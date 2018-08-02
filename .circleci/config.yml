@@ -29,11 +29,6 @@ templates:
           - v2-godeps-{{ .Branch }}-{{ .Revision }}
           - v2-godeps-{{ .Branch }}-
           - v2-godeps-master-
-    - restore_cache: &restore_omnibus
-        keys:
-        # Cache retrieval is faster than full git checkout
-        - v2-omnibus-{{ .Revision }}
-
 
 jobs:
   checkout_code:
@@ -161,7 +156,6 @@ jobs:
   publish_install_packages:
     <<: *job_template
     steps:
-    - restore_cache: *restore_omnibus
     - run:
         name: Install awscli
         command: pip install awscli
