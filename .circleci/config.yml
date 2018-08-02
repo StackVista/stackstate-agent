@@ -13,7 +13,7 @@ experimental:
 templates:
   job_template: &job_template
     docker:
-      - image: voronenko/agent-runner:base #datadog/datadog-agent-runner-circle:latest
+      - image: voronenko/agent-runner:base #stackstate/stackstate-agent-runner-circle:latest
         environment:
           USE_SYSTEM_LIBS: "1"
     working_directory: /go/src/github.com/StackVista/stackstate-agent
@@ -29,6 +29,11 @@ templates:
           - v2-godeps-{{ .Branch }}-{{ .Revision }}
           - v2-godeps-{{ .Branch }}-
           - v2-godeps-master-
+    - restore_cache: &restore_omnibus
+        keys:
+        # Cache retrieval is faster than full git checkout
+        - v2-omnibus-{{ .Revision }}
+
 
 jobs:
   checkout_code:
@@ -136,9 +141,16 @@ jobs:
     - run:
         name: build omnibus
         command: inv -e agent.omnibus-build --base-dir ./omnibus
+
     - run:
         name: build agent
         command: cd omnibus && inv -e agent.build
+
+    - save_cache:
+        key: v2-omnibus-{{ .Revision }}
+        paths:
+        - /go/src/github.com/StackVista/stackstate-agent/omnibus
+
     - run:
         name: Install awscli
         command: pip install awscli
@@ -149,8 +161,7 @@ jobs:
   publish_install_packages:
     <<: *job_template
     steps:
-    - restore_cache: *restore_source
-    - restore_cache: *restore_deps
+    - restore_cache: *restore_omnibus
     - run:
         name: Install awscli
         command: pip install awscli
