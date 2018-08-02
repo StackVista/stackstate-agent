@@ -135,7 +135,7 @@ jobs:
 
     - run:
         name: ensure libtool
-        command: apt-get install libtool && apt-get install --only-upgrade libtool
+        command: apt-get install -y libtool && apt-get install -y --only-upgrade libtool
 
     - run:
         name: build omnibus
