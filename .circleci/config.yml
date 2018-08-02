@@ -134,12 +134,16 @@ jobs:
         command: git config --global user.name "CircleCI Stackstate"
 
     - run:
+        name: ensure libtool
+        command: apt-get install libtool && apt-get install --only-upgrade libtool
+
+    - run:
         name: build omnibus
         command: inv -e agent.omnibus-build --base-dir ./omnibus
 
     - run:
         name: build agent
-        command: cd omnibus && inv -e agent.build
+        command: inv -e agent.build
 
     - save_cache:
         key: v2-omnibus-{{ .Revision }}
