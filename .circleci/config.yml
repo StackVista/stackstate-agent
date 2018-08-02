@@ -155,7 +155,7 @@ jobs:
         command: pip install awscli
     - run:
         name: Deploy to s3 bucket
-        command: aws s3 cp omnibus/pkg/* s3://${STS_AWS_BUCKET}/ --recursive
+        command: aws s3 cp omnibus/pkg s3://${STS_AWS_BUCKET}/ --recursive
 
   publish_install_packages:
     <<: *job_template
@@ -165,7 +165,7 @@ jobs:
         command: pip install awscli
     - run:
         name: Deploy to s3 bucket
-        command: aws s3 sync omnibus/pkg/* s3://${STS_AWS_BUCKET}/ --delete
+        command: aws s3 cp omnibus/pkg s3://${STS_AWS_BUCKET}/ --delete
 
   build_puppy:
     <<: *job_template
