@@ -13,7 +13,7 @@ experimental:
 templates:
   job_template: &job_template
     docker:
-      - image: voronenko/agent-runner:base #stackstate/stackstate-agent-runner-circle:latest
+      - image: stackstate/stackstate-agent-runner-circle:latest
         environment:
           USE_SYSTEM_LIBS: "1"
     working_directory: /go/src/github.com/StackVista/stackstate-agent
