@@ -125,6 +125,14 @@ jobs:
     steps:
     - restore_cache: *restore_source
     - restore_cache: *restore_deps
+  - run:
+      name: git user email
+      command: git config --global user.email "circleci@stackstate"
+
+  - run:
+      name: git user name
+      command: git config --global user.name "CircleCI Stackstate"
+
     - run:
         name: build omnibus
         command: inv -e agent.omnibus-build --base-dir ./omnibus
@@ -192,6 +200,6 @@ workflows:
       - build_install_packages:
           requires:
           - build_binaries
-      - build_install_packages:
+      - publish_install_packages:
           requires:
-          - build_binaries
+          - build_install_packages
