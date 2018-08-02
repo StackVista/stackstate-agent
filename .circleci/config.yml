@@ -149,7 +149,7 @@ jobs:
         name: Install awscli
         command: sudo pip install awscli
     - run:
-        name: Deploy to s3
+        name: Deploy to s3 bucket
         command: aws s3 sync omnibus/pkg/* s3://${STS_AWS_BUCKET}/ --delete
 
   build_puppy:
