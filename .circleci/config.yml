@@ -145,27 +145,9 @@ jobs:
         name: build agent
         command: inv -e agent.build
 
-    - save_cache:
-        key: v2-omnibus-{{ .Revision }}
-        paths:
-        - /go/src/github.com/StackVista/stackstate-agent/omnibus
-
     - run:
-        name: Install awscli
-        command: pip install awscli
-    - run:
-        name: Deploy to s3 bucket
-        command: aws s3 cp omnibus/pkg s3://${STS_AWS_BUCKET}/ --recursive --exclude "version-manifest.json"
-
-  publish_install_packages:
-    <<: *job_template
-    steps:
-    - run:
-        name: Install awscli
-        command: pip install awscli
-    - run:
-        name: Deploy to s3 bucket
-        command: aws s3 cp omnibus/pkg s3://${STS_AWS_BUCKET}/ --recursive --exclude "version-manifest.json"
+        name: Publish deb files
+        command: deb-s3 upload --bucket ${STS_AWS_BUCKET} omnibus/pkg/*.deb
 
   build_puppy:
     <<: *job_template
@@ -215,6 +197,3 @@ workflows:
       - build_install_packages:
           requires:
           - build_binaries
-#      - publish_install_packages:
-#          requires:
-#          - build_install_packages
