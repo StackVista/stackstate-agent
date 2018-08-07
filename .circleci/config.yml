@@ -139,7 +139,7 @@ jobs:
 
     - run:
         name: build omnibus
-        command: inv -e agent.omnibus-build --base-dir ./omnibus --omnibus-s3-cache
+        command: inv -e agent.omnibus-build --base-dir ./omnibus --omnibus-s3-cache --skip-sign
 
     - run:
         name: build agent
