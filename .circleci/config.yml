@@ -143,7 +143,7 @@ jobs:
 
     - run:
         name: build agent
-        command: inv -e agent.build
+        command: inv -e agent.build --build-exclude=snmp
 
     - run:
         name: Publish deb files
