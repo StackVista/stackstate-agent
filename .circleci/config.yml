@@ -126,25 +126,17 @@ jobs:
     - restore_cache: *restore_source
     - restore_cache: *restore_deps
     - run:
-        name: git user email
+        name: Git configure email
         command: git config --global user.email "circleci@stackstate"
-
     - run:
-        name: git user name
+        name: Git configure name
         command: git config --global user.name "CircleCI Stackstate"
-
     - run:
-        name: ensure libtool
+        name: Ensure libtool
         command: apt-get install -y apt-utils libtool && apt-get install -y --only-upgrade libtool
-
     - run:
-        name: build omnibus
+        name: Omnibus build
         command: inv -e agent.omnibus-build --base-dir ./omnibus --omnibus-s3-cache --skip-sign
-
-    - run:
-        name: build agent
-        command: inv -e agent.build --build-exclude=snmp
-
     - run:
         name: Publish deb files
         command: |
