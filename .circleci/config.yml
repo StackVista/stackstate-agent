@@ -120,7 +120,7 @@ jobs:
           name: build agent
           command: inv -e agent.build
 
-  build_install_packages:
+  build_publish_deb_package:
     <<: *job_template
     steps:
     - restore_cache: *restore_source
@@ -135,10 +135,10 @@ jobs:
         name: Ensure libtool
         command: apt-get install -y apt-utils libtool && apt-get install -y --only-upgrade libtool
     - run:
-        name: Omnibus build
+        name: Omnibus deb build
         command: inv -e agent.omnibus-build --base-dir ./omnibus --omnibus-s3-cache --skip-sign
     - run:
-        name: Publish deb files
+        name: Publish deb package
         command: |
           if [ "$CIRCLE_BRANCH" != "master" ];
           then
@@ -192,6 +192,6 @@ workflows:
             - unit_tests
             - integration_tests
             - docker_integration_tests
-      - build_install_packages:
+      - build_publish_deb_package:
           requires:
           - build_binaries
