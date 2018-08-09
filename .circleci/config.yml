@@ -171,11 +171,13 @@ jobs:
     docker:
       - image: docker:18.06.0
     steps:
-    - restore_cache: *restore_source
     - restore_cache: *restore_omnibus
     - run:
+        name: Copy deb file to docker context
+        command: cp omnibus/pkg/datadog-agent*_amd64.deb Dockerfiles/agent
+    - run:
         name: Build image
-        command: inv -e agent.image-build
+        command: docker build --tag stackstate/stackstate-agent:${CIRCLE_SHA1:0:7} Dockerfiles/agent
 
 
 workflows:
