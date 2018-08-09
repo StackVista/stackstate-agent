@@ -177,7 +177,7 @@ jobs:
         command: cp omnibus/pkg/datadog-agent*_amd64.deb Dockerfiles/agent
     - run:
         name: Build image
-        command: docker build --tag stackstate/stackstate-agent:${CIRCLE_SHA1:0:7} Dockerfiles/agent
+        command: docker build -t stackstate/stackstate-agent:${CIRCLE_SHA1:0:7} Dockerfiles/agent
 
 
 workflows:
