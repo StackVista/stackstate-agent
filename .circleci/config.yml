@@ -169,7 +169,7 @@ jobs:
   build_docker_image:
     <<: *job_template
     docker:
-      - image: docker/docker:18.06.0
+      - image: docker:18.06.0
     steps:
     - restore_cache: *restore_source
     - restore_cache: *restore_omnibus
