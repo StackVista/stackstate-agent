@@ -11,6 +11,7 @@ unit_tests:
   - mkdir -p /go/src/github.com/StackVista
   - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
   script:
+  - exit 0 #skipped
   - cd /go/src/github.com/StackVista/stackstate-agent
   - invoke deps
   - inv -e agent.build --race --precompile-only
@@ -35,6 +36,7 @@ filename_linting:
   - mkdir -p /go/src/github.com/StackVista
   - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
   script:
+  - exit 0 #skipped
   - cd /go/src/github.com/StackVista/stackstate-agent
   - invoke deps
   - inv -e lint-filenames
@@ -62,6 +64,7 @@ build_binaries:
   - mkdir -p /go/src/github.com/StackVista
   - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
   script:
+  - exit 0 #skipped
   - cd /go/src/github.com/StackVista/stackstate-agent
   - invoke deps
   - inv -e dogstatsd.build --static
@@ -75,6 +78,7 @@ build_puppy:
   - mkdir -p /go/src/github.com/StackVista
   - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
   script:
+  - exit 0 #skipped
   - cd /go/src/github.com/StackVista/stackstate-agent
   - invoke deps
   - inv -e agent.build --puppy
