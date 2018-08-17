@@ -92,6 +92,8 @@ build_publish_deb:
   - mkdir -p /go/src/github.com/StackVista
   - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
   script:
+  - printenv
+  - echo "======================================================"
   - cd /go/src/github.com/StackVista/stackstate-agent
   - invoke deps
   - git config --global user.email "circleci@stackstate"
