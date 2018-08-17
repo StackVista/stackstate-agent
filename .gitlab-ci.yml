@@ -1,5 +1,5 @@
 stages:
-#- docker_test
+- docker_test
 - tests
 - build
 - publish
@@ -115,14 +115,15 @@ build_publish_image:
   - docker login -u $DOCKER_USER -p $DOCKER_PASS
   - docker push stackstate/stackstate-agent:$TAG
 
-#docker_test:
-#  stage: docker_test
-#  image: docker:latest
-#  variables:
-#    DOCKER_DRIVER: overlay
-#  services:
-#  - docker:dind
-#  before_script:
-#  - docker info
-#  script:
-#    - docker ps
+docker_test:
+  stage: docker_test
+  image: docker:latest
+  variables:
+    DOCKER_DRIVER: overlay
+  services:
+  - docker:dind
+  before_script:
+  - printenv
+  - docker info
+  script:
+    - docker ps
