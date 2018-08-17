@@ -58,7 +58,6 @@ filename_linting:
 build_binaries:
   stage: build
   image: stackstate/stackstate-agent-runner-circle:latest
-  tags: [ "runner:main", "size:large" ]
   before_script:
   - mkdir -p /go/src/github.com/StackVista
   - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
@@ -72,7 +71,6 @@ build_binaries:
 build_puppy:
   stage: build
   image: stackstate/stackstate-agent-runner-circle:latest
-  tags: [ "runner:main", "size:large" ]
   before_script:
   - mkdir -p /go/src/github.com/StackVista
   - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
@@ -86,7 +84,6 @@ build_puppy:
 build_publish_deb:
   stage: build
   image: stackstate/stackstate-agent-runner-circle:latest
-  tags: [ "runner:main", "size:large" ]
   before_script:
   - mkdir -p /go/src/github.com/StackVista
   - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
@@ -107,7 +104,6 @@ build_publish_deb:
 build_publish_image:
   stage: publish
   image: docker:18.06.0
-  tags: [ "runner:main", "size:large" ]
   script:
   - cp omnibus/pkg/datadog-agent*_amd64.deb Dockerfiles/agent
   - TAG=${CI_COMMIT_SHA:0:7}
