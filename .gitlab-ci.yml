@@ -1,5 +1,5 @@
 stages:
-- docker_test
+#- docker_test
 - tests
 - build
 - publish
@@ -16,16 +16,17 @@ unit_tests:
   - inv -e agent.build --race --precompile-only
   - inv -e test --coverage --race --profile --fail-on-fmt
 
-integration_tests:
-  stage: tests
-  image: stackstate/stackstate-agent-runner-circle:latest
-  before_script:
-  - mkdir -p /go/src/github.com/StackVista
-  - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
-  script:
-  - cd /go/src/github.com/StackVista/stackstate-agent
-  - invoke deps
-  - inv -e docker.integration-tests
+# TODO: replicate remote docker tests
+#integration_tests:
+#  stage: tests
+#  image: stackstate/stackstate-agent-runner-circle:latest
+#  before_script:
+#  - mkdir -p /go/src/github.com/StackVista
+#  - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
+#  script:
+#  - cd /go/src/github.com/StackVista/stackstate-agent
+#  - invoke deps
+#  - inv  -e integration-tests --race --remote-docker
 
 filename_linting:
   stage: tests
@@ -41,6 +42,10 @@ filename_linting:
 docker_integration_tests:
   stage: tests
   image: stackstate/stackstate-agent-runner-circle:latest
+  variables:
+      DOCKER_DRIVER: overlay
+  services:
+    - docker:dind
   before_script:
   - mkdir -p /go/src/github.com/StackVista
   - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
@@ -110,14 +115,14 @@ build_publish_image:
   - docker login -u $DOCKER_USER -p $DOCKER_PASS
   - docker push stackstate/stackstate-agent:$TAG
 
-docker_test:
-  stage: docker_test
-  image: docker:latest
-  variables:
-    DOCKER_DRIVER: overlay
-  services:
-  - docker:dind
-  before_script:
-  - docker info
-  script:
-    - docker ps
+#docker_test:
+#  stage: docker_test
+#  image: docker:latest
+#  variables:
+#    DOCKER_DRIVER: overlay
+#  services:
+#  - docker:dind
+#  before_script:
+#  - docker info
+#  script:
+#    - docker ps
