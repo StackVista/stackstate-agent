@@ -14,6 +14,46 @@
   version = "4.7.1"
 
 [[projects]]
+  name = "github.com/DataDog/datadog-agent"
+  packages = [
+    "pkg/autodiscovery/integration",
+    "pkg/config",
+    "pkg/diagnose/diagnosis",
+    "pkg/errors",
+    "pkg/logs/auditor",
+    "pkg/logs/auditor/mock",
+    "pkg/logs/config",
+    "pkg/logs/message",
+    "pkg/logs/pb",
+    "pkg/logs/pipeline",
+    "pkg/logs/pipeline/mock",
+    "pkg/logs/processor",
+    "pkg/logs/restart",
+    "pkg/logs/sender",
+    "pkg/metadata/host/container",
+    "pkg/secrets",
+    "pkg/tagger/utils",
+    "pkg/util",
+    "pkg/util/androidasset",
+    "pkg/util/cache",
+    "pkg/util/containers",
+    "pkg/util/containers/metrics",
+    "pkg/util/docker",
+    "pkg/util/ec2",
+    "pkg/util/ecs",
+    "pkg/util/gce",
+    "pkg/util/hostname",
+    "pkg/util/kubernetes",
+    "pkg/util/kubernetes/apiserver",
+    "pkg/util/kubernetes/kubelet",
+    "pkg/util/log",
+    "pkg/util/retry",
+    "pkg/version"
+  ]
+  revision = "c5f338b5ed27264ebb9a7873e14fead76fee112a"
+  version = "6.4.1-dogstatsd-perf-test"
+
+[[projects]]
   branch = "master"
   name = "github.com/DataDog/gohai"
   packages = [
@@ -1316,6 +1356,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5a9127e88f491e8b090e9053c32bd9093cceaf268c57fc6774e5958816dc5311"
+  inputs-digest = "bb6a2dfea730fa5b2d1cfb60efd057c8d6090f446559b630d327e36c18f45f43"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -18,7 +18,7 @@ import (
 	dockerutil "github.com/StackVista/stackstate-agent/pkg/util/docker"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
-	"github.comStackVista/stackstate-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/config"
 	"github.com/StackVista/stackstate-agent/pkg/logs/decoder"
 	parser "github.com/StackVista/stackstate-agent/pkg/logs/docker"
 	"github.com/StackVista/stackstate-agent/pkg/logs/message"
