@@ -100,14 +100,15 @@ build_publish_deb:
   - git config --global user.name "CircleCI Stackstate"
   - apt-get install -y apt-utils libtool && apt-get install -y --only-upgrade libtool
   - inv -e agent.omnibus-build --base-dir ./omnibus --omnibus-s3-cache --skip-sign
-  - ls -la  /go/src/github.com/StackVista/stackstate-agent/omnibus/pkg
-  - ls -la /go/src/github.com/StackVista/stackstate-agent/Dockerfiles
+  - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && - mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles
+  - cp -r  /go/src/github.com/StackVista/stackstate-agent/omnibus/pkg $CI_PROJECT_DIR/outcomes/pkg
+  - cp -r  /go/src/github.com/StackVista/stackstate-agent/Dockerfiles $CI_PROJECT_DIR/outcomes/dockerfiles
 #  - deb-s3 upload --codename ${CI_COMMIT_REF_NAME:-unrecognized} --bucket ${STS_AWS_BUCKET:-stackstate-agent-test} omnibus/pkg/*.deb
   artifacts:
     paths:
-        - /go/src/github.com/StackVista/stackstate-agent/omnibus/pkg/*.deb
-        - /go/src/github.com/StackVista/stackstate-agent/omnibus/pkg/*.json
-        - /go/src/github.com/StackVista/stackstate-agent/Dockerfiles
+        - $CI_PROJECT_DIR/outcomes/pkg/*.deb
+        - $CI_PROJECT_DIR/outcomes/pkg/*.json
+        - $CI_PROJECT_DIR/outcomes/dockerfiles/*.*
     expire_in: 1 week
 
 build_publish_image:
