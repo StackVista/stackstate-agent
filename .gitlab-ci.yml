@@ -121,7 +121,10 @@ build_publish_image:
   stage: publish
   image: docker:18.06.0
   script:
-  - cp omnibus/pkg/datadog-agent*_amd64.deb Dockerfiles/agent
+  - ls -la $CI_PROJECT_DIR/outcomes/
+  - ls -la $CI_PROJECT_DIR/outcomes/pkg/
+  - ls -la $CI_PROJECT_DIR/outcomes/Dockerfiles/
+  - cp $CI_PROJECT_DIR/outcomes/pkg/*.deb Dockerfiles/agent
   - TAG=${CI_COMMIT_SHA:0:7}
   - docker build -t stackstate/stackstate-agent:$TAG Dockerfiles/agent
   - docker login -u $DOCKER_USER -p $DOCKER_PASS
