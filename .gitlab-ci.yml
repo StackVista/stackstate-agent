@@ -10,7 +10,6 @@ unit_tests:
   - mkdir -p /go/src/github.com/StackVista
   - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
   script:
-  - exit 0 #skipped
   - cd /go/src/github.com/StackVista/stackstate-agent
   - invoke deps
   - inv -e agent.build --race --precompile-only
@@ -35,7 +34,6 @@ filename_linting:
   - mkdir -p /go/src/github.com/StackVista
   - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
   script:
-  - exit 0 #skipped
   - cd /go/src/github.com/StackVista/stackstate-agent
   - invoke deps
   - inv -e lint-filenames
@@ -63,7 +61,6 @@ build_binaries:
   - mkdir -p /go/src/github.com/StackVista
   - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
   script:
-  - exit 0 #skipped
   - cd /go/src/github.com/StackVista/stackstate-agent
   - invoke deps
   - inv -e dogstatsd.build --static
@@ -77,7 +74,6 @@ build_puppy:
   - mkdir -p /go/src/github.com/StackVista
   - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
   script:
-  - exit 0 #skipped
   - cd /go/src/github.com/StackVista/stackstate-agent
   - invoke deps
   - inv -e agent.build --puppy
@@ -103,9 +99,6 @@ build_publish_deb:
   - cp -r  /go/src/github.com/StackVista/stackstate-agent/omnibus/pkg $CI_PROJECT_DIR/outcomes
   - cp -r  /go/src/github.com/StackVista/stackstate-agent/Dockerfiles $CI_PROJECT_DIR/outcomes
   - deb-s3 upload --codename ${CI_COMMIT_REF_NAME:-unrecognized} --bucket ${STS_AWS_BUCKET:-stackstate-agent-test} omnibus/pkg/*.deb
-  - ls -la $CI_PROJECT_DIR/outcomes/
-  - ls -la $CI_PROJECT_DIR/outcomes/pkg/
-  - ls -la $CI_PROJECT_DIR/outcomes/Dockerfiles/
   artifacts:
     paths:
         - $CI_PROJECT_DIR/outcomes/pkg/*.deb
@@ -124,9 +117,6 @@ build_publish_image:
   services:
   - docker:dind
   script:
-  - ls -la $CI_PROJECT_DIR/outcomes/
-  - ls -la $CI_PROJECT_DIR/outcomes/pkg/
-  - ls -la $CI_PROJECT_DIR/outcomes/Dockerfiles/
   - cp $CI_PROJECT_DIR/outcomes/pkg/*.deb Dockerfiles/agent
   - TAG=${CI_COMMIT_SHA:0:7}
   - docker build -t stackstate/stackstate-agent:$TAG Dockerfiles/agent
