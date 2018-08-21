@@ -151,13 +151,9 @@ func (s *Scanner) setup() error {
 // setupTailer sets one tailer, making it tail from the beginning or the end,
 // returns true if the setup succeeded, false otherwise
 func (s *Scanner) setupTailer(cli *client.Client, container types.Container, source *config.LogSource, tailFromBeginning bool, outputChan chan message.Message) bool {
-	log.Info("Detected container ", container.Image, " - ", ShortContainerID(container.ID))
-	tailer := NewTailer(cli, container.ID, source, outputChan)
-	since, err := Since(s.registry, tailer.Identifier(), tailFromBeginning)
-	if err != nil {
-		log.Warnf("Could not recover last committed offset for container %v: %v", ShortContainerID(container.ID), err)
-	}
-	err = tailer.Start(since)
+	log.Info("Detected container ", container.Image, " - ", s.humanReadableContainerID(container.ID))
+	t := NewTailer(cli, container.ID, source, outputChan)
+	err := t.recoverTailing(s.auditor, tailFromBeginning)
 	if err != nil {
 		log.Warn(err)
 		return false

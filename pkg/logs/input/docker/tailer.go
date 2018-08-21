@@ -14,14 +14,15 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/DataDog/datadog-agent/pkg/logs/auditor"
 	"github.com/StackVista/stackstate-agent/pkg/tagger"
 	dockerutil "github.com/StackVista/stackstate-agent/pkg/util/docker"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
-	"github.comStackVista/stackstate-agent/pkg/logs/config"
 	"github.com/StackVista/stackstate-agent/pkg/logs/decoder"
 	parser "github.com/StackVista/stackstate-agent/pkg/logs/docker"
 	"github.com/StackVista/stackstate-agent/pkg/logs/message"
+	"github.comStackVista/stackstate-agent/pkg/logs/config"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -79,12 +80,48 @@ func (t *Tailer) Stop() {
 	<-t.done
 }
 
-// Start starts tailing from the last log line processed.
+// recoverTailing starts the tailing from the last log line processed.
 // if we see this container for the first time, it will:
-// start from now if the container has been created before the agent started
+// start from now if tailFromBeginning is False
 // start from oldest log otherwise
-func (t *Tailer) Start(since time.Time) error {
-	return t.tail(since.Format(config.DateFormat))
+func (t *Tailer) recoverTailing(a *auditor.Auditor, tailFromBeginning bool) error {
+	lastCommittedOffset := a.GetLastCommittedOffset(t.Identifier())
+	return t.tailFrom(t.nextLogDate(lastCommittedOffset, tailFromBeginning))
+}
+
+// nextLogDate returns the date from which we should start tailing,
+// given what is in the auditor and how we should behave on miss
+func (t *Tailer) nextLogDate(lastCommittedOffset string, tailFromBeginning bool) string {
+	var ts time.Time
+	var err error
+	if lastCommittedOffset != "" {
+		ts, err = t.nextLogSinceDate(lastCommittedOffset)
+		if err != nil {
+			log.Warn("Couldn't recover last committed offset for container ", t.ContainerID[:12], " - ", err)
+			ts = time.Now().UTC()
+		}
+	} else if tailFromBeginning {
+		ts = time.Time{}
+	} else {
+		ts = time.Now().UTC()
+	}
+	return ts.Format(config.DateFormat)
+}
+
+// nextLogSinceDate returns the `from` value of the next log line
+// for a container.
+// In the auditor, we store the date of the last log line processed.
+// `ContainerLogs` is not exclusive on `Since`, so if we start again
+// from this date, we collect that last log line twice on restart.
+// A workaround is to add one nano second, to exclude that last
+// log line
+func (t *Tailer) nextLogSinceDate(lastTs string) (time.Time, error) {
+	ts, err := time.Parse(config.DateFormat, lastTs)
+	if err != nil {
+		return time.Time{}, err
+	}
+	ts = ts.Add(time.Nanosecond)
+	return ts, nil
 }
 
 // setupReader sets up the reader that reads the container's logs
