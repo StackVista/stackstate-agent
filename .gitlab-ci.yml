@@ -1,5 +1,4 @@
 stages:
-- docker_test
 - tests
 - build
 - publish
@@ -120,6 +119,10 @@ build_publish_deb:
 build_publish_image:
   stage: publish
   image: docker:18.06.0
+  variables:
+    DOCKER_DRIVER: overlay
+  services:
+  - docker:dind
   script:
   - ls -la $CI_PROJECT_DIR/outcomes/
   - ls -la $CI_PROJECT_DIR/outcomes/pkg/
@@ -130,15 +133,15 @@ build_publish_image:
   - docker login -u $DOCKER_USER -p $DOCKER_PASS
   - docker push stackstate/stackstate-agent:$TAG
 
-docker_test:
-  stage: docker_test
-  image: docker:latest
-  variables:
-    DOCKER_DRIVER: overlay
-  services:
-  - docker:dind
-  before_script:
-  - printenv
-  - docker info
-  script:
-    - docker ps
+#docker_test:
+#  stage: docker_test
+#  image: docker:latest
+#  variables:
+#    DOCKER_DRIVER: overlay
+#  services:
+#  - docker:dind
+#  before_script:
+#  - printenv
+#  - docker info
+#  script:
+#    - docker ps
