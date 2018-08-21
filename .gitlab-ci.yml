@@ -111,7 +111,10 @@ build_publish_deb:
     paths:
         - $CI_PROJECT_DIR/outcomes/pkg/*.deb
         - $CI_PROJECT_DIR/outcomes/pkg/*.json
-        - $CI_PROJECT_DIR/outcomes/Dockerfiles/*.*
+        - $CI_PROJECT_DIR/outcomes/Dockerfiles/agent
+        - $CI_PROJECT_DIR/outcomes/Dockerfiles/cluster-agent
+        - $CI_PROJECT_DIR/outcomes/Dockerfiles/dogstatsd
+        - $CI_PROJECT_DIR/outcomes/Dockerfiles/manifests
     expire_in: 1 week
 
 build_publish_image:
