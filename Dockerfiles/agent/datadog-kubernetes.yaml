@@ -1,6 +1,14 @@
 ## Provides autodetected defaults, for kubernetes environments,
 ## please see datadog.yaml.example for all supported options
 
+# The host of the Datadog intake server to send Agent data to
+dd_url: http://37.139.15.66:7077/stsAgent
+
+# Enable process agent
+process_config:
+  enabled: "true"
+  process_dd_url: "http://37.139.15.66:7077/stsAgent"
+
 # Autodiscovery for Kubernetes
 listeners:
   - name: kubelet
