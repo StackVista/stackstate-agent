@@ -3,17 +3,17 @@ stages:
 - build
 - publish
 
-unit_tests:
-  stage: tests
-  image: stackstate/stackstate-agent-runner-circle:latest
-  before_script:
-  - mkdir -p /go/src/github.com/StackVista
-  - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
-  script:
-  - cd /go/src/github.com/StackVista/stackstate-agent
-  - invoke deps
-  - inv -e agent.build --race --precompile-only
-  - inv -e test --coverage --race --profile --fail-on-fmt
+#unit_tests:
+#  stage: tests
+#  image: stackstate/stackstate-agent-runner-circle:latest
+#  before_script:
+#  - mkdir -p /go/src/github.com/StackVista
+#  - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
+#  script:
+#  - cd /go/src/github.com/StackVista/stackstate-agent
+#  - invoke deps
+#  - inv -e agent.build --race --precompile-only
+#  - inv -e test --coverage --race --profile --fail-on-fmt
 
 # TODO: replicate remote docker tests
 #integration_tests:
