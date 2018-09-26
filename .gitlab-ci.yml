@@ -93,13 +93,17 @@ build_publish_deb:
   - invoke deps
   - git config --global user.email "circleci@stackstate"
   - git config --global user.name "CircleCI Stackstate"
-  - apt-get install -y apt-utils libtool && apt-get install -y --only-upgrade libtool
+  - echo "$SIGNING_PUBLIC_KEY" | gpg --import
+  - echo "$SIGNING_PRIVATE_KEY" | gpg --import
+  - echo "$SIGNING_KEY_ID"
+  - apt-get install -y apt-utils libtool debsigs && apt-get install -y --only-upgrade libtool
   - printenv
   - inv -e agent.omnibus-build --base-dir ./omnibus --omnibus-s3-cache --skip-sign
   - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles
+  - debsigs --sign=origin -k ${SIGNING_KEY_ID} test_1.0-7_amd64.deb
   - cp -r  /go/src/github.com/StackVista/stackstate-agent/omnibus/pkg $CI_PROJECT_DIR/outcomes
   - cp -r  /go/src/github.com/StackVista/stackstate-agent/Dockerfiles $CI_PROJECT_DIR/outcomes
-  - deb-s3 upload --codename ${CI_COMMIT_REF_NAME:-unrecognized} --bucket ${STS_AWS_BUCKET:-stackstate-agent-test} omnibus/pkg/*.deb
+  - deb-s3 upload --sign=${SIGNING_KEY_ID} --codename ${CI_COMMIT_REF_NAME:-unrecognized} --bucket ${STS_AWS_BUCKET:-stackstate-agent-test} omnibus/pkg/*.deb
   artifacts:
     paths:
         - $CI_PROJECT_DIR/outcomes/pkg/*.deb
