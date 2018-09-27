@@ -14,6 +14,8 @@ unit_tests:
   - invoke deps
   - inv -e agent.build --race --precompile-only
   - inv -e test --coverage --race --profile --fail-on-fmt
+  tags:
+  - sts-aws 
 
 # TODO: replicate remote docker tests
 
