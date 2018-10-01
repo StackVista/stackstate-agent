@@ -8,7 +8,7 @@ package collectors
 import (
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 )
 
 // retrieveMappingFromConfig gets a stringmapstring config key and

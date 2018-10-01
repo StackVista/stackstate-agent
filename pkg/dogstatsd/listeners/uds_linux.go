@@ -13,14 +13,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
-<<<<<<< HEAD
 	"github.com/StackVista/stackstate-agent/pkg/util/cache"
 	"github.com/StackVista/stackstate-agent/pkg/util/containers"
-	"github.com/StackVista/stackstate-agent/pkg/util/docker"
-=======
-	"github.com/DataDog/datadog-agent/pkg/util/cache"
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
->>>>>>> b0407a814984daef10b504629cbac4d3aded065f
 )
 
 const (

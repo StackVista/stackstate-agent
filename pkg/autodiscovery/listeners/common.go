@@ -6,14 +6,8 @@
 package listeners
 
 import (
-<<<<<<< HEAD
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-
-	"github.com/StackVista/stackstate-agent/pkg/util/docker"
-=======
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
->>>>>>> b0407a814984daef10b504629cbac4d3aded065f
 )
 
 const (

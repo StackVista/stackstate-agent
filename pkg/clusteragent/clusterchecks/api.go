@@ -7,7 +7,7 @@
 
 package clusterchecks
 
-import "github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+import "github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 
 // GetAllConfigs returns all configurations known to the store, for reporting
 func (h *Handler) GetAllConfigs() ([]integration.Config, error) {

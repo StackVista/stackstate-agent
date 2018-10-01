@@ -10,8 +10,8 @@ package clusterchecks
 import (
 	"sync"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // store holds the state of cluster-check management.

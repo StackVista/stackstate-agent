@@ -11,7 +11,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery"
 )
 
 const (
