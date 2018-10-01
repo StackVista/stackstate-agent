@@ -6,9 +6,14 @@
 package listeners
 
 import (
+<<<<<<< HEAD
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	"github.com/StackVista/stackstate-agent/pkg/util/docker"
+=======
+	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+>>>>>>> b0407a814984daef10b504629cbac4d3aded065f
 )
 
 const (
@@ -17,20 +22,20 @@ const (
 	dockerADTemplateLabelName = "com.datadoghq.ad.instances"
 )
 
-// ComputeContainerServiceIDs takes a container ID, an image (resolved to an actual name) and labels
+// ComputeContainerServiceIDs takes an entity name, an image (resolved to an actual name) and labels
 // and computes the service IDs for this container service.
-func ComputeContainerServiceIDs(cid string, image string, labels map[string]string) []string {
+func ComputeContainerServiceIDs(entity string, image string, labels map[string]string) []string {
 	// ID override label
 	if l, found := labels[newIdentifierLabel]; found {
 		return []string{l}
 	}
 	if l, found := labels[legacyIdentifierLabel]; found {
 		log.Warnf("found legacy %s label for %s, please use the new name %s",
-			legacyIdentifierLabel, cid, newIdentifierLabel)
+			legacyIdentifierLabel, entity, newIdentifierLabel)
 		return []string{l}
 	}
 
-	ids := []string{docker.ContainerIDToEntityName(cid)}
+	ids := []string{entity}
 
 	// AD template in labels, don't add image names
 	if _, found := labels[dockerADTemplateLabelName]; found {
@@ -38,7 +43,7 @@ func ComputeContainerServiceIDs(cid string, image string, labels map[string]stri
 	}
 
 	// Add Image names (long then short if different)
-	long, short, _, err := docker.SplitImageName(image)
+	long, short, _, err := containers.SplitImageName(image)
 	if err != nil {
 		log.Warnf("error while spliting image name: %s", err)
 	}
