@@ -6,14 +6,14 @@
 package container
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/logs/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/restart"
-	"github.com/DataDog/datadog-agent/pkg/logs/service"
+	"github.com/StackVista/stackstate-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/restart"
+	"github.com/StackVista/stackstate-agent/pkg/logs/service"
 )
 
 // noopLauncher consumes docker sources and services to ensure that no deadlock occurs when
 // the docker launcher or the kubernetes scanner could not be set up properly and autodiscovery
-// emits new valid docker integration configs, see [logs-scheduler](https://github.com/DataDog/datadog-agent/blob/master/pkg/logs/scheduler/scheduler.go).
+// emits new valid docker integration configs, see [logs-scheduler](https://github.com/StackVista/stackstate-agent/blob/master/pkg/logs/scheduler/scheduler.go).
 type noopLauncher struct {
 	sources  *config.LogSources
 	services *service.Services
