@@ -25,7 +25,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/leaderelection"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
-	"github.com/DStackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // Covers the Control Plane service check and the in memory pod metadata.
