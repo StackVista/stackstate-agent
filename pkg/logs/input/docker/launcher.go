@@ -8,15 +8,15 @@
 package docker
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/tagger"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/tagger"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/docker/docker/client"
 
-	"github.com/DataDog/datadog-agent/pkg/logs/auditor"
-	"github.com/DataDog/datadog-agent/pkg/logs/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/pipeline"
-	"github.com/DataDog/datadog-agent/pkg/logs/restart"
-	"github.com/DataDog/datadog-agent/pkg/logs/service"
+	"github.com/StackVista/stackstate-agent/pkg/logs/auditor"
+	"github.com/StackVista/stackstate-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/pipeline"
+	"github.com/StackVista/stackstate-agent/pkg/logs/restart"
+	"github.com/StackVista/stackstate-agent/pkg/logs/service"
 )
 
 // A Launcher starts and stops new tailers for every new containers discovered by autodiscovery.

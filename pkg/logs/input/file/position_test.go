@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/DataDog/datadog-agent/pkg/logs/auditor/mock"
+	"github.com/StackVista/stackstate-agent/pkg/logs/auditor/mock"
 )
 
 func TestPosition(t *testing.T) {

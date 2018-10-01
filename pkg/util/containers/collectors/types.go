@@ -5,7 +5,7 @@
 
 package collectors
 
-import "github.com/DataDog/datadog-agent/pkg/util/containers"
+import "github.com/StackVista/stackstate-agent/pkg/util/containers"
 
 // Collector is the public interface to container collectors must implement
 type Collector interface {

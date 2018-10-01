@@ -8,9 +8,9 @@
 package apiserver
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/hpa"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/hpa"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"

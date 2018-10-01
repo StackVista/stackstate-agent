@@ -13,7 +13,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/DataDog/datadog-agent/pkg/clusteragent"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent"
 )
 
 // installClusterCheckEndpoints registers v1 clusterchecks endpoints

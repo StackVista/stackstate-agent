@@ -48,7 +48,7 @@ if __name__ == '__main__':
             outside of its specified root folder.
         ''',
         epilog='''
-            See https://github.com/DataDog/datadog-agent/blob/6.4.x/docs/agent/secrets.md
+            See https://github.com/StackVista/stackstate-agent/blob/6.4.x/docs/agent/secrets.md
             for more information on the secrets protocol.
         '''
     )

@@ -214,7 +214,7 @@ def deps(ctx, no_checks=False, core_dir=None, verbose=False, android=False):
     # source level deps
     ctx.run("dep ensure{}".format(verbosity))
 
-    # If github.com/DataDog/datadog-agent gets vendored too - nuke it
+    # If github.com/StackVista/stackstate-agent gets vendored too - nuke it
     #
     # This may happen as a result of having to introduce DEPPROJECTROOT
     # in our builders to get around a known-issue with go dep, and the
@@ -222,9 +222,9 @@ def deps(ctx, no_checks=False, core_dir=None, verbose=False, android=False):
     #
     # This is only a workaround, we should eliminate the need to resort
     # to DEPPROJECTROOT.
-    if os.path.exists('vendor/github.com/DataDog/datadog-agent'):
-        print("Removing vendored github.com/DataDog/datadog-agent")
-        shutil.rmtree('vendor/github.com/DataDog/datadog-agent')
+    if os.path.exists('vendor/github.com/StackVista/stackstate-agent'):
+        print("Removing vendored github.com/StackVista/stackstate-agent")
+        shutil.rmtree('vendor/github.com/StackVista/stackstate-agent')
 
     # make sure PSUTIL is gone on windows; the dep ensure above will vendor it
     # in because it's necessary on other platforms
