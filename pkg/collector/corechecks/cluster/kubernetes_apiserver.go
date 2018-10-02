@@ -24,7 +24,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/leaderelection"
-  "github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"	
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 

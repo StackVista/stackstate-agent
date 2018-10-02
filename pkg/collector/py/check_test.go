@@ -15,7 +15,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/config"
-	
+
 	python "github.com/sbinet/go-python"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

@@ -12,9 +12,8 @@ import (
 	"strconv"
 
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	
-	yaml "gopkg.in/yaml.v2"
 
+	yaml "gopkg.in/yaml.v2"
 )
 
 var tplVarRegex = regexp.MustCompile(`%%.+?%%`)

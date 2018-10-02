@@ -23,7 +23,7 @@ import (
 	"github.com/StackVista/stackstate-agent/cmd/cluster-agent/custommetrics"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/clusteragent"
-  "github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/forwarder"
 	"github.com/StackVista/stackstate-agent/pkg/serializer"

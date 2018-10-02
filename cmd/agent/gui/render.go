@@ -13,7 +13,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery"
 	"github.com/StackVista/stackstate-agent/pkg/collector"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-  "github.com/StackVista/stackstate-agent/pkg/status"
+	"github.com/StackVista/stackstate-agent/pkg/status"
 )
 
 var fmap = status.Fmap()

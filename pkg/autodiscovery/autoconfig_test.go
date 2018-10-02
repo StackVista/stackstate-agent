@@ -16,7 +16,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/scheduler"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/util/retry"
-	
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"

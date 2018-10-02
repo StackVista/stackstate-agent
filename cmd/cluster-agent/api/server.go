@@ -23,7 +23,7 @@ import (
 	"github.com/StackVista/stackstate-agent/cmd/cluster-agent/api/agent"
 	"github.com/StackVista/stackstate-agent/pkg/api/security"
 	"github.com/StackVista/stackstate-agent/pkg/api/util"
-  "github.com/StackVista/stackstate-agent/pkg/clusteragent"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/gorilla/mux"
 )

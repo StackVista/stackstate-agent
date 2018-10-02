@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	
-	"github.com/stretchr/testify/assert"	
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestServiceToConfig(t *testing.T) {

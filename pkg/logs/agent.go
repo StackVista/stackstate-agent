@@ -17,7 +17,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/logs/pipeline"
 	"github.com/StackVista/stackstate-agent/pkg/logs/restart"
 	"github.com/StackVista/stackstate-agent/pkg/logs/sender"
-  "github.com/StackVista/stackstate-agent/pkg/logs/service"
+	"github.com/StackVista/stackstate-agent/pkg/logs/service"
 )
 
 // Agent represents the data pipeline that collects, decodes,

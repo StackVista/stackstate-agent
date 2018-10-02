@@ -19,12 +19,12 @@ import (
 	"github.com/StackVista/stackstate-agent/cmd/agent/common"
 	"github.com/StackVista/stackstate-agent/cmd/agent/common/signals"
 	"github.com/StackVista/stackstate-agent/cmd/cluster-agent/api/v1"
-  "github.com/StackVista/stackstate-agent/pkg/clusteragent"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/flare"
 	"github.com/StackVista/stackstate-agent/pkg/status"
 	"github.com/StackVista/stackstate-agent/pkg/util"
-  "github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/StackVista/stackstate-agent/pkg/version"
 )
 
