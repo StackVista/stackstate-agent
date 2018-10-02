@@ -16,7 +16,7 @@ import (
 
 	"github.com/shirou/gopsutil/process"
 
-	"github.com/DataDog/datadog-agent/pkg/util/containers/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/metrics"
 )
 
 // Internal constants

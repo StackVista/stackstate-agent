@@ -10,7 +10,7 @@ package custommetrics
 import (
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/common"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/common"
 	"k8s.io/client-go/kubernetes"
 )
 

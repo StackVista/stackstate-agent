@@ -11,7 +11,8 @@ unit_tests:
   - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
   script:
   - cd /go/src/github.com/StackVista/stackstate-agent
-  - invoke deps
+  - pip install -r requirements.txt
+  - inv deps
   - inv -e agent.build --race --precompile-only
   - inv -e test --coverage --race --profile --fail-on-fmt
   tags:

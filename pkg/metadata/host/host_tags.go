@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/docker"
-	"github.com/DataDog/datadog-agent/pkg/util/ec2"
-	"github.com/DataDog/datadog-agent/pkg/util/gce"
-	k8s "github.com/DataDog/datadog-agent/pkg/util/kubernetes/hostinfo"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/docker"
+	"github.com/StackVista/stackstate-agent/pkg/util/ec2"
+	"github.com/StackVista/stackstate-agent/pkg/util/gce"
+	k8s "github.com/StackVista/stackstate-agent/pkg/util/kubernetes/hostinfo"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // this is a "low-tech" version of tagger/utils/taglist.go

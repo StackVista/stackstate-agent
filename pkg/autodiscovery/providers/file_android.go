@@ -8,7 +8,7 @@
 package providers
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/util/androidasset"
+	"github.com/StackVista/stackstate-agent/pkg/util/androidasset"
 )
 
 var (

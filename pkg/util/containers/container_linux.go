@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/util/containers/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/metrics"
 )
 
 // SetCgroups has to be called when creating the Container, in order to

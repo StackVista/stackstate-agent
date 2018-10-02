@@ -13,7 +13,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/scheduler"
 	"github.com/StackVista/stackstate-agent/pkg/collector"
 	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/logs"
+	"github.com/StackVista/stackstate-agent/pkg/logs"
 	"github.com/StackVista/stackstate-agent/pkg/tagger"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )

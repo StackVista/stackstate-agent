@@ -8,7 +8,7 @@ package clustername
 import (
 	"sync"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 )
 
 type clusterNameData struct {

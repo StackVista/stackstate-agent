@@ -14,7 +14,7 @@ import (
 	autoscalingv2 "k8s.io/api/autoscaling/v2beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/DataDog/datadog-agent/pkg/clusteragent/custommetrics"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/custommetrics"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/zorkian/go-datadog-api.v2"
 )

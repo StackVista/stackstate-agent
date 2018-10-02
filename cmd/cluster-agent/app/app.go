@@ -15,7 +15,7 @@ import (
 
 	_ "expvar" // Blank import used because this isn't directly used in this file
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/spf13/cobra"
 
 	"github.com/StackVista/stackstate-agent/cmd/agent/common"
