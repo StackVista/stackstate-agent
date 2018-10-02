@@ -17,9 +17,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/StackVista/stackstate-agent/pkg/config"
 )
 
 // dummyECS allows tests to mock a ECS's responses
