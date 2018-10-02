@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/gorilla/mux"
 
 	"github.com/StackVista/stackstate-agent/cmd/agent/common"
