@@ -12,17 +12,13 @@ import (
 	"testing"
 	"time"
 
-	// [VS] TODO: check
-	// "github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
-	// [VS] / TODO: check
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 
 	python "github.com/sbinet/go-python"
 	"github.com/stretchr/testify/assert"
-	// [VS] TODO: check
-	// "github.com/stretchr/testify/mock"
-	// [VS] / TODO: check
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
