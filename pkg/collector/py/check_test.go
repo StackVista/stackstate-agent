@@ -12,17 +12,17 @@ import (
 	"testing"
 	"time"
 
-    // [VS] TODO: check
+	// [VS] TODO: check
 	// "github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
-    // [VS] / TODO: check
+	// [VS] / TODO: check
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 
 	python "github.com/sbinet/go-python"
 	"github.com/stretchr/testify/assert"
-    // [VS] TODO: check
+	// [VS] TODO: check
 	// "github.com/stretchr/testify/mock"
-    // [VS] / TODO: check
+	// [VS] / TODO: check
 	"github.com/stretchr/testify/require"
 )
 
@@ -157,6 +157,7 @@ func TestInitNoTracebackException(t *testing.T) {
 	_, err := getCheckInstance("init_no_traceback_exception", "TestCheck")
 	assert.EqualError(t, err, "could not invoke python check constructor: __init__() takes exactly 8 arguments (5 given)")
 }
+
 // [VS] TODO: check
 // TestAggregatorLink checks to see if a simple check that sends metrics to the aggregator has no errors
 func VS_TestAggregatorLink(t *testing.T) {
@@ -212,6 +213,7 @@ func VS_TestAggregatorLinkTwoRuns(t *testing.T) {
 	err = check.Run()
 	assert.Nil(t, err)
 }
+
 // [VS] / TODO: check
 
 // BenchmarkRun executes a single check: benchmark results
