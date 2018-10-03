@@ -3,22 +3,22 @@ stages:
 - build
 - publish
 
-#unit_tests:
-#  stage: tests
-#  image: stackstate/stackstate-agent-runner-circle:latest
-#  before_script:
-#  - mkdir -p /go/src/github.com/StackVista
-#  - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
-#  script:
-#  - cd /go/src/github.com/StackVista/stackstate-agent
-#  - pip install -r requirements.txt
-#  - inv deps
-#  - inv -e agent.build --race --precompile-only
-#  - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4
-#  tags:
-#  - sts-aws
+unit_tests:
+ stage: tests
+ image: stackstate/stackstate-agent-runner-circle:latest
+ before_script:
+ - mkdir -p /go/src/github.com/StackVista
+ - ln -s $CI_PROJECT_DIR  /go/src/github.com/StackVista/stackstate-agent
+ script:
+ - cd /go/src/github.com/StackVista/stackstate-agent
+ - pip install -r requirements.txt
+ - inv deps
+ - inv -e agent.build --race --precompile-only
+ - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --build-exclude clusterchecks,kubeapiserver,kubelet
+ tags:
+ - sts-aws
 
-# TODO: replicate remote docker tests
+TODO: replicate remote docker tests
 
 integration_tests:
  stage: tests
