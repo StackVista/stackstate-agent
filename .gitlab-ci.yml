@@ -18,8 +18,6 @@ unit_tests:
  tags:
  - sts-aws
 
-TODO: replicate remote docker tests
-
 integration_tests:
  stage: tests
  image: stackstate/stackstate-agent-runner-circle:latest
