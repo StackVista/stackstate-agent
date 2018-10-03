@@ -31,7 +31,7 @@ templates:
           - v2-godeps-master-
     - run: &enter_venv
         name: add virtualenv to bashrc
-        command: echo "source /go/src/github.com/DataDog/datadog-agent/venv/bin/activate" >> $BASH_ENV
+        command: echo "source /go/src/github.com/StackVista/stackstate-agent/venv/bin/activate" >> $BASH_ENV
     - restore_cache: &restore_artifacts
         keys:
           - v2-artifacts-{{ .Revision }}
@@ -53,7 +53,7 @@ jobs:
       - restore_cache: *restore_deps
       - run:
           name: setup virtual env
-          command: virtualenv /go/src/github.com/DataDog/datadog-agent/venv
+          command: virtualenv /go/src/github.com/StackVista/stackstate-agent/venv
       - run: *enter_venv
       - run:
           name: setup python deps
@@ -230,12 +230,12 @@ workflows:
       - integration_tests:
           requires:
             - dependencies
-      - release_note:
-          requires:
-            - dependencies
-      - team_label:
-          requires:
-            - dependencies
+    #   - release_note:
+    #       requires:
+    #         - dependencies
+    #   - team_label:
+    #       requires:
+    #         - dependencies
       - filename_linting:
           requires:
             - dependencies
