@@ -1,0 +1,93 @@
+---
+- name: Prepare
+  hosts: agent_vm
+  gather_facts: false
+  tasks:
+    - name: Install python for Ansible
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream)
+      become: true
+      changed_when: false
+    - name: Install StackState-Agent .deb package from S3 bucket.
+      become: true
+      apt:
+        deb: https://s3.amazonaws.com/stackstate-agent-test/pool/master/d/da/datadog-agent_6.4.0~rc.1.git.72.f08d83c2-1_amd64.deb
+    - name: Run StackState-Agent
+      become: true
+      systemd:
+        name: datadog-agent
+        state: started
+        daemon_reload: yes
+- name: Prepare
+  hosts: receiver_vm
+  gather_facts: false
+  tasks:
+    - name: Install python for Ansible
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream)
+      become: true
+      changed_when: false
+    - name: Add Docker GPG key
+      become: true
+      apt_key: url=https://download.docker.com/linux/ubuntu/gpg
+    - name: Add Docker APT repository
+      become: true
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable
+    - name: Install list of packages
+      become: true
+      apt:
+        name: [apt-transport-https, ca-certificates, curl, software-properties-common, docker-ce]
+        state: present
+        update_cache: yes
+    - name: Add group Docker
+      become: true
+      command: groupadd docker
+      ignore_errors: yes
+    - name: Add user to docker group
+      become: true
+      user:
+        name: "ubuntu"
+        groups: "docker"
+        append: True
+    - name: reset ssh connection to allow user changes to affect 'current login user'
+      meta: reset_connection
+    - name: Install AWS-CLI
+      apt:
+        name: awscli
+        state: present
+      become: true
+    - name: ensure aws config directory exists
+      file:
+        path: /home/ubuntu/.aws/
+        recurse: yes
+        state: directory
+    - name: Configure aws credentials
+      copy:
+        content: |
+          [default]
+          aws_access_key_id = {{ lookup("env", "AWS_ACCESS_KEY_ID")}}
+          aws_secret_access_key = {{ lookup("env", "AWS_SECRET_ACCESS_KEY")}}
+        dest: /home/ubuntu/.aws/credentials
+    - name: Configure aws config
+      copy:
+        content: |
+          [default]
+          region=eu-west-1
+          output=json
+        dest: /home/ubuntu/.aws/config
+    - name: Run Docker login
+      shell: eval $(aws ecr get-login --no-include-email)
+    - name: Install Docker Compose
+      become: true
+      get_url:
+        url: "https://github.com/docker/compose/releases/download/1.22.0/docker-compose-Linux-x86_64"
+        dest: "/usr/local/bin/docker-compose"
+        force: True
+        mode: "0755"
+    - name: Copy Docker Compose file
+      copy:
+        src: ../../../docker-compose.yml
+        dest: /home/ubuntu/docker-compose.yml
+    - name: Use Docker Service to run
+      command: docker-compose up -d
+      args:
+        chdir: /home/ubuntu/
