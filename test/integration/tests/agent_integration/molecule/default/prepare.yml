@@ -48,13 +48,19 @@
     - name: Add user to docker group
       become: true
       user:
-        name: "ubuntu"
-        groups: "docker"
+        name: ubuntu
+        groups: docker
         append: True
-    - name: reset ssh connection to allow user changes to affect 'current login user'
-      meta: reset_connection
-    - name: Reload active groups
-      command: newgrp docker
+    - name: Reboot immediately if there was a change.
+      shell: sleep 1; pkill -u {{ ansible_ssh_user }} sshd
+      async: 3
+      poll: 2
+    - name: Wait for the reboot to complete if there was a change.
+      wait_for_connection:
+        connect_timeout: 20
+        sleep: 5
+        delay: 5
+        timeout: 300
     - name: Install AWS-CLI
       apt:
         name: awscli
@@ -90,7 +96,7 @@
         mode: "0755"
     - name: Copy Docker Compose file
       copy:
-        src: ../../../docker-compose.yml
+        src: ../../../../docker-compose.yml
         dest: /home/ubuntu/docker-compose.yml
     - name: Use Docker Service to run
       command: docker-compose up -d
