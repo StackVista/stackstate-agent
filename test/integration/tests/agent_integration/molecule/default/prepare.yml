@@ -7,10 +7,17 @@
       raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream)
       become: true
       changed_when: false
-    - name: Install StackState-Agent .deb package from S3 bucket.
+    - name: Add StackState-Agent APT repository
+      become: true
+      apt_repository:
+        repo: deb [trusted=yes] https://s3.amazonaws.com/stackstate-agent-test master main
+    - name: Install StackState-Agent
       become: true
       apt:
-        deb: https://s3.amazonaws.com/stackstate-agent-test/pool/master/d/da/datadog-agent_6.4.0~rc.1.git.72.f08d83c2-1_amd64.deb
+        name: datadog-agent
+        state: present
+        allow_unauthenticated: yes
+        update_cache: yes
     - name: Run StackState-Agent
       become: true
       systemd:
@@ -38,10 +45,6 @@
         name: [apt-transport-https, ca-certificates, curl, software-properties-common, docker-ce]
         state: present
         update_cache: yes
-    - name: Add group Docker
-      become: true
-      command: groupadd docker
-      ignore_errors: yes
     - name: Add user to docker group
       become: true
       user:
@@ -50,6 +53,8 @@
         append: True
     - name: reset ssh connection to allow user changes to affect 'current login user'
       meta: reset_connection
+    - name: Reload active groups
+      command: newgrp docker
     - name: Install AWS-CLI
       apt:
         name: awscli

@@ -3,9 +3,6 @@
   hosts: localhost
   connection: local
   gather_facts: false
-  no_log: false
-  vars:
-    resource_group_name: molecule
   tasks:
     - block:
         - name: Populate instance config
