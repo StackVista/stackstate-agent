@@ -1,30 +1,5 @@
 ---
 - name: Prepare
-  hosts: agent_vm
-  gather_facts: false
-  tasks:
-    - name: Install python for Ansible
-      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream)
-      become: true
-      changed_when: false
-    - name: Add StackState-Agent APT repository
-      become: true
-      apt_repository:
-        repo: deb [trusted=yes] https://s3.amazonaws.com/stackstate-agent-test master main
-    - name: Install StackState-Agent
-      become: true
-      apt:
-        name: datadog-agent
-        state: present
-        allow_unauthenticated: yes
-        update_cache: yes
-    - name: Run StackState-Agent
-      become: true
-      systemd:
-        name: datadog-agent
-        state: started
-        daemon_reload: yes
-- name: Prepare
   hosts: receiver_vm
   gather_facts: false
   tasks:
@@ -32,6 +7,16 @@
       raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream)
       become: true
       changed_when: false
+    - name: Install python-pip
+      become: true
+      apt:
+        name: python-pip
+        state: present
+        update_cache: yes
+      changed_when: false
+    - name: Installing multiple python packages in Ansible
+      pip:
+        name: boto,boto3
     - name: Add Docker GPG key
       become: true
       apt_key: url=https://download.docker.com/linux/ubuntu/gpg
@@ -55,12 +40,6 @@
       shell: sleep 1; pkill -u {{ ansible_ssh_user }} sshd
       async: 3
       poll: 2
-    - name: Wait for the reboot to complete if there was a change.
-      wait_for_connection:
-        connect_timeout: 20
-        sleep: 5
-        delay: 5
-        timeout: 300
     - name: Install AWS-CLI
       apt:
         name: awscli
@@ -102,3 +81,39 @@
       command: docker-compose up -d
       args:
         chdir: /home/ubuntu/
+    - name: Open ec2_group security port
+      command: aws ec2 authorize-security-group-ingress --group-name molecule --protocol tcp --port 7077 --cidr 0.0.0.0/0
+      ignore_errors: true
+- name: Prepare
+  hosts: agent_vm
+  gather_facts: false
+  tasks:
+    - name: Install python for Ansible
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream python-pip)
+      become: true
+      changed_when: false
+    - name: Add StackState-Agent APT repository
+      become: true
+      apt_repository:
+        repo: deb [trusted=yes] https://s3.amazonaws.com/stackstate-agent-test master main
+    - name: Install StackState-Agent
+      become: true
+      apt:
+        name: datadog-agent
+        state: present
+        allow_unauthenticated: yes
+        update_cache: yes
+    - name: Configure StackState-Agent
+      copy:
+        content: |
+          # The host of the Datadog intake server to send Agent data to
+          dd_url: http://{{ hostvars['instance-2']['ansible_host'] }}:7077/stsAgent
+          api_key: API_KEY
+        dest: /etc/datadog-agent/datadog.yaml
+      become: true
+    - name: Run StackState-Agent
+      become: true
+      systemd:
+        name: datadog-agent
+        state: started
+        daemon_reload: yes
