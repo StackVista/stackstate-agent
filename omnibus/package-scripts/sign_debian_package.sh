@@ -10,6 +10,8 @@ fi
 
 echo $STACKSTATE_AGENT_VERSION
 
+printenv
+
 echo "$SIGNING_PUBLIC_KEY" | gpg --import
 echo "$SIGNING_PRIVATE_KEY" | gpg --import
 echo "$SIGNING_KEY_ID"
