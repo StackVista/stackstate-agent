@@ -158,9 +158,10 @@ publish_deb:
   stage: publish
   dependencies:
     - build_deb
-  before_script: []
+  before_script:
+    - apt-get install -y apt-utils libtool debsigs && apt-get install -y --only-upgrade libtool
   script:
-#    - cd omnibus/package-scripts && ./sign_debian_package
+    - cd omnibus/package-scripts && ./sign_debian_package.sh
     - cd omnibus/package-scripts && ./publish_package.sh
 
 publish_image:

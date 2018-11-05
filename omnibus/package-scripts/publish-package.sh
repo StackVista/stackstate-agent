@@ -12,10 +12,7 @@ if [ -z ${STACKSTATE_AGENT_VERSION+x} ]; then
 	STACKSTATE_AGENT_VERSION=$(./version.sh)
 	# But we will be building from the master branch in this case.
 fi
-echo $PROCESS_AGENT_VERSION
-FILENAME="process-agent-amd64-$STACKSTATE_AGENT_VERSION"
-WORKSPACE=${WORKSPACE:-$PWD/../}
-agent_path="$WORKSPACE"
+echo $STACKSTATE_AGENT_VERSION
 
-deb-s3 upload --codename ${CURRENT_BRANCH:-dirty} --bucket ${STS_AWS_BUCKET:-stackstate-agent-test} $CI_PROJECT_DIR/outcomes/pkg/*.deb
+deb-s3 upload --sign=${SIGNING_KEY_ID} --codename ${CURRENT_BRANCH:-dirty} --bucket ${STS_AWS_BUCKET:-stackstate-agent-test} $CI_PROJECT_DIR/outcomes/pkg/*.deb
 
