@@ -14,5 +14,7 @@ if [ -z ${STACKSTATE_AGENT_VERSION+x} ]; then
 fi
 echo $STACKSTATE_AGENT_VERSION
 
+ls $CI_PROJECT_DIR/outcomes/pkg/*.*
+
 deb-s3 upload --sign=${SIGNING_KEY_ID} --codename ${CURRENT_BRANCH:-dirty} --bucket ${STS_AWS_BUCKET:-stackstate-agent-test} $CI_PROJECT_DIR/outcomes/pkg/*.deb
 

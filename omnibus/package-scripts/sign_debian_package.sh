@@ -16,4 +16,6 @@ echo "$SIGNING_PUBLIC_KEY" | gpg --import
 echo "$SIGNING_PRIVATE_KEY" | gpg --import
 echo "$SIGNING_KEY_ID"
 
+ls $CI_PROJECT_DIR/outcomes/pkg/*.*
+
 debsigs --sign=origin -k ${SIGNING_KEY_ID} $CI_PROJECT_DIR/outcomes/pkg/*.deb
