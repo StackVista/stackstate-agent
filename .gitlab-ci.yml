@@ -166,7 +166,7 @@ publish_deb:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh
 
 release_deb:
-  stage: publish
+  stage: release
   dependencies:
     - build_deb
   before_script:
