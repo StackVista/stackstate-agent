@@ -164,6 +164,7 @@ publish_deb:
   script:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh
+    - git status -s
 
 release_deb:
   stage: release

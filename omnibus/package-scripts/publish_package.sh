@@ -1,6 +1,7 @@
 #!/bin/sh
 
-CURRENT_BRANCH=${CI_COMMIT_REF_NAME:-dirty}
+CODENAME=${1-:$CI_COMMIT_REF_NAME}
+CURRENT_BRANCH=${CODENAME:-dirty}
 
 if [ -z ${STS_AWS_BUCKET+x} ]; then
 	echo "Missing AGENT_S3_BUCKET in environment"
