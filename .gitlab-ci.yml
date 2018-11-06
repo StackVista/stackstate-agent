@@ -5,6 +5,7 @@ stages:
 - build_and_test
 - package_test
 - publish
+- release
 
 before_script:
  - mkdir -p /go/src/github.com/StackVista
@@ -163,6 +164,20 @@ publish_deb:
   script:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh
+
+release_deb:
+  stage: publish
+  dependencies:
+    - build_deb
+  before_script:
+    - apt-get install -y apt-utils libtool debsigs && apt-get install -y --only-upgrade libtool
+  script:
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh
+  when: manual
+  only:
+    - tags
+    - triggers
 
 publish_image:
   stage: publish
