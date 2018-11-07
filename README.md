@@ -67,7 +67,7 @@ Before installing on debian distributions like `jessie` and `stretch` you have t
 To install the debian package:
 
     $ wget -qO - https://s3.amazonaws.com/stackstate-agent-test/gpg | sudo apt-key add -
-    $ echo "deb https://s3.amazonaws.com/stackstate-agent-test deb-signing main" | sudo tee -a /etc/apt/sources.list.d/stackstate-agent.list
+    $ echo "deb https://s3.amazonaws.com/stackstate-agent-test master main" | sudo tee -a /etc/apt/sources.list.d/stackstate-agent.list
     $ sudo apt-get update && sudo apt-get install stackstate-agent
     $ sudo cp /etc/stackstate-agent/stackstate.yaml.example /etc/stackstate-agent/stackstate.yaml
     $ sudo chown stackstate-agent:stackstate-agent /etc/stackstate-agent/stackstate.yaml
