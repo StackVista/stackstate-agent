@@ -163,7 +163,7 @@ publish_deb:
     - apt-get install -y apt-utils libtool debsigs && apt-get install -y --only-upgrade libtool
   script:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
-    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_TEST_BUCKET
     - git status -s
 
 release_deb:
@@ -174,7 +174,7 @@ release_deb:
     - apt-get install -y apt-utils libtool debsigs && apt-get install -y --only-upgrade libtool
   script:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
-    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh stable ${STS_AWS_RELEASE_BUCKET:-STS_AWS_BUCKET}
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_RELEASE_BUCKET stable
   when: manual
   only:
     - tags

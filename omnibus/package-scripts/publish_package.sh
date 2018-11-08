@@ -1,12 +1,13 @@
 #!/bin/bash
 
-CODENAME=${1-:$CI_COMMIT_REF_NAME}
+TARGET_BUCKET=$1
+
+CODENAME=${2:-$CI_COMMIT_REF_NAME}
 TARGET_CODENAME=${CODENAME:-dirty}
 
-TARGET_BUCKET=${2:-$STS_AWS_BUCKET}
 
-if [ -z ${STS_AWS_BUCKET+x} ]; then
-	echo "Missing AGENT_S3_BUCKET in environment"
+if [ -z ${TARGET_BUCKET+x} ]; then
+	echo "Missing S3 bucket parameter"
 	exit 1;
 fi
 
@@ -19,5 +20,4 @@ echo $STACKSTATE_AGENT_VERSION
 
 ls $CI_PROJECT_DIR/outcomes/pkg/*.*
 
-deb-s3 upload --sign=${SIGNING_KEY_ID} --codename ${TARGET_CODENAME} --bucket ${TARGET_BUCKET:-stackstate-agent-test} $CI_PROJECT_DIR/outcomes/pkg/*.deb
-
+deb-s3 upload --sign=${SIGNING_KEY_ID} --codename ${TARGET_CODENAME} --bucket ${TARGET_BUCKET} $CI_PROJECT_DIR/outcomes/pkg/*.deb
