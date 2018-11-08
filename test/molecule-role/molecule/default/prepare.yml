@@ -81,9 +81,6 @@
       command: docker-compose up -d
       args:
         chdir: /home/ubuntu/
-    - name: Open ec2_group security port
-      command: aws ec2 authorize-security-group-ingress --group-name molecule --protocol tcp --port 7077 --cidr 0.0.0.0/0
-      ignore_errors: true
 - name: Prepare Agent
   hosts: agent_vm
   gather_facts: false
