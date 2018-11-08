@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 CODENAME=${1-:$CI_COMMIT_REF_NAME}
 TARGET_CODENAME=${CODENAME:-dirty}

@@ -1,5 +1,5 @@
 ---
-- name: Prepare
+- name: Prepare Receiver
   hosts: receiver_vm
   gather_facts: false
   tasks:
@@ -75,7 +75,7 @@
         mode: "0755"
     - name: Copy Docker Compose file
       copy:
-        src: ../../../../docker-compose.yml
+        src: ../../docker-compose.yml
         dest: /home/ubuntu/docker-compose.yml
     - name: Use Docker Service to run
       command: docker-compose up -d
@@ -84,7 +84,7 @@
     - name: Open ec2_group security port
       command: aws ec2 authorize-security-group-ingress --group-name molecule --protocol tcp --port 7077 --cidr 0.0.0.0/0
       ignore_errors: true
-- name: Prepare
+- name: Prepare Agent
   hosts: agent_vm
   gather_facts: false
   tasks:
@@ -107,9 +107,9 @@
       copy:
         content: |
           # The host of the Datadog intake server to send Agent data to
-          dd_url: http://{{ hostvars['instance-2']['ansible_host'] }}:7077/stsAgent
+          sts_url: http://{{ hostvars['instance-2']['ansible_host'] }}:7077/stsAgent
           api_key: API_KEY
-        dest: /etc/datadog-agent/datadog.yaml
+        dest: /etc/stackstate-agent/stackstate.yaml
       become: true
     - name: Run StackState-Agent
       become: true
