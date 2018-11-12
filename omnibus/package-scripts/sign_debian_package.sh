@@ -19,5 +19,12 @@ echo "$SIGNING_KEY_ID"
 
 ls $CI_PROJECT_DIR/outcomes/pkg/*.*
 
-export PASSPHRASE=$SIGNING_PRIVATE_PASSPHRASE
+cat <<EOF >~/.gnupg/gpg-agent.conf
+default-cache-ttl 46000
+allow-preset-passphrase
+EOF
+
+gpg-connect-agent RELOADAGENT /bye
+echo $SIGNING_PRIVATE_PASSPHRASE | /usr/lib/gnupg2/gpg-preset-passphrase -v -c $(gpg --list-secret-keys --with-fingerprint --with-colons | awk -F: '$1 == "grp" { print $10 }')
+
 debsigs --sign=origin -k ${SIGNING_KEY_ID} $CI_PROJECT_DIR/outcomes/pkg/*.deb
