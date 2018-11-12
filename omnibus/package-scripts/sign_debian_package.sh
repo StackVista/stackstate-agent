@@ -19,4 +19,5 @@ echo "$SIGNING_KEY_ID"
 
 ls $CI_PROJECT_DIR/outcomes/pkg/*.*
 
+export PASSPHRASE=$SIGNING_PRIVATE_PASSPHRASE
 debsigs --sign=origin -k ${SIGNING_KEY_ID} $CI_PROJECT_DIR/outcomes/pkg/*.deb
