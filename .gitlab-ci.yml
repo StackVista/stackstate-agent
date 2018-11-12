@@ -4,7 +4,7 @@ stages:
 - prepare
 - build_and_test
 - package_test
-- publish
+- pre_release
 - release
 
 before_script:
@@ -155,8 +155,8 @@ test_deb_renaming:
   script:
     ./test/renaming/test.sh $CI_PROJECT_DIR/outcomes/pkg/*.deb
 
-publish_deb:
-  stage: publish
+pre_release_deb:
+  stage: pre_release
   dependencies:
     - build_deb
   before_script:
@@ -166,22 +166,8 @@ publish_deb:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_TEST_BUCKET
     - git status -s
 
-release_deb:
-  stage: release
-  dependencies:
-    - build_deb
-  before_script:
-    - apt-get install -y apt-utils libtool debsigs && apt-get install -y --only-upgrade libtool
-  script:
-    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
-    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_RELEASE_BUCKET stable
-  when: manual
-  only:
-    - tags
-    - triggers
-
-publish_image:
-  stage: publish
+pre_release_image:
+  stage: pre_release
   image: docker:18.06.0
   dependencies:
     - build_deb
@@ -193,6 +179,20 @@ publish_image:
   script:
     - cd $CI_PROJECT_DIR
     - ./.gitlab-scripts/publish_image.sh ${CI_COMMIT_SHA:0:7} $CI_PROJECT_DIR/outcomes/pkg/*.deb
+
+release_deb:
+  stage: release
+  dependencies:
+  - build_deb
+  before_script:
+  - apt-get install -y apt-utils libtool debsigs && apt-get install -y --only-upgrade libtool
+  script:
+  - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
+  - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_RELEASE_BUCKET stable
+  when: manual
+  only:
+  - tags
+  - triggers
 
 #docker_test:
 #  stage: docker_test
