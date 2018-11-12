@@ -160,7 +160,7 @@ pre_release_deb:
   dependencies:
     - build_deb
   before_script:
-    - apt-get install -y apt-utils libtool debsigs && apt-get install -y --only-upgrade libtool
+    - apt-get install -y apt-utils libtool debsigs
   script:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_TEST_BUCKET
@@ -180,14 +180,14 @@ pre_release_image:
   script:
     - cd $CI_PROJECT_DIR
     - export VERSION=`inv version`
-    - ./.gitlab-scripts/publish_image.sh $VERSION $STS_DOCKER_TEST_REPO $CI_PROJECT_DIR/outcomes/pkg/*.deb
+    - ./.gitlab-scripts/publish_image.sh "$VERSION" "$STS_DOCKER_TEST_REPO" $CI_PROJECT_DIR/outcomes/pkg/*.deb
 
 release_deb:
   stage: release
   dependencies:
     - build_deb
   before_script:
-    - apt-get install -y apt-utils libtool debsigs && apt-get install -y --only-upgrade libtool
+    - apt-get install -y apt-utils libtool debsigs
   script:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_RELEASE_BUCKET stable
@@ -209,7 +209,7 @@ release_image:
   script:
     - cd $CI_PROJECT_DIR
     - export VERSION=`inv version`
-    - ./.gitlab-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO $CI_PROJECT_DIR/outcomes/pkg/*.deb
+    - ./.gitlab-scripts/publish_image.sh "$VERSION" "$STS_DOCKER_RELEASE_REPO" $CI_PROJECT_DIR/outcomes/pkg/*.deb
   when: manual
   only:
     - tags
