@@ -210,6 +210,10 @@ release_image:
     - cd $CI_PROJECT_DIR
     - export VERSION=`inv version`
     - ./.gitlab-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO $CI_PROJECT_DIR/outcomes/pkg/*.deb
+  when: manual
+  only:
+    - tags
+    - triggers
 
 #docker_test:
 #  stage: docker_test
