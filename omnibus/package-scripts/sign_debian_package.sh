@@ -13,7 +13,8 @@ echo $STACKSTATE_AGENT_VERSION
 printenv
 
 echo "$SIGNING_PUBLIC_KEY" | gpg --import
-echo "$SIGNING_PRIVATE_KEY" | gpg --import
+echo "$SIGNING_PRIVATE_KEY" > gpg_private.key
+echo "$SIGNING_PRIVATE_PASSPHRASE" | gpg --batch --yes --passphrase-fd 0 --import gpg_private.key
 echo "$SIGNING_KEY_ID"
 
 ls $CI_PROJECT_DIR/outcomes/pkg/*.*
