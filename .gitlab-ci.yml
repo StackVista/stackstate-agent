@@ -158,6 +158,7 @@ test_deb_renaming:
 pre_release_deb:
   stage: pre_release
   dependencies:
+    - deps
     - build_deb
   before_script:
     - apt-get install -y apt-utils libtool debsigs && apt-get install -y --only-upgrade libtool
@@ -183,6 +184,7 @@ pre_release_image:
 release_deb:
   stage: release
   dependencies:
+  - deps
   - build_deb
   before_script:
   - apt-get install -y apt-utils libtool debsigs && apt-get install -y --only-upgrade libtool
