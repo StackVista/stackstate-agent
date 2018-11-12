@@ -3,7 +3,6 @@ image: stackstate/stackstate-agent-runner-circle:latest
 stages:
 - prepare
 - build_and_test
-- package_test
 - pre_release
 - release
 
@@ -149,9 +148,10 @@ build_deb:
     expire_in: 1 week
 
 test_deb_renaming:
-  stage: package_test
+  stage: pre_release
   dependencies:
     - build_deb
+  before_script: []
   script:
     ./test/renaming/test.sh $CI_PROJECT_DIR/outcomes/pkg/*.deb
 
