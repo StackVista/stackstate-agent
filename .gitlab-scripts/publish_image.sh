@@ -1,11 +1,16 @@
 #!/bin/sh
 
-TAG=$1
-REPO=$2
+IMAGE_TAG=$1
+IMAGE_REPO=$2
+ARTIFACT_PATH=$3
 
-cp ${@:3} Dockerfiles/agent
+echo $IMAGE_TAG
+echo $IMAGE_REPO
+echo $ARTIFACT_PATH
 
-docker build -t stackstate/$REPO:$TAG -t stackstate/$REPO:latest Dockerfiles/agent
+cp $ARTIFACT_PATH/*.deb Dockerfiles/agent
+
+docker build -t stackstate/$IMAGE_REPO:$IMAGE_TAG -t stackstate/$IMAGE_REPO:latest Dockerfiles/agent
 docker login -u $DOCKER_USER -p $DOCKER_PASS
-docker push stackstate/stackstate-agent:$TAG
+docker push stackstate/stackstate-agent:$IMAGE_TAG
 docker push stackstate/stackstate-agent:latest
