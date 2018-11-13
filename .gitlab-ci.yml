@@ -160,9 +160,9 @@ pre_release_deb:
   dependencies:
     - deps
     - build_deb
-  before_script:
-    - apt-get install -y apt-utils libtool debsigs
   script:
+    - apt-get install -y apt-utils libtool debsigs
+    - inv version
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_TEST_BUCKET
     - git status -s
