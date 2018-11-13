@@ -35,10 +35,12 @@ deps:
   script:
     - pip install -r requirements.txt
     - inv deps
+    - inv version > version.txt
   artifacts:
     paths:
         - $CI_PROJECT_DIR/vendor
         - $CI_PROJECT_DIR/venv
+        - $CI_PROJECT_DIR/version.txt
     expire_in: 1 week
 
 unit_tests:
@@ -178,9 +180,9 @@ pre_release_image:
   services:
     - docker:dind
   script:
-    - source .gitlab-scripts/setup_env.sh
     - cd $CI_PROJECT_DIR
-    - ./.gitlab-scripts/publish_image.sh $STS_DOCKER_TEST_REPO $CI_PROJECT_DIR/outcomes/pkg
+    - export VERSION=`cat version.txt`
+    - ./.gitlab-scripts/publish_image.sh $VERSION $STS_DOCKER_TEST_REPO $CI_PROJECT_DIR/outcomes/pkg
 
 release_deb:
   stage: release
@@ -208,9 +210,9 @@ release_image:
   services:
     - docker:dind
   script:
-    - source .gitlab-scripts/setup_env.sh
     - cd $CI_PROJECT_DIR
-    - ./.gitlab-scripts/publish_image.sh $STS_DOCKER_RELEASE_REPO $CI_PROJECT_DIR/outcomes/pkg
+    - export VERSION=`cat version.txt`
+    - ./.gitlab-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO $CI_PROJECT_DIR/outcomes/pkg
   when: manual
   only:
     - tags
