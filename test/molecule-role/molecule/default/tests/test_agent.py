@@ -1,6 +1,6 @@
 import os
-import time
 import re
+import util
 import testinfra.utils.ansible_runner
 
 testinfra_hosts = testinfra.utils.ansible_runner.AnsibleRunner(
@@ -29,12 +29,18 @@ def test_stackstate_process_agent_running_and_enabled(host):
 
 def test_stackstate_agent_log(host):
     # Wait some time for stuff to enter the logs
-    time.sleep(5)
-    agent_log = host.file("/var/log/stackstate-agent/agent.log").content_string
-    print agent_log
+    agent_log_path = "/var/log/stackstate-agent/agent.log"
 
-    # Check whether some basic data was succesfully sent
-    assert re.search("Sent host metadata payload", agent_log)
+    # Check for presence of success
+    def wait_for_check_successes():
+        agent_log = host.file(agent_log_path).content_string
+        print agent_log
+
+        assert re.search("Sent host metadata payload", agent_log)
+
+    util.wait_until(wait_for_check_successes, 30, 3)
+
+    agent_log = host.file(agent_log_path).content_string
 
     # Check for errors
     for line in agent_log.splitlines():
@@ -53,14 +59,19 @@ def test_stackstate_agent_log(host):
 
 def test_stackstate_process_agent_no_log_errors(host):
     # Wait some time for stuff to enter the logs
-    time.sleep(5)
     process_agent_log_path = "/var/log/stackstate-agent/process-agent.log"
-    process_agent_log = host.file(process_agent_log_path).content_string
-    print process_agent_log
 
     # Check for presence of success
-    assert re.search("Finished check #1", process_agent_log)
-    assert re.search("starting network tracer locally", process_agent_log)
+    def wait_for_check_successes():
+        process_agent_log = host.file(process_agent_log_path).content_string
+        print process_agent_log
+
+        assert re.search("Finished check #1", process_agent_log)
+        assert re.search("starting network tracer locally", process_agent_log)
+
+    util.wait_until(wait_for_check_successes, 30, 3)
+
+    process_agent_log = host.file(process_agent_log_path).content_string
 
     # Check for errors
     for line in process_agent_log.splitlines():
