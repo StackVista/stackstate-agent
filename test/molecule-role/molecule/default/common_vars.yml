@@ -1,4 +1,4 @@
 ---
-  agent_repo_url: "https://stackstate-agent-2-test.s3.amazonaws.com"
-  agent_gitlab_branch: "{{ lookup('env','CI_COMMIT_REF_NAME') }}"
-  agent_current_branch: "{{agent_gitlab_branch | default('stable')}}"
+agent_repo_url: "https://stackstate-agent-2-test.s3.amazonaws.com"
+agent_gitlab_branch: "{{ lookup('env','CI_COMMIT_REF_NAME') }}"
+agent_current_branch: "{{agent_gitlab_branch | default('stable')}}"
