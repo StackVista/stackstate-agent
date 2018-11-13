@@ -2,6 +2,8 @@
 - name: Prepare Receiver
   hosts: receiver_vm
   gather_facts: false
+  vars_files:
+    - common_vars.yml
   tasks:
     - name: Install python for Ansible
       raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream)
@@ -84,6 +86,8 @@
 - name: Prepare Agent
   hosts: agent_vm
   gather_facts: false
+  vars_files:
+    - common_vars.yml
   tasks:
     - name: Install python for Ansible
       raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream python-pip)
@@ -92,12 +96,14 @@
     - name: Add stackstate-agent Apt signing key
       become: true
       apt_key:
-        url: https://stackstate-agent-2-test.s3.amazonaws.com/public.key
+        url: "{{agent_repo_url}}/public.key"
         state: present
+    - name: Inform about current branch
+      debug: msg="deb {{agent_repo_url}} {{agent_current_branch}} main"
     - name: Add stackstate-agent Apt repository
       become: true
       apt_repository:
-        repo: deb https://stackstate-agent-2-test.s3.amazonaws.com STAC-2599-update-gpg-buckets main
+        repo: "deb {{agent_repo_url}} {{agent_current_branch}} main"
     - name: Install StackState-Agent
       become: true
       apt:
