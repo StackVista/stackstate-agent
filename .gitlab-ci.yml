@@ -3,7 +3,6 @@ image: stackstate/stackstate-agent-runner-circle:latest
 stages:
 - prepare
 - build_and_test
-- package_test
 - pre_release
 - release
 
@@ -149,9 +148,10 @@ build_deb:
     expire_in: 1 week
 
 test_deb_renaming:
-  stage: package_test
+  stage: pre_release
   dependencies:
     - build_deb
+  before_script: []
   script:
     ./test/renaming/test.sh $CI_PROJECT_DIR/outcomes/pkg/*.deb
 
@@ -161,7 +161,7 @@ pre_release_deb:
     - deps
     - build_deb
   before_script:
-    - apt-get install -y apt-utils libtool debsigs && apt-get install -y --only-upgrade libtool
+    - apt-get install -y apt-utils libtool debsigs
   script:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_TEST_BUCKET
@@ -172,14 +172,15 @@ pre_release_image:
   image: docker:18.06.0
   dependencies:
     - build_deb
+    - deps
   variables:
     DOCKER_DRIVER: overlay
   services:
     - docker:dind
-  before_script: []
   script:
     - cd $CI_PROJECT_DIR
-    - ./.gitlab-scripts/publish_image.sh ${CI_COMMIT_SHA:0:7} $CI_PROJECT_DIR/outcomes/pkg/*.deb
+    - export VERSION=`inv version -u`
+    - ./.gitlab-scripts/publish_image.sh $VERSION $STS_DOCKER_TEST_REPO $CI_PROJECT_DIR/outcomes/pkg
 
 release_deb:
   stage: release
@@ -187,14 +188,33 @@ release_deb:
   - deps
   - build_deb
   before_script:
-  - apt-get install -y apt-utils libtool debsigs && apt-get install -y --only-upgrade libtool
+    - apt-get install -y apt-utils libtool debsigs
   script:
-  - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
-  - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_RELEASE_BUCKET stable
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_RELEASE_BUCKET stable
   when: manual
   only:
-  - tags
-  - triggers
+    - tags
+    - triggers
+
+release_image:
+  stage: release
+  image: docker:18.06.0
+  dependencies:
+    - build_deb
+    - deps
+  variables:
+    DOCKER_DRIVER: overlay
+  services:
+    - docker:dind
+  script:
+    - cd $CI_PROJECT_DIR
+    - export VERSION=`inv version -u`
+    - ./.gitlab-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO $CI_PROJECT_DIR/outcomes/pkg
+  when: manual
+  only:
+    - tags
+    - triggers
 
 #docker_test:
 #  stage: docker_test
