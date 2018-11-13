@@ -158,10 +158,12 @@ test_deb_renaming:
 pre_release_deb:
   stage: pre_release
   dependencies:
+    - deps
     - build_deb
-  before_script:
-    - apt-get install -y apt-utils libtool debsigs
   script:
+    - source .gitlab-scripts/setup_env.sh
+    - apt-get install -y apt-utils libtool debsigs
+    - inv version
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_TEST_BUCKET
     - git status -s
@@ -183,10 +185,11 @@ pre_release_image:
 release_deb:
   stage: release
   dependencies:
-    - build_deb
-  before_script:
-    - apt-get install -y apt-utils libtool debsigs
+  - deps
+  - build_deb
   script:
+    - apt-get install -y apt-utils libtool debsigs
+    - source .gitlab-scripts/setup_env.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_RELEASE_BUCKET stable
   when: manual

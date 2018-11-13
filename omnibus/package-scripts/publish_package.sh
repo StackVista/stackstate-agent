@@ -13,7 +13,7 @@ fi
 
 if [ -z ${STACKSTATE_AGENT_VERSION+x} ]; then
 	# Pick the latest tag by default for our version.
-	STACKSTATE_AGENT_VERSION=$(./version.sh)
+	STACKSTATE_AGENT_VERSION=$(inv version)
 	# But we will be building from the master branch in this case.
 fi
 echo $STACKSTATE_AGENT_VERSION
