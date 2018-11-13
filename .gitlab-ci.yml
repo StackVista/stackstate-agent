@@ -35,7 +35,7 @@ deps:
   script:
     - pip install -r requirements.txt
     - inv deps
-    - inv version > version.txt
+    - inv version -u > version.txt
   artifacts:
     paths:
         - $CI_PROJECT_DIR/vendor
@@ -187,8 +187,8 @@ pre_release_image:
 release_deb:
   stage: release
   dependencies:
-  - deps
-  - build_deb
+    - deps
+    - build_deb
   script:
     - source .gitlab-scripts/setup_env.sh
     - apt-get install -y apt-utils libtool debsigs
