@@ -178,8 +178,7 @@ pre_release_image:
     - docker:dind
   script:
     - cd $CI_PROJECT_DIR
-    - export VERSION=$(inv version -u)
-    - ./.gitlab-scripts/publish_image.sh $VERSION $STS_DOCKER_TEST_REPO $CI_PROJECT_DIR/outcomes/pkg
+    - ./.gitlab-scripts/publish_image.sh $STS_DOCKER_TEST_REPO $CI_PROJECT_DIR/outcomes/pkg
 
 release_deb:
   stage: release
@@ -207,8 +206,7 @@ release_image:
     - docker:dind
   script:
     - cd $CI_PROJECT_DIR
-    - export VERSION=$(inv version -u)
-    - ./.gitlab-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO $CI_PROJECT_DIR/outcomes/pkg
+    - ./.gitlab-scripts/publish_image.sh $STS_DOCKER_RELEASE_REPO $CI_PROJECT_DIR/outcomes/pkg
   when: manual
   only:
     - tags

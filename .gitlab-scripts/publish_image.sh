@@ -1,8 +1,8 @@
 #!/bin/sh
 
-IMAGE_TAG=$1
-IMAGE_REPO=$2
-ARTIFACT_PATH=$3
+IMAGE_REPO=$1
+ARTIFACT_PATH=$2
+IMAGE_TAG=$(inv version)
 
 echo $IMAGE_TAG
 echo $IMAGE_REPO
