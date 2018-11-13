@@ -9,7 +9,7 @@ if [ -z ${STACKSTATE_AGENT_VERSION+x} ]; then
 fi
 
 echo $STACKSTATE_AGENT_VERSION
-exit 1
+
 printenv
 
 echo "$SIGNING_PUBLIC_KEY" | gpg --import
