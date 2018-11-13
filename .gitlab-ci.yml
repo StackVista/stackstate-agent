@@ -161,6 +161,7 @@ pre_release_deb:
     - deps
     - build_deb
   script:
+    - source .gitlab-scripts/setup_env.sh
     - apt-get install -y apt-utils libtool debsigs
     - inv version
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
