@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -xe
+
 IMAGE_TAG=$1
 IMAGE_REPO=$2
 ARTIFACT_PATH=$3
@@ -15,5 +17,3 @@ docker tag stackstate/${IMAGE_REPO}:${IMAGE_TAG} stackstate/${IMAGE_REPO}:latest
 docker login -u $DOCKER_USER -p $DOCKER_PASS
 echo docker push stackstate/${IMAGE_REPO}:${IMAGE_TAG}
 docker push stackstate/${IMAGE_REPO}:${IMAGE_TAG}
-echo docker push stackstate/${IMAGE_REPO}:latest
-docker push stackstate/${IMAGE_REPO}:latest
