@@ -1,10 +1,10 @@
 image: stackstate/stackstate-agent-runner-circle:latest
 
 stages:
-- acceptance
 - prepare
 - build_and_test
 - pre_release
+- acceptance
 - release
 
 variables:
