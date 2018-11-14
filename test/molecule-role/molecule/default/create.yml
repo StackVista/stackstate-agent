@@ -75,13 +75,15 @@
         vpc_subnet_id: "{{ item.vpc_subnet_id }}"
         group: "{{ security_group_name }}"
         instance_tags:
-          instance: "{{ item.name }}-{{ molecule_run_id }}"
+          instance: "{{ item.name }}"
+          molecule_run_id: "{{ molecule_run_id }}"
           molecule: yes
         wait: true
         assign_public_ip: true
         exact_count: 1
         count_tag:
-          instance: "{{ item.name }}-{{ molecule_run_id }}"
+          instance: "{{ item.name }}"
+          molecule_run_id: "{{ molecule_run_id }}"
       register: server
       with_items: "{{ molecule_yml.platforms }}"
       async: 7200
