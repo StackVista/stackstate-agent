@@ -196,7 +196,7 @@ molecule_tests:
   before_script: []
   script:
    - echo "=================================="
-   - cd $CI_PROJECT_DIR/test && molecule.sh create
+   - cd $CI_PROJECT_DIR/test && ./molecule.sh create
 
 release_deb:
   stage: release
