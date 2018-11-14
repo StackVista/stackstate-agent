@@ -1,10 +1,10 @@
 import time
 
-def wait_until(somepredicate, timeout, period=0.25, *args, **kwargs):
+def wait_until(someaction, timeout, period=0.25, *args, **kwargs):
   mustend = time.time() + timeout
   while True:
     try:
-        somepredicate(*args, **kwargs)
+        someaction(*args, **kwargs)
         return
     except:
         if time.time() >= mustend:
