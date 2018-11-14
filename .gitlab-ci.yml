@@ -121,6 +121,11 @@ build_deb_clear_cache:
 
 build_deb:
   stage: build_and_test
+  tags:
+    # We put the deb build on sts-aws because it runs long and we do want to have it run
+    # fast.
+    # It also cuts into our pipeline quotum
+    - sts-aws
   cache:
     key: "agent-build_publish_deb"
     paths:
