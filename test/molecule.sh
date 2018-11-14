@@ -14,6 +14,6 @@ fi
 
 cd molecule-role
 
-echo
+echo =================== $AWS_ACCESS_KEY_ID ===================
 
 molecule "$@"
