@@ -5,7 +5,6 @@ stages:
 - build_and_test
 - pre_release
 - release
-- cleanup
 
 variables:
   STS_AWS_RELEASE_BUCKET: stackstate-agent-2
@@ -236,13 +235,6 @@ release_image:
   only:
     - tags
     - triggers
-
-cleanup_molecule_tests:
-  stage: cleanup
-  script:
-    - cd test && molecule.sh destroy
-  when: always
-
 
 #docker_test:
 #  stage: docker_test
