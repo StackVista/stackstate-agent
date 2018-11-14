@@ -34,7 +34,7 @@
         to_port: 0
         cidr_ip: '0.0.0.0/0'
 
-    keypair_name: molecule_key
+    keypair_name: "molecule_key_{{ molecule_run_id }}"
     keypair_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/ssh_key"
   tasks:
     - name: Create security group
@@ -75,12 +75,13 @@
         vpc_subnet_id: "{{ item.vpc_subnet_id }}"
         group: "{{ security_group_name }}"
         instance_tags:
-          instance: "{{ item.name }}"
+          instance: "{{ item.name }}-{{ molecule_run_id }}"
+          molecule: yes
         wait: true
         assign_public_ip: true
         exact_count: 1
         count_tag:
-          instance: "{{ item.name }}"
+          instance: "{{ item.name }}-{{ molecule_run_id }}"
       register: server
       with_items: "{{ molecule_yml.platforms }}"
       async: 7200
