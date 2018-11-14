@@ -4,6 +4,7 @@ stages:
 - prepare
 - build_and_test
 - pre_release
+- acceptance
 - release
 
 variables:
@@ -196,10 +197,8 @@ pre_release_image:
     - ./.gitlab-scripts/publish_image.sh $VERSION $STS_DOCKER_TEST_REPO $CI_PROJECT_DIR/outcomes/pkg
 
 molecule_tests:
-  stage: pre_release
+  stage: acceptance
   before_script: []
-  dependencies:
-    - pre_release_deb
   script:
    - export MOLECULE_RUN_ID=${CI_JOB_ID}
    - export AGENT_GITLAB_BRANCH=${CI_COMMIT_REF_NAME}
