@@ -22,9 +22,10 @@ def test_receiver_ok(host):
     assert host.check_output(c) == "200"
 
 
-def test_created_connection(host):
+def test_created_connection(host, Ansible):
     url = "http://localhost:7070/api/topic/sts_correlate_endpoints?limit=1000"
-    conn_port = 125
+    # FIXME: Maybe there is a more direct way to get this variable
+    conn_port = int(Ansible("include_vars","./common_vars.yml")["ansible_facts"]["test_connection_port"])
 
     def wait_for_connection():
         data = host.check_output("curl %s" % url)
