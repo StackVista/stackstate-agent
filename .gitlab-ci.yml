@@ -198,6 +198,9 @@ pre_release_image:
 
 molecule_tests:
   stage: acceptance
+  dependencies:
+    - deps
+    - build_deb
   before_script: []
   script:
    - export MOLECULE_RUN_ID=${CI_JOB_ID}
