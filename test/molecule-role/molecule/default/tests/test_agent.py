@@ -11,8 +11,7 @@ def test_stackstate_agent_is_installed(host):
     agent = host.package("stackstate-agent")
     assert agent.is_installed
     print agent.version
-    # TODO: Why is the verison prefixed by 1?
-    # assert agent.version.startswith("2")
+    assert agent.version.startswith("2")
 
 
 def test_stackstate_agent_running_and_enabled(host):
@@ -76,9 +75,4 @@ def test_stackstate_process_agent_no_log_errors(host):
     # Check for errors
     for line in process_agent_log.splitlines():
         print("Considering: %s" % line)
-        # TODO: This can be dropped once
-        # https://github.com/StackVista/stackstate-process-agent/pull/13 lands
-        if re.search("could not decode message", line):
-            continue
-
         assert not re.search("error", line, re.IGNORECASE)

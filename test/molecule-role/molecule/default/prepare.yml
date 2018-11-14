@@ -137,6 +137,10 @@
   vars_files:
     - common_vars.yml
   tasks:
+    # Wait a bit for the process agent to have started
+    - name: Wait a bit for the process agent
+      pause:
+        seconds: 10
     - name: Open listening port on agent 1
       shell: "nohup nc -l -p {{ test_connection_port }} > /dev/null &"
       become: true
