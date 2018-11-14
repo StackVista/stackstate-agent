@@ -134,14 +134,18 @@
 - name: Prepare Agent 1 listening
   hosts: agent1
   gather_facts: false
+  vars_files:
+    - common_vars.yml
   tasks:
     - name: Open listening port on agent 1
-      shell: nohup nc -l -p 125 > /dev/null &
+      shell: "nohup nc -l -p {{ test_connection_port }} > /dev/null &"
       become: true
 - name: Prepare Agent 2 connecting
   hosts: agent2
   gather_facts: false
+  vars_files:
+    - common_vars.yml
   tasks:
     - name: Connect to agent 2
-      shell: nohup bash -c "yes | nc {{ hostvars['agent1']['ansible_host'] }} 125" &
+      shell: nohup bash -c "yes | nc {{ hostvars['agent1']['ansible_host'] }} {{ test_connection_port }}" &
       become: true

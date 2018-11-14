@@ -17,8 +17,14 @@ def test_docker_compose_file(host):
     assert f.is_file
 
 
+def test_receiver_ok(host):
+    c = "curl -s -o /dev/null -w \"%{http_code}\" http://localhost:7077/health"
+    assert host.check_output(c) == "200"
+
+
 def test_created_connection(host):
     url = "http://localhost:7070/api/topic/sts_correlate_endpoints?limit=1000"
+    conn_port = 125
 
     def wait_for_connection():
         data = host.check_output("curl %s" % url)
@@ -27,7 +33,7 @@ def test_created_connection(host):
                         for record
                         in json_data["messages"]
                         if record["message"]["Connection"]
-                        ["remoteEndpoint"]["endpoint"]["port"] == 125
+                        ["remoteEndpoint"]["endpoint"]["port"] == conn_port
                         )
         outgoing_conn = outgoing["message"]["Connection"]
         print outgoing_conn
@@ -38,7 +44,7 @@ def test_created_connection(host):
                         for record
                         in json_data["messages"]
                         if record["message"]["Connection"]
-                        ["localEndpoint"]["endpoint"]["port"] == 125
+                        ["localEndpoint"]["endpoint"]["port"] == conn_port
                         )
         incoming_conn = incoming["message"]["Connection"]
         print incoming_conn
