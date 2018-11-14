@@ -16,4 +16,6 @@ gitlab-ci-multi-runner exec docker \
   --env SIGNING_KEY_ID="$SIGNING_KEY_ID" \
   --env SIGNING_PRIVATE_KEY="$SIGNING_PRIVATE_KEY" \
   --env SIGNING_PUBLIC_KEY="$SIGNING_PUBLIC_KEY" \
+  --env AWS_ACCESS_KEY="$AWS_ACCESS_KEY" \
+  --env AWS_SECRET_KEY="$AWS_SECRET_KEY" \
   $@

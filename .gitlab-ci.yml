@@ -5,6 +5,7 @@ stages:
 - build_and_test
 - pre_release
 - release
+- cleanup
 
 variables:
   STS_AWS_RELEASE_BUCKET: stackstate-agent-2
@@ -190,6 +191,13 @@ pre_release_image:
     - export VERSION=`cat version.txt`
     - ./.gitlab-scripts/publish_image.sh $VERSION $STS_DOCKER_TEST_REPO $CI_PROJECT_DIR/outcomes/pkg
 
+molecule_tests:
+  stage: pre_release
+  before_script: []
+  script:
+   - echo "=================================="
+   - cd test && molecule.sh create
+
 release_deb:
   stage: release
   dependencies:
@@ -223,6 +231,13 @@ release_image:
   only:
     - tags
     - triggers
+
+cleanup_molecule_tests:
+  stage: cleanup
+  script:
+    - cd test && molecule.sh destroy
+  when: always
+
 
 #docker_test:
 #  stage: docker_test
