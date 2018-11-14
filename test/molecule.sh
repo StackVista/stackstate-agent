@@ -14,4 +14,6 @@ fi
 
 cd molecule-role
 
+echo
+
 molecule "$@"
