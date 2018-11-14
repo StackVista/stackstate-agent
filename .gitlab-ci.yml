@@ -198,8 +198,11 @@ pre_release_image:
 molecule_tests:
   stage: pre_release
   before_script: []
+  dependencies:
+    - pre_release_deb
   script:
-   - echo "=================================="
+   - export MOLECULE_RUN_ID=${CI_JOB_ID}
+   - export AGENT_GITLAB_BRANCH=${CI_COMMIT_REF_NAME}
    - cd $CI_PROJECT_DIR/test && ./molecule.sh test
 
 release_deb:
