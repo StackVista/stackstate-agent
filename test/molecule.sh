@@ -20,6 +20,6 @@ fi
 
 cd molecule-role
 
-echo =====MOLECULE_RUN_ID=${CI_JOB_ID}======AGENT_GITLAB_BRANCH=${CI_COMMIT_REF_NAME}===== $AWS_ACCESS_KEY_ID ==
+#echo =====MOLECULE_RUN_ID=${CI_JOB_ID}======AGENT_GITLAB_BRANCH=${CI_COMMIT_REF_NAME}=======
 
 molecule "$@"
