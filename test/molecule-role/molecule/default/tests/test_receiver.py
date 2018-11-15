@@ -39,7 +39,6 @@ def test_created_connection(host, Ansible):
                         )
         outgoing_conn = outgoing["message"]["Connection"]
         print outgoing_conn
-        # TODO: Enable this once we use a .deb with directional relations
         assert outgoing_conn["direction"] == "OUTGOING"
         assert outgoing_conn["connectionType"] == "TCP"
         incoming = next(record
@@ -50,7 +49,6 @@ def test_created_connection(host, Ansible):
                         )
         incoming_conn = incoming["message"]["Connection"]
         print incoming_conn
-        # TODO: Enable this once we use a .deb with directional relations
         assert incoming_conn["direction"] == "INCOMING"
         assert incoming_conn["connectionType"] == "TCP"
 
