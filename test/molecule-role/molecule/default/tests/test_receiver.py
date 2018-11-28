@@ -113,13 +113,13 @@ def test_process_metrics(host, Ansible):
 
         print metrics
         expected = set(["cpu_nice", "cpu_userPct", "cpu_userTime",
-                       "cpu_systemPct", "cpu_numThreads", "io_writeRate",
-                       "io_writeBytesRate", "cpu_totalPct",
-                       "voluntaryCtxSwitches", "mem_dirty",
-                       "involuntaryCtxSwitches", "io_readRate", "openFdCount",
-                       "mem_shared", "cpu_systemTime", "io_readBytesRate",
-                       "mem_data", "mem_vms", "mem_lib", "mem_text",
-                       "mem_swap", "mem_rss"])
+                        "cpu_systemPct", "cpu_numThreads", "io_writeRate",
+                        "io_writeBytesRate", "cpu_totalPct",
+                        "voluntaryCtxSwitches", "mem_dirty",
+                        "involuntaryCtxSwitches", "io_readRate", "openFdCount",
+                        "mem_shared", "cpu_systemTime", "io_readBytesRate",
+                        "mem_data", "mem_vms", "mem_lib", "mem_text",
+                        "mem_swap", "mem_rss"])
 
         assert metrics == expected
 
