@@ -72,8 +72,9 @@ def test_host_metrics(host, Ansible):
 
         print metrics
 
-        # These values are based on an ec2 micro instance (as created by molecule.yml)
-        
+        # These values are based on an ec2 micro instance
+        # (as created by molecule.yml)
+
         # No swap in these tests, we still wanna know whether it is reported
         assert metrics["system.swap.total"] == 0.0
         assert metrics["system.swap.pct_free"] == 1.0
