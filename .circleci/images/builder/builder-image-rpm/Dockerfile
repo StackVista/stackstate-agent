@@ -6,7 +6,8 @@ ARG GIMME_DEBUG=0
 ARG RBENV_VERSION=2.4.4
 ARG BUNDLER_VERSION=1.15.3
 
-RUN yum -y install git bzip2 gcc make openssl-devel readline-devel zlib-devel
+RUN yum -y install git bzip2 gcc make openssl-devel readline-devel zlib-devel \
+                   python-devel.x86_64 patch gcc-c++ file rpm-build
 
 RUN yum install -y python  \
     && curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" \
@@ -20,12 +21,15 @@ RUN eval "$(curl -sL https://$GIMME_URL | \
     bash)"
 
 ENV GOPATH /go
-ENV PATH="$HOME"/bin:/root/.gimme/versions/go"$GOLANG_VERSION".linux.amd64/bin:/usr/local/go/bin:$PATH
+ENV GOBIN /root/.gimme/versions/go"$GOLANG_VERSION".linux.amd64/bin
+ENV PATH="$HOME"/bin:/root/.gimme/versions/go"$GOLANG_VERSION".linux.amd64/bin:/usr/local/go/bin:/go/src/github.com/bin:$PATH
 
 RUN mkdir -p $GOPATH $HOME/bin/ /usr/local/go/bin \
     && echo $PATH && go version
 
 WORKDIR $GOPATH
+
+RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 
 RUN go get -u golang.org/x/lint/golint
 
