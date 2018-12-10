@@ -164,6 +164,53 @@ build_deb:
         - $CI_PROJECT_DIR/outcomes/Dockerfiles/manifests
     expire_in: 1 week
 
+build_rpm:
+  stage: build_and_test
+  image: stackstate/stackstate-agent-runner-gitlab:rpm.latest
+  tags:
+    # We put the deb build on sts-aws because it runs long and we do want to have it run
+    # fast.
+    # It also cuts into our pipeline quotum
+    - sts-aws
+  cache:
+    key: "agent-build_publish_rpm"
+    paths:
+      - .omnibus
+      - vendor
+  script:
+    # We move .omnibus out of the CI root because this seems to cause issues with git
+    # cloning in omnibus and operations on datadog-agent
+  - mv $CI_PROJECT_DIR/.omnibus /omnibus || mkdir -p /omnibus
+
+  - inv version
+  - cat version.txt || true
+
+  - inv -e agent.omnibus-build --base-dir /omnibus --skip-sign
+
+    # Prepare outputs
+  - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles
+  - cp -r /omnibus/pkg $CI_PROJECT_DIR/outcomes
+  - cp -r /go/src/github.com/StackVista/stackstate-agent/Dockerfiles $CI_PROJECT_DIR/outcomes
+
+    # Prepare cache
+    # Drop packages for cache
+  - rm -rf /omnibus/pkg
+    # Drop agent for cache (will be resynced anyway)
+  - rm -rf /omnibus/src/datadog-agent
+    # Drop symlink because it will fail the build when coming from a cache
+  - rm /omnibus/src/datadog-agent/src/github.com/StackVista/stackstate-agent/vendor/github.com/coreos/etcd/cmd/etcd || echo "Not found"
+  - mv /omnibus $CI_PROJECT_DIR/.omnibus
+  artifacts:
+    paths:
+        - $CI_PROJECT_DIR/outcomes/pkg/*.rpm
+        - $CI_PROJECT_DIR/outcomes/pkg/*.json
+        - $CI_PROJECT_DIR/outcomes/Dockerfiles/agent
+        - $CI_PROJECT_DIR/outcomes/Dockerfiles/cluster-agent
+        - $CI_PROJECT_DIR/outcomes/Dockerfiles/dogstatsd
+        - $CI_PROJECT_DIR/outcomes/Dockerfiles/manifests
+    expire_in: 1 week
+
+
 test_deb_renaming:
   stage: pre_release
   dependencies:
