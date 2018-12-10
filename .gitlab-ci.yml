@@ -50,6 +50,26 @@ deps:
         - $CI_PROJECT_DIR/version.txt
     expire_in: 1 week
 
+deps-rpm:
+  stage: prepare
+  image: stackstate/stackstate-agent-runner-gitlab:rpm.latest
+  cache:
+    key: "agent-deps-rpm"
+    paths:
+      - vendor
+      - venv
+  script:
+    - pip install -r requirements.txt
+    - inv deps
+    - inv version -u > version.txt
+  artifacts:
+    paths:
+        - $CI_PROJECT_DIR/vendor
+        - $CI_PROJECT_DIR/venv
+        - $CI_PROJECT_DIR/version.txt
+    expire_in: 1 week
+
+
 unit_tests:
   stage: build_and_test
   dependencies:
@@ -167,6 +187,8 @@ build_deb:
 build_rpm:
   stage: build_and_test
   image: stackstate/stackstate-agent-runner-gitlab:rpm.latest
+  dependencies:
+    - deps-rpm
   tags:
     # We put the deb build on sts-aws because it runs long and we do want to have it run
     # fast.
