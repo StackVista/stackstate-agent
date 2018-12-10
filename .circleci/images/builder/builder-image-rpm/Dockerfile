@@ -19,7 +19,7 @@ RUN eval "$(curl -sL https://$GIMME_URL | \
     GIMME_DEBUG=$GIMME_DEBUG \
     bash)"
 
-ENV GOPATH /go/src/github.com
+ENV GOPATH /go
 ENV PATH="$HOME"/bin:/root/.gimme/versions/go"$GOLANG_VERSION".linux.amd64/bin:/usr/local/go/bin:$PATH
 
 RUN mkdir -p $GOPATH $HOME/bin/ /usr/local/go/bin \
