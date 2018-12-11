@@ -256,6 +256,7 @@ pre_release_deb:
 
 pre_release_rpm:
   stage: pre_release
+  image: stackstate/stackstate-agent-runner-gitlab:rpm.latest
   dependencies:
     - deps-rpm
     - build_rpm
