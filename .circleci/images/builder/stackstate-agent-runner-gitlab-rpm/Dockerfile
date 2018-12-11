@@ -2,7 +2,7 @@ FROM stackstate/stackstate-agent-runner-circle:rpm_base.latest
 
 RUN pip install awscli boto
 
-RUN yum -y install net-snmp-devel python-deltarpm
+RUN yum -y install net-snmp-devel python-deltarpm yum-utils libtool rpm-sign
 
 # todo: if works, work rpm-s3
 RUN cd /usr/local && \
