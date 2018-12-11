@@ -254,6 +254,16 @@ pre_release_deb:
     - cd $CI_PROJECT_DIR && inv release.generate-install -t
     - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET']).object('install.sh').upload_file('./install.sh', acl:'public-read')"
 
+pre_release_rpm:
+  stage: pre_release
+  dependencies:
+    - deps-rpm
+    - build_rpm
+  script:
+    - source .gitlab-scripts/setup_env.sh
+    - yum install -y rpm-sign
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_rpm_package.sh
+
 pre_release_image:
   stage: pre_release
   image: docker:18.06.0
