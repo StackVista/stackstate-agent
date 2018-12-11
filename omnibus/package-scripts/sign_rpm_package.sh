@@ -53,7 +53,7 @@ allow-preset-passphrase
 EOF
 
 gpg-connect-agent RELOADAGENT /bye
-echo $SIGNING_PRIVATE_PASSPHRASE | /usr/libexec/gpg-preset-passphrase -v -c $(gpg --list-secret-keys --with-fingerprint --with-colons | awk -F: '$1 == "grp" { print $10 }')
+/usr/libexec/gpg-preset-passphrase -v -P $SIGNING_PRIVATE_PASSPHRASE -c $(gpg --list-secret-keys --with-fingerprint --with-colons | awk -F: '$1 == "grp" { print $10 }')
 
 # Step: 7
 # Sign your custom RPM package
