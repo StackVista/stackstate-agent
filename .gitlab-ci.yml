@@ -262,7 +262,6 @@ pre_release_rpm:
     - deps-rpm
     - build_rpm
   script:
-    - source .gitlab-scripts/setup_env.sh
 #    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_rpm_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package_rpm.sh $STS_AWS_TEST_BUCKET_YUM
 
