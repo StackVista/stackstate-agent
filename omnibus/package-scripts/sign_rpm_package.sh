@@ -39,7 +39,7 @@ rpm --import RPM-GPG-KEY-stackstate
 # Verify the list of gpg public keys in RPM DB
 
 rpm -q gpg-pubkey --qf '%{name}-%{version}-%{release} --> %{summary}\n'
-
+gpg --list-secret-keys --with-fingerprint --with-colons
 # Step: 6
 # Configure your ~/.rpmmacros file
 # %_gpg_name  => Use the Real Name you used to create your key
@@ -53,7 +53,7 @@ allow-preset-passphrase
 EOF
 
 gpg-connect-agent RELOADAGENT /bye
-/usr/libexec/gpg-preset-passphrase -v -P $SIGNING_PRIVATE_PASSPHRASE -c $(gpg --list-secret-keys --with-fingerprint --with-colons | awk -F: '$1 == "grp" { print $10 }')
+/usr/libexec/gpg-preset-passphrase -v -P $SIGNING_PRIVATE_PASSPHRASE -c $(gpg --list-secret-keys --with-fingerprint --with-colons | awk -F: '$1 == "uid" { print $8 }')
 
 # Step: 7
 # Sign your custom RPM package
