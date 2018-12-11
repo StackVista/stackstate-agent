@@ -46,6 +46,14 @@ rpm -q gpg-pubkey --qf '%{name}-%{version}-%{release} --> %{summary}\n'
 
 echo "%_gpg_name StackState <info@stackstate.com>" > ~/.rpmmacros
 
+cat <<EOF >~/.gnupg/gpg-agent.conf
+default-cache-ttl 46000
+allow-preset-passphrase
+EOF
+
+gpg-connect-agent RELOADAGENT /bye
+echo $SIGNING_PRIVATE_PASSPHRASE | /usr/libexec/gpg-preset-passphrase -v -c $(gpg --list-secret-keys --with-fingerprint --with-colons | awk -F: '$1 == "grp" { print $10 }')
+
 # Step: 7
 # Sign your custom RPM package
 #
