@@ -46,6 +46,7 @@ rpm -q gpg-pubkey --qf '%{name}-%{version}-%{release} --> %{summary}\n'
 
 echo "%_gpg_name StackState <info@stackstate.com>" > ~/.rpmmacros
 
+gpg-agent --daemon
 cat <<EOF >~/.gnupg/gpg-agent.conf
 default-cache-ttl 46000
 allow-preset-passphrase
