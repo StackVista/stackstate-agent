@@ -1,6 +1,6 @@
 #!/bin/sh
 
-REPO_BUCKET_NAME=${STS_AWS_TEST_BUCKET_YUM:-stackstate-agent-yum-test}
+REPO_BUCKET_NAME=${STS_AWS_TEST_BUCKET_YUM:-stackstate-agent-rpm-test}
 REPO_BASE=/tmp/repo_base
 RPM_ARTIFACTS_PATH=${CI_PROJECT_DIR:-.}/outcomes/pkg
 CODENAME=${CI_COMMIT_REF_NAME:-master}
