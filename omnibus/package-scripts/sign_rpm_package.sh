@@ -53,11 +53,9 @@ allow-preset-passphrase
 EOF
 
 gpg-connect-agent RELOADAGENT /bye
-/usr/libexec/gpg-preset-passphrase -v -P $SIGNING_PRIVATE_PASSPHRASE -c $(gpg --list-secret-keys --with-fingerprint --with-colons | awk -F: '$1 == "uid" { print $8 }')
+echo $SIGNING_PRIVATE_PASSPHRASE | /usr/libexec/gpg-preset-passphrase -v -c $(gpg --list-secret-keys --with-fingerprint --with-colons | awk -F: '$1 == "uid" { print $8 }')
 
 # Step: 7
 # Sign your custom RPM package
-#
-# You can sign each RPM file individually:
 
 rpm --addsign $CI_PROJECT_DIR/outcomes/pkg/*.rpm
