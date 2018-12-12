@@ -58,5 +58,6 @@ echo $SIGNING_PRIVATE_PASSPHRASE | /usr/libexec/gpg-preset-passphrase -v -c $(gp
 
 # Step: 7
 # Sign your custom RPM package
-
-rpm --addsign $CI_PROJECT_DIR/outcomes/pkg/*.rpm
+chmod +x rpm-sign
+./rpm-sign $SIGNING_PRIVATE_PASSPHRASE $CI_PROJECT_DIR/outcomes/pkg/*.rpm
+#rpm --addsign $CI_PROJECT_DIR/outcomes/pkg/*.rpm
