@@ -17,4 +17,10 @@ if [ -z ${STACKSTATE_AGENT_VERSION+x} ]; then
 fi
 echo $STACKSTATE_AGENT_VERSION
 
-rpm-s3 -b $TARGET_BUCKET -p "${TARGET_CODENAME}" $CI_PROJECT_DIR/outcomes/pkg/*.rpm
+#rpm-s3 -b $TARGET_BUCKET -p "${TARGET_CODENAME}" $CI_PROJECT_DIR/outcomes/pkg/*.rpm
+
+mkdir -p ./rpmrepo/${TARGET_CODENAME}/
+aws s3 sync s3://$TARGET_BUCKET/${TARGET_CODENAME} ./rpmrepo/
+cp  $CI_PROJECT_DIR/outcomes/pkg/*.rpm ./rpmrepo/${TARGET_CODENAME}/
+createrepo --update -v --checksum sha ./rpmrepo/${TARGET_CODENAME}
+aws s3 sync ./rpmrepo/ s3://$RPM_TESTING_S3_BUCKET/${TARGET_CODENAME} --acl public-read
