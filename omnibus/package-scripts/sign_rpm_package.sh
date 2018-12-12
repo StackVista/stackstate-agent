@@ -31,9 +31,19 @@ rpm -q gpg-pubkey --qf '%{name}-%{version}-%{release} --> %{summary}\n'
 # %_gpg_name  => Use the Real Name you used to create your key
 echo "%_gpg_name StackState <info@stackstate.com>" > ~/.rpmmacros
 
+cat <<EOF >~/.gnupg/gpg-agent.conf
+default-cache-ttl 46000
+allow-preset-passphrase
+EOF
+
+pkill -9 gpg-agent
+
+source <(gpg-agent --daemon)
+
+echo $SIGNING_PRIVATE_PASSPHRASE | /usr/lib/gnupg2/gpg-preset-passphrase -v -c $(gpg --list-secret-keys --with-fingerprint --with-colons | awk -F: '$1 == "grp" { print $10 }')
 # Sign your custom RPM package
-chmod +x rpm-sign
-./rpm-sign $SIGNING_PRIVATE_PASSPHRASE $CI_PROJECT_DIR/outcomes/pkg/*.rpm
+
+rpm --addsign $rpmfiles $CI_PROJECT_DIR/outcomes/pkg/*.rpm
 
 # Check the signature to make sure it was signed
 rpm --checksig $CI_PROJECT_DIR/outcomes/pkg/*.rpm
