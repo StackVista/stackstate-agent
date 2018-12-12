@@ -23,4 +23,4 @@ mkdir -p ./rpmrepo/${TARGET_CODENAME}/
 aws s3 sync s3://$TARGET_BUCKET/${TARGET_CODENAME} ./rpmrepo/
 cp  $CI_PROJECT_DIR/outcomes/pkg/*.rpm ./rpmrepo/${TARGET_CODENAME}/
 createrepo --update -v --checksum sha ./rpmrepo/${TARGET_CODENAME}
-aws s3 sync ./rpmrepo/ s3://$RPM_TESTING_S3_BUCKET/${TARGET_CODENAME} --acl public-read
+aws s3 sync ./rpmrepo/ s3://${TARGET_BUCKET}/${TARGET_CODENAME} --acl public-read
