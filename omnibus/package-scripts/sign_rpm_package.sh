@@ -36,11 +36,15 @@ default-cache-ttl 46000
 allow-preset-passphrase
 EOF
 
-pkill -9 gpg-agent
+echo  "Reloading gpg-agent..."
+
+pkill -9 gpg-agent || true
 
 source <(gpg-agent --daemon)
 
-echo $SIGNING_PRIVATE_PASSPHRASE | /usr/lib/gnupg2/gpg-preset-passphrase -v -c $(gpg --list-secret-keys --with-fingerprint --with-colons | awk -F: '$1 == "grp" { print $10 }')
+echo  "Presetting signing password..."
+
+echo $SIGNING_PRIVATE_PASSPHRASE | /usr/libexec/gpg-preset-passphrase -v -c $(gpg --list-secret-keys --with-fingerprint --with-colons | awk -F: '$1 == "grp" { print $10 }')
 # Sign your custom RPM package
 
 rpm --addsign $rpmfiles $CI_PROJECT_DIR/outcomes/pkg/*.rpm
