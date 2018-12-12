@@ -263,7 +263,7 @@ pre_release_rpm:
     - build_rpm
   before_script: []
   script:
-#    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_rpm_package.sh
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_rpm_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package_rpm.sh $STS_AWS_TEST_BUCKET_YUM
 
 pre_release_image:
