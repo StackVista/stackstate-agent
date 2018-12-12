@@ -1,7 +1,7 @@
 #!/bin/bash
 
 TARGET_BUCKET=$1
-
+REGION=$2
 CODENAME=${2:-$CI_COMMIT_REF_NAME}
 TARGET_CODENAME=${CODENAME:-dirty}
 
@@ -17,4 +17,4 @@ if [ -z ${STACKSTATE_AGENT_VERSION+x} ]; then
 fi
 echo $STACKSTATE_AGENT_VERSION
 
-rpm-s3 -b $TARGET_BUCKET -p "${TARGET_CODENAME}" $CI_PROJECT_DIR/outcomes/pkg/*.rpm
+rpm-s3 -r $REGION -b $TARGET_BUCKET -p "${TARGET_CODENAME}" $CI_PROJECT_DIR/outcomes/pkg/*.rpm
