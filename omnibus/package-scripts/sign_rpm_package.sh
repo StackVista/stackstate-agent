@@ -21,9 +21,11 @@ EOF
 
 echo  "Reloading gpg-agent..."
 
-pkill -9 gpg-agent || true
+python -mplatform | grep -qi centos && pkill -9 gpg-agent || true
 
-source <(gpg-agent --daemon)
+python -mplatform | grep -qi centos && source <(gpg-agent --daemon)
+
+python -mplatform | grep -qi debian && gpg-connect-agent RELOADAGENT /bye 
 
 
 echo "$SIGNING_PUBLIC_KEY" | gpg --import
