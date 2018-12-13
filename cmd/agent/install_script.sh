@@ -136,7 +136,7 @@ fi
 # Install the necessary package sources
 if [ $OS = "RedHat" ]; then
     print_blu "* Installing YUM sources for StackState\n"
-    $sudo_cmd sh -c "echo -e '[stackstate]\nname = StackState\nbaseurl = $RPM_REPO/$code_name/\nenabled=1\ngpgcheck=1\npriority=1\ngpgkey=$RPM_REPO/public.key' > /etc/yum.repos.d/stackstate.repo"
+    $sudo_cmd sh -c "echo -e '[stackstate]\nname = StackState\nbaseurl = $YUM_REPO/$code_name/\nenabled=1\ngpgcheck=1\npriority=1\ngpgkey=$YUM_REPO/public.key' > /etc/yum.repos.d/stackstate.repo"
 
     print_blu "* Installing the StackState Agent v2 package\n"
     $sudo_cmd yum -y clean metadata

@@ -177,7 +177,7 @@ Vagrant.configure("2") do |config|
       env: {
         "STS_API_KEY" => "API_KEY",
         "STS_URL" => "http://192.168.56.1:7077/stsAgent",
-        "RPM_REPO" => "https://stackstate-agent-2-rpm-test.s3.amazonaws.com",
+        "YUM_REPO" => "https://stackstate-agent-2-rpm-test.s3.amazonaws.com",
         "CODE_NAME" => branch
       },
       path: "./cmd/agent/install_script.sh",
@@ -203,7 +203,7 @@ Vagrant.configure("2") do |config|
       env: {
         "STS_API_KEY" => "API_KEY",
         "STS_URL" => "http://192.168.56.1:7077/stsAgent",
-        "RPM_REPO" => "https://stackstate-agent-2-rpm-test.s3.amazonaws.com",
+        "YUM_REPO" => "https://stackstate-agent-2-rpm-test.s3.amazonaws.com",
         "CODE_NAME" => branch
       },
       path: "./cmd/agent/install_script.sh",
@@ -227,7 +227,7 @@ Vagrant.configure("2") do |config|
       env: {
         "STS_API_KEY" => "API_KEY",
         "STS_URL" => "http://192.168.56.1:7077/stsAgent",
-        "RPM_REPO" => "https://stackstate-agent-2-rpm-test.s3.amazonaws.com",
+        "YUM_REPO" => "https://stackstate-agent-2-rpm-test.s3.amazonaws.com",
         "CODE_NAME" => branch
       },
       path: "./cmd/agent/install_script.sh",
