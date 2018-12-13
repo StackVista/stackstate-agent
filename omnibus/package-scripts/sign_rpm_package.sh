@@ -11,6 +11,21 @@ fi
 
 echo $STACKSTATE_AGENT_VERSION
 
+mkdir -p ~/.gnupg/
+chmod 700 ~/.gnupg/
+
+cat <<EOF >~/.gnupg/gpg-agent.conf
+default-cache-ttl 46000
+allow-preset-passphrase
+EOF
+
+echo  "Reloading gpg-agent..."
+
+pkill -9 gpg-agent || true
+
+source <(gpg-agent --daemon)
+
+
 echo "$SIGNING_PUBLIC_KEY" | gpg --import
 echo "$SIGNING_PRIVATE_KEY" > gpg_private.key
 echo "$SIGNING_PRIVATE_PASSPHRASE" | gpg --batch --yes --passphrase-fd 0 --import gpg_private.key
@@ -31,16 +46,6 @@ rpm -q gpg-pubkey --qf '%{name}-%{version}-%{release} --> %{summary}\n'
 # %_gpg_name  => Use the Real Name you used to create your key
 echo "%_gpg_name StackState <info@stackstate.com>" > ~/.rpmmacros
 
-cat <<EOF >~/.gnupg/gpg-agent.conf
-default-cache-ttl 46000
-allow-preset-passphrase
-EOF
-
-echo  "Reloading gpg-agent..."
-
-pkill -9 gpg-agent || true
-
-source <(gpg-agent --daemon)
 
 echo  "Presetting signing password..."
 
