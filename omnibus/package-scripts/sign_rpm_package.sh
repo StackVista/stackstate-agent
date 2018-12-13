@@ -21,11 +21,15 @@ EOF
 
 echo  "Reloading gpg-agent..."
 
+export GPPPATH=/usr/libexec
+
 python -mplatform | grep -qi centos && pkill -9 gpg-agent || true
 
 python -mplatform | grep -qi centos && source <(gpg-agent --daemon)
 
-python -mplatform | grep -qi debian && gpg-connect-agent RELOADAGENT /bye 
+python -mplatform | grep -qi debian && gpg-connect-agent RELOADAGENT /bye
+
+python -mplatform | grep -qi debian && export GPPPATH=/usr/lib/gnupg2
 
 
 echo "$SIGNING_PUBLIC_KEY" | gpg --import
@@ -51,7 +55,7 @@ echo "%_gpg_name StackState <info@stackstate.com>" > ~/.rpmmacros
 
 echo  "Presetting signing password..."
 
-echo $SIGNING_PRIVATE_PASSPHRASE | /usr/libexec/gpg-preset-passphrase -v -c $(gpg --list-secret-keys --with-fingerprint --with-colons | awk -F: '$1 == "grp" { print $10 }')
+echo $SIGNING_PRIVATE_PASSPHRASE | $GPPPATH/gpg-preset-passphrase -v -c $(gpg --list-secret-keys --with-fingerprint --with-colons | awk -F: '$1 == "grp" { print $10 }')
 # Sign your custom RPM package
 
 rpm --addsign $rpmfiles $CI_PROJECT_DIR/outcomes/pkg/*.rpm
