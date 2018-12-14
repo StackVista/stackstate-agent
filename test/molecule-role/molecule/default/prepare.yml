@@ -79,7 +79,7 @@
       copy:
         src: ../../docker-compose.yml
         dest: /home/ubuntu/docker-compose.yml
-    - name: Use Docker Service to run
+    - name: Run Docker compose
       command: docker-compose up -d
       args:
         chdir: /home/ubuntu/
@@ -106,7 +106,7 @@
   vars_files:
     - common_vars.yml
   tasks:
-    - name: Connect to agent 2
+    - name: Connect to agent 1
       shell: nohup bash -c "yes | nc {{ hostvars['agent1']['ansible_host'] }} {{ test_connection_port_before_start }}" &
       become: true
 - name: Prepare Agents
@@ -150,6 +150,6 @@
   vars_files:
     - common_vars.yml
   tasks:
-    - name: Connect to agent 2
+    - name: Connect to agent 1
       shell: nohup bash -c "yes | nc {{ hostvars['agent1']['ansible_host'] }} {{ test_connection_port_after_start }}" &
       become: true

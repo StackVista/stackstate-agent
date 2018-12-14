@@ -15,6 +15,7 @@ platforms:
     region: eu-west-1
     groups:
       - agent_vm
+    ssh_user: ubuntu
   - name: agent2
     image: ami-047bb4163c506cd98    # Amazon Linux 2018.03 (EBS-Backed x86_64)
     instance_type: t2.micro
@@ -22,6 +23,7 @@ platforms:
     region: eu-west-1
     groups:
       - agent_vm
+    ssh_user: ec2-user
   - name: receiver
     image: ami-0da760e590e7de0e8    # Ubuntu 18.04 (EBS-Backed x86_64)
     instance_type: t2.small
@@ -29,6 +31,7 @@ platforms:
     region: eu-west-1
     groups:
       - receiver_vm
+    ssh_user: ubuntu
 provisioner:
   name: ansible
   playbooks:
