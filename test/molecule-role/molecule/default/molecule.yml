@@ -9,21 +9,21 @@ lint:
     config-file: .yamllint
 platforms:
   - name: agent1
-    image: ami-0da760e590e7de0e8  # Ubuntu 18.04
+    image: ami-0da760e590e7de0e8    # Ubuntu 18.04 (EBS-Backed x86_64)
     instance_type: t2.micro
     vpc_subnet_id: subnet-41c8f224  # eu-west-1a
     region: eu-west-1
     groups:
       - agent_vm
   - name: agent2
-    image: ami-0da760e590e7de0e8  # Ubuntu 18.04
+    image: ami-07a877f081af74359    # Amazon Linux 2018.03 (instance store x86_64)
     instance_type: t2.micro
     vpc_subnet_id: subnet-41c8f224  # eu-west-1a
     region: eu-west-1
     groups:
       - agent_vm
   - name: receiver
-    image: ami-0da760e590e7de0e8  # Ubuntu 18.04
+    image: ami-0da760e590e7de0e8    # Ubuntu 18.04 (EBS-Backed x86_64)
     instance_type: t2.small
     vpc_subnet_id: subnet-41c8f224  # eu-west-1a
     region: eu-west-1
