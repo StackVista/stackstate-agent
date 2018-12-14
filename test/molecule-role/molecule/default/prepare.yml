@@ -127,10 +127,9 @@
         CODE_NAME: "{{agent_current_branch}}"
     - name: Run stackstate-agent
       become: true
-      systemd:
+      service:
         name: stackstate-agent
         state: started
-        daemon_reload: yes
 - name: Prepare Agent 1 listening after start
   hosts: agent1
   gather_facts: false
