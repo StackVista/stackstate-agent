@@ -16,7 +16,7 @@ platforms:
     groups:
       - agent_vm
   - name: agent2
-    image: ami-07a877f081af74359    # Amazon Linux 2018.03 (instance store x86_64)
+    image: ami-047bb4163c506cd98    # Amazon Linux 2018.03 (EBS-Backed x86_64)
     instance_type: t2.micro
     vpc_subnet_id: subnet-41c8f224  # eu-west-1a
     region: eu-west-1
