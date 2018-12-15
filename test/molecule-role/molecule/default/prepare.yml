@@ -125,11 +125,6 @@
         STS_API_KEY: "API_KEY"
         STS_URL: "http://{{ hostvars['receiver']['ansible_host'] }}:7077/stsAgent"
         CODE_NAME: "{{agent_current_branch}}"
-    - name: Run stackstate-agent
-      become: true
-      service:
-        name: stackstate-agent
-        state: started
 - name: Prepare Agent 1 listening after start
   hosts: agent1
   gather_facts: false
