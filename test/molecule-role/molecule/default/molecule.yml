@@ -17,7 +17,7 @@ platforms:
       - agent_vm
     ssh_user: ubuntu
   - name: agent2
-    image: ami-047bb4163c506cd98    # Amazon Linux 2018.03 (EBS-Backed x86_64)
+    image: ami-047bb4163c506cd98    # Amazon Linux 2018.03 (EBS-Backed x86_64) https://aws.amazon.com/amazon-linux-ami/
     instance_type: t2.micro
     vpc_subnet_id: subnet-41c8f224  # eu-west-1a
     region: eu-west-1
