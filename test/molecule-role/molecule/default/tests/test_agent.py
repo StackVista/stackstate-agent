@@ -22,7 +22,8 @@ def test_stackstate_agent_running_and_enabled(host):
 
 
 def test_stackstate_process_agent_running_and_enabled(host):
-    assert not host.ansible("service", "name=stackstate-agent-process enabled=true state=started")['changed']
+    # We don't check enabled because on systemd redhat is not needed check omnibus/package-scripts/agent/posttrans
+    assert not host.ansible("service", "name=stackstate-agent-process state=started")['changed']
 
 
 def test_stackstate_agent_log(host):
