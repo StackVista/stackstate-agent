@@ -17,11 +17,11 @@ platforms:
       - agent_vm
     ssh_user: ubuntu
   - name: agent2
-    image: ami-78389b01             #Fedora-Cloud-Base-27-1.6.x86_64-eu-west-1-HVM-standard-0 -> python3 only
-#    image: ami-420d213b             # Fedora-Cloud-Base-28-1.1.x86_64-hvm-eu-west-1-standard-0 -> python3 only
-#    image: ami-035901904783e1852    # Fedora-Cloud-Base-29-1.2.x86_64-hvm-eu-west-1-standard-0 (https://alt.fedoraproject.org/cloud/) (owner 125523088429) -> python3 only
-#    image: ami-f1978897             # Red Hat 7.3 (RHEL-7.3_HVM-20170613-x86_64-4-Hourly2-GP2 used in Champagne deployment) -> kernel 3.10
-#    image: ami-047bb4163c506cd98    # Amazon Linux 2018.03 (EBS-Backed x86_64) https://aws.amazon.com/amazon-linux-ami/ -> not mounting debugfs on /sys/kernel/debug
+    image: ami-78389b01              # Fedora-Cloud-Base-27-1.6.x86_64-eu-west-1-HVM-standard-0 -> python3 only
+    # image: ami-420d213b             # Fedora-Cloud-Base-28-1.1.x86_64-hvm-eu-west-1-standard-0 -> python3 only
+    # image: ami-035901904783e1852    # Fedora-Cloud-Base-29-1.2.x86_64-hvm-eu-west-1-standard-0 (https://alt.fedoraproject.org/cloud/) (owner 125523088429) -> python3 only
+    # image: ami-f1978897             # Red Hat 7.3 (RHEL-7.3_HVM-20170613-x86_64-4-Hourly2-GP2 used in Champagne deployment) -> kernel 3.10
+    # image: ami-047bb4163c506cd98    # Amazon Linux 2018.03 (EBS-Backed x86_64) https://aws.amazon.com/amazon-linux-ami/ -> not mounting debugfs on /sys/kernel/debug
     instance_type: t2.micro
     vpc_subnet_id: subnet-41c8f224  # eu-west-1a
     region: eu-west-1
