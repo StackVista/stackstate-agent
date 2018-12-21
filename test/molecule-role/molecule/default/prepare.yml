@@ -124,11 +124,15 @@
       raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream python-pip)
       become: true
       changed_when: false
+    - name: Mapping to etc hosts
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ hostvars['receiver']['ansible_host'] }} testagent.com"
     - name: Install stackstate-agent
       shell: "curl -o- {{agent_repo_url}}/install.sh | bash"
       environment:
         STS_API_KEY: "API_KEY"
-        STS_URL: "http://{{ hostvars['receiver']['ansible_host'] }}:7077/stsAgent"
+        STS_URL: "https://testagent.com/stsAgent"
         CODE_NAME: "{{agent_current_branch}}"
     - name: Run stackstate-agent
       become: true
