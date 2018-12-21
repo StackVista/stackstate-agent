@@ -79,9 +79,6 @@
       copy:
         src: "../../{{ item }}"
         dest: "/home/ubuntu/{{ item }}"
-        owner: root
-        group: root
-        mode: 0755
       with_items:
         - docker.nginx
         - nginx-signed.crt
