@@ -124,7 +124,8 @@
       raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream python-pip)
       become: true
       changed_when: false
-    - name: Mapping to etc hosts
+    - name: Add testagent.com to /etc/hosts
+      become: true
       lineinfile:
         path: /etc/hosts
         line: "{{ hostvars['receiver']['ansible_host'] }} testagent.com"
