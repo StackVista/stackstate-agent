@@ -39,4 +39,3 @@ services:
       - ./docker.nginx:/etc/nginx/nginx.conf:ro
       - ./nginx-signed.crt:/etc/ssl/certs/nginx-signed.crt:ro
       - ./nginx-signed.key:/etc/ssl/private/nginx-signed.key:ro
-
