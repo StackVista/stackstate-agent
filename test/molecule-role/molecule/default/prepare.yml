@@ -75,11 +75,19 @@
         dest: "/usr/local/bin/docker-compose"
         force: True
         mode: "0755"
-    - name: Copy Docker Compose file
+    - name: Copy Configuration files
       copy:
-        src: ../../docker-compose.yml
-        dest: /home/ubuntu/docker-compose.yml
-    - name: Use Docker Service to run
+        src: "../../{{ item }}"
+        dest: "/home/ubuntu/{{ item }}"
+        owner: root
+        group: root
+        mode: 0755
+      with_items:
+        - docker.nginx
+        - nginx-signed.crt
+        - nginx-signed.key
+        - docker-compose.yml
+    - name: Run Docker Compose
       command: docker-compose up -d
       args:
         chdir: /home/ubuntu/
