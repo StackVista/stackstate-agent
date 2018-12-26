@@ -45,13 +45,19 @@ def test_stackstate_agent_log(host):
     agent_log = host.file(agent_log_path).content_string
 
     # Check for errors
+    # count = 0
     for line in agent_log.splitlines():
         print("Considering: %s" % line)
         # TODO: Update event endpoint should get rid of this error,
         # once STAC-2500 is fixed
         if re.search(
                 "Error code \"400 Bad Request\" received while sending " +
-                "transaction to \"http://.*:7077/stsAgent/intake/",
+                "transaction to \"https://.*/stsAgent/intake/",
+                line):
+            continue
+
+        if re.search(
+                "x509: certificate signed by unknown authority",
                 line):
             continue
 

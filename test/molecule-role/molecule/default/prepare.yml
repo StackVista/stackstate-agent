@@ -88,6 +88,10 @@
       command: docker-compose up -d
       args:
         chdir: /home/ubuntu/
+    - name: Restart Nginx Service
+      command: docker-compose restart nginx
+      args:
+        chdir: /home/ubuntu/
 - name: Prepare Agent 1 listening before start
   hosts: agent1
   gather_facts: false
@@ -135,11 +139,17 @@
         STS_API_KEY: "API_KEY"
         STS_URL: "https://testagent.com/stsAgent"
         CODE_NAME: "{{agent_current_branch}}"
+    - name: Skip SSL Validation
+      become: true
+      replace:
+        path: /etc/stackstate-agent/stackstate.yaml
+        regexp: '# skip_ssl_validation: false'
+        replace: 'skip_ssl_validation: true'
     - name: Run stackstate-agent
       become: true
       systemd:
         name: stackstate-agent
-        state: started
+        state: restarted
         daemon_reload: yes
 - name: Prepare Agent 1 listening after start
   hosts: agent1
