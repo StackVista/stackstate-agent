@@ -84,7 +84,7 @@
         - nginx-signed.crt
         - nginx-signed.key
         - docker-compose.yml
-    - name: Run Docker Compose
+    - name: Run Docker compose
       command: docker-compose up -d
       args:
         chdir: /home/ubuntu/
@@ -92,19 +92,43 @@
       command: docker-compose restart nginx
       args:
         chdir: /home/ubuntu/
+- name: Prepare Agents (pre)
+  hosts: agent_vm
+  gather_facts: false
+  vars_files:
+    - common_vars.yml
+  tasks:
+    - name: Install python for Ansible
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream python-pip) || ((yum check-update || test $? -eq 100) && yum install -y python2) || true
+      become: true
+      changed_when: false
+    - name: Gather facts
+      setup:
+    # - debug: msg={{ ansible_facts }}
+    - name: Install nmap (for ncat binary) in Ubuntu
+      become: true
+      apt:
+        name: nmap
+        state: present
+      when: ansible_distribution == "Ubuntu"
+    - name: Install nc (for ncat binary) in Fedora
+      become: true
+      yum:
+        name: nc
+        state: present
+      when: ansible_distribution == "Fedora"
+    - name: Install libselinux-python in Fedora
+      become: true
+      yum:
+        name: libselinux-python
+        state: present
+      when: ansible_distribution == "Fedora"
 - name: Prepare Agent 1 listening before start
   hosts: agent1
   gather_facts: false
   vars_files:
     - common_vars.yml
   tasks:
-    - name: Install nmap (for ncat binary)
-      become: true
-      apt:
-        name: nmap
-        state: present
-        update_cache: yes
-      changed_when: false
     # We use ncat to keep a listening port open and get a direction
     - name: Open listening port on agent 1
       shell: "nohup ncat --broker --listen -p {{ test_connection_port_before_start }} &"
@@ -115,19 +139,15 @@
   vars_files:
     - common_vars.yml
   tasks:
-    - name: Connect to agent 2
-      shell: nohup bash -c "yes | nc {{ hostvars['agent1']['ansible_host'] }} {{ test_connection_port_before_start }}" &
+    - name: Connect to agent 1
+      shell: nohup bash -c "yes | ncat {{ hostvars['agent1']['ansible_host'] }} {{ test_connection_port_before_start }}" &
       become: true
-- name: Prepare Agents
+- name: Prepare Agents (post)
   hosts: agent_vm
   gather_facts: false
   vars_files:
     - common_vars.yml
   tasks:
-    - name: Install python for Ansible
-      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream python-pip)
-      become: true
-      changed_when: false
     - name: Add testagent.com to /etc/hosts
       become: true
       lineinfile:
@@ -170,6 +190,6 @@
   vars_files:
     - common_vars.yml
   tasks:
-    - name: Connect to agent 2
-      shell: nohup bash -c "yes | nc {{ hostvars['agent1']['ansible_host'] }} {{ test_connection_port_after_start }}" &
+    - name: Connect to agent 1
+      shell: nohup bash -c "yes | ncat {{ hostvars['agent1']['ansible_host'] }} {{ test_connection_port_after_start }}" &
       become: true
