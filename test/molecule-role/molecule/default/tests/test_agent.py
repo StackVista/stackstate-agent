@@ -53,13 +53,10 @@ def test_stackstate_agent_log(host):
                 line):
             continue
 
+        # Before restarting the logs contain error for previous sts_url
         if re.search(
-                "x509: certificate signed by unknown authority",
-                line):
-            continue
-
-        if re.search(
-                "Too many errors for endpoint \'https://testagent.com/*",
+                "Error code \"400 Bad Request\" received while sending " +
+                "transaction to \"http://.*:7077/stsAgent/intake/",
                 line):
             continue
 

@@ -152,13 +152,19 @@
       become: true
       lineinfile:
         path: /etc/hosts
-        line: "{{ hostvars['receiver']['ansible_host'] }} testagent.com"
+        line: "{{ hostvars['receiver']['ansible_host'] }} test-stackstate-agent.sts"
     - name: Install stackstate-agent
       shell: "curl -o- {{agent_repo_url}}/install.sh | bash"
       environment:
         STS_API_KEY: "API_KEY"
-        STS_URL: "https://testagent.com/stsAgent"
+        STS_URL: "http://{{ hostvars['receiver']['ansible_host'] }}:7077/stsAgent"
         CODE_NAME: "{{agent_current_branch}}"
+    - name: Replace STS URL to https URL
+      become: true
+      replace:
+        path: /etc/stackstate-agent/stackstate.yaml
+        regexp: 'sts_url: http://.*:7077/stsAgent'
+        replace: 'sts_url: https://test-stackstate-agent.sts/stsAgent'
     - name: Skip SSL Validation
       become: true
       replace:
