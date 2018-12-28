@@ -202,6 +202,10 @@ if [ $host_tags ]; then
     $sudo_cmd sh -c "sed -i \"s/# tags:.*/tags: "$formatted_host_tags"/\" $CONF"
 fi
 
+# To check the https connection with agent6
+print_blu "* Making skip_ssl_validation true to the Agent configuration: $CONF\n"
+$sudo_cmd sh -c "sed -i 's/# skip_ssl_validation:.*/skip_ssl_validation: true/' $CONF"
+
 function version_gt() {
     test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1";
 }

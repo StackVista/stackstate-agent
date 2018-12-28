@@ -54,11 +54,11 @@ def test_stackstate_agent_log(host):
             continue
 
         # Before restarting the logs contain error for previous sts_url
-        if re.search(
-                "Error code \"400 Bad Request\" received while sending " +
-                "transaction to \"http://.*:7077/stsAgent/intake/",
-                line):
-            continue
+        # if re.search(
+        #         "Error code \"400 Bad Request\" received while sending " +
+        #         "transaction to \"http://.*:7077/stsAgent/intake/",
+        #         line):
+        #     continue
 
         # https://stackstate.atlassian.net/browse/STAC-3202 first
         assert not re.search("\| error \|", line, re.IGNORECASE)
