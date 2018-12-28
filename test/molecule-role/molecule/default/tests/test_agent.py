@@ -42,7 +42,6 @@ def test_stackstate_agent_log(host):
     agent_log = host.file(agent_log_path).content_string
 
     # Check for errors
-    # count = 0
     for line in agent_log.splitlines():
         print("Considering: %s" % line)
         # TODO: Update event endpoint should get rid of this error,
@@ -52,13 +51,6 @@ def test_stackstate_agent_log(host):
                 "transaction to \"https://.*/stsAgent/intake/",
                 line):
             continue
-
-        # Before restarting the logs contain error for previous sts_url
-        # if re.search(
-        #         "Error code \"400 Bad Request\" received while sending " +
-        #         "transaction to \"http://.*:7077/stsAgent/intake/",
-        #         line):
-        #     continue
 
         # https://stackstate.atlassian.net/browse/STAC-3202 first
         assert not re.search("\| error \|", line, re.IGNORECASE)
