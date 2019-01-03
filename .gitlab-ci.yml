@@ -93,6 +93,7 @@ deps-windows:
     - cd %GOPATH%\src\github.com\StackVista\stackstate-agent
     - echo cd %GOPATH%\src\github.com\StackVista\stackstate-agent
     - dir
+    - SET
     - workon venv && SET 
     - workon venv && echo %GOPATH%\src\github.com\StackVista\stackstate-agent
     - workon venv && dir
