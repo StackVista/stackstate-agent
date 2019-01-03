@@ -76,6 +76,7 @@ deps-rpm:
 
 deps-windows:
   stage: prepare
+  before_script: []
   script:
     - set WIN_CI_PROJECT_DIR=%CD%
     - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
