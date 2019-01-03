@@ -91,8 +91,7 @@ deps-windows:
     - cd %GOPATH%\src\github.com\StackVista\stackstate-agent
     - cmd /c mkvirtualenv venv
     - cd %GOPATH%\src\github.com\StackVista\stackstate-agent
-    - workon venv
-    - inv -e deps
+    - workon venv && inv -e deps
   tags:
     - sts_windows
 
