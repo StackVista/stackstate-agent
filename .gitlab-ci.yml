@@ -91,7 +91,9 @@ deps-windows:
     - cd %GOPATH%\src\github.com\StackVista\stackstate-agent
     - cmd /c mkvirtualenv venv
     - cd %GOPATH%\src\github.com\StackVista\stackstate-agent
-    - workon venv && pip install -r requirements.txt
+    - echo cd %GOPATH%\src\github.com\StackVista\stackstate-agent
+    - dir
+    - workon venv && pip install -r cd %GOPATH%\src\github.com\StackVista\stackstate-agent\requirements.txt
   tags:
     - sts_windows
 
