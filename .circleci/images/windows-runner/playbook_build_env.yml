@@ -28,6 +28,9 @@
       args:
         executable: cmd
 
-
+    - name: Tune git config
+      win_shell: git config –global http.sslcainfo "C:\Program Files\Git\mingw64\ssl\certs\ca-bundle.crt"
+      args:
+        executable: cmd
 
 
