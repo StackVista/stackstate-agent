@@ -76,10 +76,10 @@ deps-rpm:
 
 deps-windows:
   stage: prepare
-  environment:
-    WORKON_HOME: $CI_PROJECT_DIR
   before_script:
+    - set 
     - set WIN_CI_PROJECT_DIR=%CD%
+    - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
     - if exist .omnibus rd /s/q .omnibus
     - mkdir .omnibus\pkg
     - if exist \omnibus-ruby rd /s/q \omnibus-ruby
