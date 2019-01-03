@@ -15,7 +15,12 @@
       win_chocolatey:
         name: python2  
         state: present
-        version: '2.7.15 '
+        version: '2.7.15'
+
+    - name: Install python2
+      win_chocolatey:
+        name: vcpython27
+        state: present
 
     - name: Install ruby 2.4.3.1
       win_chocolatey:

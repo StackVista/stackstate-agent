@@ -80,24 +80,7 @@ deps-windows:
   script:
     - set WIN_CI_PROJECT_DIR=%CD%
     - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
-    - if exist .omnibus rd /s/q .omnibus
-    - mkdir .omnibus\pkg
-    - if exist \omnibus-ruby rd /s/q \omnibus-ruby
-    - if exist %OMNIBUS_BASE_DIR_WIN% rd /s/q %OMNIBUS_BASE_DIR_WIN%
-    - if exist \opt\stackstate-agent rd /s/q \opt\stackstate-agent
-    - if exist %GOPATH%\src\github.com\StackVista\stackstate-agent rd /s/q %GOPATH%\src\github.com\StackVista\stackstate-agent
-    - mkdir %GOPATH%\src\github.com\StackVista\stackstate-agent
-    - xcopy /q/h/e/s * %GOPATH%\src\github.com\StackVista\stackstate-agent
-    - cd %GOPATH%\src\github.com\StackVista\stackstate-agent
-    - cmd /c mkvirtualenv venv
-    - cd %GOPATH%\src\github.com\StackVista\stackstate-agent
-    - echo cd %GOPATH%\src\github.com\StackVista\stackstate-agent
-    - dir
-    - SET
-    - workon venv && SET 
-    - workon venv && echo %GOPATH%\src\github.com\StackVista\stackstate-agent
-    - workon venv && dir
-    - workon venv &&  pip install -r %GOPATH%\src\github.com\StackVista\stackstate-agent\requirements.txt
+    - call .gitlab-scripts/windows_deps.cmd
   tags:
     - sts_windows
 
