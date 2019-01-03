@@ -76,6 +76,8 @@ deps-rpm:
 
 deps-windows:
   stage: prepare
+  environment:
+    WORKON_HOME: $CI_PROJECT_DIR
   before_script:
     - set WIN_CI_PROJECT_DIR=%CD%
     - if exist .omnibus rd /s/q .omnibus
@@ -87,7 +89,7 @@ deps-windows:
     - mkdir %GOPATH%\src\github.com\StackVista\stackstate-agent
     - xcopy /q/h/e/s * %GOPATH%\src\github.com\StackVista\stackstate-agent
     - cd %GOPATH%\src\github.com\StackVista\stackstate-agent
-    - WORKON_HOME=$CI_PROJECT_DIR mkvirtualenv venv
+    - mkvirtualenv venv
   script:
     - cd %GOPATH%\src\github.com\StackVista\stackstate-agent
     - inv -e deps
