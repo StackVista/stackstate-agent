@@ -1,0 +1,33 @@
+- hosts: all
+
+  vars_files:
+    - builder_vars.yml
+
+  tasks:
+
+    - name: Install go
+      win_chocolatey:
+        name: golang
+        state: present
+        version: '1.11.4'
+
+    - name: Install python2                         
+      win_chocolatey:
+        name: python2  
+        state: present
+        version: '2.7.15 '
+
+    - name: Install ruby 2.4.3.1
+      win_chocolatey:
+        name: ruby
+        state: present
+        version: 2.4.3.1
+
+    - name: Install python virtualwrapper
+      win_shell: pip install virtualenvwrapper-win
+      args:
+        executable: cmd
+
+
+
+

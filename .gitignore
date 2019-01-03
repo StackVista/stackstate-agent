@@ -89,3 +89,4 @@ kubeconfig
 .vagrant
 
 version.txt
+*.retry
