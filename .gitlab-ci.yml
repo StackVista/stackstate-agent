@@ -89,7 +89,7 @@ deps-windows:
     - mkdir %GOPATH%\src\github.com\StackVista\stackstate-agent
     - xcopy /q/h/e/s * %GOPATH%\src\github.com\StackVista\stackstate-agent
     - cd %GOPATH%\src\github.com\StackVista\stackstate-agent
-    - mkvirtualenv venv
+    - cmd /c mkvirtualenv venv
     - cd %GOPATH%\src\github.com\StackVista\stackstate-agent
     - inv -e deps
   tags:
