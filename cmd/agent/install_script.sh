@@ -207,7 +207,7 @@ if [ $host_tags ]; then
     $sudo_cmd sh -c "sed -i \"s/# tags:.*/tags: "$formatted_host_tags"/\" $CONF"
 fi
 if [ $skip_ssl_validation ]; then
-    print_blu "* Making skip_ssl_validation true to the Agent configuration: $CONF\n"
+    print_blu "* Skipping SSL validation in the Agent configuration: $CONF\n"
     $sudo_cmd sh -c "sed -i 's/# skip_ssl_validation:.*/skip_ssl_validation: $skip_ssl_validation/' $CONF"
 fi
 
