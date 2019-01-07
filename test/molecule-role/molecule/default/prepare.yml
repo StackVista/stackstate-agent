@@ -155,6 +155,7 @@
         STS_API_KEY: "API_KEY"
         STS_URL: "https://test-stackstate-agent.sts/stsAgent"
         CODE_NAME: "{{agent_current_branch}}"
+        SKIP_SSL_VALIDATION: "true"
 - name: Prepare Agent 1 listening after start
   hosts: agent1
   gather_facts: false
