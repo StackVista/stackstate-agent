@@ -11,9 +11,9 @@
         state: present
         version: '1.11.4'
 
-    - name: Install python2                         
+    - name: Install python2
       win_chocolatey:
-        name: python2  
+        name: python2
         state: present
         version: '2.7.15'
 
@@ -22,11 +22,27 @@
         name: vcpython27
         state: present
 
+    - name: Install Mingw
+      win_chocolatey:
+        name: mingw
+        state: present
+        version: '8.1.0'
+
+    - name: Install Mingw
+      win_chocolatey:
+        name: mingw
+        state: present
+
     - name: Install ruby 2.4.3.1
       win_chocolatey:
         name: ruby
         state: present
         version: 2.4.3.1
+
+    - name: Install ruby2.devkit
+      win_chocolatey:
+        name: ruby2.devkit
+        state: present
 
     - name: Install python virtualwrapper
       win_shell: pip install virtualenvwrapper-win
