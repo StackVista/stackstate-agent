@@ -17,7 +17,12 @@ dependency 'sysstat'
 dependency 'curl'
 
 # Actual dependencies
-dependency 'python'
+# https://github.com/DataDog/omnibus-software/blob/master/config/software/python.rb#L80
+# dependency 'python' [VS] Ruins runner due to logic in L80
+# [VS]
+dependency "vc_redist"
+dependency "vc_python"
+# [/VS]
 unless windows?
   dependency 'net-snmp-lib'
 end

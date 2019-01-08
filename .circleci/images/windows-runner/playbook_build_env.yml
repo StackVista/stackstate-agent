@@ -33,6 +33,7 @@
         name: mingw
         state: present
 
+    # choco install ruby --version 2.4.3.1
     - name: Install ruby 2.4.3.1
       win_chocolatey:
         name: ruby
@@ -53,5 +54,17 @@
       win_shell: git config –global http.sslcainfo "C:\Program Files\Git\mingw64\ssl\certs\ca-bundle.crt"
       args:
         executable: cmd
+
+    - name: Tune git config
+      win_shell: git config –global user.email "gitlab@windows.runner.local"
+      args:
+        executable: cmd
+
+    - name: Tune git config
+      win_shell: git config –global user.name "Windows Gitlab Runner"
+      args:
+        executable: cmd
+
+
 
 
