@@ -9,27 +9,31 @@
       raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream)
       become: true
       changed_when: false
+    - name: Disable APT daily job to avoid locks
+      file:
+        path: /etc/cron.daily/apt-compat
+        mode: "-x"
+      become: true
     - name: Install python-pip
       become: true
       apt:
         name: python-pip
         state: present
         update_cache: yes
-      changed_when: false
     - name: Installing multiple python packages in Ansible
       pip:
         name: boto,boto3
-    - name: Add Docker GPG key
+    - name: Add Docker GPG APT key
       become: true
       apt_key: url=https://download.docker.com/linux/ubuntu/gpg
     - name: Add Docker APT repository
       become: true
       apt_repository:
         repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable
-    - name: Install list of packages
+    - name: Install APT packages
       become: true
       apt:
-        name: [apt-transport-https, ca-certificates, curl, software-properties-common, docker-ce]
+        name: [apt-transport-https, ca-certificates, curl, software-properties-common, docker-ce, awscli]
         state: present
         update_cache: yes
     - name: Add user to docker group
@@ -42,11 +46,6 @@
       shell: sleep 1; pkill -u {{ ansible_ssh_user }} sshd
       async: 3
       poll: 2
-    - name: Install AWS-CLI
-      apt:
-        name: awscli
-        state: present
-      become: true
     - name: Ensure .aws config directory exists
       file:
         path: /home/ubuntu/.aws/
@@ -150,11 +149,12 @@
         path: /etc/hosts
         line: "{{ hostvars['receiver']['ansible_host'] }} test-stackstate-agent.sts"
     - name: Install stackstate-agent
-      shell: "curl -o- {{agent_repo_url}}/install.sh | bash"
+      shell: "curl -o- {{ agent_repo_url }}/install.sh | bash"
       environment:
         STS_API_KEY: "API_KEY"
         STS_URL: "https://test-stackstate-agent.sts/stsAgent"
-        CODE_NAME: "{{agent_current_branch}}"
+        STS_HOSTNAME: "{{ inventory_hostname }}"
+        CODE_NAME: "{{ agent_current_branch }}"
         SKIP_SSL_VALIDATION: "true"
 - name: Prepare Agent 1 listening after start
   hosts: agent1
