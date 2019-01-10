@@ -9,11 +9,6 @@
       raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream)
       become: true
       changed_when: false
-    - name: Disable APT daily job to avoid locks
-      file:
-        path: /etc/cron.daily/apt-compat
-        mode: "-x"
-      become: true
     - name: Install python-pip
       become: true
       apt:
