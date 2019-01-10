@@ -9,13 +9,17 @@
       raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream)
       become: true
       changed_when: false
+    - name: Disable APT daily job to avoid locks
+      file:
+        path: /etc/cron.daily/apt-compat
+        mode: "-x"
+      become: true
     - name: Install python-pip
       become: true
       apt:
         name: python-pip
         state: present
         update_cache: yes
-      changed_when: false
     - name: Installing multiple python packages in Ansible
       pip:
         name: boto,boto3
