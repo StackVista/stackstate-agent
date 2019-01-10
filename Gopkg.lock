@@ -23,7 +23,7 @@
     "pkg/registry/external_metrics",
   ]
   pruneopts = ""
-  revision = "56ec6921a4cfec971e5a8c89d5f4629c17cbb21a"
+  revision = "ae9d633c3c1ca19c96c652d7ad3ad4d421fe380f"
 
 [[projects]]
   digest = "1:b5c465c820ef1df848ddc2da97e7ebfc1e152fcc2bef8262f047522692e9fc6f"
