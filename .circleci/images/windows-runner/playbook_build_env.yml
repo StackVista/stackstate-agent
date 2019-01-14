@@ -9,7 +9,13 @@
       win_chocolatey:
         name: golang
         state: present
-        version: '1.11.4'
+# https://ci.appveyor.com/project/Datadog/datadog-agent/branch/master
+        version: '1.10.4'
+
+    - name: Install go
+      win_chocolatey:
+        name: dep
+        state: present
 
     - name: Install python2
       win_chocolatey:
@@ -28,9 +34,9 @@
         state: present
         version: '8.1.0'
 
-    - name: Install Mingw
+    - name: Install vcredist-all
       win_chocolatey:
-        name: mingw
+        name: vcredist-all
         state: present
 
     # choco install ruby --version 2.4.3.1
@@ -47,6 +53,11 @@
 
     - name: Install python virtualwrapper
       win_shell: pip install virtualenvwrapper-win
+      args:
+        executable: cmd
+
+    - name: Fix spotted bundler issue
+      win_shell: gem update --system 2.3.0
       args:
         executable: cmd
 
