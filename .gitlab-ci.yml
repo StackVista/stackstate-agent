@@ -76,11 +76,11 @@ deps-rpm:
 
 deps-windows:
   stage: prepare
-  before_script: []
+  before_script:
+    - call .gitlab-scripts/windows_deps.cmd
   script:
     - set WIN_CI_PROJECT_DIR=%CD%
     - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
-    - call .gitlab-scripts/windows_deps.cmd
   tags:
     - sts_windows
 
@@ -283,7 +283,7 @@ pre_release_rpm:
 pre_release_image:
   stage: pre_release
   image: docker:18.06.0
-  dependencies:
+	  dependencies:
     - build_deb
     - deps
   variables:

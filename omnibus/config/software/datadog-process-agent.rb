@@ -19,9 +19,9 @@ default_version process_agent_version
 
 build do
   if windows?
-    binary = "process-agent-windows-#{version}.exe"
+    binary = "stackstate-process-agent-#{version}.exe"
     target_binary = "process-agent.exe"
-    url = "https://s3.amazonaws.com/datad0g-process-agent/#{binary}"
+    url = "https://s3.amazonaws.com/stackstate-process-agent-2-test/#{binary}"
     curl_cmd = "powershell -Command wget -OutFile #{binary} #{url}"
     command curl_cmd
     command "mv #{binary} #{install_dir}/bin/agent/#{target_binary}"

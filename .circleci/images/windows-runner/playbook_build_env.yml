@@ -56,6 +56,16 @@
       args:
         executable: cmd
 
+    - name: Support for Makefiles
+      win_chocolatey:
+        name: make
+        state: present
+
+    - name: Install awscli
+      win_chocolatey:
+        name: awscli
+        state: present
+
     - name: Fix spotted bundler issue
       win_shell: gem update --system 2.3.0
       args:
