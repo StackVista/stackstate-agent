@@ -10,7 +10,7 @@ if exist %GOPATH%\src\github.com\StackVista\stackstate-agent rd /s/q %GOPATH%\sr
 mkdir %GOPATH%\src\github.com\StackVista\stackstate-agent
 xcopy /q/h/e/s * %GOPATH%\src\github.com\StackVista\stackstate-agent
 cd %GOPATH%\src\github.com\StackVista\stackstate-agent
-cmd /c mkvirtualenv venv
+call mkvirtualenv venv
 cd %GOPATH%\src\github.com\StackVista\stackstate-agent
 echo cd %GOPATH%\src\github.com\StackVista\stackstate-agent
 pip install -r requirements.txt
