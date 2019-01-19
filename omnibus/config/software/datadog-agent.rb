@@ -42,8 +42,9 @@ build do
   env = with_embedded_path(env)
 
   # STS: apply branding
-
-  command "invoke -e agent.apply-branding", env: env
+  unless windows?  # TODO: [VS] fix branding for windows
+    command "invoke -e agent.apply-branding", env: env
+  end
 
   # we assume the go deps are already installed before running omnibus
   command "invoke -e agent.build --rebuild --use-embedded-libs --no-development", env: env
@@ -69,7 +70,7 @@ build do
 
   ## build the custom action library required for the install
   if windows?
-    command "invoke customaction.build"
+#    command "invoke customaction.build"  # [VS] TODO: fix building
   end
 
   # move around bin and config files

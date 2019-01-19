@@ -66,6 +66,16 @@
         name: awscli
         state: present
 
+    - name: Install Visual studio 2017 community
+      win_chocolatey:
+        name: visualstudio2017community
+        state: present
+
+    - name: Install Wix tool set
+      win_chocolatey:
+        name: wixtoolset
+        state: present
+
     - name: Fix spotted bundler issue
       win_shell: gem update --system 2.3.0
       args:
