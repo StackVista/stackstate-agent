@@ -77,6 +77,8 @@ deps-rpm:
 deps-windows:
   stage: prepare
   before_script:
+    - set WIN_CI_PROJECT_DIR=%CD%
+    - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
     - call .gitlab-scripts/windows_build_env.cmd
   script:
     - set WIN_CI_PROJECT_DIR=%CD%
