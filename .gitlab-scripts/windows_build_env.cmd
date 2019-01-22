@@ -2,7 +2,7 @@ REM set WIN_CI_PROJECT_DIR=%CD%
 REM set WORKON_HOME=%WIN_CI_PROJECT_DIR%
 
 IF EXIST c:\deps GOTO C_DEPS_EXIST
-call %WIN_CI_PROJECT_DIR%\pkg_configs.cmd
+call %WIN_CI_PROJECT_DIR%\.gitlab-scripts\pkg_configs.cmd
 :C_DEPS_EXIST
 
 if exist .omnibus rd /s/q .omnibus

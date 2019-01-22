@@ -120,6 +120,31 @@
     - name: Tune git config
       win_command: "git config --global user.name \"Windows Gitlab Runner Instance\""
 
+    - name: Create gopath directory
+      win_file:
+        path: "C:\\gopath"
+        state: directory
+
+    - name: ENV | GOPATH
+      win_environment:
+        state: present
+        name: GOPATH
+        value: "c:\\gopath"
+        level: machine
+
+    - name: ENV | GOROOT
+      win_environment:
+        state: present
+        name: GOROOT
+        value: "c:\\tools\\go"
+        level: machine
+
+    - name: ENV | GOBIN
+      win_environment:
+        state: present
+        name: GOBIN
+        value: "c:\\tools\\go\\bin"
+        level: machine
 
 
 
