@@ -61,6 +61,7 @@ build do
       else
           binary = "stackstate-trace-agent-#{trace_agent_version}.exe"
           url = "https://s3-eu-west-1.amazonaws.com/stackstate-trace-agent-2-test/#{binary}"
+          mkdir "#{gopath.to_path}/bin"
           curl_cmd = "powershell -Command wget -OutFile #{gopath.to_path}/bin/#{trace_agent_binary} #{url}"
           command curl_cmd
       end
