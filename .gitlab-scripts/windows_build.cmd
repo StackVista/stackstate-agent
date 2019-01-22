@@ -5,6 +5,6 @@ set
 
 dir
 
-call venv/Scripts/activate.bat
+call %WORKON_HOME%\venv\Scripts\activate.bat
 
 
