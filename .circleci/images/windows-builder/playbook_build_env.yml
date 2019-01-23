@@ -10,6 +10,11 @@
         name: conemu
         state: present
 
+    - name: Install sysinternals
+      win_chocolatey:
+        name: sysinternals
+        state: present
+
     - name: Install go
       win_chocolatey:
         name: golang
@@ -149,6 +154,16 @@
 
     - name: Tune git config
       win_command: "git config --global user.name \"Windows Gitlab Runner Instance\""
+
+    - name: Tune git config for system
+      win_psexec:
+        command: "git config --global user.email \"gitlab@windowsrunner.local\""
+        system: yes
+
+    - name: Tune git config for system
+      win_psexec:
+        command: "git config --global user.name \"Windows Gitlab Runner Instance\""
+        system: yes
 
     - name: Create gopath directory
       win_file:
