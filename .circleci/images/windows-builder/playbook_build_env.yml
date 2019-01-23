@@ -55,9 +55,10 @@
         version: 2.4.3.1
 
     - name: Install msys2
-      win_chocolatey:
-        name: msys2
-        state: present
+      win_shell: choco install msys2
+#      win_chocolatey:
+#        name: msys2
+#        state: present
 
     - name: Install python virtualwrapper
       win_shell: pip install virtualenvwrapper-win
@@ -69,7 +70,7 @@
         name: make
         state: present
 
-    - name: Support for Makefiles
+    - name: 7zip
       win_chocolatey:
         name: 7zip
         state: present
@@ -87,19 +88,22 @@
         package_params: "--norestart --wait --quiet --locale en-US --add Microsoft.VisualStudio.Workload.NativeDesktop"
 #        package_params: "--allWorkloads --includeRecommended --includeOptional --passive --locale en-US"
 
-    - name: Install Wix tool set
-      win_chocolatey:
-        name: wixtoolset
-        state: present
-      ignore_errors: true
-      register: dotnet35_try1
+# HANGS TODO: replace with exe install from  https://github.com/wixtoolset/wix3/releases/tag/wix3111rtm  ?
+    # - name: Install Wix tool set
+    #   win_shell: choco install wixtoolset
+    #   # win_chocolatey:
+    #   #   name: wixtoolset
+    #   #   state: present
+    #   ignore_errors: true
+    #   register: dotnet35_try1
 
-    - name: Install Wix tool set
-      win_chocolatey:
-        name: wixtoolset
-        state: present
-      when: dotnet35_try1 is failed
-      ignore_errors: true
+    # - name: Install Wix tool set
+    #   win_shell: choco install wixtoolset
+    #   # win_chocolatey:
+    #   #   name: wixtoolset
+    #   #   state: present
+    #   when: dotnet35_try1 is failed
+    #   ignore_errors: true
 
 
     - name: Install hg
@@ -181,5 +185,5 @@
         level: machine
 
     - name: ridk install 1 2 3 woodo magic - does not break if msys from choco installed
-      win_command: "ridk install 1 2 3"
+      win_shell: "ridk install 1 2 3"
 

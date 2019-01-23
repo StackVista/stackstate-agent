@@ -1,8 +1,14 @@
 resource "aws_instance" "gitlab-runner" {
 
   ami = "${lookup(var.WIN_AMIS, "base2016")}"
-  instance_type = "t2.micro"
+  instance_type = "t3.large"
   security_groups = ["winrms-open"]
+
+  root_block_device {
+    volume_size = "200"
+    volume_type = "standard"
+  }
+
   tags {
     Name = "Windows Gitlab Runner"
   }
