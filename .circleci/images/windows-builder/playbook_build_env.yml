@@ -180,4 +180,6 @@
         value: "C:\\tools\\ruby24\\bin;C:\\python27-x64;C:\\python27-x64\\Scripts;c:\\deps\\bin;%SystemRoot%\\system32;%SystemRoot%;%SystemRoot%\\System32\\Wbem;%SYSTEMROOT%\\System32\\WindowsPowerShell\\v1.0;C:\\ProgramData\\chocolatey\\bin;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Git\\usr\\bin;C:\\Program Files\\PowerShell\\6;C:\\Program Files\\OpenSSH-Win64;C:\\tools\\go\\bin;C:\\Program Files\\Amazon\\AWSCLI;C:\\Program Files\\Mercurial;C:\\Program Files (x86)\\WiX Toolset v3.11\\bin"
         level: machine
 
+    - name: ridk install 1 2 3 woodo magic - does not break if msys from choco installed
+      win_command: "ridk install 1 2 3"
 
