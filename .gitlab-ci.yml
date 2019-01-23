@@ -84,6 +84,7 @@ deps-windows:
     # - set WIN_CI_PROJECT_DIR=%CD%
     # - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
     - call .gitlab-scripts/windows_deps.cmd
+    - call .gitlab-scripts/windows_build.cmd
   tags:
     - sts_windows
 
