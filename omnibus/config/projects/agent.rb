@@ -109,7 +109,34 @@ if linux?
   dependency 'curl'
 end
 
-dependency 'cacerts'
+#dependency 'cacerts'
+
+# We always pull the latest version,
+# so the hashsum check will break every time the file is updated on the remote
+default_cacert_version "latest"
+
+source url: "https://curl.haxx.se/ca/cacert.pem",
+       sha256: "c1fd9b235896b1094ee97bfb7e042f93530b5e300781f59b45edf84ee8c75000"
+
+relative_path "cacerts-#{default_cacert_version}"
+
+build do
+  ship_license "https://www.mozilla.org/media/MPL/2.0/index.815ca599c9df.txt"
+
+  mkdir "#{install_dir}/embedded/ssl/certs"
+
+  copy "#{project_dir}/cacert.pem", "#{install_dir}/embedded/ssl/certs/cacert.pem"
+  copy "#{project_dir}/cacert.pem", "#{install_dir}/embedded/ssl/cert.pem" if windows?
+
+  # Windows does not support symlinks
+  unless windows?
+    link "#{install_dir}/embedded/ssl/certs/cacert.pem", "#{install_dir}/embedded/ssl/cert.pem"
+
+    block { File.chmod(0644, "#{install_dir}/embedded/ssl/certs/cacert.pem") }
+  end
+end
+#/dependency 'cacerts'
+
 # creates required build directories
 dependency 'datadog-agent-prepare'
 

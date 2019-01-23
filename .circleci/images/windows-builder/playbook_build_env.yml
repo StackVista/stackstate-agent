@@ -87,22 +87,20 @@
         package_params: "--norestart --wait --quiet --locale en-US --add Microsoft.VisualStudio.Workload.NativeDesktop"
 #        package_params: "--allWorkloads --includeRecommended --includeOptional --passive --locale en-US"
 
-    - name: Install dotnet35 for wix
+    - name: Install Wix tool set
       win_chocolatey:
-        name: dotnet3.5
+        name: wixtoolset
         state: present
+      ignore_errors: true
       register: dotnet35_try1
-
-    - name: Install dotnet35 for wix
-      win_chocolatey:
-        name: dotnet3.5
-        state: present
-      when: dotnet35_try1 is failed
 
     - name: Install Wix tool set
       win_chocolatey:
         name: wixtoolset
         state: present
+      when: dotnet35_try1 is failed
+      ignore_errors: true
+
 
     - name: Install hg
       win_chocolatey:
