@@ -47,11 +47,6 @@
         state: present
       when: vcpython27_try1 is failed
 
-#    - name: Install vcredist-all
-#      win_chocolatey:
-#        name: vcredist-all
-#        state: present
-
     # choco install ruby --version 2.4.3.1
     - name: Install ruby 2.4.3.1
       win_chocolatey:
@@ -59,22 +54,10 @@
         state: present
         version: 2.4.3.1
 
-    # - name: Install Mingw
-    #   win_chocolatey:
-    #     name: mingw
-    #     state: present
-    #     version: '8.1.0'
-
-
-    # - name: Install ruby2.devkit
-    #   win_chocolatey:
-    #     name: ruby2.devkit
-    #     state: present
-
-    # - name: Install msys2
-    #   win_chocolatey:
-    #     name: msys2
-    #     state: present
+    - name: Install msys2
+      win_chocolatey:
+        name: msys2
+        state: present
 
     - name: Install python virtualwrapper
       win_shell: pip install virtualenvwrapper-win
@@ -191,5 +174,12 @@
         value: "c:\\tools\\go\\bin"
         level: machine
 
+
+    - name: ENV | DIRTY PATH
+      win_environment:
+        state: present
+        name: PATH
+        value: "C:\\tools\\ruby24\\bin;C:\\python27-x64;C:\\python27-x64\\Scripts;c:\\deps\\bin;%SystemRoot%\\system32;%SystemRoot%;%SystemRoot%\\System32\\Wbem;%SYSTEMROOT%\\System32\\WindowsPowerShell\\v1.0;C:\\ProgramData\\chocolatey\\bin;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Git\\usr\\bin;C:\\Program Files\\PowerShell\\6;C:\\Program Files\\OpenSSH-Win64;C:\\tools\\go\\bin;C:\\Program Files\\Amazon\\AWSCLI;C:\\Program Files\\Mercurial;C:\\Program Files (x86)\\WiX Toolset v3.11\\bin"
+        level: machine
 
 

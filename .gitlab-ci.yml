@@ -85,6 +85,12 @@ deps-windows:
     # - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
     - call .gitlab-scripts/windows_deps.cmd
     - call .gitlab-scripts/windows_build.cmd
+  after_script:
+    - copy %GOPATH%\src\github.com\StackVista\stackstate-agent\omnibus\pkg\*.msi
+  artifacts:
+    expire_in: 2 weeks
+    paths:
+      - ./*.msi
   tags:
     - sts_windows
 
