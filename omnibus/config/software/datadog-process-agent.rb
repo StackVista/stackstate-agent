@@ -21,7 +21,7 @@ build do
   if windows?
     binary = "stackstate-process-agent-#{version}.exe"
     target_binary = "process-agent.exe"
-    url = "https://s3.amazonaws.com/stackstate-process-agent-2-test/#{binary}"
+    url = "https://stackstate-process-agent-2-test.s3.amazonaws.com/#{binary}"
     curl_cmd = "powershell -Command wget -OutFile #{binary} #{url}"
     command curl_cmd
     command "mv #{binary} #{install_dir}/bin/agent/#{target_binary}"
