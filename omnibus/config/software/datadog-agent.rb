@@ -20,9 +20,6 @@ end
 
 # Actual dependencies
 dependency 'python'
-if windows? # [VS] temporary workaround force recent pip
-    command "\"C:\opt\stackstate-agent\embedded\python.exe\" -m pip install --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade pip"
-end
 unless windows?
   dependency 'net-snmp-lib'
 end
@@ -43,6 +40,10 @@ build do
   }
   # include embedded path (mostly for `pkg-config` binary)
   env = with_embedded_path(env)
+
+  if windows? # [VS] temporary workaround force recent pip
+      command "\"C:\opt\stackstate-agent\embedded\python.exe\" -m pip install --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade pip"
+  end
 
   # STS: apply branding
   unless windows?  # TODO: [VS] fix branding for windows
