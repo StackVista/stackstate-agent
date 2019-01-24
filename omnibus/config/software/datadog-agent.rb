@@ -20,6 +20,9 @@ end
 
 # Actual dependencies
 dependency 'python'
+if windows? # [VS] temporary workaround force recent pip
+    command "\"C:\opt\stackstate-agent\embedded\python.exe\" -m pip install --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade pip"
+end
 unless windows?
   dependency 'net-snmp-lib'
 end
