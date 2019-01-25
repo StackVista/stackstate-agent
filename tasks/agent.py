@@ -313,6 +313,8 @@ def omnibus_build(ctx, puppy=False, log_level="info", base_dir=None, gem_path=No
 
     with ctx.cd("omnibus"):
         env = load_release_versions(ctx)
+        # [VS] workaround for 3rd party transitive deps
+        ctx.run("gem install mixlib-cli -v '1.7.0'", env=env)
         cmd = "bundle install"
         if gem_path:
             cmd += " --path {}".format(gem_path)
