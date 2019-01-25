@@ -46,9 +46,9 @@ build do
 #   end
 
   # STS: apply branding
-  unless windows?  # TODO: [VS] fix branding for windows
-    command "invoke -e agent.apply-branding", env: env
-  end
+
+  command "invoke -e agent.apply-branding", env: env
+
 
   # we assume the go deps are already installed before running omnibus
   command "invoke -e agent.build --rebuild --use-embedded-libs --no-development", env: env
