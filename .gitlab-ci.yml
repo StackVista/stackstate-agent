@@ -76,6 +76,7 @@ deps-windows:
   before_script:
     - set WIN_CI_PROJECT_DIR=%CD%
     - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
+    - dir
     - call .gitlab-scripts/windows_build_env.cmd
   script:
     - call .gitlab-scripts/windows_deps.cmd
