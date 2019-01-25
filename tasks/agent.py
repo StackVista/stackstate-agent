@@ -77,27 +77,27 @@ def apply_branding(ctx):
     Apply stackstate branding
     """
     # Pkg config
-    do_rename(ctx, '\'"dd_url" -> "sts_url"\'', "./pkg/config")
-    do_rename(ctx, '\'"https://app.datadoghq.com" -> "http://localhost:7077"\'', "./pkg/config")
-    do_rename(ctx, '\'"DD_PROXY_HTTP" -> "STS_PROXY_HTTP"\'', "./pkg/config")
-    do_rename(ctx, '\'"DD_PROXY_HTTPS" -> "STS_PROXY_HTTPS"\'', "./pkg/config")
-    do_rename(ctx, '\'"DD_PROXY_NO_PROXY" -> "STS_PROXY_NO_PROXY"\'', "./pkg/config")
-    do_rename(ctx, '\'"DOCKER_DD_AGENT" -> "DOCKER_STS_AGENT"\'', "./pkg/config")
-    do_rename(ctx, '\'"DD" -> "STS"\'', "./pkg/config")
-    do_rename(ctx, '\'"datadog" -> "stackstate"\'', "./pkg/config")
-    do_rename(ctx, '\'"/etc/datadog-agent/conf.d" -> "/etc/stackstate-agent/conf.d"\'', "./pkg/config")
-    do_rename(ctx, '\'"/etc/datadog-agent/checks.d" -> "/etc/stackstate-agent/checks.d"\'', "./pkg/config")
-    do_rename(ctx, '\'"/opt/datadog-agent/run" -> "/op/stackstate-agent/run"\'', "./pkg/config")
+    do_rename(ctx, '"\\"dd_url\\" -> \\"sts_url\\""', "./pkg/config")
+    do_rename(ctx, '"\\"https://app.datadoghq.com\\" -> \\"http://localhost:7077\\""', "./pkg/config")
+    do_rename(ctx, '"\\"DD_PROXY_HTTP\\" -> \\"STS_PROXY_HTTP\\""', "./pkg/config")
+    do_rename(ctx, '"\\"DD_PROXY_HTTPS\\" -> \\"STS_PROXY_HTTPS\\""', "./pkg/config")
+    do_rename(ctx, '"\\"DD_PROXY_NO_PROXY\\" -> \\"STS_PROXY_NO_PROXY\\""', "./pkg/config")
+    do_rename(ctx, '"\\"DOCKER_DD_AGENT\\" -> \\"DOCKER_STS_AGENT\\""', "./pkg/config")
+    do_rename(ctx, '"\\"DD\\" -> \\"STS\\""', "./pkg/config")
+    do_rename(ctx, '"\\"datadog\\" -> \\"stackstate\\""', "./pkg/config")
+    do_rename(ctx, '"\\"/etc/datadog-agent/conf.d\\" -> \\"/etc/stackstate-agent/conf.d\\""', "./pkg/config")
+    do_rename(ctx, '"\\"/etc/datadog-agent/checks.d\\" -> \\"/etc/stackstate-agent/checks.d\\""', "./pkg/config")
+    do_rename(ctx, '"\\"/opt/datadog-agent/run\\" -> \\"/op/stackstate-agent/run\\""', "./pkg/config")
 
     # Defaults
-    do_rename(ctx, '\'"/etc/datadog-agent" -> "/etc/stackstate-agent"\'', "./cmd/agent/common")
-    do_rename(ctx, '\'"/var/log/datadog/agent.log" -> "/var/log/stackstate-agent/agent.log"\'', "./cmd/agent/common")
-    do_rename(ctx, '\'"/var/log/datadog/cluster-agent.log" -> "/var/log/stackstate-agent/cluster-agent.log"\'', "./cmd/agent/common")
-    do_rename(ctx, '\'"datadog.yaml" -> "stackstate.yaml"\'', "./cmd/agent")
-    do_rename(ctx, '\'"datadog.conf" -> "stackstate.conf"\'', "./cmd/agent")
-    do_rename(ctx, '\'"path to directory containing datadog.yaml" -> "path to directory containing stackstate.yaml"\'', "./cmd")
-    do_rename(ctx, '\'"unable to load Datadog config file: %s" -> "unable to load StackState config file: %s"\'', "./cmd/agent/common")
-    do_rename(ctx, '\'"Starting Datadog Agent v%v" -> "Starting StackState Agent v%v"\'', "./cmd/agent/app")
+    do_rename(ctx, '"\\"/etc/datadog-agent\\" -> \\"/etc/stackstate-agent\\""', "./cmd/agent/common")
+    do_rename(ctx, '"\\"/var/log/datadog/agent.log\\" -> \\"/var/log/stackstate-agent/agent.log\\""', "./cmd/agent/common")
+    do_rename(ctx, '"\\"/var/log/datadog/cluster-agent.log\\" -> \\"/var/log/stackstate-agent/cluster-agent.log\\""', "./cmd/agent/common")
+    do_rename(ctx, '"\\"datadog.yaml\\" -> \\"stackstate.yaml\\""', "./cmd/agent")
+    do_rename(ctx, '"\\"datadog.conf\\" -> \\"stackstate.conf\\""', "./cmd/agent")
+    do_rename(ctx, '"\\"path to directory containing datadog.yaml\\" -> \\"path to directory containing stackstate.yaml\\""', "./cmd")
+    do_rename(ctx, '"\\"unable to load Datadog config file: %s\\" -> \\"unable to load StackState config file: %s\\""', "./cmd/agent/common")
+    do_rename(ctx, '"\\"Starting Datadog Agent v%v\\" -> \\"Starting StackState Agent v%v\\""', "./cmd/agent/app")
 
 @task
 def build(ctx, rebuild=False, race=False, build_include=None, build_exclude=None,
