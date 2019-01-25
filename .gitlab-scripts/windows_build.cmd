@@ -18,4 +18,6 @@ git config --global user.email "gitlab@runner.some"
 echo git config --global user.name "Gitlab runner"
 git config --global user.name "Gitlab runner"
 
+gem install mixlib-cli -v '1.7.0'
+
 inv -e agent.omnibus-build --skip-sign --log-level debug --skip-deps
