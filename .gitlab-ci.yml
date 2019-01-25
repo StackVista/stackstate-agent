@@ -15,9 +15,6 @@ variables:
   STS_AWS_RELEASE_BUCKET_YUM: stackstate-agent-2-rpm
   STS_AWS_TEST_BUCKET_YUM: stackstate-agent-2-rpm-test
 
-  OMNIBUS_BASE_DIR_WIN: c:\omni-base\$CI_RUNNER_ID
-  OMNIBUS_BASE_DIR_WIN_OMNIBUS: c:/omni-base/$CI_RUNNER_ID
-
 before_script:
  - mkdir -p /go/src/github.com/StackVista
  - ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
@@ -37,6 +34,36 @@ dependencies_clear_cache:
   script:
     - rm -rf $CI_PROJECT_DIR/venv
     - rm -rf $CI_PROJECT_DIR/vendor
+
+dependencies_clear_cache_rpm:
+  stage: prepare
+  before_script: []
+  cache:
+    policy: push
+    key: "agent-deps-rpm"
+    paths:
+      - vendor
+      - venv
+  when: manual
+  script:
+    - rm -rf $CI_PROJECT_DIR/venv
+    - rm -rf $CI_PROJECT_DIR/vendor
+
+dependencies_clear_cache_windows:
+  stage: prepare
+  before_script:
+    - set WIN_CI_PROJECT_DIR=%CD%
+    - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
+  cache:
+    policy: push
+    key: "agent-deps-win"
+    paths:
+      - vendor
+      - venv
+  when: manual
+  script:
+    - "if exist %WIN_CI_PROJECT_DIR%\vendor rd /s/q %WIN_CI_PROJECT_DIR%\vendor"
+    - "if exist %WIN_CI_PROJECT_DIR%\venv rd /s/q %WIN_CI_PROJECT_DIR%\venv"
 
 deps:
   stage: prepare
@@ -80,18 +107,20 @@ deps-windows:
   before_script:
     - set WIN_CI_PROJECT_DIR=%CD%
     - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
-    - call .gitlab-scripts/windows_build_env.cmd
-  script:
-    # - set WIN_CI_PROJECT_DIR=%CD%
-    # - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
-    - call .gitlab-scripts/windows_deps.cmd
-    - call .gitlab-scripts/windows_build.cmd
-  after_script:
-    - copy %GOPATH%\src\github.com\StackVista\stackstate-agent\omnibus\pkg\*.msi
-  artifacts:
-    expire_in: 2 weeks
+  cache:
+    key: "agent-deps-win"
     paths:
-      - ./*.msi
+      - vendor
+      - venv
+  script:
+    - call .gitlab-scripts/windows_build_env.cmd
+    - call .gitlab-scripts/windows_deps.cmd
+  artifacts:
+    paths:
+        - "vendor"
+        - "venv"
+        - "version.txt"
+    expire_in: 1 week
   tags:
     - sts_windows
 
@@ -163,6 +192,21 @@ build_deb_clear_cache:
     - mkdir -p .omnibus
     - rm -rf .omnibus/*
     - rm -rf vendor
+
+build_rpm_clear_cache:
+  stage: build_and_test
+  cache:
+    policy: push
+    key: "agent-build_publish_rpm"
+    paths:
+      - .omnibus
+      - vendor
+  when: manual
+  script:
+    - mkdir -p .omnibus
+    - rm -rf .omnibus/*
+    - rm -rf vendor
+
 
 build_deb:
   stage: build_and_test
@@ -257,6 +301,24 @@ build_rpm:
         - $CI_PROJECT_DIR/outcomes/Dockerfiles/manifests
     expire_in: 1 week
 
+build_win:
+  stage: build_and_test
+  dependencies:
+    - deps-windows
+  before_script: []
+  script:
+    - set WIN_CI_PROJECT_DIR=%CD%
+    - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
+    - call .gitlab-scripts/windows_build_env.cmd
+    - call .gitlab-scripts/windows_build.cmd
+  after_script:
+    - copy %GOPATH%\src\github.com\StackVista\stackstate-agent\omnibus\pkg\*.msi
+  artifacts:
+    expire_in: 2 weeks
+    paths:
+      - ./*.msi
+  tags:
+    - sts_windows
 
 test_deb_renaming:
   stage: pre_release
