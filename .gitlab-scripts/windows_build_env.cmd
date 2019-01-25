@@ -15,9 +15,11 @@ REM mkdir %GOPATH%\src\github.com\StackVista\stackstate-agent
 REM xcopy /q/h/e/s * %GOPATH%\src\github.com\StackVista\stackstate-agent
 mklink /J %GOPATH%\src\github.com\StackVista\stackstate-agent %WIN_CI_PROJECT_DIR%
 cd %GOPATH%\src\github.com\StackVista\stackstate-agent
+IF EXIST %GOPATH%\src\github.com\StackVista\stackstate-agent\venv GOTO VENV_EXIST
 call mkvirtualenv venv
 cd %GOPATH%\src\github.com\StackVista\stackstate-agent
 echo cd %GOPATH%\src\github.com\StackVista\stackstate-agent
 pip install -r requirements.txt
+:VENV_EXIST
 
 gem install mixlib-cli -v '1.7.0'
