@@ -23,7 +23,6 @@ before_script:
 
 dependencies_clear_cache:
   stage: prepare
-  before_script: []
   cache:
     policy: push
     key: "agent-deps"
@@ -72,6 +71,30 @@ deps-rpm:
         - $CI_PROJECT_DIR/version.txt
     expire_in: 1 week
 
+deps-windows:
+  stage: prepare
+  before_script:
+    - set WIN_CI_PROJECT_DIR=%CD%
+    - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
+  script:
+    - call .gitlab-scripts/windows_build_env.cmd
+    - call .gitlab-scripts/windows_deps.cmd
+  cache:
+    key: "agent-deps-win"
+    paths:
+      - vendor
+      - venv
+  script:
+    - call .gitlab-scripts/windows_build_env.cmd
+    - call .gitlab-scripts/windows_deps.cmd
+  artifacts:
+    paths:
+        - "%WIN_CI_PROJECT_DIR%\\vendor"
+        - "%WIN_CI_PROJECT_DIR%\\venv"
+        - "%WIN_CI_PROJECT_DIR%\\version.txt"
+    expire_in: 1 week
+  tags:
+    - sts_windows
 
 unit_tests:
   stage: build_and_test
@@ -235,6 +258,24 @@ build_rpm:
         - $CI_PROJECT_DIR/outcomes/Dockerfiles/manifests
     expire_in: 1 week
 
+build_win:
+  stage: build_and_test
+  dependencies:
+    - deps-windows
+  before_script:
+    - set WIN_CI_PROJECT_DIR=%CD%
+    - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
+    - call .gitlab-scripts/windows_build_env.cmd
+  script:
+    - call .gitlab-scripts/windows_build.cmd
+  after_script:
+    - copy %GOPATH%\src\github.com\StackVista\stackstate-agent\omnibus\pkg\*.msi
+  artifacts:
+    expire_in: 2 weeks
+    paths:
+      - ./*.msi
+  tags:
+    - sts_windows
 
 test_deb_renaming:
   stage: pre_release
