@@ -117,9 +117,9 @@ deps-windows:
     - call .gitlab-scripts/windows_deps.cmd
   artifacts:
     paths:
-        - "%WIN_CI_PROJECT_DIR%\\vendor"
-        - "%WIN_CI_PROJECT_DIR%\\venv"
-        - "%WIN_CI_PROJECT_DIR%\\version.txt"
+        - "vendor"
+        - "venv"
+        - "version.txt"
     expire_in: 1 week
   tags:
     - sts_windows
@@ -290,11 +290,11 @@ build_win:
   stage: build_and_test
   dependencies:
     - deps-windows
-  before_script:
+  before_script: []
+  script:
     - set WIN_CI_PROJECT_DIR=%CD%
     - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
     - call .gitlab-scripts/windows_build_env.cmd
-  script:
     - call .gitlab-scripts/windows_build.cmd
   after_script:
     - copy %GOPATH%\src\github.com\StackVista\stackstate-agent\omnibus\pkg\*.msi

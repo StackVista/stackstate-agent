@@ -109,7 +109,7 @@ if linux?
   dependency 'curl'
 end
 
-dependency 'cacerts_override' # [VS] _override
+dependency 'cacerts' # [VS] _override
 # creates required build directories
 dependency 'datadog-agent-prepare'
 
