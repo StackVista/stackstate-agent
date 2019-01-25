@@ -20,6 +20,10 @@
         to_port: 7077
         cidr_ip: '0.0.0.0/0'
       - proto: tcp
+        from_port: 443  # HTTPS Port
+        to_port: 443
+        cidr_ip: '0.0.0.0/0'
+      - proto: tcp
         from_port: "{{ test_connection_port_before_start }}"
         to_port: "{{ test_connection_port_before_start }}"
         cidr_ip: '0.0.0.0/0'
@@ -100,7 +104,7 @@
       retries: 300
       with_items: "{{ server.results }}"
 
-    - debug: var="ec2_jobs"
+    # - debug: var="ec2_jobs"
 
     # Mandatory configuration for Molecule to function.
 
