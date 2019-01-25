@@ -15,6 +15,9 @@ variables:
   STS_AWS_RELEASE_BUCKET_YUM: stackstate-agent-2-rpm
   STS_AWS_TEST_BUCKET_YUM: stackstate-agent-2-rpm-test
 
+  OMNIBUS_BASE_DIR_WIN: c:\omni-base\$CI_RUNNER_ID
+  OMNIBUS_BASE_DIR_WIN_OMNIBUS: c:/omni-base/$CI_RUNNER_ID
+
 before_script:
  - mkdir -p /go/src/github.com/StackVista
  - ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
@@ -72,6 +75,25 @@ deps-rpm:
         - $CI_PROJECT_DIR/version.txt
     expire_in: 1 week
 
+deps-windows:
+  stage: prepare
+  before_script:
+    - set WIN_CI_PROJECT_DIR=%CD%
+    - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
+    - call .gitlab-scripts/windows_build_env.cmd
+  script:
+    # - set WIN_CI_PROJECT_DIR=%CD%
+    # - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
+    - call .gitlab-scripts/windows_deps.cmd
+    - call .gitlab-scripts/windows_build.cmd
+  after_script:
+    - copy %GOPATH%\src\github.com\StackVista\stackstate-agent\omnibus\pkg\*.msi
+  artifacts:
+    expire_in: 2 weeks
+    paths:
+      - ./*.msi
+  tags:
+    - sts_windows
 
 unit_tests:
   stage: build_and_test
