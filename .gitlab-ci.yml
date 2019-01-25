@@ -193,6 +193,21 @@ build_deb_clear_cache:
     - rm -rf .omnibus/*
     - rm -rf vendor
 
+build_rpm_clear_cache:
+  stage: build_and_test
+  cache:
+    policy: push
+    key: "agent-build_publish_rpm"
+    paths:
+      - .omnibus
+      - vendor
+  when: manual
+  script:
+    - mkdir -p .omnibus
+    - rm -rf .omnibus/*
+    - rm -rf vendor
+
+
 build_deb:
   stage: build_and_test
   tags:

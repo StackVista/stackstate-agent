@@ -21,5 +21,3 @@ cd %GOPATH%\src\github.com\StackVista\stackstate-agent
 echo cd %GOPATH%\src\github.com\StackVista\stackstate-agent
 pip install -r requirements.txt
 :VENV_EXIST
-
-gem install mixlib-cli -v '1.7.0'
