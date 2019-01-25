@@ -19,3 +19,5 @@ call mkvirtualenv venv
 cd %GOPATH%\src\github.com\StackVista\stackstate-agent
 echo cd %GOPATH%\src\github.com\StackVista\stackstate-agent
 pip install -r requirements.txt
+
+gem install mixlib-cli -v '1.7.0'
