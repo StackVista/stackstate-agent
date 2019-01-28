@@ -341,6 +341,15 @@ pre_release_deb:
     - cd $CI_PROJECT_DIR && inv release.generate-install -t
     - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET']).object('install.sh').upload_file('./install.sh', acl:'public-read')"
 
+pre_release_win:
+  stage: pre_release
+  dependencies:
+    - build_win
+  script:
+    - aws.exe s3 cp . s3://stackstate-agent-2-test/windows/%%CI_COMMIT_REF_NAME%% --recursive --exclude "*" --include "*.exe"
+  tags:
+    - sts_windows
+
 
 pre_release_rpm:
   stage: pre_release
