@@ -345,8 +345,9 @@ pre_release_win:
   stage: pre_release
   dependencies:
     - build_win
+  before_script: []
   script:
-    - aws.exe s3 cp . s3://stackstate-agent-2-test/windows/%%CI_COMMIT_REF_NAME%% --recursive --exclude "*" --include "*.exe"
+    - aws.exe s3 cp . s3://stackstate-agent-2-test/windows/%CI_COMMIT_REF_NAME% --recursive --exclude "*" --include "*.msi"
   tags:
     - sts_windows
 
