@@ -4,6 +4,8 @@ resource "aws_instance" "gitlab-runner" {
   instance_type = "t3.large"
   security_groups = ["winrms-open"]
 
+  key_name = "${var.KEY_NAME}"
+
   root_block_device {
     volume_size = "200"
     volume_type = "standard"
@@ -64,7 +66,7 @@ check:
 
 provision:
         ansible_gitlab_runner.sh
-	
+
 MAKEFILE
 
   hostsfile = <<HOSTS

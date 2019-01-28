@@ -17,3 +17,6 @@ variable "INSTANCE_USERNAME" {
 variable "INSTANCE_PASSWORD" {
   default = "Bionic!"
 }
+variable "KEY_NAME" {
+  default = "ServersBasicAccessKey1"
+}
