@@ -19,14 +19,14 @@ func onRestart() {
 }
 func onStart() {
 	if err := app.StartService(nil, nil); err != nil {
-		log.Warnf("Failed to start datadog service %v", err)
+		log.Warnf("Failed to start stackstate service %v", err)
 	}
 
 }
 
 func onStop() {
 	if err := app.StopService(app.ServiceName, true); err != nil {
-		log.Warnf("Failed to stop datadog service %v", err)
+		log.Warnf("Failed to stop stackstate service %v", err)
 	}
 
 }

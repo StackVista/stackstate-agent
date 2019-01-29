@@ -32,7 +32,7 @@ var (
 	menuitems []menuItem
 	ni        *walk.NotifyIcon
 	launchgui bool
-	eventname = syscall.StringToUTF16Ptr("ddtray-event")
+	eventname = syscall.StringToUTF16Ptr("ststray-event")
 )
 
 func init() {
@@ -117,7 +117,7 @@ func main() {
 		}
 
 		if err := ni.ShowCustom(
-			"Datadog Agent Manager",
+			"StackState Agent Manager",
 			"Please right click to display available options."); err != nil {
 
 			log.Warnf("Failed to show custom message %v", err)
@@ -159,7 +159,7 @@ func enableLoggingToFile() {
 	seeConfig := `
 	<seelog minlevel="debug">
 	<outputs>
-		<rollingfile type="size" filename="c:\\ProgramData\\DataDog\\Logs\\ddtray.log" maxsize="1000000" maxrolls="2" />
+		<rollingfile type="size" filename="c:\\ProgramData\\StackState\\Logs\\ststray.log" maxsize="1000000" maxrolls="2" />
 	</outputs>
 	</seelog>`
 	logger, _ := seelog.LoggerFromConfigAsBytes([]byte(seeConfig))
