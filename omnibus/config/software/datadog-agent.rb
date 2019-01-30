@@ -45,11 +45,6 @@ build do
 #       command "\"C:\\opt\\stackstate-agent\\embedded\\python.exe\" -m pip install --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade pip"
 #   end
 
-  # STS: apply branding
-
-  command "invoke -e agent.apply-branding", env: env
-
-
   # we assume the go deps are already installed before running omnibus
   command "invoke -e agent.build --rebuild --use-embedded-libs --no-development", env: env
   if windows?
