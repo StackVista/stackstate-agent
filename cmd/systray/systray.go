@@ -159,7 +159,7 @@ func enableLoggingToFile() {
 	seeConfig := `
 	<seelog minlevel="debug">
 	<outputs>
-		<rollingfile type="size" filename="c:\\ProgramData\\StackState\\Logs\\ststray.log" maxsize="1000000" maxrolls="2" />
+		<rollingfile type="size" filename="c:\\ProgramData\\Stackstate\\Logs\\ststray.log" maxsize="1000000" maxrolls="2" />
 	</outputs>
 	</seelog>`
 	logger, _ := seelog.LoggerFromConfigAsBytes([]byte(seeConfig))

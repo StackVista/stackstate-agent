@@ -5,4 +5,4 @@
 
 package main
 
-const defaultLogFile = "c:\\programdata\\datadog\\logs\\dogstatsd.log"
+const defaultLogFile = "c:\\programdata\\stackstate\\logs\\dogstatsd.log"

@@ -16,7 +16,7 @@ import (
 )
 
 // ServiceName is the name that'll be used to register the Agent
-const ServiceName = "DatadogAgent"
+const ServiceName = "StackstateAgent"
 
 func init() {
 	AgentCmd.AddCommand(instsvcCommand)
@@ -46,7 +46,7 @@ func installService(cmd *cobra.Command, args []string) error {
 		s.Close()
 		return fmt.Errorf("service %s already exists", ServiceName)
 	}
-	s, err = m.CreateService(ServiceName, exepath, mgr.Config{DisplayName: "Datadog Agent Service"})
+	s, err = m.CreateService(ServiceName, exepath, mgr.Config{DisplayName: "StackState Agent Service"})
 	if err != nil {
 		return err
 	}

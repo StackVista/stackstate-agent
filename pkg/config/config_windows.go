@@ -6,8 +6,8 @@
 package config
 
 const (
-	defaultConfdPath            = "c:\\programdata\\datadog\\conf.d"
-	defaultAdditionalChecksPath = "c:\\programdata\\datadog\\checks.d"
+	defaultConfdPath            = "c:\\programdata\\stackstate\\conf.d"
+	defaultAdditionalChecksPath = "c:\\programdata\\stackstate\\checks.d"
 	defaultRunPath              = ""
 	defaultSyslogURI            = ""
 	defaultGuiPort              = "5002"

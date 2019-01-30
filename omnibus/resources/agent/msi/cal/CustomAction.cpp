@@ -2,7 +2,7 @@
 
 static std::wstring secretUserUsername(L"stackstate_secretuser");
 static std::wstring secretUserDescription(L"StackState user used to fetch secrets from KMS");
-static std::wstring stackstate_path = L"StackState\\StackState Agent";
+static std::wstring stackstate_path = L"Stackstate\\Stackstate Agent";
 static std::wstring stackstate_key_root = L"SOFTWARE\\" + stackstate_path;
 static std::wstring stackstate_key_secret_key = L"secrets";
 static std::wstring stackstate_key_secrets = L"SOFTWARE\\" + stackstate_path + L"\\" + stackstate_key_secret_key;
@@ -269,7 +269,7 @@ int CreateUser(std::wstring& name, std::wstring& comment, bool writePassToReg) {
     WcaLog(LOGMSG_STANDARD, "Successfully created user");
     if (writePassToReg) {
 
-        // create the top level key HKLM\Software\StackState Agent\secrets.  Key must be
+        // create the top level key HKLM\Software\Stackstate Agent\secrets.  Key must be
         // created to change the ACLS.
         if (!createRegistryKey()) {
             WcaLog(LOGMSG_STANDARD, "Failed to create secret storage key");

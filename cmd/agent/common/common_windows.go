@@ -38,11 +38,11 @@ var (
 
 const (
 	// DefaultConfPath points to the folder containing datadog.yaml
-	DefaultConfPath = "c:\\programdata\\datadog"
+	DefaultConfPath = "c:\\programdata\\stackstate"
 	// DefaultLogFile points to the log file that will be used if not configured
-	DefaultLogFile = "c:\\programdata\\datadog\\logs\\agent.log"
+	DefaultLogFile = "c:\\programdata\\stackstate\\logs\\agent.log"
 	// DefaultDCALogFile points to the log file that will be used if not configured
-	DefaultDCALogFile = "c:\\programdata\\datadog\\logs\\cluster-agent.log"
+	DefaultDCALogFile = "c:\\programdata\\stackstate\\logs\\cluster-agent.log"
 )
 
 // EnableLoggingToFile -- set up logging to file
@@ -50,7 +50,7 @@ func EnableLoggingToFile() {
 	seeConfig := `
 <seelog>
 	<outputs>
-		<rollingfile type="size" filename="c:\\ProgramData\\DataDog\\Logs\\agent.log" maxsize="1000000" maxrolls="2" />
+		<rollingfile type="size" filename="c:\\ProgramData\\Stackstate\\Logs\\agent.log" maxsize="1000000" maxrolls="2" />
 	</outputs>
 </seelog>`
 	logger, _ := seelog.LoggerFromConfigAsBytes([]byte(seeConfig))
@@ -61,7 +61,7 @@ func getInstallPath() string {
 	// fetch the installation path from the registry
 	installpath := filepath.Join(_here, "..")
 	var s string
-	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\DataDog\Datadog Agent`, registry.QUERY_VALUE)
+	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\Stackstate\Stackstate Agent`, registry.QUERY_VALUE)
 	if err != nil {
 		log.Warn("Failed to open registry key %s", err)
 	} else {
@@ -128,7 +128,7 @@ func CheckAndUpgradeConfig() error {
 func ImportRegistryConfig() error {
 
 	k, err := registry.OpenKey(registry.LOCAL_MACHINE,
-		"SOFTWARE\\Datadog\\Datadog Agent",
+		"SOFTWARE\\Stackstate\\Stackstate Agent",
 		registry.ALL_ACCESS)
 	if err != nil {
 		if err == registry.ErrNotExist {

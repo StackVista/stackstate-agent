@@ -66,12 +66,12 @@
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFiles64Folder">
-        <Directory Id="APPLICATIONROOTDIRECTORY" Name="StackState">
-          <Directory Id="PROJECTLOCATION" Name="StackState Agent"/>
+        <Directory Id="APPLICATIONROOTDIRECTORY" Name="Stackstate">
+          <Directory Id="PROJECTLOCATION" Name="Stackstate Agent"/>
         </Directory>
       </Directory>
       <Directory Id="CommonAppDataFolder" SourceName="CommonAppData">
-        <Directory Id="APPLICATIONDATADIRECTORY" Name="StackState">
+        <Directory Id="APPLICATIONDATADIRECTORY" Name="Stackstate">
           <Component Id="conffolder" Guid="e540d2db-f443-4a98-bd72-7ab2654f4ffb">
             <CreateFolder>
               <Permission User="[WIX_ACCOUNT_ADMINISTRATORS]" GenericAll="yes" ChangePermission="yes"/>
@@ -82,7 +82,7 @@
         </Directory>
       </Directory>
       <Directory Id="ProgramMenuFolder">
-        <Directory Id="ApplicationProgramsFolder" Name="StackState"/>
+        <Directory Id="ApplicationProgramsFolder" Name="Stackstate"/>
       </Directory>
     </Directory>
 
@@ -100,7 +100,7 @@
       Read the path value and set the PROJECTLOCATION property with the value.
     -->
     <Property Id="PROJECTLOCATION">
-      <RegistrySearch Key="SOFTWARE\StackState\StackState Agent"
+      <RegistrySearch Key="SOFTWARE\Stackstate\Stackstate Agent"
                       Root="HKLM"
                       Type="raw"
                       Id="APPLICATIONROOTDIRECTORY_REGSEARCH"
@@ -112,7 +112,7 @@
         <!-- We need to use APPLICATIONROOTDIRECTORY variable here or RemoveFolderEx
              will not remove on "uninstall". -->
         <RegistryValue Root="HKLM"
-                       Key="SOFTWARE\StackState\StackState Agent"
+                       Key="SOFTWARE\Stackstate\Stackstate Agent"
                        Name="InstallPath"
                        Type="string"
                        Value="[PROJECTLOCATION]"/>
@@ -121,7 +121,7 @@
       <!-- Register variables that will be used by the agent at startup -->
       <Component Id="RegisterConfVariables" Guid="e2423815-704d-4f29-af3b-9baf23ef03d6">
         <RegistryKey Root="HKLM"
-                     Key="SOFTWARE\StackState\StackState Agent">
+                     Key="SOFTWARE\Stackstate\Stackstate Agent">
           <RegistryValue Name="api_key"
                          Type="string"
                          Value="[APIKEY]"/>
@@ -187,10 +187,10 @@
                 KeyPath="yes"
                 DiskId="1"
                 Source="$(var.BinFiles)/agent.exe"/>
-          <ServiceInstall Id="StackStateServiceInstaller"
+          <ServiceInstall Id="StackstateServiceInstaller"
                           DisplayName="!(loc.ServiceDisplayName)"
                           Description="!(loc.ServiceDescription)"
-                          Name="StackStateAgent"
+                          Name="StackstateAgent"
                           ErrorControl="ignore"
                           Start="auto"
                           Type="ownProcess"
@@ -206,15 +206,15 @@
               ResetPeriodInDays='1'/>
             <ServiceDependency Id="winmgmt" />
           </ServiceInstall>
-          <ServiceControl Id="StackStateStartService"
-                          Name="StackStateAgent"
+          <ServiceControl Id="StackstateStartService"
+                          Name="StackstateAgent"
                           Start="install"
                           Stop="both"
                           Remove="uninstall"
                           Wait="no" />
           <RemoveFolder Id="APPLICATIONROOTDIRECTORY" On="uninstall" />
           <!-- The "Name" field must match the argument to eventlog.Open() -->
-          <util:EventSource Log="Application" Name="StackStateAgent"
+          <util:EventSource Log="Application" Name="StackstateAgent"
                 EventMessageFile="[DIST]agent.exe"
                 SupportsErrors="yes"
                 SupportsInformationals="yes"
@@ -231,7 +231,7 @@
                 KeyPath="yes"
                 DiskId="1"
                 Source="$(var.InstallDir)/bin/agent/trace-agent.exe"/>
-            <ServiceInstall Id="StackStateAPMServiceInstaller"
+            <ServiceInstall Id="StackstateAPMServiceInstaller"
                             DisplayName="!(loc.ServiceApmDisplayName)"
                             Description="!(loc.ServiceApmDescription)"
                             Name="stackstate-trace-agent"
@@ -251,7 +251,7 @@
                 ResetPeriodInDays='1'/>
               <ServiceDependency Id="stackstateagent" />
             </ServiceInstall>
-            <ServiceControl Id="StackStateAPMStartService"
+            <ServiceControl Id="StackstateAPMStartService"
                             Name="stackstate-trace-agent"
                             Start="install"
                             Stop="both"
@@ -272,7 +272,7 @@
                 KeyPath="yes"
                 DiskId="1"
                 Source="$(var.InstallDir)/bin/agent/process-agent.exe"/>
-            <ServiceInstall Id="StackStateProcessServiceInstaller"
+            <ServiceInstall Id="StackstateProcessServiceInstaller"
                             DisplayName="!(loc.ServiceProcessDisplayName)"
                             Description="!(loc.ServiceProcessDescription)"
                             Name="stackstate-process-agent"
@@ -292,7 +292,7 @@
                 ResetPeriodInDays='1'/>
                 <ServiceDependency Id="stackstateagent" />
             </ServiceInstall>
-            <ServiceControl Id="StackStateProcessStartService"
+            <ServiceControl Id="StackstateProcessStartService"
                             Name="stackstate-process-agent"
                             Start="install"
                             Stop="both"
@@ -310,7 +310,7 @@
       </Directory>
     </DirectoryRef>
 
-    <!-- Datadog Agent specific directory definitions -->
+    <!-- StackState Agent specific directory definitions -->
     <DirectoryRef Id="ApplicationProgramsFolder">
       <Component Id="ApplicationShortcut" Guid="05206095-f4a0-4bb7-9ebd-80c7488dd7f9">
         <Shortcut Id="ApplicationStartMenuShortcut"
@@ -322,7 +322,7 @@
 
         <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall"/>
         <RegistryValue Root="HKCU"
-                       Key="Software\Microsoft\StackState"
+                       Key="Software\Microsoft\Stackstate"
                        Name="installed"
                        Type="integer"
                        Value="1"
@@ -332,7 +332,7 @@
 
     <Property Id="TUFMETALOCATION">
       <RegistrySearch Root="HKLM"
-                      Key="SOFTWARE\StackState\StackState Agent"
+                      Key="SOFTWARE\Stackstate\Stackstate Agent"
                       Type="raw"
                       Id="TUFMETADIRECTORY_REGSEARCH"
                       Name="TufMetaPath" />
@@ -385,7 +385,7 @@
            <!-- We need to use TUFMETALOCATION variable here or RemoveFolderEx
                 will not remove on "install". -->
            <RegistryValue Root="HKLM"
-                          Key="SOFTWARE\StackState\StackState Agent"
+                          Key="SOFTWARE\Stackstate\Stackstate Agent"
                           Name="TufMetaPath"
                           Type="string"
                           Value="[TUFMETALOCATION]" />
