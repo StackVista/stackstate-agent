@@ -79,8 +79,8 @@
   branch = "release-1.11"
 
 [[override]]
-  name = "github.com/CharlyF/custom-metrics-apiserver"
-  revision = "b04b53e68a77907c965b3ce7c5c0aa831b2b1a49"
+  name = "github.com/kubernetes-incubator/custom-metrics-apiserver"
+  revision = "85ebc283a57287a8fcb3ad4b488d633cd63ef7d8"
 
 [[constraint]]
   name = "github.com/gorilla/mux"
