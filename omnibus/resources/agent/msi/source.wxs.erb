@@ -180,7 +180,7 @@
       <!-- put the agent in the embedded folder so that it can find the python DLLS -->
       <Directory Id="DIST" Name="embedded">
         <!-- Windows service declaration for StackState Agent -->
-        <Component Id="DATADOGAGENTSERVICE" Guid="BCFAD885-5C69-49D3-99CB-494D14E87AAE">
+        <Component Id="STACKSTATEAGENTSERVICE" Guid="BCFAD885-5C69-49D3-99CB-494D14E87AAE">
           <File Id="agent.exe"
                 Name="agent.exe"
                 Vital="yes"
@@ -224,7 +224,7 @@
       <Directory Id="BIN" Name="bin">
         <Directory Id="AGENT" Name="agent">
           <!-- Windows service declaration for APM agent -->
-          <Component Id="DATADOGAPMSERVICE" Guid="a8e611fa-aedb-4c16-969c-bb827af0bd53">
+          <Component Id="STACKSTATEAPMSERVICE" Guid="a8e611fa-aedb-4c16-969c-bb827af0bd53">
             <File Id="trace_agent.exe"
                 Name="trace-agent.exe"
                 Vital="yes"
