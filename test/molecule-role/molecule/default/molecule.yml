@@ -16,7 +16,7 @@ platforms:
     groups:
       - agent_linux_vm
     ssh_user: ubuntu
-    user_data:
+    user_data: none.txt
   - name: agent-fedora
     image: ami-420d213b             # Fedora-Cloud-Base-28-1.1.x86_64-hvm-eu-west-1-standard-0
     instance_type: t2.micro
@@ -25,42 +25,19 @@ platforms:
     groups:
       - agent_linux_vm
     ssh_user: fedora
-    user_data:
+    user_data: none.txt
   - name: agent-win
     image: ami-0a5cbbecdba7dfe83    # amazon/Windows_Server-2016-English-Full-Base-2019.01.10 (EBS-Backed)
-    instance_type: t2.micro
+    instance_type: t3.small
     vpc_subnet_id: subnet-41c8f224  # eu-west-1a
     region: eu-west-1
     groups:
       - agent_win_vm
     ssh_user: test
     test_user: test
-    test_user_pwd: test
-    user_data: |
-      <powershell>
-      # Disable Complex Passwords
-      # Reference: http://vlasenko.org/2011/04/27/removing-password-complexity-requirements-from-windows-server-2008-core/
-      $seccfg = [IO.Path]::GetTempFileName()
-      secedit /export /cfg $seccfg
-      (Get-Content $seccfg) | Foreach-Object {$_ -replace "PasswordComplexity\s*=\s*1", "PasswordComplexity=0"} | Set-Content $seccfg
-      secedit /configure /db $env:windir\security\new.sdb /cfg $seccfg /areas SECURITYPOLICY
-      del $seccfg
-      Write-Host "Complex Passwords have been disabled." -ForegroundColor Green
+    test_user_pwd: Bionic!
+    user_data:  "winrm_advanced.txt"
 
-      # Add admin test user
-      net user test 'test' /add /y
-      net localgroup administrators test /add
-
-      # Disable Internet Explorer Security
-      # http://stackoverflow.com/a/9368555/2067999
-      $AdminKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
-      $UserKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}"
-      Set-ItemProperty -Path $AdminKey -Name "IsInstalled" -Value 0
-      Set-ItemProperty -Path $UserKey -Name "IsInstalled" -Value 0
-
-      Set-ExecutionPolicy Bypass -Scope Process -Force;
-      iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/softasap/sa-win/master/bootstrap.ps1'))
-      </powershell>
   - name: receiver
     image: ami-0da760e590e7de0e8    # Ubuntu 18.04 (EBS-Backed x86_64)
     instance_type: t2.small
@@ -69,7 +46,7 @@ platforms:
     groups:
       - receiver_vm
     ssh_user: ubuntu
-    user_data:
+    user_data: none.txt
 provisioner:
   name: ansible
   playbooks:
@@ -77,8 +54,15 @@ provisioner:
     prepare: prepare.yml
     destroy: destroy.yml
   inventory:
+    host_vars:
+      agent-win:
+        ansible_user: test
+        ansible_password: Bionic!
     group_vars:
       agent_win_vm:
+        ansible_become: false
+        ansible_port: 5986
+        ansible_winrm_scheme: https
         ansible_connection: winrm
         ansible_winrm_server_cert_validation: ignore
   lint:

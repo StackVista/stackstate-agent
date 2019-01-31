@@ -1,6 +1,6 @@
 ---
 - name: Prepare Windows Agents (pre)
-  hosts: agent_windows_vm
+  hosts: agent_win_vm
   tasks:
     - debug: msg={{ ansible_facts }}
 

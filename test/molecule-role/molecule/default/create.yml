@@ -106,7 +106,7 @@
         count_tag:
           instance: "{{ item.name }}"
           molecule_run_id: "{{ molecule_run_id }}"
-        user_data: "{{ item.user_data }}"
+        user_data: "{{ lookup('file', item.user_data) }}"
       register: server
       with_items: "{{ molecule_yml.platforms }}"
       async: 7200
