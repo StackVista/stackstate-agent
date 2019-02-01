@@ -4,6 +4,30 @@
   tasks:
     - debug: msg={{ ansible_facts }}
 
+    - name: Add test-stackstate-agent.sts to /etc/hosts
+      win_lineinfile:
+        path: C:\\Windows\\System32\\drivers\\etc\\hosts
+        line: "{{ hostvars['receiver']['ansible_host'] }} test-stackstate-agent.sts"
+        state: present
+
+    - name: Template windows installer template
+      win_copy:
+        src: files/agent-win.ps1
+        dest: C:\agent-win.ps1
+
+    - name: Install stackstate-agent (1/2)
+      win_get_url:
+        url: https://s3-eu-west-1.amazonaws.com/stackstate-agent-2-test/windows/master/stackstate-agent-2.0.0.git.443.ef0c11ef-1-x86_64.msi
+        dest: C:\stackstate-agent.msi
+
+    - debug: msg="STS_API_KEY=API_KEY STS_URL=https://test-stackstate-agent.sts/stsAgent STS_HOSTNAME={{ inventory_hostname }} SKIP_SSL_VALIDATION=true"
+
+    - name: Install stackstate-agent (2/2)
+      win_shell: Start-Process -FilePath "$env:systemroot\system32\msiexec.exe" -ArgumentList "/i C:\stackstate-agent.msi /qn /passive STS_API_KEY=API_KEY STS_URL=https://test-stackstate-agent.sts/stsAgent STS_HOSTNAME=agent-win SKIP_SSL_VALIDATION=true" -Wait
+      register: msi_result
+
+    - debug: var="msi_result"
+
 - name: Prepare Receiver
   hosts: receiver_vm
   gather_facts: false
@@ -143,6 +167,13 @@
     - name: Connect to Ubuntu Agent
       shell: nohup bash -c "yes | ncat {{ hostvars['agent-ubuntu']['ansible_host'] }} {{ test_connection_port_before_start }}" &
       become: true
+
+    - name: Add test-stackstate-agent.sts to /etc/hosts
+      become: true
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ hostvars['receiver']['ansible_host'] }} test-stackstate-agent.sts"
+
 
 - name: Prepare Linux Agents (post)
   hosts: agent_linux_vm
