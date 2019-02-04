@@ -2,7 +2,7 @@
  <Dialog Id="StsUrlDlg" Width="370" Height="270" Title="!(loc.StsUrlDialogTitle)">
 
    <Control Id="KeyFromDefault" Type="Edit" Height="15" Width="320" X="25" Y="148"
-          Property="STSURL"
+          Property="STS_URL"
          />
         <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17"
               Text="Back">
