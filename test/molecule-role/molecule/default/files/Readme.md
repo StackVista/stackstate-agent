@@ -23,6 +23,30 @@
 
 ```
 
+## X-Liner from pre-downloaded script
+
+Put overrides only into $stsAgentParams , other will be picked up from default values in install script
+
+
+```ps
+
+$stsAgentParams = @{
+    stsApiKey = 'AAAA'
+    stsUrl='BBB'
+    stsHostname='CCC'
+    stsSkipSSLValidation='true'
+    stsCodeName='DDD'
+    stsAgentVersion='EEE'
+}
+
+$ScriptPath = 'c:\agent-win.ps1'
+$sb = [scriptblock]::create(".{$(get-content $ScriptPath -Raw)} $(&{$args} @stsAgentParams)")
+Invoke-Command -ScriptBlock $sb
+
+```
+
+
+
 ## X-Liner
 
 Put overrides only into $stsAgentParams , other will be picked up from default values in install script
