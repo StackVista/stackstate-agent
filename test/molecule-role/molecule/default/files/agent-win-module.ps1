@@ -14,10 +14,18 @@ new-module -name StsAgentInstaller -scriptblock {
             [string]$stsAgentVersion = "2.0.0.git.443.ef0c11ef"
         )
 
-        Write-Host "Configured with $stsApiKey $stsUrl $stsHostname $stsSkipSSLValidation $stsCodeName $stsAgentVersion"
+        if ($stsCodeName = "master") {
+            $stsDownloadBase = "https://s3-eu-west-1.amazonaws.com/stackstate-agent-2-test/windows" #TODO: point to release base
+        }
+        else {
+            $stsDownloadBase = "https://s3-eu-west-1.amazonaws.com/stackstate-agent-2-test/windows"
+        }
 
-        $uri = "https://s3-eu-west-1.amazonaws.com/stackstate-agent-2-test/windows/master/stackstate-agent-$stsAgentVersion-1-x86_64.msi"
+        Write-Host "Building download uri from $stsDownloadBase/$stsCodeName/stackstate-agent-$stsAgentVersion-1-x86_64.msi"
+        $uri = "$stsDownloadBase/$stsCodeName/stackstate-agent-$stsAgentVersion-1-x86_64.msi"
         $out = "c:\stackstate-agent.msi"
+
+        Write-Host "Script will download installer from $uri to $out, and execute passing params $stsApiKey ; $stsUrl ; $stsHostname ; $stsSkipSSLValidation ; $stsCodeName ; $stsAgentVersion ;"
 
         Function Download_MSI_STS_Installer {
             Write-Host "About to download $uri to $out"
@@ -44,7 +52,7 @@ new-module -name StsAgentInstaller -scriptblock {
             write-host "About to install $msifile with arguments "$MSIArguments
             If ($FileExists -eq $True) {
                 Start-Process "msiexec.exe" -ArgumentList $MSIArguments -passthru | wait-process
-                write-host "Finished msi "$msifile
+                Write-Host "Finished msi "$msifile
             }
 
             Else {Write-Host "File $out doesn't exists - failed to download or corrupted. Please check."}

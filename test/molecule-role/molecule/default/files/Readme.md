@@ -67,7 +67,7 @@ $stsAgentParams = @{
 
 
 
-$ScriptPath = ((new-object net.webclient).DownloadString('https://gist.githubusercontent.com/voronenko-p/9f918443fbd2711b0d273a81c5a2b0f8/raw/71185c738c39bfc811624ef60724d7c51db49e03/gistfile1.txt'))
+$ScriptPath = ((new-object net.webclient).DownloadString('https://location/on/a/web/for/agent-win.ps1'))
 $sb = [scriptblock]::create(".{$(ScriptPath)} $(&{$args} @stsAgentParams)")
 Invoke-Command -ScriptBlock $sb
 
