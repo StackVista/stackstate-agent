@@ -104,7 +104,7 @@
         mode: "0755"
     - name: Copy Configuration files
       copy:
-        src: "../../{{ item }}"
+        src: "files/receiver/{{ item }}"
         dest: "/home/ubuntu/{{ item }}"
       with_items:
         - docker.nginx
