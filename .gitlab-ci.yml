@@ -14,6 +14,8 @@ variables:
   STS_DOCKER_TEST_REPO: stackstate-agent-2-test
   STS_AWS_RELEASE_BUCKET_YUM: stackstate-agent-2-rpm
   STS_AWS_TEST_BUCKET_YUM: stackstate-agent-2-rpm-test
+  STS_AWS_RELEASE_BUCKET_WIN: stackstate-agent-2
+  STS_AWS_TEST_BUCKET_WIN: stackstate-agent-2-test
 
 before_script:
  - mkdir -p /go/src/github.com/StackVista
@@ -348,6 +350,8 @@ pre_release_win:
   before_script: []
   script:
     - aws.exe s3 cp . s3://stackstate-agent-2-test/windows/%CI_COMMIT_REF_NAME% --recursive --exclude "*" --include "*.msi"
+    - cd $CI_PROJECT_DIR && inv release.generate-install -t
+    - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET_WIN']).object('install.ps1').upload_file('./install.ps1', acl:'public-read')"
   tags:
     - sts_windows
 

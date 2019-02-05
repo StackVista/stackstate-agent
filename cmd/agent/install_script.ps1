@@ -6,20 +6,20 @@ new-module -name StsAgentInstaller -scriptblock {
     function Install-Project {
         param (
             [Parameter(Mandatory = $true)]
-            [string]$stsApiKey = "API_KEY",
-            [string]$stsUrl = "https://test-stackstate-agent.sts/stsAgent",
+            [ValidateNotNullOrEmpty()]
+            [string]$stsApiKey,
+
+            [Parameter(Mandatory = $true)]
+            [ValidateNotNullOrEmpty()]
+            [string]$stsUrl,
+
             [string]$stsHostname = $env:computername,
-            [string]$stsSkipSSLValidation = "true",
-            [string]$stsCodeName = "master",
+            [string]$stsSkipSSLValidation = "false",
+            [string]$stsCodeName = "stable",
             [string]$stsAgentVersion = "2.0.0.git.443.ef0c11ef"
         )
 
-        if ($stsCodeName = "master") {
-            $stsDownloadBase = "https://s3-eu-west-1.amazonaws.com/stackstate-agent-2-test/windows" #TODO: point to release base
-        }
-        else {
-            $stsDownloadBase = "https://s3-eu-west-1.amazonaws.com/stackstate-agent-2-test/windows"
-        }
+        $stsDownloadBase = "$WIN_REPO"
 
         Write-Host "Building download uri from $stsDownloadBase/$stsCodeName/stackstate-agent-$stsAgentVersion-1-x86_64.msi"
         $uri = "$stsDownloadBase/$stsCodeName/stackstate-agent-$stsAgentVersion-1-x86_64.msi"
