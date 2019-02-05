@@ -73,10 +73,12 @@ Invoke-Command -ScriptBlock $sb
 
 ```
 
-# One liner with defaults only
+# One liner using module
+
+Requiries installation logic packed as a powershell module (see `agent-win-module.ps1`)
 
 ```ps
 
-. { iwr -useb https://location/on/a/web/for/agent-win.ps1 } | iex;
+. { iwr -useb https://location/on/a/web/for/agent-win-module.ps1 } | iex; install -stsApiKey AAA -stsUrl BBB -stsHostname CCC -stsSkipSSLValidation false -stsAgentVersion DD
 
 ```
