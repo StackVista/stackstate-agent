@@ -43,7 +43,7 @@
     <util:CloseApplication Id="CloseTrayApp"
                           CloseMessage="yes"
                           EndSessionMessage="yes"
-                          Target="ddtray.exe"
+                          Target="ststray.exe"
                           ElevatedCloseMessage="yes"
                           TerminateProcess="1"
                           Timeout="1"
@@ -91,7 +91,7 @@
         Directory="AGENT"
         Execute="immediate"
         Return="asyncNoWait"
-        ExeCommand="&quot;[AGENT]ddtray.exe&quot; &quot;-launch-gui&quot;" />
+        ExeCommand="&quot;[AGENT]ststray.exe&quot; &quot;-launch-gui&quot;" />
 
 
     <!-- Delete application when uninstalling -->

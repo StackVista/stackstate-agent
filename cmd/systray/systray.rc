@@ -3,7 +3,7 @@
 #define APP_MANIFEST 1
 
 
-APP_MANIFEST RT_MANIFEST ddtray.exe.manifest
+APP_MANIFEST RT_MANIFEST ststray.exe.manifest
 
 #define MAIN_ICON 1
 #define ICON_16_16 2
@@ -36,7 +36,7 @@ BEGIN
             VALUE "FileVersion", FILE_VERSION_STRING
             VALUE "InternalName", "Agent6 Systray"
             VALUE "LegalCopyright", "Copyright (C) 2018"
-            VALUE "OriginalFilename", "ddtray.exe"
+            VALUE "OriginalFilename", "ststray.exe"
             VALUE "ProductName", "Datadog Agent"
             VALUE "ProductVersion", FILE_VERSION_STRING
         END
