@@ -349,9 +349,12 @@ pre_release_win:
     - build_win
   before_script: []
   script:
+    - set WIN_CI_PROJECT_DIR=%CD%
+    - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
+    - call %WORKON_HOME%\venv\Scripts\activate.bat
     - aws.exe s3 cp . s3://stackstate-agent-2-test/windows/%CI_COMMIT_REF_NAME% --recursive --exclude "*" --include "*.msi"
-    - cd $CI_PROJECT_DIR && inv release.generate-install -t
-    - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET_WIN']).object('install.ps1').upload_file('./install.ps1', acl:'public-read')"
+    - cd %WIN_CI_PROJECT_DIR% && inv release.generate-install -t
+    - cd %WIN_CI_PROJECT_DIR%/cmd/agent && aws -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET_WIN']).object('install.ps1').upload_file('./install.ps1', acl:'public-read')"
   tags:
     - sts_windows
 
