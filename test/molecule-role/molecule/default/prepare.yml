@@ -14,7 +14,7 @@
         state: present
 
     - name: Install stackstate-agent
-      win_shell: ". { iwr -useb {{ agent_repo_url }}/install.ps1 } | iex; install -stsApiKey API_KEY -stsUrl https://test-stackstate-agent.sts/stsAgent -stsHostname {{ inventory_hostname }} $stsCodeName {{ agent_current_branch }} -stsSkipSSLValidation true"
+      win_shell: ". { iwr -useb {{ agent_repo_url }}/install.ps1 } | iex; install -stsApiKey API_KEY -stsUrl https://test-stackstate-agent.sts/stsAgent -stsHostname {{ inventory_hostname }} -stsCodeName {{ agent_current_branch }} -stsSkipSSLValidation true"
       register: install_result
 
     # - name: Install stackstate-agent (1/2)
