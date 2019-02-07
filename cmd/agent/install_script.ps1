@@ -55,7 +55,10 @@ new-module -name StsAgentInstaller -scriptblock {
                 Write-Host "Finished msi "$msifile
             }
 
-            Else {Write-Host "File $out doesn't exists - failed to download or corrupted. Please check."}
+            Else {                
+                Write-Host "File $out doesn't exists - failed to download or corrupted. Please check."
+                exit 1
+                }
         }
 
         Download_MSI_STS_Installer
