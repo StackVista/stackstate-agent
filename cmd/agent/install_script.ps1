@@ -16,7 +16,7 @@ new-module -name StsAgentInstaller -scriptblock {
             [string]$stsHostname = $env:computername,
             [string]$stsSkipSSLValidation = "false",
             [string]$stsCodeName = "stable",
-            [string]$stsAgentVersion = "2.0.0.git.443.ef0c11ef"
+            [string]$stsAgentVersion = "latest"
         )
 
         $stsDownloadBase = "$WIN_REPO"
