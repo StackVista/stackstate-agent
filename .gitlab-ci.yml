@@ -117,6 +117,7 @@ deps-windows:
   script:
     - call .gitlab-scripts/windows_build_env.cmd
     - call .gitlab-scripts/windows_deps.cmd
+    - inv version -u > version.txt
   artifacts:
     paths:
         - "vendor"
