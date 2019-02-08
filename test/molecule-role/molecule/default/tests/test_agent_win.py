@@ -8,7 +8,7 @@ testinfra_hosts = testinfra.utils.ansible_runner.AnsibleRunner(
 
 
 def test_stackstate_agent_is_installed(host):
-    pkg = "Datadog Agent"  # TODO
+    pkg = "StackState Agent"
     res = host.ansible("win_shell", "Get-Package \"{}\"".format(pkg), check=False)
     print res
     # Name             Version
@@ -27,5 +27,5 @@ def test_stackstate_agent_running_and_enabled(host):
         assert service["dependencies"] == deps
         assert service["depended_by"] == depended_by
 
-    check("datadogagent", ["winmgmt"], ["datadog-process-agent", "datadog-trace-agent"])
-    check("datadog-process-agent", ["datadogagent"], [])
+    check("stackstateagent", ["winmgmt"], ["stackstate-process-agent", "stackstate-trace-agent"])
+    check("stackstate-process-agent", ["stackstateagent"], [])
