@@ -74,7 +74,7 @@ def do_go_rename(ctx, rename, at):
 
 
 def do_sed_rename(ctx, rename, at):
-    ctx.run("sed -i {} {}".format(rename, at))
+    ctx.run("sed -i '{}' {}".format(rename, at))
 
 
 @task
@@ -108,8 +108,9 @@ def apply_branding(ctx):
     # Windows defaults
     do_sed_rename(ctx, 's/Data[dD]og/StackState/', "./cmd/agent/agent.rc")
     do_sed_rename(ctx, 's/Data[dD]og/StackState/', "./cmd/agent/app/install_service_windows.go")
-    do_sed_rename(ctx, 's/Data[dD]og/StackState/', "./cmd/agent/common/common_windows.go")
-    do_sed_rename(ctx, 's/Data[dD]og/StackState/', "./cmd/agent/common/common_windows.go")
+    # replace strings NOT containing certain pattern
+    do_sed_rename(ctx, '/config/! s/Data[dD]og/StackState/g', "./cmd/agent/common/common_windows.go")
+    do_sed_rename(ctx, 's/datadog/stackstate/', "./cmd/agent/common/common_windows.go")
     do_sed_rename(ctx, 's/dd_url/sts_url/', "./cmd/agent/common/common_windows.go")
     do_sed_rename(ctx, 's/datadog/stackstate/', "./cmd/dogstatsd/main_windows.go")
     do_sed_rename(ctx, 's/datadog/stackstate/', "./pkg/config/config_windows.go")
