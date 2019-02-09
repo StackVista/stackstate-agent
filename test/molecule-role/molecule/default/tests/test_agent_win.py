@@ -1,6 +1,6 @@
 import os
 import re
-
+import util
 import testinfra.utils.ansible_runner
 
 testinfra_hosts = testinfra.utils.ansible_runner.AnsibleRunner(
@@ -29,3 +29,20 @@ def test_stackstate_agent_running_and_enabled(host):
 
     check("stackstateagent", ["winmgmt"], ["stackstate-process-agent", "stackstate-trace-agent"])
     check("stackstate-process-agent", ["stackstateagent"], [])
+
+
+def test_stackstate_agent_log(host):
+    agent_log_path = "c:\\programdata\\stackstate\\logs\\agent.log"
+    agent_log = host.ansible("win_shell", "cat \"{}\"".format(agent_log_path), check=False)["stdout"]
+
+    # Check for presence of success
+    def wait_for_check_successes():
+        print agent_log
+        assert re.search("Sent host metadata payload", agent_log)
+
+    util.wait_until(wait_for_check_successes, 30, 3)
+
+    # Check for errors
+    for line in agent_log.splitlines():
+        print("Considering: %s" % line)
+        assert not re.search("\\| error \\|", line, re.IGNORECASE)

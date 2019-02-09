@@ -28,17 +28,14 @@ def test_stackstate_process_agent_running_and_enabled(host):
 
 def test_stackstate_agent_log(host):
     agent_log_path = "/var/log/stackstate-agent/agent.log"
+    agent_log = host.file(agent_log_path).content_string
 
     # Check for presence of success
     def wait_for_check_successes():
-        agent_log = host.file(agent_log_path).content_string
         print agent_log
-
         assert re.search("Sent host metadata payload", agent_log)
 
     util.wait_until(wait_for_check_successes, 30, 3)
-
-    agent_log = host.file(agent_log_path).content_string
 
     # Check for errors
     for line in agent_log.splitlines():
@@ -52,7 +49,7 @@ def test_stackstate_agent_log(host):
             continue
 
         # https://stackstate.atlassian.net/browse/STAC-3202 first
-        assert not re.search("\| error \|", line, re.IGNORECASE)
+        assert not re.search("\\| error \\|", line, re.IGNORECASE)
 
 
 def test_stackstate_process_agent_no_log_errors(host):
