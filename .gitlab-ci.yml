@@ -338,6 +338,7 @@ test_rpm_renaming:
   before_script: []
   script:
     ./test/renaming/test_rpm.sh $CI_PROJECT_DIR/outcomes/pkg/*.rpm
+  allow_failure: true
 
 pre_release_deb:
   stage: pre_release
