@@ -110,6 +110,7 @@ def apply_branding(ctx):
     lower_replace = 's/datadog/stackstate/g'
     do_sed_rename(ctx, camel_replace, "./cmd/agent/agent.rc")
     do_sed_rename(ctx, camel_replace, "./cmd/agent/app/install_service_windows.go")
+    do_sed_rename(ctx, lower_replace, "./cmd/agent/app/dependent_services_windows.go")
     # replace strings NOT containing certain pattern
     do_sed_rename(ctx, '/config/! s/Data[dD]og/StackState/g', "./cmd/agent/common/common_windows.go")
     do_sed_rename(ctx, lower_replace, "./cmd/agent/common/common_windows.go")
