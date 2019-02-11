@@ -333,6 +333,7 @@ test_deb_renaming:
 
 test_rpm_renaming:
   stage: pre_release
+  image: stackstate/stackstate-agent-runner-gitlab:rpm.latest
   dependencies:
     - build_rpm
   before_script: []
