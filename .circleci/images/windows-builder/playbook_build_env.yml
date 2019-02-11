@@ -85,8 +85,9 @@
       win_chocolatey:
         name: visualstudio2017community
         state: present
-        package_params: "--norestart --wait --quiet --locale en-US --norestart --wait --quiet --locale en-US --add Microsoft.VisualStudio.Workload.MSBuildTools --add Microsoft.VisualStudio.Workload.NativeDesktop  --add Microsoft.VisualStudio.Component.VC.CMake.Project --add Microsoft.VisualStudio.Component.VC.CLI.Support --add Microsoft.VisualStudio.Workload.UniversalBuildTools"
+        package_params: "--norestart --wait --quiet --locale en-US --norestart --wait --quiet --locale en-US --add Microsoft.VisualStudio.Workload.MSBuildTools --add Microsoft.VisualStudio.Workload.NativeDesktop  --add Microsoft.VisualStudio.Component.VC.CMake.Project --add Microsoft.VisualStudio.Component.VC.CLI.Support --add Microsoft.VisualStudio.Workload.UniversalBuildTools --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Win81"
 #        package_params: "--allWorkloads --includeRecommended --includeOptional --passive --locale en-US"
+
 
 # HANGS TODO: replace with exe install from  https://github.com/wixtoolset/wix3/releases/tag/wix3111rtm  ?
     # - name: Install Wix tool set
