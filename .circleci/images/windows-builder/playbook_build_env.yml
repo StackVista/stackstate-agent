@@ -196,6 +196,8 @@
         - 'C:\\Program Files\\Amazon\\AWSCLI'
         - 'C:\\Program Files\\Mercurial;C:\\Program Files (x86)\\WiX Toolset v3.11\\bin'
 
+        # msbuild get accessible via call %VCINSTALLDIR%\Common7\Tools\VsDevCmd.bat
+
     # - name: ENV | DIRTY PATH
     #   win_environment:
     #     state: present
