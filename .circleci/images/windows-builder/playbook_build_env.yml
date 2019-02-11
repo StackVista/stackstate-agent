@@ -85,7 +85,7 @@
       win_chocolatey:
         name: visualstudio2017community
         state: present
-        package_params: "--norestart --wait --quiet --locale en-US --add Microsoft.VisualStudio.Workload.NativeDesktop"
+        package_params: "--norestart --wait --quiet --locale en-US --norestart --wait --quiet --locale en-US --add Microsoft.VisualStudio.Workload.MSBuildTools --add Microsoft.VisualStudio.Workload.NativeDesktop  --add Microsoft.VisualStudio.Component.VC.CMake.Project --add Microsoft.VisualStudio.Component.VC.CLI.Support --add Microsoft.VisualStudio.Workload.UniversalBuildTools"
 #        package_params: "--allWorkloads --includeRecommended --includeOptional --passive --locale en-US"
 
 # HANGS TODO: replace with exe install from  https://github.com/wixtoolset/wix3/releases/tag/wix3111rtm  ?
@@ -175,6 +175,14 @@
         name: GOBIN
         value: "c:\\tools\\go\\bin"
         level: machine
+
+    - name: ENV | VCINSTALLDIR
+      win_environment:
+        state: present
+        name: VCINSTALLDIR
+        value: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community"
+        level: machine
+
 
 # Possible duplication but guaranteed presence
     - name: ENV | PATH
