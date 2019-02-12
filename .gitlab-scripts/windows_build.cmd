@@ -3,9 +3,8 @@ REM set WORKON_HOME=%WIN_CI_PROJECT_DIR%
 
 
 echo call %WORKON_HOME%\venv\Scripts\activate.bat
-call "%WORKON_HOME%\venv\Scripts\activate.bat"
+call %WORKON_HOME%\venv\Scripts\activate.bat
 call ridk enable
-call "%VCINSTALLDIR%\Common7\Tools\VsDevCmd.bat"
 
 set
 
