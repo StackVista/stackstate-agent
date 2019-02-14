@@ -48,41 +48,71 @@ def _get_instance_config(instance_name):
     return next(item for item in instance_config_dict if item['instance'] == instance_name)
 
 
+def _find_outgoing_connection(json_data, port, origin, dest):
+    """Find Connection as seen from the sending endpoint"""
+    return next(connection for message in json_data["messages"]
+                for connection in message["message"]["Connections"]["connections"]
+                if connection["remoteEndpoint"]["endpoint"]["port"] == port and
+                connection["remoteEndpoint"]["endpoint"]["ip"]["address"] == dest and
+                connection["localEndpoint"]["endpoint"]["ip"]["address"] == origin
+                )
+
+
+def _find_incoming_connection(json_data, port, origin, dest):
+    """Find Connection as seen from the receiving endpoint"""
+    return next(connection for message in json_data["messages"]
+                for connection in message["message"]["Connections"]["connections"]
+                if connection["localEndpoint"]["endpoint"]["port"] == port and
+                connection["localEndpoint"]["endpoint"]["ip"]["address"] == dest and
+                connection["remoteEndpoint"]["endpoint"]["ip"]["address"] == origin
+                )
+
+
 def test_created_connection_after_start_with_metrics(host):
     url = "http://localhost:7070/api/topic/sts_correlate_endpoints?limit=1000"
 
     conn_port = int(host.ansible("include_vars", "./common_vars.yml")["ansible_facts"]
                     ["test_connection_port_after_start"])
 
-    # fedora_public_ip = _get_instance_config("agent-fedora")["address"]
-    fedora_private_ip = _get_instance_config("agent-fedora")["private_address"]
     ubuntu_public_ip = _get_instance_config("agent-ubuntu")["address"]
-    # ubuntu_private_ip = _get_instance_config("agent-ubuntu")["private_address"]
+    ubuntu_private_ip = _get_instance_config("agent-ubuntu")["private_address"]
+    fedora_public_ip = _get_instance_config("agent-fedora")["address"]
+    fedora_private_ip = _get_instance_config("agent-fedora")["private_address"]
+    windows_public_ip = _get_instance_config("agent-win")["address"]
+    windows_private_ip = _get_instance_config("agent-win")["private_address"]
 
     def wait_for_connection():
         data = host.check_output("curl %s" % url)
         json_data = json.loads(data)
-        print(json.dumps(json_data))
-        outgoing_conn = next(connection for message in json_data["messages"]
-                             for connection in message["message"]["Connections"]["connections"]
-                             if connection["remoteEndpoint"]["endpoint"]["port"] == conn_port and
-                             connection["remoteEndpoint"]["endpoint"]["ip"]["address"] == ubuntu_public_ip
-                             )
+        # print(json.dumps(json_data))
+
+        outgoing_conn = _find_outgoing_connection(json_data, conn_port, fedora_private_ip, ubuntu_public_ip)
         print outgoing_conn
         assert outgoing_conn["direction"] == "OUTGOING"
         assert outgoing_conn["connectionType"] == "TCP"
         assert outgoing_conn["bytesSentPerSecond"] > 10.0
         assert outgoing_conn["bytesReceivedPerSecond"] == 0.0
-        incoming_conn = next(connection for message in json_data["messages"]
-                             for connection in message["message"]["Connections"]["connections"]
-                             if connection["localEndpoint"]["endpoint"]["port"] == conn_port and
-                             connection["localEndpoint"]["endpoint"]["ip"]["address"] == fedora_private_ip
-                             )
+
+        incoming_conn = _find_incoming_connection(json_data, conn_port, fedora_public_ip, ubuntu_private_ip)
         print incoming_conn
         assert incoming_conn["direction"] == "INCOMING"
         assert incoming_conn["connectionType"] == "TCP"
         assert incoming_conn["bytesSentPerSecond"] == 0.0
         assert incoming_conn["bytesReceivedPerSecond"] > 10.0
+
+        outgoing_conn = _find_outgoing_connection(json_data, conn_port, windows_private_ip, ubuntu_public_ip)
+        print outgoing_conn
+        assert outgoing_conn["direction"] == "OUTGOING"
+        assert outgoing_conn["connectionType"] == "TCP"
+        assert outgoing_conn["bytesSentPerSecond"] == 0.0  # We don't collect metrics on Windows
+        assert outgoing_conn["bytesReceivedPerSecond"] == 0.0
+
+        incoming_conn = _find_incoming_connection(json_data, conn_port, windows_public_ip, ubuntu_private_ip)
+        print incoming_conn
+        assert incoming_conn["direction"] == "INCOMING"
+        assert incoming_conn["connectionType"] == "TCP"
+        # assert incoming_conn["bytesSentPerSecond"] == 0.0      # TODO why > 0
+        # assert incoming_conn["bytesReceivedPerSecond"] > 10.0  # TODO why = 0
 
     util.wait_until(wait_for_connection, 30, 3)
 
@@ -93,26 +123,37 @@ def test_created_connection_before_start(host):
     conn_port = int(host.ansible("include_vars", "./common_vars.yml")["ansible_facts"]
                     ["test_connection_port_before_start"])
 
+    ubuntu_public_ip = _get_instance_config("agent-ubuntu")["address"]
+    ubuntu_private_ip = _get_instance_config("agent-ubuntu")["private_address"]
+    fedora_public_ip = _get_instance_config("agent-fedora")["address"]
+    fedora_private_ip = _get_instance_config("agent-fedora")["private_address"]
+    # windows_public_ip = _get_instance_config("agent-win")["address"]
+    # windows_private_ip = _get_instance_config("agent-win")["private_address"]
+
     def wait_for_connection():
         data = host.check_output("curl %s" % url)
         json_data = json.loads(data)
-        print(json.dumps(json_data))
-        outgoing_conn = next(connection for message in json_data["messages"]
-                             for connection in message["message"]["Connections"]["connections"]
-                             if connection["remoteEndpoint"]["endpoint"]["port"] == conn_port
-                             )
+        # print(json.dumps(json_data))
+
+        outgoing_conn = _find_outgoing_connection(json_data, conn_port, fedora_private_ip, ubuntu_public_ip)
         print outgoing_conn
-        # Outgoing gets no direction from /proc scanning
-        assert outgoing_conn["direction"] == "NONE"
+        assert outgoing_conn["direction"] == "NONE"  # Outgoing gets no direction from Linux /proc scanning
         assert outgoing_conn["connectionType"] == "TCP"
 
-        incoming_conn = next(connection for message in json_data["messages"]
-                             for connection in message["message"]["Connections"]["connections"]
-                             if connection["localEndpoint"]["endpoint"]["port"] == conn_port
-                             )
+        incoming_conn = _find_incoming_connection(json_data, conn_port, fedora_public_ip, ubuntu_private_ip)
         print incoming_conn
         assert incoming_conn["direction"] == "INCOMING"
         assert incoming_conn["connectionType"] == "TCP"
+
+        # outgoing_conn = _find_outgoing_connection(json_data, conn_port, windows_private_ip, ubuntu_public_ip)
+        # print outgoing_conn
+        # assert outgoing_conn["direction"] == "OUTGOING"
+        # assert outgoing_conn["connectionType"] == "TCP"
+        #
+        # incoming_conn = _find_incoming_connection(json_data, conn_port, windows_public_ip, ubuntu_private_ip)
+        # print incoming_conn
+        # assert incoming_conn["direction"] == "INCOMING"
+        # assert incoming_conn["connectionType"] == "TCP"
 
     util.wait_until(wait_for_connection, 30, 3)
 

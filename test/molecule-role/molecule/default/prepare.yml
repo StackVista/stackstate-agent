@@ -142,8 +142,9 @@
     - common_vars.yml
   tasks:
     - name: Connect to Ubuntu Agent
-      shell: nohup bash -c "yes | ncat {{ hostvars['agent-ubuntu']['ansible_host'] }} {{ test_connection_port_before_start }}" &
-      become: true
+      shell: yes | ncat {{ hostvars['agent-ubuntu']['ansible_host'] }} {{ test_connection_port_before_start }}
+      async: 1000
+      poll: 0
 
 - name: Prepare Windows Agent connecting before start
   hosts: agent-win
@@ -172,7 +173,7 @@
       win_shell: ". { iwr -useb {{ agent_repo_url }}/install.ps1 } | iex; install -stsApiKey API_KEY -stsUrl https://test-stackstate-agent.sts/stsAgent -stsHostname {{ inventory_hostname }} -stsCodeName {{ agent_current_branch }} -stsSkipSSLValidation true"
       register: install_result
 
-    - debug: var="install_result"
+# - debug: var="install_result"
 
 - name: Prepare Linux Agents (post)
   hosts: agent_linux_vm
@@ -205,7 +206,7 @@
       pause:
         seconds: 10
     - name: Open listening port {{ test_connection_port_after_start }}
-      shell: "nohup nc -l -p {{ test_connection_port_after_start }} > /dev/null &"
+      shell: "nohup ncat --broker --listen -p {{ test_connection_port_after_start }} &"
       become: true
 
 - name: Prepare Fedora Agent connecting after start
@@ -215,8 +216,9 @@
     - common_vars.yml
   tasks:
     - name: Connect to Ubuntu agent
-      shell: nohup bash -c "yes | ncat {{ hostvars['agent-ubuntu']['ansible_host'] }} {{ test_connection_port_after_start }}" &
-      become: true
+      shell: yes | ncat {{ hostvars['agent-ubuntu']['ansible_host'] }} {{ test_connection_port_after_start }}
+      async: 1000
+      poll: 0
 
 - name: Prepare Windows Agent connecting after start
   hosts: agent-win
