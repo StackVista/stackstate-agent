@@ -1,11 +1,11 @@
 import os
 import json
 import util
-import testinfra.utils.ansible_runner
 from collections import defaultdict
+from molecule.util import safe_load_file
+from testinfra.utils.ansible_runner import AnsibleRunner
 
-testinfra_hosts = testinfra.utils.ansible_runner.AnsibleRunner(
-    os.environ['MOLECULE_INVENTORY_FILE']).get_hosts('receiver_vm')
+testinfra_hosts = AnsibleRunner(os.environ['MOLECULE_INVENTORY_FILE']).get_hosts('receiver_vm')
 
 
 def test_etc_docker_directory(host):
@@ -43,11 +43,21 @@ def test_generic_events(host):
     util.wait_until(wait_for_metrics, 30, 3)
 
 
-def test_created_connection_after_start_with_metrics(host, Ansible):
+def _get_instance_config(instance_name):
+    instance_config_dict = safe_load_file(os.environ['MOLECULE_INSTANCE_CONFIG'])
+    return next(item for item in instance_config_dict if item['instance'] == instance_name)
+
+
+def test_created_connection_after_start_with_metrics(host):
     url = "http://localhost:7070/api/topic/sts_correlate_endpoints?limit=1000"
-    # FIXME: Maybe there is a more direct way to get this variable
-    conn_port = int(Ansible("include_vars", "./common_vars.yml")
-                    ["ansible_facts"]["test_connection_port_after_start"])
+
+    conn_port = int(host.ansible("include_vars", "./common_vars.yml")["ansible_facts"]
+                    ["test_connection_port_after_start"])
+
+    fedora_public_ip = _get_instance_config("agent-fedora")["address"]
+    fedora_private_ip = _get_instance_config("agent-fedora")["private_address"]
+    ubuntu_public_ip = _get_instance_config("agent-ubuntu")["address"]
+    ubuntu_private_ip = _get_instance_config("agent-ubuntu")["private_address"]
 
     def wait_for_connection():
         data = host.check_output("curl %s" % url)
@@ -55,7 +65,8 @@ def test_created_connection_after_start_with_metrics(host, Ansible):
         print(json.dumps(json_data))
         outgoing_conn = next(connection for message in json_data["messages"]
                              for connection in message["message"]["Connections"]["connections"]
-                             if connection["remoteEndpoint"]["endpoint"]["port"] == conn_port
+                             if connection["remoteEndpoint"]["endpoint"]["port"] == conn_port and
+                             connection["remoteEndpoint"]["endpoint"]["ip"]["address"] == ubuntu_public_ip
                              )
         print outgoing_conn
         assert outgoing_conn["direction"] == "OUTGOING"
@@ -64,7 +75,8 @@ def test_created_connection_after_start_with_metrics(host, Ansible):
         assert outgoing_conn["bytesReceivedPerSecond"] == 0.0
         incoming_conn = next(connection for message in json_data["messages"]
                              for connection in message["message"]["Connections"]["connections"]
-                             if connection["localEndpoint"]["endpoint"]["port"] == conn_port
+                             if connection["localEndpoint"]["endpoint"]["port"] == conn_port and
+                             connection["localEndpoint"]["endpoint"]["ip"]["address"] == fedora_private_ip
                              )
         print incoming_conn
         assert incoming_conn["direction"] == "INCOMING"
@@ -75,11 +87,11 @@ def test_created_connection_after_start_with_metrics(host, Ansible):
     util.wait_until(wait_for_connection, 30, 3)
 
 
-def test_created_connection_before_start(host, Ansible):
+def test_created_connection_before_start(host):
     url = "http://localhost:7070/api/topic/sts_correlate_endpoints?limit=1000"
-    # FIXME: Maybe there is a more direct way to get this variable
-    conn_port = int(Ansible("include_vars", "./common_vars.yml")
-                    ["ansible_facts"]["test_connection_port_before_start"])
+
+    conn_port = int(host.ansible("include_vars", "./common_vars.yml")["ansible_facts"]
+                    ["test_connection_port_before_start"])
 
     def wait_for_connection():
         data = host.check_output("curl %s" % url)
