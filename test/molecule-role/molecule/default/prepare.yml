@@ -152,7 +152,9 @@
     - common_vars.yml
   tasks:
     - name: Connect to Ubuntu Agent
-      win_command: start nc -w 1000 {{ hostvars['agent-ubuntu']['ansible_host'] }} {{ test_connection_port_before_start }}
+      win_command: nc -w 1000 {{ hostvars['agent-ubuntu']['ansible_host'] }} {{ test_connection_port_before_start }}
+      async: 1000
+      poll: 0
 
 - name: Prepare Windows Agents (post)
   hosts: agent_win_vm
@@ -223,4 +225,6 @@
     - common_vars.yml
   tasks:
     - name: Connect to Ubuntu agent
-      win_shell: start nc -w 1000 {{ hostvars['agent-ubuntu']['ansible_host'] }} {{ test_connection_port_after_start }}
+      win_command: nc -w 1000 {{ hostvars['agent-ubuntu']['ansible_host'] }} {{ test_connection_port_after_start }}
+      async: 1000
+      poll: 0

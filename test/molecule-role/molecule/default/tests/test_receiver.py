@@ -54,10 +54,10 @@ def test_created_connection_after_start_with_metrics(host):
     conn_port = int(host.ansible("include_vars", "./common_vars.yml")["ansible_facts"]
                     ["test_connection_port_after_start"])
 
-    fedora_public_ip = _get_instance_config("agent-fedora")["address"]
+    # fedora_public_ip = _get_instance_config("agent-fedora")["address"]
     fedora_private_ip = _get_instance_config("agent-fedora")["private_address"]
     ubuntu_public_ip = _get_instance_config("agent-ubuntu")["address"]
-    ubuntu_private_ip = _get_instance_config("agent-ubuntu")["private_address"]
+    # ubuntu_private_ip = _get_instance_config("agent-ubuntu")["private_address"]
 
     def wait_for_connection():
         data = host.check_output("curl %s" % url)
