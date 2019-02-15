@@ -71,8 +71,9 @@ def _find_incoming_connection(json_data, port, origin, dest):
 def test_created_connection_after_start_with_metrics(host):
     url = "http://localhost:7070/api/topic/sts_correlate_endpoints?limit=1000"
 
-    conn_port = int(host.ansible("include_vars", "./common_vars.yml")["ansible_facts"]
-                    ["test_connection_port_after_start"])
+    facts = host.ansible("include_vars", "./common_vars.yml")["ansible_facts"]
+    fedora_conn_port = int(facts["connection_port_after_start_fedora"])
+    windows_conn_port = int(facts["connection_port_after_start_windows"])
 
     ubuntu_public_ip = _get_instance_config("agent-ubuntu")["address"]
     ubuntu_private_ip = _get_instance_config("agent-ubuntu")["private_address"]
@@ -89,33 +90,33 @@ def test_created_connection_after_start_with_metrics(host):
         json_data = json.loads(data)
         print(json.dumps(json_data))
 
-        outgoing_conn = _find_outgoing_connection(json_data, conn_port, fedora_private_ip, ubuntu_public_ip)
+        outgoing_conn = _find_outgoing_connection(json_data, fedora_conn_port, fedora_private_ip, ubuntu_public_ip)
         print outgoing_conn
         assert outgoing_conn["direction"] == "OUTGOING"
         assert outgoing_conn["connectionType"] == "TCP"
         assert outgoing_conn["bytesSentPerSecond"] > 10.0
         assert outgoing_conn["bytesReceivedPerSecond"] == 0.0
 
-        incoming_conn = _find_incoming_connection(json_data, conn_port, fedora_public_ip, ubuntu_private_ip)
+        incoming_conn = _find_incoming_connection(json_data, fedora_conn_port, fedora_public_ip, ubuntu_private_ip)
         print incoming_conn
         assert incoming_conn["direction"] == "INCOMING"
         assert incoming_conn["connectionType"] == "TCP"
         assert incoming_conn["bytesSentPerSecond"] == 0.0
         assert incoming_conn["bytesReceivedPerSecond"] > 10.0
 
-        outgoing_conn = _find_outgoing_connection(json_data, conn_port, windows_private_ip, ubuntu_public_ip)
+        outgoing_conn = _find_outgoing_connection(json_data, windows_conn_port, windows_private_ip, ubuntu_public_ip)
         print outgoing_conn
         assert outgoing_conn["direction"] == "OUTGOING"
         assert outgoing_conn["connectionType"] == "TCP"
-        assert outgoing_conn["bytesSentPerSecond"] == 0.0    # We don't collect metrics on Windows
+        assert outgoing_conn["bytesSentPerSecond"] == 0.0       # We don't collect metrics on Windows
         assert outgoing_conn["bytesReceivedPerSecond"] == 0.0
 
-        incoming_conn = _find_incoming_connection(json_data, conn_port, windows_public_ip, ubuntu_private_ip)
+        incoming_conn = _find_incoming_connection(json_data, windows_conn_port, windows_public_ip, ubuntu_private_ip)
         print incoming_conn
         assert incoming_conn["direction"] == "INCOMING"
         assert incoming_conn["connectionType"] == "TCP"
-        assert incoming_conn["bytesSentPerSecond"] == 0.0      # TODO why > 0
-        assert incoming_conn["bytesReceivedPerSecond"] > 10.0  # TODO why = 0
+        assert incoming_conn["bytesSentPerSecond"] == 0.0
+        assert incoming_conn["bytesReceivedPerSecond"] == 0.0   # We don't send data from Windows
 
     util.wait_until(wait_for_connection, 30, 3)
 
@@ -123,8 +124,9 @@ def test_created_connection_after_start_with_metrics(host):
 def test_created_connection_before_start(host):
     url = "http://localhost:7070/api/topic/sts_correlate_endpoints?limit=1000"
 
-    conn_port = int(host.ansible("include_vars", "./common_vars.yml")["ansible_facts"]
-                    ["test_connection_port_before_start"])
+    facts = host.ansible("include_vars", "./common_vars.yml")["ansible_facts"]
+    fedora_conn_port = int(facts["connection_port_before_start_fedora"])
+    windows_conn_port = int(facts["connection_port_before_start_windows"])
 
     ubuntu_public_ip = _get_instance_config("agent-ubuntu")["address"]
     ubuntu_private_ip = _get_instance_config("agent-ubuntu")["private_address"]
@@ -141,22 +143,22 @@ def test_created_connection_before_start(host):
         json_data = json.loads(data)
         print(json.dumps(json_data))
 
-        outgoing_conn = _find_outgoing_connection(json_data, conn_port, fedora_private_ip, ubuntu_public_ip)
+        outgoing_conn = _find_outgoing_connection(json_data, fedora_conn_port, fedora_private_ip, ubuntu_public_ip)
         print outgoing_conn
         assert outgoing_conn["direction"] == "NONE"          # Outgoing gets no direction from Linux /proc scanning
         assert outgoing_conn["connectionType"] == "TCP"
 
-        incoming_conn = _find_incoming_connection(json_data, conn_port, fedora_public_ip, ubuntu_private_ip)
+        incoming_conn = _find_incoming_connection(json_data, fedora_conn_port, fedora_public_ip, ubuntu_private_ip)
         print incoming_conn
         assert incoming_conn["direction"] == "INCOMING"
         assert incoming_conn["connectionType"] == "TCP"
 
-        outgoing_conn = _find_outgoing_connection(json_data, conn_port, windows_private_ip, ubuntu_public_ip)
+        outgoing_conn = _find_outgoing_connection(json_data, windows_conn_port, windows_private_ip, ubuntu_public_ip)
         print outgoing_conn
         assert outgoing_conn["direction"] == "OUTGOING"
         assert outgoing_conn["connectionType"] == "TCP"
 
-        incoming_conn = _find_incoming_connection(json_data, conn_port, windows_public_ip, ubuntu_private_ip)
+        incoming_conn = _find_incoming_connection(json_data, windows_conn_port, windows_public_ip, ubuntu_private_ip)
         print incoming_conn
         assert incoming_conn["direction"] == "INCOMING"
         assert incoming_conn["connectionType"] == "TCP"
@@ -208,13 +210,13 @@ def test_host_metrics(host):
                 for wv in metrics[name]["agent-win"]:
                     assert win_predicate(wv)
 
-        assert_metric("system.swap.total", lambda v: v == 0, lambda v: v == 0, lambda v: v > 5000)
+        assert_metric("system.swap.total", lambda v: v == 0, lambda v: v == 0, lambda v: v > 4000)
         assert_metric("system.swap.pct_free", lambda v: v == 1.0, lambda v: v == 1.0, lambda v: v == 1.0)
 
         # Memory
         assert_metric("system.mem.total", lambda v: v > 900.0, lambda v: v > 900.0, lambda v: v > 2000.0)
         assert_metric("system.mem.usable", lambda v: 1000.0 > v > 500.0, lambda v: 1000.0 > v > 500.0,
-                      lambda v: 1800.0 > v > 1300.0)
+                      lambda v: 1800.0 > v > 1000.0)
         assert_metric("system.mem.pct_usable", lambda v: 1.0 > v > 0.5, lambda v: 1.0 > v > 0.5,
                       lambda v: 1.0 > v > 0.5)
 
@@ -243,11 +245,12 @@ def test_process_metrics(host):
         json_data = json.loads(data)
         print(json.dumps(json_data))
 
-        metrics = next(set(message["message"]["MultiMetric"]["values"].keys())
-                       for message in json_data["messages"]
-                       if message["message"]["MultiMetric"]["name"] == "processMetrics"
-                       )
-        print metrics
+        def get_keys(m_host):
+            return next(set(message["message"]["MultiMetric"]["values"].keys())
+                        for message in json_data["messages"]
+                        if message["message"]["MultiMetric"]["name"] == "processMetrics" and
+                        message["message"]["MultiMetric"]["host"] == m_host
+                        )
 
         # Same metrics we check in the backend e2e tests
         # https://stackvista.githost.io/StackVista/StackState/blob/master/stackstate-pm-test/src/test/scala/com/stackstate/it/e2e/ProcessAgentIntegrationE2E.scala#L17
@@ -257,6 +260,8 @@ def test_process_metrics(host):
                     "io_readRate", "openFdCount", "mem_shared", "cpu_systemTime", "io_readBytesRate", "mem_data",
                     "mem_vms", "mem_lib", "mem_text", "mem_swap", "mem_rss"}
 
-        assert metrics == expected
+        assert get_keys("agent-ubuntu") == expected
+        assert get_keys("agent-fedora") == expected
+        assert get_keys("agent-win") == expected
 
     util.wait_until(wait_for_metrics, 30, 3)

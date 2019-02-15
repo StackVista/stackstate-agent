@@ -131,8 +131,11 @@
     - common_vars.yml
   tasks:
     # We use ncat to keep a listening port open and get a direction
-    - name: Open listening port on Ubuntu Agent
-      shell: "nohup ncat --broker --listen -p {{ test_connection_port_before_start }} &"
+    - name: Open listening port for fedora {{ connection_port_before_start_fedora }}
+      shell: "nohup ncat --broker --listen -p {{ connection_port_before_start_fedora }} &"
+      become: true
+    - name: Open listening port for windows {{ connection_port_before_start_windows }}
+      shell: "nohup ncat --broker --listen -p {{ connection_port_before_start_windows }} &"
       become: true
 
 - name: Prepare Fedora Agent connecting before start
@@ -142,8 +145,8 @@
     - common_vars.yml
   tasks:
     - name: Connect to Ubuntu Agent
-      shell: yes | ncat {{ hostvars['agent-ubuntu']['ansible_host'] }} {{ test_connection_port_before_start }}
-      async: 1000
+      shell: yes | ncat {{ hostvars['agent-ubuntu']['ansible_host'] }} {{ connection_port_before_start_fedora }}
+      async: "{{ max_test_time }}"
       poll: 0
 
 - name: Prepare Windows Agent connecting before start
@@ -153,8 +156,8 @@
     - common_vars.yml
   tasks:
     - name: Connect to Ubuntu Agent
-      win_command: nc -w 1000 {{ hostvars['agent-ubuntu']['ansible_host'] }} {{ test_connection_port_before_start }}
-      async: 1000
+      win_command: nc -w {{ max_test_time }} {{ hostvars['agent-ubuntu']['ansible_host'] }} {{ connection_port_before_start_windows }}
+      async: "{{ max_test_time }}"
       poll: 0
 
 - name: Prepare Windows Agents (post)
@@ -205,8 +208,12 @@
     - name: Wait a bit for the process agent to start
       pause:
         seconds: 10
-    - name: Open listening port {{ test_connection_port_after_start }}
-      shell: "nohup ncat --broker --listen -p {{ test_connection_port_after_start }} &"
+    # We use ncat to keep a listening port open and get a direction
+    - name: Open listening port for fedora {{ connection_port_after_start_fedora }}
+      shell: "nohup ncat --broker --listen -p {{ connection_port_after_start_fedora }} &"
+      become: true
+    - name: Open listening port for windows {{ connection_port_after_start_windows }}
+      shell: "nohup ncat --broker --listen -p {{ connection_port_after_start_windows }} &"
       become: true
 
 - name: Prepare Fedora Agent connecting after start
@@ -216,8 +223,8 @@
     - common_vars.yml
   tasks:
     - name: Connect to Ubuntu agent
-      shell: yes | ncat {{ hostvars['agent-ubuntu']['ansible_host'] }} {{ test_connection_port_after_start }}
-      async: 1000
+      shell: yes | ncat {{ hostvars['agent-ubuntu']['ansible_host'] }} {{ connection_port_after_start_fedora }}
+      async: "{{ max_test_time }}"
       poll: 0
 
 - name: Prepare Windows Agent connecting after start
@@ -227,6 +234,6 @@
     - common_vars.yml
   tasks:
     - name: Connect to Ubuntu agent
-      win_command: nc -w 1000 {{ hostvars['agent-ubuntu']['ansible_host'] }} {{ test_connection_port_after_start }}
-      async: 1000
+      win_command: nc -w {{ max_test_time }} {{ hostvars['agent-ubuntu']['ansible_host'] }} {{ connection_port_after_start_windows }}
+      async: "{{ max_test_time }}"
       poll: 0
