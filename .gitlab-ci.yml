@@ -431,6 +431,7 @@ release_rpm:
     - build_rpm
   before_script: []
   script:
+    - source .gitlab-scripts/setup_env.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_rpm_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package_rpm.sh $STS_AWS_RELEASE_BUCKET_YUM
     - cd $CI_PROJECT_DIR && inv release.generate-install
@@ -454,9 +455,9 @@ release_win:
     - call ridk enable
     - set /P VERSION=< version.txt
     - copy stackstate-agent-%VERSION%-1-x86_64.msi stackstate-agent-latest-1-x86_64.msi
-    - aws.exe s3 cp . s3://%STS_AWS_RELEASE_BUCKET_WIN%/windows/%CI_COMMIT_REF_NAME% --recursive --exclude "*" --include "*.msi" --acl public-read
     - cd %WIN_CI_PROJECT_DIR% && inv release.generate-install -t
-    - cd %WIN_CI_PROJECT_DIR%/cmd/agent && aws -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_BUCKET_WIN']).object('install.ps1').upload_file('./install.ps1', acl:'public-read')"
+    - aws.exe s3 cp . s3://%STS_AWS_RELEASE_BUCKET_WIN%/windows/%CI_COMMIT_REF_NAME% --recursive --exclude "*" --include "*.msi" --acl public-read
+    - cd %WIN_CI_PROJECT_DIR%/cmd/agent && aws.exe s3 cp . s3://%STS_AWS_RELEASE_BUCKET_WIN%/windows/%CI_COMMIT_REF_NAME% --recursive --exclude "*" --include "install.ps1" --acl public-read
   tags:
     - sts_windows
   when: manual
