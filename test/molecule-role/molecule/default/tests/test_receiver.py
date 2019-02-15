@@ -76,10 +76,13 @@ def test_created_connection_after_start_with_metrics(host):
 
     ubuntu_public_ip = _get_instance_config("agent-ubuntu")["address"]
     ubuntu_private_ip = _get_instance_config("agent-ubuntu")["private_address"]
+    print("ubuntu public: {}, private: {}".format(ubuntu_public_ip, ubuntu_private_ip))
     fedora_public_ip = _get_instance_config("agent-fedora")["address"]
     fedora_private_ip = _get_instance_config("agent-fedora")["private_address"]
+    print("fedora public: {}, private: {}".format(fedora_public_ip, fedora_private_ip))
     windows_public_ip = _get_instance_config("agent-win")["address"]
     windows_private_ip = _get_instance_config("agent-win")["private_address"]
+    print("windows public: {}, private: {}".format(windows_public_ip, windows_private_ip))
 
     def wait_for_connection():
         data = host.check_output("curl %s" % url)
@@ -125,10 +128,13 @@ def test_created_connection_before_start(host):
 
     ubuntu_public_ip = _get_instance_config("agent-ubuntu")["address"]
     ubuntu_private_ip = _get_instance_config("agent-ubuntu")["private_address"]
+    print("ubuntu public: {}, private: {}".format(ubuntu_public_ip, ubuntu_private_ip))
     fedora_public_ip = _get_instance_config("agent-fedora")["address"]
     fedora_private_ip = _get_instance_config("agent-fedora")["private_address"]
+    print("fedora public: {}, private: {}".format(fedora_public_ip, fedora_private_ip))
     windows_public_ip = _get_instance_config("agent-win")["address"]
     windows_private_ip = _get_instance_config("agent-win")["private_address"]
+    print("windows public: {}, private: {}".format(windows_public_ip, windows_private_ip))
 
     def wait_for_connection():
         data = host.check_output("curl %s" % url)
@@ -166,42 +172,65 @@ def test_host_metrics(host):
         json_data = json.loads(data)
         print(json.dumps(json_data))
 
-        metrics = {message["message"]["Metric"]["name"]: value["value"]
-                   for message in json_data["messages"]
-                   for value in message["message"]["Metric"]["value"]
-                   }
+        metrics = {}
+        for message in json_data["messages"]:
+            metric = message["message"]["Metric"]
 
-        print metrics
+            m_name = metric["name"]
+            m_host = metric["host"]
 
-        # These values are based on an ec2 micro instance
+            if m_name not in metrics:
+                metrics[m_name] = {}
+            if m_host not in metrics[m_name]:
+                metrics[m_name][m_host] = []
+
+            values = [value["value"] for value in metric["value"]]
+            metrics[m_name][m_host] += values
+
+        print json.dumps(metrics, indent=4)
+
+        # These values are based on an ec2 micro instance for ubuntu and fedora
+        # and small instance for windows
         # (as created by molecule.yml)
 
         # Same metrics we check in the backend e2e tests
         # https://stackvista.githost.io/StackVista/StackState/blob/master/stackstate-pm-test/src/test/scala/com/stackstate/it/e2e/ProcessAgentIntegrationE2E.scala#L17
 
         # No swap in these tests, we still wanna know whether it is reported
-        assert metrics["system.swap.total"] == 0.0
-        assert metrics["system.swap.pct_free"] == 1.0
+        def assert_metric(name, ubuntu_predicate, fedora_predicate, win_predicate):
+            if ubuntu_predicate:
+                for uv in metrics[name]["agent-ubuntu"]:
+                    assert ubuntu_predicate(uv)
+            if fedora_predicate:
+                for fv in metrics[name]["agent-fedora"]:
+                    assert fedora_predicate(fv)
+            if win_predicate:
+                for wv in metrics[name]["agent-win"]:
+                    assert win_predicate(wv)
+
+        assert_metric("system.swap.total", lambda v: v == 0, lambda v: v == 0, lambda v: v > 5000)
+        assert_metric("system.swap.pct_free", lambda v: v == 1.0, lambda v: v == 1.0, lambda v: v == 1.0)
 
         # Memory
-        assert metrics["system.mem.total"] > 900.0
-        assert metrics["system.mem.usable"] > 500.0
-        assert metrics["system.mem.usable"] < 1000.0
-        assert metrics["system.mem.pct_usable"] > 0.5
-        assert metrics["system.mem.pct_usable"] < 1.0
+        assert_metric("system.mem.total", lambda v: v > 900.0, lambda v: v > 900.0, lambda v: v > 2000.0)
+        assert_metric("system.mem.usable", lambda v: 1000.0 > v > 500.0, lambda v: 1000.0 > v > 500.0,
+                      lambda v: 1800.0 > v > 1300.0)
+        assert_metric("system.mem.pct_usable", lambda v: 1.0 > v > 0.5, lambda v: 1.0 > v > 0.5,
+                      lambda v: 1.0 > v > 0.5)
 
-        # Load
-        assert metrics["system.load.norm.1"] > 0.0
+        # Load - only linux
+        assert_metric("system.load.norm.1", lambda v: v > 0.0, lambda v: v > 0.0, None)
 
         # CPU
-        assert metrics["system.cpu.idle"] > 0.0
-        assert metrics["system.cpu.iowait"] > 0.0
-        assert metrics["system.cpu.system"] > 0.0
-        assert metrics["system.cpu.user"] > 0.0
+        assert_metric("system.cpu.idle", lambda v: v > 0.0, lambda v: v > 0.0, lambda v: v > 0.0)
+        assert_metric("system.cpu.iowait", lambda v: 0.1 > v >= 0.0, lambda v: 0.1 > v >= 0.0, lambda v: 0.1 > v >= 0.0)
+        assert_metric("system.cpu.system", lambda v: v > 0.0, lambda v: v > 0.0, lambda v: v > 0.0)
+        assert_metric("system.cpu.user", lambda v: v >= 0.0, lambda v: v >= 0.0, lambda v: v >= 0.0)
 
         # Inodes
-        assert metrics["system.fs.file_handles.in_use"] > 0.0
-        assert metrics["system.fs.file_handles.max"] > 10000.0
+        assert_metric("system.fs.file_handles.in_use", lambda v: v > 0.0, lambda v: v > 0.0, lambda v: v > 0.0)
+        # only linux
+        assert_metric("system.fs.file_handles.max", lambda v: v > 10000.0, lambda v: v > 10000.0, None)
 
     util.wait_until(wait_for_metrics, 30, 3)
 
