@@ -426,6 +426,7 @@ release_deb:
 
 release_rpm:
   stage: release
+  image: stackstate/stackstate-agent-runner-gitlab:rpm.latest
   dependencies:
     - deps-rpm
     - build_rpm
@@ -456,8 +457,8 @@ release_win:
     - set /P VERSION=< version.txt
     - copy stackstate-agent-%VERSION%-1-x86_64.msi stackstate-agent-latest-1-x86_64.msi
     - cd %WIN_CI_PROJECT_DIR% && inv release.generate-install -t
-    - aws.exe s3 cp . s3://%STS_AWS_RELEASE_BUCKET_WIN%/windows/%CI_COMMIT_REF_NAME% --recursive --exclude "*" --include "*.msi" --acl public-read
-    - cd %WIN_CI_PROJECT_DIR%/cmd/agent && aws.exe s3 cp . s3://%STS_AWS_RELEASE_BUCKET_WIN%/windows/%CI_COMMIT_REF_NAME% --recursive --exclude "*" --include "install.ps1" --acl public-read
+    - aws.exe s3 cp . s3://%STS_AWS_RELEASE_BUCKET_WIN%/windows/stable --recursive --exclude "*" --include "*.msi" --acl public-read
+    - cd %WIN_CI_PROJECT_DIR%/cmd/agent && aws.exe s3 cp . s3://%STS_AWS_RELEASE_BUCKET_WIN%/windows/stable --recursive --exclude "*" --include "install.ps1" --acl public-read
   tags:
     - sts_windows
   when: manual
