@@ -84,7 +84,7 @@ def test_created_connection_after_start_with_metrics(host):
     def wait_for_connection():
         data = host.check_output("curl %s" % url)
         json_data = json.loads(data)
-        # print(json.dumps(json_data))
+        print(json.dumps(json_data))
 
         outgoing_conn = _find_outgoing_connection(json_data, conn_port, fedora_private_ip, ubuntu_public_ip)
         print outgoing_conn
@@ -104,15 +104,15 @@ def test_created_connection_after_start_with_metrics(host):
         print outgoing_conn
         assert outgoing_conn["direction"] == "OUTGOING"
         assert outgoing_conn["connectionType"] == "TCP"
-        assert outgoing_conn["bytesSentPerSecond"] == 0.0  # We don't collect metrics on Windows
+        assert outgoing_conn["bytesSentPerSecond"] == 0.0    # We don't collect metrics on Windows
         assert outgoing_conn["bytesReceivedPerSecond"] == 0.0
 
         incoming_conn = _find_incoming_connection(json_data, conn_port, windows_public_ip, ubuntu_private_ip)
         print incoming_conn
         assert incoming_conn["direction"] == "INCOMING"
         assert incoming_conn["connectionType"] == "TCP"
-        # assert incoming_conn["bytesSentPerSecond"] == 0.0      # TODO why > 0
-        # assert incoming_conn["bytesReceivedPerSecond"] > 10.0  # TODO why = 0
+        assert incoming_conn["bytesSentPerSecond"] == 0.0      # TODO why > 0
+        assert incoming_conn["bytesReceivedPerSecond"] > 10.0  # TODO why = 0
 
     util.wait_until(wait_for_connection, 30, 3)
 
@@ -127,17 +127,17 @@ def test_created_connection_before_start(host):
     ubuntu_private_ip = _get_instance_config("agent-ubuntu")["private_address"]
     fedora_public_ip = _get_instance_config("agent-fedora")["address"]
     fedora_private_ip = _get_instance_config("agent-fedora")["private_address"]
-    # windows_public_ip = _get_instance_config("agent-win")["address"]
-    # windows_private_ip = _get_instance_config("agent-win")["private_address"]
+    windows_public_ip = _get_instance_config("agent-win")["address"]
+    windows_private_ip = _get_instance_config("agent-win")["private_address"]
 
     def wait_for_connection():
         data = host.check_output("curl %s" % url)
         json_data = json.loads(data)
-        # print(json.dumps(json_data))
+        print(json.dumps(json_data))
 
         outgoing_conn = _find_outgoing_connection(json_data, conn_port, fedora_private_ip, ubuntu_public_ip)
         print outgoing_conn
-        assert outgoing_conn["direction"] == "NONE"  # Outgoing gets no direction from Linux /proc scanning
+        assert outgoing_conn["direction"] == "NONE"          # Outgoing gets no direction from Linux /proc scanning
         assert outgoing_conn["connectionType"] == "TCP"
 
         incoming_conn = _find_incoming_connection(json_data, conn_port, fedora_public_ip, ubuntu_private_ip)
@@ -145,15 +145,15 @@ def test_created_connection_before_start(host):
         assert incoming_conn["direction"] == "INCOMING"
         assert incoming_conn["connectionType"] == "TCP"
 
-        # outgoing_conn = _find_outgoing_connection(json_data, conn_port, windows_private_ip, ubuntu_public_ip)
-        # print outgoing_conn
-        # assert outgoing_conn["direction"] == "OUTGOING"
-        # assert outgoing_conn["connectionType"] == "TCP"
-        #
-        # incoming_conn = _find_incoming_connection(json_data, conn_port, windows_public_ip, ubuntu_private_ip)
-        # print incoming_conn
-        # assert incoming_conn["direction"] == "INCOMING"
-        # assert incoming_conn["connectionType"] == "TCP"
+        outgoing_conn = _find_outgoing_connection(json_data, conn_port, windows_private_ip, ubuntu_public_ip)
+        print outgoing_conn
+        assert outgoing_conn["direction"] == "OUTGOING"
+        assert outgoing_conn["connectionType"] == "TCP"
+
+        incoming_conn = _find_incoming_connection(json_data, conn_port, windows_public_ip, ubuntu_private_ip)
+        print incoming_conn
+        assert incoming_conn["direction"] == "INCOMING"
+        assert incoming_conn["connectionType"] == "TCP"
 
     util.wait_until(wait_for_connection, 30, 3)
 
@@ -164,6 +164,8 @@ def test_host_metrics(host):
     def wait_for_metrics():
         data = host.check_output("curl %s" % url)
         json_data = json.loads(data)
+        print(json.dumps(json_data))
+
         metrics = {message["message"]["Metric"]["name"]: value["value"]
                    for message in json_data["messages"]
                    for value in message["message"]["Metric"]["value"]
@@ -210,6 +212,8 @@ def test_process_metrics(host):
     def wait_for_metrics():
         data = host.check_output("curl %s" % url)
         json_data = json.loads(data)
+        print(json.dumps(json_data))
+
         metrics = next(set(message["message"]["MultiMetric"]["values"].keys())
                        for message in json_data["messages"]
                        if message["message"]["MultiMetric"]["name"] == "processMetrics"
