@@ -440,7 +440,6 @@ release_rpm:
     - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_RELEASE_BUCKET_YUM']).object('install.sh').upload_file('./install.sh', acl:'public-read')"
   when: manual
   only:
-    - releasing-pipeline
     - tags
     - triggers
 
@@ -464,7 +463,6 @@ release_win:
     - sts_windows
   when: manual
   only:
-    - releasing-pipeline
     - tags
     - triggers
 
