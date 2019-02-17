@@ -426,6 +426,7 @@ release_deb:
 
 release_rpm:
   stage: release
+  image: stackstate/stackstate-agent-runner-gitlab:latest
   dependencies:
     - deps-rpm
     - build_rpm
