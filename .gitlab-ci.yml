@@ -425,7 +425,6 @@ release_deb:
 
 release_rpm:
   stage: release
-  image: stackstate/stackstate-agent-runner-gitlab:latest
   dependencies:
     - deps-rpm
     - build_rpm
@@ -435,9 +434,6 @@ release_rpm:
   script:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_rpm_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package_rpm.sh $STS_AWS_RELEASE_BUCKET_YUM
-    - cd $CI_PROJECT_DIR && source .gitlab-scripts/setup_env.sh
-    - cd $CI_PROJECT_DIR && inv release.generate-install
-    - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_RELEASE_BUCKET_YUM']).object('install.sh').upload_file('./install.sh', acl:'public-read')"
   when: manual
   only:
     - tags
@@ -465,7 +461,6 @@ release_win:
   only:
     - tags
     - triggers
-
 
 release_image:
   stage: release
