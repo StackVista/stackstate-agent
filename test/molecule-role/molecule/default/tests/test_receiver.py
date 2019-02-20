@@ -264,6 +264,14 @@ def test_process_metrics(host):
 
     util.wait_until(wait_for_metrics, 30, 3)
 
-# test_topology_components()
-# expect 3 components, one for each agent processes
-# test its host tags
+
+def test_topology_components(host):
+    url = "http://localhost:7070/api/topic/sts_topo_process_agents?limit=1000"
+    data = host.check_output("curl %s" % url)
+    json_data = json.loads(data)
+    print(json.dumps(json_data))
+
+    # TODO
+    #  expect 3 components, one for each agent processes and check its host tags
+
+    assert 0 == 1
