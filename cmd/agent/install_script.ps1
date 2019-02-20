@@ -26,7 +26,7 @@ new-module -name StsAgentInstaller -scriptblock {
         $uri = "$stsDownloadBase/$codeName/stackstate-agent-$agentVersion-1-x86_64.msi"
         $out = "c:\stackstate-agent.msi"
 
-        $deafultHostTags = "os:windows"
+        $defaultHostTags = "os:windows"
         If ([string]::IsNullOrEmpty($hostTags)) {
             $hostTags = $defaultHostTags
         } Else {
@@ -55,7 +55,7 @@ new-module -name StsAgentInstaller -scriptblock {
                 "/norestart"
                 "/L*v"
                 $logFile
-                " APIKEY=$stsApiKey STS_URL=$stsUrl HOSTNAME=$hostname TAGS=$hostTags SKIP_SSL_VALIDATION=$skipSSLValidation "
+                " APIKEY=`"$stsApiKey`" STS_URL=`"$stsUrl`" HOSTNAME=`"$hostname`" TAGS=`"$hostTags`" SKIP_SSL_VALIDATION=`"$skipSSLValidation`" "
             )
             write-host "About to install $msifile with arguments "$MSIArguments
             If ($FileExists -eq $True) {
