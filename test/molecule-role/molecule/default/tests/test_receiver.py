@@ -215,7 +215,7 @@ def test_host_metrics(host):
 
         # Memory
         assert_metric("system.mem.total", lambda v: v > 900.0, lambda v: v > 900.0, lambda v: v > 2000.0)
-        assert_metric("system.mem.usable", lambda v: 1000.0 > v > 500.0, lambda v: 1000.0 > v > 500.0, lambda v: 1800.0 > v > 900.0)
+        assert_metric("system.mem.usable", lambda v: 1000.0 > v > 450.0, lambda v: 1000.0 > v > 450.0, lambda v: 1800.0 > v > 700.0)
         assert_metric("system.mem.pct_usable", lambda v: 1.0 > v > 0.5, lambda v: 1.0 > v > 0.5, lambda v: 1.0 > v > 0.4)
 
         # Load - only linux
@@ -263,3 +263,7 @@ def test_process_metrics(host):
         assert get_keys("agent-win") == expected
 
     util.wait_until(wait_for_metrics, 30, 3)
+
+# test_topology_components()
+# expect 3 components, one for each agent processes
+# test its host tags

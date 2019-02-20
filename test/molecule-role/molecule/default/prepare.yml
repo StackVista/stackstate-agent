@@ -173,7 +173,7 @@
         state: present
 
     - name: Install stackstate-agent
-      win_shell: ". { iwr -useb {{ agent_repo_url }}/install.ps1 } | iex; install -stsApiKey API_KEY -stsUrl https://test-stackstate-agent.sts/stsAgent -stsHostname {{ inventory_hostname }} -stsCodeName {{ agent_current_branch }} -stsSkipSSLValidation true"
+      win_shell: ". { iwr -useb {{ agent_repo_url }}/install.ps1 } | iex; install -stsApiKey API_KEY -stsUrl https://test-stackstate-agent.sts/stsAgent -hostname {{ inventory_hostname }} -codeName {{ agent_current_branch }} -skipSSLValidation true"
       register: install_result
 
 # - debug: var="install_result"
@@ -195,7 +195,7 @@
       environment:
         STS_API_KEY: "API_KEY"
         STS_URL: "https://test-stackstate-agent.sts/stsAgent"
-        STS_HOSTNAME: "{{ inventory_hostname }}"
+        HOSTNAME: "{{ inventory_hostname }}"
         CODE_NAME: "{{ agent_current_branch }}"
         SKIP_SSL_VALIDATION: "true"
 
