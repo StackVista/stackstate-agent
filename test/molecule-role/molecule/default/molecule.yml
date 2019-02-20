@@ -39,7 +39,7 @@ platforms:
     test_user: test
     test_user_pwd: Bionic!
     user_data: files/agent/none.txt
-#    user_data: files/agent/winrm_advanced.txt
+    #    user_data: files/agent/winrm_advanced.txt
 
   - name: receiver
     image: ami-0da760e590e7de0e8    # Ubuntu 18.04 (EBS-Backed x86_64)
