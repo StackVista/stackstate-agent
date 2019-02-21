@@ -433,7 +433,7 @@ release_rpm:
     - ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
   script:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_rpm_package.sh
-    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package_rpm.sh $STS_AWS_RELEASE_BUCKET_YUM
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package_rpm.sh $STS_AWS_RELEASE_BUCKET_YUM stable
   when: manual
   only:
     - tags
