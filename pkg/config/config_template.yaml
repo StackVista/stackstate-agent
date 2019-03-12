@@ -622,11 +622,47 @@ process_config:
     connections: 30
 #   A list of regex patterns that will exclude a process if matched.
   blacklist_patterns:
+  # Linux Specific patterns
     - "^/sbin/"
     - "^/usr/sbin/"
-    - "^/usr/bin/vim.basic"
+    - "^/usr/bin/vi(?:m|m.basic)?$"
     - "^sshd:"
     - "^/bin/bash"
+    - "^/usr/bin/bash"
+    - "^/usr/lib/systemd/*"
+    - "^/usr/bin/dbus-daemon"
+    - "^/usr/bin/tail"
+    - "^-bash"
+    - "^\\(sd-pam\\)"
+    - "^pickup"
+    - "^qmgr"
+  # Windows Specific patterns
+    - "cmd.exe"
+    - "conhost.exe"
+    - "taskhostw.exe"
+    - "vim.exe"
+    - "winlogon.exe"
+    - "wininit.exe"
+    - "wlms.exe"
+    - "tasklist.exe"
+    - "svchost.exe"
+    - "wmiprvse.exe"
+    - "VBoxService.exe"
+    - "lsass.exe"
+    - "dwm.exe"
+    - "sihost.exe"
+    - "Explorer.EXE"
+    - "smartscreen.exe"
+    - "DllHost.exe"
+    - "msdtc.exe"
+    - "SearchUI.exe"
+#    Should be ignored, but gets reported with an empty command line
+#    - "sppsvc.exe"
+#    - "services.exe"
+#    - "csrss.exe"
+#    - "wininit.exe"
+#    - "System"
+#    - "smss.exe"
 #   How many check results to buffer in memory when POST fails. The default is usually fine.
   queue_size: 10
 #   The maximum number of file descriptors to open when collecting net connections.
