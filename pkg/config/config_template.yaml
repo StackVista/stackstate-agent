@@ -630,6 +630,7 @@ process_config:
     - "^/bin/bash"
     - "^/usr/bin/bash"
     - "^/usr/lib/systemd/*"
+    - "^/lib/systemd/*"
     - "^/usr/bin/dbus-daemon"
     - "^/usr/bin/tail"
     - "^-bash"
