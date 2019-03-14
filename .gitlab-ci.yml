@@ -213,6 +213,8 @@ build_rpm_clear_cache:
 
 build_deb:
   stage: build_and_test
+  dependencies:
+    - deps
   tags:
     # We put the deb build on sts-aws because it runs long and we do want to have it run
     # fast.
