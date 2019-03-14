@@ -8,7 +8,7 @@ VENV_PATH=$CI_PROJECT_DIR/venv
 cd /go/src/github.com/StackVista/stackstate-agent
 
 if [ ! -d $VENV_PATH ]; then
-  virtualenv  $CI_PROJECT_DIR/venv
+  virtualenv --python=python2.7 $CI_PROJECT_DIR/venv
   source $CI_PROJECT_DIR/venv/bin/activate
   pip install -r requirements.txt
 else
