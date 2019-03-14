@@ -6,6 +6,7 @@ stages:
 - pre_release
 - acceptance
 - release
+- finally
 
 variables:
   STS_AWS_RELEASE_BUCKET: stackstate-agent-2
@@ -485,6 +486,16 @@ release_image:
     - tags
     - triggers
 
+notify:slack:
+  stage: finally
+  image: stackstate/stackstate-agent-runner-gitlab:latest
+  script:
+    - echo "stackstate-agent nightly build on \`$CI_BUILD_REF_NAME\` failed! Commit \`$(git log -1 --oneline)\`" | ./.gitlab-scripts/slack_tee.sh
+  when: on_failure
+  only:
+    - schedules
+
+
 #docker_test:
 #  stage: docker_test
 #  image: docker:latest
@@ -497,3 +508,5 @@ release_image:
 #  - docker info
 #  script:
 #    - docker ps
+
+
