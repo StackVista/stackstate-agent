@@ -36,7 +36,7 @@ machines = {
         :ip => '192.168.56.106',
     },
     :centos6 => {
-        :box => 'centos/6',           # Needs glibc 2.17 (https://stackstate.zendesk.com/agent/tickets/157)
+        :box => 'centos/6',
         :ip => '192.168.56.110',
     },
     :centos7 => {
