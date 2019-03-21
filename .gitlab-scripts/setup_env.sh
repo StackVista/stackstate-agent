@@ -1,6 +1,9 @@
+#!/usr/bin/env bash
+
 # This file is meant to be sourced
 # This file will pull in deps when a test is ran without the deps job having ran first.
 # This happens when using the ./run_gitlab_local.sh script
+
 set -x
 
 VENV_PATH=$CI_PROJECT_DIR/venv

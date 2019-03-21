@@ -1,18 +1,19 @@
 FROM centos:6
 
-ARG SYSTEMD_VERSION=219
-ARG GIT_VERSION=1.8.3.1
-ARG PYTHON_VERSION=2.7.15
-ARG GOLANG_VERSION=1.10.3
+ENV SYSTEMD_VERSION=219
+ENV GIT_VERSION=2.21.0
+ENV PYTHON_VERSION=2.7.15
+ENV GOLANG_VERSION=1.10.3
 ARG GIMME_URL=raw.githubusercontent.com/travis-ci/gimme/master/gimme
 ARG GIMME_DEBUG=0
-ARG RBENV_VERSION=2.4.4
-ARG BUNDLER_VERSION=1.15.3
+ENV RBENV_VERSION=2.4.4
+ENV BUNDLER_VERSION=1.15.3
 
 RUN yum -y install curl-devel expat-devel gettext-devel perl-ExtUtils-MakeMaker \
                    gcc make openssl-devel bzip2 bzip2-devel readline-devel \
                    zlib-devel patch gcc-c++ file rpm-build
 
+# Provide systemd header files needed to build the agent systemd module (journald log collector)
 RUN curl "https://codeload.github.com/systemd/systemd/tar.gz/v$SYSTEMD_VERSION" -o "systemd-$SYSTEMD_VERSION.tar.gz" \
     && tar xzf systemd-$SYSTEMD_VERSION.tar.gz \
     && mv systemd-$SYSTEMD_VERSION/src/systemd/ /usr/include/
@@ -21,8 +22,7 @@ RUN curl "https://mirrors.edge.kernel.org/pub/software/scm/git/git-$GIT_VERSION.
     && tar xzf git-$GIT_VERSION.tar.gz \
     && cd git-$GIT_VERSION \
     && make prefix=/usr/src/git all \
-    && make prefix=/usr/src/git install \
-    && echo "export PATH=$PATH:/usr/src/git/bin" >> /etc/bashrc
+    && make prefix=/usr/src/git install
 
 ENV PATH=$PATH:/usr/src/git/bin
 
