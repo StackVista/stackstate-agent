@@ -24,7 +24,7 @@ def test_receiver_ok(host):
 
 
 def test_generic_events(host):
-    url = "http://localhost:7070/api/topic/sts_generic_events?offset=0&limit=40"
+    url = "http://localhost:7070/api/topic/sts_generic_events?offset=0&limit=80"
 
     def wait_for_metrics():
         data = host.check_output("curl \"%s\"" % url)
