@@ -97,3 +97,6 @@ version.txt
 .circleci/images/gitlab-runner/.terraform/*
 .circleci/images/windows-builder/hosts
 .circleci/images/gitlab-runner/provisioner/hosts
+
+# python - pipenv
+Pipfile*
