@@ -300,10 +300,12 @@ def test_topology_components(host):
         assert _component_data("process", "urn:process:/agent-fedora", "/usr/sbin/sshd") is None
         assert _component_data("process", "urn:process:/agent-fedora", "/usr/sbin/dhclient") is None
         assert _component_data("process", "urn:process:/agent-fedora", "/usr/lib/systemd/systemd-journald") is None
+        assert _component_data("process", "urn:process:/agent-fedora", "/usr/bin/stress") is not None
         # ubuntu specific process filtering
         assert _component_data("process", "urn:process:/agent-ubuntu", "/usr/sbin/sshd") is None
         assert _component_data("process", "urn:process:/agent-ubuntu", "/lib/systemd/systemd-journald") is None
         assert _component_data("process", "urn:process:/agent-ubuntu", "/sbin/agetty") is None
+        assert _component_data("process", "urn:process:/agent-ubuntu", "/usr/bin/stress") is not None
         # windows specific process filtering
         assert _component_data("process", "urn:process:/agent-win", "C:\\Windows\\system32\\svchost.exe") is None
         assert _component_data("process", "urn:process:/agent-win", "winlogon.exe") is None
