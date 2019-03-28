@@ -113,11 +113,11 @@
         state: present
       when: ansible_distribution == "Fedora"
     - name: Install epel-release and stress in CentOS
-        become: true
-        yum:
-          name: [epel-release, stress]
-          state: present
-        when: ansible_distribution == "CentOS"
+      become: true
+      yum:
+        name: [epel-release, stress]
+        state: present
+      when: ansible_distribution == "CentOS"
 
 - name: Prepare Windows Agent (pre)
   hosts: agent_win_vm

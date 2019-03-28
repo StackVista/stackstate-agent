@@ -295,25 +295,39 @@ def test_topology_components(host):
         assert _component_data("process", "urn:process:/agent-centos", "/opt/stackstate-agent/bin/agent/agent")["hostTags"] == ["os:linux"]
         assert _component_data("process", "urn:process:/agent-win", "\"C:\\Program Files\\StackState\\StackState Agent\\embedded\\agent.exe\"")["hostTags"] == ["os:windows"]
 
-        # assert that process filtering works correctly
+        # assert that process filtering works correctly. Process should be filtered unless it's a top resource using process
+        def _component_filtered(type_name, external_id_prefix, command):
+            _data = _component_data(type_name, external_id_prefix, command)
+            if _data is not None:
+                if "usage:top-cpu" in _data["tags"]:
+                    return True
+                if "usage:top-mem" in _data["tags"]:
+                    return True
+                if "usage:top-io-read" in _data["tags"]:
+                    return True
+                if "usage:top-io-write" in _data["tags"]:
+                    return True
+
+            return False
+
         # fedora specific process filtering
-        assert _component_data("process", "urn:process:/agent-fedora", "/usr/sbin/sshd") is None
-        assert _component_data("process", "urn:process:/agent-fedora", "/usr/sbin/dhclient") is None
-        assert _component_data("process", "urn:process:/agent-fedora", "/usr/lib/systemd/systemd-journald") is None
-        assert _component_data("process", "urn:process:/agent-fedora", "/usr/bin/stress") is not None
+        assert _component_filtered("process", "urn:process:/agent-fedora", "/usr/sbin/sshd")
+        assert _component_filtered("process", "urn:process:/agent-fedora", "/usr/sbin/dhclient")
+        assert _component_filtered("process", "urn:process:/agent-fedora", "/usr/lib/systemd/systemd-journald")
+        assert not _component_filtered("process", "urn:process:/agent-fedora", "/usr/bin/stress")
         # ubuntu specific process filtering
-        assert _component_data("process", "urn:process:/agent-ubuntu", "/usr/sbin/sshd") is None
-        assert _component_data("process", "urn:process:/agent-ubuntu", "/lib/systemd/systemd-journald") is None
-        assert _component_data("process", "urn:process:/agent-ubuntu", "/sbin/agetty") is None
-        assert _component_data("process", "urn:process:/agent-ubuntu", "/usr/bin/stress") is not None
+        assert _component_filtered("process", "urn:process:/agent-ubuntu", "/usr/sbin/sshd")
+        assert _component_filtered("process", "urn:process:/agent-ubuntu", "/lib/systemd/systemd-journald")
+        assert _component_filtered("process", "urn:process:/agent-ubuntu", "/sbin/agetty")
+        assert not _component_filtered("process", "urn:process:/agent-ubuntu", "/usr/bin/stress")
         # windows specific process filtering
-        assert _component_data("process", "urn:process:/agent-win", "C:\\Windows\\system32\\svchost.exe") is None
-        assert _component_data("process", "urn:process:/agent-win", "winlogon.exe") is None
-        assert _component_data("process", "urn:process:/agent-win", "C:\\Windows\\system32\\wlms\\wlms.exe") is None
+        assert _component_filtered("process", "urn:process:/agent-win", "C:\\Windows\\system32\\svchost.exe")
+        assert _component_filtered("process", "urn:process:/agent-win", "winlogon.exe")
+        assert _component_filtered("process", "urn:process:/agent-win", "C:\\Windows\\system32\\wlms\\wlms.exe")
         # centos specific process filtering
-        assert _component_data("process", "urn:process:/agent-centos", "/usr/sbin/sshd") is None
-        assert _component_data("process", "urn:process:/agent-centos", "/sbin/init") is None
-        assert _component_data("process", "urn:process:/agent-centos", "/sbin/agetty") is None
-        assert _component_data("process", "urn:process:/agent-centos", "/usr/bin/stress") is not None
+        assert _component_filtered("process", "urn:process:/agent-centos", "/usr/sbin/sshd")
+        assert _component_filtered("process", "urn:process:/agent-centos", "/sbin/init")
+        assert _component_filtered("process", "urn:process:/agent-centos", "/sbin/agetty")
+        assert not _component_filtered("process", "urn:process:/agent-centos", "/usr/bin/stress")
 
     util.wait_until(wait_for_components, 30, 3)
