@@ -112,10 +112,16 @@
         name: [nc, libselinux-python, stress]
         state: present
       when: ansible_distribution == "Fedora"
-    - name: Install epel-release and stress in CentOS
+    - name: Install epel-release for stress in CentOS
       become: true
       yum:
-        name: [epel-release, stress]
+        name: epel-release
+        state: present
+      when: ansible_distribution == "CentOS"
+    - name: Install stress in CentOS
+      become: true
+      yum:
+        name: stress
         state: present
       when: ansible_distribution == "CentOS"
 
