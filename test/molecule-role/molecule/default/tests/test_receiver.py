@@ -280,8 +280,9 @@ def test_topology_components(host):
                 if "TopologyComponent" in p and p["TopologyComponent"]["typeName"] == type_name and p["TopologyComponent"]["externalId"].startswith(external_id_prefix):
                     component_data = json.loads(p["TopologyComponent"]["data"])
                     if command:
-                        if component_data["command"]["args"][0] == command:
-                            return component_data
+                        if len(component_data["command"]["args"]) > 0:
+                            if component_data["command"]["args"][0] == command:
+                                return component_data
                     else:
                         return component_data
             return None
