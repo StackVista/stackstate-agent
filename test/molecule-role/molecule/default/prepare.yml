@@ -112,10 +112,10 @@
         name: [nc, libselinux-python, stress]
         state: present
       when: ansible_distribution == "Fedora"
-    - name: Install stress in Centos
+    - name: Install epel-release and stress in CentOS
         become: true
         yum:
-          name: [stress]
+          name: [epel-release, stress]
           state: present
         when: ansible_distribution == "CentOS"
 
@@ -274,7 +274,7 @@
       async: "{{ max_test_time }}"
       poll: 0
 
-- name: Prepare Centos Agent for blacklist inclusion test
+- name: Prepare CentOS Agent for blacklist inclusion test
   hosts: agent-centos
   gather_facts: false
   vars_files:
