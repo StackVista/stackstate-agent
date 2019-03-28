@@ -100,3 +100,6 @@ version.txt
 
 # python - pipenv
 Pipfile*
+
+# molecule local json files
+/test/molecule-role/molecule/default/topic-*.json

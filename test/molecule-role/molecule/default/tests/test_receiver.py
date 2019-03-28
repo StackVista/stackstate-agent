@@ -310,4 +310,10 @@ def test_topology_components(host):
         assert _component_data("process", "urn:process:/agent-win", "C:\\Windows\\system32\\svchost.exe") is None
         assert _component_data("process", "urn:process:/agent-win", "winlogon.exe") is None
         assert _component_data("process", "urn:process:/agent-win", "C:\\Windows\\system32\\wlms\\wlms.exe") is None
+        # centos specific process filtering
+        assert _component_data("process", "urn:process:/agent-centos", "/usr/sbin/sshd") is None
+        assert _component_data("process", "urn:process:/agent-centos", "/sbin/init") is None
+        assert _component_data("process", "urn:process:/agent-centos", "/sbin/agetty") is None
+        assert _component_data("process", "urn:process:/agent-centos", "/usr/bin/stress") is not None
+
     util.wait_until(wait_for_components, 30, 3)

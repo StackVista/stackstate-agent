@@ -100,18 +100,24 @@
     - name: Gather facts
       setup:
     # - debug: msg={{ ansible_facts }}
-    - name: Install nmap (for ncat binary) in Ubuntu
+    - name: Install nmap (for ncat binary) and stress in Ubuntu
       become: true
       apt:
         name: [nmap, stress]
         state: present
       when: ansible_distribution == "Ubuntu"
-    - name: Install nc (for ncat binary) and libselinux-python in Fedora
+    - name: Install nc (for ncat binary), libselinux-python and stresss in Fedora
       become: true
       yum:
         name: [nc, libselinux-python, stress]
         state: present
       when: ansible_distribution == "Fedora"
+    - name: Install stress in Centos
+        become: true
+        yum:
+          name: [stress]
+          state: present
+        when: ansible_distribution == "CentOS"
 
 - name: Prepare Windows Agent (pre)
   hosts: agent_win_vm
@@ -250,11 +256,11 @@
       pause:
         seconds: 10
     - name: Start the stress process that consumes a large amount of memory
-      shell: "nohup stress --vm 1 --vm-bytes 248M --timeout {{ max_test_time }} --verbose &"
+      shell: "/usr/bin/stress --vm 1 --vm-bytes 248M --timeout {{ max_test_time }} --verbose"
       async: "{{ max_test_time }}"
       poll: 0
 
-- name: Prepare Fedora Agent connecting after start
+- name: Prepare Fedora Agent for blacklist inclusion test
   hosts: agent-fedora
   gather_facts: false
   vars_files:
@@ -264,6 +270,20 @@
       pause:
         seconds: 10
     - name: Start the stress process that consumes a large amount of memory
-      shell: "nohup stress --vm 1 --vm-bytes 248M --timeout {{ max_test_time }} --verbose &"
+      shell: "/usr/bin/stress --vm 1 --vm-bytes 248M --timeout {{ max_test_time }} --verbose"
+      async: "{{ max_test_time }}"
+      poll: 0
+
+- name: Prepare Centos Agent for blacklist inclusion test
+  hosts: agent-centos
+  gather_facts: false
+  vars_files:
+    - common_vars.yml
+  tasks:
+    - name: Wait a bit for the process agent to start
+      pause:
+        seconds: 10
+    - name: Start the stress process that consumes a large amount of memory
+      shell: "/usr/bin/stress --vm 1 --vm-bytes 248M --timeout {{ max_test_time }} --verbose"
       async: "{{ max_test_time }}"
       poll: 0
