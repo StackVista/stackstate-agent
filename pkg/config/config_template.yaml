@@ -661,6 +661,7 @@ process_config:
       - "winlogon.exe"
       - "wlms.exe"
       - "wmiprvse.exe"
+      - "sshd.exe"
       # Should be ignored, but gets reported with an empty command line
       #- "sppsvc.exe"
       #- "services.exe"
