@@ -317,12 +317,12 @@ def test_topology_components(host):
         assert _component_filtered("process", "urn:process:/agent-fedora", "/usr/sbin/sshd")
         assert _component_filtered("process", "urn:process:/agent-fedora", "/usr/sbin/dhclient")
         assert _component_filtered("process", "urn:process:/agent-fedora", "/usr/lib/systemd/systemd-journald")
-        assert not _component_filtered("process", "urn:process:/agent-fedora", "/usr/bin/stress")
+        assert _component_filtered("process", "urn:process:/agent-fedora", "/usr/bin/stress")
         # ubuntu specific process filtering
         assert _component_filtered("process", "urn:process:/agent-ubuntu", "/usr/sbin/sshd")
         assert _component_filtered("process", "urn:process:/agent-ubuntu", "/lib/systemd/systemd-journald")
         assert _component_filtered("process", "urn:process:/agent-ubuntu", "/sbin/agetty")
-        assert not _component_filtered("process", "urn:process:/agent-ubuntu", "/usr/bin/stress")
+        assert _component_filtered("process", "urn:process:/agent-ubuntu", "/usr/bin/stress")
         # windows specific process filtering
         assert _component_filtered("process", "urn:process:/agent-win", "C:\\Windows\\system32\\svchost.exe")
         assert _component_filtered("process", "urn:process:/agent-win", "winlogon.exe")
@@ -331,6 +331,6 @@ def test_topology_components(host):
         assert _component_filtered("process", "urn:process:/agent-centos", "/usr/sbin/sshd")
         assert _component_filtered("process", "urn:process:/agent-centos", "/sbin/init")
         assert _component_filtered("process", "urn:process:/agent-centos", "/sbin/agetty")
-        assert not _component_filtered("process", "urn:process:/agent-centos", "/usr/bin/stress")
+        assert _component_filtered("process", "urn:process:/agent-centos", "/usr/bin/stress")
 
     util.wait_until(wait_for_components, 30, 3)
