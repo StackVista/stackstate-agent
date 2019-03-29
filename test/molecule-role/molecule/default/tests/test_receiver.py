@@ -308,8 +308,10 @@ def test_topology_components(host):
                     return True
                 if "usage:top-io-write" in _data["tags"]:
                     return True
-
-            return False
+                # component was not filtered and is not a top resource consuming process
+                return False
+            # component was correctly filtered
+            return True
 
         # fedora specific process filtering
         assert _component_filtered("process", "urn:process:/agent-fedora", "/usr/sbin/sshd")
