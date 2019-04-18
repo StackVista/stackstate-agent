@@ -8,7 +8,7 @@ require 'json'
 
 name 'datadog-agent-integrations'
 
-dependency 'datadog-pip'
+dependency 'pip'
 dependency 'datadog-agent'
 dependency 'protobuf-py'
 
@@ -40,6 +40,7 @@ blacklist = [
   'docker_daemon',
   'kubernetes',
   'ntp',  # provided as a go check by the core agent
+  'cisco_aci' # temporary issues with certificate
 ]
 
 core_constraints_file = 'core_constraints.txt'
