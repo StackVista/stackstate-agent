@@ -125,6 +125,69 @@
         state: present
       when: ansible_distribution == "CentOS"
 
+- name: Prepare Centos Agent for Network Connection Namespaces (pre)
+  hosts: agent_linux_connection_namespace_vm
+  vars_files:
+    - common_vars.yml
+  tasks:
+    - name: Install python for Ansible
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream)
+      become: true
+      changed_when: false
+    - name: Install python-pip
+      become: true
+      apt:
+        name: python-pip
+        state: present
+        update_cache: yes
+    - name: Installing multiple python packages in Ansible
+      pip:
+        name: boto,boto3
+    - name: Add Docker GPG APT key
+      become: true
+      apt_key: url=https://download.docker.com/linux/ubuntu/gpg
+    - name: Add Docker APT repository
+      become: true
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable
+    - name: Install APT packages
+      become: true
+      apt:
+        name: [apt-transport-https, ca-certificates, curl, software-properties-common, docker-ce]
+        state: present
+        update_cache: yes
+      register: apt_res
+      retries: 5
+      delay: 5
+      until: apt_res is success
+    - name: Add user to docker group
+      become: true
+      user:
+        name: ubuntu
+        groups: docker
+        append: True
+    - name: Restart sshd to apply group change
+      shell: sleep 1; pkill -u {{ ansible_ssh_user }} sshd
+      async: 3
+      poll: 2
+    - name: Install Docker Compose
+      become: true
+      get_url:
+        url: "https://github.com/docker/compose/releases/download/1.22.0/docker-compose-Linux-x86_64"
+        dest: "/usr/local/bin/docker-compose"
+        force: True
+        mode: "0755"
+    - name: Copy Configuration files
+      copy:
+        src: "files/localhost_docker_connections/{{ item }}"
+        dest: "/home/ubuntu/{{ item }}"
+      with_items:
+        - docker-compose.yml
+    - name: Run Docker compose
+      command: docker-compose up -d
+      args:
+        chdir: /home/ubuntu/
+
 - name: Prepare Windows Agent (pre)
   hosts: agent_win_vm
   gather_facts: false
@@ -194,6 +257,27 @@
 
 - name: Prepare Linux Agents (post)
   hosts: agent_linux_vm
+  gather_facts: false
+  vars_files:
+    - common_vars.yml
+  tasks:
+    - name: Add test-stackstate-agent.sts to /etc/hosts
+      become: true
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ hostvars['receiver']['ansible_host'] }} test-stackstate-agent.sts"
+
+    - name: Install stackstate-agent
+      shell: "curl -o- {{ agent_repo_url }}/install.sh | bash"
+      environment:
+        STS_API_KEY: "API_KEY"
+        STS_URL: "https://test-stackstate-agent.sts/stsAgent"
+        HOSTNAME: "{{ inventory_hostname }}"
+        CODE_NAME: "{{ agent_current_branch }}"
+        SKIP_SSL_VALIDATION: "true"
+
+- name: Prepare Connection Namespaces Agents (post)
+  hosts: agent_linux_connection_namespace_vm
   gather_facts: false
   vars_files:
     - common_vars.yml
@@ -291,5 +375,20 @@
         seconds: 10
     - name: Start the stress process that consumes a large amount of memory
       shell: "/usr/bin/stress --vm 1 --vm-bytes 248M --timeout {{ max_test_time }} --verbose"
+      async: "{{ max_test_time }}"
+      poll: 0
+
+- name: Prepare Connection Namespace Host with local docker connections
+  hosts: agent-connection-namespaces
+  gather_facts: false
+  vars_files:
+    - common_vars.yml
+  tasks:
+    - name: Connect to netcat 1 docker container
+      shell: docker exec -it netcat-1 sh -c "yes | nc 127.0.0.1 70"
+      async: "{{ max_test_time }}"
+      poll: 0
+    - name: Connect to netcat 2 docker container
+      shell: docker exec -it netcat-2 sh -c "yes | nc 127.0.0.1 70"
       async: "{{ max_test_time }}"
       poll: 0
