@@ -125,7 +125,7 @@
         state: present
       when: ansible_distribution == "CentOS"
 
-- name: Prepare Centos Agent for Network Connection Namespaces (pre)
+- name: Prepare Network Connection Namespaces VM (pre)
   hosts: agent_linux_connection_namespace_vm
   vars_files:
     - common_vars.yml
@@ -276,7 +276,7 @@
         CODE_NAME: "{{ agent_current_branch }}"
         SKIP_SSL_VALIDATION: "true"
 
-- name: Prepare Connection Namespaces Agents (post)
+- name: Prepare Connection Namespaces VM - Agent (post)
   hosts: agent_linux_connection_namespace_vm
   gather_facts: false
   vars_files:
@@ -378,7 +378,7 @@
       async: "{{ max_test_time }}"
       poll: 0
 
-- name: Prepare Connection Namespace Host with local docker connections
+- name: Prepare Connection Namespace VM with local docker connections
   hosts: agent-connection-namespaces
   gather_facts: false
   vars_files:
