@@ -334,3 +334,34 @@ def test_topology_components(host):
         assert _component_filtered("process", "urn:process:/agent-centos", "/usr/bin/stress")
 
     util.wait_until(wait_for_components, 30, 3)
+
+def test_connection_network_namespaces_relations(host):
+    url = "http://localhost:7070/api/topic/sts_topo_process_agents?offset=0&limit=1000"
+
+    def wait_for_components():
+        data = host.check_output("curl \"%s\"" % url)
+        json_data = json.loads(data)
+        with open("./topic-topo-process-agents.json", 'w') as f:
+            json.dump(json_data, f, indent=4)
+
+        def _relation_data(type_name, external_id_prefix, incoming_ip, incoming_port, outgoing_ip):
+            for message in json_data["messages"]:
+                p = message["message"]["TopologyElement"]["payload"]
+                if "TopologyRelation" in p and p["TopologyRelation"]["typeName"] == type_name and p["TopologyRelation"]["externalId"].startswith(external_id_prefix):
+                    relation_data = json.loads(p["TopologyRelation"]["data"])
+                    # check that the variables have all been declared
+                    if incoming_ip and incoming_port and outgoing_ip:
+                        # check that incoming and outgoing contains an ip
+                        if "ip" in relation_data["incoming"] and "ip" in relation_data["outgoing"]:
+                            # check that the connection matches the desired one
+                            if relation_data["incoming"]["ip"] == incoming_ip and relation_data["incoming"]["port"] == incoming_port and relation_data["outgoing"]["ip"] == outgoing_ip:
+                                # check that the namespaces are the same for incoming and outgoing
+                                if relation_data["incoming"]["namespace"] == relation_data["outgoing"]["namespace"]:
+                                    return relation_data
+
+            return None
+
+        assert _relation_data("directional_connection", "TCP:/urn:process:/agent-connection-namespaces", "127.0.0.1", 70, "127.0.0.1") is not None
+        assert _relation_data("directional_connection", "TCP:/urn:process:/agent-connection-namespaces", "127.0.0.1", 70, "127.0.0.1") is not None
+
+    util.wait_until(wait_for_components, 30, 3)
