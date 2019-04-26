@@ -335,6 +335,7 @@ def test_topology_components(host):
 
     util.wait_until(wait_for_components, 30, 3)
 
+
 def test_connection_network_namespaces_relations(host):
     url = "http://localhost:7070/api/topic/sts_topo_process_agents?offset=0&limit=1000"
 
@@ -345,6 +346,7 @@ def test_connection_network_namespaces_relations(host):
             json.dump(json_data, f, indent=4)
 
         relations = []
+
         def _get_all_relation_data(type_name, external_id_prefix, incoming_ip, incoming_port, outgoing_ip):
             for message in json_data["messages"]:
                 p = message["message"]["TopologyElement"]["payload"]
