@@ -344,7 +344,8 @@ def test_connection_network_namespaces_relations(host):
         with open("./topic-topo-process-agents.json", 'w') as f:
             json.dump(json_data, f, indent=4)
 
-        def _relation_data(type_name, external_id_prefix, incoming_ip, incoming_port, outgoing_ip):
+        relations = []
+        def _get_all_relation_data(type_name, external_id_prefix, incoming_ip, incoming_port, outgoing_ip):
             for message in json_data["messages"]:
                 p = message["message"]["TopologyElement"]["payload"]
                 if "TopologyRelation" in p and p["TopologyRelation"]["typeName"] == type_name and p["TopologyRelation"]["externalId"].startswith(external_id_prefix):
@@ -357,11 +358,10 @@ def test_connection_network_namespaces_relations(host):
                             if relation_data["incoming"]["ip"] == incoming_ip and relation_data["incoming"]["port"] == incoming_port and relation_data["outgoing"]["ip"] == outgoing_ip:
                                 # check that the namespaces are the same for incoming and outgoing
                                 if relation_data["incoming"]["namespace"] == relation_data["outgoing"]["namespace"]:
-                                    return relation_data
+                                    relations.append(relation_data)
 
-            return None
-
-        assert _relation_data("directional_connection", "TCP:/urn:process:/agent-connection-namespaces", "127.0.0.1", 70, "127.0.0.1") is not None
-        assert _relation_data("directional_connection", "TCP:/urn:process:/agent-connection-namespaces", "127.0.0.1", 70, "127.0.0.1") is not None
+        # assert that we received 2 localhost connections on agent-connection-namespaces and that the connection namespaces matched
+        _get_all_relation_data("directional_connection", "TCP:/urn:process:/agent-connection-namespaces", "127.0.0.1", 70, "127.0.0.1")
+        assert relations == 2
 
     util.wait_until(wait_for_components, 30, 3)
