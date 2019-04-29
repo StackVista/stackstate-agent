@@ -132,6 +132,8 @@ unit_tests:
   dependencies:
     - deps_deb
   script:
+    # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
+    - inv deps
     - inv -e agent.build --race --precompile-only
     - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --build-exclude clusterchecks,kubeapiserver,kubelet
 
@@ -387,6 +389,7 @@ pre_release_image:
     DOCKER_DRIVER: overlay
   services:
     - docker:dind
+  before_script: []
   script:
     - cd $CI_PROJECT_DIR
     - export VERSION=`cat version.txt`
@@ -394,6 +397,7 @@ pre_release_image:
 
 molecule_tests:
   stage: acceptance
+  dependencies: []
   before_script: []
   script:
    - export MOLECULE_RUN_ID=${CI_JOB_ID}
@@ -468,6 +472,7 @@ release_image:
     DOCKER_DRIVER: overlay
   services:
     - docker:dind
+  before_script: []
   script:
     - cd $CI_PROJECT_DIR
     - export VERSION=`cat version.txt`
