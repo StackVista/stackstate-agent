@@ -337,7 +337,7 @@ def test_topology_components(host):
 
 
 def test_connection_network_namespaces_relations(host):
-    url = "http://localhost:7070/api/topic/sts_topo_process_agents?offset=0&limit=1000"
+    url = "http://localhost:7070/api/topic/sts_topo_process_agents?offset=0&limit=5000"
 
     def wait_for_components():
         data = host.check_output("curl \"%s\"" % url)

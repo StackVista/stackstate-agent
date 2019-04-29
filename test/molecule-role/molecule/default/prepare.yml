@@ -385,10 +385,10 @@
     - common_vars.yml
   tasks:
     - name: Connect to netcat 1 docker container
-      shell: docker exec -it netcat-1 sh -c "yes | nc 127.0.0.1 70"
+      shell: docker exec -it netcat-1 sh -c "yes | nc 127.0.0.1 9091"
       async: "{{ max_test_time }}"
       poll: 0
     - name: Connect to netcat 2 docker container
-      shell: docker exec -it netcat-2 sh -c "yes | nc 127.0.0.1 70"
+      shell: docker exec -it netcat-2 sh -c "yes | nc 127.0.0.1 9091"
       async: "{{ max_test_time }}"
       poll: 0
