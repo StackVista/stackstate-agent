@@ -170,23 +170,12 @@
       shell: sleep 1; pkill -u {{ ansible_ssh_user }} sshd
       async: 3
       poll: 2
-    - name: Install Docker Compose
-      become: true
-      get_url:
-        url: "https://github.com/docker/compose/releases/download/1.22.0/docker-compose-Linux-x86_64"
-        dest: "/usr/local/bin/docker-compose"
-        force: True
-        mode: "0755"
-    - name: Copy Configuration files
-      copy:
-        src: "files/localhost_docker_connections/{{ item }}"
-        dest: "/home/ubuntu/{{ item }}"
-      with_items:
-        - docker-compose.yml
-    - name: Run Docker compose
-      command: docker-compose up -d
-      args:
-        chdir: /home/ubuntu/
+    - name: Cleanup docker containers
+      shell: "docker container prune --force"
+    - name: Setup netcat 1 docker container
+      shell: "docker run -it -d --name netcat-1 ubuntu && docker exec -itd --user root netcat-1 sh -c 'apt-get update && apt-get install -y netcat && nc -lv -p 9091'"
+    - name: Setup netcat 2 docker container
+      shell: "docker run -it -d --name netcat-2 ubuntu && docker exec -itd --user root netcat-2 sh -c 'apt-get update && apt-get install -y netcat && nc -lv -p 9091'"
 
 - name: Prepare Windows Agent (pre)
   hosts: agent_win_vm
@@ -385,10 +374,6 @@
     - common_vars.yml
   tasks:
     - name: Connect to netcat 1 docker container
-      shell: docker exec -it netcat-1 sh -c "yes | nc 127.0.0.1 9091"
-      async: "{{ max_test_time }}"
-      poll: 0
+      shell: "docker exec -itd netcat-1 sh -c 'yes | nc 127.0.0.1 9091'"
     - name: Connect to netcat 2 docker container
-      shell: docker exec -it netcat-2 sh -c "yes | nc 127.0.0.1 9091"
-      async: "{{ max_test_time }}"
-      poll: 0
+      shell: "docker exec -itd netcat-2 sh -c 'yes | nc 127.0.0.1 9091'"

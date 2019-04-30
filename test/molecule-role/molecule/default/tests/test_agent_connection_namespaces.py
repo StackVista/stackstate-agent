@@ -27,8 +27,3 @@ def test_stackstate_process_agent_running_and_enabled(host):
 def test_etc_docker_directory(host):
     f = host.file('/etc/docker/')
     assert f.is_directory
-
-
-def test_docker_compose_file(host):
-    f = host.file('/home/ubuntu/docker-compose.yml')
-    assert f.is_file
