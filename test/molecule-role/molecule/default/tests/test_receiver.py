@@ -59,6 +59,7 @@ def _find_outgoing_connection(json_data, port, origin, dest):
                 connection["localEndpoint"]["endpoint"]["ip"]["address"] == origin
                 )
 
+
 def _find_outgoing_connection_in_namespace(json_data, port, scope, origin, dest):
     """Find Connection as seen from the sending endpoint"""
     return next(connection for message in json_data["messages"]
