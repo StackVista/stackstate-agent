@@ -84,7 +84,7 @@ def _find_incoming_connection(json_data, port, origin, dest):
                 )
 
 
-def _find_incoming_connection_in_namespace(json_data, port, origin, dest):
+def _find_incoming_connection_in_namespace(json_data, port, scope, origin, dest):
     """Find Connection as seen from the receiving endpoint"""
     return next(connection for message in json_data["messages"]
                 for connection in message["message"]["Connections"]["connections"]
