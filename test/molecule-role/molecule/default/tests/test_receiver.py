@@ -365,7 +365,7 @@ def test_topology_components(host):
 
 
 def test_connection_network_namespaces_relations(host):
-    url = "http://localhost:7070/api/topic/sts_correlate_endpoints?limit=1000"
+    url = "http://localhost:7070/api/topic/sts_correlate_endpoints?limit=1500"
 
     def wait_for_connection():
         data = host.check_output("curl \"%s\"" % url)
