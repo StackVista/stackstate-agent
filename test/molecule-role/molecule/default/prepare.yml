@@ -126,7 +126,7 @@
       when: ansible_distribution == "CentOS"
 
 - name: Prepare Network Connection Namespaces VM (pre)
-  hosts: agent_linux_connection_namespace_vm
+  hosts: agent-connection-namespaces
   vars_files:
     - common_vars.yml
   tasks:
@@ -173,9 +173,9 @@
     - name: Cleanup docker containers
       shell: "docker container prune --force"
     - name: Setup netcat 1 docker container
-      shell: "docker run -it -d --name netcat-1 ubuntu && docker exec -itd --user root netcat-1 sh -c 'apt-get update && apt-get install -y netcat && nc -lv -p 9091'"
+      shell: "docker run -it -d --name netcat-1 ubuntu && docker exec -itd --user root netcat-1 sh -c 'apt-get update && apt-get install -y netcat && ncat --broker --listen -p 9091'"
     - name: Setup netcat 2 docker container
-      shell: "docker run -it -d --name netcat-2 ubuntu && docker exec -itd --user root netcat-2 sh -c 'apt-get update && apt-get install -y netcat && nc -lv -p 9091'"
+      shell: "docker run -it -d --name netcat-2 ubuntu && docker exec -itd --user root netcat-2 sh -c 'apt-get update && apt-get install -y netcat && ncat --broker --listen -p 9091'"
 
 - name: Prepare Windows Agent (pre)
   hosts: agent_win_vm
@@ -246,27 +246,6 @@
 
 - name: Prepare Linux Agents (post)
   hosts: agent_linux_vm
-  gather_facts: false
-  vars_files:
-    - common_vars.yml
-  tasks:
-    - name: Add test-stackstate-agent.sts to /etc/hosts
-      become: true
-      lineinfile:
-        path: /etc/hosts
-        line: "{{ hostvars['receiver']['ansible_host'] }} test-stackstate-agent.sts"
-
-    - name: Install stackstate-agent
-      shell: "curl -o- {{ agent_repo_url }}/install.sh | bash"
-      environment:
-        STS_API_KEY: "API_KEY"
-        STS_URL: "https://test-stackstate-agent.sts/stsAgent"
-        HOSTNAME: "{{ inventory_hostname }}"
-        CODE_NAME: "{{ agent_current_branch }}"
-        SKIP_SSL_VALIDATION: "true"
-
-- name: Prepare Connection Namespaces VM - Agent (post)
-  hosts: agent_linux_connection_namespace_vm
   gather_facts: false
   vars_files:
     - common_vars.yml

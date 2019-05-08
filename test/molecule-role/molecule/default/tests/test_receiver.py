@@ -84,6 +84,20 @@ def _find_incoming_connection(json_data, port, origin, dest):
                 )
 
 
+def _find_incoming_connection_in_namespace(json_data, port, origin, dest):
+    """Find Connection as seen from the receiving endpoint"""
+    return next(connection for message in json_data["messages"]
+                for connection in message["message"]["Connections"]["connections"]
+                if connection["localEndpoint"]["endpoint"]["port"] == port and
+                connection["localEndpoint"]["endpoint"]["ip"]["address"] == dest and
+                connection["remoteEndpoint"]["endpoint"]["ip"]["address"] == origin and
+                "scope" in connection["localEndpoint"] and
+                connection["localEndpoint"]["scope"] == scope and
+                "namespace" in connection["remoteEndpoint"] and "namespace" in connection["localEndpoint"] and
+                connection["remoteEndpoint"]["namespace"] == connection["localEndpoint"]["namespace"]
+                )
+
+
 def test_created_connection_after_start_with_metrics(host):
     url = "http://localhost:7070/api/topic/sts_correlate_endpoints?limit=1000"
 
@@ -364,5 +378,9 @@ def test_connection_network_namespaces_relations(host):
         outgoing_conn = _find_outgoing_connection_in_namespace(json_data, 9091, "agent-connection-namespaces", "127.0.0.1", "127.0.0.1")
         print outgoing_conn
         assert outgoing_conn["direction"] == "OUTGOING"
+
+        incoming_conn = _find_incoming_connection_in_namespace(json_data, 9091, "agent-connection-namespaces", "127.0.0.1", "127.0.0.1")
+        print incoming_conn
+        assert incoming_conn["direction"] == "INCOMING"
 
     util.wait_until(wait_for_connection, 30, 3)
