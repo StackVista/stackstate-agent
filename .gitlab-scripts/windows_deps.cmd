@@ -12,6 +12,13 @@ IF EXIST %GOPATH%\src\github.com\StackVista\stackstate-agent\vendor GOTO VENDOR_
 
 echo "======================> stackstate-agent\vendor missing, getting deps"
 
+echo "==== using py"
+which python
+echo "==== using pip"
+which pip
+echo "==== under user"
+whoami
+
 inv -e deps
 
 :VENDOR_EXIST
