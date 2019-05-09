@@ -387,11 +387,9 @@ def test_connection_network_namespaces_relations(host):
         # agent-connection-namespaces host within the same network namespace.
         outgoing_conn = _find_outgoing_connection_in_namespace(json_data, 9091, "agent-connection-namespaces", "127.0.0.1", "127.0.0.1")
         print outgoing_conn
-        assert outgoing_conn["direction"] == "OUTGOING"
 
         incoming_conn = _find_incoming_connection_in_namespace(json_data, 9091, "agent-connection-namespaces", "127.0.0.1", "127.0.0.1")
         print incoming_conn
-        assert incoming_conn["direction"] == "INCOMING"
 
         # assert that the connections are in the same namespace
         outgoing_local_namespace = outgoing_conn["localEndpoint"]["namespace"]
