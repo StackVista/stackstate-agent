@@ -77,7 +77,7 @@ def test_stackstate_process_agent_no_log_errors(host):
 
 def test_agent_namespaces_docker(host):
     hostname = host.ansible.get_variables()["inventory_hostname"]
-    if hostname != "agent-connection-namespaces":
+    if hostname == "agent-connection-namespaces":
         f = host.file('/etc/docker/')
         assert f.is_directory
     else:
