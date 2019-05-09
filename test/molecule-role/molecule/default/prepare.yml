@@ -186,6 +186,10 @@
   vars_files:
     - common_vars.yml
   tasks:
+    - name: disable enhanced exit codes
+      win_chocolatey_feature:
+        name: useEnhancedExitCodes
+        state: disabled
     - name: Install netcat
       win_chocolatey:
         name: netcat
@@ -355,6 +359,9 @@
   vars_files:
     - common_vars.yml
   tasks:
+    - name: Wait a bit for the process agent to start
+      pause:
+        seconds: 20
     - name: Connect to netcat 1 docker container
       shell: "docker exec -itd netcat-1 sh -c 'yes | ncat 127.0.0.1 9091'"
     - name: Connect to netcat 2 docker container
