@@ -21,4 +21,6 @@ whoami
 
 inv -e deps
 
+echo "======================> /DONE stackstate-agent\vendor "
+
 :VENDOR_EXIST
