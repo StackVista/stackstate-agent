@@ -403,5 +403,4 @@ def test_connection_network_namespaces_relations(host):
             incoming_local_namespace == outgoing_remote_namespace
         )
 
-
     util.wait_until(wait_for_connection, 30, 3)
