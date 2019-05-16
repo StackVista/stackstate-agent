@@ -219,11 +219,9 @@
     - common_vars.yml
   tasks:
     - name: Connect to Ubuntu Agent
-      win_command: nc -w {{ max_test_time }} {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_before_start_windows }}
+      win_command: nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_before_start_windows }}
       async: "{{ max_test_time }}"
       poll: 0
-      retries: 5
-      delay: 5
 
 - name: Prepare Windows Agents (post)
   hosts: agent_win_vm
@@ -299,11 +297,9 @@
     - common_vars.yml
   tasks:
     - name: Connect to Ubuntu agent
-      win_command: nc -w {{ max_test_time }} {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }}
+      win_command: nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }}
       async: "{{ max_test_time }}"
       poll: 0
-      retries: 5
-      delay: 5
 
 - name: Prepare Ubuntu Agent for blacklist inclusion test
   hosts: agent-ubuntu
