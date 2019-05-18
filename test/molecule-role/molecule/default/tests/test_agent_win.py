@@ -44,7 +44,7 @@ def test_stackstate_agent_log(host, hostname):
 
     agent_log = host.ansible("win_shell", "cat \"{}\"".format(agent_log_path), check=False)["stdout"]
     with open("./{}.log".format(hostname), 'w') as f:
-        f.write(agent_log)
+        f.write(agent_log.encode('utf-8'))
 
     # Check for errors
     for line in agent_log.splitlines():
@@ -67,7 +67,7 @@ def test_stackstate_process_agent_no_log_errors(host, hostname):
 
     process_agent_log = host.ansible("win_shell", "cat \"{}\"".format(process_agent_log_path), check=False)["stdout"]
     with open("./{}-process.log".format(hostname), 'w') as f:
-        f.write(process_agent_log)
+        f.write(process_agent_log.encode('utf-8'))
 
     # Check for errors
     for line in process_agent_log.splitlines():
