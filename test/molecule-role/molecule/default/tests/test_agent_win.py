@@ -31,11 +31,7 @@ def test_stackstate_agent_running_and_enabled(host):
     check("stackstate-process-agent", ["stackstateagent"], [])
 
 
-def _hostname(host):
-    return host.ansible.get_variables()["inventory_hostname"]
-
-
-def test_stackstate_agent_log(host):
+def test_stackstate_agent_log(host, hostname):
     agent_log_path = "c:\\programdata\\stackstate\\logs\\agent.log"
 
     # Check for presence of success
@@ -47,7 +43,7 @@ def test_stackstate_agent_log(host):
     util.wait_until(wait_for_check_successes, 30, 3)
 
     agent_log = host.ansible("win_shell", "cat \"{}\"".format(agent_log_path), check=False)["stdout"]
-    with open("./{}.log".format(_hostname(host)), 'w') as f:
+    with open("./{}.log".format(hostname), 'w') as f:
         f.write(agent_log)
 
     # Check for errors
@@ -56,7 +52,7 @@ def test_stackstate_agent_log(host):
         assert not re.search("\\| error \\|", line, re.IGNORECASE)
 
 
-def test_stackstate_process_agent_no_log_errors(host):
+def test_stackstate_process_agent_no_log_errors(host, hostname):
     process_agent_log_path = "c:\\programdata\\stackstate\\logs\\process-agent.log"
 
     # Check for presence of success
@@ -70,7 +66,7 @@ def test_stackstate_process_agent_no_log_errors(host):
     util.wait_until(wait_for_check_successes, 30, 3)
 
     process_agent_log = host.ansible("win_shell", "cat \"{}\"".format(process_agent_log_path), check=False)["stdout"]
-    with open("./{}-process.log".format(_hostname(host)), 'w') as f:
+    with open("./{}-process.log".format(hostname), 'w') as f:
         f.write(process_agent_log)
 
     # Check for errors
