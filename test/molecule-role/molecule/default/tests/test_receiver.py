@@ -252,7 +252,7 @@ def test_host_metrics(host):
 
         # CPU
         assert_metric("system.cpu.idle", lambda v: v > 0.0, lambda v: v > 0.0, lambda v: v > 0.0)
-        assert_metric("system.cpu.iowait", lambda v: 0.3 > v >= 0.0, lambda v: 0.3 > v >= 0.0, lambda v: 0.3 > v >= 0.0)
+        assert_metric("system.cpu.iowait", lambda v: v >= 0.0, lambda v: v >= 0.0, lambda v: v >= 0.0)
         assert_metric("system.cpu.system", lambda v: v > 0.0, lambda v: v > 0.0, lambda v: v > 0.0)
         assert_metric("system.cpu.user", lambda v: v >= 0.0, lambda v: v >= 0.0, lambda v: v >= 0.0)
 
