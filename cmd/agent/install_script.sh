@@ -79,6 +79,12 @@ if [ -n "$STS_INSTALL_ONLY" ]; then
     no_start=true
 fi
 
+# if the installation is done on AWS ec2 instance, we use the ec2 instance id as the hostname
+if is_ec2_instance; then
+	get_ec2_instance_id
+	hostname=$EC2_INSTANCE_ID
+fi
+
 if [ -n "$HOSTNAME" ]; then
     hostname=$HOSTNAME
 fi
@@ -220,6 +226,43 @@ fi
 
 function version_gt() {
     test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1";
+}
+
+function is_ec2_instance() {
+    # This first, simple check will work for many older instance types.
+    if [[ -f /sys/hypervisor/uuid ]]; then
+      # File should be readable by non-root users.
+      if [[ `head -c 3 /sys/hypervisor/uuid` == "ec2" ]]; then
+        return 0
+      fi
+
+    # This check will work on newer m5/c5 instances, but only if you have root!
+    elif [[ -r /sys/devices/virtual/dmi/id/product_uuid ]]; then
+      # If the file exists AND is readable by us, we can rely on it.
+      if [[ `head -c 3 /sys/devices/virtual/dmi/id/product_uuid` == "EC2" ]]; then
+        return 0
+      fi
+
+    else
+      # Fallback check of http://169.254.169.254/. If we wanted to be REALLY
+      # authoritative, we could follow Amazon's suggestions for cryptographically
+      # verifying their signature, see here:
+      #    https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-identity-documents.html
+      # but this is almost certainly overkill for this purpose (and the above
+      # checks of "EC2" prefixes have a higher false positive potential, anyway).
+      if $(curl -s -m 5 http://instance-data/latest/dynamic/instance-identity/document | grep -q availabilityZone) ; then
+        return 0
+      fi
+
+    fi
+
+    return 1
+}
+
+function get_ec2_instance_id() {
+    EC2_INSTANCE_ID="$(curl -s http://instance-data/latest/meta-data/instance-id)" ||
+    "$(wget -q -O http://instance-data/latest/meta-data/instance-id)" ||
+    "$(hostname -f)"
 }
 
 #Minimum kernel version required for network tracer https://github.com/StackVista/tcptracer-bpf/blob/master/pkg/tracer/common/common_linux.go#L28
