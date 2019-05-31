@@ -15,8 +15,6 @@ variable "sts_agent_image" {
 
 variable "STS_URL" {
   description = "Stackstate server url"
-#  default = "https://stac-4493-test-ecs.test.stackstate.io/stsAgent"
-  default = "http://eedd1ede.ngrok.io/stsAgent"
 }
 
 variable "STS_API_KEY" {
