@@ -177,13 +177,6 @@
     - common_vars.yml
   tasks:
 
-    # - name: install chocolatey 0.10.13
-    #   win_chocolatey:
-    #      name: chocolatey
-    #      state: present
-    #      version: 0.10.13
-    #      force: yes
-
     - name: disable enhanced exit codes
       win_chocolatey_feature:
         name: useEnhancedExitCodes
@@ -201,7 +194,7 @@
       win_chocolatey:
         name: netcat
         state: present
-      when: msys_try1 is failed
+      when: net_try1 is failed
 
 - name: Prepare Ubuntu Agent listening before start
   hosts: agent-ubuntu
