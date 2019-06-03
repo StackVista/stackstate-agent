@@ -193,9 +193,9 @@
         name: netcat
         state: present
         timeout: 90
-        register: net_try1
-        ignore_errors: true
-        until: net_try1.finished
+      register: net_try1
+      ignore_errors: true
+      until: net_try1.finished
 
     - name: Install netcat (2/2)
       win_chocolatey:
