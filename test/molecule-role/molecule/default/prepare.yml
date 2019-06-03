@@ -188,10 +188,20 @@
       win_chocolatey_feature:
         name: useEnhancedExitCodes
         state: disabled
-    - name: Install netcat
+    - name: Install netcat (1/2)
       win_chocolatey:
         name: netcat
         state: present
+        timeout: 90
+        register: net_try1
+        ignore_errors: true
+        until: net_try1.finished
+
+    - name: Install netcat (2/2)
+      win_chocolatey:
+        name: netcat
+        state: present
+      when: msys_try1 is failed
 
 - name: Prepare Ubuntu Agent listening before start
   hosts: agent-ubuntu
