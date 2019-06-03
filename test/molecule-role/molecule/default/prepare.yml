@@ -176,6 +176,14 @@
   vars_files:
     - common_vars.yml
   tasks:
+
+    # - name: install chocolatey 0.10.13
+    #   win_chocolatey:
+    #      name: chocolatey
+    #      state: present
+    #      version: 0.10.13
+    #      force: yes
+
     - name: disable enhanced exit codes
       win_chocolatey_feature:
         name: useEnhancedExitCodes
