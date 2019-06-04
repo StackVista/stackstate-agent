@@ -14,7 +14,7 @@ spec:
     spec:
       serviceAccountName: stackstate-agent
       containers:
-      - image: stackstate/stackstate-agent:latest
+      - image: stackstate/stackstate-agent-2:latest
         imagePullPolicy: Always
         name: stackstate-agent
         ports:
@@ -72,13 +72,13 @@ spec:
           - name: cgroups
             mountPath: /host/sys/fs/cgroup
             readOnly: true
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 5555
-          initialDelaySeconds: 15
-          periodSeconds: 15
-          timeoutSeconds: 5
+#        livenessProbe:
+#          httpGet:
+#            path: /health
+#            port: 5555
+#          initialDelaySeconds: 15
+#          periodSeconds: 15
+#          timeoutSeconds: 5
       hostNetwork: true
       hostPID: true
       volumes:
