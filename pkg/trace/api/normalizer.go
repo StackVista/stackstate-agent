@@ -16,9 +16,9 @@ import (
 
 const (
 	// MaxServiceLen the maximum length a service can have
-	MaxServiceLen = 100
-	// MaxNameLen the maximum length a name can have
-	MaxNameLen = 100
+	MaxServiceLen = 250
+	// MaxNameLen the maximum length a name can have (cater for longer Traefik names)
+	MaxNameLen = 350
 	// MaxTypeLen the maximum length a span type can have
 	MaxTypeLen = 100
 	// MaxEndDateOffset the maximum amount of time in the future we
