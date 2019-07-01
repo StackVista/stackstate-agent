@@ -4,10 +4,10 @@ Agent Molecule tests
 Those are integration tests that spawn new VMs in AWS and do the following:
 
 * install the agents from the debian/rpm repositories
-* run a docker compose setup of the StackState receiver and topic API
+* run a docker compose setup of the StackState receiver, correlate and topic API
 * verify assertion on the target VMs
 
-### Run
+## Run
 
 Prerequisites:
 
@@ -30,9 +30,9 @@ To run a single ansible command use:
 
 ## Windows image for molecule
 
-Under `./molecule-role/win-image-refresh` there is a terraform script that can be used to bake an instance of Windows to be used in our molecule test
+Under `win-image-refresh` there is a terraform script that can be used to bake an instance of Windows to be used in our molecule test
 
-    $ cd molecule-role/win-image-refresh
+    $ cd win-image-refresh
     $ terraform init
     $ terraform plan -o win.plan
     $ terraform apply -f win.plan
