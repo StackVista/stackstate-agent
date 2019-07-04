@@ -409,6 +409,11 @@ pre_release_image:
 
 molecule_tests:
   stage: acceptance
+  image: docker:18.06.0
+  variables:
+    DOCKER_DRIVER: overlay
+  services:
+    - docker:dind
   dependencies: []
   before_script: []
   script:
