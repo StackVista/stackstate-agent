@@ -1,14 +1,14 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 set -e
 
-if [[ -z $CI_COMMIT_REF_NAME ]]; then
+if [ -z "$CI_COMMIT_REF_NAME" ]; then
   export AGENT_GITLAB_BRANCH=`git rev-parse --abbrev-ref HEAD`
 else
   export AGENT_GITLAB_BRANCH=$CI_COMMIT_REF_NAME
 fi
 
-docker run --rm -it \
+docker run --rm \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v /tmp:/tmp \
     -v "$(pwd)":/tmp/$(basename "${PWD}") \
