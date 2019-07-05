@@ -29,18 +29,6 @@ def _component_data(json_data, type_name, external_id_prefix, command):
     return None
 
 
-def _relation_dataxx(json_data, type_name, external_id_assert_fn, source_id_assert_fn, target_id_assert_fn):
-    for message in json_data["messages"]:
-        p = message["message"]["TopologyElement"]["payload"]
-        if "TopologyRelation" in p and \
-            p["TopologyRelation"]["typeName"] == type_name and \
-            external_id_assert_fn(p["TopologyRelation"]["externalId"]) and \
-            source_id_assert_fn(p["TopologyRelation"]["sourceId"]) and \
-            target_id_assert_fn(p["TopologyRelation"]["targetId"]):
-            return json.loads(p["TopologyRelation"]["data"])
-    return None
-
-
 def _relation_data(json_data, type_name, external_id_assert_fn):
     for message in json_data["messages"]:
         p = message["message"]["TopologyElement"]["payload"]
@@ -125,13 +113,26 @@ def test_dnat(host, common_vars):
             json.dump(json_data, f, indent=4)
 
         service_component_id = "urn:service:/{}".format(ubuntu_private_ip)
-        assert _component_data(json_data, "dnat-service", service_component_id, None)["ip"] == ubuntu_private_ip
+        assert _component_data(
+            json_data=json_data,
+            type_name="dnat-service",
+            external_id_prefix=service_component_id,
+            command=None)["ip"] == ubuntu_private_ip
 
-        proc_to_proc_id = re.compile("TCP:/urn:process:/agent-fedora:.*:.*->{}:{}".format(service_component_id, dnat_service_port))
-        proc_to_service_id = re.compile("TCP:/urn:process:/agent-fedora:.*:.*->urn:process:/agent-ubuntu:.*:.*:{}:{}".format(ubuntu_private_ip, dnat_server_port))
-        service_to_proc_id = re.compile("TCP:/{}:{}->urn:process:/agent-ubuntu:.*:.*:{}:{}".format(ubuntu_private_ip, dnat_service_port, ubuntu_private_ip, dnat_server_port))
-        assert _relation_data(json_data, "directional_connection", lambda v: proc_to_proc_id.findall(v))["outgoing"]["ip"] == fedora_private_ip
-        assert _relation_data(json_data, "directional_connection", lambda v: proc_to_service_id.findall(v))["outgoing"]["ip"] == fedora_private_ip
-        assert _relation_data(json_data, "directional_connection", lambda v: service_to_proc_id.findall(v))["incoming"]["ip"] == ubuntu_private_ip
+        proc_to_proc_id_match = re.compile("TCP:/urn:process:/agent-fedora:.*:.*->{}:{}".format(service_component_id, dnat_service_port))
+        proc_to_service_id_match = re.compile("TCP:/urn:process:/agent-fedora:.*:.*->urn:process:/agent-ubuntu:.*:.*:{}:{}".format(ubuntu_private_ip, dnat_server_port))
+        service_to_proc_id_match = re.compile("TCP:/{}:{}->urn:process:/agent-ubuntu:.*:.*:{}:{}".format(ubuntu_private_ip, dnat_service_port, ubuntu_private_ip, dnat_server_port))
+        assert _relation_data(
+            json_data=json_data,
+            type_name="directional_connection",
+            external_id_assert_fn=lambda v: proc_to_proc_id_match.findall(v))["outgoing"]["ip"] == fedora_private_ip
+        assert _relation_data(
+            json_data=json_data,
+            type_name="directional_connection",
+            external_id_assert_fn=lambda v: proc_to_service_id_match.findall(v))["outgoing"]["ip"] == fedora_private_ip
+        assert _relation_data(
+            json_data=json_data,
+            type_name="directional_connection",
+            external_id_assert_fn=lambda v: service_to_proc_id_match.findall(v))["incoming"]["ip"] == ubuntu_private_ip
 
     util.wait_until(wait_for_components, 30, 3)
