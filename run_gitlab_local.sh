@@ -33,4 +33,5 @@ gitlab-runner exec docker \
   --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
   --env AWS_REGION="$AWS_REGION" \
   --env AWS_DEFAULT_REGION="$AWS_DEFAULT_REGION" \
+  --docker-volumes /var/run/docker.sock:/var/run/docker.sock \
   "$@"
