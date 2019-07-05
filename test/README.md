@@ -30,9 +30,9 @@ To run a single ansible command use:
 
 ## Windows image for molecule
 
-Under `win-image-refresh` there is a terraform script that can be used to bake an instance of Windows to be used in our molecule test
+Under `./molecule-role/win-image-refresh` there is a terraform script that can be used to bake an instance of Windows to be used in our molecule test
 
-    $ cd win-image-refresh
+    $ cd molecule-role/win-image-refresh
     $ terraform init
     $ terraform plan -o win.plan
     $ terraform apply -f win.plan

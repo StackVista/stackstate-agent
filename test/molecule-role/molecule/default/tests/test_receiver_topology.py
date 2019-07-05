@@ -121,7 +121,7 @@ def test_dnat(host, common_vars):
 
         proc_to_proc_id_match = re.compile("TCP:/urn:process:/agent-fedora:.*:.*->{}:{}".format(service_component_id, dnat_service_port))
         proc_to_service_id_match = re.compile("TCP:/urn:process:/agent-fedora:.*:.*->urn:process:/agent-ubuntu:.*:.*:{}:{}".format(ubuntu_private_ip, dnat_server_port))
-        service_to_proc_id_match = re.compile("TCP:/{}:{}->urn:process:/agent-ubuntu:.*:.*:{}:{}".format(ubuntu_private_ip, dnat_service_port, ubuntu_private_ip, dnat_server_port))
+        service_to_proc_id_match = re.compile("TCP:/{}:{}->urn:process:/agent-ubuntu:.*:.*:{}:{}".format(service_component_id, dnat_service_port, ubuntu_private_ip, dnat_server_port))
         assert _relation_data(
             json_data=json_data,
             type_name="directional_connection",

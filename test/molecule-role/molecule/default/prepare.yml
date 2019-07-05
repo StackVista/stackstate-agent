@@ -5,6 +5,10 @@
   vars_files:
     - common_vars.yml
   tasks:
+    - name: Install python for Ansible
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream)
+      become: true
+      changed_when: false
     - name: Install python-pip
       become: true
       apt:
@@ -93,6 +97,10 @@
   vars_files:
     - common_vars.yml
   tasks:
+    - name: Install python for Ansible
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream python-pip) || ((yum check-update || test $? -eq 100) && yum install -y python2) || true
+      become: true
+      changed_when: false
     - name: Gather facts
       setup:
     # - debug: msg={{ ansible_facts }}
