@@ -18,7 +18,7 @@ def _component_data(json_data, type_name, external_id_prefix, command):
         p = message["message"]["TopologyElement"]["payload"]
         if "TopologyComponent" in p and \
             p["TopologyComponent"]["typeName"] == type_name and \
-            p["TopologyComponent"]["externalId"].startswith(external_id_prefix):
+                p["TopologyComponent"]["externalId"].startswith(external_id_prefix):
             component_data = json.loads(p["TopologyComponent"]["data"])
             if command:
                 if "args" in component_data["command"]:
@@ -34,7 +34,7 @@ def _relation_data(json_data, type_name, external_id_assert_fn):
         p = message["message"]["TopologyElement"]["payload"]
         if "TopologyRelation" in p and \
             p["TopologyRelation"]["typeName"] == type_name and \
-            external_id_assert_fn(p["TopologyRelation"]["externalId"]):
+                external_id_assert_fn(p["TopologyRelation"]["externalId"]):
             return json.loads(p["TopologyRelation"]["data"])
     return None
 
