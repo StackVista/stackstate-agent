@@ -33,11 +33,19 @@ def _relation_data(json_data, type_name, external_id_assert_fn):
 
 
 def test_receiver_ok(host):
-    def assert_health():
+    def assert_healthy():
         c = "curl -s -o /dev/null -w \"%{http_code}\" http://localhost:7077/health"
         assert host.check_output(c) == "200"
 
-    util.wait_until(assert_health, 30, 3)
+    util.wait_until(assert_healthy, 30, 3)
+
+
+def test_agent_ok(host):
+    def assert_healthy():
+        c = "docker inspect ubuntu_stackstate-agent_1 |  jq -r '.[0].State.Health.Status'"
+        assert host.check_output(c) == "healthy"
+
+    util.wait_until(assert_healthy, 30, 3)
 
 
 def test_java_traces(host):
@@ -45,10 +53,10 @@ def test_java_traces(host):
         c = "curl -H Host:stackstate-books-app -s -o /dev/null -w \"%{http_code}\" http://localhost/stackstate-books-app/listbooks"
         assert host.check_output(c) == "200"
 
-    util.wait_until(assert_ok, 30, 3)
+    util.wait_until(assert_ok, 120, 10)
 
     def assert_components():
-        topo_url = "http://localhost:7070/api/topic/sts_topo_process_agents?offset=0&limit=1000"
+        topo_url = "http://localhost:7070/api/topic/sts_topo_process_agents?limit=5000"
         data = host.check_output("curl \"%s\"" % topo_url)
         json_data = json.loads(data)
         with open("./topic-topo-process-agents-traces.json", 'w') as f:
@@ -57,6 +65,7 @@ def test_java_traces(host):
         assert _component_data(json_data, "service", "urn:service:/traefik:stackstate-authors-app", None)["name"] == "traefik:stackstate-authors-app"
         assert _component_data(json_data, "service", "urn:service:/traefik:stackstate-books-app", None)["name"] == "traefik:stackstate-books-app"
 
+        #TODO
         # traefik service
         # postgres db service
         # books app service instance + processes (due to scale)
