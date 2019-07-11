@@ -22,10 +22,10 @@ Now execute `./molecule.sh`, this will show you the help.
 To run a single ansible command use:
 
     $ source p-env/bin/activate
-    $ ansible agent-ubuntu -i /tmp/molecule/molecule-role/default/ansible_inventory.yml -m debug -a msg="{{ ansible_facts }}"
+    $ ansible agent-ubuntu -i /tmp/molecule/molecule-role/default/inventory/ansible_inventory.yml -m setup
     
     or on MacOS X:
-    $ ansible agent-ubuntu -i /var/folders/.../molecule/molecule-role/default/ansible_inventory.yml -m debug -a msg="{{ ansible_facts }}"
+    $ ansible agent-ubuntu -i /var/folders/.../molecule/molecule-role/default/inventory/ansible_inventory.yml -m setup
 
 
 ## Windows image for molecule
