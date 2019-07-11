@@ -65,7 +65,7 @@ def test_java_traces(host):
         assert _component_data(json_data, "service", "urn:service:/traefik:stackstate-authors-app", None)["name"] == "traefik:stackstate-authors-app"
         assert _component_data(json_data, "service", "urn:service:/traefik:stackstate-books-app", None)["name"] == "traefik:stackstate-books-app"
 
-        #TODO
+        # TODO
         # traefik service
         # postgres db service
         # books app service instance + processes (due to scale)
