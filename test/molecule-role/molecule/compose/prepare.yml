@@ -1,6 +1,7 @@
 ---
 - name: Prepare Trace Java
   hosts: trace-java-demo
+  gather_facts: false
   vars_files:
     - common_vars.yml
   tasks:
@@ -14,8 +15,8 @@
         name: [python-pip, virtualenv, libyajl2]  # venv and yajl2 if you wanna run the simulator
         state: present
         update_cache: yes
-      retries: 5
-      delay: 5
+      retries: 10
+      delay: 10
       register: pip_result
       until: pip_result is not failed
     - name: Installing python boto packages
@@ -82,6 +83,8 @@
         dest: "/home/ubuntu/{{ item }}"
       with_items:
         - docker-compose.yml
+    - name: Gather facts (we need docker network interface ip)
+      setup:
     - name: Run Docker compose
       command: docker-compose up --scale stackstate-books-app=2 --scale stackstate-authors-app=2 -d
       args:

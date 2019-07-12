@@ -37,7 +37,7 @@ def test_receiver_ok(host):
         c = "curl -s -o /dev/null -w \"%{http_code}\" http://localhost:7077/health"
         assert host.check_output(c) == "200"
 
-    util.wait_until(assert_healthy, 30, 3)
+    util.wait_until(assert_healthy, 30, 5)
 
 
 def test_agent_ok(host):
@@ -45,7 +45,7 @@ def test_agent_ok(host):
         c = "docker inspect ubuntu_stackstate-agent_1 |  jq -r '.[0].State.Health.Status'"
         assert host.check_output(c) == "healthy"
 
-    util.wait_until(assert_healthy, 30, 3)
+    util.wait_until(assert_healthy, 60, 5)
 
 
 def test_java_traces(host):
@@ -64,10 +64,10 @@ def test_java_traces(host):
 
         assert _component_data(json_data, "service", "urn:service:/traefik:stackstate-authors-app", None)["name"] == "traefik:stackstate-authors-app"
         assert _component_data(json_data, "service", "urn:service:/traefik:stackstate-books-app", None)["name"] == "traefik:stackstate-books-app"
+        assert _component_data(json_data, "postgresql", "urn:service:/postgresql:app", None)["name"] == "postgresql:app"
+        # assert _component_data(json_data, "service", "urn:service:/traefik", None)["name"] == "traefik"
 
         # TODO
-        # traefik service
-        # postgres db service
         # books app service instance + processes (due to scale)
         # authors app service instance + processes (due to scale)
 
