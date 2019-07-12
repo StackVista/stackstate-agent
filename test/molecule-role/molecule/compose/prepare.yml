@@ -15,7 +15,7 @@
         name: [python-pip, virtualenv, libyajl2]  # venv and yajl2 if you wanna run the simulator
         state: present
         update_cache: yes
-      retries: 10
+      retries: 20
       delay: 10
       register: pip_result
       until: pip_result is not failed
