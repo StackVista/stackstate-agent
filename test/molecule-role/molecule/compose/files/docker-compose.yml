@@ -61,7 +61,7 @@ services:
     labels:
       - "traefik.frontend.rule=Host:stackstate-books-app"
     environment:
-      MAVEN_OPTS: "-Dsts.service.name=stackstate-authors-app -Dsts.agent.host=${DOCKER_HOST_IP} -Dsts.agent.port=8126 -Dstackstate.slf4j.simpleLogger.defaultLogLevel=debug -javaagent:/sts-java-agent.jar"
+      MAVEN_OPTS: "-Dsts.service.name=stackstate-books-app -Dsts.agent.host=${DOCKER_HOST_IP} -Dsts.agent.port=8126 -Dstackstate.slf4j.simpleLogger.defaultLogLevel=debug -javaagent:/sts-java-agent.jar"
   stackstate-authors-app:
     image: "508573134510.dkr.ecr.eu-west-1.amazonaws.com/stackstate-trace-java-demo:authors-app"
     ports:

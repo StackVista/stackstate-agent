@@ -1,24 +1,21 @@
 import json
 import os
+import re
 import util
 from testinfra.utils.ansible_runner import AnsibleRunner
 
 testinfra_hosts = AnsibleRunner(os.environ['MOLECULE_INVENTORY_FILE']).get_hosts('trace-java-demo')
 
 
-def _component_data(json_data, type_name, external_id_prefix, command):
+def _component_data(json_data, type_name, external_id_assert_fn):
     for message in json_data["messages"]:
         p = message["message"]["TopologyElement"]["payload"]
         if "TopologyComponent" in p and \
             p["TopologyComponent"]["typeName"] == type_name and \
-                p["TopologyComponent"]["externalId"].startswith(external_id_prefix):
+                external_id_assert_fn(p["TopologyComponent"]["externalId"]):
             component_data = json.loads(p["TopologyComponent"]["data"])
-            if command:
-                if "args" in component_data["command"]:
-                    if component_data["command"]["args"][0] == command:
-                        return component_data
-            else:
-                return component_data
+            print(component_data)
+            return component_data
     return None
 
 
@@ -28,7 +25,9 @@ def _relation_data(json_data, type_name, external_id_assert_fn):
         if "TopologyRelation" in p and \
             p["TopologyRelation"]["typeName"] == type_name and \
                 external_id_assert_fn(p["TopologyRelation"]["externalId"]):
-            return json.loads(p["TopologyRelation"]["data"])
+            relation_data = json.loads(p["TopologyRelation"]["data"], "utf-8")
+            print(relation_data)
+            return relation_data
     return None
 
 
@@ -55,30 +54,193 @@ def test_java_traces(host):
 
     util.wait_until(assert_ok, 120, 10)
 
-    def assert_components():
+    def assert_topology():
         topo_url = "http://localhost:7070/api/topic/sts_topo_process_agents?limit=5000"
         data = host.check_output("curl \"%s\"" % topo_url)
         json_data = json.loads(data)
         with open("./topic-topo-process-agents-traces.json", 'w') as f:
             json.dump(json_data, f, indent=4)
 
-        assert _component_data(json_data, "service", "urn:service:/traefik:stackstate-authors-app", None)["name"] == "traefik:stackstate-authors-app"
-        assert _component_data(json_data, "service", "urn:service:/traefik:stackstate-books-app", None)["name"] == "traefik:stackstate-books-app"
-        assert _component_data(json_data, "postgresql", "urn:service:/postgresql:app", None)["name"] == "postgresql:app"
-        # assert _component_data(json_data, "service", "urn:service:/traefik", None)["name"] == "traefik"
+        components = [
+            {
+                "type": "service",
+                "external_id": lambda e_id: e_id == "urn:service:/traefik",
+                "data": lambda d: d["name"] == "traefik"
+            },
+            {
+                "type": "service",
+                "external_id": lambda e_id: e_id == "urn:service:/traefik:stackstate-authors-app",
+                "data": lambda d: d["name"] == "traefik:stackstate-authors-app"
+            },
+            {
+                "type": "service",
+                "external_id": lambda e_id: e_id == "urn:service:/traefik:stackstate-books-app",
+                "data": lambda d: d["name"] == "traefik:stackstate-books-app"
+            },
+            {
+                "type": "service",
+                "external_id": lambda e_id: e_id == "urn:service:/stackstate-authors-app",
+                "data": lambda d: d["name"] == "stackstate-authors-app"
+            },
+            {
+                "type": "service",
+                "external_id": lambda e_id: e_id == "urn:service:/stackstate-books-app",
+                "data": lambda d: d["name"] == "stackstate-books-app"
+            },
+            {
+                "type": "postgresql",
+                "external_id": lambda e_id: e_id == "urn:service:/postgresql:app",
+                "data": lambda d: d["name"] == "postgresql:app"
+            },
+            {
+                "type": "service-instance",
+                "external_id": lambda e_id: re.compile("urn:service-instance:/stackstate-authors-app:/.*:.*:.*").findall(e_id),
+                "data": lambda d: d["service"] == "stackstate-authors-app"
+            },
+            {
+                "type": "service-instance",
+                "external_id": lambda e_id: re.compile("urn:service-instance:/stackstate-books-app:/.*:.*:.*").findall(e_id),
+                "data": lambda d: d["service"] == "stackstate-books-app"
+            },
+        ]
 
-        # TODO
-        # books app service instance + processes (due to scale)
-        # authors app service instance + processes (due to scale)
+        for c in components:
+            assert c["data"](
+                _component_data(
+                    json_data=json_data,
+                    type_name=c["type"],
+                    external_id_assert_fn=c["external_id"],
+                )
+            )
 
-        # books app service -> instances
-        # authors app service -> instances
-        # books app service -> traefik
-        # authors app service -> traefik
-        # traefik -> books app service
-        # traefik -> authors app service
-        # books app service -> authors app service
-        # app service -> postgres service
-        # app service instances -> postgres service
+        relations = [
+            {
+                "type": "has",
+                "external_id": lambda e_id: re.compile("urn:service:/stackstate-authors-app->urn:service-instance:/stackstate-authors-app:/.*:.*:.*").findall(e_id),
+                "data": lambda d: d["targetData"]["service"] == "stackstate-authors-app"
+            },
+            {
+                "type": "has",
+                "external_id": lambda e_id: re.compile("urn:service:/stackstate-books-app->urn:service-instance:/stackstate-books-app:/.*:.*:.*").findall(e_id),
+                "data": lambda d: d["targetData"]["service"] == "stackstate-books-app"
+            },
+            {
+                "type": "is module of",
+                "external_id": lambda e_id: re.compile(r"urn:service-instance:/stackstate-authors-app:/(.*):(.*):(.*)->urn:process:/\1:\2:\3").findall(e_id),
+                "data": lambda d: d["sourceData"]["service"] == "stackstate-authors-app"
+            },
+            {
+                "type": "is module of",
+                "external_id": lambda e_id: re.compile(r"urn:service-instance:/stackstate-books-app:/(.*):(.*):(.*)->urn:process:/\1:\2:\3").findall(e_id),
+                "data": lambda d: d["sourceData"]["service"] == "stackstate-books-app"
+            },
+            {
+                "type": "calls",
+                "external_id": lambda e_id: e_id == "urn:service:/traefik->urn:service:/traefik:stackstate-books-app",
+                "data": lambda d: d["targetData"]["name"] == "traefik:stackstate-books-app",
+            },
+            {
+                "type": "calls",
+                "external_id": lambda e_id: e_id == "urn:service:/traefik:stackstate-books-app->urn:service:/stackstate-books-app",
+                "data": lambda d: d["targetData"]["component"] == "java-web-servlet",
+            },
+            # books(servlet) -> books(jsp)
+            {
+                "type": "calls",
+                "external_id": lambda e_id: e_id == "urn:service:/stackstate-books-app->urn:service:/postgresql:app",
+                "data": lambda d: d["targetData"]["component"] == "java-jdbc-statement" and d["sourceData"]["component"] == "java-web-servlet",
+            },
+            {
+                "type": "calls",
+                "external_id": lambda e_id: re.compile("urn:service-instance:/stackstate-books-app:/.*:.*:.*->urn:service:/postgresql:app").findall(e_id),
+                "data": lambda d: d["targetData"]["component"] == "java-jdbc-statement" and d["sourceData"]["component"] == "java-web-servlet",
+            },
+            {
+                "type": "calls",
+                "external_id": lambda e_id: re.compile("urn:service-instance:/stackstate-books-app:/.*:.*:.*->urn:service:/stackstate-books-app").findall(e_id),
+                "data": lambda d: d["targetData"]["component"] == "apache-httpclient" and d["sourceData"]["component"] == "java-web-servlet",
+            },
+            # books(servlet) -> books(httpclient)
 
-    util.wait_until(assert_components, 30, 3)
+
+            # {
+            #     "type": "calls",
+            #     "external_id": lambda e_id: e_id == "urn:service:/traefik->urn:service:/traefik:stackstate-authors-app", ?
+            #     "data": lambda d: d["targetData"]["name"] == "traefik:stackstate-authors-app",
+            # },
+            {
+                "type": "calls",
+                "external_id": lambda e_id: e_id == "urn:service:/traefik:stackstate-authors-app->urn:service:/stackstate-authors-app",
+                "data": lambda d: d["targetData"]["component"] == "java-web-servlet",
+            },
+            # authors(servlet) -> authors(jsp)
+            {
+                "type": "calls",
+                "external_id": lambda e_id: e_id == "urn:service:/stackstate-authors-app->urn:service:/postgresql:app",
+                "data": lambda d: d["targetData"]["component"] == "java-jdbc-statement" and d["sourceData"]["component"] == "java-web-servlet",
+            },
+            {
+                "type": "calls",
+                "external_id": lambda e_id: re.compile("urn:service-instance:/stackstate-authors-app:/.*:.*:.*->urn:service:/postgresql:app"),
+                "data": lambda d: d["targetData"]["component"] == "java-jdbc-statement" and d["sourceData"]["component"] == "java-web-servlet",
+            },
+            {
+                "type": "calls",
+                "external_id": lambda e_id: re.compile("urn:service:/traefik:stackstate-authors-app->urn:service:/traefik"),
+                "data": lambda d: d["sourceData"]["component"] == "traefik",
+            },
+
+
+            {
+                "type": "calls",
+                "external_id": lambda e_id: e_id == "urn:service:/traefik:stackstate-books-app->urn:service:/traefik",
+                "data": lambda d: d["sourceData"]["component"] == "traefik",
+            },
+            {
+                "type": "calls",
+                "external_id": lambda e_id: e_id == "urn:service:/stackstate-books-app->urn:service:/traefik:stackstate-authors-app",
+                "data": lambda d: d["targetData"]["component"] == "traefik" and d["sourceData"]["component"] == "apache-httpclient",
+            },
+
+
+            # {
+            #     "type": "calls",
+            #     "external_id": lambda e_id: ,
+            #     "data": lambda d: ,
+            # },
+        ]
+
+        for r in relations:
+            assert r["data"](
+                _relation_data(
+                    json_data=json_data,
+                    type_name=r["type"],
+                    external_id_assert_fn=r["external_id"],
+                )
+            )
+
+        #         calls               calls        has                  is module of
+        # traefik  -->  traefik:books  -->  books  -->  books-instance     -->        books-process
+        #       calls
+        # books  -->  postgres
+        #                calls
+        # books-instance  -->  postgres
+
+        #                  calls                 calls          has                    is module of
+        # books -> traefik  -->  traefik:authors  -->  authors  -->  authors-instance     -->        authors-process
+        #       calls                 calls          has                    is module of
+        # books  -->  traefik:authors  -->  authors  -->  authors-instance     -->        authors-process
+        #       calls
+        # authors  -->  postgres
+        #                calls
+        # authors-instance  -->  postgres
+
+        #                                             calls
+        # traefik:authors -> traefik -> traefik:books  ->  traefik
+        # books -> traefik:authors
+
+        # make sure we dont get:
+        # authors -> authors
+        # books -> books
+
+    util.wait_until(assert_topology, 30, 3)
