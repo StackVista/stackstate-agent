@@ -6,6 +6,6 @@ variable "region" {
 
 //  The public key to use for SSH access.
 variable "public_key_path" {
-  default = "~/.ssh/id_rsa.pub"
+  default = "./okd_rsa.pub"
 }
 

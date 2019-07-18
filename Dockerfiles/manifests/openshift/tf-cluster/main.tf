@@ -1,6 +1,15 @@
+
+terraform {
+  backend "s3" {
+    bucket = "lupulus-terraform-state"
+    key    = "aws-openshift.terraform.tfstate"
+    region = "eu-west-1"
+  }
+}
 //  Setup the core provider information.
 provider "aws" {
   region  = "${var.region}"
+  version = "~> 1.26"
 }
 
 //  Create the OpenShift cluster using our module.

@@ -1,6 +1,5 @@
-# terraform-aws-openshift
+# tf-cluster
 
-[![CircleCI](https://circleci.com/gh/dwmkerr/terraform-aws-openshift.svg?style=shield)](https://circleci.com/gh/dwmkerr/terraform-aws-openshift)
 
 
 **Index**
@@ -19,11 +18,8 @@
 - [Additional Configuration](#additional-configuration)
 - [Choosing the OpenShift Version](#choosing-the-openshift-version)
 - [Destroying the Cluster](#destroying-the-cluster)
-- [Makefile Commands](#makefile-commands)
-- [Pricing](#pricing)
 - [Troubleshooting](#troubleshooting)
 - [Developer Guide](#developer-guide)
-	- [CI](#ci)
 	- [Linting](#linting)
 
 
@@ -57,9 +53,12 @@ export AWS_ACCESS_KEY_ID=
 export AWS_SECRET_ACCESS_KEY=
 export TF_VAR_AWS_SECRET_ACCESS_KEY=...
 export TF_VAR_AWS_ACCESS_KEY_ID=...
-export TF_VAR_AWS_REGION=us-east-1
+export TF_VAR_AWS_REGION=eu-west-1
 ```
-
+4. Generate a Keypair for SSH 
+```bash
+        ssh-keygen -f okd_rsa
+```
 ## Creating the Cluster
 
 Create the infrastructure first:
@@ -72,19 +71,6 @@ eval `ssh-agent -s`
 make infrastructure
 ```
 
-You will be asked for a region to deploy in, use `us-east-1` or your preferred region. You can configure the nuances of how the cluster is created in the [`main.tf`](./main.tf) file. Once created, you will see a message like:
-
-```
-$ make infrastructure
-var.region
-  Region to deploy the cluster into
-
-  Enter a value: ap-southeast-1
-
-...
-
-Apply complete! Resources: 20 added, 0 changed, 0 destroyed.
-```
 
 That's it! The infrastructure is ready and you can install OpenShift. Leave about five minutes for everything to start up fully.
 
@@ -265,17 +251,6 @@ There are some commands in the `makefile` which make common operations a little 
 | `make ssh-node2`        | SSH to node 2.                                  |
 | `make lint`             | Lints the terraform code.                       |
 
-## Pricing
-
-You'll be paying for:
-
-- 1 x m4.xlarge instance
-- 2 x t2.large instances
-
-## Recipes
-
-Your installation can be extended with recipes.
-
 
 
 ## Troubleshooting
@@ -328,19 +303,7 @@ Failure summary:
      Message:  Unable to restart service origin-master-api: Job for origin-master-api.service failed because the control process exited with error code. See "systemctl status origin-master-api.service" and "journalctl -xe" for details.
 ```
 
-## Developer Guide
 
-This section is intended for those who want to update or modify the code.
-
-### CI
-
-[CircleCI 2](https://circleci.com/gh/dwmkerr/terraform-aws-openshift) is used to run builds. You can run a CircleCI build locally with:
-
-```bash
-make circleci
-```
-
-Currently, this build will lint the code (no tests are run).
 
 ### Linting
 
