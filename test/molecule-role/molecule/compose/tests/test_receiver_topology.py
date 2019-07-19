@@ -130,8 +130,6 @@ def test_java_traces(host):
                 "external_id": lambda e_id: re.compile(r"urn:service-instance:/stackstate-books-app:/(.*):(.*):(.*)->urn:process:/\1:\2:\3").findall(e_id),
                 "data": lambda d: d["sourceData"]["service"] == "stackstate-books-app" and d["targetData"]["pid"] is not None
             },
-            
-            
             # traefik -> books
             {
                 "type": "calls",
@@ -153,8 +151,6 @@ def test_java_traces(host):
                 "external_id": lambda e_id: re.compile("urn:service-instance:/stackstate-books-app:/.*:.*:.*->urn:service:/postgresql:app").findall(e_id),
                 "data": lambda d: d["sourceData"]["service"] == "stackstate-books-app" and d["targetData"]["service"] == "postgresql",
             },
-
-
             # traefik -> authors
             {
                 "type": "calls",
@@ -176,8 +172,6 @@ def test_java_traces(host):
                 "external_id": lambda e_id: re.compile("urn:service-instance:/stackstate-authors-app:/.*:.*:.*->urn:service:/postgresql:app").findall(e_id),
                 "data": lambda d: d["sourceData"]["service"] == "stackstate-authors-app" and d["targetData"]["service"] == "postgresql",
             },
-            
-
             # callbacks ?
             {
                 "type": "calls",
@@ -189,8 +183,6 @@ def test_java_traces(host):
                 "external_id": lambda e_id: e_id == "urn:service:/traefik:stackstate-books-app->urn:service:/traefik",
                 "data": lambda d: d["sourceData"]["service"] == "traefik" and d["targetData"]["service"] == "traefik",
             },
-
-
             # ?
             {
                 "type": "calls",
