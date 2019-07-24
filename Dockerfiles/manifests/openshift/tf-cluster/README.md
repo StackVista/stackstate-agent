@@ -1,8 +1,4 @@
-# tf-cluster
-
-
-
-**Index**
+# OpenShift cluster setup
 
 <!-- TOC depthFrom:2 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
@@ -22,7 +18,6 @@
 - [Developer Guide](#developer-guide)
 	- [Linting](#linting)
 
-
 <!-- /TOC -->
 
 ## Overview
@@ -40,25 +35,27 @@ You need:
 
 1. [Terraform](https://www.terraform.io/intro/getting-started/install.html) - `brew update && brew install terraform`
 2. An AWS account, configured with the cli locally -
-```
-if [[ "$unamestr" == 'Linux' ]]; then
-        dnf install -y awscli || yum install -y awscli
-elif [[ "$unamestr" == 'FreeBSD' ]]; then
-        brew install -y awscli
-fi
-```
+    ```
+    if [[ "$unamestr" == 'Linux' ]]; then
+            dnf install -y awscli || yum install -y awscli
+    elif [[ "$unamestr" == 'FreeBSD' ]]; then
+            brew install -y awscli
+    fi
+    ```
 3. Export the follwing environment variables -
-```
-export AWS_ACCESS_KEY_ID=
-export AWS_SECRET_ACCESS_KEY=
-export TF_VAR_AWS_SECRET_ACCESS_KEY=...
-export TF_VAR_AWS_ACCESS_KEY_ID=...
-export TF_VAR_AWS_REGION=eu-west-1
-```
+    ```
+    export AWS_ACCESS_KEY_ID=
+    export AWS_SECRET_ACCESS_KEY=
+    export TF_VAR_AWS_SECRET_ACCESS_KEY=
+    export TF_VAR_AWS_ACCESS_KEY_ID=
+    export TF_VAR_AWS_REGION=eu-west-1
+    export TF_VAR_CLUSTER_NAME=
+    ```
 4. Generate a Keypair for SSH 
-```bash
-        ssh-keygen -f okd_rsa
-```
+    ```
+    ssh-keygen -f okd_rsa
+    ```
+
 ## Creating the Cluster
 
 Create the infrastructure first:

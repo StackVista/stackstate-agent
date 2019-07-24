@@ -31,9 +31,5 @@ variable "cluster_id" {
 }
 
 data "aws_availability_zones" "azs" {}
-variable "aws_access_key"{
- default = ""
-}
-variable "aws_secret_key" {
-  default = ""
-}
+variable "aws_access_key" {}
+variable "aws_secret_key" {}

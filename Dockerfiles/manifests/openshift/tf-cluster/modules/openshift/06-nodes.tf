@@ -8,14 +8,9 @@ resource "aws_key_pair" "keypair" {
 data "template_file" "setup-master" {
   template = "${file("${path.module}/files/setup-master.sh")}"
   vars {
+    region            = "${var.region}}"
     availability_zone = "${data.aws_availability_zones.azs.names[0]}"
   }
-}
-
-// Create Elastic IP for master
-resource "aws_eip" "master_eip" {
-  instance = "${aws_instance.master.id}"
-  vpc      = true
 }
 
 //  Launch configuration for the consul cluster auto-scaling group.
@@ -61,19 +56,9 @@ resource "aws_instance" "master" {
 data "template_file" "setup-node" {
   template = "${file("${path.module}/files/setup-node.sh")}"
   vars {
+    region            = "${var.region}}"
     availability_zone = "${data.aws_availability_zones.azs.names[0]}"
   }
-}
-
-// Create Elastic IP for the nodes
-resource "aws_eip" "node1_eip" {
-  instance = "${aws_instance.node1.id}"
-  vpc      = true
-}
-
-resource "aws_eip" "node2_eip" {
-  instance = "${aws_instance.node2.id}"
-  vpc      = true
 }
 
 //  Create the two nodes. This would be better as a Launch Configuration and
