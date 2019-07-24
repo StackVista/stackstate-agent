@@ -405,8 +405,7 @@ pre_release_image:
   script:
     - cd $CI_PROJECT_DIR
     - export VERSION=`cat version.txt`
-    - export PUSH_LATEST=false
-    - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO $CI_PROJECT_DIR/outcomes/pkg $PUSH_LATEST
+    - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO $CI_PROJECT_DIR/outcomes/pkg
 
 molecule_tests_vms:
   stage: acceptance
