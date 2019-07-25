@@ -118,7 +118,7 @@ The url will be something like `https://a.b.c.d.xip.io:8443`.
 The master node has the OpenShift client installed and is authenticated as a cluster administrator. If you SSH onto the master node via the bastion, then you can use the OpenShift client and have full access to all projects:
 
 ```
-$ make ssh-master # or if you prefer: ssh -t -A ec2-user@$(terraform output bastion-public_ip) ssh master.openshift.local
+$ make ssh-master
 $ oc get pods
 NAME                       READY     STATUS    RESTARTS   AGE
 docker-registry-1-d9734    1/1       Running   0          2h
@@ -133,6 +133,18 @@ You can also use the `oadm` tool to perform administrative operations:
 ```
 $ oadm new-project test
 Created project test
+```
+
+Note: this is not recommended for production setup 
+Cluster admin user is enabled only using the master node; to enable the normal admin user to behave as a cluster admin execute this on the master:
+
+```
+$ oc adm policy add-cluster-role-to-user cluster-admin admin
+```
+
+after that re-login as admin on your machine:
+```
+$ oc login -u admin
 ```
 
 ### The OpenShift Client
