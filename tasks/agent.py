@@ -163,6 +163,15 @@ def apply_branding(ctx):
     camel_replace = 's/Data[dD]og/StackState/g'
     lower_replace = 's/datadog/stackstate/g'
 
+    # Dist config templates
+    do_sed_rename(ctx, 's|## Learn more about tagging: https://docs.datadoghq.com/tagging/||', "./cmd/agent/dist/conf.d/containerd.d/conf.yaml.example")
+    do_sed_rename(ctx, 's|## Learn more about tagging: https://docs.datadoghq.com/tagging/||', "./cmd/agent/dist/conf.d/cri.d/conf.yaml.example")
+    do_sed_rename(ctx, lower_replace, "./cmd/agent/dist/conf.d/go_expvar.d/agent_stats.yaml.example")
+    do_sed_rename(ctx, 's|http://docs.datadoghq.com/integrations/java/|StackState Agent StackPack - Java JMX integration page|g', "./cmd/agent/dist/conf.d/jmx.d/conf.yaml.example")
+    do_sed_rename(ctx, lower_replace, "./cmd/agent/dist/conf.d/apm.yaml.default")
+    do_sed_rename(ctx, 's/dd/sts/g', "./cmd/agent/dist/dd-agent")
+    do_sed_rename(ctx, lower_replace, "./cmd/agent/dist/dd-agent")
+
     # Hardcoded checks and metrics
     do_sed_rename(ctx, lower_replace, "./pkg/aggregator/aggregator.go")
 
