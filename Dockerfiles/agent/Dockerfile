@@ -58,7 +58,10 @@ ENV DOCKER_STS_AGENT=true \
     # Exit container if entrypoint fails
     S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
     # Allow readonlyrootfs
-    S6_READ_ONLY_ROOT=1
+    S6_READ_ONLY_ROOT=1\
+    # Enable trace agent
+    STS_APM_ENABLED=${STS_APM_ENABLED:-false}
+
 
 # Install openjdk-8-jre-headless on jmx flavor
 RUN if [ -n "$WITH_JMX" ]; then apt-get update \
