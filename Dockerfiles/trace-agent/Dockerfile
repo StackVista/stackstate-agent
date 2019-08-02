@@ -8,8 +8,6 @@ LABEL maintainer "StackState <info@stackstate.com>"
 ENV DOCKER_STS_AGENT=true \
     PATH=/opt/stackstate-agent/bin/agent/:/opt/stackstate-agent/embedded/bin/:$PATH \
     CURL_CA_BUNDLE=/opt/stackstate-agent/embedded/ssl/certs/cacert.pem \
-    #Set API Key
-    STS_API_KEY=API_KEY \
     # Enable trace agent
     STS_APM_ENABLED=true
 COPY trace-agent* /opt/stackstate-agent/bin/agent/
@@ -41,11 +39,11 @@ RUN  adduser --system --no-create-home --disabled-password --ingroup root stacks
  && chmod 755 /probe.sh /init-trace.sh
 
 
-#   - copy default config files
-COPY stackstate*.yaml etc/stackstate-agent/
+#   - copy default configuration files
+COPY stackstate*.yaml /etc/stackstate-agent/
 
 
-# Expose DogStatsD and trace-agent ports
+# Expose trace-agent port
 EXPOSE  8126/tcp
 
 

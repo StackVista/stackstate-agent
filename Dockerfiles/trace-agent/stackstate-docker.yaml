@@ -1,13 +1,6 @@
 ## Provides autodetected defaults, for vanilla Docker environments,
 ## please see stackstate.yaml.example for all supported options
 
-# Autodiscovery settings for vanilla Docker
-listeners:
-  - name: docker
-config_providers:
-  - name: docker
-    polling: true
-
 # Enable APM by setting the STS_APM_ENABLED envvar to true, or override this configuration
 apm_config:
   enabled: true

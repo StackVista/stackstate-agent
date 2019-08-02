@@ -19,7 +19,7 @@ docker build -t stackstate/${IMAGE_REPO}:${IMAGE_TAG} Dockerfiles/trace-agent
 docker login -u $DOCKER_USER -p $DOCKER_PASS
 docker push stackstate/${IMAGE_REPO}:${IMAGE_TAG}
 
-if ["$PUSH_LATEST= true" ]; then
+if [ "$PUSH_LATEST" = "true" ]; then
     docker tag stackstate/${IMAGE_REPO}:${IMAGE_TAG} stackstate/${IMAGE_REPO}:latest
     echo 'Pushing release to latest'
     docker push stackstate/${IMAGE_REPO}:latest
