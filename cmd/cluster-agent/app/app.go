@@ -19,7 +19,6 @@ import (
 
 	"github.com/StackVista/stackstate-agent/cmd/agent/common"
 	"github.com/StackVista/stackstate-agent/cmd/cluster-agent/api"
-	"github.com/StackVista/stackstate-agent/cmd/cluster-agent/custommetrics"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/api/healthprobe"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
