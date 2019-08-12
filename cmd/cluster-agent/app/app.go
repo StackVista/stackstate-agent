@@ -211,7 +211,7 @@ func start(cmd *cobra.Command, args []string) error {
 		//if err != nil {
 		//	log.Errorf("Could not start the custom metrics API server: %s", err.Error())
 		//}
-		log.Warnf("This feature is not supported yet in cluster agent")
+		log.Warnf("The custom external metrics feature is not supported yet in cluster agent")
 	}
 
 	// Block here until we receive the interrupt signal
@@ -230,7 +230,7 @@ func start(cmd *cobra.Command, args []string) error {
 	mainCtxCancel()
 
 	if config.Datadog.GetBool("external_metrics_provider.enabled") {
-		custommetrics.StopServer()
+		//custommetrics.StopServer()
 	}
 	if stopCh != nil {
 		close(stopCh)
