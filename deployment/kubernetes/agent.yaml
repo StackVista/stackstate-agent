@@ -6,6 +6,8 @@ spec:
   selector:
     matchLabels:
       app: stackstate-agent
+  updateStrategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
