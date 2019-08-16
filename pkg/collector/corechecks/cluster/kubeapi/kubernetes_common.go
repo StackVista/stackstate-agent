@@ -44,7 +44,7 @@ func (k *CommonCheck) InitKubeApiCheck() error {
 	if errLeader != nil {
 		if errLeader == apiserver.ErrNotLeader {
 			// Only the leader can instantiate the apiserver client.
-			return nil
+			return apiserver.ErrNotLeader
 		}
 		return errLeader
 	}

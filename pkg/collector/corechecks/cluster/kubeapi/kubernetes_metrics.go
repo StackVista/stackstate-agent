@@ -69,17 +69,19 @@ func (k *MetricsCheck) Configure(config, initConfig integration.Data) error {
 
 // Run executes the check.
 func (k *MetricsCheck) Run() error {
+	// initialize kube api check
+	err := k.InitKubeApiCheck()
+	if err == apiserver.ErrNotLeader {
+		log.Debug("Agent is not leader, will not run the check")
+	} else if err != nil {
+		return err
+	}
+
 	sender, err := aggregator.GetSender(k.ID())
 	if err != nil {
 		return err
 	}
 	defer sender.Commit()
-
-	// initialize kube api check
-	err = k.InitKubeApiCheck()
-	if err != nil {
-		return err
-	}
 
 	// Running the Control Plane status check.
 	componentsStatus, err := k.ac.ComponentStatuses()

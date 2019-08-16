@@ -7,6 +7,7 @@
 package kubeapi
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 	"k8s.io/api/core/v1"
 
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
@@ -57,16 +58,17 @@ func (k *TopologyCheck) Configure(config, initConfig integration.Data) error {
 
 // Run executes the check.
 func (k *TopologyCheck) Run() error {
+	// initialize kube api check
+	err := k.InitKubeApiCheck();
+	if err == apiserver.ErrNotLeader {
+		log.Debug("Agent is not leader, will not run the check")
+	}else if err != nil {
+		return err
+	}
 
 	// Running the event collection.
 	if !k.instance.CollectTopology {
 		return nil
-	}
-
-	// initialize kube api check
-	err := k.InitKubeApiCheck()
-	if err != nil {
-		return err
 	}
 
 	// start the topology snapshot with the batch-er
@@ -131,5 +133,5 @@ func KubernetesApiTopologyFactory() check.Check {
 
 
 func init() {
-	core.RegisterCheck(kubernetesAPITopologyCheckName, KubernetesApiEventsFactory)
+	core.RegisterCheck(kubernetesAPITopologyCheckName, KubernetesApiTopologyFactory)
 }

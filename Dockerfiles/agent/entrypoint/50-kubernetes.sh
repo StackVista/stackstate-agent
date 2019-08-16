@@ -26,6 +26,15 @@ fi
 if [[ "$STS_LEADER_ELECTION" ]] && [[ ! -e /etc/stackstate-agent/conf.d/kubernetes_apiserver.d/conf.yaml.default ]]; then
     mv /etc/stackstate-agent/conf.d/kubernetes_apiserver.d/conf.yaml.example \
     /etc/stackstate-agent/conf.d/kubernetes_apiserver.d/conf.yaml.default
+
+    mv /etc/stackstate-agent/conf.d/kubernetes_api_events.d/conf.yaml.example \
+    /etc/stackstate-agent/conf.d/kubernetes_api_events.d/conf.yaml.default
+
+    mv /etc/stackstate-agent/conf.d/kubernetes_api_metrics.d/conf.yaml.example \
+    /etc/stackstate-agent/conf.d/kubernetes_api_metrics.d/conf.yaml.default
+
+    mv /etc/stackstate-agent/conf.d/kubernetes_api_topology.d/conf.yaml.example \
+    /etc/stackstate-agent/conf.d/kubernetes_api_topology.d/conf.yaml.default
 else
     echo "Disabling the apiserver check as leader election is disabled"
 fi

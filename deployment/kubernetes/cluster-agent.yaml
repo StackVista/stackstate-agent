@@ -21,13 +21,17 @@ spec:
         name: stackstate-cluster-agent
         env:
           - name: STS_API_KEY
-            value: '<YOUR_API_KEY>'
+            value: 'API_KEY'
           - name: STS_STS_URL
-            value: "<STACKSTATE_BACKEND_URL>/stsAgent"
+            value: "http://172.17.0.1:7077/stsAgent"
+          - name: STS_LOG_LEVEL
+            value: "DEBUG"
+          - name: LOG_LEVEL
+            value: "DEBUG"
           - name: STS_COLLECT_KUBERNETES_EVENTS
-            value: "true"
+            value: "false"
           - name: STS_COLLECT_KUBERNETES_METRICS
-            value: "true"
+            value: "false"
           - name: STS_COLLECT_KUBERNETES_TOPOLOGY
             value: "true"
           - name: STS_LEADER_ELECTION
@@ -50,3 +54,11 @@ spec:
       protocol: TCP
   selector:
     app: stackstate-cluster-agent
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: datadogtoken
+  namespace: default
+data:
+  event.tokenKey: "0"

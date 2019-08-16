@@ -70,6 +70,13 @@ func (k *EventsCheck) Configure(config, initConfig integration.Data) error {
 
 // Run executes the check.
 func (k *EventsCheck) Run() error {
+	// initialize kube api check
+	err := k.InitKubeApiCheck()
+	if err == apiserver.ErrNotLeader {
+		log.Debug("Agent is not leader, will not run the check")
+	} else if err != nil {
+		return err
+	}
 
 	// Running the event collection.
 	if !k.instance.CollectEvent {
@@ -81,12 +88,6 @@ func (k *EventsCheck) Run() error {
 		return err
 	}
 	defer sender.Commit()
-
-	// initialize kube api check
-	err = k.InitKubeApiCheck()
-	if err != nil {
-		return err
-	}
 
 	// Init of the resVersion token.
 	k.eventCollectionInit()
