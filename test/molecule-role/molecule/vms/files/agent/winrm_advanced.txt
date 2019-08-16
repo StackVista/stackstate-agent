@@ -14,6 +14,9 @@ $admin.PSBase.Invoke("SetPassword", "Bionic!")
 net user test 'Bionic!' /add /y
 net localgroup administrators test /add
 
+Set-LocalUser -Name "administrator" -PasswordNeverExpires 1
+Set-LocalUser -Name "test" -PasswordNeverExpires 1
+
 # Disable Internet Explorer Security
 # http://stackoverflow.com/a/9368555/2067999
 $AdminKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"

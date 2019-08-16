@@ -5,5 +5,8 @@ $admin.PSBase.Invoke("SetPassword", "Bionic!")
 net user test 'Bionic!' /add /y
 net localgroup administrators test /add
 
+Set-LocalUser -Name "administrator" -PasswordNeverExpires 1
+Set-LocalUser -Name "test" -PasswordNeverExpires 1
+
 Invoke-Expression ((New-Object System.Net.Webclient).DownloadString('https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1'))
 </powershell>
