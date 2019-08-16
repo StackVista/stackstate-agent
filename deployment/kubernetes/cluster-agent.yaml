@@ -26,6 +26,10 @@ spec:
             value: "<STACKSTATE_BACKEND_URL>/stsAgent"
           - name: STS_COLLECT_KUBERNETES_EVENTS
             value: "true"
+          - name: STS_COLLECT_KUBERNETES_METRICS
+            value: "true"
+          - name: STS_COLLECT_KUBERNETES_TOPOLOGY
+            value: "true"
           - name: STS_LEADER_ELECTION
             value: "true"
           - name: STS_CLUSTER_AGENT_AUTH_TOKEN

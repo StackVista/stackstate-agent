@@ -53,7 +53,9 @@ AGENT_CORECHECKS = [
     "go_expvar",
     "io",
     "jmx",
-    "kubernetes_apiserver",
+    "kubernetes_api_events",
+    "kubernetes_api_metrics",
+    "kubernetes_api_topology",
     "load",
     "memory",
     "ntp",
@@ -78,6 +80,9 @@ def apply_branding(ctx):
     """
     Apply stackstate branding
     """
+    sts_camel_replace = 's/Data[dD]og/StackState/g'
+    sts_lower_replace = 's/datadog/stackstate/g'
+
     # Config
     do_go_rename(ctx, '"\\"dd_url\\" -> \\"sts_url\\""', "./pkg/config")
     do_go_rename(ctx, '"\\"https://app.datadoghq.com\\" -> \\"http://localhost:7077\\""', "./pkg/config")
@@ -138,6 +143,13 @@ def apply_branding(ctx):
     DD_HOSTNAME_replace = 's/DD_HOSTNAME/STS_HOSTNAME/g'
     do_sed_rename(ctx, DD_HOSTNAME_replace, "./pkg/trace/config/config.go")
 
+    # Cluster agent
+    do_sed_rename(ctx, sts_lower_replace, "./cmd/cluster-agent/main.go")
+    do_sed_rename(ctx, sts_lower_replace, "./cmd/cluster-agent/app/*")
+    do_sed_rename(ctx, 's/Datadog Cluster/StackState Cluster/g', "./cmd/cluster-agent/app/*")
+    do_sed_rename(ctx, 's/Datadog Agent/StackState Agent/g', "./cmd/cluster-agent/app/*")
+    do_sed_rename(ctx, 's/to Datadog/to StackState/g', "./cmd/cluster-agent/app/*")
+
     # Defaults
     do_go_rename(ctx, '"\\"/etc/datadog-agent\\" -> \\"/etc/stackstate-agent\\""', "./cmd/agent/common")
     do_go_rename(ctx, '"\\"/var/log/datadog/agent.log\\" -> \\"/var/log/stackstate-agent/agent.log\\""', "./cmd/agent/common")
@@ -147,9 +159,6 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"path to directory containing datadog.yaml\\" -> \\"path to directory containing stackstate.yaml\\""', "./cmd")
     do_go_rename(ctx, '"\\"unable to load Datadog config file: %s\\" -> \\"unable to load StackState config file: %s\\""', "./cmd/agent/common")
     do_go_rename(ctx, '"\\"Starting Datadog Agent v%v\\" -> \\"Starting StackState Agent v%v\\""', "./cmd/agent/app")
-
-    sts_camel_replace = 's/Data[dD]og/StackState/g'
-    sts_lower_replace = 's/datadog/stackstate/g'
 
     # Dist config templates
     do_sed_rename(ctx, sts_lower_replace, "./cmd/agent/dist/conf.d/go_expvar.d/agent_stats.yaml.example")
