@@ -292,7 +292,7 @@
     - name: Open listening port for fedora {{ connection_port_after_start_fedora }}
       shell: "nohup ncat --broker --listen -p {{ connection_port_after_start_fedora }} &"
       become: true
-    - name:  {{ connection_port_after_start_windows }}
+    - name: Open listening port for windows {{ connection_port_after_start_windows }}
       shell: "nohup ncat --broker --listen -p {{ connection_port_after_start_windows }} &"
       become: true
     - name: Forward DNAT port {{ dnat_service_port }} to {{ dnat_server_port }}
