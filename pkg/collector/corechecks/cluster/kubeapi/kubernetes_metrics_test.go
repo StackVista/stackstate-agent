@@ -84,10 +84,10 @@ func TestParseComponentStatus(t *testing.T) {
 	// FIXME: use the factory instead
 	kubeApiMetricsCheck := &MetricsCheck{
 		CommonCheck: CommonCheck{
-			CheckBase: core.NewCheckBase(kubernetesAPIMetricsCheckName),
+			CheckBase:             core.NewCheckBase(kubernetesAPIMetricsCheckName),
 			KubeAPIServerHostname: "hostname",
 		},
-		instance:  &MetricsConfig{},
+		instance: &MetricsConfig{},
 	}
 
 	mocked := mocksender.NewMockSender(kubeApiMetricsCheck.ID())

@@ -25,21 +25,21 @@ import (
 
 // Covers the Control Plane service check and the in memory pod metadata.
 const (
-	KubeControlPaneCheck         = "kube_apiserver_controlplane.up"
+	KubeControlPaneCheck          = "kube_apiserver_controlplane.up"
 	kubernetesAPIMetricsCheckName = "kubernetes_api_metrics"
 )
 
 // MetricsConfig.
 type MetricsConfig struct {
-	CollectOShiftQuotas      bool     `yaml:"collect_openshift_clusterquotas"`
+	CollectOShiftQuotas bool `yaml:"collect_openshift_clusterquotas"`
 }
 
 // MetricsCheck grabs metrics from the API server.
 type MetricsCheck struct {
 	CommonCheck
-	instance              *MetricsConfig
-	configMapAvailable    bool
-	oshiftAPILevel        apiserver.OpenShiftAPILevel
+	instance           *MetricsConfig
+	configMapAvailable bool
+	oshiftAPILevel     apiserver.OpenShiftAPILevel
 }
 
 func (c *MetricsConfig) parse(data []byte) error {
@@ -114,7 +114,7 @@ func KubernetesApiMetricsFactory() check.Check {
 		CommonCheck: CommonCheck{
 			CheckBase: core.NewCheckBase(kubernetesAPIMetricsCheckName),
 		},
-		instance:  &MetricsConfig{},
+		instance: &MetricsConfig{},
 	}
 }
 

@@ -62,7 +62,7 @@ func TestProcessBundledEvents(t *testing.T) {
 			FilteredEventType: []string{"ignored"},
 		},
 		CommonCheck: CommonCheck{
-			CheckBase: core.NewCheckBase(kubernetesAPIEventsCheckName),
+			CheckBase:             core.NewCheckBase(kubernetesAPIEventsCheckName),
 			KubeAPIServerHostname: "hostname",
 		},
 	}
@@ -152,7 +152,7 @@ func TestProcessEvent(t *testing.T) {
 			FilteredEventType: []string{"ignored"},
 		},
 		CommonCheck: CommonCheck{
-			CheckBase: core.NewCheckBase(kubernetesAPIEventsCheckName),
+			CheckBase:             core.NewCheckBase(kubernetesAPIEventsCheckName),
 			KubeAPIServerHostname: "hostname",
 		},
 	}

@@ -26,13 +26,13 @@ const (
 
 // TopologyConfig is the config of the API server.
 type TopologyConfig struct {
-	CollectTopology             bool     `yaml:"collect_topology"`
+	CollectTopology bool `yaml:"collect_topology"`
 }
 
 // TopologyCheck grabs events from the API server.
 type TopologyCheck struct {
 	CommonCheck
-	instance              *TopologyConfig
+	instance *TopologyConfig
 }
 
 func (c *TopologyConfig) parse(data []byte) error {
@@ -45,6 +45,9 @@ func (c *TopologyConfig) parse(data []byte) error {
 // Configure parses the check configuration and init the check.
 func (k *TopologyCheck) Configure(config, initConfig integration.Data) error {
 	err := k.ConfigureKubeApiCheck(config)
+	if err != nil {
+		return err
+	}
 
 	err = k.instance.parse(config)
 	if err != nil {
@@ -59,11 +62,11 @@ func (k *TopologyCheck) Configure(config, initConfig integration.Data) error {
 // Run executes the check.
 func (k *TopologyCheck) Run() error {
 	// initialize kube api check
-	err := k.InitKubeApiCheck();
+	err := k.InitKubeApiCheck()
 	if err == apiserver.ErrNotLeader {
 		log.Debug("Agent is not leader, will not run the check")
 		return nil
-	}else if err != nil {
+	} else if err != nil {
 		return err
 	}
 
@@ -128,10 +131,9 @@ func KubernetesApiTopologyFactory() check.Check {
 		CommonCheck: CommonCheck{
 			CheckBase: core.NewCheckBase(kubernetesAPITopologyCheckName),
 		},
-		instance:  &TopologyConfig{},
+		instance: &TopologyConfig{},
 	}
 }
-
 
 func init() {
 	core.RegisterCheck(kubernetesAPITopologyCheckName, KubernetesApiTopologyFactory)

@@ -40,9 +40,9 @@ type EventsConfig struct {
 // KubeApiEventsCheck grabs events from the API server.
 type EventsCheck struct {
 	CommonCheck
-	instance              *EventsConfig
-	latestEventToken      string
-	configMapAvailable    bool
+	instance           *EventsConfig
+	latestEventToken   string
+	configMapAvailable bool
 }
 
 func (c *EventsConfig) parse(data []byte) error {
@@ -56,6 +56,9 @@ func (c *EventsConfig) parse(data []byte) error {
 // Configure parses the check configuration and init the check.
 func (k *EventsCheck) Configure(config, initConfig integration.Data) error {
 	err := k.ConfigureKubeApiCheck(config)
+	if err != nil {
+		return err
+	}
 
 	// Check connectivity to the APIServer
 	err = k.instance.parse(config)
@@ -122,7 +125,7 @@ func KubernetesApiEventsFactory() check.Check {
 		CommonCheck: CommonCheck{
 			CheckBase: core.NewCheckBase(kubernetesAPIEventsCheckName),
 		},
-		instance:  &EventsConfig{},
+		instance: &EventsConfig{},
 	}
 }
 
