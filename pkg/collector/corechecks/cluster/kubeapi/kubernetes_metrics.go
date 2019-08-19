@@ -73,6 +73,7 @@ func (k *MetricsCheck) Run() error {
 	err := k.InitKubeApiCheck()
 	if err == apiserver.ErrNotLeader {
 		log.Debug("Agent is not leader, will not run the check")
+		return nil
 	} else if err != nil {
 		return err
 	}
