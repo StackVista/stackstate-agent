@@ -159,7 +159,7 @@ func (t *TopologyCheck) mapAndSubmitNode(node v1.Node) topology.Component {
 
 	// submit the StackState component for publishing to StackState
 	component := nodeToStackStateComponent(node)
-	log.Tracef("Publishing StackState node component for %s: %v", component.ExternalID, component.JsonString())
+	log.Tracef("Publishing StackState node component for %s: %v", component.ExternalID, component.JSONString())
 	batcher.GetBatcher().SubmitComponent(t.instance.CheckID, t.instance.Instance, component)
 
 	return component
@@ -169,7 +169,7 @@ func (t *TopologyCheck) mapAndSubmitNode(node v1.Node) topology.Component {
 func (t *TopologyCheck) mapAndSubmitPodWithRelations(pod v1.Pod) topology.Component {
 	// submit the StackState component for publishing to StackState
 	podComponent := podToStackStateComponent(pod)
-	log.Tracef("Publishing StackState pod component for %s: %v", podComponent.ExternalID, podComponent.JsonString())
+	log.Tracef("Publishing StackState pod component for %s: %v", podComponent.ExternalID, podComponent.JSONString())
 	batcher.GetBatcher().SubmitComponent(t.instance.CheckID, t.instance.Instance, podComponent)
 
 	// creates a StackState relation for the kubernetes node -> pod
@@ -182,7 +182,7 @@ func (t *TopologyCheck) mapAndSubmitPodWithRelations(pod v1.Pod) topology.Compon
 
 		// submit the StackState component for publishing to StackState
 		containerComponent := containerToStackStateComponent(pod, container)
-		log.Tracef("Publishing StackState container component for %s: %v", containerComponent.ExternalID, containerComponent.JsonString())
+		log.Tracef("Publishing StackState container component for %s: %v", containerComponent.ExternalID, containerComponent.JSONString())
 		batcher.GetBatcher().SubmitComponent(t.instance.CheckID, t.instance.Instance, containerComponent)
 
 		// create the relation between the container and pod
@@ -239,7 +239,7 @@ func nodeToStackStateComponent(node v1.Node) topology.Component {
 		},
 	}
 
-	log.Tracef("Created StackState node component %s: %v", nodeExternalID, component.JsonString())
+	log.Tracef("Created StackState node component %s: %v", nodeExternalID, component.JSONString())
 
 	return component
 }
@@ -278,7 +278,7 @@ func podToStackStateComponent(pod v1.Pod) topology.Component {
 		},
 	}
 
-	log.Tracef("Created StackState pod component %s: %v", podExternalID, component.JsonString())
+	log.Tracef("Created StackState pod component %s: %v", podExternalID, component.JSONString())
 
 	return component
 }
@@ -334,7 +334,7 @@ func containerToStackStateComponent(pod v1.Pod, container v1.ContainerStatus) to
 		Data: data,
 	}
 
-	log.Tracef("Created StackState container component %s: %v", containerExternalID, component.JsonString())
+	log.Tracef("Created StackState container component %s: %v", containerExternalID, component.JSONString())
 
 	return component
 }
