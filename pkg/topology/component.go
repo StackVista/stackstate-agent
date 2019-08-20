@@ -12,6 +12,7 @@ type Component struct {
 	Data       map[string]interface{} `json:"data"`
 }
 
+// Prints a JSON string of the Component
 func (c Component) JsonString() string {
 	b, err := json.Marshal(c)
 	if err != nil {
