@@ -37,6 +37,11 @@ type TopologyCheck struct {
 	instance *TopologyConfig
 }
 
+type EndpointID struct {
+	URL string
+	RefExternalID string
+}
+
 func (c *TopologyConfig) parse(data []byte) error {
 	// default values
 	c.CollectTopology = config.Datadog.GetBool("collect_kubernetes_topology")
@@ -143,12 +148,46 @@ func (t *TopologyCheck) getAllServices() ([]*topology.Component, error) {
 		return nil, err
 	}
 
+	endpoints, err := t.ac.GetEndpoints()
+	if err != nil {
+		return nil, err
+	}
+
 	components := make([]*topology.Component, 0)
+	serviceEndpointIdentifiers := make(map[string][]EndpointID, 0)
 
-	for _, svc := range services {
-		// creates a StackState component for the kubernetes pod
-		log.Tracef("Mapping kubernetes service to StackState Component: %s", svc.String())
+	// Get all the endpoints for the Service
+	for _, endpoint := range endpoints {
+		serviceID := buildServiceID(endpoint.Namespace, endpoint.Name)
+		for _, subset := range endpoint.Subsets {
+			for _, address := range subset.Addresses {
+				for _, port := range subset.Ports {
+					endpointID := EndpointID {
+						URL: fmt.Sprintf("%s:%d", address.IP, port.Port),
+					}
 
+					// check if the target reference is populated, so we can create relations
+					if address.TargetRef != nil {
+						switch kind := address.TargetRef.Kind; kind {
+						// add endpoint url as identifier and create service -> pod relation
+						case "Pod":
+							endpointID.RefExternalID = buildPodExternalID(endpoint.ClusterName, address.TargetRef.Name)
+						// ignore different Kind's for now, create no relation
+						default:
+						}
+					}
+
+					serviceEndpointIdentifiers[serviceID] = append(serviceEndpointIdentifiers[serviceID], endpointID)
+				}
+			}
+		}
+	}
+
+	for _, service := range services {
+		// creates and publishes StackState service component with relations
+		serviceID := buildServiceID(service.Namespace, service.Name)
+		component := t.mapAndSubmitService(service, serviceEndpointIdentifiers[serviceID])
+		components = append(components, &component)
 	}
 
 	return components, nil
@@ -194,6 +233,26 @@ func (t *TopologyCheck) mapAndSubmitPodWithRelations(pod v1.Pod) topology.Compon
 	return podComponent
 }
 
+// Map and Submit the Kubernetes Service into a StackState component with endpoints as identifiers
+func (t* TopologyCheck) mapAndSubmitService(service v1.Service, endpoints []EndpointID) topology.Component {
+
+	// submit the StackState component for publishing to StackState
+	serviceComponent := serviceToStackStateComponent(service, endpoints)
+	log.Tracef("Publishing StackState service component for %s: %v", serviceComponent.ExternalID, serviceComponent.JSONString())
+	batcher.GetBatcher().SubmitComponent(t.instance.CheckID, t.instance.Instance, serviceComponent)
+
+	for _, endpoint := range endpoints {
+		// create the relation between the service and pod on the endpoint
+		if endpoint.RefExternalID != "" {
+			relation := refToServiceStackStateRelation(serviceComponent.ExternalID, endpoint.RefExternalID)
+			log.Tracef("Publishing StackState service -> pod relation %s->%s", relation.SourceID, relation.TargetID)
+			batcher.GetBatcher().SubmitRelation(t.instance.CheckID, t.instance.Instance, relation)
+		}
+	}
+
+	return serviceComponent
+}
+
 // Creates a StackState component from a Kubernetes Node
 func nodeToStackStateComponent(node v1.Node) topology.Component {
 	// creates a StackState component for the kubernetes node
@@ -216,7 +275,7 @@ func nodeToStackStateComponent(node v1.Node) topology.Component {
 
 	log.Tracef("Created identifiers for %s: %v", node.Name, identifiers)
 
-	nodeExternalID := buildNodeExternalId(node.ClusterName, node.Name)
+	nodeExternalID := buildNodeExternalID(node.ClusterName, node.Name)
 
 	// clear out the unnecessary status array values
 	nodeStatus := node.Status
@@ -254,7 +313,7 @@ func podToStackStateComponent(pod v1.Pod) topology.Component {
 	}
 	log.Tracef("Created identifiers for %s: %v", pod.Name, identifiers)
 
-	podExternalID := buildPodExternalId(pod.ClusterName, pod.Name)
+	podExternalID := buildPodExternalID(pod.ClusterName, pod.Name)
 
 	// clear out the unnecessary status array values
 	podStatus := pod.Status
@@ -284,8 +343,8 @@ func podToStackStateComponent(pod v1.Pod) topology.Component {
 
 // Creates a StackState relation from a Kubernetes Pod to Node relation
 func podToNodeStackStateRelation(pod v1.Pod) topology.Relation {
-	podExternalID := buildPodExternalId(pod.ClusterName, pod.Name)
-	nodeExternalID := buildNodeExternalId(pod.ClusterName, pod.Spec.NodeName)
+	podExternalID := buildPodExternalID(pod.ClusterName, pod.Name)
+	nodeExternalID := buildNodeExternalID(pod.ClusterName, pod.Spec.NodeName)
 
 	log.Tracef("Mapping kubernetes pod to node relation: %s -> %s", podExternalID, nodeExternalID)
 
@@ -311,7 +370,7 @@ func containerToStackStateComponent(pod v1.Pod, container v1.ContainerStatus) to
 	}
 	log.Tracef("Created identifiers for %s: %v", container.Name, identifiers)
 
-	containerExternalID := buildContainerExternalId(pod.ClusterName, pod.Name, container.Name)
+	containerExternalID := buildContainerExternalID(pod.ClusterName, pod.Name, container.Name)
 
 	data := map[string]interface{}{
 		"name": container.Name,
@@ -355,20 +414,102 @@ func containerToPodStackStateRelation(containerExternalID, podExternalID string)
 	return relation
 }
 
-func buildNodeExternalId(clusterName, nodeName string) string {
+// Creates a StackState component from a Kubernetes Pod Service
+func serviceToStackStateComponent(service v1.Service, endpoints []EndpointID) topology.Component {
+	log.Tracef("Mapping kubernetes pod service to StackState component: %s", service.String())
+	// create identifier list to merge with StackState components
+	serviceID := buildServiceID(service.Namespace, service.Name)
+	identifiers := []string{
+		fmt.Sprintf("urn:service:/%s", serviceID),
+	}
+
+	// all external ip's which are associated with this service, but are not managed by kubernetes
+	for _, ip := range service.Spec.ExternalIPs {
+		for _, port := range service.Spec.Ports {
+			identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%d", ip, port.Port))
+		}
+	}
+
+	// all endpoints for this service
+	for _, endpoint := range endpoints {
+		identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s", serviceID, endpoint.URL))
+	}
+
+	switch service.Spec.Type {
+	case v1.ServiceTypeClusterIP:
+		identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s", serviceID, service.Spec.ClusterIP))
+	case v1.ServiceTypeLoadBalancer:
+		identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s", serviceID, service.Spec.LoadBalancerIP))
+	default:
+	}
+
+	log.Tracef("Created identifiers for %s: %v", service.Name, identifiers)
+
+	serviceExternalID := buildServiceExternalID(service.ClusterName, serviceID)
+
+	data := map[string]interface{}{
+		"name": service.Name,
+		"namespace": service.Namespace,
+		"creationTimestamp": service.CreationTimestamp,
+		"tags": service.Labels,
+		"identifiers":  identifiers,
+	}
+
+	if service.Status.LoadBalancer.Ingress != nil {
+		data["ingressPoints"] = service.Status.LoadBalancer.Ingress
+	}
+
+	component := topology.Component{
+		ExternalID: serviceExternalID,
+		Type:       topology.Type{Name: "kubernetes-service"},
+		Data:       data,
+	}
+
+	log.Tracef("Created StackState service component %s: %v", serviceExternalID, component.JSONString())
+
+	return component
+}
+
+// Creates a StackState component from a Kubernetes Pod Service
+func refToServiceStackStateRelation(refExternalID, serviceExternalID string) topology.Relation {
+	log.Tracef("Mapping kubernetes reference to service relation: %s -> %s", refExternalID, serviceExternalID)
+
+	relation := topology.Relation{
+		ExternalID: fmt.Sprintf("%s->%s", refExternalID, serviceExternalID),
+		SourceID:   refExternalID,
+		TargetID:   serviceExternalID,
+		Type:       topology.Type{Name: "exposes"},
+		Data:       map[string]interface{}{},
+	}
+
+	log.Tracef("Created StackState reference -> service relation %s->%s", relation.SourceID, relation.TargetID)
+
+	return relation
+}
+
+// buildNodeExternalID
+func buildNodeExternalID(clusterName, nodeName string) string {
 	return fmt.Sprintf("urn:/kubernetes:%s:node:%s", clusterName, nodeName)
 }
 
-func buildPodExternalId(clusterName, podName string) string {
+// buildPodExternalID
+func buildPodExternalID(clusterName, podName string) string {
 	return fmt.Sprintf("urn:/kubernetes:%s:pod:%s", clusterName, podName)
 }
 
-func buildContainerExternalId(clusterName, podName, containerName string) string {
+// buildContainerExternalID
+func buildContainerExternalID(clusterName, podName, containerName string) string {
 	return fmt.Sprintf("urn:/kubernetes:%s:pod:%s:container:%s", clusterName, podName, containerName)
 }
 
-func buildServiceExternalId(clusterName, serviceID string) string {
+// buildServiceExternalID
+func buildServiceExternalID(clusterName, serviceID string) string {
 	return fmt.Sprintf("urn:/kubernetes:%s:service:%s", clusterName, serviceID)
+}
+
+// buildServiceID - combination of the service namespace and service name
+func buildServiceID(serviceNamespace, serviceName string) string {
+	return fmt.Sprintf("%s:%s", serviceNamespace, serviceName)
 }
 
 // KubernetesASFactory is exported for integration testing.
