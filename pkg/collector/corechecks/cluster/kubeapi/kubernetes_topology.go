@@ -27,8 +27,8 @@ const (
 // TopologyConfig is the config of the API server.
 type TopologyConfig struct {
 	CollectTopology bool `yaml:"collect_topology"`
-	CheckID check.ID
-	Instance topology.Instance
+	CheckID         check.ID
+	Instance        topology.Instance
 }
 
 // TopologyCheck grabs events from the API server.
@@ -194,7 +194,6 @@ func (t *TopologyCheck) mapAndSubmitPodWithRelations(pod v1.Pod) topology.Compon
 	return podComponent
 }
 
-
 // Creates a StackState component from a Kubernetes Node
 func nodeToStackStateComponent(node v1.Node) topology.Component {
 	// creates a StackState component for the kubernetes node
@@ -226,15 +225,15 @@ func nodeToStackStateComponent(node v1.Node) topology.Component {
 
 	component := topology.Component{
 		ExternalID: nodeExternalID,
-		Type: topology.Type{ Name: "kubernetes-node" },
+		Type:       topology.Type{Name: "kubernetes-node"},
 		Data: map[string]interface{}{
-			"name": node.Name,
-			"kind": node.Kind,
+			"name":              node.Name,
+			"kind":              node.Kind,
 			"creationTimestamp": node.CreationTimestamp,
-			"tags": node.Labels,
-			"status": nodeStatus,
-			"namespace": node.Namespace,
-			"identifiers": identifiers,
+			"tags":              node.Labels,
+			"status":            nodeStatus,
+			"namespace":         node.Namespace,
+			"identifiers":       identifiers,
 			//"taints": node.Spec.Taints,
 		},
 	}
@@ -264,17 +263,17 @@ func podToStackStateComponent(pod v1.Pod) topology.Component {
 
 	component := topology.Component{
 		ExternalID: podExternalID,
-		Type: topology.Type{ Name: "kubernetes-pod" },
+		Type:       topology.Type{Name: "kubernetes-pod"},
 		Data: map[string]interface{}{
-			"name": pod.Name,
-			"kind": pod.Kind,
+			"name":              pod.Name,
+			"kind":              pod.Kind,
 			"creationTimestamp": pod.CreationTimestamp,
-			"tags": pod.Labels,
-			"status": podStatus,
-			"namespace": pod.Namespace,
+			"tags":              pod.Labels,
+			"status":            podStatus,
+			"namespace":         pod.Namespace,
 			//"tolerations": pod.Spec.Tolerations,
 			"restartPolicy": pod.Spec.RestartPolicy,
-			"identifiers": identifiers,
+			"identifiers":   identifiers,
 		},
 	}
 
@@ -292,10 +291,10 @@ func podToNodeStackStateRelation(pod v1.Pod) topology.Relation {
 
 	relation := topology.Relation{
 		ExternalID: fmt.Sprintf("%s->%s", podExternalID, nodeExternalID),
-		SourceID: podExternalID,
-		TargetID: nodeExternalID,
-		Type: topology.Type{ Name: "scheduled_on" },
-		Data: map[string]interface{}{},
+		SourceID:   podExternalID,
+		TargetID:   nodeExternalID,
+		Type:       topology.Type{Name: "scheduled_on"},
+		Data:       map[string]interface{}{},
 	}
 
 	log.Tracef("Created StackState pod -> node relation %s->%s", relation.SourceID, relation.TargetID)
@@ -308,7 +307,7 @@ func containerToStackStateComponent(pod v1.Pod, container v1.ContainerStatus) to
 	log.Tracef("Mapping kubernetes pod container to StackState component: %s", container.String())
 	// create identifier list to merge with StackState components
 	identifiers := []string{
-		fmt.Sprintf("urn:container:/%s:%s", container.ContainerID),
+		fmt.Sprintf("urn:container:/%s", container.ContainerID),
 	}
 	log.Tracef("Created identifiers for %s: %v", container.Name, identifiers)
 
@@ -317,11 +316,11 @@ func containerToStackStateComponent(pod v1.Pod, container v1.ContainerStatus) to
 	data := map[string]interface{}{
 		"name": container.Name,
 		"docker": map[string]interface{}{
-			"image": container.Image,
+			"image":        container.Image,
 			"container_id": container.ContainerID,
 		},
 		"restartCount": container.RestartCount,
-		"identifiers": identifiers,
+		"identifiers":  identifiers,
 	}
 
 	if container.State.Running != nil {
@@ -330,8 +329,8 @@ func containerToStackStateComponent(pod v1.Pod, container v1.ContainerStatus) to
 
 	component := topology.Component{
 		ExternalID: containerExternalID,
-		Type: topology.Type{ Name: "kubernetes-container" },
-		Data: data,
+		Type:       topology.Type{Name: "kubernetes-container"},
+		Data:       data,
 	}
 
 	log.Tracef("Created StackState container component %s: %v", containerExternalID, component.JSONString())
@@ -345,10 +344,10 @@ func containerToPodStackStateRelation(containerExternalID, podExternalID string)
 
 	relation := topology.Relation{
 		ExternalID: fmt.Sprintf("%s->%s", containerExternalID, podExternalID),
-		SourceID: containerExternalID,
-		TargetID: podExternalID,
-		Type: topology.Type{ Name: "scheduled_on" },
-		Data: map[string]interface{}{},
+		SourceID:   containerExternalID,
+		TargetID:   podExternalID,
+		Type:       topology.Type{Name: "scheduled_on"},
+		Data:       map[string]interface{}{},
 	}
 
 	log.Tracef("Created StackState container -> pod relation %s->%s", relation.SourceID, relation.TargetID)
