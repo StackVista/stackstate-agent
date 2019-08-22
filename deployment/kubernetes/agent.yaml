@@ -58,6 +58,8 @@ spec:
                 fieldPath: status.hostIP
           - name: STS_CLUSTER_AGENT_ENABLED
             value: "true"
+          - name: STS_LEADER_ELECTION
+            value: "true"
           - name: STS_COLLECT_KUBERNETES_TOPOLOGY
             value: "true"
           - name: STS_CLUSTER_AGENT_AUTH_TOKEN

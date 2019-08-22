@@ -90,13 +90,22 @@ func (t *TopologyCheck) Run() error {
 	batcher.GetBatcher().SubmitStartSnapshot(t.instance.CheckID, t.instance.Instance)
 
 	// get all the nodes
-	_, _ = t.getAllNodes()
+	_, err = t.getAllNodes()
+	if err != nil {
+		return err
+	}
 
 	// get all the pods
-	_, _ = t.getAllPods()
+	_, err = t.getAllPods()
+	if err != nil {
+		return err
+	}
 
 	// get all the services
-	_, _ = t.getAllServices()
+	_, err = t.getAllServices()
+	if err != nil {
+		return err
+	}
 
 	// get all the containers
 	batcher.GetBatcher().SubmitStopSnapshot(t.instance.CheckID, t.instance.Instance)
