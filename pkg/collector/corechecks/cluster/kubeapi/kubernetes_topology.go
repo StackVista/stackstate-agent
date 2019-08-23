@@ -38,7 +38,7 @@ type TopologyCheck struct {
 }
 
 type EndpointID struct {
-	URL string
+	URL           string
 	RefExternalID string
 }
 
@@ -171,7 +171,7 @@ func (t *TopologyCheck) getAllServices() ([]*topology.Component, error) {
 		for _, subset := range endpoint.Subsets {
 			for _, address := range subset.Addresses {
 				for _, port := range subset.Ports {
-					endpointID := EndpointID {
+					endpointID := EndpointID{
 						URL: fmt.Sprintf("%s:%d", address.IP, port.Port),
 					}
 
@@ -243,7 +243,7 @@ func (t *TopologyCheck) mapAndSubmitPodWithRelations(pod v1.Pod) topology.Compon
 }
 
 // Map and Submit the Kubernetes Service into a StackState component with endpoints as identifiers
-func (t* TopologyCheck) mapAndSubmitService(service v1.Service, endpoints []EndpointID) topology.Component {
+func (t *TopologyCheck) mapAndSubmitService(service v1.Service, endpoints []EndpointID) topology.Component {
 
 	// submit the StackState component for publishing to StackState
 	serviceComponent := serviceToStackStateComponent(service, endpoints)
@@ -342,6 +342,8 @@ func podToStackStateComponent(pod v1.Pod) topology.Component {
 			//"tolerations": pod.Spec.Tolerations,
 			"restartPolicy": pod.Spec.RestartPolicy,
 			"identifiers":   identifiers,
+			"uid":           pod.UID,
+			"generateName":  pod.GenerateName,
 		},
 	}
 
@@ -457,11 +459,11 @@ func serviceToStackStateComponent(service v1.Service, endpoints []EndpointID) to
 	serviceExternalID := buildServiceExternalID(service.ClusterName, serviceID)
 
 	data := map[string]interface{}{
-		"name": service.Name,
-		"namespace": service.Namespace,
+		"name":              service.Name,
+		"namespace":         service.Namespace,
 		"creationTimestamp": service.CreationTimestamp,
-		"tags": service.Labels,
-		"identifiers":  identifiers,
+		"tags":              service.Labels,
+		"identifiers":       identifiers,
 	}
 
 	if service.Status.LoadBalancer.Ingress != nil {
