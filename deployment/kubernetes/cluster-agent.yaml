@@ -4,7 +4,6 @@ metadata:
   name: stackstate-cluster-agent
   namespace: default
 spec:
-  replicas: 3
   template:
     metadata:
       labels:
