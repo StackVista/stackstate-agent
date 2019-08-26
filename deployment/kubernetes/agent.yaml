@@ -56,6 +56,10 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.hostIP
+          - name: STS_LOG_LEVEL
+            value: "DEBUG"
+          - name: LOG_LEVEL
+            value: "DEBUG"
         resources:
           requests:
             memory: "256Mi"

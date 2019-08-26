@@ -40,6 +40,10 @@ spec:
               secretKeyRef:
                 name: stackstate-auth-token
                 key: token
+          - name: STS_LOG_LEVEL
+            value: "DEBUG"
+          - name: LOG_LEVEL
+            value: "DEBUG"
 ---
 apiVersion: v1
 kind: Service
