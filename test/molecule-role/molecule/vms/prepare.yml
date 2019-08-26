@@ -15,8 +15,8 @@
         name: [python-pip, virtualenv, libyajl2]  # venv and yajl2 if you wanna run the simulator
         state: present
         update_cache: yes
-      retries: 5
-      delay: 5
+      retries: 20
+      delay: 30
       register: pip_result
       until: pip_result is not failed
     - name: Installing python boto packages
@@ -109,6 +109,10 @@
       apt:
         name: [nmap, stress]
         state: present
+      register: nmap_stress_result
+      retries: 10
+      delay: 30
+      until: nmap_stress_result is not failed
       when: ansible_distribution == "Ubuntu"
     - name: Install nc (for ncat binary), libselinux-python and stresss in Fedora
       become: true
@@ -212,6 +216,7 @@
     - common_vars.yml
   tasks:
     # We use ncat to keep a listening port open and get a direction
+    - debug: msg="Starting listening for fedora and windows"
     - name: Open listening port for fedora {{ connection_port_before_start_fedora }}
       shell: "nohup ncat --broker --listen -p {{ connection_port_before_start_fedora }} &"
       become: true
@@ -236,7 +241,7 @@
   vars_files:
     - common_vars.yml
   tasks:
-    - name: Connect to Ubuntu Agent
+    - name: Connect to Ubuntu Agent async (prepare agent-win connecting before start)
       win_command: nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_before_start_windows }}
       async: "{{ max_test_time }}"
       poll: 0
@@ -333,6 +338,17 @@
     - name: Wait a bit for the ubuntu machine to start
       pause:
         seconds: 10
+
+    - name: "Wait for port {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} port {{ connection_port_after_start_windows }}  to become open on the host, don't start checking for 10 seconds"
+      win_wait_for:
+        host: "{{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }}"
+        port: "{{ connection_port_after_start_windows }}"
+        delay: 10
+      retries: 10
+      delay: 10
+      register: wait_result
+      until: wait_result is succeeded
+
     - name: Connect to Ubuntu agent P2P (1/1)
       win_command: nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }}
       async: "{{ max_test_time }}"
