@@ -8,6 +8,7 @@ package kubeapi
 
 import (
 	"fmt"
+	"strings"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
@@ -378,8 +379,9 @@ func (t *TopologyCheck) podToNodeStackStateRelation(pod v1.Pod) topology.Relatio
 func (t *TopologyCheck) containerToStackStateComponent(pod v1.Pod, container v1.ContainerStatus) topology.Component {
 	log.Tracef("Mapping kubernetes pod container to StackState component: %s", container.String())
 	// create identifier list to merge with StackState components
+	strippedContainerId := strings.ReplaceAll(container.ContainerID, "docker://", "")
 	identifiers := []string{
-		fmt.Sprintf("urn:container:/%s", container.ContainerID),
+		fmt.Sprintf("urn:container:/%s", strippedContainerId),
 	}
 	log.Tracef("Created identifiers for %s: %v", container.Name, identifiers)
 
@@ -389,7 +391,7 @@ func (t *TopologyCheck) containerToStackStateComponent(pod v1.Pod, container v1.
 		"name": container.Name,
 		"docker": map[string]interface{}{
 			"image":        container.Image,
-			"container_id": container.ContainerID,
+			"container_id": strippedContainerId,
 		},
 		"restartCount": container.RestartCount,
 		"identifiers":  identifiers,
