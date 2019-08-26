@@ -253,7 +253,7 @@ func (t *TopologyCheck) mapAndSubmitService(service v1.Service, endpoints []Endp
 	for _, endpoint := range endpoints {
 		// create the relation between the service and pod on the endpoint
 		if endpoint.RefExternalID != "" {
-			relation := refToServiceStackStateRelation(serviceComponent.ExternalID, endpoint.RefExternalID)
+			relation := podToServiceStackStateRelation(serviceComponent.ExternalID, endpoint.RefExternalID)
 			log.Tracef("Publishing StackState service -> pod relation %s->%s", relation.SourceID, relation.TargetID)
 			batcher.GetBatcher().SubmitRelation(t.instance.CheckID, t.instance.Instance, relation)
 		}
@@ -416,7 +416,7 @@ func containerToPodStackStateRelation(containerExternalID, podExternalID string)
 		ExternalID: fmt.Sprintf("%s->%s", containerExternalID, podExternalID),
 		SourceID:   containerExternalID,
 		TargetID:   podExternalID,
-		Type:       topology.Type{Name: "scheduled_on"},
+		Type:       topology.Type{Name: "enclosed_in"},
 		Data:       map[string]interface{}{},
 	}
 
@@ -482,7 +482,7 @@ func serviceToStackStateComponent(service v1.Service, endpoints []EndpointID) to
 }
 
 // Creates a StackState component from a Kubernetes Pod Service
-func refToServiceStackStateRelation(refExternalID, serviceExternalID string) topology.Relation {
+func podToServiceStackStateRelation(refExternalID, serviceExternalID string) topology.Relation {
 	log.Tracef("Mapping kubernetes reference to service relation: %s -> %s", refExternalID, serviceExternalID)
 
 	relation := topology.Relation{

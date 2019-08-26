@@ -53,9 +53,7 @@ AGENT_CORECHECKS = [
     "go_expvar",
     "io",
     "jmx",
-    "kubernetes_api_events",
-    "kubernetes_api_metrics",
-    "kubernetes_api_topology",
+    "kubernetes_apiserver",
     "load",
     "memory",
     "ntp",
@@ -142,14 +140,6 @@ def apply_branding(ctx):
     do_sed_rename(ctx, DD_API_KEY_replace, "./pkg/trace/config/config.go")
     DD_HOSTNAME_replace = 's/DD_HOSTNAME/STS_HOSTNAME/g'
     do_sed_rename(ctx, DD_HOSTNAME_replace, "./pkg/trace/config/config.go")
-
-    # Cluster agent
-    cluster_agent_replace = '/www/! s/datadog/stackstate/g'
-    do_sed_rename(ctx, cluster_agent_replace, "./cmd/cluster-agent/main.go")
-    do_sed_rename(ctx, cluster_agent_replace, "./cmd/cluster-agent/app/*")
-    do_sed_rename(ctx, 's/Datadog Cluster/StackState Cluster/g', "./cmd/cluster-agent/app/*")
-    do_sed_rename(ctx, 's/Datadog Agent/StackState Agent/g', "./cmd/cluster-agent/app/*")
-    do_sed_rename(ctx, 's/to Datadog/to StackState/g', "./cmd/cluster-agent/app/*")
 
     # Defaults
     do_go_rename(ctx, '"\\"/etc/datadog-agent\\" -> \\"/etc/stackstate-agent\\""', "./cmd/agent/common")
