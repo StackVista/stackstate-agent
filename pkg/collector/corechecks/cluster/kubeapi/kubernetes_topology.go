@@ -26,6 +26,7 @@ const (
 
 // TopologyConfig is the config of the API server.
 type TopologyConfig struct {
+	ClusterName     string `yaml:"cluster_name"`
 	CollectTopology bool `yaml:"collect_topology"`
 	CheckID         check.ID
 	Instance        topology.Instance
@@ -44,6 +45,7 @@ type EndpointID struct {
 
 func (c *TopologyConfig) parse(data []byte) error {
 	// default values
+	c.ClusterName = config.Datadog.GetString("cluster_name")
 	c.CollectTopology = config.Datadog.GetBool("collect_kubernetes_topology")
 
 	return yaml.Unmarshal(data, c)
@@ -180,7 +182,7 @@ func (t *TopologyCheck) getAllServices() ([]*topology.Component, error) {
 						switch kind := address.TargetRef.Kind; kind {
 						// add endpoint url as identifier and create service -> pod relation
 						case "Pod":
-							endpointID.RefExternalID = buildPodExternalID(endpoint.ClusterName, address.TargetRef.Name)
+							endpointID.RefExternalID = buildPodExternalID(t.instance.ClusterName, address.TargetRef.Name)
 						// ignore different Kind's for now, create no relation
 						default:
 						}
@@ -206,7 +208,7 @@ func (t *TopologyCheck) getAllServices() ([]*topology.Component, error) {
 func (t *TopologyCheck) mapAndSubmitNode(node v1.Node) topology.Component {
 
 	// submit the StackState component for publishing to StackState
-	component := nodeToStackStateComponent(node)
+	component := t.nodeToStackStateComponent(node)
 	log.Tracef("Publishing StackState node component for %s: %v", component.ExternalID, component.JSONString())
 	batcher.GetBatcher().SubmitComponent(t.instance.CheckID, t.instance.Instance, component)
 
@@ -216,12 +218,12 @@ func (t *TopologyCheck) mapAndSubmitNode(node v1.Node) topology.Component {
 // Map and Submit the Kubernetes Pod into a StackState component
 func (t *TopologyCheck) mapAndSubmitPodWithRelations(pod v1.Pod) topology.Component {
 	// submit the StackState component for publishing to StackState
-	podComponent := podToStackStateComponent(pod)
+	podComponent := t.podToStackStateComponent(pod)
 	log.Tracef("Publishing StackState pod component for %s: %v", podComponent.ExternalID, podComponent.JSONString())
 	batcher.GetBatcher().SubmitComponent(t.instance.CheckID, t.instance.Instance, podComponent)
 
 	// creates a StackState relation for the kubernetes node -> pod
-	relation := podToNodeStackStateRelation(pod)
+	relation := t.podToNodeStackStateRelation(pod)
 	log.Tracef("Publishing StackState pod -> node relation %s->%s", relation.SourceID, relation.TargetID)
 	batcher.GetBatcher().SubmitRelation(t.instance.CheckID, t.instance.Instance, relation)
 
@@ -229,7 +231,7 @@ func (t *TopologyCheck) mapAndSubmitPodWithRelations(pod v1.Pod) topology.Compon
 	for _, container := range pod.Status.ContainerStatuses {
 
 		// submit the StackState component for publishing to StackState
-		containerComponent := containerToStackStateComponent(pod, container)
+		containerComponent := t.containerToStackStateComponent(pod, container)
 		log.Tracef("Publishing StackState container component for %s: %v", containerComponent.ExternalID, containerComponent.JSONString())
 		batcher.GetBatcher().SubmitComponent(t.instance.CheckID, t.instance.Instance, containerComponent)
 
@@ -246,7 +248,7 @@ func (t *TopologyCheck) mapAndSubmitPodWithRelations(pod v1.Pod) topology.Compon
 func (t *TopologyCheck) mapAndSubmitService(service v1.Service, endpoints []EndpointID) topology.Component {
 
 	// submit the StackState component for publishing to StackState
-	serviceComponent := serviceToStackStateComponent(service, endpoints)
+	serviceComponent := t.serviceToStackStateComponent(service, endpoints)
 	log.Tracef("Publishing StackState service component for %s: %v", serviceComponent.ExternalID, serviceComponent.JSONString())
 	batcher.GetBatcher().SubmitComponent(t.instance.CheckID, t.instance.Instance, serviceComponent)
 
@@ -263,7 +265,7 @@ func (t *TopologyCheck) mapAndSubmitService(service v1.Service, endpoints []Endp
 }
 
 // Creates a StackState component from a Kubernetes Node
-func nodeToStackStateComponent(node v1.Node) topology.Component {
+func (t *TopologyCheck) nodeToStackStateComponent(node v1.Node) topology.Component {
 	// creates a StackState component for the kubernetes node
 	log.Tracef("Mapping kubernetes node to StackState component: %s", node.String())
 
@@ -272,9 +274,9 @@ func nodeToStackStateComponent(node v1.Node) topology.Component {
 	for _, address := range node.Status.Addresses {
 		switch addressType := address.Type; addressType {
 		case v1.NodeInternalIP:
-			identifiers = append(identifiers, fmt.Sprintf("urn:ip:/%s:%s:%s", node.ClusterName, node.Name, address.Address))
+			identifiers = append(identifiers, fmt.Sprintf("urn:ip:/%s:%s:%s", t.instance.ClusterName, node.Name, address.Address))
 		case v1.NodeExternalIP:
-			identifiers = append(identifiers, fmt.Sprintf("urn:ip:/%s:%s", node.ClusterName, address.Address))
+			identifiers = append(identifiers, fmt.Sprintf("urn:ip:/%s:%s", t.instance.ClusterName, address.Address))
 		case v1.NodeHostName:
 			identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", address.Address))
 		default:
@@ -284,7 +286,7 @@ func nodeToStackStateComponent(node v1.Node) topology.Component {
 
 	log.Tracef("Created identifiers for %s: %v", node.Name, identifiers)
 
-	nodeExternalID := buildNodeExternalID(node.ClusterName, node.Name)
+	nodeExternalID := buildNodeExternalID(t.instance.ClusterName, node.Name)
 
 	// clear out the unnecessary status array values
 	nodeStatus := node.Status
@@ -312,17 +314,17 @@ func nodeToStackStateComponent(node v1.Node) topology.Component {
 }
 
 // Creates a StackState component from a Kubernetes Pod
-func podToStackStateComponent(pod v1.Pod) topology.Component {
+func (t *TopologyCheck) podToStackStateComponent(pod v1.Pod) topology.Component {
 	// creates a StackState component for the kubernetes pod
 	log.Tracef("Mapping kubernetes pod to StackState Component: %s", pod.String())
 
 	// create identifier list to merge with StackState components
 	identifiers := []string{
-		fmt.Sprintf("urn:ip:/%s:%s", pod.ClusterName, pod.Status.PodIP),
+		fmt.Sprintf("urn:ip:/%s:%s", t.instance.ClusterName, pod.Status.PodIP),
 	}
 	log.Tracef("Created identifiers for %s: %v", pod.Name, identifiers)
 
-	podExternalID := buildPodExternalID(pod.ClusterName, pod.Name)
+	podExternalID := buildPodExternalID(t.instance.ClusterName, pod.Name)
 
 	// clear out the unnecessary status array values
 	podStatus := pod.Status
@@ -353,9 +355,9 @@ func podToStackStateComponent(pod v1.Pod) topology.Component {
 }
 
 // Creates a StackState relation from a Kubernetes Pod to Node relation
-func podToNodeStackStateRelation(pod v1.Pod) topology.Relation {
-	podExternalID := buildPodExternalID(pod.ClusterName, pod.Name)
-	nodeExternalID := buildNodeExternalID(pod.ClusterName, pod.Spec.NodeName)
+func (t *TopologyCheck) podToNodeStackStateRelation(pod v1.Pod) topology.Relation {
+	podExternalID := buildPodExternalID(t.instance.ClusterName, pod.Name)
+	nodeExternalID := buildNodeExternalID(t.instance.ClusterName, pod.Spec.NodeName)
 
 	log.Tracef("Mapping kubernetes pod to node relation: %s -> %s", podExternalID, nodeExternalID)
 
@@ -373,7 +375,7 @@ func podToNodeStackStateRelation(pod v1.Pod) topology.Relation {
 }
 
 // Creates a StackState component from a Kubernetes Pod Container
-func containerToStackStateComponent(pod v1.Pod, container v1.ContainerStatus) topology.Component {
+func (t *TopologyCheck) containerToStackStateComponent(pod v1.Pod, container v1.ContainerStatus) topology.Component {
 	log.Tracef("Mapping kubernetes pod container to StackState component: %s", container.String())
 	// create identifier list to merge with StackState components
 	identifiers := []string{
@@ -381,7 +383,7 @@ func containerToStackStateComponent(pod v1.Pod, container v1.ContainerStatus) to
 	}
 	log.Tracef("Created identifiers for %s: %v", container.Name, identifiers)
 
-	containerExternalID := buildContainerExternalID(pod.ClusterName, pod.Name, container.Name)
+	containerExternalID := buildContainerExternalID(t.instance.ClusterName, pod.Name, container.Name)
 
 	data := map[string]interface{}{
 		"name": container.Name,
@@ -426,7 +428,7 @@ func containerToPodStackStateRelation(containerExternalID, podExternalID string)
 }
 
 // Creates a StackState component from a Kubernetes Pod Service
-func serviceToStackStateComponent(service v1.Service, endpoints []EndpointID) topology.Component {
+func (t *TopologyCheck) serviceToStackStateComponent(service v1.Service, endpoints []EndpointID) topology.Component {
 	log.Tracef("Mapping kubernetes pod service to StackState component: %s", service.String())
 	// create identifier list to merge with StackState components
 	serviceID := buildServiceID(service.Namespace, service.Name)
@@ -456,7 +458,7 @@ func serviceToStackStateComponent(service v1.Service, endpoints []EndpointID) to
 
 	log.Tracef("Created identifiers for %s: %v", service.Name, identifiers)
 
-	serviceExternalID := buildServiceExternalID(service.ClusterName, serviceID)
+	serviceExternalID := buildServiceExternalID(t.instance.ClusterName, serviceID)
 
 	data := map[string]interface{}{
 		"name":              service.Name,

@@ -24,11 +24,9 @@ spec:
           - name: STS_API_KEY
             value: 'API_KEY'
           - name: STS_STS_URL
-            value: "https://stac-5008-cluster-agent.test.stackstate.io/receiver/stsAgent"
-          - name: STS_LOG_LEVEL
-            value: "DEBUG"
-          - name: LOG_LEVEL
-            value: "DEBUG"
+            value: "http://151.20.17.247:7077/stsAgent"
+          - name: STS_CLUSTER_NAME
+            value: "tiziano-test"
           - name: STS_COLLECT_KUBERNETES_EVENTS
             value: "false"
           - name: STS_COLLECT_KUBERNETES_METRICS
