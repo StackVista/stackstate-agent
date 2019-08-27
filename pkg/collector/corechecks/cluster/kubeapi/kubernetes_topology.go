@@ -93,19 +93,19 @@ func (t *TopologyCheck) Run() error {
 	batcher.GetBatcher().SubmitStartSnapshot(t.instance.CheckID, t.instance.Instance)
 
 	// get all the nodes
-	_, err = t.getAllNodes()
+	nodes, err := t.getAllNodes()
 	if err != nil {
 		return err
 	}
 
 	// get all the pods
-	_, err = t.getAllPods()
+	err = t.getAllPods(nodes)
 	if err != nil {
 		return err
 	}
 
 	// get all the services
-	_, err = t.getAllServices()
+	err = t.getAllServices()
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (t *TopologyCheck) Run() error {
 }
 
 // get all the nodes in the k8s cluster
-func (t *TopologyCheck) getAllNodes() ([]*topology.Component, error) {
+func (t *TopologyCheck) getAllNodes() ([]v1.Node, error) {
 	nodes, err := t.ac.GetNodes()
 	if err != nil {
 		return nil, err
@@ -132,37 +132,48 @@ func (t *TopologyCheck) getAllNodes() ([]*topology.Component, error) {
 		components = append(components, &component)
 	}
 
-	return components, nil
+	return nodes, nil
 }
 
 // get all the pods in the k8s cluster
-func (t *TopologyCheck) getAllPods() ([]*topology.Component, error) {
+func (t *TopologyCheck) getAllPods(nodes []v1.Node) error {
 	pods, err := t.ac.GetPods()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	components := make([]*topology.Component, 0)
 
 	for _, pod := range pods {
+		var node *v1.Node
+		for _, n := range nodes {
+			if n.Name == pod.Spec.NodeName {
+				node = &n
+				break
+			}
+		}
+		if node == nil {
+			return fmt.Errorf("Could not find node for pod %s", pod.Name)
+		}
+
 		// creates and publishes StackState pod component with relations
-		component := t.mapAndSubmitPodWithRelations(pod)
+		component := t.mapAndSubmitPodWithRelations(*node, pod)
 		components = append(components, &component)
 	}
 
-	return components, nil
+	return nil
 }
 
 // get all the services in the k8s cluster
-func (t *TopologyCheck) getAllServices() ([]*topology.Component, error) {
+func (t *TopologyCheck) getAllServices() error {
 	services, err := t.ac.GetServices()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	endpoints, err := t.ac.GetEndpoints()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	components := make([]*topology.Component, 0)
@@ -202,7 +213,7 @@ func (t *TopologyCheck) getAllServices() ([]*topology.Component, error) {
 		components = append(components, &component)
 	}
 
-	return components, nil
+	return nil
 }
 
 // Map and Submit the Kubernetes Node into a StackState component
@@ -217,7 +228,7 @@ func (t *TopologyCheck) mapAndSubmitNode(node v1.Node) topology.Component {
 }
 
 // Map and Submit the Kubernetes Pod into a StackState component
-func (t *TopologyCheck) mapAndSubmitPodWithRelations(pod v1.Pod) topology.Component {
+func (t *TopologyCheck) mapAndSubmitPodWithRelations(node v1.Node, pod v1.Pod) topology.Component {
 	// submit the StackState component for publishing to StackState
 	podComponent := t.podToStackStateComponent(pod)
 	log.Tracef("Publishing StackState pod component for %s: %v", podComponent.ExternalID, podComponent.JSONString())
@@ -232,7 +243,7 @@ func (t *TopologyCheck) mapAndSubmitPodWithRelations(pod v1.Pod) topology.Compon
 	for _, container := range pod.Status.ContainerStatuses {
 
 		// submit the StackState component for publishing to StackState
-		containerComponent := t.containerToStackStateComponent(pod, container)
+		containerComponent := t.containerToStackStateComponent(node, pod, container)
 		log.Tracef("Publishing StackState container component for %s: %v", containerComponent.ExternalID, containerComponent.JSONString())
 		batcher.GetBatcher().SubmitComponent(t.instance.CheckID, t.instance.Instance, containerComponent)
 
@@ -279,16 +290,14 @@ func (t *TopologyCheck) nodeToStackStateComponent(node v1.Node) topology.Compone
 		case v1.NodeExternalIP:
 			identifiers = append(identifiers, fmt.Sprintf("urn:ip:/%s:%s", t.instance.ClusterName, address.Address))
 		case v1.NodeHostName:
-			hostId := ""
-			if len(node.Spec.ProviderID) > 0 {
-				hostId = fmt.Sprintf("%s:%s", extractInstanceIdFromProviderId(node.Spec), address.Address)
-			} else {
-				hostId = address.Address
-			}
-			identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", hostId))
+			//do nothing with it
 		default:
 			continue
 		}
+	}
+	// this allow merging with host reported by main agent
+	if len(node.Spec.ProviderID) > 0 {
+		identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", extractInstanceIdFromProviderId(node.Spec)))
 	}
 
 	log.Tracef("Created identifiers for %s: %v", node.Name, identifiers)
@@ -382,14 +391,18 @@ func (t *TopologyCheck) podToNodeStackStateRelation(pod v1.Pod) topology.Relatio
 }
 
 // Creates a StackState component from a Kubernetes Pod Container
-func (t *TopologyCheck) containerToStackStateComponent(pod v1.Pod, container v1.ContainerStatus) topology.Component {
+func (t *TopologyCheck) containerToStackStateComponent(node v1.Node, pod v1.Pod, container v1.ContainerStatus) topology.Component {
 	log.Tracef("Mapping kubernetes pod container to StackState component: %s", container.String())
 	// create identifier list to merge with StackState components
-	strippedContainerId := strings.Replace(container.ContainerID, "docker://", "", -1)
-	identifiers := []string{
-		fmt.Sprintf("urn:container:/%s", strippedContainerId),
-		//TODO add node ec2 instance id
+
+	identifier := ""
+	strippedContainerId := extractLastFragment(container.ContainerID)
+	if len(node.Spec.ProviderID) > 0 {
+		identifier = fmt.Sprintf("%s:%s", extractInstanceIdFromProviderId(node.Spec), strippedContainerId)
+	} else {
+		identifier = strippedContainerId
 	}
+	identifiers := []string{identifier}
 	log.Tracef("Created identifiers for %s: %v", container.Name, identifiers)
 
 	containerExternalID := buildContainerExternalID(t.instance.ClusterName, pod.Name, container.Name)
@@ -509,10 +522,14 @@ func podToServiceStackStateRelation(refExternalID, serviceExternalID string) top
 	return relation
 }
 
+func extractLastFragment(value string) string {
+	lastSlash := strings.LastIndex(value, "/")
+	return value[lastSlash+1:]
+}
+
 func extractInstanceIdFromProviderId(spec v1.NodeSpec) string {
 	//parse node id from cloud provider (for AWS is the ec2 instance id)
-	lastSlash := strings.LastIndex(spec.ProviderID, "/")
-	return spec.ProviderID[lastSlash+1:]
+	return extractLastFragment(spec.ProviderID)
 }
 
 // buildNodeExternalID
