@@ -402,7 +402,9 @@ func (t *TopologyCheck) containerToStackStateComponent(node v1.Node, pod v1.Pod,
 	} else {
 		identifier = strippedContainerId
 	}
-	identifiers := []string{identifier}
+	identifiers := []string{
+		fmt.Sprintf("urn:container:/%s", identifier),
+	}
 	log.Tracef("Created identifiers for %s: %v", container.Name, identifiers)
 
 	containerExternalID := buildContainerExternalID(t.instance.ClusterName, pod.Name, container.Name)
