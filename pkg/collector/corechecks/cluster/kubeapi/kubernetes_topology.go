@@ -16,6 +16,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"gopkg.in/yaml.v2"
 	"k8s.io/api/core/v1"
 	"strings"
 )
@@ -278,7 +279,16 @@ func (t *TopologyCheck) nodeToStackStateComponent(node v1.Node) topology.Compone
 		case v1.NodeExternalIP:
 			identifiers = append(identifiers, fmt.Sprintf("urn:ip:/%s:%s", t.instance.ClusterName, address.Address))
 		case v1.NodeHostName:
-			identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", address.Address))
+			hostId := ""
+			if len(node.Spec.ProviderID) > 0 {
+				//parse node id from cloud provider (for AWS is the ec2 instance id)
+				lastSlash := strings.LastIndex(node.Spec.ProviderID, "/")
+				instanceId := node.Spec.ProviderID[lastSlash:]
+				hostId = fmt.Sprintf("%s:%s", instanceId, address.Address)
+			} else {
+				hostId = address.Address
+			}
+			identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", hostId))
 		default:
 			continue
 		}
