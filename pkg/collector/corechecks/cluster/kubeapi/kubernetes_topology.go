@@ -281,10 +281,7 @@ func (t *TopologyCheck) nodeToStackStateComponent(node v1.Node) topology.Compone
 		case v1.NodeHostName:
 			hostId := ""
 			if len(node.Spec.ProviderID) > 0 {
-				//parse node id from cloud provider (for AWS is the ec2 instance id)
-				lastSlash := strings.LastIndex(node.Spec.ProviderID, "/")
-				instanceId := node.Spec.ProviderID[lastSlash:]
-				hostId = fmt.Sprintf("%s:%s", instanceId, address.Address)
+				hostId = fmt.Sprintf("%s:%s", extractInstanceIdFromProviderId(node.Spec), address.Address)
 			} else {
 				hostId = address.Address
 			}
@@ -391,6 +388,7 @@ func (t *TopologyCheck) containerToStackStateComponent(pod v1.Pod, container v1.
 	strippedContainerId := strings.Replace(container.ContainerID, "docker://", "", -1)
 	identifiers := []string{
 		fmt.Sprintf("urn:container:/%s", strippedContainerId),
+		//TODO add node ec2 instance id
 	}
 	log.Tracef("Created identifiers for %s: %v", container.Name, identifiers)
 
@@ -509,6 +507,12 @@ func podToServiceStackStateRelation(refExternalID, serviceExternalID string) top
 	log.Tracef("Created StackState reference -> service relation %s->%s", relation.SourceID, relation.TargetID)
 
 	return relation
+}
+
+func extractInstanceIdFromProviderId(spec v1.NodeSpec) string {
+	//parse node id from cloud provider (for AWS is the ec2 instance id)
+	lastSlash := strings.LastIndex(spec.ProviderID, "/")
+	return spec.ProviderID[lastSlash+1:]
 }
 
 // buildNodeExternalID
