@@ -27,7 +27,7 @@ spec:
           privileged: true
         env:
           - name: STS_API_KEY
-            value: "<STS_API_KEY>"
+            value: "API_KEY"
           - name: STS_STS_URL
             value: "<STACKSTATE_BACKEND_URL>/stsAgent"
           - name: STS_PROCESS_AGENT_URL

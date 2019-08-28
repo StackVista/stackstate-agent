@@ -25,7 +25,7 @@ spec:
           - name: STS_STS_URL
             value: "<STACKSTATE_BACKEND_URL>/stsAgent"
           - name: STS_CLUSTER_NAME
-            value: "tiziano-test"
+            value: "<CLUSTER_NAME>"
           - name: STS_COLLECT_KUBERNETES_EVENTS
             value: "false"
           - name: STS_COLLECT_KUBERNETES_METRICS
