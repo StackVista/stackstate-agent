@@ -6,7 +6,7 @@
 // +build !windows
 // +build kubeapiserver
 
-//go:generate go run ../../pkg/config/render_config.go dca ../../pkg/config/config_template.yaml ../../Dockerfiles/cluster-agent/stackstate-cluster.yaml
+//go:generate go run ../../pkg/config/render_config.go dca ../../pkg/config/config_template.yaml ../../Dockerfiles/cluster-agent/datadog-cluster.yaml
 
 package main
 
