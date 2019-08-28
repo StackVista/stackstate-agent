@@ -25,7 +25,7 @@ spec:
             protocol: TCP
           - containerPort: 5555
             name: healthport
-            protocol: TCP    
+            protocol: TCP
         securityContext:
           privileged: true
         env:
