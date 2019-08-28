@@ -16,14 +16,14 @@ spec:
     spec:
       serviceAccountName: stackstate-cluster-agent
       containers:
-      - image: stackstate/stackstate-cluster-agent-test:stac-5008-cluster-agent
+      - image: stackstate/stackstate-cluster-agent-test:master
         imagePullPolicy: Always
         name: stackstate-cluster-agent
         env:
           - name: STS_API_KEY
-            value: 'API_KEY'
+            value: "API_KEY"
           - name: STS_STS_URL
-            value: "http://151.20.17.247:7077/stsAgent"
+            value: "<STACKSTATE_BACKEND_URL>/stsAgent"
           - name: STS_CLUSTER_NAME
             value: "tiziano-test"
           - name: STS_COLLECT_KUBERNETES_EVENTS
