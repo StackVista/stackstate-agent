@@ -1,5 +1,5 @@
 ---
-- name: Prepare Kubernetes Demo
+- name: Prepare Receiver
   hosts: kubernetes-cluster-agent
   gather_facts: false
   vars_files:
@@ -15,8 +15,8 @@
         name: [python-pip, virtualenv, libyajl2]  # venv and yajl2 if you wanna run the simulator
         state: present
         update_cache: yes
-      retries: 20
-      delay: 10
+      retries: 5
+      delay: 5
       register: pip_result
       until: pip_result is not failed
     - name: Installing python boto packages
@@ -70,6 +70,28 @@
         dest: /home/ubuntu/.aws/config
     - name: Run Docker login
       shell: eval $(aws ecr get-login --no-include-email)
+    - name: Install Docker Compose
+      become: true
+      get_url:
+        url: "https://github.com/docker/compose/releases/download/1.22.0/docker-compose-Linux-x86_64"
+        dest: "/usr/local/bin/docker-compose"
+        force: True
+        mode: "0755"
+    - name: Copy Configuration files
+      copy:
+        src: "files/"
+        dest: "/home/ubuntu/"
+    - name: Run Docker compose
+      command: docker-compose up -d
+      args:
+        chdir: /home/ubuntu/receiver
+
+- name: Prepare Kubernetes Cluster
+  hosts: kubernetes-cluster-agent
+  gather_facts: false
+  vars_files:
+    - common_vars.yml
+  tasks:
     - name: Download and unarchive Terraform
       become: true
       unarchive:
@@ -91,10 +113,6 @@
         dest: "/usr/local/bin/"
         force: True
         mode: "0755"
-    - name: Copy Configuration files
-      copy:
-        src: "files/"
-        dest: "/home/ubuntu/"
     - name: Removing existing eks key-pair if exits
       file:
         path: "/home/ubuntu/terraform-scripts/{{ item }}"
