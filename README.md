@@ -87,7 +87,7 @@ and replace `PR_NAME` with the branch name (e.g. `master`, `STAC-xxxx`).
 
 ##### Test
 
-    $ docker pull docker.io/stackstate/stackstate-agent-2-test:latest
+    $ docker pull quay.io/stackstate/stackstate-agent-2-test:latest
 
 ### Windows
 
