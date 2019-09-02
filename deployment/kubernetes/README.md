@@ -52,31 +52,8 @@ As a minimum, overrides include
 * `<STS_STS_URL>` with your StackState backend URL (including suffix /stsAgent)
 * `<STS_CLUSTER_NAME>` with your Cluster name
 
+See example in folder `deployment/kubernetes/k8s/overlays/example/kustomization.yaml`,
 
-
-```yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-bases:
-- ../../base
-
-configMapGenerator:
-- name: sts-agent-config
-  behavior: merge
-  literals:
-     - STS_API_KEY=SOMEOTHER
-     - STS_STS_URL=http://localhost/stsAgent
-     - STS_CLUSTER_NAME=custom_cluster_name
-- name: sts-clusteragent-config
-  behavior: merge
-  literals:
-     - STS_API_KEY=SOMEOTHER2
-     - STS_STS_URL=http://localhost/stsAgent
-     - STS_CLUSTER_NAME=custom_cluster_name
-```
-
-See example in folder `deployment/kubernetes/k8s/overlays/example`,
 command to take a look on modified definition: `kubectl kustomize <CUSTOMIZATION DIRECTORY>`
 
 Example:

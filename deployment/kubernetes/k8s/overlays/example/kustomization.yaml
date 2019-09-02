@@ -9,8 +9,11 @@ configMapGenerator:
   behavior: merge
   literals:
      - STS_API_KEY=SOMEOTHER
+     - STS_STS_URL=http://localhost/stsAgent
 - name: sts-clusteragent-config
   behavior: merge
   literals:
      - STS_API_KEY=SOMEOTHER2
+     - STS_STS_URL=http://localhost/stsAgent
+     - STS_CLUSTER_NAME=custom_cluster_name
 
