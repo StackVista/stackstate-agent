@@ -1,0 +1,69 @@
+---
+- name: Downsize Kubernetes Cluster
+  hosts: kubernetes-cluster-agent
+  gather_facts: false
+  vars_files:
+    - common_vars.yml
+  tasks:
+    - name: Run make plan
+      make:
+        chdir: /home/ubuntu/deployment/aws-eks/tf-cluster
+        target: plan
+      environment:
+        AWS_ACCESS_KEY_ID: '{{lookup("env", "AWS_ACCESS_KEY_ID")}}'
+        AWS_SECRET_ACCESS_KEY: '{{lookup("env", "AWS_SECRET_ACCESS_KEY")}}'
+        TF_VAR_AWS_SECRET_ACCESS_KEY: '{{lookup("env", "AWS_SECRET_ACCESS_KEY")}}'
+        TF_VAR_AWS_ACCESS_KEY_ID: '{{lookup("env", "AWS_ACCESS_KEY_ID")}}'
+        TF_VAR_SCALING_DESIRED_CAPACITY: 0
+        TF_VAR_AWS_REGION: eu-west-1
+        TF_VAR_CLUSTER_NAME: {{ cluster_name }} 
+    - name: Run make apply
+      make:
+        chdir: /home/ubuntu/aws-eks/tf-cluster
+        target: apply
+- name: Destroy
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - common_vars.yml
+  tasks:
+    - block:
+        - name: Populate instance config
+          set_fact:
+            instance_conf: "{{ lookup('file', molecule_instance_config) | molecule_from_yaml }}"
+            skip_instances: false
+      rescue:
+        - name: Populate instance config when file missing
+          set_fact:
+            instance_conf: {}
+            skip_instances: true
+    - name: Destroy molecule instance(s)
+      ec2:
+        state: absent
+        instance_ids: "{{ item.instance_ids }}"
+      register: server
+      with_items: "{{ instance_conf }}"
+      when: not skip_instances
+      async: 7200
+      poll: 0
+
+    - name: Wait for instance(s) deletion to complete
+      async_status:
+        jid: "{{ item.ansible_job_id }}"
+      register: ec2_jobs
+      until: ec2_jobs.finished
+      retries: 300
+      with_items: "{{ server.results }}"
+
+    # Mandatory configuration for Molecule to function.
+
+    - name: Populate instance config
+      set_fact:
+        instance_conf: {}
+
+    - name: Dump instance config
+      copy:
+        content: "{{ instance_conf | to_json | from_json | molecule_to_yaml | molecule_header }}"
+        dest: "{{ molecule_instance_config }}"
+      when: server.changed | bool

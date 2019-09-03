@@ -10,7 +10,7 @@
 data "aws_ami" "eks-worker" {
   filter {
     name   = "name"
-    values = ["eks-worker-*"]
+    values = ["amazon-eks-node-*"]
   }
 
   most_recent = true
@@ -75,7 +75,7 @@ resource "aws_launch_configuration" "eks-launch-configuration" {
 //and Kubernetes to discover and manage compute resources.
 
 resource "aws_autoscaling_group" "eks-autoscaling-group" {
-  desired_capacity     = 2
+  desired_capacity     = "${var.SCALING_DESIRED_CAPACITY}"
   launch_configuration = "${aws_launch_configuration.eks-launch-configuration.id}"
   max_size             = 2
   min_size             = 1
