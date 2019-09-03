@@ -87,7 +87,7 @@ func (t *TopologyCheck) Run() error {
 
 	// set the check "instance id" for snapshots
 	t.instance.CheckID = kubernetesAPITopologyCheckName
-	t.instance.Instance = topology.Instance{Type: "kubernetes", URL: t.KubeAPIServerHostname}
+	t.instance.Instance = topology.Instance{Type: "kubernetes", URL: t.instance.ClusterName}
 
 	// start the topology snapshot with the batch-er
 	batcher.GetBatcher().SubmitStartSnapshot(t.instance.CheckID, t.instance.Instance)
