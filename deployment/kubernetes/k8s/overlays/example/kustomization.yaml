@@ -10,6 +10,8 @@ configMapGenerator:
   literals:
      - STS_API_KEY=SOMEOTHER
      - STS_STS_URL=http://localhost/stsAgent
+     - STS_PROCESS_AGENT_URL=http://localhost/stsAgent
+     - STS_APM_URL=http://localhost/stsAgent
 - name: sts-clusteragent-config
   behavior: merge
   literals:
