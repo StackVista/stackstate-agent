@@ -88,7 +88,7 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
   stackstate-agent:
-    image: quay.io/stackstate/stackstate-agent-2-test:${AGENT_VERSION}
+    image: docker.io/stackstate/stackstate-agent-2-test:${AGENT_VERSION}
     network_mode: "host"
     pid: "host"
     privileged: true
