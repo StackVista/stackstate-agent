@@ -69,7 +69,11 @@
           output=json
         dest: /home/ubuntu/.aws/config
     - name: Run Docker login
-      shell: echo "{{ lookup("env", "quay_password")}}" | docker login --username={{ lookup("env", "quay_user")}} --password-stdin quay.io
+      docker_login:
+        registry: quay.io
+        username: "{{ quay_user }}"
+        password: "{{ quay_password }}"
+        reauthorize: yes
     - name: Install Docker Compose
       become: true
       get_url:
