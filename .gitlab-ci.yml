@@ -462,7 +462,6 @@ molecule_tests_vms:
   dependencies: []
   before_script: []
   script:
-    - echo "${quay_password}" | docker login --username=${quay_user} --password-stdin quay.io
     - export MOLECULE_RUN_ID=${CI_JOB_ID}
     - export AGENT_GITLAB_BRANCH=${CI_COMMIT_REF_NAME}
     - cd $CI_PROJECT_DIR/test && ./molecule.sh test -s vms
@@ -478,7 +477,6 @@ molecule_tests_compose:
   dependencies: []
   before_script: []
   script:
-    - echo "${quay_password}" | docker login --username=${quay_user} --password-stdin quay.io
     - export MOLECULE_RUN_ID=${CI_JOB_ID}
     - export AGENT_GITLAB_BRANCH=${CI_COMMIT_REF_NAME}
     - cd $CI_PROJECT_DIR/test && ./molecule.sh test -s compose
