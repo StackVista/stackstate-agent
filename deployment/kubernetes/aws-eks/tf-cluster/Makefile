@@ -14,4 +14,4 @@ kubeconfig:
 config-map-aws-auth:
 	terraform output config-map-aws-auth > config-map-aws-auth.yaml
 	kubectl apply -f config-map-aws-auth.yaml
-	until kubectl get nodes | grep -m 2 "Ready"; do sleep 1 ; done	
+	kubectl wait --for=condition=Ready nodes --all --timeout=60s	

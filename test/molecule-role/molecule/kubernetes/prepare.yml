@@ -19,9 +19,9 @@
       delay: 25
       register: pip_result
       until: pip_result is not failed
-    - name: Installing python boto packages
+    - name: Installing python  packages
       pip:
-        name: boto,boto3
+        name: boto,boto3,docker
     - name: Add Docker GPG APT key
       become: true
       apt_key: url=https://download.docker.com/linux/ubuntu/gpg
@@ -69,7 +69,11 @@
           output=json
         dest: /home/ubuntu/.aws/config
     - name: Run Docker login
-      shell: eval $(aws ecr get-login  --no-include-email --region eu-west-1 --registry-ids 508573134510)
+      docker_login:
+        registry: quay.io
+        username: "{{ quay_user }}"
+        password: "{{ quay_password }}"
+        reauthorize: yes
     - name: Install Docker Compose
       become: true
       get_url:
@@ -86,7 +90,7 @@
         src: "files/receiver"
         dest: "/home/ubuntu/"
     - name: Generate env token
-      command: "echo token=$(cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1) > env.txt"
+      shell: echo token=$(cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1) > env.txt
       args:
         chdir: /home/ubuntu/deployment/k8s/overlays
     - name: Kustomization template
@@ -159,18 +163,18 @@
       make:
         chdir: /home/ubuntu/deployment/aws-eks/tf-cluster
         target: config-map-aws-auth
-      retries: 5
-      delay: 10
+      environment:
+         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
     - name: Create secret for java demo app
-      command: kubectl get secret ecr-reg-key || kubectl create secret generic ecr-reg-key --from-file=.dockerconfigjson=/home/ubuntu/.docker/config.json --type=kubernetes.io/dockerconfigjson
+      shell: kubectl get secret ecr-reg-key || kubectl create secret generic ecr-reg-key --from-file=.dockerconfigjson=/home/ubuntu/.docker/config.json --type=kubernetes.io/dockerconfigjson
     - name: Apply config files for cluster agent setup
       command: kubectl apply -k overlays
       args:
         chdir: /home/ubuntu/deployment/k8s
     - name: Apply demo app config
-      command: kubectl apply -f java-db-demo.yaml
-      args:
-        chdir: /home/ubuntu/deployment/demo-app
-      environment:
-        AGENT_VERSION: "{{ agent_current_branch }}"
-        DOCKER_HOST_IP: "{{ ansible_docker0['ipv4']['address'] }}"
+     command: kubectl apply -f java-db-demo.yaml
+     args:
+       chdir: /home/ubuntu/deployment/demo-app
+       environment:
+         AGENT_VERSION: "{{ agent_current_branch }}"
+         DOCKER_HOST_IP: "{{ ansible_docker0['ipv4']['address'] }}"
