@@ -16,7 +16,7 @@
         TF_VAR_AWS_ACCESS_KEY_ID: '{{lookup("env", "AWS_ACCESS_KEY_ID")}}'
         TF_VAR_SCALING_DESIRED_CAPACITY: 0
         TF_VAR_AWS_REGION: eu-west-1
-        TF_VAR_CLUSTER_NAME: {{ cluster_name }}
+        TF_VAR_CLUSTER_NAME: "{{ cluster_name }}"
     - name: Run make apply
       make:
         chdir: /home/ubuntu/aws-eks/tf-cluster
