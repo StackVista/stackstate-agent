@@ -77,6 +77,9 @@
         wait: true
         network:
           assign_public_ip: true
+        filters:
+          tag:Name: "{{ item.name }}"
+          instance-state-name: pending
       register: server
       with_items: "{{ molecule_yml.platforms }}"
       async: 7200

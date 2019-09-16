@@ -120,6 +120,9 @@
         wait: true
         network:
           assign_public_ip: true
+        filters:
+          tag:Name: "{{ item.name }}"
+          instance-state-name: pending
         user_data: "{{ lookup('file', item.user_data) }}"
       register: server
       with_items: "{{ molecule_yml.platforms }}"
