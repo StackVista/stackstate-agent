@@ -9,7 +9,7 @@
     ssh_port: 22
 
     security_group_name: molecule_kubernetes
-    security_group_description: Agent v2 Molecule testing running on vm
+    security_group_description: Agent v2 Molecule testing running on kubernetes
     security_group_rules:
       - proto: tcp
         from_port: "{{ ssh_port }}"
@@ -88,7 +88,10 @@
           molecule: yes
         wait: true
         network:
-          assign_public_ip: true 
+          assign_public_ip: true
+        filters:
+          tag:Name: "{{ item.name }}"
+          instance-state-name: pending
       register: server
       with_items: "{{ molecule_yml.platforms }}"
       async: 7200
@@ -110,8 +113,8 @@
       set_fact:
         instance_conf_dict: {
           'instance': "{{ item.instances[0].tags.instance }}",
-          'address': "{{ item.instances[0].public_ip_address  }}",
-          'private_address': "{{ item.instances[0].private_ip_address  }}",
+          'address': "{{ item.instances[0].public_ip_address }}",
+          'private_address': "{{ item.instances[0].private_ip_address }}",
           'user': "{{ item.item.item.ssh_user }}",
           'port': "{{ ssh_port }}",
           'identity_file': "{{ keypair_path }}",
