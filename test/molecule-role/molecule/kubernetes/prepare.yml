@@ -164,7 +164,7 @@
         chdir: /home/ubuntu/deployment/aws-eks/tf-cluster
         target: config-map-aws-auth
       environment:
-         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
+        KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
     - name: Create secret for java demo app
       shell: kubectl get secret ecr-reg-key || kubectl create secret generic ecr-reg-key --from-file=.dockerconfigjson=/home/ubuntu/.docker/config.json --type=kubernetes.io/dockerconfigjson
     - name: Apply config files for cluster agent setup
@@ -172,9 +172,9 @@
       args:
         chdir: /home/ubuntu/deployment/k8s
     - name: Apply demo app config
-     command: kubectl apply -f java-db-demo.yaml
-     args:
-       chdir: /home/ubuntu/deployment/demo-app
-       environment:
-         AGENT_VERSION: "{{ agent_current_branch }}"
-         DOCKER_HOST_IP: "{{ ansible_docker0['ipv4']['address'] }}"
+      command: kubectl apply -f java-db-demo.yaml
+      args:
+        chdir: /home/ubuntu/deployment/demo-app
+        environment:
+          AGENT_VERSION: "{{ agent_current_branch }}"
+          DOCKER_HOST_IP: "{{ ansible_docker0['ipv4']['address'] }}"
