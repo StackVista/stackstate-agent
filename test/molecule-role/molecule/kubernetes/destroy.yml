@@ -19,7 +19,7 @@
         TF_VAR_CLUSTER_NAME: "{{ cluster_name }}"
     - name: Run make apply
       make:
-        chdir:  /home/ubuntu/deployment/aws-eks/tf-cluster
+        chdir: /home/ubuntu/deployment/aws-eks/tf-cluster
         target: apply
 
 - name: Destroys the molecule instance
