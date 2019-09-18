@@ -27,7 +27,7 @@
       when: not skip_instances
       async: 7200
       poll: 0
-
+    
     - name: Wait for instance(s) deletion to complete
       async_status:
         jid: "{{ item.ansible_job_id }}"
@@ -47,6 +47,11 @@
         content: "{{ instance_conf | to_json | from_json | molecule_to_yaml | molecule_header }}"
         dest: "{{ molecule_instance_config }}"
       when: server.changed | bool
+      
+     - name: Install python for Ansible
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream)
+      become: true
+      changed_when: false  
     - name: Install APT packages
       become: true
       apt:
