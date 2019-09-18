@@ -47,6 +47,13 @@
         content: "{{ instance_conf | to_json | from_json | molecule_to_yaml | molecule_header }}"
         dest: "{{ molecule_instance_config }}"
       when: server.changed | bool
+    - name: Download and unarchive Terraform
+      become: true
+      unarchive:
+        src: "https://releases.hashicorp.com/terraform/0.12.7/terraform_0.12.7_linux_amd64.zip"
+        dest: "/usr/local/bin/"
+        remote_src: yes
+        mode: "0755"
     - name: Run make plan
       make:
         chdir: ../../../../deployment/kubernetes/aws-eks/tf-cluster
