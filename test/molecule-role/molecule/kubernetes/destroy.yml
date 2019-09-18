@@ -12,6 +12,10 @@
           set_fact:
             instance_conf: "{{ lookup('file', molecule_instance_config) | molecule_from_yaml }}"
             skip_instances: false
+        - name: Downsize the cluster
+          ec2_asg:
+            name: "eks-{{ cluster_name }}-cluster"
+            desired_capacity: 0
       rescue:
         - name: Populate instance config when file missing
           set_fact:
@@ -46,40 +50,3 @@
         content: "{{ instance_conf | to_json | from_json | molecule_to_yaml | molecule_header }}"
         dest: "{{ molecule_instance_config }}"
       when: server.changed | bool
-    - name: Install python for Ansible
-      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream)
-      become: true
-      changed_when: false
-    - name: Install APT packages
-      become: true
-      apt:
-        name: [ unzip]
-        state: present
-        update_cache: yes
-      register: apt_res
-      retries: 5
-      delay: 5
-      until: apt_res is success
-    - name: Download and unarchive Terraform
-      become: true
-      unarchive:
-        src: "https://releases.hashicorp.com/terraform/0.12.7/terraform_0.12.7_linux_amd64.zip"
-        dest: "/usr/local/bin/"
-        remote_src: yes
-        mode: "0755"
-    - name: Run make plan
-      make:
-        chdir: ../../../../deployment/kubernetes/aws-eks/tf-cluster
-        target: plan
-      environment:
-        AWS_ACCESS_KEY_ID: '{{lookup("env", "AWS_ACCESS_KEY_ID")}}'
-        AWS_SECRET_ACCESS_KEY: '{{lookup("env", "AWS_SECRET_ACCESS_KEY")}}'
-        TF_VAR_AWS_SECRET_ACCESS_KEY: '{{lookup("env", "AWS_SECRET_ACCESS_KEY")}}'
-        TF_VAR_AWS_ACCESS_KEY_ID: '{{lookup("env", "AWS_ACCESS_KEY_ID")}}'
-        TF_VAR_SCALING_DESIRED_CAPACITY: 0
-        TF_VAR_AWS_REGION: eu-west-1
-        TF_VAR_CLUSTER_NAME: "{{ cluster_name }}"
-    - name: Run make apply
-      make:
-        chdir: ../../../../deployment/kubernetes/aws-eks/tf-cluster
-        target: apply
