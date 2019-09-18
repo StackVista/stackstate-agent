@@ -26,17 +26,6 @@ provisioner:
     name: ansible-lint
 scenario:
   name: kubernetes
-  test_sequence:
-    - lint
-    - dependency
-    - syntax
-    - create
-    - prepare
-    - converge
-    - idempotence
-    - side_effect
-    - verify
-    - destroy
 verifier:
   name: testinfra
   lint:

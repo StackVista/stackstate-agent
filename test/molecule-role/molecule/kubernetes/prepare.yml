@@ -122,16 +122,13 @@
         dest: "/usr/local/bin/"
         force: True
         mode: "0755"
-    - name: Removing existing eks key-pair if exits
+    - name: Removing existing config files if exists
       file:
         path: "/home/ubuntu/deployment/aws-eks/tf-cluster/{{ item }}"
         state: absent
       with_items:
-        - eks_rsa
-        - eks_rsa.pub
         - .terraform
-    - name: Generate keypair for login in ec2 instances
-      command: ssh-keygen -f /home/ubuntu/deployment/aws-eks/tf-cluster/eks_rsa -P ""
+        - kubeconfig
     - name: Run make plan
       make:
         chdir: /home/ubuntu/deployment/aws-eks/tf-cluster
@@ -152,13 +149,6 @@
       make:
         chdir: /home/ubuntu/deployment/aws-eks/tf-cluster
         target: kubeconfig
-    - name: Set Kubeconfig
-      become: true
-      lineinfile:
-        dest: "/etc/environment"
-        state: present
-        regexp: "^KUBECONFIG"
-        line: "KUBECONFIG=/home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig"
     - name: Run make config-map-aws-auth
       make:
         chdir: /home/ubuntu/deployment/aws-eks/tf-cluster
@@ -167,14 +157,21 @@
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
     - name: Create secret for java demo app
       shell: kubectl get secret ecr-reg-key || kubectl create secret generic ecr-reg-key --from-file=.dockerconfigjson=/home/ubuntu/.docker/config.json --type=kubernetes.io/dockerconfigjson
+      environment:
+        KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
     - name: Apply config files for cluster agent setup
       command: kubectl apply -k overlays
       args:
         chdir: /home/ubuntu/deployment/k8s
+      environment:
+        KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
+    - name: Gather facts (we need the docker network interface ip)
+      setup:
     - name: Apply demo app config
       command: kubectl apply -f java-db-demo.yaml
       args:
         chdir: /home/ubuntu/deployment/demo-app
-        environment:
-          AGENT_VERSION: "{{ agent_current_branch }}"
-          DOCKER_HOST_IP: "{{ ansible_docker0['ipv4']['address'] }}"
+      environment:
+        KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
+        AGENT_VERSION: "{{ agent_current_branch }}"
+        DOCKER_HOST_IP: "{{ ansible_docker0['ipv4']['address'] }}"

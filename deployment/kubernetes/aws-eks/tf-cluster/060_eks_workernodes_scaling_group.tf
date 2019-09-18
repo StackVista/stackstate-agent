@@ -47,9 +47,13 @@ systemctl restart kubelet
 USERDATA
 }
 
+resource "tls_private_key" "eks_rsa" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
 resource "aws_key_pair" "eks-key-pair" {
   key_name   = "eks-deployer-${local.cluster_name}"
-  public_key = "${file("./eks_rsa.pub")}"
+  public_key = "${tls_private_key.eks_rsa.public_key_openssh}"
 }
 
 resource "aws_launch_configuration" "eks-launch-configuration" {
@@ -137,6 +141,9 @@ output "config-map-aws-auth" {
   value = "${local.config-map-aws-auth}"
 }
 
+output "eks_rsa"{
+  value= "${tls_private_key.eks_rsa.private_key_pem}"
+}
 
 //Run
 //
