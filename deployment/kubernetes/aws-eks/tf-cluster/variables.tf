@@ -9,14 +9,14 @@ variable "SCALING_DESIRED_CAPACITY" {
 variable "CLUSTER_NAME" {}
 
 locals {
-  availabilityzone = "${var.AWS_REGION}a"
+  availabilityzone  = "${var.AWS_REGION}a"
   availabilityzone2 = "${var.AWS_REGION}b"
 
-  cluster_name= "${var.CLUSTER_NAME}-cluster"
+  cluster_name = "${var.CLUSTER_NAME}-cluster"
 
-//  NOTE: The usage of the specific kubernetes.io/cluster/*
-//  resource tags below are required for EKS and Kubernetes to discover
-//  and manage networking resources.
+  //  NOTE: The usage of the specific kubernetes.io/cluster/*
+  //  resource tags below are required for EKS and Kubernetes to discover
+  //  and manage networking resources.
 
   common_tags = "${map(
     "Environment", "${var.CLUSTER_NAME}",
@@ -27,7 +27,7 @@ locals {
 
 variable "vpc_cidr" {
   description = "CIDR for the whole VPC"
-  default = "10.11.0.0/16"
+  default     = "10.11.0.0/16"
 }
 
 
@@ -35,12 +35,12 @@ variable "vpc_cidr" {
 
 variable "public_subnet_cidr" {
   description = "CIDR for the Public Subnet"
-  default = "10.11.0.0/24"
+  default     = "10.11.0.0/24"
 }
 
 variable "private_subnet_cidr" {
   description = "CIDR for the Private Subnet"
-  default = "10.11.1.0/24"
+  default     = "10.11.1.0/24"
 }
 
 
@@ -48,10 +48,10 @@ variable "private_subnet_cidr" {
 
 variable "public_subnet_cidr2" {
   description = "CIDR for the Public Subnet"
-  default = "10.11.2.0/24"
+  default     = "10.11.2.0/24"
 }
 
 variable "private_subnet_cidr2" {
   description = "CIDR for the Private Subnet"
-  default = "10.11.3.0/24"
+  default     = "10.11.3.0/24"
 }

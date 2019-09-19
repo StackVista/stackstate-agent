@@ -120,8 +120,6 @@ resource "aws_autoscaling_group" "eks-autoscaling-group" {
 
 locals {
   config-map-aws-auth = <<CONFIGMAPAWSAUTH
-
-
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -141,17 +139,6 @@ output "config-map-aws-auth" {
   value = "${local.config-map-aws-auth}"
 }
 
-output "eks_rsa"{
-  value= "${tls_private_key.eks_rsa.private_key_pem}"
+output "eks_rsa" {
+  value = "${tls_private_key.eks_rsa.private_key_pem}"
 }
-
-//Run
-//
-//terraform output config-map-aws-auth and save the configuration into a file,
-//e.g. config-map-aws-auth.yaml
-//
-//Run kubectl apply -f config-map-aws-auth.yaml
-//
-//You can verify the worker nodes are joining the cluster via: kubectl get nodes --watch
-//At this point, you should be able to utilize Kubernetes as expected!
-//

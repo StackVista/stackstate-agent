@@ -56,9 +56,9 @@ resource "aws_iam_instance_profile" "eks-node-instance-profile" {
 
 
 resource "aws_security_group" "eks-nodes-sg" {
-  name  =  "${local.cluster_name}-nodes-sg"
+  name        = "${local.cluster_name}-nodes-sg"
   description = "Security group for all nodes in the cluster [${var.CLUSTER_NAME}] "
-  vpc_id = "${aws_vpc.cluster.id}"
+  vpc_id      = "${aws_vpc.cluster.id}"
   //    ingress {
   //      from_port       = 0
   //      to_port         = 0
@@ -77,16 +77,16 @@ resource "aws_security_group" "eks-nodes-sg" {
 
 
   egress {
-    from_port       = 0
-    to_port         = 0
-    protocol        = "-1"
-    cidr_blocks     = ["0.0.0.0/0"]
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = "${
     map(
-     "Name", "${local.cluster_name}-nodes-sg",
-     "kubernetes.io/cluster/${local.cluster_name}", "owned",
+      "Name", "${local.cluster_name}-nodes-sg",
+      "kubernetes.io/cluster/${local.cluster_name}", "owned",
     )
   }"
 }
@@ -103,7 +103,7 @@ resource "aws_security_group_rule" "https_nodes_to_plane" {
   protocol                 = "tcp"
   security_group_id        = "${aws_security_group.eks-control-plane-sg.id}"
   source_security_group_id = "${aws_security_group.eks-nodes-sg.id}"
-  depends_on = ["aws_security_group.eks-nodes-sg", "aws_security_group.eks-control-plane-sg" ]
+  depends_on               = ["aws_security_group.eks-nodes-sg", "aws_security_group.eks-control-plane-sg"]
 }
 
 
@@ -112,17 +112,17 @@ resource "aws_security_group_rule" "communication_plane_to_nodes" {
   from_port                = 1025
   to_port                  = 65534
   protocol                 = "tcp"
-  security_group_id = "${aws_security_group.eks-nodes-sg.id}"
-  source_security_group_id        = "${aws_security_group.eks-control-plane-sg.id}"
-  depends_on = ["aws_security_group.eks-nodes-sg", "aws_security_group.eks-control-plane-sg" ]
+  security_group_id        = "${aws_security_group.eks-nodes-sg.id}"
+  source_security_group_id = "${aws_security_group.eks-control-plane-sg.id}"
+  depends_on               = ["aws_security_group.eks-nodes-sg", "aws_security_group.eks-control-plane-sg"]
 }
 
 resource "aws_security_group_rule" "nodes_internode_communications" {
-  type = "ingress"
-  from_port       = 0
-  to_port         = 0
-  protocol        = "-1"
-  description = "allow nodes to communicate with each other"
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  description       = "allow nodes to communicate with each other"
   security_group_id = "${aws_security_group.eks-nodes-sg.id}"
-  self = true
+  self              = true
 }
