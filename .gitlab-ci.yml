@@ -8,14 +8,14 @@ stages:
 - release
 
 variables:
-  STS_AWS_RELEASE_BUCKET: stackstate-agent-2
-  STS_AWS_TEST_BUCKET: stackstate-agent-2-test
-  STS_AWS_RELEASE_BUCKET_YUM: stackstate-agent-2-rpm
-  STS_AWS_TEST_BUCKET_YUM: stackstate-agent-2-rpm-test
-  STS_AWS_RELEASE_BUCKET_WIN: stackstate-agent-2
-  STS_AWS_TEST_BUCKET_WIN: stackstate-agent-2-test
-  STS_DOCKER_RELEASE_REPO: stackstate-agent-2
-  STS_DOCKER_TEST_REPO: stackstate-agent-2-test
+  STS_AWS_RELEASE_BUCKET: rpm.stackstate.io
+  STS_AWS_TEST_BUCKET: deb-test.stackstate.io
+  STS_AWS_RELEASE_BUCKET_YUM: rpm-test.stackstate.io
+  STS_AWS_TEST_BUCKET_YUM: rpm-test.stackstate.io
+  STS_AWS_RELEASE_BUCKET_WIN: rpm.stackstate.io
+  STS_AWS_TEST_BUCKET_WIN: deb-test.stackstate.io
+  STS_DOCKER_RELEASE_REPO: rpm.stackstate.io
+  STS_DOCKER_TEST_REPO: deb-test.stackstate.io
   STS_DOCKER_RELEASE_REPO_TRACE: stackstate-trace-agent
   STS_DOCKER_TEST_REPO_TRACE: stackstate-trace-agent-test
   STS_DOCKER_RELEASE_REPO_CLUSTER: stackstate-cluster-agent
@@ -380,6 +380,8 @@ pre_release_deb:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_TEST_BUCKET
     - cd $CI_PROJECT_DIR && inv release.generate-install -t
     - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET']).object('install.sh').upload_file('./install.sh', acl:'public-read')"
+  variables:
+    AWS_DEFAULT_PROFILE: stackstate-preprod
 
 pre_release_win:
   stage: pre_release
@@ -399,6 +401,8 @@ pre_release_win:
     - cd %WIN_CI_PROJECT_DIR%/cmd/agent && aws -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET_WIN']).object('install.ps1').upload_file('./install.ps1', acl:'public-read')"
   tags:
     - sts_windows
+  variables:
+    AWS_DEFAULT_PROFILE: stackstate-prod
 
 pre_release_rpm:
   stage: pre_release
@@ -409,6 +413,8 @@ pre_release_rpm:
   script:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_rpm_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package_rpm.sh $STS_AWS_TEST_BUCKET_YUM
+  variables:
+    AWS_DEFAULT_PROFILE: stackstate-preprod
 
 pre_release_image:
   stage: pre_release
@@ -416,7 +422,8 @@ pre_release_image:
   dependencies:
     - build_deb
   variables:
-    DOCKER_DRIVER: overlay
+    DOCKER_DRIVER: overlay2
+    AWS_DEFAULT_PROFILE: stackstate-preprod
   services:
     - docker:dind
   before_script: []
@@ -507,6 +514,8 @@ release_deb:
   only:
     - tags
     - triggers
+  variables:
+    AWS_DEFAULT_PROFILE: stackstate-prod
 
 release_rpm:
   stage: release
@@ -522,6 +531,8 @@ release_rpm:
   only:
     - tags
     - triggers
+  variables:
+    AWS_DEFAULT_PROFILE: stackstate-preprod
 
 release_win:
   stage: release
@@ -545,6 +556,8 @@ release_win:
   only:
     - tags
     - triggers
+  variables:
+    AWS_DEFAULT_PROFILE: stackstate-prod
 
 release_image:
   stage: release
@@ -552,7 +565,8 @@ release_image:
   dependencies:
     - build_deb
   variables:
-    DOCKER_DRIVER: overlay
+    DOCKER_DRIVER: overlay2
+    AWS_DEFAULT_PROFILE: stackstate-prod
   services:
     - docker:dind
   before_script: []

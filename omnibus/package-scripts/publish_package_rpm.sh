@@ -23,4 +23,3 @@ rpm-s3 --sign -b $TARGET_BUCKET -p "${TARGET_CODENAME}" $CI_PROJECT_DIR/outcomes
 # cp  $CI_PROJECT_DIR/outcomes/pkg/*.rpm ./rpmrepo/${TARGET_CODENAME}/
 # createrepo --update -v --checksum sha ./rpmrepo/${TARGET_CODENAME}
 # aws s3 sync ./rpmrepo/ s3://${TARGET_BUCKET} --acl public-read
-#
