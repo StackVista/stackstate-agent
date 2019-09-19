@@ -4,12 +4,10 @@
 //other AWS services as well as allow inbound networking communication from your local workstation
 //(if desired) and worker nodes.
 
-
 //EKS Master Cluster IAM Role
 //
 //IAM role and policy to allow the EKS service to manage or retrieve data from other AWS services.
 //For the latest required policy, see the EKS User Guide.
-
 
 resource "aws_iam_role" "EKSClusterRole" {
   name               = "EKSClusterRole-${var.CLUSTER_NAME}"
@@ -28,16 +26,18 @@ resource "aws_iam_role" "EKSClusterRole" {
    ]
 }
 POLICY
+
 }
 
 //https://docs.aws.amazon.com/eks/latest/userguide/service_IAM_role.html
 
 resource "aws_iam_role_policy_attachment" "eks-policy-AmazonEKSClusterPolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-  role       = "${aws_iam_role.EKSClusterRole.name}"
+  role       = aws_iam_role.EKSClusterRole.name
 }
 
 resource "aws_iam_role_policy_attachment" "eks-policy-AmazonEKSServicePolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
-  role       = "${aws_iam_role.EKSClusterRole.name}"
+  role       = aws_iam_role.EKSClusterRole.name
 }
+
