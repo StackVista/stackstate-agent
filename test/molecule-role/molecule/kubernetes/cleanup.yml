@@ -1,0 +1,14 @@
+---
+- name: Cleanup EKS cluster
+  hosts: kubernetes-cluster-agent
+  gather_facts: false
+  vars_files:
+    - common_vars.yml
+  tasks:
+    - name: Delete kubernetes stackstate objects
+      command: kubectl delete -k overlays
+      args:
+        chdir: /home/ubuntu/deployment/k8s
+      environment:
+        KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
+      ignore_errors: yes

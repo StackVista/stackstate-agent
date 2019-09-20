@@ -19,6 +19,12 @@ configMapGenerator:
       - STS_STS_URL="http://{{ hostvars['kubernetes-cluster-agent']['ansible_host'] }}:7077/stsAgent"
       - STS_CLUSTER_NAME={{ cluster_name }}
 
+images:
+  - name: stackstate-agent
+    newTag: {{ agent_current_branch }}
+  - name: stackstate-cluster-agent
+    newTag: {{ agent_current_branch }}
+
 secretGenerator:
   - name: stackstate-auth-token
     behavior: merge
