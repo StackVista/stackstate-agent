@@ -18,7 +18,7 @@ def test_receiver_healthy(host):
 
 def test_node_agent_healthy(host):
     def assert_healthy():
-        c = kubeconfig_env + "kubectl wait --for=condition=available --timeout=1s daemonset/stackstate-agent"
+        c = kubeconfig_env + "kubectl wait --for=condition=ready --timeout=1s -l app=stackstate-agent pod"
         assert host.run(c).rc == 0
 
     util.wait_until(assert_healthy, 30, 5)
