@@ -19,7 +19,7 @@
       delay: 25
       register: pip_result
       until: pip_result is not failed
-    - name: Installing python  packages
+    - name: Installing python packages
       pip:
         name: boto,boto3,docker
     - name: Add Docker GPG APT key

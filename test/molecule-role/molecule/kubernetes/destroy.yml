@@ -17,12 +17,6 @@
             instance_conf: {}
             skip_instances: true
 
-    - name: Downsize the cluster
-      ec2_asg:
-        name: "eks-{{ cluster_name }}-cluster"
-        desired_capacity: 0
-      ignore_errors: yes
-
     - name: Destroy molecule instance(s)
       ec2_instance:
         state: absent
