@@ -28,7 +28,7 @@ def _relation_data(json_data, type_name, external_id_assert_fn):
         p = message["message"]["TopologyElement"]["payload"]
         if "TopologyRelation" in p and \
             p["TopologyRelation"]["typeName"] == type_name and \
-            external_id_assert_fn(p["TopologyRelation"]["externalId"]):
+                external_id_assert_fn(p["TopologyRelation"]["externalId"]):
             return json.loads(p["TopologyRelation"]["data"])
     return None
 
@@ -42,7 +42,7 @@ def test_agent_base_topology(host, common_vars):
     def wait_for_components():
         data = host.check_output("curl \"%s\"" % url)
         json_data = json.loads(data)
-        with open("./topic-" + topic, 'w') as f:
+        with open("./topic-" + topic + ".json", 'w') as f:
             json.dump(json_data, f, indent=4)
 
         # TODO make sure we identify the 2 different ec2 instances using i-*
@@ -68,7 +68,7 @@ def test_agent_base_topology(host, common_vars):
             type_name="container",
             external_id_assert_fn=lambda eid: node_agent_container_match.findall(eid),
             cluster_name=cluster_name,
-            identifiers_assert_fn=lambda identifiers: next(x for x in identifiers if x.startswith("urn:container:/i-"))  #TODO ec2 i-*
+            identifiers_assert_fn=lambda identifiers: next(x for x in identifiers if x.startswith("urn:container:/i-"))  # TODO ec2 i-*
         )
         # 1 cluster agent pod with 1 container
         assert _component_data(
@@ -84,7 +84,7 @@ def test_agent_base_topology(host, common_vars):
             type_name="container",
             external_id_assert_fn=lambda eid: cluster_agent_container_match.findall(eid),
             cluster_name=cluster_name,
-            identifiers_assert_fn=lambda identifiers: next(x for x in identifiers if x.startswith("urn:container:/i-"))  #TODO ec2 i-*
+            identifiers_assert_fn=lambda identifiers: next(x for x in identifiers if x.startswith("urn:container:/i-"))  # TODO ec2 i-*
         )
         # 2 service, one for each agent
         assert _component_data(
@@ -102,16 +102,14 @@ def test_agent_base_topology(host, common_vars):
             identifiers_assert_fn=lambda identifiers: next(x for x in identifiers if x.startswith("urn:endpoint:/%s:" % cluster_name))
         )
 
-
-        # Pod → Node (scheduled on)
+        # Pod -> Node (scheduled on)
         # stackstate-agent pods is scheduled_on a node (2 times)
         # stackstate-cluster-agent pod is scheduled_on a node (1 time)
-        # Container → Pod (enclosed in)
+        # Container -> Pod (enclosed in)
         # stackstate-agent containers are enclosed_in a pod (2 times)
         # stackstate-cluster-agent container are enclosed_in a pod (1 time)
-        # Pod → Service (exposes)
+        # Pod -> Service (exposes)
         # stackstate-agent exposes stackstate-agent pods (2 times)
         # stackstate-cluster-agent exposes stackstate-cluster-agent pod (1 time)
-
 
     util.wait_until(wait_for_components, 5, 3)
