@@ -21,7 +21,7 @@ def test_agents_running(host):
             metric = message["message"]["Metric"]
 
             m_name = metric["name"]
-            m_host = metric["host"]
+            # m_host = metric["host"]
 
             if m_name not in metrics:
                 metrics[m_name] = []
