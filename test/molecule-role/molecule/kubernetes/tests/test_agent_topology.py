@@ -154,4 +154,5 @@ def test_agent_base_topology(host, common_vars):
             type_name="exposes",
             external_id_assert_fn=lambda eid:  cluster_agent_service_match.findall(eid)
         ).startswith("urn:/kubernetes:%s:service:%s:stackstate-cluster-agent" % (cluster_name, namespace))
-    util.wait_until(wait_for_components, 5, 3)
+
+    util.wait_until(wait_for_components, 60, 3)
