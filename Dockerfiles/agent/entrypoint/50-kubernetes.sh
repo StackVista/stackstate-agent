@@ -23,10 +23,11 @@ if [[ ! -e /etc/stackstate-agent/conf.d/kubelet.d/conf.yaml.default ]]; then
 fi
 
 # The apiserver check requires leader election to be enabled
-if [[ "$STS_LEADER_ELECTION" ]] && [[ ! -e /etc/stackstate-agent/conf.d/kubernetes_apiserver.d/conf.yaml.default ]]; then
-    mv /etc/stackstate-agent/conf.d/kubernetes_apiserver.d/conf.yaml.example \
-    /etc/stackstate-agent/conf.d/kubernetes_apiserver.d/conf.yaml.default
-else
-    echo "Disabling the apiserver check as leader election is disabled"
-fi
+# Not using the datadog kubernetes_apiserver check
+#if [[ "$STS_LEADER_ELECTION" ]] && [[ ! -e /etc/stackstate-agent/conf.d/kubernetes_apiserver.d/conf.yaml.default ]]; then
+#    mv /etc/stackstate-agent/conf.d/kubernetes_apiserver.d/conf.yaml.example \
+#    /etc/stackstate-agent/conf.d/kubernetes_apiserver.d/conf.yaml.default
+#else
+#    echo "Disabling the apiserver check as leader election is disabled"
+#fi
 
