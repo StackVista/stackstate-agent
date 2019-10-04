@@ -112,10 +112,10 @@ def test_dnat(host, common_vars):
         with open("./topic-topo-process-agents-dnat.json", 'w') as f:
             json.dump(json_data, f, indent=4)
 
-        service_component_id = "urn:service:/{}".format(ubuntu_private_ip)
+        service_component_id = "urn:endpoint:/{}".format(ubuntu_private_ip)
         assert _component_data(
             json_data=json_data,
-            type_name="dnat-service",
+            type_name="endpoint",
             external_id_prefix=service_component_id,
             command=None)["ip"] == ubuntu_private_ip
 
