@@ -10,17 +10,20 @@ testinfra_hosts = AnsibleRunner(os.environ['MOLECULE_INVENTORY_FILE']).get_hosts
 
 kubeconfig_env = "KUBECONFIG=/home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig "
 
-def _get_pod_ip(host,pod_name):
+
+def _get_pod_ip(host, pod_name):
     pod_server_c = kubeconfig_env + "kubectl get pods/%s -o json" % pod_name
     pod_server_exec = host.check_output(pod_server_c)
     pod_server_data = json.loads(pod_server_exec)
-    return  pod_server_data["status"]["podIP"]
+    return pod_server_data["status"]["podIP"]
+
 
 def _get_service_ip(host):
     service_c = kubeconfig_env + "kubectl get service/pod-service -o json"
     pod_service_exec = host.check_output(service_c)
     pod_service_data = json.loads(pod_service_exec)
-    return  pod_service_data["spec"]["clusterIP"]
+    return pod_service_data["spec"]["clusterIP"]
+
 
 def _component_data(json_data, type_name, external_id_prefix, command):
     for message in json_data["messages"]:
@@ -37,6 +40,7 @@ def _component_data(json_data, type_name, external_id_prefix, command):
                 return component_data
     return None
 
+
 def _find_component(json_data, type_name, external_id_assert_fn):
     for message in json_data["messages"]:
         p = message["message"]["TopologyElement"]["payload"]
@@ -45,6 +49,8 @@ def _find_component(json_data, type_name, external_id_assert_fn):
                 external_id_assert_fn(p["TopologyComponent"]["externalId"]):
             return p["TopologyComponent"]
     return None
+
+
 def _relation_data(json_data, type_name, external_id_assert_fn):
     for message in json_data["messages"]:
         p = message["message"]["TopologyElement"]["payload"]
@@ -53,19 +59,21 @@ def _relation_data(json_data, type_name, external_id_assert_fn):
                 external_id_assert_fn(p["TopologyRelation"]["externalId"]):
             return json.loads(p["TopologyRelation"]["data"])
     return None
+
+
 def test_dnat(host, common_vars):
     url = "http://localhost:7070/api/topic/sts_topo_process_agents?offset=0&limit=1000"
 
     dnat_service_port = int(common_vars["dnat_service_port"])
-    #dnat_server_port = int(common_vars["dnat_server_port"])
+#    dnat_server_port = int(common_vars["dnat_server_port"])
 
     def wait_for_components():
         data = host.check_output("curl \"%s\"" % url)
         json_data = json.loads(data)
         with open("./topic-topo-process-agents-dnat.json", 'w') as f:
             json.dump(json_data, f, indent=4)
-      
-        pod_server_ip = _get_pod_ip(host, "pod-server")
+
+    #    pod_server_ip = _get_pod_ip(host, "pod-server")
         pod_service_ip = _get_service_ip(host)
         pod_client = _get_pod_ip(host, "pod-client")
 
