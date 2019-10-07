@@ -91,6 +91,10 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"/etc/datadog-agent/checks.d\\" -> \\"/etc/stackstate-agent/checks.d\\""', "./pkg/config")
     do_go_rename(ctx, '"\\"/opt/datadog-agent/run\\" -> \\"/opt/stackstate-agent/run\\""', "./pkg/config")
 
+    # Commands
+    do_go_rename(ctx, '"\\"datadog\\" -> \\"stackstate\\""', "./cmd/agent/app")
+    do_go_rename(ctx, '"\\"Datadog\\" -> \\"StackState\\""', "./cmd/agent/app")
+
     # Trace agent
     do_go_rename(ctx, '"\\"DD_PROXY_HTTPS\\" -> \\"STS_PROXY_HTTPS\\""', "./pkg/trace")
     do_go_rename(ctx, '"\\"DD_CONNECTION_LIMIT\\" -> \\"STS_CONNECTION_LIMIT\\""', "./pkg/trace")
