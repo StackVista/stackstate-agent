@@ -165,6 +165,12 @@
         chdir: /home/ubuntu/deployment/k8s
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
+    - name: Apply manifests for dnat service 
+      command: kubectl apply -f pod-to-service-cluster-ip.yaml
+      args:
+        chdir: /home/ubuntu/deployment/test_connections
+      environment:
+        KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig      
 #    - name: Apply demo app config
 #      command: kubectl apply -f java-db-demo.yaml
 #      args:
