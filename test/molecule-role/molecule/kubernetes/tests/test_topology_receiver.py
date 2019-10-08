@@ -65,7 +65,8 @@ def test_dnat(host, common_vars):
     url = "http://localhost:7070/api/topic/sts_topo_process_agents?offset=0&limit=1000"
 
     dnat_service_port = int(common_vars["dnat_service_port"])
-#    dnat_server_port = int(common_vars["dnat_server_port"])
+    dnat_server_port = int(common_vars["dnat_server_port"])
+    cluster_name = common_vars['cluster_name']
 
     def wait_for_components():
         data = host.check_output("curl \"%s\"" % url)
@@ -73,7 +74,7 @@ def test_dnat(host, common_vars):
         with open("./topic-topo-process-agents-dnat.json", 'w') as f:
             json.dump(json_data, f, indent=4)
 
-    #    pod_server_ip = _get_pod_ip(host, "pod-server")
+        pod_server_ip = _get_pod_ip(host, "pod-server")
         pod_service_ip = _get_service_ip(host)
         pod_client = _get_pod_ip(host, "pod-client")
 
@@ -85,9 +86,20 @@ def test_dnat(host, common_vars):
         assert json.loads(endpoint["data"])["ip"] == pod_service_ip
         endpoint_component_id = endpoint["externalId"]
         proc_to_proc_id_match = re.compile("TCP:/urn:process:/.*:.*->{}:{}".format(endpoint_component_id, dnat_service_port))
+        proc_to_service_id_match = re.compile("TCP:/urn:process:/.*->urn:process:/.*:.*:{}:{}:{}".format(cluster_name, pod_server_ip, dnat_server_port))
+        service_to_proc_id_match = re.compile("TCP:/{}:{}->urn:process:/.*:{}:{}:{}".format(endpoint_component_id, dnat_service_port, cluster_name, pod_server_ip, dnat_server_port))
+        ""
         assert _relation_data(
             json_data=json_data,
             type_name="directional_connection",
             external_id_assert_fn=lambda v: proc_to_proc_id_match.findall(v))["outgoing"]["ip"] == pod_client
+        assert _relation_data(
+            json_data=json_data,
+            type_name="directional_connection",
+            external_id_assert_fn=lambda v: proc_to_service_id_match.findall(v))["outgoing"]["ip"] == pod_client
+        assert _relation_data(
+            json_data=json_data,
+            type_name="directional_connection",
+            external_id_assert_fn=lambda v: service_to_proc_id_match.findall(v))["incoming"]["ip"] == pod_server_ip
 
     util.wait_until(wait_for_components, 30, 3)
