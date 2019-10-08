@@ -17,7 +17,8 @@
         },
         "golang.org/x/tools/go/internal": {
             "version": "release-branch.go1.10",
-            "type": "go"
+            "type": "go",
+            "install": false
         },
         "golang.org/x/tools/go/gcexportdata": {
             "version": "release-branch.go1.10",
