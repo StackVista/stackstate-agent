@@ -16,6 +16,15 @@ def test_stackstate_agent_is_installed(host, common_vars):
         assert agent.version.startswith("2")
 
 
+def test_stackstate_agent_status_output_no_datadog(host, common_vars):
+    cmd = host.run("sudo -u stackstate-agent -- stackstate-agent status")
+    print(cmd)
+    # assert that the command ran successfully and that datadog is not contained in the output
+    assert cmd.rc == 0
+    assert "datadog" not in cmd.stdout
+    assert "Datadog" not in cmd.stdout
+
+
 def test_stackstate_agent_running_and_enabled(host):
     assert not host.ansible("service", "name=stackstate-agent enabled=true state=started")['changed']
 
