@@ -92,8 +92,8 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"/opt/datadog-agent/run\\" -> \\"/opt/stackstate-agent/run\\""', "./pkg/config")
 
     # Commands
-    do_go_rename(ctx, '"\\"datadog\\" -> \\"stackstate\\""', "./cmd/agent/app")
-    do_go_rename(ctx, '"\\"Datadog\\" -> \\"StackState\\""', "./cmd/agent/app")
+    do_go_rename(ctx, '"datadog -> stackstate"', "./cmd/agent/app")
+    do_go_rename(ctx, '"Datadog -> StackState"', "./cmd/agent/app")
 
     # Trace agent
     do_go_rename(ctx, '"\\"DD_PROXY_HTTPS\\" -> \\"STS_PROXY_HTTPS\\""', "./pkg/trace")
@@ -143,10 +143,10 @@ def apply_branding(ctx):
     do_sed_rename(ctx, DD_HOSTNAME_replace, "./pkg/trace/config/config.go")
 
     # Trace Agent Metrics
-    do_go_rename(ctx, '"\\"datadog\\" -> \\"stackstate\\""', "./pkg/trace/api")
-    do_go_rename(ctx, '"\\"datadog\\" -> \\"stackstate\\""', "./pkg/trace/agent")
-    do_go_rename(ctx, '"\\"datadog\\" -> \\"stackstate\\""', "./pkg/trace/event")
-    do_go_rename(ctx, '"\\"datadog\\" -> \\"stackstate\\""', "./pkg/trace/writer")
+    do_go_rename(ctx, '"datadog -> stackstate"', "./pkg/trace/api")
+    do_go_rename(ctx, '"datadog -> stackstate"', "./pkg/trace/agent")
+    do_go_rename(ctx, '"datadog -> stackstate"', "./pkg/trace/event")
+    do_go_rename(ctx, '"datadog -> stackstate"', "./pkg/trace/writer")
 
     # Defaults
     do_go_rename(ctx, '"\\"/etc/datadog-agent\\" -> \\"/etc/stackstate-agent\\""', "./cmd/agent/common")
@@ -212,8 +212,8 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"datadog_checks\\" -> \\"stackstate_checks\\""', "./cmd/agent/app")
     do_sed_rename(ctx, 's/datadog_checks_base/stackstate_checks_base/g', "./cmd/agent/app/integrations.go")
     do_go_rename(ctx, '"\\"datadog_checks\\" -> \\"stackstate_checks\\""', "./pkg/collector/py")
-    do_go_rename(ctx, '"\\"datadog\\" -> \\"stackstate\\""', "./pkg/collector/py")
-    do_go_rename(ctx, '"\\"datadog\\" -> \\"stackstate\\""', "./pkg/collector/runner")
+    do_go_rename(ctx, '"datadog -> stackstate"', "./pkg/collector/py")
+    do_go_rename(ctx, '"datadog -> stackstate"', "./pkg/collector/runner")
 
     # cluster agent client
     do_go_rename(ctx, '"\\"datadog-cluster-agent\\" -> \\"stackstate-cluster-agent\\""', "./pkg/config")
