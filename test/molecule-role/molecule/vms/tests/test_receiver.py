@@ -59,10 +59,11 @@ def test_state_events(host):
             state_events[message["message"]["StateEvent"]["host"]].add(message["message"]["StateEvent"]["name"])
 
         print(state_events)
-        assert state_events["agent-ubuntu"] == {"stackstate.agent.up", "stackstate.agent.check_status"}
-        assert state_events["agent-fedora"] == {"stackstate.agent.up", "stackstate.agent.check_status"}
-        assert state_events["agent-centos"] == {"stackstate.agent.up", "stackstate.agent.check_status"}
-        assert state_events["agent-win"] == {"stackstate.agent.up", "stackstate.agent.check_status"}
+        assert state_events["agent-ubuntu"] == {"stackstate.agent.up", "stackstate.agent.check_status", "ntp.in_sync"}
+        assert state_events["agent-fedora"] == {"stackstate.agent.up", "stackstate.agent.check_status", "ntp.in_sync"}
+        assert state_events["agent-centos"] == {"stackstate.agent.up", "stackstate.agent.check_status", "ntp.in_sync"}
+        assert state_events["agent-connection-namespaces"] == {"stackstate.agent.up", "stackstate.agent.check_status", "ntp.in_sync"}
+        assert state_events["agent-win"] == {"stackstate.agent.up", "stackstate.agent.check_status", "ntp.in_sync"}
 
     util.wait_until(wait_for_metrics, 30, 3)
 
