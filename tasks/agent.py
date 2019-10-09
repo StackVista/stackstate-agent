@@ -230,7 +230,7 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"datadog_checks\\" -> \\"stackstate_checks\\""', "./cmd/agent/app")
     do_sed_rename(ctx, 's/datadog_checks_base/stackstate_checks_base/g', "./cmd/agent/app/integrations.go")
     do_go_rename(ctx, '"\\"datadog_checks\\" -> \\"stackstate_checks\\""', "./pkg/collector/py")
-    do_go_rename(ctx, '"\\"An error occurred while grabbing the python datadog integration list -> \\"An error occurred while grabbing the python StackState integration list"', "./pkg/collector/py")
+    do_go_rename(ctx, '"\\"An error occurred while grabbing the python datadog integration list\\" -> \\"An error occurred while grabbing the python StackState integration list\\""', "./pkg/collector/py")
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/collector/py/loader.go")
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/collector/runner/runner.go")
 
