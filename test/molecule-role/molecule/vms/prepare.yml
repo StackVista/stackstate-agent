@@ -90,6 +90,8 @@
       command: docker-compose up -d
       args:
         chdir: /home/ubuntu/
+      environment:
+        STACKSTATE_BRANCH: "{{ stackstate_branch }}"
 
 - name: Prepare Linux Agents (pre)
   hosts: agent_linux_vm

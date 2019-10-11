@@ -226,7 +226,6 @@ def test_host_metrics(host):
 
         metrics = {}
         for message in json_data["messages"]:
-            m_host = metric["host"]
             for m_name in message["message"]["MultiMetric"]["values"].keys():
                 if m_name not in metrics:
                     metrics[m_name] = []
