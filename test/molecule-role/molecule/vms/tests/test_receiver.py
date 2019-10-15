@@ -226,12 +226,15 @@ def test_host_metrics(host):
 
         metrics = {}
         for message in json_data["messages"]:
+            m_host = message["message"]["MultiMetric"]["host"]
             for m_name in message["message"]["MultiMetric"]["values"].keys():
                 if m_name not in metrics:
-                    metrics[m_name] = []
+                    metrics[m_name] = {}
+                if m_host not in metrics[m_name]:
+                    metrics[m_name][m_host] = []
 
                 values = [message["message"]["MultiMetric"]["values"][m_name]]
-                metrics[m_name] += values
+                metrics[m_name][m_host] += values
 
         # These values are based on an ec2 micro instance for ubuntu and fedora
         # and small instance for windows
