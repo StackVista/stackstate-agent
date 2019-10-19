@@ -4,7 +4,7 @@ set -e
 
 VENV_PATH=./p-env
 
-export STACKSTATE_BRANCH=${STACKSTATE_BRANCH:-stac-5974-drop-featureflag}
+export STACKSTATE_BRANCH=${STACKSTATE_BRANCH:-master}
 
 if [[ -z $CI_COMMIT_REF_NAME ]]; then
   export AGENT_CURRENT_BRANCH=`git rev-parse --abbrev-ref HEAD`
