@@ -45,8 +45,8 @@ def test_agent_base_topology(host, common_vars):
         with open("./topic-" + topic + ".json", 'w') as f:
             json.dump(json_data, f, indent=4)
 
-        # # TODO make sure we identify the 2 different ec2 instances using i-*
-        # # 2 nodes
+        # TODO make sure we identify the 2 different ec2 instances using i-*
+        # 2 nodes
         assert _component_data(
             json_data=json_data,
             type_name="node",
@@ -125,8 +125,8 @@ def test_agent_base_topology(host, common_vars):
             type_name="scheduled_on",
             external_id_assert_fn=lambda eid: cluster_agent_pod_scheduled_match.findall(eid)
         ).startswith("urn:/kubernetes:%s:pod:stackstate-cluster-agent" % cluster_name)
-        # # Container -> Pod (enclosed in)
-        # # stackstate-agent containers are enclosed_in a pod (2 times)
+        # Container -> Pod (enclosed in)
+        # stackstate-agent containers are enclosed_in a pod (2 times)
         node_agent_container_enclosed_match = re.compile(
             "urn:/kubernetes:%s:pod:stackstate-agent-.*:container:stackstate-agent->urn:/kubernetes:%s:pod:stackstate-agent-.*"
             % (cluster_name, cluster_name))
