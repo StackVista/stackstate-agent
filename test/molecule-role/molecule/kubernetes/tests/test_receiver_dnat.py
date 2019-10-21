@@ -1,7 +1,7 @@
 import json
 import os
+import pytest
 import re
-
 import util
 
 from testinfra.utils.ansible_runner import AnsibleRunner
@@ -61,6 +61,7 @@ def _relation_data(json_data, type_name, external_id_assert_fn):
     return None
 
 
+@pytest.mark.last
 def test_dnat(host, common_vars):
     url = "http://localhost:7070/api/topic/sts_topo_process_agents?offset=0&limit=1000"
 
