@@ -4,6 +4,8 @@
 
 **Features**
 
+- Cloudera Manager integration _[(STAC-6702)](https://stackstate.atlassian.net/browse/STAC-6702)_
+
 **Improvements**
 
 **Bugs**
