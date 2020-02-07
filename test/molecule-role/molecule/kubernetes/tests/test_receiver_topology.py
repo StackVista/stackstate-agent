@@ -414,4 +414,4 @@ def test_cluster_agent_base_topology(host, ansible_var):
         )
 
 
-    util.wait_until(wait_for_cluster_agent_components, 30, 3)
+    util.wait_until(wait_for_cluster_agent_components, 120, 3)
