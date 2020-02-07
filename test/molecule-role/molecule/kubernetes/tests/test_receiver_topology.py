@@ -8,6 +8,7 @@ from testinfra.utils.ansible_runner import AnsibleRunner
 
 testinfra_hosts = AnsibleRunner(os.environ['MOLECULE_INVENTORY_FILE']).get_hosts('kubernetes-cluster-agent')
 
+
 def _component_data(json_data, type_name, external_id_assert_fn, cluster_name, identifiers_assert_fn):
     for message in json_data["messages"]:
         p = message["message"]["TopologyElement"]["payload"]
@@ -41,26 +42,27 @@ def _find_component(json_data, type_name, external_id_assert_fn):
             return p["TopologyComponent"]
     return None
 
+
 def _container_component(json_data, type_name, external_id_assert_fn, tags_assert_fn):
     for message in json_data["messages"]:
         p = message["message"]["TopologyElement"]["payload"]
         if "TopologyComponent" in p and \
             p["TopologyComponent"]["typeName"] == type_name and \
-            external_id_assert_fn(p["TopologyComponent"]["externalId"]):
+                external_id_assert_fn(p["TopologyComponent"]["externalId"]):
             component_data = json.loads(p["TopologyComponent"]["data"])
             if "tags" in component_data and tags_assert_fn(component_data["tags"]):
                 return component_data
     return None
+
 
 def _container_process_component(json_data, type_name, external_id_assert_fn, tags_assert_fn, containerId):
     for message in json_data["messages"]:
         p = message["message"]["TopologyElement"]["payload"]
         if "TopologyComponent" in p and \
             p["TopologyComponent"]["typeName"] == type_name and \
-            external_id_assert_fn(p["TopologyComponent"]["externalId"]):
+                external_id_assert_fn(p["TopologyComponent"]["externalId"]):
             component_data = json.loads(p["TopologyComponent"]["data"])
-            if "tags" in component_data and tags_assert_fn(component_data["tags"]) and \
-                "containerId" in component_data and component_data["containerId"] == containerId:
+            if "tags" in component_data and tags_assert_fn(component_data["tags"]) and "containerId" in component_data and component_data["containerId"] == containerId:
                 return component_data
     return None
 
@@ -412,6 +414,5 @@ def test_cluster_agent_base_topology(host, ansible_var):
             tags_assert_fn=lambda tags: all([assertTag for assertTag in ["pod-name:%s" % stackstate_cluster_agent_container_pod, "namespace:%s" % namespace, "cluster-name:%s" % cluster_name] if assertTag in tags]),
             containerId=stackstate_cluster_agent_container_id
         )
-
 
     util.wait_until(wait_for_cluster_agent_components, 120, 3)
