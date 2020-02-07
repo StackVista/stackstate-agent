@@ -406,7 +406,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
             tags_assert_fn=lambda tags: all([assertTag for assertTag in ["pod-name:%s" % stackstate_cluster_agent_container_pod, "namespace:%s" % namespace, "cluster-name:%s" % cluster_name] if assertTag in tags])
         )
 
-        stackstate_cluster_agent_process_match = re.compile("urn:process:/%s.*" % stackstate_cluster_agent_container["data"]["host"])
+        stackstate_cluster_agent_process_match = re.compile("urn:process:/%s.*" % stackstate_cluster_agent_container["host"])
         assert _container_process_component(
             json_data=process_json_data,
             type_name="process",
