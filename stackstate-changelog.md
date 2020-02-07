@@ -19,6 +19,8 @@
 
 **Improvements**
 
+- Added kubernetes cluster name, namespace and pod name as a tag to all kubernetes container and process topology.
+- Improved the process blacklisting to ensure that only processes that are of interest to the user is reported to StackState.
 
 ## 2.0.8 (2019-12-20)
 
