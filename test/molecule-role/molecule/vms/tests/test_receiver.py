@@ -37,10 +37,10 @@ def test_generic_events(host):
             events[message["message"]["GenericEvent"]["host"]].add(message["message"]["GenericEvent"]["name"])
 
         print(events)
-        assert events["agent-ubuntu"] == {"System.Agent Startup", "processStateEvent"}
-        assert events["agent-fedora"] == {"System.Agent Startup", "processStateEvent"}
-        assert events["agent-centos"] == {"System.Agent Startup", "processStateEvent"}
-        assert events["agent-win"] == {"System.Agent Startup"}
+        assert all([assertTag for assertTag in ["System.Agent Startup", "processStateEvent"] if assertTag in events["agent-ubuntu"]])
+        assert all([assertTag for assertTag in ["System.Agent Startup", "processStateEvent"] if assertTag in events["agent-fedora"]])
+        assert all([assertTag for assertTag in ["System.Agent Startup", "processStateEvent"] if assertTag in events["agent-centos"]])
+        assert all([assertTag for assertTag in ["System.Agent Startup"] if assertTag in events["agent-win"]])
 
     util.wait_until(wait_for_metrics, 30, 3)
 
