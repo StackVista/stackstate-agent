@@ -318,6 +318,20 @@
       async: "{{ max_test_time }}"
       poll: 0
 
+- name: Prepare Agent for short-lived filtering test
+  hosts: agent-ubuntu, agent-fedora, agent-centos
+  gather_facts: false
+  vars_files:
+    - common_vars.yml
+  tasks:
+    - name: Wait a bit for the process agent to start
+      pause:
+        seconds: 10
+    - name: Start a python process that only runs for 45 seconds
+      shell: "python -c \"import time; time.sleep(45);\""
+      async: "{{ max_test_time }}"
+      poll: 0
+
 - name: Prepare Connection Namespace VM with local docker connections
   hosts: agent-connection-namespaces
   gather_facts: false
