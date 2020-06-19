@@ -132,7 +132,7 @@ func (cc *ContainerCorrelator) containerToStackStateComponent(nodeIdentifier str
 
 	log.Tracef("Created identifiers for %s: %v", container.Name, identifiers)
 
-	containerExternalID := cc.buildContainerExternalID(pod.Name, pod.Namespace, container.Name)
+	containerExternalID := cc.buildContainerExternalID(pod.Namespace, pod.Name, container.Name)
 
 	tags := cc.initTags(metav1.ObjectMeta{Namespace: pod.Namespace})
 
