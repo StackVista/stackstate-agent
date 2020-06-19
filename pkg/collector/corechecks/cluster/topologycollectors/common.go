@@ -18,19 +18,19 @@ type ClusterTopologyCommon interface {
 	CreateRelationData(sourceExternalID, targetExternalID, typeName string, data map[string]interface{}) *topology.Relation
 	initTags(meta metav1.ObjectMeta) map[string]string
 	buildClusterExternalID() string
-	buildConfigMapExternalID(namespace, configMapID string) string
-	buildContainerExternalID(podName, containerName string) string
-	buildDaemonSetExternalID(daemonSetID string) string
+	buildConfigMapExternalID(namespace, configMapName string) string
+	buildContainerExternalID(namespace, podName, containerName string) string
+	buildDaemonSetExternalID(namespace, daemonSetName string) string
 	buildDeploymentExternalID(namespace, deploymentName string) string
 	buildNodeExternalID(nodeName string) string
-	buildPodExternalID(podID string) string
-	buildReplicaSetExternalID(replicaSetID string) string
-	buildServiceExternalID(serviceID string) string
-	buildStatefulSetExternalID(statefulSetID string) string
-	buildCronJobExternalID(cronJobID string) string
-	buildJobExternalID(jobID string) string
-	buildIngressExternalID(ingressID string) string
-	buildVolumeExternalID(volumeID string) string
+	buildPodExternalID(namespace, podName string) string
+	buildReplicaSetExternalID(namespace, replicaSetName string) string
+	buildServiceExternalID(namespace, serviceName string) string
+	buildStatefulSetExternalID(namespace, statefulSetName string) string
+	buildCronJobExternalID(namespace, cronJobName string) string
+	buildJobExternalID(namespace, jobName string) string
+	buildIngressExternalID(namespace, ingressName string) string
+	buildVolumeExternalID(namespace, volumeName string) string
 	buildPersistentVolumeExternalID(persistentVolumeID string) string
 	buildEndpointExternalID(endpointID string) string
 }
@@ -103,75 +103,75 @@ func (c *clusterTopologyCommon) buildNodeExternalID(nodeName string) string {
 
 // buildPodExternalID
 // podName
-func (c *clusterTopologyCommon) buildPodExternalID(podName string) string {
-	return fmt.Sprintf("urn:/%s:%s:pod:%s", c.Instance.Type, c.Instance.URL, podName)
+func (c *clusterTopologyCommon) buildPodExternalID(namespace, podName string) string {
+	return fmt.Sprintf("urn:/%s:%s:namespace:%s:pod:%s", c.Instance.Type, c.Instance.URL, namespace, podName)
 }
 
 // buildContainerExternalID
 // podName, containerName
-func (c *clusterTopologyCommon) buildContainerExternalID(podName, containerName string) string {
-	return fmt.Sprintf("urn:/%s:%s:pod:%s:container:%s", c.Instance.Type, c.Instance.URL, podName, containerName)
+func (c *clusterTopologyCommon) buildContainerExternalID(namespace, podName, containerName string) string {
+	return fmt.Sprintf("urn:/%s:%s:namespace:%s:pod:%s:container:%s", c.Instance.Type, c.Instance.URL, namespace, podName, containerName)
 }
 
 // buildServiceExternalID
 // serviceID
-func (c *clusterTopologyCommon) buildServiceExternalID(serviceID string) string {
-	return fmt.Sprintf("urn:/%s:%s:service:%s", c.Instance.Type, c.Instance.URL, serviceID)
+func (c *clusterTopologyCommon) buildServiceExternalID(namespace, serviceName string) string {
+	return fmt.Sprintf("urn:/%s:%s:namespace:%s:service:%s", c.Instance.Type, c.Instance.URL, namespace, serviceName)
 }
 
 // buildDaemonSetExternalID
-// daemonSetID
-func (c *clusterTopologyCommon) buildDaemonSetExternalID(daemonSetID string) string {
-	return fmt.Sprintf("urn:/%s:%s:daemonset:%s", c.Instance.Type, c.Instance.URL, daemonSetID)
+// daemonSetName
+func (c *clusterTopologyCommon) buildDaemonSetExternalID(namespace, daemonSetName string) string {
+	return fmt.Sprintf("urn:/%s:%s:namespace:%s:daemonset:%s", c.Instance.Type, c.Instance.URL, namespace, daemonSetName)
 }
 
 // buildDeploymentExternalID
-// deploymentID
-func (c *clusterTopologyCommon) buildDeploymentExternalID(namespace, deploymentID string) string {
-	return fmt.Sprintf("urn:/%s:%s:deployment:%s:%s", c.Instance.Type, c.Instance.URL, namespace, deploymentID)
+// deploymentName
+func (c *clusterTopologyCommon) buildDeploymentExternalID(namespace, deploymentName string) string {
+	return fmt.Sprintf("urn:/%s:%s:namespace:%s:deployment:%s", c.Instance.Type, c.Instance.URL, namespace, deploymentName)
 }
 
 // buildReplicaSetExternalID
 // replicaSetID
-func (c *clusterTopologyCommon) buildReplicaSetExternalID(replicaSetID string) string {
-	return fmt.Sprintf("urn:/%s:%s:replicaset:%s", c.Instance.Type, c.Instance.URL, replicaSetID)
+func (c *clusterTopologyCommon) buildReplicaSetExternalID(namespace, replicaSetName string) string {
+	return fmt.Sprintf("urn:/%s:%s:namespace:%s:replicaset:%s", c.Instance.Type, c.Instance.URL, namespace, replicaSetName)
 }
 
 // buildStatefulSetExternalID
 // statefulSetID
-func (c *clusterTopologyCommon) buildStatefulSetExternalID(statefulSetID string) string {
-	return fmt.Sprintf("urn:/%s:%s:statefulset:%s", c.Instance.Type, c.Instance.URL, statefulSetID)
+func (c *clusterTopologyCommon) buildStatefulSetExternalID(namespace, statefulSetName string) string {
+	return fmt.Sprintf("urn:/%s:%s:namespace:%s:statefulset:%s", c.Instance.Type, c.Instance.URL, namespace, statefulSetName)
 }
 
 // buildConfigMapExternalID
 // namespace
 // configMapID
-func (c *clusterTopologyCommon) buildConfigMapExternalID(namespace, configMapID string) string {
-	return fmt.Sprintf("urn:/%s:%s:configmap:%s:%s", c.Instance.Type, c.Instance.URL, namespace, configMapID)
+func (c *clusterTopologyCommon) buildConfigMapExternalID(namespace, configMapName string) string {
+	return fmt.Sprintf("urn:/%s:%s:namespace:%s:configmap:%s", c.Instance.Type, c.Instance.URL, namespace, configMapName)
 }
 
 // buildCronJobExternalID
 // cronJobID
-func (c *clusterTopologyCommon) buildCronJobExternalID(cronJobID string) string {
-	return fmt.Sprintf("urn:/%s:%s:cronjob:%s", c.Instance.Type, c.Instance.URL, cronJobID)
+func (c *clusterTopologyCommon) buildCronJobExternalID(namespace, cronJobName string) string {
+	return fmt.Sprintf("urn:/%s:%s:namespace:%s:cronjob:%s", c.Instance.Type, c.Instance.URL, namespace, cronJobName)
 }
 
 // buildJobExternalID
 // jobID
-func (c *clusterTopologyCommon) buildJobExternalID(jobID string) string {
-	return fmt.Sprintf("urn:/%s:%s:job:%s", c.Instance.Type, c.Instance.URL, jobID)
+func (c *clusterTopologyCommon) buildJobExternalID(namespace, jobName string) string {
+	return fmt.Sprintf("urn:/%s:%s:namespace:%s:job:%s", c.Instance.Type, c.Instance.URL, namespace, jobName)
 }
 
 // buildIngressExternalID
 // ingressID
-func (c *clusterTopologyCommon) buildIngressExternalID(ingressID string) string {
-	return fmt.Sprintf("urn:/%s:%s:ingress:%s", c.Instance.Type, c.Instance.URL, ingressID)
+func (c *clusterTopologyCommon) buildIngressExternalID(namespace, ingressName string) string {
+	return fmt.Sprintf("urn:/%s:%s:namespace:%s:ingress:%s", c.Instance.Type, c.Instance.URL, namespace, ingressName)
 }
 
 // buildVolumeExternalID
 // volumeID
-func (c *clusterTopologyCommon) buildVolumeExternalID(volumeID string) string {
-	return fmt.Sprintf("urn:/%s:%s:volume:%s", c.Instance.Type, c.Instance.URL, volumeID)
+func (c *clusterTopologyCommon) buildVolumeExternalID(namespace, volumeName string) string {
+	return fmt.Sprintf("urn:/%s:%s:namespace:%s:volume:%s", c.Instance.Type, c.Instance.URL, namespace, volumeName)
 }
 
 // buildPersistentVolumeExternalID

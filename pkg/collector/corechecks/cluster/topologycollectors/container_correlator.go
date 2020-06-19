@@ -77,8 +77,8 @@ func (cc *ContainerCorrelator) CorrelateFunction() error {
 
 			// map relations between the container and the volume
 			for _, mount := range c.VolumeMounts {
-				containerExternalID := cc.buildContainerExternalID(pod.Name, c.Name)
-				volumeExternalID := cc.buildVolumeExternalID(mount.Name)
+				containerExternalID := cc.buildContainerExternalID(pod.Namespace, pod.Name, c.Name)
+				volumeExternalID := cc.buildVolumeExternalID(pod.Namespace, mount.Name)
 				cc.RelationChan <- cc.containerToVolumeStackStateRelation(containerExternalID, volumeExternalID, mount)
 			}
 
@@ -132,7 +132,7 @@ func (cc *ContainerCorrelator) containerToStackStateComponent(nodeIdentifier str
 
 	log.Tracef("Created identifiers for %s: %v", container.Name, identifiers)
 
-	containerExternalID := cc.buildContainerExternalID(pod.Name, container.Name)
+	containerExternalID := cc.buildContainerExternalID(pod.Name, pod.Namespace, container.Name)
 
 	tags := cc.initTags(metav1.ObjectMeta{Namespace: pod.Namespace})
 
@@ -174,6 +174,11 @@ func (cc *ContainerCorrelator) containerToStackStateComponent(nodeIdentifier str
 	log.Tracef("Created StackState container component %s: %v", containerExternalID, component.JSONString())
 
 	return component
+}
+
+// buildContainerID - combination of the pod namespace and container name
+func buildContainerID(podNamespace, containerName string) string {
+	return fmt.Sprintf("%s:%s", podNamespace, containerName)
 }
 
 // Creates a StackState relation from a Pod to Kubernetes / OpenShift Container relation
