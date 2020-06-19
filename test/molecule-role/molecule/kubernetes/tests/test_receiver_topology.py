@@ -321,8 +321,9 @@ def test_cluster_agent_base_topology(host, ansible_var):
             external_id_assert_fn=lambda eid:  cluster_agent_service_match.findall(eid)
         ).startswith("urn:/kubernetes:%s:namespace:%s:service:stackstate-cluster-agent" % (cluster_name, namespace))
         # pod-server  exposes pod-service(1 time)
-        pod_service_match = re.compile("urn:/kubernetes:%s:service:%s:pod-service->urn:/kubernetes:%s:pod:pod-server" %
-                                       (cluster_name, namespace, cluster_name))
+        pod_service_match = re.compile("urn:/kubernetes:%s:namespace:%s:service:pod-service->"
+                                       "urn:/kubernetes:%s:namespace:%s:pod:pod-server" %
+                                       (cluster_name, namespace, cluster_name, namespace))
         assert _relation_data(
             json_data=json_data,
             type_name="exposes",
