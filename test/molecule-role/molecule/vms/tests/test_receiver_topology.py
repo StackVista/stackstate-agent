@@ -48,6 +48,7 @@ def _relation_data(json_data, type_name, external_id_assert_fn):
             return json.loads(p["TopologyRelation"]["data"])
     return None
 
+
 def _find_process_by_command_args(json_data, type_name, cmd_assert_fn):
     for message in json_data["messages"]:
         p = message["message"]["TopologyElement"]["payload"]
@@ -58,6 +59,7 @@ def _find_process_by_command_args(json_data, type_name, cmd_assert_fn):
             if cmd_assert_fn(' '.join(component_data["command"]["args"])):
                 return component_data
     return None
+
 
 def test_dnat(host, common_vars):
     url = "http://localhost:7070/api/topic/sts_topo_process_agents?offset=0&limit=1000"
