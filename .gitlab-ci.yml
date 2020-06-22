@@ -147,7 +147,7 @@ unit_tests:
 
     - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --build-exclude clusterchecks,kubelet
   tags:
-    - sts-k8s-xl-runner
+    - sts-aws
 
 integration_tests:
   stage: build_and_test
