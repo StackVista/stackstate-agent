@@ -55,7 +55,7 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					component := <-componentChannel
 					expectedComponent := &topology.Component{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-1",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-1",
 						Type:       topology.Type{Name: "pod"},
 						Data: topology.Data{
 							"name":              "test-pod-1",
@@ -79,11 +79,11 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					relation := <-relationChannel
 					expectedRelation := &topology.Relation{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-1->" +
-							"urn:/kubernetes:test-cluster-name:node:test-node",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-1->" +
+							"urn:kubernetes:/test-cluster-name:node/test-node",
 						Type:     topology.Type{Name: "scheduled_on"},
-						SourceID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-1",
-						TargetID: "urn:/kubernetes:test-cluster-name:node:test-node",
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-1",
+						TargetID: "urn:kubernetes:/test-cluster-name:node/test-node",
 						Data:     map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
@@ -96,7 +96,7 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					component := <-componentChannel
 					expectedComponent := &topology.Component{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-2",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-2",
 						Type:       topology.Type{Name: "pod"},
 						Data: topology.Data{
 							"name":              "test-pod-2",
@@ -126,11 +126,11 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					relation := <-relationChannel
 					expectedRelation := &topology.Relation{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-2->" +
-							"urn:/kubernetes:test-cluster-name:node:test-node",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-2->" +
+							"urn:kubernetes:/test-cluster-name:node/test-node",
 						Type:     topology.Type{Name: "scheduled_on"},
-						SourceID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-2",
-						TargetID: "urn:/kubernetes:test-cluster-name:node:test-node",
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-2",
+						TargetID: "urn:kubernetes:/test-cluster-name:node/test-node",
 						Data:     map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
@@ -143,7 +143,7 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					component := <-componentChannel
 					expectedComponent := &topology.Component{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-3",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-3",
 						Type:       topology.Type{Name: "pod"},
 						Data: topology.Data{
 							"name":              "test-pod-3",
@@ -167,11 +167,11 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					relation := <-relationChannel
 					expectedRelation := &topology.Relation{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-3->" +
-							"urn:/kubernetes:test-cluster-name:node:test-node",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-3->" +
+							"urn:kubernetes:/test-cluster-name:node/test-node",
 						Type:     topology.Type{Name: "scheduled_on"},
-						SourceID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-3",
-						TargetID: "urn:/kubernetes:test-cluster-name:node:test-node",
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-3",
+						TargetID: "urn:kubernetes:/test-cluster-name:node/test-node",
 						Data:     map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
@@ -179,11 +179,11 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					relation := <-relationChannel
 					expectedRelation := &topology.Relation{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:daemonset:daemonset-v->" +
-							"urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-3",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:daemonset/daemonset-v->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-3",
 						Type:     topology.Type{Name: "controls"},
-						SourceID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:daemonset:daemonset-v",
-						TargetID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-3",
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:daemonset/daemonset-v",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-3",
 						Data:     map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
@@ -191,11 +191,11 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					relation := <-relationChannel
 					expectedRelation := &topology.Relation{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:deployment:deployment-w->" +
-							"urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-3",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:deployment/deployment-w->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-3",
 						Type:     topology.Type{Name: "controls"},
-						SourceID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:deployment:deployment-w",
-						TargetID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-3",
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:deployment/deployment-w",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-3",
 						Data:     map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
@@ -203,11 +203,11 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					relation := <-relationChannel
 					expectedRelation := &topology.Relation{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:job:job-x->" +
-							"urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-3",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:job/job-x->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-3",
 						Type:     topology.Type{Name: "controls"},
-						SourceID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:job:job-x",
-						TargetID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-3",
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:job/job-x",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-3",
 						Data:     map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
@@ -215,11 +215,11 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					relation := <-relationChannel
 					expectedRelation := &topology.Relation{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:replicaset:replicaset-y->" +
-							"urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-3",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/replicaset-y->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-3",
 						Type:     topology.Type{Name: "controls"},
-						SourceID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:replicaset:replicaset-y",
-						TargetID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-3",
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/replicaset-y",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-3",
 						Data:     map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
@@ -227,11 +227,11 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					relation := <-relationChannel
 					expectedRelation := &topology.Relation{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:statefulset:statefulset-z->" +
-							"urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-3",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:statefulset/statefulset-z->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-3",
 						Type:     topology.Type{Name: "controls"},
-						SourceID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:statefulset:statefulset-z",
-						TargetID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-3",
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:statefulset/statefulset-z",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-3",
 						Data:     map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
@@ -244,7 +244,7 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					component := <-componentChannel
 					expectedComponent := &topology.Component{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-4",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-4",
 						Type:       topology.Type{Name: "pod"},
 						Data: topology.Data{
 							"name":              "test-pod-4",
@@ -268,11 +268,11 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					relation := <-relationChannel
 					expectedRelation := &topology.Relation{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-4->" +
-							"urn:/kubernetes:test-cluster-name:node:test-node",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-4->" +
+							"urn:kubernetes:/test-cluster-name:node/test-node",
 						Type:     topology.Type{Name: "scheduled_on"},
-						SourceID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-4",
-						TargetID: "urn:/kubernetes:test-cluster-name:node:test-node",
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-4",
+						TargetID: "urn:kubernetes:/test-cluster-name:node/test-node",
 						Data:     map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
@@ -280,11 +280,11 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					relation := <-relationChannel
 					expectedRelation := &topology.Relation{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-4->" +
-							"urn:/kubernetes:test-cluster-name:persistent-volume:test-volume-1",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-4->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:persistent-volume/test-volume-1",
 						Type:     topology.Type{Name: "claims"},
-						SourceID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-4",
-						TargetID: "urn:/kubernetes:test-cluster-name:persistent-volume:test-volume-1",
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-4",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:persistent-volume/test-volume-1",
 						Data:     map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
@@ -292,11 +292,11 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					relation := <-relationChannel
 					expectedRelation := &topology.Relation{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-4->" +
-							"urn:/kubernetes:test-cluster-name:persistent-volume:test-volume-2",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-4->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:persistent-volume/test-volume-2",
 						Type:     topology.Type{Name: "claims"},
-						SourceID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-4",
-						TargetID: "urn:/kubernetes:test-cluster-name:persistent-volume:test-volume-2",
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-4",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:persistent-volume/test-volume-2",
 						Data:     map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
@@ -304,14 +304,14 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					component := <-componentChannel
 					expectedComponent := &topology.Component{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:volume:test-volume-3",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:volume/test-volume-3",
 						Type:       topology.Type{Name: "volume"},
 						Data: topology.Data{
 							"name": "test-volume-3",
 							"source": coreV1.VolumeSource{
 								ConfigMap: &configMap,
 							},
-							"identifiers": []string{"urn:/kubernetes:test-cluster-name:namespace:test-namespace:configmap:name-of-the-config-map"},
+							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/name-of-the-config-map"},
 							"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 						},
 					}
@@ -320,11 +320,11 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					relation := <-relationChannel
 					expectedRelation := &topology.Relation{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-4->" +
-							"urn:/kubernetes:test-cluster-name:namespace:test-namespace:volume:test-volume-3",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-4->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:volume/test-volume-3",
 						Type:     topology.Type{Name: "claims"},
-						SourceID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-4",
-						TargetID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:volume:test-volume-3",
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-4",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:volume/test-volume-3",
 						Data:     map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
@@ -337,7 +337,7 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					component := <-componentChannel
 					expectedComponent := &topology.Component{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-5",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-5",
 						Type:       topology.Type{Name: "pod"},
 						Data: topology.Data{
 							"name":              "test-pod-5",
@@ -361,11 +361,11 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					relation := <-relationChannel
 					expectedRelation := &topology.Relation{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-5->" +
-							"urn:/kubernetes:test-cluster-name:node:test-node",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-5->" +
+							"urn:kubernetes:/test-cluster-name:node/test-node",
 						Type:     topology.Type{Name: "scheduled_on"},
-						SourceID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-5",
-						TargetID: "urn:/kubernetes:test-cluster-name:node:test-node",
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-5",
+						TargetID: "urn:kubernetes:/test-cluster-name:node/test-node",
 						Data:     map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
@@ -373,11 +373,11 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					relation := <-relationChannel
 					expectedRelation := &topology.Relation{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-5->" +
-							"urn:/kubernetes:test-cluster-name:namespace:test-namespace:configmap:name-of-the-config-map",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-5->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:configmap/name-of-the-config-map",
 						Type:     topology.Type{Name: "uses"},
-						SourceID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-5",
-						TargetID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:configmap:name-of-the-config-map",
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-5",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:configmap/name-of-the-config-map",
 						Data:     map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
@@ -385,11 +385,11 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					relation := <-relationChannel
 					expectedRelation := &topology.Relation{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-5->" +
-							"urn:/kubernetes:test-cluster-name:namespace:test-namespace:configmap:name-of-the-env-config-map",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-5->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:configmap/name-of-the-env-config-map",
 						Type:     topology.Type{Name: "uses_value"},
-						SourceID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-5",
-						TargetID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:configmap:name-of-the-env-config-map",
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-5",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:configmap/name-of-the-env-config-map",
 						Data:     map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
@@ -402,7 +402,7 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					component := <-componentChannel
 					expectedComponent := &topology.Component{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-6",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-6",
 						Type:       topology.Type{Name: "pod"},
 						Data: topology.Data{
 							"name":              "test-pod-6",
@@ -426,11 +426,11 @@ func TestPodCollector(t *testing.T) {
 				func() {
 					relation := <-relationChannel
 					expectedRelation := &topology.Relation{
-						ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-6->" +
-							"urn:/kubernetes:test-cluster-name:node:test-node",
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-6->" +
+							"urn:kubernetes:/test-cluster-name:node/test-node",
 						Type:     topology.Type{Name: "scheduled_on"},
-						SourceID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-6",
-						TargetID: "urn:/kubernetes:test-cluster-name:node:test-node",
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-6",
+						TargetID: "urn:kubernetes:/test-cluster-name:node/test-node",
 						Data:     map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
@@ -439,7 +439,7 @@ func TestPodCollector(t *testing.T) {
 					correlation := <-containerCorrelationChannel
 					expectedCorrelation := &ContainerCorrelation{
 						Pod: ContainerPod{
-							ExternalID: "urn:/kubernetes:test-cluster-name:namespace:test-namespace:pod:test-pod-6",
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-6",
 							Name:       "test-pod-6",
 							Labels:     map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 							PodIP:      "10.0.0.1",

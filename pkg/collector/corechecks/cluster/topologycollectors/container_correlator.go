@@ -176,11 +176,6 @@ func (cc *ContainerCorrelator) containerToStackStateComponent(nodeIdentifier str
 	return component
 }
 
-// buildContainerID - combination of the pod namespace and container name
-func buildContainerID(podNamespace, containerName string) string {
-	return fmt.Sprintf("%s:%s", podNamespace, containerName)
-}
-
 // Creates a StackState relation from a Pod to Kubernetes / OpenShift Container relation
 func (cc *ContainerCorrelator) podToContainerStackStateRelation(podExternalID, containerExternalID string) *topology.Relation {
 	log.Tracef("Mapping kubernetes pod to container relation: %s -> %s", podExternalID, containerExternalID)
