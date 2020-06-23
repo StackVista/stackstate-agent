@@ -77,6 +77,10 @@ func TestCollectorInterface(t *testing.T) {
 	actualVolumeExternalID := testCollector.buildVolumeExternalID(testNameSpace, volumeName)
 	assert.Equal(t, "urn:kubernetes:/Test-Cluster-Name:test-namespace:volume/test-volume", actualVolumeExternalID)
 
+	persistentVolumeName := "test-persistent-volume"
+	actualPersistentVolumeExternalID := testCollector.buildPersistentVolumeExternalID(persistentVolumeName)
+	assert.Equal(t, "urn:kubernetes:/Test-Cluster-Name:persistent-volume/test-persistent-volume", actualPersistentVolumeExternalID)
+
 	endpointName := "test-url"
 	actualEndpointExternalID := testCollector.buildEndpointExternalID(endpointName)
 	assert.Equal(t, "urn:endpoint:/Test-Cluster-Name:test-url", actualEndpointExternalID)

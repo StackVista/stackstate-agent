@@ -228,8 +228,8 @@ def test_cluster_agent_base_topology(host, ansible_var):
             external_id_assert_fn=lambda v: job_match.findall(v)
         )
         # 1 persistent-volume
-        persistent_volume_match = re.compile("urn:kubernetes:/{}:{}:persistent-volume/pvc-.*"
-                                             .format(cluster_name, namespace))
+        persistent_volume_match = re.compile("urn:kubernetes:/{}:persistent-volume/pvc-.*"
+                                             .format(cluster_name))
         assert _find_component(
             json_data=json_data,
             type_name="persistent-volume",
@@ -386,8 +386,8 @@ def test_cluster_agent_base_topology(host, ansible_var):
         ).startswith("urn:kubernetes:/%s:%s:pod/mehdb" % (cluster_name, namespace))
         #  pod claims persistent-volume
         pod_claims_persistent_volume_match = re.compile("urn:kubernetes:/%s:%s:pod/stackstate-agent-.*->"
-                                                        "urn:kubernetes:/%s:%s:persistent-volume/cgroups" %
-                                                        (cluster_name, namespace, cluster_name, namespace))
+                                                        "urn:kubernetes:/%s:persistent-volume/cgroups" %
+                                                        (cluster_name, namespace, cluster_name))
         assert _relation_data(
             json_data=json_data,
             type_name="claims",

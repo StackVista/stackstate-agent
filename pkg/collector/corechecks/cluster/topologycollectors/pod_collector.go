@@ -85,7 +85,7 @@ func (pc *PodCollector) CollectorFunction() error {
 		// map the volume components and relation to this pod
 		for _, vol := range pod.Spec.Volumes {
 			if pc.isPersistentVolume(vol) {
-				volumeExternalID = pc.buildPersistentVolumeExternalID(pod.Namespace, vol.Name)
+				volumeExternalID = pc.buildPersistentVolumeExternalID(vol.Name)
 			} else {
 				volComponent = pc.volumeToStackStateComponent(pod, vol)
 				volumeExternalID = volComponent.ExternalID

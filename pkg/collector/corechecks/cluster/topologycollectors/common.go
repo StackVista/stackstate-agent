@@ -31,7 +31,7 @@ type ClusterTopologyCommon interface {
 	buildJobExternalID(namespace, jobName string) string
 	buildIngressExternalID(namespace, ingressName string) string
 	buildVolumeExternalID(namespace, volumeName string) string
-	buildPersistentVolumeExternalID(namespace, persistentVolumeName string) string
+	buildPersistentVolumeExternalID(persistentVolumeName string) string
 	buildEndpointExternalID(endpointID string) string
 }
 
@@ -166,8 +166,8 @@ func (c *clusterTopologyCommon) buildVolumeExternalID(namespace, volumeName stri
 }
 
 // buildPersistentVolumeExternalID creates the urn external identifier for a cluster persistent volume
-func (c *clusterTopologyCommon) buildPersistentVolumeExternalID(namespace, persistentVolumeName string) string {
-	return fmt.Sprintf("%s:%s:persistent-volume/%s", c.urnPrefix, namespace, persistentVolumeName)
+func (c *clusterTopologyCommon) buildPersistentVolumeExternalID(persistentVolumeName string) string {
+	return fmt.Sprintf("%s:persistent-volume/%s", c.urnPrefix, persistentVolumeName)
 }
 
 // buildEndpointExternalID

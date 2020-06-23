@@ -110,7 +110,7 @@ func (pvc *PersistentVolumeCollector) persistentVolumeToStackStateComponent(pers
 
 	log.Tracef("Created identifiers for %s: %v", persistentVolume.Name, identifiers)
 
-	persistentVolumeExternalID := pvc.buildPersistentVolumeExternalID(persistentVolume.Namespace, persistentVolume.Name)
+	persistentVolumeExternalID := pvc.buildPersistentVolumeExternalID(persistentVolume.Name)
 
 	tags := pvc.initTags(persistentVolume.ObjectMeta)
 
