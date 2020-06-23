@@ -56,7 +56,7 @@ def _find_process_by_command_args(json_data, type_name, cmd_assert_fn):
             p["TopologyComponent"]["typeName"] == type_name and \
                 "data" in p["TopologyComponent"]:
             component_data = json.loads(p["TopologyComponent"]["data"])
-            if cmd_assert_fn(' '.join(component_data["command"]["args"])):
+            if "args" in component_data["command"] and cmd_assert_fn(' '.join(component_data["command"]["args"])):
                 return component_data
     return None
 

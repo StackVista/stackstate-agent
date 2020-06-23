@@ -225,6 +225,7 @@
         STS_HOSTNAME: "{{ inventory_hostname }}"
         CODE_NAME: "{{ agent_current_branch }}"
         SKIP_SSL_VALIDATION: "true"
+        STS_PROCESS_FILTER_SHORT_LIVED_QUALIFIER_SECS: "{{ process_filter_short_lived_qualifier_secs }}"
 
 - name: Prepare Ubuntu Agent listening after start
   hosts: agent-ubuntu
@@ -327,8 +328,8 @@
     - name: Wait a bit for the process agent to start
       pause:
         seconds: 10
-    - name: Start a python process that only runs for 45 seconds
-      shell: "python -c \"import time; time.sleep(45);\""
+    - name: "Start a python process that only runs for {{ process_filter_short_lived_qualifier_secs }} seconds"
+      shell: "python -c \"import time; time.sleep({{ process_filter_short_lived_qualifier_secs }});\""
       async: "{{ max_test_time }}"
       poll: 0
 

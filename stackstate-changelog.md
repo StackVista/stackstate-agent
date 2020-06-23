@@ -1,5 +1,13 @@
 # StackState Agent v2 releases
 
+## 2.6.0 (???)
+
+**Features**
+
+**Improvements**
+
+**Bug Fixes**
+
 ## 2.5.1 (2020-05-10)
 
 **Improvements**
