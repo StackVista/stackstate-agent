@@ -3,10 +3,17 @@
 ## 2.6.0 (???)
 
 **Features**
+- ServiceNow check add which provides support to visualize the Configuration Items from your ServiceNow instance.[(STAC-8557)](https://stackstate.atlassian.net/browse/STAC-8557)
 
 **Improvements**
 
+- Short-lived processes (by default, observed for fewer than 60sec) are filtered and not reported to StackState.[(STAC-6356)](https://stackstate.atlassian.net/browse/STAC-6356)
+- Network connections made by filtered processes (short-lived / blacklisted) are filtered and not reported to StackState.[(STAC-6286)](https://stackstate.atlassian.net/browse/STAC-6286)
+
 **Bug Fixes**
+- IP based Identifiers for pods are prefixed with the namespace and pod name if HostIP is used on Kubernetes. [(STAC-9451)](https://stackstate.atlassian.net/browse/STAC-9451)
+- Added kubernetes namespace to external ID's for all Kubernetes topology components. [(STAC-9375)](https://stackstate.atlassian.net/browse/STAC-9375)
+- Fix the data type for extra metadata collection in VSphere integration. [(STAC-9329)](https://stackstate.atlassian.net/browse/STAC-9329)
 
 ## 2.5.1 (2020-05-10)
 
