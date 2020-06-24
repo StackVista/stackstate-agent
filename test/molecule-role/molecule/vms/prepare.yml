@@ -226,6 +226,7 @@
         CODE_NAME: "{{ agent_current_branch }}"
         SKIP_SSL_VALIDATION: "true"
         STS_PROCESS_FILTER_SHORT_LIVED_QUALIFIER_SECS: "{{ process_filter_short_lived_qualifier_secs }}"
+        STS_RELATION_FILTER_SHORT_LIVED_QUALIFIER_SECS: "{{ relation_filter_short_lived_qualifier_secs }}"
 
 - name: Prepare Ubuntu Agent listening after start
   hosts: agent-ubuntu
@@ -330,6 +331,43 @@
         seconds: 10
     - name: "Start a python process that only runs for {{ process_filter_short_lived_qualifier_secs }} seconds"
       shell: "python -c \"import time; time.sleep({{ process_filter_short_lived_qualifier_secs }});\""
+      async: "{{ max_test_time }}"
+      poll: 0
+
+- name: Prepare Agent for short-lived relation test
+  hosts: agent-ubuntu, agent-fedora, agent-centos
+  gather_facts: false
+  vars_files:
+    - common_vars.yml
+  tasks:
+    - name: Wait a bit for the process agent to start
+      pause:
+        seconds: 10
+    - name: Installing requests library for test connections
+      pip:
+        name: requests
+    - name: "Start a python http server to make requests to http://localhost:{{ relation_test_server_port }}"
+      shell: "python -m SimpleHTTPServer {{ relation_test_server_port }}"
+      async: "{{ max_test_time }}"
+      poll: 0
+    - name: "Start a python process that makes a once off connection that we expect to be filtered"
+      shell: "python -c $'import time;\nimport requests;\nrequests.get(\"http://localhost:{{ relation_test_server_port }}\");\ntime.sleep({{ max_test_time }});'"
+      async: "{{ max_test_time }}"
+      poll: 0
+    - name: "Start a python http server to make multiple new requests to http://localhost:{{ relation_test_server_port_multiple }}"
+      shell: "python -m SimpleHTTPServer {{ relation_test_server_port_multiple }}"
+      async: "{{ max_test_time }}"
+      poll: 0
+    - name: "Start a python process that makes a new connection to the same endpoint every 5 seconds that we expect to be reported"
+      shell: "python -c $'import time;\nimport requests;\nwhile True:\n\trequests.get(\"http://localhost:{{ relation_test_server_port_multiple }}\");\n\ttime.sleep(5);'"
+      async: "{{ max_test_time }}"
+      poll: 0
+    - name: "Start a python http server to make multiple requests on a shared connection to http://localhost:{{ relation_test_server_port_shared_connection }}"
+      shell: "python -m SimpleHTTPServer {{ relation_test_server_port_shared_connection }}"
+      async: "{{ max_test_time }}"
+      poll: 0
+    - name: "Start a python process that makes a connection (re-using the underlying tcp connection) every 5 seconds that we expect to be reported"
+      shell: "python -c $'import time;\nimport requests;\ns = requests.Session()\nwhile True:\n\tr = s.get(\"http://localhost:{{ relation_test_server_port_shared_connection }}\");\n\tprint r.text;\n\ttime.sleep(5);'"
       async: "{{ max_test_time }}"
       poll: 0
 
