@@ -103,7 +103,7 @@ def test_dnat(host, common_vars):
 
 
 def test_topology_filtering(host, common_vars):
-    url = "http://localhost:7070/api/topic/sts_topo_process_agents?offset=0&limit=1000"
+    url = "http://localhost:7070/api/topic/sts_topo_process_agents?offset=0&limit=2000"
 
     def wait_for_components():
         data = host.check_output("curl \"%s\"" % url)

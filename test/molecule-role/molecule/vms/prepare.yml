@@ -329,13 +329,13 @@
     - name: Wait a bit for the process agent to start
       pause:
         seconds: 10
-    - name: "Start a python process that only runs for {{ process_filter_short_lived_qualifier_secs }} seconds"
-      shell: "python -c \"import time; time.sleep({{ process_filter_short_lived_qualifier_secs }});\""
+    - name: "Start a python process that only runs for {{ process_filter_short_lived_sleep }} seconds"
+      shell: "python -c \"import time; time.sleep({{ process_filter_short_lived_sleep }});\""
       async: "{{ max_test_time }}"
       poll: 0
 
 - name: Prepare Agent for short-lived relation test
-  hosts: agent-ubuntu, agent-fedora, agent-centos
+  hosts: agent-ubuntu
   gather_facts: false
   vars_files:
     - common_vars.yml
@@ -346,12 +346,12 @@
     - name: Installing requests library for test connections
       pip:
         name: requests
-    - name: "Start a python http server to make requests to http://localhost:{{ relation_test_server_port }}"
-      shell: "python -m SimpleHTTPServer {{ relation_test_server_port }}"
+    - name: "Start a python http server to make requests to http://localhost:{{ relation_test_server_port_once_off }}"
+      shell: "python -m SimpleHTTPServer {{ relation_test_server_port_once_off }}"
       async: "{{ max_test_time }}"
       poll: 0
     - name: "Start a python process that makes a once off connection that we expect to be filtered"
-      shell: "python -c $'import time;\nimport requests;\nrequests.get(\"http://localhost:{{ relation_test_server_port }}\");\ntime.sleep({{ max_test_time }});'"
+      shell: "python -c $'import time;\nimport requests;\nrequests.get(\"http://localhost:{{ relation_test_server_port_once_off }}\");\ntime.sleep({{ max_test_time }});'"
       async: "{{ max_test_time }}"
       poll: 0
     - name: "Start a python http server to make multiple new requests to http://localhost:{{ relation_test_server_port_multiple }}"
