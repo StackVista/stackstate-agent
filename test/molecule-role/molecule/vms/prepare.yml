@@ -218,8 +218,6 @@
         path: /etc/hosts
         line: "{{ hostvars['receiver']['ansible_host'] }} test-stackstate-agent.sts"
     - name: Install stackstate-agent
-      shell: "export STS_PROCESS_FILTER_SHORT_LIVED_QUALIFIER_SECS={{ process_filter_short_lived_qualifier_secs }} STS_RELATION_FILTER_SHORT_LIVED_QUALIFIER_SECS={{ relation_filter_short_lived_qualifier_secs }}"
-    - name: Install stackstate-agent
       shell: "curl -o- {{ agent_repo_url }}/install.sh | bash"
       environment:
         STS_API_KEY: "API_KEY"
@@ -227,7 +225,22 @@
         STS_HOSTNAME: "{{ inventory_hostname }}"
         CODE_NAME: "{{ agent_current_branch }}"
         SKIP_SSL_VALIDATION: "true"
-
+    - name: "Set process_config.filters.short_lived_processes.qualifier_secs and process_config.filters.short_lived_relations.qualifier_secs to get deterministic behaviour in the short-lived filtering tests"
+      become: true
+      lineinfile:
+        path: "/etc/stackstate-agent/stackstate.yaml"
+        insertafter: "process_config:"
+        line: >
+            filters:
+              short_lived_processes:
+                enabled: true
+                qualifier_secs: {{ process_filter_short_lived_qualifier_secs }}
+              short_lived_relations:
+                enabled: true
+                qualifier_secs: {{ relation_filter_short_lived_qualifier_secs }}
+    - name: "Restart StackState Agent Service"
+      become: true
+      shell: "systemctl restart stackstate-agent.service"
 - name: Prepare Ubuntu Agent listening after start
   hosts: agent-ubuntu
   gather_facts: false
@@ -350,20 +363,23 @@
       shell: "python -m SimpleHTTPServer {{ relation_test_server_port_once_off }}"
       async: "{{ max_test_time }}"
       poll: 0
-    - name: "Start a python process that makes a once off connection that we expect to be filtered"
-      shell: "python -c $'import time;\nimport requests;\nrequests.get(\"http://localhost:{{ relation_test_server_port_once_off }}\");\ntime.sleep({{ max_test_time }});'"
-      async: "{{ max_test_time }}"
-      poll: 0
     - name: "Start a python http server to make multiple new requests to http://localhost:{{ relation_test_server_port_multiple }}"
       shell: "python -m SimpleHTTPServer {{ relation_test_server_port_multiple }}"
       async: "{{ max_test_time }}"
       poll: 0
-    - name: "Start a python process that makes a new connection to the same endpoint every 5 seconds that we expect to be reported"
-      shell: "python -c $'import time;\nimport requests;\nwhile True:\n\trequests.get(\"http://localhost:{{ relation_test_server_port_multiple }}\");\n\ttime.sleep(5);'"
-      async: "{{ max_test_time }}"
-      poll: 0
     - name: "Start a python http server to make multiple requests on a shared connection to http://localhost:{{ relation_test_server_port_shared_connection }}"
       shell: "python -m SimpleHTTPServer {{ relation_test_server_port_shared_connection }}"
+      async: "{{ max_test_time }}"
+      poll: 0
+    - name: Wait a bit for the SimpleHTTPServers to start
+      pause:
+        seconds: 5
+    - name: "Start a python process that makes a once off connection that we expect to be filtered"
+      shell: "python -c $'import time;\nimport requests;\nrequests.get(\"http://localhost:{{ relation_test_server_port_once_off }}\");\ntime.sleep({{ max_test_time }});'"
+      async: "{{ max_test_time }}"
+      poll: 0
+    - name: "Start a python process that makes a new connection to the same endpoint every 5 seconds that we expect to be reported"
+      shell: "python -c $'import time;\nimport requests;\nwhile True:\n\trequests.get(\"http://localhost:{{ relation_test_server_port_multiple }}\");\n\tprint r.text;\n\ttime.sleep(5);'"
       async: "{{ max_test_time }}"
       poll: 0
     - name: "Start a python process that makes a connection (re-using the underlying tcp connection) every 5 seconds that we expect to be reported"

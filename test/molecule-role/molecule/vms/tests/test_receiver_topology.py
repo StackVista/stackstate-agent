@@ -130,4 +130,37 @@ def test_topology_filtering(host, common_vars):
             cmd_assert_fn=lambda v: short_lived_process_match.findall(v)
         ) is None
 
+        # assert that we get the 3 python simple http servers
+        server_4321_process_match = re.compile("python -m SimpleHTTPServer 4321")
+        assert _find_process_by_command_args(
+            json_data=json_data,
+            type_name="process",
+            cmd_assert_fn=lambda v: server_4321_process_match.findall(v)
+        ) is not None
+
+        server_4322_process_match = re.compile("python -m SimpleHTTPServer 4322")
+        assert _find_process_by_command_args(
+            json_data=json_data,
+            type_name="process",
+            cmd_assert_fn=lambda v: server_4322_process_match.findall(v)
+        ) is not None
+        process_to_server_4322_match = re.compile("TCP:/.*:.*->urn:process:/agent-ubuntu:.*:.*:http://localhost:4322".format("", ""))
+        assert _relation_data(
+            json_data=json_data,
+            type_name="directional_connection",
+            external_id_assert_fn=lambda v: process_to_server_4322_match.findall(v))
+
+        server_4323_process_match = re.compile("python -m SimpleHTTPServer 4323")
+        server_4323_process = _find_process_by_command_args(
+            json_data=json_data,
+            type_name="process",
+            cmd_assert_fn=lambda v: server_4323_process_match.findall(v)
+        )
+        assert server_4323_process is not None
+        process_to_server_4323_match = re.compile("TCP:/.*:.*->urn:process:/agent-ubuntu:.*:.*:http://localhost:4323".format("", ""))
+        assert _relation_data(
+            json_data=json_data,
+            type_name="directional_connection",
+            external_id_assert_fn=lambda v: process_to_server_4323_match.findall(v))
+
     util.wait_until(wait_for_components, 30, 3)
