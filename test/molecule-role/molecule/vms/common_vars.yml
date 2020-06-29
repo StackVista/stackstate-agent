@@ -17,6 +17,6 @@ dnat_server_port: 49123
 max_test_time: 3500  # in seconds
 process_filter_short_lived_qualifier_secs: 45
 relation_filter_short_lived_qualifier_secs: 20
-relation_test_server_port_once_off: 4321
-relation_test_server_port_multiple: 4322
+relation_test_server_port_single_request: 4321
+relation_test_server_port_multiple_requests: 4322
 relation_test_server_port_shared_connection: 4323

@@ -83,9 +83,14 @@ def test_dnat(host, common_vars):
         assert json.loads(endpoint["data"])["ip"] == ubuntu_private_ip
         endpoint_component_id = endpoint["externalId"]
 
-        proc_to_proc_id_match = re.compile("TCP:/urn:process:/agent-fedora:.*:.*->{}:{}".format(endpoint_component_id, dnat_service_port))
-        proc_to_service_id_match = re.compile("TCP:/urn:process:/agent-fedora:.*:.*->urn:process:/agent-ubuntu:.*:.*:{}:{}".format(ubuntu_private_ip, dnat_server_port))
-        service_to_proc_id_match = re.compile("TCP:/{}:{}->urn:process:/agent-ubuntu:.*:.*:{}:{}".format(endpoint_component_id, dnat_service_port, ubuntu_private_ip, dnat_server_port))
+        proc_to_proc_id_match = re.compile(
+            "TCP:/urn:process:/agent-fedora:.*:.*->{}:{}".format(endpoint_component_id, dnat_service_port))
+        proc_to_service_id_match = re.compile(
+            "TCP:/urn:process:/agent-fedora:.*:.*->urn:process:/agent-ubuntu:.*:.*:{}:{}".format(ubuntu_private_ip,
+                                                                                                 dnat_server_port))
+        service_to_proc_id_match = re.compile(
+            "TCP:/{}:{}->urn:process:/agent-ubuntu:.*:.*:{}:{}".format(endpoint_component_id, dnat_service_port,
+                                                                       ubuntu_private_ip, dnat_server_port))
         assert _relation_data(
             json_data=json_data,
             type_name="directional_connection",
@@ -130,37 +135,107 @@ def test_topology_filtering(host, common_vars):
             cmd_assert_fn=lambda v: short_lived_process_match.findall(v)
         ) is None
 
-        # assert that we get the 3 python simple http servers
-        server_4321_process_match = re.compile("python -m SimpleHTTPServer 4321")
-        assert _find_process_by_command_args(
+        # assert that we get the 3 python simple http servers + clients and expected relations
+        # single requests server + client and no relation
+        relation_test_server_port_single_request = int(common_vars["relation_test_server_port_single_request"])
+        server_single_request_process_match = re.compile("python -m SimpleHTTPServer {}"
+                                                         .format(relation_test_server_port_single_request))
+        server_single_request_process = _find_process_by_command_args(
             json_data=json_data,
             type_name="process",
-            cmd_assert_fn=lambda v: server_4321_process_match.findall(v)
-        ) is not None
-
-        server_4322_process_match = re.compile("python -m SimpleHTTPServer 4322")
-        assert _find_process_by_command_args(
-            json_data=json_data,
-            type_name="process",
-            cmd_assert_fn=lambda v: server_4322_process_match.findall(v)
-        ) is not None
-        process_to_server_4322_match = re.compile("TCP:/.*:.*->urn:process:/agent-ubuntu:.*:.*:http://localhost:4322".format("", ""))
-        assert _relation_data(
-            json_data=json_data,
-            type_name="directional_connection",
-            external_id_assert_fn=lambda v: process_to_server_4322_match.findall(v))
-
-        server_4323_process_match = re.compile("python -m SimpleHTTPServer 4323")
-        server_4323_process = _find_process_by_command_args(
-            json_data=json_data,
-            type_name="process",
-            cmd_assert_fn=lambda v: server_4323_process_match.findall(v)
+            cmd_assert_fn=lambda v: server_single_request_process_match.findall(v)
         )
-        assert server_4323_process is not None
-        process_to_server_4323_match = re.compile("TCP:/.*:.*->urn:process:/agent-ubuntu:.*:.*:http://localhost:4323".format("", ""))
+        assert server_single_request_process is not None
+        server_single_request_process_create_time = server_single_request_process["createTime"]
+        server_single_request_process_pid = server_single_request_process["pid"]
+
+        single_requests_process_match = re.compile("python single-request.py")
+        single_requests_process = _find_process_by_command_args(
+            json_data=json_data,
+            type_name="process",
+            cmd_assert_fn=lambda v: single_requests_process_match.findall(v)
+        )
+        assert single_requests_process is not None
+        single_requests_process_create_time = single_requests_process["createTime"]
+        single_requests_process_process_pid = single_requests_process["pid"]
+
+        single_request_process_to_server_relation_match = re.compile(
+            "TCP:/urn:process:/agent-ubuntu:{}:{}->urn:process:/agent-ubuntu:{}:{}:agent-ubuntu:.*:127.0.0.1:{}"
+            .format(single_requests_process_process_pid, single_requests_process_create_time,
+                    server_single_request_process_pid, server_single_request_process_create_time,
+                    relation_test_server_port_single_request)
+        )
         assert _relation_data(
             json_data=json_data,
             type_name="directional_connection",
-            external_id_assert_fn=lambda v: process_to_server_4323_match.findall(v))
+            external_id_assert_fn=lambda v: single_request_process_to_server_relation_match.findall(v)) is None
 
-    util.wait_until(wait_for_components, 30, 3)
+        # multiple requests server + client and their relation
+        relation_test_server_port_multiple = int(common_vars["relation_test_server_port_multiple_requests"])
+        server_multiple_process_match = re.compile("python -m SimpleHTTPServer {}"
+                                                   .format(relation_test_server_port_multiple))
+        server_multiple_process = _find_process_by_command_args(
+            json_data=json_data,
+            type_name="process",
+            cmd_assert_fn=lambda v: server_multiple_process_match.findall(v)
+        )
+        assert server_multiple_process is not None
+        server_multiple_process_create_time = server_multiple_process["createTime"]
+        server_multiple_process_pid = server_multiple_process["pid"]
+
+        multiple_requests_process_match = re.compile("python multiple-requests.py")
+        multiple_requests_process = _find_process_by_command_args(
+            json_data=json_data,
+            type_name="process",
+            cmd_assert_fn=lambda v: multiple_requests_process_match.findall(v)
+        )
+        assert multiple_requests_process is not None
+        multiple_requests_process_create_time = multiple_requests_process["createTime"]
+        multiple_requests_process_pid = multiple_requests_process["pid"]
+
+        multiple_requests_process_to_server_relation_match = re.compile(
+            "TCP:/urn:process:/agent-ubuntu:{}:{}->urn:process:/agent-ubuntu:{}:{}:agent-ubuntu:.*:127.0.0.1:{}"
+            .format(multiple_requests_process_pid, multiple_requests_process_create_time,
+                    server_multiple_process_pid, server_multiple_process_create_time,
+                    relation_test_server_port_multiple)
+        )
+        assert _relation_data(
+            json_data=json_data,
+            type_name="directional_connection",
+            external_id_assert_fn=lambda v: multiple_requests_process_to_server_relation_match.findall(v)) is not None
+
+        # shared connection requests server + client and their relation
+        relation_test_server_port_shared_connection = int(common_vars["relation_test_server_port_shared_connection"])
+        server_shared_connection_process_match = re.compile("python -m SimpleHTTPServer {}"
+                                                            .format(relation_test_server_port_shared_connection))
+        server_shared_connection_process = _find_process_by_command_args(
+            json_data=json_data,
+            type_name="process",
+            cmd_assert_fn=lambda v: server_shared_connection_process_match.findall(v)
+        )
+        assert server_shared_connection_process is not None
+        server_shared_connection_process_create_time = server_shared_connection_process["createTime"]
+        server_shared_connection_process_pid = server_shared_connection_process["pid"]
+
+        shared_connection_process_match = re.compile("python shared-connection-requests.py")
+        shared_connection_process = _find_process_by_command_args(
+            json_data=json_data,
+            type_name="process",
+            cmd_assert_fn=lambda v: shared_connection_process_match.findall(v)
+        )
+        assert shared_connection_process is not None
+        shared_connection_process_create_time = shared_connection_process["createTime"]
+        shared_connection_process_pid = shared_connection_process["pid"]
+
+        shared_connection_process_to_server_relation_match = re.compile(
+            "TCP:/urn:process:/agent-ubuntu:{}:{}->urn:process:/agent-ubuntu:{}:{}:agent-ubuntu:.*:127.0.0.1:{}"
+            .format(shared_connection_process_pid, shared_connection_process_create_time,
+                    server_shared_connection_process_pid, server_shared_connection_process_create_time,
+                    relation_test_server_port_shared_connection)
+        )
+        assert _relation_data(
+            json_data=json_data,
+            type_name="directional_connection",
+            external_id_assert_fn=lambda v: shared_connection_process_to_server_relation_match.findall(v)) is not None
+
+    util.wait_until(wait_for_components, 120, 3)
