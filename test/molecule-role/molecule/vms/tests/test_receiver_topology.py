@@ -80,11 +80,11 @@ def _network_relation(json_data, server_port, request_process_cmd):
     )
     assert request_process is not None
     request_process_create_time = request_process["createTime"]
-    request_process_process_pid = request_process["pid"]
+    request_process_pid = request_process["pid"]
 
     request_process_to_server_relation_match = re.compile(
         "TCP:/urn:process:/agent-ubuntu:{}:{}->urn:process:/agent-ubuntu:{}:{}:agent-ubuntu:.*:127.0.0.1:{}"
-        .format(request_process_process_pid, request_process_create_time,
+        .format(request_process_pid, request_process_create_time,
                 server_process_pid, server_process_create_time, server_port)
     )
     return _relation_data(
@@ -180,14 +180,14 @@ def test_topology_filtering(host, common_vars):
         assert _network_relation(
             json_data=json_data,
             server_port=common_vars["network_relation_test_server_port_multiple_requests"],
-            request_process_cmd="python multiple-request.py"
+            request_process_cmd="python multiple-requests.py"
         ) is not None
 
         # shared connection requests server + client and their relation
         assert _network_relation(
             json_data=json_data,
             server_port=common_vars["network_relation_test_server_port_shared_connection"],
-            request_process_cmd="python shared-connection-request.py"
+            request_process_cmd="python shared-connection-requests.py"
         ) is not None
 
     util.wait_until(wait_for_components, 120, 3)
