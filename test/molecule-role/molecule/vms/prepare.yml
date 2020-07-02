@@ -232,7 +232,7 @@
   vars_files:
     - common_vars.yml
   tasks:
-    - name: "Set process_config.filters.short_lived_processes.qualifier_secs and process_config.filters.short_lived_relations.qualifier_secs to get deterministic behaviour in the short-lived filtering tests"
+    - name: "Set process_config.filters.short_lived_processes and process_config.filters.short_lived_network_relations to get deterministic behaviour in the short-lived filtering tests"
       become: true
       lineinfile:
         path: "/etc/stackstate-agent/stackstate.yaml"
@@ -242,9 +242,9 @@
               short_lived_processes:
                 enabled: true
                 qualifier_secs: {{ process_filter_short_lived_qualifier_secs }}
-              short_lived_relations:
+              short_lived_network_relations:
                 enabled: true
-                qualifier_secs: {{ relation_filter_short_lived_qualifier_secs }}
+                qualifier_secs: {{ network_relation_filter_short_lived_qualifier_secs }}
     - name: "Restart StackState Agent Service"
       become: true
       shell: "systemctl restart stackstate-agent.service"
@@ -367,16 +367,16 @@
     - name: Installing requests library for test connections
       pip:
         name: requests
-    - name: "Start a python http server to make requests to http://localhost:{{ relation_test_server_port_single_request }}"
-      shell: "python -m SimpleHTTPServer {{ relation_test_server_port_single_request }}"
+    - name: "Start a python http server to make requests to http://localhost:{{ network_relation_test_server_port_single_request }}"
+      shell: "python -m SimpleHTTPServer {{ network_relation_test_server_port_single_request }}"
       async: "{{ max_test_time }}"
       poll: 0
-    - name: "Start a python http server to make multiple new requests to http://localhost:{{ relation_test_server_port_multiple_requests }}"
-      shell: "python -m SimpleHTTPServer {{ relation_test_server_port_multiple_requests }}"
+    - name: "Start a python http server to make multiple new requests to http://localhost:{{ network_relation_test_server_port_multiple_requests }}"
+      shell: "python -m SimpleHTTPServer {{ network_relation_test_server_port_multiple_requests }}"
       async: "{{ max_test_time }}"
       poll: 0
-    - name: "Start a python http server to make multiple requests on a shared connection to http://localhost:{{ relation_test_server_port_shared_connection }}"
-      shell: "python -m SimpleHTTPServer {{ relation_test_server_port_shared_connection }}"
+    - name: "Start a python http server to make multiple requests on a shared connection to http://localhost:{{ network_relation_test_server_port_shared_connection }}"
+      shell: "python -m SimpleHTTPServer {{ network_relation_test_server_port_shared_connection }}"
       async: "{{ max_test_time }}"
       poll: 0
     - name: Wait a bit for the SimpleHTTPServers to start
@@ -389,7 +389,7 @@
         line: |
           import time
           import requests
-          requests.get("http://localhost:{{ relation_test_server_port_single_request }}")
+          requests.get("http://localhost:{{ network_relation_test_server_port_single_request }}")
           time.sleep({{ max_test_time }})
     - name: "Start single-request.py"
       shell: "python single-request.py"
@@ -405,7 +405,7 @@
           import time
           import requests
           while True:
-            requests.get("http://localhost:{{ relation_test_server_port_multiple_requests }}")
+            requests.get("http://localhost:{{ network_relation_test_server_port_multiple_requests }}")
             time.sleep(5)
     - name: "Start multiple-requests.py"
       shell: "python multiple-requests.py"
@@ -422,7 +422,7 @@
           import requests
           s = requests.Session()
           while True:
-            s.get("http://localhost:{{ relation_test_server_port_shared_connection }}")
+            s.get("http://localhost:{{ network_relation_test_server_port_shared_connection }}")
             time.sleep(5)
     - name: "Start shared-connection-requests.py"
       shell: "python shared-connection-requests.py"
