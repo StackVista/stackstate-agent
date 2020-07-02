@@ -1,14 +1,15 @@
 # StackState Agent v2 releases
 
-## 2.6.0 (???)
+## 2.6.0 (2020-07-02)
 
 **Features**
-- ServiceNow check add which provides support to visualize the Configuration Items from your ServiceNow instance.[(STAC-8557)](https://stackstate.atlassian.net/browse/STAC-8557)
+- ServiceNow check add which provides support to visualize the Configuration Items from your ServiceNow instance. [(STAC-8557)](https://stackstate.atlassian.net/browse/STAC-8557)
 
 **Improvements**
 
-- Short-lived processes (by default, observed for fewer than 60sec) are filtered and not reported to StackState.[(STAC-6356)](https://stackstate.atlassian.net/browse/STAC-6356)
-- Network connections made by filtered processes (short-lived / blacklisted) are filtered and not reported to StackState.[(STAC-6286)](https://stackstate.atlassian.net/browse/STAC-6286)
+- Short-lived processes (by default, observed for fewer than 60sec) are filtered and not reported to StackState. [(STAC-6356)](https://stackstate.atlassian.net/browse/STAC-6356)
+- Network connections made by filtered processes (short-lived / blacklisted) are filtered and not reported to StackState. [(STAC-6286)](https://stackstate.atlassian.net/browse/STAC-6286)
+- Short-lived network relations (network connections that are not reported more than once within a configured time window) are filtered and not reported to StackState. [(STAC-9182)](https://stackstate.atlassian.net/browse/STAC-9182)
 
 **Bug Fixes**
 - IP based Identifiers for pods are prefixed with the namespace and pod name if HostIP is used on Kubernetes. [(STAC-9451)](https://stackstate.atlassian.net/browse/STAC-9451)
