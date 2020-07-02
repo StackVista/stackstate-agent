@@ -84,8 +84,8 @@ def _network_relation(json_data, server_port, request_process_cmd):
 
     request_process_to_server_relation_match = re.compile(
         "TCP:/urn:process:/agent-ubuntu:{}:{}->urn:process:/agent-ubuntu:{}:{}:agent-ubuntu:.*:127.0.0.1:{}"
-            .format(request_process_process_pid, request_process_create_time,
-                    server_process_pid, server_process_create_time, server_port)
+        .format(request_process_process_pid, request_process_create_time,
+                server_process_pid, server_process_create_time, server_port)
     )
     return _relation_data(
         json_data=json_data,
