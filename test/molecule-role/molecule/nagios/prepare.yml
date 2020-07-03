@@ -1,0 +1,31 @@
+---
+- name: Prepare Nagios and MySQL
+  hosts: agent-nagios-mysql
+  gather_facts: false
+  vars_files:
+    - common_vars.yml
+  tasks:
+    - name: Docker login
+      docker_login:
+        registry: quay.io
+        username: "{{ quay_user }}"
+        password: "{{ quay_password }}"
+        reauthorize: yes
+    - name: Copy Configuration files
+      copy:
+        src: "files/{{ item }}"
+        dest: "/home/ubuntu/{{ item }}"
+        mode: preserve
+      with_items:
+        - docker-compose.yml
+        - create-topics.sh
+    - name: Gather facts (we need the docker network interface ip)
+      setup:
+    - name: Run Docker compose
+      command: docker-compose up -d
+      args:
+        chdir: /home/ubuntu/
+      environment:
+        AGENT_VERSION: "{{ agent_current_branch }}"
+        DOCKER_HOST_IP: "{{ ansible_docker0['ipv4']['address'] }}"
+        STACKSTATE_BRANCH: "{{ stackstate_branch }}"
