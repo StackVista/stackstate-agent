@@ -28,7 +28,7 @@ provisioner:
     links:
       group_vars: common_vars.yml
 scenario:
-  name: compose
+  name: nagios
 verifier:
   name: testinfra
   lint:
