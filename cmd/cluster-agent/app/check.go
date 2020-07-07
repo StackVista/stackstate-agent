@@ -3,13 +3,12 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build kubeapiserver
 // +build kubeapiserver
 
 package app
 
 import (
-	"github.com/StackVista/stackstate-agent/cmd/agent/common/commands"
+	"github.com/DataDog/datadog-agent/cmd/agent/common/commands"
 )
 
 func init() {

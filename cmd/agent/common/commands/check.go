@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -22,19 +21,19 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	"github.com/StackVista/stackstate-agent/cmd/agent/app/standalone"
-	"github.com/StackVista/stackstate-agent/cmd/agent/common"
-	"github.com/StackVista/stackstate-agent/pkg/aggregator"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/collector"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/metadata"
-	"github.com/StackVista/stackstate-agent/pkg/serializer"
-	"github.com/StackVista/stackstate-agent/pkg/status"
-	"github.com/StackVista/stackstate-agent/pkg/util"
-	"github.com/StackVista/stackstate-agent/pkg/util/flavor"
+	"github.com/DataDog/datadog-agent/cmd/agent/app/standalone"
+	"github.com/DataDog/datadog-agent/cmd/agent/common"
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/collector"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/metadata"
+	"github.com/DataDog/datadog-agent/pkg/serializer"
+	"github.com/DataDog/datadog-agent/pkg/status"
+	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/DataDog/datadog-agent/pkg/util/flavor"
 )
 
 var (
@@ -126,9 +125,6 @@ func Check(loggerName config.LoggerName, confFilePath *string, flagNoColor *bool
 			// Initializing the aggregator with a flush interval of 0 (which disable the flush goroutine)
 			agg := aggregator.InitAggregatorWithFlushInterval(s, hostname, 0)
 			common.SetupAutoConfig(config.Datadog.GetString("confd_path"))
-
-			// [sts] init the batcher without the real serializer
-			batcher.InitBatcher(&printingAgentV1Serializer{}, hostname, "agent", config.GetMaxCapacity())
 
 			if config.Datadog.GetBool("inventories_enabled") {
 				metadata.SetupInventoriesExpvar(common.AC, common.Coll)
@@ -432,17 +428,6 @@ func runCheck(c check.Check, agg *aggregator.BufferedAggregator) *check.Stats {
 	return s
 }
 
-// sts
-type printingAgentV1Serializer struct{}
-
-// sts
-func (printingAgentV1Serializer) SendJSONToV1Intake(data interface{}) error {
-	fmt.Fprintln(color.Output, fmt.Sprintf("=== %s ===", color.BlueString("Topology")))
-	j, _ := json.MarshalIndent(data, "", "  ")
-	fmt.Println(string(j))
-	return nil
-}
-
 func printMetrics(agg *aggregator.BufferedAggregator) {
 	series, sketches := agg.GetSeriesAndSketches()
 	if len(series) != 0 {
@@ -477,7 +462,7 @@ func getMetricsData(agg *aggregator.BufferedAggregator) map[string]interface{} {
 	series, sketches := agg.GetSeriesAndSketches()
 	if len(series) != 0 {
 		// Workaround to get the raw sequence of metrics, see:
-		// https://github.com/StackVista/stackstate-agent/blob/b2d9527ec0ec0eba1a7ae64585df443c5b761610/pkg/metrics/series.go#L109-L122
+		// https://github.com/DataDog/datadog-agent/blob/b2d9527ec0ec0eba1a7ae64585df443c5b761610/pkg/metrics/series.go#L109-L122
 		var data map[string]interface{}
 		sj, _ := json.Marshal(series)
 		json.Unmarshal(sj, &data) //nolint:errcheck
