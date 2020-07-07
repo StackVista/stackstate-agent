@@ -388,6 +388,157 @@ func TestPush(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "filter by family",
+			toAdd: map[types.UID][]DDMetricsFam{
+				"uid-1": {
+					{
+						Type: "*v1.Nodes",
+						Name: "kube_node_info",
+						ListMetrics: []DDMetric{
+							{
+								Val:    1,
+								Labels: map[string]string{"foo": "bar"},
+							},
+						},
+					},
+				},
+				"uid-2": {
+					{
+						Type: "*v1.Pods",
+						Name: "kube_pod_info",
+						ListMetrics: []DDMetric{
+							{
+								Val:    1,
+								Labels: map[string]string{"foo": "bar"},
+							},
+						},
+					},
+				},
+			},
+			familyAllow: func(f DDMetricsFam) bool { return f.Name == "kube_node_info" },
+			metricAllow: GetAllMetrics,
+			res: map[string][]DDMetricsFam{
+				"kube_node_info": {
+					{
+						Name: "kube_node_info",
+						Type: "*v1.Nodes",
+						ListMetrics: []DDMetric{
+							{
+								Val: 1,
+								Labels: map[string]string{
+									"foo": "bar",
+									"uid": "uid-1",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "filter by metric",
+			toAdd: map[types.UID][]DDMetricsFam{
+				"uid-1": {
+					{
+						Type: "*v1.Nodes",
+						Name: "kube_node_info",
+						ListMetrics: []DDMetric{
+							{
+								Val:    1,
+								Labels: map[string]string{"foo": "bar"},
+							},
+						},
+					},
+				},
+				"uid-2": {
+					{
+						Type: "*v1.Pods",
+						Name: "kube_pod_info",
+						ListMetrics: []DDMetric{
+							{
+								Val:    2,
+								Labels: map[string]string{"foo": "bar"},
+							},
+						},
+					},
+				},
+			},
+			familyAllow: GetAllFamilies,
+			metricAllow: func(m DDMetric) bool { return m.Val == 1 },
+			res: map[string][]DDMetricsFam{
+				"kube_node_info": {
+					{
+						Name: "kube_node_info",
+						Type: "*v1.Nodes",
+						ListMetrics: []DDMetric{
+							{
+								Val: 1,
+								Labels: map[string]string{
+									"foo": "bar",
+									"uid": "uid-1",
+								},
+							},
+						},
+					},
+				},
+				"kube_pod_info": {
+					{
+						Name:        "kube_pod_info",
+						Type:        "*v1.Pods",
+						ListMetrics: []DDMetric{},
+					},
+				},
+			},
+		},
+		{
+			name: "filter by metric and family",
+			toAdd: map[types.UID][]DDMetricsFam{
+				"uid-1": {
+					{
+						Type: "*v1.Nodes",
+						Name: "kube_node_info",
+						ListMetrics: []DDMetric{
+							{
+								Val:    1,
+								Labels: map[string]string{"foo": "bar"},
+							},
+						},
+					},
+				},
+				"uid-2": {
+					{
+						Type: "*v1.Pods",
+						Name: "kube_pod_info",
+						ListMetrics: []DDMetric{
+							{
+								Val:    2,
+								Labels: map[string]string{"foo": "bar"},
+							},
+						},
+					},
+				},
+			},
+			familyAllow: func(f DDMetricsFam) bool { return f.Name == "kube_node_info" },
+			metricAllow: func(m DDMetric) bool { return m.Val == 1 },
+			res: map[string][]DDMetricsFam{
+				"kube_node_info": {
+					{
+						Name: "kube_node_info",
+						Type: "*v1.Nodes",
+						ListMetrics: []DDMetric{
+							{
+								Val: 1,
+								Labels: map[string]string{
+									"foo": "bar",
+									"uid": "uid-1",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
