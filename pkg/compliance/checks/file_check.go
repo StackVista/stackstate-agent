@@ -17,11 +17,20 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
-var fileReportedFields = []string{
-	compliance.FileFieldPath,
-	compliance.FileFieldPermissions,
-	compliance.FileFieldUser,
-	compliance.FileFieldGroup,
+var (
+	// ErrPropertyKindNotSupported is returned for property kinds not supported by the check
+	ErrPropertyKindNotSupported = errors.New("property kind '%s' not supported")
+
+	// ErrPropertyNotSupported is returned for properties not supported by the check
+	ErrPropertyNotSupported = errors.New("property '%s' not supported")
+)
+
+type pathMapper func(string) string
+
+type fileCheck struct {
+	baseCheck
+	pathMapper pathMapper
+	file       *compliance.File
 }
 
 func resolveFile(_ context.Context, e env.Env, ruleID string, res compliance.Resource) (interface{}, error) {
@@ -45,10 +54,16 @@ func resolveFile(_ context.Context, e env.Env, ruleID string, res compliance.Res
 
 	var instances []*eval.Instance
 
-	for _, path := range paths {
-		// Re-computing relative after glob filtering
-		relPath := e.RelativeToHostRoot(path)
-		fi, err := os.Stat(path)
+		switch field.Kind {
+		case compliance.PropertyKindAttribute:
+			v, err = c.getAttribute(filePath, fi, field.Property)
+		case compliance.PropertyKindJSONQuery:
+			v, err = c.getPathValue(filePath, field.Property, jsonGetter)
+		case compliance.PropertyKindYAMLQuery:
+			v, err = c.getPathValue(filePath, field.Property, yamlGetter)
+		default:
+			return invalidInputErr(ErrPropertyKindNotSupported, field.Kind)
+		}
 		if err != nil {
 			// This is not a failure unless we don't have any paths to act on
 			log.Debugf("%s: file check failed to stat %s [%s]", ruleID, path, relPath)
@@ -79,6 +94,11 @@ func resolveFile(_ context.Context, e env.Env, ruleID string, res compliance.Res
 
 		instances = append(instances, instance)
 	}
+	return "", invalidInputErr(ErrPropertyNotSupported, property)
+}
+
+// getter applies jq query to get string value from json or yaml raw data
+type getter func([]byte, string) (string, error)
 
 	if len(instances) == 0 {
 		return nil, fmt.Errorf("no files found for file check %q", file.Path)

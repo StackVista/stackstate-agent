@@ -45,9 +45,11 @@ func resolveKubeapiserver(ctx context.Context, e env.Env, ruleID string, res com
 		return nil, fmt.Errorf("cannot run Kubeapiserver check, action verb is empty")
 	}
 
-	if len(kubeResource.Version) == 0 {
-		kubeResource.Version = "v1"
-	}
+	return check, nil
+}
+
+func (c *kubeApiserverCheck) Run() error {
+	log.Debugf("%s: kubeapiserver check: %s", c.ruleID, c.kubeResource.String())
 
 	resourceSchema := schema.GroupVersionResource{
 		Group:    kubeResource.Group,

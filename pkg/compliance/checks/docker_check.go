@@ -8,6 +8,7 @@ package checks
 import (
 	"context"
 	"fmt"
+	"github.com/docker/docker/client"
 
 	"github.com/StackVista/stackstate-agent/pkg/compliance"
 	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
@@ -16,17 +17,25 @@ import (
 	"github.com/docker/docker/api/types"
 )
 
-var (
-	dockerReportedFields = []string{
-		compliance.DockerImageFieldID,
-		compliance.DockerImageFieldTags,
-		compliance.DockerContainerFieldID,
-		compliance.DockerContainerFieldName,
-		compliance.DockerContainerFieldImage,
-		compliance.DockerNetworkFieldName,
-		compliance.DockerVersionFieldVersion,
-	}
-)
+// ErrDockerKindNotSupported is returned when an unsupported kind of docker
+// object is requested by check
+var ErrDockerKindNotSupported = errors.New("unsupported docker object kind '%s'")
+
+// DockerClient abstracts Docker API client
+type DockerClient interface {
+	client.ConfigAPIClient
+	client.ContainerAPIClient
+	client.ImageAPIClient
+	client.NodeAPIClient
+	client.NetworkAPIClient
+	client.SystemAPIClient
+	client.VolumeAPIClient
+	ServerVersion(ctx context.Context) (types.Version, error)
+	Close() error
+}
+
+type dockerCheck struct {
+	baseCheck
 
 func dockerKindNotSupported(kind string) error {
 	return fmt.Errorf("unsupported docker object kind '%s'", kind)
@@ -54,7 +63,7 @@ func resolveDocker(ctx context.Context, e env.Env, ruleID string, res compliance
 	case "version":
 		return newDockerVersionInstance(ctx, client)
 	default:
-		return nil, dockerKindNotSupported(res.Docker.Kind)
+		return invalidInputErr(ErrDockerKindNotSupported, c.dockerResource.Kind)
 	}
 }
 
