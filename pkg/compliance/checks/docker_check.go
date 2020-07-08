@@ -7,8 +7,12 @@ package checks
 
 import (
 	"context"
-	"fmt"
-	"github.com/docker/docker/client"
+	"errors"
+	"strings"
+	"text/template"
+
+	"github.com/Masterminds/sprig"
+	"github.com/docker/docker/api/types"
 
 	"github.com/StackVista/stackstate-agent/pkg/compliance"
 	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
@@ -21,56 +25,103 @@ import (
 // object is requested by check
 var ErrDockerKindNotSupported = errors.New("unsupported docker object kind '%s'")
 
-// DockerClient abstracts Docker API client
-type DockerClient interface {
-	client.ConfigAPIClient
-	client.ContainerAPIClient
-	client.ImageAPIClient
-	client.NodeAPIClient
-	client.NetworkAPIClient
-	client.SystemAPIClient
-	client.VolumeAPIClient
-	ServerVersion(ctx context.Context) (types.Version, error)
-	Close() error
-}
-
 type dockerCheck struct {
 	baseCheck
-
-func dockerKindNotSupported(kind string) error {
-	return fmt.Errorf("unsupported docker object kind '%s'", kind)
+	dockerResource *compliance.DockerResource
 }
 
-func resolveDocker(ctx context.Context, e env.Env, ruleID string, res compliance.Resource) (interface{}, error) {
-	if res.Docker == nil {
-		return nil, fmt.Errorf("expecting docker resource in docker check")
-	}
+func newDockerCheck(baseCheck baseCheck, dockerResource *compliance.DockerResource) (*dockerCheck, error) {
+	// TODO: validate config for the docker resource here
+	return &dockerCheck{
+		baseCheck:      baseCheck,
+		dockerResource: dockerResource,
+	}, nil
+}
 
 	client := e.DockerClient()
 	if client == nil {
 		return nil, fmt.Errorf("docker client not configured")
 	}
 
-	switch res.Docker.Kind {
+func (c *dockerCheck) iterate(ctx context.Context, fn iterFn) error {
+	client := c.DockerClient()
+	if client == nil {
+		return errors.New("docker client not configured")
+	}
+
+	switch c.dockerResource.Kind {
 	case "image":
-		return newDockerImageIterator(ctx, client)
+		images, err := client.ImageList(ctx, types.ImageListOptions{All: true})
+		if err != nil {
+			return err
+		}
+		for _, image := range images {
+			imageInspect, _, err := client.ImageInspectWithRaw(ctx, image.ID)
+			if err != nil {
+				log.Errorf("failed to inspect image %s", image.ID)
+			}
+			fn(image.ID, imageInspect)
+		}
 	case "container":
-		return newDockerContainerIterator(ctx, client)
+		containers, err := client.ContainerList(ctx, types.ContainerListOptions{All: true})
+		if err != nil {
+			return err
+		}
+		for _, container := range containers {
+			containerInspect, err := client.ContainerInspect(ctx, container.ID)
+			if err != nil {
+				log.Errorf("failed to inspect container %s", container.ID)
+			}
+			fn(container.ID, containerInspect)
+		}
 	case "network":
-		return newDockerNetworkIterator(ctx, client)
+		networks, err := client.NetworkList(ctx, types.NetworkListOptions{})
+		if err != nil {
+			return err
+		}
+		for _, network := range networks {
+			fn(network.ID, network)
+		}
 	case "info":
-		return newDockerInfoInstance(ctx, client)
+		info, err := client.Info(ctx)
+		if err != nil {
+			return err
+		}
+		fn("", info)
 	case "version":
-		return newDockerVersionInstance(ctx, client)
+		version, err := client.ServerVersion(ctx)
+		if err != nil {
+			return err
+		}
+		fn("", version)
 	default:
 		return invalidInputErr(ErrDockerKindNotSupported, c.dockerResource.Kind)
 	}
+	return nil
 }
 
-func newDockerInfoInstance(ctx context.Context, client env.DockerClient) (*eval.Instance, error) {
-	info, err := client.Info(ctx)
-	if err != nil {
-		return nil, err
+func (c *dockerCheck) Run() error {
+	log.Debugf("%s: running docker check", c.id)
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+	return c.iterate(ctx, c.inspect)
+}
+
+func (c *dockerCheck) inspect(id string, obj interface{}) {
+	log.Debugf("%s: iterating %s[id=%s]", c.id, c.dockerResource.Kind, id)
+
+	for _, f := range c.dockerResource.Filter {
+		if f.Include != nil {
+			prop := evalTemplate(f.Include.Property, obj)
+			if !evalCondition(prop, f.Include) {
+				return
+			}
+		} else if f.Exclude != nil {
+			prop := evalTemplate(f.Exclude.Property, obj)
+			if evalCondition(prop, f.Exclude) {
+				return
+			}
+		}
 	}
 
 	return &eval.Instance{

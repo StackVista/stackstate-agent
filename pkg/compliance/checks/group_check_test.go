@@ -71,7 +71,12 @@ func TestGroupCheck(t *testing.T) {
 			env := &mocks.Env{}
 			env.On("EtcGroupPath").Return(test.etcGroupFile)
 
-			groupCheck, err := newResourceCheck(env, "rule-id", test.resource)
+			env := &mocks.Env{}
+			env.On("Reporter").Return(reporter)
+			env.On("EtcGroupPath").Return(test.etcGroupFile)
+
+			base := newTestBaseCheck(env, checkKindAudit)
+			check, err := newGroupCheck(base, test.group)
 			assert.NoError(err)
 
 			result, err := groupCheck.check(env)

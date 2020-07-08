@@ -12,9 +12,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/docker"
+	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/docker"
 )
 
 func newDockerClient() (env.DockerClient, error) {

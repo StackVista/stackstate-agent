@@ -29,18 +29,36 @@ type pathMapper func(string) string
 
 type fileCheck struct {
 	baseCheck
-	pathMapper pathMapper
-	file       *compliance.File
+	file *compliance.File
 }
 
-func resolveFile(_ context.Context, e env.Env, ruleID string, res compliance.Resource) (interface{}, error) {
-	if res.File == nil {
-		return nil, fmt.Errorf("expecting file resource in file check")
+func newFileCheck(baseCheck baseCheck, file *compliance.File) (*fileCheck, error) {
+	// TODO: validate config for the file here
+	return &fileCheck{
+		baseCheck: baseCheck,
+		file:      file,
+	}, nil
+}
+
+func (c *fileCheck) Run() error {
+	// TODO: here we will introduce various cached results lookups
+
+	var err error
+	path := c.file.Path
+	if path == "" {
+		path, err = c.ResolveValueFrom(c.file.PathFrom)
+		if err != nil {
+			return err
+		}
 	}
 
-	file := res.File
+	log.Debugf("%s: file check: %s", c.ruleID, path)
+	if path != "" {
+		return c.reportFile(c.NormalizePath(path))
+	}
 
-	log.Debugf("%s: running file check for %q", ruleID, file.Path)
+	return log.Error("no path for file check")
+}
 
 	path, err := resolvePath(e, file.Path)
 	if err != nil {
@@ -58,9 +76,9 @@ func resolveFile(_ context.Context, e env.Env, ruleID string, res compliance.Res
 		case compliance.PropertyKindAttribute:
 			v, err = c.getAttribute(filePath, fi, field.Property)
 		case compliance.PropertyKindJSONQuery:
-			v, err = c.getPathValue(filePath, field.Property, jsonGetter)
+			v, err = queryValueFromFile(filePath, field.Property, jsonGetter)
 		case compliance.PropertyKindYAMLQuery:
-			v, err = c.getPathValue(filePath, field.Property, yamlGetter)
+			v, err = queryValueFromFile(filePath, field.Property, yamlGetter)
 		default:
 			return invalidInputErr(ErrPropertyKindNotSupported, field.Kind)
 		}
@@ -122,9 +140,12 @@ func fileQuery(path string, get getter) eval.Function {
 	}
 }
 
-func fileJQ(path string) eval.Function {
-	return fileQuery(path, jsonGetter)
-}
+func queryValueFromFile(filePath string, query string, get getter) (string, error) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
 
 func fileYAML(path string) eval.Function {
 	return fileQuery(path, yamlGetter)

@@ -11,8 +11,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/mocks"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/compliance"
+	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	"github.com/DataDog/datadog-agent/pkg/compliance/mocks"
 	"github.com/docker/docker/api/types"
 
 	"github.com/stretchr/testify/mock"
@@ -22,6 +24,33 @@ import (
 var (
 	mockCtx = mock.Anything
 )
+
+func newTestRuleEvent(tags []string, kv compliance.KVMap) *compliance.RuleEvent {
+	return &compliance.RuleEvent{
+		RuleID:       testCheckMeta.ruleID,
+		Framework:    testCheckMeta.framework,
+		Version:      testCheckMeta.version,
+		ResourceType: testCheckMeta.resourceType,
+		ResourceID:   testCheckMeta.resourceID,
+		Tags:         tags,
+		Data:         kv,
+	}
+}
+
+func newTestBaseCheck(env env.Env, kind checkKind) baseCheck {
+	return baseCheck{
+		Env:       env,
+		id:        check.ID("check-1"),
+		kind:      kind,
+		interval:  time.Minute,
+		framework: testCheckMeta.framework,
+		version:   testCheckMeta.version,
+
+		ruleID:       testCheckMeta.ruleID,
+		resourceType: testCheckMeta.resourceType,
+		resourceID:   testCheckMeta.resourceID,
+	}
+}
 
 func loadTestJSON(path string, obj interface{}) error {
 	jsonFile, err := os.Open(path)
@@ -69,8 +98,15 @@ func TestDockerImageCheck(t *testing.T) {
 	defer env.AssertExpectations(t)
 	env.On("DockerClient").Return(client)
 
-	dockerCheck, err := newResourceCheck(env, "rule-id", resource)
-	assert.NoError(err)
+	env := &mocks.Env{}
+	defer env.AssertExpectations(t)
+	env.On("Reporter").Return(reporter)
+	env.On("DockerClient").Return(client)
+
+	dockerCheck := dockerCheck{
+		baseCheck:      newTestBaseCheck(env, checkKindDocker),
+		dockerResource: resource,
+	}
 
 	report, err := dockerCheck.check(env)
 	assert.NoError(err)
@@ -97,12 +133,29 @@ func TestDockerNetworkCheck(t *testing.T) {
 	assert.NoError(loadTestJSON("./testdata/docker/network-list.json", &networks))
 	client.On("NetworkList", mockCtx, types.NetworkListOptions{}).Return(networks, nil)
 
+	reporter := &mocks.Reporter{}
+	defer reporter.AssertExpectations(t)
+
+	reporter.On(
+		"Report",
+		newTestRuleEvent(
+			[]string{"check_kind:docker"},
+			compliance.KVMap{
+				"network_id":                        "e7ed6c335383178f99b61a8a44b82b62abc17b31d68b792180728bf8f2c599ec",
+				"default_bridge_traffic_restricted": "true",
+			},
+		),
+	).Once()
+
 	env := &mocks.Env{}
 	defer env.AssertExpectations(t)
+	env.On("Reporter").Return(reporter)
 	env.On("DockerClient").Return(client)
 
-	dockerCheck, err := newResourceCheck(env, "rule-id", resource)
-	assert.NoError(err)
+	dockerCheck := dockerCheck{
+		baseCheck:      newTestBaseCheck(env, checkKindDocker),
+		dockerResource: resource,
+	}
 
 	report, err := dockerCheck.check(env)
 	assert.NoError(err)
@@ -200,8 +253,37 @@ func TestDockerContainerCheck(t *testing.T) {
 				Condition: test.condition,
 			}
 
-			client := &mocks.DockerClient{}
-			defer client.AssertExpectations(t)
+	var containers []types.Container
+	assert.NoError(loadTestJSON("./testdata/docker/container-list.json", &containers))
+	client.On("ContainerList", mockCtx, types.ContainerListOptions{All: true}).Return(containers, nil)
+
+	var container types.ContainerJSON
+	assert.NoError(loadTestJSON("./testdata/docker/container-3c4bd9d35d42.json", &container))
+	client.On("ContainerInspect", mockCtx, "3c4bd9d35d42efb2314b636da42d4edb3882dc93ef0b1931ed0e919efdceec87").Return(container, nil, nil)
+
+	reporter := &mocks.Reporter{}
+	defer reporter.AssertExpectations(t)
+
+	reporter.On(
+		"Report",
+		newTestRuleEvent(
+			[]string{"check_kind:docker"},
+			compliance.KVMap{
+				"container_id": "3c4bd9d35d42efb2314b636da42d4edb3882dc93ef0b1931ed0e919efdceec87",
+				"privileged":   "true",
+			},
+		),
+	).Once()
+
+	env := &mocks.Env{}
+	defer env.AssertExpectations(t)
+	env.On("Reporter").Return(reporter)
+	env.On("DockerClient").Return(client)
+
+	dockerCheck := dockerCheck{
+		baseCheck:      newTestBaseCheck(env, checkKindDocker),
+		dockerResource: resource,
+	}
 
 			var containers []types.Container
 			assert.NoError(loadTestJSON("./testdata/docker/container-list.json", &containers))
@@ -246,9 +328,28 @@ func TestDockerInfoCheck(t *testing.T) {
 	assert.NoError(loadTestJSON("./testdata/docker/info.json", &info))
 	client.On("Info", mockCtx).Return(info, nil)
 
+	reporter := &mocks.Reporter{}
+	defer reporter.AssertExpectations(t)
+
+	reporter.On(
+		"Report",
+		newTestRuleEvent(
+			[]string{"check_kind:docker"},
+			compliance.KVMap{
+				"insecure_registries": "127.0.0.0/8",
+			},
+		),
+	).Once()
+
 	env := &mocks.Env{}
 	defer env.AssertExpectations(t)
+	env.On("Reporter").Return(reporter)
 	env.On("DockerClient").Return(client)
+
+	dockerCheck := dockerCheck{
+		baseCheck:      newTestBaseCheck(env, checkKindDocker),
+		dockerResource: resource,
+	}
 
 	dockerCheck, err := newResourceCheck(env, "rule-id", resource)
 	assert.NoError(err)
@@ -276,12 +377,28 @@ func TestDockerVersionCheck(t *testing.T) {
 	assert.NoError(loadTestJSON("./testdata/docker/version.json", &version))
 	client.On("ServerVersion", mockCtx).Return(version, nil)
 
+	reporter := &mocks.Reporter{}
+	defer reporter.AssertExpectations(t)
+
+	reporter.On(
+		"Report",
+		newTestRuleEvent(
+			[]string{"check_kind:docker"},
+			compliance.KVMap{
+				"experimental_features": "true",
+			},
+		),
+	).Once()
+
 	env := &mocks.Env{}
 	defer env.AssertExpectations(t)
+	env.On("Reporter").Return(reporter)
 	env.On("DockerClient").Return(client)
 
-	dockerCheck, err := newResourceCheck(env, "rule-id", resource)
-	assert.NoError(err)
+	dockerCheck := dockerCheck{
+		baseCheck:      newTestBaseCheck(env, checkKindDocker),
+		dockerResource: resource,
+	}
 
 	report, err := dockerCheck.check(env)
 	assert.NoError(err)

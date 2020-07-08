@@ -22,27 +22,24 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
-var groupReportedFields = []string{
-	compliance.GroupFieldName,
-	compliance.GroupFieldUsers,
-	compliance.GroupFieldID,
+type groupCheck struct {
+	baseCheck
+	group *compliance.Group
 }
 
-// ErrGroupNotFound is returned when a group cannot be found
-var ErrGroupNotFound = errors.New("group not found")
+func newGroupCheck(baseCheck baseCheck, group *compliance.Group) (*groupCheck, error) {
+	return &groupCheck{
+		baseCheck: baseCheck,
+		group:     group,
+	}, nil
+}
 
-func resolveGroup(_ context.Context, e env.Env, id string, res compliance.Resource) (interface{}, error) {
-	if res.Group == nil {
-		return nil, fmt.Errorf("%s: expecting group resource in group check", id)
-	}
-
-	group := res.Group
-
-	f, err := os.Open(e.EtcGroupPath())
+func (c *groupCheck) Run() error {
+	f, err := os.Open(c.EtcGroupPath())
 
 	if err != nil {
-		log.Errorf("%s: failed to open %s: %v", id, e.EtcGroupPath(), err)
-		return nil, err
+		log.Errorf("%s: failed to open %s: %v", c.id, c.EtcGroupPath(), err)
+		return err
 	}
 
 	defer f.Close()

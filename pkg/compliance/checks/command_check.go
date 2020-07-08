@@ -17,7 +17,8 @@ import (
 )
 
 const (
-	defaultTimeout = 30 * time.Second
+	defaultTimeout             = 30 * time.Second
+	defaultOutputSizeLimit int = 2 * 1024
 )
 
 var commandReportedFields = []string{
@@ -41,19 +42,24 @@ func resolveCommand(ctx context.Context, _ env.Env, ruleID string, res complianc
 
 	// Create `execCommand` from `command` model
 	// Binary takes precedence over Shell
-	if execCommand == nil {
-		execCommand = shellCmdToBinaryCmd(command.ShellCmd)
+	if command.BinaryCmd != nil {
+		commandCheck.execCommand = *command.BinaryCmd
+	} else {
+		commandCheck.execCommand = shellCmdToBinaryCmd(command.ShellCmd)
 	}
 
 	commandTimeout := defaultTimeout
 	if command.TimeoutSeconds != 0 {
-		commandTimeout = time.Duration(command.TimeoutSeconds) * time.Second
+		commandCheck.commandTimeout = time.Duration(command.TimeoutSeconds) * time.Second
+	} else {
+		commandCheck.commandTimeout = defaultTimeout
 	}
 
 	context, cancel := context.WithTimeout(ctx, commandTimeout)
 	defer cancel()
 
-	exitCode, stdout, err := commandRunner(context, execCommand.Name, execCommand.Args, true)
+	// TODO: Capture stdout only when necessary
+	exitCode, stdout, err := commandRunner(context, c.execCommand.Name, c.execCommand.Args, true)
 	if exitCode == -1 && err != nil {
 		return nil, fmt.Errorf("command '%v' execution failed, error: %v", command, err)
 	}

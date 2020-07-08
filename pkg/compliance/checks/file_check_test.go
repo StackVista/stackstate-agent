@@ -25,32 +25,19 @@ import (
 )
 
 func TestFileCheck(t *testing.T) {
-	assert := assert.New(t)
+	type setupFunc func(t *testing.T, env *mocks.Env) *fileCheck
+	type validateFunc func(t *testing.T, kv compliance.KVMap)
 
-	type setupFileFunc func(t *testing.T, env *mocks.Env, file *compliance.File)
-	type validateFunc func(t *testing.T, file *compliance.File, report *compliance.Report)
+	setupFile := func(file *compliance.File) setupFunc {
+		return func(t *testing.T, env *mocks.Env) *fileCheck {
+			if file.Path != "" {
+				env.On("NormalizePath", file.Path).Return(file.Path)
+			}
 
-	normalizePath := func(t *testing.T, env *mocks.Env, file *compliance.File) {
-		t.Helper()
-		env.On("NormalizeToHostRoot", file.Path).Return(file.Path)
-		env.On("RelativeToHostRoot", file.Path).Return(file.Path)
-	}
-
-	cleanUpDirs := make([]string, 0)
-	createTempFiles := func(t *testing.T, numFiles int) (string, []string) {
-		paths := make([]string, 0, numFiles)
-		dir, err := ioutil.TempDir("", "cmplFileTest")
-		assert.NoError(err)
-		cleanUpDirs = append(cleanUpDirs, dir)
-
-		for i := 0; i < numFiles; i++ {
-			fileName := fmt.Sprintf("test-%d-%d.dat", i, time.Now().Unix())
-			filePath := path.Join(dir, fileName)
-			paths = append(paths, filePath)
-
-			f, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0644)
-			defer f.Close()
-			assert.NoError(err)
+			return &fileCheck{
+				baseCheck: newTestBaseCheck(env, checkKindFile),
+				file:      file,
+			}
 		}
 
 		return dir, paths
@@ -64,37 +51,31 @@ func TestFileCheck(t *testing.T) {
 		expectError error
 	}{
 		{
-			name: "file permissions",
-			resource: compliance.Resource{
-				File: &compliance.File{
-					Path: "/etc/test-permissions.dat",
-				},
-				Condition: "file.permissions == 0644",
-			},
-			setup: func(t *testing.T, env *mocks.Env, file *compliance.File) {
-				_, filePaths := createTempFiles(t, 1)
+			name: "permissions",
+			setup: func(t *testing.T, env *mocks.Env) *fileCheck {
+				dir := os.TempDir()
 
-				env.On("NormalizeToHostRoot", file.Path).Return(filePaths[0])
-				env.On("RelativeToHostRoot", filePaths[0]).Return(file.Path)
-			},
-			validate: func(t *testing.T, file *compliance.File, report *compliance.Report) {
-				assert.True(report.Passed)
-				assert.Equal(file.Path, report.Data["file.path"])
-				assert.Equal(uint64(0644), report.Data["file.permissions"])
-			},
-		},
-		{
-			name: "file permissions (glob)",
-			resource: compliance.Resource{
-				File: &compliance.File{
-					Path: "/etc/*.dat",
-				},
-				Condition: "file.permissions == 0644",
-			},
-			setup: func(t *testing.T, env *mocks.Env, file *compliance.File) {
-				tempDir, filePaths := createTempFiles(t, 2)
-				for _, filePath := range filePaths {
-					env.On("RelativeToHostRoot", filePath).Return(path.Join("/etc/", path.Base(filePath)))
+				fileName := fmt.Sprintf("test-permissions-file-check-%d.dat", time.Now().Unix())
+				filePath := path.Join(dir, fileName)
+
+				f, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0644)
+				defer f.Close()
+				assert.NoError(t, err)
+
+				env.On("NormalizePath", fileName).Return(filePath)
+
+				file := &compliance.File{
+					Path: fileName,
+					Report: compliance.Report{
+						{
+							Property: "permissions",
+							Kind:     compliance.PropertyKindAttribute,
+						},
+					},
+				}
+				return &fileCheck{
+					baseCheck: newTestBaseCheck(env, checkKindFile),
+					file:      file,
 				}
 
 				env.On("NormalizeToHostRoot", file.Path).Return(path.Join(tempDir, "/*.dat"))
@@ -239,10 +220,48 @@ func TestFileCheck(t *testing.T) {
 			},
 		},
 		{
-			name: "yaml(apiVersion)",
-			resource: compliance.Resource{
-				File: &compliance.File{
-					Path: "/etc/pod.yaml",
+			name: "jsonquery experimental (pathFrom)",
+			setup: func(t *testing.T, env *mocks.Env) *fileCheck {
+				file := &compliance.File{
+					PathFrom: compliance.ValueFrom{
+						{
+							Process: &compliance.ValueFromProcess{
+								Name: "dockerd",
+								Flag: "--config-file",
+							},
+						},
+					},
+					Report: compliance.Report{
+						{
+							Property: ".experimental",
+							Kind:     "jsonquery",
+							As:       "experimental",
+						},
+					},
+				}
+
+				path := "./testdata/file/daemon.json"
+				env.On("ResolveValueFrom", file.PathFrom).Return(path, nil)
+				env.On("NormalizePath", path).Return(path)
+
+				return setupFile(file)(t, env)
+			},
+			validate: func(t *testing.T, kv compliance.KVMap) {
+				assert.Equal(t, compliance.KVMap{
+					"experimental": "false",
+				}, kv)
+			},
+		},
+		{
+			name: "jsonquery ulimits",
+			setup: setupFile(&compliance.File{
+				Path: "./testdata/file/daemon.json",
+				Report: compliance.Report{
+					{
+						Property: `.["default-ulimits"].nofile.Hard`,
+						Kind:     "jsonquery",
+						As:       "nofile_hard",
+					},
 				},
 				Condition: `file.yaml(".apiVersion") == "v1"`,
 			},
@@ -280,24 +299,26 @@ func TestFileCheck(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			reporter := &mocks.Reporter{}
+			defer reporter.AssertExpectations(t)
+
 			env := &mocks.Env{}
 			defer env.AssertExpectations(t)
 
-			if test.setup != nil {
-				test.setup(t, env, test.resource.File)
-			}
+			env.On("Reporter").Return(reporter)
 
-			fileCheck, err := newResourceCheck(env, "rule-id", test.resource)
-			assert.NoError(err)
+			fc := test.setup(t, env)
 
-			report, err := fileCheck.check(env)
+			reporter.On(
+				"Report",
+				mock.AnythingOfType("*compliance.RuleEvent"),
+			).Run(func(args mock.Arguments) {
+				event := args.Get(0).(*compliance.RuleEvent)
+				test.validate(t, event.Data)
+			})
 
-			if test.expectError != nil {
-				assert.EqualError(err, test.expectError.Error())
-			} else {
-				assert.NoError(err)
-				test.validate(t, test.resource.File, report)
-			}
+			err := fc.Run()
+			assert.NoError(t, err)
 		})
 	}
 

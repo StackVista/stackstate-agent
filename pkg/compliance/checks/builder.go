@@ -7,19 +7,18 @@
 package checks
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/hostinfo"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/compliance"
+	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/hostinfo"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	cache "github.com/patrickmn/go-cache"
 )
 
@@ -205,7 +204,7 @@ func NewBuilder(reporter event.Reporter, options ...BuilderOption) (Builder, err
 type builder struct {
 	checkInterval time.Duration
 
-	reporter   event.Reporter
+	reporter   compliance.Reporter
 	valueCache *cache.Cache
 
 	hostname     string
@@ -385,53 +384,46 @@ func (b *builder) isKubernetesNodeEligible(hostSelector string) (bool, error) {
 	return eligible, nil
 }
 
-func (b *builder) getNodeLabel(args ...interface{}) (string, bool, error) {
-	if len(args) == 0 {
-		return "", false, errors.New(`expecting one argument for label`)
-	}
-	label, ok := args[0].(string)
-	if !ok {
-		return "", false, fmt.Errorf(`expecting string value for label argument`)
-	}
-	if b.nodeLabels == nil {
-		return "", false, nil
-	}
-	v, ok := b.nodeLabels[label]
-	return v, ok, nil
-}
-
-func (b *builder) nodeHasLabel(_ *eval.Instance, args ...interface{}) (interface{}, error) {
-	_, ok, err := b.getNodeLabel(args...)
-	return ok, err
-}
-
-func (b *builder) nodeLabel(_ *eval.Instance, args ...interface{}) (interface{}, error) {
-	v, _, err := b.getNodeLabel(args...)
-	return v, err
-}
-
-func (b *builder) nodeLabelKeys() []string {
-	var keys []string
-	for k := range b.nodeLabels {
-		keys = append(keys, k)
+func (b *builder) checkFromRule(meta *compliance.SuiteMeta, ruleID string, ruleScope string, resource compliance.Resource) (check.Check, error) {
+	switch {
+	case resource.File != nil:
+		return newFileCheck(b.baseCheck(ruleID, checkKindFile, ruleScope, meta), resource.File)
+	case resource.Group != nil:
+		return newGroupCheck(b.baseCheck(ruleID, checkKindGroup, ruleScope, meta), resource.Group)
+	case resource.Process != nil:
+		return newProcessCheck(b.baseCheck(ruleID, checkKindProcess, ruleScope, meta), resource.Process)
+	case resource.Command != nil:
+		return newCommandCheck(b.baseCheck(ruleID, checkKindCommand, ruleScope, meta), resource.Command)
+	case resource.Audit != nil:
+		if b.auditClient == nil {
+			return nil, log.Errorf("%s: skipped - audit client not initialized", ruleID)
+		}
+		return newAuditCheck(b.baseCheck(ruleID, checkKindAudit, ruleScope, meta), resource.Audit)
+	case resource.Docker != nil:
+		if b.dockerClient == nil {
+			return nil, log.Errorf("%s: skipped - docker client not initialized", ruleID)
+		}
+		return newDockerCheck(b.baseCheck(ruleID, checkKindFile, ruleScope, meta), resource.Docker)
+	case resource.KubeApiserver != nil:
+		if b.kubeClient == nil {
+			return nil, log.Errorf("%s: skipped - kube client not initialized", ruleID)
+		}
+		return newKubeapiserverCheck(b.baseCheck(ruleID, checkKindKubeApiserver, ruleScope, meta), resource.KubeApiserver)
+	default:
+		log.Errorf("%s: resource not supported", ruleID)
+		return nil, ErrResourceNotSupported
 	}
 	return keys
 }
 
-func (b *builder) newCheck(meta *compliance.SuiteMeta, ruleScope compliance.RuleScope, rule *compliance.Rule) *complianceCheck {
-	checkable, err := newResourceCheckList(b, rule.ID, rule.Resources)
-
-	if err != nil {
-		log.Warnf("%s: check failed to initialize: %v", rule.ID, err)
-	}
-
-	// We capture err as configuration error but do not prevent check creation
-	return &complianceCheck{
+func (b *builder) baseCheck(ruleID string, kind checkKind, ruleScope string, meta *compliance.SuiteMeta) baseCheck {
+	return baseCheck{
 		Env: b,
 
-		ruleID:      rule.ID,
-		description: rule.Description,
-		interval:    b.checkInterval,
+		name:     ruleID,
+		id:       newCheckID(ruleID, kind),
+		kind:     kind,
+		interval: b.checkInterval,
 
 		framework: meta.Framework,
 		suiteName: meta.Name,
@@ -638,5 +630,119 @@ func (b *builder) evalValueFromFile(get getter) eval.Function {
 			return nil, fmt.Errorf(`expecting string value for query argument`)
 		}
 		return queryValueFromFile(path, query, get)
+	}
+}
+
+func (b *builder) Reporter() compliance.Reporter {
+	return b.reporter
+}
+
+func (b *builder) DockerClient() env.DockerClient {
+	return b.dockerClient
+}
+
+func (b *builder) AuditClient() env.AuditClient {
+	return b.auditClient
+}
+
+func (b *builder) KubeClient() env.KubeClient {
+	return b.kubeClient
+}
+
+func (b *builder) Hostname() string {
+	return b.hostname
+}
+
+func (b *builder) EtcGroupPath() string {
+	return b.etcGroupPath
+}
+
+func (b *builder) NormalizePath(path string) string {
+	if b.pathMapper == nil {
+		return path
+	}
+	return b.pathMapper(path)
+}
+
+func (b *builder) ResolveValueFrom(valueFrom compliance.ValueFrom) (string, error) {
+	for _, source := range valueFrom {
+		key := source.String()
+		if value, exists := b.valueCache.Get(key); exists {
+			return value.(string), nil
+		}
+
+		value, err := b.getValueFromSource(source)
+		if err != nil {
+			log.Debugf("Failed to fetch %s: %v", key, err)
+			continue
+		}
+
+		b.valueCache.Set(key, value, cache.DefaultExpiration)
+		return value, nil
+
+	}
+	return "", errors.New("failed to resolve")
+}
+
+func (b *builder) getValueFromSource(source compliance.ValueSource) (string, error) {
+	switch {
+	case source.Command != nil:
+		return b.getValueFromCommand(source.Command)
+	case source.Process != nil:
+		return b.getValueFromProcess(source.Process)
+	case source.File != nil:
+		return b.getValueFromFile(source.File)
+	}
+	return "", errors.New("unsupported value source")
+}
+
+func (b *builder) getValueFromCommand(cmd *compliance.ValueFromCommand) (string, error) {
+	log.Debugf("Resolving value from command: %v", cmd)
+
+	context, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	defer cancel()
+
+	var execCommand compliance.BinaryCmd
+	if cmd.BinaryCmd != nil {
+		execCommand = *cmd.BinaryCmd
+	} else if cmd.ShellCmd != nil {
+		execCommand = shellCmdToBinaryCmd(cmd.ShellCmd)
+	} else {
+		return "", errors.New("invalid command source value")
+	}
+
+	exitCode, stdout, err := commandRunner(context, execCommand.Name, execCommand.Args, true)
+	if exitCode == -1 && err != nil {
+		return "", fmt.Errorf("command '%v' execution failed, error: %v", cmd, err)
+	}
+	return string(stdout), nil
+}
+
+func (b *builder) getValueFromProcess(p *compliance.ValueFromProcess) (string, error) {
+	log.Debugf("Resolving value from process: %v", p)
+
+	processes, err := getProcesses(cacheValidity)
+	if err != nil {
+		return "", log.Errorf("Unable to fetch processes: %v", err)
+	}
+
+	matchedProcesses := processes.findProcessesByName(p.Name)
+	for _, mp := range matchedProcesses {
+		flagValues := parseProcessCmdLine(mp.Cmdline)
+		if flagValue, found := flagValues[p.Flag]; found {
+			return flagValue, nil
+		}
+	}
+	return "", fmt.Errorf("failed to get: %v", p)
+}
+
+func (b *builder) getValueFromFile(f *compliance.ValueFromFile) (string, error) {
+	switch f.Kind {
+	case compliance.PropertyKindJSONQuery:
+		return queryValueFromFile(f.Path, f.Property, jsonGetter)
+	case compliance.PropertyKindYAMLQuery:
+		return queryValueFromFile(f.Path, f.Property, yamlGetter)
+	default:
+		return "", ErrPropertyKindNotSupported
 	}
 }

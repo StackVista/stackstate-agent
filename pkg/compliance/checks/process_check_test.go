@@ -16,44 +16,59 @@ import (
 )
 
 type processFixture struct {
-	name     string
-	resource compliance.Resource
+	name    string
+	process *compliance.Process
 
-	processes    processes
-	useCache     bool
-	expectReport *compliance.Report
-	expectError  error
+	processes map[int32]*process.FilledProcess
+	expKV     compliance.KVMap
+	expError  error
 }
 
 func (f *processFixture) run(t *testing.T) {
 	t.Helper()
 	assert := assert.New(t)
 
-	if !f.useCache {
-		cache.Cache.Delete(processCacheKey)
-	}
-	processFetcher = func() (processes, error) {
+	cache.Cache.Delete(processCacheKey)
+	processFetcher = func() (map[int32]*process.FilledProcess, error) {
 		return f.processes, nil
 	}
+
+	reporter := &mocks.Reporter{}
+	defer reporter.AssertExpectations(t)
 
 	env := &mocks.Env{}
 	defer env.AssertExpectations(t)
 
-	processCheck, err := newResourceCheck(env, "rule-id", f.resource)
-	assert.NoError(err)
+	if f.expKV != nil {
+		env.On("Reporter").Return(reporter)
+		reporter.On(
+			"Report",
+			newTestRuleEvent(
+				[]string{"check_kind:process"},
+				f.expKV,
+			),
+		).Once()
+	}
 
-	result, err := processCheck.check(env)
-	assert.Equal(f.expectReport, result)
-	assert.Equal(f.expectError, err)
+	check, err := newProcessCheck(newTestBaseCheck(env, checkKindProcess), f.process)
+	assert.NoError(t, err)
+
+	err = check.Run()
+	assert.Equal(t, f.expError, err)
 }
 
 func TestProcessCheck(t *testing.T) {
 	tests := []processFixture{
 		{
-			name: "simple case",
-			resource: compliance.Resource{
-				Process: &compliance.Process{
-					Name: "proc1",
+			name: "Simple case",
+			process: &compliance.Process{
+				Name: "proc1",
+				Report: compliance.Report{
+					{
+						Kind:     "flag",
+						Property: "--path",
+						As:       "path",
+					},
 				},
 				Condition: `process.flag("--path") == "foo"`,
 			},
@@ -73,19 +88,14 @@ func TestProcessCheck(t *testing.T) {
 			},
 		},
 		{
-			name: "fallback case",
-			resource: compliance.Resource{
-				Process: &compliance.Process{
-					Name: "proc1",
-				},
-				Condition: `process.flag("--tlsverify") != ""`,
-				Fallback: &compliance.Fallback{
-					Condition: `!process.hasFlag("--tlsverify")`,
-					Resource: compliance.Resource{
-						Process: &compliance.Process{
-							Name: "proc2",
-						},
-						Condition: `process.hasFlag("--tlsverify")`,
+			name: "Process not found",
+			process: &compliance.Process{
+				Name: "proc1",
+				Report: compliance.Report{
+					{
+						Kind:     "flag",
+						Property: "--path",
+						As:       "path",
 					},
 				},
 			},
@@ -109,10 +119,15 @@ func TestProcessCheck(t *testing.T) {
 			},
 		},
 		{
-			name: "process not found",
-			resource: compliance.Resource{
-				Process: &compliance.Process{
-					Name: "proc1",
+			name: "Argument not found",
+			process: &compliance.Process{
+				Name: "proc1",
+				Report: compliance.Report{
+					{
+						Kind:     "flag",
+						Property: "--path",
+						As:       "path",
+					},
 				},
 				Condition: `process.flag("--path") == "foo"`,
 			},
@@ -131,10 +146,16 @@ func TestProcessCheck(t *testing.T) {
 			},
 		},
 		{
-			name: "argument not found",
-			resource: compliance.Resource{
-				Process: &compliance.Process{
-					Name: "proc1",
+			name: "Override returned value",
+			process: &compliance.Process{
+				Name: "proc1",
+				Report: compliance.Report{
+					{
+						Kind:     "flag",
+						Property: "--verbose",
+						As:       "verbose",
+						Value:    "true",
+					},
 				},
 				Condition: `process.flag("--path") == "foo"`,
 			},

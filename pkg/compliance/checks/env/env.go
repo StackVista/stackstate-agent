@@ -5,16 +5,13 @@
 
 package env
 
-import (
-	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
-)
+import "github.com/DataDog/datadog-agent/pkg/compliance"
 
 // Env provides environment methods for compliance checks execution
 type Env interface {
 	Clients
 	Configuration
-	Reporter() event.Reporter
+	Reporter() compliance.Reporter
 }
 
 // Clients provides an abstraction for accessing various clients needed by checks
@@ -28,7 +25,6 @@ type Clients interface {
 type Configuration interface {
 	Hostname() string
 	EtcGroupPath() string
-	NormalizeToHostRoot(path string) string
-	RelativeToHostRoot(path string) string
-	EvaluateFromCache(e eval.Evaluatable) (interface{}, error)
+	NormalizePath(path string) string
+	ResolveValueFrom(valueFrom compliance.ValueFrom) (string, error)
 }

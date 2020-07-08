@@ -11,7 +11,7 @@ package checks
 import (
 	"errors"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
+	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
 )
 
 func newDockerClient() (env.DockerClient, error) {

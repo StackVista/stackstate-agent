@@ -22,17 +22,23 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
-var kubeResourceReportedFields = []string{
-	compliance.KubeResourceFieldName,
-	compliance.KubeResourceFieldGroup,
-	compliance.KubeResourceFieldVersion,
-	compliance.KubeResourceFieldNamespace,
-	compliance.KubeResourceFieldKind,
+type kubeApiserverCheck struct {
+	baseCheck
+	kubeResource *compliance.KubernetesResource
 }
 
-func resolveKubeapiserver(ctx context.Context, e env.Env, ruleID string, res compliance.Resource) (interface{}, error) {
-	if res.KubeApiserver == nil {
-		return nil, fmt.Errorf("expecting Kubeapiserver resource in Kubeapiserver check")
+const (
+	kubeResourceNameKey      string = "kube_resource_name"
+	kubeResourceGroupKey     string = "kube_resource_group"
+	kubeResourceVersionKey   string = "kube_resource_version"
+	kubeResourceNamespaceKey string = "kube_resource_namespace"
+	kubeResourceKindKey      string = "kube_resource_kind"
+)
+
+func newKubeapiserverCheck(baseCheck baseCheck, kubeResource *compliance.KubernetesResource) (*kubeApiserverCheck, error) {
+	check := &kubeApiserverCheck{
+		baseCheck:    baseCheck,
+		kubeResource: kubeResource,
 	}
 
 	kubeResource := res.KubeApiserver
@@ -56,7 +62,7 @@ func (c *kubeApiserverCheck) Run() error {
 		Resource: kubeResource.Kind,
 		Version:  kubeResource.Version,
 	}
-	resourceDef := e.KubeClient().Resource(resourceSchema)
+	resourceDef := c.KubeClient().Resource(resourceSchema)
 
 	var resourceAPI dynamic.ResourceInterface
 	if len(kubeResource.Namespace) > 0 {

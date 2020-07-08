@@ -10,30 +10,6 @@ import (
 	"fmt"
 )
 
-// ResourceKind represents resource kind
-type ResourceKind string
-
-const (
-	// KindInvalid is set in case resource is invalid
-	KindInvalid = ResourceKind("invalid")
-	// KindFile is used for a file resource
-	KindFile = ResourceKind("file")
-	// KindProcess is used for a Process resource
-	KindProcess = ResourceKind("process")
-	// KindGroup is used for a Group resource
-	KindGroup = ResourceKind("group")
-	// KindCommand is used for a Command resource
-	KindCommand = ResourceKind("command")
-	// KindDocker is used for a DockerResource resource
-	KindDocker = ResourceKind("docker")
-	// KindAudit is used for an Audit resource
-	KindAudit = ResourceKind("audit")
-	// KindKubernetes is used for a KubernetesResource
-	KindKubernetes = ResourceKind("kubernetes")
-	// KindCustom is used for a Custom check
-	KindCustom = ResourceKind("custom")
-)
-
 // Resource describes supported resource types observed by a Rule
 type Resource struct {
 	File          *File               `yaml:"file,omitempty"`
@@ -186,12 +162,6 @@ func (c *ShellCmd) String() string {
 	return fmt.Sprintf("Shell command: %s", c.Run)
 }
 
-// Fields & functions available for Command
-const (
-	CommandFieldExitCode = "command.exitCode"
-	CommandFieldStdout   = "command.stdout"
-)
-
 // Command describes a command resource usually reporting exit code or output
 type Command struct {
 	BinaryCmd      *BinaryCmd `yaml:"binary,omitempty"`
@@ -218,7 +188,82 @@ const (
 
 // Audit describes an audited file resource
 type Audit struct {
-	Path string `yaml:"path"`
+	Path     string    `yaml:"path,omitempty"`
+	PathFrom ValueFrom `yaml:"pathFrom,omitempty"`
+
+	Filter []Filter `yaml:"filter,omitempty"`
+
+	Report Report `yaml:"report,omitempty"`
+}
+
+// Validate validates audit resource
+func (a *Audit) Validate() error {
+	if len(a.Path) == 0 && len(a.PathFrom) == 0 {
+		return errors.New("missing path")
+	}
+	return nil
+}
+
+// DockerResource describes a resource from docker daemon
+type DockerResource struct {
+	Kind string `yaml:"kind"`
+
+	Filter []Filter `yaml:"filter,omitempty"`
+
+	Report Report `yaml:"report,omitempty"`
+}
+
+// ValueFrom provides a lookup list for substitution of a value in a Resource
+type ValueFrom []ValueSource
+
+// ValueSource provides a single lookup option for value substitution in a Resource
+type ValueSource struct {
+	Command *ValueFromCommand `yaml:"command,omitempty"`
+	File    *ValueFromFile    `yaml:"file,omitempty"`
+	Process *ValueFromProcess `yaml:"process,omitempty"`
+}
+
+func (s *ValueSource) String() string {
+	switch {
+	case s.Command != nil:
+		return s.Command.String()
+	case s.File != nil:
+		return s.File.String()
+	case s.Process != nil:
+		return s.Process.String()
+	}
+	return "Empty value source"
+}
+
+// ValueFromCommand describes a value taken from command output
+type ValueFromCommand struct {
+	BinaryCmd *BinaryCmd `yaml:"binary,omitempty"`
+	ShellCmd  *ShellCmd  `yaml:"shell,omitempty"`
+}
+
+func (c *ValueFromCommand) String() string {
+	if c.BinaryCmd != nil {
+		return valueFromString(c.BinaryCmd.String())
+	}
+	if c.ShellCmd != nil {
+		return valueFromString(c.ShellCmd.String())
+	}
+	return valueFromString("Empty command")
+}
+
+func valueFromString(s string) string {
+	return fmt.Sprintf("ValueFrom[%s]", s)
+}
+
+// ValueFromFile describes a value taken from properties of a file
+type ValueFromFile struct {
+	Path     string `yaml:"path"`
+	Property string `yaml:"property"`
+	Kind     string `yaml:"kind"`
+}
+
+func (v *ValueFromFile) String() string {
+	return valueFromString(fmt.Sprintf("File: %s property: %s kind: %s", v.Path, v.Property, v.Kind))
 }
 
 // Validate validates audit resource
@@ -229,7 +274,13 @@ func (a *Audit) Validate() error {
 	return nil
 }
 
-// Fields & functions available for Docker
+func (v *ValueFromProcess) String() string {
+	return valueFromString(fmt.Sprintf("Process: %s flag: %s", v.Name, v.Flag))
+}
+
+// Report defines a set of reported fields which are sent in a RuleEvent
+type Report []ReportedField
+
 const (
 	DockerImageFieldID   = "image.id"
 	DockerImageFieldTags = "image.tags"

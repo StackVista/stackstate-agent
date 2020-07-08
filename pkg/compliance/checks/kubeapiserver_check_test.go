@@ -21,10 +21,10 @@ import (
 
 type kubeApiserverFixture struct {
 	name         string
-	resource     compliance.Resource
+	kubeResource *compliance.KubernetesResource
 	objects      []runtime.Object
-	expectReport *compliance.Report
-	expectError  error
+	expKV        []compliance.KVMap
+	expError     error
 }
 
 func newUnstructured(apiVersion, kind, namespace, name string, spec map[string]interface{}) *unstructured.Unstructured {
@@ -57,36 +57,56 @@ func newDummyObject(namespace, name string) *unstructured.Unstructured {
 func (f *kubeApiserverFixture) run(t *testing.T) {
 	t.Helper()
 
-	assert := assert.New(t)
+	reporter := &mocks.Reporter{}
+	defer reporter.AssertExpectations(t)
 
 	env := &mocks.Env{}
 	defer env.AssertExpectations(t)
+	if len(f.expKV) != 0 {
+		env.On("Reporter").Return(reporter)
+	}
 
 	kubeClient := fake.NewSimpleDynamicClient(runtime.NewScheme(), f.objects...)
 	env.On("KubeClient").Return(kubeClient)
 
-	kubeCheck, err := newResourceCheck(env, "rule-id", f.resource)
-	assert.NoError(err)
+	check, err := newKubeapiserverCheck(
+		newTestBaseCheck(env, checkKindKubeApiserver),
+		f.kubeResource,
+	)
 
-	report, err := kubeCheck.check(env)
-	assert.Equal(f.expectReport, report)
-	if f.expectError != nil {
-		assert.EqualError(err, f.expectError.Error())
+	assert.NoError(t, err)
+
+	for _, kv := range f.expKV {
+		reporter.On(
+			"Report",
+			newTestRuleEvent(
+				[]string{"check_kind:kubeapiserver"},
+				kv,
+			),
+		).Once()
 	}
+
+	err = check.Run()
+	assert.Equal(t, f.expError, err)
 }
 
 func TestKubeApiserverCheck(t *testing.T) {
 	tests := []kubeApiserverFixture{
 		{
 			name: "List case no ns",
-			resource: compliance.Resource{
-				KubeApiserver: &compliance.KubernetesResource{
-					Group:     "mygroup.com",
-					Version:   "v1",
-					Kind:      "myobjs",
-					Namespace: "",
-					APIRequest: compliance.KubernetesAPIRequest{
-						Verb: "list",
+			kubeResource: &compliance.KubernetesResource{
+				Group:     "mygroup.com",
+				Version:   "v1",
+				Kind:      "myobjs",
+				Namespace: "",
+				APIRequest: compliance.KubernetesAPIRequest{
+					Verb: "list",
+				},
+				Report: compliance.Report{
+					{
+						Kind:     compliance.PropertyKindJSONQuery,
+						Property: ".spec.stringAttribute",
+						As:       "attr1",
 					},
 				},
 				Condition: `kube.resource.jq(".spec.stringAttribute") == "foo"`,
@@ -107,15 +127,19 @@ func TestKubeApiserverCheck(t *testing.T) {
 		},
 		{
 			name: "List case with ns",
-			resource: compliance.Resource{
-				KubeApiserver: &compliance.KubernetesResource{
-
-					Group:     "mygroup.com",
-					Version:   "v1",
-					Kind:      "myobjs",
-					Namespace: "testns",
-					APIRequest: compliance.KubernetesAPIRequest{
-						Verb: "list",
+			kubeResource: &compliance.KubernetesResource{
+				Group:     "mygroup.com",
+				Version:   "v1",
+				Kind:      "myobjs",
+				Namespace: "testns",
+				APIRequest: compliance.KubernetesAPIRequest{
+					Verb: "list",
+				},
+				Report: compliance.Report{
+					{
+						Kind:     compliance.PropertyKindJSONQuery,
+						Property: ".spec.stringAttribute",
+						As:       "attr1",
 					},
 				},
 				Condition: `kube.resource.jq(".spec.stringAttribute") != "foo"`,
@@ -137,14 +161,19 @@ func TestKubeApiserverCheck(t *testing.T) {
 		},
 		{
 			name: "List case multiple matches",
-			resource: compliance.Resource{
-				KubeApiserver: &compliance.KubernetesResource{
-					Group:     "mygroup.com",
-					Version:   "v1",
-					Kind:      "myobjs",
-					Namespace: "testns",
-					APIRequest: compliance.KubernetesAPIRequest{
-						Verb: "list",
+			kubeResource: &compliance.KubernetesResource{
+				Group:     "mygroup.com",
+				Version:   "v1",
+				Kind:      "myobjs",
+				Namespace: "testns",
+				APIRequest: compliance.KubernetesAPIRequest{
+					Verb: "list",
+				},
+				Report: compliance.Report{
+					{
+						Kind:     compliance.PropertyKindJSONQuery,
+						Property: ".spec.stringAttribute",
+						As:       "attr1",
 					},
 				},
 				Condition: `kube.resource.jq(".spec.stringAttribute") == "foo"`,
@@ -167,15 +196,20 @@ func TestKubeApiserverCheck(t *testing.T) {
 		},
 		{
 			name: "Get case",
-			resource: compliance.Resource{
-				KubeApiserver: &compliance.KubernetesResource{
-					Group:     "mygroup.com",
-					Version:   "v1",
-					Kind:      "myobjs",
-					Namespace: "testns",
-					APIRequest: compliance.KubernetesAPIRequest{
-						Verb:         "get",
-						ResourceName: "dummy1",
+			kubeResource: &compliance.KubernetesResource{
+				Group:     "mygroup.com",
+				Version:   "v1",
+				Kind:      "myobjs",
+				Namespace: "testns",
+				APIRequest: compliance.KubernetesAPIRequest{
+					Verb:         "get",
+					ResourceName: "dummy1",
+				},
+				Report: compliance.Report{
+					{
+						Kind:     compliance.PropertyKindJSONQuery,
+						Property: ".spec.stringAttribute",
+						As:       "attr1",
 					},
 				},
 				Condition: `kube.resource.jq(".spec.stringAttribute") == "foo"`,
@@ -197,15 +231,30 @@ func TestKubeApiserverCheck(t *testing.T) {
 		},
 		{
 			name: "Get case all type of args",
-			resource: compliance.Resource{
-				KubeApiserver: &compliance.KubernetesResource{
-					Group:     "mygroup.com",
-					Version:   "v1",
-					Kind:      "myobjs",
-					Namespace: "testns",
-					APIRequest: compliance.KubernetesAPIRequest{
-						Verb:         "get",
-						ResourceName: "dummy1",
+			kubeResource: &compliance.KubernetesResource{
+				Group:     "mygroup.com",
+				Version:   "v1",
+				Kind:      "myobjs",
+				Namespace: "testns",
+				APIRequest: compliance.KubernetesAPIRequest{
+					Verb:         "get",
+					ResourceName: "dummy1",
+				},
+				Report: compliance.Report{
+					{
+						Kind:     compliance.PropertyKindJSONQuery,
+						Property: ".spec.structAttribute.name",
+						As:       "attr1",
+					},
+					{
+						Kind:     compliance.PropertyKindJSONQuery,
+						Property: ".spec.boolAttribute",
+						As:       "attr2",
+					},
+					{
+						Kind:     compliance.PropertyKindJSONQuery,
+						Property: ".spec.listAttribute.[0]",
+						As:       "attr3",
 					},
 				},
 				Condition: `kube.resource.jq(".spec.structAttribute.name") == "nestedFoo" && kube.resource.jq(".spec.boolAttribute") == "true" && kube.resource.jq(".spec.listAttribute.[0]") == "listFoo"`,
@@ -227,15 +276,20 @@ func TestKubeApiserverCheck(t *testing.T) {
 		},
 		{
 			name: "Error case object not found",
-			resource: compliance.Resource{
-				KubeApiserver: &compliance.KubernetesResource{
-					Group:     "mygroup.com",
-					Version:   "v1",
-					Kind:      "myobjs",
-					Namespace: "testns",
-					APIRequest: compliance.KubernetesAPIRequest{
-						Verb:         "get",
-						ResourceName: "dummy1",
+			kubeResource: &compliance.KubernetesResource{
+				Group:     "mygroup.com",
+				Version:   "v1",
+				Kind:      "myobjs",
+				Namespace: "testns",
+				APIRequest: compliance.KubernetesAPIRequest{
+					Verb:         "get",
+					ResourceName: "dummy1",
+				},
+				Report: compliance.Report{
+					{
+						Kind:     compliance.PropertyKindJSONQuery,
+						Property: ".spec.structAttribute.name",
+						As:       "attr1",
 					},
 				},
 				Condition: `kube.resource.jq(".spec.stringAttribute") == "foo"`,
@@ -246,16 +300,31 @@ func TestKubeApiserverCheck(t *testing.T) {
 			expectError: errors.New(`unable to get Kube resource:'mygroup.com/v1, Resource=myobjs', ns:'testns' name:'dummy1', err: myobjs.mygroup.com "dummy1" not found`),
 		},
 		{
-			name: "Error case property does not exist",
-			resource: compliance.Resource{
-				KubeApiserver: &compliance.KubernetesResource{
-					Group:     "mygroup.com",
-					Version:   "v1",
-					Kind:      "myobjs",
-					Namespace: "testns",
-					APIRequest: compliance.KubernetesAPIRequest{
-						Verb:         "get",
-						ResourceName: "dummy1",
+			name: "Error case one property does not exist",
+			kubeResource: &compliance.KubernetesResource{
+				Group:     "mygroup.com",
+				Version:   "v1",
+				Kind:      "myobjs",
+				Namespace: "testns",
+				APIRequest: compliance.KubernetesAPIRequest{
+					Verb:         "get",
+					ResourceName: "dummy1",
+				},
+				Report: compliance.Report{
+					{
+						Kind:     compliance.PropertyKindJSONQuery,
+						Property: ".spec.structAttribute.name",
+						As:       "attr1",
+					},
+					{
+						Kind:     compliance.PropertyKindJSONQuery,
+						Property: ".spec.IdoNotExist",
+						As:       "attr2",
+					},
+					{
+						Kind:     compliance.PropertyKindJSONQuery,
+						Property: ".spec.listAttribute.[0]",
+						As:       "attr3",
 					},
 				},
 				Condition: `kube.resource.jq(".spec.DoesNotExist") == "foo"`,
@@ -276,15 +345,20 @@ func TestKubeApiserverCheck(t *testing.T) {
 		},
 		{
 			name: "Error case attribute syntax is wrong",
-			resource: compliance.Resource{
-				KubeApiserver: &compliance.KubernetesResource{
-					Group:     "mygroup.com",
-					Version:   "v1",
-					Kind:      "myobjs",
-					Namespace: "testns",
-					APIRequest: compliance.KubernetesAPIRequest{
-						Verb:         "get",
-						ResourceName: "dummy1",
+			kubeResource: &compliance.KubernetesResource{
+				Group:     "mygroup.com",
+				Version:   "v1",
+				Kind:      "myobjs",
+				Namespace: "testns",
+				APIRequest: compliance.KubernetesAPIRequest{
+					Verb:         "get",
+					ResourceName: "dummy1",
+				},
+				Report: compliance.Report{
+					{
+						Kind:     compliance.PropertyKindJSONQuery,
+						Property: ".spec[@@@]",
+						As:       "attr1",
 					},
 				},
 				Condition: `kube.resource.jq(".spec[@@@]") == "foo"`,
@@ -296,14 +370,52 @@ func TestKubeApiserverCheck(t *testing.T) {
 		},
 		{
 			name: "List with json query selectors",
-			resource: compliance.Resource{
-				KubeApiserver: &compliance.KubernetesResource{
-					Group:     "mygroup.com",
-					Version:   "v1",
-					Kind:      "myobjs",
-					Namespace: "",
-					APIRequest: compliance.KubernetesAPIRequest{
-						Verb: "list",
+			kubeResource: &compliance.KubernetesResource{
+				Group:     "mygroup.com",
+				Version:   "v1",
+				Kind:      "myobjs",
+				Namespace: "",
+				APIRequest: compliance.KubernetesAPIRequest{
+					Verb: "list",
+				},
+				Report: compliance.Report{
+					{
+						Kind:     compliance.PropertyKindJSONQuery,
+						Property: ".spec.stringAttribute",
+						As:       "attr1",
+					},
+				},
+				Filter: []compliance.Filter{
+					{
+						Include: &compliance.Condition{
+							Kind:      compliance.ConditionKindJSONQuery,
+							Property:  ".metadata.name",
+							Value:     "dummy1",
+							Operation: compliance.OpEqual,
+						},
+					},
+					{
+						Include: &compliance.Condition{
+							Kind:      compliance.ConditionKindJSONQuery,
+							Property:  ".spec.boolAttribute",
+							Value:     "true",
+							Operation: compliance.OpEqual,
+						},
+					},
+					{
+						Exclude: &compliance.Condition{
+							Kind:      compliance.ConditionKindJSONQuery,
+							Property:  ".metadata.name",
+							Value:     "dummy2",
+							Operation: compliance.OpEqual,
+						},
+					},
+					{
+						Exclude: &compliance.Condition{
+							Kind:      compliance.ConditionKindJSONQuery,
+							Property:  ".metadata.foo.bar",
+							Operation: compliance.OpExists,
+						},
 					},
 				},
 				Condition: `kube.resource.namespace != "testns2" || kube.resource.jq(".spec.stringAttribute") == "foo"`,
