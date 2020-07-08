@@ -96,13 +96,142 @@ variables: &commonvariables
   - if: $CI_COMMIT_TAG || ($CI_COMMIT_REF_NAME == "master" && $CI_PIPELINE_SOURCE=="schedule")
     when: always
 
-# build Agent package for rpm-arm64
-agent_rpm-arm64-a7:
-  rules:
-    - <<: *if_version_7
-  stage: package_build
-  needs: ["run_go_tidy_check", "build_system-probe-arm64", "linux_arm64_go_deps"]
-  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-buildimages/rpm_arm64:$DATADOG_AGENT_ARMBUILDIMAGES
+#
+# Condition mixins for simplification of rules
+#
+
+.if_master_branch: &if_master_branch
+  if: $CI_COMMIT_BRANCH == "master"
+
+.if_not_master_branch: &if_not_master_branch
+  if: $CI_COMMIT_BRANCH != "master"
+
+.if_tagged_commit: &if_tagged_commit
+  if: $CI_COMMIT_TAG != null
+
+.if_not_tagged_commit: &if_not_tagged_commit
+  if: $CI_COMMIT_TAG == null
+
+# run job only when triggered by an external tool (ex: Jenkins). This is used
+# for jobs that run both on nightlies and tags
+.if_triggered: &if_triggered
+  if: $CI_PIPELINE_SOURCE == "trigger"
+
+.if_triggered_6: &if_triggered_6
+  if: $CI_PIPELINE_SOURCE == "trigger" && $RELEASE_VERSION_6 != ""
+
+.if_triggered_7: &if_triggered_7
+  if: $CI_PIPELINE_SOURCE == "trigger" && $RELEASE_VERSION_7 != ""
+
+.if_not_triggered: &if_not_triggered
+  if: $CI_PIPELINE_SOURCE != "trigger"
+
+# anchor to trigger test kitchen setup, run, and cleanup (so all stages
+# are run if one stage is run).  Triggers as defined:
+# - master
+# - tags (a tagged build)
+# - triggers (as above, when triggered by an external tool like jenkins)
+# - web (when the build is triggered by a specific build request through the
+#        web interface.  This way, if a kitchen run is desired on a specific branch,
+#        it can be triggered by requesting a specific build)
+#
+.if_test_kitchen_triggered: &if_test_kitchen_triggered
+  if: $CI_COMMIT_BRANCH == "master" || $CI_COMMIT_TAG != null || $CI_PIPELINE_SOURCE == "trigger" || $CI_PIPELINE_SOURCE == "web"
+
+.if_not_test_kitchen_triggered: &if_not_test_kitchen_triggered
+  if: $CI_COMMIT_BRANCH != "master" && $CI_COMMIT_TAG == null && $CI_PIPELINE_SOURCE != "trigger" && $CI_PIPELINE_SOURCE != "web"
+
+# true only when triggered by an external tool (ex: Jenkins) and when
+# RELEASE_VERSION_X is NOT "nightly". In this setting we are building either a
+# new tagged version of the agent (an RC for example). In both cases the
+# artifacts should be uploaded to our staging repository.
+.if_triggered_on_tag_6: &if_triggered_on_tag_6
+  # no  RELEASE_VERSION means a nightly build for omnibus
+  if: $CI_PIPELINE_SOURCE == "trigger" && $RELEASE_VERSION_6 != "nightly" && $RELEASE_VERSION_6 != ""
+
+.if_not_triggered_on_tag_6: &if_not_triggered_on_tag_6
+  # no  RELEASE_VERSION means a nightly build for omnibus
+  if: $CI_PIPELINE_SOURCE != "trigger" || $RELEASE_VERSION_6 == "nightly" || $RELEASE_VERSION_6 == ""
+
+.if_triggered_on_tag_7: &if_triggered_on_tag_7
+  # no  RELEASE_VERSION means a nightly build for omnibus
+  if: $CI_PIPELINE_SOURCE == "trigger" && $RELEASE_VERSION_7 != "nightly-a7" && $RELEASE_VERSION_7 != ""
+
+.if_not_triggered_on_tag_7: &if_not_triggered_on_tag_7
+  # no  RELEASE_VERSION means a nightly build for omnibus
+  if: $CI_PIPELINE_SOURCE != "trigger" || $RELEASE_VERSION_7 == "nightly-a7" || $RELEASE_VERSION_7 == ""
+
+# true only when triggered by an external tool (ex: Jenkins) and when
+# RELEASE_VERSION_X is "nightly". In this setting we build from master and update
+# the nightly build for windows, linux and docker.
+.if_triggered_on_nightly: &if_triggered_on_nightly
+  if: $CI_PIPELINE_SOURCE == "trigger" && $RELEASE_VERSION_6 == "nightly" && $RELEASE_VERSION_7 == "nightly-a7"
+
+.if_not_triggered_on_nightly: &if_not_triggered_on_nightly
+  if: $CI_PIPELINE_SOURCE != "trigger" || $RELEASE_VERSION_6 != "nightly" || $RELEASE_VERSION_7 != "nightly-a7"
+
+# true only when RELEASE_VERSION_X is not set
+.if_version_6: &if_version_6
+  if: $RELEASE_VERSION_6 != ""
+
+.if_not_version_6: &if_not_version_6
+  if: $RELEASE_VERSION_6 == ""
+
+.if_version_7: &if_version_7
+  if: $RELEASE_VERSION_7 != ""
+
+.if_not_version_7: &if_not_version_7
+  if: $RELEASE_VERSION_7 == ""
+
+# Fail if we're running a pipeline on a non-triggered tag build
+fail_on_non_triggered_tag:
+  stage: fail_on_tag
+  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-buildimages/deb_x64:$DATADOG_AGENT_BUILDIMAGES
+  tags: [ "runner:main", "size:2xlarge" ]
+  script:
+    - env | grep CI_
+    - echo CI_PIPELINE_SOURCE=$CI_PIPELINE_SOURCE CI_COMMIT_TAG=$CI_COMMIT_TAG
+    - '[[ $CI_COMMIT_TAG == dca-* || $CI_COMMIT_TAG == "" || $CI_PIPELINE_SOURCE != "push" ]]'
+
+#
+# deps_build
+#
+#
+
+# build libbcc
+.build_libbcc_common:
+  stage: deps_build
+  needs: ["fail_on_non_triggered_tag"]
+  script:
+    - git clone -b "$BCC_VERSION" --depth=1 https://github.com/iovisor/bcc.git /tmp/bcc
+    # Patch libbcc to remove references to glibc symbols with a too recent version
+    - cd /tmp/bcc
+    - patch -p1 < "$CI_PROJECT_DIR"/omnibus/config/software/libbcc_compat.patch
+    - mkdir /tmp/bcc/build
+    - cd /tmp/bcc/build
+    - cmake .. -DCMAKE_INSTALL_PREFIX=/opt/libbcc -DCMAKE_EXE_LINKER_FLAGS='-Wl,-rpath,/opt/datadog-agent/embedded/lib' -DCMAKE_SHARED_LINKER_FLAGS='-Wl,-rpath,/opt/datadog-agent/embedded/lib'
+    - make -j 4 #"$(nproc)"
+    # Check that libbcc has no references to too recent glibc
+    - objdump -p src/cc/libbcc.so | grep GLIBC_2.29 && exit 1
+    - objdump -p src/cc/libbcc.so | grep GLIBC_2.26 && exit 1
+    - make install
+    - cd /opt/libbcc
+    - chmod go-rwx lib/libbcc*
+    - rm -rf share/bcc/examples share/bcc/introspection share/bcc/man share/bcc/tools
+    - cp $(ldd lib/libbcc.so | awk '$1 ~ /^libtinfo/ {system("dirname " $3)}')/libtinfo* lib
+    - tar cvaf /tmp/libbcc.tar.xz .
+    - $S3_CP_CMD /tmp/libbcc.tar.xz $S3_ARTIFACTS_URI/libbcc-$ARCH.tar.xz
+
+build_libbcc_x64:
+  extends: .build_libbcc_common
+  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-buildimages/system-probe_x64:$DATADOG_AGENT_BUILDIMAGES
+  tags: [ "runner:main", "size:large" ]
+  variables:
+    ARCH: amd64
+
+build_libbcc_arm64:
+  extends: .build_libbcc_common
+  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-buildimages/system-probe_arm64:$DATADOG_AGENT_ARMBUILDIMAGES
   tags: ["runner:docker-arm", "platform:arm64"]
   variables:
     AGENT_MAJOR_VERSION: 7
@@ -1453,6 +1582,9 @@ deploy_windows_testing-a7:
 # Kitchen: final test matrix (tests * scenarios)
 # ----------------------------------------------
 
+# We only want to run step-by-step tests on triggered pipelines,
+# which is why they have a different rule (if_triggered_6/7)
+
 # run dd-agent-testing for the windows installer
 kitchen_windows_installer_agent-a6:
   allow_failure: true
@@ -1540,12 +1672,16 @@ kitchen_centos_install_script_dogstatsd-a7:
 
 kitchen_centos_step_by_step_agent-a6:
   allow_failure: false
+  rules:
+    - <<: *if_triggered_6
   extends:
     - .kitchen_scenario_centos_a6
     - .kitchen_test_step_by_step_agent
 
 kitchen_centos_step_by_step_agent-a7:
   allow_failure: false
+  rules:
+    - <<: *if_triggered_7
   extends:
     - .kitchen_scenario_centos_a7
     - .kitchen_test_step_by_step_agent
@@ -1615,12 +1751,16 @@ kitchen_ubuntu_install_script_dogstatsd-a7:
 
 kitchen_ubuntu_step_by_step_agent-a6:
   allow_failure: false
+  rules:
+    - <<: *if_triggered_6
   extends:
     - .kitchen_scenario_ubuntu_a6
     - .kitchen_test_step_by_step_agent
 
 kitchen_ubuntu_step_by_step_agent-a7:
   allow_failure: false
+  rules:
+    - <<: *if_triggered_7
   extends:
     - .kitchen_scenario_ubuntu_a7
     - .kitchen_test_step_by_step_agent
@@ -1689,12 +1829,16 @@ kitchen_suse_install_script_dogstatsd-a7:
 
 kitchen_suse_step_by_step_agent-a6:
   allow_failure: false
+  rules:
+    - <<: *if_triggered_6
   extends:
     - .kitchen_scenario_suse_a6
     - .kitchen_test_step_by_step_agent
 
 kitchen_suse_step_by_step_agent-a7:
   allow_failure: false
+  rules:
+    - <<: *if_triggered_7
   extends:
     - .kitchen_scenario_suse_a7
     - .kitchen_test_step_by_step_agent
@@ -1764,12 +1908,16 @@ kitchen_debian_install_script_dogstatsd-a7:
 
 kitchen_debian_step_by_step_agent-a6:
   allow_failure: false
+  rules:
+    - <<: *if_triggered_6
   extends:
     - .kitchen_scenario_debian_a6
     - .kitchen_test_step_by_step_agent
 
 kitchen_debian_step_by_step_agent-a7:
   allow_failure: false
+  rules:
+    - <<: *if_triggered_7
   extends:
     - .kitchen_scenario_debian_a7
     - .kitchen_test_step_by_step_agent
