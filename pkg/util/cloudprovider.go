@@ -6,15 +6,15 @@
 package util
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/metadata/inventories"
-	"github.com/StackVista/stackstate-agent/pkg/util/alibaba"
-	"github.com/StackVista/stackstate-agent/pkg/util/azure"
-	"github.com/StackVista/stackstate-agent/pkg/util/ec2"
-	"github.com/StackVista/stackstate-agent/pkg/util/ecs"
-	ecscommon "github.com/StackVista/stackstate-agent/pkg/util/ecs/common"
-	"github.com/StackVista/stackstate-agent/pkg/util/gce"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/StackVista/stackstate-agent/pkg/util/tencent"
+	"github.com/DataDog/datadog-agent/pkg/metadata/inventories"
+	"github.com/DataDog/datadog-agent/pkg/util/alibaba"
+	"github.com/DataDog/datadog-agent/pkg/util/azure"
+	"github.com/DataDog/datadog-agent/pkg/util/ec2"
+	"github.com/DataDog/datadog-agent/pkg/util/ecs"
+	ecscommon "github.com/DataDog/datadog-agent/pkg/util/ecs/common"
+	"github.com/DataDog/datadog-agent/pkg/util/gce"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/tencent"
 )
 
 type cloudProviderDetector struct {

@@ -13,14 +13,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/StackVista/stackstate-agent/pkg/util/retry"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/retry"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/ecs/common"
-	v1 "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata/v1"
-	v2 "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata/v2"
-	v3 "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata/v3"
+	"github.com/DataDog/datadog-agent/pkg/util/ecs/common"
+	v1 "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata/v1"
+	v2 "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata/v2"
+	v3 "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata/v3"
 )
 
 var globalUtil util
