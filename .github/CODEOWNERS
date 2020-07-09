@@ -138,7 +138,6 @@
 /tasks/process-agent.py                 @DataDog/processes
 /tasks/system-probe.py                  @DataDog/networks
 /tasks/trace.py                         @DataDog/agent-apm
-/tasks/security_agent.py                @DataDog/agent-security
 
 /test/                                  @DataDog/agent-platform
 /test/benchmarks/                       @DataDog/agent-core
