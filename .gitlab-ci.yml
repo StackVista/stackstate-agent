@@ -2162,8 +2162,7 @@ send_pkg_size-a7:
     - BUILD_ARG=${BUILD_ARG:-}
     - TARGET_TAG=$IMAGE:v$CI_PIPELINE_ID-${CI_COMMIT_SHA:0:7}$TAG_SUFFIX-$ARCH
     # Pull base image(s) with content trust enabled
-    # FIXME: Use Python 3 when python3-pip is available in docker image
-    - python2 -m pip install -r requirements.txt
+    - python3 -m pip install -r requirements.txt
     - inv -e docker.pull-base-images --signed-pull $BUILD_CONTEXT/$ARCH/Dockerfile
     # Build testing stage if provided
     - test "$TESTING_ARG" && docker build --file $BUILD_CONTEXT/$ARCH/Dockerfile $TESTING_ARG $BUILD_CONTEXT
@@ -2172,13 +2171,13 @@ send_pkg_size-a7:
     - docker push $TARGET_TAG
 
 .docker_build_job_definition_amd64: &docker_build_job_definition_amd64
-  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/docker:v1907756-26d65dc-18.09.6
+  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/docker:v2718644-9ce6565-18.09.6-py3
   tags: ["runner:docker", "size:large"]
   variables:
     ARCH: amd64
 
 .docker_build_job_definition_arm64: &docker_build_job_definition_arm64
-  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/docker:v1903032-53399bc-18.09.6-arm64
+  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/docker:v2718787-3888eda-18.09.6-arm64-py3
   tags: ["runner:docker-arm", "platform:arm64"]
   variables:
     ARCH: arm64
@@ -2541,15 +2540,14 @@ twistlock_scan-7:
 .docker_tag_job_definition: &docker_tag_job_definition
   stage: image_deploy
   tags: [ "runner:docker", "size:large" ]
-  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/docker-notary:v1912023-8c8dc1c-0.6.1
+  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/docker-notary:v2718650-9ce6565-0.6.1-py3
   variables:
     <<: *docker_hub_variables
   before_script:
     - export SRC_TAG=v$CI_PIPELINE_ID-${CI_COMMIT_SHA:0:7}
     - DOCKER_REGISTRY_LOGIN=$(aws ssm get-parameter --region us-east-1 --name ci.datadog-agent.$DOCKER_REGISTRY_LOGIN_SSM_KEY --with-decryption --query "Parameter.Value" --out text)
     - aws ssm get-parameter --region us-east-1 --name ci.datadog-agent.$DOCKER_REGISTRY_PWD_SSM_KEY --with-decryption --query "Parameter.Value" --out text | docker login --username "$DOCKER_REGISTRY_LOGIN" --password-stdin "$DOCKER_REGISTRY_URL"
-    # FIXME: Use Python 3 when python3-pip is available in docker image
-    - python2 -m pip install -r requirements.txt
+    - python3 -m pip install -r requirements.txt
     - if [[ -z "$DELEGATION_PASS_SSM_KEY" ]]; then echo "No signing key set"; exit 0; fi
     - echo "Importing delegation signing key"
     - export DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE=$(aws ssm get-parameter --region us-east-1 --name ci.datadog-agent.$DELEGATION_PASS_SSM_KEY --with-decryption --query "Parameter.Value" --out text)
@@ -3350,7 +3348,215 @@ build_beest_runners:
 build_agent_runners:
   stage: triggers
   variables:
-    <<: *commonvariables
+    VARIANT: 1909
+  tags: ["runner:windows-docker", "windowsversion:1909"]
+  dependencies:
+    - docker_build_agent7_windows1809
+    - docker_build_agent7_windows1809_jmx
+    - docker_build_agent7_windows1909
+    - docker_build_agent7_windows1909_jmx
+  script:
+    - $ErrorActionPreference = "Stop"
+    - |
+      @"
+      `$VERSION = inv -e agent.version --major-version 7
+      inv -e docker.publish-bulk --signed-push --platform windows/amd64 --src-template ${SRC_AGENT}:${SRC_TAG}-7-win1809-ARCH --dst-template datadog/agent-ARCH:`${VERSION}-win1809
+      If (`$lastExitCode -ne "0") { throw "Previous command returned `$lastExitCode" }
+      inv -e docker.publish-bulk --signed-push --platform windows/amd64 --src-template ${SRC_AGENT}:${SRC_TAG}-7-jmx-win1809-ARCH --dst-template datadog/agent-ARCH:`${VERSION}-jmx-win1809
+      If (`$lastExitCode -ne "0") { throw "Previous command returned `$lastExitCode" }
+      inv -e docker.publish-bulk --signed-push --platform windows/amd64 --src-template ${SRC_AGENT}:${SRC_TAG}-7-win1909-ARCH --dst-template datadog/agent-ARCH:`${VERSION}-win1909
+      If (`$lastExitCode -ne "0") { throw "Previous command returned `$lastExitCode" }
+      inv -e docker.publish-bulk --signed-push --platform windows/amd64 --src-template ${SRC_AGENT}:${SRC_TAG}-7-jmx-win1909-ARCH --dst-template datadog/agent-ARCH:`${VERSION}-jmx-win1909
+      If (`$lastExitCode -ne "0") { throw "Previous command returned `$lastExitCode" }
+      "@ | Add-Content ci-scripts/docker-publish.ps1
+    - cat ci-scripts/docker-publish.ps1
+    - docker run --rm -w C:\mnt -e IS_AWS_CONTAINER=true -e SIGN_WINDOWS=true -v "$(Get-Location):C:\mnt" -v \\.\pipe\docker_engine:\\.\pipe\docker_engine 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-builders/windows_${Env:VARIANT}_x64:${Env:DATADOG_AGENT_WINBUILDERS} powershell -C C:\mnt\ci-scripts\docker-publish.ps1
+    - If ($lastExitCode -ne "0") { throw "Previous command returned $lastExitCode" }
+
+tag_release_7_manifests:
+  rules:
+    - <<: *if_triggered_on_tag_7
+      when: manual
+      allow_failure: true
+  <<: *docker_tag_job_definition
+  stage: deploy7
+  # HACK: a job should not depend on manual jobs, otherwise it blocks
+  # the next stages of the pipeline until said manual jobs are run
+  # (the job remains in a pending state until all its dependencies
+  # are run).
+  # However, this job implicitly still needs both of the below jobs,
+  # and thus should be run after these two manual jobs.
+  # needs:
+  #   - tag_release_7_linux
+  #   - tag_release_7_windows
+  dependencies: []
+  script:
+    - VERSION=$(inv -e agent.version --major-version 7)
+    - inv -e docker.publish-manifest --signed-push --name datadog/agent --tag ${VERSION}
+      --image datadog/agent-amd64:${VERSION},linux/amd64
+      --image datadog/agent-amd64:${VERSION}-win1809,windows/amd64
+      --image datadog/agent-amd64:${VERSION}-win1909,windows/amd64
+      --image datadog/agent-arm64:${VERSION},linux/arm64
+    - inv -e docker.publish-manifest --signed-push --name datadog/agent --tag ${VERSION}-jmx
+      --image datadog/agent-amd64:${VERSION}-jmx,linux/amd64
+      --image datadog/agent-amd64:${VERSION}-jmx-win1809,windows/amd64
+      --image datadog/agent-amd64:${VERSION}-jmx-win1909,windows/amd64
+      --image datadog/agent-arm64:${VERSION}-jmx,linux/arm64
+
+latest_release_7:
+  rules:
+    - <<: *if_triggered_on_tag_7
+      when: manual
+      allow_failure: true
+  <<: *docker_tag_job_definition
+  stage: deploy7
+  dependencies:
+    - docker_build_agent7
+    - docker_build_agent7_arm64
+    - docker_build_agent7_jmx
+    - docker_build_agent7_jmx_arm64
+    - docker_build_dogstatsd_amd64
+    - docker_build_agent7_windows1809
+    - docker_build_agent7_windows1809_jmx
+    - docker_build_agent7_windows1909
+    - docker_build_agent7_windows1909_jmx
+  script:
+    - VERSION=$(inv -e agent.version --major-version 7)
+    # Dogstatsd
+    - inv -e docker.publish --signed-push ${SRC_DSD}:${SRC_TAG}-amd64 datadog/dogstatsd:latest
+    - inv -e docker.publish --signed-push ${SRC_DSD}:${SRC_TAG}-amd64 datadog/dogstatsd:7
+    # Manifests
+    - inv -e docker.publish-manifest --signed-push --name datadog/agent --tag latest
+      --image datadog/agent-amd64:${VERSION},linux/amd64
+      --image datadog/agent-amd64:${VERSION}-win1809,windows/amd64
+      --image datadog/agent-amd64:${VERSION}-win1909,windows/amd64
+      --image datadog/agent-arm64:${VERSION},linux/arm64
+    - inv -e docker.publish-manifest --signed-push --name datadog/agent --tag latest-jmx
+      --image datadog/agent-amd64:${VERSION}-jmx,linux/amd64
+      --image datadog/agent-amd64:${VERSION}-jmx-win1809,windows/amd64
+      --image datadog/agent-amd64:${VERSION}-jmx-win1909,windows/amd64
+      --image datadog/agent-arm64:${VERSION}-jmx,linux/arm64
+    - inv -e docker.publish-manifest --signed-push --name datadog/agent --tag 7
+      --image datadog/agent-amd64:${VERSION},linux/amd64
+      --image datadog/agent-amd64:${VERSION}-win1809,windows/amd64
+      --image datadog/agent-amd64:${VERSION}-win1909,windows/amd64
+      --image datadog/agent-arm64:${VERSION},linux/arm64
+    - inv -e docker.publish-manifest --signed-push --name datadog/agent --tag 7-jmx
+      --image datadog/agent-amd64:${VERSION}-jmx,linux/amd64
+      --image datadog/agent-amd64:${VERSION}-jmx-win1809,windows/amd64
+      --image datadog/agent-amd64:${VERSION}-jmx-win1909,windows/amd64
+      --image datadog/agent-arm64:${VERSION}-jmx,linux/arm64
+
+#
+# Use these steps to revert the latest tags to a previous release
+# while maintaining content trust signatures
+# - remove the leading dot from the name
+# - set the RELEASE envvar
+# - in the gitlab pipeline view, trigger the step (in the first column)
+#
+
+.latest_revert_to_previous_release_6:
+  rules:
+    - when: manual
+      allow_failure: true
+  <<: *docker_tag_job_definition
+  stage: source_test
+  variables:
+    <<: *docker_hub_variables
+    RELEASE: ""  # tag name of the non-jmx version, for example "6.9.0"
+  script:
+    - if [[ -z "$RELEASE" ]]; then echo "Need release version to revert to"; exit 1; fi
+    - inv -e docker.publish-manifest --signed-push --name datadog/agent --tag latest-py2 --image datadog/agent-amd64:${RELEASE},linux/amd64 --image datadog/agent-arm64:${RELEASE},linux/arm64
+    - inv -e docker.publish-manifest --signed-push --name datadog/agent --tag latest-py2-jmx --image datadog/agent-amd64:${RELEASE}-jmx,linux/amd64 --image datadog/agent-arm64:${RELEASE}-jmx,linux/arm64
+
+.latest_revert_to_previous_release_7:
+  rules:
+    - when: manual
+      allow_failure: true
+  <<: *docker_tag_job_definition
+  stage: source_test
+  variables:
+    <<: *docker_hub_variables
+    RELEASE: ""  # tag name of the non-jmx version, for example "6.9.0"
+  script:
+    - if [[ -z "$RELEASE" ]]; then echo "Need release version to revert to"; exit 1; fi
+    - inv -e docker.publish-manifest --signed-push --name datadog/agent --tag latest --image datadog/agent-amd64:${RELEASE},linux/amd64 --image datadog/agent-arm64:${RELEASE},linux/arm64
+    - inv -e docker.publish-manifest --signed-push --name datadog/agent --tag latest-jmx --image datadog/agent-amd64:${RELEASE}-jmx,linux/amd64 --image datadog/agent-arm64:${RELEASE}-jmx,linux/arm64
+    - inv -e docker.publish --signed-pull --signed-push datadog/dogstatsd:${RELEASE} datadog/dogstatsd:latest
+
+#
+# Use this step to delete a tag of a given image
+# We call the Docker Hub API because docker cli doesn't support deleting tags
+# - remove the leading dot from the name
+# - set the IMAGE and TAG envvars
+# - in the gitlab pipeline view, trigger the step (in the first column)
+#
+.delete_docker_tag:
+  rules:
+    - when: manual
+      allow_failure: true
+  tags: [ "runner:docker", "size:large" ]
+  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/docker-notary:v2718650-9ce6565-0.6.1-py3
+  before_script:
+    - DOCKER_REGISTRY_LOGIN=$(aws ssm get-parameter --region us-east-1 --name ci.datadog-agent.$DOCKER_REGISTRY_LOGIN_SSM_KEY --with-decryption --query "Parameter.Value" --out text)
+    - PASS=$(aws ssm get-parameter --region us-east-1 --name ci.datadog-agent.$DOCKER_REGISTRY_PWD_SSM_KEY --with-decryption --query "Parameter.Value" --out text)
+    - python3 -m pip install -r requirements.txt
+    - |
+      export DOCKER_TOKEN=`curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'$DOCKER_REGISTRY_LOGIN'", "password": "'$PASS'"}' https://hub.docker.com/v2/users/login/ | python -c 'import sys, json; print(json.load(sys.stdin)["token"].strip())'`
+  dependencies: [] # Don't download Gitlab artefacts
+  stage: source_test
+  variables:
+    <<: *docker_hub_variables
+    IMAGE: ""  # image name, for example "agent"
+    TAG: ""  # tag name, for example "6.9.0"
+    ORGANIZATION: "datadog"
+  script:
+    - if [[ -z "$IMAGE" ]]; then echo "Need an image"; exit 1; fi
+    - if [[ -z "$TAG" ]]; then echo "Need a tag to delete"; exit 1; fi
+    - inv -e docker.delete ${ORGANIZATION} ${IMAGE} ${TAG} ${DOCKER_TOKEN} &>/dev/null
+
+#
+# Cloudfront cache invalidation:
+# Duplicated in 2 jobs: one that runs "on success" of the previous stage, and one that runs "on failure" of previous stages.
+# Compared to having 1 single job that runs "always", this setup guarantees that if earlier stages first failed and were
+# then retried successfully, the cloudfront invalidation will also run after the successful retry.
+#
+.deploy_cloudfront_invalidate: &deploy_cloudfront_invalidate
+  stage: deploy_invalidate
+  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-builders/gitlab_agent_deploy:$DATADOG_AGENT_BUILDERS
+  tags: [ "runner:main", "size:large" ]
+  dependencies: []
+  script:
+    - cd ~/deploy_scripts/cloudfront-invalidation
+    - "REPO=apt REPO_ENV=staging PATTERN_SUBSTRING=/$DEB_RPM_BUCKET_BRANCH/ ./invalidate.sh"
+    - "REPO=yum REPO_ENV=staging PATTERN_SUBSTRING=/$DEB_RPM_BUCKET_BRANCH/ ./invalidate.sh"
+
+deploy_cloudfront_invalidate_on_success:
+  rules:
+    - <<: *if_triggered
+      when: on_success
+  <<: *deploy_cloudfront_invalidate
+
+deploy_cloudfront_invalidate_on_failure:
+  rules:
+    - <<: *if_triggered
+      when: on_failure
+  <<: *deploy_cloudfront_invalidate
+
+#
+# Trigger release pipelines
+#
+
+# The trigger jobs are always run (even on failing pipelines)
+# because there's no way to retry a trigger job once it gets skipped
+# because of a pipeline failure, even when retrying the pipeline.
+trigger_release_7:
+  rules:
+    - <<: *if_triggered_on_tag_7
+      when: always
+  stage: trigger_release
+  variables:
+    RELEASE_VERSION: $RELEASE_VERSION_7-1
   trigger:
     include: .gitlab-ci-build-runners.yml
     strategy: depend
