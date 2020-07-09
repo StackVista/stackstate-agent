@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build kubeapiserver
 // +build kubeapiserver
 
 package common
@@ -16,16 +15,16 @@ import (
 	"os"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/cmd/agent/common"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/agent"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util"
-	"github.com/StackVista/stackstate-agent/pkg/util/flavor"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/cihub/seelog"
+	"github.com/DataDog/datadog-agent/cmd/agent/common"
+	"github.com/DataDog/datadog-agent/pkg/compliance"
+	"github.com/DataDog/datadog-agent/pkg/compliance/agent"
+	"github.com/DataDog/datadog-agent/pkg/compliance/checks"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/DataDog/datadog-agent/pkg/util/flavor"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 
 	"github.com/spf13/cobra"
 )
@@ -34,14 +33,12 @@ var (
 	checkArgs = struct {
 		framework string
 		file      string
-		verbose   bool
 	}{}
 )
 
 func setupCheckCmd(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&checkArgs.framework, "framework", "", "", "Framework to run the checks from")
 	cmd.Flags().StringVarP(&checkArgs.file, "file", "f", "", "Compliance suite file to read rules from")
-	cmd.Flags().BoolVarP(&checkArgs.verbose, "verbose", "v", false, "Include verbose details")
 }
 
 // CheckCmd returns a cobra command to run security agent checks
@@ -59,26 +56,9 @@ func CheckCmd(confPath *string) *cobra.Command {
 }
 
 func runCheck(cmd *cobra.Command, confPath *string, args []string) error {
-	err := configureLogger()
-	if err != nil {
-		return err
-	}
-
-	// We need to set before calling `SetupConfig`
+	options := []checks.BuilderOption{}
 	if flavor.GetFlavor() == flavor.ClusterAgent {
 		config.Datadog.SetConfigName("datadog-cluster")
-	} else {
-		config.Datadog.SetConfigName("datadog")
-	}
-
-	err = common.SetupConfig(*confPath)
-	if err != nil {
-		return fmt.Errorf("unable to set up global security agent configuration: %v", err)
-	}
-
-	options := []checks.BuilderOption{}
-
-	if flavor.GetFlavor() == flavor.ClusterAgent {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
@@ -88,20 +68,17 @@ func runCheck(cmd *cobra.Command, confPath *string, args []string) error {
 		}
 		options = append(options, checks.MayFail(checks.WithKubernetesClient(apiCl.DynamicCl)))
 	} else {
+		config.Datadog.SetConfigName("datadog")
 		options = append(options, []checks.BuilderOption{
 			checks.WithHostRootMount(os.Getenv("HOST_ROOT")),
 			checks.MayFail(checks.WithDocker()),
 			checks.MayFail(checks.WithAudit()),
 		}...)
+	}
 
-		if config.IsKubernetes() {
-			nodeLabels, err := agent.WaitGetNodeLabels()
-			if err != nil {
-				log.Error(err)
-			} else {
-				options = append(options, checks.WithNodeLabels(nodeLabels))
-			}
-		}
+	err := common.SetupConfig(*confPath)
+	if err != nil {
+		return fmt.Errorf("unable to set up global security agent configuration: %v", err)
 	}
 
 	var ruleID string
@@ -119,19 +96,17 @@ func runCheck(cmd *cobra.Command, confPath *string, args []string) error {
 	reporter := &runCheckReporter{}
 
 	if ruleID != "" {
-		log.Infof("Looking for rule with ID=%s", ruleID)
 		options = append(options, checks.WithMatchRule(checks.IsRuleID(ruleID)))
 	}
 
 	if checkArgs.framework != "" {
-		log.Infof("Looking for rules with framework=%s", checkArgs.framework)
 		options = append(options, checks.WithMatchSuite(checks.IsFramework(checkArgs.framework)))
 	}
 
 	if checkArgs.file != "" {
 		err = agent.RunChecksFromFile(reporter, checkArgs.file, options...)
 	} else {
-		configDir := config.Datadog.GetString("compliance_config.dir")
+		configDir := coreconfig.Datadog.GetString("compliance_config.dir")
 		err = agent.RunChecks(reporter, configDir, options...)
 	}
 
@@ -142,29 +117,10 @@ func runCheck(cmd *cobra.Command, confPath *string, args []string) error {
 	return nil
 }
 
-func configureLogger() error {
-	var (
-		logFormat = "%LEVEL | %Msg%n"
-		logLevel  = "info"
-	)
-	if checkArgs.verbose {
-		const logDateFormat = "2006-01-02 15:04:05 MST"
-		logFormat = fmt.Sprintf("%%Date(%s) | %%LEVEL | (%%ShortFilePath:%%Line in %%FuncShort) | %%Msg%%n", logDateFormat)
-		logLevel = "trace"
-	}
-	logger, err := seelog.LoggerFromWriterWithMinLevelAndFormat(os.Stdout, seelog.DebugLvl, logFormat)
-	if err != nil {
-		return err
-	}
-
-	log.SetupDatadogLogger(logger, logLevel)
-	return nil
-}
-
 type runCheckReporter struct {
 }
 
-func (r *runCheckReporter) Report(event *event.Event) {
+func (r *runCheckReporter) Report(event *compliance.RuleEvent) {
 	data, err := json.Marshal(event)
 	if err != nil {
 		log.Errorf("Failed to marshal rule event: %v", err)

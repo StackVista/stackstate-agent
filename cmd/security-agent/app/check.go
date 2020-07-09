@@ -3,12 +3,9 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build !windows && kubeapiserver
-// +build !windows,kubeapiserver
-
 package app
 
-import "github.com/StackVista/stackstate-agent/cmd/security-agent/common"
+import "github.com/DataDog/datadog-agent/cmd/security-agent/common"
 
 func init() {
 	SecurityAgentCmd.AddCommand(common.CheckCmd(&confPath))
