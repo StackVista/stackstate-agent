@@ -181,16 +181,8 @@ if linux?
   dependency 'system-probe'
 end
 
-# Additional software
-if windows?
-  if ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?
-    dependency 'datadog-windows-filter-driver'
-  end
-  dependency 'cacerts_py2_local' if with_python_runtime? "2" # sts
-  dependency 'cacerts_py3_local' if with_python_runtime? "3" # sts
-else
-  dependency 'cacerts'
-end
+# Bundled cacerts file (is this a good idea?)
+dependency 'cacerts'
 
 if osx?
   dependency 'datadog-agent-mac-app'
