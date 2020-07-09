@@ -10,10 +10,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/compliance"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 const (
@@ -61,7 +60,45 @@ func resolveCommand(ctx context.Context, _ env.Env, ruleID string, res complianc
 	// TODO: Capture stdout only when necessary
 	exitCode, stdout, err := commandRunner(context, c.execCommand.Name, c.execCommand.Args, true)
 	if exitCode == -1 && err != nil {
-		return nil, fmt.Errorf("command '%v' execution failed, error: %v", command, err)
+		return log.Warnf("%s: command '%v' execution failed, error: %v", c.id, c.command, err)
+	}
+
+	var shouldReport = false
+	if len(c.command.Filter) == 0 {
+		shouldReport = true
+	} else {
+		for _, filter := range c.command.Filter {
+			if filter.Include != nil && filter.Include.ExitCode == exitCode {
+				shouldReport = true
+				break
+			}
+			if filter.Exclude != nil && filter.Exclude.ExitCode == exitCode {
+				break
+			}
+		}
+	}
+
+	if shouldReport {
+		return c.reportCommand(exitCode, stdout)
+	}
+
+	return log.Warnf("%s: command '%v' returned with exitcode: %d (not reportable), error: %v", c.id, c.command, exitCode, err)
+}
+
+func (c *commandCheck) reportCommand(exitCode int, stdout []byte) error {
+	if len(stdout) > c.maxOutputSize {
+		return log.Errorf("%s: command '%v' output is too large: %d, won't be reported", c.id, c.command, len(stdout))
+	}
+
+	kv := event.Data{
+		"exitCode": strconv.Itoa(exitCode),
+	}
+	strStdout := string(stdout)
+
+	for _, field := range c.command.Report {
+		if len(field.As) > 0 {
+			kv[field.As] = strStdout
+		}
 	}
 
 	return &eval.Instance{

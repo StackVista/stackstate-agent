@@ -14,11 +14,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/mocks"
-	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/compliance/checks"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/compliance/mocks"
+	"github.com/DataDog/datadog-agent/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -92,38 +92,25 @@ func TestRun(t *testing.T) {
 
 	reporter := &mocks.Reporter{}
 
-	reporter.On(
-		"Report",
-		mock.MatchedBy(
-			eventMatcher(
-				eventMatch{
-					ruleID:       "cis-docker-1",
-					resourceID:   "the-host",
-					resourceType: "docker",
-					result:       "passed",
-					path:         "/files/daemon.json",
-					permissions:  0644,
-				},
-			),
-		),
-	).Once()
+	reporter.On("Report", &event.Event{
+		AgentRuleID:  "cis-docker-1",
+		ResourceID:   "the-host",
+		ResourceType: "docker",
+		Tags:         []string{"check_kind:file"},
+		Data: event.Data{
+			"permissions": "644",
+		},
+	})
 
-	reporter.On(
-		"Report",
-		mock.MatchedBy(
-			eventMatcher(
-				eventMatch{
-					ruleID:       "cis-kubernetes-1",
-					resourceID:   "the-host",
-					resourceType: "kubernetesNode",
-					result:       "failed",
-					path:         "/files/kube-apiserver.yaml",
-					permissions:  0644,
-				},
-			),
-		),
-	).Once()
-
+	reporter.On("Report", &event.Event{
+		AgentRuleID:  "cis-kubernetes-1",
+		ResourceID:   "the-host",
+		ResourceType: "kubernetesCluster",
+		Tags:         []string{"check_kind:file"},
+		Data: event.Data{
+			"permissions": "644",
+		},
+	})
 	defer reporter.AssertExpectations(t)
 
 	scheduler := &mocks.Scheduler{}
@@ -169,21 +156,15 @@ func TestRunChecks(t *testing.T) {
 
 	reporter := &mocks.Reporter{}
 
-	reporter.On(
-		"Report",
-		mock.MatchedBy(
-			eventMatcher(
-				eventMatch{
-					ruleID:       "cis-docker-1",
-					resourceID:   "the-host",
-					resourceType: "docker",
-					result:       "passed",
-					path:         "/files/daemon.json",
-					permissions:  0644,
-				},
-			),
-		),
-	).Once()
+	reporter.On("Report", &event.Event{
+		AgentRuleID:  "cis-docker-1",
+		ResourceID:   "the-host",
+		ResourceType: "docker",
+		Tags:         []string{"check_kind:file"},
+		Data: event.Data{
+			"permissions": "644",
+		},
+	})
 
 	defer reporter.AssertExpectations(t)
 
@@ -210,21 +191,15 @@ func TestRunChecksFromFile(t *testing.T) {
 
 	reporter := &mocks.Reporter{}
 
-	reporter.On(
-		"Report",
-		mock.MatchedBy(
-			eventMatcher(
-				eventMatch{
-					ruleID:       "cis-kubernetes-1",
-					resourceID:   "the-host",
-					resourceType: "kubernetesNode",
-					result:       "failed",
-					path:         "/files/kube-apiserver.yaml",
-					permissions:  0644,
-				},
-			),
-		),
-	).Once()
+	reporter.On("Report", &event.Event{
+		AgentRuleID:  "cis-kubernetes-1",
+		ResourceID:   "the-host",
+		ResourceType: "kubernetesCluster",
+		Tags:         []string{"check_kind:file"},
+		Data: event.Data{
+			"permissions": "644",
+		},
+	})
 
 	defer reporter.AssertExpectations(t)
 

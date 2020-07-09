@@ -8,14 +8,16 @@ package checks
 import (
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/mocks"
-
-	assert "github.com/stretchr/testify/require"
+	"github.com/DataDog/datadog-agent/pkg/compliance"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/compliance/mocks"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestGroupCheck(t *testing.T) {
+	type validateFunc func(t *testing.T, kv event.Data)
+
 	tests := []struct {
 		name         string
 		etcGroupFile string
@@ -33,33 +35,14 @@ func TestGroupCheck(t *testing.T) {
 				},
 				Condition: `"carlos" in group.users`,
 			},
-
-			expectReport: &compliance.Report{
-				Passed: true,
-				Data: event.Data{
-					"group.name":  "docker",
-					"group.id":    412,
-					"group.users": []string{"alice", "bob", "carlos", "dan", "eve"},
-				},
-			},
-		},
-		{
-			name:         "docker group user not found",
-			etcGroupFile: "./testdata/group/etc-group",
-			resource: compliance.Resource{
-				Group: &compliance.Group{
-					Name: "docker",
-				},
-				Condition: `"carol" in group.users`,
-			},
-
-			expectReport: &compliance.Report{
-				Passed: false,
-				Data: event.Data{
-					"group.name":  "docker",
-					"group.id":    412,
-					"group.users": []string{"alice", "bob", "carlos", "dan", "eve"},
-				},
+			validate: func(t *testing.T, kv event.Data) {
+				assert.Equal(t,
+					event.Data{
+						"gid":   "412",
+						"users": "alice,bob,carlos,dan,eve",
+					},
+					kv,
+				)
 			},
 		},
 	}
@@ -79,9 +62,16 @@ func TestGroupCheck(t *testing.T) {
 			check, err := newGroupCheck(base, test.group)
 			assert.NoError(err)
 
-			result, err := groupCheck.check(env)
-			assert.Equal(test.expectReport, result)
-			assert.Equal(test.expectError, err)
+			reporter.On(
+				"Report",
+				mock.AnythingOfType("*event.Event"),
+			).Run(func(args mock.Arguments) {
+				event := args.Get(0).(*event.Event)
+				test.validate(t, event.Data)
+			})
+
+			err = check.Run()
+			assert.NoError(err)
 		})
 	}
 }

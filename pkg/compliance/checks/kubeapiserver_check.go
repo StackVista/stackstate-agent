@@ -10,11 +10,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
-	"github.com/StackVista/stackstate-agent/pkg/util/jsonquery"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/compliance"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/util/jsonquery"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -107,22 +106,32 @@ type kubeResourceIterator struct {
 	index     int
 }
 
-func (it *kubeResourceIterator) Next() (*eval.Instance, error) {
-	if !it.Done() {
-		resource := it.resources[it.index]
-		it.index++
+func (c *kubeApiserverCheck) reportResource(p unstructured.Unstructured) error {
+	kv := event.Data{}
 
-		instance := &eval.Instance{
-			Vars: eval.VarMap{
-				compliance.KubeResourceFieldKind:      resource.GetObjectKind().GroupVersionKind().Kind,
-				compliance.KubeResourceFieldGroup:     resource.GetObjectKind().GroupVersionKind().Group,
-				compliance.KubeResourceFieldVersion:   resource.GetObjectKind().GroupVersionKind().Version,
-				compliance.KubeResourceFieldNamespace: resource.GetNamespace(),
-				compliance.KubeResourceFieldName:      resource.GetName(),
-			},
-			Functions: eval.FunctionMap{
-				compliance.KubeResourceFuncJQ: kubeResourceJQ(resource),
-			},
+	for _, field := range c.kubeResource.Report {
+		switch field.Kind {
+		case compliance.PropertyKindJSONQuery:
+			reportValue, valueFound, err := jsonquery.RunSingleOutput(field.Property, p.Object)
+			if err != nil {
+				return fmt.Errorf("unable to report field: '%s' for kubernetes object '%s / %s / %s' - json query error: %v", field.Property, p.GroupVersionKind().String(), p.GetNamespace(), p.GetName(), err)
+			}
+
+			if !valueFound {
+				continue
+			}
+
+			reportName := field.Property
+			if len(field.As) > 0 {
+				reportName = field.As
+			}
+			if len(field.Value) > 0 {
+				reportValue = field.Value
+			}
+
+			kv[reportName] = reportValue
+		default:
+			return fmt.Errorf("unsupported field kind value: '%s' for kubeApiserver resource", field.Kind)
 		}
 		return instance, nil
 	}

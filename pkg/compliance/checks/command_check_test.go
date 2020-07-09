@@ -14,11 +14,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/mocks"
-
-	assert "github.com/stretchr/testify/require"
+	"github.com/DataDog/datadog-agent/pkg/compliance"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/compliance/mocks"
+	"github.com/stretchr/testify/assert"
 )
 
 type commandFixture struct {
@@ -29,12 +28,10 @@ type commandFixture struct {
 	commandExitCode int
 	commandOutput   string
 	commandError    error
-
-	expectCommandName string
-	expectCommandArgs []string
-
-	expectReport *compliance.Report
-	expectError  error
+	expCommandName  string
+	expCommandArgs  []string
+	expKV           event.Data
+	expError        error
 }
 
 func (f *commandFixture) mockRunCommand(t *testing.T) commandRunnerFunc {
@@ -94,7 +91,7 @@ func TestCommandCheck(t *testing.T) {
 			commandError:    nil,
 			expCommandName:  "myCommand",
 			expCommandArgs:  []string{"--foo=bar", "--baz"},
-			expKV: compliance.KVMap{
+			expKV: event.Data{
 				"myCommandOutput": "output",
 				"exitCode":        "0",
 			},
@@ -116,7 +113,7 @@ func TestCommandCheck(t *testing.T) {
 			commandError:    nil,
 			expCommandName:  getDefaultShell().Name,
 			expCommandArgs:  append(getDefaultShell().Args, "my command --foo=bar --baz"),
-			expKV: compliance.KVMap{
+			expKV: event.Data{
 				"myCommandOutput": "output",
 				"exitCode":        "0",
 			},
@@ -149,7 +146,7 @@ func TestCommandCheck(t *testing.T) {
 			commandError:    nil,
 			expCommandName:  "zsh",
 			expCommandArgs:  []string{"-someoption", "-c", "my command --foo=bar --baz"},
-			expKV: compliance.KVMap{
+			expKV: event.Data{
 				"myCommandOutput": "output",
 				"exitCode":        "0",
 			},
@@ -192,7 +189,7 @@ func TestCommandCheck(t *testing.T) {
 			commandError:    nil,
 			expCommandName:  "myCommand",
 			expCommandArgs:  []string{"--foo=bar", "--baz"},
-			expKV: compliance.KVMap{
+			expKV: event.Data{
 				"myCommandOutput": "output",
 				"exitCode":        "2",
 			},
@@ -222,7 +219,7 @@ func TestCommandCheck(t *testing.T) {
 			commandError:    nil,
 			expCommandName:  "myCommand",
 			expCommandArgs:  []string{"--foo=bar", "--baz"},
-			expKV: compliance.KVMap{
+			expKV: event.Data{
 				"myCommandOutput": "output",
 				"exitCode":        "2",
 			},

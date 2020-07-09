@@ -11,10 +11,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/compliance"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/DataDog/gopsutil/process"
 )
 
 const (
@@ -71,11 +71,27 @@ func resolveProcess(_ context.Context, e env.Env, id string, res compliance.Reso
 	}, nil
 }
 
-func processFlag(flagValues map[string]string) eval.Function {
-	return func(_ *eval.Instance, args ...interface{}) (interface{}, error) {
-		flag, err := validateProcessFlagArg(args...)
-		if err != nil {
-			return nil, err
+func (c *processCheck) reportProcess(p *process.FilledProcess) error {
+	log.Debugf("%s: process check - match %s", c.ruleID, p.Cmdline)
+	kv := event.Data{}
+	flagValues := parseProcessCmdLine(p.Cmdline)
+
+	for _, field := range c.process.Report {
+		switch field.Kind {
+		case "flag":
+			if flagValue, found := flagValues[field.Property]; found {
+				flagReportName := field.Property
+				if len(field.As) > 0 {
+					flagReportName = field.As
+				}
+				if len(field.Value) > 0 {
+					flagValue = field.Value
+				}
+
+				kv[flagReportName] = flagValue
+			}
+		default:
+			return log.Errorf("unsupported kind value: '%s' for process: '%s'", field.Kind, p.Name)
 		}
 		value, _ := flagValues[flag]
 		return value, nil

@@ -12,20 +12,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/StackVista/stackstate-agent/cmd/agent/common"
-	"github.com/StackVista/stackstate-agent/pkg/collector/runner"
-	"github.com/StackVista/stackstate-agent/pkg/collector/scheduler"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/agent"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
-	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/logs/auditor"
-	"github.com/StackVista/stackstate-agent/pkg/logs/client"
-	"github.com/StackVista/stackstate-agent/pkg/logs/config"
-	"github.com/StackVista/stackstate-agent/pkg/logs/pipeline"
-	"github.com/StackVista/stackstate-agent/pkg/logs/restart"
-	"github.com/StackVista/stackstate-agent/pkg/status/health"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/cmd/agent/common"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/logs/restart"
 )
 
 var (

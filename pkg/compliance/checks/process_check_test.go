@@ -7,10 +7,10 @@ package checks
 import (
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/mocks"
-	"github.com/StackVista/stackstate-agent/pkg/util/cache"
+	"github.com/DataDog/datadog-agent/pkg/compliance"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/compliance/mocks"
+	"github.com/DataDog/datadog-agent/pkg/util/cache"
 
 	assert "github.com/stretchr/testify/require"
 )
@@ -20,7 +20,7 @@ type processFixture struct {
 	process *compliance.Process
 
 	processes map[int32]*process.FilledProcess
-	expKV     compliance.KVMap
+	expKV     event.Data
 	expError  error
 }
 
@@ -78,13 +78,8 @@ func TestProcessCheck(t *testing.T) {
 					Cmdline: []string{"arg1", "--path=foo"},
 				},
 			},
-			expectReport: &compliance.Report{
-				Passed: true,
-				Data: event.Data{
-					"process.name":    "proc1",
-					"process.exe":     "",
-					"process.cmdLine": []string{"arg1", "--path=foo"},
-				},
+			expKV: event.Data{
+				"path": "foo",
 			},
 		},
 		{
@@ -165,13 +160,8 @@ func TestProcessCheck(t *testing.T) {
 					Cmdline: []string{"arg1", "--paths=foo"},
 				},
 			},
-			expectReport: &compliance.Report{
-				Passed: false,
-				Data: event.Data{
-					"process.name":    "proc1",
-					"process.exe":     "",
-					"process.cmdLine": []string{"arg1", "--paths=foo"},
-				},
+			expKV: event.Data{
+				"verbose": "true",
 			},
 		},
 	}

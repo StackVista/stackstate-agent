@@ -11,10 +11,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/compliance"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/util/jsonquery"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -60,10 +62,9 @@ func (c *fileCheck) Run() error {
 	return log.Error("no path for file check")
 }
 
-	path, err := resolvePath(e, file.Path)
-	if err != nil {
-		return nil, err
-	}
+func (c *fileCheck) reportFile(filePath string) error {
+	kv := event.Data{}
+	var v string
 
 	paths, err := filepath.Glob(e.NormalizeToHostRoot(path))
 	if err != nil {

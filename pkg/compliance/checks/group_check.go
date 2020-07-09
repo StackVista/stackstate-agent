@@ -16,10 +16,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/compliance"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 type groupCheck struct {
@@ -79,10 +78,34 @@ func (f *groupFinder) findGroup(line []byte) (bool, error) {
 		return false, errors.New("malformed group file format")
 	}
 
-	gid, err := strconv.Atoi(parts[2])
-	if err != nil {
-		log.Errorf("failed to parse group ID for %s: %v", f.groupName, err)
-	}
+	kv := event.Data{}
+	for _, field := range c.group.Report {
+
+		if c.setStaticKV(field, kv) {
+			continue
+		}
+
+		var v string
+		switch field.Kind {
+		case compliance.PropertyKindAttribute:
+			switch field.Property {
+			case "users", "members":
+				v = parts[3]
+			case "name":
+				v = parts[1]
+			case "group_id", "gid":
+				v = parts[2]
+			default:
+				return false, ErrPropertyNotSupported
+			}
+		default:
+			return false, ErrPropertyKindNotSupported
+		}
+
+		key := field.As
+		if key == "" {
+			key = field.Property
+		}
 
 	f.instance = &eval.Instance{
 		Vars: eval.VarMap{

@@ -8,10 +8,9 @@ package checks
 import (
 	"fmt"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/compliance"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/elastic/go-libaudit/rule"
 )
 
@@ -62,7 +61,7 @@ func (c *auditCheck) reportOnRule(r *rule.FileWatchRule, path string) error {
 	var (
 		v   string
 		err error
-		kv  = compliance.KVMap{}
+		kv  = event.Data{}
 	)
 
 	log.Debugf("%s: evaluating audit rules", ruleID)

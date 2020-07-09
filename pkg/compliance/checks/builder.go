@@ -16,6 +16,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/collector/check"
 	"github.com/DataDog/datadog-agent/pkg/compliance"
 	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
 	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/hostinfo"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
@@ -204,7 +205,7 @@ func NewBuilder(reporter event.Reporter, options ...BuilderOption) (Builder, err
 type builder struct {
 	checkInterval time.Duration
 
-	reporter   compliance.Reporter
+	reporter   event.Reporter
 	valueCache *cache.Cache
 
 	hostname     string
@@ -633,7 +634,7 @@ func (b *builder) evalValueFromFile(get getter) eval.Function {
 	}
 }
 
-func (b *builder) Reporter() compliance.Reporter {
+func (b *builder) Reporter() event.Reporter {
 	return b.reporter
 }
 

@@ -14,11 +14,9 @@ import (
 	"github.com/Masterminds/sprig"
 	"github.com/docker/docker/api/types"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/docker/docker/api/types"
+	"github.com/DataDog/datadog-agent/pkg/compliance"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // ErrDockerKindNotSupported is returned when an unsupported kind of docker
@@ -124,12 +122,11 @@ func (c *dockerCheck) inspect(id string, obj interface{}) {
 		}
 	}
 
-	return &eval.Instance{
-		Functions: eval.FunctionMap{
-			compliance.DockerFuncTemplate: dockerTemplateQuery(compliance.DockerFuncTemplate, info),
-		},
-	}, nil
-}
+	kv := event.Data{}
+	for _, field := range c.dockerResource.Report {
+		if c.setStaticKV(field, kv) {
+			continue
+		}
 
 func newDockerVersionInstance(ctx context.Context, client env.DockerClient) (*eval.Instance, error) {
 	version, err := client.ServerVersion(ctx)

@@ -14,6 +14,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/collector/check"
 	"github.com/DataDog/datadog-agent/pkg/compliance"
 	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
 	"github.com/DataDog/datadog-agent/pkg/compliance/mocks"
 	"github.com/docker/docker/api/types"
 
@@ -25,15 +26,13 @@ var (
 	mockCtx = mock.Anything
 )
 
-func newTestRuleEvent(tags []string, kv compliance.KVMap) *compliance.RuleEvent {
-	return &compliance.RuleEvent{
-		RuleID:       testCheckMeta.ruleID,
-		Framework:    testCheckMeta.framework,
-		Version:      testCheckMeta.version,
+func newTestRuleEvent(tags []string, data event.Data) *event.Event {
+	return &event.Event{
+		AgentRuleID:  testCheckMeta.ruleID,
 		ResourceType: testCheckMeta.resourceType,
 		ResourceID:   testCheckMeta.resourceID,
 		Tags:         tags,
-		Data:         kv,
+		Data:         data,
 	}
 }
 
@@ -94,9 +93,36 @@ func TestDockerImageCheck(t *testing.T) {
 		client.On("ImageInspectWithRaw", mockCtx, id).Return(image, nil, nil)
 	}
 
-	env := &mocks.Env{}
-	defer env.AssertExpectations(t)
-	env.On("DockerClient").Return(client)
+	reporter := &mocks.Reporter{}
+	defer reporter.AssertExpectations(t)
+
+	imagesWithMissingHealthcheck := []struct {
+		id   string
+		name string
+	}{
+		{
+			id:   "sha256:f9b9909726890b00d2098081642edf32e5211b7ab53563929a47f250bcdc1d7c",
+			name: "redis:latest",
+		},
+		{
+			id:   "sha256:89ec9da682137d6b18ab8244ca263b6771067f251562f884c7510c8f1e5ac910",
+			name: "nginx:alpine",
+		},
+	}
+
+	for _, image := range imagesWithMissingHealthcheck {
+		reporter.On(
+			"Report",
+			newTestRuleEvent(
+				[]string{"check_kind:docker"},
+				event.Data{
+					"image_id":                  image.id,
+					"image_name":                image.name,
+					"image_healthcheck_missing": "true",
+				},
+			),
+		).Once()
+	}
 
 	env := &mocks.Env{}
 	defer env.AssertExpectations(t)
@@ -140,7 +166,7 @@ func TestDockerNetworkCheck(t *testing.T) {
 		"Report",
 		newTestRuleEvent(
 			[]string{"check_kind:docker"},
-			compliance.KVMap{
+			event.Data{
 				"network_id":                        "e7ed6c335383178f99b61a8a44b82b62abc17b31d68b792180728bf8f2c599ec",
 				"default_bridge_traffic_restricted": "true",
 			},
@@ -268,7 +294,7 @@ func TestDockerContainerCheck(t *testing.T) {
 		"Report",
 		newTestRuleEvent(
 			[]string{"check_kind:docker"},
-			compliance.KVMap{
+			event.Data{
 				"container_id": "3c4bd9d35d42efb2314b636da42d4edb3882dc93ef0b1931ed0e919efdceec87",
 				"privileged":   "true",
 			},
@@ -335,7 +361,7 @@ func TestDockerInfoCheck(t *testing.T) {
 		"Report",
 		newTestRuleEvent(
 			[]string{"check_kind:docker"},
-			compliance.KVMap{
+			event.Data{
 				"insecure_registries": "127.0.0.0/8",
 			},
 		),
@@ -384,7 +410,7 @@ func TestDockerVersionCheck(t *testing.T) {
 		"Report",
 		newTestRuleEvent(
 			[]string{"check_kind:docker"},
-			compliance.KVMap{
+			event.Data{
 				"experimental_features": "true",
 			},
 		),
