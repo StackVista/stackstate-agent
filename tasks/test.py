@@ -13,6 +13,9 @@ import yaml
 from invoke import task
 from invoke.exceptions import Exit
 
+from .utils import get_build_flags
+from .go import fmt, lint, vet, misspell, ineffassign, staticcheck, lint_licenses, golangci_lint, generate
+from .build_tags import get_default_build_tags, get_build_tags
 from .agent import integration_tests as agent_integration_tests
 from .build_tags import filter_incompatible_tags, get_build_tags, get_default_build_tags
 from .cluster_agent import integration_tests as dca_integration_tests
