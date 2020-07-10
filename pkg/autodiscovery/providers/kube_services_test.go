@@ -13,7 +13,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -34,9 +34,9 @@ func TestParseKubeServiceAnnotations(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					UID: types.UID("test"),
 					Annotations: map[string]string{
-						"ad.datadoghq.com/service.check_names":  "[\"http_check\"]",
-						"ad.datadoghq.com/service.init_configs": "[{}]",
-						"ad.datadoghq.com/service.instances":    "[{\"name\": \"My service\", \"url\": \"http://%%host%%\", \"timeout\": 1}]",
+						"ad.stackstate.com/service.check_names":  "[\"http_check\"]",
+						"ad.stackstate.com/service.init_configs": "[{}]",
+						"ad.stackstate.com/service.instances":    "[{\"name\": \"My service\", \"url\": \"http://%%host%%\", \"timeout\": 1}]",
 					},
 				},
 			},
@@ -68,9 +68,9 @@ func TestInvalidateIfChanged(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			ResourceVersion: "89",
 			Annotations: map[string]string{
-				"ad.datadoghq.com/service.check_names":  "[\"http_check\"]",
-				"ad.datadoghq.com/service.init_configs": "[{}]",
-				"ad.datadoghq.com/service.instances":    "[{\"name\": \"My service\", \"url\": \"http://%%host%%\", \"timeout\": 1}]",
+				"ad.stackstate.com/service.check_names":  "[\"http_check\"]",
+				"ad.stackstate.com/service.init_configs": "[{}]",
+				"ad.stackstate.com/service.instances":    "[{\"name\": \"My service\", \"url\": \"http://%%host%%\", \"timeout\": 1}]",
 			},
 		},
 	}
@@ -78,9 +78,9 @@ func TestInvalidateIfChanged(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			ResourceVersion: "90",
 			Annotations: map[string]string{
-				"ad.datadoghq.com/service.check_names":  "[\"http_check\"]",
-				"ad.datadoghq.com/service.init_configs": "[{}]",
-				"ad.datadoghq.com/service.instances":    "[{\"name\": \"My service\", \"url\": \"http://%%host%%\", \"timeout\": 1}]",
+				"ad.stackstate.com/service.check_names":  "[\"http_check\"]",
+				"ad.stackstate.com/service.init_configs": "[{}]",
+				"ad.stackstate.com/service.instances":    "[{\"name\": \"My service\", \"url\": \"http://%%host%%\", \"timeout\": 1}]",
 			},
 		},
 	}

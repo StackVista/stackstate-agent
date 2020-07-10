@@ -132,7 +132,7 @@ func getMockedPods() []*kubelet.Pod {
 			Metadata: kubelet.PodMetadata{
 				Name: "mock-pod",
 				Annotations: map[string]string{
-					"ad.datadoghq.com/baz.instances": "[]",
+					"ad.stackstate.com/baz.instances": "[]",
 				},
 			},
 		},

@@ -23,8 +23,9 @@ import (
 )
 
 const (
-	newPodAnnotationFormat    = "ad.datadoghq.com/%s.instances"
-	legacyPodAnnotationFormat = "service-discovery.datadoghq.com/%s.instances"
+	newPodAnnotationFormat        = TagPrefix + "/%s.instances"
+	dataDogNewPodAnnotationFormat = DataDogTagPrefix + "/%s.instances"
+	legacyPodAnnotationFormat     = "service-discovery.datadoghq.com/%s.instances"
 )
 
 // KubeletListener listen to kubelet pod creation
@@ -209,11 +210,16 @@ func (l *KubeletListener) createService(entity string, pod *kubelet.Pod, firstRu
 // AD template. It does not try to validate it, just having the `instance` fields is
 // OK to return true.
 func podHasADTemplate(annotations map[string]string, containerName string) bool {
-	if _, found := annotations[fmt.Sprintf(newPodAnnotationFormat, containerName)]; found {
-		return true
+	formats := []string{
+		newPodAnnotationFormat,
+		dataDogNewPodAnnotationFormat,
+		legacyPodAnnotationFormat,
 	}
-	if _, found := annotations[fmt.Sprintf(legacyPodAnnotationFormat, containerName)]; found {
-		return true
+
+	for _, annotationFormat := range formats {
+		if _, found := annotations[fmt.Sprintf(annotationFormat, containerName)]; found {
+			return true
+		}
 	}
 	return false
 }

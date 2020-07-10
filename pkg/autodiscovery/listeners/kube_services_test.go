@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -20,6 +20,52 @@ import (
 )
 
 func TestProcessService(t *testing.T) {
+	ksvc := &v1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			ResourceVersion: "123",
+			UID:             types.UID("test"),
+			Annotations: map[string]string{
+				"ad.stackstate.com/service.check_names":  "[\"http_check\"]",
+				"ad.stackstate.com/service.init_configs": "[{}]",
+				"ad.stackstate.com/service.instances":    "[{\"name\": \"My service\", \"url\": \"http://%%host%%\", \"timeout\": 1}]",
+			},
+			Name:      "myservice",
+			Namespace: "default",
+		},
+		Spec: v1.ServiceSpec{
+			ClusterIP: "10.0.0.1",
+			Ports: []v1.ServicePort{
+				{Name: "test1", Port: 123},
+				{Name: "test2", Port: 126},
+			},
+		},
+	}
+
+	svc := processService(ksvc, true)
+	assert.Equal(t, "kube_service://test", svc.GetEntity())
+	assert.Equal(t, integration.Before, svc.GetCreationTime())
+
+	adID, err := svc.GetADIdentifiers()
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"kube_service://test"}, adID)
+
+	hosts, err := svc.GetHosts()
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]string{"cluster": "10.0.0.1"}, hosts)
+
+	ports, err := svc.GetPorts()
+	assert.NoError(t, err)
+	assert.Equal(t, []ContainerPort{{123, "test1"}, {126, "test2"}}, ports)
+
+	tags, err := svc.GetTags()
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"kube_service:myservice", "kube_namespace:default"}, tags)
+
+	svc = processService(ksvc, false)
+	assert.Equal(t, integration.After, svc.GetCreationTime())
+}
+
+func TestProcessServiceWithDataDogAnnotation(t *testing.T) {
 	ksvc := &v1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			ResourceVersion: "123",
@@ -207,9 +253,9 @@ func TestServicesDiffer(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					ResourceVersion: "124",
 					Annotations: map[string]string{
-						"ad.datadoghq.com/service.check_names":  "[\"http_check\"]",
-						"ad.datadoghq.com/service.init_configs": "[{}]",
-						"ad.datadoghq.com/service.instances":    "[{\"name\": \"My service\", \"url\": \"http://%%host%%\", \"timeout\": 1}]",
+						"ad.stackstate.com/service.check_names":  "[\"http_check\"]",
+						"ad.stackstate.com/service.init_configs": "[{}]",
+						"ad.stackstate.com/service.instances":    "[{\"name\": \"My service\", \"url\": \"http://%%host%%\", \"timeout\": 1}]",
 					},
 				},
 				Spec: v1.ServiceSpec{
@@ -226,9 +272,9 @@ func TestServicesDiffer(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					ResourceVersion: "123",
 					Annotations: map[string]string{
-						"ad.datadoghq.com/service.check_names":  "[\"http_check\"]",
-						"ad.datadoghq.com/service.init_configs": "[{}]",
-						"ad.datadoghq.com/service.instances":    "[{\"name\": \"My service\", \"url\": \"http://%%host%%\", \"timeout\": 1}]",
+						"ad.stackstate.com/service.check_names":  "[\"http_check\"]",
+						"ad.stackstate.com/service.init_configs": "[{}]",
+						"ad.stackstate.com/service.instances":    "[{\"name\": \"My service\", \"url\": \"http://%%host%%\", \"timeout\": 1}]",
 					},
 				},
 				Spec: v1.ServiceSpec{

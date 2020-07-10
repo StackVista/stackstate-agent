@@ -16,7 +16,7 @@ import (
 // configPath refers to the configuration that can be passed over a docker label or a pod annotation,
 // this feature is commonly named 'ad' or 'autodicovery'.
 const (
-	annotationConfigPathPrefix = "ad.datadoghq.com"
+	annotationConfigPathPrefix = "ad.stackstate.com"
 	annotationConfigPathSuffix = "logs"
 )
 

@@ -10,9 +10,9 @@ spec:
         app: datadog-cluster-agent
       name: datadog-agent
       annotations:
-        ad.datadoghq.com/datadog-cluster-agent.check_names: '["prometheus"]'
-        ad.datadoghq.com/datadog-cluster-agent.init_configs: '[{}]'
-        ad.datadoghq.com/datadog-cluster-agent.instances: '[{"prometheus_url": "http://%%host%%:5000/metrics","namespace": "datadog.cluster_agent","metrics": ["go_goroutines","go_memstats_*","process_*","api_requests","datadog_requests","external_metrics", "cluster_checks_*"]}]'
+        ad.stackstate.com/datadog-cluster-agent.check_names: '["prometheus"]'
+        ad.stackstate.com/datadog-cluster-agent.init_configs: '[{}]'
+        ad.stackstate.com/datadog-cluster-agent.instances: '[{"prometheus_url": "http://%%host%%:5000/metrics","namespace": "datadog.cluster_agent","metrics": ["go_goroutines","go_memstats_*","process_*","api_requests","datadog_requests","external_metrics", "cluster_checks_*"]}]'
     spec:
       serviceAccountName: dca
       containers:

@@ -20,9 +20,9 @@ func TestParseDockerLabels(t *testing.T) {
 	containers := map[string]map[string]string{
 		"nolabels": {},
 		"3b8efe0c50e8": {
-			"com.datadoghq.ad.check_names":  "[\"apache\",\"http_check\"]",
-			"com.datadoghq.ad.init_configs": "[{}, {}]",
-			"com.datadoghq.ad.instances":    "[{\"apache_status_url\": \"http://%%host%%/server-status?auto\"},{\"name\": \"My service\", \"url\": \"http://%%host%%\", \"timeout\": 1}]",
+			"com.stackstate.ad.check_names":  "[\"apache\",\"http_check\"]",
+			"com.stackstate.ad.init_configs": "[{}, {}]",
+			"com.stackstate.ad.instances":    "[{\"apache_status_url\": \"http://%%host%%/server-status?auto\"},{\"name\": \"My service\", \"url\": \"http://%%host%%\", \"timeout\": 1}]",
 		},
 	}
 

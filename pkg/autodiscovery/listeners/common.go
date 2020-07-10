@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	newIdentifierLabel        = "com.datadoghq.ad.check.id"
+	newIdentifierLabel        = ReverseTagPrefix + ".check.id"
 	legacyIdentifierLabel     = "com.datadoghq.sd.check.id"
-	dockerADTemplateLabelName = "com.datadoghq.ad.instances"
+	dockerADTemplateLabelName = ReverseTagPrefix + ".instances"
 )
 
 // ComputeContainerServiceIDs takes an entity name, an image (resolved to an actual name) and labels
@@ -23,6 +23,7 @@ func ComputeContainerServiceIDs(entity string, image string, labels map[string]s
 	if l, found := labels[newIdentifierLabel]; found {
 		return []string{l}
 	}
+
 	if l, found := labels[legacyIdentifierLabel]; found {
 		log.Warnf("found legacy %s label for %s, please use the new name %s",
 			legacyIdentifierLabel, entity, newIdentifierLabel)

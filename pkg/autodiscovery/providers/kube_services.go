@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	listersv1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
@@ -25,9 +25,9 @@ import (
 
 const (
 	// AD on the load-balanced service IPs
-	kubeServiceAnnotationPrefix = "ad.datadoghq.com/service."
+	kubeServiceAnnotationPrefix = TagPrefix + "/service."
 	// AD on the individual service endpoints (TODO)
-	// kubeEndpointAnnotationPrefix = "ad.datadoghq.com/endpoints."
+	// kubeEndpointAnnotationPrefix = TagPrefix + "/endpoints."
 	// kubeEndpointIDPrefix         = "kube_endpoint://"
 )
 

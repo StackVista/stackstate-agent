@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	dockerADLabelPrefix = "com.datadoghq.ad."
+	dockerADLabelPrefix = ReverseTagPrefix + "."
 )
 
 // DockerConfigProvider implements the ConfigProvider interface for the docker labels.

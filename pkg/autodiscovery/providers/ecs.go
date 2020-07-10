@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	ecsADLabelPrefix        = "com.datadoghq.ad."
+	ecsADLabelPrefix        = ReverseTagPrefix + "."
 	metadataURL      string = "http://169.254.170.2/v2/metadata"
 )
 

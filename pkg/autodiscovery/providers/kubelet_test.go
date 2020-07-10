@@ -44,9 +44,9 @@ func TestParseKubeletPodlist(t *testing.T) {
 			pod: &kubelet.Pod{
 				Metadata: kubelet.PodMetadata{
 					Annotations: map[string]string{
-						"ad.datadoghq.com/apache.check_names":                 "[\"http_check\"]",
-						"ad.datadoghq.com/apache.init_configs":                "[{}]",
-						"ad.datadoghq.com/apache.instances":                   "[{\"name\": \"My service\", \"url\": \"http://%%host%%\", \"timeout\": 1}]",
+						"ad.stackstate.com/apache.check_names":                "[\"http_check\"]",
+						"ad.stackstate.com/apache.init_configs":               "[{}]",
+						"ad.stackstate.com/apache.instances":                  "[{\"name\": \"My service\", \"url\": \"http://%%host%%\", \"timeout\": 1}]",
 						"service-discovery.datadoghq.com/apache.check_names":  "[\"invalid\"]",
 						"service-discovery.datadoghq.com/apache.init_configs": "[{}]",
 						"service-discovery.datadoghq.com/apache.instances":    "[{}]",
@@ -75,12 +75,12 @@ func TestParseKubeletPodlist(t *testing.T) {
 			pod: &kubelet.Pod{
 				Metadata: kubelet.PodMetadata{
 					Annotations: map[string]string{
-						"ad.datadoghq.com/apache.check_names":  "[\"http_check\"]",
-						"ad.datadoghq.com/apache.init_configs": "[{}]",
-						"ad.datadoghq.com/apache.instances":    "[{\"name\": \"My service\", \"url\": \"http://%%host%%\", \"timeout\": 1}]",
-						"ad.datadoghq.com/nginx.check_names":   "[\"http_check\"]",
-						"ad.datadoghq.com/nginx.init_configs":  "[{}]",
-						"ad.datadoghq.com/nginx.instances":     "[{\"name\": \"Other service\", \"url\": \"http://%%host_external%%\", \"timeout\": 1}]",
+						"ad.stackstate.com/apache.check_names":  "[\"http_check\"]",
+						"ad.stackstate.com/apache.init_configs": "[{}]",
+						"ad.stackstate.com/apache.instances":    "[{\"name\": \"My service\", \"url\": \"http://%%host%%\", \"timeout\": 1}]",
+						"ad.stackstate.com/nginx.check_names":   "[\"http_check\"]",
+						"ad.stackstate.com/nginx.init_configs":  "[{}]",
+						"ad.stackstate.com/nginx.instances":     "[{\"name\": \"Other service\", \"url\": \"http://%%host_external%%\", \"timeout\": 1}]",
 					},
 				},
 				Status: kubelet.Status{

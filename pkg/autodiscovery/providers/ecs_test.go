@@ -14,9 +14,9 @@ import (
 
 func TestParseECSContainers(t *testing.T) {
 	labels := map[string]string{
-		"com.datadoghq.ad.check_names":  "[\"nginx\", \"http_check\"]",
-		"com.datadoghq.ad.init_configs": "[{}, {}]",
-		"com.datadoghq.ad.instances":    "[{\"nginx_status_url\": \"http://%%host%%\"}, {\"url\": \"http://%%host%%/healthz\"}]",
+		"com.stackstate.ad.check_names":  "[\"nginx\", \"http_check\"]",
+		"com.stackstate.ad.init_configs": "[{}, {}]",
+		"com.stackstate.ad.instances":    "[{\"nginx_status_url\": \"http://%%host%%\"}, {\"url\": \"http://%%host%%/healthz\"}]",
 	}
 	c := ecs.Container{
 		DockerID: "deadbeef",

@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	podAnnotationPrefix              = "ad.datadoghq.com/"
+	podAnnotationPrefix              = "ad.stackstate.com/"
 	podContainerTagsAnnotationFormat = podAnnotationPrefix + "%s.tags"
 	podTagsAnnotation                = podAnnotationPrefix + "tags"
 )
