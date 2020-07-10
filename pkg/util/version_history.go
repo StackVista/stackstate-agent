@@ -11,9 +11,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/StackVista/stackstate-agent/pkg/version"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/version"
 )
 
 type versionHistoryEntry struct {
@@ -40,7 +40,7 @@ func logVersionHistoryToFile(versionHistoryFilePath, agentVersion string, timest
 	history := versionHistoryEntries{}
 
 	if err != nil {
-		log.Infof("Cannot read file: %s, will create a new one. %v", versionHistoryFilePath, err)
+		log.Warnf("Cannot read file: %s, will create a new one. %v", versionHistoryFilePath, err)
 	} else {
 		err = json.Unmarshal(file, &history)
 		if err != nil {
