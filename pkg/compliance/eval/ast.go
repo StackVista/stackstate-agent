@@ -30,7 +30,7 @@ type IterableExpression struct {
 type IterableComparison struct {
 	Pos lexer.Position
 
-	Fn               *string           `parser:"@( \"count\" | \"all\" | \"none\" )"`
+	Fn               *string           `parser:"@Ident"`
 	Expression       *Expression       `parser:"\"(\" @@ \")\""`
 	ScalarComparison *ScalarComparison `parser:"[ @@ ]"`
 }
