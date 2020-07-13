@@ -4,7 +4,7 @@
   connection: local
   gather_facts: false
   vars_files:
-    - common_vars.yaml
+    - common_vars.yml
   vars:
     ssh_port: 22
 

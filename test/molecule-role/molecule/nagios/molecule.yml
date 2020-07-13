@@ -24,9 +24,6 @@ provisioner:
     destroy: destroy.yml
   lint:
     name: ansible-lint
-  inventory:
-    links:
-      group_vars: common_vars.yml
 scenario:
   name: nagios
 verifier:
