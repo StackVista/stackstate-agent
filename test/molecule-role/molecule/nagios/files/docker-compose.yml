@@ -71,7 +71,7 @@ services:
       MYSQL_ALLOW_EMPTY_PASSWORD: 1
 
   nagios:
-    build: ./nagios
+    build: nagios
     ports:
       - 8080:80
     volumes:
