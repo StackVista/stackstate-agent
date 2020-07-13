@@ -13,14 +13,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/aggregator"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
-	kubestatemetrics "github.com/StackVista/stackstate-agent/pkg/kubestatemetrics/builder"
-	ksmstore "github.com/StackVista/stackstate-agent/pkg/kubestatemetrics/store"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
+	kubestatemetrics "github.com/DataDog/datadog-agent/pkg/kubestatemetrics/builder"
+	ksmstore "github.com/DataDog/datadog-agent/pkg/kubestatemetrics/store"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 
 	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/tools/cache"
@@ -60,13 +60,6 @@ type KSMConfig struct {
 	// labels_mapper:
 	//   namespace: kube_namespace
 	LabelsMapper map[string]string `yaml:"labels_mapper"`
-
-	// Tags contains the list of tags to attach to every metric, event and service check emitted by this integration.
-	// Example:
-	// tags:
-	//   - env:prod
-	//   - zone:eu
-	Tags []string `yaml:"tags"`
 
 	// Namespaces contains the namespaces from which we collect metrics
 	// Example: Enable metric collection for objects in prod and kube-system namespaces.
@@ -137,8 +130,6 @@ func (k *KSMCheck) Configure(config, initConfig integration.Data, source string)
 
 	// Prepare labels mapper
 	k.mergeLabelsMapper(defaultLabelsMapper)
-
-	k.initTags()
 
 	builder := kubestatemetrics.New()
 
@@ -242,14 +233,13 @@ func (k *KSMCheck) processMetrics(sender aggregator.Sender, metrics map[string][
 			}
 			if transform, found := metricTransformers[metricFamily.Name]; found {
 				for _, m := range metricFamily.ListMetrics {
-					hostname, tags := k.hostnameAndTags(m.Labels, metricsToGet)
-					transform(sender, metricFamily.Name, m, hostname, tags)
+					// TODO: implement metric transformer functions
+					transform(sender, metricFamily.Name, m.Val, k.joinLabels(m.Labels, metricsToGet))
 				}
 				continue
 			}
 			for _, m := range metricFamily.ListMetrics {
-				hostname, tags := k.hostnameAndTags(m.Labels, metricsToGet)
-				sender.Gauge(formatMetricName(metricFamily.Name), m.Val, hostname, tags)
+				sender.Gauge(formatMetricName(metricFamily.Name), m.Val, "", k.joinLabels(m.Labels, metricsToGet))
 			}
 		}
 	}
@@ -389,6 +379,26 @@ func (k *KSMCheck) mergeLabelJoins(extra map[string]*JoinsConfig) {
 func (k *KSMCheck) initTags() {
 	if k.instance.Tags == nil {
 		k.instance.Tags = []string{}
+	}
+}
+
+// mergeLabelsMapper adds extra label mappings to the configured labels mapper
+// User-defined mappings are prioritized over additional mappings
+func (k *KSMCheck) mergeLabelsMapper(extra map[string]string) {
+	for key, value := range extra {
+		if _, found := k.instance.LabelsMapper[key]; !found {
+			k.instance.LabelsMapper[key] = value
+		}
+	}
+}
+
+// mergeLabelJoins adds extra label joins to the configured label joins
+// User-defined label joins are prioritized over additional label joins
+func (k *KSMCheck) mergeLabelJoins(extra map[string]*JoinsConfig) {
+	for key, value := range extra {
+		if _, found := k.instance.LabelJoins[key]; !found {
+			k.instance.LabelJoins[key] = value
+		}
 	}
 }
 

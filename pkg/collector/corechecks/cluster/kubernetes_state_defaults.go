@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build kubeapiserver
 // +build kubeapiserver
 
 package cluster
@@ -11,17 +10,23 @@ package cluster
 import (
 	"regexp"
 
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+
 	"k8s.io/kube-state-metrics/pkg/options"
 )
 
 // ksmMetricPrefix defines the KSM metrics namespace
 const ksmMetricPrefix = "kubernetes_state."
 
+// metricTransformerFunc is used to tweak or generate new metrics from a given KSM metric
+// For name translation only please use metricNamesMapper instead
+type metricTransformerFunc = func(aggregator.Sender, string, float64, []string)
+
 var (
 	// defaultLabelsMapper contains the default label to tag names mapping
 	defaultLabelsMapper = map[string]string{
 		"namespace":                        "kube_namespace",
-		"job_name":                         "kube_job",
+		"job":                              "kube_job",
 		"cronjob":                          "kube_cronjob",
 		"pod":                              "pod_name",
 		"phase":                            "pod_phase",
@@ -109,6 +114,27 @@ var (
 		"kube_verticalpodautoscaler_spec_updatepolicy_updatemode":                                  "vpa.update_mode",
 		"kube_verticalpodautoscaler_spec_resourcepolicy_container_policies_minallowed":             "vpa.spec_container_minallowed",
 		"kube_verticalpodautoscaler_spec_resourcepolicy_container_policies_maxallowed":             "vpa.spec_container_maxallowed",
+	}
+
+	// metricTransformers contains KSM metric names and their corresponding transformer functions
+	// These metrics require more than a name translation to generate Datadog metrics, as opposed to the metrics in metricNamesMapper
+	// TODO: implement the metric transformers of these metrics and unit test them
+	// For reference see METRIC_TRANSFORMERS in KSM check V1
+	metricTransformers = map[string]metricTransformerFunc{
+		"kube_pod_status_phase":                       func(s aggregator.Sender, name string, val float64, tags []string) {},
+		"kube_pod_container_status_waiting_reason":    func(s aggregator.Sender, name string, val float64, tags []string) {},
+		"kube_pod_container_status_terminated_reason": func(s aggregator.Sender, name string, val float64, tags []string) {},
+		"kube_cronjob_next_schedule_time":             func(s aggregator.Sender, name string, val float64, tags []string) {},
+		"kube_job_complete":                           func(s aggregator.Sender, name string, val float64, tags []string) {},
+		"kube_job_failed":                             func(s aggregator.Sender, name string, val float64, tags []string) {},
+		"kube_job_status_failed":                      func(s aggregator.Sender, name string, val float64, tags []string) {},
+		"kube_job_status_succeeded":                   func(s aggregator.Sender, name string, val float64, tags []string) {},
+		"kube_node_status_condition":                  func(s aggregator.Sender, name string, val float64, tags []string) {},
+		"kube_node_spec_unschedulable":                func(s aggregator.Sender, name string, val float64, tags []string) {},
+		"kube_resourcequota":                          func(s aggregator.Sender, name string, val float64, tags []string) {},
+		"kube_limitrange":                             func(s aggregator.Sender, name string, val float64, tags []string) {},
+		"kube_persistentvolume_status_phase":          func(s aggregator.Sender, name string, val float64, tags []string) {},
+		"kube_service_spec_type":                      func(s aggregator.Sender, name string, val float64, tags []string) {},
 	}
 
 	// metadata metrics are useful for label joins
