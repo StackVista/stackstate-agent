@@ -18,7 +18,9 @@
         mode: preserve
       with_items:
         - docker-compose.yml
-        - create-topics.sh
+        - agent
+        - mysql
+        - nagios
     - name: Gather facts (we need the docker network interface ip)
       setup:
     - name: Run Docker compose
