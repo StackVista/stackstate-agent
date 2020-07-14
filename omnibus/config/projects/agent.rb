@@ -144,7 +144,7 @@ package :msi do
     signing_identity_file "#{ENV['SIGN_PFX']}", password: "#{ENV['SIGN_PFX_PW']}", algorithm: "SHA256"
   end
   include_sysprobe = "false"
-  if not windows_arch_i386? and ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?
+  if not windows_arch_i386? and ENV['WINDOWS_DDFILTER_DRIVER'] and not ENV['WINDOWS_DDFILTER_DRIVER'].empty?
     include_sysprobe = "true"
   end
   parameters({
@@ -181,6 +181,12 @@ if linux?
   dependency 'system-probe'
 end
 
+# Additional software
+if windows?
+  if ENV['WINDOWS_DDFILTER_DRIVER'] and not ENV['WINDOWS_DDFILTER_DRIVER'].empty?
+    dependency 'datadog-windows-filter-driver'
+  end
+end
 # Bundled cacerts file (is this a good idea?)
 dependency 'cacerts'
 

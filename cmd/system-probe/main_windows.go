@@ -6,12 +6,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/util/winutil"
-	"path/filepath"
+	"github.com/DataDog/datadog-agent/pkg/process/config"
+	"github.com/DataDog/datadog-agent/pkg/process/util"
 	"time"
-
-	"github.com/StackVista/stackstate-agent/pkg/process/config"
-	"github.com/StackVista/stackstate-agent/pkg/process/util"
 
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
@@ -19,19 +16,6 @@ import (
 )
 
 var elog debug.Log
-
-// ServiceName is the service name used for the process-agent
-const ServiceName = "datadog-system-probe"
-
-// opts are the command-line options
-var defaultSysProbeConfigPath = "c:\\programdata\\datadog\\system-probe.yaml"
-
-func init() {
-	pd, err := winutil.GetProgramDataDir()
-	if err == nil {
-		defaultSysProbeConfigPath = filepath.Join(pd, "system-probe.yaml")
-	}
-}
 
 func main() {
 	flag.StringVar(&opts.configPath, "config", defaultSysProbeConfigPath, "Path to system-probe config formatted as YAML")
@@ -60,6 +44,9 @@ func main() {
 func runCheck(cfg *config.AgentConfig) {
 	return
 }
+
+// ServiceName is the service name used for the process-agent
+const ServiceName = "datadog-system-probe"
 
 type myservice struct{}
 

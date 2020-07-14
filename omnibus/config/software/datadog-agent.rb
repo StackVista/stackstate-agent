@@ -59,7 +59,7 @@ build do
   if windows?
     platform = windows_arch_i386? ? "x86" : "x64"
     do_windows_sysprobe = ""
-    if not windows_arch_i386? and ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?
+    if not windows_arch_i386? and ENV['WINDOWS_DDFILTER_DRIVER'] and not ENV['WINDOWS_DDFILTER_DRIVER'].empty?
       do_windows_sysprobe = "--windows-sysprobe"
     end
     command "inv -e rtloader.make --python-runtimes #{py_runtimes_arg} --install-prefix \"#{windows_safe_path(python_2_embedded)}\" --cmake-options \"-G \\\"Unix Makefiles\\\"\" --arch #{platform}", :env => env
@@ -67,7 +67,6 @@ build do
     # //TODO: sts mkdir workaround
     mkdir "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent/"
     command "mv rtloader/bin/*.dll  #{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent/"
-    command "echo %PATH%" # TODO:sts
     command "inv -e agent.build --exclude-rtloader --python-runtimes #{py_runtimes_arg} --major-version #{major_version_arg} --rtloader-root=#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/rtloader --rebuild --no-development --embedded-path=#{install_dir}/embedded --arch #{platform} #{do_windows_sysprobe}", env: env
     command "inv -e systray.build --major-version #{major_version_arg} --rebuild --no-development --arch #{platform}", env: env
   else
@@ -121,25 +120,24 @@ build do
     end
   end
 
-# [STS] Do not want to build the DD Process Agent
-#   if windows?
-#     platform = windows_arch_i386? ? "x86" : "x64"
-#     # Build the process-agent with the correct go version for windows
-#     command "invoke -e process-agent.build --python-runtimes #{py_runtimes_arg} --major-version #{major_version_arg} --arch #{platform}", :env => env
-#
-#     copy 'bin/process-agent/process-agent.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
-#
-#     unless windows_arch_i386?
-#       if ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?
-#         ## don't bother with system probe build on x86.
-#         command "invoke -e system-probe.build --windows"
-#         copy 'bin/system-probe/system-probe.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
-#       end
-#     end
-#   else
-#     command "invoke -e process-agent.build --python-runtimes #{py_runtimes_arg} --major-version #{major_version_arg}", :env => env
-#     copy 'bin/process-agent/process-agent', "#{install_dir}/embedded/bin"
-#   end
+  if windows?
+    platform = windows_arch_i386? ? "x86" : "x64"
+    # Build the process-agent with the correct go version for windows
+    command "invoke -e process-agent.build --python-runtimes #{py_runtimes_arg} --major-version #{major_version_arg} --arch #{platform}", :env => env
+
+    copy 'bin/process-agent/process-agent.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
+
+    unless windows_arch_i386?
+      if ENV['WINDOWS_DDFILTER_DRIVER'] and not ENV['WINDOWS_DDFILTER_DRIVER'].empty?
+        ## don't bother with system probe build on x86.
+        command "invoke -e system-probe.build --windows"
+        copy 'bin/system-probe/system-probe.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
+      end
+    end
+  else
+    command "invoke -e process-agent.build --python-runtimes #{py_runtimes_arg} --major-version #{major_version_arg}", :env => env
+    copy 'bin/process-agent/process-agent', "#{install_dir}/embedded/bin"
+  end
 
   # Add SELinux policy for system-probe
   if debian? || redhat?

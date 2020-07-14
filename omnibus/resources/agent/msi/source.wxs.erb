@@ -379,7 +379,7 @@
             <!-- todo service declaration -->
             <?if $(var.IncludeSysprobe) = true ?>
               <Directory Id="DRIVER" Name="driver">
-                <Merge Id="ddnpminstall" SourceFile="$(var.BinFiles)\ddnpm.msm" DiskId="1" Language="1033" />
+                <Merge Id="ddfilterinstall" SourceFile="$(var.BinFiles)\ddfilter.msm" DiskId="1" Language="1033" />
               </Directory>
               <Component Id="DATADOGSYSPROBESERVICE" Guid="5D41ECDB-B91E-4802-878C-CDBA84721623">
                 <File Id="system_probe.exe"
@@ -445,7 +445,7 @@
             Source="$(var.EtcFiles)\system-probe.yaml.example"/>
         </Component>
       <?endif ?>
-
+      
 
       <Directory Id="checks.d" Name="checks.d">
         <Component Id="checks.d"
@@ -551,15 +551,15 @@
     <?if $(var.IncludeSysprobe) = true ?>
       <!-- don't install by default (indicated by level 100)  Only things with level
            <= INSTALLLEVEL (1 by default) will be installed.  Can be changed via gui or command line params to optionally install -->
-      <Feature Id="WindowsNP"
-               Level="100"
-               Title="Network Performance Monitoring"
+      <Feature Id="WindowsNP" 
+               Level="100"  
+               Title="Network Performance Monitoring" 
                ConfigurableDirectory="APPLICATIONROOTDIRECTORY"
                Absent="allow"
                AllowAdvertise="no"
                >
         <ComponentRef Id="DATADOGSYSPROBESERVICE" />
-        <MergeRef Id="ddnpminstall"/>
+        <MergeRef Id="ddfilterinstall"/>
         <ComponentRef Id="system_probe.yaml.example" />
         <!--
         <Condition Level="1"><![CDATA[ADDLOCAL >< "WindowsNP" OR ADDLOCAL = "ALL" ]]></Condition>
@@ -634,7 +634,7 @@
            -->
 
       <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="LicenseAgreementDlg">NOT PREVIOUSFOUND</Publish>
-
+      
 
       <?if $(var.IncludeSysprobe) = true ?>
         <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="CustomizeDlg">PREVIOUSFOUND</Publish>
@@ -660,9 +660,9 @@
       <Publish Dialog="LicenseAgreementDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg"></Publish>
 
       <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="3">1</Publish>
-      <Publish Dialog="StsUrlDlg" Control="Back" Event="NewDialog" Value="ApiKeyDlg">NOT PREVIOUSFOUND</Publish>
-      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="StsUrlDlg">NOT PREVIOUSFOUND</Publish>
-
+      <Publish Dialog="SiteDlg" Control="Back" Event="NewDialog" Value="ApiKeyDlg">NOT PREVIOUSFOUND</Publish>
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="SiteDlg">NOT PREVIOUSFOUND</Publish>
+      
 
       <Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog" Value="MaintenanceTypeDlg">1</Publish>
 
@@ -706,7 +706,7 @@
     <WixVariable Id="WixUIDialogBmp" Value="Resources\assets\dialog_background.bmp" />
     <WixVariable Id="WixUIBannerBmp" Value="Resources\assets\banner_background.bmp" />
 
-    <CustomAction Id='SetFinalizeProperty' Return='check' Property='FinalizeInstall'
+    <CustomAction Id='SetFinalizeProperty' Return='check' Property='FinalizeInstall' 
         Value='PROJECTLOCATION=[PROJECTLOCATION];APPLICATIONDATADIRECTORY=[APPLICATIONDATADIRECTORY];DDAGENTUSER_NAME=[DDAGENTUSER_NAME];DDAGENTUSER_PASSWORD=[DDAGENTUSER_PASSWORD];SYSPROBE_PRESENT=[SYSPROBE_PRESENT];ADDLOCAL=[ADDLOCAL]' />
     <CustomAction Id='FinalizeInstall' BinaryKey='wixcadll' DllEntry='FinalizeInstall' Execute='deferred' Return='check' Impersonate='no'/>
     <CustomAction Id='StopDDServices' BinaryKey='wixcadll' DllEntry='PreStopServices' Execute='deferred' Return='check' Impersonate='no'/>

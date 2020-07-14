@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
-	"time"
+
+	"github.com/DataDog/datadog-agent/pkg/process/config"
+	"github.com/DataDog/datadog-agent/pkg/process/util"
 
 	_ "net/http/pprof"
 
@@ -31,13 +32,10 @@ var factories = []api.Factory{
 	modules.SecurityRuntime,
 }
 
-// Flag values
-var opts struct {
-	configPath  string
-	pidFilePath string
-	debug       bool
-	version     bool
-	console     bool // windows only; execute on console rather than via SCM
+	// Handles signals, which tells us whether we should exit.
+	exit := make(chan struct{})
+	go util.HandleSignals(exit)
+	runAgent(exit)
 }
 
 // Version info sourced from build flags

@@ -18,8 +18,6 @@ from .utils import (
     get_build_flags,
     get_git_branch_name,
     get_git_commit,
-    get_go_version,
-    get_version,
     get_version_numeric_only,
 )
 
@@ -48,8 +46,6 @@ def build(
     go_mod="vendor",
     windows=False,
     arch="x64",
-    embedded_path=DATADOG_AGENT_EMBEDDED_PATH,
-    bundle_ebpf=False,
 ):
     """
     Build the system_probe
@@ -62,6 +58,25 @@ def build(
     ldflags, gcflags, env = get_build_flags(
         ctx, major_version=major_version, python_runtimes=python_runtimes, embedded_path=embedded_path
     )
+
+    # generate windows resources
+    if sys.platform == 'win32':
+        windres_target = "pe-x86-64"
+        if arch == "x86":
+            print("system probe not supported on x86")
+            raise
+
+        ver = get_version_numeric_only(ctx, env, major_version=major_version)
+        maj_ver, min_ver, patch_ver = ver.split(".")
+        resdir = os.path.join(".", "cmd", "system-probe", "windows_resources")
+
+        ctx.run(
+            "windmc --target {target_arch} -r {resdir} {resdir}/system-probe-msg.mc".format(
+                resdir=resdir, target_arch=windres_target
+            )
+        )
+
+    ldflags, gcflags, env = get_build_flags(ctx, major_version=major_version, python_runtimes=python_runtimes)
 
     # generate windows resources
     if sys.platform == 'win32':

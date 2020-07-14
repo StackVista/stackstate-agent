@@ -6,16 +6,16 @@ default_version "master"
 #
 # this should only ever be included by a windows build.
 if ohai["platform"] == "windows"
-    driverpath = ENV['WINDOWS_DDNPM_DRIVER']
-    driverver = ENV['WINDOWS_DDNPM_VERSION']
-    drivermsmsha = ENV['WINDOWS_DDNPM_SHASUM']
+    driverpath = ENV['WINDOWS_DDFILTER_DRIVER']
+    driverver = ENV['WINDOWS_DDFILTER_VERSION']
+    drivermsmsha = ENV['WINDOWS_DDFILTER_SHASUM']
 
-    source :url => "https://s3.amazonaws.com/dd-windowsfilter/builds/#{driverpath}/ddnpminstall-#{driverver}.msm",
+    source :url => "https://s3.amazonaws.com/dd-windowsfilter/builds/#{driverpath}/ddfilterinstall-#{driverver}.msm",
            :sha256 => "#{drivermsmsha}",
-           :target_filename => "DDNPM.msm"
+           :target_filename => "ddfilter.msm"
 
     build do
-        copy "DDNPM.msm", "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent/DDNPM.msm"
+        copy "ddfilter.msm", "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent/ddfilter.msm"
     end
 
 end
