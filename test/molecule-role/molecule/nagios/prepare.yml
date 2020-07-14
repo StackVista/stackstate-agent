@@ -11,16 +11,28 @@
         username: "{{ quay_user }}"
         password: "{{ quay_password }}"
         reauthorize: yes
-    - name: Copy Configuration files
+    - name: Copy docker compose file
       copy:
-        src: "files/{{ item }}"
-        dest: "/home/ubuntu/{{ item }}"
+        src: files/docker-compose.yml
+        dest: /home/ubuntu/
+        mode: preserve
+    - name: Copy nagios files
+      copy:
+        src: files/nagios/{{item}}
+        dest: /home/ubuntu/nagios/
         mode: preserve
       with_items:
-        - docker-compose.yml
-        - agent
-        - mysql
-        - nagios
+        - Dockerfile
+        - mysql.cfg
+        - nagios.cfg
+    - name: Copy agent files
+      copy:
+        src: files/agent/{{item}}
+        dest: /home/ubuntu/agent/
+        mode: preserve
+      with_items:
+        - Dockerfile
+        - nagios.yaml
     - name: Gather facts (we need the docker network interface ip)
       setup:
     - name: Run Docker compose
