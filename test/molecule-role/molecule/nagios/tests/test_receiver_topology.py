@@ -35,7 +35,6 @@ def test_nagios_mysql(host):
         json_data = json.loads(data)
         with open("./topic-topo-process-agents-traces.json", 'w') as f:
             json.dump(json_data, f, indent=4)
-        json_data = json.loads()
 
         components = [
             {
