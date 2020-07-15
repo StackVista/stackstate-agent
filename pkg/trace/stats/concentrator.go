@@ -92,8 +92,8 @@ func (c *Concentrator) Run() {
 	go func() {
 		for {
 			select {
-			case inputs := <-c.In:
-				c.Add(inputs)
+			case i := <-c.In:
+				c.addNow(i, time.Now().UnixNano())
 			}
 		}
 	}()
