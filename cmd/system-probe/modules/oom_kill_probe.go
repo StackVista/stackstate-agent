@@ -3,12 +3,11 @@ package modules
 import (
 	"net/http"
 
-	"github.com/StackVista/stackstate-agent/cmd/system-probe/api"
-	"github.com/StackVista/stackstate-agent/cmd/system-probe/utils"
-	"github.com/StackVista/stackstate-agent/pkg/ebpf"
-	"github.com/StackVista/stackstate-agent/pkg/process/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/pkg/errors"
+	"github.com/DataDog/datadog-agent/cmd/system-probe/api"
+	"github.com/DataDog/datadog-agent/cmd/system-probe/utils"
+	"github.com/DataDog/datadog-agent/pkg/ebpf"
+	"github.com/DataDog/datadog-agent/pkg/process/config"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // OOMKillProbe Factory
@@ -21,11 +20,8 @@ var OOMKillProbe = api.Factory{
 		}
 
 		log.Infof("Starting the OOM Kill probe")
-		okp, err := ebpf.NewOOMKillProbe(config.SysProbeConfigFromConfig(cfg))
-		if err != nil {
-			return nil, errors.Wrapf(err, "unable to start the OOM kill probe")
-		}
-		return &oomKillModule{okp}, nil
+		okp, err := ebpf.NewOOMKillProbe()
+		return &oomKillModule{okp}, err
 	},
 }
 

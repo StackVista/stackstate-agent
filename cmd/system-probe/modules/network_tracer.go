@@ -1,4 +1,3 @@
-//go:build linux || windows
 // +build linux windows
 
 package modules
@@ -12,14 +11,14 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/cmd/system-probe/api"
-	"github.com/StackVista/stackstate-agent/cmd/system-probe/utils"
-	"github.com/StackVista/stackstate-agent/pkg/network"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/cmd/system-probe/api"
+	"github.com/DataDog/datadog-agent/cmd/system-probe/utils"
+	"github.com/DataDog/datadog-agent/pkg/network"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 
-	"github.com/StackVista/stackstate-agent/pkg/ebpf"
-	"github.com/StackVista/stackstate-agent/pkg/network/encoding"
-	"github.com/StackVista/stackstate-agent/pkg/process/config"
+	"github.com/DataDog/datadog-agent/pkg/ebpf"
+	"github.com/DataDog/datadog-agent/pkg/network/encoding"
+	"github.com/DataDog/datadog-agent/pkg/process/config"
 )
 
 // ErrSysprobeUnsupported is the unsupported error prefix, for error-class matching from callers

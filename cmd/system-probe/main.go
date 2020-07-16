@@ -1,4 +1,4 @@
-// +build linux
+// +build linux windows
 
 package main
 
@@ -7,21 +7,20 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-
-	"github.com/DataDog/datadog-agent/pkg/process/config"
-	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"strings"
+	"time"
 
 	_ "net/http/pprof"
 
-	"github.com/StackVista/stackstate-agent/cmd/system-probe/api"
-	"github.com/StackVista/stackstate-agent/cmd/system-probe/modules"
-	"github.com/StackVista/stackstate-agent/cmd/system-probe/utils"
-	ddconfig "github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/pidfile"
-	"github.com/StackVista/stackstate-agent/pkg/process/config"
-	"github.com/StackVista/stackstate-agent/pkg/process/net"
-	"github.com/StackVista/stackstate-agent/pkg/process/statsd"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/cmd/system-probe/api"
+	"github.com/DataDog/datadog-agent/cmd/system-probe/modules"
+	"github.com/DataDog/datadog-agent/cmd/system-probe/utils"
+	ddconfig "github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/pidfile"
+	"github.com/DataDog/datadog-agent/pkg/process/config"
+	"github.com/DataDog/datadog-agent/pkg/process/net"
+	"github.com/DataDog/datadog-agent/pkg/process/statsd"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // All System Probe modules should register their factories here
@@ -29,13 +28,15 @@ var factories = []api.Factory{
 	modules.NetworkTracer,
 	modules.TCPQueueLength,
 	modules.OOMKillProbe,
-	modules.SecurityRuntime,
 }
 
-	// Handles signals, which tells us whether we should exit.
-	exit := make(chan struct{})
-	go util.HandleSignals(exit)
-	runAgent(exit)
+// Flag values
+var opts struct {
+	configPath  string
+	pidFilePath string
+	debug       bool
+	version     bool
+	console     bool // windows only; execute on console rather than via SCM
 }
 
 // Version info sourced from build flags
@@ -97,29 +98,20 @@ func runAgent(exit <-chan struct{}) {
 		cleanupAndExit(1)
 	}
 
-	// if a debug port is specified, we expose the default handler to that port
-	if cfg.SystemProbeDebugPort > 0 {
-		go http.ListenAndServe(fmt.Sprintf("localhost:%d", cfg.SystemProbeDebugPort), http.DefaultServeMux) //nolint:errcheck
-	}
-
 	loader := NewLoader()
-	defer loader.Close()
-
 	httpMux := http.NewServeMux()
 
 	err = loader.Register(cfg, httpMux, factories)
+	if err != nil && strings.HasPrefix(err.Error(), modules.ErrSysprobeUnsupported.Error()) {
+		// If tracer is unsupported by this operating system, then exit gracefully
+		log.Infof("%s, exiting.", err)
+		gracefulExit()
+	}
 	if err != nil {
-		loader.Close()
-
-		if strings.HasPrefix(err.Error(), modules.ErrSysprobeUnsupported.Error()) {
-			// If tracer is unsupported by this operating system, then exit gracefully
-			log.Infof("%s, exiting.", err)
-			gracefulExit()
-		}
-
 		log.Criticalf("failed to create system probe: %s", err)
 		cleanupAndExit(1)
 	}
+	defer loader.Close()
 
 	// Register stats endpoint
 	httpMux.HandleFunc("/debug/stats", func(w http.ResponseWriter, req *http.Request) {
@@ -127,14 +119,11 @@ func runAgent(exit <-chan struct{}) {
 		utils.WriteAsJSON(w, stats)
 	})
 
-	go func() {
-		err = http.Serve(conn.GetListener(), httpMux)
-		if err != nil {
-			log.Criticalf("Error creating HTTP server: %s", err)
-			loader.Close()
-			cleanupAndExit(1)
-		}
-	}()
+	err = http.Serve(conn.GetListener(), httpMux)
+	if err != nil {
+		log.Criticalf("Error creating HTTP server: %s", err)
+		cleanupAndExit(1)
+	}
 
 	log.Infof("system probe successfully started")
 
@@ -146,9 +135,6 @@ func runAgent(exit <-chan struct{}) {
 		heartbeat := time.NewTicker(15 * time.Second)
 		for range heartbeat.C {
 			statsd.Client.Gauge("datadog.system_probe.agent", 1, tags, 1) //nolint:errcheck
-			for moduleName := range loader.modules {
-				statsd.Client.Gauge(fmt.Sprintf("datadog.system_probe.agent.%s", moduleName), 1, tags, 1) //nolint:errcheck
-			}
 		}
 	}()
 

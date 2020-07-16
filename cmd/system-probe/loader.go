@@ -1,16 +1,14 @@
-//go:build linux || windows
 // +build linux windows
 
 package main
 
 import (
+	"fmt"
 	"net/http"
-	"sync"
 
-	"github.com/StackVista/stackstate-agent/cmd/system-probe/api"
-	"github.com/StackVista/stackstate-agent/pkg/process/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/pkg/errors"
+	"github.com/DataDog/datadog-agent/cmd/system-probe/api"
+	"github.com/DataDog/datadog-agent/pkg/process/config"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // Loader is responsible for managing the lifecyle of each api.Module, which includes:
@@ -18,7 +16,6 @@ import (
 // * Module termination;
 // * Module telemetry consolidation;
 type Loader struct {
-	once    sync.Once
 	modules map[string]api.Module
 }
 
@@ -34,25 +31,17 @@ func (l *Loader) Register(cfg *config.AgentConfig, httpMux *http.ServeMux, facto
 			continue
 		}
 
-		// In case a module failed to be started, do not make the whole `system-probe` abort.
-		// Let `system-probe` run the other modules.
 		if err != nil {
-			log.Errorf("new module `%s` error: %w", factory.Name, err)
-			continue
+			return fmt.Errorf("new module `%s` error", factory.Name)
 		}
 
 		if err = module.Register(httpMux); err != nil {
-			log.Errorf("error registering HTTP endpoints for module `%s` error: %w", factory.Name, err)
-			continue
+			return fmt.Errorf("error registering HTTP endpoints for module `%s` error", factory.Name)
 		}
 
 		l.modules[factory.Name] = module
 
 		log.Infof("module: %s started", factory.Name)
-	}
-
-	if len(l.modules) == 0 {
-		return errors.New("no module could be loaded")
 	}
 
 	return nil
@@ -69,11 +58,9 @@ func (l *Loader) GetStats() map[string]interface{} {
 
 // Close each registered module
 func (l *Loader) Close() {
-	l.once.Do(func() {
-		for _, module := range l.modules {
-			module.Close()
-		}
-	})
+	for _, module := range l.modules {
+		module.Close()
+	}
 }
 
 // NewLoader returns a new Loader instance

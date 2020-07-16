@@ -1,4 +1,3 @@
-//go:build linux
 // +build linux
 
 package main
@@ -6,7 +5,7 @@ package main
 import (
 	"flag"
 
-	"github.com/StackVista/stackstate-agent/pkg/process/util"
+	"github.com/DataDog/datadog-agent/pkg/process/util"
 )
 
 func main() {

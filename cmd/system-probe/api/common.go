@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/StackVista/stackstate-agent/pkg/process/config"
+	"github.com/DataDog/datadog-agent/pkg/process/config"
 )
 
 // ErrNotEnabled is a special error type that should be returned by a Factory

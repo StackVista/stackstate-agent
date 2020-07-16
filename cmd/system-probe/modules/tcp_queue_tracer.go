@@ -3,12 +3,11 @@ package modules
 import (
 	"net/http"
 
-	"github.com/StackVista/stackstate-agent/cmd/system-probe/api"
-	"github.com/StackVista/stackstate-agent/cmd/system-probe/utils"
-	"github.com/StackVista/stackstate-agent/pkg/ebpf"
-	"github.com/StackVista/stackstate-agent/pkg/process/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/pkg/errors"
+	"github.com/DataDog/datadog-agent/cmd/system-probe/api"
+	"github.com/DataDog/datadog-agent/cmd/system-probe/utils"
+	"github.com/DataDog/datadog-agent/pkg/ebpf"
+	"github.com/DataDog/datadog-agent/pkg/process/config"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // TCPQueueLength Factory
@@ -20,9 +19,9 @@ var TCPQueueLength = api.Factory{
 			return nil, api.ErrNotEnabled
 		}
 
-		t, err := ebpf.NewTCPQueueLengthTracer(config.SysProbeConfigFromConfig(cfg))
+		t, err := ebpf.NewTCPQueueLengthTracer()
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to start the TCP queue length tracer")
+			log.Errorf("unable to start the TCP queue length tracer: %v", err)
 		}
 
 		return &tcpQueueLengthModule{t}, nil
