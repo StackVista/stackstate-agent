@@ -1,8 +1,10 @@
 import json
 import os
 import re
-import util
+
 from testinfra.utils.ansible_runner import AnsibleRunner
+
+import util
 
 testinfra_hosts = AnsibleRunner(os.environ['MOLECULE_INVENTORY_FILE']).get_hosts('agent-nagios-mysql')
 
@@ -11,7 +13,7 @@ def _component_data(json_data, type_name, external_id_assert_fn, data_assert_fn)
     for message in json_data["messages"]:
         p = message["message"]["TopologyElement"]["payload"]
         if "TopologyComponent" in p and \
-            p["TopologyComponent"]["typeName"] == type_name and \
+                p["TopologyComponent"]["typeName"] == type_name and \
                 external_id_assert_fn(p["TopologyComponent"]["externalId"]):
             if data_assert_fn(json.loads(p["TopologyComponent"]["data"])):
                 return json.loads(p["TopologyComponent"]["data"])
@@ -22,7 +24,7 @@ def _relation_data(json_data, type_name, external_id_assert_fn):
     for message in json_data["messages"]:
         p = message["message"]["TopologyElement"]["payload"]
         if "TopologyRelation" in p and \
-            p["TopologyRelation"]["typeName"] == type_name and \
+                p["TopologyRelation"]["typeName"] == type_name and \
                 external_id_assert_fn(p["TopologyRelation"]["externalId"]):
             return p["TopologyRelation"]
     return None

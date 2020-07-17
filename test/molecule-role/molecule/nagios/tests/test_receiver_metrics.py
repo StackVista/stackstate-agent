@@ -1,7 +1,9 @@
 import json
 import os
-import util
+
 from testinfra.utils.ansible_runner import AnsibleRunner
+
+import util
 
 testinfra_hosts = AnsibleRunner(os.environ['MOLECULE_INVENTORY_FILE']).get_hosts('agent-nagios-mysql')
 
@@ -27,4 +29,3 @@ def test_container_metrics(host):
         assert get_keys("agent-nagios-mysql") == expected
 
     util.wait_until(wait_for_metrics, 180, 3)
-
