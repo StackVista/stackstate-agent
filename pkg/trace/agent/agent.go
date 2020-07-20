@@ -122,7 +122,7 @@ func (a *Agent) work() {
 			if !ok {
 				return
 			}
-			a.Process(p, sublayerCalculator)
+			a.Process(t, sublayerCalculator)
 		}
 	}
 
@@ -151,9 +151,9 @@ func (a *Agent) loop() {
 
 // Process is the default work unit that receives a trace, transforms it and
 // passes it downstream.
-func (a *Agent) Process(p *api.Payload, sublayerCalculator *stats.SublayerCalculator) {
-	if len(p.Traces) == 0 {
-		log.Debugf("Skipping received empty payload")
+func (a *Agent) Process(t *api.Trace, sublayerCalculator *stats.SublayerCalculator) {
+	if len(t.Spans) == 0 {
+		log.Debugf("Skipping received empty trace")
 		return
 	}
 	defer timing.Since("datadog.trace_agent.internal.process_payload_ms", time.Now())
@@ -307,7 +307,7 @@ func (a *Agent) Process(p *api.Payload, sublayerCalculator *stats.SublayerCalcul
 
 	subtraces := stats.ExtractSubtraces(t.Spans, root)
 	for _, subtrace := range subtraces {
-		subtraceSublayers := stats.ComputeSublayers(subtrace.Trace)
+		subtraceSublayers := sublayerCalculator.ComputeSublayers(subtrace.Trace)
 		pt.Sublayers[subtrace.Root] = subtraceSublayers
 		if sampled {
 			stats.SetSublayersOnSpan(subtrace.Root, subtraceSublayers)
