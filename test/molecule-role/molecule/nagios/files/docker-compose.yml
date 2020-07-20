@@ -81,7 +81,7 @@ services:
       - mysql
 
   stackstate-agent:
-    build: agent
+    image: docker.io/stackstate/stackstate-agent-2-test:${AGENT_VERSION}
     network_mode: "host"
     pid: "host"
     privileged: true
@@ -93,6 +93,7 @@ services:
       - /sys/kernel/debug:/sys/kernel/debug
       - nagios_logs:/opt/nagios/var/log
       - nagios_conf:/etc/nagios/
+      - ./nagios.yaml:/etc/stackstate-agent/conf.d/nagios.d/conf.yaml
     environment:
       STS_API_KEY: "API_KEY"
       STS_STS_URL: "http://localhost:7077/stsAgent"
