@@ -19,9 +19,9 @@ def test_container_metrics(host):
 
         def get_keys(m_host):
             return set(
-                message["message"]["MultiMetric"]["values"].keys()
+                ''.join(message["message"]["MultiMetric"]["values"].keys())
                 for message in json_data["messages"]
-                if message["message"]["MultiMetric"]["name"] == "containerMetrics" and
+                if message["message"]["MultiMetric"]["name"] == "convertedMetric" and
                 message["message"]["MultiMetric"]["host"] == m_host
             )
 
@@ -29,7 +29,6 @@ def test_container_metrics(host):
                     'nagios.swap_usage.swap', 'nagios.host.pl', 'nagios.root_partition', 'nagios.current_users.users',
                     'nagios.current_load.load1', 'nagios.host.rta', 'nagios.ping.rta', 'nagios.current_load.load5',
                     'nagios.total_processes.procs'}
-        print 'keys:', get_keys("localhost")
         assert get_keys("localhost") == expected
 
     util.wait_until(wait_for_metrics, 180, 3)
