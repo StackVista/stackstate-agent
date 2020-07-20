@@ -373,8 +373,27 @@ agent_suse-x64-a6:
     PACKAGE_ARCH: amd64
   before_script:
     - *retrieve_linux_go_deps
-    - export RELEASE_VERSION=$RELEASE_VERSION_6
-  <<: *agent_build_common_suse_rpm
+    - source /root/.bashrc && conda activate $CONDA_ENV
+    - python3 -m pip install wheel
+    - python3 -m pip install -r requirements.txt
+    - GO111MODULE=off go get gopkg.in/yaml.v2
+    - GO111MODULE=off go get github.com/stretchr/testify
+    - inv -e rtloader.make --install-prefix=$SRC_PATH/dev --python-runtimes "$PYTHON_RUNTIMES"
+    - inv -e rtloader.install
+    - inv -e rtloader.format --raise-if-changed
+    - inv -e rtloader.test
+
+# run tests for deb-x64
+run_tests_deb-x64-py2:
+  stage: source_test
+  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-buildimages/deb_x64:$DATADOG_AGENT_BUILDIMAGES
+  tags: [ "runner:main", "size:2xlarge" ]
+  variables:
+    PYTHON_RUNTIMES: '2'
+    CONDA_ENV: ddpy2
+  <<: *run_tests_preparation
+  script:
+    - inv -e test --race --profile --python-runtimes "$PYTHON_RUNTIMES" --cpus 4
 
 # build Agent package for suse-x64
 agent_suse-x64-a7:
@@ -388,11 +407,25 @@ agent_suse-x64-a7:
     AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: /credentials
     AGENT_MAJOR_VERSION: 7
     PYTHON_RUNTIMES: '3'
-    PACKAGE_ARCH: amd64
-  before_script:
-    - *retrieve_linux_go_deps
-    - export RELEASE_VERSION=$RELEASE_VERSION_7
-  <<: *agent_build_common_suse_rpm
+    CONDA_ENV: ddpy3
+  <<: *run_tests_preparation
+  script:
+    - inv -e test --race --profile --python-runtimes "$PYTHON_RUNTIMES" --cpus 4
+
+# run tests for rpm-x64
+run_tests_rpm-x64-py2:
+  stage: source_test
+  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-buildimages/rpm_x64:$DATADOG_AGENT_BUILDIMAGES
+  tags: [ "runner:main", "size:2xlarge" ]
+  variables:
+    PYTHON_RUNTIMES: '2'
+    CONDA_ENV: ddpy2
+  <<: *run_tests_preparation
+  script:
+    # Exclude systemd because it cannot succeed on Centos 6: the image doesn't have the shared object required by
+    # https://github.com/coreos/go-systemd/blob/c8cc474ba8655dfbdb0ac7fcc09b7faf5b643caf/sdjournal/functions.go#L46
+    # This is OK because the test on systemd still runs on the debian image above
+    - inv -e test --race --profile --python-runtimes "$PYTHON_RUNTIMES" --cpus 4 --build-exclude=systemd
 
 iot_agent_suse-x64:
   rules:
@@ -400,7 +433,21 @@ iot_agent_suse-x64:
   stage: package_build
   image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-builders/suse_x64:$DATADOG_AGENT_BUILDERS
   tags: [ "runner:main", "size:2xlarge" ]
-  needs: ["fail_on_non_triggered_tag", "linux_x64_go_deps"]
+  variables:
+    PYTHON_RUNTIMES: '3'
+    CONDA_ENV: ddpy3
+  <<: *run_tests_preparation
+  script:
+    # Exclude systemd because it cannot succeed on Centos 6: the image doesn't have the shared object required by
+    # https://github.com/coreos/go-systemd/blob/c8cc474ba8655dfbdb0ac7fcc09b7faf5b643caf/sdjournal/functions.go#L46
+    # This is OK because the test on systemd still runs on the debian image above
+    - inv -e test --race --profile --python-runtimes "$PYTHON_RUNTIMES" --cpus 4 --build-exclude=systemd
+
+# run tests for eBPF code
+run_tests_ebpf:
+  stage: source_test
+  needs: ["build_libbcc_x64", "linux_x64_go_deps"]
+  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-buildimages/system-probe_x64:$DATADOG_AGENT_SYSPROBE_BUILDIMAGES
   before_script:
     - *retrieve_linux_go_deps
   script:
