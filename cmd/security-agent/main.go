@@ -11,8 +11,8 @@ import (
 	_ "expvar"         // Blank import used because this isn't directly used in this file
 	_ "net/http/pprof" // Blank import used because this isn't directly used in this file
 
-	"github.com/StackVista/stackstate-agent/pkg/util/flavor"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/flavor"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 
 	"github.com/StackVista/stackstate-agent/cmd/security-agent/app"
 )

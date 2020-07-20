@@ -22,7 +22,6 @@ import (
 	"github.com/DataDog/datadog-agent/cmd/agent/common"
 	"github.com/DataDog/datadog-agent/cmd/security-agent/api"
 	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/api/healthprobe"
 	"github.com/DataDog/datadog-agent/pkg/collector/runner"
 	"github.com/DataDog/datadog-agent/pkg/collector/scheduler"
 	"github.com/DataDog/datadog-agent/pkg/serializer"
@@ -156,36 +155,15 @@ func start(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	if pidfilePath != "" {
-		err = pidfile.WritePID(pidfilePath)
-		if err != nil {
-			return log.Errorf("Error while writing PID file, exiting: %v", err)
-		}
-		defer os.Remove(pidfilePath)
-		log.Infof("pid '%d' written to pid file '%s'", os.Getpid(), pidfilePath)
-	}
-
 	// Check if we have at least one component to start based on config
-	if !coreconfig.Datadog.GetBool("compliance_config.enabled") && !coreconfig.Datadog.GetBool("runtime_security_config.enabled") {
+	if !coreconfig.Datadog.GetBool("compliance_config.enabled") {
 		log.Infof("All security-agent components are deactivated, exiting")
-
-		// A sleep is necessary so that sysV doesn't think the agent has failed
-		// to startup because of an error. Only applies on Debian 7 and SUSE 11.
-		time.Sleep(5 * time.Second)
-
 		return nil
 	}
 
 	if !coreconfig.Datadog.IsSet("api_key") {
 		log.Critical("no API key configured, exiting")
 		return nil
-	}
-
-	// Setup expvar server
-	var port = coreconfig.Datadog.GetString("security_agent.expvar_port")
-	coreconfig.Datadog.Set("expvar_port", port)
-	if coreconfig.Datadog.GetBool("telemetry.enabled") {
-		http.Handle("/telemetry", telemetry.Handler())
 	}
 	go http.ListenAndServe("127.0.0.1:"+port, http.DefaultServeMux) //nolint:errcheck
 
