@@ -91,7 +91,7 @@ services:
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
       - /etc/passwd:/etc/passwd:ro
       - /sys/kernel/debug:/sys/kernel/debug
-      - conf.yaml:/etc/stackstate-agent/conf.d/nagios.d:ro
+      - ./agent/:/etc/stackstate-agent/conf.d/nagios.d:ro
       - nagios_logs:/opt/nagios/var/log
       - nagios_conf:/etc/nagios/
     environment:

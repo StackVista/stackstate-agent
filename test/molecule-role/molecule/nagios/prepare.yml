@@ -13,12 +13,9 @@
         reauthorize: yes
     - name: Copy docker compose file
       copy:
-        src: files/{{item}}
+        src: files/docker-compose.yml
         dest: /home/ubuntu/
         mode: preserve
-      with_items:
-        - docker-compose.yml
-        - conf.yaml
     - name: Copy nagios files
       copy:
         src: files/nagios/{{item}}
@@ -28,6 +25,11 @@
         - Dockerfile
         - mysql.cfg
         - nagios.cfg
+    - name: Copy agent files
+      copy:
+        src: files/agent/conf.yaml
+        dest: /home/ubuntu/agent/
+        mode: preserve
     - name: Gather facts (we need the docker network interface ip)
       setup:
     - name: Run Docker compose
