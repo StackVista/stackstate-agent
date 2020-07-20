@@ -18,14 +18,17 @@ def test_container_metrics(host):
             json.dump(json_data, f, indent=4)
 
         def get_keys(m_host):
-            return next(set(message["message"]["MultiMetric"]["values"].keys())
-                        for message in json_data["messages"]
-                        if message["message"]["MultiMetric"]["name"] == "containerMetrics" and
-                        message["message"]["MultiMetric"]["host"] == m_host
-                        )
+            return set(
+                message["message"]["MultiMetric"]["values"].keys()
+                for message in json_data["messages"]
+                if message["message"]["MultiMetric"]["name"] == "containerMetrics" and
+                message["message"]["MultiMetric"]["host"] == m_host
+            )
 
-        expected = {"netRcvdPs", "memCache", "totalPct", "wbps", "systemPct", "rbps", "memRss", "netSentBps",
-                    "netSentPs", "netRcvdBps", "userPct"}
-        assert get_keys("agent-nagios-mysql") == expected
+        expected = {'nagios.http.size', 'nagios.ping.pl', 'nagios.http.time', 'nagios.current_load.load15',
+                    'nagios.swap_usage.swap', 'nagios.host.pl', 'nagios.root_partition', 'nagios.current_users.users',
+                    'nagios.current_load.load1', 'nagios.host.rta', 'nagios.ping.rta', 'nagios.current_load.load5',
+                    'nagios.total_processes.procs'}
+        assert get_keys("localhost") == expected
 
     util.wait_until(wait_for_metrics, 180, 3)
