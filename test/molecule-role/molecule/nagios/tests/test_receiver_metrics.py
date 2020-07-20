@@ -29,6 +29,7 @@ def test_container_metrics(host):
                     'nagios.swap_usage.swap', 'nagios.host.pl', 'nagios.root_partition', 'nagios.current_users.users',
                     'nagios.current_load.load1', 'nagios.host.rta', 'nagios.ping.rta', 'nagios.current_load.load5',
                     'nagios.total_processes.procs'}
+        print 'keys:', get_keys("localhost")
         assert get_keys("localhost") == expected
 
     util.wait_until(wait_for_metrics, 180, 3)
