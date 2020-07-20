@@ -89,55 +89,6 @@ variables: &commonvariables
   BCC_VERSION: v0.12.0
   SYSTEM_PROBE_GO_VERSION: 1.13.11
   DATADOG_AGENT_EMBEDDED_PATH: /opt/datadog-agent/embedded
-  ARCH: amd64
-  VCINSTALLDIR: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community"
-  MOLECULE_K8S_CLUSTER: eks_test_cluster_1_21
-  # This variable represents which one of the gitlab pipelines will contain most of the jobs that's not required for both pipelines to run.
-  # IE VMS is a massive jobs and only has to run on either v2 or the v3 pipeline. With this variable you can control on which of the pipelines
-  # do jobs like these run on
-  PRIMARY_MAJOR_VERSION: '2'
-  HELM_CHART_VERSION: 'latest'
-  PROCESS_AGENT_TEST_REPO: stackstate-process-agent-test
-
-
-.agent2_variables: &agent2_variables
-  CONDA_ENV: ddpy2
-  PYTHON_RUNTIMES: '2'
-  MAJOR_VERSION: '2'
-  STS_VER: 'v2'
-  STS_AWS_RELEASE_BUCKET: stackstate-agent-2
-  STS_AWS_TEST_BUCKET: stackstate-agent-2-test
-  STS_AWS_RELEASE_BUCKET_YUM: stackstate-agent-2-rpm
-  STS_AWS_TEST_BUCKET_YUM: stackstate-agent-2-rpm-test
-  STS_AWS_RELEASE_BUCKET_WIN: stackstate-agent-2
-  STS_AWS_TEST_BUCKET_WIN: stackstate-agent-2-test
-  STS_DOCKER_RELEASE_REPO: stackstate-agent-2
-  STS_DOCKER_TEST_REPO: stackstate-agent-2-test
-  STS_DOCKER_RELEASE_REPO_TRACE: stackstate-trace-agent
-  STS_DOCKER_TEST_REPO_TRACE: stackstate-trace-agent-test
-  STS_DOCKER_RELEASE_REPO_CLUSTER: stackstate-cluster-agent
-  STS_DOCKER_TEST_REPO_CLUSTER: stackstate-cluster-agent-test
-  STS_DOCKER_RELEASE_REPO_SWARM: stackstate-swarm-agent
-  STS_DOCKER_TEST_REPO_SWARM: stackstate-swarm-agent-test
-
-.agent3_variables: &agent3_variables
-  CONDA_ENV: ddpy3
-  PYTHON_RUNTIMES: '3'
-  MAJOR_VERSION: '3'
-  STS_VER: 'v3'
-  STS_AWS_RELEASE_BUCKET: stackstate-agent-3
-  STS_AWS_TEST_BUCKET: stackstate-agent-3-test
-  STS_AWS_RELEASE_BUCKET_YUM: stackstate-agent-3-rpm
-  STS_AWS_TEST_BUCKET_YUM: stackstate-agent-3-rpm-test
-  STS_AWS_RELEASE_BUCKET_WIN: stackstate-agent-3
-  STS_AWS_TEST_BUCKET_WIN: stackstate-agent-3-test
-  STS_DOCKER_RELEASE_REPO: stackstate-agent
-  STS_DOCKER_TEST_REPO: stackstate-agent-test
-  # we do not build trace-agent and cluster-agent for v2
-
-.always_scheduled_master_and_tags: &always_scheduled_master_and_tags
-  - if: $CI_COMMIT_TAG || ($CI_COMMIT_REF_NAME == "master" && $CI_PIPELINE_SOURCE=="schedule")
-    when: always
 
 #
 # Condition mixins for simplification of rules
@@ -252,7 +203,7 @@ fail_on_non_triggered_tag:
     - patch -p1 < "$CI_PROJECT_DIR"/omnibus/config/software/libbcc_compat.patch
     - mkdir /tmp/bcc/build
     - cd /tmp/bcc/build
-    - cmake .. -DCMAKE_INSTALL_PREFIX=/opt/libbcc -DCMAKE_EXE_LINKER_FLAGS='-Wl,-rpath,/opt/datadog-agent/embedded/lib' -DCMAKE_SHARED_LINKER_FLAGS='-Wl,-rpath,/opt/datadog-agent/embedded/lib'
+    - cmake .. -DCMAKE_INSTALL_PREFIX=/opt/libbcc -DCMAKE_EXE_LINKER_FLAGS="-Wl,-rpath,$DATADOG_AGENT_EMBEDDED_PATH/lib" -DCMAKE_SHARED_LINKER_FLAGS="-Wl,-rpath,$DATADOG_AGENT_EMBEDDED_PATH/lib"
     - make -j 4 #"$(nproc)"
     # Check that libbcc has no references to too recent glibc
     - objdump -p src/cc/libbcc.so | grep GLIBC_2.29 && exit 1
@@ -559,12 +510,12 @@ windows_msi_x86-a7:
     - inv -e deps --verbose
     # Retrieve libbcc from S3
     - $S3_CP_CMD $S3_ARTIFACTS_URI/libbcc-$ARCH.tar.xz /tmp/libbcc.tar.xz
-    - mkdir -p /opt/datadog-agent/embedded
-    - tar -xvf /tmp/libbcc.tar.xz -C /opt/datadog-agent/embedded
+    - mkdir -p $DATADOG_AGENT_EMBEDDED_PATH
+    - tar -xvf /tmp/libbcc.tar.xz -C $DATADOG_AGENT_EMBEDDED_PATH
 
   script:
-    - CGO_CFLAGS='-I/opt/datadog-agent/embedded/include' CGO_LDFLAGS='-Wl,-rpath,/opt/datadog-agent/embedded/lib -L/opt/datadog-agent/embedded/lib' inv -e system-probe.build --go-version=$SYSTEM_PROBE_GO_VERSION
-    - CGO_CFLAGS='-I/opt/datadog-agent/embedded/include' CGO_LDFLAGS='-Wl,-rpath,/opt/datadog-agent/embedded/lib -L/opt/datadog-agent/embedded/lib' inv -e system-probe.test --only-check-bpf-bytes
+    - inv -e system-probe.build --go-version=$SYSTEM_PROBE_GO_VERSION --embedded-path=$DATADOG_AGENT_EMBEDDED_PATH
+    - inv -e system-probe.test --only-check-bpf-bytes
     - $S3_CP_CMD $SRC_PATH/$SYSTEM_PROBE_BINARIES_DIR/system-probe $S3_ARTIFACTS_URI/system-probe.$ARCH
 
 build_system-probe-x64:
@@ -3371,8 +3322,35 @@ deploy_suse_rpm_testing-a7:
   before_script:
     - ls $OMNIBUS_PACKAGE_DIR_SUSE
   tags: [ "runner:main", "size:large" ]
-  variables:
-    DD_PIPELINE_ID: $CI_PIPELINE_ID-a7
+  dependencies:
+    - agent_deb-x64-a7
+  script:
+    # The shell expansion `datadog-agent_*_amd64.deb` might return multiple
+    # entries, so we sort them and get the first one.
+    - dpkg -x $(ls -1 datadog-agent_*_amd64.deb | sort -V | head -n 1) ./out
+    # Use tag or shortened branch with short commit hash to identify the binary
+    - export SHORT_REF=$(echo $CI_COMMIT_REF_NAME | cut -d'/' -f2- | cut -c -10 | sed -E 's/[^[:alnum:]]+/-/g')
+    - export NAME="${CI_COMMIT_TAG:-$SHORT_REF}-${CI_COMMIT_SHA:0:7}"
+    - echo "Uploading with name=$NAME"
+    - $S3_CP_CMD ./out$DATADOG_AGENT_EMBEDDED_PATH/bin/process-agent s3://$PROCESS_S3_BUCKET/process-agent-amd64-$NAME --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers full=id=612548d92af7fa77f7ad7bcab230494f7310438ac6332e904a8fb2e6daa5cb23
+    - $S3_CP_CMD ./out$DATADOG_AGENT_EMBEDDED_PATH/bin/system-probe s3://$PROCESS_S3_BUCKET/system-probe-amd64-$NAME --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers full=id=612548d92af7fa77f7ad7bcab230494f7310438ac6332e904a8fb2e6daa5cb23
+
+#
+# Docker releases
+#
+
+tag_release_6:
+  rules:
+    - <<: *if_triggered_on_tag_6
+      when: manual
+      allow_failure: true
+  <<: *docker_tag_job_definition
+  stage: deploy6
+  dependencies:
+    - docker_build_agent6
+    - docker_build_agent6_arm64
+    - docker_build_agent6_jmx
+    - docker_build_agent6_jmx_arm64
   script:
     - rpm-s3 --verbose --visibility public-read -c "https://s3.amazonaws.com" -b $RPM_TESTING_S3_BUCKET -p "suse/pipeline-$DD_PIPELINE_ID/7/x86_64/" $OMNIBUS_PACKAGE_DIR_SUSE/datadog-*-7.*x86_64.rpm
 

@@ -46,6 +46,7 @@ def build(
     go_mod="vendor",
     windows=False,
     arch="x64",
+    embedded_path=DATADOG_AGENT_EMBEDDED_PATH,
 ):
     """
     Build the system_probe
@@ -76,7 +77,9 @@ def build(
             )
         )
 
-    ldflags, gcflags, env = get_build_flags(ctx, major_version=major_version, python_runtimes=python_runtimes)
+    ldflags, gcflags, env = get_build_flags(
+        ctx, major_version=major_version, python_runtimes=python_runtimes, embedded_path=embedded_path
+    )
 
     # generate windows resources
     if sys.platform == 'win32':
