@@ -18,7 +18,7 @@
         mode: preserve
       with_items:
         - docker-compose.yml
-        - nagios.yaml
+        - conf.yaml
     - name: Copy nagios files
       copy:
         src: files/nagios/{{item}}

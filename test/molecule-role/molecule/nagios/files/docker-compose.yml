@@ -91,9 +91,9 @@ services:
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
       - /etc/passwd:/etc/passwd:ro
       - /sys/kernel/debug:/sys/kernel/debug
+      - conf.yaml:/etc/stackstate-agent/conf.d/nagios.d/
       - nagios_logs:/opt/nagios/var/log
       - nagios_conf:/etc/nagios/
-      - nagios.yaml:/etc/stackstate-agent/conf.d/nagios.d/conf.yaml
     environment:
       STS_API_KEY: "API_KEY"
       STS_STS_URL: "http://localhost:7077/stsAgent"
