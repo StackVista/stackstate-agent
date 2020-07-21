@@ -9,21 +9,20 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // complianceCheck implements a compliance check
 type complianceCheck struct {
 	env.Env
 
-	ruleID      string
-	description string
-	interval    time.Duration
+	name     string
+	ruleID   string
+	interval time.Duration
 
 	framework    string
 	suiteName    string
@@ -40,7 +39,7 @@ func (c *complianceCheck) Stop() {
 }
 
 func (c *complianceCheck) String() string {
-	return fmt.Sprintf("%s: %s", c.ruleID, c.description)
+	return c.name
 }
 
 func (c *complianceCheck) Configure(config, initConfig integration.Data, source string) error {
@@ -80,17 +79,24 @@ func (c *complianceCheck) Run() error {
 		return c.configError
 	}
 
+	var (
+		passed bool
+		data   event.Data
+	)
+
 	report, err := c.checkable.check(c)
-	if err != nil {
+	if err == nil {
+		data = report.data
+		passed = report.passed
+	} else {
 		log.Warnf("%s: check run failed: %v", c.ruleID, err)
 	}
-	data, result := reportToEventData(report, err)
 
 	e := &event.Event{
 		AgentRuleID:  c.ruleID,
 		ResourceID:   c.resourceID,
 		ResourceType: c.resourceType,
-		Result:       result,
+		Result:       eventResult(passed, err),
 		Data:         data,
 	}
 
@@ -99,23 +105,6 @@ func (c *complianceCheck) Run() error {
 	c.Reporter().Report(e)
 
 	return err
-}
-
-func reportToEventData(report *compliance.Report, err error) (event.Data, string) {
-	var (
-		data   event.Data
-		passed bool
-	)
-	if report != nil {
-		data = report.Data
-		passed = report.Passed
-	}
-	if err != nil {
-		data = event.Data{
-			"error": err.Error(),
-		}
-	}
-	return data, eventResult(passed, err)
 }
 
 func eventResult(passed bool, err error) string {

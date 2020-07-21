@@ -11,10 +11,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
 	"github.com/DataDog/datadog-agent/pkg/compliance"
-	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
-	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/compliance/eval"
 	"github.com/DataDog/datadog-agent/pkg/compliance/mocks"
 	"github.com/docker/docker/api/types"
 
@@ -25,31 +23,6 @@ import (
 var (
 	mockCtx = mock.Anything
 )
-
-func newTestRuleEvent(tags []string, data event.Data) *event.Event {
-	return &event.Event{
-		AgentRuleID:  testCheckMeta.ruleID,
-		ResourceType: testCheckMeta.resourceType,
-		ResourceID:   testCheckMeta.resourceID,
-		Tags:         tags,
-		Data:         data,
-	}
-}
-
-func newTestBaseCheck(env env.Env, kind checkKind) baseCheck {
-	return baseCheck{
-		Env:       env,
-		id:        check.ID("check-1"),
-		kind:      kind,
-		interval:  time.Minute,
-		framework: testCheckMeta.framework,
-		version:   testCheckMeta.version,
-
-		ruleID:       testCheckMeta.ruleID,
-		resourceType: testCheckMeta.resourceType,
-		resourceID:   testCheckMeta.resourceID,
-	}
-}
 
 func loadTestJSON(path string, obj interface{}) error {
 	jsonFile, err := os.Open(path)
@@ -93,53 +66,19 @@ func TestDockerImageCheck(t *testing.T) {
 		client.On("ImageInspectWithRaw", mockCtx, id).Return(image, nil, nil)
 	}
 
-	reporter := &mocks.Reporter{}
-	defer reporter.AssertExpectations(t)
-
-	imagesWithMissingHealthcheck := []struct {
-		id   string
-		name string
-	}{
-		{
-			id:   "sha256:f9b9909726890b00d2098081642edf32e5211b7ab53563929a47f250bcdc1d7c",
-			name: "redis:latest",
-		},
-		{
-			id:   "sha256:89ec9da682137d6b18ab8244ca263b6771067f251562f884c7510c8f1e5ac910",
-			name: "nginx:alpine",
-		},
-	}
-
-	for _, image := range imagesWithMissingHealthcheck {
-		reporter.On(
-			"Report",
-			newTestRuleEvent(
-				[]string{"check_kind:docker"},
-				event.Data{
-					"image_id":                  image.id,
-					"image_name":                image.name,
-					"image_healthcheck_missing": "true",
-				},
-			),
-		).Once()
-	}
-
 	env := &mocks.Env{}
 	defer env.AssertExpectations(t)
-	env.On("Reporter").Return(reporter)
 	env.On("DockerClient").Return(client)
 
-	dockerCheck := dockerCheck{
-		baseCheck:      newTestBaseCheck(env, checkKindDocker),
-		dockerResource: resource,
-	}
-
-	report, err := dockerCheck.check(env)
+	expr, err := eval.ParseIterable(resource.Condition)
 	assert.NoError(err)
 
-	assert.False(report.Passed)
-	assert.Equal("sha256:f9b9909726890b00d2098081642edf32e5211b7ab53563929a47f250bcdc1d7c", report.Data["image.id"])
-	assert.Equal([]string{"redis:latest"}, report.Data["image.tags"])
+	report, err := checkDocker(env, "rule-id", resource, expr)
+	assert.NoError(err)
+
+	assert.False(report.passed)
+	assert.Equal("sha256:f9b9909726890b00d2098081642edf32e5211b7ab53563929a47f250bcdc1d7c", report.data["image.id"])
+	assert.Equal([]string{"redis:latest"}, report.data["image.tags"])
 }
 
 func TestDockerNetworkCheck(t *testing.T) {
@@ -159,115 +98,28 @@ func TestDockerNetworkCheck(t *testing.T) {
 	assert.NoError(loadTestJSON("./testdata/docker/network-list.json", &networks))
 	client.On("NetworkList", mockCtx, types.NetworkListOptions{}).Return(networks, nil)
 
-	reporter := &mocks.Reporter{}
-	defer reporter.AssertExpectations(t)
-
-	reporter.On(
-		"Report",
-		newTestRuleEvent(
-			[]string{"check_kind:docker"},
-			event.Data{
-				"network_id":                        "e7ed6c335383178f99b61a8a44b82b62abc17b31d68b792180728bf8f2c599ec",
-				"default_bridge_traffic_restricted": "true",
-			},
-		),
-	).Once()
-
 	env := &mocks.Env{}
 	defer env.AssertExpectations(t)
-	env.On("Reporter").Return(reporter)
 	env.On("DockerClient").Return(client)
 
-	dockerCheck := dockerCheck{
-		baseCheck:      newTestBaseCheck(env, checkKindDocker),
-		dockerResource: resource,
-	}
-
-	report, err := dockerCheck.check(env)
+	expr, err := eval.ParseIterable(resource.Condition)
 	assert.NoError(err)
 
-	assert.True(report.Passed)
-	assert.Equal("bridge", report.Data["network.name"])
+	report, err := checkDocker(env, "rule-id", resource, expr)
+	assert.NoError(err)
+
+	assert.True(report.passed)
+	assert.Equal("bridge", report.data["network.name"])
 }
 
 func TestDockerContainerCheck(t *testing.T) {
 	assert := assert.New(t)
 
-	tests := []struct {
-		name         string
-		condition    string
-		expectPassed bool
-	}{
-		{
-			name:         "apparmor profile check 5.1",
-			condition:    `docker.template("{{- $.AppArmorProfile -}}") not in ["", "unconfined"]`,
-			expectPassed: false,
+	resource := compliance.Resource{
+		Docker: &compliance.DockerResource{
+			Kind: "container",
 		},
-		{
-			name:         "selinux check 5.2",
-			condition:    `docker.template("{{- has \"selinux\" $.HostConfig.SecurityOpt -}}") == "true"`,
-			expectPassed: false,
-		},
-		{
-			name:         "capadd check 5.3",
-			condition:    `docker.template("{{ range $.HostConfig.CapAdd }}{{ if regexMatch \"AUDIT_WRITE|CHOWN|DAC_OVERRIDE|FOWNER|FSETID|KILL|MKNOD|NET_BIND_SERVICE|NET_RAW|SETFCAP|SETGID|SETPCAP|SETUID|SYS_CHROOT\" . }}failed{{ end }}{{ end }}") == ""`,
-			expectPassed: false,
-		},
-		{
-			name:         "privileged mode container 5.4",
-			condition:    `docker.template("{{- $.HostConfig.Privileged -}}") != "true"`,
-			expectPassed: false,
-		},
-		{
-			name:         "host mounts check 5.5",
-			condition:    `docker.template("{{ range $.Mounts }}{{ if has .Source (list \"/\" \"/boot\" \"/dev\" \"/etc\" \"/lib\" \"/proc\" \"/sys\" \"/usr\") }}{{ .Source }}{{ end }}{{ end }}") == ""`,
-			expectPassed: false,
-		},
-		{
-			name:         "privileged ports 5.7",
-			condition:    `docker.template("{{ range $k, $_ := $.NetworkSettings.Ports }}{{ with $p := (regexReplaceAllLiteral \"/.*\" ($k | toString) \"\") | atoi }}{{ if lt $p 1024}}failed{{ end }}{{ end }}{{ end }}") == ""`,
-			expectPassed: false,
-		},
-		{
-			name:         "network mode check 5.9",
-			condition:    `docker.template("{{- $.HostConfig.NetworkMode -}}") != "host"`,
-			expectPassed: false,
-		},
-		{
-			name:         "memory check 5.10",
-			condition:    `docker.template("{{- $.HostConfig.Memory -}}") != "0"`,
-			expectPassed: false,
-		},
-		{
-			name:         "cpu shares check 5.11",
-			condition:    `docker.template("{{- $.HostConfig.CpuShares -}}") not in ["0", "1024", ""]`,
-			expectPassed: false,
-		},
-		{
-			name:         "readonly rootfs check 5.12",
-			condition:    `docker.template("{{- $.HostConfig.ReadonlyRootfs -}}") == "true"`,
-			expectPassed: false,
-		},
-		{
-			name:         "restart policy check 5.14",
-			condition:    `docker.template("{{- $.HostConfig.RestartPolicy.Name -}}") == "on-failure" && docker.template("{{- eq $.HostConfig.RestartPolicy.MaximumRetryCount 5 -}}") == "true"`,
-			expectPassed: false,
-		},
-		{
-			name:         "pid mode check 5.15",
-			condition:    `docker.template("{{- $.HostConfig.PidMode -}}") != "host"`,
-			expectPassed: true,
-		},
-		{
-			name:         "pids limit check 5.28",
-			condition:    `docker.template("{{- $.HostConfig.PidsLimit -}}") not in ["", "<nil>", "0"]`,
-			expectPassed: false,
-		},
-		{
-			name:         "docker.sock check 5.31",
-			condition:    `docker.template("{{ range $.Mounts }}{{ if eq .Source \"/var/run/docker.sock\" }}{{ .Source }}{{ end }}{{ end }}") == ""`,
-			expectPassed: false,
-		},
+		Condition: `docker.template("{{- $.HostConfig.Privileged -}}") != "true"`,
 	}
 
 	for _, test := range tests {
@@ -287,54 +139,20 @@ func TestDockerContainerCheck(t *testing.T) {
 	assert.NoError(loadTestJSON("./testdata/docker/container-3c4bd9d35d42.json", &container))
 	client.On("ContainerInspect", mockCtx, "3c4bd9d35d42efb2314b636da42d4edb3882dc93ef0b1931ed0e919efdceec87").Return(container, nil, nil)
 
-	reporter := &mocks.Reporter{}
-	defer reporter.AssertExpectations(t)
-
-	reporter.On(
-		"Report",
-		newTestRuleEvent(
-			[]string{"check_kind:docker"},
-			event.Data{
-				"container_id": "3c4bd9d35d42efb2314b636da42d4edb3882dc93ef0b1931ed0e919efdceec87",
-				"privileged":   "true",
-			},
-		),
-	).Once()
-
 	env := &mocks.Env{}
 	defer env.AssertExpectations(t)
-	env.On("Reporter").Return(reporter)
 	env.On("DockerClient").Return(client)
 
-	dockerCheck := dockerCheck{
-		baseCheck:      newTestBaseCheck(env, checkKindDocker),
-		dockerResource: resource,
-	}
+	expr, err := eval.ParseIterable(resource.Condition)
+	assert.NoError(err)
 
-			var containers []types.Container
-			assert.NoError(loadTestJSON("./testdata/docker/container-list.json", &containers))
-			client.On("ContainerList", mockCtx, types.ContainerListOptions{All: true}).Return(containers, nil)
+	report, err := checkDocker(env, "rule-id", resource, expr)
+	assert.NoError(err)
 
-			var container types.ContainerJSON
-			assert.NoError(loadTestJSON("./testdata/docker/container-3c4bd9d35d42.json", &container))
-			client.On("ContainerInspect", mockCtx, "3c4bd9d35d42efb2314b636da42d4edb3882dc93ef0b1931ed0e919efdceec87").Return(container, nil, nil)
-
-			env := &mocks.Env{}
-			defer env.AssertExpectations(t)
-			env.On("DockerClient").Return(client)
-
-			dockerCheck, err := newResourceCheck(env, "rule-id", resource)
-			assert.NoError(err)
-
-			report, err := dockerCheck.check(env)
-			assert.NoError(err)
-
-			assert.Equal(test.expectPassed, report.Passed)
-			assert.Equal("3c4bd9d35d42efb2314b636da42d4edb3882dc93ef0b1931ed0e919efdceec87", report.Data["container.id"])
-			assert.Equal("/sharp_cori", report.Data["container.name"])
-			assert.Equal("sha256:b4ceee5c3fa3cea2607d5e2bcc54d019be616e322979be8fc7a8d0d78b59a1f1", report.Data["container.image"])
-		})
-	}
+	assert.False(report.passed)
+	assert.Equal("3c4bd9d35d42efb2314b636da42d4edb3882dc93ef0b1931ed0e919efdceec87", report.data["container.id"])
+	assert.Equal("/sharp_cori", report.data["container.name"])
+	assert.Equal("sha256:b4ceee5c3fa3cea2607d5e2bcc54d019be616e322979be8fc7a8d0d78b59a1f1", report.data["container.image"])
 }
 
 func TestDockerInfoCheck(t *testing.T) {
@@ -354,36 +172,17 @@ func TestDockerInfoCheck(t *testing.T) {
 	assert.NoError(loadTestJSON("./testdata/docker/info.json", &info))
 	client.On("Info", mockCtx).Return(info, nil)
 
-	reporter := &mocks.Reporter{}
-	defer reporter.AssertExpectations(t)
-
-	reporter.On(
-		"Report",
-		newTestRuleEvent(
-			[]string{"check_kind:docker"},
-			event.Data{
-				"insecure_registries": "127.0.0.0/8",
-			},
-		),
-	).Once()
-
 	env := &mocks.Env{}
 	defer env.AssertExpectations(t)
-	env.On("Reporter").Return(reporter)
 	env.On("DockerClient").Return(client)
 
-	dockerCheck := dockerCheck{
-		baseCheck:      newTestBaseCheck(env, checkKindDocker),
-		dockerResource: resource,
-	}
-
-	dockerCheck, err := newResourceCheck(env, "rule-id", resource)
+	expr, err := eval.ParseIterable(resource.Condition)
 	assert.NoError(err)
 
-	report, err := dockerCheck.check(env)
+	report, err := checkDocker(env, "rule-id", resource, expr)
 	assert.NoError(err)
 
-	assert.False(report.Passed)
+	assert.False(report.passed)
 }
 
 func TestDockerVersionCheck(t *testing.T) {
@@ -403,32 +202,16 @@ func TestDockerVersionCheck(t *testing.T) {
 	assert.NoError(loadTestJSON("./testdata/docker/version.json", &version))
 	client.On("ServerVersion", mockCtx).Return(version, nil)
 
-	reporter := &mocks.Reporter{}
-	defer reporter.AssertExpectations(t)
-
-	reporter.On(
-		"Report",
-		newTestRuleEvent(
-			[]string{"check_kind:docker"},
-			event.Data{
-				"experimental_features": "true",
-			},
-		),
-	).Once()
-
 	env := &mocks.Env{}
 	defer env.AssertExpectations(t)
-	env.On("Reporter").Return(reporter)
 	env.On("DockerClient").Return(client)
 
-	dockerCheck := dockerCheck{
-		baseCheck:      newTestBaseCheck(env, checkKindDocker),
-		dockerResource: resource,
-	}
-
-	report, err := dockerCheck.check(env)
+	expr, err := eval.ParseIterable(resource.Condition)
 	assert.NoError(err)
 
-	assert.False(report.Passed)
-	assert.Equal("19.03.6", report.Data["docker.version"])
+	report, err := checkDocker(env, "rule-id", resource, expr)
+	assert.NoError(err)
+
+	assert.False(report.passed)
+	assert.Equal("19.03.6", report.data["docker.version"])
 }

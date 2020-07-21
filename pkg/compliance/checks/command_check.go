@@ -11,20 +11,23 @@ import (
 	"time"
 
 	"github.com/DataDog/datadog-agent/pkg/compliance"
-	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	"github.com/DataDog/datadog-agent/pkg/compliance/eval"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 const (
-	defaultTimeout             = 30 * time.Second
-	defaultOutputSizeLimit int = 2 * 1024
+	defaultTimeout = 30 * time.Second
+
+	commandFieldExitCode = "command.exitCode"
+	commandFieldStdout   = "command.stdout"
 )
 
 var commandReportedFields = []string{
-	compliance.CommandFieldExitCode,
+	commandFieldExitCode,
 }
 
-func resolveCommand(ctx context.Context, _ env.Env, ruleID string, res compliance.Resource) (interface{}, error) {
+func checkCommand(_ env.Env, ruleID string, res compliance.Resource, expr *eval.IterableExpression) (*report, error) {
 	if res.Command == nil {
 		return nil, fmt.Errorf("%s: expecting command resource in command check", ruleID)
 	}
@@ -41,70 +44,34 @@ func resolveCommand(ctx context.Context, _ env.Env, ruleID string, res complianc
 
 	// Create `execCommand` from `command` model
 	// Binary takes precedence over Shell
-	if command.BinaryCmd != nil {
-		commandCheck.execCommand = *command.BinaryCmd
-	} else {
-		commandCheck.execCommand = shellCmdToBinaryCmd(command.ShellCmd)
+	if execCommand == nil {
+		execCommand = shellCmdToBinaryCmd(command.ShellCmd)
 	}
 
 	commandTimeout := defaultTimeout
 	if command.TimeoutSeconds != 0 {
-		commandCheck.commandTimeout = time.Duration(command.TimeoutSeconds) * time.Second
-	} else {
-		commandCheck.commandTimeout = defaultTimeout
+		commandTimeout = time.Duration(command.TimeoutSeconds) * time.Second
 	}
 
-	context, cancel := context.WithTimeout(ctx, commandTimeout)
+	context, cancel := context.WithTimeout(context.Background(), commandTimeout)
 	defer cancel()
 
-	// TODO: Capture stdout only when necessary
-	exitCode, stdout, err := commandRunner(context, c.execCommand.Name, c.execCommand.Args, true)
+	exitCode, stdout, err := commandRunner(context, execCommand.Name, execCommand.Args, true)
 	if exitCode == -1 && err != nil {
-		return log.Warnf("%s: command '%v' execution failed, error: %v", c.id, c.command, err)
+		return nil, fmt.Errorf("command '%v' execution failed, error: %v", command, err)
 	}
 
-	var shouldReport = false
-	if len(c.command.Filter) == 0 {
-		shouldReport = true
-	} else {
-		for _, filter := range c.command.Filter {
-			if filter.Include != nil && filter.Include.ExitCode == exitCode {
-				shouldReport = true
-				break
-			}
-			if filter.Exclude != nil && filter.Exclude.ExitCode == exitCode {
-				break
-			}
-		}
-	}
-
-	if shouldReport {
-		return c.reportCommand(exitCode, stdout)
-	}
-
-	return log.Warnf("%s: command '%v' returned with exitcode: %d (not reportable), error: %v", c.id, c.command, exitCode, err)
-}
-
-func (c *commandCheck) reportCommand(exitCode int, stdout []byte) error {
-	if len(stdout) > c.maxOutputSize {
-		return log.Errorf("%s: command '%v' output is too large: %d, won't be reported", c.id, c.command, len(stdout))
-	}
-
-	kv := event.Data{
-		"exitCode": strconv.Itoa(exitCode),
-	}
-	strStdout := string(stdout)
-
-	for _, field := range c.command.Report {
-		if len(field.As) > 0 {
-			kv[field.As] = strStdout
-		}
-	}
-
-	return &eval.Instance{
+	instance := &eval.Instance{
 		Vars: eval.VarMap{
-			compliance.CommandFieldExitCode: exitCode,
-			compliance.CommandFieldStdout:   string(stdout),
+			commandFieldExitCode: exitCode,
+			commandFieldStdout:   string(stdout),
 		},
-	}, nil
+	}
+
+	passed, err := expr.Evaluate(instance)
+	if err != nil {
+		return nil, err
+	}
+
+	return instanceToReport(instance, passed, commandReportedFields), nil
 }

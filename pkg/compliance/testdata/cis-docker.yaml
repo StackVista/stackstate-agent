@@ -9,6 +9,6 @@ rules:
     - docker
   hostSelector: '"foo" in node.labels'
   resources:
-    - file:
-        path: /etc/docker/daemon.json
-      condition: file.permissions == 0644
+  - file:
+      path: /etc/docker/daemon.json
+    condition: file.permissions == 0644

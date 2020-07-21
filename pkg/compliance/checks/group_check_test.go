@@ -9,21 +9,20 @@ import (
 	"testing"
 
 	"github.com/DataDog/datadog-agent/pkg/compliance"
+	"github.com/DataDog/datadog-agent/pkg/compliance/eval"
 	"github.com/DataDog/datadog-agent/pkg/compliance/event"
 	"github.com/DataDog/datadog-agent/pkg/compliance/mocks"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+
+	assert "github.com/stretchr/testify/require"
 )
 
 func TestGroupCheck(t *testing.T) {
-	type validateFunc func(t *testing.T, kv event.Data)
-
 	tests := []struct {
 		name         string
 		etcGroupFile string
 		resource     compliance.Resource
 
-		expectReport *compliance.Report
+		expectReport *report
 		expectError  error
 	}{
 		{
@@ -35,14 +34,33 @@ func TestGroupCheck(t *testing.T) {
 				},
 				Condition: `"carlos" in group.users`,
 			},
-			validate: func(t *testing.T, kv event.Data) {
-				assert.Equal(t,
-					event.Data{
-						"gid":   "412",
-						"users": "alice,bob,carlos,dan,eve",
-					},
-					kv,
-				)
+
+			expectReport: &report{
+				passed: true,
+				data: event.Data{
+					"group.name":  "docker",
+					"group.id":    412,
+					"group.users": []string{"alice", "bob", "carlos", "dan", "eve"},
+				},
+			},
+		},
+		{
+			name:         "docker group user not found",
+			etcGroupFile: "./testdata/group/etc-group",
+			resource: compliance.Resource{
+				Group: &compliance.Group{
+					Name: "docker",
+				},
+				Condition: `"carol" in group.users`,
+			},
+
+			expectReport: &report{
+				passed: false,
+				data: event.Data{
+					"group.name":  "docker",
+					"group.id":    412,
+					"group.users": []string{"alice", "bob", "carlos", "dan", "eve"},
+				},
 			},
 		},
 	}
@@ -54,24 +72,12 @@ func TestGroupCheck(t *testing.T) {
 			env := &mocks.Env{}
 			env.On("EtcGroupPath").Return(test.etcGroupFile)
 
-			env := &mocks.Env{}
-			env.On("Reporter").Return(reporter)
-			env.On("EtcGroupPath").Return(test.etcGroupFile)
-
-			base := newTestBaseCheck(env, checkKindAudit)
-			check, err := newGroupCheck(base, test.group)
+			expr, err := eval.ParseIterable(test.resource.Condition)
 			assert.NoError(err)
 
-			reporter.On(
-				"Report",
-				mock.AnythingOfType("*event.Event"),
-			).Run(func(args mock.Arguments) {
-				event := args.Get(0).(*event.Event)
-				test.validate(t, event.Data)
-			})
-
-			err = check.Run()
-			assert.NoError(err)
+			result, err := checkGroup(env, "rule-id", test.resource, expr)
+			assert.Equal(test.expectReport, result)
+			assert.Equal(test.expectError, err)
 		})
 	}
 }

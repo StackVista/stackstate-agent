@@ -18,43 +18,10 @@ file:
 condition: file.owner == "root"
 `
 
-const testResourceFileReportingPermissions = `
-file:
-  path: /etc/docker/daemon.json
-  report:
-  - property: permissions
-    kind: attribute
-`
-
-const testResourceFilePathFromCommand = `
-file:
-  pathFrom:
-  - command:
-      shell:
-        run: systemctl show -p FragmentPath docker.service
-  report:
-  - property: owner
-    kind: attribute
-`
-
-const testResourceFileReportingJSONPath = `
-file:
-  path: /etc/docker/daemon.json
-  report:
-  - property: tlsverify
-    kind: jsonquery
-`
-const testResourceProcessWithFallback = `
+const testResourceProcess = `
 process:
   name: dockerd
 condition: process.flag("--tlsverify") != ""
-fallback:
-  condition: >-
-    !process.hasFlag("--tlsverify")
-  resource:
-    file:
-      path: /etc/docker/daemon.json
-    condition: file.jq(".tlsverify") == "true"
 `
 
 const testResourceCommand = `
@@ -67,20 +34,7 @@ condition: command.exitCode == 0
 const testResourceAudit = `
 audit:
   path: /usr/bin/dockerd
-  report:
-  - property: enabled
-    kind: attribute
-`
-
-const testResourceAuditPathFromCommand = `
-audit:
-  pathFrom:
-  - command:
-      shell:
-        run: systemctl show -p FragmentPath docker.socket
-  report:
-  - property: enabled
-    kind: attribute
+condition: audit.enabled
 `
 
 const testResourceGroup = `
@@ -116,58 +70,10 @@ func TestResources(t *testing.T) {
 			name:  "process",
 			input: testResourceProcess,
 			expected: Resource{
-				File: &File{
-					PathFrom: ValueFrom{
-						{
-							Command: &ValueFromCommand{
-								ShellCmd: &ShellCmd{
-									Run: `systemctl show -p FragmentPath docker.service`,
-								},
-							},
-						},
-					},
-					Report: Report{
-						{
-							Property: "owner",
-							Kind:     PropertyKindAttribute,
-						},
-					},
-				},
-			},
-		},
-		{
-			name:  "file reporting jsonquery property",
-			input: testResourceFileReportingJSONPath,
-			expected: Resource{
-				File: &File{
-					Path: `/etc/docker/daemon.json`,
-					Report: Report{
-						{
-							Property: "tlsverify",
-							Kind:     PropertyKindJSONQuery,
-						},
-					},
-				},
-				Condition: `process.flag("--tlsverify") != ""`,
-			},
-		},
-		{
-			name:  "process with fallback",
-			input: testResourceProcessWithFallback,
-			expected: Resource{
 				Process: &Process{
 					Name: "dockerd",
 				},
 				Condition: `process.flag("--tlsverify") != ""`,
-				Fallback: &Fallback{
-					Condition: `!process.hasFlag("--tlsverify")`,
-					Resource: Resource{
-						File: &File{
-							Path: `/etc/docker/daemon.json`,
-						},
-						Condition: `file.jq(".tlsverify") == "true"`,
-					},
-				},
 			},
 		},
 		{
@@ -188,35 +94,6 @@ func TestResources(t *testing.T) {
 			expected: Resource{
 				Audit: &Audit{
 					Path: "/usr/bin/dockerd",
-					Report: Report{
-						{
-							Property: "enabled",
-							Kind:     "attribute",
-						},
-					},
-				},
-			},
-		},
-		{
-			name:  "audit with file path from command",
-			input: testResourceAuditPathFromCommand,
-			expected: Resource{
-				Audit: &Audit{
-					PathFrom: ValueFrom{
-						{
-							Command: &ValueFromCommand{
-								ShellCmd: &ShellCmd{
-									Run: `systemctl show -p FragmentPath docker.socket`,
-								},
-							},
-						},
-					},
-					Report: Report{
-						{
-							Property: "enabled",
-							Kind:     "attribute",
-						},
-					},
 				},
 				Condition: `audit.enabled`,
 			},

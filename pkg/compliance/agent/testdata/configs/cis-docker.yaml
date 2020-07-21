@@ -8,8 +8,8 @@ rules:
   scope:
     - docker
   resources:
-    - file:
-        path: /files/daemon.json
-      condition: file.permissions == 0644
+  - file:
+      path: /files/daemon.json
+    condition: file.permissions == 0644
 
 

@@ -10,16 +10,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"regexp"
 	"strings"
 	"text/template"
 
+	"github.com/DataDog/datadog-agent/pkg/compliance/eval"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/util/jsonquery"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/Masterminds/sprig"
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
-	"github.com/StackVista/stackstate-agent/pkg/util/jsonquery"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"gopkg.in/yaml.v2"
 )
 
@@ -36,7 +34,7 @@ func jsonGetter(data []byte, query string) (string, error) {
 	return value, err
 }
 
-// yamlGetter retrieves a property from a YAML file (jq style syntax)
+// jsonGetter retrieves a property from a YAML file (jq style syntax)
 func yamlGetter(data []byte, query string) (string, error) {
 	var yamlContent map[string]interface{}
 	if err := yaml.Unmarshal(data, &yamlContent); err != nil {
@@ -44,21 +42,6 @@ func yamlGetter(data []byte, query string) (string, error) {
 	}
 	value, _, err := jsonquery.RunSingleOutput(query, yamlContent)
 	return value, err
-}
-
-// regexpGetter retrieves the leftmost property matching regexp
-func regexpGetter(data []byte, expr string) (string, error) {
-	re, err := regexp.Compile(expr)
-	if err != nil {
-		return "", err
-	}
-
-	match := re.Find(data)
-	if match == nil {
-		return "", nil
-	}
-
-	return string(match), nil
 }
 
 // queryValueFromFile retrieves a value from a file with the provided getter func
@@ -81,13 +64,12 @@ func queryValueFromFile(filePath string, query string, get getter) (string, erro
 func evalGoTemplate(s string, obj interface{}) string {
 	tmpl, err := template.New("tmpl").Funcs(sprig.TxtFuncMap()).Parse(s)
 	if err != nil {
-		log.Warnf("failed to parse template %q: %v", s, err)
+		log.Warn("failed to parse template")
 		return ""
 	}
 
 	b := &strings.Builder{}
 	if err := tmpl.Execute(b, obj); err != nil {
-		log.Tracef("failed to execute template %q: %v", s, err)
 		return ""
 	}
 	return b.String()
@@ -120,21 +102,21 @@ func instanceToEventData(instance *eval.Instance, allowedFields []string) event.
 
 // instanceToReport converts an instance and passed status to report
 // filtering out fields not on the allowedFields list
-func instanceToReport(instance *eval.Instance, passed bool, allowedFields []string) *compliance.Report {
+func instanceToReport(instance *eval.Instance, passed bool, allowedFields []string) *report {
 	var data event.Data
 
 	if instance != nil {
 		data = instanceToEventData(instance, allowedFields)
 	}
 
-	return &compliance.Report{
-		Passed: passed,
-		Data:   data,
+	return &report{
+		passed: passed,
+		data:   data,
 	}
 }
 
 // instanceToReport converts an evaluated instanceResult to report
 // filtering out fields not on the allowedFields list
-func instanceResultToReport(result *eval.InstanceResult, allowedFields []string) *compliance.Report {
+func instanceResultToReport(result *eval.InstanceResult, allowedFields []string) *report {
 	return instanceToReport(result.Instance, result.Passed, allowedFields)
 }

@@ -6,28 +6,33 @@
 package checks
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/DataDog/datadog-agent/pkg/compliance"
-	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	"github.com/DataDog/datadog-agent/pkg/compliance/eval"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/gopsutil/process"
 )
 
 const (
 	cacheValidity time.Duration = 10 * time.Minute
+
+	processFieldName    = "process.name"
+	processFieldExe     = "process.exe"
+	processFieldCmdLine = "process.cmdLine"
+	processFuncFlag     = "process.flag"
+	processFuncHasFlag  = "process.hasFlag"
 )
 
 var processReportedFields = []string{
-	compliance.ProcessFieldName,
-	compliance.ProcessFieldExe,
-	compliance.ProcessFieldCmdLine,
+	processFieldName,
+	processFieldExe,
+	processFieldCmdLine,
 }
 
-func resolveProcess(_ context.Context, e env.Env, id string, res compliance.Resource) (interface{}, error) {
+func checkProcess(e env.Env, id string, res compliance.Resource, expr *eval.IterableExpression) (*report, error) {
 	if res.Process == nil {
 		return nil, fmt.Errorf("%s: expecting process resource in process check", id)
 	}
@@ -50,48 +55,35 @@ func resolveProcess(_ context.Context, e env.Env, id string, res compliance.Reso
 		flagValues := parseProcessCmdLine(mp.Cmdline)
 		instance := &eval.Instance{
 			Vars: eval.VarMap{
-				compliance.ProcessFieldName:    mp.Name,
-				compliance.ProcessFieldExe:     mp.Exe,
-				compliance.ProcessFieldCmdLine: mp.Cmdline,
+				processFieldName:    mp.Name,
+				processFieldExe:     mp.Exe,
+				processFieldCmdLine: mp.Cmdline,
 			},
 			Functions: eval.FunctionMap{
-				compliance.ProcessFuncFlag:    processFlag(flagValues),
-				compliance.ProcessFuncHasFlag: processHasFlag(flagValues),
+				processFuncFlag:    processFlag(flagValues),
+				processFuncHasFlag: processHasFlag(flagValues),
 			},
 		}
 		instances = append(instances, instance)
 	}
 
-	if len(instances) == 1 {
-		return instances[0], nil
+	it := &instanceIterator{
+		instances: instances,
 	}
 
-	return &instanceIterator{
-		instances: instances,
-	}, nil
+	result, err := expr.EvaluateIterator(it, globalInstance)
+	if err != nil {
+		return nil, err
+	}
+
+	return instanceResultToReport(result, processReportedFields), nil
 }
 
-func (c *processCheck) reportProcess(p *process.FilledProcess) error {
-	log.Debugf("%s: process check - match %s", c.ruleID, p.Cmdline)
-	kv := event.Data{}
-	flagValues := parseProcessCmdLine(p.Cmdline)
-
-	for _, field := range c.process.Report {
-		switch field.Kind {
-		case "flag":
-			if flagValue, found := flagValues[field.Property]; found {
-				flagReportName := field.Property
-				if len(field.As) > 0 {
-					flagReportName = field.As
-				}
-				if len(field.Value) > 0 {
-					flagValue = field.Value
-				}
-
-				kv[flagReportName] = flagValue
-			}
-		default:
-			return log.Errorf("unsupported kind value: '%s' for process: '%s'", field.Kind, p.Name)
+func processFlag(flagValues map[string]string) eval.Function {
+	return func(_ *eval.Instance, args ...interface{}) (interface{}, error) {
+		flag, err := validateProcessFlagArg(args...)
+		if err != nil {
+			return nil, err
 		}
 		value, _ := flagValues[flag]
 		return value, nil

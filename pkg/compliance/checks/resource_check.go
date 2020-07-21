@@ -6,99 +6,30 @@
 package checks
 
 import (
-	"context"
 	"errors"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/compliance"
+	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	"github.com/DataDog/datadog-agent/pkg/compliance/eval"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 var (
 	// ErrResourceKindNotSupported is returned in case resource kind is not supported by evaluator
 	ErrResourceKindNotSupported = errors.New("resource kind not supported")
-
-	// ErrResourceFallbackMissing is returned when a resource relies on fallback but no fallback is provided
-	ErrResourceFallbackMissing = errors.New("resource fallback missing")
-
-	// ErrResourceCannotUseFallback is returned when a resource cannot use fallback
-	ErrResourceCannotUseFallback = errors.New("resource cannot use fallback")
-
-	// ErrResourceFailedToResolve is returned when a resource failed to resolve to any instances for evaluation
-	ErrResourceFailedToResolve = errors.New("failed to resolve resource")
 )
 
-type resolveFunc func(ctx context.Context, e env.Env, ruleID string, resource compliance.Resource) (interface{}, error)
+type checkFunc func(e env.Env, ruleID string, res compliance.Resource, expr *eval.IterableExpression) (*report, error)
 
 type resourceCheck struct {
-	ruleID   string
-	resource compliance.Resource
-
-	resolve  resolveFunc
-	fallback checkable
-
-	reportedFields []string
+	ruleID     string
+	resource   compliance.Resource
+	expression *eval.IterableExpression
+	checkFn    checkFunc
 }
 
-func (c *resourceCheck) check(env env.Env) (*compliance.Report, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
-	defer cancel()
-
-	resolved, err := c.resolve(ctx, env, c.ruleID, c.resource)
-	if err != nil {
-		return nil, err
-	}
-
-	return c.evaluate(env, resolved)
-}
-
-func (c *resourceCheck) evaluate(env env.Env, resolved interface{}) (*compliance.Report, error) {
-	conditionExpression, err := eval.Cache.ParseIterable(c.resource.Condition)
-	if err != nil {
-		return nil, err
-	}
-
-	switch resolved := resolved.(type) {
-	case *eval.Instance:
-		if c.resource.Fallback != nil {
-			if c.fallback == nil {
-				return nil, ErrResourceFallbackMissing
-			}
-
-			fallbackExpression, err := eval.Cache.ParseExpression(c.resource.Fallback.Condition)
-			if err != nil {
-				return nil, err
-			}
-
-			useFallback, err := fallbackExpression.BoolEvaluate(resolved)
-			if err != nil {
-				return nil, err
-			}
-			if useFallback {
-				return c.fallback.check(env)
-			}
-		}
-
-		passed, err := conditionExpression.Evaluate(resolved)
-		if err != nil {
-			return nil, err
-		}
-		return instanceToReport(resolved, passed, c.reportedFields), nil
-
-	case eval.Iterator:
-		if c.resource.Fallback != nil {
-			return nil, ErrResourceCannotUseFallback
-		}
-
-		result, err := conditionExpression.EvaluateIterator(resolved, globalInstance)
-		if err != nil {
-			return nil, err
-		}
-		return instanceResultToReport(result, c.reportedFields), nil
-	default:
-		return nil, ErrResourceFailedToResolve
-	}
+func (c *resourceCheck) check(env env.Env) (*report, error) {
+	return c.checkFn(env, c.ruleID, c.resource, c.expression)
 }
 
 func newResourceCheck(env env.Env, ruleID string, resource compliance.Resource) (checkable, error) {
@@ -106,8 +37,6 @@ func newResourceCheck(env env.Env, ruleID string, resource compliance.Resource) 
 	kind := resource.Kind()
 
 	switch kind {
-	case compliance.KindCustom:
-		return newCustomCheck(ruleID, resource)
 	case compliance.KindAudit:
 		if env.AuditClient() == nil {
 			return nil, log.Errorf("%s: audit client not initialized", ruleID)
@@ -122,46 +51,41 @@ func newResourceCheck(env env.Env, ruleID string, resource compliance.Resource) 
 		}
 	}
 
-	resolve, reportedFields, err := resourceKindToResolverAndFields(kind)
+	expression, err := eval.ParseIterable(resource.Condition)
 	if err != nil {
-		return nil, log.Errorf("%s: failed to find resource resolver for resource kind: %s", ruleID, kind)
+		return nil, log.Errorf("%s: failed to parse condition: %s", ruleID, err)
 	}
 
-	var fallback checkable
-	if resource.Fallback != nil {
-		fallback, err = newResourceCheck(env, ruleID, resource.Fallback.Resource)
-		if err != nil {
-			return nil, err
-		}
+	checkFn, err := checkFuncForKind(kind)
+	if err != nil {
+		return nil, log.Errorf("%s: failed to resolve evaluator for kind: %s", ruleID, kind)
 	}
 
 	return &resourceCheck{
-		ruleID:         ruleID,
-		resource:       resource,
-		resolve:        resolve,
-		fallback:       fallback,
-		reportedFields: reportedFields,
+		resource:   resource,
+		expression: expression,
+		checkFn:    checkFn,
 	}, nil
 }
 
-func resourceKindToResolverAndFields(kind compliance.ResourceKind) (resolveFunc, []string, error) {
+func checkFuncForKind(kind compliance.ResourceKind) (checkFunc, error) {
 	switch kind {
 	case compliance.KindFile:
-		return resolveFile, fileReportedFields, nil
+		return checkFile, nil
 	case compliance.KindAudit:
-		return resolveAudit, auditReportedFields, nil
+		return checkAudit, nil
 	case compliance.KindGroup:
-		return resolveGroup, groupReportedFields, nil
+		return checkGroup, nil
 	case compliance.KindCommand:
-		return resolveCommand, commandReportedFields, nil
+		return checkCommand, nil
 	case compliance.KindProcess:
-		return resolveProcess, processReportedFields, nil
+		return checkProcess, nil
 	case compliance.KindDocker:
-		return resolveDocker, dockerReportedFields, nil
+		return checkDocker, nil
 	case compliance.KindKubernetes:
-		return resolveKubeapiserver, kubeResourceReportedFields, nil
+		return checkKubeapiserver, nil
 	default:
-		return nil, nil, ErrResourceKindNotSupported
+		return nil, ErrResourceKindNotSupported
 	}
 }
 

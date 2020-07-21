@@ -6,33 +6,35 @@
 package checks
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
+	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
 )
+
+// report is a report produced by a checkable
+type report struct {
+	data   event.Data
+	passed bool
+}
 
 // checkable abstracts a resource check
 type checkable interface {
-	check(env env.Env) (*compliance.Report, error)
+	check(env env.Env) (*report, error)
 }
 
-// checkableList abstracts a list of resource checks
 type checkableList []checkable
 
 // check implements checkable interface for checkableList
-// note that this implements AND for all checkables in a check:
-// failure or error from a single checkable fails the check, all checkables must
-// return Passed in order for the check to be successful.
-func (list checkableList) check(env env.Env) (*compliance.Report, error) {
+func (list checkableList) check(env env.Env) (*report, error) {
 	var (
-		result *compliance.Report
+		result *report
 		err    error
 	)
 
 	for _, c := range list {
 		result, err = c.check(env)
-		if err != nil || !result.Passed {
-			break
+		if err != nil || !result.passed {
+			continue
 		}
 	}
-	return result, err
+	return result, nil
 }

@@ -6,12 +6,12 @@
 package checks
 
 import (
-	"context"
 	"errors"
 	"fmt"
 
 	"github.com/DataDog/datadog-agent/pkg/compliance"
-	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	"github.com/DataDog/datadog-agent/pkg/compliance/eval"
 	"github.com/DataDog/datadog-agent/pkg/util/jsonquery"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 
@@ -21,23 +21,26 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
-type kubeApiserverCheck struct {
-	baseCheck
-	kubeResource *compliance.KubernetesResource
-}
-
 const (
-	kubeResourceNameKey      string = "kube_resource_name"
-	kubeResourceGroupKey     string = "kube_resource_group"
-	kubeResourceVersionKey   string = "kube_resource_version"
-	kubeResourceNamespaceKey string = "kube_resource_namespace"
-	kubeResourceKindKey      string = "kube_resource_kind"
+	kubeResourceFieldName      = "kube.resource.name"
+	kubeResourceFieldGroup     = "kube.resource.group"
+	kubeResourceFieldVersion   = "kube.resource.version"
+	kubeResourceFieldNamespace = "kube.resource.namespace"
+	kubeResourceFieldKind      = "kube.resource.kind"
+	kubeResourceFuncJQ         = "kube.resource.jq"
 )
 
-func newKubeapiserverCheck(baseCheck baseCheck, kubeResource *compliance.KubernetesResource) (*kubeApiserverCheck, error) {
-	check := &kubeApiserverCheck{
-		baseCheck:    baseCheck,
-		kubeResource: kubeResource,
+var kubeResourceReportedFields = []string{
+	kubeResourceFieldName,
+	kubeResourceFieldGroup,
+	kubeResourceFieldVersion,
+	kubeResourceFieldNamespace,
+	kubeResourceFieldKind,
+}
+
+func checkKubeapiserver(e env.Env, ruleID string, res compliance.Resource, expr *eval.IterableExpression) (*report, error) {
+	if res.KubeApiserver == nil {
+		return nil, fmt.Errorf("expecting Kubeapiserver resource in Kubeapiserver check")
 	}
 
 	kubeResource := res.KubeApiserver
@@ -50,18 +53,16 @@ func newKubeapiserverCheck(baseCheck baseCheck, kubeResource *compliance.Kuberne
 		return nil, fmt.Errorf("cannot run Kubeapiserver check, action verb is empty")
 	}
 
-	return check, nil
-}
-
-func (c *kubeApiserverCheck) Run() error {
-	log.Debugf("%s: kubeapiserver check: %s", c.ruleID, c.kubeResource.String())
+	if len(kubeResource.Version) == 0 {
+		kubeResource.Version = "v1"
+	}
 
 	resourceSchema := schema.GroupVersionResource{
 		Group:    kubeResource.Group,
 		Resource: kubeResource.Kind,
 		Version:  kubeResource.Version,
 	}
-	resourceDef := c.KubeClient().Resource(resourceSchema)
+	resourceDef := e.KubeClient().Resource(resourceSchema)
 
 	var resourceAPI dynamic.ResourceInterface
 	if len(kubeResource.Namespace) > 0 {
@@ -84,6 +85,7 @@ func (c *kubeApiserverCheck) Run() error {
 		}
 		resources = []unstructured.Unstructured{*resource}
 	case "list":
+
 		list, err := resourceAPI.List(metav1.ListOptions{
 			LabelSelector: kubeResource.LabelSelector,
 			FieldSelector: kubeResource.FieldSelector,
@@ -96,9 +98,18 @@ func (c *kubeApiserverCheck) Run() error {
 
 	log.Debugf("%s: Got %d resources", ruleID, len(resources))
 
-	return &kubeResourceIterator{
+	it := &kubeResourceIterator{
 		resources: resources,
-	}, nil
+	}
+	return nil, errors.New("out of bounds iteration")
+}
+
+	result, err := expr.EvaluateIterator(it, globalInstance)
+	if err != nil {
+		return nil, err
+	}
+
+	return instanceResultToReport(result, kubeResourceReportedFields), nil
 }
 
 type kubeResourceIterator struct {
@@ -106,32 +117,22 @@ type kubeResourceIterator struct {
 	index     int
 }
 
-func (c *kubeApiserverCheck) reportResource(p unstructured.Unstructured) error {
-	kv := event.Data{}
+func (it *kubeResourceIterator) Next() (*eval.Instance, error) {
+	if !it.Done() {
+		resource := it.resources[it.index]
+		it.index++
 
-	for _, field := range c.kubeResource.Report {
-		switch field.Kind {
-		case compliance.PropertyKindJSONQuery:
-			reportValue, valueFound, err := jsonquery.RunSingleOutput(field.Property, p.Object)
-			if err != nil {
-				return fmt.Errorf("unable to report field: '%s' for kubernetes object '%s / %s / %s' - json query error: %v", field.Property, p.GroupVersionKind().String(), p.GetNamespace(), p.GetName(), err)
-			}
-
-			if !valueFound {
-				continue
-			}
-
-			reportName := field.Property
-			if len(field.As) > 0 {
-				reportName = field.As
-			}
-			if len(field.Value) > 0 {
-				reportValue = field.Value
-			}
-
-			kv[reportName] = reportValue
-		default:
-			return fmt.Errorf("unsupported field kind value: '%s' for kubeApiserver resource", field.Kind)
+		instance := &eval.Instance{
+			Vars: eval.VarMap{
+				kubeResourceFieldKind:      resource.GetObjectKind().GroupVersionKind().Kind,
+				kubeResourceFieldGroup:     resource.GetObjectKind().GroupVersionKind().Group,
+				kubeResourceFieldVersion:   resource.GetObjectKind().GroupVersionKind().Version,
+				kubeResourceFieldNamespace: resource.GetNamespace(),
+				kubeResourceFieldName:      resource.GetName(),
+			},
+			Functions: eval.FunctionMap{
+				kubeResourceFuncJQ: kubeResourceJQ(resource),
+			},
 		}
 		return instance, nil
 	}

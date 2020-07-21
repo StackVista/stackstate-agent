@@ -10,6 +10,28 @@ import (
 	"fmt"
 )
 
+// ResourceKind represents resource kind
+type ResourceKind string
+
+const (
+	// KindInvalid is set in case resource is invalid
+	KindInvalid = ResourceKind("invalid")
+	// KindFile is used for a file resource
+	KindFile = ResourceKind("file")
+	// KindProcess is used for a Process resource
+	KindProcess = ResourceKind("process")
+	// KindGroup is used for a Group resource
+	KindGroup = ResourceKind("group")
+	// KindCommand is used for a Command resource
+	KindCommand = ResourceKind("command")
+	// KindDocker is used for a DockerResource resource
+	KindDocker = ResourceKind("docker")
+	// KindAudit is used for an Audit resource
+	KindAudit = ResourceKind("audit")
+	// KindKubernetes is used for a KubernetesResource
+	KindKubernetes = ResourceKind("kubernetes")
+)
+
 // Resource describes supported resource types observed by a Rule
 type Resource struct {
 	File          *File               `yaml:"file,omitempty"`
@@ -19,9 +41,29 @@ type Resource struct {
 	Audit         *Audit              `yaml:"audit,omitempty"`
 	Docker        *DockerResource     `yaml:"docker,omitempty"`
 	KubeApiserver *KubernetesResource `yaml:"kubeApiserver,omitempty"`
-	Custom        *Custom             `yaml:"custom,omitempty"`
 	Condition     string              `yaml:"condition"`
-	Fallback      *Fallback           `yaml:"fallback,omitempty"`
+}
+
+// Kind returns ResourceKind of the resource
+func (r *Resource) Kind() ResourceKind {
+	switch {
+	case r.File != nil:
+		return KindFile
+	case r.Process != nil:
+		return KindProcess
+	case r.Group != nil:
+		return KindGroup
+	case r.Command != nil:
+		return KindCommand
+	case r.Audit != nil:
+		return KindAudit
+	case r.Docker != nil:
+		return KindDocker
+	case r.KubeApiserver != nil:
+		return KindKubernetes
+	default:
+		return KindInvalid
+	}
 }
 
 // Kind returns ResourceKind of the resource
@@ -71,38 +113,17 @@ type File struct {
 	Path string `yaml:"path"`
 }
 
-// Fields & functions available for Process
-const (
-	ProcessFieldName    = "process.name"
-	ProcessFieldExe     = "process.exe"
-	ProcessFieldCmdLine = "process.cmdLine"
-
-	ProcessFuncFlag    = "process.flag"
-	ProcessFuncHasFlag = "process.hasFlag"
-)
-
 // Process describes a process resource
 type Process struct {
 	Name string `yaml:"name"`
 }
 
-// Fields & functions available for KubernetesResource
-const (
-	KubeResourceFieldName      = "kube.resource.name"
-	KubeResourceFieldGroup     = "kube.resource.group"
-	KubeResourceFieldVersion   = "kube.resource.version"
-	KubeResourceFieldNamespace = "kube.resource.namespace"
-	KubeResourceFieldKind      = "kube.resource.kind"
-
-	KubeResourceFuncJQ = "kube.resource.jq"
-)
-
 // KubernetesResource describes any object in Kubernetes (incl. CRDs)
 type KubernetesResource struct {
 	Kind      string `yaml:"kind"`
 	Version   string `yaml:"version,omitempty"`
-	Group     string `yaml:"group,omitempty"`
-	Namespace string `yaml:"namespace,omitempty"`
+	Group     string `yaml:"group"`
+	Namespace string `yaml:"namespace"`
 
 	// A selector to restrict the list of returned objects by their labels.
 	// Defaults to everything.
@@ -112,11 +133,6 @@ type KubernetesResource struct {
 	FieldSelector string `yaml:"fieldSelector,omitempty"`
 
 	APIRequest KubernetesAPIRequest `yaml:"apiRequest"`
-}
-
-// String returns human-friendly information string about the KubernetesResource
-func (kr *KubernetesResource) String() string {
-	return fmt.Sprintf("%s/%s - Kind: %s - Namespace: %s - Request: %s - %s", kr.Group, kr.Version, kr.Kind, kr.Namespace, kr.APIRequest.Verb, kr.APIRequest.ResourceName)
 }
 
 // String returns human-friendly information string about the KubernetesResource
@@ -188,82 +204,7 @@ const (
 
 // Audit describes an audited file resource
 type Audit struct {
-	Path     string    `yaml:"path,omitempty"`
-	PathFrom ValueFrom `yaml:"pathFrom,omitempty"`
-
-	Filter []Filter `yaml:"filter,omitempty"`
-
-	Report Report `yaml:"report,omitempty"`
-}
-
-// Validate validates audit resource
-func (a *Audit) Validate() error {
-	if len(a.Path) == 0 && len(a.PathFrom) == 0 {
-		return errors.New("missing path")
-	}
-	return nil
-}
-
-// DockerResource describes a resource from docker daemon
-type DockerResource struct {
-	Kind string `yaml:"kind"`
-
-	Filter []Filter `yaml:"filter,omitempty"`
-
-	Report Report `yaml:"report,omitempty"`
-}
-
-// ValueFrom provides a lookup list for substitution of a value in a Resource
-type ValueFrom []ValueSource
-
-// ValueSource provides a single lookup option for value substitution in a Resource
-type ValueSource struct {
-	Command *ValueFromCommand `yaml:"command,omitempty"`
-	File    *ValueFromFile    `yaml:"file,omitempty"`
-	Process *ValueFromProcess `yaml:"process,omitempty"`
-}
-
-func (s *ValueSource) String() string {
-	switch {
-	case s.Command != nil:
-		return s.Command.String()
-	case s.File != nil:
-		return s.File.String()
-	case s.Process != nil:
-		return s.Process.String()
-	}
-	return "Empty value source"
-}
-
-// ValueFromCommand describes a value taken from command output
-type ValueFromCommand struct {
-	BinaryCmd *BinaryCmd `yaml:"binary,omitempty"`
-	ShellCmd  *ShellCmd  `yaml:"shell,omitempty"`
-}
-
-func (c *ValueFromCommand) String() string {
-	if c.BinaryCmd != nil {
-		return valueFromString(c.BinaryCmd.String())
-	}
-	if c.ShellCmd != nil {
-		return valueFromString(c.ShellCmd.String())
-	}
-	return valueFromString("Empty command")
-}
-
-func valueFromString(s string) string {
-	return fmt.Sprintf("ValueFrom[%s]", s)
-}
-
-// ValueFromFile describes a value taken from properties of a file
-type ValueFromFile struct {
-	Path     string `yaml:"path"`
-	Property string `yaml:"property"`
-	Kind     string `yaml:"kind"`
-}
-
-func (v *ValueFromFile) String() string {
-	return valueFromString(fmt.Sprintf("File: %s property: %s kind: %s", v.Path, v.Property, v.Kind))
+	Path string `yaml:"path"`
 }
 
 // Validate validates audit resource
@@ -274,42 +215,7 @@ func (a *Audit) Validate() error {
 	return nil
 }
 
-func (v *ValueFromProcess) String() string {
-	return valueFromString(fmt.Sprintf("Process: %s flag: %s", v.Name, v.Flag))
-}
-
-// Report defines a set of reported fields which are sent in a RuleEvent
-type Report []ReportedField
-
-const (
-	DockerImageFieldID   = "image.id"
-	DockerImageFieldTags = "image.tags"
-
-	DockerContainerFieldID    = "container.id"
-	DockerContainerFieldName  = "container.name"
-	DockerContainerFieldImage = "container.image"
-
-	DockerNetworkFieldID   = "network.id"
-	DockerNetworkFieldName = "network.name"
-
-	DockerVersionFieldVersion       = "docker.version"
-	DockerVersionFieldAPIVersion    = "docker.apiVersion"
-	DockerVersionFieldPlatform      = "docker.platform"
-	DockerVersionFieldExperimental  = "docker.experimental"
-	DockerVersionFieldOS            = "docker.os"
-	DockerVersionFieldArch          = "docker.arch"
-	DokcerVersionFieldKernelVersion = "docker.kernelVersion"
-
-	DockerFuncTemplate = "docker.template"
-)
-
 // DockerResource describes a resource from docker daemon
 type DockerResource struct {
 	Kind string `yaml:"kind"`
-}
-
-// Custom is a special resource handled by a dedicated function
-type Custom struct {
-	Name      string            `yaml:"name"`
-	Variables map[string]string `yaml:"variables,omitempty"`
 }

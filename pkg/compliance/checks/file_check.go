@@ -6,126 +6,101 @@
 package checks
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/DataDog/datadog-agent/pkg/compliance"
-	"github.com/DataDog/datadog-agent/pkg/compliance/event"
-	"github.com/DataDog/datadog-agent/pkg/util/jsonquery"
+	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	"github.com/DataDog/datadog-agent/pkg/compliance/eval"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
-
-	"gopkg.in/yaml.v2"
 )
 
-var (
-	// ErrPropertyKindNotSupported is returned for property kinds not supported by the check
-	ErrPropertyKindNotSupported = errors.New("property kind '%s' not supported")
+const (
+	fileFieldPath        = "file.path"
+	fileFieldPermissions = "file.permissions"
+	fileFieldUser        = "file.user"
+	fileFieldGroup       = "file.group"
 
-	// ErrPropertyNotSupported is returned for properties not supported by the check
-	ErrPropertyNotSupported = errors.New("property '%s' not supported")
+	fileFuncJQ   = "file.jq"
+	fileFuncYAML = "file.yaml"
 )
 
-type pathMapper func(string) string
-
-type fileCheck struct {
-	baseCheck
-	file *compliance.File
+var fileReportedFields = []string{
+	fileFieldPath,
+	fileFieldPermissions,
+	fileFieldUser,
+	fileFieldGroup,
 }
 
-func newFileCheck(baseCheck baseCheck, file *compliance.File) (*fileCheck, error) {
-	// TODO: validate config for the file here
-	return &fileCheck{
-		baseCheck: baseCheck,
-		file:      file,
-	}, nil
-}
-
-func (c *fileCheck) Run() error {
-	// TODO: here we will introduce various cached results lookups
-
-	var err error
-	path := c.file.Path
-	if path == "" {
-		path, err = c.ResolveValueFrom(c.file.PathFrom)
-		if err != nil {
-			return err
-		}
+func checkFile(e env.Env, ruleID string, res compliance.Resource, expr *eval.IterableExpression) (*report, error) {
+	if res.File == nil {
+		return nil, fmt.Errorf("expecting file resource in file check")
 	}
 
-	log.Debugf("%s: file check: %s", c.ruleID, path)
-	if path != "" {
-		return c.reportFile(c.NormalizePath(path))
-	}
+	file := res.File
 
-	return log.Error("no path for file check")
-}
+	log.Debugf("%s: running file check: %v", ruleID, file)
 
-func (c *fileCheck) reportFile(filePath string) error {
-	kv := event.Data{}
-	var v string
-
-	paths, err := filepath.Glob(e.NormalizeToHostRoot(path))
+	path, err := resolvePath(e, file.Path)
 	if err != nil {
 		return nil, err
 	}
 
+	paths := []string{
+		path,
+	}
+
 	var instances []*eval.Instance
 
-		switch field.Kind {
-		case compliance.PropertyKindAttribute:
-			v, err = c.getAttribute(filePath, fi, field.Property)
-		case compliance.PropertyKindJSONQuery:
-			v, err = queryValueFromFile(filePath, field.Property, jsonGetter)
-		case compliance.PropertyKindYAMLQuery:
-			v, err = queryValueFromFile(filePath, field.Property, yamlGetter)
-		default:
-			return invalidInputErr(ErrPropertyKindNotSupported, field.Kind)
-		}
+	for _, path := range paths {
+		normalizedPath := e.NormalizePath(path)
+
+		fi, err := os.Stat(normalizedPath)
 		if err != nil {
 			// This is not a failure unless we don't have any paths to act on
-			log.Debugf("%s: file check failed to stat %s [%s]", ruleID, path, relPath)
+			log.Debugf("%s: file check failed to stat %s", ruleID, path)
 			continue
 		}
 
 		instance := &eval.Instance{
 			Vars: eval.VarMap{
-				compliance.FileFieldPath:        relPath,
-				compliance.FileFieldPermissions: uint64(fi.Mode() & os.ModePerm),
+				fileFieldPath:        path,
+				fileFieldPermissions: uint64(fi.Mode() & os.ModePerm),
 			},
 			Functions: eval.FunctionMap{
-				compliance.FileFuncJQ:     fileJQ(path),
-				compliance.FileFuncYAML:   fileYAML(path),
-				compliance.FileFuncRegexp: fileRegexp(path),
+				fileFuncJQ:   fileJQ(normalizedPath),
+				fileFuncYAML: fileYAML(normalizedPath),
 			},
 		}
 
 		user, err := getFileUser(fi)
 		if err == nil {
-			instance.Vars[compliance.FileFieldUser] = user
+			instance.Vars[fileFieldUser] = user
 		}
 
 		group, err := getFileGroup(fi)
 		if err == nil {
-			instance.Vars[compliance.FileFieldGroup] = group
+			instance.Vars[fileFieldGroup] = group
 		}
 
 		instances = append(instances, instance)
 	}
-	return "", invalidInputErr(ErrPropertyNotSupported, property)
-}
-
-// getter applies jq query to get string value from json or yaml raw data
-type getter func([]byte, string) (string, error)
 
 	if len(instances) == 0 {
-		return nil, fmt.Errorf("no files found for file check %q", file.Path)
+		return nil, fmt.Errorf("no files found for file check")
 	}
 
-	return &instanceIterator{
+	it := &instanceIterator{
 		instances: instances,
-	}, nil
+	}
+
+	result, err := expr.EvaluateIterator(it, globalInstance)
+	if err != nil {
+		return nil, err
+	}
+
+	return instanceResultToReport(result, fileReportedFields), nil
 }
 
 func fileQuery(path string, get getter) eval.Function {
@@ -141,17 +116,10 @@ func fileQuery(path string, get getter) eval.Function {
 	}
 }
 
-func queryValueFromFile(filePath string, query string, get getter) (string, error) {
-	f, err := os.Open(filePath)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
+func fileJQ(path string) eval.Function {
+	return fileQuery(path, jsonGetter)
+}
 
 func fileYAML(path string) eval.Function {
 	return fileQuery(path, yamlGetter)
-}
-
-func fileRegexp(path string) eval.Function {
-	return fileQuery(path, regexpGetter)
 }
