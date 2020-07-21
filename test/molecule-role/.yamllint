@@ -11,4 +11,4 @@ rules:
   truthy: disable
 
 ignore: |
-  nagios.yaml
+  conf.yaml
