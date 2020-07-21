@@ -293,5 +293,23 @@ def test_java_traces(host):
                 external_id_assert_fn=r["external_id"],
             ) is not None
 
+    #         calls               calls        has                  is module of
+    # traefik  -->  traefik:books  -->  books  -->  books-instance     -->        books-process
+    #       calls
+    # books  -->  postgres
+    #                calls
+    # books-instance  -->  postgres
+
+    #        ?          calls                 calls          has                    is module of
+    # books -> traefik  -->   traefik:authors  -->  authors  -->  authors-instance     -->        authors-process
+    #                   calls
+    #             books  -->  traefik:authors
+    #         calls
+    # authors  -->  postgres
+    #                  calls
+    # authors-instance  -->  postgres
+
+    #                 calls                          calls
+    # traefik:authors  -->  traefik -> traefik:books  -->  traefik
 
     util.wait_until(assert_topology, 30, 3)
