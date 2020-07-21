@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2017-2020 Datadog, Inc.
 
-//go:build clusterchecks
 // +build clusterchecks
 
 package v1
