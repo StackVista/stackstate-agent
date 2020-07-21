@@ -41,7 +41,8 @@ from .test import (
     lint_teamassignment,
     make_kitchen_gitlab_yml,
     make_simple_gitlab_yml,
-    test,
+    check_gitlab_broken_dependencies,
+    install_shellcheck,
 )
 
 # [sts] Security agent
