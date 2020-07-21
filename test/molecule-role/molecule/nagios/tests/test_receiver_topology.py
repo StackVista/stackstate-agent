@@ -34,18 +34,19 @@ def test_nagios_mysql(host):
         with open("./topic-topo-process-agents-traces.json", 'w') as f:
             json.dump(json_data, f, indent=4)
 
+        external_id_pattern = re.compile(r"urn:container:/agent-nagios-mysql:.*")
         components = [
             {
                 "assertion": "Should find the nagios container",
                 "type": "container",
-                "external_id": lambda e_id: re.compile(r"urn:container:/agent-nagios-mysql:/.*").findall(e_id),
-                "tags": lambda d: d["container_name"] == "ubuntu_nagios_1"
+                "external_id": lambda e_id: external_id_pattern.findall(e_id),
+                "tags": lambda t: t["container_name"] == "ubuntu_nagios_1"
             },
             {
                 "assertion": "Should find the mysql container",
                 "type": "container",
-                "external_id": lambda e_id: re.compile(r"urn:container:/agent-nagios-mysql:/.*").findall(e_id),
-                "tags": lambda d: d["container_name"] == "ubuntu_mysql_1"
+                "external_id": lambda e_id: external_id_pattern.findall(e_id),
+                "tags": lambda t: t["container_name"] == "ubuntu_mysql_1"
             }
         ]
 
