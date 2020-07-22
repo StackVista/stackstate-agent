@@ -1,5 +1,9 @@
-FROM debian:wheezy-backports
-#[VS] TODO: Why? RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+#FROM debian:wheezy-backports
+FROM golang:1.13.11
+
+RUN sed -i 's/^#\s*\(deb.*universe\)$/\1/g' /etc/apt/sources.list \
+    && sed -i 's/^#\s*\(deb.*multiverse\)$/\1/g' /etc/apt/sources.list \
+    && sed -i 's/main/main contrib non-free/' /etc/apt/sources.list
 
 # Build Args
 ARG GIMME_GO_VERSION=1.13.11
@@ -27,22 +31,34 @@ ENV DD_CONDA_VERSION $DD_CONDA_VERSION
 # Wheezy is EOL, security updates repo will not get any newer updates, or will do so
 # in arbitrary, unscheduled timeframes. At the time of this writing the repo has
 # expired making the following option necessary for apt to work.
-RUN echo 'Acquire::Check-Valid-Until "false";' >> /etc/apt/apt.conf.d/20datadog
+#RUN echo 'Acquire::Check-Valid-Until "false";' >> /etc/apt/apt.conf.d/20datadog
 
-RUN echo "deb http://archive.debian.org/debian wheezy main contrib non-free" > /etc/apt/sources.list && \
- echo "deb http://archive.debian.org/debian wheezy-backports main contrib non-free" > /etc/apt/sources.list.d/backports.list && \
- echo "deb http://archive.debian.org/debian-security wheezy/updates main contrib non-free" > /etc/apt/sources.list.d/security.list
+#RUN echo "deb http://archive.debian.org/debian wheezy main contrib non-free" > /etc/apt/sources.list && \
+# echo "deb http://archive.debian.org/debian wheezy-backports main contrib non-free" > /etc/apt/sources.list.d/backports.list && \
+# echo "deb http://archive.debian.org/debian-security wheezy/updates main contrib non-free" > /etc/apt/sources.list.d/security.list
+
+
+# [VS]
+# RUN mkdir -p /etc/apt/source.list.d/ && \
+#     echo "deb http://deb.debian.org/debian/ stretch main contrib non-free" > /etc/apt/source.list.d/sts_extra.list && \
+#     echo "deb-src http://deb.debian.org/debian stretch main contrib non-free" >> /etc/apt/source.list.d/sts_extra.list
+
+RUN echo 'Acquire::Check-Valid-Until "false";' >> /etc/apt/apt.conf.d/20stackstate
+
+# [/VS]
 
 RUN apt-get update && apt-get install -y fakeroot curl git procps bzip2 \
   build-essential pkg-config\
   rpm tar gettext libtool autopoint autoconf pkg-config flex \
   selinux-basics
 
-RUN apt-get install -y libsystemd-journal-dev/wheezy-backports
+
+#RUN apt-get install -y libsystemd-journal-dev/wheezy-backports
+RUN apt-get install -y libsystemd-dev
 
 # The license does not recognize debian based systems for some reason
 # It's a bug in this version. So, it has been rewritten
-COPY ./mqlicense.sh /mqlicense.sh
+#COPY ./mqlicense.sh /mqlicense.sh
 
 # IBM MQ
 # IBM MQ is required in the builder.
@@ -57,12 +73,78 @@ RUN bash ~/miniconda.sh -b
 COPY ./conda.sh /etc/profile.d/
 
 # RVM
+# [VS]
 COPY ./rvm/gpg-keys /gpg-keys
 RUN gpg --import /gpg-keys/*
 RUN rm -rf /gpg-keys
 RUN curl -sSL https://get.rvm.io | bash -s stable --version latest-1.29
+
+# # Ruby,,,
+RUN mkdir -p /usr/local/etc \
+    && { \
+    echo 'install: --no-document'; \
+    echo 'update: --no-document'; \
+    } >> /usr/local/etc/gemrc
+
+# ENV RUBY_MAJOR 2.4
+# ENV RUBY_VERSION 2.4.2
+# ENV RUBY_DOWNLOAD_SHA256 748a8980d30141bd1a4124e11745bb105b436fb1890826e0d2b9ea31af27f735
+# ENV RUBYGEMS_VERSION 2.6.12
+
+# # some of ruby's build scripts are written in ruby
+# #   we purge system ruby later to make sure our final image uses what we just built
+# RUN set -ex \
+#     \
+#     && buildDeps=' \
+#     bison \
+#     dpkg-dev \
+#     libgdbm-dev \
+#     ruby \
+#     ' \
+#     && apt-get update \
+#     && apt-get install -y --no-install-recommends $buildDeps \
+#     && rm -rf /var/lib/apt/lists/* \
+#     \
+#     && wget -O ruby.tar.xz "https://cache.ruby-lang.org/pub/ruby/${RUBY_MAJOR%-rc}/ruby-$RUBY_VERSION.tar.xz" \
+#     && echo "$RUBY_DOWNLOAD_SHA256 *ruby.tar.xz" | sha256sum -c - \
+#     \
+#     && mkdir -p /usr/src/ruby \
+#     && tar -xJf ruby.tar.xz -C /usr/src/ruby --strip-components=1 \
+#     && rm ruby.tar.xz \
+#     \
+#     && cd /usr/src/ruby \
+#     \
+#     # hack in "ENABLE_PATH_CHECK" disabling to suppress:
+#     #   warning: Insecure world writable dir
+#     && { \
+#     echo '#define ENABLE_PATH_CHECK 0'; \
+#     echo; \
+#     cat file.c; \
+#     } > file.c.new \
+#     && mv file.c.new file.c \
+#     \
+#     && autoconf \
+#     && gnuArch="$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)" \
+#     && ./configure \
+#     --build="$gnuArch" \
+#     --disable-install-doc \
+#     --enable-shared \
+#     --with-openssl=/usr/lib/ssl \
+#     && make -j "$(nproc)" \
+#     && make install \
+#     \
+#     && apt-get purge -y --auto-remove $buildDeps \
+#     && cd / \
+#     && gem update --system "$RUBYGEMS_VERSION" \
+#     && gem install deb-s3 \
+#     && rm -r /usr/src/ruby
+
+# ENV BUNDLER_VERSION 1.15.3
+
+# RUN gem install bundler --version "$BUNDLER_VERSION"
+
 RUN /bin/bash -l -c "rvm requirements"
-RUN /bin/bash -l -c "rvm install 2.3 && rvm cleanup all"
+RUN /bin/bash -l -c "rvm install 2.4.2 && rvm cleanup all"
 RUN /bin/bash -l -c "gem install bundler --no-document"
 
 # CONDA prep
@@ -86,15 +168,16 @@ RUN /bin/bash -c  "source /root/.bashrc && conda activate ddpy3 \
     && pip install --ignore-installed setuptools==${DD_SETUPTOOLS_VERSION} \
     && pip install invoke distro==1.4.0 awscli==1.16.240"
 
+# [VS] not needed if we base on GO base image.
 # Gimme
-RUN curl -sL -o /bin/gimme https://raw.githubusercontent.com/travis-ci/gimme/master/gimme
-RUN chmod +x /bin/gimme
-RUN gimme $GIMME_GO_VERSION
+#RUN curl -sL -o /bin/gimme https://raw.githubusercontent.com/travis-ci/gimme/master/gimme
+#RUN chmod +x /bin/gimme
+#RUN gimme $GIMME_GO_VERSION
 COPY ./gobin.sh /etc/profile.d/
 
 # Docker
 # Pin docker to before they broke wheezy
-RUN curl -fsSL https://raw.githubusercontent.com/docker/docker-install/a34555fc0214be705330911071a8c3357f26e40b/install.sh | sed -e 's/ftp\.debian\.org/archive.debian.org/g' | sh
+#[VS] RUN curl -fsSL https://raw.githubusercontent.com/docker/docker-install/a34555fc0214be705330911071a8c3357f26e40b/install.sh | sed -e 's/ftp\.debian\.org/archive.debian.org/g' | sh
 
 # CMake
 RUN set -ex \
@@ -142,7 +225,7 @@ RUN apt-get install sudo
 RUN pip install awscli boto3 sa-rpm-s3
 ADD rpmmacros /root/.rpmmacros
 # yum-utils #https://pkgs.org/download/yum-utils
-RUN apt-get install -y libkrb5-dev unixodbc-dev rpm python-deltarpm createrepo bison
+RUN apt-get install -y libkrb5-dev unixodbc-dev rpm python-deltarpm createrepo bison yum-utils
 
 # /STS
 

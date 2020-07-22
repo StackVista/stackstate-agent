@@ -9,11 +9,11 @@ if command -v conda; then
   conda activate ddpy3
 fi
 
-if [ "$DD_TARGET_ARCH" = "arm64v8" ] ; then
-    export GIMME_ARCH=arm64
-elif [ "$DD_TARGET_ARCH" = "arm32v7" ] ; then
-    export GIMME_ARCH=arm
-fi
-eval "$(gimme)"
+#if [ "$DD_TARGET_ARCH" = "arm64v8" ] ; then
+#    export GIMME_ARCH=arm64
+#elif [ "$DD_TARGET_ARCH" = "arm32v7" ] ; then
+#    export GIMME_ARCH=arm
+#fi
+#eval "$(gimme)"
 
 exec "$@"
