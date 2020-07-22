@@ -17,8 +17,8 @@ import (
 	"strings"
 	"time"
 
-	seelogCfg "github.com/github.com/StackVista/stackstate-agent/pkg/config/seelog"
-	"github.com/github.com/StackVista/stackstate-agent/pkg/util/log"
+	seelogCfg "github.com/StackVista/stackstate-agent/pkg/config/seelog"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/cihub/seelog"
 )
 
