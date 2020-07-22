@@ -83,6 +83,7 @@ deps_deb:
       - venv
   script:
     - whoami
+    - printenv
     - pip install -r requirements.txt
     - inv deps
     - inv version -u > version.txt
