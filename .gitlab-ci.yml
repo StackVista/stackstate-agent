@@ -84,13 +84,14 @@ deps_deb:
   script:
     - whoami
     - printenv
-    - pip install -r requirements.txt
-    - inv deps
+#    - pip install -r requirements.txt
+    - conda activate ddpy3
+    - inv -e deps --verbose --dep-vendor-only
     - inv version -u > version.txt
   artifacts:
     paths:
       - $CI_PROJECT_DIR/vendor
-      - $CI_PROJECT_DIR/venv
+#      - $CI_PROJECT_DIR/venv
       - $CI_PROJECT_DIR/version.txt
     expire_in: 1 week
 
