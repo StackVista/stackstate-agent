@@ -21,9 +21,9 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/aggregator/ckey"
 	"github.com/StackVista/stackstate-agent/pkg/serializer/marshaler"
 =======
-	"github.com/DataDog/datadog-agent/pkg/aggregator/ckey"
-	"github.com/DataDog/datadog-agent/pkg/serializer/marshaler"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/ckey"
+	"github.com/StackVista/stackstate-agent/pkg/serializer/marshaler"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 >>>>>>> 739f13794e0acd59dadfeeffcbef952a117b9d64
 )
 
