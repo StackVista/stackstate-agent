@@ -31,7 +31,7 @@ def test_nagios_mysql(host):
         topo_url = "http://localhost:7070/api/topic/sts_topo_process_agents?limit=1500"
         data = host.check_output('curl "{}"'.format(topo_url))
         json_data = json.loads(data)
-        with open("./topic-topo-process-agents-traces.json", 'w') as f:
+        with open("./topic-topo-process-agents.json", 'w') as f:
             json.dump(json_data, f, indent=4)
 
         external_id_pattern = re.compile(r"urn:container:/agent-nagios-mysql:.*")
