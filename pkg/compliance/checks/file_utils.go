@@ -10,9 +10,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	"github.com/DataDog/datadog-agent/pkg/compliance/eval"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 type pathMapper struct {
@@ -38,7 +38,7 @@ func (m pathMapper) relativeToHostRoot(path string) string {
 }
 
 func resolvePath(e env.Env, path string) (string, error) {
-	pathExpr, err := eval.Cache.ParsePath(path)
+	pathExpr, err := eval.ParsePath(path)
 	if err != nil {
 		return "", err
 	}
@@ -47,19 +47,15 @@ func resolvePath(e env.Env, path string) (string, error) {
 		return *pathExpr.Path, nil
 	}
 
-	v, err := e.EvaluateFromCache(pathExpr.Expression)
+	v, err := e.EvaluateFromCache(pathExpr)
 	if err != nil {
-		return "", fmt.Errorf("failed to resolve path: %w", err)
+		return "", err
 	}
 
-	res, ok := v.(string)
+	path, ok := v.(string)
 	if !ok {
-		return "", fmt.Errorf(`failed to resolve path: expected string from %s got "%v"`, path, v)
+		return "", fmt.Errorf("resource path expression not resolved to string: %s", path)
 	}
 
-	if res == "" {
-		return "", fmt.Errorf("failed to resolve path: empty path from %s", path)
-	}
-
-	return res, nil
+	return path, nil
 }

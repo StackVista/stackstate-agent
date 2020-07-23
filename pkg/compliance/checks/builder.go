@@ -9,7 +9,6 @@ package checks
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -203,8 +202,6 @@ func NewBuilder(reporter event.Reporter, options ...BuilderOption) (Builder, err
 	)
 	return b, nil
 }
-
-type pathMapper func(string) string
 
 type builder struct {
 	checkInterval time.Duration
@@ -517,11 +514,18 @@ func (b *builder) EtcGroupPath() string {
 	return b.etcGroupPath
 }
 
-func (b *builder) NormalizePath(path string) string {
+func (b *builder) NormalizeToHostRoot(path string) string {
 	if b.pathMapper == nil {
 		return path
 	}
-	return b.pathMapper(path)
+	return b.pathMapper.normalizeToHostRoot(path)
+}
+
+func (b *builder) RelativeToHostRoot(path string) string {
+	if b.pathMapper == nil {
+		return path
+	}
+	return b.pathMapper.relativeToHostRoot(path)
 }
 
 func (b *builder) EvaluateFromCache(ev eval.Evaluatable) (interface{}, error) {
@@ -679,7 +683,7 @@ func (b *builder) evalValueFromFile(get getter) eval.Function {
 			return nil, fmt.Errorf(`expecting string value for path argument`)
 		}
 
-		path = b.NormalizePath(path)
+		path = b.NormalizeToHostRoot(path)
 
 		query, ok := args[1].(string)
 		if !ok {
