@@ -27,8 +27,18 @@ const (
 	KubernetesClusterScope RuleScope = "kubernetesCluster"
 )
 
-// RuleScopeList is a set of RuleScopes
-type RuleScopeList []RuleScope
+// Scope defines when a rule can be run based on observed properties of the environment
+type Scope struct {
+	Docker            bool `yaml:"docker,omitempty"`
+	KubernetesNode    bool `yaml:"kubernetesNode,omitempty"`
+	KubernetesCluster bool `yaml:"kubernetesCluster,omitempty"`
+}
+
+// HostSelector allows to activate/deactivate dynamically based on host properties
+type HostSelector struct {
+	KubernetesNodeLabels []KubeNodeSelector `yaml:"kubernetesRole,omitempty"`
+	KubernetesNodeRole   string             `yaml:"kubernetesNodeRole,omitempty"`
+}
 
 // Includes returns true if RuleScopeList includes the specified RuleScope value
 func (l RuleScopeList) Includes(ruleScope RuleScope) bool {

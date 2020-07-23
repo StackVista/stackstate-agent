@@ -6,8 +6,8 @@ version: 1.5.0
 rules:
 - id: cis-kubernetes-1
   scope:
-    - kubernetesNode
-  hostSelector: node.label("kubernetes.io/role") in ["worker"]
+    # Hack for now to avoid triggering kubernetesCluster or kubernetesNode rule scope matcher
+    docker: true
   resources:
   - file:
       path: /files/kube-apiserver.yaml

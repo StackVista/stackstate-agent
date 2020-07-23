@@ -114,7 +114,7 @@ func TestRun(t *testing.T) {
 				eventMatch{
 					ruleID:       "cis-kubernetes-1",
 					resourceID:   "the-host",
-					resourceType: "kubernetesCluster",
+					resourceType: "docker",
 					result:       "failed",
 					path:         "/files/kube-apiserver.yaml",
 					permissions:  0644,
@@ -136,12 +136,17 @@ func TestRun(t *testing.T) {
 		check.Run()
 	})
 
+	dockerClient := &mocks.DockerClient{}
+	dockerClient.On("Close").Return(nil).Once()
+	defer dockerClient.AssertExpectations(t)
+
 	agent, err := New(
 		reporter,
 		scheduler,
 		e.dir,
 		checks.WithHostname("the-host"),
 		checks.WithHostRootMount(e.dir),
+		checks.WithDockerClient(dockerClient),
 	)
 	assert.NoError(err)
 
@@ -187,6 +192,7 @@ func TestRunChecks(t *testing.T) {
 		checks.WithMatchRule(checks.IsRuleID("cis-docker-1")),
 		checks.WithHostname("the-host"),
 		checks.WithHostRootMount(e.dir),
+		checks.WithDockerClient(dockerClient),
 	)
 	assert.NoError(err)
 }
@@ -205,7 +211,7 @@ func TestRunChecksFromFile(t *testing.T) {
 				eventMatch{
 					ruleID:       "cis-kubernetes-1",
 					resourceID:   "the-host",
-					resourceType: "kubernetesCluster",
+					resourceType: "docker",
 					result:       "failed",
 					path:         "/files/kube-apiserver.yaml",
 					permissions:  0644,
@@ -220,15 +226,12 @@ func TestRunChecksFromFile(t *testing.T) {
 	dockerClient.On("Close").Return(nil).Once()
 	defer dockerClient.AssertExpectations(t)
 
-	nodeLabels := map[string]string{
-		"node-role.kubernetes.io/worker": "",
-	}
-
 	err := RunChecksFromFile(
 		reporter,
 		filepath.Join(e.dir, "cis-kubernetes.yaml"),
 		checks.WithHostname("the-host"),
 		checks.WithHostRootMount(e.dir),
+		checks.WithDockerClient(dockerClient),
 	)
 	assert.NoError(err)
 }
