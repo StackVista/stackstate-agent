@@ -20,10 +20,8 @@ const (
 	processCacheKey string = "compliance-processes"
 )
 
-type processFetcherFunc func() (map[int32]*process.FilledProcess, error)
-
 var (
-	processFetcher processFetcherFunc = process.AllProcesses
+	processFetcher func() (processes, error) = fetchProcesses
 )
 
 func (p processes) findProcessesByName(name string) []*process.FilledProcess {
@@ -53,7 +51,7 @@ func getProcesses(maxAge time.Duration) (processes, error) {
 	}
 
 	log.Debug("Updating process cache")
-	cachedProcesses, err := processFetcher()
+	rawProcesses, err := processFetcher()
 	if err != nil {
 		return nil, err
 	}

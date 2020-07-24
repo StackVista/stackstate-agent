@@ -13,8 +13,6 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/compliance/mocks"
 	"github.com/DataDog/datadog-agent/pkg/util/cache"
 
-	"github.com/DataDog/gopsutil/process"
-
 	assert "github.com/stretchr/testify/require"
 )
 
@@ -22,7 +20,8 @@ type processFixture struct {
 	name     string
 	resource compliance.Resource
 
-	processes    map[int32]*process.FilledProcess
+	processes    processes
+	useCache     bool
 	expectReport *report
 	expectError  error
 }
@@ -31,8 +30,10 @@ func (f *processFixture) run(t *testing.T) {
 	t.Helper()
 	assert := assert.New(t)
 
-	cache.Cache.Delete(processCacheKey)
-	processFetcher = func() (map[int32]*process.FilledProcess, error) {
+	if !f.useCache {
+		cache.Cache.Delete(processCacheKey)
+	}
+	processFetcher = func() (processes, error) {
 		return f.processes, nil
 	}
 
@@ -154,9 +155,9 @@ func TestProcessCheckCache(t *testing.T) {
 				Cmdline: []string{"arg1", "--path=foo"},
 			},
 		},
-		expectReport: &compliance.Report{
-			Passed: true,
-			Data: event.Data{
+		expectReport: &report{
+			passed: true,
+			data: event.Data{
 				"process.name":    "proc1",
 				"process.exe":     "",
 				"process.cmdLine": []string{"arg1", "--path=foo"},
@@ -175,9 +176,9 @@ func TestProcessCheckCache(t *testing.T) {
 			Condition: `process.flag("--path") == "foo"`,
 		},
 		useCache: true,
-		expectReport: &compliance.Report{
-			Passed: true,
-			Data: event.Data{
+		expectReport: &report{
+			passed: true,
+			data: event.Data{
 				"process.name":    "proc1",
 				"process.exe":     "",
 				"process.cmdLine": []string{"arg1", "--path=foo"},
