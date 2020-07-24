@@ -302,7 +302,7 @@ func (b *builder) ChecksFromFile(file string, onCheck compliance.CheckVisitor) e
 }
 
 func (b *builder) CheckFromRule(meta *compliance.SuiteMeta, rule *compliance.Rule) (check.Check, error) {
-	ruleScope, err := b.getRuleScope(meta, rule)
+	ruleScope, err := getRuleScope(meta, rule)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +333,7 @@ func getRuleScope(meta *compliance.SuiteMeta, rule *compliance.Rule) (compliance
 	}
 }
 
-func (b *builder) hostMatcher(scope string, rule *compliance.Rule) (bool, error) {
+func (b *builder) hostMatcher(scope compliance.RuleScope, rule *compliance.Rule) (bool, error) {
 	switch scope {
 	case compliance.DockerScope:
 		if b.dockerClient == nil {
@@ -390,7 +390,40 @@ func (b *builder) isKubernetesNodeEligible(hostSelector string) (bool, error) {
 	return eligible, nil
 }
 
-func (b *builder) newCheck(meta *compliance.SuiteMeta, ruleScope string, rule *compliance.Rule) *complianceCheck {
+func (b *builder) getNodeLabel(args ...interface{}) (string, bool, error) {
+	if len(args) == 0 {
+		return "", false, errors.New(`expecting one argument for label`)
+	}
+	label, ok := args[0].(string)
+	if !ok {
+		return "", false, fmt.Errorf(`expecting string value for label argument`)
+	}
+	if b.nodeLabels == nil {
+		return "", false, nil
+	}
+	v, ok := b.nodeLabels[label]
+	return v, ok, nil
+}
+
+func (b *builder) nodeHasLabel(_ *eval.Instance, args ...interface{}) (interface{}, error) {
+	_, ok, err := b.getNodeLabel(args...)
+	return ok, err
+}
+
+func (b *builder) nodeLabel(_ *eval.Instance, args ...interface{}) (interface{}, error) {
+	v, _, err := b.getNodeLabel(args...)
+	return v, err
+}
+
+func (b *builder) nodeLabelKeys() []string {
+	var keys []string
+	for k := range b.nodeLabels {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+func (b *builder) newCheck(meta *compliance.SuiteMeta, ruleScope compliance.RuleScope, rule *compliance.Rule) *complianceCheck {
 	checkable, err := newResourceCheckList(b, rule.ID, rule.Resources)
 
 	if err != nil {
@@ -409,7 +442,8 @@ func (b *builder) newCheck(meta *compliance.SuiteMeta, ruleScope string, rule *c
 		suiteName: meta.Name,
 		version:   meta.Version,
 
-		resourceType: ruleScope,
+		// For now we are using rule scope (e.g. docker, kubernetesNode) as resource type
+		resourceType: string(ruleScope),
 		resourceID:   b.hostname,
 		configError:  err,
 		checkable:    checkable,

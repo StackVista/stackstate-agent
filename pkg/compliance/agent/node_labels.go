@@ -9,8 +9,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/hostinfo"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/hostinfo"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 
 	"github.com/cenkalti/backoff"
 )

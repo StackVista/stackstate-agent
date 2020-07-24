@@ -12,25 +12,18 @@ import (
 )
 
 func TestParseSuite(t *testing.T) {
-	tests := []struct {
-		name        string
-		file        string
-		expectSuite *Suite
-		expectError error
-	}{
-		{
-			name: "supported version",
-			file: "./testdata/cis-docker.yaml",
-			expectSuite: &Suite{
-				Meta: SuiteMeta{
-					Schema: SuiteSchema{
-						Version: "1.0",
-					},
-					Name:      "CIS Docker Generic",
-					Framework: "cis-docker",
-					Version:   "1.2.0",
-				},
-				Rules: []Rule{
+	expected := &Suite{
+		Meta: SuiteMeta{
+			Name:      "CIS Docker Generic",
+			Framework: "cis-docker",
+			Version:   "1.2.0",
+		},
+		Rules: []Rule{
+			{
+				ID:           "cis-docker-1",
+				Scope:        RuleScopeList{DockerScope},
+				HostSelector: `"foo" in node.labels`,
+				Resources: []Resource{
 					{
 						File: &File{
 							Path: "/etc/docker/daemon.json",

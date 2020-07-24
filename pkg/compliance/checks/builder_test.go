@@ -7,9 +7,9 @@ package checks
 
 import (
 	"context"
+	"errors"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/compliance"
 	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
 	"github.com/DataDog/datadog-agent/pkg/compliance/eval"
 	"github.com/DataDog/datadog-agent/pkg/compliance/mocks"
@@ -103,120 +103,6 @@ func TestKubernetesNodeEligible(t *testing.T) {
 			if tt.expectError != nil {
 				assert.EqualError(t, err, tt.expectError.Error())
 			}
-		})
-	}
-}
-
-func TestResolveValueFrom(t *testing.T) {
-	assert := assert.New(t)
-
-	tests := []struct {
-		name        string
-		expression  string
-		setup       func(t *testing.T)
-		expectValue interface{}
-		expectError error
-	}{
-		{
-			name:       "from shell command",
-			expression: `shell("cat /home/root/hiya-buddy.txt", "/bin/bash")`,
-			setup: func(t *testing.T) {
-				commandRunner = func(ctx context.Context, name string, args []string, captureStdout bool) (int, []byte, error) {
-					assert.Equal("/bin/bash", name)
-					assert.Equal([]string{"cat /home/root/hiya-buddy.txt"}, args)
-					return 0, []byte("hiya buddy"), nil
-				}
-			},
-			expectValue: "hiya buddy",
-		},
-		{
-			name:       "from binary command",
-			expression: `exec("/bin/buddy", "/home/root/hiya-buddy.txt")`,
-			setup: func(t *testing.T) {
-				commandRunner = func(ctx context.Context, name string, args []string, captureStdout bool) (int, []byte, error) {
-					assert.Equal("/bin/buddy", name)
-					assert.Equal([]string{"/home/root/hiya-buddy.txt"}, args)
-					return 0, []byte("hiya buddy"), nil
-				}
-			},
-			expectValue: "hiya buddy",
-		},
-		{
-			name:       "from process",
-			expression: `process.flag("buddy", "--path")`,
-			setup: func(t *testing.T) {
-				processFetcher = func() (processes, error) {
-					return processes{
-						42: {
-							Name:    "buddy",
-							Cmdline: []string{"--path=/home/root/hiya-buddy.txt"},
-						},
-					}, nil
-				}
-			},
-			expectValue: "/home/root/hiya-buddy.txt",
-		},
-		{
-			name:       "from process missing process",
-			expression: `process.flag("buddy", "--path")`,
-			setup: func(t *testing.T) {
-				processFetcher = func() (processes, error) {
-					return processes{}, nil
-				}
-			},
-			expectError: errors.New(`1:1: call to "process.flag()" failed: failed to find process: buddy`),
-		},
-		{
-			name:       "from process missing flag",
-			expression: `process.flag("buddy", "--path")`,
-			setup: func(t *testing.T) {
-				processFetcher = func() (processes, error) {
-					return processes{
-						42: {
-							Name: "buddy",
-						},
-					}, nil
-				}
-			},
-			expectValue: "",
-		},
-		{
-			name:        "from json file",
-			expression:  `json("daemon.json", ".\"log-driver\"")`,
-			expectValue: "json-file",
-		},
-		{
-			name:        "from file yaml",
-			expression:  `yaml("pod.yaml", ".apiVersion")`,
-			expectValue: "v1",
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			reporter := &mocks.Reporter{}
-			b, err := NewBuilder(reporter, WithHostRootMount("./testdata/file/"))
-			assert.NoError(err)
-
-			env, ok := b.(env.Env)
-			assert.True(ok)
-
-			if test.setup != nil {
-				test.setup(t)
-			}
-
-			cache.Cache.Flush()
-
-			expr, err := eval.ParseExpression(test.expression)
-			assert.NoError(err)
-
-			value, err := env.EvaluateFromCache(expr)
-			if test.expectError != nil {
-				assert.EqualError(err, test.expectError.Error())
-			} else {
-				assert.NoError(err)
-			}
-			assert.Equal(test.expectValue, value)
 		})
 	}
 }

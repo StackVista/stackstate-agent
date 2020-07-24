@@ -9,7 +9,6 @@ package compliance
 // Rule defines a rule in a compliance config
 type Rule struct {
 	ID           string        `yaml:"id"`
-	Description  string        `yaml:"description,omitempty"`
 	Scope        RuleScopeList `yaml:"scope,omitempty"`
 	HostSelector string        `yaml:"hostSelector,omitempty"`
 	Resources    []Resource    `yaml:"resources,omitempty"`
@@ -27,18 +26,8 @@ const (
 	KubernetesClusterScope RuleScope = "kubernetesCluster"
 )
 
-// Scope defines when a rule can be run based on observed properties of the environment
-type Scope struct {
-	Docker            bool `yaml:"docker,omitempty"`
-	KubernetesNode    bool `yaml:"kubernetesNode,omitempty"`
-	KubernetesCluster bool `yaml:"kubernetesCluster,omitempty"`
-}
-
-// HostSelector allows to activate/deactivate dynamically based on host properties
-type HostSelector struct {
-	KubernetesNodeLabels []KubeNodeSelector `yaml:"kubernetesRole,omitempty"`
-	KubernetesNodeRole   string             `yaml:"kubernetesNodeRole,omitempty"`
-}
+// RuleScopeList is a set of RuleScopes
+type RuleScopeList []RuleScope
 
 // Includes returns true if RuleScopeList includes the specified RuleScope value
 func (l RuleScopeList) Includes(ruleScope RuleScope) bool {
