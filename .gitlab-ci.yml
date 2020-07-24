@@ -72,7 +72,7 @@ clear_deps_win_cache:
     - "if exist %WIN_CI_PROJECT_DIR%\\venv rd /s/q %WIN_CI_PROJECT_DIR%\\venv"
     - "if exist C:\\opt\\stackstate-agent rd /s/q C:\\opt\\stackstate-agent"
     - "del /S /F /Q %TEMP%"
-    - "del /S /F /Q %WINDIR%\TEMP"
+    - "del /S /F /Q %WINDIR%\\TEMP"
   tags:
     - sts_windows
 
