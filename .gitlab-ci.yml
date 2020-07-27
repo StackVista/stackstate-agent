@@ -81,7 +81,7 @@ variables: &commonvariables
   RELEASE_VERSION_6: nightly
   RELEASE_VERSION_7: nightly-a7
   DATADOG_AGENT_BUILDIMAGES: v2653795-e59e3fd
-  DATADOG_AGENT_BUILDERS: v2752318-c3e56c1
+  DATADOG_AGENT_BUILDERS: v2782547-a0df417
   DATADOG_AGENT_WINBUILDIMAGES: v2724986-3bcb1ae
   DATADOG_AGENT_WINBUILDERS: v2348149-ba6640d
   DATADOG_AGENT_ARMBUILDIMAGES: v2653795-e59e3fd
@@ -1297,7 +1297,7 @@ deploy_rpm_testing-a6:
   variables:
     DD_PIPELINE_ID: $CI_PIPELINE_ID-a6
   script:
-    - rpm-s3 --verbose --visibility public-read -c "https://s3.amazonaws.com" -b $RPM_TESTING_S3_BUCKET -p "testing/pipeline-$DD_PIPELINE_ID/6/x86_64/" $OMNIBUS_PACKAGE_DIR/datadog-*-6.*x86_64.rpm
+    - rpm-s3 --verbose --visibility public-read -c "https://s3.amazonaws.com" -b $RPM_TESTING_S3_BUCKET -p "testing/pipeline-$DD_PIPELINE_ID/6/x86_64/" -a "x86_64" $OMNIBUS_PACKAGE_DIR/datadog-*-6.*x86_64.rpm
 
 deploy_rpm_testing-a7:
   rules:
@@ -1313,7 +1313,7 @@ deploy_rpm_testing-a7:
   variables:
     DD_PIPELINE_ID: $CI_PIPELINE_ID-a7
   script:
-    - rpm-s3 --verbose --visibility public-read -c "https://s3.amazonaws.com" -b $RPM_TESTING_S3_BUCKET -p "testing/pipeline-$DD_PIPELINE_ID/7/x86_64/" $OMNIBUS_PACKAGE_DIR/datadog-*-7.*x86_64.rpm
+    - rpm-s3 --verbose --visibility public-read -c "https://s3.amazonaws.com" -b $RPM_TESTING_S3_BUCKET -p "testing/pipeline-$DD_PIPELINE_ID/7/x86_64/" -a "x86_64" $OMNIBUS_PACKAGE_DIR/datadog-*-7.*x86_64.rpm
 
 # deploy rpm packages to yum staging repo
 deploy_suse_rpm_testing-a6:
@@ -1330,7 +1330,7 @@ deploy_suse_rpm_testing-a6:
   variables:
     DD_PIPELINE_ID: $CI_PIPELINE_ID-a6
   script:
-    - rpm-s3 --verbose --visibility public-read -c "https://s3.amazonaws.com" -b $RPM_TESTING_S3_BUCKET -p "suse/testing/pipeline-$DD_PIPELINE_ID/6/x86_64/" $OMNIBUS_PACKAGE_DIR_SUSE/datadog-*-6.*x86_64.rpm
+    - rpm-s3 --verbose --visibility public-read -c "https://s3.amazonaws.com" -b $RPM_TESTING_S3_BUCKET -p "suse/testing/pipeline-$DD_PIPELINE_ID/6/x86_64/" -a "x86_64" $OMNIBUS_PACKAGE_DIR_SUSE/datadog-*-6.*x86_64.rpm
 
 deploy_suse_rpm_testing-a7:
   rules:
@@ -1346,7 +1346,7 @@ deploy_suse_rpm_testing-a7:
   variables:
     DD_PIPELINE_ID: $CI_PIPELINE_ID-a7
   script:
-    - rpm-s3 --verbose --visibility public-read -c "https://s3.amazonaws.com" -b $RPM_TESTING_S3_BUCKET -p "suse/testing/pipeline-$DD_PIPELINE_ID/7/x86_64/" $OMNIBUS_PACKAGE_DIR_SUSE/datadog-*-7.*x86_64.rpm
+    - rpm-s3 --verbose --visibility public-read -c "https://s3.amazonaws.com" -b $RPM_TESTING_S3_BUCKET -p "suse/testing/pipeline-$DD_PIPELINE_ID/7/x86_64/" -a "x86_64" $OMNIBUS_PACKAGE_DIR_SUSE/datadog-*-7.*x86_64.rpm
 
 # deploy windows packages to our testing bucket
 deploy_windows_testing-a6:
@@ -3170,7 +3170,8 @@ deploy_staging_windows_master-a6:
   dependencies:
     - windows_msi_x64-a6
   script:
-    - $S3_CP_CMD --recursive --exclude "*" --include "datadog-agent-6*.msi" $OMNIBUS_PACKAGE_DIR s3://$WINDOWS_BUILDS_S3_BUCKET/master/ --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers full=id=3a6e02b08553fd157ae3fb918945dd1eaae5a1aa818940381ef07a430cf25732
+    - rpm-s3 --verbose --visibility public-read -c "https://s3.amazonaws.com" -b $RPM_S3_BUCKET -p "$DEB_RPM_BUCKET_BRANCH/6/x86_64/" -a "x86_64" $OMNIBUS_PACKAGE_DIR/*-6.*x86_64.rpm
+    - rpm-s3 --verbose --visibility public-read -c "https://s3.amazonaws.com" -b $RPM_S3_BUCKET -p "$DEB_RPM_BUCKET_BRANCH/6/aarch64/" -a "aarch64" $OMNIBUS_PACKAGE_DIR/*-6.*aarch64.rpm
 
 # nightlies (7 and dogstatsd), deployed to bucket/master
 deploy_staging_windows_master-a7:
@@ -3187,8 +3188,9 @@ deploy_staging_windows_master-a7:
     - windows_msi_x64-a7
     - windows_dsd_msi_x64-a7
   script:
-    - $S3_CP_CMD --recursive --exclude "*" --include "datadog-agent-7*.msi" $OMNIBUS_PACKAGE_DIR s3://$WINDOWS_BUILDS_S3_BUCKET/master/ --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers full=id=3a6e02b08553fd157ae3fb918945dd1eaae5a1aa818940381ef07a430cf25732
-    - $S3_CP_CMD --recursive --exclude "*" --include "datadog-dogstatsd-7*.msi" $OMNIBUS_PACKAGE_DIR s3://$WINDOWS_BUILDS_S3_BUCKET/master/ --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers full=id=3a6e02b08553fd157ae3fb918945dd1eaae5a1aa818940381ef07a430cf25732
+    - rpm-s3 --verbose --visibility public-read -c "https://s3.amazonaws.com" -b $RPM_S3_BUCKET -p "$DEB_RPM_BUCKET_BRANCH/7/x86_64/" -a "x86_64" $OMNIBUS_PACKAGE_DIR/*-7.*x86_64.rpm
+    - rpm-s3 --verbose --visibility public-read -c "https://s3.amazonaws.com" -b $RPM_S3_BUCKET -p "$DEB_RPM_BUCKET_BRANCH/7/aarch64/" -a "aarch64" $OMNIBUS_PACKAGE_DIR/*-7.*aarch64.rpm
+    - rpm-s3 --verbose --visibility public-read -c "https://s3.amazonaws.com" -b $RPM_S3_BUCKET -p "$DEB_RPM_BUCKET_BRANCH/7/armv7hl/" -a "armv7hl" $OMNIBUS_PACKAGE_DIR/*-7.*armv7hl.rpm
 
 # nightlies latest (6), deployed to bucket/master
 deploy_staging_windows_master-latest-a6:
@@ -3204,7 +3206,7 @@ deploy_staging_windows_master-latest-a6:
   dependencies:
     - windows_msi_x64-a6
   script:
-    - $S3_CP_CMD $OMNIBUS_PACKAGE_DIR/datadog-agent-6*-x86_64.msi "s3://$WINDOWS_BUILDS_S3_BUCKET/master/datadog-agent-6-latest.amd64.msi" --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers full=id=3a6e02b08553fd157ae3fb918945dd1eaae5a1aa818940381ef07a430cf25732
+    - rpm-s3 --verbose --visibility public-read -c "https://s3.amazonaws.com" -b $RPM_S3_BUCKET -p "suse/$DEB_RPM_BUCKET_BRANCH/6/x86_64/" -a "x86_64" $OMNIBUS_PACKAGE_DIR_SUSE/*-6.*x86_64.rpm
 
 # deploy debian packages to apt staging repo
 deploy_deb_testing-a6:
@@ -3221,7 +3223,7 @@ deploy_deb_testing-a6:
   variables:
     DD_PIPELINE_ID: $CI_PIPELINE_ID-a6
   script:
-    - set +x # make sure we don't output the creds to the build log
+    - rpm-s3 --verbose --visibility public-read -c "https://s3.amazonaws.com" -b $RPM_S3_BUCKET -p "suse/$DEB_RPM_BUCKET_BRANCH/7/x86_64/" -a "x86_64" $OMNIBUS_PACKAGE_DIR_SUSE/*-7.*x86_64.rpm
 
 # deploy dsd binary to staging bucket
 deploy_staging_dsd:
@@ -3234,7 +3236,7 @@ deploy_staging_dsd:
   tags: [ "runner:main", "size:large" ]
   dependencies: []
   script:
-    - python3 -m pip install --user -r requirements.txt
+    - python3.5 -m pip install --user -r requirements.txt
     - $S3_CP_CMD $S3_ARTIFACTS_URI/dogstatsd/dogstatsd ./dogstatsd
     - export PACKAGE_VERSION=$(inv agent.version --url-safe --major-version 7)
     - $S3_CP_CMD ./dogstatsd $S3_DSD6_URI/linux/dogstatsd-$PACKAGE_VERSION --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers full=id=3a6e02b08553fd157ae3fb918945dd1eaae5a1aa818940381ef07a430cf25732
@@ -3253,7 +3255,7 @@ deploy_deb_testing-a7:
   variables:
     DD_PIPELINE_ID: $CI_PIPELINE_ID-a7
   script:
-    - python3 -m pip install --user -r requirements.txt
+    - python3.5 -m pip install --user -r requirements.txt
     - $S3_CP_CMD $S3_ARTIFACTS_URI/iot/agent ./agent
     - export PACKAGE_VERSION=$(inv agent.version --url-safe --major-version 7)
     - $S3_CP_CMD ./agent $S3_DSD6_URI/linux/iot/agent-$PACKAGE_VERSION --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers full=id=3a6e02b08553fd157ae3fb918945dd1eaae5a1aa818940381ef07a430cf25732
@@ -3701,8 +3703,34 @@ trigger_release_7:
   variables:
     RELEASE_VERSION: $RELEASE_VERSION_7-1
   trigger:
-    include: .gitlab-ci-build-runners.yml
-    strategy: depend
+    project: DataDog/agent-release-management
+    branch: master
+
+trigger_release_6:
+  rules:
+    - <<: *if_triggered_on_tag_6
+      when: always
+  stage: trigger_release
+  variables:
+    RELEASE_VERSION: $RELEASE_VERSION_6-1
+  trigger:
+    project: DataDog/agent-release-management
+    branch: master
+
+#
+# end to end
+#
+
+.pupernetes_template: &pupernetes_template
+  stage: e2e
+  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-builders/gitlab_agent_deploy:$DATADOG_AGENT_BUILDERS
+  tags: [ "runner:main", "size:large" ]
+  dependencies: []
+  before_script:
+  - cd $SRC_PATH
+  - python3.5 -m pip install --user -r requirements.txt
+
+pupernetes-dev:
   rules:
     - if: $CI_MERGE_REQUEST_IID
     - if: $CI_OPEN_MERGE_REQUESTS
