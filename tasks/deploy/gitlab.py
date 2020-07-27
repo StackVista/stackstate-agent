@@ -5,6 +5,7 @@ import re
 
 from invoke.exceptions import Exit
 
+
 errno_regex = re.compile(r".*\[Errno (\d+)\] (.*)")
 
 __all__ = ["Gitlab"]

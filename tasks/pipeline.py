@@ -3,13 +3,22 @@ from __future__ import print_function
 from invoke import task
 from invoke.exceptions import Exit
 
-from .deploy.gitlab import Gitlab
 from .deploy.pipeline_tools import trigger_agent_pipeline, wait_for_pipeline
+from .deploy.gitlab import Gitlab
 
 
 @task
-def trigger(ctx, git_ref="master", release_version_6="nightly", release_version_7="nightly-a7", repo_branch="nightly"):
-    pipeline_id = trigger_agent_pipeline(git_ref, release_version_6, release_version_7, repo_branch)
+def trigger(
+    ctx,
+    git_ref="master",
+    release_version_6="nightly",
+    release_version_7="nightly-a7",
+    repo_branch="nightly",
+    windows_update_latest=True,
+):
+    pipeline_id = trigger_agent_pipeline(
+        git_ref, release_version_6, release_version_7, repo_branch, windows_update_latest
+    )
     wait_for_pipeline("DataDog/datadog-agent", pipeline_id)
 
 

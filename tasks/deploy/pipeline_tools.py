@@ -1,14 +1,21 @@
-import functools
 import platform
-from time import sleep, time
+import functools
 
-from .color import color_message
 from .gitlab import Gitlab
+from .color import color_message
+
+from time import sleep, time
 
 PIPELINE_FINISH_TIMEOUT_SEC = 3600 * 5
 
 
-def trigger_agent_pipeline(ref="master", release_version_6="nightly", release_version_7="nightly-a7", branch="nightly"):
+def trigger_agent_pipeline(
+    ref="master",
+    release_version_6="nightly",
+    release_version_7="nightly-a7",
+    branch="nightly",
+    windows_update_latest=True,
+):
     """
     Trigger a pipeline to deploy an Agent to staging repos
     (as specified with the DEPLOY_AGENT arg).
@@ -17,14 +24,21 @@ def trigger_agent_pipeline(ref="master", release_version_6="nightly", release_ve
 
     args["DEPLOY_AGENT"] = "true"
 
+    # The build tag appended to all released binaries
     if release_version_6 is not None:
         args["RELEASE_VERSION_6"] = release_version_6
 
+    # Override the environment to release the binaries to (prod or staging)
     if release_version_7 is not None:
         args["RELEASE_VERSION_7"] = release_version_7
 
+    # Override the environment to release the binaries to (prod or staging)
     if branch is not None:
         args["DEB_RPM_BUCKET_BRANCH"] = branch
+
+    # Override the environment to release the binaries to (prod or staging)
+    if windows_update_latest is not None:
+        args["WINDOWS_DO_NOT_UPDATE_LATEST"] = str(not windows_update_latest).lower()
 
     print(
         "Creating pipeline for datadog-agent on branch/tag {} with args:\n{}".format(
@@ -118,8 +132,8 @@ def pipeline_status(gitlab, proj, pipeline_id, job_status):
         page += 1
 
     job_status = update_job_status(jobs, job_status)
+    # check pipeline status
 
-    # Check pipeline status
     pipeline = gitlab.pipeline(proj, pipeline_id)
     pipestatus = pipeline["status"].lower().strip()
     ref = pipeline["ref"]
@@ -201,11 +215,17 @@ def print_job_status(job):
     Prints notifications about job changes.
     """
 
-    def print_job(name, stage, color, date, duration, status, link):
+    def print_job(name, stage, color, finish_date, duration, status, link):
         print(
             color_message(
-                "[{date}] Job {name} (stage: {stage}) {status} [job duration: {m:.0f}m{s:2.0f}s]\n{link}".format(
-                    name=name, stage=stage, date=date, m=(duration // 60), s=(duration % 60), status=status, link=link,
+                "[{finish_date}] Job {name} (stage: {stage}) {status} [job duration: {m:.0f}m{s:2.0f}s]\n{link}".format(
+                    name=name,
+                    stage=stage,
+                    finish_date=finish_date,
+                    m=(duration // 60),
+                    s=(duration % 60),
+                    status=status,
+                    link=link,
                 ).strip(),
                 color,
             )
@@ -223,11 +243,6 @@ def print_job_status(job):
     job_status = None  # Status string printed in the console
     link = ''  # Link to the pipeline. Only filled for failing jobs, to be able to quickly go to the failing job.
     color = 'grey'  # Log output color
-
-    # A None duration is set by Gitlab when the job gets canceled before it was started.
-    # In that case, set a duration of 0s.
-    if duration is None:
-        duration = 0
 
     if status == 'success':
         job_status = 'succeeded'
