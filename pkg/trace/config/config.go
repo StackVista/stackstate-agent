@@ -117,12 +117,6 @@ type AgentConfig struct {
 
 	// Obfuscation holds sensitive data obufscator's configuration.
 	Obfuscation *ObfuscationConfig
-
-	// InterpreterConfig contains span interpreter config.
-	InterpreterConfig *interpreterconfig.Config
-
-	// Features
-	FeaturesConfig featuresconfig.FeaturesConfig
 }
 
 // New returns a configuration with the default values.
