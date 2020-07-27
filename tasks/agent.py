@@ -60,10 +60,12 @@ AGENT_CORECHECKS = [
     "containerd",
     "cpu",
     "cri",
+    "docker",
     "file_handle",
     "go_expvar",
     "io",
     "jmx",
+    "kubernetes_apiserver",
     "load",
     "memory",
     "ntp",
@@ -337,9 +339,26 @@ def apply_branding(ctx):
     do_sed_rename(ctx, 's/com.datadoghq.ad/com.stackstate.ad/g', "./pkg/autodiscovery/providers/ecs.go")
 
 @task
-def build(ctx, rebuild=False, race=False, build_include=None, build_exclude=None,
-          puppy=False, use_embedded_libs=False, development=True, precompile_only=False,
-          skip_assets=False, use_venv=False):
+def build(
+    ctx,
+    rebuild=False,
+    race=False,
+    build_include=None,
+    build_exclude=None,
+    iot=False,
+    development=True,
+    precompile_only=False,
+    skip_assets=False,
+    embedded_path=None,
+    rtloader_root=None,
+    python_home_2=None,
+    python_home_3=None,
+    major_version='',
+    python_runtimes='3',
+    arch='x64',
+    exclude_rtloader=False,
+    go_mod="vendor",
+):
     """
     Build the agent. If the bits to include in the build are not specified,
     the values from `invoke.yaml` will be used.
