@@ -11,8 +11,8 @@ from subprocess import check_output
 
 
 # constants
-ORG_PATH = "github.com/DataDog"
-REPO_PATH = "{}/datadog-agent".format(ORG_PATH)
+ORG_PATH = "github.com/StackVista"
+REPO_PATH = "{}/stackstate-agent".format(ORG_PATH)
 
 
 def bin_name(name, android=False):

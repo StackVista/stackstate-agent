@@ -449,8 +449,11 @@ def build(
         "REPO_PATH": REPO_PATH,
         "flavor": "iot-agent" if iot else "agent",
     }
+    print ("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    print(cmd.format(**args))
+    print (env)
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     ctx.run(cmd.format(**args), env=env)
-
     # Remove cross-compiling bits to render config
     env.update(
         {"GOOS": "", "GOARCH": "",}
