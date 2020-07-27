@@ -6,8 +6,7 @@
 package checks
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
+	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -16,7 +15,7 @@ type mockCheckable struct {
 	mock.Mock
 }
 
-func (m *mockCheckable) check(env env.Env) (*compliance.Report, error) {
+func (m *mockCheckable) check(env env.Env) (*report, error) {
 	args := m.Called(env)
-	return args.Get(0).(*compliance.Report), args.Error(1)
+	return args.Get(0).(*report), args.Error(1)
 }

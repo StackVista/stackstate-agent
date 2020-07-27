@@ -9,9 +9,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/mocks"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/compliance/mocks"
 	assert "github.com/stretchr/testify/require"
 )
 
@@ -27,7 +26,7 @@ func TestCheckRun(t *testing.T) {
 	tests := []struct {
 		name        string
 		configErr   error
-		checkReport *compliance.Report
+		checkReport *report
 		checkErr    error
 		expectEvent *event.Event
 		expectErr   error
@@ -39,9 +38,9 @@ func TestCheckRun(t *testing.T) {
 		},
 		{
 			name: "successful check",
-			checkReport: &compliance.Report{
-				Passed: true,
-				Data: event.Data{
+			checkReport: &report{
+				passed: true,
+				data: event.Data{
 					"file.permissions": 0644,
 				},
 			},
@@ -57,9 +56,9 @@ func TestCheckRun(t *testing.T) {
 		},
 		{
 			name: "failed check",
-			checkReport: &compliance.Report{
-				Passed: false,
-				Data: event.Data{
+			checkReport: &report{
+				passed: false,
+				data: event.Data{
 					"file.permissions": 0644,
 				},
 			},
