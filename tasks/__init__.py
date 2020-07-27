@@ -92,7 +92,9 @@ ns.add_collection(process_agent)
 ns.add_collection(uninstallcmd)
 ns.add_collection(security_agent)
 
-ns.add_collection(version)
+# sts
+ns.add_task(version)
+# /sts
 
 ns.configure(
     {

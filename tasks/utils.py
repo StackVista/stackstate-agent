@@ -257,7 +257,7 @@ def query_version(ctx, git_sha_length=7, prefix=None, major_version_hint=None):
 
 
 def get_version(
-    ctx, include_git=False, url_safe=False, git_sha_length=7, prefix=None, env=os.environ, major_version='7'
+    ctx, include_git=False, url_safe=False, git_sha_length=7, prefix=None, env=os.environ, major_version=''
 ):
     # we only need the git info for the non omnibus builds, omnibus includes all this information by default
 

@@ -145,3 +145,7 @@ pkg/network/netlink/testdata/message_dump*
 
 # Merge artifacts
 *.orig
+
+
+#sts
+version.txt
