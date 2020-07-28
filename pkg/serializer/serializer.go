@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/forwarder"
@@ -99,6 +100,40 @@ type MetricSerializer interface {
 	SendJSONToV1Intake(data interface{}) error
 }
 
+// AgentV1Serializer is a serializer for just agent v1 data
+type AgentV1Serializer interface {
+	SendJSONToV1Intake(data interface{}) error
+}
+
+// AgentV1MockSerializer is a mock implementation of agent v1 serializer. USed for testing
+type AgentV1MockSerializer struct {
+	sendJSONToV1IntakeMessages chan interface{}
+}
+
+// NewAgentV1MockSerializer instantiate the agent v1 mock serializer
+func NewAgentV1MockSerializer() AgentV1MockSerializer {
+	return AgentV1MockSerializer{
+		sendJSONToV1IntakeMessages: make(chan interface{}),
+	}
+}
+
+// SendJSONToV1Intake publishes v1 agent data
+func (serializer AgentV1MockSerializer) SendJSONToV1Intake(data interface{}) error {
+	serializer.sendJSONToV1IntakeMessages <- data
+	return nil
+}
+
+// GetJSONToV1IntakeMessage gets message from the mock
+func (serializer AgentV1MockSerializer) GetJSONToV1IntakeMessage() interface{} {
+	select {
+	case res := <-serializer.sendJSONToV1IntakeMessages:
+		return res
+	case <-time.After(3 * time.Second):
+		log.Error("Timeout retrieving element")
+		return nil
+	}
+}
+
 // Serializer serializes metrics to the correct format and routes the payloads to the correct endpoint in the Forwarder
 type Serializer struct {
 	Forwarder forwarder.Forwarder
@@ -114,6 +149,7 @@ type Serializer struct {
 	enableEvents                  bool
 	enableSeries                  bool
 	enableServiceChecks           bool
+	enableCheckRuns               bool	
 	enableSketches                bool
 	enableJSONToV1Intake          bool
 	enableJSONStream              bool
@@ -129,6 +165,7 @@ func NewSerializer(forwarder forwarder.Forwarder) *Serializer {
 		enableEvents:                  config.Datadog.GetBool("enable_payloads.events"),
 		enableSeries:                  config.Datadog.GetBool("enable_payloads.series"),
 		enableServiceChecks:           config.Datadog.GetBool("enable_payloads.service_checks"),
+		enableCheckRuns:               config.Datadog.GetBool("enable_payloads.check_runs"),
 		enableSketches:                config.Datadog.GetBool("enable_payloads.sketches"),
 		enableJSONToV1Intake:          config.Datadog.GetBool("enable_payloads.json_to_v1_intake"),
 		enableJSONStream:              jsonstream.Available && config.Datadog.GetBool("enable_stream_payload_serialization"),
@@ -144,6 +181,9 @@ func NewSerializer(forwarder forwarder.Forwarder) *Serializer {
 	}
 	if !s.enableServiceChecks {
 		log.Warn("service_checks payloads are disabled: all service_checks will be dropped")
+	}
+	if !s.enableCheckRuns {
+		log.Warn("check_runs payloads are disabled: all check_runs will be dropped")
 	}
 	if !s.enableSketches {
 		log.Warn("sketches payloads are disabled: all sketches will be dropped")
@@ -274,7 +314,8 @@ func (s *Serializer) SendServiceChecks(sc marshaler.StreamJSONMarshaler) error {
 		return fmt.Errorf("dropping service check payload: %s", err)
 	}
 
-	if useV1API {
+	// check if V1 API and enableCheckRuns is true. For StackState we default enableCheckRuns to false
+	if useV1API && s.enableCheckRuns {
 		return s.Forwarder.SubmitV1CheckRuns(serviceCheckPayloads, extraHeaders)
 	}
 	return s.Forwarder.SubmitServiceChecks(serviceCheckPayloads, extraHeaders)
@@ -316,7 +357,7 @@ func (s *Serializer) SendSketch(sketches marshaler.Marshaler) error {
 		return nil
 	}
 
-	compress := true
+	compress := false // TODO: enable compression once the backend supports it on this endpoint
 	useV1API := false // Sketches only have a v2 endpoint
 	splitSketches, extraHeaders, err := s.serializePayload(sketches, compress, useV1API)
 	if err != nil {
