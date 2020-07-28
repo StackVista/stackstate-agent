@@ -24,6 +24,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/kubernetes/pkg/kubelet/pod"
 )
@@ -62,17 +63,10 @@ func ProcessPodlist(podList []*v1.Pod, groupID int32, cfg *config.AgentConfig, h
 
 		// scrub & generate YAML
 		for c := 0; c < len(podList[p].Spec.Containers); c++ {
-			scrubContainer(&podList[p].Spec.Containers[c], cfg)
+			ScrubContainer(&podList[p].Spec.Containers[c], cfg)
 		}
-
-		// scrub & generate YAML
-		if withScrubbing {
-			for c := 0; c < len(podList[p].Spec.Containers); c++ {
-				ScrubContainer(&podList[p].Spec.Containers[c], cfg)
-			}
-			for c := 0; c < len(podList[p].Spec.InitContainers); c++ {
-				ScrubContainer(&podList[p].Spec.InitContainers[c], cfg)
-			}
+		for c := 0; c < len(podList[p].Spec.InitContainers); c++ {
+			ScrubContainer(&podList[p].Spec.InitContainers[c], cfg)
 		}
 
 		// k8s objects only have json "omitempty" annotations
@@ -360,4 +354,45 @@ func generateUniqueStaticPodHash(host, podName, namespace, clusterName string) s
 	_, _ = h.Write([]byte(namespace))
 	_, _ = h.Write([]byte(clusterName))
 	return strconv.FormatUint(h.Sum64(), 16)
+}
+
+// ExtractMetadata extracts standard metadata into the model
+func ExtractMetadata(m *metav1.ObjectMeta) *model.Metadata {
+	meta := model.Metadata{
+		Name:      m.Name,
+		Namespace: m.Namespace,
+		Uid:       string(m.UID),
+	}
+	if !m.CreationTimestamp.IsZero() {
+		meta.CreationTimestamp = m.CreationTimestamp.Unix()
+	}
+	if !m.DeletionTimestamp.IsZero() {
+		meta.DeletionTimestamp = m.DeletionTimestamp.Unix()
+	}
+	if len(m.Annotations) > 0 {
+		meta.Annotations = make([]string, len(m.Annotations))
+		i := 0
+		for k, v := range m.Annotations {
+			meta.Annotations[i] = k + ":" + v
+			i++
+		}
+	}
+	if len(m.Labels) > 0 {
+		meta.Labels = make([]string, len(m.Labels))
+		i := 0
+		for k, v := range m.Labels {
+			meta.Labels[i] = k + ":" + v
+			i++
+		}
+	}
+	for _, o := range m.OwnerReferences {
+		owner := model.OwnerReference{
+			Name: o.Name,
+			Uid:  string(o.UID),
+			Kind: o.Kind,
+		}
+		meta.OwnerReferences = append(meta.OwnerReferences, &owner)
+	}
+
+	return &meta
 }

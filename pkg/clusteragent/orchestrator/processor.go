@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build kubeapiserver && orchestrator
 // +build kubeapiserver,orchestrator
 
 package orchestrator
@@ -12,16 +11,16 @@ import (
 	"time"
 
 	model "github.com/DataDog/agent-payload/process"
-	"github.com/StackVista/stackstate-agent/pkg/process/config"
-	"github.com/StackVista/stackstate-agent/pkg/process/util/orchestrator"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/process/config"
+	"github.com/DataDog/datadog-agent/pkg/process/util/orchestrator"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 
 	jsoniter "github.com/json-iterator/go"
+	yaml "gopkg.in/yaml.v2"
 	v1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 )
 
-func processDeploymentList(deploymentList []*v1.Deployment, groupID int32, cfg *config.AgentConfig, clusterName string, clusterID string, withScrubbing bool) ([]model.MessageBody, error) {
+func processDeploymentList(deploymentList []*v1.Deployment, groupID int32, cfg *config.AgentConfig, clusterName string, clusterID string) ([]model.MessageBody, error) {
 	start := time.Now()
 	deployMsgs := make([]*model.Deployment, 0, len(deploymentList))
 
@@ -30,23 +29,24 @@ func processDeploymentList(deploymentList []*v1.Deployment, groupID int32, cfg *
 		deployModel := extractDeployment(deploymentList[d])
 
 		// scrub & generate YAML
-		if withScrubbing {
-			for c := 0; c < len(deploymentList[d].Spec.Template.Spec.InitContainers); c++ {
-				orchestrator.ScrubContainer(&deploymentList[d].Spec.Template.Spec.InitContainers[c], cfg)
-			}
-			for c := 0; c < len(deploymentList[d].Spec.Template.Spec.Containers); c++ {
-				orchestrator.ScrubContainer(&deploymentList[d].Spec.Template.Spec.Containers[c], cfg)
-			}
+		for c := 0; c < len(deploymentList[d].Spec.Template.Spec.InitContainers); c++ {
+			orchestrator.ScrubContainer(&deploymentList[d].Spec.Template.Spec.InitContainers[c], cfg)
+		}
+		for c := 0; c < len(deploymentList[d].Spec.Template.Spec.Containers); c++ {
+			orchestrator.ScrubContainer(&deploymentList[d].Spec.Template.Spec.Containers[c], cfg)
 		}
 
 		// k8s objects only have json "omitempty" annotations
-		// and marshalling is more performant than YAML
+		// we're doing json<>yaml to get rid of the null properties
 		jsonDeploy, err := jsoniter.Marshal(deploymentList[d])
 		if err != nil {
-			log.Debugf("Could not marshal deployment to JSON: %s", err)
+			log.Debugf("Could not marshal deployment in JSON: %s", err)
 			continue
 		}
-		deployModel.Yaml = jsonDeploy
+		var jsonObj interface{}
+		_ = yaml.Unmarshal(jsonDeploy, &jsonObj)
+		yamlDeploy, _ := yaml.Marshal(jsonObj)
+		deployModel.Yaml = yamlDeploy
 
 		deployMsgs = append(deployMsgs, deployModel)
 	}
@@ -90,7 +90,7 @@ func chunkDeployments(deploys []*model.Deployment, chunkCount, chunkSize int) []
 	return chunks
 }
 
-func processReplicaSetList(rsList []*v1.ReplicaSet, groupID int32, cfg *config.AgentConfig, clusterName string, clusterID string, withScrubbing bool) ([]model.MessageBody, error) {
+func processReplicaSetList(rsList []*v1.ReplicaSet, groupID int32, cfg *config.AgentConfig, clusterName string, clusterID string) ([]model.MessageBody, error) {
 	start := time.Now()
 	rsMsgs := make([]*model.ReplicaSet, 0, len(rsList))
 
@@ -99,23 +99,24 @@ func processReplicaSetList(rsList []*v1.ReplicaSet, groupID int32, cfg *config.A
 		rsModel := extractReplicaSet(rsList[rs])
 
 		// scrub & generate YAML
-		if withScrubbing {
-			for c := 0; c < len(rsList[rs].Spec.Template.Spec.InitContainers); c++ {
-				orchestrator.ScrubContainer(&rsList[rs].Spec.Template.Spec.InitContainers[c], cfg)
-			}
-			for c := 0; c < len(rsList[rs].Spec.Template.Spec.Containers); c++ {
-				orchestrator.ScrubContainer(&rsList[rs].Spec.Template.Spec.Containers[c], cfg)
-			}
+		for c := 0; c < len(rsList[rs].Spec.Template.Spec.InitContainers); c++ {
+			orchestrator.ScrubContainer(&rsList[rs].Spec.Template.Spec.InitContainers[c], cfg)
+		}
+		for c := 0; c < len(rsList[rs].Spec.Template.Spec.Containers); c++ {
+			orchestrator.ScrubContainer(&rsList[rs].Spec.Template.Spec.Containers[c], cfg)
 		}
 
 		// k8s objects only have json "omitempty" annotations
-		// and marshalling is more performant than YAML
-		jsonRS, err := jsoniter.Marshal(rsList[rs])
+		// we're doing json<>yaml to get rid of the null properties
+		jsonRs, err := jsoniter.Marshal(rsList[rs])
 		if err != nil {
-			log.Debugf("Could not marshal replica set to JSON: %s", err)
+			log.Debugf("Could not marshal replica set in JSON: %s", err)
 			continue
 		}
-		rsModel.Yaml = jsonRS
+		var jsonObj interface{}
+		_ = yaml.Unmarshal(jsonRs, &jsonObj)
+		yamlDeploy, _ := yaml.Marshal(jsonObj)
+		rsModel.Yaml = yamlDeploy
 
 		rsMsgs = append(rsMsgs, rsModel)
 	}
@@ -129,7 +130,7 @@ func processReplicaSetList(rsList []*v1.ReplicaSet, groupID int32, cfg *config.A
 	for i := 0; i < groupSize; i++ {
 		messages = append(messages, &model.CollectorReplicaSet{
 			ClusterName: clusterName,
-			ReplicaSets: chunked[i],
+			Replicasets: chunked[i],
 			GroupId:     groupID,
 			GroupSize:   int32(groupSize),
 			ClusterId:   clusterID,
@@ -141,7 +142,7 @@ func processReplicaSetList(rsList []*v1.ReplicaSet, groupID int32, cfg *config.A
 }
 
 // chunkReplicaSets formats and chunks the replica sets into a slice of chunks using a specific number of chunks.
-func chunkReplicaSets(replicaSets []*model.ReplicaSet, chunkCount, chunkSize int) [][]*model.ReplicaSet {
+func chunkReplicaSets(replicaSets []*model.ReplicaSet, chunkSize, chunkCount int) [][]*model.ReplicaSet {
 	chunks := make([][]*model.ReplicaSet, 0, chunkCount)
 
 	for c := 1; c <= chunkCount; c++ {
@@ -154,68 +155,6 @@ func chunkReplicaSets(replicaSets []*model.ReplicaSet, chunkCount, chunkSize int
 			chunkEnd = len(replicaSets)
 		}
 		chunks = append(chunks, replicaSets[chunkStart:chunkEnd])
-	}
-
-	return chunks
-}
-
-// processServiceList process a service list into process messages.
-func processServiceList(serviceList []*corev1.Service, groupID int32, cfg *config.AgentConfig, clusterName string, clusterID string) ([]model.MessageBody, error) {
-	start := time.Now()
-	serviceMsgs := make([]*model.Service, 0, len(serviceList))
-
-	for s := 0; s < len(serviceList); s++ {
-		serviceModel := extractService(serviceList[s])
-
-		// k8s objects only have json "omitempty" annotations
-		// + marshalling is more performant than YAML
-		jsonSvc, err := jsoniter.Marshal(serviceList[s])
-		if err != nil {
-			log.Debugf("Could not marshal service to JSON: %s", err)
-			continue
-		}
-		serviceModel.Yaml = jsonSvc
-
-		serviceMsgs = append(serviceMsgs, serviceModel)
-	}
-
-	groupSize := len(serviceMsgs) / cfg.MaxPerMessage
-	if len(serviceMsgs)%cfg.MaxPerMessage > 0 {
-		groupSize++
-	}
-
-	chunks := chunkServices(serviceMsgs, groupSize, cfg.MaxPerMessage)
-	messages := make([]model.MessageBody, 0, groupSize)
-
-	for i := 0; i < groupSize; i++ {
-		messages = append(messages, &model.CollectorService{
-			ClusterName: clusterName,
-			ClusterId:   clusterID,
-			GroupId:     groupID,
-			GroupSize:   int32(groupSize),
-			Services:    chunks[i],
-		})
-	}
-
-	log.Debugf("Collected & enriched %d services in %s", len(serviceMsgs), time.Now().Sub(start))
-	return messages, nil
-}
-
-// chunkServices chunks the given list of services, honoring the given chunk count and size.
-// The last chunk may be smaller than the others.
-func chunkServices(services []*model.Service, chunkCount, chunkSize int) [][]*model.Service {
-	chunks := make([][]*model.Service, 0, chunkCount)
-
-	for c := 1; c <= chunkCount; c++ {
-		var (
-			chunkStart = chunkSize * (c - 1)
-			chunkEnd   = chunkSize * (c)
-		)
-		// last chunk may be smaller than the chunk size
-		if c == chunkCount {
-			chunkEnd = len(services)
-		}
-		chunks = append(chunks, services[chunkStart:chunkEnd])
 	}
 
 	return chunks
