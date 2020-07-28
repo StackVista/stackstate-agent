@@ -451,6 +451,7 @@ def build(
     }
     print ("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     print(cmd.format(**args))
+    print("~~~~~~")    
     print (env)
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     ctx.run(cmd.format(**args), env=env)

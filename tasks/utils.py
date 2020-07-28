@@ -89,7 +89,7 @@ def get_build_flags(
 
     if embedded_path is None:
         # fall back to local dev path
-        embedded_path = "{}/src/github.com/DataDog/datadog-agent/dev".format(get_gopath(ctx))
+        embedded_path = "{}/src/github.com/StackVista/stackstate-agent/dev".format(get_gopath(ctx))
 
     rtloader_lib, rtloader_headers, rtloader_common_headers = get_multi_python_location(embedded_path, rtloader_root)
 
