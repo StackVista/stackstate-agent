@@ -19,7 +19,7 @@ spec:
       labels:
         app: datadog-clusterchecks
       name: datadog-clusterchecks
-      annotations: {}
+      annotations:
     spec:
       serviceAccountName: datadog
       imagePullSecrets: []
@@ -123,9 +123,6 @@ spec:
             successThreshold: 1
             timeoutSeconds: 5
       volumes:
-        - name: installinfo
-          configMap:
-            name: datadog-installinfo
         - name: config
           emptyDir: {}
       affinity:
