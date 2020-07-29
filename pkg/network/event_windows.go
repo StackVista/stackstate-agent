@@ -124,9 +124,9 @@ func FlowToConnStat(flow *C.struct__perFlowData, enableMonotonicCounts bool) Con
 		// after lengthy discussion, use the transport bytes in/out.  monotonic
 		// RecvBytes/SentBytes includes the size of the IP header and transport
 		// header, transportBytes is the raw transport data.  At present,
-		// the linux probe only reports the raw transport data.  So do that.
-		MonotonicSentBytes: uint64(flow.transportBytesOut),
-		MonotonicRecvBytes: uint64(flow.transportBytesIn),
+		// the linux probe only reports the raw transport data.  So do that by default.
+		MonotonicSentBytes: monotonicOrTransportBytes(enableMonotonicCounts, flow.monotonicSentBytes, flow.transportBytesOut),
+		MonotonicRecvBytes: monotonicOrTransportBytes(enableMonotonicCounts, flow.monotonicRecvBytes, flow.transportBytesIn),
 		LastUpdateEpoch:    0,
 		Pid:                uint32(flow.processId),
 		SPort:              uint16(flow.localPort),
@@ -136,11 +136,6 @@ func FlowToConnStat(flow *C.struct__perFlowData, enableMonotonicCounts bool) Con
 		Direction:          connDirection(flow.flags),
 	}
 
-	if connectionType == TCP {
-		cs.MonotonicRetransmits = uint32(C.getTcp_retransmitCount(flow))
-		cs.RTT = uint32(C.getTcp_sRTT(flow))
-		cs.RTTVar = uint32(C.getTcp_rttVariance(flow))
-	}
 	if connectionType == TCP {
 		cs.MonotonicRetransmits = uint32(C.getTcp_retransmitCount(flow))
 		cs.RTT = uint32(C.getTcp_sRTT(flow))

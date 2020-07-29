@@ -96,9 +96,6 @@ type Config struct {
 	// OffsetGuessThreshold is the size of the byte threshold we will iterate over when guessing offsets
 	OffsetGuessThreshold uint64
 
-	// EnableTracepoints enables use of tracepoints instead of kprobes for probing syscalls (if available on system)
-	EnableTracepoints bool
-
 	// EnableMonotonicCount (Windows only) determines if we will calculate send/recv bytes of connections with headers and retransmits
 	EnableMonotonicCount bool
 }
