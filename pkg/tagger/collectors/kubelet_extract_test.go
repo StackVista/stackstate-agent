@@ -13,8 +13,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
 	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
 )
 
 func TestParsePods(t *testing.T) {
@@ -123,7 +123,7 @@ func TestParsePods(t *testing.T) {
 				Entity: dockerEntityID,
 				LowCardTags: []string{
 					"kube_namespace:default",
-					"kube_cluster_name:test-cluster"
+					"kube_cluster_name:test-cluster",
 					"kube_container_name:dd-agent",
 					"kube_daemon_set:dd-agent-rc",
 					"image_tag:latest5",
