@@ -94,6 +94,8 @@ deps_deb:
 #      - $CI_PROJECT_DIR/venv
       - $CI_PROJECT_DIR/version.txt
     expire_in: 1 week
+  tags:
+    - agent7
 
 deps_rpm:
   stage: prepare
