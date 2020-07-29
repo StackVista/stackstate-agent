@@ -122,7 +122,7 @@ func (a *Agent) work() {
 			if !ok {
 				return
 			}
-			a.Process(t, sublayerCalculator)
+			a.Process(p, sublayerCalculator)
 		}
 	}
 
@@ -151,9 +151,9 @@ func (a *Agent) loop() {
 
 // Process is the default work unit that receives a trace, transforms it and
 // passes it downstream.
-func (a *Agent) Process(t *api.Trace, sublayerCalculator *stats.SublayerCalculator) {
-	if len(t.Spans) == 0 {
-		log.Debugf("Skipping received empty trace")
+func (a *Agent) Process(p *api.Payload, sublayerCalculator *stats.SublayerCalculator) {
+	if len(p.Traces) == 0 {
+		log.Debugf("Skipping received empty payload")
 		return
 	}
 	defer timing.Since("datadog.trace_agent.internal.process_payload_ms", time.Now())
@@ -191,8 +191,6 @@ func (a *Agent) Process(t *api.Trace, sublayerCalculator *stats.SublayerCalculat
 			Truncate(span)
 		}
 		a.Replacer.Replace(t)
-
-		t = a.SpanInterpreterEngine.Interpret(t) //sts
 
 		{
 			// this section sets up any necessary tags on the root:
@@ -263,76 +261,9 @@ func (a *Agent) Process(t *api.Trace, sublayerCalculator *stats.SublayerCalculat
 	}
 }
 
-	if !a.Blacklister.Allows(root) {
-		log.Debugf("Trace rejected by blacklister. root: %v", root)
-		atomic.AddInt64(&ts.TracesFiltered, 1)
-		atomic.AddInt64(&ts.SpansFiltered, int64(len(t.Spans)))
-		return
-	}
-
-	// Extra sanitization steps of the trace.
-	for _, span := range t.Spans {
-		a.obfuscator.Obfuscate(span)
-		Truncate(span)
-	}
-	a.Replacer.Replace(t.Spans)
-
-	{
-		// this section sets up any necessary tags on the root:
-		clientSampleRate := sampler.GetGlobalRate(root)
-		sampler.SetClientRate(root, clientSampleRate)
-
-		if ratelimiter := a.Receiver.RateLimiter; ratelimiter.Active() {
-			rate := ratelimiter.RealRate()
-			sampler.SetPreSampleRate(root, rate)
-			sampler.AddGlobalRate(root, rate)
-		}
-		if t.ContainerTags != "" {
-			traceutil.SetMeta(root, tagContainersTags, t.ContainerTags)
-		}
-	}
-	// Figure out the top-level spans and sublayers now as it involves modifying the Metrics map
-	// which is not thread-safe while samplers and Concentrator might modify it too.
-	traceutil.ComputeTopLevel(t.Spans)
-
-	pt := ProcessedTrace{
-		Trace:         t.Spans,
-		WeightedTrace: stats.NewWeightedTrace(t.Spans, root),
-		Root:          root,
-		Env:           a.conf.DefaultEnv,
-		Sublayers:     make(map[*pb.Span][]stats.SublayerValue),
-	}
-
-	sampledSpans, sampled := a.sample(ts, pt)
-
-	subtraces := stats.ExtractSubtraces(t.Spans, root)
-	for _, subtrace := range subtraces {
-		subtraceSublayers := sublayerCalculator.ComputeSublayers(subtrace.Trace)
-		pt.Sublayers[subtrace.Root] = subtraceSublayers
-		if sampled {
-			stats.SetSublayersOnSpan(subtrace.Root, subtraceSublayers)
-		}
-	}
-
-	if tenv := traceutil.GetEnv(t.Spans); tenv != "" {
-		// this trace has a user defined env.
-		pt.Env = tenv
-	}
-
-	a.Concentrator.In <- &stats.Input{
-		Trace:     pt.WeightedTrace,
-		Sublayers: pt.Sublayers,
-		Env:       pt.Env,
-	}
-
-	if sampled {
-		a.Out <- sampledSpans
-	}
-}
-
 // sample decides whether the trace will be kept and extracts any APM events
 // from it.
-func (a *Agent) sample(ts *info.TagStats, pt ProcessedTrace) (*writer.SampledSpans, bool) {
+func (a *Agent) sample(ts *info.TagStats, pt ProcessedTrace) (events []*pb.Span, keep bool) {
 	priority, hasPriority := sampler.GetSamplingPriority(pt.Root)
 
 	// Depending on the sampling priority, count that trace differently.
@@ -354,7 +285,6 @@ func (a *Agent) sample(ts *info.TagStats, pt ProcessedTrace) (*writer.SampledSpa
 		return nil, false
 	}
 
-	var ss writer.SampledSpans
 	sampled, rate := a.runSamplers(pt, hasPriority)
 	if sampled {
 		sampler.AddGlobalRate(pt.Root, rate)
@@ -365,7 +295,7 @@ func (a *Agent) sample(ts *info.TagStats, pt ProcessedTrace) (*writer.SampledSpa
 	atomic.AddInt64(&ts.EventsExtracted, int64(numExtracted))
 	atomic.AddInt64(&ts.EventsSampled, int64(len(events)))
 
-	return &ss, !ss.Empty()
+	return events, sampled
 }
 
 // runSamplers runs all the agent's samplers on pt and returns the sampling decision

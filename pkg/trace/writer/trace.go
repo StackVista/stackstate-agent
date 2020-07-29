@@ -13,13 +13,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/trace/config"
-	"github.com/StackVista/stackstate-agent/pkg/trace/info"
-	"github.com/StackVista/stackstate-agent/pkg/trace/logutil"
-	"github.com/StackVista/stackstate-agent/pkg/trace/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/trace/metrics/timing"
-	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/trace/config"
+	"github.com/DataDog/datadog-agent/pkg/trace/info"
+	"github.com/DataDog/datadog-agent/pkg/trace/logutil"
+	"github.com/DataDog/datadog-agent/pkg/trace/metrics"
+	"github.com/DataDog/datadog-agent/pkg/trace/metrics/timing"
+	"github.com/DataDog/datadog-agent/pkg/trace/pb"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 
 	"github.com/gogo/protobuf/proto"
 )

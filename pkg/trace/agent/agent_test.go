@@ -93,9 +93,9 @@ func TestProcess(t *testing.T) {
 			Start:    now.Add(-time.Second).UnixNano(),
 			Duration: (500 * time.Millisecond).Nanoseconds(),
 		}
-		agnt.Process(&api.Trace{
-			Spans:  pb.Trace{span},
-			Source: &info.Tags{},
+		agnt.Process(&api.Payload{
+			Traces: pb.Traces{{span}},
+			Source: info.NewReceiverStats().GetTagStats(info.Tags{}),
 		}, stats.NewSublayerCalculator())
 
 		assert := assert.New(t)
@@ -132,16 +132,16 @@ func TestProcess(t *testing.T) {
 		want := agnt.Receiver.Stats.GetTagStats(info.Tags{})
 		assert := assert.New(t)
 
-		agnt.Process(&api.Trace{
-			Spans:  pb.Trace{spanValid},
-			Source: &info.Tags{},
+		agnt.Process(&api.Payload{
+			Traces: pb.Traces{{spanValid}},
+			Source: want,
 		}, stats.NewSublayerCalculator())
 		assert.EqualValues(0, want.TracesFiltered)
 		assert.EqualValues(0, want.SpansFiltered)
 
-		agnt.Process(&api.Trace{
-			Spans:  pb.Trace{spanInvalid, spanInvalid},
-			Source: &info.Tags{},
+		agnt.Process(&api.Payload{
+			Traces: pb.Traces{{spanInvalid, spanInvalid}},
+			Source: want,
 		}, stats.NewSublayerCalculator())
 		assert.EqualValues(1, want.TracesFiltered)
 		assert.EqualValues(2, want.SpansFiltered)
@@ -210,9 +210,9 @@ func TestProcess(t *testing.T) {
 			if key != sampler.PriorityNone {
 				sampler.SetSamplingPriority(span, key)
 			}
-			agnt.Process(&api.Trace{
-				Spans:  pb.Trace{span},
-				Source: &info.Tags{},
+			agnt.Process(&api.Payload{
+				Traces: pb.Traces{{span}},
+				Source: want,
 			}, stats.NewSublayerCalculator())
 		}
 		assert.Equal(t, "unnamed_operation", span.Name)
@@ -245,8 +245,74 @@ func TestProcess(t *testing.T) {
 			Source: agnt.Receiver.Stats.GetTagStats(info.Tags{}),
 		}, stats.NewSublayerCalculator())
 
+		assert.EqualValues(t, 1, want.TracesPriorityNone)
+		assert.EqualValues(t, 2, want.TracesPriorityNeg)
+		assert.EqualValues(t, 3, want.TracesPriority0)
+		assert.EqualValues(t, 4, want.TracesPriority1)
+		assert.EqualValues(t, 5, want.TracesPriority2)
+	})
+
+	t.Run("normalizing", func(t *testing.T) {
+		cfg := config.New()
+		cfg.Endpoints[0].APIKey = "test"
+		ctx, cancel := context.WithCancel(context.Background())
+		agnt := NewAgent(ctx, cfg)
+		defer cancel()
+
+		traces := pb.Traces{{{
+			Service:  "something &&<@# that should be a metric!",
+			TraceID:  1,
+			SpanID:   1,
+			Resource: "SELECT name FROM people WHERE age = 42 AND extra = 55",
+			Type:     "sql",
+			Start:    time.Now().Add(-time.Second).UnixNano(),
+			Duration: (500 * time.Millisecond).Nanoseconds(),
+			Metrics:  map[string]float64{sampler.KeySamplingPriority: 2},
+		}}}
+		go agnt.Process(&api.Payload{
+			Traces: traces,
+			Source: agnt.Receiver.Stats.GetTagStats(info.Tags{}),
+		}, stats.NewSublayerCalculator())
+		timeout := time.After(2 * time.Second)
+		var span *pb.Span
+		select {
+		case ss := <-agnt.Out:
+			span = ss.Traces[0].Spans[0]
+		case <-timeout:
+			t.Fatal("timed out")
+		}
+		assert.Equal(t, "unnamed_operation", span.Name)
+		assert.Equal(t, "something_that_should_be_a_metric", span.Service)
+	})
+
+	t.Run("chunking", func(t *testing.T) {
+		cfg := config.New()
+		cfg.Endpoints[0].APIKey = "test"
+		ctx, cancel := context.WithCancel(context.Background())
+		agnt := NewAgent(ctx, cfg)
+		defer cancel()
+
+		payloadN := 2
+		trace := pb.Trace{{
+			TraceID:  1,
+			SpanID:   1,
+			Resource: "SELECT name FROM people WHERE age = 42 AND extra = 55",
+			Type:     "sql",
+			Start:    time.Now().Add(-time.Second).UnixNano(),
+			Duration: (500 * time.Millisecond).Nanoseconds(),
+			Metrics:  map[string]float64{sampler.KeySamplingPriority: 2},
+		}}
+		var traces pb.Traces
+		for size := 0; size < writer.MaxPayloadSize*payloadN; size += trace.Msgsize() {
+			traces = append(traces, trace)
+		}
+		go agnt.Process(&api.Payload{
+			Traces: traces,
+			Source: agnt.Receiver.Stats.GetTagStats(info.Tags{}),
+		}, stats.NewSublayerCalculator())
+
 		var gotCount int
-		timeout := time.After(7 * time.Second)
+		timeout := time.After(3 * time.Second)
 		// expect multiple payloads
 		for i := 0; i < payloadN+2; i++ {
 			select {
@@ -573,9 +639,9 @@ func runTraceProcessingBenchmark(b *testing.B, c *config.AgentConfig) {
 	b.ResetTimer()
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		ta.Process(&api.Trace{
-			Spans:  testutil.RandomTrace(10, 8),
-			Source: &info.Tags{},
+		ta.Process(&api.Payload{
+			Traces: pb.Traces{testutil.RandomTrace(10, 8)},
+			Source: info.NewReceiverStats().GetTagStats(info.Tags{}),
 		}, stats.NewSublayerCalculator())
 	}
 }

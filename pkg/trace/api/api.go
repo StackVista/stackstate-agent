@@ -29,20 +29,40 @@ import (
 
 	"github.com/tinylib/msgp/msgp"
 
-	mainconfig "github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/tagger"
-	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
-	"github.com/StackVista/stackstate-agent/pkg/trace/config"
-	"github.com/StackVista/stackstate-agent/pkg/trace/info"
-	"github.com/StackVista/stackstate-agent/pkg/trace/logutil"
-	"github.com/StackVista/stackstate-agent/pkg/trace/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/trace/osutil"
-	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
-	openTelemetryTrace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/collector"
-	"github.com/StackVista/stackstate-agent/pkg/trace/sampler"
-	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/gogo/protobuf/proto"
+	mainconfig "github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/tagger"
+	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
+	"github.com/DataDog/datadog-agent/pkg/trace/config"
+	"github.com/DataDog/datadog-agent/pkg/trace/info"
+	"github.com/DataDog/datadog-agent/pkg/trace/logutil"
+	"github.com/DataDog/datadog-agent/pkg/trace/metrics"
+	"github.com/DataDog/datadog-agent/pkg/trace/osutil"
+	"github.com/DataDog/datadog-agent/pkg/trace/pb"
+	"github.com/DataDog/datadog-agent/pkg/trace/sampler"
+	"github.com/DataDog/datadog-agent/pkg/trace/watchdog"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+)
+
+// Version is a dumb way to version our collector handlers
+type Version string
+
+const (
+	// v01 DEPRECATED, FIXME[1.x]
+	// Traces: JSON, slice of spans
+	// Services: deprecated
+	v01 Version = "v0.1"
+	// v02 DEPRECATED, FIXME[1.x]
+	// Traces: JSON, slice of traces
+	// Services: deprecated
+	v02 Version = "v0.2"
+	// v03
+	// Traces: msgpack/JSON (Content-Type) slice of traces
+	// Services: deprecated
+	v03 Version = "v0.3"
+	// v04
+	// Traces: msgpack/JSON (Content-Type) slice of traces + returns service sampling ratios
+	// Services: deprecated
+	v04 Version = "v0.4"
 )
 
 // HTTPReceiver is a collector that uses HTTP protocol and just holds
@@ -251,7 +271,7 @@ func (r *HTTPReceiver) handleWithVersion(v Version, f func(Version, http.Respons
 			return
 		}
 
-		// TODO(x): replace with http.MaxBytesReader?
+		// TODO(x): replace with httpt.MaxBytesReader
 		req.Body = NewLimitedReader(req.Body, r.conf.MaxRequestBytes)
 
 		f(v, w, req)
@@ -444,64 +464,6 @@ type Payload struct {
 
 	// Traces contains all the traces received in the payload
 	Traces pb.Traces
-}
-
-// [sts]
-// Open telemetry support - Uses protobuf
-func (r *HTTPReceiver) handleOpenTelemetry(w http.ResponseWriter, req *http.Request) {
-	ts := r.tagStats(v05, req)
-
-	openTelemetryTraces, err := r.decodeOpenTelemetry(req)
-	if err != nil {
-		if err == ErrLimitedReaderLimitReached {
-			atomic.AddInt64(&ts.TracesDropped.PayloadTooLarge, 1)
-		} else {
-			atomic.AddInt64(&ts.TracesDropped.DecodingError, 1)
-		}
-		log.Errorf("Cannot decode traces payload: %v", err)
-		return
-	}
-
-	// Open telemetry does not immediately fit into the pb.Traces structure and thus needs to be mapped into it
-	traces := mapOpenTelemetryTraces(*openTelemetryTraces)
-	traceCount := int64(len(traces))
-
-	// Determine rate limit based on length of traces we decoded
-	if !r.RateLimiter.Permits(traceCount) {
-		// this payload can not be accepted
-		io.Copy(ioutil.Discard, req.Body)
-		w.WriteHeader(r.rateLimiterResponse)
-		httpOK(w)
-		atomic.AddInt64(&ts.PayloadRefused, 1)
-		return
-	}
-
-	httpOK(w)
-
-	atomic.AddInt64(&ts.TracesReceived, int64(len(traces)))
-	atomic.AddInt64(&ts.TracesBytes, req.Body.(*LimitedReader).Count)
-	atomic.AddInt64(&ts.PayloadAccepted, 1)
-
-	payload := &Payload{
-		Source:        ts,
-		Traces:        traces,
-		ContainerTags: getContainerTags(req.Header.Get(headerContainerID)),
-	}
-	select {
-	case r.out <- payload:
-		// ok
-	default:
-		// channel blocked, add a goroutine to ensure we never drop
-		r.wg.Add(1)
-		go func() {
-			metrics.Count("datadog.trace_agent.receiver.queued_send", 1, nil, 1)
-			defer func() {
-				r.wg.Done()
-				watchdog.LogOnPanic()
-			}()
-			r.out <- payload
-		}()
-	}
 }
 
 // handleServices handle a request with a list of several services
