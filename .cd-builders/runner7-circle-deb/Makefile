@@ -5,6 +5,9 @@ build:
 push:
 	docker push docker.io/stackstate/stackstate-agent-runner-circle:deb7_$(RUNTIMETAG)
 
+try:
+	docker run -it docker.io/stackstate/stackstate-agent-runner-circle:deb7_$(RUNTIMETAG) sh
+
 tag_latest:
 	docker tag docker.io/stackstate/stackstate-agent-runner-circle:deb7_$(RUNTIMETAG) docker.io/stackstate/stackstate-agent-runner-circle:deb7_latest
 
