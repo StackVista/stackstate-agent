@@ -131,8 +131,6 @@ def build(
     ldflags += ' '.join(["-X '{name}={value}'".format(name=main + key, value=value) for key, value in ld_vars.items()])
 
     build_tags = get_default_build_tags(build="system-probe", arch=arch)
-    if bundle_ebpf:
-        build_tags.append("ebpf_bindata")
 
     if with_bcc:
         build_tags.append(BCC_TAG)

@@ -1,6 +1,5 @@
 import datetime
 import os
-
 from invoke import task
 
 from .build_tags import get_default_build_tags
@@ -15,26 +14,12 @@ from .utils import (
     get_gopath,
     get_version,
 )
+from .build_tags import get_default_build_tags
+from .go import generate
 
 BIN_DIR = os.path.join(".", "bin", "security-agent")
 BIN_PATH = os.path.join(BIN_DIR, bin_name("security-agent", android=False))
 GIMME_ENV_VARS = ['GOROOT', 'PATH']
-
-
-def get_go_env(ctx, go_version):
-    goenv = {}
-    if go_version:
-        lines = ctx.run("gimme {version}".format(version=go_version)).stdout.split("\n")
-        for line in lines:
-            for env_var in GIMME_ENV_VARS:
-                if env_var in line:
-                    goenv[env_var] = line[line.find(env_var) + len(env_var) + 1 : -1].strip('\'\"')
-
-    # extend PATH from gimme with the one from get_build_flags
-    if "PATH" in os.environ and "PATH" in goenv:
-        goenv["PATH"] += ":" + os.environ["PATH"]
-
-    return goenv
 
 
 @task

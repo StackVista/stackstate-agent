@@ -15,9 +15,8 @@ from .go import deps
 from .utils import do_go_rename, do_sed_rename
 
 # constants
-BIN_PATH = os.path.join(".", "bin", "stackstate-cluster-agent")
-AGENT_TAG = "stackstate/cluster_agent:master"
-
+BIN_PATH = os.path.join(".", "bin", "datadog-cluster-agent")
+AGENT_TAG = "datadog/cluster_agent:master"
 
 @task
 def apply_branding(ctx):
