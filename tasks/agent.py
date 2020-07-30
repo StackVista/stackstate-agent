@@ -248,7 +248,6 @@ def apply_branding(ctx):
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/writer/trace.go")
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/writer/stats.go")
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/writer/stats_test.go")
-    do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/writer/trace_nix_test.go")
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/info/stats.go")
 
     # Defaults
