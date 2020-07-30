@@ -77,6 +77,7 @@ def build(ctx, rebuild=False, build_include=None, build_exclude=None, race=False
      Example invokation:
         inv cluster-agent.build
     """
+    apply_branding(ctx)
     build_common(
         ctx,
         "cluster-agent.build",

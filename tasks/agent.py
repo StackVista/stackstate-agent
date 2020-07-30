@@ -451,7 +451,7 @@ def build(
     }
     print ("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     print(cmd.format(**args))
-    print("~~~~~~")    
+    print("~~~~~~")
     print("~~~")
     print(ldflags)
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
@@ -646,7 +646,7 @@ def omnibus_build(
     skip_deps=False,
     skip_sign=False,
     release_version="nightly",
-    major_version='7',
+    major_version='',
     python_runtimes='3',
     omnibus_s3_cache=False,
     hardened_runtime=False,
@@ -666,6 +666,7 @@ def omnibus_build(
         deps_end = datetime.datetime.now()
         deps_elapsed = deps_end - deps_start
 
+    apply_branding(ctx)
     # omnibus config overrides
     overrides = []
 
