@@ -26,7 +26,7 @@ before_script:
  - ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
    # Either we already have a venv, or we still need to make it (as part of get_deps.sh)
 # - source .gitlab-scripts/setup_env.sh
-
+ - . /root/miniconda3/etc/profile.d/conda.sh # TODO: check possibility to use bash from the start
 clear_deps_deb_cache:
   stage: prepare
   before_script: []
@@ -85,7 +85,6 @@ deps_deb:
     - whoami
     - printenv
 #    - pip install -r requirements.txt
-    - . /root/miniconda3/etc/profile.d/conda.sh # TODO: check possibility to use bash from the start
     - conda activate ddpy3
     - inv -e deps --verbose --dep-vendor-only
     - inv version -u > version.txt
@@ -107,8 +106,9 @@ deps_rpm:
       - vendor
       - venv
   script:
-    - pip install -r requirements.txt
-    - inv deps
+    - . /root/miniconda3/etc/profile.d/conda.sh # TODO: check possibility to use bash from the start
+    - conda activate ddpy3
+    - inv -e deps --verbose --dep-vendor-only
     - inv version -u > version.txt
   artifacts:
     paths:
@@ -189,16 +189,20 @@ build_binaries:
   needs:
     - deps_deb
   script:
+    - . /root/miniconda3/etc/profile.d/conda.sh
     - inv -e dogstatsd.build --static
     - inv -e agent.build
+  tags:
+    - agent7
 
-build_puppy:
-  stage: build_and_test
-  needs:
-    - deps_deb
-  script:
-    - inv -e agent.build --puppy
-    - ./bin/agent/agent -c ./bin/agent/dist check cpu
+#[VS] todo: obosolete in agent7?
+#build_puppy:
+#  stage: build_and_test
+#  needs:
+#    - deps_deb
+#  script:
+#    - inv -e agent.build --puppy
+#    - ./bin/agent/agent -c ./bin/agent/dist check cpu
 
 build_cluster_agent:
   stage: build_and_test
