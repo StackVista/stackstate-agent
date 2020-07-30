@@ -7,3 +7,4 @@ RUN echo 'export PATH=$HOME/bin:$PATH' >> /root/.bashrc
 #RUN apt-get install -y libkrb5-dev unixodbc-dev rpm python-deltarpm createrepo yum-utils
 
 #ADD rpmmacros /root/.rpmmacros
+SHELL ["/bin/bash", "-c"]

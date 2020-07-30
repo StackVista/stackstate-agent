@@ -85,6 +85,7 @@ deps_deb:
     - whoami
     - printenv
 #    - pip install -r requirements.txt
+    - . /root/miniconda3/etc/profile.d/conda.sh # TODO: check possibility to use bash from the start
     - conda activate ddpy3
     - inv -e deps --verbose --dep-vendor-only
     - inv version -u > version.txt
@@ -94,6 +95,8 @@ deps_deb:
 #      - $CI_PROJECT_DIR/venv
       - $CI_PROJECT_DIR/version.txt
     expire_in: 1 week
+  tags:
+    - agent7
 
 deps_rpm:
   stage: prepare
