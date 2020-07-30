@@ -283,8 +283,6 @@ def apply_branding(ctx):
     do_sed_rename(ctx, sts_camel_replace, "./pkg/config/config_windows.go")
 
     # Windows MSI installation
-    do_sed_rename(ctx, sts_camel_replace, "./omnibus/resources/agent/msi/cal/CustomAction.cpp")
-    do_sed_rename(ctx, sts_lower_replace, "./omnibus/resources/agent/msi/cal/CustomAction.cpp")
     do_sed_rename(ctx, sts_camel_replace, "./omnibus/resources/agent/msi/cal/CustomAction.def")
     do_sed_rename(ctx, sts_camel_replace, "./omnibus/resources/agent/msi/localization-en-us.wxl.erb")
     do_sed_rename(ctx, 's/"datadog\.yaml\.example"/"stackstate\.yaml\.example"/', "./omnibus/resources/agent/msi/source.wxs.erb")
