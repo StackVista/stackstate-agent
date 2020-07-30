@@ -3,19 +3,17 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build linux_bpf
 // +build linux_bpf
 
 package module
 
 import (
-	"fmt"
 	"sync/atomic"
 
 	"github.com/DataDog/datadog-go/statsd"
 	"golang.org/x/time/rate"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/probe"
+	"github.com/DataDog/datadog-agent/pkg/security/probe"
 )
 
 const (
@@ -95,16 +93,11 @@ func (rl *RateLimiter) GetStats() map[string]RateLimiterStat {
 // for the set of rules
 func (rl *RateLimiter) SendStats(client *statsd.Client) error {
 	for ruleID, counts := range rl.GetStats() {
-		tags := []string{fmt.Sprintf("rule_id:%s", ruleID)}
-		if counts.dropped > 0 {
-			if err := client.Count(probe.MetricPrefix+".rules.rate_limiter.drop", counts.dropped, tags, 1.0); err != nil {
-				return err
-			}
+		if err := client.Count(probe.MetricPrefix+".rules."+ruleID+".rate_limiter.drop", counts.dropped, nil, 1.0); err != nil {
+			return err
 		}
-		if counts.allowed > 0 {
-			if err := client.Count(probe.MetricPrefix+".rules.rate_limiter.allow", counts.allowed, tags, 1.0); err != nil {
-				return err
-			}
+		if err := client.Count(probe.MetricPrefix+".rules."+ruleID+".rate_limiter.allow", counts.allowed, nil, 1.0); err != nil {
+			return err
 		}
 	}
 	return nil

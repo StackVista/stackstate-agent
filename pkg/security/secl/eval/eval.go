@@ -3,7 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:generate go run github.com/StackVista/stackstate-agent/pkg/security/secl/generators/operators -output eval_operators.go
+//go:generate go run github.com/DataDog/datadog-agent/pkg/security/secl/generators/operators -output eval_operators.go
 
 package eval
 
@@ -14,7 +14,7 @@ import (
 
 	"github.com/alecthomas/participle/lexer"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/ast"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/ast"
 )
 
 // Field name
@@ -59,6 +59,7 @@ func NewOptsWithParams(debug bool, constants map[string]interface{}) *Opts {
 
 // Evaluator is the interface of an evaluator
 type Evaluator interface {
+	StringValue(ctx *Context) string
 	Eval(ctx *Context) interface{}
 }
 
@@ -69,6 +70,11 @@ type BoolEvaluator struct {
 	Value   bool
 
 	isPartial bool
+}
+
+// StringValue returns a string representation of the evaluation result
+func (b *BoolEvaluator) StringValue(ctx *Context) string {
+	return fmt.Sprintf("%t", b.EvalFnc(nil))
 }
 
 // Eval returns the result of the evaluation
@@ -85,9 +91,14 @@ type IntEvaluator struct {
 	isPartial bool
 }
 
+// StringValue returns a string representation of the evaluation result
+func (i *IntEvaluator) StringValue(ctx *Context) string {
+	return fmt.Sprintf("%d", i.EvalFnc(nil))
+}
+
 // Eval returns the result of the evaluation
 func (i *IntEvaluator) Eval(ctx *Context) interface{} {
-	return i.EvalFnc(ctx)
+	return i.EvalFnc(nil)
 }
 
 // StringEvaluator returns a string as result of the evaluation
@@ -97,6 +108,11 @@ type StringEvaluator struct {
 	Value   string
 
 	isPartial bool
+}
+
+// StringValue returns a string representation of the evaluation result
+func (s *StringEvaluator) StringValue(ctx *Context) string {
+	return s.EvalFnc(ctx)
 }
 
 // Eval returns the result of the evaluation

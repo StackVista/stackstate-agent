@@ -6,9 +6,12 @@
 package rules
 
 import (
+	"math/rand"
 	"reflect"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/eval"
+	"github.com/pkg/errors"
+
+	"github.com/DataDog/datadog-agent/pkg/security/secl/eval"
 )
 
 type truthEntry struct {
@@ -190,9 +193,8 @@ func combineFilterValues(filterValues []FilterValues) []FilterValues {
 	return combined
 }
 
-func newTruthTable(rule *eval.Rule, event eval.Event) (*truthTable, error) {
-	ctx := &eval.Context{}
-	ctx.SetObject(event.GetPointer())
+func newTruthTable(rule *eval.Rule, model eval.Model, event eval.Event) (*truthTable, error) {
+	model.SetEvent(event)
 
 	if len(rule.GetEvaluator().FieldValues) == 0 {
 		return nil, nil
@@ -221,10 +223,33 @@ func newTruthTable(rule *eval.Rule, event eval.Event) (*truthTable, error) {
 			})
 		}
 
-		entry.Result = rule.GetEvaluator().Eval(ctx)
+		entry.Result = rule.GetEvaluator().Eval(&eval.Context{})
 
 		truthTable.Entries = append(truthTable.Entries, entry)
 	}
 
 	return &truthTable, nil
+}
+
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func randStringRunes(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
+}
+
+func notOfValue(value interface{}) (interface{}, error) {
+	switch v := value.(type) {
+	case int:
+		return ^v, nil
+	case string:
+		return randStringRunes(256), nil
+	case bool:
+		return !v, nil
+	}
+
+	return nil, errors.New("value type unknown")
 }

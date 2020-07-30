@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build linux_bpf
 // +build linux_bpf
 
 package probe
@@ -21,9 +20,8 @@ type PolicyFlag uint8
 
 // Policy modes
 const (
-	PolicyModeAccept PolicyMode = iota + 1
-	PolicyModeDeny
-	PolicyModeNoFilter
+	PolicyModeAccept PolicyMode = 1
+	PolicyModeDeny              = 2
 )
 
 // Policy flags
@@ -31,8 +29,9 @@ const (
 	PolicyFlagBasename     PolicyFlag = 1
 	PolicyFlagFlags        PolicyFlag = 2
 	PolicyFlagMode         PolicyFlag = 4
-	PolicyFlagProcessInode PolicyFlag = 8
-	PolicyFlagProcessName  PolicyFlag = 16
+	PolicyFlagParentName   PolicyFlag = 8
+	PolicyFlagProcessInode PolicyFlag = 16
+	PolicyFlagProcessName  PolicyFlag = 32
 
 	// need to be aligned with the kernel size
 	BasenameFilterSize = 32
@@ -69,6 +68,9 @@ func (f PolicyFlag) MarshalJSON() ([]byte, error) {
 	}
 	if f&PolicyFlagMode != 0 {
 		flags = append(flags, `"mode"`)
+	}
+	if f&PolicyFlagParentName != 0 {
+		flags = append(flags, `"parent_name"`)
 	}
 	if f&PolicyFlagProcessInode != 0 {
 		flags = append(flags, `"inode"`)

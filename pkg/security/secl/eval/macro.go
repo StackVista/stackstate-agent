@@ -6,7 +6,7 @@
 package eval
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/ast"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/ast"
 	"github.com/pkg/errors"
 )
 
@@ -73,7 +73,7 @@ func macroToEvaluator(macro *ast.Macro, model Model, opts *Opts, field Field) (*
 		return nil, err
 	}
 
-	events, err := eventTypesFromFields(model, state)
+	events, err := eventFromFields(model, state)
 	if err != nil {
 		return nil, err
 	}

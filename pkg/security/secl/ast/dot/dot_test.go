@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/ast"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/ast"
 )
 
 func TestDotWriterParenthesis(t *testing.T) {

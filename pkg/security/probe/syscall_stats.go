@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build linux_bpf
 // +build linux_bpf
 
 package probe
@@ -14,9 +13,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/DataDog/datadog-agent/pkg/security/ebpf"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/datadog-go/statsd"
-	"github.com/StackVista/stackstate-agent/pkg/security/ebpf"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const syscallMetric = MetricPrefix + ".syscalls"

@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build functionaltests
 // +build functionaltests
 
 package tests
@@ -13,13 +12,13 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/policy"
+	"github.com/DataDog/datadog-agent/pkg/security/policy"
 )
 
 func TestRename(t *testing.T) {
 	rule := &policy.RuleDefinition{
 		ID:         "test_rule",
-		Expression: `rename.old.filename == "{{.Root}}/test-rename" && rename.new.filename == "{{.Root}}/test2-rename"`,
+		Expression: `rename.old_filename == "{{.Root}}/test-rename" && rename.new_filename == "{{.Root}}/test2-rename"`,
 	}
 
 	test, err := newTestModule(nil, []*policy.RuleDefinition{rule}, testOpts{})

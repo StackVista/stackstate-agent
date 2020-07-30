@@ -3,14 +3,12 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build functionaltests
-// +build functionaltests
+//+build functionaltests
 
 package tests
 
 import (
 	"bytes"
-	"context"
 	"io/ioutil"
 	"net"
 	"os"
@@ -24,22 +22,20 @@ import (
 	"github.com/cihub/seelog"
 	"github.com/pkg/errors"
 
-	"github.com/StackVista/stackstate-agent/cmd/system-probe/api"
-	aconfig "github.com/StackVista/stackstate-agent/pkg/config"
-	pconfig "github.com/StackVista/stackstate-agent/pkg/process/config"
-	"github.com/StackVista/stackstate-agent/pkg/security/config"
-	"github.com/StackVista/stackstate-agent/pkg/security/module"
-	"github.com/StackVista/stackstate-agent/pkg/security/policy"
-	sprobe "github.com/StackVista/stackstate-agent/pkg/security/probe"
-	"github.com/StackVista/stackstate-agent/pkg/security/rules"
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/eval"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/cmd/system-probe/api"
+	aconfig "github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/security/config"
+	"github.com/DataDog/datadog-agent/pkg/security/module"
+	"github.com/DataDog/datadog-agent/pkg/security/policy"
+	sprobe "github.com/DataDog/datadog-agent/pkg/security/probe"
+	"github.com/DataDog/datadog-agent/pkg/security/rules"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/eval"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 var (
 	eventChanLength     = 100
 	discarderChanLength = 100
-	logger              seelog.LoggerInterface
 )
 
 const grpcAddr = "127.0.0.1:18787"
@@ -56,12 +52,6 @@ runtime_security_config:
   socket: /tmp/test-security-probe.sock
 {{if not .EnableFilters}}
   enable_kernel_filters: false
-{{end}}
-{{if .DisableApprovers}}
-  enable_approvers: false
-{{end}}
-{{if .DisableDiscarders}}
-  enable_discarders: false
 {{end}}
 
   policies:
@@ -90,9 +80,7 @@ type testEvent struct {
 }
 
 type testOpts struct {
-	enableFilters     bool
-	disableApprovers  bool
-	disableDiscarders bool
+	enableFilters bool
 }
 
 type testModule struct {
@@ -112,7 +100,6 @@ type testProbe struct {
 	probe      *sprobe.Probe
 	events     chan *sprobe.Event
 	discarders chan *testDiscarder
-	rs         *rules.RuleSet
 }
 
 type testEventHandler struct {
@@ -128,17 +115,17 @@ func (h *testEventHandler) HandleEvent(event *sprobe.Event) {
 
 func (h *testEventHandler) RuleMatch(rule *eval.Rule, event eval.Event) {}
 
-func (h *testEventHandler) EventDiscarderFound(rs *rules.RuleSet, event eval.Event, field string) {
+func (h *testEventHandler) EventDiscarderFound(event eval.Event, field string) {
 	h.discarders <- &testDiscarder{event: event, field: field}
 }
 
-func setTestConfig(dir string, macros []*policy.MacroDefinition, rules []*policy.RuleDefinition, opts testOpts) (string, error) {
+func setTestConfig(macros []*policy.MacroDefinition, rules []*policy.RuleDefinition, opts testOpts) (string, error) {
 	tmpl, err := template.New("test-config").Parse(testConfig)
 	if err != nil {
 		return "", err
 	}
 
-	testPolicyFile, err := ioutil.TempFile(dir, "secagent-policy.*.policy")
+	testPolicyFile, err := ioutil.TempFile("", "secagent-policy.*.policy")
 	if err != nil {
 		return "", err
 	}
@@ -150,10 +137,8 @@ func setTestConfig(dir string, macros []*policy.MacroDefinition, rules []*policy
 
 	buffer := new(bytes.Buffer)
 	if err := tmpl.Execute(buffer, map[string]interface{}{
-		"TestPoliciesDir":   path.Dir(testPolicyFile.Name()),
-		"EnableFilters":     opts.enableFilters,
-		"DisableApprovers":  opts.disableApprovers,
-		"DisableDiscarders": opts.disableDiscarders,
+		"TestPoliciesDir": path.Dir(testPolicyFile.Name()),
+		"EnableFilters":   opts.enableFilters,
 	}); err != nil {
 		return "", fail(err)
 	}
@@ -194,13 +179,13 @@ func newTestModule(macros []*policy.MacroDefinition, rules []*policy.RuleDefinit
 		return nil, err
 	}
 
-	cfgFilename, err := setTestConfig(st.root, macros, rules, opts)
+	cfgFilename, err := setTestConfig(macros, rules, opts)
 	if err != nil {
 		return nil, err
 	}
 	defer os.Remove(cfgFilename)
 
-	mod, err := module.NewModule(pconfig.NewDefaultAgentConfig(false))
+	mod, err := module.NewModule(nil)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +214,7 @@ func (tm *testModule) RuleMatch(rule *eval.Rule, event eval.Event) {
 	tm.events <- testEvent{event: event, rule: rule}
 }
 
-func (tm *testModule) EventDiscarderFound(rs *rules.RuleSet, event eval.Event, field string) {
+func (tm *testModule) EventDiscarderFound(event eval.Event, field string) {
 }
 
 func (tm *testModule) GetEvent() (*sprobe.Event, *eval.Rule, error) {
@@ -256,37 +241,19 @@ func (tm *testModule) Close() {
 	time.Sleep(time.Second)
 }
 
-func waitProcScan(test *testProbe) {
-	// Consume test.events so that testEventHandler.HandleEvent doesn't block
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		for {
-			select {
-			case <-test.events:
-			case <-test.discarders:
-				continue
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-	time.Sleep(5 * time.Second)
-	cancel()
-}
-
 func newTestProbe(macros []*policy.MacroDefinition, rules []*policy.RuleDefinition, opts testOpts) (*testProbe, error) {
 	st, err := newSimpleTest(macros, rules)
 	if err != nil {
 		return nil, err
 	}
 
-	cfgFilename, err := setTestConfig(st.root, macros, rules, opts)
+	cfgFilename, err := setTestConfig(macros, rules, opts)
 	if err != nil {
 		return nil, err
 	}
 	defer os.Remove(cfgFilename)
 
-	config, err := config.NewConfig(pconfig.NewDefaultAgentConfig(false))
+	config, err := config.NewConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -296,8 +263,16 @@ func newTestProbe(macros []*policy.MacroDefinition, rules []*policy.RuleDefiniti
 		return nil, err
 	}
 
+	if err := probe.Start(); err != nil {
+		return nil, err
+	}
+
 	ruleSet, err := module.LoadPolicies(config, probe)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := probe.Snapshot(); err != nil {
 		return nil, err
 	}
 
@@ -316,21 +291,12 @@ func newTestProbe(macros []*policy.MacroDefinition, rules []*policy.RuleDefiniti
 		return nil, err
 	}
 
-	if err := probe.Snapshot(); err != nil {
-		return nil, err
-	}
-
-	test := &testProbe{
+	return &testProbe{
 		st:         st,
 		probe:      probe,
 		events:     events,
 		discarders: discarders,
-		rs:         ruleSet,
-	}
-
-	waitProcScan(test)
-
-	return test, nil
+	}, nil
 }
 
 func (tp *testProbe) Root() string {
@@ -378,21 +344,17 @@ func (t *simpleTest) Path(filename string) (string, unsafe.Pointer, error) {
 }
 
 func newSimpleTest(macros []*policy.MacroDefinition, rules []*policy.RuleDefinition) (*simpleTest, error) {
-	var logLevel seelog.LogLevel = seelog.InfoLvl
 	if testing.Verbose() {
-		logLevel = seelog.TraceLvl
+		logger, err := seelog.LoggerFromWriterWithMinLevelAndFormat(os.Stderr, seelog.DebugLvl, "%Ns [%LEVEL] %Msg\n")
+		if err != nil {
+			return nil, err
+		}
+		err = seelog.ReplaceLogger(logger)
+		if err != nil {
+			return nil, err
+		}
+		log.SetupDatadogLogger(logger, "debug")
 	}
-
-	logger, err := seelog.LoggerFromWriterWithMinLevelAndFormat(os.Stderr, logLevel, "%Ns [%LEVEL] %Msg\n")
-	if err != nil {
-		return nil, err
-	}
-
-	err = seelog.ReplaceLogger(logger)
-	if err != nil {
-		return nil, err
-	}
-	log.SetupDatadogLogger(logger, logLevel.String())
 
 	root, err := ioutil.TempDir("", "test-secagent-root")
 	if err != nil {

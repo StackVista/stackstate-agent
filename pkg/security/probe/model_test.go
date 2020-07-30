@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build linux_bpf
 // +build linux_bpf
 
 package probe
@@ -30,11 +29,9 @@ func TestMkdirJSON(t *testing.T) {
 		GID:     9,
 	}
 	e.Mkdir = MkdirEvent{
-		FileEvent: FileEvent{
-			Inode:       33,
-			PathnameStr: "/etc/passwd",
-		},
-		Mode: 0777,
+		Inode:       33,
+		Mode:        0777,
+		PathnameStr: "/etc/passwd",
 	}
 
 	data, err := json.Marshal(e)

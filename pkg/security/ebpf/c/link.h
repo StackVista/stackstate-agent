@@ -4,12 +4,16 @@
 #include "syscalls.h"
 
 struct link_event_t {
-    struct kevent_t event;
-    struct process_context_t process;
-    struct container_context_t container;
-    struct syscall_t syscall;
-    struct file_t source;
-    struct file_t target;
+    struct event_t event;
+    struct process_data_t process;
+    int src_mount_id;
+    u32 padding;
+    unsigned long src_inode;
+    unsigned long target_inode;
+    int target_mount_id;
+    int src_overlay_numlower;
+    int target_overlay_numlower;
+    u32 padding2;
 };
 
 int __attribute__((always_inline)) trace__sys_link() {
@@ -45,12 +49,9 @@ int kprobe__vfs_link(struct pt_regs *ctx) {
     // this is a hard link, source and target dentries are on the same filesystem & mount point
     // target_path was set by kprobe/filename_create before we reach this point.
     syscall->link.src_key = get_key(dentry, syscall->link.target_path);
-    // we generate a fake target key as the inode is the same
-    syscall->link.target_key.ino = bpf_get_prandom_u32() << 32 | bpf_get_prandom_u32();
-    syscall->link.target_key.mount_id = syscall->link.src_key.mount_id;
-    get_key(syscall->link.target_dentry, syscall->link.target_path);
+    syscall->link.target_key = get_key(syscall->link.target_dentry, syscall->link.target_path);
 
-    resolve_dentry(dentry, syscall->link.src_key, NULL);
+    resolve_dentry(dentry, syscall->link.src_key);
     return 0;
 }
 
@@ -64,27 +65,19 @@ int __attribute__((always_inline)) trace__sys_link_ret(struct pt_regs *ctx) {
         return 0;
 
     struct link_event_t event = {
+        .event.retval = retval,
         .event.type = EVENT_LINK,
-        .syscall = {
-            .retval = retval,
-            .timestamp = bpf_ktime_get_ns(),
-        },
-        .source = {
-            .inode = syscall->link.src_key.ino,
-            .mount_id = syscall->link.src_key.mount_id,
-            .overlay_numlower = syscall->link.src_overlay_numlower,
-        },
-        .target = {
-            .inode = syscall->link.target_key.ino,
-            .mount_id = syscall->link.target_key.mount_id,
-            .overlay_numlower = get_overlay_numlower(syscall->link.target_dentry),
-        }
+        .event.timestamp = bpf_ktime_get_ns(),
+        .src_inode = syscall->link.src_key.ino,
+        .src_mount_id = syscall->link.src_key.mount_id,
+        .target_inode = syscall->link.target_key.ino,
+        .target_mount_id = syscall->link.target_key.mount_id,
+        .src_overlay_numlower = syscall->link.src_overlay_numlower,
+        .target_overlay_numlower = get_overlay_numlower(syscall->link.target_dentry),
     };
 
-    struct proc_cache_t *entry = fill_process_data(&event.process);
-    fill_container_data(entry, &event.container);
-
-    resolve_dentry(syscall->link.target_dentry, syscall->link.target_key, NULL);
+    fill_process_data(&event.process);
+    resolve_dentry(syscall->link.target_dentry, syscall->link.target_key);
 
     send_event(ctx, event);
 

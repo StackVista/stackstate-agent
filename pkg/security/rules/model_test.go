@@ -8,10 +8,17 @@ package rules
 import (
 	"reflect"
 	"syscall"
-	"unsafe"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/eval"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/eval"
 	"github.com/pkg/errors"
+)
+
+var (
+	ErrEvaluatorNotFound     = errors.New("evaluator not found")
+	ErrTagsNotFound          = errors.New("tags not found")
+	ErrEventTypeNotFound     = errors.New("event type not found")
+	ErrSetEventValueNotFound = errors.New("set event value error field not found")
+	ErrFieldTypeNotFound     = errors.New("field type not found")
 )
 
 type testProcess struct {
@@ -42,18 +49,23 @@ type testEvent struct {
 }
 
 type testModel struct {
+	event *testEvent
+}
+
+func (e *testEvent) GetID() string {
+	return e.id
 }
 
 func (e *testEvent) GetType() string {
 	return e.kind
 }
 
-func (e *testEvent) GetPointer() unsafe.Pointer {
-	return unsafe.Pointer(e)
+func (m *testModel) SetEvent(event interface{}) {
+	m.event = event.(*testEvent)
 }
 
-func (m *testModel) NewEvent() eval.Event {
-	return &testEvent{}
+func (m *testModel) GetEvent() eval.Event {
+	return m.event
 }
 
 func (m *testModel) ValidateField(key string, value eval.FieldValue) error {
@@ -75,75 +87,75 @@ func (m *testModel) ValidateField(key string, value eval.FieldValue) error {
 	return nil
 }
 
-func (m *testModel) GetEvaluator(key string) (eval.Evaluator, error) {
+func (m *testModel) GetEvaluator(key string) (interface{}, error) {
 	switch key {
 
 	case "process.name":
 
 		return &eval.StringEvaluator{
-			EvalFnc: func(ctx *eval.Context) string { return (*testEvent)(ctx.Object).process.name },
+			EvalFnc: func(ctx *eval.Context) string { return m.event.process.name },
 			Field:   key,
 		}, nil
 
 	case "process.uid":
 
 		return &eval.IntEvaluator{
-			EvalFnc: func(ctx *eval.Context) int { return (*testEvent)(ctx.Object).process.uid },
+			EvalFnc: func(ctx *eval.Context) int { return m.event.process.uid },
 			Field:   key,
 		}, nil
 
 	case "process.gid":
 
 		return &eval.IntEvaluator{
-			EvalFnc: func(ctx *eval.Context) int { return (*testEvent)(ctx.Object).process.gid },
+			EvalFnc: func(ctx *eval.Context) int { return m.event.process.gid },
 			Field:   key,
 		}, nil
 
 	case "process.is_root":
 
 		return &eval.BoolEvaluator{
-			EvalFnc: func(ctx *eval.Context) bool { return (*testEvent)(ctx.Object).process.isRoot },
+			EvalFnc: func(ctx *eval.Context) bool { return m.event.process.isRoot },
 			Field:   key,
 		}, nil
 
 	case "open.filename":
 
 		return &eval.StringEvaluator{
-			EvalFnc: func(ctx *eval.Context) string { return (*testEvent)(ctx.Object).open.filename },
+			EvalFnc: func(ctx *eval.Context) string { return m.event.open.filename },
 			Field:   key,
 		}, nil
 
 	case "open.flags":
 
 		return &eval.IntEvaluator{
-			EvalFnc: func(ctx *eval.Context) int { return (*testEvent)(ctx.Object).open.flags },
+			EvalFnc: func(ctx *eval.Context) int { return m.event.open.flags },
 			Field:   key,
 		}, nil
 
 	case "open.mode":
 
 		return &eval.IntEvaluator{
-			EvalFnc: func(ctx *eval.Context) int { return (*testEvent)(ctx.Object).open.mode },
+			EvalFnc: func(ctx *eval.Context) int { return m.event.open.mode },
 			Field:   key,
 		}, nil
 
 	case "mkdir.filename":
 
 		return &eval.StringEvaluator{
-			EvalFnc: func(ctx *eval.Context) string { return (*testEvent)(ctx.Object).mkdir.filename },
+			EvalFnc: func(ctx *eval.Context) string { return m.event.mkdir.filename },
 			Field:   key,
 		}, nil
 
 	case "mkdir.mode":
 
 		return &eval.IntEvaluator{
-			EvalFnc: func(ctx *eval.Context) int { return (*testEvent)(ctx.Object).mkdir.mode },
+			EvalFnc: func(ctx *eval.Context) int { return m.event.mkdir.mode },
 			Field:   key,
 		}, nil
 
 	}
 
-	return nil, &eval.ErrFieldNotFound{Field: key}
+	return nil, errors.Wrap(ErrEvaluatorNotFound, key)
 }
 
 func (e *testEvent) GetFieldValue(key string) (interface{}, error) {
@@ -187,7 +199,51 @@ func (e *testEvent) GetFieldValue(key string) (interface{}, error) {
 
 	}
 
-	return nil, &eval.ErrFieldNotFound{Field: key}
+	return nil, errors.Wrap(ErrEvaluatorNotFound, key)
+}
+
+func (e *testEvent) GetFieldTags(key string) ([]string, error) {
+	switch key {
+
+	case "process.name":
+
+		return []string{"process"}, nil
+
+	case "process.uid":
+
+		return []string{"process"}, nil
+
+	case "process.gid":
+
+		return []string{"process"}, nil
+
+	case "process.is_root":
+
+		return []string{"process"}, nil
+
+	case "open.filename":
+
+		return []string{"fs"}, nil
+
+	case "open.flags":
+
+		return []string{"fs"}, nil
+
+	case "open.mode":
+
+		return []string{"fs"}, nil
+
+	case "mkdir.filename":
+
+		return []string{"fs"}, nil
+
+	case "mkdir.flags":
+
+		return []string{"fs"}, nil
+
+	}
+
+	return nil, errors.Wrap(ErrTagsNotFound, key)
 }
 
 func (e *testEvent) GetFieldEventType(key string) (string, error) {
@@ -231,7 +287,7 @@ func (e *testEvent) GetFieldEventType(key string) (string, error) {
 
 	}
 
-	return "", &eval.ErrFieldNotFound{Field: key}
+	return "", errors.Wrap(ErrEventTypeNotFound, key)
 }
 
 func (e *testEvent) SetFieldValue(key string, value interface{}) error {
@@ -284,7 +340,7 @@ func (e *testEvent) SetFieldValue(key string, value interface{}) error {
 
 	}
 
-	return &eval.ErrFieldNotFound{Field: key}
+	return errors.Wrap(ErrSetEventValueNotFound, key)
 }
 
 func (e *testEvent) GetFieldType(key string) (reflect.Kind, error) {
@@ -328,7 +384,7 @@ func (e *testEvent) GetFieldType(key string) (reflect.Kind, error) {
 
 	}
 
-	return reflect.Invalid, &eval.ErrFieldNotFound{Field: key}
+	return reflect.Invalid, errors.Wrap(ErrFieldTypeNotFound, key)
 }
 
 var testConstants = map[string]interface{}{

@@ -1,4 +1,3 @@
-//go:build !linux
 // +build !linux
 
 // Unless explicitly stated otherwise all files in this repository are licensed
@@ -11,20 +10,19 @@ package app
 import (
 	"errors"
 
-	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/logs/client"
-	"github.com/StackVista/stackstate-agent/pkg/logs/config"
-	"github.com/StackVista/stackstate-agent/pkg/logs/restart"
-	secagent "github.com/StackVista/stackstate-agent/pkg/security/agent"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/logs/client"
+	"github.com/DataDog/datadog-agent/pkg/logs/config"
+	"github.com/DataDog/datadog-agent/pkg/logs/restart"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
-func startRuntimeSecurity(hostname string, endpoints *config.Endpoints, context *client.DestinationsContext, stopper restart.Stopper) (*secagent.RuntimeSecurityAgent, error) {
+func startRuntimeSecurity(hostname string, endpoints *config.Endpoints, context *client.DestinationsContext, stopper restart.Stopper) error {
 	enabled := coreconfig.Datadog.GetBool("runtime_security_config.enabled")
 	if !enabled {
 		log.Info("Datadog runtime security agent disabled by config")
-		return nil, nil
+		return nil
 	}
 
-	return nil, errors.New("Datadog runtime security agent is only supported on Linux")
+	return errors.New("Datadog runtime security agent is only supported on Linux")
 }

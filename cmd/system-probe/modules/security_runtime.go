@@ -6,11 +6,11 @@
 package modules
 
 import (
-	"github.com/StackVista/stackstate-agent/cmd/system-probe/api"
-	"github.com/StackVista/stackstate-agent/pkg/ebpf"
-	"github.com/StackVista/stackstate-agent/pkg/process/config"
-	secmodule "github.com/StackVista/stackstate-agent/pkg/security/module"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/cmd/system-probe/api"
+	"github.com/DataDog/datadog-agent/pkg/ebpf"
+	"github.com/DataDog/datadog-agent/pkg/process/config"
+	secmodule "github.com/DataDog/datadog-agent/pkg/security/module"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // SecurityRuntime - Security runtime Factory

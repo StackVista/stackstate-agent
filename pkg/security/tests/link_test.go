@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build functionaltests
 // +build functionaltests
 
 package tests
@@ -13,13 +12,13 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/policy"
+	"github.com/DataDog/datadog-agent/pkg/security/policy"
 )
 
 func TestLink(t *testing.T) {
 	rule := &policy.RuleDefinition{
 		ID:         "test_rule",
-		Expression: `link.source.filename == "{{.Root}}/test-link" && link.target.filename == "{{.Root}}/test2-link"`,
+		Expression: `link.src_filename == "{{.Root}}/test-link" && link.new_filename == "{{.Root}}/test2-link"`,
 	}
 
 	test, err := newTestModule(nil, []*policy.RuleDefinition{rule}, testOpts{})

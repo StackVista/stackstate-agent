@@ -8,7 +8,7 @@ package secl
 import (
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/ast"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/ast"
 	"github.com/alecthomas/participle/lexer"
 )
 

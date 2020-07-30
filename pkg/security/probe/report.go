@@ -3,14 +3,13 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build linux_bpf
 // +build linux_bpf
 
 package probe
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/security/rules"
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/eval"
+	"github.com/DataDog/datadog-agent/pkg/security/rules"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/eval"
 )
 
 // PolicyReport describes the result of the kernel policy and the approvers for an event type

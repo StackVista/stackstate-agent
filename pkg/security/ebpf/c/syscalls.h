@@ -3,6 +3,14 @@
 
 #include "filters.h"
 
+#define bpf_printk(fmt, ...)                       \
+	({                                             \
+		char ____fmt[] = fmt;                      \
+		bpf_trace_printk(____fmt, sizeof(____fmt), \
+						 ##__VA_ARGS__);           \
+	})
+
+
 struct ktimeval {
     long tv_sec;
     long tv_nsec;
@@ -12,6 +20,7 @@ struct syscall_cache_t {
     struct policy_t policy;
 
     u16 type;
+    u64 pid;
 
     union {
         struct {
@@ -97,8 +106,8 @@ struct bpf_map_def SEC("maps/syscalls") syscalls = {
 };
 
 void __attribute__((always_inline)) cache_syscall(struct syscall_cache_t *syscall) {
-    u64 key = bpf_get_current_pid_tgid();
-    bpf_map_update_elem(&syscalls, &key, syscall, BPF_ANY);
+    syscall->pid = bpf_get_current_pid_tgid();
+    bpf_map_update_elem(&syscalls, &syscall->pid, syscall, BPF_ANY);
 }
 
 struct syscall_cache_t * __attribute__((always_inline)) peek_syscall() {

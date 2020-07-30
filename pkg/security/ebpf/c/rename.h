@@ -4,12 +4,17 @@
 #include "syscalls.h"
 
 struct rename_event_t {
-    struct kevent_t event;
-    struct process_context_t process;
-    struct container_context_t container;
-    struct syscall_t syscall;
-    struct file_t old;
-    struct file_t new;
+    struct event_t event;
+    struct process_data_t process;
+    int src_mount_id;
+    u32 padding;
+    unsigned long src_inode;
+    unsigned long src_random_id;
+    unsigned long target_inode;
+    int target_mount_id;
+    int src_overlay_numlower;
+    int target_overlay_numlower;
+    u32 padding2;
 };
 
 int __attribute__((always_inline)) trace__sys_rename() {
@@ -48,9 +53,10 @@ int kprobe__vfs_rename(struct pt_regs *ctx) {
 
     // we generate a fake source key as the inode is (can be ?) reused
     syscall->rename.src_key.ino = bpf_get_prandom_u32() << 32 | bpf_get_prandom_u32();
+    syscall->rename.src_inode = get_dentry_ino(syscall->rename.src_dentry);
 
     // the mount id of path_key is resolved by kprobe/mnt_want_write. It is already set by the time we reach this probe.
-    resolve_dentry(syscall->rename.src_dentry, syscall->rename.src_key, NULL);
+    resolve_dentry(syscall->rename.src_dentry, syscall->rename.src_key);
 
     return 0;
 }
@@ -68,27 +74,20 @@ int __attribute__((always_inline)) trace__sys_rename_ret(struct pt_regs *ctx) {
     // (the mount id was set by kprobe/mnt_want_write)
     syscall->rename.target_key.ino = get_dentry_ino(syscall->rename.src_dentry);
     struct rename_event_t event = {
+        .event.retval = PT_REGS_RC(ctx),
         .event.type = EVENT_RENAME,
-        .syscall = {
-            .retval = retval,
-            .timestamp = bpf_ktime_get_ns(),
-        },
-        .old = {
-            .inode = syscall->rename.src_key.ino,
-            .mount_id = syscall->rename.src_key.mount_id,
-            .overlay_numlower = syscall->rename.src_overlay_numlower,
-        },
-        .new = {
-            .inode = syscall->rename.target_key.ino,
-            .mount_id = syscall->rename.target_key.mount_id,
-            .overlay_numlower = get_overlay_numlower(syscall->rename.src_dentry),
-        }
+        .event.timestamp = bpf_ktime_get_ns(),
+        .src_inode = syscall->rename.src_inode,
+        .src_mount_id = syscall->rename.src_key.mount_id,
+        .src_random_id = syscall->rename.src_key.ino,
+        .target_inode = syscall->rename.target_key.ino,
+        .target_mount_id = syscall->rename.target_key.mount_id,
+        .src_overlay_numlower = syscall->rename.src_overlay_numlower,
+        .target_overlay_numlower = get_overlay_numlower(syscall->rename.src_dentry),
     };
 
-    struct proc_cache_t *entry = fill_process_data(&event.process);
-    fill_container_data(entry, &event.container);
-
-    resolve_dentry(syscall->rename.src_dentry, syscall->rename.target_key, NULL);
+    fill_process_data(&event.process);
+    resolve_dentry(syscall->rename.src_dentry, syscall->rename.target_key);
 
     send_event(ctx, event);
 

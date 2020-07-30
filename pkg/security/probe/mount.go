@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build linux_bpf
 // +build linux_bpf
 
 package probe
@@ -15,11 +14,12 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/DataDog/gopsutil/process"
 	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/ebpf"
-	"github.com/StackVista/stackstate-agent/pkg/security/utils"
+	"github.com/DataDog/datadog-agent/pkg/security/ebpf"
+	"github.com/DataDog/datadog-agent/pkg/security/utils"
 )
 
 var (
@@ -305,10 +305,31 @@ type MountResolver struct {
 	mounts  map[uint32]*Mount
 }
 
-// SyncCache - Snapshots the current mount points of the system by reading through /proc/[pid]/mountinfo.
+// SyncCache snapshots the current mount points of the system by reading through /proc/[pid]/mountinfo.
+// If pid is null, the function will parse the mountinfo entry of all the processes currently running.
 func (mr *MountResolver) SyncCache(pid uint32) error {
 	mr.lock.Lock()
 	defer mr.lock.Unlock()
+	if pid > 0 {
+		return mr.syncCache(pid)
+	}
+
+	// List all processes and parse mountinfo
+	processes, err := process.AllProcesses()
+	if err != nil {
+		return err
+	}
+	for _, process := range processes {
+		if err := mr.syncCache(uint32(process.Pid)); err != nil {
+			if !os.IsNotExist(err) {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (mr *MountResolver) syncCache(pid uint32) error {
 	// Parse /proc/[pid]/moutinfo
 	mnts, err := utils.GetProcMounts(pid)
 	if err != nil {
@@ -327,7 +348,7 @@ func (mr *MountResolver) SyncCache(pid uint32) error {
 		}
 
 		// Insert mount point
-		mr.insert(e)
+		mr.insert(e, false)
 	}
 	return nil
 }
@@ -370,10 +391,10 @@ func (mr *MountResolver) Delete(mountID uint32) error {
 func (mr *MountResolver) Insert(e *MountEvent) {
 	mr.lock.Lock()
 	defer mr.lock.Unlock()
-	mr.insert(e)
+	mr.insert(e, true)
 }
 
-func (mr *MountResolver) insert(e *MountEvent) {
+func (mr *MountResolver) insert(e *MountEvent, allowResync bool) {
 	// Fetch the device of the new mount point
 	d, ok := mr.devices[e.NewDevice]
 	if !ok {

@@ -3,20 +3,16 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build linux_bpf
-// +build linux_bpf
-
 package module
 
 import (
 	"encoding/json"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/api"
-	sprobe "github.com/StackVista/stackstate-agent/pkg/security/probe"
-	"github.com/StackVista/stackstate-agent/pkg/security/rules"
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/eval"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/security/api"
+	"github.com/DataDog/datadog-agent/pkg/security/rules"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/eval"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // EventServer represents a gRPC server in charge of receiving events sent by
@@ -54,14 +50,12 @@ func (e *EventServer) SendEvent(rule *eval.Rule, event eval.Event) {
 	if err != nil {
 		return
 	}
-	tags := append(rule.Tags, "rule_id:"+rule.ID)
-	tags = append(tags, event.(*sprobe.Event).GetTags()...)
-	log.Infof("Sending event message for rule `%s` to security-agent `%s` with tags %v", rule.ID, string(data), tags)
+	log.Infof("Sending event message for rule `%s` to security-agent `%s` with tags %v", rule.ID, string(data), rule.Tags)
 
 	msg := &api.SecurityEventMessage{
 		RuleID: rule.ID,
 		Type:   event.GetType(),
-		Tags:   tags,
+		Tags:   append(rule.Tags, "type:"+event.GetType(), "rule_id:"+rule.ID),
 		Data:   data,
 	}
 

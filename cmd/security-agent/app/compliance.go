@@ -13,9 +13,19 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/DataDog/datadog-agent/cmd/agent/common"
+	"github.com/DataDog/datadog-agent/pkg/collector/runner"
+	"github.com/DataDog/datadog-agent/pkg/collector/scheduler"
+	"github.com/DataDog/datadog-agent/pkg/compliance/agent"
+	"github.com/DataDog/datadog-agent/pkg/compliance/checks"
 	"github.com/DataDog/datadog-agent/pkg/compliance/event"
 	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/logs/auditor"
+	"github.com/DataDog/datadog-agent/pkg/logs/client"
+	"github.com/DataDog/datadog-agent/pkg/logs/config"
+	"github.com/DataDog/datadog-agent/pkg/logs/pipeline"
 	"github.com/DataDog/datadog-agent/pkg/logs/restart"
+	"github.com/DataDog/datadog-agent/pkg/status/health"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 var (
@@ -70,7 +80,7 @@ func eventRun(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to set up compliance log reporter: %w", err)
 	}
 
-	eventArgs.event.Data = event.Data{}
+	eventData := event.Data{}
 	for _, d := range eventArgs.data {
 		kv := strings.SplitN(d, ":", 2)
 		if len(kv) != 2 {
@@ -89,7 +99,7 @@ func newComplianceReporter(stopper restart.Stopper, sourceName, sourceType strin
 	health := health.RegisterLiveness("compliance")
 
 	// setup the auditor
-	auditor := auditor.New(coreconfig.Datadog.GetString("compliance_config.run_path"), "compliance-registry.json", health)
+	auditor := auditor.New(coreconfig.Datadog.GetString("compliance_config.run_path"), health)
 	auditor.Start()
 	stopper.Add(auditor)
 

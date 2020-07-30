@@ -3,18 +3,11 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build linux_bpf
 // +build linux_bpf
 
 package probe
 
-import "github.com/StackVista/stackstate-agent/pkg/security/ebpf"
-
-// execTables holds the list of eBPF tables used by the process kprobes
-var execTables = []string{
-	"proc_cache",
-	"pid_cookie",
-}
+import "github.com/DataDog/datadog-agent/pkg/security/ebpf"
 
 // execHookPoints holds the list of hookpoints to track processes execution
 var execHookPoints = []*HookPoint{
@@ -38,8 +31,12 @@ var execHookPoints = []*HookPoint{
 		Optional: true,
 	},
 	{
-		Name:       "sched_process_fork",
-		Tracepoint: "tracepoint/sched/sched_process_fork",
+		Name: "do_fork",
+		KProbes: []*ebpf.KProbe{{
+			ExitFunc: "kretprobe/_do_fork",
+		}, {
+			ExitFunc: "kretprobe/do_fork",
+		}},
 		EventTypes: map[string]Capabilities{
 			"*": {},
 		},
@@ -52,45 +49,5 @@ var execHookPoints = []*HookPoint{
 		EventTypes: map[string]Capabilities{
 			"*": {},
 		},
-	},
-	{
-		Name: "cgroup_procs_write",
-		KProbes: []*ebpf.KProbe{{
-			ExitFunc: "kprobe/cgroup_procs_write",
-		}},
-		EventTypes: map[string]Capabilities{
-			"*": {},
-		},
-		Optional: true,
-	},
-	{
-		Name: "cgroup1_procs_write",
-		KProbes: []*ebpf.KProbe{{
-			ExitFunc: "kprobe/cgroup1_procs_write",
-		}},
-		EventTypes: map[string]Capabilities{
-			"*": {},
-		},
-		Optional: true,
-	},
-	{
-		Name: "cgroup_tasks_write",
-		KProbes: []*ebpf.KProbe{{
-			ExitFunc: "kprobe/cgroup_tasks_write",
-		}},
-		EventTypes: map[string]Capabilities{
-			"*": {},
-		},
-		Optional: true,
-	},
-	{
-		Name: "cgroup1_tasks_write",
-		KProbes: []*ebpf.KProbe{{
-			ExitFunc: "kprobe/cgroup1_tasks_write",
-		}},
-		EventTypes: map[string]Capabilities{
-			"*": {},
-		},
-		Optional: true,
 	},
 }

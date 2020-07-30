@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/ast"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/ast"
 )
 
 type node struct {

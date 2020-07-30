@@ -4,11 +4,11 @@
 #include "syscalls.h"
 
 struct rmdir_event_t {
-    struct kevent_t event;
-    struct process_context_t process;
-    struct container_context_t container;
-    struct syscall_t syscall;
-    struct file_t file;
+    struct event_t event;
+    struct process_data_t process;
+    unsigned long inode;
+    int mount_id;
+    int overlay_numlower;
 };
 
 SYSCALL_KPROBE(rmdir) {
@@ -53,7 +53,7 @@ int kprobe__vfs_rmdir(struct pt_regs *ctx) {
         key = syscall->unlink.path_key;
     }
     if (dentry != NULL) {
-        resolve_dentry(dentry, key, NULL);
+        resolve_dentry(dentry, key);
     }
 
     return 0;
@@ -69,20 +69,15 @@ SYSCALL_KRETPROBE(rmdir) {
         return 0;
 
     struct rmdir_event_t event = {
+        .event.retval = PT_REGS_RC(ctx),
         .event.type = EVENT_RMDIR,
-        .syscall = {
-            .retval = retval,
-            .timestamp = bpf_ktime_get_ns(),
-        },
-        .file = {
-            .inode = syscall->rmdir.path_key.ino,
-            .mount_id = syscall->rmdir.path_key.mount_id,
-            .overlay_numlower = syscall->rmdir.overlay_numlower,
-        }
+        .event.timestamp = bpf_ktime_get_ns(),
+        .inode = syscall->rmdir.path_key.ino,
+        .mount_id = syscall->rmdir.path_key.mount_id,
+        .overlay_numlower = syscall->rmdir.overlay_numlower,
     };
 
-    struct proc_cache_t *entry = fill_process_data(&event.process);
-    fill_container_data(entry, &event.container);
+    fill_process_data(&event.process);
 
     send_event(ctx, event);
 

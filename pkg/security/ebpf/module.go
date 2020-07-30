@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build linux_bpf
 // +build linux_bpf
 
 package ebpf
@@ -13,8 +12,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"strings"
-	"time"
 
 	bpflib "github.com/iovisor/gobpf/elf"
 )
@@ -63,51 +60,10 @@ func (m *Module) RegisterTable(name string) (*Table, error) {
 	return &Table{Map: m.Map(name), module: m.Module}, nil
 }
 
-const (
-	// eBPFLogSize is the size of the log buffer given to the verifier (2 * 1024 * 1024)
-	eBPFLogSize = 2097152
-
-	// number of retry to avoid fail for permission denied
-	maxDetachRetry = 5
-)
-
-func detach(kprobe *bpflib.Kprobe) error {
-	isKretprobe := strings.HasPrefix(kprobe.Name, "kretprobe/")
-	var err error
-	if isKretprobe {
-		funcName := strings.TrimPrefix(kprobe.Name, "kretprobe/")
-		err = disableKprobe("r" + funcName)
-	} else {
-		funcName := strings.TrimPrefix(kprobe.Name, "kprobe/")
-		err = disableKprobe("p" + funcName)
-	}
-	return err
-}
-
-// Close detach all the registered kProbes
-func (m *Module) Close() error {
-	for kprobe := range m.IterKprobes() {
-		if err := kprobe.Detach(); err != nil {
-			for i := 0; i != maxDetachRetry; i++ {
-				if err = detach(kprobe); err == nil {
-					break
-				}
-				time.Sleep(time.Second)
-			}
-
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return m.Module.Close()
-}
-
 // NewModuleFromReader creates an eBPF from a ReaderAt interface that points to
 // the ELF file containing the eBPF bytecode
 func NewModuleFromReader(reader io.ReaderAt) (*Module, error) {
-	module := bpflib.NewModuleFromReaderWithLogSize(reader, eBPFLogSize)
+	module := bpflib.NewModuleFromReader(reader)
 	if module == nil {
 		return nil, ErrEBPFNotSupported
 	}

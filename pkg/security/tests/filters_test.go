@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build functionaltests
 // +build functionaltests
 
 package tests
@@ -15,9 +14,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/policy"
-	"github.com/StackVista/stackstate-agent/pkg/security/probe"
-	sprobe "github.com/StackVista/stackstate-agent/pkg/security/probe"
+	"github.com/DataDog/datadog-agent/pkg/security/policy"
+	"github.com/DataDog/datadog-agent/pkg/security/probe"
+	sprobe "github.com/DataDog/datadog-agent/pkg/security/probe"
 	"github.com/pkg/errors"
 )
 
@@ -72,7 +71,7 @@ func waitForOpenDiscarder(test *testProbe, filename string) (*probe.Event, error
 		select {
 		case <-test.events:
 		case discarder := <-test.discarders:
-			test.probe.OnNewDiscarder(test.rs, discarder.event.(*sprobe.Event), discarder.field)
+			test.probe.OnNewDiscarder(discarder.event.(*sprobe.Event), discarder.field)
 			if value, _ := discarder.event.GetFieldValue("open.filename"); value == filename {
 				event = discarder.event.(*sprobe.Event)
 			}
@@ -121,17 +120,20 @@ func TestOpenBasenameApproverFilter(t *testing.T) {
 	}
 }
 
-func TestOpenParentDiscarderFilter(t *testing.T) {
+func TestOpenBasenameDiscarderFilter(t *testing.T) {
 	rule := &policy.RuleDefinition{
 		ID:         "test_rule",
-		Expression: `open.filename == "/etc/passwd"`,
+		Expression: `open.basename == "test-obd-1"`,
 	}
 
-	test, err := newTestProbe(nil, []*policy.RuleDefinition{rule}, testOpts{enableFilters: true, disableApprovers: true})
+	test, err := newTestProbe(nil, []*policy.RuleDefinition{rule}, testOpts{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer test.Close()
+
+	// wait to ensure that snapshots sync is done
+	time.Sleep(3 * time.Second)
 
 	fd1, testFile1, err := openTestFile(test, "test-obd-2", syscall.O_CREAT)
 	if err != nil {

@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build linux_bpf
 // +build linux_bpf
 
 package probe
@@ -17,7 +16,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/ebpf"
+	"github.com/DataDog/datadog-agent/pkg/security/ebpf"
 )
 
 const (
@@ -54,17 +53,6 @@ func (p *pathKey) String() string {
 	return fmt.Sprintf("%x/%x", p.mountID, p.inode)
 }
 
-func (p *pathKey) Bytes() ([]byte, error) {
-	if p.IsNull() {
-		return nil, fmt.Errorf("invalid inode/mountID couple: %s", p.String())
-	}
-
-	b := make([]byte, 16)
-	p.Write(b)
-
-	return b, nil
-}
-
 type pathValue struct {
 	parent pathKey
 	name   [256]byte
@@ -72,12 +60,12 @@ type pathValue struct {
 
 func (dr *DentryResolver) getName(mountID uint32, inode uint64) (name string, err error) {
 	key := pathKey{mountID: mountID, inode: inode}
-
-	keyBuffer, err := key.Bytes()
-	if err != nil {
-		return "", err
+	if key.IsNull() {
+		return "", fmt.Errorf("invalid inode/mountID couple: %s", key.String())
 	}
 
+	keyBuffer := make([]byte, 16)
+	key.Write(keyBuffer)
 	pathRaw := []byte{}
 	var nameRaw [256]byte
 
@@ -100,13 +88,14 @@ func (dr *DentryResolver) GetName(mountID uint32, inode uint64) string {
 
 // Resolve the pathname of a dentry, starting at the pathnameKey in the pathnames table
 func (dr *DentryResolver) resolve(mountID uint32, inode uint64) (filename string, err error) {
+	// Don't resolve path if pathnameKey isn't valid
 	key := pathKey{mountID: mountID, inode: inode}
-
-	keyBuffer, err := key.Bytes()
-	if err != nil {
-		return "", err
+	if key.IsNull() {
+		return "", fmt.Errorf("invalid inode/mountID couple: %s", key.String())
 	}
 
+	keyBuffer := make([]byte, 16)
+	key.Write(keyBuffer)
 	done := false
 	pathRaw := []byte{}
 	var path pathValue
@@ -150,31 +139,11 @@ func (dr *DentryResolver) Resolve(mountID uint32, inode uint64) string {
 	return path
 }
 
-// GetParent - Return the parent mount_id/inode
-func (dr *DentryResolver) GetParent(mountID uint32, inode uint64) (uint32, uint64, error) {
-	key := pathKey{mountID: mountID, inode: inode}
-
-	keyBuffer, err := key.Bytes()
-	if err != nil {
-		return 0, 0, err
-	}
-
-	pathRaw, err := dr.pathnames.Get(keyBuffer)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	var path pathValue
-	path.parent.Read(pathRaw)
-
-	return path.parent.mountID, path.parent.inode, nil
-}
-
 // Start the dentry resolver
 func (dr *DentryResolver) Start() error {
 	pathnames := dr.probe.Table("pathnames")
 	if pathnames == nil {
-		return errors.New("pathnames BPF_HASH table doesn't exist")
+		return fmt.Errorf("pathnames BPF_HASH table doesn't exist")
 	}
 	dr.pathnames = pathnames
 

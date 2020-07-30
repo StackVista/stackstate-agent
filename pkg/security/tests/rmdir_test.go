@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build functionaltests
 // +build functionaltests
 
 package tests
@@ -13,7 +12,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/policy"
+	"github.com/DataDog/datadog-agent/pkg/security/policy"
 )
 
 func TestRmdir(t *testing.T) {

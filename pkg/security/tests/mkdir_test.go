@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build functionaltests
 // +build functionaltests
 
 package tests
@@ -14,22 +13,16 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/policy"
+	"github.com/DataDog/datadog-agent/pkg/security/policy"
 )
 
 func TestMkdir(t *testing.T) {
-	rules := []*policy.RuleDefinition{
-		{
-			ID:         "test_rule",
-			Expression: `mkdir.filename == "{{.Root}}/test-mkdir" || mkdir.filename == "{{.Root}}/testat-mkdir"`,
-		},
-		{
-			ID:         "test_rule2",
-			Expression: `mkdir.retval == EACCES`,
-		},
+	rule := &policy.RuleDefinition{
+		ID:         "test_rule",
+		Expression: `mkdir.filename == "{{.Root}}/test-mkdir" || mkdir.filename == "{{.Root}}/testat-mkdir" || (event.type == "mkdir" && event.retval == EPERM)`,
 	}
 
-	test, err := newTestModule(nil, rules, testOpts{})
+	test, err := newTestModule(nil, []*policy.RuleDefinition{rule}, testOpts{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,11 +77,6 @@ func TestMkdir(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, testatFilePtr, err = test.Path("testat2-mkdir")
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	if err := os.Chmod(test.Root(), 0711); err != nil {
 		t.Fatal(err)
 	}
@@ -118,7 +106,7 @@ func TestMkdir(t *testing.T) {
 			t.Errorf("expected mkdir event, got %s", event.GetType())
 		}
 
-		if retval := event.Mkdir.Retval; retval != -int64(syscall.EACCES) {
+		if retval := event.Event.Retval; retval != -int64(syscall.EACCES) {
 			t.Errorf("expected retval != EACCES, got %d", retval)
 		}
 	}

@@ -14,24 +14,22 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
-	"github.com/StackVista/stackstate-agent/pkg/logs/message"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/logs/message"
 	"google.golang.org/grpc"
 
-	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/security/api"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/security/api"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // RuntimeSecurityAgent represents the main wrapper for the Runtime Security product
 type RuntimeSecurityAgent struct {
-	hostname      string
-	reporter      event.Reporter
-	conn          *grpc.ClientConn
-	running       atomic.Value
-	wg            sync.WaitGroup
-	connected     atomic.Value
-	eventReceived uint64
+	hostname string
+	reporter event.Reporter
+	conn     *grpc.ClientConn
+	running  atomic.Value
+	wg       sync.WaitGroup
 }
 
 // NewRuntimeSecurityAgent instantiates a new RuntimeSecurityAgent
@@ -73,13 +71,13 @@ func (rsa *RuntimeSecurityAgent) StartEventListener() {
 	defer rsa.wg.Done()
 	apiClient := api.NewSecurityModuleClient(rsa.conn)
 
-	rsa.connected.Store(false)
+	var connected bool
 
 	rsa.running.Store(true)
 	for rsa.running.Load() == true {
 		stream, err := apiClient.GetEvents(context.Background(), &api.GetParams{})
 		if err != nil {
-			rsa.connected.Store(false)
+			connected = false
 
 			log.Warnf("Error while connecting to the runtime security module: %v", err)
 
@@ -88,8 +86,8 @@ func (rsa *RuntimeSecurityAgent) StartEventListener() {
 			continue
 		}
 
-		if rsa.connected.Load() != true {
-			rsa.connected.Store(true)
+		if !connected {
+			connected = true
 
 			log.Info("Successfully connected to the runtime security module")
 		}
@@ -101,8 +99,6 @@ func (rsa *RuntimeSecurityAgent) StartEventListener() {
 				break
 			}
 			log.Infof("Got message from rule `%s` for event `%s` with tags `%+v` ", in.RuleID, string(in.Data), in.Tags)
-
-			atomic.AddUint64(&rsa.eventReceived, 1)
 
 			// Dispatch security event
 			rsa.DispatchEvent(in)
@@ -126,12 +122,4 @@ func (rsa *RuntimeSecurityAgent) SendSecurityEvent(evt *api.SecurityEventMessage
 func (rsa *RuntimeSecurityAgent) DispatchEvent(evt *api.SecurityEventMessage) {
 	// For now simply log to Datadog
 	rsa.SendSecurityEvent(evt, message.StatusAlert)
-}
-
-// GetStatus returns the current status on the agent
-func (rsa *RuntimeSecurityAgent) GetStatus() map[string]interface{} {
-	return map[string]interface{}{
-		"connected":     rsa.connected.Load(),
-		"eventReceived": atomic.LoadUint64(&rsa.eventReceived),
-	}
 }

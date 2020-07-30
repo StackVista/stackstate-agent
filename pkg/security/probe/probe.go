@@ -3,31 +3,29 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build linux_bpf
 // +build linux_bpf
 
 package probe
 
 import (
-	"fmt"
+	"bytes"
 	"math"
 	"strings"
 
-	"github.com/DataDog/datadog-go/statsd"
+	"github.com/pkg/errors"
+
 	"github.com/iovisor/gobpf/elf"
 
-	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode"
-	"github.com/StackVista/stackstate-agent/pkg/security/config"
-	"github.com/StackVista/stackstate-agent/pkg/security/ebpf"
-	"github.com/StackVista/stackstate-agent/pkg/security/rules"
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/eval"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/security/config"
+	"github.com/DataDog/datadog-agent/pkg/security/ebpf"
+	"github.com/DataDog/datadog-agent/pkg/security/rules"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/eval"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/DataDog/datadog-go/statsd"
 )
 
-const (
-	// MetricPrefix is the prefix of the metrics sent by the runtime security agent
-	MetricPrefix = "datadog.runtime_security"
-)
+// MetricPrefix is the prefix of the metrics sent by the runtime security agent
+const MetricPrefix = "datadog.agent.runtime_security"
 
 // EventHandler represents an handler for the events sent by the probe
 type EventHandler interface {
@@ -41,7 +39,7 @@ type Discarder struct {
 }
 
 type onApproversFnc func(probe *Probe, approvers rules.Approvers) error
-type onDiscarderFnc func(rs *rules.RuleSet, event *Event, probe *Probe, discarder Discarder) error
+type onDiscarderFnc func(probe *Probe, discarder Discarder) error
 
 // Probe represents the runtime security eBPF probe in charge of
 // setting up the required kProbes and decoding events sent from the kernel
@@ -70,7 +68,6 @@ type Capabilities map[eval.Field]Capability
 type HookPoint struct {
 	Name            string
 	KProbes         []*ebpf.KProbe
-	Tracepoint      string
 	Optional        bool
 	EventTypes      map[eval.EventType]Capabilities
 	OnNewApprovers  onApproversFnc
@@ -263,6 +260,29 @@ var allHookPoints = []*HookPoint{
 		},
 	},
 	{
+		Name: "vfs_unlink",
+		KProbes: []*ebpf.KProbe{{
+			EntryFunc: "kprobe/vfs_unlink",
+		}},
+		EventTypes: map[eval.EventType]Capabilities{
+			"unlink": {},
+		},
+	},
+	{
+		Name:    "sys_unlink",
+		KProbes: syscallKprobe("unlink"),
+		EventTypes: map[eval.EventType]Capabilities{
+			"unlink": {},
+		},
+	},
+	{
+		Name:    "sys_unlinkat",
+		KProbes: syscallKprobe("unlinkat"),
+		EventTypes: map[eval.EventType]Capabilities{
+			"unlink": {},
+		},
+	},
+	{
 		Name: "vfs_rename",
 		KProbes: []*ebpf.KProbe{{
 			EntryFunc: "kprobe/vfs_rename",
@@ -352,7 +372,7 @@ func (caps Capabilities) GetFieldCapabilities() rules.FieldCapabilities {
 }
 
 // NewRuleSet returns a new rule set
-func (p *Probe) NewRuleSet(opts *rules.Opts) *rules.RuleSet {
+func (p *Probe) NewRuleSet(opts *eval.Opts) *rules.RuleSet {
 	eventCtor := func() eval.Event {
 		return NewEvent(p.resolvers)
 	}
@@ -368,11 +388,7 @@ func (p *Probe) getTableNames() []string {
 		"noisy_processes_bb",
 	}
 
-	tables = append(tables, openTables...)
-	tables = append(tables, execTables...)
-	tables = append(tables, unlinkTables...)
-
-	return tables
+	return append(tables, openTables...)
 }
 
 // Table returns either an eprobe Table or a LRU based eprobe Table
@@ -401,23 +417,23 @@ func (p *Probe) getPerfMaps() []*ebpf.PerfMapDefinition {
 
 // Start the runtime security probe
 func (p *Probe) Start() error {
-	asset := "pkg/security/ebpf/c/runtime-security"
+	asset := "pkg/security/ebpf/c/probe"
 	openSyscall := getSyscallFnName("open")
 	if !strings.HasPrefix(openSyscall, "SyS_") && !strings.HasPrefix(openSyscall, "sys_") {
 		asset += "-syscall-wrapper"
 	}
 
-	bytecodeReader, err := bytecode.GetReader(p.config.BPFDir, asset+".o")
+	bytecode, err := Asset(asset + ".o") // ioutil.ReadFile("pkg/security/ebpf/c/probe.o")
 	if err != nil {
 		return err
 	}
 
-	p.Module, err = ebpf.NewModuleFromReader(bytecodeReader)
+	p.Module, err = ebpf.NewModuleFromReader(bytes.NewReader(bytecode))
 	if err != nil {
 		return err
 	}
 
-	if err = p.Load(); err != nil {
+	if err := p.Load(); err != nil {
 		return err
 	}
 
@@ -478,18 +494,19 @@ func (p *Probe) SendStats(statsdClient *statsd.Client) error {
 		return err
 	}
 
-	receivedEvents := MetricPrefix + ".events.received"
+	if err := statsdClient.Count(MetricPrefix+".events.received", p.eventsStats.GetAndResetReceived(), nil, 1.0); err != nil {
+		return err
+	}
+
 	for i := range p.eventsStats.PerEventType {
 		if i == 0 {
 			continue
 		}
 
 		eventType := EventType(i)
-		tags := []string{fmt.Sprintf("event_type:%s", eventType.String())}
-		if value := p.eventsStats.GetAndResetEventCount(eventType); value > 0 {
-			if err := statsdClient.Count(receivedEvents, value, tags, 1.0); err != nil {
-				return err
-			}
+		key := MetricPrefix + ".events." + eventType.String()
+		if err := statsdClient.Count(key, p.eventsStats.GetAndResetEventCount(eventType), nil, 1.0); err != nil {
+			return err
 		}
 	}
 
@@ -500,14 +517,10 @@ func (p *Probe) SendStats(statsdClient *statsd.Client) error {
 func (p *Probe) GetStats() (map[string]interface{}, error) {
 	stats := make(map[string]interface{})
 
-	var syscalls *SyscallStats
-	var err error
-
-	if p.syscallMonitor != nil {
-		syscalls, err = p.syscallMonitor.GetStats()
-	}
+	syscalls, err := p.syscallMonitor.GetStats()
 
 	stats["events"] = map[string]interface{}{
+		"received": p.eventsStats.GetReceived(),
 		"lost":     p.eventsStats.GetLost(),
 		"syscalls": syscalls,
 	}
@@ -532,24 +545,32 @@ func (p *Probe) GetEventsStats() EventsStats {
 }
 
 func (p *Probe) handleLostEvents(count uint64) {
-	log.Warnf("lost %d events\n", count)
+	log.Warnf("Lost %d events\n", count)
 	p.eventsStats.CountLost(int64(count))
 }
 
 func (p *Probe) handleEvent(data []byte) {
+	log.Debugf("Handling dentry event (len %d)", len(data))
+	p.eventsStats.CountReceived(1)
+
 	offset := 0
 	event := NewEvent(p.resolvers)
 
-	read, err := event.UnmarshalBinary(data)
+	read, err := event.Event.UnmarshalBinary(data)
 	if err != nil {
-		log.Errorf("failed to decode event: %s", err)
+		log.Errorf("failed to decode event")
 		return
 	}
 	offset += read
 
-	eventType := EventType(event.Type)
-	log.Tracef("Decoding event %s", eventType.String())
+	read, err = event.Process.UnmarshalBinary(data[offset:])
+	if err != nil {
+		log.Errorf("failed to decode process event")
+		return
+	}
+	offset += read
 
+	eventType := EventType(event.Event.Type)
 	switch eventType {
 	case FileOpenEventType:
 		if _, err := event.Open.UnmarshalBinary(data[offset:]); err != nil {
@@ -618,24 +639,19 @@ func (p *Probe) handleEvent(data []byte) {
 			log.Errorf("failed to delete mount point %d from cache: %s", event.Umount.MountID, err)
 		}
 	default:
-		log.Errorf("unsupported event type %d", eventType)
+		log.Errorf("Unsupported event type %d\n", eventType)
 		return
 	}
 
 	p.eventsStats.CountEventType(eventType, 1)
 
-	log.Tracef("Dispatching event %+v\n", event)
+	log.Debugf("Dispatching event %+v\n", event)
 	p.DispatchEvent(event)
 }
 
 // OnNewDiscarder is called when a new discarder is found
-func (p *Probe) OnNewDiscarder(rs *rules.RuleSet, event *Event, field eval.Field) error {
-	// discarders disabled
-	if !p.config.EnableDiscarders {
-		return nil
-	}
-
-	log.Tracef("New discarder event %+v for field %s\n", event, field)
+func (p *Probe) OnNewDiscarder(event *Event, field eval.Field) error {
+	log.Debugf("New discarder event %+v for field %s\n", event, field)
 
 	eventType, err := event.GetFieldEventType(field)
 	if err != nil {
@@ -653,7 +669,7 @@ func (p *Probe) OnNewDiscarder(rs *rules.RuleSet, event *Event, field eval.Field
 			Value: value,
 		}
 
-		if err = fnc(rs, event, p, discarder); err != nil {
+		if err = fnc(p, discarder); err != nil {
 			return err
 		}
 	}
@@ -670,14 +686,6 @@ type Applier interface {
 
 func (p *Probe) setKProbePolicy(hookPoint *HookPoint, rs *rules.RuleSet, eventType eval.EventType, capabilities Capabilities, applier Applier) error {
 	if !p.enableFilters {
-		if err := applier.ApplyFilterPolicy(eventType, hookPoint.PolicyTable, PolicyModeNoFilter, math.MaxUint8); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	// if approver disabled
-	if !p.config.EnableApprovers {
 		if err := applier.ApplyFilterPolicy(eventType, hookPoint.PolicyTable, PolicyModeAccept, math.MaxUint8); err != nil {
 			return err
 		}
@@ -729,7 +737,7 @@ func (p *Probe) ApplyRuleSet(rs *rules.RuleSet, dryRun bool) (*Report, error) {
 
 		// first set policies
 		for eventType, capabilities := range hookPoint.EventTypes {
-			if rs.HasRulesForEventType(eventType) {
+			if eventType == "*" || rs.HasRulesForEventType(eventType) {
 				if hookPoint.PolicyTable == "" {
 					continue
 				}
@@ -762,19 +770,12 @@ func (p *Probe) ApplyRuleSet(rs *rules.RuleSet, dryRun bool) (*Report, error) {
 					}
 
 					if err = p.Module.RegisterKprobe(kprobe); err == nil {
+						active++
+
 						log.Infof("kProbe `%s` registered", kprobe.Name)
-						active++
-					} else {
-						log.Debugf("failed to register kProbe `%s`", kprobe.Name)
+						break
 					}
-				}
-				if len(hookPoint.Tracepoint) > 0 && err == nil {
-					if err = p.Module.RegisterTracepoint(hookPoint.Tracepoint); err == nil {
-						log.Infof("tracepoint `%s` registered", hookPoint.Tracepoint)
-						active++
-					} else {
-						log.Debugf("failed to register tracepoint `%s`", hookPoint.Tracepoint)
-					}
+					log.Debugf("failed to register kProbe `%s`", kprobe.Name)
 				}
 
 				if err != nil {
@@ -783,9 +784,7 @@ func (p *Probe) ApplyRuleSet(rs *rules.RuleSet, dryRun bool) (*Report, error) {
 					}
 				}
 
-				if active > 0 {
-					log.Infof("Hook Point `%s` registered with %d active kProbes", hookPoint.Name, active)
-				}
+				log.Infof("Hook Point `%s` registered with %d active kProbes", hookPoint.Name, active)
 				already[hookPoint] = true
 			}
 		}
@@ -797,7 +796,11 @@ func (p *Probe) ApplyRuleSet(rs *rules.RuleSet, dryRun bool) (*Report, error) {
 // Snapshot runs the different snapshot functions of the resolvers that
 // require to sync with the current state of the system
 func (p *Probe) Snapshot() error {
-	return p.resolvers.Snapshot(5)
+	// Sync with the current mount points of the system
+	if err := p.resolvers.MountResolver.SyncCache(0); err != nil {
+		return errors.Wrap(err, "couldn't sync mount points of the host")
+	}
+	return nil
 }
 
 // NewProbe instantiates a new runtime security agent probe
@@ -814,12 +817,21 @@ func NewProbe(config *config.Config) (*Probe, error) {
 		PerfMaps: p.getPerfMaps(),
 	}
 
-	resolvers, err := NewResolvers(p.Probe)
+	dentryResolver, err := NewDentryResolver(p.Probe)
 	if err != nil {
 		return nil, err
 	}
 
-	p.resolvers = resolvers
+	timeResolver, err := NewTimeResolver()
+	if err != nil {
+		return nil, err
+	}
+
+	p.resolvers = &Resolvers{
+		DentryResolver: dentryResolver,
+		MountResolver:  NewMountResolver(),
+		TimeResolver:   timeResolver,
+	}
 
 	return p, nil
 }
@@ -828,5 +840,4 @@ func init() {
 	allHookPoints = append(allHookPoints, openHookPoints...)
 	allHookPoints = append(allHookPoints, mountHookPoints...)
 	allHookPoints = append(allHookPoints, execHookPoints...)
-	allHookPoints = append(allHookPoints, UnlinkHookPoints...)
 }

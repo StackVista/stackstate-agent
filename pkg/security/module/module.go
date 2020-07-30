@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build linux_bpf
 // +build linux_bpf
 
 package module
@@ -23,17 +22,17 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
+	"github.com/DataDog/datadog-agent/cmd/system-probe/api"
+	aconfig "github.com/DataDog/datadog-agent/pkg/process/config"
+	sapi "github.com/DataDog/datadog-agent/pkg/security/api"
+	"github.com/DataDog/datadog-agent/pkg/security/config"
+	"github.com/DataDog/datadog-agent/pkg/security/policy"
+	"github.com/DataDog/datadog-agent/pkg/security/probe"
+	sprobe "github.com/DataDog/datadog-agent/pkg/security/probe"
+	"github.com/DataDog/datadog-agent/pkg/security/rules"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/eval"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/datadog-go/statsd"
-	"github.com/StackVista/stackstate-agent/cmd/system-probe/api"
-	aconfig "github.com/StackVista/stackstate-agent/pkg/process/config"
-	sapi "github.com/StackVista/stackstate-agent/pkg/security/api"
-	"github.com/StackVista/stackstate-agent/pkg/security/config"
-	"github.com/StackVista/stackstate-agent/pkg/security/policy"
-	"github.com/StackVista/stackstate-agent/pkg/security/probe"
-	sprobe "github.com/StackVista/stackstate-agent/pkg/security/probe"
-	"github.com/StackVista/stackstate-agent/pkg/security/rules"
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/eval"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // Module represents the system-probe module for the runtime security agent
@@ -120,13 +119,13 @@ func (m *Module) RuleMatch(rule *eval.Rule, event eval.Event) {
 	if m.rateLimiter.Allow(rule.ID) {
 		m.eventServer.SendEvent(rule, event)
 	} else {
-		log.Debugf("Event on rule %s was dropped due to rate limiting", rule.ID)
+		log.Debugf("Event %s on rule %s was dropped due to rate limiting", event.GetID(), rule.ID)
 	}
 }
 
 // EventDiscarderFound is called by the ruleset when a new discarder discovered
-func (m *Module) EventDiscarderFound(rs *rules.RuleSet, event eval.Event, field string) {
-	if err := m.probe.OnNewDiscarder(rs, event.(*sprobe.Event), field); err != nil {
+func (m *Module) EventDiscarderFound(event eval.Event, field string) {
+	if err := m.probe.OnNewDiscarder(event.(*sprobe.Event), field); err != nil {
 		log.Debug(err)
 	}
 }
@@ -141,7 +140,7 @@ func (m *Module) HandleEvent(event *sprobe.Event) {
 func LoadPolicies(config *config.Config, probe *sprobe.Probe) (*rules.RuleSet, error) {
 	var result *multierror.Error
 
-	ruleSet := probe.NewRuleSet(rules.NewOptsWithParams(config.Debug, sprobe.SECLConstants, sprobe.InvalidDiscarders))
+	ruleSet := probe.NewRuleSet(eval.NewOptsWithParams(config.Debug, sprobe.SECLConstants))
 
 	policyFiles, err := ioutil.ReadDir(config.PoliciesDir)
 	if err != nil {
@@ -227,7 +226,7 @@ func (m *Module) GetRuleSet() *rules.RuleSet {
 
 // NewModule instantiates a runtime security system-probe module
 func NewModule(cfg *aconfig.AgentConfig) (api.Module, error) {
-	config, err := config.NewConfig(cfg)
+	config, err := config.NewConfig()
 	if err != nil {
 		log.Errorf("invalid security runtime module configuration: %s", err)
 		return nil, err

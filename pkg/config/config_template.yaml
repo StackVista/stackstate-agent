@@ -1035,7 +1035,7 @@ network_tracer_config:
   ## Syscall monitoring
   #
   # syscall_monitor:
-
+  
     ## @param enabled - boolean - optional - default: false
     ## Set to true to enable the Syscall monitoring.
     #

@@ -3,9 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build linux_bpf
-// +build linux_bpf
-
 package utils
 
 import (
@@ -13,8 +10,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/DataDog/datadog-agent/pkg/process/util"
 )
 
 var validOptionalFields = map[string]bool{
@@ -152,9 +152,27 @@ func mountOptionsParser(mountOptions string) map[string]string {
 	return opts
 }
 
-// GetProcMounts retrieves mountinfo information from a processes' `/proc/<pid>/mountinfo`.
+func mountInfoPath() string {
+	return filepath.Join(util.HostProc(), "/self/mountinfo")
+}
+
+func mountInfoPidPath(pid uint32) string {
+	return filepath.Join(util.HostProc(), fmt.Sprintf("/%d/mountinfo", pid))
+}
+
+// GetMounts - Retrieves mountinfo information from `/proc/self/mountinfo`.
+func GetMounts() ([]*MountInfo, error) {
+	f, err := os.Open(mountInfoPath())
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return parseMountInfo(f)
+}
+
+// GetProcMounts - Retrieves mountinfo information from a processes' `/proc/<pid>/mountinfo`.
 func GetProcMounts(pid uint32) ([]*MountInfo, error) {
-	f, err := os.Open(MountInfoPidPath(pid))
+	f, err := os.Open(mountInfoPidPath(pid))
 	if err != nil {
 		return nil, err
 	}

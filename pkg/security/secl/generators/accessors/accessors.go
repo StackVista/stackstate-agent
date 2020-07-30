@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	pkgPrefix = "github.com/StackVista/stackstate-agent/pkg/security"
+	pkgPrefix = "github.com/DataDog/datadog-agent/pkg/security"
 )
 
 var (
@@ -319,15 +319,22 @@ package {{.Name}}
 import (
 	"reflect"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/eval"
+	"github.com/pkg/errors"
+
+	"github.com/DataDog/datadog-agent/pkg/security/secl/eval"
 )
 
-func (m *Model) GetEvaluator(field eval.Field) (eval.Evaluator, error) {
+var (
+	ErrFieldNotFound = errors.New("field not found")
+	ErrWrongValueType = errors.New("wrong value type")
+)
+
+func (m *Model) GetEvaluator(field eval.Field) (interface{}, error) {
 	switch field {
 	{{range $Name, $Field := .Fields}}
-	{{$Return := $Field.Name | printf "(*Event)(ctx.Object).%s"}}
+	{{$Return := $Field.Name | printf "m.event.%s"}}
 	{{if ne $Field.Handler ""}}
-		{{$Return = $Field.Handler | printf "(*Event)(ctx.Object).%s((*Event)(ctx.Object).resolvers)"}}
+		{{$Return = $Field.Handler | printf "m.event.%s(m.event.resolvers)"}}
 	{{end}}
 
 	case "{{$Name}}":
@@ -346,7 +353,7 @@ func (m *Model) GetEvaluator(field eval.Field) (eval.Evaluator, error) {
 	{{end}}
 	}
 
-	return nil, &eval.ErrFieldNotFound{Field: field}
+	return nil, errors.Wrap(ErrFieldNotFound, field)
 }
 
 func (e *Event) GetFieldValue(field eval.Field) (interface{}, error) {
@@ -368,7 +375,7 @@ func (e *Event) GetFieldValue(field eval.Field) (interface{}, error) {
 		{{end}}
 		}
 
-		return nil, &eval.ErrFieldNotFound{Field: field}
+		return nil, errors.Wrap(ErrFieldNotFound, field)
 }
 
 func (e *Event) GetFieldEventType(field eval.Field) (eval.EventType, error) {
@@ -379,7 +386,7 @@ func (e *Event) GetFieldEventType(field eval.Field) (eval.EventType, error) {
 	{{end}}
 	}
 
-	return "", &eval.ErrFieldNotFound{Field: field}
+	return "", errors.Wrap(ErrFieldNotFound, field)
 }
 
 func (e *Event) GetFieldType(field eval.Field) (reflect.Kind, error) {
@@ -397,7 +404,7 @@ func (e *Event) GetFieldType(field eval.Field) (reflect.Kind, error) {
 		{{end}}
 		}
 
-		return reflect.Invalid, &eval.ErrFieldNotFound{Field: field}
+		return reflect.Invalid, errors.Wrap(ErrFieldNotFound, field)
 }
 
 func (e *Event) SetFieldValue(field eval.Field, value interface{}) error {
@@ -408,26 +415,26 @@ func (e *Event) SetFieldValue(field eval.Field, value interface{}) error {
 		case "{{$Name}}":
 		{{if eq $Field.OrigType "string"}}
 			if {{$FieldName}}, ok = value.(string); !ok {
-				return &eval.ErrValueTypeMismatch{Field: "{{$Field.Name}}"}
+				return ErrWrongValueType
 			}
 			return nil
 		{{else if eq $Field.BasicType "int"}}
 			v, ok := value.(int)
 			if !ok {
-				return &eval.ErrValueTypeMismatch{Field: "{{$Field.Name}}"}
+				return ErrWrongValueType
 			}
 			{{$FieldName}} = {{$Field.OrigType}}(v)
 			return nil
 		{{else if eq $Field.BasicType "bool"}}
 			if {{$FieldName}}, ok = value.(string); !ok {
-				return &eval.ErrValueTypeMismatch{Field: "{{$Field.Name}}"}
+				return ErrWrongValueType
 			}
 			return nil
 		{{end}}
 		{{end}}
 		}
 
-		return &eval.ErrFieldNotFound{Field: field}
+		return errors.Wrap(ErrFieldNotFound, field)
 }
 
 `))

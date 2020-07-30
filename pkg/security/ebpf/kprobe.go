@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build linux_bpf
 // +build linux_bpf
 
 package ebpf
@@ -13,12 +12,6 @@ import (
 	"os"
 	"strings"
 	"syscall"
-	"time"
-)
-
-const (
-	// maxEnableRetry number of retry for resource busy fail
-	maxEnableRetry = 3
 )
 
 // KProbe describes a Linux Kprobe
@@ -28,30 +21,15 @@ type KProbe struct {
 	ExitFunc  string
 }
 
-func (m *Module) tryEnableKprobe(secName string) (err error) {
-	for i := 0; i != maxEnableRetry; i++ {
-		if err = m.EnableKprobe(secName, 512); err == nil {
-			break
-		}
-		// not available, not a temporary error
-		if strings.Contains(err.Error(), syscall.ENOENT.Error()) {
-			break
-		}
-		time.Sleep(time.Second)
-	}
-
-	return err
-}
-
 // RegisterKprobe registers a Kprobe
 func (m *Module) RegisterKprobe(k *KProbe) error {
 	if k.EntryFunc != "" {
-		if err := m.tryEnableKprobe(k.EntryFunc); err != nil {
+		if err := m.EnableKprobe(k.EntryFunc, 512); err != nil {
 			return fmt.Errorf("failed to load Kprobe %v: %s", k.EntryFunc, err)
 		}
 	}
 	if k.ExitFunc != "" {
-		if err := m.tryEnableKprobe(k.ExitFunc); err != nil {
+		if err := m.EnableKprobe(k.ExitFunc, 512); err != nil {
 			return fmt.Errorf("failed to load Kretprobe %v: %s", k.ExitFunc, err)
 		}
 	}
@@ -62,21 +40,15 @@ func (m *Module) RegisterKprobe(k *KProbe) error {
 // UnregisterKprobe unregisters a Kprobe
 func (m *Module) UnregisterKprobe(k *KProbe) error {
 	if k.EntryFunc != "" {
-		kp := m.Kprobe(k.EntryFunc)
-		if kp == nil {
-			return fmt.Errorf("couldn't find kprobe %s with section %s", k.Name, k.EntryFunc)
-		}
-		if err := kp.Detach(); err != nil {
-			return err
+		funcName := strings.TrimPrefix(k.EntryFunc, "kprobe/")
+		if err := disableKprobe("r" + funcName); err != nil {
+			return fmt.Errorf("failed to unregister Kprobe %v: %s", k.EntryFunc, err)
 		}
 	}
 	if k.ExitFunc != "" {
-		kp := m.Kprobe(k.ExitFunc)
-		if kp == nil {
-			return fmt.Errorf("couldn't find kretprobe %s with section %s", k.Name, k.ExitFunc)
-		}
-		if err := kp.Detach(); err != nil {
-			return err
+		funcName := strings.TrimPrefix(k.ExitFunc, "kretprobe/")
+		if err := disableKprobe("r" + funcName); err != nil {
+			return fmt.Errorf("failed to unregister Kprobe %v: %s", k.ExitFunc, err)
 		}
 	}
 
