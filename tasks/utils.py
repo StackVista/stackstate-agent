@@ -292,3 +292,15 @@ def load_release_versions(ctx, target_version):
             # environment when running a subprocess.
             return {str(k): str(v) for k, v in versions[target_version].items()}
     raise Exception("Could not find '{}' version in release.json".format(target_version))
+
+
+def do_go_rename(ctx, rename, at):
+    ctx.run("gofmt -l -w -r {} {}".format(rename, at))
+
+
+def do_sed_rename(ctx, rename, at):
+    ctx.run("sed -i '{}' {}".format(rename, at))
+
+
+def do_sed_rename_quoted(ctx, rename, at):
+    ctx.run("sed -i \"{}\" {}".format(rename, at))
