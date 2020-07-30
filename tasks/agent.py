@@ -22,6 +22,7 @@ from .utils import (
     get_win_py_runtime_var,
 )
 from .utils import REPO_PATH
+from .utils import do_go_rename, do_sed_rename
 from .build_tags import get_build_tags, get_default_build_tags, LINUX_ONLY_TAGS, WINDOWS_32BIT_EXCLUDE_TAGS
 from .go import deps, generate
 from .docker import pull_base_images
