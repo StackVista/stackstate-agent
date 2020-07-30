@@ -202,8 +202,6 @@ func (s *MetricsStore) Push(familyFilter FamilyAllow, metricFilter MetricAllow) 
 				if !metricFilter(metric) {
 					continue
 				}
-				tags := metric.Labels
-				tags["uid"] = string(u)
 				resMetric = append(resMetric, DDMetric{
 					Val:    metric.Val,
 					Labels: metric.Labels,
