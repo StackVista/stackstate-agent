@@ -3,15 +3,14 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build linux_bpf
 // +build linux_bpf
 
 package probe
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/security/ebpf"
-	"github.com/StackVista/stackstate-agent/pkg/security/rules"
-	"github.com/StackVista/stackstate-agent/pkg/security/secl/eval"
+	"github.com/DataDog/datadog-agent/pkg/security/ebpf"
+	"github.com/DataDog/datadog-agent/pkg/security/rules"
+	"github.com/DataDog/datadog-agent/pkg/security/secl/eval"
 )
 
 var unlinkTables = []string{
@@ -36,7 +35,7 @@ var UnlinkHookPoints = []*HookPoint{
 				fsEvent := event.Unlink
 				table := "unlink_path_inode_discarders"
 
-				isDiscarded, err := discardParentInode(probe, rs, "unlink", discarder.Value.(string), fsEvent.MountID, fsEvent.Inode, table)
+				isDiscarded, err := discardParentInode(probe, rs, field, discarder.Value.(string), fsEvent.MountID, fsEvent.Inode, table)
 				if !isDiscarded || err != nil {
 					// not able to discard the parent then only discard the filename
 					_, err = discardInode(probe, fsEvent.MountID, fsEvent.Inode, table)

@@ -8,7 +8,7 @@ package rules
 import (
 	"github.com/pkg/errors"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/utils"
+	"github.com/DataDog/datadog-agent/pkg/security/utils"
 )
 
 func notOfValue(value interface{}) (interface{}, error) {
