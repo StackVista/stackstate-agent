@@ -147,7 +147,7 @@ unit_tests:
 
     - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --build-exclude clusterchecks,kubelet
   tags:
-    - sts-k8s-xl-no-docker-runner
+    - sts-aws
 
 integration_tests:
   stage: build_and_test
@@ -175,8 +175,8 @@ docker_integration_tests:
     - docker:dind
   script:
     - inv -e docker.integration-tests
-#  tags:
-#    - sts-aws
+  tags:
+    - sts-k8s-m-runner
 
 build_binaries:
   stage: build_and_test
@@ -239,7 +239,7 @@ build_deb:
   tags:
     # We put the deb build on sts-aws because it runs long and we do want to have it run fast.
     # It also cuts into our pipeline quotum
-    - sts-aws
+    - sts-k8s-m-runner
     #- slavko_shell
   cache:
     key: "build-deb-$CI_COMMIT_REF_SLUG"
@@ -290,7 +290,7 @@ build_rpm:
   tags:
     # We put the deb build on sts-aws because it runs long and we do want to have it run fast.
     # It also cuts into our pipeline quotum
-    - sts-aws
+    - sts-k8s-m-runner
   cache:
     key: "build-rpm-$CI_COMMIT_REF_SLUG"
     paths:
