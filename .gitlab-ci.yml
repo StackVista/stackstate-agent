@@ -146,8 +146,8 @@ unit_tests:
     - gofmt -l -w -s ./pkg ./cmd
 
     - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --build-exclude clusterchecks,kubelet
-  tags:
-    - sts-aws
+#  tags:
+#    - sts-aws
 
 integration_tests:
   stage: build_and_test
@@ -155,8 +155,8 @@ integration_tests:
     - deps_deb
   script:
     - inv -e integration-tests --race --remote-docker
-  tags:
-    - sts-aws
+#  tags:
+#    - sts-aws
 
 filename_linting:
   stage: build_and_test
@@ -175,8 +175,8 @@ docker_integration_tests:
     - docker:dind
   script:
     - inv -e docker.integration-tests
-  tags:
-    - sts-aws
+#  tags:
+#    - sts-aws
 
 build_binaries:
   stage: build_and_test
