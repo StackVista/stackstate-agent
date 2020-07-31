@@ -2,7 +2,6 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
-//go:build windows
 // +build windows
 
 package listeners
@@ -11,14 +10,14 @@ import (
 	"expvar"
 	"fmt"
 
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/DataDog/datadog-agent/pkg/telemetry"
 )
 
 type listenerTelemetry struct {
+	expvars             *expvar.Map
 	packetReadingErrors expvar.Int
 	packets             expvar.Int
 	bytes               expvar.Int
-	expvars             *expvar.Map
 	tlmPackets          telemetry.Counter
 	tlmPacketsBytes     telemetry.Counter
 }
