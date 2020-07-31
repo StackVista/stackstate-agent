@@ -20,6 +20,19 @@ variables:
   STS_DOCKER_TEST_REPO_TRACE: stackstate-trace-agent-test
   STS_DOCKER_RELEASE_REPO_CLUSTER: stackstate-cluster-agent
   STS_DOCKER_TEST_REPO_CLUSTER: stackstate-cluster-agent-test
+  # The SRC_PATH is in the GOPATH of the builders which
+  # currently is /go
+  SRC_PATH: /go/src/github.com/StackVista/stackstate-agent
+  # Directory in which we execute the omnibus build.
+  # For an unknown reason, it does not go well with
+  # a ruby dependency if we build directly into $CI_PROJECT_DIR/.omnibus
+  OMNIBUS_BASE_DIR: /.omnibus
+  # Directory in which we put the artifacts after the build
+  # Must be in $CI_PROJECT_DIR
+  OMNIBUS_PACKAGE_DIR: $CI_PROJECT_DIR/.omnibus/pkg/
+  # Directory in which we execute the omnibus build for SUSE
+  # as we want to separate the RPM built for this distro.
+
 
 before_script:
  - mkdir -p /go/src/github.com/StackVista
