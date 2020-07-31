@@ -98,6 +98,7 @@ def apply_branding(ctx):
     sts_camel_replace = 's/Data[dD]og/StackState/g'
     sts_lower_replace = 's/datadog/stackstate/g'
     datadog_metrics_replace = 's/"datadog./"stackstate./g'
+    datadog_checks_replace = 's/"datadog_checks./"stackstate_checks./g'
 
     # Config
     do_go_rename(ctx, '"\\"dd_url\\" -> \\"sts_url\\""', "./pkg/config")
@@ -313,7 +314,7 @@ def apply_branding(ctx):
     do_sed_rename(ctx, 's/datadog_checks_base/stackstate_checks_base/g', "./cmd/agent/app/integrations.go")
     do_go_rename(ctx, '"\\"datadog_checks\\" -> \\"stackstate_checks\\""', "./pkg/collector/python")
     do_go_rename(ctx, '"\\"An error occurred while grabbing the python datadog integration list\\" -> \\"An error occurred while grabbing the python StackState integration list\\""', "./pkg/collector/python")
-    do_sed_rename(ctx, datadog_metrics_replace, "./pkg/collector/python/loader.go")
+#    do_sed_rename(ctx, datadog_checks_replace, "./pkg/collector/python/loader.go")
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/collector/runner/runner.go")
 
     # cluster agent client
