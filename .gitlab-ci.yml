@@ -3408,7 +3408,7 @@ deploy_staging_windows_master-latest-a6:
 # deploy debian packages to apt staging repo
 deploy_deb_testing-a6:
   rules:
-    - <<: *if_not_version_6
+    - <<: *if_not_version_7
       when: never
     - <<: *if_deploy
   stage: deploy7
