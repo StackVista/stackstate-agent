@@ -147,7 +147,7 @@ unit_tests:
 
     - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --build-exclude clusterchecks,kubelet
   tags:
-    - sts-aws
+    - sts-k8s-xl-no-docker-runner
 
 integration_tests:
   stage: build_and_test
