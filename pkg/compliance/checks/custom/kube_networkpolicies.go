@@ -8,10 +8,10 @@ package custom
 import (
 	"fmt"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
+	"github.com/DataDog/datadog-agent/pkg/compliance"
+	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	"github.com/DataDog/datadog-agent/pkg/compliance/eval"
+	"github.com/DataDog/datadog-agent/pkg/compliance/event"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -20,7 +20,7 @@ func init() {
 	registerCustomCheck("kubernetesNetworkPolicies", kubernetesNetworkPoliciesCheck)
 }
 
-func kubernetesNetworkPoliciesCheck(e env.Env, ruleID string, vars map[string]string, _ *eval.IterableExpression) (*compliance.Report, error) {
+func kubernetesNetworkPoliciesCheck(e env.Env, ruleID string, vars map[string]string, expr *eval.IterableExpression) (*compliance.Report, error) {
 	if e.KubeClient() == nil {
 		return nil, fmt.Errorf("unable to run kubernetesNetworkPolicies check for rule: %s - Kubernetes client not initialized", ruleID)
 	}

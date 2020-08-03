@@ -8,9 +8,9 @@ package custom
 import (
 	"fmt"
 
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
+	"github.com/DataDog/datadog-agent/pkg/compliance"
+	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	"github.com/DataDog/datadog-agent/pkg/compliance/eval"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -21,7 +21,7 @@ func init() {
 	registerCustomCheck("kubernetesDefaultServiceAccounts", kubernetesDefaultServiceAccountsCheck)
 }
 
-func kubernetesDefaultServiceAccountsCheck(e env.Env, ruleID string, vars map[string]string, _ *eval.IterableExpression) (*compliance.Report, error) {
+func kubernetesDefaultServiceAccountsCheck(e env.Env, ruleID string, vars map[string]string, expr *eval.IterableExpression) (*compliance.Report, error) {
 	if e.KubeClient() == nil {
 		return nil, fmt.Errorf("unable to run kubernetesDefaultServiceAccounts check for rule: %s - Kubernetes client not initialized", ruleID)
 	}

@@ -22,7 +22,7 @@ type processFixture struct {
 
 	processes    processes
 	useCache     bool
-	expectReport *report
+	expectReport *compliance.Report
 	expectError  error
 }
 
@@ -65,9 +65,9 @@ func TestProcessCheck(t *testing.T) {
 					Cmdline: []string{"arg1", "--path=foo"},
 				},
 			},
-			expectReport: &report{
-				passed: true,
-				data: event.Data{
+			expectReport: &compliance.Report{
+				Passed: true,
+				Data: event.Data{
 					"process.name":    "proc1",
 					"process.exe":     "",
 					"process.cmdLine": []string{"arg1", "--path=foo"},
@@ -100,8 +100,8 @@ func TestProcessCheck(t *testing.T) {
 					"process.cmdLine": []string{"arg1", "--tlsverify"},
 				},
 			},
-			expectReport: &report{
-				passed: false,
+			expectReport: &compliance.Report{
+				Passed: false,
 			},
 		},
 		{
@@ -122,9 +122,9 @@ func TestProcessCheck(t *testing.T) {
 					Cmdline: []string{"arg1", "--path=foo"},
 				},
 			},
-			expectReport: &report{
-				passed: false,
-				data: event.Data{
+			expectReport: &compliance.Report{
+				Passed: false,
+				Data: event.Data{
 					"process.name":    "proc1",
 					"process.exe":     "",
 					"process.cmdLine": []string{"arg1", "--paths=foo"},
@@ -155,9 +155,9 @@ func TestProcessCheckCache(t *testing.T) {
 				Cmdline: []string{"arg1", "--path=foo"},
 			},
 		},
-		expectReport: &report{
-			passed: true,
-			data: event.Data{
+		expectReport: &compliance.Report{
+			Passed: true,
+			Data: event.Data{
 				"process.name":    "proc1",
 				"process.exe":     "",
 				"process.cmdLine": []string{"arg1", "--path=foo"},
@@ -176,9 +176,9 @@ func TestProcessCheckCache(t *testing.T) {
 			Condition: `process.flag("--path") == "foo"`,
 		},
 		useCache: true,
-		expectReport: &report{
-			passed: true,
-			data: event.Data{
+		expectReport: &compliance.Report{
+			Passed: true,
+			Data: event.Data{
 				"process.name":    "proc1",
 				"process.exe":     "",
 				"process.cmdLine": []string{"arg1", "--path=foo"},

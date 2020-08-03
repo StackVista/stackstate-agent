@@ -30,6 +30,8 @@ const (
 	KindAudit = ResourceKind("audit")
 	// KindKubernetes is used for a KubernetesResource
 	KindKubernetes = ResourceKind("kubernetes")
+	// KindCustom is used for a Custom check
+	KindCustom = ResourceKind("custom")
 )
 
 // Resource describes supported resource types observed by a Rule
@@ -41,29 +43,8 @@ type Resource struct {
 	Audit         *Audit              `yaml:"audit,omitempty"`
 	Docker        *DockerResource     `yaml:"docker,omitempty"`
 	KubeApiserver *KubernetesResource `yaml:"kubeApiserver,omitempty"`
+	Custom        *Custom             `yaml:"custom,omitempty"`
 	Condition     string              `yaml:"condition"`
-}
-
-// Kind returns ResourceKind of the resource
-func (r *Resource) Kind() ResourceKind {
-	switch {
-	case r.File != nil:
-		return KindFile
-	case r.Process != nil:
-		return KindProcess
-	case r.Group != nil:
-		return KindGroup
-	case r.Command != nil:
-		return KindCommand
-	case r.Audit != nil:
-		return KindAudit
-	case r.Docker != nil:
-		return KindDocker
-	case r.KubeApiserver != nil:
-		return KindKubernetes
-	default:
-		return KindInvalid
-	}
 }
 
 // Kind returns ResourceKind of the resource
@@ -90,12 +71,6 @@ func (r *Resource) Kind() ResourceKind {
 	}
 }
 
-// Fallback specifies optional fallback configuration for a resource
-type Fallback struct {
-	Condition string   `yaml:"condition,omitempty"`
-	Resource  Resource `yaml:"resource"`
-}
-
 // Fields & functions available for File
 const (
 	FileFieldPath        = "file.path"
@@ -113,10 +88,31 @@ type File struct {
 	Path string `yaml:"path"`
 }
 
+// Fields & functions available for Process
+const (
+	ProcessFieldName    = "process.name"
+	ProcessFieldExe     = "process.exe"
+	ProcessFieldCmdLine = "process.cmdLine"
+
+	ProcessFuncFlag    = "process.flag"
+	ProcessFuncHasFlag = "process.hasFlag"
+)
+
 // Process describes a process resource
 type Process struct {
 	Name string `yaml:"name"`
 }
+
+// Fields & functions available for KubernetesResource
+const (
+	KubeResourceFieldName      = "kube.resource.name"
+	KubeResourceFieldGroup     = "kube.resource.group"
+	KubeResourceFieldVersion   = "kube.resource.version"
+	KubeResourceFieldNamespace = "kube.resource.namespace"
+	KubeResourceFieldKind      = "kube.resource.kind"
+
+	KubeResourceFuncJQ = "kube.resource.jq"
+)
 
 // KubernetesResource describes any object in Kubernetes (incl. CRDs)
 type KubernetesResource struct {
@@ -178,6 +174,12 @@ func (c *ShellCmd) String() string {
 	return fmt.Sprintf("Shell command: %s", c.Run)
 }
 
+// Fields & functions available for Command
+const (
+	CommandFieldExitCode = "command.exitCode"
+	CommandFieldStdout   = "command.stdout"
+)
+
 // Command describes a command resource usually reporting exit code or output
 type Command struct {
 	BinaryCmd      *BinaryCmd `yaml:"binary,omitempty"`
@@ -215,7 +217,36 @@ func (a *Audit) Validate() error {
 	return nil
 }
 
+// Fields & functions available for Docker
+const (
+	DockerImageFieldID   = "image.id"
+	DockerImageFieldTags = "image.tags"
+
+	DockerContainerFieldID    = "container.id"
+	DockerContainerFieldName  = "container.name"
+	DockerContainerFieldImage = "container.image"
+
+	DockerNetworkFieldID   = "network.id"
+	DockerNetworkFieldName = "network.name"
+
+	DockerVersionFieldVersion       = "docker.version"
+	DockerVersionFieldAPIVersion    = "docker.apiVersion"
+	DockerVersionFieldPlatform      = "docker.platform"
+	DockerVersionFieldExperimental  = "docker.experimental"
+	DockerVersionFieldOS            = "docker.os"
+	DockerVersionFieldArch          = "docker.arch"
+	DokcerVersionFieldKernelVersion = "docker.kernelVersion"
+
+	DockerFuncTemplate = "docker.template"
+)
+
 // DockerResource describes a resource from docker daemon
 type DockerResource struct {
 	Kind string `yaml:"kind"`
+}
+
+// Custom is a special resource handled by a dedicated function
+type Custom struct {
+	Name      string            `yaml:"name"`
+	Variables map[string]string `yaml:"variables,omitempty"`
 }
