@@ -41,13 +41,8 @@ from .test import (
     lint_teamassignment,
     make_kitchen_gitlab_yml,
     make_simple_gitlab_yml,
-    check_gitlab_broken_dependencies,
-    install_shellcheck,
+    test,
 )
-
-# [sts] Security agent
-enable_security_agent = False
-
 
 # the root namespace
 ns = Collection()

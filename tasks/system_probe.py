@@ -18,6 +18,8 @@ from .utils import (
     get_build_flags,
     get_git_branch_name,
     get_git_commit,
+    get_go_version,
+    get_version,
     get_version_numeric_only,
 )
 

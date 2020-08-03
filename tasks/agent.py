@@ -29,17 +29,7 @@ from .utils import (
     get_win_py_runtime_var,
     has_both_python,
     load_release_versions,
-    do_go_rename,  # sts
-    do_sed_rename,  # sts
 )
-from .utils import REPO_PATH
-from .build_tags import get_build_tags, get_default_build_tags, filter_incompatible_tags
-from .go import deps, generate
-from .docker import pull_base_images
-from .ssm import get_signing_cert, get_pfx_pass
-from .rtloader import make as rtloader_make
-from .rtloader import install as rtloader_install
-from .rtloader import clean as rtloader_clean
 
 # constants
 BIN_PATH = os.path.join(".", "bin", "agent")

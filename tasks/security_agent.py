@@ -1,5 +1,6 @@
 import datetime
 import os
+
 from invoke import task
 
 from .build_tags import get_default_build_tags
@@ -14,8 +15,6 @@ from .utils import (
     get_gopath,
     get_version,
 )
-from .build_tags import get_default_build_tags
-from .go import generate
 
 BIN_DIR = os.path.join(".", "bin", "security-agent")
 BIN_PATH = os.path.join(BIN_DIR, bin_name("security-agent", android=False))
