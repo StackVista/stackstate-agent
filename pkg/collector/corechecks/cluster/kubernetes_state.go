@@ -242,19 +242,24 @@ func (k *KSMCheck) processMetrics(sender aggregator.Sender, metrics map[string][
 			}
 			if transform, found := metricTransformers[metricFamily.Name]; found {
 				for _, m := range metricFamily.ListMetrics {
-					transform(sender, metricFamily.Name, m, k.prepareTags(m.Labels, metricsToGet))
+					hostname, tags := k.hostnameAndTags(m.Labels, metricsToGet)
+					transform(sender, metricFamily.Name, m, hostname, tags)
 				}
 				continue
 			}
 			for _, m := range metricFamily.ListMetrics {
-				sender.Gauge(formatMetricName(metricFamily.Name), m.Val, "", k.prepareTags(m.Labels, metricsToGet))
+				hostname, tags := k.hostnameAndTags(m.Labels, metricsToGet)
+				sender.Gauge(formatMetricName(metricFamily.Name), m.Val, hostname, tags)
 			}
 		}
 	}
 }
 
-// prepareTags converts metric labels into datatog tags, append the configured check tags and applies the label joins config
-func (k *KSMCheck) prepareTags(labels map[string]string, metricsToGet []ksmstore.DDMetricsFam) (tags []string) {
+// hostnameAndTags returns the tags and the hostname for a metric based on the metric labels and the check configuration
+func (k *KSMCheck) hostnameAndTags(labels map[string]string, metricsToGet []ksmstore.DDMetricsFam) (string, []string) {
+	hostname := ""
+	tags := []string{}
+
 	for key, value := range labels {
 		tag, hostTag := k.buildTag(key, value)
 		tags = append(tags, tag)
@@ -280,7 +285,7 @@ func (k *KSMCheck) prepareTags(labels map[string]string, metricsToGet []ksmstore
 		}
 	}
 
-	return append(tags, k.instance.Tags...)
+	return hostname, append(tags, k.instance.Tags...)
 }
 
 // familyFilter is a metric families filter for label joins
@@ -358,33 +363,6 @@ func (k *KSMCheck) getJoinedTags(config *JoinsConfig, srcLabels map[string]strin
 		}
 	}
 	return hostname, tags
-}
-
-// mergeLabelsMapper adds extra label mappings to the configured labels mapper
-// User-defined mappings are prioritized over additional mappings
-func (k *KSMCheck) mergeLabelsMapper(extra map[string]string) {
-	for key, value := range extra {
-		if _, found := k.instance.LabelsMapper[key]; !found {
-			k.instance.LabelsMapper[key] = value
-		}
-	}
-}
-
-// mergeLabelJoins adds extra label joins to the configured label joins
-// User-defined label joins are prioritized over additional label joins
-func (k *KSMCheck) mergeLabelJoins(extra map[string]*JoinsConfig) {
-	for key, value := range extra {
-		if _, found := k.instance.LabelJoins[key]; !found {
-			k.instance.LabelJoins[key] = value
-		}
-	}
-}
-
-// initTags avoids keeping a nil Tags field in the check instance
-func (k *KSMCheck) initTags() {
-	if k.instance.Tags == nil {
-		k.instance.Tags = []string{}
-	}
 }
 
 // mergeLabelsMapper adds extra label mappings to the configured labels mapper
