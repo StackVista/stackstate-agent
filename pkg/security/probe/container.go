@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build linux_bpf
 // +build linux_bpf
 
 package probe
@@ -11,7 +10,7 @@ package probe
 import (
 	"os"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/utils"
+	"github.com/DataDog/datadog-agent/pkg/security/utils"
 )
 
 // ContainerResolver is used to resolve the container context of the events
