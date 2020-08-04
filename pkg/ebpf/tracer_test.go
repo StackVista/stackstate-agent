@@ -1657,10 +1657,12 @@ func TestConntrackExpiration(t *testing.T) {
 func TestTCPEstablished(t *testing.T) {
 	// Ensure closed connections are flushed as soon as possible
 	cfg := NewDefaultConfig()
-	cfg.TCPClosedTimeout = 500 * time.Millisecond
+	cfg.TCPClosedTimeout = time.Millisecond
 
 	tr, err := NewTracer(cfg)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer tr.Stop()
 
 	// Warm-up state
@@ -1675,7 +1677,9 @@ func TestTCPEstablished(t *testing.T) {
 	defer close(doneChan)
 
 	c, err := net.DialTimeout("tcp", server.address, 50*time.Millisecond)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	laddr, raddr := c.LocalAddr(), c.RemoteAddr()
 	c.Write([]byte("hello"))
@@ -1683,17 +1687,17 @@ func TestTCPEstablished(t *testing.T) {
 	connections := getConnections(t, tr)
 	conn, ok := findConnection(laddr, raddr, connections)
 
-	require.True(t, ok)
+	assert.True(t, ok)
 	assert.Equal(t, uint32(1), conn.LastTCPEstablished)
 	assert.Equal(t, uint32(0), conn.LastTCPClosed)
 
 	c.Close()
 	// Wait for the connection to be sent from the perf buffer
-	time.Sleep(cfg.TCPClosedTimeout)
+	time.Sleep(10 * time.Millisecond)
 
 	connections = getConnections(t, tr)
 	conn, ok = findConnection(laddr, raddr, connections)
-	require.True(t, ok)
+	assert.True(t, ok)
 	assert.Equal(t, uint32(0), conn.LastTCPEstablished)
 	assert.Equal(t, uint32(1), conn.LastTCPClosed)
 }
@@ -1708,15 +1712,19 @@ func TestTCPEstablishedPreExistingConn(t *testing.T) {
 	defer close(doneChan)
 
 	c, err := net.DialTimeout("tcp", server.address, 50*time.Millisecond)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	laddr, raddr := c.LocalAddr(), c.RemoteAddr()
 
 	// Ensure closed connections are flushed as soon as possible
 	cfg := NewDefaultConfig()
-	cfg.TCPClosedTimeout = 500 * time.Millisecond
+	cfg.TCPClosedTimeout = time.Millisecond
 
 	tr, err := NewTracer(cfg)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer tr.Stop()
 
 	// Warm-up state
@@ -1725,11 +1733,11 @@ func TestTCPEstablishedPreExistingConn(t *testing.T) {
 	c.Write([]byte("hello"))
 	c.Close()
 	// Wait for the connection to be sent from the perf buffer
-	time.Sleep(cfg.TCPClosedTimeout)
+	time.Sleep(10 * time.Millisecond)
 	connections := getConnections(t, tr)
 	conn, ok := findConnection(laddr, raddr, connections)
 
-	require.True(t, ok)
+	assert.True(t, ok)
 	assert.Equal(t, uint32(0), conn.MonotonicTCPEstablished)
 	assert.Equal(t, uint32(1), conn.MonotonicTCPClosed)
 }

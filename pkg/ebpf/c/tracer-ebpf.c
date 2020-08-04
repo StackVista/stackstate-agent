@@ -1,7 +1,8 @@
 #include "tracer-ebpf.h"
-#include "bpf_helpers.h"
-#include "syscalls.h"
-#include <linux/kconfig.h>
+#include <linux/version.h>
+
+#include <net/sock.h>
+#include <net/tcp_states.h>
 #include <net/inet_sock.h>
 #include <net/net_namespace.h>
 #include <net/tcp_states.h>
@@ -398,33 +399,6 @@ static __always_inline void update_tcp_stats(conn_tuple_t* t, tcp_stats_t stats)
     }
 }
 
-static __always_inline void increment_telemetry_count(enum telemetry_counter counter_name) {
-    __u64 key = 0;
-    telemetry_t empty = {};
-    telemetry_t* val;
-    bpf_map_update_elem(&telemetry, &key, &empty, BPF_NOEXIST);
-    val = bpf_map_lookup_elem(&telemetry, &key);
-
-    if (val == NULL) {
-        return;
-    }
-    switch (counter_name) {
-        case tcp_sent_miscounts:
-            __sync_fetch_and_add(&val->tcp_sent_miscounts, 1);
-            break;
-        case missed_tcp_close:
-            __sync_fetch_and_add(&val->missed_tcp_close, 1);
-            break;
-        case udp_send_processed:
-            __sync_fetch_and_add(&val->udp_sends_processed, 1);
-            break;
-        case udp_send_missed:
-            __sync_fetch_and_add(&val->udp_sends_missed, 1);
-            break;
-    }
-    return;
-}
-
 static __always_inline void cleanup_tcp_conn(struct pt_regs* __attribute__((unused)) ctx, conn_tuple_t* tup) {
     u32 cpu = bpf_get_smp_processor_id();
 
@@ -754,6 +728,34 @@ int kprobe__tcp_set_state(struct pt_regs* ctx) {
     u64 pid_tgid = bpf_get_current_pid_tgid();
     conn_tuple_t t = {};
     if (!read_conn_tuple(&t, sk, pid_tgid, CONN_TYPE_TCP)) {
+        return 0;
+    }
+
+    tcp_stats_t stats = { .state_transitions = (1 << state) };
+    update_tcp_stats(&t, stats);
+
+    return 0;
+}
+
+SEC("kprobe/tcp_set_state")
+int kprobe__tcp_set_state(struct pt_regs* ctx) {
+    u8 state = (u8)PT_REGS_PARM2(ctx);
+
+    // For now we're tracking only TCP_ESTABLISHED
+    if (state != TCP_ESTABLISHED) {
+        return 0;
+    }
+
+    struct sock* sk = (struct sock*)PT_REGS_PARM1(ctx);
+    u64 zero = 0;
+    tracer_status_t* status = bpf_map_lookup_elem(&tracer_status, &zero);
+    if (status == NULL) {
+        return 0;
+    }
+
+    u64 pid_tgid = bpf_get_current_pid_tgid();
+    conn_tuple_t t = {};
+    if (!read_conn_tuple(&t, status, sk, pid_tgid, CONN_TYPE_TCP)) {
         return 0;
     }
 
