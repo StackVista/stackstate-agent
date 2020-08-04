@@ -284,7 +284,7 @@ build_deb:
 
     # Prepare outputs
   - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles && mkdir -p $CI_PROJECT_DIR/outcomes/binary
-  - cp -r /omnibus/pkg $CI_PROJECT_DIR/outcomes
+  - cp -r $OMNIBUS_BASE_DIR/pkg $CI_PROJECT_DIR/outcomes
   - cp -r /go/src/github.com/StackVista/stackstate-agent/Dockerfiles $CI_PROJECT_DIR/outcomes
   - cp -r /opt/stackstate-agent/embedded/bin/trace-agent  $CI_PROJECT_DIR/outcomes/binary/
 
@@ -295,7 +295,7 @@ build_deb:
   - rm -rf /omnibus/src/datadog-agent
     # Drop symlink because it will fail the build when coming from a cache
   - rm /omnibus/src/datadog-agent/src/github.com/StackVista/stackstate-agent/vendor/github.com/coreos/etcd/cmd/etcd || echo "Not found"
-  - mv /omnibus $CI_PROJECT_DIR/.omnibus
+#  - mv /omnibus $CI_PROJECT_DIR/.omnibus
   artifacts:
     paths:
         - $CI_PROJECT_DIR/outcomes/pkg/*.deb
