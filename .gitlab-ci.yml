@@ -285,8 +285,9 @@ build_deb:
     # Prepare outputs
   - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles && mkdir -p $CI_PROJECT_DIR/outcomes/binary
   - cp -r $OMNIBUS_BASE_DIR/pkg $CI_PROJECT_DIR/outcomes
-  - cp -r /go/src/github.com/StackVista/stackstate-agent/Dockerfiles $CI_PROJECT_DIR/outcomes
-  - cp -r /opt/stackstate-agent/embedded/bin/trace-agent  $CI_PROJECT_DIR/outcomes/binary/
+  - cp -r $CI_PROJECT_DIR/Dockerfiles $CI_PROJECT_DIR/outcomes
+# TODO: localize /opt/datadog-agent
+  - cp -r /opt/datadog-agent/embedded/bin/trace-agent  $CI_PROJECT_DIR/outcomes/binary/
 
     # Prepare cache
     # Drop packages for cache
