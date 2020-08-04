@@ -279,7 +279,7 @@ build_deb:
   - cat version.txt || true
   - source ./.gitlab-scripts/setup_artifactory.sh
 
-  - inv -e agent.omnibus-build --base-dir /omnibus --skip-sign
+  - inv -e agent.omnibus-build --base-dir $OMNIBUS_BASE_DIR --skip-sign --skip-deps --major-version 2
 
     # Prepare outputs
   - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles && mkdir -p $CI_PROJECT_DIR/outcomes/binary
