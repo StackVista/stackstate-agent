@@ -205,8 +205,8 @@ build_binaries:
     - deps_deb
   script:
     - . /root/miniconda3/etc/profile.d/conda.sh
-    - inv -e dogstatsd.build --static --major-version 7
-    - inv -e agent.build --major-version 7
+    - inv -e dogstatsd.build --static --major-version 2
+    - inv -e agent.build --major-version 2
   tags:
     - sts-aws
 
