@@ -36,12 +36,23 @@ variables:
   SYSTEM_PROBE_GO_VERSION: 1.13.11
   DATADOG_AGENT_EMBEDDED_PATH: /opt/datadog-agent/embedded
 
+
+######################### pipeline bricks
+
+.retrieve_linux_go_deps: &retrieve_linux_go_deps |
+  mkdir -p $GOPATH/bin && tar xzf go-bin.tar.gz -C $GOPATH/bin
+  mkdir -p $GOPATH/pkg && tar xzf go-pkg.tar.gz -C $GOPATH/pkg
+  mkdir vendor && tar xzf vendor.tar.gz -C vendor
+  rm -f go-bin.tar.gz go-pkg.tar.gz vendor.tar.gz
+
+######################### /pipeline bricks
+
+
 before_script:
  - mkdir -p /go/src/github.com/StackVista
  - ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
-   # Either we already have a venv, or we still need to make it (as part of get_deps.sh)
-# - source .gitlab-scripts/setup_env.sh
  - . /root/miniconda3/etc/profile.d/conda.sh # TODO: check possibility to use bash from the start
+ - *retrieve_linux_go_deps
 clear_deps_deb_cache:
   stage: prepare
   before_script: []
@@ -103,14 +114,18 @@ deps_deb:
     - conda activate ddpy3
     - inv -e deps --verbose --dep-vendor-only
     - inv version -u > version.txt
+    - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz .
+    - cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz .
+    - cd $CI_PROJECT_DIR/vendor && tar czf $CI_PROJECT_DIR/vendor.tar.gz .
   artifacts:
     paths:
-      - $CI_PROJECT_DIR/vendor
+#      - $CI_PROJECT_DIR/vendor
 #      - $CI_PROJECT_DIR/venv
       - $CI_PROJECT_DIR/version.txt
+      - $CI_PROJECT_DIR/go-pkg.tar.gz
+      - $CI_PROJECT_DIR/go-bin.tar.gz
+      - $CI_PROJECT_DIR/vendor.tar.gz
     expire_in: 1 week
-  tags:
-    - agent7
 
 deps_rpm:
   stage: prepare
@@ -279,8 +294,7 @@ build_deb:
   - cat version.txt || true
   - source ./.gitlab-scripts/setup_artifactory.sh
 
-# TODO: below add --skip-deps
-  - inv -e agent.omnibus-build --base-dir $OMNIBUS_BASE_DIR --skip-sign --major-version 2
+  - inv -e agent.omnibus-build --base-dir $OMNIBUS_BASE_DIR --skip-deps --skip-sign --major-version 2
 
     # Prepare outputs
   - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles && mkdir -p $CI_PROJECT_DIR/outcomes/binary
