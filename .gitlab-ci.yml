@@ -205,10 +205,10 @@ build_binaries:
     - deps_deb
   script:
     - . /root/miniconda3/etc/profile.d/conda.sh
-    - inv -e dogstatsd.build --static
-    - inv -e agent.build
+    - inv -e dogstatsd.build --static --major-version 7
+    - inv -e agent.build --major-version 7
   tags:
-    - agent7
+    - sts-aws
 
 #[VS] todo: obosolete in agent7?
 #build_puppy:
@@ -279,7 +279,8 @@ build_deb:
   - cat version.txt || true
   - source ./.gitlab-scripts/setup_artifactory.sh
 
-  - inv -e agent.omnibus-build --base-dir $OMNIBUS_BASE_DIR --skip-sign --skip-deps --major-version 2
+# TODO: below add --skip-deps
+  - inv -e agent.omnibus-build --base-dir $OMNIBUS_BASE_DIR --skip-sign --major-version 2
 
     # Prepare outputs
   - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles && mkdir -p $CI_PROJECT_DIR/outcomes/binary
