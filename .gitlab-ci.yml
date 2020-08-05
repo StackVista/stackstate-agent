@@ -41,7 +41,7 @@ variables:
 
 .retrieve_linux_go_deps: &retrieve_linux_go_deps |
   echo "~~~~~> Trying to retrieve_linux_go_deps"
-  ls *.tar.gz
+  ls *.tar.gz || true
   [ -e "go-bin.tar.gz" ] && mkdir -p $GOPATH/bin && tar xzf go-bin.tar.gz -C $GOPATH/bin
   [ -e "go-pkg.tar.gz" ] && mkdir -p $GOPATH/pkg && tar xzf go-pkg.tar.gz -C $GOPATH/pkg
   [ -e "vendor.tar.gz" ] && mkdir vendor && tar xzf vendor.tar.gz -C vendor
