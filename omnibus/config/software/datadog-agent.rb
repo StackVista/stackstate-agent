@@ -151,12 +151,11 @@ build do
       platform = windows_arch_i386? ? "x86" : "x64"
       command "invoke -e security-agent.build --major-version #{major_version_arg} --arch #{platform}", :env => env
 
-      copy 'bin/security-agent/security-agent.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
-    else
-      command "invoke -e security-agent.build --major-version #{major_version_arg}", :env => env
-      copy 'bin/security-agent/security-agent', "#{install_dir}/embedded/bin"
-      copy 'bin/security-agent/dist/runtime-security.d/default.policy', "#{conf_dir}/runtime-security.d"
-	end
+    copy 'bin/security-agent/security-agent.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
+  else
+    command "invoke -e security-agent.build --major-version #{major_version_arg}", :env => env
+    copy 'bin/security-agent/security-agent', "#{install_dir}/embedded/bin"
+    copy 'bin/security-agent/dist/runtime-security.d/default.policy', "#{conf_dir}/runtime-security.d"
   end
 
   if linux?

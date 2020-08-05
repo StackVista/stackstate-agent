@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/StackVista/stackstate-agent/pkg/security/config"
+	"github.com/DataDog/datadog-agent/pkg/security/config"
 )
 
 func main() {
