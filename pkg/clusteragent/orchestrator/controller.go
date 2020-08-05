@@ -287,13 +287,3 @@ func spreadProcessors(processors []func(), spreadInterval, processorPeriod time.
 		})
 	}
 }
-
-func spreadProcessors(processors []func(), spreadInterval, processorPeriod time.Duration, stopCh <-chan struct{}) {
-	for idx, p := range processors {
-		processor := p
-		time.AfterFunc(time.Duration(idx)*spreadInterval, func() {
-			go wait.Until(processor, processorPeriod, stopCh)
-		})
-	}
-
-}
