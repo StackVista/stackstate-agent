@@ -20,11 +20,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/cmd/security-agent/api/agent"
-	"github.com/StackVista/stackstate-agent/pkg/api/security"
-	"github.com/StackVista/stackstate-agent/pkg/api/util"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	secagent "github.com/StackVista/stackstate-agent/pkg/security/agent"
+	"github.com/DataDog/datadog-agent/cmd/security-agent/api/agent"
+	"github.com/DataDog/datadog-agent/pkg/api/security"
+	"github.com/DataDog/datadog-agent/pkg/api/util"
+	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/gorilla/mux"
 )
 

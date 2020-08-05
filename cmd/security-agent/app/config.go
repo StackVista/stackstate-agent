@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:build kubeapiserver
 // +build kubeapiserver
 
 package app
@@ -12,9 +11,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/StackVista/stackstate-agent/cmd/agent/common"
-	"github.com/StackVista/stackstate-agent/pkg/api/util"
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/cmd/agent/common"
+	"github.com/DataDog/datadog-agent/pkg/api/util"
+	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )

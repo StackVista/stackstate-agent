@@ -780,22 +780,13 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("inventories_min_interval", 300) // 5min
 
 	// Datadog security agent (common)
+	config.BindEnvAndSetDefault("security_agent.cmd_port", 5010)
 	config.BindEnvAndSetDefault("security_agent.expvar_port", 5011)
 
 	// Datadog security agent (compliance)
 	config.BindEnvAndSetDefault("compliance_config.enabled", false)
 	config.BindEnvAndSetDefault("compliance_config.check_interval", 20*time.Minute)
 	config.BindEnvAndSetDefault("compliance_config.dir", "/etc/datadog-agent/compliance.d")
-	config.BindEnvAndSetDefault("compliance_config.run_path", defaultRunPath)
-
-	// Datadog security agent (runtime)
-	config.BindEnvAndSetDefault("runtime_security_config.enabled", false)
-	config.BindEnvAndSetDefault("runtime_security_config.debug", false)
-	config.BindEnvAndSetDefault("runtime_security_config.policies.dir", "/etc/datadog-agent/runtime-security.d")
-	config.BindEnvAndSetDefault("runtime_security_config.socket", "/opt/datadog-agent/run/runtime-security.sock")
-	config.BindEnvAndSetDefault("runtime_security_config.enable_kernel_filters", true)
-	config.BindEnvAndSetDefault("runtime_security_config.syscall_monitor.enabled", false)
-	config.BindEnvAndSetDefault("runtime_security_config.run_path", defaultRunPath)
 
 	// Datadog security agent (runtime)
 	config.BindEnvAndSetDefault("runtime_security_config.enabled", false)

@@ -41,12 +41,12 @@ func NewAgent(runtimeAgent *secagent.RuntimeSecurityAgent) *Agent {
 // SetupHandlers adds the specific handlers for /agent endpoints
 func (a *Agent) SetupHandlers(r *mux.Router) {
 	r.HandleFunc("/version", common.GetVersion).Methods("GET")
-	r.HandleFunc("/flare", a.makeFlare).Methods("POST")
-	r.HandleFunc("/hostname", a.getHostname).Methods("GET")
-	r.HandleFunc("/stop", a.stopAgent).Methods("POST")
-	r.HandleFunc("/status", a.getStatus).Methods("GET")
-	r.HandleFunc("/status/health", a.getHealth).Methods("GET")
-	r.HandleFunc("/config", a.getRuntimeConfig).Methods("GET")
+	r.HandleFunc("/flare", makeFlare).Methods("POST")
+	r.HandleFunc("/hostname", getHostname).Methods("GET")
+	r.HandleFunc("/stop", stopAgent).Methods("POST")
+	r.HandleFunc("/status", getStatus).Methods("GET")
+	r.HandleFunc("/status/health", getHealth).Methods("GET")
+	r.HandleFunc("/config", getRuntimeConfig).Methods("GET")
 }
 
 func (a *Agent) stopAgent(w http.ResponseWriter, r *http.Request) {
@@ -141,7 +141,7 @@ func (a *Agent) makeFlare(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(filePath))
 }
 
-func (a *Agent) getRuntimeConfig(w http.ResponseWriter, r *http.Request) {
+func getRuntimeConfig(w http.ResponseWriter, r *http.Request) {
 	runtimeConfig, err := yaml.Marshal(config.Datadog.AllSettings())
 	if err != nil {
 		log.Errorf("Unable to marshal runtime config response: %s", err)
