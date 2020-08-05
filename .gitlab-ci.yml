@@ -50,6 +50,7 @@ variables:
 
 .configure_centos_environment: &configure_centos_environment |
   . /root/.gimme/envs/go1.13.11.env
+  . /root/miniconda3/etc/profile.d/conda.sh
   conda activate ddpy3
   mkdir -p /go/src/github.com/StackVista
   ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
