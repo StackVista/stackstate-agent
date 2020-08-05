@@ -50,7 +50,6 @@ variables:
 
 .configure_centos_environment: &configure_centos_environment |
   . /root/.gimme/envs/go1.13.11.env
-  . /etc/profile.d/conda.sh # TODO: check state with miniconda2/3
   conda activate ddpy3
   mkdir -p /go/src/github.com/StackVista
   ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
@@ -123,9 +122,6 @@ deps_deb:
       - vendor
       - venv
   script:
-    - whoami
-    - printenv
-#    - pip install -r requirements.txt
     - conda activate ddpy3
     - inv -e deps --verbose --dep-vendor-only
     - inv version -u > version.txt
