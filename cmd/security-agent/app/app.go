@@ -16,6 +16,10 @@ import (
 	"net/http"
 	_ "net/http/pprof" // Blank import used because this isn't directly used in this file
 
+	_ "expvar" // Blank import used because this isn't directly used in this file
+	"net/http"
+	_ "net/http/pprof" // Blank import used because this isn't directly used in this file
+
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
@@ -24,10 +28,11 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/aggregator"
 	"github.com/DataDog/datadog-agent/pkg/forwarder"
 	"github.com/DataDog/datadog-agent/pkg/logs/client"
-	"github.com/DataDog/datadog-agent/pkg/logs/client/http"
+	logshttp "github.com/DataDog/datadog-agent/pkg/logs/client/http"
 	"github.com/DataDog/datadog-agent/pkg/logs/config"
 	"github.com/DataDog/datadog-agent/pkg/logs/restart"
 	"github.com/DataDog/datadog-agent/pkg/serializer"
+	"github.com/DataDog/datadog-agent/pkg/telemetry"
 	"github.com/DataDog/datadog-agent/pkg/util"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/datadog-agent/pkg/version"
@@ -116,7 +121,7 @@ func newLogContext() (*config.Endpoints, *client.DestinationsContext, error) {
 func newLogContext() (*config.Endpoints, *client.DestinationsContext, error) {
 	httpConnectivity := config.HTTPConnectivityFailure
 	if endpoints, err := config.BuildHTTPEndpoints(); err == nil {
-		httpConnectivity = http.CheckConnectivity(endpoints.Main)
+		httpConnectivity = logshttp.CheckConnectivity(endpoints.Main)
 	}
 
 	endpoints, err := config.BuildEndpoints(httpConnectivity)
@@ -171,6 +176,14 @@ func start(cmd *cobra.Command, args []string) error {
 	if !coreconfig.Datadog.IsSet("api_key") {
 		log.Critical("no API key configured, exiting")
 		return nil
+	}
+	go http.ListenAndServe("127.0.0.1:"+port, http.DefaultServeMux) //nolint:errcheck
+
+	// Setup expvar server
+	var port = coreconfig.Datadog.GetString("security_agent.expvar_port")
+	coreconfig.Datadog.Set("expvar_port", port)
+	if coreconfig.Datadog.GetBool("telemetry.enabled") {
+		http.Handle("/telemetry", telemetry.Handler())
 	}
 	go http.ListenAndServe("127.0.0.1:"+port, http.DefaultServeMux) //nolint:errcheck
 
