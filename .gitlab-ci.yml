@@ -54,6 +54,7 @@ variables:
   . /root/miniconda3/etc/profile.d/conda.sh
   conda activate ddpy3
   mkdir -p /go/src/github.com/StackVista
+  rm -rf /go/src/github.com/StackVista/stackstate-agent || true
   ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
 
 
@@ -61,6 +62,7 @@ variables:
   . /root/miniconda3/etc/profile.d/conda.sh # TODO: check possibility to use bash from the start
   conda activate ddpy3
   mkdir -p /go/src/github.com/StackVista
+  rm -rf /go/src/github.com/StackVista/stackstate-agent || true
   ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
 
 ######################### /pipeline bricks
@@ -237,6 +239,9 @@ build_binaries:
     - deps_deb
   script:
     - inv -e dogstatsd.build --static --major-version 2
+    - inv -e rtloader.make
+    - inv -e rtloader.install
+    - cd $SRC_PATH
     - inv -e agent.build --major-version 2
   tags:
     - sts-aws
