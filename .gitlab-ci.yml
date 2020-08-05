@@ -50,7 +50,7 @@ variables:
 
 .configure_centos_environment: &configure_centos_environment |
   . /root/.gimme/envs/go1.13.11.env
-  . /root/miniconda3/etc/profile.d/conda.sh # TODO: check possibility to use bash from the start
+  . /etc/profile.d/conda.sh # TODO: check state with miniconda2/3
   conda activate ddpy3
   mkdir -p /go/src/github.com/StackVista
   ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
