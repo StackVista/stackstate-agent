@@ -47,6 +47,13 @@ variables:
   [ -e "vendor.tar.gz" ] && mkdir vendor && tar xzf vendor.tar.gz -C vendor
   rm -f go-bin.tar.gz go-pkg.tar.gz vendor.tar.gz || true
   echo "~~~~~> /Trying..."
+
+.configure_centos_environment: &configure_centos_environment |
+  . /root/.gimme/envs/go1.13.11.env
+  . /root/miniconda3/etc/profile.d/conda.sh # TODO: check possibility to use bash from the start
+  conda activate ddpy3
+  mkdir -p /go/src/github.com/StackVista
+  ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
 ######################### /pipeline bricks
 
 
@@ -131,22 +138,26 @@ deps_deb:
 
 deps_rpm:
   stage: prepare
-  image: docker.io/stackstate/stackstate-agent-runner-gitlab:centos6
+  image: docker.io/stackstate/stackstate-agent-runner-gitlab:centos6_latest_v7
   cache:
     key: "deps-rpm-$CI_COMMIT_REF_SLUG"
     paths:
       - vendor
       - venv
+  before_script:
+    - *configure_centos_environment
   script:
-    - . /root/miniconda3/etc/profile.d/conda.sh # TODO: check possibility to use bash from the start
-    - conda activate ddpy3
     - inv -e deps --verbose --dep-vendor-only
     - inv version -u > version.txt
+    - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz .
+    - cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz .
+    - cd $CI_PROJECT_DIR/vendor && tar czf $CI_PROJECT_DIR/vendor.tar.gz .
   artifacts:
     paths:
-      - $CI_PROJECT_DIR/vendor
-      - $CI_PROJECT_DIR/venv
       - $CI_PROJECT_DIR/version.txt
+      - $CI_PROJECT_DIR/go-pkg.tar.gz
+      - $CI_PROJECT_DIR/go-bin.tar.gz
+      - $CI_PROJECT_DIR/vendor.tar.gz
     expire_in: 1 week
 
 deps_win:
