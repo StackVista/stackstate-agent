@@ -17,19 +17,20 @@ import (
 	"github.com/gorilla/mux"
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/StackVista/stackstate-agent/cmd/agent/api/response"
-	"github.com/StackVista/stackstate-agent/cmd/agent/common"
-	"github.com/StackVista/stackstate-agent/cmd/agent/common/signals"
-	v1 "github.com/StackVista/stackstate-agent/cmd/cluster-agent/api/v1"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/clusteragent"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/flare"
-	"github.com/StackVista/stackstate-agent/pkg/status"
-	"github.com/StackVista/stackstate-agent/pkg/util"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/StackVista/stackstate-agent/pkg/version"
+	"github.com/DataDog/datadog-agent/cmd/agent/api/response"
+	"github.com/DataDog/datadog-agent/cmd/agent/common"
+	"github.com/DataDog/datadog-agent/cmd/agent/common/signals"
+	v1 "github.com/DataDog/datadog-agent/cmd/cluster-agent/api/v1"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/clusteragent"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/flare"
+	"github.com/DataDog/datadog-agent/pkg/status"
+	"github.com/DataDog/datadog-agent/pkg/status/health"
+	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/version"
 )
 
 // SetupHandlers adds the specific handlers for cluster agent endpoints
@@ -39,6 +40,7 @@ func SetupHandlers(r *mux.Router, sc clusteragent.ServerContext) {
 	r.HandleFunc("/flare", makeFlare).Methods("POST")
 	r.HandleFunc("/stop", stopAgent).Methods("POST")
 	r.HandleFunc("/status", getStatus).Methods("GET")
+	r.HandleFunc("/status/health", getHealth).Methods("GET")
 	r.HandleFunc("/config-check", getConfigCheck).Methods("GET")
 	r.HandleFunc("/config", getRuntimeConfig).Methods("GET")
 
@@ -62,6 +64,24 @@ func getStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(jsonStats)
+}
+
+func getHealth(w http.ResponseWriter, r *http.Request) {
+	h := health.GetReady()
+
+	if len(h.Unhealthy) > 0 {
+		log.Debugf("Healthcheck failed on: %v", h.Unhealthy)
+	}
+
+	jsonHealth, err := json.Marshal(h)
+	if err != nil {
+		log.Errorf("Error marshalling status. Error: %v, Status: %v", err, h)
+		body, _ := json.Marshal(map[string]string{"error": err.Error()})
+		http.Error(w, string(body), 500)
+		return
+	}
+
+	w.Write(jsonHealth)
 }
 
 func stopAgent(w http.ResponseWriter, r *http.Request) {
