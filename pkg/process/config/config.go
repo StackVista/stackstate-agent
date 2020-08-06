@@ -30,6 +30,9 @@ var (
 	// defaultSystemProbeBPFDir is the default path for eBPF programs
 	defaultSystemProbeBPFDir = "/opt/datadog-agent/embedded/share/system-probe/ebpf"
 
+	// defaultSystemProbeBPFDir is the default path for eBPF programs
+	defaultSystemProbeBPFDir = "/opt/datadog-agent/embedded/usr/share/system-probe/ebpf"
+
 	processChecks   = []string{"process", "rtprocess"}
 	containerChecks = []string{"container", "rtcontainer"}
 )
@@ -211,7 +214,7 @@ func NewDefaultAgentConfig(canAccessContainers bool) *AgentConfig {
 		DisableIPv6Tracing:    false,
 		DisableDNSInspection:  false,
 		SystemProbeAddress:    defaultSystemProbeAddress,
-		SystemProbeLogFile:    defaultSystemProbeLogFilePath,
+		SystemProbeLogFile:    defaultSystemProbeFilePath,
 		SystemProbeBPFDir:     defaultSystemProbeBPFDir,
 		MaxTrackedConnections: defaultMaxTrackedConnections,
 		EnableConntrack:       true,

@@ -4,7 +4,7 @@
 package ebpf
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/ebpf/tcpqueuelength"
+	"github.com/DataDog/datadog-agent/pkg/ebpf/tcpqueuelength"
 )
 
 // TCPQueueLengthTracer is not implemented on non-linux systems

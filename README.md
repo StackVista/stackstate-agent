@@ -170,3 +170,11 @@ helm upgrade --install \
 
 To use this version in the `stackstate-agent` pipeline, create a branch and update the `HELM_CHART_VERSION` variable on `.gitlab-ci.yml`, with that the pipeline will use the test helm repository that was updated by the helm-charts pipeline.
 
+You'll find information and help on how to contribute code to this project under
+[the `docs/dev` directory](docs/dev) of the present repo.
+
+## License
+
+The Datadog agent user space components are licensed under the
+[Apache License, Version 2.0](LICENSE). The BPF code is licensed
+under the [General Public License, Version 2.0](pkg/ebpf/c/COPYING).

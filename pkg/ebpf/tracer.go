@@ -95,7 +95,7 @@ func NewTracer(config *Config) (*Tracer, error) {
 		return nil, fmt.Errorf("%s: %s", "system-probe unsupported", msg)
 	}
 
-	buf, err := bytecode.ReadBPFModule(config.BPFDir, config.BPFDebug)
+	m, err := bytecode.ReadBPFModule(config.BPFDir, config.BPFDebug)
 	if err != nil {
 		return nil, fmt.Errorf("could not read bpf module: %s", err)
 	}

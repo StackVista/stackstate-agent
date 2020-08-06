@@ -25,12 +25,14 @@ build do
     copy "#{ENV['SYSTEM_PROBE_BIN']}/runtime-security-syscall-wrapper.o", "#{install_dir}/embedded/share/system-probe/ebpf/"
   end
 
+  mkdir "#{install_dir}/embedded/share/system-probe/ebpf"
+
   copy 'pkg/ebpf/c/COPYING', "#{install_dir}/embedded/share/system-probe/ebpf/"
-  copy 'pkg/ebpf/c/bpf-common.h', "#{install_dir}/embedded/share/system-probe/ebpf/"
-
+  copy 'pkg/ebpf/bytecode/tracer-ebpf.o', "#{install_dir}/embedded/share/system-probe/ebpf/"
+  copy 'pkg/ebpf/bytecode/tracer-ebpf-debug.o', "#{install_dir}/embedded/share/system-probe/ebpf/"
   copy 'pkg/ebpf/c/oom-kill-kern.c', "#{install_dir}/embedded/share/system-probe/ebpf/"
-  copy 'pkg/ebpf/oom-kill-kern-user.h', "#{install_dir}/embedded/share/system-probe/ebpf/"
-
   copy 'pkg/ebpf/c/tcp-queue-length-kern.c', "#{install_dir}/embedded/share/system-probe/ebpf/"
-  copy 'pkg/ebpf/tcp-queue-length-kern-user.h', "#{install_dir}/embedded/share/system-probe/ebpf/"
+
+  copy 'pkg/security/ebpf/c/runtime-security.o', "#{install_dir}/embedded/share/system-probe/ebpf/"
+  copy 'pkg/security/ebpf/c/runtime-security-syscall-wrapper.o', "#{install_dir}/embedded/share/system-probe/ebpf/"
 end
