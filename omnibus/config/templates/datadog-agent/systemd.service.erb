@@ -1,7 +1,7 @@
 [Unit]
 Description=Stackstate Agent
 After=network.target
-Wants=stackstate-agent-trace.service stackstate-agent-process.service stackstate-agent-sysprobe.service
+Wants=datadog-agent-trace.service datadog-agent-process.service datadog-agent-sysprobe.service datadog-agent-security.service
 
 [Service]
 Type=simple

@@ -31,6 +31,7 @@ import (
 	logshttp "github.com/DataDog/datadog-agent/pkg/logs/client/http"
 	"github.com/DataDog/datadog-agent/pkg/logs/config"
 	"github.com/DataDog/datadog-agent/pkg/logs/restart"
+	"github.com/DataDog/datadog-agent/pkg/pidfile"
 	"github.com/DataDog/datadog-agent/pkg/serializer"
 	"github.com/DataDog/datadog-agent/pkg/telemetry"
 	"github.com/DataDog/datadog-agent/pkg/util"
@@ -118,23 +119,6 @@ func newLogContext() (*config.Endpoints, *client.DestinationsContext, error) {
 	return endpoints, destinationsCtx, nil
 }
 
-func newLogContext() (*config.Endpoints, *client.DestinationsContext, error) {
-	httpConnectivity := config.HTTPConnectivityFailure
-	if endpoints, err := config.BuildHTTPEndpoints(); err == nil {
-		httpConnectivity = logshttp.CheckConnectivity(endpoints.Main)
-	}
-
-	endpoints, err := config.BuildEndpoints(httpConnectivity)
-	if err != nil {
-		return nil, nil, log.Errorf("Invalid endpoints: %v", err)
-	}
-
-	destinationsCtx := client.NewDestinationsContext()
-	destinationsCtx.Start()
-
-	return endpoints, destinationsCtx, nil
-}
-
 func start(cmd *cobra.Command, args []string) error {
 	defer log.Flush()
 
@@ -165,6 +149,15 @@ func start(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		log.Criticalf("Unable to setup logger: %s", err)
 		return nil
+	}
+
+	if pidfilePath != "" {
+		err = pidfile.WritePID(pidfilePath)
+		if err != nil {
+			return log.Errorf("Error while writing PID file, exiting: %v", err)
+		}
+		defer os.Remove(pidfilePath)
+		log.Infof("pid '%d' written to pid file '%s'", os.Getpid(), pidfilePath)
 	}
 
 	// Check if we have at least one component to start based on config
