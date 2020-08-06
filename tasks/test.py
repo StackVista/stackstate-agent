@@ -79,7 +79,6 @@ def test(
         test_targets = DEFAULT_TEST_TARGETS
     else:
         tool_targets = test_targets = targets
-
     build_include = (
         get_default_build_tags(process=True, arch=arch) if build_include is None else build_include.split(",")
     )
@@ -93,8 +92,9 @@ def test(
     print("--- go generating:")
     generate(ctx)
 
-    print("--- Linting licenses:")
-    lint_licenses(ctx)
+    # TODO: //[VS] not compatible with custom major version
+    # print("--- Linting licenses:")
+    # lint_licenses(ctx)
 
     if skip_linters:
         print("--- [skipping linters]")
@@ -119,6 +119,7 @@ def test(
 
     with open(PROFILE_COV, "w") as f_cov:
         f_cov.write("mode: count")
+
 
     ldflags, gcflags, env = get_build_flags(
         ctx,
