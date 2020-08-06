@@ -60,18 +60,8 @@ func TestComputeDomainsURL(t *testing.T) {
 		"https://app.myproxy.com":        {"api_key8"},
 	}
 
-	// just sort the expected map for easy comparison
-	for _, keys := range expectedMap {
-		sort.Strings(keys)
-	}
-
 	fh := forwarderHealth{keysPerDomains: keysPerDomains}
 	fh.init()
-
-	// lexicographical sort for assert
-	for _, keys := range fh.keysPerAPIEndpoint {
-		sort.Strings(keys)
-	}
 
 	assert.Equal(t, expectedMap, fh.keysPerAPIEndpoint)
 }
