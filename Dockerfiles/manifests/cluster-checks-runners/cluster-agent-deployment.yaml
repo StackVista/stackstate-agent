@@ -116,5 +116,8 @@ spec:
               mountPath: /etc/datadog-agent/install_info
               readOnly: true
       volumes:
+        - name: installinfo
+          configMap:
+            name: datadog-installinfo
       nodeSelector:
         kubernetes.io/os: linux
