@@ -347,7 +347,7 @@ build_deb:
 
 build_rpm:
   stage: build_and_test
-  image: docker.io/stackstate/stackstate-agent-runner-gitlab:centos6_20190429
+  image: docker.io/stackstate/stackstate-agent-runner-gitlab:centos6_latest_v7
   needs:
     - deps_rpm
   tags:
