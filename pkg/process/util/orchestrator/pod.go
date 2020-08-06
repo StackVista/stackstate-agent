@@ -62,11 +62,13 @@ func ProcessPodlist(podList []*v1.Pod, groupID int32, cfg *config.AgentConfig, h
 		}
 
 		// scrub & generate YAML
-		for c := 0; c < len(podList[p].Spec.Containers); c++ {
-			ScrubContainer(&podList[p].Spec.Containers[c], cfg)
-		}
-		for c := 0; c < len(podList[p].Spec.InitContainers); c++ {
-			ScrubContainer(&podList[p].Spec.InitContainers[c], cfg)
+		if withScrubbing {
+			for c := 0; c < len(podList[p].Spec.Containers); c++ {
+				ScrubContainer(&podList[p].Spec.Containers[c], cfg)
+			}
+			for c := 0; c < len(podList[p].Spec.InitContainers); c++ {
+				ScrubContainer(&podList[p].Spec.InitContainers[c], cfg)
+			}
 		}
 
 		// k8s objects only have json "omitempty" annotations
