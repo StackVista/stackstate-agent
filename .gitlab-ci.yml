@@ -1,4 +1,5 @@
 image: docker.io/stackstate/stackstate-agent-runner-gitlab:latest7
+image: docker.io/stackstate/stackstate-agent-runner-gitlab:latest7
 
 stages:
 - prepare
@@ -225,18 +226,19 @@ filename_linting:
   script:
     - inv -e lint-filenames
 
-docker_integration_tests:
-  stage: build_and_test
-  needs:
-    - deps_deb
-  variables:
-      DOCKER_DRIVER: overlay
-  services:
-    - docker:dind
-  script:
-    - inv -e docker.integration-tests
-  tags:
-    - sts-aws
+# TODO:  Not observed in v7 in a direct form ?
+#docker_integration_tests:
+#  stage: build_and_test
+#  needs:
+#    - deps_deb
+#  variables:
+#      DOCKER_DRIVER: overlay
+#  services:
+#    - docker:dind
+#  script:
+#    - inv -e docker.integration-tests
+#  tags:
+#    - sts-aws
 
 build_binaries:
   stage: build_and_test
