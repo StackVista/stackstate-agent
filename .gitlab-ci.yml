@@ -150,7 +150,6 @@ deps_rpm:
     key: "deps-rpm-$CI_COMMIT_REF_SLUG"
     paths:
       - vendor
-      - venv
   before_script:
     - *configure_centos_environment
   script:
@@ -358,6 +357,9 @@ build_rpm:
     key: "build-rpm-$CI_COMMIT_REF_SLUG"
     paths:
       - .omnibus
+  before_script:
+    - *configure_centos_environment
+    - *retrieve_linux_go_deps
   script:
     # We move .omnibus out of the CI root because this seems to cause issues with git
     # cloning in omnibus and operations on datadog-agent
