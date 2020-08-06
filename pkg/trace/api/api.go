@@ -43,28 +43,6 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
-// Version is a dumb way to version our collector handlers
-type Version string
-
-const (
-	// v01 DEPRECATED, FIXME[1.x]
-	// Traces: JSON, slice of spans
-	// Services: deprecated
-	v01 Version = "v0.1"
-	// v02 DEPRECATED, FIXME[1.x]
-	// Traces: JSON, slice of traces
-	// Services: deprecated
-	v02 Version = "v0.2"
-	// v03
-	// Traces: msgpack/JSON (Content-Type) slice of traces
-	// Services: deprecated
-	v03 Version = "v0.3"
-	// v04
-	// Traces: msgpack/JSON (Content-Type) slice of traces + returns service sampling ratios
-	// Services: deprecated
-	v04 Version = "v0.4"
-)
-
 // HTTPReceiver is a collector that uses HTTP protocol and just holds
 // a chan where the spans received are sent one by one
 type HTTPReceiver struct {
@@ -271,7 +249,7 @@ func (r *HTTPReceiver) handleWithVersion(v Version, f func(Version, http.Respons
 			return
 		}
 
-		// TODO(x): replace with httpt.MaxBytesReader
+		// TODO(x): replace with http.MaxBytesReader?
 		req.Body = NewLimitedReader(req.Body, r.conf.MaxRequestBytes)
 
 		f(v, w, req)
@@ -370,21 +348,6 @@ func decodeTraces(v Version, req *http.Request) (pb.Traces, error) {
 		}
 		return traces, nil
 	}
-}
-
-// [sts]
-func (r *HTTPReceiver) decodeOpenTelemetry(req *http.Request) (*openTelemetryTrace.ExportTraceServiceRequest, error) {
-	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	openTelemetryTraceData := &openTelemetryTrace.ExportTraceServiceRequest{}
-	if err := proto.Unmarshal(body, openTelemetryTraceData); err != nil {
-		return nil, err
-	}
-
-	return openTelemetryTraceData, nil
 }
 
 func (r *HTTPReceiver) replyOK(v Version, w http.ResponseWriter) {
