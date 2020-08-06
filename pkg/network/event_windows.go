@@ -5,7 +5,7 @@ package network
 
 /*
 #include <winsock2.h>
-#include "../ebpf/c/ddfilterapi.h"
+#include "../ebpf/c/ddnpmapi.h"
 
 uint32_t getTcp_sRTT(PER_FLOW_DATA *pfd)
 {

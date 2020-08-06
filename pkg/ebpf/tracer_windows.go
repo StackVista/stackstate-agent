@@ -3,6 +3,10 @@
 
 package ebpf
 
+/*
+#include "c/ddnpmapi.h"
+*/
+import "C"
 import (
 	"expvar"
 	"fmt"
