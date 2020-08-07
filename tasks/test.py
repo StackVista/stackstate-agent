@@ -96,13 +96,11 @@ def test(
     print("--- go generating:")
     generate(ctx)
 
-
     if skip_linters:
         print("--- [skipping linters]")
     else:
-        # TODO: //[sts] not compatible with custom major version
-        # print("--- Linting licenses:")
-        # lint_licenses(ctx)
+        print("--- Linting licenses:")
+        lint_licenses(ctx)
 
         print("--- Linting filenames:")
         lint_filenames(ctx)
