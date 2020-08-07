@@ -24,6 +24,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/api/security"
 	"github.com/DataDog/datadog-agent/pkg/api/util"
 	"github.com/DataDog/datadog-agent/pkg/config"
+	secagent "github.com/DataDog/datadog-agent/pkg/security/agent"
 	"github.com/gorilla/mux"
 )
 

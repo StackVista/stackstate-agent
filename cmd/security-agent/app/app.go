@@ -214,7 +214,8 @@ func start(cmd *cobra.Command, args []string) error {
 	}
 
 	// start runtime security agent
-	if err = startRuntimeSecurity(hostname, endpoints, dstContext, stopper); err != nil {
+	runtimeAgent, err := startRuntimeSecurity(hostname, endpoints, dstContext, stopper)
+	if err != nil {
 		return err
 	}
 

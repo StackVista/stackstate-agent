@@ -161,7 +161,7 @@ func zipRuntimeFiles(tempDir, hostname string, permsInfos permissionsInfos) erro
 		if f == nil {
 			return nil
 		}
-		if f.IsDir() || f.Mode()&os.ModeSymlink != 0 {
+		if f.IsDir() {
 			return nil
 		}
 

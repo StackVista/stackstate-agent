@@ -16,14 +16,15 @@ import (
 	"github.com/gorilla/mux"
 	"gopkg.in/yaml.v2"
 
-	"github.com/StackVista/stackstate-agent/cmd/agent/common"
-	"github.com/StackVista/stackstate-agent/cmd/agent/common/signals"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/flare"
-	"github.com/StackVista/stackstate-agent/pkg/status"
-	"github.com/StackVista/stackstate-agent/pkg/status/health"
-	"github.com/StackVista/stackstate-agent/pkg/util"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/cmd/agent/common"
+	"github.com/DataDog/datadog-agent/cmd/agent/common/signals"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/flare"
+	secagent "github.com/DataDog/datadog-agent/pkg/security/agent"
+	"github.com/DataDog/datadog-agent/pkg/status"
+	"github.com/DataDog/datadog-agent/pkg/status/health"
+	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // Agent handles REST API calls
@@ -41,12 +42,12 @@ func NewAgent(runtimeAgent *secagent.RuntimeSecurityAgent) *Agent {
 // SetupHandlers adds the specific handlers for /agent endpoints
 func (a *Agent) SetupHandlers(r *mux.Router) {
 	r.HandleFunc("/version", common.GetVersion).Methods("GET")
-	r.HandleFunc("/flare", makeFlare).Methods("POST")
-	r.HandleFunc("/hostname", getHostname).Methods("GET")
-	r.HandleFunc("/stop", stopAgent).Methods("POST")
-	r.HandleFunc("/status", getStatus).Methods("GET")
-	r.HandleFunc("/status/health", getHealth).Methods("GET")
-	r.HandleFunc("/config", getRuntimeConfig).Methods("GET")
+	r.HandleFunc("/flare", a.makeFlare).Methods("POST")
+	r.HandleFunc("/hostname", a.getHostname).Methods("GET")
+	r.HandleFunc("/stop", a.stopAgent).Methods("POST")
+	r.HandleFunc("/status", a.getStatus).Methods("GET")
+	r.HandleFunc("/status/health", a.getHealth).Methods("GET")
+	r.HandleFunc("/config", a.getRuntimeConfig).Methods("GET")
 }
 
 func (a *Agent) stopAgent(w http.ResponseWriter, r *http.Request) {
@@ -62,6 +63,7 @@ func (a *Agent) stopAgent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *Agent) getHostname(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	hname, err := util.GetHostname()
 	if err != nil {
 		log.Warnf("Error getting hostname: %s\n", err) // or something like this
@@ -141,7 +143,7 @@ func (a *Agent) makeFlare(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(filePath))
 }
 
-func getRuntimeConfig(w http.ResponseWriter, r *http.Request) {
+func (a *Agent) getRuntimeConfig(w http.ResponseWriter, r *http.Request) {
 	runtimeConfig, err := yaml.Marshal(config.Datadog.AllSettings())
 	if err != nil {
 		log.Errorf("Unable to marshal runtime config response: %s", err)
