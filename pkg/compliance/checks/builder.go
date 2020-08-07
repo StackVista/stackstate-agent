@@ -43,7 +43,6 @@ const (
 // Builder defines an interface to build checks from rules
 type Builder interface {
 	ChecksFromFile(file string, onCheck compliance.CheckVisitor) error
-	CheckFromRule(meta *compliance.SuiteMeta, rule *compliance.Rule) (check.Check, error)
 	Close() error
 }
 
@@ -271,18 +270,14 @@ func (b *builder) ChecksFromFile(file string, onCheck compliance.CheckVisitor) e
 			continue
 		}
 
-		if len(r.Resources) == 0 {
-			log.Debugf("%s/%s: skipping rule %s - no configured resources", suite.Meta.Name, suite.Meta.Version, r.ID)
-			continue
-		}
-
 		log.Debugf("%s/%s: loading rule %s", suite.Meta.Name, suite.Meta.Version, r.ID)
-		check, err := b.CheckFromRule(&suite.Meta, &r)
+		check, err := b.checkFromRule(&suite.Meta, &r)
 
 		if err != nil {
 			if err != ErrRuleDoesNotApply {
 				log.Warnf("%s/%s: failed to load rule %s: %v", suite.Meta.Name, suite.Meta.Version, r.ID, err)
 			}
+			log.Infof("%s/%s: skipped rule %s - does not apply to this system", suite.Meta.Name, suite.Meta.Version, r.ID)
 			continue
 		}
 
@@ -301,7 +296,7 @@ func (b *builder) ChecksFromFile(file string, onCheck compliance.CheckVisitor) e
 	return nil
 }
 
-func (b *builder) CheckFromRule(meta *compliance.SuiteMeta, rule *compliance.Rule) (check.Check, error) {
+func (b *builder) checkFromRule(meta *compliance.SuiteMeta, rule *compliance.Rule) (check.Check, error) {
 	ruleScope, err := getRuleScope(meta, rule)
 	if err != nil {
 		return nil, err
