@@ -50,8 +50,9 @@ func (c *MetricsConfig) parse(data []byte) error {
 }
 
 // Configure parses the check configuration and init the check.
-func (k *MetricsCheck) Configure(config, initConfig integration.Data) error {
-	err := k.CommonConfigure(config)
+// TODO: [sts] implement
+func (k *MetricsCheck) Configure(config, initConfig integration.Data, source string) error {
+	err := k.CommonConfigure(config, source)
 	if err != nil {
 		return err
 	}
