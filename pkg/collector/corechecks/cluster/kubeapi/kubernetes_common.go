@@ -24,7 +24,7 @@ type CommonCheck struct {
 }
 
 func (k *CommonCheck) ConfigureKubeApiCheck(config integration.Data) error {
-	return k.CommonConfigure(config)
+	return k.CommonConfigure(config, "")  // TODO: [sts] implement source
 }
 
 func (k *CommonCheck) InitKubeApiCheck() error {
