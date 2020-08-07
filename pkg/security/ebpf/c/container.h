@@ -3,7 +3,7 @@
 
 #include "defs.h"
 
-struct proc_cache_t* get_pid_cache(u32 tgid);
+struct proc_cache_t* get_pid_cache(u64 pid);
 
 static __attribute__((always_inline)) u32 copy_container_id(char dst[CONTAINER_ID_LEN], char src[CONTAINER_ID_LEN]) {
     if (src[0] == 0) {
