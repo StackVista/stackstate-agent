@@ -8,7 +8,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode"
+	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

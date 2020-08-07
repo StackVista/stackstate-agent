@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode"
+	"github.com/DataDog/datadog-agent/pkg/process/util"
 	"github.com/DataDog/ebpf"
 	"github.com/DataDog/ebpf/manager"
-	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode"
-	"github.com/StackVista/stackstate-agent/pkg/process/util"
 	mdns "github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -101,7 +101,7 @@ Loop:
 }
 
 func TestDNSOverUDPSnooping(t *testing.T) {
-	m, err := bytecode.ReadBPFModule("", false)
+	buf, err := bytecode.ReadBPFModule("", false)
 	require.NoError(t, err)
 
 	m, reverseDNS := getSnooper(t, buf, false, false, 15*time.Second)
@@ -133,8 +133,8 @@ const (
 	validDNSServerIP = "8.8.8.8"
 )
 
-func initDNSTests(t *testing.T) (*bpflib.Module, *SocketFilterSnooper) {
-	m, err := bytecode.ReadBPFModule("", false)
+func initDNSTests(t *testing.T) (*manager.Manager, *SocketFilterSnooper) {
+	buf, err := bytecode.ReadBPFModule("", false)
 	require.NoError(t, err)
 	return getSnooper(t, buf, true, false, 1*time.Second)
 }
@@ -271,7 +271,7 @@ func TestDNSOverUDPSnoopingWithTimedOutResponse(t *testing.T) {
 }
 
 func TestParsingError(t *testing.T) {
-	m, err := bytecode.ReadBPFModule("", false)
+	buf, err := bytecode.ReadBPFModule("", false)
 	require.NoError(t, err)
 
 	m, reverseDNS := getSnooper(t, buf, false, false, 15*time.Second)

@@ -1,8 +1,7 @@
 #include "tracer-ebpf.h"
-#include <linux/version.h>
-
-#include <net/sock.h>
-#include <net/tcp_states.h>
+#include "bpf_helpers.h"
+#include "syscalls.h"
+#include <linux/kconfig.h>
 #include <net/inet_sock.h>
 #include <net/net_namespace.h>
 #include <net/tcp_states.h>
@@ -19,8 +18,6 @@
  */
 #define LOAD_CONSTANT(param, var) asm("%0 = " param " ll" \
                                       : "=r"(var))
-
-enum telemetry_counter{tcp_sent_miscounts, missed_tcp_close, udp_send_processed, udp_send_missed};
 
 enum telemetry_counter{tcp_sent_miscounts, missed_tcp_close, udp_send_processed, udp_send_missed};
 
@@ -401,8 +398,7 @@ static __always_inline void update_tcp_stats(conn_tuple_t* t, tcp_stats_t stats)
     }
 }
 
-__attribute__((always_inline))
-static void increment_telemetry_count(enum telemetry_counter counter_name) {
+static __always_inline void increment_telemetry_count(enum telemetry_counter counter_name) {
     __u64 key = 0;
     telemetry_t empty = {};
     telemetry_t* val;
@@ -429,8 +425,7 @@ static void increment_telemetry_count(enum telemetry_counter counter_name) {
     return;
 }
 
-__attribute__((always_inline))
-static void cleanup_tcp_conn(struct pt_regs* ctx, conn_tuple_t* tup) {
+static __always_inline void cleanup_tcp_conn(struct pt_regs* __attribute__((unused)) ctx, conn_tuple_t* tup) {
     u32 cpu = bpf_get_smp_processor_id();
 
     // Will hold the full connection data to send through the perf buffer
@@ -646,7 +641,7 @@ int kprobe__udp_sendmsg(struct pt_regs* ctx) {
     u64 pid_tgid = bpf_get_current_pid_tgid();
 
     conn_tuple_t t = {};
-    if (!read_conn_tuple(&t, status, sk, pid_tgid, CONN_TYPE_UDP)) {
+    if (!read_conn_tuple(&t, sk, pid_tgid, CONN_TYPE_UDP)) {
         increment_telemetry_count(udp_send_missed);
         return 0;
     }
@@ -665,7 +660,7 @@ int kprobe__udp_sendmsg__pre_4_1_0(struct pt_regs* ctx) {
     u64 pid_tgid = bpf_get_current_pid_tgid();
 
     conn_tuple_t t = {};
-    if (!read_conn_tuple(&t, status, sk, pid_tgid, CONN_TYPE_UDP)) {
+    if (!read_conn_tuple(&t, sk, pid_tgid, CONN_TYPE_UDP)) {
         increment_telemetry_count(udp_send_missed);
         return 0;
     }
@@ -759,34 +754,6 @@ int kprobe__tcp_set_state(struct pt_regs* ctx) {
     u64 pid_tgid = bpf_get_current_pid_tgid();
     conn_tuple_t t = {};
     if (!read_conn_tuple(&t, sk, pid_tgid, CONN_TYPE_TCP)) {
-        return 0;
-    }
-
-    tcp_stats_t stats = { .state_transitions = (1 << state) };
-    update_tcp_stats(&t, stats);
-
-    return 0;
-}
-
-SEC("kprobe/tcp_set_state")
-int kprobe__tcp_set_state(struct pt_regs* ctx) {
-    u8 state = (u8)PT_REGS_PARM2(ctx);
-
-    // For now we're tracking only TCP_ESTABLISHED
-    if (state != TCP_ESTABLISHED) {
-        return 0;
-    }
-
-    struct sock* sk = (struct sock*)PT_REGS_PARM1(ctx);
-    u64 zero = 0;
-    tracer_status_t* status = bpf_map_lookup_elem(&tracer_status, &zero);
-    if (status == NULL) {
-        return 0;
-    }
-
-    u64 pid_tgid = bpf_get_current_pid_tgid();
-    conn_tuple_t t = {};
-    if (!read_conn_tuple(&t, status, sk, pid_tgid, CONN_TYPE_TCP)) {
         return 0;
     }
 

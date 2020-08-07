@@ -26,10 +26,10 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode"
+	"github.com/DataDog/datadog-agent/pkg/network"
+	"github.com/DataDog/datadog-agent/pkg/process/util"
 	"github.com/DataDog/ebpf"
-	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode"
-	"github.com/StackVista/stackstate-agent/pkg/network"
-	"github.com/StackVista/stackstate-agent/pkg/process/util"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -101,44 +101,40 @@ func TestTracerExpvar(t *testing.T) {
 			"TruncatedPackets",
 		},
 		"kprobes": {
-			"PSysBindHits",
-			"PSysBindMisses",
-			"PSysSocketHits",
-			"PSysSocketMisses",
-			"PtcpCleanupRbufHits",
-			"PtcpCleanupRbufMisses",
-			"PtcpCloseHits",
-			"PtcpCloseMisses",
-			"PtcpGetInfoHits",
-			"PtcpGetInfoMisses",
-			"PtcpRetransmitSkbHits",
-			"PtcpRetransmitSkbMisses",
-			"PtcpSendmsgHits",
-			"PtcpSendmsgMisses",
-			"PtcpSetStateHits",
-			"PtcpSetStateMisses",
-			"PtcpVConnectHits",
-			"PtcpVConnectMisses",
-			"PtcpVDestroySockHits",
-			"PtcpVDestroySockMisses",
-			"PudpDestroySockHits",
-			"PudpDestroySockMisses",
-			"PudpRecvmsgHits",
-			"PudpRecvmsgMisses",
-			"PudpSendmsgHits",
-			"PudpSendmsgMisses",
-			"RSysBindHits",
-			"RSysBindMisses",
-			"RSysSocketHits",
-			"RSysSocketMisses",
-			"RinetCskAcceptHits",
-			"RinetCskAcceptMisses",
-			"RtcpCloseHits",
-			"RtcpCloseMisses",
-			"RtcpVConnectHits",
-			"RtcpVConnectMisses",
-			"RudpRecvmsgHits",
-			"RudpRecvmsgMisses",
+			"PXSysBindHits",
+			"PXSysBindMisses",
+			"PXSysSocketHits",
+			"PXSysSocketMisses",
+			"PTcpCleanupRbufHits",
+			"PTcpCleanupRbufMisses",
+			"PTcpCloseHits",
+			"PTcpCloseMisses",
+			"PTcpRetransmitSkbHits",
+			"PTcpRetransmitSkbMisses",
+			"PTcpSendmsgHits",
+			"PTcpSendmsgMisses",
+			"PTcpSetStateHits",
+			"PTcpSetStateMisses",
+			"PTcpVDestroySockHits",
+			"PTcpVDestroySockMisses",
+			"PUdpDestroySockHits",
+			"PUdpDestroySockMisses",
+			"PUdpRecvmsgHits",
+			"PUdpRecvmsgMisses",
+			"PUdpSendmsgHits",
+			"PUdpSendmsgMisses",
+			"RXSysBindHits",
+			"RXSysBindMisses",
+			"RXSysSocketHits",
+			"RXSysSocketMisses",
+			"RInetCskAcceptHits",
+			"RInetCskAcceptMisses",
+			"RTcpCloseHits",
+			"RTcpCloseMisses",
+			"RUdpRecvmsgHits",
+			"RUdpRecvmsgMisses",
+			"RTcpSendmsgHits",
+			"RTcpSendmsgMisses",
 		},
 	}
 
@@ -1661,12 +1657,10 @@ func TestConntrackExpiration(t *testing.T) {
 func TestTCPEstablished(t *testing.T) {
 	// Ensure closed connections are flushed as soon as possible
 	cfg := NewDefaultConfig()
-	cfg.TCPClosedTimeout = time.Millisecond
+	cfg.TCPClosedTimeout = 500 * time.Millisecond
 
 	tr, err := NewTracer(cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	defer tr.Stop()
 
 	// Warm-up state
@@ -1681,9 +1675,7 @@ func TestTCPEstablished(t *testing.T) {
 	defer close(doneChan)
 
 	c, err := net.DialTimeout("tcp", server.address, 50*time.Millisecond)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	laddr, raddr := c.LocalAddr(), c.RemoteAddr()
 	c.Write([]byte("hello"))
@@ -1691,17 +1683,17 @@ func TestTCPEstablished(t *testing.T) {
 	connections := getConnections(t, tr)
 	conn, ok := findConnection(laddr, raddr, connections)
 
-	assert.True(t, ok)
+	require.True(t, ok)
 	assert.Equal(t, uint32(1), conn.LastTCPEstablished)
 	assert.Equal(t, uint32(0), conn.LastTCPClosed)
 
 	c.Close()
 	// Wait for the connection to be sent from the perf buffer
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(cfg.TCPClosedTimeout)
 
 	connections = getConnections(t, tr)
 	conn, ok = findConnection(laddr, raddr, connections)
-	assert.True(t, ok)
+	require.True(t, ok)
 	assert.Equal(t, uint32(0), conn.LastTCPEstablished)
 	assert.Equal(t, uint32(1), conn.LastTCPClosed)
 }
@@ -1716,19 +1708,15 @@ func TestTCPEstablishedPreExistingConn(t *testing.T) {
 	defer close(doneChan)
 
 	c, err := net.DialTimeout("tcp", server.address, 50*time.Millisecond)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	laddr, raddr := c.LocalAddr(), c.RemoteAddr()
 
 	// Ensure closed connections are flushed as soon as possible
 	cfg := NewDefaultConfig()
-	cfg.TCPClosedTimeout = time.Millisecond
+	cfg.TCPClosedTimeout = 500 * time.Millisecond
 
 	tr, err := NewTracer(cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	defer tr.Stop()
 
 	// Warm-up state
@@ -1737,11 +1725,11 @@ func TestTCPEstablishedPreExistingConn(t *testing.T) {
 	c.Write([]byte("hello"))
 	c.Close()
 	// Wait for the connection to be sent from the perf buffer
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(cfg.TCPClosedTimeout)
 	connections := getConnections(t, tr)
 	conn, ok := findConnection(laddr, raddr, connections)
 
-	assert.True(t, ok)
+	require.True(t, ok)
 	assert.Equal(t, uint32(0), conn.MonotonicTCPEstablished)
 	assert.Equal(t, uint32(1), conn.MonotonicTCPClosed)
 }

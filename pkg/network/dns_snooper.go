@@ -11,9 +11,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/ebpf/manager"
-	"github.com/StackVista/stackstate-agent/pkg/process/util"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/google/gopacket/afpacket"
 )
 

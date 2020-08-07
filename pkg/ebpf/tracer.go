@@ -13,13 +13,13 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode"
+	"github.com/DataDog/datadog-agent/pkg/network"
+	"github.com/DataDog/datadog-agent/pkg/network/netlink"
+	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/ebpf"
 	"github.com/DataDog/ebpf/manager"
-	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode"
-	"github.com/StackVista/stackstate-agent/pkg/network"
-	"github.com/StackVista/stackstate-agent/pkg/network/netlink"
-	"github.com/StackVista/stackstate-agent/pkg/process/util"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"golang.org/x/sys/unix"
 )
 
@@ -36,7 +36,7 @@ func init() {
 }
 
 type Tracer struct {
-	m *bpflib.Module
+	m *manager.Manager
 
 	config *Config
 
@@ -48,7 +48,8 @@ type Tracer struct {
 
 	reverseDNS network.ReverseDNS
 
-	perfMap      *bpflib.PerfMap
+	perfMap      *manager.PerfMap
+	perfHandler  *bytecode.PerfHandler
 	batchManager *PerfBatchManager
 
 	// Telemetry
@@ -95,7 +96,7 @@ func NewTracer(config *Config) (*Tracer, error) {
 		return nil, fmt.Errorf("%s: %s", "system-probe unsupported", msg)
 	}
 
-	m, err := bytecode.ReadBPFModule(config.BPFDir, config.BPFDebug)
+	buf, err := bytecode.ReadBPFModule(config.BPFDir, config.BPFDebug)
 	if err != nil {
 		return nil, fmt.Errorf("could not read bpf module: %s", err)
 	}
@@ -152,10 +153,12 @@ func NewTracer(config *Config) (*Tracer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid probe configuration: %v", err)
 	}
-
+	for probeName := range enabledProbes {
+		mgrOptions.ActivatedProbes = append(mgrOptions.ActivatedProbes, string(probeName))
+	}
 	enableSocketFilter := config.DNSInspection && !pre410Kernel
 	if enableSocketFilter {
-		enabledProbes[bytecode.SocketDnsFilter] = struct{}{}
+		mgrOptions.ActivatedProbes = append(mgrOptions.ActivatedProbes, string(bytecode.SocketDnsFilter))
 		if config.CollectDNSStats {
 			mgrOptions.ConstantEditors = append(mgrOptions.ConstantEditors, manager.ConstantEditor{
 				Name:  "dns_stats_enabled",
@@ -164,15 +167,6 @@ func NewTracer(config *Config) (*Tracer, error) {
 		}
 	}
 
-	// exclude all non-enabled probes to ensure we don't run into problems with unsupported probe types
-	for _, p := range m.Probes {
-		if _, enabled := enabledProbes[bytecode.ProbeName(p.Section)]; !enabled {
-			mgrOptions.ExcludedProbes = append(mgrOptions.ExcludedProbes, p.Section)
-		}
-	}
-	for probeName := range enabledProbes {
-		mgrOptions.ActivatedProbes = append(mgrOptions.ActivatedProbes, string(probeName))
-	}
 	err = m.InitWithOptions(buf, mgrOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init ebpf manager: %v", err)
@@ -275,13 +269,7 @@ func runOffsetGuessing(config *Config, buf bytecode.AssetReader) ([]manager.Cons
 			Max: math.MaxUint64,
 		},
 	}
-	enabledProbes := offsetGuessProbes(config)
-	for _, p := range offsetMgr.Probes {
-		if _, enabled := enabledProbes[bytecode.ProbeName(p.Section)]; !enabled {
-			offsetOptions.ExcludedProbes = append(offsetOptions.ExcludedProbes, p.Section)
-		}
-	}
-	for probeName := range enabledProbes {
+	for _, probeName := range offsetGuessProbes(config) {
 		offsetOptions.ActivatedProbes = append(offsetOptions.ActivatedProbes, string(probeName))
 	}
 	if err := offsetMgr.InitWithOptions(buf, offsetOptions); err != nil {
@@ -524,7 +512,7 @@ func (t *Tracer) getConnections(active []network.ConnectionStats) ([]network.Con
 	key, stats := &ConnTuple{}, &ConnStatsWithTimestamp{}
 	seen := make(map[ConnTuple]struct{})
 	var expired []*ConnTuple
-	entries := mp.IterateFrom(unsafe.Pointer(&ConnTuple{}))
+	entries := mp.Iterate()
 	for entries.Next(unsafe.Pointer(key), unsafe.Pointer(stats)) {
 		if stats.isExpired(latestTime, t.timeoutForConn(key)) {
 			expired = append(expired, key.copy())
@@ -757,12 +745,12 @@ func (t *Tracer) DebugNetworkMaps() (*network.Connections, error) {
 // the map will be one of port_bindings  or udp_port_bindings, and the mapping will be one of tracer#portMapping
 // tracer#udpPortMapping respectively.
 func (t *Tracer) populatePortMapping(mp *ebpf.Map, mapping *network.PortMapping) ([]uint16, error) {
-	var key, emptyKey uint16
+	var key uint16
 	var state uint8
 
 	closedPortBindings := make([]uint16, 0)
 
-	entries := mp.IterateFrom(unsafe.Pointer(&emptyKey))
+	entries := mp.Iterate()
 	for entries.Next(unsafe.Pointer(&key), unsafe.Pointer(&state)) {
 		port := key
 

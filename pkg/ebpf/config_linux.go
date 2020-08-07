@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/ebpf/manager"
-	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const x64SyscallPrefix = "__x64_"
@@ -25,13 +25,13 @@ func (c *Config) EnabledProbes(pre410Kernel bool) (map[bytecode.ProbeName]struct
 		} else {
 			enabled[bytecode.TCPSendMsg] = struct{}{}
 		}
-		enabled[TCPCleanupRBuf] = struct{}{}
-		enabled[TCPClose] = struct{}{}
-		enabled[TCPSetState] = struct{}{}
-		enabled[TCPCloseReturn] = struct{}{}
-		enabled[TCPRetransmit] = struct{}{}
-		enabled[InetCskAcceptReturn] = struct{}{}
-		enabled[TCPv4DestroySock] = struct{}{}
+		enabled[bytecode.TCPCleanupRBuf] = struct{}{}
+		enabled[bytecode.TCPClose] = struct{}{}
+		enabled[bytecode.TCPCloseReturn] = struct{}{}
+		enabled[bytecode.TCPRetransmit] = struct{}{}
+		enabled[bytecode.InetCskAcceptReturn] = struct{}{}
+		enabled[bytecode.TCPv4DestroySock] = struct{}{}
+		enabled[bytecode.TCPSetState] = struct{}{}
 
 		if c.BPFDebug {
 			enabled[bytecode.TCPSendMsgReturn] = struct{}{}

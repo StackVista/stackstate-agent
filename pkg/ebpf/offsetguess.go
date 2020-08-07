@@ -18,10 +18,10 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/ebpf"
 	"github.com/DataDog/ebpf/manager"
-	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/pkg/errors"
 )
 
@@ -177,14 +177,10 @@ func waitUntilStable(conn net.Conn, window time.Duration, attempts int) (*fieldV
 	return nil, errors.New("unstable TCP socket params")
 }
 
-func offsetGuessProbes(c *Config) map[bytecode.ProbeName]struct{} {
-	probes := map[bytecode.ProbeName]struct{}{
-		bytecode.TCPGetInfo: {},
-	}
-
+func offsetGuessProbes(c *Config) []bytecode.ProbeName {
+	probes := []bytecode.ProbeName{bytecode.TCPGetInfo}
 	if c.CollectIPv6Conns {
-		probes[bytecode.TCPv6Connect] = struct{}{}
-		probes[bytecode.TCPv6ConnectReturn] = struct{}{}
+		probes = append(probes, bytecode.TCPv6Connect, bytecode.TCPv6ConnectReturn)
 	}
 	return probes
 }

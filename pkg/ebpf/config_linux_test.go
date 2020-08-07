@@ -1,11 +1,10 @@
-//go:build linux_bpf
 // +build linux_bpf
 
 package ebpf
 
 import (
+	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode"
 	"github.com/DataDog/ebpf/manager"
-	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"runtime"
