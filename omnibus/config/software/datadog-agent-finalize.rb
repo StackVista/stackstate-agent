@@ -117,12 +117,12 @@ build do
             end
 
             # Move configuration files
-            mkdir "/etc/stackstate-agent"
-            move "#{install_dir}/bin/agent/sts-agent", "/usr/bin/sts-agent"
-            move "#{install_dir}/etc/stackstate-agent/stackstate.yaml.example", "/etc/stackstate-agent"
-            move "#{install_dir}/etc/stackstate-agent/system-probe.yaml.example", "/etc/stackstate-agent"
-            move "#{install_dir}/etc/stackstate-agent/conf.d", "/etc/stackstate-agent", :force=>true
-            move "#{install_dir}/etc/stackstate-agent/runtime-security.d", "/etc/datadog-agent", :force=>true
+            mkdir "/etc/datadog-agent"
+            move "#{install_dir}/bin/agent/dd-agent", "/usr/bin/dd-agent"
+            move "#{install_dir}/etc/datadog-agent/datadog.yaml.example", "/etc/datadog-agent"
+            move "#{install_dir}/etc/datadog-agent/system-probe.yaml.example", "/etc/datadog-agent"
+            move "#{install_dir}/etc/datadog-agent/conf.d", "/etc/datadog-agent", :force=>true
+            move "#{install_dir}/etc/datadog-agent/runtime-security.d", "/etc/datadog-agent", :force=>true
 
             # Move SELinux policy
             if debian? || redhat?
@@ -204,7 +204,6 @@ build do
 
             # Do not strip eBPF programs
             strip_exclude("*tracer-ebpf*")
-            strip_exclude("*offset-guess*")
             strip_exclude("*runtime-security*")
 
         elsif osx?
