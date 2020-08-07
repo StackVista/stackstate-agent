@@ -22,6 +22,8 @@
 
 enum telemetry_counter{tcp_sent_miscounts, missed_tcp_close, udp_send_processed, udp_send_missed};
 
+enum telemetry_counter{tcp_sent_miscounts, missed_tcp_close, udp_send_processed, udp_send_missed};
+
 /* This is a key/value store with the keys being a conn_tuple_t for send & recv calls
  * and the values being conn_stats_ts_t *.
  */
@@ -399,7 +401,36 @@ static __always_inline void update_tcp_stats(conn_tuple_t* t, tcp_stats_t stats)
     }
 }
 
-static __always_inline void cleanup_tcp_conn(struct pt_regs* __attribute__((unused)) ctx, conn_tuple_t* tup) {
+__attribute__((always_inline))
+static void increment_telemetry_count(enum telemetry_counter counter_name) {
+    __u64 key = 0;
+    telemetry_t empty = {};
+    telemetry_t* val;
+    bpf_map_update_elem(&telemetry, &key, &empty, BPF_NOEXIST);
+    val = bpf_map_lookup_elem(&telemetry, &key);
+
+    if (val == NULL) {
+        return;
+    }
+    switch (counter_name) {
+        case tcp_sent_miscounts:
+            __sync_fetch_and_add(&val->tcp_sent_miscounts, 1);
+            break;
+        case missed_tcp_close:
+            __sync_fetch_and_add(&val->missed_tcp_close, 1);
+            break;
+        case udp_send_processed:
+            __sync_fetch_and_add(&val->udp_sends_processed, 1);
+            break;
+        case udp_send_missed:
+            __sync_fetch_and_add(&val->udp_sends_missed, 1);
+            break;
+    }
+    return;
+}
+
+__attribute__((always_inline))
+static void cleanup_tcp_conn(struct pt_regs* ctx, conn_tuple_t* tup) {
     u32 cpu = bpf_get_smp_processor_id();
 
     // Will hold the full connection data to send through the perf buffer
@@ -615,7 +646,7 @@ int kprobe__udp_sendmsg(struct pt_regs* ctx) {
     u64 pid_tgid = bpf_get_current_pid_tgid();
 
     conn_tuple_t t = {};
-    if (!read_conn_tuple(&t, sk, pid_tgid, CONN_TYPE_UDP)) {
+    if (!read_conn_tuple(&t, status, sk, pid_tgid, CONN_TYPE_UDP)) {
         increment_telemetry_count(udp_send_missed);
         return 0;
     }
@@ -634,7 +665,7 @@ int kprobe__udp_sendmsg__pre_4_1_0(struct pt_regs* ctx) {
     u64 pid_tgid = bpf_get_current_pid_tgid();
 
     conn_tuple_t t = {};
-    if (!read_conn_tuple(&t, sk, pid_tgid, CONN_TYPE_UDP)) {
+    if (!read_conn_tuple(&t, status, sk, pid_tgid, CONN_TYPE_UDP)) {
         increment_telemetry_count(udp_send_missed);
         return 0;
     }
