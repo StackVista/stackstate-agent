@@ -15,8 +15,8 @@ import (
 	"io"
 	"text/template"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/snmp/traps"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/snmp/traps"
 )
 
 var fmap = Textfmap()

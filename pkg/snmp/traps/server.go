@@ -9,7 +9,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/soniah/gosnmp"
 )
 
@@ -138,8 +138,8 @@ func (s *TrapServer) Stop() {
 
 	select {
 	case <-stopped:
-	case <-time.After(time.Duration(s.config.StopTimeout) * time.Second):
-		log.Errorf("Stopping server. Timeout after %d seconds", s.config.StopTimeout)
+	case <-time.After(s.config.StopTimeout):
+		log.Error("Stopping server timed out")
 	}
 
 	// Let consumers know that we will not be sending any more packets.
