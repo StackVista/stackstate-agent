@@ -188,7 +188,7 @@ deps_win:
       - "version.txt"
     expire_in: 1 week
   tags:
-    - sts_windows
+    - windows_agent7 #sts_windows
 
 unit_tests:
   stage: build_and_test
