@@ -131,6 +131,11 @@ func (a *Agent) makeFlare(w http.ResponseWriter, r *http.Request) {
 		runtimeAgentStatus = a.runtimeAgent.GetStatus()
 	}
 
+	var runtimeAgentStatus map[string]interface{}
+	if a.runtimeAgent != nil {
+		runtimeAgentStatus = a.runtimeAgent.GetStatus()
+	}
+
 	filePath, err := flare.CreateSecurityAgentArchive(false, logFile, runtimeAgentStatus)
 	if err != nil || filePath == "" {
 		if err != nil {
