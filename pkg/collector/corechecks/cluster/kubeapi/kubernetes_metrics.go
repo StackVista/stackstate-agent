@@ -38,7 +38,6 @@ type MetricsConfig struct {
 type MetricsCheck struct {
 	CommonCheck
 	instance           *MetricsConfig
-	configMapAvailable bool
 	oshiftAPILevel     apiserver.OpenShiftAPILevel
 }
 
@@ -50,7 +49,6 @@ func (c *MetricsConfig) parse(data []byte) error {
 }
 
 // Configure parses the check configuration and init the check.
-// TODO: [sts] implement
 func (k *MetricsCheck) Configure(config, initConfig integration.Data, source string) error {
 	err := k.CommonConfigure(config, source)
 	if err != nil {
@@ -132,6 +130,7 @@ func (k *MetricsCheck) parseComponentStatus(sender aggregator.Sender, components
 		tagComp := []string{fmt.Sprintf("component:%s", component.Name)}
 		for _, condition := range component.Conditions {
 			statusCheck := metrics.ServiceCheckUnknown
+			message := ""
 
 			// We only expect the Healthy condition. May change in the future. https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#typical-status-properties
 			if condition.Type != "Healthy" {
@@ -142,11 +141,12 @@ func (k *MetricsCheck) parseComponentStatus(sender aggregator.Sender, components
 			switch condition.Status {
 			case "True":
 				statusCheck = metrics.ServiceCheckOK
-
+				message = condition.Message
 			case "False":
 				statusCheck = metrics.ServiceCheckCritical
+				message = condition.Error
 			}
-			sender.ServiceCheck(KubeControlPaneCheck, statusCheck, k.KubeAPIServerHostname, tagComp, "")
+			sender.ServiceCheck(KubeControlPaneCheck, statusCheck, k.KubeAPIServerHostname, tagComp, message)
 		}
 	}
 	return nil

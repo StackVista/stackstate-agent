@@ -29,8 +29,7 @@ func TestReportClusterQuotas(t *testing.T) {
 	var instanceCfg = []byte("")
 	var initCfg = []byte("")
 	kubeApiMetricsCheck := KubernetesApiMetricsFactory().(*MetricsCheck)
-	//TODO: [sts] address source
-	err = kubeApiMetricsCheck.Configure(instanceCfg, initCfg, "")
+	err = kubeApiMetricsCheck.Configure(instanceCfg, initCfg, "test")
 	require.NoError(t, err)
 
 	mocked := mocksender.NewMockSender(kubeApiMetricsCheck.ID())

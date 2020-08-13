@@ -30,9 +30,8 @@ type TopologyCheck struct {
 }
 
 // Configure parses the check configuration and init the check.
-// TODO: [STS] implement source string
 func (t *TopologyCheck) Configure(config, initConfig integration.Data, source string) error {
-	err := t.ConfigureKubeApiCheck(config)
+	err := t.ConfigureKubeApiCheck(config, source)
 	if err != nil {
 		return err
 	}
