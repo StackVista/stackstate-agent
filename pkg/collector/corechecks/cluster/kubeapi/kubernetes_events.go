@@ -30,7 +30,6 @@ import (
 const (
 	kubernetesAPIEventsCheckName = "kubernetes_api_events"
 	eventTokenKey                = "event"
-
 	maxEventCardinality           = 300
 	defaultResyncPeriodInSecond   = 300
 	defaultTimeoutEventCollection = 2000
@@ -69,6 +68,22 @@ func (c *EventsConfig) parse(data []byte) error {
 	c.ResyncPeriodEvents = defaultResyncPeriodInSecond
 
 	return yaml.Unmarshal(data, c)
+}
+
+// NewKubernetesApiEventsCheck creates a instance of the kubernetes EventsCheck given the base and instance
+func NewKubernetesApiEventsCheck(base core.CheckBase, instance *EventsConfig) *EventsCheck {
+	return &EventsCheck{
+		CommonCheck: CommonCheck{
+			CheckBase: base,
+		},
+		instance: instance,
+		providerIDCache: cache.New(defaultCacheExpire, defaultCachePurge),
+	}
+}
+
+// KubernetesApiEventsFactory is exported for integration testing.
+func KubernetesApiEventsFactory() check.Check {
+	return NewKubernetesApiEventsCheck(core.NewCheckBase(kubernetesAPIEventsCheckName), &EventsConfig{})
 }
 
 // Configure parses the check configuration and init the check.
@@ -146,17 +161,6 @@ func (k *EventsCheck) Run() error {
 		_ = k.Warnf("Could not submit new event %s", err.Error())
 	}
 	return nil
-}
-
-// KubernetesASFactory is exported for integration testing.
-func KubernetesApiEventsFactory() check.Check {
-	return &EventsCheck{
-		CommonCheck: CommonCheck{
-			CheckBase: core.NewCheckBase(kubernetesAPIEventsCheckName),
-		},
-		instance: &EventsConfig{},
-		providerIDCache: cache.New(defaultCacheExpire, defaultCachePurge),
-	}
 }
 
 func (k *EventsCheck) eventCollectionCheck() (newEvents []*v1.Event, err error) {

@@ -60,13 +60,7 @@ func TestProcessBundledEvents(t *testing.T) {
 	ev4 := createEvent(29, "default", "localhost", "Node", "e63e74fa-f566-11e7-9749-0e4863e1cbf4", "kubelet", "machine-blue", "MissingClusterDNS", "MountVolume.SetUp succeeded", "Normal", 709675200)
 	// (As Object kinds are Pod and Node here, the event should take the remote hostname `machine-blue`)
 
-	kubeApiEventsCheck := &EventsCheck{
-		instance: &EventsConfig{},
-		CommonCheck: CommonCheck{
-			CheckBase:             core.NewCheckBase(kubernetesAPIEventsCheckName),
-			KubeAPIServerHostname: "hostname",
-		},
-	}
+	kubeApiEventsCheck := NewKubernetesApiEventsCheck(core.NewCheckBase(kubernetesAPIEventsCheckName), &EventsConfig{})
 	// Several new events, testing aggregation
 	// Not testing full match of the event message as the order of the actions in the summary isn't guaranteed
 
@@ -113,7 +107,7 @@ func TestProcessBundledEvents(t *testing.T) {
 	mocked.AssertExpectations(t)
 
 	// Test the hostname change when a cluster name is set
-	var testClusterName = "Laika"
+	var testClusterName = "laika"
 	mockConfig := config.Mock()
 	mockConfig.Set("cluster_name", testClusterName)
 	clustername.ResetClusterName() // reset state as clustername was already read
@@ -148,13 +142,8 @@ func TestProcessEvent(t *testing.T) {
 	ev1 := createEvent(2, "default", "dca-789976f5d7-2ljx6", "ReplicaSet", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "Scheduled", "Successfully assigned dca-789976f5d7-2ljx6 to ip-10-0-0-54", "Warning", 709662600)
 	// (Object kind was changed from Pod to ReplicaSet to test the choice of hostname: it should take here the local hostname below `hostname`)
 
-	kubeApiEventsCheck := &EventsCheck{
-		instance: &EventsConfig{},
-		CommonCheck: CommonCheck{
-			CheckBase:             core.NewCheckBase(kubernetesAPIEventsCheckName),
-			KubeAPIServerHostname: "hostname",
-		},
-	}
+	kubeApiEventsCheck := NewKubernetesApiEventsCheck(core.NewCheckBase(kubernetesAPIEventsCheckName), &EventsConfig{})
+
 	mocked := mocksender.NewMockSender(kubeApiEventsCheck.ID())
 
 	newKubeEventBundle := []*v1.Event{
@@ -220,13 +209,7 @@ func TestProcessEventsType(t *testing.T) {
 	ev2 := createEvent(3, "default", "dca-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "Started", "Started container", "Normal", 709662600)
 	ev3 := createEvent(4, "default", "dca-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "BackOff", "Back-off restarting failed container", "Warning", 709662600)
 
-	kubeApiEventsCheck := &EventsCheck{
-		instance: &EventsConfig{},
-		CommonCheck: CommonCheck{
-			CheckBase:             core.NewCheckBase(kubernetesAPIEventsCheckName),
-			KubeAPIServerHostname: "hostname",
-		},
-	}
+	kubeApiEventsCheck := NewKubernetesApiEventsCheck(core.NewCheckBase(kubernetesAPIEventsCheckName), &EventsConfig{})
 
 	newKubeEventsBundle := []*v1.Event{
 		ev1,

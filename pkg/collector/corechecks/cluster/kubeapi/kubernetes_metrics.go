@@ -48,6 +48,21 @@ func (c *MetricsConfig) parse(data []byte) error {
 	return yaml.Unmarshal(data, c)
 }
 
+// NewKubernetesApiMetricsCheck creates a instance of the kubernetes MetricsCheck given the base and instance
+func NewKubernetesApiMetricsCheck(base core.CheckBase, instance *MetricsConfig) *MetricsCheck {
+	return &MetricsCheck{
+		CommonCheck: CommonCheck{
+			CheckBase: base,
+		},
+		instance: instance,
+	}
+}
+
+// KubernetesApiMetricsFactory is exported for integration testing.
+func KubernetesApiMetricsFactory() check.Check {
+	return NewKubernetesApiMetricsCheck(core.NewCheckBase(kubernetesAPIMetricsCheckName), &MetricsConfig{})
+}
+
 // Configure parses the check configuration and init the check.
 func (k *MetricsCheck) Configure(config, initConfig integration.Data, source string) error {
 	err := k.CommonConfigure(config, source)
@@ -105,16 +120,6 @@ func (k *MetricsCheck) Run() error {
 	}
 
 	return nil
-}
-
-// KubernetesASFactory is exported for integration testing.
-func KubernetesApiMetricsFactory() check.Check {
-	return &MetricsCheck{
-		CommonCheck: CommonCheck{
-			CheckBase: core.NewCheckBase(kubernetesAPIMetricsCheckName),
-		},
-		instance: &MetricsConfig{},
-	}
 }
 
 func (k *MetricsCheck) parseComponentStatus(sender aggregator.Sender, componentsStatus *v1.ComponentStatusList) error {
