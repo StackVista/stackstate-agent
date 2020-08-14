@@ -116,7 +116,7 @@ func NewTestCollector(componentChannel chan<- *topology.Component, relationChann
 }
 
 // GetName returns the name of the TestCollector
-func (_ *TestCollector) GetName() string {
+func (*TestCollector) GetName() string {
 	return "Test Collector"
 }
 
@@ -150,7 +150,7 @@ func NewErrorTestCollector(componentChannel chan<- *topology.Component, relation
 }
 
 // GetName returns the name of the ErrorTestCollector
-func (_ *ErrorTestCollector) GetName() string {
+func (*ErrorTestCollector) GetName() string {
 	return "Error Test Collector"
 }
 

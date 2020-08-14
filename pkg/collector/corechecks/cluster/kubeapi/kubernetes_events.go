@@ -28,8 +28,8 @@ import (
 
 // Covers the Control Plane service check and the in memory pod metadata.
 const (
-	kubernetesAPIEventsCheckName = "kubernetes_api_events"
-	eventTokenKey                = "event"
+	kubernetesAPIEventsCheckName  = "kubernetes_api_events"
+	eventTokenKey                 = "event"
 	maxEventCardinality           = 300
 	defaultResyncPeriodInSecond   = 300
 	defaultTimeoutEventCollection = 2000
@@ -41,7 +41,7 @@ const (
 // KubeApiEventsConfig is the config of the API server.
 type EventsConfig struct {
 	CollectEvent             bool     `yaml:"collect_events"`
-	FilteredEventTypes        []string `yaml:"filtered_event_types"`
+	FilteredEventTypes       []string `yaml:"filtered_event_types"`
 	EventCollectionTimeoutMs int      `yaml:"kubernetes_event_read_timeout_ms"`
 	MaxEventCollection       int      `yaml:"max_events_per_run"`
 	ResyncPeriodEvents       int      `yaml:"kubernetes_event_resync_period_s"`
@@ -56,7 +56,7 @@ type EventC struct {
 // KubeApiEventsCheck grabs events from the API server.
 type EventsCheck struct {
 	CommonCheck
-	instance           *EventsConfig
+	instance        *EventsConfig
 	eventCollection EventC
 	ignoredEvents   string
 	providerIDCache *cache.Cache
@@ -70,25 +70,25 @@ func (c *EventsConfig) parse(data []byte) error {
 	return yaml.Unmarshal(data, c)
 }
 
-// NewKubernetesApiEventsCheck creates a instance of the kubernetes EventsCheck given the base and instance
-func NewKubernetesApiEventsCheck(base core.CheckBase, instance *EventsConfig) *EventsCheck {
+// NewKubernetesAPIEventsCheck creates a instance of the kubernetes EventsCheck given the base and instance
+func NewKubernetesAPIEventsCheck(base core.CheckBase, instance *EventsConfig) *EventsCheck {
 	return &EventsCheck{
 		CommonCheck: CommonCheck{
 			CheckBase: base,
 		},
-		instance: instance,
+		instance:        instance,
 		providerIDCache: cache.New(defaultCacheExpire, defaultCachePurge),
 	}
 }
 
-// KubernetesApiEventsFactory is exported for integration testing.
-func KubernetesApiEventsFactory() check.Check {
-	return NewKubernetesApiEventsCheck(core.NewCheckBase(kubernetesAPIEventsCheckName), &EventsConfig{})
+// KubernetesAPIEventsFactory is exported for integration testing.
+func KubernetesAPIEventsFactory() check.Check {
+	return NewKubernetesAPIEventsCheck(core.NewCheckBase(kubernetesAPIEventsCheckName), &EventsConfig{})
 }
 
 // Configure parses the check configuration and init the check.
 func (k *EventsCheck) Configure(config, initConfig integration.Data, source string) error {
-	err := k.ConfigureKubeApiCheck(config, source)
+	err := k.ConfigureKubeAPICheck(config, source)
 	if err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func convertFilter(conf []string) string {
 // Run executes the check.
 func (k *EventsCheck) Run() error {
 	// initialize kube api check
-	err := k.InitKubeApiCheck()
+	err := k.InitKubeAPICheck()
 	if err == apiserver.ErrNotLeader {
 		log.Debug("Agent is not leader, will not run the check")
 		return nil
@@ -192,7 +192,6 @@ func (k *EventsCheck) eventCollectionCheck() (newEvents []*v1.Event, err error) 
 	return newEvents, nil
 }
 
-
 // processEvents:
 // - iterates over the Kubernetes Events
 // - extracts some attributes and builds a structure ready to be submitted as a Datadog event (bundle)
@@ -231,5 +230,5 @@ func bundleID(e *v1.Event) string {
 }
 
 func init() {
-	core.RegisterCheck(kubernetesAPIEventsCheckName, KubernetesApiEventsFactory)
+	core.RegisterCheck(kubernetesAPIEventsCheckName, KubernetesAPIEventsFactory)
 }

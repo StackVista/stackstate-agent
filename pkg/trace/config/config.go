@@ -127,7 +127,6 @@ type AgentConfig struct {
 
 	// Features [sts]
 	FeaturesConfig featuresconfig.FeaturesConfig
-
 }
 
 // New returns a configuration with the default values.

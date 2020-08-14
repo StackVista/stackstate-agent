@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/DataDog/gopsutil/process"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/stretchr/testify/assert"
 )
 

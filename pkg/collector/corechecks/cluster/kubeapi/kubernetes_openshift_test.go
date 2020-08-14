@@ -28,7 +28,7 @@ func TestReportClusterQuotas(t *testing.T) {
 
 	var instanceCfg = []byte("")
 	var initCfg = []byte("")
-	kubeApiMetricsCheck := KubernetesApiMetricsFactory().(*MetricsCheck)
+	kubeApiMetricsCheck := KubernetesAPIMetricsFactory().(*MetricsCheck)
 	err = kubeApiMetricsCheck.Configure(instanceCfg, initCfg, "test")
 	require.NoError(t, err)
 
