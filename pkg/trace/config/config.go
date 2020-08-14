@@ -166,6 +166,9 @@ func New() *AgentConfig {
 		AnalyzedRateByServiceLegacy: make(map[string]float64),
 		AnalyzedSpansByService:      make(map[string]map[string]float64),
 
+		// [sts] interpreter config
+		InterpreterConfig: interpreterconfig.DefaultInterpreterConfig(),
+
 		DDAgentBin: defaultDDAgentBin,
 	}
 }
