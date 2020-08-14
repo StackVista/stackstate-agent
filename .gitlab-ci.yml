@@ -67,6 +67,13 @@ variables:
   rm -rf /go/src/github.com/StackVista/stackstate-agent || true
   ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
 
+.configure_windows_ps1_environment: &configure_windows_ps1_environment |
+  Import-Module C:\tools\miniconda3\shell\condabin\conda-hook.ps1
+  conda activate ddpy3
+
+.configure_windows_cmd_environment: &configure_windows_cmd_environment |
+  c:\tools\miniconda3\condabin\activate
+  conda activate ddpy3
 ######################### /pipeline bricks
 
 
