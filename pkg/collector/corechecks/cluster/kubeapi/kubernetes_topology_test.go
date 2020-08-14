@@ -26,7 +26,7 @@ func TestRunClusterCollectors(t *testing.T) {
 	componentID = 1
 	relationID = 1
 
-	kubernetesTopologyCheck := KubernetesApiTopologyFactory().(*TopologyCheck)
+	kubernetesTopologyCheck := KubernetesAPITopologyFactory().(*TopologyCheck)
 	instance := topology.Instance{Type: "kubernetes", URL: "test-cluster-name"}
 	// set up the batcher for this instance
 	kubernetesTopologyCheck.instance.CollectTimeout = 5
