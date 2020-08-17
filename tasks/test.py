@@ -190,8 +190,6 @@ def test(
 
     if coverage:
         print("\n--- Test coverage:")
-        with open(PROFILE_COV, "r") as f_cov:
-            print(f_cov.read())
         ctx.run("go tool cover -func {}".format(PROFILE_COV))
 
     if profile:
