@@ -188,10 +188,10 @@ def test(
     }
     ctx.run(cmd.format(**args), env=env, out_stream=test_profiler)
 
-    # if coverage:
-    #     print("\n--- Test coverage:")
-    #     ctx.run("go tool cover -func {}".format(PROFILE_COV))
-    #
+    if coverage:
+        print("\n--- Test coverage:")
+        ctx.run("go tool cover -func {}".format(PROFILE_COV))
+
     # if profile:
     #     print("\n--- Top 15 packages sorted by run time:")
     #     test_profiler.print_sorted(15)
