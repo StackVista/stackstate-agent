@@ -4,6 +4,7 @@
             "golang.org/x/lint/golint",
             "github.com/fzipp/gocyclo",
             "github.com/gordonklaus/ineffassign",
+            "github.com/client9/misspell/cmd/misspell",
             "golang.org/x/mobile/cmd/gomobile",
             "golang.org/x/tools/go/ast/astutil",
             "golang.org/x/tools/go/internal",
@@ -35,6 +36,10 @@
             "type": "go"
         },
         "github.com/gordonklaus/ineffassign": {
+            "version": "master",
+            "type": "go"
+        },
+        "github.com/client9/misspell/cmd/misspell": {
             "version": "master",
             "type": "go"
         },

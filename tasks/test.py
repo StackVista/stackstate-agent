@@ -109,7 +109,7 @@ def test(
         vet(ctx, targets=tool_targets, rtloader_root=rtloader_root, build_tags=build_tags, arch=arch)
         fmt(ctx, targets=tool_targets, fail_on_fmt=fail_on_fmt)
         lint(ctx, targets=tool_targets)
-#        misspell(ctx, targets=tool_targets) //[sts] no misspell
+        misspell(ctx, targets=tool_targets)
         ineffassign(ctx, targets=tool_targets)
 
         # for now we only run golangci_lint on Unix as the Windows env need more work
