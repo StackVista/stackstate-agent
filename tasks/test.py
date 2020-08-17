@@ -188,7 +188,7 @@ def test(
     }
     ctx.run(cmd.format(**args), env=env, out_stream=test_profiler)
 
-    # disabling it for now, looks like there might be some bug in go 1.13 running into:
+    # TODO: [sts] disabling it for now, looks like there might be some bug in go 1.13 running into:
     # cover: cannot run go list: exit status 1
     # build github.com/StackVista/stackstate-agent/cmd/secrets:
     #   cannot load github.com/StackVista/stackstate-agent/cmd/secrets: no Go source files
