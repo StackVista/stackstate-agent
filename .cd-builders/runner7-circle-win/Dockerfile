@@ -75,8 +75,8 @@ RUN setx SSL_CERT_FILE \"C:\cacert.pem\"
 ### (https://github.com/wixtoolset/issues/issues/5661).
 
 # Install .NET Fx 3.5
-COPY ./windows/install_net35_1809.bat install_net35_1809.bat
-COPY ./windows/install_net35_1909.bat install_net35_1909.bat
+COPY install_net35_1809.bat install_net35_1809.bat
+COPY install_net35_1909.bat install_net35_1909.bat
 RUN if ($Env:WINDOWS_VERSION -eq '1809') { .\install_net35_1809.bat }
 RUN if ($Env:WINDOWS_VERSION -eq '1909') { .\install_net35_1909.bat }
 
@@ -102,7 +102,7 @@ RUN cinst -y --no-progress visualstudio2017buildtools $ENV:CHOCO_ARCH_FLAG --ver
 RUN setx VSTUDIO_ROOT \"${env:ProgramFiles(x86)}\Microsoft Visual Studio\2017\BuildTools\"
 
 # If x64, install the WDK for driver development
-COPY ./windows/install_wdk.ps1 install_wdk.ps1
+COPY install_wdk.ps1 install_wdk.ps1
 RUN if ($Env:TARGET_ARCH -eq 'x64') { powershell -Command .\install_wdk.ps1 }
 
 # Install VC compiler for Python 2.7
@@ -139,15 +139,15 @@ RUN if ($Env:TARGET_ARCH -eq 'x86') { ridk enable; bash -c \"pacman -S --needed 
 RUN if ($Env:TARGET_ARCH -eq 'x86') { [Environment]::SetEnvironmentVariable(\"Path\", [Environment]::GetEnvironmentVariable(\"Path\", [EnvironmentVariableTarget]::Machine) + \";C:\tools\msys64\mingw32\bin;C:\tools\msys64\usr\bin\", [System.EnvironmentVariableTarget]::Machine) }
 
 # Install aws cli
-COPY ./windows/install_awscli.ps1 install_awscli.ps1
+COPY install_awscli.ps1 install_awscli.ps1
 RUN powershell -C .\install_awscli.ps1
 
 # Install docker, manifest-tool and notary
-COPY ./windows/install_docker.ps1 install_docker.ps1
+COPY install_docker.ps1 install_docker.ps1
 RUN powershell -Command .\install_docker.ps1
 
 # Install embedded pythons (for unit testing)
-COPY ./windows/install_embedded_pythons.ps1 install_embedded_pythons.ps1
+COPY install_embedded_pythons.ps1 install_embedded_pythons.ps1
 RUN powershell -C .\install_embedded_pythons.ps1
 
 # Add signtool to path
@@ -156,7 +156,7 @@ RUN [Environment]::SetEnvironmentVariable(\"Path\", [Environment]::GetEnvironmen
 # Set 32-bit flag env var
 RUN if ($Env:TARGET_ARCH -eq 'x86') { setx WINDOWS_BUILD_32_BIT 1 }
 
-COPY ./windows/entrypoint.bat /entrypoint.bat
-COPY ./windows/aws_networking.ps1 /aws_networking.ps1
+COPY entrypoint.bat /entrypoint.bat
+COPY aws_networking.ps1 /aws_networking.ps1
 
 ENTRYPOINT ["/entrypoint.bat"]
