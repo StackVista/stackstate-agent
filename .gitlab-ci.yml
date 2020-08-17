@@ -69,6 +69,9 @@ variables:
 .configure_windows_ps1_environment: &configure_windows_ps1_environment |
   Import-Module C:\tools\miniconda3\shell\condabin\conda-hook.ps1
   conda activate ddpy3
+  $current_dir=Get-Location
+  Remove-Item -LiteralPath "c:\\gopath\\src\\github.com\\StackVista\\stackstate-agent" -Force -Recurse
+  New-Item -ItemType SymbolicLink -Path "c:\\gopath\\src\\github.com\\StackVista\\stackstate-agent" -Target $current_dir
 
 .configure_windows_cmd_environment: &configure_windows_cmd_environment |
   c:\tools\miniconda3\condabin\activate
@@ -176,25 +179,24 @@ deps_rpm:
 deps_win:
   stage: prepare
   before_script:
-    - set WIN_CI_PROJECT_DIR=%CD%
-    - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
+    - *configure_windows_ps1_environment
   cache:
     key: "deps-win-$CI_COMMIT_REF_SLUG"
     paths:
       - vendor
-      - venv
   script:
-    - call .gitlab-scripts/windows_build_env.cmd
-    - call .gitlab-scripts/windows_deps.cmd
+    - inv deps
     - inv version -u > version.txt
+    - cd $Env:GOPATH/pkg ; tar czf $CI_PROJECT_DIR/go-pkg.tar.gz .
+    - cd $Env:GOPATH/bin ; tar czf $CI_PROJECT_DIR/go-bin.tar.gz .
+    - cd $Env:CI_PROJECT_DIR/vendor ; tar czf $CI_PROJECT_DIR/vendor.tar.gz .
   artifacts:
     paths:
       - "vendor"
-      - "venv"
       - "version.txt"
     expire_in: 1 week
   tags:
-    - windows_agent7 #sts_windows
+    - windows_agent7_ps1 #sts_windows
 
 unit_tests:
   stage: build_and_test
