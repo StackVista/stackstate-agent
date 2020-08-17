@@ -67,10 +67,12 @@ variables:
   ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
 
 .configure_windows_ps1_environment: &configure_windows_ps1_environment |
+  dir env:
   Import-Module C:\tools\miniconda3\shell\condabin\conda-hook.ps1
   conda activate ddpy3
   $current_dir=Get-Location
-  Remove-Item -LiteralPath "c:\\gopath\\src\\github.com\\StackVista\\stackstate-agent" -Force -Recurse
+#  Remove-Item -LiteralPath "c:\\gopath\\src\\github.com\\StackVista\\stackstate-agent" -Force -Recurse
+  cmd /c if exist %GOPATH%\src\github.com\StackVista\stackstate-agent rd /s/q %GOPATH%\src\github.com\StackVista\stackstate-agent
   New-Item -ItemType SymbolicLink -Path "c:\\gopath\\src\\github.com\\StackVista\\stackstate-agent" -Target $current_dir
 
 .configure_windows_cmd_environment: &configure_windows_cmd_environment |
