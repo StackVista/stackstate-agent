@@ -193,8 +193,10 @@ deps_win:
     - cd $Env:CI_PROJECT_DIR/vendor ; tar czf $CI_PROJECT_DIR/vendor.tar.gz .
   artifacts:
     paths:
-      - "vendor"
-      - "version.txt"
+      - $CI_PROJECT_DIR/version.txt
+      - $CI_PROJECT_DIR/go-pkg.tar.gz
+      - $CI_PROJECT_DIR/go-bin.tar.gz
+      - $CI_PROJECT_DIR/vendor.tar.gz
     expire_in: 1 week
   tags:
     - windows_agent7_ps1 #sts_windows
