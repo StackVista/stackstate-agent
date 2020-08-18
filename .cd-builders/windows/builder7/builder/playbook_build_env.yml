@@ -21,6 +21,12 @@
       args:
         stdin: choco feature enable -n allowGlobalConfirmation
 
+# Minoconda3 - agent7 part
+    - name: Install Miniconda
+      win_chocolatey:
+        name: miniconda3
+        state: present
+
 # validate by  Get-WindowsFeature
     - name: Activate .NET35 feature (way 1 win_optional_feature NetFx3)
       win_optional_feature:
@@ -132,11 +138,11 @@
         state: present
 
 # choco install visualstudio2017community --package-parameters "...."
-    # - name: Install Visual studio 2017 community
-    #   win_chocolatey:
-    #     name: visualstudio2017community
-    #     state: present
-    #     package_params: "--norestart --wait --quiet --locale en-US --add Microsoft.VisualStudio.Workload.MSBuildTools --add Microsoft.VisualStudio.Workload.NativeDesktop  --add Microsoft.VisualStudio.Component.VC.CMake.Project --add Microsoft.VisualStudio.Component.VC.CLI.Support --add Microsoft.VisualStudio.Workload.UniversalBuildTools --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Win81"
+    - name: Backward compatibility - Install Visual studio 2017 community
+      win_chocolatey:
+        name: visualstudio2017community
+        state: present
+        package_params: "--norestart --wait --quiet --locale en-US --add Microsoft.VisualStudio.Workload.MSBuildTools --add Microsoft.VisualStudio.Workload.NativeDesktop  --add Microsoft.VisualStudio.Component.VC.CMake.Project --add Microsoft.VisualStudio.Component.VC.CLI.Support --add Microsoft.VisualStudio.Workload.UniversalBuildTools --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Win81"
 
 # choco install visualstudio2019community --package-parameters "...."
     - name: Install Visual studio 2019 community
@@ -170,10 +176,16 @@
       until: wixtry2.rc == 0
       retries: 3
 
-    - name: Template wix installer (either full or extension)
+    - name: Template wix installer InstallWixExtension2019
       win_copy:
 #        src: files/InstallWixSet.ps1
         src: files/InstallWixExtension.ps1
+        dest: C:\
+
+    - name: Template wix installer InstallWixExtension2017
+      win_copy:
+#        src: files/InstallWixSet.ps1
+        src: files/InstallWixExtension2017.ps1
         dest: C:\
 
     # - name: Execute wix installer
@@ -183,8 +195,11 @@
 # https://marketplace.visualstudio.com/items?itemName=WixToolset.WixToolsetVisualStudio2019Extension
 # Check files/InstallWixSet.ps1ss
 
-    - name: Execute wix extension
+    - name: Execute wix extension (2019)
       win_command: powershell.exe -File C:\InstallWixExtension.ps1
+
+    - name: Execute wix extension (2017)
+      win_command: powershell.exe -File C:\InstallWixExtension2017.ps1
 
 # Install additional workflows
 
@@ -280,18 +295,20 @@
         value: "c:\\gopath"
         level: machine
 
-    - name: ENV | GOROOT
-      win_environment:
-        state: present
-        name: GOROOT
-        value: "c:\\tools\\go"
-        level: machine
+# [VS] GOROOT is no longer needed
+#    - name: ENV | GOROOT
+#      win_environment:
+#        state: present
+#        name: GOROOT
+#        value: "c:\\tools\\go"
+#        level: machine
 
+# [VS] GOBIN has changed
     - name: ENV | GOBIN
       win_environment:
         state: present
         name: GOBIN
-        value: "c:\\tools\\go\\bin"
+        value: "c:\\gopath\\bin"
         level: machine
 
     # - name: ENV | VCINSTALLDIR
