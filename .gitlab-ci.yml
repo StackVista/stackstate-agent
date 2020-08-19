@@ -188,9 +188,9 @@ deps_win:
   script:
     - inv deps
     - inv version -u > version.txt
-    - cd $Env:GOPATH/pkg ; tar czf $CI_PROJECT_DIR/go-pkg.tar.gz .
-    - cd $Env:GOPATH/bin ; tar czf $CI_PROJECT_DIR/go-bin.tar.gz .
-    - cd $Env:CI_PROJECT_DIR/vendor ; tar czf $CI_PROJECT_DIR/vendor.tar.gz .
+    - cd $Env:GOPATH/pkg ; tar --force-local -czf $CI_PROJECT_DIR/go-pkg.tar.gz .
+    - cd $Env:GOPATH/bin ; tar --force-local -czf $CI_PROJECT_DIR/go-bin.tar.gz .
+    - cd $Env:CI_PROJECT_DIR/vendor ; tar --force-local -czf $CI_PROJECT_DIR/vendor.tar.gz .
   artifacts:
     paths:
       - $CI_PROJECT_DIR/version.txt
