@@ -512,6 +512,8 @@ pre_release_image:
     - build_deb
   variables:
     DOCKER_DRIVER: overlay
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
   services:
     - docker:dind
   before_script: []
@@ -528,6 +530,8 @@ pre_release_trace_agent_image:
     - build_deb
   variables:
     DOCKER_DRIVER: overlay
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
   services:
     - docker:dind
   before_script: []
@@ -544,6 +548,8 @@ pre_release_cluster_agent_image:
     - build_cluster_agent
   variables:
     DOCKER_DRIVER: overlay
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
   services:
     - docker:dind
   before_script: []
