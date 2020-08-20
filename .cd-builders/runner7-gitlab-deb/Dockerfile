@@ -5,6 +5,9 @@ RUN echo 'export PATH=$HOME/bin:$PATH' >> /root/.bashrc
 
 RUN echo 'source /usr/local/rvm/scripts/rvm' >> /root/.bashrc
 RUN echo 'source /usr/local/rvm/scripts/rvm' >> /root/.bash_profile
+RUN echo 'gem: --no-document' >> /root/.gemrc
+
+RUN bash -c "source /usr/local/rvm/scripts/rvm && gem install deb-s3"
 
 #RUN pip install awscli boto3 sa-rpm-s3
 ADD rpmmacros /root/.rpmmacros
