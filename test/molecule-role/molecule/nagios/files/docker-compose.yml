@@ -93,7 +93,7 @@ services:
       - /sys/kernel/debug:/sys/kernel/debug
       - ./agent/:/etc/stackstate-agent/conf.d/nagios.d:ro
       - nagios_logs:/opt/nagios/var/log
-      - nagios_conf:/etc/nagios/
+      - nagios_conf:/opt/nagios/etc
     environment:
       STS_API_KEY: "API_KEY"
       STS_STS_URL: "http://localhost:7077/stsAgent"
