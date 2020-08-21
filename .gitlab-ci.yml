@@ -171,6 +171,8 @@ docker_integration_tests:
     - deps_deb
   variables:
       DOCKER_DRIVER: overlay
+      DOCKER_HOST: tcp://docker:2375
+      DOCKER_TLS_CERTDIR: ""
   services:
     - docker:dind
   script:
