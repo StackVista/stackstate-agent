@@ -334,6 +334,20 @@ def apply_branding(ctx):
     do_sed_rename(ctx, 's/com.datadoghq.ad/com.stackstate.ad/g', "./pkg/autodiscovery/providers/docker.go")
     do_sed_rename(ctx, 's/com.datadoghq.ad/com.stackstate.ad/g', "./pkg/autodiscovery/providers/ecs.go")
 
+    # omnibus
+    do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/projects/agent.rb")
+    do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/projects/iot-agent.rb")
+    do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/software/datadog-agent-finalize.rb")
+    do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/templates/datadog-agent/sysvinit_debian.erb")
+    do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/package-scripts/dogstatsd/postinst")
+    do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/package-scripts/dogstatsd/posttrans")
+    do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/package-scripts/dogstatsd/preinst")
+    do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/package-scripts/iot-agent/postinst")
+    do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/package-scripts/iot-agent/postrm")
+    do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/package-scripts/iot-agent/posttrans")
+    do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/package-scripts/iot-agent/preinst")
+
+
 @task
 def build(
     ctx,
