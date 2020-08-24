@@ -54,6 +54,12 @@ find . -iname \*datadog\* \
   | grep -v "/opt/stackstate-agent/embedded/lib/python2.7/site-packages/stackstate_checks/stubs/datadog_agent.py" \
   | grep -v "/opt/stackstate-agent/embedded/lib/python2.7/site-packages/stackstate_checks/base/stubs/datadog_agent.py" \
   | grep -v "/opt/stackstate-agent/embedded/lib/python2.7/site-packages/datadog_a7" \
+  | grep -v "python3.8/site-packages/datadog_" \
+  | grep -v "/opt/stackstate-agent/embedded/include/datadog_agent_rtloader.h" \
+  | grep -v "/opt/stackstate-agent/embedded/lib/libdatadog-agent-rtloader.so" \
+  | grep -v "/opt/stackstate-agent/embedded/lib/libdatadog-agent-rtloader.so.0.1.0" \
+  | grep -v "/opt/stackstate-agent/embedded/lib/libdatadog-agent-rtloader.so.1" \
+  | grep -v "/opt/stackstate-agent/embedded/lib/libdatadog-agent-three.so" \
   | tee -a out.txt
 find . -iname \*dd-\* | tee -a out.txt
 
