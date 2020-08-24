@@ -280,6 +280,7 @@ build_cluster_agent:
   script:
     - inv -e cluster-agent.build
     - inv -e version
+    - ls -la $CI_PROJECT_DIR/bin/
   artifacts:
     paths:
       - $CI_PROJECT_DIR/bin/stackstate-cluster-agent
