@@ -564,7 +564,7 @@ pre_release_cluster_agent_image:
   before_script: []
   script:
     - cd $CI_PROJECT_DIR
-    - cp -r ./bin/stackstate-cluster-agent/* ./Dockerfiles/cluster-agent
+    - cp -r ./bin/stackstate-cluster-agent* ./Dockerfiles/cluster-agent
     - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent
 
 molecule_tests_vms:
