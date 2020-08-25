@@ -441,9 +441,9 @@ build_win:
 #    - inv version -u > version.txt
 #    - whoami
 # /debug
-    - call .gitlab-scripts/windows_build.cmd
+#    - call .gitlab-scripts/windows_build.cmd
   after_script:
-    - copy %GOPATH%\src\github.com\StackVista\stackstate-agent\omnibus\pkg\*.msi
+    - cmd.exe /c "copy %GOPATH%\src\github.com\StackVista\stackstate-agent\omnibus\pkg\*.msi"
   artifacts:
     expire_in: 2 weeks
     paths:
