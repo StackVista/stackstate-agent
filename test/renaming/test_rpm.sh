@@ -67,11 +67,16 @@ find . -iname \*datadog\* \
   | grep -v "/opt/stackstate-agent/embedded/lib/libdatadog-agent-three.so" \
   | tee -a out.txt
 
+#echo "pass 1" >> out.txt
+
 find . -iname \*dd-\* | tee -a out.txt
+
+#echo "pass 2" >> out.txt
 
 grep -R "datadog_checks" ./opt/stackstate-agent/embedded/ \
   | grep -v "datadog_checks_shared" \
   | grep -v "site-packages" \
+  | grep -v "/opt/stackstate-agent/embedded/lib/libdatadog-agent-three.so" \
   | tee -a out.txt \
 
 echo "========Output:========================="
