@@ -156,7 +156,7 @@ integration_tests:
   script:
     - inv -e integration-tests --race --remote-docker
   tags:
-    - sts-aws
+    - sts-k8s-xl-no-docker-runner
 
 filename_linting:
   stage: build_and_test
