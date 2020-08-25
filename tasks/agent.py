@@ -489,7 +489,7 @@ def build(
         "go_file": "./pkg/config/render_config.go",
         "build_type": build_type,
         "template_file": "./pkg/config/config_template.yaml",
-        "output_file": "./cmd/agent/dist/datadog.yaml",
+        "output_file": "./cmd/agent/dist/stackstate.yaml",
     }
 
     ctx.run(cmd.format(**args), env=env)
@@ -530,7 +530,7 @@ def refresh_assets(ctx, build_tags, development=True, iot=False):
     # System probe not supported on windows
     if sys.platform.startswith('linux'):
         shutil.copy("./cmd/agent/dist/system-probe.yaml", os.path.join(dist_folder, "system-probe.yaml"))
-    shutil.copy("./cmd/agent/dist/datadog.yaml", os.path.join(dist_folder, "datadog.yaml"))
+    shutil.copy("./cmd/agent/dist/stackstate.yaml", os.path.join(dist_folder, "stackstate.yaml"))
 
     for check in AGENT_CORECHECKS if not iot else IOT_AGENT_CORECHECKS:
         check_dir = os.path.join(dist_folder, "conf.d/{}.d/".format(check))
