@@ -239,7 +239,7 @@ build_deb:
   needs:
     - deps_deb
   tags:
-    - sts-k8s-xl-no-docker-runner
+    - sts-aws
   cache:
     key: "build-deb-$CI_COMMIT_REF_SLUG"
     paths:
