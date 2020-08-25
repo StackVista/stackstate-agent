@@ -156,7 +156,7 @@ integration_tests:
   script:
     - inv -e integration-tests --race --remote-docker
   tags:
-    - sts-k8s-xl-no-docker-runner
+    - sts-aws
 
 filename_linting:
   stage: build_and_test
@@ -239,7 +239,7 @@ build_deb:
   needs:
     - deps_deb
   tags:
-    - sts-aws
+    - sts-k8s-xl-no-docker-runner
   cache:
     key: "build-deb-$CI_COMMIT_REF_SLUG"
     paths:
