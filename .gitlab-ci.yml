@@ -568,6 +568,7 @@ pre_release_cluster_agent_image:
 
 molecule_tests_vms:
   stage: acceptance
+  image: docker.io/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
   needs:
     - pre_release_deb
     - pre_release_rpm
@@ -588,6 +589,7 @@ molecule_tests_vms:
 
 molecule_tests_compose:
   stage: acceptance
+  image: docker.io/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
   needs:
     - pre_release_image
   dependencies: []
@@ -606,6 +608,7 @@ molecule_tests_compose:
 
 molecule_tests_local_install:
   stage: acceptance
+  image: docker.io/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
   needs:
     - pre_release_deb
     - pre_release_rpm
@@ -623,6 +626,7 @@ molecule_tests_local_install:
 
 molecule_tests_kubernetes:
   stage: acceptance
+  image: docker.io/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
   needs:
     - pre_release_cluster_agent_image
     - pre_release_image
@@ -642,6 +646,7 @@ molecule_tests_kubernetes:
 
 molecule_tests_secrets:
   stage: acceptance
+  image: docker.io/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
   needs:
     - pre_release_deb
   dependencies: []
