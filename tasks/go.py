@@ -267,7 +267,7 @@ def deps(ctx, no_checks=False, core_dir=None, verbose=False, android=False):
             ctx.run('git -C {} checkout {}'.format(core_dir, integrations_core_version))
             tags_output = ctx.run("git -C " + core_dir + " ls-remote --tags | awk -F/ '{ print $3 }'")
             tags = tags_output.stdout
-            if integrations_core_version in tags:
+            if integrations_core_version not in tags:
                 ctx.run('git -C {} pull origin master'.format(core_dir))
             else:
                 ctx.run('git -C {} pull'.format(core_dir))
