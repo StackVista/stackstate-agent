@@ -270,7 +270,7 @@ def deps(ctx, no_checks=False, core_dir=None, verbose=False, android=False):
             if integrations_core_version not in tags:
                 ctx.run('git -C {} pull origin master'.format(core_dir))
             else:
-                ctx.run('git -C {} pull'.format(core_dir))
+                ctx.run('git -C {} pull origin {}'.format(core_dir, integrations_core_version))
             ctx.run('pip install -{} {}'.format(verbosity, checks_base))
             ctx.run('pip install -{} -r {}'.format(verbosity, os.path.join(checks_base, 'requirements.in')))
     checks_done = datetime.datetime.now()
