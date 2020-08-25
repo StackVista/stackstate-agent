@@ -424,13 +424,18 @@ build_win:
   stage: build_and_test
   needs:
     - deps_win
-  before_script: []
+  before_script:
+    - *configure_windows_ps1_environment
   script:
-    - call .gitlab-scripts/setup_artifactory.cmd
-    - set WIN_CI_PROJECT_DIR=%CD%
-    - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
-    - type %APPDATA%\pip\pip.ini
-    - call .gitlab-scripts/windows_build_env.cmd
+    - Get-VSSetupInstance 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community'
+    - ridk enable
+    - dir env:
+    - inv -e agent.omnibus-build --skip-sign --log-level debug --skip-deps
+#    - call .gitlab-scripts/setup_artifactory.cmd
+#    - set WIN_CI_PROJECT_DIR=%CD%
+#    - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
+#    - type %APPDATA%\pip\pip.ini
+#    - call .gitlab-scripts/windows_build_env.cmd
 # debug
 #    - call .gitlab-scripts/windows_deps.cmd
 #    - inv version -u > version.txt
@@ -445,7 +450,7 @@ build_win:
       - ./*.msi
       - "version.txt"
   tags:
-    - sts_windows
+    - windows_agent7_ps1
 
 test_deb_renaming:
   stage: pre_release
