@@ -430,7 +430,7 @@ old_win:
     - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
     - call .gitlab-scripts/windows_build_env.cmd
     - call ridk enable
-    - ridk version
+    - call ridk version
     - echo "=====Environment vars:"
     - set
     - echo "/====="
