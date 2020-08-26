@@ -431,7 +431,9 @@ old_win:
     - call .gitlab-scripts/windows_build_env.cmd
     - call ridk enable
     - ridk version
+    - echo "=====Environment vars:"
     - set
+    - echo "/====="
   tags:
     - sts_windows
 
