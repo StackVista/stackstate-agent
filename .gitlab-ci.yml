@@ -36,7 +36,7 @@ variables:
   SYSTEM_PROBE_GO_VERSION: 1.13.11
   DATADOG_AGENT_EMBEDDED_PATH: /opt/datadog-agent/embedded
   ARCH: amd64
-  VCINSTALLDIR: "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community"
+  VCINSTALLDIR: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community"
 
 
 ######################### pipeline bricks
