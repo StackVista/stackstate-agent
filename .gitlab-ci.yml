@@ -447,7 +447,7 @@ build_win:
   script:
     - Get-VSSetupInstance 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community'
     - ridk enable
-    - dir:env
+    - "dir env:"
     - echo "=====Path:"
     - echo $Env:path
     - echo "/====="
