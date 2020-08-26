@@ -36,6 +36,7 @@ variables:
   SYSTEM_PROBE_GO_VERSION: 1.13.11
   DATADOG_AGENT_EMBEDDED_PATH: /opt/datadog-agent/embedded
   ARCH: amd64
+  VCINSTALLDIR: "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community"
 
 
 ######################### pipeline bricks
@@ -446,7 +447,10 @@ build_win:
   script:
     - Get-VSSetupInstance 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community'
     - ridk enable
-    - "dir env:"
+    - dir:env
+    - echo "=====Path:"
+    - echo $Env:path
+    - echo "/====="
     - inv -e agent.omnibus-build --skip-sign --log-level debug --skip-deps
 #    - call .gitlab-scripts/setup_artifactory.cmd
 #    - set WIN_CI_PROJECT_DIR=%CD%
