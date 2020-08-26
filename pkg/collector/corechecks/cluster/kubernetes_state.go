@@ -11,6 +11,7 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/DataDog/datadog-agent/pkg/aggregator"
@@ -78,13 +79,18 @@ type KSMConfig struct {
 
 	// ResyncPeriod is the frequency of resync'ing the metrics cache in seconds, default 30.
 	ResyncPeriod int `yaml:"resync_period"`
+
+	// Telemetry enables telemetry check's metrics, default false.
+	// Metrics can be found under kubernetes_state.telemetry
+	Telemetry bool `yaml:"telemetry"`
 }
 
 // KSMCheck wraps the config and the metric stores needed to run the check
 type KSMCheck struct {
 	core.CheckBase
-	instance *KSMConfig
-	store    []cache.Store
+	instance  *KSMConfig
+	store     []cache.Store
+	telemetry *telemetryCache
 }
 
 // JoinsConfig contains the config parameters for label joins
@@ -227,7 +233,10 @@ func (k *KSMCheck) Run() error {
 	for _, store := range k.store {
 		metrics := store.(*ksmstore.MetricsStore).Push(ksmstore.GetAllFamilies, ksmstore.GetAllMetrics)
 		k.processMetrics(sender, metrics, metricsToGet)
+		k.processTelemetry(metrics)
 	}
+
+	k.sendTelemetry(sender)
 
 	return nil
 }
@@ -239,6 +248,12 @@ func (k *KSMCheck) processMetrics(sender aggregator.Sender, metrics map[string][
 			if metadataMetricsRegex.MatchString(metricFamily.Name) {
 				// metadata metrics are only used by the check for label joins
 				// they shouldn't be forwarded to Datadog
+				continue
+			}
+			if !isKnownMetric(metricFamily.Name) {
+				// ignore the metric if it doesn't have a transformer
+				// or if it isn't mapped to a datadog metric name
+				log.Tracef("KSM metric '%s' is unknown for the check, ignoring it", metricFamily.Name)
 				continue
 			}
 			if transform, found := metricTransformers[metricFamily.Name]; found {
@@ -397,6 +412,49 @@ func (k *KSMCheck) initTags() {
 	}
 }
 
+// processTelemetry accumulates the telemetry metric values, it can be called multiple times
+// during a check run then sendTelemetry should be called to forward the calculated values
+func (k *KSMCheck) processTelemetry(metrics map[string][]ksmstore.DDMetricsFam) {
+	if !k.instance.Telemetry {
+		return
+	}
+
+	for name, list := range metrics {
+		isMetadataMetric := metadataMetricsRegex.MatchString(name)
+		if !isKnownMetric(name) && !isMetadataMetric {
+			k.telemetry.incUnknown()
+			continue
+		}
+		if isMetadataMetric {
+			continue
+		}
+		count := 0
+		for _, family := range list {
+			count += len(family.ListMetrics)
+		}
+		k.telemetry.incTotal(count)
+		if resource := resourceNameFromMetric(name); resource != "" {
+			k.telemetry.incResource(resourceNameFromMetric(name), count)
+		}
+	}
+}
+
+// sendTelemetry converts the cached telemetry values and forwards them as telemetry metrics
+func (k *KSMCheck) sendTelemetry(s aggregator.Sender) {
+	if !k.instance.Telemetry {
+		return
+	}
+
+	// reset the cache for the next check run
+	defer k.telemetry.reset()
+
+	s.Gauge(ksmMetricPrefix+"telemetry.metrics.count.total", float64(k.telemetry.getTotal()), "", k.instance.Tags)
+	s.Gauge(ksmMetricPrefix+"telemetry.unknown_metrics.count", float64(k.telemetry.getUnknown()), "", k.instance.Tags) // useful to track metrics that aren't mapped to DD metrics
+	for resource, count := range k.telemetry.getResourcesCount() {
+		s.Gauge(ksmMetricPrefix+"telemetry.metrics.count", float64(count), "", append(k.instance.Tags, "resource_name:"+resource))
+	}
+}
+
 func KubeStateMetricsFactory() check.Check {
 	return newKSMCheck(
 		core.NewCheckBase(kubeStateMetricsCheckName),
@@ -411,6 +469,7 @@ func newKSMCheck(base core.CheckBase, instance *KSMConfig) *KSMCheck {
 	return &KSMCheck{
 		CheckBase: base,
 		instance:  instance,
+		telemetry: newTelemetryCache(),
 	}
 }
 
@@ -421,4 +480,27 @@ func formatMetricName(name string) string {
 	}
 	log.Tracef("KSM metric '%s' is not found in the metric names mapper", name)
 	return ksmMetricPrefix + name
+}
+
+// resourceNameFromMetric returns the resource name based on the metric name
+// It relies on the conventional KSM naming format kube_<resource>_suffix
+// returns an empty string otherwise
+func resourceNameFromMetric(name string) string {
+	parts := strings.SplitN(name, "_", 3)
+	if len(parts) < 2 {
+		return ""
+	}
+	return parts[1]
+}
+
+// isKnownMetric returns whether the KSM metric name is known by the check
+// A known metric should satisfy one of the conditions:
+//  - has a datadog metric name
+//  - has a metric transformer
+func isKnownMetric(name string) bool {
+	if _, found := metricNamesMapper[name]; found {
+		return true
+	}
+	_, found := metricTransformers[name]
+	return found
 }
