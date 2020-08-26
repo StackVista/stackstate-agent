@@ -7,6 +7,8 @@
 # using the package manager and StackState repositories.
 
 set -e
+install_script_version=1.0.1
+logfile="ddagent-install.log"
 
 PKG_NAME="stackstate-agent"
 PKG_USER="stackstate-agent"
@@ -243,6 +245,24 @@ If the failing repository is StackState, please contact StackState support.
     if [ ! -z "$no_repo" ]; then
         $sudo_cmd rm -f /etc/apt/sources.list.d/stackstate.list
     fi
+    $sudo_cmd rpm --import "https://${yum_url}/DATADOG_RPM_KEY_E09422B3.public"
+  fi
+
+  if [ "$agent_major_version" -eq 7 ]; then
+    gpgkeys="https://${yum_url}/DATADOG_RPM_KEY_E09422B3.public"
+  else
+    gpgkeys="https://${yum_url}/DATADOG_RPM_KEY.public\n       https://${yum_url}/DATADOG_RPM_KEY_E09422B3.public"
+  fi
+
+  echo -e "\033[34m\n* Installing YUM Repository for Datadog\n\033[0m"
+  $sudo_cmd sh -c "echo -e '[datadog]\nname=datadog\nenabled=1\nbaseurl=https://${yum_url}/suse/${yum_version_path}/${ARCHI}\ntype=rpm-md\ngpgcheck=1\nrepo_gpgcheck=0\ngpgkey=${gpgkeys}' > /etc/zypp/repos.d/datadog.repo"
+
+  echo -e "\033[34m\n* Refreshing repositories\n\033[0m"
+  $sudo_cmd zypper --non-interactive --no-gpg-checks refresh datadog
+
+  echo -e "\033[34m\n* Installing Datadog Agent\n\033[0m"
+  $sudo_cmd zypper --non-interactive install "$agent_flavor"
+
 else
     print_red "Your OS or distribution is not supported yet.\n"
     exit 1
