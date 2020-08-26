@@ -435,6 +435,8 @@ old_win:
     - echo "=====Environment vars:"
     - set
     - echo "/====="
+    - which make
+    - make --version
   tags:
     - sts_windows
 
