@@ -6,9 +6,10 @@ FROM debian:bullseye-slim as builder
 
 WORKDIR /output
 
-COPY stackstate-cluster-agent.arm64 opt/stackstate-agent/bin/stackstate-cluster-agent
-COPY ./conf.d etc/stackstate-agent/conf.d
-COPY ./stackstate-cluster.yaml etc/stackstate-agent/stackstate-cluster.yaml
+COPY datadog-cluster-agent.arm64 opt/datadog-agent/bin/datadog-cluster-agent
+COPY ./conf.d etc/datadog-agent/conf.d
+COPY ./datadog-cluster.yaml etc/datadog-agent/datadog-cluster.yaml
+COPY ./security-agent-policies/compliance/containers/ etc/datadog-agent/compliance.d
 COPY entrypoint.sh .
 COPY readsecret.sh .
 

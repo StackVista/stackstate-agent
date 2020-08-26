@@ -208,6 +208,10 @@ if with_python_runtime? "3"
   dependency 'stackstate-agent-integrations-py3'
 end
 
+if linux?
+  dependency 'datadog-security-agent-policies'
+end
+
 # External agents
 dependency 'jmxfetch'
 # //TODO: [STS] Embed code changes into main source code
