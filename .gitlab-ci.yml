@@ -433,10 +433,8 @@ old_win:
     - call ridk enable
     - call ridk version
     - echo "=====Environment vars:"
-    - set
-    - echo "/====="
-    - which make
-    - make --version
+    - bundle config
+    - which omnibus
   tags:
     - sts_windows
 
