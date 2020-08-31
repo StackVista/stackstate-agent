@@ -435,9 +435,9 @@ old_win:
     - call ridk enable
     - call ridk version
     - echo "=====Environment vars:"
-    - bundle config
-    - bundle version
-    - ruby --version
+    - call bundle config
+    - call bundle version
+    - call ruby --version
     - cd omnibus && bundle install
     - which omnibus
   tags:
