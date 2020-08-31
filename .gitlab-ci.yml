@@ -440,6 +440,8 @@ old_win:
     - call ruby --version
     - cd omnibus && call bundle install
     - where omnibus
+    - call omnibus --version
+    - where omnibus.bat
   tags:
     - sts_windows
 
