@@ -438,8 +438,8 @@ old_win:
     - call bundle config
     - call bundle version
     - call ruby --version
-    - cd omnibus && bundle install
-    - which omnibus
+    - cd omnibus && call bundle install
+    - where omnibus
   tags:
     - sts_windows
 
