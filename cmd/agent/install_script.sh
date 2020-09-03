@@ -7,7 +7,7 @@
 # using the package manager and StackState repositories.
 
 set -e
-install_script_version=1.0.1
+install_script_version=1.0.2
 logfile="ddagent-install.log"
 
 PKG_NAME="stackstate-agent"
@@ -124,9 +124,12 @@ if [ ! $api_key ]; then
     exit 1
 fi
 
-if [ ! $sts_url ]; then
-    print_red "StackState url not available in STS_URL environment variable.\n"
-    exit 1
+keyserver="hkp://keyserver.ubuntu.com:80"
+backup_keyserver="hkp://pool.sks-keyservers.net:80"
+# use this env var to specify another key server, such as
+# hkp://p80.pool.sks-keyservers.net:80 for example.
+if [ -n "$DD_KEYSERVER" ]; then
+  keyserver="$DD_KEYSERVER"
 fi
 
 INSTALL_MODE="REPO"
@@ -203,6 +206,26 @@ elif [ $OS = "Debian" ]; then
     else
         $sudo_cmd apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 B3CC4376 || print_red "> Failed to install apt repo key (no internet connection?). Please install separately for further repo updates"
     fi
+    printf "\033[34m\n* Installing APT package sources for Datadog\n\033[0m\n"
+    $sudo_cmd sh -c "echo 'deb https://${apt_url}/ ${apt_repo_version}' > /etc/apt/sources.list.d/datadog.list"
+    for retries in {0..4}; do
+      $sudo_cmd apt-key adv --recv-keys --keyserver "${keyserver}" A2923DFF56EDA6E76E55E492D3A80E30382E94DE && break
+      if [ "$retries" -eq 4 ]; then
+        ERROR_MESSAGE="ERROR
+Couldn't fetch Datadog public key.
+This might be due to a connectivity error with the key server
+or a temporary service interruption.
+*****
+"
+        false
+      fi
+      printf "\033[33m\napt-key failed to retrieve Datadog's public key, retrying in 5 seconds...\n\033[0m\n"
+      sleep 5
+      if [ "$retries" -eq 1 ]; then
+        printf "\033[34mSwitching to backup keyserver\n\033[0m\n"
+        keyserver="${backup_keyserver}"
+      fi
+    done
 
     print_blu "* Installing the StackState Agent v2 package\n"
     ERROR_MESSAGE="ERROR
