@@ -453,13 +453,10 @@ build_win:
   before_script:
     - *configure_windows_ps1_environment
   script:
-    - Get-VSSetupInstance 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community'
+    - Import-VisualStudioVars 2017 -Architecture amd64
+# pscx func ^^^
     - ridk enable
-    - "dir env:"
-    - echo "=====Path:"
-    - echo $Env:path
-    - echo "/====="
-    - inv -e agent.omnibus-build --skip-sign --log-level debug --skip-deps
+    - inv -e agent.omnibus-build --skip-sign --log-level debug --skip-deps --major-version 2
 #    - call .gitlab-scripts/setup_artifactory.cmd
 #    - set WIN_CI_PROJECT_DIR=%CD%
 #    - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
