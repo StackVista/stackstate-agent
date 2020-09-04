@@ -412,13 +412,6 @@
         version: "3.17.2"
         state: present
 
-
-# Reenterable, "Latest version already installed. Done."
-    - name: Fix spotted bundler issue
-      win_shell: gem update --system 3.0.2
-      args:
-        executable: cmd
-
     - name: Install invoke into python namespace
       win_shell: pip install invoke
       args:
@@ -428,6 +421,12 @@
     - name: ridk install 1 2 3 woodo magic - does not break if msys from choco installed (download base around 0.6G)
 #      win_shell: "ridk install 1 2 3"
       win_shell: "ridk install 3"  # seems smth wrong if updated?
+
+# Reenterable, "Latest version already installed. Done."
+    - name: Fix spotted bundler issue
+      win_shell: gem update --system 3.0.2
+      args:
+        executable: cmd
 
     # - name: Enable defender realtime scan back
     #   win_command: powershell.exe -
