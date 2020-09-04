@@ -438,6 +438,7 @@ old_win:
     - call bundle config
     - call bundle version
     - call ruby --version
+    - call gem env
     - cd omnibus && call bundle install
     - where omnibus
     - call omnibus --version
