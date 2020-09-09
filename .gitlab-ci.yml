@@ -153,12 +153,13 @@ unit_tests:
 
 integration_tests:
   stage: build_and_test
-  variables:
-    DOCKER_DRIVER: overlay
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
-  services:
-    - docker:dind
+  # Uncomment if approach with dind docker found
+  # variables:
+  #   DOCKER_DRIVER: overlay
+  #   DOCKER_HOST: tcp://docker:2375
+  #   DOCKER_TLS_CERTDIR: ""
+  # services:
+  #   - docker:dind
   needs:
     - deps_deb
   script:

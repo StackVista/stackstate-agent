@@ -74,8 +74,8 @@ func GetAPIClient() (*APIClient, error) {
 			RetryCount:    10,
 			RetryDelay:    30 * time.Second,
 		})
-		wg.Done()
 	}
+    wg.Done();
 	err := globalAPIClient.initRetry.TriggerRetry()
 	if err != nil {
 		log.Debugf("API Server init error: %s", err)
