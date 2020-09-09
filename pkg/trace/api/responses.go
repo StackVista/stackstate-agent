@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 
 	"github.com/StackVista/stackstate-agent/pkg/trace/metrics"
@@ -51,15 +52,23 @@ func httpDecodingError(err error, tags []string, w http.ResponseWriter) {
 	errtag := "decoding-error"
 	msg := err.Error()
 
-	if err == ErrLimitedReaderLimitReached {
+	switch err {
+	case ErrLimitedReaderLimitReached:
 		status = http.StatusRequestEntityTooLarge
-		errtag := "payload-too-large"
+		errtag = "payload-too-large"
+		msg = errtag
+	case io.EOF, io.ErrUnexpectedEOF:
+		errtag = "unexpected-eof"
+		msg = errtag
+	}
+	if err, ok := err.(net.Error); ok && err.Timeout() {
+		status = http.StatusRequestTimeout
+		errtag = "timeout"
 		msg = errtag
 	}
 
 	tags = append(tags, fmt.Sprintf("error:%s", errtag))
 	metrics.Count(receiverErrorKey, 1, tags, 1)
-
 	http.Error(w, msg, status)
 }
 
