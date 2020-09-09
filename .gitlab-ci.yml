@@ -156,7 +156,7 @@ integration_tests:
   needs:
     - deps_deb
   script:
-    - inv -e integration-tests --race --remote-docker --cpus 2
+    - inv -e integration-tests --race --remote-docker
   tags:
     - sts-k8s-xl-runner
 
