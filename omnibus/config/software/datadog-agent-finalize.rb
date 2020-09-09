@@ -88,23 +88,15 @@ build do
 
                 # sysvinit support for debian only for now
                 mkdir "/etc/init.d"
-                move "#{install_dir}/scripts/stackstate-agent", "/etc/init.d"
-                move "#{install_dir}/scripts/stackstate-agent-trace", "/etc/init.d"
-                move "#{install_dir}/scripts/stackstate-agent-process", "/etc/init.d"
-                # sts
-                if $enable_security_agent
-                    move "#{install_dir}/scripts/stackstate-agent-security", "/etc/init.d"
-                end
+                move "#{install_dir}/scripts/datadog-agent", "/etc/init.d"
+                move "#{install_dir}/scripts/datadog-agent-trace", "/etc/init.d"
+                move "#{install_dir}/scripts/datadog-agent-process", "/etc/init.d"
             end
             if suse?
                 mkdir "/etc/init.d"
-                move "#{install_dir}/scripts/stackstate-agent", "/etc/init.d"
-                move "#{install_dir}/scripts/stackstate-agent-trace", "/etc/init.d"
-                move "#{install_dir}/scripts/stackstate-agent-process", "/etc/init.d"
-                # sts
-                if $enable_security_agent
-                    move "#{install_dir}/scripts/stackstate-agent-security", "/etc/init.d"
-                end
+                move "#{install_dir}/scripts/datadog-agent", "/etc/init.d"
+                move "#{install_dir}/scripts/datadog-agent-trace", "/etc/init.d"
+                move "#{install_dir}/scripts/datadog-agent-process", "/etc/init.d"
             end
             mkdir systemd_directory
             move "#{install_dir}/scripts/stackstate-agent.service", systemd_directory

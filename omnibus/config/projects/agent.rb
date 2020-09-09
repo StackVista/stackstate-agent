@@ -242,29 +242,14 @@ if linux?
   if debian?
     systemd_directory = "/lib/systemd/system"
 
-    extra_package_file "/etc/init.d/stackstate-agent"
-    extra_package_file "/etc/init.d/stackstate-agent-process"
-    extra_package_file "/etc/init.d/stackstate-agent-trace"
-    # sts
-    if $enable_security_agent
-        extra_package_file "/etc/init.d/stackstate-agent-security"
-    end
+    extra_package_file "/etc/init.d/datadog-agent"
+    extra_package_file "/etc/init.d/datadog-agent-process"
+    extra_package_file "/etc/init.d/datadog-agent-trace"
   end
   if suse?
-    extra_package_file "/etc/init.d/stackstate-agent"
-    extra_package_file "/etc/init.d/stackstate-agent-process"
-    extra_package_file "/etc/init.d/stackstate-agent-trace"
-    # sts
-    if $enable_security_agent
-        extra_package_file "/etc/init.d/stackstate-agent-security"
-    end
-  end
-  extra_package_file "#{systemd_directory}/stackstate-agent.service"
-  extra_package_file "#{systemd_directory}/stackstate-agent-process.service"
-  extra_package_file "#{systemd_directory}/stackstate-agent-sysprobe.service"
-  extra_package_file "#{systemd_directory}/stackstate-agent-trace.service"
-  if $enable_security_agent
-    extra_package_file "#{systemd_directory}/stackstate-agent-security.service"
+    extra_package_file "/etc/init.d/datadog-agent"
+    extra_package_file "/etc/init.d/datadog-agent-process"
+    extra_package_file "/etc/init.d/datadog-agent-trace"
   end
   extra_package_file '/etc/stackstate-agent/'
   extra_package_file '/usr/bin/sts-agent'
