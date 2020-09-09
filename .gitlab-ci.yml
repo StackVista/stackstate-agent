@@ -156,9 +156,9 @@ integration_tests:
   needs:
     - deps_deb
   script:
-    - inv -e integration-tests --race --remote-docker
+    - inv -e integration-tests --race --remote-docker --cpus 2
   tags:
-    - sts-aws
+    - sts-k8s-xl-runner
 
 filename_linting:
   stage: build_and_test
