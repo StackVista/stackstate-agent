@@ -51,6 +51,7 @@ type Tracer struct {
 	perfMap      *manager.PerfMap
 	perfHandler  *bytecode.PerfHandler
 	batchManager *PerfBatchManager
+	flushIdle    chan chan struct{}
 
 	// Telemetry
 	perfReceived  int64
@@ -240,6 +241,7 @@ func NewTracer(config *Config) (*Tracer, error) {
 		sourceExcludes: network.ParseConnectionFilters(config.ExcludedSourceConnections),
 		destExcludes:   network.ParseConnectionFilters(config.ExcludedDestinationConnections),
 		perfHandler:    perfHandler,
+		flushIdle:      make(chan chan struct{}),
 	}
 
 	tr.perfMap, tr.batchManager, err = tr.initPerfPolling(perfHandler)
@@ -348,8 +350,6 @@ func (t *Tracer) initPerfPolling(perf *bytecode.PerfHandler) (*manager.PerfMap, 
 	go func() {
 		// Stats about how much connections have been closed / lost
 		ticker := time.NewTicker(5 * time.Minute)
-		flushIdle := time.NewTicker(t.config.TCPClosedTimeout)
-
 		for {
 			select {
 			case batchData, ok := <-perf.ClosedChannel:
@@ -368,11 +368,15 @@ func (t *Tracer) initPerfPolling(perf *bytecode.PerfHandler) (*manager.PerfMap, 
 					return
 				}
 				atomic.AddInt64(&t.perfLost, int64(lostCount))
-			case now := <-flushIdle.C:
-				idleConns := t.batchManager.GetIdleConns(now)
+			case done, ok := <-t.flushIdle:
+				if !ok {
+					return
+				}
+				idleConns := t.batchManager.GetIdleConns(time.Now())
 				for _, c := range idleConns {
 					t.storeClosedConn(c)
 				}
+				close(done)
 			case <-ticker.C:
 				recv := atomic.SwapInt64(&t.perfReceived, 0)
 				lost := atomic.SwapInt64(&t.perfLost, 0)
@@ -420,6 +424,7 @@ func (t *Tracer) Stop() {
 	_ = t.m.Stop(manager.CleanAll)
 	_ = t.perfMap.Stop(manager.CleanAll)
 	t.perfHandler.Stop()
+	close(t.flushIdle)
 	t.conntracker.Close()
 }
 
@@ -438,6 +443,11 @@ func (t *Tracer) GetActiveConnections(clientID string) (*network.Connections, er
 	} else if len(latestConns) <= cap(t.buffer)/2 {
 		t.buffer = make([]network.ConnectionStats, 0, cap(t.buffer)/2)
 	}
+
+	// Ensure that TCP closed connections are flushed
+	done := make(chan struct{})
+	t.flushIdle <- done
+	<-done
 
 	conns := t.state.Connections(clientID, latestTime, latestConns, t.reverseDNS.GetDNSStats())
 	names := t.reverseDNS.Resolve(conns)
