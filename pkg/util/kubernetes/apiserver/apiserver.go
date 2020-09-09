@@ -62,8 +62,8 @@ type APIClient struct {
 // GetAPIClient returns the shared ApiClient instance.
 func GetAPIClient() (*APIClient, error) {
     var wg sync.WaitGroup
+    wg.Add(1)
 	if globalAPIClient == nil {
-		wg.Add(1)
 		globalAPIClient = &APIClient{
 			timeoutSeconds: config.Datadog.GetInt64("kubernetes_apiserver_client_timeout"),
 		}
