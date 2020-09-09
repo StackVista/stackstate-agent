@@ -61,7 +61,9 @@ type APIClient struct {
 
 // GetAPIClient returns the shared ApiClient instance.
 func GetAPIClient() (*APIClient, error) {
+    var wg sync.WaitGroup
 	if globalAPIClient == nil {
+		wg.Add(1)
 		globalAPIClient = &APIClient{
 			timeoutSeconds: config.Datadog.GetInt64("kubernetes_apiserver_client_timeout"),
 		}
@@ -72,12 +74,14 @@ func GetAPIClient() (*APIClient, error) {
 			RetryCount:    10,
 			RetryDelay:    30 * time.Second,
 		})
+		wg.Done()
 	}
 	err := globalAPIClient.initRetry.TriggerRetry()
 	if err != nil {
 		log.Debugf("API Server init error: %s", err)
 		return nil, err
 	}
+	wg.Wait()
 	return globalAPIClient, nil
 }
 
