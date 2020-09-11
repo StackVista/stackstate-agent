@@ -2,8 +2,8 @@ package cloudfoundry
 
 import (
 	"code.cloudfoundry.org/garden/gardenfakes"
-	"github.com/StackVista/stackstate-agent/pkg/util/containers/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/util/containers/providers"
+	"github.com/DataDog/datadog-agent/pkg/util/containers/metrics"
+	"github.com/DataDog/datadog-agent/pkg/util/containers/providers"
 	"net"
 	"testing"
 
