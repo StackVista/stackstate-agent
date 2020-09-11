@@ -153,7 +153,7 @@ unit_tests:
     # Check number of processors unit_tests are running on
     - grep processor /proc/cpuinfo | wc -l
     # sts-k8s-xl-runner has limitation to 2 cores / 2 cpu?
-    - inv -e test --coverage --race --profile --fail-on-fmt --cpus 2 --build-exclude clusterchecks,kubelet
+    - inv -e test --coverage --race --profile --fail-on-fmt --cpus 1 --build-exclude clusterchecks,kubelet
   tags:
     - sts-k8s-xl-runner
 
