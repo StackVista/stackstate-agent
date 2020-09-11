@@ -138,6 +138,12 @@ unit_tests:
   stage: build_and_test
   needs:
     - deps_deb
+  variables:
+      DOCKER_DRIVER: overlay
+      DOCKER_HOST: tcp://docker:2375
+      DOCKER_TLS_CERTDIR: ""
+  services:
+    - docker:dind
   script:
     # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
     - inv deps
