@@ -355,7 +355,7 @@ def apply_branding(ctx):
                   "./omnibus/config/software/vc_redist_14.rb")
     do_sed_rename(ctx, 's/DataDog\/datadog-agent\/bin\/agent/StackVista\/stackstate-agent\/bin\/agent/',
                 "./omnibus/config/software/datadog-agent.rb")
-    do_sed_rename(ctx, 's/\/etc\/datadog-agent/\/etc\/stackstate-agent',
+    do_sed_rename(ctx, 's/\/etc\/datadog-agent/\/etc\/stackstate-agent/',
                   "./omnibus/config/software/datadog-agent.rb")
 
 @task
