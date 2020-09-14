@@ -7,7 +7,7 @@ stages:
 - acceptance
 - release
 
-variables:
+variables: &globalvariables
   STS_AWS_RELEASE_BUCKET: stackstate-agent-2
   STS_AWS_TEST_BUCKET: stackstate-agent-2-test
   STS_AWS_RELEASE_BUCKET_YUM: stackstate-agent-2-rpm
@@ -448,6 +448,9 @@ old_win:
 
 build_win:
   stage: build_and_test
+  variables:
+    <<: *globalvariables
+    OMNIBUS_BASE_DIR: c:\omni-base
   needs:
     - deps_win
   before_script:
