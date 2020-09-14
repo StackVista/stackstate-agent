@@ -63,6 +63,7 @@ build do
     # //TODO: sts mkdir workaround
     mkdir "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent/"
     command "mv rtloader/bin/*.dll  #{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent/"
+    command "echo %PATH%" # TODO:sts
     command "inv -e agent.build --exclude-rtloader --python-runtimes #{py_runtimes_arg} --major-version #{major_version_arg} --rtloader-root=#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/rtloader --rebuild --no-development --embedded-path=#{install_dir}/embedded --arch #{platform}", env: env
     command "inv -e systray.build --major-version #{major_version_arg} --rebuild --no-development --arch #{platform}", env: env
   else
