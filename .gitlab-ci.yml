@@ -454,11 +454,13 @@ build_win:
   needs:
     - deps_win
   before_script:
+    - $Env:Path
     - *configure_windows_ps1_environment
   script:
     - Import-VisualStudioVars 2017 -Architecture amd64
 # pscx func ^^^
     - ridk enable
+    - $Env:Path
     - inv -e agent.omnibus-build --skip-sign --log-level debug --skip-deps --major-version 2
 #    - call .gitlab-scripts/setup_artifactory.cmd
 #    - set WIN_CI_PROJECT_DIR=%CD%
