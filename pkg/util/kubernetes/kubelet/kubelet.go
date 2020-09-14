@@ -80,7 +80,7 @@ func ResetCache() {
 	cache.Cache.Delete(podListCacheKey)
 }
 
-func newKubeUtil() *KubeUtil {
+func NewKubeUtil() *KubeUtil {
 	ku := &KubeUtil{
 		kubeletAPIClient:         &http.Client{Timeout: time.Second},
 		kubeletAPIRequestHeaders: &http.Header{},
@@ -102,7 +102,7 @@ func GetKubeUtil() (KubeUtilInterface, error) {
 	globalKubeUtilMutex.Lock()
 	defer globalKubeUtilMutex.Unlock()
 	if globalKubeUtil == nil {
-		globalKubeUtil = newKubeUtil()
+		globalKubeUtil = NewKubeUtil()
 		globalKubeUtil.initRetry.SetupRetrier(&retry.Config{ //nolint:errcheck
 			Name:              "kubeutil",
 			AttemptMethod:     globalKubeUtil.init,
@@ -286,6 +286,16 @@ func (ku *KubeUtil) GetStatusForContainerID(pod *Pod, containerID string) (Conta
 		}
 	}
 	return ContainerStatus{}, fmt.Errorf("Container %v not found", containerID)
+}
+
+// GetSpecForContainerName returns the container spec from the pod given a name
+func (ku *KubeUtil) GetSpecForContainerName(pod *Pod, containerName string) (ContainerSpec, error) {
+	for _, containerSpec := range pod.Spec.Containers {
+		if containerName == containerSpec.Name {
+			return containerSpec, nil
+		}
+	}
+	return ContainerSpec{}, fmt.Errorf("Container %v not found", containerName)
 }
 
 func (ku *KubeUtil) GetPodFromUID(podUID string) (*Pod, error) {
