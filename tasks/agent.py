@@ -469,10 +469,13 @@ def build(
         "REPO_PATH": REPO_PATH,
         "flavor": "iot-agent" if iot else "agent",
     }
-    print ("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    if sys.platform.startswith('win'):
+        print ("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~contextdir:")
+        ctx.run("echo %cd%", env=env)
+    print ("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~cmd:")
     print(cmd.format(**args))
     print("~~~~~~")
-    print("~~~")
+    print("~~~ldflags:")
     print(ldflags)
     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
     ctx.run(cmd.format(**args), env=env)
