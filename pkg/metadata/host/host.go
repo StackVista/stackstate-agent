@@ -11,23 +11,22 @@ import (
 	"sync"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/metadata/common"
-	"github.com/StackVista/stackstate-agent/pkg/util"
-	"github.com/StackVista/stackstate-agent/pkg/util/alibaba"
-	"github.com/StackVista/stackstate-agent/pkg/util/cache"
-	"github.com/StackVista/stackstate-agent/pkg/util/flavor"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/StackVista/stackstate-agent/pkg/util/tencent"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/logs/status"
+	"github.com/DataDog/datadog-agent/pkg/metadata/common"
+	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/DataDog/datadog-agent/pkg/util/alibaba"
+	"github.com/DataDog/datadog-agent/pkg/util/cache"
+	"github.com/DataDog/datadog-agent/pkg/util/flavor"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/tencent"
 
-	"github.com/StackVista/stackstate-agent/pkg/metadata/host/container"
-	"github.com/StackVista/stackstate-agent/pkg/util/azure"
-	"github.com/StackVista/stackstate-agent/pkg/util/cloudfoundry"
-	"github.com/StackVista/stackstate-agent/pkg/util/ec2"
-	"github.com/StackVista/stackstate-agent/pkg/util/gce"
-	kubelet "github.com/StackVista/stackstate-agent/pkg/util/hostname/kubelet"
-
-	"github.com/StackVista/stackstate-agent/pkg/logs"
+	"github.com/DataDog/datadog-agent/pkg/metadata/host/container"
+	"github.com/DataDog/datadog-agent/pkg/util/azure"
+	"github.com/DataDog/datadog-agent/pkg/util/cloudfoundry"
+	"github.com/DataDog/datadog-agent/pkg/util/ec2"
+	"github.com/DataDog/datadog-agent/pkg/util/gce"
+	kubelet "github.com/DataDog/datadog-agent/pkg/util/hostname/kubelet"
 
 	"io/ioutil"
 
@@ -235,7 +234,7 @@ func getContainerMeta(timeout time.Duration) map[string]string {
 }
 
 func getLogsMeta() *LogsMeta {
-	return &LogsMeta{Transport: string(logs.CurrentTransport)}
+	return &LogsMeta{Transport: string(status.CurrentTransport)}
 }
 
 func buildKey(key string) string {

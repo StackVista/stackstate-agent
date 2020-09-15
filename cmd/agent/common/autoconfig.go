@@ -8,14 +8,15 @@ package common
 import (
 	"path/filepath"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/providers"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/scheduler"
-	"github.com/StackVista/stackstate-agent/pkg/collector"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/logs"
-	"github.com/StackVista/stackstate-agent/pkg/tagger"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/providers"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/scheduler"
+	"github.com/DataDog/datadog-agent/pkg/collector"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	lsched "github.com/DataDog/datadog-agent/pkg/logs/scheduler"
+	lstatus "github.com/DataDog/datadog-agent/pkg/logs/status"
+	"github.com/DataDog/datadog-agent/pkg/tagger"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // SetupAutoConfig configures the global AutoConfig:
@@ -36,8 +37,8 @@ func SetupAutoConfig(confdPath string) {
 	metaScheduler.Register("check", collector.InitCheckScheduler(Coll))
 
 	// registering the logs scheduler
-	if logs.IsAgentRunning() {
-		metaScheduler.Register("logs", logs.GetScheduler())
+	if lstatus.Get().IsRunning {
+		metaScheduler.Register("logs", lsched.GetScheduler())
 	}
 
 	// create the Autoconfig instance
