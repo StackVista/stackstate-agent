@@ -361,8 +361,6 @@ def apply_branding(ctx):
                   "./omnibus/config/software/datadog-agent.rb")
 
 
-datadog-agent/src/github.com/DataDog/datadog-agent/rtloader
-
 @task
 def build(
     ctx,
