@@ -463,8 +463,8 @@ build_win:
     - ridk enable
     - $Env:Path
     - Write-Output "2 ==================================================================="
-# todo: unpack deps here?
-    - inv -e agent.omnibus-build --skip-deps --skip-sign --log-level debug --major-version 2
+# todo: unpack deps here? --skip-deps
+    - inv -e agent.omnibus-build --skip-sign --log-level debug --major-version 2
 #    - call .gitlab-scripts/setup_artifactory.cmd
 #    - set WIN_CI_PROJECT_DIR=%CD%
 #    - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
