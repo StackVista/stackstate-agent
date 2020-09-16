@@ -20,33 +20,22 @@ import (
 	"strings"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/cmd/agent/api/agent"
-	"github.com/StackVista/stackstate-agent/cmd/agent/api/check"
-	pb "github.com/StackVista/stackstate-agent/cmd/agent/api/pb"
-	"github.com/StackVista/stackstate-agent/pkg/api/util"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	hostutil "github.com/StackVista/stackstate-agent/pkg/util"
-	gorilla "github.com/gorilla/mux"
+	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+
+	"github.com/DataDog/datadog-agent/cmd/agent/api/agent"
+	"github.com/DataDog/datadog-agent/cmd/agent/api/check"
+	pb "github.com/DataDog/datadog-agent/cmd/agent/api/pb"
+	"github.com/DataDog/datadog-agent/pkg/api/util"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	gorilla "github.com/gorilla/mux"
 )
 
 var (
 	listener net.Listener
 )
-
-type server struct {
-	pb.UnimplementedAgentServer
-}
-
-func (s *server) GetHostname(ctx context.Context, in *pb.HostnameRequest) (*pb.HostnameReply, error) {
-	h, err := hostutil.GetHostname()
-	if err != nil {
-		return &pb.HostnameReply{}, err
-	}
-	return &pb.HostnameReply{Hostname: h}, nil
-}
 
 // grpcHandlerFunc returns an http.Handler that delegates to grpcServer on incoming gRPC
 // connections or otherHandler otherwise. Copied from cockroachdb.
@@ -84,10 +73,14 @@ func StartServer() error {
 	// gRPC server
 	mux := http.NewServeMux()
 	opts := []grpc.ServerOption{
-		grpc.Creds(credentials.NewClientTLSFromCert(tlsCertPool, tlsAddr))}
+		grpc.Creds(credentials.NewClientTLSFromCert(tlsCertPool, tlsAddr)),
+		grpc.StreamInterceptor(grpc_auth.StreamServerInterceptor(grpcAuth)),
+		grpc.UnaryInterceptor(grpc_auth.UnaryServerInterceptor(grpcAuth)),
+	}
 
 	s := grpc.NewServer(opts...)
 	pb.RegisterAgentServer(s, &server{})
+	pb.RegisterAgentSecureServer(s, &serverSecure{})
 
 	dcreds := credentials.NewTLS(&tls.Config{
 		ServerName: tlsAddr,
@@ -99,6 +92,12 @@ func StartServer() error {
 	ctx := context.Background()
 	gwmux := runtime.NewServeMux()
 	err = pb.RegisterAgentHandlerFromEndpoint(
+		ctx, gwmux, tlsAddr, dopts)
+	if err != nil {
+		panic(err)
+	}
+
+	err = pb.RegisterAgentSecureHandlerFromEndpoint(
 		ctx, gwmux, tlsAddr, dopts)
 	if err != nil {
 		panic(err)
@@ -147,13 +146,4 @@ func StopServer() {
 // ServerAddress retruns the server address.
 func ServerAddress() *net.TCPAddr {
 	return listener.Addr().(*net.TCPAddr)
-}
-
-func validateToken(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := util.Validate(w, r); err != nil {
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
 }
