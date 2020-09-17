@@ -1,4 +1,4 @@
-package telemetry
+package utils
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/config"

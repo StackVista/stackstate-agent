@@ -11,10 +11,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	telemetry_utils "github.com/DataDog/datadog-agent/pkg/telemetry/utils"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 type JMXCheck struct {
@@ -33,7 +33,7 @@ func newJMXCheck(config integration.Config, source string) *JMXCheck {
 		name:      config.Name,
 		id:        check.ID(fmt.Sprintf("%v_%v", config.Name, config.Digest())),
 		source:    source,
-		telemetry: telemetry.IsCheckEnabled("jmx"),
+		telemetry: telemetry_utils.IsCheckEnabled("jmx"),
 	}
 	check.Configure(config.InitConfig, config.MetricConfig, source) //nolint:errcheck
 

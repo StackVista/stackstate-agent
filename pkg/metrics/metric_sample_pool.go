@@ -3,7 +3,8 @@ package metrics
 import (
 	"sync"
 
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/DataDog/datadog-agent/pkg/telemetry"
+	telemetry_utils "github.com/DataDog/datadog-agent/pkg/telemetry/utils"
 )
 
 var (
@@ -31,7 +32,7 @@ func NewMetricSamplePool(batchSize int) *MetricSamplePool {
 			},
 		},
 		// telemetry
-		tlmEnabled: telemetry.IsEnabled(),
+		tlmEnabled: telemetry_utils.IsEnabled(),
 	}
 }
 
