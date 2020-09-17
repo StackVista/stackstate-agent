@@ -359,6 +359,14 @@ def apply_branding(ctx):
                   "./omnibus/config/software/datadog-agent.rb")
     do_sed_rename(ctx, 's/datadog-agent\/src\/github\.com\/DataDog\/datadog-agent\/rtloader/datadog-agent\/src\/github\.com\/StackVista\/stackstate-agent\/rtloader/',
                   "./omnibus/config/software/datadog-agent.rb")
+    do_sed_rename(ctx, 's/opt\\datadog-agent/opt\\stackstate-agent/',
+                  "./omnibus/resources/iot/msi/localbuild/rebuild.bat")
+    do_sed_rename(ctx, 's/opt\\datadog-agent/opt\\stackstate-agent/',
+                  "./omnibus/resources/agent/msi/localbuild/rebuild.bat")
+    do_sed_rename(ctx, 's/src\\etc\\datadog-agent/src\\etc\\stackstate-agent/',
+                  "./omnibus/resources/iot/msi/localbuild/rebuild.bat")
+    do_sed_rename(ctx, 's/src\\etc\\datadog-agent/src\\etc\\stackstate-agent/',
+                  "./omnibus/resources/agent/msi/localbuild/rebuild.bat")
 
 
 @task
