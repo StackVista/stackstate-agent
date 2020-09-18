@@ -17,16 +17,17 @@ import (
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/StackVista/stackstate-agent/pkg/aggregator"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/leaderelection"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/leaderelection"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // Covers the Control Plane service check and the in memory pod metadata.
@@ -318,7 +319,8 @@ func (k *KubeASCheck) processEvents(sender aggregator.Sender, events []*v1.Event
 			k.Warnf("Error while bundling events, %s.", err.Error()) //nolint:errcheck
 		}
 	}
-	clusterName := clustername.GetClusterName()
+	hostname, _ := util.GetHostname()
+	clusterName := clustername.GetClusterName(hostname)
 	for _, bundle := range eventsByObject {
 		datadogEv, err := bundle.formatEvents(clusterName, k.providerIDCache)
 		if err != nil {

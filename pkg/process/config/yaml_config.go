@@ -11,12 +11,13 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/process/util"
-	"github.com/StackVista/stackstate-agent/pkg/process/util/api"
-	httputils "github.com/StackVista/stackstate-agent/pkg/util/http"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/DataDog/datadog-agent/pkg/process/util/api"
+	coreutil "github.com/DataDog/datadog-agent/pkg/util"
+	httputils "github.com/DataDog/datadog-agent/pkg/util/http"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 const (
@@ -384,7 +385,8 @@ func (a *AgentConfig) LoadProcessYamlConfig(path string) error {
 	if config.Datadog.GetBool("orchestrator_explorer.enabled") {
 		a.OrchestrationCollectionEnabled = true
 		// Set clustername
-		if clusterName := clustername.GetClusterName(); clusterName != "" {
+		hostname, _ := coreutil.GetHostname()
+		if clusterName := clustername.GetClusterName(hostname); clusterName != "" {
 			a.KubeClusterName = clusterName
 		}
 	}

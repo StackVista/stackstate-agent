@@ -13,12 +13,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/status/health"
-	"github.com/StackVista/stackstate-agent/pkg/util/clusteragent"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/status/health"
+	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/DataDog/datadog-agent/pkg/util/clusteragent"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 const firstRunnerStatsMinutes = 2  // collect runner stats after the first 2 minutes
@@ -41,7 +42,8 @@ func newDispatcher() *dispatcher {
 	d.nodeExpirationSeconds = config.Datadog.GetInt64("cluster_checks.node_expiration_timeout")
 	d.extraTags = config.Datadog.GetStringSlice("cluster_checks.extra_tags")
 
-	clusterTagValue := clustername.GetClusterName()
+	hostname, _ := util.GetHostname()
+	clusterTagValue := clustername.GetClusterName(hostname)
 	clusterTagName := config.Datadog.GetString("cluster_checks.cluster_tag_name")
 	if clusterTagValue != "" {
 		if clusterTagName != "" && !config.Datadog.GetBool("disable_cluster_name_tag_key") {

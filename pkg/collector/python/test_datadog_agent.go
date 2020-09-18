@@ -48,7 +48,7 @@ func testGetClusterName(t *testing.T) {
 	GetClusterName(&ch)
 	require.NotNil(t, ch)
 
-	assert.Equal(t, clustername.GetClusterName(), C.GoString(ch))
+	assert.Equal(t, clustername.GetClusterName(""), C.GoString(ch))
 }
 
 func testGetPid(t *testing.T) {
