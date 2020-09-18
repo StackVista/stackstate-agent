@@ -23,3 +23,8 @@ func IsFargateInstance() bool {
 func IsRunningOn() bool {
 	return false
 }
+
+// GetNTPHosts returns the NTP hosts for ECS/Fargate if it is detected as the cloud provider, otherwise an empty array.
+func GetNTPHosts() []string {
+	return nil
+}

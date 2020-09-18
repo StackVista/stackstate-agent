@@ -15,8 +15,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/metrics"
 )
 
 var (
@@ -337,6 +338,7 @@ hosts:
 func TestDefaultHostConfig(t *testing.T) {
 	expectedHosts := []string{"0.datadog.pool.ntp.org", "1.datadog.pool.ntp.org", "2.datadog.pool.ntp.org", "3.datadog.pool.ntp.org"}
 	testedConfig := []byte(``)
+	config.Datadog.Set("cloud_provider_metadata", []string{})
 
 	ntpCheck := new(NTPCheck)
 	ntpCheck.Configure(testedConfig, []byte(""), "test")
