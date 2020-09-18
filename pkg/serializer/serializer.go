@@ -97,6 +97,7 @@ type MetricSerializer interface {
 	SendSeries(series marshaler.StreamJSONMarshaler) error
 	SendSketch(sketches marshaler.Marshaler) error
 	SendMetadata(m marshaler.Marshaler) error
+	SendHostMetadata(m marshaler.Marshaler) error
 	SendJSONToV1Intake(data interface{}) error
 }
 
@@ -287,7 +288,7 @@ func (s *Serializer) SendEvents(e EventsStreamJSONMarshaler) error {
 	}
 
 	if useV1API {
-		return s.Forwarder.SubmitV1Intake(eventPayloads, extraHeaders)
+		return s.Forwarder.SubmitV1Intake(eventPayloads, extraHeaders, forwarder.TransactionPriorityNormal)
 	}
 	return s.Forwarder.SubmitEvents(eventPayloads, extraHeaders)
 }
@@ -369,6 +370,15 @@ func (s *Serializer) SendSketch(sketches marshaler.Marshaler) error {
 
 // SendMetadata serializes a metadata payload and sends it to the forwarder
 func (s *Serializer) SendMetadata(m marshaler.Marshaler) error {
+	return s.sendMetadata(m, forwarder.TransactionPriorityNormal)
+}
+
+// SendHostMetadata serializes a metadata payload and sends it to the forwarder
+func (s *Serializer) SendHostMetadata(m marshaler.Marshaler) error {
+	return s.sendMetadata(m, forwarder.TransactionPriorityHigh)
+}
+
+func (s *Serializer) sendMetadata(m marshaler.Marshaler, priority forwarder.TransactionPriority) error {
 	smallEnough, compressedPayload, payload, err := split.CheckSizeAndSerialize(m, true, split.MarshalJSON)
 	if err != nil {
 		return fmt.Errorf("could not determine size of metadata payload: %s", err)
@@ -380,7 +390,7 @@ func (s *Serializer) SendMetadata(m marshaler.Marshaler) error {
 		return fmt.Errorf("metadata payload was too big to send (%d bytes compressed), metadata payloads cannot be split", len(compressedPayload))
 	}
 
-	if err := s.Forwarder.SubmitV1Intake(forwarder.Payloads{&compressedPayload}, jsonExtraHeadersWithCompression); err != nil {
+	if err := s.Forwarder.SubmitV1Intake(forwarder.Payloads{&compressedPayload}, jsonExtraHeadersWithCompression, priority); err != nil {
 		return err
 	}
 
@@ -400,7 +410,7 @@ func (s *Serializer) SendJSONToV1Intake(data interface{}) error {
 	if err != nil {
 		return fmt.Errorf("could not serialize v1 payload: %s", err)
 	}
-	if err := s.Forwarder.SubmitV1Intake(forwarder.Payloads{&payload}, jsonExtraHeaders); err != nil {
+	if err := s.Forwarder.SubmitV1Intake(forwarder.Payloads{&payload}, jsonExtraHeaders, forwarder.TransactionPriorityNormal); err != nil {
 		return err
 	}
 
