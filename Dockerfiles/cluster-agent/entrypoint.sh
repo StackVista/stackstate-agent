@@ -17,6 +17,9 @@ fi
 ##### Copy the custom confs #####
 find /conf.d -name '*.yaml' -exec cp --parents -fv {} /etc/stackstate-agent/ \;
 
+##### Allow User Group to exec the secret backend script.
+export DD_SECRET_BACKEND_COMMAND_ALLOW_GROUP_EXEC_PERM="true"
+
 ##### Starting up #####
 export PATH="/opt/stackstate-agent/bin/stackstate-cluster-agent/:/opt/stackstate-agent/embedded/bin/":$PATH
 
