@@ -45,6 +45,7 @@ type context struct {
 	Compliance        bool
 	SNMP              bool
 	SecurityModule    bool
+	NetworkModule     bool // Sub-module of System Probe
 }
 
 func mkContext(buildType string) context {
@@ -94,7 +95,8 @@ func mkContext(buildType string) context {
 		}
 	case "system-probe":
 		return context{
-			SystemProbe: true,
+			SystemProbe:   true,
+			NetworkModule: true,
 		}
 	case "dogstatsd":
 		return context{
