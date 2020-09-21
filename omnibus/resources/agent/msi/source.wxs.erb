@@ -391,14 +391,6 @@
       </Component>
     </DirectoryRef>
 
-    <Property Id="TUFMETALOCATION">
-      <RegistrySearch Root="HKLM"
-                      Key="SOFTWARE\Datadog\Datadog Agent"
-                      Type="raw"
-                      Id="TUFMETADIRECTORY_REGSEARCH"
-                      Name="TufMetaPath" />
-    </Property>
-
     <DirectoryRef Id="APPLICATIONDATADIRECTORY">
       <Component Id="datadog.yaml.example"
                  Guid="83461594-01AC-11E2-BE35-37EC6088709B"
@@ -501,7 +493,7 @@
     <Feature Id="MainApplication" Title="Datadog Agent" Level="1" ConfigurableDirectory="APPLICATIONROOTDIRECTORY">
       <ComponentRef Id="conffolder" />
       <ComponentGroupRef Id="ProjectDir" />
-      <ComponentRef Id="stackstate.yaml.example" />
+      <ComponentRef Id="datadog.yaml.example" />
       <ComponentRef Id="install_info" />
       <ComponentRef Id="logs" />
       <ComponentRef Id="conf.d" />
@@ -514,7 +506,7 @@
         <ComponentRef Id="DATADOGAPMSERVICE" />
         <ComponentRef Id="DATADOGPROCESSSERVICE" />
       <?endif ?>
-      <!-- <ComponentGroupRef Id="ExtraEXAMPLECONFSLOCATION" /> TODO:STS-->
+      <ComponentGroupRef Id="ExtraEXAMPLECONFSLOCATION" />
       <ComponentRef Id="CleanupMainApplicationFolder" />
       <ComponentRef Id="RegisterConfVariables" />
       <?if $(var.IncludePython2) = true ?>
@@ -557,7 +549,6 @@
           WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 and NOT Installed
       </Publish>
       <?include Resources\assets\apikeydlg.wxi ?>
-      <?include Resources\assets\stsurldlg.wxi ?>
       <?include Resources\assets\sitedlg.wxi ?>
       <DialogRef Id="ErrorDlg" />
       <DialogRef Id="FatalError" />
