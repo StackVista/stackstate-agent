@@ -336,6 +336,8 @@ def apply_branding(ctx):
 
     # omnibus
     do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/projects/agent.rb")
+    do_sed_rename(ctx, 's/\\\\etc\\\\datadog-agent\\\\extra_package_files/\\\\etc\\\\stackstate-agent\\\\extra_package_files/g',
+                  "./omnibus/config/projects/agent.rb")
     do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/projects/iot-agent.rb")
     do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/software/datadog-agent-finalize.rb")
     do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/templates/datadog-agent/sysvinit_debian.erb")
