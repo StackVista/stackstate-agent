@@ -309,8 +309,9 @@ def apply_branding(ctx):
     do_sed_rename(ctx, sts_camel_replace, "./cmd/agent/gui/views/templates/index.tmpl")
     do_sed_rename(ctx, sts_camel_replace, "./cmd/agent/gui/views/private/js/javascript.js")
 
-    # TODO: overbranding
+    # TODO: overbranding - fix either dll name or reference
     do_sed_rename(ctx, 's/libstackstate-agent-three/libdatadog-agent-three/g', "./omnibus/resources/agent/msi/source.wxs.erb")
+    do_sed_rename(ctx, 's/libstackstate-agent-two/libdatadog-agent-three/g', "./omnibus/resources/agent/msi/source.wxs.erb")
 
     # stackstate_checks
     do_go_rename(ctx, '"\\"datadog_checks\\" -> \\"stackstate_checks\\""', "./cmd/agent/app")
