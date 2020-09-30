@@ -498,11 +498,12 @@ pre_release_win:
     - Import-VisualStudioVars 2017 -Architecture amd64
     - ridk enable
   script:
+    - ls
     - set /P VERSION=< version.txt
-    - copy stackstate-agent-%VERSION%-1-x86_64.msi stackstate-agent-latest-1-x86_64.msi
-    - aws.exe s3 cp . s3://%STS_AWS_TEST_BUCKET_WIN%/windows/%CI_COMMIT_REF_NAME% --recursive --exclude "*" --include "*.msi" --acl public-read
-    - cd %WIN_CI_PROJECT_DIR% && inv release.generate-install -t
-    - cd %WIN_CI_PROJECT_DIR%/cmd/agent && aws -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET_WIN']).object('install.ps1').upload_file('./install.ps1', acl:'public-read')"
+    - cmd /c "copy stackstate-agent-%VERSION%-1-x86_64.msi stackstate-agent-latest-1-x86_64.msi"
+    - cmd /c 'aws.exe s3 cp . s3://%STS_AWS_TEST_BUCKET_WIN%/windows/%CI_COMMIT_REF_NAME% --recursive --exclude "*" --include "*.msi" --acl public-read'
+    - inv release.generate-install -t
+    - aws -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET_WIN']).object('install.ps1').upload_file('./cmd/agent/install.ps1', acl:'public-read')"
   tags:
     - windows_agent7_ps1
 
