@@ -505,7 +505,8 @@ pre_release_win:
     - cmd /c 'echo aws.exe s3 cp . s3://%STS_AWS_TEST_BUCKET_WIN%/windows/%CI_COMMIT_REF_NAME% --recursive --exclude "*" --include "*.msi" --acl public-read'
     - cmd /c 'aws.exe s3 cp . s3://%STS_AWS_TEST_BUCKET_WIN%/windows/%CI_COMMIT_REF_NAME% --recursive --exclude "*" --include "*.msi" --acl public-read'
     - inv release.generate-install -t
-    - aws -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET_WIN']).object('install.ps1').upload_file('./cmd/agent/install.ps1', acl:'public-read')"
+    - cmd /c 'echo aws.exe s3 cp ./cmd/agent/install.ps1 s3://%STS_AWS_TEST_BUCKET_WIN%/install.ps1 --acl public-read'
+    - cmd /c 'aws.exe s3 cp ./cmd/agent/install.ps1 s3://%STS_AWS_TEST_BUCKET_WIN%/install.ps1 --acl public-read'
   tags:
     - windows_agent7_ps1
 
