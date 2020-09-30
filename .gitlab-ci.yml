@@ -70,7 +70,6 @@ variables: &globalvariables
   ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
 
 .configure_windows_ps1_environment: &configure_windows_ps1_environment |
-  dir env:
   Import-Module C:\tools\miniconda3\shell\condabin\conda-hook.ps1
   conda activate ddpy3
   $current_dir=Get-Location
@@ -496,6 +495,7 @@ pre_release_win:
     - Import-VisualStudioVars 2017 -Architecture amd64
     - ridk enable
   script:
+    - ls
     - $env:VERSION = Get-Content version.txt -First 1
     - $filename = "stackstate-agent-" + $Env:VERSION + "-1-x86_64.msi"
     - $filename
