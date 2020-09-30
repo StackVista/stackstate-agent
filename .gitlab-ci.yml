@@ -491,16 +491,16 @@ pre_release_win:
   variables:
     <<: *globalvariables
     OMNIBUS_BASE_DIR: c:\omnibus-ruby
-  needs:
-    - deps_win
-  before_script:  
+  before_script:
     - *configure_windows_ps1_environment
     - Import-VisualStudioVars 2017 -Architecture amd64
     - ridk enable
   script:
-    - ls
-    - set /P VERSION=< version.txt
-    - cmd /c "copy stackstate-agent-%VERSION%-1-x86_64.msi stackstate-agent-latest-1-x86_64.msi"
+    - $env:VERSION = Get-Content version.txt -First 1
+    - $filename = "stackstate-agent-" + $Env:VERSION + "-1-x86_64.msi"
+    - $filename
+    - Copy-Item $filename -Destination stackstate-agent-latest-1-x86_64.msi
+    - cmd /c 'echo aws.exe s3 cp . s3://%STS_AWS_TEST_BUCKET_WIN%/windows/%CI_COMMIT_REF_NAME% --recursive --exclude "*" --include "*.msi" --acl public-read'
     - cmd /c 'aws.exe s3 cp . s3://%STS_AWS_TEST_BUCKET_WIN%/windows/%CI_COMMIT_REF_NAME% --recursive --exclude "*" --include "*.msi" --acl public-read'
     - inv release.generate-install -t
     - aws -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET_WIN']).object('install.ps1').upload_file('./cmd/agent/install.ps1', acl:'public-read')"
@@ -713,9 +713,11 @@ release_win:
     - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
     - call %WORKON_HOME%\venv\Scripts\activate.bat
     - call ridk enable
-    - set /P VERSION=< version.txt
-    - copy stackstate-agent-%VERSION%-1-x86_64.msi stackstate-agent-latest-1-x86_64.msi
-    - cd %WIN_CI_PROJECT_DIR% && inv release.generate-install
+    - $env:VERSION = Get-Content version.txt -First 1
+    - $filename = "stackstate-agent-" + $Env:VERSION + "-1-x86_64.msi"
+    - $filename
+    - Copy-Item $filename -Destination stackstate-agent-latest-1-x86_64.msi
+    - inv release.generate-install
     - aws.exe s3 cp . s3://%STS_AWS_RELEASE_BUCKET_WIN%/windows/stable --recursive --exclude "*" --include "*.msi" --acl public-read
     - cd %WIN_CI_PROJECT_DIR%/cmd/agent && aws.exe s3 cp . s3://%STS_AWS_RELEASE_BUCKET_WIN% --recursive --exclude "*" --include "install.ps1" --acl public-read
   tags:
