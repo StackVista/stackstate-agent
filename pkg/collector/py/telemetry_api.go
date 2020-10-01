@@ -6,14 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	chk "github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/mitchellh/mapstructure"
 	"unsafe"
-
-	"github.com/sbinet/go-python"
 
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
@@ -46,27 +42,35 @@ func SubmitContextualizedEvent(check *C.PyObject, checkID *C.char, event *C.PyOb
 		return C._none()
 	}
 
-	_event, err := extractEventFromDict(event, goCheckID)
+	eventMap, err := extractStructureFromObject(event, goCheckID)
+	var contextualizedEvent metrics.Event
+	err = mapstructure.Decode(eventMap, contextualizedEvent)
 	if err != nil {
 		log.Error(err)
 		return nil
 	}
 
-	// Extract context
-	pyKey := C.CString("context")
-	defer C.free(unsafe.Pointer(pyKey))
+	//_event, err := extractEventFromDict(event, goCheckID)
+	//if err != nil {
+	//	log.Error(err)
+	//	return nil
+	//}
+	//
+	//// Extract context
+	//pyKey := C.CString("context")
+	//defer C.free(unsafe.Pointer(pyKey))
+	//
+	//context := C.PyDict_GetItemString(event, pyKey) // borrowed ref
+	//if context != nil {
+	//	if _context, err := extractEventContext(context, checkID); err != nil {
+	//		log.Error(err)
+	//		return nil
+	//	} else {
+	//		_event.EventContext = _context
+	//	}
+	//}
 
-	context := C.PyDict_GetItemString(event, pyKey) // borrowed ref
-	if context != nil {
-		if _context, err := extractEventContext(context, checkID); err != nil {
-			log.Error(err)
-			return nil
-		} else {
-			_event.EventContext = _context
-		}
-	}
-
-	sender.Event(_event)
+	sender.Event(contextualizedEvent)
 
 	return C._none()
 }

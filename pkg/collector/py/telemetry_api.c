@@ -23,7 +23,7 @@ static PyObject *submit_contextualized_event(PyObject *self, PyObject *args) {
 }
 
 static PyMethodDef TelemetryMethods[] = {
-  {"submit_contextualized_event", (PyCFunction)submit_event, METH_VARARGS, "Submit events to the aggregator."},
+  {"submit_contextualized_event", (PyCFunction)submit_contextualized_event, METH_VARARGS, "Submit events to the aggregator."},
   {NULL, NULL}  // guards
 };
 
