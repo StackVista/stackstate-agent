@@ -596,7 +596,6 @@ molecule_tests_vms:
 
 molecule_tests_compose:
   stage: acceptance
-  image: docker.io/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
   needs:
     - pre_release_image
   dependencies: []
@@ -605,7 +604,7 @@ molecule_tests_compose:
     - export AWS_ACCESS_KEY_ID=${MOLECULE_AWS_ACCESS_KEY_ID}
     - export AWS_SECRET_ACCESS_KEY=${MOLECULE_AWS_SECRET_ACCESS_KEY}
     - export MOLECULE_RUN_ID=${CI_JOB_ID}
-    - cd $CI_PROJECT_DIR/test && ./molecule.sh test -s compose
+    - cd $CI_PROJECT_DIR/test && ./molecule3.sh test -s compose
   artifacts:
     when: always
     paths:
