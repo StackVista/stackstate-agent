@@ -80,6 +80,17 @@ type Event struct {
 	AggregationKey string         `json:"aggregation_key,omitempty"`
 	SourceTypeName string         `json:"source_type_name,omitempty"`
 	EventType      string         `json:"event_type,omitempty"`
+	EventContext *EventContext `json:"event_context,omitempty"`
+}
+// [sts]
+// EventContext enriches the event with some more context and allows correlation to topology in StackState
+type EventContext struct {
+	SourceIdentifier string `json:"source_identifier,omitempty"`
+	ElementIdentifiers []string `json:"element_identifiers"`
+	Source string `json:"source"`
+	Category string `json:"category"`
+	Data map[string]interface{} `json:"data"`
+	SourceLinks map[string]string `json:"source_links"`
 }
 
 // Return a JSON string or "" in case of error during the Marshaling
