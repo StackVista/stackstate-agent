@@ -70,27 +70,35 @@ func GetAlertTypeFromString(val string) (EventAlertType, error) {
 
 // Event holds an event (w/ serialization to DD agent 5 intake format)
 type Event struct {
-	Title          string         `json:"msg_title"`
-	Text           string         `json:"msg_text"`
-	Ts             int64          `json:"timestamp"`
-	Priority       EventPriority  `json:"priority,omitempty"`
-	Host           string         `json:"host"`
-	Tags           []string       `json:"tags,omitempty"`
-	AlertType      EventAlertType `json:"alert_type,omitempty"`
-	AggregationKey string         `json:"aggregation_key,omitempty"`
-	SourceTypeName string         `json:"source_type_name,omitempty"`
-	EventType      string         `json:"event_type,omitempty"`
-	EventContext *EventContext `json:"event_context,omitempty"`
+	Title          string         `json:"msg_title" mapstructure:"msg_title"`
+	Text           string         `json:"msg_text" mapstructure:"msg_text"`
+	Ts             int64          `json:"timestamp" mapstructure:"timestamp"`
+	Priority       EventPriority  `json:"priority,omitempty" mapstructure:"priority"`
+	Host           string         `json:"host" mapstructure:"host"`
+	Tags           []string       `json:"tags,omitempty" mapstructure:"tags"`
+	AlertType      EventAlertType `json:"alert_type,omitempty" mapstructure:"alert_type"`
+	AggregationKey string         `json:"aggregation_key,omitempty" mapstructure:"aggregation_key"`
+	SourceTypeName string         `json:"source_type_name,omitempty" mapstructure:"source_type_name"`
+	EventType      string         `json:"event_type,omitempty" mapstructure:"event_type"`
+	EventContext *EventContext `json:"event_context,omitempty" mapstructure:"event_context"`
 }
+
 // [sts]
 // EventContext enriches the event with some more context and allows correlation to topology in StackState
 type EventContext struct {
-	SourceIdentifier string `json:"source_identifier,omitempty"`
-	ElementIdentifiers []string `json:"element_identifiers"`
-	Source string `json:"source"`
-	Category string `json:"category"`
-	Data map[string]interface{} `json:"data"`
-	SourceLinks map[string]string `json:"source_links"`
+	SourceIdentifier string `json:"source_identifier,omitempty" mapstructure:"source_identifier"`
+	ElementIdentifiers []string `json:"element_identifiers" mapstructure:"element_identifiers"`
+	Source string `json:"source" mapstructure:"source"`
+	Category string `json:"category" mapstructure:"category"`
+	Data map[string]interface{} `json:"data" mapstructure:"data"`
+	SourceLinks []SourceLink `json:"source_links" mapstructure:"source_links"`
+}
+
+// [sts]
+// SourceLink points to links that may contain more information about this event
+type SourceLink struct {
+	Title string `json:"title" mapstructure:"title"`
+	URL string `json:"url" mapstructure:"url"`
 }
 
 // Return a JSON string or "" in case of error during the Marshaling

@@ -2,9 +2,9 @@
 
 #include "topology_api.h"
 
-PyObject* SubmitContextualizedEvent(PyObject*, char*, PyObject*);
+PyObject* SubmitTopologyEvent(PyObject*, char*, PyObject*);
 
-static PyObject *submit_contextualized_event(PyObject *self, PyObject *args) {
+static PyObject *submit_topology_event(PyObject *self, PyObject *args) {
     PyObject *check = NULL;
     PyObject *event = NULL;
     char *check_id;
@@ -12,18 +12,18 @@ static PyObject *submit_contextualized_event(PyObject *self, PyObject *args) {
     PyGILState_STATE gstate;
     gstate = PyGILState_Ensure();
 
-    // aggregator.submit_event(self, check_id, event)
+    // aggregator.submit_topology_event(self, check_id, event)
     if (!PyArg_ParseTuple(args, "OsO", &check, &check_id, &event)) {
       PyGILState_Release(gstate);
       return NULL;
     }
 
     PyGILState_Release(gstate);
-    return SubmitContextualizedEvent(check, check_id, event);
+    return SubmitTopologyEvent(check, check_id, event);
 }
 
 static PyMethodDef TelemetryMethods[] = {
-  {"submit_contextualized_event", (PyCFunction)submit_contextualized_event, METH_VARARGS, "Submit events to the aggregator."},
+  {"submit_topology_event", (PyCFunction)submit_topology_event, METH_VARARGS, "Submit topology events to the aggregator."},
   {NULL, NULL}  // guards
 };
 

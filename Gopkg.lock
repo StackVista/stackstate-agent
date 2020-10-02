@@ -1991,6 +1991,7 @@
     "github.com/lxn/walk",
     "github.com/lxn/win",
     "github.com/mholt/archiver",
+    "github.com/mitchellh/mapstructure",
     "github.com/mitchellh/reflectwalk",
     "github.com/openshift/api/quota/v1",
     "github.com/patrickmn/go-cache",

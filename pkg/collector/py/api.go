@@ -9,6 +9,7 @@ package py
 
 import (
 	"errors"
+	"fmt"
 	"unsafe"
 
 	chk "github.com/StackVista/stackstate-agent/pkg/collector/check"
@@ -123,6 +124,8 @@ func SubmitEvent(check *C.PyObject, checkID *C.char, event *C.PyObject) *C.PyObj
 		log.Error(err)
 		return nil
 	}
+
+	log.Error(fmt.Sprintf("normal event: %v", _event))
 
 	sender.Event(_event)
 
