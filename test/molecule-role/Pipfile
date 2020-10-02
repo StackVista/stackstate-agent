@@ -13,6 +13,7 @@ molecule-digitalocean = "*"
 pytest-molecule = "*"
 molecule-ec2 = "*"
 flake8 = "*"
+testinfra = "*"
 
 [requires]
 python_version = "3.6"
