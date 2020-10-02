@@ -1,6 +1,6 @@
 // +build cpython
 
-#include "topology_api.h"
+#include "telemetry_api.h"
 
 PyObject* SubmitTopologyEvent(PyObject*, char*, PyObject*);
 
