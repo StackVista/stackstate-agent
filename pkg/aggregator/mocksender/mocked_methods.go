@@ -6,9 +6,7 @@
 package mocksender
 
 import (
-	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 //Rate adds a rate type to the mock calls.
@@ -58,7 +56,7 @@ func (m *MockSender) DisableDefaultHostname(d bool) {
 
 //Event enables the event mock call.
 func (m *MockSender) Event(e metrics.Event) {
-	log.Infof(fmt.Sprintf("%v", e))
+	m.SentEvents = append(m.SentEvents, &e)
 	m.Called(e)
 }
 

@@ -3,7 +3,6 @@
 package py
 
 import (
-	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	chk "github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
@@ -14,6 +13,7 @@ import (
 // #cgo pkg-config: python-2.7
 // #cgo windows LDFLAGS: -Wl,--allow-multiple-definition
 // #include "telemetry_api.h"
+// #include "topology_api.h"
 // #include "api.h"
 // #include "stdlib.h"
 // #include <Python.h>
@@ -41,33 +41,11 @@ func SubmitTopologyEvent(check *C.PyObject, checkID *C.char, event *C.PyObject) 
 
 	eventMap, err := extractStructureFromObject(event, goCheckID)
 	var topologyEvent metrics.Event
-	err = mapstructure.Decode(eventMap, topologyEvent)
+	err = mapstructure.Decode(eventMap, &topologyEvent)
 	if err != nil {
 		log.Error(err)
 		return nil
 	}
-
-	//_event, err := extractEventFromDict(event, goCheckID)
-	//if err != nil {
-	//	log.Error(err)
-	//	return nil
-	//}
-	//
-	//// Extract context
-	//pyKey := C.CString("context")
-	//defer C.free(unsafe.Pointer(pyKey))
-	//
-	//context := C.PyDict_GetItemString(event, pyKey) // borrowed ref
-	//if context != nil {
-	//	if _context, err := extractEventContext(context, checkID); err != nil {
-	//		log.Error(err)
-	//		return nil
-	//	} else {
-	//		_event.EventContext = _context
-	//	}
-	//}
-
-	log.Error(fmt.Sprintf("%v", topologyEvent))
 
 	sender.Event(topologyEvent)
 
@@ -204,3 +182,8 @@ func SubmitTopologyEvent(check *C.PyObject, checkID *C.char, event *C.PyObject) 
 //	data := C.PyDict_GetItemString(context, pyKey) // borrowed ref
 //	return extractStructureFromObject(data, checkID)
 //}
+
+func initTelemetry() {
+	C.inittelemetry()
+}
+
