@@ -73,14 +73,14 @@ type Event struct {
 	Title          string         `json:"msg_title" mapstructure:"msg_title"`
 	Text           string         `json:"msg_text" mapstructure:"msg_text"`
 	Ts             int64          `json:"timestamp" mapstructure:"timestamp"`
-	Priority       EventPriority  `json:"priority,omitempty" mapstructure:"priority"`
+	Priority       EventPriority  `json:"priority,omitempty" mapstructure:"priority,omitempty"`
 	Host           string         `json:"host" mapstructure:"host"`
-	Tags           []string       `json:"tags,omitempty" mapstructure:"tags"`
-	AlertType      EventAlertType `json:"alert_type,omitempty" mapstructure:"alert_type"`
-	AggregationKey string         `json:"aggregation_key,omitempty" mapstructure:"aggregation_key"`
-	SourceTypeName string         `json:"source_type_name,omitempty" mapstructure:"source_type_name"`
-	EventType      string         `json:"event_type,omitempty" mapstructure:"event_type"`
-	EventContext *EventContext `json:"event_context,omitempty" mapstructure:"event_context"`
+	Tags           []string       `json:"tags,omitempty" mapstructure:"tags,omitempty"`
+	AlertType      EventAlertType `json:"alert_type,omitempty" mapstructure:"alert_type,omitempty"`
+	AggregationKey string         `json:"aggregation_key,omitempty" mapstructure:"aggregation_key,omitempty"`
+	SourceTypeName string         `json:"source_type_name,omitempty" mapstructure:"source_type_name,omitempty"`
+	EventType      string         `json:"event_type,omitempty" mapstructure:"event_type,omitempty"`
+	EventContext *EventContext `json:"event_context,omitempty" mapstructure:"event_context,omitempty"`
 }
 
 // [sts]
