@@ -287,7 +287,7 @@ def get_version_numeric_only(ctx, env=os.environ, major_version='2'):
 
 
 def load_release_versions(ctx, target_version):
-    with open("release.json", "r") as f:
+    with open("stackstate-deps.json", "r") as f:
         versions = json.load(f)
         if target_version in versions:
             # windows runners don't accepts anything else than strings in the
