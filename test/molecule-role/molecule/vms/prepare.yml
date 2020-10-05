@@ -126,7 +126,7 @@
       shell: pip3 install docker
       become: yes
     - name: Installing multiple python packages in Ansible
-      shell: pip3 install boto,boto3
+      shell: pip3 install boto boto3
       become: yes
     - name: Add Docker GPG APT key
       become: true
