@@ -290,7 +290,7 @@ def load_release_versions(ctx, target_version):
     print("[load_release_versions] Loading deps for version ", target_version)
     with open("stackstate-deps.json", "r") as f:
         versions = json.load(f)
-        return {str(k):str(v) for k, v in versions.iteritems()}
+        return {str(k):str(v) for k, v in versions.items()}
         # versions = json.load(f)
         # if target_version in versions:
         #     # windows runners don't accepts anything else than strings in the
