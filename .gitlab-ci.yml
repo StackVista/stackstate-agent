@@ -502,13 +502,11 @@ pre_release_win:
     - $filename
     - Copy-Item $filename -Destination stackstate-agent-latest-1-x86_64.msi
     - ls
-    - cmd /c 'echo aws.exe s3 cp . s3://%STS_AWS_TEST_BUCKET_WIN%/windows/%CI_COMMIT_REF_NAME% --recursive --exclude "*" --include "*.msi" --acl public-read'
-    - cmd /c 'aws.exe s3 cp . s3://%STS_AWS_TEST_BUCKET_WIN%/windows/%CI_COMMIT_REF_NAME% --recursive --exclude "*" --include "*.msi" --acl public-read'
+    - aws.exe s3 cp . s3://$Env:STS_AWS_TEST_BUCKET_WIN/windows/$Env:CI_COMMIT_REF_NAME --recursive --exclude "*" --include "*.msi" --acl public-read
     - inv release.generate-install -t
-    - cmd /c 'echo aws.exe s3 cp ./cmd/agent/install.ps1 s3://%STS_AWS_TEST_BUCKET_WIN%/install.ps1 --acl public-read'
-    - cmd /c 'aws.exe s3 cp ./cmd/agent/install.ps1 s3://%STS_AWS_TEST_BUCKET_WIN%/install.ps1 --acl public-read'
-    - cmd /c 'aws.exe s3 ls s3://%STS_AWS_TEST_BUCKET_WIN%/windows/%CI_COMMIT_REF_NAME%'
-    - cmd /c 'aws.exe s3 ls s3://%STS_AWS_TEST_BUCKET_WIN%/'
+    - aws.exe s3 cp ./cmd/agent/install.ps1 s3://$Env:STS_AWS_TEST_BUCKET_WIN/install.ps1 --acl public-read
+    - aws.exe s3 ls s3://$Env:STS_AWS_TEST_BUCKET_WIN/windows/$Env:CI_COMMIT_REF_NAME
+    - aws.exe s3 ls s3://$Env:STS_AWS_TEST_BUCKET_WIN/
   tags:
     - windows_agent7_ps1
 
