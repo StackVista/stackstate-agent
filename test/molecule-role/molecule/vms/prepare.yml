@@ -192,7 +192,7 @@
         timeout: 90
       register: net_try1
       ignore_errors: true
-      until: net_try1.finished
+      until: net_try1 is not failed
     - name: Install netcat (2/2)
       win_chocolatey:
         name: netcat
@@ -412,8 +412,7 @@
       pause:
         seconds: 10
     - name: Installing requests library for test connections
-      pip:
-        name: requests
+      shell: pip install requests
     - name: "Start a python http server to make requests to http://localhost:{{ network_relation_test_server_port_single_request }}"
       shell: "python -m SimpleHTTPServer {{ network_relation_test_server_port_single_request }}"
       async: "{{ max_test_time }}"
