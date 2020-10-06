@@ -18,18 +18,17 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/StackVista/stackstate-agent/pkg/aggregator"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
-	dd_config "github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/ebpf/oomkill"
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	process_net "github.com/StackVista/stackstate-agent/pkg/process/net"
-	"github.com/StackVista/stackstate-agent/pkg/tagger"
-	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
-	"github.com/StackVista/stackstate-agent/pkg/util/containers"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
+	dd_config "github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/ebpf/oomkill"
+	"github.com/DataDog/datadog-agent/pkg/metrics"
+	process_net "github.com/DataDog/datadog-agent/pkg/process/net"
+	"github.com/DataDog/datadog-agent/pkg/tagger"
+	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 const (
@@ -114,10 +113,14 @@ func (m *OOMKillCheck) Run() error {
 			continue
 		}
 		entityID := containers.BuildTaggerEntityName(line.ContainerID)
-		tags, err := tagger.Tag(entityID, collectors.OrchestratorCardinality)
-		if err != nil {
-			log.Errorf("Could not collect tags for container %s: %s", line.ContainerID, err)
+		var tags []string
+		if entityID != "" {
+			tags, err = tagger.Tag(entityID, tagger.ChecksCardinality)
+			if err != nil {
+				log.Errorf("Error collecting tags for container %s: %s", line.ContainerID, err)
+			}
 		}
+
 		if line.MemCgOOM == 1 {
 			triggerType = "cgroup"
 			triggerTypeText = fmt.Sprintf("This OOM kill was invoked by a cgroup, containerID: %s.", line.ContainerID)
