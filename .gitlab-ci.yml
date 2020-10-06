@@ -505,7 +505,7 @@ pre_release_win:
     - aws.exe s3 cp . s3://$Env:STS_AWS_TEST_BUCKET_WIN/windows/$Env:CI_COMMIT_REF_NAME --recursive --exclude "*" --include "*.msi" --acl public-read
     - inv release.generate-install -t
     - aws.exe s3 cp ./cmd/agent/install.ps1 s3://$Env:STS_AWS_TEST_BUCKET_WIN/install.ps1 --acl public-read
-    - aws.exe s3 ls s3://$Env:STS_AWS_TEST_BUCKET_WIN/windows/$Env:CI_COMMIT_REF_NAME
+    - aws.exe s3 ls s3://$Env:STS_AWS_TEST_BUCKET_WIN/windows/$Env:CI_COMMIT_REF_NAME/
     - aws.exe s3 ls s3://$Env:STS_AWS_TEST_BUCKET_WIN/
   tags:
     - windows_agent7_ps1
