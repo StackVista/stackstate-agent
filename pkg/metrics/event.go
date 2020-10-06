@@ -80,25 +80,25 @@ type Event struct {
 	AggregationKey string         `json:"aggregation_key,omitempty" mapstructure:"aggregation_key,omitempty"`
 	SourceTypeName string         `json:"source_type_name,omitempty" mapstructure:"source_type_name,omitempty"`
 	EventType      string         `json:"event_type,omitempty" mapstructure:"event_type,omitempty"`
-	EventContext *EventContext `json:"event_context,omitempty" mapstructure:"event_context,omitempty"`
+	EventContext   *EventContext  `json:"event_context,omitempty" mapstructure:"event_context,omitempty"`
 }
 
 // [sts]
 // EventContext enriches the event with some more context and allows correlation to topology in StackState
 type EventContext struct {
-	SourceIdentifier string `json:"source_identifier,omitempty" mapstructure:"source_identifier"`
-	ElementIdentifiers []string `json:"element_identifiers" mapstructure:"element_identifiers"`
-	Source string `json:"source" mapstructure:"source"`
-	Category string `json:"category" mapstructure:"category"`
-	Data map[string]interface{} `json:"data" mapstructure:"data"`
-	SourceLinks []SourceLink `json:"source_links" mapstructure:"source_links"`
+	SourceIdentifier   string                 `json:"source_identifier,omitempty" mapstructure:"source_identifier"`
+	ElementIdentifiers []string               `json:"element_identifiers" mapstructure:"element_identifiers"`
+	Source             string                 `json:"source" mapstructure:"source"`
+	Category           string                 `json:"category" mapstructure:"category"`
+	Data               map[string]interface{} `json:"data" mapstructure:"data"`
+	SourceLinks        []SourceLink           `json:"source_links" mapstructure:"source_links"`
 }
 
 // [sts]
 // SourceLink points to links that may contain more information about this event
 type SourceLink struct {
 	Title string `json:"title" mapstructure:"title"`
-	URL string `json:"url" mapstructure:"url"`
+	URL   string `json:"url" mapstructure:"url"`
 }
 
 // Return a JSON string or "" in case of error during the Marshaling

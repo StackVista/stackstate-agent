@@ -25,12 +25,12 @@ func TestSubmitTopologyEvent(t *testing.T) {
 	assert.Equal(t, "instance-request-agent-integration-sample", sentTopologyEvent.AggregationKey)
 	assert.Equal(t, "HTTP_TIMEOUT", sentTopologyEvent.SourceTypeName)
 	expectedEventContext := &metrics.EventContext{
-		SourceIdentifier: "source_identifier_value",
+		SourceIdentifier:   "source_identifier_value",
 		ElementIdentifiers: []string{"urn:host:/123"},
-		Source: "source_value",
-		Category: "my_category",
-		Data: map[string]interface {}{"big_black_hole":"here"},
-		SourceLinks: []metrics.SourceLink{ {Title:"my_event_external_link", URL:"http://localhost"} },
+		Source:             "source_value",
+		Category:           "my_category",
+		Data:               map[string]interface{}{"big_black_hole": "here"},
+		SourceLinks:        []metrics.SourceLink{{Title: "my_event_external_link", URL: "http://localhost"}},
 	}
 	assert.EqualValues(t, expectedEventContext, sentTopologyEvent.EventContext)
 }
