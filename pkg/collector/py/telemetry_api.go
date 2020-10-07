@@ -40,6 +40,11 @@ func SubmitTopologyEvent(check *C.PyObject, checkID *C.char, event *C.PyObject) 
 	}
 
 	eventMap, err := extractStructureFromObject(event, goCheckID)
+	if err != nil {
+		log.Error(err)
+		return nil
+	}
+
 	var topologyEvent metrics.Event
 	err = mapstructure.Decode(eventMap, &topologyEvent)
 	if err != nil {
