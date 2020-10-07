@@ -83,7 +83,6 @@ type Event struct {
 	EventContext   *EventContext  `json:"event_context,omitempty" mapstructure:"event_context,omitempty"`
 }
 
-// [sts]
 // EventContext enriches the event with some more context and allows correlation to topology in StackState
 type EventContext struct {
 	SourceIdentifier   string                 `json:"source_identifier,omitempty" mapstructure:"source_identifier"`
@@ -92,14 +91,13 @@ type EventContext struct {
 	Category           string                 `json:"category" mapstructure:"category"`
 	Data               map[string]interface{} `json:"data" mapstructure:"data"`
 	SourceLinks        []SourceLink           `json:"source_links" mapstructure:"source_links"`
-}
+} // [sts]
 
-// [sts]
 // SourceLink points to links that may contain more information about this event
 type SourceLink struct {
 	Title string `json:"title" mapstructure:"title"`
 	URL   string `json:"url" mapstructure:"url"`
-}
+} // [sts]
 
 // Return a JSON string or "" in case of error during the Marshaling
 func (e *Event) String() string {
