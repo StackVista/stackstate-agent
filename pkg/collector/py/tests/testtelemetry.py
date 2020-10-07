@@ -24,7 +24,7 @@ class TestTopologyEvents(AgentCheck):
             "msg_title": "URL timeout",
             "msg_text": "Http request to %s timed out after %s seconds." % (instance_url, timeout),
             "aggregation_key": "instance-request-%s" % instance_url,
-            "event_context": {
+            "context": {
                 "source_identifier": "source_identifier_value",
                 "element_identifiers": ["urn:host:/123"],
                 "source": "source_value",
@@ -34,4 +34,4 @@ class TestTopologyEvents(AgentCheck):
                     {"title": "my_event_external_link", "url": "http://localhost"}
                 ]
             }
-        }, {"context": "yes"})
+        })
