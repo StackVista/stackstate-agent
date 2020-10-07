@@ -80,7 +80,7 @@ type Event struct {
 	AggregationKey string         `json:"aggregation_key,omitempty" mapstructure:"aggregation_key,omitempty"`
 	SourceTypeName string         `json:"source_type_name,omitempty" mapstructure:"source_type_name,omitempty"`
 	EventType      string         `json:"event_type,omitempty" mapstructure:"event_type,omitempty"`
-	EventContext   *EventContext  `json:"context,omitempty" mapstructure:"event_context,omitempty"`
+	EventContext   *EventContext  `json:"context,omitempty" mapstructure:"context,omitempty"`
 }
 
 // EventContext enriches the event with some more context and allows correlation to topology in StackState

@@ -28,6 +28,8 @@ class TestAggregatorCheck(AgentCheck):
         self.decrement("test.decrement", tags=['foo', 'bar', 'baz'])
 
         self.event({
+            "timestamp": 123,
+            "source_type_name": "new.event",
             "event_type": "new.event",
             "msg_title": "new test event",
             "aggregation_key": "test.event",
