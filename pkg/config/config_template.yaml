@@ -3,6 +3,9 @@
 ## Basic Configuration ##
 #########################
 
+# The host of the StackState receiver to send Agent data to
+sts_url:
+
 ## @param api_key - string - required
 ## The StackState API key to associate your Agent's data with your organization.
 ## Create a new API key here: https://app.datadoghq.com/account/settings

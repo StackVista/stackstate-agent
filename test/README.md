@@ -52,3 +52,23 @@ Under `./molecule-role/win-image-refresh` there is a terraform script that can b
     $ terraform init
     $ terraform plan -o win.plan
     $ terraform apply -f win.plan
+
+## Emulating pipeline molecule run locally
+
+```sh
+
+export MOLECULE_RUN_ID=${USER}_manual
+export AGENT_CURRENT_BRANCH=`git rev-parse --abbrev-ref HEAD`
+export quay_password=SPECIFY_ENCRYPTED_CHECK_UI
+export quay_user=SPECIFY
+export STACKSTATE_BRANCH=master
+```
+
+you can only converge environment, like 
+
+```sh
+cd test/molecule-role
+molecule converge -s vms
+```
+
+Important, do not leave dangling instances on a cloud after manual troubleshouting.
