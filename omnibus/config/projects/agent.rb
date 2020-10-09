@@ -169,7 +169,6 @@ end
 # Linux-specific dependencies
 if linux?
   dependency 'procps-ng'
-  dependency 'sysstat'
   dependency 'curl'
 end
 
