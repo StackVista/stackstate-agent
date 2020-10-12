@@ -6,7 +6,7 @@ from testinfra.utils.ansible_runner import AnsibleRunner
 
 import util
 
-testinfra_hosts = AnsibleRunner(os.environ['MOLECULE_INVENTORY_FILE']).get_hosts('agent-nagios-mysql')
+testinfra_hosts = AnsibleRunner(os.environ['MOLECULE_INVENTORY_FILE']).get_hosts('agent-integrations-mysql')
 
 
 def _get_key_value(tag_list):
@@ -31,10 +31,10 @@ def test_nagios_mysql(host):
         topo_url = "http://localhost:7070/api/topic/sts_topo_process_agents?limit=1500"
         data = host.check_output('curl "{}"'.format(topo_url))
         json_data = json.loads(data)
-        with open("./topic-topo-process-agents.json", 'w') as f:
+        with open("./topic-nagios-topo-process-agents.json", 'w') as f:
             json.dump(json_data, f, indent=4)
 
-        external_id_pattern = re.compile(r"urn:container:/agent-nagios-mysql:.*")
+        external_id_pattern = re.compile(r"urn:container:/agent-integrations-mysql:.*")
         components = [
             {
                 "assertion": "Should find the nagios container",

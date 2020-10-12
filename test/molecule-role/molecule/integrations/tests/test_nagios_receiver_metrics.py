@@ -5,7 +5,7 @@ from testinfra.utils.ansible_runner import AnsibleRunner
 
 import util
 
-testinfra_hosts = AnsibleRunner(os.environ['MOLECULE_INVENTORY_FILE']).get_hosts('agent-nagios-mysql')
+testinfra_hosts = AnsibleRunner(os.environ['MOLECULE_INVENTORY_FILE']).get_hosts('agent-integrations-mysql')
 
 
 def test_container_metrics(host):
@@ -14,7 +14,7 @@ def test_container_metrics(host):
     def wait_for_metrics():
         data = host.check_output("curl \"%s\"" % url)
         json_data = json.loads(data)
-        with open("./topic-sts-multi-metrics.json", 'w') as f:
+        with open("./topic-nagios-sts-multi-metrics.json", 'w') as f:
             json.dump(json_data, f, indent=4)
 
         def get_keys(m_host):
@@ -29,6 +29,6 @@ def test_container_metrics(host):
                     'nagios.swap_usage.swap', 'nagios.host.pl', 'nagios.root_partition', 'nagios.current_users.users',
                     'nagios.current_load.load1', 'nagios.host.rta', 'nagios.ping.rta', 'nagios.current_load.load5',
                     'nagios.total_processes.procs'}
-        assert get_keys("localhost") == expected
+        assert all([expectedMetric for expectedMetric in expected if expectedMetric in get_keys("agent-integrations-mysql")])
 
     util.wait_until(wait_for_metrics, 180, 3)

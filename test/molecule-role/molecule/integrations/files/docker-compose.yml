@@ -91,13 +91,14 @@ services:
       - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
       - /etc/passwd:/etc/passwd:ro
       - /sys/kernel/debug:/sys/kernel/debug
-      - ./agent/:/etc/stackstate-agent/conf.d/nagios.d:ro
+      - ./agent/nagios.d:/etc/stackstate-agent/conf.d/nagios.d:ro
+      - ./agent/agent_integration_sample.d:/etc/stackstate-agent/conf.d/agent_integration_sample.d:ro
       - nagios_logs:/opt/nagios/var/log
       - nagios_conf:/etc/nagios/
     environment:
       STS_API_KEY: "API_KEY"
       STS_STS_URL: "http://localhost:7077/stsAgent"
-      STS_HOSTNAME: "agent-nagios-mysql"
+      STS_HOSTNAME: "agent-integrations-mysql"
       STS_PROCESS_AGENT_URL: "http://localhost:7077/stsAgent"
       STS_PROCESS_AGENT_ENABLED: "true"
       STS_NETWORK_TRACING_ENABLED: "false"
