@@ -148,6 +148,18 @@ def apply_branding(ctx):
                   "./pkg/config/config_windows.go")
     do_sed_rename(ctx, 's/"datadog.conf"/"stackstate.conf"/g',
                   "./pkg/config/config_windows.go")
+    do_sed_rename(ctx, 's/"Datadog Agent Service"/"StackState Agent Service"/g',
+                  "./cmd/agent/app/install_service_windows.go")
+    do_sed_rename(ctx, 's/"Datadog Agent Service"/"StackState Agent Service"/g',
+                  "./cmd/process-agent/main_windows.go")
+    do_sed_rename(ctx, 's/"Datadog Agent Service"/"StackState Agent Service"/g',
+                  "./cmd/trace-agent/main_windows.go")
+    do_sed_rename(ctx, 's/"DatadogAgent"/"StackStateAgent"/g',
+                  "./pkg/config/config_windows.go")
+    do_sed_rename(ctx, 's/"datadog-process-agent"/"stackstate-process-agent"/g',
+                  "./cmd/process-agent/main_windows.go")
+    do_sed_rename(ctx, 's/"datadog-trace-agent"/"stackstate-trace-agent"/g',
+                  "./cmd/trace-agent/main_windows.go")
     # pkg/pidfile/pidfile_windows.go
     do_sed_rename(ctx, 's/"programdata\\\\\\\\datadog"/"programdata\\\\\\\\stackstate"/g',
                   "./pkg/pidfile/pidfile_windows.go")
