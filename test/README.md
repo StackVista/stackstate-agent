@@ -72,3 +72,14 @@ molecule converge -s vms
 ```
 
 Important, do not leave dangling instances on a cloud after manual troubleshouting.
+
+In compose scenario to get round of traces
+
+```sh
+curl -H Host:stackstate-books-app -s -o /dev/null -w \"%{http_code}\" http://localhost/stackstate-books-app/listbooks
+```
+getting intercepted payload from simulator
+
+```sh
+curl -o out.json http://localhost:7077/download
+```
