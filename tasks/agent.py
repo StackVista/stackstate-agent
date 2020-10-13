@@ -182,22 +182,24 @@ def apply_branding(ctx):
                   "./pkg/trace/flags/flags_windows.go")
 
     # ApiKeys
+    dd_api_key_repl = '"\\"DD-Api-Key\\" -> \\"sts-api-key\\""'
+    dd_api_key_repl_upper = '"\\"DD-API-KEY\\" -> \\"sts-api-key\\""'
     do_go_rename(
-        ctx, '"DD-Api-Key" -> "sts-api-key"', "./cmd/process-agent")
+        ctx, dd_api_key_repl, "./cmd/process-agent")
     do_go_rename(
-        ctx, '"DD-Api-Key" -> "sts-api-key"', "./pkg/forwarder")
+        ctx, dd_api_key_repl, "./pkg/forwarder")
     do_go_rename(
-        ctx, '"DD-Api-Key" -> "sts-api-key"', "./pkg/trace/api")
+        ctx, dd_api_key_repl, "./pkg/trace/api")
     do_go_rename(
-        ctx, '"DD-Api-Key" -> "sts-api-key"', "./pkg/trace/writer")
+        ctx, dd_api_key_repl, "./pkg/trace/writer")
     do_go_rename(
-        ctx, '"DD-API-KEY" -> "sts-api-key"', "./cmd/process-agent")
+        ctx, dd_api_key_repl_upper, "./cmd/process-agent")
     do_go_rename(
-        ctx, '"DD-API-KEY" -> "sts-api-key"', "./pkg/forwarder")
+        ctx, dd_api_key_repl_upper, "./pkg/forwarder")
     do_go_rename(
-        ctx, '"DD-API-KEY" -> "sts-api-key"', "./pkg/trace/api")
+        ctx, dd_api_key_repl_upper, "./pkg/trace/api")
     do_go_rename(
-        ctx, '"DD-API-KEY" -> "sts-api-key"', "./pkg/trace/writer")
+        ctx, dd_api_key_repl_upper, "./pkg/trace/writer")
 
     # Commands
     do_sed_rename(ctx, sts_lower_replace, "./cmd/agent/app/integrations.go")
@@ -290,9 +292,8 @@ def apply_branding(ctx):
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/writer/stats.go")
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/writer/stats_test.go")
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/info/stats.go")
-    do_go_rename(
-        ctx, '"Datadog Trace Agent\/%s\/%s" -> "Stackstate Trace Agent-%s-%s"', "./pkg/trace/writer/sender.go")
-
+    do_sed_rename(ctx, 's/"Datadog Trace Agent\/%s\/%s"/"Stackstate Trace Agent-%s-%s"/g',
+                  "./pkg/trace/writer/sender.go")
 
     # Defaults
     do_go_rename(ctx, '"\\"/etc/datadog-agent\\" -> \\"/etc/stackstate-agent\\""', "./cmd/agent/common")
