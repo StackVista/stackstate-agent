@@ -1,7 +1,7 @@
 ---
 - name: Prepare Trace Java
   hosts: trace-java-demo
-  gather_facts: false
+  gather_facts: true
   tasks:
     - name: Ubuntu18 automatic updates (wait for lock) (1/2)
       shell: "while fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 10; done;"
@@ -47,8 +47,14 @@
         dest: "/home/ubuntu/{{ item }}"
         mode: preserve
       with_items:
-        - docker-compose.yml
         - create-topics.sh
+    - name: Template Configuration files
+      template:
+        src: "files/{{ item }}"
+        dest: "/home/ubuntu/{{ item }}"
+        mode: preserve
+      with_items:
+        - docker-compose.yml
     - name: Gather facts (we need the docker network interface ip)
       setup:
     - name: Run Docker compose
