@@ -16,6 +16,7 @@ flake8 = "*"
 testinfra = "*"
 pywinrm = "*"
 pytest-ordering = "*"
+docker = "*"
 
 [requires]
 python_version = "3.6"
