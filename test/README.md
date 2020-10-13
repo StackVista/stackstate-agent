@@ -83,3 +83,9 @@ getting intercepted payload from simulator
 ```sh
 curl -o out.json http://localhost:7077/download
 ```
+
+
+Leaving instances up for troubleshouting
+```sh
+molecule test -s vm --destroy=never
+```
