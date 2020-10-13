@@ -17,6 +17,7 @@ testinfra = "*"
 pywinrm = "*"
 pytest-ordering = "*"
 docker = "*"
+pytest-dependency = "*"
 
 [requires]
 python_version = "3.6"
