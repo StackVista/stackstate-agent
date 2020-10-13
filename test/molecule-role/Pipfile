@@ -15,6 +15,7 @@ molecule-ec2 = "*"
 flake8 = "*"
 testinfra = "*"
 pywinrm = "*"
+pytest-ordering = "*"
 
 [requires]
 python_version = "3.6"
