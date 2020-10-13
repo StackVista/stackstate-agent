@@ -171,17 +171,6 @@ def apply_branding(ctx):
                   "./pkg/pidfile/pidfile_windows.go")
     do_sed_rename(ctx, 's/"datadog"/"stackstate"/g',
                   "./pkg/pidfile/pidfile_windows.go")
-    # pkg/trace/config/config_windows.go
-    do_sed_rename(ctx, 's/"programdata\\\\\\\\datadog"/"programdata\\\\\\\\stackstate"/g',
-                  "./pkg/trace/config/config_windows.go")
-    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\datadog"/"ProgramData\\\\\\\\StackState"/g',
-                  "./pkg/trace/config/config_windows.go")
-    do_sed_rename(ctx, 's/"Datadog"/"Stackstate"/g',
-                  "./pkg/trace/config/config_windows.go")
-    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\DataDog"/"ProgramData\\\\\\\\StackState"/g',
-                  "./pkg/trace/config/config_windows.go")
-    do_sed_rename(ctx, 's/"datadog.conf"/"stackstate.conf"/g',
-                  "./pkg/trace/config/config_windows.go")
     # pkg/trace/flags/flags_windows.go
     do_sed_rename(ctx, 's/"programdata\\\\\\\\datadog"/"programdata\\\\\\\\stackstate"/g',
                   "./pkg/trace/flags/flags_windows.go")
@@ -191,6 +180,24 @@ def apply_branding(ctx):
                   "./pkg/trace/flags/flags_windows.go")
     do_sed_rename(ctx, 's/"ProgramData\\\\\\\\DataDog"/"ProgramData\\\\\\\\StackState"/g',
                   "./pkg/trace/flags/flags_windows.go")
+
+    # ApiKeys
+    do_go_rename(
+        ctx, '"DD-Api-Key" -> "sts-api-key"', "./cmd/process-agent")
+    do_go_rename(
+        ctx, '"DD-Api-Key" -> "sts-api-key"', "./pkg/forwarder")
+    do_go_rename(
+        ctx, '"DD-Api-Key" -> "sts-api-key"', "./pkg/trace/api")
+    do_go_rename(
+        ctx, '"DD-Api-Key" -> "sts-api-key"', "./pkg/trace/writer")
+    do_go_rename(
+        ctx, '"DD-API-KEY" -> "sts-api-key"', "./cmd/process-agent")
+    do_go_rename(
+        ctx, '"DD-API-KEY" -> "sts-api-key"', "./pkg/forwarder")
+    do_go_rename(
+        ctx, '"DD-API-KEY" -> "sts-api-key"', "./pkg/trace/api")
+    do_go_rename(
+        ctx, '"DD-API-KEY" -> "sts-api-key"', "./pkg/trace/writer")
 
     # Commands
     do_sed_rename(ctx, sts_lower_replace, "./cmd/agent/app/integrations.go")
@@ -249,7 +256,28 @@ def apply_branding(ctx):
     DD_API_KEY_replace = 's/DD_API_KEY/STS_API_KEY/g'
     do_sed_rename(ctx, DD_API_KEY_replace, "./pkg/trace/config/config.go")
     DD_HOSTNAME_replace = 's/DD_HOSTNAME/STS_HOSTNAME/g'
+    DD_HEADER_replace = 's/X-Datadog/X-Stackstate/g'
     do_sed_rename(ctx, DD_HOSTNAME_replace, "./pkg/trace/config/config.go")
+    do_sed_rename(ctx, DD_HEADER_replace, "./pkg/trace/api/profiles.go")
+    do_sed_rename(ctx, DD_HEADER_replace, "./pkg/trace/api/api.go")
+    do_sed_rename(ctx, DD_HEADER_replace, "./pkg/trace/test/runner.go")
+    do_sed_rename(ctx, DD_HEADER_replace, "./pkg/trace/writer/stats_test.go")
+    do_sed_rename(ctx, DD_HEADER_replace, "./pkg/trace/writer/trace.go")
+    apm_dd_tags_replace = 's/"_dd/"_sts/g'
+    do_sed_rename(ctx, apm_dd_tags_replace, "./pkg/trace/agent/agent.go")
+
+    # pkg/trace/config/config_windows.go
+    do_sed_rename(ctx, 's/"programdata\\\\\\\\datadog"/"programdata\\\\\\\\stackstate"/g',
+                  "./pkg/trace/config/config_windows.go")
+    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\datadog"/"ProgramData\\\\\\\\StackState"/g',
+                  "./pkg/trace/config/config_windows.go")
+    do_sed_rename(ctx, 's/"Datadog"/"Stackstate"/g',
+                  "./pkg/trace/config/config_windows.go")
+    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\DataDog"/"ProgramData\\\\\\\\StackState"/g',
+                  "./pkg/trace/config/config_windows.go")
+    do_sed_rename(ctx, 's/"datadog.conf"/"stackstate.conf"/g',
+                  "./pkg/trace/config/config_windows.go")
+
 
     # Trace Agent Metrics
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/api/api.go")
@@ -262,6 +290,9 @@ def apply_branding(ctx):
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/writer/stats.go")
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/writer/stats_test.go")
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/info/stats.go")
+    do_go_rename(
+        ctx, '"Datadog Trace Agent\/%s\/%s" -> "Stackstate Trace Agent-%s-%s"', "./pkg/trace/writer/sender.go")
+
 
     # Defaults
     do_go_rename(ctx, '"\\"/etc/datadog-agent\\" -> \\"/etc/stackstate-agent\\""', "./cmd/agent/common")
@@ -306,6 +337,13 @@ def apply_branding(ctx):
     do_sed_rename(ctx, 's/\[.*DD_URL\]/\[STS_URL\]/', "./omnibus/resources/agent/msi/source.wxs.erb")
     do_sed_rename(ctx, sts_camel_replace, "./omnibus/resources/agent/msi/bundle.wxs.erb")
     do_sed_rename(ctx, 's/dd_logo_side\\.png/sts_logo_side\\.png/', "./omnibus/resources/agent/msi/bundle.wxs.erb")
+    do_sed_rename(ctx, 's/DataDog Agent/Stackstate Agent/',
+                  "./tools/windows/install-help/cal/stopservices.cpp")
+    do_sed_rename(ctx, 's/DataDog Trace Agent/Stackstate Trace Agent/',
+                  "./tools/windows/install-help/cal/stopservices.cpp")
+    do_sed_rename(ctx, 's/DataDog Trace Agent/Stackstate Trace Agent/',
+                  "./cmd/trace-agent/windows_resources/trace-agent.rc")
+
 
     # Windows SysTray and GUI
     tray_replace = 's/ddtray/ststray/'
