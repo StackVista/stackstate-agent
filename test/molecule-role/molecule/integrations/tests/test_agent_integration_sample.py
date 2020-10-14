@@ -1,6 +1,5 @@
 import json
 import os
-import re
 
 from testinfra.utils.ansible_runner import AnsibleRunner
 
@@ -19,7 +18,7 @@ def _component_data(json_data, type_name, external_id_assert_fn, data_assert_fn)
         p = message["message"]["TopologyElement"]["payload"]
         if "TopologyComponent" in p and \
             p["TopologyComponent"]["typeName"] == type_name and \
-            external_id_assert_fn(p["TopologyComponent"]["externalId"]):
+                external_id_assert_fn(p["TopologyComponent"]["externalId"]):
             data = json.loads(p["TopologyComponent"]["data"])
             if data and data_assert_fn(data):
                 return data
@@ -66,96 +65,96 @@ def test_agent_integration_sample_topology(host):
                 "type": "Host",
                 "external_id": lambda e_id: "urn:example:/host:this_host" == e_id,
                 "data": lambda d: d == {
-                    "checks":[
+                    "checks": [
                         {
-                            "critical_value":90,
-                            "deviating_value":75,
-                            "is_metric_maximum_average_check":1,
-                            "max_window":300000,
-                            "name":"Max CPU Usage (Average)",
-                            "remediation_hint":"There is too much activity on this host",
-                            "stream_id":-1
+                            "critical_value": 90,
+                            "deviating_value": 75,
+                            "is_metric_maximum_average_check": 1,
+                            "max_window": 300000,
+                            "name": "Max CPU Usage (Average)",
+                            "remediation_hint": "There is too much activity on this host",
+                            "stream_id": -1
                         },
                         {
-                            "critical_value":90,
-                            "deviating_value":75,
-                            "is_metric_maximum_last_check":1,
-                            "max_window":300000,
-                            "name":"Max CPU Usage (Last)",
-                            "remediation_hint":"There is too much activity on this host",
-                            "stream_id":-1
+                            "critical_value": 90,
+                            "deviating_value": 75,
+                            "is_metric_maximum_last_check": 1,
+                            "max_window": 300000,
+                            "name": "Max CPU Usage (Last)",
+                            "remediation_hint": "There is too much activity on this host",
+                            "stream_id": -1
                         },
                         {
-                            "critical_value":5,
-                            "deviating_value":10,
-                            "is_metric_minimum_average_check":1,
-                            "max_window":300000,
-                            "name":"Min CPU Usage (Average)",
-                            "remediation_hint":"There is too few activity on this host",
-                            "stream_id":-1
+                            "critical_value": 5,
+                            "deviating_value": 10,
+                            "is_metric_minimum_average_check": 1,
+                            "max_window": 300000,
+                            "name": "Min CPU Usage (Average)",
+                            "remediation_hint": "There is too few activity on this host",
+                            "stream_id": -1
                         },
                         {
-                            "critical_value":5,
-                            "deviating_value":10,
-                            "is_metric_minimum_last_check":1,
-                            "max_window":300000,
-                            "name":"Min CPU Usage (Last)",
-                            "remediation_hint":"There is too few activity on this host",
-                            "stream_id":-1
+                            "critical_value": 5,
+                            "deviating_value": 10,
+                            "is_metric_minimum_last_check": 1,
+                            "max_window": 300000,
+                            "name": "Min CPU Usage (Last)",
+                            "remediation_hint": "There is too few activity on this host",
+                            "stream_id": -1
                         }
                     ],
-                    "domain":"Webshop",
-                    "environment":"Production",
-                    "identifiers":[
+                    "domain": "Webshop",
+                    "environment": "Production",
+                    "identifiers": [
                         "another_identifier_for_this_host"
                     ],
-                    "labels":[
+                    "labels": [
                         "host:this_host",
                         "region:eu-west-1"
                     ],
-                    "layer":"Machines",
-                    "metrics":[
+                    "layer": "Machines",
+                    "metrics": [
                         {
-                            "aggregation":"MEAN",
-                            "conditions":[
+                            "aggregation": "MEAN",
+                            "conditions": [
                                 {
-                                    "key":"tags.hostname",
-                                    "value":"this-host"
+                                    "key": "tags.hostname",
+                                    "value": "this-host"
                                 },
                                 {
-                                    "key":"tags.region",
-                                    "value":"eu-west-1"
+                                    "key": "tags.region",
+                                    "value": "eu-west-1"
                                 }
                             ],
-                            "identifier":d["metrics"][0]["identifier"],
-                            "metric_field":"system.cpu.usage",
-                            "name":"Host CPU Usage",
-                            "priority":"HIGH",
-                            "stream_id":-1,
-                            "unit_of_measure":"Percentage"
+                            "identifier": d["metrics"][0]["identifier"],
+                            "metric_field": "system.cpu.usage",
+                            "name": "Host CPU Usage",
+                            "priority": "HIGH",
+                            "stream_id": -1,
+                            "unit_of_measure": "Percentage"
                         },
                         {
-                            "aggregation":"MEAN",
-                            "conditions":[
+                            "aggregation": "MEAN",
+                            "conditions": [
                                 {
-                                    "key":"tags.hostname",
-                                    "value":"this-host"
+                                    "key": "tags.hostname",
+                                    "value": "this-host"
                                 },
                                 {
-                                    "key":"tags.region",
-                                    "value":"eu-west-1"
+                                    "key": "tags.region",
+                                    "value": "eu-west-1"
                                 }
                             ],
-                            "identifier":d["metrics"][1]["identifier"],
-                            "metric_field":"location.availability",
-                            "name":"Host Availability",
-                            "priority":"HIGH",
-                            "stream_id":-2,
-                            "unit_of_measure":"Percentage"
+                            "identifier": d["metrics"][1]["identifier"],
+                            "metric_field": "location.availability",
+                            "name": "Host Availability",
+                            "priority": "HIGH",
+                            "stream_id": -2,
+                            "unit_of_measure": "Percentage"
                         }
                     ],
-                    "name":"this-host",
-                    "tags":[
+                    "name": "this-host",
+                    "tags": [
                         "integration-type:agent-integration",
                         "integration-url:sample"
                     ]
@@ -166,101 +165,101 @@ def test_agent_integration_sample_topology(host):
                 "type": "Application",
                 "external_id": lambda e_id: "urn:example:/application:some_application" == e_id,
                 "data": lambda d: d == {
-                    "checks":[
+                    "checks": [
                         {
-                            "critical_value":75,
-                            "denominator_stream_id":-1,
-                            "deviating_value":50,
-                            "is_metric_maximum_ratio_check":1,
-                            "max_window":300000,
-                            "name":"OK vs Error Responses (Maximum)",
-                            "numerator_stream_id":-2
+                            "critical_value": 75,
+                            "denominator_stream_id": -1,
+                            "deviating_value": 50,
+                            "is_metric_maximum_ratio_check": 1,
+                            "max_window": 300000,
+                            "name": "OK vs Error Responses (Maximum)",
+                            "numerator_stream_id": -2
                         },
                         {
-                            "critical_value":70,
-                            "deviating_value":50,
-                            "is_metric_maximum_percentile_check":1,
-                            "max_window":300000,
-                            "name":"Error Response 99th Percentile",
-                            "percentile":99,
-                            "stream_id":-2
+                            "critical_value": 70,
+                            "deviating_value": 50,
+                            "is_metric_maximum_percentile_check": 1,
+                            "max_window": 300000,
+                            "name": "Error Response 99th Percentile",
+                            "percentile": 99,
+                            "stream_id": -2
                         },
                         {
-                            "critical_value":75,
-                            "denominator_stream_id":-1,
-                            "deviating_value":50,
-                            "is_metric_failed_ratio_check":1,
-                            "max_window":300000,
-                            "name":"OK vs Error Responses (Failed)",
-                            "numerator_stream_id":-2
+                            "critical_value": 75,
+                            "denominator_stream_id": -1,
+                            "deviating_value": 50,
+                            "is_metric_failed_ratio_check": 1,
+                            "max_window": 300000,
+                            "name": "OK vs Error Responses (Failed)",
+                            "numerator_stream_id": -2
                         },
                         {
-                            "critical_value":5,
-                            "deviating_value":10,
-                            "is_metric_minimum_percentile_check":1,
-                            "max_window":300000,
-                            "name":"Success Response 99th Percentile",
-                            "percentile":99,
-                            "stream_id":-1
+                            "critical_value": 5,
+                            "deviating_value": 10,
+                            "is_metric_minimum_percentile_check": 1,
+                            "max_window": 300000,
+                            "name": "Success Response 99th Percentile",
+                            "percentile": 99,
+                            "stream_id": -1
                         }
                     ],
-                    "domain":"Webshop",
-                    "environment":"Production",
-                    "identifiers":[
+                    "domain": "Webshop",
+                    "environment": "Production",
+                    "identifiers": [
                         "another_identifier_for_some_application"
                     ],
-                    "labels":[
+                    "labels": [
                         "application:some_application",
                         "region:eu-west-1",
                         "hosted_on:this-host"
                     ],
-                    "layer":"Applications",
-                    "metrics":[
+                    "layer": "Applications",
+                    "metrics": [
                         {
-                            "aggregation":"MEAN",
-                            "conditions":[
+                            "aggregation": "MEAN",
+                            "conditions": [
                                 {
-                                    "key":"tags.application",
-                                    "value":"some_application"
+                                    "key": "tags.application",
+                                    "value": "some_application"
                                 },
                                 {
-                                    "key":"tags.region",
-                                    "value":"eu-west-1"
+                                    "key": "tags.region",
+                                    "value": "eu-west-1"
                                 }
                             ],
-                            "identifier":d["metrics"][0]["identifier"],
-                            "metric_field":"2xx.responses",
-                            "name":"2xx Responses",
-                            "priority":"HIGH",
-                            "stream_id":-1,
-                            "unit_of_measure":"Count"
+                            "identifier": d["metrics"][0]["identifier"],
+                            "metric_field": "2xx.responses",
+                            "name": "2xx Responses",
+                            "priority": "HIGH",
+                            "stream_id": -1,
+                            "unit_of_measure": "Count"
                         },
                         {
-                            "aggregation":"MEAN",
-                            "conditions":[
+                            "aggregation": "MEAN",
+                            "conditions": [
                                 {
-                                    "key":"tags.application",
-                                    "value":"some_application"
+                                    "key": "tags.application",
+                                    "value": "some_application"
                                 },
                                 {
-                                    "key":"tags.region",
-                                    "value":"eu-west-1"
+                                    "key": "tags.region",
+                                    "value": "eu-west-1"
                                 }
                             ],
-                            "identifier":d["metrics"][1]["identifier"],
-                            "metric_field":"5xx.responses",
-                            "name":"5xx Responses",
-                            "priority":"HIGH",
-                            "stream_id":-2,
-                            "unit_of_measure":"Count"
+                            "identifier": d["metrics"][1]["identifier"],
+                            "metric_field": "5xx.responses",
+                            "name": "5xx Responses",
+                            "priority": "HIGH",
+                            "stream_id": -2,
+                            "unit_of_measure": "Count"
                         }
                     ],
-                    "name":"some-application",
-                    "tags":[
+                    "name": "some-application",
+                    "tags": [
                         "integration-type:agent-integration",
                         "integration-url:sample"
                     ],
-                    "version":"0.2.0"
+                    "version": "0.2.0"
                 }
             },
             {
@@ -268,12 +267,12 @@ def test_agent_integration_sample_topology(host):
                 "type": "stackstate-agent",
                 "external_id": lambda e_id: ("urn:stackstate-agent:/%s" % hostname) == e_id,
                 "data": lambda d: d == {
-                    "hostname":"agent-integrations-mysql",
-                    "identifiers":[
+                    "hostname": "agent-integrations-mysql",
+                    "identifiers": [
                         "urn:process:/%s:%s" % (hostname, d["identifiers"][0][len("urn:process:/%s:" % hostname):])
                     ],
-                    "name":"StackState Agent:agent-integrations-mysql",
-                    "tags":[
+                    "name": "StackState Agent:agent-integrations-mysql",
+                    "tags": [
                         "hostname:agent-integrations-mysql",
                         "stackstate-agent"
                     ]
@@ -284,34 +283,34 @@ def test_agent_integration_sample_topology(host):
                 "type": "agent-integration",
                 "external_id": lambda e_id: ("urn:agent-integration:/%s:agent-integration" % hostname) == e_id,
                 "data": lambda d: d == {
-                    "checks":[
+                    "checks": [
                         {
-                            "is_service_check_health_check":1,
-                            "name":"Integration Health",
-                            "stream_id":-1
+                            "is_service_check_health_check": 1,
+                            "name": "Integration Health",
+                            "stream_id": -1
                         }
                     ],
-                    "hostname":hostname,
-                    "integration":"agent-integration",
-                    "name":"%s:agent-integration" % hostname,
-                    "service_checks":[
+                    "hostname": hostname,
+                    "integration": "agent-integration",
+                    "name": "%s:agent-integration" % hostname,
+                    "service_checks": [
                         {
-                            "conditions":[
+                            "conditions": [
                                 {
                                     "key": "host",
                                     "value": hostname
                                 },
                                 {
-                                    "key":"tags.integration-type",
-                                    "value":"agent-integration"
+                                    "key": "tags.integration-type",
+                                    "value": "agent-integration"
                                 }
                             ],
-                            "identifier":d["service_checks"][0]["identifier"],
-                            "name":"Service Checks",
-                            "stream_id":-1
+                            "identifier": d["service_checks"][0]["identifier"],
+                            "name": "Service Checks",
+                            "stream_id": -1
                         }
                     ],
-                    "tags":[
+                    "tags": [
                         "hostname:%s" % hostname,
                         "integration-type:agent-integration"
                     ]
@@ -322,38 +321,38 @@ def test_agent_integration_sample_topology(host):
                 "type": "agent-integration-instance",
                 "external_id": lambda e_id: ("urn:agent-integration-instance:/%s:agent-integration:sample" % hostname) == e_id,
                 "data": lambda d: d == {
-                    "checks":[
+                    "checks": [
                         {
-                            "is_service_check_health_check":1,
-                            "name":"Integration Instance Health",
-                            "stream_id":-1
+                            "is_service_check_health_check": 1,
+                            "name": "Integration Instance Health",
+                            "stream_id": -1
                         }
                     ],
-                    "hostname":hostname,
-                    "integration":"agent-integration",
-                    "name":"agent-integration:sample",
-                    "service_checks":[
+                    "hostname": hostname,
+                    "integration": "agent-integration",
+                    "name": "agent-integration:sample",
+                    "service_checks": [
                         {
-                            "conditions":[
+                            "conditions": [
                                 {
-                                    "key":"host",
-                                    "value":hostname
+                                    "key": "host",
+                                    "value": hostname
                                 },
                                 {
-                                    "key":"tags.integration-type",
-                                    "value":"agent-integration"
+                                    "key": "tags.integration-type",
+                                    "value": "agent-integration"
                                 },
                                 {
-                                    "key":"tags.integration-url",
-                                    "value":"sample"
+                                    "key": "tags.integration-url",
+                                    "value": "sample"
                                 }
                             ],
-                            "identifier":d["service_checks"][0]["identifier"],
-                            "name":"Service Checks",
-                            "stream_id":-1
+                            "identifier": d["service_checks"][0]["identifier"],
+                            "name": "Service Checks",
+                            "stream_id": -1
                         }
                     ],
-                    "tags":[
+                    "tags": [
                         "hostname:%s" % hostname,
                         "integration-type:agent-integration",
                         "integration-url:sample"
@@ -387,8 +386,7 @@ def test_agent_integration_sample_events(host):
         def _event_data(event):
             for message in json_data["messages"]:
                 p = message["message"]
-                if "GenericEvent" in p and \
-                    p["GenericEvent"]["host"] == hostname:
+                if "GenericEvent" in p and p["GenericEvent"]["host"] == hostname:
                     _data = p["GenericEvent"]
                     if _data == dict(_data, **event):
                         return _data
