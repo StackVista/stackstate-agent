@@ -18,8 +18,12 @@ if ohai['platform'] == "windows"
   install_dir "C:/opt/stackstate-dogstatsd/"
   maintainer 'Datadog Inc.' # Windows doesn't want our e-mail address :(
 else
-  install_dir '/opt/stackstate-dogstatsd'
-  maintainer 'Datadog Packages <package@datadoghq.com>'
+  install_dir '/opt/datadog-dogstatsd'
+  if redhat? || suse?
+    maintainer 'Datadog, Inc <package@datadoghq.com>'
+  else
+    maintainer 'Datadog Packages <package@datadoghq.com>'
+  end
 end
 
 # build_version is computed by an invoke command/function.
