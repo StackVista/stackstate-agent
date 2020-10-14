@@ -237,7 +237,11 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"DD_APM_MAX_EPS\\" -> \\"STS_APM_MAX_EPS\\""', "./pkg/trace")
     do_go_rename(ctx, '"\\"DD_APM_ENV\\" -> \\"STS_APM_ENV\\""', "./pkg/trace")
     do_go_rename(ctx, '"\\"DD_APM_MAX_MEMORY\\" -> \\"STS_APM_MAX_MEMORY\\""', "./pkg/trace")
-
+    do_go_rename(ctx, '"\\"datadog.trace_agent.sampler.exception.hits\\" -> \\"stackstate.trace_agent.sampler.exception.hits\\""', "./pkg/trace/sampler")
+    do_go_rename(ctx, '"\\"datadog.trace_agent.sampler.exception.misses\\" -> \\"stackstate.trace_agent.sampler.exception.misses\\""', "./pkg/trace/sampler")
+    do_go_rename(ctx, '"\\"datadog.trace_agent.sampler.exception.shrinks\\" -> \\"stackstate.trace_agent.sampler.exception.shrinks\\""', "./pkg/trace/sampler")
+    do_go_rename(ctx, '"\\"datadog.trace_agent.obfuscations\\" -> \\"stackstate.trace_agent.obfuscations\\""', "./pkg/trace/obfuscate")
+    do_go_rename(ctx, '"\\"datadog.agent.python.version\\" -> \\"stackstate.agent.python.version\\""', "./pkg/collector/python")
     do_go_rename(ctx, '"\\"/var/log/datadog/trace-agent.log\\" -> \\"/var/log/stackstate-agent/trace-agent.log\\""', "./pkg/trace/config/")
     do_go_rename(ctx, '"\\"/opt/datadog-agent/embedded/bin/python\\" -> \\"/opt/stackstate-agent/embedded/bin/python\\""', "./pkg/trace/config/")
     do_go_rename(ctx, '"\\"PYTHONPATH=/opt/datadog-agent/agent\\" -> \\"PYTHONPATH=/opt/stackstate-agent/agent\\""', "./pkg/trace/config/")

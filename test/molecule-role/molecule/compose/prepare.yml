@@ -65,3 +65,32 @@
         AGENT_VERSION: "{{ agent_current_branch }}"
         DOCKER_HOST_IP: "{{ ansible_docker0['ipv4']['address'] }}"
         STACKSTATE_BRANCH: "{{ stackstate_branch }}"
+
+    - name: Wait for receiver http://localhost:7077/health
+      uri:
+        url: http://localhost:7077/health
+        return_content: true
+      register: response
+      failed_when: "'OKAY' not in response.content"
+      retries: 20
+      delay: 5
+
+    - name: Wait for receiver http://localhost:7077/health
+      uri:
+        url: http://localhost:7077/health
+        return_content: true
+      changed_when: false
+      register: response
+      until: ('OKAY' in response.content)
+      retries: 20
+      delay: 5
+
+    - name: Wait for agent
+      shell: docker inspect ubuntu_stackstate-agent_1 |  jq -r '.[0].State.Health.Status' | grep  healthy
+      args:
+        chdir: /home/ubuntu
+      become: yes
+      register: agent_healthy
+      until: agent_healthy.rc == 0
+      retries: 20
+      delay: 5

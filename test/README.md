@@ -85,7 +85,32 @@ curl -o out.json http://localhost:7077/download
 ```
 
 
-Leaving instances up for troubleshouting
+### Leaving instances up for troubleshouting
 ```sh
 molecule test -s vm --destroy=never
 ```
+
+### Escaping root device size
+
+```yaml
+
+- name: ami facts
+  ec2_ami_info:
+    image_ids: "{{ ami_id }}"
+  register: ami_facts
+
+- name: set current ami
+  set_fact:
+    ami: "{{ ami_facts.images | first }}"
+```
+
+    
+and use ami.root_device_name    
+
+
+you can also get the same information from console, like
+
+```sh
+ ansible localhost -m ec2_ami_info -a "image_ids=ami-09ae46ee3ab46c423" | grep root_device
+```
+
