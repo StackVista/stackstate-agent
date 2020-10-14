@@ -75,7 +75,17 @@
       retries: 20
       delay: 5
 
-    - name: Wait for receiver http://localhost:7077/health
+    - name: Wait for accessible receiver
+      uri:
+        url: "http://localhost:7077/health"
+        follow_redirects: none
+        method: GET
+      register: result
+      until: result.status == 200
+      retries: 30
+      delay: 5
+
+    - name: Check/Wait for OKAY from receiver
       uri:
         url: http://localhost:7077/health
         return_content: true
