@@ -398,7 +398,7 @@ def test_agent_integration_sample_events(host):
                 "title": "stackstate.agent.check_status",
                 "eventType": "service-check",
                 "tags": {
-                    "event_type": "service-check",
+                    "source_type_name": "service-check",
                     "status": "OK",
                     "check": "cpu"
                 },
@@ -412,7 +412,7 @@ def test_agent_integration_sample_events(host):
                 "title": "URL timeout",
                 "eventType": "HTTP_TIMEOUT",
                 "tags": {
-                    "event_type": "HTTP_TIMEOUT"
+                    "source_type_name": "HTTP_TIMEOUT"
                 },
                 "host": "agent-integrations-mysql",
                 "message": "Http request to http://localhost timed out after 5.0 seconds."
