@@ -10,8 +10,9 @@ package hostinfo
 import (
 	"strings"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/tagger/utils"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/tagger/utils"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes"
 )
 
 // GetTags gets the tags from the kubernetes apiserver
@@ -32,7 +33,7 @@ func GetTags() ([]string, error) {
 
 func getDefaultLabelsToTags() map[string]string {
 	return map[string]string{
-		NormalizedRoleLabel: "kube_node_role",
+		NormalizedRoleLabel: kubernetes.KubeNodeRoleTagName,
 	}
 }
 
