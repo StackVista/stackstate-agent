@@ -4012,7 +4012,7 @@ deploy_suse_rpm_testing-a7:
 # Docker releases
 #
 
-tag_release_6:
+tag_release_6_docker_hub:
   rules:
     - <<: *if_deploy_on_tag_6
       when: manual
@@ -4025,99 +4025,15 @@ tag_release_6:
     - docker_build_agent6_jmx
     - docker_build_agent6_jmx_arm64
   script:
-    - rpm-s3 --verbose --visibility public-read -c "https://s3.amazonaws.com" -b $RPM_TESTING_S3_BUCKET -p "suse/pipeline-$DD_PIPELINE_ID/7/x86_64/" $OMNIBUS_PACKAGE_DIR_SUSE/datadog-*-7.*x86_64.rpm
+    - VERSION=$(inv -e agent.version --major-version 6)
+    # Platform-specific agent images
+    - inv -e docker.publish-bulk --signed-push --platform linux/amd64 --platform linux/arm64 --src-template ${SRC_AGENT}:${SRC_TAG}-6-ARCH      --dst-template datadog/agent-ARCH:${VERSION}
+    - inv -e docker.publish-bulk --signed-push --platform linux/amd64 --platform linux/arm64 --src-template ${SRC_AGENT}:${SRC_TAG}-6-jmx-ARCH  --dst-template datadog/agent-ARCH:${VERSION}-jmx
+    # Manifests
+    - inv -e docker.publish-manifest --signed-push --name datadog/agent --tag ${VERSION} --image datadog/agent-amd64:${VERSION},linux/amd64 --image datadog/agent-arm64:${VERSION},linux/arm64
+    - inv -e docker.publish-manifest --signed-push --name datadog/agent --tag ${VERSION}-jmx  --image datadog/agent-amd64:${VERSION}-jmx,linux/amd64 --image datadog/agent-arm64:${VERSION}-jmx,linux/arm64
 
-#.other_files_rule: &other_files_rule
-#  # Check if any files (not MD) changed
-#  # Glob syntax that checks for changes in all files except files that end with .md extension.
-#  # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
-#  - changes:
-#      - "**/{.*,!(*.md)}"
-#    # If any non-MD files changed, always run the pipeline.
-#    when: always
-
-# What happens if I updated CHANGELOG.md and some python file?
-.md_only_rule: &md_only_rule
-  # Check if any MD files changed
-  # Glob syntax that checks for changes in files ending with .md extension.
-  # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
-  - changes:
-      - "**/*.markdown"
-      - "**/*.md"
-      - "**/*.mdown"
-    # If any MD files changed, don't run the pipeline.
-    when: manual
-    # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
-    allow_failure: true
-
-.rules:
-  - &exclude_on_cluster_agent
-    if: $CI_COMMIT_MESSAGE =~ /\[cluster-agent]/
-    when: never
-  - &include_on_cluster_agent
-    if: $CI_COMMIT_MESSAGE =~ /\[cluster-agent]/
-    when: on_success
-  - &exclude_on_tag_v2
-    if: $CI_COMMIT_TAG =~ /2\..*/
-    when: never
-  - &exclude_on_tag_v3
-    if: $CI_COMMIT_TAG =~ /3\..*/
-    when: never
-
-agent2:
-  stage: triggers
-  variables:
-    <<: *commonvariables
-    <<: *agent2_variables
-  trigger:
-    include: .gitlab-ci-agent.yml
-    strategy: depend
-  rules:
-    - <<: *exclude_on_cluster_agent
-    # exclude this pipeline if we're running a v3 tag pipeline
-    - <<: *exclude_on_tag_v3
-    - *always_scheduled_master_and_tags
-    - if: $CI_COMMIT_MESSAGE =~ /\[py3]/
-      when: never
-    - *other_files_rule
-    - *md_only_rule
-    - if: $CI_MERGE_REQUEST_IID
-    - if: $CI_OPEN_MERGE_REQUESTS
-      when: never
-    - if: $CI_COMMIT_BRANCH
-
-# if MD only change, the only pipelines we want to run are scheduled masters and tags.
-
-agent3:
- stage: triggers
- variables:
-   <<: *commonvariables
-   <<: *agent3_variables
- trigger:
-   include: .gitlab-ci-agent.yml
-   strategy: depend
- rules:
-   - <<: *exclude_on_cluster_agent
-   # exclude this pipeline if we're running a v2 tag pipeline
-   - <<: *exclude_on_tag_v2
-   - *always_scheduled_master_and_tags
-   - if: $CI_COMMIT_MESSAGE =~ /\[py2]/
-     when: never
-   - *other_files_rule
-   - *md_only_rule
-   - if: $CI_MERGE_REQUEST_IID
-   - if: $CI_OPEN_MERGE_REQUESTS
-     when: never
-   - if: $CI_COMMIT_BRANCH
-
-cluster_agent:
-  stage: triggers
-  variables:
-    <<: *commonvariables
-    <<: *agent3_variables
-  trigger:
-    include: .gitlab-ci-cluster-agent.yml
-    strategy: depend
+latest_release_6_docker_hub:
   rules:
     - <<: *if_deploy_on_tag_6
       when: manual
@@ -4158,25 +4074,6 @@ build_beest_runners:
     - inv -e docker.publish-bulk --signed-push --platform linux/amd64 --platform linux/arm64 --src-template ${SRC_AGENT}:${SRC_TAG}-7-ARCH      --dst-template datadog/agent-ARCH:${VERSION}
     - inv -e docker.publish-bulk --signed-push --platform linux/amd64 --platform linux/arm64 --src-template ${SRC_AGENT}:${SRC_TAG}-7-jmx-ARCH  --dst-template datadog/agent-ARCH:${VERSION}-jmx
     - inv -e docker.publish --signed-push ${SRC_DSD}:${SRC_TAG}-amd64 datadog/dogstatsd:${VERSION}
-
-tag_release_7_linux_google_container_registry:
-  rules:
-    - <<: *if_deploy_on_tag_7
-      when: manual
-      allow_failure: true
-  <<: *google_container_registry_tag_job_definition
-  stage: deploy7
-  dependencies:
-    - docker_build_agent7
-    - docker_build_agent7_arm64
-    - docker_build_agent7_jmx
-    - docker_build_agent7_jmx_arm64
-    - docker_build_dogstatsd_amd64
-  script:
-    - VERSION=$(inv -e agent.version --major-version 7)
-    - inv -e docker.publish-bulk --platform linux/amd64 --platform linux/arm64 --src-template ${SRC_AGENT}:${SRC_TAG}-7-ARCH      --dst-template gcr.io/datadoghq/agent-ARCH:${VERSION}
-    - inv -e docker.publish-bulk --platform linux/amd64 --platform linux/arm64 --src-template ${SRC_AGENT}:${SRC_TAG}-7-jmx-ARCH  --dst-template gcr.io/datadoghq/agent-ARCH:${VERSION}-jmx
-    - inv -e docker.publish ${SRC_DSD}:${SRC_TAG}-amd64 gcr.io/datadoghq/dogstatsd:${VERSION}
 
 tag_release_7_windows:
   rules:
@@ -4285,6 +4182,69 @@ latest_release_7:
       --image datadog/agent-amd64:${VERSION}-jmx-win1909,windows/amd64
       --image datadog/agent-arm64:${VERSION}-jmx,linux/arm64
 
+#
+# Google Container Registry releases
+#
+
+tag_release_6_google_container_registry:
+  rules:
+    - <<: *if_deploy_on_tag_6
+      when: manual
+      allow_failure: true
+  <<: *google_container_registry_tag_job_definition
+  stage: deploy6
+  dependencies:
+    - docker_build_agent6
+    - docker_build_agent6_arm64
+    - docker_build_agent6_jmx
+    - docker_build_agent6_jmx_arm64
+  script:
+    - VERSION=$(inv -e agent.version --major-version 6)
+    # Platform-specific agent images
+    - inv -e docker.publish-bulk --platform linux/amd64 --platform linux/arm64 --src-template ${SRC_AGENT}:${SRC_TAG}-6-ARCH      --dst-template gcr.io/datadoghq/agent-ARCH:${VERSION}
+    - inv -e docker.publish-bulk --platform linux/amd64 --platform linux/arm64 --src-template ${SRC_AGENT}:${SRC_TAG}-6-jmx-ARCH  --dst-template gcr.io/datadoghq/agent-ARCH:${VERSION}-jmx
+    # Manifests
+    - inv -e docker.publish-manifest --name gcr.io/datadoghq/agent --tag ${VERSION} --image gcr.io/datadoghq/agent-amd64:${VERSION},linux/amd64 --image gcr.io/datadoghq/agent-arm64:${VERSION},linux/arm64
+    - inv -e docker.publish-manifest --name gcr.io/datadoghq/agent --tag ${VERSION}-jmx  --image gcr.io/datadoghq/agent-amd64:${VERSION}-jmx,linux/amd64 --image gcr.io/datadoghq/agent-arm64:${VERSION}-jmx,linux/arm64
+
+latest_release_6_google_container_registry:
+  rules:
+    - <<: *if_deploy_on_tag_6
+      when: manual
+      allow_failure: true
+  <<: *google_container_registry_tag_job_definition
+  stage: deploy6
+  dependencies:
+    - docker_build_agent6
+    - docker_build_agent6_arm64
+    - docker_build_agent6_jmx
+    - docker_build_agent6_jmx_arm64
+  script:
+    - VERSION=$(inv -e agent.version --major-version 6)
+    - inv -e docker.publish-manifest --name gcr.io/datadoghq/agent --tag latest-py2 --image gcr.io/datadoghq/agent-amd64:${VERSION},linux/amd64 --image gcr.io/datadoghq/agent-arm64:${VERSION},linux/arm64
+    - inv -e docker.publish-manifest --name gcr.io/datadoghq/agent --tag latest-py2-jmx --image gcr.io/datadoghq/agent-amd64:${VERSION}-jmx,linux/amd64 --image gcr.io/datadoghq/agent-arm64:${VERSION}-jmx,linux/arm64
+    - inv -e docker.publish-manifest --name gcr.io/datadoghq/agent --tag 6 --image gcr.io/datadoghq/agent-amd64:${VERSION},linux/amd64 --image gcr.io/datadoghq/agent-arm64:${VERSION},linux/arm64
+    - inv -e docker.publish-manifest --name gcr.io/datadoghq/agent --tag 6-jmx --image gcr.io/datadoghq/agent-amd64:${VERSION}-jmx,linux/amd64 --image gcr.io/datadoghq/agent-arm64:${VERSION}-jmx,linux/arm64
+
+tag_release_7_linux_google_container_registry:
+  rules:
+    - <<: *if_deploy_on_tag_7
+      when: manual
+      allow_failure: true
+  <<: *google_container_registry_tag_job_definition
+  stage: deploy7
+  dependencies:
+    - docker_build_agent7
+    - docker_build_agent7_arm64
+    - docker_build_agent7_jmx
+    - docker_build_agent7_jmx_arm64
+    - docker_build_dogstatsd_amd64
+  script:
+    - VERSION=$(inv -e agent.version --major-version 7)
+    - inv -e docker.publish-bulk --platform linux/amd64 --platform linux/arm64 --src-template ${SRC_AGENT}:${SRC_TAG}-7-ARCH      --dst-template gcr.io/datadoghq/agent-ARCH:${VERSION}
+    - inv -e docker.publish-bulk --platform linux/amd64 --platform linux/arm64 --src-template ${SRC_AGENT}:${SRC_TAG}-7-jmx-ARCH  --dst-template gcr.io/datadoghq/agent-ARCH:${VERSION}-jmx
+    - inv -e docker.publish ${SRC_DSD}:${SRC_TAG}-amd64 gcr.io/datadoghq/dogstatsd:${VERSION}
+
 latest_release_7_google_container_registry:
   rules:
     - <<: *if_deploy_on_tag_7
@@ -4373,6 +4333,23 @@ revert_dockerhub_latest_7:
       --image datadog/agent-amd64:${NEW_LATEST_RELEASE_7}-jmx-win1909,windows/amd64
     - inv -e docker.publish --signed-pull --signed-push datadog/dogstatsd:${NEW_LATEST_RELEASE_7} datadog/dogstatsd:latest
     - inv -e docker.publish --signed-pull --signed-push datadog/dogstatsd:${NEW_LATEST_RELEASE_7} datadog/dogstatsd:7
+
+revert_google_container_registry_latest_6:
+  rules:
+    - <<: *if_master_branch
+      when: manual
+      allow_failure: true
+  <<: *google_container_registry_tag_job_definition
+  stage: maintenance_jobs
+  variables:
+    <<: *google_container_registry_variables
+    NEW_LATEST_RELEASE_6: ""  # tag name of the non-jmx version, for example "6.21.0"
+  script:
+    - if [[ -z "$NEW_LATEST_RELEASE_6" ]]; then echo "Need release version to revert to"; exit 1; fi
+    - inv -e docker.publish-manifest --name gcr.io/datadoghq/agent --tag latest-py2 --image gcr.io/datadoghq/agent-amd64:${NEW_LATEST_RELEASE_6},linux/amd64 --image gcr.io/datadoghq/agent-arm64:${NEW_LATEST_RELEASE_6},linux/arm64
+    - inv -e docker.publish-manifest --name gcr.io/datadoghq/agent --tag latest-py2-jmx --image gcr.io/datadoghq/agent-amd64:${NEW_LATEST_RELEASE_6}-jmx,linux/amd64 --image gcr.io/datadoghq/agent-arm64:${NEW_LATEST_RELEASE_6}-jmx,linux/arm64
+    - inv -e docker.publish-manifest --name gcr.io/datadoghq/agent --tag 6 --image gcr.io/datadoghq/agent-amd64:${NEW_LATEST_RELEASE_6},linux/amd64 --image gcr.io/datadoghq/agent-arm64:${NEW_LATEST_RELEASE_6},linux/arm64
+    - inv -e docker.publish-manifest --name gcr.io/datadoghq/agent --tag 6-jmx --image gcr.io/datadoghq/agent-amd64:${NEW_LATEST_RELEASE_6}-jmx,linux/amd64 --image gcr.io/datadoghq/agent-arm64:${NEW_LATEST_RELEASE_6}-jmx,linux/arm64
 
 revert_google_container_registry_latest_7:
   rules:
