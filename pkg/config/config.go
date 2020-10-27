@@ -190,13 +190,7 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("health_port", int64(0))
 	config.BindEnvAndSetDefault("disable_py3_validation", false)
 	config.BindEnvAndSetDefault("python_version", DefaultPython)
-	// [sts] skip datadog functionality
-	config.BindEnvAndSetDefault("skip_leader_election", true)
-	// [sts] bind env for skip_validate_clustername, default is set in the config_template.yaml to avoid test failures.
-	config.BindEnv("skip_validate_clustername") //nolint:errcheck
-
-	// [sts] batcher environment variables
-	config.BindEnvAndSetDefault("batcher_capacity", DefaultBatcherBufferSize)
+	config.BindEnvAndSetDefault("allow_arbitrary_tags", false)
 
 	// overridden in IoT Agent main
 	config.BindEnvAndSetDefault("iot_host", false)
