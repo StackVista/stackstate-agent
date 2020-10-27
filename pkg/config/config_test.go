@@ -888,21 +888,19 @@ dogstatsd_mapper_profiles:
 	assert.Empty(t, profiles)
 }
 
-// sts begin
-func TestKubernetesKubeletHostFromSTSPrefix(t *testing.T) {
-	kubeletHost := "/host/kubelet"
-	os.Setenv("STS_KUBERNETES_KUBELET_HOST", kubeletHost)
-	config := setupConf()
-	assert.Equal(t, kubeletHost, config.GetString("kubernetes_kubelet_host"))
+func TestDogstatsdMappingProfilesEnv(t *testing.T) {
+	env := "DD_DOGSTATSD_MAPPER_PROFILES"
+	err := os.Setenv(env, `[{"name":"another_profile","prefix":"abcd","mappings":[{"match":"foo.bar.*.*","name":"foo","tags":{"a":"$1","b":"$2"}}]},{"name":"some_other_profile","prefix":"some_other_profile.","mappings":[{"match":"some_other_profile.*","name":"some_other_profile.abc","tags":{"a":"$1"}}]}]`)
+	assert.Nil(t, err)
+	defer os.Unsetenv(env)
+	expected := []MappingProfile{
+		{Name: "another_profile", Prefix: "abcd", Mappings: []MetricMapping{
+			{Match: "foo.bar.*.*", Name: "foo", Tags: map[string]string{"a": "$1", "b": "$2"}},
+		}},
+		{Name: "some_other_profile", Prefix: "some_other_profile.", Mappings: []MetricMapping{
+			{Match: "some_other_profile.*", Name: "some_other_profile.abc", Tags: map[string]string{"a": "$1"}},
+		}},
+	}
+	mappings, _ := GetDogstatsdMappingProfiles()
+	assert.Equal(t, mappings, expected)
 }
-
-func TestSkipSSLValidationFromSTSPrefix(t *testing.T) {
-	config := setupConf()
-	assert.Equal(t, false, config.GetBool("skip_ssl_validation"))
-
-	os.Setenv("STS_SKIP_SSL_VALIDATION", "true")
-	config2 := setupConf()
-	assert.Equal(t, true, config2.GetBool("skip_ssl_validation"))
-}
-
-// sts end
