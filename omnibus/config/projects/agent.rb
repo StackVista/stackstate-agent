@@ -247,11 +247,13 @@ if linux?
     extra_package_file "/etc/init.d/datadog-agent"
     extra_package_file "/etc/init.d/datadog-agent-process"
     extra_package_file "/etc/init.d/datadog-agent-trace"
+    extra_package_file "/etc/init.d/datadog-agent-security"
   end
   if suse?
     extra_package_file "/etc/init.d/datadog-agent"
     extra_package_file "/etc/init.d/datadog-agent-process"
     extra_package_file "/etc/init.d/datadog-agent-trace"
+    extra_package_file "/etc/init.d/datadog-agent-security"
   end
   extra_package_file '/etc/stackstate-agent/'
   extra_package_file '/usr/bin/sts-agent'

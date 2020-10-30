@@ -14,11 +14,11 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
-	"github.com/StackVista/stackstate-agent/cmd/agent/common"
-	"github.com/StackVista/stackstate-agent/pkg/api/util"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/status"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/cmd/security-agent/common"
+	"github.com/DataDog/datadog-agent/pkg/api/util"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/status"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 var (
@@ -48,11 +48,10 @@ func runStatus(cmd *cobra.Command, args []string) error {
 		color.NoColor = true
 	}
 
-	// we'll search for a config file named `datadog.yaml`
-	config.Datadog.SetConfigName("datadog")
-	err := common.SetupConfig(confPath)
+	// Read configuration files received from the command line arguments '-c'
+	err := common.MergeConfigurationFiles("datadog", confPathArray)
 	if err != nil {
-		return fmt.Errorf("unable to set up global security agent configuration: %v", err)
+		return err
 	}
 
 	err = config.SetupLogger(loggerName, config.GetEnv("DD_LOG_LEVEL", "off"), "", "", false, true, false)

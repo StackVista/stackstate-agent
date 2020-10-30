@@ -12,11 +12,11 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
-	"github.com/StackVista/stackstate-agent/cmd/agent/common"
-	"github.com/StackVista/stackstate-agent/pkg/api/util"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/flare"
-	"github.com/StackVista/stackstate-agent/pkg/util/input"
+	secagentcommon "github.com/DataDog/datadog-agent/cmd/security-agent/common"
+	"github.com/DataDog/datadog-agent/pkg/api/util"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/flare"
+	"github.com/DataDog/datadog-agent/pkg/util/input"
 )
 
 var (
@@ -42,11 +42,10 @@ var flareCmd = &cobra.Command{
 			color.NoColor = true
 		}
 
-		// we'll search for a config file named `datadog.yaml`
-		config.Datadog.SetConfigName("datadog")
-		err := common.SetupConfig(confPath)
+		// Read configuration files received from the command line arguments '-c'
+		err := secagentcommon.MergeConfigurationFiles("datadog", confPathArray)
 		if err != nil {
-			return fmt.Errorf("unable to set up global security agent configuration: %v", err)
+			return err
 		}
 
 		// The flare command should not log anything, all errors should be reported directly to the console without the log format
