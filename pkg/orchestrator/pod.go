@@ -16,11 +16,10 @@ import (
 	"time"
 
 	model "github.com/DataDog/agent-payload/process"
-	"github.com/StackVista/stackstate-agent/pkg/process/config"
-	"github.com/StackVista/stackstate-agent/pkg/tagger"
-	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/tagger"
+	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/kubelet"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 
 	jsoniter "github.com/json-iterator/go"
 	v1 "k8s.io/api/core/v1"
@@ -35,8 +34,8 @@ const (
 	nodeUnreachablePodReason = "NodeLost"
 )
 
-// ProcessPodlist processes a pod list into process messages
-func ProcessPodlist(podList []*v1.Pod, groupID int32, cfg *config.AgentConfig, hostName string, clusterName string, clusterID string, withScrubbing bool, extraTags []string) ([]model.MessageBody, error) {
+// ProcessPodList processes a pod list into process messages
+func ProcessPodList(podList []*v1.Pod, groupID int32, hostName string, clusterName string, clusterID string, withScrubbing bool, maxPerMessage int, scrubber *DataScrubber, extraTags []string) ([]model.MessageBody, error) {
 	start := time.Now()
 	podMsgs := make([]*model.Pod, 0, len(podList))
 
@@ -71,10 +70,10 @@ func ProcessPodlist(podList []*v1.Pod, groupID int32, cfg *config.AgentConfig, h
 		// scrub & generate YAML
 		if withScrubbing {
 			for c := 0; c < len(podList[p].Spec.Containers); c++ {
-				ScrubContainer(&podList[p].Spec.Containers[c], cfg)
+				ScrubContainer(&podList[p].Spec.Containers[c], scrubber)
 			}
 			for c := 0; c < len(podList[p].Spec.InitContainers); c++ {
-				ScrubContainer(&podList[p].Spec.InitContainers[c], cfg)
+				ScrubContainer(&podList[p].Spec.InitContainers[c], scrubber)
 			}
 		}
 
@@ -90,11 +89,11 @@ func ProcessPodlist(podList []*v1.Pod, groupID int32, cfg *config.AgentConfig, h
 		podMsgs = append(podMsgs, podModel)
 	}
 
-	groupSize := len(podMsgs) / cfg.MaxPerMessage
-	if len(podMsgs)%cfg.MaxPerMessage != 0 {
+	groupSize := len(podMsgs) / maxPerMessage
+	if len(podMsgs)%maxPerMessage != 0 {
 		groupSize++
 	}
-	chunked := chunkPods(podMsgs, groupSize, cfg.MaxPerMessage)
+	chunked := chunkPods(podMsgs, groupSize, maxPerMessage)
 	messages := make([]model.MessageBody, 0, groupSize)
 	for i := 0; i < groupSize; i++ {
 		messages = append(messages, &model.CollectorPod{
@@ -113,19 +112,18 @@ func ProcessPodlist(podList []*v1.Pod, groupID int32, cfg *config.AgentConfig, h
 }
 
 // ScrubContainer scrubs sensitive information in the command line & env vars
-func ScrubContainer(c *v1.Container, cfg *config.AgentConfig) {
+func ScrubContainer(c *v1.Container, scrubber *DataScrubber) bool {
 	// scrub command line
-	scrubbedCmd, _ := cfg.Scrubber.ScrubCommand(c.Command)
+	scrubbedCmd, changed := scrubber.ScrubSimpleCommand(c.Command)
 	c.Command = scrubbedCmd
 	// scrub env vars
 	for e := 0; e < len(c.Env); e++ {
-		// use the "key: value" format to work with the regular credential cleaner
-		combination := c.Env[e].Name + ": " + c.Env[e].Value
-		scrubbedVal, err := log.CredentialsCleanerBytes([]byte(combination))
-		if err == nil && combination != string(scrubbedVal) {
+		if scrubber.ContainsSensitiveWord(c.Env[e].Name) {
 			c.Env[e].Value = redactedValue
+			changed = true
 		}
 	}
+	return changed
 }
 
 // chunkPods formats and chunks the pods into a slice of chunks using a specific number of chunks.
