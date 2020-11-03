@@ -79,10 +79,10 @@ def test_container_metrics(host):
                 message["message"]["MultiMetric"]["host"] == m_host
             )
 
-        expected = {'nagios.http.size', 'nagios.ping.pl', 'nagios.http.time', 'nagios.current_load.load15',
-                    'nagios.swap_usage.swap', 'nagios.host.pl', 'nagios.root_partition', 'nagios.current_users.users',
-                    'nagios.current_load.load1', 'nagios.host.rta', 'nagios.ping.rta', 'nagios.current_load.load5',
-                    'nagios.total_processes.procs'}
-        assert all([expectedMetric for expectedMetric in expected if expectedMetric in get_keys("agent-integrations-mysql")])
+        expected_metrics = {'nagios.http.size', 'nagios.ping.pl', 'nagios.http.time', 'nagios.current_load.load15',
+                            'nagios.swap_usage.swap', 'nagios.host.pl', 'nagios.root_partition',
+                            'nagios.current_users.users', 'nagios.current_load.load1', 'nagios.host.rta',
+                            'nagios.ping.rta', 'nagios.current_load.load5', 'nagios.total_processes.procs'}
+        assert all([metric for metric in expected_metrics if metric in get_keys("agent-integrations-mysql")])
 
     util.wait_until(wait_for_metrics, 180, 3)
