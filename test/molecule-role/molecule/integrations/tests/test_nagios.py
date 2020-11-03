@@ -86,3 +86,52 @@ def test_container_metrics(host):
         assert all([metric for metric in expected_metrics if metric in get_keys("agent-integrations-mysql")])
 
     util.wait_until(wait_for_metrics, 180, 3)
+
+
+def test_nagios_events(host):
+    hostname = host.ansible.get_variables()["inventory_hostname"]
+    url = "http://localhost:7070/api/topic/sts_generic_events?limit=1000"
+
+    def wait_for_events():
+        data = host.check_output("curl \"%s\"" % url)
+        json_data = json.loads(data)
+        with open("./topic-nagios-sts-generic-events.json", 'w') as f:
+            json.dump(json_data, f, indent=4)
+
+        # def _event_data(event):
+        #     for message in json_data["messages"]:
+        #         p = message["message"]
+        #         if "GenericEvent" in p and p["GenericEvent"]["host"] == hostname:
+        #             _data = p["GenericEvent"]
+        #             if _data == dict(_data, **event):
+        #                 return _data
+        #     return None
+        #
+        # assert _event_data(
+        #     {
+        #         "name": "service-check.service-check",
+        #         "title": "stackstate.agent.check_status",
+        #         "eventType": "service-check",
+        #         "tags": {
+        #             "source_type_name": "service-check",
+        #             "status": "OK",
+        #             "check": "cpu"
+        #         },
+        #         "host": hostname,
+        #     }
+        # ) is not None
+        #
+        # assert _event_data(
+        #     {
+        #         "name": "HTTP_TIMEOUT",
+        #         "title": "URL timeout",
+        #         "eventType": "HTTP_TIMEOUT",
+        #         "tags": {
+        #             "source_type_name": "HTTP_TIMEOUT"
+        #         },
+        #         "host": "agent-integrations-mysql",
+        #         "message": "Http request to http://localhost timed out after 5.0 seconds."
+        #     }
+        # ) is not None
+
+    util.wait_until(wait_for_events, 180, 3)
