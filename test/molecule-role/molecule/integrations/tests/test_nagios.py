@@ -98,40 +98,26 @@ def test_nagios_events(host):
         with open("./topic-nagios-sts-generic-events.json", 'w') as f:
             json.dump(json_data, f, indent=4)
 
-        # def _event_data(event):
-        #     for message in json_data["messages"]:
-        #         p = message["message"]
-        #         if "GenericEvent" in p and p["GenericEvent"]["host"] == hostname:
-        #             _data = p["GenericEvent"]
-        #             if _data == dict(_data, **event):
-        #                 return _data
-        #     return None
-        #
-        # assert _event_data(
-        #     {
-        #         "name": "service-check.service-check",
-        #         "title": "stackstate.agent.check_status",
-        #         "eventType": "service-check",
-        #         "tags": {
-        #             "source_type_name": "service-check",
-        #             "status": "OK",
-        #             "check": "cpu"
-        #         },
-        #         "host": hostname,
-        #     }
-        # ) is not None
-        #
-        # assert _event_data(
-        #     {
-        #         "name": "HTTP_TIMEOUT",
-        #         "title": "URL timeout",
-        #         "eventType": "HTTP_TIMEOUT",
-        #         "tags": {
-        #             "source_type_name": "HTTP_TIMEOUT"
-        #         },
-        #         "host": "agent-integrations-mysql",
-        #         "message": "Http request to http://localhost timed out after 5.0 seconds."
-        #     }
-        # ) is not None
+        def get_event_data(event):
+            for message in json_data["messages"]:
+                p = message["message"]
+                if "GenericEvent" in p and p["GenericEvent"]["host"] == hostname:
+                    _data = p["GenericEvent"]
+                    if _data == dict(_data, **event):
+                        return _data
+            return None
+
+        assert get_event_data(
+            {
+                "name": "SERVICE NOTIFICATION",
+                "title": "Root Partition",
+                "eventType": "SERVICE NOTIFICATION",
+                "tags": {
+                    "source_type_name": "SERVICE NOTIFICATION"
+                },
+                "host": hostname,
+                "message": "WARNING"
+            }
+        ) is not None
 
     util.wait_until(wait_for_events, 180, 3)
