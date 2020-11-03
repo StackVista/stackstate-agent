@@ -10,7 +10,7 @@ testinfra_hosts = AnsibleRunner(os.environ['MOLECULE_INVENTORY_FILE']).get_hosts
 
 
 def _get_key_value(tag_list):
-    for key, value in (pair.split(':', 1) for pair in tag_list):
+    for key, value in [pair.split(':', 1) for pair in tag_list]:
         yield key, value
 
 
@@ -89,7 +89,6 @@ def test_container_metrics(host):
 
 
 def test_nagios_events(host):
-    hostname = host.ansible.get_variables()["inventory_hostname"]
     url = "http://localhost:7070/api/topic/sts_generic_events?limit=1000"
 
     def wait_for_events():
@@ -100,9 +99,9 @@ def test_nagios_events(host):
 
         def get_event_data(event):
             for message in json_data["messages"]:
-                p = message["message"]
-                if "GenericEvent" in p and p["GenericEvent"]["host"] == hostname:
-                    _data = p["GenericEvent"]
+                m = message["message"]
+                if "GenericEvent" in m:
+                    _data = m["GenericEvent"]
                     if _data == dict(_data, **event):
                         return _data
             return None
@@ -115,7 +114,6 @@ def test_nagios_events(host):
                 "tags": {
                     "source_type_name": "SERVICE NOTIFICATION"
                 },
-                "host": hostname,
                 "message": "WARNING"
             }
         ) is not None
