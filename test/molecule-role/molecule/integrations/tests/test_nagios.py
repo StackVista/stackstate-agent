@@ -99,22 +99,20 @@ def test_nagios_events(host):
 
         def get_event_data(event):
             for message in json_data["messages"]:
-                m = message["message"]
-                if "GenericEvent" in m:
-                    _data = m["GenericEvent"]
-                    if _data == dict(_data, **event):
+                _data = message.get('message').get('GenericEvent')
+                if _data and _data['name'] == "SERVICE NOTIFICATION" and _data['host'] == 'agent-integrations-mysql':
+                    d = dict(_data, **event)
+                    if _data == d:
                         return _data
             return None
 
         assert get_event_data(
             {
                 "name": "SERVICE NOTIFICATION",
-                "title": "Root Partition",
+                "title": "Swap Usage",
                 "eventType": "SERVICE NOTIFICATION",
-                "tags": {
-                    "source_type_name": "SERVICE NOTIFICATION"
-                },
-                "message": "WARNING"
+                "message": "CRITICAL",
+                'host': 'agent-integrations-mysql'
             }
         ) is not None
 
