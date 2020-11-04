@@ -100,7 +100,7 @@ def test_nagios_events(host):
         def get_event_data(event):
             for message in json_data["messages"]:
                 _data = message.get('message').get('GenericEvent')
-                if _data and _data['name'] == "SERVICE NOTIFICATION" and _data['host'] == 'agent-integrations-mysql':
+                if _data and _data['name'] == "SERVICE NOTIFICATION":
                     d = dict(_data, **event)
                     if _data == d:
                         return _data
@@ -108,11 +108,19 @@ def test_nagios_events(host):
 
         assert get_event_data(
             {
-                "name": "SERVICE NOTIFICATION",
                 "title": "Swap Usage",
                 "eventType": "SERVICE NOTIFICATION",
                 "message": "CRITICAL",
                 'host': 'agent-integrations-mysql'
+            }
+        ) is not None
+
+        assert get_event_data(
+            {
+                "title": "Check MySQL",
+                "eventType": "SERVICE NOTIFICATION",
+                "message": "CRITICAL",
+                'host': 'mysql'
             }
         ) is not None
 
