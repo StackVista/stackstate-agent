@@ -1,5 +1,14 @@
 # StackState Agent v2 releases
 
+## 2.9.0 (2020-11-??)
+
+**Bugfix**
+- Nagios integration:
+  - Fixes event tags format so state change is detected [(STAC-10614)](https://stackstate.atlassian.net/browse/STAC-10614)
+  - Fixes event_state string handling [(STAC-11100)](https://stackstate.atlassian.net/browse/STAC-11100)
+  - Shows correct check name in Event details [(STAC-11119)](https://stackstate.atlassian.net/browse/STAC-11119)
+
+
 ## 2.8.0 (2020-09-27)
 
 **Features**
