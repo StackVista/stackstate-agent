@@ -23,7 +23,7 @@ func MakeSQLSpanInterpreter(config *config.Config) *SQLSpanInterpreter {
 }
 
 // Interpret performs the interpretation for the SQLSpanInterpreter
-func (in *SQLSpanInterpreter) Interpret(span *model.SpanWithMeta) *pb.Span {
+func (in *SQLSpanInterpreter) Interpret(span *model.SpanWithMeta) []*pb.Span {
 	dbType := DatabaseTypeName
 
 	// no meta, add a empty map
@@ -36,5 +36,5 @@ func (in *SQLSpanInterpreter) Interpret(span *model.SpanWithMeta) *pb.Span {
 	}
 	span.Meta["span.serviceType"] = dbType
 
-	return span.Span
+	return []*pb.Span{span.Span}
 }

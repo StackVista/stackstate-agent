@@ -22,7 +22,7 @@ func MakeTraefikInterpreter(config *config.Config) *TraefikInterpreter {
 }
 
 // Interpret performs the interpretation for the TraefikInterpreter
-func (t *TraefikInterpreter) Interpret(span *pb.Span) *pb.Span {
+func (t *TraefikInterpreter) Interpret(span *pb.Span, originalSpans map[uint64]*pb.Span) []*pb.Span {
 
 	// no meta, add a empty map
 	if span.Meta == nil {
@@ -61,7 +61,7 @@ func (t *TraefikInterpreter) Interpret(span *pb.Span) *pb.Span {
 
 	span.Meta["span.serviceType"] = "traefik"
 
-	return span
+	return []*pb.Span{span}
 }
 
 // CreateServiceInstanceURN creates the urn identifier for all traefik service instance components

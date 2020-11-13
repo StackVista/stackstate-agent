@@ -23,7 +23,7 @@ func MakeProcessSpanInterpreter(config *config.Config) *ProcessSpanInterpreter {
 }
 
 // Interpret performs the interpretation for the ProcessSpanInterpreter
-func (in *ProcessSpanInterpreter) Interpret(span *model.SpanWithMeta) *pb.Span {
+func (in *ProcessSpanInterpreter) Interpret(span *model.SpanWithMeta) []*pb.Span {
 	serviceType := ServiceTypeName
 
 	// no meta, add a empty map
@@ -39,7 +39,7 @@ func (in *ProcessSpanInterpreter) Interpret(span *model.SpanWithMeta) *pb.Span {
 	// create the service instance identifier using the already interpreted name
 	span.Meta["span.serviceInstanceURN"] = in.CreateServiceInstanceURN(span.Meta["span.serviceName"], span.Hostname, span.PID, span.CreateTime)
 
-	return span.Span
+	return []*pb.Span{span.Span}
 }
 
 // LanguageToComponentType converts a trace language to a component type

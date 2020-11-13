@@ -159,8 +159,8 @@ func TestSpanInterpreterEngine(t *testing.T) {
 		},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
-			actual := sie.Interpret(&tc.span)
-			assert.EqualValues(t, tc.expected, *actual)
+			actual := sie.Interpret(&tc.span, make(map[uint64]*pb.Span))
+			assert.EqualValues(t, tc.expected, *actual[0])
 		})
 	}
 }

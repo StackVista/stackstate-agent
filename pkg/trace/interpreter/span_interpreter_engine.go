@@ -28,25 +28,27 @@ func MakeSpanInterpreterEngine(config *interpreterConfig.Config, typeIns map[str
 
 // NewSpanInterpreterEngine creates a SpanInterpreterEngine given the config and the default interpreters
 func NewSpanInterpreterEngine(agentConfig *config.AgentConfig) *SpanInterpreterEngine {
-	interpreterConfig := agentConfig.InterpreterConfig
+	interpreterConf := agentConfig.InterpreterConfig
 	typeIns := make(map[string]interpreters.TypeInterpreter, 0)
-	typeIns[interpreters.ProcessSpanInterpreterName] = interpreters.MakeProcessSpanInterpreter(interpreterConfig)
-	typeIns[interpreters.SQLSpanInterpreterName] = interpreters.MakeSQLSpanInterpreter(interpreterConfig)
+	typeIns[interpreters.ProcessSpanInterpreterName] = interpreters.MakeProcessSpanInterpreter(interpreterConf)
+	typeIns[interpreters.SQLSpanInterpreterName] = interpreters.MakeSQLSpanInterpreter(interpreterConf)
 	sourceIns := make(map[string]interpreters.SourceInterpreter, 0)
-	sourceIns[interpreters.TraefikSpanInterpreterSpan] = interpreters.MakeTraefikInterpreter(interpreterConfig)
+	sourceIns[interpreters.TraefikSpanInterpreterSpan] = interpreters.MakeTraefikInterpreter(interpreterConf)
 
-	return MakeSpanInterpreterEngine(interpreterConfig, typeIns, sourceIns)
+	return MakeSpanInterpreterEngine(interpreterConf, typeIns, sourceIns)
 }
 
 // Interpret interprets spans using the configured SpanInterpreterEngine
-func (se *SpanInterpreterEngine) Interpret(span *pb.Span) *pb.Span {
+func (se *SpanInterpreterEngine) Interpret(span *pb.Span, originalSpans map[uint64]*pb.Span) []*pb.Span {
 
 	// check if span is pre-interpreted by the trace client
 	if _, found := span.Meta["span.serviceURN"]; found {
-		return span
+		return []*pb.Span{span}
 	}
 
 	span = se.DefaultSpanInterpreter.Interpret(span)
+
+	var interpretedSpans []*pb.Span
 
 	meta, err := se.extractSpanMetadata(span)
 	// no metadata, let's look for the span's source.
@@ -54,7 +56,7 @@ func (se *SpanInterpreterEngine) Interpret(span *pb.Span) *pb.Span {
 		if source, found := span.Meta["source"]; found {
 			// interpret the source if we have a interpreter.
 			if interpreter, found := se.SourceInterpreters[source]; found {
-				span = interpreter.Interpret(span)
+				interpretedSpans = interpreter.Interpret(span, originalSpans)
 			}
 		}
 	} else {
@@ -63,11 +65,11 @@ func (se *SpanInterpreterEngine) Interpret(span *pb.Span) *pb.Span {
 
 		// interpret the type if we have a interpreter, otherwise run it through the process interpreter.
 		if interpreter, found := se.TypeInterpreters[meta.Type]; found {
-			span = interpreter.Interpret(spanWithMeta)
+			interpretedSpans = interpreter.Interpret(spanWithMeta)
 		} else {
-			span = se.TypeInterpreters["process"].Interpret(spanWithMeta)
+			interpretedSpans = se.TypeInterpreters["process"].Interpret(spanWithMeta)
 		}
 	}
 	// we mutate so we return the "same" span
-	return span
+	return interpretedSpans
 }

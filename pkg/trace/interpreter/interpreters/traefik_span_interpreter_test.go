@@ -96,8 +96,8 @@ func TestTraefikSpanInterpreter(t *testing.T) {
 		},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
-			actual := tc.interpreter.Interpret(&tc.span)
-			assert.EqualValues(t, tc.expected, *actual)
+			actual := tc.interpreter.Interpret(&tc.span, make(map[uint64]*pb.Span))
+			assert.EqualValues(t, tc.expected, *actual[0])
 		})
 	}
 }

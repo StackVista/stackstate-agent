@@ -108,7 +108,7 @@ func TestProcessSpanInterpreter(t *testing.T) {
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
 			actual := tc.interpreter.Interpret(&tc.span)
-			assert.EqualValues(t, tc.expected, *actual)
+			assert.EqualValues(t, tc.expected, *actual[0])
 		})
 	}
 }
