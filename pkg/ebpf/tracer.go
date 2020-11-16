@@ -4,7 +4,6 @@
 package ebpf
 
 import (
-	"bytes"
 	"expvar"
 	"fmt"
 	"math"
@@ -81,7 +80,7 @@ type Tracer struct {
 	bufferLock sync.Mutex
 
 	// Internal buffer used to compute bytekeys
-	buf *bytes.Buffer
+	buf [network.ConnectionByteKeyMaxLen]byte
 
 	// Connections for the tracer to blacklist
 	sourceExcludes []*network.ConnectionFilter
@@ -241,7 +240,6 @@ func NewTracer(config *Config) (*Tracer, error) {
 		udpPortMapping: udpPortMapping,
 		reverseDNS:     reverseDNS,
 		buffer:         make([]network.ConnectionStats, 0, 512),
-		buf:            &bytes.Buffer{},
 		conntracker:    conntracker,
 		sourceExcludes: network.ParseConnectionFilters(config.ExcludedSourceConnections),
 		destExcludes:   network.ParseConnectionFilters(config.ExcludedDestinationConnections),
@@ -427,7 +425,7 @@ func (t *Tracer) storeClosedConn(cs network.ConnectionStats) {
 
 	atomic.AddInt64(&t.closedConns, 1)
 	cs.IPTranslation = t.conntracker.GetTranslationForConn(cs)
-	t.state.StoreClosedConnection(cs)
+	t.state.StoreClosedConnection(&cs)
 	if cs.IPTranslation != nil {
 		t.conntracker.DeleteTranslation(cs)
 	}
