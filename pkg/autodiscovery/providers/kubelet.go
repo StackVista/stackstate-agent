@@ -13,10 +13,11 @@ import (
 
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/providers/names"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/common"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/providers/names"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/kubelet"
 )
 
 const (
@@ -91,8 +92,13 @@ func parseKubeletPodlist(podlist []*kubelet.Pod) ([]integration.Config, error) {
 		}
 
 		for _, container := range pod.Status.GetAllContainers() {
+			adIdentifier := container.Name
+			if customADIdentifier, customIDFound := common.GetCustomCheckID(pod.Metadata.Annotations, container.Name); customIDFound {
+				adIdentifier = customADIdentifier
+			}
+
 			c, errors := extractTemplatesFromMap(container.ID, pod.Metadata.Annotations,
-				fmt.Sprintf(adExtractFormat, container.Name))
+				fmt.Sprintf(adExtractFormat, adIdentifier))
 
 			for _, err := range errors {
 				log.Errorf("Can't parse template for pod %s: %s", pod.Metadata.Name, err)

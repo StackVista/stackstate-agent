@@ -15,13 +15,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/status/health"
-	"github.com/StackVista/stackstate-agent/pkg/tagger"
-	"github.com/StackVista/stackstate-agent/pkg/util/containers"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/common"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/status/health"
+	"github.com/DataDog/datadog-agent/pkg/tagger"
+	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/kubelet"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 const (
@@ -243,15 +244,24 @@ func (l *KubeletListener) createService(entity string, pod *kubelet.Pod, firstRu
 			svc.metricsExcluded = l.filters.IsExcluded(containers.MetricsFilter, container.Name, containerImage, pod.Metadata.Namespace)
 			svc.logsExcluded = l.filters.IsExcluded(containers.LogsFilter, container.Name, containerImage, pod.Metadata.Namespace)
 
+			// Cache the container name to get the corresponding ports after breaking the for-loop
 			containerName = container.Name
+
+			// Check for custom AD identifiers
+			adIdentifier := containerName
+			if customADIdentifier, customIDFound := common.GetCustomCheckID(pod.Metadata.Annotations, containerName); customIDFound {
+				adIdentifier = customADIdentifier
+				// Add custom check ID as AD identifier
+				svc.adIdentifiers = append(svc.adIdentifiers, customADIdentifier)
+			}
 
 			// Add container uid as ID
 			svc.adIdentifiers = append(svc.adIdentifiers, entity)
 
 			// Cache check names if the pod template is annotated
-			if podHasADTemplate(pod.Metadata.Annotations, containerName) {
+			if podHasADTemplate(pod.Metadata.Annotations, adIdentifier) {
 				var err error
-				svc.checkNames, err = getCheckNamesFromAnnotations(pod.Metadata.Annotations, containerName)
+				svc.checkNames, err = getCheckNamesFromAnnotations(pod.Metadata.Annotations, adIdentifier)
 				if err != nil {
 					log.Error(err.Error())
 				}
