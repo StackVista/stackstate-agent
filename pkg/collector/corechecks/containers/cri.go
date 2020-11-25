@@ -16,15 +16,16 @@ import (
 	yaml "gopkg.in/yaml.v2"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
-	"github.com/StackVista/stackstate-agent/pkg/aggregator"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
-	"github.com/StackVista/stackstate-agent/pkg/tagger"
-	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
-	"github.com/StackVista/stackstate-agent/pkg/util/containers"
-	"github.com/StackVista/stackstate-agent/pkg/util/containers/cri"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/tagger"
+	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
+	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/util/containers/cri"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 const (
@@ -174,6 +175,10 @@ func (c *CRICheck) computeContainerUptime(sender aggregator.Sender, currentTime 
 
 // isExcluded returns whether a container should be excluded based on its image, name and namespace
 func (c *CRICheck) isExcluded(ctr *pb.ContainerStatus) bool {
+	if config.Datadog.GetBool("exclude_pause_container") && containers.IsPauseContainer(ctr.Labels) {
+		return true
+	}
+
 	name := ""
 	if meta := ctr.GetMetadata(); meta != nil {
 		name = meta.GetName()

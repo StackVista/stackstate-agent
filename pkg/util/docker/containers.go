@@ -23,10 +23,11 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/go-connections/nat"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/containers"
-	"github.com/StackVista/stackstate-agent/pkg/util/containers/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/util/containers/providers"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/util/containers/metrics"
+	"github.com/DataDog/datadog-agent/pkg/util/containers/providers"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 var healthRe = regexp.MustCompile(`\(health: (\w+)\)`)
@@ -269,7 +270,8 @@ func (d *DockerUtil) dockerContainers(cfg *ContainerListConfig) ([]*containers.C
 			log.Warnf("Can't resolve image name %s: %s", c.Image, err)
 		}
 
-		excluded := d.cfg.filter.IsExcluded(c.Names[0], image, c.Labels["io.kubernetes.pod.namespace"])
+		pauseContainerExcluded := config.Datadog.GetBool("exclude_pause_container") && containers.IsPauseContainer(c.Labels)
+		excluded := pauseContainerExcluded || d.cfg.filter.IsExcluded(c.Names[0], image, c.Labels["io.kubernetes.pod.namespace"])
 		if excluded && !cfg.FlagExcluded {
 			continue
 		}

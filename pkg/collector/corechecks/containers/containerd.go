@@ -23,18 +23,19 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"gopkg.in/yaml.v2"
 
-	"github.com/StackVista/stackstate-agent/pkg/aggregator"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
-	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/tagger"
-	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
-	cutil "github.com/StackVista/stackstate-agent/pkg/util/containerd"
-	ddContainers "github.com/StackVista/stackstate-agent/pkg/util/containers"
-	"github.com/StackVista/stackstate-agent/pkg/util/containers/providers/cgroup"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/DataDog/datadog-agent/pkg/collector/corechecks"
+	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/tagger"
+	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
+	cutil "github.com/DataDog/datadog-agent/pkg/util/containerd"
+	ddContainers "github.com/DataDog/datadog-agent/pkg/util/containers"
+	cgroup "github.com/DataDog/datadog-agent/pkg/util/containers/providers/cgroup"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 const (
@@ -287,6 +288,9 @@ func computeMetrics(sender aggregator.Sender, cu cutil.ContainerdItf, fil *ddCon
 }
 
 func isExcluded(ctn containers.Container, fil *ddContainers.Filter) bool {
+	if config.Datadog.GetBool("exclude_pause_container") && ddContainers.IsPauseContainer(ctn.Labels) {
+		return true
+	}
 	// The container name is not available in Containerd, we only rely on image name and kube namespace based exclusion
 	return fil.IsExcluded("", ctn.Image, ctn.Labels["io.kubernetes.pod.namespace"])
 }
