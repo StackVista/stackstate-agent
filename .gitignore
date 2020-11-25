@@ -113,6 +113,9 @@ omnibus/.tarball-version
 omnibus/files/sources
 omnibus/resources/agent/msi/cal/packages/
 
+# serverless artifact
+cmd/serverless/serverless
+
 #visual studio files
 *.aps
 omnibus/resources/agent/msi/cal/packages/
@@ -151,35 +154,6 @@ cmd/agent/gui/templates.go
 # netlink message dump test files
 pkg/network/netlink/testdata/message_dump*
 
-# Merge artifacts
-*.orig
-
-
-#sts
-version.txt
-
-.cd-builders/windows/builder7/runner/roles/
-
-# molecule local json files
-/test/molecule-role/molecule/*/topic-*.json
-/test/molecule-role/molecule/*/persistent-cache-*.json
-.cache
-
-# ignore manual test files
-test/manual/*
-
-# cluster agent generated files
-Dockerfiles/cluster-agent/stackstate-cluster.yaml
-Dockerfiles/cluster-agent/auth_token
-Dockerfiles/cluster-agent/cluster_agent.auth_token
-Dockerfiles/cluster-agent/stackstate-cluster-agent
-Dockerfiles/cluster-agent/dist/
-
-# kubernetes test deployment
-deployment/kubernetes/k8s-*/
-
-# windows ami
-.cd-builders/windows/builder/runner/roles/sa_gitlab_runner_win
-
-# msgpack gen files
-*_gen*.go
+# serverless
+.layers
+.extension
