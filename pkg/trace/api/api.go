@@ -314,6 +314,10 @@ const (
 	// headerTracerVersion specifies the name of the header which contains the version
 	// of the tracer sending the payload.
 	headerTracerVersion = "Datadog-Meta-Tracer-Version"
+
+	// headerComputedTopLevel specifies that the client has marked top-level spans, when set.
+	// Any non-empty value will mean 'yes'.
+	headerComputedTopLevel = "Datadog-Client-Computed-Top-Level"
 )
 
 func (r *HTTPReceiver) tagStats(v Version, req *http.Request) *info.TagStats {
@@ -409,9 +413,10 @@ func (r *HTTPReceiver) handleTraces(v Version, w http.ResponseWriter, req *http.
 	atomic.AddInt64(&ts.PayloadAccepted, 1)
 
 	payload := &Payload{
-		Source:        ts,
-		Traces:        traces,
-		ContainerTags: getContainerTags(req.Header.Get(headerContainerID)),
+		Source:                 ts,
+		Traces:                 traces,
+		ContainerTags:          getContainerTags(req.Header.Get(headerContainerID)),
+		ClientComputedTopLevel: req.Header.Get(headerComputedTopLevel) != "",
 	}
 	select {
 	case r.out <- payload:
@@ -442,6 +447,10 @@ type Payload struct {
 
 	// Traces contains all the traces received in the payload
 	Traces pb.Traces
+
+	// ClientComputedTopLevel specifies that the client has already marked top-level
+	// spans.
+	ClientComputedTopLevel bool
 }
 
 // handleServices handle a request with a list of several services
