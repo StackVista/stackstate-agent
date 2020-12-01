@@ -7,14 +7,14 @@ from checks import AgentCheck, TopologyInstance
 
 class TestComponentCheck(AgentCheck):
     def get_instance_key(self, instance):
-        return TopologyInstance("type", "url")
+        return TopologyInstance("type", "url", with_snapshots=True)
 
     def check(self, instance):
         self.component("myid", "mytype", { "key": "value", "intlist": [1], "emptykey": None, "nestedobject": { "nestedkey": "nestedValue" }})
 
 class TestRelationCheck(AgentCheck):
     def get_instance_key(self, instance):
-        return TopologyInstance("type", "url")
+        return TopologyInstance("type", "url", with_snapshots=True)
 
     def check(self, instance):
         self.relation("source", "target", "mytype", { "key": "value", "intlist": [1], "emptykey": None, "nestedobject": { "nestedkey": "nestedValue" }})
