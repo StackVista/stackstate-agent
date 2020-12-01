@@ -35,7 +35,7 @@ func TestComponentTopology(t *testing.T) {
 					Data: topology.Data{
 						"nestedobject": map[string]interface{}{"nestedkey": "nestedValue"},
 						"key":          "value",
-						"intlist":      []interface{}{int64(1)}, "emptykey": map[string]interface{}{},
+						"intlist":      []interface{}{int64(1)},
 						"tags": []interface{}{
 							fmt.Sprintf("integration-type:%s", instance.Type),
 							fmt.Sprintf("integration-url:%s", instance.URL),
@@ -82,7 +82,6 @@ func TestRelationTopology(t *testing.T) {
 						"nestedobject": map[string]interface{}{"nestedkey": "nestedValue"},
 						"key":          "value",
 						"intlist":      []interface{}{int64(1)},
-						"emptykey":     map[string]interface{}{},
 					},
 				},
 			},
