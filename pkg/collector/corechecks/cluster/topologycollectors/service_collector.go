@@ -164,6 +164,33 @@ func (sc *ServiceCollector) serviceToStackStateComponent(service v1.Service) *to
 		if service.Spec.ClusterIP != "None" && service.Spec.ClusterIP != "" {
 			identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s", sc.GetInstance().URL, service.Spec.ClusterIP))
 		}
+	case v1.ServiceTypeExternalName:
+		if service.Spec.ExternalName != "None" && service.Spec.ExternalName != "" {
+			identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s", service.Spec.ExternalName))
+			// If targetPorts are specified, use those
+			for _, port := range service.Spec.Ports {
+				// map all the node ports
+				if port.Port != 0 {
+					identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s:%d", sc.GetInstance().URL, service.Spec.ExternalName, port.Port))
+				}
+			}
+
+			addrs, err := net.LookupHost(service.Spec.ExternalName)
+			if err != nil {
+				log.Warnf("Could not lookup IP addresses for host '%s' (Error: %s)", service.Spec.ExternalName, err.Error())
+			} else {
+				for _, addr := range addrs {
+					identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s", sc.GetInstance().URL, addr))
+					// If targetPorts are specified, use those
+					for _, port := range service.Spec.Ports {
+						// map all the node ports
+						if port.Port != 0 {
+							identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s:%d", sc.GetInstance().URL, addr, port.Port))
+						}
+					}
+				}
+			}
+		}
 	default:
 	}
 
