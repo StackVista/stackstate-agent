@@ -7,6 +7,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"k8s.io/api/core/v1"
+	"net"
 )
 
 // ServiceCollector implements the ClusterTopologyCollector interface.
