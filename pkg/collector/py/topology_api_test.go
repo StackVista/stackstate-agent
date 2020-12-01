@@ -110,7 +110,7 @@ func TestStartSnapshotCheck(t *testing.T) {
 	assert.Equal(t, batcher.Topologies(map[check.ID]topology.Topology{
 		"testtopology:c3d960f8ff8a5c55": {
 			StartSnapshot: true,
-			StopSnapshot:  true,
+			StopSnapshot:  false,
 			Instance:      instance,
 			Components:    []topology.Component{},
 			Relations:     []topology.Relation{},
@@ -138,7 +138,7 @@ func TestStopSnapshotCheck(t *testing.T) {
 
 	assert.Equal(t, batcher.Topologies(map[check.ID]topology.Topology{
 		"testtopology:c3d960f8ff8a5c55": {
-			StartSnapshot: true,
+			StartSnapshot: false,
 			StopSnapshot:  true,
 			Instance:      instance,
 			Components:    []topology.Component{},
