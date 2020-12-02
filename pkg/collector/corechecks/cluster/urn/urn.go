@@ -16,7 +16,7 @@ const (
 
 // Builder builds StackState compatible URNs for Kubernetes components
 type Builder interface {
-	URNPrefix()
+	URNPrefix() string
 	BuildExternalID(kind, namespace, objName string) (string, error)
 	BuildClusterExternalID() string
 	BuildConfigMapExternalID(namespace, configMapName string) string
