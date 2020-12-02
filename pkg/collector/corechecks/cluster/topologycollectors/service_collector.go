@@ -93,6 +93,14 @@ func (sc *ServiceCollector) CollectorFunction() error {
 		sc.ComponentChan <- component
 		sc.RelationChan <- sc.namespaceToServiceStackStateRelation(sc.buildNamespaceExternalID(service.Namespace), component.ExternalID)
 
+		// Check whether we have an ExternalName service, which will result in an extra component+relation
+		if service.Spec.Type == v1.ServiceTypeExternalName {
+			externalService := sc.serviceToExternalServiceComponent(service)
+
+			sc.ComponentChan <- externalService
+			sc.RelationChan <- sc.serviceToExternalServiceStackStateRelation(component.ExternalID, externalService.ExternalID)
+		}
+
 		publishedPodRelations := make(map[string]string, 0)
 		for _, endpoint := range serviceEndpointIdentifiers[serviceID] {
 			// create the relation between the service and the pod
@@ -142,12 +150,12 @@ func (sc *ServiceCollector) serviceToStackStateComponent(service v1.Service) *to
 	case v1.ServiceTypeClusterIP:
 		// verify that the cluster ip is not empty
 		if service.Spec.ClusterIP != "None" && service.Spec.ClusterIP != "" {
-			identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s", sc.GetInstance().URL, service.Spec.ClusterIP))
+			identifiers = append(identifiers, sc.buildEndpointExternalID(service.Spec.ClusterIP))
 		}
 	case v1.ServiceTypeNodePort:
 		// verify that the node port is not empty
 		if service.Spec.ClusterIP != "None" && service.Spec.ClusterIP != "" {
-			identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s", sc.GetInstance().URL, service.Spec.ClusterIP))
+			identifiers = append(identifiers, sc.buildEndpointExternalID(service.Spec.ClusterIP))
 			// map all of the node ports for the ip
 			for _, port := range service.Spec.Ports {
 				// map all the node ports
@@ -159,39 +167,13 @@ func (sc *ServiceCollector) serviceToStackStateComponent(service v1.Service) *to
 	case v1.ServiceTypeLoadBalancer:
 		// verify that the load balance ip is not empty
 		if service.Spec.LoadBalancerIP != "" {
-			identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s", sc.GetInstance().URL, service.Spec.LoadBalancerIP))
+			identifiers = append(identifiers, sc.buildEndpointExternalID(service.Spec.LoadBalancerIP))
 		}
 		// verify that the cluster ip is not empty
 		if service.Spec.ClusterIP != "None" && service.Spec.ClusterIP != "" {
-			identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s", sc.GetInstance().URL, service.Spec.ClusterIP))
+			identifiers = append(identifiers, sc.buildEndpointExternalID(service.Spec.ClusterIP))
 		}
 	case v1.ServiceTypeExternalName:
-		if service.Spec.ExternalName != "None" && service.Spec.ExternalName != "" {
-			identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s", service.Spec.ExternalName))
-			// If targetPorts are specified, use those
-			for _, port := range service.Spec.Ports {
-				// map all the node ports
-				if port.Port != 0 {
-					identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s:%d", sc.GetInstance().URL, service.Spec.ExternalName, port.Port))
-				}
-			}
-
-			addrs, err := net.LookupHost(service.Spec.ExternalName)
-			if err != nil {
-				log.Warnf("Could not lookup IP addresses for host '%s' (Error: %s)", service.Spec.ExternalName, err.Error())
-			} else {
-				for _, addr := range addrs {
-					identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s", sc.GetInstance().URL, addr))
-					// If targetPorts are specified, use those
-					for _, port := range service.Spec.Ports {
-						// map all the node ports
-						if port.Port != 0 {
-							identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s:%d", sc.GetInstance().URL, addr, port.Port))
-						}
-					}
-				}
-			}
-		}
 	default:
 	}
 
@@ -240,6 +222,65 @@ func (sc *ServiceCollector) serviceToStackStateComponent(service v1.Service) *to
 	return component
 }
 
+func (sc *ServiceCollector) serviceToExternalServiceComponent(service *v1.Service) *topology.Component {
+	log.Tracef("Mapping kubernetes pod ExternalName service to extra StackState component: %s", service.String())
+	// create identifier list to merge with StackState components
+	identifiers := make([]string, 0)
+
+	if service.Spec.ExternalName != "None" && service.Spec.ExternalName != "" {
+		identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s", service.Spec.ExternalName))
+		// If targetPorts are specified, use those
+		for _, port := range service.Spec.Ports {
+			// map all the node ports
+			if port.Port != 0 {
+				identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s:%d", sc.GetInstance().URL, service.Spec.ExternalName, port.Port))
+			}
+		}
+
+		addrs, err := net.LookupHost(service.Spec.ExternalName)
+		if err != nil {
+			log.Warnf("Could not lookup IP addresses for host '%s' (Error: %s)", service.Spec.ExternalName, err.Error())
+		} else {
+			for _, addr := range addrs {
+				identifiers = append(identifiers, sc.buildEndpointExternalID(addr))
+				// If targetPorts are specified, use those
+				for _, port := range service.Spec.Ports {
+					// map all the node ports
+					if port.Port != 0 {
+						identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s:%d", sc.GetInstance().URL, addr, port.Port))
+					}
+				}
+			}
+		}
+	}
+
+	// add identifier for this service name
+	serviceID := buildServiceID(service.Namespace, service.Name)
+	identifiers = append(identifiers, fmt.Sprintf("urn:external-service:/%s:%s", sc.GetInstance().URL, serviceID))
+
+	log.Tracef("Created identifiers for %s: %v", service.Name, identifiers)
+
+	externalID := fmt.Sprintf("%s:%s/external-service:%s", sc.getURNBuilder().URNPrefix(), service.Namespace, service.Name)
+
+	tags := sc.initTags(service.ObjectMeta)
+
+	component := &topology.Component{
+		ExternalID: externalID,
+		Type:       topology.Type{Name: "external-service"},
+		Data: map[string]interface{}{
+			"name":              service.Name,
+			"creationTimestamp": service.CreationTimestamp,
+			"tags":              tags,
+			"identifiers":       identifiers,
+			"uid":               service.UID,
+		},
+	}
+
+	log.Tracef("Created StackState external-service component %s: %v", serviceExternalID, component.JSONString())
+
+	return component
+}
+
 // Creates a StackState relation from a Kubernetes / OpenShift Service to Pod
 func (sc *ServiceCollector) serviceToPodStackStateRelation(serviceExternalID, podExternalID string) *topology.Relation {
 	log.Tracef("Mapping kubernetes pod to service relation: %s -> %s", podExternalID, serviceExternalID)
@@ -258,6 +299,17 @@ func (sc *ServiceCollector) namespaceToServiceStackStateRelation(namespaceExtern
 	relation := sc.CreateRelation(namespaceExternalID, serviceExternalID, "encloses")
 
 	log.Tracef("Created StackState namespace -> service relation %s->%s", relation.SourceID, relation.TargetID)
+
+	return relation
+}
+
+// Creates a StackState relation from a Kubernetes / OpenShift Service to 'ExternalService' relation
+func (sc *ServiceCollector) serviceToExternalServiceStackStateRelation(serviceExternalID, externalServiceExternalID string) *topology.Relation {
+	log.Tracef("Mapping kubernetes service to external service relation: %s -> %s", serviceExternalID, externalServiceExternalID)
+
+	relation := sc.CreateRelation(serviceExternalID, externalServiceExternalID, "uses")
+
+	log.Tracef("Created StackState service -> external service relation %s->%s", relation.SourceID, relation.TargetID)
 
 	return relation
 }
