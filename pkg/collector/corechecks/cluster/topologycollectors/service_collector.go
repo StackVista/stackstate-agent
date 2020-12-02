@@ -222,7 +222,7 @@ func (sc *ServiceCollector) serviceToStackStateComponent(service v1.Service) *to
 	return component
 }
 
-func (sc *ServiceCollector) serviceToExternalServiceComponent(service *v1.Service) *topology.Component {
+func (sc *ServiceCollector) serviceToExternalServiceComponent(service v1.Service) *topology.Component {
 	log.Tracef("Mapping kubernetes pod ExternalName service to extra StackState component: %s", service.String())
 	// create identifier list to merge with StackState components
 	identifiers := make([]string, 0)
@@ -260,7 +260,7 @@ func (sc *ServiceCollector) serviceToExternalServiceComponent(service *v1.Servic
 
 	log.Tracef("Created identifiers for %s: %v", service.Name, identifiers)
 
-	externalID := fmt.Sprintf("%s:%s/external-service:%s", sc.getURNBuilder().URNPrefix(), service.Namespace, service.Name)
+	externalID := fmt.Sprintf("%s:%s/external-service:%s", sc.GetURNBuilder().URNPrefix(), service.Namespace, service.Name)
 
 	tags := sc.initTags(service.ObjectMeta)
 
@@ -276,7 +276,7 @@ func (sc *ServiceCollector) serviceToExternalServiceComponent(service *v1.Servic
 		},
 	}
 
-	log.Tracef("Created StackState external-service component %s: %v", serviceExternalID, component.JSONString())
+	log.Tracef("Created StackState external-service component %s: %v", externalID, component.JSONString())
 
 	return component
 }
