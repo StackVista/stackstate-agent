@@ -4,10 +4,12 @@ package topologycollectors
 
 import (
 	"fmt"
+	"net"
+
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/dns"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"k8s.io/api/core/v1"
-	"net"
+	v1 "k8s.io/api/core/v1"
 )
 
 // ServiceCollector implements the ClusterTopologyCollector interface.
@@ -15,6 +17,7 @@ type ServiceCollector struct {
 	ComponentChan chan<- *topology.Component
 	RelationChan  chan<- *topology.Relation
 	ClusterTopologyCollector
+	DNS dns.DNSResolver
 }
 
 // EndpointID contains the definition of a cluster ip
@@ -30,6 +33,7 @@ func NewServiceCollector(componentChannel chan<- *topology.Component, relationCh
 		ComponentChan:            componentChannel,
 		RelationChan:             relationChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
+		DNS:                      net.LookupHost,
 	}
 }
 
@@ -91,7 +95,6 @@ func (sc *ServiceCollector) CollectorFunction() error {
 		component := sc.serviceToStackStateComponent(service)
 
 		sc.ComponentChan <- component
-		sc.RelationChan <- sc.namespaceToServiceStackStateRelation(sc.buildNamespaceExternalID(service.Namespace), component.ExternalID)
 
 		// Check whether we have an ExternalName service, which will result in an extra component+relation
 		if service.Spec.Type == v1.ServiceTypeExternalName {
@@ -100,6 +103,9 @@ func (sc *ServiceCollector) CollectorFunction() error {
 			sc.ComponentChan <- externalService
 			sc.RelationChan <- sc.serviceToExternalServiceStackStateRelation(component.ExternalID, externalService.ExternalID)
 		}
+
+		// First ensure we publish all components, else the test becomes complex
+		sc.RelationChan <- sc.namespaceToServiceStackStateRelation(sc.buildNamespaceExternalID(service.Namespace), component.ExternalID)
 
 		publishedPodRelations := make(map[string]string, 0)
 		for _, endpoint := range serviceEndpointIdentifiers[serviceID] {
@@ -237,7 +243,7 @@ func (sc *ServiceCollector) serviceToExternalServiceComponent(service v1.Service
 			}
 		}
 
-		addrs, err := net.LookupHost(service.Spec.ExternalName)
+		addrs, err := sc.DNS(service.Spec.ExternalName)
 		if err != nil {
 			log.Warnf("Could not lookup IP addresses for host '%s' (Error: %s)", service.Spec.ExternalName, err.Error())
 		} else {
@@ -260,7 +266,7 @@ func (sc *ServiceCollector) serviceToExternalServiceComponent(service v1.Service
 
 	log.Tracef("Created identifiers for %s: %v", service.Name, identifiers)
 
-	externalID := fmt.Sprintf("%s:%s/external-service:%s", sc.GetURNBuilder().URNPrefix(), service.Namespace, service.Name)
+	externalID := fmt.Sprintf("%s:%s:external-service/%s", sc.GetURNBuilder().URNPrefix(), service.Namespace, service.Name)
 
 	tags := sc.initTags(service.ObjectMeta)
 
