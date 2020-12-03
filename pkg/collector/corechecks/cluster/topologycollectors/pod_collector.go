@@ -143,7 +143,7 @@ func (pc *PodCollector) CollectorFunction() error {
 // Checks to see if the volume is a persistent volume
 func (pc *PodCollector) isPersistentVolume(volume v1.Volume) bool {
 	if volume.EmptyDir != nil || volume.Secret != nil || volume.ConfigMap != nil || volume.DownwardAPI != nil ||
-		volume.Projected != nil || volumne.HostPath != nil {
+		volume.Projected != nil || volume.HostPath != nil {
 		return false
 	}
 
