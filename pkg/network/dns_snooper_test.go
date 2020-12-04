@@ -12,7 +12,10 @@ import (
 	"testing"
 	"time"
 
+	ddebpf "github.com/DataDog/datadog-agent/pkg/ebpf"
 	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode"
+	netebpf "github.com/DataDog/datadog-agent/pkg/network/ebpf"
+	"github.com/DataDog/datadog-agent/pkg/network/ebpf/probes"
 	"github.com/DataDog/datadog-agent/pkg/process/util"
 	"github.com/DataDog/datadog-agent/pkg/util/kernel"
 	"github.com/DataDog/ebpf"
@@ -39,14 +42,14 @@ func getSnooper(
 		return nil, nil
 	}
 
-	mgr := bytecode.NewManager(bytecode.NewPerfHandler(1))
+	mgr := netebpf.NewManager(ddebpf.NewPerfHandler(1))
 	mgrOptions := manager.Options{
 		MapSpecEditors: map[string]manager.MapSpecEditor{
 			// These maps are unrelated to DNS but are getting set because the eBPF library loads all of them
-			string(bytecode.ConnMap):            {Type: ebpf.Hash, MaxEntries: 1024, EditorFlag: manager.EditMaxEntries},
-			string(bytecode.TcpStatsMap):        {Type: ebpf.Hash, MaxEntries: 1024, EditorFlag: manager.EditMaxEntries},
-			string(bytecode.PortBindingsMap):    {Type: ebpf.Hash, MaxEntries: 1024, EditorFlag: manager.EditMaxEntries},
-			string(bytecode.UdpPortBindingsMap): {Type: ebpf.Hash, MaxEntries: 1024, EditorFlag: manager.EditMaxEntries},
+			string(probes.ConnMap):            {Type: ebpf.Hash, MaxEntries: 1024, EditorFlag: manager.EditMaxEntries},
+			string(probes.TcpStatsMap):        {Type: ebpf.Hash, MaxEntries: 1024, EditorFlag: manager.EditMaxEntries},
+			string(probes.PortBindingsMap):    {Type: ebpf.Hash, MaxEntries: 1024, EditorFlag: manager.EditMaxEntries},
+			string(probes.UdpPortBindingsMap): {Type: ebpf.Hash, MaxEntries: 1024, EditorFlag: manager.EditMaxEntries},
 		},
 		RLimit: &unix.Rlimit{
 			Cur: math.MaxUint64,
@@ -55,14 +58,14 @@ func getSnooper(
 		ActivatedProbes: []manager.ProbesSelector{
 			&manager.ProbeSelector{
 				ProbeIdentificationPair: manager.ProbeIdentificationPair{
-					Section: string(bytecode.SocketDnsFilter),
+					Section: string(probes.SocketDnsFilter),
 				},
 			},
 		},
 	}
 
 	for _, p := range mgr.Probes {
-		if p.Section != string(bytecode.SocketDnsFilter) {
+		if p.Section != string(probes.SocketDnsFilter) {
 			mgrOptions.ExcludedSections = append(mgrOptions.ExcludedSections, p.Section)
 		}
 	}
@@ -76,7 +79,7 @@ func getSnooper(
 	err = mgr.InitWithOptions(buf, mgrOptions)
 	require.NoError(t, err)
 
-	filter, _ := mgr.GetProbe(manager.ProbeIdentificationPair{Section: string(bytecode.SocketDnsFilter)})
+	filter, _ := mgr.GetProbe(manager.ProbeIdentificationPair{Section: string(probes.SocketDnsFilter)})
 	require.NotNil(t, filter)
 
 	reverseDNS, err := NewSocketFilterSnooper(
@@ -122,7 +125,7 @@ Loop:
 }
 
 func TestDNSOverUDPSnooping(t *testing.T) {
-	buf, err := bytecode.ReadBPFModule("build", false)
+	buf, err := netebpf.ReadBPFModule("build", false)
 	require.NoError(t, err)
 
 	m, reverseDNS := getSnooper(t, buf, false, false, 15*time.Second)
@@ -178,7 +181,7 @@ const (
 )
 
 func initDNSTests(t *testing.T, localDNS bool) (*manager.Manager, *SocketFilterSnooper) {
-	buf, err := bytecode.ReadBPFModule("build", false)
+	buf, err := netebpf.ReadBPFModule("build", false)
 	require.NoError(t, err)
 	return getSnooper(t, buf, true, localDNS, 1*time.Second)
 }
@@ -374,7 +377,7 @@ func TestDNSOverUDPTimeoutCount(t *testing.T) {
 }
 
 func TestParsingError(t *testing.T) {
-	buf, err := bytecode.ReadBPFModule("build", false)
+	buf, err := netebpf.ReadBPFModule("build", false)
 	require.NoError(t, err)
 
 	m, reverseDNS := getSnooper(t, buf, false, false, 15*time.Second)
