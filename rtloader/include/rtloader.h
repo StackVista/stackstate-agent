@@ -436,85 +436,14 @@ public:
     */
     virtual void setObfuscateSqlCb(cb_obfuscate_sql_t) = 0;
 
-    //! setSubmitComponentCb member.
+    //! setObfuscateSqlExecPlanCb member.
     /*!
-      \param A cb_submit_component_t function pointer to the CGO callback.
+      \param A cb_obfuscate_sql_exec_plan_t function pointer to the CGO callback.
 
-      Actual topology components are submitted from go-land, this allows us to set the CGO callback.
+      This allows us to set the relevant CGO callback that will allow retrieving value for
+      specific check instances.
     */
-    virtual void setSubmitComponentCb(cb_submit_component_t) = 0;
-
-    //! setSubmitRelationCb member.
-    /*!
-      \param A cb_submit_relation_t function pointer to the CGO callback.
-
-      Actual topology relations are submitted from go-land, this allows us to set the CGO callback.
-    */
-    virtual void setSubmitRelationCb(cb_submit_relation_t) = 0;
-
-    //! setSubmitStartSnapshotCb member.
-    /*!
-      \param A cb_submit_start_snapshot_t function pointer to the CGO callback.
-
-      Actual start topology snapshot is submitted from go-land, this allows us to set the CGO callback.
-    */
-    virtual void setSubmitStartSnapshotCb(cb_submit_start_snapshot_t) = 0;
-
-    //! setSubmitStopSnapshotCb member.
-    /*!
-      \param A cb_submit_stop_snapshot_t function pointer to the CGO callback.
-
-      Actual stop topology snapshot is submitted from go-land, this allows us to set the CGO callback.
-    */
-    virtual void setSubmitStopSnapshotCb(cb_submit_stop_snapshot_t) = 0;
-
-    //! setSubmitDeleteCb member.
-    /*!
-      \param A cb_submit_delete_t function pointer to the CGO callback.
-
-      Actual deleting of a topology element identifier is submitted from go-land, this allows us to set the CGO callback.
-    */
-    virtual void setSubmitDeleteCb(cb_submit_delete_t) = 0;
-
-    //! setSubmitTopologyEventCb member.
-    /*!
-      \param A cb_submit_topology_event_t function pointer to the CGO callback.
-
-      Actual topology events are submitted from go-land, this allows us to set the CGO callback.
-    */
-    virtual void setSubmitTopologyEventCb(cb_submit_topology_event_t) = 0;
-
-    //! setSubmitHealthCheckDataCb member.
-    /*!
-      \param A cb_submit_health_check_data_t function pointer to the CGO callback.
-
-      Actual check data is submitted from go-land, this allows us to set the CGO callback.
-    */
-    virtual void setSubmitHealthCheckDataCb(cb_submit_health_check_data_t) = 0;
-
-    //! setSubmitHealthStartSnapshotCb member.
-    /*!
-      \param A cb_submit_health_start_snapshot_t function pointer to the CGO callback.
-
-      Actual start health snapshot is submitted from go-land, this allows us to set the CGO callback.
-    */
-    virtual void setSubmitHealthStartSnapshotCb(cb_submit_health_start_snapshot_t) = 0;
-
-    //! setSubmitHealthStopSnapshotCb member.
-    /*!
-      \param A cb_submit_health_stop_snapshot_t function pointer to the CGO callback.
-
-      Actual stop health snapshot is submitted from go-land, this allows us to set the CGO callback.
-    */
-    virtual void setSubmitHealthStopSnapshotCb(cb_submit_health_stop_snapshot_t) = 0;
-
-    //! setSubmitRawMetricsDataCb member.
-    /*!
-      \param A cb_submit_raw_metrics_data_t function pointer to the CGO callback.
-
-      Actual check data is submitted from go-land, this allows us to set the CGO callback.
-    */
-    virtual void setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t) = 0;
+    virtual void setObfuscateSqlExecPlanCb(cb_obfuscate_sql_exec_plan_t) = 0;
 
 private:
     mutable std::string _error; /*!< string containing a RtLoader error */

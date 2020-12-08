@@ -904,59 +904,9 @@ void Two::setObfuscateSqlCb(cb_obfuscate_sql_t cb)
     _set_obfuscate_sql_cb(cb);
 }
 
-
-// [sts] topology
-void Two::setSubmitComponentCb(cb_submit_component_t cb)
+void Two::setObfuscateSqlExecPlanCb(cb_obfuscate_sql_exec_plan_t cb)
 {
-    _set_submit_component_cb(cb);
-}
-
-void Two::setSubmitRelationCb(cb_submit_relation_t cb)
-{
-    _set_submit_relation_cb(cb);
-}
-
-void Two::setSubmitStartSnapshotCb(cb_submit_start_snapshot_t cb)
-{
-    _set_submit_start_snapshot_cb(cb);
-}
-
-void Two::setSubmitStopSnapshotCb(cb_submit_stop_snapshot_t cb)
-{
-    _set_submit_stop_snapshot_cb(cb);
-}
-
-void Two::setSubmitDeleteCb(cb_submit_delete_t cb)
-{
-    _set_submit_delete_cb(cb);
-}
-
-// [sts] telemetry
-void Two::setSubmitTopologyEventCb(cb_submit_topology_event_t cb)
-{
-    _set_submit_topology_event_cb(cb);
-}
-
-// [sts] health
-void Two::setSubmitHealthCheckDataCb(cb_submit_health_check_data_t cb)
-{
-    _set_submit_health_check_data_cb(cb);
-}
-
-void Two::setSubmitHealthStartSnapshotCb(cb_submit_health_start_snapshot_t cb)
-{
-    _set_submit_health_start_snapshot_cb(cb);
-}
-
-void Two::setSubmitHealthStopSnapshotCb(cb_submit_health_stop_snapshot_t cb)
-{
-    _set_submit_health_stop_snapshot_cb(cb);
-}
-
-// [sts] raw metrics
-void Two::setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t cb)
-{
-    _set_submit_raw_metrics_data_cb(cb);
+    _set_obfuscate_sql_exec_plan_cb(cb);
 }
 
 // Python Helpers

@@ -31,6 +31,7 @@ extern void setExternalHostTags(char*, char*, char**);
 extern void writePersistentCache(char*, char*);
 extern char* readPersistentCache(char*);
 extern char* obfuscateSQL(char*, char**);
+extern char* obfuscateSQLExecPlan(char*, bool, char**);
 
 
 static void initDatadogAgentTests(rtloader_t *rtloader) {
@@ -49,6 +50,7 @@ static void initDatadogAgentTests(rtloader_t *rtloader) {
    set_write_persistent_cache_cb(rtloader, writePersistentCache);
    set_read_persistent_cache_cb(rtloader, readPersistentCache);
    set_obfuscate_sql_cb(rtloader, obfuscateSQL);
+   set_obfuscate_sql_exec_plan_cb(rtloader, obfuscateSQLExecPlan);
 }
 */
 import "C"
@@ -255,6 +257,26 @@ func obfuscateSQL(rawQuery *C.char, errResult **C.char) *C.char {
 	// expected error results from obfuscator
 	case "":
 		*errResult = (*C.char)(helpers.TrackedCString("result is empty"))
+		return nil
+	default:
+		*errResult = (*C.char)(helpers.TrackedCString("unknown test case"))
+		return nil
+	}
+}
+
+//export obfuscateSQLExecPlan
+func obfuscateSQLExecPlan(rawQuery *C.char, normalize C.bool, errResult **C.char) *C.char {
+	switch C.GoString(rawQuery) {
+	case "raw-json-plan":
+		if bool(normalize) {
+			return (*C.char)(helpers.TrackedCString("obfuscated-and-normalized"))
+		} else {
+			// obfuscate only
+			return (*C.char)(helpers.TrackedCString("obfuscated"))
+		}
+	// expected error results from obfuscator
+	case "":
+		*errResult = (*C.char)(helpers.TrackedCString("empty"))
 		return nil
 	default:
 		*errResult = (*C.char)(helpers.TrackedCString("unknown test case"))
