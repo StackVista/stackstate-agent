@@ -1,5 +1,38 @@
 # StackState Agent v2 releases
 
+## 2.9.0 (2020-12-08)
+
+**Features**
+
+- DynaTrace Topology Integration:
+  - Create the topology in StackState from Dynatrace smartscape topology.
+- Added support for integrations to send events that can be linked to topology in StackState using Event Context.
+- ServiceNow Integration:
+  - ServiceNow Change Request are monitored in StackState with all updates to the Change Request state reflected as
+  external events in StackState, such that potential failures can be related to a change in ServiceNow.
+  - Added support for filtering ServiceNow CI's using a custom `sysparm_query`.
+- Integrations:
+  - Added local persistent state that can be used by integrations to persist a JSON object per check instance to disk.
+
+**Improvements**
+
+- ServiceNow Integration:
+  - Added support for batch queries. This can be set with new parameter `batch_size` in check configuration file.
+- Integrations:
+  - Kubernetes, Kubelet, Kubernetes State and OpenMetrics integrations are monitored by StackState.
+  - Sanitize events and topology data in the base check, encoding unicode to string, before propagating data upstream.
+
+**Bugfix**
+
+- VSphere Integration:
+  - Reconnect to VSphere on an authentication session timeout.
+- Integrations:
+  - Fixed python2 utf-8 string encoding in data produced by all integrations.
+  - Fixed spurious updates of Agent Integrations components in StackState.
+  - Fixed a memory leak in the integrations caused by `yaml.safe_load` when loading large objects.
+- Nagios Integration:
+  - Fixes event tags format so state changes are detected in StackState.
+
 ## 2.8.0 (2020-09-27)
 
 **Features**
