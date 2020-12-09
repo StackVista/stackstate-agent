@@ -8,8 +8,7 @@
   - Create the topology in StackState from Dynatrace smartscape topology.
 - Added support for integrations to send events that can be linked to topology in StackState using Event Context.
 - ServiceNow Integration:
-  - ServiceNow Change Request are monitored in StackState with all updates to the Change Request state reflected as
-  external events in StackState, such that potential failures can be related to a change in ServiceNow.
+  - ServiceNow Change Request are monitored in StackState with all updates to the Change Request state reflected as external events in StackState, such that potential failures can be related to a change in ServiceNow.
   - Added support for filtering ServiceNow CI's using a custom `sysparm_query`.
 - Integrations:
   - Added local persistent state that can be used by integrations to persist a JSON object per check instance to disk.
@@ -21,7 +20,7 @@
 - Integrations:
   - Kubernetes, Kubelet, Kubernetes State and OpenMetrics integrations are monitored by StackState.
   - Sanitize events and topology data in the base check, encoding unicode to string, before propagating data upstream.
-
+  - Added functionality to the Identifiers utility to provide lower-cased identifiers for all StackState-related identifiers.
 **Bugfix**
 
 - VSphere Integration:
