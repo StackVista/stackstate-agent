@@ -10,10 +10,12 @@ package flare
 
 import (
 	"bytes"
+	"context"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 	"unsafe"
 
 	"github.com/DataDog/datadog-agent/pkg/util/log"
@@ -30,6 +32,7 @@ var (
 		"Application": "Event/System/Provider[@Name=\"datadog-trace-agent\"]",
 		"Microsoft-Windows-WMI-Activity/Operational": "*",
 	}
+	execTimeout = 30 * time.Second
 )
 
 const (
@@ -82,7 +85,11 @@ func zipCounterStrings(tempDir, hostname string) error {
 }
 
 func zipTypeperfData(tempDir, hostname string) error {
-	cmd := exec.Command("typeperf", "-qx")
+	cancelctx, cancelfunc := context.WithTimeout(context.Background(), execTimeout)
+	defer cancelfunc()
+
+	cmd := exec.CommandContext(cancelctx, "typeperf", "-qx")
+
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
@@ -97,6 +104,35 @@ func zipTypeperfData(tempDir, hostname string) error {
 
 	err = ioutil.WriteFile(f, out.Bytes(), os.ModePerm)
 	if err != nil {
+		return err
+	}
+	return nil
+}
+func zipLodctrOutput(tempDir, hostname string) error {
+	cancelctx, cancelfunc := context.WithTimeout(context.Background(), execTimeout)
+	defer cancelfunc()
+
+	cmd := exec.CommandContext(cancelctx, "lodctr.exe", "/q")
+
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		log.Warnf("Error running lodctr command %v", err)
+		// for some reason the lodctr command returns error 259 even when
+		// it succeeds.  Log the error in case it's some other error,
+		// but continue on.
+	}
+	f := filepath.Join(tempDir, hostname, "lodctr.txt")
+	err = ensureParentDirsExist(f)
+	if err != nil {
+		log.Warnf("Error in ensureParentDirsExist %v", err)
+		return err
+	}
+
+	err = ioutil.WriteFile(f, out.Bytes(), os.ModePerm)
+	if err != nil {
+		log.Warnf("Error writing file %v", err)
 		return err
 	}
 	return nil
