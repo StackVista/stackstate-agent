@@ -433,7 +433,7 @@ func TestEnvOrchestratorAdditionalEndpoints(t *testing.T) {
 	)
 	assert.NoError(err)
 
-	for _, actual := range agentConfig.OrchestratorEndpoints {
+	for _, actual := range agentConfig.Orchestrator.OrchestratorEndpoints {
 		assert.Equal(expected[actual.APIKey], actual.Endpoint.Hostname(), actual)
 	}
 }
