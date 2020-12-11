@@ -40,6 +40,10 @@ func TestPodCollector(t *testing.T) {
 		LocalObjectReference: coreV1.LocalObjectReference{
 			Name: "name-of-the-config-map",
 		},
+	}	
+	hostPath = coreV1.HostPathVolumeSource{
+		Path: "some/path/to/the/volume",
+		Type: &pathType,
 	}
 
 	ic := NewPodCollector(componentChannel, relationChannel, containerCorrelationChannel, NewTestCommonClusterCollector(MockPodAPICollectorClient{}))
@@ -207,9 +211,9 @@ func TestPodCollector(t *testing.T) {
 					assert.EqualValues(t, expectedRelation, relation)
 				},
 			},
-		},
+		},		
 		{
-			testCase: "Test Pod 4 - Volumes + Persistent Volumes",
+			testCase: "Test Pod 4 - Volumes + Persistent Volumes + HostPath",
 			assertions: []func(){
 				func() {
 					component := <-componentChannel
@@ -289,6 +293,34 @@ func TestPodCollector(t *testing.T) {
 					}
 					assert.EqualValues(t, expectedRelation, relation)
 				},
+				func() {
+					component := <-componentChannel
+					expectedComponent := &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:volume/test-volume-4",
+						Type:       topology.Type{Name: "volume"},
+						Data: topology.Data{
+							"name": "test-volume-4",
+							"source": coreV1.VolumeSource{
+								HostPath: &hostPath,
+							},
+							"identifiers": []string{"urn:/test-cluster-name:kubernetes:volume:test-node:test-volume-4"},
+							"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						},
+					}
+					assert.EqualValues(t, expectedComponent, component)
+				},
+				func() {
+					relation := <-relationChannel
+					expectedRelation := &topology.Relation{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-4->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:volume/test-volume-4",
+						Type:     topology.Type{Name: "claims"},
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-4",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:volume/test-volume-4",
+						Data:     map[string]interface{}{},
+					}
+					assert.EqualValues(t, expectedRelation, relation)
+				},				
 			},
 		},
 		{
@@ -401,11 +433,15 @@ func TestPodCollector(t *testing.T) {
 					assert.EqualValues(t, expectedCorrelation, correlation)
 				},
 			},
-		},
+		},		
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
-			for _, assertion := range tc.assertions {
+			for x, assertion := range tc.assertions {
+				println("Before")
+				println(x)
+				println(assertion)
 				assertion()
+				println("After")
 			}
 		})
 	}
@@ -470,6 +506,7 @@ func (m MockPodAPICollectorClient) GetPods() ([]coreV1.Pod, error) {
 				{Name: "test-volume-1", VolumeSource: coreV1.VolumeSource{AWSElasticBlockStore: &awsElasticBlockStore}},
 				{Name: "test-volume-2", VolumeSource: coreV1.VolumeSource{GCEPersistentDisk: &gcePersistentDisk}},
 				{Name: "test-volume-3", VolumeSource: coreV1.VolumeSource{ConfigMap: &configMap}},
+				{Name: "test-volume-4", VolumeSource: coreV1.VolumeSource{HostPath: &hostPath}},
 			}
 		}
 
