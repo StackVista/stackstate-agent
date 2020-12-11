@@ -76,6 +76,7 @@ func (rsc *ReplicaSetCollector) replicaSetToStackStateComponent(replicaSet v1.Re
 			"tags":              tags,
 			"desiredReplicas":   replicaSet.Spec.Replicas,
 			"uid":               replicaSet.UID,
+			"version": deployment.GetResourceVersion(),
 		},
 	}
 

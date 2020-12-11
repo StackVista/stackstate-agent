@@ -64,6 +64,7 @@ func (ssc *StatefulSetCollector) statefulSetToStackStateComponent(statefulSet v1
 			"podManagementPolicy": statefulSet.Spec.PodManagementPolicy,
 			"serviceName":         statefulSet.Spec.ServiceName,
 			"uid":                 statefulSet.UID,
+			"version": deployment.GetResourceVersion(),
 		},
 	}
 

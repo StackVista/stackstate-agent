@@ -122,6 +122,7 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) *topology.Compo
 			},
 			"identifiers": identifiers,
 			"uid":         node.UID,
+			"version": deployment.GetResourceVersion(),
 			//"taints": node.Spec.Taints,
 		},
 	}

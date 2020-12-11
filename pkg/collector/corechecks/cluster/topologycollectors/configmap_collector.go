@@ -57,6 +57,7 @@ func (cmc *ConfigMapCollector) configMapToStackStateComponent(configMap v1.Confi
 			"tags":              tags,
 			"uid":               configMap.UID,
 			"identifiers":       []string{configMapExternalID},
+			"version": deployment.GetResourceVersion(),
 		},
 	}
 

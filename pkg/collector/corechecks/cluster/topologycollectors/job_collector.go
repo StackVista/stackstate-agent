@@ -77,6 +77,7 @@ func (jc *JobCollector) jobToStackStateComponent(job v1.Job) *topology.Component
 			"uid":               job.UID,
 			"backoffLimit":      job.Spec.BackoffLimit,
 			"parallelism":       job.Spec.Parallelism,
+			"version": deployment.GetResourceVersion(),
 		},
 	}
 

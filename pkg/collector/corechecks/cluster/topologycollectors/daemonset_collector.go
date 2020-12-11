@@ -5,7 +5,7 @@ package topologycollectors
 import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"k8s.io/api/apps/v1"
+	v1 "k8s.io/api/apps/v1"
 )
 
 // DaemonSetCollector implements the ClusterTopologyCollector interface.
@@ -61,6 +61,7 @@ func (dsc *DaemonSetCollector) daemonSetToStackStateComponent(daemonSet v1.Daemo
 			"tags":              tags,
 			"updateStrategy":    daemonSet.Spec.UpdateStrategy.Type,
 			"uid":               daemonSet.UID,
+			"version": deployment.GetResourceVersion(),
 		},
 	}
 

@@ -217,6 +217,7 @@ func (sc *ServiceCollector) serviceToStackStateComponent(service v1.Service) *to
 			"tags":              tags,
 			"identifiers":       identifiers,
 			"uid":               service.UID,
+			"version": deployment.GetResourceVersion(),
 		},
 	}
 
