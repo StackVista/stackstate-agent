@@ -55,6 +55,7 @@ AGENT_TAGS = set(
         "kubeapiserver",
         "kubelet",
         "netcgo",
+        "orchestrator",
         "process",
         "python",
         "secrets",
