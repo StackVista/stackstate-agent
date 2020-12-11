@@ -174,7 +174,7 @@ docker_integration_tests:
       DOCKER_HOST: tcp://docker:2375
       DOCKER_TLS_CERTDIR: ""
   services:
-    - docker:dind
+    - docker:18.09-dind
   script:
     - inv -e docker.integration-tests
   tags:
@@ -423,7 +423,7 @@ pre_release_image:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   services:
-    - docker:dind
+    - docker:18.09-dind
   before_script: []
   script:
     - cd $CI_PROJECT_DIR
@@ -443,7 +443,7 @@ pre_release_trace_agent_image:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   services:
-    - docker:dind
+    - docker:18.09-dind
   before_script: []
   script:
     - cd $CI_PROJECT_DIR
@@ -463,7 +463,7 @@ pre_release_cluster_agent_image:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   services:
-    - docker:dind
+    - docker:18.09-dind
   before_script: []
   script:
     - cd $CI_PROJECT_DIR
@@ -642,7 +642,7 @@ release_image:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   services:
-    - docker:dind
+    - docker:18.09-dind
   before_script: []
   script:
     - cd $CI_PROJECT_DIR
@@ -667,7 +667,7 @@ release_trace_agent_image:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   services:
-    - docker:dind
+    - docker:18.09-dind
   before_script: []
   script:
     - cd $CI_PROJECT_DIR
@@ -692,7 +692,7 @@ release_cluster_agent_image:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   services:
-    - docker:dind
+    - docker:18.09-dind
   before_script: []
   script:
     - cd $CI_PROJECT_DIR
