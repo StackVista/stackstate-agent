@@ -12,6 +12,7 @@
   - Added support for filtering ServiceNow CI's using a custom `sysparm_query`.
 - Integrations:
   - Added local persistent state that can be used by integrations to persist a JSON object per check instance to disk.
+  - Support dynamic identifier building from check configuration using `identifier_mappings`.
 
 **Improvements**
 
@@ -21,10 +22,12 @@
   - Kubernetes, Kubelet, Kubernetes State and OpenMetrics integrations are monitored by StackState.
   - Sanitize events and topology data in the base check, encoding unicode to string, before propagating data upstream.
   - Added functionality to the Identifiers utility to provide lower-cased identifiers for all StackState-related identifiers.
+
 **Bugfix**
 
 - VSphere Integration:
   - Reconnect to VSphere on an authentication session timeout.
+  - Metric collection for components in Vsphere are now limited to the configured `config.vpxd.stats.maxQueryMetrics` value.
 - Integrations:
   - Fixed python2 utf-8 string encoding in data produced by all integrations.
   - Fixed spurious updates of Agent Integrations components in StackState.
