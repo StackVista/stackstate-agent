@@ -4,7 +4,6 @@ package topologycollectors
 
 import (
 	"fmt"
-	"net"
 
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/dns"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -17,7 +16,7 @@ type ServiceCollector struct {
 	ComponentChan chan<- *topology.Component
 	RelationChan  chan<- *topology.Relation
 	ClusterTopologyCollector
-	DNS dns.DNSResolver
+	DNS dns.Resolver
 }
 
 // EndpointID contains the definition of a cluster ip
@@ -33,7 +32,7 @@ func NewServiceCollector(componentChannel chan<- *topology.Component, relationCh
 		ComponentChan:            componentChannel,
 		RelationChan:             relationChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
-		DNS:                      net.LookupHost,
+		DNS:                      dns.StandardResolver,
 	}
 }
 
@@ -166,7 +165,7 @@ func (sc *ServiceCollector) serviceToStackStateComponent(service v1.Service) *to
 			for _, port := range service.Spec.Ports {
 				// map all the node ports
 				if port.NodePort != 0 {
-					identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s:%d", sc.GetInstance().URL, service.Spec.ClusterIP, port.NodePort))
+					identifiers = append(identifiers, sc.buildEndpointExternalID(fmt.Sprintf("%s:%d", service.Spec.ClusterIP, port.NodePort)))
 				}
 			}
 		}
@@ -203,6 +202,7 @@ func (sc *ServiceCollector) serviceToStackStateComponent(service v1.Service) *to
 	serviceExternalID := sc.buildServiceExternalID(service.Namespace, service.Name)
 
 	tags := sc.initTags(service.ObjectMeta)
+	tags["service-type"] = string(service.Spec.Type)
 
 	if service.Spec.ClusterIP == "None" {
 		tags["service"] = "headless"
@@ -217,7 +217,7 @@ func (sc *ServiceCollector) serviceToStackStateComponent(service v1.Service) *to
 			"tags":              tags,
 			"identifiers":       identifiers,
 			"uid":               service.UID,
-			"version": deployment.GetResourceVersion(),
+			"version":           deployment.GetResourceVersion(),
 		},
 	}
 
@@ -240,7 +240,7 @@ func (sc *ServiceCollector) serviceToExternalServiceComponent(service v1.Service
 		for _, port := range service.Spec.Ports {
 			// map all the node ports
 			if port.Port != 0 {
-				identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s:%d", sc.GetInstance().URL, service.Spec.ExternalName, port.Port))
+				identifiers = append(identifiers, sc.buildEndpointExternalID(fmt.Sprintf("%s:%d", service.Spec.ExternalName, port.Port)))
 			}
 		}
 
@@ -254,7 +254,7 @@ func (sc *ServiceCollector) serviceToExternalServiceComponent(service v1.Service
 				for _, port := range service.Spec.Ports {
 					// map all the node ports
 					if port.Port != 0 {
-						identifiers = append(identifiers, fmt.Sprintf("urn:endpoint:/%s:%s:%d", sc.GetInstance().URL, addr, port.Port))
+						identifiers = append(identifiers, sc.buildEndpointExternalID(fmt.Sprintf("%s:%d", addr, port.Port)))
 					}
 				}
 			}
@@ -267,7 +267,7 @@ func (sc *ServiceCollector) serviceToExternalServiceComponent(service v1.Service
 
 	log.Tracef("Created identifiers for %s: %v", service.Name, identifiers)
 
-	externalID := fmt.Sprintf("%s:%s:external-service/%s", sc.GetURNBuilder().URNPrefix(), service.Namespace, service.Name)
+	externalID := sc.GetURNBuilder().BuildComponentExternalID("external-service", service.Namespace, service.Name)
 
 	tags := sc.initTags(service.ObjectMeta)
 
