@@ -127,7 +127,7 @@ func (pvc *PersistentVolumeCollector) persistentVolumeToStackStateComponent(pers
 			"statusMessage":     persistentVolume.Status.Message,
 			"storageClassName":  persistentVolume.Spec.StorageClassName,
 			"source":            persistentVolume.Spec.PersistentVolumeSource,
-			"version": deployment.GetResourceVersion(),
+			"version":           persistentVolume.GetResourceVersion(),
 		},
 	}
 

@@ -200,7 +200,7 @@ func (pc *PodCollector) podToStackStateComponent(pod v1.Pod) *topology.Component
 			"status":            podStatus,
 			"identifiers":       identifiers,
 			"uid":               pod.UID,
-			"version": deployment.GetResourceVersion(),
+			"version":           pod.GetResourceVersion(),
 		},
 	}
 

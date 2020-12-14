@@ -4,10 +4,11 @@ package topologycollectors
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"k8s.io/api/core/v1"
-	"strings"
+	v1 "k8s.io/api/core/v1"
 )
 
 // NodeCollector implements the ClusterTopologyCollector interface.
@@ -122,7 +123,7 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) *topology.Compo
 			},
 			"identifiers": identifiers,
 			"uid":         node.UID,
-			"version": deployment.GetResourceVersion(),
+			"version":     node.GetResourceVersion(),
 			//"taints": node.Spec.Taints,
 		},
 	}

@@ -92,7 +92,7 @@ func (ic *IngressCollector) ingressToStackStateComponent(ingress v1beta1.Ingress
 			"tags":              tags,
 			"identifiers":       identifiers,
 			"uid":               ingress.UID,
-			"version": deployment.GetResourceVersion(),
+			"version":           ingress.GetResourceVersion(),
 		},
 	}
 

@@ -5,7 +5,7 @@ package topologycollectors
 import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"k8s.io/api/apps/v1"
+	v1 "k8s.io/api/apps/v1"
 )
 
 // ReplicaSetCollector implements the ClusterTopologyCollector interface.
@@ -76,7 +76,7 @@ func (rsc *ReplicaSetCollector) replicaSetToStackStateComponent(replicaSet v1.Re
 			"tags":              tags,
 			"desiredReplicas":   replicaSet.Spec.Replicas,
 			"uid":               replicaSet.UID,
-			"version": deployment.GetResourceVersion(),
+			"version":           replicaSet.GetGeneration(),
 		},
 	}
 

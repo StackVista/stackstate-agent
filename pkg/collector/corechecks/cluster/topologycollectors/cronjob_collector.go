@@ -62,7 +62,7 @@ func (cjc *CronJobCollector) cronJobToStackStateComponent(cronJob v1beta1.CronJo
 			"uid":               cronJob.UID,
 			"concurrencyPolicy": cronJob.Spec.ConcurrencyPolicy,
 			"schedule":          cronJob.Spec.Schedule,
-			"version": deployment.GetResourceVersion(),
+			"version":           cronJob.GetResourceVersion(),
 		},
 	}
 

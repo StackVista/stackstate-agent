@@ -61,7 +61,7 @@ func (dsc *DaemonSetCollector) daemonSetToStackStateComponent(daemonSet v1.Daemo
 			"tags":              tags,
 			"updateStrategy":    daemonSet.Spec.UpdateStrategy.Type,
 			"uid":               daemonSet.UID,
-			"version": deployment.GetResourceVersion(),
+			"version":           daemonSet.GetGeneration(),
 		},
 	}
 

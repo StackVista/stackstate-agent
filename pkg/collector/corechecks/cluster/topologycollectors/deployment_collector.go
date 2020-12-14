@@ -62,7 +62,7 @@ func (dmc *DeploymentCollector) deploymentToStackStateComponent(deployment v1.De
 			"tags":               tags,
 			"deploymentStrategy": deployment.Spec.Strategy.Type,
 			"desiredReplicas":    deployment.Spec.Replicas,
-			"version":            deployment.GetResourceVersion(),
+			"version":            deployment.GetGeneration(),
 			"uid":                deployment.UID,
 		},
 	}
