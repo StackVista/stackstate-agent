@@ -5,6 +5,21 @@
 
   tasks:
 
+    - name: Create workspaces directory
+      win_file:
+        path: "C:\\workspaces"
+        state: directory
+
+    - name: Grant machine users full control over directory
+      win_acl:
+        path: C:\workspaces
+        user: BUILTIN\Users
+        rights: FullControl
+        type: allow
+        state: present
+        inherit: ContainerInherit, ObjectInherit
+        propagation: 'InheritOnly'
+
     - name: Install conemu
       win_chocolatey:
         name: conemu
@@ -67,7 +82,7 @@
       win_chocolatey:
         name: msys2
         state: present
-        when: msys_try1 is failed
+      when: msys_try1 is failed
 
     - name: Install python virtualwrapper
       win_shell: pip install virtualenvwrapper-win
@@ -131,11 +146,13 @@
         state: present
         version: 4.6.1
 
+    # Workaround using allow_empty_checksums for missing checksums during install
     - name: Install pkgconfiglite
       win_chocolatey:
         name: pkgconfiglite
         state: present
         version: 0.28
+        allow_empty_checksums: yes
 
     - name: Install wget
       win_chocolatey:
@@ -179,6 +196,16 @@
         path: "C:\\gopath"
         state: directory
 
+    - name: Grant machine users full control over directory
+      win_acl:
+        path: C:\gopath
+        user: BUILTIN\Users
+        rights: FullControl
+        type: allow
+        state: present
+        inherit: ContainerInherit, ObjectInherit
+        propagation: 'InheritOnly'
+
     - name: ENV | GOPATH
       win_environment:
         state: present
@@ -206,7 +233,6 @@
         name: VCINSTALLDIR
         value: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community"
         level: machine
-
 
 # Possible duplication but guaranteed presence
     - name: ENV | PATH
