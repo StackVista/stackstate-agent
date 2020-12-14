@@ -57,7 +57,7 @@ func (nsc *NamespaceCollector) namespaceToStackStateComponent(namespace v1.Names
 			"tags":              tags,
 			"uid":               namespace.UID,
 			"identifiers":       []string{namespaceExternalID},
-			"version": deployment.GetResourceVersion(),
+			"version":           namespace.GetResourceVersion(),
 		},
 	}
 
