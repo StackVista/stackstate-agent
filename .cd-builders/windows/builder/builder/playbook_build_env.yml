@@ -5,6 +5,28 @@
 
   tasks:
 
+    - name: Disable defender realtime scan to speedup process
+      win_command: powershell.exe -
+      args:
+        stdin: Set-MpPreference -DisableRealtimeMonitoring $true
+
+# Workaround for "Unhandled exception while executing module: The specified module 'ServerManager' was not loaded because no valid module file was found in any module directory.
+    - name: Install RSAT
+      win_chocolatey:
+        name: rsat
+        state: present
+
+    - name: Activate choco global confirmation mode
+      win_command: powershell.exe -
+      args:
+        stdin: choco feature enable -n allowGlobalConfirmation
+
+    - name: Get recent cacerts (1/2)
+      win_copy:
+        src: files/GetLastCacert.ps1
+        dest: C:\
+
+
     - name: Create workspaces directory
       win_file:
         path: "C:\\workspaces"
