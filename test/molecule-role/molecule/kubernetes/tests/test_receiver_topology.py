@@ -210,7 +210,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
             external_id_assert_fn=lambda v: agent_configmap_match.findall(v)
         )
         # 1 volume cgroups
-        volume_match = re.compile("urn:kubernetes:/{}:{}}:volume/cgroups".format(cluster_name, namespace))
+        volume_match = re.compile("urn:kubernetes:/{}:{}:volume/cgroups".format(cluster_name, namespace))
         assert _find_component(
             json_data=json_data,
             type_name="volume",
