@@ -5,7 +5,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"net/url"
-	"strconv"
 	"strings"
 )
 
@@ -70,7 +69,7 @@ func (t *TraefikInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			}
 		}
 
-		t.interpretHttpError(span)
+		t.interpretHTTPError(span)
 
 		span.Meta["span.serviceType"] = "traefik"
 	}
@@ -88,16 +87,13 @@ func (t *TraefikInterpreter) CreateServiceInstanceURN(serviceName string, hostna
 	return fmt.Sprintf("urn:%s:/%s:/%s", ServiceInstanceTypeName, serviceName, hostname)
 }
 
-func (t *TraefikInterpreter) interpretHttpError(span *pb.Span) {
+func (t *TraefikInterpreter) interpretHTTPError(span *pb.Span) {
 	if span.Error != 0 {
-		if httpStatus, found := span.Meta["http.status_code"]; found {
-			code, err := strconv.Atoi(httpStatus)
-			if err != nil {
-				if code >= 400 && code < 500 {
-					span.Meta["span.errorClass"] = "4xx"
-				} else if code >= 500 {
-					span.Meta["span.errorClass"] = "5xx"
-				}
+		if httpStatus, found := span.Metrics["http.status_code"]; found {
+			if httpStatus >= 400 && httpStatus < 500 {
+				span.Meta["span.errorClass"] = "4xx"
+			} else if httpStatus >= 500 {
+				span.Meta["span.errorClass"] = "5xx"
 			}
 		}
 	}

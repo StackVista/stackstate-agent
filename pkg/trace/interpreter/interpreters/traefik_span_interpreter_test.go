@@ -94,6 +94,50 @@ func TestTraefikSpanInterpreter(t *testing.T) {
 				},
 			},
 		},
+		{
+			testCase:    "Should interpret 4xx http errors",
+			interpreter: traefikInterpreter,
+			span: pb.Span{
+				Service: "service-name",
+				Error:   1,
+				Metrics: map[string]float64{
+					"http.status_code": 404.0,
+				},
+			},
+			expected: pb.Span{
+				Service: "service-name",
+				Error:   1,
+				Metrics: map[string]float64{
+					"http.status_code": 404.0,
+				},
+				Meta: map[string]string{
+					"span.serviceType": "traefik",
+					"span.errorClass":  "4xx",
+				},
+			},
+		},
+		{
+			testCase:    "Should interpret 5xx http errors",
+			interpreter: traefikInterpreter,
+			span: pb.Span{
+				Service: "service-name",
+				Error:   1,
+				Metrics: map[string]float64{
+					"http.status_code": 503.0,
+				},
+			},
+			expected: pb.Span{
+				Service: "service-name",
+				Error:   1,
+				Metrics: map[string]float64{
+					"http.status_code": 503.0,
+				},
+				Meta: map[string]string{
+					"span.serviceType": "traefik",
+					"span.errorClass":  "5xx",
+				},
+			},
+		},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
 			trace := []*pb.Span{&tc.span}
