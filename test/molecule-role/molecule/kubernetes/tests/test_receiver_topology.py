@@ -215,6 +215,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
             json_data=json_data,
             type_name="volume",
             external_id_assert_fn=lambda v: volume_match.findall(v)
+        )
 
         # 1 replicaset cluster-agent
         replicaset_match = re.compile("urn:kubernetes:/{}:{}:replicaset/"
