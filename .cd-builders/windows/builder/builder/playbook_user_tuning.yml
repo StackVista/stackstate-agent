@@ -15,12 +15,19 @@
       win_environment:
         state: present
         name: GOROOT
-        value: "c:\\tools\\go"
+        value: "c:\\go"
         level: user
 
     - name: ENV | GOBIN
       win_environment:
         state: present
         name: GOBIN
-        value: "c:\\tools\\go\\bin"
+        value: "c:\\go\\bin"
         level: user
+
+    - name: Tune git config
+      win_command: "git config --global user.email \"gitlab@windowsrunner.local\""
+
+    - name: Tune git config
+      win_command: "git config --global user.name \"Windows Gitlab Runner Instance\""
+
