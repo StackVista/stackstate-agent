@@ -40,7 +40,7 @@ func TestPodCollector(t *testing.T) {
 		LocalObjectReference: coreV1.LocalObjectReference{
 			Name: "name-of-the-config-map",
 		},
-	}	
+	}
 	hostPath = coreV1.HostPathVolumeSource{
 		Path: "some/path/to/the/volume",
 		Type: &pathType,
@@ -211,7 +211,7 @@ func TestPodCollector(t *testing.T) {
 					assert.EqualValues(t, expectedRelation, relation)
 				},
 			},
-		},		
+		},
 		{
 			testCase: "Test Pod 4 - Volumes + Persistent Volumes + HostPath",
 			assertions: []func(){
@@ -320,7 +320,7 @@ func TestPodCollector(t *testing.T) {
 						Data:     map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
-				},				
+				},
 			},
 		},
 		{
@@ -433,15 +433,11 @@ func TestPodCollector(t *testing.T) {
 					assert.EqualValues(t, expectedCorrelation, correlation)
 				},
 			},
-		},		
+		},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
-			for x, assertion := range tc.assertions {
-				println("Before")
-				println(x)
-				println(assertion)
+			for _, assertion := range tc.assertions {
 				assertion()
-				println("After")
 			}
 		})
 	}
