@@ -54,6 +54,7 @@ AGENT_CORECHECKS = [
     "tcp_queue_length",
     "uptime",
     "winproc",
+    "jetson",
 ]
 
 IOT_AGENT_CORECHECKS = [
@@ -66,6 +67,7 @@ IOT_AGENT_CORECHECKS = [
     "ntp",
     "uptime",
     "systemd",
+    "jetson",
 ]
 
 @task
