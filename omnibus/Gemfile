@@ -1,5 +1,7 @@
 source 'https://rubygems.org'
 
+gem 'libyajl2', git: 'https://github.com/StackVista/libyajl2-gem.git', branch: '1.2.0-fixed-lssa', submodules: true
+
 # Install omnibus
 # Sadly, DataDog does not provide tag for release we are using, so we are forced to use commit SHA1.
 # Check OMNIBUS_RUBY_VERSION in stackstate-deps.json (in root of this git repository).
@@ -11,3 +13,4 @@ gem 'omnibus-software', git: 'https://github.com/DataDog/omnibus-software.git', 
 
 
 gem 'mixlib-cli', '~> 1.7.0'
+
