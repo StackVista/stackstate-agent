@@ -105,6 +105,12 @@ If you wanna install a branch version use the test repository:
 
 and replace `PR_NAME` with the branch name (e.g. `master`, `STAC-xxxx`).
 
+##### HACKHACKHACK
+
+We ended up checking in a patched gem file under omnibus/vendor/cache/libyajl2-1.2.1.gem, to make windows builds work with newer msys toolchain.
+The source of this can be found here https://github.com/StackVista/libyajl2-gem/tree/1.2.0-fixed-lssp. Ideally we'd be able to drop this hack once we
+bump the ruby version > 2.6.5 because libyajl2 compiles proper on those ruby versions.
+
 #### Arguments
 
 Other arguments can be passed to the installation command.

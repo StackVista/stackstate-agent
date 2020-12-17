@@ -1,7 +1,8 @@
 source 'https://rubygems.org'
 
 
-# Pinning libyajl2 to our custom verision (see 1. We use the gem that is checked in into vendor/cache because git-based pinning does not work
+# Pinning libyajl2 to our custom version (see https://github.com/StackVista/libyajl2-gem/tree/1.2.0-fixed-lssp)
+# We use the gem that is checked in into vendor/cache because git-based pinning does not work
 # Pinning using git is not picked up by transitive dependencies, the only real solution is to provide a properly packaged
 # gem, which is the easiest by having it in vendor/cache
 gem 'libyajl2', "= 1.2.1"
