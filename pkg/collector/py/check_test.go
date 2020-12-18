@@ -206,7 +206,7 @@ func TestAggregatorLink(t *testing.T) {
 
 	mockSender.On("ServiceCheck",
 		"testservicecheck", mock.AnythingOfType("metrics.ServiceCheckStatus"), "",
-		[]string{}, mock.AnythingOfType("string"),
+		[]string(nil), mock.AnythingOfType("string"),
 	).Return().Times(1)
 	mockSender.On("ServiceCheck",
 		"testservicecheckwithhostname", mock.AnythingOfType("metrics.ServiceCheckStatus"), "testhostname",
@@ -214,7 +214,7 @@ func TestAggregatorLink(t *testing.T) {
 	).Return().Times(1)
 	mockSender.On("ServiceCheck",
 		"testservicecheckwithnonemessage", mock.AnythingOfType("metrics.ServiceCheckStatus"), "",
-		[]string{}, "").Return().Times(1)
+		[]string(nil), "").Return().Times(1)
 	mockSender.On("Gauge", "testmetric", mock.AnythingOfType("float64"), "", []string(nil)).Return().Times(1)
 	mockSender.On("Gauge", "testmetricstringvalue", mock.AnythingOfType("float64"), "", []string(nil)).Return().Times(1)
 	mockSender.On("Counter", "test.increment", 1., "", []string{"foo", "bar"}).Return().Times(1)
@@ -235,13 +235,13 @@ func TestAggregatorLinkTwoRuns(t *testing.T) {
 
 	mockSender.On("ServiceCheck",
 		"testservicecheck", mock.AnythingOfType("metrics.ServiceCheckStatus"), "",
-		[]string{}, mock.AnythingOfType("string")).Return().Times(2)
+		[]string(nil), mock.AnythingOfType("string")).Return().Times(2)
 	mockSender.On("ServiceCheck",
 		"testservicecheckwithhostname", mock.AnythingOfType("metrics.ServiceCheckStatus"), "testhostname",
 		[]string{"foo", "bar"}, "a message").Return().Times(2)
 	mockSender.On("ServiceCheck",
 		"testservicecheckwithnonemessage", mock.AnythingOfType("metrics.ServiceCheckStatus"), "",
-		[]string{}, "").Return().Times(2)
+		[]string(nil), "").Return().Times(2)
 	mockSender.On("Gauge", "testmetric", mock.AnythingOfType("float64"), "", []string(nil)).Return().Times(2)
 	mockSender.On("Gauge", "testmetricstringvalue", mock.AnythingOfType("float64"), "", []string(nil)).Return().Times(2)
 	mockSender.On("Counter", "test.increment", 1., "", []string{"foo", "bar"}).Return().Times(2)
