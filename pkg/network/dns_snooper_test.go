@@ -417,6 +417,8 @@ func TestDNSFailedResponseCount(t *testing.T) {
 }
 
 func TestDNSOverUDPTimeoutCount(t *testing.T) {
+	t.Skip("flaky test. please fix.")
+
 	m, reverseDNS := initDNSTestsWithDomainCollection(t, false)
 	defer m.Stop(manager.CleanAll)
 	defer reverseDNS.Close()
@@ -436,6 +438,8 @@ func TestDNSOverUDPTimeoutCount(t *testing.T) {
 }
 
 func TestDNSOverUDPTimeoutCountWithoutDomain(t *testing.T) {
+	t.Skip("flaky test. please fix.")
+
 	m, reverseDNS := initDNSTests(t, false, false)
 	defer m.Stop(manager.CleanAll)
 	defer reverseDNS.Close()
