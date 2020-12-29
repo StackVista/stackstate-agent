@@ -92,7 +92,8 @@ type Event struct {
 	AggregationKey string         `json:"aggregation_key,omitempty"`
 	SourceTypeName string         `json:"source_type_name,omitempty"`
 	EventType      string         `json:"event_type,omitempty"`
-	EventContext   *EventContext  `json:"context,omitempty"`
+	OriginID       string         `json:"-"`
+	K8sOriginID    string         `json:"-"`
 }
 
 // EventContext enriches the event with some more context and allows correlation to topology in StackState
