@@ -1,6 +1,7 @@
 {
     "deps": {
         "order": [
+            "dmitri.shuralyov.com/go/generated",
             "golang.org/x/lint/golint",
             "github.com/fzipp/gocyclo",
             "github.com/gordonklaus/ineffassign",
