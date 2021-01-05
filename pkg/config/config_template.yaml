@@ -915,59 +915,24 @@ process_config:
   #   - 'sql*'
   #   - '*pass*d*'
 
-# [STS] defaults
-network_tracer_config:
-  network_tracing_enabled: "true"
-  initial_connections_from_proc: "true"
-# /[STS] defaults
-
-{{- if .NetworkTracer }}
-# Network tracer specific settings
-#
-# network_tracer_config:
-#   # A boolean indicating the enabled state of the network tracer.
-#   network_tracing_enabled: "true"
-#   # The full path to the file where network-tracer logs will be written.
-#   log_file: /var/log/stackstate-agent/process_agent.log
-#   # An integer indicating the amount of seconds for the retry interval for initializing the network tracer.
-#   network_tracer_retry_init_duration_sec: 5
-#   # An integer indicating the amount of retries to use for initializing the network tracer.
-#   network_tracer_retry_init_amount: 3
-#   # Whenever debugging statements of eBPF code of network tracer should be redirected to the agent log
-#   ebpf_debuglog_enabled: "false"
-#   # A boolean indicating the enabled state of the protocol inspection.
-#   protocol_inspection_enabled: "true"
-#   http_metrics:
-#     # Specifies which algorithm to use to collapse measurements: collapsing_lowest_dense, collapsing_highest_dense, unbounded
-#     sketch_type: collapsing_lowest_dense
-#     # A maximum number of bins of the ddSketch we use to store percentiles
-#     max_num_bins: 1024
-#     # Desired accuracy for computed percentiles. 0.01 means, for example, we can say that p99 is 100ms +- 1ms
-#     accuracy: 0.01
-{{ end -}}
-
-{{ end -}}
-{{- if .Compliance }}
-#############################################
-## Security Agent Compliance Configuration ##
-#############################################
-## @param compliance_config - custom object - optional
-## Enter specific configuration for continuous compliance checks.
-# compliance_config:
-
+{{- if .Profiling -}}
+  ## @param profiling - custom object - optional
+  ## Enter specific configurations for profiling.
+  ## Uncomment this parameter and the one below to enable profiling.
+  ## See https://docs.datadoghq.com/tracing/profiling/
+  #
+  ## NOTE: If you enable this option, it may impact your billing or
+  ##       other features (e.g. process-agent profiles showing with your
+  ##       services).
+  #
+  # profiling:
+  #
   ## @param enabled - boolean - optional - default: false
-  ## Set to true to enable continuous compliance checks
+  ## Enable profiling for the Process Agent process.
   #
   # enabled: false
 
-  ## @param dir - string - optional - default: /etc/datadog-agent/compliance.d
-  ## Directory path for compliance checks configuration containing enabled benchmarks
-  #
-  # dir: /etc/datadog-agent/compliance.d
-
-  ## @param check_interval - duration - optional - default: 20m
-  ## Check interval (see  https://golang.org/pkg/time/#ParseDuration for available options)
-  # check_interval: 20m
+{{ end }}
 {{ end -}}
 {{- if .Compliance }}
 #############################################
