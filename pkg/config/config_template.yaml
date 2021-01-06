@@ -1,9 +1,9 @@
 {{ if .Common }}
 # The host of the StackState receiver to send Agent data to
-sts_url:
+sts_url: "http://localhost:7077/stsAgent"
 
 # The StackState api key to associate your Agent's data with your organization.
-api_key:
+api_key: "API_KEY"
 
 # If you need a proxy to connect to the Internet, provide it here (default:
 # disabled). You can use the 'no_proxy' list to specify hosts that should
@@ -735,7 +735,7 @@ process_config:
 #   If "disabled" it will be disabled altogether and won't start.
   enabled: "true"
 # Enable/disable network tracing
-  process_sts_url:
+  process_sts_url: "http://localhost:7077/stsAgent"
 #   The full path to the file where process-agent logs will be written.
 #   log_file:
 #   The interval, in seconds, at which we will run each check. If you want consistent
@@ -813,7 +813,7 @@ network_tracer_config:
 apm_config:
 #   Whether or not the APM Agent should run
   enabled: true
-  apm_sts_url:
+  apm_sts_url: "http://localhost:7077/stsAgent"
 #   The environment tag that Traces should be tagged with
 #   Will inherit from "env" tag if "none" is applied here
 #   env: none
