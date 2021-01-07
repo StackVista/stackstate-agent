@@ -12,8 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/common"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/common"
+	httputils "github.com/DataDog/datadog-agent/pkg/util/http"
 )
 
 // declare these as vars not const to ease testing
@@ -143,7 +144,8 @@ func getResponseWithMaxLength(endpoint string, maxLength int) (string, error) {
 
 func getResponse(url string) (string, error) {
 	client := http.Client{
-		Timeout: time.Duration(config.Datadog.GetInt("gce_metadata_timeout")) * time.Millisecond,
+		Transport: httputils.CreateHTTPTransport(),
+		Timeout:   time.Duration(config.Datadog.GetInt("gce_metadata_timeout")) * time.Millisecond,
 	}
 
 	req, err := http.NewRequest("GET", url, nil)
