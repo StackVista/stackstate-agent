@@ -142,7 +142,7 @@ func extractIPsAndPorts(conn net.Conn) (
 	if err != nil {
 		return
 	}
-	saddr = binary.LittleEndian.Uint32(net.ParseIP(saddrStr).To4())
+	saddr = nativeEndian.Uint32(net.ParseIP(saddrStr).To4())
 	sportn, err := strconv.Atoi(sportStr)
 	if err != nil {
 		return
@@ -153,7 +153,7 @@ func extractIPsAndPorts(conn net.Conn) (
 	if err != nil {
 		return
 	}
-	daddr = binary.LittleEndian.Uint32(net.ParseIP(daddrStr).To4())
+	daddr = nativeEndian.Uint32(net.ParseIP(daddrStr).To4())
 	dportn, err := strconv.Atoi(dportStr)
 	if err != nil {
 		return
@@ -581,7 +581,7 @@ func newEventGenerator() (*eventGenerator, error) {
 		return nil, err
 	}
 
-	udpConn, err := net.Dial("udp", "8.8.8.8:53")
+	udpConn, err := net.Dial("udp", "8.8.4.4:53")
 	if err != nil {
 		return nil, err
 	}
