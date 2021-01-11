@@ -14,8 +14,4 @@
 I got a PO / QA Approval by:
 - [ ] Name
 
-### Step 5: Did you add release notes describing the changes you made?
-- [ ] Yes
-
-### Step 6: Can we ship this feature to production?
-- [ ] Yes, I'm proud of my work. Ship it! :ship:
+Write there any instructions and details that should be tested during the QA.
