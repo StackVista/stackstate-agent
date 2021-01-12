@@ -6,7 +6,9 @@
 package processor
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"sync"
+
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 
 	"github.com/StackVista/stackstate-agent/pkg/logs/config"
 	"github.com/StackVista/stackstate-agent/pkg/logs/message"
@@ -21,6 +23,7 @@ type Processor struct {
 	processingRules []*config.ProcessingRule
 	encoder         Encoder
 	done            chan struct{}
+	mu              sync.Mutex
 }
 
 // New returns an initialized Processor.
@@ -46,27 +49,46 @@ func (p *Processor) Stop() {
 	<-p.done
 }
 
+// Flush processes synchronously the messages that this processor has to process.
+func (p *Processor) Flush() {
+	p.mu.Lock()
+	for {
+		if len(p.inputChan) == 0 {
+			break
+		}
+		msg := <-p.inputChan
+		p.processMessage(msg)
+	}
+	p.mu.Unlock()
+}
+
 // run starts the processing of the inputChan
 func (p *Processor) run() {
 	defer func() {
 		p.done <- struct{}{}
 	}()
 	for msg := range p.inputChan {
-		metrics.LogsDecoded.Add(1)
-		metrics.TlmLogsDecoded.Inc()
-		if shouldProcess, redactedMsg := p.applyRedactingRules(msg); shouldProcess {
-			metrics.LogsProcessed.Add(1)
-			metrics.TlmLogsProcessed.Inc()
+		p.processMessage(msg)
+		p.mu.Lock() // block here if we're trying to flush synchronously
+		p.mu.Unlock()
+	}
+}
 
-			// Encode the message to its final format
-			content, err := p.encoder.Encode(msg, redactedMsg)
-			if err != nil {
-				log.Error("unable to encode msg ", err)
-				continue
-			}
-			msg.Content = content
-			p.outputChan <- msg
+func (p *Processor) processMessage(msg *message.Message) {
+	metrics.LogsDecoded.Add(1)
+	metrics.TlmLogsDecoded.Inc()
+	if shouldProcess, redactedMsg := p.applyRedactingRules(msg); shouldProcess {
+		metrics.LogsProcessed.Add(1)
+		metrics.TlmLogsProcessed.Inc()
+
+		// Encode the message to its final format
+		content, err := p.encoder.Encode(msg, redactedMsg)
+		if err != nil {
+			log.Error("unable to encode msg ", err)
+			return
 		}
+		msg.Content = content
+		p.outputChan <- msg
 	}
 }
 

@@ -9,8 +9,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/StackVista/stackstate-agent/pkg/logs/message"
-	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/DataDog/datadog-agent/pkg/logs/message"
 )
 
 // Encoder turns a message into a raw byte array ready to be sent.
@@ -33,15 +32,4 @@ func toValidUtf8(msg []byte) string {
 		}
 	}
 	return string(str)
-}
-
-// getHostname returns the name of the host.
-func getHostname() string {
-	hostname, err := util.GetHostname()
-	if err != nil {
-		// this scenario is not likely to happen since
-		// the agent can not start without a hostname
-		hostname = "unknown"
-	}
-	return hostname
 }
