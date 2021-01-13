@@ -17,12 +17,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/listeners"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/tagger"
-	"github.com/StackVista/stackstate-agent/pkg/util/containers"
-	"github.com/StackVista/stackstate-agent/pkg/util/docker"
-	"github.com/StackVista/stackstate-agent/test/integration/utils"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/listeners"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/tagger"
+	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
+	"github.com/DataDog/datadog-agent/pkg/tagger/local"
+	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/util/docker"
+	"github.com/DataDog/datadog-agent/test/integration/utils"
 )
 
 type DockerListenerTestSuite struct {
@@ -41,6 +43,7 @@ func (suite *DockerListenerTestSuite) SetupSuite() {
 	config.Datadog.SetDefault("ac_exclude", []string{"image:datadog/docker-library:redis.*"})
 	containers.ResetSharedFilter()
 
+	tagger.SetDefaultTagger(local.NewTagger(collectors.DefaultCatalog))
 	tagger.Init()
 
 	config.SetupLogger(

@@ -14,17 +14,20 @@ import (
 	"runtime/pprof"
 	"time"
 
-	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/pidfile"
-	"github.com/StackVista/stackstate-agent/pkg/tagger"
-	"github.com/StackVista/stackstate-agent/pkg/trace/config"
-	"github.com/StackVista/stackstate-agent/pkg/trace/flags"
-	"github.com/StackVista/stackstate-agent/pkg/trace/info"
-	"github.com/StackVista/stackstate-agent/pkg/trace/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/trace/metrics/timing"
-	"github.com/StackVista/stackstate-agent/pkg/trace/osutil"
-	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/pidfile"
+	"github.com/DataDog/datadog-agent/pkg/tagger"
+	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
+	"github.com/DataDog/datadog-agent/pkg/tagger/local"
+	"github.com/DataDog/datadog-agent/pkg/tagger/remote"
+	"github.com/DataDog/datadog-agent/pkg/trace/config"
+	"github.com/DataDog/datadog-agent/pkg/trace/flags"
+	"github.com/DataDog/datadog-agent/pkg/trace/info"
+	"github.com/DataDog/datadog-agent/pkg/trace/metrics"
+	"github.com/DataDog/datadog-agent/pkg/trace/metrics/timing"
+	"github.com/DataDog/datadog-agent/pkg/trace/osutil"
+	"github.com/DataDog/datadog-agent/pkg/trace/watchdog"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 const messageAgentDisabled = `trace-agent not enabled. Set the environment variable
@@ -124,8 +127,20 @@ func Run(ctx context.Context) {
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
+	var t tagger.Tagger
+	if coreconfig.Datadog.GetBool("apm_config.remote_tagger") {
+		t = remote.NewTagger()
+	} else {
+		t = local.NewTagger(collectors.DefaultCatalog)
+	}
+	tagger.SetDefaultTagger(t)
 	tagger.Init()
-	defer tagger.Stop()
+	defer func() {
+		err := tagger.Stop()
+		if err != nil {
+			log.Error(err)
+		}
+	}()
 
 	agnt := NewAgent(ctx, cfg)
 	log.Infof("Trace agent running on host %s", cfg.Hostname)
