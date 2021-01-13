@@ -88,8 +88,7 @@ build do
             # Fix pip after building on extended toolchain in CentOS builder
             if redhat?
               unless arm?
-                # sts path is /opt/centos/devtoolset-1.1/root for centos6 based runner
-                rhel_toolchain_root = "/opt/rh/devtoolset-7/root"
+                rhel_toolchain_root = "/opt/rh/devtoolset-1.1/root"
                 # lets be cautious - we first search for the expected toolchain path, if its not there, bail out
                 command "find #{install_dir} -type f -iname '*_sysconfigdata*.py' -exec grep -inH '#{rhel_toolchain_root}' {} \\; |  egrep '.*'"
                 # replace paths with expected target toolchain location
