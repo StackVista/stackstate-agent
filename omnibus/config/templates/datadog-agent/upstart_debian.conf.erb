@@ -11,7 +11,8 @@ normal exit 0
 # syslog depending on its configuration. We make upstart log what the process still outputs in order
 # to log panics/crashes to /var/log/upstart/stackstate-agent.log
 console log
-env STS_LOG_TO_CONSOLE=false
+env DD_LOG_TO_CONSOLE=false
+env GOTRACEBACK=crash
 
 setuid stackstate-agent
 
