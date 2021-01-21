@@ -12,14 +12,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/status/health"
-	"github.com/StackVista/stackstate-agent/pkg/tagger"
-	"github.com/StackVista/stackstate-agent/pkg/util/containers"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-
-	ecsmeta "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata"
-	v2 "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata/v2"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/status/health"
+	"github.com/DataDog/datadog-agent/pkg/tagger"
+	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	ecsmeta "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata"
+	v2 "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata/v2"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 // ECSListener implements the ServiceListener interface for fargate-backed ECS cluster.

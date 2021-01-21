@@ -12,12 +12,11 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/containers"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/listeners"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/providers/names"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/listeners"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/providers/names"
+	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 type variableGetter func(key []byte, svc listeners.Service) ([]byte, error)
