@@ -37,6 +37,12 @@ func (jc *JobCollector) CollectorFunction() error {
 	}
 
 	for _, job := range jobs {
+
+		if job.Status.CompletionTime != nil {
+			// Job is completed, we don't create component
+			continue
+		}
+
 		component := jc.jobToStackStateComponent(job)
 		jc.ComponentChan <- component
 

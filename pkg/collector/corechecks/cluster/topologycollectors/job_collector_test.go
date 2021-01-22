@@ -21,6 +21,7 @@ import (
 
 var parralelism int32
 var backoffLimit int32
+var completionTime v1.Time
 
 func TestJobCollector(t *testing.T) {
 
@@ -32,6 +33,7 @@ func TestJobCollector(t *testing.T) {
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	parralelism = int32(2)
 	backoffLimit = int32(5)
+	completionTime = v1.Time{Time: time.Now()}
 
 	jc := NewJobCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockJobAPICollectorClient{}))
 	expectedCollectorName := "Job Collector"
@@ -119,6 +121,11 @@ func TestJobCollector(t *testing.T) {
 				},
 			},
 		},
+		//{
+		//	testCase: "Test Job 4 - Job is complete",
+		//	expectedComponent: nil,
+		//	expectedRelations: nil,
+		//},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
 			component := <-componentChannel
@@ -139,7 +146,7 @@ type MockJobAPICollectorClient struct {
 
 func (m MockJobAPICollectorClient) GetJobs() ([]batchV1.Job, error) {
 	jobs := make([]batchV1.Job, 0)
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 4; i++ {
 		job := batchV1.Job{
 			TypeMeta: v1.TypeMeta{
 				Kind: "",
@@ -169,6 +176,10 @@ func (m MockJobAPICollectorClient) GetJobs() ([]batchV1.Job, error) {
 		if i == 3 {
 			job.TypeMeta.Kind = "some-specified-kind"
 			job.ObjectMeta.GenerateName = "some-specified-generation"
+		}
+
+		if i == 4 {
+			job.Status.CompletionTime = &completionTime
 		}
 
 		jobs = append(jobs, job)
