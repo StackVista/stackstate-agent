@@ -15,10 +15,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/trace/agent"
-	"github.com/StackVista/stackstate-agent/pkg/trace/flags"
-	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
-	_ "github.com/StackVista/stackstate-agent/pkg/util/containers/providers/windows"
+	"github.com/DataDog/datadog-agent/pkg/runtime"
+	"github.com/DataDog/datadog-agent/pkg/trace/agent"
+	"github.com/DataDog/datadog-agent/pkg/trace/flags"
+	"github.com/DataDog/datadog-agent/pkg/trace/watchdog"
+	_ "github.com/DataDog/datadog-agent/pkg/util/containers/providers/windows"
 
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
@@ -150,6 +151,9 @@ func main() {
 			return
 		}
 	}
+
+	// prepare go runtime
+	runtime.SetMaxProcs()
 
 	// if we are an interactive session, then just invoke the agent on the command line.
 	ctx, cancelFunc := context.WithCancel(context.Background())
