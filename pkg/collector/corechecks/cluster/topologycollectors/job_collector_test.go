@@ -120,17 +120,28 @@ func TestJobCollector(t *testing.T) {
 				},
 			},
 		},
+		{
+			testCase:          "Test Job 4 - Should not be created",
+			expectedComponent: nil,
+			expectedRelations: nil,
+		},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
-			component := <-componentChannel
-			numberOfComponents = numberOfComponents + 1
-			assert.EqualValues(t, tc.expectedComponent, component)
+			if tc.expectedComponent == nil && tc.expectedRelations == nil {
+				// test-job-4 is skipped because it's completed
+				assert.Empty(t, componentChannel)
+				assert.Empty(t, relationChannel)
+			} else {
+				// test-job-1 .. test-job-3
+				component := <-componentChannel
+				numberOfComponents = numberOfComponents + 1
+				assert.EqualValues(t, tc.expectedComponent, component)
 
-			for _, expectedRelation := range tc.expectedRelations {
-				cronJobRelation := <-relationChannel
-				assert.EqualValues(t, expectedRelation, cronJobRelation)
+				for _, expectedRelation := range tc.expectedRelations {
+					cronJobRelation := <-relationChannel
+					assert.EqualValues(t, expectedRelation, cronJobRelation)
+				}
 			}
-
 		})
 	}
 
