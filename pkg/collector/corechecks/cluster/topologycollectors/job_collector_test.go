@@ -121,7 +121,7 @@ func TestJobCollector(t *testing.T) {
 			},
 		},
 		{
-			testCase:          "Test Job 4 - Should not be created",
+			testCase:          "Test Job 4 - No container or relation should not be created",
 			expectedComponent: nil,
 			expectedRelations: nil,
 		},
@@ -134,7 +134,7 @@ func TestJobCollector(t *testing.T) {
 			} else {
 				// test-job-1 .. test-job-3
 				component := <-componentChannel
-				numberOfComponents = numberOfComponents + 1
+				numberOfComponents += 1
 				assert.EqualValues(t, tc.expectedComponent, component)
 
 				for _, expectedRelation := range tc.expectedRelations {
