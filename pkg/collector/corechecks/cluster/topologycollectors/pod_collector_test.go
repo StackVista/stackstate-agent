@@ -435,11 +435,31 @@ func TestPodCollector(t *testing.T) {
 			},
 		},
 		{
-			testCase: "Test Pod 7 - Pod Phase Succeeded - no Component created",
+			testCase: "Test Pod 7 - Pod Phase Succeeded - no Job relation created",
 			assertions: []func(){
 				func() {
-					// test-pod-7 is skipped as its Pod Phase is Succeeded
-					assert.Empty(t, componentChannel)
+					component := <-componentChannel
+					expectedComponent := &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-7",
+						Type:       topology.Type{Name: "pod"},
+						Data: topology.Data{
+							"name":              "test-pod-7",
+							"creationTimestamp": creationTime,
+							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"uid":               types.UID("test-pod-7"),
+							"identifiers":       []string{"urn:ip:/test-cluster-name:10.0.0.1", "urn:ip:/test-cluster-name:test-namespace:test-pod-7:10.0.0.1"},
+							"restartPolicy":     coreV1.RestartPolicyAlways,
+							"status": coreV1.PodStatus{
+								Phase:                 coreV1.PodSucceeded,
+								Conditions:            []coreV1.PodCondition{},
+								InitContainerStatuses: []coreV1.ContainerStatus{},
+								ContainerStatuses:     []coreV1.ContainerStatus{},
+								StartTime:             &creationTime,
+								PodIP:                 "10.0.0.1",
+							},
+						},
+					}
+					assert.EqualValues(t, expectedComponent, component)
 				},
 				func() {
 					// there should be no relations created for skipped pod
@@ -560,6 +580,9 @@ func (m MockPodAPICollectorClient) GetPods() ([]coreV1.Pod, error) {
 
 		if i == 7 {
 			pod.Status.Phase = coreV1.PodSucceeded
+			pod.OwnerReferences = []v1.OwnerReference{
+				{Kind: "Job", Name: "test-job-7"},
+			}
 		}
 
 		pods = append(pods, pod)

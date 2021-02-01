@@ -55,11 +55,6 @@ func (pc *PodCollector) CollectorFunction() error {
 	var volumeExternalID string
 	for _, pod := range pods {
 
-		if pod.Status.Phase == "Succeeded" {
-			// Pod phase is succeeded, we don't create component
-			continue
-		}
-
 		// creates and publishes StackState pod component with relations
 		component = pc.podToStackStateComponent(pod)
 		pc.ComponentChan <- component
@@ -90,6 +85,10 @@ func (pc *PodCollector) CollectorFunction() error {
 				pc.RelationChan <- pc.controllerWorkloadToPodStackStateRelation(controllerExternalID, component.ExternalID)
 				managed = true
 			case Job:
+				if pod.Status.Phase == "Succeeded" || pod.Status.Phase == "Failed" {
+					// Pod finished running so we don't create the relation to its job
+					continue
+				}
 				controllerExternalID = pc.buildJobExternalID(pod.Namespace, ref.Name)
 				pc.RelationChan <- pc.controllerWorkloadToPodStackStateRelation(controllerExternalID, component.ExternalID)
 				managed = true
