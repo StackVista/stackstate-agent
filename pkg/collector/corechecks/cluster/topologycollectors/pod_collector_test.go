@@ -434,6 +434,19 @@ func TestPodCollector(t *testing.T) {
 				},
 			},
 		},
+		{
+			testCase: "Test Pod 7 - Pod Phase Succeeded - no Component created",
+			assertions: []func(){
+				func() {
+					// test-pod-7 is skipped as its Pod Phase is Succeeded
+					assert.Empty(t, componentChannel)
+				},
+				func() {
+					// there should be no relations created for skipped pod
+					assert.Empty(t, relationChannel)
+				},
+			},
+		},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
 			for _, assertion := range tc.assertions {
@@ -449,7 +462,7 @@ type MockPodAPICollectorClient struct {
 
 func (m MockPodAPICollectorClient) GetPods() ([]coreV1.Pod, error) {
 	pods := make([]coreV1.Pod, 0)
-	for i := 1; i <= 6; i++ {
+	for i := 1; i <= 7; i++ {
 		pod := coreV1.Pod{
 			TypeMeta: v1.TypeMeta{
 				Kind: "",
@@ -543,6 +556,10 @@ func (m MockPodAPICollectorClient) GetPods() ([]coreV1.Pod, error) {
 					Image: "docker/image/repo/container-2:latest",
 				},
 			}
+		}
+
+		if i == 7 {
+			pod.Status.Phase = coreV1.PodSucceeded
 		}
 
 		pods = append(pods, pod)

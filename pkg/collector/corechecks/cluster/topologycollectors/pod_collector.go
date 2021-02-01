@@ -54,6 +54,12 @@ func (pc *PodCollector) CollectorFunction() error {
 	var controllerExternalID string
 	var volumeExternalID string
 	for _, pod := range pods {
+
+		if pod.Status.Phase == "Succeeded" {
+			// Pod phase is succeeded, we don't create component
+			continue
+		}
+
 		// creates and publishes StackState pod component with relations
 		component = pc.podToStackStateComponent(pod)
 		pc.ComponentChan <- component
