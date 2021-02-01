@@ -32,7 +32,6 @@ func TestJobCollector(t *testing.T) {
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	parralelism = int32(2)
 	backoffLimit = int32(5)
-	var numberOfComponents int
 
 	jc := NewJobCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockJobAPICollectorClient{}))
 	expectedCollectorName := "Job Collector"
@@ -120,36 +119,18 @@ func TestJobCollector(t *testing.T) {
 				},
 			},
 		},
-		{
-			testCase:          "Test Job 4 - No container or relation should not be created",
-			expectedComponent: nil,
-			expectedRelations: nil,
-		},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
-			if tc.expectedComponent == nil && tc.expectedRelations == nil {
-				// test-job-4 is skipped because it's completed
-				assert.Empty(t, componentChannel)
-				assert.Empty(t, relationChannel)
-			} else {
-				// test-job-1 .. test-job-3
-				component := <-componentChannel
-				numberOfComponents += 1
-				assert.EqualValues(t, tc.expectedComponent, component)
+			component := <-componentChannel
+			assert.EqualValues(t, tc.expectedComponent, component)
 
-				for _, expectedRelation := range tc.expectedRelations {
-					cronJobRelation := <-relationChannel
-					assert.EqualValues(t, expectedRelation, cronJobRelation)
-				}
+			for _, expectedRelation := range tc.expectedRelations {
+				cronJobRelation := <-relationChannel
+				assert.EqualValues(t, expectedRelation, cronJobRelation)
 			}
+
 		})
 	}
-
-	t.Run("noTestJob4", func(t *testing.T) {
-		// we should have only 3 components, test-job-4 is completed so no component is created
-		assert.Equal(t, 3, numberOfComponents)
-	})
-
 }
 
 type MockJobAPICollectorClient struct {
@@ -157,10 +138,8 @@ type MockJobAPICollectorClient struct {
 }
 
 func (m MockJobAPICollectorClient) GetJobs() ([]batchV1.Job, error) {
-	completionTime := v1.Time{Time: time.Now()}
-
 	jobs := make([]batchV1.Job, 0)
-	for i := 1; i <= 4; i++ {
+	for i := 1; i <= 3; i++ {
 		job := batchV1.Job{
 			TypeMeta: v1.TypeMeta{
 				Kind: "",
@@ -190,10 +169,6 @@ func (m MockJobAPICollectorClient) GetJobs() ([]batchV1.Job, error) {
 		if i == 3 {
 			job.TypeMeta.Kind = "some-specified-kind"
 			job.ObjectMeta.GenerateName = "some-specified-generation"
-		}
-
-		if i == 4 {
-			job.Status.CompletionTime = &completionTime
 		}
 
 		jobs = append(jobs, job)
