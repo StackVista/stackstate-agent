@@ -54,7 +54,6 @@ func (pc *PodCollector) CollectorFunction() error {
 	var controllerExternalID string
 	var volumeExternalID string
 	for _, pod := range pods {
-
 		// creates and publishes StackState pod component with relations
 		component = pc.podToStackStateComponent(pod)
 		pc.ComponentChan <- component
@@ -86,7 +85,7 @@ func (pc *PodCollector) CollectorFunction() error {
 				managed = true
 			case Job:
 				if pod.Status.Phase == "Succeeded" || pod.Status.Phase == "Failed" {
-					// Pod finished running so we don't create the relation to its job
+					// Pod finished running so we don't create the relation to its Job
 					continue
 				}
 				controllerExternalID = pc.buildJobExternalID(pod.Namespace, ref.Name)
