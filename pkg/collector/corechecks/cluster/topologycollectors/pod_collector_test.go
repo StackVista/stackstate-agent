@@ -461,6 +461,8 @@ func TestPodCollector(t *testing.T) {
 					}
 					assert.EqualValues(t, expectedComponent, component)
 				},
+				expectPodNodeRelation(t, relationChannel, "test-pod-7"),
+				expectNamespaceRelation(t, relationChannel, "test-pod-7"),
 				func() {
 					// there should be no relations created for skipped pod
 					assert.Empty(t, relationChannel)
@@ -591,7 +593,7 @@ func (m MockPodAPICollectorClient) GetPods() ([]coreV1.Pod, error) {
 	return pods, nil
 }
 
-func expectNamespaceRelation(t *testing.T, ch chan (*topology.Relation), podName string) func() {
+func expectNamespaceRelation(t *testing.T, ch chan *topology.Relation, podName string) func() {
 	return func() {
 		relation := <-ch
 		expected := &topology.Relation{
@@ -606,7 +608,7 @@ func expectNamespaceRelation(t *testing.T, ch chan (*topology.Relation), podName
 	}
 }
 
-func expectPodNodeRelation(t *testing.T, ch chan (*topology.Relation), podName string) func() {
+func expectPodNodeRelation(t *testing.T, ch chan *topology.Relation, podName string) func() {
 	return func() {
 		relation := <-ch
 		expectedRelation := &topology.Relation{
