@@ -7,8 +7,9 @@
 # using the package manager and StackState repositories.
 
 set -e
-install_script_version=1.1.0
+install_script_version=1.2.0
 logfile="ddagent-install.log"
+support_email=support@datadoghq.com
 
 PKG_NAME="stackstate-agent"
 PKG_USER="stackstate-agent"
@@ -43,24 +44,29 @@ mknod $npipe p
 tee <$npipe $logfile &
 exec 1>&-
 exec 1>$npipe 2>&1
-trap "rm -f $npipe" EXIT
+trap 'rm -f $npipe' EXIT
 
-# Colours
-readonly C_NOC="\\033[0m"    # No colour
-readonly C_RED="\\033[0;31m" # Red
-readonly C_GRN="\\033[0;32m" # Green
-readonly C_BLU="\\033[0;34m" # Blue
-readonly C_PUR="\\033[0;35m" # Purple
-readonly C_CYA="\\033[0;36m" # Cyan
-readonly C_WHI="\\033[0;37m" # White
+function fallback_msg(){
+  printf "
+If you are still having problems, please send an email to $support_email
+with the contents of $logfile and any information you think would be
+useful and we will do our very best to help you solve your problem.\n"
+}
 
-### Helper functions
-print_red () { local i; for i in "$@"; do echo -e "${C_RED}${i}${C_NOC}"; done }
-print_grn () { local i; for i in "$@"; do echo -e "${C_GRN}${i}${C_NOC}"; done }
-print_blu () { local i; for i in "$@"; do echo -e "${C_BLU}${i}${C_NOC}"; done }
-print_pur () { local i; for i in "$@"; do echo -e "${C_PUR}${i}${C_NOC}"; done }
-print_cya () { local i; for i in "$@"; do echo -e "${C_CYA}${i}${C_NOC}"; done }
-print_whi () { local i; for i in "$@"; do echo -e "${C_WHI}${i}${C_NOC}"; done }
+function report(){
+  if curl -f -s \
+    --data-urlencode "os=${OS}" \
+    --data-urlencode "version=${agent_major_version}" \
+    --data-urlencode "log=$(cat $logfile)" \
+    --data-urlencode "email=${email}" \
+    --data-urlencode "apikey=${apikey}" \
+    "$report_failure_url"; then
+   printf "A notification has been sent to Datadog with the contents of $logfile\n"
+  else
+    printf "Unable to send the notification (curl v7.18 or newer is required)"
+    fallback_msg
+  fi
+}
 
 function on_error() {
     print_red "$ERROR_MESSAGE
@@ -68,11 +74,23 @@ It looks like you hit an issue when trying to install the StackState Agent v2.
 
 Basic information about the Agent are available at:
 
-    https://l.stackstate.com/agent-install-docs-link
+    https://docs.datadoghq.com/agent/basic_agent_usage/\n\033[0m\n"
 
-If you're still having problems, please send an email to info@stackstate.com
-with the contents of $logfile and we'll do our very best to help you
-solve your problem.\n"
+    while true; do
+        read -p  "Do you want to send a failure report to Datadog (including $logfile)? (y/n) " -r yn
+        case $yn in
+          [Yy]* )
+            read -p "Enter an email address so we can follow up: " -r email
+            report
+            break;;
+          [Nn]* )
+            fallback_msg
+            break;;
+          * )
+            printf "Please answer yes or no.\n"
+            ;;
+        esac
+    done
 }
 trap on_error ERR
 
@@ -144,13 +162,17 @@ if [ -n "$DD_KEYSERVER" ]; then
   keyserver="$DD_KEYSERVER"
 fi
 
-INSTALL_MODE="REPO"
-if [ ! -z "$1" ]; then
-    if test -f "$1"; then
-        print_blu "Trying to install from local package $1"
-        INSTALL_MODE="FILE"
-        LOCAL_PKG_NAME="$1"
-    fi
+report_failure_url="https://api.datadoghq.com/agent_stats/report_failure"
+if [ -n "$TESTING_REPORT_URL" ]; then
+  report_failure_url=$TESTING_REPORT_URL
+fi
+
+if [ ! "$apikey" ]; then
+  # if it's an upgrade, then we will use the transition script
+  if [ ! "$upgrade" ]; then
+    printf "\033[31mAPI key not available in DD_API_KEY environment variable.\033[0m\n"
+    exit 1;
+  fi
 fi
 
 # OS/Distro Detection
