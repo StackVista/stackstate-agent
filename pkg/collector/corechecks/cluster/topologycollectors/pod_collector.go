@@ -86,6 +86,7 @@ func (pc *PodCollector) CollectorFunction() error {
 			case Job:
 				if pod.Status.Phase == "Succeeded" || pod.Status.Phase == "Failed" {
 					// Pod finished running so we don't create the relation to its Job
+					log.Debugf("skipping relation from pod: %s to finished job : %s", pod.Name, ref.Name)
 					continue
 				}
 				controllerExternalID = pc.buildJobExternalID(pod.Namespace, ref.Name)
