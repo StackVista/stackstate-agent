@@ -17,10 +17,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
-	httputils "github.com/StackVista/stackstate-agent/pkg/util/http"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/telemetry"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 var (
@@ -251,7 +250,7 @@ func (t *HTTPTransaction) GetCreatedAt() time.Time {
 // GetTarget return the url used by the transaction
 func (t *HTTPTransaction) GetTarget() string {
 	url := t.Domain + t.Endpoint.route
-	return httputils.SanitizeURL(url) // sanitized url that can be logged
+	return log.SanitizeURL(url) // sanitized url that can be logged
 }
 
 // GetPriority returns the priority
@@ -298,7 +297,7 @@ func (t *HTTPTransaction) internalProcess(ctx context.Context, client *http.Clie
 	reader := bytes.NewReader(*t.Payload)
 	url := t.Domain + t.Endpoint.route
 	transactionEndpointName := t.GetEndpointName()
-	logURL := httputils.SanitizeURL(url) // sanitized url that can be logged
+	logURL := log.SanitizeURL(url) // sanitized url that can be logged
 
 	req, err := http.NewRequest("POST", url, reader)
 	if err != nil {
@@ -320,7 +319,7 @@ func (t *HTTPTransaction) internalProcess(ctx context.Context, client *http.Clie
 		t.ErrorCount++
 		transactionsErrors.Add(1)
 		tlmTxErrors.Inc(t.Domain, transactionEndpointName, "cant_send")
-		return 0, nil, fmt.Errorf("error while sending transaction, rescheduling it: %s", httputils.SanitizeURL(err.Error()))
+		return 0, nil, fmt.Errorf("error while sending transaction, rescheduling it: %s", log.SanitizeURL(err.Error()))
 	}
 	defer func() { _ = resp.Body.Close() }()
 
