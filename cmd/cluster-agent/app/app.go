@@ -11,6 +11,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -24,30 +25,29 @@ import (
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/record"
 
-	"github.com/StackVista/stackstate-agent/cmd/agent/common"
-	admissioncmd "github.com/StackVista/stackstate-agent/cmd/cluster-agent/admission"
-	"github.com/StackVista/stackstate-agent/cmd/cluster-agent/api"
-	"github.com/StackVista/stackstate-agent/cmd/cluster-agent/custommetrics"
-	"github.com/StackVista/stackstate-agent/pkg/aggregator"
-	"github.com/StackVista/stackstate-agent/pkg/api/healthprobe"
-	"github.com/StackVista/stackstate-agent/pkg/clusteragent"
-	admissionpkg "github.com/StackVista/stackstate-agent/pkg/clusteragent/admission"
-	"github.com/StackVista/stackstate-agent/pkg/clusteragent/admission/mutate"
-	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks"
-	"github.com/StackVista/stackstate-agent/pkg/clusteragent/orchestrator"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/forwarder"
-	"github.com/StackVista/stackstate-agent/pkg/serializer"
-	"github.com/StackVista/stackstate-agent/pkg/status/health"
-	"github.com/StackVista/stackstate-agent/pkg/util"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
-	apicommon "github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/common"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/leaderelection"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/StackVista/stackstate-agent/pkg/version"
-
-	"github.com/StackVista/stackstate-agent/pkg/batcher" // sts
+	"github.com/DataDog/datadog-agent/cmd/agent/common"
+	admissioncmd "github.com/DataDog/datadog-agent/cmd/cluster-agent/admission"
+	"github.com/DataDog/datadog-agent/cmd/cluster-agent/api"
+	"github.com/DataDog/datadog-agent/cmd/cluster-agent/custommetrics"
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/api/healthprobe"
+	"github.com/DataDog/datadog-agent/pkg/clusteragent"
+	admissionpkg "github.com/DataDog/datadog-agent/pkg/clusteragent/admission"
+	"github.com/DataDog/datadog-agent/pkg/clusteragent/admission/mutate"
+	"github.com/DataDog/datadog-agent/pkg/clusteragent/clusterchecks"
+	"github.com/DataDog/datadog-agent/pkg/clusteragent/orchestrator"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/forwarder"
+	"github.com/DataDog/datadog-agent/pkg/serializer"
+	"github.com/DataDog/datadog-agent/pkg/status/health"
+	"github.com/DataDog/datadog-agent/pkg/telemetry"
+	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
+	apicommon "github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/common"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/leaderelection"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/version"
 )
 
 // loggerName is the name of the cluster agent logger
@@ -149,6 +149,16 @@ func start(cmd *cobra.Command, args []string) error {
 		log.Critical("no API key configured, exiting")
 		return nil
 	}
+
+	// Expose the registered metrics via HTTP.
+	http.Handle("/metrics", telemetry.Handler())
+	go func() {
+		port := config.Datadog.GetInt("metrics_port")
+		err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), nil)
+		if err != nil && err != http.ErrServerClosed {
+			log.Errorf("Error creating telemetry server on port %v: %v", port, err)
+		}
+	}()
 
 	// Setup healthcheck port
 	var healthPort = config.Datadog.GetInt("health_port")
