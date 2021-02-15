@@ -94,8 +94,11 @@ Basic information about the Agent are available at:
 }
 trap on_error ERR
 
-if [ -n "$STS_API_KEY" ]; then
-    api_key=$STS_API_KEY
+echo -e "\033[34m\n* Datadog Agent install script v${install_script_version}\n\033[0m"
+
+hostname=
+if [ -n "$DD_HOSTNAME" ]; then
+    hostname=$DD_HOSTNAME
 fi
 
 if [ -n "$STS_SITE" ]; then
