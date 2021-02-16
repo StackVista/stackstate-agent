@@ -26,8 +26,8 @@ import (
 
 // Install registers v1 API endpoints
 func installClusterCheckEndpoints(r *mux.Router, sc clusteragent.ServerContext) {
-	r.HandleFunc("/clusterchecks/status/{nodeName}", postCheckStatus(sc)).Methods("POST")
-	r.HandleFunc("/clusterchecks/configs/{nodeName}", getCheckConfigs(sc)).Methods("GET")
+	r.HandleFunc("/clusterchecks/status/{identifier}", postCheckStatus(sc)).Methods("POST")
+	r.HandleFunc("/clusterchecks/configs/{identifier}", getCheckConfigs(sc)).Methods("GET")
 	r.HandleFunc("/clusterchecks/rebalance", postRebalanceChecks(sc)).Methods("POST")
 	r.HandleFunc("/clusterchecks", getState(sc)).Methods("GET")
 }
@@ -44,7 +44,7 @@ func postCheckStatus(sc clusteragent.ServerContext) func(w http.ResponseWriter, 
 		}
 
 		vars := mux.Vars(r)
-		nodeName := vars["nodeName"]
+		identifier := vars["identifier"]
 
 		decoder := json.NewDecoder(r.Body)
 		var status cctypes.NodeStatus
@@ -62,7 +62,7 @@ func postCheckStatus(sc clusteragent.ServerContext) func(w http.ResponseWriter, 
 			return
 		}
 
-		response, err := sc.ClusterCheckHandler.PostStatus(nodeName, clientIP, status)
+		response, err := sc.ClusterCheckHandler.PostStatus(identifier, clientIP, status)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			incrementRequestMetric("postCheckStatus", http.StatusInternalServerError)
@@ -85,8 +85,8 @@ func getCheckConfigs(sc clusteragent.ServerContext) func(w http.ResponseWriter, 
 		}
 
 		vars := mux.Vars(r)
-		nodeName := vars["nodeName"]
-		response, err := sc.ClusterCheckHandler.GetConfigs(nodeName)
+		identifier := vars["identifier"]
+		response, err := sc.ClusterCheckHandler.GetConfigs(identifier)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			incrementRequestMetric("getCheckConfigs", http.StatusInternalServerError)
