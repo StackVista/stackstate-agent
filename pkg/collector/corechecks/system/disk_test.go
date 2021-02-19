@@ -96,7 +96,7 @@ func TestDiskCheck(t *testing.T) {
 	diskPartitions = diskSampler
 	diskUsage = diskUsageSampler
 	ioCounters = diskIoSampler
-	diskCheck := diskFactory()
+	diskCheck := diskFactory().(*DiskCheck)
 	diskCheck.Configure(nil, nil)
 
 	mock := mocksender.NewMockSender(diskCheck.ID())
@@ -167,13 +167,14 @@ func TestDiskCheckExcludedDiskFilsystem(t *testing.T) {
 	diskPartitions = diskSampler
 	diskUsage = diskUsageSampler
 	ioCounters = diskIoSampler
-	diskCheck := new(DiskCheck)
+	diskCheck := diskFactory().(*DiskCheck)
 	diskCheck.Configure(nil, nil)
 
 	diskCheck.cfg.excludedFilesystems = []string{"vfat"}
 	diskCheck.cfg.excludedDisks = []string{"/dev/sda2"}
 
 	mock := mocksender.NewMockSender(diskCheck.ID())
+	_ = batcher.NewMockBatcher()
 
 	expectedGauges := 0
 	expectedRates := 2
@@ -194,13 +195,14 @@ func TestDiskCheckExcludedRe(t *testing.T) {
 	diskPartitions = diskSampler
 	diskUsage = diskUsageSampler
 	ioCounters = diskIoSampler
-	diskCheck := new(DiskCheck)
+	diskCheck := diskFactory().(*DiskCheck)
 	diskCheck.Configure(nil, nil)
 
 	diskCheck.cfg.excludedMountpointRe = regexp.MustCompile("/boot/efi")
 	diskCheck.cfg.excludedDiskRe = regexp.MustCompile("/dev/sda2")
 
 	mock := mocksender.NewMockSender(diskCheck.ID())
+	_ = batcher.NewMockBatcher()
 
 	expectedGauges := 0
 	expectedRates := 2
@@ -221,13 +223,14 @@ func TestDiskCheckTags(t *testing.T) {
 	diskPartitions = diskSampler
 	diskUsage = diskUsageSampler
 	ioCounters = diskIoSampler
-	diskCheck := new(DiskCheck)
+	diskCheck := diskFactory().(*DiskCheck)
 
 	config := integration.Data([]byte("use_mount: true\ntag_by_filesystem: true\nall_partitions: true\ndevice_tag_re:\n  /boot/efi: role:esp\n  /dev/sda2: device_type:sata,disk_size:large"))
 
 	diskCheck.Configure(config, nil)
 
 	mock := mocksender.NewMockSender(diskCheck.ID())
+	_ = batcher.NewMockBatcher()
 
 	expectedGauges := 16
 	expectedRates := 2
