@@ -39,6 +39,7 @@ AGENT_CORECHECKS = [
     "containerd",
     "cpu",
     "cri",
+    "snmp",
     "docker",
     "disk",
     "file_handle",
