@@ -7,7 +7,7 @@ import (
 
 // CheckTopologyCollector contains all the metadata needed to produce disk topology
 type CheckTopologyCollector struct {
-	CheckID check.ID
+	CheckID          check.ID
 	TopologyInstance topology.Instance
 }
 
@@ -25,7 +25,7 @@ func MakeCheckProcessTopologyCollector(checkID check.ID) CheckTopologyCollector 
 // MakeCheckTopologyCollector returns an instance of the CheckTopologyCollector
 func MakeCheckTopologyCollector(checkID check.ID, instance topology.Instance) CheckTopologyCollector {
 	return CheckTopologyCollector{
-		CheckID: checkID,
+		CheckID:          checkID,
 		TopologyInstance: instance,
 	}
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/shirou/gopsutil/disk"
 )
 
-
 const diskCheckID = "disk_topology"
 
 // DiskTopologyCollector contains all the metadata needed to produce disk topology
@@ -62,8 +61,9 @@ func (dtc *DiskTopologyCollector) createDiskComponent(hostname string, partition
 
 	return topology.Component{
 		ExternalID: fmt.Sprintf("urn:host:/%s", hostname),
-		Type:       topology.Type{ Name: "host"},
-		Data:       topology.Data{
+		Type:       topology.Type{Name: "host"},
+		Data: topology.Data{
+			"host":    hostname,
 			"devices": hostDevices,
 		},
 	}

@@ -7,6 +7,11 @@
 package system
 
 import (
+	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/stretchr/testify/assert"
 	"regexp"
 	"testing"
 
@@ -88,14 +93,18 @@ func diskIoSampler(names ...string) (map[string]disk.IOCountersStat, error) {
 }
 
 func TestDiskCheck(t *testing.T) {
-
 	diskPartitions = diskSampler
 	diskUsage = diskUsageSampler
 	ioCounters = diskIoSampler
-	diskCheck := new(DiskCheck)
+	diskCheck := diskFactory()
 	diskCheck.Configure(nil, nil)
 
 	mock := mocksender.NewMockSender(diskCheck.ID())
+	// set up the mock batcher
+	mockBatcher := batcher.NewMockBatcher()
+	// set mock hostname
+	testHostname := "test-hostname"
+	config.Datadog.Set("hostname", testHostname)
 
 	expectedRates := 2
 	expectedGauges := 16
@@ -128,6 +137,30 @@ func TestDiskCheck(t *testing.T) {
 	mock.AssertNumberOfCalls(t, "Gauge", expectedGauges)
 	mock.AssertNumberOfCalls(t, "Rate", expectedRates)
 	mock.AssertNumberOfCalls(t, "Commit", 1)
+
+	producedTopology := mockBatcher.CollectedTopology.Flush()
+	expectedTopology := batcher.Topologies{
+		"disk_topology": {
+			StartSnapshot: false,
+			StopSnapshot:  false,
+			Instance:      topology.Instance{Type: "disk", URL: "agents"},
+			Components: []topology.Component{
+				{
+					ExternalID: fmt.Sprintf("urn:host:/%s", testHostname),
+					Type: topology.Type{
+						Name: "host",
+					},
+					Data: topology.Data{
+						"host":    testHostname,
+						"devices": []string{"/dev/sda2", "/dev/sda1"},
+					},
+				},
+			},
+			Relations: []topology.Relation{},
+		},
+	}
+
+	assert.Equal(t, expectedTopology, producedTopology)
 }
 
 func TestDiskCheckExcludedDiskFilsystem(t *testing.T) {

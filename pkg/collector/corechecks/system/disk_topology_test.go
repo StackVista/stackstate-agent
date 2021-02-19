@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/stretchr/testify/assert"
@@ -25,28 +26,29 @@ func TestDiskTopologyCollector_createComponent(t *testing.T) {
 	testHostname := "test-hostname"
 	partitions := []disk.PartitionStat{
 		{
-			Device:     "abcd",
+			Device: "abcd",
 		},
 		{
-			Device:     "1234",
+			Device: "1234",
 		},
 		{
-			Device:     "ecdf",
+			Device: "ecdf",
 		},
 		{
-			Device:     "my/device/path",
+			Device: "my/device/path",
 		},
 		{
-			Device:     "1234",
+			Device: "1234",
 		},
 		{
-			Device:     "abcd",
+			Device: "abcd",
 		},
 	}
 	diskComponent := dtc.createDiskComponent(testHostname, partitions)
 	assert.Equal(t, fmt.Sprintf("urn:host:/%s", testHostname), diskComponent.ExternalID)
-	assert.Equal(t, topology.Type(topology.Type{Name:"host"}), diskComponent.Type)
+	assert.Equal(t, topology.Type(topology.Type{Name: "host"}), diskComponent.Type)
 	expectedData := topology.Data{
+		"host":    testHostname,
 		"devices": []string{"abcd", "1234", "ecdf", "my/device/path"},
 	}
 	assert.Equal(t, expectedData, diskComponent.Data)
@@ -55,26 +57,29 @@ func TestDiskTopologyCollector_createComponent(t *testing.T) {
 func TestDiskTopologyCollector_BuildTopology(t *testing.T) {
 	// set up the mock batcher
 	mockBatcher := batcher.NewMockBatcher()
+	// set mock hostname
+	testHostname := "test-hostname"
+	config.Datadog.Set("hostname", testHostname)
 
 	dtc := MakeTopologyCollector()
 	partitions := []disk.PartitionStat{
 		{
-			Device:     "abcd",
+			Device: "abcd",
 		},
 		{
-			Device:     "1234",
+			Device: "1234",
 		},
 		{
-			Device:     "ecdf",
+			Device: "ecdf",
 		},
 		{
-			Device:     "my/device/path",
+			Device: "my/device/path",
 		},
 		{
-			Device:     "1234",
+			Device: "1234",
 		},
 		{
-			Device:     "abcd",
+			Device: "abcd",
 		},
 	}
 
@@ -86,13 +91,22 @@ func TestDiskTopologyCollector_BuildTopology(t *testing.T) {
 		"disk_topology": {
 			StartSnapshot: false,
 			StopSnapshot:  false,
-			Instance:      topology.Instance{Type: "disk", URL:  "agents",},
-			Components:    nil,
-			Relations:     nil,
+			Instance:      topology.Instance{Type: "disk", URL: "agents"},
+			Components: []topology.Component{
+				{
+					ExternalID: fmt.Sprintf("urn:host:/%s", testHostname),
+					Type: topology.Type{
+						Name: "host",
+					},
+					Data: topology.Data{
+						"host":    testHostname,
+						"devices": []string{"abcd", "1234", "ecdf", "my/device/path"},
+					},
+				},
+			},
+			Relations: []topology.Relation{},
 		},
 	}
 
-	assert.Equal(t, expectedData, producedTopology)
+	assert.Equal(t, expectedTopology, producedTopology)
 }
-
-
