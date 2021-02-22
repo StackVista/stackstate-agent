@@ -40,7 +40,7 @@ func (c *DiskCheck) Run() error {
 		return err
 	}
 
-	err, partitions := c.collectPartitionMetrics(sender)
+	partitions, err := c.collectPartitionMetrics(sender)
 	if err != nil {
 		return err
 	}
@@ -61,10 +61,10 @@ func (c *DiskCheck) Run() error {
 	return nil
 }
 
-func (c *DiskCheck) collectPartitionMetrics(sender aggregator.Sender) (error, []disk.PartitionStat) {
+func (c *DiskCheck) collectPartitionMetrics(sender aggregator.Sender) ([]disk.PartitionStat, error) {
 	partitions, err := diskPartitions(true)
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 
 	// sts - collect disk partitions to create host topology
@@ -107,7 +107,7 @@ func (c *DiskCheck) collectPartitionMetrics(sender aggregator.Sender) (error, []
 		c.sendPartitionMetrics(sender, usage, tags)
 	}
 
-	return nil, parts
+	return parts, nil
 }
 
 func (c *DiskCheck) collectDiskMetrics(sender aggregator.Sender) error {

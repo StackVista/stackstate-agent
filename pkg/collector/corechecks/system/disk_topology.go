@@ -27,7 +27,7 @@ func MakeTopologyCollector() *DiskTopologyCollector {
 	}
 }
 
-// CollectorFunction creates / collects and produces disk topology
+// BuildTopology creates / collects and produces disk topology
 func (dtc *DiskTopologyCollector) BuildTopology(partitions []disk.PartitionStat) error {
 	sender := batcher.GetBatcher()
 
