@@ -94,6 +94,9 @@
         chdir: /home/ubuntu/deployment
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
+    - name: Wait a minute for the test workloads to come alive and start doing their thing (otherwise connections might occur after agent startup)
+      pause:
+        minutes: 1
     - name: Apply manifests for stackstate node agent and cluster agent
       command: kubectl apply -k overlays
       args:
