@@ -9,9 +9,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/network"
-	"github.com/StackVista/stackstate-agent/pkg/process/util"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/network"
+	"github.com/DataDog/datadog-agent/pkg/network/config"
+	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	ct "github.com/florianl/go-conntrack"
 	"golang.org/x/sys/unix"
 )
@@ -63,7 +64,7 @@ type realConntracker struct {
 }
 
 // NewConntracker creates a new conntracker with a short term buffer capped at the given size
-func NewConntracker(procRoot string, maxStateSize, targetRateLimit int, listenAllNamespaces bool) (Conntracker, error) {
+func NewConntracker(config *config.Config) (Conntracker, error) {
 	var (
 		err         error
 		conntracker Conntracker
@@ -72,7 +73,7 @@ func NewConntracker(procRoot string, maxStateSize, targetRateLimit int, listenAl
 	done := make(chan struct{})
 
 	go func() {
-		conntracker, err = newConntrackerOnce(procRoot, maxStateSize, targetRateLimit, listenAllNamespaces)
+		conntracker, err = newConntrackerOnce(config.ProcRoot, config.ConntrackMaxStateSize, config.ConntrackRateLimit, config.EnableConntrackAllNamespaces)
 		done <- struct{}{}
 	}()
 
