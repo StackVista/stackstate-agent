@@ -106,6 +106,12 @@
         chdir: /home/ubuntu/deployment/agents
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
+    - name: Wait for the stackstate cluster agent to start doing it's thing
+      command: kubectl -n={{ namespace }} wait --all --for=condition=Ready --timeout=120s -l app=stackstate-cluster-agent pod
+      args:
+        chdir: /home/ubuntu/deployment/agents
+      environment:
+        KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
     - name: Wait for the stackstate node agent to start doing their thing (otherwise connections might occur after agent startup)
       command: kubectl -n={{ namespace }} wait --all --for=condition=Ready --timeout=120s -l app=stackstate-agent pod
       args:
