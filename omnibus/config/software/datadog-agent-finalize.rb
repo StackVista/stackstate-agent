@@ -35,6 +35,8 @@ build do
             delete "#{conf_dir}/load.d"
             # disk isn't supported by windows
             delete "#{conf_dir}/disk.d"
+            # docker isn't supported by windows
+            delete "#{conf_dir}/docker.d"
 
             # cleanup clutter
             delete "#{install_dir}/etc"
