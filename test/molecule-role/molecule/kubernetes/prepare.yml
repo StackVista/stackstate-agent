@@ -94,8 +94,8 @@
         chdir: /home/ubuntu/deployment
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
-    - name: Wait a minute for the test workloads to become ready and start doing their thing (otherwise connections might occur after agent startup)
-      command: kubectl wait --all-namespaces --all --for=condition=Ready --timeout=120s pod || exit 1
+    - name: Wait for the test workloads to become ready and start doing their thing (otherwise connections might occur after agent startup)
+      command: kubectl -n={{ namespace }} wait --all --for=condition=Ready --timeout=120s pods
       args:
         chdir: /home/ubuntu/deployment/agents
       environment:
