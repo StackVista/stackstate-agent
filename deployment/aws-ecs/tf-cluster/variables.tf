@@ -36,7 +36,7 @@ variable "scaling_min_instance_size" {
 }
 
 variable "scaling_desired_capacity" {
-  default = 4
+  default = 2
 }
 
 

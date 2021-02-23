@@ -43,7 +43,7 @@ resource "aws_launch_configuration" "eks-launch-configuration" {
   associate_public_ip_address = true
   iam_instance_profile        = aws_iam_instance_profile.eks-node-instance-profile.name
   image_id                    = data.aws_ami.eks-worker.id
-  instance_type               = "t2.small"
+  instance_type               = "t2.medium"
   spot_price                  = "0.008"
   name_prefix                 = "eks-${local.cluster_name}"
   security_groups             = [aws_security_group.eks-nodes-sg.id]
@@ -64,7 +64,7 @@ resource "aws_launch_configuration" "eks-launch-configuration" {
 resource "aws_autoscaling_group" "eks-autoscaling-group" {
   desired_capacity     = var.SCALING_DESIRED_CAPACITY
   launch_configuration = aws_launch_configuration.eks-launch-configuration.id
-  max_size             = 4
+  max_size             = 2
   min_size             = 0
   name                 = "eks-${local.cluster_name}"
   vpc_zone_identifier  = [aws_subnet.eks-private.id, aws_subnet.eks-private-2.id]
