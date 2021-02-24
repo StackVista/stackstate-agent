@@ -108,6 +108,7 @@ func TestDiskCheck(t *testing.T) {
 	testHostname := "test-hostname"
 	config.Datadog.Set("hostname", testHostname)
 
+	expectedMonoCounts := 2
 	expectedRates := 2
 	expectedGauges := 16
 
@@ -129,13 +130,17 @@ func TestDiskCheck(t *testing.T) {
 	mock.On("Gauge", "system.fs.inodes.free", 2953160.0, "", []string{"device:/dev/sda2", "device_name:sda2"}).Return().Times(1)
 	mock.On("Gauge", "system.fs.inodes.in_use", 0.08966372711489899, "", []string{"device:/dev/sda2", "device_name:sda2"}).Return().Times(1)
 
+	mock.On("MonotonicCount", "system.disk.read_time", 19699308.0, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
+	mock.On("MonotonicCount", "system.disk.write_time", 418600.0, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
+
 	mock.On("Rate", "system.disk.read_time_pct", 1969930.8, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
 	mock.On("Rate", "system.disk.write_time_pct", 41860.0, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
 
 	mock.On("Commit").Return().Times(1)
-
 	diskCheck.Run()
+
 	mock.AssertExpectations(t)
+	mock.AssertNumberOfCalls(t, "MonotonicCount", expectedMonoCounts)
 	mock.AssertNumberOfCalls(t, "Gauge", expectedGauges)
 	mock.AssertNumberOfCalls(t, "Rate", expectedRates)
 	mock.AssertNumberOfCalls(t, "Commit", 1)
@@ -183,16 +188,21 @@ func TestDiskCheckExcludedDiskFilsystem(t *testing.T) {
 	mock := mocksender.NewMockSender(diskCheck.ID())
 	_ = batcher.NewMockBatcher()
 
+	expectedMonoCounts := 2
 	expectedGauges := 0
 	expectedRates := 2
+
+	mock.On("MonotonicCount", "system.disk.read_time", 19699308.0, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
+	mock.On("MonotonicCount", "system.disk.write_time", 418600.0, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
 
 	mock.On("Rate", "system.disk.read_time_pct", 1969930.8, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
 	mock.On("Rate", "system.disk.write_time_pct", 41860.0, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
 
 	mock.On("Commit").Return().Times(1)
-
 	diskCheck.Run()
+
 	mock.AssertExpectations(t)
+	mock.AssertNumberOfCalls(t, "MonotonicCount", expectedMonoCounts)
 	mock.AssertNumberOfCalls(t, "Gauge", expectedGauges)
 	mock.AssertNumberOfCalls(t, "Rate", expectedRates)
 	mock.AssertNumberOfCalls(t, "Commit", 1)
@@ -211,16 +221,21 @@ func TestDiskCheckExcludedRe(t *testing.T) {
 	mock := mocksender.NewMockSender(diskCheck.ID())
 	_ = batcher.NewMockBatcher()
 
+	expectedMonoCounts := 2
 	expectedGauges := 0
 	expectedRates := 2
+
+	mock.On("MonotonicCount", "system.disk.read_time", 19699308.0, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
+	mock.On("MonotonicCount", "system.disk.write_time", 418600.0, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
 
 	mock.On("Rate", "system.disk.read_time_pct", 1969930.8, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
 	mock.On("Rate", "system.disk.write_time_pct", 41860.0, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
 
 	mock.On("Commit").Return().Times(1)
-
 	diskCheck.Run()
+
 	mock.AssertExpectations(t)
+	mock.AssertNumberOfCalls(t, "MonotonicCount", expectedMonoCounts)
 	mock.AssertNumberOfCalls(t, "Gauge", expectedGauges)
 	mock.AssertNumberOfCalls(t, "Rate", expectedRates)
 	mock.AssertNumberOfCalls(t, "Commit", 1)
@@ -239,6 +254,7 @@ func TestDiskCheckTags(t *testing.T) {
 	mock := mocksender.NewMockSender(diskCheck.ID())
 	_ = batcher.NewMockBatcher()
 
+	expectedMonoCounts := 2
 	expectedGauges := 16
 	expectedRates := 2
 
@@ -260,13 +276,17 @@ func TestDiskCheckTags(t *testing.T) {
 	mock.On("Gauge", "system.fs.inodes.free", 2953160.0, "", []string{"ext4", "filesystem:ext4", "device:/", "device_name:sda2", "device_type:sata", "disk_size:large"}).Return().Times(1)
 	mock.On("Gauge", "system.fs.inodes.in_use", 0.08966372711489899, "", []string{"ext4", "filesystem:ext4", "device:/", "device_name:sda2", "device_type:sata", "disk_size:large"}).Return().Times(1)
 
+	mock.On("MonotonicCount", "system.disk.read_time", 19699308.0, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
+	mock.On("MonotonicCount", "system.disk.write_time", 418600.0, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
+
 	mock.On("Rate", "system.disk.read_time_pct", 1969930.8, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
 	mock.On("Rate", "system.disk.write_time_pct", 41860.0, "", []string{"device:sda", "device_name:sda"}).Return().Times(1)
 
 	mock.On("Commit").Return().Times(1)
-
 	diskCheck.Run()
+
 	mock.AssertExpectations(t)
+	mock.AssertNumberOfCalls(t, "MonotonicCount", expectedMonoCounts)
 	mock.AssertNumberOfCalls(t, "Gauge", expectedGauges)
 	mock.AssertNumberOfCalls(t, "Rate", expectedRates)
 	mock.AssertNumberOfCalls(t, "Commit", 1)
