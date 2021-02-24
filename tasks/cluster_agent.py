@@ -97,7 +97,6 @@ def build(
     apply_branding(ctx)
     build_common(
         ctx,
-        "cluster-agent.build",
         BIN_PATH,
         get_default_build_tags(build="cluster-agent"),
         "",
