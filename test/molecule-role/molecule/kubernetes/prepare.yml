@@ -101,13 +101,13 @@
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
     - name: Wait for the stackstate cluster agent to start doing it's thing
-      command: kubectl -n={{ namespace }} wait --all --for=condition=Ready --timeout=120s -l app=stackstate-cluster-agent pod
+      command: kubectl -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app=stackstate-cluster-agent pod
       args:
         chdir: /home/ubuntu/deployment/agents
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
-    - name: Wait for the stackstate node agent to start doing their thing (otherwise connections might occur after agent startup)
-      command: kubectl -n={{ namespace }} wait --all --for=condition=Ready --timeout=120s -l app=stackstate-agent pod
+    - name: Wait for the stackstate node agents to start doing their thing (otherwise connections might occur after agent startup)
+      command: kubectl -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app=stackstate-agent pod
       args:
         chdir: /home/ubuntu/deployment/agents
       environment:
@@ -131,19 +131,19 @@
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
     - name: Wait for the pod-to-service-cluster-ip scenario to become ready
-      command: kubectl -n={{ namespace }} wait --all --for=condition=Ready --timeout=120s -l test:pod-to-service-cluster-ip pod
+      command: kubectl -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l test=pod-to-service-cluster-ip pod
       args:
         chdir: /home/ubuntu/deployment/agents
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
     - name: Wait for the pod-localhost scenario to become ready
-      command: kubectl -n={{ namespace }} wait --all --for=condition=Ready --timeout=120s -l test:pod-localhost pod
+      command: kubectl -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l test=pod-localhost pod
       args:
         chdir: /home/ubuntu/deployment/agents
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
     - name: Wait for the pod-to-pod-headless scenario to become ready
-      command: kubectl -n={{ namespace }} wait --all --for=condition=Ready --timeout=120s -l test:pod-to-pod-headless pod
+      command: kubectl -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l test=pod-to-pod-headless pod
       args:
         chdir: /home/ubuntu/deployment/agents
       environment:
