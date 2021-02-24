@@ -35,7 +35,8 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: pod-headless-client
-  test: pod-to-pod-headless
+  labels:
+    test: pod-to-pod-headless
 spec:
   containers:
     - image: jgkamat/netcat
