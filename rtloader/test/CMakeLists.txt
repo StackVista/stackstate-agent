@@ -34,7 +34,7 @@ if (NOT DISABLE_PYTHON2)
     set (CGO_LDFLAGS \"-L${PROJECT_BINARY_DIR}/two/ ${CGO_LDFLAGS}\")
     add_custom_command(
         OUTPUT testPy2
-        COMMAND ${CMAKE_COMMAND} -E env CGO_CFLAGS=${CGO_CFLAGS} CGO_LDFLAGS=${CGO_LDFLAGS} DYLD_LIBRARY_PATH=${LIBS_PATH} LD_LIBRARY_PATH=${LIBS_PATH} go test -tags "two" -count=1 -p=1 ${PKGS}
+        COMMAND ${CMAKE_COMMAND} -E env CGO_CFLAGS=${CGO_CFLAGS} CGO_LDFLAGS=${CGO_LDFLAGS} DYLD_LIBRARY_PATH=${LIBS_PATH} LD_LIBRARY_PATH=${LIBS_PATH} go test -mod=mod -tags "two" -count=1 -p=1 ${PKGS}
     )
     list(APPEND TARGETS "testPy2")
 endif()
@@ -43,7 +43,7 @@ if (NOT DISABLE_PYTHON3)
     set (CGO_LDFLAGS \"-L${PROJECT_BINARY_DIR}/three/ ${CGO_LDFLAGS}\")
     add_custom_command(
         OUTPUT testPy3
-        COMMAND ${CMAKE_COMMAND} -E env CGO_CFLAGS=${CGO_CFLAGS} CGO_LDFLAGS=${CGO_LDFLAGS} DYLD_LIBRARY_PATH=${LIBS_PATH} LD_LIBRARY_PATH=${LIBS_PATH} go test -tags "three" -count=1 -p=1 ${PKGS}
+        COMMAND ${CMAKE_COMMAND} -E env CGO_CFLAGS=${CGO_CFLAGS} CGO_LDFLAGS=${CGO_LDFLAGS} DYLD_LIBRARY_PATH=${LIBS_PATH} LD_LIBRARY_PATH=${LIBS_PATH} go test -mod=mod -tags "three" -count=1 -p=1 ${PKGS}
     )
     list(APPEND TARGETS "testPy3")
 endif()
