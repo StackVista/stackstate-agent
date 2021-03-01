@@ -6,8 +6,10 @@
 package mock
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/logs/message"
-	"github.com/StackVista/stackstate-agent/pkg/logs/pipeline"
+	"context"
+
+	"github.com/DataDog/datadog-agent/pkg/logs/message"
+	"github.com/DataDog/datadog-agent/pkg/logs/pipeline"
 )
 
 // mockProvider mocks pipeline providing logic
@@ -29,7 +31,7 @@ func (p *mockProvider) Start() {}
 func (p *mockProvider) Stop() {}
 
 // Flush does nothing
-func (p *mockProvider) Flush() {}
+func (p *mockProvider) Flush(ctx context.Context) {}
 
 // NextPipelineChan returns the next pipeline
 func (p *mockProvider) NextPipelineChan() chan *message.Message {
