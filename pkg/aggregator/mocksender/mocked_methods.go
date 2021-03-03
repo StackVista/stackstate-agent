@@ -6,7 +6,8 @@
 package mocksender
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/serializer"
 )
 
 //Rate adds a rate type to the mock calls.
@@ -94,4 +95,9 @@ func (m *MockSender) FinalizeCheckServiceTag() {
 func (m *MockSender) GetMetricStats() map[string]int64 {
 	m.Called()
 	return make(map[string]int64)
+}
+
+// OrchestratorMetadata submit orchestrator metadata messages
+func (m *MockSender) OrchestratorMetadata(msgs []serializer.ProcessMessageBody, clusterID, payloadType string) {
+	m.Called(msgs, clusterID, payloadType)
 }
