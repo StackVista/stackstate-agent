@@ -14,6 +14,8 @@ from datetime import date
 from invoke import Failure, task
 from invoke.exceptions import Exit
 
+from .modules import DEFAULT_MODULES
+
 
 @task
 def add_prelude(ctx, version):
@@ -557,7 +559,7 @@ def _save_release_json(
 
 @task
 def finish(
-    _,
+    ctx,
     major_versions="6,7",
     integration_version=None,
     omnibus_software_version=None,
@@ -570,6 +572,8 @@ def finish(
 
     """
     Creates new entry in the release.json file for the new version. Removes all the RC entries.
+
+    Update internal module dependencies with the new version.
     """
 
     if sys.version_info[0] < 3:
@@ -724,10 +728,13 @@ def finish(
         macos_build_version,
     )
 
+    # Update internal module dependencies
+    update_modules(ctx, _stringify_version(highest_version))
+
 
 @task
 def create_rc(
-    _,
+    ctx,
     major_versions="6,7",
     integration_version=None,
     omnibus_software_version=None,
@@ -740,6 +747,8 @@ def create_rc(
     """
     Takes whatever version is the highest in release.json and adds a new RC to it.
     If there was no RC, creates one and bump minor version. If there was an RC, create RC + 1.
+
+    Update internal module dependencies with the new RC.
     """
 
     if sys.version_info[0] < 3:
@@ -835,22 +844,60 @@ def create_rc(
         macos_build_version,
     )
 
+    # Update internal module dependencies
+    update_modules(ctx, _stringify_version(highest_version))
+
+
+def check_version(agent_version):
+    """Check Agent version to see if it is valid."""
+    version_re = re.compile(r'7[.](\d+)[.](\d+)(-rc\.(\d+))?')
+    if not version_re.match(agent_version):
+        raise Exit(message="Version should be of the form 7.Y.Z or 7.Y.Z-rc.t")
+
+
 @task
-def generate_install(ctx, test_repo=False):
+def update_modules(ctx, agent_version, verify=True):
     """
-    Task to generate Agent install.sh script that will use either the official or test debian repository
+    Update internal dependencies between the different Agent modules.
+    * --verify checks for correctness on the Agent Version (on by default).
+
+    Examples:
+    inv -e release.update-modules 7.27.0 
     """
-    deb_official_repo = os.environ.get("STS_AWS_RELEASE_BUCKET")
-    deb_test_repo = os.environ.get("STS_AWS_TEST_BUCKET")
-    deb_repo = deb_test_repo if test_repo else deb_official_repo
-    yum_official_repo = os.environ.get("STS_AWS_RELEASE_BUCKET_YUM")
-    yum_test_repo = os.environ.get("STS_AWS_TEST_BUCKET_YUM")
-    yum_repo = yum_test_repo if test_repo else yum_official_repo
-    win_official_repo = os.environ.get("STS_AWS_RELEASE_BUCKET_WIN")
-    win_test_repo = os.environ.get("STS_AWS_TEST_BUCKET_WIN")
-    win_repo = win_test_repo if test_repo else win_official_repo
-    print("Generating install.sh and install.ps1 ...")
-    ctx.run("sed -e 's/$DEBIAN_REPO/https:\/\/{0}.s3.amazonaws.com/g' ./cmd/agent/install_script.sh > ./cmd/agent/install_1.sh".format(deb_repo))
-    ctx.run("sed -e 's/$YUM_REPO/https:\/\/{0}.s3.amazonaws.com/g' ./cmd/agent/install_1.sh > ./cmd/agent/install.sh".format(yum_repo))
-    ctx.run("rm ./cmd/agent/install_1.sh")
-    ctx.run("sed -e 's/$env:WIN_REPO/https:\/\/{0}.s3.amazonaws.com\/windows/g' ./cmd/agent/install_script.ps1 > ./cmd/agent/install.ps1".format(win_repo))
+    if verify:
+        check_version(agent_version)
+
+    for module in DEFAULT_MODULES.values():
+        for dependency in module.dependencies:
+            dependency_mod = DEFAULT_MODULES[dependency]
+            ctx.run(
+                "go mod edit -require={dependency_path} {go_mod_path}".format(
+                    dependency_path=dependency_mod.dependency_path(agent_version), go_mod_path=module.go_mod_path()
+                )
+            )
+
+
+@task
+def tag_version(ctx, agent_version, commit="HEAD", verify=True, push=True):
+    """
+    Create tags for a given Datadog Agent version.
+    The version should be given as an Agent 7 version.
+
+    * --commit COMMIT will tag COMMIT with the tags (default HEAD)
+    * --verify checks for correctness on the Agent version (on by default).
+    * --push will push the tags to the origin remote (on by default).
+
+    Examples:
+    inv -e release.tag-version 7.27.0                 # Create tags and push them to origin
+    inv -e release.tag-version 7.27.0-rc.3 --no-push  # Create tags locally; don't push them
+    """
+    if verify:
+        check_version(agent_version)
+
+    for module in DEFAULT_MODULES.values():
+        for tag in module.tag(agent_version):
+            ctx.run("git tag -m {tag} {tag} {commit}".format(tag=tag, commit=commit))
+            if push:
+                ctx.run("git push origin {}".format(tag))
+
+    print("Created all tags for version {}".format(agent_version))
