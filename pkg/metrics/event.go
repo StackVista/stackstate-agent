@@ -94,6 +94,7 @@ type Event struct {
 	EventType      string         `json:"event_type,omitempty"`
 	OriginID       string         `json:"-"`
 	K8sOriginID    string         `json:"-"`
+	Cardinality    string         `json:"-"`
 }
 
 // EventContext enriches the event with some more context and allows correlation to topology in StackState
