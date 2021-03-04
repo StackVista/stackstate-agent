@@ -33,6 +33,7 @@ import (
 
 const (
 	kubeStateMetricsCheckName = "kubernetes_state_core"
+	maximumWaitForAPIServer   = 10 * time.Second
 )
 
 // KSMConfig contains the check config parameters
@@ -189,7 +190,12 @@ func (k *KSMCheck) Configure(config, initConfig integration.Data, source string)
 
 	builder.WithAllowDenyList(allowDenyList)
 
-	c, err := apiserver.GetAPIClient()
+	// Due to how init is done, we cannot use GetAPIClient in `Run()` method
+	// So we are waiting for a reasonable amount of time here in case.
+	// We cannot wait forever as there's no way to be notified of shutdown
+	apiCtx, apiCancel := context.WithTimeout(context.Background(), maximumWaitForAPIServer)
+	defer apiCancel()
+	c, err := apiserver.WaitForAPIClient(apiCtx)
 	if err != nil {
 		return err
 	}

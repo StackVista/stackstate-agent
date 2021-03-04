@@ -16,23 +16,25 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
-	"github.com/StackVista/stackstate-agent/cmd/agent/common"
-	"github.com/StackVista/stackstate-agent/cmd/cluster-agent/api"
-	"github.com/StackVista/stackstate-agent/cmd/cluster-agent/commands"
-	"github.com/StackVista/stackstate-agent/pkg/aggregator"
-	"github.com/StackVista/stackstate-agent/pkg/api/healthprobe"
-	"github.com/StackVista/stackstate-agent/pkg/clusteragent"
-	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/forwarder"
-	"github.com/StackVista/stackstate-agent/pkg/serializer"
-	"github.com/StackVista/stackstate-agent/pkg/status/health"
-	"github.com/StackVista/stackstate-agent/pkg/util"
-	"github.com/StackVista/stackstate-agent/pkg/util/cloudfoundry"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/StackVista/stackstate-agent/pkg/version"
+	"github.com/DataDog/datadog-agent/cmd/agent/common"
+	"github.com/DataDog/datadog-agent/cmd/cluster-agent/api"
+	dcav1 "github.com/DataDog/datadog-agent/cmd/cluster-agent/api/v1"
+	"github.com/DataDog/datadog-agent/cmd/cluster-agent/commands"
+	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/DataDog/datadog-agent/pkg/api/healthprobe"
+	"github.com/DataDog/datadog-agent/pkg/clusteragent"
+	"github.com/DataDog/datadog-agent/pkg/clusteragent/clusterchecks"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/forwarder"
+	"github.com/DataDog/datadog-agent/pkg/serializer"
+	"github.com/DataDog/datadog-agent/pkg/status/health"
+	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/DataDog/datadog-agent/pkg/util/cloudfoundry"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/version"
 )
 
 // loggerName is the name of the cluster agent logger
@@ -189,20 +191,18 @@ func run(cmd *cobra.Command, args []string) error {
 	// start the autoconfig, this will immediately run any configured check
 	common.StartAutoConfig()
 
-	var clusterCheckHandler *clusterchecks.Handler
-	clusterCheckHandler, err = setupClusterCheck(mainCtx)
-	if err != nil {
-		log.Errorf("Error while setting up cluster check Autodiscovery %v", err)
+	if err = api.StartServer(); err != nil {
+		return log.Errorf("Error while starting agent API, exiting: %v", err)
 	}
 
-	// Start the cmd HTTPS server
-	// We always need to start it, even with nil clusterCheckHandler
-	// as it's also used to perform the agent commands (e.g. agent status)
-	sc := clusteragent.ServerContext{
-		ClusterCheckHandler: clusterCheckHandler,
-	}
-	if err = api.StartServer(sc); err != nil {
-		return log.Errorf("Error while starting agent API, exiting: %v", err)
+	var clusterCheckHandler *clusterchecks.Handler
+	clusterCheckHandler, err = setupClusterCheck(mainCtx)
+	if err == nil {
+		api.ModifyRouter(func(r *mux.Router) {
+			dcav1.Install(r.PathPrefix("/api/v1").Subrouter(), clusteragent.ServerContext{ClusterCheckHandler: clusterCheckHandler})
+		})
+	} else {
+		log.Errorf("Error while setting up cluster check Autodiscovery %v", err)
 	}
 
 	// Block here until we receive the interrupt signal
