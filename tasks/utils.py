@@ -306,13 +306,12 @@ def load_release_versions(_, target_version):
     raise Exception("Could not find '{}' version in release.json".format(target_version))
 
 
-def do_go_rename(ctx, rename, at):
-    ctx.run("gofmt -l -w -r {} {}".format(rename, at))
-
-
-def do_sed_rename(ctx, rename, at):
-    ctx.run("sed -i '{}' {}".format(rename, at))
-
-
-def do_sed_rename_quoted(ctx, rename, at):
-    ctx.run("sed -i \"{}\" {}".format(rename, at))
+def generate_config(ctx, build_type, output_file, env=None):
+    args = {
+        "go_file": "./pkg/config/render_config.go",
+        "build_type": build_type,
+        "template_file": "./pkg/config/config_template.yaml",
+        "output_file": output_file,
+    }
+    cmd = "go run {go_file} {build_type} {template_file} {output_file}"
+    return ctx.run(cmd.format(**args), env=env or {})
