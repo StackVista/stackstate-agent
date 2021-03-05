@@ -11,9 +11,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
-	"github.com/StackVista/stackstate-agent/pkg/trace/stats"
-	"github.com/StackVista/stackstate-agent/pkg/trace/test/testutil"
+	"github.com/DataDog/datadog-agent/pkg/trace/pb"
+	"github.com/DataDog/datadog-agent/pkg/trace/test/testutil"
 )
 
 // The below example shows a common use-case scenario for the runner.
@@ -47,7 +46,7 @@ func Example() {
 	switch v := (<-runner.Out()).(type) {
 	case pb.TracePayload:
 		fmt.Println("OK traces: ", len(v.Traces))
-	case stats.Payload:
+	case pb.StatsPayload:
 		fmt.Println("OK stats: ", len(v.Stats))
 	}
 }
