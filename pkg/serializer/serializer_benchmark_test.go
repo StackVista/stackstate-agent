@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/forwarder"
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/serializer/jsonstream"
-	"github.com/StackVista/stackstate-agent/pkg/serializer/split"
+	"github.com/DataDog/datadog-agent/pkg/forwarder"
+	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/serializer/split"
+	"github.com/DataDog/datadog-agent/pkg/serializer/stream"
 )
 
 func buildSeries(numberOfSeries int) metrics.Series {
@@ -40,7 +40,7 @@ var results forwarder.Payloads
 
 func benchmarkJSONStream(b *testing.B, passes int, sharedBuffers bool, numberOfSeries int) {
 	series := buildSeries(numberOfSeries)
-	payloadBuilder := jsonstream.NewPayloadBuilder(sharedBuffers)
+	payloadBuilder := stream.NewJSONPayloadBuilder(sharedBuffers)
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
