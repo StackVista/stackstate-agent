@@ -87,7 +87,9 @@ type SwarmService struct {
 	Name           string
 	ContainerImage string
 	Labels         map[string]string  `json:",omitempty"`
-	Replica		   int64
+	Replica		   uint64
+	DesiredTasks   uint64
+	RunningTasks   uint64
 	Version        swarm.Version      `json:",omitempty"`
 	CreatedAt      time.Time          `json:",omitempty"`
 	UpdatedAt      time.Time          `json:",omitempty"`

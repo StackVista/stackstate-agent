@@ -117,13 +117,14 @@ func (dt *DockerTopologyCollector) collectContainers(du *docker.DockerUtil) ([]*
 
 // collectSwarmServices collects swarm services from the docker util and produces topology.Component
 func (dt *DockerTopologyCollector) collectSwarmServices(du *docker.DockerUtil, sender aggregator.Sender) ([]*topology.Component, error) {
-	sList, err := du.ListSwarmServices(sender)
+	sList, err := du.ListSwarmServices()
 	if err != nil {
 		return nil, err
 	}
 
 	containerComponents := make([]*topology.Component, 0)
 	for _, s := range sList {
+		tags := []string{nil}
 		containerComponent := &topology.Component{
 			ExternalID: fmt.Sprintf("urn:%s:/%s", swarmServiceType, s.ID),
 			Type:       topology.Type{Name: swarmServiceType},
@@ -131,6 +132,8 @@ func (dt *DockerTopologyCollector) collectSwarmServices(du *docker.DockerUtil, s
 				"name":         s.Name,
 				"image":        s.ContainerImage,
 				"tags":         s.Labels,
+				"desiredTasks": s.DesiredTasks,
+				"runningTasks": s.RunningTasks,
 				"version":      s.Version.Index,
 				"created":      s.CreatedAt,
 				"spec":         s.Spec,
@@ -138,6 +141,7 @@ func (dt *DockerTopologyCollector) collectSwarmServices(du *docker.DockerUtil, s
 				"updateStatus": s.UpdateStatus,
 			},
 		}
+
 
 		// add updated time when it's present
 		if !s.UpdatedAt.IsZero() {
@@ -148,6 +152,7 @@ func (dt *DockerTopologyCollector) collectSwarmServices(du *docker.DockerUtil, s
 		if s.PreviousSpec != nil {
 			containerComponent.Data["previousSpec"] = s.PreviousSpec
 		}
+		sender.Gauge("docker.service.replicas", float64(s.Replica), "", append(tags, "serviceName:"+s.Name))
 
 		containerComponents = append(containerComponents, containerComponent)
 	}
