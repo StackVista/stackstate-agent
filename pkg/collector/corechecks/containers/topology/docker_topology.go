@@ -3,6 +3,7 @@ package topology
 import (
 	"errors"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -63,14 +64,14 @@ func (dt *DockerTopologyCollector) BuildContainerTopology(du *docker.DockerUtil)
 }
 
 // BuildSwarmTopology collects and produces all docker swarm topology
-func (dt *DockerTopologyCollector) BuildSwarmTopology(du *docker.DockerUtil) error {
+func (dt *DockerTopologyCollector) BuildSwarmTopology(du *docker.DockerUtil, metrics aggregator.Sender) error {
 	sender := batcher.GetBatcher()
 	if sender == nil {
 		return errors.New("no batcher instance available, skipping BuildSwarmTopology")
 	}
 
 	// collect all swarm services as topology components
-	swarmServices, err := dt.collectSwarmServices(du)
+	swarmServices, err := dt.collectSwarmServices(du, metrics)
 	if err != nil {
 		return err
 	}
@@ -115,8 +116,8 @@ func (dt *DockerTopologyCollector) collectContainers(du *docker.DockerUtil) ([]*
 }
 
 // collectSwarmServices collects swarm services from the docker util and produces topology.Component
-func (dt *DockerTopologyCollector) collectSwarmServices(du *docker.DockerUtil) ([]*topology.Component, error) {
-	sList, err := du.ListSwarmServices()
+func (dt *DockerTopologyCollector) collectSwarmServices(du *docker.DockerUtil, sender aggregator.Sender) ([]*topology.Component, error) {
+	sList, err := du.ListSwarmServices(sender)
 	if err != nil {
 		return nil, err
 	}

@@ -10,13 +10,15 @@ package docker
 import (
 	"context"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/docker/docker/api/types"
 )
 
 // ListSwarmServices gets a list of all swarm services on the current node using the Docker APIs.
-func (d *DockerUtil) ListSwarmServices() ([]*containers.SwarmService, error) {
-	sList, err := d.dockerSwarmServices()
+func (d *DockerUtil) ListSwarmServices(sender aggregator.Sender) ([]*containers.SwarmService, error) {
+	sList, err := d.dockerSwarmServices(sender)
 	if err != nil {
 		return nil, fmt.Errorf("could not get docker swarm services: %s", err)
 	}
@@ -25,20 +27,26 @@ func (d *DockerUtil) ListSwarmServices() ([]*containers.SwarmService, error) {
 }
 
 // dockerSwarmServices returns all the swarm services in the swarm cluster
-func (d *DockerUtil) dockerSwarmServices() ([]*containers.SwarmService, error) {
+func (d *DockerUtil) dockerSwarmServices(sender aggregator.Sender) ([]*containers.SwarmService, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.queryTimeout)
 	defer cancel()
-	sList, err := d.cli.ServiceList(ctx, types.ServiceListOptions{})
+	sList, err := d.cli.ServiceList(ctx, types.ServiceListOptions{Status: true})
 	if err != nil {
 		return nil, fmt.Errorf("error listing swarm services: %s", err)
 	}
 	ret := make([]*containers.SwarmService, 0, len(sList))
 	for _, s := range sList {
+		log.Infof("value of swarm service status %s", s)
+		log.Infof("value of swarm service status %s", s.ServiceStatus.DesiredTasks)
+		log.Infof("value of swarm service status %s", s.ServiceStatus.RunningTasks)
+		tags := []string{}
+		replicaCount := s.Spec.Mode.Replicated.Replicas
 		service := &containers.SwarmService{
 			ID:             s.ID,
 			Name:           s.Spec.Name,
 			ContainerImage: s.Spec.TaskTemplate.ContainerSpec.Image,
 			Labels:         s.Spec.Labels,
+			Replica:		replicaCount,
 			Version:        s.Version,
 			CreatedAt:      s.CreatedAt,
 			UpdatedAt:      s.UpdatedAt,
@@ -47,7 +55,7 @@ func (d *DockerUtil) dockerSwarmServices() ([]*containers.SwarmService, error) {
 			Endpoint:       s.Endpoint,
 			UpdateStatus:   s.UpdateStatus,
 		}
-
+		sender.Gauge("docker.service.replicas", float64(replicaCount), "", append(tags, "serviceName:"+s.Spec.Name))
 		ret = append(ret, service)
 	}
 
