@@ -70,6 +70,12 @@ spec:
           - name: cgroups
             mountPath: /host/sys/fs/cgroup
             readOnly: true
+          # Agent Integration Sample configuration and state storage persistent volume
+          - name: config
+            mountPath: etc/stackstate-agent/conf.d/agent-integration-sample.d
+            readOnly: true
+          - name: agent-integration-sample-state-storage
+            mountPath: /etc/stackstate-agent/state.d/agent-integration-sample.d
         livenessProbe:
          httpGet:
            path: /health
@@ -95,6 +101,12 @@ spec:
         - hostPath:
             path: /sys/fs/cgroup
           name: cgroups
+        - name: config
+          configMap:
+            name: agent-integration-sample-config
+        - name: agent-integration-sample-state-storage
+          persistentVolumeClaim:
+            claimName: agent-integration-sample-state-pv-claim
 ---
 apiVersion: v1
 kind: Service
@@ -108,3 +120,20 @@ spec:
       protocol: TCP
   selector:
     app: stackstate-agent
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: agent-pv-volume
+  labels:
+    type: local
+spec:
+  storageClassName: local-storage
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  persistentVolumeReclaimPolicy: Delete
+  accessModes:
+    - ReadWriteOne
+  local:
+    path: "/etc/stackstate-agent/data"

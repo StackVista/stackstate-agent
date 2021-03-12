@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-integration-sample-config
+  namespace: default
+data:
+  conf.yaml:
+    init_config:
+    instances:
+      - state_location: "/etc/stackstate-agent/state.d/agent-integration-sample.d"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: agent-integration-sample-state-pv-claim
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOne
+  resources:
+    requests:
+      storage: 20Mb
