@@ -9,8 +9,7 @@ The present repository contains the source code of the StackState Agent version 
 
 ## Documentation
 
-The general documentation of the project, including instructions for installation
-and development, is located under [the docs directory](docs) of the present repo.
+The general documentation of the project is located under [the docs directory](docs) of the present repo.
 
 ## Getting started
 
@@ -39,7 +38,6 @@ To start working on the Agent, you can build the `master` branch:
    Make sure that `$GOPATH/bin` is in your `$PATH` otherwise this step might fail.
 4. build the whole project with `invoke agent.build --build-exclude=snmp,systemd` (with `--use-venv` to use a python virtualenv)
 
-Please refer to the [Agent Developer Guide](docs/dev/README.md) for more details.
 
 ## Run
 
@@ -52,79 +50,12 @@ overwrite it with the environment variable like:
 STS_API_KEY=12345678990 ./bin/agent/agent -c bin/agent/dist/stackstate.yaml
 ```
 
-## Contributing code
-
-You'll find information and help on how to contribute code to this project under
-[the `docs/dev` directory](docs/dev) of the present repo.
-
 ## Install
 
-### Linux
+Installation instructions are available on the [StackState docs site](https://docs.stackstate.com/stackpacks/integrations/agent).
 
-##### Official
-
-To install the official release:
-
-    $ curl -o- https://stackstate-agent-2.s3.amazonaws.com/install.sh | STS_API_KEY="xxx" STS_URL="yyy" bash
-     or
-    $ wget -qO- https://stackstate-agent-2.s3.amazonaws.com/install.sh | STS_API_KEY="xxx" STS_URL="yyy" bash
-
-##### Test
-
-If you wanna install a branch version use the test repository:
-
-    $ curl -o- https://stackstate-agent-2-test.s3.amazonaws.com/install.sh | STS_API_KEY="xxx" STS_URL="yyy" CODE_NAME="PR_NAME" bash
-     or
-    $ wget -qO- https://stackstate-agent-2-test.s3.amazonaws.com/install.sh | STS_API_KEY="xxx" STS_URL="yyy" CODE_NAME="PR_NAME" bash
-
-and replace `PR_NAME` with the branch name (e.g. `master`, `STAC-xxxx`).
-
-### Docker
-
-##### Official
-
-    $ docker pull docker.io/stackstate/stackstate-agent-2:latest
-
-##### Test
-
-    $ docker pull docker.io/stackstate/stackstate-agent-2-test:latest
-
-### Windows
-
-##### Official
-
-To install the official release:
-
-    $ . { iwr -useb https://stackstate-agent-2.s3.amazonaws.com/install.ps1 } | iex; install -stsApiKey "xxx" -stsUrl "yyy"
-
-##### Test
-
-If you wanna install a branch version use the test repository:
-
-    $ . { iwr -useb https://stackstate-agent-2-test.s3.amazonaws.com/install.ps1 } | iex; install -stsApiKey "xxx" -stsUrl "yyy" -codeName "PR_NAME"
-
-and replace `PR_NAME` with the branch name (e.g. `master`, `STAC-xxxx`).
-
-##### HACKHACKHACK
+##### Omnibus notes for windows build process
 
 We ended up checking in a patched gem file under omnibus/vendor/cache/libyajl2-1.2.1.gem, to make windows builds work with newer msys toolchain.
 The source of this can be found here https://github.com/StackVista/libyajl2-gem/tree/1.2.0-fixed-lssp. Ideally we'd be able to drop this hack once we
 bump the ruby version > 2.6.5 because libyajl2 compiles proper on those ruby versions.
-
-#### Arguments
-
-Other arguments can be passed to the installation command.
-
-Linux arguments:
-
-- `STS_HOSTNAME` = Instance hostname
-- `$HOST_TAGS` = Agent host tags to use for all topology component (by default `os:linux` will be added)
-- `SKIP_SSL_VALIDATION` = Skip ssl certificates validation when talking to the backend (defaults to `false`)
-- `STS_INSTALL_ONLY` = Agent won't be automatically started after installation
-
-Windows arguments:
-
-- `hostname` = Instance hostname
-- `tags` = Agent host tags to use for all topology component (by default `os:windows` will be added)
-- `skipSSLValidation` = Skip ssl certificates validation when talking to the backend (defaults to `false`)
-- `agentVersion` = Version of the Agent to be installed (defaults to `latest`)
