@@ -4,7 +4,7 @@ metadata:
   name: agent-integration-sample-config
   namespace: default
 data:
-  conf.yaml:
+  config: |
     init_config:
     instances:
       - state_location: "/etc/stackstate-agent/state.d/agent-integration-sample.d"
@@ -14,9 +14,9 @@ kind: PersistentVolumeClaim
 metadata:
   name: agent-integration-sample-state-pv-claim
 spec:
-  storageClassName: manual
+  storageClassName: local-storage
   accessModes:
-    - ReadWriteOne
+    - ReadWriteOnce
   resources:
     requests:
-      storage: 20Mb
+      storage: 20Mi

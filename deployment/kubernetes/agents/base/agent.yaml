@@ -1,3 +1,29 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: agent-pv-volume
+  labels:
+    type: local
+spec:
+  storageClassName: local-storage
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  persistentVolumeReclaimPolicy: Delete
+  accessModes:
+    - ReadWriteOnce
+  local:
+    path: "/mnt/data"
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/os
+              operator: In
+              values:
+                - linux
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -104,6 +130,9 @@ spec:
         - name: config
           configMap:
             name: agent-integration-sample-config
+            items:
+              - key: "config"
+                path: conf.yaml
         - name: agent-integration-sample-state-storage
           persistentVolumeClaim:
             claimName: agent-integration-sample-state-pv-claim
@@ -120,20 +149,3 @@ spec:
       protocol: TCP
   selector:
     app: stackstate-agent
----
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: agent-pv-volume
-  labels:
-    type: local
-spec:
-  storageClassName: local-storage
-  capacity:
-    storage: 1Gi
-  volumeMode: Filesystem
-  persistentVolumeReclaimPolicy: Delete
-  accessModes:
-    - ReadWriteOne
-  local:
-    path: "/etc/stackstate-agent/data"
