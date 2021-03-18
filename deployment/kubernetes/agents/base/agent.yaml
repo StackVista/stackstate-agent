@@ -98,10 +98,10 @@ spec:
             readOnly: true
           # Agent Integration Sample configuration and state storage persistent volume
           - name: config
-            mountPath: etc/stackstate-agent/conf.d/agent-integration-sample.d
+            mountPath: etc/stackstate-agent/conf.d/agent_integration_sample.d
             readOnly: true
           - name: agent-integration-sample-state-storage
-            mountPath: /etc/stackstate-agent/state.d/agent-integration-sample.d
+            mountPath: /etc/stackstate-agent/state.d/agent_integration_sample.d
         livenessProbe:
          httpGet:
            path: /health
