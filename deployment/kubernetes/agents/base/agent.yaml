@@ -6,7 +6,7 @@ metadata:
   labels:
     type: local
 spec:
-  storageClassName: local-storage
+  storageClassName: manual
   capacity:
     storage: 1Gi
   volumeMode: Filesystem
@@ -14,7 +14,7 @@ spec:
   accessModes:
     - ReadWriteOnce
   local:
-    path: "/mnt/data"
+    path: "/tmp"
   nodeAffinity:
     required:
       nodeSelectorTerms:

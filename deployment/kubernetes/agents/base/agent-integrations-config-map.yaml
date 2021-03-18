@@ -14,7 +14,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: agent-integration-sample-state-pv-claim
 spec:
-  storageClassName: local-storage
+  storageClassName: manual
   accessModes:
     - ReadWriteOnce
   resources:
