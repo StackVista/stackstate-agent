@@ -428,13 +428,15 @@ pre_release_win:
   script:
     - set WIN_CI_PROJECT_DIR=%CD%
     - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
-    - call %WORKON_HOME%\venv\Scripts\activate.bat
-    - call ridk enable
+    - type %APPDATA%\pip\pip.ini
+    - call .gitlab-scripts/windows_build_env.cmd
+    - call .gitlab-scripts/windows_build.cmd
     - set /P VERSION=< version.txt
     - copy stackstate-agent-%VERSION%-1-x86_64.msi stackstate-agent-latest-1-x86_64.msi
     - aws.exe s3 cp . s3://%STS_AWS_TEST_BUCKET_WIN%/windows/%CI_COMMIT_REF_NAME% --recursive --exclude "*" --include "*.msi" --acl public-read
     - cd %WIN_CI_PROJECT_DIR% && inv release.generate-install -t
-    - cd %WIN_CI_PROJECT_DIR%/cmd/agent && aws -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET_WIN']).object('install.ps1').upload_file('./install.ps1', acl:'public-read')"
+    - aws.exe s3 cp ./install.ps1 s3://%STS_AWS_TEST_BUCKET_WIN% --acl public-read
+#    - cd %WIN_CI_PROJECT_DIR%/cmd/agent && aws -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET_WIN']).object('install.ps1').upload_file('./install.ps1', acl:'public-read')"
   tags:
     - agent_windows_6
   retry:
@@ -666,8 +668,8 @@ release_win:
   script:
     - set WIN_CI_PROJECT_DIR=%CD%
     - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
-    - call %WORKON_HOME%\venv\Scripts\activate.bat
-    - call ridk enable
+    - call .gitlab-scripts/windows_build_env.cmd
+    - call .gitlab-scripts/windows_build.cmd
     - set /P VERSION=< version.txt
     - copy stackstate-agent-%VERSION%-1-x86_64.msi stackstate-agent-latest-1-x86_64.msi
     - cd %WIN_CI_PROJECT_DIR% && inv release.generate-install
@@ -679,6 +681,12 @@ release_win:
   only:
     - tags
     - triggers
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+      - script_failure
 
 release_image:
   stage: release
