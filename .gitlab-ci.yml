@@ -430,7 +430,7 @@ pre_release_win:
     - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
     - type %APPDATA%\pip\pip.ini
     - call .gitlab-scripts/windows_build_env.cmd
-    - call .gitlab-scripts/windows_build.cmd
+    - call "%WORKON_HOME%\venv\Scripts\activate.bat"
     - set /P VERSION=< version.txt
     - copy stackstate-agent-%VERSION%-1-x86_64.msi stackstate-agent-latest-1-x86_64.msi
     - aws.exe s3 cp . s3://%STS_AWS_TEST_BUCKET_WIN%/windows/%CI_COMMIT_REF_NAME% --recursive --exclude "*" --include "*.msi" --acl public-read
@@ -668,7 +668,7 @@ release_win:
     - set WIN_CI_PROJECT_DIR=%CD%
     - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
     - call .gitlab-scripts/windows_build_env.cmd
-    - call .gitlab-scripts/windows_build.cmd
+    - call "%WORKON_HOME%\venv\Scripts\activate.bat"
     - set /P VERSION=< version.txt
     - copy stackstate-agent-%VERSION%-1-x86_64.msi stackstate-agent-latest-1-x86_64.msi
     - cd %WIN_CI_PROJECT_DIR% && inv release.generate-install
