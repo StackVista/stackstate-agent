@@ -13,6 +13,16 @@ def _get_key_value(tag_list):
         yield key, value
 
 
+def kubernetes_event_data(event, json_data):
+    for message in json_data["messages"]:
+        p = message["message"]
+        if "GenericEvent" in p:
+            _data = p["GenericEvent"]
+            if _data == dict(_data, **event):
+                return _data
+    return None
+
+
 def test_agent_integration_sample_metrics(host):
     hostname = host.ansible.get_variables()["inventory_hostname"]
     url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=1000"
@@ -245,101 +255,6 @@ def test_agent_integration_sample_topology(host):
                     ],
                     "version": "0.2.0"
                 }
-            },
-            {
-                "assertion": "Should find the stackstate-agent component",
-                "type": "stackstate-agent",
-                "external_id": lambda e_id: ("urn:stackstate-agent:/%s" % hostname) == e_id,
-                "data": lambda d: d == {
-                    "hostname": "agent-integrations-mysql",
-                    "identifiers": [
-                        "urn:process:/%s:%s" % (hostname, d["identifiers"][0][len("urn:process:/%s:" % hostname):])
-                    ],
-                    "name": "StackState Agent:agent-integrations-mysql",
-                    "tags": [
-                        "hostname:agent-integrations-mysql",
-                        "stackstate-agent"
-                    ]
-                }
-            },
-            {
-                "assertion": "Should find the agent-integration integration component",
-                "type": "agent-integration",
-                "external_id": lambda e_id: ("urn:agent-integration:/%s:agent-integration" % hostname) == e_id,
-                "data": lambda d: d == {
-                    "checks": [
-                        {
-                            "is_service_check_health_check": 1,
-                            "name": "Integration Health",
-                            "stream_id": -1
-                        }
-                    ],
-                    "hostname": hostname,
-                    "integration": "agent-integration",
-                    "name": "%s:agent-integration" % hostname,
-                    "service_checks": [
-                        {
-                            "conditions": [
-                                {
-                                    "key": "host",
-                                    "value": hostname
-                                },
-                                {
-                                    "key": "tags.integration-type",
-                                    "value": "agent-integration"
-                                }
-                            ],
-                            "name": "Service Checks",
-                            "stream_id": -1
-                        }
-                    ],
-                    "tags": [
-                        "hostname:%s" % hostname,
-                        "integration-type:agent-integration"
-                    ]
-                }
-            },
-            {
-                "assertion": "Should find the agent-integration-instance component",
-                "type": "agent-integration-instance",
-                "external_id": lambda e_id: ("urn:agent-integration-instance:/%s:agent-integration:sample" % hostname) == e_id,
-                "data": lambda d: d == {
-                    "checks": [
-                        {
-                            "is_service_check_health_check": 1,
-                            "name": "Integration Instance Health",
-                            "stream_id": -1
-                        }
-                    ],
-                    "hostname": hostname,
-                    "integration": "agent-integration",
-                    "name": "agent-integration:sample",
-                    "service_checks": [
-                        {
-                            "conditions": [
-                                {
-                                    "key": "host",
-                                    "value": hostname
-                                },
-                                {
-                                    "key": "tags.integration-type",
-                                    "value": "agent-integration"
-                                },
-                                {
-                                    "key": "tags.integration-url",
-                                    "value": "sample"
-                                }
-                            ],
-                            "name": "Service Checks",
-                            "stream_id": -1
-                        }
-                    ],
-                    "tags": [
-                        "hostname:%s" % hostname,
-                        "integration-type:agent-integration",
-                        "integration-url:sample"
-                    ]
-                }
             }
         ]
 
@@ -374,9 +289,8 @@ def test_agent_integration_sample_events(host):
                 "status": "OK",
                 "check": "cpu"
             },
-            "host": hostname,
         }
-        assert util.event_data(service_event, json_data, hostname) is not None
+        assert kubernetes_event_data(service_event, json_data) is not None
 
         http_event = {
             "name": "HTTP_TIMEOUT",
@@ -385,12 +299,11 @@ def test_agent_integration_sample_events(host):
             "tags": {
                 "source_type_name": "HTTP_TIMEOUT"
             },
-            "host": "agent-integrations-mysql",
             "message": "Http request to http://localhost timed out after 5.0 seconds."
         }
-        assert util.event_data(http_event, json_data, hostname) is not None
+        assert kubernetes_event_data(http_event, json_data) is not None
 
-    util.wait_until(wait_for_events, 180, 3)
+    util.wait_until(wait_for_events, 60, 3)
 
 
 def test_agent_integration_sample_topology_events(host):
@@ -433,4 +346,4 @@ def test_agent_integration_sample_topology_events(host):
             }
         ) is not None
 
-    util.wait_until(wait_for_topology_events, 180, 3)
+    util.wait_until(wait_for_topology_events, 60, 3)
