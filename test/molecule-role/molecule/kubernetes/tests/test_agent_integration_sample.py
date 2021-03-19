@@ -48,8 +48,6 @@ def test_agent_integration_sample_metrics(host):
 
 
 def test_agent_integration_sample_topology(host):
-    hostname = host.ansible.get_variables()["inventory_hostname"]
-
     def assert_topology():
         topo_url = "http://localhost:7070/api/topic/sts_topo_agent_integrations?limit=1500"
         data = host.check_output('curl "{}"'.format(topo_url))
@@ -271,7 +269,6 @@ def test_agent_integration_sample_topology(host):
 
 
 def test_agent_integration_sample_events(host):
-    hostname = host.ansible.get_variables()["inventory_hostname"]
     url = "http://localhost:7070/api/topic/sts_generic_events?limit=1000"
 
     def wait_for_events():
