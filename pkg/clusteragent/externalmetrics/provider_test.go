@@ -27,7 +27,7 @@ import (
 
 type providerFixture struct {
 	desc                       string
-	storeContent               []model.DatadogMetricInternal
+	storeContent               []ddmWithQuery
 	queryNamespace             string
 	queryMetricName            string
 	querySelector              map[string]string
@@ -45,7 +45,8 @@ func (f *providerFixture) runGetExternalMetric(t *testing.T) {
 		autogenNamespace: "default",
 	}
 	for _, datadogMetric := range f.storeContent {
-		datadogMetricProvider.store.Set(datadogMetric.ID, datadogMetric, "utest")
+		datadogMetric.ddm.SetQueries(datadogMetric.query)
+		datadogMetricProvider.store.Set(datadogMetric.ddm.ID, datadogMetric.ddm, "utest")
 	}
 
 	externalMetrics, err := datadogMetricProvider.getExternalMetric(f.queryNamespace, labels.Set(f.querySelector).AsSelector(), provider.ExternalMetricInfo{Metric: f.queryMetricName})
@@ -67,7 +68,8 @@ func (f *providerFixture) runListAllExternalMetrics(t *testing.T) {
 		store: NewDatadogMetricsInternalStore(),
 	}
 	for _, datadogMetric := range f.storeContent {
-		datadogMetricProvider.store.Set(datadogMetric.ID, datadogMetric, "utest")
+		datadogMetric.ddm.SetQueries(datadogMetric.query)
+		datadogMetricProvider.store.Set(datadogMetric.ddm.ID, datadogMetric.ddm, "utest")
 	}
 
 	expectedExternalMetricInfo := datadogMetricProvider.ListAllExternalMetrics()
@@ -81,14 +83,16 @@ func TestGetExternalMetrics(t *testing.T) {
 	fixtures := []providerFixture{
 		{
 			desc: "Test nominal case - DatadogMetric exists and is valid",
-			storeContent: []model.DatadogMetricInternal{
+			storeContent: []ddmWithQuery{
 				{
-					ID:         "ns/metric0",
-					Query:      "query-metric0",
-					UpdateTime: defaultUpdateTime,
-					Valid:      true,
-					Error:      nil,
-					Value:      42.0,
+					ddm: model.DatadogMetricInternal{
+						ID:         "ns/metric0",
+						UpdateTime: defaultUpdateTime,
+						Valid:      true,
+						Error:      nil,
+						Value:      42.0,
+					},
+					query: "query-metric0",
 				},
 			},
 			queryMetricName: "datadogmetric@ns:metric0",
@@ -103,14 +107,16 @@ func TestGetExternalMetrics(t *testing.T) {
 		},
 		{
 			desc: "Test DatadogMetric is invalid",
-			storeContent: []model.DatadogMetricInternal{
+			storeContent: []ddmWithQuery{
 				{
-					ID:         "ns/metric0",
-					Query:      "query-metric0",
-					UpdateTime: defaultUpdateTime,
-					Valid:      false,
-					Error:      fmt.Errorf("Some error"),
-					Value:      42.0,
+					ddm: model.DatadogMetricInternal{
+						ID:         "ns/metric0",
+						UpdateTime: defaultUpdateTime,
+						Valid:      false,
+						Error:      fmt.Errorf("Some error"),
+						Value:      42.0,
+					},
+					query: "query-metric0",
 				},
 			},
 			queryMetricName:         "datadogmetric@ns:metric0",
@@ -119,14 +125,16 @@ func TestGetExternalMetrics(t *testing.T) {
 		},
 		{
 			desc: "Test DatadogMetric not found",
-			storeContent: []model.DatadogMetricInternal{
+			storeContent: []ddmWithQuery{
 				{
-					ID:         "ns/metric0",
-					Query:      "query-metric0",
-					UpdateTime: defaultUpdateTime,
-					Valid:      true,
-					Error:      nil,
-					Value:      42.0,
+					ddm: model.DatadogMetricInternal{
+						ID:         "ns/metric0",
+						UpdateTime: defaultUpdateTime,
+						Valid:      true,
+						Error:      nil,
+						Value:      42.0,
+					},
+					query: "query-metric0",
 				},
 			},
 			queryMetricName:         "datadogmetric@ns:metric1",
@@ -135,14 +143,16 @@ func TestGetExternalMetrics(t *testing.T) {
 		},
 		{
 			desc: "Test DatadogMetric not found",
-			storeContent: []model.DatadogMetricInternal{
+			storeContent: []ddmWithQuery{
 				{
-					ID:         "ns/metric0",
-					Query:      "query-metric0",
-					UpdateTime: defaultUpdateTime,
-					Valid:      true,
-					Error:      nil,
-					Value:      42.0,
+					ddm: model.DatadogMetricInternal{
+						ID:         "ns/metric0",
+						UpdateTime: defaultUpdateTime,
+						Valid:      true,
+						Error:      nil,
+						Value:      42.0,
+					},
+					query: "query-metric0",
 				},
 			},
 			queryMetricName:         "datadogmetric@ns:metric1",
@@ -151,14 +161,16 @@ func TestGetExternalMetrics(t *testing.T) {
 		},
 		{
 			desc: "Test ExternalMetric use wrong DatadogMetric format",
-			storeContent: []model.DatadogMetricInternal{
+			storeContent: []ddmWithQuery{
 				{
-					ID:         "ns/metric0",
-					Query:      "query-metric0",
-					UpdateTime: defaultUpdateTime,
-					Valid:      true,
-					Error:      nil,
-					Value:      42.0,
+					ddm: model.DatadogMetricInternal{
+						ID:         "ns/metric0",
+						UpdateTime: defaultUpdateTime,
+						Valid:      true,
+						Error:      nil,
+						Value:      42.0,
+					},
+					query: "query-metric0",
 				},
 			},
 			queryMetricName:         "datadogmetric@metric1",
@@ -167,14 +179,16 @@ func TestGetExternalMetrics(t *testing.T) {
 		},
 		{
 			desc: "Test ExternalMetric does not use DatadogMetric format",
-			storeContent: []model.DatadogMetricInternal{
+			storeContent: []ddmWithQuery{
 				{
-					ID:         "ns/metric0",
-					Query:      "query-metric0",
-					UpdateTime: defaultUpdateTime,
-					Valid:      true,
-					Error:      nil,
-					Value:      42.0,
+					ddm: model.DatadogMetricInternal{
+						ID:         "ns/metric0",
+						UpdateTime: defaultUpdateTime,
+						Valid:      true,
+						Error:      nil,
+						Value:      42.0,
+					},
+					query: "query-metric0",
 				},
 			},
 			queryMetricName:         "nginx.net.request_per_s",
@@ -196,47 +210,55 @@ func TestListAllExternalMetrics(t *testing.T) {
 	fixtures := []providerFixture{
 		{
 			desc:                       "Test no metrics in store",
-			storeContent:               []model.DatadogMetricInternal{},
+			storeContent:               []ddmWithQuery{},
 			expectedExternalMetricInfo: []provider.ExternalMetricInfo{},
 		},
 		{
 			desc: "Test with metrics in store",
-			storeContent: []model.DatadogMetricInternal{
+			storeContent: []ddmWithQuery{
 				{
-					ID:         "ns/metric0",
-					Query:      "query-metric0",
-					UpdateTime: defaultUpdateTime,
-					Valid:      true,
-					Error:      nil,
-					Value:      42.0,
+					ddm: model.DatadogMetricInternal{
+						ID:         "ns/metric0",
+						UpdateTime: defaultUpdateTime,
+						Valid:      true,
+						Error:      nil,
+						Value:      42.0,
+					},
+					query: "query-metric0",
 				},
 				{
-					ID:         "ns/metric1",
-					Query:      "query-metric1",
-					UpdateTime: defaultUpdateTime,
-					Valid:      false,
-					Error:      nil,
-					Value:      42.0,
+					ddm: model.DatadogMetricInternal{
+						ID:         "ns/metric1",
+						UpdateTime: defaultUpdateTime,
+						Valid:      false,
+						Error:      nil,
+						Value:      42.0,
+					},
+					query: "query-metric1",
 				},
 				{
-					ID:                 "autogen-foo",
-					Query:              "query-metric2",
-					UpdateTime:         defaultUpdateTime,
-					ExternalMetricName: "metric2",
-					Autogen:            true,
-					Valid:              false,
-					Error:              nil,
-					Value:              42.0,
+					ddm: model.DatadogMetricInternal{
+						ID:                 "autogen-foo",
+						UpdateTime:         defaultUpdateTime,
+						ExternalMetricName: "metric2",
+						Autogen:            true,
+						Valid:              false,
+						Error:              nil,
+						Value:              42.0,
+					},
+					query: "query-metric2",
 				},
 				{
-					ID:                 "autogen-bar",
-					Query:              "query-metric3",
-					UpdateTime:         defaultUpdateTime,
-					ExternalMetricName: "metric2",
-					Autogen:            true,
-					Valid:              false,
-					Error:              nil,
-					Value:              42.0,
+					ddm: model.DatadogMetricInternal{
+						ID:                 "autogen-bar",
+						UpdateTime:         defaultUpdateTime,
+						ExternalMetricName: "metric2",
+						Autogen:            true,
+						Valid:              false,
+						Error:              nil,
+						Value:              42.0,
+					},
+					query: "query-metric3",
 				},
 			},
 			expectedExternalMetricInfo: []provider.ExternalMetricInfo{
