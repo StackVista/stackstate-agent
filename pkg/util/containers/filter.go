@@ -10,7 +10,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 const (
@@ -97,6 +98,8 @@ func parseFilters(filters []string) (imageFilters, nameFilters, namespaceFilters
 				return nil, nil, nil, fmt.Errorf("invalid regex '%s': %s", pat, err)
 			}
 			namespaceFilters = append(namespaceFilters, r)
+		default:
+			log.Warnf("Container filter %q is unknown, Ignoring it. The supported filters are 'image', 'name' and 'kube_namespace'", filter)
 		}
 	}
 	return imageFilters, nameFilters, namespaceFilters, nil
