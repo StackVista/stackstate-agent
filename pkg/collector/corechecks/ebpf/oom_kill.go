@@ -4,8 +4,8 @@
 // Copyright 2016-present Datadog, Inc.
 
 // FIXME: we require the `cgo` build tag because of this dep relationship:
-// github.com/StackVista/stackstate-agent/pkg/process/net depends on `github.com/DataDog/agent-payload/process`,
-// which has a hard dependency on `github.com/DataDog/zstd`, which requires CGO.
+// github.com/DataDog/datadog-agent/pkg/process/net depends on `github.com/DataDog/agent-payload/process`,
+// which has a hard dependency on `github.com/DataDog/zstd_0`, which requires CGO.
 // Should be removed once `github.com/DataDog/agent-payload/process` can be imported with CGO disabled.
 //go:build cgo && linux
 // +build cgo,linux
