@@ -3,11 +3,12 @@
 ## 2.11.0 (xxxx-xx-xx)
 
 **Improvements**
-
-  - Added support to map user defined stackstate-environment tags or config to the environments object
-  - Added support to map user defined stackstate-layer tags or config to the layer object
-  - Added support to map user defined stackstate-domain tags or config to the domain object
-  - Added support to map user defined stackstate-identifiers tags or config to the identifiers array
+- Integrations
+  - Added support to override the check state location in the configuration of a check. [(STAC-12220)](https://stackstate.atlassian.net/browse/STAC-12220)
+  - Added support to map user defined stackstate-environment tags or config to the environments object [(STAC-11132)](https://stackstate.atlassian.net/browse/STAC-11132)
+  - Added support to map user defined stackstate-layer tags or config to the layer object [(STAC-11132)](https://stackstate.atlassian.net/browse/STAC-11132)
+  - Added support to map user defined stackstate-domain tags or config to the domain object [(STAC-11132)](https://stackstate.atlassian.net/browse/STAC-11132)
+  - Added support to map user defined stackstate-identifiers tags or config to the identifiers array [(STAC-11132)](https://stackstate.atlassian.net/browse/STAC-11132)
 
 
 ## 2.10.0 (2021-02-25)
