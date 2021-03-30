@@ -32,7 +32,8 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/logs/restart"
 	"github.com/DataDog/datadog-agent/pkg/pidfile"
 	"github.com/DataDog/datadog-agent/pkg/serializer"
-	"github.com/DataDog/datadog-agent/pkg/status/health"
+	"github.com/DataDog/datadog-agent/pkg/tagger"
+	"github.com/DataDog/datadog-agent/pkg/tagger/remote"
 	"github.com/DataDog/datadog-agent/pkg/telemetry"
 	"github.com/DataDog/datadog-agent/pkg/util"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
@@ -277,6 +278,12 @@ func RunAgent(ctx context.Context) (err error) {
 	statsdClient, err := ddgostatsd.New(statsdAddr)
 	if err != nil {
 		return log.Criticalf("Error creating statsd Client: %s", err)
+	}
+
+	// Initialize the remote tagger
+	if coreconfig.Datadog.GetBool("security_agent.remote_tagger") {
+		tagger.SetDefaultTagger(remote.NewTagger())
+		tagger.Init()
 	}
 
 	if err = startCompliance(hostname, stopper, statsdClient); err != nil {
