@@ -28,9 +28,11 @@ fi
 # D75CEA17048B9ACBF186794B32637D44F14F620E expires in 2032
 APT_GPG_KEYS=("A2923DFF56EDA6E76E55E492D3A80E30382E94DE" "D75CEA17048B9ACBF186794B32637D44F14F620E")
 
+# DATADOG_RPM_KEY_CURRENT.public always contains key used to sign current
+# repodata and newly released packages
 # DATADOG_RPM_KEY_E09422B3.public expires in 2022
-# DATADOG_RPM_KEY_20200908.public expires in 2024
-RPM_GPG_KEYS=("DATADOG_RPM_KEY_E09422B3.public" "DATADOG_RPM_KEY_20200908.public")
+# DATADOG_RPM_KEY_FD4BF915.public expires in 2024
+RPM_GPG_KEYS=("DATADOG_RPM_KEY_CURRENT.public" "DATADOG_RPM_KEY_E09422B3.public" "DATADOG_RPM_KEY_FD4BF915.public")
 
 # RPM_GPG_KEYS_A6 contains keys we only install for the A6 repo.
 # DATADOG_RPM_KEY.public is only useful to install old (< 6.14) Agent packages.
@@ -134,10 +136,14 @@ if [ -n "$STS_HOSTNAME" ]; then
     hostname=$STS_HOSTNAME
 fi
 
-# comma-separated list of tags
-default_host_tags="os:linux"
-if [ -n "$HOST_TAGS" ]; then
-    host_tags="$default_host_tags,$HOST_TAGS"
+if [ -n "$TESTING_KEYS_URL" ]; then
+  keys_url=$TESTING_KEYS_URL
+else
+  keys_url="keys.datadoghq.com"
+fi
+
+if [ -n "$TESTING_YUM_URL" ]; then
+  yum_url=$TESTING_YUM_URL
 else
     host_tags=$default_host_tags
 fi
@@ -222,20 +228,32 @@ else
 fi
 
 # Install the necessary package sources
-if [ $OS = "RedHat" ]; then
-    if [ -z "$no_repo" ]; then
-    print_blu "* Installing YUM sources for StackState\n"
-    $sudo_cmd sh -c "echo -e '[stackstate]\nname = StackState\nbaseurl = $YUM_REPO/$code_name/\nenabled=1\ngpgcheck=1\npriority=1\ngpgkey=$YUM_REPO/public.key' > /etc/yum.repos.d/stackstate.repo"
+if [ "$OS" = "RedHat" ]; then
+    echo -e "\033[34m\n* Installing YUM sources for Datadog\n\033[0m"
+
+    UNAME_M=$(uname -m)
+    if [ "$UNAME_M" == "i686" ] || [ "$UNAME_M" == "i386" ] || [ "$UNAME_M" == "x86" ]; then
+        ARCHI="i386"
+    elif [ "$UNAME_M" == "aarch64" ]; then
+        ARCHI="aarch64"
+    else
+        ARCHI="x86_64"
+    fi
+
+    if [ "$agent_major_version" -eq 7 ]; then
+      gpgkeys="https://${keys_url}/DATADOG_RPM_KEY_E09422B3.public"
+    else
+      gpgkeys="https://${keys_url}/DATADOG_RPM_KEY.public\n       https://${keys_url}/DATADOG_RPM_KEY_E09422B3.public"
     fi
 
     gpgkeys=''
     separator='\n       '
     for key_path in "${RPM_GPG_KEYS[@]}"; do
-      gpgkeys="${gpgkeys:+"${gpgkeys}${separator}"}https://${yum_url}/${key_path}"
+      gpgkeys="${gpgkeys:+"${gpgkeys}${separator}"}https://${keys_url}/${key_path}"
     done
     if [ "$agent_major_version" -eq 6 ]; then
       for key_path in "${RPM_GPG_KEYS_A6[@]}"; do
-        gpgkeys="${gpgkeys:+"${gpgkeys}${separator}"}https://${yum_url}/${key_path}"
+        gpgkeys="${gpgkeys:+"${gpgkeys}${separator}"}https://${keys_url}/${key_path}"
       done
     fi
 
@@ -309,22 +327,22 @@ If the failing repository is StackState, please contact StackState support.
   if [ "$SUSE11" == "yes" ]; then
     # SUSE 11 special case
     for key_path in "${RPM_GPG_KEYS[@]}"; do
-      $sudo_cmd curl -o "/tmp/${key_path}" "https://${yum_url}/${key_path}"
+      $sudo_cmd curl -o "/tmp/${key_path}" "https://${keys_url}/${key_path}"
       $sudo_cmd rpm --import "/tmp/${key_path}"
     done
     if [ "$agent_major_version" -eq 6 ]; then
       for key_path in "${RPM_GPG_KEYS_A6[@]}"; do
-        $sudo_cmd curl -o "/tmp/${key_path}" "https://${yum_url}/${key_path}"
+        $sudo_cmd curl -o "/tmp/${key_path}" "https://${keys_url}/${key_path}"
         $sudo_cmd rpm --import "/tmp/${key_path}"
       done
     fi
   else
     for key_path in "${RPM_GPG_KEYS[@]}"; do
-      $sudo_cmd rpm --import "https://${yum_url}/${key_path}"
+      $sudo_cmd rpm --import "https://${keys_url}/${key_path}"
     done
     if [ "$agent_major_version" -eq 6 ]; then
       for key_path in "${RPM_GPG_KEYS_A6[@]}"; do
-        $sudo_cmd rpm --import "https://${yum_url}/${key_path}"
+        $sudo_cmd rpm --import "https://${keys_url}/${key_path}"
       done
     fi
   fi
@@ -335,15 +353,15 @@ If the failing repository is StackState, please contact StackState support.
     gpgkeys=''
     separator='\n       '
     for key_path in "${RPM_GPG_KEYS[@]}"; do
-      gpgkeys="${gpgkeys:+"${gpgkeys}${separator}"}https://${yum_url}/${key_path}"
+      gpgkeys="${gpgkeys:+"${gpgkeys}${separator}"}https://${keys_url}/${key_path}"
     done
     if [ "$agent_major_version" -eq 6 ]; then
       for key_path in "${RPM_GPG_KEYS_A6[@]}"; do
-        gpgkeys="${gpgkeys:+"${gpgkeys}${separator}"}https://${yum_url}/${key_path}"
+        gpgkeys="${gpgkeys:+"${gpgkeys}${separator}"}https://${keys_url}/${key_path}"
       done
     fi
   else
-    gpgkeys="https://${yum_url}/DATADOG_RPM_KEY_CURRENT.public"
+    gpgkeys="https://${keys_url}/DATADOG_RPM_KEY_CURRENT.public"
   fi
 
   echo -e "\033[34m\n* Installing YUM Repository for Datadog\n\033[0m"
