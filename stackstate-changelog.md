@@ -3,6 +3,7 @@
 ## 2.11.0 (xxxx-xx-xx)
 
 **Improvements**
+
 - Integrations
   - Added support to override the check state location in the configuration of a check. [(STAC-12220)](https://stackstate.atlassian.net/browse/STAC-12220)
   - Added support to map user defined stackstate-environment tags or config to the environments object [(STAC-11132)](https://stackstate.atlassian.net/browse/STAC-11132)
