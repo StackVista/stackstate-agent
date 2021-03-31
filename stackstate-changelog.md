@@ -2,6 +2,10 @@
 
 ## 2.11.0 (xxxx-xx-xx)
 
+**Features**
+- DynaTrace Integration
+  - Gather Dynatrace events to determine the health state of Dynatrace components in StackState [(STAC-10795)](https://stackstate.atlassian.net/browse/STAC-10795)
+
 **Improvements**
 
 - Integrations
