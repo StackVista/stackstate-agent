@@ -247,15 +247,20 @@ func initConfig(config Config) {
 	// We only support containerd in Kubernetes. By default containerd cri uses `k8s.io` https://github.com/containerd/cri/blob/release/1.2/pkg/constants/constants.go#L22-L23
 	config.BindEnvAndSetDefault("containerd_namespace", "k8s.io")
 
+	// Docker Swarm
+	config.BindEnvAndSetDefault("collect_swarm_topology", false)
+
 	// Kubernetes
 	config.BindEnvAndSetDefault("kubernetes_kubelet_host", "")
 	config.BindEnvAndSetDefault("kubernetes_http_kubelet_port", 10255)
 	config.BindEnvAndSetDefault("kubernetes_https_kubelet_port", 10250)
 
 	config.BindEnvAndSetDefault("kubelet_tls_verify", true)
+	config.BindEnvAndSetDefault("kubelet_fallback_to_unverified_tls", true) // sts
+	config.BindEnvAndSetDefault("kubelet_fallback_to_insecure", true)       // sts
 	config.BindEnvAndSetDefault("collect_kubernetes_events", false)
 	config.BindEnvAndSetDefault("collect_kubernetes_metrics", false)
-	config.BindEnvAndSetDefault("collect_kubernetes_topology", true)
+	config.BindEnvAndSetDefault("collect_kubernetes_topology", false)
 	config.BindEnvAndSetDefault("collect_kubernetes_timeout", 10)
 	config.BindEnvAndSetDefault("kubelet_client_ca", "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
 
@@ -670,6 +675,14 @@ func IsKubernetes() bool {
 	}
 	// support of Datadog environment variable for Kubernetes
 	if os.Getenv("KUBERNETES") != "" {
+		return true
+	}
+	return false
+}
+
+// IsDockerSwarm returns whether the Agent is running on a Swarm cluster
+func IsDockerSwarm() bool {
+	if os.Getenv("DOCKER_SWARM") != "" {
 		return true
 	}
 	return false

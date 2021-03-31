@@ -9,7 +9,12 @@
   - Added support to map user defined stackstate-layer tags or config to the layer object [(STAC-11132)](https://stackstate.atlassian.net/browse/STAC-11132)
   - Added support to map user defined stackstate-domain tags or config to the domain object [(STAC-11132)](https://stackstate.atlassian.net/browse/STAC-11132)
   - Added support to map user defined stackstate-identifiers tags or config to the identifiers array [(STAC-11132)](https://stackstate.atlassian.net/browse/STAC-11132)
+  - Remove `stackstate-identifier`, `stackstate-environment`, `stackstate-layer`, `stackstate-domain` and `stackstate-identifiers` from the tags object if it has been mapped to the data object. [(STAC-11132)](https://stackstate.atlassian.net/browse/STAC-11132)
+  - Improved out-of-the-box support for Kubernetes 1.18+ by automatically falling back to using TLS without verifying CA when communicating with the secure Kubelet [(STAC-12205)](https://stackstate.atlassian.net/browse/STAC-12205)
 
+**Bugfix**
+
+  - Kubelet check should not fail for Kubernetes 1.18+ (due to deprecated `/spec` API endpoint) [(STAC-12307)](https://stackstate.atlassian.net/browse/STAC-12307)
 
 ## 2.10.0 (2021-02-25)
 
