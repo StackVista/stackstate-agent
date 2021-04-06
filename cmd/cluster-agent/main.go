@@ -40,4 +40,6 @@ func main() {
 		log.Error(err)
 		os.Exit(-1)
 	}
+
+	fmt.Println("hello")
 }
