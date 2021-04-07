@@ -115,7 +115,7 @@ deps_deb:
   rules:
 #    - if: '$CI_COMMIT_BRANCH == "master"'
 #    - if: '$CI_COMMIT_TAG =~ /.*\..*\..*/'
-    - if: $CI_PIPELINE_SOURCE == "push"
+    - if: $CI_MERGE_REQUEST_ID
       changes: *cluster_agent_changes
       when: always
 
