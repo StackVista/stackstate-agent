@@ -701,7 +701,6 @@ release_deb:
     - triggers
 
 release_rpm:
-  <<: *non_cluster_agent_base
   stage: release
   dependencies:
     - build_rpm
