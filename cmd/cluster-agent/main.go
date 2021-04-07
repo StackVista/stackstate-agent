@@ -8,6 +8,8 @@
 
 //go:generate go run ../../pkg/config/render_config.go dca ../../pkg/config/config_template.yaml ../../Dockerfiles/cluster-agent/datadog-cluster.yaml
 
+// this is a test
+
 package main
 
 import (
