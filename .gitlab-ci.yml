@@ -92,16 +92,27 @@ deps_deb:
       - $CI_PROJECT_DIR/version.txt
     expire_in: 1 week
 
-.non_cluster_agent_base: &non_cluster_agent_base
+.agent_base: &agent_base
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
     - if: '$CI_COMMIT_TAG =~ /.*\..*\..*/'
     - if: $CI_MERGE_REQUEST_IID
+      changes:
+        - "cmd/cluster-agent/*"
+        - "pkg/clusteragent/*"
+        - "Dockerfiles/cluster-agent/*"
+        - "pkg/collector/corechecks/cluster/*"
+        - "pkg/collector/corechecks/containers/*"
+        - "pkg/collector/corechecks/topology_collector.go"
+        - "pkg/util/kubernetes/*"
+        - "pkg/util/docker/*"
+        - "test/molecule-role/molecule/kubernetes/*"
+      when: never
 
 .cluster_agent_base: &cluster_agent_base
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /.*/'
+    - if: $CI_MERGE_REQUEST_IID
       changes:
       - "cmd/cluster-agent/*"
       - "pkg/clusteragent/*"
@@ -112,9 +123,10 @@ deps_deb:
       - "pkg/util/kubernetes/*"
       - "pkg/util/docker/*"
       - "test/molecule-role/molecule/kubernetes/*"
+      when: on_success
 
 deps_rpm:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: prepare
   image: docker.io/stackstate/stackstate-agent-runner-gitlab:centos6
   cache:
@@ -134,7 +146,7 @@ deps_rpm:
     expire_in: 1 week
 
 deps_win:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: prepare
   before_script:
     - set WIN_CI_PROJECT_DIR=%CD%
@@ -158,7 +170,7 @@ deps_win:
     - agent_windows_6
 
 unit_tests:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: build_and_test
   needs:
     - deps_deb
@@ -180,7 +192,7 @@ unit_tests:
     - sts-aws
 
 integration_tests:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: build_and_test
   needs:
     - deps_deb
@@ -199,7 +211,7 @@ integration_tests:
     - sts-aws
 
 filename_linting:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: build_and_test
   needs:
     - deps_deb
@@ -207,7 +219,7 @@ filename_linting:
     - inv -e lint-filenames
 
 docker_integration_tests:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: build_and_test
   needs:
     - deps_deb
@@ -229,7 +241,7 @@ docker_integration_tests:
     - sts-k8s-m-runner
 
 build_binaries:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: build_and_test
   needs:
     - deps_deb
@@ -238,7 +250,7 @@ build_binaries:
     - inv -e agent.build
 
 build_puppy:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: build_and_test
   needs:
     - deps_deb
@@ -338,7 +350,7 @@ build_deb:
 
 
 build_rpm:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: build_and_test
   image: docker.io/stackstate/stackstate-agent-runner-gitlab:centos6_20190429
   needs:
@@ -390,7 +402,7 @@ build_rpm:
 
 
 build_win:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: build_and_test
   needs:
     - deps_win
@@ -425,7 +437,7 @@ build_win:
 
 
 test_deb_renaming:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: pre_release
   needs:
     - build_deb
@@ -434,7 +446,7 @@ test_deb_renaming:
     ./test/renaming/test_deb.sh $CI_PROJECT_DIR/outcomes/pkg/*.deb
 
 test_rpm_renaming:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: pre_release
   image: docker.io/stackstate/stackstate-agent-runner-gitlab:centos6_20190429
   needs:
@@ -444,7 +456,7 @@ test_rpm_renaming:
     ./test/renaming/test_rpm.sh $CI_PROJECT_DIR/outcomes/pkg/*.rpm
 
 pre_release_deb:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: pre_release
   needs:
     - deps_deb
@@ -458,7 +470,7 @@ pre_release_deb:
     - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET']).object('install.sh').upload_file('./install.sh', acl:'public-read')"
 
 pre_release_win:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: pre_release
   needs:
     - deps_win
@@ -486,7 +498,7 @@ pre_release_win:
 
 
 pre_release_rpm:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: pre_release
 #  image: docker.io/stackstate/stackstate-agent-runner-gitlab:rpm.latest
   needs:
@@ -518,7 +530,7 @@ pre_release_image:
     - sts-k8s-m-runner
 
 pre_release_trace_agent_image:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: pre_release
   image: docker:18.06.0
   needs:
@@ -575,7 +587,7 @@ pre_release_cluster_agent_image:
       - script_failure
 
 molecule_tests_vms:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: acceptance
   needs:
     - pre_release_deb
@@ -593,7 +605,7 @@ molecule_tests_vms:
     expire_in: 1 week
 
 molecule_tests_compose:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: acceptance
   needs:
     - pre_release_image
@@ -659,7 +671,7 @@ molecule_tests_secrets:
     expire_in: 1 week
 
 molecule_tests_integrations:
-  <<: *non_cluster_agent_base
+  <<: *agent_base
   stage: acceptance
   needs:
     - pre_release_image
