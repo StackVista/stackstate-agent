@@ -263,10 +263,6 @@ func prepareConfig(path string) (*AgentConfig, error) {
 		return cfg, err
 	}
 	cfg.ConfigPath = path
-	// if the agent binary path is empty, use the default path
-	if cfg.DDAgentBin == "" {
-		cfg.DDAgentBin = defaultDDAgentBin
-	}
 	return cfg, nil
 }
 
