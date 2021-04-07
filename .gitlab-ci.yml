@@ -92,7 +92,30 @@ deps_deb:
       - $CI_PROJECT_DIR/version.txt
     expire_in: 1 week
 
+.cluster_agent_base: &cluster_agent_base
+  rules:
+    - changes:
+      - "cmd/cluster-agent/*"
+      - "pkg/clusteragent/*"
+      - "Dockerfiles/cluster-agent/*"
+      - "pkg/collector/corechecks/cluster/*"
+      - "pkg/collector/corechecks/containers/*"
+      - "pkg/collector/corechecks/topology_collector.go"
+      - "pkg/util/kubernetes/*"
+      - "pkg/util/docker/*"
+      - "test/molecule-role/molecule/kubernetes/*"
+      when: always
+
+.non_cluster_agent_base: &non_cluster_agent_base
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_TAG =~ /*.*.*/'
+    - if: $CI_MERGE_REQUEST_IID
+      when: always
+
+
 deps_rpm:
+  <<: *non_cluster_agent_base
   stage: prepare
   image: docker.io/stackstate/stackstate-agent-runner-gitlab:centos6
   cache:
@@ -112,6 +135,7 @@ deps_rpm:
     expire_in: 1 week
 
 deps_win:
+  <<: *non_cluster_agent_base
   stage: prepare
   before_script:
     - set WIN_CI_PROJECT_DIR=%CD%
@@ -135,6 +159,7 @@ deps_win:
     - agent_windows_6
 
 unit_tests:
+  <<: *non_cluster_agent_base
   stage: build_and_test
   needs:
     - deps_deb
@@ -156,6 +181,7 @@ unit_tests:
     - sts-aws
 
 integration_tests:
+  <<: *non_cluster_agent_base
   stage: build_and_test
   needs:
     - deps_deb
@@ -174,6 +200,7 @@ integration_tests:
     - sts-aws
 
 filename_linting:
+  <<: *non_cluster_agent_base
   stage: build_and_test
   needs:
     - deps_deb
@@ -181,6 +208,7 @@ filename_linting:
     - inv -e lint-filenames
 
 docker_integration_tests:
+  <<: *non_cluster_agent_base
   stage: build_and_test
   needs:
     - deps_deb
@@ -202,6 +230,7 @@ docker_integration_tests:
     - sts-k8s-m-runner
 
 build_binaries:
+  <<: *non_cluster_agent_base
   stage: build_and_test
   needs:
     - deps_deb
@@ -210,6 +239,7 @@ build_binaries:
     - inv -e agent.build
 
 build_puppy:
+  <<: *non_cluster_agent_base
   stage: build_and_test
   needs:
     - deps_deb
@@ -218,6 +248,7 @@ build_puppy:
     - ./bin/agent/agent -c ./bin/agent/dist check cpu
 
 build_cluster_agent:
+  <<: *cluster_agent_base
   stage: build_and_test
   needs:
     - deps_deb
@@ -460,6 +491,7 @@ pre_release_rpm:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package_rpm.sh $STS_AWS_TEST_BUCKET_YUM
 
 pre_release_image:
+  <<: *cluster_agent_base
   stage: pre_release
   image: docker:18.06.0
   needs:
@@ -500,6 +532,7 @@ pre_release_trace_agent_image:
     - sts-k8s-m-runner
 
 pre_release_cluster_agent_image:
+  <<: *cluster_agent_base
   stage: pre_release
   image: docker:18.06.0
   needs:
@@ -582,6 +615,7 @@ molecule_tests_local_install:
     - STAC-10025-local-install-bis
 
 molecule_tests_kubernetes:
+  <<: *cluster_agent_base
   stage: acceptance
   needs:
     - pre_release_cluster_agent_image
@@ -636,6 +670,7 @@ molecule_tests_swarm:
     - pre_release_image
   dependencies: []
   <<: *molecule_base
+  <<: *cluster_agent_base
   script:
     - cd $CI_PROJECT_DIR/test && ./molecule.sh test -s swarm
   artifacts:
