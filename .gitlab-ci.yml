@@ -426,6 +426,7 @@ build_win:
 
 
 test_deb_renaming:
+  <<: *non_cluster_agent_base
   stage: pre_release
   needs:
     - build_deb
@@ -444,6 +445,7 @@ test_rpm_renaming:
     ./test/renaming/test_rpm.sh $CI_PROJECT_DIR/outcomes/pkg/*.rpm
 
 pre_release_deb:
+  <<: *non_cluster_agent_base
   stage: pre_release
   needs:
     - deps_deb
@@ -517,6 +519,7 @@ pre_release_image:
     - sts-k8s-m-runner
 
 pre_release_trace_agent_image:
+  <<: *non_cluster_agent_base
   stage: pre_release
   image: docker:18.06.0
   needs:
