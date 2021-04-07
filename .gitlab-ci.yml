@@ -434,6 +434,7 @@ test_deb_renaming:
     ./test/renaming/test_deb.sh $CI_PROJECT_DIR/outcomes/pkg/*.deb
 
 test_rpm_renaming:
+  <<: *non_cluster_agent_base
   stage: pre_release
   image: docker.io/stackstate/stackstate-agent-runner-gitlab:centos6_20190429
   needs:
@@ -484,6 +485,7 @@ pre_release_win:
 
 
 pre_release_rpm:
+  <<: *non_cluster_agent_base
   stage: pre_release
 #  image: docker.io/stackstate/stackstate-agent-runner-gitlab:rpm.latest
   needs:
