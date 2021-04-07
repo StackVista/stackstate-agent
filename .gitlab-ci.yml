@@ -339,6 +339,7 @@ build_deb:
 
 
 build_rpm:
+  <<: *non_cluster_agent_base
   stage: build_and_test
   image: docker.io/stackstate/stackstate-agent-runner-gitlab:centos6_20190429
   needs:
@@ -570,6 +571,7 @@ pre_release_cluster_agent_image:
       - script_failure
 
 molecule_tests_vms:
+  <<: *non_cluster_agent_base
   stage: acceptance
   needs:
     - pre_release_deb
