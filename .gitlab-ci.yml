@@ -716,7 +716,6 @@ release_rpm:
     - triggers
 
 release_win:
-  <<: *non_cluster_agent_base
   stage: release
   dependencies:
     - deps_win
