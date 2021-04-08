@@ -94,12 +94,12 @@ deps_deb:
 
 .agent_base: &agent_base
   rules:
-    - if: '$CI_COMMIT_MESSAGE =~ /.*\[cluster_agent\].*/'
+    - if: '$CI_COMMIT_MESSAGE =~ /\[cluster_agent]/'
       when: never
 
 .cluster_agent_base: &cluster_agent_base
   rules:
-    - if: '$CI_COMMIT_MESSAGE =~ /.*\[cluster_agent\].*/'
+    - if: '$CI_COMMIT_MESSAGE =~ /\[cluster_agent]/'
       when: on_success
 
 deps_rpm:
