@@ -238,7 +238,7 @@ build_puppy:
     - ./bin/agent/agent -c ./bin/agent/dist check cpu
 
 build_cluster_agent:
-  <<: *cluster_agent_base
+#  <<: *cluster_agent_base
   stage: build_and_test
   needs:
     - deps_deb
@@ -488,7 +488,7 @@ pre_release_rpm:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package_rpm.sh $STS_AWS_TEST_BUCKET_YUM
 
 pre_release_image:
-  <<: *cluster_agent_base
+#  <<: *cluster_agent_base
   stage: pre_release
   image: docker:18.06.0
   needs:
@@ -530,7 +530,7 @@ pre_release_trace_agent_image:
     - sts-k8s-m-runner
 
 pre_release_cluster_agent_image:
-  <<: *cluster_agent_base
+#  <<: *cluster_agent_base
   stage: pre_release
   image: docker:18.06.0
   needs:
@@ -615,7 +615,7 @@ molecule_tests_local_install:
     - STAC-10025-local-install-bis
 
 molecule_tests_kubernetes:
-  <<: *cluster_agent_base
+#  <<: *cluster_agent_base
   stage: acceptance
   needs:
     - pre_release_cluster_agent_image
@@ -671,7 +671,7 @@ molecule_tests_swarm:
     - pre_release_image
   dependencies: []
   <<: *molecule_base
-  <<: *cluster_agent_base
+#  <<: *cluster_agent_base
   script:
     - cd $CI_PROJECT_DIR/test && ./molecule.sh test -s swarm
   artifacts:
