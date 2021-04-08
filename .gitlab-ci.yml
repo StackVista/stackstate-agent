@@ -98,7 +98,7 @@ deps_deb:
       when: never
     - if: $CI_COMMIT_MESSAGE !~ /\[cluster_agent]/
       when: on_success
-
+# test
 deps_rpm:
   <<: *agent_base
   stage: prepare
