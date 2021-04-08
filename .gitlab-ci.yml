@@ -92,32 +92,15 @@ deps_deb:
       - $CI_PROJECT_DIR/version.txt
     expire_in: 1 week
 
-.cluster_agent_changes: &cluster_agent_changes
-  - "cmd/cluster-agent/*"
-  - "pkg/clusteragent/*"
-  - "Dockerfiles/cluster-agent/*"
-  - "pkg/collector/corechecks/cluster/*"
-  - "pkg/collector/corechecks/containers/*"
-  - "pkg/collector/corechecks/topology_collector.go"
-  - "pkg/util/kubernetes/*"
-  - "pkg/util/docker/*"
-  - "test/molecule-role/molecule/kubernetes/*"
-
 .agent_base: &agent_base
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
     - if: '$CI_COMMIT_TAG =~ /.*\..*\..*/'
-    - if: $CI_EXTERNAL_PULL_REQUEST_IID
-      changes: *cluster_agent_changes
+    - if: '$CI_COMMIT_MESSAGE =~ /.*\[cluster_agent\].*/'
       when: never
 
 .cluster_agent_base: &cluster_agent_base
-  rules:
-#    - if: '$CI_COMMIT_BRANCH == "master"'
-#    - if: '$CI_COMMIT_TAG =~ /.*\..*\..*/'
-    - if: $CI_EXTERNAL_PULL_REQUEST_IID
-      changes: *cluster_agent_changes
-      when: always
+
 
 deps_rpm:
   <<: *agent_base
