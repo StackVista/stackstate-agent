@@ -94,9 +94,9 @@ deps_deb:
 
 .agent_base: &agent_base
   rules:
-    - if: $CI_COMMIT_MESSAGE =~ /\[cluster_agent]/
+    - if: $CI_COMMIT_MESSAGE =~ /\[cluster-agent]/
       when: never
-    - if: $CI_COMMIT_MESSAGE !~ /\[cluster_agent]/
+    - if: $CI_COMMIT_MESSAGE !~ /\[cluster-agent]/
       when: on_success
 
 deps_rpm:
