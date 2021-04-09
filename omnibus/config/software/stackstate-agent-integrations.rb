@@ -10,7 +10,6 @@ name 'stackstate-agent-integrations'
 
 dependency 'datadog-agent'
 dependency 'pip3'
-dependency 'protobuf-py'
 
 if linux?
   # add nfsiostat script
@@ -106,10 +105,10 @@ build do
     # HACK: we need to do this like this due to the well known issues with omnibus
     # runtime requirements.
     if windows?
-      freeze_mixin = shellout!("#{windows_safe_path(install_dir)}\\embedded\\Scripts\\pip.exe freeze")
+      freeze_mixin = shellout!("#{pip} freeze")
       frozen_agent_reqs = freeze_mixin.stdout
     else
-      freeze_mixin = shellout!("#{install_dir}/embedded/bin/pip freeze")
+      freeze_mixin = shellout!("#{pip} freeze")
       frozen_agent_reqs = freeze_mixin.stdout
     end
     pip "freeze > #{project_dir}/#{core_constraints_file}"
@@ -123,17 +122,16 @@ build do
     end
 
     # Windows pip workaround to support globs
-    python_bin = "\"#{windows_safe_path(install_dir)}\\embedded\\python.exe\""
     python_pip_no_deps = "#{pip} install -c #{windows_safe_path(project_dir)}\\#{core_constraints_file} --no-deps #{windows_safe_path(project_dir)}"
     python_pip_req = "#{pip} install -c #{windows_safe_path(project_dir)}\\#{core_constraints_file} --no-deps --require-hashes -r"
     python_pip_uninstall = "#{pip} uninstall -y"
 
     if windows?
       static_reqs_in_file = "#{windows_safe_path(project_dir)}\\stackstate_checks_base\\stackstate_checks\\base\\data\\#{agent_requirements_in}"
-      static_reqs_filtered_file = "#{windows_safe_path(project_dir)}\\#{agent_requirements_in}"
+      static_reqs_out_file = "#{windows_safe_path(project_dir)}\\#{agent_requirements_in}"
     else
       static_reqs_in_file = "#{project_dir}/stackstate_checks_base/stackstate_checks/base/data/#{agent_requirements_in}"
-      static_reqs_filtered_file = "#{project_dir}/#{agent_requirements_in}"
+      static_reqs_out_file = "#{project_dir}/#{agent_requirements_in}"
     end
 
     # Remove any blacklisted requirements from the static-environment req file
@@ -153,7 +151,7 @@ build do
     end
 
     erb source: "static_requirements.txt.erb",
-        dest: "#{static_reqs_filtered_file}",
+        dest: "#{static_reqs_out_file}",
         mode: 0640,
         vars: { requirements: requirements }
 
@@ -249,7 +247,7 @@ build do
 
       File.file?("#{check_dir}/setup.py") || next
       if windows?
-        command("#{python_bin} -m #{python_pip_no_deps}\\#{check}")
+        command("#{python} -m #{python_pip_no_deps}\\#{check}")
       else
         pip "install --no-deps .", :env => nix_build_env, :cwd => "#{project_dir}/#{check}"
       end
