@@ -139,7 +139,7 @@ Loop:
 }
 
 func TestDNSOverUDPSnooping(t *testing.T) {
-	cfg := config.NewDefaultConfig()
+	cfg := testConfig()
 	buf, err := netebpf.ReadBPFModule(cfg.BPFDir, false)
 	require.NoError(t, err)
 	defer buf.Close()
@@ -201,7 +201,7 @@ func initDNSTestsWithDomainCollection(t *testing.T, localDNS bool) (*manager.Man
 }
 
 func initDNSTests(t *testing.T, localDNS bool, collectDomain bool) (*manager.Manager, *SocketFilterSnooper) {
-	cfg := config.NewDefaultConfig()
+	cfg := testConfig()
 	buf, err := netebpf.ReadBPFModule(cfg.BPFDir, false)
 	require.NoError(t, err)
 	defer buf.Close()
@@ -477,7 +477,7 @@ func TestDNSOverUDPTimeoutCountWithoutDomain(t *testing.T) {
 }
 
 func TestParsingError(t *testing.T) {
-	cfg := config.NewDefaultConfig()
+	cfg := testConfig()
 	buf, err := netebpf.ReadBPFModule(cfg.BPFDir, false)
 	require.NoError(t, err)
 	defer buf.Close()
@@ -550,4 +550,8 @@ func nxDomainHandler(w dns.ResponseWriter, r *dns.Msg) {
 	answer.SetReply(r)
 	answer.SetRcode(r, dns.RcodeNameError)
 	w.WriteMsg(answer) //nolint:errcheck
+}
+
+func testConfig() *config.Config {
+	return config.New()
 }
