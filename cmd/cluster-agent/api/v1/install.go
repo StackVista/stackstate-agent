@@ -8,8 +8,9 @@ package v1
 import (
 	"strconv"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/telemetry"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/gorilla/mux"
 
 	"github.com/StackVista/stackstate-agent/pkg/clusteragent"
@@ -25,13 +26,19 @@ func incrementRequestMetric(handler string, status int) {
 	apiRequests.Inc(handler, strconv.Itoa(status))
 }
 
-// Install registers v1 API endpoints
-func Install(r *mux.Router, sc clusteragent.ServerContext) {
+// InstallMetadataEndpoints registers endpoints for metadata
+func InstallMetadataEndpoints(r *mux.Router) {
+	log.Debug("Registering metadata endpoints")
 	if config.Datadog.GetBool("cloud_foundry") {
 		installCloudFoundryMetadataEndpoints(r)
 	} else {
 		installKubernetesMetadataEndpoints(r)
 	}
+}
+
+// InstallChecksEndpoints registers endpoints for cluster checks
+func InstallChecksEndpoints(r *mux.Router, sc clusteragent.ServerContext) {
+	log.Debug("Registering checks endpoints")
 	installClusterCheckEndpoints(r, sc)
 	installEndpointsCheckEndpoints(r, sc)
 }
