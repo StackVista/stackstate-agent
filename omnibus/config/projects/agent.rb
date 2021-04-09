@@ -205,7 +205,7 @@ end
 dependency 'jmxfetch'
 # //TODO: [STS] Embed code changes into main source code
 dependency 'stackstate-process-agent'
-dependency 'stackstate-agent-integrations'
+# dependency 'stackstate-agent-integrations'
 
 # version manifest file
 dependency 'version-manifest'
