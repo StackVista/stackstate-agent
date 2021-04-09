@@ -339,7 +339,7 @@ build_deb:
   - cat version.txt || true
   - source ./.gitlab-scripts/setup_artifactory.sh
 
-  - inv -e agent.omnibus-build --base-dir $OMNIBUS_BASE_DIR --skip-deps --skip-sign --major-version 2
+  - inv -e agent.omnibus-build --base-dir $OMNIBUS_BASE_DIR --skip-deps --skip-sign --major-version 3
 
     # Prepare outputs
   - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles && mkdir -p $CI_PROJECT_DIR/outcomes/binary
@@ -393,7 +393,7 @@ build_rpm:
   - source ./.gitlab-scripts/setup_artifactory.sh
 
 # TODO:  --python-runtimes "$PYTHON_RUNTIMES" --system-probe-bin=/tmp/system-probe --libbcc-tarball=/tmp/libbcc.tar.xz
-  - inv -e agent.omnibus-build --major-version 2 --base-dir $OMNIBUS_BASE_DIR --skip-deps
+  - inv -e agent.omnibus-build --major-version 3 --base-dir $OMNIBUS_BASE_DIR --skip-deps
 #  - find $OMNIBUS_BASE_DIR/pkg -type f -name '*.rpm' ! -name '*dbg*.rpm' -print0 | xargs -0 -I '{}' rpm -i '{}'
 #  - find $OMNIBUS_BASE_DIR/pkg -type f -name '*dbg*.rpm' -print0 | xargs -0 -I '{}' rpm -i '{}'
 
@@ -435,7 +435,7 @@ build_win:
     - Import-VisualStudioVars 2017 -Architecture amd64
     - ridk enable
   script:
-    - inv -e agent.omnibus-build --skip-sign --log-level debug --major-version 2
+    - inv -e agent.omnibus-build --skip-sign --log-level debug --major-version 3
   after_script:
     - cmd.exe /c "copy %GOPATH%\src\github.com\StackVista\stackstate-agent\omnibus\pkg\*.msi"
   artifacts:

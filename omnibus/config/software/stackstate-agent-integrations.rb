@@ -8,8 +8,8 @@ require 'json'
 
 name 'stackstate-agent-integrations'
 
-dependency 'pip'
 dependency 'datadog-agent'
+dependency 'pip3'
 dependency 'protobuf-py'
 
 if linux?
@@ -24,12 +24,12 @@ unless windows?
 end
 
 relative_path 'integrations-core'
-whitelist_file "embedded/lib/python2.7"
+whitelist_file "embedded/lib/python3.8/site-packages/psycopg2"
+whitelist_file "embedded/lib/python3.8/site-packages/pymqi"
 
 source git: 'https://github.com/StackVista/stackstate-agent-integrations.git'
 
-PIPTOOLS_VERSION = "2.0.2"
-UNINSTALL_PIPTOOLS_DEPS = ['six', 'click', 'first', 'pip-tools']
+PIPTOOLS_VERSION = "4.2.0"
 
 integrations_core_version = ENV['STACKSTATE_INTEGRATIONS_VERSION']
 if integrations_core_version.nil? || integrations_core_version.empty?
@@ -64,6 +64,15 @@ build do
   end
   mkdir conf_dir
 
+  # aliases for pip
+  if windows?
+    pip = "#{windows_safe_path(python_3_embedded)}\\Scripts\\pip.exe"
+    python = "#{windows_safe_path(python_3_embedded)}\\python.exe"
+  else
+    pip = "#{install_dir}/embedded/bin/pip3"
+    python = "#{install_dir}/embedded/bin/python3"
+  end
+
   # Install the checks and generate the global requirements file
   block do
     all_reqs_file = File.open("#{project_dir}/check_requirements.txt", 'w+')
@@ -74,6 +83,8 @@ build do
 
     all_reqs_file.close
 
+    command "#{pip} install wheel==0.34.1"
+    uninstall_buildtime_deps = ['six', 'rtloader', 'click', 'first', 'pip-tools']
     nix_build_env = {
       "CFLAGS" => "-I#{install_dir}/embedded/include -I/opt/mqm/inc",
       "CXXFLAGS" => "-I#{install_dir}/embedded/include -I/opt/mqm/inc",
@@ -86,7 +97,7 @@ build do
     # Install all the build requirements
     if windows?
       pip_args = "install --require-hashes -r #{project_dir}/check_requirements.txt"
-      command "#{windows_safe_path(install_dir)}\\embedded\\scripts\\pip.exe #{pip_args}"
+      command "#{pip} #{pip_args}"
     else
       pip "install --require-hashes -r #{project_dir}/check_requirements.txt", :env => nix_build_env
     end
@@ -106,16 +117,16 @@ build do
     # Install all the build requirements
     if windows?
       pip_args = "install pip-tools==#{PIPTOOLS_VERSION}"
-      command "#{windows_safe_path(install_dir)}\\embedded\\scripts\\pip.exe #{pip_args}"
+      command "#{pip} #{pip_args}"
     else
       pip "install pip-tools==#{PIPTOOLS_VERSION}", :env => nix_build_env
     end
 
     # Windows pip workaround to support globs
     python_bin = "\"#{windows_safe_path(install_dir)}\\embedded\\python.exe\""
-    python_pip_no_deps = "pip install -c #{windows_safe_path(project_dir)}\\#{core_constraints_file} --no-deps #{windows_safe_path(project_dir)}"
-    python_pip_req = "pip install -c #{windows_safe_path(project_dir)}\\#{core_constraints_file} --no-deps --require-hashes -r"
-    python_pip_uninstall = "pip uninstall -y"
+    python_pip_no_deps = "#{pip} install -c #{windows_safe_path(project_dir)}\\#{core_constraints_file} --no-deps #{windows_safe_path(project_dir)}"
+    python_pip_req = "#{pip} install -c #{windows_safe_path(project_dir)}\\#{core_constraints_file} --no-deps --require-hashes -r"
+    python_pip_uninstall = "#{pip} uninstall -y"
 
     if windows?
       static_reqs_in_file = "#{windows_safe_path(project_dir)}\\stackstate_checks_base\\stackstate_checks\\base\\data\\#{agent_requirements_in}"
@@ -146,41 +157,43 @@ build do
         mode: 0640,
         vars: { requirements: requirements }
 
-    # Install the static environment requirements that the Agent and all checks will use
+    # Use pip-compile to create the final requirements file. Notice when we invoke `pip` through `python -m pip <...>`,
+    # there's no need to refer to `pip`, the interpreter will pick the right script.
     if windows?
-      command("#{python_bin} -m #{python_pip_no_deps}\\stackstate_checks_base")
-      command("#{python_bin} -m piptools compile --generate-hashes --output-file #{windows_safe_path(install_dir)}\\#{agent_requirements_file} #{static_reqs_filtered_file}")
+      command "#{python} -m #{pip} install --no-deps  #{windows_safe_path(project_dir)}\\stackstate_checks_base"
+      command "#{python} -m #{pip} install --no-deps  #{windows_safe_path(project_dir)}\\stackstate_checks_downloader --install-option=\"--install-scripts=#{windows_safe_path(install_dir)}/bin\""
+      command "#{python} -m piptools compile --generate-hashes --output-file #{windows_safe_path(install_dir)}\\#{agent_requirements_file} #{static_reqs_out_file}"
     else
-      pip "install -c #{project_dir}/#{core_constraints_file} --no-deps .", :env => nix_build_env, :cwd => "#{project_dir}/stackstate_checks_base"
-      command("#{install_dir}/embedded/bin/python -m piptools compile --generate-hashes --output-file #{install_dir}/#{agent_requirements_file} #{static_reqs_filtered_file}")
+      command "#{pip} install --no-deps .", :env => nix_build_env, :cwd => "#{project_dir}/stackstate_checks_base"
+      command "#{pip} install --no-deps .", :env => nix_build_env, :cwd => "#{project_dir}/stackstate_checks_downloader"
+      command "#{python} -m piptools compile --generate-hashes --output-file #{install_dir}/#{agent_requirements_file} #{static_reqs_out_file}", :env => nix_build_env
     end
 
-    # Uninstall the deps that pip-compile installs so we don't include them in the final artifact
-    UNINSTALL_PIPTOOLS_DEPS.each do |dep|
-      re = Regexp.new("^#{dep}==").freeze
-      if not re.match frozen_agent_reqs
-        if windows?
-          command("#{python_bin} -m #{python_pip_uninstall} #{dep}")
-        else
-          pip "uninstall -y #{dep}"
-        end
+    # From now on we don't need piptools anymore, uninstall its deps so we don't include them in the final artifact
+    uninstall_buildtime_deps.each do |dep|
+      if windows?
+        command "#{python} -m #{pip} uninstall -y #{dep}"
+      else
+        command "#{pip} uninstall -y #{dep}"
       end
     end
 
-    # install static-environment requirements
+    #
+    # Install static-environment requirements that the Agent and all checks will use
+    #
     if windows?
-      command("#{python_bin} -m #{python_pip_req} #{windows_safe_path(install_dir)}\\#{agent_requirements_file}")
+      command "#{python} -m #{pip} install --no-deps --require-hashes -r #{windows_safe_path(install_dir)}\\#{agent_requirements_file}"
     else
-      pip "install -c #{project_dir}/#{core_constraints_file} --require-hashes --no-deps -r #{install_dir}/#{agent_requirements_file}", :env => nix_build_env
+      command "#{pip} install --no-deps --require-hashes -r #{install_dir}/#{agent_requirements_file}", :env => nix_build_env
     end
+
+    #
+    # Install Core integrations
+    #
+
     # Create a constraint file after installing all the core dependencies and before any integration
     # This is then used as a constraint file by the integration command to avoid messing with the agent's python environment
-    pip "freeze > #{install_dir}/#{final_constraints_file}"
-
-    # Ship requirements-agent-release.txt file containing the versions of every check shipped with the agent
-    # Used by the `stackstate-agent integration` command to prevent downgrading a check to a version
-    # older than the one shipped in the agent
-    copy "#{project_dir}/requirements-agent-release.txt", "#{install_dir}/"
+    command "#{pip} freeze > #{install_dir}/#{final_constraints_file}"
 
     # install integrations
     Dir.glob("#{project_dir}/*").each do |check_dir|
@@ -242,4 +255,15 @@ build do
       end
     end
   end
+  # Run pip check to make sure the agent's python environment is clean, all the dependencies are compatible
+  if windows?
+    command "#{python} -m pip check"
+  else
+    command "#{pip} check"
+  end
+
+  # Ship `requirements-agent-release.txt` file containing the versions of every check shipped with the agent
+  # Used by the `datadog-agent integration` command to prevent downgrading a check to a version
+  # older than the one shipped in the agent
+  copy "#{project_dir}/requirements-agent-release.txt", "#{install_dir}/"
 end
