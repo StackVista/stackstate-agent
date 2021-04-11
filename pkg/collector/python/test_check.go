@@ -344,7 +344,12 @@ func testCheckCancelWhenRuntimeUnloaded(t *testing.T) {
 func testFinalizer(t *testing.T) {
 	// Initialize rtloader pointer
 	rtloader = &C.rtloader_t{}
-	defer func() { rtloader = nil }()
+	defer func() {
+		// We have to wrap this in locks otherwise the race detector complains
+		pyDestroyLock.Lock()
+		rtloader = nil
+		pyDestroyLock.Unlock()
+	}()
 
 	check, err := NewPythonFakeCheck()
 	if !assert.Nil(t, err) {
@@ -384,7 +389,12 @@ func testFinalizer(t *testing.T) {
 func testFinalizerWhenRuntimeUnloaded(t *testing.T) {
 	// Initialize rtloader pointer
 	rtloader = &C.rtloader_t{}
-	defer func() { rtloader = nil }()
+	defer func() {
+		// We have to wrap this in locks otherwise the race detector complains
+		pyDestroyLock.Lock()
+		rtloader = nil
+		pyDestroyLock.Unlock()
+	}()
 
 	check, err := NewPythonFakeCheck()
 	if !assert.Nil(t, err) {
