@@ -214,7 +214,7 @@ build do
     Dir.glob("#{project_dir}/*").each do |check_dir|
       check = check_dir.split('/').last
 
-      next if !File.directory?("#{check_dir}") || blacklist.include?(check)
+      next if !File.directory?("#{check_dir}") || blacklist_folders.include?(check)
 
       # If there is no manifest file, then we should assume the folder does not
       # contain a working check and move onto the next
