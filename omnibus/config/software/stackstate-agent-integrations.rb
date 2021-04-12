@@ -28,8 +28,6 @@ whitelist_file "embedded/lib/python3.8/site-packages/pymqi"
 
 source git: 'https://github.com/StackVista/stackstate-agent-integrations.git'
 
-PIPTOOLS_VERSION = "4.2.0"
-
 integrations_core_version = ENV['STACKSTATE_INTEGRATIONS_VERSION']
 if integrations_core_version.nil? || integrations_core_version.empty?
   integrations_core_version = 'master'
@@ -49,9 +47,9 @@ if suse?
   blacklist_req.push(/^aerospike==/)  # Temporarily blacklist Aerospike until builder supports new dependency
 end
 
-core_constraints_file = 'core_constraints.txt'
 final_constraints_file = 'final_constraints.txt'
 agent_requirements_file = 'agent_requirements.txt'
+filtered_agent_requirements_in = 'agent_requirements-py3.in'
 agent_requirements_in = 'agent_requirements.in'
 
 build do
@@ -72,17 +70,14 @@ build do
     python = "#{install_dir}/embedded/bin/python3"
   end
 
-  # Install the checks and generate the global requirements file
+  # Install the checks along with their dependencies
   block do
-    all_reqs_file = File.open("#{project_dir}/check_requirements.txt", 'w+')
-    # FIX THIS these dependencies have to be grabbed from somewhere
-    all_reqs_file.puts "pympler==0.5 --hash=sha256:7d16c4285f01dcc647f69fb6ed4635788abc7a7cb7caa0065d763f4ce3d21c0f"
-    all_reqs_file.puts "wheel==0.30.0 --hash=sha256:e721e53864f084f956f40f96124a74da0631ac13fbbd1ba99e8e2b5e9cafdf64"\
-    " --hash=sha256:9515fe0a94e823fd90b08d22de45d7bde57c90edce705b22f5e1ecf7e1b653c8"
-
-    all_reqs_file.close
-
+    #
+    # Prepare the build env, these dependencies are only needed to build and
+    # install the core integrations.
+    #
     command "#{pip} install wheel==0.34.1"
+    command "#{pip} install pip-tools==4.2.0"
     uninstall_buildtime_deps = ['six', 'rtloader', 'click', 'first', 'pip-tools']
     nix_build_env = {
       "CFLAGS" => "-I#{install_dir}/embedded/include -I/opt/mqm/inc",
@@ -92,46 +87,12 @@ build do
       "PATH" => "#{install_dir}/embedded/bin:#{ENV['PATH']}",
     }
 
-    # Install all the requirements
-    # Install all the build requirements
-    if windows?
-      pip_args = "install --require-hashes -r #{project_dir}/check_requirements.txt"
-      command "#{pip} #{pip_args}"
-    else
-      pip "install --require-hashes -r #{project_dir}/check_requirements.txt", :env => nix_build_env
-    end
-
-    # Set frozen requirements (save to var, and to file)
-    # HACK: we need to do this like this due to the well known issues with omnibus
-    # runtime requirements.
-    if windows?
-      freeze_mixin = shellout!("#{pip} freeze")
-      frozen_agent_reqs = freeze_mixin.stdout
-    else
-      freeze_mixin = shellout!("#{pip} freeze")
-      frozen_agent_reqs = freeze_mixin.stdout
-    end
-    pip "freeze > #{project_dir}/#{core_constraints_file}"
-
-    # Install all the build requirements
-    if windows?
-      pip_args = "install pip-tools==#{PIPTOOLS_VERSION}"
-      command "#{pip} #{pip_args}"
-    else
-      pip "install pip-tools==#{PIPTOOLS_VERSION}", :env => nix_build_env
-    end
-
-    # Windows pip workaround to support globs
-    python_pip_no_deps = "#{pip} install -c #{windows_safe_path(project_dir)}\\#{core_constraints_file} --no-deps #{windows_safe_path(project_dir)}"
-    python_pip_req = "#{pip} install -c #{windows_safe_path(project_dir)}\\#{core_constraints_file} --no-deps --require-hashes -r"
-    python_pip_uninstall = "#{pip} uninstall -y"
-
     if windows?
       static_reqs_in_file = "#{windows_safe_path(project_dir)}\\stackstate_checks_base\\stackstate_checks\\base\\data\\#{agent_requirements_in}"
-      static_reqs_out_file = "#{windows_safe_path(project_dir)}\\#{agent_requirements_in}"
+      static_reqs_out_file = "#{windows_safe_path(project_dir)}\\#{filtered_agent_requirements_in}"
     else
       static_reqs_in_file = "#{project_dir}/stackstate_checks_base/stackstate_checks/base/data/#{agent_requirements_in}"
-      static_reqs_out_file = "#{project_dir}/#{agent_requirements_in}"
+      static_reqs_out_file = "#{project_dir}/#{filtered_agent_requirements_in}"
     end
 
     # Remove any blacklisted requirements from the static-environment req file
@@ -247,7 +208,7 @@ build do
 
       File.file?("#{check_dir}/setup.py") || next
       if windows?
-        command("#{python} -m #{python_pip_no_deps}\\#{check}")
+        command "#{python} -m pip install --no-deps #{windows_safe_path(project_dir)}\\#{check}"
       else
         pip "install --no-deps .", :env => nix_build_env, :cwd => "#{project_dir}/#{check}"
       end
