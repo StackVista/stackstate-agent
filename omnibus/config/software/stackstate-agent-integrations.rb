@@ -11,15 +11,32 @@ name 'stackstate-agent-integrations'
 dependency 'datadog-agent'
 dependency 'pip3'
 
+if arm?
+  # psycopg2 doesn't come with pre-built wheel on the arm architecture.
+  # to compile from source, it requires the `pg_config` executable present on the $PATH
+  dependency 'postgresql'
+  # same with libffi to build the cffi wheel
+  dependency 'libffi'
+  # same with libxml2 and libxslt to build the lxml wheel
+  dependency 'libxml2'
+  dependency 'libxslt'
+end
+
+if osx?
+  dependency 'unixodbc'
+end
+
 if linux?
   # add nfsiostat script
   dependency 'unixodbc'
+  dependency 'freetds'  # needed for SQL Server integration
   dependency 'nfsiostat'
-end
-
-unless windows?
   # need kerberos for hdfs
   dependency 'libkrb5'
+
+  unless suse? || arm?
+    dependency 'aerospike-py3'
+  end
 end
 
 relative_path 'integrations-core'
@@ -110,6 +127,9 @@ build do
         requirements.push(line)
       end
     end
+
+    # Adding pympler for memory debug purposes
+    requirements.push("pympler==0.7")
 
     erb source: "static_requirements.txt.erb",
         dest: "#{static_reqs_out_file}",
