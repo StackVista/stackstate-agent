@@ -52,20 +52,50 @@ end
 default_version integrations_core_version
 
 
-blacklist = [
+blacklist_folders = [
   'stackstate_checks_base',           # namespacing package for wheels (NOT AN INTEGRATION)
   'stackstate_checks_dev',            # Development package, (NOT AN INTEGRATION)
   'stackstate_checks_tests_helper'    # Testing and Development package, (NOT AN INTEGRATION)
 ]
-blacklist_req = Array.new
+
+# package names of dependencies that won't be added to the Agent Python environment
+blacklist_packages = Array.new
+
+# We build these manually
+blacklist_packages.push(/^aerospike==/)
 
 if suse?
-  blacklist.push('aerospike')  # Temporarily blacklist Aerospike until builder supports new dependency
-  blacklist_req.push(/^aerospike==/)  # Temporarily blacklist Aerospike until builder supports new dependency
+  blacklist_folders.push('aerospike')  # Temporarily blacklist Aerospike until builder supports new dependency
 end
 
-final_constraints_file = 'final_constraints.txt'
-agent_requirements_file = 'agent_requirements.txt'
+if osx?
+  # Blacklist lxml as it fails MacOS notarization: the etree.cpython-37m-darwin.so and objectify.cpython-37m-darwin.so
+  # binaries were built with a MacOS SDK lower than 10.9.
+  # This can be removed once a new lxml version with binaries built with a newer SDK is available.
+  blacklist_packages.push(/^lxml==/)
+  # Blacklist ibm_was, which depends on lxml
+  blacklist_folders.push('ibm_was')
+
+  # Blacklist aerospike, new version 3.10 is not supported on MacOS yet
+  blacklist_folders.push('aerospike')
+end
+
+if arm?
+  # These two checks don't build on ARM
+  blacklist_folders.push('aerospike')
+  blacklist_folders.push('ibm_mq')
+  blacklist_packages.push(/^pymqi==/)
+end
+
+# _64_bit checks the kernel arch.  On windows, the builder is 64 bit
+# even when doing a 32 bit build.  Do a specific check for the 32 bit
+# build
+if arm? || !_64_bit? || (windows? && windows_arch_i386?)
+  blacklist_packages.push(/^orjson==/)
+end
+
+final_constraints_file = 'final_constraints-py3.txt'
+agent_requirements_file = 'agent_requirements-py3.txt'
 filtered_agent_requirements_in = 'agent_requirements-py3.in'
 agent_requirements_in = 'agent_requirements.in'
 
@@ -104,6 +134,12 @@ build do
       "PATH" => "#{install_dir}/embedded/bin:#{ENV['PATH']}",
     }
 
+    #
+    # Prepare the requirements file containing ALL the dependencies needed by
+    # any integration. This will provide the "static Python environment" of the Agent.
+    # We don't use the .in file provided by the base check directly because we
+    # want to filter out things before installing.
+    #
     if windows?
       static_reqs_in_file = "#{windows_safe_path(project_dir)}\\stackstate_checks_base\\stackstate_checks\\base\\data\\#{agent_requirements_in}"
       static_reqs_out_file = "#{windows_safe_path(project_dir)}\\#{filtered_agent_requirements_in}"
@@ -116,7 +152,7 @@ build do
     requirements = Array.new
     File.open("#{static_reqs_in_file}", 'r+').readlines().each do |line|
       blacklist_flag = false
-      blacklist_req.each do |blacklist_regex|
+      blacklist_packages.each do |blacklist_regex|
         re = Regexp.new(blacklist_regex).freeze
         if re.match line
           blacklist_flag = true
@@ -139,8 +175,8 @@ build do
     # Use pip-compile to create the final requirements file. Notice when we invoke `pip` through `python -m pip <...>`,
     # there's no need to refer to `pip`, the interpreter will pick the right script.
     if windows?
-      command "#{python} -m #{pip} install --no-deps  #{windows_safe_path(project_dir)}\\stackstate_checks_base"
-#       command "#{python} -m #{pip} install --no-deps  #{windows_safe_path(project_dir)}\\stackstate_checks_downloader --install-option=\"--install-scripts=#{windows_safe_path(install_dir)}/bin\""
+      command "#{python} -m pip install --no-deps  #{windows_safe_path(project_dir)}\\stackstate_checks_base"
+#       command "#{python} -m pip install --no-deps  #{windows_safe_path(project_dir)}\\stackstate_checks_downloader --install-option=\"--install-scripts=#{windows_safe_path(install_dir)}/bin\""
       command "#{python} -m piptools compile --generate-hashes --output-file #{windows_safe_path(install_dir)}\\#{agent_requirements_file} #{static_reqs_out_file}"
     else
       command "#{pip} install --no-deps .", :env => nix_build_env, :cwd => "#{project_dir}/stackstate_checks_base"
@@ -161,7 +197,7 @@ build do
     # Install static-environment requirements that the Agent and all checks will use
     #
     if windows?
-      command "#{python} -m #{pip} install --no-deps --require-hashes -r #{windows_safe_path(install_dir)}\\#{agent_requirements_file}"
+      command "#{python} -m pip install --no-deps --require-hashes -r #{windows_safe_path(install_dir)}\\#{agent_requirements_file}"
     else
       command "#{pip} install --no-deps --require-hashes -r #{install_dir}/#{agent_requirements_file}", :env => nix_build_env
     end
