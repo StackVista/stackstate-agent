@@ -159,11 +159,11 @@ build do
     # there's no need to refer to `pip`, the interpreter will pick the right script.
     if windows?
       command "#{python} -m #{pip} install --no-deps  #{windows_safe_path(project_dir)}\\stackstate_checks_base"
-      command "#{python} -m #{pip} install --no-deps  #{windows_safe_path(project_dir)}\\stackstate_checks_downloader --install-option=\"--install-scripts=#{windows_safe_path(install_dir)}/bin\""
+#       command "#{python} -m #{pip} install --no-deps  #{windows_safe_path(project_dir)}\\stackstate_checks_downloader --install-option=\"--install-scripts=#{windows_safe_path(install_dir)}/bin\""
       command "#{python} -m piptools compile --generate-hashes --output-file #{windows_safe_path(install_dir)}\\#{agent_requirements_file} #{static_reqs_out_file}"
     else
       command "#{pip} install --no-deps .", :env => nix_build_env, :cwd => "#{project_dir}/stackstate_checks_base"
-      command "#{pip} install --no-deps .", :env => nix_build_env, :cwd => "#{project_dir}/stackstate_checks_downloader"
+#       command "#{pip} install --no-deps .", :env => nix_build_env, :cwd => "#{project_dir}/stackstate_checks_downloader"
       command "#{python} -m piptools compile --generate-hashes --output-file #{install_dir}/#{agent_requirements_file} #{static_reqs_out_file}", :env => nix_build_env
     end
 
@@ -260,8 +260,6 @@ build do
     command "#{pip} check"
   end
 
-  # Ship `requirements-agent-release.txt` file containing the versions of every check shipped with the agent
-  # Used by the `datadog-agent integration` command to prevent downgrading a check to a version
-  # older than the one shipped in the agent
-  copy "#{project_dir}/requirements-agent-release.txt", "#{install_dir}/"
+  # Ship `stackstate-changelog.md` file containing the versions of every check shipped with the agent
+  copy "#{project_dir}/stackstate-changelog.md", "#{install_dir}/"
 end
