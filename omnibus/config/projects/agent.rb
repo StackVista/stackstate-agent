@@ -192,17 +192,19 @@ if osx?
 end
 
 # [STS] drop datadog agent integrations
-# if with_python_runtime? "2"
-#   dependency 'pylint2'
+if with_python_runtime? "2"
+  dependency 'pylint2'
 #   dependency 'datadog-agent-integrations-py2'
-# end
-#
-# if with_python_runtime? "3"
-#   dependency 'datadog-agent-integrations-py3'
-# end
+  # [STS] stackstate agent integrations
+#   dependency 'stackstate-agent-integrations-py2'
+end
 
-# [STS] stackstate agent integrations
-dependency 'stackstate-agent-integrations'
+if with_python_runtime? "3"
+#   dependency 'datadog-agent-integrations-py3'
+  # [STS] stackstate agent integrations
+  dependency 'stackstate-agent-integrations-py3'
+end
+
 
 # External agents
 dependency 'jmxfetch'
