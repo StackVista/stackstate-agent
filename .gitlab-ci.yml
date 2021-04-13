@@ -155,7 +155,28 @@ unit_tests:
     #TODO: check why formatting rules differ from previous step
     - gofmt -l -w -s ./pkg ./cmd
 
-    - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --build-exclude clusterchecks,kubelet
+    - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --build-exclude clusterchecks,kubelet,kubeapiserver
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+      - script_failure
+  tags:
+    - sts-aws
+
+unit_tests_cluster_agent:
+  stage: build_and_test
+  needs:
+    - deps_deb
+  script:
+    # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
+    - inv deps
+    - inv -e agent.build --race --precompile-only
+    #TODO: check why formatting rules differ from previous step
+    - gofmt -l -w -s ./pkg ./cmd
+
+    - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --build-include docker,linux,kubeapiserver
   retry:
     max: 2
     when:
