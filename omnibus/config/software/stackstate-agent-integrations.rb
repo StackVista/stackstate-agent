@@ -55,7 +55,7 @@ if integrations_core_version.nil? || integrations_core_version.empty?
 end
 default_version integrations_core_version
 
-
+# folder names containing integrations from -core that won't be packaged with the Agent
 blacklist_folders = [
   'stackstate_checks_base',           # namespacing package for wheels (NOT AN INTEGRATION)
   'stackstate_checks_dev',            # Development package, (NOT AN INTEGRATION)
@@ -104,7 +104,7 @@ filtered_agent_requirements_in = 'agent_requirements-py3.in'
 agent_requirements_in = 'agent_requirements.in'
 
 build do
-  # The dir for the confs
+  # The dir for confs
   if osx?
     conf_dir = "#{install_dir}/etc/conf.d"
   else
@@ -129,7 +129,7 @@ build do
     #
     command "#{pip} install wheel==0.34.1"
     command "#{pip} install pip-tools==4.2.0"
-    uninstall_buildtime_deps = ['six', 'rtloader', 'click', 'first', 'pip-tools']
+    uninstall_buildtime_deps = ['rtloader', 'click', 'first', 'pip-tools']
     nix_build_env = {
       "CFLAGS" => "-I#{install_dir}/embedded/include -I/opt/mqm/inc",
       "CXXFLAGS" => "-I#{install_dir}/embedded/include -I/opt/mqm/inc",
@@ -171,6 +171,7 @@ build do
     # Adding pympler for memory debug purposes
     requirements.push("pympler==0.7")
 
+    # Render the filtered requirements file
     erb source: "static_requirements.txt.erb",
         dest: "#{static_reqs_out_file}",
         mode: 0640,
@@ -214,10 +215,11 @@ build do
     # This is then used as a constraint file by the integration command to avoid messing with the agent's python environment
     command "#{pip} freeze > #{install_dir}/#{final_constraints_file}"
 
-    # install integrations
+    # Go through every integration package in `integrations-core`, build and install
     Dir.glob("#{project_dir}/*").each do |check_dir|
       check = check_dir.split('/').last
 
+      # do not install blacklisted integrations
       next if !File.directory?("#{check_dir}") || blacklist_folders.include?(check)
 
       # If there is no manifest file, then we should assume the folder does not
@@ -270,10 +272,19 @@ build do
       if windows?
         command "#{python} -m pip install --no-deps #{windows_safe_path(project_dir)}\\#{check}"
       else
-        pip "install --no-deps .", :env => nix_build_env, :cwd => "#{project_dir}/#{check}"
+        command "#{pip} install --no-deps .", :env => nix_build_env, :cwd => "#{project_dir}/#{check}"
       end
     end
+
+    # Patch applies to only one file: set it explicitly as a target, no need for -p
+    if windows?
+      patch :source => "jpype_0_7.patch", :target => "#{python_3_embedded}/Lib/site-packages/jaydebeapi/__init__.py"
+    else
+      patch :source => "jpype_0_7.patch", :target => "#{install_dir}/embedded/lib/python3.8/site-packages/jaydebeapi/__init__.py"
+    end
+
   end
+
   # Run pip check to make sure the agent's python environment is clean, all the dependencies are compatible
   if windows?
     command "#{python} -m pip check"
