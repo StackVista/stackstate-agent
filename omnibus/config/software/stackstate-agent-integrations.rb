@@ -40,6 +40,10 @@ if linux?
 end
 
 relative_path 'integrations-core'
+whitelist_file "embedded/lib/python3.6/site-packages/psycopg2"
+whitelist_file "embedded/lib/python3.6/site-packages/pymqi"
+whitelist_file "embedded/lib/python3.7/site-packages/psycopg2"
+whitelist_file "embedded/lib/python3.7/site-packages/pymqi"
 whitelist_file "embedded/lib/python3.8/site-packages/psycopg2"
 whitelist_file "embedded/lib/python3.8/site-packages/pymqi"
 
@@ -187,7 +191,7 @@ build do
     # From now on we don't need piptools anymore, uninstall its deps so we don't include them in the final artifact
     uninstall_buildtime_deps.each do |dep|
       if windows?
-        command "#{python} -m #{pip} uninstall -y #{dep}"
+        command "#{python} -m pip uninstall -y #{dep}"
       else
         command "#{pip} uninstall -y #{dep}"
       end
