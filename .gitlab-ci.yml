@@ -435,6 +435,7 @@ build_win:
     - Import-VisualStudioVars 2017 -Architecture amd64
     - ridk enable
   script:
+    - call .gitlab-scripts/setup_artifactory.cmd
     - inv -e agent.omnibus-build --skip-sign --log-level debug --major-version 2
   after_script:
     - cmd.exe /c "copy %GOPATH%\src\github.com\StackVista\stackstate-agent\omnibus\pkg\*.msi"
