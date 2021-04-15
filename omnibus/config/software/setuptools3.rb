@@ -1,5 +1,5 @@
 name "setuptools3"
-default_version "47.0.0"
+default_version "40.9.0"
 skip_transitive_dependency_licensing true
 
 dependency "python3"
@@ -7,7 +7,7 @@ dependency "python3"
 relative_path "setuptools-#{version}"
 
 source :url => "https://github.com/pypa/setuptools/archive/v#{version}.tar.gz",
-       :sha256 => "73950497467d47166723abae91129c4753406fb2880ee2f32e376232c752c0be",
+       :sha256 => "9ef6623c057d6e46ada8156bb48dc72ef6dbe721768720cc66966cca4097061c",
        :extract => :seven_zip
 
 build do
