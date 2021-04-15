@@ -1,5 +1,5 @@
 name "setuptools3"
-default_version "40.9.0"
+default_version "47.0.0"
 skip_transitive_dependency_licensing true
 
 dependency "python3"
