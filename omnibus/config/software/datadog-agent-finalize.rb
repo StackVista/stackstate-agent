@@ -204,6 +204,7 @@ build do
             # Do not strip eBPF programs
             strip_exclude("*tracer*")
             strip_exclude("*offset-guess*")
+            strip_exclude("*http*")
             strip_exclude("*runtime-security*")
         end
 
