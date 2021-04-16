@@ -620,7 +620,7 @@ enable_gohai: false
 
 {{- if .Profiling -}}
 ## @param profiling - custom object - optional
-## Enter specific configurations for profiling.
+## Enter specific configurations for internal profiling.
 ## Uncomment this parameter and the one below to enable profiling.
 ## See https://docs.datadoghq.com/tracing/profiling/
 #
@@ -628,10 +628,10 @@ enable_gohai: false
 ##       unexpected side-effects (ie. agent profiles showing with your
 ##       services).
 #
-# profiling:
+# internal_profiling:
 #
   ## @param enabled - boolean - optional - default: false
-  ## Enable profiling for the Agent process.
+  ## Enable internal profiling for the Agent process.
   #
   # enabled: false
 
@@ -967,7 +967,7 @@ process_config:
 
 {{- if .Profiling -}}
   ## @param profiling - custom object - optional
-  ## Enter specific configurations for profiling.
+  ## Enter specific configurations for internal profiling.
   ## Uncomment this parameter and the one below to enable profiling.
   ## See https://docs.datadoghq.com/tracing/profiling/
   #
@@ -975,10 +975,10 @@ process_config:
   ##       other features (e.g. process-agent profiles showing with your
   ##       services).
   #
-  # profiling:
+  # internal_profiling:
   #
   ## @param enabled - boolean - optional - default: false
-  ## Enable profiling for the Process Agent process.
+  ## Enable internal profiling for the Process Agent process.
   #
   # enabled: false
 
@@ -1036,7 +1036,7 @@ process_config:
 
 {{- if .Profiling -}}
   ## @param profiling - custom object - optional
-  ## Enter specific configurations for profiling.
+  ## Enter specific configurations for internal profiling.
   ## Uncomment this parameter and the one below to enable profiling.
   ## See https://docs.datadoghq.com/tracing/profiling/
   #
@@ -1044,10 +1044,10 @@ process_config:
   ##       unexpected side-effects (ie. system probe profiles showing with your
   ##       services).
   #
-  # profiling:
+  # internal_profiling:
   #
     ## @param enabled - boolean - optional - default: false
-    ## Enable profiling for the System Probe process.
+    ## Enable internal profiling for the System Probe process.
     #
     # enabled: false
 
