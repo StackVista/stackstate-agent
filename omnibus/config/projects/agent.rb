@@ -196,7 +196,7 @@ if with_python_runtime? "2"
   dependency 'pylint2'
 #   dependency 'datadog-agent-integrations-py2'
   # [STS] stackstate agent integrations
-#   dependency 'stackstate-agent-integrations-py2'
+  dependency 'stackstate-agent-integrations-py2'
 end
 
 if with_python_runtime? "3"
