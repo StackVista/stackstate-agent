@@ -1,6 +1,6 @@
 module github.com/StackVista/stackstate-agent
 
-go 1.14
+go 1.15
 
 // Internal deps fix version
 replace (

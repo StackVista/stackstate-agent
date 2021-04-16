@@ -9,7 +9,7 @@ Installation instructions are available on the [StackState docs site](https://do
 ## Getting development started
 
 To build the Agent you need:
- * [Go](https://golang.org/doc/install) 1.13 or later. You'll also need to set your `$GOPATH` and have `$GOPATH/bin` in your path.
+ * [Go](https://golang.org/doc/install) 1.15 or later. You'll also need to set your `$GOPATH` and have `$GOPATH/bin` in your path.
  * Python 3.7+ along with development libraries for tooling. You will also need Python 2.7 if you are building the Agent with Python 2 support.
  * Python dependencies. You may install these with `pip install -r requirements.txt`
    This will also pull in [Invoke](http://www.pyinvoke.org) if not yet installed.
