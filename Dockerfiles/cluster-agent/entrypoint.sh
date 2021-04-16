@@ -14,8 +14,8 @@ if [[ -z "$STS_API_KEY" ]]; then
     exit 1
 fi
 
-##### Copy the custom confs #####
-find /conf.d -name '*.yaml' -exec cp --parents -fv {} /etc/stackstate-agent/ \;
+##### Copy the custom confs removing any ".." folder in the paths #####
+find /conf.d -name '*.yaml' | sed -E "s#/\.\.[^/]+##" | xargs -I{} cp --parents -fv {} /etc/datadog-agent/
 
 ##### Starting up #####
 export PATH="/opt/stackstate-agent/bin/stackstate-cluster-agent/:/opt/stackstate-agent/embedded/bin/":$PATH
