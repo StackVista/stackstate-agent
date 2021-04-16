@@ -10,7 +10,6 @@ package containerd
 
 import (
 	"encoding/json"
-	"runtime"
 	"sort"
 	"testing"
 	"time"
@@ -25,11 +24,12 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
-	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	containersutil "github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
+	"github.com/DataDog/datadog-agent/pkg/collector/corechecks"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/metrics"
+	containersutil "github.com/DataDog/datadog-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/util/system"
 )
 
 func int64Ptr(v int64) *int64 {
@@ -111,26 +111,28 @@ func TestComputeEvents(t *testing.T) {
 		},
 		{
 			name: "Events on wrong type",
-			events: []containerdEvent{{
-				Topic: "/containers/delete/extra",
-			}, {
-				Topic: "containers/delete",
-			},
+			events: []containerdEvent{
+				{
+					Topic: "/containers/delete/extra",
+				}, {
+					Topic: "containers/delete",
+				},
 			},
 			expectedTitle: "",
 			numberEvents:  0,
 		},
 		{
 			name: "High cardinality Events with one invalid",
-			events: []containerdEvent{{
-				Topic:     "/containers/delete",
-				Timestamp: time.Now(),
-				Extra:     map[string]string{"foo": "bar"},
-				Message:   "Container xxx deleted",
-				ID:        "xxx",
-			}, {
-				Topic: "containers/delete",
-			},
+			events: []containerdEvent{
+				{
+					Topic:     "/containers/delete",
+					Timestamp: time.Now(),
+					Extra:     map[string]string{"foo": "bar"},
+					Message:   "Container xxx deleted",
+					ID:        "xxx",
+				}, {
+					Topic: "containers/delete",
+				},
 			},
 			expectedTitle: "Event on containers from Containerd",
 			expectedTags:  []string{"foo:bar"},
@@ -138,13 +140,14 @@ func TestComputeEvents(t *testing.T) {
 		},
 		{
 			name: "Low cardinality Event",
-			events: []containerdEvent{{
-				Topic:     "/images/update",
-				Timestamp: time.Now(),
-				Extra:     map[string]string{"foo": "baz"},
-				Message:   "Image yyy updated",
-				ID:        "yyy",
-			},
+			events: []containerdEvent{
+				{
+					Topic:     "/images/update",
+					Timestamp: time.Now(),
+					Extra:     map[string]string{"foo": "baz"},
+					Message:   "Image yyy updated",
+					ID:        "yyy",
+				},
 			},
 			expectedTitle: "Event on images from Containerd",
 			expectedTags:  []string{"foo:baz"},
@@ -152,13 +155,14 @@ func TestComputeEvents(t *testing.T) {
 		},
 		{
 			name: "Filtered event",
-			events: []containerdEvent{{
-				Topic:     "/images/create",
-				Timestamp: time.Now(),
-				Extra:     map[string]string{},
-				Message:   "Image kubernetes/pause created",
-				ID:        "kubernetes/pause",
-			},
+			events: []containerdEvent{
+				{
+					Topic:     "/images/create",
+					Timestamp: time.Now(),
+					Extra:     map[string]string{},
+					Message:   "Image kubernetes/pause created",
+					ID:        "kubernetes/pause",
+				},
 			},
 			expectedTitle: "Event on images from Containerd",
 			expectedTags:  nil,
@@ -212,7 +216,7 @@ func TestComputeCPU(t *testing.T) {
 				"containerd.cpu.system": 10,
 				"containerd.cpu.total":  40,
 				"containerd.cpu.user":   30,
-				"containerd.cpu.limit":  1e10 * float64(runtime.NumCPU()),
+				"containerd.cpu.limit":  1e10 * float64(system.HostCPUCount()),
 			},
 		},
 		{

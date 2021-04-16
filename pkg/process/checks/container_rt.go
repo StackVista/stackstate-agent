@@ -1,15 +1,15 @@
 package checks
 
 import (
-	"runtime"
 	"time"
 
 	model "github.com/DataDog/agent-payload/process"
-	"github.com/StackVista/stackstate-agent/pkg/process/config"
-	"github.com/StackVista/stackstate-agent/pkg/process/util"
-	"github.com/StackVista/stackstate-agent/pkg/util/containers"
-	containercollectors "github.com/StackVista/stackstate-agent/pkg/util/containers/collectors"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/process/config"
+	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	containercollectors "github.com/DataDog/datadog-agent/pkg/util/containers/collectors"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/system"
 )
 
 // RTContainer is a singleton RTContainerCheck.
@@ -68,7 +68,7 @@ func (r *RTContainerCheck) Run(cfg *config.AgentConfig, groupID int32) ([]model.
 		messages = append(messages, &model.CollectorContainerRealTime{
 			HostName:          cfg.HostName,
 			Stats:             chunked[i],
-			NumCpus:           int32(runtime.NumCPU()),
+			NumCpus:           int32(system.HostCPUCount()),
 			TotalMemory:       r.sysInfo.TotalMemory,
 			GroupId:           groupID,
 			GroupSize:         int32(groupSize),
@@ -106,7 +106,7 @@ func fmtContainerStats(
 		lastCtr = fillNilRates(lastCtr)
 
 		ifStats := ctr.Network.SumInterfaces()
-		cpus := runtime.NumCPU()
+		cpus := system.HostCPUCount()
 		sys2, sys1 := ctr.CPU.SystemUsage, lastCtr.CPU.SystemUsage
 		chunk = append(chunk, &model.ContainerStat{
 			Id:          ctr.ID,

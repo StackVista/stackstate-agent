@@ -1,21 +1,21 @@
 package checks
 
 import (
-	"runtime"
 	"sync"
 	"time"
 
 	model "github.com/DataDog/agent-payload/process"
-	"github.com/StackVista/stackstate-agent/pkg/process/config"
-	"github.com/StackVista/stackstate-agent/pkg/process/statsd"
-	"github.com/StackVista/stackstate-agent/pkg/process/util"
-	"github.com/StackVista/stackstate-agent/pkg/tagger"
-	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
-	agentutil "github.com/StackVista/stackstate-agent/pkg/util"
-	"github.com/StackVista/stackstate-agent/pkg/util/containers"
-	containercollectors "github.com/StackVista/stackstate-agent/pkg/util/containers/collectors"
-	"github.com/StackVista/stackstate-agent/pkg/util/containers/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/process/config"
+	"github.com/DataDog/datadog-agent/pkg/process/statsd"
+	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/DataDog/datadog-agent/pkg/tagger"
+	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
+	agentutil "github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	containercollectors "github.com/DataDog/datadog-agent/pkg/util/containers/collectors"
+	"github.com/DataDog/datadog-agent/pkg/util/containers/metrics"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/system"
 )
 
 // Container is a singleton ContainerCheck.
@@ -133,7 +133,7 @@ func fmtContainers(ctrList []*containers.Container, lastRates map[string]util.Co
 		lastCtr = fillNilRates(lastCtr)
 
 		ifStats := ctr.Network.SumInterfaces()
-		cpus := runtime.NumCPU()
+		cpus := system.HostCPUCount()
 		sys2, sys1 := ctr.CPU.SystemUsage, lastCtr.CPU.SystemUsage
 
 		// Retrieves metadata tags
