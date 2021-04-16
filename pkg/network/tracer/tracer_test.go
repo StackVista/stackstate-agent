@@ -73,8 +73,6 @@ func TestTracerExpvar(t *testing.T) {
 	pre410Kernel := currKernelVersion < kernel.VersionCode(4, 1, 0)
 
 	cfg := testConfig()
-	// EnableHTTPMonitoring must be true for kretprobe/tcp_sendmsg to be included
-	cfg.EnableHTTPMonitoring = true
 	tr, err := NewTracer(cfg)
 	require.NoError(t, err)
 	defer tr.Stop()
@@ -158,8 +156,6 @@ func TestTracerExpvar(t *testing.T) {
 			"RTcpCloseMisses",
 			"RUdpRecvmsgHits",
 			"RUdpRecvmsgMisses",
-			"RTcpSendmsgHits",
-			"RTcpSendmsgMisses",
 			"RInetBindHits",
 			"RInetBindMisses",
 			"RInet6BindHits",
