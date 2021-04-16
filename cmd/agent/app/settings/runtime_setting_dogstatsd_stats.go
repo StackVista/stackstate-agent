@@ -13,7 +13,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/config"
 )
 
-// dsdStatsRuntimeSetting wraps operations to change log level at runtime.
+// dsdStatsRuntimeSetting wraps operations to change the collection of dogstatsd stats at runtime.
 type dsdStatsRuntimeSetting string
 
 func (s dsdStatsRuntimeSetting) Description() string {

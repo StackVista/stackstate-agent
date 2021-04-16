@@ -19,9 +19,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/dogstatsd/listeners"
-	"github.com/StackVista/stackstate-agent/test/integration/utils"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/dogstatsd/listeners"
+	"github.com/DataDog/datadog-agent/pkg/dogstatsd/packets"
+	"github.com/DataDog/datadog-agent/test/integration/utils"
 )
 
 const (
@@ -56,9 +57,10 @@ func testUDSOriginDetection(t *testing.T) {
 	mockConfig.Set("dogstatsd_origin_detection", true)
 
 	// Start DSD
-	packetsChannel := make(chan listeners.Packets)
-	sharedPacketPool := listeners.NewPacketPool(32)
-	s, err := listeners.NewUDSListener(packetsChannel, sharedPacketPool)
+	packetsChannel := make(chan packets.Packets)
+	sharedPacketPool := packets.NewPool(32)
+	sharedPacketPoolManager := packets.NewPoolManager(sharedPacketPool)
+	s, err := listeners.NewUDSListener(packetsChannel, sharedPacketPoolManager, nil)
 	require.Nil(t, err)
 
 	go s.Listen()
