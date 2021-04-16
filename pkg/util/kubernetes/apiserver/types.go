@@ -41,4 +41,8 @@ const (
 	ServicesInformer InformerName = "services"
 	// NodesInformer holds the name of the informer
 	NodesInformer InformerName = "nodes"
+	// JobsInformer holds the name of the informer
+	JobsInformer InformerName = "jobs"
+	// CronJobsInformer holds the name of the informer
+	CronJobsInformer InformerName = "cronJobs"
 )
