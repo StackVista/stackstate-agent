@@ -13,7 +13,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/dynamic"
-	dynamic_informer "k8s.io/client-go/dynamic/dynamicinformer"
+	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
@@ -22,8 +22,6 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/config"
 	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/autoscalers"
 	"github.com/DataDog/datadog-agent/pkg/util/log"
-	dd_client "github.com/DataDog/datadog-operator/pkg/generated/clientset/versioned"
-	dd_informers "github.com/DataDog/datadog-operator/pkg/generated/informers/externalversions"
 )
 
 type startFunc func(ControllerContext, chan error)
@@ -58,9 +56,9 @@ type ControllerContext struct {
 	informers          map[InformerName]cache.SharedInformer
 	InformerFactory    informers.SharedInformerFactory
 	WPAClient          dynamic.Interface
-	WPAInformerFactory dynamic_informer.DynamicSharedInformerFactory
-	DDClient           dd_client.Interface
-	DDInformerFactory  dd_informers.SharedInformerFactory
+	WPAInformerFactory dynamicinformer.DynamicSharedInformerFactory
+	DDClient           dynamic.Interface
+	DDInformerFactory  dynamicinformer.DynamicSharedInformerFactory
 	Client             kubernetes.Interface
 	IsLeaderFunc       func() bool
 	EventRecorder      record.EventRecorder
