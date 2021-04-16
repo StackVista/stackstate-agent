@@ -11,18 +11,21 @@ static cb_submit_metric_t cb_submit_metric = NULL;
 static cb_submit_service_check_t cb_submit_service_check = NULL;
 static cb_submit_event_t cb_submit_event = NULL;
 static cb_submit_histogram_bucket_t cb_submit_histogram_bucket = NULL;
+static cb_submit_event_platform_event_t cb_submit_event_platform_event = NULL;
 
 // forward declarations
 static PyObject *submit_metric(PyObject *self, PyObject *args);
 static PyObject *submit_service_check(PyObject *self, PyObject *args);
 static PyObject *submit_event(PyObject *self, PyObject *args);
 static PyObject *submit_histogram_bucket(PyObject *self, PyObject *args);
+static PyObject *submit_event_platform_event(PyObject *self, PyObject *args);
 
 static PyMethodDef methods[] = {
     { "submit_metric", (PyCFunction)submit_metric, METH_VARARGS, "Submit metrics." },
     { "submit_service_check", (PyCFunction)submit_service_check, METH_VARARGS, "Submit service checks." },
     { "submit_event", (PyCFunction)submit_event, METH_VARARGS, "Submit events." },
     { "submit_histogram_bucket", (PyCFunction)submit_histogram_bucket, METH_VARARGS, "Submit histogram bucket." },
+    { "submit_event_platform_event", (PyCFunction)submit_event_platform_event, METH_VARARGS, "Submit event platform event." },
     { NULL, NULL } // guards
 };
 
@@ -83,6 +86,90 @@ void _set_submit_event_cb(cb_submit_event_t cb)
 void _set_submit_histogram_bucket_cb(cb_submit_histogram_bucket_t cb)
 {
     cb_submit_histogram_bucket = cb;
+}
+
+void _set_submit_event_platform_event_cb(cb_submit_event_platform_event_t cb)
+{
+    cb_submit_event_platform_event = cb;
+}
+
+
+/*! \fn py_tag_to_c(PyObject *py_tags)
+    \brief A function to convert a list of python strings (tags) into an
+    array of C-strings.
+    \return a char ** pointer to the C-representation of the provided python
+    tag list. In the event of failure NULL is returned.
+
+    The returned char ** string array pointer is heap allocated here and should
+    be subsequently freed by the caller. This function may set and raise python
+    interpreter errors. The function is static and not in the builtin's API.
+*/
+static char **py_tag_to_c(PyObject *py_tags)
+{
+    char **tags = NULL;
+    PyObject *py_tags_list = NULL; // new reference
+
+    if (!PySequence_Check(py_tags)) {
+        PyErr_SetString(PyExc_TypeError, "tags must be a sequence");
+        return NULL;
+    }
+
+    int len = PySequence_Length(py_tags);
+    if (len == -1) {
+        PyErr_SetString(PyExc_RuntimeError, "could not compute tags length");
+        return NULL;
+    } else if (len == 0) {
+        if (!(tags = _malloc(sizeof(*tags)))) {
+            PyErr_SetString(PyExc_RuntimeError, "could not allocate memory for tags");
+            return NULL;
+        }
+        tags[0] = NULL;
+        return tags;
+    }
+
+    py_tags_list = PySequence_Fast(py_tags, "py_tags is not a sequence"); // new reference
+    if (py_tags_list == NULL) {
+        goto done;
+    }
+
+    if (!(tags = _malloc(sizeof(*tags) * (len + 1)))) {
+        PyErr_SetString(PyExc_RuntimeError, "could not allocate memory for tags");
+        goto done;
+    }
+    int nb_valid_tag = 0;
+    int i;
+    for (i = 0; i < len; i++) {
+        // `item` is borrowed, no need to decref
+        PyObject *item = PySequence_Fast_GET_ITEM(py_tags_list, i);
+
+        char *ctag = as_string(item);
+        if (ctag == NULL) {
+            continue;
+        }
+        tags[nb_valid_tag] = ctag;
+        nb_valid_tag++;
+    }
+    tags[nb_valid_tag] = NULL;
+
+done:
+    Py_XDECREF(py_tags_list);
+    return tags;
+}
+
+/*! \fn free_tags(char **tags)
+    \brief A helper function to free the memory allocated by the py_tag_to_c() function.
+
+    This function is for internal use and expects the tag array to be properly intialized,
+    and have a NULL canary at the end of the array, just like py_tag_to_c() initializes and
+    populates the array. Be mindful if using this function in any other context.
+*/
+static void free_tags(char **tags)
+{
+    int i;
+    for (i = 0; tags[i] != NULL; i++) {
+        _free(tags[i]);
+    }
+    _free(tags);
 }
 
 /*! \fn submit_metric(PyObject *self, PyObject *args)
@@ -325,4 +412,27 @@ static PyObject *submit_histogram_bucket(PyObject *self, PyObject *args)
 error:
     PyGILState_Release(gstate);
     return NULL;
+}
+
+static PyObject *submit_event_platform_event(PyObject *self, PyObject *args)
+{
+    if (cb_submit_event_platform_event == NULL) {
+        Py_RETURN_NONE;
+    }
+
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    PyObject *check = NULL;
+    char *check_id = NULL;
+    char *raw_event = NULL;
+    char *event_type = NULL;
+
+    if (!PyArg_ParseTuple(args, "Osss", &check, &check_id, &raw_event, &event_type)) {
+        PyGILState_Release(gstate);
+        return NULL;
+    }
+
+    cb_submit_event_platform_event(check_id, raw_event, event_type);
+    PyGILState_Release(gstate);
+    Py_RETURN_NONE;
 }
