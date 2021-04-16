@@ -16,12 +16,15 @@ relative_path 'src/github.com/StackVista/stackstate-agent'
 build do
   # set GOPATH on the omnibus source dir for this software
   gopath = Pathname.new(project_dir) + '../../../..'
-  gomodcache = Pathname.new("/gomodcache")
   env = {
     'GOPATH' => gopath.to_path,
-    'GOMODCACHE' => gomodcache.to_path,
     'PATH' => "#{gopath.to_path}/bin:#{ENV['PATH']}",
   }
+
+  unless ENV["OMNIBUS_GOMODCACHE"].nil? || ENV["OMNIBUS_GOMODCACHE"].empty?
+    gomodcache = Pathname.new(ENV["OMNIBUS_GOMODCACHE"])
+    env["GOMODCACHE"] = gomodcache.to_path
+  end
 
   if windows?
     major_version_arg = "%MAJOR_VERSION%"
