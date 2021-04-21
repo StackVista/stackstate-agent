@@ -107,7 +107,7 @@ def clean(ctx):
     """
     Remove temporary objects and binary artifacts
     """
-    clean_common(ctx, "datadog-cluster-agent")
+    clean_common(ctx, "stackstate-cluster-agent")
 
 
 @task
@@ -162,7 +162,7 @@ def image_build(ctx, arch='amd64', tag=AGENT_TAG, push=False):
     ctx.run("chmod +x {}".format(latest_file))
 
     build_context = "Dockerfiles/cluster-agent"
-    exec_path = "{}/datadog-cluster-agent.{}".format(build_context, arch)
+    exec_path = "{}/stackstate-cluster-agent.{}".format(build_context, arch)
     dockerfile_path = "{}/{}/Dockerfile".format(build_context, arch)
 
     shutil.copy2(latest_file, exec_path)
