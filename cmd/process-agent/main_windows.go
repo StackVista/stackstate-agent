@@ -11,8 +11,9 @@ import (
 	"path/filepath"
 	"time"
 
-	_ "github.com/StackVista/stackstate-agent/pkg/util/containers/providers/windows"
-	"github.com/StackVista/stackstate-agent/pkg/util/winutil"
+	"github.com/DataDog/datadog-agent/cmd/process-agent/flags"
+	_ "github.com/DataDog/datadog-agent/pkg/util/containers/providers/windows"
+	"github.com/DataDog/datadog-agent/pkg/util/winutil"
 
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
@@ -26,10 +27,10 @@ var elog debug.Log
 const ServiceName = "datadog-process-agent"
 
 // opts are the command-line options
-var defaultConfigPath = "c:\\programdata\\datadog\\datadog.yaml"
-var defaultSysProbeConfigPath = "c:\\programdata\\datadog\\system-probe.yaml"
-var defaultConfdPath = "c:\\programdata\\datadog\\conf.d"
-var defaultLogFilePath = "c:\\programdata\\datadog\\logs\\process-agent.log"
+var defaultConfigPath = flags.DefaultConfPath
+var defaultSysProbeConfigPath = flags.DefaultSysProbeConfPath
+var defaultConfdPath = flags.DefaultConfdPath
+var defaultLogFilePath = flags.DefaultLogFilePath
 
 var winopts struct {
 	installService   bool
