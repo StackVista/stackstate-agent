@@ -10,6 +10,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"os"
 	"os/signal"
 	"sync"
@@ -181,6 +182,9 @@ func start(cmd *cobra.Command, args []string) error {
 
 	aggregatorInstance := aggregator.InitAggregator(s, hostname)
 	aggregatorInstance.AddAgentStartupTelemetry(fmt.Sprintf("%s - Datadog Cluster Agent", version.AgentVersion))
+
+	// [sts] init the batcher for topology production
+	batcher.InitBatcher(s, hostname, "agent", config.GetMaxCapacity())
 
 	log.Infof("Datadog Cluster Agent is now running.")
 
