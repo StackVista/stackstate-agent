@@ -10,6 +10,13 @@ package app
 import (
 	"context"
 	"fmt"
+	admissionpkg "github.com/StackVista/stackstate-agent/pkg/clusteragent/admission"
+	apicommon "github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/common"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/leaderelection"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
+	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/tools/record"
 	"os"
 	"os/signal"
 	"sync"
@@ -177,78 +184,81 @@ func start(cmd *cobra.Command, args []string) error {
 	apiCl, err := apiserver.GetAPIClient() // make sure we can connect to the apiserver
 	if err != nil {
 		log.Errorf("Could not connect to the apiserver: %v", err)
+	} else {
+		// [sts] - skipping leader election because we don't need it.
+		skipLeaderElection := config.Datadog.GetBool("skip_leader_election")
+		if !skipLeaderElection {
+			le, err := leaderelection.GetLeaderEngine()
+			if err != nil {
+				return err
+			}
+
+			// Create event recorder
+			eventBroadcaster := record.NewBroadcaster()
+			eventBroadcaster.StartLogging(log.Infof)
+			eventBroadcaster.StartRecordingToSink(&corev1.EventSinkImpl{Interface: apiCl.Cl.CoreV1().Events("")})
+			eventRecorder := eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: "datadog-cluster-agent"})
+
+			stopCh := make(chan struct{})
+			ctx := apiserver.ControllerContext{
+				InformerFactory:    apiCl.InformerFactory,
+				WPAClient:          apiCl.WPAClient,
+				WPAInformerFactory: apiCl.WPAInformerFactory,
+				DDClient:           apiCl.DDClient,
+				DDInformerFactory:  apiCl.DDInformerFactory,
+				Client:             apiCl.Cl,
+				IsLeaderFunc:       le.IsLeader,
+				EventRecorder:      eventRecorder,
+				StopCh:             stopCh,
+			}
+
+			if aggErr := apiserver.StartControllers(ctx); aggErr != nil {
+				for _, err := range aggErr.Errors() {
+					log.Warnf("Error while starting controller: %v", err)
+				}
+			}
+
+			// Generate and persist a cluster ID
+			// this must be a UUID, and ideally be stable for the lifetime of a cluster
+			// so we store it in a configmap that we try and read before generating a new one.
+			coreClient := apiCl.Cl.CoreV1().(*corev1.CoreV1Client)
+			_, err = apicommon.GetOrCreateClusterID(coreClient)
+			if err != nil {
+				log.Errorf("Failed to generate or retrieve the cluster ID")
+			}
+
+			// TODO: move rest of the controllers out of the apiserver package
+			orchestratorCtx := orchestrator.ControllerContext{
+				IsLeaderFunc:                 le.IsLeader,
+				UnassignedPodInformerFactory: apiCl.UnassignedPodInformerFactory,
+				Client:                       apiCl.Cl,
+				StopCh:                       stopCh,
+				Hostname:                     hostname,
+				ClusterName:                  clustername.GetClusterName(),
+				ConfigPath:                   confPath,
+			}
+			err = orchestrator.StartController(orchestratorCtx)
+			if err != nil {
+				log.Errorf("Could not start orchestrator controller: %v", err)
+			}
+
+			if config.Datadog.GetBool("admission_controller.enabled") {
+				admissionCtx := admissionpkg.ControllerContext{
+					IsLeaderFunc:     le.IsLeader,
+					SecretInformers:  apiCl.CertificateSecretInformerFactory,
+					WebhookInformers: apiCl.WebhookConfigInformerFactory,
+					Client:           apiCl.Cl,
+					StopCh:           stopCh,
+				}
+				err = admissionpkg.StartControllers(admissionCtx)
+				if err != nil {
+					log.Errorf("Could not start admission controller: %v", err)
+				}
+			} else {
+				log.Info("Admission controller is disabled")
+			}
+		}
 	}
-	//else {
-	//	le, err := leaderelection.GetLeaderEngine()
-	//	if err != nil {
-	//		return err
-	//	}
-	//
-	//	// Create event recorder
-	//	eventBroadcaster := record.NewBroadcaster()
-	//	eventBroadcaster.StartLogging(log.Infof)
-	//	eventBroadcaster.StartRecordingToSink(&corev1.EventSinkImpl{Interface: apiCl.Cl.CoreV1().Events("")})
-	//	eventRecorder := eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: "datadog-cluster-agent"})
-	//
-	//	stopCh := make(chan struct{})
-	//	ctx := apiserver.ControllerContext{
-	//		InformerFactory:    apiCl.InformerFactory,
-	//		WPAClient:          apiCl.WPAClient,
-	//		WPAInformerFactory: apiCl.WPAInformerFactory,
-	//		DDClient:           apiCl.DDClient,
-	//		DDInformerFactory:  apiCl.DDInformerFactory,
-	//		Client:             apiCl.Cl,
-	//		IsLeaderFunc:       le.IsLeader,
-	//		EventRecorder:      eventRecorder,
-	//		StopCh:             stopCh,
-	//	}
-	//
-	//	if aggErr := apiserver.StartControllers(ctx); aggErr != nil {
-	//		for _, err := range aggErr.Errors() {
-	//			log.Warnf("Error while starting controller: %v", err)
-	//		}
-	//	}
-	//
-	//	// Generate and persist a cluster ID
-	//	// this must be a UUID, and ideally be stable for the lifetime of a cluster
-	//	// so we store it in a configmap that we try and read before generating a new one.
-	//	coreClient := apiCl.Cl.CoreV1().(*corev1.CoreV1Client)
-	//	_, err = apicommon.GetOrCreateClusterID(coreClient)
-	//	if err != nil {
-	//		log.Errorf("Failed to generate or retrieve the cluster ID")
-	//	}
-	//
-	//	// TODO: move rest of the controllers out of the apiserver package
-	//	orchestratorCtx := orchestrator.ControllerContext{
-	//		IsLeaderFunc:                 le.IsLeader,
-	//		UnassignedPodInformerFactory: apiCl.UnassignedPodInformerFactory,
-	//		Client:                       apiCl.Cl,
-	//		StopCh:                       stopCh,
-	//		Hostname:                     hostname,
-	//		ClusterName:                  clustername.GetClusterName(),
-	//		ConfigPath:                   confPath,
-	//	}
-	//	err = orchestrator.StartController(orchestratorCtx)
-	//	if err != nil {
-	//		log.Errorf("Could not start orchestrator controller: %v", err)
-	//	}
-	//
-	//	if config.Datadog.GetBool("admission_controller.enabled") {
-	//		admissionCtx := admissionpkg.ControllerContext{
-	//			IsLeaderFunc:     le.IsLeader,
-	//			SecretInformers:  apiCl.CertificateSecretInformerFactory,
-	//			WebhookInformers: apiCl.WebhookConfigInformerFactory,
-	//			Client:           apiCl.Cl,
-	//			StopCh:           stopCh,
-	//		}
-	//		err = admissionpkg.StartControllers(admissionCtx)
-	//		if err != nil {
-	//			log.Errorf("Could not start admission controller: %v", err)
-	//		}
-	//	} else {
-	//		log.Info("Admission controller is disabled")
-	//	}
-	//}
 
 	// Setup a channel to catch OS signals
 	signalCh := make(chan os.Signal, 1)
