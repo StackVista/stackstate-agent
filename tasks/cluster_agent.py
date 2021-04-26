@@ -31,7 +31,6 @@ def apply_branding(ctx):
     """
     Apply stackstate branding
     """
-    print("Applying Cluster Agent STS Branding")
     sts_lower_replace = 's/datadog/stackstate/g'
 
     # Config
