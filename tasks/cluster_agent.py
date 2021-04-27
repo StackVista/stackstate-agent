@@ -48,7 +48,8 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"/opt/datadog-agent/run\\" -> \\"/opt/stackstate-agent/run\\""', "./pkg/config")
 
     # Trace Agent Metrics
-    do_sed_rename(ctx, datadog_metrics_replace, "./pkg/process/statsd/statsd.go")
+    # do_sed_rename(ctx, datadog_metrics_replace, "./pkg/process/statsd/statsd.go")
+    do_sed_rename(ctx, datadog_metrics_replace, "./vendor/github.com/DataDog/datadog-go/statsd/statsd.go")
 
     # Cluster Agent
     cluster_agent_replace = '/www/! s/datadog/stackstate/g'
