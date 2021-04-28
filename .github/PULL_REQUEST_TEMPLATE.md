@@ -10,8 +10,7 @@
 - [ ] E2E/Molecule test
 
 
-### Step 4: I'm confident that everything is properly tested:
-I got a PO / QA Approval by:
-- [ ] Name
+### Describe how to test your changes
 
-Write there any instructions and details that should be tested during the QA.
+Write here in detail how you have tested your changes
+and instructions on how this should be tested in QA.
