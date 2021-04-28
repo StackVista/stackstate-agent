@@ -182,7 +182,8 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("python_version", DefaultPython)
 	// [sts] skip datadog functionality
 	config.BindEnvAndSetDefault("skip_leader_election", true)
-	config.BindEnvAndSetDefault("skip_validate_clustername", true)
+	// [sts] bind env for skip_validate_clustername, default is set in the config_template.yaml to avoid test failures.
+	config.BindEnv("skip_validate_clustername")
 
 	// [sts] batcher environment variables
 	config.BindEnvAndSetDefault("batcher_capacity", DefaultBatcherBufferSize)

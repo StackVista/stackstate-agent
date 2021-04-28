@@ -1738,6 +1738,10 @@ network_tracer_config:
 #
 # disable_cluster_name_tag_key: false
 
+## @param skip_validate_clustername - boolean - optional - default: true
+## Disables the kubernetes cluster name validation in the StackState cluster agent.
+skip_validate_clustername: true
+
 {{ end -}}
 {{- if .CloudFoundryBBS }}
 #######################################################
