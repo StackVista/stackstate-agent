@@ -49,7 +49,8 @@ const (
 	// ClusterIDCacheKey is the key name for the orchestrator cluster id in the agent in-mem cache
 	ClusterIDCacheKey = "orchestratorClusterID"
 
-	// [sts] Batcher default buffer size
+	// DefaultBatcherBufferSize sets the default buffer size of the batcher to 10000
+	// [sts]
 	DefaultBatcherBufferSize = 10000
 )
 
