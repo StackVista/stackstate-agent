@@ -39,7 +39,7 @@ const (
 	defaultCachePurge  = 10 * time.Minute
 )
 
-// KubeApiEventsConfig is the config of the API server.
+// EventsConfig is the config of the API server.
 type EventsConfig struct {
 	CollectEvent             bool     `yaml:"collect_events"`
 	FilteredEventTypes       []string `yaml:"filtered_event_types"`
@@ -55,7 +55,7 @@ type EventC struct {
 	LastTime   time.Time
 }
 
-// KubeApiEventsCheck grabs events from the API server.
+// EventsCheck grabs events from the API server.
 type EventsCheck struct {
 	CommonCheck
 	instance        *EventsConfig
@@ -139,11 +139,6 @@ func (k *EventsCheck) Run() error {
 	}
 	defer sender.Commit()
 
-	if config.Datadog.GetBool("cluster_agent.enabled") {
-		log.Debug("Cluster agent is enabled. Not running Kubernetes API Server check or collecting Kubernetes Events.")
-		return nil
-	}
-
 	// If the check is configured as a cluster check, the cluster check worker needs to skip the leader election section.
 	// The Cluster Agent will passed in the `skip_leader_election` bool.
 	if !k.instance.LeaderSkip {
@@ -161,15 +156,12 @@ func (k *EventsCheck) Run() error {
 		}
 	}
 
-	// API Server client initialisation on first run
-	if k.ac == nil {
-		// We start the API Server Client.
-		k.ac, err = apiserver.GetAPIClient()
-		if err != nil {
-			k.Warnf("Could not connect to apiserver: %s", err) //nolint:errcheck
-			return err
-		}
+	// initialize kube api check
+	err = k.InitKubeAPICheck()
+	if err != nil {
+		return err
 	}
+
 
 	// Running the event collection.
 	if !k.instance.CollectEvent {

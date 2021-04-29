@@ -20,6 +20,25 @@ rules:
   - get
   - list
   - watch
+- apiGroups: # Kubernetes event collection state
+  - ""
+  resources:
+  - configmaps
+  resourceNames:
+  - stackstatetoken
+  verbs:
+  - get
+  - update
+- apiGroups: # To create the cluster-id configmap
+  - ""
+  resources:
+  - configmaps
+  resourceNames:
+  - "stackstate-cluster-id"
+  verbs:
+  - create
+  - get
+  - update
 - apiGroups:
   - "storage.k8s.io"
   resources:
