@@ -8,6 +8,7 @@
 package kubeapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -246,6 +247,15 @@ func (k *EventsCheck) processEvents(sender aggregator.Sender, events []*v1.Event
 			_ = k.Warnf("Error while mapping event, %s.", err.Error())
 			continue
 		}
+		log.Debugf("Sending event: %v", mappedEvent)
+
+		j, err := json.Marshal(mappedEvent)
+		if err != nil {
+			_ = k.Warnf("Error while marshalling event to json, %s.", err.Error())
+		} else {
+			log.Debugf("Sending event: %s", string(j))
+		}
+
 		sender.Event(mappedEvent)
 	}
 
