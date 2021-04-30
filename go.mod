@@ -2,6 +2,13 @@ module github.com/StackVista/stackstate-agent
 
 go 1.15
 
+// NOTE: Dependencies on the left-hand side of `replace` directives are not
+// automatically updated with Dependabot, since the version stated in the associated
+// `require` directive is ignored.
+//
+// Prefer using simple `require` directives instead of using `replace` if possible.
+// If you need to `replace` a dependency, add it to the ignore list on .github/dependabot.yaml
+
 // Internal deps fix version
 replace (
 	bitbucket.org/ww/goautoneg => github.com/munnerz/goautoneg v0.0.0-20120707110453-a547fc61f48d
