@@ -62,7 +62,7 @@ func (c *Check) Run() error {
 		log.Warnf("Error getting handle value %v", err)
 	} else {
 		val := vals["_Total"]
-		sender.Gauge("system.cpu.interrupt", float64(val), "", nil) //FIXME(Agent8): should be multiplied by 100 like the other metrics
+		sender.Gauge("system.cpu.interrupt", float64(val), "", nil)
 	}
 
 	vals, err = c.idleCounter.GetAllValues()
@@ -70,7 +70,7 @@ func (c *Check) Run() error {
 		log.Warnf("Error getting handle value %v", err)
 	} else {
 		val := vals["_Total"]
-		sender.Gauge("system.cpu.idle", float64(val*100), "", nil)
+		sender.Gauge("system.cpu.idle", float64(val), "", nil)
 	}
 
 	vals, err = c.userCounter.GetAllValues()
@@ -78,7 +78,7 @@ func (c *Check) Run() error {
 		log.Warnf("Error getting handle value %v", err)
 	} else {
 		val := vals["_Total"]
-		sender.Gauge("system.cpu.user", float64(val*100), "", nil)
+		sender.Gauge("system.cpu.user", float64(val), "", nil)
 	}
 
 	vals, err = c.privilegedCounter.GetAllValues()
@@ -86,7 +86,7 @@ func (c *Check) Run() error {
 		log.Warnf("Error getting handle value %v", err)
 	} else {
 		val := vals["_Total"]
-		sender.Gauge("system.cpu.system", float64(val*100), "", nil)
+		sender.Gauge("system.cpu.system", float64(val), "", nil)
 	}
 
 	sender.Gauge("system.cpu.iowait", 0.0, "", nil)
