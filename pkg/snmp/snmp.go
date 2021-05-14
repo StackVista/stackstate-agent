@@ -18,8 +18,8 @@ import (
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
 
+	"github.com/DataDog/viper"
 	"github.com/gosnmp/gosnmp"
-	"github.com/spf13/viper"
 )
 
 const (
