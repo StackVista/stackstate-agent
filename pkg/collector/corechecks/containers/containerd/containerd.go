@@ -74,12 +74,7 @@ func ContainerdFactory() check.Check {
 
 // Parse is used to get the configuration set by the user
 func (co *ContainerdConfig) Parse(data []byte) error {
-	// sts
-	co.CollectContainerTopology = true
-	if err := yaml.Unmarshal(data, co); err != nil {
-		return err
-	}
-	return nil
+	return yaml.Unmarshal(data, co)
 }
 
 // Configure parses the check configuration and init the check
