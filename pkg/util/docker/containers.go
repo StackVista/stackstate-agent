@@ -38,47 +38,7 @@ type ContainerListConfig struct {
 	FlagExcluded  bool
 }
 
-// sts begin
-func (d *DockerUtil) GetContainers() ([]*spec.Container, error) {
-	dockerContainers, err := d.ListContainers(&ContainerListConfig{IncludeExited: false, FlagExcluded: true})
-	if err != nil {
-		return nil, err
-	}
-	uContainers := make([]*spec.Container, 0, len(dockerContainers))
-	for _, dContainer := range dockerContainers {
-		container := &spec.Container{
-			Name:    dContainer.Name,
-			Runtime: "docker",
-			ID:      dContainer.ID,
-			Image:   dContainer.Image,
-			Mounts:  d.mapMountPointToMount(dContainer.Mounts),
-			State:   dContainer.State,
-		}
-		uContainers = append(uContainers, container)
-	}
-	return uContainers, nil
-}
-
-func (d *DockerUtil) mapMountPointToMount(mounts []types.MountPoint) []specs.Mount {
-	output := make([]specs.Mount, 0, len(mounts))
-
-	for _, v := range mounts {
-
-		mount := specs.Mount{
-			Destination: v.Destination,
-			Type:        string(v.Type),
-			Source:      v.Source,
-			Options:     []string{},
-		}
-		output = append(output, mount)
-	}
-
-	return output
-}
-
-// sts end
-
-// Containers gets a list of all containers on the current node using a mix of
+// ListContainers gets a list of all containers on the current node using a mix of
 // the Docker APIs and cgroups stats. We attempt to limit syscalls where possible.
 func (d *DockerUtil) ListContainers(cfg *ContainerListConfig) ([]*containers.Container, error) {
 	err := providers.ContainerImpl().Prefetch()
