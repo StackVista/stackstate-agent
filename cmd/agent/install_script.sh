@@ -106,6 +106,19 @@ Basic information about the Agent are available at:
 }
 trap on_error ERR
 
+function verify_agent_version(){
+    local ver_separator="$1"
+    if [ -z "$agent_version_custom" ]; then
+        echo -e "
+  \033[33mWarning: Specified version not found: $agent_major_version.$agent_minor_version
+  Check available versions at: https://github.com/DataDog/datadog-agent/blob/master/CHANGELOG.rst\033[0m"
+        fallback_msg
+        exit 1;
+    else
+        agent_flavor+="$ver_separator$agent_version_custom"
+    fi
+}
+
 echo -e "\033[34m\n* Datadog Agent install script v${install_script_version}\n\033[0m"
 
 hostname=
@@ -177,9 +190,17 @@ else
     code_name="stable"
 fi
 
-if [ -z "$DEBIAN_REPO" ]; then
-    # for offline script remember default production repo address
-    DEBIAN_REPO="https://stackstate-agent-3.s3.amazonaws.com"
+if [ -n "$DD_AGENT_MINOR_VERSION" ]; then
+  # Examples:
+  #  - 20   = defaults to highest patch version x.20.2
+  #  - 20.0 = sets explicit patch version x.20.0
+  # Note: Specifying an invalid minor version will terminate the script.
+  agent_minor_version=$DD_AGENT_MINOR_VERSION
+fi
+
+agent_flavor="datadog-agent"
+if [ -n "$DD_AGENT_FLAVOR" ]; then
+    agent_flavor=$DD_AGENT_FLAVOR #Eg: datadog-iot-agent
 fi
 
 if [ -z "$YUM_REPO" ]; then
@@ -300,10 +321,21 @@ if [ "$OS" = "RedHat" ]; then
         $sudo_cmd yum -y localinstall $LOCAL_PKG_NAME
     fi
 
-elif [ $OS = "Debian" ]; then
-    print_blu "* Installing apt-transport-https\n"
-    $sudo_cmd apt-get update || print_red "'apt-get update' failed, the script will not install the latest version of apt-transport-https."
-    $sudo_cmd apt-get install -y apt-transport-https || print_red "> 'apt-transport-https' was not installed"
+    if [ -n "$agent_minor_version" ]; then
+        # Example: datadog-agent-7.20.2-1
+        pkg_pattern="$agent_major_version\.${agent_minor_version%.}(\.[[:digit:]]+){0,1}(-[[:digit:]])?"
+        agent_version_custom="$(yum -y --disablerepo=* --enablerepo=datadog list --showduplicates datadog-agent | sort -r | grep -E "$pkg_pattern" -om1)" || true
+        verify_agent_version "-"
+    fi
+    echo -e "  \033[33mInstalling package: $agent_flavor\n\033[0m"
+
+    $sudo_cmd yum -y --disablerepo='*' --enablerepo='datadog' install $dnf_flag "$agent_flavor" || $sudo_cmd yum -y install $dnf_flag "$agent_flavor"
+
+elif [ "$OS" = "Debian" ]; then
+
+    printf "\033[34m\n* Installing apt-transport-https\n\033[0m\n"
+    $sudo_cmd apt-get update || printf "\033[31m'apt-get update' failed, the script will not install the latest version of apt-transport-https.\033[0m\n"
+    $sudo_cmd apt-get install -y apt-transport-https
     # Only install dirmngr if it's available in the cache
     # it may not be available on Ubuntu <= 14.04 but it's not required there
     cache_output=$(apt-cache search dirmngr)
@@ -350,6 +382,35 @@ see the logs above to determine the cause.
 If the failing repository is StackState, please contact StackState support.
 *****
 "
+    $sudo_cmd apt-get update -o Dir::Etc::sourcelist="sources.list.d/datadog.list" -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0"
+    ERROR_MESSAGE="ERROR
+Failed to install the Datadog package, sometimes it may be
+due to another APT source failing. See the logs above to
+determine the cause.
+If the cause is unclear, please contact Datadog support.
+*****
+"
+    
+    if [ -n "$agent_minor_version" ]; then
+        # Example: datadog-agent=1:7.20.2-1
+        pkg_pattern="([[:digit:]]:)?$agent_major_version\.${agent_minor_version%.}(\.[[:digit:]]+){0,1}(-[[:digit:]])?"
+        agent_version_custom="$(apt-cache madison datadog-agent | grep -E "$pkg_pattern" -om1)" || true
+        verify_agent_version "="
+    fi
+    echo -e "  \033[33mInstalling package: $agent_flavor\n\033[0m"
+
+    $sudo_cmd apt-get install -y --force-yes "$agent_flavor"
+    ERROR_MESSAGE=""
+elif [ "$OS" = "SUSE" ]; then
+  UNAME_M=$(uname -m)
+  if [ "$UNAME_M"  == "i686" ] || [ "$UNAME_M"  == "i386" ] || [ "$UNAME_M"  == "x86" ]; then
+      printf "\033[31mThe Datadog Agent installer is only available for 64 bit SUSE Enterprise machines.\033[0m\n"
+      exit;
+  elif [ "$UNAME_M"  == "aarch64" ]; then
+      ARCHI="aarch64"
+  else
+      ARCHI="x86_64"
+  fi
 
   if [ -z "$rpm_repo_gpgcheck" ]; then
       rpm_repo_gpgcheck=1
@@ -406,8 +467,17 @@ If the failing repository is StackState, please contact StackState support.
 
   echo -e "\033[34m\n* Refreshing repositories\n\033[0m"
   $sudo_cmd zypper --non-interactive --no-gpg-checks refresh datadog
-
+  
   echo -e "\033[34m\n* Installing Datadog Agent\n\033[0m"
+
+  if [ -n "$agent_minor_version" ]; then
+      # Example: datadog-agent-1:7.20.2-1
+      pkg_pattern="([[:digit:]]:)?$agent_major_version\.${agent_minor_version%.}(\.[[:digit:]]+){0,1}(-[[:digit:]])?"
+      agent_version_custom="$(zypper search -s datadog-agent | grep -E "$pkg_pattern" -om1)" || true
+      verify_agent_version "-"
+  fi
+  echo -e "  \033[33mInstalling package: $agent_flavor\n\033[0m"
+
   $sudo_cmd zypper --non-interactive install "$agent_flavor"
 
 else
