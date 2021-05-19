@@ -62,6 +62,7 @@ func enterTempEnv(t *testing.T) *tempEnv {
 
 type eventMatch struct {
 	ruleID       string
+	frameworkID  string
 	resourceID   string
 	resourceType string
 	result       string
@@ -74,7 +75,8 @@ func eventMatcher(m eventMatch) interface{} {
 		if e.AgentRuleID != m.ruleID ||
 			e.Result != m.result ||
 			e.ResourceID != m.resourceID ||
-			e.ResourceType != m.resourceType {
+			e.ResourceType != m.resourceType ||
+			e.AgentFrameworkID != m.frameworkID {
 			return false
 		}
 
@@ -103,6 +105,7 @@ func TestRun(t *testing.T) {
 			eventMatcher(
 				eventMatch{
 					ruleID:       "cis-docker-1",
+					frameworkID:  "cis-docker",
 					resourceID:   "the-host",
 					resourceType: "docker",
 					result:       "passed",
@@ -119,6 +122,7 @@ func TestRun(t *testing.T) {
 			eventMatcher(
 				eventMatch{
 					ruleID:       "cis-kubernetes-1",
+					frameworkID:  "cis-kubernetes",
 					resourceID:   "the-host",
 					resourceType: "kubernetesNode",
 					result:       "failed",
@@ -196,6 +200,7 @@ func TestRunChecks(t *testing.T) {
 			eventMatcher(
 				eventMatch{
 					ruleID:       "cis-docker-1",
+					frameworkID:  "cis-docker",
 					resourceID:   "the-host",
 					resourceType: "docker",
 					result:       "passed",
@@ -237,6 +242,7 @@ func TestRunChecksFromFile(t *testing.T) {
 			eventMatcher(
 				eventMatch{
 					ruleID:       "cis-kubernetes-1",
+					frameworkID:  "cis-kubernetes",
 					resourceID:   "the-host",
 					resourceType: "kubernetesNode",
 					result:       "failed",
