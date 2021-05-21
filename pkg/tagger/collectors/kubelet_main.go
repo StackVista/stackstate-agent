@@ -102,8 +102,11 @@ func (c *KubeletCollector) Fetch(entity string) ([]string, []string, []string, e
 	log.Infof("Fetching Kubelet tags for entity '%s'", entity)
 	pod, err := c.watcher.GetPodForEntityID(entity)
 	if err != nil {
+		log.Warnf("No pod found for '%s'", entity)
 		return []string{}, []string{}, []string{}, err
 	}
+
+	log.Infof("Found pod '%s' for entity '%s'", pod.Metadata.Name, entity)
 
 	pods := []*kubelet.Pod{pod}
 	updates, err := c.parsePods(pods)
