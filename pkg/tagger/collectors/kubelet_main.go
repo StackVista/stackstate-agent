@@ -14,6 +14,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/errors"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (
@@ -98,6 +99,7 @@ func (c *KubeletCollector) Pull() error {
 // Fetch fetches tags for a given entity by iterating on the whole podlist
 // TODO: optimize if called too often on production
 func (c *KubeletCollector) Fetch(entity string) ([]string, []string, []string, error) {
+	log.Infof("Fetching Kubelet tags for entity '%s'", entity)
 	pod, err := c.watcher.GetPodForEntityID(entity)
 	if err != nil {
 		return []string{}, []string{}, []string{}, err
