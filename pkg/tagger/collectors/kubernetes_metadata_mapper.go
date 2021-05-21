@@ -10,6 +10,8 @@ package collectors
 import (
 	"strings"
 
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
+
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/tagger/utils"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
@@ -65,6 +67,16 @@ func (c *KubeMetadataCollector) getTagInfos(pods []*kubelet.Pod) []*TagInfo {
 			}
 			tagList.AddLow(tag[0], tag[1])
 		}
+
+		// Pod name
+		tagList.AddOrchestrator("pod_name", po.Metadata.Name)
+		tagList.AddLow("kube_namespace", po.Metadata.Namespace)
+		// sts
+		clusterName := clustername.GetClusterName()
+		if clusterName != "" {
+			tagList.AddLow("kube_cluster_name", clusterName)
+		}
+		// sts
 
 		low, orchestrator, high := tagList.Compute()
 		// Register the tags for the pod itself
