@@ -208,6 +208,7 @@ func (ku *KubeUtil) ForceGetLocalPodList() ([]*Pod, error) {
 // a given container on the node. Reset the cache if needed.
 // Returns a nil pointer if not found.
 func (ku *KubeUtil) GetPodForContainerID(containerID string) (*Pod, error) {
+	log.Infof("Search pod for container ID '%s'", containerID)
 	// Best case scenario
 	pods, err := ku.GetLocalPodList()
 	if err != nil {
@@ -305,6 +306,9 @@ func (ku *KubeUtil) GetPodFromUID(podUID string) (*Pod, error) {
 func (ku *KubeUtil) GetPodForEntityID(entityID string) (*Pod, error) {
 	if strings.HasPrefix(entityID, KubePodPrefix) {
 		uid := strings.TrimPrefix(entityID, KubePodPrefix)
+		return ku.GetPodFromUID(uid)
+	} else if strings.HasPrefix(entityID, KubePodUidPrefix) {
+		uid := strings.TrimPrefix(entityID, KubePodUidPrefix)
 		return ku.GetPodFromUID(uid)
 	}
 	return ku.GetPodForContainerID(entityID)
