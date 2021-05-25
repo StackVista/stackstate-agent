@@ -163,6 +163,10 @@ func (c *KubeletCollector) parsePods(pods []*kubelet.Pod) ([]*TagInfo, error) {
 			}
 
 			cLow, cOrch, cHigh := cTags.Compute()
+
+			log.Debugf("Found low tags %v for pod %s", cLow, pod.Metadata.Name)
+			log.Debugf("Found orch tags %v for pod %s", cOrch, pod.Metadata.Name)
+
 			info := &TagInfo{
 				Source:               kubeletCollectorName,
 				Entity:               container.ID,
