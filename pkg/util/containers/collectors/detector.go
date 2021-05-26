@@ -56,6 +56,19 @@ func NewDetector(configuredName string) *Detector {
 	return d
 }
 
+func (d *Detector) ListCollectorCandidateNames() []string {
+	s := []string{}
+	for k := range d.candidates {
+		s = append(s, k)
+	}
+
+	return s
+}
+
+func (d *Detector) ListCatalog() Catalog {
+	return defaultCatalog
+}
+
 // GetPreferred detects, ranks and returns the best collector for now.
 // Result might change if new collectors are valid after start, then
 // constant when all collectors are either ok or PermaFail.
