@@ -24,7 +24,8 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/network/config"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/pkg/errors"
 	"golang.org/x/sys/windows"
 )
@@ -73,6 +74,11 @@ const (
 
 const (
 	dnsReadBufferCount = 100
+
+	// set default max open & closed flows for windows.  See note in setParams(),
+	// these are only sort-of honored for now
+	defaultMaxOpenFlows   = uint64(32767)
+	defaultMaxClosedFlows = uint64(32767)
 )
 
 // DriverExpvarNames is a list of all the DriverExpvar names returned from GetStats
@@ -96,6 +102,9 @@ type DriverInterface struct {
 	moreDataErrors int64
 	bufferSize     int64
 
+	maxOpenFlows   uint64
+	maxClosedFlows uint64
+
 	driverFlowHandle  *DriverHandle
 	driverStatsHandle *DriverHandle
 	driverDNSHandle   *DriverHandle
@@ -111,12 +120,14 @@ type DriverInterface struct {
 }
 
 // NewDriverInterface returns a DriverInterface struct for interacting with the driver
-func NewDriverInterface(enableMonotonicCounts bool, bufferSize int) (*DriverInterface, error) {
+func NewDriverInterface(config *config.Config) (*DriverInterface, error) {
 	dc := &DriverInterface{
 		path:                  deviceName,
-		enableMonotonicCounts: enableMonotonicCounts,
-		readBuffer:            make([]byte, bufferSize),
-		bufferSize:            int64(bufferSize),
+		enableMonotonicCounts: config.EnableMonotonicCount,
+		readBuffer:            make([]byte, config.DriverBufferSize),
+		bufferSize:            int64(config.DriverBufferSize),
+		maxOpenFlows:          uint64(config.MaxTrackedConnections),
+		maxClosedFlows:        uint64(config.MaxClosedConnectionsBuffered),
 	}
 
 	err := dc.setupFlowHandle()
@@ -186,6 +197,11 @@ func (di *DriverInterface) setupFlowHandle() error {
 		return err
 	}
 
+	// Set up the maximum amount of connections
+	err = di.setFlowParams()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -394,6 +410,9 @@ func (di *DriverInterface) ReadDNSPacket(visit func([]byte, time.Time) error) (d
 type DriverHandle struct {
 	handle     windows.Handle
 	handleType HandleType
+
+	// record the last value of number of flows missed due to max exceeded
+	lastNumFlowsMissed uint64
 }
 
 // NewDriverHandle returns a DriverHandle struct
@@ -415,6 +434,38 @@ func (dh *DriverHandle) setFilters(filters []C.struct__filterDefinition) error {
 		}
 	}
 	return nil
+}
+func minUint64(a, b uint64) uint64 {
+	if a > b {
+		return b
+	}
+	return a
+}
+
+// setParams passes any configuration values from the config file down
+// to the driver.
+func (di *DriverInterface) setFlowParams() error {
+	// set up the maximum flows
+
+	// temporary setup.  Will set the maximum flows to the sum of the configured
+	// max_tracked_connections and max_closed_connections_buffered, setting a
+	// (hard_coded) maximum.  This will be updated to actually honor the separate
+	// config values when the driver is updated to track them separately.
+
+	// this makes it so that the config can clamp down, but can never make it
+	// larger than the coded defaults above.
+	maxFlows := minUint64((defaultMaxOpenFlows + defaultMaxClosedFlows), (di.maxOpenFlows + di.maxClosedFlows))
+	log.Debugf("Setting max flows in driver to %v", maxFlows)
+	err := windows.DeviceIoControl(di.driverFlowHandle.handle,
+		C.DDNPMDRIVER_IOCTL_SET_MAX_FLOWS,
+		(*byte)(unsafe.Pointer(&maxFlows)),
+		uint32(unsafe.Sizeof(maxFlows)),
+		nil,
+		uint32(0), nil, nil)
+	if err != nil {
+		log.Warnf("Failed to set max number of flows to %v %v", maxFlows, err)
+	}
+	return err
 }
 
 func (dh *DriverHandle) setDataFilters(filters []C.struct__filterDefinition) error {
@@ -470,21 +521,28 @@ func (dh *DriverHandle) getStatsForHandle() (map[string]int64, error) {
 		}, nil
 	// A FlowHandle handle returns the flow stats specific to this handle
 	case FlowHandle:
+		if dh.lastNumFlowsMissed < uint64(stats.handle.flow_stats.num_flows_missed_max_exceeded) {
+			log.Warnf("Flows missed due to maximum flow limit. %v", stats.handle.flow_stats.num_flows_missed_max_exceeded)
+		}
+		dh.lastNumFlowsMissed = uint64(stats.handle.flow_stats.num_flows_missed_max_exceeded)
 		return map[string]int64{
-			"read_calls":             int64(stats.handle.handle_stats.read_calls),
-			"read_calls_outstanding": int64(stats.handle.handle_stats.read_calls_outstanding),
-			"read_calls_completed":   int64(stats.handle.handle_stats.read_calls_completed),
-			"read_calls_cancelled":   int64(stats.handle.handle_stats.read_calls_cancelled),
-			"write_calls":            int64(stats.handle.handle_stats.write_calls),
-			"write_bytes":            int64(stats.handle.handle_stats.write_bytes),
-			"ioctl_calls":            int64(stats.handle.handle_stats.ioctl_calls),
-			"packets_observed":       int64(stats.handle.flow_stats.packets_observed),
-			"packets_processed_flow": int64(stats.handle.flow_stats.packets_processed),
-			"open_flows":             int64(stats.handle.flow_stats.open_flows),
-			"total_flows":            int64(stats.handle.flow_stats.total_flows),
-			"num_flow_searches":      int64(stats.handle.flow_stats.num_flow_searches),
-			"num_flow_search_misses": int64(stats.handle.flow_stats.num_flow_search_misses),
-			"num_flow_collisions":    int64(stats.handle.flow_stats.num_flow_collisions),
+			"read_calls":                    int64(stats.handle.handle_stats.read_calls),
+			"read_calls_outstanding":        int64(stats.handle.handle_stats.read_calls_outstanding),
+			"read_calls_completed":          int64(stats.handle.handle_stats.read_calls_completed),
+			"read_calls_cancelled":          int64(stats.handle.handle_stats.read_calls_cancelled),
+			"write_calls":                   int64(stats.handle.handle_stats.write_calls),
+			"write_bytes":                   int64(stats.handle.handle_stats.write_bytes),
+			"ioctl_calls":                   int64(stats.handle.handle_stats.ioctl_calls),
+			"packets_observed":              int64(stats.handle.flow_stats.packets_observed),
+			"packets_processed_flow":        int64(stats.handle.flow_stats.packets_processed),
+			"open_flows":                    int64(stats.handle.flow_stats.open_flows),
+			"total_flows":                   int64(stats.handle.flow_stats.total_flows),
+			"num_flow_searches":             int64(stats.handle.flow_stats.num_flow_searches),
+			"num_flow_search_misses":        int64(stats.handle.flow_stats.num_flow_search_misses),
+			"num_flow_collisions":           int64(stats.handle.flow_stats.num_flow_collisions),
+			"num_flow_structures":           int64(stats.handle.flow_stats.num_flow_structures),
+			"peak_num_flow_structures":      int64(stats.handle.flow_stats.peak_num_flow_structures),
+			"num_flows_missed_max_exceeded": int64(stats.handle.flow_stats.num_flows_missed_max_exceeded),
 		}, nil
 	// A DataHandle handle returns transfer stats specific to this handle
 	case DataHandle:
