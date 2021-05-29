@@ -17,12 +17,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/listeners"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/providers/names"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/scheduler"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/retry"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/listeners"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/providers"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/providers/names"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/scheduler"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/util/retry"
 )
 
 type MockProvider struct {
@@ -40,6 +41,10 @@ func (p *MockProvider) String() string {
 
 func (p *MockProvider) IsUpToDate() (bool, error) {
 	return true, nil
+}
+
+func (p *MockProvider) GetConfigErrors() map[string]providers.ErrorMsgSet {
+	return make(map[string]providers.ErrorMsgSet)
 }
 
 type MockProvider2 struct {
