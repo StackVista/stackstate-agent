@@ -25,8 +25,8 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/docker"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/StackVista/stackstate-agent/pkg/util/retry"
+	log "github.com/cihub/seelog"
 )
 
 const (

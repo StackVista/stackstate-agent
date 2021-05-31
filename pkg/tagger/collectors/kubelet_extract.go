@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	log "github.com/cihub/seelog"
 
 	"github.com/StackVista/stackstate-agent/pkg/tagger/utils"
 	"github.com/StackVista/stackstate-agent/pkg/util/containers"

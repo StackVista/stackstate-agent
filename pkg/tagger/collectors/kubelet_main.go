@@ -14,7 +14,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/errors"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	log "github.com/cihub/seelog"
 )
 
 const (
