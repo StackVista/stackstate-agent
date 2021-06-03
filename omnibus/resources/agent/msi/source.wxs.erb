@@ -400,8 +400,8 @@
                  NeverOverwrite="yes"
                  Permanent="yes">
         <File Id="stackstate.yaml.example"
-            Name="stackstate.yaml"
-            Source="$(var.EtcFiles)\stackstate.yaml.example"/>
+              Name="stackstate.yaml"
+              Source="$(var.EtcFiles)\stackstate.yaml.example"/>
       </Component>
 
       <Component Id="install_info"
@@ -496,7 +496,7 @@
     <Feature Id="MainApplication" Title="Datadog Agent" Level="1" ConfigurableDirectory="APPLICATIONROOTDIRECTORY">
       <ComponentRef Id="conffolder" />
       <ComponentGroupRef Id="ProjectDir" />
-      <ComponentRef Id="datadog.yaml.example" />
+      <ComponentRef Id="stackstate.yaml.example" />
       <ComponentRef Id="install_info" />
       <ComponentRef Id="logs" />
       <ComponentRef Id="conf.d" />
