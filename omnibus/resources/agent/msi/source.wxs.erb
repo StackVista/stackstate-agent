@@ -77,10 +77,6 @@
     <Property Id="DDAGENTUSER_NAME" />
     <Property Id="DDAGENTUSER_PASSWORD" Hidden="yes" />
     <Property Id="APIKEY" Hidden="yes" />
-    <!-- [sts] -->
-    <Property Id="STS_URL" Hidden="yes" />
-    <Property Id="SKIP_SSL_VALIDATION" Hidden="yes" />
-    <!-- [sts] -->
     <Property Id="SITE" Value="datadoghq.com" />
     <Property Id="FinalizeInstall" Hidden="yes" />
      <PropertyRef Id="WIX_ACCOUNT_ADMINISTRATORS" />
@@ -403,9 +399,9 @@
                  Guid="83461594-01AC-11E2-BE35-37EC6088709B"
                  NeverOverwrite="yes"
                  Permanent="yes">
-        <File Id="datadog.yaml.example"
-            Name="datadog.yaml"
-            Source="$(var.EtcFiles)\datadog.yaml.example"/>
+        <File Id="stackstate.yaml.example"
+            Name="stackstate.yaml"
+            Source="$(var.EtcFiles)\stackstate.yaml.example"/>
       </Component>
 
       <Component Id="install_info"
