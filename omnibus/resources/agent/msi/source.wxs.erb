@@ -77,6 +77,10 @@
     <Property Id="DDAGENTUSER_NAME" />
     <Property Id="DDAGENTUSER_PASSWORD" Hidden="yes" />
     <Property Id="APIKEY" Hidden="yes" />
+    <!-- [sts] -->
+    <Property Id="STS_URL" Hidden="yes" />
+    <Property Id="SKIP_SSL_VALIDATION" Hidden="yes" />
+    <!-- [sts] -->
     <Property Id="SITE" Value="datadoghq.com" />
     <Property Id="FinalizeInstall" Hidden="yes" />
      <PropertyRef Id="WIX_ACCOUNT_ADMINISTRATORS" />
@@ -258,6 +262,9 @@
           <RegistryValue Name="hostname_fqdn"
                          Type="string"
                          Value="[HOSTNAME_FQDN_ENABLED]" />
+          <RegistryValue Name="skip_ssl_validation"
+                         Type="string"
+                         Value="[SKIP_SSL_VALIDATION]" />
         </RegistryKey>
 
       </Component>
