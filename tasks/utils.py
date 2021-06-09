@@ -12,8 +12,9 @@ from subprocess import check_output
 from invoke import task
 
 # constants
-ORG_PATH = "github.com/StackVista"
-REPO_PATH = "{}/stackstate-agent".format(ORG_PATH)
+ORG_PATH = "github.com/DataDog"
+DEFAULT_BRANCH = "master"
+REPO_PATH = "{}/datadog-agent".format(ORG_PATH)
 
 
 def bin_name(name, android=False):
