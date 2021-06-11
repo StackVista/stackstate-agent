@@ -292,13 +292,6 @@
               short_lived_network_relations:
                 enabled: true
                 qualifier_secs: {{ network_relation_filter_short_lived_qualifier_secs }}
-    - name: "Set debug level for agent logs"
-      become: true
-      lineinfile:
-        path: "/etc/stackstate-agent/stackstate.yaml"
-        insertafter: "# log_level: 'info'"
-        line: |2
-          log_level: 'debug'
     - name: "Restart StackState Agent Service"
       become: true
       shell: "systemctl restart stackstate-agent.service"
@@ -317,7 +310,7 @@
       shell: "nohup ncat --broker --listen -p {{ connection_port_after_start_fedora }} &"
       become: true
     - name: Open listening port for windows {{ connection_port_after_start_windows }}
-      shell: "nohup yes | sudo ncat --broker --listen -p {{ connection_port_after_start_windows }} &"
+      shell: "nohup ncat --broker --listen -p {{ connection_port_after_start_windows }} &"
       become: true
     - name: Forward DNAT port {{ dnat_service_port }} to {{ dnat_server_port }}
       iptables:
@@ -358,8 +351,12 @@
     - name: Wait a bit for the ubuntu machine to start
       pause:
         seconds: 10
+    - name: Write file for request
+      win_command: echo "hello from windows, hello from windows, hello from windows, hello from windows" > test.txt
+      async: "{{ max_test_time }}"
+      poll: 0
     - name: Connect to Ubuntu agent P2P (1/1)
-      win_command: nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }}
+      win_command: nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }} < test.txt
       async: "{{ max_test_time }}"
       ignore_errors: True
       register: ubuntu_connect_result
