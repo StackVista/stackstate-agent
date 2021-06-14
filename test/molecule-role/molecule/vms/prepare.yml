@@ -361,7 +361,7 @@
           hello from windows 1
           hello from windows 2
           hello from windows 3
-        dest:  C:\Temp\test.txt
+        dest: C:\Temp\test.txt
     - name: Write file for interval request
       win_copy:
         content: |
