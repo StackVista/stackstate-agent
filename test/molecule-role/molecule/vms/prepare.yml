@@ -351,18 +351,36 @@
     - name: Wait a bit for the ubuntu machine to start
       pause:
         seconds: 10
+    - name: Create temp directory
+      win_file:
+        path: C:\Temp
+        state: directory
     - name: Write file for request
-      win_command: echo "hello from windows, hello from windows, hello from windows, hello from windows" > test.txt
+      win_copy:
+        content: |
+          hello from windows 1
+          hello from windows 2
+          hello from windows 3
+        dest:  C:\Temp\test.txt
+    - name: Write file for interval request
+      win_copy:
+        content: |
+          :loop
+          nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }} -w 5 < C:\Temp\test.txt
+          goto loop
+        dest: C:\Temp\request.bat
+    - name: Start nc request loop to hit ubuntu every 5 secs
+      win_command: C:\Temp\request.bat
       async: "{{ max_test_time }}"
       poll: 0
     - name: Connect to Ubuntu agent P2P (1/1)
-      win_command: nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }} < test.txt
+      win_command: nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }} < C:\Temp\test.txt
       async: "{{ max_test_time }}"
       ignore_errors: True
       register: ubuntu_connect_result
       poll: 0
     - name: Connect to Ubuntu agent P2P (1/2)
-      win_command: nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }}
+      win_command: nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }} < C:\Temp\test.txt
       async: "{{ max_test_time }}"
       poll: 0
       when: ubuntu_connect_result is failed
