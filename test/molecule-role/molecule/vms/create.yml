@@ -59,6 +59,10 @@
         to_port: "{{ connection_port_after_start_windows }}"
         cidr_ip: '0.0.0.0/0'
       - proto: tcp
+        from_port: "{{ connection_port_after_start_windows_interval }}"
+        to_port: "{{ connection_port_after_start_windows_interval }}"
+        cidr_ip: '0.0.0.0/0'
+      - proto: tcp
         from_port: "{{ dnat_service_port }}"
         to_port: "{{ dnat_service_port }}"
         cidr_ip: '0.0.0.0/0'

@@ -128,6 +128,7 @@ def test_created_connection_after_start_with_metrics(host, common_vars):
 
     fedora_conn_port = int(common_vars["connection_port_after_start_fedora"])
     windows_conn_port = int(common_vars["connection_port_after_start_windows"])
+    windows_interval_conn_port = int(common_vars["connection_port_after_start_windows_interval"])
 
     ubuntu_private_ip = _get_instance_config("agent-ubuntu")["private_address"]
     print("ubuntu private: {}".format(ubuntu_private_ip))
@@ -172,6 +173,24 @@ def test_created_connection_after_start_with_metrics(host, common_vars):
         print("trying to find connection (windows -> ubuntu INCOMING) {}:{} -> {}".format(windows_private_ip,
               windows_conn_port, ubuntu_private_ip))
         incoming_conn = _find_incoming_connection(json_data, windows_conn_port, windows_private_ip, ubuntu_private_ip)
+        print(incoming_conn)
+        assert incoming_conn["direction"] == "INCOMING"
+        assert incoming_conn["connectionType"] == "TCP"
+        assert incoming_conn["bytesSentPerSecond"] == 0.0
+        assert incoming_conn["bytesReceivedPerSecond"] == 0.0   # We don't send data from Windows
+
+        print("trying to find connection (windows -> ubuntu interval OUTGOING) {}:{} -> {}".format(windows_private_ip,
+              windows_interval_conn_port, ubuntu_private_ip))
+        outgoing_conn = _find_outgoing_connection(json_data, windows_interval_conn_port, windows_private_ip, ubuntu_private_ip)
+        print(outgoing_conn)
+        assert outgoing_conn["direction"] == "OUTGOING"
+        assert outgoing_conn["connectionType"] == "TCP"
+        assert outgoing_conn["bytesSentPerSecond"] == 0.0       # We don't collect metrics on Windows
+        assert outgoing_conn["bytesReceivedPerSecond"] == 0.0
+
+        print("trying to find connection (windows -> ubuntu interval INCOMING) {}:{} -> {}".format(windows_private_ip,
+              windows_interval_conn_port, ubuntu_private_ip))
+        incoming_conn = _find_incoming_connection(json_data, windows_interval_conn_port, windows_private_ip, ubuntu_private_ip)
         print(incoming_conn)
         assert incoming_conn["direction"] == "INCOMING"
         assert incoming_conn["connectionType"] == "TCP"

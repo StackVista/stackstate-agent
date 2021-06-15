@@ -312,6 +312,9 @@
     - name: Open listening port for windows {{ connection_port_after_start_windows }}
       shell: "nohup ncat --broker --listen -p {{ connection_port_after_start_windows }} &"
       become: true
+    - name: Open listening port for windows interval {{ connection_port_after_start_windows_interval }}
+      shell: "nohup ncat --broker --listen -p {{ connection_port_after_start_windows_interval }} &"
+      become: true
     - name: Forward DNAT port {{ dnat_service_port }} to {{ dnat_server_port }}
       iptables:
         table: nat
@@ -369,7 +372,7 @@
       win_copy:
         content: |
           :loop
-          nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }} -w 5 < C:\Temp\test.txt
+          nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows_interval }} -w 5 < C:\Temp\test.txt
           goto loop
         dest: C:\Temp\request.bat
     - name: Start nc request loop to hit ubuntu every 5 secs
