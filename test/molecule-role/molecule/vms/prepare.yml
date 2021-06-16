@@ -316,14 +316,20 @@
         seconds: 60
     # We use ncat to keep a listening port open and get a direction
     - name: Open listening port for fedora {{ connection_port_after_start_fedora }}
-      shell: "nohup ncat --broker --listen -p {{ connection_port_after_start_fedora }} &"
+      shell: "ncat --listen -p {{ connection_port_after_start_fedora }}"
       become: true
+      async: "{{ max_test_time }}"
+      poll: 0
     - name: Open listening port for windows {{ connection_port_after_start_windows }}
-      shell: "nohup ncat --broker --listen -p {{ connection_port_after_start_windows }} &"
+      shell: "ncat --listen -p {{ connection_port_after_start_windows }}"
       become: true
+      async: "{{ max_test_time }}"
+      poll: 0
     - name: Open listening port for windows interval {{ connection_port_after_start_windows_interval }}
-      shell: "nohup ncat --broker --listen -p {{ connection_port_after_start_windows_interval }} &"
+      shell: "ncat --listen -p {{ connection_port_after_start_windows_interval }}"
       become: true
+      async: "{{ max_test_time }}"
+      poll: 0
     - name: Forward DNAT port {{ dnat_service_port }} to {{ dnat_server_port }}
       iptables:
         table: nat
@@ -336,8 +342,10 @@
         comment: "Redirect traffic with dnat"
       become: yes
     - name: Open dnat_server listening port {{ dnat_server_port }}
-      shell: "nohup ncat --broker --listen -p {{ dnat_server_port }} &"
+      shell: "ncat --listen -p {{ dnat_server_port }}"
       become: true
+      async: "{{ max_test_time }}"
+      poll: 0
 
 - name: Prepare Windows Agent connecting after start
   hosts: agent-win
@@ -352,13 +360,18 @@
       win_file:
         path: C:\Temp
         state: directory
-    - name: Write file for request
+    - name: Write file for requests (win alternative for yes | ...)
       win_copy:
         content: |
-          hello from windows 1
-          hello from windows 2
-          hello from windows 3
-        dest: C:\Temp\test.txt
+          :loop
+          echo y >> C:\Temp\test.txt
+          timeout /t 1
+          goto loop
+        dest: C:\Temp\write_request_file.bat
+    - name: Write y to request file
+      win_command: C:\Temp\write_request_file.bat
+      async: "{{ max_test_time }}"
+      poll: 0
     - name: Write file for interval request
       win_copy:
         content: |
@@ -371,13 +384,13 @@
       async: "{{ max_test_time }}"
       poll: 0
     - name: Connect to Ubuntu agent P2P (1/1)
-      win_command: nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }} < C:\Temp\test.txt
+      win_command: nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }} -w {{ max_test_time }} < C:\Temp\test.txt
       async: "{{ max_test_time }}"
       ignore_errors: True
       register: ubuntu_connect_result
       poll: 0
     - name: Connect to Ubuntu agent P2P (1/2)
-      win_command: nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }} < C:\Temp\test.txt
+      win_command: nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }} -w {{ max_test_time }} < C:\Temp\test.txt
       async: "{{ max_test_time }}"
       poll: 0
       when: ubuntu_connect_result is failed
