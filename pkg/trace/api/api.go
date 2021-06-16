@@ -133,10 +133,11 @@ func (r *HTTPReceiver) Listen(addr, logExtra string) error {
 	if err != nil {
 		return fmt.Errorf("cannot create listener: %v", err)
 	}
-	timeout := 5 * time.Second
+	timeout := 60 * time.Second
 	if r.conf.ReceiverTimeout > 0 {
 		timeout = time.Duration(r.conf.ReceiverTimeout) * time.Second
 	}
+	log.Infof("Timeout set for read & write is %d", timeout)
 	r.server = &http.Server{
 		ReadTimeout:  timeout,
 		WriteTimeout: timeout,
