@@ -316,17 +316,17 @@
         seconds: 60
     # We use ncat to keep a listening port open and get a direction
     - name: Open listening port for fedora {{ connection_port_after_start_fedora }}
-      shell: "ncat --listen -p {{ connection_port_after_start_fedora }}"
+      shell: "ncat --listen --broker -p {{ connection_port_after_start_fedora }}"
       become: true
       async: "{{ max_test_time }}"
       poll: 0
     - name: Open listening port for windows {{ connection_port_after_start_windows }}
-      shell: "ncat --listen -p {{ connection_port_after_start_windows }}"
+      shell: "ncat --listen --broker -p {{ connection_port_after_start_windows }}"
       become: true
       async: "{{ max_test_time }}"
       poll: 0
     - name: Open listening port for windows interval {{ connection_port_after_start_windows_interval }}
-      shell: "ncat --listen -p {{ connection_port_after_start_windows_interval }}"
+      shell: "ncat --listen --broker -p {{ connection_port_after_start_windows_interval }}"
       become: true
       async: "{{ max_test_time }}"
       poll: 0
@@ -342,58 +342,10 @@
         comment: "Redirect traffic with dnat"
       become: yes
     - name: Open dnat_server listening port {{ dnat_server_port }}
-      shell: "ncat --listen -p {{ dnat_server_port }}"
+      shell: "ncat --listen --broker -p {{ dnat_server_port }}"
       become: true
       async: "{{ max_test_time }}"
       poll: 0
-
-- name: Prepare Windows Agent connecting after start
-  hosts: agent-win
-  gather_facts: false
-  vars_files:
-    - common_vars.yml
-  tasks:
-    - name: Wait a bit for the ubuntu machine to start
-      pause:
-        seconds: 10
-    - name: Create temp directory
-      win_file:
-        path: C:\Temp
-        state: directory
-    - name: Write file for requests (win alternative for yes | ...)
-      win_copy:
-        content: |
-          :loop
-          echo y >> C:\Temp\test.txt
-          timeout /t 1
-          goto loop
-        dest: C:\Temp\write_request_file.bat
-    - name: Write y to request file
-      win_command: C:\Temp\write_request_file.bat
-      async: "{{ max_test_time }}"
-      poll: 0
-    - name: Write file for interval request
-      win_copy:
-        content: |
-          :loop
-          nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows_interval }} -w 5 < C:\Temp\test.txt
-          goto loop
-        dest: C:\Temp\request.bat
-    - name: Start nc request loop to hit ubuntu every 5 secs
-      win_command: C:\Temp\request.bat
-      async: "{{ max_test_time }}"
-      poll: 0
-    - name: Connect to Ubuntu agent P2P (1/1)
-      win_command: nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }} -w {{ max_test_time }} < C:\Temp\test.txt
-      async: "{{ max_test_time }}"
-      ignore_errors: True
-      register: ubuntu_connect_result
-      poll: 0
-    - name: Connect to Ubuntu agent P2P (1/2)
-      win_command: nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }} -w {{ max_test_time }} < C:\Temp\test.txt
-      async: "{{ max_test_time }}"
-      poll: 0
-      when: ubuntu_connect_result is failed
 
 - name: Prepare Fedora Agent connecting after start
   hosts: agent-fedora
@@ -412,6 +364,60 @@
       shell: yes | ncat {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ dnat_service_port }}
       async: "{{ max_test_time }}"
       poll: 0
+
+- name: Prepare Windows Agent connecting after start
+  hosts: agent-win
+  gather_facts: false
+  vars_files:
+    - common_vars.yml
+  tasks:
+    - name: Wait a bit for the ubuntu machine to start
+      pause:
+        seconds: 10
+    - name: "Wait for {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} port {{ connection_port_after_start_windows }}  to become open on the host, don't start checking for 10 seconds"
+      win_wait_for:
+        host: "{{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }}"
+        port: "{{ connection_port_after_start_windows }}"
+        delay: 10
+      retries: 10
+      delay: 10
+      register: wait_result
+      until: wait_result is succeeded
+    - name: "Wait for {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} port {{ connection_port_after_start_fedora }}  to become open on the host, don't start checking for 10 seconds"
+      win_wait_for:
+        host: "{{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }}"
+        port: "{{ connection_port_after_start_fedora }}"
+        delay: 10
+      retries: 10
+      delay: 10
+      register: wait_result_fedora
+      until: wait_result_fedora is succeeded
+    - name: Create temp directory
+      win_file:
+        path: C:\Temp
+        state: directory
+    - name: Write file for interval request
+      win_copy:
+        content: |
+          :loop
+          nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_fedora }} | nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows_interval }} -w 5
+          goto loop
+        dest: C:\Temp\request.bat
+    - name: Start nc request loop to hit ubuntu every 5 secs
+      win_command: C:\Temp\request.bat
+      async: "{{ max_test_time }}"
+      poll: 0
+    - name: Connect to Ubuntu agent P2P (1/1) -- Piggyback on fedora ncat broker and pipe data to windows
+      win_command: nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_fedora }} | nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }}
+      async: "{{ max_test_time }}"
+      ignore_errors: True
+      register: ubuntu_connect_result
+      poll: 0
+    - name: Connect to Ubuntu agent P2P (1/2) -- Piggyback on fedora ncat broker and pipe data to windows
+      win_command: nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_fedora }} | nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }}
+      async: "{{ max_test_time }}"
+      poll: 0
+      when: ubuntu_connect_result is failed
 
 - name: Prepare Agent for blacklist inclusion test
   hosts: agent-ubuntu, agent-fedora, agent-centos
@@ -526,3 +532,13 @@
       shell: "docker exec -itd netcat-1 sh -c 'yes | ncat 127.0.0.1 9091'"
     - name: Connect to netcat 2 docker container
       shell: "docker exec -itd netcat-2 sh -c 'yes | ncat 127.0.0.1 9091'"
+
+- name: Prepare Receiver
+  hosts: receiver_vm
+  gather_facts: false
+  vars_files:
+    - common_vars.yml
+  tasks:
+    - name: Wait a bit for all the data to start flowing before we start making assertions
+      pause:
+        seconds: 60
