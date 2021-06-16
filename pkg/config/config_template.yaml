@@ -11,7 +11,7 @@ sts_url:
 ## @param site - string - optional - default: datadoghq.com
 ## The site of the Datadog intake to send Agent data to.
 ## Set to 'datadoghq.eu' to send data to the EU site.
-## Set to 'us3.datadoghq.com' to send data to the US3 site. 
+## Set to 'us3.datadoghq.com' to send data to the US3 site.
 ## Set to 'ddog-gov.com' to send data to the US1-FED site.
 #
 # site: datadoghq.com
@@ -1524,6 +1524,12 @@ process_config:
 ## If enabled the Agent will log using the RFC3339 format for the log time.
 #
 # log_format_rfc3339: false
+
+## @param log_all_goroutines_when_unhealthy - boolean - optional - default false
+## If enabled, when the health probe of an internal component fails, the stack traces
+## of all the goroutines are logged.
+#
+# log_all_goroutines_when_unhealthy: false
 
 {{ end -}}
 {{- if .Autoconfig }}
