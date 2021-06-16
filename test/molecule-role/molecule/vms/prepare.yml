@@ -52,12 +52,21 @@
         - nginx-signed.crt
         - nginx-signed.key
         - docker-compose.yml
-    - name: Run Docker compose
+    - name: Run Docker compose (1/2)
       command: docker-compose up -d
       args:
         chdir: /home/ubuntu/
       environment:
         STACKSTATE_BRANCH: "{{ stackstate_branch }}"
+      ignore_errors: True
+      register: docker_compose_result
+    - name: Run Docker compose (2/2) - Retry for flaky compose setup
+      command: docker-compose up -d
+      args:
+        chdir: /home/ubuntu/
+      environment:
+        STACKSTATE_BRANCH: "{{ stackstate_branch }}"
+      when: docker_compose_result is failed
 
 - name: Prepare Linux Agents (pre)
   hosts: agent_linux_vm
@@ -304,7 +313,7 @@
   tasks:
     - name: Wait a bit for the process agent to start
       pause:
-        seconds: 10
+        seconds: 60
     # We use ncat to keep a listening port open and get a direction
     - name: Open listening port for fedora {{ connection_port_after_start_fedora }}
       shell: "nohup ncat --broker --listen -p {{ connection_port_after_start_fedora }} &"
@@ -329,24 +338,6 @@
     - name: Open dnat_server listening port {{ dnat_server_port }}
       shell: "nohup ncat --broker --listen -p {{ dnat_server_port }} &"
       become: true
-
-- name: Prepare Fedora Agent connecting after start
-  hosts: agent-fedora
-  gather_facts: false
-  vars_files:
-    - common_vars.yml
-  tasks:
-    - name: Wait a bit for the ubuntu machine to start
-      pause:
-        seconds: 10
-    - name: Connect to Ubuntu agent P2P
-      shell: yes | ncat {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_fedora }}
-      async: "{{ max_test_time }}"
-      poll: 0
-    - name: Connect to Ubuntu agent DNAT
-      shell: yes | ncat {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ dnat_service_port }}
-      async: "{{ max_test_time }}"
-      poll: 0
 
 - name: Prepare Windows Agent connecting after start
   hosts: agent-win
@@ -390,6 +381,24 @@
       async: "{{ max_test_time }}"
       poll: 0
       when: ubuntu_connect_result is failed
+
+- name: Prepare Fedora Agent connecting after start
+  hosts: agent-fedora
+  gather_facts: false
+  vars_files:
+    - common_vars.yml
+  tasks:
+    - name: Wait a bit for the ubuntu machine to start
+      pause:
+        seconds: 10
+    - name: Connect to Ubuntu agent P2P
+      shell: yes | ncat {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_fedora }}
+      async: "{{ max_test_time }}"
+      poll: 0
+    - name: Connect to Ubuntu agent DNAT
+      shell: yes | ncat {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ dnat_service_port }}
+      async: "{{ max_test_time }}"
+      poll: 0
 
 - name: Prepare Agent for blacklist inclusion test
   hosts: agent-ubuntu, agent-fedora, agent-centos
