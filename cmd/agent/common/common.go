@@ -10,17 +10,21 @@ package common
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"path/filepath"
 
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery"
-	"github.com/StackVista/stackstate-agent/pkg/collector"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/dogstatsd"
-	"github.com/StackVista/stackstate-agent/pkg/forwarder"
-	"github.com/StackVista/stackstate-agent/pkg/metadata"
-	"github.com/StackVista/stackstate-agent/pkg/util/executable"
-	"github.com/StackVista/stackstate-agent/pkg/version"
+	"github.com/DataDog/datadog-agent/pkg/api/util"
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery"
+	"github.com/DataDog/datadog-agent/pkg/collector"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/config/settings"
+	settingshttp "github.com/DataDog/datadog-agent/pkg/config/settings/http"
+	"github.com/DataDog/datadog-agent/pkg/dogstatsd"
+	"github.com/DataDog/datadog-agent/pkg/forwarder"
+	"github.com/DataDog/datadog-agent/pkg/metadata"
+	"github.com/DataDog/datadog-agent/pkg/util/executable"
+	"github.com/DataDog/datadog-agent/pkg/version"
 )
 
 var (
@@ -67,4 +71,14 @@ func GetVersion(w http.ResponseWriter, r *http.Request) {
 	av, _ := version.Agent()
 	j, _ := json.Marshal(av)
 	w.Write(j)
+}
+
+// NewSettingsClient returns a configured runtime settings client.
+func NewSettingsClient() (settings.Client, error) {
+	ipcAddress, err := config.GetIPCAddress()
+	if err != nil {
+		return nil, err
+	}
+	hc := util.GetClient(false)
+	return settingshttp.NewClient(hc, fmt.Sprintf("https://%v:%v/agent/config", ipcAddress, config.Datadog.GetInt("cmd_port")), "agent"), nil
 }
