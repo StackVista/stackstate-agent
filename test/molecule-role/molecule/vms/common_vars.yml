@@ -10,7 +10,6 @@ stackstate_branch: "{{ lookup('env', 'STACKSTATE_BRANCH') }}"
 
 connection_port_before_start_fedora: 125
 connection_port_after_start_fedora: 126
-connection_port_after_start_fedora_non_broker: 4325
 connection_port_before_start_windows: 127
 connection_port_after_start_windows: 128
 dnat_service_port: 1234

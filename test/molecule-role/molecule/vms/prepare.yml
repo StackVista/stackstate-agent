@@ -346,11 +346,6 @@
       become: true
       async: "{{ max_test_time }}"
       poll: 0
-    - name: Open listening port for fedora non-broker {{ connection_port_after_start_fedora_non_broker }}
-      shell: "ncat --listen -p {{ connection_port_after_start_fedora_non_broker }}"
-      become: true
-      async: "{{ max_test_time }}"
-      poll: 0
     - name: Forward DNAT port {{ dnat_service_port }} to {{ dnat_server_port }}
       iptables:
         table: nat
@@ -379,10 +374,6 @@
         seconds: 10
     - name: Connect to Ubuntu agent P2P
       shell: yes | ncat {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_fedora }}
-      async: "{{ max_test_time }}"
-      poll: 0
-    - name: Connect to Ubuntu agent P2P - non broker
-      shell: yes | ncat {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_fedora_non_broker }}
       async: "{{ max_test_time }}"
       poll: 0
     - name: Connect to Ubuntu agent DNAT
@@ -425,22 +416,20 @@
       win_copy:
         content: |
           :loop
-          nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_fedora }} | nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }}
+          echo y
+          goto loop
+        dest: C:\Temp\win_yes.bat
+    - name: Write file for stable request
+      win_copy:
+        content: |
+          :loop
+          C:\Temp\win_yes.bat | nc {{ hostvars['agent-ubuntu']['ansible_default_ipv4']['address'] }} {{ connection_port_after_start_windows }}
           goto loop
         dest: C:\Temp\stable_request.bat
-    - name: Start stable request loop to hit ubuntu P2P (1/2) -- Piggyback on fedora ncat broker and pipe data to windows
+    - name: Start stable request loop to hit ubuntu P2P
       win_command: C:\Temp\stable_request.bat
       async: "{{ max_test_time }}"
-      ignore_errors: True
-      register: ubuntu_connect_result
       poll: 0
-    - name: Start stable request loop to hit ubuntu P2P (2/2) -- Piggyback on fedora ncat broker and pipe data to windows
-      win_command: C:\Temp\stable_request.bat
-      async: "{{ max_test_time }}"
-      ignore_errors: True
-      register: ubuntu_connect_result
-      poll: 0
-      when: ubuntu_connect_result is failed
 
 - name: Prepare Agent for blacklist inclusion test
   hosts: agent-ubuntu, agent-fedora, agent-centos
