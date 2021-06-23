@@ -9,14 +9,15 @@
 package kubelet
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/StackVista/stackstate-agent/pkg/util/hostname/validate"
 )
 
 // GetHostAlias uses the "kubelet" hostname provider to fetch the kubernetes alias
-func GetHostAlias() (string, error) {
-	name, err := HostnameProvider()
+func GetHostAlias(ctx context.Context) (string, error) {
+	name, err := HostnameProvider(ctx)
 	if err == nil && validate.ValidHostname(name) == nil {
 		return name, nil
 	}

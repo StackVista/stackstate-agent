@@ -9,8 +9,10 @@
 package ecs
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/diagnose/diagnosis"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"context"
+
+	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 
 	ecsmeta "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata"
 )
@@ -30,7 +32,7 @@ func diagnoseECS() error {
 	}
 	log.Info("successfully detected ECS metadata server endpoint")
 
-	if _, err = client.GetTasks(); err != nil {
+	if _, err = client.GetTasks(context.TODO()); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -48,7 +50,7 @@ func diagnoseECSTags() error {
 	}
 	log.Info("successfully detected ECS metadata server endpoint for resource tags")
 
-	if _, err = client.GetTaskWithTags(); err != nil {
+	if _, err = client.GetTaskWithTags(context.TODO()); err != nil {
 		log.Error(err)
 		return err
 	}
@@ -65,7 +67,7 @@ func diagnoseFargate() error {
 		return err
 	}
 
-	if _, err := client.GetTask(); err != nil {
+	if _, err := client.GetTask(context.TODO()); err != nil {
 		log.Error(err)
 		return err
 	}

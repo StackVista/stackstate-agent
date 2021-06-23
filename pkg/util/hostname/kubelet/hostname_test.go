@@ -9,6 +9,7 @@
 package kubelet
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -24,12 +25,13 @@ type kubeUtilMock struct {
 	mock.Mock
 }
 
-func (m *kubeUtilMock) GetNodename() (string, error) {
+func (m *kubeUtilMock) GetNodename(ctx context.Context) (string, error) {
 	args := m.Called()
 	return args.String(0), args.Error(1)
 }
 
 func TestHostnameProvider(t *testing.T) {
+	ctx := context.Background()
 	mockConfig := config.Mock()
 
 	ku := &kubeUtilMock{}
@@ -42,7 +44,7 @@ func TestHostnameProvider(t *testing.T) {
 		return ku, nil
 	}
 
-	hostName, err := HostnameProvider()
+	hostName, err := HostnameProvider(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, "node-name", hostName)
 
@@ -54,7 +56,7 @@ func TestHostnameProvider(t *testing.T) {
 	defer mockConfig.Set("cluster_name", "")
 	defer clustername.ResetClusterName()
 
-	hostName, err = HostnameProvider()
+	hostName, err = HostnameProvider(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, "node-name-laika", hostName)
 }

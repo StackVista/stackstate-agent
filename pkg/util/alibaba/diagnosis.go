@@ -6,8 +6,10 @@
 package alibaba
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/diagnose/diagnosis"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"context"
+
+	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 func init() {
@@ -16,7 +18,7 @@ func init() {
 
 // diagnose the alibaba metadata API availability
 func diagnose() error {
-	_, err := GetHostAlias()
+	_, err := GetHostAlias(context.TODO())
 	if err != nil {
 		log.Error(err)
 	}

@@ -8,18 +8,20 @@
 package v5
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/metadata/common"
-	"github.com/StackVista/stackstate-agent/pkg/metadata/gohai"
-	"github.com/StackVista/stackstate-agent/pkg/metadata/host"
-	"github.com/StackVista/stackstate-agent/pkg/metadata/resources"
-	"github.com/StackVista/stackstate-agent/pkg/util"
+	"context"
+
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/metadata/common"
+	"github.com/DataDog/datadog-agent/pkg/metadata/gohai"
+	"github.com/DataDog/datadog-agent/pkg/metadata/host"
+	"github.com/DataDog/datadog-agent/pkg/metadata/resources"
+	"github.com/DataDog/datadog-agent/pkg/util"
 )
 
 // GetPayload returns the complete metadata payload as seen in Agent v5
-func GetPayload(hostnameData util.HostnameData) *Payload {
+func GetPayload(ctx context.Context, hostnameData util.HostnameData) *Payload {
 	cp := common.GetPayload(hostnameData.Hostname)
-	hp := host.GetPayload(hostnameData)
+	hp := host.GetPayload(ctx, hostnameData)
 	rp := resources.GetPayload(hostnameData.Hostname)
 
 	p := &Payload{

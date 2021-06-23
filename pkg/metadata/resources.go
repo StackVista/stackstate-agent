@@ -6,6 +6,7 @@
 package metadata
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -21,8 +22,8 @@ import (
 type ResourcesCollector struct{}
 
 // Send collects the data needed and submits the payload
-func (rp *ResourcesCollector) Send(s *serializer.Serializer) error {
-	hostname, _ := util.GetHostname()
+func (rp *ResourcesCollector) Send(ctx context.Context, s *serializer.Serializer) error {
+	hostname, _ := util.GetHostname(ctx)
 
 	// GetPayload builds a payload of processes metadata collected from gohai.
 	res := resources.GetPayload(hostname)

@@ -9,8 +9,10 @@
 package docker
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/diagnose/diagnosis"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"context"
+
+	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
 )
 
 func init() {
@@ -26,7 +28,7 @@ func diagnose() error {
 		log.Info("successfully connected to docker")
 	}
 
-	hostname, err := HostnameProvider()
+	hostname, err := HostnameProvider(context.TODO())
 	if err != nil {
 		log.Errorf("returned hostname %q with error: %s", hostname, err)
 	} else {

@@ -8,6 +8,7 @@
 package docker
 
 import (
+	"context"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/topology"
 	"math"
@@ -93,11 +94,11 @@ func (d *DockerCheck) countAndWeightImages(sender aggregator.Sender, imageTagsBy
 		return nil
 	}
 
-	availableImages, err := du.Images(false)
+	availableImages, err := du.Images(context.TODO(), false)
 	if err != nil {
 		return err
 	}
-	allImages, err := du.Images(true)
+	allImages, err := du.Images(context.TODO(), true)
 	if err != nil {
 		return err
 	}
@@ -138,8 +139,7 @@ func (d *DockerCheck) Run() error {
 		log.Debugf("Agent is not running in container, skipping the Docker check")
 		return nil
 	}
-
-	cList, err := du.ListContainers(&docker.ContainerListConfig{IncludeExited: true, FlagExcluded: true})
+	cList, err := du.ListContainers(context.TODO(), &docker.ContainerListConfig{IncludeExited: true, FlagExcluded: true})
 	if err != nil {
 		sender.ServiceCheck(DockerServiceUp, metrics.ServiceCheckCritical, "", nil, err.Error())
 		d.Warnf("Error collecting containers: %s", err) //nolint:errcheck
@@ -247,7 +247,7 @@ func (d *DockerCheck) Run() error {
 		}
 
 		if collectingContainerSizeDuringThisRun {
-			info, err := du.Inspect(c.ID, true)
+			info, err := du.Inspect(context.TODO(), c.ID, true)
 			if err != nil {
 				log.Errorf("Failed to inspect container %s - %s", c.ID[:12], err)
 			} else if info.SizeRw == nil || info.SizeRootFs == nil {
@@ -304,7 +304,7 @@ func (d *DockerCheck) Run() error {
 	}
 
 	if d.instance.CollectDiskStats {
-		stats, err := du.GetStorageStats()
+		stats, err := du.GetStorageStats(context.TODO())
 		if err != nil {
 			d.Warnf("Error collecting disk stats: %s", err) //nolint:errcheck
 		} else {
@@ -331,7 +331,7 @@ func (d *DockerCheck) Run() error {
 	}
 
 	if d.instance.CollectVolumeCount {
-		attached, dangling, err := du.CountVolumes()
+		attached, dangling, err := du.CountVolumes(context.TODO())
 		if err != nil {
 			d.Warnf("Error collecting volume stats: %s", err) //nolint:errcheck
 		} else {
@@ -427,7 +427,7 @@ func (d *DockerCheck) Configure(config, initConfig integration.Data, source stri
 	// Use the same hostname as the agent so that host tags (like `availability-zone:us-east-1b`)
 	// are attached to Docker events from this host. The hostname from the docker api may be
 	// different than the agent hostname depending on the environment (like EC2 or GCE).
-	d.dockerHostname, err = util.GetHostname()
+	d.dockerHostname, err = util.GetHostname(context.TODO())
 	if err != nil {
 		log.Warnf("Can't get hostname from docker, events will not have it: %s", err)
 	}

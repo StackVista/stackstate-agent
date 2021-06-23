@@ -6,8 +6,10 @@
 package providers
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"context"
+
+	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/DataDog/datadog-agent/pkg/config"
 )
 
 // KubeEndpointsProviderName defines the kube endpoints provider name
@@ -51,8 +53,8 @@ func NewCPCache() *ProviderCache {
 // or data needed to access the resource providing the configuration.
 // IsUpToDate checks the local cache of the CP and returns accordingly.
 type ConfigProvider interface {
-	Collect() ([]integration.Config, error)
+	Collect(context.Context) ([]integration.Config, error)
 	String() string
-	IsUpToDate() (bool, error)
+	IsUpToDate(context.Context) (bool, error)
 	GetConfigErrors() map[string]ErrorMsgSet
 }

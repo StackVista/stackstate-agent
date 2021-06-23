@@ -8,9 +8,7 @@
 package python
 
 import (
-	collectorutils "github.com/StackVista/stackstate-agent/pkg/collector/util"
-	"os"
-	"strconv"
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -39,7 +37,7 @@ func testGetHostname(t *testing.T) {
 	GetHostname(&h)
 	require.NotNil(t, h)
 
-	hostname, _ := util.GetHostname()
+	hostname, _ := util.GetHostname(context.Background())
 	assert.Equal(t, hostname, C.GoString(h))
 }
 
@@ -48,7 +46,7 @@ func testGetClusterName(t *testing.T) {
 	GetClusterName(&ch)
 	require.NotNil(t, ch)
 
-	assert.Equal(t, clustername.GetClusterName(""), C.GoString(ch))
+	assert.Equal(t, clustername.GetClusterName(context.Background(), ""), C.GoString(ch))
 }
 
 func testGetPid(t *testing.T) {

@@ -6,6 +6,7 @@
 package runner
 
 import (
+	"context"
 	"expvar"
 	"fmt"
 	"strings"
@@ -429,6 +430,6 @@ func RemoveCheckStats(checkID check.ID) {
 }
 
 func getHostname() string {
-	hostname, _ := util.GetHostname()
+	hostname, _ := util.GetHostname(context.TODO())
 	return hostname
 }

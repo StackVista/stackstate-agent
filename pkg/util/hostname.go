@@ -8,6 +8,7 @@
 package util
 
 import (
+	"context"
 	"expvar"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/util/azure"
@@ -74,14 +75,14 @@ func setHostnameProvider(name string) {
 // There can be some cases where the agent is running in a non-root UTS namespace that are
 // not detected by this function (systemd-nspawn containers, manual `unshare -u`…)
 // In those uncertain cases, it returns `true`.
-func isOSHostnameUsable() (osHostnameUsable bool) {
+func isOSHostnameUsable(ctx context.Context) (osHostnameUsable bool) {
 	// If the agent is not containerized, just skip all this detection logic
 	if !config.IsContainerized() {
 		return true
 	}
 
 	// Check UTS namespace from docker
-	utsMode, err := GetAgentUTSMode()
+	utsMode, err := GetAgentUTSMode(ctx)
 	if err == nil && (utsMode != containers.HostUTSMode && utsMode != containers.UnknownUTSMode) {
 		log.Debug("Agent is running in a docker container without host UTS mode: OS-provided hostnames cannot be used for hostname resolution.")
 		return false
@@ -100,8 +101,8 @@ func isOSHostnameUsable() (osHostnameUsable bool) {
 }
 
 // GetHostname retrieves the host name from GetHostnameData
-func GetHostname() (string, error) {
-	hostnameData, err := GetHostnameData()
+func GetHostname(ctx context.Context) (string, error) {
+	hostnameData, err := GetHostnameData(ctx)
 	return hostnameData.Hostname, err
 }
 
@@ -134,7 +135,7 @@ func saveHostnameData(cacheHostnameKey string, hostname string, provider string,
 // * kubernetes
 // * os
 // * EC2
-func GetHostnameData() (HostnameData, error) {
+func GetHostnameData(ctx context.Context) (HostnameData, error) {
 	cacheHostnameKey := cache.BuildAgentKey("hostname")
 	if cacheHostname, found := cache.Cache.Get(cacheHostnameKey); found {
 		return cacheHostname.(HostnameData), nil
@@ -148,8 +149,8 @@ func GetHostnameData() (HostnameData, error) {
 	configName := config.Datadog.GetString("hostname")
 	err = validate.ValidHostname(configName)
 	if err == nil {
-		hostnameData := saveHostnameData(cacheHostnameKey, configName, HostnameProviderConfiguration, []string{})
-		if !isHostnameCanonicalForIntake(configName) && !config.Datadog.GetBool("hostname_force_config_as_canonical") {
+		hostnameData := saveHostnameData(cacheHostnameKey, configName, HostnameProviderConfiguration)
+		if !isHostnameCanonicalForIntake(ctx, configName) && !config.Datadog.GetBool("hostname_force_config_as_canonical") {
 			_ = log.Warnf("Hostname '%s' defined in configuration will not be used as the in-app hostname. For more information: https://dtdg.co/agent-hostname-force-config-as-canonical", configName)
 		}
 		return hostnameData, err
@@ -163,16 +164,15 @@ func GetHostnameData() (HostnameData, error) {
 	log.Debug("Trying to determine a reliable host name automatically...")
 
 	// if fargate we strip the hostname
-	if fargate.IsFargateInstance() {
-		hostnameData := saveHostnameData(cacheHostnameKey, "", "", []string{})
-		log.Debugf("Got hostname '%s' from Farget", hostnameData)
+	if fargate.IsFargateInstance(ctx) {
+		hostnameData := saveHostnameData(cacheHostnameKey, "", "")
 		return hostnameData, nil
 	}
 
 	// GCE metadata
 	log.Debug("GetHostname trying GCE metadata...")
 	if getGCEHostname, found := hostname.ProviderCatalog["gce"]; found {
-		gceName, err := getGCEHostname()
+		gceName, err := getGCEHostname(ctx)
 		if err == nil {
 			hostnameData := saveHostnameData(cacheHostnameKey, gceName, "gce", []string{})
 			return hostnameData, err
@@ -203,7 +203,7 @@ func GetHostnameData() (HostnameData, error) {
 
 	// FQDN
 	var fqdn string
-	canUseOSHostname := isOSHostnameUsable()
+	canUseOSHostname := isOSHostnameUsable(ctx)
 	if canUseOSHostname {
 		log.Debug("GetHostname trying FQDN/`hostname -f`...")
 		fqdn, err = getSystemFQDN()
@@ -220,7 +220,7 @@ func GetHostnameData() (HostnameData, error) {
 		}
 	}
 
-	isContainerized, containerName := getContainerHostname()
+	isContainerized, containerName := getContainerHostname(ctx)
 	if isContainerized {
 		if containerName != "" {
 			hostName = containerName
@@ -256,7 +256,7 @@ func GetHostnameData() (HostnameData, error) {
 		log.Debug("GetHostname trying EC2 metadata...")
 
 		if ecs.IsECSInstance() || ec2.IsDefaultHostname(hostName) {
-			ec2Hostname, err := getValidEC2Hostname(getEC2Hostname)
+			ec2Hostname, err := getValidEC2Hostname(ctx, getEC2Hostname)
 
 			if err == nil {
 				hostName = ec2Hostname
@@ -278,7 +278,7 @@ func GetHostnameData() (HostnameData, error) {
 			if ec2.IsWindowsDefaultHostname(hostName) {
 				// As we are in the else clause `ec2.IsDefaultHostname(hostName)` is false. If `ec2.IsWindowsDefaultHostname(hostName)`
 				// is `true` that means `ec2_use_windows_prefix_detection` is set to false.
-				ec2Hostname, err := getValidEC2Hostname(getEC2Hostname)
+				ec2Hostname, err := getValidEC2Hostname(ctx, getEC2Hostname)
 
 				// Check if we get a valid hostname when enabling `ec2_use_windows_prefix_detection` and the hostnames are different.
 				if err == nil && ec2Hostname != hostName {
@@ -293,7 +293,7 @@ func GetHostnameData() (HostnameData, error) {
 	if getAzureHostname, found := hostname.ProviderCatalog["azure"]; found {
 		log.Debug("GetHostname trying Azure metadata...")
 
-		azureHostname, err := getAzureHostname()
+		azureHostname, err := getAzureHostname(ctx)
 		if err == nil {
 			hostName = azureHostname
 			provider = "azure"
@@ -336,10 +336,10 @@ func GetHostnameData() (HostnameData, error) {
 }
 
 // isHostnameCanonicalForIntake returns true if the intake will use the hostname as canonical hostname.
-func isHostnameCanonicalForIntake(hostname string) bool {
+func isHostnameCanonicalForIntake(ctx context.Context, hostname string) bool {
 	// Intake uses instance id for ec2 default hostname except for Windows.
 	if ec2.IsDefaultHostnameForIntake(hostname) {
-		_, err := ec2.GetInstanceID()
+		_, err := ec2.GetInstanceID(ctx)
 		return err != nil
 	}
 	return true
@@ -347,8 +347,8 @@ func isHostnameCanonicalForIntake(hostname string) bool {
 
 // getValidEC2Hostname gets a valid EC2 hostname
 // Returns (hostname, error)
-func getValidEC2Hostname(ec2Provider hostname.Provider) (string, error) {
-	instanceID, err := ec2Provider()
+func getValidEC2Hostname(ctx context.Context, ec2Provider hostname.Provider) (string, error) {
+	instanceID, err := ec2Provider(ctx)
 	if err == nil {
 		err = validate.ValidHostname(instanceID)
 		if err == nil {

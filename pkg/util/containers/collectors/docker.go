@@ -8,8 +8,10 @@
 package collectors
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/util/containers"
-	"github.com/StackVista/stackstate-agent/pkg/util/docker"
+	"context"
+
+	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/util/docker"
 )
 
 const (
@@ -40,7 +42,7 @@ func (c *DockerCollector) Detect() error {
 
 // List gets all running containers
 func (c *DockerCollector) List() ([]*containers.Container, error) {
-	return c.dockerUtil.ListContainers(c.listConfig)
+	return c.dockerUtil.ListContainers(context.TODO(), c.listConfig)
 }
 
 // UpdateMetrics updates metrics on an existing list of containers

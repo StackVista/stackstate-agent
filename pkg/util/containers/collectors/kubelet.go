@@ -8,8 +8,10 @@
 package collectors
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/util/containers"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
+	"context"
+
+	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/kubelet"
 )
 
 const (
@@ -34,7 +36,7 @@ func (c *KubeletCollector) Detect() error {
 
 // List gets all running containers
 func (c *KubeletCollector) List() ([]*containers.Container, error) {
-	return c.kubeUtil.ListContainers()
+	return c.kubeUtil.ListContainers(context.TODO())
 }
 
 // UpdateMetrics updates metrics on an existing list of containers
