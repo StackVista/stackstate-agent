@@ -78,7 +78,7 @@ variables: &globalvariables
   $current_dir=Get-Location
   New-Item -ItemType Directory -Force -Path c:\\gopath\\src\\github.com\\StackVista
   cmd /c if exist %GOPATH%\src\github.com\StackVista\stackstate-agent rd /s/q %GOPATH%\src\github.com\StackVista\stackstate-agent
-  New-Item -ItemType SymbolicLink -Path "c:\\gopath\\src\\github.com\\StackVista\\stackstate-agent" -Target $current_dir
+  New-Item -ItemType SymbolicLink -Path "c:\\gopath\\src\\github.com\\StackVista\\stackstate-agent" -Target $current_dir -Force
 
 ######################### /pipeline bricks
 
