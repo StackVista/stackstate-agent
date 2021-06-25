@@ -689,7 +689,18 @@ molecule_tests_compose:
     paths:
       - $CI_PROJECT_DIR/test/molecule-role/molecule/compose/topic-*.json
       - $CI_PROJECT_DIR/test/molecule-role/molecule/compose/*.log
+      - $CI_PROJECT_DIR/tmp_molecule_inventory
     expire_in: 1 week
+
+molecule_tests_compose_cleanup:
+   <<: *molecule_base
+   stage: acceptance_cleanup
+   script:
+     - cd $CI_PROJECT_DIR/test && ./molecule3.sh destroy -s compose
+   needs:
+     - molecule_tests_compose
+   when: on_failure
+   allow_failure: true
 
 molecule_tests_integrations:
   <<: *molecule_base
@@ -702,7 +713,18 @@ molecule_tests_integrations:
     paths:
       - $CI_PROJECT_DIR/test/molecule-role/molecule/integrations/topic-*.json
       - $CI_PROJECT_DIR/test/molecule-role/molecule/integrations/*.log
+      - $CI_PROJECT_DIR/tmp_molecule_inventory
     expire_in: 1 week
+
+molecule_tests_integrations_cleanup:
+   <<: *molecule_base
+   stage: acceptance_cleanup
+   script:
+     - cd $CI_PROJECT_DIR/test && ./molecule3.sh destroy -s integrations
+   needs:
+     - molecule_tests_integrations
+   when: on_failure
+   allow_failure: true
 
 molecule_tests_kubernetes:
   <<: *molecule_base
@@ -716,7 +738,18 @@ molecule_tests_kubernetes:
     paths:
       - $CI_PROJECT_DIR/test/molecule-role/molecule/kubernetes/topic-*.json
       - $CI_PROJECT_DIR/test/molecule-role/molecule/kubernetes/*.log
+      - $CI_PROJECT_DIR/tmp_molecule_inventory
     expire_in: 1 week
+
+molecule_tests_kubernetes_cleanup:
+   <<: *molecule_base
+   stage: acceptance_cleanup
+   script:
+     - cd $CI_PROJECT_DIR/test && ./molecule3.sh destroy -s kubernetes
+   needs:
+     - molecule_tests_kubernetes
+   when: on_failure
+   allow_failure: true
 
 molecule_tests_local_install:
   <<: *molecule_base
@@ -725,9 +758,22 @@ molecule_tests_local_install:
     - pre_release_rpm
   script:
     - cd $CI_PROJECT_DIR/test && ./molecule3.sh test -s localinstall
-#  only:
-#    - tags
-#    - master
+  artifacts:
+    when: always
+    paths:
+      - $CI_PROJECT_DIR/tmp_molecule_inventory
+    expire_in: 1 week
+
+molecule_tests_local_install_cleanup:
+   <<: *molecule_base
+   stage: acceptance_cleanup
+   script:
+     - cd $CI_PROJECT_DIR/test && ./molecule3.sh destroy -s localinstall
+   needs:
+     - molecule_tests_local_install
+   when: on_failure
+   allow_failure: true
+
 
 molecule_tests_secrets:
   <<: *molecule_base
@@ -739,10 +785,18 @@ molecule_tests_secrets:
     when: always
     paths:
       - $CI_PROJECT_DIR/test/molecule-role/molecule/secrets/*.log
+      - $CI_PROJECT_DIR/tmp_molecule_inventory
     expire_in: 1 week
-#  only:
-#    - tags
-#    - master
+
+molecule_tests_secrets_cleanup:
+   <<: *molecule_base
+   stage: acceptance_cleanup
+   script:
+     - cd $CI_PROJECT_DIR/test && ./molecule3.sh destroy -s secrets
+   needs:
+     - molecule_tests_secrets
+   when: on_failure
+   allow_failure: true
 
 
 ## release stage
