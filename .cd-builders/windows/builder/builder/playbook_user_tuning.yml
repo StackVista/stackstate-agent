@@ -31,3 +31,10 @@
     - name: Tune git config
       win_command: "git config --global user.name \"Windows Gitlab Runner Instance\""
 
+    - name: Template powershell vssetup module installation
+      win_copy:
+        src: install_vssetup.ps1
+        dest: C:\
+
+    - name: Install powershell vssetup module
+      win_command: powershell.exe -File C:\install_vssetup.ps1
