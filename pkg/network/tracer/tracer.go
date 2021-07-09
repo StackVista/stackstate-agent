@@ -88,7 +88,7 @@ type Tracer struct {
 	// Internal buffer used to compute bytekeys
 	buf []byte
 
-	// Connections for the tracer to blacklist
+	// Connections for the tracer to exclude
 	sourceExcludes []*network.ConnectionFilter
 	destExcludes   []*network.ConnectionFilter
 

@@ -184,7 +184,7 @@ func connDirection(flags C.uint32_t) ConnectionDirection {
 	if (direction & C.FLOW_DIRECTION_OUTBOUND) == C.FLOW_DIRECTION_OUTBOUND {
 		return OUTGOING
 	}
-	return NONE
+	return OUTGOING
 }
 
 func isFlowClosed(flags C.uint32_t) bool {
