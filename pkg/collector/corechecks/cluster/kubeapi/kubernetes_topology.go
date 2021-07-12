@@ -74,15 +74,15 @@ func (t *TopologyCheck) SetSubmitter(submitter TopologySubmitter) {
 */
 // Run executes the check.
 func (t *TopologyCheck) Run() error {
-	// Running the event collection.
-	if !t.instance.CollectTopology {
-		return nil
-	}
-
 	// initialize kube api check
 	err := t.InitKubeAPICheck()
 	if err != nil {
 		return err
+	}
+
+	// Running the event collection.
+	if !t.instance.CollectTopology {
+		return nil
 	}
 
 	// set the check "instance id" for snapshots
@@ -109,7 +109,6 @@ func (t *TopologyCheck) Run() error {
 	// Make a channel for each of the relations to avoid passing data down into all the functions
 	nodeIdentifierCorrelationChannel := make(chan *collectors.NodeIdentifierCorrelation)
 	containerCorrelationChannel := make(chan *collectors.ContainerCorrelation)
-	volumeCorrelationChannel := make(chan *collectors.VolumeCorrelation)
 
 	// make a channel that is responsible for publishing components and relations
 	componentChannel := make(chan *topology.Component)
@@ -142,11 +141,6 @@ func (t *TopologyCheck) Run() error {
 			componentChannel,
 			commonClusterCollector,
 		),
-		// Register Secret Component Collector
-		collectors.NewSecretCollector(
-			componentChannel,
-			commonClusterCollector,
-		),
 		// Register DaemonSet Component Collector
 		collectors.NewDaemonSetCollector(
 			componentChannel,
@@ -174,7 +168,6 @@ func (t *TopologyCheck) Run() error {
 		// Register Persistent Volume Component Collector
 		collectors.NewPersistentVolumeCollector(
 			componentChannel,
-			relationChannel,
 			commonClusterCollector,
 		),
 		// Register Pod Component Collector
@@ -182,7 +175,6 @@ func (t *TopologyCheck) Run() error {
 			componentChannel,
 			relationChannel,
 			containerCorrelationChannel,
-			volumeCorrelationChannel,
 			commonClusterCollector,
 		),
 		// Register Service Component Collector
@@ -219,12 +211,6 @@ func (t *TopologyCheck) Run() error {
 			relationChannel,
 			nodeIdentifierCorrelationChannel,
 			containerCorrelationChannel,
-			commonClusterCorrelator,
-		),
-		collectors.NewVolumeCorrelator(
-			componentChannel,
-			relationChannel,
-			volumeCorrelationChannel,
 			commonClusterCorrelator,
 		),
 	}
@@ -307,10 +293,12 @@ func (t *TopologyCheck) RunClusterCollectors(clusterCollectors []collectors.Clus
 			runCollector(collector, errorChannel, waitGroup)
 		}
 	}()
-	// Run all correlators in parallel to avoid blocking channels
-	for _, correlator := range clusterCorrelators {
-		go runCorrelator(correlator, errorChannel, waitGroup)
-	}
+	go func() {
+		for _, correlator := range clusterCorrelators {
+			// add this collector to the wait group
+			runCorrelator(correlator, errorChannel, waitGroup)
+		}
+	}()
 }
 
 // runCollector
@@ -327,7 +315,7 @@ func runCollector(collector collectors.ClusterTopologyCollector, errorChannel ch
 
 // runCorrelator
 func runCorrelator(correlator collectors.ClusterTopologyCorrelator, errorChannel chan<- error, wg *sync.WaitGroup) {
-	log.Infof("Starting cluster topology correlator: %s\n", correlator.GetName())
+	log.Debugf("Starting cluster topology correlator: %s\n", correlator.GetName())
 	err := correlator.CorrelateFunction()
 	if err != nil {
 		errorChannel <- err

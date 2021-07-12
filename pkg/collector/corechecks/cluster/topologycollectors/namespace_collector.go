@@ -23,7 +23,7 @@ func NewNamespaceCollector(componentChannel chan<- *topology.Component, clusterT
 }
 
 // GetName returns the name of the Collector
-func (*NamespaceCollector) GetName() string {
+func (nsc *NamespaceCollector) GetName() string {
 	return "Namespace Collector"
 }
 

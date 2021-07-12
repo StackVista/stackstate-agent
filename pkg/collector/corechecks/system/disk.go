@@ -92,23 +92,16 @@ func (c *DiskCheck) instanceConfigure(data integration.Data) error {
 	}
 
 	excludedFilesystems, found := conf["excluded_filesystems"]
-	if excludedFilesystems, ok := excludedFilesystems.([]interface{}); found && ok {
-		excludedList := make([]string, len(excludedFilesystems))
-		for i, ex := range excludedFilesystems {
-			excludedList[i] = ex.(string)
-		}
-		c.cfg.excludedFilesystems = excludedList
+	if excludedFilesystems, ok := excludedFilesystems.([]string); found && ok {
+		c.cfg.excludedFilesystems = excludedFilesystems
 	}
 
+	// Force exclusion of CDROM (iso9660) from disk check
 	c.cfg.excludedFilesystems = append(c.cfg.excludedFilesystems, "iso9660")
 
 	excludedDisks, found := conf["excluded_disks"]
-	if excludedDisks, ok := excludedDisks.([]interface{}); found && ok {
-		excludedList := make([]string, len(excludedDisks))
-		for i, ex := range excludedDisks {
-			excludedList[i] = ex.(string)
-		}
-		c.cfg.excludedDisks = excludedList
+	if excludedDisks, ok := excludedDisks.([]string); found && ok {
+		c.cfg.excludedDisks = excludedDisks
 	}
 
 	excludedDiskRe, found := conf["excluded_disk_re"]
@@ -182,8 +175,7 @@ func (c *DiskCheck) applyDeviceTags(device, mountpoint string, tags []string) []
 
 func diskFactory() check.Check {
 	return &DiskCheck{
-		CheckBase:         core.NewCheckBase(diskCheckName),
-		topologyCollector: MakeTopologyCollector(),
+		CheckBase: core.NewCheckBase(diskCheckName),
 	}
 }
 

@@ -10,7 +10,6 @@ package kubeapi
 import (
 	"errors"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/config"
 
 	"gopkg.in/yaml.v2"
 	"k8s.io/api/core/v1"
@@ -32,7 +31,6 @@ const (
 
 // MetricsConfig.
 type MetricsConfig struct {
-	CollectMetrics      bool `yaml:"collect_metrics"`
 	CollectOShiftQuotas bool `yaml:"collect_openshift_clusterquotas"`
 }
 
@@ -45,7 +43,6 @@ type MetricsCheck struct {
 
 func (c *MetricsConfig) parse(data []byte) error {
 	// default values
-	c.CollectMetrics = config.Datadog.GetBool("collect_kubernetes_metrics")
 	c.CollectOShiftQuotas = true
 
 	return yaml.Unmarshal(data, c)
@@ -86,11 +83,6 @@ func (k *MetricsCheck) Configure(config, initConfig integration.Data, source str
 
 // Run executes the check.
 func (k *MetricsCheck) Run() error {
-	// Running the metric collection.
-	if !k.instance.CollectMetrics {
-		return nil
-	}
-
 	// initialize kube api check
 	err := k.InitKubeAPICheck()
 	if err == apiserver.ErrNotLeader {

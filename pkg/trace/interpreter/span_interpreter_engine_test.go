@@ -1,6 +1,7 @@
 package interpreter
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	"github.com/StackVista/stackstate-agent/pkg/trace/config"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/stretchr/testify/assert"
@@ -179,9 +180,13 @@ func TestSpanInterpreterEngine(t *testing.T) {
 		},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
-			trace := []*pb.Span{&tc.span}
+			trace := &api.Trace{
+				Source:        nil,
+				ContainerTags: "",
+				Spans:         []*pb.Span{&tc.span},
+			}
 			actual := sie.Interpret(trace)
-			assert.EqualValues(t, tc.expected, *actual[0])
+			assert.EqualValues(t, tc.expected, *actual.Spans[0])
 		})
 	}
 }

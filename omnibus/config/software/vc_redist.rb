@@ -25,8 +25,6 @@ build do
   #
   # also copy them to the bin/agent directory, so we can (optionally) install on
   # 2008.
-  agent_dir = "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent/"
-  mkdir agent_dir
-  copy '*.dll', agent_dir
-  copy '*.manifest', agent_dir
+  copy '*.dll', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent/"
+  copy '*.manifest', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent/"
 end

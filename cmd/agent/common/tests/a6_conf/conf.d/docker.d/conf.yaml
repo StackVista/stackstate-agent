@@ -10,4 +10,3 @@ instances:
   collect_events: true
   filtered_event_types: []
   capped_metrics: {}
-  collect_container_topology: true

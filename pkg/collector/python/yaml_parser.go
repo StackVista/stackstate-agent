@@ -23,6 +23,7 @@ func tryParseYamlToMap(data *C.char) (map[string]interface{}, error) {
 	result, err := convertKeysToString(_data)
 
 	if err == nil {
+		log.Errorf("No error")
 		return result.(map[string]interface{}), nil
 	}
 	log.Errorf("Got error")

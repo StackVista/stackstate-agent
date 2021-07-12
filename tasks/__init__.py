@@ -39,7 +39,8 @@ from .test import (
     e2e_tests,
     make_kitchen_gitlab_yml,
     check_gitlab_broken_dependencies,
-    install_shellcheck
+    install_shellcheck,
+    version
 )
 from .build_tags import audit_tag_impact
 
@@ -96,6 +97,10 @@ ns.add_collection(uninstallcmd)
 # [sts] Security agent
 if enable_security_agent:
     ns.add_collection(security_agent)
+
+# sts
+ns.add_task(version)
+# /sts
 
 ns.configure(
     {

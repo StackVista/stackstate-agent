@@ -1,5 +1,3 @@
-// +build kubeapiserver
-
 package kubeapi
 
 import (

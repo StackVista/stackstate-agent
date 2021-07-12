@@ -62,7 +62,6 @@ AGENT_CORECHECKS = [
     "cpu",
     "cri",
     "docker",
-    "disk",
     "file_handle",
     "go_expvar",
     "io",
@@ -468,7 +467,7 @@ def apply_branding(ctx):
 
     # TODO: overbranding - fix either dll name or reference
     do_sed_rename(ctx, 's/libstackstate-agent-three/libdatadog-agent-three/g', "./omnibus/resources/agent/msi/source.wxs.erb")
-    do_sed_rename(ctx, 's/libstackstate-agent-two/libdatadog-agent-two/g', "./omnibus/resources/agent/msi/source.wxs.erb")
+    do_sed_rename(ctx, 's/libstackstate-agent-two/libdatadog-agent-three/g', "./omnibus/resources/agent/msi/source.wxs.erb")
 
     # stackstate_checks
     do_go_rename(ctx, '"\\"datadog_checks\\" -> \\"stackstate_checks\\""', "./cmd/agent/app")
@@ -534,8 +533,6 @@ def apply_branding(ctx):
     do_sed_rename(ctx, 's/datadog-iot-agent\/src/stackstate-iot-agent\/src/', "./omnibus/config/software/datadog-iot-agent.rb")
     do_sed_rename(ctx, 's/DataDog\/datadog-agent\/tools\/windows\/decompress_merge_module.ps1/StackVista\/stackstate-agent\/tools\/windows\/decompress_merge_module.ps1/',
                   "./omnibus/config/software/vc_redist_14.rb")
-    do_sed_rename(ctx, 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/',
-                  "./omnibus/config/software/vc_redist.rb")
     do_sed_rename(ctx, 's/DataDog\/datadog-agent\/bin\/agent/StackVista\/stackstate-agent\/bin\/agent/',
                 "./omnibus/config/software/datadog-agent.rb")
     do_sed_rename(ctx, 's/\/etc\/datadog-agent/\/etc\/stackstate-agent/',
@@ -1002,7 +999,7 @@ def clean(ctx):
 
 
 @task
-def version(ctx, url_safe=False, git_sha_length=7, major_version=''):
+def version(ctx, url_safe=False, git_sha_length=7, major_version='7'):
     """
     Get the agent version.
     url_safe: get the version that is able to be addressed as a url

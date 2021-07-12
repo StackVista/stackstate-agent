@@ -72,10 +72,6 @@
           "value": "true"
         },
         {
-          "name": "STS_PROTOCOL_INSPECTION_ENABLED",
-          "value": "${STS_PROTOCOL_INSPECTION_ENABLED}"
-        },
-        {
           "name": "STS_SKIP_SSL_VALIDATION",
           "value": "${STS_SKIP_SSL_VALIDATION}"
         },

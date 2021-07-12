@@ -243,7 +243,6 @@ func (d *DockerUtil) dockerContainers(cfg *ContainerListConfig) ([]*containers.C
 			State:       c.State,
 			Excluded:    excluded,
 			Health:      parseContainerHealth(c.Status),
-			Mounts:      c.Mounts,
 			AddressList: d.parseContainerNetworkAddresses(c.ID, c.Ports, c.NetworkSettings, c.Names[0]),
 		}
 

@@ -6,13 +6,15 @@ from testinfra.utils.ansible_runner import AnsibleRunner
 testinfra_hosts = AnsibleRunner(os.environ["MOLECULE_INVENTORY_FILE"]).get_hosts("agent_win_vm")
 
 
-def test_stackstate_agent_is_installed(host, ansible_var):
+def test_stackstate_agent_is_installed(host):
     pkg = "StackState Agent"
     # res = host.ansible("win_shell", "Get-Package \"{}\"".format(pkg), check=False)
     res = host.ansible("win_shell", " Get-WmiObject -Class Win32_Product | where name -eq \"{}\" | select Name, Version ".format(pkg), check=False)
     print(res)
-    expected_major_version = ansible_var("major_version")
-    assert re.search(".*{} {}\\.".format(pkg, expected_major_version), res["stdout"], re.I)
+    # Name             Version
+    # ----             -------
+    # Datadog Agent    2.x
+    assert re.search(".*{}\\s+2\\.".format(pkg), res["stdout"], re.I)
 
 
 def test_stackstate_agent_running_and_enabled(host):
