@@ -1,3 +1,4 @@
+---
 role: common
 ssh_port: 22
 security_group_name: molecule_common

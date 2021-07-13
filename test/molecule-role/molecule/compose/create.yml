@@ -9,4 +9,3 @@
       vars:
         role: compose
         security_group_name: molecule_compose
-
