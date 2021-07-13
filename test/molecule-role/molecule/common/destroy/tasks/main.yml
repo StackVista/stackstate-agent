@@ -1,7 +1,4 @@
 ---
-- debug:
-    msg: "Running Task [Destroy]"
-
 - block:
   - name: Populate instance config
     set_fact:

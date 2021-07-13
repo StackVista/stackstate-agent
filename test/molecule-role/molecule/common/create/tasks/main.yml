@@ -1,7 +1,4 @@
 ---
-- debug:
-    msg: "Role Defined [{{role}}]"
-
 - name: Create security group
   ec2_group:
     name: "{{ security_group_name }}"
