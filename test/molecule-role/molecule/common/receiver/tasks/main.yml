@@ -96,4 +96,3 @@
 
 - import_tasks: ../wait-for-receiver.yml
 - import_tasks: ../wait-for-agent.yml
-
