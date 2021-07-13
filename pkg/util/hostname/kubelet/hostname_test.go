@@ -31,6 +31,9 @@ func (m *kubeUtilMock) GetNodename(ctx context.Context) (string, error) {
 }
 
 func TestHostnameProvider(t *testing.T) {
+	config.SetDetectedFeatures(config.FeatureMap{config.Kubernetes: struct{}{}})
+	defer config.SetDetectedFeatures(nil)
+
 	ctx := context.Background()
 	mockConfig := config.Mock()
 
@@ -48,7 +51,7 @@ func TestHostnameProvider(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "node-name", hostName)
 
-	var testClusterName = "laika"
+	testClusterName := "laika"
 	mockConfig.Set("cluster_name", testClusterName)
 	clustername.ResetClusterName() // reset state as clustername was already read
 
