@@ -8,14 +8,12 @@
         name: ../common/create
       vars:
         role: vms
-
         winrm_http_port: 5985
         winrm_https_port: 5986
         winrm_rdp_port: 3389
-
         security_group_name: molecule_vms
         security_group_description: Agent v2 Molecule testing running on EC2 VMs
-        security_group_rules:
+        security_group_rules_extend:
           - proto: tcp
             from_port: "{{ winrm_http_port }}"
             to_port: "{{ winrm_http_port }}"
@@ -56,3 +54,5 @@
             from_port: "{{ dnat_service_port }}"
             to_port: "{{ dnat_service_port }}"
             cidr_ip: '0.0.0.0/0'
+      set_fact:
+        security_group_rules: "{{ security_group_rules + security_group_rules_extend }}"
