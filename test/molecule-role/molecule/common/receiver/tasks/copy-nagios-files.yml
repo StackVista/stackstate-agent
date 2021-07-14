@@ -1,0 +1,16 @@
+---
+- name: Copy nagios files
+  copy:
+    src: files/nagios/{{item}}
+    dest: /home/ubuntu/nagios/
+    mode: preserve
+  with_items:
+    - Dockerfile
+    - mysql.cfg
+    - nagios.cfg
+
+- name: Copy nagios config files
+  copy:
+    src: files/agent/nagios.d/conf.yaml
+    dest: /home/ubuntu/agent/nagios.d/
+    mode: preserve

@@ -2,8 +2,17 @@
 - name: Prepare Integrations and Dependencies
   hosts: agent-integrations
   gather_facts: false
+  include_vars: ../common/receiver/vars/main.yml
   tasks:
-    - include_role:
-        name: ../common/receiver
-      vars:
-        role: integrations
+    - include_tasks: ../common/receiver/tasks/ubuntu-18-automatic-updates.yml
+    - include_tasks: ../common/receiver/tasks/provisioning-dependencies.yml
+    - include_tasks: ../common/receiver/tasks/docker-login.yml
+    - include_tasks: ../common/receiver/tasks/copy-configuration-files.yml
+    - include_tasks: ../common/receiver/tasks/copy-verify-and-create-script-file.yml
+    - include_tasks: ../common/receiver/tasks/copy-nagios-files.yml
+    - include_tasks: ../common/receiver/tasks/copy-agent-integration-config-files.yml
+    - include_tasks: ../common/receiver/tasks/gather-facts.yml
+    - include_tasks: ../common/receiver/tasks/configure-env-for-docker-compose.yml
+    - include_tasks: ../common/receiver/tasks/run-docker-compose.yml
+    - include_tasks: ../wait-for-receiver.yml
+    - include_tasks: ../wait-for-agent.yml
