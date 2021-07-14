@@ -16,7 +16,6 @@
         security_group_name: molecule_vms
         security_group_description: Agent v2 Molecule testing running on EC2 VMs
         security_group_rules:
-          - "{{ security_group_rules }}"
           - proto: tcp
             from_port: "{{ winrm_http_port }}"
             to_port: "{{ winrm_http_port }}"
