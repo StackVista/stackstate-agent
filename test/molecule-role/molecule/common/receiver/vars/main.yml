@@ -1,4 +1,0 @@
----
-role: common
-configuration_files_src: "files/"
-configuration_files_dest: "/home/ubuntu"

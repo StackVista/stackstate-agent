@@ -2,7 +2,6 @@
 - name: Prepare Integrations and Dependencies
   hosts: agent-integrations
   gather_facts: false
-  include_vars: ../common/receiver/vars/main.yml
   tasks:
     - include_tasks: ../common/receiver/tasks/ubuntu-18-automatic-updates.yml
     - include_tasks: ../common/receiver/tasks/provisioning-dependencies.yml

@@ -1,6 +1,6 @@
 ---
 - name: Copy Configuration files
   copy:
-    src: "{{ configuration_files_src }}"
-    dest: "{{ configuration_files_dest }}"
+    src: "files/"
+    dest: "/home/ubuntu"
     mode: preserve
