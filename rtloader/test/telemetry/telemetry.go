@@ -106,4 +106,5 @@ func submitTopologyEvent(id *C.char, data *C.char) {
 	yaml.Unmarshal([]byte(C.GoString(data)), _data)
 	result, _ := python.ConvertKeysToString(_data)
 	mapstructure.Decode(result, &_topoEvt)
+	_topoEvt.FillEventContextDefaults()
 }
