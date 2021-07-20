@@ -3,8 +3,6 @@
   hosts: localhost
   connection: local
   gather_facts: false
+  role: compose
   tasks:
-    - include_role:
-        name: ../common/destroy
-      vars:
-        role: compose
+    - include_tasks: ../common/destroy/tasks/main.yml

@@ -3,9 +3,9 @@
   hosts: localhost
   connection: local
   gather_facts: false
+  include_vars: ../common/create/vars/main.yml
+  role: compose
+  security_group_name: molecule_compose
   tasks:
-    - include_role:
-        name: ../common/create
-      vars:
-        role: compose
-        security_group_name: molecule_compose
+    - include_tasks: ../common/create/tasks/main.yml
+

@@ -13,7 +13,19 @@
         swarm_udp_network_port: 4789
         security_group_name: molecule_swarm
         security_group_description: Agent2 Molecule Testing running on EC2 VMs for Swarm
-        security_group_rules_extend:
+        security_group_rules:
+          - proto: tcp
+            from_port: "{{ ssh_port }}"
+            to_port: "{{ ssh_port }}"
+            cidr_ip: '0.0.0.0/0'
+          - proto: tcp
+            from_port: 7070  # StackState Topic API port
+            to_port: 7070
+            cidr_ip: '0.0.0.0/0'
+          - proto: icmp
+            from_port: 8
+            to_port: -1
+            cidr_ip: '0.0.0.0/0'
           - proto: tcp
             from_port: "{{ swarm_tcp_cluster_port }}"
             to_port: "{{ swarm_tcp_cluster_port }}"
@@ -34,5 +46,3 @@
             from_port: 7077  # StackState Receiver API port
             to_port: 7077
             cidr_ip: '0.0.0.0/0'
-      set_fact:
-        security_group_rules: "{{ security_group_rules + security_group_rules_extend }}"
