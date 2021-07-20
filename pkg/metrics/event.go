@@ -125,12 +125,14 @@ func (e *Event) String() string {
 // The implementation of mapstructure.Decode will use the zero value for slices (Nil) on empty arrays in yaml. Seeing as
 // StackState provides no default values we are unable to omit these from JSON and we are forced to create empty slices.
 func (e *Event) FillEventContextDefaults() {
-	if e.EventContext.ElementIdentifiers == nil {
-		e.EventContext.ElementIdentifiers = make([]string, 0)
-	}
+	if e.EventContext != nil {
+		if e.EventContext.ElementIdentifiers == nil {
+			e.EventContext.ElementIdentifiers = make([]string, 0)
+		}
 
-	if e.EventContext.SourceLinks == nil {
-		e.EventContext.SourceLinks = make([]SourceLink, 0)
+		if e.EventContext.SourceLinks == nil {
+			e.EventContext.SourceLinks = make([]SourceLink, 0)
+		}
 	}
 }
 

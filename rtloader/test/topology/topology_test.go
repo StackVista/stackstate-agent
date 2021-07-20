@@ -22,7 +22,7 @@ func TestMain(m *testing.M) {
 const topoData = `
 {
   "key": "value ®",
-  "stringlist": ["a", "b", "c", "4"],
+  "stringlist": ["a", "b", "c", "04", "09"],
   "boollist": [True, False],
   "intlist": [1],
   "doublelist": [0.7, 1.42],
@@ -32,20 +32,21 @@ const topoData = `
 
 func testTopoData(t *testing.T) {
 	if result["key"] != "value ®" {
-		t.Fatalf("Unexpected component data 'key' value: %s", result["key"])
+		t.Fatalf("Unexpected component data 'key' value: %s: %v", result["key"], _raw_data)
 	}
 	var stringlist = result["stringlist"].([]interface{})
-	if len(stringlist) != 4 {
-		t.Fatalf("Unexpected component data 'stringlist' size: %v", len(stringlist))
+	if len(stringlist) != 5 {
+		t.Fatalf("Unexpected component data 'stringlist' size: %v, %v, raw: %v",
+			len(stringlist), _data, _raw_data)
 	}
-	if stringlist[0] != "a" && stringlist[1] != "b"  && stringlist[2] != "c" && stringlist[3] != "4" {
+	if stringlist[0] != "a" || stringlist[1] != "b" || stringlist[2] != "c" || stringlist[3] != "04" || stringlist[4] != "09" {
 		t.Fatalf("Unexpected component data 'stringlist' value: %s", result["stringlist"])
 	}
 	var boollist = result["boollist"].([]interface{})
 	if len(boollist) != 2 {
 		t.Fatalf("Unexpected component data 'boollist' size: %v", len(boollist))
 	}
-	if boollist[0] != true && boollist[1] != false {
+	if boollist[0] != true || boollist[1] != false {
 		t.Fatalf("Unexpected component data 'boollist' value: %s", result["boollist"])
 	}
 	var intlist = result["intlist"].([]interface{})
@@ -59,7 +60,7 @@ func testTopoData(t *testing.T) {
 	if len(doublelist) != 2 {
 		t.Fatalf("Unexpected component data 'doublelist' size: %v", len(doublelist))
 	}
-	if doublelist[0] != 0.7 && doublelist[1] != 1.42 {
+	if doublelist[0] != 0.7 || doublelist[1] != 1.42 {
 		t.Fatalf("Unexpected component data 'doublelist' value: %s", result["doublelist"])
 	}
 	if result["emptykey"] != nil {
@@ -135,8 +136,8 @@ func TestSubmitComponentCannotBeSerialized(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// example error 'RepresenterError: ('cannot represent an object', <object object at 0x7fc1df8f3e90>)'
-	if !strings.HasPrefix(out, "RepresenterError: ('cannot represent an object'") {
+	// ruamel.yaml.representer.RepresenterError: cannot represent an object: <object object at 0x7f71960b8280>
+	if !strings.Contains(out, "RepresenterError") {
 		t.Errorf("Unexpected printed value: '%s'", out)
 	}
 
@@ -208,8 +209,8 @@ func TestSubmitRelationCannotBeSerialized(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// example error 'RepresenterError: ('cannot represent an object', <object object at 0x7fc1df8f3e90>)'
-	if !strings.HasPrefix(out, "RepresenterError: ('cannot represent an object'") {
+	// ruamel.yaml.representer.RepresenterError: cannot represent an object: <object object at 0x7f71960b8280>
+	if !strings.Contains(out, "RepresenterError") {
 		t.Errorf("Unexpected printed value: '%s'", out)
 	}
 

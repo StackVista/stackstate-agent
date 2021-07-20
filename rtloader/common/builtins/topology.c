@@ -120,9 +120,9 @@ static PyObject *submit_component(PyObject *self, PyObject *args) {
     instance_key->type_ = as_string(PyDict_GetItemString(instance_key_dict, "type"));
     instance_key->url = as_string(PyDict_GetItemString(instance_key_dict, "url"));
 
-    yaml_data = as_yaml(data_dict);
+    yaml_data = as_yaml_ruamel(data_dict);
     if (yaml_data == NULL) {
-        // If as_yaml fails it sets a python exception, so we just return
+        // If as_yaml_ruamel fails it sets a python exception, so we just return
         retval = NULL; // Failure
         goto done;
     } else {
@@ -200,9 +200,9 @@ static PyObject *submit_relation(PyObject *self, PyObject *args) {
     instance_key->type_ = as_string(PyDict_GetItemString(instance_key_dict, "type"));
     instance_key->url = as_string(PyDict_GetItemString(instance_key_dict, "url"));
 
-    yaml_data = as_yaml(data_dict);
+    yaml_data = as_yaml_ruamel(data_dict);
     if (yaml_data == NULL) {
-        // If as_yaml fails it sets a python exception, so we just return
+        // If as_yaml_ruamel fails it sets a python exception, so we just return
         retval = NULL; // Failure
         goto done;
     } else {

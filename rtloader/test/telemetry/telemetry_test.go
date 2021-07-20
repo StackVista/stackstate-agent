@@ -181,7 +181,7 @@ func testChangeRequestEventsBase(t *testing.T) {
 		t.Fatalf("Unexpected topology event data 'context.source_links' size: %v", len(_topoEvt.EventContext.SourceLinks))
 	}
 
-	var emptySourceLinks []metrics.SourceLink
+	emptySourceLinks :=  make([]metrics.SourceLink, 0)
 	if !reflect.DeepEqual(_topoEvt.EventContext.SourceLinks, emptySourceLinks) {
 		t.Fatalf("Unexpected topology event data 'context.source_links' value: %v", _topoEvt.EventContext.SourceLinks)
 	}

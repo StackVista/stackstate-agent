@@ -110,7 +110,7 @@ static PyObject *submit_health_check_data(PyObject *self, PyObject *args) {
     health_stream_key->urn = as_string(PyDict_GetItemString(health_stream_dict, "urn"));
     health_stream_key->sub_stream = as_string(PyDict_GetItemString(health_stream_dict, "sub_stream"));
 
-    yaml_data = as_yaml(data_dict);
+    yaml_data = as_yaml_ruamel(data_dict);
     if (yaml_data == NULL) {
         // If as_yaml fails it sets a python exception, so we just return
         retval = NULL; // Failure

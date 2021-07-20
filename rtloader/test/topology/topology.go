@@ -37,6 +37,7 @@ var (
 	rtloader		*C.rtloader_t
 	checkID			string
 	_instance		*Instance
+	_raw_data       string
 	_data			map[string]interface{}
 	result          map[string]interface{}
 	_externalID		string
@@ -54,6 +55,7 @@ type Instance struct {
 func resetOuputValues() {
 	checkID = ""
 	_instance = nil
+	_raw_data = ""
 	_data = nil
 	result = nil
 	_externalID = ""
@@ -131,6 +133,7 @@ func submitComponent(id *C.char, instanceKey *C.instance_key_t, externalID *C.ch
 
 	_externalID = C.GoString(externalID)
 	_componentType = C.GoString(componentType)
+	_raw_data = C.GoString(data)
 	_data = make(map[string]interface{})
 	yaml.Unmarshal([]byte(C.GoString(data)), _data)
 	r, _ := python.ConvertKeysToString(_data)
@@ -153,6 +156,7 @@ func submitRelation(id *C.char, instanceKey *C.instance_key_t, sourceID *C.char,
 	_externalID = fmt.Sprintf("%s-%s-%s", _sourceID, _relationType, _targetID)
 
 	_data = make(map[string]interface{})
+	_raw_data = C.GoString(data)
 	yaml.Unmarshal([]byte(C.GoString(data)), _data)
 	r, _ := python.ConvertKeysToString(_data)
 	result = r.(map[string]interface{})
