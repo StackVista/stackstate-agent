@@ -154,9 +154,13 @@ int init_stringutils(void) {
     return ret;
 
 done:
+    Py_XDECREF(module_name_r);
+    Py_XDECREF(module_name_YAML);
     Py_XDECREF(ruamel_module);
     Py_XDECREF(ruamel);
     Py_XDECREF(r_dump_name);
+    Py_XDECREF(module_name_compat);
+    Py_XDECREF(module_name_StringIO);
     Py_XDECREF(kwargs);
     Py_XDECREF(args);
     Py_XDECREF(yaml);
@@ -235,7 +239,7 @@ char *as_yaml_ruamel(PyObject *object) {
 
     // get stream getvalue()
     char get_value_name[] = "getvalue";
-    PyObject *get_value_func = PyObject_GetAttrString(stream, get_value_name);
+    PyObject *get_value_func = PyObject_GetAttrString(stream, get_value_name); // borrowed
     if (get_value_func == NULL) {
         PyErr_SetString(PyExc_TypeError, "error: no function 'getvalue' found for StringIO()");
         retval = NULL; // Failure
@@ -255,9 +259,8 @@ char *as_yaml_ruamel(PyObject *object) {
 done:
     //Py_XDECREF can accept (and ignore) NULL references
     Py_XDECREF(dumped);
-//    Py_XDECREF(stream);
+    Py_XDECREF(stream);
     Py_XDECREF(args);
     Py_XDECREF(get_value_name);
-    Py_XDECREF(get_value_func);
     return retval;
 }

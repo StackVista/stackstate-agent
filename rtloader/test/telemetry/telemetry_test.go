@@ -238,8 +238,8 @@ func TestSubmitEventCannotBeSerialized(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// example error 'RepresenterError: ('cannot represent an object', <object object at 0x7fc1df8f3e90>)'
-	if !strings.HasPrefix(out, "RepresenterError: ('cannot represent an object'") {
+	// ruamel.yaml.representer.RepresenterError: cannot represent an object: <object object at 0x7f71960b8280>
+	if !strings.Contains(out, "RepresenterError") {
 		t.Errorf("Unexpected printed value: '%s'", out)
 	}
 	if len(_data) != 0 {
