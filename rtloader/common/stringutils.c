@@ -208,7 +208,7 @@ char *as_yaml_ruamel(PyObject *object) {
      // ruamel = YAML(typ='safe')
     PyObject *args = PyTuple_New(0);
     PyObject *kwargs = Py_BuildValue("{s:s}", "typ", "safe");
-    PyObject *ruamel = PyObject_Call(ruamel_module, args, NULL);
+    PyObject *ruamel = PyObject_Call(ruamel_module, args, kwargs);
 
     // get ruamel dump()
     char r_dump_name[] = "dump";
@@ -228,13 +228,6 @@ char *as_yaml_ruamel(PyObject *object) {
     args = Py_BuildValue("O,O", object, stream);
     PyObject_Call(rdump, args, NULL);
     if (PyErr_Occurred()) {
-        // dump exceptions do not clean up the _output and _context_manager in ruamel yaml dump_all function
-        // clear yaml _output
-        char _output[] = "_output";
-        PyObject_SetAttrString(ruamel, _output, Py_None);
-        // clear yaml _context_manager
-        char _context_manager[] = "_context_manager";
-        PyObject_SetAttrString(ruamel, _context_manager, Py_None);
         retval = NULL; // Failure
         goto done;
     }
@@ -261,6 +254,7 @@ char *as_yaml_ruamel(PyObject *object) {
 done:
     //Py_XDECREF can accept (and ignore) NULL references
     Py_XDECREF(args);
+    Py_XDECREF(kwargs);
     Py_XDECREF(stream);
     Py_XDECREF(dumped);
     Py_XDECREF(r_dump_name);

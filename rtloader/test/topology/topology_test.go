@@ -145,6 +145,44 @@ func TestSubmitComponentCannotBeSerialized(t *testing.T) {
 	helpers.AssertMemoryUsage(t)
 }
 
+
+func TestSubmitRelationPerformance(t *testing.T) {
+	// Reset memory counters
+	helpers.ResetMemoryStats()
+
+	out, err := run(fmt.Sprintf(`for i in range(10000): topology.submit_relation(None, "checkid", {"type": "instance.type", "url": "instance.url"}, "source", "target", "mytype", %s)`, topoData))
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out != "" {
+		t.Errorf("Unexpected printed value: '%s'", out)
+	}
+
+	if checkID != "checkid" {
+		t.Fatalf("Unexpected check id value: %s", checkID)
+	}
+	if _instance.Type != "instance.type" {
+		t.Fatalf("Unexpected instance type value: %s", _instance.Type)
+	}
+	if _instance.URL != "instance.url" {
+		t.Fatalf("Unexpected instance url value: %s", _instance.URL)
+	}
+	if _sourceID != "source" {
+		t.Fatalf("Unexpected relation source value: %s", _sourceID)
+	}
+	if _targetID != "target" {
+		t.Fatalf("Unexpected relation target value: %s", _targetID)
+	}
+	if _relationType != "mytype" {
+		t.Fatalf("Unexpected relation type value: %s", _relationType)
+	}
+
+	testTopoData(t)
+	// Check for leaks
+	helpers.AssertMemoryUsage(t)
+}
+
 func TestSubmitRelation(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
