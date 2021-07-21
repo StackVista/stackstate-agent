@@ -207,11 +207,18 @@ char *as_yaml_ruamel(PyObject *object) {
     PyObject *args = PyTuple_New(0);
     PyObject *kwargs = Py_BuildValue("{s:s}", "typ", "safe");
     PyObject *ruamel = PyObject_Call(ruamel_module, args, kwargs);
+    if (rdump == NULL) {
+        PyErr_SetString(PyExc_TypeError, "error: initializing YAML");
+        retval = NULL; // Failure
+        goto done;
+    }
 
     // get ruamel dump()
     char r_dump_name[] = "dump";
     PyObject *rdump = PyObject_GetAttrString(ruamel, r_dump_name);
     if (rdump == NULL) {
+        PyErr_SetString(PyExc_TypeError, "error: no function 'dump' found for YAML");
+        retval = NULL; // Failure
         goto done;
     }
 
@@ -219,6 +226,8 @@ char *as_yaml_ruamel(PyObject *object) {
     args = PyTuple_New(0);
     PyObject *stream = PyObject_Call(stringio_module, args, NULL);
     if (stream == NULL) {
+        PyErr_SetString(PyExc_TypeError, "error: no function 'getvalue' found for StringIO()");
+        retval = NULL; // Failure
         goto done;
     }
 
