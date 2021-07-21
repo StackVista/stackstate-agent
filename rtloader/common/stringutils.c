@@ -140,8 +140,6 @@ int init_stringutils(void) {
 
     ret = EXIT_SUCCESS;
 
-    return ret;
-
 done:
     Py_XDECREF(module_name_r);
     Py_XDECREF(module_name_YAML);
