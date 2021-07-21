@@ -4,50 +4,50 @@ version: '2.4'
 services:
   zookeeper:
     extends:
-      file: ../../common/docker/docker-compose.base.yml
+      file: docker-compose.base.yml
       service: zookeeper
 
   kafka:
     extends:
-      file: ../../common/docker/docker-compose.base.yml
+      file: docker-compose.base.yml
       service: kafka
 
   receiver:
     extends:
-      file: ../../common/docker/docker-compose.base.yml
+      file: docker-compose.base.yml
       service: receiver
 
   correlate:
     extends:
-      file: ../../common/docker/docker-compose.base.yml
+      file: docker-compose.base.yml
       service: correlate
 
   topic-api:
     extends:
-      file: ../../common/docker/docker-compose.base.yml
+      file: docker-compose.base.yml
       service: topic-api
 
   db:
     extends:
-      file: ../../common/docker/docker-compose.base.yml
+      file: docker-compose.base.yml
       service: db
 
   stackstate-books-app:
     extends:
-      file: ../../common/docker/docker-compose.base.yml
+      file: docker-compose.base.yml
       service: stackstate-books-app
 
   stackstate-authors-app:
     extends:
-      file: ../../common/docker/docker-compose.base.yml
+      file: docker-compose.base.yml
       service: stackstate-authors-app
 
   traefik:
     extends:
-      file: ../../common/docker/docker-compose.base.yml
+      file: docker-compose.base.yml
       service: traefik
 
   stackstate-agent:
     extends:
-      file: ../../common/docker/docker-compose.base.yml
+      file: docker-compose.base.yml
       service: stackstate-agent
