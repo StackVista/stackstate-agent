@@ -44,7 +44,7 @@ func ConvertKeysToString(i interface{}) (interface{}, error) {
 					return nil, err
 				}
 			default:
-				return nil, fmt.Errorf("got key other than type string: %T", k)
+				return nil, fmt.Errorf("got a key which is not a string: %T -> %v", k, k)
 			}
 		}
 		return m2, nil

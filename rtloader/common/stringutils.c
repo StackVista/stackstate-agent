@@ -120,9 +120,13 @@ int init_stringutils(void) {
             goto done;
         }
     }
+
     // from ruamel.yaml import YAML
     char module_name_r[] = "ruamel.yaml";
     PyObject *ruamel_m = PyImport_ImportModule(module_name_r);
+    if (ruamel_m == NULL) {
+        goto done;
+    }
     char module_name_YAML[] = "YAML";
     ruamel_module = PyObject_GetAttrString(ruamel_m, module_name_YAML);
     if (ruamel_module == NULL) {
@@ -132,6 +136,9 @@ int init_stringutils(void) {
     // from ruamel.yaml.compat import StringIO
     char module_name_compat[] = "ruamel.yaml.compat";
     PyObject *ruamel_compat = PyImport_ImportModule(module_name_compat);
+    if (ruamel_compat == NULL) {
+        goto done;
+    }
     char module_name_StringIO[] = "StringIO";
     stringio_module = PyObject_GetAttrString(ruamel_compat, module_name_StringIO);
     if (stringio_module == NULL) {
