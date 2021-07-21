@@ -8,4 +8,3 @@
   security_group_name: molecule_compose
   tasks:
     - include_tasks: ../common/create/tasks/main.yml
-
