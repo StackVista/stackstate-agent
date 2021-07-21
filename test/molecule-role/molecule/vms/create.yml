@@ -7,7 +7,6 @@
     - include_role:
         name: ../common/create
       vars:
-        role: vms
         winrm_http_port: 5985
         winrm_https_port: 5986
         winrm_rdp_port: 3389

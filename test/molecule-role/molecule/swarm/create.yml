@@ -7,7 +7,6 @@
     - include_role:
         name: ../common/create
       vars:
-        role: vms
         swarm_tcp_cluster_port: 2377
         swarm_nodes_port: 7946
         swarm_udp_network_port: 4789

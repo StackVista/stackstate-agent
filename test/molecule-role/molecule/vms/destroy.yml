@@ -6,5 +6,3 @@
   tasks:
     - include_role:
         name: ../common/destroy
-      vars:
-        role: vms

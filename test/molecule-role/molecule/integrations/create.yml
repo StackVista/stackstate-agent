@@ -8,4 +8,3 @@
         name: ../common/create
       vars:
         security_group_name: molecule_integrations
-        role: integrations

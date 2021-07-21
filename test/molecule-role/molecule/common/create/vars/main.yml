@@ -1,5 +1,4 @@
 ---
-role: common
 ssh_port: 22
 security_group_name: molecule_common
 security_group_description: Agent v2 Molecule testing running on docker compose

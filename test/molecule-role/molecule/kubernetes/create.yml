@@ -7,7 +7,6 @@
     - include_role:
         name: ../common/create
       vars:
-        role: kubernetes
         security_group_name: molecule_kubernetes
         security_group_description: Agent v2 Molecule testing running on kubernetes
         security_group_rules:
