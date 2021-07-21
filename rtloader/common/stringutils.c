@@ -13,9 +13,9 @@ PyObject * yload = NULL;
 PyObject * ydump = NULL;
 PyObject * loader = NULL;
 PyObject * dumper = NULL;
-
 PyObject * stringio_module = NULL;
 PyObject * ruamel_module = NULL;
+
 /**
  * returns a C (NULL terminated UTF-8) string from a python string.
  *
@@ -142,8 +142,8 @@ int init_stringutils(void) {
 
 done:
     Py_XDECREF(module_name_r);
-    Py_XDECREF(module_name_YAML);
     Py_XDECREF(ruamel_m);
+    Py_XDECREF(module_name_YAML);
     Py_XDECREF(module_name_compat);
     Py_XDECREF(module_name_StringIO);
     Py_XDECREF(yaml);

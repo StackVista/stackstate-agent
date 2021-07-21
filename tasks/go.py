@@ -244,6 +244,9 @@ def deps(
     """
     Setup Go dependencies
     """
+    print("install pip dev requirements")
+    ctx.run("pip install -r requirements.txt")
+
     if not no_bootstrap:
         deps = get_deps('deps')
         order = deps.get("order", deps.keys())
