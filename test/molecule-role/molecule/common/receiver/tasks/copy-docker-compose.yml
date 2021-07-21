@@ -4,6 +4,7 @@
     src: files/docker-compose.yml
     dest: /home/ubuntu/
     mode: preserve
+
 - name: Copy docker compose base file
   copy:
     src: ../common/docker/docker-compose.base.yml
