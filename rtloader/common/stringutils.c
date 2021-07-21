@@ -207,7 +207,7 @@ char *as_yaml_ruamel(PyObject *object) {
     PyObject *args = PyTuple_New(0);
     PyObject *kwargs = Py_BuildValue("{s:s}", "typ", "safe");
     PyObject *ruamel = PyObject_Call(ruamel_module, args, kwargs);
-    if (rdump == NULL) {
+    if (ruamel == NULL) {
         PyErr_SetString(PyExc_TypeError, "error: initializing YAML");
         retval = NULL; // Failure
         goto done;
