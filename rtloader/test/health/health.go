@@ -2,6 +2,7 @@ package testhealth
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/python"
 	"io/ioutil"
 	"log"
 	"os"
@@ -35,6 +36,7 @@ var (
 	checkID				   string
 	_healthStream		   *HealthStream
 	_data				   map[string]interface{}
+	result          	   map[string]interface{}
 	_expirySeconds		   int
 	_repeatIntervalSeconds int
 )
@@ -48,6 +50,7 @@ func resetOuputValues() {
 	checkID = ""
 	_healthStream = nil
 	_data = nil
+	result = nil
 	_expirySeconds = 0
 	_repeatIntervalSeconds = 0
 }
@@ -120,6 +123,8 @@ func submitHealthCheckData(id *C.char, healthStream *C.health_stream_t, data *C.
 
 	_data = make(map[string]interface{})
 	yaml.Unmarshal([]byte(C.GoString(data)), _data)
+	r, _ := python.ConvertKeysToString(_data)
+	result = r.(map[string]interface{})
 }
 
 //export submitHealthStartSnapshot
