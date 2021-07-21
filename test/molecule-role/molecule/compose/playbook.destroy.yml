@@ -4,4 +4,4 @@
   connection: local
   gather_facts: false
   tasks:
-    - include_tasks: ../common/destroy/tasks/main.yml
+    - include_tasks: ../common/destroy/tasks.yml
