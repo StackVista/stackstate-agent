@@ -14,8 +14,8 @@ PyObject * ydump = NULL;
 PyObject * loader = NULL;
 PyObject * dumper = NULL;
 
-PyObject *rdump = NULL;
-PyObject *stream = NULL;
+PyObject * stringio_module = NULL;
+PyObject * ruamel_module = NULL;
 /**
  * returns a C (NULL terminated UTF-8) string from a python string.
  *
@@ -124,19 +124,8 @@ int init_stringutils(void) {
     char module_name_r[] = "ruamel.yaml";
     PyObject *ruamel_m = PyImport_ImportModule(module_name_r);
     char module_name_YAML[] = "YAML";
-    PyObject *ruamel_module = PyObject_GetAttrString(ruamel_m, module_name_YAML);
+    ruamel_module = PyObject_GetAttrString(ruamel_m, module_name_YAML);
     if (ruamel_module == NULL) {
-        goto done;
-    }
-    // ruamel = YAML(typ='safe')
-    PyObject *args = PyTuple_New(0);
-    PyObject *kwargs = Py_BuildValue("{s:s}", "typ", "safe");
-    PyObject *ruamel = PyObject_Call(ruamel_module, args, NULL);
-
-    // get ruamel dump()
-    char r_dump_name[] = "dump";
-    rdump = PyObject_GetAttrString(ruamel, r_dump_name);
-    if (rdump == NULL) {
         goto done;
     }
 
@@ -144,15 +133,8 @@ int init_stringutils(void) {
     char module_name_compat[] = "ruamel.yaml.compat";
     PyObject *ruamel_compat = PyImport_ImportModule(module_name_compat);
     char module_name_StringIO[] = "StringIO";
-    PyObject *stringio = PyObject_GetAttrString(ruamel_compat, module_name_StringIO);
-    if (stringio == NULL) {
-        goto done;
-    }
-
-    // stream = StringIO()
-    args = PyTuple_New(0);
-    stream = PyObject_Call(stringio, args, NULL);
-    if (stream == NULL) {
+    stringio_module = PyObject_GetAttrString(ruamel_compat, module_name_StringIO);
+    if (stringio_module == NULL) {
         goto done;
     }
 
@@ -164,14 +146,8 @@ done:
     Py_XDECREF(module_name_r);
     Py_XDECREF(module_name_YAML);
     Py_XDECREF(ruamel_m);
-    Py_XDECREF(ruamel_module);
-    Py_XDECREF(ruamel);
-    Py_XDECREF(r_dump_name);
     Py_XDECREF(module_name_compat);
     Py_XDECREF(module_name_StringIO);
-    Py_XDECREF(stringio);
-    Py_XDECREF(stream);
-    Py_XDECREF(args);
     Py_XDECREF(yaml);
     return ret;
 }
@@ -229,10 +205,36 @@ char *as_yaml_ruamel(PyObject *object) {
     char *retval = NULL;
     PyObject *dumped = NULL;
 
+     // ruamel = YAML(typ='safe')
+    PyObject *args = PyTuple_New(0);
+    PyObject *kwargs = Py_BuildValue("{s:s}", "typ", "safe");
+    PyObject *ruamel = PyObject_Call(ruamel_module, args, NULL);
+
+    // get ruamel dump()
+    char r_dump_name[] = "dump";
+    PyObject *rdump = PyObject_GetAttrString(ruamel, r_dump_name);
+    if (rdump == NULL) {
+        goto done;
+    }
+
+    // stream = StringIO()
+    args = PyTuple_New(0);
+    PyObject *stream = PyObject_Call(stringio_module, args, NULL);
+    if (stream == NULL) {
+        goto done;
+    }
+
     // yaml.dump(data, stream) --> returns NULL
-    PyObject *args = Py_BuildValue("O,O", object, stream);
+    args = Py_BuildValue("O,O", object, stream);
     PyObject_Call(rdump, args, NULL);
     if (PyErr_Occurred()) {
+        // dump exceptions do not clean up the _output and _context_manager in ruamel yaml dump_all function
+        // clear yaml _output
+        char _output[] = "_output";
+        PyObject_SetAttrString(ruamel, _output, Py_None);
+        // clear yaml _context_manager
+        char _context_manager[] = "_context_manager";
+        PyObject_SetAttrString(ruamel, _context_manager, Py_None);
         retval = NULL; // Failure
         goto done;
     }
@@ -258,8 +260,10 @@ char *as_yaml_ruamel(PyObject *object) {
 
 done:
     //Py_XDECREF can accept (and ignore) NULL references
-    Py_XDECREF(dumped);
     Py_XDECREF(args);
+    Py_XDECREF(stream);
+    Py_XDECREF(dumped);
+    Py_XDECREF(r_dump_name);
     Py_XDECREF(get_value_name);
     return retval;
 }
