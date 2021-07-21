@@ -112,7 +112,7 @@ static PyObject *submit_health_check_data(PyObject *self, PyObject *args) {
 
     yaml_data = as_yaml_ruamel(data_dict);
     if (yaml_data == NULL) {
-        // If as_yaml fails it sets a python exception, so we just return
+        // If as_yaml_ruamel fails it sets a python exception, so we just return
         retval = NULL; // Failure
         goto done;
     } else {
