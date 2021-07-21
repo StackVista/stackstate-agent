@@ -543,24 +543,22 @@ if version_gt $min_required_kernel $current_kernel; then
     $sudo_cmd sh -c "sed -i \"s/network_tracing_enabled:.*/network_tracing_enabled: 'false'/\" $CONF"
 fi
 
-$sudo_cmd chown $PKG_USER:$PKG_USER $CONF
-$sudo_cmd chmod 640 $CONF
+# Use /usr/sbin/service by default.
+# Some distros usually include compatibility scripts with Upstart or Systemd. Check with: `command -v service | xargs grep -E "(upstart|systemd)"`
+restart_cmd="$sudo_cmd $service_cmd datadog-agent restart"
+stop_instructions="$sudo_cmd $service_cmd datadog-agent stop"
+start_instructions="$sudo_cmd $service_cmd datadog-agent start"
 
-# Use systemd by default
-restart_cmd="$sudo_cmd systemctl restart $PKG_NAME.service"
-stop_instructions="$sudo_cmd systemctl stop $PKG_NAME"
-start_instructions="$sudo_cmd systemctl start $PKG_NAME"
-
-# Try to detect Upstart, this works most of the times but still a best effort
-if /sbin/init --version 2>&1 | grep -q upstart; then
-    restart_cmd="$sudo_cmd start $PKG_NAME"
-    stop_instructions="$sudo_cmd stop $PKG_NAME"
-    start_instructions="$sudo_cmd start $PKG_NAME"
-elif [[ -d /etc/rc.d/ || -d /etc/init.d/ ]]; then
-    # Use sysv-init
-    restart_cmd="$sudo_cmd service $PKG_NAME restart"
-    stop_instructions="$sudo_cmd service $PKG_NAME stop"
-    start_instructions="$sudo_cmd service $PKG_NAME start"
+if [[ `$sudo_cmd ps --no-headers -o comm 1 2>&1` == "systemd" ]] && command -v systemctl 2>&1; then
+  # Use systemd if systemctl binary exists and systemd is the init process
+  restart_cmd="$sudo_cmd systemctl restart datadog-agent.service"
+  stop_instructions="$sudo_cmd systemctl stop datadog-agent"
+  start_instructions="$sudo_cmd systemctl start datadog-agent"
+elif /sbin/init --version 2>&1 | grep -q upstart; then
+  # Try to detect Upstart, this works most of the times but still a best effort
+  restart_cmd="$sudo_cmd stop datadog-agent || true ; sleep 2s ; $sudo_cmd start datadog-agent"
+  stop_instructions="$sudo_cmd stop datadog-agent"
+  start_instructions="$sudo_cmd start datadog-agent"
 fi
 
 if [ $no_start ]; then
