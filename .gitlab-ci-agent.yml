@@ -28,6 +28,7 @@ stages:
   ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
   . /usr/local/rvm/scripts/rvm
   export PATH=/go/bin:/usr/local/go/bin:$PATH
+  pip install ruamel.yaml==0.16.13
   eval $(gimme)
 
 .configure_debian_env_script: &configure_debian_env_script |
@@ -37,6 +38,7 @@ stages:
   rm -rf /go/src/github.com/StackVista/stackstate-agent || true
   . /usr/local/rvm/scripts/rvm
   ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
+  pip install ruamel.yaml==0.16.13
 
 .configure_windows_ps1_env_script: &configure_windows_ps1_env_script |
   Import-Module C:\tools\miniconda3\shell\condabin\conda-hook.ps1
@@ -45,6 +47,7 @@ stages:
   New-Item -ItemType Directory -Force -Path "$Env:GOPATH\\src\\github.com\\StackVista"
   cmd /c if exist %GOPATH%\src\github.com\StackVista\stackstate-agent rd /s/q %GOPATH%\src\github.com\StackVista\stackstate-agent
   New-Item -ItemType SymbolicLink -Path "$Env:GOPATH\\src\\github.com\\StackVista\\stackstate-agent" -Target $current_dir -Force
+  pip install ruamel.yaml==0.16.13
 
 .rules:
   - &only_agent_3
@@ -855,7 +858,6 @@ release_deb:
     - deps_deb
     - build_deb
   script:
-    - source .gitlab-scripts/setup_env.sh
     - apt-get install -y apt-utils libtool debsigs
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_RELEASE_BUCKET stable
