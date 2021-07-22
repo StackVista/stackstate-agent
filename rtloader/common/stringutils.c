@@ -209,6 +209,7 @@ done:
 char *as_yaml_ruamel(PyObject *object) {
     char *retval = NULL;
     PyObject *dumped = NULL;
+    PyObject *temp_bytes = NULL;
 
      // ruamel = YAML(typ='safe')
     PyObject *args = PyTuple_New(0);
@@ -233,7 +234,7 @@ char *as_yaml_ruamel(PyObject *object) {
     args = PyTuple_New(0);
     PyObject *stream = PyObject_Call(stringio_module, args, NULL);
     if (stream == NULL) {
-        PyErr_SetString(PyExc_TypeError, "error: no function 'getvalue' found for StringIO()");
+        PyErr_SetString(PyExc_RuntimeError, "error: initializing StringIO");
         retval = NULL; // Failure
         goto done;
     }
@@ -259,14 +260,14 @@ char *as_yaml_ruamel(PyObject *object) {
     args = PyTuple_New(0);
     dumped = PyObject_Call(get_value_func, args, NULL);
     if (dumped == NULL) {
-        PyErr_SetString(PyExc_TypeError, "error: nothing dumped into stream");
+        PyErr_SetString(PyExc_RuntimeError, "error: nothing dumped into stream");
         retval = NULL; // Failure
         goto done;
     }
 
     // duplicated code from as_string function. Ruamel dump outputs are handled the same for
     // Py2 and Py3. Both return unicode that needs to be encoded as 'UTF-8'.
-    PyObject *temp_bytes = PyUnicode_AsEncodedString(dumped, "UTF-8", "strict");
+    temp_bytes = PyUnicode_AsEncodedString(dumped, "UTF-8", "strict");
     if (temp_bytes == NULL) {
         // PyUnicode_AsEncodedString raises an error if the codec raised an exception
         retval = NULL; // Failure
@@ -283,5 +284,6 @@ done:
     Py_XDECREF(dumped);
     Py_XDECREF(r_dump_name);
     Py_XDECREF(get_value_name);
+    Py_XDECREF(temp_bytes);
     return retval;
 }
