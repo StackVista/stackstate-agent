@@ -263,7 +263,17 @@ char *as_yaml_ruamel(PyObject *object) {
         retval = NULL; // Failure
         goto done;
     }
-    retval = as_string(dumped);
+
+    // duplicated code from as_string function. Ruamel dump outputs are handled the same for
+    // Py2 and Py3. Both return unicode that needs to be encoded as 'UTF-8'.
+    PyObject *temp_bytes = PyUnicode_AsEncodedString(dumped, "UTF-8", "strict");
+    if (temp_bytes == NULL) {
+        // PyUnicode_AsEncodedString raises an error if the codec raised an exception
+        retval = NULL; // Failure
+        goto done;
+    }
+
+    retval = strdupe(PyBytes_AS_STRING(temp_bytes));
 
 done:
     //Py_XDECREF can accept (and ignore) NULL references
