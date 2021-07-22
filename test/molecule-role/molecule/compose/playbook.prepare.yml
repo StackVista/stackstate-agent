@@ -7,7 +7,7 @@
     - include_tasks: ../common/receiver/tasks/provisioning-dependencies.yml
     - include_tasks: ../common/receiver/tasks/docker-login.yml
     - include_tasks: ../common/receiver/tasks/copy-configuration-files.yml
-    - include_tasks: ../common/receiver/tasks/copy-docker-compose.yml
+    - include_tasks: ../common/receiver/tasks/copy-docker-compose-base.yml
     - include_tasks: ../common/receiver/tasks/copy-verify-and-create-script-file.yml
     - include_tasks: ../common/receiver/tasks/gather-facts.yml
     - include_tasks: ../common/receiver/tasks/configure-env-for-docker-compose.yml

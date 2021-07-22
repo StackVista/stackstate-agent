@@ -4,5 +4,4 @@
   connection: local
   gather_facts: false
   tasks:
-    - include_role:
-        name: ../common/destroy
+    - include_tasks: ../common/destroy/tasks.yml

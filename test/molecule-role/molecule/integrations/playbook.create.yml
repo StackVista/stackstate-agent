@@ -1,0 +1,11 @@
+---
+- name: Create
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - ../common/create/vars.yml
+  vars:
+    security_group_name: molecule_integrations
+  tasks:
+    - include_tasks: ../common/create/tasks.yml

@@ -10,6 +10,7 @@
     - include_tasks: ../common/receiver/tasks/copy-receiver-files.yml
     - include_tasks: ../common/receiver/tasks/copy-verify-and-create-script-file.yml
     - include_tasks: ../common/receiver/tasks/configure-env-for-docker-compose.yml
+    - include_tasks: ../common/receiver/tasks/copy-docker-compose-base.yml
 
     - name: Run Docker compose (1/2)
       command: docker-compose up -d

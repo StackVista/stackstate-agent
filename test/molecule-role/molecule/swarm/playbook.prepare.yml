@@ -69,6 +69,7 @@
         password: "{{ quay_password }}"
         reauthorize: yes
 
+    - include_tasks: ../common/receiver/tasks/copy-docker-compose-base.yml
     - name: Copy docker compose file
       copy:
         src: files/docker-compose.yml

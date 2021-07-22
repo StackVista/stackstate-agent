@@ -6,6 +6,7 @@
     - include_tasks: ../common/receiver/tasks/ubuntu-18-automatic-updates.yml
     - include_tasks: ../common/receiver/tasks/provisioning-dependencies.yml
     - include_tasks: ../common/receiver/tasks/configure-aws-credentials.yml
+    - include_tasks: ../common/receiver/tasks/copy-docker-compose-base.yml
     - include_tasks: ../common/receiver/tasks/docker-login.yml
 
     - name: Copy Terraform Files and Manifests
