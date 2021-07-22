@@ -42,9 +42,7 @@ services:
       service: topic-api
 
   nginx:
-    extends:
-      file: ../docker-compose.base.yml
-      service: nginx
+    image: nginx:1.14.2
     ports:
       - 443:443
     depends_on:

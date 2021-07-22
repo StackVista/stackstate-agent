@@ -48,11 +48,10 @@ services:
 
   nagios:
     depends_on:
-      mysql:
-        condition: service_healthy
+      - mysql
     extends:
       file: docker-compose.base.yml
-      service: topic-api
+      service: nagios
 
   nginx:
     extends:
@@ -60,18 +59,7 @@ services:
       service: nginx
 
   stackstate-agent:
-    depends_on:
-      - nagios
-      - receiver
-    extends:
-      file: docker-compose.base.yml
-      service: stackstate-agent
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /proc/:/host/proc/:ro
-      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
-      - /etc/passwd:/etc/passwd:ro
-      - /sys/kernel/debug:/sys/kernel/debug
       - ./agent/nagios.d:/etc/stackstate-agent/conf.d/nagios.d:ro
       - ./agent/agent_integration_sample.d:/etc/stackstate-agent/conf.d/agent_integration_sample.d:ro
       - nagios_logs:/opt/nagios/var/log
@@ -83,12 +71,12 @@ services:
       STS_LOG_LEVEL: "debug"
       STS_LOG_TO_CONSOLE: "true"
       STS_LOG_PAYLOADS: "false"
-
-#    healthcheck:
-#      test: curl --fail -s http://localhost:5000/ || exit 1
-#      interval: 1m30s
-#      timeout: 10s
-#      retries: 3
+    extends:
+      file: docker-compose.base.yml
+      service: stackstate-agent
+    depends_on:
+      - nagios
+      - receiver
 
 volumes:
   nagios_logs:

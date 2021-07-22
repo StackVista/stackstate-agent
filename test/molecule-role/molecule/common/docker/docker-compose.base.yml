@@ -137,11 +137,11 @@ services:
     pid: "host"
     privileged: true
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "/proc/:/host/proc/:ro"
-      - "/sys/fs/cgroup/:/host/sys/fs/cgroup:ro"
-      - "/etc/passwd:/etc/passwd:ro"
-      - "/sys/kernel/debug:/sys/kernel/debug"
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc/:/host/proc/:ro
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+      - /etc/passwd:/etc/passwd:ro
+      - /sys/kernel/debug:/sys/kernel/debug
     environment:
       STS_API_KEY: "API_KEY"
       STS_STS_URL: "http://localhost:7077/stsAgent"

@@ -3,7 +3,6 @@
   hosts: agent-integrations
   gather_facts: false
   tasks:
-    - include_tasks: ../common/receiver/tasks/ubuntu-18-automatic-updates.yml
     - include_tasks: ../common/receiver/tasks/provisioning-dependencies.yml
     - include_tasks: ../common/receiver/tasks/docker-login.yml
     - include_tasks: ../common/receiver/tasks/copy-configuration-files.yml
@@ -12,7 +11,15 @@
     - include_tasks: ../common/receiver/tasks/copy-nagios-files.yml
     - include_tasks: ../common/receiver/tasks/copy-agent-integration-config-files.yml
     - include_tasks: ../common/receiver/tasks/gather-facts.yml
-    - include_tasks: ../common/receiver/tasks/configure-env-for-docker-compose.yml
+
+    - name: Configure .env file used by docker-compose
+      copy:
+        content: |
+          AGENT_DOCKER_REPO={{ agent_docker_repo }}
+          AGENT_VERSION={{ agent_current_branch }}
+          STACKSTATE_BRANCH={{ stackstate_branch }}
+        dest: /home/ubuntu/.env
+
     - include_tasks: ../common/receiver/tasks/run-docker-compose.yml
     - include_tasks: ../wait-for-receiver.yml
     - include_tasks: ../wait-for-agent.yml
