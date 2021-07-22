@@ -4,7 +4,7 @@ version: '2.4'
 services:
   zookeeper:
     extends:
-      file: ../docker-compose.base.yml
+      file: docker-compose.base.yml
       service: zookeeper
 
   kafka:
@@ -12,7 +12,7 @@ services:
       zookeeper:
         condition: service_healthy
     extends:
-      file: ../docker-compose.base.yml
+      file: docker-compose.base.yml
       service: kafka
     environment:
       KAFKA_CREATE_TOPICS: "sts_connection_beat_events:1:1,sts_correlate_endpoints:1:1,sts_generic_events:1:1,sts_intake_health:1:1,sts_multi_metrics:1:1,sts_state_events:1:1,sts_topology_events:1:1,sts_topo_process_agents:1:1,sts_trace_events:1:1,sts_topo_kubernetes_${CLUSTER_NAME}:1:1"
@@ -22,7 +22,7 @@ services:
       kafka:
         condition: service_healthy
     extends:
-      file: ../docker-compose.base.yml
+      file: docker-compose.base.yml
       service: receiver
 
   correlate:
@@ -30,7 +30,7 @@ services:
       kafka:
         condition: service_healthy
     extends:
-      file: ../docker-compose.base.yml
+      file: docker-compose.base.yml
       service: correlate
 
   topic-api:
@@ -38,7 +38,7 @@ services:
       kafka:
         condition: service_healthy
     extends:
-      file: ../docker-compose.base.yml
+      file: docker-compose.base.yml
       service: topic-api
 
   nginx:
