@@ -17,9 +17,6 @@ services:
     image: wurstmeister/kafka:2.12-2.3.1
     ports:
       - 9092:9092
-    depends_on:
-      zookeeper:
-        condition: service_healthy
     environment:
       KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ADVERTISED_PORT: 9092
@@ -40,9 +37,6 @@ services:
     ports:
       - 7077:7077
       - 1618:1618
-    depends_on:
-      kafka:
-        condition: service_healthy
     environment:
       KAFKA_BROKERS: kafka:9092
     restart: always
@@ -50,9 +44,6 @@ services:
 
   correlate:
     image: "quay.io/stackstate/stackstate-correlate:${STACKSTATE_BRANCH}"
-    depends_on:
-      kafka:
-        condition: service_healthy
     environment:
       KAFKA_BROKERS: kafka:9092
       STACKSTATE_CORRELATE_LOG_LEVEL: "DEBUG"
@@ -63,9 +54,6 @@ services:
     image: "quay.io/stackstate/stackstate-topic-api:${STACKSTATE_BRANCH}"
     ports:
       - 7070:7070
-    depends_on:
-      kafka:
-        condition: service_healthy
     environment:
       KAFKA_BROKERS: kafka:9092
       ZOOKEEPER_QUORUM: kafka
@@ -94,11 +82,6 @@ services:
     pid: "host"
     ports:
       - '8081-8091:8081'
-    depends_on:
-      db:
-        condition: service_healthy
-      stackstate-agent:
-        condition: service_started
     labels:
       - "traefik.frontend.rule=Host:stackstate-books-app"
       - "traefik.backend=stackstate-books-app"
@@ -111,11 +94,6 @@ services:
     pid: "host"
     ports:
       - '8092-8099:8081'
-    depends_on:
-      db:
-        condition: service_healthy
-      stackstate-agent:
-        condition: service_started
     labels:
       - "traefik.frontend.rule=Host:stackstate-authors-app"
       - "traefik.backend=stackstate-authors-app"
@@ -129,9 +107,6 @@ services:
     ports:
       - 80:80      # The HTTP port
       - 8080:8080  # The Web UI (enabled by --api)
-    depends_on:
-      - stackstate-books-app
-      - stackstate-authors-app
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
