@@ -3,4 +3,8 @@
   copy:
     src: ../common/docker/docker-compose.base.yml
     dest: /home/ubuntu/
-    mode: preserve
+
+- name: Copy docker compose base file receiver
+  copy:
+    src: ../common/docker/docker-compose.base.yml
+    dest: /home/ubuntu/receiver

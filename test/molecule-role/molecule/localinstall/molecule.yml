@@ -31,9 +31,9 @@ provisioner:
     defaults:
       any_errors_fatal: true
   playbooks:
-    create: create.yml
-    destroy: destroy.yml
-    prepare: prepare.yml
+    create: playbook.create.yml
+    destroy: playbook.destroy.yml
+    prepare: playbook.prepare.yml
   lint:
     name: ansible-lint
   inventory:

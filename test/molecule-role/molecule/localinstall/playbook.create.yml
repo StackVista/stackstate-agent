@@ -1,0 +1,15 @@
+---
+- name: Create
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - ../common/create/vars.yml
+  vars:
+    winrm_http_port: 5985
+    winrm_https_port: 5986
+    winrm_rdp_port: 3389
+    security_group_name: molecule_local_install
+    security_group_description: Agent v2 Molecule testing running on EC2 VMs
+  tasks:
+    - include_tasks: ../common/create/tasks.yml

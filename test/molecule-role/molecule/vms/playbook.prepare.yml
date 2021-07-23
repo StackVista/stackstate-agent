@@ -3,14 +3,24 @@
   hosts: receiver_vm
   gather_facts: false
   tasks:
-    - include_tasks: ../common/receiver/tasks/copy-docker-compose-base.yml
     - include_tasks: ../common/receiver/tasks/ubuntu-18-automatic-updates.yml
     - include_tasks: ../common/receiver/tasks/provisioning-dependencies.yml
     - include_tasks: ../common/receiver/tasks/configure-aws-credentials.yml
     - include_tasks: ../common/receiver/tasks/docker-login.yml
-    - include_tasks: ../common/receiver/tasks/copy-receiver-files.yml
+    - include_tasks: ../common/receiver/tasks/copy-docker-compose-base.yml
+
+    - name: Copy Receiver files
+      copy:
+        src: "files/receiver/"
+        dest: "/home/ubuntu/"
+
     - include_tasks: ../common/receiver/tasks/copy-verify-and-create-script-file.yml
-    - include_tasks: ../common/receiver/tasks/configure-env-for-docker-compose.yml
+
+    - name: Configure .env file used by docker-compose
+      copy:
+        content: |
+          STACKSTATE_BRANCH={{ stackstate_branch }}
+        dest: /home/ubuntu/.env
 
     - name: Run Docker compose (1/2)
       command: docker-compose up -d
@@ -70,11 +80,9 @@
 - name: Prepare Network Connection Namespaces VM (pre)
   hosts: agent-connection-namespaces
   gather_facts: false
-  include_vars: ../common/receiver/vars/main.yml
   tasks:
     - include_tasks: ../common/receiver/tasks/ubuntu-18-automatic-updates.yml
     - include_tasks: ../common/receiver/tasks/provisioning-dependencies.yml
-
     - name: Installing multiple python packages in Ansible
       shell: pip3 install boto boto3
       become: yes

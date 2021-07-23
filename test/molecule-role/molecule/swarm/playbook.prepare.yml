@@ -3,19 +3,7 @@
   hosts: all
   gather_facts: false
   tasks:
-    - name: Install provisioning dependencies (1/2)
-      apt:
-        name:
-          python3-pip
-        state: present
-      become: yes
-      register: pip3_res
-      retries: 15
-      delay: 5
-      until: pip3_res is success
-    - name: Install provisioning dependencies (2/2)
-      shell: pip3 install docker
-      become: yes
+    - include_tasks: ../common/receiver/tasks/provisioning-dependencies.yml
 
 - name: Register Swarm Master Node
   hosts: swarm_master_vm
@@ -48,6 +36,8 @@
   hosts: swarm_master_vm
   gather_facts: true
   tasks:
+    - include_tasks: ../common/receiver/tasks/copy-docker-compose-base.yml
+
     - name: Check if nginx service already exists, otherwise create it
       shell: "docker service ps nginx"
       register: nginx_status
@@ -62,25 +52,15 @@
       pip:
         name: docker
 
-    - name: Docker login
-      docker_login:
-        registry: quay.io
-        username: "{{ quay_user }}"
-        password: "{{ quay_password }}"
-        reauthorize: yes
+    - include_tasks: ../common/receiver/tasks/docker-login.yml
 
-    - include_tasks: ../common/receiver/tasks/copy-docker-compose-base.yml
     - name: Copy docker compose file
       copy:
         src: files/docker-compose.yml
         dest: /home/ubuntu/
         mode: preserve
 
-    - name: Copy Verify and Create Script file
-      copy:
-        src: ./../verify-or-create-topics.sh
-        dest: /home/ubuntu
-        mode: u+x
+    - include_tasks: ../common/receiver/tasks/copy-verify-and-create-script-file.yml
 
     - name: Create StacSktate Agent Service on Master
       command: docker stack deploy -c docker-compose.yml --with-registry-auth agent

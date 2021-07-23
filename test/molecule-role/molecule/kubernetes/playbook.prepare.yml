@@ -3,9 +3,6 @@
   hosts: kubernetes-cluster-agent
   gather_facts: true
   tasks:
-    - include_tasks: ../common/receiver/tasks/copy-docker-compose-base.yml
-    # - include_tasks: ../common/receiver/tasks/ubuntu-18-automatic-updates.yml
-
     - name: Ubuntu18 automatic updates (wait for lock) (1/2)
       shell: "while fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 10; done;"
       become: yes
@@ -36,7 +33,7 @@
           aws_access_key_id = {{ lookup("env", "AWS_ACCESS_KEY_ID")}}
           aws_secret_access_key = {{ lookup("env", "AWS_SECRET_ACCESS_KEY")}}
         dest: /home/ubuntu/.aws/credentials
-
+    - include_tasks: ../common/receiver/tasks/copy-docker-compose-base.yml
     - name: Docker login
       docker_login:
         registry: quay.io
