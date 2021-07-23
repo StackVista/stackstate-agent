@@ -38,8 +38,8 @@ var (
 
 	testStream        = health.Stream{Urn: "urn", SubStream: "bla"}
 	testStream2       = health.Stream{Urn: "urn"}
-	testStartSnapshot = health.StartSnapshotMetadata{ExpiryIntervalS: 0, RepeatIntervalS: 1}
-	testStopSnapshot  = health.StopSnapshotMetadata{}
+	testStartSnapshot = &health.StartSnapshotMetadata{ExpiryIntervalS: 0, RepeatIntervalS: 1}
+	testStopSnapshot  = &health.StopSnapshotMetadata{}
 	testCheckData     = map[string]interface{}{}
 )
 
@@ -83,7 +83,7 @@ func TestBatchFlushOnStopHealthSnapshot(t *testing.T) {
 			"topologies":       []topology.Topology{},
 			"health": []health.Health{
 				{
-					StopSnapshot: &testStopSnapshot,
+					StopSnapshot: testStopSnapshot,
 					Stream:       testStream,
 					CheckStates:  []health.CheckData{},
 				},
@@ -194,7 +194,7 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 		},
 		"health": []health.Health{
 			{
-				StartSnapshot: &testStartSnapshot,
+				StartSnapshot: testStartSnapshot,
 				Stream:        testStream,
 				CheckStates:   []health.CheckData{testCheckData},
 			},
@@ -357,7 +357,7 @@ func TestBatcherHealthStartSnapshot(t *testing.T) {
 			"topologies":       []topology.Topology{},
 			"health": []health.Health{
 				{
-					StartSnapshot: &testStartSnapshot,
+					StartSnapshot: testStartSnapshot,
 					Stream:        testStream,
 					CheckStates:   []health.CheckData{},
 				},
@@ -382,12 +382,12 @@ func TestBatchMultipleHealthStreams(t *testing.T) {
 		"topologies":       []topology.Topology{},
 		"health": []health.Health{
 			{
-				StartSnapshot: &testStartSnapshot,
+				StartSnapshot: testStartSnapshot,
 				Stream:        testStream,
 				CheckStates:   []health.CheckData{},
 			},
 			{
-				StartSnapshot: &testStartSnapshot,
+				StartSnapshot: testStartSnapshot,
 				Stream:        testStream2,
 				CheckStates:   []health.CheckData{},
 			},
