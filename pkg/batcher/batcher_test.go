@@ -377,7 +377,7 @@ func TestBatchMultipleHealthStreams(t *testing.T) {
 
 	message := serializer.GetJSONToV1IntakeMessage().(map[string]interface{})
 
-	assert.EqualValues(t, message, map[string]interface{}{
+	assert.Equal(t, message, map[string]interface{}{
 		"internalHostname": "myhost",
 		"topologies":       []topology.Topology{},
 		"health": []health.Health{
