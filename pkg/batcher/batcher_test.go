@@ -174,7 +174,7 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 
 	message := serializer.GetJSONToV1IntakeMessage().(map[string]interface{})
 
-	assert.Equal(t, message, map[string]interface{}{
+	assert.ObjectsAreEqualValues(message, map[string]interface{}{
 		"internalHostname": "myhost",
 		"topologies": []topology.Topology{
 			{
@@ -203,7 +203,7 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 				CheckStates: []health.CheckData{testCheckData},
 			},
 		},
-	}, message)
+	})
 
 	batcher.Shutdown()
 }
@@ -377,7 +377,7 @@ func TestBatchMultipleHealthStreams(t *testing.T) {
 
 	message := serializer.GetJSONToV1IntakeMessage().(map[string]interface{})
 
-	assert.Equal(t, message, map[string]interface{}{
+	assert.ObjectsAreEqualValues(message, map[string]interface{}{
 		"internalHostname": "myhost",
 		"topologies":       []topology.Topology{},
 		"health": []health.Health{
@@ -392,7 +392,7 @@ func TestBatchMultipleHealthStreams(t *testing.T) {
 				CheckStates:   []health.CheckData{},
 			},
 		},
-	}, message)
+	})
 
 	batcher.Shutdown()
 }
