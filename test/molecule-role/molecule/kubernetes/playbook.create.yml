@@ -3,8 +3,6 @@
   hosts: localhost
   connection: local
   gather_facts: false
-  vars_files:
-    - ../common/create/vars.yml
   vars:
     ssh_port: 22
     security_group_name: molecule_kubernetes
