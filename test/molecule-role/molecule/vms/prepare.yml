@@ -270,7 +270,7 @@
                 qualifier_secs: {{ network_relation_filter_short_lived_qualifier_secs }}
     - name: "Restart StackState Agent Service"
       win_command: |
-        "C:\\Program Files\\StackState\\StackState Agent\\embedded\\agent.exe" restart-service
+       "C:\\Program Files\\StackState\\StackState Agent\\embedded\\agent.exe" restart-service
 
 - name: Prepare Linux Agents (post)
   hosts: agent_linux_vm
