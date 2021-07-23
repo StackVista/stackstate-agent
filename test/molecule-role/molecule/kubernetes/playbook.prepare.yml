@@ -33,7 +33,7 @@
           aws_access_key_id = {{ lookup("env", "AWS_ACCESS_KEY_ID")}}
           aws_secret_access_key = {{ lookup("env", "AWS_SECRET_ACCESS_KEY")}}
         dest: /home/ubuntu/.aws/credentials
-    - include_tasks: ../common/receiver/tasks/copy-docker-compose-base.yml
+
     - name: Docker login
       docker_login:
         registry: quay.io

@@ -3,18 +3,54 @@
   hosts: receiver_vm
   gather_facts: false
   tasks:
-    - include_tasks: ../common/receiver/tasks/ubuntu-18-automatic-updates.yml
-    - include_tasks: ../common/receiver/tasks/provisioning-dependencies.yml
-    - include_tasks: ../common/receiver/tasks/configure-aws-credentials.yml
-    - include_tasks: ../common/receiver/tasks/docker-login.yml
-    - include_tasks: ../common/receiver/tasks/copy-docker-compose-base.yml
+    - name: Ubuntu18 automatic updates (wait for lock) (1/2)
+      shell: "while fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 10; done;"
+      become: yes
+
+    - name: Ubuntu18 automatic updates (wait for lock) (2/2)
+      shell: "sleep 15; while fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 10; done;"
+      become: yes
+
+    - name: Install provisioning dependencies (1/2)
+      apt:
+        name:
+          python3-pip
+        state: present
+      become: yes
+      register: pip3_res
+      retries: 15
+      delay: 5
+      until: pip3_res is success
+
+    - name: Install provisioning dependencies (2/2)
+      shell: pip3 install docker
+      become: yes
+
+    - name: Configure aws credentials
+      copy:
+        content: |
+          [default]
+          aws_access_key_id = {{ lookup("env", "AWS_ACCESS_KEY_ID")}}
+          aws_secret_access_key = {{ lookup("env", "AWS_SECRET_ACCESS_KEY")}}
+        dest: /home/ubuntu/.aws/credentials
+
+    - name: Docker login
+      docker_login:
+        registry: quay.io
+        username: "{{ quay_user }}"
+        password: "{{ quay_password }}"
+        reauthorize: yes
 
     - name: Copy Receiver files
       copy:
         src: "files/receiver/"
         dest: "/home/ubuntu/"
 
-    - include_tasks: ../common/receiver/tasks/copy-verify-and-create-script-file.yml
+    - name: Copy Verify and Create Script file
+      copy:
+        src: ./../verify-or-create-topics.sh
+        dest: /home/ubuntu
+        mode: u+x
 
     - name: Configure .env file used by docker-compose
       copy:
@@ -81,8 +117,28 @@
   hosts: agent-connection-namespaces
   gather_facts: false
   tasks:
-    - include_tasks: ../common/receiver/tasks/ubuntu-18-automatic-updates.yml
-    - include_tasks: ../common/receiver/tasks/provisioning-dependencies.yml
+    - name: Ubuntu18 automatic updates (wait for lock) (1/2)
+      shell: "while fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 10; done;"
+      become: yes
+
+    - name: Ubuntu18 automatic updates (wait for lock) (2/2)
+      shell: "sleep 15; while fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 10; done;"
+      become: yes
+
+    - name: Install provisioning dependencies (1/2)
+      apt:
+        name:
+          python3-pip
+        state: present
+      become: yes
+      register: pip3_res
+      retries: 15
+      delay: 5
+      until: pip3_res is success
+
+    - name: Install provisioning dependencies (2/2)
+      shell: pip3 install docker
+      become: yes
     - name: Installing multiple python packages in Ansible
       shell: pip3 install boto boto3
       become: yes
@@ -214,7 +270,7 @@
                 qualifier_secs: {{ network_relation_filter_short_lived_qualifier_secs }}
     - name: "Restart StackState Agent Service"
       win_command: |
-       "C:\\Program Files\\StackState\\StackState Agent\\embedded\\agent.exe" restart-service
+        "C:\\Program Files\\StackState\\StackState Agent\\embedded\\agent.exe" restart-service
 
 - name: Prepare Linux Agents (post)
   hosts: agent_linux_vm
