@@ -7,7 +7,7 @@
 # using the package manager and StackState repositories.
 
 set -e
-install_script_version=1.5.0.post
+install_script_version=1.6.0
 logfile="ddagent-install.log"
 support_email=support@datadoghq.com
 
