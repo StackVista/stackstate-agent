@@ -211,11 +211,13 @@ done:
 
 char *as_yaml_ruamel(PyObject *object) {
     char *retval = NULL;
+    PyObject *args = NULL;
+    PyObject *kwargs = NULL;
     PyObject *ruamel = NULL;
     PyObject *stream = NULL;
     PyObject *dumped = NULL;
+    PyObject *ruamel_close = NULL;
     PyObject *temp_bytes = NULL;
-    char ruamel_default_flow_style[] = "default_flow_style";
     char ruamel_dump_name[] = "dump";
     PyObject *ruamel_dump_func = NULL;
     char ruamel_get_value_name[] = "getvalue";
@@ -224,17 +226,14 @@ char *as_yaml_ruamel(PyObject *object) {
     PyObject *ruamel_close_func = NULL;
 
      // ruamel = YAML(typ='safe')
-    PyObject *args = PyTuple_New(0);
-    PyObject *kwargs = Py_BuildValue("{s:s}", "typ", "safe");
+    args = PyTuple_New(0);
+    kwargs = Py_BuildValue("{s:s}", "typ", "safe");
     ruamel = PyObject_Call(ruamel_module, args, kwargs);
     if (ruamel == NULL) {
         PyErr_SetString(PyExc_TypeError, "error: initializing YAML");
         retval = NULL; // Failure
         goto done;
     }
-
-    // yaml.default_flow_style = False
-    PyObject_SetAttrString(ruamel, ruamel_default_flow_style, Py_False);
 
     // stream = StringIO()
     args = PyTuple_New(0);
@@ -288,7 +287,7 @@ char *as_yaml_ruamel(PyObject *object) {
 
     // stream.close() --> returns NULL --> clears buffer / memory
     args = PyTuple_New(0);
-    PyObject_Call(ruamel_close_func, args, NULL);
+    ruamel_close = PyObject_Call(ruamel_close_func, args, NULL);
     if (PyErr_Occurred()) {
         retval = NULL; // Failure
         goto done;
@@ -311,6 +310,7 @@ done:
     Py_XDECREF(kwargs);
     Py_XDECREF(ruamel);
     Py_XDECREF(stream);
+    Py_XDECREF(ruamel_close);
     Py_XDECREF(ruamel_dump_func);
     Py_XDECREF(ruamel_get_value_func);
     Py_XDECREF(ruamel_close_func);
