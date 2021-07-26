@@ -155,7 +155,7 @@ int init_stringutils(void) {
         goto done;
     }
     char module_name_YAML2[] = "yaml";
-    ruamel_module2 = PyObject_GetAttrString(ruamel_m2, module_name_YAML2);
+    PyObject *ruamel_module2 = PyObject_GetAttrString(ruamel_m2, module_name_YAML2);
     if (ruamel_module2 == NULL) {
         goto done;
     }
@@ -163,8 +163,6 @@ int init_stringutils(void) {
     char safe_dump_name[] = "safe_dump";
     ruamel_dump_func2 = PyObject_GetAttrString(ruamel_module2, safe_dump_name);
     if (ruamel_dump_func2 == NULL) {
-        PyErr_SetString(PyExc_TypeError, "error: no function 'dump' found for ruamel YAML");
-        retval = NULL; // Failure
         goto done;
     }
 
