@@ -235,7 +235,7 @@ char *as_yaml_ruamel(PyObject *object) {
     PyObject *dumped = NULL;
 
     PyObject *args = PyTuple_New(0);
-    PyObject *kwargs = Py_BuildValue("{s:O, s:O}", "data", object, "Dumper", dumper);
+    PyObject *kwargs = Py_BuildValue("{s:O}", "data", object);
 
     dumped = PyObject_Call(ruamel_dump_func2, args, kwargs);
     if (dumped == NULL) {
