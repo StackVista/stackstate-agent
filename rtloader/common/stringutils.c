@@ -215,6 +215,7 @@ char *as_yaml_ruamel(PyObject *object) {
     PyObject *stream = NULL;
     PyObject *dumped = NULL;
     PyObject *temp_bytes = NULL;
+    char ruamel_default_flow_style[] = "default_flow_style";
     char ruamel_dump_name[] = "dump";
     PyObject *ruamel_dump_func = NULL;
     char ruamel_get_value_name[] = "getvalue";
@@ -231,6 +232,9 @@ char *as_yaml_ruamel(PyObject *object) {
         retval = NULL; // Failure
         goto done;
     }
+
+    // yaml.default_flow_style = False
+    PyObject_SetAttrString(ruamel, ruamel_default_flow_style, Py_False);
 
     // stream = StringIO()
     args = PyTuple_New(0);
