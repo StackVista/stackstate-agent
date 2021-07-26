@@ -210,6 +210,11 @@ char *as_yaml_ruamel(PyObject *object) {
     char *retval = NULL;
     PyObject *dumped = NULL;
     PyObject *temp_bytes = NULL;
+    char ruamel_dump_name[] = "dump";
+    char ruamel_get_value_name[] = "getvalue";
+    PyObject *ruamel_get_value_func = NULL;
+    char ruamel_close_name[] = "close";
+    PyObject *ruamel_close_func = NULL;
 
      // ruamel = YAML(typ='safe')
     PyObject *args = PyTuple_New(0);
@@ -222,9 +227,8 @@ char *as_yaml_ruamel(PyObject *object) {
     }
 
     // get ruamel dump()
-    char r_dump_name[] = "dump";
-    PyObject *rdump = PyObject_GetAttrString(ruamel, r_dump_name);
-    if (rdump == NULL) {
+    PyObject *ruamel_dump_func = PyObject_GetAttrString(ruamel, ruamel_dump_name);
+    if (ruamel_dump_func == NULL) {
         PyErr_SetString(PyExc_TypeError, "error: no function 'dump' found for YAML");
         retval = NULL; // Failure
         goto done;
@@ -241,16 +245,15 @@ char *as_yaml_ruamel(PyObject *object) {
 
     // yaml.dump(data, stream) --> returns NULL
     args = Py_BuildValue("O,O", object, stream);
-    PyObject_Call(rdump, args, NULL);
+    PyObject_Call(ruamel_dump_func, args, NULL);
     if (PyErr_Occurred()) {
         retval = NULL; // Failure
         goto done;
     }
 
     // get stream getvalue()
-    char get_value_name[] = "getvalue";
-    PyObject *get_value_func = PyObject_GetAttrString(stream, get_value_name); // borrowed
-    if (get_value_func == NULL) {
+    ruamel_get_value_func = PyObject_GetAttrString(stream, ruamel_get_value_name);
+    if (ruamel_get_value_func == NULL) {
         PyErr_SetString(PyExc_TypeError, "error: no function 'getvalue' found for StringIO()");
         retval = NULL; // Failure
         goto done;
@@ -258,9 +261,25 @@ char *as_yaml_ruamel(PyObject *object) {
 
     // stream.getvalue() --> returns string
     args = PyTuple_New(0);
-    dumped = PyObject_Call(get_value_func, args, NULL);
+    dumped = PyObject_Call(ruamel_get_value_func, args, NULL);
     if (dumped == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "error: nothing dumped into stream");
+        retval = NULL; // Failure
+        goto done;
+    }
+
+    // get stream close()
+    ruamel_close_func = PyObject_GetAttrString(stream, ruamel_close_name);
+    if (ruamel_close_func == NULL) {
+        PyErr_SetString(PyExc_TypeError, "error: no function 'close' found for StringIO()");
+        retval = NULL; // Failure
+        goto done;
+    }
+
+    // stream.close() --> returns NULL
+    args = PyTuple_New(0);
+    PyObject_Call(ruamel_close_func, args, NULL);
+    if (PyErr_Occurred()) {
         retval = NULL; // Failure
         goto done;
     }
@@ -280,10 +299,15 @@ done:
     //Py_XDECREF can accept (and ignore) NULL references
     Py_XDECREF(args);
     Py_XDECREF(kwargs);
+    Py_XDECREF(ruamel);
+    Py_XDECREF(ruamel_dump_name);
+    Py_XDECREF(ruamel_dump_func);
     Py_XDECREF(stream);
+    Py_XDECREF(ruamel_get_value_name);
+    Py_XDECREF(ruamel_get_value_func);
+    Py_XDECREF(ruamel_close_name);
+    Py_XDECREF(ruamel_close_func);
     Py_XDECREF(dumped);
-    Py_XDECREF(r_dump_name);
-    Py_XDECREF(get_value_name);
     Py_XDECREF(temp_bytes);
     return retval;
 }
