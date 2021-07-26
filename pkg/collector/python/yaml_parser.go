@@ -33,7 +33,7 @@ func tryParseYamlToMap(data *C.char) (map[string]interface{}, error) {
 func ConvertKeysToString(i interface{}) (interface{}, error) {
 	switch x := i.(type) {
 	case map[interface{}]interface{}:
-		m2 := map[string]interface{}{}
+		m2 := make(map[string]interface{}, len(x))
 		for k, v := range x {
 			switch keyString := k.(type) {
 			case string:
