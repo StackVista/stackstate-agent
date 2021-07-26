@@ -150,7 +150,7 @@ int init_stringutils(void) {
 
     // from ruamel import yaml
     char module_name_r2[] = "ruamel";
-    PyObject *ruamel_m2 = PyImport_ImportModule(module_name_r);
+    PyObject *ruamel_m2 = PyImport_ImportModule(module_name_r2);
     if (ruamel_m2 == NULL) {
         goto done;
     }
