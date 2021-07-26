@@ -151,8 +151,11 @@ done:
     Py_XDECREF(module_name_r);
     Py_XDECREF(ruamel_m);
     Py_XDECREF(module_name_YAML);
+    Py_XDECREF(ruamel_module);
     Py_XDECREF(module_name_compat);
+    Py_XDECREF(ruamel_compat);
     Py_XDECREF(module_name_StringIO);
+    Py_XDECREF(stringio_module);
     Py_XDECREF(yaml);
     return ret;
 }
@@ -208,6 +211,8 @@ done:
 
 char *as_yaml_ruamel(PyObject *object) {
     char *retval = NULL;
+    PyObject *ruamel = NULL;
+    PyObject *stream = NULL;
     PyObject *dumped = NULL;
     PyObject *temp_bytes = NULL;
     char ruamel_dump_name[] = "dump";
@@ -219,7 +224,7 @@ char *as_yaml_ruamel(PyObject *object) {
      // ruamel = YAML(typ='safe')
     PyObject *args = PyTuple_New(0);
     PyObject *kwargs = Py_BuildValue("{s:s}", "typ", "safe");
-    PyObject *ruamel = PyObject_Call(ruamel_module, args, kwargs);
+    ruamel = PyObject_Call(ruamel_module, args, kwargs);
     if (ruamel == NULL) {
         PyErr_SetString(PyExc_TypeError, "error: initializing YAML");
         retval = NULL; // Failure
@@ -236,7 +241,7 @@ char *as_yaml_ruamel(PyObject *object) {
 
     // stream = StringIO()
     args = PyTuple_New(0);
-    PyObject *stream = PyObject_Call(stringio_module, args, NULL);
+    stream = PyObject_Call(stringio_module, args, NULL);
     if (stream == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "error: initializing StringIO");
         retval = NULL; // Failure
@@ -276,7 +281,7 @@ char *as_yaml_ruamel(PyObject *object) {
         goto done;
     }
 
-    // stream.close() --> returns NULL
+    // stream.close() --> returns NULL --> clears buffer / memory
     args = PyTuple_New(0);
     PyObject_Call(ruamel_close_func, args, NULL);
     if (PyErr_Occurred()) {
