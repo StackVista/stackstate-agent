@@ -216,6 +216,7 @@ char *as_yaml_ruamel(PyObject *object) {
     PyObject *dumped = NULL;
     PyObject *temp_bytes = NULL;
     char ruamel_dump_name[] = "dump";
+    PyObject *ruamel_dump_func = NULL;
     char ruamel_get_value_name[] = "getvalue";
     PyObject *ruamel_get_value_func = NULL;
     char ruamel_close_name[] = "close";
@@ -231,19 +232,19 @@ char *as_yaml_ruamel(PyObject *object) {
         goto done;
     }
 
-    // get ruamel dump()
-    PyObject *ruamel_dump_func = PyObject_GetAttrString(ruamel, ruamel_dump_name);
-    if (ruamel_dump_func == NULL) {
-        PyErr_SetString(PyExc_TypeError, "error: no function 'dump' found for YAML");
-        retval = NULL; // Failure
-        goto done;
-    }
-
     // stream = StringIO()
     args = PyTuple_New(0);
     stream = PyObject_Call(stringio_module, args, NULL);
     if (stream == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "error: initializing StringIO");
+        retval = NULL; // Failure
+        goto done;
+    }
+
+    // get ruamel dump()
+    ruamel_dump_func = PyObject_GetAttrString(ruamel, ruamel_dump_name);
+    if (ruamel_dump_func == NULL) {
+        PyErr_SetString(PyExc_TypeError, "error: no function 'dump' found for YAML");
         retval = NULL; // Failure
         goto done;
     }
@@ -305,12 +306,9 @@ done:
     Py_XDECREF(args);
     Py_XDECREF(kwargs);
     Py_XDECREF(ruamel);
-    Py_XDECREF(ruamel_dump_name);
-    Py_XDECREF(ruamel_dump_func);
     Py_XDECREF(stream);
-    Py_XDECREF(ruamel_get_value_name);
+    Py_XDECREF(ruamel_dump_func);
     Py_XDECREF(ruamel_get_value_func);
-    Py_XDECREF(ruamel_close_name);
     Py_XDECREF(ruamel_close_func);
     Py_XDECREF(dumped);
     Py_XDECREF(temp_bytes);
