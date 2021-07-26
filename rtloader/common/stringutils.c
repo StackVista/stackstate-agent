@@ -160,7 +160,8 @@ int init_stringutils(void) {
         goto done;
     }
     // get ruamel dump()
-    ruamel_dump_func2 = PyObject_GetAttrString(ruamel_module2, dump_name);
+    char safe_dump_name[] = "safe_dump";
+    ruamel_dump_func2 = PyObject_GetAttrString(ruamel_module2, safe_dump_name);
     if (ruamel_dump_func2 == NULL) {
         PyErr_SetString(PyExc_TypeError, "error: no function 'dump' found for ruamel YAML");
         retval = NULL; // Failure
