@@ -16,6 +16,8 @@ PyObject * dumper = NULL;
 PyObject * stringio_module = NULL;
 PyObject * ruamel_module = NULL;
 
+PyObject * ruamel_dump_func2 = NULL;
+
 /**
  * returns a C (NULL terminated UTF-8) string from a python string.
  *
@@ -145,6 +147,26 @@ int init_stringutils(void) {
         goto done;
     }
 
+
+    // from ruamel import yaml
+    char module_name_r2[] = "ruamel";
+    PyObject *ruamel_m2 = PyImport_ImportModule(module_name_r);
+    if (ruamel_m2 == NULL) {
+        goto done;
+    }
+    char module_name_YAML2[] = "yaml";
+    ruamel_module2 = PyObject_GetAttrString(ruamel_m2, module_name_YAML2);
+    if (ruamel_module2 == NULL) {
+        goto done;
+    }
+    // get ruamel dump()
+    ruamel_dump_func2 = PyObject_GetAttrString(ruamel_module2, dump_name);
+    if (ruamel_dump_func2 == NULL) {
+        PyErr_SetString(PyExc_TypeError, "error: no function 'dump' found for ruamel YAML");
+        retval = NULL; // Failure
+        goto done;
+    }
+
     ret = EXIT_SUCCESS;
 
 done:
@@ -210,6 +232,27 @@ done:
 }
 
 char *as_yaml_ruamel(PyObject *object) {
+    char *retval = NULL;
+    PyObject *dumped = NULL;
+
+    PyObject *args = PyTuple_New(0);
+    PyObject *kwargs = Py_BuildValue("{s:O, s:O}", "data", object, "Dumper", dumper);
+
+    dumped = PyObject_Call(ruamel_dump_func2, args, kwargs);
+    if (dumped == NULL) {
+        goto done;
+    }
+    retval = as_string(dumped);
+
+done:
+    //Py_XDECREF can accept (and ignore) NULL references
+    Py_XDECREF(dumped);
+    Py_XDECREF(kwargs);
+    Py_XDECREF(args);
+    return retval;
+}
+
+char *as_yaml_ruamel2(PyObject *object) {
     char *retval = NULL;
     PyObject *args = NULL;
     PyObject *kwargs = NULL;
