@@ -318,6 +318,9 @@ def deps(
     if not no_dep_ensure:
         print("go mod vendor, elapsed: {}".format(dep_done - start))
 
+    print("running generate for dev dependencies")
+    ctx.run("go generate ./...")
+
 
 @task
 def lint_licenses(ctx, verbose=False):

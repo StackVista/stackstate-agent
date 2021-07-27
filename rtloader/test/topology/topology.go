@@ -2,7 +2,8 @@ package testtopology
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/collector/python"
+	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/tinylib/msgp/msgp"
 	"io/ioutil"
 	"log"
 	"os"
@@ -12,7 +13,6 @@ import (
 
 	common "github.com/StackVista/stackstate-agent/rtloader/test/common"
 	"github.com/StackVista/stackstate-agent/rtloader/test/helpers"
-	"gopkg.in/yaml.v2"
 )
 
 /*
@@ -134,10 +134,10 @@ func submitComponent(id *C.char, instanceKey *C.instance_key_t, externalID *C.ch
 	_externalID = C.GoString(externalID)
 	_componentType = C.GoString(componentType)
 	_raw_data = C.GoString(data)
-	_data = make(map[string]interface{})
-	yaml.Unmarshal([]byte(C.GoString(data)), _data)
-	r, _ := python.ConvertKeysToString(_data)
-	result = r.(map[string]interface{})
+	component := topology.Component{}
+	reader := strings.NewReader(_raw_data)
+	msgp.Decode(reader, &component)
+	result = component.Data
 }
 
 //export submitRelation
@@ -157,9 +157,10 @@ func submitRelation(id *C.char, instanceKey *C.instance_key_t, sourceID *C.char,
 
 	_data = make(map[string]interface{})
 	_raw_data = C.GoString(data)
-	yaml.Unmarshal([]byte(C.GoString(data)), _data)
-	r, _ := python.ConvertKeysToString(_data)
-	result = r.(map[string]interface{})
+	relation := topology.Relation{}
+	reader := strings.NewReader(_raw_data)
+	msgp.Decode(reader, &relation)
+	result = relation.Data
 }
 
 //export submitStartSnapshot

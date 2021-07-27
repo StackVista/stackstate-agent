@@ -88,7 +88,7 @@ static PyObject *submit_component(PyObject *self, PyObject *args) {
     char *component_type;
     PyObject *data_dict = NULL; // borrowed
     instance_key_t *instance_key = NULL;
-    char *yaml_data = NULL;
+    char *msgpack_data = NULL;
     PyObject * retval = NULL;
 
     PyGILState_STATE gstate = PyGILState_Ensure();
@@ -120,13 +120,15 @@ static PyObject *submit_component(PyObject *self, PyObject *args) {
     instance_key->type_ = as_string(PyDict_GetItemString(instance_key_dict, "type"));
     instance_key->url = as_string(PyDict_GetItemString(instance_key_dict, "url"));
 
-    yaml_data = as_yaml_ruamel(data_dict);
-    if (yaml_data == NULL) {
+    PyObject *type = Py_BuildValue("{s:s}", "name", component_type);
+    PyObject *data = Py_BuildValue("{s:s, s:O, s:O}", "externalId", component_id, "type", type, "data", data_dict);
+    msgpack_data = as_msgpack(data);
+    if (msgpack_data == NULL) {
         // If as_yaml_ruamel fails it sets a python exception, so we just return
         retval = NULL; // Failure
         goto done;
     } else {
-        cb_submit_component(check_id, instance_key, component_id, component_type, yaml_data);
+        cb_submit_component(check_id, instance_key, component_id, component_type, msgpack_data);
 
         Py_INCREF(Py_None); // Increment, since we are not using the macro Py_RETURN_NONE that does it for us
         retval = Py_None; // Success
@@ -138,8 +140,8 @@ done:
         _free(instance_key->url);
         _free(instance_key);
     }
-    if (yaml_data != NULL) {
-        _free(yaml_data);
+    if (msgpack_data != NULL) {
+        _free(msgpack_data);
     }
     PyGILState_Release(gstate);
     return retval;
@@ -168,7 +170,7 @@ static PyObject *submit_relation(PyObject *self, PyObject *args) {
     char *relation_type;
     PyObject *data_dict = NULL; // borrowed
     instance_key_t *instance_key = NULL;
-    char *yaml_data = NULL;
+    char *msgpack_data = NULL;
     PyObject * retval = NULL;
 
     PyGILState_STATE gstate = PyGILState_Ensure();
@@ -200,13 +202,16 @@ static PyObject *submit_relation(PyObject *self, PyObject *args) {
     instance_key->type_ = as_string(PyDict_GetItemString(instance_key_dict, "type"));
     instance_key->url = as_string(PyDict_GetItemString(instance_key_dict, "url"));
 
-    yaml_data = as_yaml_ruamel(data_dict);
-    if (yaml_data == NULL) {
+    PyObject *type = Py_BuildValue("{s:s}", "name", relation_type);
+    PyObject *data = Py_BuildValue("{s:s, s:s, s:O, s:O}", "sourceId", source_id, "targetId", target_id, "type",
+        type, "data", data_dict);
+    msgpack_data = as_msgpack(data);
+    if (msgpack_data == NULL) {
         // If as_yaml_ruamel fails it sets a python exception, so we just return
         retval = NULL; // Failure
         goto done;
     } else {
-        cb_submit_relation(check_id, instance_key, source_id, target_id, relation_type, yaml_data);
+        cb_submit_relation(check_id, instance_key, source_id, target_id, relation_type, msgpack_data);
 
         Py_INCREF(Py_None); // Increment, since we are not using the macro Py_RETURN_NONE that does it for us
         retval = Py_None; // Success
@@ -218,8 +223,8 @@ done:
         _free(instance_key->url);
         _free(instance_key);
     }
-    if (yaml_data != NULL) {
-        _free(yaml_data);
+    if (msgpack_data != NULL) {
+        _free(msgpack_data);
     }
     PyGILState_Release(gstate);
     return retval;

@@ -18,6 +18,8 @@ PyObject * ruamel_module = NULL;
 
 PyObject * ruamel_dump_func2 = NULL;
 
+PyObject * msgpack_pack = NULL;
+
 /**
  * returns a C (NULL terminated UTF-8) string from a python string.
  *
@@ -166,6 +168,19 @@ int init_stringutils(void) {
         goto done;
     }
 
+    // import msgpack
+    char module_name_msgpack[] = "msgpack";
+    PyObject *msgpack_module = PyImport_ImportModule(module_name_msgpack);
+    if (msgpack_module == NULL) {
+        goto done;
+    }
+    // msgpack.packb(...)
+    char packb_name[] = "packb";
+    msgpack_pack = PyObject_GetAttrString(msgpack_module, packb_name);
+    if (msgpack_pack == NULL) {
+        goto done;
+    }
+
     ret = EXIT_SUCCESS;
 
 done:
@@ -248,6 +263,28 @@ done:
     Py_XDECREF(dumped);
     Py_XDECREF(kwargs);
     Py_XDECREF(args);
+    return retval;
+}
+
+char *as_msgpack(PyObject *object) {
+    char *retval = NULL;
+    PyObject *packed = NULL;
+
+    // msgpack.packb(data) --> returns binary
+    PyObject *args = PyTuple_New(0);
+    PyObject *kwargs = Py_BuildValue("{s:O, s:b}", "o", object, "use_bin_type", Py_True);
+    packed = PyObject_Call(msgpack_pack, args, kwargs);
+    if (packed == NULL) {
+        goto done;
+    }
+
+    retval = as_string(packed);
+
+done:
+    //Py_XDECREF can accept (and ignore) NULL references
+    Py_XDECREF(args);
+    Py_XDECREF(kwargs);
+    Py_XDECREF(packed);
     return retval;
 }
 

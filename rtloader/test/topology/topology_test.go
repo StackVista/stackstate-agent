@@ -2,6 +2,7 @@ package testtopology
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"strings"
 	"testing"
@@ -27,7 +28,14 @@ const topoData = `
   "intlist": [1],
   "doublelist": [0.7, 1.42],
   "emptykey": None,
-  "nestedobject": {"nestedkey": "nestedValue"}
+  "nestedobject": {
+    "nestedkey": "nestedValue",
+    "animals": {
+      "legs":  "dog",
+      "wings": "eagle",
+      "tail":  "crocodile",
+    }
+  }
 }`
 
 func testTopoData(t *testing.T) {
@@ -39,28 +47,28 @@ func testTopoData(t *testing.T) {
 		t.Fatalf("Unexpected component data 'stringlist' size: %v, %v, raw: %v",
 			len(stringlist), _data, _raw_data)
 	}
-	if stringlist[0] != "a" || stringlist[1] != "b" || stringlist[2] != "c" || stringlist[3] != "04" || stringlist[4] != "09" {
+	if assert.ObjectsAreEqualValues(stringlist, []string{"a", "b", "c", "04", "09"}) {
 		t.Fatalf("Unexpected component data 'stringlist' value: %s", result["stringlist"])
 	}
 	var boollist = result["boollist"].([]interface{})
 	if len(boollist) != 2 {
 		t.Fatalf("Unexpected component data 'boollist' size: %v", len(boollist))
 	}
-	if boollist[0] != true || boollist[1] != false {
+	if assert.ObjectsAreEqualValues(boollist, []bool{true, false}) {
 		t.Fatalf("Unexpected component data 'boollist' value: %s", result["boollist"])
 	}
 	var intlist = result["intlist"].([]interface{})
 	if len(intlist) != 1 {
 		t.Fatalf("Unexpected component data 'intlist' size: %v", len(intlist))
 	}
-	if intlist[0] != 1 {
+	if assert.ObjectsAreEqualValues(intlist, []int64{1}) {
 		t.Fatalf("Unexpected component data 'intlist' value: %s", result["intlist"])
 	}
 	var doublelist = result["doublelist"].([]interface{})
 	if len(doublelist) != 2 {
 		t.Fatalf("Unexpected component data 'doublelist' size: %v", len(doublelist))
 	}
-	if doublelist[0] != 0.7 || doublelist[1] != 1.42 {
+	if assert.ObjectsAreEqualValues(doublelist, []float64{0.7, 1.42}) {
 		t.Fatalf("Unexpected component data 'doublelist' value: %s", result["doublelist"])
 	}
 	if result["emptykey"] != nil {
@@ -69,8 +77,16 @@ func testTopoData(t *testing.T) {
 	if result["nestedobject"] == nil {
 		t.Fatalf("Unexpected component data 'nestedobject' value: %s", result["nestedobject"])
 	}
-	var nestedObj = result["nestedobject"].(map[interface{}]interface{})
+	var nestedObj = result["nestedobject"].(map[string]interface{})
 	if nestedObj["nestedkey"] != "nestedValue" {
+		t.Fatalf("Unexpected component data 'nestedkey' value: %s", nestedObj["nestedkey"])
+	}
+	var nestedAnimals = map[string]interface{}{
+		"legs":  "dog",
+		"wings": "eagle",
+		"tail":  "crocodile",
+	}
+	if !assert.ObjectsAreEqualValues(nestedObj["animals"], nestedAnimals) {
 		t.Fatalf("Unexpected component data 'nestedkey' value: %s", nestedObj["nestedkey"])
 	}
 }
@@ -137,7 +153,7 @@ func TestSubmitComponentCannotBeSerialized(t *testing.T) {
 		t.Fatal(err)
 	}
 	// ruamel.yaml.representer.RepresenterError: cannot represent an object: <object object at 0x7f71960b8280>
-	if !strings.Contains(out, "RepresenterError") {
+	if !strings.Contains(out, "can't serialize <object object at") {
 		t.Errorf("Unexpected printed value: '%s'", out)
 	}
 
@@ -248,7 +264,7 @@ func TestSubmitRelationCannotBeSerialized(t *testing.T) {
 		t.Fatal(err)
 	}
 	// ruamel.yaml.representer.RepresenterError: cannot represent an object: <object object at 0x7f71960b8280>
-	if !strings.Contains(out, "RepresenterError") {
+	if !strings.Contains(out, "can't serialize <object object at") {
 		t.Errorf("Unexpected printed value: '%s'", out)
 	}
 

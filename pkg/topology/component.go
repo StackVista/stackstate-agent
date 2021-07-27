@@ -1,5 +1,7 @@
 package topology
 
+//go:generate msgp
+
 import (
 	"encoding/json"
 	"fmt"
@@ -10,9 +12,9 @@ type Data map[string]interface{}
 
 // Component is a representation of a topology component
 type Component struct {
-	ExternalID string `json:"externalId"`
-	Type       Type   `json:"type"`
-	Data       Data   `json:"data"`
+	ExternalID string `json:"externalId" msg:"externalId"`
+	Type       Type   `json:"type" msg:"type"`
+	Data       Data   `json:"data" msg:"data"`
 }
 
 // JSONString returns a JSON string of the Component

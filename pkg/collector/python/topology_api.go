@@ -13,6 +13,8 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/tinylib/msgp/msgp"
+	"strings"
 )
 
 /*
@@ -38,20 +40,14 @@ func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, externalID *C.ch
 		URL:  C.GoString(instanceKey.url),
 	}
 
-	_externalID := C.GoString(externalID)
-	_componentType := C.GoString(componentType)
-	_json, err := tryParseYamlToMap(data)
+	component := topology.Component{}
+	reader := strings.NewReader(C.GoString(data))
+	err := msgp.Decode(reader, &component)
 
 	if err == nil {
-		batcher.GetBatcher().SubmitComponent(check.ID(goCheckID),
-			_instance,
-			topology.Component{
-				ExternalID: _externalID,
-				Type:       topology.Type{Name: _componentType},
-				Data:       _json,
-			})
+		batcher.GetBatcher().SubmitComponent(check.ID(goCheckID), _instance, component)
 	} else {
-		_ = log.Errorf("Empty topology event not sent. Json: %v, Error: %v", _json, err)
+		_ = log.Errorf("Empty topology event not sent. Json: %v, Error: %v", component.JSONString(), err)
 	}
 }
 
