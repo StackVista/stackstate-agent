@@ -51,7 +51,7 @@ func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, externalID *C.ch
 				Data:       _json,
 			})
 	} else {
-		_ = log.Errorf("Empty topology event not sent. Json: %v, Error: %v", _json, err)
+		_ = log.Errorf("Empty topology component not sent. Json: %v, Error: %v", _json, err)
 	}
 }
 
@@ -82,7 +82,7 @@ func SubmitRelation(id *C.char, instanceKey *C.instance_key_t, sourceID *C.char,
 				Data:       _json,
 			})
 	} else {
-		_ = log.Errorf("Empty topology event not sent. Json: %v, Error: %v", _json, err)
+		_ = log.Errorf("Empty topology relation not sent. Json: %v, Error: %v", _json, err)
 	}
 }
 
