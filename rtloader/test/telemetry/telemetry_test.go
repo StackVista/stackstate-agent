@@ -3,8 +3,8 @@ package testtelemetry
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/stretchr/testify/assert"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -212,8 +212,8 @@ func TestSubmitTopologyChangeRequestEvents(t *testing.T) {
 		t.Fatalf("Unexpected topology event data 'context.source_links' size: %v", len(_topoEvt.EventContext.SourceLinks))
 	}
 
-	emptySourceLinks :=  make([]metrics.SourceLink, 0)
-	if !reflect.DeepEqual(_topoEvt.EventContext.SourceLinks, emptySourceLinks) {
+	var emptySourceLinks []metrics.SourceLink
+	if !assert.ObjectsAreEqualValues(_topoEvt.EventContext.SourceLinks, emptySourceLinks) {
 		t.Fatalf("Unexpected topology event data 'context.source_links' value: %v", _topoEvt.EventContext.SourceLinks)
 	}
 
@@ -276,8 +276,8 @@ func TestSubmitEventCannotBeSerialized(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// ruamel.yaml.representer.RepresenterError: cannot represent an object: <object object at 0x7f71960b8280>
-	if !strings.Contains(out, "RepresenterError") {
+	// can not serialize 'object' object'
+	if !strings.Contains(out, "can not serialize 'object' object") {
 		t.Errorf("Unexpected printed value: '%s'", out)
 	}
 	if len(_data) != 0 {

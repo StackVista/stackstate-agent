@@ -32,7 +32,7 @@ import "C"
 
 // SubmitComponent is the method exposed to Python scripts to submit topology component
 //export SubmitComponent
-func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, externalID *C.char, componentType *C.char, data *C.char) {
+func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, _ *C.char, _ *C.char, data *C.char) {
 	goCheckID := C.GoString(id)
 
 	_instance := topology.Instance{
@@ -41,19 +41,21 @@ func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, externalID *C.ch
 	}
 
 	component := topology.Component{}
-	reader := strings.NewReader(C.GoString(data))
+	rawComponent := C.GoString(data)
+	reader := strings.NewReader(rawComponent)
 	err := msgp.Decode(reader, &component)
 
 	if err == nil {
 		batcher.GetBatcher().SubmitComponent(check.ID(goCheckID), _instance, component)
 	} else {
-		_ = log.Errorf("Empty topology event not sent. Json: %v, Error: %v", component.JSONString(), err)
+		_ = log.Errorf("Empty topology component not sent. Raw: %v, Json: %v, Error: %v", rawComponent,
+			component.JSONString(), err)
 	}
 }
 
 // SubmitRelation is the method exposed to Python scripts to submit topology relation
 //export SubmitRelation
-func SubmitRelation(id *C.char, instanceKey *C.instance_key_t, sourceID *C.char, targetID *C.char, relationType *C.char, data *C.char) {
+func SubmitRelation(id *C.char, instanceKey *C.instance_key_t, _ *C.char, _ *C.char, _ *C.char, data *C.char) {
 	goCheckID := C.GoString(id)
 
 	_instance := topology.Instance{
@@ -61,24 +63,17 @@ func SubmitRelation(id *C.char, instanceKey *C.instance_key_t, sourceID *C.char,
 		URL:  C.GoString(instanceKey.url),
 	}
 
-	_sourceID := C.GoString(sourceID)
-	_targetID := C.GoString(targetID)
-	_relationType := C.GoString(relationType)
-	_externalID := fmt.Sprintf("%s-%s-%s", _sourceID, _relationType, _targetID)
-	_json, err := tryParseYamlToMap(data)
+	relation := topology.Relation{}
+	rawRelation := C.GoString(data)
+	reader := strings.NewReader(rawRelation)
+	err := msgp.Decode(reader, &relation)
 
 	if err == nil {
-		batcher.GetBatcher().SubmitRelation(check.ID(goCheckID),
-			_instance,
-			topology.Relation{
-				ExternalID: _externalID,
-				SourceID:   _sourceID,
-				TargetID:   _targetID,
-				Type:       topology.Type{Name: _relationType},
-				Data:       _json,
-			})
+		relation.ExternalID = fmt.Sprintf("%s-%s-%s", relation.SourceID, relation.Type.Name, relation.TargetID)
+		batcher.GetBatcher().SubmitRelation(check.ID(goCheckID), _instance, relation)
 	} else {
-		_ = log.Errorf("Empty topology event not sent. Json: %v, Error: %v", _json, err)
+		_ = log.Errorf("Empty topology relation not sent. Raw: %v, Json: %v, Error: %v", rawRelation,
+			relation.JSONString(), err)
 	}
 }
 

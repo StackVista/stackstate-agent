@@ -14,9 +14,10 @@ import "C"
 //
 func tryParseYamlToMap(data *C.char) (map[string]interface{}, error) {
 	_data := make(map[interface{}]interface{})
-	err := yaml.Unmarshal([]byte(C.GoString(data)), _data)
+	rawYaml := C.GoString(data)
+	err := yaml.Unmarshal([]byte(rawYaml), _data)
 	if err != nil {
-		log.Errorf("Cannot unmarshal yaml: %v", err)
+		log.Errorf("Cannot unmarshal yaml: '%s': %v", rawYaml, err)
 		return nil, err
 	}
 

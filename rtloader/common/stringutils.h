@@ -54,15 +54,6 @@
     The returned C-string YAML representation is allocated by the function and should
     be subsequently freed by the caller.
 */
-/*! \fn char *as_yaml_ruamel(PyObject * object)
-    \brief Returns a C string YAML representation for the supplied Python object.
-    \param object The python object whose YAML representation we want.
-    \return char * pointer to the C-string representation for the supplied Python object.
-    In case of error, NULL will be returned.
-
-    The returned C-string YAML representation is allocated by the function and should
-    be subsequently freed by the caller.
-*/
 /*! \fn char *as_msgpack(PyObject * object)
     \brief Returns a C string YAML representation for the supplied Python object.
     \param object The python object whose YAML representation we want.
@@ -90,7 +81,6 @@ int init_stringutils(void);
 char *as_string(PyObject *);
 PyObject *from_yaml(const char *);
 char *as_yaml(PyObject *);
-char *as_yaml_ruamel(PyObject *);
 char *as_msgpack(PyObject *);
 
 #ifdef DATADOG_AGENT_THREE

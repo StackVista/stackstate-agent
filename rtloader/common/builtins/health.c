@@ -77,8 +77,10 @@ static PyObject *submit_health_check_data(PyObject *self, PyObject *args) {
     char *check_id;
     PyObject *health_stream_dict = NULL; // borrowed
     PyObject *data_dict = NULL; // borrowed
+    char *urn = NULL;
+    char *sub_stream = NULL;
     health_stream_t *health_stream_key = NULL;
-    char *yaml_data = NULL;
+    char *msgpack_data = NULL;
     PyObject * retval = NULL;
 
     PyGILState_STATE gstate = PyGILState_Ensure();
@@ -107,16 +109,20 @@ static PyObject *submit_health_check_data(PyObject *self, PyObject *args) {
     }
 
     // notice: PyDict_GetItemString returns a borrowed ref or NULL if key was not found
-    health_stream_key->urn = as_string(PyDict_GetItemString(health_stream_dict, "urn"));
-    health_stream_key->sub_stream = as_string(PyDict_GetItemString(health_stream_dict, "sub_stream"));
+    urn = as_string(PyDict_GetItemString(health_stream_dict, "urn"));
+    sub_stream = as_string(PyDict_GetItemString(health_stream_dict, "sub_stream"));
+    health_stream_key->urn = urn;
+    health_stream_key->sub_stream = sub_stream;
 
-    yaml_data = as_yaml_ruamel(data_dict);
-    if (yaml_data == NULL) {
+    PyObject *stream = Py_BuildValue("{s:s, s:s}", "urn", urn, "sub_stream", sub_stream);
+    PyObject *health = Py_BuildValue("{s:O, s:O}", "stream", stream, "data", data_dict);
+    msgpack_data = as_msgpack(health);
+    if (msgpack_data == NULL) {
         // If as_yaml_ruamel fails it sets a python exception, so we just return
         retval = NULL; // Failure
         goto done;
     } else {
-        cb_submit_health_check_data(check_id, health_stream_key, yaml_data);
+        cb_submit_health_check_data(check_id, health_stream_key, msgpack_data);
 
         Py_INCREF(Py_None); // Increment, since we are not using the macro Py_RETURN_NONE that does it for us
         retval = Py_None; // Success
@@ -128,8 +134,8 @@ done:
         _free(health_stream_key->sub_stream);
         _free(health_stream_key);
     }
-    if (yaml_data != NULL) {
-        _free(yaml_data);
+    if (msgpack_data != NULL) {
+        _free(msgpack_data);
     }
     PyGILState_Release(gstate);
     return retval;

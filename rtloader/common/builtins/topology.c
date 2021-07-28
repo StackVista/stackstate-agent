@@ -124,7 +124,7 @@ static PyObject *submit_component(PyObject *self, PyObject *args) {
     PyObject *component = Py_BuildValue("{s:s, s:O, s:O}", "externalId", component_id, "type", type, "data", data_dict);
     msgpack_data = as_msgpack(component);
     if (msgpack_data == NULL) {
-        // If as_yaml_ruamel fails it sets a python exception, so we just return
+        // If as_msgpack fails it sets a python exception, so we just return
         retval = NULL; // Failure
         goto done;
     } else {
@@ -207,7 +207,7 @@ static PyObject *submit_relation(PyObject *self, PyObject *args) {
         type, "data", data_dict);
     msgpack_data = as_msgpack(relation);
     if (msgpack_data == NULL) {
-        // If as_yaml_ruamel fails it sets a python exception, so we just return
+        // If as_msgpack fails it sets a python exception, so we just return
         retval = NULL; // Failure
         goto done;
     } else {

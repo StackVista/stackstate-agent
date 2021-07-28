@@ -13,10 +13,6 @@ PyObject * yload = NULL;
 PyObject * ydump = NULL;
 PyObject * loader = NULL;
 PyObject * dumper = NULL;
-PyObject * stringio_module = NULL;
-PyObject * ruamel_module = NULL;
-
-PyObject * ruamel_dump_func2 = NULL;
 
 PyObject * msgpack_pack = NULL;
 
@@ -125,49 +121,6 @@ int init_stringutils(void) {
         }
     }
 
-    // from ruamel.yaml import YAML
-    char module_name_r[] = "ruamel.yaml";
-    PyObject *ruamel_m = PyImport_ImportModule(module_name_r);
-    if (ruamel_m == NULL) {
-        goto done;
-    }
-    char module_name_YAML[] = "YAML";
-    ruamel_module = PyObject_GetAttrString(ruamel_m, module_name_YAML);
-    if (ruamel_module == NULL) {
-        goto done;
-    }
-
-    // from ruamel.yaml.compat import StringIO
-    char module_name_compat[] = "ruamel.yaml.compat";
-    PyObject *ruamel_compat = PyImport_ImportModule(module_name_compat);
-    if (ruamel_compat == NULL) {
-        goto done;
-    }
-    char module_name_StringIO[] = "StringIO";
-    stringio_module = PyObject_GetAttrString(ruamel_compat, module_name_StringIO);
-    if (stringio_module == NULL) {
-        goto done;
-    }
-
-
-    // from ruamel import yaml
-    char module_name_r2[] = "ruamel";
-    PyObject *ruamel_m2 = PyImport_ImportModule(module_name_r2);
-    if (ruamel_m2 == NULL) {
-        goto done;
-    }
-    char module_name_YAML2[] = "yaml";
-    PyObject *ruamel_module2 = PyObject_GetAttrString(ruamel_m2, module_name_YAML2);
-    if (ruamel_module2 == NULL) {
-        goto done;
-    }
-    // get ruamel dump()
-    char safe_dump_name[] = "safe_dump";
-    ruamel_dump_func2 = PyObject_GetAttrString(ruamel_module2, safe_dump_name);
-    if (ruamel_dump_func2 == NULL) {
-        goto done;
-    }
-
     // import msgpack
     char module_name_msgpack[] = "msgpack";
     PyObject *msgpack_module = PyImport_ImportModule(module_name_msgpack);
@@ -184,15 +137,8 @@ int init_stringutils(void) {
     ret = EXIT_SUCCESS;
 
 done:
-    Py_XDECREF(module_name_r);
-    Py_XDECREF(ruamel_m);
-    Py_XDECREF(module_name_YAML);
-    Py_XDECREF(ruamel_module);
-    Py_XDECREF(module_name_compat);
-    Py_XDECREF(ruamel_compat);
-    Py_XDECREF(module_name_StringIO);
-    Py_XDECREF(stringio_module);
     Py_XDECREF(yaml);
+    Py_XDECREF(msgpack_module);
     return ret;
 }
 
@@ -245,27 +191,6 @@ done:
     return retval;
 }
 
-char *as_yaml_ruamel(PyObject *object) {
-    char *retval = NULL;
-    PyObject *dumped = NULL;
-
-    PyObject *args = PyTuple_New(0);
-    PyObject *kwargs = Py_BuildValue("{s:O}", "data", object);
-
-    dumped = PyObject_Call(ruamel_dump_func2, args, kwargs);
-    if (dumped == NULL) {
-        goto done;
-    }
-    retval = as_string(dumped);
-
-done:
-    //Py_XDECREF can accept (and ignore) NULL references
-    Py_XDECREF(dumped);
-    Py_XDECREF(kwargs);
-    Py_XDECREF(args);
-    return retval;
-}
-
 char *as_msgpack(PyObject *object) {
     char *retval = NULL;
     PyObject *packed = NULL;
@@ -285,115 +210,5 @@ done:
     Py_XDECREF(args);
     Py_XDECREF(kwargs);
     Py_XDECREF(packed);
-    return retval;
-}
-
-char *as_yaml_ruamel2(PyObject *object) {
-    char *retval = NULL;
-    PyObject *args = NULL;
-    PyObject *kwargs = NULL;
-    PyObject *ruamel = NULL;
-    PyObject *stream = NULL;
-    PyObject *dumped = NULL;
-    PyObject *ruamel_close = NULL;
-    PyObject *temp_bytes = NULL;
-    char ruamel_dump_name[] = "dump";
-    PyObject *ruamel_dump_func = NULL;
-    char ruamel_get_value_name[] = "getvalue";
-    PyObject *ruamel_get_value_func = NULL;
-    char ruamel_close_name[] = "close";
-    PyObject *ruamel_close_func = NULL;
-
-     // ruamel = YAML(typ='safe')
-    args = PyTuple_New(0);
-    kwargs = Py_BuildValue("{s:s}", "typ", "safe");
-    ruamel = PyObject_Call(ruamel_module, args, kwargs);
-    if (ruamel == NULL) {
-        PyErr_SetString(PyExc_TypeError, "error: initializing YAML");
-        retval = NULL; // Failure
-        goto done;
-    }
-
-    // stream = StringIO()
-    args = PyTuple_New(0);
-    stream = PyObject_Call(stringio_module, args, NULL);
-    if (stream == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "error: initializing StringIO");
-        retval = NULL; // Failure
-        goto done;
-    }
-
-    // get ruamel dump()
-    ruamel_dump_func = PyObject_GetAttrString(ruamel, ruamel_dump_name);
-    if (ruamel_dump_func == NULL) {
-        PyErr_SetString(PyExc_TypeError, "error: no function 'dump' found for YAML");
-        retval = NULL; // Failure
-        goto done;
-    }
-
-    // yaml.dump(data, stream) --> returns NULL
-    args = Py_BuildValue("O,O", object, stream);
-    PyObject_Call(ruamel_dump_func, args, NULL);
-    if (PyErr_Occurred()) {
-        retval = NULL; // Failure
-        goto done;
-    }
-
-    // get stream getvalue()
-    ruamel_get_value_func = PyObject_GetAttrString(stream, ruamel_get_value_name);
-    if (ruamel_get_value_func == NULL) {
-        PyErr_SetString(PyExc_TypeError, "error: no function 'getvalue' found for StringIO()");
-        retval = NULL; // Failure
-        goto done;
-    }
-
-    // stream.getvalue() --> returns string
-    args = PyTuple_New(0);
-    dumped = PyObject_Call(ruamel_get_value_func, args, NULL);
-    if (dumped == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "error: nothing dumped into stream");
-        retval = NULL; // Failure
-        goto done;
-    }
-
-    // get stream close()
-    ruamel_close_func = PyObject_GetAttrString(stream, ruamel_close_name);
-    if (ruamel_close_func == NULL) {
-        PyErr_SetString(PyExc_TypeError, "error: no function 'close' found for StringIO()");
-        retval = NULL; // Failure
-        goto done;
-    }
-
-    // stream.close() --> returns NULL --> clears buffer / memory
-    args = PyTuple_New(0);
-    ruamel_close = PyObject_Call(ruamel_close_func, args, NULL);
-    if (PyErr_Occurred()) {
-        retval = NULL; // Failure
-        goto done;
-    }
-
-    // duplicated code from as_string function. Ruamel dump outputs are handled the same for
-    // Py2 and Py3. Both return unicode that needs to be encoded as 'UTF-8'.
-    temp_bytes = PyUnicode_AsEncodedString(dumped, "UTF-8", "strict");
-    if (temp_bytes == NULL) {
-        // PyUnicode_AsEncodedString raises an error if the codec raised an exception
-        retval = NULL; // Failure
-        goto done;
-    }
-
-    retval = strdupe(PyBytes_AS_STRING(temp_bytes));
-
-done:
-    //Py_XDECREF can accept (and ignore) NULL references
-    Py_XDECREF(args);
-    Py_XDECREF(kwargs);
-    Py_XDECREF(ruamel);
-    Py_XDECREF(stream);
-    Py_XDECREF(ruamel_close);
-    Py_XDECREF(ruamel_dump_func);
-    Py_XDECREF(ruamel_get_value_func);
-    Py_XDECREF(ruamel_close_func);
-    Py_XDECREF(dumped);
-    Py_XDECREF(temp_bytes);
     return retval;
 }

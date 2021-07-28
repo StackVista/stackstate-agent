@@ -2,7 +2,8 @@ package testhealth
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/collector/python"
+	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/tinylib/msgp/msgp"
 	"io/ioutil"
 	"log"
 	"os"
@@ -12,7 +13,6 @@ import (
 
 	common "github.com/StackVista/stackstate-agent/rtloader/test/common"
 	"github.com/StackVista/stackstate-agent/rtloader/test/helpers"
-	"gopkg.in/yaml.v2"
 )
 
 /*
@@ -121,10 +121,11 @@ func submitHealthCheckData(id *C.char, healthStream *C.health_stream_t, data *C.
 		SubStream:  C.GoString(healthStream.sub_stream),
 	}
 
-	_data = make(map[string]interface{})
-	yaml.Unmarshal([]byte(C.GoString(data)), _data)
-	r, _ := python.ConvertKeysToString(_data)
-	result = r.(map[string]interface{})
+	_raw_data := C.GoString(data)
+	health := health.Payload{}
+	reader := strings.NewReader(_raw_data)
+	msgp.Decode(reader, &health)
+	result = health.Data
 }
 
 //export submitHealthStartSnapshot
