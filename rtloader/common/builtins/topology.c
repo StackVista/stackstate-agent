@@ -121,8 +121,8 @@ static PyObject *submit_component(PyObject *self, PyObject *args) {
     instance_key->url = as_string(PyDict_GetItemString(instance_key_dict, "url"));
 
     PyObject *type = Py_BuildValue("{s:s}", "name", component_type);
-    PyObject *data = Py_BuildValue("{s:s, s:O, s:O}", "externalId", component_id, "type", type, "data", data_dict);
-    msgpack_data = as_msgpack(data);
+    PyObject *component = Py_BuildValue("{s:s, s:O, s:O}", "externalId", component_id, "type", type, "data", data_dict);
+    msgpack_data = as_msgpack(component);
     if (msgpack_data == NULL) {
         // If as_yaml_ruamel fails it sets a python exception, so we just return
         retval = NULL; // Failure
@@ -203,9 +203,9 @@ static PyObject *submit_relation(PyObject *self, PyObject *args) {
     instance_key->url = as_string(PyDict_GetItemString(instance_key_dict, "url"));
 
     PyObject *type = Py_BuildValue("{s:s}", "name", relation_type);
-    PyObject *data = Py_BuildValue("{s:s, s:s, s:O, s:O}", "sourceId", source_id, "targetId", target_id, "type",
+    PyObject *relation = Py_BuildValue("{s:s, s:s, s:O, s:O}", "sourceId", source_id, "targetId", target_id, "type",
         type, "data", data_dict);
-    msgpack_data = as_msgpack(data);
+    msgpack_data = as_msgpack(relation);
     if (msgpack_data == NULL) {
         // If as_yaml_ruamel fails it sets a python exception, so we just return
         retval = NULL; // Failure
