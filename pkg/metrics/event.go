@@ -5,7 +5,6 @@
 
 //go:generate msgp
 
-
 package metrics
 
 import (

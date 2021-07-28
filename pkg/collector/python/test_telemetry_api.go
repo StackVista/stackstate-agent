@@ -29,7 +29,7 @@ func testTopologyEvent(t *testing.T) {
 		AggregationKey: "aggregation_key",
 		SourceTypeName: "source_type",
 		EventType:      "event_type",
-		EventContext:   &metrics.EventContext{
+		EventContext: &metrics.EventContext{
 			SourceIdentifier:   "ctx_source_id",
 			ElementIdentifiers: []string{"ctx_elem_id1", "ctx_elem_id2"},
 			Source:             "ctx_source",
@@ -38,13 +38,13 @@ func testTopologyEvent(t *testing.T) {
 				"nestedobject": map[string]interface{}{
 					"nestedkey": "nestedValue",
 					"animals": map[string]interface{}{
-						"legs": "dog",
+						"legs":  "dog",
 						"wings": "eagle",
-						"tail": "crocodile",
+						"tail":  "crocodile",
 					},
 				},
 			},
-			SourceLinks:        []metrics.SourceLink{
+			SourceLinks: []metrics.SourceLink{
 				{
 					Title: "source1_title",
 					URL:   "source1_url",
@@ -108,9 +108,9 @@ func testTopologyEventMissingFields(t *testing.T) {
 	var buf bytes.Buffer
 	c := &metrics.Event{
 		Title: "ev_title",
-		Text:           "ev_text",
-		Ts:             21,
-		Host:           "ev_host",
+		Text:  "ev_text",
+		Ts:    21,
+		Host:  "ev_host",
 	}
 	err := msgp.Encode(&buf, c)
 	assert.NoError(t, err)

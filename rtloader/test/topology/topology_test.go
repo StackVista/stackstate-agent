@@ -161,7 +161,6 @@ func TestSubmitComponentCannotBeSerialized(t *testing.T) {
 	helpers.AssertMemoryUsage(t)
 }
 
-
 func TestSubmitRelationPerformance(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()

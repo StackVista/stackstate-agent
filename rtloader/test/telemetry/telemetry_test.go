@@ -182,7 +182,7 @@ func TestSubmitTopologyChangeRequestEvents(t *testing.T) {
 	}
 	if _topoEvt.Tags[0] != "number:CHG0000001" && _topoEvt.Tags[1] != "priority:3 - Moderate" && _topoEvt.Tags[2] != "risk:High" &&
 		_topoEvt.Tags[3] != "state:New" && _topoEvt.Tags[4] != "category:Software" && _topoEvt.Tags[5] != "conflict_status:None" &&
-		_topoEvt.Tags[6] != "assigned_to:ITIL User"{
+		_topoEvt.Tags[6] != "assigned_to:ITIL User" {
 		t.Fatalf("Unexpected topology event data 'tags' value: %s", _topoEvt.Tags)
 	}
 	if _topoEvt.EventType != "Change Request Normal" {

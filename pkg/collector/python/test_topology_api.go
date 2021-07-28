@@ -22,7 +22,7 @@ func testComponentTopology(t *testing.T) {
 	var buf bytes.Buffer
 	c := &topology.Component{
 		ExternalID: "external-id",
-		Type: topology.Type{Name: "component-type"},
+		Type:       topology.Type{Name: "component-type"},
 		Data: map[string]interface{}{
 			"some": "data",
 		},
@@ -73,7 +73,7 @@ func testRelationTopology(t *testing.T) {
 	c := &topology.Relation{
 		SourceID: "source-id",
 		TargetID: "target-id",
-		Type: topology.Type{Name: "relation-type"},
+		Type:     topology.Type{Name: "relation-type"},
 		Data: map[string]interface{}{
 			"some": "data",
 		},

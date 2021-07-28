@@ -32,18 +32,18 @@ static void initHealthTests(rtloader_t *rtloader) {
 import "C"
 
 var (
-	rtloader			   *C.rtloader_t
-	checkID				   string
-	_healthStream		   *HealthStream
-	_data				   map[string]interface{}
-	result          	   map[string]interface{}
-	_expirySeconds		   int
+	rtloader               *C.rtloader_t
+	checkID                string
+	_healthStream          *HealthStream
+	_data                  map[string]interface{}
+	result                 map[string]interface{}
+	_expirySeconds         int
 	_repeatIntervalSeconds int
 )
 
 type HealthStream struct {
-	Urn string `json:"urn"`
-	SubStream  string `json:"sub_stream"`
+	Urn       string `json:"urn"`
+	SubStream string `json:"sub_stream"`
 }
 
 func resetOuputValues() {
@@ -117,8 +117,8 @@ func submitHealthCheckData(id *C.char, healthStream *C.health_stream_t, data *C.
 	checkID = C.GoString(id)
 
 	_healthStream = &HealthStream{
-		Urn: C.GoString(healthStream.urn),
-		SubStream:  C.GoString(healthStream.sub_stream),
+		Urn:       C.GoString(healthStream.urn),
+		SubStream: C.GoString(healthStream.sub_stream),
 	}
 
 	_raw_data := C.GoString(data)
@@ -133,8 +133,8 @@ func submitHealthStartSnapshot(id *C.char, healthStream *C.health_stream_t, expi
 	checkID = C.GoString(id)
 
 	_healthStream = &HealthStream{
-		Urn: C.GoString(healthStream.urn),
-		SubStream:  C.GoString(healthStream.sub_stream),
+		Urn:       C.GoString(healthStream.urn),
+		SubStream: C.GoString(healthStream.sub_stream),
 	}
 
 	_expirySeconds = int(expirySeconds)
@@ -146,7 +146,7 @@ func submitHealthStopSnapshot(id *C.char, healthStream *C.health_stream_t) {
 	checkID = C.GoString(id)
 
 	_healthStream = &HealthStream{
-		Urn: C.GoString(healthStream.urn),
-		SubStream:  C.GoString(healthStream.sub_stream),
+		Urn:       C.GoString(healthStream.urn),
+		SubStream: C.GoString(healthStream.sub_stream),
 	}
 }

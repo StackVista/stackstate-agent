@@ -17,8 +17,8 @@ type Health struct {
 
 // Payload is a single payload for the batch of health synchronization data
 type Payload struct {
-	Stream        Stream                 `msg:"stream"`
-	Data   CheckData            `msg:"data"`
+	Stream Stream    `msg:"stream"`
+	Data   CheckData `msg:"data"`
 }
 
 // JSONString returns a JSON string of the Payload

@@ -34,17 +34,17 @@ static void initTopologyTests(rtloader_t *rtloader) {
 import "C"
 
 var (
-	rtloader		*C.rtloader_t
-	checkID			string
-	_instance		*Instance
-	_raw_data       string
-	_data			map[string]interface{}
-	result          map[string]interface{}
-	_externalID		string
-	_componentType	string
-	_sourceID		string
-	_targetID		string
-	_relationType	string
+	rtloader       *C.rtloader_t
+	checkID        string
+	_instance      *Instance
+	_raw_data      string
+	_data          map[string]interface{}
+	result         map[string]interface{}
+	_externalID    string
+	_componentType string
+	_sourceID      string
+	_targetID      string
+	_relationType  string
 )
 
 type Instance struct {
