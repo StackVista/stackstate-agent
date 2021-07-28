@@ -106,7 +106,12 @@ func testTopologyEventMissingFields(t *testing.T) {
 	sender.SetupAcceptAll()
 
 	var buf bytes.Buffer
-	c := &metrics.Event{Title: "ev_title"}
+	c := &metrics.Event{
+		Title: "ev_title",
+		Text:           "ev_text",
+		Ts:             21,
+		Host:           "ev_host",
+	}
 	err := msgp.Encode(&buf, c)
 	assert.NoError(t, err)
 
@@ -114,7 +119,14 @@ func testTopologyEventMissingFields(t *testing.T) {
 
 	SubmitTopologyEvent(C.CString("testID"), ev)
 
-	sender.AssertEvent(t, metrics.Event{}, 0)
+	expectedEvent := metrics.Event{
+		Title:    "ev_title",
+		Text:     "ev_text",
+		Ts:       21,
+		Priority: "ev_priority",
+		Host:     "ev_host",
+	}
+	sender.AssertEvent(t, expectedEvent, 0)
 }
 
 func testTopologyEventWrongFieldType(t *testing.T) {
