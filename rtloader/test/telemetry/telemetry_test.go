@@ -212,7 +212,7 @@ func TestSubmitTopologyChangeRequestEvents(t *testing.T) {
 		t.Fatalf("Unexpected topology event data 'context.source_links' size: %v", len(_topoEvt.EventContext.SourceLinks))
 	}
 
-	var emptySourceLinks []metrics.SourceLink
+	emptySourceLinks := make([]metrics.SourceLink, 0)
 	if !assert.ObjectsAreEqualValues(_topoEvt.EventContext.SourceLinks, emptySourceLinks) {
 		t.Fatalf("Unexpected topology event data 'context.source_links' value: %v", _topoEvt.EventContext.SourceLinks)
 	}
@@ -276,8 +276,8 @@ func TestSubmitEventCannotBeSerialized(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// can not serialize 'object' object'
-	if !strings.Contains(out, "can not serialize 'object' object") {
+	// keys must be a string
+	if !strings.Contains(out, "keys must be") {
 		t.Errorf("Unexpected printed value: '%s'", out)
 	}
 	if len(_data) != 0 {

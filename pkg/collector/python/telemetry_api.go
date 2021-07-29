@@ -8,12 +8,11 @@
 package python
 
 import (
+	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/tinylib/msgp/msgp"
-	"strings"
 )
 
 /*
@@ -45,8 +44,7 @@ func SubmitTopologyEvent(id *C.char, data *C.char) {
 
 	var topologyEvent metrics.Event
 	rawEvent := C.GoString(data)
-	reader := strings.NewReader(rawEvent)
-	err = msgp.Decode(reader, &topologyEvent)
+	err = json.Unmarshal([]byte(rawEvent), &topologyEvent)
 
 	if err == nil {
 		sender.Event(topologyEvent)

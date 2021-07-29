@@ -3,11 +3,10 @@
 package python
 
 import (
-	"bytes"
+	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/stretchr/testify/assert"
-	"github.com/tinylib/msgp/msgp"
 	"testing"
 )
 
@@ -17,7 +16,6 @@ import "C"
 func testTopologyEvent(t *testing.T) {
 	sender := mocksender.NewMockSender("testID")
 	sender.SetupAcceptAll()
-	var buf bytes.Buffer
 	c := &metrics.Event{
 		Title:          "ev_title",
 		Text:           "ev_text",
@@ -56,10 +54,10 @@ func testTopologyEvent(t *testing.T) {
 			},
 		},
 	}
-	err := msgp.Encode(&buf, c)
+	data, err := json.Marshal(c)
 	assert.NoError(t, err)
 
-	ev := C.CString(buf.String())
+	ev := C.CString(string(data))
 
 	SubmitTopologyEvent(C.CString("testID"), ev)
 
@@ -105,17 +103,16 @@ func testTopologyEventMissingFields(t *testing.T) {
 	sender := mocksender.NewMockSender("testID")
 	sender.SetupAcceptAll()
 
-	var buf bytes.Buffer
 	c := &metrics.Event{
 		Title: "ev_title",
 		Text:  "ev_text",
 		Ts:    21,
 		Host:  "ev_host",
 	}
-	err := msgp.Encode(&buf, c)
+	data, err := json.Marshal(c)
 	assert.NoError(t, err)
 
-	ev := C.CString(buf.String())
+	ev := C.CString(string(data))
 
 	SubmitTopologyEvent(C.CString("testID"), ev)
 
@@ -133,7 +130,7 @@ func testTopologyEventWrongFieldType(t *testing.T) {
 	sender := mocksender.NewMockSender("testID")
 	sender.SetupAcceptAll()
 
-	ev := C.CString(`msg_title: 42`)
+	ev := C.CString(`{msg_title: 42}`)
 
 	SubmitTopologyEvent(C.CString("testID"), ev)
 

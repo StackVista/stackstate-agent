@@ -14,7 +14,7 @@ PyObject * ydump = NULL;
 PyObject * loader = NULL;
 PyObject * dumper = NULL;
 
-PyObject * msgpack_pack = NULL;
+PyObject * json_dump = NULL;
 
 /**
  * returns a C (NULL terminated UTF-8) string from a python string.
@@ -121,16 +121,16 @@ int init_stringutils(void) {
         }
     }
 
-    // import msgpack
-    char module_name_msgpack[] = "msgpack";
-    PyObject *msgpack_module = PyImport_ImportModule(module_name_msgpack);
-    if (msgpack_module == NULL) {
+    // import json
+    char module_name_json[] = "json";
+    PyObject *json_module = PyImport_ImportModule(module_name_json);
+    if (json_module == NULL) {
         goto done;
     }
     // msgpack.packb(...)
-    char packb_name[] = "packb";
-    msgpack_pack = PyObject_GetAttrString(msgpack_module, packb_name);
-    if (msgpack_pack == NULL) {
+    char dumps_name[] = "dumps";
+    json_dump = PyObject_GetAttrString(json_module, dumps_name);
+    if (json_dump == NULL) {
         goto done;
     }
 
@@ -138,7 +138,7 @@ int init_stringutils(void) {
 
 done:
     Py_XDECREF(yaml);
-    Py_XDECREF(msgpack_module);
+    Py_XDECREF(json_module);
     return ret;
 }
 
@@ -191,31 +191,19 @@ done:
     return retval;
 }
 
-char *as_msgpack(PyObject *object) {
+char *as_json(PyObject *object) {
     char *retval = NULL;
     PyObject *packed = NULL;
 
-    // msgpack.packb(data) --> returns binary
+    // json.dumps(data) --> returns binary
     PyObject *args = PyTuple_New(0);
-// DATADOG_AGENT_THREE implementation is the default
-#ifdef DATADOG_AGENT_TWO
-    PyObject *kwargs = Py_BuildValue("{s:O, s:b}", "o", object, "use_bin_type", Py_False);
-    packed = PyObject_Call(msgpack_pack, args, kwargs);
-    if (packed == NULL) {
-        goto done;
-    }
-
-    retval = strdupe(PyBytes_AS_STRING(packed));
-#else
-    PyObject *kwargs = Py_BuildValue("{s:O, s:b}", "o", object, "use_bin_type", Py_True);
-    packed = PyObject_Call(msgpack_pack, args, kwargs);
+    PyObject *kwargs = Py_BuildValue("{s:O}", "obj", object);
+    packed = PyObject_Call(json_dump, args, kwargs);
     if (packed == NULL) {
         goto done;
     }
 
     retval = as_string(packed);
-#endif
-
 done:
     //Py_XDECREF can accept (and ignore) NULL references
     Py_XDECREF(args);

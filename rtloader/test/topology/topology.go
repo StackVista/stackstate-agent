@@ -1,9 +1,9 @@
 package testtopology
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
-	"github.com/tinylib/msgp/msgp"
 	"io/ioutil"
 	"log"
 	"os"
@@ -134,9 +134,8 @@ func submitComponent(id *C.char, instanceKey *C.instance_key_t, externalID *C.ch
 	_externalID = C.GoString(externalID)
 	_componentType = C.GoString(componentType)
 	_raw_data = C.GoString(data)
-	component := topology.Component{}
-	reader := strings.NewReader(_raw_data)
-	msgp.Decode(reader, &component)
+	component := &topology.Component{}
+	json.Unmarshal([]byte(_raw_data), component)
 	result = component.Data
 }
 
@@ -157,9 +156,8 @@ func submitRelation(id *C.char, instanceKey *C.instance_key_t, sourceID *C.char,
 
 	_data = make(map[string]interface{})
 	_raw_data = C.GoString(data)
-	relation := topology.Relation{}
-	reader := strings.NewReader(_raw_data)
-	msgp.Decode(reader, &relation)
+	relation := &topology.Relation{}
+	json.Unmarshal([]byte(_raw_data), relation)
 	result = relation.Data
 }
 

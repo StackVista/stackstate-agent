@@ -8,12 +8,11 @@
 package python
 
 import (
+	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/tinylib/msgp/msgp"
-	"strings"
 )
 
 /*
@@ -35,8 +34,7 @@ func SubmitHealthCheckData(id *C.char, _ *C.health_stream_t, data *C.char) {
 	goCheckID := C.GoString(id)
 	rawHealthPayload := C.GoString(data)
 	healthPayload := health.Payload{}
-	reader := strings.NewReader(rawHealthPayload)
-	err := msgp.Decode(reader, &healthPayload)
+	err := json.Unmarshal([]byte(rawHealthPayload), &healthPayload)
 
 	if err == nil {
 		if len(healthPayload.Data) != 0 {

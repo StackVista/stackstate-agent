@@ -122,9 +122,9 @@ static PyObject *submit_component(PyObject *self, PyObject *args) {
 
     PyObject *type = Py_BuildValue("{s:s}", "name", component_type);
     PyObject *component = Py_BuildValue("{s:s, s:O, s:O}", "externalId", component_id, "type", type, "data", data_dict);
-    msgpack_data = as_msgpack(component);
+    msgpack_data = as_json(component);
     if (msgpack_data == NULL) {
-        // If as_msgpack fails it sets a python exception, so we just return
+        // If as_json fails it sets a python exception, so we just return
         retval = NULL; // Failure
         goto done;
     } else {
@@ -205,9 +205,9 @@ static PyObject *submit_relation(PyObject *self, PyObject *args) {
     PyObject *type = Py_BuildValue("{s:s}", "name", relation_type);
     PyObject *relation = Py_BuildValue("{s:s, s:s, s:O, s:O}", "sourceId", source_id, "targetId", target_id, "type",
         type, "data", data_dict);
-    msgpack_data = as_msgpack(relation);
+    msgpack_data = as_json(relation);
     if (msgpack_data == NULL) {
-        // If as_msgpack fails it sets a python exception, so we just return
+        // If as_json fails it sets a python exception, so we just return
         retval = NULL; // Failure
         goto done;
     } else {

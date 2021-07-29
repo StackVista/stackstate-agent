@@ -1,9 +1,9 @@
 package testtelemetry
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	"github.com/tinylib/msgp/msgp"
 	"io/ioutil"
 	"log"
 	"os"
@@ -101,6 +101,5 @@ except Exception as e:
 func submitTopologyEvent(id *C.char, data *C.char) {
 	checkID = C.GoString(id)
 	result := C.GoString(data)
-	reader := strings.NewReader(result)
-	msgp.Decode(reader, &_topoEvt)
+	json.Unmarshal([]byte(result), &_topoEvt)
 }

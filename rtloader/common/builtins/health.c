@@ -116,9 +116,9 @@ static PyObject *submit_health_check_data(PyObject *self, PyObject *args) {
 
     PyObject *stream = Py_BuildValue("{s:s, s:s}", "urn", urn, "sub_stream", sub_stream);
     PyObject *health = Py_BuildValue("{s:O, s:O}", "stream", stream, "data", data_dict);
-    msgpack_data = as_msgpack(health);
+    msgpack_data = as_json(health);
     if (msgpack_data == NULL) {
-        // If as_msgpack fails it sets a python exception, so we just return
+        // If as_json fails it sets a python exception, so we just return
         retval = NULL; // Failure
         goto done;
     } else {

@@ -8,13 +8,12 @@
 package python
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/tinylib/msgp/msgp"
-	"strings"
 )
 
 /*
@@ -42,8 +41,7 @@ func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, _ *C.char, _ *C.
 
 	component := topology.Component{}
 	rawComponent := C.GoString(data)
-	reader := strings.NewReader(rawComponent)
-	err := msgp.Decode(reader, &component)
+	err := json.Unmarshal([]byte(rawComponent), &component)
 
 	if err == nil {
 		batcher.GetBatcher().SubmitComponent(check.ID(goCheckID), _instance, component)
@@ -65,8 +63,7 @@ func SubmitRelation(id *C.char, instanceKey *C.instance_key_t, _ *C.char, _ *C.c
 
 	relation := topology.Relation{}
 	rawRelation := C.GoString(data)
-	reader := strings.NewReader(rawRelation)
-	err := msgp.Decode(reader, &relation)
+	err := json.Unmarshal([]byte(rawRelation), &relation)
 
 	if err == nil {
 		relation.ExternalID = fmt.Sprintf("%s-%s-%s", relation.SourceID, relation.Type.Name, relation.TargetID)

@@ -1,9 +1,9 @@
 package testhealth
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/health"
-	"github.com/tinylib/msgp/msgp"
 	"io/ioutil"
 	"log"
 	"os"
@@ -122,10 +122,9 @@ func submitHealthCheckData(id *C.char, healthStream *C.health_stream_t, data *C.
 	}
 
 	_raw_data := C.GoString(data)
-	health := health.Payload{}
-	reader := strings.NewReader(_raw_data)
-	msgp.Decode(reader, &health)
-	result = health.Data
+	healthPayload := &health.Payload{}
+	json.Unmarshal([]byte(_raw_data), healthPayload)
+	result = healthPayload.Data
 }
 
 //export submitHealthStartSnapshot

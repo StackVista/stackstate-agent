@@ -152,8 +152,8 @@ func TestSubmitComponentCannotBeSerialized(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// ruamel.yaml.representer.RepresenterError: cannot represent an object: <object object at 0x7f71960b8280>
-	if !strings.Contains(out, "can not serialize 'object' object") {
+	// keys must be a string
+	if !strings.Contains(out, "keys must be") {
 		t.Errorf("Unexpected printed value: '%s'", out)
 	}
 
@@ -262,8 +262,8 @@ func TestSubmitRelationCannotBeSerialized(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// can not serialize 'object' object
-	if !strings.Contains(out, "can not serialize 'object' object") {
+	// keys must be a string
+	if !strings.Contains(out, "keys must be") {
 		t.Errorf("Unexpected printed value: '%s'", out)
 	}
 

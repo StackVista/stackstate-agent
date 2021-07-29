@@ -3,12 +3,11 @@
 package python
 
 import (
-	"bytes"
+	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/stretchr/testify/assert"
-	"github.com/tinylib/msgp/msgp"
 	"testing"
 )
 
@@ -35,7 +34,6 @@ var expectedCheckData = health.CheckData{
 func testHealthCheckData(t *testing.T) {
 	mockBatcher := batcher.NewMockBatcher()
 
-	var buf bytes.Buffer
 	c := &health.Payload{
 		Stream: health.Stream{
 			Urn:       "myurn",
@@ -43,7 +41,7 @@ func testHealthCheckData(t *testing.T) {
 		},
 		Data: expectedCheckData,
 	}
-	err := msgp.Encode(&buf, c)
+	data, err := json.Marshal(c)
 	assert.NoError(t, err)
 
 	checkId := C.CString("check-id")
@@ -54,7 +52,7 @@ func testHealthCheckData(t *testing.T) {
 	SubmitHealthCheckData(
 		checkId,
 		&stream,
-		C.CString(buf.String()))
+		C.CString(string(data)))
 	SubmitHealthStopSnapshot(checkId, &stream)
 
 	expectedState := mockBatcher.CollectedTopology.Flush()
