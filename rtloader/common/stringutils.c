@@ -197,6 +197,16 @@ char *as_msgpack(PyObject *object) {
 
     // msgpack.packb(data) --> returns binary
     PyObject *args = PyTuple_New(0);
+// DATADOG_AGENT_THREE implementation is the default
+#ifdef DATADOG_AGENT_TWO
+    PyObject *kwargs = Py_BuildValue("{s:O, s:b}", "o", object, "use_bin_type", Py_False);
+    packed = PyObject_Call(msgpack_pack, args, kwargs);
+    if (packed == NULL) {
+        goto done;
+    }
+
+    retval = strdupe(PyBytes_AS_STRING(packed));
+#else
     PyObject *kwargs = Py_BuildValue("{s:O, s:b}", "o", object, "use_bin_type", Py_True);
     packed = PyObject_Call(msgpack_pack, args, kwargs);
     if (packed == NULL) {
@@ -204,6 +214,7 @@ char *as_msgpack(PyObject *object) {
     }
 
     retval = as_string(packed);
+#endif
 
 done:
     //Py_XDECREF can accept (and ignore) NULL references

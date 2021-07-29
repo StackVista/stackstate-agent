@@ -40,7 +40,7 @@ const topoData = `
 
 func testTopoData(t *testing.T) {
 	if result["key"] != "value ®" {
-		t.Fatalf("Unexpected component data 'key' value: %s: %v", result["key"], _raw_data)
+		t.Fatalf("Unexpected component data 'key' value: %s: %s", result["key"], _raw_data)
 	}
 	var stringlist = result["stringlist"].([]interface{})
 	if len(stringlist) != 5 {
