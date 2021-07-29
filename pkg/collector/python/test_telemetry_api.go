@@ -120,7 +120,6 @@ func testTopologyEventMissingFields(t *testing.T) {
 		Title:    "ev_title",
 		Text:     "ev_text",
 		Ts:       21,
-		Priority: "ev_priority",
 		Host:     "ev_host",
 	}
 	sender.AssertEvent(t, expectedEvent, 0)

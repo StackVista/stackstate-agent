@@ -18,7 +18,7 @@ var expectedCheckData = health.CheckData{
 	"key":        "value ®",
 	"stringlist": []interface{}{"a", "b", "c"},
 	"boollist":   []interface{}{true, false},
-	"intlist":    []interface{}{int64(1)},
+	"intlist":    []interface{}{float64(1)},
 	"doublelist": []interface{}{0.7, 1.42},
 	"emptykey":   nil,
 	"nestedobject": map[string]interface{}{
