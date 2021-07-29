@@ -47,7 +47,7 @@ func TestHostnameProvider(t *testing.T) {
 		return ku, nil
 	}
 
-	hostName, err := HostnameProvider(ctx)
+	hostName, err := HostnameProvider(ctx, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "node-name", hostName)
 
@@ -59,7 +59,7 @@ func TestHostnameProvider(t *testing.T) {
 	defer mockConfig.Set("cluster_name", "")
 	defer clustername.ResetClusterName()
 
-	hostName, err = HostnameProvider(ctx)
+	hostName, err = HostnameProvider(ctx, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "node-name-laika", hostName)
 }
