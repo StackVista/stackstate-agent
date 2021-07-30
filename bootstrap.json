@@ -11,7 +11,7 @@
             "github.com/golangci/golangci-lint",
             "github.com/frapposelli/wwhrd",
             "github.com/goware/modvendor",
-            "github.com/shuLhan/go-bindata/cmd/go-bindata",
+            "github.com/shuLhan/go-bindata/cmd/go-bindata"
         ],
         "golang.org/x/tools/go/ast/astutil": {
             "version": "release-branch.go1.10",
