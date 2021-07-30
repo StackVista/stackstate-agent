@@ -3,8 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//go:generate msgp
-
 package metrics
 
 import (
@@ -84,17 +82,17 @@ func GetAlertTypeFromString(val string) (EventAlertType, error) {
 
 // Event holds an event (w/ serialization to DD agent 5 intake format)
 type Event struct {
-	Title          string         `json:"msg_title" msg:"msg_title"`
-	Text           string         `json:"msg_text" msg:"msg_text"`
-	Ts             int64          `json:"timestamp" msg:"timestamp"`
-	Priority       EventPriority  `json:"priority,omitempty" msg:"priority,omitempty"`
-	Host           string         `json:"host" msg:"host"`
-	Tags           []string       `json:"tags,omitempty" msg:"tags,omitempty"`
-	AlertType      EventAlertType `json:"alert_type,omitempty" msg:"alert_type,omitempty"`
-	AggregationKey string         `json:"aggregation_key,omitempty" msg:"aggregation_key,omitempty"`
-	SourceTypeName string         `json:"source_type_name,omitempty" msg:"source_type_name,omitempty"`
-	EventType      string         `json:"event_type,omitempty" msg:"event_type,omitempty"`
-	EventContext   *EventContext  `json:"context,omitempty" msg:"context,omitempty"`
+	Title          string         `json:"msg_title"`
+	Text           string         `json:"msg_text"`
+	Ts             int64          `json:"timestamp"`
+	Priority       EventPriority  `json:"priority,omitempty"`
+	Host           string         `json:"host"`
+	Tags           []string       `json:"tags,omitempty"`
+	AlertType      EventAlertType `json:"alert_type,omitempty"`
+	AggregationKey string         `json:"aggregation_key,omitempty"`
+	SourceTypeName string         `json:"source_type_name,omitempty"`
+	EventType      string         `json:"event_type,omitempty"`
+	EventContext   *EventContext  `json:"context,omitempty"`
 }
 
 // EventContext enriches the event with some more context and allows correlation to topology in StackState

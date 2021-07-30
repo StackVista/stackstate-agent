@@ -5,8 +5,6 @@ import (
 	"fmt"
 )
 
-//go:generate msgp
-
 // Health is a batch of health synchronization data
 type Health struct {
 	StartSnapshot *StartSnapshotMetadata `json:"start_snapshot,omitempty"`
@@ -17,8 +15,8 @@ type Health struct {
 
 // Payload is a single payload for the batch of health synchronization data
 type Payload struct {
-	Stream Stream    `msg:"stream"`
-	Data   CheckData `msg:"data"`
+	Stream Stream
+	Data   CheckData
 }
 
 // JSONString returns a JSON string of the Payload

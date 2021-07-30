@@ -12,8 +12,6 @@
             "github.com/frapposelli/wwhrd",
             "github.com/goware/modvendor",
             "github.com/shuLhan/go-bindata/cmd/go-bindata",
-            "github.com/ttacon/chalk",
-            "github.com/tinylib/msgp"
         ],
         "golang.org/x/tools/go/ast/astutil": {
             "version": "release-branch.go1.10",
@@ -59,14 +57,6 @@
         },
         "github.com/goware/modvendor": {
             "version": "892bf4ecb805b052575eb45070a60f9db471df8e",
-            "type": "go"
-        },
-        "github.com/ttacon/chalk": {
-            "version": "v0.1",
-            "type": "go"
-        },
-        "github.com/tinylib/msgp": {
-            "version": "v1.1.2",
             "type": "go"
         }
     }

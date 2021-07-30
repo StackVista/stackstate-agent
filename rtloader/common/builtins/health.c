@@ -80,7 +80,7 @@ static PyObject *submit_health_check_data(PyObject *self, PyObject *args) {
     char *urn = NULL;
     char *sub_stream = NULL;
     health_stream_t *health_stream_key = NULL;
-    char *msgpack_data = NULL;
+    char *json_data = NULL;
     PyObject * retval = NULL;
 
     PyGILState_STATE gstate = PyGILState_Ensure();
@@ -116,13 +116,13 @@ static PyObject *submit_health_check_data(PyObject *self, PyObject *args) {
 
     PyObject *stream = Py_BuildValue("{s:s, s:s}", "urn", urn, "sub_stream", sub_stream);
     PyObject *health = Py_BuildValue("{s:O, s:O}", "stream", stream, "data", data_dict);
-    msgpack_data = as_json(health);
-    if (msgpack_data == NULL) {
+    json_data = as_json(health);
+    if (json_data == NULL) {
         // If as_json fails it sets a python exception, so we just return
         retval = NULL; // Failure
         goto done;
     } else {
-        cb_submit_health_check_data(check_id, health_stream_key, msgpack_data);
+        cb_submit_health_check_data(check_id, health_stream_key, json_data);
 
         Py_INCREF(Py_None); // Increment, since we are not using the macro Py_RETURN_NONE that does it for us
         retval = Py_None; // Success
@@ -134,8 +134,8 @@ done:
         _free(health_stream_key->sub_stream);
         _free(health_stream_key);
     }
-    if (msgpack_data != NULL) {
-        _free(msgpack_data);
+    if (json_data != NULL) {
+        _free(json_data);
     }
     PyGILState_Release(gstate);
     return retval;

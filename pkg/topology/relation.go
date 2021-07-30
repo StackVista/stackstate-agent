@@ -1,7 +1,5 @@
 package topology
 
-//go:generate msgp
-
 import (
 	"encoding/json"
 	"fmt"
@@ -9,11 +7,11 @@ import (
 
 // Relation is a representation of a topology relation
 type Relation struct {
-	ExternalID string `json:"externalId" msg:"externalId"`
-	SourceID   string `json:"sourceId" msg:"sourceId"`
-	TargetID   string `json:"targetId" msg:"targetId"`
-	Type       Type   `json:"type" msg:"type"`
-	Data       Data   `json:"data" msg:"data"`
+	ExternalID string `json:"externalId"`
+	SourceID   string `json:"sourceId"`
+	TargetID   string `json:"targetId"`
+	Type       Type   `json:"type"`
+	Data       Data   `json:"data"`
 }
 
 // JSONString returns a JSON string of the Relation

@@ -127,7 +127,7 @@ int init_stringutils(void) {
     if (json_module == NULL) {
         goto done;
     }
-    // msgpack.packb(...)
+    // json.dumps(...)
     char dumps_name[] = "dumps";
     json_dump = PyObject_GetAttrString(json_module, dumps_name);
     if (json_dump == NULL) {

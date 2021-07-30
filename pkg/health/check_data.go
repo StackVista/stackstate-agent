@@ -1,7 +1,5 @@
 package health
 
-//go:generate msgp
-
 import "fmt"
 import "encoding/json"
 
