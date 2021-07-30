@@ -34,17 +34,12 @@ import "C"
 var (
 	rtloader               *C.rtloader_t
 	checkID                string
-	_healthStream          *HealthStream
+	_healthStream          *health.Stream
 	_data                  map[string]interface{}
 	result                 map[string]interface{}
 	_expirySeconds         int
 	_repeatIntervalSeconds int
 )
-
-type HealthStream struct {
-	Urn       string `json:"urn"`
-	SubStream string `json:"sub_stream"`
-}
 
 func resetOuputValues() {
 	checkID = ""
@@ -115,23 +110,18 @@ except Exception as e:
 //export submitHealthCheckData
 func submitHealthCheckData(id *C.char, healthStream *C.health_stream_t, data *C.char) {
 	checkID = C.GoString(id)
-
-	_healthStream = &HealthStream{
-		Urn:       C.GoString(healthStream.urn),
-		SubStream: C.GoString(healthStream.sub_stream),
-	}
-
 	_raw_data := C.GoString(data)
 	healthPayload := &health.Payload{}
 	json.Unmarshal([]byte(_raw_data), healthPayload)
 	result = healthPayload.Data
+	_healthStream = &healthPayload.Stream
 }
 
 //export submitHealthStartSnapshot
 func submitHealthStartSnapshot(id *C.char, healthStream *C.health_stream_t, expirySeconds C.int, repeatIntervalSeconds C.int) {
 	checkID = C.GoString(id)
 
-	_healthStream = &HealthStream{
+	_healthStream = &health.Stream{
 		Urn:       C.GoString(healthStream.urn),
 		SubStream: C.GoString(healthStream.sub_stream),
 	}
@@ -143,8 +133,7 @@ func submitHealthStartSnapshot(id *C.char, healthStream *C.health_stream_t, expi
 //export submitHealthStopSnapshot
 func submitHealthStopSnapshot(id *C.char, healthStream *C.health_stream_t) {
 	checkID = C.GoString(id)
-
-	_healthStream = &HealthStream{
+	_healthStream = &health.Stream{
 		Urn:       C.GoString(healthStream.urn),
 		SubStream: C.GoString(healthStream.sub_stream),
 	}
