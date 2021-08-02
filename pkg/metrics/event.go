@@ -82,33 +82,33 @@ func GetAlertTypeFromString(val string) (EventAlertType, error) {
 
 // Event holds an event (w/ serialization to DD agent 5 intake format)
 type Event struct {
-	Title          string         `json:"msg_title" mapstructure:"msg_title"`
-	Text           string         `json:"msg_text" mapstructure:"msg_text"`
-	Ts             int64          `json:"timestamp" mapstructure:"timestamp"`
-	Priority       EventPriority  `json:"priority,omitempty" mapstructure:"priority,omitempty"`
-	Host           string         `json:"host" mapstructure:"host"`
-	Tags           []string       `json:"tags,omitempty" mapstructure:"tags,omitempty"`
-	AlertType      EventAlertType `json:"alert_type,omitempty" mapstructure:"alert_type,omitempty"`
-	AggregationKey string         `json:"aggregation_key,omitempty" mapstructure:"aggregation_key,omitempty"`
-	SourceTypeName string         `json:"source_type_name,omitempty" mapstructure:"source_type_name,omitempty"`
-	EventType      string         `json:"event_type,omitempty" mapstructure:"event_type,omitempty"`
-	EventContext   *EventContext  `json:"context,omitempty" mapstructure:"context,omitempty"`
+	Title          string         `json:"msg_title"`
+	Text           string         `json:"msg_text"`
+	Ts             int64          `json:"timestamp"`
+	Priority       EventPriority  `json:"priority,omitempty"`
+	Host           string         `json:"host"`
+	Tags           []string       `json:"tags,omitempty"`
+	AlertType      EventAlertType `json:"alert_type,omitempty"`
+	AggregationKey string         `json:"aggregation_key,omitempty"`
+	SourceTypeName string         `json:"source_type_name,omitempty"`
+	EventType      string         `json:"event_type,omitempty"`
+	EventContext   *EventContext  `json:"context,omitempty"`
 }
 
 // EventContext enriches the event with some more context and allows correlation to topology in StackState
 type EventContext struct {
-	SourceIdentifier   string                 `json:"source_identifier,omitempty" mapstructure:"source_identifier"`
-	ElementIdentifiers []string               `json:"element_identifiers" mapstructure:"element_identifiers"`
-	Source             string                 `json:"source" mapstructure:"source"`
-	Category           string                 `json:"category" mapstructure:"category"`
-	Data               map[string]interface{} `json:"data" mapstructure:"data"`
-	SourceLinks        []SourceLink           `json:"source_links" mapstructure:"source_links"`
+	SourceIdentifier   string                 `json:"source_identifier,omitempty" msg:"source_identifier,omitempty"`
+	ElementIdentifiers []string               `json:"element_identifiers" msg:"element_identifiers"`
+	Source             string                 `json:"source" msg:"source"`
+	Category           string                 `json:"category" msg:"category"`
+	Data               map[string]interface{} `json:"data" msg:"data"`
+	SourceLinks        []SourceLink           `json:"source_links" msg:"source_links"`
 } // [sts]
 
 // SourceLink points to links that may contain more information about this event
 type SourceLink struct {
-	Title string `json:"title" mapstructure:"title"`
-	URL   string `json:"url" mapstructure:"url"`
+	Title string `json:"title" msg:"title"`
+	URL   string `json:"url" msg:"url"`
 } // [sts]
 
 // Return a JSON string
@@ -120,21 +120,6 @@ func (e *Event) String() string {
 	}
 	return string(s)
 } // [sts]
-
-// FillEventContextDefaults fills in the default values for the event context for which StackState provides no defaults.
-// The implementation of mapstructure.Decode will use the zero value for slices (Nil) on empty arrays in yaml. Seeing as
-// StackState provides no default values we are unable to omit these from JSON and we are forced to create empty slices.
-func (e *Event) FillEventContextDefaults() {
-	if e.EventContext != nil {
-		if e.EventContext.ElementIdentifiers == nil {
-			e.EventContext.ElementIdentifiers = make([]string, 0)
-		}
-
-		if e.EventContext.SourceLinks == nil {
-			e.EventContext.SourceLinks = make([]SourceLink, 0)
-		}
-	}
-}
 
 // Events represents a list of events ready to be serialize
 type Events []*Event

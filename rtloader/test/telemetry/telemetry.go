@@ -1,11 +1,9 @@
 package testtelemetry
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/collector/python"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	"github.com/mitchellh/mapstructure"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
@@ -102,9 +100,6 @@ except Exception as e:
 //export submitTopologyEvent
 func submitTopologyEvent(id *C.char, data *C.char) {
 	checkID = C.GoString(id)
-	_data = make(map[string]interface{})
-	yaml.Unmarshal([]byte(C.GoString(data)), _data)
-	result, _ := python.ConvertKeysToString(_data)
-	mapstructure.Decode(result, &_topoEvt)
-	_topoEvt.FillEventContextDefaults()
+	result := C.GoString(data)
+	json.Unmarshal([]byte(result), &_topoEvt)
 }

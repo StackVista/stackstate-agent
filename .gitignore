@@ -174,3 +174,6 @@ deployment/kubernetes/k8s-*/
 
 # windows ami
 .cd-builders/windows/builder/runner/roles/sa_gitlab_runner_win
+
+# msgpack gen files
+*_gen*.go

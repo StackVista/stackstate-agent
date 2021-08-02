@@ -2,6 +2,7 @@ package testhealth
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"strings"
 	"testing"
@@ -22,7 +23,7 @@ func TestMain(m *testing.M) {
 const healthCheckData = `
 {
   "key": "value ®",
-  "stringlist": ["a", "b", "c"],
+  "stringlist": ["a", "b", "c", "04", "09"],
   "boollist": [True, False],
   "intlist": [1],
   "doublelist": [0.7, 1.42],
@@ -35,31 +36,31 @@ func testHealthCheckData(t *testing.T) {
 		t.Fatalf("Unexpected component data 'key' value: %s", result["key"])
 	}
 	var stringlist = result["stringlist"].([]interface{})
-	if len(stringlist) != 3 {
+	if len(stringlist) != 5 {
 		t.Fatalf("Unexpected component data 'stringlist' size: %v", len(stringlist))
 	}
-	if stringlist[0] != "a" && stringlist[1] != "b"  && stringlist[2] != "c" {
+	if assert.ObjectsAreEqualValues(stringlist, []string{"a", "b", "c", "04", "09"}) {
 		t.Fatalf("Unexpected component data 'stringlist' value: %s", result["stringlist"])
 	}
 	var boollist = result["boollist"].([]interface{})
 	if len(boollist) != 2 {
 		t.Fatalf("Unexpected component data 'boollist' size: %v", len(boollist))
 	}
-	if boollist[0] != true && boollist[1] != false {
+	if assert.ObjectsAreEqualValues(boollist, []bool{true, false}) {
 		t.Fatalf("Unexpected component data 'boollist' value: %s", result["boollist"])
 	}
 	var intlist = result["intlist"].([]interface{})
 	if len(intlist) != 1 {
 		t.Fatalf("Unexpected component data 'intlist' size: %v", len(intlist))
 	}
-	if intlist[0] != 1 {
+	if assert.ObjectsAreEqualValues(intlist, []int64{1}) {
 		t.Fatalf("Unexpected component data 'intlist' value: %s", result["intlist"])
 	}
 	var doublelist = result["doublelist"].([]interface{})
 	if len(doublelist) != 2 {
 		t.Fatalf("Unexpected component data 'doublelist' size: %v", len(doublelist))
 	}
-	if doublelist[0] != 0.7 && doublelist[1] != 1.42 {
+	if assert.ObjectsAreEqualValues(doublelist, []float64{0.7, 1.42}) {
 		t.Fatalf("Unexpected component data 'doublelist' value: %s", result["doublelist"])
 	}
 	if result["emptykey"] != nil {
@@ -68,7 +69,7 @@ func testHealthCheckData(t *testing.T) {
 	if result["nestedobject"] == nil {
 		t.Fatalf("Unexpected component data 'nestedobject' value: %s", result["nestedobject"])
 	}
-	var nestedObj = result["nestedobject"].(map[interface{}]interface{})
+	var nestedObj = result["nestedobject"].(map[string]interface{})
 	if nestedObj["nestedkey"] != "nestedValue" {
 		t.Fatalf("Unexpected component data 'nestedkey' value: %s", nestedObj["nestedkey"])
 	}
@@ -129,8 +130,8 @@ func TestSubmitHealthCheckDataCannotBeSerialized(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// ruamel.yaml.representer.RepresenterError: cannot represent an object: <object object at 0x7f71960b8280>
-	if !strings.Contains(out, "RepresenterError") {
+	// keys must be a string
+	if !strings.Contains(out, "keys must be") {
 		t.Errorf("Unexpected printed value: '%s'", out)
 	}
 

@@ -3,8 +3,8 @@ package testtelemetry
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/stretchr/testify/assert"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -182,7 +182,7 @@ func TestSubmitTopologyChangeRequestEvents(t *testing.T) {
 	}
 	if _topoEvt.Tags[0] != "number:CHG0000001" && _topoEvt.Tags[1] != "priority:3 - Moderate" && _topoEvt.Tags[2] != "risk:High" &&
 		_topoEvt.Tags[3] != "state:New" && _topoEvt.Tags[4] != "category:Software" && _topoEvt.Tags[5] != "conflict_status:None" &&
-		_topoEvt.Tags[6] != "assigned_to:ITIL User"{
+		_topoEvt.Tags[6] != "assigned_to:ITIL User" {
 		t.Fatalf("Unexpected topology event data 'tags' value: %s", _topoEvt.Tags)
 	}
 	if _topoEvt.EventType != "Change Request Normal" {
@@ -212,8 +212,8 @@ func TestSubmitTopologyChangeRequestEvents(t *testing.T) {
 		t.Fatalf("Unexpected topology event data 'context.source_links' size: %v", len(_topoEvt.EventContext.SourceLinks))
 	}
 
-	emptySourceLinks :=  make([]metrics.SourceLink, 0)
-	if !reflect.DeepEqual(_topoEvt.EventContext.SourceLinks, emptySourceLinks) {
+	emptySourceLinks := make([]metrics.SourceLink, 0)
+	if !assert.ObjectsAreEqualValues(_topoEvt.EventContext.SourceLinks, emptySourceLinks) {
 		t.Fatalf("Unexpected topology event data 'context.source_links' value: %v", _topoEvt.EventContext.SourceLinks)
 	}
 
@@ -276,8 +276,8 @@ func TestSubmitEventCannotBeSerialized(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// ruamel.yaml.representer.RepresenterError: cannot represent an object: <object object at 0x7f71960b8280>
-	if !strings.Contains(out, "RepresenterError") {
+	// keys must be a string
+	if !strings.Contains(out, "keys must be") {
 		t.Errorf("Unexpected printed value: '%s'", out)
 	}
 	if len(_data) != 0 {
