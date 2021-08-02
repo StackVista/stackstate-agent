@@ -55,12 +55,12 @@
     be subsequently freed by the caller.
 */
 /*! \fn char *as_json(PyObject * object)
-    \brief Returns a C string YAML representation for the supplied Python object.
-    \param object The python object whose YAML representation we want.
+    \brief Returns a C string JSON representation for the supplied Python object.
+    \param object The python object whose JSON representation we want.
     \return char * pointer to the C-string representation for the supplied Python object.
     In case of error, NULL will be returned.
 
-    The returned C-string YAML representation is allocated by the function and should
+    The returned C-string JSON representation is allocated by the function and should
     be subsequently freed by the caller.
 */
 /*! \def PyStringFromCString(x)

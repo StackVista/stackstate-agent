@@ -20,6 +20,15 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+// topoData contains various types of topology that can be produced by an agent check
+// strings (including special chars)
+// list[string], list[int], list[double]
+// empty values / None
+// objects + nested objects
+// we produce octal numbers as string; valid - 04 and invalid 09 to make sure they remain unchanged by the
+// serialization of json data
+// we also verify that nested objects remains key:string -> value:interface{} in go, such that they can be correctly
+// serialized to JSON.
 const topoData = `
 {
   "key": "value ®",
