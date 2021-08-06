@@ -749,8 +749,6 @@ molecule_tests_kubernetes_cleanup:
    needs:
      - molecule_tests_kubernetes
    allow_failure: true
-   rules:
-     - *only_agent_3_failure
 
 molecule_tests_swarm_cleanup:
   <<: *molecule_base
@@ -760,8 +758,6 @@ molecule_tests_swarm_cleanup:
   needs:
     - molecule_tests_swarm
   allow_failure: true
-  rules:
-    - *only_agent_3_failure
 
 molecule_tests_local_install:
   <<: *molecule_base
