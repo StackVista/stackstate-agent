@@ -750,6 +750,20 @@ molecule_tests_kubernetes_cleanup:
      - molecule_tests_kubernetes
    allow_failure: true
 
+molecule_tests_swarm:
+  <<: *molecule_base
+  needs:
+    - pre_release_cluster_agent_image
+    - pre_release_main_agent_image
+  script:
+    - cd $CI_PROJECT_DIR/test && ./molecule3.sh test -s swarm
+  artifacts:
+    when: always
+    paths:
+      - $CI_PROJECT_DIR/test/molecule-role/molecule/swarm/topic-*.json
+      - $CI_PROJECT_DIR/tmp_molecule_inventory
+    expire_in: 1 week
+
 molecule_tests_swarm_cleanup:
   <<: *molecule_base
   stage: acceptance_cleanup
