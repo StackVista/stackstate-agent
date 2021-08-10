@@ -16,8 +16,9 @@ import (
 
 	// 3p
 
-	"github.com/StackVista/stackstate-agent/pkg/aggregator/ckey"
-	"github.com/StackVista/stackstate-agent/pkg/quantile"
+	"github.com/DataDog/datadog-agent/pkg/aggregator/ckey"
+	"github.com/DataDog/datadog-agent/pkg/quantile"
+	"github.com/DataDog/datadog-agent/pkg/util"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -162,7 +163,7 @@ func Makeseries(i int) SketchSeries {
 	}
 
 	gen := ckey.NewKeyGenerator()
-	ss.ContextKey = gen.Generate(ss.Name, ss.Host, ss.Tags)
+	ss.ContextKey = gen.Generate(ss.Name, ss.Host, util.NewTagsBuilderFromSlice(ss.Tags))
 
 	return ss
 }

@@ -15,14 +15,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/StackVista/stackstate-agent/pkg/aggregator/ckey"
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/quantile"
+	"github.com/DataDog/datadog-agent/pkg/aggregator/ckey"
+	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/DataDog/datadog-agent/pkg/quantile"
+	"github.com/DataDog/datadog-agent/pkg/util"
 )
 
 func generateSerieContextKey(serie *metrics.Serie) ckey.ContextKey {
 	l := ckey.NewKeyGenerator()
-	return l.Generate(serie.Name, serie.Host, serie.Tags)
+	return l.Generate(serie.Name, serie.Host, util.NewTagsBuilderFromSlice(serie.Tags))
 }
 
 // TimeSampler
@@ -319,7 +320,7 @@ func TestSketch(t *testing.T) {
 					Ts:     0,
 				},
 			},
-			ContextKey: keyGen.Generate(ctx.Name, ctx.Host, ctx.Tags),
+			ContextKey: keyGen.Generate(ctx.Name, ctx.Host, util.NewTagsBuilderFromSlice(ctx.Tags)),
 		}, flushed[0])
 
 		_, flushed = sampler.flush(now)
