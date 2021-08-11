@@ -98,7 +98,7 @@ type MetricSerializer interface {
 	SendMetadata(m marshaler.Marshaler) error
 	SendHostMetadata(m marshaler.Marshaler) error
 	SendProcessesMetadata(data interface{}) error
-	SendOrchestratorMetadata(msgs []ProcessMessageBody, hostName, clusterID, payloadType string) error
+	SendOrchestratorMetadata(msgs []ProcessMessageBody, hostName, clusterID string, payloadType int) error
 }
 
 // AgentV1Serializer is a serializer for just agent v1 data
@@ -441,7 +441,7 @@ func (s *Serializer) SendProcessesMetadata(data interface{}) error {
 }
 
 // SendOrchestratorMetadata serializes & send orchestrator metadata payloads
-func (s *Serializer) SendOrchestratorMetadata(msgs []ProcessMessageBody, hostName, clusterID, payloadType string) error {
+func (s *Serializer) SendOrchestratorMetadata(msgs []ProcessMessageBody, hostName, clusterID string, payloadType int) error {
 	if s.orchestratorForwarder == nil {
 		return errors.New("orchestrator forwarder is not setup")
 	}
