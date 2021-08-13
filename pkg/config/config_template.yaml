@@ -1107,7 +1107,7 @@ process_config:
 # compliance_config:
 
   ## @param enabled - boolean - optional - default: false
-  ## Set to true to enable continuous compliance checks
+  ## Set to true to enable Cloud Security Posture Management (CSPM).
   #
   # enabled: false
 
@@ -1200,12 +1200,13 @@ process_config:
 
 # runtime_security_config:
   ## @param enabled - boolean - optional - default: false
-  ## Set to true to enable the Security Runtime Module.
+  ## Set to true to enable Cloud Workload Security (CWS).
   #
   # enabled: false
 
   ## @param fim_enabled - boolean - optional - default: false
-  ## Set to true to enable the File Integrity Monitoring feature.
+  ## Set to true to enable the File Integrity Monitoring (FIM) feature of Cloud Workload Security (CWS).
+  #
   # fim_enabled: false
 
   ## @param socket - string - optional - default: /opt/datadog-agent/run/runtime-security.sock
@@ -1228,7 +1229,7 @@ process_config:
   # syscall_monitor:
 
     ## @param enabled - boolean - optional - default: false
-    ## Set to true to enable the Syscall monitoring.
+    ## Set to true to enable the Syscall monitoring (recommended for troubleshooting only).
     #
     #  enabled: false
 
@@ -1256,7 +1257,7 @@ process_config:
 
 # runtime_security_config:
   ## @param enabled - boolean - optional - default: false
-  ## Set to true to enable the Security Runtime Module.
+  ## Set to true to enable Cloud Workload Security (CWS).
   #
   # enabled: false
 
