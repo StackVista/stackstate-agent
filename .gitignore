@@ -37,7 +37,7 @@ agentmsg.h
 # go-generated files
 stackstate.yaml
 system-probe.yaml
-network-tracer.yaml
+security-agent.yaml
 dogstatsd.yaml
 cloudfoundry.yaml
 Dockerfiles/cluster-agent/datadog-cluster.yaml
