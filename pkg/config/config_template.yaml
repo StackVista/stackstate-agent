@@ -29,6 +29,9 @@ sts_url:
 api_key:
 
 ## @param proxy - custom object - optional
+## @env DD_PROXY_HTTP - string - optional
+## @env DD_PROXY_HTTPS - string - optional
+## @env DD_PROXY_NO_PROXY - space separated list of strings - optional
 ## If you need a proxy to connect to the Internet, provide it here (default:
 ## disabled). You can use the 'no_proxy' list to specify hosts that should
 ## bypass the proxy. These settings might impact your checks requests, please
@@ -44,22 +47,20 @@ api_key:
 #     - <HOSTNAME-2>
 
 ## @param skip_ssl_validation - boolean - optional - default: false
+## @env DD_SKIP_SSL_VALIDATION - boolean - optional - default: false
 ## Setting this option to "true" tells the Agent to skip validation of SSL/TLS certificates.
 #
 # skip_ssl_validation: false
 
 ## @param force_tls_12 - boolean - optional - default: false
-## Setting this option to "true" will tell the agent to skip validation of SSL/TLS certificates.
-## This may be necessary if the agent is running behind a proxy.
-#
-# skip_ssl_validation: false
-
-## Setting this option to "true" will force the agent to only use TLS 1.2 when
-## pushing data to the url specified in "sts_url".
+## @env DD_FORCE_TLS_12 - boolean - optional - default: false
+## Setting this option to "true" forces the Agent to only use TLS 1.2 when
+## pushing data to the Datadog intake specified in "site" or "dd_url".
 #
 # force_tls_12: false
 
 ## @param hostname - string - optional - default: auto-detected
+## @env DD_HOSTNAME - string - optional - default: auto-detected
 ## Force the hostname name.
 #
 # hostname: <HOSTNAME_NAME>
@@ -73,6 +74,7 @@ api_key:
 # hostname_file: /var/lib/cloud/data/instance-id
 
 ## @param hostname_fqdn - boolean - optional - default: false
+## @param DD_HOSTNAME_FQDN - boolean - optional - default: false
 ## When the Agent relies on the OS to determine the hostname, make it use the
 ## FQDN instead of the short hostname. Recommended value: true
 #
@@ -89,6 +91,7 @@ api_key:
 #   - <ALIAS-2>
 
 ## @param tags  - list of key:value elements - optional
+## @env DD_TAGS - space separated list of strings - optional
 ## List of host tags. Attached in-app to every metric, event, log, trace, and service check emitted by this Agent.
 ##
 ## Additional tags can be supplied using the `DD_EXTRA_TAGS` environment variable.
@@ -101,12 +104,14 @@ api_key:
 #   - role:database
 
 ## @param env - string - optional
+## @param DD_ENV - string - optional
 ## The environment name where the agent is running. Attached in-app to every
 ## metric, event, log, trace, and service check emitted by this Agent.
 #
 # env: <environment name>
 
 ## @param tag_value_split_separator - map - optional
+## @env DD_TAG_VALUE_SPLIT_SEPARATOR - list of key:value strings - optional
 ## Split tag values according to a given separator. Only applies to host tags,
 ## and tags coming from container integrations. It does not apply to tags on dogstatsd metrics,
 ## and tags collected by other integrations.
