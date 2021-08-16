@@ -45,7 +45,7 @@ COPY stackstate*.yaml etc/stackstate-agent/
 # Actual docker image construction #
 ####################################
 
-FROM ubuntu:20.04
+FROM ubuntu:21.04
 LABEL maintainer "StackState <info@stackstate.com>"
 ARG WITH_JMX
 ENV DOCKER_STS_AGENT=true \
