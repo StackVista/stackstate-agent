@@ -595,7 +595,7 @@ pre_release_rpm:
 pre_release_main_agent_image: &pre_release_image
   stage: pre_release
   interruptible: true
-  image: docker:18.06.0
+  image: docker:19.03
   needs:
     - build_deb
   variables:
@@ -924,7 +924,7 @@ release_win:
 
 .base_release_image: &base_release_image
   stage: release
-  image: docker:18.06.0
+  image: docker:19.03
   dependencies:
     - build_deb
   variables:
