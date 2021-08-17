@@ -535,6 +535,14 @@ void set_submit_topology_event_cb(rtloader_t *rtloader, cb_submit_topology_event
 }
 
 /*
+ * [sts] raw metrics API
+ */
+void set_submit_raw_metrics_data_cb(rtloader_t *rtloader, cb_submit_raw_metrics_data_t cb)
+{
+    AS_TYPE(RtLoader, rtloader)->setSubmitRawMetricsDataCb(cb);
+}
+
+/*
  * [sts] health API
  */
 void set_submit_health_check_data_cb(rtloader_t *rtloader, cb_submit_health_check_data_t cb)

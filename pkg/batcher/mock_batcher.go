@@ -3,6 +3,7 @@ package batcher
 import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 )
 
@@ -50,6 +51,11 @@ func (batcher MockBatcher) SubmitHealthStartSnapshot(checkID check.ID, stream he
 // SubmitHealthStopSnapshot mock
 func (batcher MockBatcher) SubmitHealthStopSnapshot(checkID check.ID, stream health.Stream) {
 	batcher.CollectedTopology.HealthStopSnapshot(checkID, stream)
+}
+
+// SubmitRawMetricData mock
+func (batcher MockBatcher) SubmitRawMetricData(checkID check.ID, data []metrics.RawMetricsData) {
+	batcher.CollectedTopology.AddRawMetricsData(checkID, data)
 }
 
 // SubmitComplete mock

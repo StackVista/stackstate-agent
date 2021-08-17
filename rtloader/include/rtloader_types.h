@@ -179,12 +179,22 @@ typedef void (*cb_submit_stop_snapshot_t)(char *, instance_key_t *);
 // (check_id, topology_event)
 typedef void (*cb_submit_topology_event_t)(char *, char *);
 
+// [sts] telemetry
+//
+// (check_id, topology_event)
+typedef void (*cb_submit_topology_event_t)(char *, char *);
+
 // [sts] health
 //
 typedef struct health_stream_s {
     char *urn;
     char *sub_stream;
 } health_stream_t;
+
+// [sts] raw metrics
+//
+// (check_id, raw_metrics_event)
+typedef void (*cb_submit_raw_metrics_data_t)(char *, char *);
 
 // (check_id, stream, data)
 typedef void (*cb_submit_health_check_data_t)(char *, health_stream_t *, char *);

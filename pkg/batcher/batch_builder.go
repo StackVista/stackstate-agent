@@ -3,6 +3,7 @@ package batcher
 import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 )
 
@@ -10,6 +11,7 @@ import (
 type CheckInstanceBatchState struct {
 	Topology *topology.Topology
 	Health   map[string]health.Health
+	Metrics  []metrics.RawMetricsData
 }
 
 // CheckInstanceBatchStates is the type representing batched data for all check instances
@@ -41,6 +43,7 @@ func (builder *BatchBuilder) getOrCreateState(checkID check.ID) CheckInstanceBat
 	state := CheckInstanceBatchState{
 		Topology: nil,
 		Health:   make(map[string]health.Health),
+		Metrics:  []metrics.RawMetricsData{},
 	}
 	builder.states[checkID] = state
 	return state
@@ -81,6 +84,21 @@ func (builder *BatchBuilder) getOrCreateHealth(checkID check.ID, stream health.S
 	}
 
 	return builder.states[checkID].Health[stream.GoString()]
+}
+
+func (builder *BatchBuilder) getOrCreateRawMetrics(checkID check.ID) []metrics.RawMetricsData {
+	state := builder.getOrCreateState(checkID)
+
+	if state.Metrics != nil {
+		return state.Metrics
+	}
+
+	builder.states[checkID] = CheckInstanceBatchState{
+		Metrics:  []metrics.RawMetricsData{},
+		Health:   state.Health,
+		Topology: state.Topology,
+	}
+	return builder.states[checkID].Metrics
 }
 
 // AddComponent adds a component
@@ -138,6 +156,13 @@ func (builder *BatchBuilder) HealthStopSnapshot(checkID check.ID, stream health.
 	builder.states[checkID].Health[stream.GoString()] = healthData
 	// We always flush after a TopologyStopSnapshot to limit latency
 	return builder.Flush()
+}
+
+// AddRawMetricsData adds raw metric data
+func (builder *BatchBuilder) AddRawMetricsData(checkID check.ID, data []metrics.RawMetricsData) CheckInstanceBatchStates {
+	metricData := builder.getOrCreateRawMetrics(checkID)
+	metricData = append(metricData, data...)
+	return builder.incrementAndTryFlush()
 }
 
 // Flush the collected data. Returning the data and wiping the current build up Topology

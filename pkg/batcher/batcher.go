@@ -5,6 +5,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/serializer"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -30,6 +31,9 @@ type Batcher interface {
 	SubmitHealthCheckData(checkID check.ID, stream health.Stream, data health.CheckData)
 	SubmitHealthStartSnapshot(checkID check.ID, stream health.Stream, intervalSeconds int, expirySeconds int)
 	SubmitHealthStopSnapshot(checkID check.ID, stream health.Stream)
+
+	// Raw Metrics
+	SubmitRawMetricData(checkID check.ID, data []metrics.RawMetricsData)
 
 	// lifecycle
 	SubmitComplete(checkID check.ID)
@@ -115,6 +119,11 @@ type submitHealthStopSnapshot struct {
 	stream  health.Stream
 }
 
+type submitRawMetricsData struct {
+	checkID check.ID
+	data    []metrics.RawMetricsData
+}
+
 type submitComplete struct {
 	checkID check.ID
 }
@@ -140,10 +149,19 @@ func (batcher *AsynchronousBatcher) sendState(states CheckInstanceBatchStates) {
 			}
 		}
 
+		// Create the rawMetricData payload
+		rawMetricsData := make([]metrics.RawMetricsData, 0)
+		for _, state := range states {
+			for _, rawMetricRecord := range state.Metrics {
+				rawMetricsData = append(rawMetricsData, rawMetricRecord)
+			}
+		}
+
 		payload := map[string]interface{}{
 			"internalHostname": batcher.hostname,
 			"topologies":       topologies,
 			"health":           healthData,
+			"metrics":          rawMetricsData,
 		}
 
 		// For debug purposes print out all topologies payload
@@ -156,6 +174,11 @@ func (batcher *AsynchronousBatcher) sendState(states CheckInstanceBatchStates) {
 			log.Debug("Flushing the following health data:")
 			for _, health := range healthData {
 				log.Debugf("%v", health)
+			}
+
+			log.Debug("Flushing the following raw metric data:")
+			for _, rawMetric := range rawMetricsData {
+				log.Debugf("%v", rawMetric)
 			}
 		}
 
@@ -192,6 +215,9 @@ func (batcher *AsynchronousBatcher) run() {
 			batcher.sendState(batcher.builder.HealthStartSnapshot(submission.checkID, submission.stream, submission.intervalSeconds, submission.expirySeconds))
 		case submitHealthStopSnapshot:
 			batcher.sendState(batcher.builder.HealthStopSnapshot(submission.checkID, submission.stream))
+
+		case submitRawMetricsData:
+			batcher.sendState(batcher.builder.AddRawMetricsData(submission.checkID, submission.data))
 
 		case submitComplete:
 			batcher.sendState(batcher.builder.FlushIfDataProduced(submission.checkID))
@@ -262,6 +288,17 @@ func (batcher AsynchronousBatcher) SubmitHealthStopSnapshot(checkID check.ID, st
 	batcher.input <- submitHealthStopSnapshot{
 		checkID: checkID,
 		stream:  stream,
+	}
+}
+
+// SubmitRawMetricData submits Raw Metrics data to the batch
+func (batcher AsynchronousBatcher) SubmitRawMetricData(checkID check.ID, data []metrics.RawMetricsData) {
+	// TODO: Add marshal for the metric object
+	// log.Debugf("Submitting Raw metrics data for check [%s]: %s", checkID, data.JSONString())
+	log.Debugf("Submitting Raw metrics data for check [%s]", checkID)
+	batcher.input <- submitRawMetricsData{
+		checkID: checkID,
+		data:    data,
 	}
 }
 

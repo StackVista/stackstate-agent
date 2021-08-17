@@ -19,6 +19,7 @@
 #include "tagger.h"
 #include "util.h"
 #include "topology.h"
+#include "rawmetrics.h"
 #include "telemetry.h"
 #include "health.h"
 
@@ -118,6 +119,7 @@ bool Two::init()
     Py2_init_kubeutil();
     Py2_init_containers();
     Py2_init_topology();
+    Py2_init_raw_metrics();
     Py2_init_telemetry();
     Py2_init_health();
 
@@ -931,6 +933,12 @@ void Two::setSubmitStopSnapshotCb(cb_submit_stop_snapshot_t cb)
 void Two::setSubmitTopologyEventCb(cb_submit_topology_event_t cb)
 {
     _set_submit_topology_event_cb(cb);
+}
+
+// [sts] raw metrics
+void Two::setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t cb)
+{
+    _set_submit_raw_metrics_data_cb(cb);
 }
 
 // [sts] health

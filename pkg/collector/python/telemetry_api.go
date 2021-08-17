@@ -10,6 +10,7 @@ package python
 import (
 	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -51,5 +52,26 @@ func SubmitTopologyEvent(id *C.char, data *C.char) {
 	} else {
 		_ = log.Errorf("Empty topology event not sent. Raw: %v, Json: %v, Error: %v", rawEvent,
 			topologyEvent.String(), err)
+	}
+}
+
+// SubmitMetricsRawData is the method exposed to Python scripts to submit raw metric data
+//export SubmitMetricsRawData
+func SubmitMetricsRawData(id *C.char, _ *C.metric_raw_stream_t, data *C.char) {
+	goCheckID := C.GoString(id)
+	metricRawPayload := C.GoString(data)
+	var metricPayload []metrics.RawMetricsData
+	err := json.Unmarshal([]byte(metricRawPayload), &metricPayload)
+
+	if err == nil {
+		if len(metricPayload) != 0 {
+			batcher.GetBatcher().SubmitRawMetricData(check.ID(goCheckID), metricPayload)
+		} else {
+			_ = log.Errorf("Empty json submitted to as check data, this is not allowed, data will not be forwarded.")
+		}
+	} else {
+		_ = log.Errorf("Empty raw metric data not sent")
+		// _ = log.Errorf("Empty health data event not sent. Raw: %v, Json: %v, Error: %v", metricRawPayload,
+		// 	metricPayload.JSONString(), err)
 	}
 }

@@ -494,6 +494,14 @@ public:
     */
     virtual void setSubmitTopologyEventCb(cb_submit_topology_event_t) = 0;
 
+    //! setSubmitRawMetricsDataCb member.
+    /*!
+      \param A cb_submit_raw_metrics_data_t function pointer to the CGO callback.
+
+      Actual raw metrics data are submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t) = 0;
+
     //! setSubmitHealthCheckDataCb member.
     /*!
       \param A cb_submit_health_check_data_t function pointer to the CGO callback.

@@ -48,6 +48,7 @@ add_library(datadog-agent-three SHARED
     ../common/builtins/containers.c
     ../common/builtins/topology.c
     ../common/builtins/telemetry.c
+    ../common/builtins/rawmetrics.c
     ../common/builtins/health.c
 )
 
