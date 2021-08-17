@@ -2,7 +2,7 @@
 # Preparation stage: extract and cleanup #
 ##########################################
 
-FROM debian:buster-slim as extract
+FROM ubuntu:20.10 as extract
 ARG WITH_JMX
 COPY stackstate-agent*_amd64.deb /
 WORKDIR /output
@@ -45,7 +45,7 @@ COPY stackstate*.yaml etc/stackstate-agent/
 # Actual docker image construction #
 ####################################
 
-FROM ubuntu:21.04
+FROM ubuntu:20.10
 LABEL maintainer "StackState <info@stackstate.com>"
 ARG WITH_JMX
 ENV DOCKER_STS_AGENT=true \

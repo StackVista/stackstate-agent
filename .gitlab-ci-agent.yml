@@ -1,4 +1,4 @@
-image: docker.io/stackstate/stackstate-agent-runner-gitlab:latest7
+image: docker.io/stackstate/stackstate-agent-runner-gitlab:new-latest7
 
 stages:
   - prepare
