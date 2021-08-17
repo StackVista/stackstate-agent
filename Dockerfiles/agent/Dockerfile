@@ -2,7 +2,7 @@
 # Preparation stage: extract and cleanup #
 ##########################################
 
-FROM ubuntu:20.10 as extract
+FROM ubuntu:21.04 as extract
 ARG WITH_JMX
 COPY stackstate-agent*_amd64.deb /
 WORKDIR /output
