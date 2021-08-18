@@ -1,7 +1,5 @@
-diff --git a/lib/yaml/reader.py b/lib/yaml/reader.py
-index 4c42150..481d3d2 100644
---- a/lib/yaml/reader.py
-+++ b/lib/yaml/reader.py
+--- a/reader.py
++++ b/reader.py
 @@ -71,6 +71,7 @@ class Reader(object):
          self.index = 0
          self.line = 0
