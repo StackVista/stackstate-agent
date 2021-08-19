@@ -36,7 +36,7 @@ services:
     mem_limit: 1G
 
   receiver:
-    image: "quay.io/stackstate/stackstate-receiver:${STACKSTATE_BRANCH}"
+    image: "quay.io/stackstate/stackstate-receiver:STAC-13675-aggregate-across-reports"
     ports:
       - 7077:7077
       - 1618:1618
@@ -49,7 +49,7 @@ services:
     mem_limit: 1G
 
   correlate:
-    image: "quay.io/stackstate/stackstate-correlate:${STACKSTATE_BRANCH}"
+    image: "quay.io/stackstate/stackstate-correlate:STAC-13675-aggregate-across-reports"
     depends_on:
       kafka:
         condition: service_healthy
@@ -59,7 +59,7 @@ services:
     mem_limit: 1G
 
   topic-api:
-    image: "quay.io/stackstate/stackstate-topic-api:${STACKSTATE_BRANCH}"
+    image: "quay.io/stackstate/stackstate-topic-api:STAC-13675-aggregate-across-reports"
     ports:
       - 7070:7070
     depends_on:
