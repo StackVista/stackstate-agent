@@ -1,5 +1,3 @@
-diff --git a/reader.py b/reader.py
-index 2b12cc6..48674a1 100644
 --- a/reader.py
 +++ b/reader.py
 @@ -71,6 +71,7 @@ class Reader(object):
@@ -17,7 +15,7 @@ index 2b12cc6..48674a1 100644
 -    if has_ucs4:
 -        NON_PRINTABLE = u'[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uD7FF\uE000-\uFFFD\U00010000-\U0010ffff]'
 -    elif sys.platform.startswith('java'):
--        # Jython doesn't support lone surrogates https://bugs.jython.org/issue2048
+-        # Jython doesn't support lone surrogates https://bugs.jython.org/issue2048 
 -        NON_PRINTABLE = u'[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uD7FF\uE000-\uFFFD]'
 -    else:
 -        # Need to use eval here due to the above Jython issue
