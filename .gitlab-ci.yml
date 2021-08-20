@@ -81,6 +81,12 @@ variables: &commonvariables
   - &include_on_cluster_agent
     if: $CI_COMMIT_MESSAGE =~ /\[cluster-agent]/
     when: on_success
+  - &exclude_on_tag_v2
+    if: $CI_COMMIT_TAG =~ /2\..*/
+    when: never
+  - &exclude_on_tag_v3
+    if: $CI_COMMIT_TAG =~ /3\..*/
+    when: never
 
 agent2:
   stage: triggers
@@ -92,6 +98,8 @@ agent2:
     strategy: depend
   rules:
     - <<: *exclude_on_cluster_agent
+    # exclude this pipeline if we're running a v3 tag pipeline
+    - <<: *exclude_on_tag_v3
     - if: $CI_COMMIT_MESSAGE =~ /\[py3]/
       when: never
     - when: on_success
@@ -106,6 +114,8 @@ agent3:
     strategy: depend
   rules:
     - <<: *exclude_on_cluster_agent
+    # exclude this pipeline if we're running a v2 tag pipeline
+    - <<: *exclude_on_tag_v2
     - if: $CI_COMMIT_MESSAGE =~ /\[py2]/
       when: never
     - when: on_success
