@@ -258,8 +258,8 @@ func GetHostnameData(ctx context.Context) (HostnameData, error) {
 		}
 	}
 
-	isContainerized, containerName := getContainerHostname(ctx)
-	if isContainerized {
+	if config.IsContainerized() {
+		containerName := getContainerHostname(ctx)
 		if containerName != "" {
 			hostName = containerName
 			provider = "container"
