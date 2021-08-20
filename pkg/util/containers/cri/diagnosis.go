@@ -8,8 +8,7 @@
 package cri
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/diagnose/diagnosis"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
 )
 
 func init() {
@@ -19,8 +18,5 @@ func init() {
 // diagnose the CRI socket connectivity
 func diagnose() error {
 	_, err := GetUtil()
-	if err != nil {
-		log.Error(err)
-	}
 	return err
 }

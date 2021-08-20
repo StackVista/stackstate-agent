@@ -9,8 +9,7 @@
 package kubelet
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/diagnose/diagnosis"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
 )
 
 func init() {
@@ -20,8 +19,5 @@ func init() {
 // diagnose the API server availability
 func diagnose() error {
 	_, err := GetKubeUtil()
-	if err != nil {
-		log.Error(err)
-	}
 	return err
 }

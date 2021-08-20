@@ -6,8 +6,7 @@
 package clusteragent
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/diagnose/diagnosis"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
 )
 
 func init() {
@@ -16,8 +15,5 @@ func init() {
 
 func diagnose() error {
 	_, err := GetClusterAgentClient()
-	if err != nil {
-		log.Error(err)
-	}
 	return err
 }
