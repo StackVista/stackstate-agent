@@ -128,6 +128,7 @@ build do
     # install the core integrations.
     #
     command "#{pip} install wheel==0.34.1"
+    command "#{pip} install pip-tools==5.4.0"
 
     uninstall_buildtime_deps = ['rtloader', 'click', 'first', 'pip-tools']
     nix_build_env = {
@@ -145,12 +146,10 @@ build do
     # want to filter out things before installing.
     #
     if windows?
-      command "#{pip} install pip-tools==5.4.0"
       static_reqs_in_file = "#{windows_safe_path(project_dir)}\\stackstate_checks_base\\stackstate_checks\\base\\data\\#{agent_requirements_in}"
       static_reqs_out_file = "#{windows_safe_path(project_dir)}\\#{filtered_agent_requirements_in}"
       shared_libraries_in_file = "#{windows_safe_path(project_dir)}\\#{shared_libraries_in}"
     else
-      command "#{pip} install pip-tools==4.2.0"
       static_reqs_in_file = "#{project_dir}/stackstate_checks_base/stackstate_checks/base/data/#{agent_requirements_in}"
       static_reqs_out_file = "#{project_dir}/#{filtered_agent_requirements_in}"
       shared_libraries_in_file = "#{project_dir}/#{shared_libraries_in}"
