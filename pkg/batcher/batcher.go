@@ -33,7 +33,9 @@ type Batcher interface {
 	SubmitHealthStopSnapshot(checkID check.ID, stream health.Stream)
 
 	// Raw Metrics
-	SubmitRawMetricData(checkID check.ID, data []metrics.RawMetricsData)
+	SubmitRawMetricsData(checkID check.ID, stream metrics.RawMetricsStream, data metrics.RawMetricsCheckData) // TODO: Raw Metrics
+	SubmitRawMetricsStartSnapshot(checkID check.ID, stream metrics.RawMetricsStream) // TODO: Raw Metrics
+	SubmitRawMetricsStopSnapshot(checkID check.ID, stream metrics.RawMetricsStream) // TODO: Raw Metrics
 
 	// lifecycle
 	SubmitComplete(checkID check.ID)
@@ -119,9 +121,23 @@ type submitHealthStopSnapshot struct {
 	stream  health.Stream
 }
 
+// TODO: Raw Metrics
 type submitRawMetricsData struct {
 	checkID check.ID
-	data    []metrics.RawMetricsData
+	stream  metrics.RawMetricsStream
+	data    metrics.RawMetricsCheckData
+}
+
+// TODO: Raw Metrics
+type submitRawMetricsStartSnapshot struct {
+	checkID         check.ID
+	stream          metrics.RawMetricsStream
+}
+
+// TODO: Raw Metrics
+type submitRawMetricsStopSnapshot struct {
+	checkID check.ID
+	stream  metrics.RawMetricsStream
 }
 
 type submitComplete struct {
@@ -149,19 +165,20 @@ func (batcher *AsynchronousBatcher) sendState(states CheckInstanceBatchStates) {
 			}
 		}
 
-		// Create the rawMetricData payload
-		rawMetricsData := make([]metrics.RawMetricsData, 0)
+		// Create the rawMetricData payload   TODO: Raw Metrics
+		rawMetricsData := make([]metrics.RawMetrics, 0)
 		for _, state := range states {
 			for _, rawMetricRecord := range state.Metrics {
 				rawMetricsData = append(rawMetricsData, rawMetricRecord)
 			}
 		}
 
+		// TODO: Raw Metrics
 		payload := map[string]interface{}{
 			"internalHostname": batcher.hostname,
 			"topologies":       topologies,
 			"health":           healthData,
-			"metrics":          rawMetricsData,
+			"metrics":          rawMetricsData, // TODO: Raw Metrics
 		}
 
 		// For debug purposes print out all topologies payload
@@ -176,6 +193,7 @@ func (batcher *AsynchronousBatcher) sendState(states CheckInstanceBatchStates) {
 				log.Debugf("%v", health)
 			}
 
+			// TODO: Raw Metrics
 			log.Debug("Flushing the following raw metric data:")
 			for _, rawMetric := range rawMetricsData {
 				log.Debugf("%v", rawMetric)
@@ -216,8 +234,13 @@ func (batcher *AsynchronousBatcher) run() {
 		case submitHealthStopSnapshot:
 			batcher.sendState(batcher.builder.HealthStopSnapshot(submission.checkID, submission.stream))
 
+		// TODO: Raw Metrics
 		case submitRawMetricsData:
-			batcher.sendState(batcher.builder.AddRawMetricsData(submission.checkID, submission.data))
+			batcher.sendState(batcher.builder.AddRawMetricsData(submission.checkID, submission.stream, submission.data))
+		case submitRawMetricsStartSnapshot:
+			batcher.sendState(batcher.builder.RawMetricsStartSnapshot(submission.checkID, submission.stream))
+		case submitRawMetricsStopSnapshot:
+			batcher.sendState(batcher.builder.RawMetricsStopSnapshot(submission.checkID, submission.stream))
 
 		case submitComplete:
 			batcher.sendState(batcher.builder.FlushIfDataProduced(submission.checkID))
@@ -291,14 +314,29 @@ func (batcher AsynchronousBatcher) SubmitHealthStopSnapshot(checkID check.ID, st
 	}
 }
 
-// SubmitRawMetricData submits Raw Metrics data to the batch
-func (batcher AsynchronousBatcher) SubmitRawMetricData(checkID check.ID, data []metrics.RawMetricsData) {
-	// TODO: Add marshal for the metric object
-	// log.Debugf("Submitting Raw metrics data for check [%s]: %s", checkID, data.JSONString())
-	log.Debugf("Submitting Raw metrics data for check [%s]", checkID)
+// SubmitRawMetricsData TODO: Raw Metrics
+func (batcher AsynchronousBatcher) SubmitRawMetricsData(checkID check.ID, stream metrics.RawMetricsStream, data metrics.RawMetricsCheckData) {
+	log.Debugf("Submitting Raw metrics data for check [%s] stream [%s]: %s", checkID, stream.GoString(), data.JSONString())
 	batcher.input <- submitRawMetricsData{
 		checkID: checkID,
+		stream:  stream,
 		data:    data,
+	}
+}
+
+// SubmitRawMetricsStartSnapshot TODO: Raw Metrics
+func (batcher AsynchronousBatcher) SubmitRawMetricsStartSnapshot(checkID check.ID, stream metrics.RawMetricsStream) {
+	batcher.input <- submitRawMetricsStartSnapshot{
+		checkID:         checkID,
+		stream:          stream,
+	}
+}
+
+// SubmitRawMetricsStopSnapshot TODO: Raw Metrics
+func (batcher AsynchronousBatcher) SubmitRawMetricsStopSnapshot(checkID check.ID, stream metrics.RawMetricsStream) {
+	batcher.input <- submitRawMetricsStopSnapshot{
+		checkID: checkID,
+		stream:  stream,
 	}
 }
 

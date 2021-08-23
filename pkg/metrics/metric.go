@@ -5,19 +5,12 @@
 
 package metrics
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // APIMetricType represents an API metric type
 type APIMetricType int
-
-type RawMetricsData struct {
-	Name      string            `json:"name"`
-	Timestamp int               `json:"timestamp"`
-	Value     string            `json:"value"`
-	Hostname  string            `json:"hostname"`
-	Type      string            `json:"type,omitempty"`
-	Tags      map[string]string `json:"tags"`
-}
 
 // Enumeration of the existing API metric types
 const (

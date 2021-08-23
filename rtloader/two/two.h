@@ -133,6 +133,11 @@ public:
     // raw metrics
     void setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t);
 
+    // raw metrics  TODO: Raw Metrics
+    void setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t);
+    void setSubmitRawMetricsStartSnapshotCb(cb_submit_raw_metrics_start_snapshot_t);
+    void setSubmitRawMetricsStopSnapshotCb(cb_submit_raw_metrics_stop_snapshot_t);
+
     // health
     void setSubmitHealthCheckDataCb(cb_submit_health_check_data_t);
     void setSubmitHealthStartSnapshotCb(cb_submit_health_start_snapshot_t);

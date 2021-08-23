@@ -53,9 +53,19 @@ func (batcher MockBatcher) SubmitHealthStopSnapshot(checkID check.ID, stream hea
 	batcher.CollectedTopology.HealthStopSnapshot(checkID, stream)
 }
 
-// SubmitRawMetricData mock
-func (batcher MockBatcher) SubmitRawMetricData(checkID check.ID, data []metrics.RawMetricsData) {
-	batcher.CollectedTopology.AddRawMetricsData(checkID, data)
+// SubmitRawMetricsData mock   TODO: Raw Metrics
+func (batcher MockBatcher) SubmitRawMetricsData(checkID check.ID, stream metrics.RawMetricsStream, data metrics.RawMetricsCheckData) {
+	batcher.CollectedTopology.AddRawMetricsData(checkID, stream, data)
+}
+
+// SubmitRawMetricsStartSnapshot mock   TODO: Raw Metrics
+func (batcher MockBatcher) SubmitRawMetricsStartSnapshot(checkID check.ID, stream metrics.RawMetricsStream) {
+	batcher.CollectedTopology.RawMetricsStartSnapshot(checkID, stream)
+}
+
+// SubmitRawMetricsStopSnapshot mock   TODO: Raw Metrics
+func (batcher MockBatcher) SubmitRawMetricsStopSnapshot(checkID check.ID, stream metrics.RawMetricsStream) {
+	batcher.CollectedTopology.RawMetricsStopSnapshot(checkID, stream)
 }
 
 // SubmitComplete mock

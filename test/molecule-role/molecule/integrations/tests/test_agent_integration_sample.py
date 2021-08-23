@@ -474,3 +474,39 @@ def test_agent_integration_sample_health_synchronization(host):
         ) is not None
 
     util.wait_until(wait_for_health_messages, 60, 3)
+
+
+def test_agent_integration_sample_raw_metrics_synchronization(host):
+    url = "http://localhost:7070/api/topic/sts_intake_raw_metrics?limit=100"
+
+    def wait_for_raw_metrics_messages():
+        data = host.check_output("curl \"%s\"" % url)
+        json_data = json.loads(data)
+        with open("./topic-agent-integration-sample-sts-raw_metrics-messages.json", 'w') as f:
+            json.dump(json_data, f, indent=4)
+
+        def _raw_metrics_contains_payload(event):
+            for message in json_data["messages"]:
+                p = message["message"]
+                if "IntakeRawMetricsMessage" in p:
+                    _data = p["IntakeRawMetricsMessage"]["payload"]
+                    if _data == dict(_data, **event):
+                        return _data
+            return None
+
+        assert _raw_metrics_contains_payload({
+                "IntakeRawMetricsMainStreamStop": {}
+            }
+        ) is not None
+        assert _raw_metrics_contains_payload(
+            {
+                "IntakeRawMetricsCheckStates": {
+                    "consistencyModel": "REPEAT_SNAPSHOTS",
+                    "intakeCheckStates": [
+                        {"data":"{\"name\":\"name\"}"}
+                    ]
+                }
+            }
+        ) is not None
+
+    util.wait_until(wait_for_raw_metrics_messages, 60, 3)

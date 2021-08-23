@@ -14,6 +14,8 @@
 #include <string>
 #include <vector>
 
+// TODO: Raw Metrics
+
 //! RtLoaderPyObject class.
 /*!
   A PyObject C++ class representation for C-API PyObjects.
@@ -494,14 +496,6 @@ public:
     */
     virtual void setSubmitTopologyEventCb(cb_submit_topology_event_t) = 0;
 
-    //! setSubmitRawMetricsDataCb member.
-    /*!
-      \param A cb_submit_raw_metrics_data_t function pointer to the CGO callback.
-
-      Actual raw metrics data are submitted from go-land, this allows us to set the CGO callback.
-    */
-    virtual void setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t) = 0;
-
     //! setSubmitHealthCheckDataCb member.
     /*!
       \param A cb_submit_health_check_data_t function pointer to the CGO callback.
@@ -525,6 +519,30 @@ public:
       Actual stop health snapshot is submitted from go-land, this allows us to set the CGO callback.
     */
     virtual void setSubmitHealthStopSnapshotCb(cb_submit_health_stop_snapshot_t) = 0;
+
+    //! setSubmitRawMetricsDataCb member.
+    /*!
+      \param A cb_submit_raw_metrics_data_t function pointer to the CGO callback.
+
+      Actual check data is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t) = 0;
+
+    //! setSubmitRawMetricsStartSnapshotCb member.
+    /*!
+      \param A cb_submit_raw_metrics_start_snapshot_t function pointer to the CGO callback.
+
+      Actual start raw metrics snapshot is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setSubmitRawMetricsStartSnapshotCb(cb_submit_raw_metrics_start_snapshot_t) = 0;
+
+    //! setSubmitRawMetricsStopSnapshotCb member.
+    /*!
+      \param A cb_submit_raw_metrics_stop_snapshot_t function pointer to the CGO callback.
+
+      Actual stop raw metrics snapshot is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setSubmitRawMetricsStopSnapshotCb(cb_submit_raw_metrics_stop_snapshot_t) = 0;
 private:
     mutable std::string _error; /*!< string containing a RtLoader error */
     mutable bool _errorFlag; /*!< boolean indicating whether an error was set on RtLoader */

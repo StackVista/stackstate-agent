@@ -4,6 +4,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	serializer2 "github.com/StackVista/stackstate-agent/pkg/serializer"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
@@ -41,6 +42,10 @@ var (
 	testStartSnapshot = &health.StartSnapshotMetadata{ExpiryIntervalS: 0, RepeatIntervalS: 1}
 	testStopSnapshot  = &health.StopSnapshotMetadata{}
 	testCheckData     = map[string]interface{}{}
+
+	testRawMetricsStream        = metrics.RawMetricsStream{Urn: "urn", SubStream: "bla"} // TODO: Raw Metrics
+	testRawMetricsStream2       = metrics.RawMetricsStream{Urn: "urn"} // TODO: Raw Metrics
+	testRawMetricsData     		= map[string]interface{}{} // TODO: Raw Metrics
 )
 
 func TestBatchFlushOnStopSnapshot(t *testing.T) {
@@ -64,6 +69,7 @@ func TestBatchFlushOnStopSnapshot(t *testing.T) {
 				},
 			},
 			"health": []health.Health{},
+			"metrics": []metrics.RawMetrics{},
 		})
 
 	batcher.Shutdown()
@@ -88,6 +94,32 @@ func TestBatchFlushOnStopHealthSnapshot(t *testing.T) {
 					CheckStates:  []health.CheckData{},
 				},
 			},
+			"metrics": []metrics.RawMetrics{},
+		})
+
+	batcher.Shutdown()
+}
+
+// TODO: Raw Metrics
+func TestBatchFlushOnStopRawMetricsSnapshot(t *testing.T) {
+	serializer := serializer2.NewAgentV1MockSerializer()
+	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, 100)
+
+	batcher.SubmitRawMetricsStopSnapshot(testID, testRawMetricsStream)
+
+	message := serializer.GetJSONToV1IntakeMessage()
+
+	assert.Equal(t, message,
+		map[string]interface{}{
+			"internalHostname": "myhost",
+			"topologies":       []topology.Topology{},
+			"health": []health.Health{},
+			"metrics": []metrics.RawMetrics{
+				{
+					Stream:       testRawMetricsStream,
+					CheckStates:  []metrics.RawMetricsCheckData{},
+				},
+			},
 		})
 
 	batcher.Shutdown()
@@ -99,6 +131,7 @@ func TestBatchFlushOnComplete(t *testing.T) {
 
 	batcher.SubmitComponent(testID, testInstance, testComponent)
 	batcher.SubmitHealthCheckData(testID, testStream, testCheckData)
+	batcher.SubmitRawMetricsData(testID, testRawMetricsStream, testRawMetricsData) // TODO: Raw Metrics
 
 	batcher.SubmitComplete(testID)
 
@@ -120,6 +153,12 @@ func TestBatchFlushOnComplete(t *testing.T) {
 				{
 					Stream:      testStream,
 					CheckStates: []health.CheckData{testCheckData},
+				},
+			},
+			"metrics": []metrics.RawMetrics{  // TODO: Raw Metrics
+				{
+					Stream:       testRawMetricsStream,
+					CheckStates:  []metrics.RawMetricsCheckData{testRawMetricsData},
 				},
 			},
 		})
@@ -153,6 +192,7 @@ func TestBatchNoDataNoComplete(t *testing.T) {
 				},
 			},
 			"health": []health.Health{},
+			"metrics": []metrics.RawMetrics{},
 		})
 
 	batcher.Shutdown()
@@ -167,9 +207,15 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 	batcher.SubmitComponent(testID2, testInstance2, testComponent)
 	batcher.SubmitComponent(testID2, testInstance2, testComponent)
 	batcher.SubmitComponent(testID2, testInstance2, testComponent)
+
 	batcher.SubmitHealthStartSnapshot(testID, testStream, 1, 0)
 	batcher.SubmitHealthCheckData(testID, testStream, testCheckData)
 	batcher.SubmitHealthCheckData(testID2, testStream2, testCheckData)
+
+	batcher.SubmitRawMetricsStartSnapshot(testID, testRawMetricsStream) // TODO: Raw Metrics
+	batcher.SubmitRawMetricsData(testID, testRawMetricsStream, testRawMetricsData) // TODO: Raw Metrics
+	batcher.SubmitRawMetricsData(testID2, testRawMetricsStream2, testRawMetricsData) // TODO: Raw Metrics
+
 	batcher.SubmitStopSnapshot(testID, testInstance)
 
 	message := serializer.GetJSONToV1IntakeMessage().(map[string]interface{})
@@ -203,6 +249,16 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 				CheckStates: []health.CheckData{testCheckData},
 			},
 		},
+		"metrics": []metrics.RawMetrics{ // TODO: Raw Metrics
+			{
+				Stream:        testRawMetricsStream, // TODO: Raw Metrics
+				CheckStates:   []metrics.RawMetricsCheckData{testRawMetricsData}, // TODO: Raw Metrics
+			},
+			{
+				Stream:      testRawMetricsStream2, // TODO: Raw Metrics
+				CheckStates: []metrics.RawMetricsCheckData{testRawMetricsData}, // TODO: Raw Metrics
+			},
+		},
 	})
 
 	batcher.Shutdown()
@@ -230,6 +286,7 @@ func TestBatchFlushOnMaxElements(t *testing.T) {
 				},
 			},
 			"health": []health.Health{},
+			"metrics": []metrics.RawMetrics{}, // TODO: Raw Metrics
 		})
 
 	batcher.Shutdown()
@@ -252,6 +309,33 @@ func TestBatchFlushOnMaxHealthElements(t *testing.T) {
 				{
 					Stream:      testStream,
 					CheckStates: []health.CheckData{testCheckData, testCheckData},
+				},
+			},
+			"metrics": []metrics.RawMetrics{},
+		})
+
+	batcher.Shutdown()
+}
+
+// TODO: Raw Metrics
+func TestBatchFlushOnMaxRawMetricsElements(t *testing.T) {
+	serializer := serializer2.NewAgentV1MockSerializer()
+	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, 2)
+
+	batcher.SubmitRawMetricsData(testID, testRawMetricsStream, testRawMetricsData)
+	batcher.SubmitRawMetricsData(testID, testRawMetricsStream, testRawMetricsData)
+
+	message := serializer.GetJSONToV1IntakeMessage()
+
+	assert.Equal(t, message,
+		map[string]interface{}{
+			"internalHostname": "myhost",
+			"topologies":       []topology.Topology{},
+			"health": 			[]health.Health{},
+			"metrics": 			[]metrics.RawMetrics{
+				{
+					Stream:      testRawMetricsStream,
+					CheckStates: []metrics.RawMetricsCheckData{testRawMetricsData, testRawMetricsData},
 				},
 			},
 		})
@@ -282,6 +366,7 @@ func TestBatchFlushOnMaxElementsEnv(t *testing.T) {
 				},
 			},
 			"health": []health.Health{},
+			"metrics": []metrics.RawMetrics{},
 		})
 
 	batcher.Shutdown()
@@ -310,6 +395,7 @@ func TestBatcherStartSnapshot(t *testing.T) {
 				},
 			},
 			"health": []health.Health{},
+			"metrics": []metrics.RawMetrics{},
 		})
 
 	batcher.Shutdown()
@@ -337,6 +423,7 @@ func TestBatcherRelation(t *testing.T) {
 				},
 			},
 			"health": []health.Health{},
+			"metrics": []metrics.RawMetrics{},
 		})
 
 	batcher.Shutdown()
@@ -362,6 +449,7 @@ func TestBatcherHealthStartSnapshot(t *testing.T) {
 					CheckStates:   []health.CheckData{},
 				},
 			},
+			"metrics": []metrics.RawMetrics{},
 		})
 
 	batcher.Shutdown()
@@ -390,6 +478,63 @@ func TestBatchMultipleHealthStreams(t *testing.T) {
 				StartSnapshot: testStartSnapshot,
 				Stream:        testStream2,
 				CheckStates:   []health.CheckData{},
+			},
+		},
+		"metrics": []metrics.RawMetrics{},
+	})
+
+	batcher.Shutdown()
+}
+
+// TODO: Raw Metrics
+func TestBatcherRawMetricsStartSnapshot(t *testing.T) {
+	serializer := serializer2.NewAgentV1MockSerializer()
+	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, 100)
+
+	batcher.SubmitRawMetricsStartSnapshot(testID, testRawMetricsStream)
+	batcher.SubmitComplete(testID)
+
+	message := serializer.GetJSONToV1IntakeMessage()
+
+	assert.Equal(t, message,
+		map[string]interface{}{
+			"internalHostname": "myhost",
+			"topologies":       []topology.Topology{},
+			"health": []health.Health{},
+			"metrics": []metrics.RawMetrics{
+				{
+					Stream:        testRawMetricsStream,
+					CheckStates:   []metrics.RawMetricsCheckData{},
+				},
+			},
+		})
+
+	batcher.Shutdown()
+}
+
+// TODO: Raw Metrics
+func TestBatchMultipleRawMetricsStreams(t *testing.T) {
+	serializer := serializer2.NewAgentV1MockSerializer()
+	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, 100)
+
+	batcher.SubmitRawMetricsStartSnapshot(testID, testRawMetricsStream)
+	batcher.SubmitRawMetricsStartSnapshot(testID, testRawMetricsStream2)
+	batcher.SubmitComplete(testID)
+
+	message := serializer.GetJSONToV1IntakeMessage().(map[string]interface{})
+
+	assert.ObjectsAreEqualValues(message, map[string]interface{}{
+		"internalHostname": "myhost",
+		"topologies":       []topology.Topology{},
+		"health": []health.Health{},
+		"metrics": []metrics.RawMetrics{
+			{
+				Stream:        testRawMetricsStream,
+				CheckStates:   []metrics.RawMetricsCheckData{},
+			},
+			{
+				Stream:        testRawMetricsStream2,
+				CheckStates:   []metrics.RawMetricsCheckData{},
 			},
 		},
 	})

@@ -18,7 +18,7 @@
 #include "tagger.h"
 #include "util.h"
 #include "topology.h"
-#include "rawmetrics.h"
+#include "raw_metrics.h"
 #include "telemetry.h"
 #include "health.h"
 
@@ -938,13 +938,6 @@ void Three::setSubmitTopologyEventCb(cb_submit_topology_event_t cb)
     _set_submit_topology_event_cb(cb);
 }
 
-
-// [sts] raw metrics
-void Three::setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t cb)
-{
-    _set_submit_raw_metrics_data_cb(cb);
-}
-
 // [sts] health
 void Three::setSubmitHealthCheckDataCb(cb_submit_health_check_data_t cb)
 {
@@ -959,6 +952,22 @@ void Three::setSubmitHealthStartSnapshotCb(cb_submit_health_start_snapshot_t cb)
 void Three::setSubmitHealthStopSnapshotCb(cb_submit_health_stop_snapshot_t cb)
 {
     _set_submit_health_stop_snapshot_cb(cb);
+}
+
+// [sts] raw metrics   TODO: Raw Metrics
+void Three::setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t cb)
+{
+    _set_submit_raw_metrics_data_cb(cb);
+}
+
+void Three::setSubmitRawMetricsStartSnapshotCb(cb_submit_raw_metrics_start_snapshot_t cb)
+{
+    _set_submit_raw_metrics_start_snapshot_cb(cb);
+}
+
+void Three::setSubmitRawMetricsStopSnapshotCb(cb_submit_raw_metrics_stop_snapshot_t cb)
+{
+    _set_submit_raw_metrics_stop_snapshot_cb(cb);
 }
 
 // Python Helpers
