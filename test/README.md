@@ -7,6 +7,36 @@ Those are integration tests that spawn new VMs in AWS and do the following:
 * run a docker compose setup of the StackState receiver, correlate and topic API
 * verify assertion on the target VMs
 
+## ** Important Notes ** (Auto Cleanup, and unreachable machines)
+Gitlab CI Process:
+- Molecule instances spun up won't run for longer than 2 hours and 30 minutes. After the max time, a script will clean those instances to prevent EC2 costs from racking up from zombie instances
+- Only one instance per branch is allowed. What that means is if you push up another commit, the prepare stage will destroy the ec2 machine from your previous builds. If you get a message that says x-x-x-branch-name-lock, that means you have a prev branch still running and need to kill that branch to release the lock to allow your new branch to continue. This prevents a lot of useless EC2 instances from running and building up costs (We did include interrupt but GitLab seems to be broken on interrupts atm)
+- If a step in the "Cleanup" stage ran to destroy a molecule machine, or your acceptance step complains about "Unable to reach the ssh machine", then your molecule instance might have been destroyed or cleaned up. To recreate it, rerun the appropriate "Prepare" stage step to spin the machine back up
+
+Supported Commit Message Functionality (Target builds and reduce EC2 costs):
+
+** Default: Note these do not have to be defined, by default everything will be included except secrets and localinstall which falls on master and tags **
+
+The following will run a single molecule pipeline and ignore the rest
+this will reduce ec2 costs, possible wait times and clutter
+- "<commit message> [molecule-compose]"
+- "<commit message> [molecule-integrations]"
+- "<commit message> [molecule-secrets]"
+- "<commit message> [molecule-localinstall]"
+- "<commit message> [molecule-kubernetes]"
+- "<commit message> [molecule-swarm]"
+- "<commit message> [molecule-vms]"
+
+You can also reduce ec2 costs and clutter by defining the py version you want to build
+- "<commit message> [py2]"
+- "<commit message> [py3]"
+
+This would be ideal to reduce the pipeline build to only what's required
+You can combine tags from the top to stack filters for example:
+- "<commit message> [py2][molecule-compose]"
+- "<commit message> [py3][molecule-secrets][molecule-vms]"
+
+
 ## Run
 
 Prerequisites:
