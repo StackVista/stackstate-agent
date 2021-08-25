@@ -2,7 +2,7 @@
 # Preparation stage: layout and chmods #
 ########################################
 
-FROM ubuntu:20.10 as builder
+FROM ubuntu:20.04 as builder
 
 WORKDIR /output
 
@@ -22,7 +22,7 @@ RUN chmod 755 entrypoint.sh \
 # Actual docker image construction #
 ####################################
 
-FROM ubuntu:20.10
+FROM ubuntu:20.04
 
 LABEL maintainer "StackState <info@stackstate.com>"
 
