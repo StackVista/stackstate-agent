@@ -22,7 +22,7 @@ extern void submitRawMetricsData(char *, raw_metrics_stream_t *, char *);
 extern void submitRawMetricsStartSnapshot(char *, raw_metrics_stream_t *, int, int);
 extern void submitRawMetricsStopSnapshot(char *, raw_metrics_stream_t *);
 
-static void initRawMetrics(rtloader_t *rtloader) {
+static void initRawMetricsTests(rtloader_t *rtloader) {
 	set_submit_raw_metrics_data_cb(rtloader, submitRawMetricsData);
 	set_submit_raw_metrics_start_snapshot_cb(rtloader, submitRawMetricsStartSnapshot);
 	set_submit_raw_metrics_stop_snapshot_cb(rtloader, submitRawMetricsStopSnapshot);
