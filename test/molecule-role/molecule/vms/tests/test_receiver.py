@@ -351,7 +351,6 @@ def test_connection_network_namespaces_relations(host):
 
 
 def test_process_http_metrics(host):
-    pytest.skip("Disabled HTTP Metrics: https://stackstate.atlassian.net/browse/STAC-13669.")
     url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=1000"
 
     def wait_for_metrics():
