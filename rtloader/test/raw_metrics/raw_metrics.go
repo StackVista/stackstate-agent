@@ -19,7 +19,7 @@ import (
 #include "datadog_agent_rtloader.h"
 
 extern void submitRawMetricsData(char *, raw_metrics_stream_t *, char *);
-extern void submitRawMetricsStartSnapshot(char *, raw_metrics_stream_t *, int, int);
+extern void submitRawMetricsStartSnapshot(char *, raw_metrics_stream_t *);
 extern void submitRawMetricsStopSnapshot(char *, raw_metrics_stream_t *);
 
 static void initRawMetricsTests(rtloader_t *rtloader) {
