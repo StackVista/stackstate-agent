@@ -81,7 +81,12 @@ func TestSubmitRawMetricsData(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
 
+
 	out, err := run(`metrics.submit_raw_metrics_data(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"}, ` + rawMetricsData + ` )`)
+
+	t.Logf("-- Debug --")
+	t.Logf(rawMetricsData)
+	t.Logf(out)
 
 	if err != nil {
 		t.Fatal(err)
