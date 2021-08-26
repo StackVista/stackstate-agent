@@ -116,6 +116,9 @@ func TestSubmitRawMetricsDataNoDict(t *testing.T) {
 
 	out, err := run(`raw_metrics.submit_raw_metrics_data(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"}, "I should be a dict")`)
 
+	t.Logf("-- Debug --")
+	t.Logf(out)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,6 +135,9 @@ func TestSubmitRawMetricsDataCannotBeSerialized(t *testing.T) {
 	helpers.ResetMemoryStats()
 
 	out, err := run(`raw_metrics.submit_raw_metrics_data(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"}, {object(): object()})`)
+
+	t.Logf("-- Debug --")
+	t.Logf(out)
 
 	if err != nil {
 		t.Fatal(err)
@@ -150,6 +156,9 @@ func TestRawMetricsStartSnapshot(t *testing.T) {
 	helpers.ResetMemoryStats()
 
 	out, err := run(`raw_metrics.submit_raw_metrics_start_snapshot(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"})`)
+
+	t.Logf("-- Debug --")
+	t.Logf(out)
 
 	if err != nil {
 		t.Fatal(err)
@@ -178,6 +187,9 @@ func TestStopSnapshot(t *testing.T) {
 	helpers.ResetMemoryStats()
 
 	out, err := run(`raw_metrics.submit_raw_metrics_stop_snapshot(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"})`)
+
+	t.Logf("-- Debug --")
+	t.Logf(out)
 
 	if err != nil {
 		t.Fatal(err)
