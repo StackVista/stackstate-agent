@@ -81,8 +81,7 @@ func TestSubmitRawMetricsData(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
 
-
-	out, err := run(`metrics.submit_raw_metrics_data(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"}, ` + rawMetricsData + ` )`)
+	out, err := run(`raw_metrics.submit_raw_metrics_data(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"}, ` + rawMetricsData + ` )`)
 
 	t.Logf("-- Debug --")
 	t.Logf(rawMetricsData)
@@ -115,7 +114,7 @@ func TestSubmitRawMetricsDataNoDict(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
 
-	out, err := run(`metrics.submit_raw_metrics_data(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"}, "I should be a dict")`)
+	out, err := run(`raw_metrics.submit_raw_metrics_data(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"}, "I should be a dict")`)
 
 	if err != nil {
 		t.Fatal(err)
@@ -132,7 +131,7 @@ func TestSubmitRawMetricsDataCannotBeSerialized(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
 
-	out, err := run(`metrics.submit_raw_metrics_data(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"}, {object(): object()})`)
+	out, err := run(`raw_metrics.submit_raw_metrics_data(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"}, {object(): object()})`)
 
 	if err != nil {
 		t.Fatal(err)
@@ -150,7 +149,7 @@ func TestRawMetricsStartSnapshot(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
 
-	out, err := run(`metrics.submit_raw_metrics_start_snapshot(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"})`)
+	out, err := run(`raw_metrics.submit_raw_metrics_start_snapshot(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"})`)
 
 	if err != nil {
 		t.Fatal(err)
@@ -178,7 +177,7 @@ func TestStopSnapshot(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
 
-	out, err := run(`metrics.submit_raw_metrics_stop_snapshot(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"})`)
+	out, err := run(`raw_metrics.submit_raw_metrics_stop_snapshot(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"})`)
 
 	if err != nil {
 		t.Fatal(err)
