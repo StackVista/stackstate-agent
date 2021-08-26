@@ -155,7 +155,7 @@ func TestRawMetricsStartSnapshot(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
 
-	out, err := run(`raw_metrics.submit_raw_metrics_start_snapshot(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"})`)
+	out, err := run(`raw_metrics.submit_raw_metrics_start_snapshot(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"}, 0, 1)`)
 
 	t.Logf("-- Debug --")
 	t.Logf(out)
