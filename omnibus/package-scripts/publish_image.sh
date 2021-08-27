@@ -13,8 +13,11 @@ echo "${IMAGE_TAG}"
 echo "${IMAGE_REPO}"
 echo "${DOCKERFILE_PATH}"
 
+# -e ARTIFACTORY_USER=$ARTIFACTORY_USER \
+# -e ARTIFACTORY_PASSWORD=$ARTIFACTORY_PASSWORD \
+
 docker build -t "${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${IMAGE_TAG}" "${DOCKERFILE_PATH}"
-docker login -u "${docker_user}" -p "${docker_password}" "docker.io"
+docker login -u "${ARTIFACTORY_USER}" -p "${ARTIFACTORY_PASSWORD}" "artifactory.stackstate.io"
 docker push "${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${IMAGE_TAG}"
 
 if [ -n "$EXTRA_TAG" ]; then
