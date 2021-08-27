@@ -14,7 +14,7 @@ echo "${IMAGE_REPO}"
 echo "${DOCKERFILE_PATH}"
 
 docker build -t "${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${IMAGE_TAG}" "${DOCKERFILE_PATH}"
-docker login -u "${docker_user}" -p "${docker_password}" "${REGISTRY}"
+docker login -u "${docker_user}" -p "${docker_password}" "docker.io"
 docker push "${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${IMAGE_TAG}"
 
 if [ -n "$EXTRA_TAG" ]; then
