@@ -1,6 +1,7 @@
 image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:latest7
 
 stages:
+  - manual_cleanup
   - prepare
   - build
   - test
@@ -8,7 +9,6 @@ stages:
   - acceptance
   - cleanup
   - release
-  - manual_cleanup
 
 ######################### pipeline bricks
 
