@@ -855,7 +855,7 @@ molecule_kubernetes_cleanup:
     - molecule_kubernetes_test
   rules:
     - *kubernetes_ignore_rule
-    - *only_agent_3_always
+    - *only_agent_3_on_success
 
 
 # Job Seq: Molecule
