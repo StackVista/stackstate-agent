@@ -603,7 +603,7 @@ pre_release_main_agent_image: &pre_release_image
     DOCKER_TLS_CERTDIR: ""
   services:
     - name: artifactory.stackstate.io/docker-virtual/docker:18.09-dind
-      alias: docker:18.09-dind
+      alias: docker
   before_script: []
   script:
     - cd $CI_PROJECT_DIR
@@ -1207,7 +1207,7 @@ release_win:
     DOCKER_TLS_CERTDIR: ""
   services:
     - name: artifactory.stackstate.io/docker-virtual/docker:18.09-dind
-      alias: docker:18.09-dind
+      alias: docker
   before_script: []
   tags:
     - sts-k8s-m-runner
