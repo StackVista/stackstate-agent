@@ -602,7 +602,7 @@ pre_release_main_agent_image: &pre_release_image
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   services:
-    - docker:18.09-dind
+    - artifactory.stackstate.io/docker-virtual/docker:18.09-dind
   before_script: []
   script:
     - cd $CI_PROJECT_DIR
@@ -1205,7 +1205,7 @@ release_win:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   services:
-    - docker:18.09-dind
+    - artifactory.stackstate.io/docker-virtual/docker:18.09-dind
   before_script: []
   tags:
     - sts-k8s-m-runner
