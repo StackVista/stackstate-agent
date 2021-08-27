@@ -6,18 +6,16 @@ IMAGE_TAG="${1}"
 IMAGE_REPO="${2}"
 DOCKERFILE_PATH="${3}"
 EXTRA_TAG="${4}"
-REGISTRY="${5:-artifactory.stackstate.io/docker-virtual}"
+REGISTRY="${5:-docker.io}"
 ORGANIZATION="${6:-stackstate}"
+REGISTRY_ARTIFACTORY="${7:-artifactory.stackstate.io/docker-virtual}"
 
 echo "${IMAGE_TAG}"
 echo "${IMAGE_REPO}"
 echo "${DOCKERFILE_PATH}"
 
-# -e ARTIFACTORY_USER=$ARTIFACTORY_USER \
-# -e ARTIFACTORY_PASSWORD=$ARTIFACTORY_PASSWORD \
-
-docker build -t "${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${IMAGE_TAG}" "${DOCKERFILE_PATH}"
-docker login -u "${ARTIFACTORY_USER}" -p "${ARTIFACTORY_PASSWORD}" "artifactory.stackstate.io"
+docker build -t "${REGISTRY_ARTIFACTORY}/${ORGANIZATION}/${IMAGE_REPO}:${IMAGE_TAG}" "${DOCKERFILE_PATH}"
+docker login -u "${docker_user}" -p "${docker_password}" "${REGISTRY}"
 docker push "${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${IMAGE_TAG}"
 
 if [ -n "$EXTRA_TAG" ]; then
