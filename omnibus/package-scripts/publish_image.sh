@@ -6,7 +6,7 @@ IMAGE_TAG="${1}"
 IMAGE_REPO="${2}"
 DOCKERFILE_PATH="${3}"
 EXTRA_TAG="${4}"
-REGISTRY="${5:-docker.io}"
+REGISTRY="${5:-artifactory.stackstate.io/docker-virtual}"
 ORGANIZATION="${6:-stackstate}"
 
 echo "${IMAGE_TAG}"
