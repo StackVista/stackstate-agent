@@ -8,13 +8,12 @@ DOCKERFILE_PATH="${3}"
 EXTRA_TAG="${4}"
 REGISTRY="${5:-docker.io}"
 ORGANIZATION="${6:-stackstate}"
-REGISTRY_ARTIFACTORY="${7:-artifactory.stackstate.io/docker-virtual}"
 
 echo "${IMAGE_TAG}"
 echo "${IMAGE_REPO}"
 echo "${DOCKERFILE_PATH}"
 
-docker build -t "${REGISTRY_ARTIFACTORY}/${ORGANIZATION}/${IMAGE_REPO}:${IMAGE_TAG}" "${DOCKERFILE_PATH}"
+docker build -t "${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${IMAGE_TAG}" "${DOCKERFILE_PATH}"
 docker login -u "${docker_user}" -p "${docker_password}" "${REGISTRY}"
 docker push "${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${IMAGE_TAG}"
 
