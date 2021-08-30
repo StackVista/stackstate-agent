@@ -1,0 +1,8 @@
+---
+- name: Get Inventory contents
+  command: cat {{ci_project_dir}}/tmp_molecule_inventory/instance_config.yml
+  register: inventory_output
+
+- name: Print Inventory contents to console
+  debug:
+    msg: "{{inventory_output.stdout}}"
