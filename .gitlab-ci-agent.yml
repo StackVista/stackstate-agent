@@ -663,6 +663,7 @@ pre_release_cluster_agent_image:
     key: $CI_COMMIT_REF_SLUG
     paths:
       - .molecule/$MOLECULE_SCENARIO/
+      - tmp_molecule_inventory/
 
   # artifacts:
   #   when: always
