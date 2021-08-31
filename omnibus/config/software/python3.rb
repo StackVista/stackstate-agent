@@ -40,7 +40,8 @@ if ohai["platform"] != "windows"
     ship_license "PSFL"
 
     # security patches
-    patch :source => "python-3.8_3.8.8-cve-2021-29921.diff" unless windows?
+    # this patch might not be required in future releases of python version and can be removed.
+    patch :source => "python-3.8-cve-2021-29921.diff" unless windows?
 
     env = case ohai["platform"]
           when "aix"
