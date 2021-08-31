@@ -29,7 +29,6 @@ LABEL maintainer "StackState <info@stackstate.com>"
 ENV PATH="/opt/stackstate-agent/bin/:$PATH"
 
 RUN apt-get update \
- && apt full-upgrade -y \
  && apt-get install --no-install-recommends -y ca-certificates curl \
  # https://security-tracker.debian.org/tracker/CVE-2018-15686
 # && apt-get install -y libudev1 libsystemd0 \

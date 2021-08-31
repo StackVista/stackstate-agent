@@ -72,7 +72,6 @@ RUN if [ -n "$WITH_JMX" ]; then apt-get update \
 # make sure we have recent dependencies
 RUN apt-get update \
   # CVE-fixing time!
-  && apt full-upgrade -y \
   && apt-get install -y libssl-dev util-linux ncurses-bin ncurses-base libncursesw5:amd64 \
   # https://security-tracker.debian.org/tracker/CVE-2018-15686
 #  && apt-get install -y libudev1 libsystemd0 \
