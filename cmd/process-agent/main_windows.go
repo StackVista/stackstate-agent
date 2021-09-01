@@ -14,6 +14,7 @@ import (
 	_ "github.com/DataDog/datadog-agent/pkg/util/containers/providers/windows"
 	"github.com/DataDog/datadog-agent/pkg/util/winutil"
 
+	"github.com/spf13/cobra"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
@@ -130,6 +131,14 @@ func main() {
 	rootCmd.PersistentFlags().BoolVar(&winopts.stopService, "stop-service", false, "Stops the process agent service")
 	rootCmd.PersistentFlags().BoolVar(&winopts.foreground, "foreground", false, "Always run foreground instead whether session is interactive or not")
 
+	// Invoke the Agent
+	fixDeprecatedFlags()
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(-1)
+	}
+}
+
+func rootCmdRun(cmd *cobra.Command, args []string) {
 	if !winopts.foreground {
 		isIntSess, err := svc.IsAnInteractiveSession()
 		if err != nil {
@@ -188,11 +197,9 @@ func main() {
 		}
 	}
 
+	exit := make(chan struct{})
 	// Invoke the Agent
-	fixDeprecatedFlags()
-	if err := rootCmd.Execute(); err != nil {
-		os.Exit(-1)
-	}
+	runAgent(exit)
 }
 
 func startService() error {
