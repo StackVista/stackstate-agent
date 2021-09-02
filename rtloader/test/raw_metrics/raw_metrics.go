@@ -18,14 +18,10 @@ import (
 #include "rtloader_mem.h"
 #include "datadog_agent_rtloader.h"
 
-extern void submitRawMetricsData(char *, raw_metrics_stream_t *, char *);
-extern void submitRawMetricsStartSnapshot(char *, raw_metrics_stream_t *);
-extern void submitRawMetricsStopSnapshot(char *, raw_metrics_stream_t *);
+extern void submitRawMetricsData(char *, char *);
 
 static void initRawMetricsTests(rtloader_t *rtloader) {
 	set_submit_raw_metrics_data_cb(rtloader, submitRawMetricsData);
-	set_submit_raw_metrics_start_snapshot_cb(rtloader, submitRawMetricsStartSnapshot);
-	set_submit_raw_metrics_stop_snapshot_cb(rtloader, submitRawMetricsStopSnapshot);
 }
 */
 import "C"
