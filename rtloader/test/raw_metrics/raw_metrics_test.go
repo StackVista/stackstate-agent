@@ -10,8 +10,6 @@ import (
 	"github.com/StackVista/stackstate-agent/rtloader/test/helpers"
 )
 
-// TODO: Raw Metrics
-
 func TestMain(m *testing.M) {
 	err := setUp()
 	if err != nil {
@@ -81,7 +79,7 @@ func TestSubmitRawMetricsData(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
 
-	out, err := run(`raw_metrics.submit_raw_metrics_data(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"}, ` + rawMetricsData + ` )`)
+	out, err := run(`raw_metrics.submit_raw_metrics_data(None, "checkid", ` + rawMetricsData + ` )`)
 
 	t.Logf("-- Debug --")
 	t.Logf(rawMetricsData)
@@ -97,12 +95,6 @@ func TestSubmitRawMetricsData(t *testing.T) {
 	if checkID != "checkid" {
 		t.Fatalf("Unexpected check id value: %s", checkID)
 	}
-	if _rawMetricsStream.Urn != "urn:" {
-		t.Fatalf("Unexpected raw metrics stream urn value: %s", _rawMetricsStream.Urn)
-	}
-	if _rawMetricsStream.SubStream != "subStream" {
-		t.Fatalf("Unexpected raw metrics stream sub stream value: %s", _rawMetricsStream.SubStream)
-	}
 
 	testRawMetricsData(t)
 
@@ -114,7 +106,7 @@ func TestSubmitRawMetricsDataNoDict(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
 
-	out, err := run(`raw_metrics.submit_raw_metrics_data(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"}, "I should be a dict")`)
+	out, err := run(`raw_metrics.submit_raw_metrics_data(None, "checkid", "I should be a dict")`)
 
 	t.Logf("-- Debug --")
 	t.Logf(out)
@@ -134,7 +126,7 @@ func TestSubmitRawMetricsDataCannotBeSerialized(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
 
-	out, err := run(`raw_metrics.submit_raw_metrics_data(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"}, {object(): object()})`)
+	out, err := run(`raw_metrics.submit_raw_metrics_data(None, "checkid", {object(): object()})`)
 
 	t.Logf("-- Debug --")
 	t.Logf(out)
@@ -145,67 +137,6 @@ func TestSubmitRawMetricsDataCannotBeSerialized(t *testing.T) {
 	// keys must be a string
 	if !strings.Contains(out, "keys must be") {
 		t.Errorf("Unexpected printed value: '%s'", out)
-	}
-
-	// Check for leaks
-	helpers.AssertMemoryUsage(t)
-}
-
-func TestRawMetricsStartSnapshot(t *testing.T) {
-	// Reset memory counters
-	helpers.ResetMemoryStats()
-
-	out, err := run(`raw_metrics.submit_raw_metrics_start_snapshot(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"})`)
-
-	t.Logf("-- Debug --")
-	t.Logf(out)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-	if out != "" {
-		t.Errorf("Unexpected printed value: '%s'", out)
-	}
-
-	if checkID != "checkid" {
-		t.Fatalf("Unexpected check id value: %s", checkID)
-	}
-
-	if _rawMetricsStream.Urn != "urn:" {
-		t.Fatalf("Unexpected raw metrics stream urn value: %s", _rawMetricsStream.Urn)
-	}
-	if _rawMetricsStream.SubStream != "subStream" {
-		t.Fatalf("Unexpected raw metrics stream sub stream value: %s", _rawMetricsStream.SubStream)
-	}
-
-	// Check for leaks
-	helpers.AssertMemoryUsage(t)
-}
-
-func TestStopSnapshot(t *testing.T) {
-	// Reset memory counters
-	helpers.ResetMemoryStats()
-
-	out, err := run(`raw_metrics.submit_raw_metrics_stop_snapshot(None, "checkid", {"urn": "urn:", "sub_stream": "subStream"})`)
-
-	t.Logf("-- Debug --")
-	t.Logf(out)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-	if out != "" {
-		t.Errorf("Unexpected printed value: '%s'", out)
-	}
-
-	if checkID != "checkid" {
-		t.Fatalf("Unexpected check id value: %s", checkID)
-	}
-	if _rawMetricsStream.Urn != "urn:" {
-		t.Fatalf("Unexpected raw metrics stream urn value: %s", _rawMetricsStream.Urn)
-	}
-	if _rawMetricsStream.SubStream != "subStream" {
-		t.Fatalf("Unexpected raw metrics stream sub stream value: %s", _rawMetricsStream.SubStream)
 	}
 
 	// Check for leaks

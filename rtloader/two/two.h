@@ -130,10 +130,8 @@ public:
     // telemetry
     void setSubmitTopologyEventCb(cb_submit_topology_event_t);
 
-    // raw metrics  TODO: Raw Metrics
+    // raw metrics
     void setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t);
-    void setSubmitRawMetricsStartSnapshotCb(cb_submit_raw_metrics_start_snapshot_t);
-    void setSubmitRawMetricsStopSnapshotCb(cb_submit_raw_metrics_stop_snapshot_t);
 
     // health
     void setSubmitHealthCheckDataCb(cb_submit_health_check_data_t);

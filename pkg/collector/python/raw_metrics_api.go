@@ -24,15 +24,13 @@ import (
 */
 import "C"
 
-// TODO: Raw Metrics
-
 // NOTE
 // Beware that any changes made here MUST be reflected also in the test implementation
 // rtloader/test/raw_metrics/raw_metrics.go
 
-// SubmitRawMetricsData // TODO: Raw Metrics
+// SubmitRawMetricsData
 //export SubmitRawMetricsData
-func SubmitRawMetricsData(id *C.char, _ *C.raw_metrics_stream_t, data *C.char) {
+func SubmitRawMetricsData(id *C.char, data *C.char) {
 	goCheckID := C.GoString(id)
 	rawMetricsPayload := C.GoString(data)
 	metricsPayload := metrics.RawMetricsPayload{}
@@ -40,43 +38,12 @@ func SubmitRawMetricsData(id *C.char, _ *C.raw_metrics_stream_t, data *C.char) {
 
 	if err == nil {
 		if len(metricsPayload.Data) != 0 {
-			batcher.GetBatcher().SubmitRawMetricsData(check.ID(goCheckID), metricsPayload.Stream, metricsPayload.Data)
+			batcher.GetBatcher().SubmitRawMetricsData(check.ID(goCheckID), metricsPayload.Data)
 		} else {
 			_ = log.Errorf("Empty json submitted to as check data, this is not allowed, data will not be forwarded.")
 		}
 	} else {
 		_ = log.Errorf("Empty raw metrics data event not sent. Raw: %v, Json: %v, Error: %v", rawMetricsPayload,
 			metricsPayload.JSONString(), err)
-	}
-}
-
-// SubmitRawMetricsStartSnapshot // TODO: Raw Metrics
-//export SubmitRawMetricsStartSnapshot
-func SubmitRawMetricsStartSnapshot(id *C.char, rawMetricsStream *C.raw_metrics_stream_t) {
-	goCheckID := C.GoString(id)
-	_stream := convertRawMetricsStream(rawMetricsStream)
-
-	batcher.GetBatcher().SubmitRawMetricsStartSnapshot(check.ID(goCheckID), _stream)
-}
-
-// SubmitRawMetricsStopSnapshot // TODO: Raw Metrics
-//export SubmitRawMetricsStopSnapshot
-func SubmitRawMetricsStopSnapshot(id *C.char, rawMetricsStream *C.raw_metrics_stream_t) {
-	goCheckID := C.GoString(id)
-	_stream := convertRawMetricsStream(rawMetricsStream)
-
-	batcher.GetBatcher().SubmitRawMetricsStopSnapshot(check.ID(goCheckID), _stream)
-}
-
-func convertRawMetricsStream(rawMetricsStream *C.raw_metrics_stream_t) metrics.RawMetricsStream {
-	_subStream := C.GoString(rawMetricsStream.sub_stream)
-	if _subStream == "" {
-		return metrics.RawMetricsStream{
-			Urn: C.GoString(rawMetricsStream.urn),
-		}
-	}
-	return metrics.RawMetricsStream{
-		Urn:       C.GoString(rawMetricsStream.urn),
-		SubStream: _subStream,
 	}
 }

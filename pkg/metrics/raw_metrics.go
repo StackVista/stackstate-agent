@@ -10,26 +10,15 @@ import (
 	"fmt"
 )
 
-// TODO: Raw Metrics
-
 type RawMetrics struct {
-	Stream        RawMetricsStream       	`json:"stream"`
-	CheckStates   []RawMetricsCheckData		`json:"check_states"`
+	CheckStates		[]RawMetricsCheckData	`json:"check_states"`
 }
-
-type RawMetricsStream struct {
-	Urn       string `json:"urn"`
-	SubStream string `json:"sub_stream,omitempty"`
-}
-
-type RawMetricsCheckData map[string]interface{}
 
 type RawMetricsPayload struct {
-	Stream RawMetricsStream
 	Data   RawMetricsCheckData
 }
 
-// TODO: Make generic with health check
+type RawMetricsCheckData map[string]interface{}
 
 // JSONString returns a JSON string of the Payload
 func (p RawMetricsPayload) JSONString() string {
@@ -44,16 +33,6 @@ func (p RawMetricsPayload) JSONString() string {
 // JSONString returns a JSON string of the Component
 func (c RawMetricsCheckData) JSONString() string {
 	b, err := json.Marshal(c)
-	if err != nil {
-		fmt.Println(err)
-		return fmt.Sprintf("{\"error\": \"%s\"}", err.Error())
-	}
-	return string(b)
-}
-
-// GoString prints as string, can also be used in maps
-func (i *RawMetricsStream) GoString() string {
-	b, err := json.Marshal(i)
 	if err != nil {
 		fmt.Println(err)
 		return fmt.Sprintf("{\"error\": \"%s\"}", err.Error())

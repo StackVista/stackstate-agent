@@ -37,109 +37,21 @@ func testRawMetricsData(t *testing.T) {
 	mockBatcher := batcher.NewMockBatcher()
 
 	c := &metrics.RawMetricsPayload{
-		Stream: metrics.RawMetricsStream{
-			Urn:       "myurn",
-			SubStream: "substream",
-		},
 		Data: expectedRawMetricsData,
 	}
 	data, err := json.Marshal(c)
 	assert.NoError(t, err)
 
 	checkId := C.CString("check-id")
-	stream := C.raw_metrics_stream_t{}
-	stream.urn = C.CString("myurn")
-	stream.sub_stream = C.CString("substream")
-	SubmitRawMetricsStartSnapshot(checkId, &stream)
-	SubmitRawMetricsData(
-		checkId,
-		&stream,
-		C.CString(string(data)))
-	SubmitRawMetricsStopSnapshot(checkId, &stream)
+	SubmitRawMetricsData(checkId, C.CString(string(data)))
 
 	expectedState := mockBatcher.CollectedTopology.Flush()
-	expectedStream := metrics.RawMetricsStream{Urn: "myurn", SubStream: "substream"}
 
 	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
-			Metrics: map[string]metrics.RawMetrics{
-				expectedStream.GoString(): {
-					Stream:        expectedStream,
-					CheckStates: []metrics.RawMetricsCheckData{
-						expectedRawMetricsData,
-					},
-				},
-			},
-		},
-	}), expectedState)
-}
-
-func testRawMetricsStartSnapshot(t *testing.T) {
-	mockBatcher := batcher.NewMockBatcher()
-
-	checkId := C.CString("check-id")
-	stream := C.raw_metrics_stream_t{}
-	stream.urn = C.CString("myurn")
-	stream.sub_stream = C.CString("substream")
-	SubmitRawMetricsStartSnapshot(checkId, &stream)
-
-	expectedState := mockBatcher.CollectedTopology.Flush()
-	expectedStream := metrics.RawMetricsStream{Urn: "myurn", SubStream: "substream"}
-
-	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
-		"check-id": {
-			Metrics: map[string]metrics.RawMetrics{
-				expectedStream.GoString(): {
-					Stream:        expectedStream,
-					CheckStates:   []metrics.RawMetricsCheckData{},
-				},
-			},
-		},
-	}), expectedState)
-}
-
-func testRawMetricsStopSnapshot(t *testing.T) {
-	mockBatcher := batcher.NewMockBatcher()
-
-	checkId := C.CString("check-id")
-	stream := C.raw_metrics_stream_t{}
-	stream.urn = C.CString("myurn")
-	stream.sub_stream = C.CString("substream")
-	SubmitRawMetricsStopSnapshot(checkId, &stream)
-
-	expectedState := mockBatcher.CollectedTopology.Flush()
-	expectedStream := metrics.RawMetricsStream{Urn: "myurn", SubStream: "substream"}
-
-	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
-		"check-id": {
-			Metrics: map[string]metrics.RawMetrics{
-				expectedStream.GoString(): {
-					Stream:       expectedStream,
-					CheckStates:  []metrics.RawMetricsCheckData{},
-				},
-			},
-		},
-	}), expectedState)
-}
-
-func testNoRawMetricsSubStream(t *testing.T) {
-	mockBatcher := batcher.NewMockBatcher()
-
-	checkId := C.CString("check-id")
-	stream := C.raw_metrics_stream_t{}
-	stream.urn = C.CString("myurn")
-	stream.sub_stream = C.CString("")
-	SubmitRawMetricsStartSnapshot(checkId, &stream)
-
-	expectedState := mockBatcher.CollectedTopology.Flush()
-	expectedStream := metrics.RawMetricsStream{Urn: "myurn"}
-
-	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
-		"check-id": {
-			Metrics: map[string]metrics.RawMetrics{
-				expectedStream.GoString(): {
-					Stream:        expectedStream,
-					CheckStates:   []metrics.RawMetricsCheckData{},
+			Metrics: &metrics.RawMetrics{
+				CheckStates: []metrics.RawMetricsCheckData{
+					expectedRawMetricsData,
 				},
 			},
 		},

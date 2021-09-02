@@ -954,20 +954,10 @@ void Three::setSubmitHealthStopSnapshotCb(cb_submit_health_stop_snapshot_t cb)
     _set_submit_health_stop_snapshot_cb(cb);
 }
 
-// [sts] raw metrics   TODO: Raw Metrics
+// [sts] raw metrics
 void Three::setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t cb)
 {
     _set_submit_raw_metrics_data_cb(cb);
-}
-
-void Three::setSubmitRawMetricsStartSnapshotCb(cb_submit_raw_metrics_start_snapshot_t cb)
-{
-    _set_submit_raw_metrics_start_snapshot_cb(cb);
-}
-
-void Three::setSubmitRawMetricsStopSnapshotCb(cb_submit_raw_metrics_stop_snapshot_t cb)
-{
-    _set_submit_raw_metrics_stop_snapshot_cb(cb);
 }
 
 // Python Helpers

@@ -6,8 +6,6 @@
 #ifndef DATADOG_AGENT_RTLOADER_THREE_RAW_METRICS_H
 #define DATADOG_AGENT_RTLOADER_THREE_RAW_METRICS_H
 
-// TODO: Raw Metrics
-
 /*! \file raw_metrics.h
     \brief RtLoader raw_metrics builtin header file.
 
@@ -40,20 +38,6 @@
 
     The callback is expected to be provided by the rtloader caller - in go-context: CGO.
 */
-/*! \fn void _set_submit_raw_metrics_start_snapshot_t(cb_submit_raw_metrics_start_snapshot_t)
-    \brief Sets the submit start raw metrics snapshot callback to be used by rtloader to signal the raw metrics snapshot start.
-    \param object A function pointer with cb_submit_raw_metrics_start_snapshot_t function prototype to the
-    callback function.
-
-    The callback is expected to be provided by the rtloader caller - in go-context: CGO.
-*/
-/*! \fn void _set_submit_raw_metrics_stop_snapshot_t(cb_submit_raw_metrics_stop_snapshot_t)
-    \brief Sets the submit raw metrics stop snapshot callback to be used by rtloader to signal the raw metrics snapshot stop.
-    \param object A function pointer with cb_submit_raw_metrics_stop_snapshot_t function prototype to the
-    callback function.
-
-    The callback is expected to be provided by the rtloader caller - in go-context: CGO.
-*/
 
 #include <Python.h>
 #include <rtloader_types.h>
@@ -71,8 +55,6 @@ void Py2_init_raw_metrics();
 #endif
 
 void _set_submit_raw_metrics_data_cb(cb_submit_raw_metrics_data_t);
-void _set_submit_raw_metrics_start_snapshot_cb(cb_submit_raw_metrics_start_snapshot_t);
-void _set_submit_raw_metrics_stop_snapshot_cb(cb_submit_raw_metrics_stop_snapshot_t);
 
 
 #ifdef __cplusplus

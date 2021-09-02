@@ -10,8 +10,8 @@ import (
 // CheckInstanceBatchState is the type representing batched data per check instance
 type CheckInstanceBatchState struct {
 	Topology *topology.Topology
+	Metrics  *metrics.RawMetrics
 	Health   map[string]health.Health
-	Metrics  map[string]metrics.RawMetrics // TODO: Raw Metrics
 }
 
 // CheckInstanceBatchStates is the type representing batched data for all check instances
@@ -43,7 +43,7 @@ func (builder *BatchBuilder) getOrCreateState(checkID check.ID) CheckInstanceBat
 	state := CheckInstanceBatchState{
 		Topology: nil,
 		Health:   make(map[string]health.Health),
-		Metrics:  make(map[string]metrics.RawMetrics), // TODO: Raw Metrics
+		Metrics:  nil,
 	}
 	builder.states[checkID] = state
 	return state
@@ -65,6 +65,7 @@ func (builder *BatchBuilder) getOrCreateTopology(checkID check.ID, instance topo
 			Relations:     make([]topology.Relation, 0),
 		},
 		Health: state.Health,
+		Metrics:  state.Metrics,
 	}
 	return builder.states[checkID].Topology
 }
@@ -86,20 +87,22 @@ func (builder *BatchBuilder) getOrCreateHealth(checkID check.ID, stream health.S
 	return builder.states[checkID].Health[stream.GoString()]
 }
 
-// TODO: Raw Metrics
-func (builder *BatchBuilder) getOrCreateRawMetrics(checkID check.ID, stream metrics.RawMetricsStream) metrics.RawMetrics {
+func (builder *BatchBuilder) getOrCreateRawMetrics(checkID check.ID) *metrics.RawMetrics {
 	state := builder.getOrCreateState(checkID)
 
-	if value, ok := state.Metrics[stream.GoString()]; ok {
-		return value
+	if state.Metrics != nil {
+		return state.Metrics
 	}
 
-	builder.states[checkID].Metrics[stream.GoString()] = metrics.RawMetrics {
-		Stream:        stream,
-		CheckStates:   make([]metrics.RawMetricsCheckData, 0),
+	builder.states[checkID] = CheckInstanceBatchState{
+		Topology: state.Topology,
+		Health: state.Health,
+		Metrics:  &metrics.RawMetrics{
+			CheckStates: make([]metrics.RawMetricsCheckData, 0),
+		},
 	}
 
-	return builder.states[checkID].Metrics[stream.GoString()]
+	return builder.states[checkID].Metrics
 }
 
 // AddComponent adds a component
@@ -159,27 +162,11 @@ func (builder *BatchBuilder) HealthStopSnapshot(checkID check.ID, stream health.
 	return builder.Flush()
 }
 
-// AddRawMetricsData adds raw metric data    TODO: Raw Metrics
-func (builder *BatchBuilder) AddRawMetricsData(checkID check.ID, stream metrics.RawMetricsStream, data metrics.RawMetricsCheckData) CheckInstanceBatchStates {
-	rawMetricsData := builder.getOrCreateRawMetrics(checkID, stream)
+// AddRawMetricsData adds raw metric data
+func (builder *BatchBuilder) AddRawMetricsData(checkID check.ID, data metrics.RawMetricsCheckData) CheckInstanceBatchStates {
+	rawMetricsData := builder.getOrCreateRawMetrics(checkID)
 	rawMetricsData.CheckStates = append(rawMetricsData.CheckStates, data)
-	builder.states[checkID].Metrics[stream.GoString()] = rawMetricsData
 	return builder.incrementAndTryFlush()
-}
-
-// RawMetricsStartSnapshot starts a Raw metrics snapshot    TODO: Raw Metrics
-func (builder *BatchBuilder) RawMetricsStartSnapshot(checkID check.ID, stream metrics.RawMetricsStream) CheckInstanceBatchStates {
-	rawMetricsData := builder.getOrCreateRawMetrics(checkID, stream)
-	builder.states[checkID].Metrics[stream.GoString()] = rawMetricsData
-	return nil
-}
-
-// RawMetricsStopSnapshot stops a Raw metrics snapshot. This will always flush    TODO: Raw Metrics
-func (builder *BatchBuilder) RawMetricsStopSnapshot(checkID check.ID, stream metrics.RawMetricsStream) CheckInstanceBatchStates {
-	rawMetricsData := builder.getOrCreateRawMetrics(checkID, stream)
-	builder.states[checkID].Metrics[stream.GoString()] = rawMetricsData
-	// We always flush after a TopologyStopSnapshot to limit latency
-	return builder.Flush()
 }
 
 // Flush the collected data. Returning the data and wiping the current build up Topology

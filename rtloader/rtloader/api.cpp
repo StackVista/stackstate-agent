@@ -557,11 +557,3 @@ void set_submit_raw_metrics_data_cb(rtloader_t *rtloader, cb_submit_raw_metrics_
 {
     AS_TYPE(RtLoader, rtloader)->setSubmitRawMetricsDataCb(cb);
 }
-void set_submit_raw_metrics_start_snapshot_cb(rtloader_t *rtloader, cb_submit_raw_metrics_start_snapshot_t cb)
-{
-    AS_TYPE(RtLoader, rtloader)->setSubmitRawMetricsStartSnapshotCb(cb);
-}
-void set_submit_raw_metrics_stop_snapshot_cb(rtloader_t *rtloader, cb_submit_raw_metrics_stop_snapshot_t cb)
-{
-    AS_TYPE(RtLoader, rtloader)->setSubmitRawMetricsStopSnapshotCb(cb);
-}

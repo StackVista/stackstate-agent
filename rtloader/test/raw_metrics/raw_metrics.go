@@ -35,14 +35,12 @@ import "C"
 var (
 	rtloader               *C.rtloader_t
 	checkID                string
-	_rawMetricsStream      *metrics.RawMetricsStream
 	_data                  map[string]interface{}
 	result                 map[string]interface{}
 )
 
 func resetOuputValues() {
 	checkID = ""
-	_rawMetricsStream = nil
 	_data = nil
 	result = nil
 }
@@ -105,30 +103,10 @@ except Exception as e:
 }
 
 //export submitRawMetricsData
-func submitRawMetricsData(id *C.char, rawMetricsStream *C.raw_metrics_stream_t, data *C.char) {
+func submitRawMetricsData(id *C.char, data *C.char) {
 	checkID = C.GoString(id)
 	_raw_data := C.GoString(data)
 	rawMetricsPayload := &metrics.RawMetricsPayload{}
 	json.Unmarshal([]byte(_raw_data), rawMetricsPayload)
 	result = rawMetricsPayload.Data
-	_rawMetricsStream = &rawMetricsPayload.Stream
-}
-
-//export submitRawMetricsStartSnapshot
-func submitRawMetricsStartSnapshot(id *C.char, rawMetricsStream *C.raw_metrics_stream_t) {
-	checkID = C.GoString(id)
-
-	_rawMetricsStream = &metrics.RawMetricsStream{
-		Urn:       C.GoString(rawMetricsStream.urn),
-		SubStream: C.GoString(rawMetricsStream.sub_stream),
-	}
-}
-
-//export submitRawMetricsStopSnapshot
-func submitRawMetricsStopSnapshot(id *C.char, rawMetricsStream *C.raw_metrics_stream_t) {
-	checkID = C.GoString(id)
-	_rawMetricsStream = &metrics.RawMetricsStream{
-		Urn:       C.GoString(rawMetricsStream.urn),
-		SubStream: C.GoString(rawMetricsStream.sub_stream),
-	}
 }

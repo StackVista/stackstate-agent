@@ -206,14 +206,10 @@ void initHealthModule(rtloader_t *rtloader) {
 // [sts] raw metrics module
 //
 
-void SubmitRawMetricsData(char *, raw_metrics_stream_t *, char *);
-void SubmitRawMetricsStartSnapshot(char *, raw_metrics_stream_t *);
-void SubmitRawMetricsStopSnapshot(char *, raw_metrics_stream_t *);
+void SubmitRawMetricsData(char *, char *);
 
 void initRawMetricsModule(rtloader_t *rtloader) {
 	set_submit_raw_metrics_data_cb(rtloader, SubmitRawMetricsData);
-	set_submit_raw_metrics_start_snapshot_cb(rtloader, SubmitRawMetricsStartSnapshot);
-	set_submit_raw_metrics_stop_snapshot_cb(rtloader, SubmitRawMetricsStopSnapshot);
 }
 */
 import "C"

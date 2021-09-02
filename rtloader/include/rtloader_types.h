@@ -198,19 +198,8 @@ typedef void (*cb_submit_health_start_snapshot_t)(char *, health_stream_t *, int
 // (check_id, stream)
 typedef void (*cb_submit_health_stop_snapshot_t)(char *, health_stream_t *);
 
-// [sts] raw metrics
-//
-typedef struct raw_metrics_stream_s {
-    char *urn;
-    char *sub_stream;
-} raw_metrics_stream_t;
-
 // (check_id, stream, data)
-typedef void (*cb_submit_raw_metrics_data_t)(char *, raw_metrics_stream_t *, char *);
-// (check_id, stream, expiry_seconds, repeat_seconds)
-typedef void (*cb_submit_raw_metrics_start_snapshot_t)(char *, raw_metrics_stream_t *);
-// (check_id, stream)
-typedef void (*cb_submit_raw_metrics_stop_snapshot_t)(char *, raw_metrics_stream_t *);
+typedef void (*cb_submit_raw_metrics_data_t)(char *, char *);
 
 #ifdef __cplusplus
 }
