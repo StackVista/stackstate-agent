@@ -675,7 +675,7 @@ pre_release_cluster_agent_image:
   stage: prepare
   script:
     - cd $CI_PROJECT_DIR/test
-    - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.setup.yml create --scenario-name $MOLECULE_SCENARIO
+    - ./molecule3.sh $MOLECULE_SCENARIO create
 
 # Primary test steps for all the molecule builds
 .molecule_test: &molecule_test
@@ -683,17 +683,15 @@ pre_release_cluster_agent_image:
   stage: acceptance
   script:
     - cd $CI_PROJECT_DIR/test
-    # TODO: We can add this step if you are able to detect that the create already happened, and if destroy did run then run create
-    # - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.run.yml create --scenario-name $MOLECULE_SCENARIO # Rerun create step, assist with if a destroy was triggered
-    - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.run.yml prepare --force --scenario-name $MOLECULE_SCENARIO # This is the secondary prepare step which does the run file step
-    - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.run.yml test --scenario-name $MOLECULE_SCENARIO --destroy=never
+    - ./molecule3.sh $MOLECULE_SCENARIO prepare
+    - ./molecule3.sh $MOLECULE_SCENARIO test
 
 # Primary destroy steps for all the molecule builds
 .molecule_destroy: &molecule_destroy
   stage: cleanup
   script:
     - cd $CI_PROJECT_DIR/test
-    - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.setup.yml destroy --scenario-name $MOLECULE_SCENARIO
+    - ./molecule3.sh $MOLECULE_SCENARIO destroy
 
 # Job Seq: Molecule
 # Type: Compose
@@ -832,7 +830,7 @@ molecule_kubernetes_test:
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
   script:
-    - cd $CI_PROJECT_DIR/test && ./molecule3.sh test -s kubernetes
+    - cd $CI_PROJECT_DIR/test && ./molecule3.sh --bypass test -s kubernetes
   artifacts:
     when: always
     paths:
