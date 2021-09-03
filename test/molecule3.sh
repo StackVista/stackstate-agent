@@ -1,5 +1,37 @@
 #!/usr/bin/env bash
 
+if [ -z "$1" ] || [ $1 == "help" ]; then
+    echo "Example Charts of how this is used on the Gitlab CI: https://miro.com/app/board/o9J_lzUC0FM=/"
+    echo ""
+    echo "WARNING: If you create any instance from you local machine please delete it seeing that Lambda does not clean dev instances thus the EC2 costs will increase the longer that instances stays up"
+    echo ""
+    echo "    First step is to create the EC2 machine"
+    echo "    -  ./molecule3.sh <scenario> create"
+    echo ""
+    echo "    After that we copy over all the required files, install updates and deps, cache images etc."
+    echo "    - ./molecule3.sh <scenario> prepare"
+    echo ""
+    echo "    Now you can either login into your machine with SSH or"
+    echo "    -  ./molecule3.sh <scenario> login"
+    echo ""
+    echo "    Run the docker-compose and the unit tests (Note that everytime you run this a docker-compose cleanup is also ran to cleanup your prev run)"
+    echo "    -  ./molecule3.sh <scenario> test"
+    echo ""
+    echo "    Destroy the EC2 machine and Keypair you created"
+    echo "    -  ./molecule3.sh <scenario> destroy"
+    echo ""
+    echo "Available scenarios"
+    echo "- compose"
+    echo "- integrations"
+    echo "- kubernetes"
+    echo "- localinstall"
+    echo "- secrets"
+    echo "- swarm"
+    echo "- vms"
+    exit 1
+fi
+
+
 # Determine if you are running the script from a CI that contains a commit sha or from localhost
 # These variables will be used within the build process to determine if encryption should be applied and where things are copied to
 export DEV_MODE="false"
@@ -14,8 +46,6 @@ if [ -z "$CI_COMMIT_SHA" ]; then
     echo "---------------------------------------------------------"
     echo ""
 fi
-
-
 
 export CONDA_BASE="${HOME}/miniconda3"
 

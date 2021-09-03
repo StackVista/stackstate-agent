@@ -34,42 +34,37 @@ The molecule script executions has a few requirements:
  - The molecule action to take
  - The molecule scenario name
 
+https://miro.com/app/live-embed/o9J_lzUC0FM=/?moveToViewport=-2949,-1274,7710,3737
+
 Test are organized by scenarios, they are directories located under `molecule-role/molecule` and all molecule commands need to target a scenario, like:
 
+Example Charts of how this is used on the Gitlab CI: https://miro.com/app/board/o9J_lzUC0FM=/
 
-    # We target the setup script and run create to initiate the structure
-    # The create step will automatically run the prepare step in the create composition
+WARNING: If you create any instance from you local machine please delete it seeing that Lambda does not clean dev instances thus the EC2 costs will increase the longer that instances stays up
 
-    -  ./molecule3.sh --base-config ./molecule/<scenario>/provisioner.setup.yml create --scenario-name <scenario>
+    First step is to create the EC2 machine
+    -  ./molecule3.sh <scenario> create
 
-    # Next we execute another prepare step but with another base config to allow the primary execution to happen
-    # this exection will use the prev created molecule and force a secondary prepare on it
+    After that we copy over all the required files, install updates and deps, cache images etc.
+    - ./molecule3.sh <scenario> prepare
 
-    -  ./molecule3.sh --base-config ./molecule/<scenario>/provisioner.run.yml prepare --force --scenario-name <scenario>
+    Now you can either login into your machine with SSH or
+    -  ./molecule3.sh <scenario> login
 
-    # A test can be ran on the molecule that does not destroy itself when and if it fails (Will skip the prepare and create phase cause those already ran)
+    Run the docker-compose and the unit tests (Note that everytime you run this a docker-compose cleanup is also ran to cleanup your prev run)
+    -  ./molecule3.sh <scenario> test
 
-    -  ./molecule3.sh --base-config ./molecule/<scenario>/provisioner.run.yml test --scenario-name <scenario> --destroy=never
+    Destroy the EC2 machine and Keypair you created
+    -  ./molecule3.sh <scenario> destroy
 
-    # This is the funally step where we destroy everything. You can use the run or setup script here
-
-    -  ./molecule3.sh --base-config ./molecule/<scenario>/provisioner.setup.yml destroy --scenario-name <scenario>
-
-
-    ----- Example -----
-
-    # (Compose) - Setup machine and Requirements
-    -  ./molecule3.sh --base-config ./molecule/compose/provisioner.setup.yml create --scenario-name compose
-    -  ./molecule3.sh --base-config ./molecule/compose/provisioner.run.yml prepare --force --scenario-name compose
-
-    # (Compose) - Run Unit Tests
-    -  ./molecule3.sh --base-config ./molecule/compose/provisioner.run.yml test --scenario-name compose --destroy=never
-
-    # (Compose) - SSH Into the Machine
-    -  ./molecule3.sh --base-config ./molecule/compose/provisioner.run.yml login --scenario-name compose
-
-    # (Compose) - Destroy your dev instance (!!! Remember dev instances do not get cleaned up as they do not identify as zombie instances, please destroy your instance at the end)
-    -  ./molecule3.sh --base-config ./molecule/compose/provisioner.setup.yml destroy --scenario-name compose
+Available scenarios
+- compose
+- integrations
+- kubernetes
+- localinstall
+- secrets
+- swarm
+- vms
 
 ### Troubleshooting
 
