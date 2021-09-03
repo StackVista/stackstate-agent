@@ -34,7 +34,7 @@ The molecule script executions has a few requirements:
  - The molecule action to take
  - The molecule scenario name
 
-https://miro.com/app/live-embed/o9J_lzUC0FM=/?moveToViewport=-2949,-1274,7710,3737
+https://miro.com/app/board/o9J_lzUC0FM=/
 
 Test are organized by scenarios, they are directories located under `molecule-role/molecule` and all molecule commands need to target a scenario, like:
 

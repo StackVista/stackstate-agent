@@ -131,13 +131,9 @@ if [[ ! " ${AVAILABLE_MOLECULE_PROCESS[*]} " =~ $2 ]]; then
     echo ""
     echo "Available Molecule Processes:"
     echo "  - create"
-    echo "      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur auctor"
     echo "  - prepare"
-    echo "      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur auctor"
     echo "  - test"
-    echo "      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur auctor"
     echo "  - destroy"
-    echo "      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur auctor"
     echo "---------------------------------------------------------"
     echo ""
     exit 1
