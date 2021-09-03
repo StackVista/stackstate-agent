@@ -14,12 +14,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/StackVista/stackstate-agent/pkg/util/retry"
+	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/DataDog/datadog-agent/pkg/errors"
+	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/DataDog/datadog-agent/pkg/util/retry"
+
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/containers"
+	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 )
@@ -37,11 +40,16 @@ var (
 
 // ContainerdItf is the interface implementing a subset of methods that leverage the Containerd api.
 type ContainerdItf interface {
+	Container(id string) (containerd.Container, error)
+	ContainerWithContext(ctx context.Context, id string) (containerd.Container, error)
 	Containers() ([]containerd.Container, error)
 	GetEvents() containerd.EventService
 	Info(ctn containerd.Container) (containers.Container, error)
+	Labels(ctn containerd.Container) (map[string]string, error)
+	LabelsWithContext(ctx context.Context, ctn containerd.Container) (map[string]string, error)
 	ImageSize(ctn containerd.Container) (int64, error)
 	Spec(ctn containerd.Container) (*oci.Spec, error)
+	SpecWithContext(ctx context.Context, ctn containerd.Container) (*oci.Spec, error)
 	Metadata() (containerd.Version, error)
 	Namespace() string
 	TaskMetrics(ctn containerd.Container) (*types.Metric, error)
@@ -136,63 +144,23 @@ func (c *ContainerdUtil) GetEvents() containerd.EventService {
 	return c.cl.EventService()
 }
 
-// GetContainers interfaces with the containerd api to get the list of containers.
-func (c *ContainerdUtil) GetContainers() ([]*cspec.Container, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.queryTimeout)
-	defer cancel()
-
-	dContainers, err := c.Containers()
-	if err != nil {
-		return nil, err
-	}
-
-	uContainers := make([]*cspec.Container, 0, len(dContainers))
-	for _, dContainer := range dContainers {
-		ctxNamespace := namespaces.WithNamespace(ctx, c.namespace)
-
-		info, err := dContainer.Info(ctxNamespace)
-		if err != nil {
-			_ = log.Errorf("Could not extract containerd %s from container '%s'. Error: %v", "Info", dContainer.ID(), err)
-			continue
-		}
-		name := info.ID
-		if nameLabel, ok := info.Labels["io.kubernetes.container.name"]; ok {
-			name = nameLabel
-		}
-
-		spec, err := dContainer.Spec(ctxNamespace)
-		if err != nil {
-			logExtractionError("Spec", dContainer, err)
-		}
-
-		state := ""
-		task, err := dContainer.Task(ctxNamespace, nil)
-		if err != nil {
-			logExtractionError("Task", dContainer, err)
-		} else {
-			status, err := task.Status(ctxNamespace)
-			if err != nil {
-				logExtractionError("Task Status", dContainer, err)
-			} else {
-				state = string(status.Status)
-			}
-		}
-
-		container := &cspec.Container{
-			Name:    name,
-			Runtime: "containerd",
-			ID:      dContainer.ID(),
-			Image:   info.Image,
-			Mounts:  spec.Mounts,
-			State:   state,
-		}
-		uContainers = append(uContainers, container)
-	}
-	return uContainers, nil
+// Container interfaces with the containerd api to get a container by ID.
+func (c *ContainerdUtil) Container(id string) (containerd.Container, error) {
+	return c.ContainerWithContext(context.Background(), id)
 }
 
-func logExtractionError(what string, container containerd.Container, err error) {
-	_ = log.Warnf("Could not extract containerd %s from container '%s'. Error: %v", what, container.ID(), err)
+// ContainerWithContext interfaces with the containerd api to get a container by ID.
+// It allows passing the parent context
+func (c *ContainerdUtil) ContainerWithContext(ctx context.Context, id string) (containerd.Container, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.queryTimeout)
+	defer cancel()
+	ctxNamespace := namespaces.WithNamespace(ctx, c.namespace)
+	ctn, err := c.cl.LoadContainer(ctxNamespace, id)
+	if errdefs.IsNotFound(err) {
+		return ctn, errors.NewNotFound(id)
+	}
+
+	return ctn, err
 }
 
 // Containers interfaces with the containerd api to get the list of Containers.
@@ -225,9 +193,30 @@ func (c *ContainerdUtil) Info(ctn containerd.Container) (containers.Container, e
 	return ctn.Info(ctxNamespace)
 }
 
+// Labels interfaces with the containerd api to get Container labels
+func (c *ContainerdUtil) Labels(ctn containerd.Container) (map[string]string, error) {
+	return c.LabelsWithContext(context.Background(), ctn)
+}
+
+// LabelsWithContext interfaces with the containerd api to get Container labels
+// It allows passing the parent context
+func (c *ContainerdUtil) LabelsWithContext(ctx context.Context, ctn containerd.Container) (map[string]string, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.queryTimeout)
+	defer cancel()
+	ctxNamespace := namespaces.WithNamespace(ctx, c.namespace)
+
+	return ctn.Labels(ctxNamespace)
+}
+
 // Spec interfaces with the containerd api to get container OCI Spec
 func (c *ContainerdUtil) Spec(ctn containerd.Container) (*oci.Spec, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.queryTimeout)
+	return c.SpecWithContext(context.Background(), ctn)
+}
+
+// SpecWithContext interfaces with the containerd api to get container OCI Spec
+// It allows passing the parent context
+func (c *ContainerdUtil) SpecWithContext(ctx context.Context, ctn containerd.Container) (*oci.Spec, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.queryTimeout)
 	defer cancel()
 	ctxNamespace := namespaces.WithNamespace(ctx, c.namespace)
 
