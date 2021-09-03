@@ -2,7 +2,7 @@
 # Preparation stage: layout and chmods #
 ########################################
 
-FROM artifactory.stackstate.io/docker-virtual/ubuntu:20.04 as builder
+FROM ubuntu:20.04 as builder
 
 WORKDIR /output
 
@@ -22,7 +22,7 @@ RUN chmod 755 entrypoint.sh \
 # Actual docker image construction #
 ####################################
 
-FROM artifactory.stackstate.io/docker-virtual/ubuntu:20.04
+FROM ubuntu:20.04
 
 LABEL maintainer "StackState <info@stackstate.com>"
 
