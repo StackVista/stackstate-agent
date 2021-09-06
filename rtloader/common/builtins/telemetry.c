@@ -8,12 +8,15 @@
 
 // these must be set by the Agent
 static cb_submit_topology_event_t cb_submit_topology_event = NULL;
+static cb_submit_raw_metrics_data_t cb_submit_raw_metrics_data = NULL;
 
 // forward declarations
 static PyObject *submit_topology_event(PyObject *self, PyObject *args);
+static PyObject *submit_raw_metrics_data(PyObject *self, PyObject *args);
 
 static PyMethodDef methods[] = {
     {"submit_topology_event", (PyCFunction)submit_topology_event, METH_VARARGS, "Submit a topology event to the intake api."},
+    {"submit_raw_metrics_data", (PyCFunction)submit_raw_metrics_data, METH_VARARGS, "Submit raw metrics data to the raw metrics api."},
     {NULL, NULL}  // guards
 };
 
@@ -77,4 +80,56 @@ static PyObject *submit_topology_event(PyObject *self, PyObject *args) {
 error:
     PyGILState_Release(gstate);
     return NULL; // Failure
+}
+
+
+void _set_submit_raw_metrics_data_cb(cb_submit_raw_metrics_data_t cb)
+{
+    cb_submit_raw_metrics_data = cb;
+}
+
+/*! \fn submit_raw_metrics_check_data(PyObject *self, PyObject *args)
+    \brief Raw metrics builtin class method for raw metrics data submission.
+    \param self A PyObject * pointer to self - the raw metrics module.
+    \param args A PyObject * pointer to the python args or kwargs.
+    \return This function returns a new reference to None (already INCREF'd), or NULL in case of error.
+
+    This function implements the `submit_raw_metrics_data` python callable in C and is used from the python code.
+    More specifically, in the context of rtloader and datadog-agent, this is called from our python base check
+    class to submit raw metrics data to the batcher.
+*/
+static PyObject *submit_raw_metrics_data(PyObject *self, PyObject *args)
+{
+    if (cb_submit_raw_metrics_data == NULL) {
+        Py_RETURN_NONE;
+    }
+
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    PyObject *check = NULL; // borrowed
+    PyObject *py_tags = NULL; // borrowed
+    char *name = NULL;
+    char *hostname = NULL;
+    char *timestamp = NULL;
+    char *check_id = NULL;
+    char **tags = NULL;
+    float value;
+
+    if (!PyArg_ParseTuple(args, "OssfOsi", &check, &check_id, &name, &value, &py_tags, &hostname, &timestamp)) {
+        goto error;
+    }
+
+    if ((tags = py_tag_to_c(py_tags)) == NULL)
+        goto error;
+
+    cb_submit_raw_metrics_data(check_id, name, value, tags, hostname, timestamp);
+
+    free_tags(tags);
+
+    PyGILState_Release(gstate);
+    Py_RETURN_NONE;
+
+error:
+    PyGILState_Release(gstate);
+    return NULL;
 }

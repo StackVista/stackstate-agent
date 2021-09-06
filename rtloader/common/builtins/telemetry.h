@@ -51,6 +51,7 @@ void Py2_init_telemetry();
 #endif
 
 void _set_submit_topology_event_cb(cb_submit_topology_event_t);
+void _set_submit_raw_metrics_data_cb(cb_submit_raw_metrics_data_t);
 
 #ifdef __cplusplus
 }
