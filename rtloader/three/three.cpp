@@ -18,7 +18,6 @@
 #include "tagger.h"
 #include "util.h"
 #include "topology.h"
-#include "raw_metrics.h"
 #include "telemetry.h"
 #include "health.h"
 
@@ -86,7 +85,6 @@ bool Three::init()
     PyImport_AppendInittab(KUBEUTIL_MODULE_NAME, PyInit_kubeutil);
     PyImport_AppendInittab(CONTAINERS_MODULE_NAME, PyInit_containers);
     PyImport_AppendInittab(TOPOLOGY_MODULE_NAME, PyInit_topology);
-    PyImport_AppendInittab(RAW_METRICS_MODULE_NAME, PyInit_raw_metrics);
     PyImport_AppendInittab(TELEMETRY_MODULE_NAME, PyInit_telemetry);
     PyImport_AppendInittab(HEALTH_MODULE_NAME, PyInit_health);
 

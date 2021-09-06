@@ -7,7 +7,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/health"
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -48,7 +48,7 @@ func testComponentTopology(t *testing.T) {
 	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
 			Health: make(map[string]health.Health),
-			Metrics: &metrics.RawMetrics {},
+			Metrics: &telemetry.RawMetrics {},
 			Topology: &topology.Topology{
 				StartSnapshot: true,
 				StopSnapshot:  true,
@@ -98,7 +98,7 @@ func testRelationTopology(t *testing.T) {
 	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
 			Health: make(map[string]health.Health),
-			Metrics: &metrics.RawMetrics {},
+			Metrics: &telemetry.RawMetrics {},
 			Topology: &topology.Topology{
 				StartSnapshot: false,
 				StopSnapshot:  false,
@@ -133,7 +133,7 @@ func testStartSnapshotCheck(t *testing.T) {
 	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
 			Health: make(map[string]health.Health),
-			Metrics: &metrics.RawMetrics {},
+			Metrics: &telemetry.RawMetrics {},
 			Topology: &topology.Topology{
 				StartSnapshot: true,
 				StopSnapshot:  false,
@@ -160,7 +160,7 @@ func testStopSnapshotCheck(t *testing.T) {
 	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
 			Health: make(map[string]health.Health),
-			Metrics: &metrics.RawMetrics {},
+			Metrics: &telemetry.RawMetrics {},
 			Topology: &topology.Topology{
 				StartSnapshot: false,
 				StopSnapshot:  true,

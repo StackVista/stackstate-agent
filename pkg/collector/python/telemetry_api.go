@@ -10,8 +10,10 @@ package python
 import (
 	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
@@ -51,5 +53,25 @@ func SubmitTopologyEvent(id *C.char, data *C.char) {
 	} else {
 		_ = log.Errorf("Empty topology event not sent. Raw: %v, Json: %v, Error: %v", rawEvent,
 			topologyEvent.String(), err)
+	}
+}
+
+// SubmitRawMetricsData
+//export SubmitRawMetricsData
+func SubmitRawMetricsData(id *C.char, data *C.char) {
+	goCheckID := C.GoString(id)
+	rawMetricsPayload := C.GoString(data)
+	metricsPayload := telemetry.RawMetricsPayload{}
+	err := json.Unmarshal([]byte(rawMetricsPayload), &metricsPayload)
+
+	if err == nil {
+		if len(metricsPayload.Data) != 0 {
+			batcher.GetBatcher().SubmitRawMetricsData(check.ID(goCheckID), metricsPayload.Data)
+		} else {
+			_ = log.Errorf("Empty json submitted to as check data, this is not allowed, data will not be forwarded.")
+		}
+	} else {
+		_ = log.Errorf("Empty raw metrics data event not sent. Raw: %v, Json: %v, Error: %v", rawMetricsPayload,
+			metricsPayload.JSONString(), err)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"io/ioutil"
 	"log"
 	"os"
@@ -32,11 +33,13 @@ var (
 	checkID  string
 	_data    map[string]interface{}
 	_topoEvt metrics.Event
+	rawMetricsResult map[string]interface{}
 )
 
 func resetOuputValues() {
 	checkID = ""
 	_data = nil
+	rawMetricsResult = nil
 	_topoEvt = metrics.Event{}
 }
 
@@ -102,4 +105,13 @@ func submitTopologyEvent(id *C.char, data *C.char) {
 	checkID = C.GoString(id)
 	result := C.GoString(data)
 	json.Unmarshal([]byte(result), &_topoEvt)
+}
+
+//export submitRawMetricsData
+func submitRawMetricsData(id *C.char, data *C.char) {
+	checkID = C.GoString(id)
+	_raw_data := C.GoString(data)
+	rawMetricsPayload := &telemetry.RawMetricsPayload{}
+	json.Unmarshal([]byte(_raw_data), rawMetricsPayload)
+	rawMetricsResult = rawMetricsPayload.Data
 }

@@ -5,8 +5,8 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/health"
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/serializer"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"sync"
@@ -33,7 +33,7 @@ type Batcher interface {
 	SubmitHealthStopSnapshot(checkID check.ID, stream health.Stream)
 
 	// Raw Metrics
-	SubmitRawMetricsData(checkID check.ID, data metrics.RawMetricsCheckData)
+	SubmitRawMetricsData(checkID check.ID, data telemetry.RawMetricsCheckData)
 
 	// lifecycle
 	SubmitComplete(checkID check.ID)
@@ -121,7 +121,7 @@ type submitHealthStopSnapshot struct {
 
 type submitRawMetricsData struct {
 	checkID check.ID
-	data    metrics.RawMetricsCheckData
+	data    telemetry.RawMetricsCheckData
 }
 
 type submitComplete struct {
@@ -150,7 +150,7 @@ func (batcher *AsynchronousBatcher) sendState(states CheckInstanceBatchStates) {
 		}
 
 		// Create the rawMetricData payload
-		rawMetrics := make([]metrics.RawMetrics, 0)
+		rawMetrics := make([]telemetry.RawMetrics, 0)
 		for _, state := range states {
 			if state.Metrics != nil {
 				rawMetrics = append(rawMetrics, *state.Metrics)
@@ -293,7 +293,7 @@ func (batcher AsynchronousBatcher) SubmitHealthStopSnapshot(checkID check.ID, st
 }
 
 // SubmitRawMetricsData TODO: Raw Metrics
-func (batcher AsynchronousBatcher) SubmitRawMetricsData(checkID check.ID, data metrics.RawMetricsCheckData) {
+func (batcher AsynchronousBatcher) SubmitRawMetricsData(checkID check.ID, data telemetry.RawMetricsCheckData) {
 	log.Debugf("Submitting Raw metrics data for check [%s]: %s", checkID, data.JSONString())
 	batcher.input <- submitRawMetricsData{
 		checkID: checkID,

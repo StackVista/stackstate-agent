@@ -19,7 +19,6 @@
 #include "tagger.h"
 #include "util.h"
 #include "topology.h"
-#include "raw_metrics.h"
 #include "telemetry.h"
 #include "health.h"
 
@@ -119,7 +118,6 @@ bool Two::init()
     Py2_init_kubeutil();
     Py2_init_containers();
     Py2_init_topology();
-    Py2_init_raw_metrics();
     Py2_init_telemetry();
     Py2_init_health();
 

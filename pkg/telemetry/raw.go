@@ -3,7 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-package metrics
+package telemetry
 
 import (
 	"encoding/json"
@@ -39,12 +39,3 @@ func (c RawMetricsCheckData) JSONString() string {
 	}
 	return string(b)
 }
-
-// 	type RawMetricsData struct {
-// 		Name      string            `json:"name"`
-// 		Timestamp int               `json:"timestamp"`
-// 		Value     string            `json:"value"`
-// 		Hostname  string            `json:"hostname"`
-// 		Type      string            `json:"type,omitempty"`
-// 		Tags      map[string]string `json:"tags"`
-// 	}

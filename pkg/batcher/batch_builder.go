@@ -3,14 +3,14 @@ package batcher
 import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/health"
-	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 )
 
 // CheckInstanceBatchState is the type representing batched data per check instance
 type CheckInstanceBatchState struct {
 	Topology *topology.Topology
-	Metrics  *metrics.RawMetrics
+	Metrics  *telemetry.RawMetrics
 	Health   map[string]health.Health
 }
 
@@ -87,7 +87,7 @@ func (builder *BatchBuilder) getOrCreateHealth(checkID check.ID, stream health.S
 	return builder.states[checkID].Health[stream.GoString()]
 }
 
-func (builder *BatchBuilder) getOrCreateRawMetrics(checkID check.ID) *metrics.RawMetrics {
+func (builder *BatchBuilder) getOrCreateRawMetrics(checkID check.ID) *telemetry.RawMetrics {
 	state := builder.getOrCreateState(checkID)
 
 	if state.Metrics != nil {
@@ -97,8 +97,8 @@ func (builder *BatchBuilder) getOrCreateRawMetrics(checkID check.ID) *metrics.Ra
 	builder.states[checkID] = CheckInstanceBatchState{
 		Topology: state.Topology,
 		Health: state.Health,
-		Metrics:  &metrics.RawMetrics{
-			CheckStates: make([]metrics.RawMetricsCheckData, 0),
+		Metrics:  &telemetry.RawMetrics{
+			CheckStates: make([]telemetry.RawMetricsCheckData, 0),
 		},
 	}
 
@@ -163,7 +163,7 @@ func (builder *BatchBuilder) HealthStopSnapshot(checkID check.ID, stream health.
 }
 
 // AddRawMetricsData adds raw metric data
-func (builder *BatchBuilder) AddRawMetricsData(checkID check.ID, data metrics.RawMetricsCheckData) CheckInstanceBatchStates {
+func (builder *BatchBuilder) AddRawMetricsData(checkID check.ID, data telemetry.RawMetricsCheckData) CheckInstanceBatchStates {
 	rawMetricsData := builder.getOrCreateRawMetrics(checkID)
 	rawMetricsData.CheckStates = append(rawMetricsData.CheckStates, data)
 	return builder.incrementAndTryFlush()

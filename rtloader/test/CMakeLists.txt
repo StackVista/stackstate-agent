@@ -13,7 +13,6 @@ set(PKGS
 	"../../test/containers/..."
 	"../../test/topology/..."
 	"../../test/telemetry/..."
-	"../../test/raw_metrics/..."
 	"../../test/health/..."
 )
 

@@ -5,7 +5,10 @@ package python
 import (
 	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -99,6 +102,23 @@ func testTopologyEvent(t *testing.T) {
 	sender.AssertEvent(t, expectedEvent, 0)
 }
 
+var expectedRawMetricsData = telemetry.RawMetricsCheckData{
+	"key":        "value ®",
+	"stringlist": []interface{}{"a", "b", "c"},
+	"boollist":   []interface{}{true, false},
+	"intlist":    []interface{}{float64(1)},
+	"doublelist": []interface{}{0.7, 1.42},
+	"emptykey":   nil,
+	"nestedobject": map[string]interface{}{
+		"nestedkey": "nestedValue",
+		"animals": map[string]interface{}{
+			"legs":  "dog",
+			"wings": "eagle",
+			"tail":  "crocodile",
+		},
+	},
+}
+
 func testTopologyEventMissingFields(t *testing.T) {
 	sender := mocksender.NewMockSender("testID")
 	sender.SetupAcceptAll()
@@ -134,4 +154,29 @@ func testTopologyEventWrongFieldType(t *testing.T) {
 	SubmitTopologyEvent(C.CString("testID"), ev)
 
 	sender.AssertNotCalled(t, "Event")
+}
+
+func testRawMetricsData(t *testing.T) {
+	mockBatcher := batcher.NewMockBatcher()
+
+	c := &telemetry.RawMetricsPayload{
+		Data: expectedRawMetricsData,
+	}
+	data, err := json.Marshal(c)
+	assert.NoError(t, err)
+
+	checkId := C.CString("check-id")
+	SubmitRawMetricsData(checkId, C.CString(string(data)))
+
+	expectedState := mockBatcher.CollectedTopology.Flush()
+
+	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
+		"check-id": {
+			Metrics: &telemetry.RawMetrics{
+				CheckStates: []telemetry.RawMetricsCheckData{
+					expectedRawMetricsData,
+				},
+			},
+		},
+	}), expectedState)
 }

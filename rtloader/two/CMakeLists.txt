@@ -51,7 +51,6 @@ add_library(datadog-agent-two SHARED
     ../common/builtins/containers.c
     ../common/builtins/topology.c
     ../common/builtins/telemetry.c
-    ../common/builtins/raw_metrics.c
     ../common/builtins/health.c
 )
 add_compile_definitions(DATADOG_AGENT_TWO)

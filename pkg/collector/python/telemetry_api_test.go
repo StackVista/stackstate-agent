@@ -15,3 +15,7 @@ func TestTopologyEventMissingFields(t *testing.T) {
 func TestTopologyEventWrongFieldType(t *testing.T) {
 	testTopologyEventWrongFieldType(t)
 }
+
+func TestSubmitRawMetricsData(t *testing.T) {
+	testRawMetricsData(t)
+}
