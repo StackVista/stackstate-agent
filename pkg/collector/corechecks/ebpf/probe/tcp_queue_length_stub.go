@@ -1,5 +1,4 @@
-//go:build !linux_bpf || (linux_bpf && !bcc)
-// +build !linux_bpf linux_bpf,!bcc
+// +build !linux_bpf
 
 package probe
 
