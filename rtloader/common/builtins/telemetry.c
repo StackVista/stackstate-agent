@@ -206,7 +206,7 @@ static PyObject *submit_raw_metrics_data(PyObject *self, PyObject *args) {
 
     if ((tags = py_tag_to_c(py_tags)) == NULL)
         retval = NULL; // Failure
-        PyErr_SetString(PyExc_TypeError, "Unable to set raw metric tags");
+        PyErr_SetString(PyExc_TypeError, "Unable to set the raw metric tags");
         goto done;
 
 
