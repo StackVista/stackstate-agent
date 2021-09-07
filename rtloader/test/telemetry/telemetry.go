@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	// "github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"io/ioutil"
 	"log"
 	"os"
@@ -112,9 +112,9 @@ func submitTopologyEvent(id *C.char, data *C.char) {
 //export submitRawMetricsData
 func submitRawMetricsData(id *C.char, data *C.char) {
 	fmt.Println("-- Debug (submitRawMetricsData) --")
-	fmt.Println(id)
-	fmt.Println(data)
-	nameTest = data
+	nameTest = C.GoString(data)
+	fmt.Println(nameTest)
+	fmt.Println(C.GoString(id))
 
 	// checkID = C.GoString(id)
 	// _raw_data := C.GoString(data)
