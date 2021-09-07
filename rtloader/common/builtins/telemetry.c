@@ -209,19 +209,23 @@ static PyObject *submit_raw_metrics_data(PyObject *self, PyObject *args) {
         PyErr_SetString(PyExc_TypeError, "Unable to set raw metric tags");
         goto done;
 
-    data = Py_BuildValue("{s:s, s:f, s:O, s:s, s:i}", "name", name, "value", value, "tags", tags, "hostname", hostname, "timestamp", timestamp);
-    json_data = as_json(data);
+    // data = Py_BuildValue("{s:s, s:f, s:O, s:s, s:i}", "name", name, "value", value, "tags", tags, "hostname", hostname, "timestamp", timestamp);
+    // json_data = as_json(data);
 
-    if (json_data == NULL) {
-        // If as_json fails it sets a python exception, so we just return
-        retval = NULL; // Failure
-        PyErr_SetString(PyExc_TypeError, "Unable to create a raw metric JSON data");
-        goto done;
-    } else {
-        cb_submit_raw_metrics_data(check_id, json_data);
-        Py_INCREF(Py_None); // Increment, since we are not using the macro Py_RETURN_NONE that does it for us
-        retval = Py_None; // Success
-    }
+    cb_submit_raw_metrics_data(check_id, "text test");
+    Py_INCREF(Py_None); // Increment, since we are not using the macro Py_RETURN_NONE that does it for us
+    retval = Py_None; // Success
+
+    // if (json_data == NULL) {
+    //     // If as_json fails it sets a python exception, so we just return
+    //     retval = NULL; // Failure
+    //     PyErr_SetString(PyExc_TypeError, "Unable to create a raw metric JSON data");
+    //     goto done;
+    // } else {
+    //     cb_submit_raw_metrics_data(check_id, json_data);
+    //     Py_INCREF(Py_None); // Increment, since we are not using the macro Py_RETURN_NONE that does it for us
+    //     retval = Py_None; // Success
+    // }
 
 done:
     if (json_data != NULL) {
