@@ -209,6 +209,7 @@ static PyObject *submit_raw_metrics_data(PyObject *self, PyObject *args) {
         PyErr_SetString(PyExc_TypeError, "Unable to set raw metric tags");
         goto done;
 
+
     data = Py_BuildValue("{s:s, s:f, s:O, s:s, s:i}", "name", name, "value", value, "tags", tags, "hostname", hostname, "timestamp", timestamp);
     json_data = as_json(data);
 
