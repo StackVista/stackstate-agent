@@ -34,6 +34,7 @@ var (
 	_data    map[string]interface{}
 	_topoEvt metrics.Event
 	rawMetricsResult map[string]interface{}
+	nameTest string
 )
 
 func resetOuputValues() {
@@ -41,6 +42,7 @@ func resetOuputValues() {
 	_data = nil
 	rawMetricsResult = nil
 	_topoEvt = metrics.Event{}
+	nameTest = ""
 }
 
 func setUp() error {
@@ -112,10 +114,11 @@ func submitRawMetricsData(id *C.char, data *C.char) {
 	fmt.Println("-- Debug (submitRawMetricsData) --")
 	fmt.Println(id)
 	fmt.Println(data)
+	nameTest = data
 
-	checkID = C.GoString(id)
-	_raw_data := C.GoString(data)
-	rawMetricsPayload := &telemetry.RawMetricsPayload{}
-	json.Unmarshal([]byte(_raw_data), rawMetricsPayload)
-	rawMetricsResult = rawMetricsPayload.Data
+	// checkID = C.GoString(id)
+	// _raw_data := C.GoString(data)
+	// rawMetricsPayload := &telemetry.RawMetricsPayload{}
+	// json.Unmarshal([]byte(_raw_data), rawMetricsPayload)
+	// rawMetricsResult = rawMetricsPayload.Data
 }

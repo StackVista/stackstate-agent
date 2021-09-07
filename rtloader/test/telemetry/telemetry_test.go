@@ -336,10 +336,12 @@ func TestSubmitRawMetricsData(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
 
-	out, err := run(`telemetry.submit_raw_metrics_data(None, "checkid", "name", 10, ["tag"], "hostname", 1400000)`)
+	out, err := run(`telemetry.submit_raw_metrics_data(None, "checkid", "name", "10", ["tag"], "hostname", "10")`)
 
 	t.Logf("-- Debug (TestSubmitRawMetricsData) --")
 	t.Logf(out)
+	t.Logf(nameTest)
+	t.Logf("-- -- -- --")
 
 	if err != nil {
 		t.Fatal(err)
