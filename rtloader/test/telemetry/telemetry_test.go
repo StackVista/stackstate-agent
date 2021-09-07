@@ -338,7 +338,7 @@ func TestSubmitRawMetricsData(t *testing.T) {
 
 	out, err := run(`telemetry.submit_raw_metrics_data(None, "checkid", "name", 10, ["tag"], "hostname", 1400000)`)
 
-	t.Logf("-- Debug --")
+	t.Logf("-- Debug (TestSubmitRawMetricsData) --")
 	t.Logf(out)
 
 	if err != nil {

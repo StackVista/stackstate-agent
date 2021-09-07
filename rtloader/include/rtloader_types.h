@@ -198,8 +198,8 @@ typedef void (*cb_submit_health_start_snapshot_t)(char *, health_stream_t *, int
 // (check_id, stream)
 typedef void (*cb_submit_health_stop_snapshot_t)(char *, health_stream_t *);
 
-// (check_id, name, value, py_tags, hostname, timestamp)
-typedef void (*cb_submit_raw_metrics_data_t)(char *, char *, char *, char *, char *, char *);
+// (check_id, data)
+typedef void (*cb_submit_raw_metrics_data_t)(char *, char *);
 
 #ifdef __cplusplus
 }

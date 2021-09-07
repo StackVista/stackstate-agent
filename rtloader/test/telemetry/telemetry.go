@@ -109,6 +109,10 @@ func submitTopologyEvent(id *C.char, data *C.char) {
 
 //export submitRawMetricsData
 func submitRawMetricsData(id *C.char, data *C.char) {
+	fmt.Println("-- Debug (submitRawMetricsData) --")
+	fmt.Println(id)
+	fmt.Println(data)
+
 	checkID = C.GoString(id)
 	_raw_data := C.GoString(data)
 	rawMetricsPayload := &telemetry.RawMetricsPayload{}
