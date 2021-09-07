@@ -21,18 +21,6 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-const rawMetricsData = `
-{
-  "key": "value ®",
-  "stringlist": ["a", "b", "c", "04", "09"],
-  "boollist": [True, False],
-  "intlist": [1],
-  "doublelist": [0.7, 1.42],
-  "emptykey": None,
-  "nestedobject": {"nestedkey": "nestedValue"}
-}`
-
-
 func TestSubmitTopologyEvent(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
@@ -348,10 +336,9 @@ func TestSubmitRawMetricsData(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
 
-	out, err := run(`telemetry.submit_raw_metrics_data(None, "checkid", "name", 10, ["tag"], "hostname", 1400000 )`)
+	out, err := run(`telemetry.submit_raw_metrics_data(None, "checkid", "name", 10, ["tag"], "hostname", 1400000)`)
 
 	t.Logf("-- Debug --")
-	t.Logf(rawMetricsData)
 	t.Logf(out)
 
 	if err != nil {

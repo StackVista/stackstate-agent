@@ -199,11 +199,13 @@ static PyObject *submit_raw_metrics_data(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "OssfOsi", &check, &check_id, &name, &value, &py_tags, &hostname, &timestamp)) {
         retval = NULL; // Failure
+        PyErr_SetString(PyExc_TypeError, "Failure A");
         goto done;
     }
 
     if ((tags = py_tag_to_c(py_tags)) == NULL)
         retval = NULL; // Failure
+        PyErr_SetString(PyExc_TypeError, "Failure B");
         goto done;
 
     data = Py_BuildValue("{s:s, s:f, s:O, s:s, s:i}", "name", name, "value", value, "tags", tags, "hostname", hostname, "timestamp", timestamp);
@@ -212,6 +214,7 @@ static PyObject *submit_raw_metrics_data(PyObject *self, PyObject *args) {
     if (json_data == NULL) {
         // If as_json fails it sets a python exception, so we just return
         retval = NULL; // Failure
+        PyErr_SetString(PyExc_TypeError, "Failure C");
         goto done;
     } else {
         cb_submit_raw_metrics_data(check_id, json_data);
