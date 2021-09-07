@@ -180,6 +180,7 @@ static void free_tags(char **tags)
 */
 static PyObject *submit_raw_metrics_data(PyObject *self, PyObject *args) {
     if (cb_submit_raw_metrics_data == NULL) {
+        PyErr_SetString(PyExc_TypeError, "`cb_submit_raw_metrics_data` is not defined");
         Py_RETURN_NONE;
     }
 
