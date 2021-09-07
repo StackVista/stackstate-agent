@@ -180,11 +180,14 @@ static void free_tags(char **tags)
 */
 static PyObject *submit_raw_metrics_data(PyObject *self, PyObject *args) {
     if (cb_submit_raw_metrics_data == NULL) {
+        PyErr_SetString(PyExc_TypeError, "`cb_submit_raw_metrics_data` should not be null");
         Py_RETURN_NONE;
     }
 
     PyObject *check = NULL; // borrowed
     PyObject *py_tags = NULL; // borrowed
+    PyObject * data = NULL;
+    PyObject * retval = NULL;
     char *json_data = NULL;
     char *name = NULL;
     char *hostname = NULL;
@@ -192,20 +195,18 @@ static PyObject *submit_raw_metrics_data(PyObject *self, PyObject *args) {
     char *check_id = NULL;
     char **tags = NULL;
     float value;
-    PyObject * data = NULL;
-    PyObject * retval = NULL;
 
     PyGILState_STATE gstate = PyGILState_Ensure();
 
     if (!PyArg_ParseTuple(args, "OssfOsi", &check, &check_id, &name, &value, &py_tags, &hostname, &timestamp)) {
         retval = NULL; // Failure
-        PyErr_SetString(PyExc_TypeError, "Failure A");
+        PyErr_SetString(PyExc_TypeError, "Raw metrics, Unable to parse arguments passed to `submit_raw_metrics_data`");
         goto done;
     }
 
     if ((tags = py_tag_to_c(py_tags)) == NULL)
         retval = NULL; // Failure
-        PyErr_SetString(PyExc_TypeError, "Failure B");
+        PyErr_SetString(PyExc_TypeError, "Unable to set raw metric tags");
         goto done;
 
     data = Py_BuildValue("{s:s, s:f, s:O, s:s, s:i}", "name", name, "value", value, "tags", tags, "hostname", hostname, "timestamp", timestamp);
@@ -214,11 +215,10 @@ static PyObject *submit_raw_metrics_data(PyObject *self, PyObject *args) {
     if (json_data == NULL) {
         // If as_json fails it sets a python exception, so we just return
         retval = NULL; // Failure
-        PyErr_SetString(PyExc_TypeError, "Failure C");
+        PyErr_SetString(PyExc_TypeError, "Unable to create a raw metric JSON data");
         goto done;
     } else {
         cb_submit_raw_metrics_data(check_id, json_data);
-
         Py_INCREF(Py_None); // Increment, since we are not using the macro Py_RETURN_NONE that does it for us
         retval = Py_None; // Success
     }
