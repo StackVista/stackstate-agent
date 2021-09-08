@@ -5,6 +5,7 @@
 #include "telemetry.h"
 #include "rtloader_mem.h"
 #include "stringutils.h"
+#include "util.h"
 
 // these must be set by the Agent
 static cb_submit_topology_event_t cb_submit_topology_event = NULL;
@@ -94,54 +95,36 @@ static PyObject *submit_raw_metrics_data(PyObject *self, PyObject *args) {
         Py_RETURN_NONE;
     }
 
-    PyObject *retval = NULL;
-    PyObject *data = NULL;
-    // char *json_data = NULL;
+    PyGILState_STATE gstate = PyGILState_Ensure();
 
     // Arguments passed to `submit_raw_metrics_data` *args
     PyObject *check = NULL; // borrowed
+    PyObject *py_tags = NULL; // borrowed
     char *check_id = NULL;
     char *name = NULL;
-    float value;
     char **tags = NULL;
     char *hostname = NULL;
+    float value;
     int timestamp;
 
-    PyGILState_STATE gstate = PyGILState_Ensure();
-
-    if (!PyArg_ParseTuple(args, "OssfOsi", &check, &check_id, &name, &value, &tags, &hostname, &timestamp)) {
-        retval = NULL; // Failure
+    // Python call: telemetry.submit_raw_metrics_data(self, check_id, name, value, tags, hostname, timestamp)
+    if (!PyArg_ParseTuple(args, "OssfOsi", &check, &check_id, &name, &value, &py_tags, &hostname, &timestamp)) {
         PyErr_SetString(PyExc_TypeError, "Raw metrics, Unable to parse arguments passed to `submit_raw_metrics_data`");
-        goto done;
+        goto error;
     }
 
-    // retval = NULL; // Failure
-    // PyErr_SetString(PyExc_TypeError, hostname);
-    // goto done;
+    if ((tags = py_tag_to_c(py_tags)) == NULL)
+        goto error;
 
-    // Map args into a key:value json object
-    data = Py_BuildValue("{s:s,s:s,s:f,s:i}", "check_id", check_id, "name", name, "value", value, "timestamp", timestamp);
-    // json_data = as_json(data);
+//    TODO: update cb_submit_raw_metrics_data with correct params
+//    cb_submit_raw_metrics_data(check_id, name, value, tags, hostname, timestamp);
 
-    // if (json_data == NULL) {
-    //     retval = NULL; // Failure
-    //     PyErr_SetString(PyExc_TypeError, "Unable to create a raw metric JSON data");
-    //     goto done;
-    // }
-    // else {
-    //     cb_submit_raw_metrics_data(check_id, json_data);
-    //     Py_INCREF(Py_None); // Increment, since we are not using the macro Py_RETURN_NONE that does it for us
-    //     retval = Py_None; // Success
-    // }
+    free_tags(tags);
 
-    Py_INCREF(Py_None); // Increment, since we are not using the macro Py_RETURN_NONE that does it for us
-    retval = Py_None; // Success
-
-
-done:
-    // if (json_data != NULL) {
-    //     _free(json_data);
-    // }
     PyGILState_Release(gstate);
-    return retval;
+    Py_RETURN_NONE;
+
+error:
+    PyGILState_Release(gstate);
+    return NULL;
 }
