@@ -1,0 +1,112 @@
+# -version*- mode: ruby -*-
+# vi: set ft=ruby :
+Vagrant.configure("2") do |config|
+  # VM Instance to run the code in
+  config.vm.box = "ubuntu/bionic64"
+  config.vm.hostname = 'stackstate-agent-t'
+
+  # The settings for this vagrant box
+  # We attempt to use all your available resources dynamically
+  config.vm.provider "virtualbox" do |v|
+    host = RbConfig::CONFIG['host_os']
+    if host =~ /darwin/
+      v.cpus = `sysctl -n hw.ncpu`.to_i
+      v.memory = `sysctl -n hw.memsize`.to_i / 1024 / 1024
+
+    elsif host =~ /linux/
+      v.cpus = `nproc`.to_i
+      v.memory = `grep 'MemTotal' /proc/meminfo | sed -e 's/MemTotal://' -e 's/ kB//'`.to_i / 1024
+
+    else
+      v.cpus = 4
+      v.memory = 8192
+    end
+  end
+
+  config.vm.synced_folder "./../", "/home/vagrant/stackstate-agent"
+  config.vm.network :public_network, bridge: "eno2"
+  config.vm.provision "shell", inline: <<-SHELL
+    # Route
+    cd /home/vagrant
+
+    # Download Requirements
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
+    wget https://golang.org/dl/go1.17.linux-amd64.tar.gz
+
+    # Updates
+    apt-get update -y
+    apt-get upgrade -y
+    apt-get install -y build-essential curl git mercurial make binutils bison gcc build-essential
+
+    # Cmake
+    wget http://www.cmake.org/files/v3.12/cmake-3.12.1.tar.gz
+    tar -xvzf cmake-3.12.1.tar.gz
+    cd cmake-3.12.1
+    ./configure
+    make
+    export PATH="$PATH:/home/vagrant/cmake-3.12.1/bin"
+    cd /home/vagrant
+    cmake --version
+
+    # Conda
+    chmod 777 ~/miniconda.sh
+    bash ~/miniconda.sh -b
+    . /root/miniconda3/etc/profile.d/conda.sh
+
+    # Golang
+    bash < <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer)
+    source /root/.gvm/scripts/gvm
+    gvm install go1.4 -B
+    gvm use go1.4
+    gvm install go1.16.3
+    gvm use go1.16.3
+    go version
+
+    # Route Project
+    cd /home/vagrant/stackstate-agent
+
+    # Conda Env
+    conda create -n ddpy2 python=2.7.18
+    conda create -n ddpy3 python=3.7
+    conda activate "ddpy#{ENV['VERSION']}"
+
+    # Pip
+    pip install -r requirements.txt
+
+    # Golang
+    invoke deps
+    invoke -e deps --verbose --dep-vendor-only
+    invoke agent.version --major-version "#{ENV['VERSION']}" -u > version.txt
+    cd $GOPATH/pkg && tar czf /home/vagrant/go-pkg.tar.gz .
+    cd $GOPATH/bin && tar czf /home/vagrant/go-bin.tar.gz .
+    cd /home/vagrant/stackstate-agent/vendor && tar czf /home/vagrant/vendor.tar.gz .
+  SHELL
+
+
+  $script = <<-SCRIPT
+    # Re Setup Env Variables
+    source /root/.gvm/scripts/gvm
+    gvm use go1.16.3
+    export PATH="$PATH:/home/vagrant/cmake-3.12.1/bin"
+    . /root/miniconda3/etc/profile.d/conda.sh
+    cd /home/vagrant/stackstate-agent
+    conda activate "ddpy#{ENV['VERSION']}"
+
+    # Golang Invoke Agent Build
+    invoke -e rtloader.make --python-runtimes "#{ENV['VERSION']}"
+    inv -e rtloader.test
+  SCRIPT
+
+  config.vm.provision "rtloader.test", type: "shell", run: "never", inline: $script
+end
+
+
+
+
+
+
+
+
+
+
+
