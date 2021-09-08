@@ -186,6 +186,7 @@ void SubmitTopologyEvent(char *, char *);
 
 void initTelemetryModule(rtloader_t *rtloader) {
 	set_submit_topology_event_cb(rtloader, SubmitTopologyEvent);
+	set_submit_raw_metrics_data_cb(rtloader, SubmitRawMetricsData);
 }
 
 //

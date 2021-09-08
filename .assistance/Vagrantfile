@@ -93,6 +93,7 @@ Vagrant.configure("2") do |config|
     conda activate "ddpy#{ENV['VERSION']}"
 
     # Golang Invoke Agent Build
+    inv -e rtloader.clean
     invoke -e rtloader.make --python-runtimes "#{ENV['VERSION']}"
     inv -e rtloader.test
   SCRIPT

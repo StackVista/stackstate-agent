@@ -289,63 +289,57 @@ func TestSubmitEventCannotBeSerialized(t *testing.T) {
 }
 
 func testRawMetricsData(t *testing.T) {
-	if rawMetricsResult["key"] != "value ®" {
-		t.Fatalf("Unexpected component data 'key' value: %s", rawMetricsResult["key"])
-	}
-	var stringlist = rawMetricsResult["stringlist"].([]interface{})
-	if len(stringlist) != 5 {
-		t.Fatalf("Unexpected component data 'stringlist' size: %v", len(stringlist))
-	}
-	if assert.ObjectsAreEqualValues(stringlist, []string{"a", "b", "c", "04", "09"}) {
-		t.Fatalf("Unexpected component data 'stringlist' value: %s", rawMetricsResult["stringlist"])
-	}
-	var boollist = rawMetricsResult["boollist"].([]interface{})
-	if len(boollist) != 2 {
-		t.Fatalf("Unexpected component data 'boollist' size: %v", len(boollist))
-	}
-	if assert.ObjectsAreEqualValues(boollist, []bool{true, false}) {
-		t.Fatalf("Unexpected component data 'boollist' value: %s", rawMetricsResult["boollist"])
-	}
-	var intlist = rawMetricsResult["intlist"].([]interface{})
-	if len(intlist) != 1 {
-		t.Fatalf("Unexpected component data 'intlist' size: %v", len(intlist))
-	}
-	if assert.ObjectsAreEqualValues(intlist, []int64{1}) {
-		t.Fatalf("Unexpected component data 'intlist' value: %s", rawMetricsResult["intlist"])
-	}
-	var doublelist = rawMetricsResult["doublelist"].([]interface{})
-	if len(doublelist) != 2 {
-		t.Fatalf("Unexpected component data 'doublelist' size: %v", len(doublelist))
-	}
-	if assert.ObjectsAreEqualValues(doublelist, []float64{0.7, 1.42}) {
-		t.Fatalf("Unexpected component data 'doublelist' value: %s", rawMetricsResult["doublelist"])
-	}
-	if rawMetricsResult["emptykey"] != nil {
-		t.Fatalf("Unexpected component data 'emptykey' value: %s", rawMetricsResult["emptykey"])
-	}
-	if rawMetricsResult["nestedobject"] == nil {
-		t.Fatalf("Unexpected component data 'nestedobject' value: %s", rawMetricsResult["nestedobject"])
-	}
-	var nestedObj = rawMetricsResult["nestedobject"].(map[string]interface{})
-	if nestedObj["nestedkey"] != "nestedValue" {
-		t.Fatalf("Unexpected component data 'nestedkey' value: %s", nestedObj["nestedkey"])
-	}
+	//  if _rawMetric["key"] != "value ®" {
+	//  	t.Fatalf("Unexpected component data 'key' value: %s", rawMetricsResult["key"])
+	//  }
+	//  var stringlist = rawMetricsResult["stringlist"].([]interface{})
+	//  if len(stringlist) != 5 {
+	//  	t.Fatalf("Unexpected component data 'stringlist' size: %v", len(stringlist))
+	//  }
+	//  if assert.ObjectsAreEqualValues(stringlist, []string{"a", "b", "c", "04", "09"}) {
+	//  	t.Fatalf("Unexpected component data 'stringlist' value: %s", rawMetricsResult["stringlist"])
+	//  }
+	//  var boollist = rawMetricsResult["boollist"].([]interface{})
+	//  if len(boollist) != 2 {
+	//  	t.Fatalf("Unexpected component data 'boollist' size: %v", len(boollist))
+	//  }
+	//  if assert.ObjectsAreEqualValues(boollist, []bool{true, false}) {
+	//  	t.Fatalf("Unexpected component data 'boollist' value: %s", rawMetricsResult["boollist"])
+	//  }
+	//  var intlist = rawMetricsResult["intlist"].([]interface{})
+	//  if len(intlist) != 1 {
+	//  	t.Fatalf("Unexpected component data 'intlist' size: %v", len(intlist))
+	//  }
+	//  if assert.ObjectsAreEqualValues(intlist, []int64{1}) {
+	//  	t.Fatalf("Unexpected component data 'intlist' value: %s", rawMetricsResult["intlist"])
+	//  }
+	//  var doublelist = rawMetricsResult["doublelist"].([]interface{})
+	//  if len(doublelist) != 2 {
+	//  	t.Fatalf("Unexpected component data 'doublelist' size: %v", len(doublelist))
+	//  }
+	//  if assert.ObjectsAreEqualValues(doublelist, []float64{0.7, 1.42}) {
+	//  	t.Fatalf("Unexpected component data 'doublelist' value: %s", rawMetricsResult["doublelist"])
+	//  }
+	//  if rawMetricsResult["emptykey"] != nil {
+	//  	t.Fatalf("Unexpected component data 'emptykey' value: %s", rawMetricsResult["emptykey"])
+	//  }
+	//  if rawMetricsResult["nestedobject"] == nil {
+	//  	t.Fatalf("Unexpected component data 'nestedobject' value: %s", rawMetricsResult["nestedobject"])
+	//  }
+	//  var nestedObj = rawMetricsResult["nestedobject"].(map[string]interface{})
+	//  if nestedObj["nestedkey"] != "nestedValue" {
+	//  	t.Fatalf("Unexpected component data 'nestedkey' value: %s", nestedObj["nestedkey"])
+	//  }
 }
 
 func TestSubmitRawMetricsData(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
 
-	out, err := run(`telemetry.submit_raw_metrics_data(None, "checkid", "name", "10", ["tag"], "hostname", "10")`)
+	out, _ := run(`telemetry.submit_raw_metrics_data(None, "checkid", "name", 10, ['foo', 21, 'bar', ["hey"]], "hostname", 14000)`)
+	t.Fatal(out)
 
-	t.Logf("-- Debug (TestSubmitRawMetricsData) --")
-	t.Logf(out)
-	t.Logf(nameTest)
-	t.Logf("-- -- -- --")
-
-	if err != nil {
-		t.Fatal(err)
-	}
+	/*
 	if out != "" {
 		t.Errorf("Unexpected printed value: '%s'", out)
 	}
@@ -354,20 +348,25 @@ func TestSubmitRawMetricsData(t *testing.T) {
 		t.Fatalf("Unexpected check id value: %s", checkID)
 	}
 
+	t.Log("=============================")
+	t.Log("=============================")
+	// t.Log(_rawMetric)
+	t.Log("=============================")
+	t.Log("=============================")
+
 	testRawMetricsData(t)
 
 	// Check for leaks
 	helpers.AssertMemoryUsage(t)
+	 */
 }
 
+/*
 func TestSubmitRawMetricsDataNoDict(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
 
 	out, err := run(`telemetry.submit_raw_metrics_data(None, "checkid", "I should be a dict")`)
-
-	t.Logf("-- Debug --")
-	t.Logf(out)
 
 	if err != nil {
 		t.Fatal(err)
@@ -386,9 +385,6 @@ func TestSubmitRawMetricsDataCannotBeSerialized(t *testing.T) {
 
 	out, err := run(`telemetry.submit_raw_metrics_data(None, "checkid", {object(): object()})`)
 
-	t.Logf("-- Debug --")
-	t.Logf(out)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -400,3 +396,4 @@ func TestSubmitRawMetricsDataCannotBeSerialized(t *testing.T) {
 	// Check for leaks
 	helpers.AssertMemoryUsage(t)
 }
+*/

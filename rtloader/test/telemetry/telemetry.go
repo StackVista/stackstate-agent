@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	// "github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"io/ioutil"
 	"log"
 	"os"
@@ -21,9 +21,11 @@ import (
 #include "datadog_agent_rtloader.h"
 
 extern void submitTopologyEvent(char *, char *);
+extern void submitRawMetricsData(char *, char *);
 
 static void initTelemetryTests(rtloader_t *rtloader) {
 	set_submit_topology_event_cb(rtloader, submitTopologyEvent);
+	set_submit_raw_metrics_data_cb(rtloader, submitRawMetricsData);
 }
 */
 import "C"
@@ -33,16 +35,14 @@ var (
 	checkID  string
 	_data    map[string]interface{}
 	_topoEvt metrics.Event
-	rawMetricsResult map[string]interface{}
-	nameTest string
+	_rawMetric telemetry.RawMetricsCheckData
 )
 
 func resetOuputValues() {
 	checkID = ""
 	_data = nil
-	rawMetricsResult = nil
 	_topoEvt = metrics.Event{}
-	nameTest = ""
+	_rawMetric = telemetry.RawMetricsCheckData{}
 }
 
 func setUp() error {
@@ -111,14 +111,7 @@ func submitTopologyEvent(id *C.char, data *C.char) {
 
 //export submitRawMetricsData
 func submitRawMetricsData(id *C.char, data *C.char) {
-	fmt.Println("-- Debug (submitRawMetricsData) --")
-	nameTest = C.GoString(data)
-	fmt.Println(nameTest)
-	fmt.Println(C.GoString(id))
-
-	// checkID = C.GoString(id)
-	// _raw_data := C.GoString(data)
-	// rawMetricsPayload := &telemetry.RawMetricsPayload{}
-	// json.Unmarshal([]byte(_raw_data), rawMetricsPayload)
-	// rawMetricsResult = rawMetricsPayload.Data
+	checkID = C.GoString(id)
+	result := C.GoString(data)
+	json.Unmarshal([]byte(result), &_rawMetric)
 }

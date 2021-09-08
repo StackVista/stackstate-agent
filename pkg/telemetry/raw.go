@@ -20,6 +20,14 @@ type RawMetricsPayload struct {
 
 type RawMetricsCheckData map[string]interface{}
 
+// type RawMetricsCheckData struct {
+// 	Timestamp 	*int  `json:"timestamp,omitempty"`
+// 	HostName  	*string  `json:"host_name,omitempty"`
+// 	Name  		*string  `json:"name,omitempty"`
+// 	Value 		*int  `json:"value,omitempty"`
+// 	Tags      	[]string `json:"tags,omitempty"`
+// }
+
 // JSONString returns a JSON string of the Payload
 func (p RawMetricsPayload) JSONString() string {
 	b, err := json.Marshal(p)
