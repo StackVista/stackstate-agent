@@ -1,5 +1,7 @@
 # Vagrant Assistance
 
+./.assistance/run.sh provision rtloader.test
+
 This vagrant image can be used to create the required env to run the following scenarios:
 
 - rtloader.make
