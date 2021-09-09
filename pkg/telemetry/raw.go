@@ -10,20 +10,23 @@ import (
 	"fmt"
 )
 
+// RawMetrics is a batch of raw metrics data
 type RawMetrics struct {
-	CheckStates		[]RawMetricsCheckData	`json:"check_states"`
+	CheckStates []RawMetricsCheckData `json:"check_states"`
 }
 
+// RawMetricsPayload is a single payload for the batch of raw metrics data
 type RawMetricsPayload struct {
-	Data   RawMetricsCheckData
+	Data RawMetricsCheckData
 }
 
+// RawMetricsCheckData single payload structure
 type RawMetricsCheckData struct {
-	Name  		string  `json:"name,omitempty"`
-	Timestamp 	int64  `json:"timestamp,omitempty"`
-	HostName  	string  `json:"host_name,omitempty"`
-	Value 		float64  `json:"value,omitempty"`
-	Tags      	[]string `json:"tags,omitempty"`
+	Name      string   `json:"name,omitempty"`
+	Timestamp int64    `json:"timestamp,omitempty"`
+	HostName  string   `json:"host_name,omitempty"`
+	Value     float64  `json:"value,omitempty"`
+	Tags      []string `json:"tags,omitempty"`
 }
 
 // JSONString returns a JSON string of the Payload
