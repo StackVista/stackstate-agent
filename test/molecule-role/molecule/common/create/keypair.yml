@@ -35,3 +35,11 @@
     dest: "{{ci_project_dir}}/.molecule/{{ molecule_scenario_name }}/ssh_key"
     content: "{{ keypair.key.private_key }}"
     mode: 0600
+
+- name: Get Temp SSH Key
+  command: cat "{{ci_project_dir}}/.molecule/{{ molecule_scenario_name }}/ssh_key"
+  register: ssh_key_content
+
+- name: Temp SSH Key display
+  debug:
+    msg: "{{ssh_key_content.stdout}}"

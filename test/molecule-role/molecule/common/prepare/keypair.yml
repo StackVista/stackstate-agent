@@ -15,6 +15,14 @@
     dest: "{{ keypair_path }}"
     mode: preserve
 
+- name: Get Temp SSH Key
+  command: cat "{{ keypair_path }}"
+  register: ssh_key_content
+
+- name: Temp SSH Key display
+  debug:
+    msg: "{{ssh_key_content.stdout}}"
+
 - name: Wait (SSH Key Restore)
   pause:
     seconds: 3
