@@ -674,7 +674,7 @@ pre_release_cluster_agent_image:
 # Primary create steps for all the molecule builds
 .molecule_create_combine: &molecule_create_combine
   <<: *molecule_artifacts
-  stage: prepare
+  stage: acceptance
   script:
     - cd $CI_PROJECT_DIR/test
     - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.setup.yml create --scenario-name $MOLECULE_SCENARIO
