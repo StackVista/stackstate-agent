@@ -657,6 +657,16 @@ pre_release_cluster_agent_image:
   retry:
     max: 2
 
+# Base cache for create and test steps
+.molecule_cache: &molecule_cache
+  cache:
+    key: "$CI_COMMIT_SHA"
+    paths:
+      - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/topic-*.json
+      - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/*.log
+      - $CI_PROJECT_DIR/.molecule
+      - $MOLECULE_EPHEMERAL_DIRECTORY
+
 # Base artifacts for create and test steps
 .molecule_artifacts: &molecule_artifacts
   artifacts:
@@ -669,7 +679,15 @@ pre_release_cluster_agent_image:
     expire_in: 1 week
 
 # Primary create steps for all the molecule builds
-.molecule_create: &molecule_create
+.molecule_create_cache: &molecule_create_cache
+  <<: *molecule_cache
+  stage: prepare
+  script:
+    - cd $CI_PROJECT_DIR/test
+    - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.setup.yml create --scenario-name $MOLECULE_SCENARIO
+
+# Primary create steps for all the molecule builds
+.molecule_create_artifacts: &molecule_create_artifacts
   <<: *molecule_artifacts
   stage: prepare
   script:
@@ -677,8 +695,8 @@ pre_release_cluster_agent_image:
     - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.setup.yml create --scenario-name $MOLECULE_SCENARIO
 
 # Primary test steps for all the molecule builds
-.molecule_test: &molecule_test
-  <<: *molecule_artifacts
+.molecule_test_cache: &molecule_test_cache
+  <<: *molecule_cache
   stage: acceptance
   script:
     - cd $CI_PROJECT_DIR/test
@@ -686,7 +704,7 @@ pre_release_cluster_agent_image:
     - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.run.yml test --scenario-name $MOLECULE_SCENARIO --destroy=never
 
 # Primary test steps for all the molecule builds
-.molecule_test_combine: &molecule_test_combine
+.molecule_test_full_artifacts: &molecule_test_full_artifacts
   <<: *molecule_artifacts
   stage: acceptance
   script:
@@ -704,36 +722,35 @@ pre_release_cluster_agent_image:
 
 # Job Seq: Molecule
 # Type: Compose
-
 .molecule_compose_rule:
   - &compose_ignore_rule
     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-compose]/
     when: never
 
-# molecule_compose_create:
-#   <<: *molecule
-#   <<: *molecule_create
-#   rules:
-#     - *compose_ignore_rule
-#     - when: always
-#   variables:
-#     MOLECULE_SCENARIO: compose
-#     MOLECULE_EPHEMERAL_DIRECTORY: $CI_PROJECT_DIR/tmp_molecule_inventory
+molecule_compose_create:
+  <<: *molecule
+  <<: *molecule_create_cache
+  rules:
+    - *compose_ignore_rule
+    - when: always
+  variables:
+    MOLECULE_SCENARIO: compose
+    MOLECULE_EPHEMERAL_DIRECTORY: $CI_PROJECT_DIR/tmp_molecule_inventory
 
 molecule_compose_test:
   <<: *molecule
-  <<: *molecule_test_combine
+  <<: *molecule_test_cache
   rules:
     - *compose_ignore_rule
     - when: on_success
   variables:
     MOLECULE_SCENARIO: compose
     MOLECULE_EPHEMERAL_DIRECTORY: $CI_PROJECT_DIR/tmp_molecule_inventory
-  # dependencies:
-  #   - molecule_compose_create
+  dependencies:
+    - molecule_compose_create
   needs:
     - pre_release_main_agent_image
-    # - molecule_compose_create
+    - molecule_compose_create
 
 molecule_compose_failure_cleanup:
   <<: *molecule_destroy
@@ -744,7 +761,7 @@ molecule_compose_failure_cleanup:
     MOLECULE_SCENARIO: compose
   needs:
     - molecule_compose_test
-    # - molecule_compose_create
+    - molecule_compose_create
 
 molecule_compose_success_cleanup:
   <<: *molecule_destroy
@@ -755,10 +772,12 @@ molecule_compose_success_cleanup:
     MOLECULE_SCENARIO: compose
   dependencies:
     - molecule_compose_test
-    # - molecule_compose_create
+    - molecule_compose_create
   needs:
     - molecule_compose_test
-    # - molecule_compose_create
+    - molecule_compose_create
+
+
 
 
 # Job Seq: Molecule
@@ -781,7 +800,7 @@ molecule_compose_success_cleanup:
 
 molecule_integrations_test:
   <<: *molecule
-  <<: *molecule_test_combine
+  <<: *molecule_test_full_artifacts
   rules:
     - *integrations_ignore_rule
     - when: on_success
@@ -888,7 +907,7 @@ molecule_kubernetes_cleanup:
 
 molecule_localinstall_test:
   <<: *molecule
-  <<: *molecule_test_combine
+  <<: *molecule_test_full_artifacts
   rules:
     - *localinstall_ignore_rule
     - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
@@ -957,7 +976,7 @@ molecule_localinstall_success_cleanup:
 
 molecule_secrets_test:
   <<: *molecule
-  <<: *molecule_test_combine
+  <<: *molecule_test_full_artifacts
   rules:
     - *secrets_ignore_rule
     - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
@@ -1023,7 +1042,7 @@ molecule_secrets_success_cleanup:
 
 molecule_swarm_test:
   <<: *molecule
-  <<: *molecule_test_combine
+  <<: *molecule_test_full_artifacts
   rules:
     - *swarm_ignore_rule
     - *only_agent_3_on_success
@@ -1084,7 +1103,7 @@ molecule_swarm_success_cleanup:
 
 molecule_vms_test:
   <<: *molecule
-  <<: *molecule_test_combine
+  <<: *molecule_test_full_artifacts
   rules:
     - *vms_ignore_rule
     - when: on_success
