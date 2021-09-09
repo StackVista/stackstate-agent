@@ -672,6 +672,16 @@ pre_release_cluster_agent_image:
     expire_in: 1 week
 
 # Primary create steps for all the molecule builds
+.molecule_create_combine: &molecule_create_combine
+  <<: *molecule_artifacts
+  stage: prepare
+  script:
+    - cd $CI_PROJECT_DIR/test
+    - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.setup.yml create --scenario-name $MOLECULE_SCENARIO
+    - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.run.yml prepare --force --scenario-name $MOLECULE_SCENARIO # This is the secondary prepare step which does the run file step
+    - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.run.yml test --scenario-name $MOLECULE_SCENARIO --destroy=never
+
+# Primary create steps for all the molecule builds
 .molecule_create: &molecule_create
   <<: *molecule_artifacts
   stage: prepare
@@ -705,7 +715,7 @@ pre_release_cluster_agent_image:
 
 molecule_compose_create:
   <<: *molecule
-  <<: *molecule_create
+  <<: *molecule_create_combine
   rules:
     - *compose_ignore_rule
     - when: always
@@ -713,20 +723,19 @@ molecule_compose_create:
     MOLECULE_SCENARIO: compose
     MOLECULE_EPHEMERAL_DIRECTORY: $CI_PROJECT_DIR/tmp_molecule_inventory
 
-molecule_compose_test:
-  <<: *molecule
-  <<: *molecule_test
-  rules:
-    - *compose_ignore_rule
-    - when: on_success
-  variables:
-    MOLECULE_SCENARIO: compose
-    MOLECULE_EPHEMERAL_DIRECTORY: $CI_PROJECT_DIR/tmp_molecule_inventory
-  dependencies:
-    - molecule_compose_create
-  needs:
-    - pre_release_main_agent_image
-    - molecule_compose_create
+# molecule_compose_test:
+#   <<: *molecule
+#   rules:
+#     - *compose_ignore_rule
+#     - when: on_success
+#   variables:
+#     MOLECULE_SCENARIO: compose
+#     MOLECULE_EPHEMERAL_DIRECTORY: $CI_PROJECT_DIR/tmp_molecule_inventory
+#   dependencies:
+#     - molecule_compose_create
+#   needs:
+#     - pre_release_main_agent_image
+#     - molecule_compose_create
 
 molecule_compose_failure_cleanup:
   <<: *molecule_destroy
@@ -736,7 +745,7 @@ molecule_compose_failure_cleanup:
   variables:
     MOLECULE_SCENARIO: compose
   needs:
-    - molecule_compose_test
+#    - molecule_compose_test
     - molecule_compose_create
 
 molecule_compose_success_cleanup:
@@ -747,10 +756,10 @@ molecule_compose_success_cleanup:
   variables:
     MOLECULE_SCENARIO: compose
   dependencies:
-    - molecule_compose_test
+#    - molecule_compose_test
     - molecule_compose_create
   needs:
-    - molecule_compose_test
+#    - molecule_compose_test
     - molecule_compose_create
 
 
