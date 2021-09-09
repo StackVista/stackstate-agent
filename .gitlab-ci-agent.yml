@@ -659,20 +659,14 @@ pre_release_cluster_agent_image:
 
 # Base artifacts for create and test steps
 .molecule_artifacts: &molecule_artifacts
-  cache:
-    key: $CI_COMMIT_REF_SLUG
+  artifacts:
+    when: always
     paths:
-      - .molecule/$MOLECULE_SCENARIO/
-      - tmp_molecule_inventory/
-
-  # artifacts:
-  #   when: always
-  #   paths:
-  #     - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/topic-*.json
-  #     - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/*.log
-  #     - $CI_PROJECT_DIR/.molecule
-  #     - $MOLECULE_EPHEMERAL_DIRECTORY
-  #   expire_in: 1 week
+      - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/topic-*.json
+      - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/*.log
+      - $CI_PROJECT_DIR/.molecule
+      - $MOLECULE_EPHEMERAL_DIRECTORY
+    expire_in: 1 week
 
 # Primary create steps for all the molecule builds
 .molecule_create: &molecule_create
