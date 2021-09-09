@@ -70,6 +70,6 @@ echo "====== AGENT_CURRENT_BRANCH=${AGENT_CURRENT_BRANCH} ======="
 # export MOLECULE_VERBOSITY=2
 # export ANSIBLE_VEBOSITY=2
 
-molecule --debug "$@"
+molecule "$@"
 
 
