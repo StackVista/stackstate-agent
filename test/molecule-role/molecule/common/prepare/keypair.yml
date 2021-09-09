@@ -5,7 +5,7 @@
   copy:
     src: "{{ci_project_dir}}/.molecule/{{ molecule_scenario_name }}/ssh_key"
     dest: "{{ keypair_path }}"
-    mode: preserve
+    mode: 0600
 
 - name: (LOCAL) Restore artifact ssh key
   when: ci_project_dir is undefined or ci_project_dir == ""
@@ -13,7 +13,7 @@
   copy:
     src: ".molecule/{{ molecule_scenario_name }}/ssh_key"
     dest: "{{ keypair_path }}"
-    mode: preserve
+    mode: 0600
 
 - name: Get Temp SSH Key
   command: cat "{{ keypair_path }}"
