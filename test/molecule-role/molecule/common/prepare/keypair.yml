@@ -15,13 +15,27 @@
     dest: "{{ keypair_path }}"
     mode: 0600
 
-- name: Get Temp SSH Key
+- name: File exist check (1)
+  stat:
+    path: "{{ keypair_path }}"
+  register: file_exist
+
+- name: File exist check (2)
+  debug:
+    msg: "The file or directory exists"
+  when: file_exist.stat.exists
+
+- name: Get Temp SSH Key (1)
   command: cat "{{ keypair_path }}"
   register: ssh_key_content
 
-- name: Temp SSH Key display
+- name: Temp SSH Key display (2)
   debug:
     msg: "{{ssh_key_content.stdout}}"
+
+- name: Temp SSH Key display (3)
+  debug: "{{ item }}"
+  with_lines: cat "{{ keypair_path }}"
 
 - name: Wait (SSH Key Restore)
   pause:
