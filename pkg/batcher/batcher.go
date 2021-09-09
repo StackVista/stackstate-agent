@@ -157,7 +157,6 @@ func (batcher *AsynchronousBatcher) sendState(states CheckInstanceBatchStates) {
 			}
 		}
 
-		// TODO: Raw Metrics
 		payload := map[string]interface{}{
 			"internalHostname": batcher.hostname,
 			"topologies":       topologies,
@@ -292,7 +291,7 @@ func (batcher AsynchronousBatcher) SubmitHealthStopSnapshot(checkID check.ID, st
 	}
 }
 
-// SubmitRawMetricsData TODO: Raw Metrics
+// SubmitRawMetricsData
 func (batcher AsynchronousBatcher) SubmitRawMetricsData(checkID check.ID, data telemetry.RawMetricsCheckData) {
 	log.Debugf("Submitting Raw metrics data for check [%s]: %s", checkID, data.JSONString())
 	batcher.input <- submitRawMetricsData{

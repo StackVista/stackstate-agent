@@ -103,19 +103,13 @@ func testTopologyEvent(t *testing.T) {
 }
 
 var expectedRawMetricsData = telemetry.RawMetricsCheckData{
-	"key":        "value ®",
-	"stringlist": []interface{}{"a", "b", "c"},
-	"boollist":   []interface{}{true, false},
-	"intlist":    []interface{}{float64(1)},
-	"doublelist": []interface{}{0.7, 1.42},
-	"emptykey":   nil,
-	"nestedobject": map[string]interface{}{
-		"nestedkey": "nestedValue",
-		"animals": map[string]interface{}{
-			"legs":  "dog",
-			"wings": "eagle",
-			"tail":  "crocodile",
-		},
+	Name: "name",
+	Timestamp: 123456,
+	HostName: "hostname",
+	Value: 10,
+	Tags: []string{
+		"foo",
+		"bar",
 	},
 }
 
@@ -162,11 +156,15 @@ func testRawMetricsData(t *testing.T) {
 	c := &telemetry.RawMetricsPayload{
 		Data: expectedRawMetricsData,
 	}
-	data, err := json.Marshal(c)
-	assert.NoError(t, err)
 
 	checkId := C.CString("check-id")
-	SubmitRawMetricsData(checkId, C.CString(string(data)))
+	name := C.CString(c.Data.Name)
+	value := C.float(c.Data.Value)
+	tags := []*C.char{C.CString("foo"), C.CString("bar")}
+	hostname := C.CString(c.Data.HostName)
+	timestamp := C.longlong(c.Data.Timestamp)
+
+	SubmitRawMetricsData(checkId, name, value, &tags[0], hostname, timestamp)
 
 	expectedState := mockBatcher.CollectedTopology.Flush()
 

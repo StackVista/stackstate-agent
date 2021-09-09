@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"io/ioutil"
 	"log"
 	"os"
@@ -21,7 +20,7 @@ import (
 #include "datadog_agent_rtloader.h"
 
 extern void submitTopologyEvent(char *, char *);
-extern void submitRawMetricsData(char *, char *);
+extern void submitRawMetricsData(char *, char *, float, char **, char *, long long);
 
 static void initTelemetryTests(rtloader_t *rtloader) {
 	set_submit_topology_event_cb(rtloader, submitTopologyEvent);
@@ -31,18 +30,26 @@ static void initTelemetryTests(rtloader_t *rtloader) {
 import "C"
 
 var (
-	rtloader *C.rtloader_t
-	checkID  string
-	_data    map[string]interface{}
-	_topoEvt metrics.Event
-	_rawMetric telemetry.RawMetricsCheckData
+	rtloader 	*C.rtloader_t
+	checkID  	string
+	_data    	map[string]interface{}
+	_topoEvt 	metrics.Event
+	rawName		string
+	rawHostname  string
+	rawValue 	float64
+	rawTags      []string
+	rawTimestamp int64
 )
 
 func resetOuputValues() {
 	checkID = ""
 	_data = nil
 	_topoEvt = metrics.Event{}
-	_rawMetric = telemetry.RawMetricsCheckData{}
+	rawName = ""
+	rawHostname = ""
+	rawValue = 0
+	rawTags = nil
+	rawTimestamp = 0
 }
 
 func setUp() error {
@@ -102,6 +109,20 @@ except Exception as e:
 	return strings.TrimSpace(string(output)), err
 }
 
+func charArrayToSlice(array **C.char) (res []string) {
+	pTags := uintptr(unsafe.Pointer(array))
+	ptrSize := unsafe.Sizeof(*array)
+
+	for i := uintptr(0); ; i++ {
+		tagPtr := *(**C.char)(unsafe.Pointer(pTags + ptrSize*i))
+		if tagPtr == nil {
+			return
+		}
+		tag := C.GoString(tagPtr)
+		res = append(res, tag)
+	}
+}
+
 //export submitTopologyEvent
 func submitTopologyEvent(id *C.char, data *C.char) {
 	checkID = C.GoString(id)
@@ -110,8 +131,13 @@ func submitTopologyEvent(id *C.char, data *C.char) {
 }
 
 //export submitRawMetricsData
-func submitRawMetricsData(id *C.char, data *C.char) {
+func submitRawMetricsData(id *C.char, name *C.char, value C.float, tags **C.char, hostname *C.char, timestamp C.longlong) {
 	checkID = C.GoString(id)
-	result := C.GoString(data)
-	json.Unmarshal([]byte(result), &_rawMetric)
+	rawName = C.GoString(name)
+	rawHostname = C.GoString(hostname)
+	rawValue = float64(value)
+	rawTimestamp = int64(timestamp)
+	if tags != nil {
+		rawTags = append(rawTags, charArrayToSlice(tags)...)
+	}
 }

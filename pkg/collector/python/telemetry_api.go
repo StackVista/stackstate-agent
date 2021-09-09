@@ -58,20 +58,19 @@ func SubmitTopologyEvent(id *C.char, data *C.char) {
 
 // SubmitRawMetricsData
 //export SubmitRawMetricsData
-func SubmitRawMetricsData(id *C.char, data *C.char) {
-	goCheckID := C.GoString(id)
-	rawMetricsPayload := C.GoString(data)
-	metricsPayload := telemetry.RawMetricsPayload{}
-	err := json.Unmarshal([]byte(rawMetricsPayload), &metricsPayload)
+func SubmitRawMetricsData(id *C.char, name *C.char, value C.float, tags **C.char, hostname *C.char, timestamp C.longlong) {
+	checkID := C.GoString(id)
+	rawName := C.GoString(name)
+	rawHostname := C.GoString(hostname)
+	rawValue := float64(value)
+	rawTimestamp := int64(timestamp)
+	rawTags := cStringArrayToSlice(tags)
 
-	if err == nil {
-		if len(metricsPayload.Data) != 0 {
-			batcher.GetBatcher().SubmitRawMetricsData(check.ID(goCheckID), metricsPayload.Data)
-		} else {
-			_ = log.Errorf("Empty json submitted to as check data, this is not allowed, data will not be forwarded.")
-		}
-	} else {
-		_ = log.Errorf("Empty raw metrics data event not sent. Raw: %v, Json: %v, Error: %v", rawMetricsPayload,
-			metricsPayload.JSONString(), err)
-	}
+	batcher.GetBatcher().SubmitRawMetricsData(check.ID(checkID), telemetry.RawMetricsCheckData{
+		Name: rawName,
+		Timestamp: rawTimestamp,
+		HostName: rawHostname,
+		Value: rawValue,
+		Tags: rawTags,
+	})
 }

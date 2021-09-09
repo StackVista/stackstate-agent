@@ -43,7 +43,16 @@ var (
 	testStopSnapshot  = &health.StopSnapshotMetadata{}
 	testCheckData     = map[string]interface{}{}
 
-	testRawMetricsData  = map[string]interface{}{}
+	testRawMetricsData  = telemetry.RawMetricsCheckData{
+		Name: "name",
+		Timestamp: 123456,
+		HostName: "hostname",
+		Value: 10,
+		Tags: []string{
+			"foo",
+			"bar",
+		},
+	}
 )
 
 func TestBatchFlushOnStopSnapshot(t *testing.T) {

@@ -18,15 +18,13 @@ type RawMetricsPayload struct {
 	Data   RawMetricsCheckData
 }
 
-type RawMetricsCheckData map[string]interface{}
-
-// type RawMetricsCheckData struct {
-// 	Timestamp 	*int  `json:"timestamp,omitempty"`
-// 	HostName  	*string  `json:"host_name,omitempty"`
-// 	Name  		*string  `json:"name,omitempty"`
-// 	Value 		*int  `json:"value,omitempty"`
-// 	Tags      	[]string `json:"tags,omitempty"`
-// }
+type RawMetricsCheckData struct {
+	Name  		string  `json:"name,omitempty"`
+	Timestamp 	int64  `json:"timestamp,omitempty"`
+	HostName  	string  `json:"host_name,omitempty"`
+	Value 		float64  `json:"value,omitempty"`
+	Tags      	[]string `json:"tags,omitempty"`
+}
 
 // JSONString returns a JSON string of the Payload
 func (p RawMetricsPayload) JSONString() string {

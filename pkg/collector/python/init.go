@@ -207,7 +207,7 @@ void initHealthModule(rtloader_t *rtloader) {
 // [sts] raw metrics module
 //
 
-void SubmitRawMetricsData(char *, char *);
+void SubmitRawMetricsData(char *, char *, float, char **, char *, long long);
 
 void initRawMetricsModule(rtloader_t *rtloader) {
 	set_submit_raw_metrics_data_cb(rtloader, SubmitRawMetricsData);
