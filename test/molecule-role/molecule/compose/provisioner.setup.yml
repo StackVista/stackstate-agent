@@ -1,8 +1,8 @@
 ---
 provisioner:
   name: ansible
-  options:
-    'vault-id': "${MOLECULE_SCENARIO_NAME}@${CI_PROJECT_DIR}${DEV_PATH}/test/molecule-role/molecule/vault-password.py"
+  # options:
+  #   'vault-id': "${MOLECULE_SCENARIO_NAME}@${CI_PROJECT_DIR}${DEV_PATH}/test/molecule-role/molecule/vault-password.py"
   playbooks:
     create: playbook.create.yml
     prepare: playbook.prepare.yml
