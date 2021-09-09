@@ -5,6 +5,9 @@
   gather_facts: true
   tasks:
     - include_tasks: ../common/prepare/keypair.yml
+    - name: Pause Machine
+      pause:
+        minutes: 60
 
 - name: Prepare Trace Java
   hosts: trace-java-demo
