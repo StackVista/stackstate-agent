@@ -183,6 +183,7 @@ void initTopologyModule(rtloader_t *rtloader) {
 //
 
 void SubmitTopologyEvent(char *, char *);
+void SubmitRawMetricsData(char *, char *, float, char **, char *, long long);
 
 void initTelemetryModule(rtloader_t *rtloader) {
 	set_submit_topology_event_cb(rtloader, SubmitTopologyEvent);
@@ -203,15 +204,6 @@ void initHealthModule(rtloader_t *rtloader) {
 	set_submit_health_stop_snapshot_cb(rtloader, SubmitHealthStopSnapshot);
 }
 
-//
-// [sts] raw metrics module
-//
-
-void SubmitRawMetricsData(char *, char *, float, char **, char *, long long);
-
-void initRawMetricsModule(rtloader_t *rtloader) {
-	set_submit_raw_metrics_data_cb(rtloader, SubmitRawMetricsData);
-}
 */
 import "C"
 
@@ -397,7 +389,6 @@ func Initialize(paths ...string) error {
 	C.initTopologyModule(rtloader)
 	C.initTelemetryModule(rtloader)
 	C.initHealthModule(rtloader)
-	C.initRawMetricsModule(rtloader)
 	// [sts]
 
 	// Init RtLoader machinery
