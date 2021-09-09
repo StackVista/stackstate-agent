@@ -65,10 +65,10 @@ yamllint -c .yamllint .
 echo "===== MOLECULE_RUN_ID=${CI_JOB_ID:-unknown}  ======="
 echo "====== AGENT_CURRENT_BRANCH=${AGENT_CURRENT_BRANCH} ======="
 
-export MOLECULE_NOLOG=0
-export MOLECULE_DEBUG=1
-export MOLECULE_VERBOSITY=2
-export ANSIBLE_VEBOSITY=2
+# export MOLECULE_NOLOG=0
+# export MOLECULE_DEBUG=1
+# export MOLECULE_VERBOSITY=2
+# export ANSIBLE_VEBOSITY=2
 
 molecule --debug "$@"
 
