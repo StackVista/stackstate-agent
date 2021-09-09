@@ -113,6 +113,7 @@ func TestBatchFlushOnComplete(t *testing.T) {
 
 	batcher.SubmitComponent(testID, testInstance, testComponent)
 	batcher.SubmitHealthCheckData(testID, testStream, testCheckData)
+	batcher.SubmitRawMetricsData(testID, testRawMetricsData)
 	batcher.SubmitComplete(testID)
 
 	message := serializer.GetJSONToV1IntakeMessage()
