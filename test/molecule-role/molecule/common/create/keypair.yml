@@ -15,12 +15,19 @@
     name: "{{ keypair_name }}"
   register: keypair
 
-- name: Persist the keypair
+- name: Dump the ssh private key in the artifact directory
   copy:
-    dest: "{{ keypair_path }}"
+    dest: "{{ci_project_dir}}/.molecule/{{ molecule_scenario_name }}/ssh_key"
     content: "{{ keypair.key.private_key }}"
     mode: 0600
-  when: keypair.changed
+
+
+# - name: Persist the keypair
+#   copy:
+#     dest: "{{ keypair_path }}"
+#     content: "{{ keypair.key.private_key }}"
+#     mode: 0600
+#   when: keypair.changed
 
 # - name: (LOCAL) Dump the ssh private key in the artifact directory
 #   when: keypair.changed and (ci_project_dir is undefined or ci_project_dir == "")
@@ -28,10 +35,3 @@
 #     dest: ".molecule/{{ molecule_scenario_name }}/ssh_key"
 #     content: "{{ keypair.key.private_key }}"
 #     mode: 0600
-
-- name: (CI) Dump the ssh private key in the artifact directory
-  when: keypair.changed and (ci_project_dir is defined and ci_project_dir != "")
-  copy:
-    dest: "{{ci_project_dir}}/.molecule/{{ molecule_scenario_name }}/ssh_key"
-    content: "{{ keypair.key.private_key }}"
-    mode: 0600
