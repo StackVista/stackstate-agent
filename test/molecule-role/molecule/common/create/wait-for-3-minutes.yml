@@ -1,4 +1,0 @@
----
-- name: Wait for 3 minutes
-  pause:
-    minutes: 3

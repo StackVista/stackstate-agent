@@ -14,6 +14,7 @@
       agent_current_branch: "{{ agent_current_branch }}"
       molecule_scenario_name: "{{ molecule_scenario_name }}"
       ci_sts_major_python_version: "{{ ci_sts_major_python_version }}"
+      ci_job_id: "{{ ci_job_id }}"
       usage: "molecule-build"
       dev: "{{ dev_mode }}"
       molecule: yes
