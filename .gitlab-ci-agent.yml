@@ -666,7 +666,7 @@ pre_release_cluster_agent_image:
       - $CI_PROJECT_DIR/.molecule
       - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/topic-*.json
       - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/*.log
-      - /root/.cache/molecule
+      - $CI_PROJECT_DIR/.cache
       - $MOLECULE_EPHEMERAL_DIRECTORY
 
 # Base artifacts for create and test steps
@@ -676,8 +676,7 @@ pre_release_cluster_agent_image:
     paths:
       - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/topic-*.json
       - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/*.log
-      - $CI_PROJECT_DIR/.molecule
-      - /root/.cache/molecule
+      - $CI_PROJECT_DIR/.cache
       - $MOLECULE_EPHEMERAL_DIRECTORY
     expire_in: 1 week
 

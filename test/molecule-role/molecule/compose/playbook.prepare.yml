@@ -1,19 +1,4 @@
 ---
-- name: Prepare Connections
-  hosts: localhost
-  connection: local
-  gather_facts: true
-  tasks:
-    - include_tasks: ../common/prepare/gather-facts.yml
-    - name: molecule_instance_config path
-      debug:
-        msg: "{{ molecule_instance_config }}"
-    - name: Print to console
-      debug:
-        msg: "{{ item }}"
-      with_items: "{{ lookup('file', molecule_instance_config) | molecule_from_yaml }}"
-    - include_tasks: ../common/create/wait-for-3-minutes.yml
-
 - name: Prepare Trace Java
   hosts: trace-java-demo
   gather_facts: true

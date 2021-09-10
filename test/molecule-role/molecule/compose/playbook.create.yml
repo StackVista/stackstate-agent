@@ -32,3 +32,4 @@
     - include_tasks: ../common/create/create-molecule-instances.yml
     - include_tasks: ../common/create/wait-for-instance-creation-to-complete.yml
     - include_tasks: ../common/create/wait-for-ssh.yml
+    - include_tasks: ../common/create/copy-molecule-cache.yml
