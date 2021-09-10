@@ -705,6 +705,15 @@ pre_release_cluster_agent_image:
     - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.run.yml test --scenario-name $MOLECULE_SCENARIO --destroy=never
 
 # Primary test steps for all the molecule builds
+.molecule_test_artifacts: &molecule_test_artifacts
+  <<: *molecule_artifacts
+  stage: prepare_temp
+  script:
+    - cd $CI_PROJECT_DIR/test
+    - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.run.yml prepare --force --scenario-name $MOLECULE_SCENARIO # This is the secondary prepare step which does the run file step
+    - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.run.yml test --scenario-name $MOLECULE_SCENARIO --destroy=never
+
+# Primary test steps for all the molecule builds
 .molecule_test_full_artifacts: &molecule_test_full_artifacts
   <<: *molecule_artifacts
   stage: acceptance
@@ -730,7 +739,7 @@ pre_release_cluster_agent_image:
 
 molecule_compose_create:
   <<: *molecule
-  <<: *molecule_create_cache
+  <<: *molecule_create_artifacts
   rules:
     - *compose_ignore_rule
     - when: always
@@ -739,7 +748,7 @@ molecule_compose_create:
 
 molecule_compose_test:
   <<: *molecule
-  <<: *molecule_test_cache
+  <<: *molecule_test_artifacts
   rules:
     - *compose_ignore_rule
     - when: on_success
