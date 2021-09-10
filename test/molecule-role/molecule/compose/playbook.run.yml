@@ -5,6 +5,22 @@
   gather_facts: true
   tasks:
     - include_tasks: ../common/prepare/restore-molecule-cache.yml
+    - include_tasks: ../common/prepare/gather-facts.yml
+    - name: Include vars of stuff.yaml into the 'stuff' variable (2.2).
+      include_vars:
+        file: /root/.cache/molecule/molecule-role/compose/instance_config.yml
+        name: stuff
+    - name: Populate instance config dict
+      set_fact:
+        instance_conf_dict: {
+          'instance': "{{ stuff.instance }}",
+          'address': "{{ stuff.address }}",
+          'private_address': "{{ stuff.private_address }}",
+          'user': "{{ stuff.user }}",
+          'port': "{{ stuff.port }}",
+          'identity_file': "{{ stuff.identity_file }}",
+          'instance_ids': "{{ stuff.instance_ids }}", }
+      register: "instance_config_dict"
 
 - name: Prepare Trace Java
   hosts: trace-java-demo
