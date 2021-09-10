@@ -3,5 +3,3 @@
   copy:
     src: "/root/.cache/molecule"
     dest: "{{ci_project_dir}}/.cache"
-
-
