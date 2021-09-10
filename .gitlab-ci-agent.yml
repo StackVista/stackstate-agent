@@ -580,7 +580,7 @@ pre_release_win:
 pre_release_rpm:
   stage: pre_release
   interruptible: true
-  image: docker.io/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
+  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
   needs:
     - build_rpm
   before_script: []
@@ -1173,7 +1173,7 @@ release_deb:
 release_rpm:
   interruptible: true
   stage: release
-  image: docker.io/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
+  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
   dependencies:
     - build_rpm
   before_script:
