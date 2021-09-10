@@ -16,6 +16,12 @@
     content: "{{ keypair_id.key.private_key }}"
     mode: 0600
 
+- name: Persist the keypair for init connection
+  copy:
+    dest: "{{ keypair_path }}"
+    content: "{{ keypair_id.key.private_key }}"
+    mode: 0600
+
 # - name: Test for presence of local keypair
 #   stat:
 #     path: "{{ keypair_path }}"
