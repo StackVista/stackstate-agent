@@ -3,13 +3,13 @@
   hosts: localhost
   connection: local
   gather_facts: true
+  vars:
+    stuff: "{{  lookup('file', lookup('env','CI_PROJECT_DIR') + '/.cache/molecule/molecule-role/compose/instance_config.yml') | from_yaml }}"
   tasks:
+    - name: Content of stuff
+      debug:
+        var: stuff
     - include_tasks: ../common/prepare/restore-molecule-cache.yml
-    - include_tasks: ../common/prepare/gather-facts.yml
-    - name: Include vars of stuff.yaml into the 'stuff' variable (2.2).
-      include_vars:
-        file: /root/.cache/molecule/molecule-role/compose/instance_config.yml
-        name: stuff
     - name: Populate instance config dict
       set_fact:
         instance_conf_dict: {
@@ -26,6 +26,8 @@
       set_fact:
         instance_conf: "{{ instance_config_dict.results | map(attribute='ansible_facts.instance_conf_dict') | list }}"
       when: server.changed | bool
+
+    - include_tasks: ../common/prepare/gather-facts.yml
 
 - name: Prepare Trace Java
   hosts: trace-java-demo
