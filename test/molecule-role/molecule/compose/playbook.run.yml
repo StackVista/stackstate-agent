@@ -13,13 +13,13 @@
     - name: Populate instance config dict
       set_fact:
         instance_conf_dict: {
-          'instance': "{{ stuff.instance }}",
-          'address': "{{ stuff.address }}",
-          'private_address': "{{ stuff.private_address }}",
-          'user': "{{ stuff.user }}",
-          'port': "{{ stuff.port }}",
-          'identity_file': "{{ stuff.identity_file }}",
-          'instance_ids': "{{ stuff.instance_ids }}", }
+          'instance': "{{ stuff[0].instance }}",
+          'address': "{{ stuff[0].address }}",
+          'private_address': "{{ stuff[0].private_address }}",
+          'user': "{{ stuff[0].user }}",
+          'port': "{{ stuff[0].port }}",
+          'identity_file': "{{ stuff[0].identity_file }}",
+          'instance_ids': "{{ stuff[0].instance_ids }}", }
       register: "instance_config_dict"
 
     - name: Convert instance config dict to a list
