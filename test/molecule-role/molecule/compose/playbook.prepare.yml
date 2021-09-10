@@ -5,6 +5,9 @@
   gather_facts: true
   tasks:
     - include_tasks: ../common/prepare/gather-facts.yml
+    - name: molecule_instance_config path
+      debug:
+        msg: "{{ molecule_instance_config }}"
     - name: Print to console
       debug:
         msg: "{{ item }}"
