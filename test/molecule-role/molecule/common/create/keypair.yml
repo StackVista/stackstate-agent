@@ -1,7 +1,7 @@
 ---
 - name: Create Key
   ec2_key:
-    name: keypair_test
+    name: "{{ keypair_name }}"
   register: keypair_id
 
 - name: Persist the keypair
