@@ -2,4 +2,4 @@
 - name: Copy Molecule Cache Files
   copy:
     src: "{{ci_project_dir}}/.cache"
-    dest: "/root/.cache/molecule"
+    dest: "/root/"
