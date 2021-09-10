@@ -661,9 +661,8 @@ pre_release_cluster_agent_image:
 # Base cache for create and test steps
 .molecule_cache: &molecule_cache
   cache:
-    key: "$CI_COMMIT_SHA"
+    key: "$CI_JOB_ID-$MOLECULE_SCENARIO"
     paths:
-      - $CI_PROJECT_DIR/.molecule
       - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/topic-*.json
       - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/*.log
       - $CI_PROJECT_DIR/.cache
@@ -742,7 +741,7 @@ pre_release_cluster_agent_image:
 
 molecule_compose_create:
   <<: *molecule
-  <<: *molecule_create_artifacts
+  <<: *molecule_create_cache
   rules:
     - *compose_ignore_rule
     - when: always
@@ -751,7 +750,7 @@ molecule_compose_create:
 
 molecule_compose_test:
   <<: *molecule
-  <<: *molecule_test_artifacts
+  <<: *molecule_test_cache
   rules:
     - *compose_ignore_rule
     - when: on_success
