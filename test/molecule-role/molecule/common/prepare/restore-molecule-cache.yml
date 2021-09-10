@@ -2,13 +2,8 @@
 - name: Restore Molecule Cache Files
   copy:
     src: "{{ci_project_dir}}/.cache"
-    dest: "/root/.cache"
+    dest: "/root"
 
-# - name: Copy Molecule Cache Files 1
-#   copy:
-#     src: "{{ci_project_dir}}/.cache"
-#     dest: "/root"
-#
 # - name: Copy Molecule Cache Files 3
 #   copy:
 #     src: "{{ci_project_dir}}/.cache"
