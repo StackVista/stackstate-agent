@@ -9,7 +9,6 @@
       debug:
         msg: "{{ item }}"
       with_items: "{{ lookup('file', molecule_instance_config) | molecule_from_yaml }}"
-    - include_tasks: ../common/create/wait-for-ssh.yml
     - include_tasks: ../common/create/wait-for-3-minutes.yml
 
 - name: Prepare Trace Java
