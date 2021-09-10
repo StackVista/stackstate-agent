@@ -1,4 +1,23 @@
 ---
+- name: Prepare Connections
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  tasks:
+    - name: Test reachability to {{ item.address }
+      net_ping:
+        dest: {{ item.address }
+      with_items: "{{ lookup('file', molecule_instance_config) | molecule_from_yaml }}"
+
+    - include_tasks: ../common/prepare/gather-facts.yml
+
+    - name: Print to console
+      debug:
+        msg: "{{ item }}"
+      with_items: "{{ lookup('file', molecule_instance_config) | molecule_from_yaml }}"
+
+    - include_tasks: ../common/create/wait-for-3-minutes.yml
+
 - name: Prepare Trace Java
   hosts: trace-java-demo
   gather_facts: true
