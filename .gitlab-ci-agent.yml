@@ -658,17 +658,6 @@ pre_release_cluster_agent_image:
   retry:
     max: 2
 
-# Base cache for create and test steps
-.molecule_cache: &molecule_cache
-  cache:
-    key: "$CI_JOB_ID-$MOLECULE_SCENARIO"
-    paths:
-      - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/topic-*.json
-      - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/*.log
-      - $CI_PROJECT_DIR/.cache
-      - $CI_PROJECT_DIR/tmp_molecule_inventory
-      - $MOLECULE_EPHEMERAL_DIRECTORY
-
 # Base artifacts for create and test steps
 .molecule_artifacts: &molecule_artifacts
   artifacts:
@@ -682,29 +671,12 @@ pre_release_cluster_agent_image:
     expire_in: 1 week
 
 # Primary create steps for all the molecule builds
-.molecule_create_cache: &molecule_create_cache
-  <<: *molecule_cache
-  stage: prepare
-  script:
-    - cd $CI_PROJECT_DIR/test
-    - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.setup.yml create --scenario-name $MOLECULE_SCENARIO
-
-# Primary create steps for all the molecule builds
 .molecule_create_artifacts: &molecule_create_artifacts
   <<: *molecule_artifacts
   stage: prepare
   script:
     - cd $CI_PROJECT_DIR/test
     - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.setup.yml create --scenario-name $MOLECULE_SCENARIO
-
-# Primary test steps for all the molecule builds
-.molecule_test_cache: &molecule_test_cache
-  <<: *molecule_cache
-  stage: prepare_temp
-  script:
-    - cd $CI_PROJECT_DIR/test
-    - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.run.yml create --scenario-name $MOLECULE_SCENARIO
-    - ./molecule3.sh --base-config ./molecule/$MOLECULE_SCENARIO/provisioner.run.yml test --scenario-name $MOLECULE_SCENARIO --destroy=never
 
 # Primary test steps for all the molecule builds
 .molecule_test_artifacts: &molecule_test_artifacts
@@ -741,7 +713,7 @@ pre_release_cluster_agent_image:
 
 molecule_compose_create:
   <<: *molecule
-  <<: *molecule_create_cache
+  <<: *molecule_create_artifacts
   rules:
     - *compose_ignore_rule
     - when: always
@@ -750,7 +722,7 @@ molecule_compose_create:
 
 molecule_compose_test:
   <<: *molecule
-  <<: *molecule_test_cache
+  <<: *molecule_test_artifacts
   rules:
     - *compose_ignore_rule
     - when: on_success

@@ -491,4 +491,4 @@
   connection: local
   gather_facts: true
   tasks:
-    - include_tasks: ../common/prepare/encrypt-key.yml
+    - include_tasks: ../common/create/encrypt-ssh-key.yml
