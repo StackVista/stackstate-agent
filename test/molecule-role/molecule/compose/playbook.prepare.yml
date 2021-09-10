@@ -1,11 +1,4 @@
 ---
-- name: Create
-  hosts: localhost
-  connection: local
-  gather_facts: true
-  tasks:
-    - include_tasks: ../common/prepare/restore-molecule-cache.yml
-
 - name: Prepare Trace Java
   hosts: trace-java-demo
   gather_facts: true
