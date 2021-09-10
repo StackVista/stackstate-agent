@@ -1,49 +1,26 @@
 ---
-- name: Create Key
+- name: Test for presence of local keypair
+  stat:
+    path: "{{ keypair_path }}"
+  register: keypair_local
+
+- name: Delete remote keypair
   ec2_key:
     name: "{{ keypair_name }}"
-  register: keypair_id
+    state: absent
+  when: not keypair_local.stat.exists
+
+- name: Create keypair
+  ec2_key:
+    name: "{{ keypair_name }}"
+  register: keypair
 
 - name: Persist the keypair
   copy:
     dest: "{{ keypair_path }}"
-    content: "{{ keypair_id }}"
+    content: "{{ keypair.key.private_key }}"
     mode: 0600
-
-- name: Persist the keypair for cache
-  copy:
-    dest: "{{ ci_project_dir }}/.molecule/{{ molecule_scenario_name }}/private_key"
-    content: "{{ keypair_id }}"
-    mode: 0600
-
-# - name: Test for presence of local keypair
-#   stat:
-#     path: "{{ keypair_path }}"
-#   register: keypair_local
-
-# - name: Delete remote keypair
-#   ec2_key:
-#     name: "{{ keypair_name }}"
-#     state: absent
-#   when: not keypair_local.stat.exists
-
-# - name: Create keypair
-#   ec2_key:
-#     name: "{{ keypair_name }}"
-#   register: keypair
-
-# - name: Persist the keypair
-#   copy:
-#     dest: "{{ keypair_path }}"
-#     content: "{{ keypair.key.private_key }}"
-#     mode: 0600
-#   when: keypair.changed
-
-# - name: Copy file with owner and permissions
-#   copy:
-#     src: "{{ keypair_path }}"
-#     dest: "{{ ci_project_dir }}/.molecule/{{ molecule_scenario_name }}/ssh_key"
-#     mode: '0644'
+  when: keypair.changed
 
 # - name: (LOCAL) Dump the ssh private key in the artifact directory
 #   when: keypair.changed and (ci_project_dir is undefined or ci_project_dir == "")
@@ -51,10 +28,10 @@
 #     dest: ".molecule/{{ molecule_scenario_name }}/ssh_key"
 #     content: "{{ keypair.key.private_key }}"
 #     mode: 0600
-#
-# - name: (CI) Dump the ssh private key in the artifact directory
-#   when: keypair.changed and (ci_project_dir is defined and ci_project_dir != "")
-#   copy:
-#     dest: "{{ci_project_dir}}/.molecule/{{ molecule_scenario_name }}/ssh_key"
-#     content: "{{ keypair.key.private_key }}"
-#     mode: 0600
+
+- name: (CI) Dump the ssh private key in the artifact directory
+  when: keypair.changed and (ci_project_dir is defined and ci_project_dir != "")
+  copy:
+    dest: "{{ci_project_dir}}/.molecule/{{ molecule_scenario_name }}/ssh_key"
+    content: "{{ keypair.key.private_key }}"
+    mode: 0600
