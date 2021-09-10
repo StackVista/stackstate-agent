@@ -5,6 +5,7 @@
   gather_facts: true
   tasks:
     - include_tasks: ../common/create/create-structure.yml
+    - include_tasks: ../common/create/restore-molecule-cache.yml
 
     - name: "Gather existing EC2 instances for the branch '{{ agent_current_branch }}'"
       ec2_instance_info:
