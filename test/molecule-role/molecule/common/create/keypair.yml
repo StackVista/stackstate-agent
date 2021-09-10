@@ -17,7 +17,7 @@
 
 - name: Dump the ssh private key in the artifact directory
   copy:
-    dest: "{{ci_project_dir}}/.molecule/{{ molecule_scenario_name }}/ssh_key"
+    dest: "{{ keypair_path }}"
     content: "{{ keypair.key.private_key }}"
     mode: 0600
 

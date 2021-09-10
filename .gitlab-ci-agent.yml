@@ -666,7 +666,7 @@ pre_release_cluster_agent_image:
       - $CI_PROJECT_DIR/.molecule
       - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/topic-*.json
       - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/*.log
-      - $MOLECULE_EPHEMERAL_DIRECTORY
+      # - $MOLECULE_EPHEMERAL_DIRECTORY
 
 # Base artifacts for create and test steps
 .molecule_artifacts: &molecule_artifacts
@@ -676,7 +676,7 @@ pre_release_cluster_agent_image:
       - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/topic-*.json
       - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/*.log
       - $CI_PROJECT_DIR/.molecule
-      - $MOLECULE_EPHEMERAL_DIRECTORY
+      # - $MOLECULE_EPHEMERAL_DIRECTORY
     expire_in: 1 week
 
 # Primary create steps for all the molecule builds
@@ -736,7 +736,6 @@ molecule_compose_create:
     - when: always
   variables:
     MOLECULE_SCENARIO: compose
-    MOLECULE_EPHEMERAL_DIRECTORY: $CI_PROJECT_DIR/tmp_molecule_inventory
 
 molecule_compose_test:
   <<: *molecule
@@ -746,7 +745,6 @@ molecule_compose_test:
     - when: on_success
   variables:
     MOLECULE_SCENARIO: compose
-    MOLECULE_EPHEMERAL_DIRECTORY: $CI_PROJECT_DIR/tmp_molecule_inventory
   dependencies:
     - molecule_compose_create
   needs:
@@ -797,7 +795,6 @@ molecule_compose_success_cleanup:
 #     - when: always
 #   variables:
 #     MOLECULE_SCENARIO: integrations
-#     MOLECULE_EPHEMERAL_DIRECTORY: $CI_PROJECT_DIR/tmp_molecule_inventory
 
 molecule_integrations_test:
   <<: *molecule
@@ -807,7 +804,6 @@ molecule_integrations_test:
     - when: on_success
   variables:
     MOLECULE_SCENARIO: integrations
-    MOLECULE_EPHEMERAL_DIRECTORY: $CI_PROJECT_DIR/tmp_molecule_inventory
   # dependencies:
   #   - molecule_integrations_create
   needs:
@@ -904,7 +900,6 @@ molecule_kubernetes_cleanup:
 #     - when: never
 #   variables:
 #     MOLECULE_SCENARIO: localinstall
-#     MOLECULE_EPHEMERAL_DIRECTORY: $CI_PROJECT_DIR/tmp_molecule_inventory
 
 molecule_localinstall_test:
   <<: *molecule
@@ -916,7 +911,6 @@ molecule_localinstall_test:
     - when: never
   variables:
     MOLECULE_SCENARIO: localinstall
-    MOLECULE_EPHEMERAL_DIRECTORY: $CI_PROJECT_DIR/tmp_molecule_inventory
   # dependencies:
   #   - molecule_localinstall_create
   needs:
@@ -973,7 +967,6 @@ molecule_localinstall_success_cleanup:
 #     - when: never
 #   variables:
 #     MOLECULE_SCENARIO: secrets
-#     MOLECULE_EPHEMERAL_DIRECTORY: $CI_PROJECT_DIR/tmp_molecule_inventory
 
 molecule_secrets_test:
   <<: *molecule
@@ -985,7 +978,6 @@ molecule_secrets_test:
     - when: never
   variables:
     MOLECULE_SCENARIO: secrets
-    MOLECULE_EPHEMERAL_DIRECTORY: $CI_PROJECT_DIR/tmp_molecule_inventory
   # dependencies:
   #   - molecule_secrets_create
   needs:
@@ -1039,7 +1031,6 @@ molecule_secrets_success_cleanup:
 #     - *only_agent_3_always
 #   variables:
 #     MOLECULE_SCENARIO: swarm
-#     MOLECULE_EPHEMERAL_DIRECTORY: $CI_PROJECT_DIR/tmp_molecule_inventory
 
 molecule_swarm_test:
   <<: *molecule
@@ -1051,7 +1042,6 @@ molecule_swarm_test:
   #   - molecule_swarm_create
   variables:
     MOLECULE_SCENARIO: swarm
-    MOLECULE_EPHEMERAL_DIRECTORY: $CI_PROJECT_DIR/tmp_molecule_inventory
   needs:
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
@@ -1100,7 +1090,6 @@ molecule_swarm_success_cleanup:
 #     - when: always
 #   variables:
 #     MOLECULE_SCENARIO: vms
-#     MOLECULE_EPHEMERAL_DIRECTORY: $CI_PROJECT_DIR/tmp_molecule_inventory
 
 molecule_vms_test:
   <<: *molecule
@@ -1110,7 +1099,6 @@ molecule_vms_test:
     - when: on_success
   variables:
     MOLECULE_SCENARIO: vms
-    MOLECULE_EPHEMERAL_DIRECTORY: $CI_PROJECT_DIR/tmp_molecule_inventory
   # dependencies:
   #   - molecule_vms_create
   needs:
