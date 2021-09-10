@@ -4,11 +4,6 @@
   connection: local
   gather_facts: true
   tasks:
-    - name: "Test reachability to {{ item.address }}"
-      net_ping:
-        dest: "{{ item.address }}"
-      with_items: "{{ lookup('file', molecule_instance_config) | molecule_from_yaml }}"
-
     - include_tasks: ../common/prepare/gather-facts.yml
 
     - name: Print to console
