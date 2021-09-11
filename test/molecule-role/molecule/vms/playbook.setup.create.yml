@@ -76,3 +76,5 @@
     - include_tasks: ../common/create/wait-for-ssh.yml
     - include_tasks: ../common/create/wait-for-winrm-instance-check.yml
     - include_tasks: ../common/create/wait-for-boot-process-to-finish.yml
+    - include_tasks: ../common/create/persist-molecule-cache.yml
+    - include_tasks: ../common/create/encrypt-ssh-key.yml
