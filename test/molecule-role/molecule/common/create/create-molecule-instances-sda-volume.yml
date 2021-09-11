@@ -16,6 +16,7 @@
     tags:
       Name: "{{ item.name }}"
       instance: "{{ item.name }}"
+      user: "{{ item.ssh_user }}"
       molecule_run_id: "{{ molecule_run_id }}"
       agent_current_branch: "{{ agent_current_branch }}"
       molecule_scenario_name: "{{ molecule_scenario_name }}"
