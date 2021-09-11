@@ -2,4 +2,29 @@
 - name: Restore Molecule Cache Files
   copy:
     src: "{{ci_project_dir}}/.cache"
+    dest: "/root/.cache"
+
+- name: Copy Molecule Cache Files 1
+  copy:
+    src: "{{ci_project_dir}}/.cache"
     dest: "/root"
+
+- name: Copy Molecule Cache Files 3
+  copy:
+    src: "{{ci_project_dir}}/.cache"
+    dest: "/root/"
+
+- name: Copy Molecule Cache Files 4
+  copy:
+    src: "{{ci_project_dir}}/.cache/"
+    dest: "/root/.cache/"
+
+- name: Copy Molecule Cache Files 5
+  copy:
+    src: "{{ci_project_dir}}/.cache/molecule/molecule-role/compose/"
+    dest: "{{ci_project_dir}}/tmp_molecule_inventory/"
+
+- name: Copy Molecule Cache Files 6
+  copy:
+    src: "{{ci_project_dir}}/.cache/molecule/molecule-role/compose/"
+    dest: "{{ci_project_dir}}/tmp_molecule_inventory"
