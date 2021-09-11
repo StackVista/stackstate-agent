@@ -821,7 +821,7 @@ molecule_kubernetes_create:
   rules:
     - *kubernetes_ignore_rule
     - *only_agent_3
-    - when: always
+    - when: never
   variables:
     MOLECULE_SCENARIO: kubernetes
 
@@ -832,7 +832,7 @@ molecule_kubernetes_test:
   rules:
     - *kubernetes_ignore_rule
     - *only_agent_3
-    - when: on_success
+    - when: never
   variables:
     MOLECULE_SCENARIO: kubernetes
   dependencies:
@@ -848,7 +848,7 @@ molecule_kubernetes_failure_cleanup:
   rules:
     - *kubernetes_ignore_rule
     - *only_agent_3_on_failure
-    - when: on_failure
+    - when: never
   variables:
     MOLECULE_SCENARIO: kubernetes
   needs:
@@ -861,7 +861,7 @@ molecule_kubernetes_success_cleanup:
   rules:
     - *kubernetes_ignore_rule
     - *only_agent_3_on_success
-    - when: on_success
+    - when: never
   variables:
     MOLECULE_SCENARIO: kubernetes
   dependencies:
