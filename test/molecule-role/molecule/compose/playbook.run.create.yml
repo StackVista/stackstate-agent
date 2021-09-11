@@ -6,6 +6,7 @@
   vars:
     ssh_port: 22
   tasks:
+    - include_tasks: ../common/prepare/decrypt-ssh-key.yml
     - include_tasks: ../common/prepare/restore-molecule-cache.yml
     - include_tasks: ../common/prepare/populate-instance-config.yml
     - include_tasks: ../common/create/wait-for-ssh.yml
