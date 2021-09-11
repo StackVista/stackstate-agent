@@ -654,7 +654,6 @@ pre_release_cluster_agent_image:
     - export MOLECULE_RUN_ID=${CI_JOB_ID}
     - export LC_CTYPE=en_US.UTF-8
     - export LANG=en_US.UTF-8
-    - mkdir -p $CI_PROJECT_DIR/tmp_molecule_inventory
   retry:
     max: 2
 
@@ -666,7 +665,6 @@ pre_release_cluster_agent_image:
       - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/topic-*.json
       - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/*.log
       - $CI_PROJECT_DIR/.cache
-      - $CI_PROJECT_DIR/tmp_molecule_inventory
       - $MOLECULE_EPHEMERAL_DIRECTORY
     expire_in: 1 week
 
