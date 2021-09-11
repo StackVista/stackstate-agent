@@ -11,6 +11,11 @@
       "tag:dev": "{{ dev_mode }}"
   register: ec2_instances
 
+- name: A Content of ec2_instances
+  debug:
+    var: ec2_instances
+  when: ec2_instances is defined
+
 - name: "B Gather existing EC2 instances for the branch '{{ agent_current_branch }}' for pipeline {{ ci_commit_sha }}"
   ec2_instance_info:
     filters:
@@ -23,6 +28,11 @@
       "tag:dev": "{{ dev_mode }}"
   with_items: "{{ molecule_yml.platforms }}"
   register: ec2_instances_items
+
+- name: B Content of ec2_instances_items
+  debug:
+    var: ec2_instances_items
+  when: ec2_instances_items is defined
 
 # - name: Content of ec2_instances
 #   debug:
