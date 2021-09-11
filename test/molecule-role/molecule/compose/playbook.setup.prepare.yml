@@ -9,6 +9,7 @@
     - include_tasks: ../common/prepare/copy-configuration-files.yml
     - include_tasks: ../common/prepare/copy-verify-and-create-script-file.yml
     - include_tasks: ../common/prepare/gather-facts.yml
+    - include_tasks: ../common/prepare/gather-facts.yml
     - name: Configure .env file used by docker-compose
       copy:
         content: |
@@ -17,3 +18,4 @@
           DOCKER_HOST_IP={{ ansible_docker0['ipv4']['address'] }}
           STACKSTATE_BRANCH={{ stackstate_branch }}
         dest: /home/ubuntu/.env
+    - include_tasks: ../common/prepare/docker-compose-pull.yml
