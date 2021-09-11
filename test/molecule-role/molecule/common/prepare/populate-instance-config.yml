@@ -1,9 +1,9 @@
 ---
-- name: "Gather existing EC2 instances for the branch '{{ agent_current_branch }}' for job {{ ci_job_id }}"
+- name: "Gather existing EC2 instances for the branch '{{ agent_current_branch }}' for pipeline {{ ci_pipeline_id }}"
   ec2_instance_info:
     filters:
       instance-state-name: [ "running" ]
-      "tag:ci_job_id": "{{ ci_job_id }}"
+      "tag:ci_pipeline_id": "{{ ci_pipeline_id }}"
       "tag:ci_sts_major_python_version": "{{ ci_sts_major_python_version }}"
       "tag:agent_current_branch": "{{ agent_current_branch }}"
       "tag:molecule_scenario_name": "{{ molecule_scenario_name }}"
@@ -18,7 +18,7 @@
 
 - name: If no EC2 instance is found
   fail:
-    msg: "A EC2 instance was not found for this job {{ ci_job_id }} and scenario {{ molecule_scenario_name }}. Please rerun the first stage inside this job for {{ molecule_scenario_name }} to recreate the require EC2 instance"
+    msg: "A EC2 instance was not found for this job {{ ci_pipeline_id }} and scenario {{ molecule_scenario_name }}. Please rerun the first stage inside this job for {{ molecule_scenario_name }} to recreate the require EC2 instance"
   when: ec2_instances is not defined or ec2_instances | length == 0
 
 - name: Populate instance config dict
