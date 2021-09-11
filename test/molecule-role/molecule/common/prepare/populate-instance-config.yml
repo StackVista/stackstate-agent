@@ -1,29 +1,38 @@
 ---
-- name: "Gather existing EC2 instances for the branch '{{ agent_current_branch }}' for pipeline {{ ci_commit_sha }}"
+- name: "A Gather existing EC2 instances for the branch '{{ agent_current_branch }}' for pipeline {{ ci_commit_sha }}"
   ec2_instance_info:
     filters:
       instance-state-name: [ "running" ]
-      "tag:instance": "{{ item.name }}"
       "tag:agent_current_branch": "{{ agent_current_branch }}"
       "tag:molecule_scenario_name": "{{ molecule_scenario_name }}"
       "tag:ci_sts_major_python_version": "{{ ci_sts_major_python_version }}"
       "tag:ci_commit_sha": "{{ ci_commit_sha }}"
       "tag:usage": "molecule-build"
       "tag:dev": "{{ dev_mode }}"
-      "tag:molecule": "yes"
-  with_items: "{{ molecule_yml.platforms }}"
   register: ec2_instances
 
-- name: Content of ec2_instances
-  debug:
-    var: ec2_instances
-  when: ec2_instances is defined
+- name: "B Gather existing EC2 instances for the branch '{{ agent_current_branch }}' for pipeline {{ ci_commit_sha }}"
+  ec2_instance_info:
+    filters:
+      instance-state-name: [ "running" ]
+      "tag:agent_current_branch": "{{ agent_current_branch }}"
+      "tag:molecule_scenario_name": "{{ molecule_scenario_name }}"
+      "tag:ci_sts_major_python_version": "{{ ci_sts_major_python_version }}"
+      "tag:ci_commit_sha": "{{ ci_commit_sha }}"
+      "tag:usage": "molecule-build"
+      "tag:dev": "{{ dev_mode }}"
+  with_items: "{{ molecule_yml.platforms }}"
+  register: ec2_instances_items
 
-- name: If no EC2 instance is found
-  fail:
-    msg: "A EC2 instance was not found for this job {{ ci_commit_sha }} and scenario {{ molecule_scenario_name }}. Please rerun the first stage inside this job for {{ molecule_scenario_name }} to recreate the require EC2 instance"
-  when: ec2_instances is not defined or ec2_instances.results is not defined or ec2_instances.results | length == 0
-
+# - name: Content of ec2_instances
+#   debug:
+#     var: ec2_instances
+#   when: ec2_instances is defined
+#
+# - name: If no EC2 instance is found
+#   fail:
+#     msg: "A EC2 instance was not found for this job {{ ci_commit_sha }} and scenario {{ molecule_scenario_name }}. Please rerun the first stage inside this job for {{ molecule_scenario_name }} to recreate the require EC2 instance"
+#   when: ec2_instances is not defined or ec2_instances.results is not defined or ec2_instances.results | length == 0
 # - name: Populate instance config dict
 #   set_fact:
 #     instance_conf_dict: {
