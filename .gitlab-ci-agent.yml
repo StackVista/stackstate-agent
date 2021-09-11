@@ -923,7 +923,6 @@ molecule_localinstall_success_cleanup:
 
 # Job Seq: Molecule
 # Type: secrets
-
 .molecule_secrets_rule:
   - &secrets_ignore_rule
     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-secrets]/
