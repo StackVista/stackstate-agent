@@ -1,12 +1,4 @@
 ---
-- name: Prepare Connection
-  hosts: localhost
-  connection: local
-  gather_facts: true
-  tasks:
-    - include_tasks: ../common/prepare/keypair.yml
-    - include_tasks: ../common/create/wait-for-boot-process-to-finish.yml
-
 - name: Create global service on Master
   hosts: swarm_master_vm
   gather_facts: true
@@ -32,9 +24,9 @@
       delay: 5
       changed_when: false
 
-# - name: Prepare Connection
-#   hosts: localhost
-#   connection: local
-#   gather_facts: true
-#   tasks:
-#     - include_tasks: ../common/create/encrypt-ssh-key.yml
+- name: Encryption
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  tasks:
+    - include_tasks: ../common/create/encrypt-ssh-key.yml

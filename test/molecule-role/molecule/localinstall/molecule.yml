@@ -43,6 +43,7 @@ scenario:
     - dependency
     - syntax
     - prepare
+    - create
     - converge
     - idempotence
     - lint

@@ -1,12 +1,4 @@
 ---
-- name: Prepare Connection
-  hosts: localhost
-  connection: local
-  gather_facts: true
-  tasks:
-    - include_tasks: ../common/prepare/keypair.yml
-    - include_tasks: ../common/create/wait-for-boot-process-to-finish.yml
-
 - name: Prepare Linux Agents
   hosts: agent_linux_vm
   gather_facts: false
@@ -68,9 +60,9 @@
       until: install_agent_result is not failed
       retries: 5
 
-# - name: Prepare Connection
-#   hosts: localhost
-#   connection: local
-#   gather_facts: true
-#   tasks:
-#     - include_tasks: ../common/create/encrypt-ssh-key.yml
+- name: Encryption
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  tasks:
+    - include_tasks: ../common/create/encrypt-ssh-key.yml

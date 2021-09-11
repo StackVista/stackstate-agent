@@ -1,12 +1,4 @@
 ---
-- name: Prepare Connection
-  hosts: localhost
-  connection: local
-  gather_facts: true
-  tasks:
-    - include_tasks: ../common/prepare/keypair.yml
-    - include_tasks: ../common/create/wait-for-boot-process-to-finish.yml
-
 - name: Prepare Linux Agents (pre)
   hosts: agent_linux_vm
   gather_facts: false
@@ -69,10 +61,3 @@
           STACKSTATE_BRANCH={{ stackstate_branch }}
         dest: /home/ubuntu/.env
     - include_tasks: ../common/create/wait-for-boot-process-to-finish.yml
-
-- name: Prepare Connection
-  hosts: localhost
-  connection: local
-  gather_facts: true
-  tasks:
-    - include_tasks: ../common/create/encrypt-ssh-key.yml

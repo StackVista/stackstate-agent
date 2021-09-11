@@ -1,12 +1,4 @@
 ---
-- name: Prepare Connection
-  hosts: localhost
-  connection: local
-  gather_facts: true
-  tasks:
-    - include_tasks: ../common/prepare/keypair.yml
-    - include_tasks: ../common/create/wait-for-boot-process-to-finish.yml
-
 - name: Prepare Receiver
   hosts: receiver_vm
   gather_facts: false
@@ -486,7 +478,7 @@
       pause:
         seconds: 60
 
-- name: Prepare Connection
+- name: Encryption
   hosts: localhost
   connection: local
   gather_facts: true

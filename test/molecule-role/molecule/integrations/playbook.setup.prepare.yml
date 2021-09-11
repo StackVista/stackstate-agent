@@ -1,11 +1,4 @@
 ---
-- name: Prepare Connection
-  hosts: localhost
-  connection: local
-  gather_facts: true
-  tasks:
-    - include_tasks: ../common/prepare/keypair.yml
-
 - name: Prepare Integrations and Dependencies
   hosts: agent-integrations
   gather_facts: false
@@ -48,10 +41,3 @@
           AGENT_VERSION={{ agent_current_branch }}
           STACKSTATE_BRANCH={{ stackstate_branch }}
         dest: /home/ubuntu/.env
-
-- name: Prepare Connection
-  hosts: localhost
-  connection: local
-  gather_facts: true
-  tasks:
-    - include_tasks: ../common/create/encrypt-ssh-key.yml
