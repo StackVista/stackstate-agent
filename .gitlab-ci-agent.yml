@@ -836,7 +836,7 @@ molecule_kubernetes_test:
   variables:
     MOLECULE_SCENARIO: kubernetes
   dependencies:
-    - molecule_integrations_create
+    - molecule_kubernetes_create
   needs:
     - molecule_kubernetes_create
     - pre_release_cluster_agent_image
