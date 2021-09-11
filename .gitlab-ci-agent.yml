@@ -815,42 +815,61 @@ molecule_integrations_success_cleanup:
     if: $MAJOR_VERSION == "3" && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-kubernetes]/
     when: never
 
-molecule_kubernetes_test:
+molecule_kubernetes_create:
   <<: *molecule
-  resource_group: eks_test_cluster
-  stage: acceptance
-  needs:
-    - pre_release_cluster_agent_image
-    - pre_release_main_agent_image
-  script:
-    - cd $CI_PROJECT_DIR/test && ./molecule3.sh test -s kubernetes
-  variables:
-    MOLECULE_SCENARIO: kubernetes
-  artifacts:
-    when: always
-    paths:
-      - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/topic-*.json
-      - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/*.log
-      - $CI_PROJECT_DIR/.cache
-      - $MOLECULE_EPHEMERAL_DIRECTORY
-    expire_in: 1 week
+  <<: *molecule_create
   rules:
     - *kubernetes_ignore_rule
     - *only_agent_3
+    - when: always
+  variables:
+    MOLECULE_SCENARIO: kubernetes
 
-molecule_kubernetes_cleanup:
+molecule_kubernetes_test:
+  <<: *molecule
+  <<: *molecule_test
+  resource_group: eks_test_cluster
+  rules:
+    - *kubernetes_ignore_rule
+    - *only_agent_3
+    - when: on_success
+  variables:
+    MOLECULE_SCENARIO: kubernetes
+  dependencies:
+    - molecule_integrations_create
+  needs:
+    - molecule_kubernetes_create
+    - pre_release_cluster_agent_image
+    - pre_release_main_agent_image
+
+molecule_kubernetes_failure_cleanup:
   <<: *molecule
   <<: *molecule_destroy
-  resource_group: eks_test_cluster
+  rules:
+    - *kubernetes_ignore_rule
+    - *only_agent_3_on_failure
+    - when: on_failure
+  variables:
+    MOLECULE_SCENARIO: kubernetes
+  needs:
+    - molecule_kubernetes_test
+    - molecule_kubernetes_create
+
+molecule_kubernetes_success_cleanup:
+  <<: *molecule
+  <<: *molecule_destroy
+  rules:
+    - *kubernetes_ignore_rule
+    - *only_agent_3_on_success
+    - when: on_success
   variables:
     MOLECULE_SCENARIO: kubernetes
   dependencies:
     - molecule_kubernetes_test
+    - molecule_kubernetes_create
   needs:
     - molecule_kubernetes_test
-  rules:
-    - *kubernetes_ignore_rule
-    - *only_agent_3_on_success
+    - molecule_kubernetes_create
 
 
 # Job Seq: Molecule

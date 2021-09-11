@@ -1,0 +1,24 @@
+---
+- name: Prepare Receiver and EKS cluster
+  hosts: kubernetes-cluster-agent
+  gather_facts: true
+  tasks:
+    - include_tasks: ../common/prepare/ubuntu18-automatic-updates.yml
+    - include_tasks: ../common/prepare/install-provisioning-dependencies.yml
+    - include_tasks: ../common/prepare/configure-aws-credentials.yml
+    - include_tasks: ../common/prepare/docker-login.yml
+    - include_tasks: ../common/prepare/copy-terraform-files-and-manifests.yml
+    - include_tasks: ../common/prepare/copy-receiver-files.yml
+    - include_tasks: ../common/prepare/copy-verify-and-create-script-file.yml
+
+    - name: Generate env token
+      shell: echo token=$(cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1) > env.txt
+      args:
+        chdir: /home/ubuntu/deployment/agents/overlays
+
+    - name: Configure .env file used by docker-compose
+      copy:
+        content: |
+          STACKSTATE_BRANCH={{ stackstate_branch }}
+          CLUSTER_NAME={{ cluster_name }}
+        dest: /home/ubuntu/receiver/.env
