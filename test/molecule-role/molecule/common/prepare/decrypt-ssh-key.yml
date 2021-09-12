@@ -1,5 +1,5 @@
 ---
-- name: (CI) Decrypt data from artifact
-  # when: ci_project_dir is defined and ci_project_dir != ""
-  shell: |
-    ansible-vault decrypt --vault-id "{{molecule_scenario_name}}@{{ci_project_dir}}/test/molecule-role/molecule/vault-password.py" "{{ci_project_dir}}/.cache/molecule/molecule-role/{{molecule_scenario_name}}/ssh_key"
+# - name: (CI) Decrypt data from artifact
+#   # when: ci_project_dir is defined and ci_project_dir != ""
+#   shell: |
+#     ansible-vault decrypt --vault-id "{{molecule_scenario_name}}@{{ci_project_dir}}/test/molecule-role/molecule/vault-password.py" "{{ci_project_dir}}/.cache/molecule/molecule-role/{{molecule_scenario_name}}/ssh_key"
