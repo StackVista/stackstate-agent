@@ -42,8 +42,8 @@ scenario:
   test_sequence:
     - dependency
     - syntax
-    - prepare
     - create
+    - prepare
     - converge
     - idempotence
     - lint
