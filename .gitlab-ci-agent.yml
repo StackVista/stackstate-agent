@@ -878,14 +878,26 @@ molecule_kubernetes_success_cleanup:
   - &localinstall_ignore_rule
     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-localinstall]/
     when: never
+  - &localinstall_master_only_rule
+    if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: always
+  - &localinstall_acceptance_rule
+    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-localinstall]/
+    when: always
+  - &localinstall_acceptance_on_success_rule
+    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-localinstall]/
+    when: on_success
+  - &localinstall_acceptance_on_failure_rule
+    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-localinstall]/
+    when: on_failure
 
 molecule_localinstall_create:
   <<: *molecule
   <<: *molecule_create
   rules:
     - *localinstall_ignore_rule
-    - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-      when: always
+    - *localinstall_master_only_rule
+    - *localinstall_acceptance_rule
     - when: never
   variables:
     MOLECULE_SCENARIO: localinstall
@@ -895,8 +907,8 @@ molecule_localinstall_test:
   <<: *molecule_test
   rules:
     - *localinstall_ignore_rule
-    - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-      when: on_success
+    - *localinstall_master_only_rule
+    - *localinstall_acceptance_rule
     - when: never
   variables:
     MOLECULE_SCENARIO: localinstall
@@ -914,8 +926,8 @@ molecule_localinstall_failure_cleanup:
   <<: *molecule_destroy
   rules:
     - *localinstall_ignore_rule
-    - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-      when: on_failure
+    - *localinstall_master_only_rule
+    - *localinstall_acceptance_on_failure_rule
     - when: never
   needs:
     - molecule_localinstall_test
@@ -928,8 +940,8 @@ molecule_localinstall_success_cleanup:
   <<: *molecule_destroy
   rules:
     - *localinstall_ignore_rule
-    - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-      when: on_success
+    - *localinstall_master_only_rule
+    - *localinstall_acceptance_on_success_rule
     - when: never
   dependencies:
     - molecule_localinstall_test
@@ -941,18 +953,31 @@ molecule_localinstall_success_cleanup:
 
 # Job Seq: Molecule
 # Type: secrets
+
 .molecule_secrets_rule:
   - &secrets_ignore_rule
-    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-secrets]/
+    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-compose]/
     when: never
+  - &secrets_master_only_rule
+    if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: always
+  - &secrets_acceptance_rule
+    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-compose]/
+    when: always
+  - &secrets_acceptance_on_success_rule
+    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-compose]/
+    when: on_success
+  - &secrets_acceptance_on_failure_rule
+    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-compose]/
+    when: on_failure
 
 molecule_secrets_create:
   <<: *molecule
   <<: *molecule_create
   rules:
     - *secrets_ignore_rule
-    - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-      when: always
+    - *secrets_master_only_rule
+    - *secrets_acceptance_rule
     - when: never
   variables:
     MOLECULE_SCENARIO: secrets
@@ -962,8 +987,8 @@ molecule_secrets_test:
   <<: *molecule_test
   rules:
     - *secrets_ignore_rule
-    - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-      when: on_success
+    - *secrets_master_only_rule
+    - *secrets_acceptance_rule
     - when: never
   variables:
     MOLECULE_SCENARIO: secrets
@@ -980,8 +1005,8 @@ molecule_secrets_failure_cleanup:
   <<: *molecule_destroy
   rules:
     - *secrets_ignore_rule
-    - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-      when: on_failure
+    - *secrets_master_only_rule
+    - *secrets_acceptance_on_failure_rule
     - when: never
   needs:
     - molecule_secrets_test
@@ -994,8 +1019,8 @@ molecule_secrets_success_cleanup:
   <<: *molecule_destroy
   rules:
     - *secrets_ignore_rule
-    - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-      when: on_success
+    - *secrets_master_only_rule
+    - *secrets_acceptance_on_success_rule
     - when: never
   dependencies:
     - molecule_secrets_test
@@ -1003,6 +1028,7 @@ molecule_secrets_success_cleanup:
   needs:
     - molecule_secrets_test
     - molecule_secrets_create
+
 
 # Job Seq: Molecule
 # Type: swarm
