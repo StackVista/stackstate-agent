@@ -805,7 +805,6 @@ molecule_integrations_success_cleanup:
     - molecule_integrations_test
     - molecule_integrations_create
 
-
 # Job Seq: Molecule
 # Type: kubernetes
 # TODO: Split into two stages instead of one test stage, Unit Test fails SSH when split debug required
