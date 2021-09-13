@@ -38,6 +38,7 @@
         to_port: 0
         cidr_ip: '0.0.0.0/0'
   tasks:
+    - include_tasks: ../common/create/pause.yml
     - include_tasks: ../common/create/create-security-group.yml
     - include_tasks: ../common/create/keypair.yml
     - include_tasks: ../common/create/create-molecule-instances.yml

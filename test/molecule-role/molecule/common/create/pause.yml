@@ -1,0 +1,4 @@
+---
+- name: Pause for 6 minutes, We slow down the EC2 creation to allow a more synced up state to the pre-release stage and reduce EC2 uptime
+  pause:
+    minutes: 6
