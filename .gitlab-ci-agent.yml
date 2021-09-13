@@ -1053,8 +1053,8 @@ molecule_swarm_test:
   rules:
     - *swarm_ignore_rule
     - *only_agent_3_on_success
-  # dependencies:
-  #   - molecule_swarm_create
+  dependencies:
+    - molecule_swarm_create
   variables:
     MOLECULE_SCENARIO: swarm
   needs:
