@@ -563,6 +563,7 @@ enable_gohai: false
 # windows_use_pythonpath: false
 {{ end }}
 ## @param secret_backend_command - string - optional
+## @env DD_SECRET_BACKEND_COMMAND - string - optional
 ## `secret_backend_command` is the path to the script to execute to fetch secrets.
 ## The executable must have specific rights that differ on Windows and Linux.
 ##
@@ -571,6 +572,7 @@ enable_gohai: false
 # secret_backend_command: <COMMAND_PATH>
 
 ## @param secret_backend_arguments - list of strings - optional
+## @env DD_SECRET_BACKEND_ARGUMENTS - space separated list of strings - optional
 ## If secret_backend_command is set, specify here a list of arguments to give to the command at each run.
 #
 # secret_backend_arguments:
@@ -578,11 +580,13 @@ enable_gohai: false
 #   - <ARGUMENT_2>
 
 ## @param secret_backend_output_max_size - integer - optional - default: 1048576
+## @env DD_SECRET_BACKEND_OUTPUT_MAX_SIZE - integer - optional - default: 1048576
 ## The size in bytes of the buffer used to store the command answer (apply to both stdout and stderr)
 #
 # secret_backend_output_max_size: 1048576
 
 ## @param secret_backend_timeout - integer - optional - default: 30
+## @env DD_SECRET_BACKEND_TIMEOUT - integer - optional - default: 30
 ## The timeout to execute the command in second
 #
 # secret_backend_timeout: 30
@@ -787,6 +791,7 @@ enable_gohai: false
 ##################################
 
 ## @param logs_enabled - boolean - optional - default: false
+## @env DD_LOGS_ENABLED - boolean - optional - default: false
 ## Enable Datadog Agent log collection by setting logs_enabled to true.
 #
 # logs_enabled: false
@@ -799,17 +804,20 @@ enable_gohai: false
 # logs_config:
 
   ## @param container_collect_all - boolean - optional - default: false
+  ## @env DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL - boolean - optional - default: false
   ## Enable container log collection for all the containers (see ac_exclude to filter out containers)
   #
   # container_collect_all: false
 
   ## @param logs_dd_url - string - optional
+  ## @env DD_LOGS_CONFIG_DD_URL - string - optional
   ## Define the endpoint and port to hit when using a proxy for logs. The logs are forwarded in TCP
   ## therefore the proxy must be able to handle TCP connections.
   #
   # logs_dd_url: <ENDPOINT>:<PORT>
 
   ## @param logs_no_ssl - boolean - optional - default: false
+  ## @env DD_LOGS_CONFIG_LOGS_NO_SSL - optional - default: false
   ## Disable the SSL encryption. This parameter should only be used when logs are
   ## forwarded locally to a proxy. It is highly recommended to then handle the SSL encryption
   ## on the proxy side.
@@ -817,6 +825,7 @@ enable_gohai: false
   # logs_no_ssl: false
 
   ## @param processing_rules - list of custom objects - optional
+  ## @env DD_LOGS_CONFIG_PROCESSING_RULES - list of custom objects - optional
   ## Global processing rules that are applied to all logs. The available rules are
   ## "exclude_at_match", "include_at_match" and "mask_sequences". More information in Datadog documentation:
   ## https://docs.datadoghq.com/agent/logs/advanced_log_collection/#global-processing-rules
@@ -827,6 +836,7 @@ enable_gohai: false
   #     pattern: <RULE_PATTERN>
 
   ## @param use_http - boolean - optional - default: false
+  ## @env DD_LOGS_CONFIG_USE_HTTP - boolean - optional - default: false
   ## By default, logs are sent through TCP, use this parameter
   ## to send logs in HTTPS batches to port 443
   #
@@ -839,18 +849,21 @@ enable_gohai: false
   # use_tcp: true
 
   ## @param use_compression - boolean - optional - default: false
+  ## @env DD_LOGS_CONFIG_USE_COMPRESSION - boolean - optional - default: false
   ## This parameter is available when sending logs with HTTPS. If enabled, the Agent
   ## compresses logs before sending them.
   #
   # use_compression: true
 
   ## @param compression_level - integer - optional - default: 6
+  ## @env DD_LOGS_CONFIG_COMPRESSION_LEVEL - boolean - optional - default: false
   ## The compression_level parameter accepts values from 0 (no compression)
   ## to 9 (maximum compression but higher resource usage).
   #
   # compression_level: 6
 
   ## @param batch_wait - integer - optional - default: 5
+  ## @env DD_LOGS_CONFIG_BATCH_WAIT - integer - optional - default: 5
   ## The maximum time the Datadog Agent waits to fill each batch of logs before sending.
   #
   # batch_wait: 5
