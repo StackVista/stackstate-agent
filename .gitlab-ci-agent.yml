@@ -691,6 +691,7 @@ pre_release_cluster_agent_image:
     - cd $CI_PROJECT_DIR/test
     - ./molecule3.sh $MOLECULE_SCENARIO destroy
 
+
 # Job Seq: Molecule
 # Type: Compose
 .molecule_compose_rule:
