@@ -141,7 +141,7 @@ elif [[ $2 == "prepare" ]] || [[ $2 == "test" ]] || [[ $2 == "login" ]]; then
     CONFIG_TARGET="run"
 fi
 
-if [[ $DEV_MODE ]]; then
+if [[ $DEV_MODE == "true" ]]; then
     echo ""
     echo "------------------------ DEV MODE WARNING --------------------------------"
     echo "------------ INSTANCES CREATED WITH DEV MODE WILL NOT BE DESTROYED ----------"
