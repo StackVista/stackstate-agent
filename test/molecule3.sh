@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if [ -z "$1" ] || [ $1 == "help" ]; then
+if [ -z "$1" ] || [ "$1" == "help" ]; then
     echo "Example Charts of how this is used on the Gitlab CI: https://miro.com/app/board/o9J_lzUC0FM=/"
     echo ""
     echo "WARNING: If you create any instance from you local machine please delete it seeing that Lambda does not clean dev instances thus the EC2 costs will increase the longer that instances stays up"
@@ -29,22 +29,6 @@ if [ -z "$1" ] || [ $1 == "help" ]; then
     echo "- swarm"
     echo "- vms"
     exit 1
-fi
-
-
-# Determine if you are running the script from a CI that contains a commit sha or from localhost
-# These variables will be used within the build process to determine if encryption should be applied and where things are copied to
-export DEV_MODE="false"
-export DEV_PATH=""
-if [ -z "$CI_COMMIT_SHA" ]; then
-    echo ""
-    echo "------------ DEV MODE ENABLED --------------"
-    export DEV_MODE="true"
-    export DEV_PATH="${PWD}/.."
-    echo "DEV_MODE: ${DEV_MODE}"
-    echo "DEV_PATH: ${DEV_PATH}"
-    echo "---------------------------------------------------------"
-    echo ""
 fi
 
 export CONDA_BASE="${HOME}/miniconda3"
@@ -98,6 +82,7 @@ yamllint -c .yamllint .
 echo "MOLECULE_RUN_ID=${CI_JOB_ID:-unknown}"
 echo "AGENT_CURRENT_BRANCH=${AGENT_CURRENT_BRANCH}"
 
+# TODO: Remove if kubernetes works
 if [[ $1 == "--bypass" ]]; then
     echo ""
     echo "------------ Bypass supplied running molecule command directly with parameters --------------"
@@ -107,6 +92,7 @@ if [[ $1 == "--bypass" ]]; then
     exit 0
 fi
 
+# Helper for the first parameter defined
 AVAILABLE_MOLECULE_SCENARIOS=("compose" "integrations" "kubernetes" "localinstall" "secrets" "swarm" "vms")
 if [[ ! " ${AVAILABLE_MOLECULE_SCENARIOS[*]} " =~ $1 ]]; then
     echo ""
@@ -122,7 +108,7 @@ if [[ ! " ${AVAILABLE_MOLECULE_SCENARIOS[*]} " =~ $1 ]]; then
     exit 1
 fi
 
-CONFIG_TARGET="setup"
+# Helper for the second parameter defined
 AVAILABLE_MOLECULE_PROCESS=("create" "prepare" "test" "destroy" "login")
 if [[ ! " ${AVAILABLE_MOLECULE_PROCESS[*]} " =~ $2 ]]; then
     echo ""
@@ -136,19 +122,51 @@ if [[ ! " ${AVAILABLE_MOLECULE_PROCESS[*]} " =~ $2 ]]; then
     echo "---------------------------------------------------------"
     echo ""
     exit 1
-
-elif [[ $2 == "prepare" ]] || [[ $2 == "test" ]] || [[ $2 == "login" ]]; then
-    CONFIG_TARGET="run"
 fi
 
-if [[ $DEV_MODE == "true" ]]; then
-    echo ""
+# Determine if you are running the script from a CI that contains a commit sha or from localhost
+# These variables will be used within the build process to determine if encryption should be applied and where things are copied to
+export DEV_MODE="false"
+
+if [ -z "$CI_COMMIT_SHA" ]; then
+    export DEV_MODE="true" && echo "DEV_MODE: $DEV_MODE"
+
     echo "------------------------ DEV MODE WARNING --------------------------------"
     echo "------------ INSTANCES CREATED WITH DEV MODE WILL NOT BE DESTROYED ----------"
     echo "------ MEANING IF YOU LEAVE THIS ZOMBIE INSTANCE UP IT WILL COST PER HOUR ----"
     echo "-----------------------------------------------------------------------------"
+
     sleep 5
 fi
 
-echo "Running Molecule Command: molecule --base-config ./molecule/$1/provisioner.$CONFIG_TARGET.yml $2 --scenario-name $1"
-molecule --base-config "./molecule/$1/provisioner.$CONFIG_TARGET.yml" "$2" --scenario-name "$1"
+remove_molecule_cache_folder()
+{
+    MOLECULE_CACHE_PATH="$HOME/.cache/molecule/molecule-role/$1"
+    if [ -d "$MOLECULE_CACHE_PATH" ]; then
+        rm -rf "$MOLECULE_CACHE_PATH";
+    fi
+}
+
+execute_molecule()
+{
+    molecule --base-config "./molecule/$1/provisioner.$2.yml" "$3" --scenario-name "$1"
+}
+
+if [[ $2 == "create" ]]; then
+    execute_molecule "$1" setup create
+
+elif [[ $2 == "prepare" ]]; then
+    remove_molecule_cache_folder "$1"
+    execute_molecule "$1" run create
+
+elif [[ $2 == "test" ]]; then
+    remove_molecule_cache_folder "$1"
+    execute_molecule "$1" run test
+
+elif [[ $2 == "login" ]]; then
+    execute_molecule "$1" setup login
+
+elif [[ $2 == "destroy" ]]; then
+    execute_molecule "$1" setup destroy
+fi
+

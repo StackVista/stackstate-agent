@@ -2,6 +2,7 @@
 provisioner:
   name: ansible
   playbooks:
+    cleanup: playbook.setup.cleanup.yml
     create: playbook.run.create.yml
     prepare: playbook.run.prepare.yml
   lint:

@@ -5,10 +5,10 @@
   register: keypair_local
 
 - name: Delete remote keypair
+  ignore_errors: true
   ec2_key:
     name: "{{ keypair_name }}"
     state: absent
-  when: not keypair_local.stat.exists
 
 - name: Create keypair
   ec2_key:
