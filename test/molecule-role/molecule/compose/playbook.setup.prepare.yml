@@ -9,7 +9,6 @@
     - include_tasks: ../common/prepare/copy-configuration-files.yml
     - include_tasks: ../common/prepare/copy-verify-and-create-script-file.yml
     - include_tasks: ../common/prepare/gather-facts.yml
-    - include_tasks: ../common/prepare/gather-facts.yml
     - name: Configure .env file used by docker-compose
       copy:
         content: |

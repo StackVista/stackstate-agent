@@ -472,6 +472,11 @@
   hosts: receiver_vm
   gather_facts: false
   tasks:
+    - name: Configure .env file used by docker-compose
+      copy:
+        content: |
+          STACKSTATE_BRANCH={{ stackstate_branch }}
+        dest: /home/ubuntu/.env
     - name: Wait a bit for all the data to start flowing before we start making assertions
       pause:
         seconds: 60
