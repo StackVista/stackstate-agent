@@ -192,7 +192,7 @@ func getClientConfig(timeout time.Duration) (*rest.Config, error) {
 	return clientConfig, nil
 }
 
-func getKubeClient(timeout time.Duration) (kubernetes.Interface, error) {
+func GetKubeClient(timeout time.Duration) (kubernetes.Interface, error) {
 	// TODO: Remove custom warning logger when we remove usage of ComponentStatus
 	rest.SetDefaultWarningHandler(CustomWarningLogger{})
 	clientConfig, err := getClientConfig(timeout)
@@ -254,7 +254,7 @@ func getDDInformerFactory() (dynamicinformer.DynamicSharedInformerFactory, error
 
 func getInformerFactory() (informers.SharedInformerFactory, error) {
 	resyncPeriodSeconds := time.Duration(config.Datadog.GetInt64("kubernetes_informers_resync_period"))
-	client, err := getKubeClient(0) // No timeout for the Informers, to allow long watch.
+	client, err := GetKubeClient(0) // No timeout for the Informers, to allow long watch.
 	if err != nil {
 		log.Errorf("Could not get apiserver client: %v", err)
 		return nil, err
@@ -264,7 +264,7 @@ func getInformerFactory() (informers.SharedInformerFactory, error) {
 
 func getInformerFactoryWithOption(options ...informers.SharedInformerOption) (informers.SharedInformerFactory, error) {
 	resyncPeriodSeconds := time.Duration(config.Datadog.GetInt64("kubernetes_informers_resync_period"))
-	client, err := getKubeClient(0) // No timeout for the Informers, to allow long watch.
+	client, err := GetKubeClient(0) // No timeout for the Informers, to allow long watch.
 	if err != nil {
 		log.Errorf("Could not get apiserver client: %v", err)
 		return nil, err
@@ -274,7 +274,7 @@ func getInformerFactoryWithOption(options ...informers.SharedInformerOption) (in
 
 func (c *APIClient) connect() error {
 	var err error
-	c.Cl, err = getKubeClient(time.Duration(c.timeoutSeconds) * time.Second)
+	c.Cl, err = GetKubeClient(time.Duration(c.timeoutSeconds) * time.Second)
 	if err != nil {
 		log.Infof("Could not get apiserver client: %v", err)
 		return err
