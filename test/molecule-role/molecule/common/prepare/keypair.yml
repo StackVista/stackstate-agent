@@ -5,7 +5,7 @@
   copy:
     src: "{{ci_project_dir}}/.molecule/{{ molecule_scenario_name }}/ssh_key"
     dest: "{{ keypair_path }}"
-    mode: 0600
+    mode: preserve
 
 - name: (LOCAL) Restore artifact ssh key
   when: ci_project_dir is undefined or ci_project_dir == ""
@@ -13,29 +13,7 @@
   copy:
     src: ".molecule/{{ molecule_scenario_name }}/ssh_key"
     dest: "{{ keypair_path }}"
-    mode: 0600
-
-- name: File exist check (1)
-  stat:
-    path: "{{ keypair_path }}"
-  register: file_exist
-
-- name: File exist check (2)
-  debug:
-    msg: "The file or directory exists"
-  when: file_exist.stat.exists
-
-- name: Get Temp SSH Key (1)
-  command: cat "{{ keypair_path }}"
-  register: ssh_key_content
-
-- name: Temp SSH Key display (2)
-  debug:
-    msg: "{{ssh_key_content.stdout}}"
-
-- name: Temp SSH Key display (3)
-  debug: "{{ item }}"
-  with_lines: cat "{{ keypair_path }}"
+    mode: preserve
 
 - name: Wait (SSH Key Restore)
   pause:

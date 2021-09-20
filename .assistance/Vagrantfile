@@ -24,11 +24,11 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.synced_folder "./../", "/home/vagrant/stackstate-agent"
-  config.vm.network :public_network, bridge: "eno2"
+  config.vm.network :public_network
 
 
   # Update the machine and pull all the requirements (vagrant provision --provision-with req-update)
-  config.vm.provision "machine-update", type: "shell", run: "never", inline: <<-SCRIPT
+  config.vm.provision "machine-update", type: "shell", inline: <<-SCRIPT
     apt-get update -y
     apt-get upgrade -y
     cd /home/vagrant
@@ -37,7 +37,7 @@ Vagrant.configure("2") do |config|
 
 
   # Rerun this provision to update `CMake` to the x.x.x env specified version (vagrant provision --provision-with cmake-update)
-  config.vm.provision "cmake-update", type: "shell", run: "never", inline: <<-SCRIPT
+  config.vm.provision "cmake-update", type: "shell", inline: <<-SCRIPT
     cd /home/vagrant
     wget https://github.com/Kitware/CMake/releases/download/v#{ENV['CMAKE_VERSION']}/cmake-#{ENV['CMAKE_VERSION']}.tar.gz
     tar -xvzf cmake-#{ENV['CMAKE_VERSION']}.tar.gz
@@ -50,7 +50,7 @@ Vagrant.configure("2") do |config|
 
 
   # Rerun this provision to update `conda mini` (vagrant provision --provision-with conda-update)
-  config.vm.provision "conda-update", type: "shell", run: "never", inline: <<-SCRIPT
+  config.vm.provision "conda-update", type: "shell", inline: <<-SCRIPT
     cd /home/vagrant
     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
     chmod 777 ~/miniconda.sh
@@ -63,7 +63,7 @@ Vagrant.configure("2") do |config|
 
 
   # Rerun this provision to update `golang` (vagrant provision --provision-with golang-update)
-  config.vm.provision "golang-update", type: "shell", run: "never", inline: <<-SCRIPT
+  config.vm.provision "golang-update", type: "shell", inline: <<-SCRIPT
     cd /home/vagrant
     bash < <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer)
     source /root/.gvm/scripts/gvm
@@ -77,7 +77,7 @@ Vagrant.configure("2") do |config|
 
 
   # Rerun this provision to update `setup` (vagrant provision --provision-with setup)
-  config.vm.provision "setup", type: "shell", run: "never", inline: <<-SCRIPT
+  config.vm.provision "deps-and-version", type: "shell", inline: <<-SCRIPT
     # Re initialize the env variable for the installed resources
     source /root/.gvm/scripts/gvm
     gvm use go#{ENV['GOLANG_VERSION']}
@@ -103,7 +103,7 @@ Vagrant.configure("2") do |config|
 
 
   # Rerun golang rtloader.test (vagrant provision --provision-with rtloader.test)
-  config.vm.provision "rtloader.test", type: "shell", run: "never", inline: <<-SCRIPT
+  config.vm.provision "rtloader.test", type: "shell", inline: <<-SCRIPT
     # Re initialize the env variable for the installed resources
     source /root/.gvm/scripts/gvm
     gvm use go#{ENV['GOLANG_VERSION']}
