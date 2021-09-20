@@ -44,9 +44,15 @@ func SubmitTopologyEvent(id *C.char, data *C.char) {
 		return
 	}
 
+	log.Debugf("======= SubmitTopologyEvent Debugging ========")
+	log.Debugf(data)
+
 	var topologyEvent metrics.Event
 	rawEvent := C.GoString(data)
+	log.Debugf(rawEvent)
 	err = json.Unmarshal([]byte(rawEvent), &topologyEvent)
+	log.Debugf(err)
+	log.Debugf("=============================================")
 
 	if err == nil {
 		sender.Event(topologyEvent)
