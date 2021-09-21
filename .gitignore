@@ -125,7 +125,7 @@ build.out/
 
 # dev VM
 .vagrant
-Vagrantfile
+/Vagrantfile
 packer.json
 *.box
 devenv/iso

@@ -42,3 +42,5 @@
     - include_tasks: ../common/prepare/restore-molecule-cache.yml
     - include_tasks: ../common/prepare/populate-instance-config.yml
     - include_tasks: ../common/create/wait-for-ssh.yml
+    - include_tasks: ../common/create/persist-molecule-cache.yml
+    - include_tasks: ../common/create/encrypt-ssh-key.yml

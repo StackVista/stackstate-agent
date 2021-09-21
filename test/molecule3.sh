@@ -164,7 +164,7 @@ elif [[ $2 == "test" ]]; then
     execute_molecule "$1" run test
 
 elif [[ $2 == "login" ]]; then
-    execute_molecule "$1" setup login
+    execute_molecule "$1" run login
 
 elif [[ $2 == "destroy" ]]; then
     execute_molecule "$1" setup destroy

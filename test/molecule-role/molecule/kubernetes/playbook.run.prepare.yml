@@ -54,6 +54,17 @@
         password: "{{ quay_password }}"
         reauthorize: yes
 
+    - name: Kubectl Version Get
+      shell:
+        cmd: kubectl version
+      ignore_errors: true
+      register: kubectl_version
+
+    - name: Kubectl Version Display
+      ignore_errors: true
+      debug:
+        msg: "{{kubectl_version}}"
+
     - name: Copy Terraform Files and Manifests
       copy:
         src: "../../../../deployment/kubernetes/"
@@ -137,25 +148,17 @@
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
 
-    # - name: Delete namespace test-global-lock
-    #   shell: kubectl delete ns test-global-lock
-    #   environment:
-    #     KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
+    - name: Delete namespace '{{namespace}}'
+      ignore_errors: true
+      shell: kubectl delete ns --ignore-not-found=true {{namespace}}
+      environment:
+        KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
 
-    # - name: Delete namespace '{{namespace}}'
-    #   # shell: "if kubectl delete ns {{ namespace }}; then kubectl delete ns test-global-lock; fi"
-    #   shell: kubectl delete ns --ignore-not-found=true {{namespace}}
-    #   environment:
-    #     KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
-
-    - name: Wait for delete
-      pause:
-        minutes: 2
-
-    - name: Create global lock namespace (only one test can run on the cluster at the same time)
-      shell: kubectl create ns test-global-lock
+    - name: Delete manifests for stackstate node agent and cluster agent
+      ignore_errors: true
+      command: kubectl delete -k overlays --ignore-not-found=true
       args:
-        chdir: /home/ubuntu/deployment
+        chdir: /home/ubuntu/deployment/agents
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
 
@@ -188,7 +191,8 @@
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
 
     - name: Wait for the stackstate node agents to start doing their thing (otherwise connections might occur after agent startup)
-      command: kubectl -n={{ namespace }} wait --all --for=condition=Ready --timeout=720s -l app=stackstate-agent pod
+      ignore_errors: true
+      command: kubectl -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app=stackstate-agent pod
       args:
         chdir: /home/ubuntu/deployment/agents
       environment:

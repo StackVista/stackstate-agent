@@ -8,6 +8,14 @@
     - include_tasks: ../common/prepare/copy-docker-compose-file.yml
     - include_tasks: ../common/prepare/copy-verify-and-create-script-file.yml
 
+    - name: Configure .env file used by docker-compose
+      copy:
+        content: |
+          AGENT_DOCKER_REPO={{ agent_docker_repo }}
+          AGENT_VERSION={{ agent_current_branch }}
+          STACKSTATE_BRANCH={{ stackstate_branch }}
+        dest: /home/ubuntu/.env
+
     - name: Copy nagios files
       copy:
         src: files/nagios/{{item}}
@@ -24,7 +32,6 @@
         dest: /home/ubuntu/agent/nagios.d/
         mode: preserve
 
-
     - name: Copy agent integration config files
       copy:
         src: files/agent/agent_integration_sample.d/conf.yaml
@@ -33,11 +40,3 @@
 
     - name: Gather facts (we need the docker network interface ip)
       setup:
-
-    - name: Configure .env file used by docker-compose
-      copy:
-        content: |
-          AGENT_DOCKER_REPO={{ agent_docker_repo }}
-          AGENT_VERSION={{ agent_current_branch }}
-          STACKSTATE_BRANCH={{ stackstate_branch }}
-        dest: /home/ubuntu/.env

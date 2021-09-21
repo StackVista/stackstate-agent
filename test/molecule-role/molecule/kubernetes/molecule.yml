@@ -23,15 +23,14 @@ scenario:
   name: kubernetes
   create_sequence:
     - dependency
-    - cleanup
     - destroy
     - syntax
     - create
     - prepare
+    - cleanup
   test_sequence:
     - dependency
     - syntax
-    - cleanup
     - create
     - prepare
     - converge
