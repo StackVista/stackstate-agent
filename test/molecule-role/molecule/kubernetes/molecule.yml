@@ -27,7 +27,6 @@ scenario:
     - syntax
     - create
     - prepare
-    - cleanup
   test_sequence:
     - dependency
     - syntax
