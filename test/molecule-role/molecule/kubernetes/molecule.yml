@@ -40,7 +40,6 @@ scenario:
     - cleanup
   destroy_sequence:
     - dependency
-    - cleanup
     - destroy
 
 verifier:
