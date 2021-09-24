@@ -37,6 +37,7 @@ scenario:
     - lint
     - side_effect
     - verify
+    - cleanup
   destroy_sequence:
     - dependency
     - cleanup
