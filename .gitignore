@@ -125,6 +125,7 @@ build.out/
 
 # dev VM
 .vagrant
+/Vagrantfile
 packer.json
 *.box
 devenv/iso
@@ -156,7 +157,7 @@ version.txt
 
 # molecule local json files
 /test/molecule-role/molecule/*/topic-*.json
-.molecule
+.cache
 
 # ignore manual test files
 test/manual/*
