@@ -12,11 +12,11 @@ Vagrant.configure("2") do |config|
     host = RbConfig::CONFIG['host_os']
     if host =~ /darwin/
       v.cpus = `sysctl -n hw.ncpu`.to_i
-      v.memory = `sysctl -n hw.memsize`.to_i / 1024 / 1024
+      v.memory = `sysctl -n hw.memsize`.to_i / 1024 / 1024 / 2
 
     elsif host =~ /linux/
       v.cpus = `nproc`.to_i
-      v.memory = `grep 'MemTotal' /proc/meminfo | sed -e 's/MemTotal://' -e 's/ kB//'`.to_i / 1024
+      v.memory = `grep 'MemTotal' /proc/meminfo | sed -e 's/MemTotal://' -e 's/ kB//'`.to_i / 1024 / 2
 
     else
       v.cpus = 4
@@ -35,10 +35,10 @@ Vagrant.configure("2") do |config|
     echo "export ARCH=amd64" >> /home/vagrant/.env
     echo "export OMNIBUS_BASE_DIR=/.omnibus" >> /home/vagrant/.env
 
-    echo "export CONDA_ENV=ddpy2" >> /home/vagrant/.env
-    echo "export CONDA_VERSION=2" >> /home/vagrant/.env
-    echo "export MAJOR_VERSION=2" >> /home/vagrant/.env
-    echo "export PYTHON_RUNTIMES=2" >> /home/vagrant/.env
+    echo "export CONDA_ENV=ddpy3" >> /home/vagrant/.env
+    echo "export CONDA_VERSION=3" >> /home/vagrant/.env
+    echo "export MAJOR_VERSION=3" >> /home/vagrant/.env
+    echo "export PYTHON_RUNTIMES=3" >> /home/vagrant/.env
     echo "export PY2_VERSION=2.7.18" >> /home/vagrant/.env
     echo "export PY3_VERSION=3.8.5" >> /home/vagrant/.env
     echo "export CMAKE_VERSION=3.14.7" >> /home/vagrant/.env
@@ -52,7 +52,6 @@ Vagrant.configure("2") do |config|
     echo "export CI_PROJECT_DIR=/home/vagrant/stackstate-agent" >> /home/vagrant/.env
     echo "export C_MAKE_SETUP_PATH=~/cmake" >> /home/vagrant/.env
     echo "export CONDA_SETUP_PATH=~/conda" >> /home/vagrant/.env
-    echo "export GIT_LAB_SCRIPTS=$CI_PROJECT_DIR/.assistance/gitlab" >> /home/vagrant/.env
   SCRIPT
 
   config.vm.provision "dependencies", type: "shell", inline: <<-SCRIPT
@@ -77,6 +76,8 @@ Vagrant.configure("2") do |config|
     source /home/vagrant/.env
 
     cp -R $HOST_DIR $CI_PROJECT_DIR
+    mkdir -p /root/.gvm/pkgsets/go1.14/global/src/github.com/StackVista
+    ln -s $CI_PROJECT_DIR /root/.gvm/pkgsets/go1.14/global/src/github.com/StackVista/stackstate-agent
     echo "cd $CI_PROJECT_DIR" >> ~/.env
   SCRIPT
 
@@ -102,8 +103,7 @@ Vagrant.configure("2") do |config|
     chmod 777 ~/miniconda.sh
     bash ~/miniconda.sh -b
     . /root/miniconda3/etc/profile.d/conda.sh
-    conda create -n ddpy2 python=${PY2_VERSION}"
-    conda create -n ddpy3 python=${PY3_VERSION}"
+    conda create -n ${CONDA_ENV} python=${PY3_VERSION}
     conda activate "${CONDA_ENV}"
 
     echo ". /root/miniconda3/etc/profile.d/conda.sh" >> /home/vagrant/.env
@@ -125,11 +125,81 @@ Vagrant.configure("2") do |config|
     echo "gvm use go${GOLANG_VERSION}" >> /home/vagrant/.env
   SCRIPT
 
-  # config.vm.provision "gitlab.script.deps_deb", type: "shell", inline: <<-SCRIPT
-  #   source /home/vagrant/.env
-  #
-  #   $GIT_LAB_SCRIPTS/deps_deb.sh
-  # SCRIPT
+  config.vm.provision "gitlab.script.setup", type: "shell", inline: <<-SCRIPT
+    source /home/vagrant/.env
+    cd $CI_PROJECT_DIR
+
+    mkdir -p /go/src/github.com/StackVista
+    rm -rf $SRC_PATH || true
+    ln -s /root/.gvm/pkgsets/go1.14/global/src/github.com/StackVista/stackstate-agent $CI_PROJECT_DIR
+  SCRIPT
+
+
+  config.vm.provision "gitlab.script.deps_deb", type: "shell", inline: <<-SCRIPT
+    source /home/vagrant/.env
+    cd $CI_PROJECT_DIR
+    export ARCH=amd64
+
+    conda activate $CONDA_ENV
+    pip install -r requirements.txt
+    inv -e deps --verbose --dep-vendor-only
+    inv agent.version --major-version $MAJOR_VERSION -u > version.txt
+    cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz .
+    cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz .
+    cd $CI_PROJECT_DIR/vendor && tar czf $CI_PROJECT_DIR/vendor.tar.gz .
+  SCRIPT
+
+  config.vm.provision "gitlab.script.build_binaries", type: "shell", inline: <<-SCRIPT
+    source /home/vagrant/.env
+    cd $CI_PROJECT_DIR
+
+    echo ""
+    echo ""
+    echo "------------------ CONDA ----------------------"
+    echo ""
+    echo ""
+    conda activate $CONDA_ENV
+
+    echo ""
+    echo ""
+    echo "------------------ DOGSTATS ----------------------"
+    echo ""
+    echo ""
+    inv -e dogstatsd.build --static --major-version $MAJOR_VERSION
+
+    echo ""
+    echo ""
+    echo "------------------ RTLOADER CLEAN ----------------------"
+    echo ""
+    echo ""
+    inv -e rtloader.clean
+
+    echo ""
+    echo ""
+    echo "------------------ RTLOADER MAKE ----------------------"
+    echo ""
+    echo ""
+    inv -e rtloader.make
+
+    echo ""
+    echo ""
+    echo "------------------ RTLOADER INSTALL ----------------------"
+    echo ""
+    echo ""
+    inv -e rtloader.install
+
+    echo ""
+    echo ""
+    echo "------------------ AGENT.BUILD ----------------------"
+    echo ""
+    echo ""
+
+    # echo "$SRC_PATH"
+    # ls $SRC_PATH
+    # cd $SRC_PATH
+
+    inv -e agent.build --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
+  SCRIPT
 
 
   #  # Rerun golang rtloader.test (vagrant provision --provision-with rtloader.test)
