@@ -98,7 +98,9 @@ func testRelationTopology(t *testing.T) {
 	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
 			Health: make(map[string]health.Health),
-			Metrics: &telemetry.RawMetrics {},
+			Metrics: &telemetry.RawMetrics {
+				CheckStates: []telemetry.RawMetricsCheckData{},
+			},
 			Topology: &topology.Topology{
 				StartSnapshot: false,
 				StopSnapshot:  false,
