@@ -64,7 +64,7 @@ func SubmitRawMetricsData(id *C.char, name *C.char, value C.float, tags **C.char
 	rawHostname := C.GoString(hostname)
 	rawValue := float64(value)
 	rawTimestamp := int64(timestamp)
-	rawTags := cStringcStringArrayToSliceArrayToSlice(tags)
+	rawTags := cStringArrayToSlice(tags)
 
 	batcher.GetBatcher().SubmitRawMetricsData(check.ID(goCheckID), telemetry.RawMetricsCheckData{
 		Name:      rawName,
