@@ -58,8 +58,8 @@ func SubmitTopologyEvent(id *C.char, data *C.char) {
 
 // SubmitRawMetricsData
 //export SubmitRawMetricsData
-func SubmitRawMetricsData(id *C.char, name *C.char, value C.float, tags **C.char, hostname *C.char, timestamp C.longlong) {
-	goCheckID := C.GoString(id)
+func SubmitRawMetricsData(checkID *C.char, name *C.char, value C.float, tags **C.char, hostname *C.char, timestamp C.longlong) {
+	goCheckID := C.GoString(checkID)
 	rawName := C.GoString(name)
 	rawHostname := C.GoString(hostname)
 	rawValue := float64(value)

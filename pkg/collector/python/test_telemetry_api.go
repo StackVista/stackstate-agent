@@ -7,8 +7,10 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -102,17 +104,6 @@ func testTopologyEvent(t *testing.T) {
 	sender.AssertEvent(t, expectedEvent, 0)
 }
 
-var expectedRawMetricsData = telemetry.RawMetricsCheckData{
-	Name: "name",
-	Timestamp: 123456,
-	HostName: "hostname",
-	Value: 10,
-	Tags: []string{
-		"foo",
-		"bar",
-	},
-}
-
 func testTopologyEventMissingFields(t *testing.T) {
 	sender := mocksender.NewMockSender("testID")
 	sender.SetupAcceptAll()
@@ -150,17 +141,28 @@ func testTopologyEventWrongFieldType(t *testing.T) {
 	sender.AssertNotCalled(t, "Event")
 }
 
+var expectedRawMetricsData = telemetry.RawMetricsCheckData{
+	Name: "name",
+	Timestamp: 123456,
+	HostName: "hostname",
+	Value: 10,
+	Tags: []string{
+		"foo",
+		"bar",
+	},
+}
+
 func testRawMetricsData(t *testing.T) {
 	mockBatcher := batcher.NewMockBatcher()
 
-	c := &telemetry.RawMetricsPayload{
+	c := telemetry.RawMetricsPayload{
 		Data: expectedRawMetricsData,
 	}
 
 	checkId := C.CString("check-id")
 	name := C.CString(c.Data.Name)
 	value := C.float(c.Data.Value)
-	tags := []*C.char{C.CString("foo"), C.CString("bar")}
+	tags := []*C.char{C.CString("foo"), C.CString("bar"), nil}
 	hostname := C.CString(c.Data.HostName)
 	timestamp := C.longlong(c.Data.Timestamp)
 
@@ -168,13 +170,13 @@ func testRawMetricsData(t *testing.T) {
 
 	expectedState := mockBatcher.CollectedTopology.Flush()
 
-	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
+	assert.ObjectsAreEqualValues(expectedState, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
-			Metrics: &telemetry.RawMetrics{
-				CheckStates: []telemetry.RawMetricsCheckData{
-					expectedRawMetricsData,
-				},
-			},
+			Health: make(map[string]health.Health),
+			Metrics: &telemetry.RawMetrics {CheckStates: []telemetry.RawMetricsCheckData{
+				expectedRawMetricsData,
+			}},
+			Topology: &topology.Topology{},
 		},
-	}), expectedState)
+	}))
 }
