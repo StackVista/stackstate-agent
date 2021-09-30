@@ -59,14 +59,15 @@ func SubmitTopologyEvent(id *C.char, data *C.char) {
 // SubmitRawMetricsData
 //export SubmitRawMetricsData
 func SubmitRawMetricsData(id *C.char, name *C.char, value C.float, tags **C.char, hostname *C.char, timestamp C.longlong) {
-	// checkID := C.GoString(id)
+	checkID := C.GoString(id)
+
 	// rawName := C.GoString(name)
 	// rawHostname := C.GoString(hostname)
 	// rawValue := float64(value)
 	// rawTimestamp := int64(timestamp)
 	// rawTags := cStringArrayToSlice(tags)
 
-	batcher.GetBatcher().SubmitRawMetricsData(check.ID("random-id"), telemetry.RawMetricsCheckData{
+	batcher.GetBatcher().SubmitRawMetricsData(checkID, telemetry.RawMetricsCheckData{
 		Name:      "name",
 		Timestamp: 140000,
 		HostName:  "hostname",
