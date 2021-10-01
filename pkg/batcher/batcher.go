@@ -150,10 +150,12 @@ func (batcher *AsynchronousBatcher) sendState(states CheckInstanceBatchStates) {
 		}
 
 		// Create the rawMetricData payload
-		rawMetrics := make([]telemetry.RawMetrics, 0)
+		rawMetrics := make([]interface{}, 0)
 		for _, state := range states {
 			if state.Metrics != nil {
-				rawMetrics = append(rawMetrics, *state.Metrics)
+				for _, metric := range state.Metrics.Data {
+					rawMetrics = append(rawMetrics, metric.ConvertToIntakeMetric())
+				}
 			}
 		}
 

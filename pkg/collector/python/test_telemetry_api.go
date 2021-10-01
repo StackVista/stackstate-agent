@@ -10,7 +10,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
-	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -122,10 +121,10 @@ func testTopologyEventMissingFields(t *testing.T) {
 	SubmitTopologyEvent(C.CString("testID"), ev)
 
 	expectedEvent := metrics.Event{
-		Title:    "ev_title",
-		Text:     "ev_text",
-		Ts:       21,
-		Host:     "ev_host",
+		Title: "ev_title",
+		Text:  "ev_text",
+		Ts:    21,
+		Host:  "ev_host",
 	}
 	sender.AssertEvent(t, expectedEvent, 0)
 }
@@ -142,10 +141,10 @@ func testTopologyEventWrongFieldType(t *testing.T) {
 }
 
 var expectedRawMetricsData = telemetry.RawMetricsCheckData{
-	Name: "name",
+	Name:      "name",
 	Timestamp: 123456,
-	HostName: "hostname",
-	Value: 10,
+	HostName:  "hostname",
+	Value:     10,
 	Tags: []string{
 		"foo",
 		"bar",
@@ -155,28 +154,24 @@ var expectedRawMetricsData = telemetry.RawMetricsCheckData{
 func testRawMetricsData(t *testing.T) {
 	mockBatcher := batcher.NewMockBatcher()
 
-	c := telemetry.RawMetricsPayload{
-		Data: expectedRawMetricsData,
-	}
-
 	checkId := C.CString("check-id")
-	name := C.CString(c.Data.Name)
-	value := C.float(c.Data.Value)
+	name := C.CString(expectedRawMetricsData.Name)
+	value := C.float(expectedRawMetricsData.Value)
 	tags := []*C.char{C.CString("foo"), C.CString("bar"), nil}
-	hostname := C.CString(c.Data.HostName)
-	timestamp := C.longlong(c.Data.Timestamp)
+	hostname := C.CString(expectedRawMetricsData.HostName)
+	timestamp := C.longlong(expectedRawMetricsData.Timestamp)
 
 	SubmitRawMetricsData(checkId, name, value, &tags[0], hostname, timestamp)
 
 	expectedState := mockBatcher.CollectedTopology.Flush()
 
-	assert.ObjectsAreEqualValues(expectedState, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
+	assert.Exactly(t, expectedState, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
 			Health: make(map[string]health.Health),
-			Metrics: &telemetry.RawMetrics {CheckStates: []telemetry.RawMetricsCheckData{
+			Metrics: &telemetry.RawMetrics{Data: []telemetry.RawMetricsCheckData{
 				expectedRawMetricsData,
 			}},
-			Topology: &topology.Topology{},
+			Topology: nil,
 		},
 	}))
 }

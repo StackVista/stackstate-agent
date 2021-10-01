@@ -43,11 +43,11 @@ var (
 	testStopSnapshot  = &health.StopSnapshotMetadata{}
 	testCheckData     = map[string]interface{}{}
 
-	testRawMetricsData  = telemetry.RawMetricsCheckData{
-		Name: "name",
+	testRawMetricsData = telemetry.RawMetricsCheckData{
+		Name:      "name",
 		Timestamp: 123456,
-		HostName: "hostname",
-		Value: 10,
+		HostName:  "hostname",
+		Value:     10,
 		Tags: []string{
 			"foo",
 			"bar",
@@ -75,7 +75,7 @@ func TestBatchFlushOnStopSnapshot(t *testing.T) {
 					Relations:     []topology.Relation{},
 				},
 			},
-			"health": []health.Health{},
+			"health":  []health.Health{},
 			"metrics": []telemetry.RawMetrics{},
 		})
 
@@ -138,7 +138,7 @@ func TestBatchFlushOnComplete(t *testing.T) {
 			},
 			"metrics": []telemetry.RawMetrics{
 				{
-					CheckStates:  []telemetry.RawMetricsCheckData{testRawMetricsData},
+					Data: []telemetry.RawMetricsCheckData{testRawMetricsData},
 				},
 			},
 		})
@@ -171,7 +171,7 @@ func TestBatchNoDataNoComplete(t *testing.T) {
 					Relations:     []topology.Relation{},
 				},
 			},
-			"health": []health.Health{},
+			"health":  []health.Health{},
 			"metrics": []telemetry.RawMetrics{},
 		})
 
@@ -230,10 +230,10 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 		},
 		"metrics": []telemetry.RawMetrics{
 			{
-				CheckStates:   []telemetry.RawMetricsCheckData{testRawMetricsData},
+				Data: []telemetry.RawMetricsCheckData{testRawMetricsData},
 			},
 			{
-				CheckStates: []telemetry.RawMetricsCheckData{testRawMetricsData},
+				Data: []telemetry.RawMetricsCheckData{testRawMetricsData},
 			},
 		},
 	})
@@ -262,7 +262,7 @@ func TestBatchFlushOnMaxElements(t *testing.T) {
 					Relations:     []topology.Relation{},
 				},
 			},
-			"health": []health.Health{},
+			"health":  []health.Health{},
 			"metrics": []telemetry.RawMetrics{},
 		})
 
@@ -307,10 +307,10 @@ func TestBatchFlushOnMaxRawMetricsElements(t *testing.T) {
 		map[string]interface{}{
 			"internalHostname": "myhost",
 			"topologies":       []topology.Topology{},
-			"health": 			[]health.Health{},
-			"metrics": 			[]telemetry.RawMetrics{
+			"health":           []health.Health{},
+			"metrics": []telemetry.RawMetrics{
 				{
-					CheckStates: []telemetry.RawMetricsCheckData{testRawMetricsData, testRawMetricsData},
+					Data: []telemetry.RawMetricsCheckData{testRawMetricsData, testRawMetricsData},
 				},
 			},
 		})
@@ -340,7 +340,7 @@ func TestBatchFlushOnMaxElementsEnv(t *testing.T) {
 					Relations:     []topology.Relation{},
 				},
 			},
-			"health": []health.Health{},
+			"health":  []health.Health{},
 			"metrics": []telemetry.RawMetrics{},
 		})
 
@@ -369,7 +369,7 @@ func TestBatcherStartSnapshot(t *testing.T) {
 					Relations:     []topology.Relation{},
 				},
 			},
-			"health": []health.Health{},
+			"health":  []health.Health{},
 			"metrics": []telemetry.RawMetrics{},
 		})
 
@@ -397,7 +397,7 @@ func TestBatcherRelation(t *testing.T) {
 					Relations:     []topology.Relation{testRelation},
 				},
 			},
-			"health": []health.Health{},
+			"health":  []health.Health{},
 			"metrics": []telemetry.RawMetrics{},
 		})
 

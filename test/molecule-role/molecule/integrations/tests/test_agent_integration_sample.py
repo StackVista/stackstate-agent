@@ -30,7 +30,7 @@ def test_agent_integration_sample_metrics(host, hostname):
                 message["message"]["MultiMetric"]["host"] == m_host
             )
 
-        expected = {'system.cpu.usage', 'location.availability', '2xx.responses', '5xx.responses'}
+        expected = {'system.cpu.usage', 'location.availability', '2xx.responses', '5xx.responses', 'raw.metrics'}
         assert all([expectedMetric for expectedMetric in expected if expectedMetric in get_keys(hostname)])
 
     util.wait_until(wait_for_metrics, 60, 3)

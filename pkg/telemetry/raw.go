@@ -12,12 +12,7 @@ import (
 
 // RawMetrics is a batch of raw metrics data
 type RawMetrics struct {
-	CheckStates []RawMetricsCheckData `json:"check_states"`
-}
-
-// RawMetricsPayload is a single payload for the batch of raw metrics data
-type RawMetricsPayload struct {
-	Data RawMetricsCheckData
+	Data []RawMetricsCheckData `json:"check_states"`
 }
 
 // RawMetricsCheckData single payload structure
@@ -29,14 +24,26 @@ type RawMetricsCheckData struct {
 	Tags      []string `json:"tags,omitempty"`
 }
 
-// JSONString returns a JSON string of the Payload
-func (p RawMetricsPayload) JSONString() string {
-	b, err := json.Marshal(p)
-	if err != nil {
-		fmt.Println(err)
-		return fmt.Sprintf("{\"error\": \"%s\"}", err.Error())
+// RawMetricsMetaData payload containing meta data for the metric
+type RawMetricsMetaData struct {
+	Hostname string   `json:"hostname,omitempty"`
+	Tags     []string `json:"tags,omitempty"`
+	Type     string   `json:"type,omitempty"`
+}
+
+// ConvertToIntakeMetric Converts RawMetricsCheckData struct to an older v1 metrics structure
+func (r RawMetricsCheckData) ConvertToIntakeMetric() []interface{} {
+	data := []interface{}{
+		r.Name,
+		r.Timestamp,
+		r.Value,
+		RawMetricsMetaData{
+			Hostname: r.HostName,
+			Type:     "raw",
+			Tags:     r.Tags,
+		},
 	}
-	return string(b)
+	return data
 }
 
 // JSONString returns a JSON string of the Component

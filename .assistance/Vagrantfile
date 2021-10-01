@@ -162,13 +162,6 @@ Vagrant.configure("2") do |config|
 
     echo ""
     echo ""
-    echo "------------------ DOGSTATS ----------------------"
-    echo ""
-    echo ""
-    inv -e dogstatsd.build --static --major-version $MAJOR_VERSION
-
-    echo ""
-    echo ""
     echo "------------------ RTLOADER CLEAN ----------------------"
     echo ""
     echo ""
@@ -217,7 +210,7 @@ Vagrant.configure("2") do |config|
   #    inv -e rtloader.clean
   #    invoke -e rtloader.make --python-runtimes "#{ENV['CONDA_VERSION']}"
   #    inv -e rtloader.test
-  #    # inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --major-version #{ENV['MAJOR_VERSION']} --python-runtimes #{ENV['PYTHON_RUNTIMES']}
+  #    # inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --major-version 3 --python-runtimes 3 --skip-linters
   #  SCRIPT
 end
 

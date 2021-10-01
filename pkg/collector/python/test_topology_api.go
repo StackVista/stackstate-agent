@@ -47,8 +47,8 @@ func testComponentTopology(t *testing.T) {
 
 	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
-			Health: make(map[string]health.Health),
-			Metrics: &telemetry.RawMetrics {},
+			Health:  make(map[string]health.Health),
+			Metrics: &telemetry.RawMetrics{},
 			Topology: &topology.Topology{
 				StartSnapshot: true,
 				StopSnapshot:  true,
@@ -97,8 +97,8 @@ func testRelationTopology(t *testing.T) {
 
 	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
-			Health: make(map[string]health.Health),
-			Metrics: &telemetry.RawMetrics {},
+			Health:  make(map[string]health.Health),
+			Metrics: &telemetry.RawMetrics{},
 			Topology: &topology.Topology{
 				StartSnapshot: false,
 				StopSnapshot:  false,
@@ -132,8 +132,8 @@ func testStartSnapshotCheck(t *testing.T) {
 
 	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
-			Health: make(map[string]health.Health),
-			Metrics: &telemetry.RawMetrics {},
+			Health:  make(map[string]health.Health),
+			Metrics: &telemetry.RawMetrics{},
 			Topology: &topology.Topology{
 				StartSnapshot: true,
 				StopSnapshot:  false,
@@ -159,8 +159,8 @@ func testStopSnapshotCheck(t *testing.T) {
 
 	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
-			Health: make(map[string]health.Health),
-			Metrics: &telemetry.RawMetrics {},
+			Health:  make(map[string]health.Health),
+			Metrics: &telemetry.RawMetrics{},
 			Topology: &topology.Topology{
 				StartSnapshot: false,
 				StopSnapshot:  true,
