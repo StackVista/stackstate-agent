@@ -145,7 +145,6 @@ func NewTracer(config *config.Config) (*Tracer, error) {
 		config.MaxConnectionsStateBuffered,
 		config.MaxDNSStatsBuffered,
 		config.MaxHTTPStatsBuffered,
-		config.CollectDNSDomains,
 	)
 
 	tr := &Tracer{
@@ -312,6 +311,7 @@ func (t *Tracer) GetActiveConnections(clientID string) (*network.Connections, er
 	return &network.Connections{
 		Conns:                       delta.Connections,
 		DNS:                         names,
+		DNSStats:                    delta.DNSStats,
 		HTTP:                        delta.HTTP,
 		ConnTelemetry:               ctm,
 		CompilationTelemetryByAsset: rctm,
