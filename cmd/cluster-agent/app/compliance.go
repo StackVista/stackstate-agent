@@ -103,7 +103,7 @@ func startCompliance(stopper restart.Stopper, apiCl *apiserver.APIClient, isLead
 		checks.WithInterval(checkInterval),
 		checks.WithMaxEvents(checkMaxEvents),
 		checks.WithHostname(hostname),
-		checks.WithMatchRule(func(rule *compliance.Rule) bool {
+		checks.WithMatchRule(func(rule *compliance.RuleCommon) bool {
 			return rule.Scope.Includes(compliance.KubernetesClusterScope)
 		}),
 		checks.WithKubernetesClient(apiCl.DynamicCl, ""),
