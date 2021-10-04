@@ -1,4 +1,4 @@
-FROM docker.io/stackstate/stackstate-agent-runner-circle:centos6_latest_v7
+FROM docker.io/stackstate/stackstate-agent-runner-circle:centos6_20200805_v7
 
 #workaround
 
@@ -10,6 +10,9 @@ RUN sed -i -e 's/^mirrorlist/#mirrorlist/g' -e 's/^#baseurl=http:\/\/mirror.cent
 
 # force update root certificates, in particular might return DST Root CA X3
 RUN yum -y update ca-certificates && yum -y reinstall ca-certificates
+
+# Force update ruby storage (check location via curl -Lks 'https://git.io/rg-ssl' | ruby )
+RUN curl https://curl.se/ca/cacert.pem -o /etc/pki/tls/certs/ca-bundle.crt
 
 # Blacklist DST ROOT CA, if any
 RUN mkdir -p /etc/pki/ca-trust/source/blacklist/
@@ -26,9 +29,6 @@ RUN update-ca-trust && update-ca-trust extract
 
 # validate we are able to manage with https:// cert
 RUN curl https://curl.se/ca/cacert.pem
-
-# Force update ruby storage (check location via curl -Lks 'https://git.io/rg-ssl' | ruby )
-RUN curl https://curl.se/ca/cacert.pem -o /etc/pki/tls/certs/ca-bundle.crt
 
 # /workaround
 
