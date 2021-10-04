@@ -18,6 +18,8 @@ def test_agent_integration_sample_metrics(host, hostname):
 
     def wait_for_metrics():
         data = host.check_output("curl \"%s\"" % url)
+        print("test_agent_integration_sample_metrics data")
+        print(data)
         json_data = json.loads(data)
         with open("./topic-agent-integration-sample-sts-multi-metrics.json", 'w') as f:
             json.dump(json_data, f, indent=4)
