@@ -47,8 +47,8 @@ func (r RawMetricsCheckData) ConvertToIntakeMetric() []interface{} {
 }
 
 // JSONString returns a JSON string of the Component
-func (c RawMetricsCheckData) JSONString() string {
-	b, err := json.Marshal(c)
+func (r RawMetricsCheckData) JSONString() string {
+	b, err := json.Marshal(r)
 	if err != nil {
 		fmt.Println(err)
 		return fmt.Sprintf("{\"error\": \"%s\"}", err.Error())
