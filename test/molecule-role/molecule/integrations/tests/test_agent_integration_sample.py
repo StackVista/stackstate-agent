@@ -34,6 +34,7 @@ def test_agent_integration_sample_metrics(host, hostname):
         keys = get_keys(hostname)
 
         expected = {'system.cpu.usage', 'location.availability', '2xx.responses', '5xx.responses', 'raw.metrics'}
+        print("Mismatched data in the two sets:", (expected.difference(keys)))
         assert expected.issubset(keys) is True
 
         expected.add('invalid.value.does.not.exist')

@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="ddpy2 - inv deps" type="ShConfigurationType">
-    <option name="SCRIPT_TEXT" value="conda activate ddpy2 &amp;&amp; inv deps" />
+  <configuration default="false" name="ddpy3 - full" type="ShConfigurationType">
+    <option name="SCRIPT_TEXT" value="conda activate ddpy3 &amp;&amp; inv deps &amp;&amp; inv -e agent.build --race --precompile-only --major-version 3 --python-runtimes 3 &amp;&amp; inv -e rtloader.test &amp;&amp; inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --major-version 3 --python-runtimes 3 --skip-linters" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
     <option name="SCRIPT_PATH" value="" />
     <option name="SCRIPT_OPTIONS" value="" />
