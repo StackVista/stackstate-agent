@@ -18,22 +18,26 @@ def test_agent_integration_sample_metrics(host, hostname):
 
     def wait_for_metrics():
         data = host.check_output("curl \"%s\"" % url)
-        print("test_agent_integration_sample_metrics data")
-        print(data)
         json_data = json.loads(data)
         with open("./topic-agent-integration-sample-sts-multi-metrics.json", 'w') as f:
             json.dump(json_data, f, indent=4)
 
         def get_keys(m_host):
-            return set(
-                ''.join(message["message"]["MultiMetric"]["values"].keys())
-                for message in json_data["messages"]
-                if message["message"]["MultiMetric"]["name"] == "convertedMetric" and
-                message["message"]["MultiMetric"]["host"] == m_host
-            )
+            data_set = set()
+            for message in json_data["messages"]:
+                multi_metric = message["message"]["MultiMetric"]
+                if multi_metric["name"] == "convertedMetric" and multi_metric["host"] == m_host:
+                    for key in multi_metric["values"].keys():
+                        data_set.add(key)
+            return data_set
+
+        keys = get_keys(hostname)
 
         expected = {'system.cpu.usage', 'location.availability', '2xx.responses', '5xx.responses', 'raw.metrics'}
-        assert all([expectedMetric for expectedMetric in expected if expectedMetric in get_keys(hostname)])
+        assert expected.issubset(keys) is True
+
+        expected.add('invalid.value.does.not.exist')
+        assert expected.issubset(keys) is False
 
     util.wait_until(wait_for_metrics, 60, 3)
 

@@ -64,14 +64,12 @@ conda activate molecule
 pip3 install -r molecule-role/requirements-molecule3.txt
 
 # reads env file to file variables for molecule jobs locally
-ENV_FILE=./.env
-if test -f "$ENV_FILE"; then
-    echo ""
-    echo "------------ Sourcing env file with contents ------------"
-    echo "$(cat $ENV_FILE)"
-    echo "---------------------------------------------------------"
-    echo ""
-    source $ENV_FILE
+if test -f "./.envrc"; then
+    source "./.envrc"
+elif test -f "./.env"; then
+    source "./.env"
+else
+    echo "No env variables file found, Create either a .envrc or .env file to auto load env variables if required"
 fi
 
 cd molecule-role
@@ -147,8 +145,12 @@ remove_molecule_cache_folder()
     fi
 }
 
+export LC_ALL=en_US.utf-8
+export LANG=en_US.utf-8
+
 execute_molecule()
 {
+    echo "molecule --base-config ./molecule/$1/provisioner.$2.yml $3 --scenario-name $1"
     molecule --base-config "./molecule/$1/provisioner.$2.yml" "$3" --scenario-name "$1"
 }
 
