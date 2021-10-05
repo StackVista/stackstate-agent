@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="ddpy2 - test" type="ShConfigurationType" singleton="false">
+  <configuration default="false" name="ddpy2 - test" type="ShConfigurationType">
     <option name="SCRIPT_TEXT" value="conda activate ddpy2 &amp;&amp; inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --major-version 2 --python-runtimes 2 --skip-linters" />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
     <option name="SCRIPT_PATH" value="" />
