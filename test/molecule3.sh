@@ -31,6 +31,8 @@ if [ -z "$1" ] || [ "$1" == "help" ]; then
     exit 1
 fi
 
+export LC_ALL=en_US.utf-8
+export LANG=en_US.utf-8
 export CONDA_BASE="${HOME}/miniconda3"
 
 # see if conda is available -- when running locally and use the conda base path
@@ -47,7 +49,6 @@ fi
 set -e
 
 export STACKSTATE_BRANCH=${STACKSTATE_BRANCH:-master}
-
 export MAJOR_VERSION=${MAJOR_VERSION:-3}
 export STS_AWS_TEST_BUCKET=${STS_AWS_TEST_BUCKET:-stackstate-agent-3-test}
 export STS_DOCKER_TEST_REPO=${STS_DOCKER_TEST_REPO:-stackstate-agent-test}
@@ -137,6 +138,7 @@ if [ -z "$CI_COMMIT_SHA" ]; then
     sleep 5
 fi
 
+# Cleanup for the cache folder before we create a new instance
 remove_molecule_cache_folder()
 {
     MOLECULE_CACHE_PATH="$HOME/.cache/molecule/molecule-role/$1"
@@ -145,14 +147,13 @@ remove_molecule_cache_folder()
     fi
 }
 
-export LC_ALL=en_US.utf-8
-export LANG=en_US.utf-8
-
+# Generic handler for all the molecule calls
 execute_molecule()
 {
     echo "molecule --base-config ./molecule/$1/provisioner.$2.yml $3 --scenario-name $1"
     molecule --base-config "./molecule/$1/provisioner.$2.yml" "$3" --scenario-name "$1"
 }
+
 
 if [[ $2 == "create" ]]; then
     execute_molecule "$1" setup create
@@ -166,9 +167,14 @@ elif [[ $2 == "test" ]]; then
     execute_molecule "$1" run test
 
 elif [[ $2 == "login" ]]; then
+    # Login is used on dev only, thus we restore the .cache file that contains the ssh key
+    # This allows the dev to connect back into the server
+    # For some reason the ssh key is deleted after the prepare phase is done thus why we have a backup and
+    # we can not setup a custom scenario for login thus we have to restore the key inside the sh script
+    cp ".cache/molecule/molecule-role/$1/ssh_key" "$HOME/.cache/molecule/molecule-role/$1/ssh_key"
+    chmod 600 "$HOME/.cache/molecule/molecule-role/$1/ssh_key"
     execute_molecule "$1" run login
 
 elif [[ $2 == "destroy" ]]; then
     execute_molecule "$1" setup destroy
 fi
-
