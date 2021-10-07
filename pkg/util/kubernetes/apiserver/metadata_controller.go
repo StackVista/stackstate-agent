@@ -311,6 +311,7 @@ func GetPodMetadataNames(nodeName, ns, podName string) ([]string, error) {
 
 // GetNodeLabels retrieves the labels of the queried node from the cache of the shared informer.
 func GetNodeLabels(nodeName string) (map[string]string, error) {
+	log.Debugf("metadata_controller.go.GetNodeLabels")
 	as, err := GetAPIClient()
 	if err != nil {
 		return nil, err
@@ -319,6 +320,7 @@ func GetNodeLabels(nodeName string) (map[string]string, error) {
 		return nil, log.Errorf("Metadata collection is disabled on the Cluster Agent")
 	}
 	node, err := as.InformerFactory.Core().V1().Nodes().Lister().Get(nodeName)
+	log.Debugf("node = %v", node)
 	if err != nil {
 		return nil, err
 	}

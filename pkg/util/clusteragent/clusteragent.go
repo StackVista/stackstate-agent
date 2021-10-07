@@ -239,6 +239,7 @@ func (c *DCAClient) GetVersion() (version.Version, error) {
 
 // GetNodeLabels returns the node labels from the Cluster Agent.
 func (c *DCAClient) GetNodeLabels(nodeName string) (map[string]string, error) {
+	log.Debugf("clusteragent.GetNodeLabels start")
 	const dcaNodeMeta = "api/v1/tags/node"
 	var err error
 	var labels map[string]string
@@ -267,6 +268,7 @@ func (c *DCAClient) GetNodeLabels(nodeName string) (map[string]string, error) {
 		return nil, err
 	}
 	err = json.Unmarshal(body, &labels)
+	log.Debugf("clusteragent.GetNodeLabels end")
 	return labels, err
 }
 

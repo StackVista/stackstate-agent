@@ -327,7 +327,7 @@ func runCollector(collector collectors.ClusterTopologyCollector, errorChannel ch
 
 // runCorrelator
 func runCorrelator(correlator collectors.ClusterTopologyCorrelator, errorChannel chan<- error, wg *sync.WaitGroup) {
-	log.Infof("Starting cluster topology correlator: %s\n", correlator.GetName())
+	log.Debugf("Starting cluster topology correlator: %s\n", correlator.GetName())
 	err := correlator.CorrelateFunction()
 	if err != nil {
 		errorChannel <- err
