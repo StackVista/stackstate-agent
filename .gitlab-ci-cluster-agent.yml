@@ -249,6 +249,9 @@ pre_release_cluster_agent_image:
     - export LANG=en_US.UTF-8
   retry:
     max: 2
+  rules:
+    - if: $CI_COMMIT_MESSAGE =~ /\[image_only]/
+      when: never
 
 # Base artifacts for create and test steps
 .molecule_artifacts: &molecule_artifacts
@@ -260,6 +263,9 @@ pre_release_cluster_agent_image:
       - $CI_PROJECT_DIR/.cache
       - $MOLECULE_EPHEMERAL_DIRECTORY
     expire_in: 1 week
+  rules:
+    - if: $CI_COMMIT_MESSAGE =~ /\[image_only]/
+      when: never
 
 # Primary create steps for all the molecule builds
 .molecule_create: &molecule_create
