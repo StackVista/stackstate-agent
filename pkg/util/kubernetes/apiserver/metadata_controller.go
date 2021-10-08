@@ -319,10 +319,10 @@ func GetNodeLabels(nodeName string) (map[string]string, error) {
 	if !config.Datadog.GetBool("kubernetes_collect_metadata_tags") {
 		return nil, log.Errorf("Metadata collection is disabled on the Cluster Agent")
 	}
-	log.Debugf("Core = %v", as.InformerFactory.Core())
-	log.Debugf("V1 = %v", as.InformerFactory.Core().V1())
-	log.Debugf("Nodes = %v", as.InformerFactory.Core().V1().Nodes())
-	log.Debugf("Lister = %v", as.InformerFactory.Core().V1().Nodes().Lister())
+	log.Debugf("Core = %+v", as.InformerFactory.Core())
+	log.Debugf("V1 = %+v", as.InformerFactory.Core().V1())
+	log.Debugf("Nodes = %+v", as.InformerFactory.Core().V1().Nodes())
+	log.Debugf("Lister = %+v", as.InformerFactory.Core().V1().Nodes().Lister())
 	node, err := as.InformerFactory.Core().V1().Nodes().Lister().Get(nodeName)
 	log.Debugf("node = %v", node)
 	if err != nil {
