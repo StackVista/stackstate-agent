@@ -673,8 +673,6 @@ pre_release_cluster_agent_image:
       - $CI_PROJECT_DIR/.cache
       - $MOLECULE_EPHEMERAL_DIRECTORY
     expire_in: 1 week
-  rules:
-    - *exclude_on_image_only
 
 # Primary create steps for all the molecule builds
 .molecule_create: &molecule_create
