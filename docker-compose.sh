@@ -20,14 +20,21 @@ fi
 # Logging
 echo "AGENT_VERSION: $AGENT_VERSION"
 
+rm docker-compose-*.log
 docker-compose kill
 docker rmi "stackstate/${STS_DOCKER_TEST_REPO:-stackstate-agent-test}:$AGENT_VERSION" --force
 
 # Startup a new docker instance outputting the logs
 docker-compose up --detach
 
+# Compose container id
+CONTAINER_ID=$(docker ps | grep 'quay.io/stackstate/stackstate-receiver' | awk '{ print $1 }')
+
+sleep 15
+
 # Record all the logs to files
 docker-compose logs --no-color --follow --tail 1 zookeeper >& "docker-compose-zookeeper-$AGENT_VERSION".log &
 docker-compose logs --no-color --follow --tail 1 kafka >& "docker-compose-kafka-$AGENT_VERSION".log &
-docker-compose logs --no-color --follow --tail 1 receiver >& "docker-compose-receiver-$AGENT_VERSION".log &
 docker-compose logs --no-color --follow --tail 1 stackstate-agent >& "docker-compose-agent-$AGENT_VERSION".log &
+docker exec "$CONTAINER_ID" tail -f /opt/docker/logs/stackstate-receiver.log >& "docker-compose-receiver-$AGENT_VERSION".log &
+

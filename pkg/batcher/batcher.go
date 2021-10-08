@@ -294,11 +294,15 @@ func (batcher AsynchronousBatcher) SubmitHealthStopSnapshot(checkID check.ID, st
 }
 
 // SubmitRawMetricsData submits a raw metrics data record to the batch
-func (batcher AsynchronousBatcher) SubmitRawMetricsData(checkID check.ID, data telemetry.RawMetricsCheckData) {
-	log.Debugf("Submitting Raw metrics data for check [%s]: %s", checkID, data.JSONString())
+func (batcher AsynchronousBatcher) SubmitRawMetricsData(checkID check.ID, rawMetric telemetry.RawMetricsCheckData) {
+	if rawMetric.HostName == "" {
+		rawMetric.HostName = batcher.hostname
+	}
+
+	log.Debugf("Submitting Raw metrics data for check [%s]: %s", checkID, rawMetric.JSONString())
 	batcher.input <- submitRawMetricsData{
 		checkID: checkID,
-		data:    data,
+		data:    rawMetric,
 	}
 }
 
