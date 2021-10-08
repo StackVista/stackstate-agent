@@ -30,7 +30,7 @@ stages:
 #   - "<commit message> [py3][molecule-secrets][molecule-vms]"
 
 # You can also reduce the costs by building only the image
-#   - "<commit message> [image_only]"
+#   - "<commit message> [image-only]"
 
 variables: &commonvariables
   # The SRC_PATH is in the GOPATH of the builders which
