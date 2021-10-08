@@ -70,6 +70,7 @@ stages:
     when: manual
 ######################### /pipeline bricks
 
+
 before_script:
   - *configure_debian_env_script
   - *retrieve_linux_go_deps_script

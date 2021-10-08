@@ -24,6 +24,7 @@ stages:
   rm -f go-bin.tar.gz go-pkg.tar.gz vendor.tar.gz || true
   echo "~~~~~> /Trying..."
 
+
 ######################### /pipeline bricks
 
 before_script:
@@ -259,9 +260,6 @@ pre_release_cluster_agent_image:
       - $CI_PROJECT_DIR/.cache
       - $MOLECULE_EPHEMERAL_DIRECTORY
     expire_in: 1 week
-  rules:
-    - if: $CI_COMMIT_MESSAGE =~ /\[image_only]/
-      when: never
 
 # Primary create steps for all the molecule builds
 .molecule_create: &molecule_create
