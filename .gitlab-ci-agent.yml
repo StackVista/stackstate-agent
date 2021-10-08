@@ -1119,6 +1119,7 @@ molecule_swarm_success_cleanup:
 molecule_vms_create:
   <<: *molecule
   <<: *molecule_create
+  <<: *exclude_on_image_only
   rules:
     - *vms_ignore_rule
     - when: always
@@ -1128,6 +1129,7 @@ molecule_vms_create:
 molecule_vms_test:
   <<: *molecule
   <<: *molecule_test
+  <<: *exclude_on_image_only
   rules:
     - *vms_ignore_rule
     - when: on_success
@@ -1146,6 +1148,7 @@ molecule_vms_failure_cleanup:
     MOLECULE_SCENARIO: vms
   <<: *molecule
   <<: *molecule_destroy
+  <<: *exclude_on_image_only
   rules:
     - *vms_ignore_rule
     - when: on_failure
@@ -1158,6 +1161,7 @@ molecule_vms_success_cleanup:
     MOLECULE_SCENARIO: vms
   <<: *molecule
   <<: *molecule_destroy
+  <<: *exclude_on_image_only
   rules:
     - *vms_ignore_rule
     - when: on_success
