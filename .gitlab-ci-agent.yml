@@ -1214,7 +1214,6 @@ release_rpm:
       - stuck_or_timeout_failure
 
 release_win:
-  <<: *exclude_on_image_only
   interruptible: true
   stage: release
   dependencies:
