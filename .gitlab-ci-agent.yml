@@ -68,12 +68,10 @@ stages:
   - &cluster_agent_release
     if: $MAJOR_VERSION == "2" && ($CI_COMMIT_TAG || $CI_JOB_TRIGGERED == "true")
     when: manual
+  - &exclude_on_image_only
+    if: $CI_COMMIT_MESSAGE =~ /\[image-only]/
+    when: never
 ######################### /pipeline bricks
-
-.exclude_on_image_only: &exclude_on_image_only
-  rules:
-    - if: $CI_COMMIT_MESSAGE =~ /\[image-only]/
-      when: never
 
 before_script:
   - *configure_debian_env_script
@@ -157,7 +155,6 @@ deps_deb:
       - stuck_or_timeout_failure
 
 deps_rpm:
-  <<: *exclude_on_image_only
   stage: prepare
   interruptible: true
   image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
@@ -409,7 +406,6 @@ build_deb:
       - always
 
 build_rpm:
-  <<: *exclude_on_image_only
   stage: build
   interruptible: true
   image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
@@ -471,7 +467,6 @@ build_rpm:
       - always
 
 build_win:
-  <<: *exclude_on_image_only
   stage: build
   interruptible: true
   needs:
@@ -519,7 +514,6 @@ test_deb_renaming:
       - stuck_or_timeout_failure
 
 test_rpm_renaming:
-  <<: *exclude_on_image_only
   stage: test
   interruptible: true
   image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos6_20190429
@@ -559,7 +553,6 @@ pre_release_deb:
       - stuck_or_timeout_failure
 
 pre_release_win:
-  <<: *exclude_on_image_only
   stage: pre_release
   interruptible: true
   needs:
@@ -589,7 +582,6 @@ pre_release_win:
       - stuck_or_timeout_failure
 
 pre_release_rpm:
-  <<: *exclude_on_image_only
   stage: pre_release
   interruptible: true
   image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
@@ -657,7 +649,6 @@ pre_release_cluster_agent_image:
 
 # Core Molecule Structure for all the molecule steps
 .molecule: &molecule
-  <<: *exclude_on_image_only
   interruptible: true
   resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_BRANCH-$MOLECULE_SCENARIO-branch-lock"
   dependencies: []
@@ -669,10 +660,11 @@ pre_release_cluster_agent_image:
     - export LANG=en_US.UTF-8
   retry:
     max: 2
+  rules:
+    - *exclude_on_image_only
 
 # Base artifacts for create and test steps
 .molecule_artifacts: &molecule_artifacts
-  <<: *exclude_on_image_only
   artifacts:
     when: always
     paths:
@@ -681,6 +673,8 @@ pre_release_cluster_agent_image:
       - $CI_PROJECT_DIR/.cache
       - $MOLECULE_EPHEMERAL_DIRECTORY
     expire_in: 1 week
+  rules:
+    - *exclude_on_image_only
 
 # Primary create steps for all the molecule builds
 .molecule_create: &molecule_create
@@ -915,6 +909,7 @@ molecule_localinstall_create:
     - *localinstall_ignore_rule
     - *localinstall_master_only_rule
     - *localinstall_acceptance_rule
+    - *exclude_on_image_only
     - when: never
   variables:
     MOLECULE_SCENARIO: localinstall
@@ -926,6 +921,7 @@ molecule_localinstall_test:
     - *localinstall_ignore_rule
     - *localinstall_master_only_rule
     - *localinstall_acceptance_rule
+    - *exclude_on_image_only
     - when: never
   variables:
     MOLECULE_SCENARIO: localinstall
@@ -945,6 +941,7 @@ molecule_localinstall_failure_cleanup:
     - *localinstall_ignore_rule
     - *localinstall_master_only_rule
     - *localinstall_acceptance_on_failure_rule
+    - *exclude_on_image_only
     - when: never
   needs:
     - molecule_localinstall_test
@@ -1119,9 +1116,9 @@ molecule_swarm_success_cleanup:
 molecule_vms_create:
   <<: *molecule
   <<: *molecule_create
-  <<: *exclude_on_image_only
   rules:
     - *vms_ignore_rule
+    - *exclude_on_image_only
     - when: always
   variables:
     MOLECULE_SCENARIO: vms
@@ -1129,9 +1126,9 @@ molecule_vms_create:
 molecule_vms_test:
   <<: *molecule
   <<: *molecule_test
-  <<: *exclude_on_image_only
   rules:
     - *vms_ignore_rule
+    - *exclude_on_image_only
     - when: on_success
   variables:
     MOLECULE_SCENARIO: vms
@@ -1148,9 +1145,9 @@ molecule_vms_failure_cleanup:
     MOLECULE_SCENARIO: vms
   <<: *molecule
   <<: *molecule_destroy
-  <<: *exclude_on_image_only
   rules:
     - *vms_ignore_rule
+    - *exclude_on_image_only
     - when: on_failure
   needs:
     - molecule_vms_create
@@ -1161,9 +1158,9 @@ molecule_vms_success_cleanup:
     MOLECULE_SCENARIO: vms
   <<: *molecule
   <<: *molecule_destroy
-  <<: *exclude_on_image_only
   rules:
     - *vms_ignore_rule
+    - *exclude_on_image_only
     - when: on_success
   dependencies:
     - molecule_vms_create
