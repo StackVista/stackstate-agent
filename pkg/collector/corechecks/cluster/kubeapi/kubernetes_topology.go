@@ -315,7 +315,7 @@ func (t *TopologyCheck) RunClusterCollectors(clusterCollectors []collectors.Clus
 
 // runCollector
 func runCollector(collector collectors.ClusterTopologyCollector, errorChannel chan<- error, wg *sync.WaitGroup) {
-	log.Debugf("Starting cluster topology collector: %s\n", collector.GetName())
+	log.Infof("Starting cluster topology collector: %s\n", collector.GetName()) //TODO change to Debug
 	err := collector.CollectorFunction()
 	if err != nil {
 		errorChannel <- err

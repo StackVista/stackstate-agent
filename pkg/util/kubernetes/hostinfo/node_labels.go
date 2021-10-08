@@ -17,6 +17,7 @@ import (
 
 // GetNodeLabels returns node labels for this host
 func GetNodeLabels() (map[string]string, error) {
+	log.Infof("node_labels.GetNodeLabels")
 	ku, err := kubelet.GetKubeUtil()
 	if err != nil {
 		return nil, err
@@ -28,7 +29,7 @@ func GetNodeLabels() (map[string]string, error) {
 	}
 
 	if config.Datadog.GetBool("cluster_agent.enabled") {
-		log.Debugf("cluster_agent.enabled = TRUE")
+		log.Infof("cluster_agent.enabled = TRUE")
 		cl, err := clusteragent.GetClusterAgentClient()
 		if err != nil {
 			return nil, err

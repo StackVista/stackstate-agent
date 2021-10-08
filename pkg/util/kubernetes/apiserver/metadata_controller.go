@@ -311,7 +311,7 @@ func GetPodMetadataNames(nodeName, ns, podName string) ([]string, error) {
 
 // GetNodeLabels retrieves the labels of the queried node from the cache of the shared informer.
 func GetNodeLabels(nodeName string) (map[string]string, error) {
-	log.Debugf("metadata_controller.GetNodeLabels")
+	log.Info("metadata_controller.GetNodeLabels")
 	as, err := GetAPIClient()
 	if err != nil {
 		return nil, err
@@ -319,12 +319,12 @@ func GetNodeLabels(nodeName string) (map[string]string, error) {
 	if !config.Datadog.GetBool("kubernetes_collect_metadata_tags") {
 		return nil, log.Errorf("Metadata collection is disabled on the Cluster Agent")
 	}
-	log.Debugf("Core = %+v", as.InformerFactory.Core())
-	log.Debugf("V1 = %+v", as.InformerFactory.Core().V1())
-	log.Debugf("Nodes = %+v", as.InformerFactory.Core().V1().Nodes())
-	log.Debugf("Lister = %+v", as.InformerFactory.Core().V1().Nodes().Lister())
+	log.Infof("Core = %+v", as.InformerFactory.Core())
+	log.Infof("V1 = %+v", as.InformerFactory.Core().V1())
+	log.Infof("Nodes = %+v", as.InformerFactory.Core().V1().Nodes())
+	log.Infof("Lister = %+v", as.InformerFactory.Core().V1().Nodes().Lister())
 	node, err := as.InformerFactory.Core().V1().Nodes().Lister().Get(nodeName)
-	log.Debugf("node = %v", node)
+	log.Infof("node = %+v", node)
 	if err != nil {
 		return nil, err
 	}

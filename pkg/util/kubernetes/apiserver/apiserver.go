@@ -140,7 +140,6 @@ func getClientConfig() (*rest.Config, error) {
 	var clientConfig *rest.Config
 	var err error
 	cfgPath := config.Datadog.GetString("kubernetes_kubeconfig_path")
-	log.Debugf("jk debug cfgPath = %s", cfgPath)
 	if cfgPath == "" {
 		clientConfig, err = rest.InClusterConfig()
 		if err != nil {

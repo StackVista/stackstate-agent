@@ -24,11 +24,6 @@ stages:
   rm -f go-bin.tar.gz go-pkg.tar.gz vendor.tar.gz || true
   echo "~~~~~> /Trying..."
 
-.exclude_on_image_only: &exclude_on_image_only
-  rules:
-    - if: $CI_COMMIT_MESSAGE =~ /\[image-only]/
-      when: never
-
 ######################### /pipeline bricks
 
 before_script:
@@ -242,7 +237,6 @@ pre_release_cluster_agent_image:
 
 # Core Molecule Structure for all the molecule steps
 .molecule: &molecule
-  <<: *exclude_on_image_only
   interruptible: true
   resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_BRANCH-$MOLECULE_SCENARIO-branch-lock"
   dependencies: []
@@ -257,7 +251,6 @@ pre_release_cluster_agent_image:
 
 # Base artifacts for create and test steps
 .molecule_artifacts: &molecule_artifacts
-  <<: *exclude_on_image_only
   artifacts:
     when: always
     paths:
@@ -273,7 +266,6 @@ pre_release_cluster_agent_image:
 # Primary create steps for all the molecule builds
 .molecule_create: &molecule_create
   <<: *molecule_artifacts
-  <<: *exclude_on_image_only
   stage: prepare
   script:
     - cd $CI_PROJECT_DIR/test
@@ -282,7 +274,6 @@ pre_release_cluster_agent_image:
 # Primary test steps for all the molecule builds
 .molecule_test: &molecule_test
   <<: *molecule_artifacts
-  <<: *exclude_on_image_only
   stage: acceptance
   timeout: 50 minutes
   script:
@@ -291,7 +282,6 @@ pre_release_cluster_agent_image:
 
 # Primary destroy steps for all the molecule builds
 .molecule_destroy: &molecule_destroy
-  <<: *exclude_on_image_only
   stage: cleanup
   script:
     - cd $CI_PROJECT_DIR/test
