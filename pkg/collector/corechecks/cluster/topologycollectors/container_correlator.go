@@ -63,14 +63,16 @@ func (*ContainerCorrelator) GetName() string {
 
 // Collects and Published the Cluster Component
 func (cc *ContainerCorrelator) CorrelateFunction() error {
-
+	log.Infof("ContainerCorrelator.CorrelateFunction() begin")
 	nodeMap := make(map[string]string)
 	// map containers that require the Node instanceId
 	for containerToNodeCorrelation := range cc.NodeIdentifierCorrChan {
+		log.Infof("containerToNodeCorrelation = %+v", containerToNodeCorrelation)
 		nodeMap[containerToNodeCorrelation.NodeName] = containerToNodeCorrelation.NodeIdentifier
 	}
 
 	for containerCorrelation := range cc.ContainerCorrChan {
+		log.Infof("containerCorrelation = %+v", containerCorrelation)
 		pod := containerCorrelation.Pod
 		// map container to exposed ports
 		containerPorts := make(map[string]ContainerPort)
@@ -86,12 +88,14 @@ func (cc *ContainerCorrelator) CorrelateFunction() error {
 
 		// check to see if we have container statuses
 		for _, container := range containerCorrelation.ContainerStatuses {
+			log.Infof("container = %+v", container)
 			containerPort := ContainerPort{}
 			if cntPort, found := containerPorts[fmt.Sprintf("%s_%s", container.Image, container.Name)]; found {
 				containerPort = cntPort
 			}
 
 			if nodeIdentifier, ok := nodeMap[pod.NodeName]; ok {
+				log.Infof("nodeIdentifier = %+v", nodeIdentifier)
 				// submit the StackState component for publishing to StackState
 				containerComponent := cc.containerToStackStateComponent(nodeIdentifier, pod, container, containerPort)
 				cc.ComponentChan <- containerComponent
@@ -101,6 +105,7 @@ func (cc *ContainerCorrelator) CorrelateFunction() error {
 		}
 	}
 
+	log.Infof("ContainerCorrelator.CorrelateFunction() end")
 	return nil
 }
 
