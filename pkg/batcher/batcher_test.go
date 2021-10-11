@@ -43,16 +43,29 @@ var (
 	testStopSnapshot  = &health.StopSnapshotMetadata{}
 	testCheckData     = map[string]interface{}{}
 
-	testRawMetricsData = telemetry.RawMetricsCheckData{
+	testRawMetricsData = telemetry.RawMetrics{
 		Name:      "name",
-		Timestamp: 123456,
+		Timestamp: 1400000,
 		HostName:  "hostname",
-		Value:     10,
+		Value:     200,
 		Tags: []string{
 			"foo",
 			"bar",
 		},
 	}
+	testRawMetricsData2 = telemetry.RawMetrics{
+		Name:      "name",
+		Timestamp: 1500000,
+		HostName:  "hostname",
+		Value:     100,
+		Tags: []string{
+			"hello",
+			"world",
+		},
+	}
+
+	testRawMetricsDataIntakeMetric = testRawMetricsData.ConvertToIntakeMetric()
+	testRawMetricsDataIntakeMetric2 = testRawMetricsData2.ConvertToIntakeMetric()
 )
 
 func TestBatchFlushOnStopSnapshot(t *testing.T) {
@@ -76,7 +89,7 @@ func TestBatchFlushOnStopSnapshot(t *testing.T) {
 				},
 			},
 			"health":  []health.Health{},
-			"metrics": []telemetry.RawMetrics{},
+			"metrics": []interface{}{},
 		})
 
 	batcher.Shutdown()
@@ -101,7 +114,7 @@ func TestBatchFlushOnStopHealthSnapshot(t *testing.T) {
 					CheckStates:  []health.CheckData{},
 				},
 			},
-			"metrics": []telemetry.RawMetrics{},
+			"metrics": []interface{}{},
 		})
 
 	batcher.Shutdown()
@@ -114,6 +127,7 @@ func TestBatchFlushOnComplete(t *testing.T) {
 	batcher.SubmitComponent(testID, testInstance, testComponent)
 	batcher.SubmitHealthCheckData(testID, testStream, testCheckData)
 	batcher.SubmitRawMetricsData(testID, testRawMetricsData)
+	batcher.SubmitRawMetricsData(testID, testRawMetricsData2)
 	batcher.SubmitComplete(testID)
 
 	message := serializer.GetJSONToV1IntakeMessage()
@@ -136,11 +150,7 @@ func TestBatchFlushOnComplete(t *testing.T) {
 					CheckStates: []health.CheckData{testCheckData},
 				},
 			},
-			"metrics": []telemetry.RawMetrics{
-				{
-					Data: []telemetry.RawMetricsCheckData{testRawMetricsData},
-				},
-			},
+			"metrics": []interface{}{testRawMetricsDataIntakeMetric, testRawMetricsDataIntakeMetric2},
 		})
 
 	batcher.Shutdown()
@@ -172,7 +182,7 @@ func TestBatchNoDataNoComplete(t *testing.T) {
 				},
 			},
 			"health":  []health.Health{},
-			"metrics": []telemetry.RawMetrics{},
+			"metrics": []interface{}{},
 		})
 
 	batcher.Shutdown()
@@ -193,7 +203,9 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 	batcher.SubmitHealthCheckData(testID2, testStream2, testCheckData)
 
 	batcher.SubmitRawMetricsData(testID, testRawMetricsData)
+	batcher.SubmitRawMetricsData(testID, testRawMetricsData2)
 	batcher.SubmitRawMetricsData(testID2, testRawMetricsData)
+	batcher.SubmitRawMetricsData(testID2, testRawMetricsData2)
 
 	batcher.SubmitStopSnapshot(testID, testInstance)
 
@@ -228,13 +240,11 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 				CheckStates: []health.CheckData{testCheckData},
 			},
 		},
-		"metrics": []telemetry.RawMetrics{
-			{
-				Data: []telemetry.RawMetricsCheckData{testRawMetricsData},
-			},
-			{
-				Data: []telemetry.RawMetricsCheckData{testRawMetricsData},
-			},
+		"metrics": []interface{}{
+			testRawMetricsDataIntakeMetric,
+			testRawMetricsDataIntakeMetric,
+			testRawMetricsDataIntakeMetric2,
+			testRawMetricsDataIntakeMetric2,
 		},
 	})
 
@@ -263,7 +273,7 @@ func TestBatchFlushOnMaxElements(t *testing.T) {
 				},
 			},
 			"health":  []health.Health{},
-			"metrics": []telemetry.RawMetrics{},
+			"metrics": []interface{}{},
 		})
 
 	batcher.Shutdown()
@@ -288,7 +298,7 @@ func TestBatchFlushOnMaxHealthElements(t *testing.T) {
 					CheckStates: []health.CheckData{testCheckData, testCheckData},
 				},
 			},
-			"metrics": []telemetry.RawMetrics{},
+			"metrics": []interface{}{},
 		})
 
 	batcher.Shutdown()
@@ -299,7 +309,7 @@ func TestBatchFlushOnMaxRawMetricsElements(t *testing.T) {
 	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, 2)
 
 	batcher.SubmitRawMetricsData(testID, testRawMetricsData)
-	batcher.SubmitRawMetricsData(testID, testRawMetricsData)
+	batcher.SubmitRawMetricsData(testID, testRawMetricsData2)
 
 	message := serializer.GetJSONToV1IntakeMessage()
 
@@ -308,11 +318,8 @@ func TestBatchFlushOnMaxRawMetricsElements(t *testing.T) {
 			"internalHostname": "myhost",
 			"topologies":       []topology.Topology{},
 			"health":           []health.Health{},
-			"metrics": []telemetry.RawMetrics{
-				{
-					Data: []telemetry.RawMetricsCheckData{testRawMetricsData, testRawMetricsData},
-				},
-			},
+			"metrics": 			[]interface{}{
+				testRawMetricsDataIntakeMetric, testRawMetricsDataIntakeMetric2},
 		})
 
 	batcher.Shutdown()
@@ -341,7 +348,7 @@ func TestBatchFlushOnMaxElementsEnv(t *testing.T) {
 				},
 			},
 			"health":  []health.Health{},
-			"metrics": []telemetry.RawMetrics{},
+			"metrics": []interface{}{},
 		})
 
 	batcher.Shutdown()
@@ -370,7 +377,7 @@ func TestBatcherStartSnapshot(t *testing.T) {
 				},
 			},
 			"health":  []health.Health{},
-			"metrics": []telemetry.RawMetrics{},
+			"metrics": []interface{}{},
 		})
 
 	batcher.Shutdown()
@@ -398,7 +405,7 @@ func TestBatcherRelation(t *testing.T) {
 				},
 			},
 			"health":  []health.Health{},
-			"metrics": []telemetry.RawMetrics{},
+			"metrics": []interface{}{},
 		})
 
 	batcher.Shutdown()
@@ -424,7 +431,7 @@ func TestBatcherHealthStartSnapshot(t *testing.T) {
 					CheckStates:   []health.CheckData{},
 				},
 			},
-			"metrics": []telemetry.RawMetrics{},
+			"metrics": []interface{}{},
 		})
 
 	batcher.Shutdown()

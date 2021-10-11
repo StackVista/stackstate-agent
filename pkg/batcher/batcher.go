@@ -33,7 +33,7 @@ type Batcher interface {
 	SubmitHealthStopSnapshot(checkID check.ID, stream health.Stream)
 
 	// Raw Metrics
-	SubmitRawMetricsData(checkID check.ID, data telemetry.RawMetricsCheckData)
+	SubmitRawMetricsData(checkID check.ID, data telemetry.RawMetrics)
 
 	// lifecycle
 	SubmitComplete(checkID check.ID)
@@ -121,7 +121,7 @@ type submitHealthStopSnapshot struct {
 
 type submitRawMetricsData struct {
 	checkID check.ID
-	data    telemetry.RawMetricsCheckData
+	rawData    telemetry.RawMetrics
 }
 
 type submitComplete struct {
@@ -153,7 +153,7 @@ func (batcher *AsynchronousBatcher) sendState(states CheckInstanceBatchStates) {
 		rawMetrics := make([]interface{}, 0)
 		for _, state := range states {
 			if state.Metrics != nil {
-				for _, metric := range state.Metrics.Data {
+				for _, metric := range *state.Metrics {
 					rawMetrics = append(rawMetrics, metric.ConvertToIntakeMetric())
 				}
 			}
@@ -219,7 +219,7 @@ func (batcher *AsynchronousBatcher) run() {
 			batcher.sendState(batcher.builder.HealthStopSnapshot(submission.checkID, submission.stream))
 
 		case submitRawMetricsData:
-			batcher.sendState(batcher.builder.AddRawMetricsData(submission.checkID, submission.data))
+			batcher.sendState(batcher.builder.AddRawMetricsData(submission.checkID, submission.rawData))
 
 		case submitComplete:
 			batcher.sendState(batcher.builder.FlushIfDataProduced(submission.checkID))
@@ -294,15 +294,14 @@ func (batcher AsynchronousBatcher) SubmitHealthStopSnapshot(checkID check.ID, st
 }
 
 // SubmitRawMetricsData submits a raw metrics data record to the batch
-func (batcher AsynchronousBatcher) SubmitRawMetricsData(checkID check.ID, rawMetric telemetry.RawMetricsCheckData) {
+func (batcher AsynchronousBatcher) SubmitRawMetricsData(checkID check.ID, rawMetric telemetry.RawMetrics) {
 	if rawMetric.HostName == "" {
 		rawMetric.HostName = batcher.hostname
 	}
 
-	log.Debugf("Submitting Raw metrics data for check [%s]: %s", checkID, rawMetric.JSONString())
 	batcher.input <- submitRawMetricsData{
 		checkID: checkID,
-		data:    rawMetric,
+		rawData:    rawMetric,
 	}
 }
 

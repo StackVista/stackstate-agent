@@ -140,7 +140,7 @@ func testTopologyEventWrongFieldType(t *testing.T) {
 	sender.AssertNotCalled(t, "Event")
 }
 
-var expectedRawMetricsData = telemetry.RawMetricsCheckData{
+var expectedRawMetricsData = telemetry.RawMetrics{
 	Name:      "name",
 	Timestamp: 123456,
 	HostName:  "hostname",
@@ -168,9 +168,7 @@ func testRawMetricsData(t *testing.T) {
 	assert.Exactly(t, expectedState, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
 			Health: make(map[string]health.Health),
-			Metrics: &telemetry.RawMetrics{Data: []telemetry.RawMetricsCheckData{
-				expectedRawMetricsData,
-			}},
+			Metrics: &[]telemetry.RawMetrics{expectedRawMetricsData},
 			Topology: nil,
 		},
 	}))

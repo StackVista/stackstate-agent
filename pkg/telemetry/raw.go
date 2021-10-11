@@ -10,13 +10,8 @@ import (
 	"fmt"
 )
 
-// RawMetrics is a batch of raw metrics data
+// RawMetrics single payload structure
 type RawMetrics struct {
-	Data []RawMetricsCheckData `json:"check_states"`
-}
-
-// RawMetricsCheckData single payload structure
-type RawMetricsCheckData struct {
 	Name      string   `json:"name,omitempty"`
 	Timestamp int64    `json:"timestamp,omitempty"`
 	HostName  string   `json:"host_name,omitempty"`
@@ -32,7 +27,7 @@ type RawMetricsMetaData struct {
 }
 
 // ConvertToIntakeMetric Converts RawMetricsCheckData struct to an older v1 metrics structure
-func (r RawMetricsCheckData) ConvertToIntakeMetric() []interface{} {
+func (r RawMetrics) ConvertToIntakeMetric() []interface{} {
 	data := []interface{}{
 		r.Name,
 		r.Timestamp,
@@ -47,7 +42,7 @@ func (r RawMetricsCheckData) ConvertToIntakeMetric() []interface{} {
 }
 
 // JSONString returns a JSON string of the Component
-func (r RawMetricsCheckData) JSONString() string {
+func (r RawMetrics) JSONString() string {
 	b, err := json.Marshal(r)
 	if err != nil {
 		fmt.Println(err)

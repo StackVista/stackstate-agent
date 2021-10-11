@@ -10,7 +10,7 @@ import (
 // CheckInstanceBatchState is the type representing batched data per check instance
 type CheckInstanceBatchState struct {
 	Topology *topology.Topology
-	Metrics  *telemetry.RawMetrics
+	Metrics  *[]telemetry.RawMetrics
 	Health   map[string]health.Health
 }
 
@@ -87,7 +87,7 @@ func (builder *BatchBuilder) getOrCreateHealth(checkID check.ID, stream health.S
 	return builder.states[checkID].Health[stream.GoString()]
 }
 
-func (builder *BatchBuilder) getOrCreateRawMetrics(checkID check.ID) *telemetry.RawMetrics {
+func (builder *BatchBuilder) getOrCreateRawMetrics(checkID check.ID) *[]telemetry.RawMetrics {
 	state := builder.getOrCreateState(checkID)
 
 	if state.Metrics != nil {
@@ -97,9 +97,7 @@ func (builder *BatchBuilder) getOrCreateRawMetrics(checkID check.ID) *telemetry.
 	builder.states[checkID] = CheckInstanceBatchState{
 		Topology: state.Topology,
 		Health:   state.Health,
-		Metrics: &telemetry.RawMetrics{
-			Data: make([]telemetry.RawMetricsCheckData, 0),
-		},
+		Metrics: &[]telemetry.RawMetrics{},
 	}
 
 	return builder.states[checkID].Metrics
@@ -163,9 +161,9 @@ func (builder *BatchBuilder) HealthStopSnapshot(checkID check.ID, stream health.
 }
 
 // AddRawMetricsData adds raw metric data
-func (builder *BatchBuilder) AddRawMetricsData(checkID check.ID, data telemetry.RawMetricsCheckData) CheckInstanceBatchStates {
+func (builder *BatchBuilder) AddRawMetricsData(checkID check.ID, rawData telemetry.RawMetrics) CheckInstanceBatchStates {
 	rawMetricsData := builder.getOrCreateRawMetrics(checkID)
-	rawMetricsData.Data = append(rawMetricsData.Data, data)
+	*rawMetricsData = append(*rawMetricsData, rawData)
 	return builder.incrementAndTryFlush()
 }
 

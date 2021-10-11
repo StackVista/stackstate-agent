@@ -523,7 +523,7 @@ DATADOG_AGENT_RTLOADER_API void set_get_subprocess_output_cb(rtloader_t *rtloade
 /*! \fn void set_cgo_free_cb(rtloader_t *rtloader, cb_cgo_free_t cb)
     \brief Sets a callback to be used by rtloader to free memory allocated by the
     rtloader's caller and passed into rtloader.
-    \param rtloader_t A rtloader_t * pointer to the RtLoader instance.raw
+    \param rtloader_t A rtloader_t * pointer to the RtLoader instance
     \param object A function pointer to the callback function.
 
     On Windows we cannot free a memory block from another DLL. This is why we
