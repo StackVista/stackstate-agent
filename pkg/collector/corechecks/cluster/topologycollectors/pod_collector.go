@@ -55,7 +55,7 @@ func (pc *PodCollector) CollectorFunction() error {
 	var component *topology.Component
 	var controllerExternalID string
 	for _, pod := range pods {
-		log.Infof("pod_collector Pod = %v, Name = %s", pod, pod.ObjectMeta.Name)
+		log.Infof("PodCollector Pod.Name = %s", pod.ObjectMeta.Name)
 		// creates and publishes StackState pod component with relations
 		component = pc.podToStackStateComponent(pod)
 		pc.ComponentChan <- component
@@ -102,7 +102,7 @@ func (pc *PodCollector) CollectorFunction() error {
 		}
 
 		for _, c := range pod.Spec.Containers {
-			log.Infof("pod_collector Container = %v, Name = %s", c, c.Name)
+			log.Infof("PodCollector Container = %s", c.Name)
 			// map relations to config map
 			for _, env := range c.EnvFrom {
 				if env.ConfigMapRef != nil {

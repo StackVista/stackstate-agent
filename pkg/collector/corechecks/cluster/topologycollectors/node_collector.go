@@ -43,13 +43,17 @@ func (*NodeCollector) GetName() string {
 
 // Collects and Published the Node Components
 func (nc *NodeCollector) CollectorFunction() error {
+	log.Infof("NodeCollector.CollectorFunction begin")
 	// get all the nodes in the cluster
 	nodes, err := nc.GetAPIClient().GetNodes()
+	log.Infof("NodeCollector All Nodes = %v", nodes)
+
 	if err != nil {
 		return err
 	}
 
 	for _, node := range nodes {
+		log.Infof("NodeCollector Node = %v", node)
 		// creates and publishes StackState node component
 		component := nc.nodeToStackStateComponent(node)
 		// creates a StackState relation for the cluster node -> cluster
@@ -69,6 +73,7 @@ func (nc *NodeCollector) CollectorFunction() error {
 
 	close(nc.NodeIdentifierCorrChan)
 
+	log.Infof("NodeCollector.CollectorFunction end")
 	return nil
 }
 
