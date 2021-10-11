@@ -20,9 +20,10 @@ name "cacerts_py3_local"
 # so the hashsum check will break every time the file is updated on the remote
 default_version "latest"
 
-source url: "https://curl.haxx.se/ca/cacert.pem",
+source url: "https://curl.se/ca/cacert.pem",
        sha256: "f524fc21859b776e18df01a87880efa198112214e13494275dbcbd9bcb71d976",
-       target_filename: "cacert.pem"
+       target_filename: "cacert.pem",
+       options: {ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE}  # Workaround LE root cert. Return back in 90 days
 
 relative_path "cacerts-#{version}"
 
