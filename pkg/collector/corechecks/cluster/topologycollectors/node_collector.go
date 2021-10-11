@@ -41,7 +41,7 @@ func (*NodeCollector) GetName() string {
 	return "Node Collector"
 }
 
-// Collects and Published the Node Components
+// Collects and Publishes the Node Components
 func (nc *NodeCollector) CollectorFunction() error {
 	log.Infof("NodeCollector.CollectorFunction begin")
 	// get all the nodes in the cluster
@@ -147,11 +147,11 @@ func (nc *NodeCollector) nodeToClusterStackStateRelation(node v1.Node) *topology
 	nodeExternalID := nc.buildNodeExternalID(node.Name)
 	clusterExternalID := nc.buildClusterExternalID()
 
-	log.Tracef("Mapping kubernetes node to cluster relation: %s -> %s", nodeExternalID, clusterExternalID)
+	log.Infof("Mapping kubernetes node to cluster relation: %s -> %s", nodeExternalID, clusterExternalID)
 
 	relation := nc.CreateRelation(nodeExternalID, clusterExternalID, "belongs_to")
 
-	log.Tracef("Created StackState node -> cluster relation %s->%s", relation.SourceID, relation.TargetID)
+	log.Infof("Created StackState node -> cluster relation %s->%s", relation.SourceID, relation.TargetID)
 
 	return relation
 }
