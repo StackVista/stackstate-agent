@@ -56,6 +56,7 @@ func (nc *NodeCollector) CollectorFunction() error {
 		log.Infof("NodeCollector Node = %+v", node)
 		// creates and publishes StackState node component
 		component := nc.nodeToStackStateComponent(node)
+		log.Infof("NodeCollector Node component = %+v", component)
 		// creates a StackState relation for the cluster node -> cluster
 		relation := nc.nodeToClusterStackStateRelation(node)
 
@@ -65,8 +66,8 @@ func (nc *NodeCollector) CollectorFunction() error {
 		// send the node identifier to be correlated
 		if node.Spec.ProviderID != "" {
 			nodeIdentifier := extractInstanceIDFromProviderID(node.Spec)
+			log.Infof("NodeCollector nodeIdentifier = \"%s\"", nodeIdentifier)
 			if nodeIdentifier != "" {
-
 				nc.NodeIdentifierCorrChan <- &NodeIdentifierCorrelation{node.Name, nodeIdentifier}
 			}
 		}
@@ -81,7 +82,7 @@ func (nc *NodeCollector) CollectorFunction() error {
 // Creates a StackState component from a Kubernetes Node
 func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) *topology.Component {
 	// creates a StackState component for the kubernetes node
-	log.Tracef("Mapping kubernetes node to StackState component: %s", node.String())
+	log.Infof("Mapping kubernetes node to StackState component: %s", node.String())
 
 	// create identifier list to merge with StackState components
 	identifiers := make([]string, 0)
@@ -108,7 +109,7 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) *topology.Compo
 		identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", instanceID))
 	}
 
-	log.Tracef("Created identifiers for %s: %v", node.Name, identifiers)
+	log.Infof("Created identifiers for %s: %v", node.Name, identifiers)
 
 	nodeExternalID := nc.buildNodeExternalID(node.Name)
 
@@ -136,7 +137,7 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) *topology.Compo
 	component.Data.PutNonEmpty("kind", node.Kind)
 	component.Data.PutNonEmpty("instanceId", instanceID)
 
-	log.Tracef("Created StackState node component %s: %v", nodeExternalID, component.JSONString())
+	log.Infof("Created StackState node component %s: %v", nodeExternalID, component.JSONString())
 
 	return component
 }
