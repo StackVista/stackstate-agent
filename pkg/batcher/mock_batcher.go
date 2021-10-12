@@ -54,8 +54,8 @@ func (batcher MockBatcher) SubmitHealthStopSnapshot(checkID check.ID, stream hea
 }
 
 // SubmitRawMetricsData mock
-func (batcher MockBatcher) SubmitRawMetricsData(checkID check.ID, data telemetry.RawMetrics) {
-	batcher.CollectedTopology.AddRawMetricsData(checkID, data)
+func (batcher MockBatcher) SubmitRawMetricsData(checkID check.ID, rawMetric telemetry.RawMetrics) {
+	batcher.CollectedTopology.AddRawMetricsData(checkID, rawMetric)
 }
 
 // SubmitComplete mock

@@ -203,8 +203,8 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 	batcher.SubmitHealthCheckData(testID2, testStream2, testCheckData)
 
 	batcher.SubmitRawMetricsData(testID, testRawMetricsData)
-	batcher.SubmitRawMetricsData(testID, testRawMetricsData2)
 	batcher.SubmitRawMetricsData(testID2, testRawMetricsData)
+	batcher.SubmitRawMetricsData(testID, testRawMetricsData2)
 	batcher.SubmitRawMetricsData(testID2, testRawMetricsData2)
 
 	batcher.SubmitStopSnapshot(testID, testInstance)
@@ -462,7 +462,7 @@ func TestBatchMultipleHealthStreams(t *testing.T) {
 				CheckStates:   []health.CheckData{},
 			},
 		},
-		"metrics": []telemetry.RawMetrics{},
+		"metrics": []interface{}{},
 	})
 
 	batcher.Shutdown()

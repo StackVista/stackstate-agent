@@ -121,7 +121,7 @@ type submitHealthStopSnapshot struct {
 
 type submitRawMetricsData struct {
 	checkID check.ID
-	rawData    telemetry.RawMetrics
+	rawMetric telemetry.RawMetrics
 }
 
 type submitComplete struct {
@@ -219,7 +219,7 @@ func (batcher *AsynchronousBatcher) run() {
 			batcher.sendState(batcher.builder.HealthStopSnapshot(submission.checkID, submission.stream))
 
 		case submitRawMetricsData:
-			batcher.sendState(batcher.builder.AddRawMetricsData(submission.checkID, submission.rawData))
+			batcher.sendState(batcher.builder.AddRawMetricsData(submission.checkID, submission.rawMetric))
 
 		case submitComplete:
 			batcher.sendState(batcher.builder.FlushIfDataProduced(submission.checkID))
@@ -301,7 +301,7 @@ func (batcher AsynchronousBatcher) SubmitRawMetricsData(checkID check.ID, rawMet
 
 	batcher.input <- submitRawMetricsData{
 		checkID: checkID,
-		rawData:    rawMetric,
+		rawMetric: rawMetric,
 	}
 }
 

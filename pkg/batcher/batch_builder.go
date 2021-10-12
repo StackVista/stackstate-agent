@@ -161,9 +161,9 @@ func (builder *BatchBuilder) HealthStopSnapshot(checkID check.ID, stream health.
 }
 
 // AddRawMetricsData adds raw metric data
-func (builder *BatchBuilder) AddRawMetricsData(checkID check.ID, rawData telemetry.RawMetrics) CheckInstanceBatchStates {
+func (builder *BatchBuilder) AddRawMetricsData(checkID check.ID, rawMetric telemetry.RawMetrics) CheckInstanceBatchStates {
 	rawMetricsData := builder.getOrCreateRawMetrics(checkID)
-	*rawMetricsData = append(*rawMetricsData, rawData)
+	*rawMetricsData = append(*rawMetricsData, rawMetric)
 	return builder.incrementAndTryFlush()
 }
 
