@@ -109,7 +109,7 @@ static PyObject *submit_raw_metrics_data(PyObject *self, PyObject *args) {
 
     // Python call: telemetry.submit_raw_metrics_data(self, check_id, name, value, tags, hostname, timestamp)
     if (!PyArg_ParseTuple(args, "OssfOsl", &check, &check_id, &name, &value, &py_tags, &hostname, &timestamp)) {
-        PyErr_SetString(PyExc_TypeError, "Raw metrics, Unable to parse arguments passed to `submit_raw_metrics_data`");
+        PyErr_SetString(PyExc_TypeError, "Raw metrics, Unable to parse arguments passed to `submit_raw_metrics_data`, name:" name);
         goto error;
     }
 
