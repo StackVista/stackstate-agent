@@ -101,6 +101,8 @@ func (cc *ContainerCorrelator) CorrelateFunction() error {
 				cc.ComponentChan <- containerComponent
 				// create the relation between the container and pod
 				cc.RelationChan <- cc.podToContainerStackStateRelation(pod.ExternalID, containerComponent.ExternalID)
+				// create the relation between the container and node
+				cc.RelationChan <- cc.podToContainerStackStateRelation(containerComponent.ExternalID, nodeIdentifier)
 			}
 		}
 	}
