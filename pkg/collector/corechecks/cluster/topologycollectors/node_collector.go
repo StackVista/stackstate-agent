@@ -64,7 +64,7 @@ func (nc *NodeCollector) CollectorFunction() error {
 		nc.RelationChan <- relation
 
 		// send the node identifier to be correlated
-		nc.NodeIdentifierCorrChan <- &NodeIdentifierCorrelation{node.Name, nodeIdentifier}
+		nc.NodeIdentifierCorrChan <- &NodeIdentifierCorrelation{node.Name, nodeIdentifier, component.ExternalID}
 	}
 
 	close(nc.NodeIdentifierCorrChan)
