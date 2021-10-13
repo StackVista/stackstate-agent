@@ -102,7 +102,7 @@ func (cc *ContainerCorrelator) CorrelateFunction() error {
 				// create the relation between the container and pod
 				cc.RelationChan <- cc.podToContainerStackStateRelation(pod.ExternalID, containerComponent.ExternalID)
 				// create the relation between the container and node
-				cc.RelationChan <- cc.podToContainerStackStateRelation(containerComponent.ExternalID, nodeIdentifier)
+				cc.RelationChan <- cc.containerToNodeStackStateRelation(containerComponent.ExternalID, nodeIdentifier)
 			}
 		}
 	}
@@ -184,6 +184,17 @@ func (cc *ContainerCorrelator) podToContainerStackStateRelation(podExternalID, c
 	relation := cc.CreateRelation(podExternalID, containerExternalID, "encloses")
 
 	log.Tracef("Created StackState pod -> container relation %s->%s", relation.SourceID, relation.TargetID)
+
+	return relation
+}
+
+// Creates a StackState relation from a Container to Kubernetes / OpenShift Node relation
+func (cc *ContainerCorrelator) containerToNodeStackStateRelation(containerExternalID, nodeIdentifier string) *topology.Relation {
+	log.Infof("Mapping kubernetes container to node relation: %s -> %s", containerExternalID, nodeIdentifier) // TODO change to trace
+
+	relation := cc.CreateRelation(containerExternalID, nodeIdentifier, "runs_on")
+
+	log.Infof("Created StackState container -> node relation %s->%s", relation.SourceID, relation.TargetID)
 
 	return relation
 }
