@@ -43,20 +43,15 @@ func (*NodeCollector) GetName() string {
 
 // Collects and Publishes the Node Components
 func (nc *NodeCollector) CollectorFunction() error {
-	log.Infof("NodeCollector.CollectorFunction begin")
 	// get all the nodes in the cluster
 	nodes, err := nc.GetAPIClient().GetNodes()
-	//log.Infof("NodeCollector All Nodes = %v", nodes)
-
 	if err != nil {
 		return err
 	}
 
 	for _, node := range nodes {
-		log.Infof("NodeCollector Node = %+v", node)
 		// creates and publishes StackState node component
 		component, nodeIdentifier := nc.nodeToStackStateComponent(node)
-		log.Infof("NodeCollector Node component = %+v", component)
 		// creates a StackState relation for the cluster node -> cluster
 		relation := nc.nodeToClusterStackStateRelation(node)
 
@@ -69,14 +64,13 @@ func (nc *NodeCollector) CollectorFunction() error {
 
 	close(nc.NodeIdentifierCorrChan)
 
-	log.Infof("NodeCollector.CollectorFunction end")
 	return nil
 }
 
 // Creates a StackState component from a Kubernetes Node
 func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Component, string) {
 	// creates a StackState component for the kubernetes node
-	log.Infof("Mapping kubernetes node to StackState component: %s", node.String())
+	log.Tracef("Mapping kubernetes node to StackState component: %s", node.String())
 
 	// create identifier list to merge with StackState components
 	identifiers := make([]string, 0)
@@ -105,7 +99,7 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 	}
 	identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", instanceID))
 
-	log.Infof("Created identifiers for %s: %v", node.Name, identifiers)
+	log.Tracef("Created identifiers for %s: %v", node.Name, identifiers)
 
 	nodeExternalID := nc.buildNodeExternalID(node.Name)
 
@@ -133,7 +127,7 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 	component.Data.PutNonEmpty("kind", node.Kind)
 	component.Data.PutNonEmpty("instanceId", instanceID)
 
-	log.Infof("Created StackState node component %s: %v", nodeExternalID, component.JSONString())
+	log.Tracef("Created StackState node component %s: %v", nodeExternalID, component.JSONString())
 
 	return component, instanceID
 }
@@ -143,11 +137,11 @@ func (nc *NodeCollector) nodeToClusterStackStateRelation(node v1.Node) *topology
 	nodeExternalID := nc.buildNodeExternalID(node.Name)
 	clusterExternalID := nc.buildClusterExternalID()
 
-	log.Infof("Mapping kubernetes node to cluster relation: %s -> %s", nodeExternalID, clusterExternalID)
+	log.Tracef("Mapping kubernetes node to cluster relation: %s -> %s", nodeExternalID, clusterExternalID)
 
 	relation := nc.CreateRelation(nodeExternalID, clusterExternalID, "belongs_to")
 
-	log.Infof("Created StackState node -> cluster relation %s->%s", relation.SourceID, relation.TargetID)
+	log.Tracef("Created StackState node -> cluster relation %s->%s", relation.SourceID, relation.TargetID)
 
 	return relation
 }
