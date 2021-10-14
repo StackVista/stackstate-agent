@@ -49,24 +49,8 @@
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
 
-    - name: Delete namespace '{{namespace}}'
-      ignore_errors: true
-      shell: kubectl delete ns --ignore-not-found=true {{namespace}}
-      environment:
-        KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
-
-    - name: Delete manifests for stackstate node agent and cluster agent
-      ignore_errors: true
-      command: kubectl delete -k overlays --ignore-not-found=true
-      args:
-        chdir: /home/ubuntu/deployment/agents
-      environment:
-        KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
-
-    - name: Create test namespace '{{namespace}}'
-      shell: kubectl create ns {{ namespace }}
-      args:
-        chdir: /home/ubuntu/deployment
+    - name: Delete helm install
+      shell: helm uninstall stackstate-cluster-agent --namespace {{namespace}}
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
 
@@ -77,10 +61,21 @@
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
 
-    - name: Apply manifests for stackstate node agent and cluster agent
-      command: kubectl apply -k overlays
+    - name: Helm install StackState Agent
+      command: helm upgrade --install \
+        --namespace stackstate \
+        --create-namespace \
+        --set-string 'stackstate.apiKey'='{{api_key}}' \
+        --set-string 'stackstate.cluster.name'='{{cluster_name}}' \
+        --set-string 'stackstate.url'='http://{{ hostvars['kubernetes-cluster-agent']['ansible_host'] }}:7077/stsAgent' \
+        --set "agent.image.tag={{agent_current_branch}}" \
+        --set "agent.image.repository={{agent_docker_repo}}" \
+        --set "clusterAgent.image.tag={{agent_current_branch}}" \
+        --set "clusterAgent.image.repository={{cluster_agent_docker_repo}}" \
+        --values ./values.yaml
+        stackstate-cluster-agent stackstate/cluster-agent
       args:
-        chdir: /home/ubuntu/deployment/agents
+        chdir: /home/ubuntu/template
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
 
