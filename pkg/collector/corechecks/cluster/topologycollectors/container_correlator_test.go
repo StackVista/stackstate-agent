@@ -8,8 +8,12 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
+	"time"
 )
+
+var startedAtTime = metav1.NewTime(time.Now())
 
 func TestContainerCollector(t *testing.T) {
 	componentChannel := make(chan *topology.Component)
@@ -77,6 +81,54 @@ func TestContainerCollector(t *testing.T) {
 				},
 			},
 		},
+		{
+			testCase: "Test Container 2",
+			assertions: []func(){
+				func() {
+					component := <-componentChannel
+					expectedComponent := &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace-2:pod/Pod-Name-2:container/container-2",
+						Type:       topology.Type{Name: "container"},
+						Data: topology.Data{
+							"containerPort": int32(1234),
+							"docker":        map[string]interface{}{"containerId": "containerID-2", "image": "image-2"},
+							"hostPort":      int32(8080),
+							"identifiers":   []string{"urn:container:/nodeID-2:containerID-2"},
+							"name":          "container-2",
+							"pod":           "Pod-Name-2",
+							"podIP":         "10.0.1.2",
+							"podPhase":      "Running",
+							"restartCount":  int32(2),
+							"startTime":     startedAtTime,
+							"tags":          map[string]string{"cluster-name": "test-cluster-name", "namespace": "namespace-2"},
+						},
+					}
+					assert.EqualValues(t, expectedComponent, component)
+				},
+				func() {
+					relation := <-relationChannel
+					expectedRelation := &topology.Relation{
+						ExternalID: "Pod-ExternalID-2->urn:kubernetes:/test-cluster-name:namespace-2:pod/Pod-Name-2:container/container-2",
+						SourceID:   "Pod-ExternalID-2",
+						TargetID:   "urn:kubernetes:/test-cluster-name:namespace-2:pod/Pod-Name-2:container/container-2",
+						Type:       topology.Type{Name: "encloses"},
+						Data:       topology.Data{},
+					}
+					assert.EqualValues(t, expectedRelation, relation)
+				},
+				func() {
+					relation := <-relationChannel
+					expectedRelation := &topology.Relation{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace-2:pod/Pod-Name-2:container/container-2->urn:kubernetes:/cluster:node/nodeID-2",
+						SourceID:   "urn:kubernetes:/test-cluster-name:namespace-2:pod/Pod-Name-2:container/container-2",
+						TargetID:   "urn:kubernetes:/cluster:node/nodeID-2",
+						Type:       topology.Type{Name: "runs_on"},
+						Data:       topology.Data{},
+					}
+					assert.EqualValues(t, expectedRelation, relation)
+				},
+			},
+		},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
 			for _, assertion := range tc.assertions {
@@ -90,7 +142,7 @@ func populateData(nodeIdentifierCorrelationChannel chan *NodeIdentifierCorrelati
 	go func() {
 		fmt.Println("start nodeIdentifierCorrelationChannel")
 		defer close(nodeIdentifierCorrelationChannel)
-		for i := 1; i <= 3; i++ {
+		for i := 1; i <= 2; i++ {
 			nodeIdentifierCorrelationChannel <- CreateNodeIdentifierCorrelation(i)
 		}
 		fmt.Println("end nodeIdentifierCorrelationChannel")
@@ -98,15 +150,29 @@ func populateData(nodeIdentifierCorrelationChannel chan *NodeIdentifierCorrelati
 	go func() {
 		fmt.Println("start containerCorrelationChannel")
 		defer close(containerCorrelationChannel)
-		for i := 1; i <= 3; i++ {
-			containerCorrelation := CreateContainerCorrelation(i)
-			containerCorrelationChannel <- containerCorrelation
-		}
+		containerCorrelation1 := CreateContainerCorrelation(1, false, false)
+		containerCorrelationChannel <- containerCorrelation1
+		containerCorrelation2 := CreateContainerCorrelation(2, true, true)
+		containerCorrelationChannel <- containerCorrelation2
 		fmt.Println("end containerCorrelationChannel")
 	}()
 }
 
-func CreateContainerCorrelation(id int) *ContainerCorrelation {
+func CreateContainerCorrelation(id int, isRunning bool, hasPort bool) *ContainerCorrelation {
+	var running *v1.ContainerStateRunning = nil
+	if isRunning {
+		running = &v1.ContainerStateRunning{
+			StartedAt: startedAtTime,
+		}
+	}
+
+	ports := []v1.ContainerPort{}
+	if hasPort {
+		ports = []v1.ContainerPort{
+			{"port1", 8080, 1234, v1.ProtocolTCP, "10.0.0.1"},
+		}
+	}
+
 	return &ContainerCorrelation{
 		Pod: ContainerPod{
 			ExternalID: fmt.Sprintf("Pod-ExternalID-%d", id),
@@ -121,10 +187,9 @@ func CreateContainerCorrelation(id int) *ContainerCorrelation {
 		},
 		Containers: []v1.Container{
 			{
-				Name: "container1",
-				Ports: []v1.ContainerPort{
-					{"port1", 8080, 1234, v1.ProtocolTCP, "10.0.0.1"},
-				},
+				Name:  fmt.Sprintf("container-%d", id),
+				Image: fmt.Sprintf("image-%d", id),
+				Ports: ports,
 			},
 		},
 		ContainerStatuses: []v1.ContainerStatus{
@@ -135,7 +200,7 @@ func CreateContainerCorrelation(id int) *ContainerCorrelation {
 				RestartCount: int32(id),
 				State: v1.ContainerState{
 					Waiting:    nil,
-					Running:    nil,
+					Running:    running,
 					Terminated: nil,
 				},
 			},
