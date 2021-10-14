@@ -140,21 +140,17 @@ func TestContainerCollector(t *testing.T) {
 
 func populateData(nodeIdentifierCorrelationChannel chan *NodeIdentifierCorrelation, containerCorrelationChannel chan *ContainerCorrelation) {
 	go func() {
-		fmt.Println("start nodeIdentifierCorrelationChannel")
 		defer close(nodeIdentifierCorrelationChannel)
 		for i := 1; i <= 2; i++ {
 			nodeIdentifierCorrelationChannel <- CreateNodeIdentifierCorrelation(i)
 		}
-		fmt.Println("end nodeIdentifierCorrelationChannel")
 	}()
 	go func() {
-		fmt.Println("start containerCorrelationChannel")
 		defer close(containerCorrelationChannel)
 		containerCorrelation1 := CreateContainerCorrelation(1, false, false)
 		containerCorrelationChannel <- containerCorrelation1
 		containerCorrelation2 := CreateContainerCorrelation(2, true, true)
 		containerCorrelationChannel <- containerCorrelation2
-		fmt.Println("end containerCorrelationChannel")
 	}()
 }
 
@@ -169,7 +165,12 @@ func CreateContainerCorrelation(id int, isRunning bool, hasPort bool) *Container
 	ports := []v1.ContainerPort{}
 	if hasPort {
 		ports = []v1.ContainerPort{
-			{"port1", 8080, 1234, v1.ProtocolTCP, "10.0.0.1"},
+			{
+				Name:          "port1",
+				HostPort:      8080,
+				ContainerPort: 1234,
+				Protocol:      v1.ProtocolTCP,
+				HostIP:        "10.0.0.1"},
 		}
 	}
 

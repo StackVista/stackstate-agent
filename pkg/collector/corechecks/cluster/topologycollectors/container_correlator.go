@@ -65,17 +65,13 @@ func (*ContainerCorrelator) GetName() string {
 
 // Collects and Published the Cluster Component
 func (cc *ContainerCorrelator) CorrelateFunction() error {
-	fmt.Sprint("Container CorrelateFunction\n")
-	log.Infof("ContainerCorrelator.CorrelateFunction() begin")
 	nodeMap := make(map[string]NodeIdentifierCorrelation)
 	// map containers that require the Node instanceId
 	for containerToNodeCorrelation := range cc.NodeIdentifierCorrChan {
-		log.Infof("containerToNodeCorrelation = %+v", containerToNodeCorrelation)
 		nodeMap[containerToNodeCorrelation.NodeName] = *containerToNodeCorrelation
 	}
 
 	for containerCorrelation := range cc.ContainerCorrChan {
-		log.Infof("containerCorrelation = %+v", containerCorrelation)
 		pod := containerCorrelation.Pod
 		// map container to exposed ports
 		containerPorts := make(map[string]ContainerPort)
@@ -91,14 +87,12 @@ func (cc *ContainerCorrelator) CorrelateFunction() error {
 
 		// check to see if we have container statuses
 		for _, container := range containerCorrelation.ContainerStatuses {
-			log.Infof("container = %+v", container)
 			containerPort := ContainerPort{}
 			if cntPort, found := containerPorts[fmt.Sprintf("%s_%s", container.Image, container.Name)]; found {
 				containerPort = cntPort
 			}
 
 			if nodeCorrelation, ok := nodeMap[pod.NodeName]; ok {
-				log.Infof("nodeCorrelation = %+v", nodeCorrelation.NodeIdentifier)
 				// submit the StackState component for publishing to StackState
 				containerComponent := cc.containerToStackStateComponent(nodeCorrelation.NodeIdentifier, pod, container, containerPort)
 				cc.ComponentChan <- containerComponent
@@ -110,7 +104,6 @@ func (cc *ContainerCorrelator) CorrelateFunction() error {
 		}
 	}
 
-	log.Infof("ContainerCorrelator.CorrelateFunction() end")
 	return nil
 }
 
@@ -193,11 +186,11 @@ func (cc *ContainerCorrelator) podToContainerStackStateRelation(podExternalID, c
 
 // Creates a StackState relation from a Container to Kubernetes / OpenShift Node relation
 func (cc *ContainerCorrelator) containerToNodeStackStateRelation(containerExternalID, nodeIdentifier string) *topology.Relation {
-	log.Infof("Mapping kubernetes container to node relation: %s -> %s", containerExternalID, nodeIdentifier) // TODO change to trace
+	log.Tracef("Mapping kubernetes container to node relation: %s -> %s", containerExternalID, nodeIdentifier) // TODO change to trace
 
 	relation := cc.CreateRelation(containerExternalID, nodeIdentifier, "runs_on")
 
-	log.Infof("Created StackState container -> node relation %s -> %s", relation.SourceID, relation.TargetID)
+	log.Tracef("Created StackState container -> node relation %s -> %s", relation.SourceID, relation.TargetID)
 
 	return relation
 }
