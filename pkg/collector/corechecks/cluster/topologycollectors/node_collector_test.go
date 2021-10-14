@@ -87,6 +87,7 @@ func TestNodeCollector(t *testing.T) {
 					expectedNodeIdentifier := &NodeIdentifierCorrelation{
 						NodeName:       "test-node-1",
 						NodeIdentifier: "test-node-1",
+						NodeExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-1",
 					}
 					assert.EqualValues(t, expectedNodeIdentifier, nodeIdentifier)
 				},
@@ -139,6 +140,7 @@ func TestNodeCollector(t *testing.T) {
 					expectedNodeIdentifier := &NodeIdentifierCorrelation{
 						NodeName:       "test-node-2",
 						NodeIdentifier: "test-node-2",
+						NodeExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-2",
 					}
 					assert.EqualValues(t, expectedNodeIdentifier, nodeIdentifier)
 				},
@@ -193,6 +195,7 @@ func TestNodeCollector(t *testing.T) {
 					expectedNodeIdentifier := &NodeIdentifierCorrelation{
 						NodeName:       "test-node-3",
 						NodeIdentifier: "i-024b28584ed2e6321",
+						NodeExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-3",
 					}
 					assert.EqualValues(t, expectedNodeIdentifier, nodeIdentifier)
 				},
