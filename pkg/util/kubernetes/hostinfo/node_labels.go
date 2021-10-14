@@ -11,13 +11,10 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/util/clusteragent"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
-
-	log "github.com/cihub/seelog"
 )
 
 // GetNodeLabels returns node labels for this host
 func GetNodeLabels() (map[string]string, error) {
-	log.Infof("node_labels.GetNodeLabels")
 	ku, err := kubelet.GetKubeUtil()
 	if err != nil {
 		return nil, err
@@ -29,7 +26,6 @@ func GetNodeLabels() (map[string]string, error) {
 	}
 
 	if config.Datadog.GetBool("cluster_agent.enabled") {
-		log.Infof("cluster_agent.enabled = TRUE")
 		cl, err := clusteragent.GetClusterAgentClient()
 		if err != nil {
 			return nil, err
