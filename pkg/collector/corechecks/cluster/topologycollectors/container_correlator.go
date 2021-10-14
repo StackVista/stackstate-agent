@@ -65,6 +65,7 @@ func (*ContainerCorrelator) GetName() string {
 
 // Collects and Published the Cluster Component
 func (cc *ContainerCorrelator) CorrelateFunction() error {
+	fmt.Sprint("Container CorrelateFunction\n")
 	log.Infof("ContainerCorrelator.CorrelateFunction() begin")
 	nodeMap := make(map[string]NodeIdentifierCorrelation)
 	// map containers that require the Node instanceId
