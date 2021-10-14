@@ -149,7 +149,8 @@ remove_molecule_cache_folder()
 
 execute_molecule()
 {
-    molecule --base-config "./molecule/$1/provisioner.$2.yml" "$3" --scenario-name "$1"
+    all_args=("$@")
+    molecule --base-config "./molecule/$1/provisioner.$2.yml" "$3" --scenario-name "$1" "${all_args[@]:3}"
 }
 
 if [[ $2 == "create" ]]; then
@@ -170,7 +171,12 @@ elif [[ $2 == "login" ]]; then
     # we can not setup a custom scenario for login thus we have to restore the key inside the sh script
     cp ".cache/molecule/molecule-role/$1/ssh_key" "$HOME/.cache/molecule/molecule-role/$1/ssh_key"
     chmod 600 "$HOME/.cache/molecule/molecule-role/$1/ssh_key"
-    execute_molecule "$1" run login
+
+    if [ -z "$3" ]; then
+        execute_molecule "$1" run login
+    else
+        execute_molecule "$1" run login -h "$3"
+    fi
 
 elif [[ $2 == "destroy" ]]; then
     execute_molecule "$1" setup destroy
