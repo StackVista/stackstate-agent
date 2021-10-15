@@ -46,7 +46,7 @@ fi
 
 set -e
 
-export STACKSTATE_BRANCH="STAC-13710-Correlator-scale-kafka"
+export STACKSTATE_BRANCH=${STACKSTATE_BRANCH:-master}
 
 export MAJOR_VERSION=${MAJOR_VERSION:-3}
 export STS_AWS_TEST_BUCKET=${STS_AWS_TEST_BUCKET:-stackstate-agent-3-test}
