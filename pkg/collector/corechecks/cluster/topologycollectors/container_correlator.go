@@ -186,7 +186,7 @@ func (cc *ContainerCorrelator) podToContainerStackStateRelation(podExternalID, c
 
 // Creates a StackState relation from a Container to Kubernetes / OpenShift Node relation
 func (cc *ContainerCorrelator) containerToNodeStackStateRelation(containerExternalID, nodeIdentifier string) *topology.Relation {
-	log.Tracef("Mapping kubernetes container to node relation: %s -> %s", containerExternalID, nodeIdentifier) // TODO change to trace
+	log.Tracef("Mapping kubernetes container to node relation: %s -> %s", containerExternalID, nodeIdentifier)
 
 	relation := cc.CreateRelation(containerExternalID, nodeIdentifier, "runs_on")
 
