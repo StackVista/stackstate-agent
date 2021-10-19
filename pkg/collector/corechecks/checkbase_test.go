@@ -24,6 +24,12 @@ collection_interval: 60
 empty_default_hostname: true
 name: foobar
 `
+	legacyInstance   = `
+foo_init: bar_init
+min_collection_interval: 60
+empty_default_hostname: true
+name: foobar
+`
 )
 
 type dummyCheck struct {
@@ -66,5 +72,24 @@ func TestCommonConfigureCustomID(t *testing.T) {
 	assert.Equal(t, 60*time.Second, mycheck.Interval())
 	mycheck.BuildID([]byte(customInstance), []byte(initConfig))
 	assert.Equal(t, string(mycheck.ID()), "test:foobar:19e743a262c48886")
+	mockSender.AssertExpectations(t)
+}
+
+// Tests whether we are backwards compatiable with MinCollectionInterval
+func TestCommonConfigureMinCollectionInterval(t *testing.T) {
+	checkName := "test"
+	mycheck := &dummyCheck{
+		CheckBase: NewCheckBase(checkName),
+	}
+	mycheck.BuildID([]byte(legacyInstance), nil)
+	assert.NotEqual(t, checkName, string(mycheck.ID()))
+	mockSender := mocksender.NewMockSender(mycheck.ID())
+
+	mockSender.On("DisableDefaultHostname", true).Return().Once()
+	err := mycheck.CommonConfigure([]byte(legacyInstance), "test")
+	assert.NoError(t, err)
+	assert.Equal(t, 60*time.Second, mycheck.Interval())
+	mycheck.BuildID([]byte(legacyInstance), []byte(initConfig))
+	assert.Equal(t, string(mycheck.ID()), "test:foobar:bd63a7031add5db9")
 	mockSender.AssertExpectations(t)
 }

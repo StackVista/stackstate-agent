@@ -1,6 +1,4 @@
 init_config:
-  # Changed to collection_interval to test that transfering it into the instance config works
-  collection_interval: 30
 
 instances:
   - nagios_conf: /etc/nagios/nagios.cfg
@@ -8,3 +6,4 @@ instances:
     passive_checks_events: True            # default is False
     collect_host_performance_data: True    # default is False
     collect_service_performance_data: True # default is False
+    collection_interval: 30
