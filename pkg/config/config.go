@@ -519,6 +519,7 @@ func InitConfig(config Config) {
 	// We only support containerd in Kubernetes. By default containerd cri uses `k8s.io` https://github.com/containerd/cri/blob/release/1.2/pkg/constants/constants.go#L22-L23
 	config.BindEnvAndSetDefault("containerd_namespace", "k8s.io")
 	config.BindEnvAndSetDefault("container_env_as_tags", map[string]string{})
+	config.BindEnvAndSetDefault("container_labels_as_tags", map[string]string{})
 
 	// Docker Swarm
 	config.BindEnvAndSetDefault("collect_swarm_topology", false)
