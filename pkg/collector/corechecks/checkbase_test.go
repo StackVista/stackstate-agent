@@ -75,7 +75,7 @@ func TestCommonConfigureCustomID(t *testing.T) {
 	mockSender.AssertExpectations(t)
 }
 
-// Tests whether we are backwards compatiable with MinCollectionInterval
+// Tests whether we are backwards compatible with MinCollectionInterval
 func TestCommonConfigureMinCollectionInterval(t *testing.T) {
 	checkName := "test"
 	mycheck := &dummyCheck{
