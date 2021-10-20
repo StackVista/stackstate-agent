@@ -113,12 +113,13 @@ func (c *Config) String() string {
 	return string(buffer)
 }
 
+// GetCollectionInterval returns the collection interval, taking into account legacy configuration
 func (c *CommonInstanceConfig) GetCollectionInterval() int {
 	if c.MinCollectionInterval != 0 {
 		return c.MinCollectionInterval
-	} else {
-		return c.CollectionInterval
 	}
+
+	return c.CollectionInterval
 }
 
 // IsTemplate returns if the config has AD identifiers
