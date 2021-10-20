@@ -12,5 +12,7 @@ import (
 const (
 	// DefaultCheckInterval is the interval in seconds the scheduler should apply
 	// when no value was provided in Check configuration.
+  	// Be sure to also update stackstate_checks_base/stackstate_checks/base/checks/base.py
+  	// in stackstate-agent-integrations when the default is changed
 	DefaultCheckInterval time.Duration = 40 * time.Second
 )

@@ -12,6 +12,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
@@ -301,12 +302,13 @@ func testConfigure(t *testing.T) {
 
 	C.get_check_return = 1
 	C.get_check_check = &C.rtloader_pyobject_t{}
-	err := c.Configure(integration.Data("{\"val\": 21}"), integration.Data("{\"val\": 21}"), "test")
+	err := c.Configure(integration.Data("{\"collection_interval\": 25, \"val\": 21}"), integration.Data("{\"val\": 21}"), "test")
 	assert.Nil(t, err)
 
+	assert.Equal(t, 25*time.Second, c.interval)
 	assert.Equal(t, c.class, C.get_check_py_class)
 	assert.Equal(t, "{\"val\": 21}", C.GoString(C.get_check_init_config))
-	assert.Equal(t, "{\"val\": 21}", C.GoString(C.get_check_instance))
+	assert.Equal(t, "{\"collection_interval\": 25, \"val\": 21}", C.GoString(C.get_check_instance))
 	assert.Equal(t, string(c.id), C.GoString(C.get_check_check_id))
 	assert.Equal(t, "fake_check", C.GoString(C.get_check_check_name))
 	assert.Equal(t, C.get_check_check, c.instance)
@@ -329,9 +331,10 @@ func testConfigureDeprecated(t *testing.T) {
 	C.get_check_return = 0
 	C.get_check_deprecated_check = &C.rtloader_pyobject_t{}
 	C.get_check_deprecated_return = 1
-	err := c.Configure(integration.Data("{\"val\": 21}"), integration.Data("{\"val\": 21}"), "test")
+	err := c.Configure(integration.Data("{\"min_collection_interval\": 25, \"val\": 21}"), integration.Data("{\"val\": 21}"), "test")
 	assert.Nil(t, err)
 
+	assert.Equal(t, 25*time.Second, c.interval)
 	assert.Equal(t, c.class, C.get_check_py_class)
 	assert.Equal(t, "{\"val\": 21}", C.GoString(C.get_check_init_config))
 	assert.Equal(t, "{\"val\": 21}", C.GoString(C.get_check_instance))
@@ -341,7 +344,7 @@ func testConfigureDeprecated(t *testing.T) {
 
 	assert.Equal(t, c.class, C.get_check_deprecated_py_class)
 	assert.Equal(t, "{\"val\": 21}", C.GoString(C.get_check_deprecated_init_config))
-	assert.Equal(t, "{\"val\": 21}", C.GoString(C.get_check_deprecated_instance))
+	assert.Equal(t, "{\"min_collection_interval\": 25, \"val\": 21}", C.GoString(C.get_check_deprecated_instance))
 	assert.Equal(t, string(c.id), C.GoString(C.get_check_deprecated_check_id))
 	assert.Equal(t, "fake_check", C.GoString(C.get_check_deprecated_check_name))
 	require.NotNil(t, C.get_check_deprecated_agent_config)
