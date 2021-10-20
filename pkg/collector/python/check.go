@@ -223,8 +223,22 @@ func (c *PythonCheck) Configure(data integration.Data, initConfig integration.Da
 		}
 	}
 
+	// make sure collection_interval is set within the instance data
+	var rawInstance integration.RawMap
+	err := yaml.Unmarshal(data, &rawInstance)
+	if err != nil {
+		return err
+	}
+
+	rawInstance[string("collection_interval")] = int(c.interval.Seconds())
+
+	updatedInstanceData, err := yaml.Marshal(rawInstance)
+	if err != nil {
+		return err
+	}
+
 	cInitConfig := TrackedCString(string(initConfig))
-	cInstance := TrackedCString(string(data))
+	cInstance := TrackedCString(string(updatedInstanceData))
 	cCheckID := TrackedCString(string(c.id))
 	cCheckName := TrackedCString(c.ModuleName)
 	defer C._free(unsafe.Pointer(cInitConfig))
