@@ -832,7 +832,7 @@ molecule_kubernetes_create:
 molecule_kubernetes_test:
   <<: *molecule
   <<: *molecule_test
-  resource_group: eks_test_cluster
+  resource_group: eks_test_cluster_1_21
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent
