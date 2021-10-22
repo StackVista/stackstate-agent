@@ -31,7 +31,7 @@ import "C"
 
 // SubmitComponent is the method exposed to Python scripts to submit topology component
 //export SubmitComponent
-func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, _ignoredExternalId *C.char, _ignoredComponentType *C.char, data *C.char) {
+func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, _ignoredExternalID *C.char, _ignoredComponentType *C.char, data *C.char) {
 	goCheckID := C.GoString(id)
 
 	_instance := topology.Instance{
@@ -53,7 +53,7 @@ func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, _ignoredExternal
 
 // SubmitRelation is the method exposed to Python scripts to submit topology relation
 //export SubmitRelation
-func SubmitRelation(id *C.char, instanceKey *C.instance_key_t, _ignoredSourceId *C.char, _ignoredTargetId *C.char, _ignoredRelationType *C.char, data *C.char) {
+func SubmitRelation(id *C.char, instanceKey *C.instance_key_t, _ignoredSourceID *C.char, _ignoredTargetID *C.char, _ignoredRelationType *C.char, data *C.char) {
 	goCheckID := C.GoString(id)
 
 	_instance := topology.Instance{
