@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"time"
 	"runtime"
 	"strings"
 	"unsafe"
@@ -35,6 +36,7 @@ extern void writePersistentCache(char*, char*);
 extern char* readPersistentCache(char*);
 extern char* obfuscateSQL(char*, char*, char**);
 extern char* obfuscateSQLExecPlan(char*, bool, char**);
+extern double getProcessStartTime();
 
 
 static void initDatadogAgentTests(rtloader_t *rtloader) {
@@ -54,6 +56,7 @@ static void initDatadogAgentTests(rtloader_t *rtloader) {
    set_read_persistent_cache_cb(rtloader, readPersistentCache);
    set_obfuscate_sql_cb(rtloader, obfuscateSQL);
    set_obfuscate_sql_exec_plan_cb(rtloader, obfuscateSQLExecPlan);
+   set_get_process_start_time_cb(rtloader, getProcessStartTime);
 }
 */
 import "C"
@@ -295,4 +298,11 @@ func obfuscateSQLExecPlan(rawQuery *C.char, normalize C.bool, errResult **C.char
 		*errResult = (*C.char)(helpers.TrackedCString("unknown test case"))
 		return nil
 	}
+}
+
+var processStartTime = float64(time.Now().Unix())
+
+//export getProcessStartTime
+func getProcessStartTime() float64 {
+	return processStartTime
 }
