@@ -49,7 +49,15 @@
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
 
-    - name: Delete helm install
+    - name: Create test namespace '{{namespace}}'
+      shell: kubectl create ns {{ namespace }}
+      args:
+        chdir: /home/ubuntu/deployment
+      environment:
+        KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
+
+    - name: Uninstall StackState Agent
+      ignore_errors: true
       shell: helm uninstall stackstate-cluster-agent --namespace {{namespace}}
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig

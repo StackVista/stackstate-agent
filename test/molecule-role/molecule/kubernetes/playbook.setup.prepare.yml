@@ -96,6 +96,11 @@
         chdir: /home/ubuntu/deployment/aws-eks/tf-cluster
         target: kubeconfig
 
+    - name: Change kubeconfig permissions
+      file:
+        path: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
+        mode: '0600'
+
     - name: Run make config-map-aws-auth
       make:
         chdir: /home/ubuntu/deployment/aws-eks/tf-cluster

@@ -19,14 +19,14 @@
   ignore_unreachable: true
   gather_facts: false
   tasks:
-    - name: Delete namespace '{{namespace}}'
-      shell: "kubectl delete ns {{ namespace }}"
+    - name: Uninstall StackState Agent
+      ignore_errors: true
+      shell: helm uninstall stackstate-cluster-agent --namespace {{namespace}}
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
 
-    - name: Delete manifests for stackstate node agent and cluster agent
-      command: kubectl delete -k overlays
-      args:
-        chdir: /home/ubuntu/deployment/agents
+    - name: Delete namespace '{{namespace}}'
+      ignore_errors: true
+      shell: "kubectl delete ns {{ namespace }}"
       environment:
         KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
