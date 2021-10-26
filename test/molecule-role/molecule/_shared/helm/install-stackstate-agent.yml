@@ -1,0 +1,18 @@
+---
+- name: Helm install StackState Agent
+  command: helm upgrade --install \
+    --namespace stackstate \
+    --create-namespace \
+    --set-string 'stackstate.apiKey'='{{api_key}}' \
+    --set-string 'stackstate.cluster.name'='{{cluster_name}}' \
+    --set-string 'stackstate.url'='http://{{ hostvars['kubernetes-cluster-agent']['ansible_host'] }}:7077/stsAgent' \
+    --set "agent.image.tag={{agent_current_branch}}" \
+    --set "agent.image.repository={{agent_docker_repo}}" \
+    --set "clusterAgent.image.tag={{agent_current_branch}}" \
+    --set "clusterAgent.image.repository={{cluster_agent_docker_repo}}" \
+    --values ./values.yaml
+    stackstate-cluster-agent stackstate/cluster-agent
+  args:
+    chdir: /home/ubuntu/template
+  environment:
+    KUBECONFIG: /home/ubuntu/deployment/aws-eks/tf-cluster/kubeconfig
