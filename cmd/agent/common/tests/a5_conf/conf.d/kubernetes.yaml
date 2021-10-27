@@ -1,5 +1,5 @@
 init_config:
-  collection_interval: 30
+  min_collection_interval: 30
 
 instances:
   - kubelet_port: 4192
