@@ -114,8 +114,7 @@ func (c *Config) String() string {
 	return string(buffer)
 }
 
-// [sts] Compatibility function
-// GetCollectionInterval returns the collection interval, taking into account legacy configuration
+// GetCollectionInterval returns the collection interval, taking into account legacy configuration. [sts]
 func (c *CommonInstanceConfig) GetCollectionInterval() int {
 	if c.CollectionInterval != 0 {
 		return c.CollectionInterval
