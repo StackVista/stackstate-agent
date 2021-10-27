@@ -44,6 +44,14 @@ Prerequisites:
 * export AWS_SECRET_ACCESS_KEY=
 * export AWS_REGION=eu-west-1
 
+Install miniconda: https://docs.conda.io/en/latest/miniconda.html
+
+Enable virtualenv:
+```shell
+virtualenv venv
+source venv/bin/activate
+```
+
 Make sure if you change the AWS_REGION to find the correct vpc subnet and replace it in `molecule.yml`.
 
 Now execute `./molecule.sh`, this will show you the help.
