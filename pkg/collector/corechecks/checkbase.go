@@ -114,6 +114,7 @@ func (c *CheckBase) CommonConfigure(instance integration.Data, source string) er
 	}
 
 	// See if a collection interval was specified
+	// [sts] use new compatibility function
 	if commonOptions.GetCollectionInterval() > 0 {
 		c.checkInterval = time.Duration(commonOptions.GetCollectionInterval()) * time.Second
 	}
