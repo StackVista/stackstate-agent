@@ -109,12 +109,13 @@ if [[ ! " ${AVAILABLE_MOLECULE_SCENARIOS[*]} " =~ $1 ]]; then
 fi
 
 # Helper for the second parameter defined
-AVAILABLE_MOLECULE_PROCESS=("create" "prepare" "test" "destroy" "login")
+AVAILABLE_MOLECULE_PROCESS=("lint" "create" "prepare" "test" "destroy" "login")
 if [[ ! " ${AVAILABLE_MOLECULE_PROCESS[*]} " =~ $2 ]]; then
     echo ""
     echo "------------ Invalid Molecule Process Supplied ('$2') --------------"
     echo ""
     echo "Available Molecule Processes:"
+    echo "  - lint"
     echo "  - create"
     echo "  - prepare"
     echo "  - test"
@@ -153,7 +154,10 @@ execute_molecule()
     molecule --base-config "./molecule/$1/provisioner.$2.yml" "$3" --scenario-name "$1" "${all_args[@]:3}"
 }
 
-if [[ $2 == "create" ]]; then
+if [[ $2 == "lint" ]]; then
+    execute_molecule "$1" setup lint
+
+elif [[ $2 == "create" ]]; then
     execute_molecule "$1" setup create
 
 elif [[ $2 == "prepare" ]]; then
