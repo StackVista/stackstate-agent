@@ -3,7 +3,6 @@
 - include_tasks: ../_shared/wait/wait-for-receiver.yml
 - include_tasks: ../_shared/kubectl/create-secret-for-private-docker.yml
 - include_tasks: ../_shared/kubectl/delete-namespace--ignore.yml
-- include_tasks: ../_shared/kubectl/delete-manifests--ignore.yml
 - include_tasks: ../_shared/kubectl/create-namespace.yml
 - include_tasks: ../_shared/kubectl/apply-manifest-test-workload.yml
 - include_tasks: ../_shared/helm/install-stackstate-agent.yml
