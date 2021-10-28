@@ -160,6 +160,7 @@ func GetHostnameData() (HostnameData, error) {
 	// if fargate we strip the hostname
 	if fargate.IsFargateInstance() {
 		hostnameData := saveHostnameData(cacheHostnameKey, "", "")
+		log.Debugf("Got hostname '%s' from Farget", hostnameData)
 		return hostnameData, nil
 	}
 
@@ -168,6 +169,7 @@ func GetHostnameData() (HostnameData, error) {
 	if getGCEHostname, found := hostname.ProviderCatalog["gce"]; found {
 		gceName, err := getGCEHostname()
 		if err == nil {
+			log.Debugf("Got hostname '%s' from GCE", gceName)
 			hostnameData := saveHostnameData(cacheHostnameKey, gceName, "gce")
 			return hostnameData, err
 		}
@@ -175,6 +177,21 @@ func GetHostnameData() (HostnameData, error) {
 		expErr.Set(err.Error())
 		hostnameErrors.Set("gce", expErr)
 		log.Debug("Unable to get hostname from GCE: ", err)
+	}
+
+	// Azure metadata
+	log.Debug("GetHostname trying Azure metadata...")
+	if getAzureHostname, found := hostname.ProviderCatalog["azure"]; found {
+		azureName, err := getAzureHostname()
+		if err == nil {
+			log.Debugf("Got hostname '%s' from Azure", azureName)
+			hostnameData := saveHostnameData(cacheHostnameKey, azureName, "azure")
+			return hostnameData, err
+		}
+		expErr := new(expvar.String)
+		expErr.Set(err.Error())
+		hostnameErrors.Set("azure", expErr)
+		log.Debug("Unable to get hostname from Azure: ", err)
 	}
 
 	// FQDN
