@@ -3,11 +3,13 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build docker
 // +build docker
 
 package docker
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname/hostnamedata"
 	"sync"
 	"time"
 
@@ -58,12 +60,12 @@ func EnableTestingMode() {
 }
 
 // HostnameProvider docker implementation for the hostname provider
-func HostnameProvider() (string, error) {
+func HostnameProvider() (*hostnamedata.HostnameData, error) {
 	du, err := GetDockerUtil()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return du.GetHostname()
+	return hostnamedata.JustHostname(du.GetHostname())
 }
 
 // Config is an exported configuration object that is used when

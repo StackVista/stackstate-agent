@@ -3,8 +3,8 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2017-2020 Datadog, Inc.
 
-// +build docker
-// +build kubeapiserver
+//go:build docker && kubeapiserver
+// +build docker,kubeapiserver
 
 package kubernetes
 
@@ -183,7 +183,7 @@ func (suite *testSuite) TestHostnameProvider() {
 
 	// Hostname provider should return the expected value
 	foundHost, err := hostname_apiserver.HostnameProvider()
-	assert.Equal(suite.T(), "target.host", foundHost)
+	assert.Equal(suite.T(), "target.host", foundHost.Hostname)
 
 	// Testing hostname when a cluster name is set
 	var testClusterName = "laika"
@@ -193,5 +193,5 @@ func (suite *testSuite) TestHostnameProvider() {
 	defer clustername.ResetClusterName()
 
 	foundHost, err = hostname_apiserver.HostnameProvider()
-	assert.Equal(suite.T(), "target.host-laika", foundHost)
+	assert.Equal(suite.T(), "target.host-laika", foundHost.Hostname)
 }

@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubelet
 // +build kubelet
 
 package kubelet
@@ -684,11 +685,12 @@ func getKubeletHostFromConfig(ctx context.Context, kubeletHost string) ([]string
 func getKubeletHostFromDocker(ctx context.Context) ([]string, []string) {
 	var ips []string
 	var hostnames []string
-	dockerHost, err := docker.HostnameProvider()
+	dockerHostData, err := docker.HostnameProvider()
 	if err != nil {
 		log.Debugf("unable to get hostname from docker, make sure to set the kubernetes_kubelet_host option: %s", err)
 		return ips, hostnames
 	}
+	dockerHost := dockerHostData.Hostname
 
 	log.Debugf("Trying to resolve host name %s provided by docker to ip...", dockerHost)
 	hostnames = append(hostnames, dockerHost)

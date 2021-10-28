@@ -8,6 +8,7 @@ package util
 import (
 	"expvar"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname/hostnamedata"
 	"net"
 	"os"
 	"runtime"
@@ -107,14 +108,15 @@ const HostnameProviderConfiguration = "configuration"
 
 // HostnameData contains hostname and the hostname provider
 type HostnameData struct {
-	Hostname string
-	Provider string
+	Hostname    string
+	Provider    string
+	Identifiers []string
 }
 
 // saveHostnameData creates a HostnameData struct, saves it in the cache under cacheHostnameKey
 // and calls setHostnameProvider with the provider if it is not empty.
-func saveHostnameData(cacheHostnameKey string, hostname string, provider string) HostnameData {
-	hostnameData := HostnameData{Hostname: hostname, Provider: provider}
+func saveHostnameData(cacheHostnameKey string, hostname string, provider string, identifiers []string) HostnameData {
+	hostnameData := HostnameData{Hostname: hostname, Provider: provider, Identifiers: identifiers}
 	cache.Cache.Set(cacheHostnameKey, hostnameData, cache.NoExpiration)
 	if provider != "" {
 		setHostnameProvider(provider)
@@ -138,12 +140,13 @@ func GetHostnameData() (HostnameData, error) {
 	var hostName string
 	var err error
 	var provider string
+	identifiers := make([]string, 0)
 
 	// try the name provided in the configuration file
 	configName := config.Datadog.GetString("hostname")
 	err = validate.ValidHostname(configName)
 	if err == nil {
-		hostnameData := saveHostnameData(cacheHostnameKey, configName, HostnameProviderConfiguration)
+		hostnameData := saveHostnameData(cacheHostnameKey, configName, HostnameProviderConfiguration, []string{})
 		if !isHostnameCanonicalForIntake(configName) && !config.Datadog.GetBool("hostname_force_config_as_canonical") {
 			_ = log.Warnf("Hostname '%s' defined in configuration will not be used as the in-app hostname. For more information: https://dtdg.co/agent-hostname-force-config-as-canonical", configName)
 		}
@@ -159,22 +162,39 @@ func GetHostnameData() (HostnameData, error) {
 
 	// if fargate we strip the hostname
 	if fargate.IsFargateInstance() {
-		hostnameData := saveHostnameData(cacheHostnameKey, "", "")
+		hostnameData := saveHostnameData(cacheHostnameKey, "", "", []string{})
+		log.Debugf("Got hostname '%s' from Farget", hostnameData)
 		return hostnameData, nil
 	}
 
 	// GCE metadata
 	log.Debug("GetHostname trying GCE metadata...")
 	if getGCEHostname, found := hostname.ProviderCatalog["gce"]; found {
-		gceName, err := getGCEHostname()
+		gceHostData, err := getGCEHostname()
 		if err == nil {
-			hostnameData := saveHostnameData(cacheHostnameKey, gceName, "gce")
+			log.Debugf("Got hostname data '%v' from GCE", gceHostData)
+			hostnameData := saveHostnameData(cacheHostnameKey, gceHostData.Hostname, "gce", gceHostData.Identifiers)
 			return hostnameData, err
 		}
 		expErr := new(expvar.String)
 		expErr.Set(err.Error())
 		hostnameErrors.Set("gce", expErr)
 		log.Debug("Unable to get hostname from GCE: ", err)
+	}
+
+	// Azure metadata
+	log.Debug("GetHostname trying Azure metadata...")
+	if getAzureHostname, found := hostname.ProviderCatalog["azure"]; found {
+		azureData, err := getAzureHostname()
+		if err == nil {
+			log.Debugf("Got hostname data '%v' from Azure", azureData)
+			hostnameData := saveHostnameData(cacheHostnameKey, azureData.Hostname, "azure", azureData.Identifiers)
+			return hostnameData, err
+		}
+		expErr := new(expvar.String)
+		expErr.Set(err.Error())
+		hostnameErrors.Set("azure", expErr)
+		log.Debug("Unable to get hostname from Azure: ", err)
 	}
 
 	// FQDN
@@ -231,11 +251,12 @@ func GetHostnameData() (HostnameData, error) {
 		log.Debug("GetHostname trying EC2 metadata...")
 
 		if ecs.IsECSInstance() || ec2.IsDefaultHostname(hostName) {
-			ec2Hostname, err := getValidEC2Hostname(getEC2Hostname)
+			ec2HostData, err := getValidEC2Hostname(getEC2Hostname)
 
 			if err == nil {
-				hostName = ec2Hostname
+				hostName = ec2HostData.Hostname
 				provider = "aws"
+				identifiers = append(identifiers, ec2HostData.Identifiers...)
 			} else {
 				expErr := new(expvar.String)
 				expErr.Set(err.Error())
@@ -256,7 +277,7 @@ func GetHostnameData() (HostnameData, error) {
 				ec2Hostname, err := getValidEC2Hostname(getEC2Hostname)
 
 				// Check if we get a valid hostname when enabling `ec2_use_windows_prefix_detection` and the hostnames are different.
-				if err == nil && ec2Hostname != hostName {
+				if err == nil && ec2Hostname.Hostname != hostName {
 					// REMOVEME: This should be removed if/when the default `ec2_use_windows_prefix_detection` is set to true
 					log.Infof("The agent resolved your hostname as '%s'. You may want to use the EC2 instance-id ('%s') for the in-app hostname."+
 						" For more information: https://docs.datadoghq.com/ec2-use-win-prefix-detection", hostName, ec2Hostname)
@@ -283,7 +304,7 @@ func GetHostnameData() (HostnameData, error) {
 		err = nil
 	}
 
-	hostnameData := saveHostnameData(cacheHostnameKey, hostName, provider)
+	hostnameData := saveHostnameData(cacheHostnameKey, hostName, provider, identifiers)
 	if err != nil {
 		expErr := new(expvar.String)
 		expErr.Set(fmt.Sprintf(err.Error()))
@@ -303,15 +324,16 @@ func isHostnameCanonicalForIntake(hostname string) bool {
 }
 
 // getValidEC2Hostname gets a valid EC2 hostname
-// Returns (hostname, error)
-func getValidEC2Hostname(ec2Provider hostname.Provider) (string, error) {
-	instanceID, err := ec2Provider()
-	if err == nil {
-		err = validate.ValidHostname(instanceID)
-		if err == nil {
-			return instanceID, nil
-		}
-		return "", fmt.Errorf("EC2 instance ID is not a valid hostname: %s", err)
+func getValidEC2Hostname(ec2Provider hostname.Provider) (*hostnamedata.HostnameData, error) {
+	instanceData, err := ec2Provider()
+	if err != nil {
+		return nil, fmt.Errorf("Unable to determine hostname from EC2: %s", err)
 	}
-	return "", fmt.Errorf("Unable to determine hostname from EC2: %s", err)
+
+	err = validate.ValidHostname(instanceData.Hostname)
+	if err != nil {
+		return nil, fmt.Errorf("EC2 instance ID (%s) is not a valid hostname: %s", instanceData.Hostname, err)
+	}
+
+	return instanceData, nil
 }

@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build docker
 // +build docker
 
 package docker
@@ -27,9 +28,9 @@ func diagnose() error {
 
 	hostname, err := HostnameProvider()
 	if err != nil {
-		log.Errorf("returned hostname %q with error: %s", hostname, err)
+		log.Errorf("returned hostname %v with error: %s", hostname, err)
 	} else {
-		log.Infof("successfully got hostname %q from docker", hostname)
+		log.Infof("successfully got hostname %v from docker", hostname)
 	}
 	return err
 }

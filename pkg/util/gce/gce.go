@@ -7,6 +7,7 @@ package gce
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname/hostnamedata"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -166,6 +167,6 @@ func getResponse(url string) (string, error) {
 }
 
 // HostnameProvider GCE implementation of the HostnameProvider
-func HostnameProvider() (string, error) {
-	return GetHostname()
+func HostnameProvider() (*hostnamedata.HostnameData, error) {
+	return hostnamedata.JustHostname(GetHostname())
 }

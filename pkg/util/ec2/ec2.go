@@ -8,6 +8,7 @@ package ec2
 import (
 	"errors"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname/hostnamedata"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -256,7 +257,7 @@ func isDefaultHostname(hostname string, useWindowsPrefix bool) bool {
 }
 
 // HostnameProvider gets the hostname
-func HostnameProvider() (string, error) {
+func HostnameProvider() (*hostnamedata.HostnameData, error) {
 	log.Debug("GetHostname trying EC2 metadata...")
-	return GetInstanceID()
+	return hostnamedata.JustHostname(GetInstanceID())
 }

@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubelet
 // +build kubelet
 
 package kubelet
@@ -43,7 +44,7 @@ func TestHostnameProvider(t *testing.T) {
 
 	hostName, err := HostnameProvider()
 	assert.NoError(t, err)
-	assert.Equal(t, "node-name", hostName)
+	assert.Equal(t, "node-name", hostName.Hostname)
 
 	var testClusterName = "laika"
 	mockConfig.Set("cluster_name", testClusterName)
@@ -55,5 +56,5 @@ func TestHostnameProvider(t *testing.T) {
 
 	hostName, err = HostnameProvider()
 	assert.NoError(t, err)
-	assert.Equal(t, "node-name-laika", hostName)
+	assert.Equal(t, "node-name-laika", hostName.Hostname)
 }

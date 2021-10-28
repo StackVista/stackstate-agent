@@ -3,7 +3,9 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build linux || windows || darwin
 // +build linux windows darwin
+
 // I don't think windows and darwin can actually be docker hosts
 // but keeping it this way for build consistency (for now)
 
@@ -17,42 +19,41 @@ import (
 )
 
 func getContainerHostname() (bool, string) {
-	var name string
 
 	// Cluster-agent logic: Kube apiserver
 	if getKubeHostname, found := hostname.ProviderCatalog["kube_apiserver"]; found {
 		log.Debug("GetHostname trying Kubernetes trough API server...")
-		name, err := getKubeHostname()
-		if err == nil && validate.ValidHostname(name) == nil {
-			return true, name
+		data, err := getKubeHostname()
+		if err == nil && validate.ValidHostname(data.Hostname) == nil {
+			return true, data.Hostname
 		}
 	}
 
 	if config.IsContainerized() == false {
-		return false, name
+		return false, ""
 	}
 
 	// Node-agent logic: docker or kubelet
 
 	// Docker
 	log.Debug("GetHostname trying Docker API...")
-	if getDockerHostname, found := hostname.ProviderCatalog["docker"]; found {
-		name, err := getDockerHostname()
-		if err == nil && validate.ValidHostname(name) == nil {
-			return true, name
+	if getDockerHostnameData, found := hostname.ProviderCatalog["docker"]; found {
+		data, err := getDockerHostnameData()
+		if err == nil && validate.ValidHostname(data.Hostname) == nil {
+			return true, data.Hostname
 		}
 	}
 
 	if config.IsKubernetes() == false {
-		return false, name
+		return false, ""
 	}
 	// Kubelet
-	if getKubeletHostname, found := hostname.ProviderCatalog["kubelet"]; found {
+	if getKubeletHostnameData, found := hostname.ProviderCatalog["kubelet"]; found {
 		log.Debug("GetHostname trying Kubernetes trough kubelet API...")
-		name, err := getKubeletHostname()
-		if err == nil && validate.ValidHostname(name) == nil {
-			return true, name
+		data, err := getKubeletHostnameData()
+		if err == nil && validate.ValidHostname(data.Hostname) == nil {
+			return true, data.Hostname
 		}
 	}
-	return false, name
+	return false, ""
 }

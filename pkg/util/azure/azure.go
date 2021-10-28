@@ -6,7 +6,10 @@
 package azure
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname/hostnamedata"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -102,4 +105,42 @@ func getResponse(url string) (string, error) {
 	}
 
 	return string(all), nil
+}
+
+type vmMetadata struct {
+	Name       string `json:"name"`
+	ResourceID string `json:"resourceId"`
+}
+
+func getMetadata() (*vmMetadata, error) {
+	metadataJSON, err := getResponse(metadataURL + "/metadata/instance/compute?api-version=2021-02-01")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Azure VM metadata: %s", err)
+	}
+	var metadata vmMetadata
+	if err := json.Unmarshal([]byte(metadataJSON), &metadata); err != nil {
+		return nil, fmt.Errorf("failed to parse Azure VM metadata: %s", err)
+	}
+	return &metadata, nil
+}
+
+// HostnameProvider azure implementation for the hostname provider
+func HostnameProvider() (*hostnamedata.HostnameData, error) {
+	metadata, err := getMetadata()
+	if err != nil {
+		log.Warnf("Can't get Azure VM metadata: %v", err)
+		return nil, err
+	}
+	log.Infof("Azure VM metadata %v", metadata)
+
+	identifiers := make([]string, 0)
+	if metadata.ResourceID != "" {
+		identifiers = append(identifiers, "urn:azure:"+metadata.ResourceID)
+		identifiers = append(identifiers, "urn:azure:"+strings.ToUpper(metadata.ResourceID))
+	}
+
+	return &hostnamedata.HostnameData{
+		Hostname:    metadata.Name,
+		Identifiers: identifiers,
+	}, nil
 }

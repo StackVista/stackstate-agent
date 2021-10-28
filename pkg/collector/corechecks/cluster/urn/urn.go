@@ -2,6 +2,7 @@ package urn
 
 import (
 	"fmt"
+	v1 "k8s.io/api/core/v1"
 	"strings"
 )
 
@@ -39,6 +40,7 @@ type Builder interface {
 	BuildPersistentVolumeExternalID(persistentVolumeName string) string
 	BuildComponentExternalID(component, namespace, name string) string
 	BuildEndpointExternalID(endpointID string) string
+	BuildNodeURNs(node v1.Node) []string
 }
 
 type urnBuilder struct {
@@ -209,6 +211,37 @@ func (b *urnBuilder) BuildComponentExternalID(component, namespace, name string)
 // endpointID
 func (b *urnBuilder) BuildEndpointExternalID(endpointID string) string {
 	return fmt.Sprintf("urn:endpoint:/%s:%s", b.url, endpointID)
+}
+
+// BuildNodeURNs creates identifier list to merge with StackState components
+func (b *urnBuilder) BuildNodeURNs(node v1.Node) []string {
+
+	identifiers := make([]string, 0, len(node.Status.Addresses)+1)
+	for _, address := range node.Status.Addresses {
+		switch addressType := address.Type; addressType {
+		case v1.NodeInternalIP:
+			identifiers = append(identifiers, fmt.Sprintf("urn:ip:/%s:%s:%s", b.url, node.Name, address.Address))
+		case v1.NodeExternalIP:
+			identifiers = append(identifiers, fmt.Sprintf("urn:ip:/%s:%s", b.url, address.Address))
+		case v1.NodeInternalDNS:
+			identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s:%s", b.url, address.Address))
+		case v1.NodeExternalDNS:
+			identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", address.Address))
+		case v1.NodeHostName:
+			//do nothing with it
+		default:
+			continue
+		}
+	}
+
+	if azureArn := strings.TrimPrefix(node.Spec.ProviderID, "azure:///"); azureArn != node.Spec.ProviderID {
+		identifiers = append(identifiers,
+			"urn:azure:/"+azureArn,
+			"urn:azure:/"+strings.ToUpper(azureArn), // to match uppercased ARN from Azure Stackpack
+		)
+	}
+
+	return identifiers
 }
 
 // ClusterTypeFromString converts a string representation of the ClusterType to the specific ClusterType

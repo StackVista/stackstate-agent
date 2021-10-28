@@ -3,12 +3,14 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubelet
 // +build kubelet
 
 package kubelet
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname/hostnamedata"
 
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	k "github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
@@ -20,20 +22,20 @@ type kubeUtilGetter func() (k.KubeUtilInterface, error)
 var kubeUtilGet kubeUtilGetter = k.GetKubeUtil
 
 // HostnameProvider builds a hostname from the kubernetes nodename and an optional cluster-name
-func HostnameProvider() (string, error) {
+func HostnameProvider() (*hostnamedata.HostnameData, error) {
 	ku, err := kubeUtilGet()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	nodeName, err := ku.GetNodename()
 	if err != nil {
-		return "", fmt.Errorf("couldn't fetch the host nodename from the kubelet: %s", err)
+		return nil, fmt.Errorf("couldn't fetch the host nodename from the kubelet: %s", err)
 	}
 
 	clusterName := clustername.GetClusterName()
 	if clusterName == "" {
 		log.Debugf("Now using plain kubernetes nodename as an alias: no cluster name was set and none could be autodiscovered")
-		return nodeName, nil
+		return hostnamedata.JustHostname(nodeName, nil)
 	}
-	return (nodeName + "-" + clusterName), nil
+	return hostnamedata.JustHostname(nodeName+"-"+clusterName, nil)
 }
