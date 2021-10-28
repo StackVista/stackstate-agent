@@ -3,7 +3,7 @@
   command: helm upgrade --install \
     --namespace {{namespace}} \
     --create-namespace \
-    --set-string 'stackstate.apiKey'='{{api_key}}' \
+    --set-string 'stackstate.apiKey'='API_KEY' \
     --set-string 'stackstate.cluster.name'='{{cluster_name}}' \
     --set-string 'stackstate.url'='http://{{ hostvars['kubernetes-cluster-agent']['ansible_host'] }}:7077/stsAgent' \
     --set "agent.image.tag={{agent_current_branch}}" \
