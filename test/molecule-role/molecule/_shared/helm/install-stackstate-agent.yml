@@ -1,7 +1,7 @@
 ---
 - name: Helm install StackState Agent
   command: helm upgrade --install \
-    --namespace stackstate \
+    --namespace {{namespace}} \
     --create-namespace \
     --set-string 'stackstate.apiKey'='{{api_key}}' \
     --set-string 'stackstate.cluster.name'='{{cluster_name}}' \
@@ -10,7 +10,7 @@
     --set "agent.image.repository={{agent_docker_repo}}" \
     --set "clusterAgent.image.tag={{agent_current_branch}}" \
     --set "clusterAgent.image.repository={{cluster_agent_docker_repo}}" \
-    --values ./values.yaml
+    --values ./values.yml \
     stackstate-cluster-agent stackstate/cluster-agent
   args:
     chdir: /home/ubuntu/template
