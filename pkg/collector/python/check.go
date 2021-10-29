@@ -171,6 +171,20 @@ func (c *PythonCheck) getPythonWarnings(gstate *stickyLock) []error {
 	return warnings
 }
 
+// [sts] Make sure collection_interval is always set
+func (c *PythonCheck) setCollectionIntervalToInstanceData(data integration.Data) (integration.Data, error) {
+	// make sure collection_interval is set within the instance data
+	var rawInstance integration.RawMap
+	err := yaml.Unmarshal(data, &rawInstance)
+	if err != nil {
+		return nil, err
+	}
+
+	rawInstance[string("collection_interval")] = int(c.interval.Seconds())
+
+	return yaml.Marshal(rawInstance)
+}
+
 // Configure the Python check from YAML data
 func (c *PythonCheck) Configure(data integration.Data, initConfig integration.Data, source string) error {
 	// Generate check ID
@@ -199,8 +213,8 @@ func (c *PythonCheck) Configure(data integration.Data, initConfig integration.Da
 	}
 
 	// See if a collection interval was specified
-	if commonOptions.MinCollectionInterval > 0 {
-		c.interval = time.Duration(commonOptions.MinCollectionInterval) * time.Second
+	if commonOptions.GetCollectionInterval() > 0 {
+		c.interval = time.Duration(commonOptions.GetCollectionInterval()) * time.Second
 	}
 
 	// Disable default hostname if specified
@@ -223,8 +237,14 @@ func (c *PythonCheck) Configure(data integration.Data, initConfig integration.Da
 		}
 	}
 
+	// [sts] Make sure collection_interval is always set
+	updatedInstanceData, err := c.setCollectionIntervalToInstanceData(data)
+	if err != nil {
+		return err
+	}
+
 	cInitConfig := TrackedCString(string(initConfig))
-	cInstance := TrackedCString(string(data))
+	cInstance := TrackedCString(string(updatedInstanceData))
 	cCheckID := TrackedCString(string(c.id))
 	cCheckName := TrackedCString(c.ModuleName)
 	defer C._free(unsafe.Pointer(cInitConfig))
