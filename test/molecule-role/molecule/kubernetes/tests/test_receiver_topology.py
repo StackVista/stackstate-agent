@@ -609,7 +609,7 @@ def test_cluster_agent_pod_mount_volume_relation(host, ansible_var):
 
         # stackstate-cluster-agent Pod -> Volume mount (secret)
         cluster_agent_urn = \
-            "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-.*:container/stackstate-cluster-agent->" \
+            "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-.*:container/stackstate-cluster-agent" \
             % (cluster_name, namespace)
         before_1_21 = _find_mount_relation(
             json_data,
@@ -626,7 +626,7 @@ def test_cluster_agent_pod_mount_volume_relation(host, ansible_var):
         assert relation.startswith("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent" % (cluster_name, namespace))
 
         # stackstate-agent Pod -> Volume mount (secret)
-        agent_urn = "urn:kubernetes:/%s:%s:pod/stackstate-agent-.*:container/stackstate-agent->" \
+        agent_urn = "urn:kubernetes:/%s:%s:pod/stackstate-agent-.*:container/stackstate-agent" \
                     % (cluster_name, namespace)
         before_1_21 = _find_mount_relation(
             json_data,
