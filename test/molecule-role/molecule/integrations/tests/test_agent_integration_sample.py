@@ -453,7 +453,7 @@ def test_agent_integration_sample_health_synchronization(host):
 
         assert _health_contains_payload({
                 "IntakeHealthMainStreamStart": {
-                    "repeatIntervalMs":15000
+                    "repeatIntervalMs":30000
                 }
             }
         ) is not None
