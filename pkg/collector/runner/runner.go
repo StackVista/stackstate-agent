@@ -246,7 +246,8 @@ func (r *Runner) work() {
 		// see if the check is already running
 		r.m.Lock()
 		if _, isRunning := r.runningChecks[check.ID()]; isRunning {
-			log.Debugf("Check %s is already running, skip execution...", check)
+			// [sts] Changed this to warning because we are more serious about the collection_interval being met
+			_ = log.Warnf("Check %s did not finish execution with the defined collection_interval time '%s', skipping execution...", check, check.Interval().String())
 			r.m.Unlock()
 			continue
 		} else {

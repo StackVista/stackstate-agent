@@ -31,8 +31,6 @@ if [ -z "$1" ] || [ "$1" == "help" ]; then
     exit 1
 fi
 
-export LC_ALL=en_US.utf-8
-export LANG=en_US.utf-8
 export CONDA_BASE="${HOME}/miniconda3"
 
 # see if conda is available -- when running locally and use the conda base path
@@ -49,10 +47,13 @@ fi
 set -e
 
 export STACKSTATE_BRANCH=${STACKSTATE_BRANCH:-master}
+
 export MAJOR_VERSION=${MAJOR_VERSION:-3}
 export STS_AWS_TEST_BUCKET=${STS_AWS_TEST_BUCKET:-stackstate-agent-3-test}
 export STS_DOCKER_TEST_REPO=${STS_DOCKER_TEST_REPO:-stackstate-agent-test}
 export STS_DOCKER_TEST_REPO_CLUSTER=${STS_DOCKER_TEST_REPO_CLUSTER:-stackstate-cluster-agent-test}
+export LC_ALL=en_US.utf-8
+export LANG=en_US.utf-8
 
 if [[ -z $CI_COMMIT_REF_NAME ]]; then
   export AGENT_CURRENT_BRANCH=`git rev-parse --abbrev-ref HEAD`
@@ -138,7 +139,6 @@ if [ -z "$CI_COMMIT_SHA" ]; then
     sleep 5
 fi
 
-# Cleanup for the cache folder before we create a new instance
 remove_molecule_cache_folder()
 {
     MOLECULE_CACHE_PATH="$HOME/.cache/molecule/molecule-role/$1"
@@ -147,13 +147,11 @@ remove_molecule_cache_folder()
     fi
 }
 
-# Generic handler for all the molecule calls
 execute_molecule()
 {
-    echo "molecule --base-config ./molecule/$1/provisioner.$2.yml $3 --scenario-name $1"
-    molecule --base-config "./molecule/$1/provisioner.$2.yml" "$3" --scenario-name "$1"
+    all_args=("$@")
+    molecule --base-config "./molecule/$1/provisioner.$2.yml" "$3" --scenario-name "$1" "${all_args[@]:3}"
 }
-
 
 if [[ $2 == "create" ]]; then
     execute_molecule "$1" setup create
@@ -173,8 +171,14 @@ elif [[ $2 == "login" ]]; then
     # we can not setup a custom scenario for login thus we have to restore the key inside the sh script
     cp ".cache/molecule/molecule-role/$1/ssh_key" "$HOME/.cache/molecule/molecule-role/$1/ssh_key"
     chmod 600 "$HOME/.cache/molecule/molecule-role/$1/ssh_key"
-    execute_molecule "$1" run login
+
+    if [ -z "$3" ]; then
+        execute_molecule "$1" run login
+    else
+        execute_molecule "$1" run login -h "$3"
+    fi
 
 elif [[ $2 == "destroy" ]]; then
     execute_molecule "$1" setup destroy
 fi
+

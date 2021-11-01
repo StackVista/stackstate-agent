@@ -1,5 +1,7 @@
 init_config:
-  min_collection_interval: 30
 
 instances:
   - url: 'http://localhost'
+    # Left as min_collection_interval to test that the rewrite to collection_interval works
+    min_collection_interval: 30
+

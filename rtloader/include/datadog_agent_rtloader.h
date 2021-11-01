@@ -22,10 +22,10 @@
 extern "C" {
 #endif
 
-struct rtloader_s;
+struct rtloader_s {};
 typedef struct rtloader_s rtloader_t;
 
-struct rtloader_pyobject_s;
+struct rtloader_pyobject_s {};
 typedef struct rtloader_pyobject_s rtloader_pyobject_t;
 
 // FACTORIES
