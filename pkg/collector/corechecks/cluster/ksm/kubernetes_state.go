@@ -65,7 +65,8 @@ type KSMConfig struct {
 	// deployment metrics.
 	// label_joins:
 	//   kube_deployment_labels:
-	//     label_to_match: deployment
+	//     labels_to_match:
+	//       - deployment
 	//     labels_to_get:
 	//       - label_addonmanager_kubernetes_io_mode
 	LabelJoins map[string]*JoinsConfig `yaml:"label_joins"`
