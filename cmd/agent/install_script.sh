@@ -528,7 +528,7 @@ elif [ "$OS" = "SUSE" ]; then
   fi
   echo -e "  \033[33mInstalling package: $agent_flavor\n\033[0m"
 
-  $sudo_cmd zypper --non-interactive install "$agent_flavor"
+  $sudo_cmd ZYPP_RPM_DEBUG="${ZYPP_RPM_DEBUG:-0}" zypper --non-interactive install "$agent_flavor"
 
 else
     print_red "Your OS or distribution is not supported yet.\n"
