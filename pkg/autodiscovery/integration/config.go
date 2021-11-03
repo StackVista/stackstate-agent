@@ -59,8 +59,11 @@ type Config struct {
 
 // CommonInstanceConfig holds the reserved fields for the yaml instance data
 type CommonInstanceConfig struct {
-	MinCollectionInterval int      `yaml:"min_collection_interval"`
-	EmptyDefaultHostname  bool     `yaml:"empty_default_hostname"`
+	// [sts] This is a legacy setting and is replaced by the CollectionInterval below, we keep this for backwards compatibility
+	MinCollectionInterval   int  `yaml:"min_collection_interval"`
+	// [sts] Add CollectionInterval, replacing MinCollectionInterval
+	CollectionInterval   int  `yaml:"collection_interval"`
+	EmptyDefaultHostname bool `yaml:"empty_default_hostname"`
 	Tags                  []string `yaml:"tags"`
 	Service               string   `yaml:"service"`
 	Name                  string   `yaml:"name"`
@@ -109,6 +112,15 @@ func (c *Config) String() string {
 	}
 
 	return string(buffer)
+}
+
+// GetCollectionInterval returns the collection interval, taking into account legacy configuration. [sts]
+func (c *CommonInstanceConfig) GetCollectionInterval() int {
+	if c.CollectionInterval != 0 {
+		return c.CollectionInterval
+	}
+
+	return c.MinCollectionInterval
 }
 
 // IsTemplate returns if the config has AD identifiers
