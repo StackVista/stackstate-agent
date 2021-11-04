@@ -111,6 +111,7 @@ resource "aws_nat_gateway" "nat_gateway" {
   depends_on    = [aws_internet_gateway.igw]
   tags = {
     Environment = var.CLUSTER_NAME
+    Name = "${var.CLUSTER_NAME}-nat-gw-1"
   }
 }
 
@@ -120,6 +121,7 @@ resource "aws_nat_gateway" "nat_gateway_2" {
   depends_on    = [aws_internet_gateway.igw]
   tags = {
     Environment = var.CLUSTER_NAME
+    Name = "${var.CLUSTER_NAME}-nat-gw-2"
   }
 }
 
