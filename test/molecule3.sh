@@ -52,6 +52,8 @@ export MAJOR_VERSION=${MAJOR_VERSION:-3}
 export STS_AWS_TEST_BUCKET=${STS_AWS_TEST_BUCKET:-stackstate-agent-3-test}
 export STS_DOCKER_TEST_REPO=${STS_DOCKER_TEST_REPO:-stackstate-agent-test}
 export STS_DOCKER_TEST_REPO_CLUSTER=${STS_DOCKER_TEST_REPO_CLUSTER:-stackstate-cluster-agent-test}
+export LC_ALL=en_US.utf-8
+export LANG=en_US.utf-8
 
 if [[ -z $CI_COMMIT_REF_NAME ]]; then
   export AGENT_CURRENT_BRANCH=`git rev-parse --abbrev-ref HEAD`
@@ -64,14 +66,12 @@ conda activate molecule
 pip3 install -r molecule-role/requirements-molecule3.txt
 
 # reads env file to file variables for molecule jobs locally
-ENV_FILE=./.env
-if test -f "$ENV_FILE"; then
-    echo ""
-    echo "------------ Sourcing env file with contents ------------"
-    echo "$(cat $ENV_FILE)"
-    echo "---------------------------------------------------------"
-    echo ""
-    source $ENV_FILE
+if test -f "./.envrc"; then
+    source "./.envrc"
+elif test -f "./.env"; then
+    source "./.env"
+else
+    echo "No env variables file found, Create either a .envrc or .env file to auto load env variables if required"
 fi
 
 cd molecule-role
@@ -149,7 +149,8 @@ remove_molecule_cache_folder()
 
 execute_molecule()
 {
-    molecule --base-config "./molecule/$1/provisioner.$2.yml" "$3" --scenario-name "$1"
+    all_args=("$@")
+    molecule --base-config "./molecule/$1/provisioner.$2.yml" "$3" --scenario-name "$1" "${all_args[@]:3}"
 }
 
 if [[ $2 == "create" ]]; then
@@ -164,7 +165,18 @@ elif [[ $2 == "test" ]]; then
     execute_molecule "$1" run test
 
 elif [[ $2 == "login" ]]; then
-    execute_molecule "$1" run login
+    # Login is used on dev only, thus we restore the .cache file that contains the ssh key
+    # This allows the dev to connect back into the server
+    # For some reason the ssh key is deleted after the prepare phase is done thus why we have a backup and
+    # we can not setup a custom scenario for login thus we have to restore the key inside the sh script
+    cp ".cache/molecule/molecule-role/$1/ssh_key" "$HOME/.cache/molecule/molecule-role/$1/ssh_key"
+    chmod 600 "$HOME/.cache/molecule/molecule-role/$1/ssh_key"
+
+    if [ -z "$3" ]; then
+        execute_molecule "$1" run login
+    else
+        execute_molecule "$1" run login -h "$3"
+    fi
 
 elif [[ $2 == "destroy" ]]; then
     execute_molecule "$1" setup destroy
