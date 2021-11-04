@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -8,7 +9,6 @@ import (
 
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/pborman/uuid"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -384,7 +384,7 @@ func createProjectedVolume(vc VolumeCreator, pod PodIdentifier, volume v1.Volume
 		return nil, nil
 	}
 
-	extID := vc.GetURNBuilder().BuildExternalVolumeExternalID("projected", uuid.New())
+	extID := vc.GetURNBuilder().BuildExternalVolumeExternalID("projected", volume.Name)
 
 	tags := map[string]string{
 		"kind": "projection",
