@@ -1,3 +1,4 @@
+// StackState
 package topology
 
 import (

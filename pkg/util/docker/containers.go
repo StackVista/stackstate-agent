@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build docker
 // +build docker
 
 package docker
@@ -11,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 	"io"
 	"net"
 	"regexp"
@@ -33,6 +35,30 @@ type ContainerListConfig struct {
 	IncludeExited bool
 	FlagExcluded  bool
 }
+
+// sts begin
+func (d *DockerUtil) GetContainers() ([]*util.Container, error) {
+	dockerContainers, err := d.ListContainers(&ContainerListConfig{IncludeExited: false, FlagExcluded: true})
+	if err != nil {
+		return nil, err
+	}
+	uContainers := make([]*util.Container, 0, len(dockerContainers))
+	for _, dContainer := range dockerContainers {
+		container := &util.Container{
+			Name:   dContainer.Name,
+			Type:   dContainer.Type,
+			ID:     dContainer.ID,
+			Image:  dContainer.Image,
+			Mounts: dContainer.Mounts,
+			State:  dContainer.State,
+			Health: dContainer.Health,
+		}
+		uContainers = append(uContainers, container)
+	}
+	return uContainers, nil
+}
+
+// sts end
 
 // Containers gets a list of all containers on the current node using a mix of
 // the Docker APIs and cgroups stats. We attempt to limit syscalls where possible.
