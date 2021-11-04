@@ -9,8 +9,8 @@ package checks
 
 import (
 	"fmt"
-	model "github.com/DataDog/agent-payload/process"
-	"github.com/StackVista/stackstate-agent/pkg/process/config"
+	model "github.com/DataDog/agent-payload/v5/process"
+	"github.com/DataDog/datadog-agent/pkg/process/config"
 )
 
 // Pod is a singleton PodCheck.

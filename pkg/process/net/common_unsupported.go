@@ -3,8 +3,8 @@
 package net
 
 import (
-	model "github.com/DataDog/agent-payload/process"
-	"github.com/StackVista/stackstate-agent/pkg/ebpf"
+	model "github.com/DataDog/agent-payload/v5/process"
+	"github.com/DataDog/datadog-agent/pkg/ebpf"
 )
 
 // RemoteSysProbeUtil is not supported
