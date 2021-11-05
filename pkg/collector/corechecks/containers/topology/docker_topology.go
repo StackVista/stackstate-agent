@@ -1,5 +1,9 @@
 // Package topology is responsible for gathering topology for containers
 // StackState
+
+//go:build docker
+// +build docker
+
 package topology
 
 import (

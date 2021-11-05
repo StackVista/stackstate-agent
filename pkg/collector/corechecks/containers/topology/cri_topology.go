@@ -1,5 +1,9 @@
 // Package topology is responsible for gathering topology for containers
 // StackState
+
+//go:build cri
+// +build cri
+
 package topology
 
 import (
