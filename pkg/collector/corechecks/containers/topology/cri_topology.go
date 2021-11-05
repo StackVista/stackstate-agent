@@ -7,54 +7,54 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
-	"github.com/StackVista/stackstate-agent/pkg/util/docker"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/cri"
 )
 
 const (
-	dockerTopologyCheckName = "docker_topology"
+	criTopologyCheckName = "cri_topology"
 )
 
-// DockerTopologyCollector contains the checkID and topology instance for the docker topology check
-type DockerTopologyCollector struct {
+// CRITopologyCollector contains the checkID and topology instance for the docker topology check
+type CRITopologyCollector struct {
 	corechecks.CheckTopologyCollector
 }
 
-// MakeDockerTopologyCollector returns a new instance of DockerTopologyCollector
-func MakeDockerTopologyCollector() *DockerTopologyCollector {
-	return &DockerTopologyCollector{
-		corechecks.MakeCheckTopologyCollector(dockerTopologyCheckName, topology.Instance{
-			Type: "docker",
+// MakeCRITopologyCollector returns a new instance of CRITopologyCollector
+func MakeCRITopologyCollector() *CRITopologyCollector {
+	return &CRITopologyCollector{
+		corechecks.MakeCheckTopologyCollector(criTopologyCheckName, topology.Instance{
+			Type: "cri",
 			URL:  "agents",
 		}),
 	}
 }
 
 // BuildContainerTopology collects all docker container topology
-func (dt *DockerTopologyCollector) BuildContainerTopology(du *docker.DockerUtil) error {
+func (critc *CRITopologyCollector) BuildContainerTopology(cu *cri.CRIUtil) error {
 	sender := batcher.GetBatcher()
 	if sender == nil {
 		return errors.New("no batcher instance available, skipping BuildContainerTopology")
 	}
 
 	// collect all containers as topology components
-	containerComponents, err := dt.collectContainers(du)
+	containerComponents, err := critc.collectContainers(cu)
 	if err != nil {
 		return err
 	}
 
 	// submit all collected topology components
 	for _, component := range containerComponents {
-		sender.SubmitComponent(dt.CheckID, dt.TopologyInstance, *component)
+		sender.SubmitComponent(critc.CheckID, critc.TopologyInstance, *component)
 	}
 
-	sender.SubmitComplete(dt.CheckID)
+	sender.SubmitComplete(critc.CheckID)
 
 	return nil
 }
 
 // collectContainers collects containers from the docker util and produces topology.Component
-func (dt *DockerTopologyCollector) collectContainers(du *docker.DockerUtil) ([]*topology.Component, error) {
-	cList, err := du.GetContainers()
+func (critc *CRITopologyCollector) collectContainers(cu *cri.CRIUtil) ([]*topology.Component, error) {
+	cList, err := cu.GetContainers()
 	if err != nil {
 		return nil, err
 	}

@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build cri
 // +build cri
 
 package cri
@@ -10,6 +11,8 @@ package cri
 import (
 	"context"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	dtypes "github.com/docker/docker/api/types"
 	"net"
 	"sync"
 	"time"
@@ -103,6 +106,37 @@ func GetUtil() (*CRIUtil, error) {
 	}
 	return globalCRIUtil, nil
 }
+
+// sts begin
+func (c *CRIUtil) GetContainers() ([]*util.Container, error) {
+	containerStats, err := c.ListContainerStats()
+	if err != nil {
+		return nil, err
+	}
+	uContainers := make([]*util.Container, 0, len(containerStats))
+	for cid, stats := range containerStats {
+		log.Infof("STAC-14498 DEBUG cri stats '%s' -> %+v", cid, stats)
+		cstatus, err := c.GetContainerStatus(cid)
+		if err != nil {
+			log.Debugf("Could not get status of container '%s'", cid)
+			continue
+		}
+		log.Infof("STAC-14498 DEBUG cri status '%s' -> %+v", cid, cstatus)
+		container := &util.Container{
+			Name:   cstatus.Metadata.Name,
+			Type:   "CRI",
+			ID:     cid,
+			Image:  cstatus.Image.Image,
+			Mounts: []dtypes.MountPoint{{Type: "mtype", Source: "/source", Destination: "/dest"}},
+			State:  cstatus.State.String(),
+			Health: "Health",
+		}
+		uContainers = append(uContainers, container)
+	}
+	return uContainers, nil
+}
+
+// sts end
 
 // ListContainerStats sends a ListContainerStatsRequest to the server, and parses the returned response
 func (c *CRIUtil) ListContainerStats() (map[string]*pb.ContainerStats, error) {
