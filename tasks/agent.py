@@ -59,6 +59,7 @@ DEFAULT_BUILD_TAGS = [
 ]
 
 AGENT_CORECHECKS = [
+    "containers",
     "containerd",
     "cpu",
     "cri",

@@ -1,3 +1,4 @@
+// Package topology is responsible for gathering topology for containers
 // StackState
 package topology
 
@@ -9,6 +10,7 @@ const (
 	containerType = "container"
 )
 
+// ContainerTopology is an interface for types capable of building container topology
 type ContainerTopology interface {
 	BuildContainerTopology(du *containers.ContainerUtil) error
 }

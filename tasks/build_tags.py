@@ -55,6 +55,7 @@ LINUX_ONLY_TAGS = [
     "systemd",
 ]
 WINDOWS_32BIT_EXCLUDE_TAGS = [
+    "cri"
     "orchestrator",
     "docker",
     "kubeapiserver",

@@ -99,6 +99,7 @@ type NetworkDestination struct {
 	Mask      uint64
 }
 
+// ContainerUtil is an interface for util classes capable of getting a list of Container
 type ContainerUtil interface {
 	GetContainers() ([]*Container, error)
 }

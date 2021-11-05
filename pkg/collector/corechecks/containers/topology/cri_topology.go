@@ -1,3 +1,4 @@
+// Package topology is responsible for gathering topology for containers
 // StackState
 package topology
 
