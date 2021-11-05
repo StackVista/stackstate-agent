@@ -12,7 +12,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/util"
 	"io"
 	"net"
 	"regexp"
@@ -37,14 +36,14 @@ type ContainerListConfig struct {
 }
 
 // sts begin
-func (d *DockerUtil) GetContainers() ([]*util.Container, error) {
+func (d *DockerUtil) GetContainers() ([]*containers.Container, error) {
 	dockerContainers, err := d.ListContainers(&ContainerListConfig{IncludeExited: false, FlagExcluded: true})
 	if err != nil {
 		return nil, err
 	}
-	uContainers := make([]*util.Container, 0, len(dockerContainers))
+	uContainers := make([]*containers.Container, 0, len(dockerContainers))
 	for _, dContainer := range dockerContainers {
-		container := &util.Container{
+		container := &containers.Container{
 			Name:   dContainer.Name,
 			Type:   dContainer.Type,
 			ID:     dContainer.ID,

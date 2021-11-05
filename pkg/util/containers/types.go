@@ -99,6 +99,10 @@ type NetworkDestination struct {
 	Mask      uint64
 }
 
+type ContainerUtil interface {
+	GetContainers() ([]*Container, error)
+}
+
 // ContainerImplementation is a generic interface that defines a common interface across
 // different container implementation (Linux cgroup, windows containers, etc.)
 type ContainerImplementation interface {
