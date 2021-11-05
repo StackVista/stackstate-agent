@@ -105,7 +105,12 @@ Basic information about the Agent are available at:
       fallback_msg
       exit 1;
     fi
-    
+
+    if [ "$site" == "ddog-gov.com" ]; then
+      fallback_msg
+      exit 1;
+    fi
+
     while true; do
         read -t 60 -p  "Do you want to send a failure report to Datadog (including $logfile)? (y/[n]) " -r yn || on_read_error
         case $yn in
@@ -239,6 +244,9 @@ if [ ! $api_key ]; then
 fi
 
 report_failure_url="https://api.datadoghq.com/agent_stats/report_failure"
+if [ -n "$DD_SITE" ]; then
+    report_failure_url="https://api.${DD_SITE}/agent_stats/report_failure"
+fi
 if [ -n "$TESTING_REPORT_URL" ]; then
   report_failure_url=$TESTING_REPORT_URL
 fi
