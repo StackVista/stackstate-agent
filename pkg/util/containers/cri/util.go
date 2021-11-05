@@ -11,7 +11,7 @@ package cri
 import (
 	"context"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
 	dtypes "github.com/docker/docker/api/types"
 	"net"
 	"sync"
@@ -108,12 +108,12 @@ func GetUtil() (*CRIUtil, error) {
 }
 
 // sts begin
-func (c *CRIUtil) GetContainers() ([]*util.Container, error) {
+func (c *CRIUtil) GetContainers() ([]*containers.Container, error) {
 	containerStats, err := c.ListContainerStats()
 	if err != nil {
 		return nil, err
 	}
-	uContainers := make([]*util.Container, 0, len(containerStats))
+	uContainers := make([]*containers.Container, 0, len(containerStats))
 	for cid, stats := range containerStats {
 		log.Infof("STAC-14498 DEBUG cri stats '%s' -> %+v", cid, stats)
 		cstatus, err := c.GetContainerStatus(cid)
@@ -122,7 +122,7 @@ func (c *CRIUtil) GetContainers() ([]*util.Container, error) {
 			continue
 		}
 		log.Infof("STAC-14498 DEBUG cri status '%s' -> %+v", cid, cstatus)
-		container := &util.Container{
+		container := &containers.Container{
 			Name:   cstatus.Metadata.Name,
 			Type:   "CRI",
 			ID:     cid,

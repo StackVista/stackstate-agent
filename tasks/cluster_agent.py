@@ -23,7 +23,9 @@ DEFAULT_BUILD_TAGS = [
     "secrets",
     "orchestrator",
     "zlib",
-    "docker"
+    "docker",
+    "cri",
+    "containers"
 ]
 
 

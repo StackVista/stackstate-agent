@@ -2,7 +2,7 @@
 package topology
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
 )
 
 const (
@@ -10,5 +10,5 @@ const (
 )
 
 type ContainerTopology interface {
-	BuildContainerTopology(du *util.ContainerUtil) error
+	BuildContainerTopology(du *containers.ContainerUtil) error
 }
