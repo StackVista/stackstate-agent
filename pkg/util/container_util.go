@@ -1,13 +1,15 @@
 package util
 
-import "github.com/docker/docker/api/types"
+import (
+	"github.com/opencontainers/runtime-spec/specs-go"
+)
 
 type Container struct {
 	Name   string
 	Type   string
 	ID     string
 	Image  string
-	Mounts []types.MountPoint
+	Mounts []specs.Mount
 	State  string
 	Health string
 }
