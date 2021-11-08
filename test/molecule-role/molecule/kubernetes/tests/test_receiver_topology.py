@@ -234,14 +234,6 @@ def test_cluster_agent_base_topology(host, ansible_var):
             type_name="configmap",
             external_id_assert_fn=lambda v: cluster_agent_configmap_match.findall(v)
         )
-        # 1 cluster agent secret stackstate-auth-token
-        cluster_agent_secret_match = re.compile("urn:kubernetes:/{}:{}:secret/"
-                                                "stackstate-cluster-agent-token-.*".format(cluster_name, namespace))
-        assert _find_component(
-            json_data=json_data,
-            type_name="volume",
-            external_id_assert_fn=lambda v: cluster_agent_secret_match.findall(v)
-        )
         # 1 volume cgroups
         volume_match = re.compile("urn:kubernetes:external-volume:hostpath/.*/cgroup".format(cluster_name, namespace))
         assert _find_component(
