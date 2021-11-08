@@ -9,9 +9,11 @@ package containerd
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
+	"github.com/StackVista/stackstate-agent/pkg/util"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/StackVista/stackstate-agent/pkg/util/retry"
@@ -112,7 +114,7 @@ func (c *ContainerdUtil) connect() error {
 	if c.cl != nil {
 		err = c.cl.Reconnect()
 		if err != nil {
-			log.Errorf("Could not reconnect to the containerd daemon: %v", err)
+			_ = log.Errorf("Could not reconnect to the containerd daemon: %v", err)
 			return c.cl.Close() // Attempt to close connections to avoid overloading the GRPC
 		}
 		return nil
@@ -132,6 +134,62 @@ func (c *ContainerdUtil) connect() error {
 // GetEvents interfaces with the containerd api to get the event service.
 func (c *ContainerdUtil) GetEvents() containerd.EventService {
 	return c.cl.EventService()
+}
+
+// GetContainers interfaces with the containerd api to get the list of containers.
+func (c *ContainerdUtil) GetContainers() ([]*util.Container, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.queryTimeout)
+	defer cancel()
+
+	dContainers, err := c.Containers()
+	if err != nil {
+		return nil, err
+	}
+
+	uContainers := make([]*util.Container, 0, len(dContainers))
+	for _, dContainer := range dContainers {
+		image, err := dContainer.Image(ctx)
+		if err != nil {
+			_ = log.Errorf("Error extracting containerd %v information: %v", "Image", err)
+			continue
+		}
+
+		info, err := dContainer.Info(ctx)
+		if err != nil {
+			_ = log.Errorf("Error extracting containerd %v information: %v", "Info", err)
+			continue
+		}
+
+		spec, err := dContainer.Spec(ctx)
+		if err != nil {
+			_ = log.Errorf("Error extracting containerd %v information: %v", "Spec", err)
+			continue
+		}
+
+		task, err := dContainer.Task(ctx, nil)
+		if err != nil {
+			_ = log.Errorf("Error extracting containerd %v information: %v", "Task", err)
+			continue
+		}
+
+		status, err := task.Status(ctx)
+		if err != nil {
+			_ = log.Errorf("Error extracting Task %v information: %v", "Status", err)
+			continue
+		}
+
+		container := &util.Container{
+			Name:   info.ID,
+			Type:   image.Target().MediaType,
+			ID:     dContainer.ID(),
+			Image:  info.Image,
+			Mounts: spec.Mounts,
+			State:  fmt.Sprintf("%v",status.Status),
+			Health: "",
+		}
+		uContainers = append(uContainers, container)
+	}
+	return uContainers, nil
 }
 
 // Containers interfaces with the containerd api to get the list of Containers.
