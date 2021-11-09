@@ -85,6 +85,7 @@ func (c *CRICheck) Configure(config, initConfig integration.Data, source string)
 
 // Run executes the check
 func (c *CRICheck) Run() error {
+	log.Infof("### DEBUG STAC-14498 CRI Run check")
 	sender, err := aggregator.GetSender(c.ID())
 	if err != nil {
 		return err

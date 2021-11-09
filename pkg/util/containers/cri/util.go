@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/util/containers"
 	dtypes "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/mount"
 	"net"
 	"sync"
 	"time"
@@ -108,28 +109,51 @@ func GetUtil() (*CRIUtil, error) {
 }
 
 // sts begin
+var MountPropagationMap = map[pb.MountPropagation]mount.Propagation{
+	pb.MountPropagation_PROPAGATION_PRIVATE:           mount.PropagationPrivate,
+	pb.MountPropagation_PROPAGATION_HOST_TO_CONTAINER: mount.PropagationRSlave,
+	pb.MountPropagation_PROPAGATION_BIDIRECTIONAL:     mount.PropagationRShared,
+}
+var ContainerStateMap = map[pb.ContainerState]string{
+	pb.ContainerState_CONTAINER_CREATED: containers.ContainerCreatedState,
+	pb.ContainerState_CONTAINER_RUNNING: containers.ContainerRunningState,
+	pb.ContainerState_CONTAINER_EXITED:  containers.ContainerExitedState,
+	pb.ContainerState_CONTAINER_UNKNOWN: containers.ContainerUnknownState,
+}
+
 func (c *CRIUtil) GetContainers() ([]*containers.Container, error) {
 	containerStats, err := c.ListContainerStats()
 	if err != nil {
 		return nil, err
 	}
 	uContainers := make([]*containers.Container, 0, len(containerStats))
-	for cid, stats := range containerStats {
-		log.Infof("STAC-14498 DEBUG cri stats '%s' -> %+v", cid, stats)
+	for cid := range containerStats {
 		cstatus, err := c.GetContainerStatus(cid)
 		if err != nil {
 			log.Debugf("Could not get status of container '%s'", cid)
 			continue
 		}
-		log.Infof("STAC-14498 DEBUG cri status '%s' -> %+v", cid, cstatus)
+		mounts := make([]dtypes.MountPoint, 0, len(cstatus.Mounts))
+		for _, cmount := range cstatus.Mounts {
+			mountPoint := dtypes.MountPoint{
+				Source:      cmount.HostPath,
+				Destination: cmount.ContainerPath,
+			}
+			if propagation, ok := MountPropagationMap[cmount.Propagation]; ok {
+				mountPoint.Propagation = propagation
+			}
+			mounts = append(mounts, mountPoint)
+		}
 		container := &containers.Container{
-			Name:   cstatus.Metadata.Name,
 			Type:   "CRI",
+			Name:   cstatus.Metadata.Name,
 			ID:     cid,
 			Image:  cstatus.Image.Image,
-			Mounts: []dtypes.MountPoint{{Type: "mtype", Source: "/source", Destination: "/dest"}},
-			State:  cstatus.State.String(),
-			Health: "Health",
+			Mounts: mounts,
+			Health: "",
+		}
+		if state, ok := ContainerStateMap[cstatus.State]; ok {
+			container.State = state
 		}
 		uContainers = append(uContainers, container)
 	}
