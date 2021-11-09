@@ -9,7 +9,6 @@ package containerd
 
 import (
 	"context"
-	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/container_runtime"
 	"sync"
 	"time"
@@ -148,11 +147,6 @@ func (c *ContainerdUtil) GetContainers() ([]*container_runtime.Container, error)
 
 	uContainers := make([]*container_runtime.Container, 0, len(dContainers))
 	for _, dContainer := range dContainers {
-		image, err := dContainer.Image(ctx)
-		if err != nil {
-			_ = log.Errorf("Error extracting containerd %v information: %v", "Image", err)
-			continue
-		}
 
 		info, err := dContainer.Info(ctx)
 		if err != nil {
@@ -177,10 +171,10 @@ func (c *ContainerdUtil) GetContainers() ([]*container_runtime.Container, error)
 			_ = log.Errorf("Error extracting Task %v information: %v", "Status", err)
 			continue
 		}
-		
+
 		container := &container_runtime.Container{
 			Name:   info.ID,
-			Type:   "containerd", //image.Target().MediaType,
+			Type:   "containerd",
 			ID:     dContainer.ID(),
 			Image:  info.Image,
 			Mounts: spec.Mounts,

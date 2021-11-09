@@ -11,9 +11,10 @@ package cri
 import (
 	"context"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/container_runtime"
 	"github.com/StackVista/stackstate-agent/pkg/util/containers"
-	dtypes "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/mount"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"net"
 	"sync"
 	"time"
@@ -121,30 +122,28 @@ var ContainerStateMap = map[pb.ContainerState]string{
 	pb.ContainerState_CONTAINER_UNKNOWN: containers.ContainerUnknownState,
 }
 
-func (c *CRIUtil) GetContainers() ([]*containers.Container, error) {
+func (c *CRIUtil) GetContainers() ([]*container_runtime.Container, error) {
 	containerStats, err := c.ListContainerStats()
 	if err != nil {
 		return nil, err
 	}
-	uContainers := make([]*containers.Container, 0, len(containerStats))
+	uContainers := make([]*container_runtime.Container, 0, len(containerStats))
 	for cid := range containerStats {
 		cstatus, err := c.GetContainerStatus(cid)
 		if err != nil {
 			log.Debugf("Could not get status of container '%s'", cid)
 			continue
 		}
-		mounts := make([]dtypes.MountPoint, 0, len(cstatus.Mounts))
+		mounts := make([]specs.Mount, 0, len(cstatus.Mounts))
 		for _, cmount := range cstatus.Mounts {
-			mountPoint := dtypes.MountPoint{
+			mountPoint := specs.Mount{
 				Source:      cmount.HostPath,
 				Destination: cmount.ContainerPath,
 			}
-			if propagation, ok := MountPropagationMap[cmount.Propagation]; ok {
-				mountPoint.Propagation = propagation
-			}
+
 			mounts = append(mounts, mountPoint)
 		}
-		container := &containers.Container{
+		container := &container_runtime.Container{
 			Type:   "CRI",
 			Name:   cstatus.Metadata.Name,
 			ID:     cid,
