@@ -120,7 +120,7 @@ type KSMConfig struct {
 type KSMCheck struct {
 	core.CheckBase
 	instance    *KSMConfig
-	store       []cache.Store
+	allStores   [][]cache.Store
 	telemetry   *telemetryCache
 	cancel      context.CancelFunc
 	isCLCRunner bool
@@ -250,6 +250,8 @@ func (k *KSMCheck) Configure(config, initConfig integration.Data, source string)
 
 	builder.WithKubeClient(c.Cl)
 
+	builder.WithVPAClient(c.VPAClient)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	k.cancel = cancel
 	builder.WithContext(ctx)
@@ -261,10 +263,10 @@ func (k *KSMCheck) Configure(config, initConfig integration.Data, source string)
 
 	builder.WithResync(time.Duration(resyncPeriod) * time.Second)
 
-	builder.WithGenerateStoreFunc(builder.GenerateStore)
+	builder.WithGenerateStoresFunc(builder.GenerateStores)
 
 	// Start the collection process
-	k.store = builder.Build()
+	k.allStores = builder.BuildStores()
 
 	return nil
 }
@@ -309,15 +311,19 @@ func (k *KSMCheck) Run() error {
 	sender.DisableDefaultHostname(true)
 
 	labelJoiner := newLabelJoiner(k.instance.LabelJoins)
-	for _, store := range k.store {
-		metrics := store.(*ksmstore.MetricsStore).Push(k.familyFilter, k.metricFilter)
-		labelJoiner.insertFamilies(metrics)
+	for _, stores := range k.allStores {
+		for _, store := range stores {
+			metrics := store.(*ksmstore.MetricsStore).Push(k.familyFilter, k.metricFilter)
+			labelJoiner.insertFamilies(metrics)
+		}
 	}
 
-	for _, store := range k.store {
-		metrics := store.(*ksmstore.MetricsStore).Push(ksmstore.GetAllFamilies, ksmstore.GetAllMetrics)
-		k.processMetrics(sender, metrics, labelJoiner)
-		k.processTelemetry(metrics)
+	for _, stores := range k.allStores {
+		for _, store := range stores {
+			metrics := store.(*ksmstore.MetricsStore).Push(ksmstore.GetAllFamilies, ksmstore.GetAllMetrics)
+			k.processMetrics(sender, metrics, labelJoiner)
+			k.processTelemetry(metrics)
+		}
 	}
 
 	k.sendTelemetry(sender)
@@ -601,7 +607,7 @@ func KubeStateMetricsFactory() check.Check {
 }
 
 // KubeStateMetricsFactoryWithParam is used only by test/benchmarks/kubernetes_state
-func KubeStateMetricsFactoryWithParam(labelsMapper map[string]string, labelJoins map[string]*JoinsConfig, store []cache.Store) *KSMCheck {
+func KubeStateMetricsFactoryWithParam(labelsMapper map[string]string, labelJoins map[string]*JoinsConfig, allStores [][]cache.Store) *KSMCheck {
 	check := newKSMCheck(
 		core.NewCheckBase(kubeStateMetricsCheckName),
 		&KSMConfig{
@@ -609,7 +615,7 @@ func KubeStateMetricsFactoryWithParam(labelsMapper map[string]string, labelJoins
 			LabelJoins:   labelJoins,
 			Namespaces:   []string{},
 		})
-	check.store = store
+	check.allStores = allStores
 	return check
 }
 
