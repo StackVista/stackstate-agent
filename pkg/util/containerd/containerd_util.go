@@ -10,10 +10,10 @@ package containerd
 import (
 	"context"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/container_runtime"
 	"sync"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/util"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/StackVista/stackstate-agent/pkg/util/retry"
@@ -137,7 +137,7 @@ func (c *ContainerdUtil) GetEvents() containerd.EventService {
 }
 
 // GetContainers interfaces with the containerd api to get the list of containers.
-func (c *ContainerdUtil) GetContainers() ([]*util.Container, error) {
+func (c *ContainerdUtil) GetContainers() ([]*container_runtime.Container, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.queryTimeout)
 	defer cancel()
 
@@ -146,7 +146,7 @@ func (c *ContainerdUtil) GetContainers() ([]*util.Container, error) {
 		return nil, err
 	}
 
-	uContainers := make([]*util.Container, 0, len(dContainers))
+	uContainers := make([]*container_runtime.Container, 0, len(dContainers))
 	for _, dContainer := range dContainers {
 		image, err := dContainer.Image(ctx)
 		if err != nil {
@@ -177,14 +177,14 @@ func (c *ContainerdUtil) GetContainers() ([]*util.Container, error) {
 			_ = log.Errorf("Error extracting Task %v information: %v", "Status", err)
 			continue
 		}
-
-		container := &util.Container{
+		
+		container := &container_runtime.Container{
 			Name:   info.ID,
-			Type:   image.Target().MediaType,
+			Type:   "containerd", //image.Target().MediaType,
 			ID:     dContainer.ID(),
 			Image:  info.Image,
 			Mounts: spec.Mounts,
-			State:  fmt.Sprintf("%v",status.Status),
+			State:  string(status.Status),
 			Health: "",
 		}
 		uContainers = append(uContainers, container)

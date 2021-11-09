@@ -12,7 +12,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/container_runtime"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"io"
 	"net"
 	"regexp"
@@ -37,25 +38,42 @@ type ContainerListConfig struct {
 }
 
 // sts begin
-func (d *DockerUtil) GetContainers() ([]*util.Container, error) {
+func (d *DockerUtil) GetContainers() ([]*container_runtime.Container, error) {
 	dockerContainers, err := d.ListContainers(&ContainerListConfig{IncludeExited: false, FlagExcluded: true})
 	if err != nil {
 		return nil, err
 	}
-	uContainers := make([]*util.Container, 0, len(dockerContainers))
+	uContainers := make([]*container_runtime.Container, 0, len(dockerContainers))
 	for _, dContainer := range dockerContainers {
-		container := &util.Container{
+		container := &container_runtime.Container{
 			Name:   dContainer.Name,
 			Type:   dContainer.Type,
 			ID:     dContainer.ID,
 			Image:  dContainer.Image,
-			Mounts: dContainer.Mounts,
+			Mounts: d.mapMountPointToMount(dContainer.Mounts),
 			State:  dContainer.State,
 			Health: dContainer.Health,
 		}
 		uContainers = append(uContainers, container)
 	}
 	return uContainers, nil
+}
+
+func (d *DockerUtil) mapMountPointToMount(mounts []types.MountPoint) []specs.Mount {
+	output := make([]specs.Mount, 0, len(mounts))
+
+	for _, v := range mounts {
+
+		mount := specs.Mount{
+			Destination: v.Destination,
+			Type: string(v.Type),
+			Source: v.Source,
+			Options: []string{},
+		}
+		output = append(output, mount)
+	}
+
+	return output
 }
 
 // sts end
