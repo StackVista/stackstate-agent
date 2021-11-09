@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build cri
 // +build cri
 
 package cri
@@ -10,6 +11,9 @@ package cri
 import (
 	"context"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	dtypes "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/mount"
 	"net"
 	"sync"
 	"time"
@@ -103,6 +107,60 @@ func GetUtil() (*CRIUtil, error) {
 	}
 	return globalCRIUtil, nil
 }
+
+// sts begin
+var MountPropagationMap = map[pb.MountPropagation]mount.Propagation{
+	pb.MountPropagation_PROPAGATION_PRIVATE:           mount.PropagationPrivate,
+	pb.MountPropagation_PROPAGATION_HOST_TO_CONTAINER: mount.PropagationRSlave,
+	pb.MountPropagation_PROPAGATION_BIDIRECTIONAL:     mount.PropagationRShared,
+}
+var ContainerStateMap = map[pb.ContainerState]string{
+	pb.ContainerState_CONTAINER_CREATED: containers.ContainerCreatedState,
+	pb.ContainerState_CONTAINER_RUNNING: containers.ContainerRunningState,
+	pb.ContainerState_CONTAINER_EXITED:  containers.ContainerExitedState,
+	pb.ContainerState_CONTAINER_UNKNOWN: containers.ContainerUnknownState,
+}
+
+func (c *CRIUtil) GetContainers() ([]*containers.Container, error) {
+	containerStats, err := c.ListContainerStats()
+	if err != nil {
+		return nil, err
+	}
+	uContainers := make([]*containers.Container, 0, len(containerStats))
+	for cid := range containerStats {
+		cstatus, err := c.GetContainerStatus(cid)
+		if err != nil {
+			log.Debugf("Could not get status of container '%s'", cid)
+			continue
+		}
+		mounts := make([]dtypes.MountPoint, 0, len(cstatus.Mounts))
+		for _, cmount := range cstatus.Mounts {
+			mountPoint := dtypes.MountPoint{
+				Source:      cmount.HostPath,
+				Destination: cmount.ContainerPath,
+			}
+			if propagation, ok := MountPropagationMap[cmount.Propagation]; ok {
+				mountPoint.Propagation = propagation
+			}
+			mounts = append(mounts, mountPoint)
+		}
+		container := &containers.Container{
+			Type:   "CRI",
+			Name:   cstatus.Metadata.Name,
+			ID:     cid,
+			Image:  cstatus.Image.Image,
+			Mounts: mounts,
+			Health: "",
+		}
+		if state, ok := ContainerStateMap[cstatus.State]; ok {
+			container.State = state
+		}
+		uContainers = append(uContainers, container)
+	}
+	return uContainers, nil
+}
+
+// sts end
 
 // ListContainerStats sends a ListContainerStatsRequest to the server, and parses the returned response
 func (c *CRIUtil) ListContainerStats() (map[string]*pb.ContainerStats, error) {

@@ -3,11 +3,14 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build cri
 // +build cri
 
 package containers
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/topology"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
@@ -31,12 +34,16 @@ const (
 // CRIConfig holds the config of the check
 type CRIConfig struct {
 	CollectDisk bool `yaml:"collect_disk"`
+	// sts
+	CollectContainerTopology bool `yaml:"collect_container_topology"`
 }
 
 // CRICheck grabs CRI metrics
 type CRICheck struct {
 	core.CheckBase
 	instance *CRIConfig
+	// sts
+	topologyCollector *topology.CRITopologyCollector
 }
 
 func init() {
@@ -48,6 +55,8 @@ func CRIFactory() check.Check {
 	return &CRICheck{
 		CheckBase: core.NewCheckBase(criCheckName),
 		instance:  &CRIConfig{},
+		// sts
+		topologyCollector: topology.MakeCRITopologyCollector(),
 	}
 }
 
@@ -55,6 +64,8 @@ func CRIFactory() check.Check {
 func (c *CRIConfig) Parse(data []byte) error {
 	// default values
 	c.CollectDisk = false
+	// sts
+	c.CollectContainerTopology = true
 
 	if err := yaml.Unmarshal(data, c); err != nil {
 		return err
@@ -74,6 +85,7 @@ func (c *CRICheck) Configure(config, initConfig integration.Data, source string)
 
 // Run executes the check
 func (c *CRICheck) Run() error {
+	log.Infof("### DEBUG STAC-14498 CRI Run check")
 	sender, err := aggregator.GetSender(c.ID())
 	if err != nil {
 		return err
@@ -91,6 +103,18 @@ func (c *CRICheck) Run() error {
 		return err
 	}
 	c.generateMetrics(sender, containerStats, util)
+
+	// sts begin
+	// Collect container topology
+	if c.instance.CollectContainerTopology {
+		err := c.topologyCollector.BuildContainerTopology(util)
+		if err != nil {
+			sender.ServiceCheck(DockerServiceUp, metrics.ServiceCheckCritical, "", nil, err.Error())
+			log.Errorf("Could not collect container topology: %s", err)
+			return err
+		}
+	}
+	//sts end
 
 	sender.Commit()
 	return nil
