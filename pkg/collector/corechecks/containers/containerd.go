@@ -10,6 +10,7 @@ package containers
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/topology"
 	"runtime"
 	"strings"
 	"time"
@@ -64,6 +65,7 @@ func ContainerdFactory() check.Check {
 		CheckBase: corechecks.NewCheckBase(containerdCheckName),
 		instance:  &ContainerdConfig{},
 		sub:       &subscriber{},
+		topologyCollector: topology.MakeContainerdTopologyCollector(),
 	}
 }
 
