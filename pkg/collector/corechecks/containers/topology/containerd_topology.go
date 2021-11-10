@@ -75,7 +75,6 @@ func (contd *ContainerdTopologyCollector) collectContainers(cu *containerd.Conta
 				"image":       ctr.Image,
 				"mounts":      ctr.Mounts,
 				"state":       ctr.State,
-				"health":      ctr.Health,
 			},
 		}
 

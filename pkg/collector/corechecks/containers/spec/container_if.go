@@ -5,13 +5,13 @@ import (
 )
 
 type Container struct {
-	Name    string
-	Runtime string
-	ID      string
-	Image   string
-	Mounts  []specs.Mount
-	State   string
-	Health  string
+	Name    string        `json:"name"`
+	Runtime string        `json:"runtime"`
+	ID      string        `json:"id"`
+	Image   string        `json:"image,omitempty"`
+	Mounts  []specs.Mount `json:"mounts"`
+	State   string        `json:"state,omitempty"`
+	Tags    []string      `json:"tags"`
 }
 
 type ContainerUtil interface {

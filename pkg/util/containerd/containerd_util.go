@@ -180,7 +180,6 @@ func (c *ContainerdUtil) GetContainers() ([]*specification.Container, error) {
 			Image:   info.Image,
 			Mounts:  spec.Mounts,
 			State:   string(status.Status),
-			Health:  "",
 		}
 		uContainers = append(uContainers, container)
 	}

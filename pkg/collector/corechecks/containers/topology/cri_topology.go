@@ -76,7 +76,6 @@ func (critc *CRITopologyCollector) collectContainers(cu *cri.CRIUtil) ([]*topolo
 				"image":       ctr.Image,
 				"mounts":      ctr.Mounts,
 				"state":       ctr.State,
-				"health":      ctr.Health,
 			},
 		}
 

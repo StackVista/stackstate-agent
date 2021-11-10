@@ -52,7 +52,6 @@ func (d *DockerUtil) GetContainers() ([]*spec.Container, error) {
 			Image:   dContainer.Image,
 			Mounts:  d.mapMountPointToMount(dContainer.Mounts),
 			State:   dContainer.State,
-			Health:  dContainer.Health,
 		}
 		uContainers = append(uContainers, container)
 	}

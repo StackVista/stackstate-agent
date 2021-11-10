@@ -149,7 +149,6 @@ func (c *CRIUtil) GetContainers() ([]*spec.Container, error) {
 			ID:      cid,
 			Image:   cstatus.Image.Image,
 			Mounts:  mounts,
-			Health:  "",
 		}
 		if state, ok := ContainerStateMap[cstatus.State]; ok {
 			container.State = state

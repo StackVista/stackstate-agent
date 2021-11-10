@@ -76,7 +76,6 @@ func (dt *DockerTopologyCollector) collectContainers(du *docker.DockerUtil) ([]*
 				"image":       ctr.Image,
 				"mounts":      ctr.Mounts,
 				"state":       ctr.State,
-				"health":      ctr.Health,
 			},
 		}
 
