@@ -8,7 +8,6 @@ package topology
 
 import (
 	"errors"
-	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -22,6 +21,7 @@ const (
 // DockerTopologyCollector contains the checkID and topology instance for the docker topology check
 type DockerTopologyCollector struct {
 	corechecks.CheckTopologyCollector
+	containerTopology
 }
 
 // MakeDockerTopologyCollector returns a new instance of DockerTopologyCollector
@@ -31,6 +31,7 @@ func MakeDockerTopologyCollector() *DockerTopologyCollector {
 			Type: "docker",
 			URL:  "agents",
 		}),
+		containerTopology{},
 	}
 }
 
@@ -64,23 +65,7 @@ func (dt *DockerTopologyCollector) collectContainers(du *docker.DockerUtil) ([]*
 		return nil, err
 	}
 
-	containerComponents := make([]*topology.Component, 0)
-	for _, ctr := range cList {
-		containerComponent := &topology.Component{
-			ExternalID: fmt.Sprintf("urn:%s:/%s", containerType, ctr.ID),
-			Type:       topology.Type{Name: containerType},
-			Data: topology.Data{
-				"type":        ctr.Runtime,
-				"containerID": ctr.ID,
-				"name":        ctr.Name,
-				"image":       ctr.Image,
-				"mounts":      ctr.Mounts,
-				"state":       ctr.State,
-			},
-		}
-
-		containerComponents = append(containerComponents, containerComponent)
-	}
+	containerComponents := dt.MapContainersToComponents(cList)
 
 	return containerComponents, nil
 }
