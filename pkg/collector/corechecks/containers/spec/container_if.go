@@ -4,6 +4,7 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
+// Container holds the data to be sent when creating a container component
 type Container struct {
 	Name    string        `json:"name"`
 	Runtime string        `json:"runtime"`
@@ -14,6 +15,7 @@ type Container struct {
 	Tags    []string      `json:"tags"`
 }
 
+// ContainerUtil is an interface for util classes capable of getting a list of Container
 type ContainerUtil interface {
 	GetContainers() ([]*Container, error)
 }
