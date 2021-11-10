@@ -45,6 +45,7 @@ variables: &commonvariables
   DATADOG_AGENT_EMBEDDED_PATH: /opt/datadog-agent/embedded
   ARCH: amd64
   VCINSTALLDIR: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community"
+  MOLECULE_K8S_CLUSTER: eks_test_cluster_1_21
 
 .agent2_variables: &agent2_variables
   CONDA_ENV: ddpy2

@@ -14,6 +14,9 @@ resource "aws_security_group" "eks-control-plane-sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  tags = {
+    "Name" = "${local.cluster_name}-control-plane-sg"
+  }
 }
 
 # OPTIONAL: Allow inbound traffic from your local workstation external IP
