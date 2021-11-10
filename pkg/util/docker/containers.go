@@ -12,7 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/container_runtime"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"io"
 	"net"
@@ -38,14 +38,14 @@ type ContainerListConfig struct {
 }
 
 // sts begin
-func (d *DockerUtil) GetContainers() ([]*container_runtime.Container, error) {
+func (d *DockerUtil) GetContainers() ([]*spec.Container, error) {
 	dockerContainers, err := d.ListContainers(&ContainerListConfig{IncludeExited: false, FlagExcluded: true})
 	if err != nil {
 		return nil, err
 	}
-	uContainers := make([]*container_runtime.Container, 0, len(dockerContainers))
+	uContainers := make([]*spec.Container, 0, len(dockerContainers))
 	for _, dContainer := range dockerContainers {
-		container := &container_runtime.Container{
+		container := &spec.Container{
 			Name:   dContainer.Name,
 			Type:   dContainer.Type,
 			ID:     dContainer.ID,

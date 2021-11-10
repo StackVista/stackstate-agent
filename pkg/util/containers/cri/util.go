@@ -11,7 +11,7 @@ package cri
 import (
 	"context"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/container_runtime"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec"
 	"github.com/StackVista/stackstate-agent/pkg/util/containers"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/opencontainers/runtime-spec/specs-go"
@@ -122,12 +122,12 @@ var ContainerStateMap = map[pb.ContainerState]string{
 	pb.ContainerState_CONTAINER_UNKNOWN: containers.ContainerUnknownState,
 }
 
-func (c *CRIUtil) GetContainers() ([]*container_runtime.Container, error) {
+func (c *CRIUtil) GetContainers() ([]*spec.Container, error) {
 	containerStats, err := c.ListContainerStats()
 	if err != nil {
 		return nil, err
 	}
-	uContainers := make([]*container_runtime.Container, 0, len(containerStats))
+	uContainers := make([]*spec.Container, 0, len(containerStats))
 	for cid := range containerStats {
 		cstatus, err := c.GetContainerStatus(cid)
 		if err != nil {
@@ -143,7 +143,7 @@ func (c *CRIUtil) GetContainers() ([]*container_runtime.Container, error) {
 
 			mounts = append(mounts, mountPoint)
 		}
-		container := &container_runtime.Container{
+		container := &spec.Container{
 			Type:   "CRI",
 			Name:   cstatus.Metadata.Name,
 			ID:     cid,

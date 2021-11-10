@@ -9,7 +9,7 @@ package containerd
 
 import (
 	"context"
-	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/container_runtime"
+	specification "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec"
 	"sync"
 	"time"
 
@@ -136,7 +136,7 @@ func (c *ContainerdUtil) GetEvents() containerd.EventService {
 }
 
 // GetContainers interfaces with the containerd api to get the list of containers.
-func (c *ContainerdUtil) GetContainers() ([]*container_runtime.Container, error) {
+func (c *ContainerdUtil) GetContainers() ([]*specification.Container, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.queryTimeout)
 	defer cancel()
 
@@ -145,7 +145,7 @@ func (c *ContainerdUtil) GetContainers() ([]*container_runtime.Container, error)
 		return nil, err
 	}
 
-	uContainers := make([]*container_runtime.Container, 0, len(dContainers))
+	uContainers := make([]*specification.Container, 0, len(dContainers))
 	for _, dContainer := range dContainers {
 
 		info, err := dContainer.Info(ctx)
@@ -172,7 +172,7 @@ func (c *ContainerdUtil) GetContainers() ([]*container_runtime.Container, error)
 			continue
 		}
 
-		container := &container_runtime.Container{
+		container := &specification.Container{
 			Name:   info.ID,
 			Type:   "containerd",
 			ID:     dContainer.ID(),
