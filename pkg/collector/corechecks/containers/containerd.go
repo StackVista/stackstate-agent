@@ -3,7 +3,6 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-
 //go:build containerd
 // +build containerd
 
@@ -45,9 +44,9 @@ const (
 // ContainerCheck grabs containerd metrics and events
 type ContainerdCheck struct {
 	core.CheckBase
-	instance *ContainerdConfig
-	sub      *subscriber
-	filters  *ddContainers.Filter
+	instance          *ContainerdConfig
+	sub               *subscriber
+	filters           *ddContainers.Filter
 	topologyCollector *topology.ContainerdTopologyCollector
 }
 
@@ -64,9 +63,9 @@ func init() {
 // ContainerdFactory is used to create register the check and initialize it.
 func ContainerdFactory() check.Check {
 	return &ContainerdCheck{
-		CheckBase: corechecks.NewCheckBase(containerdCheckName),
-		instance:  &ContainerdConfig{},
-		sub:       &subscriber{},
+		CheckBase:         corechecks.NewCheckBase(containerdCheckName),
+		instance:          &ContainerdConfig{},
+		sub:               &subscriber{},
 		topologyCollector: topology.MakeContainerdTopologyCollector(),
 	}
 }

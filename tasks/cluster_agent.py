@@ -25,7 +25,8 @@ DEFAULT_BUILD_TAGS = [
     "zlib",
     "docker",
     "cri",
-    "containers"
+    "containers",
+    "containerd"
 ]
 
 

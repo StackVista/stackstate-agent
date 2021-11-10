@@ -69,7 +69,7 @@ func (contd *ContainerdTopologyCollector) collectContainers(cu *containerd.Conta
 			ExternalID: fmt.Sprintf("urn:%s:/%s", containerType, ctr.ID),
 			Type:       topology.Type{Name: containerType},
 			Data: topology.Data{
-				"type":        ctr.Type,
+				"type":        ctr.Runtime,
 				"containerID": ctr.ID,
 				"name":        ctr.Name,
 				"image":       ctr.Image,

@@ -5,13 +5,13 @@ import (
 )
 
 type Container struct {
-	Name   string
-	Type   string
-	ID     string
-	Image  string
-	Mounts []specs.Mount
-	State  string
-	Health string
+	Name    string
+	Runtime string
+	ID      string
+	Image   string
+	Mounts  []specs.Mount
+	State   string
+	Health  string
 }
 
 type ContainerUtil interface {

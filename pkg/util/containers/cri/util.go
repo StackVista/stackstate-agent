@@ -144,12 +144,12 @@ func (c *CRIUtil) GetContainers() ([]*spec.Container, error) {
 			mounts = append(mounts, mountPoint)
 		}
 		container := &spec.Container{
-			Type:   "CRI",
-			Name:   cstatus.Metadata.Name,
-			ID:     cid,
-			Image:  cstatus.Image.Image,
-			Mounts: mounts,
-			Health: "",
+			Runtime: "CRI",
+			Name:    cstatus.Metadata.Name,
+			ID:      cid,
+			Image:   cstatus.Image.Image,
+			Mounts:  mounts,
+			Health:  "",
 		}
 		if state, ok := ContainerStateMap[cstatus.State]; ok {
 			container.State = state

@@ -174,13 +174,13 @@ func (c *ContainerdUtil) GetContainers() ([]*specification.Container, error) {
 		}
 
 		container := &specification.Container{
-			Name:   info.ID,
-			Type:   "containerd",
-			ID:     dContainer.ID(),
-			Image:  info.Image,
-			Mounts: spec.Mounts,
-			State:  string(status.Status),
-			Health: "",
+			Name:    info.ID,
+			Runtime: "containerd",
+			ID:      dContainer.ID(),
+			Image:   info.Image,
+			Mounts:  spec.Mounts,
+			State:   string(status.Status),
+			Health:  "",
 		}
 		uContainers = append(uContainers, container)
 	}

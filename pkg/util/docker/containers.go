@@ -46,13 +46,13 @@ func (d *DockerUtil) GetContainers() ([]*spec.Container, error) {
 	uContainers := make([]*spec.Container, 0, len(dockerContainers))
 	for _, dContainer := range dockerContainers {
 		container := &spec.Container{
-			Name:   dContainer.Name,
-			Type:   dContainer.Type,
-			ID:     dContainer.ID,
-			Image:  dContainer.Image,
-			Mounts: d.mapMountPointToMount(dContainer.Mounts),
-			State:  dContainer.State,
-			Health: dContainer.Health,
+			Name:    dContainer.Name,
+			Runtime: "docker",
+			ID:      dContainer.ID,
+			Image:   dContainer.Image,
+			Mounts:  d.mapMountPointToMount(dContainer.Mounts),
+			State:   dContainer.State,
+			Health:  dContainer.Health,
 		}
 		uContainers = append(uContainers, container)
 	}
@@ -66,9 +66,9 @@ func (d *DockerUtil) mapMountPointToMount(mounts []types.MountPoint) []specs.Mou
 
 		mount := specs.Mount{
 			Destination: v.Destination,
-			Type: string(v.Type),
-			Source: v.Source,
-			Options: []string{},
+			Type:        string(v.Type),
+			Source:      v.Source,
+			Options:     []string{},
 		}
 		output = append(output, mount)
 	}
