@@ -8,7 +8,6 @@ package topology
 
 import (
 	"errors"
-	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -64,23 +63,9 @@ func (critc *CRITopologyCollector) collectContainers(cu *cri.CRIUtil) ([]*topolo
 		return nil, err
 	}
 
-	containerComponents := make([]*topology.Component, 0)
-	for _, ctr := range cList {
-		containerComponent := &topology.Component{
-			ExternalID: fmt.Sprintf("urn:%s:/%s", containerType, ctr.ID),
-			Type:       topology.Type{Name: containerType},
-			Data: topology.Data{
-				"type":        ctr.Runtime,
-				"containerID": ctr.ID,
-				"name":        ctr.Name,
-				"image":       ctr.Image,
-				"mounts":      ctr.Mounts,
-				"state":       ctr.State,
-			},
-		}
+	ct := containerTopology{}
 
-		containerComponents = append(containerComponents, containerComponent)
-	}
+	containerComponents := ct.MapContainersToComponents(cList)
 
 	return containerComponents, nil
 }
