@@ -12,8 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
-	"github.com/StackVista/stackstate-agent/pkg/trace/test"
+	"github.com/DataDog/datadog-agent/pkg/trace/pb"
+	"github.com/DataDog/datadog-agent/pkg/trace/sampler"
+	"github.com/DataDog/datadog-agent/pkg/trace/test"
 )
 
 func jsonTraceFromPath(path string) (pb.Trace, error) {
@@ -58,8 +59,8 @@ func TestAPMEvents(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		waitForTrace(t, &runner, func(v pb.TracePayload) {
-			if n := len(v.Transactions); n != 0 {
+		waitForTrace(t, &runner, func(v pb.AgentPayload) {
+			if n := countEvents(&v); n != 0 {
 				t.Fatalf("expected no events, got %d", n)
 			}
 		})
@@ -77,8 +78,8 @@ func TestAPMEvents(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		waitForTrace(t, &runner, func(v pb.TracePayload) {
-			if n := len(v.Transactions); n != 1 {
+		waitForTrace(t, &runner, func(v pb.AgentPayload) {
+			if n := countEvents(&v); n != 1 {
 				t.Fatalf("expected 1 event, got %d", n)
 			}
 		})
@@ -94,10 +95,24 @@ func TestAPMEvents(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		waitForTrace(t, &runner, func(v pb.TracePayload) {
-			if n := len(v.Transactions); n != 5 {
+		waitForTrace(t, &runner, func(v pb.AgentPayload) {
+			if n := countEvents(&v); n != 5 {
 				t.Fatalf("expected 5 event, got %d", n)
 			}
 		})
 	})
+}
+
+func countEvents(p *pb.AgentPayload) int {
+	n := 0
+	for _, tp := range p.TracerPayloads {
+		for _, chunk := range tp.Chunks {
+			for _, span := range chunk.Spans {
+				if sampler.IsAnalyzedSpan(span) {
+					n++
+				}
+			}
+		}
+	}
+	return n
 }
