@@ -3,7 +3,8 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-// +build cgroup
+
+//go:build containerd
 // +build containerd
 
 package containers
@@ -33,7 +34,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
 	cutil "github.com/StackVista/stackstate-agent/pkg/util/containerd"
 	ddContainers "github.com/StackVista/stackstate-agent/pkg/util/containers"
-	cgroup "github.com/StackVista/stackstate-agent/pkg/util/containers/providers/cgroup"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/providers/cgroup"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
@@ -47,6 +48,7 @@ type ContainerdCheck struct {
 	instance *ContainerdConfig
 	sub      *subscriber
 	filters  *ddContainers.Filter
+	topologyCollector *topology.ContainerdTopologyCollector
 }
 
 // ContainerdConfig contains the custom options and configurations set by the user.

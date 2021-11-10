@@ -1,4 +1,8 @@
 // StackState
+
+//go:build containerd
+// +build containerd
+
 package topology
 
 import (
