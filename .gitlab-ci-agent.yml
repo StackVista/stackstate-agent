@@ -1116,6 +1116,8 @@ molecule_vms_create:
   <<: *molecule_create
   rules:
     - *vms_ignore_rule
+    - if: $MAJOR_VERSION == "2"
+      when: always
     - when: manual
   variables:
     MOLECULE_SCENARIO: vms
