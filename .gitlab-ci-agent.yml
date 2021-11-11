@@ -253,7 +253,6 @@ unit_tests_cluster_agent:
     - sts-aws
   rules:
     - *cluster_agent
-    - when: manual
   retry:
     max: 2
 
@@ -317,7 +316,6 @@ build_cluster_agent:
       - $CI_PROJECT_DIR/version.txt
   rules:
     - *cluster_agent
-    - when: manual
   retry:
     max: 2
     when:
@@ -646,7 +644,6 @@ pre_release_cluster_agent_image:
     - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent $CI_COMMIT_SHORT_SHA
   rules:
     - *cluster_agent
-    - when: manual
 
 # Core Molecule Structure for all the molecule steps
 .molecule: &molecule
@@ -703,7 +700,7 @@ pre_release_cluster_agent_image:
 .molecule_compose_rule:
   - &compose_ignore_rule
     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-compose]/
-    when: manual
+    when: never
 
 molecule_compose_create:
   <<: *molecule
@@ -760,7 +757,7 @@ molecule_compose_success_cleanup:
 .molecule_integrations_rule:
   - &integrations_ignore_rule
     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-integrations]/
-    when: manual
+    when: never
 
 molecule_integrations_create:
   <<: *molecule
@@ -820,7 +817,7 @@ molecule_integrations_success_cleanup:
   # TODO: Change this when V3 releases are finalized and the default.
   - &kubernetes_ignore_rule
     if: $MAJOR_VERSION == "2" && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-kubernetes]/
-    when: manual
+    when: never
 
 molecule_kubernetes_create:
   <<: *molecule
@@ -828,7 +825,7 @@ molecule_kubernetes_create:
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent
-    - when: manual
+    - when: never
   variables:
     MOLECULE_SCENARIO: kubernetes
 
@@ -839,7 +836,7 @@ molecule_kubernetes_test:
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent
-    - when: on_success
+    - when: never
   variables:
     MOLECULE_SCENARIO: kubernetes
   dependencies:
@@ -855,7 +852,7 @@ molecule_kubernetes_failure_cleanup:
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent_on_failure
-    - when: on_failure
+    - when: never
   variables:
     MOLECULE_SCENARIO: kubernetes
   needs:
@@ -868,7 +865,7 @@ molecule_kubernetes_success_cleanup:
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent_on_success
-    - when: on_success
+    - when: never
   variables:
     MOLECULE_SCENARIO: kubernetes
   dependencies:
@@ -885,7 +882,7 @@ molecule_kubernetes_success_cleanup:
 .molecule_localinstall_rule:
   - &localinstall_ignore_rule
     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-localinstall]/
-    when: manual
+    when: never
   - &localinstall_master_only_rule
     if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
     when: always
@@ -906,7 +903,7 @@ molecule_localinstall_create:
     - *localinstall_ignore_rule
     - *localinstall_master_only_rule
     - *localinstall_acceptance_rule
-    - when: manual
+    - when: never
   variables:
     MOLECULE_SCENARIO: localinstall
 
@@ -917,8 +914,7 @@ molecule_localinstall_test:
     - *localinstall_ignore_rule
     - *localinstall_master_only_rule
     - *localinstall_acceptance_rule
-    - when: on_success
-    - when: manual
+    - when: never
   variables:
     MOLECULE_SCENARIO: localinstall
   dependencies:
@@ -937,8 +933,7 @@ molecule_localinstall_failure_cleanup:
     - *localinstall_ignore_rule
     - *localinstall_master_only_rule
     - *localinstall_acceptance_on_failure_rule
-    - when: on_failure
-    - when: manual
+    - when: never
   needs:
     - molecule_localinstall_test
     - molecule_localinstall_create
@@ -952,8 +947,7 @@ molecule_localinstall_success_cleanup:
     - *localinstall_ignore_rule
     - *localinstall_master_only_rule
     - *localinstall_acceptance_on_success_rule
-    - when: on_success
-    - when: manual
+    - when: never
   dependencies:
     - molecule_localinstall_test
     - molecule_localinstall_create
@@ -968,7 +962,7 @@ molecule_localinstall_success_cleanup:
 .molecule_secrets_rule:
   - &secrets_ignore_rule
     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-compose]/
-    when: manual
+    when: never
   - &secrets_master_only_rule
     if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
     when: always
@@ -989,7 +983,7 @@ molecule_secrets_create:
     - *secrets_ignore_rule
     - *secrets_master_only_rule
     - *secrets_acceptance_rule
-    - when: manual
+    - when: never
   variables:
     MOLECULE_SCENARIO: secrets
 
@@ -1000,7 +994,7 @@ molecule_secrets_test:
     - *secrets_ignore_rule
     - *secrets_master_only_rule
     - *secrets_acceptance_rule
-    - when: on_success
+    - when: never
   variables:
     MOLECULE_SCENARIO: secrets
   dependencies:
@@ -1018,7 +1012,7 @@ molecule_secrets_failure_cleanup:
     - *secrets_ignore_rule
     - *secrets_master_only_rule
     - *secrets_acceptance_on_failure_rule
-    - when: on_failure
+    - when: never
   needs:
     - molecule_secrets_test
     - molecule_secrets_create
@@ -1032,7 +1026,7 @@ molecule_secrets_success_cleanup:
     - *secrets_ignore_rule
     - *secrets_master_only_rule
     - *secrets_acceptance_on_success_rule
-    - when: on_success
+    - when: never
   dependencies:
     - molecule_secrets_test
     - molecule_secrets_create
@@ -1049,7 +1043,7 @@ molecule_secrets_success_cleanup:
   # TODO: Change this when V3 releases are finalized and the default.
   - &swarm_ignore_rule
     if: $MAJOR_VERSION == "2" && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-swarm]/
-    when: manual
+    when: never
 
 molecule_swarm_create:
   <<: *molecule
@@ -1057,7 +1051,6 @@ molecule_swarm_create:
   rules:
     - *swarm_ignore_rule
     - *cluster_agent_always
-    - when: manual
   variables:
     MOLECULE_SCENARIO: swarm
 
@@ -1067,7 +1060,6 @@ molecule_swarm_test:
   rules:
     - *swarm_ignore_rule
     - *cluster_agent_on_success
-    - when: on_success
   dependencies:
     - molecule_swarm_create
   variables:
@@ -1085,7 +1077,6 @@ molecule_swarm_failure_cleanup:
   rules:
     - *swarm_ignore_rule
     - *cluster_agent_on_failure
-    - when: manual
   needs:
     - molecule_swarm_create
     - molecule_swarm_test
@@ -1098,7 +1089,6 @@ molecule_swarm_success_cleanup:
   rules:
     - *swarm_ignore_rule
     - *cluster_agent_on_success
-    - when: manual
   dependencies:
     - molecule_swarm_create
     - molecule_swarm_test
@@ -1112,7 +1102,7 @@ molecule_swarm_success_cleanup:
 .molecule_vms_rule:
   - &vms_ignore_rule
     if: $MAJOR_VERSION == "2" && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-vms]/
-    when: manual
+    when: never
 
 molecule_vms_create:
   <<: *molecule
@@ -1121,7 +1111,6 @@ molecule_vms_create:
     - *vms_ignore_rule
     - if: $MAJOR_VERSION == "2"
       when: always
-    - when: manual
   variables:
     MOLECULE_SCENARIO: vms
 
@@ -1130,7 +1119,8 @@ molecule_vms_test:
   <<: *molecule_test
   rules:
     - *vms_ignore_rule
-    - when: on_success
+    - if: $MAJOR_VERSION == "2"
+      when: on_success
   variables:
     MOLECULE_SCENARIO: vms
   dependencies:
@@ -1148,7 +1138,8 @@ molecule_vms_failure_cleanup:
   <<: *molecule_destroy
   rules:
     - *vms_ignore_rule
-    - when: on_failure
+    - if: $MAJOR_VERSION == "2"
+      when: on_failure
   needs:
     - molecule_vms_create
     - molecule_vms_test
@@ -1160,7 +1151,8 @@ molecule_vms_success_cleanup:
   <<: *molecule_destroy
   rules:
     - *vms_ignore_rule
-    - when: on_success
+    - if: $MAJOR_VERSION == "2"
+      when: on_success
   dependencies:
     - molecule_vms_create
     - molecule_vms_test
@@ -1302,4 +1294,3 @@ release_cluster_agent_image:
     - ./omnibus/package-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent latest
   rules:
     - *cluster_agent_release
-    - when: manual
