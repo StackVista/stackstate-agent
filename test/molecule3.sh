@@ -47,7 +47,6 @@ fi
 set -e
 
 export STACKSTATE_BRANCH=${STACKSTATE_BRANCH:-master}
-
 export MAJOR_VERSION=${MAJOR_VERSION:-3}
 export STS_AWS_TEST_BUCKET=${STS_AWS_TEST_BUCKET:-stackstate-agent-3-test}
 export STS_DOCKER_TEST_REPO=${STS_DOCKER_TEST_REPO:-stackstate-agent-test}
@@ -109,7 +108,7 @@ if [[ ! " ${AVAILABLE_MOLECULE_SCENARIOS[*]} " =~ $1 ]]; then
 fi
 
 # Helper for the second parameter defined
-AVAILABLE_MOLECULE_PROCESS=("create" "prepare" "test" "destroy" "login")
+AVAILABLE_MOLECULE_PROCESS=("create" "prepare" "test" "destroy" "login" "unit-test")
 if [[ ! " ${AVAILABLE_MOLECULE_PROCESS[*]} " =~ $2 ]]; then
     echo ""
     echo "------------ Invalid Molecule Process Supplied ('$2') --------------"
@@ -118,6 +117,7 @@ if [[ ! " ${AVAILABLE_MOLECULE_PROCESS[*]} " =~ $2 ]]; then
     echo "  - create"
     echo "  - prepare"
     echo "  - test"
+    echo "  - unit-test"
     echo "  - destroy"
     echo "---------------------------------------------------------"
     echo ""
@@ -163,6 +163,14 @@ elif [[ $2 == "prepare" ]]; then
 elif [[ $2 == "test" ]]; then
     remove_molecule_cache_folder "$1"
     execute_molecule "$1" run test
+
+elif [[ $2 == "unit-test" ]]; then
+    if [ $DEV_MODE == 'true' ]; then
+        execute_molecule "$1" run test
+    else
+        echo "Molecule 'unit-test' can only be ran in dev mode, it's recommended to rather run the full 'test' command instead of 'unit-test'"
+        exit 1
+    fi
 
 elif [[ $2 == "login" ]]; then
     # Login is used on dev only, thus we restore the .cache file that contains the ssh key
