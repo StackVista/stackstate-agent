@@ -316,6 +316,7 @@ build_cluster_agent:
       - $CI_PROJECT_DIR/version.txt
   rules:
     - *cluster_agent
+    - when: manual
   retry:
     max: 2
     when:
@@ -1295,3 +1296,4 @@ release_cluster_agent_image:
     - ./omnibus/package-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent latest
   rules:
     - *cluster_agent_release
+    - when: manual
