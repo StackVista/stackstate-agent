@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec"
 	"github.com/StackVista/stackstate-agent/pkg/util/containers"
-	"github.com/docker/docker/api/types/mount"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"net"
 	"sync"
@@ -110,11 +109,8 @@ func GetUtil() (*CRIUtil, error) {
 }
 
 // sts begin
-var MountPropagationMap = map[pb.MountPropagation]mount.Propagation{
-	pb.MountPropagation_PROPAGATION_PRIVATE:           mount.PropagationPrivate,
-	pb.MountPropagation_PROPAGATION_HOST_TO_CONTAINER: mount.PropagationRSlave,
-	pb.MountPropagation_PROPAGATION_BIDIRECTIONAL:     mount.PropagationRShared,
-}
+
+// ContainerStateMap is used to map cri specific state to own internal state
 var ContainerStateMap = map[pb.ContainerState]string{
 	pb.ContainerState_CONTAINER_CREATED: containers.ContainerCreatedState,
 	pb.ContainerState_CONTAINER_RUNNING: containers.ContainerRunningState,
