@@ -839,7 +839,7 @@ molecule_kubernetes_test:
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent
-    - when: manual
+    - when: on_success
   variables:
     MOLECULE_SCENARIO: kubernetes
   dependencies:
@@ -855,7 +855,7 @@ molecule_kubernetes_failure_cleanup:
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent_on_failure
-    - when: manual
+    - when: on_failure
   variables:
     MOLECULE_SCENARIO: kubernetes
   needs:
@@ -868,7 +868,7 @@ molecule_kubernetes_success_cleanup:
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent_on_success
-    - when: manual
+    - when: on_success
   variables:
     MOLECULE_SCENARIO: kubernetes
   dependencies:
@@ -917,7 +917,7 @@ molecule_localinstall_test:
     - *localinstall_ignore_rule
     - *localinstall_master_only_rule
     - *localinstall_acceptance_rule
-    - when: manual
+    - when: on_success
   variables:
     MOLECULE_SCENARIO: localinstall
   dependencies:
@@ -936,7 +936,7 @@ molecule_localinstall_failure_cleanup:
     - *localinstall_ignore_rule
     - *localinstall_master_only_rule
     - *localinstall_acceptance_on_failure_rule
-    - when: manual
+    - when: on_failure
   needs:
     - molecule_localinstall_test
     - molecule_localinstall_create
@@ -950,7 +950,7 @@ molecule_localinstall_success_cleanup:
     - *localinstall_ignore_rule
     - *localinstall_master_only_rule
     - *localinstall_acceptance_on_success_rule
-    - when: manual
+    - when: on_success
   dependencies:
     - molecule_localinstall_test
     - molecule_localinstall_create
@@ -997,7 +997,7 @@ molecule_secrets_test:
     - *secrets_ignore_rule
     - *secrets_master_only_rule
     - *secrets_acceptance_rule
-    - when: manual
+    - when: on_success
   variables:
     MOLECULE_SCENARIO: secrets
   dependencies:
@@ -1015,7 +1015,7 @@ molecule_secrets_failure_cleanup:
     - *secrets_ignore_rule
     - *secrets_master_only_rule
     - *secrets_acceptance_on_failure_rule
-    - when: manual
+    - when: on_failure
   needs:
     - molecule_secrets_test
     - molecule_secrets_create
@@ -1029,7 +1029,7 @@ molecule_secrets_success_cleanup:
     - *secrets_ignore_rule
     - *secrets_master_only_rule
     - *secrets_acceptance_on_success_rule
-    - when: manual
+    - when: on_success
   dependencies:
     - molecule_secrets_test
     - molecule_secrets_create
@@ -1064,7 +1064,7 @@ molecule_swarm_test:
   rules:
     - *swarm_ignore_rule
     - *cluster_agent_on_success
-    - when: manual
+    - when: on_success
   dependencies:
     - molecule_swarm_create
   variables:
@@ -1108,15 +1108,15 @@ molecule_swarm_success_cleanup:
 
 .molecule_vms_rule:
   - &vms_ignore_rule
-    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-vms]/
-    when: never
+    if: $MAJOR_VERSION == "2" && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-vms]/
+    when: manual
 
 molecule_vms_create:
   <<: *molecule
   <<: *molecule_create
   rules:
     - *vms_ignore_rule
-    - when: always
+    - when: manual
   variables:
     MOLECULE_SCENARIO: vms
 
