@@ -882,7 +882,7 @@ molecule_kubernetes_success_cleanup:
 .molecule_localinstall_rule:
   - &localinstall_ignore_rule
     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-localinstall]/
-    when: never
+    when: manual
   - &localinstall_master_only_rule
     if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
     when: always
@@ -962,7 +962,7 @@ molecule_localinstall_success_cleanup:
 .molecule_secrets_rule:
   - &secrets_ignore_rule
     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-compose]/
-    when: never
+    when: manual
   - &secrets_master_only_rule
     if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
     when: always
