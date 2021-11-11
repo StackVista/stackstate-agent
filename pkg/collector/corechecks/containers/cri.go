@@ -43,7 +43,7 @@ type CRICheck struct {
 	core.CheckBase
 	instance *CRIConfig
 	// sts
-	topologyCollector *topology.CRITopologyCollector
+	topologyCollector *topology.ContainerTopologyCollector
 }
 
 func init() {

@@ -47,7 +47,7 @@ type ContainerdCheck struct {
 	instance          *ContainerdConfig
 	sub               *subscriber
 	filters           *ddContainers.Filter
-	topologyCollector *topology.ContainerdTopologyCollector
+	topologyCollector *topology.ContainerTopologyCollector
 }
 
 // ContainerdConfig contains the custom options and configurations set by the user.
