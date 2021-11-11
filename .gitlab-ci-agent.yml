@@ -700,7 +700,7 @@ pre_release_cluster_agent_image:
 .molecule_compose_rule:
   - &compose_ignore_rule
     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-compose]/
-    when: never
+    when: manual
 
 molecule_compose_create:
   <<: *molecule
@@ -757,7 +757,7 @@ molecule_compose_success_cleanup:
 .molecule_integrations_rule:
   - &integrations_ignore_rule
     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-integrations]/
-    when: never
+    when: manual
 
 molecule_integrations_create:
   <<: *molecule
@@ -817,7 +817,7 @@ molecule_integrations_success_cleanup:
   # TODO: Change this when V3 releases are finalized and the default.
   - &kubernetes_ignore_rule
     if: $MAJOR_VERSION == "2" && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-kubernetes]/
-    when: never
+    when: manual
 
 molecule_kubernetes_create:
   <<: *molecule
@@ -825,7 +825,7 @@ molecule_kubernetes_create:
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent
-    - when: never
+    - when: manual
   variables:
     MOLECULE_SCENARIO: kubernetes
 
@@ -836,7 +836,7 @@ molecule_kubernetes_test:
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent
-    - when: never
+    - when: manual
   variables:
     MOLECULE_SCENARIO: kubernetes
   dependencies:
@@ -852,7 +852,7 @@ molecule_kubernetes_failure_cleanup:
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent_on_failure
-    - when: never
+    - when: manual
   variables:
     MOLECULE_SCENARIO: kubernetes
   needs:
@@ -865,7 +865,7 @@ molecule_kubernetes_success_cleanup:
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent_on_success
-    - when: never
+    - when: manual
   variables:
     MOLECULE_SCENARIO: kubernetes
   dependencies:
@@ -1043,7 +1043,7 @@ molecule_secrets_success_cleanup:
   # TODO: Change this when V3 releases are finalized and the default.
   - &swarm_ignore_rule
     if: $MAJOR_VERSION == "2" && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-swarm]/
-    when: never
+    when: manual
 
 molecule_swarm_create:
   <<: *molecule
@@ -1051,6 +1051,7 @@ molecule_swarm_create:
   rules:
     - *swarm_ignore_rule
     - *cluster_agent_always
+    - when: manual
   variables:
     MOLECULE_SCENARIO: swarm
 
@@ -1060,6 +1061,7 @@ molecule_swarm_test:
   rules:
     - *swarm_ignore_rule
     - *cluster_agent_on_success
+    - when: manual
   dependencies:
     - molecule_swarm_create
   variables:
@@ -1077,6 +1079,7 @@ molecule_swarm_failure_cleanup:
   rules:
     - *swarm_ignore_rule
     - *cluster_agent_on_failure
+    - when: manual
   needs:
     - molecule_swarm_create
     - molecule_swarm_test
@@ -1089,6 +1092,7 @@ molecule_swarm_success_cleanup:
   rules:
     - *swarm_ignore_rule
     - *cluster_agent_on_success
+    - when: manual
   dependencies:
     - molecule_swarm_create
     - molecule_swarm_test
