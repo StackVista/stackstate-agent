@@ -476,27 +476,6 @@ def test_cluster_agent_base_topology(host, ansible_var):
             type_name="routes",
             external_id_assert_fn=lambda eid: ingress_routes_service_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:ingress/example-ingress" % (cluster_name, namespace))
-        # stackstate-cluster-agent Container mounts Volume  stackstate-cluster-agent-token
-        container_mounts_volume_match = re.compile(
-            "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-.*-.*:container/cluster-agent->"
-            "urn:kubernetes:/%s:%s:secret/stackstate-cluster-agent-token-.*"
-            % (cluster_name, namespace, cluster_name, namespace)
-        )
-        assert _relation_sourceid(
-            json_data=json_data,
-            type_name="mounts",
-            external_id_assert_fn=lambda eid:  container_mounts_volume_match.findall(eid)
-        ).startswith("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent" % (cluster_name, namespace))
-        # stackstate-cluster-agent Container mounts Volume  stackstate-cluster-agent-token
-        agent_container_mounts_volume_match = \
-            re.compile("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*:container/cluster-agent->"
-                       "urn:kubernetes:/%s:%s:secret/stackstate-cluster-agent-agent-.*" %
-                       (cluster_name, namespace, cluster_name, namespace))
-        assert _relation_sourceid(
-            json_data=json_data,
-            type_name="mounts",
-            external_id_assert_fn=lambda eid:  agent_container_mounts_volume_match.findall(eid)
-        ).startswith("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent" % (cluster_name, namespace))
         # hello job controls hello pod
         job_controls_match = re.compile("urn:kubernetes:/%s:%s:job/countdown->"
                                         "urn:kubernetes:/%s:%s:pod/countdown-.*" %
@@ -623,8 +602,7 @@ def test_cluster_agent_pod_mount_volume_relation(host, ansible_var):
         from_1_21 = _find_mount_relation(
             json_data,
             cluster_agent_urn,
-            # "urn:kubernetes:external-volume:projected/.*"
-            "urn:kubernetes:external-volume:projected/kube-api-access-.*"
+            "urn:kubernetes:external-volume:projected/.*"
         )
         relation = before_1_21 if before_1_21 else from_1_21
         assert relation.startswith("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent" % (cluster_name, namespace))
@@ -640,8 +618,7 @@ def test_cluster_agent_pod_mount_volume_relation(host, ansible_var):
         from_1_21 = _find_mount_relation(
             json_data,
             agent_urn,
-            # "urn:kubernetes:external-volume:projected/.*"
-            "urn:kubernetes:external-volume:projected/kube-api-access-.*"
+            "urn:kubernetes:external-volume:projected/.*"
         )
         relation = before_1_21 if before_1_21 else from_1_21
         assert relation.startswith("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent" % (cluster_name, namespace))
