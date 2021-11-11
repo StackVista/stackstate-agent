@@ -644,6 +644,7 @@ pre_release_cluster_agent_image:
     - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent $CI_COMMIT_SHORT_SHA
   rules:
     - *cluster_agent
+    - when: manual
 
 # Core Molecule Structure for all the molecule steps
 .molecule: &molecule
