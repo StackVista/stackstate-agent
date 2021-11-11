@@ -253,6 +253,7 @@ unit_tests_cluster_agent:
     - sts-aws
   rules:
     - *cluster_agent
+    - when: manual
   retry:
     max: 2
 
