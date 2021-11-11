@@ -918,6 +918,7 @@ molecule_localinstall_test:
     - *localinstall_master_only_rule
     - *localinstall_acceptance_rule
     - when: on_success
+    - when: manual
   variables:
     MOLECULE_SCENARIO: localinstall
   dependencies:
@@ -937,6 +938,7 @@ molecule_localinstall_failure_cleanup:
     - *localinstall_master_only_rule
     - *localinstall_acceptance_on_failure_rule
     - when: on_failure
+    - when: manual
   needs:
     - molecule_localinstall_test
     - molecule_localinstall_create
@@ -951,6 +953,7 @@ molecule_localinstall_success_cleanup:
     - *localinstall_master_only_rule
     - *localinstall_acceptance_on_success_rule
     - when: on_success
+    - when: manual
   dependencies:
     - molecule_localinstall_test
     - molecule_localinstall_create
