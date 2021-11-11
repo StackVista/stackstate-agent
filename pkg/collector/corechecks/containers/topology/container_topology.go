@@ -12,12 +12,45 @@ import (
 )
 
 const (
-	containerType = "container"
+	containerType               = "container"
+	dockerTopologyCheckName     = "docker_topology"
+	criTopologyCheckName        = "cri_topology"
+	containerdTopologyCheckName = "containerd_topology"
 )
 
 // ContainerTopologyCollector contains the checkID and topology instance for the container topology checks
 type ContainerTopologyCollector struct {
 	corechecks.CheckTopologyCollector
+}
+
+// MakeContainerdTopologyCollector returns a new instance of ContainerdTopologyCollector
+func MakeContainerdTopologyCollector() *ContainerTopologyCollector {
+	return &ContainerTopologyCollector{
+		corechecks.MakeCheckTopologyCollector(containerdTopologyCheckName, topology.Instance{
+			Type: "containerd",
+			URL:  "agents",
+		}),
+	}
+}
+
+// MakeCRITopologyCollector returns a new instance of CRITopologyCollector
+func MakeCRITopologyCollector() *ContainerTopologyCollector {
+	return &ContainerTopologyCollector{
+		corechecks.MakeCheckTopologyCollector(criTopologyCheckName, topology.Instance{
+			Type: "cri",
+			URL:  "agents",
+		}),
+	}
+}
+
+// MakeDockerTopologyCollector returns a new instance of DockerTopologyCollector
+func MakeDockerTopologyCollector() *ContainerTopologyCollector {
+	return &ContainerTopologyCollector{
+		corechecks.MakeCheckTopologyCollector(dockerTopologyCheckName, topology.Instance{
+			Type: "docker",
+			URL:  "agents",
+		}),
+	}
 }
 
 // BuildContainerTopology collects all docker container topology
