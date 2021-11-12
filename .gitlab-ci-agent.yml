@@ -55,19 +55,20 @@ stages:
   # build so that we can release the cluster agent as part of a V2 release.
   # TODO: Change this when V3 releases are finalized and the default.
   - &cluster_agent
-    if: $MAJOR_VERSION == "2"
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
   - &cluster_agent_always
-    if: $MAJOR_VERSION == "2"
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
     when: always
   - &cluster_agent_on_success
-    if: $MAJOR_VERSION == "2"
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
     when: on_success
   - &cluster_agent_on_failure
-    if: $MAJOR_VERSION == "2"
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
     when: on_failure
   - &cluster_agent_release
-    if: $MAJOR_VERSION == "2" && ($CI_COMMIT_TAG || $CI_JOB_TRIGGERED == "true")
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_JOB_TRIGGERED == "true")
     when: manual
+
 ######################### /pipeline bricks
 
 
@@ -816,7 +817,7 @@ molecule_integrations_success_cleanup:
   # Currently we default to only running on Python2 build.
   # TODO: Change this when V3 releases are finalized and the default.
   - &kubernetes_ignore_rule
-    if: $MAJOR_VERSION == "2" && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-kubernetes]/
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-kubernetes]/
     when: never
 
 molecule_kubernetes_create:
@@ -1042,7 +1043,7 @@ molecule_secrets_success_cleanup:
   # Currently we default to only running on Python2 build.
   # TODO: Change this when V3 releases are finalized and the default.
   - &swarm_ignore_rule
-    if: $MAJOR_VERSION == "2" && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-swarm]/
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-swarm]/
     when: never
 
 molecule_swarm_create:
@@ -1101,7 +1102,7 @@ molecule_swarm_success_cleanup:
 
 .molecule_vms_rule:
   - &vms_ignore_rule
-    if: $MAJOR_VERSION == "2" && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-vms]/
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-vms]/
     when: never
 
 molecule_vms_create:
@@ -1109,7 +1110,7 @@ molecule_vms_create:
   <<: *molecule_create
   rules:
     - *vms_ignore_rule
-    - if: $MAJOR_VERSION == "2"
+    - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
       when: always
   variables:
     MOLECULE_SCENARIO: vms
@@ -1119,7 +1120,7 @@ molecule_vms_test:
   <<: *molecule_test
   rules:
     - *vms_ignore_rule
-    - if: $MAJOR_VERSION == "2"
+    - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
       when: on_success
   variables:
     MOLECULE_SCENARIO: vms
@@ -1138,7 +1139,7 @@ molecule_vms_failure_cleanup:
   <<: *molecule_destroy
   rules:
     - *vms_ignore_rule
-    - if: $MAJOR_VERSION == "2"
+    - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
       when: on_failure
   needs:
     - molecule_vms_create
@@ -1151,7 +1152,7 @@ molecule_vms_success_cleanup:
   <<: *molecule_destroy
   rules:
     - *vms_ignore_rule
-    - if: $MAJOR_VERSION == "2"
+    - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
       when: on_success
   dependencies:
     - molecule_vms_create
