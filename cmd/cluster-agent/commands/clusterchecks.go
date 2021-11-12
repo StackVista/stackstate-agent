@@ -23,12 +23,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	checkName string
+)
+
 func GetClusterChecksCobraCmd(flagNoColor *bool, confPath *string, loggerName config.LoggerName) *cobra.Command {
 	clusterChecksCmd := &cobra.Command{
 		Use:   "clusterchecks",
 		Short: "Prints the active cluster check configurations",
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			if *flagNoColor {
 				color.NoColor = true
 			}
@@ -46,13 +49,14 @@ func GetClusterChecksCobraCmd(flagNoColor *bool, confPath *string, loggerName co
 				return err
 			}
 
-			if err = flare.GetClusterChecks(color.Output); err != nil {
+			if err = flare.GetClusterChecks(color.Output, checkName); err != nil {
 				return err
 			}
 
-			return flare.GetEndpointsChecks(color.Output)
+			return flare.GetEndpointsChecks(color.Output, checkName)
 		},
 	}
+	clusterChecksCmd.PersistentFlags().StringVarP(&checkName, "check", "", "", "the check name to filter for")
 
 	return clusterChecksCmd
 }
