@@ -39,6 +39,8 @@ services:
       - 1618:1618
     environment:
       KAFKA_BROKERS: kafka:9092
+      # STACKSTATE_RECEIVER_HTTP_LOG_LEVEL: DEBUG
+      # STACKSTATE_CORRELATE_LOG_LEVEL: DEBUG
     restart: always
     mem_limit: 1G
 

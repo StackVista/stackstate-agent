@@ -5,7 +5,11 @@ package python
 import (
 	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -117,10 +121,10 @@ func testTopologyEventMissingFields(t *testing.T) {
 	SubmitTopologyEvent(C.CString("testID"), ev)
 
 	expectedEvent := metrics.Event{
-		Title:    "ev_title",
-		Text:     "ev_text",
-		Ts:       21,
-		Host:     "ev_host",
+		Title: "ev_title",
+		Text:  "ev_text",
+		Ts:    21,
+		Host:  "ev_host",
 	}
 	sender.AssertEvent(t, expectedEvent, 0)
 }
@@ -134,4 +138,38 @@ func testTopologyEventWrongFieldType(t *testing.T) {
 	SubmitTopologyEvent(C.CString("testID"), ev)
 
 	sender.AssertNotCalled(t, "Event")
+}
+
+var expectedRawMetricsData = telemetry.RawMetrics{
+	Name:      "name",
+	Timestamp: 123456,
+	HostName:  "hostname",
+	Value:     10,
+	Tags: []string{
+		"foo",
+		"bar",
+	},
+}
+
+func testRawMetricsData(t *testing.T) {
+	mockBatcher := batcher.NewMockBatcher()
+
+	checkId := C.CString("check-id")
+	name := C.CString(expectedRawMetricsData.Name)
+	value := C.float(expectedRawMetricsData.Value)
+	tags := []*C.char{C.CString("foo"), C.CString("bar"), nil}
+	hostname := C.CString(expectedRawMetricsData.HostName)
+	timestamp := C.longlong(expectedRawMetricsData.Timestamp)
+
+	SubmitRawMetricsData(checkId, name, value, &tags[0], hostname, timestamp)
+
+	expectedState := mockBatcher.CollectedTopology.Flush()
+
+	assert.Exactly(t, expectedState, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
+		"check-id": {
+			Health: make(map[string]health.Health),
+			Metrics: &[]telemetry.RawMetrics{expectedRawMetricsData},
+			Topology: nil,
+		},
+	}))
 }
