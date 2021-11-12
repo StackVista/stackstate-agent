@@ -46,7 +46,10 @@ variables: &commonvariables
   ARCH: amd64
   VCINSTALLDIR: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community"
   MOLECULE_K8S_CLUSTER: eks_test_cluster_1_21
-  PRIMARY_MAJOR_VERSION: '2'
+  # This variable represents which one of the gitlab pipelines will contain most of the jobs that's not required for both pipelines to run.
+  # IE VMS is a massive jobs and only has to run on either v2 or the v3 pipeline. With this variable you can control on which of the pipelines
+  # do jobs like these run on
+  PRIMARY_MAJOR_VERSION: '3'
 
 
 .agent2_variables: &agent2_variables
