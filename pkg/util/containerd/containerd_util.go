@@ -10,7 +10,7 @@ package containerd
 
 import (
 	"context"
-	specification "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec"
+	cspec "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec"
 	"sync"
 	"time"
 
@@ -37,6 +37,8 @@ var (
 
 // ContainerdItf is the interface implementing a subset of methods that leverage the Containerd api.
 type ContainerdItf interface {
+	// sts
+	GetContainers() ([]*cspec.Container, error)
 	Containers() ([]containerd.Container, error)
 	GetEvents() containerd.EventService
 	Info(ctn containerd.Container) (containers.Container, error)
@@ -137,7 +139,7 @@ func (c *ContainerdUtil) GetEvents() containerd.EventService {
 }
 
 // GetContainers interfaces with the containerd api to get the list of containers.
-func (c *ContainerdUtil) GetContainers() ([]*specification.Container, error) {
+func (c *ContainerdUtil) GetContainers() ([]*cspec.Container, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.queryTimeout)
 	defer cancel()
 
@@ -146,7 +148,7 @@ func (c *ContainerdUtil) GetContainers() ([]*specification.Container, error) {
 		return nil, err
 	}
 
-	uContainers := make([]*specification.Container, 0, len(dContainers))
+	uContainers := make([]*cspec.Container, 0, len(dContainers))
 	for _, dContainer := range dContainers {
 
 		info, err := dContainer.Info(ctx)
@@ -173,7 +175,7 @@ func (c *ContainerdUtil) GetContainers() ([]*specification.Container, error) {
 			continue
 		}
 
-		container := &specification.Container{
+		container := &cspec.Container{
 			Name:    info.ID,
 			Runtime: "containerd",
 			ID:      dContainer.ID(),

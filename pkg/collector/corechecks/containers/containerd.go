@@ -54,6 +54,8 @@ type ContainerdCheck struct {
 type ContainerdConfig struct {
 	ContainerdFilters []string `yaml:"filters"`
 	CollectEvents     bool     `yaml:"collect_events"`
+	// sts
+	CollectContainerTopology bool `yaml:"collect_container_topology"`
 }
 
 func init() {
@@ -130,6 +132,18 @@ func (c *ContainerdCheck) Run() error {
 		// Process events
 		computeEvents(events, sender, c.filters)
 	}
+
+	// sts begin
+	// Collect container topology
+	if c.instance.CollectContainerTopology {
+		err := c.topologyCollector.BuildContainerTopology(cu)
+		if err != nil {
+			sender.ServiceCheck("containerd.health", metrics.ServiceCheckCritical, "", nil, err.Error())
+			log.Errorf("Could not collect container topology: %s", err)
+			return err
+		}
+	}
+	// sts end
 
 	computeMetrics(sender, cu, c.filters)
 	return nil
