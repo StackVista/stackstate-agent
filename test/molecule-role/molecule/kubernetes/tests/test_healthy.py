@@ -13,7 +13,7 @@ def test_node_agent_healthy(host, ansible_var):
     namespace = ansible_var("namespace")
 
     def assert_healthy():
-        c = kubeconfig_env + "kubectl wait --for=condition=ready --timeout=1s -l app=stackstate-agent pod --namespace={}".format(namespace)
+        c = kubeconfig_env + "kubectl wait --for=condition=ready --timeout=1s -l app.kubernetes.io/component=agent pod --namespace={}".format(namespace)
         assert host.run(c).rc == 0
 
     util.wait_until(assert_healthy, 30, 5)
@@ -24,7 +24,7 @@ def test_cluster_agent_healthy(host, ansible_var):
     namespace = ansible_var("namespace")
 
     def assert_healthy():
-        c = kubeconfig_env + "kubectl wait --for=condition=available --timeout=1s deployment/stackstate-cluster-agent --namespace={}".format(namespace)
+        c = kubeconfig_env + "kubectl wait --for=condition=ready --timeout=1s -l app.kubernetes.io/component=cluster-agent pod --namespace={}".format(namespace)
         assert host.run(c).rc == 0
 
     util.wait_until(assert_healthy, 30, 5)

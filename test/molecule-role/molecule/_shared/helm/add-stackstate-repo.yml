@@ -1,0 +1,3 @@
+---
+- name: Add StackState Repo to Helm
+  shell: helm repo add stackstate https://helm.stackstate.io && helm repo update
