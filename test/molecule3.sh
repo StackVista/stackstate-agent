@@ -48,8 +48,8 @@ set -e
 
 export STACKSTATE_BRANCH=${STACKSTATE_BRANCH:-master}
 export MAJOR_VERSION=${MAJOR_VERSION:-3}
-export STS_AWS_TEST_BUCKET=${STS_AWS_TEST_BUCKET:-stackstate-agent-3-test}
-export STS_DOCKER_TEST_REPO=${STS_DOCKER_TEST_REPO:-stackstate-agent-test}
+export STS_AWS_TEST_BUCKET=${STS_AWS_TEST_BUCKET:-stackstate-agent-2-test}
+export STS_DOCKER_TEST_REPO=${STS_DOCKER_TEST_REPO:-stackstate-agent-2-test}
 export STS_DOCKER_TEST_REPO_CLUSTER=${STS_DOCKER_TEST_REPO_CLUSTER:-stackstate-cluster-agent-test}
 export LC_ALL=en_US.utf-8
 export LANG=en_US.utf-8
@@ -108,12 +108,13 @@ if [[ ! " ${AVAILABLE_MOLECULE_SCENARIOS[*]} " =~ $1 ]]; then
 fi
 
 # Helper for the second parameter defined
-AVAILABLE_MOLECULE_PROCESS=("create" "prepare" "test" "destroy" "login" "unit-test")
+AVAILABLE_MOLECULE_PROCESS=("lint" "create" "prepare" "test" "destroy" "login" "unit-test")
 if [[ ! " ${AVAILABLE_MOLECULE_PROCESS[*]} " =~ $2 ]]; then
     echo ""
     echo "------------ Invalid Molecule Process Supplied ('$2') --------------"
     echo ""
     echo "Available Molecule Processes:"
+    echo "  - lint"
     echo "  - create"
     echo "  - prepare"
     echo "  - test"
@@ -153,7 +154,10 @@ execute_molecule()
     molecule --base-config "./molecule/$1/provisioner.$2.yml" "$3" --scenario-name "$1" "${all_args[@]:3}"
 }
 
-if [[ $2 == "create" ]]; then
+if [[ $2 == "lint" ]]; then
+    execute_molecule "$1" setup lint
+
+elif [[ $2 == "create" ]]; then
     execute_molecule "$1" setup create
 
 elif [[ $2 == "prepare" ]]; then

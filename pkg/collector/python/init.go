@@ -183,9 +183,11 @@ void initTopologyModule(rtloader_t *rtloader) {
 //
 
 void SubmitTopologyEvent(char *, char *);
+void SubmitRawMetricsData(char *, char *, float, char **, char *, long long);
 
 void initTelemetryModule(rtloader_t *rtloader) {
 	set_submit_topology_event_cb(rtloader, SubmitTopologyEvent);
+	set_submit_raw_metrics_data_cb(rtloader, SubmitRawMetricsData);
 }
 
 //
@@ -201,6 +203,7 @@ void initHealthModule(rtloader_t *rtloader) {
 	set_submit_health_start_snapshot_cb(rtloader, SubmitHealthStartSnapshot);
 	set_submit_health_stop_snapshot_cb(rtloader, SubmitHealthStopSnapshot);
 }
+
 */
 import "C"
 

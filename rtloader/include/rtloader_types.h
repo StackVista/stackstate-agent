@@ -193,6 +193,9 @@ typedef void (*cb_submit_health_start_snapshot_t)(char *, health_stream_t *, int
 // (check_id, stream)
 typedef void (*cb_submit_health_stop_snapshot_t)(char *, health_stream_t *);
 
+// (check_id, name, value, tags, hostname, timestamp)
+typedef void (*cb_submit_raw_metrics_data_t)(char *, char *, float, char **, char *, long long);
+
 #ifdef __cplusplus
 }
 #endif

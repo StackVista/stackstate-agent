@@ -7,6 +7,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -44,9 +45,10 @@ func testComponentTopology(t *testing.T) {
 	expectedTopology := mockBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
+	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
-			Health: make(map[string]health.Health),
+			Health:  make(map[string]health.Health),
+			Metrics: &[]telemetry.RawMetrics{},
 			Topology: &topology.Topology{
 				StartSnapshot: true,
 				StopSnapshot:  true,
@@ -61,7 +63,7 @@ func testComponentTopology(t *testing.T) {
 				Relations: []topology.Relation{},
 			},
 		},
-	}), expectedTopology)
+	}))
 }
 
 func testRelationTopology(t *testing.T) {
@@ -93,9 +95,10 @@ func testRelationTopology(t *testing.T) {
 	expectedTopology := mockBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
+	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
-			Health: make(map[string]health.Health),
+			Health:  make(map[string]health.Health),
+			Metrics: &[]telemetry.RawMetrics{},
 			Topology: &topology.Topology{
 				StartSnapshot: false,
 				StopSnapshot:  false,
@@ -112,7 +115,7 @@ func testRelationTopology(t *testing.T) {
 				},
 			},
 		},
-	}), expectedTopology)
+	}))
 }
 
 func testStartSnapshotCheck(t *testing.T) {
@@ -127,9 +130,10 @@ func testStartSnapshotCheck(t *testing.T) {
 	expectedTopology := mockBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
+	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
-			Health: make(map[string]health.Health),
+			Health:  make(map[string]health.Health),
+			Metrics: &[]telemetry.RawMetrics{},
 			Topology: &topology.Topology{
 				StartSnapshot: true,
 				StopSnapshot:  false,
@@ -138,7 +142,7 @@ func testStartSnapshotCheck(t *testing.T) {
 				Relations:     []topology.Relation{},
 			},
 		},
-	}), expectedTopology)
+	}))
 }
 
 func testStopSnapshotCheck(t *testing.T) {
@@ -153,9 +157,10 @@ func testStopSnapshotCheck(t *testing.T) {
 	expectedTopology := mockBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
+	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
-			Health: make(map[string]health.Health),
+			Health:  make(map[string]health.Health),
+			Metrics: &[]telemetry.RawMetrics{},
 			Topology: &topology.Topology{
 				StartSnapshot: false,
 				StopSnapshot:  true,
@@ -164,5 +169,5 @@ func testStopSnapshotCheck(t *testing.T) {
 				Relations:     []topology.Relation{},
 			},
 		},
-	}), expectedTopology)
+	}))
 }

@@ -952,6 +952,12 @@ void Three::setSubmitHealthStopSnapshotCb(cb_submit_health_stop_snapshot_t cb)
     _set_submit_health_stop_snapshot_cb(cb);
 }
 
+// [sts] raw metrics
+void Three::setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t cb)
+{
+    _set_submit_raw_metrics_data_cb(cb);
+}
+
 // Python Helpers
 
 // get_integration_list return a list of every datadog's wheels installed.
