@@ -10,8 +10,10 @@ package python
 import (
 	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
@@ -52,4 +54,23 @@ func SubmitTopologyEvent(id *C.char, data *C.char) {
 		_ = log.Errorf("Empty topology event not sent. Raw: %v, Json: %v, Error: %v", rawEvent,
 			topologyEvent.String(), err)
 	}
+}
+
+// SubmitRawMetricsData
+//export SubmitRawMetricsData
+func SubmitRawMetricsData(checkID *C.char, name *C.char, value C.float, tags **C.char, hostname *C.char, timestamp C.longlong) {
+	goCheckID := C.GoString(checkID)
+	rawName := C.GoString(name)
+	rawHostname := C.GoString(hostname)
+	rawValue := float64(value)
+	rawTimestamp := int64(timestamp)
+	rawTags := cStringArrayToSlice(tags)
+
+	batcher.GetBatcher().SubmitRawMetricsData(check.ID(goCheckID), telemetry.RawMetrics{
+		Name:      rawName,
+		Timestamp: rawTimestamp,
+		HostName:  rawHostname,
+		Value:     rawValue,
+		Tags:      rawTags,
+	})
 }

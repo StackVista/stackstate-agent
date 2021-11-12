@@ -287,3 +287,46 @@ func TestSubmitEventCannotBeSerialized(t *testing.T) {
 	// Check for leaks
 	helpers.AssertMemoryUsage(t)
 }
+
+func testRawMetricsData(t *testing.T) {
+	if rawName != "name" {
+		t.Fatalf("Unexpected raw metric data 'name' value: %s", rawName)
+	}
+	if rawHostname != "hostname" {
+		t.Fatalf("Unexpected raw metric data 'hostname' value: %s", rawHostname)
+	}
+	if rawValue != 10 {
+		t.Fatalf("Unexpected raw metric data 'value' value: %v", rawValue)
+	}
+	if len(rawTags) != 2 {
+		t.Fatalf("Unexpected raw metric data 'tags' value: %s", rawTags)
+	}
+	if rawTimestamp != 14000 {
+		t.Fatalf("Unexpected raw metric data 'timestamp' value: %v", rawTimestamp)
+	}
+
+}
+
+func TestSubmitRawMetricsData(t *testing.T) {
+	// Reset memory counters
+	helpers.ResetMemoryStats()
+
+	out, err := run(`telemetry.submit_raw_metrics_data(None, "checkid", "name", 10, ['foo', 21, 'bar', ["hey"]], "hostname", 14000)`)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if out != "" {
+		t.Errorf("Unexpected printed value: '%s'", out)
+	}
+
+	if checkID != "checkid" {
+		t.Fatalf("Unexpected check id value: %s", checkID)
+	}
+
+	testRawMetricsData(t)
+
+	// Check for leaks
+	helpers.AssertMemoryUsage(t)
+}

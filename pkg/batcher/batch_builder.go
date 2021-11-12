@@ -3,12 +3,14 @@ package batcher
 import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 )
 
 // CheckInstanceBatchState is the type representing batched data per check instance
 type CheckInstanceBatchState struct {
 	Topology *topology.Topology
+	Metrics  *[]telemetry.RawMetrics
 	Health   map[string]health.Health
 }
 
@@ -41,6 +43,7 @@ func (builder *BatchBuilder) getOrCreateState(checkID check.ID) CheckInstanceBat
 	state := CheckInstanceBatchState{
 		Topology: nil,
 		Health:   make(map[string]health.Health),
+		Metrics:  nil,
 	}
 	builder.states[checkID] = state
 	return state
@@ -61,7 +64,8 @@ func (builder *BatchBuilder) getOrCreateTopology(checkID check.ID, instance topo
 			Components:    make([]topology.Component, 0),
 			Relations:     make([]topology.Relation, 0),
 		},
-		Health: state.Health,
+		Health:  state.Health,
+		Metrics: state.Metrics,
 	}
 	return builder.states[checkID].Topology
 }
@@ -81,6 +85,22 @@ func (builder *BatchBuilder) getOrCreateHealth(checkID check.ID, stream health.S
 	}
 
 	return builder.states[checkID].Health[stream.GoString()]
+}
+
+func (builder *BatchBuilder) getOrCreateRawMetrics(checkID check.ID) *[]telemetry.RawMetrics {
+	state := builder.getOrCreateState(checkID)
+
+	if state.Metrics != nil {
+		return state.Metrics
+	}
+
+	builder.states[checkID] = CheckInstanceBatchState{
+		Topology: state.Topology,
+		Health:   state.Health,
+		Metrics: &[]telemetry.RawMetrics{},
+	}
+
+	return builder.states[checkID].Metrics
 }
 
 // AddComponent adds a component
@@ -138,6 +158,13 @@ func (builder *BatchBuilder) HealthStopSnapshot(checkID check.ID, stream health.
 	builder.states[checkID].Health[stream.GoString()] = healthData
 	// We always flush after a TopologyStopSnapshot to limit latency
 	return builder.Flush()
+}
+
+// AddRawMetricsData adds raw metric data
+func (builder *BatchBuilder) AddRawMetricsData(checkID check.ID, rawMetric telemetry.RawMetrics) CheckInstanceBatchStates {
+	rawMetricsData := builder.getOrCreateRawMetrics(checkID)
+	*rawMetricsData = append(*rawMetricsData, rawMetric)
+	return builder.incrementAndTryFlush()
 }
 
 // Flush the collected data. Returning the data and wiping the current build up Topology
