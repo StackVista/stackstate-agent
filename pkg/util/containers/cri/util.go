@@ -136,7 +136,6 @@ func (c *CRIUtil) GetContainers() ([]*spec.Container, error) {
 				Source:      cmount.HostPath,
 				Destination: cmount.ContainerPath,
 			}
-
 			mounts = append(mounts, mountPoint)
 		}
 		container := &spec.Container{

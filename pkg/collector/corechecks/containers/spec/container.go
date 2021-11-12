@@ -12,7 +12,6 @@ type Container struct {
 	Image   string        `json:"image,omitempty"`
 	Mounts  []specs.Mount `json:"mounts"`
 	State   string        `json:"state,omitempty"`
-	Tags    []string      `json:"tags"`
 }
 
 // ContainerUtil is an interface for util classes capable of getting a list of Container
