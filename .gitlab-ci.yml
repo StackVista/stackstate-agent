@@ -49,7 +49,7 @@ variables: &commonvariables
   # This variable represents which one of the gitlab pipelines will contain most of the jobs that's not required for both pipelines to run.
   # IE VMS is a massive jobs and only has to run on either v2 or the v3 pipeline. With this variable you can control on which of the pipelines
   # do jobs like these run on
-  PRIMARY_MAJOR_VERSION: '3'
+  PRIMARY_MAJOR_VERSION: '2'
 
 
 .agent2_variables: &agent2_variables
