@@ -25,7 +25,7 @@ data "aws_ami" "eks-worker" {
 locals {
   eks-node-userdata = <<USERDATA
 #!/bin/bash -xe
-/etc/eks/bootstrap.sh ${local.cluster_name}
+/etc/eks/bootstrap.sh ${local.cluster_name} --container-runtime containerd
 USERDATA
 }
 
