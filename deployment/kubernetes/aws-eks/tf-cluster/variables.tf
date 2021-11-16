@@ -7,6 +7,7 @@ variable "SCALING_DESIRED_CAPACITY" {
 }
 
 variable "CLUSTER_NAME" {
+  default = "test-containerd"
 }
 
 locals {

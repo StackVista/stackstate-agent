@@ -143,5 +143,6 @@ output "config-map-aws-auth" {
 
 output "eks_rsa" {
   value = tls_private_key.eks_rsa.private_key_pem
+  sensitive = true
 }
 
