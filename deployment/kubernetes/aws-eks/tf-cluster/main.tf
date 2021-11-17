@@ -10,7 +10,7 @@
 terraform {
   backend "s3" {
     bucket = "lupulus-sandbox-terraform-state"
-    key    = "aws-eks-containerd.terraform.tfstate"
+    key    = "test-containerd-2.terraform.tfstate"
     region = "eu-west-1"
   }
 }
