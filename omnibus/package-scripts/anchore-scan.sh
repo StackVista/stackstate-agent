@@ -32,7 +32,7 @@ fi
 FILE="anchore-scan.txt"
 ANCHORE="anchore/engine-cli:v0.9.2"
 ANCHORE_DOCKER_INVOKE="docker run --rm -a stdout -e ANCHORE_CLI_USER=${ANCHORE_CLI_USER} -e ANCHORE_CLI_PASS=${ANCHORE_CLI_PASS} -e ANCHORE_CLI_URL=${ANCHORE_CLI_URL} ${ANCHORE}"
-ANCHORE_PARSE="quay.io/stackstate/anchore-parser:c1c93c53"
+ANCHORE_PARSE="quay.io/stackstate/anchore-parser:14a59ca9"
 
 {
     ${ANCHORE_DOCKER_INVOKE} anchore-cli image add "$IMAGE"
