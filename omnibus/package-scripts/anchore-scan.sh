@@ -9,7 +9,6 @@ usage()
 }
 
 IMAGE=""
-NOTIFY=0
 
 while getopts ":i:n:" o; do
     case "${o}" in
@@ -29,15 +28,11 @@ shift $((OPTIND-1))
 if [ -z "${IMAGE}" ] || [ -z "${NOTIFY}" ]; then
     usage
 fi
-if [ ! $NOTIFY = 0 ] && [ ! $NOTIFY = 1 ]; then
-    usage
-fi
 
 FILE="anchore-scan.txt"
 ANCHORE="anchore/engine-cli:v0.9.2"
 ANCHORE_DOCKER_INVOKE="docker run --rm -a stdout -e ANCHORE_CLI_USER=${ANCHORE_CLI_USER} -e ANCHORE_CLI_PASS=${ANCHORE_CLI_PASS} -e ANCHORE_CLI_URL=${ANCHORE_CLI_URL} ${ANCHORE}"
 ANCHORE_PARSE="quay.io/stackstate/anchore-parser:c1c93c53"
-ANCHORE_PARSE_DOCKER_INVOKE="docker run --rm -e ANCHORE_WEBHOOK=${ANCHORE_WEBHOOK} -e INPUT_FILE=anchore-output/${FILE} -e IMAGE_WHITELIST_FILE=anchore-whitelists/image-whitelist.json -e CVE_WHITELIST_FILE=anchore-whitelists/cve-whitelist.json -e WHITELIST_IMAGES_HAVE_TAGS=false -v ${PWD}/anchore-whitelists:/usr/src/app/anchore-whitelists -v ${PWD}/anchore-output:/usr/src/app/anchore-output ${ANCHORE_PARSE}"
 
 ${ANCHORE_DOCKER_INVOKE} anchore-cli image add "$IMAGE" > /dev/null
 ${ANCHORE_DOCKER_INVOKE} anchore-cli image wait "$IMAGE" > /dev/null
@@ -52,6 +47,14 @@ fi
 mkdir -p "${PWD}"/anchore-output
 mv ${FILE} anchore-output
 
-${ANCHORE_PARSE_DOCKER_INVOKE} python daily_high_crit_report.py
+docker run --rm \
+   -e ANCHORE_WEBHOOK="${ANCHORE_WEBHOOK}" \
+   -e INPUT_FILE="anchore-output/${FILE}" \
+   -e IMAGE_WHITELIST_FILE="anchore-whitelists/image-whitelist.json" \
+   -e CVE_WHITELIST_FILE="anchore-whitelists/cve-whitelist.json" \
+   -e WHITELIST_IMAGES_HAVE_TAGS="false" \
+   -v "${PWD}"/anchore-whitelists:/usr/src/app/anchore-whitelists \
+   -v "${PWD}"/anchore-output:/usr/src/app/anchore-output \
+   ${ANCHORE_PARSE} python daily_high_crit_report.py
 
 rm -rf anchore-output
