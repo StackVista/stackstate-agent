@@ -44,36 +44,23 @@ ${ANCHORE_DOCKER_INVOKE} anchore-cli image add "$IMAGE" > /dev/null
 ${ANCHORE_DOCKER_INVOKE} anchore-cli image wait "$IMAGE" > /dev/null
 ${ANCHORE_DOCKER_INVOKE} anchore-cli image vuln --vendor-only false "$IMAGE" all > $FILE
 ${ANCHORE_DOCKER_INVOKE} anchore-cli evaluate check "$IMAGE" --policy "cluster-agent-04x" --detail
-# --policy "stackstate-default"
 
 if [ ! -f ${FILE} ]; then
     echo "File ${FILE} not found!"
     exit 1
 fi
 
-MESSAGE=""
-while IFS= read -r line || [ ! -z "$line" ]; do
+mdir -p ${PWD}/anchore-output
+mv ${FILE} anchore-output
 
-    if [ "${START}" = "true" ]; then
-        # Here we parse the vulns
-        VULN_ID=$(echo $line | awk '{print $1}')
-        VULN_LVL=$(echo $line | awk '{print $3}')
-        if [ "${VULN_LVL}" = "Critical" ] ||  [ "${VULN_LVL}" = "High" ]; then
-            MESSAGE="${MESSAGE}${VULN_LVL} Vulnerability (${VULN_ID}) detected in docker image ${IMAGE}.\n"
-        fi
+docker run --rm -it \
+       -e ANCHORE_WEBHOOK="${ANCHORE_WEBHOOK}" \
+       -e INPUT_FILE="anchore-output/${FILE}" \
+       -e IMAGE_WHITELIST_FILE=anchore-whitelists/image-whitelist.json \
+       -e CVE_WHITELIST_FILE=anchore-whitelists/cve-whitelist.json \
+       -e WHITELIST_IMAGES_HAVE_TAGS="false" \
+       -v "${PWD}"/anchore-whitelists:/usr/src/app/anchore-whitelists \
+       -v "${PWD}"/anchore-output:/usr/src/app/anchore-output \
+       quay.io/stackstate/anchore-parser:c1c93c53 python daily_high_crit_report.py
 
-        if [ "${VULN_LVL}" = "Medium" ] && [ $NOTIFY = 1 ]; then
-            MESSAGE="${MESSAGE}${VULN_LVL} Vulnerability (${VULN_ID}) detected in docker image ${IMAGE}.\n"
-        fi
-
-    elif [ ! -z "$(echo $line | grep "Vulnerability")" ] && [ "${START}" = "false" ]; then
-        START="true"
-    fi
-done < $FILE
-
-if [ ! -z "${MESSAGE}" ]; then
-    ${CURL_DOCKER_INVOKE} -X POST -H 'Content-type: application/json' --data '{"text":"'"${MESSAGE}"'"}' ${ANCHORE_WEBHOOK}
-    # echo ${MESSAGE}
-fi
-
-rm $FILE
+rm -rf anchore-output
