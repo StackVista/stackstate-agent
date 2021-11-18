@@ -1,0 +1,8 @@
+---
+- name: Prepare Kubernetes Cluster
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  tasks:
+    - include_tasks: ../../library/ansible-tasks/helm/uninstall-stackstate-agent.yml
+    - include_tasks: ../../library/ansible-tasks/kubectl/delete-namespace.yml

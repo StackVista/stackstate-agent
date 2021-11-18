@@ -1,0 +1,37 @@
+---
+- name: Prepare Receiver
+  hosts: receiver
+  gather_facts: true
+  tasks:
+    - include_tasks: ../../library/ansible-tasks/install-and-update/updates-ubuntu18-automatic.yml
+    - include_tasks: ../../library/ansible-tasks/install-and-update/install-provisioning-dependencies.yml
+    - include_tasks: ../../library/ansible-tasks/docker/login.yml
+    - include_tasks: ../../library/ansible-tasks/copy/copy-receiver-files.yml
+    - include_tasks: ../../library/ansible-tasks/env/branch-cluster-env.yml
+    - include_tasks: ../../library/ansible-tasks/docker/compose-run-receiver.yml
+    - include_tasks: ../../library/ansible-tasks/wait/wait-for-receiver.yml
+
+- name: Prepare Kubernetes Cluster
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  tasks:
+    - include_tasks: ../../library/ansible-tasks/docker/login.yml
+    - include_tasks: ../../library/ansible-tasks/helm/add-stackstate-repo.yml
+    - include_tasks: ../../library/ansible-tasks/kubectl/create-secret-for-private-docker.yml
+    - include_tasks: ../../library/ansible-tasks/kubectl/create-namespace.yml
+    - include_tasks: ../../library/ansible-tasks/kubectl/apply-manifest-test-workload.yml
+    - include_tasks: ../../library/ansible-tasks/helm/install-stackstate-agent.yml
+    - include_tasks: ../../library/ansible-tasks/kubectl/wait-for-stackstate-cluster.yml
+    - include_tasks: ../../library/ansible-tasks/kubectl/wait-for-stackstate-node-agents.yml
+    - include_tasks: ../../library/ansible-tasks/kubectl/wait-for-stackstate-cluster-check-agent.yml
+    - include_tasks: ../../library/ansible-tasks/kubectl/wait-for-kube-state-metrics.yml
+#    - include_tasks: ../../library/ansible-tasks/kubectl/scenario-pod-to-service-ip.yml
+    - include_tasks: ../../library/ansible-tasks/kubectl/scenario-pod-localhost.yml
+#    - include_tasks: ../../library/ansible-tasks/kubectl/scenario-pod-headless.yml
+    - include_tasks: ../../library/ansible-tasks/kubectl/scenario-pod-http-metrics.yml
+#    - include_tasks: ../../library/ansible-tasks/kubectl/scenario-pod-to-service-ip-wait.yml
+    - include_tasks: ../../library/ansible-tasks/kubectl/scenario-pod-localhost-wait.yml
+#    - include_tasks: ../../library/ansible-tasks/kubectl/scenario-pod-headless-wait.yml
+    - include_tasks: ../../library/ansible-tasks/kubectl/scenario-pod-http-metrics-wait.yml
+    - include_tasks: ../../library/ansible-tasks/kubectl/test-workload.yml
