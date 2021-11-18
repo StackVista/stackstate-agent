@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -5,6 +6,7 @@ package topologycollectors
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"k8s.io/api/core/v1"
 	"strings"
@@ -76,10 +78,15 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) *topology.Compo
 
 	identifiers := nc.GetURNBuilder().BuildNodeURNs(node)
 
+	clusterName := clustername.GetClusterName()
+
 	// this allow merging with host reported by main agent
 	var instanceID string
 	if instanceID = extractInstanceIDFromProviderID(node.Spec); instanceID != "" {
 		identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", instanceID))
+		if clusterName != "" {
+			identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s-%s", instanceID, clusterName))
+		}
 	}
 	log.Tracef("Created identifiers for %s: %v", node.Name, identifiers)
 
