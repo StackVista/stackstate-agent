@@ -1,0 +1,13 @@
+---
+- name: Cleanup Kubernetes Cluster
+  hosts: local
+  gather_facts: true
+  tasks:
+    - include_tasks: ../../bees/tasks/helm/uninstall-stackstate-agent.yml  # TODO switch to ansible role
+    - include_tasks: ../../bees/tasks/kubectl/delete-namespace.yml
+
+- name: Cleanup Receiver
+  hosts: receiver
+  gather_facts: true
+  tasks:
+    - include_tasks: ../../bees/tasks/docker/compose-cleanup.yml  # TODO switch to ansible role

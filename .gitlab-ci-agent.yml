@@ -672,6 +672,57 @@ pre_release_cluster_agent_image:
     - cd $CI_PROJECT_DIR/test
     - ./molecule3.sh $MOLECULE_SCENARIO destroy
 
+# Core Structure for all the beest steps
+.beest: &beest
+  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
+  variables:
+    DOCKER_DRIVER: overlay
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  services:
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
+      alias: docker
+  interruptible: true
+  dependencies: []
+  before_script:
+    - export AWS_ACCESS_KEY_ID=${MOLECULE_AWS_ACCESS_KEY_ID}
+    - export AWS_SECRET_ACCESS_KEY=${MOLECULE_AWS_SECRET_ACCESS_KEY}
+
+# Base artifacts for create and test steps
+.beest_artifacts: &beest_artifacts
+  artifacts:
+    when: always
+    paths:
+      - $CI_PROJECT_DIR/beest/sut/yards/$BEEST_SCENARIO/topic-*.json
+      - $CI_PROJECT_DIR/beest/sut/yards/$BEEST_SCENARIO/*.log
+      - $CI_PROJECT_DIR/.cache
+      - $MOLECULE_EPHEMERAL_DIRECTORY
+    expire_in: 1 week
+
+# Primary create steps for all the beest builds
+.beest_create: &beest_create
+  <<: *beest_artifacts
+  stage: prepare
+  script:
+    - cd $CI_PROJECT_DIR/beest
+    - action="create $BEEST_SCENARIO" make
+
+# Primary test steps for all the beest builds
+.beest_test: &beest_test
+  <<: *beest_artifacts
+  stage: acceptance
+  timeout: 80 minutes
+  script:
+    - cd $CI_PROJECT_DIR/beest
+    - action="test $BEEST_SCENARIO" make
+
+# Primary destroy steps for all the beest builds
+.beest_destroy: &beest_destroy
+  stage: cleanup
+  script:
+    - cd $CI_PROJECT_DIR/beest
+    - action="destroy $BEEST_SCENARIO" make
+
 
 # Job Seq: Molecule
 # Type: Compose
@@ -798,25 +849,25 @@ molecule_integrations_success_cleanup:
     when: never
 
 molecule_kubernetes_create:
-  <<: *molecule
-  <<: *molecule_create
+  <<: *beest
+  <<: *beest_create
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent
     - when: never
   variables:
-    MOLECULE_SCENARIO: kubernetes
+    BEEST_SCENARIO: kubernetes
 
 molecule_kubernetes_test:
-  <<: *molecule
-  <<: *molecule_test
+  <<: *beest
+  <<: *beest_test
   resource_group: $MOLECULE_K8S_CLUSTER
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent
     - when: never
   variables:
-    MOLECULE_SCENARIO: kubernetes
+    BEEST_SCENARIO: kubernetes
   dependencies:
     - molecule_kubernetes_create
   needs:
@@ -825,27 +876,27 @@ molecule_kubernetes_test:
     - pre_release_main_agent_image
 
 molecule_kubernetes_failure_cleanup:
-  <<: *molecule
-  <<: *molecule_destroy
+  <<: *beest
+  <<: *beest_destroy
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent_on_failure
     - when: never
   variables:
-    MOLECULE_SCENARIO: kubernetes
+    BEEST_SCENARIO: kubernetes
   needs:
     - molecule_kubernetes_test
     - molecule_kubernetes_create
 
 molecule_kubernetes_success_cleanup:
-  <<: *molecule
-  <<: *molecule_destroy
+  <<: *beest
+  <<: *beest_destroy
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent_on_success
     - when: never
   variables:
-    MOLECULE_SCENARIO: kubernetes
+    BEEST_SCENARIO: kubernetes
   dependencies:
     - molecule_kubernetes_test
     - molecule_kubernetes_create

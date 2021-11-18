@@ -1,0 +1,8 @@
+---
+- include_tasks: ./tasks/install-and-update/updates-ubuntu18-automatic.yml
+- include_tasks: ./tasks/install-and-update/install-provisioning-dependencies.yml
+- include_tasks: ./tasks/docker/login.yml
+- include_tasks: ./tasks/copy/copy-receiver-files.yml
+- include_tasks: ./tasks/env/branch-cluster-env.yml
+- include_tasks: ./tasks/docker/compose-run-receiver.yml
+- include_tasks: ./tasks/wait/wait-for-receiver.yml

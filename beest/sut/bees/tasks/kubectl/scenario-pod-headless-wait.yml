@@ -1,0 +1,5 @@
+---
+- name: Wait for the pod-to-pod-headless scenario to become ready
+  command: kubectl -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l test=pod-to-pod-headless pod
+  environment:
+    KUBECONFIG: "{{ kubeconfig }}"

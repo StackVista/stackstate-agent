@@ -1,0 +1,6 @@
+---
+- name: Wait for the stackstate cluster check agent to start
+  ignore_errors: true
+  command: kubectl -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=clusterchecks pod
+  environment:
+    KUBECONFIG: "{{ kubeconfig }}"
