@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"expvar"
 	"fmt"
+	"github.com/gogo/protobuf/proto"
 	"io"
 	"io/ioutil"
 	stdlog "log"
@@ -29,6 +30,8 @@ import (
 
 	"github.com/tinylib/msgp/msgp"
 
+	openTelemetryTrace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/v1"
+	// tracecollector "github.com/open-telemetry/opentelemetry-proto/gen/go/collector/trace/v1"
 	mainconfig "github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/tagger"
 	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
@@ -87,6 +90,7 @@ type HTTPReceiver struct {
 // NewHTTPReceiver returns a pointer to a new HTTPReceiver
 func NewHTTPReceiver(conf *config.AgentConfig, dynConf *sampler.DynamicConfig, out chan *Trace) *HTTPReceiver {
 	rateLimiterResponse := http.StatusOK
+
 	if config.HasFeature("429") {
 		rateLimiterResponse = http.StatusTooManyRequests
 	}
@@ -122,6 +126,8 @@ func (r *HTTPReceiver) Start() {
 	mux.HandleFunc("/v0.4/traces", r.handleWithVersion(v04, r.handleTraces))
 	mux.HandleFunc("/v0.4/services", r.handleWithVersion(v04, r.handleServices))
 	mux.Handle("/profiling/v1/input", r.profileProxyHandler())
+	// [sts]
+	mux.HandleFunc("/open-telemetry", r.handleProtobuf(r.handleOpenTelemetry))
 
 	timeout := 5 * time.Second
 	if r.conf.ReceiverTimeout > 0 {
@@ -274,6 +280,20 @@ func (r *HTTPReceiver) handleWithVersion(v Version, f func(Version, http.Respons
 	}
 }
 
+// [sts]
+func (r *HTTPReceiver) handleProtobuf(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		if mediaType := getMediaType(req); mediaType != "application/x-protobuf" {
+			httpFormatErrorNoVersion(w, fmt.Errorf("unsupported media type: %q", mediaType))
+			return
+		}
+
+		req.Body = NewLimitedReader(req.Body, r.conf.MaxRequestBytes)
+
+		f(w, req)
+	}
+}
+
 func traceCount(req *http.Request) (int64, error) {
 	if _, ok := req.Header[headerTraceCount]; !ok {
 		return 0, fmt.Errorf("HTTP header %q not found", headerTraceCount)
@@ -342,6 +362,22 @@ func (r *HTTPReceiver) decodeTraces(v Version, req *http.Request) (pb.Traces, er
 		return nil, err
 	}
 	return traces, nil
+}
+
+// [sts]
+func (r *HTTPReceiver) decodeOpenTelemetry(req *http.Request) (*openTelemetryTrace.TracesData, error) {
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	traceData := &openTelemetryTrace.TracesData{}
+
+	if err := proto.Unmarshal(body, traceData); err != nil {
+		return nil, err
+	}
+
+	return traceData, nil
 }
 
 func (r *HTTPReceiver) replyOK(v Version, w http.ResponseWriter) {
@@ -434,6 +470,61 @@ func (r *HTTPReceiver) processTraces(ts *info.TagStats, containerID string, trac
 			Spans:         trace,
 		}
 	}
+}
+
+// [sts]
+func (r *HTTPReceiver) processOpenTelemetry(ts *info.TagStats, containerID string, traces *openTelemetryTrace.TracesData) {
+	defer timing.Since("datadog.trace_agent.internal.normalize_ms", time.Now())
+
+	// containerTags := getContainerTags(containerID)
+	//  for _, trace := range traces.ResourceSpans {
+	//  	spans := len(trace)
+	//  	atomic.AddInt64(&ts.SpansReceived, int64(spans))
+	//  	err := normalizeTrace(ts, trace)
+	//  	if err != nil {
+	//  		log.Debug("Dropping invalid trace: %s", err)
+	//  		atomic.AddInt64(&ts.SpansDropped, int64(spans))
+	//  		continue
+	//  	}
+	//  	r.out <- &Trace{
+	//  		Source:        &ts.Tags,
+	//  		ContainerTags: containerTags,
+	//  		Spans:         trace,
+	//  	}
+	//  }
+}
+
+// [sts]
+// Open telemetry protobuf support
+func (r *HTTPReceiver) handleOpenTelemetry(w http.ResponseWriter, req *http.Request) {
+	ts := r.tagStats(req)
+
+	// Trace count ignored
+	// Rate Limiter Ignored
+
+	traces, err := r.decodeOpenTelemetry(req)
+	if err != nil {
+		httpDecodingError(err, []string{}, w)
+		atomic.AddInt64(&ts.TracesDropped.DecodingError, 0)
+		log.Errorf("Cannot cannot decode open telemetry protobuf content: %v", err)
+		return
+	}
+
+	httpOK(w)
+
+	atomic.AddInt64(&ts.TracesReceived, int64(len(traces.ResourceSpans)))
+	atomic.AddInt64(&ts.TracesBytes, req.Body.(*LimitedReader).Count)
+	atomic.AddInt64(&ts.PayloadAccepted, 1)
+
+	r.wg.Add(1)
+	go func() {
+		defer func() {
+			r.wg.Done()
+			watchdog.LogOnPanic()
+		}()
+		containerID := req.Header.Get(headerContainerID)
+		r.processOpenTelemetry(ts, containerID, traces)
+	}()
 }
 
 // handleServices handle a request with a list of several services

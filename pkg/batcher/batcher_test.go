@@ -64,7 +64,7 @@ var (
 		},
 	}
 
-	testRawMetricsDataIntakeMetric = testRawMetricsData.ConvertToIntakeMetric()
+	testRawMetricsDataIntakeMetric  = testRawMetricsData.ConvertToIntakeMetric()
 	testRawMetricsDataIntakeMetric2 = testRawMetricsData2.ConvertToIntakeMetric()
 )
 
@@ -318,7 +318,7 @@ func TestBatchFlushOnMaxRawMetricsElements(t *testing.T) {
 			"internalHostname": "myhost",
 			"topologies":       []topology.Topology{},
 			"health":           []health.Health{},
-			"metrics": 			[]interface{}{
+			"metrics": []interface{}{
 				testRawMetricsDataIntakeMetric, testRawMetricsDataIntakeMetric2},
 		})
 
