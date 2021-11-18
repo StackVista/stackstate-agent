@@ -4,11 +4,10 @@
 package topologycollectors
 
 import (
-	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/urn"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"k8s.io/api/core/v1"
-	"strings"
 )
 
 // NodeCollector implements the ClusterTopologyCollector interface.
@@ -73,34 +72,8 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 	// creates a StackState component for the kubernetes node
 	log.Tracef("Mapping kubernetes node to StackState component: %s", node.String())
 
-	// create identifier list to merge with StackState components
-	identifiers := make([]string, 0)
-	for _, address := range node.Status.Addresses {
-		switch addressType := address.Type; addressType {
-		case v1.NodeInternalIP:
-			identifiers = append(identifiers, fmt.Sprintf("urn:ip:/%s:%s:%s", nc.GetInstance().URL, node.Name, address.Address))
-		case v1.NodeExternalIP:
-			identifiers = append(identifiers, fmt.Sprintf("urn:ip:/%s:%s", nc.GetInstance().URL, address.Address))
-		case v1.NodeInternalDNS:
-			identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s:%s", nc.GetInstance().URL, address.Address))
-		case v1.NodeExternalDNS:
-			identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", address.Address))
-		case v1.NodeHostName:
-			//do nothing with it
-		default:
-			continue
-		}
-	}
-	// this allow merging with host reported by main agent
-	var instanceID string
-	if len(node.Spec.ProviderID) > 0 {
-		instanceID = extractInstanceIDFromProviderID(node.Spec)
-	} else {
-		instanceID = node.Name
-	}
-	identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", instanceID))
-
-	log.Tracef("Created identifiers for %s: %v", node.Name, identifiers)
+	identifiers := nc.GetURNBuilder().BuildNodeURNs(node)
+	log.Debugf("Created identifiers for %s: %v", node.Name, identifiers)
 
 	nodeExternalID := nc.buildNodeExternalID(node.Name)
 
@@ -124,6 +97,7 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 		},
 	}
 
+	instanceID := urn.GetInstanceID(node)
 	component.Data.PutNonEmpty("generateName", node.GenerateName)
 	component.Data.PutNonEmpty("kind", node.Kind)
 	component.Data.PutNonEmpty("instanceId", instanceID)
@@ -145,14 +119,4 @@ func (nc *NodeCollector) nodeToClusterStackStateRelation(node v1.Node) *topology
 	log.Tracef("Created StackState node -> cluster relation %s->%s", relation.SourceID, relation.TargetID)
 
 	return relation
-}
-
-func extractLastFragment(value string) string {
-	lastSlash := strings.LastIndex(value, "/")
-	return value[lastSlash+1:]
-}
-
-func extractInstanceIDFromProviderID(spec v1.NodeSpec) string {
-	//parse node id from cloud provider (for AWS is the ec2 instance id)
-	return extractLastFragment(spec.ProviderID)
 }

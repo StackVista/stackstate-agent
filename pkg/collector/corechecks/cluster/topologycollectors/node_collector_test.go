@@ -9,6 +9,7 @@ package topologycollectors
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 	"github.com/stretchr/testify/assert"
@@ -19,14 +20,10 @@ import (
 	"time"
 )
 
-func TestInstanceIdExtractor(t *testing.T) {
-	nodeSpecProviderID := "aws:///us-east-1b/i-024b28584ed2e6321"
-
-	instanceID := extractInstanceIDFromProviderID(coreV1.NodeSpec{ProviderID: nodeSpecProviderID})
-	assert.Equal(t, "i-024b28584ed2e6321", instanceID)
-}
-
 func TestNodeCollector(t *testing.T) {
+	mockConfig := config.Mock()
+	var testClusterName = "test-cluster-name"
+	mockConfig.Set("cluster_name", testClusterName)
 
 	componentChannel := make(chan *topology.Component)
 	defer close(componentChannel)
@@ -67,7 +64,11 @@ func TestNodeCollector(t *testing.T) {
 								},
 								KubeletEndpoint: coreV1.DaemonEndpoint{Port: 5000},
 							},
-							"identifiers": []string{"urn:ip:/test-cluster-name:test-node-1:10.20.01.01", "urn:host:/test-node-1"},
+							"identifiers": []string{
+								"urn:ip:/test-cluster-name:test-node-1:10.20.01.01",
+								"urn:host:/test-node-1",
+								"urn:host:/test-node-1-test-cluster-name",
+							},
 						},
 					}
 					assert.EqualValues(t, expectedComponent, component)
@@ -118,7 +119,12 @@ func TestNodeCollector(t *testing.T) {
 								},
 								KubeletEndpoint: coreV1.DaemonEndpoint{Port: 5000},
 							},
-							"identifiers":  []string{"urn:ip:/test-cluster-name:test-node-2:10.20.01.01", "urn:ip:/test-cluster-name:10.20.01.02", "urn:host:/test-node-2"},
+							"identifiers": []string{
+								"urn:ip:/test-cluster-name:test-node-2:10.20.01.01",
+								"urn:ip:/test-cluster-name:10.20.01.02",
+								"urn:host:/test-node-2",
+								"urn:host:/test-node-2-test-cluster-name",
+							},
 							"kind":         "some-specified-kind",
 							"generateName": "some-specified-generation",
 						},
@@ -169,9 +175,14 @@ func TestNodeCollector(t *testing.T) {
 								},
 								KubeletEndpoint: coreV1.DaemonEndpoint{Port: 5000},
 							},
-							"identifiers": []string{"urn:ip:/test-cluster-name:test-node-3:10.20.01.01", "urn:ip:/test-cluster-name:10.20.01.02",
-								"urn:host:/test-cluster-name:cluster.internal.dns.test-node-3", "urn:host:/my-organization.test-node-3",
-								"urn:host:/i-024b28584ed2e6321"},
+							"identifiers": []string{
+								"urn:ip:/test-cluster-name:test-node-3:10.20.01.01",
+								"urn:ip:/test-cluster-name:10.20.01.02",
+								"urn:host:/test-cluster-name:cluster.internal.dns.test-node-3",
+								"urn:host:/my-organization.test-node-3",
+								"urn:host:/i-024b28584ed2e6321",
+								"urn:host:/i-024b28584ed2e6321-test-cluster-name",
+							},
 							"kind":         "some-specified-kind",
 							"generateName": "some-specified-generation",
 							"instanceId":   "i-024b28584ed2e6321",
@@ -225,6 +236,7 @@ func CreateBaseNode(id int) coreV1.Node {
 			},
 			UID:          types.UID(fmt.Sprintf("test-node-%d", id)),
 			GenerateName: "",
+			ClusterName:  "mycluster",
 		},
 		Status: coreV1.NodeStatus{
 			Phase: coreV1.NodeRunning,
