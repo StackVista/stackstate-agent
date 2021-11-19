@@ -9,6 +9,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (
@@ -55,6 +56,7 @@ func MakeDockerTopologyCollector() *ContainerTopologyCollector {
 
 // BuildContainerTopology collects all docker container topology
 func (ctc *ContainerTopologyCollector) BuildContainerTopology(containerUtil spec.ContainerUtil) error {
+	log.Infof("Running container topology collector for '%s' runtime", ctc.TopologyInstance.Type)
 	sender := batcher.GetBatcher()
 	if sender == nil {
 		return errors.New("no batcher instance available, skipping BuildContainerTopology")
