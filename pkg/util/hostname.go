@@ -186,7 +186,10 @@ func GetHostnameData() (HostnameData, error) {
 	if getAzureHostname, found := hostname.ProviderCatalog["azure"]; found {
 		azureName, err := getAzureHostname()
 		if err == nil {
-			azureIdentifiers, err := azure.HostnameIdentifiers()
+			azureIdentifiers, idsErr := azure.HostnameIdentifiers()
+			if idsErr != nil {
+				log.Warnf("Failed to get Azure host identifiers: %v", idsErr)
+			}
 			log.Debugf("Got hostname '%s' from Azure", azureName)
 			hostnameData := saveHostnameData(cacheHostnameKey, azureName, "azure", azureIdentifiers)
 			return hostnameData, err

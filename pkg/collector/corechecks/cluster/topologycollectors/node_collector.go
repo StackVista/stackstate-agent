@@ -4,12 +4,10 @@
 package topologycollectors
 
 import (
-	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/urn"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"k8s.io/api/core/v1"
-	"strings"
 )
 
 // NodeCollector implements the ClusterTopologyCollector interface.
@@ -61,7 +59,7 @@ func (nc *NodeCollector) CollectorFunction() error {
 		nc.RelationChan <- relation
 
 		// send the node identifier to be correlated
-		if nodeIdentifier := extractInstanceIDFromProviderID(node.Spec); nodeIdentifier != "" {
+		if nodeIdentifier := urn.GetInstanceID(node.Spec); nodeIdentifier != "" {
 			nc.NodeIdentifierCorrChan <- &NodeIdentifierCorrelation{node.Name, nodeIdentifier}
 		}
 	}
@@ -77,18 +75,7 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) *topology.Compo
 	log.Tracef("Mapping kubernetes node to StackState component: %s", node.String())
 
 	identifiers := nc.GetURNBuilder().BuildNodeURNs(node)
-
-	clusterName := clustername.GetClusterName()
-
-	// this allow merging with host reported by main agent
-	var instanceID string
-	if instanceID = extractInstanceIDFromProviderID(node.Spec); instanceID != "" {
-		identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", instanceID))
-		if clusterName != "" {
-			identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s-%s", instanceID, clusterName))
-		}
-	}
-	log.Tracef("Created identifiers for %s: %v", node.Name, identifiers)
+	log.Debugf("Created identifiers for %s: %v", node.Name, identifiers)
 
 	nodeExternalID := nc.buildNodeExternalID(node.Name)
 
@@ -114,7 +101,7 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) *topology.Compo
 
 	component.Data.PutNonEmpty("generateName", node.GenerateName)
 	component.Data.PutNonEmpty("kind", node.Kind)
-	component.Data.PutNonEmpty("instanceId", instanceID)
+	component.Data.PutNonEmpty("instanceId", urn.GetInstanceID(node.Spec))
 
 	log.Tracef("Created StackState node component %s: %v", nodeExternalID, component.JSONString())
 
@@ -133,17 +120,4 @@ func (nc *NodeCollector) nodeToClusterStackStateRelation(node v1.Node) *topology
 	log.Tracef("Created StackState node -> cluster relation %s->%s", relation.SourceID, relation.TargetID)
 
 	return relation
-}
-
-func extractLastFragment(value string) string {
-	lastSlash := strings.LastIndex(value, "/")
-	return value[lastSlash+1:]
-}
-
-func extractInstanceIDFromProviderID(spec v1.NodeSpec) string {
-	if spec.ProviderID == "" {
-		return ""
-	}
-	//parse node id from cloud provider (for AWS is the ec2 instance id)
-	return extractLastFragment(spec.ProviderID)
 }

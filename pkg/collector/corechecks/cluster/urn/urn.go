@@ -2,6 +2,7 @@ package urn
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	v1 "k8s.io/api/core/v1"
 	"strings"
 )
@@ -241,6 +242,16 @@ func (b *urnBuilder) BuildNodeURNs(node v1.Node) []string {
 		)
 	}
 
+	// this allow merging with host reported by main agent
+	if instanceID := GetInstanceID(node.Spec); instanceID != "" {
+		identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", instanceID))
+
+		clusterName := clustername.GetClusterName()
+		if clusterName != "" {
+			identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s-%s", instanceID, clusterName))
+		}
+	}
+
 	return identifiers
 }
 
@@ -251,4 +262,17 @@ func ClusterTypeFromString(s string) ClusterType {
 	}
 
 	return Kubernetes
+}
+
+func extractLastFragment(value string) string {
+	lastSlash := strings.LastIndex(value, "/")
+	return value[lastSlash+1:]
+}
+
+func GetInstanceID(spec v1.NodeSpec) string {
+	if spec.ProviderID == "" {
+		return ""
+	}
+	//parse node id from cloud provider (for AWS is the ec2 instance id)
+	return extractLastFragment(spec.ProviderID)
 }

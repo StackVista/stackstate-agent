@@ -104,8 +104,9 @@ func TestDiskTopologyCollector_BuildTopology(t *testing.T) {
 							Name: "host",
 						},
 						Data: topology.Data{
-							"host":    testHostname,
-							"devices": []string{"abcd", "1234", "ecdf", "my/device/path"},
+							"host":        testHostname,
+							"devices":     []string{"abcd", "1234", "ecdf", "my/device/path"},
+							"identifiers": []string{},
 						},
 					},
 				},
