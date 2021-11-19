@@ -135,6 +135,8 @@ func (c *ContainerdCheck) Run() error {
 		computeEvents(events, sender, c.filters)
 	}
 
+	computeMetrics(sender, cu, c.filters)
+
 	// sts begin
 	// Collect container topology
 	if c.instance.CollectContainerTopology {
@@ -147,7 +149,6 @@ func (c *ContainerdCheck) Run() error {
 	}
 	// sts end
 
-	computeMetrics(sender, cu, c.filters)
 	return nil
 }
 
