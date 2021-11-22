@@ -1,0 +1,5 @@
+{
+  "whitelist": [
+    "docker.io/stackstate/stackstate-trace-agent-test"
+  ]
+}

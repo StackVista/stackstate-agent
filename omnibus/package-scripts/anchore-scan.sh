@@ -9,7 +9,6 @@ usage()
 }
 
 IMAGE=""
-NOTIFY=0
 
 while getopts ":i:n:" o; do
     case "${o}" in
@@ -29,51 +28,38 @@ shift $((OPTIND-1))
 if [ -z "${IMAGE}" ] || [ -z "${NOTIFY}" ]; then
     usage
 fi
-if [ ! $NOTIFY = 0 ] && [ ! $NOTIFY = 1 ]; then
-    usage
-fi
 
-START="false"
 FILE="anchore-scan.txt"
 ANCHORE="anchore/engine-cli:v0.9.2"
 ANCHORE_DOCKER_INVOKE="docker run --rm -a stdout -e ANCHORE_CLI_USER=${ANCHORE_CLI_USER} -e ANCHORE_CLI_PASS=${ANCHORE_CLI_PASS} -e ANCHORE_CLI_URL=${ANCHORE_CLI_URL} ${ANCHORE}"
-CURL="curlimages/curl:7.79.1"
-CURL_DOCKER_INVOKE="docker run --rm -a stdout ${CURL}"
+ANCHORE_PARSE="quay.io/stackstate/anchore-parser:8d113bdb"
 
-${ANCHORE_DOCKER_INVOKE} anchore-cli image add "$IMAGE" > /dev/null
-${ANCHORE_DOCKER_INVOKE} anchore-cli image wait "$IMAGE" > /dev/null
-${ANCHORE_DOCKER_INVOKE} anchore-cli image vuln --vendor-only false "$IMAGE" all > $FILE
-${ANCHORE_DOCKER_INVOKE} anchore-cli evaluate check "$IMAGE" --policy "cluster-agent-04x" --detail
-# --policy "stackstate-default"
+{
+    ${ANCHORE_DOCKER_INVOKE} anchore-cli image add "$IMAGE"
+    ${ANCHORE_DOCKER_INVOKE} anchore-cli image wait "$IMAGE"
+    ${ANCHORE_DOCKER_INVOKE} anchore-cli image vuln --vendor-only false "$IMAGE" all
+    ${ANCHORE_DOCKER_INVOKE} anchore-cli evaluate check "$IMAGE" --policy "cluster-agent-04x" --detail
+} >> "${FILE}"
 
 if [ ! -f ${FILE} ]; then
     echo "File ${FILE} not found!"
     exit 1
 fi
 
-MESSAGE=""
-while IFS= read -r line || [ ! -z "$line" ]; do
+APP_DIR=$(dirname "${0}")
+EXEC_DIR="${PWD}/${APP_DIR}"
 
-    if [ "${START}" = "true" ]; then
-        # Here we parse the vulns
-        VULN_ID=$(echo $line | awk '{print $1}')
-        VULN_LVL=$(echo $line | awk '{print $3}')
-        if [ "${VULN_LVL}" = "Critical" ] ||  [ "${VULN_LVL}" = "High" ]; then
-            MESSAGE="${MESSAGE}${VULN_LVL} Vulnerability (${VULN_ID}) detected in docker image ${IMAGE}.\n"
-        fi
+mkdir -p "${EXEC_DIR}"/anchore-output
+mv ${FILE} "${EXEC_DIR}"/anchore-output
 
-        if [ "${VULN_LVL}" = "Medium" ] && [ $NOTIFY = 1 ]; then
-            MESSAGE="${MESSAGE}${VULN_LVL} Vulnerability (${VULN_ID}) detected in docker image ${IMAGE}.\n"
-        fi
+docker run --rm \
+   -e ANCHORE_WEBHOOK="${ANCHORE_WEBHOOK}" \
+   -e INPUT_FILE="anchore-output/${FILE}" \
+   -e IMAGE_WHITELIST_FILE="anchore-whitelists/image-whitelist.json" \
+   -e CVE_WHITELIST_FILE="anchore-whitelists/cve-whitelist.json" \
+   -e WHITELIST_IMAGES_HAVE_TAGS="false" \
+   -v "${EXEC_DIR}"/anchore-whitelists:/usr/src/app/anchore-whitelists \
+   -v "${EXEC_DIR}"/anchore-output:/usr/src/app/anchore-output \
+   ${ANCHORE_PARSE} python daily_high_crit_report.py
 
-    elif [ ! -z "$(echo $line | grep "Vulnerability")" ] && [ "${START}" = "false" ]; then
-        START="true"
-    fi
-done < $FILE
-
-if [ ! -z "${MESSAGE}" ]; then
-    ${CURL_DOCKER_INVOKE} -X POST -H 'Content-type: application/json' --data '{"text":"'"${MESSAGE}"'"}' ${ANCHORE_WEBHOOK}
-    # echo ${MESSAGE}
-fi
-
-rm $FILE
+rm -rf "${EXEC_DIR}"/anchore-output
