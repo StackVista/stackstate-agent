@@ -161,6 +161,10 @@ func (c *ContainerdUtil) GetContainers() ([]*cspec.Container, error) {
 			_ = log.Errorf("Error extracting containerd %v information: %v", "Info", err)
 			continue
 		}
+		name := info.ID
+		if value, ok := info.Labels["io.kubernetes.container.name"]; ok {
+			name = value
+		}
 
 		spec, err := dContainer.Spec(ctxNamespace)
 		log.Infof("DEBUG Containerd | spec = %+v", spec)
@@ -184,7 +188,7 @@ func (c *ContainerdUtil) GetContainers() ([]*cspec.Container, error) {
 		}
 
 		container := &cspec.Container{
-			Name:    info.ID,
+			Name:    name,
 			Runtime: "containerd",
 			ID:      dContainer.ID(),
 			Image:   info.Image,
