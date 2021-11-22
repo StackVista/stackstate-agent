@@ -162,21 +162,21 @@ func (c *ContainerdUtil) GetContainers() ([]*cspec.Container, error) {
 			continue
 		}
 
-		spec, err := dContainer.Spec(ctx)
+		spec, err := dContainer.Spec(ctxNamespace)
 		log.Infof("DEBUG Containerd | spec = %+v", spec)
 		if err != nil {
 			_ = log.Errorf("Error extracting containerd %v information: %v", "Spec", err)
 			continue
 		}
 
-		task, err := dContainer.Task(ctx, nil)
+		task, err := dContainer.Task(ctxNamespace, nil)
 		log.Infof("DEBUG Containerd | task = %+v", task)
 		if err != nil {
 			_ = log.Errorf("Error extracting containerd %v information: %v", "Task", err)
 			continue
 		}
 
-		status, err := task.Status(ctx)
+		status, err := task.Status(ctxNamespace)
 		log.Infof("DEBUG Containerd | status = %+v", status)
 		if err != nil {
 			_ = log.Errorf("Error extracting Task %v information: %v", "Status", err)
