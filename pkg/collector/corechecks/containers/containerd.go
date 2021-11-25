@@ -68,7 +68,7 @@ func ContainerdFactory() check.Check {
 		CheckBase:         corechecks.NewCheckBase(containerdCheckName),
 		instance:          &ContainerdConfig{},
 		sub:               &subscriber{},
-		topologyCollector: topology.MakeContainerdTopologyCollector(),
+		topologyCollector: topology.MakeContainerTopologyCollector(containerdCheckName),
 	}
 }
 

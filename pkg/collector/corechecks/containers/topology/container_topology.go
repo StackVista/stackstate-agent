@@ -6,51 +6,37 @@ import (
 	"errors"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (
-	containerType               = "container"
-	dockerTopologyCheckName     = "docker_topology"
-	criTopologyCheckName        = "cri_topology"
-	containerdTopologyCheckName = "containerd_topology"
+	containerType = "container"
 )
 
 // ContainerTopologyCollector contains the checkID and topology instance for the container topology checks
 type ContainerTopologyCollector struct {
 	corechecks.CheckTopologyCollector
+	Hostname string
 }
 
-// MakeContainerdTopologyCollector returns a new instance of ContainerdTopologyCollector
-func MakeContainerdTopologyCollector() *ContainerTopologyCollector {
-	return &ContainerTopologyCollector{
-		corechecks.MakeCheckTopologyCollector(containerdTopologyCheckName, topology.Instance{
-			Type: "containerd",
-			URL:  "agents",
-		}),
+// MakeContainerTopologyCollector returns a new instance of DockerTopologyCollector
+func MakeContainerTopologyCollector(checkName string) *ContainerTopologyCollector {
+	hostname, err := util.GetHostname()
+	if err != nil {
+		log.Warnf("Can't get hostname from %s, containers ExternalIDs will not have it: %s", checkName, err)
 	}
-}
-
-// MakeCRITopologyCollector returns a new instance of CRITopologyCollector
-func MakeCRITopologyCollector() *ContainerTopologyCollector {
 	return &ContainerTopologyCollector{
-		corechecks.MakeCheckTopologyCollector(criTopologyCheckName, topology.Instance{
-			Type: "cri",
-			URL:  "agents",
-		}),
-	}
-}
-
-// MakeDockerTopologyCollector returns a new instance of DockerTopologyCollector
-func MakeDockerTopologyCollector() *ContainerTopologyCollector {
-	return &ContainerTopologyCollector{
-		corechecks.MakeCheckTopologyCollector(dockerTopologyCheckName, topology.Instance{
-			Type: "docker",
-			URL:  "agents",
-		}),
+		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector(
+			check.ID(fmt.Sprintf("%s_topology", checkName)), topology.Instance{
+				Type: checkName,
+				URL:  "agents",
+			}),
+		Hostname: hostname,
 	}
 }
 
@@ -79,7 +65,7 @@ func (ctc *ContainerTopologyCollector) BuildContainerTopology(containerUtil spec
 }
 
 // MapContainerDataToTopologyData takes a spec.Container as input and outputs topology.Data
-func (ctc *ContainerTopologyCollector) MapContainerDataToTopologyData(container *spec.Container) topology.Data {
+func (ctc *ContainerTopologyCollector) MapContainerDataToTopologyData(container *spec.Container, identifier string) topology.Data {
 	return topology.Data{
 		"type":        container.Runtime,
 		"containerID": container.ID,
@@ -87,17 +73,21 @@ func (ctc *ContainerTopologyCollector) MapContainerDataToTopologyData(container 
 		"image":       container.Image,
 		"mounts":      container.Mounts,
 		"state":       container.State,
+		"identifiers": []string{identifier},
 	}
 }
 
 // MapContainerToComponent Maps a single spec.Container to a single topology.Component
 func (ctc *ContainerTopologyCollector) MapContainerToComponent(container *spec.Container) *topology.Component {
 	output := &topology.Component{
-		ExternalID: fmt.Sprintf("urn:%s:/%s", containerType, container.ID),
+		// from process-agent -> urn:container:/i-0fb15b6cbe93f37f7:10bf22f593d8ccec119d3fbcfdddd054284aa8af2b867f58f3c6e77f4ec9baaa
+		// urn:container:runtime:/hostName:containerID
+		// add process-agent external id as identifier
+		ExternalID: ctc.buildContainerExternalID(container.ID),
 		Type: topology.Type{
 			Name: containerType,
 		},
-		Data: ctc.MapContainerDataToTopologyData(container),
+		Data: ctc.MapContainerDataToTopologyData(container, ctc.buildProcessAgentContainerExternalID(container.ID)),
 	}
 	return output
 }
@@ -124,4 +114,20 @@ func (ctc *ContainerTopologyCollector) collectContainers(containerUtil spec.Cont
 	containerComponents := ctc.MapContainersToComponents(cList)
 
 	return containerComponents, nil
+}
+
+func (ctc *ContainerTopologyCollector) buildContainerExternalID(containerID string) string {
+	if ctc.Hostname != "" {
+		return fmt.Sprintf("urn:%s:%s:/%s:%s", containerType, ctc.TopologyInstance.Type, ctc.Hostname, containerID)
+	} else {
+		return fmt.Sprintf("urn:%s:%s:/%s", containerType, ctc.TopologyInstance.Type, containerID)
+	}
+}
+
+func (ctc *ContainerTopologyCollector) buildProcessAgentContainerExternalID(containerID string) string {
+	if ctc.Hostname != "" {
+		return fmt.Sprintf("urn:%s/%s:%s", containerType, ctc.Hostname, containerID)
+	} else {
+		return fmt.Sprintf("urn:%s/%s", containerType, containerID)
+	}
 }

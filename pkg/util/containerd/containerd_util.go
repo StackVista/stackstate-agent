@@ -162,8 +162,8 @@ func (c *ContainerdUtil) GetContainers() ([]*cspec.Container, error) {
 			continue
 		}
 		name := info.ID
-		if value, ok := info.Labels["io.kubernetes.container.name"]; ok {
-			name = value
+		if nameLabel, ok := info.Labels["io.kubernetes.container.name"]; ok {
+			name = nameLabel
 		}
 
 		spec, err := dContainer.Spec(ctxNamespace)

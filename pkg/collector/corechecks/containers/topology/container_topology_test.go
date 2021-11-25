@@ -9,6 +9,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
 	cspec "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -17,7 +18,6 @@ import (
 type MockUtil struct {
 }
 
-// sts
 func (m MockUtil) GetContainers() ([]*cspec.Container, error) {
 	return []*cspec.Container{
 		{
@@ -45,45 +45,32 @@ func (m MockUtil) GetContainers() ([]*cspec.Container, error) {
 	}, nil
 }
 
-func TestMakeContainerdTopologyCollector(t *testing.T) {
+func TestMakeContainerTopologyCollector(t *testing.T) {
+	hostname, err := util.GetHostname()
+	assert.NoError(t, err)
 	assert.Equal(t, &ContainerTopologyCollector{
-		corechecks.MakeCheckTopologyCollector(containerdTopologyCheckName, topology.Instance{
-			Type: "containerd",
+		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector("checkName_topology", topology.Instance{
+			Type: "checkName",
 			URL:  "agents",
 		}),
-	}, MakeContainerdTopologyCollector())
-}
-
-func TestMakeCRITopologyCollector(t *testing.T) {
-	assert.Equal(t, &ContainerTopologyCollector{
-		corechecks.MakeCheckTopologyCollector(criTopologyCheckName, topology.Instance{
-			Type: "cri",
-			URL:  "agents",
-		}),
-	}, MakeCRITopologyCollector())
-}
-
-func TestMakeDockerTopologyCollector(t *testing.T) {
-	assert.Equal(t, &ContainerTopologyCollector{
-		corechecks.MakeCheckTopologyCollector(dockerTopologyCheckName, topology.Instance{
-			Type: "docker",
-			URL:  "agents",
-		}),
-	}, MakeDockerTopologyCollector())
+		Hostname: hostname,
+	}, MakeContainerTopologyCollector("checkName"))
 }
 
 func TestBuildContainerTopology(t *testing.T) {
 	collector := ContainerTopologyCollector{
-		corechecks.MakeCheckTopologyCollector(containerdTopologyCheckName, topology.Instance{
-			Type: "containerd",
+		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector("checkName", topology.Instance{
+			Type: "checkName",
 			URL:  "agents",
-		})}
+		}),
+		Hostname: "host",
+	}
 
 	components, err := collector.collectContainers(MockUtil{})
 	assert.NoError(t, err)
 	assert.Equal(t, []*topology.Component{
 		{
-			ExternalID: "urn:container:/containerId1",
+			ExternalID: "urn:container:checkName:/host:containerId1",
 			Type:       topology.Type{Name: "container"},
 			Data: topology.Data{
 				"name":        "container1",
@@ -105,10 +92,11 @@ func TestBuildContainerTopology(t *testing.T) {
 						Options:     nil,
 					},
 				},
+				"identifiers": []string{"urn:container/host:containerId1"},
 			},
 		},
 		{
-			ExternalID: "urn:container:/containerId2",
+			ExternalID: "urn:container:checkName:/host:containerId2",
 			Type: topology.Type{
 				Name: "container",
 			},
@@ -129,9 +117,10 @@ func TestBuildContainerTopology(t *testing.T) {
 						Options:     nil,
 					},
 				},
-				"name":  "container2",
-				"state": "running",
-				"type":  "runtime",
+				"name":        "container2",
+				"state":       "running",
+				"type":        "runtime",
+				"identifiers": []string{"urn:container/host:containerId2"},
 			},
 		},
 	}, components)
