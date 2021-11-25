@@ -142,7 +142,6 @@ func (c *ContainerdUtil) GetEvents() containerd.EventService {
 func (c *ContainerdUtil) GetContainers() ([]*cspec.Container, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.queryTimeout)
 	defer cancel()
-	log.Infof("DEBUG Containerd | ctx = %+v", ctx)
 
 	dContainers, err := c.Containers()
 	if err != nil {
@@ -151,12 +150,9 @@ func (c *ContainerdUtil) GetContainers() ([]*cspec.Container, error) {
 
 	uContainers := make([]*cspec.Container, 0, len(dContainers))
 	for _, dContainer := range dContainers {
-		log.Infof("DEBUG Containerd | dContainer = %+v", dContainer)
 		ctxNamespace := namespaces.WithNamespace(ctx, c.namespace)
-		log.Infof("DEBUG Containerd | ctxNamespace = %+v", ctxNamespace)
 
 		info, err := dContainer.Info(ctxNamespace)
-		log.Infof("DEBUG Containerd | info = %+v", info)
 		if err != nil {
 			_ = log.Errorf("Error extracting containerd %v information: %v", "Info", err)
 			continue
@@ -167,21 +163,18 @@ func (c *ContainerdUtil) GetContainers() ([]*cspec.Container, error) {
 		}
 
 		spec, err := dContainer.Spec(ctxNamespace)
-		log.Infof("DEBUG Containerd | spec = %+v", spec)
 		if err != nil {
 			_ = log.Errorf("Error extracting containerd %v information: %v", "Spec", err)
 			continue
 		}
 
 		task, err := dContainer.Task(ctxNamespace, nil)
-		log.Infof("DEBUG Containerd | task = %+v", task)
 		if err != nil {
 			_ = log.Errorf("Error extracting containerd %v information: %v", "Task", err)
 			continue
 		}
 
 		status, err := task.Status(ctxNamespace)
-		log.Infof("DEBUG Containerd | status = %+v", status)
 		if err != nil {
 			_ = log.Errorf("Error extracting Task %v information: %v", "Status", err)
 			continue
