@@ -117,17 +117,15 @@ func (ctc *ContainerTopologyCollector) collectContainers(containerUtil spec.Cont
 }
 
 func (ctc *ContainerTopologyCollector) buildContainerExternalID(containerID string) string {
-	if ctc.Hostname != "" {
-		return fmt.Sprintf("urn:%s:%s:/%s:%s", containerType, ctc.TopologyInstance.Type, ctc.Hostname, containerID)
-	} else {
+	if ctc.Hostname == "" {
 		return fmt.Sprintf("urn:%s:%s:/%s", containerType, ctc.TopologyInstance.Type, containerID)
 	}
+	return fmt.Sprintf("urn:%s:%s:/%s:%s", containerType, ctc.TopologyInstance.Type, ctc.Hostname, containerID)
 }
 
 func (ctc *ContainerTopologyCollector) buildProcessAgentContainerExternalID(containerID string) string {
-	if ctc.Hostname != "" {
-		return fmt.Sprintf("urn:%s/%s:%s", containerType, ctc.Hostname, containerID)
-	} else {
+	if ctc.Hostname == "" {
 		return fmt.Sprintf("urn:%s/%s", containerType, containerID)
 	}
+	return fmt.Sprintf("urn:%s/%s:%s", containerType, ctc.Hostname, containerID)
 }
