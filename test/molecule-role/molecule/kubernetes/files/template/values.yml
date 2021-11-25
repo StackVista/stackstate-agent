@@ -1,0 +1,24 @@
+---
+clusterChecks:
+  # clusterChecks.enabled -- Enables the cluster checks functionality _and_ the clustercheck pods.
+  enabled: true
+agent:
+  config:
+    override:
+      # agent.config.override -- Create a configmap that can be used as the state file to keep track of agent integration
+      # sample state
+      - name: instance.agent.integrations.state
+        path: /etc/stackstate-agent/state.d/agent_integration_sample.d
+        data: |
+clusterAgent:
+  config:
+    override:
+      # clusterAgent.config.override
+      - name: conf.yaml
+        path: /etc/stackstate-agent/conf.d/agent_integration_sample.d
+        data: |
+          cluster_check: true
+          init_config:
+          instances:
+            - url: "http://localhost"
+              state_location: "/etc/stackstate-agent/state.d/agent_integration_sample.d"

@@ -34,6 +34,12 @@
     callback function.
     The callback is expected to be provided by the rtloader caller - in go-context: CGO.
 */
+/*! \fn void _set_submit_raw_metrics_data_cb(cb_submit_raw_metrics_data_t)
+    \brief Sets the submit raw metrics callback to be used by rtloader for raw metrics data submission.
+    \param object A function pointer with cb_submit_raw_metrics_data_t function prototype to the
+    callback function.
+    The callback is expected to be provided by the rtloader caller - in go-context: CGO.
+*/
 
 #include <Python.h>
 #include <rtloader_types.h>
@@ -51,6 +57,7 @@ void Py2_init_telemetry();
 #endif
 
 void _set_submit_topology_event_cb(cb_submit_topology_event_t);
+void _set_submit_raw_metrics_data_cb(cb_submit_raw_metrics_data_t);
 
 #ifdef __cplusplus
 }
