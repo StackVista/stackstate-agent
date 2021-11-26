@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	porterpb "github.com/StackVista/stackstate-agent/pkg/porter/proto"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -12,9 +13,22 @@ import (
 
 func main() {
 	fmt.Println("Hello client ...")
+	// variables declaration
+	var porterHost string
+	var porterPort string
+	var instaceType string
+	var instaceUrl string
+
+	// flags declaration using flag package
+	flag.StringVar(&porterHost, "h", "porter-host", "Specify porter server host.")
+	flag.StringVar(&porterPort, "p", "porter-port", "Specify porter server port.")
+	flag.StringVar(&instaceType, "i", "instance-type", "Specify instance type.")
+	flag.StringVar(&instaceUrl, "u", "instance-url", "Specify instance url.")
+
+	flag.Parse() // after declaring flags we need to call it
 
 	opts := grpc.WithInsecure()
-	cc, err := grpc.Dial("localhost:50051", opts)
+	cc, err := grpc.Dial(fmt.Sprintf("%s:%s", porterHost, porterPort), opts)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,8 +38,8 @@ func main() {
 	instance := &porterpb.StackPorterInstance{
 		PorterID: "Jeremy",
 		Instance: &porterpb.StackInstance{
-			Type: "my-type",
-			Url: "my-url",
+			Type: instaceType,
+			Url:  instaceUrl,
 		},
 	}
 
@@ -39,10 +53,10 @@ func main() {
 	req := &porterpb.PushStackComponentRequest{
 		PorterID: instance.PorterID,
 		Instance: &porterpb.StackInstance{Type: instance.Instance.Type, Url: instance.Instance.Url},
-		Component:            &porterpb.StackComponent{
-			ExternalID:           "my-external-id",
-			Type:                 &porterpb.StackType{Name: "my-type-name"},
-			Data: cData,
+		Component: &porterpb.StackComponent{
+			ExternalID: "my-external-id",
+			Type:       &porterpb.StackType{Name: "my-type-name"},
+			Data:       cData,
 		},
 	}
 	resp, err = porter.PushComponent(context.Background(), req)
@@ -55,12 +69,12 @@ func main() {
 	rreq := &porterpb.PushStackRelationRequest{
 		PorterID: instance.PorterID,
 		Instance: &porterpb.StackInstance{Type: instance.Instance.Type, Url: instance.Instance.Url},
-		Relation:            &porterpb.StackRelation{
-			ExternalID:           "id1->id2",
-			SourceID: "id1",
-			TargetID: "id2",
-			Type:                 &porterpb.StackType{Name: "my-relation-type-name"},
-			Data: rData,
+		Relation: &porterpb.StackRelation{
+			ExternalID: "id1->id2",
+			SourceID:   "id1",
+			TargetID:   "id2",
+			Type:       &porterpb.StackType{Name: "my-relation-type-name"},
+			Data:       rData,
 		},
 	}
 	resp, err = porter.PushRelation(context.Background(), rreq)
@@ -76,7 +90,7 @@ func main() {
 	fmt.Printf("Receive response => %s - %s\n", resp.Status, resp.Message)
 
 	status := &porterpb.StackPorterStatus{
-		Status: porterpb.PorterStatus_success,
+		Status:  porterpb.PorterStatus_success,
 		Message: "Completed Porter",
 	}
 	completePorter := &porterpb.StackPorterComplete{Instance: instance, Status: status}

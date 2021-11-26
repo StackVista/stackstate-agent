@@ -73,3 +73,13 @@ func (c *APIClient) GetCronJobs() ([]batchV1B.CronJob, error) {
 
 	return cjList.Items, nil
 }
+
+// GetCronJobs() retrieves all the CronJobs in the Kubernetes / OpenShift cluster across all namespaces.
+func (c *APIClient) CreateCronJob(namespace string, cronjob *batchV1B.CronJob) (*batchV1B.CronJob, error) {
+	cj, err := c.Cl.BatchV1beta1().CronJobs(namespace).Create(cronjob)
+	if err != nil {
+		return nil, err
+	}
+
+	return cj, nil
+}

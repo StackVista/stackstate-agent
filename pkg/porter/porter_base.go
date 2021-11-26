@@ -13,9 +13,9 @@ import (
 	"net"
 )
 
+// StackPorterServer wraps the porter gRPC server
 type StackPorterServer struct {
-	Server  *grpc.Server
-	Exit chan struct{}
+	Server *grpc.Server
 }
 
 // Start starts doing the gRPC server and is ready to receive data from porters
@@ -48,30 +48,37 @@ func (s *StackPorterServer) Stop() {
 	s.Server.GracefulStop()
 }
 
+// KickOffSnapshot pushes a SubmitStartSnapshot to the batcher instance
 func (s *StackPorterServer) KickOffSnapshot(ctx context.Context, req *porterpb.StackPorterInstance) (*porterpb.StackPorterStatus, error) {
 	batcher.GetBatcher().SubmitStartSnapshot(check.ID(req.PorterID), s.CreateInstance(req.Instance))
 
 	return &porterpb.StackPorterStatus{
-		Status: porterpb.PorterStatus_success,
+		Status:  porterpb.PorterStatus_success,
 		Message: "Submitted start snapshot",
 	}, nil
 }
+
+// EndSnapshot pushes a SubmitStopSnapshot to the batcher instance
 func (s *StackPorterServer) EndSnapshot(ctx context.Context, req *porterpb.StackPorterInstance) (*porterpb.StackPorterStatus, error) {
 	batcher.GetBatcher().SubmitStopSnapshot(check.ID(req.PorterID), s.CreateInstance(req.Instance))
 
 	return &porterpb.StackPorterStatus{
-		Status: porterpb.PorterStatus_success,
+		Status:  porterpb.PorterStatus_success,
 		Message: "Submitted stop snapshot",
 	}, nil
 }
+
+// CompletePorter pushes a SubmitComplete to the batcher instance
 func (s *StackPorterServer) CompletePorter(ctx context.Context, req *porterpb.StackPorterComplete) (*porterpb.StackPorterStatus, error) {
 	batcher.GetBatcher().SubmitComplete(check.ID(req.PorterID))
 
 	return &porterpb.StackPorterStatus{
-		Status: porterpb.PorterStatus_success,
+		Status:  porterpb.PorterStatus_success,
 		Message: "Submitted complete for porter",
 	}, nil
 }
+
+// PushComponent pushes a component to the batcher instance
 func (s *StackPorterServer) PushComponent(ctx context.Context, req *porterpb.PushStackComponentRequest) (*porterpb.StackPorterStatus, error) {
 	batcher.GetBatcher().SubmitComponent(check.ID(req.PorterID), s.CreateInstance(req.Instance), s.CreateComponent(req.Component))
 
@@ -80,6 +87,8 @@ func (s *StackPorterServer) PushComponent(ctx context.Context, req *porterpb.Pus
 		Message: fmt.Sprintf("Submitted component for porter %s", req.PorterID),
 	}, nil
 }
+
+// PushRelation pushes a relation to the batcher instance
 func (s *StackPorterServer) PushRelation(ctx context.Context, req *porterpb.PushStackRelationRequest) (*porterpb.StackPorterStatus, error) {
 	batcher.GetBatcher().SubmitRelation(check.ID(req.PorterID), s.CreateInstance(req.Instance), s.CreateRelation(req.Relation))
 
@@ -101,14 +110,15 @@ func (*StackPorterServer) CreateInstance(instance *porterpb.StackInstance) topol
 func (*StackPorterServer) CreateComponent(component *porterpb.StackComponent) topology.Component {
 	// get the data
 	var data topology.Data
-	err := json.Unmarshal(component.Data, &data); if err != nil {
+	err := json.Unmarshal(component.Data, &data)
+	if err != nil {
 		log.Fatalf("Error %v", err)
 	}
 
 	return topology.Component{
 		ExternalID: component.ExternalID,
 		Type:       topology.Type{Name: component.Type.Name},
-		Data: data,
+		Data:       data,
 	}
 }
 
@@ -116,7 +126,8 @@ func (*StackPorterServer) CreateComponent(component *porterpb.StackComponent) to
 func (*StackPorterServer) CreateRelation(relation *porterpb.StackRelation) topology.Relation {
 	// get the data
 	var data topology.Data
-	err := json.Unmarshal(relation.Data, &data); if err != nil {
+	err := json.Unmarshal(relation.Data, &data)
+	if err != nil {
 		log.Fatalf("Error %v", err)
 	}
 

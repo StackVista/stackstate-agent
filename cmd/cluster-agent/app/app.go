@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/porter/scheduler"
 	"os"
 	"os/signal"
 	"sync"
@@ -308,6 +309,18 @@ func start(cmd *cobra.Command, args []string) error {
 		grpcServer := &porter.StackPorterServer{}
 		grpcServer.Start(mainCtx)
 	}()
+
+	porterScheduler := scheduler.MakeKubernetesPorterScheduler(apiCl)
+	err = porterScheduler.SchedulePorter(scheduler.Porter{
+		Name:             "Test Porter",
+		PorterDefinition: map[string]string{
+			"ImageName": "quay.io/stackstate/agent-porter:latest",
+			"Namespace": "stackstate-porters",
+		},
+	})
+	if err != nil {
+		log.Error("Error scheduling porter: Test Porter")
+	}
 
 	// Autoscaler Controller Goroutine
 	if config.Datadog.GetBool("external_metrics_provider.enabled") {
