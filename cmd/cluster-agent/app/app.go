@@ -319,7 +319,7 @@ func start(cmd *cobra.Command, args []string) error {
 		},
 	})
 	if err != nil {
-		log.Error("Error scheduling porter: Test Porter")
+		log.Error("Error scheduling porter: Test Porter: %s", err)
 	}
 
 	// Autoscaler Controller Goroutine

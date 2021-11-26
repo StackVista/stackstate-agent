@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: agent-porter
+spec:
+  schedule: "*/10 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: agent-porter
+              image: quay.io/stackstate/agent-porter:latest
+              imagePullPolicy: IfNotPresent
+              args:
+                - ./agent-porter
+                - -h
+                - localhost
+                - p
+                - 50051
+                - -instance-type
+                - my-instance
+                - -instance-url
+                - my-url
+          restartPolicy: OnFailure
