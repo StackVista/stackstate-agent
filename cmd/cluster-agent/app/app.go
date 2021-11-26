@@ -16,6 +16,8 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/StackVista/stackstate-agent/pkg/porter"
+
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
@@ -297,6 +299,15 @@ func start(cmd *cobra.Command, args []string) error {
 	}
 
 	wg := sync.WaitGroup{}
+
+	// Start the porter server
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		grpcServer := &porter.StackPorterServer{}
+		grpcServer.Start(mainCtx)
+	}()
 
 	// Autoscaler Controller Goroutine
 	if config.Datadog.GetBool("external_metrics_provider.enabled") {

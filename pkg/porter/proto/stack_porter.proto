@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+option go_package = "github.com/StackVista/stackstate-agent/pkg/porter/proto";
+
+// Interface exported by the server.
+service StackPorter {
+// istance functions
+  rpc KickOffSnapshot(StackPorterInstance) returns (StackPorterStatus) {}
+  rpc EndSnapshot(StackPorterInstance) returns (StackPorterStatus) {}
+  rpc CompletePorter(StackPorterComplete) returns (StackPorterStatus) {}
+
+// topology functions
+  rpc PushComponent(PushStackComponentRequest) returns (StackPorterStatus) {}
+  rpc PushRelation(PushStackRelationRequest) returns (StackPorterStatus) {}
+
+}
+
+message StackInstance {
+  string type = 1;
+  string url = 2;
+}
+
+message StackPorterInstance {
+  string porterID = 1;
+  StackInstance instance = 2;
+}
+
+enum PorterStatus {
+  success = 0;
+  failure = 1;
+  unknown = 2;
+}
+
+message StackPorterStatus {
+  PorterStatus status = 1;
+  string message = 2;
+}
+
+message StackPorterComplete {
+  string porterID = 1;
+  StackPorterInstance instance = 2;
+  StackPorterStatus status = 3;
+}
+
+message StackComponent {
+  string externalID = 1;
+  StackType type = 2;
+  // json string
+  bytes data = 3;
+}
+
+message PushStackComponentRequest {
+  string porterID = 1;
+  StackInstance instance = 2;
+  StackComponent component = 3;
+}
+
+message StackRelation {
+  string externalID = 1;
+  string sourceID = 2;
+  string targetID = 3;
+  StackType type = 4;
+  // json string
+  bytes data = 5;
+}
+
+message PushStackRelationRequest {
+  string porterID = 1;
+  StackInstance instance = 2;
+  StackRelation relation = 3;
+}
+
+message StackType {
+  string name = 1;
+}
