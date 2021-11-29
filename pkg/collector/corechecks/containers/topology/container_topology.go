@@ -65,29 +65,32 @@ func (ctc *ContainerTopologyCollector) BuildContainerTopology(containerUtil spec
 }
 
 // MapContainerDataToTopologyData takes a spec.Container as input and outputs topology.Data
-func (ctc *ContainerTopologyCollector) MapContainerDataToTopologyData(container *spec.Container, identifier string) topology.Data {
-	return topology.Data{
+func (ctc *ContainerTopologyCollector) MapContainerDataToTopologyData(container *spec.Container) topology.Data {
+	data := topology.Data{
 		"type":        container.Runtime,
 		"containerID": container.ID,
 		"name":        container.Name,
 		"image":       container.Image,
 		"mounts":      container.Mounts,
 		"state":       container.State,
-		"identifiers": []string{identifier},
 	}
+	processAgentIdentifier, err := ctc.buildProcessAgentContainerIdentifier(container.ID)
+	if err != nil {
+		log.Warnf("Could not build process agent identifier for container: %s", err.Error())
+	} else {
+		data["identifiers"] = []string{processAgentIdentifier}
+	}
+	return data
 }
 
 // MapContainerToComponent Maps a single spec.Container to a single topology.Component
 func (ctc *ContainerTopologyCollector) MapContainerToComponent(container *spec.Container) *topology.Component {
 	output := &topology.Component{
-		// from process-agent -> urn:container:/i-0fb15b6cbe93f37f7:10bf22f593d8ccec119d3fbcfdddd054284aa8af2b867f58f3c6e77f4ec9baaa
-		// urn:container:runtime:/hostName:containerID
-		// add process-agent external id as identifier
 		ExternalID: ctc.buildContainerExternalID(container.ID),
 		Type: topology.Type{
 			Name: containerType,
 		},
-		Data: ctc.MapContainerDataToTopologyData(container, ctc.buildProcessAgentContainerExternalID(container.ID)),
+		Data: ctc.MapContainerDataToTopologyData(container),
 	}
 	return output
 }
@@ -123,9 +126,11 @@ func (ctc *ContainerTopologyCollector) buildContainerExternalID(containerID stri
 	return fmt.Sprintf("urn:%s:%s:/%s:%s", containerType, ctc.TopologyInstance.Type, ctc.Hostname, containerID)
 }
 
-func (ctc *ContainerTopologyCollector) buildProcessAgentContainerExternalID(containerID string) string {
+// buildProcessAgentContainerIdentifier creates an identifier with the same format as in the process-agent
+// It is added to make sure the container component from the node agent merge with the one from the process agent.
+func (ctc *ContainerTopologyCollector) buildProcessAgentContainerIdentifier(containerID string) (string, error) {
 	if ctc.Hostname == "" {
-		return fmt.Sprintf("urn:%s/%s", containerType, containerID)
+		return "", fmt.Errorf("no hostname found, it's not possible to build the process-agent identifier")
 	}
-	return fmt.Sprintf("urn:%s/%s:%s", containerType, ctc.Hostname, containerID)
+	return fmt.Sprintf("urn:%s/%s:%s", containerType, ctc.Hostname, containerID), nil
 }
