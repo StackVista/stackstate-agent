@@ -45,6 +45,8 @@ variables: &commonvariables
   DATADOG_AGENT_EMBEDDED_PATH: /opt/datadog-agent/embedded
   ARCH: amd64
   VCINSTALLDIR: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community"
+  ARTIFACTORY_USER: "$artifactory_user"
+  ARTIFACTORY_PASSWORD: "$artifactory_password"
 
 .agent2_variables: &agent2_variables
   CONDA_ENV: ddpy2
