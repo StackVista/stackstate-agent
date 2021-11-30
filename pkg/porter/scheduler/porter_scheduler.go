@@ -58,7 +58,7 @@ func (k *KubernetesPorterScheduler) SchedulePorter(porter Porter) error {
 			Namespace:                  porterCJDefinition.Namespace,
 		},
 		Spec:       batchV1B.CronJobSpec{
-			Schedule:                   "*/10 * * * *",
+			Schedule:                   "*/1 * * * *",
 			JobTemplate:                batchV1B.JobTemplateSpec{
 				Spec:       batchV1.JobSpec{
 					Template:                v1.PodTemplateSpec{
@@ -67,8 +67,24 @@ func (k *KubernetesPorterScheduler) SchedulePorter(porter Porter) error {
 								{
 									Name:                     porter.Name,
 									Image:                   porterCJDefinition.Image,
-									Args:                     []string{"./agent-porter", "-h", "localhost", "-p",
-										"50051", "-instance-type", "my-instance", "-instance-url", "my-url"},
+									Env: []v1.EnvVar{
+										{
+											Name:      "PORTER_SERVER_HOST",
+											Value:     "stackstate-cluster-agent-porter-server",
+										},
+										{
+											Name:      "PORTER_SERVER_PORT",
+											Value:     "50051",
+										},
+										{
+											Name:      "INSTANCE_TYPE",
+											Value:     "my-instance",
+										},
+										{
+											Name:      "INSTANCE_URL",
+											Value:     "my-url",
+										},
+									},
 									ImagePullPolicy:          coreV1.PullAlways,
 								},
 							},
@@ -77,8 +93,6 @@ func (k *KubernetesPorterScheduler) SchedulePorter(porter Porter) error {
 					},
 				},
 			},
-			SuccessfulJobsHistoryLimit: nil,
-			FailedJobsHistoryLimit:     nil,
 		},
 	})
 

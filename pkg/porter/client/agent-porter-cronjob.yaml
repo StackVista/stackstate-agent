@@ -1,25 +1,43 @@
-apiVersion: batch/v1
+apiVersion: v1
+kind: Service
+metadata:
+  name: stackstate-cluster-agent-porter-server
+spec:
+  ports:
+    - name: porter-server
+      port: 50051
+      protocol: TCP
+      targetPort: 50051
+  selector:
+    app.kubernetes.io/component: cluster-agent
+    app.kubernetes.io/instance: stackstate-cluster-agent
+    app.kubernetes.io/name: cluster-agent
+  type: ClusterIP
+---
+apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
   name: agent-porter
 spec:
-  schedule: "*/10 * * * *"
+  schedule: "*/1 * * * *"
   jobTemplate:
     spec:
       template:
         spec:
           containers:
             - name: agent-porter
-              image: quay.io/stackstate/agent-porter:latest
-              imagePullPolicy: IfNotPresent
-              args:
-                - ./agent-porter
-                - -h
-                - localhost
-                - p
-                - 50051
-                - -instance-type
-                - my-instance
-                - -instance-url
-                - my-url
+              image: "quay.io/stackstate/agent-porter:latest"
+              imagePullPolicy: Always
+              env:
+                - name: PORTER_SERVER_HOST
+                  value: "stackstate-cluster-agent-porter-server"
+                - name: PORTER_SERVER_PORT
+                  value: "50051"
+                - name: INSTANCE_TYPE
+                  value: "my-instance"
+                - name: INSTANCE_URL
+                  value: "my-url"
+
           restartPolicy: OnFailure
+          imagePullSecrets:
+            - name: quayregisterykey

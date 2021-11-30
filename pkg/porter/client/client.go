@@ -3,29 +3,21 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	porterpb "github.com/StackVista/stackstate-agent/pkg/porter/proto"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"google.golang.org/grpc"
 	"log"
+	"os"
 )
 
 func main() {
 	fmt.Println("Hello client ...")
 	// variables declaration
-	var porterHost string
-	var porterPort string
-	var instaceType string
-	var instaceUrl string
-
-	// flags declaration using flag package
-	flag.StringVar(&porterHost, "h", "porter-host", "Specify porter server host.")
-	flag.StringVar(&porterPort, "p", "porter-port", "Specify porter server port.")
-	flag.StringVar(&instaceType, "i", "instance-type", "Specify instance type.")
-	flag.StringVar(&instaceUrl, "u", "instance-url", "Specify instance url.")
-
-	flag.Parse() // after declaring flags we need to call it
+	porterHost := os.Getenv("PORTER_SERVER_HOST")
+	porterPort := os.Getenv("PORTER_SERVER_PORT")
+	instaceType := os.Getenv("INSTANCE_TYPE")
+	instaceUrl := os.Getenv("INSTANCE_URL")
 
 	opts := grpc.WithInsecure()
 	cc, err := grpc.Dial(fmt.Sprintf("%s:%s", porterHost, porterPort), opts)
