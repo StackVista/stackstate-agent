@@ -154,7 +154,7 @@ func (c *ContainerdUtil) GetContainers() ([]*cspec.Container, error) {
 
 		info, err := dContainer.Info(ctxNamespace)
 		if err != nil {
-			_ = log.Errorf("Error extracting containerd %v information: %v", "Info", err)
+			_ = log.Errorf("Could not extract containerd %s from container '%s'. Error: %v", "Info", dContainer.ID(), err)
 			continue
 		}
 		name := info.ID
@@ -164,20 +164,20 @@ func (c *ContainerdUtil) GetContainers() ([]*cspec.Container, error) {
 
 		spec, err := dContainer.Spec(ctxNamespace)
 		if err != nil {
-			_ = log.Errorf("Error extracting containerd %v information: %v", "Spec", err)
-			continue
+			logExtractionError("Spec", dContainer, err)
 		}
 
+		state := ""
 		task, err := dContainer.Task(ctxNamespace, nil)
 		if err != nil {
-			_ = log.Errorf("Error extracting containerd %v information: %v", "Task", err)
-			continue
-		}
-
-		status, err := task.Status(ctxNamespace)
-		if err != nil {
-			_ = log.Errorf("Error extracting Task %v information: %v", "Status", err)
-			continue
+			logExtractionError("Task", dContainer, err)
+		} else {
+			status, err := task.Status(ctxNamespace)
+			if err != nil {
+				logExtractionError("Task Status", dContainer, err)
+			} else {
+				state = string(status.Status)
+			}
 		}
 
 		container := &cspec.Container{
@@ -186,11 +186,15 @@ func (c *ContainerdUtil) GetContainers() ([]*cspec.Container, error) {
 			ID:      dContainer.ID(),
 			Image:   info.Image,
 			Mounts:  spec.Mounts,
-			State:   string(status.Status),
+			State:   state,
 		}
 		uContainers = append(uContainers, container)
 	}
 	return uContainers, nil
+}
+
+func logExtractionError(what string, container containerd.Container, err error) {
+	_ = log.Warnf("Could not extract containerd %s from container '%s'. Error: %v", what, container.ID(), err)
 }
 
 // Containers interfaces with the containerd api to get the list of Containers.
