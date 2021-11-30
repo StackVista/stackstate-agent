@@ -37,8 +37,6 @@ var (
 
 // ContainerdItf is the interface implementing a subset of methods that leverage the Containerd api.
 type ContainerdItf interface {
-	// sts
-	GetContainers() ([]*cspec.Container, error)
 	Containers() ([]containerd.Container, error)
 	GetEvents() containerd.EventService
 	Info(ctn containerd.Container) (containers.Container, error)
@@ -62,7 +60,7 @@ type ContainerdUtil struct {
 
 // GetContainerdUtil creates the Containerd util containing the Containerd client and implementing the ContainerdItf
 // Errors are handled in the retrier.
-func GetContainerdUtil() (ContainerdItf, error) {
+func GetContainerdUtil() (*ContainerdUtil, error) {
 	once.Do(func() {
 		globalContainerdUtil = &ContainerdUtil{
 			queryTimeout:      config.Datadog.GetDuration("cri_query_timeout") * time.Second,

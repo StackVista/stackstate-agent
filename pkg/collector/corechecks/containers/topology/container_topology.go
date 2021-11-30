@@ -127,7 +127,7 @@ func (ctc *ContainerTopologyCollector) buildContainerExternalID(containerID stri
 }
 
 // buildProcessAgentContainerIdentifier creates an identifier with the same format as in the process-agent
-// It is added to make sure the container component from the node agent merge with the one from the process agent.
+// It is added to make sure the container component from the node agent merges with the one from the process agent.
 func (ctc *ContainerTopologyCollector) buildProcessAgentContainerIdentifier(containerID string) (string, error) {
 	if ctc.Hostname == "" {
 		return "", fmt.Errorf("no hostname found, it's not possible to build the process-agent identifier")

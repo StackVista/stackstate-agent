@@ -65,11 +65,6 @@ func (m *mockItf) Namespace() string {
 	return m.mockNamespace()
 }
 
-// sts
-func (m *mockItf) GetContainers() ([]*cspec.Container, error) {
-	return m.mockSContainer()
-}
-
 func (m *mockItf) Containers() ([]containerd.Container, error) {
 	return m.mockContainer()
 }

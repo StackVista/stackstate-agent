@@ -127,7 +127,15 @@ func (c *CRIUtil) GetContainers() ([]*spec.Container, error) {
 	for cid := range containerStats {
 		cstatus, err := c.GetContainerStatus(cid)
 		if err != nil {
-			log.Debugf("Could not get status of container '%s'", cid)
+			_ = log.Warnf("Could not get Status from CRI container '%s'. Error: %v", cid, err)
+			continue
+		}
+		if cstatus.Metadata == nil {
+			_ = log.Warnf("Could not get Metadata from CRI container '%s'", cid)
+			continue
+		}
+		if cstatus.Image == nil {
+			_ = log.Warnf("Could not get Image from CRI container '%s'", cid)
 			continue
 		}
 		mounts := make([]specs.Mount, 0, len(cstatus.Mounts))
@@ -147,6 +155,8 @@ func (c *CRIUtil) GetContainers() ([]*spec.Container, error) {
 		}
 		if state, ok := ContainerStateMap[cstatus.State]; ok {
 			container.State = state
+		} else {
+			_ = log.Warnf("Could not map state of container '%s'. State: %s", cid, cstatus.State.String())
 		}
 		uContainers = append(uContainers, container)
 	}
