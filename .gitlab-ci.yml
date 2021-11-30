@@ -50,7 +50,8 @@ variables: &commonvariables
   # IE VMS is a massive jobs and only has to run on either v2 or the v3 pipeline. With this variable you can control on which of the pipelines
   # do jobs like these run on
   PRIMARY_MAJOR_VERSION: '2'
-
+  ARTIFACTORY_USER: "$artifactory_user"
+  ARTIFACTORY_PASSWORD: "$artifactory_password"
 
 .agent2_variables: &agent2_variables
   CONDA_ENV: ddpy2
