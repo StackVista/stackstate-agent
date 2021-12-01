@@ -1,0 +1,284 @@
+{
+  "resource_spans": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "Value": {
+                "string_value": "sts-open-telemetry-dev-NodeJsOpenTelemetrySQS"
+              }
+            }
+          },
+          {
+            "key": "telemetry.sdk.language",
+            "value": {
+              "Value": {
+                "string_value": "nodejs"
+              }
+            }
+          },
+          {
+            "key": "telemetry.sdk.name",
+            "value": {
+              "Value": {
+                "string_value": "opentelemetry"
+              }
+            }
+          },
+          {
+            "key": "telemetry.sdk.version",
+            "value": {
+              "Value": {
+                "string_value": "1.0.0"
+              }
+            }
+          },
+          {
+            "key": "cloud.provider",
+            "value": {
+              "Value": {
+                "string_value": "aws"
+              }
+            }
+          },
+          {
+            "key": "cloud.region",
+            "value": {
+              "Value": {
+                "string_value": "eu-west-1"
+              }
+            }
+          },
+          {
+            "key": "faas.name",
+            "value": {
+              "Value": {
+                "string_value": "sts-open-telemetry-dev-NodeJsOpenTelemetrySQS"
+              }
+            }
+          },
+          {
+            "key": "faas.version",
+            "value": {
+              "Value": {
+                "string_value": "$LATEST"
+              }
+            }
+          },
+          {
+            "key": "process.pid",
+            "value": {
+              "Value": {
+                "int_value": 17
+              }
+            }
+          },
+          {
+            "key": "process.executable.name",
+            "value": {
+              "Value": {
+                "string_value": "/var/lang/bin/node"
+              }
+            }
+          },
+          {
+            "key": "process.command",
+            "value": {
+              "Value": {
+                "string_value": "/var/runtime/index.js"
+              }
+            }
+          },
+          {
+            "key": "process.command_line",
+            "value": {
+              "Value": {
+                "string_value": "/var/lang/bin/node /var/runtime/index.js"
+              }
+            }
+          }
+        ]
+      },
+      "instrumentation_library_spans": [
+        {
+          "instrumentation_library": {
+            "name": "@opentelemetry/instrumentation-aws-sdk",
+            "version": "0.1.0"
+          },
+          "spans": [
+            {
+              "trace_id": "YaYAaSHHWzguItlwE7uCqg==",
+              "span_id": "BcPqZq4vJKA=",
+              "parent_span_id": "zUvS3/uai2U=",
+              "name": "sts-open-telemetry-dev-OpenTelemetrySQS send",
+              "kind": 4,
+              "start_time_unix_nano": 1638269037261695232,
+              "end_time_unix_nano": 1638269037881886208,
+              "attributes": [
+                {
+                  "key": "aws.operation",
+                  "value": {
+                    "Value": {
+                      "string_value": "sendMessage"
+                    }
+                  }
+                },
+                {
+                  "key": "aws.signature.version",
+                  "value": {
+                    "Value": {
+                      "string_value": "v4"
+                    }
+                  }
+                },
+                {
+                  "key": "aws.service.api",
+                  "value": {
+                    "Value": {
+                      "string_value": "SQS"
+                    }
+                  }
+                },
+                {
+                  "key": "aws.service.identifier",
+                  "value": {
+                    "Value": {
+                      "string_value": "sqs"
+                    }
+                  }
+                },
+                {
+                  "key": "aws.service.name",
+                  "value": {
+                    "Value": {
+                      "string_value": "Amazon SQS"
+                    }
+                  }
+                },
+                {
+                  "key": "rpc.system",
+                  "value": {
+                    "Value": {
+                      "string_value": "aws-api"
+                    }
+                  }
+                },
+                {
+                  "key": "rpc.method",
+                  "value": {
+                    "Value": {
+                      "string_value": "SendMessage"
+                    }
+                  }
+                },
+                {
+                  "key": "rpc.service",
+                  "value": {
+                    "Value": {
+                      "string_value": "SQS"
+                    }
+                  }
+                },
+                {
+                  "key": "aws.region",
+                  "value": {
+                    "Value": {
+                      "string_value": "eu-west-1"
+                    }
+                  }
+                },
+                {
+                  "key": "messaging.system",
+                  "value": {
+                    "Value": {
+                      "string_value": "aws.sqs"
+                    }
+                  }
+                },
+                {
+                  "key": "messaging.destination_kind",
+                  "value": {
+                    "Value": {
+                      "string_value": "queue"
+                    }
+                  }
+                },
+                {
+                  "key": "messaging.destination",
+                  "value": {
+                    "Value": {
+                      "string_value": "sts-open-telemetry-dev-OpenTelemetrySQS"
+                    }
+                  }
+                },
+                {
+                  "key": "messaging.url",
+                  "value": {
+                    "Value": {
+                      "string_value": "https://sqs.eu-west-1.amazonaws.com/120431062118/sts-open-telemetry-dev-OpenTelemetrySQS"
+                    }
+                  }
+                },
+                {
+                  "key": "aws.request.id",
+                  "value": {
+                    "Value": {
+                      "string_value": "98a7e806-6c4c-5706-a975-b2266ee15215"
+                    }
+                  }
+                }
+              ],
+              "status": {}
+            }
+          ]
+        },
+        {
+          "instrumentation_library": {
+            "name": "@opentelemetry/instrumentation-aws-lambda",
+            "version": "0.27.0"
+          },
+          "spans": [
+            {
+              "trace_id": "YaYAaSHHWzguItlwE7uCqg==",
+              "span_id": "zUvS3/uai2U=",
+              "parent_span_id": "DP01Iz5oQJQ=",
+              "name": "sts-open-telemetry-dev-NodeJsOpenTelemetrySQS",
+              "kind": 2,
+              "start_time_unix_nano": 1638269037162481408,
+              "end_time_unix_nano": 1638269037882446080,
+              "attributes": [
+                {
+                  "key": "faas.execution",
+                  "value": {
+                    "Value": {
+                      "string_value": "18e510ba-aa08-4e53-bb59-37ee23400990"
+                    }
+                  }
+                },
+                {
+                  "key": "faas.id",
+                  "value": {
+                    "Value": {
+                      "string_value": "arn:aws:lambda:eu-west-1:120431062118:function:sts-open-telemetry-dev-NodeJsOpenTelemetrySQS"
+                    }
+                  }
+                },
+                {
+                  "key": "cloud.account.id",
+                  "value": {
+                    "Value": {
+                      "string_value": "120431062118"
+                    }
+                  }
+                }
+              ],
+              "status": {}
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

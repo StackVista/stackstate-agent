@@ -9,12 +9,12 @@ import (
 
 // DefaultSpanInterpreter sets up the default span interpreter
 type DefaultSpanInterpreter struct {
-	interpreter
+	Interpreter
 }
 
 // MakeDefaultSpanInterpreter creates an instance of the default span interpreter
 func MakeDefaultSpanInterpreter(config *config.Config) *DefaultSpanInterpreter {
-	return &DefaultSpanInterpreter{interpreter{Config: config}}
+	return &DefaultSpanInterpreter{Interpreter{Config: config}}
 }
 
 // Interpret performs the interpretation for the DefaultSpanInterpreter

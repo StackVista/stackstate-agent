@@ -9,6 +9,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	v11 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/common/v1"
+	openTelemetryTrace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/collector"
+	v1 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/v1"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -27,6 +30,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/test/testutil"
 
 	"github.com/cihub/seelog"
+	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/tinylib/msgp/msgp"
 )
@@ -392,6 +396,131 @@ func TestTraceCount(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, count, int64(123))
 	})
+}
+
+// [sts]
+func TestProto(t *testing.T) {
+	assert := assert.New(t)
+
+	// Create the expected packet structure
+	traceStruct := &openTelemetryTrace.ExportTraceServiceRequest{
+		ResourceSpans: []*v1.ResourceSpans{
+			{
+				InstrumentationLibrarySpans: []*v1.InstrumentationLibrarySpans{
+					{
+						InstrumentationLibrary: &v11.InstrumentationLibrary{
+							Name: "@opentelemetry/instrumentation-aws-sdk",
+							Version: "0.1.0",
+						},
+						Spans: []*v1.Span{
+							{
+								TraceId: []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
+								SpanId: []byte("yjXK+2eLD+s="),
+								ParentSpanId: []byte("Y3OrG+/srMM="),
+								Name: "ENTRY_A_SQS_QUEUE send",
+								Kind: 4,
+								StartTimeUnixNano: 1637684210743088640,
+								EndTimeUnixNano: 1637684210827280128,
+								Attributes: []*v11.KeyValue {
+									{
+										Key: "aws.operation",
+										Value: &v11.AnyValue{
+											Value: &v11.AnyValue_StringValue{
+												StringValue: "sendMessage",
+											},
+										},
+									},
+									{
+										Key: "messaging.url",
+										Value: &v11.AnyValue{
+											Value: &v11.AnyValue_StringValue{
+												StringValue: "https://sqs.eu-west-1.amazonaws.com/120431062118/ENTRY_A_SQS_QUEUE",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					{
+						InstrumentationLibrary: &v11.InstrumentationLibrary{
+							Name: "@opentelemetry/instrumentation-aws-lambda",
+							Version: "0.27.0",
+						},
+						Spans: []*v1.Span{
+							{
+								TraceId: []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
+								SpanId: []byte("Y3OrG+/srMM="),
+								ParentSpanId: []byte("RK3KTmkP93g="),
+								Name: "nn-observability-stack-dev-EntryLambdaToSQS",
+								Kind: 2,
+								StartTimeUnixNano: 1637684210732307968,
+								EndTimeUnixNano: 1637684210827808768,
+								Attributes: []*v11.KeyValue {
+									{
+										Key: "faas.execution",
+										Value: &v11.AnyValue{
+											Value: &v11.AnyValue_StringValue{
+												StringValue: "2ef7e384-cda2-46cc-bcf7-2268671e2cf5",
+											},
+										},
+									},
+									{
+										Key: "faas.id",
+										Value: &v11.AnyValue{
+											Value: &v11.AnyValue_StringValue{
+												StringValue: "arn:aws:lambda:eu-west-1:120431062118:function:nn-observability-stack-dev-EntryLambdaToSQS",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Marshal the proto object
+	trace, err := proto.Marshal(traceStruct)
+	assert.Nil(err)
+	assert.IsType(make([]byte, 0), trace)
+	assert.Equal(616, len(trace))
+
+	// prepare the receiver
+	conf := newTestReceiverConfig()
+	receiver := newTestReceiverFromConfig(conf)
+
+	// response recorder
+	handler := http.HandlerFunc(receiver.handleProtobuf(receiver.handleOpenTelemetry))
+
+	// consume the traces channel without doing anything
+	select {
+		case <- receiver.out:
+		default:
+	}
+
+	// forge the request
+	rr := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/open-telemetry", bytes.NewReader(trace))
+	req.Header.Set("Content-Type", "application/x-protobuf")
+	req.Header.Set("Datadog-Meta-Lang", langs[0])
+
+	handler.ServeHTTP(rr, req)
+	assert.Equal("OK\n", rr.Body.String())
+
+	// Receiver
+	rs := receiver.Stats
+	assert.Equal(1, len(rs.Stats))
+
+	// Receiver State
+	ts, ok := rs.Stats[info.Tags{Lang: langs[0]}]
+	assert.True(ok)
+	assert.Equal(int64(2), ts.TracesReceived)
+	assert.Equal(int64(616), ts.TracesBytes)
+
+	assert.Equal(1, 2)
 }
 
 func TestHandleTraces(t *testing.T) {

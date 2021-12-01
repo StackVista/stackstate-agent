@@ -10,11 +10,15 @@ import (
 	"encoding/json"
 	"expvar"
 	"fmt"
+	v1 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/common/v1"
+	openTelemetryTrace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/collector"
 	"github.com/gogo/protobuf/proto"
+	"github.com/tinylib/msgp/msgp"
 	"io"
 	"io/ioutil"
 	stdlog "log"
 	"math"
+	"math/big"
 	"mime"
 	"net"
 	"net/http"
@@ -27,10 +31,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"github.com/tinylib/msgp/msgp"
-
-	openTelemetryTrace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/v1"
 	// tracecollector "github.com/open-telemetry/opentelemetry-proto/gen/go/collector/trace/v1"
 	mainconfig "github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/tagger"
@@ -126,6 +126,7 @@ func (r *HTTPReceiver) Start() {
 	mux.HandleFunc("/v0.4/traces", r.handleWithVersion(v04, r.handleTraces))
 	mux.HandleFunc("/v0.4/services", r.handleWithVersion(v04, r.handleServices))
 	mux.Handle("/profiling/v1/input", r.profileProxyHandler())
+
 	// [sts]
 	mux.HandleFunc("/open-telemetry", r.handleProtobuf(r.handleOpenTelemetry))
 
@@ -365,20 +366,138 @@ func (r *HTTPReceiver) decodeTraces(v Version, req *http.Request) (pb.Traces, er
 }
 
 // [sts]
-func (r *HTTPReceiver) decodeOpenTelemetry(req *http.Request) (*openTelemetryTrace.TracesData, error) {
+func (r *HTTPReceiver) decodeOpenTelemetry(req *http.Request) (*openTelemetryTrace.ExportTraceServiceRequest, error) {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	traceData := &openTelemetryTrace.TracesData{}
-
-	if err := proto.Unmarshal(body, traceData); err != nil {
+	openTelemetryTraceData := &openTelemetryTrace.ExportTraceServiceRequest{}
+	if err := proto.Unmarshal(body, openTelemetryTraceData); err != nil {
 		return nil, err
 	}
 
-	return traceData, nil
+	return openTelemetryTraceData, nil
 }
+
+// [sts]
+// convertStringToUint64 Generates a uint64 based on a string as a seed
+func convertStringToUint64(input string) (*uint64, error) {
+	// https://www.geeksforgeeks.org/rune-in-golang/
+	// https://yourbasic.org/golang/convert-string-to-rune-slice/
+	// https://yourbasic.org/golang/build-append-concatenate-strings-efficiently/
+
+	// Int Ascii values representing the string values
+	runes := []rune(input)
+
+	// We use string builder for performance
+	// The actual integer values are written to a string to create a massive big itn
+	var sb strings.Builder
+	var stringBuilderError error
+
+	for _, r := range runes {
+		runeIntToString := fmt.Sprintf("%v", r)
+		_, err := sb.WriteString(runeIntToString)
+		if err != nil {
+			stringBuilderError = err
+			break
+		}
+	}
+
+	if stringBuilderError != nil {
+		return nil, stringBuilderError
+	}
+
+	runeString := sb.String()
+
+	// Convert a massive number to an uint64 representation
+	bigInt := big.NewInt(0)
+	bigInt.SetString(runeString, 10)
+	var uint64Representation = bigInt.Uint64()
+
+	return &uint64Representation, nil
+}
+
+// [sts]
+// mapOpenTelemetryTraces Converts the open telemetry proto structure to the pb.Trace structure
+func mapOpenTelemetryTraces (otelTraces openTelemetryTrace.ExportTraceServiceRequest) pb.Traces {
+	var traces = pb.Traces {}
+
+	for _, resourceSpan := range otelTraces.ResourceSpans {
+		// Every library span contains aws sdk / boto and aws-lambda information
+		for _, instrumentationLibrarySpan := range resourceSpan.InstrumentationLibrarySpans {
+			var trace = pb.Trace {}
+
+			// Each span contains information about the aws sdk / boto target or lambda information
+			// Usually we receive both generically mapping their values into the meta struct
+			for _, librarySpan := range instrumentationLibrarySpan.Spans {
+				// TODO: Verify structure per language / manual instrumentation
+
+				var meta = map[string]string {
+					"instrumentation_library": instrumentationLibrarySpan.InstrumentationLibrary.Name,
+					"source": "openTelemetry",
+				}
+
+				for _, attribute := range librarySpan.Attributes {
+					if value, ok := attribute.Value.GetValue().(*v1.AnyValue_StringValue); ok {
+						meta[attribute.Key] = value.StringValue
+					} else if value, ok := attribute.Value.GetValue().(*v1.AnyValue_BoolValue); ok {
+						meta[attribute.Key] = strconv.FormatBool(value.BoolValue)
+					} else if value, ok := attribute.Value.GetValue().(*v1.AnyValue_IntValue); ok {
+						meta[attribute.Key] = strconv.FormatInt(value.IntValue, 10)
+					} else if value, ok := attribute.Value.GetValue().(*v1.AnyValue_DoubleValue); ok {
+						meta[attribute.Key] = fmt.Sprintf("%f", value.DoubleValue)
+					} else if value, ok := attribute.Value.GetValue().(*v1.AnyValue_StringValue); ok {
+						meta[attribute.Key] = value.StringValue
+					} else {
+						log.Warnf("Open Telemetry, Unable to map the value '%v' of type '%T' into the meta struct.", attribute, attribute)
+					}
+				}
+
+				// We receive a trace in to following format: "trace_id": "YZ0T8B2Ll8IIzMv3EfFIqQ==",
+				traceId, err := convertStringToUint64(string(librarySpan.TraceId[:]))
+				if err != nil {
+					log.Errorf("Unable to convert %v to a uint64 version, Error received %v", librarySpan.TraceId[:], err)
+					return nil
+				}
+
+				// We receive a spanId in to following format:  "span_id": "yjXK+2eLD+s=",
+				spanId, err := convertStringToUint64(string(librarySpan.SpanId[:]))
+				if err != nil {
+					log.Errorf("Unable to convert %v to a uint64 version, Error received %v", librarySpan.SpanId[:], err)
+					return nil
+				}
+
+				// We receive a parentId in to following format: "parent_span_id": "Y3OrG+/srMM=",
+				parentId, err := convertStringToUint64(string(librarySpan.ParentSpanId[:]))
+				if err != nil {
+					log.Errorf("Unable to convert %v to a uint64 version, Error received %v", librarySpan.ParentSpanId[:], err)
+					return nil
+				}
+
+				trace = append(trace, &pb.Span {
+					Name: librarySpan.Name,
+					TraceID: *traceId,
+					SpanID: *spanId,
+					ParentID: *parentId,
+					Start: int64(librarySpan.StartTimeUnixNano),
+					Duration: int64(librarySpan.EndTimeUnixNano) - int64(librarySpan.StartTimeUnixNano),
+					Meta: meta,
+					// Error: 0,
+					// Type: "",
+					// Resource: "",
+					// Service: "",
+					// Metrics: map[string]float64 {},
+				})
+			}
+
+			traces = append(traces, trace)
+		}
+	}
+
+	return traces
+}
+
 
 func (r *HTTPReceiver) replyOK(v Version, w http.ResponseWriter) {
 	switch v {
@@ -472,58 +591,60 @@ func (r *HTTPReceiver) processTraces(ts *info.TagStats, containerID string, trac
 	}
 }
 
-// [sts]
-func (r *HTTPReceiver) processOpenTelemetry(ts *info.TagStats, containerID string, traces *openTelemetryTrace.TracesData) {
-	defer timing.Since("datadog.trace_agent.internal.normalize_ms", time.Now())
-
-	// containerTags := getContainerTags(containerID)
-	//  for _, trace := range traces.ResourceSpans {
-	//  	spans := len(trace)
-	//  	atomic.AddInt64(&ts.SpansReceived, int64(spans))
-	//  	err := normalizeTrace(ts, trace)
-	//  	if err != nil {
-	//  		log.Debug("Dropping invalid trace: %s", err)
-	//  		atomic.AddInt64(&ts.SpansDropped, int64(spans))
-	//  		continue
-	//  	}
-	//  	r.out <- &Trace{
-	//  		Source:        &ts.Tags,
-	//  		ContainerTags: containerTags,
-	//  		Spans:         trace,
-	//  	}
-	//  }
-}
 
 // [sts]
 // Open telemetry protobuf support
 func (r *HTTPReceiver) handleOpenTelemetry(w http.ResponseWriter, req *http.Request) {
 	ts := r.tagStats(req)
-
-	// Trace count ignored
-	// Rate Limiter Ignored
-
-	traces, err := r.decodeOpenTelemetry(req)
+	traceCount, err := traceCount(req)
 	if err != nil {
-		httpDecodingError(err, []string{}, w)
-		atomic.AddInt64(&ts.TracesDropped.DecodingError, 0)
-		log.Errorf("Cannot cannot decode open telemetry protobuf content: %v", err)
+		log.Warnf("Error getting trace count: %q. Functionality may be limited.", err)
+	}
+
+	if !r.RateLimiter.Permits(traceCount) {
+		// this payload can not be accepted
+		io.Copy(ioutil.Discard, req.Body)
+		w.WriteHeader(r.rateLimiterResponse)
+		httpOK(w)
+		atomic.AddInt64(&ts.PayloadRefused, 1)
 		return
 	}
 
+	openTelemetryTraces, err := r.decodeOpenTelemetry(req)
+	if err != nil {
+		if err == ErrLimitedReaderLimitReached {
+			atomic.AddInt64(&ts.TracesDropped.PayloadTooLarge, traceCount)
+		} else {
+			atomic.AddInt64(&ts.TracesDropped.DecodingError, traceCount)
+		}
+		log.Errorf("Cannot decode traces payload: %v", err)
+		return
+	}
+
+	traces := mapOpenTelemetryTraces(*openTelemetryTraces)
+
 	httpOK(w)
 
-	atomic.AddInt64(&ts.TracesReceived, int64(len(traces.ResourceSpans)))
+	atomic.AddInt64(&ts.TracesReceived, int64(len(traces)))
 	atomic.AddInt64(&ts.TracesBytes, req.Body.(*LimitedReader).Count)
 	atomic.AddInt64(&ts.PayloadAccepted, 1)
 
+	fmt.Print("traces A\n")
+	fmt.Print(traces)
+	fmt.Print("\n")
+
 	r.wg.Add(1)
 	go func() {
+		fmt.Print("traces B\n")
+		fmt.Print(traces)
+		fmt.Print("\n")
+
 		defer func() {
 			r.wg.Done()
 			watchdog.LogOnPanic()
 		}()
 		containerID := req.Header.Get(headerContainerID)
-		r.processOpenTelemetry(ts, containerID, traces)
+		r.processTraces(ts, containerID, traces)
 	}()
 }
 

@@ -10,8 +10,6 @@ package api
 import (
 	"bytes"
 	"context"
-	openTelemetryTrace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/v1"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"testing"
@@ -20,19 +18,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/config"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/trace/test/testutil"
-	"github.com/gogo/protobuf/proto"
 )
-
-func TestDecode(t *testing.T) {
-	content, _ := ioutil.ReadFile("./trace-event-18-11-2021_14-26-50.proto")
-
-
-	traceData := &openTelemetryTrace.ResourceSpans{}
-	if err := proto.Unmarshal(content, traceData); err != nil {
-		t.Log(err)
-	}
-	t.Log(traceData)
-}
 
 func TestUDS(t *testing.T) {
 	sockPath := "/tmp/test-trace.sock"
