@@ -28,7 +28,7 @@ if [[ "$#" -eq "1" ]]; then
         docker run --rm \
             -e ARTIFACTORY_USER=$ARTIFACTORY_USER \
             -e ARTIFACTORY_PASSWORD=$ARTIFACTORY_PASSWORD \
-            -e ARTIFACTORY_URL="artifactory.stackstate.io/artifactory/api/pypi/pypi-local" \
+            -e ARTIFACTORY_URL="artifactory.tooling.stackstate.io/artifactory/api/pypi/pypi-local" \
             -it --name $NAME -v "`pwd`:$MOUNT:ro" agent_build:latest "$MOUNT" $CURBRANCH
 
         exit 0
