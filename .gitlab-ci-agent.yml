@@ -369,7 +369,6 @@ build_deb:
     - inv agent.version --major-version $MAJOR_VERSION
     - cat version.txt || true
     - source ./.gitlab-scripts/setup_artifactory.sh
-
     - inv -e agent.omnibus-build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --skip-deps --skip-sign --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
 
     # Prepare outputs
