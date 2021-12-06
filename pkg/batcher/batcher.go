@@ -120,7 +120,7 @@ type submitHealthStopSnapshot struct {
 }
 
 type submitRawMetricsData struct {
-	checkID   check.ID
+	checkID check.ID
 	rawMetric telemetry.RawMetrics
 }
 
@@ -300,7 +300,7 @@ func (batcher AsynchronousBatcher) SubmitRawMetricsData(checkID check.ID, rawMet
 	}
 
 	batcher.input <- submitRawMetricsData{
-		checkID:   checkID,
+		checkID: checkID,
 		rawMetric: rawMetric,
 	}
 }

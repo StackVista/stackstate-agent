@@ -30,13 +30,13 @@ static void initTelemetryTests(rtloader_t *rtloader) {
 import "C"
 
 var (
-	rtloader     *C.rtloader_t
-	checkID      string
-	_data        map[string]interface{}
-	_topoEvt     metrics.Event
-	rawName      string
+	rtloader 	*C.rtloader_t
+	checkID  	string
+	_data    	map[string]interface{}
+	_topoEvt 	metrics.Event
+	rawName		string
 	rawHostname  string
-	rawValue     float64
+	rawValue 	float64
 	rawTags      []string
 	rawTimestamp int64
 )

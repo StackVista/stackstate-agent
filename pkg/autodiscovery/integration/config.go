@@ -60,14 +60,14 @@ type Config struct {
 // CommonInstanceConfig holds the reserved fields for the yaml instance data
 type CommonInstanceConfig struct {
 	// [sts] This is a legacy setting and is replaced by the CollectionInterval below, we keep this for backwards compatibility
-	MinCollectionInterval int `yaml:"min_collection_interval"`
+	MinCollectionInterval   int  `yaml:"min_collection_interval"`
 	// [sts] Add CollectionInterval, replacing MinCollectionInterval
-	CollectionInterval   int      `yaml:"collection_interval"`
-	EmptyDefaultHostname bool     `yaml:"empty_default_hostname"`
-	Tags                 []string `yaml:"tags"`
-	Service              string   `yaml:"service"`
-	Name                 string   `yaml:"name"`
-	Namespace            string   `yaml:"namespace"`
+	CollectionInterval   int  `yaml:"collection_interval"`
+	EmptyDefaultHostname bool `yaml:"empty_default_hostname"`
+	Tags                  []string `yaml:"tags"`
+	Service               string   `yaml:"service"`
+	Name                  string   `yaml:"name"`
+	Namespace             string   `yaml:"namespace"`
 }
 
 // CommonGlobalConfig holds the reserved fields for the yaml init_config data

@@ -1,6 +1,7 @@
 package interpreter
 
 import (
+	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/trace/config"
 	interpreterConfig "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
@@ -37,15 +38,37 @@ func NewSpanInterpreterEngine(agentConfig *config.AgentConfig) *SpanInterpreterE
 	sourceIns := make(map[string]interpreters.SourceInterpreter, 0)
 	sourceIns[interpreters.TraefikSpanInterpreterSpan] = interpreters.MakeTraefikInterpreter(interpreterConf)
 	sourceIns[openTelemetry.OpenTelemetryLambdaInterpreterSpan] = openTelemetry.MakeOpenTelemetryLambdaInterpreter(interpreterConf)
-	sourceIns[openTelemetry.OpenTelemetrySNSInterpreterSpan] = openTelemetry.MakeOpenTelemetrySNSInterpreter(interpreterConf)
 	sourceIns[openTelemetry.OpenTelemetrySQSInterpreterSpan] = openTelemetry.MakeOpenTelemetrySQSInterpreter(interpreterConf)
 
 	return MakeSpanInterpreterEngine(interpreterConf, typeIns, sourceIns)
 }
 
+func ReplaceSourceIfOpenTelemetry(source string, span *pb.Span) string {
+	if source == "openTelemetry" {
+		switch span.Meta["instrumentation_library"] {
+			case "@opentelemetry/instrumentation-aws-lambda": // NodeJS
+				return "openTelemetryLambda"
+
+			case "@opentelemetry/instrumentation-aws-sdk": // NodeJS
+				switch span.Meta["aws.service.identifier"] {
+					case "sqs":
+						return "openTelemetrySQS"
+
+					default:
+						fmt.Printf("Unknown AWS identifier for Open Telemetry: %v", span.Meta["aws.service.identifier"])
+				}
+				break
+
+			default:
+				fmt.Printf("Unknown Open Telemetry instrumentation library: %v", span.Meta["instrumentation_library"])
+		}
+	}
+
+	return source
+}
+
 // Interpret interprets the trace using the configured SpanInterpreterEngine
 func (se *SpanInterpreterEngine) Interpret(origTrace pb.Trace) pb.Trace {
-
 	// we do not mutate the original trace
 	var interpretedTrace = make(pb.Trace, 0)
 	groupedSourceSpans := make(map[string][]*pb.Span)
@@ -64,6 +87,11 @@ func (se *SpanInterpreterEngine) Interpret(origTrace pb.Trace) pb.Trace {
 			// no metadata, let's look for the span's source.
 			if err != nil {
 				if source, found := span.Meta["source"]; found {
+					// Special mapping for open telemetry, Multiple sub interpreters
+					if source == "openTelemetry" {
+						source = ReplaceSourceIfOpenTelemetry(source, span)
+					}
+
 					//group spans that share the same source
 					groupedSourceSpans[source] = append(groupedSourceSpans[source], span)
 				} else {

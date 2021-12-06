@@ -97,7 +97,7 @@ func (builder *BatchBuilder) getOrCreateRawMetrics(checkID check.ID) *[]telemetr
 	builder.states[checkID] = CheckInstanceBatchState{
 		Topology: state.Topology,
 		Health:   state.Health,
-		Metrics:  &[]telemetry.RawMetrics{},
+		Metrics: &[]telemetry.RawMetrics{},
 	}
 
 	return builder.states[checkID].Metrics

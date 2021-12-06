@@ -90,7 +90,6 @@ type HTTPReceiver struct {
 // NewHTTPReceiver returns a pointer to a new HTTPReceiver
 func NewHTTPReceiver(conf *config.AgentConfig, dynConf *sampler.DynamicConfig, out chan *Trace) *HTTPReceiver {
 	rateLimiterResponse := http.StatusOK
-
 	if config.HasFeature("429") {
 		rateLimiterResponse = http.StatusTooManyRequests
 	}
@@ -483,11 +482,10 @@ func mapOpenTelemetryTraces (otelTraces openTelemetryTrace.ExportTraceServiceReq
 					Start: int64(librarySpan.StartTimeUnixNano),
 					Duration: int64(librarySpan.EndTimeUnixNano) - int64(librarySpan.StartTimeUnixNano),
 					Meta: meta,
-					// Error: 0,
-					// Type: "",
-					// Resource: "",
-					// Service: "",
-					// Metrics: map[string]float64 {},
+					Service: "openTelemetry",
+					Resource: "openTelemetry",
+					Type: "openTelemetry",
+					Metrics: map[string]float64 {},
 				})
 			}
 
@@ -576,6 +574,7 @@ func (r *HTTPReceiver) processTraces(ts *info.TagStats, containerID string, trac
 
 		atomic.AddInt64(&ts.SpansReceived, int64(spans))
 
+		// Point of missing resource and service
 		err := normalizeTrace(ts, trace)
 		if err != nil {
 			log.Debug("Dropping invalid trace: %s", err)
@@ -601,14 +600,15 @@ func (r *HTTPReceiver) handleOpenTelemetry(w http.ResponseWriter, req *http.Requ
 		log.Warnf("Error getting trace count: %q. Functionality may be limited.", err)
 	}
 
-	if !r.RateLimiter.Permits(traceCount) {
-		// this payload can not be accepted
-		io.Copy(ioutil.Discard, req.Body)
-		w.WriteHeader(r.rateLimiterResponse)
-		httpOK(w)
-		atomic.AddInt64(&ts.PayloadRefused, 1)
-		return
-	}
+	// TODO:
+	//  if !r.RateLimiter.Permits(traceCount) {
+	//  	// this payload can not be accepted
+	//  	io.Copy(ioutil.Discard, req.Body)
+	//  	w.WriteHeader(r.rateLimiterResponse)
+	//  	httpOK(w)
+	//  	atomic.AddInt64(&ts.PayloadRefused, 1)
+	//  	return
+	//  }
 
 	openTelemetryTraces, err := r.decodeOpenTelemetry(req)
 	if err != nil {
@@ -629,16 +629,8 @@ func (r *HTTPReceiver) handleOpenTelemetry(w http.ResponseWriter, req *http.Requ
 	atomic.AddInt64(&ts.TracesBytes, req.Body.(*LimitedReader).Count)
 	atomic.AddInt64(&ts.PayloadAccepted, 1)
 
-	fmt.Print("traces A\n")
-	fmt.Print(traces)
-	fmt.Print("\n")
-
 	r.wg.Add(1)
 	go func() {
-		fmt.Print("traces B\n")
-		fmt.Print(traces)
-		fmt.Print("\n")
-
 		defer func() {
 			r.wg.Done()
 			watchdog.LogOnPanic()

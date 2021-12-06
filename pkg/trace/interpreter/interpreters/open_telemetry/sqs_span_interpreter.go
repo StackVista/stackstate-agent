@@ -27,21 +27,25 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			span.Meta = map[string]string{}
 		}
 
+		span.Meta["span.kind"] = "consumer"
+
 		// SQS Name for example: SQSQueueName
 		if queueName, ok := span.Meta["messaging.destination"]; queueName != "" && ok {
-			span.Meta["sts.service.name"] = queueName
-			span.Service = queueName
+			span.Meta["span.serviceName"] = queueName
 		}
 
 		if url, ok := span.Meta["messaging.url"]; url != "" && ok {
+			// ARN and URN
 			var urn = t.CreateServiceURN(url)
-			span.Meta["sts.service.URN"] = urn
-			span.Meta["sts.service.identifiers"] = urn // TODO: Possible arn
+			span.Meta["span.serviceURN"] = urn
+			span.Meta["sts.service.identifiers"] = url
 		}
 
 		// AWS Service used like SQS, SNS etc
 		if service, ok := span.Meta["aws.service.api"]; service != "" && ok {
 			span.Meta["span.kind"] = "consumer"
+			span.Service = service
+			span.Meta["service"] = service
 			span.Resource = service
 		}
 
@@ -50,9 +54,9 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			span.Type = action
 		}
 
-		t.interpretHTTPError(span)
-
 		span.Meta["span.serviceType"] = OpenTelemetrySQSInterpreterSpan
+
+		t.interpretHTTPError(span)
 	}
 
 	return spans

@@ -28,31 +28,29 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 		}
 
 		span.Meta["span.kind"] = "producer"
+		span.Service = "Lambda"
+		span.Resource = "Lambda"
+		span.Type = "Invoke"
 
 		// Lambda Function Name
 		if lambdaName := span.Name; lambdaName != "" {
-			span.Meta["sts.service.name"] = lambdaName
-			span.Service = lambdaName
+			span.Meta["span.serviceName"] = lambdaName
+			span.Meta["service"] = lambdaName
 		}
 
 		if arn, ok := span.Meta["faas.id"]; arn != "" && ok {
-			// Service
 			span.Meta["aws.service.api"] = "Lambda"
-			span.Resource = "Lambda"
-
-			// Action
 			span.Meta["aws.operation"] = "Invoke"
-			span.Type = "Invoke"
 
 			// URN & ARN
 			var urn = t.CreateServiceURN(arn)
-			span.Meta["sts.service.URN"] = urn
-			span.Meta["sts.service.identifiers"] = urn // TODO: Possible arn
+			span.Meta["span.serviceURN"] = urn
+			span.Meta["sts.service.identifiers"] = arn
 		}
 
-		t.interpretHTTPError(span)
-
 		span.Meta["span.serviceType"] = OpenTelemetryLambdaInterpreterSpan
+
+		t.interpretHTTPError(span)
 	}
 
 	return spans
