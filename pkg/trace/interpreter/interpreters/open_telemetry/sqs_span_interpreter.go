@@ -1,9 +1,11 @@
 package interpreters
 
 import (
+	"fmt"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"strings"
 )
 
 // OpenTelemetrySQSInterpreter default span interpreter for this data structure
@@ -29,29 +31,33 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 
 		span.Meta["span.kind"] = "consumer"
 
-		// SQS Name for example: SQSQueueName
-		if queueName, ok := span.Meta["messaging.destination"]; queueName != "" && ok {
-			span.Meta["span.serviceName"] = queueName
-		}
+		// Retrieve the core information required to trace SQS
+		awsRegion, awsRegionOk := span.Meta["aws.region"]
+		awsOperation, awsOperationOk := span.Meta["aws.operation"]
+		awsService, awsServiceOk := span.Meta["aws.service.api"]
+		sqsEndpoint, sqsEndpointOk := span.Meta["messaging.url"]
+		sqsQueueName, sqsQueueNameOk := span.Meta["messaging.destination"]
 
-		if url, ok := span.Meta["messaging.url"]; url != "" && ok {
-			// ARN and URN
-			var urn = t.CreateServiceURN(url)
-			span.Meta["span.serviceURN"] = urn
-			span.Meta["sts.service.identifiers"] = url
-		}
+		if sqsQueueNameOk && sqsEndpointOk &&
+			awsServiceOk && awsOperationOk && awsRegionOk {
+			sqsEndpointPieces := strings.Split(sqsEndpoint, "/") // Example Input: https://sqs.<region>.amazonaws.com/<account-id>/<queue-name>
 
-		// AWS Service used like SQS, SNS etc
-		if service, ok := span.Meta["aws.service.api"]; service != "" && ok {
-			span.Meta["span.kind"] = "consumer"
-			span.Service = service
-			span.Meta["service"] = service
-			span.Resource = service
-		}
+			if len(sqsEndpointPieces) >= 3 {
+				var accountId = sqsEndpointPieces[3]
 
-		// AWS Action taken for example MessageSend
-		if action, ok := span.Meta["aws.operation"]; action != "" && ok {
-			span.Type = action
+				// We need to manually recreate the endpoint as it differs a bit with the stackpack one
+				span.Meta["sts.service.identifiers"] = fmt.Sprintf("https://%s.queue.amazonaws.com/%s/%s",
+					awsRegion, accountId, sqsQueueName)
+
+				var urn = t.CreateServiceURN(sqsEndpoint)
+				span.Meta["span.serviceURN"] = urn
+
+				span.Meta["span.serviceName"] = sqsQueueName
+				span.Type = awsOperation
+				span.Service = awsService
+				span.Resource = awsService
+				span.Meta["service"] = awsService
+			}
 		}
 
 		span.Meta["span.serviceType"] = OpenTelemetrySQSInterpreterSpan

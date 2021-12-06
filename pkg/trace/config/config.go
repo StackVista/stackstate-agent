@@ -177,11 +177,8 @@ func (c *AgentConfig) APIKey() string {
 // Validate validates if the current configuration is good for the agent to start with.
 func (c *AgentConfig) validate() error {
 	if len(c.Endpoints) == 0 || c.Endpoints[0].APIKey == "" {
-		// var data, _ = json.Marshal(c.Endpoints[0])
-		// fmt.Println(string(data))
 		return ErrMissingAPIKey
 	}
-	// c.DDAgentBin = "/bin/agent/agents"
 	if c.DDAgentBin == "" {
 		return errors.New("agent binary path not set")
 	}

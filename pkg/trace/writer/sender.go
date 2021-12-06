@@ -302,7 +302,8 @@ type retriableError struct{ err error }
 func (e retriableError) Error() string { return e.err.Error() }
 
 const (
-	headerAPIKey    = "DD-Api-Key"
+	// TODO: Melcom - Change back - Local testing
+	headerAPIKey    = "sts-Api-Key"
 	headerUserAgent = "User-Agent"
 )
 

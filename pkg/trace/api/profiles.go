@@ -53,7 +53,8 @@ func newProfileProxy(target *url.URL, apiKey, tags string) *httputil.ReverseProx
 	director := func(req *http.Request) {
 		req.URL = target
 		req.Host = target.Host
-		req.Header.Set("DD-API-KEY", apiKey)
+		// TODO: Melcom - Change back - Local testing
+		req.Header.Set("sts-API-KEY", apiKey)
 		req.Header.Set("Via", fmt.Sprintf("trace-agent %s", info.Version))
 		if _, ok := req.Header["User-Agent"]; !ok {
 			// explicitly disable User-Agent so it's not set to the default value

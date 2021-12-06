@@ -10,8 +10,21 @@ import (
 	"encoding/json"
 	"expvar"
 	"fmt"
+	mainconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/tagger"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config"
+	"github.com/StackVista/stackstate-agent/pkg/trace/info"
+	"github.com/StackVista/stackstate-agent/pkg/trace/logutil"
+	"github.com/StackVista/stackstate-agent/pkg/trace/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/trace/metrics/timing"
+	"github.com/StackVista/stackstate-agent/pkg/trace/osutil"
+	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	v1 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/common/v1"
 	openTelemetryTrace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/collector"
+	"github.com/StackVista/stackstate-agent/pkg/trace/sampler"
+	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/gogo/protobuf/proto"
 	"github.com/tinylib/msgp/msgp"
 	"io"
@@ -31,20 +44,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	// tracecollector "github.com/open-telemetry/opentelemetry-proto/gen/go/collector/trace/v1"
-	mainconfig "github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/tagger"
-	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
-	"github.com/StackVista/stackstate-agent/pkg/trace/config"
-	"github.com/StackVista/stackstate-agent/pkg/trace/info"
-	"github.com/StackVista/stackstate-agent/pkg/trace/logutil"
-	"github.com/StackVista/stackstate-agent/pkg/trace/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/trace/metrics/timing"
-	"github.com/StackVista/stackstate-agent/pkg/trace/osutil"
-	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
-	"github.com/StackVista/stackstate-agent/pkg/trace/sampler"
-	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // Version is a dumb way to version our collector handlers
@@ -281,6 +280,7 @@ func (r *HTTPReceiver) handleWithVersion(v Version, f func(Version, http.Respons
 }
 
 // [sts]
+// Only accepts protobuf content types
 func (r *HTTPReceiver) handleProtobuf(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if mediaType := getMediaType(req); mediaType != "application/x-protobuf" {
@@ -380,12 +380,8 @@ func (r *HTTPReceiver) decodeOpenTelemetry(req *http.Request) (*openTelemetryTra
 }
 
 // [sts]
-// convertStringToUint64 Generates a uint64 based on a string as a seed
+// convertStringToUint64 Current solution for convert a string that contains numbers and chars into an integer
 func convertStringToUint64(input string) (*uint64, error) {
-	// https://www.geeksforgeeks.org/rune-in-golang/
-	// https://yourbasic.org/golang/convert-string-to-rune-slice/
-	// https://yourbasic.org/golang/build-append-concatenate-strings-efficiently/
-
 	// Int Ascii values representing the string values
 	runes := []rune(input)
 
@@ -417,85 +413,92 @@ func convertStringToUint64(input string) (*uint64, error) {
 	return &uint64Representation, nil
 }
 
+// Source Identifier for Open Telemetry
+const OpenTelemetrySource = "openTelemetry"
+
 // [sts]
-// mapOpenTelemetryTraces Converts the open telemetry proto structure to the pb.Trace structure
-func mapOpenTelemetryTraces (otelTraces openTelemetryTrace.ExportTraceServiceRequest) pb.Traces {
-	var traces = pb.Traces {}
+// mapOpenTelemetryTraces Converts the Open Telemetry structure into the accepted Traces structure
+func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceServiceRequest) pb.Traces {
+	var traces = pb.Traces{}
 
-	for _, resourceSpan := range otelTraces.ResourceSpans {
-		// Every library span contains aws sdk / boto and aws-lambda information
+	for _, resourceSpan := range openTelemetryTraces.ResourceSpans {
 		for _, instrumentationLibrarySpan := range resourceSpan.InstrumentationLibrarySpans {
-			var trace = pb.Trace {}
+			var singleTrace = pb.Trace{}
 
-			// Each span contains information about the aws sdk / boto target or lambda information
-			// Usually we receive both generically mapping their values into the meta struct
 			for _, librarySpan := range instrumentationLibrarySpan.Spans {
-				// TODO: Verify structure per language / manual instrumentation
+				// TODO: Verify if different languages have different structures, Approved Languages: NodeJS
 
-				var meta = map[string]string {
+				var meta = map[string]string{
 					"instrumentation_library": instrumentationLibrarySpan.InstrumentationLibrary.Name,
-					"source": "openTelemetry",
+					"source":                  OpenTelemetrySource,
 				}
 
 				for _, attribute := range librarySpan.Attributes {
-					if value, ok := attribute.Value.GetValue().(*v1.AnyValue_StringValue); ok {
-						meta[attribute.Key] = value.StringValue
-					} else if value, ok := attribute.Value.GetValue().(*v1.AnyValue_BoolValue); ok {
-						meta[attribute.Key] = strconv.FormatBool(value.BoolValue)
-					} else if value, ok := attribute.Value.GetValue().(*v1.AnyValue_IntValue); ok {
-						meta[attribute.Key] = strconv.FormatInt(value.IntValue, 10)
-					} else if value, ok := attribute.Value.GetValue().(*v1.AnyValue_DoubleValue); ok {
-						meta[attribute.Key] = fmt.Sprintf("%f", value.DoubleValue)
-					} else if value, ok := attribute.Value.GetValue().(*v1.AnyValue_StringValue); ok {
-						meta[attribute.Key] = value.StringValue
-					} else {
+					attributeValue := attribute.Value.GetValue()
+
+					switch attributeValue.(type) {
+					case *v1.AnyValue_StringValue:
+						var stringValue = attributeValue.(*v1.AnyValue_StringValue).StringValue
+						meta[attribute.Key] = stringValue
+
+					case *v1.AnyValue_BoolValue:
+						var boolValue = attributeValue.(*v1.AnyValue_BoolValue).BoolValue
+						meta[attribute.Key] = strconv.FormatBool(boolValue)
+
+					case *v1.AnyValue_IntValue:
+						var intValue = attributeValue.(*v1.AnyValue_IntValue).IntValue
+						meta[attribute.Key] = strconv.FormatInt(intValue, 10)
+
+					case *v1.AnyValue_DoubleValue:
+						var doubleValue = attributeValue.(*v1.AnyValue_DoubleValue).DoubleValue
+						meta[attribute.Key] = fmt.Sprintf("%f", doubleValue)
+
+					default:
 						log.Warnf("Open Telemetry, Unable to map the value '%v' of type '%T' into the meta struct.", attribute, attribute)
 					}
 				}
 
-				// We receive a trace in to following format: "trace_id": "YZ0T8B2Ll8IIzMv3EfFIqQ==",
 				traceId, err := convertStringToUint64(string(librarySpan.TraceId[:]))
 				if err != nil {
-					log.Errorf("Unable to convert %v to a uint64 version, Error received %v", librarySpan.TraceId[:], err)
+					_ = log.Errorf("Unable to convert %v to a uint64 version, Error received %v", librarySpan.TraceId[:], err)
 					return nil
 				}
 
-				// We receive a spanId in to following format:  "span_id": "yjXK+2eLD+s=",
 				spanId, err := convertStringToUint64(string(librarySpan.SpanId[:]))
 				if err != nil {
-					log.Errorf("Unable to convert %v to a uint64 version, Error received %v", librarySpan.SpanId[:], err)
+					_ = log.Errorf("Unable to convert %v to a uint64 version, Error received %v", librarySpan.SpanId[:], err)
 					return nil
 				}
 
-				// We receive a parentId in to following format: "parent_span_id": "Y3OrG+/srMM=",
 				parentId, err := convertStringToUint64(string(librarySpan.ParentSpanId[:]))
 				if err != nil {
-					log.Errorf("Unable to convert %v to a uint64 version, Error received %v", librarySpan.ParentSpanId[:], err)
+					_ = log.Errorf("Unable to convert %v to a uint64 version, Error received %v", librarySpan.ParentSpanId[:], err)
 					return nil
 				}
 
-				trace = append(trace, &pb.Span {
-					Name: librarySpan.Name,
-					TraceID: *traceId,
-					SpanID: *spanId,
+				singleTrace = append(singleTrace, &pb.Span{
+					Name:     librarySpan.Name,
+					TraceID:  *traceId,
+					SpanID:   *spanId,
 					ParentID: *parentId,
-					Start: int64(librarySpan.StartTimeUnixNano),
+					Start:    int64(librarySpan.StartTimeUnixNano),
 					Duration: int64(librarySpan.EndTimeUnixNano) - int64(librarySpan.StartTimeUnixNano),
-					Meta: meta,
-					Service: "openTelemetry",
+					Meta:     meta,
+
+					// Set a few default for this trace, These will be changed when interpreted
+					Service:  "openTelemetry",
 					Resource: "openTelemetry",
-					Type: "openTelemetry",
-					Metrics: map[string]float64 {},
+					Type:     "openTelemetry",
+					Metrics:  map[string]float64{},
 				})
 			}
 
-			traces = append(traces, trace)
+			traces = append(traces, singleTrace)
 		}
 	}
 
 	return traces
 }
-
 
 func (r *HTTPReceiver) replyOK(v Version, w http.ResponseWriter) {
 	switch v {
@@ -590,9 +593,8 @@ func (r *HTTPReceiver) processTraces(ts *info.TagStats, containerID string, trac
 	}
 }
 
-
 // [sts]
-// Open telemetry protobuf support
+// Open telemetry support - Uses protobuf
 func (r *HTTPReceiver) handleOpenTelemetry(w http.ResponseWriter, req *http.Request) {
 	ts := r.tagStats(req)
 	traceCount, err := traceCount(req)
@@ -600,15 +602,14 @@ func (r *HTTPReceiver) handleOpenTelemetry(w http.ResponseWriter, req *http.Requ
 		log.Warnf("Error getting trace count: %q. Functionality may be limited.", err)
 	}
 
-	// TODO:
-	//  if !r.RateLimiter.Permits(traceCount) {
-	//  	// this payload can not be accepted
-	//  	io.Copy(ioutil.Discard, req.Body)
-	//  	w.WriteHeader(r.rateLimiterResponse)
-	//  	httpOK(w)
-	//  	atomic.AddInt64(&ts.PayloadRefused, 1)
-	//  	return
-	//  }
+	if !r.RateLimiter.Permits(traceCount) {
+		// this payload can not be accepted
+		io.Copy(ioutil.Discard, req.Body)
+		w.WriteHeader(r.rateLimiterResponse)
+		httpOK(w)
+		atomic.AddInt64(&ts.PayloadRefused, 1)
+		return
+	}
 
 	openTelemetryTraces, err := r.decodeOpenTelemetry(req)
 	if err != nil {
@@ -621,6 +622,7 @@ func (r *HTTPReceiver) handleOpenTelemetry(w http.ResponseWriter, req *http.Requ
 		return
 	}
 
+	// Open telemetry does not immediately fit into the pb.Traces structure and thus needs to be mapped into it
 	traces := mapOpenTelemetryTraces(*openTelemetryTraces)
 
 	httpOK(w)
