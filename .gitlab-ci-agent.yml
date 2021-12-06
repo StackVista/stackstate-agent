@@ -436,7 +436,6 @@ build_rpm:
     - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles
     - cp -r $OMNIBUS_BASE_DIR/pkg $CI_PROJECT_DIR/outcomes
     - cp -r $CI_PROJECT_DIR/Dockerfiles $CI_PROJECT_DIR/outcomes
-
     - ls -la $CI_PROJECT_DIR/outcomes/Dockerfiles
 
     #    # Prepare cache
