@@ -364,7 +364,6 @@ build_deb:
     # We move .omnibus out of the CI root because this seems to cause issues with git
     # cloning in omnibus and operations on datadog-agent
     - mv $CI_PROJECT_DIR/.omnibus /omnibus || mkdir -p /omnibus
-
     - conda activate $CONDA_ENV
     - inv agent.version --major-version $MAJOR_VERSION
     - cat version.txt || true
