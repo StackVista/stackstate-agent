@@ -47,7 +47,7 @@ Vagrant.configure("2") do |config|
     echo "export RUBY_VERSION=2.4.2" >> /home/vagrant/.env
     echo "export ARTIFACTORY_USER=user" >> /home/vagrant/.env
     echo "export ARTIFACTORY_PASSWORD=ZPxcNe6dXZmGmCz3" >> /home/vagrant/.env
-    echo "export ARTIFACTORY_URL=artifactory.tooling.stackstate.io/artifactory/api/pypi/pypi-local" >> /home/vagrant/.env
+    echo "export ARTIFACTORY_PYPI_URL=artifactory.tooling.stackstate.io/artifactory/api/pypi/pypi-local" >> /home/vagrant/.env
     echo "export HOST_DIR=/home/vagrant/stackstate-agent-host" >> /home/vagrant/.env
     echo "export CI_PROJECT_DIR=/home/vagrant/stackstate-agent" >> /home/vagrant/.env
     echo "export C_MAKE_SETUP_PATH=~/cmake" >> /home/vagrant/.env
