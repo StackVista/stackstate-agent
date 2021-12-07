@@ -19,8 +19,8 @@ Remember to `git pull` every time you push a change.
 We use some private python libraries for our integrations therefore you need to configure artifactory as pypi repository:
 ```bash
 $ export ARTIFACTORY_PYPI_URL=artifactory.tooling.stackstate.io/artifactory/api/pypi/pypi-local && \
-  export ARTIFACTORY_USER=... && \
-  export ARTIFACTORY_PASSWORD=... && \
+  export artifactory_user=... && \
+  export artifactory_password=... && \
   source ./.gitlab-scripts/setup_artifactory.sh
 ```
 
