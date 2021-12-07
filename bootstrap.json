@@ -4,7 +4,6 @@
             "golang.org/x/lint/golint",
             "github.com/gordonklaus/ineffassign",
             "github.com/client9/misspell/cmd/misspell",
-            "golang.org/x/mobile/cmd/gomobile",
             "golang.org/x/tools/go/ast/astutil",
             "golang.org/x/tools/go/internal",
             "golang.org/x/tools/go/gcexportdata",
@@ -36,10 +35,6 @@
         },
         "github.com/client9/misspell/cmd/misspell": {
             "version": "v0.3.4",
-            "type": "go"
-        },
-        "golang.org/x/mobile/cmd/gomobile": {
-            "version": "v0.0.0-20211207041440-4e6c2922fdee",
             "type": "go"
         },
         "github.com/golangci/golangci-lint": {
