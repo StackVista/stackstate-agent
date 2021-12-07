@@ -35,7 +35,7 @@
             "type": "go"
         },
         "github.com/client9/misspell/cmd/misspell": {
-            "version": "master",
+            "version": "v0.3.4",
             "type": "go"
         },
         "golang.org/x/mobile/cmd/gomobile": {
