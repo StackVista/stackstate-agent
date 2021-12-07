@@ -1,0 +1,37 @@
+
+
+stages:
+  - build_runner_base
+  - build_runners
+
+variables:
+  RUNNER7_DEB_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-deb
+
+
+# produces the base deb image: quay.io/stackstate/stackstate-agent-runner-circle:deb7_{yyyymmdd}
+build-v3-deb-base:
+  # use ubuntu as the image builder
+  image: ubuntu:20.04
+  stage: build_runner_base
+  interruptible: true
+  script:
+    - cd $RUNNER7_DEB_BASE
+   # make the image, try running sh, push the tag to quay, write the version as a artifact
+    - make build try push version
+  artifacts:
+    name: Base deb image version
+    paths:
+      - $RUNNER7_DEB_BASE/version.txt
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+
+#  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:latest7
+
+#  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
+
+#  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos6_20190429
+
+#  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher

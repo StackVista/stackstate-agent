@@ -1,5 +1,8 @@
 RUNTIMETAG := $(shell date +%Y%m%d)
 
+version:
+	echo $(RUNTIMETAG) | tail -1 > version.txt
+
 build:
 	docker build -t docker.io/stackstate/stackstate-agent-runner-circle:deb7_$(RUNTIMETAG) .
 push:

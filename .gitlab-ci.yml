@@ -142,3 +142,13 @@ cluster_agent:
   rules:
     - <<: *include_on_cluster_agent
     - when: never
+
+build_runners:
+  stage: triggers
+  variables:
+    <<: *commonvariables
+  trigger:
+    include: .gitlab-ci-build-runners.yml
+    strategy: depend
+  rules:
+    - when: manual
