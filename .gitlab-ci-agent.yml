@@ -368,6 +368,16 @@ build_deb:
     - conda activate $CONDA_ENV
     - inv agent.version --major-version $MAJOR_VERSION
     - cat version.txt || true
+    - echo "ARTIFACTORY_PYPI_URL"
+    - echo $ARTIFACTORY_PYPI_URL
+    - echo "ARTIFACTORY_URL"
+    - echo $ARTIFACTORY_URL
+    - echo "artifactory_url"
+    - echo $artifactory_url
+    - echo "ARTIFACTORY_USER"
+    - echo $ARTIFACTORY_USER
+    - echo "artifactory_user"
+    - echo $artifactory_user
     - source ./.gitlab-scripts/setup_artifactory.sh
 
     - inv -e agent.omnibus-build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --skip-deps --skip-sign --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
