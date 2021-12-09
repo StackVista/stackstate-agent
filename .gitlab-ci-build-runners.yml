@@ -6,18 +6,20 @@ stages:
 
 variables:
   RUNNER7_DEB_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-deb
+  RUNNER7_MAIN: $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb
+  DOCKER_REPOSITORY: quay.io
 
 
 # produces the base deb image: quay.io/stackstate/stackstate-agent-runner-circle:deb7_{yyyymmdd}
-build-v3-deb-base:
+build-deb-base:
   # use ubuntu as the image builder
   image: ubuntu:20.04
   stage: build_runner_base
-  interruptible: true
   script:
     - cd $RUNNER7_DEB_BASE
    # make the image, try running sh, push the tag to quay, write the version as a artifact
     - make build try push version
+    - echo "Produced deb based container version: $(cat $RUNNER7_DEB_BASE/version.txt)"
   artifacts:
     name: Base deb image version
     paths:
@@ -28,7 +30,24 @@ build-v3-deb-base:
       - runner_system_failure
       - stuck_or_timeout_failure
 
-#  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:latest7
+#  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
+build-main-runner:
+  # use ubuntu as the image builder
+  image: ubuntu:20.04
+  stage: build_runners
+  needs: [build-deb-base]
+  script:
+    - cd RUNNER7_MAIN
+    - export BASE_RUNNER_IMAGE_VERSION=$(cat $RUNNER7_DEB_BASE/version.txt)
+    - echo "Using deb base container version: $BASE_RUNNER_IMAGE_VERSION"
+    # make the image, try running sh, push the tag to quay, write the version as a artifact
+    - make build try push version
+    - echo "Produced deb container version: $(cat $RUNNER7_MAIN/version.txt)"
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
 
 #  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
 

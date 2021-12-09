@@ -1,4 +1,5 @@
-FROM docker.io/stackstate/stackstate-agent-runner-circle:deb7_latest
+ARG BASE_RUNNER_IMAGE_VERSION=deb7_latest
+FROM docker.io/stackstate/stackstate-agent-runner-circle:${BASE_RUNNER_IMAGE_VERSION}
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y nano libtool-bin libelf-dev gnupg2 locales
 RUN echo 'export PATH=$HOME/bin:$PATH' >> /root/.bashrc
@@ -16,8 +17,8 @@ ADD rpmmacros /root/.rpmmacros
 
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
     locale-gen
-ENV LANG en_US.UTF-8  
-ENV LANGUAGE en_US:en  
-ENV LC_ALL en_US.UTF-8 
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
 
 SHELL ["/bin/bash", "-c"]
