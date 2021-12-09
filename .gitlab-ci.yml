@@ -151,4 +151,4 @@ build_runners:
     include: .gitlab-ci-build-runners.yml
     strategy: depend
   rules:
-    - when: manual
+    - when: on_success

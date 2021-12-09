@@ -10,19 +10,21 @@ variables:
 
 # produces the base deb image: quay.io/stackstate/stackstate-agent-runner-circle:deb7_{yyyymmdd}
 build-deb-base:
-  # use ubuntu as the image builder
-  image: ubuntu:20.04
+  # use docker as the image builder
+  image: artifactory.stackstate.io/docker-virtual/docker:18.06.0
+  variables:
+    DOCKER_DRIVER: overlay
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
   stage: build_runner_base
   script:
     - cd $RUNNER7_DEB_BASE
-    # make the image, try running sh, push the tag to quay, write the version as a artifact
-    - make build try push version
-    - export BASE_RUNNER_IMAGE_VERSION="$(cat $RUNNER7_DEB_BASE/version.txt)"
-    - echo Produced deb based container version $BASE_RUNNER_IMAGE_VERSION
-  artifacts:
-    name: Base deb image version
-    paths:
-      - $RUNNER7_DEB_BASE/version.txt
+    # get the current date as the base image version
+    - $BASE_RUNNER_IMAGE_VERSION="deb7_$(date +%Y%m%d)"
+    # make the image, push the tag to quay
+    - docker build -t $DOCKER_REPOSITORY/stackstate/stackstate-agent-runner-circle:$BASE_RUNNER_IMAGE_VERSION .
+    - docker push $DOCKER_REPOSITORY/stackstate/stackstate-agent-runner-circle:$BASE_RUNNER_IMAGE_VERSION
+    - echo Produced deb based container version deb7_$BASE_RUNNER_IMAGE_VERSION
   retry:
     max: 2
     when:
@@ -31,18 +33,22 @@ build-deb-base:
 
 #  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
 build-main-runner:
-  # use ubuntu as the image builder
-  image: ubuntu:20.04
+  # use docker as the image builder
+  image: artifactory.stackstate.io/docker-virtual/docker:18.06.0
+  variables:
+    DOCKER_DRIVER: overlay
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
   stage: build_runners
   needs: [build-deb-base]
   script:
     - cd RUNNER7_MAIN
-    - export BASE_RUNNER_IMAGE_VERSION="$(cat $RUNNER7_DEB_BASE/version.txt)"
+    # get the current date as the base image version
+    - $BASE_RUNNER_IMAGE_VERSION="deb7_$(date +%Y%m%d)"
     - echo Using deb base container version $BASE_RUNNER_IMAGE_VERSION
     # make the image, try running sh, push the tag to quay, write the version as a artifact
-    - make build try push version
-    - export MAIN_RUNNER_IMAGE_VERSION="$(cat $RUNNER7_MAIN/version.txt)"
-    - echo Produced deb container version $MAIN_RUNNER_IMAGE_VERSION
+    - docker build --build-arg BASE_RUNNER_IMAGE_VERSION=$BASE_RUNNER_IMAGE_VERSION -t $DOCKER_REPOSITORY/stackstate/stackstate-agent-runner-gitlab:$BASE_RUNNER_IMAGE_VERSION .
+    - docker push $DOCKER_REPOSITORY/stackstate/stackstate-agent-runner-gitlab:$BASE_RUNNER_IMAGE_VERSION
   retry:
     max: 2
     when:
