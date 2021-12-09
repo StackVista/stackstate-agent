@@ -1,5 +1,3 @@
-image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
-
 stages:
   - build_runner_base
   - build_runners
@@ -9,13 +7,20 @@ variables:
   RUNNER7_MAIN: $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb
   DOCKER_REPOSITORY: quay.io
 
-# produces the base deb image: quay.io/stackstate/stackstate-agent-runner-circle:deb7_{yyyymmdd}
-build-deb-base:
+.docker_build_base: &docker_build_base
   # use docker as the image builder
+  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
   variables:
     DOCKER_DRIVER: overlay
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
+  services:
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
+      alias: docker
+
+# produces the base deb image: quay.io/stackstate/stackstate-agent-runner-circle:deb7_{yyyymmdd}
+build-deb-base:
+  <<: *docker_build_base
   stage: build_runner_base
   script:
     - cd $RUNNER7_DEB_BASE
@@ -33,10 +38,7 @@ build-deb-base:
 
 #  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
 build-main-runner:
-  variables:
-    DOCKER_DRIVER: overlay
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
+  <<: *docker_build_base
   stage: build_runners
   needs: [build-deb-base]
   script:
