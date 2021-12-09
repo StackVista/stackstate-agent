@@ -79,6 +79,10 @@ deps_deb:
 unit_tests_cluster_agent:
   stage: build_and_test
   interruptible: true
+  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
+  services:
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
+      alias: docker
   needs:
     - deps_deb
   script:
