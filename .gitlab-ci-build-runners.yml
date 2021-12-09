@@ -1,3 +1,5 @@
+image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
+
 stages:
   - build_runner_base
   - build_runners
@@ -11,7 +13,6 @@ variables:
 # produces the base deb image: quay.io/stackstate/stackstate-agent-runner-circle:deb7_{yyyymmdd}
 build-deb-base:
   # use docker as the image builder
-  image: artifactory.stackstate.io/docker-virtual/docker:18.06.0
   variables:
     DOCKER_DRIVER: overlay
     DOCKER_HOST: tcp://docker:2375
@@ -33,8 +34,6 @@ build-deb-base:
 
 #  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
 build-main-runner:
-  # use docker as the image builder
-  image: artifactory.stackstate.io/docker-virtual/docker:18.06.0
   variables:
     DOCKER_DRIVER: overlay
     DOCKER_HOST: tcp://docker:2375
