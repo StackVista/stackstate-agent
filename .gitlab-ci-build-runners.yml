@@ -9,7 +9,6 @@ variables:
   RUNNER7_MAIN: $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb
   DOCKER_REPOSITORY: quay.io
 
-
 # produces the base deb image: quay.io/stackstate/stackstate-agent-runner-circle:deb7_{yyyymmdd}
 build-deb-base:
   # use docker as the image builder
@@ -25,7 +24,7 @@ build-deb-base:
     # make the image, push the tag to quay
     - docker build -t $DOCKER_REPOSITORY/stackstate/stackstate-agent-runner-circle:$BASE_RUNNER_IMAGE_VERSION .
     - docker push $DOCKER_REPOSITORY/stackstate/stackstate-agent-runner-circle:$BASE_RUNNER_IMAGE_VERSION
-    - echo Produced deb based container version deb7_$BASE_RUNNER_IMAGE_VERSION
+    - echo Produced deb based container version $BASE_RUNNER_IMAGE_VERSION
   retry:
     max: 2
     when:
