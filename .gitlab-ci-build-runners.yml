@@ -38,10 +38,10 @@ build-main-runner:
   script:
     - cd RUNNER7_MAIN
     - export BASE_RUNNER_IMAGE_VERSION="$(cat $RUNNER7_DEB_BASE/version.txt)"
-    - echo "Using deb base container version: $BASE_RUNNER_IMAGE_VERSION"
+    - echo Using deb base container version $BASE_RUNNER_IMAGE_VERSION
     # make the image, try running sh, push the tag to quay, write the version as a artifact
     - make build try push version
-    - export MAIN_RUNNER_IMAGE_VERSION=$(cat $RUNNER7_MAIN/version.txt)
+    - export MAIN_RUNNER_IMAGE_VERSION="$(cat $RUNNER7_MAIN/version.txt)"
     - echo Produced deb container version $MAIN_RUNNER_IMAGE_VERSION
   retry:
     max: 2
