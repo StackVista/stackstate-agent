@@ -20,7 +20,7 @@ build-deb-base:
   script:
     - cd $RUNNER7_DEB_BASE
     # get the current date as the base image version
-    - $BASE_RUNNER_IMAGE_VERSION="deb7_$(date +%Y%m%d)"
+    - $BASE_RUNNER_IMAGE_VERSION="deb7_$(shell date +%Y%m%d)"
     # make the image, push the tag to quay
     - docker build -t $DOCKER_REPOSITORY/stackstate/stackstate-agent-runner-circle:$BASE_RUNNER_IMAGE_VERSION .
     - docker push $DOCKER_REPOSITORY/stackstate/stackstate-agent-runner-circle:$BASE_RUNNER_IMAGE_VERSION
@@ -42,7 +42,7 @@ build-main-runner:
   script:
     - cd RUNNER7_MAIN
     # get the current date as the base image version
-    - $BASE_RUNNER_IMAGE_VERSION="deb7_$(date +%Y%m%d)"
+    - $BASE_RUNNER_IMAGE_VERSION="deb7_$(shell date +%Y%m%d)"
     - echo Using deb base container version $BASE_RUNNER_IMAGE_VERSION
     # make the image, try running sh, push the tag to quay, write the version as a artifact
     - docker build --build-arg BASE_RUNNER_IMAGE_VERSION=$BASE_RUNNER_IMAGE_VERSION -t $DOCKER_REPOSITORY/stackstate/stackstate-agent-runner-gitlab:$BASE_RUNNER_IMAGE_VERSION .
