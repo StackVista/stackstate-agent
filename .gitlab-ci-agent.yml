@@ -230,8 +230,6 @@ unit_tests:
     - gofmt -l -w -s ./pkg ./cmd
     - inv -e rtloader.test
     - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
-  tags:
-    - sts-aws
   retry:
     max: 2
 
@@ -250,8 +248,6 @@ unit_tests_cluster_agent:
     # TODO: --python-runtimes "$PYTHON_RUNTIMES"
     - inv -e rtloader.test
     - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES --build-include docker,linux,kubelet,kubeapiserver,python,orchestrator,clusterchecks,zlib
-  tags:
-    - sts-aws
   rules:
     - *cluster_agent
   retry:
