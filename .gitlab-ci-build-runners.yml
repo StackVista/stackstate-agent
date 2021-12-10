@@ -5,7 +5,12 @@ stages:
 variables:
   RUNNER7_DEB_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-deb
   RUNNER7_MAIN: $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb
-  DOCKER_REPOSITORY: quay.io
+  DOCKER_REGISTRY: quay.io
+  QUAY_REGISTRY: quay.io
+
+before_script:
+  - docker login -u "${docker_user}" -p "${docker_password}" "${DOCKER_REGISTRY}"
+  - docker login -u "${quay_user}" -p "${quay_password}" "${QUAY_REGISTRY}"
 
 .docker_build_base: &docker_build_base
   # use docker as the image builder
