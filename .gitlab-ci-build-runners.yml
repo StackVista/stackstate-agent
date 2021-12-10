@@ -34,15 +34,15 @@ build-deb-base:
     - BASE_RUNNER_IMAGE_VERSION="deb7_$(date +%Y%m%d)"
     # build the base image
     - BUILD_TAG="stackstate-agent-runner-circle:${BASE_RUNNER_IMAGE_VERSION}"
-    - docker build -t $BUILD_TAG .
+    - docker build -t "${BUILD_TAG}" .
     # tag the image, push to docker
     - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
     - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
-    - docker push $DOCKER_TAG
+    - docker push "${DOCKER_TAG}"
     # tag the image, push to quay
 #    - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
 #    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
-#    - docker push $QUAY_TAG
+#    - docker push "${QUAY_TAG}"
   retry:
     max: 2
     when:
@@ -60,15 +60,15 @@ build-main-runner:
     - BASE_RUNNER_IMAGE_VERSION="deb7_$(date +%Y%m%d)"
     - echo Using deb base container version $BASE_RUNNER_IMAGE_VERSION
     - BUILD_TAG="stackstate-agent-runner-gitlab:${BASE_RUNNER_IMAGE_VERSION}"
-    - docker build --build-arg BASE_RUNNER_IMAGE_VERSION=$BASE_RUNNER_IMAGE_VERSION -t $BUILD_TAG .
+    - docker build --build-arg BASE_RUNNER_IMAGE_VERSION=$BASE_RUNNER_IMAGE_VERSION -t "${BUILD_TAG}" .
     # tag the image, push to docker
     - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
     - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
-    - docker push $DOCKER_TAG
+    - docker push "${DOCKER_TAG}"
     # tag the image, push to quay
 #    - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
 #    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
-#    - docker push $QUAY_TAG
+#    - docker push "${QUAY_TAG}"
   retry:
     max: 2
     when:
