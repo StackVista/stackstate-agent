@@ -55,7 +55,7 @@ build-main-runner:
   stage: build_runners
   needs: [build-deb-base]
   script:
-    - cd RUNNER7_MAIN
+    - cd $RUNNER7_MAIN
     # get the current date as the base image version
     - BASE_RUNNER_IMAGE_VERSION="deb7_$(date +%Y%m%d)"
     - echo Using deb base container version $BASE_RUNNER_IMAGE_VERSION
