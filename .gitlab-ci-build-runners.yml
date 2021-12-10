@@ -5,6 +5,7 @@ stages:
 variables:
   RUNNER7_DEB_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-deb
   RUNNER7_MAIN: $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb
+  RUNNER7_DEB_RPM_PUBLISHER: $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb-rpmpublisher
   DOCKER_REGISTRY: docker.io
   QUAY_REGISTRY: quay.io
 
@@ -23,6 +24,11 @@ before_script:
   services:
     - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
       alias: docker
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
 
 # produces the base deb image: quay.io/stackstate/stackstate-agent-runner-circle:deb7_{yyyymmdd}
 build-deb-base:
@@ -43,23 +49,22 @@ build-deb-base:
 #    - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
 #    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
 #    - docker push "${QUAY_TAG}"
-  retry:
-    max: 2
-    when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
 
-#  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
-build-main-runner:
+
+##################################################################################
+# BUILD IMAGES BASED ON DEB IMAGE BASE
+#################################################################################
+
+.docker_deb_build_base: &docker_deb_build_base
   <<: *docker_build_base
   stage: build_runners
-  needs: [build-deb-base]
+  needs: [ build-deb-base ]
   script:
-    - cd $RUNNER7_MAIN
+    - cd $RUNNER_DIR
     # get the current date as the base image version
     - BASE_RUNNER_IMAGE_VERSION="deb7_$(date +%Y%m%d)"
     - echo Using deb base container version $BASE_RUNNER_IMAGE_VERSION
-    - BUILD_TAG="stackstate-agent-runner-gitlab:${BASE_RUNNER_IMAGE_VERSION}"
+    - BUILD_TAG="stackstate-agent-runner-gitlab:${RUNNER_IMAGE_VERSION}"
     - docker build --build-arg BASE_RUNNER_IMAGE_VERSION=$BASE_RUNNER_IMAGE_VERSION -t "${BUILD_TAG}" .
     # tag the image, push to docker
     - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
@@ -69,14 +74,25 @@ build-main-runner:
 #    - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
 #    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
 #    - docker push "${QUAY_TAG}"
-  retry:
-    max: 2
-    when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+
+
+#  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
+build-main-deb-runner:
+  <<: *docker_build_base
+  <<: *docker_deb_build_base
+  variables:
+    RUNNER_DIR: $RUNNER7_MAIN
+    RUNNER_IMAGE_VERSION: "deb7_$(date +%Y%m%d)"
+
+#  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_{yyyymmdd}
+build-deb-rpm-publisher:
+  <<: *docker_build_base
+  <<: *docker_deb_build_base
+  variables:
+    RUNNER_DIR: $RUNNER7_DEB_RPM_PUBLISHER
+    RUNNER_IMAGE_VERSION: "deb-rpmpublisher_$(date +%Y%m%d)"
 
 #  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
 
 #  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos6_20190429
 
-#  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
