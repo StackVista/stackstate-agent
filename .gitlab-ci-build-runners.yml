@@ -3,10 +3,11 @@ stages:
   - build_runners
 
 variables:
-  RUNNER7_DEB_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-deb
-  RUNNER7_MAIN: $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb
-  RUNNER7_DEB_RPM_PUBLISHER: $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb-rpmpublisher
-  RUNNER7_RPM_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-rpm7
+  RUNNER_DEB_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-deb
+  RUNNER_DEB: $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb
+  RUNNER_DEB_RPM_PUBLISHER: $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb-rpmpublisher
+  RUNNER_CENTOS6_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-rpm
+  RUNNER_CENTOS7_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-rpm7
   DOCKER_REGISTRY: docker.io
   QUAY_REGISTRY: quay.io
 
@@ -55,14 +56,21 @@ before_script:
 build-deb-base:
   <<: *docker_build_runner_base
   variables:
-    RUNNER_DIR: $RUNNER7_DEB_BASE
+    RUNNER_DIR: $RUNNER_DEB_BASE
     BASE_RUNNER_IMAGE_VERSION: "deb7_$(date +%Y%m%d)"
 
-# produces the base rpm image: quay.io/stackstate/stackstate-agent-runner-circle:centos7_{yyyymmdd}
-build-rpm-base:
+# produces the base rpm image: quay.io/stackstate/stackstate-agent-runner-circle:centos6_{yyyymmdd}
+build-centos6-base:
   <<: *docker_build_runner_base
   variables:
-    RUNNER_DIR: $RUNNER7_RPM_BASE
+    RUNNER_DIR: $RUNNER_CENTOS6_BASE
+    BASE_RUNNER_IMAGE_VERSION: "centos6_$(date +%Y%m%d)"
+
+# produces the base rpm image: quay.io/stackstate/stackstate-agent-runner-circle:centos7_{yyyymmdd}
+build-centos7-base:
+  <<: *docker_build_runner_base
+  variables:
+    RUNNER_DIR: $RUNNER7_CENTOS7_BASE
     BASE_RUNNER_IMAGE_VERSION: "centos7_$(date +%Y%m%d)"
 
 ##################################################################################
@@ -94,14 +102,14 @@ build-rpm-base:
 build-main-deb-runner:
   <<: *docker_deb_build_base
   variables:
-    RUNNER_DIR: $RUNNER7_MAIN
+    RUNNER_DIR: $RUNNER_DEB
     RUNNER_IMAGE_VERSION: "deb7_$(date +%Y%m%d)"
 
 #  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_{yyyymmdd}
 build-deb-rpm-publisher:
   <<: *docker_deb_build_base
   variables:
-    RUNNER_DIR: $RUNNER7_DEB_RPM_PUBLISHER
+    RUNNER_DIR: $RUNNER_DEB_RPM_PUBLISHER
     RUNNER_IMAGE_VERSION: "deb-rpmpublisher_$(date +%Y%m%d)"
 
 #  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0

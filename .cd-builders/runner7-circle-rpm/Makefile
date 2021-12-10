@@ -1,13 +1,18 @@
 RUNTIMETAG := $(shell date +%Y%m%d)
+DOCKER_REPOSITORY ?= docker.io
+
+version:
+	echo $(RUNTIMETAG) | tail -1 > version.txt
+
 
 build:
-	docker build -t docker.io/stackstate/stackstate-agent-runner-circle:centos6_$(RUNTIMETAG)_v7 .
+	docker build -t $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-circle:centos6_$(RUNTIMETAG) .
 push:
-	docker push docker.io/stackstate/stackstate-agent-runner-circle:centos6_$(RUNTIMETAG)_v7
+	docker push $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-circle:centos6_$(RUNTIMETAG)
 
 tag_latest:
-	docker tag docker.io/stackstate/stackstate-agent-runner-circle:centos6_$(RUNTIMETAG)_v7 docker.io/stackstate/stackstate-agent-runner-circle:centos6_latest_v7
+	docker tag $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-circle:centos6_$(RUNTIMETAG) $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-circle:centos6_latest
 
 push_latest:
-	docker push docker.io/stackstate/stackstate-agent-runner-circle:centos6_latest_v7
+	docker push $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-circle:centos6_latest
 
