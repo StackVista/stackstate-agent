@@ -1,4 +1,4 @@
-image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:latest7
+image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_20211210
 
 stages:
   - manual_cleanup
@@ -156,7 +156,7 @@ deps_deb:
 deps_rpm:
   stage: prepare
   interruptible: true
-  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
+  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211210
   cache:
     key: "deps-rpm-$STS_VER-$CI_COMMIT_REF_SLUG"
     paths:
@@ -407,7 +407,7 @@ build_deb:
 build_rpm:
   stage: build
   interruptible: true
-  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
+  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211210
   needs:
     - deps_rpm
   tags:
@@ -515,7 +515,7 @@ test_deb_renaming:
 test_rpm_renaming:
   stage: test
   interruptible: true
-  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos6_20190429
+  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211210
   needs:
     - build_rpm
   before_script: []
@@ -583,7 +583,7 @@ pre_release_win:
 pre_release_rpm:
   stage: pre_release
   interruptible: true
-  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
+  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_20211210
   needs:
     - build_rpm
   before_script: []
@@ -1188,7 +1188,7 @@ release_deb:
 release_rpm:
   interruptible: true
   stage: release
-  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
+  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_20211210
   dependencies:
     - build_rpm
   before_script:

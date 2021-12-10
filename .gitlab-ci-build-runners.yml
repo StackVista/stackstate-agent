@@ -29,8 +29,8 @@ before_script:
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      # TODO: figure out what causes flakiness in the docker builds, sometimes pulling fails on builder the image or the base image is not available yet for the runner to pull
+      - always
 
 ##################################################################################
 # BUILD IMAGES BASE FOR DEB + RPM

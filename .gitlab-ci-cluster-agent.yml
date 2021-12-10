@@ -4,7 +4,7 @@
 ####################################################################################################
 ####################################################################################################
 
-image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:latest7
+image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_20211210
 
 stages:
   - prepare

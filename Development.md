@@ -2,7 +2,7 @@
 
 Using our builder image clone and checkout the public repo and th <<branch>> you are interested of:
 ```bash
-$ docker run --rm -ti artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:latest7 bash
+$ docker run --rm -ti artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_20211210 bash
 
 $ export CI_PROJECT_DIR=/go/src/github.com/StackVista/stackstate-agent && \
   mkdir -p /go/src/github.com/StackVista && \
@@ -44,7 +44,7 @@ $ conda activate ddpy2 && \
 
 Instead of cloning the repo you could use directly your local one:
 ```bash
-$ docker run --rm -it --name stackstate-agent-builder --mount type=bind,source="${PWD}",target=/root/stackstate-agent,readonly artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:latest7 bash
+$ docker run --rm -it --name stackstate-agent-builder --mount type=bind,source="${PWD}",target=/root/stackstate-agent,readonly artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_20211210 bash
 
 $ export CI_PROJECT_DIR=/go/src/github.com/StackVista/stackstate-agent && \
   mkdir -p /go/src/github.com/StackVista && \
