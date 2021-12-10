@@ -10,6 +10,9 @@ variables:
   RUNNER_CENTOS7_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-rpm7
   DOCKER_REGISTRY: docker.io
   QUAY_REGISTRY: quay.io
+  DOCKER_DRIVER: overlay
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
 
 before_script:
   # login to both docker registries
@@ -19,10 +22,6 @@ before_script:
 .docker_build_base: &docker_build_base
   # use docker as the image builder
   image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
-  variables:
-    DOCKER_DRIVER: overlay
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
   services:
     - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
       alias: docker
