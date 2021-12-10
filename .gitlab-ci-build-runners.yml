@@ -40,7 +40,7 @@ before_script:
   script:
     - cd $RUNNER_DIR
     # build the base image
-    - BUILD_TAG="stackstate-agent-runner-circle:${BASE_RUNNER_IMAGE_VERSION}"
+    - BUILD_TAG="stackstate-agent-runner-circle:${BASE_RUNNER_IMAGE_VERSION}_$(date +%Y%m%d)"
     - docker build -t "${BUILD_TAG}" .
     # tag the image, push to docker
     - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
@@ -56,21 +56,21 @@ build-deb-base:
   <<: *docker_build_runner_base
   variables:
     RUNNER_DIR: $RUNNER_DEB_BASE
-    BASE_RUNNER_IMAGE_VERSION: "deb7_$(date +%Y%m%d)"
+    BASE_RUNNER_IMAGE_VERSION: "deb7"
 
 # produces the base rpm image: quay.io/stackstate/stackstate-agent-runner-circle:centos6_{yyyymmdd}
 build-centos6-base:
   <<: *docker_build_runner_base
   variables:
     RUNNER_DIR: $RUNNER_CENTOS6_BASE
-    BASE_RUNNER_IMAGE_VERSION: "centos6_$(date +%Y%m%d)"
+    BASE_RUNNER_IMAGE_VERSION: "centos6"
 
 # produces the base rpm image: quay.io/stackstate/stackstate-agent-runner-circle:centos7_{yyyymmdd}
 build-centos7-base:
   <<: *docker_build_runner_base
   variables:
     RUNNER_DIR: $RUNNER7_CENTOS7_BASE
-    BASE_RUNNER_IMAGE_VERSION: "centos7_$(date +%Y%m%d)"
+    BASE_RUNNER_IMAGE_VERSION: "centos7"
 
 ##################################################################################
 # BUILD IMAGES BASED ON DEB IMAGE BASE
@@ -85,7 +85,7 @@ build-centos7-base:
     # get the current date as the base image version
     - BASE_RUNNER_IMAGE_VERSION="deb7_$(date +%Y%m%d)"
     - echo Using deb base container version $BASE_RUNNER_IMAGE_VERSION
-    - BUILD_TAG="stackstate-agent-runner-gitlab:${RUNNER_IMAGE_VERSION}"
+    - BUILD_TAG="stackstate-agent-runner-gitlab:${RUNNER_IMAGE_VERSION}_$(date +%Y%m%d)"
     - docker build --build-arg BASE_RUNNER_IMAGE_VERSION=$BASE_RUNNER_IMAGE_VERSION -t "${BUILD_TAG}" .
     # tag the image, push to docker
     - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
@@ -102,14 +102,14 @@ build-main-deb-runner:
   <<: *docker_deb_build_base
   variables:
     RUNNER_DIR: $RUNNER_DEB
-    RUNNER_IMAGE_VERSION: "deb7_$(date +%Y%m%d)"
+    RUNNER_IMAGE_VERSION: "deb7"
 
 #  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_{yyyymmdd}
 build-deb-rpm-publisher:
   <<: *docker_deb_build_base
   variables:
     RUNNER_DIR: $RUNNER_DEB_RPM_PUBLISHER
-    RUNNER_IMAGE_VERSION: "deb-rpmpublisher_$(date +%Y%m%d)"
+    RUNNER_IMAGE_VERSION: "deb-rpmpublisher"
 
 #  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
 
