@@ -8,6 +8,7 @@ variables:
   RUNNER_DEB_RPM_PUBLISHER: $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb-rpmpublisher
   RUNNER_CENTOS6_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-rpm
   RUNNER_CENTOS7_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-rpm7
+  RUNNER_CENTOS7: $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-rpm7
   DOCKER_REGISTRY: docker.io
   QUAY_REGISTRY: quay.io
   DOCKER_DRIVER: overlay
@@ -75,7 +76,7 @@ build-centos7-base:
     BASE_RUNNER_IMAGE_VERSION: "centos7"
 
 ##################################################################################
-# BUILD IMAGES BASED ON DEB IMAGE BASE
+# BUILD RUNNER IMAGES FROM BASE IMAGE
 #################################################################################
 
 .docker_main_runner_build_base: &docker_main_runner_build_base
@@ -98,7 +99,7 @@ build-centos7-base:
 #    - docker push "${QUAY_TAG}"
 
 
-#  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
+# produces the runner deb image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
 build-main-deb-runner:
   <<: *docker_main_runner_build_base
   needs: [ build-deb-base ]
@@ -107,8 +108,8 @@ build-main-deb-runner:
     RUNNER_IMAGE_VERSION: "deb7"
     BASE_RUNNER_IMAGE_VERSION: "deb7"
 
-#  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_{yyyymmdd}
-build-deb-rpm-publisher:
+# produces the runner deb/rpm publisher image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_{yyyymmdd}
+build-deb-rpm-publisher-runner:
   <<: *docker_main_runner_build_base
   needs: [ build-deb-base ]
   variables:
@@ -116,7 +117,16 @@ build-deb-rpm-publisher:
     RUNNER_IMAGE_VERSION: "deb-rpmpublisher"
     BASE_RUNNER_IMAGE_VERSION: "deb7"
 
-#  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
+# produces the runner centos 7 image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
+build-centos7-runner:
+  <<: *docker_main_runner_build_base
+  needs: [ build-centos7-base ]
+  variables:
+    RUNNER_DIR: $RUNNER_CENTOS7
+    RUNNER_IMAGE_VERSION: "centos7"
+    BASE_RUNNER_IMAGE_VERSION: "centos7"
 
-#  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos6_20190429
+# TODO: centos6 is EOL. This might potentially work: https://arstech.net/centos-6-error-yumrepo-error-all-mirror-urls-are-not-using-ftp-http/
+# TODO: skipping it for now
+# produces the runner centos 6 image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos6_20190429
 

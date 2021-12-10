@@ -1,10 +1,12 @@
 RUNTIMETAG := $(shell date +%Y%m%d)
-TRY := 0
+DOCKER_REPOSITORY ?= docker.io
+BASE_RUNNER_IMAGE_VERSION ?= centos7_latest
+
+version:
+	echo $(RUNTIMETAG) | tail -1 > version.txt
+
 build:
-	docker build -t docker.io/stackstate/stackstate-agent-runner-gitlab:centos7_latest_v7 .
+	docker build --build-arg BASE_RUNNER_IMAGE_VERSION=$(BASE_RUNNER_IMAGE_VERSION) -t $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-gitlab:centos7_$(RUNTIMETAG) .
+
 push:
-	docker tag docker.io/stackstate/stackstate-agent-runner-gitlab:centos7_latest_v7 docker.io/stackstate/stackstate-agent-runner-gitlab:centos7_$(RUNTIMETAG)_v7_$(TRY)
-	docker tag docker.io/stackstate/stackstate-agent-runner-gitlab:centos7_latest_v7 docker.io/stackstate/stackstate-agent-runner-gitlab:centos7_$(RUNTIMETAG)_v7
-	docker push docker.io/stackstate/stackstate-agent-runner-gitlab:centos7_latest_v7
-	docker push docker.io/stackstate/stackstate-agent-runner-gitlab:centos7_$(RUNTIMETAG)_v7
-	docker push docker.io/stackstate/stackstate-agent-runner-gitlab:centos7_$(RUNTIMETAG)_v7_$(TRY)
+	docker push $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-circle:centos7_$(RUNTIMETAG)
