@@ -6,6 +6,7 @@ variables:
   RUNNER7_DEB_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-deb
   RUNNER7_MAIN: $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb
   RUNNER7_DEB_RPM_PUBLISHER: $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb-rpmpublisher
+  RUNNER7_RPM_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-rpm7
   DOCKER_REGISTRY: docker.io
   QUAY_REGISTRY: quay.io
 
@@ -30,14 +31,14 @@ before_script:
       - runner_system_failure
       - stuck_or_timeout_failure
 
-# produces the base deb image: quay.io/stackstate/stackstate-agent-runner-circle:deb7_{yyyymmdd}
-build-deb-base:
+##################################################################################
+# BUILD IMAGES BASE FOR DEB + RPM
+#################################################################################
+.docker_build_runner_base: &docker_build_runner_base
   <<: *docker_build_base
   stage: build_runner_base
   script:
-    - cd $RUNNER7_DEB_BASE
-    # get the current date as the base image version
-    - BASE_RUNNER_IMAGE_VERSION="deb7_$(date +%Y%m%d)"
+    - cd $RUNNER_DIR
     # build the base image
     - BUILD_TAG="stackstate-agent-runner-circle:${BASE_RUNNER_IMAGE_VERSION}"
     - docker build -t "${BUILD_TAG}" .
@@ -45,11 +46,26 @@ build-deb-base:
     - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
     - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
     - docker push "${DOCKER_TAG}"
-    # tag the image, push to quay
+  # tag the image, push to quay
 #    - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
 #    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
 #    - docker push "${QUAY_TAG}"
 
+# produces the base deb image: quay.io/stackstate/stackstate-agent-runner-circle:deb7_{yyyymmdd}
+build-deb-base:
+  <<: *docker_build_base
+  <<: *docker_build_runner_base
+  variables:
+    RUNNER_DIR: $RUNNER7_DEB_BASE
+    BASE_RUNNER_IMAGE_VERSION: "deb7_$(date +%Y%m%d)"
+
+# produces the base rpm image: quay.io/stackstate/stackstate-agent-runner-circle:centos7_{yyyymmdd}
+build-rpm-base:
+  <<: *docker_build_base
+  <<: *docker_build_runner_base
+  variables:
+    RUNNER_DIR: $RUNNER7_RPM_BASE
+    BASE_RUNNER_IMAGE_VERSION: "centos7_$(date +%Y%m%d)"
 
 ##################################################################################
 # BUILD IMAGES BASED ON DEB IMAGE BASE
