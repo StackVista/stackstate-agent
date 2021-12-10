@@ -53,7 +53,6 @@ before_script:
 
 # produces the base deb image: quay.io/stackstate/stackstate-agent-runner-circle:deb7_{yyyymmdd}
 build-deb-base:
-  <<: *docker_build_base
   <<: *docker_build_runner_base
   variables:
     RUNNER_DIR: $RUNNER7_DEB_BASE
@@ -61,7 +60,6 @@ build-deb-base:
 
 # produces the base rpm image: quay.io/stackstate/stackstate-agent-runner-circle:centos7_{yyyymmdd}
 build-rpm-base:
-  <<: *docker_build_base
   <<: *docker_build_runner_base
   variables:
     RUNNER_DIR: $RUNNER7_RPM_BASE
@@ -94,7 +92,6 @@ build-rpm-base:
 
 #  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
 build-main-deb-runner:
-  <<: *docker_build_base
   <<: *docker_deb_build_base
   variables:
     RUNNER_DIR: $RUNNER7_MAIN
@@ -102,7 +99,6 @@ build-main-deb-runner:
 
 #  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_{yyyymmdd}
 build-deb-rpm-publisher:
-  <<: *docker_build_base
   <<: *docker_deb_build_base
   variables:
     RUNNER_DIR: $RUNNER7_DEB_RPM_PUBLISHER
