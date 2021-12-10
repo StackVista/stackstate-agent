@@ -58,35 +58,36 @@ build-deb-base:
     RUNNER_DIR: $RUNNER_DEB_BASE
     BASE_RUNNER_IMAGE_VERSION: "deb7"
 
+# TODO: centos6 is EOL. This might potentially work: https://arstech.net/centos-6-error-yumrepo-error-all-mirror-urls-are-not-using-ftp-http/
+# TODO: skipping it for now
 # produces the base rpm image: quay.io/stackstate/stackstate-agent-runner-circle:centos6_{yyyymmdd}
-build-centos6-base:
-  <<: *docker_build_runner_base
-  variables:
-    RUNNER_DIR: $RUNNER_CENTOS6_BASE
-    BASE_RUNNER_IMAGE_VERSION: "centos6"
+#build-centos6-base:
+#  <<: *docker_build_runner_base
+#  variables:
+#    RUNNER_DIR: $RUNNER_CENTOS6_BASE
+#    BASE_RUNNER_IMAGE_VERSION: "centos6"
 
 # produces the base rpm image: quay.io/stackstate/stackstate-agent-runner-circle:centos7_{yyyymmdd}
 build-centos7-base:
   <<: *docker_build_runner_base
   variables:
-    RUNNER_DIR: $RUNNER7_CENTOS7_BASE
+    RUNNER_DIR: $RUNNER_CENTOS7_BASE
     BASE_RUNNER_IMAGE_VERSION: "centos7"
 
 ##################################################################################
 # BUILD IMAGES BASED ON DEB IMAGE BASE
 #################################################################################
 
-.docker_deb_build_base: &docker_deb_build_base
+.docker_main_runner_build_base: &docker_main_runner_build_base
   <<: *docker_build_base
   stage: build_runners
-  needs: [ build-deb-base ]
   script:
     - cd $RUNNER_DIR
     # get the current date as the base image version
-    - BASE_RUNNER_IMAGE_VERSION="deb7_$(date +%Y%m%d)"
-    - echo Using deb base container version $BASE_RUNNER_IMAGE_VERSION
+    - BASE_RUNNER_DATED_IMAGE_VERSION="${BASE_RUNNER_IMAGE_VERSION}_$(date +%Y%m%d)"
+    - echo Using deb base container version $BASE_RUNNER_DATED_IMAGE_VERSION
     - BUILD_TAG="stackstate-agent-runner-gitlab:${RUNNER_IMAGE_VERSION}_$(date +%Y%m%d)"
-    - docker build --build-arg BASE_RUNNER_IMAGE_VERSION=$BASE_RUNNER_IMAGE_VERSION -t "${BUILD_TAG}" .
+    - docker build --build-arg BASE_RUNNER_IMAGE_VERSION=$BASE_RUNNER_DATED_IMAGE_VERSION -t "${BUILD_TAG}" .
     # tag the image, push to docker
     - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
     - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
@@ -99,17 +100,21 @@ build-centos7-base:
 
 #  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
 build-main-deb-runner:
-  <<: *docker_deb_build_base
+  <<: *docker_main_runner_build_base
+  needs: [ build-deb-base ]
   variables:
     RUNNER_DIR: $RUNNER_DEB
     RUNNER_IMAGE_VERSION: "deb7"
+    BASE_RUNNER_IMAGE_VERSION: "deb7"
 
 #  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_{yyyymmdd}
 build-deb-rpm-publisher:
-  <<: *docker_deb_build_base
+  <<: *docker_main_runner_build_base
+  needs: [ build-deb-base ]
   variables:
     RUNNER_DIR: $RUNNER_DEB_RPM_PUBLISHER
     RUNNER_IMAGE_VERSION: "deb-rpmpublisher"
+    BASE_RUNNER_IMAGE_VERSION: "deb7"
 
 #  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
 
