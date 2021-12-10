@@ -32,13 +32,17 @@ build-deb-base:
     - cd $RUNNER7_DEB_BASE
     # get the current date as the base image version
     - BASE_RUNNER_IMAGE_VERSION="deb7_$(date +%Y%m%d)"
-    # make the image, push the tag to docker
-    - docker build -t $DOCKER_REGISTRY/stackstate/stackstate-agent-runner-circle:$BASE_RUNNER_IMAGE_VERSION .
-    - docker push $DOCKER_REGISTRY/stackstate/stackstate-agent-runner-circle:$BASE_RUNNER_IMAGE_VERSION
-    # make the image, push the tag to docker
-    - docker build -t $QUAY_REGISTRY/stackstate/stackstate-agent-runner-circle:$BASE_RUNNER_IMAGE_VERSION .
-    - docker push $QUAY_REGISTRY/stackstate/stackstate-agent-runner-circle:$BASE_RUNNER_IMAGE_VERSION
-    - echo Produced deb based container version $BASE_RUNNER_IMAGE_VERSION
+    # build the base image
+    - BUILD_TAG="stackstate-agent-runner-circle:${BASE_RUNNER_IMAGE_VERSION}"
+    - docker build -t $BUILD_TAG .
+    # tag the image, push to docker
+    - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
+    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
+    - docker push $DOCKER_TAG
+    # tag the image, push to quay
+#    - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
+#    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
+#    - docker push $QUAY_TAG
   retry:
     max: 2
     when:
@@ -55,12 +59,16 @@ build-main-runner:
     # get the current date as the base image version
     - BASE_RUNNER_IMAGE_VERSION="deb7_$(date +%Y%m%d)"
     - echo Using deb base container version $BASE_RUNNER_IMAGE_VERSION
-    # make the image, push the tag to docker
-    - docker build --build-arg BASE_RUNNER_IMAGE_VERSION=$BASE_RUNNER_IMAGE_VERSION -t $DOCKER_REGISTRY/stackstate/stackstate-agent-runner-gitlab:$BASE_RUNNER_IMAGE_VERSION .
-    - docker push $DOCKER_REGISTRY/stackstate/stackstate-agent-runner-gitlab:$BASE_RUNNER_IMAGE_VERSION
-    # make the image, push the tag to quay
-    - docker build --build-arg BASE_RUNNER_IMAGE_VERSION=$BASE_RUNNER_IMAGE_VERSION -t $QUAY_REGISTRY/stackstate/stackstate-agent-runner-gitlab:$BASE_RUNNER_IMAGE_VERSION .
-    - docker push $QUAY_REGISTRY/stackstate/stackstate-agent-runner-gitlab:$BASE_RUNNER_IMAGE_VERSION
+    - BUILD_TAG="stackstate-agent-runner-gitlab:${BASE_RUNNER_IMAGE_VERSION}"
+    - docker build --build-arg BASE_RUNNER_IMAGE_VERSION=$BASE_RUNNER_IMAGE_VERSION -t $BUILD_TAG .
+    # tag the image, push to docker
+    - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
+    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
+    - docker push $DOCKER_TAG
+    # tag the image, push to quay
+#    - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
+#    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
+#    - docker push $QUAY_TAG
   retry:
     max: 2
     when:
