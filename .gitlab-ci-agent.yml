@@ -239,6 +239,7 @@ unit_tests:
   retry:
     max: 2
 
+
 unit_tests_cluster_agent:
   stage: test
   interruptible: true
