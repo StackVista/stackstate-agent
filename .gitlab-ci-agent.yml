@@ -219,14 +219,11 @@ deps_win:
 unit_tests:
   stage: test
   interruptible: true
-  services:
-    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
-      alias: docker
   needs:
     - deps_deb
   variables:
     # disable all usable cloud providers to avoid picking up runner's cluster name
-    DD_CLOUD_PROVIDER_METADATA: unknown
+    DD_KUBE_RESOURCES_NAMESPACE: default
   script:
     - conda activate $CONDA_ENV
     # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
@@ -235,7 +232,8 @@ unit_tests:
     # TODO: check why formatting rules differ from previous step
     - gofmt -l -w -s ./pkg ./cmd
     - inv -e rtloader.test
-    - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
+    # excluded ec2 because our gitlab runner is running in aws eks, this is how we get unwanted cluster name
+    - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES --build-exclude ec2
   tags:
     - sts-k8s-xl-runner
   retry:
@@ -244,14 +242,12 @@ unit_tests:
 unit_tests_cluster_agent:
   stage: test
   interruptible: true
-  services:
-    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
-      alias: docker
   needs:
     - deps_deb
   variables:
     # disable all usable cloud providers to avoid picking up runner's cluster name
     DD_CLOUD_PROVIDER_METADATA: unknown
+    DD_KUBE_RESOURCES_NAMESPACE: default
   script:
     - conda activate $CONDA_ENV
     # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
@@ -261,7 +257,7 @@ unit_tests_cluster_agent:
     - gofmt -l -w -s ./pkg ./cmd
     # TODO: --python-runtimes "$PYTHON_RUNTIMES"
     - inv -e rtloader.test
-    - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES --build-include docker,linux,kubelet,kubeapiserver,python,orchestrator,clusterchecks,zlib
+    - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES --build-include docker,linux,kubelet,kubeapiserver,python,orchestrator,clusterchecks,zlib,ec2
   tags:
     - sts-k8s-xl-runner
   rules:
