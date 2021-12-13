@@ -224,6 +224,9 @@ unit_tests:
       alias: docker
   needs:
     - deps_deb
+  variables:
+    # disable all usable cloud providers to avoid picking up runner's cluster name
+    DD_CLOUD_PROVIDER_METADATA: unknown
   script:
     - conda activate $CONDA_ENV
     # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
@@ -246,6 +249,9 @@ unit_tests_cluster_agent:
       alias: docker
   needs:
     - deps_deb
+  variables:
+    # disable all usable cloud providers to avoid picking up runner's cluster name
+    DD_CLOUD_PROVIDER_METADATA: unknown
   script:
     - conda activate $CONDA_ENV
     # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
