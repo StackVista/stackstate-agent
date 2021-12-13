@@ -94,6 +94,8 @@ unit_tests_cluster_agent:
     # TODO: --python-runtimes "$PYTHON_RUNTIMES"
     - inv -e rtloader.test
     - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES --build-include docker,linux,kubelet,kubeapiserver,python,orchestrator,clusterchecks,zlib
+  tags:
+    - sts-k8s-xl-runner
   retry:
     max: 2
     when:
