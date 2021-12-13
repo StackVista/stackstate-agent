@@ -99,8 +99,7 @@ const (
 )
 
 const (
-	// TODO: Melcom - Change back - Local testing
-	apiHTTPHeaderKey       = "sts-Api-Key"
+	apiHTTPHeaderKey       = "DD-Api-Key"
 	versionHTTPHeaderKey   = "DD-Agent-Version"
 	useragentHTTPHeaderKey = "User-Agent"
 )
