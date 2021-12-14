@@ -9,7 +9,7 @@
     --set "agent.image.tag={{agent_current_branch}}" \
     --set "agent.image.repository=stackstate/{{agent_docker_repo}}" \
     --set "clusterAgent.image.tag={{agent_current_branch}}" \
-    --set "clusterAgent.image.repository=docker.io/stackstate/{{cluster_agent_docker_repo}}" \
+    --set "clusterAgent.image.repository=stackstate/{{cluster_agent_docker_repo}}" \
     --set "clusterChecks.image.tag={{agent_current_branch}}" \
     --set "clusterChecks.image.repository=stackstate/{{agent_docker_repo}}" \
     --values ./values.yml \
