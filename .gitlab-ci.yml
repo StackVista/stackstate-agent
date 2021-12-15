@@ -150,7 +150,9 @@ build_runners:
   trigger:
     include: .gitlab-ci-build-runners.yml
     strategy: depend
-#  rules:
-#    # make a manual job only on the master branch
-#    - if: $CI_COMMIT_REF_NAME == "master"
-#      when: manual
+  rules:
+    # make a manual job only on the master branch
+    - if: $CI_COMMIT_REF_NAME == "master"
+      when: manual
+    - if: $CI_COMMIT_MESSAGE =~ /\[build_runners]/
+      when: manual
