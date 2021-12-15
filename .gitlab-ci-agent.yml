@@ -214,21 +214,6 @@ deps_win:
       - runner_system_failure
       - stuck_or_timeout_failure
 
-publish_rpmpublisher:
-  stage: prepare
-  before_script: []
-  when: manual
-  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
-  services:
-    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
-      alias: docker
-  tags:
-    - sts-k8s-m-runner
-  script:
-    - apk add --update alpine-sdk
-    - cd $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb-rpmpublisher && make build
-    - cd $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb-rpmpublisher && make push
-
 ## build stage
 
 unit_tests:
@@ -576,7 +561,7 @@ pre_release_win:
 pre_release_rpm:
   stage: pre_release
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_20211210
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_20211215
   needs:
     - build_rpm
   before_script: []
@@ -1180,7 +1165,7 @@ release_deb:
 release_rpm:
   interruptible: true
   stage: release
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_20211210
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_20211215
   dependencies:
     - build_rpm
   before_script:
