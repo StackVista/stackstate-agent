@@ -269,6 +269,7 @@ func extractLastFragment(value string) string {
 	return value[lastSlash+1:]
 }
 
+// GetInstanceID extracts node name from cloud-specific ProviderID, if present
 func GetInstanceID(spec v1.NodeSpec) string {
 	if spec.ProviderID == "" {
 		return ""
