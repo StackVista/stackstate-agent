@@ -4,7 +4,7 @@
 ####################################################################################################
 ####################################################################################################
 
-image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:latest7
+image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:latest7
 
 stages:
   - prepare
@@ -79,6 +79,9 @@ deps_deb:
 unit_tests_cluster_agent:
   stage: build_and_test
   interruptible: true
+  services:
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
+      alias: docker
   needs:
     - deps_deb
   script:
@@ -202,7 +205,7 @@ pre_release_deb:
 pre_release_main_agent_image: &pre_release_image
   stage: pre_release
   interruptible: true
-  image: artifactory.stackstate.io/docker-virtual/docker:18.06.0
+  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
   needs:
     - build_deb
   variables:
@@ -210,7 +213,7 @@ pre_release_main_agent_image: &pre_release_image
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   services:
-    - name: artifactory.stackstate.io/docker-virtual/docker:18.09-dind
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
       alias: docker
   before_script: []
   script:
@@ -297,7 +300,7 @@ pre_release_cluster_agent_image:
 molecule_kubernetes_create:
   <<: *molecule
   <<: *molecule_create
-  resource_group: eks_test_cluster
+  resource_group: $MOLECULE_K8S_CLUSTER
   rules:
     - *kubernetes_ignore_rule
     - when: always
@@ -307,7 +310,7 @@ molecule_kubernetes_create:
 molecule_kubernetes_test:
   <<: *molecule
   <<: *molecule_test
-  resource_group: eks_test_cluster
+  resource_group: $MOLECULE_K8S_CLUSTER
   rules:
     - *kubernetes_ignore_rule
     - when: always
@@ -324,7 +327,7 @@ molecule_kubernetes_failure_cleanup:
   <<: *molecule
   <<: *molecule_artifacts
   <<: *molecule_destroy
-  resource_group: eks_test_cluster
+  resource_group: $MOLECULE_K8S_CLUSTER
   rules:
     - *kubernetes_ignore_rule
     - when: always
@@ -340,7 +343,7 @@ molecule_kubernetes_success_cleanup:
   <<: *molecule
   <<: *molecule_artifacts
   <<: *molecule_destroy
-  resource_group: eks_test_cluster
+  resource_group: $MOLECULE_K8S_CLUSTER
   rules:
     - *kubernetes_ignore_rule
     - when: always

@@ -1,4 +1,4 @@
-image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:latest7
+image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:latest7
 
 stages:
   - manual_cleanup
@@ -55,19 +55,20 @@ stages:
   # build so that we can release the cluster agent as part of a V2 release.
   # TODO: Change this when V3 releases are finalized and the default.
   - &cluster_agent
-    if: $MAJOR_VERSION == "2"
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
   - &cluster_agent_always
-    if: $MAJOR_VERSION == "2"
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
     when: always
   - &cluster_agent_on_success
-    if: $MAJOR_VERSION == "2"
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
     when: on_success
   - &cluster_agent_on_failure
-    if: $MAJOR_VERSION == "2"
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
     when: on_failure
   - &cluster_agent_release
-    if: $MAJOR_VERSION == "2" && ($CI_COMMIT_TAG || $CI_JOB_TRIGGERED == "true")
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_JOB_TRIGGERED == "true")
     when: manual
+
 ######################### /pipeline bricks
 
 
@@ -155,7 +156,7 @@ deps_deb:
 deps_rpm:
   stage: prepare
   interruptible: true
-  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
   cache:
     key: "deps-rpm-$STS_VER-$CI_COMMIT_REF_SLUG"
     paths:
@@ -231,28 +232,6 @@ unit_tests:
     - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
   tags:
     - sts-aws
-  retry:
-    max: 2
-
-unit_tests_cluster_agent:
-  stage: test
-  interruptible: true
-  needs:
-    - deps_deb
-  script:
-    - conda activate $CONDA_ENV
-    # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
-    - inv deps
-    - inv -e agent.build --race --precompile-only --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
-    # TODO: check why formatting rules differ from previous step
-    - gofmt -l -w -s ./pkg ./cmd
-    # TODO: --python-runtimes "$PYTHON_RUNTIMES"
-    - inv -e rtloader.test
-    - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES --build-include docker,linux,kubelet,kubeapiserver,python,orchestrator,clusterchecks,zlib
-  tags:
-    - sts-aws
-  rules:
-    - *cluster_agent
   retry:
     max: 2
 
@@ -406,7 +385,7 @@ build_deb:
 build_rpm:
   stage: build
   interruptible: true
-  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
   needs:
     - deps_rpm
   tags:
@@ -514,7 +493,7 @@ test_deb_renaming:
 test_rpm_renaming:
   stage: test
   interruptible: true
-  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos6_20190429
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos6_20190429
   needs:
     - build_rpm
   before_script: []
@@ -582,7 +561,7 @@ pre_release_win:
 pre_release_rpm:
   stage: pre_release
   interruptible: true
-  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
   needs:
     - build_rpm
   before_script: []
@@ -597,7 +576,7 @@ pre_release_rpm:
 
 pre_release_main_agent_image: &pre_release_image
   stage: pre_release
-  image: artifactory.stackstate.io/docker-virtual/docker:18.06.0
+  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
   needs:
     - build_deb
   variables:
@@ -605,7 +584,7 @@ pre_release_main_agent_image: &pre_release_image
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   services:
-    - name: artifactory.stackstate.io/docker-virtual/docker:18.09-dind
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
       alias: docker
   before_script: []
   script:
@@ -637,7 +616,6 @@ pre_release_cluster_agent_image:
   interruptible: true
   needs:
     - build_cluster_agent
-    - unit_tests_cluster_agent
   script:
     - cd $CI_PROJECT_DIR
     - cp -r ./bin/stackstate-cluster-agent* ./Dockerfiles/cluster-agent
@@ -816,7 +794,7 @@ molecule_integrations_success_cleanup:
   # Currently we default to only running on Python2 build.
   # TODO: Change this when V3 releases are finalized and the default.
   - &kubernetes_ignore_rule
-    if: $MAJOR_VERSION == "2" && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-kubernetes]/
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-kubernetes]/
     when: never
 
 molecule_kubernetes_create:
@@ -832,7 +810,7 @@ molecule_kubernetes_create:
 molecule_kubernetes_test:
   <<: *molecule
   <<: *molecule_test
-  resource_group: eks_test_cluster
+  resource_group: $MOLECULE_K8S_CLUSTER
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent
@@ -1042,7 +1020,7 @@ molecule_secrets_success_cleanup:
   # Currently we default to only running on Python2 build.
   # TODO: Change this when V3 releases are finalized and the default.
   - &swarm_ignore_rule
-    if: $MAJOR_VERSION == "2" && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-swarm]/
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-swarm]/
     when: never
 
 molecule_swarm_create:
@@ -1101,7 +1079,7 @@ molecule_swarm_success_cleanup:
 
 .molecule_vms_rule:
   - &vms_ignore_rule
-    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-vms]/
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-vms]/
     when: never
 
 molecule_vms_create:
@@ -1109,7 +1087,8 @@ molecule_vms_create:
   <<: *molecule_create
   rules:
     - *vms_ignore_rule
-    - when: always
+    - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
+      when: always
   variables:
     MOLECULE_SCENARIO: vms
 
@@ -1118,7 +1097,8 @@ molecule_vms_test:
   <<: *molecule_test
   rules:
     - *vms_ignore_rule
-    - when: on_success
+    - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
+      when: on_success
   variables:
     MOLECULE_SCENARIO: vms
   dependencies:
@@ -1136,7 +1116,8 @@ molecule_vms_failure_cleanup:
   <<: *molecule_destroy
   rules:
     - *vms_ignore_rule
-    - when: on_failure
+    - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
+      when: on_failure
   needs:
     - molecule_vms_create
     - molecule_vms_test
@@ -1148,7 +1129,8 @@ molecule_vms_success_cleanup:
   <<: *molecule_destroy
   rules:
     - *vms_ignore_rule
-    - when: on_success
+    - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
+      when: on_success
   dependencies:
     - molecule_vms_create
     - molecule_vms_test
@@ -1183,7 +1165,7 @@ release_deb:
 release_rpm:
   interruptible: true
   stage: release
-  image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
   dependencies:
     - build_rpm
   before_script:
@@ -1235,7 +1217,7 @@ release_win:
 
 .base_release_image: &base_release_image
   stage: release
-  image: artifactory.stackstate.io/docker-virtual/docker:18.06.0
+  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
   dependencies:
     - build_deb
   variables:
@@ -1243,7 +1225,7 @@ release_win:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   services:
-    - name: artifactory.stackstate.io/docker-virtual/docker:18.09-dind
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
       alias: docker
   before_script: []
   tags:

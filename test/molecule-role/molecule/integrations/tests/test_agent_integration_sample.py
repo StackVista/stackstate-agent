@@ -23,15 +23,24 @@ def test_agent_integration_sample_metrics(host, hostname):
             json.dump(json_data, f, indent=4)
 
         def get_keys(m_host):
-            return set(
-                ''.join(message["message"]["MultiMetric"]["values"].keys())
-                for message in json_data["messages"]
-                if message["message"]["MultiMetric"]["name"] == "convertedMetric" and
-                message["message"]["MultiMetric"]["host"] == m_host
-            )
+            data_set = set()
+            for message in json_data["messages"]:
+                multi_metric = message["message"]["MultiMetric"]
+                if multi_metric["name"] == "convertedMetric" and multi_metric["host"] == m_host:
+                    for key in multi_metric["values"].keys():
+                        data_set.add(key)
+            return data_set
 
-        expected = {'system.cpu.usage', 'location.availability', '2xx.responses', '5xx.responses'}
-        assert all([expectedMetric for expectedMetric in expected if expectedMetric in get_keys(hostname)])
+        keys = get_keys(hostname)
+
+        expected = {'system.cpu.usage', 'location.availability', '2xx.responses', '5xx.responses', 'raw.metrics'}
+        sets_difference = expected.difference(keys)
+        if len(sets_difference) > 0:
+            print("Missing keys inside the topic response:", (expected.difference(keys)))
+        assert expected.issubset(keys) is True
+
+        expected.add('invalid.value.does.not.exist')
+        assert expected.issubset(keys) is False
 
     util.wait_until(wait_for_metrics, 60, 3)
 

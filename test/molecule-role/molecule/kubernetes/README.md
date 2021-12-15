@@ -15,6 +15,7 @@
 - ./molecule3.sh kubernetes prepare
 - (optional) ./molecule3.sh kubernetes login
 - ./molecule3.sh kubernetes test
+- ./molecule3.sh kubernetes destroy
 
 ## Folder Structure
 

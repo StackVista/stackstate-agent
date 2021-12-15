@@ -549,3 +549,11 @@ void set_submit_health_stop_snapshot_cb(rtloader_t *rtloader, cb_submit_health_s
 {
     AS_TYPE(RtLoader, rtloader)->setSubmitHealthStopSnapshotCb(cb);
 }
+
+/*
+ * [sts] raw metrics API
+ */
+void set_submit_raw_metrics_data_cb(rtloader_t *rtloader, cb_submit_raw_metrics_data_t cb)
+{
+    AS_TYPE(RtLoader, rtloader)->setSubmitRawMetricsDataCb(cb);
+}

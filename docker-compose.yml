@@ -2,8 +2,33 @@
 version: '2.4'
 
 services:
+  zookeeper:
+    extends:
+      file: ./test/molecule-role/molecule/common/files/docker-compose.base.yml
+      service: zookeeper
+
+  kafka:
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    extends:
+      file: ./test/molecule-role/molecule/common/files/docker-compose.base.yml
+      service: kafka
+    volumes:
+      - "./test/molecule-role/molecule/verify-or-create-topics.sh:/usr/local/bin/verify-or-create-topics.sh"
+    environment:
+      KAFKA_CREATE_TOPICS: "sts_connection_beat_events:1:1,sts_correlate_endpoints:1:1,sts_generic_events:1:1,sts_intake_health:1:1,sts_multi_metrics:1:1,sts_state_events:1:1,sts_topo_agent_integrations:1:1,sts_topology_events:1:1,sts_topo_process_agents:1:1,sts_trace_events:1:1"
+
+  receiver:
+    depends_on:
+      kafka:
+        condition: service_healthy
+    extends:
+      file: ./test/molecule-role/molecule/common/files/docker-compose.base.yml
+      service: receiver
+
   stackstate-agent:
-    image: artifactory.stackstate.io/docker-virtual/stackstate/${STS_DOCKER_TEST_REPO:-stackstate-agent-test}:${AGENT_VERSION-master}
+    image: docker.io/stackstate/${STS_DOCKER_TEST_REPO:-stackstate-agent-test}:${AGENT_VERSION-master}
     network_mode: "host"
     pid: "host"
     privileged: true
@@ -13,6 +38,8 @@ services:
       - "/sys/fs/cgroup/:/host/sys/fs/cgroup:ro"
       - "/etc/passwd:/etc/passwd:ro"
       - "/sys/kernel/debug:/sys/kernel/debug"
+      - "/sys/kernel/debug:/home/ubuntu/agent/agent_integration_sample.d/"
+      - "./test/molecule-role/molecule/integrations/files/agent/agent_integration_sample.d:/etc/stackstate-agent/conf.d/agent_integration_sample.d:ro"
     environment:
       STS_API_KEY: "API_KEY"
       STS_STS_URL: "http://localhost:7077/stsAgent"
@@ -28,6 +55,7 @@ services:
       STS_LOG_LEVEL: "debug"
       STS_LOG_TO_CONSOLE: "true"
       STS_LOG_PAYLOADS: "true"
+
 #    healthcheck:
 #      test: curl --fail -s http://localhost:5000/ || exit 1
 #      interval: 1m30s
