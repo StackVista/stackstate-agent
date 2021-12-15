@@ -218,6 +218,10 @@ publish_rpmpublisher:
   stage: prepare
   before_script: []
   when: manual
+  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
+  services:
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
+      alias: docker
   tags:
     - sts-k8s-m-runner
   script:
