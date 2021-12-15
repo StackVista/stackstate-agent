@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package common
@@ -66,7 +67,7 @@ func GetOrCreateClusterID(coreClient corev1.CoreV1Interface) (string, error) {
 		return x.(string), nil
 	}
 
-	myNS := GetMyNamespace()
+	myNS := GetResourcesNamespace()
 
 	cm, err := coreClient.ConfigMaps(myNS).Get(defaultClusterIDMap, metav1.GetOptions{})
 	if err != nil {
