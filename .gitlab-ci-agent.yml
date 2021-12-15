@@ -225,6 +225,7 @@ publish_rpmpublisher:
   tags:
     - sts-k8s-m-runner
   script:
+    - apk add --update alpine-sdk
     - cd $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb-rpmpublisher && make build
     - cd $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb-rpmpublisher && make push
 
