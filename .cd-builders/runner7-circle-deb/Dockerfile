@@ -168,7 +168,7 @@ RUN apt-get install -y apt-utils libtool && apt-get install -y --only-upgrade li
 RUN apt-get install sudo
 
 # TODO: to be moved to conda virtualenvs
-#RUN pip install awscli boto3 sa-rpm-s3
+#RUN pip install awscli boto3 sts-rpm-s3
 ADD rpmmacros /root/.rpmmacros
 # yum-utils #https://pkgs.org/download/yum-utils
 #RUN apt-get install -y libkrb5-dev unixodbc-dev rpm python-deltarpm createrepo bison yum-utils

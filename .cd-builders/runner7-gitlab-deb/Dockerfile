@@ -10,7 +10,7 @@ RUN echo 'gem: --no-document' >> /root/.gemrc
 
 RUN bash -c "source /usr/local/rvm/scripts/rvm && gem install deb-s3"
 
-#RUN pip install awscli boto3 sa-rpm-s3
+#RUN pip install awscli boto3 sts-rpm-s3
 ADD rpmmacros /root/.rpmmacros
 # yum-utils #https://pkgs.org/download/yum-utils
 #RUN apt-get install -y libkrb5-dev unixodbc-dev rpm python-deltarpm createrepo bison yum-utils
