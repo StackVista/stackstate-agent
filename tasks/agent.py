@@ -38,6 +38,7 @@ DEFAULT_BUILD_TAGS = [
     "apm",
     "process",
     "consul",
+    "containers",
     "containerd",
     "python",
     "cri",
@@ -114,6 +115,7 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"/opt/datadog-agent/run\\" -> \\"/opt/stackstate-agent/run\\""', "./pkg/config")
     do_go_rename(ctx, '"\\"https://process.datadoghq.com\\" -> \\"http://localhost:7077\\""', "./pkg/process/config")
     do_go_rename(ctx, '"\\"https://orchestrator.datadoghq.com\\" -> \\"http://localhost:7077\\""', "./pkg/process/config")
+    do_sed_rename(ctx, 's/DD_CRI_SOCKET_PATH/STS_CRI_SOCKET_PATH/g', "./Dockerfiles/agent/entrypoint/50-cri.sh")
 
     # [sts] turn of the metadata collection, the receiver does not recognize these payloads
     do_sed_rename(ctx, 's/"enable_metadata_collection"\\, true/"enable_metadata_collection"\\, false/g', "./pkg/config/config.go")

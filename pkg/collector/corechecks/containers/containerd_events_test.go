@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build containerd
 // +build containerd
 
 package containers
@@ -10,6 +11,7 @@ package containers
 import (
 	"context"
 	"fmt"
+	cspec "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec"
 	"testing"
 	"time"
 
@@ -28,6 +30,7 @@ import (
 
 type mockItf struct {
 	mockEvents      func() containerd.EventService
+	mockSContainer  func() ([]*cspec.Container, error)
 	mockContainer   func() ([]containerd.Container, error)
 	mockMetadata    func() (containerd.Version, error)
 	mockImageSize   func(ctn containerd.Container) (int64, error)
