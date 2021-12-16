@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -41,7 +42,7 @@ func (*NodeCollector) GetName() string {
 	return "Node Collector"
 }
 
-// Collects and Published the Node Components
+// Collects and Publishes the Node Components
 func (nc *NodeCollector) CollectorFunction() error {
 	// get all the nodes in the cluster
 	nodes, err := nc.GetAPIClient().GetNodes()
@@ -51,7 +52,7 @@ func (nc *NodeCollector) CollectorFunction() error {
 
 	for _, node := range nodes {
 		// creates and publishes StackState node component
-		component := nc.nodeToStackStateComponent(node)
+		component, nodeIdentifier := nc.nodeToStackStateComponent(node)
 		// creates a StackState relation for the cluster node -> cluster
 		relation := nc.nodeToClusterStackStateRelation(node)
 
@@ -59,12 +60,7 @@ func (nc *NodeCollector) CollectorFunction() error {
 		nc.RelationChan <- relation
 
 		// send the node identifier to be correlated
-		if node.Spec.ProviderID != "" {
-			nodeIdentifier := extractInstanceIDFromProviderID(node.Spec)
-			if nodeIdentifier != "" {
-				nc.NodeIdentifierCorrChan <- &NodeIdentifierCorrelation{node.Name, nodeIdentifier}
-			}
-		}
+		nc.NodeIdentifierCorrChan <- &NodeIdentifierCorrelation{node.Name, nodeIdentifier, component.ExternalID}
 	}
 
 	close(nc.NodeIdentifierCorrChan)
@@ -73,7 +69,7 @@ func (nc *NodeCollector) CollectorFunction() error {
 }
 
 // Creates a StackState component from a Kubernetes Node
-func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) *topology.Component {
+func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Component, string) {
 	// creates a StackState component for the kubernetes node
 	log.Tracef("Mapping kubernetes node to StackState component: %s", node.String())
 
@@ -99,8 +95,10 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) *topology.Compo
 	var instanceID string
 	if len(node.Spec.ProviderID) > 0 {
 		instanceID = extractInstanceIDFromProviderID(node.Spec)
-		identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", instanceID))
+	} else {
+		instanceID = node.Name
 	}
+	identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", instanceID))
 
 	log.Tracef("Created identifiers for %s: %v", node.Name, identifiers)
 
@@ -132,7 +130,7 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) *topology.Compo
 
 	log.Tracef("Created StackState node component %s: %v", nodeExternalID, component.JSONString())
 
-	return component
+	return component, instanceID
 }
 
 // Creates a StackState relation from a Kubernetes Pod to Node relation

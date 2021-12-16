@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -11,17 +12,8 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/stretchr/testify/assert"
-	coreV1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 )
-
-var creationTime v1.Time
-var replicas int32
-var pathType coreV1.HostPathType
-var gcePersistentDisk coreV1.GCEPersistentDiskVolumeSource
-var awsElasticBlockStore coreV1.AWSElasticBlockStoreVolumeSource
-var hostPath coreV1.HostPathVolumeSource
 
 func NewTestCommonClusterCollector(client apiserver.APICollectorClient) ClusterTopologyCollector {
 	instance := topology.Instance{Type: "kubernetes", URL: "test-cluster-name"}

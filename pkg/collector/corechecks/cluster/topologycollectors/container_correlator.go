@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -15,6 +16,7 @@ import (
 type NodeIdentifierCorrelation struct {
 	NodeName       string
 	NodeIdentifier string
+	NodeExternalID string
 }
 
 // ContainerPod
@@ -46,7 +48,8 @@ type ContainerCorrelator struct {
 
 // NewContainerCorrelator
 func NewContainerCorrelator(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation,
-	nodeIdentifierCorrChan <-chan *NodeIdentifierCorrelation, containerCorrChannel <-chan *ContainerCorrelation, clusterTopologyCorrelator ClusterTopologyCorrelator) ClusterTopologyCorrelator {
+	nodeIdentifierCorrChan <-chan *NodeIdentifierCorrelation, containerCorrChannel <-chan *ContainerCorrelation,
+	clusterTopologyCorrelator ClusterTopologyCorrelator) ClusterTopologyCorrelator {
 	return &ContainerCorrelator{
 		ComponentChan:             componentChannel,
 		RelationChan:              relationChannel,
@@ -63,11 +66,10 @@ func (*ContainerCorrelator) GetName() string {
 
 // Collects and Published the Cluster Component
 func (cc *ContainerCorrelator) CorrelateFunction() error {
-
-	nodeMap := make(map[string]string)
+	nodeMap := make(map[string]NodeIdentifierCorrelation)
 	// map containers that require the Node instanceId
 	for containerToNodeCorrelation := range cc.NodeIdentifierCorrChan {
-		nodeMap[containerToNodeCorrelation.NodeName] = containerToNodeCorrelation.NodeIdentifier
+		nodeMap[containerToNodeCorrelation.NodeName] = *containerToNodeCorrelation
 	}
 
 	for containerCorrelation := range cc.ContainerCorrChan {
@@ -91,12 +93,14 @@ func (cc *ContainerCorrelator) CorrelateFunction() error {
 				containerPort = cntPort
 			}
 
-			if nodeIdentifier, ok := nodeMap[pod.NodeName]; ok {
+			if nodeCorrelation, ok := nodeMap[pod.NodeName]; ok {
 				// submit the StackState component for publishing to StackState
-				containerComponent := cc.containerToStackStateComponent(nodeIdentifier, pod, container, containerPort)
+				containerComponent := cc.containerToStackStateComponent(nodeCorrelation.NodeIdentifier, pod, container, containerPort)
 				cc.ComponentChan <- containerComponent
 				// create the relation between the container and pod
 				cc.RelationChan <- cc.podToContainerStackStateRelation(pod.ExternalID, containerComponent.ExternalID)
+				// create the relation between the container and node
+				cc.RelationChan <- cc.containerToNodeStackStateRelation(containerComponent.ExternalID, nodeCorrelation.NodeExternalID)
 			}
 		}
 	}
@@ -176,7 +180,18 @@ func (cc *ContainerCorrelator) podToContainerStackStateRelation(podExternalID, c
 
 	relation := cc.CreateRelation(podExternalID, containerExternalID, "encloses")
 
-	log.Tracef("Created StackState pod -> container relation %s->%s", relation.SourceID, relation.TargetID)
+	log.Tracef("Created StackState pod -> container relation %s -> %s", relation.SourceID, relation.TargetID)
+
+	return relation
+}
+
+// Creates a StackState relation from a Container to Kubernetes / OpenShift Node relation
+func (cc *ContainerCorrelator) containerToNodeStackStateRelation(containerExternalID, nodeIdentifier string) *topology.Relation {
+	log.Tracef("Mapping kubernetes container to node relation: %s -> %s", containerExternalID, nodeIdentifier)
+
+	relation := cc.CreateRelation(containerExternalID, nodeIdentifier, "runs_on")
+
+	log.Tracef("Created StackState container -> node relation %s -> %s", relation.SourceID, relation.TargetID)
 
 	return relation
 }

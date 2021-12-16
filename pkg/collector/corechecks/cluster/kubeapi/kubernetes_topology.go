@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package kubeapi
@@ -327,7 +328,7 @@ func runCollector(collector collectors.ClusterTopologyCollector, errorChannel ch
 
 // runCorrelator
 func runCorrelator(correlator collectors.ClusterTopologyCorrelator, errorChannel chan<- error, wg *sync.WaitGroup) {
-	log.Infof("Starting cluster topology correlator: %s\n", correlator.GetName())
+	log.Debugf("Starting cluster topology correlator: %s\n", correlator.GetName())
 	err := correlator.CorrelateFunction()
 	if err != nil {
 		errorChannel <- err
