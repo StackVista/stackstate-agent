@@ -1,5 +1,10 @@
 # StackState Agent v2 releases
 
+## 2.14.1 (???)
+
+**Bugfix**
+- JMX integration: bumps jmxfetch to disable the vulnerable features of log4j2 [STAC-15197](https://stackstate.atlassian.net/browse/STAC-15197)
+
 ## 2.14.0 (2021-10-21)
 
 **Features**
