@@ -8,6 +8,7 @@ package util
 import (
 	"expvar"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util/azure"
 	"net"
 	"os"
 	"runtime"
@@ -107,14 +108,15 @@ const HostnameProviderConfiguration = "configuration"
 
 // HostnameData contains hostname and the hostname provider
 type HostnameData struct {
-	Hostname string
-	Provider string
+	Hostname    string
+	Provider    string
+	Identifiers []string
 }
 
 // saveHostnameData creates a HostnameData struct, saves it in the cache under cacheHostnameKey
 // and calls setHostnameProvider with the provider if it is not empty.
-func saveHostnameData(cacheHostnameKey string, hostname string, provider string) HostnameData {
-	hostnameData := HostnameData{Hostname: hostname, Provider: provider}
+func saveHostnameData(cacheHostnameKey string, hostname string, provider string, identifiers []string) HostnameData {
+	hostnameData := HostnameData{Hostname: hostname, Provider: provider, Identifiers: identifiers}
 	cache.Cache.Set(cacheHostnameKey, hostnameData, cache.NoExpiration)
 	if provider != "" {
 		setHostnameProvider(provider)
@@ -143,7 +145,7 @@ func GetHostnameData() (HostnameData, error) {
 	configName := config.Datadog.GetString("hostname")
 	err = validate.ValidHostname(configName)
 	if err == nil {
-		hostnameData := saveHostnameData(cacheHostnameKey, configName, HostnameProviderConfiguration)
+		hostnameData := saveHostnameData(cacheHostnameKey, configName, HostnameProviderConfiguration, []string{})
 		if !isHostnameCanonicalForIntake(configName) && !config.Datadog.GetBool("hostname_force_config_as_canonical") {
 			_ = log.Warnf("Hostname '%s' defined in configuration will not be used as the in-app hostname. For more information: https://dtdg.co/agent-hostname-force-config-as-canonical", configName)
 		}
@@ -159,7 +161,8 @@ func GetHostnameData() (HostnameData, error) {
 
 	// if fargate we strip the hostname
 	if fargate.IsFargateInstance() {
-		hostnameData := saveHostnameData(cacheHostnameKey, "", "")
+		hostnameData := saveHostnameData(cacheHostnameKey, "", "", []string{})
+		log.Debugf("Got hostname '%s' from Farget", hostnameData)
 		return hostnameData, nil
 	}
 
@@ -168,13 +171,33 @@ func GetHostnameData() (HostnameData, error) {
 	if getGCEHostname, found := hostname.ProviderCatalog["gce"]; found {
 		gceName, err := getGCEHostname()
 		if err == nil {
-			hostnameData := saveHostnameData(cacheHostnameKey, gceName, "gce")
+			log.Debugf("Got hostname '%s' from GCE", gceName)
+			hostnameData := saveHostnameData(cacheHostnameKey, gceName, "gce", []string{})
 			return hostnameData, err
 		}
 		expErr := new(expvar.String)
 		expErr.Set(err.Error())
 		hostnameErrors.Set("gce", expErr)
 		log.Debug("Unable to get hostname from GCE: ", err)
+	}
+
+	// Azure metadata
+	log.Debug("GetHostname trying Azure metadata...")
+	if getAzureHostname, found := hostname.ProviderCatalog["azure"]; found {
+		azureName, err := getAzureHostname()
+		if err == nil {
+			azureIdentifiers, idsErr := azure.HostnameIdentifiers()
+			if idsErr != nil {
+				log.Warnf("Failed to get Azure host identifiers: %v", idsErr)
+			}
+			log.Debugf("Got hostname '%s' from Azure", azureName)
+			hostnameData := saveHostnameData(cacheHostnameKey, azureName, "azure", azureIdentifiers)
+			return hostnameData, err
+		}
+		expErr := new(expvar.String)
+		expErr.Set(err.Error())
+		hostnameErrors.Set("azure", expErr)
+		log.Debug("Unable to get hostname from Azure: ", err)
 	}
 
 	// FQDN
@@ -283,7 +306,7 @@ func GetHostnameData() (HostnameData, error) {
 		err = nil
 	}
 
-	hostnameData := saveHostnameData(cacheHostnameKey, hostName, provider)
+	hostnameData := saveHostnameData(cacheHostnameKey, hostName, provider, []string{})
 	if err != nil {
 		expErr := new(expvar.String)
 		expErr.Set(fmt.Sprintf(err.Error()))
