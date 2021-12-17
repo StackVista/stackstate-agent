@@ -1,9 +1,13 @@
 # StackState Agent v2 releases
 
-## 2.14.1 (???)
+## 2.14.1 (2021-12-17)
 
 **Bugfix**
-- JMX integration: bumps jmxfetch to disable the vulnerable features of log4j2 [STAC-15197](https://stackstate.atlassian.net/browse/STAC-15197)
+- JMX integration: bumps jmxfetch to disable the vulnerable features of log4j2. [STAC-15197](https://stackstate.atlassian.net/browse/STAC-15197)
+- Add identifier to kubernetes nodes and add identifier to azure vms, so they eventually merge. [STAC-14538](https://stackstate.atlassian.net/browse/STAC-14538)
+- Fix invalid example of kubernetes check configs. [STAC-14835](https://stackstate.atlassian.net/browse/STAC-14835)
+- Integrations
+  - [StackState Agent Integrations 1.17.0](https://github.com/StackVista/stackstate-agent-integrations/blob/master/stackstate-changelog.md#1170--2021-12-17)
 
 ## 2.14.0 (2021-10-21)
 
