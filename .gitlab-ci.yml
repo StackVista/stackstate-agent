@@ -29,6 +29,9 @@ stages:
 #   - "<commit message> [py2][molecule-compose]"
 #   - "<commit message> [py3][molecule-secrets][molecule-vms]"
 
+# You can also reduce the costs by running no molecule tests
+#   - "<commit message> [molecule-none]"
+
 variables: &commonvariables
   # The SRC_PATH is in the GOPATH of the builders which
   # currently is /go
@@ -45,8 +48,12 @@ variables: &commonvariables
   DATADOG_AGENT_EMBEDDED_PATH: /opt/datadog-agent/embedded
   ARCH: amd64
   VCINSTALLDIR: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community"
-  ARTIFACTORY_USER: "$artifactory_user"
-  ARTIFACTORY_PASSWORD: "$artifactory_password"
+  MOLECULE_K8S_CLUSTER: eks_test_cluster_1_21
+  # This variable represents which one of the gitlab pipelines will contain most of the jobs that's not required for both pipelines to run.
+  # IE VMS is a massive jobs and only has to run on either v2 or the v3 pipeline. With this variable you can control on which of the pipelines
+  # do jobs like these run on
+  PRIMARY_MAJOR_VERSION: '2'
+
 
 .agent2_variables: &agent2_variables
   CONDA_ENV: ddpy2

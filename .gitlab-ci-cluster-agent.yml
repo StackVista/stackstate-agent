@@ -300,7 +300,7 @@ pre_release_cluster_agent_image:
 molecule_kubernetes_create:
   <<: *molecule
   <<: *molecule_create
-  resource_group: eks_test_cluster
+  resource_group: $MOLECULE_K8S_CLUSTER
   rules:
     - *kubernetes_ignore_rule
     - when: always
@@ -310,7 +310,7 @@ molecule_kubernetes_create:
 molecule_kubernetes_test:
   <<: *molecule
   <<: *molecule_test
-  resource_group: eks_test_cluster
+  resource_group: $MOLECULE_K8S_CLUSTER
   rules:
     - *kubernetes_ignore_rule
     - when: always
@@ -327,7 +327,7 @@ molecule_kubernetes_failure_cleanup:
   <<: *molecule
   <<: *molecule_artifacts
   <<: *molecule_destroy
-  resource_group: eks_test_cluster
+  resource_group: $MOLECULE_K8S_CLUSTER
   rules:
     - *kubernetes_ignore_rule
     - when: always
@@ -343,7 +343,7 @@ molecule_kubernetes_success_cleanup:
   <<: *molecule
   <<: *molecule_artifacts
   <<: *molecule_destroy
-  resource_group: eks_test_cluster
+  resource_group: $MOLECULE_K8S_CLUSTER
   rules:
     - *kubernetes_ignore_rule
     - when: always

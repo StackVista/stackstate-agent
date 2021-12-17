@@ -91,6 +91,10 @@ WARNING: If you create any instance from you local machine please delete it seei
     Run the docker-compose and the unit tests (Note that everytime you run this a docker-compose cleanup is also ran to cleanup your prev run)
     -  ./molecule3.sh <scenario> test
 
+    Alternative Unit-Test - You can run this command to only execute the unit-tests instead of rebuilding the entire prepare stage
+    This function is only allowed for local dev
+    -  ./molecule3.sh <scenario> unit-test
+
     Destroy the EC2 machine and Keypair you created
     -  ./molecule3.sh <scenario> destroy
 
