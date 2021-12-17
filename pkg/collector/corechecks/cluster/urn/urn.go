@@ -2,6 +2,8 @@ package urn
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
+	v1 "k8s.io/api/core/v1"
 	"strings"
 )
 
@@ -39,6 +41,7 @@ type Builder interface {
 	BuildPersistentVolumeExternalID(persistentVolumeName string) string
 	BuildComponentExternalID(component, namespace, name string) string
 	BuildEndpointExternalID(endpointID string) string
+	BuildNodeURNs(node v1.Node) []string
 }
 
 type urnBuilder struct {
@@ -211,6 +214,47 @@ func (b *urnBuilder) BuildEndpointExternalID(endpointID string) string {
 	return fmt.Sprintf("urn:endpoint:/%s:%s", b.url, endpointID)
 }
 
+// BuildNodeURNs creates identifier list to merge with StackState components
+func (b *urnBuilder) BuildNodeURNs(node v1.Node) []string {
+
+	identifiers := make([]string, 0, len(node.Status.Addresses)+1)
+	for _, address := range node.Status.Addresses {
+		switch addressType := address.Type; addressType {
+		case v1.NodeInternalIP:
+			identifiers = append(identifiers, fmt.Sprintf("urn:ip:/%s:%s:%s", b.url, node.Name, address.Address))
+		case v1.NodeExternalIP:
+			identifiers = append(identifiers, fmt.Sprintf("urn:ip:/%s:%s", b.url, address.Address))
+		case v1.NodeInternalDNS:
+			identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s:%s", b.url, address.Address))
+		case v1.NodeExternalDNS:
+			identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", address.Address))
+		case v1.NodeHostName:
+			//do nothing with it
+		default:
+			continue
+		}
+	}
+
+	if azureArn := strings.TrimPrefix(node.Spec.ProviderID, "azure:///"); azureArn != node.Spec.ProviderID {
+		identifiers = append(identifiers,
+			"urn:azure:/"+azureArn,
+			"urn:azure:/"+strings.ToUpper(azureArn), // to match uppercased ARN from Azure Stackpack
+		)
+	}
+
+	// this allow merging with host reported by main agent
+	if instanceID := GetInstanceID(node.Spec); instanceID != "" {
+		identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", instanceID))
+
+		clusterName := clustername.GetClusterName()
+		if clusterName != "" {
+			identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s-%s", instanceID, clusterName))
+		}
+	}
+
+	return identifiers
+}
+
 // ClusterTypeFromString converts a string representation of the ClusterType to the specific ClusterType
 func ClusterTypeFromString(s string) ClusterType {
 	if s == string(OpenShift) {
@@ -218,4 +262,18 @@ func ClusterTypeFromString(s string) ClusterType {
 	}
 
 	return Kubernetes
+}
+
+func extractLastFragment(value string) string {
+	lastSlash := strings.LastIndex(value, "/")
+	return value[lastSlash+1:]
+}
+
+// GetInstanceID extracts node name from cloud-specific ProviderID, if present
+func GetInstanceID(spec v1.NodeSpec) string {
+	if spec.ProviderID == "" {
+		return ""
+	}
+	//parse node id from cloud provider (for AWS is the ec2 instance id)
+	return extractLastFragment(spec.ProviderID)
 }
