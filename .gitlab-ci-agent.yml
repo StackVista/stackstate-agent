@@ -334,7 +334,7 @@ build_deb:
   tags:
     - sts-k8s-xl-no-docker-runner
   cache:
-    key: "build-deb-$STS_VER-master"
+    key: "build-deb-$STS_VER-$CI_COMMIT_REF_SLUG"
     paths:
       - .omnibus
       - .gems
@@ -391,7 +391,7 @@ build_rpm:
   tags:
     - sts-k8s-xl-no-docker-runner
   cache:
-    key: "build-rpm-$STS_VER-master"
+    key: "build-rpm-$STS_VER-$CI_COMMIT_REF_SLUG"
     paths:
       - .omnibus
       - .gems
@@ -449,7 +449,7 @@ build_win:
   needs:
     - deps_win
   cache:
-    key: "build-win-$STS_VER-master"
+    key: "build-win-$STS_VER-$CI_COMMIT_REF_SLUG"
     paths:
       - .gems
   before_script:
