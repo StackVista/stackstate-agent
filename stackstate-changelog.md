@@ -2,6 +2,12 @@
 
 ## 2.15.0 (2021-12-20)
 
+**Features**
+
+- Raw Metrics API Endpoint
+  * Add support for Raw Metrics in line with the current v2/v3 api format. [(STAC-12434)](https://stackstate.atlassian.net/browse/STAC-12434)
+  * Convert v2/v3 api format into the v1 raw metric intake format, Allows compatibility with v1 [(STAC-12434)](https://stackstate.atlassian.net/browse/STAC-12434)
+
 **Improvement**
 - Dependencies updates:
   - Upgraded source image for docker agent image from `debian:buster-slim` to `ubuntu:20.04`.
