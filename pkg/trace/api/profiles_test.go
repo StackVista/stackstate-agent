@@ -27,7 +27,7 @@ func TestProfileProxy(t *testing.T) {
 		if body := string(slurp); body != "body" {
 			t.Fatalf("invalid request body: %q", body)
 		}
-		if v := req.Header.Get("DD-API-KEY"); v != "123" {
+		if v := req.Header.Get("sts-API-KEY"); v != "123" {
 			t.Fatalf("got invalid API key: %q", v)
 		}
 		if v := req.Header.Get("X-Datadog-Additional-Tags"); v != "key:val" {

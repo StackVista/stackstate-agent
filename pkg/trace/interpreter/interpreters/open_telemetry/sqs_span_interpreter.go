@@ -29,6 +29,8 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			span.Meta = map[string]string{}
 		}
 
+		fmt.Println("Process SQS Span Interpreter")
+
 		span.Meta["span.kind"] = "consumer"
 
 		// Retrieve the core information required to trace SQS

@@ -99,7 +99,7 @@ const (
 )
 
 const (
-	apiHTTPHeaderKey       = "DD-Api-Key"
+	apiHTTPHeaderKey       = "sts-Api-Key"
 	versionHTTPHeaderKey   = "DD-Agent-Version"
 	useragentHTTPHeaderKey = "User-Agent"
 )

@@ -413,7 +413,7 @@ func convertStringToUint64(input string) (*uint64, error) {
 	return &uint64Representation, nil
 }
 
-// Source Identifier for Open Telemetry
+// OpenTelemetrySource Source Identifier for Open Telemetry
 const OpenTelemetrySource = "openTelemetry"
 
 // [sts]
@@ -422,15 +422,34 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 	var traces = pb.Traces{}
 
 	for _, resourceSpan := range openTelemetryTraces.ResourceSpans {
+		var awsAccountId *string = nil
+
+		// Attempt to extract information from the lambda library to enhance the sdk library
+		// We need the account id for sections where it is not defined for example lambda to lambda
+		for _, library := range resourceSpan.InstrumentationLibrarySpans {
+			if library.InstrumentationLibrary.Name == "@opentelemetry/instrumentation-aws-lambda" {
+				for _, span := range library.Spans {
+					for _, attribute := range span.Attributes {
+						if attribute.Key == "cloud.account.id" {
+							var accountId = attribute.Value.GetStringValue()
+							awsAccountId = &accountId
+						}
+					}
+				}
+			}
+		}
+
 		for _, instrumentationLibrarySpan := range resourceSpan.InstrumentationLibrarySpans {
 			var singleTrace = pb.Trace{}
 
 			for _, librarySpan := range instrumentationLibrarySpan.Spans {
-				// TODO: Verify if different languages have different structures, Approved Languages: NodeJS
-
 				var meta = map[string]string{
 					"instrumentation_library": instrumentationLibrarySpan.InstrumentationLibrary.Name,
 					"source":                  OpenTelemetrySource,
+				}
+
+				if awsAccountId != nil {
+					meta["aws.account.id"] = *awsAccountId
 				}
 
 				for _, attribute := range librarySpan.Attributes {

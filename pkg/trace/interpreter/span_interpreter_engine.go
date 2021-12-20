@@ -40,8 +40,13 @@ func NewSpanInterpreterEngine(agentConfig *config.AgentConfig) *SpanInterpreterE
 
 	sourceIns := make(map[string]interpreters.SourceInterpreter, 0)
 	sourceIns[interpreters.TraefikSpanInterpreterSpan] = interpreters.MakeTraefikInterpreter(interpreterConf)
+
+	// Open Telemetry
 	sourceIns[openTelemetry.OpenTelemetryLambdaInterpreterSpan] = openTelemetry.MakeOpenTelemetryLambdaInterpreter(interpreterConf)
 	sourceIns[openTelemetry.OpenTelemetrySQSInterpreterSpan] = openTelemetry.MakeOpenTelemetrySQSInterpreter(interpreterConf)
+	sourceIns[openTelemetry.OpenTelemetryS3InterpreterSpan] = openTelemetry.MakeOpenTelemetryS3Interpreter(interpreterConf)
+	sourceIns[openTelemetry.OpenTelemetryStepFunctionsInterpreterSpan] = openTelemetry.MakeOpenTelemetryStepFunctionsInterpreter(interpreterConf)
+	sourceIns[openTelemetry.OpenTelemetrySNSInterpreterSpan] = openTelemetry.MakeOpenTelemetrySNSInterpreter(interpreterConf)
 
 	return MakeSpanInterpreterEngine(interpreterConf, typeIns, sourceIns)
 }
@@ -49,8 +54,6 @@ func NewSpanInterpreterEngine(agentConfig *config.AgentConfig) *SpanInterpreterE
 func UpdateOpenTelemetrySpanSource(source string, span *pb.Span) string {
 	if source == "openTelemetry" {
 		switch span.Meta["instrumentation_library"] {
-		// TODO: instrumentation-aws-sdk is NodeJS support need to add support for more languages
-
 		case "@opentelemetry/instrumentation-aws-lambda":
 			return "openTelemetryLambda"
 
@@ -58,6 +61,18 @@ func UpdateOpenTelemetrySpanSource(source string, span *pb.Span) string {
 			switch span.Meta["aws.service.identifier"] {
 			case "sqs":
 				return "openTelemetrySQS"
+
+			case "lambda":
+				return "openTelemetryLambda"
+
+			case "sns":
+				return "openTelemetrySNS"
+
+			case "s3":
+				return "openTelemetryS3"
+
+			case "stepfunctions":
+				return "openTelemetryStepFunctions"
 
 			default:
 				fmt.Printf("Unknown AWS identifier for Open Telemetry: %v", span.Meta["aws.service.identifier"])

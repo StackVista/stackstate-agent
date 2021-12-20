@@ -123,7 +123,7 @@ func TestCreateHTTPTransactions(t *testing.T) {
 	assert.Equal(t, endpoint.route, transactions[2].Endpoint)
 	assert.Equal(t, endpoint.route, transactions[3].Endpoint)
 	assert.Len(t, transactions[0].Headers, 4)
-	assert.NotEmpty(t, transactions[0].Headers.Get("DD-Api-Key"))
+	assert.NotEmpty(t, transactions[0].Headers.Get("sts-Api-Key"))
 	assert.NotEmpty(t, transactions[0].Headers.Get("HTTP-MAGIC"))
 	assert.Equal(t, version.AgentVersion, transactions[0].Headers.Get("DD-Agent-Version"))
 	assert.Equal(t, "datadog-agent/"+version.AgentVersion, transactions[0].Headers.Get("User-Agent"))
