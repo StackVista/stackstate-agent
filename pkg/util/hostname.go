@@ -116,6 +116,7 @@ type HostnameData struct {
 // saveHostnameData creates a HostnameData struct, saves it in the cache under cacheHostnameKey
 // and calls setHostnameProvider with the provider if it is not empty.
 func saveHostnameData(cacheHostnameKey string, hostname string, provider string, identifiers []string) HostnameData {
+	log.Debugf("Saving hostname '%s' from %s", hostname, provider)
 	hostnameData := HostnameData{Hostname: hostname, Provider: provider, Identifiers: identifiers}
 	cache.Cache.Set(cacheHostnameKey, hostnameData, cache.NoExpiration)
 	if provider != "" {
@@ -171,7 +172,6 @@ func GetHostnameData() (HostnameData, error) {
 	if getGCEHostname, found := hostname.ProviderCatalog["gce"]; found {
 		gceName, err := getGCEHostname()
 		if err == nil {
-			log.Debugf("Got hostname '%s' from GCE", gceName)
 			hostnameData := saveHostnameData(cacheHostnameKey, gceName, "gce", []string{})
 			return hostnameData, err
 		}
@@ -190,7 +190,6 @@ func GetHostnameData() (HostnameData, error) {
 			if idsErr != nil {
 				log.Warnf("Failed to get Azure host identifiers: %v", idsErr)
 			}
-			log.Debugf("Got hostname '%s' from Azure", azureName)
 			hostnameData := saveHostnameData(cacheHostnameKey, azureName, "azure", azureIdentifiers)
 			return hostnameData, err
 		}
