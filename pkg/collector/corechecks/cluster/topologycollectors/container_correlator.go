@@ -5,11 +5,11 @@ package topologycollectors
 
 import (
 	"fmt"
-
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strings"
 )
 
 // ContainerToNodeCorrelation
@@ -194,4 +194,9 @@ func (cc *ContainerCorrelator) containerToNodeStackStateRelation(containerExtern
 	log.Tracef("Created StackState container -> node relation %s -> %s", relation.SourceID, relation.TargetID)
 
 	return relation
+}
+
+func extractLastFragment(value string) string {
+	lastSlash := strings.LastIndex(value, "/")
+	return value[lastSlash+1:]
 }
