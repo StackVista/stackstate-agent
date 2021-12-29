@@ -80,6 +80,14 @@ func (dmc *DeploymentCollector) deploymentToStackStateComponent(deployment v1.De
 	sourceProperties, err := marshalToData(&deployment)
 	if err != nil {
 		_ = log.Warnf("Can't serialize sourceProperties for Deployment %s/%s: %v", deployment.Namespace, deployment.Name, err)
+	} else {
+		if metadata, ok := sourceProperties["metadata"]; ok {
+			switch metadataMap := metadata.(type) {
+			case map[string]interface{}:
+				delete(metadataMap, "managedFields")
+			default:
+			}
+		}
 	}
 
 	deploymentExternalID := dmc.buildDeploymentExternalID(deployment.Namespace, deployment.Name)
