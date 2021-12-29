@@ -14,6 +14,7 @@ import (
 	coreV1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"strings"
 	"testing"
 	"time"
 )
@@ -25,7 +26,7 @@ func TestConfigMapCollector(t *testing.T) {
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 
-	cmc := NewConfigMapCollector(componentChannel, NewTestCommonClusterCollector(MockConfigMapAPICollectorClient{}))
+	cmc := NewConfigMapCollector(componentChannel, NewTestCommonClusterCollector(MockConfigMapAPICollectorClient{}), 500)
 	expectedCollectorName := "ConfigMap Collector"
 	RunCollectorTest(t, cmc, expectedCollectorName)
 
@@ -43,7 +44,7 @@ func TestConfigMapCollector(t *testing.T) {
 					"creationTimestamp": creationTime,
 					"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 					"uid":               types.UID("test-configmap-1"),
-					"data":              map[string]string{"key1": "value1", "key2": "longersecretvalue2"},
+					"data":              map[string]string{"key1": "value1", "key2": "longersecretvalue2", "key3": "[dropped 1000 chars, hashsum: c2e686823489ced2]"},
 					"identifiers":       []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-1"},
 				},
 			},
@@ -110,6 +111,7 @@ func (m MockConfigMapAPICollectorClient) GetConfigMaps() ([]coreV1.ConfigMap, er
 			configMap.Data = map[string]string{
 				"key1": "value1",
 				"key2": "longersecretvalue2",
+				"key3": strings.Repeat("A", 1000),
 			}
 		}
 
@@ -123,4 +125,52 @@ func (m MockConfigMapAPICollectorClient) GetConfigMaps() ([]coreV1.ConfigMap, er
 	}
 
 	return configMaps, nil
+}
+
+func TestCutDataProportionally(t *testing.T) {
+	result := cutData(map[string]string{
+		"a": strings.Repeat("A", 11),
+		"b": strings.Repeat("B", 22),
+	}, 30)
+
+	assert.EqualValues(t, map[string]string{
+		"a": strings.Repeat("A", 10) + "[dropped 1 chars, hashsum: 559aead08264d579]",
+		"b": strings.Repeat("B", 20) + "[dropped 2 chars, hashsum: fc686c314491e1f6]",
+	}, result)
+}
+
+func TestCutDataBiggest(t *testing.T) {
+	// if configmap has TLS certificate and some actual configuration,
+	// it is very likely that cutting TLS certificate is enough,
+	// in the same time config untouched makes sense
+	// let's keep keys that have small strings untouched
+	result := cutData(map[string]string{
+		"root.crt":      strings.Repeat("A", 100000),
+		"blacklist.txt": strings.Repeat("B", 150),
+		"nginx.conf":    strings.Repeat("C", 150),
+	}, 300)
+
+	assert.EqualValues(t, map[string]string{
+		"root.crt":      "[dropped 100000 chars, hashsum: e6631225e83d23bf]",
+		"blacklist.txt": strings.Repeat("B", 150),
+		"nginx.conf":    strings.Repeat("C", 150),
+	}, result)
+}
+
+func TestCutDataCombined(t *testing.T) {
+	// if configmap has TLS certificate and some actual configuration,
+	// it is very likely that cutting TLS certificate is enough,
+	// in the same time config untouched makes sense
+	// let's keep keys that have small strings untouched
+	result := cutData(map[string]string{
+		"root.crt": strings.Repeat("A", 100000),
+		"a":        strings.Repeat("A", 11),
+		"b":        strings.Repeat("B", 22),
+	}, 30)
+
+	assert.EqualValues(t, map[string]string{
+		"root.crt": "[dropped 100000 chars, hashsum: e6631225e83d23bf]",
+		"a":        strings.Repeat("A", 10) + "[dropped 1 chars, hashsum: 559aead08264d579]",
+		"b":        strings.Repeat("B", 20) + "[dropped 2 chars, hashsum: fc686c314491e1f6]",
+	}, result)
 }
