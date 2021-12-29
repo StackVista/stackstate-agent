@@ -3,8 +3,12 @@
 package topologycollectors
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/gogo/protobuf/jsonpb"
+	"github.com/gogo/protobuf/proto"
 	"k8s.io/api/apps/v1"
 )
 
@@ -46,11 +50,37 @@ func (dmc *DeploymentCollector) CollectorFunction() error {
 	return nil
 }
 
+var JsonMarshaler = jsonpb.Marshaler{
+	EnumsAsInts:  false,
+	EmitDefaults: false,
+}
+
+func marshalToData(msg proto.Message) (map[string]interface{}, error) {
+	var buf bytes.Buffer
+	if err := JsonMarshaler.Marshal(&buf, msg); err != nil {
+		return nil, err
+	}
+	var result map[string]interface{}
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (dmc *DeploymentCollector) DeploymentToStackStateComponent(deployment v1.Deployment) *topology.Component {
+	return dmc.deploymentToStackStateComponent(deployment)
+}
+
 // Creates a StackState deployment component from a Kubernetes / OpenShift Cluster
 func (dmc *DeploymentCollector) deploymentToStackStateComponent(deployment v1.Deployment) *topology.Component {
 	log.Tracef("Mapping Deployment to StackState component: %s", deployment.String())
 
 	tags := dmc.initTags(deployment.ObjectMeta)
+
+	sourceProperties, err := marshalToData(&deployment)
+	if err != nil {
+		_ = log.Warnf("Can't serialize sourceProperties for Deployment %s/%s: %v", deployment.Namespace, deployment.Name, err)
+	}
 
 	deploymentExternalID := dmc.buildDeploymentExternalID(deployment.Namespace, deployment.Name)
 	component := &topology.Component{
@@ -64,6 +94,7 @@ func (dmc *DeploymentCollector) deploymentToStackStateComponent(deployment v1.De
 			"desiredReplicas":    deployment.Spec.Replicas,
 			"uid":                deployment.UID,
 		},
+		SourceProperties: sourceProperties,
 	}
 
 	component.Data.PutNonEmpty("generateName", deployment.GenerateName)
