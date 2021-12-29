@@ -3,12 +3,9 @@
 package topologycollectors
 
 import (
-	"bytes"
-	"encoding/json"
+	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/gogo/protobuf/jsonpb"
-	"github.com/gogo/protobuf/proto"
 	"k8s.io/api/apps/v1"
 )
 
@@ -50,23 +47,6 @@ func (dmc *DeploymentCollector) CollectorFunction() error {
 	return nil
 }
 
-var JsonMarshaler = jsonpb.Marshaler{
-	EnumsAsInts:  false,
-	EmitDefaults: false,
-}
-
-func marshalToData(msg proto.Message) (map[string]interface{}, error) {
-	var buf bytes.Buffer
-	if err := JsonMarshaler.Marshal(&buf, msg); err != nil {
-		return nil, err
-	}
-	var result map[string]interface{}
-	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
 func (dmc *DeploymentCollector) DeploymentToStackStateComponent(deployment v1.Deployment) *topology.Component {
 	return dmc.deploymentToStackStateComponent(deployment)
 }
@@ -77,16 +57,11 @@ func (dmc *DeploymentCollector) deploymentToStackStateComponent(deployment v1.De
 
 	tags := dmc.initTags(deployment.ObjectMeta)
 
-	sourceProperties, err := marshalToData(&deployment)
+	sourceProperties, err := marshallK8sObjectToData(&deployment)
 	if err != nil {
 		_ = log.Warnf("Can't serialize sourceProperties for Deployment %s/%s: %v", deployment.Namespace, deployment.Name, err)
-	} else {
-		if metadata, ok := sourceProperties["metadata"]; ok {
-			switch metadataMap := metadata.(type) {
-			case map[string]interface{}:
-				delete(metadataMap, "managedFields")
-			default:
-			}
+		sourceProperties = map[string]interface{}{
+			"serialization_error": fmt.Sprintf("error occurred during serialization of this object: %v", err),
 		}
 	}
 
