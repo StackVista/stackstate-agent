@@ -38,7 +38,7 @@ func TestSendConnectionsMessage(t *testing.T) {
 		assert.Equal(t, "/api/v1/collector", req.uri)
 
 		assert.Equal(t, cfg.HostName, req.headers.Get(api.HostHeader))
-		assert.Equal(t, cfg.APIEndpoints[0].APIKey, req.headers.Get("DD-Api-Key"))
+		assert.Equal(t, cfg.APIEndpoints[0].APIKey, req.headers.Get("sts-api-key"))
 
 		reqBody, err := process.DecodeMessage(req.body)
 		require.NoError(t, err)
@@ -71,7 +71,7 @@ func TestSendContainerMessage(t *testing.T) {
 		assert.Equal(t, "/api/v1/container", req.uri)
 
 		assert.Equal(t, cfg.HostName, req.headers.Get(api.HostHeader))
-		assert.Equal(t, cfg.APIEndpoints[0].APIKey, req.headers.Get("DD-Api-Key"))
+		assert.Equal(t, cfg.APIEndpoints[0].APIKey, req.headers.Get("sts-api-key"))
 		assert.Equal(t, "1", req.headers.Get(api.ContainerCountHeader))
 
 		reqBody, err := process.DecodeMessage(req.body)
@@ -102,7 +102,7 @@ func TestSendProcMessage(t *testing.T) {
 		assert.Equal(t, "/api/v1/collector", req.uri)
 
 		assert.Equal(t, cfg.HostName, req.headers.Get(api.HostHeader))
-		assert.Equal(t, cfg.APIEndpoints[0].APIKey, req.headers.Get("DD-Api-Key"))
+		assert.Equal(t, cfg.APIEndpoints[0].APIKey, req.headers.Get("sts-api-key"))
 		assert.Equal(t, "1", req.headers.Get(api.ContainerCountHeader))
 		assert.Equal(t, "1", req.headers.Get("X-DD-Agent-Attempts"))
 		assert.NotEmpty(t, req.headers.Get(api.TimestampHeader))
@@ -138,7 +138,7 @@ func TestSendProcMessageWithRetry(t *testing.T) {
 		timestamps := make(map[string]struct{})
 		for _, req := range requests {
 			assert.Equal(t, cfg.HostName, req.headers.Get(api.HostHeader))
-			assert.Equal(t, cfg.APIEndpoints[0].APIKey, req.headers.Get("DD-Api-Key"))
+			assert.Equal(t, cfg.APIEndpoints[0].APIKey, req.headers.Get("sts-api-key"))
 			assert.Equal(t, "1", req.headers.Get(api.ContainerCountHeader))
 			timestamps[req.headers.Get(api.TimestampHeader)] = struct{}{}
 
@@ -209,7 +209,7 @@ func TestSendPodMessage(t *testing.T) {
 		assert.Equal(t, "/api/v1/orchestrator", req.uri)
 
 		assert.Equal(t, cfg.HostName, req.headers.Get(api.HostHeader))
-		assert.Equal(t, cfg.OrchestratorEndpoints[0].APIKey, req.headers.Get("DD-Api-Key"))
+		assert.Equal(t, cfg.OrchestratorEndpoints[0].APIKey, req.headers.Get("sts-api-key"))
 		assert.Equal(t, "0", req.headers.Get(api.ContainerCountHeader))
 		assert.Equal(t, "1", req.headers.Get("X-DD-Agent-Attempts"))
 		assert.NotEmpty(t, req.headers.Get(api.TimestampHeader))
@@ -310,7 +310,7 @@ func TestMultipleAPIKeys(t *testing.T) {
 	runCollectorTestWithAPIKeys(t, check, cfg, &endpointConfig{}, apiKeys, orchKeys, func(cfg *config.AgentConfig, ep *mockEndpoint) {
 		for _, expectedAPIKey := range apiKeys {
 			request := <-ep.Requests
-			assert.Equal(t, expectedAPIKey, request.headers.Get("DD-Api-Key"))
+			assert.Equal(t, expectedAPIKey, request.headers.Get("sts-api-key"))
 		}
 	})
 }

@@ -264,7 +264,7 @@ func TestPayload(t *testing.T) {
 
 	t.Run("httpRequest", func(t *testing.T) {
 		assert := assert.New(t)
-		p := newPayload(map[string]string{"DD-Api-Key": testAPIKey})
+		p := newPayload(map[string]string{"sts-api-key": testAPIKey})
 		p.body = expectBody
 		url, err := url.Parse("http://localhost/my/path")
 		if err != nil {
@@ -275,7 +275,7 @@ func TestPayload(t *testing.T) {
 		assert.Equal(http.MethodPost, req.Method)
 		assert.Equal("/my/path", req.URL.Path)
 		assert.Equal("4", req.Header.Get("Content-Length"))
-		assert.Equal(testAPIKey, req.Header.Get("DD-Api-Key"))
+		assert.Equal(testAPIKey, req.Header.Get("sts-api-key"))
 		slurp, err := ioutil.ReadAll(req.Body)
 		assert.NoError(err)
 		req.Body.Close()
