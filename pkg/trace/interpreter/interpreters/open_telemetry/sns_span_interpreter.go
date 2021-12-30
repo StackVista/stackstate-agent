@@ -1,7 +1,6 @@
 package interpreters
 
 import (
-	"fmt"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
@@ -29,29 +28,24 @@ func (t *OpenTelemetrySNSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			span.Meta = map[string]string{}
 		}
 
-		span.Meta["span.kind"] = "consumer"
-
-		fmt.Println("Process SNS Span Interpreter")
-
 		// Retrieve the core information required to trace SNS
+
+		// awsService, awsServiceOk := span.Meta["aws.service.api"]
 		awsOperation, awsOperationOk := span.Meta["aws.operation"]
-		awsService, awsServiceOk := span.Meta["aws.service.api"]
 		topicArn, topicArnOk := span.Meta["aws.request.topic.arn"]
 
-		if awsServiceOk && awsOperationOk && topicArnOk {
+		if awsOperationOk && topicArnOk {
 			var urn = t.CreateServiceURN(strings.ToLower(topicArn))
 
-			span.Type = awsOperation
-			span.Service = awsService
-			span.Resource = awsService
-
-			span.Meta["sts.service.identifiers"] = strings.ToLower(topicArn)
-			span.Meta["span.serviceURN"] = urn
-			span.Meta["span.serviceName"] = awsService // TODO, Change to section in url arn:aws:sns:eu-west-1:965323806078:open-telemetry-dev-OpenTelemetrySNS
-			span.Meta["service"] = awsService
+			OpenTelemetryConsumerMappings(
+				span,
+				urn,
+				strings.ToLower(topicArn),
+				"sns",
+				OpenTelemetrySNSInterpreterSpan,
+				awsOperation,
+			)
 		}
-
-		span.Meta["span.serviceType"] = OpenTelemetrySNSInterpreterSpan
 
 		t.interpretHTTPError(span)
 	}

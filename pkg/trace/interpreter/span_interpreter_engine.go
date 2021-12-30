@@ -1,7 +1,6 @@
 package interpreter
 
 import (
-	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	"github.com/StackVista/stackstate-agent/pkg/trace/config"
 	interpreterConfig "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
@@ -47,44 +46,9 @@ func NewSpanInterpreterEngine(agentConfig *config.AgentConfig) *SpanInterpreterE
 	sourceIns[openTelemetry.OpenTelemetryS3InterpreterSpan] = openTelemetry.MakeOpenTelemetryS3Interpreter(interpreterConf)
 	sourceIns[openTelemetry.OpenTelemetryStepFunctionsInterpreterSpan] = openTelemetry.MakeOpenTelemetryStepFunctionsInterpreter(interpreterConf)
 	sourceIns[openTelemetry.OpenTelemetrySNSInterpreterSpan] = openTelemetry.MakeOpenTelemetrySNSInterpreter(interpreterConf)
+	sourceIns[openTelemetry.OpenTelemetryHTTPInterpreterSpan] = openTelemetry.MakeOpenTelemetryHTTPInterpreter(interpreterConf)
 
 	return MakeSpanInterpreterEngine(interpreterConf, typeIns, sourceIns)
-}
-
-func UpdateOpenTelemetrySpanSource(source string, span *pb.Span) string {
-	if source == "openTelemetry" {
-		switch span.Meta["instrumentation_library"] {
-		case "@opentelemetry/instrumentation-aws-lambda":
-			return "openTelemetryLambda"
-
-		case "@opentelemetry/instrumentation-aws-sdk":
-			switch span.Meta["aws.service.identifier"] {
-			case "sqs":
-				return "openTelemetrySQS"
-
-			case "lambda":
-				return "openTelemetryLambda"
-
-			case "sns":
-				return "openTelemetrySNS"
-
-			case "s3":
-				return "openTelemetryS3"
-
-			case "stepfunctions":
-				return "openTelemetryStepFunctions"
-
-			default:
-				fmt.Printf("Unknown AWS identifier for Open Telemetry: %v", span.Meta["aws.service.identifier"])
-			}
-			break
-
-		default:
-			fmt.Printf("Unknown Open Telemetry instrumentation library: %v", span.Meta["instrumentation_library"])
-		}
-	}
-
-	return source
 }
 
 // Interpret interprets the trace using the configured SpanInterpreterEngine
@@ -107,12 +71,11 @@ func (se *SpanInterpreterEngine) Interpret(origTrace pb.Trace) pb.Trace {
 			// no metadata, let's look for the span's source.
 			if err != nil {
 				if source, found := span.Meta["source"]; found {
-					// Special mapping for open telemetry, Multiple interpreters required for spans
-					if source == api.OpenTelemetrySource {
-						source = UpdateOpenTelemetrySpanSource(source, span)
-					}
+					source = openTelemetry.UpdateOpenTelemetrySpanSource(source, span)
 
-					groupedSourceSpans[source] = append(groupedSourceSpans[source], span)
+					if source != api.OpenTelemetrySource {
+						groupedSourceSpans[source] = append(groupedSourceSpans[source], span)
+					}
 				} else {
 					interpretedTrace = append(interpretedTrace, span)
 				}

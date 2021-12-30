@@ -29,40 +29,33 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			span.Meta = map[string]string{}
 		}
 
-		fmt.Println("Process SQS Span Interpreter")
-
-		span.Meta["span.kind"] = "consumer"
-
 		// Retrieve the core information required to trace SQS
+
+		// awsService, awsServiceOk := span.Meta["aws.service.api"]
 		awsRegion, awsRegionOk := span.Meta["aws.region"]
 		awsOperation, awsOperationOk := span.Meta["aws.operation"]
-		awsService, awsServiceOk := span.Meta["aws.service.api"]
 		sqsEndpoint, sqsEndpointOk := span.Meta["messaging.url"]
 		sqsQueueName, sqsQueueNameOk := span.Meta["messaging.destination"]
 
-		if sqsQueueNameOk && sqsEndpointOk &&
-			awsServiceOk && awsOperationOk && awsRegionOk {
+		if sqsQueueNameOk && sqsEndpointOk && awsOperationOk && awsRegionOk {
 			sqsEndpointPieces := strings.Split(sqsEndpoint, "/") // Example Input: https://sqs.<region>.amazonaws.com/<account-id>/<queue-name>
 
 			if len(sqsEndpointPieces) >= 3 {
 				var accountId = sqsEndpointPieces[3]
-
-				// We need to manually recreate the endpoint as it differs a bit with the stackpack one
-				span.Meta["sts.service.identifiers"] = fmt.Sprintf("https://%s.queue.amazonaws.com/%s/%s",
-					awsRegion, accountId, sqsQueueName)
-
 				var urn = t.CreateServiceURN(sqsEndpoint)
-				span.Meta["span.serviceURN"] = urn
+				var arn = strings.ToLower(
+					fmt.Sprintf("https://%s.queue.amazonaws.com/%s/%s", awsRegion, accountId, sqsQueueName))
 
-				span.Meta["span.serviceName"] = sqsQueueName
-				span.Type = awsOperation
-				span.Service = awsService
-				span.Resource = awsService
-				span.Meta["service"] = awsService
+				OpenTelemetryConsumerMappings(
+					span,
+					urn,
+					arn,
+					"sqs",
+					OpenTelemetrySQSInterpreterSpan,
+					awsOperation,
+				)
 			}
 		}
-
-		span.Meta["span.serviceType"] = OpenTelemetrySQSInterpreterSpan
 
 		t.interpretHTTPError(span)
 	}

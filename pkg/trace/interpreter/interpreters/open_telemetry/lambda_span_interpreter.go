@@ -29,12 +29,8 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 			span.Meta = map[string]string{}
 		}
 
-		fmt.Println("Process Lambda Span Interpreter")
-
-		if span.Meta["aws.operation"] == "invoke" {
-			fmt.Println("A")
-			span.Meta["span.kind"] = "consumer"
-
+		// Invoke will contain data to another Lambda function being invoked
+		if lambdaName := span.Name; span.Meta["aws.operation"] == "invoke" && lambdaName != "" {
 			var functionName = span.Meta["aws.request.function.name"]
 			var accountId = span.Meta["aws.account.id"]
 			var region = span.Meta["aws.region"]
@@ -42,31 +38,28 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 			var arn = strings.ToLower(fmt.Sprintf("arn:aws:lambda:%s:%s:function:%s", region, accountId, functionName))
 			var urn = t.CreateServiceURN(arn)
 
-			span.Meta["span.serviceURN"] = urn
-			span.Meta["sts.service.identifiers"] = arn
+			OpenTelemetryConsumerMappings(
+				span,
+				urn,
+				arn,
+				"lambda.function",
+				OpenTelemetryLambdaInterpreterSpan,
+				"invoke",
+			)
 
-		} else {
-			fmt.Println("B")
-			span.Meta["span.kind"] = "producer"
+		} else if arn, ok := span.Meta["faas.id"]; arn != "" && ok {
+			var urn = t.CreateServiceURN(strings.ToLower(arn))
+			arn = strings.ToLower(arn)
 
-			if arn, ok := span.Meta["faas.id"]; arn != "" && ok {
-				var urn = t.CreateServiceURN(strings.ToLower(arn))
-				span.Meta["span.serviceURN"] = urn
-				span.Meta["sts.service.identifiers"] = strings.ToLower(arn)
-			}
+			OpenTelemetryProducerMappings(
+				span,
+				urn,
+				arn,
+				"lambda.function",
+				OpenTelemetryLambdaInterpreterSpan,
+				"execute",
+			)
 		}
-
-		if lambdaName := span.Name; lambdaName != "" {
-			span.Meta["span.serviceName"] = lambdaName
-			span.Meta["service"] = lambdaName
-			span.Service = "Lambda"
-			span.Resource = "Lambda"
-			span.Meta["aws.service.api"] = "lambda"
-			span.Meta["aws.operation"] = "invoke"
-			span.Type = "invoke"
-		}
-
-		span.Meta["span.serviceType"] = OpenTelemetryLambdaInterpreterSpan
 
 		t.interpretHTTPError(span)
 	}

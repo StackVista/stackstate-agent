@@ -1,7 +1,6 @@
 package interpreters
 
 import (
-	"fmt"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
@@ -29,30 +28,25 @@ func (t *OpenTelemetryStepFunctionsInterpreter) Interpret(spans []*pb.Span) []*p
 			span.Meta = map[string]string{}
 		}
 
-		fmt.Println("Process Step Functions Span Interpreter")
-
-		span.Meta["span.kind"] = "consumer"
-
 		// Retrieve the core information required to trace SNS
+
+		// awsService, awsServiceOk := span.Meta["aws.service.api"]
 		awsOperation, awsOperationOk := span.Meta["aws.operation"]
-		awsService, awsServiceOk := span.Meta["aws.service.api"]
 		stateMachineArn, stateMachineArnOk := span.Meta["aws.request.state.machine.arn"]
 
-		if awsServiceOk && awsOperationOk && stateMachineArnOk {
+		if awsOperationOk && stateMachineArnOk {
 			var arn = strings.ToLower(stateMachineArn)
 			var urn = t.CreateServiceURN(arn)
 
-			span.Type = awsOperation
-			span.Service = awsService
-			span.Resource = awsService
-
-			span.Meta["sts.service.identifiers"] = arn
-			span.Meta["span.serviceURN"] = urn
-			span.Meta["span.serviceName"] = awsService
-			span.Meta["service"] = awsService
+			OpenTelemetryConsumerMappings(
+				span,
+				urn,
+				arn,
+				"step.function",
+				OpenTelemetryStepFunctionsInterpreterSpan,
+				awsOperation,
+			)
 		}
-
-		span.Meta["span.serviceType"] = OpenTelemetryStepFunctionsInterpreterSpan
 
 		t.interpretHTTPError(span)
 	}

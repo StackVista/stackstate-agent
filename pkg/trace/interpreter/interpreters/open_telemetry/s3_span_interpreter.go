@@ -29,30 +29,25 @@ func (t *OpenTelemetryS3Interpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			span.Meta = map[string]string{}
 		}
 
-		span.Meta["span.kind"] = "consumer"
-
-		fmt.Println("Process s3 Span Interpreter")
-
 		// Retrieve the core information required to trace SNS
+
+		// awsService, awsServiceOk := span.Meta["aws.service.api"]
 		awsOperation, awsOperationOk := span.Meta["aws.operation"]
-		awsService, awsServiceOk := span.Meta["aws.service.api"]
 		s3Bucket, s3BucketOk := span.Meta["aws.request.bucket"]
 
-		if awsServiceOk && awsOperationOk && s3BucketOk {
-			var arn = "arn:aws:s3:::" + strings.ToLower(s3Bucket)
+		if awsOperationOk && s3BucketOk {
+			var arn = strings.ToLower(fmt.Sprintf("arn:aws:s3:::%s", s3Bucket))
 			var urn = t.CreateServiceURN(arn)
 
-			span.Type = awsOperation
-			span.Service = awsService
-			span.Resource = awsService
-
-			span.Meta["sts.service.identifiers"] = arn
-			span.Meta["span.serviceURN"] = urn
-			span.Meta["span.serviceName"] = awsService // TODO, Change to section in url arn:aws:sns:eu-west-1:965323806078:open-telemetry-dev-OpenTelemetrySNS
-			span.Meta["service"] = awsService
+			OpenTelemetryConsumerMappings(
+				span,
+				urn,
+				arn,
+				"s3",
+				OpenTelemetryS3InterpreterSpan,
+				awsOperation,
+			)
 		}
-
-		span.Meta["span.serviceType"] = OpenTelemetryS3InterpreterSpan
 
 		t.interpretHTTPError(span)
 	}
