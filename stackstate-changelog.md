@@ -1,5 +1,31 @@
 # StackState Agent v2 releases
 
+## 2.15.0 (2021-12-20)
+
+**Features**
+
+- Raw Metrics API Endpoint
+  * Add support for Raw Metrics in line with the current v2/v3 api format. [(STAC-12434)](https://stackstate.atlassian.net/browse/STAC-12434)
+  * Convert v2/v3 api format into the v1 raw metric intake format, Allows compatibility with v1 [(STAC-12434)](https://stackstate.atlassian.net/browse/STAC-12434)
+
+**Improvement**
+- Dependencies updates:
+  - Upgraded source image for docker agent image from `debian:buster-slim` to `ubuntu:20.04`.
+  - Upgraded the python3 version to `3.8.10` from `3.8.1`.
+  - Upgraded the pip version from `20.3` to `20.3.3`.
+  - Upgraded python lib versions for below module:
+    * pyyaml - `5.3.1` to `5.4.1`
+    * requests - `2.24.0` to `2.25.0`
+    * urllib3 - `1.26.5`
+
+**Bugfix**
+- Fix relation from container to node in Openshift environments [STAC-14043](https://stackstate.atlassian.net/browse/STAC-14043)
+- JMX integration: bumps jmxfetch to disable the vulnerable features of log4j2. [STAC-15197](https://stackstate.atlassian.net/browse/STAC-15197)
+- Add identifier to kubernetes nodes and add identifier to azure vms, so they eventually merge. [STAC-14538](https://stackstate.atlassian.net/browse/STAC-14538)
+- Fix invalid example of kubernetes check configs. [STAC-14835](https://stackstate.atlassian.net/browse/STAC-14835)
+- Integrations
+  - [StackState Agent Integrations 1.17.0](https://github.com/StackVista/stackstate-agent-integrations/blob/master/stackstate-changelog.md#1170--2021-12-17)
+
 ## 2.14.0 (2021-10-21)
 
 **Features**

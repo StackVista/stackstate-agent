@@ -2,7 +2,7 @@
 
 Using our builder image clone and checkout the public repo and th <<branch>> you are interested of:
 ```bash
-$ docker run --rm -ti artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:latest7 bash
+$ docker run --rm -ti artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:latest7 bash
 
 $ export CI_PROJECT_DIR=/go/src/github.com/StackVista/stackstate-agent && \
   mkdir -p /go/src/github.com/StackVista && \
@@ -18,9 +18,9 @@ Remember to `git pull` every time you push a change.
 
 We use some private python libraries for our integrations therefore you need to configure artifactory as pypi repository:
 ```bash
-$ export ARTIFACTORY_URL=artifactory.stackstate.io/artifactory/api/pypi/pypi-local && \
-  export ARTIFACTORY_USER=... && \
-  export ARTIFACTORY_PASSWORD=... && \
+$ export ARTIFACTORY_PYPI_URL=artifactory.tooling.stackstate.io/artifactory/api/pypi/pypi-local/simple && \
+  export artifactory_user=... && \
+  export artifactory_password=... && \
   source ./.gitlab-scripts/setup_artifactory.sh
 ```
 
@@ -44,7 +44,7 @@ $ conda activate ddpy2 && \
 
 Instead of cloning the repo you could use directly your local one:
 ```bash
-$ docker run --rm -it --name stackstate-agent-builder --mount type=bind,source="${PWD}",target=/root/stackstate-agent,readonly artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:latest7 bash
+$ docker run --rm -it --name stackstate-agent-builder --mount type=bind,source="${PWD}",target=/root/stackstate-agent,readonly artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:latest7 bash
 
 $ export CI_PROJECT_DIR=/go/src/github.com/StackVista/stackstate-agent && \
   mkdir -p /go/src/github.com/StackVista && \
