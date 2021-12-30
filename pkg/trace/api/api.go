@@ -422,7 +422,7 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 	var traces = pb.Traces{}
 
 	for _, resourceSpan := range openTelemetryTraces.ResourceSpans {
-		var awsAccountId *string = nil
+		var awsAccountID *string = nil
 
 		// Attempt to extract information from the lambda library to enhance the sdk library
 		// We need the account id for sections where it is not defined for example lambda to lambda
@@ -431,8 +431,8 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 				for _, span := range library.Spans {
 					for _, attribute := range span.Attributes {
 						if attribute.Key == "cloud.account.id" {
-							var accountId = attribute.Value.GetStringValue()
-							awsAccountId = &accountId
+							var accountID = attribute.Value.GetStringValue()
+							awsAccountID = &accountID
 						}
 					}
 				}
@@ -448,8 +448,8 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 					"source":                  OpenTelemetrySource,
 				}
 
-				if awsAccountId != nil {
-					meta["aws.account.id"] = *awsAccountId
+				if awsAccountID != nil {
+					meta["aws.account.id"] = *awsAccountID
 				}
 
 				for _, attribute := range librarySpan.Attributes {
@@ -477,19 +477,19 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 					}
 				}
 
-				traceId, err := convertStringToUint64(string(librarySpan.TraceId[:]))
+				traceID, err := convertStringToUint64(string(librarySpan.TraceId[:]))
 				if err != nil {
 					_ = log.Errorf("Unable to convert %v to a uint64 version, Error received %v", librarySpan.TraceId[:], err)
 					return nil
 				}
 
-				spanId, err := convertStringToUint64(string(librarySpan.SpanId[:]))
+				spanID, err := convertStringToUint64(string(librarySpan.SpanId[:]))
 				if err != nil {
 					_ = log.Errorf("Unable to convert %v to a uint64 version, Error received %v", librarySpan.SpanId[:], err)
 					return nil
 				}
 
-				parentId, err := convertStringToUint64(string(librarySpan.ParentSpanId[:]))
+				parentID, err := convertStringToUint64(string(librarySpan.ParentSpanId[:]))
 				if err != nil {
 					_ = log.Errorf("Unable to convert %v to a uint64 version, Error received %v", librarySpan.ParentSpanId[:], err)
 					return nil
@@ -497,9 +497,9 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 
 				singleTrace = append(singleTrace, &pb.Span{
 					Name:     librarySpan.Name,
-					TraceID:  *traceId,
-					SpanID:   *spanId,
-					ParentID: *parentId,
+					TraceID:  *traceID,
+					SpanID:   *spanID,
+					ParentID: *parentID,
 					Start:    int64(librarySpan.StartTimeUnixNano),
 					Duration: int64(librarySpan.EndTimeUnixNano) - int64(librarySpan.StartTimeUnixNano),
 					Meta:     meta,

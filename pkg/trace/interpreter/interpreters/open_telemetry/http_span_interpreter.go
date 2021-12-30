@@ -20,7 +20,7 @@ func MakeOpenTelemetryHTTPInterpreter(config *config.Config) *OpenTelemetryHTTPI
 	return &OpenTelemetryHTTPInterpreter{interpreter.Interpreter{Config: config}}
 }
 
-func sanitizeUrl(url string) string {
+func sanitizeURL(url string) string {
 	urlLowerCase := strings.ToLower(url)
 	hashFiltered := strings.Split(urlLowerCase, "#")
 	queryFiltered := strings.Split(hashFiltered[0], "?")
@@ -38,11 +38,11 @@ func (t *OpenTelemetryHTTPInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 		}
 
 
-		httpUrl, httpUrlOk := span.Meta["http.url"]
+		httpURL, httpURLOk := span.Meta["http.url"]
 		httpMethod, httpMethodOk := span.Meta["http.method"]
 
-		if httpUrlOk && httpMethodOk {
-			var url = sanitizeUrl(httpUrl)
+		if httpURLOk && httpMethodOk {
+			var url = sanitizeURL(httpURL)
 			var urn = t.CreateServiceURN(url)
 
 			OpenTelemetryConsumerMappings(

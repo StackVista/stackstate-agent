@@ -41,10 +41,10 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			sqsEndpointPieces := strings.Split(sqsEndpoint, "/") // Example Input: https://sqs.<region>.amazonaws.com/<account-id>/<queue-name>
 
 			if len(sqsEndpointPieces) >= 3 {
-				var accountId = sqsEndpointPieces[3]
+				var accountID = sqsEndpointPieces[3]
 				var urn = t.CreateServiceURN(sqsEndpoint)
 				var arn = strings.ToLower(
-					fmt.Sprintf("https://%s.queue.amazonaws.com/%s/%s", awsRegion, accountId, sqsQueueName))
+					fmt.Sprintf("https://%s.queue.amazonaws.com/%s/%s", awsRegion, accountID, sqsQueueName))
 
 				OpenTelemetryConsumerMappings(
 					span,

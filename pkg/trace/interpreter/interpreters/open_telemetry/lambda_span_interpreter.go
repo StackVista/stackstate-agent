@@ -32,10 +32,10 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 		// Invoke will contain data to another Lambda function being invoked
 		if lambdaName := span.Name; span.Meta["aws.operation"] == "invoke" && lambdaName != "" {
 			var functionName = span.Meta["aws.request.function.name"]
-			var accountId = span.Meta["aws.account.id"]
+			var accountID = span.Meta["aws.account.id"]
 			var region = span.Meta["aws.region"]
 
-			var arn = strings.ToLower(fmt.Sprintf("arn:aws:lambda:%s:%s:function:%s", region, accountId, functionName))
+			var arn = strings.ToLower(fmt.Sprintf("arn:aws:lambda:%s:%s:function:%s", region, accountID, functionName))
 			var urn = t.CreateServiceURN(arn)
 
 			OpenTelemetryConsumerMappings(

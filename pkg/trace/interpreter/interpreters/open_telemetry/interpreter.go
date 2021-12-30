@@ -32,14 +32,17 @@ func openTelemetryMappings (span *pb.Span, kind string, urn string, arn string, 
 	span.Meta["sts.service.identifiers"] = arn
 }
 
+// OpenTelemetryConsumerMappings Map consumer information for Open Telemetry into a generic span structure
 func OpenTelemetryConsumerMappings (span *pb.Span, urn string, arn string, service string, serviceType string, spanType string) {
 	openTelemetryMappings(span, "consumer", urn, arn, service, serviceType, spanType)
 }
 
+// OpenTelemetryProducerMappings Map producer information for Open Telemetry into a generic span structure
 func OpenTelemetryProducerMappings (span *pb.Span, urn string, arn string, service string, serviceType string, spanType string) {
 	openTelemetryMappings(span, "producer", urn, arn, service, serviceType, spanType)
 }
 
+// UpdateOpenTelemetrySpanSource update the span source if it contains a openTelemetry instrumentation library to the correct source name
 func UpdateOpenTelemetrySpanSource(source string, span *pb.Span) string {
 	var openTelemetryPrefix = "openTelemetry"
 

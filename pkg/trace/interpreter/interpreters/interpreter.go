@@ -23,6 +23,7 @@ type TypeInterpreter interface {
 	Interpret(span *model.SpanWithMeta) *pb.Span
 }
 
+// Interpreter provides a structure for any service identifier config mappings
 type Interpreter struct {
 	Config *config.Config
 }
