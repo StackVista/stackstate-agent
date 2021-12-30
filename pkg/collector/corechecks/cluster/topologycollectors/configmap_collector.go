@@ -77,8 +77,14 @@ func (cmc *ConfigMapCollector) configMapToStackStateComponent(configMap v1.Confi
 
 func cutReplacement(dropped string) string {
 	hashing := sha256.New()
-	hashing.Write([]byte(dropped))
-	hash := hex.EncodeToString(hashing.Sum([]byte{}))[0:16]
+	_, err := hashing.Write([]byte(dropped))
+	var hash string
+	if err != nil {
+		// doubt what error could happen, but just to satisfy linter, and in case...
+		hash = fmt.Sprintf("hash error: %v", err)
+	} else {
+		hash = hex.EncodeToString(hashing.Sum([]byte{}))[0:16]
+	}
 	return fmt.Sprintf("[dropped %d chars, hashsum: %s]", len(dropped), hash)
 }
 
