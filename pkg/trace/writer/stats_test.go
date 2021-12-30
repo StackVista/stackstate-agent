@@ -54,7 +54,7 @@ func TestStatsWriter(t *testing.T) {
 			"X-Datadog-Reported-Languages": strings.Join(info.Languages(), "|"),
 			"Content-Type":                 "application/json",
 			"Content-Encoding":             "gzip",
-			"sts-Api-Key":                  "123",
+			"Dd-Api-Key":                   "123",
 		}
 		assertPayload(assert, expectedHeaders, testSets, srv.Payloads())
 	})

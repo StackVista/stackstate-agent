@@ -302,7 +302,7 @@ type retriableError struct{ err error }
 func (e retriableError) Error() string { return e.err.Error() }
 
 const (
-	headerAPIKey    = "sts-API-KEY"
+	headerAPIKey    = "DD-Api-Key"
 	headerUserAgent = "User-Agent"
 )
 

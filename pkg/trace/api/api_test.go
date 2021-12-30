@@ -409,19 +409,19 @@ func TestProto(t *testing.T) {
 				InstrumentationLibrarySpans: []*v1.InstrumentationLibrarySpans{
 					{
 						InstrumentationLibrary: &v11.InstrumentationLibrary{
-							Name: "@opentelemetry/instrumentation-aws-sdk",
+							Name:    "@opentelemetry/instrumentation-aws-sdk",
 							Version: "0.1.0",
 						},
 						Spans: []*v1.Span{
 							{
-								TraceId: []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
-								SpanId: []byte("yjXK+2eLD+s="),
-								ParentSpanId: []byte("Y3OrG+/srMM="),
-								Name: "ENTRY_A_SQS_QUEUE send",
-								Kind: 4,
+								TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
+								SpanId:            []byte("yjXK+2eLD+s="),
+								ParentSpanId:      []byte("Y3OrG+/srMM="),
+								Name:              "ENTRY_A_SQS_QUEUE send",
+								Kind:              4,
 								StartTimeUnixNano: 1637684210743088640,
-								EndTimeUnixNano: 1637684210827280128,
-								Attributes: []*v11.KeyValue {
+								EndTimeUnixNano:   1637684210827280128,
+								Attributes: []*v11.KeyValue{
 									{
 										Key: "aws.operation",
 										Value: &v11.AnyValue{
@@ -444,19 +444,19 @@ func TestProto(t *testing.T) {
 					},
 					{
 						InstrumentationLibrary: &v11.InstrumentationLibrary{
-							Name: "@opentelemetry/instrumentation-aws-lambda",
+							Name:    "@opentelemetry/instrumentation-aws-lambda",
 							Version: "0.27.0",
 						},
 						Spans: []*v1.Span{
 							{
-								TraceId: []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
-								SpanId: []byte("Y3OrG+/srMM="),
-								ParentSpanId: []byte("RK3KTmkP93g="),
-								Name: "nn-observability-stack-dev-EntryLambdaToSQS",
-								Kind: 2,
+								TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
+								SpanId:            []byte("Y3OrG+/srMM="),
+								ParentSpanId:      []byte("RK3KTmkP93g="),
+								Name:              "nn-observability-stack-dev-EntryLambdaToSQS",
+								Kind:              2,
 								StartTimeUnixNano: 1637684210732307968,
-								EndTimeUnixNano: 1637684210827808768,
-								Attributes: []*v11.KeyValue {
+								EndTimeUnixNano:   1637684210827808768,
+								Attributes: []*v11.KeyValue{
 									{
 										Key: "faas.execution",
 										Value: &v11.AnyValue{
@@ -497,8 +497,8 @@ func TestProto(t *testing.T) {
 
 	// consume the traces channel without doing anything
 	select {
-		case <- receiver.out:
-		default:
+	case <-receiver.out:
+	default:
 	}
 
 	// forge the request
@@ -519,8 +519,6 @@ func TestProto(t *testing.T) {
 	assert.True(ok)
 	assert.Equal(int64(2), ts.TracesReceived)
 	assert.Equal(int64(616), ts.TracesBytes)
-
-	assert.Equal(1, 2)
 }
 
 func TestHandleTraces(t *testing.T) {
