@@ -1,6 +1,7 @@
 package interpreters
 
 import (
+	"fmt"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
@@ -37,13 +38,12 @@ func (t *OpenTelemetryHTTPInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			span.Meta = map[string]string{}
 		}
 
-
 		httpURL, httpURLOk := span.Meta["http.url"]
 		httpMethod, httpMethodOk := span.Meta["http.method"]
 
 		if httpURLOk && httpMethodOk {
 			var url = sanitizeURL(httpURL)
-			var urn = t.CreateServiceURN(url)
+			var urn = t.CreateServiceURN(fmt.Sprintf("lambda-http-request/%s/%s", url, httpMethod))
 
 			OpenTelemetryConsumerMappings(
 				span,
