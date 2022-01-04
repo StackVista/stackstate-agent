@@ -2,12 +2,14 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 	"github.com/stretchr/testify/assert"
@@ -18,14 +20,10 @@ import (
 	"time"
 )
 
-func TestInstanceIdExtractor(t *testing.T) {
-	nodeSpecProviderID := "aws:///us-east-1b/i-024b28584ed2e6321"
-
-	instanceID := extractInstanceIDFromProviderID(coreV1.NodeSpec{ProviderID: nodeSpecProviderID})
-	assert.Equal(t, "i-024b28584ed2e6321", instanceID)
-}
-
 func TestNodeCollector(t *testing.T) {
+	mockConfig := config.Mock()
+	var testClusterName = "test-cluster-name"
+	mockConfig.Set("cluster_name", testClusterName)
 
 	componentChannel := make(chan *topology.Component)
 	defer close(componentChannel)
@@ -56,6 +54,7 @@ func TestNodeCollector(t *testing.T) {
 							"creationTimestamp": creationTime,
 							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 							"uid":               types.UID("test-node-1"),
+							"instanceId":        "test-node-1",
 							"status": NodeStatus{
 								Phase: coreV1.NodeRunning,
 								NodeInfo: coreV1.NodeSystemInfo{
@@ -65,7 +64,11 @@ func TestNodeCollector(t *testing.T) {
 								},
 								KubeletEndpoint: coreV1.DaemonEndpoint{Port: 5000},
 							},
-							"identifiers": []string{"urn:ip:/test-cluster-name:test-node-1:10.20.01.01"},
+							"identifiers": []string{
+								"urn:ip:/test-cluster-name:test-node-1:10.20.01.01",
+								"urn:host:/test-node-1",
+								"urn:host:/test-node-1-test-cluster-name",
+							},
 						},
 					}
 					assert.EqualValues(t, expectedComponent, component)
@@ -80,6 +83,15 @@ func TestNodeCollector(t *testing.T) {
 						Data:       map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
+				},
+				func() {
+					nodeIdentifier := <-nodeIdentifierCorrelationChannel
+					expectedNodeIdentifier := &NodeIdentifierCorrelation{
+						NodeName:       "test-node-1",
+						NodeIdentifier: "test-node-1",
+						NodeExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-1",
+					}
+					assert.EqualValues(t, expectedNodeIdentifier, nodeIdentifier)
 				},
 			},
 		},
@@ -97,6 +109,7 @@ func TestNodeCollector(t *testing.T) {
 							"creationTimestamp": creationTime,
 							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 							"uid":               types.UID("test-node-2"),
+							"instanceId":        "test-node-2",
 							"status": NodeStatus{
 								Phase: coreV1.NodeRunning,
 								NodeInfo: coreV1.NodeSystemInfo{
@@ -106,7 +119,12 @@ func TestNodeCollector(t *testing.T) {
 								},
 								KubeletEndpoint: coreV1.DaemonEndpoint{Port: 5000},
 							},
-							"identifiers":  []string{"urn:ip:/test-cluster-name:test-node-2:10.20.01.01", "urn:ip:/test-cluster-name:10.20.01.02"},
+							"identifiers": []string{
+								"urn:ip:/test-cluster-name:test-node-2:10.20.01.01",
+								"urn:ip:/test-cluster-name:10.20.01.02",
+								"urn:host:/test-node-2",
+								"urn:host:/test-node-2-test-cluster-name",
+							},
 							"kind":         "some-specified-kind",
 							"generateName": "some-specified-generation",
 						},
@@ -123,6 +141,15 @@ func TestNodeCollector(t *testing.T) {
 						Data:       map[string]interface{}{},
 					}
 					assert.EqualValues(t, expectedRelation, relation)
+				},
+				func() {
+					nodeIdentifier := <-nodeIdentifierCorrelationChannel
+					expectedNodeIdentifier := &NodeIdentifierCorrelation{
+						NodeName:       "test-node-2",
+						NodeIdentifier: "test-node-2",
+						NodeExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-2",
+					}
+					assert.EqualValues(t, expectedNodeIdentifier, nodeIdentifier)
 				},
 			},
 		},
@@ -148,9 +175,14 @@ func TestNodeCollector(t *testing.T) {
 								},
 								KubeletEndpoint: coreV1.DaemonEndpoint{Port: 5000},
 							},
-							"identifiers": []string{"urn:ip:/test-cluster-name:test-node-3:10.20.01.01", "urn:ip:/test-cluster-name:10.20.01.02",
-								"urn:host:/test-cluster-name:cluster.internal.dns.test-node-3", "urn:host:/my-organization.test-node-3",
-								"urn:host:/i-024b28584ed2e6321"},
+							"identifiers": []string{
+								"urn:ip:/test-cluster-name:test-node-3:10.20.01.01",
+								"urn:ip:/test-cluster-name:10.20.01.02",
+								"urn:host:/test-cluster-name:cluster.internal.dns.test-node-3",
+								"urn:host:/my-organization.test-node-3",
+								"urn:host:/i-024b28584ed2e6321",
+								"urn:host:/i-024b28584ed2e6321-test-cluster-name",
+							},
 							"kind":         "some-specified-kind",
 							"generateName": "some-specified-generation",
 							"instanceId":   "i-024b28584ed2e6321",
@@ -175,6 +207,7 @@ func TestNodeCollector(t *testing.T) {
 					expectedNodeIdentifier := &NodeIdentifierCorrelation{
 						NodeName:       "test-node-3",
 						NodeIdentifier: "i-024b28584ed2e6321",
+						NodeExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-3",
 					}
 					assert.EqualValues(t, expectedNodeIdentifier, nodeIdentifier)
 				},
@@ -189,68 +222,67 @@ func TestNodeCollector(t *testing.T) {
 	}
 }
 
+func CreateBaseNode(id int) coreV1.Node {
+	return coreV1.Node{
+		TypeMeta: v1.TypeMeta{
+			Kind: "",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:              fmt.Sprintf("test-node-%d", id),
+			CreationTimestamp: creationTime,
+			Namespace:         "test-namespace",
+			Labels: map[string]string{
+				"test": "label",
+			},
+			UID:          types.UID(fmt.Sprintf("test-node-%d", id)),
+			GenerateName: "",
+			ClusterName:  "mycluster",
+		},
+		Status: coreV1.NodeStatus{
+			Phase: coreV1.NodeRunning,
+			NodeInfo: coreV1.NodeSystemInfo{
+				MachineID:     fmt.Sprintf("test-machine-id-%d", id),
+				KernelVersion: "4.19.0",
+				Architecture:  "x86_64",
+			},
+			DaemonEndpoints: coreV1.NodeDaemonEndpoints{KubeletEndpoint: coreV1.DaemonEndpoint{Port: 5000}},
+		},
+	}
+}
+
 type MockNodeAPICollectorClient struct {
 	apiserver.APICollectorClient
 }
 
 func (m MockNodeAPICollectorClient) GetNodes() ([]coreV1.Node, error) {
 	nodes := make([]coreV1.Node, 0)
-	for i := 1; i <= 3; i++ {
-		node := coreV1.Node{
-			TypeMeta: v1.TypeMeta{
-				Kind: "",
-			},
-			ObjectMeta: v1.ObjectMeta{
-				Name:              fmt.Sprintf("test-node-%d", i),
-				CreationTimestamp: creationTime,
-				Namespace:         "test-namespace",
-				Labels: map[string]string{
-					"test": "label",
-				},
-				UID:          types.UID(fmt.Sprintf("test-node-%d", i)),
-				GenerateName: "",
-			},
-			Status: coreV1.NodeStatus{
-				Phase: coreV1.NodeRunning,
-				NodeInfo: coreV1.NodeSystemInfo{
-					MachineID:     fmt.Sprintf("test-machine-id-%d", i),
-					KernelVersion: "4.19.0",
-					Architecture:  "x86_64",
-				},
-				DaemonEndpoints: coreV1.NodeDaemonEndpoints{KubeletEndpoint: coreV1.DaemonEndpoint{Port: 5000}},
-			},
-		}
 
-		if i == 1 {
-			node.Status.Addresses = []coreV1.NodeAddress{
-				{Type: coreV1.NodeInternalIP, Address: "10.20.01.01"},
-			}
-		}
-
-		if i == 2 {
-			node.TypeMeta.Kind = "some-specified-kind"
-			node.ObjectMeta.GenerateName = "some-specified-generation"
-
-			node.Status.Addresses = []coreV1.NodeAddress{
-				{Type: coreV1.NodeInternalIP, Address: "10.20.01.01"},
-				{Type: coreV1.NodeExternalIP, Address: "10.20.01.02"},
-			}
-		}
-
-		if i == 3 {
-			node.TypeMeta.Kind = "some-specified-kind"
-			node.ObjectMeta.GenerateName = "some-specified-generation"
-			node.Spec.ProviderID = "aws:///us-east-1b/i-024b28584ed2e6321"
-			node.Status.Addresses = []coreV1.NodeAddress{
-				{Type: coreV1.NodeInternalIP, Address: "10.20.01.01"},
-				{Type: coreV1.NodeExternalIP, Address: "10.20.01.02"},
-				{Type: coreV1.NodeInternalDNS, Address: "cluster.internal.dns.test-node-3"},
-				{Type: coreV1.NodeExternalDNS, Address: "my-organization.test-node-3"},
-			}
-		}
-
-		nodes = append(nodes, node)
+	node1 := CreateBaseNode(1)
+	node1.Status.Addresses = []coreV1.NodeAddress{
+		{Type: coreV1.NodeInternalIP, Address: "10.20.01.01"},
 	}
+	nodes = append(nodes, node1)
+
+	node2 := CreateBaseNode(2)
+	node2.TypeMeta.Kind = "some-specified-kind"
+	node2.ObjectMeta.GenerateName = "some-specified-generation"
+	node2.Status.Addresses = []coreV1.NodeAddress{
+		{Type: coreV1.NodeInternalIP, Address: "10.20.01.01"},
+		{Type: coreV1.NodeExternalIP, Address: "10.20.01.02"},
+	}
+	nodes = append(nodes, node2)
+
+	node3 := CreateBaseNode(3)
+	node3.TypeMeta.Kind = "some-specified-kind"
+	node3.ObjectMeta.GenerateName = "some-specified-generation"
+	node3.Spec.ProviderID = "aws:///us-east-1b/i-024b28584ed2e6321"
+	node3.Status.Addresses = []coreV1.NodeAddress{
+		{Type: coreV1.NodeInternalIP, Address: "10.20.01.01"},
+		{Type: coreV1.NodeExternalIP, Address: "10.20.01.02"},
+		{Type: coreV1.NodeInternalDNS, Address: "cluster.internal.dns.test-node-3"},
+		{Type: coreV1.NodeExternalDNS, Address: "my-organization.test-node-3"},
+	}
+	nodes = append(nodes, node3)
 
 	return nodes, nil
 }

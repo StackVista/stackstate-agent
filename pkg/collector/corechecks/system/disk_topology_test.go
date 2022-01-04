@@ -25,6 +25,7 @@ func TestMakeTopologyCollector(t *testing.T) {
 func TestDiskTopologyCollector_createComponent(t *testing.T) {
 	dtc := MakeTopologyCollector()
 	testHostname := "test-hostname"
+	testIdentifiers := []string{"urn:azure:/subscriptions/bla/bla/bla/virtualMachine/bla"}
 	partitions := []disk.PartitionStat{
 		{
 			Device: "abcd",
@@ -45,12 +46,13 @@ func TestDiskTopologyCollector_createComponent(t *testing.T) {
 			Device: "abcd",
 		},
 	}
-	diskComponent := dtc.createDiskComponent(testHostname, partitions)
+	diskComponent := dtc.createDiskComponent(testHostname, testIdentifiers, partitions)
 	assert.Equal(t, fmt.Sprintf("urn:host:/%s", testHostname), diskComponent.ExternalID)
 	assert.Equal(t, topology.Type{Name: "host"}, diskComponent.Type)
 	expectedData := topology.Data{
-		"host":    testHostname,
-		"devices": []string{"abcd", "1234", "ecdf", "my/device/path"},
+		"host":        testHostname,
+		"identifiers": testIdentifiers,
+		"devices":     []string{"abcd", "1234", "ecdf", "my/device/path"},
 	}
 	assert.Equal(t, expectedData, diskComponent.Data)
 }
@@ -102,8 +104,9 @@ func TestDiskTopologyCollector_BuildTopology(t *testing.T) {
 							Name: "host",
 						},
 						Data: topology.Data{
-							"host":    testHostname,
-							"devices": []string{"abcd", "1234", "ecdf", "my/device/path"},
+							"host":        testHostname,
+							"devices":     []string{"abcd", "1234", "ecdf", "my/device/path"},
+							"identifiers": []string{},
 						},
 					},
 				},

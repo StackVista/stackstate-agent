@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
+//go:build !windows
 // +build !windows
 
 package system
@@ -155,8 +156,9 @@ func TestDiskCheck(t *testing.T) {
 							Name: "host",
 						},
 						Data: topology.Data{
-							"host":    testHostname,
-							"devices": []string{"/dev/sda2", "/dev/sda1"},
+							"host":        testHostname,
+							"devices":     []string{"/dev/sda2", "/dev/sda1"},
+							"identifiers": []string{},
 						},
 					},
 				},

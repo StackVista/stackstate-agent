@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package system
@@ -34,14 +35,14 @@ func (dtc *DiskTopologyCollector) BuildTopology(partitions []disk.PartitionStat)
 	sender := batcher.GetBatcher()
 
 	// try to get the agent hostname to use in the host component
-	hostname, err := util.GetHostname()
+	hostnameData, err := util.GetHostnameData()
 	if err != nil {
 		log.Warnf("Can't get hostname for host running the disk integration, not reporting a host: %s", err)
 		return err
 	}
 
 	// produce a host component with all the disk devices as metadata
-	diskComponent := dtc.createDiskComponent(hostname, partitions)
+	diskComponent := dtc.createDiskComponent(hostnameData.Hostname, hostnameData.Identifiers, partitions)
 	sender.SubmitComponent(dtc.CheckID, dtc.TopologyInstance, diskComponent)
 
 	sender.SubmitComplete(dtc.CheckID)
@@ -50,7 +51,7 @@ func (dtc *DiskTopologyCollector) BuildTopology(partitions []disk.PartitionStat)
 }
 
 // createDiskComponent creates a topology.Component given a hostname and disk partitions
-func (dtc *DiskTopologyCollector) createDiskComponent(hostname string, partitions []disk.PartitionStat) topology.Component {
+func (dtc *DiskTopologyCollector) createDiskComponent(hostname string, identifiers []string, partitions []disk.PartitionStat) topology.Component {
 	deviceMap := make(map[string]bool, 0)
 	hostDevices := make([]string, 0)
 	for _, part := range partitions {
@@ -65,8 +66,9 @@ func (dtc *DiskTopologyCollector) createDiskComponent(hostname string, partition
 		ExternalID: fmt.Sprintf("urn:host:/%s", hostname),
 		Type:       topology.Type{Name: "host"},
 		Data: topology.Data{
-			"host":    hostname,
-			"devices": hostDevices,
+			"host":        hostname,
+			"identifiers": identifiers,
+			"devices":     hostDevices,
 		},
 	}
 }
