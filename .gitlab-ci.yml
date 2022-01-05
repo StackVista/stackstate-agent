@@ -31,6 +31,7 @@ stages:
 
 # You can also reduce the costs by running no molecule tests
 #   - "<commit message> [molecule-none]"
+# test commit 
 
 variables: &commonvariables
   # The SRC_PATH is in the GOPATH of the builders which
