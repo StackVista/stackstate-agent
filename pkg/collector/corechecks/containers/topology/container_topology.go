@@ -132,5 +132,5 @@ func (ctc *ContainerTopologyCollector) buildProcessAgentContainerIdentifier(cont
 	if ctc.Hostname == "" {
 		return "", fmt.Errorf("no hostname found, it's not possible to build the process-agent identifier")
 	}
-	return fmt.Sprintf("urn:%s/%s:%s", containerType, ctc.Hostname, containerID), nil
+	return fmt.Sprintf("urn:%s:/%s:%s", containerType, ctc.Hostname, containerID), nil
 }
