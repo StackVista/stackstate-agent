@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package kubeapi
@@ -19,10 +20,8 @@ const (
 	Kubernetes ClusterType = "kubernetes"
 	// OpenShift cluster type
 	OpenShift = "openshift"
-)
 
-const (
-	DefaultConfigMapDataLimit = 100 * 1024
+	DefaultConfigMapDataSizeLimit = 100 * 1024
 )
 
 // TopologyConfig is the config of the API server.
@@ -42,7 +41,7 @@ func (c *TopologyConfig) parse(data []byte) error {
 	c.CollectTimeout = config.Datadog.GetInt("collect_kubernetes_timeout")
 	c.ConfigMapMaxDataSize = config.Datadog.GetSizeInBytes("configmap_max_datasize")
 	if c.ConfigMapMaxDataSize == 0 {
-		c.ConfigMapMaxDataSize = DefaultConfigMapDataLimit
+		c.ConfigMapMaxDataSize = DefaultConfigMapDataSizeLimit
 	}
 
 	return yaml.Unmarshal(data, c)
