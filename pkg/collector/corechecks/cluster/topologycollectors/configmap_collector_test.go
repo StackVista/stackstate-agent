@@ -158,7 +158,3 @@ func TestCutDataProportionally2(t *testing.T) {
 		"b": "BBBBBBBBBBBBBBB[dropped 7 chars, hashsum: f4205e933dd99030]",
 	}, result)
 }
-
-func strippedString(char string, originalLength int, newLength int) string {
-	return strings.Repeat(char, newLength) + cutReplacement(strings.Repeat(char, originalLength-newLength))
-}
