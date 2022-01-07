@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -9,7 +10,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
-	"math"
 )
 
 // ConfigMapCollector implements the ClusterTopologyCollector interface.
@@ -90,39 +90,20 @@ func cutReplacement(dropped string) string {
 
 // cutData tries to reduce `data` size
 // it replaces values within the map completely or partially with `[dropped N, hash...]` string
-// it's intended to strip some big files out of configmap,
-// and on scale of hundred of KiB it's precise enough: it doesn't take into account replacement string
-// Algorithm:
-// 1. remove values that are on their own are bigger than limit
-// 2. proportionally cut the rest of the values
+// cut limit is defined as maxSize divided by entries count in data. So every entry is limited to maxSize/len(data) bytes
 func cutData(data map[string]string, maxSize int) map[string]string {
-	if maxSize == 0 {
+	keyCount := len(data)
+	if maxSize == 0 || keyCount == 0 {
 		return data
 	}
+	maxPerKey := maxSize / keyCount
 	newData := make(map[string]string, len(data))
-	toEquallyReduce := make([]string, 0, len(data))
-	restSize := 0
 	for k, v := range data {
-		vSize := len(v)
-		// immediately remove values that are themselves bigger than limit
-		if vSize > maxSize {
-			newData[k] = cutReplacement(v)
+		valueSize := len(v)
+		if valueSize > maxPerKey {
+			newData[k] = v[0:maxPerKey] + cutReplacement(v[maxPerKey:])
 		} else {
-			toEquallyReduce = append(toEquallyReduce, k)
-			restSize += vSize
-		}
-	}
-
-	if restSize > maxSize {
-		ratio := float64(maxSize) / float64(restSize)
-		for _, k := range toEquallyReduce {
-			v := data[k]
-			leaveSize := int(math.Floor(ratio * float64(len(v))))
-			newData[k] = v[0:leaveSize] + cutReplacement(v[leaveSize:])
-		}
-	} else {
-		for _, k := range toEquallyReduce {
-			newData[k] = data[k]
+			newData[k] = v
 		}
 	}
 	return newData
