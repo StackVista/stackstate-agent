@@ -6,7 +6,8 @@ RUN apt-get update && \
 
 COPY requirements.txt .
 # TODO upgrade to aws cli v2 !?
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt && \
+    rm requirements.txt
 
 ARG TERRAFORM_V=1.0.11
 RUN curl -O "https://releases.hashicorp.com/terraform/${TERRAFORM_V}/terraform_${TERRAFORM_V}_linux_amd64.zip" && \
@@ -54,4 +55,4 @@ ARG DOCKER_V=20.10.9
 RUN curl -O https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_V}.tgz && \
     tar xvzf docker-${DOCKER_V}.tgz && \
     mv ./docker/docker /usr/local/bin/ && \
-    rm -r docker
+    rm -r docker-${DOCKER_V}.tgz docker

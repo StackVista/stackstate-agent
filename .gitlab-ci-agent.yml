@@ -674,28 +674,20 @@ pre_release_cluster_agent_image:
 
 # Core Structure for all the beest steps
 .beest: &beest
-  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
-  services:
-    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
-      alias: docker
+  image: stackstate/stackstate-agent-2-test:beest-keeper-base-20220108
   interruptible: true
   dependencies: []
   before_script:
-    - apk add make git bash
-    # Multi-line command
-    - echo -e
-      "export PATH=\$PWD:\$PATH\n
-       export AWS_DEFAULT_REGION=eu-west-1\n
-       export AWS_ACCESS_KEY_ID=${MOLECULE_AWS_ACCESS_KEY_ID}\n
-       export AWS_SECRET_ACCESS_KEY=${MOLECULE_AWS_SECRET_ACCESS_KEY}\n
-       export quay_user=${quay_user}\n
-       export quay_password=${quay_password}" >> $CI_PROJECT_DIR/beest/.envrc
-    - cat $CI_PROJECT_DIR/beest/.envrc
-
-.beest_variables: &beest_variables
-  DOCKER_DRIVER: overlay
-  DOCKER_HOST: tcp://docker:2375
-  DOCKER_TLS_CERTDIR: ""
+    - mkdir /go/src/app
+    - cp -R $CI_PROJECT_DIR/beest/* /go/src/app
+    - cd /go/src/app
+    - go build .
+    - export AWS_ACCESS_KEY_ID=${MOLECULE_AWS_ACCESS_KEY_ID}
+    - export AWS_SECRET_ACCESS_KEY=${MOLECULE_AWS_SECRET_ACCESS_KEY}
+    - export PATH=/go/src/app:${PATH}
+    - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
+    - export STACKSTATE_BRANCH=4.5.1
+    - env
 
 # Base artifacts for create and test steps
 .beest_artifacts: &beest_artifacts
@@ -713,8 +705,13 @@ pre_release_cluster_agent_image:
   <<: *beest_artifacts
   stage: prepare
   script:
-    - cd $CI_PROJECT_DIR/beest
-    - action="create $BEEST_SCENARIO -y" make
+    - ls -la /root/.kube/* || true
+    - cd /go/src/app
+    - beest create $BEEST_SCENARIO -y
+    - cat /root/.kube/*
+    - ansible -c local -i localhost, -m setup localhost
+    - ansible -c local -i localhost, -m kubernetes.core.k8s -a "name=beest api_version=v1 kind=Namespace state=present" localhost
+    - ansible -c local -i localhost, -m kubernetes.core.k8s -a "name=beest api_version=v1 kind=Namespace state=present kubeconfig=/root/.kube/config" localhost
 
 # Primary test steps for all the beest builds
 .beest_test: &beest_test
@@ -722,15 +719,15 @@ pre_release_cluster_agent_image:
   stage: acceptance
   timeout: 80 minutes
   script:
-    - cd $CI_PROJECT_DIR/beest
-    - action="test $BEEST_SCENARIO" make
+    - cd /go/src/app
+    - beest test $BEEST_SCENARIO
 
 # Primary destroy steps for all the beest builds
 .beest_destroy: &beest_destroy
   stage: cleanup
   script:
-    - cd $CI_PROJECT_DIR/beest
-    - action="destroy $BEEST_SCENARIO -y" make
+    - cd /go/src/app
+#    - beest destroy $BEEST_SCENARIO -y #TODO
 
 
 # Job Seq: Molecule
@@ -859,7 +856,6 @@ molecule_integrations_success_cleanup:
 
 .beest_kubernetes_variables: &beest_kubernetes_variables
   variables:
-    <<: *beest_variables
     BEEST_SCENARIO: dockerd-eks
     BEEST_TEST_GROUP: k8s
 

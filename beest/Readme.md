@@ -24,5 +24,6 @@ Make a copy of envrc.example and replace the `TBD` values with your secrets:
 
 Start the keeper from which to run tests:
 
-    make start
+    make
+    $ beest [tab][tab]
     $ beest test <scenario>
