@@ -1,4 +1,4 @@
-//EKS Master Cluster Security Group
+  //EKS Master Cluster Security Group
 
 //This security group controls networking access to the Kubernetes masters.
 //Needs to be configured also with an ingress rule to allow traffic from the worker nodes.
@@ -13,6 +13,9 @@ resource "aws_security_group" "eks_control_plane_sg" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+  tags = {
+    "Name" = "${var.environment}-control-plane-sg"
   }
 }
 

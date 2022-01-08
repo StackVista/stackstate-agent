@@ -15,7 +15,7 @@ var destroyCmd = &cobra.Command{
 
 		create := step.Create(scenario.Yard.path())
 		destroy := step.Destroy(create)
-		doDestroy(destroy, true)
+		doDestroy(destroy, !assumeYes)
 	},
 }
 
@@ -25,4 +25,6 @@ func doDestroy(destroy *step.DestroyStep, prompt bool) {
 
 func init() {
 	rootCmd.AddCommand(destroyCmd)
+
+	destroyCmd.Flags().BoolVarP(&assumeYes, AssumeYesFlag, AssumeYesShortFlag, false, "automatic yes to prompts")
 }

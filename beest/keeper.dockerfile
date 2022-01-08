@@ -1,4 +1,4 @@
-FROM stackstate/stackstate-agent-2-test:beest-keeper-base
+FROM stackstate/stackstate-agent-2-test:beest-keeper-base-20220108
 
 ARG UID
 ARG GID

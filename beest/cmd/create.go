@@ -14,7 +14,7 @@ var createCmd = &cobra.Command{
 		scenario = choseScenario(args[0])
 
 		create := step.Create(scenario.Yard.path())
-		doCreate(create, true)
+		doCreate(create, !assumeYes)
 	},
 }
 
@@ -24,4 +24,6 @@ func doCreate(create *step.CreationStep, prompt bool) {
 
 func init() {
 	rootCmd.AddCommand(createCmd)
+
+	createCmd.Flags().BoolVarP(&assumeYes, AssumeYesFlag, AssumeYesShortFlag, false, "automatic yes to prompts")
 }

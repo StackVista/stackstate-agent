@@ -11,9 +11,6 @@ func (yard *Yard) WorkingDir() string {
 ///
 
 type CreationStep struct {
-	//Module   *tfconfig.Module
-	//tf       *tfexec.Terraform
-	//planPath string
 	Yard
 }
 

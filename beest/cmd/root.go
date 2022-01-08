@@ -11,15 +11,19 @@ import (
 const (
 	ScenariosPath = "./scenarios.yml"
 
-	YardIdFlag = "yard-id"
-
 	AgentCurrentBranchEnvVar = "AGENT_CURRENT_BRANCH"
+
+	YardIdFlag         = "yard-id"
+	AssumeYesFlag      = "assume-yes"
+	AssumeYesShortFlag = "y"
 )
 
 var (
-	agentCurrentBranch string
 	cfgFile            string
-	yardId             string
+	agentCurrentBranch string
+
+	yardId    string
+	assumeYes bool
 
 	scenario *Scenario
 )
