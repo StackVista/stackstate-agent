@@ -88,7 +88,7 @@ func TestBuildContainerTopology(t *testing.T) {
 						Options:     nil,
 					},
 				},
-				"identifiers": []string{"urn:container/host:containerId1"},
+				"identifiers": []string{"urn:container:/host:containerId1"},
 			},
 		},
 		{
@@ -116,7 +116,7 @@ func TestBuildContainerTopology(t *testing.T) {
 				"name":        "container2",
 				"state":       "running",
 				"type":        "runtime",
-				"identifiers": []string{"urn:container/host:containerId2"},
+				"identifiers": []string{"urn:container:/host:containerId2"},
 			},
 		},
 	}, components)
