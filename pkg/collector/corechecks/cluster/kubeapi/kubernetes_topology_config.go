@@ -29,7 +29,7 @@ type TopologyConfig struct {
 	ClusterName          string `yaml:"cluster_name"`
 	CollectTopology      bool   `yaml:"collect_topology"`
 	CollectTimeout       int    `yaml:"collect_timeout"`
-	ConfigMapMaxDataSize uint   `yaml:"configmap_max_datasize"`
+	ConfigMapMaxDataSize int    `yaml:"configmap_max_datasize"`
 	CheckID              check.ID
 	Instance             topology.Instance
 }
@@ -39,7 +39,7 @@ func (c *TopologyConfig) parse(data []byte) error {
 	c.ClusterName = config.Datadog.GetString("cluster_name")
 	c.CollectTopology = config.Datadog.GetBool("collect_kubernetes_topology")
 	c.CollectTimeout = config.Datadog.GetInt("collect_kubernetes_timeout")
-	c.ConfigMapMaxDataSize = config.Datadog.GetSizeInBytes("configmap_max_datasize")
+	c.ConfigMapMaxDataSize = config.Datadog.GetInt("configmap_max_datasize")
 	if c.ConfigMapMaxDataSize == 0 {
 		c.ConfigMapMaxDataSize = DefaultConfigMapDataSizeLimit
 	}
