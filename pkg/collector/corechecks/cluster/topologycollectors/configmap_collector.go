@@ -16,11 +16,11 @@ import (
 type ConfigMapCollector struct {
 	ComponentChan chan<- *topology.Component
 	ClusterTopologyCollector
-	maxDataSize uint
+	maxDataSize int
 }
 
 // NewConfigMapCollector
-func NewConfigMapCollector(componentChannel chan<- *topology.Component, clusterTopologyCollector ClusterTopologyCollector, maxDataSize uint) ClusterTopologyCollector {
+func NewConfigMapCollector(componentChannel chan<- *topology.Component, clusterTopologyCollector ClusterTopologyCollector, maxDataSize int) ClusterTopologyCollector {
 	log.Infof("Initialized ConfigMap collector with %d size limit for configmap data", maxDataSize)
 
 	return &ConfigMapCollector{
