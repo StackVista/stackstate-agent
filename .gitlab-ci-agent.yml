@@ -687,7 +687,6 @@ pre_release_cluster_agent_image:
     - export PATH=/go/src/app:${PATH}
     - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
     - export STACKSTATE_BRANCH=4.5.1
-    - env
 
 # Base artifacts for create and test steps
 .beest_artifacts: &beest_artifacts
@@ -705,13 +704,11 @@ pre_release_cluster_agent_image:
   <<: *beest_artifacts
   stage: prepare
   script:
-    - ls -la /root/.kube/* || true
     - cd /go/src/app
     - beest create $BEEST_SCENARIO -y
-    - cat /root/.kube/*
+    - ls -al /var/run/secrets/kubernetes.io/serviceaccount/ || true
     - ansible -c local -i localhost, -m setup localhost
-    - ansible -c local -i localhost, -m kubernetes.core.k8s -a "name=beest api_version=v1 kind=Namespace state=present" localhost
-    - ansible -c local -i localhost, -m kubernetes.core.k8s -a "name=beest api_version=v1 kind=Namespace state=present kubeconfig=/root/.kube/config" localhost
+    - ansible -c local -i localhost, -m kubernetes.core.k8s -a "name=beest api_version=v1 kind=Namespace state=present context=aws-beest-dockerd-eks-beest" localhost
 
 # Primary test steps for all the beest builds
 .beest_test: &beest_test
