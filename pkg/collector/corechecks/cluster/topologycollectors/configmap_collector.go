@@ -70,7 +70,7 @@ func (cmc *ConfigMapCollector) configMapToStackStateComponent(configMap v1.Confi
 
 	component.Data.PutNonEmpty("generateName", configMap.GenerateName)
 	component.Data.PutNonEmpty("kind", configMap.Kind)
-	component.Data.PutNonEmpty("data", cutData(configMap.Data, int(cmc.maxDataSize)))
+	component.Data.PutNonEmpty("data", cutData(configMap.Data, cmc.maxDataSize))
 
 	log.Tracef("Created StackState ConfigMap component %s: %v", configMapExternalID, component.JSONString())
 
