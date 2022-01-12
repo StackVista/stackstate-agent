@@ -17,6 +17,7 @@ const (
 
 type TerraformContext interface {
 	WorkingDir() string
+	Variables() map[string]interface{}
 }
 
 type TerraformState struct {
@@ -25,20 +26,20 @@ type TerraformState struct {
 	planPath string
 }
 
-func TerraformApply(ctx TerraformContext, vars map[string]interface{}, prompt bool) {
-	apply(ctx, false, vars, prompt)
+func TerraformApply(ctx TerraformContext, prompt bool) {
+	apply(ctx, false, prompt)
 }
 
-func TerraformDestroy(ctx TerraformContext, vars map[string]interface{}, prompt bool) {
-	apply(ctx, true, vars, prompt)
+func TerraformDestroy(ctx TerraformContext, prompt bool) {
+	apply(ctx, true, prompt)
 }
 
-func apply(ctx TerraformContext, destroy bool, vars map[string]interface{}, prompt bool) {
+func apply(ctx TerraformContext, destroy bool, prompt bool) {
 	state := newTerraform(ctx)
 	state.init()
 	state.validate()
-	log.Println(fmt.Sprintf("Variables: %v", vars))
-	if state.plan(vars, destroy) {
+	log.Println(fmt.Sprintf("Variables: %v", ctx.Variables()))
+	if state.plan(ctx.Variables(), destroy) {
 		state.apply(prompt)
 	} else {
 		log.Println("No Terraform changes detected.")

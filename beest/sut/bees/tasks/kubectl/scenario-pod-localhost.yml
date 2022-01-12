@@ -1,6 +1,6 @@
 ---
 - name: Apply the pod-localhost scenario
-  command: kubectl -n={{ namespace }} apply -f pod-localhost.yaml
+  command: kubectl --context={{ kubecontext }} -n={{ namespace }} apply -f pod-localhost.yaml
   args:
     chdir: "{{ ansibleTasksDir }}/kubectl/test_connections"
   environment:

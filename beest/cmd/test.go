@@ -3,6 +3,7 @@ package cmd
 import (
 	"beest/cmd/step"
 	"github.com/spf13/cobra"
+	"log"
 )
 
 const (
@@ -22,7 +23,7 @@ var testCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		scenario = choseScenario(args[0])
 
-		create := step.Create(scenario.Yard.path())
+		create := step.Create(scenario.Yard.path(), scenario.mergeVars(commonVariables()))
 		doCreate(create, false)
 		prepare := step.Prepare(create)
 		cleanup := step.Cleanup(prepare)
@@ -38,6 +39,8 @@ var testCmd = &cobra.Command{
 		if !noDestroy {
 			destroy := step.Destroy(create)
 			doDestroy(destroy, false)
+		} else {
+			log.Println("The yard won't be destroyed")
 		}
 	},
 }

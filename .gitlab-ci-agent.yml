@@ -672,6 +672,7 @@ pre_release_cluster_agent_image:
     - cd $CI_PROJECT_DIR/test
     - ./molecule3.sh $MOLECULE_SCENARIO destroy
 
+
 # Core Structure for all the beest steps
 .beest: &beest
   image: stackstate/stackstate-agent-2-test:beest-keeper-base-20220108
@@ -695,8 +696,6 @@ pre_release_cluster_agent_image:
     paths:
       - $CI_PROJECT_DIR/beest/tests/$BEEST_TEST_GROUP/topic-*.json
       - $CI_PROJECT_DIR/beest/tests/$BEEST_TEST_GROUP/*.log
-      - $CI_PROJECT_DIR/.cache
-      - $MOLECULE_EPHEMERAL_DIRECTORY
     expire_in: 1 week
 
 # Primary create steps for all the beest builds
@@ -704,11 +703,7 @@ pre_release_cluster_agent_image:
   <<: *beest_artifacts
   stage: prepare
   script:
-    - cd /go/src/app
     - beest create $BEEST_SCENARIO -y
-    - ls -al /var/run/secrets/kubernetes.io/serviceaccount/ || true
-    - ansible -c local -i localhost, -m setup localhost
-    - ansible -c local -i localhost, -m kubernetes.core.k8s -a "name=beest api_version=v1 kind=Namespace state=present context=aws-beest-dockerd-eks-beest" localhost
 
 # Primary test steps for all the beest builds
 .beest_test: &beest_test
@@ -716,15 +711,13 @@ pre_release_cluster_agent_image:
   stage: acceptance
   timeout: 80 minutes
   script:
-    - cd /go/src/app
     - beest test $BEEST_SCENARIO
 
 # Primary destroy steps for all the beest builds
 .beest_destroy: &beest_destroy
   stage: cleanup
   script:
-    - cd /go/src/app
-#    - beest destroy $BEEST_SCENARIO -y #TODO
+    - beest destroy $BEEST_SCENARIO -y
 
 
 # Job Seq: Molecule
@@ -869,7 +862,6 @@ beest_kubernetes_test:
   <<: *beest
   <<: *beest_test
   <<: *beest_kubernetes_variables
-  resource_group: $MOLECULE_K8S_CLUSTER
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent

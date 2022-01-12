@@ -36,9 +36,10 @@ clusters:
 contexts:
 - context:
     cluster: kubernetes
+    namespace: default
     user: aws
-  name: aws-${var.environment}
-current-context: aws-${var.environment}
+  name: ${var.environment}
+current-context: ${var.environment}
 kind: Config
 preferences: {}
 users:

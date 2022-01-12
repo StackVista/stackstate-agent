@@ -18,10 +18,13 @@ type ConnectionContext interface {
 type AnsibleContext interface {
 	ConnectionContext
 	Playbook() string
+	Variables() map[string]interface{}
 }
 
-func AnsiblePlay(ctx AnsibleContext, vars map[string]interface{}) {
-	vars["ansibleTasksDir"] = sut.AnsibleTasksPath()
+func AnsiblePlay(ctx AnsibleContext) {
+	vars := map[string]interface{}{
+		"ansibleTasksDir": sut.AnsibleTasksPath(),
+	}
 
 	runOption := &playbook.AnsiblePlaybookOptions{
 		Inventory: ctx.Inventory(),

@@ -13,14 +13,14 @@ var prepareCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		scenario = choseScenario(args[0])
 
-		create := step.Create(scenario.Yard.path())
+		create := step.Create(scenario.Yard.path(), scenario.mergeVars(commonVariables()))
 		prepare := step.Prepare(create)
 		doPrepare(prepare)
 	},
 }
 
 func doPrepare(prepare *step.PrepareStep) {
-	driver.AnsiblePlay(prepare, map[string]interface{}{})
+	driver.AnsiblePlay(prepare)
 }
 
 func init() {

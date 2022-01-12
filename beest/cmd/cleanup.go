@@ -13,7 +13,7 @@ var cleanupCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		scenario = choseScenario(args[0])
 
-		create := step.Create(scenario.Yard.path())
+		create := step.Create(scenario.Yard.path(), scenario.mergeVars(commonVariables()))
 		prepare := step.Prepare(create)
 		cleanup := step.Cleanup(prepare)
 		doCleanup(cleanup)
@@ -21,7 +21,7 @@ var cleanupCmd = &cobra.Command{
 }
 
 func doCleanup(cleanup *step.CleanupStep) {
-	driver.AnsiblePlay(cleanup, map[string]interface{}{})
+	driver.AnsiblePlay(cleanup)
 }
 
 func init() {

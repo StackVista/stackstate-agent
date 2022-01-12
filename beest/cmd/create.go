@@ -13,13 +13,13 @@ var createCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		scenario = choseScenario(args[0])
 
-		create := step.Create(scenario.Yard.path())
+		create := step.Create(scenario.Yard.path(), scenario.mergeVars(commonVariables()))
 		doCreate(create, !assumeYes)
 	},
 }
 
 func doCreate(create *step.CreationStep, prompt bool) {
-	driver.TerraformApply(create, scenario.mergeVars(commonVariables()), prompt)
+	driver.TerraformApply(create, prompt)
 }
 
 func init() {

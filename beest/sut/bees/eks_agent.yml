@@ -1,7 +1,7 @@
 ---
 - include_tasks: ./tasks/docker/login.yml
-- include_tasks: ./tasks/helm/add-stackstate-repo.yml
 - include_tasks: ./tasks/kubectl/create-secret-for-private-docker.yml
+- include_tasks: ./tasks/helm/add-stackstate-repo.yml
 - include_tasks: ./tasks/kubectl/create-namespace.yml
 - include_tasks: ./tasks/kubectl/apply-manifest-test-workload.yml
 - include_tasks: ./tasks/helm/install-stackstate-agent.yml

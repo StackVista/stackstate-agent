@@ -1,6 +1,6 @@
 ---
 - name: Apply the pod-to-pod-headless scenario
-  command: kubectl -n={{ namespace }} apply -f pod-to-pod-headless.yaml
+  command: kubectl --context={{ kubecontext }} -n={{ namespace }} apply -f pod-to-pod-headless.yaml
   args:
     chdir: "{{ ansibleTasksDir }}/kubectl/test_connections"
   environment:

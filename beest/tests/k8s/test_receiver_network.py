@@ -5,15 +5,15 @@ import util
 testinfra_hosts = ["local"]
 
 
-def _get_pod_ip(kubeconfig, host, namespace, pod_name):
-    pod_server_c = "KUBECONFIG={0} kubectl get pods/{1} -o json --namespace={2}".format(kubeconfig, pod_name, namespace)
+def _get_pod_ip(kubeconfig, kubecontext, host, namespace, pod_name):
+    pod_server_c = "KUBECONFIG={0} kubectl --context={1} get pods/{2} -o json --namespace={3}".format(kubeconfig, kubecontext, pod_name, namespace)
     pod_server_exec = host.check_output(pod_server_c)
     pod_server_data = json.loads(pod_server_exec)
     return pod_server_data["status"]["podIP"]
 
 
-def _get_service_ip(kubeconfig, host, namespace):
-    service_c = "KUBECONFIG={0} kubectl get service/pod-service -o json --namespace={1}".format(kubeconfig, namespace)
+def _get_service_ip(kubeconfig, kubecontext, host, namespace):
+    service_c = "KUBECONFIG={0} kubectl --context={1} get service/pod-service -o json --namespace={2}".format(kubeconfig, kubecontext, namespace)
     pod_service_exec = host.check_output(service_c)
     pod_service_data = json.loads(pod_service_exec)
     return pod_service_data["spec"]["clusterIP"]
@@ -74,6 +74,7 @@ def test_dnat(host, ansible_var, topic_api):
     dnat_service_port = int(ansible_var("dnat_service_port"))
     namespace = ansible_var("namespace")
     kubeconfig = ansible_var("kubeconfig")
+    kubecontext = ansible_var("kubecontext")
 
     def wait_for_components():
         data = host.check_output("curl \"%s\"" % url)
@@ -87,8 +88,8 @@ def test_dnat(host, ansible_var, topic_api):
         with open("./topic-topo-process-agents-dnat-correlate.json", 'w') as f:
             json.dump(correlate_json_data, f, indent=4)
 
-        pod_service_ip = _get_service_ip(kubeconfig, host, namespace)
-        pod_client = _get_pod_ip(kubeconfig, host, namespace, "pod-client")
+        pod_service_ip = _get_service_ip(kubeconfig, kubecontext, host, namespace)
+        pod_client = _get_pod_ip(kubeconfig, kubecontext, host, namespace, "pod-client")
 
         endpoint_match = re.compile("urn:endpoint:/.*:{}".format(pod_service_ip))
         endpoint = _find_component(

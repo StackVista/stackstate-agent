@@ -13,14 +13,14 @@ var destroyCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		scenario = choseScenario(args[0])
 
-		create := step.Create(scenario.Yard.path())
+		create := step.Create(scenario.Yard.path(), scenario.mergeVars(commonVariables()))
 		destroy := step.Destroy(create)
 		doDestroy(destroy, !assumeYes)
 	},
 }
 
 func doDestroy(destroy *step.DestroyStep, prompt bool) {
-	driver.TerraformDestroy(destroy, scenario.mergeVars(commonVariables()), prompt)
+	driver.TerraformDestroy(destroy, prompt)
 }
 
 func init() {

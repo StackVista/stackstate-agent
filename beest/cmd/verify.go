@@ -25,7 +25,7 @@ var verifyCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		scenario = choseScenario(args[0])
 
-		create := step.Create(scenario.Yard.path())
+		create := step.Create(scenario.Yard.path(), scenario.mergeVars(commonVariables()))
 		prepare := step.Prepare(create)
 		verify := step.Verify(prepare, scenario.Test.path(), []string{})
 		testError := doVerify(verify, watchTest, testSelection)
