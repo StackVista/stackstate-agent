@@ -3,10 +3,12 @@ version: '2.4'
 
 services:
   zookeeper:
-    image: wurstmeister/zookeeper
+    image: quay.io/stackstate/zookeeper:3.6.1-focal-20210827-r37
     ports:
       - 2181:2181
     mem_limit: 1G
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
     healthcheck:
       test: [ "CMD-SHELL", "echo ruok | nc -w 2 zookeeper 2181" ]
       interval: 5s
@@ -14,7 +16,8 @@ services:
       retries: 3
 
   kafka:
-    image: wurstmeister/kafka:2.12-2.3.1
+    image: quay.io/stackstate/kafka:2.8.1-focal-20210827-r90.20220103.1605
+    user: root
     ports:
       - 9092:9092
     depends_on:
@@ -24,9 +27,13 @@ services:
       KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ADVERTISED_PORT: 9092
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_CREATE_TOPICS: "sts_connection_beat_events:1:1,sts_correlate_endpoints:1:1,sts_generic_events:1:1,sts_intake_health:1:1,sts_multi_metrics:1:1,sts_state_events:1:1,sts_topology_events:1:1,sts_topo_process_agents:1:1,sts_trace_events:1:1,sts_topo_kubernetes_${CLUSTER_NAME}:1:1,sts_correlated_connections:1:1"
+      KAFKA_CREATE_TOPICS: "sts_connection_beat_events:1:1,sts_correlate_endpoints:1:1,sts_generic_events:1:1,sts_intake_health:1:1,sts_multi_metrics:1:1,sts_state_events:1:1,sts_topo_agent_integrations:1:1,sts_topology_events:1:1,sts_topo_process_agents:1:1,sts_trace_events:1:1,sts_correlated_connections:1:1"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      DOCKER_API_VERSION: 1.22
+      KAFKA_HOME: "/opt/bitnami/kafka"
     volumes:
       - "./verify-or-create-topics.sh:/usr/local/bin/verify-or-create-topics.sh"
+      - /var/run/docker.sock:/var/run/docker.sock
     healthcheck:
       test: [ "CMD", "verify-or-create-topics.sh" ]
       interval: 10s

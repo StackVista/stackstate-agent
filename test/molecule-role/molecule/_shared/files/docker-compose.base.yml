@@ -20,6 +20,9 @@ services:
     user: root
     ports:
       - 9092:9092
+    depends_on:
+      zookeeper:
+        condition: service_healthy
     environment:
       KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ADVERTISED_PORT: 9092
@@ -44,6 +47,9 @@ services:
     ports:
       - 7077:7077
       - 1618:1618
+    depends_on:
+      kafka:
+        condition: service_healthy
     environment:
       KAFKA_BROKERS: kafka:9092
       # STACKSTATE_RECEIVER_HTTP_LOG_LEVEL: DEBUG
@@ -53,6 +59,9 @@ services:
 
   correlate:
     image: "quay.io/stackstate/stackstate-correlate:${STACKSTATE_BRANCH}"
+    depends_on:
+      kafka:
+        condition: service_healthy
     environment:
       KAFKA_BROKERS: kafka:9092
       STACKSTATE_CORRELATE_LOG_LEVEL: "DEBUG"
@@ -63,6 +72,9 @@ services:
     image: "quay.io/stackstate/stackstate-topic-api:${STACKSTATE_BRANCH}"
     ports:
       - 7070:7070
+    depends_on:
+      kafka:
+        condition: service_healthy
     environment:
       KAFKA_BROKERS: kafka:9092
       ZOOKEEPER_QUORUM: kafka
