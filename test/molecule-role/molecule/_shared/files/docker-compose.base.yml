@@ -30,7 +30,6 @@ services:
       KAFKA_HOME: "/opt/bitnami/kafka"
     volumes:
       - "./verify-or-create-topics.sh:/usr/local/bin/verify-or-create-topics.sh"
-      - /var/run/docker.sock:/var/run/docker.sock
     healthcheck:
       test: [ "CMD", "verify-or-create-topics.sh" ]
       interval: 10s
