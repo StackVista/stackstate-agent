@@ -68,7 +68,7 @@ func (ctc *ContainerTopologyCollector) BuildContainerTopology(containerUtil spec
 func (ctc *ContainerTopologyCollector) MapContainerDataToTopologyData(container *spec.Container) topology.Data {
 	data := topology.Data{
 		"type":        container.Runtime,
-		"containerID": container.ID,
+		"containerId": container.ID,
 		"name":        container.Name,
 		"image":       container.Image,
 		"mounts":      container.Mounts,
