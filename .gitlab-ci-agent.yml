@@ -473,6 +473,9 @@ build_win:
     max: 2
     when:
       - always
+  rules:
+    - if: $MAJOR_VERSION != $PRIMARY_MAJOR_VERSION
+      when: never
 
 ## pre_release stage
 
