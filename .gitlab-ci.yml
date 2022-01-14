@@ -118,21 +118,21 @@ agent2:
       when: never
     - when: on_success
 
-agent3:
-  stage: triggers
-  variables:
-    <<: *commonvariables
-    <<: *agent3_variables
-  trigger:
-    include: .gitlab-ci-agent.yml
-    strategy: depend
-  rules:
-    - <<: *exclude_on_cluster_agent
-    # exclude this pipeline if we're running a v2 tag pipeline
-    - <<: *exclude_on_tag_v2
-    - if: $CI_COMMIT_MESSAGE =~ /\[py2]/
-      when: never
-    - when: on_success
+#agent3:
+#  stage: triggers
+#  variables:
+#    <<: *commonvariables
+#    <<: *agent3_variables
+#  trigger:
+#    include: .gitlab-ci-agent.yml
+#    strategy: depend
+#  rules:
+#    - <<: *exclude_on_cluster_agent
+#    # exclude this pipeline if we're running a v2 tag pipeline
+#    - <<: *exclude_on_tag_v2
+#    - if: $CI_COMMIT_MESSAGE =~ /\[py2]/
+#      when: never
+#    - when: on_success
 
 cluster_agent:
   stage: triggers
