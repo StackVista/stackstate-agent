@@ -124,6 +124,8 @@ clear_deps_win_cache:
     - "if (Test-Path C:\\opt\\stackstate-agent) { Remove-Item -Force -Recurse C:\\opt\\stackstate-agent }"
   tags:
     - windows_agent7_ps1
+  rules:
+    - *cluster_agent
 
 deps_deb:
   stage: prepare
@@ -213,6 +215,8 @@ deps_win:
     when:
       - runner_system_failure
       - stuck_or_timeout_failure
+  rules:
+    - *cluster_agent
 
 ## build stage
 
@@ -474,8 +478,7 @@ build_win:
     when:
       - always
   rules:
-    - if: $MAJOR_VERSION != $PRIMARY_MAJOR_VERSION
-      when: never
+    - *cluster_agent
 
 ## pre_release stage
 
@@ -560,6 +563,8 @@ pre_release_win:
     when:
       - runner_system_failure
       - stuck_or_timeout_failure
+  rules:
+    - *cluster_agent
 
 pre_release_rpm:
   stage: pre_release
@@ -1217,6 +1222,8 @@ release_win:
     when:
       - runner_system_failure
       - stuck_or_timeout_failure
+  rules:
+    - *cluster_agent
 
 .base_release_image: &base_release_image
   stage: release
