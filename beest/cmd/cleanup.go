@@ -8,7 +8,7 @@ import (
 
 var cleanupCmd = &cobra.Command{
 	Use:   "cleanup [scenario]",
-	Short: "Uninstall all the configured integrations",
+	Short: "Uninstall all the configured bees",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		scenario = choseScenario(args[0])

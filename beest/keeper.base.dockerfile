@@ -9,11 +9,22 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt && \
     rm requirements.txt
 
+ARG TERRAGRUNT_V=0.35.18
+RUN curl -L "https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_V}/terragrunt_linux_amd64" -o terragrunt && \
+    chmod +x ./terragrunt && \
+    mv ./terragrunt /usr/local/bin/
+
 ARG TERRAFORM_V=1.0.11
 RUN curl -O "https://releases.hashicorp.com/terraform/${TERRAFORM_V}/terraform_${TERRAFORM_V}_linux_amd64.zip" && \
     unzip terraform_${TERRAFORM_V}_linux_amd64.zip && \
     rm terraform_${TERRAFORM_V}_linux_amd64.zip && \
     mv ./terraform /usr/local/bin/
+
+ARG PACKER_V=1.7.8
+RUN curl -O "https://releases.hashicorp.com/packer/${PACKER_V}/packer_${PACKER_V}_linux_amd64.zip" && \
+    unzip packer_${PACKER_V}_linux_amd64.zip && \
+    rm packer_${PACKER_V}_linux_amd64.zip && \
+    mv ./packer /usr/local/bin/
 
 ARG KUBECTL_V=1.22.4
 RUN curl -LO "https://dl.k8s.io/release/v${KUBECTL_V}/bin/linux/amd64/kubectl" && \
@@ -49,10 +60,10 @@ RUN curl -O "https://stseuw1-tooling-main-homebrew.s3.amazonaws.com/sts-toolbox/
     mv ./sts-toolbox /usr/local/bin/
 
 ARG K3D_V=5.2.0
-RUN curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | TAG=v${K3D_V} bash
+RUN curl -s "https://raw.githubusercontent.com/rancher/k3d/main/install.sh" | TAG=v${K3D_V} bash
 
 ARG DOCKER_V=20.10.9
-RUN curl -O https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_V}.tgz && \
+RUN curl -O "https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_V}.tgz" && \
     tar xvzf docker-${DOCKER_V}.tgz && \
     mv ./docker/docker /usr/local/bin/ && \
     rm -r docker-${DOCKER_V}.tgz docker

@@ -688,6 +688,8 @@ pre_release_cluster_agent_image:
     - export PATH=/go/src/app:${PATH}
     - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
     - export STACKSTATE_BRANCH=4.5.1
+  retry:
+    max: 2
 
 # Base artifacts for create and test steps
 .beest_artifacts: &beest_artifacts

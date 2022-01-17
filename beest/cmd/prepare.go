@@ -8,7 +8,7 @@ import (
 
 var prepareCmd = &cobra.Command{
 	Use:   "prepare [scenario]",
-	Short: "Deploy the integrations configured as part of the yard",
+	Short: "Deploy the bees configured as part of the yard",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		scenario = choseScenario(args[0])

@@ -23,7 +23,7 @@ STS_AWS_TEST_BUCKET          ?= stackstate-agent-2-test
 STS_DOCKER_TEST_REPO         ?= stackstate-agent-2-test
 STS_DOCKER_TEST_REPO_CLUSTER ?= stackstate-cluster-agent-test
 
-BASE_KEEPER_IMAGE  = stackstate/stackstate-agent-2-test:beest-keeper-base-20220108
+BASE_KEEPER_IMAGE  = stackstate/stackstate-agent-2-test:beest-keeper-base-20220113
 KEEPER_IMAGE       = beest:${BRANCH}
 KEEPER_CONTAINER   = beest
 VOLUME_GO_PKG_NAME = beest-go-volume
@@ -43,6 +43,7 @@ push-base: build-base
 
 build:
 	docker build -t ${KEEPER_IMAGE} \
+		--build-arg BASE_IMAGE=${BASE_KEEPER_IMAGE} \
 		--build-arg UID=${UID} \
 		--build-arg GID=${GID} \
 		--build-arg DOCKER_GID=${DOCKER_GID} \

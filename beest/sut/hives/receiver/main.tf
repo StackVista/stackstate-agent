@@ -72,7 +72,7 @@ resource "aws_security_group" "receiver_group" {
 }
 
 resource "aws_instance" "receiver" {
-  ami                         = "ami-09ae46ee3ab46c423" //Our Packer image based on Ubuntu 18.04 (EBS-Backed x86_64)
+  ami                         = "ami-09153889bcbb64887" //Our Packer image based on Ubuntu 18.04 (EBS-Backed x86_64)
   instance_type               = "t3.large"
   subnet_id                   = var.subnet_id
   associate_public_ip_address = true

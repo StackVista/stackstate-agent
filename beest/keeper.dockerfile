@@ -1,4 +1,5 @@
-FROM stackstate/stackstate-agent-2-test:beest-keeper-base-20220108
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
 
 ARG UID
 ARG GID
