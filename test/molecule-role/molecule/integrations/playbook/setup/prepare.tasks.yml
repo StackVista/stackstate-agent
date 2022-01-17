@@ -1,6 +1,5 @@
 ---
 - include_tasks: ../_shared/process/gather-facts.yml
-- include_tasks: ../_shared/install-and-update/install-provisioning-dependencies.yml
 - include_tasks: ../_shared/docker/login.yml
 - include_tasks: ../_shared/docker/compose-copy.yml
 - include_tasks: ../_shared/copy/copy-verify-and-create-script-file.yml
