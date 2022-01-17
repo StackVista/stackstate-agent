@@ -72,7 +72,7 @@ func TestBuildContainerTopology(t *testing.T) {
 				"name":        "container1",
 				"state":       "running",
 				"type":        "runtime",
-				"containerID": "containerId1",
+				"containerId": "containerId1",
 				"image":       "image1",
 				"mounts": []specs.Mount{
 					{
@@ -97,7 +97,7 @@ func TestBuildContainerTopology(t *testing.T) {
 				Name: "container",
 			},
 			Data: topology.Data{
-				"containerID": "containerId2",
+				"containerId": "containerId2",
 				"image":       "image2",
 				"mounts": []specs.Mount{
 					{
