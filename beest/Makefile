@@ -17,7 +17,7 @@ endif
 GIT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
 BRANCH = $(shell echo ${GIT_BRANCH} | cut -d'/' -f 2- | tr [:upper:] [:lower:])
 
-STACKSTATE_BRANCH            ?= 4.5.1
+STACKSTATE_BRANCH            ?= master
 MAJOR_VERSION                ?= 2
 STS_AWS_TEST_BUCKET          ?= stackstate-agent-2-test
 STS_DOCKER_TEST_REPO         ?= stackstate-agent-2-test

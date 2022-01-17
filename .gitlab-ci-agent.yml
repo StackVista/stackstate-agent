@@ -687,7 +687,7 @@ pre_release_cluster_agent_image:
     - export AWS_SECRET_ACCESS_KEY=${MOLECULE_AWS_SECRET_ACCESS_KEY}
     - export PATH=/go/src/app:${PATH}
     - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
-    - export STACKSTATE_BRANCH=4.5.1
+    - export STACKSTATE_BRANCH=master
   retry:
     max: 2
 
