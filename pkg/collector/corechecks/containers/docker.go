@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build docker
 // +build docker
 
 package containers
@@ -83,7 +84,7 @@ type DockerCheck struct {
 	cappedSender                *cappedSender
 	collectContainerSizeCounter uint64
 	// sts
-	topologyCollector *topology.DockerTopologyCollector
+	topologyCollector *topology.ContainerTopologyCollector
 }
 
 func updateContainerRunningCount(images map[string]*containerPerImage, c *containers.Container) {
@@ -470,7 +471,7 @@ func DockerFactory() check.Check {
 	return &DockerCheck{
 		CheckBase:         core.NewCheckBase(dockerCheckName),
 		instance:          &DockerConfig{},
-		topologyCollector: topology.MakeDockerTopologyCollector(),
+		topologyCollector: topology.MakeContainerTopologyCollector(dockerCheckName),
 	}
 }
 
