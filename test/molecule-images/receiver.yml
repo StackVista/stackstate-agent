@@ -2,13 +2,13 @@
 - hosts: all
   tasks:
     - name: Install python for Ansible
-      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal python-zipstream)
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python3)
       become: true
       changed_when: false
     - name: Install python-pip
       become: true
       apt:
-        name: [python-pip, virtualenv, libyajl2]  # venv and yajl2 if you wanna run the simulator
+        name: [python3-pip, virtualenv, libyajl2, jq]  # venv and yajl2 if you wanna run the simulator
         state: present
         update_cache: yes
       retries: 20

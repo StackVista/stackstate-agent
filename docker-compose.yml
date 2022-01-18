@@ -4,7 +4,7 @@ version: '2.4'
 services:
   zookeeper:
     extends:
-      file: ./test/molecule-role/molecule/common/files/docker-compose.base.yml
+      file: ./test/molecule-role/molecule/_shared/files/docker-compose.base.yml
       service: zookeeper
 
   kafka:
@@ -12,7 +12,7 @@ services:
       zookeeper:
         condition: service_healthy
     extends:
-      file: ./test/molecule-role/molecule/common/files/docker-compose.base.yml
+      file: ./test/molecule-role/molecule/_shared/files/docker-compose.base.yml
       service: kafka
     volumes:
       - "./test/molecule-role/molecule/verify-or-create-topics.sh:/usr/local/bin/verify-or-create-topics.sh"
@@ -24,7 +24,7 @@ services:
       kafka:
         condition: service_healthy
     extends:
-      file: ./test/molecule-role/molecule/common/files/docker-compose.base.yml
+      file: ./test/molecule-role/molecule/_shared/files/docker-compose.base.yml
       service: receiver
 
   stackstate-agent:

@@ -44,7 +44,7 @@ log "Kafka is now ready"
 IFS="${KAFKA_CREATE_TOPICS_SEPARATOR-,}" read -ra DEFINED_TOPICS <<< "$KAFKA_CREATE_TOPICS"
 
 # Retrieve the existing kafka topics
-ACTIVE_TOPICS="$(/opt/kafka/bin/kafka-topics.sh --list --zookeeper zookeeper | grep -v __consumer_offsets | wc -l)"
+ACTIVE_TOPICS="$($KAFKA_HOME/bin/kafka-topics.sh --list --zookeeper zookeeper | grep -v __consumer_offsets | wc -l)"
 
 log "Active Topic Count: ${ACTIVE_TOPICS}"
 log "Defined Topic Count: ${#DEFINED_TOPICS[@]}"
