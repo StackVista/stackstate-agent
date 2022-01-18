@@ -3,12 +3,14 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build containerd
 // +build containerd
 
 package containerd
 
 import (
 	"context"
+	cspec "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec"
 	"sync"
 	"time"
 
@@ -58,7 +60,7 @@ type ContainerdUtil struct {
 
 // GetContainerdUtil creates the Containerd util containing the Containerd client and implementing the ContainerdItf
 // Errors are handled in the retrier.
-func GetContainerdUtil() (ContainerdItf, error) {
+func GetContainerdUtil() (*ContainerdUtil, error) {
 	once.Do(func() {
 		globalContainerdUtil = &ContainerdUtil{
 			queryTimeout:      config.Datadog.GetDuration("cri_query_timeout") * time.Second,
@@ -112,7 +114,7 @@ func (c *ContainerdUtil) connect() error {
 	if c.cl != nil {
 		err = c.cl.Reconnect()
 		if err != nil {
-			log.Errorf("Could not reconnect to the containerd daemon: %v", err)
+			_ = log.Errorf("Could not reconnect to the containerd daemon: %v", err)
 			return c.cl.Close() // Attempt to close connections to avoid overloading the GRPC
 		}
 		return nil
@@ -132,6 +134,65 @@ func (c *ContainerdUtil) connect() error {
 // GetEvents interfaces with the containerd api to get the event service.
 func (c *ContainerdUtil) GetEvents() containerd.EventService {
 	return c.cl.EventService()
+}
+
+// GetContainers interfaces with the containerd api to get the list of containers.
+func (c *ContainerdUtil) GetContainers() ([]*cspec.Container, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.queryTimeout)
+	defer cancel()
+
+	dContainers, err := c.Containers()
+	if err != nil {
+		return nil, err
+	}
+
+	uContainers := make([]*cspec.Container, 0, len(dContainers))
+	for _, dContainer := range dContainers {
+		ctxNamespace := namespaces.WithNamespace(ctx, c.namespace)
+
+		info, err := dContainer.Info(ctxNamespace)
+		if err != nil {
+			_ = log.Errorf("Could not extract containerd %s from container '%s'. Error: %v", "Info", dContainer.ID(), err)
+			continue
+		}
+		name := info.ID
+		if nameLabel, ok := info.Labels["io.kubernetes.container.name"]; ok {
+			name = nameLabel
+		}
+
+		spec, err := dContainer.Spec(ctxNamespace)
+		if err != nil {
+			logExtractionError("Spec", dContainer, err)
+		}
+
+		state := ""
+		task, err := dContainer.Task(ctxNamespace, nil)
+		if err != nil {
+			logExtractionError("Task", dContainer, err)
+		} else {
+			status, err := task.Status(ctxNamespace)
+			if err != nil {
+				logExtractionError("Task Status", dContainer, err)
+			} else {
+				state = string(status.Status)
+			}
+		}
+
+		container := &cspec.Container{
+			Name:    name,
+			Runtime: "containerd",
+			ID:      dContainer.ID(),
+			Image:   info.Image,
+			Mounts:  spec.Mounts,
+			State:   state,
+		}
+		uContainers = append(uContainers, container)
+	}
+	return uContainers, nil
+}
+
+func logExtractionError(what string, container containerd.Container, err error) {
+	_ = log.Warnf("Could not extract containerd %s from container '%s'. Error: %v", what, container.ID(), err)
 }
 
 // Containers interfaces with the containerd api to get the list of Containers.

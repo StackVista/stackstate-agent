@@ -3,12 +3,14 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build containerd
 // +build containerd
 
 package containers
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/topology"
 	"runtime"
 	"strings"
 	"time"
@@ -31,7 +33,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
 	cutil "github.com/StackVista/stackstate-agent/pkg/util/containerd"
 	ddContainers "github.com/StackVista/stackstate-agent/pkg/util/containers"
-	cgroup "github.com/StackVista/stackstate-agent/pkg/util/containers/providers/cgroup"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/providers/cgroup"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
@@ -42,15 +44,18 @@ const (
 // ContainerCheck grabs containerd metrics and events
 type ContainerdCheck struct {
 	core.CheckBase
-	instance *ContainerdConfig
-	sub      *subscriber
-	filters  *ddContainers.Filter
+	instance          *ContainerdConfig
+	sub               *subscriber
+	filters           *ddContainers.Filter
+	topologyCollector *topology.ContainerTopologyCollector
 }
 
 // ContainerdConfig contains the custom options and configurations set by the user.
 type ContainerdConfig struct {
 	ContainerdFilters []string `yaml:"filters"`
 	CollectEvents     bool     `yaml:"collect_events"`
+	// sts
+	CollectContainerTopology bool `yaml:"collect_container_topology"`
 }
 
 func init() {
@@ -60,14 +65,17 @@ func init() {
 // ContainerdFactory is used to create register the check and initialize it.
 func ContainerdFactory() check.Check {
 	return &ContainerdCheck{
-		CheckBase: corechecks.NewCheckBase(containerdCheckName),
-		instance:  &ContainerdConfig{},
-		sub:       &subscriber{},
+		CheckBase:         corechecks.NewCheckBase(containerdCheckName),
+		instance:          &ContainerdConfig{},
+		sub:               &subscriber{},
+		topologyCollector: topology.MakeContainerTopologyCollector(containerdCheckName),
 	}
 }
 
 // Parse is used to get the configuration set by the user
 func (co *ContainerdConfig) Parse(data []byte) error {
+	// sts
+	co.CollectContainerTopology = true
 	if err := yaml.Unmarshal(data, co); err != nil {
 		return err
 	}
@@ -128,6 +136,19 @@ func (c *ContainerdCheck) Run() error {
 	}
 
 	computeMetrics(sender, cu, c.filters)
+
+	// sts begin
+	// Collect container topology
+	if c.instance.CollectContainerTopology {
+		err := c.topologyCollector.BuildContainerTopology(cu)
+		if err != nil {
+			sender.ServiceCheck("containerd.health", metrics.ServiceCheckCritical, "", nil, err.Error())
+			log.Errorf("Could not collect container topology: %s", err)
+			return err
+		}
+	}
+	// sts end
+
 	return nil
 }
 

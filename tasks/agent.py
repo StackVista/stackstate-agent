@@ -38,6 +38,7 @@ DEFAULT_BUILD_TAGS = [
     "apm",
     "process",
     "consul",
+    "containers",
     "containerd",
     "python",
     "cri",
