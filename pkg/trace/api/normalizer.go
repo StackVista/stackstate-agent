@@ -181,6 +181,9 @@ func normalizeTrace(ts *info.TagStats, t pb.Trace) error {
 	for _, span := range t {
 		if span.TraceID != firstSpan.TraceID {
 			atomic.AddInt64(&ts.TracesDropped.ForeignSpan, 1)
+			log.Debugf("Span Trace ID: %s", span.TraceID)
+			log.Debugf("First Span Trace ID: %s", firstSpan.TraceID)
+			log.Debugf("First Span: %s", firstSpan)
 			return fmt.Errorf("trace has foreign span (reason:foreign_span): %s", span)
 		}
 		if err := normalize(ts, span); err != nil {
