@@ -142,6 +142,7 @@ func (t *TopologyCheck) Run() error {
 		collectors.NewConfigMapCollector(
 			componentChannel,
 			commonClusterCollector,
+			t.instance.ConfigMapMaxDataSize,
 		),
 		// Register Secret Component Collector
 		collectors.NewSecretCollector(
