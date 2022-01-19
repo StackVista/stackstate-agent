@@ -5,7 +5,6 @@ stages:
 variables:
   RUNNER_DEB_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-deb
   RUNNER_DEB: $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb
-  RUNNER_PUBLISHER_BASE: $CI_PROJECT_DIR/.cd-builders/runner-circle-deb
   RUNNER_DEB_RPM_PUBLISHER: $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb-rpmpublisher
   RUNNER_CENTOS6_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-rpm
   RUNNER_CENTOS7_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-rpm7
@@ -52,13 +51,6 @@ before_script:
 #    - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
 #    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
 #    - docker push "${QUAY_TAG}"
-
-# produces the base deb image: quay.io/stackstate/stackstate-agent-runner-circle:publisher_{yyyymmdd}
-build-publisher-base:
-  <<: *docker_build_runner_base
-  variables:
-    RUNNER_DIR: $RUNNER_PUBLISHER_BASE
-    BASE_RUNNER_IMAGE_VERSION: "publisher"
 
 # produces the base deb image: quay.io/stackstate/stackstate-agent-runner-circle:deb7_{yyyymmdd}
 build-deb-base:
@@ -119,11 +111,11 @@ build-main-deb-runner:
 # produces the runner deb/rpm publisher image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_{yyyymmdd}
 build-deb-rpm-publisher-runner:
   <<: *docker_main_runner_build_base
-  needs: [ build-publisher-base ]
+  needs: [ build-deb-base ]
   variables:
     RUNNER_DIR: $RUNNER_DEB_RPM_PUBLISHER
     RUNNER_IMAGE_VERSION: "deb-rpmpublisher"
-    BASE_RUNNER_IMAGE_VERSION: "publisher"
+    BASE_RUNNER_IMAGE_VERSION: "deb7"
 
 # produces the runner centos 7 image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
 build-centos7-runner:

@@ -1,4 +1,4 @@
-ARG BASE_RUNNER_IMAGE_VERSION=publisher_latest
+ARG BASE_RUNNER_IMAGE_VERSION=deb7_latest
 FROM docker.io/stackstate/stackstate-agent-runner-circle:${BASE_RUNNER_IMAGE_VERSION}
 
 RUN pip install boto3 sts-rpm-s3==0.3.3 invoke distro==1.4.0 awscli==1.16
