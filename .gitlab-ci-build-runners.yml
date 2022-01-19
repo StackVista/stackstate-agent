@@ -5,7 +5,7 @@ stages:
 variables:
   RUNNER_DEB_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-deb
   RUNNER_DEB: $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb
-  RUNNER_PUBLISHER_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-deb
+  RUNNER_PUBLISHER_BASE: $CI_PROJECT_DIR/.cd-builders/runner-circle-deb
   RUNNER_DEB_RPM_PUBLISHER: $CI_PROJECT_DIR/.cd-builders/runner7-gitlab-deb-rpmpublisher
   RUNNER_CENTOS6_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-rpm
   RUNNER_CENTOS7_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-rpm7
