@@ -130,3 +130,5 @@ build-centos7-runner:
 # TODO: skipping it for now
 # produces the runner centos 6 image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos6_20190429
 
+
+# TEST
