@@ -157,5 +157,6 @@ build_runners:
     # make a manual job only on the master branch
     - if: $CI_COMMIT_REF_NAME == "master"
       when: manual
+    # make a manual job when the commit message includes [build_runners]
     - if: $CI_COMMIT_MESSAGE =~ /\[build_runners]/
       when: manual
