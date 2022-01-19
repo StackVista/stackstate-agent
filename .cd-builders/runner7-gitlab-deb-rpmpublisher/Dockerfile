@@ -1,10 +1,7 @@
-ARG BASE_RUNNER_IMAGE_VERSION=deb7_latest
+ARG BASE_RUNNER_IMAGE_VERSION=publisher_latest
 FROM docker.io/stackstate/stackstate-agent-runner-circle:${BASE_RUNNER_IMAGE_VERSION}
 
 RUN pip install boto3 sts-rpm-s3==0.3.3 invoke distro==1.4.0 awscli==1.16
 RUN apt update  && apt-get install -y libkrb5-dev unixodbc-dev rpm python-deltarpm createrepo yum-utils
 
 ADD rpmmacros /root/.rpmmacros
-
-# TODO: Get rid of entrypoint that runs this image with python V2. Investigate if createrepo can work with Py3
-ENTRYPOINT ["/entrypoint.sh"]
