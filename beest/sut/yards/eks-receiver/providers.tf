@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket = "lupulus-sandbox-terraform-state"
-    key    = "tiziano-aws-eks-1-21-shard.terraform.tfstate"
+    key    = "beest.terraform.tfstate"
     region = "eu-west-1"
   }
   required_providers {

@@ -23,7 +23,7 @@ STS_AWS_TEST_BUCKET          ?= stackstate-agent-2-test
 STS_DOCKER_TEST_REPO         ?= stackstate-agent-2-test
 STS_DOCKER_TEST_REPO_CLUSTER ?= stackstate-cluster-agent-test
 
-BASE_KEEPER_IMAGE  = stackstate/stackstate-agent-2-test:beest-keeper-base-20220113
+BASE_KEEPER_IMAGE  = artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20220120
 KEEPER_IMAGE       = beest:${BRANCH}
 KEEPER_CONTAINER   = beest
 VOLUME_GO_PKG_NAME = beest-go-volume
@@ -33,13 +33,6 @@ DOCKER_ENV		   = --env AGENT_CURRENT_BRANCH=${GIT_BRANCH} \
 					 --env STS_AWS_TEST_BUCKET=${STS_AWS_TEST_BUCKET} \
 					 --env STS_DOCKER_TEST_REPO=${STS_DOCKER_TEST_REPO} \
 					 --env STS_DOCKER_TEST_REPO_CLUSTER=${STS_DOCKER_TEST_REPO_CLUSTER}
-
-
-build-base:
-	docker build -t ${BASE_KEEPER_IMAGE} -f ./keeper.base.dockerfile .
-
-push-base: build-base
-	docker push ${BASE_KEEPER_IMAGE}
 
 build:
 	docker build -t ${KEEPER_IMAGE} \
@@ -65,11 +58,3 @@ shell:
 
 shell-root:
 	docker exec --user root -ti ${KEEPER_CONTAINER} bash
-
-
-gitlab-debug:
-	docker run -it --rm \
-		--volume ${PWD}:/root/beest \
-		--env CI_PROJECT_DIR=/root \
-		${DOCKER_ENV} \
-		${BASE_KEEPER_IMAGE}

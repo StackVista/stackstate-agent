@@ -45,11 +45,11 @@ func buildPyTestCmd(ctx PytestContext, watch bool, selection string) *exec.Cmd {
 		args = append(args, "--")
 	}
 
-	args = append(args, "-vs") //TODO debug
 	args = append(args, "-rap")
 
 	args = append(args, fmt.Sprintf("%s=%s", SshIdentityFileFlag, ctx.PrivateKey()))
-	args = append(args, fmt.Sprintf("%s=%s", ConnectionFlag, "ansible")) //Ansible module is only available with ansible connection backend
+	// Ansible module is only available with ansible connection backend
+	args = append(args, fmt.Sprintf("%s=%s", ConnectionFlag, "ansible"))
 	args = append(args, fmt.Sprintf("%s=%s", AnsibleInventoryFlag, ctx.Inventory()))
 
 	if len(ctx.Hostnames()) > 0 {
@@ -71,8 +71,6 @@ func buildPyTestCmd(ctx PytestContext, watch bool, selection string) *exec.Cmd {
 		cmd = exec.Command(DefaultPyTestBinary, args...)
 	}
 
-	// TODO env variables
-	//cmd.Env = tf.buildEnv(mergeEnv)
 	cmd.Dir = ctx.TestsPath()
 
 	return cmd
@@ -119,9 +117,6 @@ func runPyTestCmd(ctx context.Context, cmd *exec.Cmd) error {
 	}
 	if err != nil {
 		return errors.New(errBuf.String())
-
-		//TODO parse pytest errors
-		//return tf.wrapExitError(ctx, err, errBuf.String())
 	}
 
 	return nil

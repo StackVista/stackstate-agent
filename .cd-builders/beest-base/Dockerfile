@@ -5,7 +5,6 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-# TODO upgrade to aws cli v2 !?
 RUN pip install -r requirements.txt && \
     rm requirements.txt
 

@@ -675,7 +675,7 @@ pre_release_cluster_agent_image:
 
 # Core Structure for all the beest steps
 .beest: &beest
-  image: stackstate/stackstate-agent-2-test:beest-keeper-base-20220113
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20220120
   interruptible: true
   dependencies: []
   before_script:

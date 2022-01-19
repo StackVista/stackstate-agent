@@ -3,11 +3,11 @@
   hosts: receiver
   gather_facts: true
   tasks:
-    - include_tasks: ../../bees/receiver.yml  # TODO switch to ansible role
+    - include_tasks: ../../bees/receiver.yml
 
 - name: Prepare Kubernetes Cluster
   hosts: localhost
   connection: local
   gather_facts: true
   tasks:
-    - include_tasks: ../../bees/eks_agent.yml  # TODO switch to ansible role
+    - include_tasks: ../../bees/eks_agent.yml

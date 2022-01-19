@@ -54,9 +54,6 @@ func newTerraform(ctx TerraformContext) *TerraformState {
 		log.Fatalf("Error running NewTerraform: %s", err)
 	}
 
-	// TODO debug
-	//tf.SetStdout(os.Stdout)
-
 	return &TerraformState{
 		tf:     tf,
 		Module: loadModule(tf.WorkingDir()),
