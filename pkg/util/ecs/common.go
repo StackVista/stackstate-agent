@@ -170,9 +170,9 @@ func formatMemoryLimit(val uint64) uint64 {
 func convertMetaV2ContainerStats(s *v2.ContainerStats) (metrics.ContainerMetrics, uint64) {
 	return metrics.ContainerMetrics{
 		CPU: &metrics.ContainerCPUStats{
-			User:        float64(s.CPU.Usage.Usermode),
-			System:      float64(s.CPU.Usage.Kernelmode),
-			SystemUsage: s.CPU.System,
+			User:        float64(s.CPU.Usage.Usermode) / 1e7, // Normalize to UserHz (1/100s)
+			System:      float64(s.CPU.Usage.Kernelmode) / 1e7,
+			SystemUsage: s.CPU.System / 1e7,
 		},
 		Memory: &metrics.ContainerMemStats{
 			Cache:           s.Memory.Details.Cache,
