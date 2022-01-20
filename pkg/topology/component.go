@@ -10,9 +10,10 @@ type Data map[string]interface{}
 
 // Component is a representation of a topology component
 type Component struct {
-	ExternalID string `json:"externalId"`
-	Type       Type   `json:"type"`
-	Data       Data   `json:"data"`
+	ExternalID       string `json:"externalId"`
+	Type             Type   `json:"type"`
+	Data             Data   `json:"data"`
+	SourceProperties Data   `json:"sourceProperties"`
 }
 
 // JSONString returns a JSON string of the Component
