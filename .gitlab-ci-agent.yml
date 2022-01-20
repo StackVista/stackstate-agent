@@ -456,6 +456,7 @@ build_win:
     - *configure_windows_ps1_env_script
     - Import-VisualStudioVars 2017 -Architecture amd64
     - ridk enable
+    - del C:\omnibus-ruby\pkg\*
   script:
     - cmd.exe /c "%GOPATH%\src\github.com\StackVista\stackstate-agent\.gitlab-scripts\setup_artifactory.cmd"
     - conda activate $CONDA_ENV
