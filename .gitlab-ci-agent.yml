@@ -1,7 +1,6 @@
 image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:latest7
 
 stages:
-  - automatic_cleanup
   - manual_cleanup
   - prepare
   - prepare_temp
@@ -78,15 +77,6 @@ before_script:
   - *retrieve_linux_go_deps_script
 
 ## prepare stage
-
-clean_windows_pkg_dir:
-  stage: automatic_cleanup
-  when: always
-  script:
-    - del C:\omnibus-ruby\pkg\*
-  allow_failure: true
-  tags:
-    - windows_agent7_ps1
 
 clear_deps_deb_cache:
   stage: manual_cleanup
@@ -466,6 +456,7 @@ build_win:
     - *configure_windows_ps1_env_script
     - Import-VisualStudioVars 2017 -Architecture amd64
     - ridk enable
+    - del C:\omnibus-ruby\pkg\*
   script:
     - cmd.exe /c "%GOPATH%\src\github.com\StackVista\stackstate-agent\.gitlab-scripts\setup_artifactory.cmd"
     - conda activate $CONDA_ENV
