@@ -6,4 +6,8 @@ RUN apt update  && apt-get install -y libkrb5-dev unixodbc-dev rpm python-deltar
 
 ADD rpmmacros /root/.rpmmacros
 
+# Entrypoint
+COPY ./entrypoint.sh /
+RUN chmod +x /entrypoint.sh
+
 ENTRYPOINT ["/entrypoint.sh"]
