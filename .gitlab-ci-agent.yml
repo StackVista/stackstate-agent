@@ -443,7 +443,6 @@ build_rpm:
     when:
       - always
 
-# Job cleans pkg folder.
 build_win:
   stage: build
   interruptible: true
