@@ -1,0 +1,22 @@
+scenarios:
+  - name: dockerd-eks
+    yard:
+      name: eks-receiver
+    test:
+      group: k8s
+    variables:
+      k8s_runtime: dockerd
+      k8s_version: "1.21"
+  - name: containerd-eks
+    yard:
+      name: eks-receiver
+    test:
+      group: k8s
+    variables:
+      k8s_runtime: containerd
+      k8s_version: "1.21"
+  - name: containerd-k3d
+    yard:
+      name: k3d-receiver
+    test:
+      group: k8s

@@ -1,0 +1,8 @@
+---
+- name: Create test namespace '{{namespace}}'
+  kubernetes.core.k8s:
+    context: "{{ kubecontext }}"
+    api_version: v1
+    kind: Namespace
+    name: "{{ namespace }}"
+    state: present

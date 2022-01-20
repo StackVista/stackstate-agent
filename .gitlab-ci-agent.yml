@@ -674,6 +674,55 @@ pre_release_cluster_agent_image:
     - ./molecule3.sh $MOLECULE_SCENARIO destroy
 
 
+# Core Structure for all the beest steps
+.beest: &beest
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20220120
+  interruptible: true
+  dependencies: []
+  before_script:
+    - mkdir /go/src/app
+    - cp -R $CI_PROJECT_DIR/beest/* /go/src/app
+    - cd /go/src/app
+    - go build .
+    - export AWS_ACCESS_KEY_ID=${MOLECULE_AWS_ACCESS_KEY_ID}
+    - export AWS_SECRET_ACCESS_KEY=${MOLECULE_AWS_SECRET_ACCESS_KEY}
+    - export PATH=/go/src/app:${PATH}
+    - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
+    - export STACKSTATE_BRANCH=master
+  retry:
+    max: 2
+
+# Base artifacts for create and test steps
+.beest_artifacts: &beest_artifacts
+  artifacts:
+    when: always
+    paths:
+      - $CI_PROJECT_DIR/beest/tests/$BEEST_TEST_GROUP/topic-*.json
+      - $CI_PROJECT_DIR/beest/tests/$BEEST_TEST_GROUP/*.log
+    expire_in: 1 week
+
+# Primary create steps for all the beest builds
+.beest_create: &beest_create
+  <<: *beest_artifacts
+  stage: prepare
+  script:
+    - beest create $BEEST_SCENARIO -y
+
+# Primary test steps for all the beest builds
+.beest_test: &beest_test
+  <<: *beest_artifacts
+  stage: acceptance
+  timeout: 80 minutes
+  script:
+    - beest test $BEEST_SCENARIO
+
+# Primary destroy steps for all the beest builds
+.beest_destroy: &beest_destroy
+  stage: cleanup
+  script:
+    - beest destroy $BEEST_SCENARIO -y
+
+
 # Job Seq: Molecule
 # Type: Compose
 .molecule_compose_rule:
@@ -788,71 +837,71 @@ molecule_integrations_success_cleanup:
     - molecule_integrations_test
     - molecule_integrations_create
 
-# Job Seq: Molecule
+# Job Seq: Beest
 # Type: kubernetes
 
-.molecule_kubernetes_rule:
+.beest_kubernetes_rule:
   # Currently we default to only running on Python2 build.
   # TODO: Change this when V3 releases are finalized and the default.
   - &kubernetes_ignore_rule
-    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-kubernetes]/
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[beest\-/ && $CI_COMMIT_MESSAGE !~ /\[beest\-kubernetes]/
     when: never
 
-molecule_kubernetes_create:
-  <<: *molecule
-  <<: *molecule_create
-  rules:
-    - *kubernetes_ignore_rule
-    - *cluster_agent
-    - when: never
+.beest_kubernetes_variables: &beest_kubernetes_variables
   variables:
-    MOLECULE_SCENARIO: kubernetes
+    BEEST_SCENARIO: dockerd-eks
+    BEEST_TEST_GROUP: k8s
 
-molecule_kubernetes_test:
-  <<: *molecule
-  <<: *molecule_test
-  resource_group: $MOLECULE_K8S_CLUSTER
+beest_kubernetes_create:
+  <<: *beest
+  <<: *beest_create
+  <<: *beest_kubernetes_variables
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent
     - when: never
-  variables:
-    MOLECULE_SCENARIO: kubernetes
+
+beest_kubernetes_test:
+  <<: *beest
+  <<: *beest_test
+  <<: *beest_kubernetes_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *cluster_agent
+    - when: never
   dependencies:
-    - molecule_kubernetes_create
+    - beest_kubernetes_create
   needs:
-    - molecule_kubernetes_create
+    - beest_kubernetes_create
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
-molecule_kubernetes_failure_cleanup:
-  <<: *molecule
-  <<: *molecule_destroy
+beest_kubernetes_failure_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_kubernetes_variables
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent_on_failure
     - when: never
-  variables:
-    MOLECULE_SCENARIO: kubernetes
   needs:
-    - molecule_kubernetes_test
-    - molecule_kubernetes_create
+    - beest_kubernetes_test
+    - beest_kubernetes_create
 
-molecule_kubernetes_success_cleanup:
-  <<: *molecule
-  <<: *molecule_destroy
+beest_kubernetes_success_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_kubernetes_variables
   rules:
     - *kubernetes_ignore_rule
     - *cluster_agent_on_success
     - when: never
-  variables:
-    MOLECULE_SCENARIO: kubernetes
   dependencies:
-    - molecule_kubernetes_test
-    - molecule_kubernetes_create
+    - beest_kubernetes_test
+    - beest_kubernetes_create
   needs:
-    - molecule_kubernetes_test
-    - molecule_kubernetes_create
+    - beest_kubernetes_test
+    - beest_kubernetes_create
 
 
 # Job Seq: Molecule

@@ -1,0 +1,13 @@
+---
+- name: Prepare Receiver
+  hosts: receiver
+  gather_facts: true
+  tasks:
+    - include_tasks: ../../bees/receiver.yml
+
+- name: Prepare Kubernetes Cluster
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  tasks:
+    - include_tasks: ../../bees/eks_agent.yml

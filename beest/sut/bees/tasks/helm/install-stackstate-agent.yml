@@ -1,0 +1,20 @@
+---
+- name: Helm install StackState Agent
+  command: helm upgrade --install \
+    --namespace {{namespace}} \
+    --create-namespace \
+    --set-string 'stackstate.apiKey'='API_KEY' \
+    --set-string 'stackstate.cluster.name'='{{cluster_name}}' \
+    --set-string 'stackstate.url'='http://{{ groups['receiver'][0] }}:7077/stsAgent' \
+    --set "agent.image.tag={{agent_current_branch}}" \
+    --set "agent.image.repository=stackstate/{{agent_docker_repo}}" \
+    --set "clusterAgent.image.tag={{agent_current_branch}}" \
+    --set "clusterAgent.image.repository=stackstate/{{cluster_agent_docker_repo}}" \
+    --set "clusterChecks.image.tag={{agent_current_branch}}" \
+    --set "clusterChecks.image.repository=stackstate/{{agent_docker_repo}}" \
+    --values ./values.yml \
+    stackstate-cluster-agent stackstate/cluster-agent
+  args:
+    chdir: "{{ ansibleTasksDir }}/helm"
+  environment:
+    KUBECONFIG: "{{ kubeconfig }}"
