@@ -129,6 +129,3 @@ build-centos7-runner:
 # TODO: centos6 is EOL. This might potentially work: https://arstech.net/centos-6-error-yumrepo-error-all-mirror-urls-are-not-using-ftp-http/
 # TODO: skipping it for now
 # produces the runner centos 6 image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos6_20190429
-
-
-# TEST
