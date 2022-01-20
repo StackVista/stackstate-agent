@@ -1,0 +1,12 @@
+export PATH=$PWD:$PATH
+
+export AWS_DEFAULT_REGION=eu-west-1
+
+# Configure either the AWS profile or the AWS keys, not both
+export AWS_PROFILE=stackstate-sandbox
+#
+#export AWS_ACCESS_KEY_ID=TBD
+#export AWS_SECRET_ACCESS_KEY=TBD
+
+export quay_user=TBD
+export quay_password=TBD

@@ -1,0 +1,6 @@
+---
+- name: Copy Receiver files
+  copy:
+    src: "{{ ansibleTasksDir }}/copy/receiver"
+    dest: "/home/ubuntu/"
+    mode: preserve
