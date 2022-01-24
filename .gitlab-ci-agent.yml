@@ -1,7 +1,6 @@
 image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:latest7
 
 stages:
-  - manual_cleanup
   - prepare
   - prepare_temp
   - build
@@ -71,59 +70,9 @@ stages:
 
 ######################### /pipeline bricks
 
-
 before_script:
   - *configure_debian_env_script
   - *retrieve_linux_go_deps_script
-
-## prepare stage
-
-clear_deps_deb_cache:
-  stage: manual_cleanup
-  before_script: []
-  cache:
-    policy: push
-    key: "deps-deb-$STS_VER-$CI_COMMIT_REF_SLUG"
-    paths:
-      - vendor
-      - venv
-  when: manual
-  script:
-    - rm -rf $CI_PROJECT_DIR/venv
-    - rm -rf $CI_PROJECT_DIR/vendor
-
-clear_deps_rpm_cache:
-  stage: manual_cleanup
-  before_script: []
-  cache:
-    policy: push
-    key: "deps-rpm-$STS_VER-$CI_COMMIT_REF_SLUG"
-    paths:
-      - vendor
-      - venv
-  when: manual
-  script:
-    - rm -rf $CI_PROJECT_DIR/venv
-    - rm -rf $CI_PROJECT_DIR/vendor
-
-clear_deps_win_cache:
-  stage: manual_cleanup
-  before_script:
-    - set WIN_CI_PROJECT_DIR=%CD%
-    - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
-  cache:
-    policy: push
-    key: "deps-win-$STS_VER-$CI_COMMIT_REF_SLUG"
-    paths:
-      - vendor
-      - venv
-  when: manual
-  script:
-    - "if (Test-Path %WIN_CI_PROJECT_DIR%\\vendor) { Remove-Item -Force -Recurse %WIN_CI_PROJECT_DIR%\\vendor }"
-    - "if (Test-Path %WIN_CI_PROJECT_DIR%\\venv) { Remove-Item -Force -Recurse %WIN_CI_PROJECT_DIR%\\venv }"
-    - "if (Test-Path C:\\opt\\stackstate-agent) { Remove-Item -Force -Recurse C:\\opt\\stackstate-agent }"
-  tags:
-    - windows_agent7_ps1
 
 deps_deb:
   stage: prepare
@@ -152,6 +101,8 @@ deps_deb:
     when:
       - runner_system_failure
       - stuck_or_timeout_failure
+  rules:
+    - when: on_success
 
 deps_rpm:
   stage: prepare
@@ -182,6 +133,8 @@ deps_rpm:
     when:
       - runner_system_failure
       - stuck_or_timeout_failure
+  rules:
+    - when: on_success
 
 deps_win:
   stage: prepare
@@ -213,6 +166,8 @@ deps_win:
     when:
       - runner_system_failure
       - stuck_or_timeout_failure
+  rules:
+    - when: on_success
 
 ## build stage
 
@@ -234,6 +189,8 @@ unit_tests:
     - sts-aws
   retry:
     max: 2
+  rules:
+    - when: on_success
 
 filename_linting:
   stage: test
@@ -243,6 +200,8 @@ filename_linting:
   script:
     - conda activate $CONDA_ENV
     - inv -e lint-filenames
+  rules:
+    - when: on_success
 
 # TODO:  Not observed in v7 in a direct form ?
 #docker_integration_tests:
@@ -278,6 +237,8 @@ build_binaries:
     max: 2
     when:
       - always
+  rules:
+    - when: on_success
 
 build_cluster_agent:
   stage: build
@@ -299,32 +260,6 @@ build_cluster_agent:
     max: 2
     when:
       - always
-
-clear_build_deb_cache:
-  stage: manual_cleanup
-  interruptible: true
-  cache:
-    policy: push
-    key: "build-deb-$STS_VER-$CI_COMMIT_REF_SLUG"
-    paths:
-      - .omnibus
-  when: manual
-  script:
-    - mkdir -p .omnibus
-    - rm -rf .omnibus/*
-
-clear_build_rpm_cache:
-  stage: manual_cleanup
-  interruptible: true
-  cache:
-    policy: push
-    key: "build-rpm-$STS_VER-$CI_COMMIT_REF_SLUG"
-    paths:
-      - .omnibus
-  when: manual
-  script:
-    - mkdir -p .omnibus
-    - rm -rf .omnibus/*
 
 build_deb:
   stage: build
@@ -381,6 +316,8 @@ build_deb:
     max: 2
     when:
       - always
+  rules:
+    - when: on_success
 
 build_rpm:
   stage: build
@@ -442,6 +379,8 @@ build_rpm:
     max: 2
     when:
       - always
+  rules:
+    - when: on_success
 
 build_win:
   stage: build
@@ -474,6 +413,8 @@ build_win:
     max: 2
     when:
       - always
+  rules:
+    - when: on_success
 
 ## pre_release stage
 
@@ -490,6 +431,8 @@ test_deb_renaming:
     when:
       - runner_system_failure
       - stuck_or_timeout_failure
+  rules:
+    - when: on_success
 
 test_rpm_renaming:
   stage: test
@@ -505,6 +448,8 @@ test_rpm_renaming:
     when:
       - runner_system_failure
       - stuck_or_timeout_failure
+  rules:
+    - when: on_success
 
 
 pre_release_deb:
@@ -529,6 +474,8 @@ pre_release_deb:
     when:
       - runner_system_failure
       - stuck_or_timeout_failure
+  rules:
+    - when: on_success
 
 pre_release_win:
   stage: pre_release
@@ -558,6 +505,8 @@ pre_release_win:
     when:
       - runner_system_failure
       - stuck_or_timeout_failure
+  rules:
+    - when: on_success
 
 pre_release_rpm:
   stage: pre_release
@@ -574,6 +523,8 @@ pre_release_rpm:
     when:
       - runner_system_failure
       - stuck_or_timeout_failure
+  rules:
+    - when: on_success
 
 pre_release_main_agent_image: &pre_release_image
   stage: pre_release
@@ -600,6 +551,8 @@ pre_release_main_agent_image: &pre_release_image
     when:
       - runner_system_failure
       - stuck_or_timeout_failure
+  rules:
+    - when: on_success
 
 pre_release_trace_agent_image:
   <<: *pre_release_image
@@ -1202,10 +1155,9 @@ release_deb:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_RELEASE_BUCKET stable
     - cd $CI_PROJECT_DIR && inv release.generate-install
     - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_RELEASE_BUCKET']).object('install.sh').upload_file('./install.sh', acl:'public-read')"
-  when: manual
-  only:
-    - tags
-    - triggers
+  rules:
+    - if: $CI_COMMIT_TAG || $CI_COMMIT_TRIGGERED == 'true'
+      when: manual
   retry:
     max: 2
     when:
@@ -1224,10 +1176,9 @@ release_rpm:
   script:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_rpm_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package_rpm.sh $STS_AWS_RELEASE_BUCKET_YUM stable
-  when: manual
-  only:
-    - tags
-    - triggers
+  rules:
+    - if: $CI_COMMIT_TAG || $CI_COMMIT_TRIGGERED == 'true'
+      when: manual
   retry:
     max: 2
     when:
@@ -1253,10 +1204,9 @@ release_win:
     - aws.exe s3 cp . s3://$Env:STS_AWS_RELEASE_BUCKET_WIN/windows/stable --recursive --exclude "*" --include "*.msi" --acl public-read
     - aws.exe s3 ls s3://$Env:STS_AWS_RELEASE_BUCKET_WIN/windows/stable/
     - aws.exe s3 ls s3://$Env:STS_AWS_RELEASE_BUCKET_WIN/
-  when: manual
-  only:
-    - tags
-    - triggers
+  rules:
+    - if: $CI_COMMIT_TAG || $CI_COMMIT_TRIGGERED == 'true'
+      when: manual
   tags:
     - windows_agent7_ps1
   retry:
@@ -1294,10 +1244,9 @@ release_main_agent_image:
     - export VERSION=`cat version.txt`
     - cp ./outcomes/pkg/stackstate-agent_*_amd64.deb Dockerfiles/agent
     - ./omnibus/package-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO $CI_PROJECT_DIR/Dockerfiles/agent latest
-  when: manual
-  only:
-    - tags
-    - triggers
+  rules:
+    - if: $CI_COMMIT_TAG || $CI_COMMIT_TRIGGERED == 'true'
+      when: manual
 
 release_trace_agent_image:
   <<: *base_release_image
