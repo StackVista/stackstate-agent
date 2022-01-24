@@ -643,15 +643,16 @@ pre_release_cluster_agent_image:
     - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
     - export STACKSTATE_BRANCH=master
   retry:
-    max: 2
+    max: 1
 
 # Base artifacts for create and test steps
 .beest_artifacts: &beest_artifacts
   artifacts:
     when: always
     paths:
-      - $CI_PROJECT_DIR/beest/tests/$BEEST_TEST_GROUP/topic-*.json
-      - $CI_PROJECT_DIR/beest/tests/$BEEST_TEST_GROUP/*.log
+      - /go/src/app/tests/$BEEST_TEST_GROUP/topic-*.json
+      - /go/src/app/tests/$BEEST_TEST_GROUP/*.log
+      - /go/src/app/terraform.log
     expire_in: 1 week
 
 # Primary create steps for all the beest builds
