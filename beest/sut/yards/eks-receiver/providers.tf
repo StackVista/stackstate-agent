@@ -1,8 +1,10 @@
 terraform {
   backend "s3" {
-    bucket = "lupulus-sandbox-terraform-state"
-    key    = "beest.terraform.tfstate"
-    region = "eu-west-1"
+    region         = "eu-west-1"
+    bucket         = "lupulus-sandbox-terraform-state"
+    key            = "beest.terraform.tfstate"
+    dynamodb_table = "beest-terraform-lock"
+    encrypt        = true
   }
   required_providers {
     aws = {
