@@ -53,6 +53,7 @@ func newTerraform(ctx TerraformContext) *TerraformState {
 	if err != nil {
 		log.Fatalf("Error running NewTerraform: %s", err)
 	}
+	tf.SetStdout(os.Stdout)
 
 	return &TerraformState{
 		tf:     tf,
