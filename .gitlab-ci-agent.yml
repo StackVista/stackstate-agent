@@ -642,6 +642,10 @@ pre_release_cluster_agent_image:
     - export PATH=/go/src/app:${PATH}
     - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
     - export STACKSTATE_BRANCH=master
+  after_script: # artifacts do not work with absolute path, so we move them inside the build dir
+    - mv /go/src/app/terraform.log $CI_PROJECT_DIR/beest/
+    - mv /go/src/app/tests/$BEEST_TEST_GROUP/topic-*.json $CI_PROJECT_DIR/beest/
+    - mv /go/src/app/tests/$BEEST_TEST_GROUP/*.log $CI_PROJECT_DIR/beest/
   retry:
     max: 1
 
@@ -650,9 +654,8 @@ pre_release_cluster_agent_image:
   artifacts:
     when: always
     paths:
-      - /go/src/app/tests/$BEEST_TEST_GROUP/topic-*.json
-      - /go/src/app/tests/$BEEST_TEST_GROUP/*.log
-      - /go/src/app/terraform.log
+      - beest/*.log
+      - beest/topic-*.json
     expire_in: 1 week
 
 # Primary create steps for all the beest builds
