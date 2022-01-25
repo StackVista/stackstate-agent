@@ -1096,6 +1096,11 @@ molecule_vms_create:
     - *vms_ignore_rule
     - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
       when: always
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+      when: manual
   variables:
     MOLECULE_SCENARIO: vms
 
