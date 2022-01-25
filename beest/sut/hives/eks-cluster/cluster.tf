@@ -28,6 +28,8 @@ data "aws_eks_cluster_auth" "cluster" {
 locals {
   kubeconfig = <<KUBECONFIG
 apiVersion: v1
+kind: Config
+preferences: {}
 clusters:
 - cluster:
     certificate-authority-data: ${aws_eks_cluster.cluster.certificate_authority[0].data}
@@ -40,8 +42,6 @@ contexts:
     user: aws
   name: ${var.environment}
 current-context: ${var.environment}
-kind: Config
-preferences: {}
 users:
 - name: aws
   user:

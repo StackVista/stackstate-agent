@@ -111,14 +111,15 @@ agent2:
     include: .gitlab-ci-agent.yml
     strategy: depend
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: never
     - <<: *exclude_on_cluster_agent
     # exclude this pipeline if we're running a v3 tag pipeline
     - <<: *exclude_on_tag_v3
     - if: $CI_COMMIT_MESSAGE =~ /\[py3]/
       when: never
-    - when: on_success
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
 
 agent3:
  stage: triggers
@@ -129,14 +130,17 @@ agent3:
    include: .gitlab-ci-agent.yml
    strategy: depend
  rules:
-   - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-     when: never
    - <<: *exclude_on_cluster_agent
    # exclude this pipeline if we're running a v2 tag pipeline
    - <<: *exclude_on_tag_v2
    - if: $CI_COMMIT_MESSAGE =~ /\[py2]/
      when: never
-   - when: on_success
+   - if: $CI_MERGE_REQUEST_IID
+   - if: $CI_OPEN_MERGE_REQUESTS
+     when: never
+   - if: $CI_COMMIT_BRANCH
+
+
 
 cluster_agent:
   stage: triggers

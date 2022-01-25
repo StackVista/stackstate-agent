@@ -1,7 +1,7 @@
 .envrc
 
 # terraform related
-.terraform*
+.terraform
 tf.deploy
 kubeconfig*
 
