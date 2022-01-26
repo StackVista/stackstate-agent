@@ -3,7 +3,11 @@
 package topologycollectors
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"github.com/gogo/protobuf/jsonpb"
+	"github.com/gogo/protobuf/proto"
 
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/urn"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -211,4 +215,31 @@ func (c *clusterTopologyCommon) initTags(meta metav1.ObjectMeta) map[string]stri
 	}
 
 	return tags
+}
+
+var protoJSONMarshaler = jsonpb.Marshaler{
+	EnumsAsInts:  false,
+	EmitDefaults: false,
+}
+
+func marshallK8sObjectToData(msg proto.Message) (map[string]interface{}, error) {
+	var buf bytes.Buffer
+	if err := protoJSONMarshaler.Marshal(&buf, msg); err != nil {
+		return nil, err
+	}
+	var result map[string]interface{}
+	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+		return nil, err
+	}
+	if metadata, ok := result["metadata"]; ok {
+		switch metadataMap := metadata.(type) {
+		case map[string]interface{}:
+			// managedFields contains information about who is able to modify certain parts of an object
+			// this information is irrelevant to runtime, hence is being dropped here to have smaller status
+			// https://kubernetes.io/docs/reference/using-api/server-side-apply/#field-management
+			delete(metadataMap, "managedFields")
+		default:
+		}
+	}
+	return result, nil
 }

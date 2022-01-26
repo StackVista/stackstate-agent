@@ -1,0 +1,5 @@
+---
+- name: Wait for the pod-localhost scenario to become ready
+  command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l test=pod-localhost pod
+  environment:
+    KUBECONFIG: "{{ kubeconfig }}"

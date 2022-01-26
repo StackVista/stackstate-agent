@@ -50,6 +50,30 @@ func TestDeploymentCollector(t *testing.T) {
 					"deploymentStrategy": appsV1.RollingUpdateDeploymentStrategyType,
 					"desiredReplicas":    &replicas,
 				},
+				SourceProperties: topology.Data{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
+						"labels": map[string]interface{}{
+							"test": "label",
+						},
+						"name":      "test-deployment-1",
+						"namespace": "test-namespace",
+						"uid":       "test-deployment-1",
+					},
+					"spec": map[string]interface{}{
+						"replicas": float64(1),
+						"strategy": map[string]interface{}{
+							"type": "RollingUpdate",
+						},
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": nil,
+							},
+							"spec": map[string]interface{}{},
+						},
+					},
+					"status": map[string]interface{}{},
+				},
 			},
 		},
 		{
@@ -64,6 +88,30 @@ func TestDeploymentCollector(t *testing.T) {
 					"uid":                types.UID("test-deployment-2"),
 					"deploymentStrategy": appsV1.RollingUpdateDeploymentStrategyType,
 					"desiredReplicas":    &replicas,
+				},
+				SourceProperties: topology.Data{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
+						"labels": map[string]interface{}{
+							"test": "label",
+						},
+						"name":      "test-deployment-2",
+						"namespace": "test-namespace",
+						"uid":       "test-deployment-2",
+					},
+					"spec": map[string]interface{}{
+						"replicas": float64(1),
+						"strategy": map[string]interface{}{
+							"type": "RollingUpdate",
+						},
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": nil,
+							},
+							"spec": map[string]interface{}{},
+						},
+					},
+					"status": map[string]interface{}{},
 				},
 			},
 		},
@@ -81,6 +129,31 @@ func TestDeploymentCollector(t *testing.T) {
 					"generateName":       "some-specified-generation",
 					"deploymentStrategy": appsV1.RollingUpdateDeploymentStrategyType,
 					"desiredReplicas":    &replicas,
+				},
+				SourceProperties: topology.Data{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
+						"labels": map[string]interface{}{
+							"test": "label",
+						},
+						"name":         "test-deployment-3",
+						"generateName": "some-specified-generation",
+						"namespace":    "test-namespace",
+						"uid":          "test-deployment-3",
+					},
+					"spec": map[string]interface{}{
+						"replicas": float64(1),
+						"strategy": map[string]interface{}{
+							"type": "RollingUpdate",
+						},
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": nil,
+							},
+							"spec": map[string]interface{}{},
+						},
+					},
+					"status": map[string]interface{}{},
 				},
 			},
 		},
@@ -123,6 +196,15 @@ func (m MockDeploymentAPICollectorClient) GetDeployments() ([]appsV1.Deployment,
 				},
 				UID:          types.UID(fmt.Sprintf("test-deployment-%d", i)),
 				GenerateName: "",
+				ManagedFields: []v1.ManagedFieldsEntry{
+					{
+						Manager:    "ignored",
+						Operation:  "Updated",
+						APIVersion: "whatever",
+						Time:       &v1.Time{Time: time.Now()},
+						FieldsType: "whatever",
+					},
+				},
 			},
 			Spec: appsV1.DeploymentSpec{
 				Strategy: appsV1.DeploymentStrategy{

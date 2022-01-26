@@ -3,6 +3,7 @@
 package topologycollectors
 
 import (
+	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"k8s.io/api/apps/v1"
@@ -46,11 +47,23 @@ func (dmc *DeploymentCollector) CollectorFunction() error {
 	return nil
 }
 
+func (dmc *DeploymentCollector) DeploymentToStackStateComponent(deployment v1.Deployment) *topology.Component {
+	return dmc.deploymentToStackStateComponent(deployment)
+}
+
 // Creates a StackState deployment component from a Kubernetes / OpenShift Cluster
 func (dmc *DeploymentCollector) deploymentToStackStateComponent(deployment v1.Deployment) *topology.Component {
 	log.Tracef("Mapping Deployment to StackState component: %s", deployment.String())
 
 	tags := dmc.initTags(deployment.ObjectMeta)
+
+	sourceProperties, err := marshallK8sObjectToData(&deployment)
+	if err != nil {
+		_ = log.Warnf("Can't serialize sourceProperties for Deployment %s/%s: %v", deployment.Namespace, deployment.Name, err)
+		sourceProperties = map[string]interface{}{
+			"serialization_error": fmt.Sprintf("error occurred during serialization of this object: %v", err),
+		}
+	}
 
 	deploymentExternalID := dmc.buildDeploymentExternalID(deployment.Namespace, deployment.Name)
 	component := &topology.Component{
@@ -64,6 +77,7 @@ func (dmc *DeploymentCollector) deploymentToStackStateComponent(deployment v1.De
 			"desiredReplicas":    deployment.Spec.Replicas,
 			"uid":                deployment.UID,
 		},
+		SourceProperties: sourceProperties,
 	}
 
 	component.Data.PutNonEmpty("generateName", deployment.GenerateName)
