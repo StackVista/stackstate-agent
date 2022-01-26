@@ -158,6 +158,8 @@ github.com/StackVista/agent-payload v0.0.0-20211202101543-fefd8c662066 h1:nGOEpj
 github.com/StackVista/agent-payload v0.0.0-20211202101543-fefd8c662066/go.mod h1:UhvM7VVAnEOx4tg3rzMZCwXXYIuzcQyJZR19uGU2luE=
 github.com/StackVista/agent-payload v0.0.0-20220126105101-dd4e066db93b h1:QtzkSOfevoR4vVlwAXrb4gfdF2bAzi6KWlZF8TfLxE8=
 github.com/StackVista/agent-payload v0.0.0-20220126105101-dd4e066db93b/go.mod h1:2upLt0q42uvodrGkZQL2JOPVe/Uh0R4Rt1mXxljrqsU=
+github.com/StackVista/agent-payload v0.0.0-20220126130553-9e6236e70466 h1:6WUUWdSk27p5wis8RHGgD24pdn3VSm0RqA7M2TplqcY=
+github.com/StackVista/agent-payload v0.0.0-20220126130553-9e6236e70466/go.mod h1:2upLt0q42uvodrGkZQL2JOPVe/Uh0R4Rt1mXxljrqsU=
 github.com/StackVista/sketches-go v1.1.1-0.20211118100531-f89574a9eac9 h1:ujjdYWjh5O/CjpPXi/KQ7PPcAY5FYsLm5hM2slULJX8=
 github.com/StackVista/sketches-go v1.1.1-0.20211118100531-f89574a9eac9/go.mod h1:xerTHIkY3XGMCqOy9PwIlCwHNiaqCJE854wvOvlSjyc=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=

@@ -170,7 +170,7 @@ require (
 // Pinned to kubernetes-1.16.2
 replace github.com/kubernetes-incubator/custom-metrics-apiserver => github.com/kubernetes-incubator/custom-metrics-apiserver v0.0.0-20190918110929-3d9be26a50eb
 
-replace github.com/DataDog/agent-payload => github.com/StackVista/agent-payload v0.0.0-20220126105101-dd4e066db93b
+replace github.com/DataDog/agent-payload => github.com/StackVista/agent-payload v0.0.0-20220126130553-9e6236e70466
 
 //replace github.com/DataDog/sketches-go => github.com/StackVista/sketches-go v1.1.1-0.20211118100531-f89574a9eac9
 
