@@ -5,10 +5,11 @@ ARG UID
 ARG GID
 ARG DOCKER_GID
 ARG MYUSER=keeper
+ARG UNAME_S
 
 RUN (groupadd -g $GID $MYUSER || true) && \
     useradd -m -u $UID -g $GID $MYUSER -s /bin/sh
-RUN if [ $(UNAME_S) = "Linux" ]; then \
+RUN if [ $UNAME_S = "Linux" ]; then \
       groupadd -g $DOCKER_GID docker && \
       usermod -a -G docker $MYUSER; \
     fi

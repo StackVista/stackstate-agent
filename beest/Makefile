@@ -2,6 +2,7 @@
 
 SHELL         := /bin/bash
 .DEFAULT_GOAL := start
+UNAME_S ?= Linux
 
 UID    ?= $(shell id -u)
 GID    ?= $(shell id -g)
@@ -12,6 +13,7 @@ ifeq ($(OS),Linux)
 endif
 ifeq ($(OS),Darwin)
 	DOCKER_GID ?= $(shell stat -f '%g' /var/run/docker.sock)
+	UNAME_S = Darwin
 endif
 
 GIT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
@@ -40,6 +42,7 @@ build:
 		--build-arg UID=${UID} \
 		--build-arg GID=${GID} \
 		--build-arg DOCKER_GID=${DOCKER_GID} \
+		--build-arg UNAME_S=${UNAME_S} \
 		-f ./keeper.dockerfile .
 
 start: build
