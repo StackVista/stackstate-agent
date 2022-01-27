@@ -148,7 +148,7 @@ def get_payload_version():
             if len(whitespace_split) < 2:
                 continue
             pkgname = whitespace_split[0]
-            if pkgname == "github.com/DataDog/agent-payload":
+            if pkgname == "github.com/DataDog/agent-payload" or pkgname == "github.com/StackVista/agent-payload":
                 comment_split = line.split("//")
                 if len(comment_split) < 2:
                     raise Exception(
