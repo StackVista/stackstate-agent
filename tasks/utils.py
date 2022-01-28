@@ -144,6 +144,11 @@ def get_payload_version():
     with open('go.mod') as f:
         for rawline in f:
             line = rawline.strip()
+
+            # replace line syntax. Strip the "replaced" package and take the "replacing" package and it's version
+            if "=>" in line:
+                line = line.split("=> ")[1]
+
             whitespace_split = line.split(" ")
             if len(whitespace_split) < 2:
                 continue

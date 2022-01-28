@@ -39,7 +39,7 @@ replace (
 
 require github.com/DataDog/agent-payload v0.0.0-20200624194755-bbcbef3bd83d // 4.36.0
 
-replace github.com/DataDog/agent-payload => github.com/StackVista/agent-payload v0.0.0-20220127143949-6e1e4f4a458a
+replace github.com/DataDog/agent-payload => github.com/StackVista/agent-payload v0.0.0-20220127143949-6e1e4f4a458a // 4.36.0
 
 require (
 	code.cloudfoundry.org/bbs v0.0.0-20200403215808-d7bc971db0db
