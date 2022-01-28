@@ -56,8 +56,15 @@ func commonVariables() map[string]interface{} {
 	if yardId == "" {
 		yardId = scenario.Name
 	}
-	trimmedBranch := agentCurrentBranch[:24]
+	trimmedBranch := trimTo(agentCurrentBranch, 24)
 	return map[string]interface{}{
 		"yard_id": fmt.Sprintf("beest-%s-%s", yardId, trimmedBranch),
 	}
+}
+
+func trimTo(s string, maxLength int) string {
+	if len(s) < maxLength {
+		return s
+	}
+	return s[:maxLength]
 }
