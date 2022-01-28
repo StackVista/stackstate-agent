@@ -56,7 +56,8 @@ func commonVariables() map[string]interface{} {
 	if yardId == "" {
 		yardId = scenario.Name
 	}
+	trimmedBranch := agentCurrentBranch[:24]
 	return map[string]interface{}{
-		"yard_id": fmt.Sprintf("beest-%s-%s", yardId, agentCurrentBranch),
+		"yard_id": fmt.Sprintf("beest-%s-%s", yardId, trimmedBranch),
 	}
 }

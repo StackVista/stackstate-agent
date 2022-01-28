@@ -1,11 +1,5 @@
 terraform {
-  backend "s3" {
-    region         = "eu-west-1"
-    bucket         = "lupulus-sandbox-terraform-state"
-    key            = "beest.terraform.tfstate"
-    dynamodb_table = "beest-terraform-lock"
-    encrypt        = true
-  }
+  backend "s3" {}
   required_providers {
     aws = {
       source  = "hashicorp/aws"
