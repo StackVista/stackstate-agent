@@ -528,6 +528,7 @@ pre_release_rpm:
 
 pre_release_main_agent_image: &pre_release_image
   stage: pre_release
+  interruptible: true
   image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
   needs:
     - build_deb
@@ -577,6 +578,82 @@ pre_release_cluster_agent_image:
   rules:
     - *cluster_agent
 
+.v2_merge_train_common: &v2_merge_train_common
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
+    when: manual
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
+    when: manual
+    allow_failure: true
+
+.merge_train_common: &merge_train_common
+  - if: $CI_MERGE_REQUEST_IID
+    when: manual
+    allow_failure: true
+  - if: $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $CI_COMMIT_BRANCH
+    when: manual
+    allow_failure: true
+
+# Merge train rules for agent v2
+.v2_merge_train_always: &v2_merge_train_always
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: always
+    allow_failure: false
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: always
+    allow_failure: false
+  - *v2_merge_train_common
+
+.v2_merge_train_on_success: &v2_merge_train_on_success
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: on_success
+    allow_failure: false
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_success
+    allow_failure: false
+  - *v2_merge_train_common
+
+.v2_merge_train_on_failure: &v2_merge_train_on_failure
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: on_failure
+    allow_failure: false
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_failure
+    allow_failure: false
+  - *v2_merge_train_common
+
+# Merge train rules for all agents
+.merge_train_always: &merge_train_always
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: always
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: always
+    allow_failure: false
+  - *merge_train_common
+
+.merge_train_on_success: &merge_train_on_success
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: on_success
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_success
+    allow_failure: false
+  - *merge_train_common
+
+.merge_train_on_failure: &merge_train_on_failure
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: on_failure
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_failure
+    allow_failure: false
+  - *merge_train_common
+
 # Core Molecule Structure for all the molecule steps
 .molecule: &molecule
   interruptible: true
@@ -622,6 +699,7 @@ pre_release_cluster_agent_image:
 # Primary destroy steps for all the molecule builds
 .molecule_destroy: &molecule_destroy
   stage: cleanup
+  interruptible: true
   script:
     - cd $CI_PROJECT_DIR/test
     - ./molecule3.sh $MOLECULE_SCENARIO destroy
@@ -692,7 +770,7 @@ molecule_compose_create:
   <<: *molecule_create
   rules:
     - *compose_ignore_rule
-    - when: always
+    - *merge_train_always
   variables:
     MOLECULE_SCENARIO: compose
 
@@ -701,7 +779,7 @@ molecule_compose_test:
   <<: *molecule_test
   rules:
     - *compose_ignore_rule
-    - when: on_success
+    - *merge_train_on_success
   variables:
     MOLECULE_SCENARIO: compose
   dependencies:
@@ -714,7 +792,7 @@ molecule_compose_failure_cleanup:
   <<: *molecule_destroy
   rules:
     - *compose_ignore_rule
-    - when: on_failure
+    - *merge_train_on_failure
   variables:
     MOLECULE_SCENARIO: compose
   needs:
@@ -725,7 +803,7 @@ molecule_compose_success_cleanup:
   <<: *molecule_destroy
   rules:
     - *compose_ignore_rule
-    - when: on_success
+    - *merge_train_on_success
   variables:
     MOLECULE_SCENARIO: compose
   dependencies:
@@ -749,7 +827,7 @@ molecule_integrations_create:
   <<: *molecule_create
   rules:
     - *integrations_ignore_rule
-    - when: always
+    - *merge_train_always
   variables:
     MOLECULE_SCENARIO: integrations
 
@@ -758,7 +836,7 @@ molecule_integrations_test:
   <<: *molecule_test
   rules:
     - *integrations_ignore_rule
-    - when: on_success
+    - *merge_train_on_success
   variables:
     MOLECULE_SCENARIO: integrations
   dependencies:
@@ -772,7 +850,7 @@ molecule_integrations_failure_cleanup:
   <<: *molecule_destroy
   rules:
     - *integrations_ignore_rule
-    - when: on_failure
+    - *merge_train_on_failure
   variables:
     MOLECULE_SCENARIO: integrations
   needs:
@@ -784,7 +862,7 @@ molecule_integrations_success_cleanup:
   <<: *molecule_destroy
   rules:
     - *integrations_ignore_rule
-    - when: on_success
+    - *merge_train_on_success
   variables:
     MOLECULE_SCENARIO: integrations
   dependencies:
@@ -1035,7 +1113,7 @@ molecule_swarm_create:
   <<: *molecule_create
   rules:
     - *swarm_ignore_rule
-    - *cluster_agent_always
+    - *v2_merge_train_always
   variables:
     MOLECULE_SCENARIO: swarm
 
@@ -1044,7 +1122,7 @@ molecule_swarm_test:
   <<: *molecule_test
   rules:
     - *swarm_ignore_rule
-    - *cluster_agent_on_success
+    - *v2_merge_train_on_success
   dependencies:
     - molecule_swarm_create
   variables:
@@ -1061,7 +1139,7 @@ molecule_swarm_failure_cleanup:
   <<: *molecule_destroy
   rules:
     - *swarm_ignore_rule
-    - *cluster_agent_on_failure
+    - *v2_merge_train_on_failure
   needs:
     - molecule_swarm_create
     - molecule_swarm_test
@@ -1073,7 +1151,7 @@ molecule_swarm_success_cleanup:
   <<: *molecule_destroy
   rules:
     - *swarm_ignore_rule
-    - *cluster_agent_on_success
+    - *v2_merge_train_on_success
   dependencies:
     - molecule_swarm_create
     - molecule_swarm_test
@@ -1094,8 +1172,7 @@ molecule_vms_create:
   <<: *molecule_create
   rules:
     - *vms_ignore_rule
-    - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
-      when: always
+    - *v2_merge_train_always
   variables:
     MOLECULE_SCENARIO: vms
 
@@ -1104,8 +1181,7 @@ molecule_vms_test:
   <<: *molecule_test
   rules:
     - *vms_ignore_rule
-    - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
-      when: on_success
+    - *v2_merge_train_on_success
   variables:
     MOLECULE_SCENARIO: vms
   dependencies:
@@ -1123,8 +1199,7 @@ molecule_vms_failure_cleanup:
   <<: *molecule_destroy
   rules:
     - *vms_ignore_rule
-    - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
-      when: on_failure
+    - *v2_merge_train_on_failure
   needs:
     - molecule_vms_create
     - molecule_vms_test
@@ -1136,8 +1211,7 @@ molecule_vms_success_cleanup:
   <<: *molecule_destroy
   rules:
     - *vms_ignore_rule
-    - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
-      when: on_success
+    - *v2_merge_train_on_success
   dependencies:
     - molecule_vms_create
     - molecule_vms_test
