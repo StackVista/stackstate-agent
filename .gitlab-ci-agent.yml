@@ -753,6 +753,7 @@ pre_release_cluster_agent_image:
 
 # Primary destroy steps for all the beest builds
 .beest_destroy: &beest_destroy
+  <<: *beest_artifacts
   stage: cleanup
   script:
     - beest destroy $BEEST_SCENARIO -y
