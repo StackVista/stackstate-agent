@@ -4,8 +4,8 @@
     --namespace {{namespace}} \
     --create-namespace \
     --set-string 'stackstate.apiKey'='API_KEY' \
-    --set-string 'stackstate.cluster.name'='{{cluster_name}}' \
-    --set-string 'stackstate.url'='http://{{ groups['receiver'][0] }}:7077/stsAgent' \
+    --set-string 'stackstate.cluster.name'='beest-juliano' \
+    --set-string 'stackstate.url'='https://dev-juliano.sandbox.stackstate.io/receiver' \
     --set "agent.image.tag={{agent_current_branch}}" \
     --set "agent.image.repository=stackstate/{{agent_docker_repo}}" \
     --set "clusterAgent.image.tag={{agent_current_branch}}" \
