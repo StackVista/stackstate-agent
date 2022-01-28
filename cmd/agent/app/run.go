@@ -8,9 +8,10 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"runtime"
 	"syscall"
+
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
 
 	_ "expvar" // Blank import used because this isn't directly used in this file
 	"net/http"
@@ -199,7 +200,7 @@ func StartAgent() error {
 	if config.Datadog.GetBool("telemetry.enabled") {
 		http.Handle("/telemetry", telemetry.Handler())
 	}
-	go http.ListenAndServe("127.0.0.1:"+port, http.DefaultServeMux) //nolint:errcheck
+	go http.ListenAndServe("0.0.0.0:"+port, http.DefaultServeMux) //nolint:errcheck
 
 	// Setup healthcheck port
 	var healthPort = config.Datadog.GetInt("health_port")
