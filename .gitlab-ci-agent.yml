@@ -55,15 +55,6 @@ stages:
   # TODO: Change this when V3 releases are finalized and the default.
   - &cluster_agent
     if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
-  - &cluster_agent_always
-    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
-    when: always
-  - &cluster_agent_on_success
-    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
-    when: on_success
-  - &cluster_agent_on_failure
-    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
-    when: on_failure
   - &cluster_agent_release
     if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_JOB_TRIGGERED == "true")
     when: manual
