@@ -25,15 +25,15 @@ type ContainerTopologyCollector struct {
 }
 
 // MakeContainerTopologyCollector returns a new instance of DockerTopologyCollector
-func MakeContainerTopologyCollector(checkName string) *ContainerTopologyCollector {
+func MakeContainerTopologyCollector() *ContainerTopologyCollector {
 	hostname, err := util.GetHostname()
 	if err != nil {
-		log.Warnf("Can't get hostname from %s, containers ExternalIDs will not have it: %s", checkName, err)
+		log.Warnf("Can't get hostname from container collector, containers ExternalIDs will not have it: %s", err)
 	}
 	return &ContainerTopologyCollector{
 		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector(
-			check.ID(fmt.Sprintf("%s_topology", checkName)), topology.Instance{
-				Type: checkName,
+			check.ID(fmt.Sprintf("%s_topology", containerType)), topology.Instance{
+				Type: containerType,
 				URL:  "agents",
 			}),
 		Hostname: hostname,
@@ -73,6 +73,7 @@ func (ctc *ContainerTopologyCollector) MapContainerDataToTopologyData(container 
 		"image":       container.Image,
 		"mounts":      container.Mounts,
 		"state":       container.State,
+		"labels":      []string{runtimeLabel(container.Runtime)},
 	}
 	processAgentIdentifier, err := ctc.buildProcessAgentContainerIdentifier(container.ID)
 	if err != nil {
@@ -133,4 +134,8 @@ func (ctc *ContainerTopologyCollector) buildProcessAgentContainerIdentifier(cont
 		return "", fmt.Errorf("no hostname found, it's not possible to build the process-agent identifier")
 	}
 	return fmt.Sprintf("urn:%s:/%s:%s", containerType, ctc.Hostname, containerID), nil
+}
+
+func runtimeLabel(runtime string) string {
+	return fmt.Sprintf("runtime:%s", runtime)
 }
