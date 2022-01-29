@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	DefaultTerraformBinary = "/usr/local/bin/terraform"
+	DefaultTerraformBinary = "/usr/local/bin/terragrunt"
 )
 
 type TerraformContext interface {
