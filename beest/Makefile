@@ -12,8 +12,8 @@ ifeq ($(OS),Linux)
     UNAME_S = Linux
 endif
 ifeq ($(OS),Darwin)
-	DOCKER_GID ?= $(shell stat -f '%g' /var/run/docker.sock)
-	UNAME_S = Darwin
+    DOCKER_GID ?= $(shell stat -f '%g' /var/run/docker.sock)
+    UNAME_S = Darwin
 endif
 
 GIT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
