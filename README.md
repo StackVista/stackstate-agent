@@ -121,7 +121,7 @@ To install the official release:
 
 ##### Test
 
-If you wanna install a branch version use the test repository:
+If you want to install a branch version use the test repository:
 
     $ . { iwr -useb https://stackstate-agent-3-test.s3.amazonaws.com/install.ps1 } | iex; install -stsApiKey "xxx" -stsUrl "yyy" -codeName "PR_NAME"
 
