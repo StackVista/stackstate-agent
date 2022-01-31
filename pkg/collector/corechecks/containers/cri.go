@@ -56,7 +56,7 @@ func CRIFactory() check.Check {
 		CheckBase: core.NewCheckBase(criCheckName),
 		instance:  &CRIConfig{},
 		// sts
-		topologyCollector: topology.MakeContainerTopologyCollector(criCheckName),
+		topologyCollector: topology.MakeContainerTopologyCollector(),
 	}
 }
 
