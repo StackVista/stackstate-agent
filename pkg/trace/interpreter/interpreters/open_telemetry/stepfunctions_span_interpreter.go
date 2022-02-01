@@ -28,8 +28,6 @@ func (t *OpenTelemetryStepFunctionsInterpreter) Interpret(spans []*pb.Span) []*p
 			span.Meta = map[string]string{}
 		}
 
-		// Retrieve the core information required to trace SNS
-
 		// awsService, awsServiceOk := span.Meta["aws.service.api"]
 		awsOperation, awsOperationOk := span.Meta["aws.operation"]
 		stateMachineArn, stateMachineArnOk := span.Meta["aws.request.state.machine.arn"]

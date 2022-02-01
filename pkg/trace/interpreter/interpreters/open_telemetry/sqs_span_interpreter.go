@@ -29,8 +29,6 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			span.Meta = map[string]string{}
 		}
 
-		// Retrieve the core information required to trace SQS
-
 		// awsService, awsServiceOk := span.Meta["aws.service.api"]
 		awsRegion, awsRegionOk := span.Meta["aws.region"]
 		awsOperation, awsOperationOk := span.Meta["aws.operation"]
