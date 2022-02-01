@@ -10,3 +10,5 @@ export AWS_PROFILE=stackstate-sandbox
 
 export quay_user=TBD
 export quay_password=TBD
+
+export STACKSTATE_BRANCH=master
