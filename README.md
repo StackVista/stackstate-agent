@@ -45,7 +45,7 @@ To start working on the Agent, you can build the `master` branch:
    Make sure that `$GOPATH/bin` is in your `$PATH` otherwise this step might fail.
 4. Create a development `datadog.yaml` configuration file in `dev/dist/datadog.yaml`, containing a valid API key: `api_key: <API_KEY>`
 5. Build the agent with `invoke agent.build --build-exclude=systemd`.
-   By default, the Agent will be built to use Python 3 but you can select which Python version you want to use:
+   By default, the Agent will be built to use Python 3, but you can select which Python version you want to use:
    - `invoke agent.build --python-runtimes 2` for Python2 only
    - `invoke agent.build --python-runtimes 3` for Python3 only
    - `invoke agent.build --python-runtimes 2,3` for both Python2 and Python3
