@@ -739,9 +739,9 @@ pre_release_cluster_agent_image:
     - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
     - export STACKSTATE_BRANCH=master
   after_script: # artifacts do not work with absolute path, so we move them inside the build dir
-    - mv /go/src/app/terraform.log $CI_PROJECT_DIR/beest/
-    - mv /go/src/app/tests/$BEEST_TEST_GROUP/topic-*.json $CI_PROJECT_DIR/beest/
-    - mv /go/src/app/tests/$BEEST_TEST_GROUP/*.log $CI_PROJECT_DIR/beest/
+    - mv /go/src/app/terraform.log $CI_PROJECT_DIR/beest/ || true
+    - mv /go/src/app/tests/$BEEST_TEST_GROUP/topic-*.json $CI_PROJECT_DIR/beest/ || true
+    - mv /go/src/app/tests/$BEEST_TEST_GROUP/*.log $CI_PROJECT_DIR/beest/ || true
   retry:
     max: 1
 
