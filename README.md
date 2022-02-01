@@ -93,7 +93,7 @@ To install the official release:
 
 ##### Test
 
-If you wanna install a branch version use the test repository:
+If you want to install a branch version use the test repository:
 
     $ curl -o- https://stackstate-agent-3-test.s3.amazonaws.com/install.sh | STS_API_KEY="xxx" STS_URL="yyy" CODE_NAME="PR_NAME" bash
      or
