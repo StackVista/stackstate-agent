@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -14,8 +15,14 @@ import (
 	coreV1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"strings"
 	"testing"
 	"time"
+)
+
+const (
+	TestMaxDataSize = 120
+	TestKey3Length  = 500
 )
 
 func TestConfigMapCollector(t *testing.T) {
@@ -25,7 +32,7 @@ func TestConfigMapCollector(t *testing.T) {
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 
-	cmc := NewConfigMapCollector(componentChannel, NewTestCommonClusterCollector(MockConfigMapAPICollectorClient{}))
+	cmc := NewConfigMapCollector(componentChannel, NewTestCommonClusterCollector(MockConfigMapAPICollectorClient{}), TestMaxDataSize)
 	expectedCollectorName := "ConfigMap Collector"
 	RunCollectorTest(t, cmc, expectedCollectorName)
 
@@ -43,8 +50,12 @@ func TestConfigMapCollector(t *testing.T) {
 					"creationTimestamp": creationTime,
 					"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 					"uid":               types.UID("test-configmap-1"),
-					"data":              map[string]string{"key1": "value1", "key2": "longersecretvalue2"},
-					"identifiers":       []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-1"},
+					"data": map[string]string{
+						"key1": "value1",
+						"key2": "longersecretvalue2",
+						"key3": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA[dropped 460 chars, hashsum: 828798a87da42aa9]",
+					},
+					"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-1"},
 				},
 			},
 		},
@@ -110,6 +121,7 @@ func (m MockConfigMapAPICollectorClient) GetConfigMaps() ([]coreV1.ConfigMap, er
 			configMap.Data = map[string]string{
 				"key1": "value1",
 				"key2": "longersecretvalue2",
+				"key3": strings.Repeat("A", TestKey3Length),
 			}
 		}
 
@@ -123,4 +135,26 @@ func (m MockConfigMapAPICollectorClient) GetConfigMaps() ([]coreV1.ConfigMap, er
 	}
 
 	return configMaps, nil
+}
+
+func TestCutDataProportionally1(t *testing.T) {
+	result := cutData(map[string]string{
+		"a": strings.Repeat("A", 30),
+	}, 20)
+
+	assert.EqualValues(t, map[string]string{
+		"a": "AAAAAAAAAAAAAAAAAAAA[dropped 10 chars, hashsum: 1d65bf29403e4fb1]",
+	}, result)
+}
+
+func TestCutDataProportionally2(t *testing.T) {
+	result := cutData(map[string]string{
+		"a": strings.Repeat("A", 11),
+		"b": strings.Repeat("B", 22),
+	}, 30)
+
+	assert.EqualValues(t, map[string]string{
+		"a": "AAAAAAAAAAA",
+		"b": "BBBBBBBBBBBBBBB[dropped 7 chars, hashsum: f4205e933dd99030]",
+	}, result)
 }
