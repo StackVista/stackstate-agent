@@ -488,23 +488,23 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 				}
 
 				if librarySpan.TraceId != nil && librarySpan.TraceId[:] != nil && len(string(librarySpan.TraceId[:])) > 0 {
-					traceId := convertStringToUint64(string(librarySpan.TraceId[:]))
-					if traceId != nil {
-						openTelemetrySpan.TraceID = *traceId
+					traceID := convertStringToUint64(string(librarySpan.TraceId[:]))
+					if traceID != nil {
+						openTelemetrySpan.TraceID = *traceID
 					}
 				}
 
 				if librarySpan.SpanId != nil && librarySpan.SpanId[:] != nil && len(string(librarySpan.SpanId[:])) > 0 {
-					spanId := convertStringToUint64(string(librarySpan.SpanId[:]))
-					if spanId != nil {
-						openTelemetrySpan.SpanID = *spanId
+					spanID := convertStringToUint64(string(librarySpan.SpanId[:]))
+					if spanID != nil {
+						openTelemetrySpan.SpanID = *spanID
 					}
 				}
 
 				if librarySpan.ParentSpanId != nil && librarySpan.ParentSpanId[:] != nil && len(string(librarySpan.ParentSpanId[:])) > 0 {
-					parentSpanId := convertStringToUint64(string(librarySpan.ParentSpanId[:]))
-					if parentSpanId != nil {
-						openTelemetrySpan.ParentID = *parentSpanId
+					parentSpanID := convertStringToUint64(string(librarySpan.ParentSpanId[:]))
+					if parentSpanID != nil {
+						openTelemetrySpan.ParentID = *parentSpanID
 					}
 				}
 
