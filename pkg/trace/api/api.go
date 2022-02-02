@@ -408,7 +408,7 @@ func convertStringToUint64(input string) (*uint64, error) {
 	// Convert a massive number to an uint64 representation
 	bigInt := big.NewInt(0)
 	bigInt.SetString(runeString, 10)
-	var uint64Representation = bigInt.Uint64()
+	var uint64Representation = uint64(math.Abs(float64(bigInt.Uint64())))
 
 	return &uint64Representation, nil
 }
