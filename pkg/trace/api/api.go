@@ -381,7 +381,7 @@ func (r *HTTPReceiver) decodeOpenTelemetry(req *http.Request) (*openTelemetryTra
 
 // [sts]
 // convertStringToUint64 Current solution for convert a string that contains numbers and chars into an integer
-func convertStringToUint64(input string) (*uint64, error) {
+func convertStringToUint64(input string) *uint64 {
 	// Int Ascii values representing the string values
 	runes := []rune(input)
 
@@ -400,7 +400,7 @@ func convertStringToUint64(input string) (*uint64, error) {
 	}
 
 	if stringBuilderError != nil {
-		return nil, stringBuilderError
+		return nil
 	}
 
 	runeString := sb.String()
@@ -410,7 +410,7 @@ func convertStringToUint64(input string) (*uint64, error) {
 	bigInt.SetString(runeString, 10)
 	var uint64Representation = uint64(math.Abs(float64(bigInt.Uint64())))
 
-	return &uint64Representation, nil
+	return &uint64Representation
 }
 
 // OpenTelemetrySource Source Identifier for Open Telemetry
@@ -477,39 +477,38 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 					}
 				}
 
-				traceID, err := convertStringToUint64(string(librarySpan.TraceId[:]))
-				if err != nil {
-					_ = log.Errorf("Unable to convert %v to a uint64 version, Error received %v", librarySpan.TraceId[:], err)
-					return nil
-				}
-
-				spanID, err := convertStringToUint64(string(librarySpan.SpanId[:]))
-				if err != nil {
-					_ = log.Errorf("Unable to convert %v to a uint64 version, Error received %v", librarySpan.SpanId[:], err)
-					return nil
-				}
-
-				parentID, err := convertStringToUint64(string(librarySpan.ParentSpanId[:]))
-				if err != nil {
-					_ = log.Errorf("Unable to convert %v to a uint64 version, Error received %v", librarySpan.ParentSpanId[:], err)
-					return nil
-				}
-
-				singleTrace = append(singleTrace, &pb.Span{
+				openTelemetrySpan := &pb.Span{
 					Name:     librarySpan.Name,
-					TraceID:  *traceID,
-					SpanID:   *spanID,
-					ParentID: *parentID,
 					Start:    int64(librarySpan.StartTimeUnixNano),
 					Duration: int64(librarySpan.EndTimeUnixNano) - int64(librarySpan.StartTimeUnixNano),
 					Meta:     meta,
-
-					// Set a few default for this trace, These will be changed when interpreted
 					Service:  "openTelemetry",
 					Resource: "openTelemetry",
 					Type:     "openTelemetry",
-					Metrics:  map[string]float64{},
-				})
+				}
+
+				if librarySpan.TraceId != nil && librarySpan.TraceId[:] != nil && len(string(librarySpan.TraceId[:])) > 0 {
+					traceId := convertStringToUint64(string(librarySpan.TraceId[:]))
+					if traceId != nil {
+						openTelemetrySpan.TraceID = *traceId
+					}
+				}
+
+				if librarySpan.SpanId != nil && librarySpan.SpanId[:] != nil && len(string(librarySpan.SpanId[:])) > 0 {
+					spanId := convertStringToUint64(string(librarySpan.SpanId[:]))
+					if spanId != nil {
+						openTelemetrySpan.SpanID = *spanId
+					}
+				}
+
+				if librarySpan.ParentSpanId != nil && librarySpan.ParentSpanId[:] != nil && len(string(librarySpan.ParentSpanId[:])) > 0 {
+					parentSpanId := convertStringToUint64(string(librarySpan.ParentSpanId[:]))
+					if parentSpanId != nil {
+						openTelemetrySpan.ParentID = *parentSpanId
+					}
+				}
+
+				singleTrace = append(singleTrace, openTelemetrySpan)
 			}
 
 			traces = append(traces, singleTrace)

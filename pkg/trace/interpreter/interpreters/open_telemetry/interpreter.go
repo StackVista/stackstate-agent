@@ -70,12 +70,12 @@ func UpdateOpenTelemetrySpanSource(source string, span *pb.Span) string {
 				return fmt.Sprintf("%s%s", api.OpenTelemetrySource, "StepFunctions")
 
 			default:
-				fmt.Printf("[WARNING] Unknown AWS identifier for Open Telemetry: %v\n", span.Meta["aws.service.identifier"])
+				fmt.Printf("[INFO] Unknown AWS identifier for Open Telemetry: %v\n", span.Meta["aws.service.identifier"])
 			}
 			break
 
 		default:
-			fmt.Printf("[WARNING] Unknown Open Telemetry instrumentation library: %v\n", span.Meta["instrumentation_library"])
+			fmt.Printf("[INFO] Unknown Open Telemetry instrumentation library: %v\n", span.Meta["instrumentation_library"])
 		}
 	}
 
