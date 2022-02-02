@@ -61,10 +61,11 @@ func TestSerialization(t *testing.T) {
 					ReplSrcPort: int32(40),
 					ReplDstPort: int32(70),
 				},
-
 				Type:      model.ConnectionType_udp,
 				Family:    model.ConnectionFamily_v6,
 				Direction: model.ConnectionDirection_local,
+				Namespace: "7",
+				Metrics:   []*model.ConnectionMetric{},
 			},
 		},
 		Dns: map[string]*model.DNSEntry{
@@ -112,6 +113,11 @@ func TestSerialization(t *testing.T) {
 		unmarshaler := GetUnmarshaler("application/protobuf")
 		result, err := unmarshaler.Unmarshal(blob)
 		require.NoError(t, err)
+
+		// empty slices are treated differently in protobuf so we set the connection metrics to nil for the `out` var.
+		for _, conns := range out.Conns {
+			conns.Metrics = nil
+		}
 		assert.Equal(out, result)
 	})
 

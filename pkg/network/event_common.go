@@ -43,18 +43,22 @@ type ConnectionFamily uint8
 // ConnectionDirection indicates if the connection is incoming to the host or outbound
 type ConnectionDirection uint8
 
+// [STS] updates for connection direction enum
 const (
-	// INCOMING represents connections inbound to the host
-	INCOMING ConnectionDirection = 1
+	// NONE represents connections that have no direction (udp, for example)
+	NONE ConnectionDirection = 0
 
-	// OUTGOING represents outbound connections from the host
-	OUTGOING ConnectionDirection = 2
+	// OUTGOING represents connections inbound to the host
+	OUTGOING ConnectionDirection = 1
+
+	// INCOMING represents outbound connections from the host
+	INCOMING ConnectionDirection = 2
 
 	// LOCAL represents connections that don't leave the host
 	LOCAL ConnectionDirection = 3
 
-	// NONE represents connections that have no direction (udp, for example)
-	NONE ConnectionDirection = 4
+	// UNSPECIFIED represents connections that have no direction (udp, for example)
+	UNSPECIFIED ConnectionDirection = 4
 )
 
 func (d ConnectionDirection) String() string {
@@ -65,6 +69,8 @@ func (d ConnectionDirection) String() string {
 		return "local"
 	case NONE:
 		return "none"
+	case UNSPECIFIED:
+		return "unspecified"
 	default:
 		return "incoming"
 	}

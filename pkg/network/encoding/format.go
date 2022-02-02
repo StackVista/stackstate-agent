@@ -4,6 +4,7 @@ import (
 	model "github.com/DataDog/agent-payload/process"
 	"github.com/StackVista/stackstate-agent/pkg/network"
 	"github.com/StackVista/stackstate-agent/pkg/process/util"
+	"strconv"
 )
 
 // FormatConnection converts a ConnectionStats into an model.Connection
@@ -28,6 +29,9 @@ func FormatConnection(conn network.ConnectionStats) *model.Connection {
 		DnsTimeouts:            conn.DNSTimeouts,
 		DnsSuccessLatencySum:   conn.DNSSuccessLatencySum,
 		DnsFailureLatencySum:   conn.DNSFailureLatencySum,
+		// [sts] properties
+		Namespace: strconv.FormatUint(uint64(conn.NetNS), 10),
+		Metrics:   []*model.ConnectionMetric{},
 	}
 }
 
