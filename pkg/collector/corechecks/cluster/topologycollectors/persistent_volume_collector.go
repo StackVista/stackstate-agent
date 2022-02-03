@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -95,6 +96,7 @@ func (pvc *PersistentVolumeCollector) persistentVolumeToStackStateComponent(pers
 			"statusMessage":     persistentVolume.Status.Message,
 			"storageClassName":  persistentVolume.Spec.StorageClassName,
 		},
+		SourceProperties: makeSourceProperties(&persistentVolume),
 	}
 
 	component.Data.PutNonEmpty("kind", persistentVolume.Kind)

@@ -1,9 +1,9 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
 
 import (
-	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"k8s.io/api/apps/v1"
@@ -57,13 +57,7 @@ func (dmc *DeploymentCollector) deploymentToStackStateComponent(deployment v1.De
 
 	tags := dmc.initTags(deployment.ObjectMeta)
 
-	sourceProperties, err := marshallK8sObjectToData(&deployment)
-	if err != nil {
-		_ = log.Warnf("Can't serialize sourceProperties for Deployment %s/%s: %v", deployment.Namespace, deployment.Name, err)
-		sourceProperties = map[string]interface{}{
-			"serialization_error": fmt.Sprintf("error occurred during serialization of this object: %v", err),
-		}
-	}
+	sourceProperties := makeSourceProperties(&deployment)
 
 	deploymentExternalID := dmc.buildDeploymentExternalID(deployment.Namespace, deployment.Name)
 	component := &topology.Component{

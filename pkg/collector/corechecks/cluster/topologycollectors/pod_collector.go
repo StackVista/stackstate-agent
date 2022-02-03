@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -191,6 +192,7 @@ func (pc *PodCollector) podToStackStateComponent(pod v1.Pod) *topology.Component
 			"identifiers":       identifiers,
 			"uid":               pod.UID,
 		},
+		SourceProperties: makeSourceProperties(&pod),
 	}
 
 	component.Data.PutNonEmpty("generateName", pod.GenerateName)

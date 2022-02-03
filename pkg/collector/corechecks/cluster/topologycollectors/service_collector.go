@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -218,6 +219,7 @@ func (sc *ServiceCollector) serviceToStackStateComponent(service v1.Service) *to
 			"identifiers":       identifiers,
 			"uid":               service.UID,
 		},
+		SourceProperties: makeSourceProperties(&service),
 	}
 
 	component.Data.PutNonEmpty("kind", service.Kind)

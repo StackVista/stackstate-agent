@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -62,6 +63,7 @@ func (dsc *DaemonSetCollector) daemonSetToStackStateComponent(daemonSet v1.Daemo
 			"updateStrategy":    daemonSet.Spec.UpdateStrategy.Type,
 			"uid":               daemonSet.UID,
 		},
+		SourceProperties: makeSourceProperties(&daemonSet),
 	}
 
 	component.Data.PutNonEmpty("generateName", daemonSet.GenerateName)

@@ -56,6 +56,13 @@ func (cmc *ConfigMapCollector) configMapToStackStateComponent(configMap v1.Confi
 	tags := cmc.initTags(configMap.ObjectMeta)
 	configMapExternalID := cmc.buildConfigMapExternalID(configMap.Namespace, configMap.Name)
 
+	configMapCopy := configMap
+	configMapCopy.Data = cutData(configMap.Data, cmc.maxDataSize)
+	for k := range configMapCopy.BinaryData {
+		configMapCopy.BinaryData[k] = []byte("<binary data ommited>")
+	}
+	sourceProperties := makeSourceProperties(&configMapCopy)
+
 	component := &topology.Component{
 		ExternalID: configMapExternalID,
 		Type:       topology.Type{Name: "configmap"},
@@ -66,6 +73,7 @@ func (cmc *ConfigMapCollector) configMapToStackStateComponent(configMap v1.Confi
 			"uid":               configMap.UID,
 			"identifiers":       []string{configMapExternalID},
 		},
+		SourceProperties: sourceProperties,
 	}
 
 	component.Data.PutNonEmpty("generateName", configMap.GenerateName)

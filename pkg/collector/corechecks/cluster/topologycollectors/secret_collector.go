@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -67,6 +68,7 @@ func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topo
 			"uid":               secret.UID,
 			"identifiers":       []string{secretExternalID},
 		},
+		SourceProperties: makeSourceProperties(&secret),
 	}
 
 	component.Data.PutNonEmpty("generateName", secret.GenerateName)

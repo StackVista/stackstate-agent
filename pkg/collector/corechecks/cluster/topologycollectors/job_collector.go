@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -78,6 +79,7 @@ func (jc *JobCollector) jobToStackStateComponent(job v1.Job) *topology.Component
 			"backoffLimit":      job.Spec.BackoffLimit,
 			"parallelism":       job.Spec.Parallelism,
 		},
+		SourceProperties: makeSourceProperties(&job),
 	}
 
 	component.Data.PutNonEmpty("generateName", job.GenerateName)

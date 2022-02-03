@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -100,6 +101,7 @@ func (ic *IngressCollector) ingressToStackStateComponent(ingress v1beta1.Ingress
 			"identifiers":       identifiers,
 			"uid":               ingress.UID,
 		},
+		SourceProperties: makeSourceProperties(&ingress),
 	}
 
 	component.Data.PutNonEmpty("generateName", ingress.GenerateName)
