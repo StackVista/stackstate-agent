@@ -57,8 +57,6 @@ func (dmc *DeploymentCollector) deploymentToStackStateComponent(deployment v1.De
 
 	tags := dmc.initTags(deployment.ObjectMeta)
 
-	sourceProperties := makeSourceProperties(&deployment)
-
 	deploymentExternalID := dmc.buildDeploymentExternalID(deployment.Namespace, deployment.Name)
 	component := &topology.Component{
 		ExternalID: deploymentExternalID,
@@ -71,7 +69,7 @@ func (dmc *DeploymentCollector) deploymentToStackStateComponent(deployment v1.De
 			"desiredReplicas":    deployment.Spec.Replicas,
 			"uid":                deployment.UID,
 		},
-		SourceProperties: sourceProperties,
+		SourceProperties: makeSourceProperties(&deployment),
 	}
 
 	component.Data.PutNonEmpty("generateName", deployment.GenerateName)
