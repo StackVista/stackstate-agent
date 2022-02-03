@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -65,6 +66,7 @@ func (ssc *StatefulSetCollector) statefulSetToStackStateComponent(statefulSet v1
 			"serviceName":         statefulSet.Spec.ServiceName,
 			"uid":                 statefulSet.UID,
 		},
+		SourceProperties: makeSourceProperties(&statefulSet),
 	}
 
 	component.Data.PutNonEmpty("generateName", statefulSet.GenerateName)

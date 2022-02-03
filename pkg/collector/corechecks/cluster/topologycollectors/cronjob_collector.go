@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -52,6 +53,7 @@ func (cjc *CronJobCollector) cronJobToStackStateComponent(cronJob v1beta1.CronJo
 	tags := cjc.initTags(cronJob.ObjectMeta)
 
 	cronJobExternalID := cjc.buildCronJobExternalID(cronJob.Namespace, cronJob.Name)
+	sourceProperties := makeSourceProperties(&cronJob)
 	component := &topology.Component{
 		ExternalID: cronJobExternalID,
 		Type:       topology.Type{Name: "cronjob"},
@@ -63,6 +65,7 @@ func (cjc *CronJobCollector) cronJobToStackStateComponent(cronJob v1beta1.CronJo
 			"concurrencyPolicy": cronJob.Spec.ConcurrencyPolicy,
 			"schedule":          cronJob.Spec.Schedule,
 		},
+		SourceProperties: sourceProperties,
 	}
 
 	component.Data.PutNonEmpty("generateName", cronJob.GenerateName)

@@ -1,4 +1,5 @@
-//+build kubeapiserver
+//go:build kubeapiserver
+// +build kubeapiserver
 
 package topologycollectors
 
@@ -58,6 +59,7 @@ func (nsc *NamespaceCollector) namespaceToStackStateComponent(namespace v1.Names
 			"uid":               namespace.UID,
 			"identifiers":       []string{namespaceExternalID},
 		},
+		SourceProperties: makeSourceProperties(&namespace),
 	}
 
 	component.Data.PutNonEmpty("generateName", namespace.GenerateName)

@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -6,6 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/gogo/protobuf/jsonpb"
 	"github.com/gogo/protobuf/proto"
 
@@ -242,4 +244,20 @@ func marshallK8sObjectToData(msg proto.Message) (map[string]interface{}, error) 
 		}
 	}
 	return result, nil
+}
+
+type MarshalableKubernetesObject interface {
+	metav1.Object
+	proto.Message
+}
+
+func makeSourceProperties(object MarshalableKubernetesObject) map[string]interface{} {
+	sourceProperties, err := marshallK8sObjectToData(object)
+	if err != nil {
+		_ = log.Warnf("Can't serialize sourceProperties for %s: %v", object.GetSelfLink(), err)
+		sourceProperties = map[string]interface{}{
+			"serialization_error": fmt.Sprintf("error occurred during serialization of this object: %v", err),
+		}
+	}
+	return sourceProperties
 }

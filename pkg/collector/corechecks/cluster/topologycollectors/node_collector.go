@@ -95,6 +95,7 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 			"uid":         node.UID,
 			//"taints": node.Spec.Taints,
 		},
+		SourceProperties: makeSourceProperties(&node),
 	}
 
 	instanceID := urn.GetInstanceID(node)

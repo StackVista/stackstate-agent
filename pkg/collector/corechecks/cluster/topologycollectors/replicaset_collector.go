@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -77,6 +78,7 @@ func (rsc *ReplicaSetCollector) replicaSetToStackStateComponent(replicaSet v1.Re
 			"desiredReplicas":   replicaSet.Spec.Replicas,
 			"uid":               replicaSet.UID,
 		},
+		SourceProperties: makeSourceProperties(&replicaSet),
 	}
 
 	component.Data.PutNonEmpty("kind", replicaSet.Kind)
