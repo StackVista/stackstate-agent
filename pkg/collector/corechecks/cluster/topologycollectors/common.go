@@ -240,6 +240,7 @@ func marshallK8sObjectToData(msg proto.Message) (map[string]interface{}, error) 
 			// this information is irrelevant to runtime, hence is being dropped here to have smaller status
 			// https://kubernetes.io/docs/reference/using-api/server-side-apply/#field-management
 			delete(metadataMap, "managedFields")
+			delete(metadataMap, "resourceVersion")
 		default:
 		}
 	}
