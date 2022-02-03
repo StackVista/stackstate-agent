@@ -6,14 +6,14 @@ import (
 )
 
 // OpenTelemetrySpanBuilder An generic function to map Open Telemetry AWS service traces to a format that STS understands
-func OpenTelemetrySpanBuilder(span *pb.Span, spanKind string, spanEvent string, serviceId string, serviceType string, serviceLayer string, serviceDomain string, _ string, arn string) {
+func OpenTelemetrySpanBuilder(span *pb.Span, spanKind string, spanEvent string, serviceID string, serviceType string, serviceLayer string, serviceDomain string, _ string, arn string) {
 	var mappingKey = "open.telemetry"
 
 	span.Type = serviceType
-	span.Resource = fmt.Sprintf("%s.%s", serviceId, spanEvent)
-	span.Service = fmt.Sprintf("%s.%s", mappingKey, serviceId)
+	span.Resource = fmt.Sprintf("%s.%s", serviceID, spanEvent)
+	span.Service = fmt.Sprintf("%s.%s", mappingKey, serviceID)
 
-	span.Meta["span.serviceName"] = fmt.Sprintf("%s.%s.%s", mappingKey, serviceId, spanEvent)
+	span.Meta["span.serviceName"] = fmt.Sprintf("%s.%s.%s", mappingKey, serviceID, spanEvent)
 	span.Meta["span.kind"] = spanKind
 	span.Meta["sts.service.identifiers"] = arn
 
