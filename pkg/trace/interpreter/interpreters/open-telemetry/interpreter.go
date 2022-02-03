@@ -1,4 +1,4 @@
-package openTelemetry
+package opentelemetry
 
 import (
 	"fmt"
