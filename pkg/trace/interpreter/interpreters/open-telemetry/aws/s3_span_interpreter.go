@@ -14,9 +14,13 @@ type OpenTelemetryS3Interpreter struct {
 	interpreter.Interpreter
 }
 
+// OpenTelemetryS3ServiceIdentifier The base identifier for this interpreter, Is also used in identifying AWS services
 const OpenTelemetryS3ServiceIdentifier = "S3"
 
+// OpenTelemetryS3InterpreterSpan An identifier used to direct Open Telemetry interprets to this Interpreter
 var OpenTelemetryS3InterpreterSpan = fmt.Sprintf("%s%s", api.OpenTelemetrySource, OpenTelemetryS3ServiceIdentifier)
+
+// OpenTelemetryS3AwsIdentifier An identifier used to map the AWS Service to the STS InterpreterServiceIdentifier
 var OpenTelemetryS3AwsIdentifier = strings.ToLower(OpenTelemetryS3ServiceIdentifier)
 
 // MakeOpenTelemetryS3Interpreter creates an instance of the OpenTelemetryS3 span interpreter

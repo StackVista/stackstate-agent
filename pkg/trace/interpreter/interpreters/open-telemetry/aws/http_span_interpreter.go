@@ -14,8 +14,10 @@ type OpenTelemetryHTTPInterpreter struct {
 	interpreter.Interpreter
 }
 
+// OpenTelemetryHTTPServiceIdentifier The base identifier for this interpreter, Is also used in identifying AWS services
 const OpenTelemetryHTTPServiceIdentifier = "Http"
 
+// OpenTelemetryHTTPInterpreterSpan An identifier used to direct Open Telemetry interprets to this Interpreter
 var OpenTelemetryHTTPInterpreterSpan = fmt.Sprintf("%s%s", api.OpenTelemetrySource, OpenTelemetryHTTPServiceIdentifier)
 
 // MakeOpenTelemetryHTTPInterpreter creates an instance of the OpenTelemetry HTTP span interpreter

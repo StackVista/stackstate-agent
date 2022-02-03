@@ -14,9 +14,13 @@ type OpenTelemetryStepFunctionsInterpreter struct {
 	interpreter.Interpreter
 }
 
+// OpenTelemetrySFNServiceIdentifier The base identifier for this interpreter, Is also used in identifying AWS services
 const OpenTelemetrySFNServiceIdentifier = "StepFunctions"
 
+// OpenTelemetrySFNInterpreterSpan An identifier used to direct Open Telemetry interprets to this Interpreter
 var OpenTelemetrySFNInterpreterSpan = fmt.Sprintf("%s%s", api.OpenTelemetrySource, OpenTelemetrySFNServiceIdentifier)
+
+// OpenTelemetrySFNAwsIdentifier An identifier used to map the AWS Service to the STS InterpreterServiceIdentifier
 var OpenTelemetrySFNAwsIdentifier = strings.ToLower(OpenTelemetrySFNServiceIdentifier)
 
 // MakeOpenTelemetryStepFunctionsInterpreter creates an instance of the OpenTelemetryStepFunctions span interpreter

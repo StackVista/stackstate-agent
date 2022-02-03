@@ -14,9 +14,13 @@ type OpenTelemetrySQSInterpreter struct {
 	interpreter.Interpreter
 }
 
+// OpenTelemetrySQSServiceIdentifier The base identifier for this interpreter, Is also used in identifying AWS services
 const OpenTelemetrySQSServiceIdentifier = "SQS"
 
+// OpenTelemetrySQSInterpreterSpan An identifier used to direct Open Telemetry interprets to this Interpreter
 var OpenTelemetrySQSInterpreterSpan = fmt.Sprintf("%s%s", api.OpenTelemetrySource, OpenTelemetrySQSServiceIdentifier)
+
+// OpenTelemetrySQSAwsIdentifier An identifier used to map the AWS Service to the STS InterpreterServiceIdentifier
 var OpenTelemetrySQSAwsIdentifier = strings.ToLower(OpenTelemetrySQSServiceIdentifier)
 
 // MakeOpenTelemetrySQSInterpreter creates an instance of the OpenTelemetrySQS span interpreter

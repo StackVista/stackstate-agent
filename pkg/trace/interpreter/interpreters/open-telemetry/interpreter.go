@@ -1,4 +1,4 @@
-package open_telemetry
+package openTelemetry
 
 import (
 	"fmt"
@@ -7,6 +7,8 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 )
 
+// InterpretBasedOnInstrumentationLibrary Open Telemetry mappings per instrumentation library
+// This allows us to tag certain resources in a way that we can interpret them
 func InterpretBasedOnInstrumentationLibrary(span *pb.Span, source string) string {
 	if source == api.OpenTelemetrySource {
 		switch span.Meta["instrumentation_library"] {
@@ -25,6 +27,8 @@ func InterpretBasedOnInstrumentationLibrary(span *pb.Span, source string) string
 	return source
 }
 
+// InterpretBuilderForAwsSdkInstrumentation an Open Telemetry mapping specific for aws services
+// It is separate to the one above as these services might grow to a massive list of items
 func InterpretBuilderForAwsSdkInstrumentation(span *pb.Span, source string) string {
 	switch span.Meta["aws.service.identifier"] {
 	case aws.OpenTelemetrySQSAwsIdentifier:

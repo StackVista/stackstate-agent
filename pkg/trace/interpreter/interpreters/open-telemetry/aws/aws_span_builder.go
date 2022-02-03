@@ -6,6 +6,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
+// OpenTelemetrySpanBuilder An generic function to map Open Telemetry AWS service traces to a format that STS understands
 func OpenTelemetrySpanBuilder(span *pb.Span,
 	kind string,
 	urn string,

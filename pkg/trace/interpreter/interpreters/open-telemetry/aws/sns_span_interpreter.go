@@ -14,9 +14,13 @@ type OpenTelemetrySNSInterpreter struct {
 	interpreter.Interpreter
 }
 
+// OpenTelemetrySNSServiceIdentifier The base identifier for this interpreter, Is also used in identifying AWS services
 const OpenTelemetrySNSServiceIdentifier = "SNS"
 
+// OpenTelemetrySNSInterpreterSpan An identifier used to direct Open Telemetry interprets to this Interpreter
 var OpenTelemetrySNSInterpreterSpan = fmt.Sprintf("%s%s", api.OpenTelemetrySource, OpenTelemetrySNSServiceIdentifier)
+
+// OpenTelemetrySNSAwsIdentifier An identifier used to map the AWS Service to the STS InterpreterServiceIdentifier
 var OpenTelemetrySNSAwsIdentifier = strings.ToLower(OpenTelemetrySNSServiceIdentifier)
 
 // MakeOpenTelemetrySNSInterpreter creates an instance of the OpenTelemetrySNS span interpreter
