@@ -21,8 +21,7 @@ func InterpretBasedOnInstrumentationLibrary(span *pb.Span, source string) string
 			return fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetryHTTPServiceIdentifier)
 
 		case "@opentelemetry/instrumentation-aws-sdk":
-			InterpretBuilderForAwsSdkInstrumentation(span, source)
-			break
+			return InterpretBuilderForAwsSdkInstrumentation(span, source)
 
 		default:
 			log.Debugf("[OTEL] Unknown instrumentation library: %s", instrumentationLibrary)
@@ -36,26 +35,41 @@ func InterpretBasedOnInstrumentationLibrary(span *pb.Span, source string) string
 // It is separate to the one above as these services might grow to a massive list of items
 func InterpretBuilderForAwsSdkInstrumentation(span *pb.Span, source string) string {
 	serviceIdentifier := span.Meta["aws.service.identifier"]
-	log.Debugf("[OTEL] AWS-SDK instrumentation mapping service: %s", serviceIdentifier)
+	log.Debugf("[OTEL] Mapping service: %s", serviceIdentifier)
 
 	switch serviceIdentifier {
 	case aws.OpenTelemetrySQSAwsIdentifier:
-		return fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetrySQSServiceIdentifier)
+		sqsInterpreterIdentifier := fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetrySQSServiceIdentifier)
+		log.Debugf("[OTEL] Mapped service '%s' to '%s'", serviceIdentifier, sqsInterpreterIdentifier)
+
+		return sqsInterpreterIdentifier
 
 	case aws.OpenTelemetryLambdaAwsIdentifier:
-		return fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetryLambdaServiceIdentifier)
+		lambdaInterpreterIdentifier := fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetryLambdaServiceIdentifier)
+		log.Debugf("[OTEL] Mapped service '%s' to '%s'", serviceIdentifier, lambdaInterpreterIdentifier)
+
+		return lambdaInterpreterIdentifier
 
 	case aws.OpenTelemetrySNSAwsIdentifier:
-		return fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetrySNSServiceIdentifier)
+		snsInterpreterIdentifier := fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetrySNSServiceIdentifier)
+		log.Debugf("[OTEL] Mapped service '%s' to '%s'", serviceIdentifier, snsInterpreterIdentifier)
+
+		return snsInterpreterIdentifier
 
 	case aws.OpenTelemetryS3AwsIdentifier:
-		return fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetryS3ServiceIdentifier)
+		s3InterpreterIdentifier := fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetryS3ServiceIdentifier)
+		log.Debugf("[OTEL] Mapped service '%s' to '%s'", serviceIdentifier, s3InterpreterIdentifier)
+
+		return s3InterpreterIdentifier
 
 	case aws.OpenTelemetrySFNAwsIdentifier:
-		return fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetrySFNServiceIdentifier)
+		sfnInterpreterIdentifier := fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetrySFNServiceIdentifier)
+		log.Debugf("[OTEL] Mapped service '%s' to '%s'", serviceIdentifier, sfnInterpreterIdentifier)
+
+		return sfnInterpreterIdentifier
 
 	default:
-		log.Debugf("[OTEL] AWS-SDK instrumentation unable to map the service: %s", serviceIdentifier)
+		log.Debugf("[OTEL] Unable to map the service: %s", serviceIdentifier)
 		return source
 	}
 }
