@@ -1,5 +1,11 @@
 # StackState Agent v2 releases
 
+## 2.16.0 (2022-02-??)
+
+**Features**
+- Process Agent
+  - [Process Agent 3.0.1](https://github.com/StackVista/stackstate-process-agent/blob/master/stackstate-changelog.md#301)
+
 ## 2.15.0 (2021-12-20)
 
 **Features**
