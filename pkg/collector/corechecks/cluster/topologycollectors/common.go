@@ -243,6 +243,7 @@ func marshallK8sObjectToData(msg proto.Message) (map[string]interface{}, error) 
 		default:
 		}
 	}
+	delete(result, "status")
 	return result, nil
 }
 
