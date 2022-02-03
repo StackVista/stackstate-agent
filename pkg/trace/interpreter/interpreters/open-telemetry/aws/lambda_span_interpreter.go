@@ -50,11 +50,13 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 				OpenTelemetrySpanBuilder(
 					span,
 					"consumer",
+					"invoke",
+					"lambda",
+					"Lambda Function",
+					"Serverless",
+					"test-eu-west-1",
 					urn,
 					arn,
-					"lambda.function",
-					OpenTelemetryLambdaInterpreterSpan,
-					"invoke",
 				)
 
 				t.interpretHTTPError(span)
@@ -82,11 +84,13 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 			OpenTelemetrySpanBuilder(
 				span,
 				"producer",
+				"execute",
+				"lambda",
+				"Lambda Function",
+				"Serverless",
+				"test-eu-west-1",
 				urn,
 				arn,
-				"lambda.function",
-				OpenTelemetryLambdaInterpreterSpan,
-				"execute",
 			)
 		} else {
 			_ = log.Errorf("[OTEL] [LAMBDA-CORE]: Unable to determine the root Lambda Span")

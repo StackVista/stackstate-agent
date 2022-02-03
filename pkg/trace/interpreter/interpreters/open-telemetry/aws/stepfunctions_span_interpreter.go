@@ -48,11 +48,13 @@ func (t *OpenTelemetryStepFunctionsInterpreter) Interpret(spans []*pb.Span) []*p
 			OpenTelemetrySpanBuilder(
 				span,
 				"consumer",
+				awsOperation,
+				"step.function",
+				"Step Functions State Machine",
+				"Serverless",
+				"test-eu-west-1",
 				urn,
 				arn,
-				"step.function",
-				OpenTelemetrySFNInterpreterSpan,
-				awsOperation,
 			)
 		} else {
 			_ = log.Errorf("[OTEL] [SFN]: Unable to map the Step Functions request")

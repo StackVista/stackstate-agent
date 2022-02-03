@@ -43,15 +43,18 @@ func (t *OpenTelemetrySNSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 
 		if awsOperationOk && topicArnOk {
 			var urn = t.CreateServiceURN(strings.ToLower(topicArn))
+			var arn = strings.ToLower(topicArn)
 
 			OpenTelemetrySpanBuilder(
 				span,
 				"consumer",
-				urn,
-				strings.ToLower(topicArn),
-				"sns",
-				OpenTelemetrySNSInterpreterSpan,
 				awsOperation,
+				"sns",
+				"SNS Topic",
+				"Messaging",
+				"test-eu-west-1",
+				urn,
+				arn,
 			)
 		} else {
 			_ = log.Errorf("[OTEL] [SNS]: Unable to map the SNS request")

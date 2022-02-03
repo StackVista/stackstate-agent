@@ -55,11 +55,13 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 				OpenTelemetrySpanBuilder(
 					span,
 					"consumer",
+					awsOperation,
+					"sqs",
+					"SQS Queue",
+					"Messaging",
+					"test-eu-west-1",
 					urn,
 					arn,
-					"sqs",
-					OpenTelemetrySQSInterpreterSpan,
-					awsOperation,
 				)
 			} else {
 				_ = log.Errorf("[OTEL] [SQS]: The SQS Endpoint URL is incorrect, Unable to parse %s.", sqsEndpointPieces)

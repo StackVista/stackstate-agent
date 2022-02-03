@@ -3,29 +3,27 @@ package aws
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // OpenTelemetrySpanBuilder An generic function to map Open Telemetry AWS service traces to a format that STS understands
-func OpenTelemetrySpanBuilder(span *pb.Span,
-	kind string,
-	urn string,
-	arn string,
-	awsService string,
-	serviceType string,
-	awsOperation string) {
-	_ = log.Warnf(fmt.Sprintf("[OTEL]: '%s'", awsService))
-
+func OpenTelemetrySpanBuilder(span *pb.Span, spanKind string, spanEvent string, serviceId string, serviceType string, serviceLayer string, serviceDomain string, _ string, arn string) {
 	var mappingKey = "open.telemetry"
 
-	span.Type = fmt.Sprintf("aws.%s", awsService)
-	span.Service = fmt.Sprintf("%s.%s", mappingKey, awsService)
-	span.Resource = fmt.Sprintf("aws.%s.%s", awsService, awsOperation)
+	span.Type = serviceType
+	span.Resource = fmt.Sprintf("%s.%s", serviceId, spanEvent)
+	span.Service = fmt.Sprintf("%s.%s", mappingKey, serviceId)
 
-	span.Meta["service"] = span.Service
-	span.Meta["span.kind"] = kind
-	span.Meta["span.serviceName"] = span.Service
-	span.Meta["span.serviceType"] = serviceType
-	span.Meta["span.serviceURN"] = urn
+	span.Meta["span.serviceName"] = fmt.Sprintf("%s.%s.%s", mappingKey, serviceId, spanEvent)
+	span.Meta["span.kind"] = spanKind
 	span.Meta["sts.service.identifiers"] = arn
+
+	span.Meta["span.layer"] = serviceLayer
+	span.Meta["layer"] = serviceLayer
+
+	span.Meta["span.domain"] = serviceDomain
+	span.Meta["domain"] = serviceDomain
+
+	// span.Meta["service"] = span.Service
+	// span.Meta["span.serviceType"] = serviceType
+	// span.Meta["span.serviceURN"] = urn
 }
