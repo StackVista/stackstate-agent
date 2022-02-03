@@ -1,6 +1,8 @@
-package interpreters
+package aws
 
 import (
+	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
@@ -12,8 +14,10 @@ type OpenTelemetryStepFunctionsInterpreter struct {
 	interpreter.Interpreter
 }
 
-// OpenTelemetryStepFunctionsInterpreterSpan is the name used for matching this interpreter
-const OpenTelemetryStepFunctionsInterpreterSpan = "openTelemetryStepFunctions"
+const OpenTelemetrySFNServiceIdentifier = "StepFunctions"
+
+var OpenTelemetrySFNInterpreterSpan = fmt.Sprintf("%s%s", api.OpenTelemetrySource, OpenTelemetrySFNServiceIdentifier)
+var OpenTelemetrySFNAwsIdentifier = strings.ToLower(OpenTelemetrySFNServiceIdentifier)
 
 // MakeOpenTelemetryStepFunctionsInterpreter creates an instance of the OpenTelemetryStepFunctions span interpreter
 func MakeOpenTelemetryStepFunctionsInterpreter(config *config.Config) *OpenTelemetryStepFunctionsInterpreter {
@@ -36,12 +40,13 @@ func (t *OpenTelemetryStepFunctionsInterpreter) Interpret(spans []*pb.Span) []*p
 			var arn = strings.ToLower(stateMachineArn)
 			var urn = t.CreateServiceURN(arn)
 
-			OpenTelemetryConsumerMappings(
+			OpenTelemetrySpanBuilder(
 				span,
+				"consumer",
 				urn,
 				arn,
 				"step.function",
-				OpenTelemetryStepFunctionsInterpreterSpan,
+				OpenTelemetrySFNInterpreterSpan,
 				awsOperation,
 			)
 		}

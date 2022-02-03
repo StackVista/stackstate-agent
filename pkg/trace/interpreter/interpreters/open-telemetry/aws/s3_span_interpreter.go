@@ -1,7 +1,8 @@
-package interpreters
+package aws
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
@@ -13,8 +14,10 @@ type OpenTelemetryS3Interpreter struct {
 	interpreter.Interpreter
 }
 
-// OpenTelemetryS3InterpreterSpan is the name used for matching this interpreter
-const OpenTelemetryS3InterpreterSpan = "openTelemetryS3"
+const OpenTelemetryS3ServiceIdentifier = "S3"
+
+var OpenTelemetryS3InterpreterSpan = fmt.Sprintf("%s%s", api.OpenTelemetrySource, OpenTelemetryS3ServiceIdentifier)
+var OpenTelemetryS3AwsIdentifier = strings.ToLower(OpenTelemetryS3ServiceIdentifier)
 
 // MakeOpenTelemetryS3Interpreter creates an instance of the OpenTelemetryS3 span interpreter
 func MakeOpenTelemetryS3Interpreter(config *config.Config) *OpenTelemetryS3Interpreter {
@@ -29,8 +32,6 @@ func (t *OpenTelemetryS3Interpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			span.Meta = map[string]string{}
 		}
 
-		// Retrieve the core information required to trace SNS
-
 		// awsService, awsServiceOk := span.Meta["aws.service.api"]
 		awsOperation, awsOperationOk := span.Meta["aws.operation"]
 		s3Bucket, s3BucketOk := span.Meta["aws.request.bucket"]
@@ -39,8 +40,9 @@ func (t *OpenTelemetryS3Interpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			var arn = strings.ToLower(fmt.Sprintf("arn:aws:s3:::%s", s3Bucket))
 			var urn = t.CreateServiceURN(arn)
 
-			OpenTelemetryConsumerMappings(
+			OpenTelemetrySpanBuilder(
 				span,
+				"consumer",
 				urn,
 				arn,
 				"s3",

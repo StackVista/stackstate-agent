@@ -501,11 +501,6 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 					}
 				}
 
-				if instrumentationLibrarySpan.InstrumentationLibrary.Name == "@opentelemetry/instrumentation-aws-lambda" {
-					fmt.Print("[DEBUG] Found 'instrumentation-aws-lambda' OTEL, ignoring ParentSpanId")
-				}
-
-				// Testing force remove on parentId - Top level lambda currently has a parentId which is incorrect
 				if librarySpan.ParentSpanId != nil &&
 					librarySpan.ParentSpanId[:] != nil &&
 					len(string(librarySpan.ParentSpanId[:])) > 0 &&

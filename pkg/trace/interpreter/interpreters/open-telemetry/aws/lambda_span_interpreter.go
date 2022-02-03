@@ -1,7 +1,8 @@
-package interpreters
+package aws
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
@@ -13,8 +14,10 @@ type OpenTelemetryLambdaInterpreter struct {
 	interpreter.Interpreter
 }
 
-// OpenTelemetryLambdaInterpreterSpan is the name used for matching this interpreter
-const OpenTelemetryLambdaInterpreterSpan = "openTelemetryLambda"
+const OpenTelemetryLambdaServiceIdentifier = "Lambda"
+
+var OpenTelemetryLambdaInterpreterSpan = fmt.Sprintf("%s%s", api.OpenTelemetrySource, OpenTelemetryLambdaServiceIdentifier)
+var OpenTelemetryLambdaAwsIdentifier = strings.ToLower(OpenTelemetryLambdaServiceIdentifier)
 
 // MakeOpenTelemetryLambdaInterpreter creates an instance of the OpenTelemetry Lambda span interpreter
 func MakeOpenTelemetryLambdaInterpreter(config *config.Config) *OpenTelemetryLambdaInterpreter {
@@ -38,8 +41,9 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 			var arn = strings.ToLower(fmt.Sprintf("arn:aws:lambda:%s:%s:function:%s", region, accountID, functionName))
 			var urn = t.CreateServiceURN(arn)
 
-			OpenTelemetryConsumerMappings(
+			OpenTelemetrySpanBuilder(
 				span,
+				"consumer",
 				urn,
 				arn,
 				"lambda.function",
@@ -51,8 +55,9 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 			var urn = t.CreateServiceURN(strings.ToLower(arn))
 			arn = strings.ToLower(arn)
 
-			OpenTelemetryProducerMappings(
+			OpenTelemetrySpanBuilder(
 				span,
+				"producer",
 				urn,
 				arn,
 				"lambda.function",

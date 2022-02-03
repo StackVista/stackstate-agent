@@ -1,7 +1,8 @@
-package interpreters
+package aws
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
@@ -13,8 +14,10 @@ type OpenTelemetrySQSInterpreter struct {
 	interpreter.Interpreter
 }
 
-// OpenTelemetrySQSInterpreterSpan is the name used for matching this interpreter
-const OpenTelemetrySQSInterpreterSpan = "openTelemetrySQS"
+const OpenTelemetrySQSServiceIdentifier = "SQS"
+
+var OpenTelemetrySQSInterpreterSpan = fmt.Sprintf("%s%s", api.OpenTelemetrySource, OpenTelemetrySQSServiceIdentifier)
+var OpenTelemetrySQSAwsIdentifier = strings.ToLower(OpenTelemetrySQSServiceIdentifier)
 
 // MakeOpenTelemetrySQSInterpreter creates an instance of the OpenTelemetrySQS span interpreter
 func MakeOpenTelemetrySQSInterpreter(config *config.Config) *OpenTelemetrySQSInterpreter {
@@ -44,8 +47,9 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 				var arn = strings.ToLower(
 					fmt.Sprintf("https://%s.queue.amazonaws.com/%s/%s", awsRegion, accountID, sqsQueueName))
 
-				OpenTelemetryConsumerMappings(
+				OpenTelemetrySpanBuilder(
 					span,
+					"consumer",
 					urn,
 					arn,
 					"sqs",

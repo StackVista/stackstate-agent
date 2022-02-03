@@ -1,7 +1,8 @@
-package interpreters
+package aws
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
@@ -13,8 +14,9 @@ type OpenTelemetryHTTPInterpreter struct {
 	interpreter.Interpreter
 }
 
-// OpenTelemetryHTTPInterpreterSpan is the name used for matching this interpreter
-const OpenTelemetryHTTPInterpreterSpan = "openTelemetryHttp"
+const OpenTelemetryHTTPServiceIdentifier = "Http"
+
+var OpenTelemetryHTTPInterpreterSpan = fmt.Sprintf("%s%s", api.OpenTelemetrySource, OpenTelemetryHTTPServiceIdentifier)
 
 // MakeOpenTelemetryHTTPInterpreter creates an instance of the OpenTelemetry HTTP span interpreter
 func MakeOpenTelemetryHTTPInterpreter(config *config.Config) *OpenTelemetryHTTPInterpreter {
@@ -45,8 +47,9 @@ func (t *OpenTelemetryHTTPInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			var url = sanitizeURL(httpURL)
 			var urn = t.CreateServiceURN(fmt.Sprintf("lambda-http-request/%s/%s", url, httpMethod))
 
-			OpenTelemetryConsumerMappings(
+			OpenTelemetrySpanBuilder(
 				span,
+				"consumer",
 				urn,
 				url,
 				"lambda.http",

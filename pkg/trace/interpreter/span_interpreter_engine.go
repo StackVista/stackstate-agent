@@ -5,7 +5,8 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/config"
 	interpreterConfig "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
-	openTelemetry "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open_telemetry"
+	open_telemetry "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry"
+	openTelemetry "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/aws"
 	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/model"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/golang/protobuf/proto"
@@ -44,7 +45,7 @@ func NewSpanInterpreterEngine(agentConfig *config.AgentConfig) *SpanInterpreterE
 	sourceIns[openTelemetry.OpenTelemetryLambdaInterpreterSpan] = openTelemetry.MakeOpenTelemetryLambdaInterpreter(interpreterConf)
 	sourceIns[openTelemetry.OpenTelemetrySQSInterpreterSpan] = openTelemetry.MakeOpenTelemetrySQSInterpreter(interpreterConf)
 	sourceIns[openTelemetry.OpenTelemetryS3InterpreterSpan] = openTelemetry.MakeOpenTelemetryS3Interpreter(interpreterConf)
-	sourceIns[openTelemetry.OpenTelemetryStepFunctionsInterpreterSpan] = openTelemetry.MakeOpenTelemetryStepFunctionsInterpreter(interpreterConf)
+	sourceIns[openTelemetry.OpenTelemetrySFNInterpreterSpan] = openTelemetry.MakeOpenTelemetryStepFunctionsInterpreter(interpreterConf)
 	sourceIns[openTelemetry.OpenTelemetrySNSInterpreterSpan] = openTelemetry.MakeOpenTelemetrySNSInterpreter(interpreterConf)
 	sourceIns[openTelemetry.OpenTelemetryHTTPInterpreterSpan] = openTelemetry.MakeOpenTelemetryHTTPInterpreter(interpreterConf)
 
@@ -71,11 +72,11 @@ func (se *SpanInterpreterEngine) Interpret(origTrace pb.Trace) pb.Trace {
 			// no metadata, let's look for the span's source.
 			if err != nil {
 				if source, found := span.Meta["source"]; found {
-					source = openTelemetry.UpdateOpenTelemetrySpanSource(source, span)
-
-					if source != api.OpenTelemetrySource {
-						groupedSourceSpans[source] = append(groupedSourceSpans[source], span)
+					if source == api.OpenTelemetrySource {
+						source = open_telemetry.InterpretBasedOnInstrumentationLibrary(span, source)
 					}
+
+					groupedSourceSpans[source] = append(groupedSourceSpans[source], span)
 				} else {
 					interpretedTrace = append(interpretedTrace, span)
 				}

@@ -1,6 +1,8 @@
-package interpreters
+package aws
 
 import (
+	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
@@ -12,8 +14,10 @@ type OpenTelemetrySNSInterpreter struct {
 	interpreter.Interpreter
 }
 
-// OpenTelemetrySNSInterpreterSpan is the name used for matching this interpreter
-const OpenTelemetrySNSInterpreterSpan = "openTelemetrySNS"
+const OpenTelemetrySNSServiceIdentifier = "SNS"
+
+var OpenTelemetrySNSInterpreterSpan = fmt.Sprintf("%s%s", api.OpenTelemetrySource, OpenTelemetrySNSServiceIdentifier)
+var OpenTelemetrySNSAwsIdentifier = strings.ToLower(OpenTelemetrySNSServiceIdentifier)
 
 // MakeOpenTelemetrySNSInterpreter creates an instance of the OpenTelemetrySNS span interpreter
 func MakeOpenTelemetrySNSInterpreter(config *config.Config) *OpenTelemetrySNSInterpreter {
@@ -28,8 +32,6 @@ func (t *OpenTelemetrySNSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			span.Meta = map[string]string{}
 		}
 
-		// Retrieve the core information required to trace SNS
-
 		// awsService, awsServiceOk := span.Meta["aws.service.api"]
 		awsOperation, awsOperationOk := span.Meta["aws.operation"]
 		topicArn, topicArnOk := span.Meta["aws.request.topic.arn"]
@@ -37,8 +39,9 @@ func (t *OpenTelemetrySNSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 		if awsOperationOk && topicArnOk {
 			var urn = t.CreateServiceURN(strings.ToLower(topicArn))
 
-			OpenTelemetryConsumerMappings(
+			OpenTelemetrySpanBuilder(
 				span,
+				"consumer",
 				urn,
 				strings.ToLower(topicArn),
 				"sns",
