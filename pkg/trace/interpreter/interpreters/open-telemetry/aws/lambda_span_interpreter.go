@@ -58,19 +58,20 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 				)
 
 				t.interpretHTTPError(span)
-				return nil
-			} else {
-				_ = log.Errorf("[OTEL] [LAMBDA]: Unable to map the invoked Lambda Function")
 
-				if !functionNameOk {
-					_ = log.Errorf("[OTEL] [LAMBDA]: 'aws.request.function.name' is not found in the span meta data, this value is required.")
-				}
-				if !accountIDOk {
-					_ = log.Errorf("[OTEL] [LAMBDA]: 'aws.account.id' is not found in the span meta data, this value is required.")
-				}
-				if !regionOk {
-					_ = log.Errorf("[OTEL] [LAMBDA]: 'aws.region' is not found in the span meta data, this value is required.")
-				}
+				return nil
+			}
+
+			_ = log.Errorf("[OTEL] [LAMBDA]: Unable to map the invoked Lambda Function")
+
+			if !functionNameOk {
+				_ = log.Errorf("[OTEL] [LAMBDA]: 'aws.request.function.name' is not found in the span meta data, this value is required.")
+			}
+			if !accountIDOk {
+				_ = log.Errorf("[OTEL] [LAMBDA]: 'aws.account.id' is not found in the span meta data, this value is required.")
+			}
+			if !regionOk {
+				_ = log.Errorf("[OTEL] [LAMBDA]: 'aws.region' is not found in the span meta data, this value is required.")
 			}
 		}
 
