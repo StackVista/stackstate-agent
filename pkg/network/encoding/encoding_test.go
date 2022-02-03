@@ -115,10 +115,33 @@ func TestSerialization(t *testing.T) {
 		require.NoError(t, err)
 
 		// empty slices are treated differently in protobuf so we set the connection metrics to nil for the `out` var.
-		for _, conns := range out.Conns {
-			conns.Metrics = nil
+		protoOut := &model.Connections{
+			Conns: []*model.Connection{
+				{
+					Laddr:             &model.Addr{Ip: "10.1.1.1", Port: int32(1000)},
+					Raddr:             &model.Addr{Ip: "10.2.2.2", Port: int32(9000)},
+					LastBytesSent:     2,
+					LastBytesReceived: 101,
+					LastRetransmits:   201,
+					Pid:               int32(6000),
+					NetNS:             7,
+					IpTranslation: &model.IPTranslation{
+						ReplSrcIP:   "20.1.1.1",
+						ReplDstIP:   "20.1.1.1",
+						ReplSrcPort: int32(40),
+						ReplDstPort: int32(70),
+					},
+					Type:      model.ConnectionType_udp,
+					Family:    model.ConnectionFamily_v6,
+					Direction: model.ConnectionDirection_local,
+					Namespace: "7",
+				},
+			},
+			Dns: map[string]*model.DNSEntry{
+				"172.217.12.145": {Names: []string{"golang.org"}},
+			},
 		}
-		assert.Equal(out, result)
+		assert.Equal(protoOut, result)
 	})
 
 	t.Run("requesting unsupported serialization format", func(t *testing.T) {
