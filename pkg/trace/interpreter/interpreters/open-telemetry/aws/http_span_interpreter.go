@@ -6,6 +6,7 @@ import (
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
 )
 
@@ -58,6 +59,15 @@ func (t *OpenTelemetryHTTPInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 				OpenTelemetryHTTPInterpreterSpan,
 				httpMethod,
 			)
+		} else {
+			_ = log.Errorf("[OTEL] [LAMBDA.HTTP]: Unable to map the Lambda HTTP request")
+
+			if !httpURLOk {
+				_ = log.Errorf("[OTEL] [LAMBDA.HTTP]: 'http.url' is not found in the span meta data, this value is required.")
+			}
+			if !httpMethodOk {
+				_ = log.Errorf("[OTEL] [LAMBDA.HTTP]: 'http.method' is not found in the span meta data, this value is required.")
+			}
 		}
 
 		t.interpretHTTPError(span)

@@ -5,13 +5,15 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/aws"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // InterpretBasedOnInstrumentationLibrary Open Telemetry mappings per instrumentation library
 // This allows us to tag certain resources in a way that we can interpret them
 func InterpretBasedOnInstrumentationLibrary(span *pb.Span, source string) string {
 	if source == api.OpenTelemetrySource {
-		switch span.Meta["instrumentation_library"] {
+		instrumentationLibrary := span.Meta["instrumentation_library"]
+		switch instrumentationLibrary {
 		case "@opentelemetry/instrumentation-aws-lambda":
 			return fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetryLambdaServiceIdentifier)
 
@@ -21,6 +23,9 @@ func InterpretBasedOnInstrumentationLibrary(span *pb.Span, source string) string
 		case "@opentelemetry/instrumentation-aws-sdk":
 			InterpretBuilderForAwsSdkInstrumentation(span, source)
 			break
+
+		default:
+			log.Debugf("[OTEL] Unknown instrumentation library: %s", instrumentationLibrary)
 		}
 	}
 
@@ -30,7 +35,10 @@ func InterpretBasedOnInstrumentationLibrary(span *pb.Span, source string) string
 // InterpretBuilderForAwsSdkInstrumentation an Open Telemetry mapping specific for aws services
 // It is separate to the one above as these services might grow to a massive list of items
 func InterpretBuilderForAwsSdkInstrumentation(span *pb.Span, source string) string {
-	switch span.Meta["aws.service.identifier"] {
+	serviceIdentifier := span.Meta["aws.service.identifier"]
+	log.Debugf("[OTEL] AWS-SDK instrumentation mapping service: %s", serviceIdentifier)
+
+	switch serviceIdentifier {
 	case aws.OpenTelemetrySQSAwsIdentifier:
 		return fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetrySQSServiceIdentifier)
 
@@ -45,7 +53,9 @@ func InterpretBuilderForAwsSdkInstrumentation(span *pb.Span, source string) stri
 
 	case aws.OpenTelemetrySFNAwsIdentifier:
 		return fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetrySFNServiceIdentifier)
-	}
 
-	return source
+	default:
+		log.Debugf("[OTEL] AWS-SDK instrumentation unable to map the service: %s", serviceIdentifier)
+		return source
+	}
 }

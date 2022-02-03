@@ -14,7 +14,7 @@ func OpenTelemetrySpanBuilder(span *pb.Span,
 	awsService string,
 	serviceType string,
 	awsOperation string) {
-	_ = log.Warnf(fmt.Sprintf("Open Telemetry - Mapping Service '%s'", awsService))
+	_ = log.Warnf(fmt.Sprintf("OTEL Map: '%s'", awsService))
 
 	var mappingKey = "open.telemetry"
 

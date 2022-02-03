@@ -6,6 +6,7 @@ import (
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
 )
 
@@ -60,6 +61,23 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 					OpenTelemetrySQSInterpreterSpan,
 					awsOperation,
 				)
+			} else {
+				_ = log.Errorf("[OTEL] [SQS]: The SQS Endpoint URL is incorrect, Unable to parse %s.", sqsEndpointPieces)
+			}
+		} else {
+			_ = log.Errorf("[OTEL] [SQS]: Unable to map the SQS request")
+
+			if !awsRegionOk {
+				_ = log.Errorf("[OTEL] [SQS]: 'aws.region' is not found in the span meta data, this value is required.")
+			}
+			if !awsOperationOk {
+				_ = log.Errorf("[OTEL] [SQS]: 'aws.operation' is not found in the span meta data, this value is required.")
+			}
+			if !sqsEndpointOk {
+				_ = log.Errorf("[OTEL] [SQS]: 'messaging.url' is not found in the span meta data, this value is required.")
+			}
+			if !sqsQueueNameOk {
+				_ = log.Errorf("[OTEL] [SQS]: 'messaging.destination' is not found in the span meta data, this value is required.")
 			}
 		}
 

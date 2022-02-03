@@ -6,6 +6,7 @@ import (
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
 )
 
@@ -53,6 +54,15 @@ func (t *OpenTelemetryStepFunctionsInterpreter) Interpret(spans []*pb.Span) []*p
 				OpenTelemetrySFNInterpreterSpan,
 				awsOperation,
 			)
+		} else {
+			_ = log.Errorf("[OTEL] [SFN]: Unable to map the Step Functions request")
+
+			if !awsOperationOk {
+				_ = log.Errorf("[OTEL] [SFN]: 'aws.operation' is not found in the span meta data, this value is required.")
+			}
+			if !stateMachineArnOk {
+				_ = log.Errorf("[OTEL] [SFN]: 'aws.request.state.machine.arn' is not found in the span meta data, this value is required.")
+			}
 		}
 
 		t.interpretHTTPError(span)

@@ -6,6 +6,7 @@ import (
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
 )
 
@@ -52,6 +53,15 @@ func (t *OpenTelemetrySNSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 				OpenTelemetrySNSInterpreterSpan,
 				awsOperation,
 			)
+		} else {
+			_ = log.Errorf("[OTEL] [SNS]: Unable to map the SNS request")
+
+			if !awsOperationOk {
+				_ = log.Errorf("[OTEL] [SNS]: 'aws.operation' is not found in the span meta data, this value is required.")
+			}
+			if !topicArnOk {
+				_ = log.Errorf("[OTEL] [SNS]: 'aws.request.topic.arn' is not found in the span meta data, this value is required.")
+			}
 		}
 
 		t.interpretHTTPError(span)

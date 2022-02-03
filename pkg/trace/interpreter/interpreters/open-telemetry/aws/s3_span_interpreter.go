@@ -6,6 +6,7 @@ import (
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
 )
 
@@ -53,6 +54,15 @@ func (t *OpenTelemetryS3Interpreter) Interpret(spans []*pb.Span) []*pb.Span {
 				OpenTelemetryS3InterpreterSpan,
 				awsOperation,
 			)
+		} else {
+			_ = log.Errorf("[OTEL] [S3]: Unable to map the S3 request")
+
+			if !awsOperationOk {
+				_ = log.Errorf("[OTEL] [S3]: 'aws.operation' is not found in the span meta data, this value is required.")
+			}
+			if !s3BucketOk {
+				_ = log.Errorf("[OTEL] [S3]: 'aws.request.bucket' is not found in the span meta data, this value is required.")
+			}
 		}
 
 		t.interpretHTTPError(span)

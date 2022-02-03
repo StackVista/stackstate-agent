@@ -6,6 +6,7 @@ import (
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
 )
 
@@ -38,24 +39,42 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 
 		// Invoke will contain data to another Lambda function being invoked
 		if lambdaName := span.Name; span.Meta["aws.operation"] == "invoke" && lambdaName != "" {
-			var functionName = span.Meta["aws.request.function.name"]
-			var accountID = span.Meta["aws.account.id"]
-			var region = span.Meta["aws.region"]
+			functionName, functionNameOk := span.Meta["aws.request.function.name"]
+			accountID, accountIDOk := span.Meta["aws.account.id"]
+			region, regionOk := span.Meta["aws.region"]
 
-			var arn = strings.ToLower(fmt.Sprintf("arn:aws:lambda:%s:%s:function:%s", region, accountID, functionName))
-			var urn = t.CreateServiceURN(arn)
+			if functionNameOk && accountIDOk && regionOk {
+				var arn = strings.ToLower(fmt.Sprintf("arn:aws:lambda:%s:%s:function:%s", region, accountID, functionName))
+				var urn = t.CreateServiceURN(arn)
 
-			OpenTelemetrySpanBuilder(
-				span,
-				"consumer",
-				urn,
-				arn,
-				"lambda.function",
-				OpenTelemetryLambdaInterpreterSpan,
-				"invoke",
-			)
+				OpenTelemetrySpanBuilder(
+					span,
+					"consumer",
+					urn,
+					arn,
+					"lambda.function",
+					OpenTelemetryLambdaInterpreterSpan,
+					"invoke",
+				)
 
-		} else if arn, ok := span.Meta["faas.id"]; arn != "" && ok {
+				t.interpretHTTPError(span)
+				return nil
+			} else {
+				_ = log.Errorf("[OTEL] [LAMBDA]: Unable to map the invoked Lambda Function")
+
+				if !functionNameOk {
+					_ = log.Errorf("[OTEL] [LAMBDA]: 'aws.request.function.name' is not found in the span meta data, this value is required.")
+				}
+				if !accountIDOk {
+					_ = log.Errorf("[OTEL] [LAMBDA]: 'aws.account.id' is not found in the span meta data, this value is required.")
+				}
+				if !regionOk {
+					_ = log.Errorf("[OTEL] [LAMBDA]: 'aws.region' is not found in the span meta data, this value is required.")
+				}
+			}
+		}
+
+		if arn, ok := span.Meta["faas.id"]; arn != "" && ok {
 			var urn = t.CreateServiceURN(strings.ToLower(arn))
 			arn = strings.ToLower(arn)
 
@@ -68,6 +87,12 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 				OpenTelemetryLambdaInterpreterSpan,
 				"execute",
 			)
+		} else {
+			_ = log.Errorf("[OTEL] [LAMBDA-CORE]: Unable to determine the root Lambda Span")
+
+			if !ok {
+				_ = log.Errorf("[OTEL] [LAMBDA-CORE]: 'faas.id' is not found in the span meta data, this value is required.")
+			}
 		}
 
 		t.interpretHTTPError(span)
