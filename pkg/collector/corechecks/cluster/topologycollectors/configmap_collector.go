@@ -58,8 +58,8 @@ func (cmc *ConfigMapCollector) configMapToStackStateComponent(configMap v1.Confi
 
 	configMapCopy := configMap
 	configMapCopy.Data = cutData(configMap.Data, cmc.maxDataSize)
-	for k := range configMapCopy.BinaryData {
-		configMapCopy.BinaryData[k] = []byte("<binary data ommited>")
+	for k, data := range configMapCopy.BinaryData {
+		configMapCopy.BinaryData[k] = []byte(cutReplacement(data))
 	}
 	sourceProperties := makeSourceProperties(&configMapCopy)
 
@@ -85,9 +85,9 @@ func (cmc *ConfigMapCollector) configMapToStackStateComponent(configMap v1.Confi
 	return component
 }
 
-func cutReplacement(dropped string) string {
+func cutReplacement(dropped []byte) string {
 	hashing := sha256.New()
-	_, err := hashing.Write([]byte(dropped))
+	_, err := hashing.Write(dropped)
 	var hash string
 	if err != nil {
 		// doubt what error could happen, but just to satisfy linter, and in case...
@@ -111,7 +111,7 @@ func cutData(data map[string]string, maxSize int) map[string]string {
 	for k, v := range data {
 		valueSize := len(v)
 		if valueSize > maxPerKey {
-			newData[k] = v[0:maxPerKey] + cutReplacement(v[maxPerKey:])
+			newData[k] = v[0:maxPerKey] + cutReplacement([]byte(v[maxPerKey:]))
 		} else {
 			newData[k] = v
 		}
