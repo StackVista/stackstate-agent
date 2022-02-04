@@ -2,12 +2,15 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
 
 import (
 	"fmt"
+	batchV1 "k8s.io/api/batch/v1"
+	apiv1 "k8s.io/api/core/v1"
 	"testing"
 	"time"
 
@@ -27,6 +30,7 @@ func TestCronJobCollector(t *testing.T) {
 	defer close(relationChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
+	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	cjc := NewCronJobCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockCronJobAPICollectorClient{}))
 	expectedCollectorName := "CronJob Collector"
@@ -51,6 +55,40 @@ func TestCronJobCollector(t *testing.T) {
 					"kind":              "some-specified-kind",
 					"generateName":      "some-specified-generation",
 				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"labels":            map[string]interface{}{"test": "label"},
+						"name":              "test-cronjob-1",
+						"namespace":         "test-namespace",
+						"uid":               "test-cronjob-1",
+						"generateName":      "some-specified-generation",
+					},
+					"spec": map[string]interface{}{
+						"concurrencyPolicy": "Allow",
+						"jobTemplate": map[string]interface{}{
+							"metadata": map[string]interface{}{"creationTimestamp": interface{}(nil)},
+							"spec": map[string]interface{}{
+								"template": map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"creationTimestamp": interface{}(nil),
+									},
+									"spec": map[string]interface{}{
+										"containers": []interface{}{
+											map[string]interface{}{
+												"image":     "busybox",
+												"name":      "job",
+												"resources": map[string]interface{}{},
+											},
+										},
+										"restartPolicy": "OnFailure",
+									},
+								},
+							},
+						},
+						"schedule": "0 0 * * *",
+					},
+				},
 			},
 		},
 		{
@@ -65,6 +103,39 @@ func TestCronJobCollector(t *testing.T) {
 					"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 					"uid":               types.UID("test-cronjob-2"),
 					"concurrencyPolicy": v1beta1.AllowConcurrent,
+				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"labels":            map[string]interface{}{"test": "label"},
+						"name":              "test-cronjob-2",
+						"namespace":         "test-namespace",
+						"uid":               "test-cronjob-2",
+					},
+					"spec": map[string]interface{}{
+						"concurrencyPolicy": "Allow",
+						"jobTemplate": map[string]interface{}{
+							"metadata": map[string]interface{}{"creationTimestamp": interface{}(nil)},
+							"spec": map[string]interface{}{
+								"template": map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"creationTimestamp": interface{}(nil),
+									},
+									"spec": map[string]interface{}{
+										"containers": []interface{}{
+											map[string]interface{}{
+												"image":     "busybox",
+												"name":      "job",
+												"resources": map[string]interface{}{},
+											},
+										},
+										"restartPolicy": "OnFailure",
+									},
+								},
+							},
+						},
+						"schedule": "0 0 * * *",
+					},
 				},
 			},
 		},
@@ -111,6 +182,21 @@ func (m MockCronJobAPICollectorClient) GetCronJobs() ([]v1beta1.CronJob, error) 
 			Spec: v1beta1.CronJobSpec{
 				Schedule:          "0 0 * * *",
 				ConcurrencyPolicy: v1beta1.AllowConcurrent,
+				JobTemplate: v1beta1.JobTemplateSpec{
+					Spec: batchV1.JobSpec{
+						Template: apiv1.PodTemplateSpec{
+							Spec: apiv1.PodSpec{
+								Containers: []apiv1.Container{
+									{
+										Name:  "job",
+										Image: "busybox",
+									},
+								},
+								RestartPolicy: apiv1.RestartPolicyOnFailure,
+							},
+						},
+					},
+				},
 			},
 		}
 

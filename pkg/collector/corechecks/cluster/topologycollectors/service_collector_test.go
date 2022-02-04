@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -28,6 +29,7 @@ func TestServiceCollector(t *testing.T) {
 	defer close(relationChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
+	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	cjc := NewServiceCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockServiceAPICollectorClient{}))
 	// Mock out DNS resolution function for test
@@ -54,6 +56,22 @@ func TestServiceCollector(t *testing.T) {
 						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
 						"uid":               types.UID("test-service-1"),
 						"identifiers":       []string{"urn:service:/test-cluster-name:test-namespace:test-service-1"},
+					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"labels":            map[string]interface{}{"test": "label"},
+							"name":              "test-service-1",
+							"namespace":         "test-namespace",
+							"uid":               "test-service-1"},
+						"spec": map[string]interface{}{
+							"type": "ClusterIP",
+							"ports": []interface{}{
+								map[string]interface{}{
+									"name":       "test-service-port-1",
+									"port":       float64(81),
+									"targetPort": float64(8081)},
+							}},
 					},
 				},
 			},
@@ -93,6 +111,24 @@ func TestServiceCollector(t *testing.T) {
 							"urn:service:/test-cluster-name:test-namespace:test-service-2",
 						},
 					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"labels":            map[string]interface{}{"test": "label"},
+							"name":              "test-service-2",
+							"namespace":         "test-namespace",
+							"uid":               "test-service-2"},
+						"spec": map[string]interface{}{
+							"type":      "NodePort",
+							"clusterIP": "10.100.200.20",
+							"ports": []interface{}{
+								map[string]interface{}{
+									"name":       "test-service-node-port-2",
+									"nodePort":   float64(10202),
+									"port":       float64(82),
+									"targetPort": float64(8082)},
+							}},
+					},
 				},
 			},
 			expectedRelations: []*topology.Relation{
@@ -123,6 +159,24 @@ func TestServiceCollector(t *testing.T) {
 							"urn:service:/test-cluster-name:test-namespace:test-service-3",
 						},
 					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"labels":            map[string]interface{}{"test": "label"},
+							"name":              "test-service-3",
+							"namespace":         "test-namespace",
+							"uid":               "test-service-3"},
+						"spec": map[string]interface{}{
+							"type":        "ClusterIP",
+							"clusterIP":   "10.100.200.21",
+							"externalIPs": []interface{}{"34.100.200.12", "34.100.200.13"},
+							"ports": []interface{}{
+								map[string]interface{}{
+									"name":       "test-service-port-3",
+									"port":       float64(83),
+									"targetPort": float64(8083)},
+							}},
+					},
 				},
 			},
 			expectedRelations: []*topology.Relation{
@@ -152,6 +206,23 @@ func TestServiceCollector(t *testing.T) {
 							"urn:service:/test-cluster-name:test-namespace:test-service-4",
 						},
 					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"labels":            map[string]interface{}{"test": "label"},
+							"name":              "test-service-4",
+							"namespace":         "test-namespace",
+							"uid":               "test-service-4"},
+						"spec": map[string]interface{}{
+							"type":      "ClusterIP",
+							"clusterIP": "10.100.200.22",
+							"ports": []interface{}{
+								map[string]interface{}{
+									"name":       "test-service-port-4",
+									"port":       float64(84),
+									"targetPort": float64(8084)},
+							}},
+					},
 				},
 			},
 			expectedRelations: []*topology.Relation{
@@ -179,6 +250,23 @@ func TestServiceCollector(t *testing.T) {
 						},
 						"uid":         types.UID("test-service-5"),
 						"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-5"},
+					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"labels":            map[string]interface{}{"test": "label"},
+							"name":              "test-service-5",
+							"namespace":         "test-namespace",
+							"uid":               "test-service-5"},
+						"spec": map[string]interface{}{
+							"type":      "ClusterIP",
+							"clusterIP": "None",
+							"ports": []interface{}{
+								map[string]interface{}{
+									"name":       "test-service-port-5",
+									"port":       float64(85),
+									"targetPort": float64(8085)},
+							}},
 					},
 				},
 			},
@@ -210,6 +298,28 @@ func TestServiceCollector(t *testing.T) {
 							"urn:endpoint:/test-cluster-name:10.100.200.23", "urn:ingress-point:/34.100.200.15",
 							"urn:ingress-point:/64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
 							"urn:service:/test-cluster-name:test-namespace:test-service-6"},
+					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"labels":            map[string]interface{}{"test": "label"},
+							"name":              "test-service-6",
+							"namespace":         "test-namespace",
+							"uid":               "test-service-6"},
+						"spec": map[string]interface{}{
+							"type":           "LoadBalancer",
+							"loadBalancerIP": "10.100.200.23",
+							"ports": []interface{}{
+								map[string]interface{}{
+									"name":       "test-service-port-6",
+									"port":       float64(86),
+									"targetPort": float64(8086)},
+								map[string]interface{}{
+									"name":       "test-service-node-port-6",
+									"nodePort":   float64(10206),
+									"port":       float64(86),
+									"targetPort": float64(8086)},
+							}},
 					},
 				},
 			},
@@ -246,6 +356,23 @@ func TestServiceCollector(t *testing.T) {
 						},
 						"uid":         types.UID("test-service-7"),
 						"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-7"},
+					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"labels":            map[string]interface{}{"test": "label"},
+							"name":              "test-service-7",
+							"namespace":         "test-namespace",
+							"uid":               "test-service-7"},
+						"spec": map[string]interface{}{
+							"type":         "ExternalName",
+							"externalName": "mysql-db.host.example.com",
+							"ports": []interface{}{
+								map[string]interface{}{
+									"name":       "test-service-port-7",
+									"port":       float64(87),
+									"targetPort": float64(8087)},
+							}},
 					},
 				},
 				{

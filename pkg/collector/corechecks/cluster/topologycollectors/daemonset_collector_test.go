@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -27,6 +28,7 @@ func TestDaemonSetCollector(t *testing.T) {
 	defer close(relationChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
+	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	cmc := NewDaemonSetCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockDaemonSetAPICollectorClient{}))
 	expectedCollectorName := "DaemonSet Collector"
@@ -48,6 +50,26 @@ func TestDaemonSetCollector(t *testing.T) {
 					"uid":               types.UID("test-daemonset-1"),
 					"updateStrategy":    appsV1.RollingUpdateDaemonSetStrategyType,
 				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"labels":            map[string]interface{}{"test": "label"},
+						"name":              "test-daemonset-1",
+						"namespace":         "test-namespace",
+						"uid":               "test-daemonset-1",
+					},
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": interface{}(nil),
+							},
+							"spec": map[string]interface{}{},
+						},
+						"updateStrategy": map[string]interface{}{
+							"type": "RollingUpdate",
+						},
+					},
+				},
 			},
 		},
 		{
@@ -61,6 +83,26 @@ func TestDaemonSetCollector(t *testing.T) {
 					"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 					"uid":               types.UID("test-daemonset-2"),
 					"updateStrategy":    appsV1.RollingUpdateDaemonSetStrategyType,
+				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"labels":            map[string]interface{}{"test": "label"},
+						"name":              "test-daemonset-2",
+						"namespace":         "test-namespace",
+						"uid":               "test-daemonset-2",
+					},
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": interface{}(nil),
+							},
+							"spec": map[string]interface{}{},
+						},
+						"updateStrategy": map[string]interface{}{
+							"type": "RollingUpdate",
+						},
+					},
 				},
 			},
 		},
@@ -77,6 +119,27 @@ func TestDaemonSetCollector(t *testing.T) {
 					"updateStrategy":    appsV1.RollingUpdateDaemonSetStrategyType,
 					"kind":              "some-specified-kind",
 					"generateName":      "some-specified-generation",
+				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"labels":            map[string]interface{}{"test": "label"},
+						"generateName":      "some-specified-generation",
+						"name":              "test-daemonset-3",
+						"namespace":         "test-namespace",
+						"uid":               "test-daemonset-3",
+					},
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": interface{}(nil),
+							},
+							"spec": map[string]interface{}{},
+						},
+						"updateStrategy": map[string]interface{}{
+							"type": "RollingUpdate",
+						},
+					},
 				},
 			},
 		},

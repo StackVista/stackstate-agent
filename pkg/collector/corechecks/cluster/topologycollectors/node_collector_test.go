@@ -32,6 +32,7 @@ func TestNodeCollector(t *testing.T) {
 	nodeIdentifierCorrelationChannel := make(chan *NodeIdentifierCorrelation)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
+	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	ic := NewNodeCollector(componentChannel, relationChannel, nodeIdentifierCorrelationChannel, NewTestCommonClusterCollector(MockNodeAPICollectorClient{}))
 	expectedCollectorName := "Node Collector"
@@ -69,6 +70,17 @@ func TestNodeCollector(t *testing.T) {
 								"urn:host:/test-node-1",
 								"urn:host:/test-node-1-test-cluster-name",
 							},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"clusterName":       "mycluster",
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-node-1",
+								"namespace":         "test-namespace",
+								"uid":               "test-node-1",
+							},
+							"spec": map[string]interface{}{},
 						},
 					}
 					assert.EqualValues(t, expectedComponent, component)
@@ -128,6 +140,18 @@ func TestNodeCollector(t *testing.T) {
 							"kind":         "some-specified-kind",
 							"generateName": "some-specified-generation",
 						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"clusterName":       "mycluster",
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-node-2",
+								"namespace":         "test-namespace",
+								"uid":               "test-node-2",
+								"generateName":      "some-specified-generation",
+							},
+							"spec": map[string]interface{}{},
+						},
 					}
 					assert.EqualValues(t, expectedComponent, component)
 				},
@@ -186,6 +210,20 @@ func TestNodeCollector(t *testing.T) {
 							"kind":         "some-specified-kind",
 							"generateName": "some-specified-generation",
 							"instanceId":   "i-024b28584ed2e6321",
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"clusterName":       "mycluster",
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-node-3",
+								"namespace":         "test-namespace",
+								"uid":               "test-node-3",
+								"generateName":      "some-specified-generation",
+							},
+							"spec": map[string]interface{}{
+								"providerID": "aws:///us-east-1b/i-024b28584ed2e6321",
+							},
 						},
 					}
 					assert.EqualValues(t, expectedComponent, component)

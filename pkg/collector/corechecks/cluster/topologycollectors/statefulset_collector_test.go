@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -27,6 +28,7 @@ func TestStatefulSetCollector(t *testing.T) {
 	defer close(relationChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
+	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	replicas = int32(1)
 
@@ -53,6 +55,28 @@ func TestStatefulSetCollector(t *testing.T) {
 					"podManagementPolicy": appsV1.OrderedReadyPodManagement,
 					"serviceName":         "statefulset-service-name",
 				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"labels":            map[string]interface{}{"test": "label"},
+						"name":              "test-statefulset-1",
+						"namespace":         "test-namespace",
+						"uid":               "test-statefulset-1"},
+					"spec": map[string]interface{}{
+						"podManagementPolicy": "OrderedReady",
+						"replicas":            float64(1),
+						"serviceName":         "statefulset-service-name",
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": nil,
+							},
+							"spec": map[string]interface{}{},
+						},
+						"updateStrategy": map[string]interface{}{
+							"type": "RollingUpdate",
+						},
+					},
+				},
 			},
 		},
 		{
@@ -69,6 +93,28 @@ func TestStatefulSetCollector(t *testing.T) {
 					"desiredReplicas":     &replicas,
 					"podManagementPolicy": appsV1.OrderedReadyPodManagement,
 					"serviceName":         "statefulset-service-name",
+				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"labels":            map[string]interface{}{"test": "label"},
+						"name":              "test-statefulset-2",
+						"namespace":         "test-namespace",
+						"uid":               "test-statefulset-2"},
+					"spec": map[string]interface{}{
+						"podManagementPolicy": "OrderedReady",
+						"replicas":            float64(1),
+						"serviceName":         "statefulset-service-name",
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": nil,
+							},
+							"spec": map[string]interface{}{},
+						},
+						"updateStrategy": map[string]interface{}{
+							"type": "RollingUpdate",
+						},
+					},
 				},
 			},
 		},
@@ -88,6 +134,29 @@ func TestStatefulSetCollector(t *testing.T) {
 					"desiredReplicas":     &replicas,
 					"podManagementPolicy": appsV1.OrderedReadyPodManagement,
 					"serviceName":         "statefulset-service-name",
+				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"labels":            map[string]interface{}{"test": "label"},
+						"name":              "test-statefulset-3",
+						"namespace":         "test-namespace",
+						"generateName":      "some-specified-generation",
+						"uid":               "test-statefulset-3"},
+					"spec": map[string]interface{}{
+						"podManagementPolicy": "OrderedReady",
+						"replicas":            float64(1),
+						"serviceName":         "statefulset-service-name",
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": nil,
+							},
+							"spec": map[string]interface{}{},
+						},
+						"updateStrategy": map[string]interface{}{
+							"type": "RollingUpdate",
+						},
+					},
 				},
 			},
 		},

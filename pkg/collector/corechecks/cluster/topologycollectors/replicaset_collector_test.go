@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -27,6 +28,7 @@ func TestReplicaSetCollector(t *testing.T) {
 	defer close(relationChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
+	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 	replicas = 1
 
 	ic := NewReplicaSetCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockReplicaSetAPICollectorClient{}))
@@ -49,6 +51,21 @@ func TestReplicaSetCollector(t *testing.T) {
 					"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 					"uid":               types.UID("test-replicaset-1"),
 					"desiredReplicas":   &replicas,
+				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"labels":            map[string]interface{}{"test": "label"},
+						"name":              "test-replicaset-1",
+						"namespace":         "test-namespace",
+						"uid":               "test-replicaset-1"},
+					"spec": map[string]interface{}{
+						"replicas": float64(1),
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": nil},
+							"spec": map[string]interface{}{},
+						}},
 				},
 			},
 			expectedRelations: []*topology.Relation{
@@ -75,6 +92,22 @@ func TestReplicaSetCollector(t *testing.T) {
 					"kind":              "some-specified-kind",
 					"generateName":      "some-specified-generation",
 				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"labels":            map[string]interface{}{"test": "label"},
+						"name":              "test-replicaset-2",
+						"namespace":         "test-namespace",
+						"generateName":      "some-specified-generation",
+						"uid":               "test-replicaset-2"},
+					"spec": map[string]interface{}{
+						"replicas": float64(1),
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": nil},
+							"spec": map[string]interface{}{},
+						}},
+				},
 			},
 			expectedRelations: []*topology.Relation{
 				{
@@ -99,6 +132,24 @@ func TestReplicaSetCollector(t *testing.T) {
 					"desiredReplicas":   &replicas,
 					"kind":              "some-specified-kind",
 					"generateName":      "some-specified-generation",
+				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"labels":            map[string]interface{}{"test": "label"},
+						"name":              "test-replicaset-3",
+						"namespace":         "test-namespace",
+						"generateName":      "some-specified-generation",
+
+						"ownerReferences": []interface{}{map[string]interface{}{"kind": "Deployment", "name": "test-deployment-3"}},
+						"uid":             "test-replicaset-3"},
+					"spec": map[string]interface{}{
+						"replicas": float64(1),
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": nil},
+							"spec": map[string]interface{}{},
+						}},
 				},
 			},
 			expectedRelations: []*topology.Relation{

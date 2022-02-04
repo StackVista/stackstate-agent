@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -31,6 +32,7 @@ func TestPodCollector(t *testing.T) {
 	volumeCorrelationChannel := make(chan *VolumeCorrelation)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
+	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 	pathType = coreV1.HostPathFileOrCreate
 	gcePersistentDisk = coreV1.GCEPersistentDiskVolumeSource{
 		PDName: "name-of-the-gce-persistent-disk",
@@ -81,7 +83,17 @@ func TestPodCollector(t *testing.T) {
 								ContainerStatuses:     []coreV1.ContainerStatus{},
 								StartTime:             &creationTime,
 								PodIP:                 "10.0.0.1",
-							},
+							}},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-pod-1",
+								"namespace":         "test-namespace",
+								"uid":               "test-pod-1"},
+							"spec": map[string]interface{}{
+								"nodeName":      "test-node",
+								"restartPolicy": "Always"},
 						},
 					}
 					assert.EqualValues(t, expectedComponent, component)
@@ -118,7 +130,20 @@ func TestPodCollector(t *testing.T) {
 								Reason:                "some-short-reason",
 								NominatedNodeName:     "some-nominated-node-name",
 								QOSClass:              "some-qos-class",
-							},
+							}},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-pod-2",
+								"namespace":         "test-namespace",
+								"generateName":      "some-specified-generation",
+								"uid":               "test-pod-2"},
+							"spec": map[string]interface{}{
+								"hostNetwork":        true,
+								"nodeName":           "test-node",
+								"serviceAccountName": "some-service-account-name",
+								"restartPolicy":      "Always"},
 						},
 					}
 					assert.EqualValues(t, expectedComponent, component)
@@ -149,7 +174,24 @@ func TestPodCollector(t *testing.T) {
 								ContainerStatuses:     []coreV1.ContainerStatus{},
 								StartTime:             &creationTime,
 								PodIP:                 "10.0.0.1",
-							},
+							}},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-pod-3",
+								"namespace":         "test-namespace",
+								"uid":               "test-pod-3",
+								"ownerReferences": []interface{}{
+									map[string]interface{}{"kind": "DaemonSet", "name": "daemonset-v"},
+									map[string]interface{}{"kind": "Deployment", "name": "deployment-w"},
+									map[string]interface{}{"kind": "Job", "name": "job-x"},
+									map[string]interface{}{"kind": "ReplicaSet", "name": "replicaset-y"},
+									map[string]interface{}{"kind": "StatefulSet", "name": "statefulset-z"},
+								}},
+							"spec": map[string]interface{}{
+								"nodeName":      "test-node",
+								"restartPolicy": "Always"},
 						},
 					}
 					assert.EqualValues(t, expectedComponent, component)
@@ -241,6 +283,46 @@ func TestPodCollector(t *testing.T) {
 								PodIP:                 "10.0.0.1",
 							},
 						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-pod-4",
+								"namespace":         "test-namespace",
+								"uid":               "test-pod-4"},
+							"spec": map[string]interface{}{
+								"nodeName":      "test-node",
+								"restartPolicy": "Always",
+								"volumes": []interface{}{
+									map[string]interface{}{
+										"name": "test-volume-1",
+										"volumeSource": map[string]interface{}{
+											"awsElasticBlockStore": map[string]interface{}{
+												"volumeID": "id-of-the-aws-block-store"}}},
+									map[string]interface{}{
+										"name": "test-volume-2",
+										"volumeSource": map[string]interface{}{
+											"gcePersistentDisk": map[string]interface{}{
+												"pdName": "name-of-the-gce-persistent-disk"}}},
+									map[string]interface{}{
+										"name": "test-volume-3",
+										"volumeSource": map[string]interface{}{
+											"configMap": map[string]interface{}{
+												"localObjectReference": map[string]interface{}{
+													"name": "name-of-the-config-map"}}}},
+									map[string]interface{}{
+										"name": "test-volume-4",
+										"volumeSource": map[string]interface{}{
+											"hostPath": map[string]interface{}{
+												"path": "some/path/to/the/volume",
+												"type": "FileOrCreate"}}},
+									map[string]interface{}{
+										"name": "test-volume-5",
+										"volumeSource": map[string]interface{}{
+											"secret": map[string]interface{}{
+												"secretName": "name-of-the-secret"}}},
+								}},
+						},
 					}
 					assert.EqualValues(t, expectedComponent, component)
 				},
@@ -277,6 +359,35 @@ func TestPodCollector(t *testing.T) {
 								ContainerStatuses:     []coreV1.ContainerStatus{},
 								StartTime:             &creationTime,
 								PodIP:                 "10.0.0.1",
+							},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-pod-5",
+								"namespace":         "test-namespace",
+								"uid":               "test-pod-5"},
+							"spec": map[string]interface{}{
+								"nodeName":      "test-node",
+								"restartPolicy": "Always",
+								"containers": []interface{}{
+									map[string]interface{}{
+										"env": []interface{}{
+											map[string]interface{}{
+												"name": "env-var",
+												"valueFrom": map[string]interface{}{
+													"configMapKeyRef": map[string]interface{}{
+														"localObjectReference": map[string]interface{}{
+															"name": "name-of-the-env-config-map"}}}}},
+										"envFrom": []interface{}{
+											map[string]interface{}{
+												"configMapRef": map[string]interface{}{
+													"localObjectReference": map[string]interface{}{
+														"name": "name-of-the-config-map"}}}},
+										"image":     "docker/image/repo/container:latest",
+										"name":      "container-1",
+										"resources": map[string]interface{}{}}},
 							},
 						},
 					}
@@ -334,6 +445,35 @@ func TestPodCollector(t *testing.T) {
 								PodIP:                 "10.0.0.1",
 							},
 						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-pod-6",
+								"namespace":         "test-namespace",
+								"uid":               "test-pod-6"},
+							"spec": map[string]interface{}{
+								"nodeName":      "test-node",
+								"restartPolicy": "Always",
+								"containers": []interface{}{
+									map[string]interface{}{
+										"env": []interface{}{
+											map[string]interface{}{
+												"name": "env-var",
+												"valueFrom": map[string]interface{}{
+													"secretKeyRef": map[string]interface{}{
+														"localObjectReference": map[string]interface{}{
+															"name": "name-of-the-env-secret"}}}}},
+										"envFrom": []interface{}{
+											map[string]interface{}{
+												"secretRef": map[string]interface{}{
+													"localObjectReference": map[string]interface{}{
+														"name": "name-of-the-secret"}}}},
+										"image":     "docker/image/repo/container:latest",
+										"name":      "container-1",
+										"resources": map[string]interface{}{}}},
+							},
+						},
 					}
 					assert.EqualValues(t, expectedComponent, component)
 				},
@@ -388,6 +528,18 @@ func TestPodCollector(t *testing.T) {
 								StartTime:             &creationTime,
 								PodIP:                 "10.0.0.1",
 							},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-pod-7",
+								"namespace":         "test-namespace",
+								"uid":               "test-pod-7",
+							},
+							"spec": map[string]interface{}{
+								"nodeName":      "test-node",
+								"restartPolicy": "Always"},
 						},
 					}
 					assert.EqualValues(t, expectedComponent, component)
@@ -444,6 +596,18 @@ func TestPodCollector(t *testing.T) {
 								StartTime:             &creationTime,
 								PodIP:                 "10.0.0.1",
 							},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-pod-8",
+								"namespace":         "test-namespace",
+								"ownerReferences":   []interface{}{map[string]interface{}{"kind": "Job", "name": "test-job-8"}},
+								"uid":               "test-pod-8"},
+							"spec": map[string]interface{}{
+								"nodeName":      "test-node",
+								"restartPolicy": "Always"},
 						},
 					}
 					assert.EqualValues(t, expectedComponent, component)

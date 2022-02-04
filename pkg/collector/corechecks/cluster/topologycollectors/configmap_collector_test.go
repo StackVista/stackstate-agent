@@ -31,6 +31,7 @@ func TestConfigMapCollector(t *testing.T) {
 	defer close(componentChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
+	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	cmc := NewConfigMapCollector(componentChannel, NewTestCommonClusterCollector(MockConfigMapAPICollectorClient{}), TestMaxDataSize)
 	expectedCollectorName := "ConfigMap Collector"
@@ -57,6 +58,20 @@ func TestConfigMapCollector(t *testing.T) {
 					},
 					"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-1"},
 				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"labels":            map[string]interface{}{"test": "label"},
+						"name":              "test-configmap-1",
+						"namespace":         "test-namespace",
+						"uid":               "test-configmap-1",
+					},
+					"data": map[string]interface{}{
+						"key1": "value1",
+						"key2": "longersecretvalue2",
+						"key3": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA[dropped 460 chars, hashsum: 828798a87da42aa9]",
+					},
+				},
 			},
 		},
 		{
@@ -71,6 +86,15 @@ func TestConfigMapCollector(t *testing.T) {
 					"uid":               types.UID("test-configmap-2"),
 					"identifiers":       []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-2"},
 				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"labels":            map[string]interface{}{"test": "label"},
+						"name":              "test-configmap-2",
+						"namespace":         "test-namespace",
+						"uid":               "test-configmap-2",
+					},
+				},
 			},
 		},
 		{
@@ -84,6 +108,14 @@ func TestConfigMapCollector(t *testing.T) {
 					"tags":              map[string]string{"cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 					"uid":               types.UID("test-configmap-3"),
 					"identifiers":       []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-3"},
+				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"name":              "test-configmap-3",
+						"namespace":         "test-namespace",
+						"uid":               "test-configmap-3",
+					},
 				},
 			},
 		},

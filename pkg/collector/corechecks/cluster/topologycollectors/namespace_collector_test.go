@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -25,6 +26,7 @@ func TestNamespaceCollector(t *testing.T) {
 	defer close(componentChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
+	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	nsc := NewNamespaceCollector(componentChannel, NewTestCommonClusterCollector(MockNamespaceAPICollectorClient{}))
 	expectedCollectorName := "Namespace Collector"
@@ -46,6 +48,15 @@ func TestNamespaceCollector(t *testing.T) {
 					"uid":               types.UID("test-namespace-1"),
 					"identifiers":       []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-1"},
 				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"labels":            map[string]interface{}{"test": "label"},
+						"name":              "test-namespace-1",
+						"uid":               "test-namespace-1",
+					},
+					"spec": map[string]interface{}{},
+				},
 			},
 		},
 		{
@@ -59,6 +70,14 @@ func TestNamespaceCollector(t *testing.T) {
 					"tags":              map[string]string{"cluster-name": "test-cluster-name"},
 					"uid":               types.UID("test-namespace-2"),
 					"identifiers":       []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
+				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"name":              "test-namespace-2",
+						"uid":               "test-namespace-2",
+					},
+					"spec": map[string]interface{}{},
 				},
 			},
 		},

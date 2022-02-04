@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -28,6 +29,7 @@ func TestPersistentVolumeCollector(t *testing.T) {
 	defer close(relationChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
+	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 	pathType = coreV1.HostPathFileOrCreate
 	gcePersistentDisk = coreV1.GCEPersistentDiskVolumeSource{
 		PDName: "name-of-the-gce-persistent-disk",
@@ -65,7 +67,22 @@ func TestPersistentVolumeCollector(t *testing.T) {
 							"status":            coreV1.VolumeAvailable,
 							"statusMessage":     "Volume is available for use",
 							"storageClassName":  "Storage-Class-Name",
-						}}
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-persistent-volume-1",
+								"namespace":         "test-namespace",
+								"uid":               "test-persistent-volume-1",
+							},
+							"spec": map[string]interface{}{
+								"persistentVolumeSource": map[string]interface{}{
+									"awsElasticBlockStore": map[string]interface{}{
+										"volumeID": "id-of-the-aws-block-store"}},
+								"storageClassName": "Storage-Class-Name"},
+						},
+					}
 					assert.EqualValues(t, expected, component)
 				},
 				func(t *testing.T) {
@@ -113,6 +130,20 @@ func TestPersistentVolumeCollector(t *testing.T) {
 							"status":            coreV1.VolumeAvailable,
 							"statusMessage":     "Volume is available for use",
 							"storageClassName":  "Storage-Class-Name",
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-persistent-volume-2",
+								"namespace":         "test-namespace",
+								"uid":               "test-persistent-volume-2",
+							},
+							"spec": map[string]interface{}{
+								"persistentVolumeSource": map[string]interface{}{
+									"gcePersistentDisk": map[string]interface{}{
+										"pdName": "name-of-the-gce-persistent-disk"}},
+								"storageClassName": "Storage-Class-Name"},
 						}}
 					assert.EqualValues(t, expected, component)
 				},
@@ -163,6 +194,22 @@ func TestPersistentVolumeCollector(t *testing.T) {
 							"status":            coreV1.VolumeAvailable,
 							"statusMessage":     "Volume is available for use",
 							"storageClassName":  "Storage-Class-Name",
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-persistent-volume-3",
+								"namespace":         "test-namespace",
+								"uid":               "test-persistent-volume-3",
+								"generateName":      "some-specified-generation",
+							},
+							"spec": map[string]interface{}{
+								"persistentVolumeSource": map[string]interface{}{
+									"hostPath": map[string]interface{}{
+										"path": "some/path/to/the/volume",
+										"type": "FileOrCreate"}},
+								"storageClassName": "Storage-Class-Name"},
 						},
 					}
 					assert.EqualValues(t, expected, component)

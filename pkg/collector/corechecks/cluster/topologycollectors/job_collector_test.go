@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -30,6 +31,7 @@ func TestJobCollector(t *testing.T) {
 	defer close(relationChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
+	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 	parralelism = int32(2)
 	backoffLimit = int32(5)
 
@@ -55,6 +57,28 @@ func TestJobCollector(t *testing.T) {
 					"backoffLimit":      &backoffLimit,
 					"parallelism":       &parralelism,
 				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"labels":            map[string]interface{}{"test": "label"},
+						"name":              "test-job-1",
+						"namespace":         "test-namespace",
+						"ownerReferences": []interface{}{
+							map[string]interface{}{"kind": "CronJob", "name": "test-cronjob-1"},
+						},
+						"uid": "test-job-1",
+					},
+					"spec": map[string]interface{}{
+						"backoffLimit": float64(5),
+						"parallelism":  float64(2),
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": interface{}(nil),
+							},
+							"spec": map[string]interface{}{},
+						},
+					},
+				},
 			},
 			expectedRelations: []*topology.Relation{
 				{
@@ -79,6 +103,25 @@ func TestJobCollector(t *testing.T) {
 					"uid":               types.UID("test-job-2"),
 					"backoffLimit":      &backoffLimit,
 					"parallelism":       &parralelism,
+				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"labels":            map[string]interface{}{"test": "label"},
+						"name":              "test-job-2",
+						"namespace":         "test-namespace",
+						"uid":               "test-job-2",
+					},
+					"spec": map[string]interface{}{
+						"backoffLimit": float64(5),
+						"parallelism":  float64(2),
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": interface{}(nil),
+							},
+							"spec": map[string]interface{}{},
+						},
+					},
 				},
 			},
 			expectedRelations: []*topology.Relation{
@@ -106,6 +149,26 @@ func TestJobCollector(t *testing.T) {
 					"generateName":      "some-specified-generation",
 					"backoffLimit":      &backoffLimit,
 					"parallelism":       &parralelism,
+				},
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"creationTimestamp": creationTimeFormatted,
+						"labels":            map[string]interface{}{"test": "label"},
+						"name":              "test-job-3",
+						"namespace":         "test-namespace",
+						"uid":               "test-job-3",
+						"generateName":      "some-specified-generation",
+					},
+					"spec": map[string]interface{}{
+						"backoffLimit": float64(5),
+						"parallelism":  float64(2),
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": interface{}(nil),
+							},
+							"spec": map[string]interface{}{},
+						},
+					},
 				},
 			},
 			expectedRelations: []*topology.Relation{

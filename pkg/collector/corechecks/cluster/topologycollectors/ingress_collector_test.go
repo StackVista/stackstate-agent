@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -28,6 +29,7 @@ func TestIngressCollector(t *testing.T) {
 	defer close(relationChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
+	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	ic := NewIngressCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockIngressAPICollectorClient{}))
 	expectedCollectorName := "Ingress Collector"
@@ -49,6 +51,16 @@ func TestIngressCollector(t *testing.T) {
 						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 						"uid":               types.UID("test-ingress-1"),
 						"identifiers":       []string{},
+					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"labels":            map[string]interface{}{"test": "label"},
+							"name":              "test-ingress-1",
+							"namespace":         "test-namespace",
+							"uid":               "test-ingress-1",
+						},
+						"spec": map[string]interface{}{},
 					},
 				}),
 				expectComponent(&topology.Component{
@@ -99,6 +111,21 @@ func TestIngressCollector(t *testing.T) {
 						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 						"uid":               types.UID("test-ingress-2"),
 						"identifiers":       []string{},
+					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"labels":            map[string]interface{}{"test": "label"},
+							"name":              "test-ingress-2",
+							"namespace":         "test-namespace",
+							"uid":               "test-ingress-2",
+						},
+						"spec": map[string]interface{}{
+							"backend": map[string]interface{}{
+								"serviceName": "test-service",
+								"servicePort": float64(0),
+							},
+						},
 					},
 				}),
 				expectRelation(&topology.Relation{
@@ -159,6 +186,43 @@ func TestIngressCollector(t *testing.T) {
 						"kind":              "some-specified-kind",
 						"generateName":      "some-specified-generation",
 						"identifiers":       []string{},
+					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"labels":            map[string]interface{}{"test": "label"},
+							"name":              "test-ingress-3",
+							"namespace":         "test-namespace",
+							"uid":               "test-ingress-3",
+							"generateName":      "some-specified-generation",
+						},
+						"spec": map[string]interface{}{
+							"rules": []interface{}{
+								map[string]interface{}{
+									"host": "host-1",
+									"ingressRuleValue": map[string]interface{}{
+										"http": map[string]interface{}{
+											"paths": []interface{}{
+												map[string]interface{}{
+													"backend": map[string]interface{}{
+														"serviceName": "test-service-1",
+														"servicePort": float64(0)},
+													"path": "host-1-path-1"},
+												map[string]interface{}{
+													"backend": map[string]interface{}{
+														"serviceName": "test-service-2",
+														"servicePort": float64(0)},
+													"path": "host-1-path-2"}}}}},
+								map[string]interface{}{
+									"host": "host-2",
+									"ingressRuleValue": map[string]interface{}{
+										"http": map[string]interface{}{
+											"paths": []interface{}{
+												map[string]interface{}{
+													"backend": map[string]interface{}{
+														"serviceName": "test-service-3",
+														"servicePort": float64(0)},
+													"path": "host-2-path-1"}}}}}}},
 					},
 				}),
 				expectRelation(&topology.Relation{

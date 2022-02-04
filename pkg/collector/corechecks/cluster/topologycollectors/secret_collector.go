@@ -58,6 +58,16 @@ func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topo
 	tags := cmc.initTags(secret.ObjectMeta)
 	secretExternalID := cmc.buildSecretExternalID(secret.Namespace, secret.Name)
 
+	secretDataHash, err := secure(secret.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	prunedSecret := secret
+	prunedSecret.Data = map[string][]byte{
+		"<data hash>": []byte(secretDataHash),
+	}
+
 	component := &topology.Component{
 		ExternalID: secretExternalID,
 		Type:       topology.Type{Name: "secret"},
@@ -68,17 +78,12 @@ func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topo
 			"uid":               secret.UID,
 			"identifiers":       []string{secretExternalID},
 		},
-		SourceProperties: makeSourceProperties(&secret),
+		SourceProperties: makeSourceProperties(&prunedSecret),
 	}
 
 	component.Data.PutNonEmpty("generateName", secret.GenerateName)
 	component.Data.PutNonEmpty("kind", secret.Kind)
-
-	hash, err := secure(secret.Data)
-	if err != nil {
-		return nil, err
-	}
-	component.Data.PutNonEmpty("data", hash)
+	component.Data.PutNonEmpty("data", secretDataHash)
 
 	log.Tracef("Created StackState Secret component %s: %v", secretExternalID, component.JSONString())
 
