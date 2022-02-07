@@ -5,6 +5,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
+	opentelemetry "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
@@ -45,7 +46,7 @@ func (t *OpenTelemetryStepFunctionsInterpreter) Interpret(spans []*pb.Span) []*p
 			var arn = strings.ToLower(stateMachineArn)
 			var urn = t.CreateServiceURN(arn)
 
-			OpenTelemetrySpanBuilder(
+			opentelemetry.OpenTelemetrySpanBuilder(
 				span,
 				"consumer",
 				awsOperation,
@@ -65,6 +66,8 @@ func (t *OpenTelemetryStepFunctionsInterpreter) Interpret(spans []*pb.Span) []*p
 			if !stateMachineArnOk {
 				_ = log.Errorf("[OTEL] [SFN]: 'aws.request.state.machine.arn' is not found in the span meta data, this value is required.")
 			}
+
+			return nil
 		}
 
 		t.interpretHTTPError(span)

@@ -5,6 +5,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
+	opentelemetry "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
@@ -52,7 +53,7 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 				var arn = strings.ToLower(
 					fmt.Sprintf("https://%s.queue.amazonaws.com/%s/%s", awsRegion, accountID, sqsQueueName))
 
-				OpenTelemetrySpanBuilder(
+				opentelemetry.OpenTelemetrySpanBuilder(
 					span,
 					"consumer",
 					awsOperation,
@@ -81,6 +82,8 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			if !sqsQueueNameOk {
 				_ = log.Errorf("[OTEL] [SQS]: 'messaging.destination' is not found in the span meta data, this value is required.")
 			}
+
+			return nil
 		}
 
 		t.interpretHTTPError(span)

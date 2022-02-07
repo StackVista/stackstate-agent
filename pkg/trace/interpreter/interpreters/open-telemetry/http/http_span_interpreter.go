@@ -1,10 +1,11 @@
-package aws
+package http
 
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
+	opentelemetry "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
@@ -46,11 +47,11 @@ func (t *OpenTelemetryHTTPInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 		httpURL, httpURLOk := span.Meta["http.url"]
 		httpMethod, httpMethodOk := span.Meta["http.method"]
 
-		if httpURLOk && httpMethodOk {
+		if httpURLOk && httpMethodOk && len(httpURL) > 0 {
 			var url = sanitizeURL(httpURL)
 			var urn = t.CreateServiceURN(fmt.Sprintf("lambda-http-request/%s/%s", url, httpMethod))
 
-			OpenTelemetrySpanBuilder(
+			opentelemetry.OpenTelemetrySpanBuilder(
 				span,
 				"consumer",
 				httpMethod,
@@ -70,6 +71,8 @@ func (t *OpenTelemetryHTTPInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			if !httpMethodOk {
 				_ = log.Errorf("[OTEL] [LAMBDA.HTTP]: 'http.method' is not found in the span meta data, this value is required.")
 			}
+
+			return nil
 		}
 
 		t.interpretHTTPError(span)

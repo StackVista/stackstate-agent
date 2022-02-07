@@ -5,6 +5,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
+	opentelemetry "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
@@ -45,7 +46,7 @@ func (t *OpenTelemetryS3Interpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			var arn = strings.ToLower(fmt.Sprintf("arn:aws:s3:::%s", s3Bucket))
 			var urn = t.CreateServiceURN(arn)
 
-			OpenTelemetrySpanBuilder(
+			opentelemetry.OpenTelemetrySpanBuilder(
 				span,
 				"consumer",
 				awsOperation,
@@ -65,6 +66,8 @@ func (t *OpenTelemetryS3Interpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			if !s3BucketOk {
 				_ = log.Errorf("[OTEL] [S3]: 'aws.request.bucket' is not found in the span meta data, this value is required.")
 			}
+
+			return nil
 		}
 
 		t.interpretHTTPError(span)

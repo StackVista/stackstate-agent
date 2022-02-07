@@ -5,6 +5,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
+	opentelemetry "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
@@ -47,7 +48,7 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 				var arn = strings.ToLower(fmt.Sprintf("arn:aws:lambda:%s:%s:function:%s", region, accountID, functionName))
 				var urn = t.CreateServiceURN(arn)
 
-				OpenTelemetrySpanBuilder(
+				opentelemetry.OpenTelemetrySpanBuilder(
 					span,
 					"consumer",
 					"invoke",
@@ -71,11 +72,13 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 			if !regionOk {
 				_ = log.Errorf("[OTEL] [LAMBDA]: 'aws.region' is not found in the span meta data, this value is required.")
 			}
+
+			return nil
 		} else if arn, ok := span.Meta["faas.id"]; arn != "" && ok {
 			var urn = t.CreateServiceURN(strings.ToLower(arn))
 			arn = strings.ToLower(arn)
 
-			OpenTelemetrySpanBuilder(
+			opentelemetry.OpenTelemetrySpanBuilder(
 				span,
 				"producer",
 				"execute",
@@ -92,6 +95,8 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 			if !ok {
 				_ = log.Errorf("[OTEL] [LAMBDA-CORE]: 'faas.id' is not found in the span meta data, this value is required.")
 			}
+
+			return nil
 		}
 
 		t.interpretHTTPError(span)
