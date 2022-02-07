@@ -5,7 +5,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
-	opentelemetry "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
@@ -48,7 +47,7 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 				var arn = strings.ToLower(fmt.Sprintf("arn:aws:lambda:%s:%s:function:%s", region, accountID, functionName))
 				var urn = t.CreateServiceURN(arn)
 
-				opentelemetry.OpenTelemetrySpanBuilder(
+				OpenTelemetrySpanBuilder(
 					span,
 					"consumer",
 					"invoke",
@@ -78,7 +77,7 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 			var urn = t.CreateServiceURN(strings.ToLower(arn))
 			arn = strings.ToLower(arn)
 
-			opentelemetry.OpenTelemetrySpanBuilder(
+			OpenTelemetrySpanBuilder(
 				span,
 				"producer",
 				"execute",
