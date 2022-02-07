@@ -572,7 +572,7 @@ pre_release_cluster_agent_image:
 # Merge train rules for agent v2
 .v2_merge_train_always: &v2_merge_train_always
   # If the major version is 2, and it is the master branch or a tag, always execute this step
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_PROTECTED)
     when: always
     allow_failure: false
   # Else, if the major version is 2, and it is a merge train job, always execute this step
@@ -592,7 +592,7 @@ pre_release_cluster_agent_image:
     allow_failure: true
 
 .v2_merge_train_on_success: &v2_merge_train_on_success
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_PROTECTED)
     when: on_success
     allow_failure: false
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
@@ -608,7 +608,7 @@ pre_release_cluster_agent_image:
     allow_failure: false
 
 .v2_merge_train_on_failure: &v2_merge_train_on_failure
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_PROTECTED)
     when: on_failure
     allow_failure: false
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
@@ -625,7 +625,7 @@ pre_release_cluster_agent_image:
 
 # Merge train rules for all agents
 .merge_train_always: &merge_train_always
-  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_PROTECTED)
     when: always
     allow_failure: false
   - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
@@ -641,7 +641,7 @@ pre_release_cluster_agent_image:
     allow_failure: true
 
 .merge_train_on_success: &merge_train_on_success
-  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_PROTECTED)
     when: on_success
     allow_failure: false
   - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
@@ -657,7 +657,7 @@ pre_release_cluster_agent_image:
     allow_failure: false
 
 .merge_train_on_failure: &merge_train_on_failure
-  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_PROTECTED)
     when: on_failure
     allow_failure: false
   - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
@@ -1042,7 +1042,7 @@ molecule_localinstall_success_cleanup:
     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-compose]/
     when: never
   - &secrets_master_only_rule
-    if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_PROTECTED)
     when: always
   - &secrets_acceptance_rule
     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-compose]/
