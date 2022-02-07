@@ -58,10 +58,6 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 					urn,
 					arn,
 				)
-
-				t.interpretHTTPError(span)
-
-				return nil
 			}
 
 			_ = log.Errorf("[OTEL] [LAMBDA]: Unable to map the invoked Lambda Function")
@@ -75,9 +71,7 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 			if !regionOk {
 				_ = log.Errorf("[OTEL] [LAMBDA]: 'aws.region' is not found in the span meta data, this value is required.")
 			}
-		}
-
-		if arn, ok := span.Meta["faas.id"]; arn != "" && ok {
+		} else if arn, ok := span.Meta["faas.id"]; arn != "" && ok {
 			var urn = t.CreateServiceURN(strings.ToLower(arn))
 			arn = strings.ToLower(arn)
 
