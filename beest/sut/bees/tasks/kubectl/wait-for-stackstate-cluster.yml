@@ -1,0 +1,5 @@
+---
+- name: Wait for the stackstate cluster agent to start doing it's thing
+  command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=cluster-agent pod
+  environment:
+    KUBECONFIG: "{{ kubeconfig }}"

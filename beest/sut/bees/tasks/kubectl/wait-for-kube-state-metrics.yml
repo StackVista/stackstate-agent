@@ -1,0 +1,6 @@
+---
+- name: Wait for the kube-state-metrics to be ready
+  ignore_errors: true
+  command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/name=kube-state-metrics pod
+  environment:
+    KUBECONFIG: "{{ kubeconfig }}"

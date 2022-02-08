@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ -z "${DD_CRI_SOCKET_PATH}" ]]; then
+if [[ -z "${STS_CRI_SOCKET_PATH}" ]]; then
     exit 0
 fi
 
@@ -12,7 +12,7 @@ if [[ ! -e /etc/stackstate-agent/conf.d/cri.d/conf.yaml.default ]]; then
 fi
 
 # If the CRI is containerd, enable the containerd check
-if [[ $DD_CRI_SOCKET_PATH =~ containerd ]]; then
+if [[ $STS_CRI_SOCKET_PATH =~ containerd ]]; then
      mv /etc/stackstate-agent/conf.d/containerd.d/conf.yaml.example \
         /etc/stackstate-agent/conf.d/containerd.d/conf.yaml.default
 fi

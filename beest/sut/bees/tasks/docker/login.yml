@@ -1,0 +1,3 @@
+---
+- name: Docker login
+  command: "docker login -u {{ quay_user }} -p {{ quay_password }} quay.io"

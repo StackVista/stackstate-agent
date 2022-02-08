@@ -1,0 +1,19 @@
+---
+- include_tasks: ./tasks/kubectl/create-namespace.yml
+- include_tasks: ./tasks/kubectl/create-secret-for-private-docker.yml
+- include_tasks: ./tasks/helm/add-stackstate-repo.yml
+- include_tasks: ./tasks/kubectl/apply-manifest-test-workload.yml
+- include_tasks: ./tasks/helm/install-stackstate-agent.yml
+- include_tasks: ./tasks/kubectl/wait-for-stackstate-cluster.yml
+- include_tasks: ./tasks/kubectl/wait-for-stackstate-node-agents.yml
+- include_tasks: ./tasks/kubectl/wait-for-stackstate-cluster-check-agent.yml
+- include_tasks: ./tasks/kubectl/wait-for-kube-state-metrics.yml
+- include_tasks: ./tasks/kubectl/scenario-pod-to-service-ip.yml  #TODO
+- include_tasks: ./tasks/kubectl/scenario-pod-localhost.yml
+- include_tasks: ./tasks/kubectl/scenario-pod-headless.yml  #TODO
+- include_tasks: ./tasks/kubectl/scenario-pod-http-metrics.yml
+- include_tasks: ./tasks/kubectl/scenario-pod-to-service-ip-wait.yml  #TODO
+- include_tasks: ./tasks/kubectl/scenario-pod-localhost-wait.yml
+- include_tasks: ./tasks/kubectl/scenario-pod-headless-wait.yml  #TODO
+- include_tasks: ./tasks/kubectl/scenario-pod-http-metrics-wait.yml
+- include_tasks: ./tasks/kubectl/test-workload.yml
