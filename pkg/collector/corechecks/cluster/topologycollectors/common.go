@@ -233,19 +233,33 @@ func marshallK8sObjectToData(msg proto.Message) (map[string]interface{}, error) 
 	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
 		return nil, err
 	}
-	if metadata, ok := result["metadata"]; ok {
-		switch metadataMap := metadata.(type) {
+
+	delete(result, "status")
+	visitNestedMap(result, "metadata", false, func(metadata map[string]interface{}) {
+		// managedFields contains information about who is able to modify certain parts of an object
+		// this information is irrelevant to runtime, hence is being dropped here to have smaller status
+		// https://kubernetes.io/docs/reference/using-api/server-side-apply/#field-management
+		delete(metadata, "managedFields")
+		delete(metadata, "resourceVersion")
+		visitNestedMap(metadata, "annotations", true, func(annotations map[string]interface{}) {
+			delete(annotations, "kubectl.kubernetes.io/last-applied-configuration")
+		})
+	})
+
+	return result, nil
+}
+
+func visitNestedMap(parentMap map[string]interface{}, key string, removeEmpty bool, callback func(map[string]interface{})) {
+	if nested, ok := parentMap[key]; ok {
+		switch nestedMap := nested.(type) {
 		case map[string]interface{}:
-			// managedFields contains information about who is able to modify certain parts of an object
-			// this information is irrelevant to runtime, hence is being dropped here to have smaller status
-			// https://kubernetes.io/docs/reference/using-api/server-side-apply/#field-management
-			delete(metadataMap, "managedFields")
-			delete(metadataMap, "resourceVersion")
+			callback(nestedMap)
+			if removeEmpty && len(nestedMap) == 0 {
+				delete(parentMap, key)
+			}
 		default:
 		}
 	}
-	delete(result, "status")
-	return result, nil
 }
 
 type MarshalableKubernetesObject interface {

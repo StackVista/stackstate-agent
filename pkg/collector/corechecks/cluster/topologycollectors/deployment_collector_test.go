@@ -215,6 +215,13 @@ func (m MockDeploymentAPICollectorClient) GetDeployments() ([]appsV1.Deployment,
 		if i == 3 {
 			deployment.TypeMeta.Kind = "some-specified-kind"
 			deployment.ObjectMeta.GenerateName = "some-specified-generation"
+			deployment.Annotations = map[string]string{
+				"kubectl.kubernetes.io/last-applied-configuration": `{"apiVersion":"apps/v1","kind":"Deployment",
+				  "metadata":{"annotations":{},"name":"nginx-deployment","namespace":"default"},
+				  "spec":{"minReadySeconds":5,"selector":{"matchLabels":{"app":nginx}},"template":{"metadata":{"labels":{"app":"nginx"}},
+				  "spec":{"containers":[{"image":"nginx:1.14.2","name":"nginx",
+				  "ports":[{"containerPort":80}]}]}}}}`,
+			}
 		}
 
 		deployments = append(deployments, deployment)
