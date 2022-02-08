@@ -22,7 +22,7 @@ module "eks_cluster" {
 }
 
 module "receiver" {
-  source = "../../hives/receiver"
+  source = "../../hives/ec2-receiver"
 
   vpc_id      = module.eks_vpc.vpc_id
   subnet_id   = module.eks_vpc.private_subnet_1_id

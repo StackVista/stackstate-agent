@@ -11,9 +11,7 @@ var destroyCmd = &cobra.Command{
 	Short: "Destroy all resources associated with the yard",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		scenario = choseScenario(args[0])
-
-		create := step.Create(scenario.Yard.path(), scenario.mergeVars(commonVariables()))
+		create := findScenario(args[0]).generateCreateStep(runId)
 		destroy := step.Destroy(create)
 		doDestroy(destroy, !assumeYes)
 	},
