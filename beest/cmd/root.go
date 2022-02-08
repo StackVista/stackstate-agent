@@ -53,7 +53,7 @@ func initializeConfig(cmd *cobra.Command) error {
 	bindFlags(cmd, v)
 
 	// Safely shortens the length of the run id, because it used in yard resource names
-	runId = trimTo(runId, 24)
+	runId = trimTo(runId, 18)
 
 	return nil
 }
