@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"beest/cmd/step"
 	"beest/sut"
 	"fmt"
 	"gopkg.in/yaml.v2"
@@ -32,14 +33,15 @@ type Scenario struct {
 	Variables map[string]interface{} `yaml:"variables"`
 }
 
-func (s *Scenario) mergeVars(maps ...map[string]interface{}) map[string]interface{} {
-	result := make(map[string]interface{})
-	for _, m := range append(maps, s.Variables) {
-		for k, v := range m {
-			result[k] = v
-		}
+func (s *Scenario) generateCreateStep(runId string) *step.CreationStep {
+	runVariables := make(map[string]interface{})
+	for k, v := range s.Variables {
+		runVariables[k] = v
 	}
-	return result
+	workspace := fmt.Sprintf("%s-%s", runId, s.Name)
+	runVariables["yard_id"] = fmt.Sprintf("beest-%s", workspace)
+
+	return step.Create(workspace, s.Yard.path(), runVariables)
 }
 
 type Scenarios struct {
@@ -62,7 +64,7 @@ func loadScenarios() *Scenarios {
 	return availableScenarios
 }
 
-func choseScenario(name string) *Scenario {
+func findScenario(name string) *Scenario {
 	scenarios := loadScenarios()
 
 	keys := make([]string, 0, len(scenarios.Scenarios))
