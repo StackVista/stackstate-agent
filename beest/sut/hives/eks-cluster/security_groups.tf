@@ -1,4 +1,4 @@
-  //EKS Master Cluster Security Group
+//EKS Master Cluster Security Group
 
 //This security group controls networking access to the Kubernetes masters.
 //Needs to be configured also with an ingress rule to allow traffic from the worker nodes.

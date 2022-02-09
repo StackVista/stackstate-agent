@@ -17,7 +17,7 @@ type PrepareStep struct {
 }
 
 func Prepare(create *CreationStep) *PrepareStep {
-	return &PrepareStep{Yard{create.dir, create.vars}}
+	return &PrepareStep{create.Yard}
 }
 
 func (p *PrepareStep) Playbook() string {
@@ -34,7 +34,7 @@ type VerificationStep struct {
 
 func Verify(prepare *PrepareStep, testsPath string, hosts []string) *VerificationStep {
 	return &VerificationStep{
-		Yard{prepare.dir, prepare.vars},
+		prepare.Yard,
 		testsPath,
 		hosts,
 	}
@@ -55,7 +55,7 @@ type CleanupStep struct {
 }
 
 func Cleanup(prepare *PrepareStep) *CleanupStep {
-	return &CleanupStep{Yard{prepare.dir, prepare.vars}}
+	return &CleanupStep{prepare.Yard}
 }
 
 func (c *CleanupStep) Playbook() string {
