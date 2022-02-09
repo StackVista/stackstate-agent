@@ -16,14 +16,16 @@ const (
 )
 
 type TerraformContext interface {
+	RunId() string
 	WorkingDir() string
 	Variables() map[string]interface{}
 }
 
 type TerraformState struct {
-	Module   *tfconfig.Module
-	tf       *tfexec.Terraform
-	planPath string
+	module      *tfconfig.Module
+	tf          *tfexec.Terraform
+	planPath    string
+	workspaceId string
 }
 
 func TerraformApply(ctx TerraformContext, prompt bool) {
@@ -38,6 +40,7 @@ func apply(ctx TerraformContext, destroy bool, prompt bool) {
 	state := newTerraform(ctx)
 	state.init()
 	state.validate()
+	state.selectWorkspace()
 	log.Println(fmt.Sprintf("Variables: %v", ctx.Variables()))
 	if state.plan(ctx.Variables(), destroy) {
 		state.apply(prompt)
@@ -56,8 +59,9 @@ func newTerraform(ctx TerraformContext) *TerraformState {
 	tf.SetLogPath("/go/src/app/terraform.log")
 
 	return &TerraformState{
-		tf:     tf,
-		Module: loadModule(tf.WorkingDir()),
+		tf:          tf,
+		module:      loadModule(tf.WorkingDir()),
+		workspaceId: ctx.RunId(),
 	}
 }
 
@@ -70,10 +74,23 @@ func loadModule(moduleDir string) *tfconfig.Module {
 }
 
 func (ts *TerraformState) init() {
-	log.Println("Initializing Terraform workspace ...")
+	log.Println("Initializing Terraform ...")
 	err := ts.tf.Init(context.Background(), tfexec.Upgrade(true))
 	if err != nil {
 		log.Fatalf("Error running Init: %s", err)
+	}
+}
+
+func (ts *TerraformState) selectWorkspace() {
+	log.Printf("Selecting workspace %s ...\n", ts.workspaceId)
+	// create and switches to the new workspace
+	err := ts.tf.WorkspaceNew(context.Background(), ts.workspaceId)
+	if err != nil {
+		// if new returns an error means that the workspace exists, so we select it
+		err = ts.tf.WorkspaceSelect(context.Background(), ts.workspaceId)
+		if err != nil {
+			return
+		}
 	}
 }
 
@@ -96,7 +113,7 @@ func (ts *TerraformState) plan(vars map[string]interface{}, destroy bool) bool {
 	for k, v := range vars {
 		tfPlanOptions = append(tfPlanOptions, tfexec.Var(fmt.Sprintf("%s=%s", k, v)))
 	}
-	planPath := fmt.Sprintf("%s/tf.deploy", ts.Module.Path)
+	planPath := fmt.Sprintf("%s/tf.deploy", ts.module.Path)
 	tfPlanOptions = append(tfPlanOptions, tfexec.Out(planPath))
 
 	if destroy {
@@ -173,7 +190,7 @@ func (ts *TerraformState) output() {
 			log.Fatalf("Error retrieving raw value '%s': %s", k, err)
 		}
 		fmt.Println(fmt.Sprintf("Writing output %s ...", k))
-		outPath := fmt.Sprintf("%s/%s", ts.Module.Path, k)
+		outPath := fmt.Sprintf("%s/%s", ts.module.Path, k)
 
 		// output use -json option, but the out is not json, we just need to get the string and write it to a file
 		strOut, err := strconv.Unquote(string(raw))

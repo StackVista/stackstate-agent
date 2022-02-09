@@ -11,9 +11,7 @@ var prepareCmd = &cobra.Command{
 	Short: "Deploy the bees configured as part of the yard",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		scenario = choseScenario(args[0])
-
-		create := step.Create(scenario.Yard.path(), scenario.mergeVars(commonVariables()))
+		create := findScenario(args[0]).generateCreateStep(runId)
 		prepare := step.Prepare(create)
 		doPrepare(prepare)
 	},

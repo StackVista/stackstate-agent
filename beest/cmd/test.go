@@ -21,9 +21,9 @@ var testCmd = &cobra.Command{
 	Short: "Execute all the steps in sequence",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		scenario = choseScenario(args[0])
+		scenario := findScenario(args[0])
 
-		create := step.Create(scenario.Yard.path(), scenario.mergeVars(commonVariables()))
+		create := scenario.generateCreateStep(runId)
 		doCreate(create, false)
 		prepare := step.Prepare(create)
 		cleanup := step.Cleanup(prepare)
