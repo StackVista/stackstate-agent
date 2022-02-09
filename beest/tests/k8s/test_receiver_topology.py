@@ -85,6 +85,40 @@ def _container_process_component(json_data, type_name, external_id_assert_fn, ta
                 return component_data
     return None
 
+def _container_runtime_component_data(json_data, external_id_assert_fn, runtime, identifiers_assert_fn):
+    for message in json_data["messages"]:
+        p = message["message"]["TopologyElement"]["payload"]
+        if "TopologyComponent" in p and \
+            p["TopologyComponent"]["typeName"] == "container" and \
+            external_id_assert_fn(p["TopologyComponent"]["externalId"]):
+            component_data = json.loads(p["TopologyComponent"]["data"])
+            if "runtime:%s" % runtime in component_data["labels"] and \
+               identifiers_assert_fn(component_data["identifiers"]):
+                return component_data
+    return None
+
+def test_node_agent_container_topology(host, ansible_var):
+    runtime = ansible_var("k8s_runtime")
+    if runtime == "dockerd":
+        runtime = "docker"
+    topic = "sts_topo_container_agents"
+    url = "http://localhost:7070/api/topic/%s?limit=1000" % topic
+
+    def wait_for_cluster_agent_components():
+        data = host.check_output("curl \"%s\"" % url)
+        json_data = json.loads(data)
+        with open("./topic-" + topic + ".json", 'w') as f:
+            json.dump(json_data, f, indent=4)
+
+        container_match = re.compile("urn:container:%s:/" % runtime)
+        assert _container_runtime_component_data(
+            json_data=json_data,
+            external_id_assert_fn=lambda eid: container_match.findall(eid),
+            runtime=runtime,
+            identifiers_assert_fn=lambda identifiers: next(x for x in identifiers if x.startswith("urn:container:/i-"))
+        )
+
+    util.wait_until(wait_for_cluster_agent_components, 60, 3)
 
 def test_cluster_agent_base_topology(host, ansible_var):
     cluster_name = ansible_var("cluster_name")

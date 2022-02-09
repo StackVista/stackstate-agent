@@ -87,7 +87,7 @@ func (ctc *ContainerTopologyCollector) MapContainerDataToTopologyData(container 
 // MapContainerToComponent Maps a single spec.Container to a single topology.Component
 func (ctc *ContainerTopologyCollector) MapContainerToComponent(container *spec.Container) *topology.Component {
 	output := &topology.Component{
-		ExternalID: ctc.buildContainerExternalID(container.ID),
+		ExternalID: ctc.buildContainerExternalID(container),
 		Type: topology.Type{
 			Name: containerType,
 		},
@@ -120,11 +120,11 @@ func (ctc *ContainerTopologyCollector) collectContainers(containerUtil spec.Cont
 	return containerComponents, nil
 }
 
-func (ctc *ContainerTopologyCollector) buildContainerExternalID(containerID string) string {
+func (ctc *ContainerTopologyCollector) buildContainerExternalID(container *spec.Container) string {
 	if ctc.Hostname == "" {
-		return fmt.Sprintf("urn:%s:%s:/%s", containerType, ctc.TopologyInstance.Type, containerID)
+		return fmt.Sprintf("urn:%s:%s:/%s", containerType, container.Runtime, container.ID)
 	}
-	return fmt.Sprintf("urn:%s:%s:/%s:%s", containerType, ctc.TopologyInstance.Type, ctc.Hostname, containerID)
+	return fmt.Sprintf("urn:%s:%s:/%s:%s", containerType, container.Runtime, ctc.Hostname, container.ID)
 }
 
 // buildProcessAgentContainerIdentifier creates an identifier with the same format as in the process-agent

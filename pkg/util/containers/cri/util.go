@@ -147,7 +147,7 @@ func (c *CRIUtil) GetContainers() ([]*spec.Container, error) {
 			mounts = append(mounts, mountPoint)
 		}
 		container := &spec.Container{
-			Runtime: "CRI",
+			Runtime: "cri",
 			Name:    cstatus.Metadata.Name,
 			ID:      cid,
 			Image:   cstatus.Image.Image,

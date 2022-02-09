@@ -66,7 +66,7 @@ func TestBuildContainerTopology(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []*topology.Component{
 		{
-			ExternalID: "urn:container:checkName:/host:containerId1",
+			ExternalID: "urn:container:containerd:/host:containerId1",
 			Type:       topology.Type{Name: "container"},
 			Data: topology.Data{
 				"name":        "container1",
@@ -93,7 +93,7 @@ func TestBuildContainerTopology(t *testing.T) {
 			},
 		},
 		{
-			ExternalID: "urn:container:checkName:/host:containerId2",
+			ExternalID: "urn:container:docker:/host:containerId2",
 			Type: topology.Type{
 				Name: "container",
 			},
