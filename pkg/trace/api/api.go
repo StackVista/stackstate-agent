@@ -421,6 +421,9 @@ const OpenTelemetrySource = "openTelemetry"
 func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceServiceRequest) pb.Traces {
 	var traces = pb.Traces{}
 
+	tracesString, _ := json.Marshal(traces)
+	log.Debugf(string(tracesString))
+
 	for _, resourceSpan := range openTelemetryTraces.ResourceSpans {
 		var awsAccountID *string = nil
 
