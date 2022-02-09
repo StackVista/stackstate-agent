@@ -31,6 +31,8 @@ func MakeOpenTelemetrySNSInterpreter(config *config.Config) *OpenTelemetrySNSInt
 
 // Interpret performs the interpretation for the OpenTelemetrySNSInterpreter
 func (t *OpenTelemetrySNSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
+	log.Debugf("[OTEL] [SNS] Interpreting and mapping Open Telemetry data")
+
 	for _, span := range spans {
 		// no meta, add a empty map
 		if span.Meta == nil {

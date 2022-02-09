@@ -31,6 +31,8 @@ func MakeOpenTelemetrySQSInterpreter(config *config.Config) *OpenTelemetrySQSInt
 
 // Interpret performs the interpretation for the OpenTelemetrySQSInterpreter
 func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
+	log.Debugf("[OTEL] [SQS] Interpreting and mapping Open Telemetry data")
+
 	for _, span := range spans {
 		// no meta, add a empty map
 		if span.Meta == nil {

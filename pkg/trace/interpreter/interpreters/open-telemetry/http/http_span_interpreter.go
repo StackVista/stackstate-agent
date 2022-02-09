@@ -38,6 +38,8 @@ func sanitizeURL(url string) string {
 
 // Interpret performs the interpretation for the OpenTelemetryHTTPInterpreter
 func (t *OpenTelemetryHTTPInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
+	log.Debugf("[OTEL] [HTTP] Interpreting and mapping Open Telemetry data")
+
 	for _, span := range spans {
 		// no meta, add a empty map
 		if span.Meta == nil {

@@ -31,6 +31,8 @@ func MakeOpenTelemetryLambdaInterpreter(config *config.Config) *OpenTelemetryLam
 
 // Interpret performs the interpretation for the OpenTelemetryLambdaInterpreter
 func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
+	log.Debugf("[OTEL] [LAMBDA] Interpreting and mapping Open Telemetry data")
+
 	for _, span := range spans {
 		// no meta, add a empty map
 		if span.Meta == nil {

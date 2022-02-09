@@ -31,6 +31,8 @@ func MakeOpenTelemetryStepFunctionsInterpreter(config *config.Config) *OpenTelem
 
 // Interpret performs the interpretation for the OpenTelemetryStepFunctionsInterpreter
 func (t *OpenTelemetryStepFunctionsInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
+	log.Debugf("[OTEL] [SFN] Interpreting and mapping Open Telemetry data")
+
 	for _, span := range spans {
 		// no meta, add a empty map
 		if span.Meta == nil {

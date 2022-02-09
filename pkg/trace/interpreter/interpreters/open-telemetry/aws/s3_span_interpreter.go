@@ -31,6 +31,8 @@ func MakeOpenTelemetryS3Interpreter(config *config.Config) *OpenTelemetryS3Inter
 
 // Interpret performs the interpretation for the OpenTelemetryS3Interpreter
 func (t *OpenTelemetryS3Interpreter) Interpret(spans []*pb.Span) []*pb.Span {
+	log.Debugf("[OTEL] [S3] Interpreting and mapping Open Telemetry data")
+
 	for _, span := range spans {
 		// no meta, add a empty map
 		if span.Meta == nil {

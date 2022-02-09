@@ -427,10 +427,16 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 		// Attempt to extract information from the lambda library to enhance the sdk library
 		// We need the account id for sections where it is not defined for example lambda to lambda
 		for _, library := range resourceSpan.InstrumentationLibrarySpans {
+			// TODO: Remove temp for testing
+			log.Debugf("@opentelemetry/instrumentation-aws-lambda --> Test")
 			if library.InstrumentationLibrary.Name == "@opentelemetry/instrumentation-aws-lambda" {
+				// TODO: Remove temp for testing
+				log.Debugf("@opentelemetry/instrumentation-aws-lambda --> Found")
 				for _, span := range library.Spans {
 					for _, attribute := range span.Attributes {
 						if attribute.Key == "cloud.account.id" {
+							// TODO: Remove temp for testing
+							log.Debugf("@opentelemetry/instrumentation-aws-lambda --> Found AWS ACCOUNT ID")
 							var accountID = attribute.Value.GetStringValue()
 							awsAccountID = &accountID
 						}
