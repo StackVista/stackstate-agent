@@ -1,5 +1,10 @@
 # StackState Agent v2 releases
 
+## 2.16.0 (2022-02-??)
+
+**Features**
+- Process agent now acknowledges STS_SKIP_SSL_VALIDATION environment variable. [(STAC-15225)](https://stackstate.atlassian.net/browse/STAC-15225)
+
 ## 2.15.0 (2021-12-20)
 
 **Features**
