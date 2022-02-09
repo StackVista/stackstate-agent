@@ -43,6 +43,7 @@ func NewSpanInterpreterEngine(agentConfig *config.AgentConfig) *SpanInterpreterE
 	sourceIns[interpreters.TraefikSpanInterpreterSpan] = interpreters.MakeTraefikInterpreter(interpreterConf)
 
 	// Open Telemetry
+	sourceIns[awsOpenTelemetry.OpenTelemetryLambdaEntryInterpreterSpan] = awsOpenTelemetry.MakeOpenTelemetryLambdaEntryInterpreter(interpreterConf)
 	sourceIns[awsOpenTelemetry.OpenTelemetryLambdaInterpreterSpan] = awsOpenTelemetry.MakeOpenTelemetryLambdaInterpreter(interpreterConf)
 	sourceIns[awsOpenTelemetry.OpenTelemetrySQSInterpreterSpan] = awsOpenTelemetry.MakeOpenTelemetrySQSInterpreter(interpreterConf)
 	sourceIns[awsOpenTelemetry.OpenTelemetryS3InterpreterSpan] = awsOpenTelemetry.MakeOpenTelemetryS3Interpreter(interpreterConf)

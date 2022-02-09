@@ -37,29 +37,28 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 			span.Meta = map[string]string{}
 		}
 
+		functionName, functionNameOk := span.Meta["aws.request.function.name"]
+		accountID, accountIDOk := span.Meta["aws.account.id"]
+		region, regionOk := span.Meta["aws.region"]
+		awsOperation, awsOperationOk := span.Meta["aws.operation"]
+
 		// Invoke will contain data to another Lambda function being invoked
-		if lambdaName := span.Name; span.Meta["aws.operation"] == "invoke" && lambdaName != "" {
-			functionName, functionNameOk := span.Meta["aws.request.function.name"]
-			accountID, accountIDOk := span.Meta["aws.account.id"]
-			region, regionOk := span.Meta["aws.region"]
+		if functionNameOk && accountIDOk && regionOk && awsOperationOk && span.Meta["aws.operation"] == "invoke" {
+			var arn = strings.ToLower(fmt.Sprintf("arn:aws:lambda:%s:%s:function:%s", region, accountID, functionName))
+			var urn = t.CreateServiceURN(arn)
 
-			if functionNameOk && accountIDOk && regionOk {
-				var arn = strings.ToLower(fmt.Sprintf("arn:aws:lambda:%s:%s:function:%s", region, accountID, functionName))
-				var urn = t.CreateServiceURN(arn)
-
-				OpenTelemetrySpanBuilder(
-					span,
-					"consumer",
-					"invoke",
-					"lambda",
-					"Lambda Function",
-					"Serverless",
-					"test-eu-west-1",
-					urn,
-					arn,
-				)
-			}
-
+			OpenTelemetrySpanBuilder(
+				span,
+				"consumer",
+				awsOperation,
+				"lambda",
+				"Lambda Function",
+				"Serverless",
+				"test-eu-west-1",
+				urn,
+				arn,
+			)
+		} else {
 			_ = log.Errorf("[OTEL] [LAMBDA]: Unable to map the invoked Lambda Function")
 
 			if !functionNameOk {
@@ -71,28 +70,8 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 			if !regionOk {
 				_ = log.Errorf("[OTEL] [LAMBDA]: 'aws.region' is not found in the span meta data, this value is required.")
 			}
-
-			return nil
-		} else if arn, ok := span.Meta["faas.id"]; arn != "" && ok {
-			var urn = t.CreateServiceURN(strings.ToLower(arn))
-			arn = strings.ToLower(arn)
-
-			OpenTelemetrySpanBuilder(
-				span,
-				"producer",
-				"execute",
-				"lambda",
-				"Lambda Function",
-				"Serverless",
-				"test-eu-west-1",
-				urn,
-				arn,
-			)
-		} else {
-			_ = log.Errorf("[OTEL] [LAMBDA-CORE]: Unable to determine the root Lambda Span")
-
-			if !ok {
-				_ = log.Errorf("[OTEL] [LAMBDA-CORE]: 'faas.id' is not found in the span meta data, this value is required.")
+			if !awsOperationOk {
+				_ = log.Errorf("[OTEL] [LAMBDA]: 'aws.operation' is not found in the span meta data, this value is required.")
 			}
 
 			return nil

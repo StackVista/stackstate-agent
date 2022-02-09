@@ -16,7 +16,7 @@ func InterpretBasedOnInstrumentationLibrary(span *pb.Span, source string) string
 		instrumentationLibrary := span.Meta["instrumentation_library"]
 		switch instrumentationLibrary {
 		case "@opentelemetry/instrumentation-aws-lambda":
-			return fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetryLambdaServiceIdentifier)
+			return fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetryLambdaEntryServiceIdentifier)
 
 		case "@opentelemetry/instrumentation-http":
 			return fmt.Sprintf("%s%s", api.OpenTelemetrySource, http.OpenTelemetryHTTPServiceIdentifier)
@@ -43,6 +43,11 @@ func InterpretBuilderForAwsSdkInstrumentation(span *pb.Span, source string) stri
 		sqsInterpreterIdentifier := fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetrySQSServiceIdentifier)
 		log.Debugf("[OTEL] Mapped service '%s' to '%s'", serviceIdentifier, sqsInterpreterIdentifier)
 		return sqsInterpreterIdentifier
+
+	case aws.OpenTelemetryLambdaEntryAwsIdentifier:
+		lambdaInterpreterIdentifier := fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetryLambdaEntryServiceIdentifier)
+		log.Debugf("[OTEL] Mapped service '%s' to '%s'", serviceIdentifier, lambdaInterpreterIdentifier)
+		return lambdaInterpreterIdentifier
 
 	case aws.OpenTelemetryLambdaAwsIdentifier:
 		lambdaInterpreterIdentifier := fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetryLambdaServiceIdentifier)
