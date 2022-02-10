@@ -1,11 +1,11 @@
 # StackState Agent v2 releases
 
-## 2.16.0 (???)
+## 2.16.0 (2022-02-??)
 
 **Features**
-
 - Kubernetes objects topology
   * made object YAML definition available as "Component properties" in order to enable [Kubernetes changes events](https://docs.stackstate.com/stackpacks/integrations/kubernetes#events) ([STAC-15054](https://stackstate.atlassian.net/browse/STAC-15054))
+- Process agent now acknowledges STS_SKIP_SSL_VALIDATION environment variable. [(STAC-15225)](https://stackstate.atlassian.net/browse/STAC-15225)
 
 ## 2.15.0 (2021-12-20)
 
