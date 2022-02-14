@@ -5,6 +5,9 @@
 **Features**
 - Process agent now acknowledges STS_SKIP_SSL_VALIDATION environment variable. [(STAC-15225)](https://stackstate.atlassian.net/browse/STAC-15225)
 
+**Bugfix**
+- Fix missing HTTP response time charts [STAC-15754](https://stackstate.atlassian.net/browse/STAC-15754)
+
 ## 2.15.0 (2021-12-20)
 
 **Features**
