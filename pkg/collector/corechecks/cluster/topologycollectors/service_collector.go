@@ -132,6 +132,41 @@ func (sc *ServiceCollector) CollectorFunction() error {
 // Creates a StackState component from a Kubernetes / OpenShift Service
 func (sc *ServiceCollector) serviceToStackStateComponent(service v1.Service) *topology.Component {
 	log.Tracef("Mapping kubernetes pod service to StackState component: %s", service.String())
+	identifiers := sc.identifiers(service)
+
+	log.Tracef("Created identifiers for %s: %v", service.Name, identifiers)
+
+	serviceExternalID := sc.buildServiceExternalID(service.Namespace, service.Name)
+
+	tags := sc.initTags(service.ObjectMeta)
+	tags["service-type"] = string(service.Spec.Type)
+
+	if service.Spec.ClusterIP == "None" {
+		tags["service"] = "headless"
+	}
+
+	component := &topology.Component{
+		ExternalID: serviceExternalID,
+		Type:       topology.Type{Name: "service"},
+		Data: map[string]interface{}{
+			"name":              service.Name,
+			"creationTimestamp": service.CreationTimestamp,
+			"tags":              tags,
+			"identifiers":       identifiers,
+			"uid":               service.UID,
+		},
+		SourceProperties: makeSourceProperties(&service),
+	}
+
+	component.Data.PutNonEmpty("kind", service.Kind)
+	component.Data.PutNonEmpty("generateName", service.GenerateName)
+
+	log.Tracef("Created StackState service component %s: %v", serviceExternalID, component.JSONString())
+
+	return component
+}
+
+func (sc *ServiceCollector) identifiers(service v1.Service) []string {
 	// create identifier list to merge with StackState components
 	identifiers := make([]string, 0)
 
@@ -198,36 +233,7 @@ func (sc *ServiceCollector) serviceToStackStateComponent(service v1.Service) *to
 	serviceID := buildServiceID(service.Namespace, service.Name)
 	identifiers = append(identifiers, fmt.Sprintf("urn:service:/%s:%s", sc.GetInstance().URL, serviceID))
 
-	log.Tracef("Created identifiers for %s: %v", service.Name, identifiers)
-
-	serviceExternalID := sc.buildServiceExternalID(service.Namespace, service.Name)
-
-	tags := sc.initTags(service.ObjectMeta)
-	tags["service-type"] = string(service.Spec.Type)
-
-	if service.Spec.ClusterIP == "None" {
-		tags["service"] = "headless"
-	}
-
-	component := &topology.Component{
-		ExternalID: serviceExternalID,
-		Type:       topology.Type{Name: "service"},
-		Data: map[string]interface{}{
-			"name":              service.Name,
-			"creationTimestamp": service.CreationTimestamp,
-			"tags":              tags,
-			"identifiers":       identifiers,
-			"uid":               service.UID,
-		},
-		SourceProperties: makeSourceProperties(&service),
-	}
-
-	component.Data.PutNonEmpty("kind", service.Kind)
-	component.Data.PutNonEmpty("generateName", service.GenerateName)
-
-	log.Tracef("Created StackState service component %s: %v", serviceExternalID, component.JSONString())
-
-	return component
+	return identifiers
 }
 
 func (sc *ServiceCollector) serviceToExternalServiceComponent(service v1.Service) *topology.Component {
