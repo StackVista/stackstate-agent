@@ -4,29 +4,17 @@
 #########################
 
 # The host of the StackState receiver to send Agent data to
-sts_url:
+sts_url: http://localhost
 
-## @param api_key - string - required
-## The StackState API key to associate your Agent's data with your organization.
-## Create a new API key here: https://app.datadoghq.com/account/settings
-#
-api_key:
+# The StackState API key to associate your Agent's data with your organization.
+api_key: API_KEY
 
-## @param site - string - optional - default: datadoghq.com
-# The site of the Datadog intake to send Agent data to.
-# Defaults to 'datadoghq.com', set to 'datadoghq.eu' to send data to the EU site.
-#
-## @param dd_url - string - optional - default: https://app.datadoghq.com
-# The host of the Datadog intake server to send Agent data to, only set this option
-# if you need the Agent to send data to a custom URL.
-# Overrides the site setting defined in "site".
-## own "*_dd_url" settings.
-#
-## @param proxy - custom object - optional
-## If you need a proxy to connect to the Internet, provide it here (default:
-## disabled). Refer to https://docs.datadoghq.com/agent/proxy/ to understand how to use these settings.
-# variables DD_PROXY_HTTP, DD_PROXY_HTTPS and DD_PROXY_NO_PROXY (space-separated string)
-# will override the values set here. See https://docs.datadoghq.com/agent/proxy/.
+# If you need a proxy to connect to the Internet, provide it here (default:
+# disabled). You can use the 'no_proxy' list to specify hosts that should
+# bypass the proxy. These settings might impact your checks requests, please
+# refer to the specific check documentation for more details. Environment
+# variables STS_PROXY_HTTP, STS_PROXY_HTTPS and STS_PROXY_NO_PROXY (space-separated string)
+# will override the values set here. Refer to https://docs.stackstate.com/setup/agent/advanced-agent-configuration/
 #
 # proxy:
 #   https: http://<USERNAME>:<PASSWORD>@<PROXY_SERVER_FOR_HTTPS>:<PORT>
@@ -41,8 +29,13 @@ api_key:
 # skip_ssl_validation: false
 
 ## @param force_tls_12 - boolean - optional - default: false
-## Setting this option to "true" forces the Agent to only use TLS 1.2 when
-## pushing data to the Datadog intake specified in "site" or "dd_url".
+# Setting this option to "true" will tell the agent to skip validation of SSL/TLS certificates.
+# This may be necessary if the agent is running behind a proxy.
+#
+# skip_ssl_validation: false
+
+# Setting this option to "true" will force the agent to only use TLS 1.2 when
+# pushing data to the url specified in "sts_url".
 #
 # force_tls_12: false
 
@@ -54,18 +47,17 @@ api_key:
 ## @param hostname_fqdn - boolean - optional - default: false
 ## When the Agent relies on the OS to determine the hostname, make it use the
 ## FQDN instead of the short hostname. Recommended value: true
-## More information at https://dtdg.co/flag-hostname-fqdn
 #
 # hostname_fqdn: false
 
 ## @param tags  - list of key:value elements - optional
 ## List of host tags. Attached in-app to every metric, event, log, trace, and service check emitted by this Agent.
 ##
-## Learn more about tagging: https://docs.datadoghq.com/tagging/
 #
 # tags:
-#   - environment:dev
-#   - <TAG_KEY>:<TAG_VALUE>
+#   - mytag
+#   - env:prod
+#   - role:database
 
 ## @param env - string - optional
 ## The environment name where the agent is running. Attached in-app to every
