@@ -5,6 +5,9 @@
 **Features**
 - Container collector for Docker, ContainerD and CRI runtimes. [STAC-14483](https://stackstate.atlassian.net/browse/STAC-14483)
 
+**Bugfix**
+- Process agent now acknowledges STS_SKIP_SSL_VALIDATION environment variable. [(STAC-15225)](https://stackstate.atlassian.net/browse/STAC-15225)
+
 ## 2.15.0 (2021-12-20)
 
 **Features**
