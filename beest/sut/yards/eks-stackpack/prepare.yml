@@ -1,0 +1,6 @@
+---
+- name: Prepare StackState
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - role: "{{ bees_path }}/stackstate"

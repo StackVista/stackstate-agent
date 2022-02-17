@@ -4,7 +4,7 @@ import (
 	"beest/cmd/step"
 	"beest/sut"
 	"fmt"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
 	"strings"
@@ -58,7 +58,7 @@ func loadScenarios() *Scenarios {
 	}
 
 	availableScenarios := &Scenarios{}
-	err = yaml.UnmarshalStrict(scenariosYaml, availableScenarios)
+	err = yaml.Unmarshal(scenariosYaml, availableScenarios)
 	if err != nil {
 		log.Fatalf("Error unmarshalling scenarios: %s", err)
 	}

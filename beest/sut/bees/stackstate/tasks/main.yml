@@ -1,0 +1,143 @@
+---
+- name: Add stable chart repo
+  kubernetes.core.helm_repository:
+    name: stable
+    repo_url: "https://charts.helm.sh/stable"
+
+- name: Add stackstate-internal chart repo
+  kubernetes.core.helm_repository:
+    name: stackstate-internal
+    repo_url: "https://helm-internal.stackstate.io"
+
+- name: Add stackstate chart repo
+  kubernetes.core.helm_repository:
+    name: stackstate
+    repo_url: "https://helm.stackstate.io"
+
+
+# TODO: use sts-toolbox generate-values -o my-values-file.yaml, and override only what's needed
+
+
+- name: Deploy stackstate chart using values files
+  kubernetes.core.helm:
+    name: stackstate
+    chart_ref: stackstate-internal/stackstate
+    chart_version: ">0.0.0-0"  # use development versions
+    release_namespace: "{{ namespace }}"
+    create_namespace: true
+    update_repo_cache: true
+    values_files:
+      - "{{ role_path }}/files/stackstate-minimal.yml"
+
+
+- name: Wait for stackstate to be ready # TODO does not wait (for all ?)
+  kubernetes.core.k8s:
+    kind: Pod
+    namespace: "{{ namespace }}"
+    label_selectors: "app.kubernetes.io/instance=stackstate"  # TODO: same as helm release name
+    wait: yes
+    wait_condition:
+      type: Ready
+      status: True
+    wait_timeout: 1200  # 20 min
+
+
+- name: Create stackstate-admin Role
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: Role
+      metadata:
+        name: stackstate-admin
+        namespace: "{{ namespace }}"
+
+- name: Create CLI ServiceAccount
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: stackstate-admin  # NOTE: do not change, needs to be called this way for now, see https://stackstate.atlassian.net/browse/STAC-15814
+        namespace: "{{ namespace }}"
+
+- name: Create CLI RoleBinding
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: stackstate-admin
+        namespace: "{{ namespace }}"
+      roleRef:
+        name: stackstate-admin
+        apiGroup: rbac.authorization.k8s.io
+        kind: Role
+      subjects:
+      - kind: ServiceAccount
+        name: stackstate-admin
+
+- name: Create CLI entrypoint script ConfigMap
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: cli-config
+        namespace: "{{ namespace }}"
+      data:
+        cli-entrypoint.sh: "{{ lookup('file', 'cli-entrypoint.sh') }}"
+
+- name: Start the CLI pod
+  kubernetes.core.k8s:
+    definition:
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: stackstate-cli
+        namespace: "{{ namespace }}"
+      spec:
+        # this makes kubernetes.io/serviceaccount/token available and used for authenticating against stackstate-api
+        serviceAccount: stackstate-admin
+        containers:
+          - name: cli
+            image: stackstate/stackstate-cli:4.5.5
+            command: ["/root/cli/cli-entrypoint.sh"] # TODO: Can we find a better way to keep it running ?
+            volumeMounts:
+              - name: config-volume
+                mountPath: /root/cli
+        volumes:
+          - name: config-volume
+            configMap:
+              name: cli-config
+              defaultMode: 0777
+
+- name: Install stackstate-agent-v2 StackPack
+  kubernetes.core.k8s_exec:
+    namespace: "{{ namespace }}"
+    pod: stackstate-cli
+    command: python -m stackstate_cli.cli stackpack install stackstate-agent-v2
+
+- name: Install kubernetes StackPack
+  kubernetes.core.k8s_exec:
+    namespace: "{{ namespace }}"
+    pod: stackstate-cli
+    command: python -m stackstate_cli.cli stackpack install kubernetes -p kubernetes_cluster_name "{{ cluster_name }}"
+
+
+### Uninstall
+
+#- name: Undeploy stackstate
+#  kubernetes.core.helm:
+#    name: stackstate
+#    release_namespace: "{{ namespace }}"
+#    state: absent
+#    wait: true
+#
+#- name: Delete namespace '{{namespace}}' # TODO does not wait
+#  kubernetes.core.k8s:
+#    api_version: v1
+#    kind: Namespace
+#    name: "{{ namespace }}"
+#    state: absent
+#    wait: yes
+#    context: "{{ kubecontext }}" # TODO use this everywhere

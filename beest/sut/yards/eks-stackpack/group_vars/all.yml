@@ -1,0 +1,8 @@
+---
+agent_current_branch: "{{ lookup('env', 'AGENT_CURRENT_BRANCH') or AGENT_CURRENT_BRANCH }}"
+
+namespace: "{{ agent_current_branch.replace('.','-').replace('_','-') | lower }}"
+cluster_name: "{{ namespace }}"
+
+kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/config"
+kubecontext: "{{ yard_id }}"

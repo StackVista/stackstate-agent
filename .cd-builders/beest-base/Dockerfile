@@ -1,7 +1,7 @@
 FROM golang:1.17.3-bullseye
 
 RUN apt-get update && \
-    apt-get install -y less direnv unzip pip bash-completion vim && \
+    apt-get install -y --no-install-recommends less direnv unzip python3-pip bash-completion vim jq && \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -52,12 +52,6 @@ RUN curl -O "https://get.helm.sh/helm-v${HELM_V}-linux-amd64.tar.gz" && \
     mv ./linux-amd64/helm /usr/local/bin/ && \
     rm -r helm-v${HELM_V}-linux-amd64.tar.gz linux-amd64/
 
-ARG STSTOOLBOX_V=1.3.17
-RUN curl -O "https://stseuw1-tooling-main-homebrew.s3.amazonaws.com/sts-toolbox/v${STSTOOLBOX_V}/sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz" && \
-    tar xvzf sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \
-    rm -r sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \
-    mv ./sts-toolbox /usr/local/bin/
-
 ARG K3D_V=5.2.0
 RUN curl -s "https://raw.githubusercontent.com/rancher/k3d/main/install.sh" | TAG=v${K3D_V} bash
 
@@ -66,3 +60,9 @@ RUN curl -O "https://download.docker.com/linux/static/stable/x86_64/docker-${DOC
     tar xvzf docker-${DOCKER_V}.tgz && \
     mv ./docker/docker /usr/local/bin/ && \
     rm -r docker-${DOCKER_V}.tgz docker
+
+ARG STSTOOLBOX_V=1.3.22
+RUN curl -O "https://stseuw1-tooling-main-homebrew.s3.amazonaws.com/sts-toolbox/v${STSTOOLBOX_V}/sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz" && \
+    tar xvzf sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \
+    rm -r sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \
+    mv ./sts-toolbox /usr/local/bin/

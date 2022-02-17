@@ -12,6 +12,10 @@ func YardPath(name string) string {
 	return fmt.Sprintf("%s/sut/yards/%s", Cwd, name)
 }
 
+func BeesPath() string {
+	return fmt.Sprintf("%s/sut/bees", Cwd)
+}
+
 func AnsibleTasksPath() string {
 	return fmt.Sprintf("%s/sut/bees/tasks", Cwd)
 }
