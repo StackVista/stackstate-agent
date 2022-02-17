@@ -192,6 +192,11 @@ func (pc *PodCollector) podToStackStateComponent(pod v1.Pod) *topology.Component
 
 	if pc.IsSourcePropertiesFeatureEnabled() {
 		component.SourceProperties = makeSourcePropertiesKS(&pod)
+		// for backward compatibility with K8s/OpenShift stackpack
+		// we specify status.phase in data even if it's also in the sourceProperties
+		component.Data.PutNonEmpty("status", map[string]interface{}{
+			"phase": string(pod.Status.Phase),
+		})
 	} else {
 		component.Data.PutNonEmpty("kind", pod.Kind)
 		component.Data.PutNonEmpty("creationTimestamp", pod.CreationTimestamp)

@@ -91,6 +91,9 @@ func TestPodCollector(t *testing.T) {
 									"name":        "test-pod-1",
 									"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 									"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-1:10.0.0.1"},
+									"status": map[string]interface{}{
+										"phase": "Running",
+									},
 								},
 								SourceProperties: map[string]interface{}{
 									"metadata": map[string]interface{}{
@@ -152,6 +155,9 @@ func TestPodCollector(t *testing.T) {
 									"name":        "test-pod-2",
 									"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-account": "some-service-account-name"},
 									"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-2:10.0.0.2"},
+									"status": map[string]interface{}{
+										"phase": "Running",
+									},
 								},
 								SourceProperties: map[string]interface{}{
 									"metadata": map[string]interface{}{
@@ -214,6 +220,9 @@ func TestPodCollector(t *testing.T) {
 									"name":        "test-pod-3",
 									"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 									"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-3:10.0.0.1"},
+									"status": map[string]interface{}{
+										"phase": "Running",
+									},
 								},
 								SourceProperties: map[string]interface{}{
 									"metadata": map[string]interface{}{
@@ -336,6 +345,7 @@ func TestPodCollector(t *testing.T) {
 									"name":        "test-pod-4",
 									"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 									"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-4:10.0.0.1"},
+									"status":      map[string]interface{}{"phase": "Running"},
 								},
 								SourceProperties: map[string]interface{}{
 									"metadata": map[string]interface{}{
@@ -428,6 +438,7 @@ func TestPodCollector(t *testing.T) {
 									"name":        "test-pod-5",
 									"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 									"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-5:10.0.0.1"},
+									"status":      map[string]interface{}{"phase": "Running"},
 								},
 								SourceProperties: map[string]interface{}{
 									"metadata": map[string]interface{}{
@@ -526,6 +537,7 @@ func TestPodCollector(t *testing.T) {
 									"name":        "test-pod-6",
 									"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 									"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-6:10.0.0.1"},
+									"status":      map[string]interface{}{"phase": "Running"},
 								},
 								SourceProperties: map[string]interface{}{
 									"metadata": map[string]interface{}{
@@ -624,6 +636,7 @@ func TestPodCollector(t *testing.T) {
 									"name":        "test-pod-7",
 									"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 									"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-7:10.0.0.1"},
+									"status":      map[string]interface{}{"phase": "Running"},
 								},
 								SourceProperties: map[string]interface{}{
 									"metadata": map[string]interface{}{
@@ -706,6 +719,7 @@ func TestPodCollector(t *testing.T) {
 									"name":        "test-pod-8",
 									"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 									"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-8:10.0.0.1"},
+									"status":      map[string]interface{}{"phase": "Succeeded"},
 								},
 								SourceProperties: map[string]interface{}{
 									"metadata": map[string]interface{}{

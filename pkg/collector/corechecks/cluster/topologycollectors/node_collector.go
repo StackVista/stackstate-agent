@@ -87,7 +87,9 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 			"name":        node.Name,
 			"tags":        tags,
 			"identifiers": identifiers,
-			"instanceId":  instanceID,
+			// for backward compatibility with K8s/OpenShift stackpack
+			// we specify instanceId in data even if it's also in the sourceProperties
+			"instanceId": instanceID,
 		},
 	}
 
