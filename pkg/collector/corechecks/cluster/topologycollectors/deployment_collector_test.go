@@ -160,6 +160,9 @@ func TestDeploymentCollector(t *testing.T) {
 							"labels": map[string]interface{}{
 								"test": "label",
 							},
+							"annotations": map[string]interface{}{
+								"another-annotation-1": "should-be-kept",
+							},
 							"name":         "test-deployment-3",
 							"generateName": "some-specified-generation",
 							"namespace":    "test-namespace",
@@ -247,6 +250,7 @@ func (m MockDeploymentAPICollectorClient) GetDeployments() ([]appsV1.Deployment,
 			deployment.TypeMeta.Kind = "some-specified-kind"
 			deployment.ObjectMeta.GenerateName = "some-specified-generation"
 			deployment.Annotations = map[string]string{
+				"another-annotation-1": "should-be-kept",
 				"kubectl.kubernetes.io/last-applied-configuration": `{"apiVersion":"apps/v1","kind":"Deployment",
 				  "metadata":{"annotations":{},"name":"nginx-deployment","namespace":"default"},
 				  "spec":{"minReadySeconds":5,"selector":{"matchLabels":{"app":nginx}},"template":{"metadata":{"labels":{"app":"nginx"}},
