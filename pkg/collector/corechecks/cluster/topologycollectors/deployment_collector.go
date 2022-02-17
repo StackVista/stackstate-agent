@@ -61,18 +61,21 @@ func (dmc *DeploymentCollector) deploymentToStackStateComponent(deployment v1.De
 		ExternalID: deploymentExternalID,
 		Type:       topology.Type{Name: "deployment"},
 		Data: map[string]interface{}{
-			"name":               deployment.Name,
-			"creationTimestamp":  deployment.CreationTimestamp,
-			"tags":               tags,
-			"deploymentStrategy": deployment.Spec.Strategy.Type,
-			"desiredReplicas":    deployment.Spec.Replicas,
-			"uid":                deployment.UID,
+			"name": deployment.Name,
+			"tags": tags,
 		},
-		SourceProperties: makeSourceProperties(&deployment),
 	}
 
-	component.Data.PutNonEmpty("generateName", deployment.GenerateName)
-	component.Data.PutNonEmpty("kind", deployment.Kind)
+	if dmc.IsSourcePropertiesFeatureEnabled() {
+		component.SourceProperties = makeSourceProperties(&deployment)
+	} else {
+		component.Data.PutNonEmpty("kind", deployment.Kind)
+		component.Data.PutNonEmpty("uid", deployment.UID)
+		component.Data.PutNonEmpty("creationTimestamp", deployment.CreationTimestamp)
+		component.Data.PutNonEmpty("generateName", deployment.GenerateName)
+		component.Data.PutNonEmpty("deploymentStrategy", deployment.Spec.Strategy.Type)
+		component.Data.PutNonEmpty("desiredReplicas", deployment.Spec.Replicas)
+	}
 
 	log.Tracef("Created StackState Deployment component %s: %v", deploymentExternalID, component.JSONString())
 

@@ -57,17 +57,20 @@ func (dsc *DaemonSetCollector) daemonSetToStackStateComponent(daemonSet v1.Daemo
 		ExternalID: daemonSetExternalID,
 		Type:       topology.Type{Name: "daemonset"},
 		Data: map[string]interface{}{
-			"name":              daemonSet.Name,
-			"creationTimestamp": daemonSet.CreationTimestamp,
-			"tags":              tags,
-			"updateStrategy":    daemonSet.Spec.UpdateStrategy.Type,
-			"uid":               daemonSet.UID,
+			"name": daemonSet.Name,
+			"tags": tags,
 		},
-		SourceProperties: makeSourceProperties(&daemonSet),
 	}
 
-	component.Data.PutNonEmpty("generateName", daemonSet.GenerateName)
-	component.Data.PutNonEmpty("kind", daemonSet.Kind)
+	if dsc.IsSourcePropertiesFeatureEnabled() {
+		component.SourceProperties = makeSourceProperties(&daemonSet)
+	} else {
+		component.Data.PutNonEmpty("kind", daemonSet.Kind)
+		component.Data.PutNonEmpty("uid", daemonSet.UID)
+		component.Data.PutNonEmpty("creationTimestamp", daemonSet.CreationTimestamp)
+		component.Data.PutNonEmpty("generateName", daemonSet.GenerateName)
+		component.Data.PutNonEmpty("updateStrategy", daemonSet.Spec.UpdateStrategy.Type)
+	}
 
 	log.Tracef("Created StackState DaemonSet component %s: %v", daemonSetExternalID, component.JSONString())
 

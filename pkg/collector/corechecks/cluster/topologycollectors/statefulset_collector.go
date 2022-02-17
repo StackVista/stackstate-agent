@@ -57,20 +57,23 @@ func (ssc *StatefulSetCollector) statefulSetToStackStateComponent(statefulSet v1
 		ExternalID: statefulSetExternalID,
 		Type:       topology.Type{Name: "statefulset"},
 		Data: map[string]interface{}{
-			"name":                statefulSet.Name,
-			"creationTimestamp":   statefulSet.CreationTimestamp,
-			"tags":                tags,
-			"updateStrategy":      statefulSet.Spec.UpdateStrategy.Type,
-			"desiredReplicas":     statefulSet.Spec.Replicas,
-			"podManagementPolicy": statefulSet.Spec.PodManagementPolicy,
-			"serviceName":         statefulSet.Spec.ServiceName,
-			"uid":                 statefulSet.UID,
+			"name": statefulSet.Name,
+			"tags": tags,
 		},
-		SourceProperties: makeSourceProperties(&statefulSet),
 	}
 
-	component.Data.PutNonEmpty("generateName", statefulSet.GenerateName)
-	component.Data.PutNonEmpty("kind", statefulSet.Kind)
+	if ssc.IsSourcePropertiesFeatureEnabled() {
+		component.SourceProperties = makeSourceProperties(&statefulSet)
+	} else {
+		component.Data.PutNonEmpty("kind", statefulSet.Kind)
+		component.Data.PutNonEmpty("uid", statefulSet.UID)
+		component.Data.PutNonEmpty("generateName", statefulSet.GenerateName)
+		component.Data.PutNonEmpty("creationTimestamp", statefulSet.CreationTimestamp)
+		component.Data.PutNonEmpty("updateStrategy", statefulSet.Spec.UpdateStrategy.Type)
+		component.Data.PutNonEmpty("desiredReplicas", statefulSet.Spec.Replicas)
+		component.Data.PutNonEmpty("podManagementPolicy", statefulSet.Spec.PodManagementPolicy)
+		component.Data.PutNonEmpty("serviceName", statefulSet.Spec.ServiceName)
+	}
 
 	log.Tracef("Created StackState StatefulSet component %s: %v", statefulSetExternalID, component.JSONString())
 

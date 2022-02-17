@@ -14,9 +14,18 @@ import (
 )
 
 func TestCollectorInterface(t *testing.T) {
+	t.Run("with sourceProperties enabled", func(t *testing.T) {
+		testCollectorInterface(t, true)
+	})
+	t.Run("with sourceProperties disabled", func(t *testing.T) {
+		testCollectorInterface(t, false)
+	})
+}
+
+func testCollectorInterface(t *testing.T, sourcePropertiesEnabled bool) {
 
 	instance := topology.Instance{Type: "kubernetes", URL: "Test-Cluster-Name"}
-	clusterTopologyCommon := NewClusterTopologyCommon(instance, nil)
+	clusterTopologyCommon := NewClusterTopologyCommon(instance, nil, sourcePropertiesEnabled)
 	testCollector := NewTestCollector(NewClusterTopologyCollector(clusterTopologyCommon))
 
 	actualClusterExternalID := testCollector.buildClusterExternalID()

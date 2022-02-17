@@ -72,18 +72,21 @@ func (jc *JobCollector) jobToStackStateComponent(job v1.Job) *topology.Component
 		ExternalID: jobExternalID,
 		Type:       topology.Type{Name: "job"},
 		Data: map[string]interface{}{
-			"name":              job.Name,
-			"creationTimestamp": job.CreationTimestamp,
-			"tags":              tags,
-			"uid":               job.UID,
-			"backoffLimit":      job.Spec.BackoffLimit,
-			"parallelism":       job.Spec.Parallelism,
+			"name": job.Name,
+			"tags": tags,
 		},
-		SourceProperties: makeSourceProperties(&job),
 	}
 
-	component.Data.PutNonEmpty("generateName", job.GenerateName)
-	component.Data.PutNonEmpty("kind", job.Kind)
+	if jc.IsSourcePropertiesFeatureEnabled() {
+		component.SourceProperties = makeSourceProperties(&job)
+	} else {
+		component.Data.PutNonEmpty("kind", job.Kind)
+		component.Data.PutNonEmpty("creationTimestamp", job.CreationTimestamp)
+		component.Data.PutNonEmpty("uid", job.UID)
+		component.Data.PutNonEmpty("generateName", job.GenerateName)
+		component.Data.PutNonEmpty("backoffLimit", job.Spec.BackoffLimit)
+		component.Data.PutNonEmpty("parallelism", job.Spec.Parallelism)
+	}
 
 	log.Tracef("Created StackState Job component %s: %v", jobExternalID, component.JSONString())
 

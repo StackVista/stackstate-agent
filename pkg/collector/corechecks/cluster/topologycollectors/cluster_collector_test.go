@@ -17,7 +17,7 @@ func TestClusterCollector(t *testing.T) {
 	componentChannel := make(chan *topology.Component)
 	defer close(componentChannel)
 
-	cc := NewClusterCollector(componentChannel, NewTestCommonClusterCollector(MockClusterAPICollectorClient{}))
+	cc := NewClusterCollector(componentChannel, NewTestCommonClusterCollector(MockClusterAPICollectorClient{}, true))
 	expectedCollectorName := "Cluster Collector"
 	RunCollectorTest(t, cc, expectedCollectorName)
 

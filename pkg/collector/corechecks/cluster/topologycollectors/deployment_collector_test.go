@@ -29,147 +29,179 @@ func TestDeploymentCollector(t *testing.T) {
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	replicas = int32(1)
 
-	cmc := NewDeploymentCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockDeploymentAPICollectorClient{}))
-	expectedCollectorName := "Deployment Collector"
-	RunCollectorTest(t, cmc, expectedCollectorName)
+	for _, sourcePropertiesEnabled := range []bool{false, true} {
+		cmc := NewDeploymentCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockDeploymentAPICollectorClient{}, sourcePropertiesEnabled))
+		expectedCollectorName := "Deployment Collector"
+		RunCollectorTest(t, cmc, expectedCollectorName)
 
-	for _, tc := range []struct {
-		testCase string
-		expected *topology.Component
-	}{
-		{
-			testCase: "Test Deployment 1",
-			expected: &topology.Component{
-				ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:deployment/test-deployment-1",
-				Type:       topology.Type{Name: "deployment"},
-				Data: topology.Data{
-					"name":               "test-deployment-1",
-					"creationTimestamp":  creationTime,
-					"tags":               map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-					"uid":                types.UID("test-deployment-1"),
-					"deploymentStrategy": appsV1.RollingUpdateDeploymentStrategyType,
-					"desiredReplicas":    &replicas,
-				},
-				SourceProperties: topology.Data{
-					"metadata": map[string]interface{}{
-						"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
-						"labels": map[string]interface{}{
-							"test": "label",
-						},
-						"name":      "test-deployment-1",
-						"namespace": "test-namespace",
-						"uid":       "test-deployment-1",
+		for _, tc := range []struct {
+			testCase     string
+			expectedSP   *topology.Component
+			expectedNoSP *topology.Component
+		}{
+			{
+				testCase: "Test Deployment 1",
+				expectedNoSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:deployment/test-deployment-1",
+					Type:       topology.Type{Name: "deployment"},
+					Data: topology.Data{
+						"name":               "test-deployment-1",
+						"creationTimestamp":  creationTime,
+						"tags":               map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						"uid":                types.UID("test-deployment-1"),
+						"deploymentStrategy": appsV1.RollingUpdateDeploymentStrategyType,
+						"desiredReplicas":    &replicas,
 					},
-					"spec": map[string]interface{}{
-						"replicas": float64(1),
-						"strategy": map[string]interface{}{
-							"type": "RollingUpdate",
-						},
-						"template": map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"creationTimestamp": nil,
+				},
+				expectedSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:deployment/test-deployment-1",
+					Type:       topology.Type{Name: "deployment"},
+					Data: topology.Data{
+						"name": "test-deployment-1",
+						"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+					},
+					SourceProperties: topology.Data{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
+							"labels": map[string]interface{}{
+								"test": "label",
 							},
-							"spec": map[string]interface{}{},
+							"name":      "test-deployment-1",
+							"namespace": "test-namespace",
+							"uid":       "test-deployment-1",
+						},
+						"spec": map[string]interface{}{
+							"replicas": float64(1),
+							"strategy": map[string]interface{}{
+								"type": "RollingUpdate",
+							},
+							"template": map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": nil,
+								},
+								"spec": map[string]interface{}{},
+							},
 						},
 					},
 				},
 			},
-		},
-		{
-			testCase: "Test Deployment 2",
-			expected: &topology.Component{
-				ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:deployment/test-deployment-2",
-				Type:       topology.Type{Name: "deployment"},
-				Data: topology.Data{
-					"name":               "test-deployment-2",
-					"creationTimestamp":  creationTime,
-					"tags":               map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-					"uid":                types.UID("test-deployment-2"),
-					"deploymentStrategy": appsV1.RollingUpdateDeploymentStrategyType,
-					"desiredReplicas":    &replicas,
-				},
-				SourceProperties: topology.Data{
-					"metadata": map[string]interface{}{
-						"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
-						"labels": map[string]interface{}{
-							"test": "label",
-						},
-						"name":      "test-deployment-2",
-						"namespace": "test-namespace",
-						"uid":       "test-deployment-2",
+			{
+				testCase: "Test Deployment 2",
+				expectedNoSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:deployment/test-deployment-2",
+					Type:       topology.Type{Name: "deployment"},
+					Data: topology.Data{
+						"name":               "test-deployment-2",
+						"creationTimestamp":  creationTime,
+						"tags":               map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						"uid":                types.UID("test-deployment-2"),
+						"deploymentStrategy": appsV1.RollingUpdateDeploymentStrategyType,
+						"desiredReplicas":    &replicas,
 					},
-					"spec": map[string]interface{}{
-						"replicas": float64(1),
-						"strategy": map[string]interface{}{
-							"type": "RollingUpdate",
-						},
-						"template": map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"creationTimestamp": nil,
+				},
+				expectedSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:deployment/test-deployment-2",
+					Type:       topology.Type{Name: "deployment"},
+					Data: topology.Data{
+						"name": "test-deployment-2",
+						"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+					},
+					SourceProperties: topology.Data{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
+							"labels": map[string]interface{}{
+								"test": "label",
 							},
-							"spec": map[string]interface{}{},
+							"name":      "test-deployment-2",
+							"namespace": "test-namespace",
+							"uid":       "test-deployment-2",
+						},
+						"spec": map[string]interface{}{
+							"replicas": float64(1),
+							"strategy": map[string]interface{}{
+								"type": "RollingUpdate",
+							},
+							"template": map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": nil,
+								},
+								"spec": map[string]interface{}{},
+							},
 						},
 					},
 				},
 			},
-		},
-		{
-			testCase: "Test Deployment 3 - Kind + Generate Name",
-			expected: &topology.Component{
-				ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:deployment/test-deployment-3",
-				Type:       topology.Type{Name: "deployment"},
-				Data: topology.Data{
-					"name":               "test-deployment-3",
-					"creationTimestamp":  creationTime,
-					"tags":               map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-					"uid":                types.UID("test-deployment-3"),
-					"kind":               "some-specified-kind",
-					"generateName":       "some-specified-generation",
-					"deploymentStrategy": appsV1.RollingUpdateDeploymentStrategyType,
-					"desiredReplicas":    &replicas,
-				},
-				SourceProperties: topology.Data{
-					"metadata": map[string]interface{}{
-						"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
-						"labels": map[string]interface{}{
-							"test": "label",
-						},
-						"name":         "test-deployment-3",
-						"generateName": "some-specified-generation",
-						"namespace":    "test-namespace",
-						"uid":          "test-deployment-3",
+			{
+				testCase: "Test Deployment 3 - Kind + Generate Name",
+				expectedNoSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:deployment/test-deployment-3",
+					Type:       topology.Type{Name: "deployment"},
+					Data: topology.Data{
+						"name":               "test-deployment-3",
+						"creationTimestamp":  creationTime,
+						"tags":               map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						"uid":                types.UID("test-deployment-3"),
+						"kind":               "some-specified-kind",
+						"generateName":       "some-specified-generation",
+						"deploymentStrategy": appsV1.RollingUpdateDeploymentStrategyType,
+						"desiredReplicas":    &replicas,
 					},
-					"spec": map[string]interface{}{
-						"replicas": float64(1),
-						"strategy": map[string]interface{}{
-							"type": "RollingUpdate",
-						},
-						"template": map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"creationTimestamp": nil,
+				},
+				expectedSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:deployment/test-deployment-3",
+					Type:       topology.Type{Name: "deployment"},
+					Data: topology.Data{
+						"name": "test-deployment-3",
+						"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+					},
+					SourceProperties: topology.Data{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
+							"labels": map[string]interface{}{
+								"test": "label",
 							},
-							"spec": map[string]interface{}{},
+							"name":         "test-deployment-3",
+							"generateName": "some-specified-generation",
+							"namespace":    "test-namespace",
+							"uid":          "test-deployment-3",
+						},
+						"spec": map[string]interface{}{
+							"replicas": float64(1),
+							"strategy": map[string]interface{}{
+								"type": "RollingUpdate",
+							},
+							"template": map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": nil,
+								},
+								"spec": map[string]interface{}{},
+							},
 						},
 					},
 				},
 			},
-		},
-	} {
-		t.Run(tc.testCase, func(t *testing.T) {
-			component := <-componentChannel
-			assert.EqualValues(t, tc.expected, component)
+		} {
+			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
+				component := <-componentChannel
 
-			actualRelation := <-relationChannel
-			expectedRelation := &topology.Relation{
-				ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" + component.ExternalID,
-				Type:       topology.Type{Name: "encloses"},
-				SourceID:   "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
-				TargetID:   component.ExternalID,
-				Data:       map[string]interface{}{},
-			}
-			assert.EqualValues(t, expectedRelation, actualRelation)
+				if sourcePropertiesEnabled {
+					assert.EqualValues(t, tc.expectedSP, component)
+				} else {
+					assert.EqualValues(t, tc.expectedNoSP, component)
+				}
 
-		})
+				actualRelation := <-relationChannel
+				expectedRelation := &topology.Relation{
+					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" + component.ExternalID,
+					Type:       topology.Type{Name: "encloses"},
+					SourceID:   "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
+					TargetID:   component.ExternalID,
+					Data:       map[string]interface{}{},
+				}
+				assert.EqualValues(t, expectedRelation, actualRelation)
+
+			})
+		}
 	}
 }
 

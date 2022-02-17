@@ -95,17 +95,20 @@ func (ic *IngressCollector) ingressToStackStateComponent(ingress v1beta1.Ingress
 		ExternalID: ingressExternalID,
 		Type:       topology.Type{Name: "ingress"},
 		Data: map[string]interface{}{
-			"name":              ingress.Name,
-			"creationTimestamp": ingress.CreationTimestamp,
-			"tags":              tags,
-			"identifiers":       identifiers,
-			"uid":               ingress.UID,
+			"name":        ingress.Name,
+			"tags":        tags,
+			"identifiers": identifiers,
 		},
-		SourceProperties: makeSourceProperties(&ingress),
 	}
 
-	component.Data.PutNonEmpty("generateName", ingress.GenerateName)
-	component.Data.PutNonEmpty("kind", ingress.Kind)
+	if ic.IsSourcePropertiesFeatureEnabled() {
+		component.SourceProperties = makeSourceProperties(&ingress)
+	} else {
+		component.Data.PutNonEmpty("creationTimestamp", ingress.CreationTimestamp)
+		component.Data.PutNonEmpty("uid", ingress.UID)
+		component.Data.PutNonEmpty("generateName", ingress.GenerateName)
+		component.Data.PutNonEmpty("kind", ingress.Kind)
+	}
 
 	log.Tracef("Created StackState Ingress component %s: %v", ingressExternalID, component.JSONString())
 

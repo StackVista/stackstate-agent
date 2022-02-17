@@ -72,18 +72,21 @@ func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topo
 		ExternalID: secretExternalID,
 		Type:       topology.Type{Name: "secret"},
 		Data: map[string]interface{}{
-			"name":              secret.Name,
-			"creationTimestamp": secret.CreationTimestamp,
-			"tags":              tags,
-			"uid":               secret.UID,
-			"identifiers":       []string{secretExternalID},
+			"name":        secret.Name,
+			"tags":        tags,
+			"identifiers": []string{secretExternalID},
 		},
-		SourceProperties: makeSourceProperties(&prunedSecret),
 	}
 
-	component.Data.PutNonEmpty("generateName", secret.GenerateName)
-	component.Data.PutNonEmpty("kind", secret.Kind)
-	component.Data.PutNonEmpty("data", secretDataHash)
+	if cmc.IsSourcePropertiesFeatureEnabled() {
+		component.SourceProperties = makeSourceProperties(&prunedSecret)
+	} else {
+		component.Data.PutNonEmpty("creationTimestamp", secret.CreationTimestamp)
+		component.Data.PutNonEmpty("uid", secret.UID)
+		component.Data.PutNonEmpty("generateName", secret.GenerateName)
+		component.Data.PutNonEmpty("kind", secret.Kind)
+		component.Data.PutNonEmpty("data", secretDataHash)
+	}
 
 	log.Tracef("Created StackState Secret component %s: %v", secretExternalID, component.JSONString())
 

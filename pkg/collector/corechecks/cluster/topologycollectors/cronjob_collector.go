@@ -53,23 +53,26 @@ func (cjc *CronJobCollector) cronJobToStackStateComponent(cronJob v1beta1.CronJo
 	tags := cjc.initTags(cronJob.ObjectMeta)
 
 	cronJobExternalID := cjc.buildCronJobExternalID(cronJob.Namespace, cronJob.Name)
-	sourceProperties := makeSourceProperties(&cronJob)
+
 	component := &topology.Component{
 		ExternalID: cronJobExternalID,
 		Type:       topology.Type{Name: "cronjob"},
 		Data: map[string]interface{}{
-			"name":              cronJob.Name,
-			"creationTimestamp": cronJob.CreationTimestamp,
-			"tags":              tags,
-			"uid":               cronJob.UID,
-			"concurrencyPolicy": cronJob.Spec.ConcurrencyPolicy,
-			"schedule":          cronJob.Spec.Schedule,
+			"name": cronJob.Name,
+			"tags": tags,
 		},
-		SourceProperties: sourceProperties,
 	}
 
-	component.Data.PutNonEmpty("generateName", cronJob.GenerateName)
-	component.Data.PutNonEmpty("kind", cronJob.Kind)
+	if cjc.IsSourcePropertiesFeatureEnabled() {
+		component.SourceProperties = makeSourceProperties(&cronJob)
+	} else {
+		component.Data.PutNonEmpty("uid", cronJob.UID)
+		component.Data.PutNonEmpty("kind", cronJob.Kind)
+		component.Data.PutNonEmpty("creationTimestamp", cronJob.CreationTimestamp)
+		component.Data.PutNonEmpty("generateName", cronJob.GenerateName)
+		component.Data.PutNonEmpty("schedule", cronJob.Spec.Schedule)
+		component.Data.PutNonEmpty("concurrencyPolicy", cronJob.Spec.ConcurrencyPolicy)
+	}
 
 	log.Tracef("Created StackState CronJob component %s: %v", cronJobExternalID, component.JSONString())
 

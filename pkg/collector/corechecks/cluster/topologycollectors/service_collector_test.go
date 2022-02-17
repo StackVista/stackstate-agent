@@ -31,403 +31,509 @@ func TestServiceCollector(t *testing.T) {
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
-	cjc := NewServiceCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockServiceAPICollectorClient{}))
-	// Mock out DNS resolution function for test
-	cjc.(*ServiceCollector).DNS = func(name string) ([]string, error) {
-		return []string{"10.10.42.42", "10.10.42.43"}, nil
-	}
-	expectedCollectorName := "Service Collector"
-	RunCollectorTest(t, cjc, expectedCollectorName)
+	for _, sourcePropertiesEnabled := range []bool{false, true} {
+		cjc := NewServiceCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockServiceAPICollectorClient{}, sourcePropertiesEnabled))
+		// Mock out DNS resolution function for test
+		cjc.(*ServiceCollector).DNS = func(name string) ([]string, error) {
+			return []string{"10.10.42.42", "10.10.42.43"}, nil
+		}
+		expectedCollectorName := "Service Collector"
+		RunCollectorTest(t, cjc, expectedCollectorName)
 
-	for _, tc := range []struct {
-		testCase           string
-		expectedComponents []*topology.Component
-		expectedRelations  []*topology.Relation
-	}{
-		{
-			testCase: "Test Service 1 - Service + Pod Relation",
-			expectedComponents: []*topology.Component{
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1",
-					Type:       topology.Type{Name: "service"},
-					Data: topology.Data{
-						"name":              "test-service-1",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
-						"uid":               types.UID("test-service-1"),
-						"identifiers":       []string{"urn:service:/test-cluster-name:test-namespace:test-service-1"},
-					},
-					SourceProperties: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"creationTimestamp": creationTimeFormatted,
-							"labels":            map[string]interface{}{"test": "label"},
-							"name":              "test-service-1",
-							"namespace":         "test-namespace",
-							"uid":               "test-service-1"},
-						"spec": map[string]interface{}{
-							"type": "ClusterIP",
-							"ports": []interface{}{
-								map[string]interface{}{
-									"name":       "test-service-port-1",
-									"port":       float64(81),
-									"targetPort": float64(8081)},
-							}},
-					},
-				},
-			},
-			expectedRelations: []*topology.Relation{
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" +
-						"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1",
-					Type:     topology.Type{Name: "encloses"},
-					SourceID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
-					TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1",
-					Data:     map[string]interface{}{},
-				},
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1->" +
-						"urn:kubernetes:/test-cluster-name:pod-namespace:pod/some-pod-name",
-					Type:     topology.Type{Name: "exposes"},
-					SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1",
-					TargetID: "urn:kubernetes:/test-cluster-name:pod-namespace:pod/some-pod-name",
-					Data:     map[string]interface{}{},
-				},
-			},
-		},
-		{
-			testCase: "Test Service 2 - Minimal - NodePort",
-			expectedComponents: []*topology.Component{
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-2",
-					Type:       topology.Type{Name: "service"},
-					Data: topology.Data{
-						"name":              "test-service-2",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "NodePort"},
-						"uid":               types.UID("test-service-2"),
-						"identifiers": []string{
-							"urn:endpoint:/test-cluster-name:10.100.200.20",
-							"urn:endpoint:/test-cluster-name:10.100.200.20:10202",
-							"urn:service:/test-cluster-name:test-namespace:test-service-2",
+		for _, tc := range []struct {
+			testCase           string
+			expectedComponents []*topology.Component
+			expectedRelations  []*topology.Relation
+		}{
+			{
+				testCase: "Test Service 1 - Service + Pod Relation",
+				expectedComponents: []*topology.Component{
+					chooseBySourcePropertiesFeature(
+						sourcePropertiesEnabled,
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1",
+							Type:       topology.Type{Name: "service"},
+							Data: topology.Data{
+								"name":              "test-service-1",
+								"creationTimestamp": creationTime,
+								"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
+								"uid":               types.UID("test-service-1"),
+								"identifiers":       []string{"urn:service:/test-cluster-name:test-namespace:test-service-1"},
+							},
 						},
-					},
-					SourceProperties: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"creationTimestamp": creationTimeFormatted,
-							"labels":            map[string]interface{}{"test": "label"},
-							"name":              "test-service-2",
-							"namespace":         "test-namespace",
-							"uid":               "test-service-2"},
-						"spec": map[string]interface{}{
-							"type":      "NodePort",
-							"clusterIP": "10.100.200.20",
-							"ports": []interface{}{
-								map[string]interface{}{
-									"name":       "test-service-node-port-2",
-									"nodePort":   float64(10202),
-									"port":       float64(82),
-									"targetPort": float64(8082)},
-							}},
-					},
-				},
-			},
-			expectedRelations: []*topology.Relation{
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" +
-						"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-2",
-					Type:     topology.Type{Name: "encloses"},
-					SourceID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
-					TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-2",
-					Data:     map[string]interface{}{},
-				},
-			},
-		},
-		{
-			testCase: "Test Service 3 - Minimal - Cluster IP + External IPs",
-			expectedComponents: []*topology.Component{
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-3",
-					Type:       topology.Type{Name: "service"},
-					Data: topology.Data{
-						"name":              "test-service-3",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
-						"uid":               types.UID("test-service-3"),
-						"identifiers": []string{
-							"urn:endpoint:/34.100.200.12:83", "urn:endpoint:/34.100.200.13:83",
-							"urn:endpoint:/test-cluster-name:10.100.200.21",
-							"urn:service:/test-cluster-name:test-namespace:test-service-3",
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1",
+							Type:       topology.Type{Name: "service"},
+							Data: topology.Data{
+								"name":        "test-service-1",
+								"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
+								"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-1"},
+							},
+							SourceProperties: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": creationTimeFormatted,
+									"labels":            map[string]interface{}{"test": "label"},
+									"name":              "test-service-1",
+									"namespace":         "test-namespace",
+									"uid":               "test-service-1"},
+								"spec": map[string]interface{}{
+									"type": "ClusterIP",
+									"ports": []interface{}{
+										map[string]interface{}{
+											"name":       "test-service-port-1",
+											"port":       float64(81),
+											"targetPort": float64(8081)},
+									}},
+							},
 						},
+					),
+				},
+				expectedRelations: []*topology.Relation{
+					{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1",
+						Type:     topology.Type{Name: "encloses"},
+						SourceID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1",
+						Data:     map[string]interface{}{},
 					},
-					SourceProperties: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"creationTimestamp": creationTimeFormatted,
-							"labels":            map[string]interface{}{"test": "label"},
-							"name":              "test-service-3",
-							"namespace":         "test-namespace",
-							"uid":               "test-service-3"},
-						"spec": map[string]interface{}{
-							"type":        "ClusterIP",
-							"clusterIP":   "10.100.200.21",
-							"externalIPs": []interface{}{"34.100.200.12", "34.100.200.13"},
-							"ports": []interface{}{
-								map[string]interface{}{
-									"name":       "test-service-port-3",
-									"port":       float64(83),
-									"targetPort": float64(8083)},
-							}},
+					{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1->" +
+							"urn:kubernetes:/test-cluster-name:pod-namespace:pod/some-pod-name",
+						Type:     topology.Type{Name: "exposes"},
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1",
+						TargetID: "urn:kubernetes:/test-cluster-name:pod-namespace:pod/some-pod-name",
+						Data:     map[string]interface{}{},
 					},
 				},
 			},
-			expectedRelations: []*topology.Relation{
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" +
-						"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-3",
-					Type:     topology.Type{Name: "encloses"},
-					SourceID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
-					TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-3",
-					Data:     map[string]interface{}{},
-				},
-			},
-		},
-		{
-			testCase: "Test Service 4 - Minimal - Cluster IP",
-			expectedComponents: []*topology.Component{
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-4",
-					Type:       topology.Type{Name: "service"},
-					Data: topology.Data{
-						"name":              "test-service-4",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
-						"uid":               types.UID("test-service-4"),
-						"identifiers": []string{
-							"urn:endpoint:/test-cluster-name:10.100.200.22",
-							"urn:service:/test-cluster-name:test-namespace:test-service-4",
+			{
+				testCase: "Test Service 2 - Minimal - NodePort",
+				expectedComponents: []*topology.Component{
+					chooseBySourcePropertiesFeature(
+						sourcePropertiesEnabled,
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-2",
+							Type:       topology.Type{Name: "service"},
+							Data: topology.Data{
+								"name":              "test-service-2",
+								"creationTimestamp": creationTime,
+								"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "NodePort"},
+								"uid":               types.UID("test-service-2"),
+								"identifiers": []string{
+									"urn:endpoint:/test-cluster-name:10.100.200.20",
+									"urn:endpoint:/test-cluster-name:10.100.200.20:10202",
+									"urn:service:/test-cluster-name:test-namespace:test-service-2",
+								},
+							},
 						},
-					},
-					SourceProperties: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"creationTimestamp": creationTimeFormatted,
-							"labels":            map[string]interface{}{"test": "label"},
-							"name":              "test-service-4",
-							"namespace":         "test-namespace",
-							"uid":               "test-service-4"},
-						"spec": map[string]interface{}{
-							"type":      "ClusterIP",
-							"clusterIP": "10.100.200.22",
-							"ports": []interface{}{
-								map[string]interface{}{
-									"name":       "test-service-port-4",
-									"port":       float64(84),
-									"targetPort": float64(8084)},
-							}},
-					},
-				},
-			},
-			expectedRelations: []*topology.Relation{
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" +
-						"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-4",
-					Type:     topology.Type{Name: "encloses"},
-					SourceID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
-					TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-4",
-					Data:     map[string]interface{}{},
-				},
-			},
-		},
-		{
-			testCase: "Test Service 5 - Minimal - Cluster IP - None",
-			expectedComponents: []*topology.Component{
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-5",
-					Type:       topology.Type{Name: "service"},
-					Data: topology.Data{
-						"name":              "test-service-5",
-						"creationTimestamp": creationTime,
-						"tags": map[string]string{
-							"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service": "headless", "service-type": "ClusterIP",
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-2",
+							Type:       topology.Type{Name: "service"},
+							Data: topology.Data{
+								"name": "test-service-2",
+								"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "NodePort"},
+								"identifiers": []string{
+									"urn:endpoint:/test-cluster-name:10.100.200.20",
+									"urn:endpoint:/test-cluster-name:10.100.200.20:10202",
+									"urn:service:/test-cluster-name:test-namespace:test-service-2",
+								},
+							},
+							SourceProperties: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": creationTimeFormatted,
+									"labels":            map[string]interface{}{"test": "label"},
+									"name":              "test-service-2",
+									"namespace":         "test-namespace",
+									"uid":               "test-service-2"},
+								"spec": map[string]interface{}{
+									"type":      "NodePort",
+									"clusterIP": "10.100.200.20",
+									"ports": []interface{}{
+										map[string]interface{}{
+											"name":       "test-service-node-port-2",
+											"nodePort":   float64(10202),
+											"port":       float64(82),
+											"targetPort": float64(8082)},
+									}},
+							},
 						},
-						"uid":         types.UID("test-service-5"),
-						"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-5"},
-					},
-					SourceProperties: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"creationTimestamp": creationTimeFormatted,
-							"labels":            map[string]interface{}{"test": "label"},
-							"name":              "test-service-5",
-							"namespace":         "test-namespace",
-							"uid":               "test-service-5"},
-						"spec": map[string]interface{}{
-							"type":      "ClusterIP",
-							"clusterIP": "None",
-							"ports": []interface{}{
-								map[string]interface{}{
-									"name":       "test-service-port-5",
-									"port":       float64(85),
-									"targetPort": float64(8085)},
-							}},
+					),
+				},
+				expectedRelations: []*topology.Relation{
+					{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-2",
+						Type:     topology.Type{Name: "encloses"},
+						SourceID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-2",
+						Data:     map[string]interface{}{},
 					},
 				},
 			},
-			expectedRelations: []*topology.Relation{
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" +
-						"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-5",
-					Type:     topology.Type{Name: "encloses"},
-					SourceID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
-					TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-5",
-					Data:     map[string]interface{}{},
-				},
-			},
-		},
-		{
-			testCase: "Test Service 6 - LoadBalancer + Ingress Points + Ingress Correlation",
-			expectedComponents: []*topology.Component{
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-6",
-					Type:       topology.Type{Name: "service"},
-					Data: topology.Data{
-						"name":              "test-service-6",
-						"creationTimestamp": creationTime,
-						"tags": map[string]string{
-							"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "LoadBalancer",
+			{
+				testCase: "Test Service 3 - Minimal - Cluster IP + External IPs",
+				expectedComponents: []*topology.Component{
+					chooseBySourcePropertiesFeature(
+						sourcePropertiesEnabled,
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-3",
+							Type:       topology.Type{Name: "service"},
+							Data: topology.Data{
+								"name":              "test-service-3",
+								"creationTimestamp": creationTime,
+								"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
+								"uid":               types.UID("test-service-3"),
+								"identifiers": []string{
+									"urn:endpoint:/34.100.200.12:83", "urn:endpoint:/34.100.200.13:83",
+									"urn:endpoint:/test-cluster-name:10.100.200.21",
+									"urn:service:/test-cluster-name:test-namespace:test-service-3",
+								},
+							},
 						},
-						"uid": types.UID("test-service-6"),
-						"identifiers": []string{
-							"urn:endpoint:/test-cluster-name:10.100.200.23", "urn:ingress-point:/34.100.200.15",
-							"urn:ingress-point:/64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
-							"urn:service:/test-cluster-name:test-namespace:test-service-6"},
-					},
-					SourceProperties: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"creationTimestamp": creationTimeFormatted,
-							"labels":            map[string]interface{}{"test": "label"},
-							"name":              "test-service-6",
-							"namespace":         "test-namespace",
-							"uid":               "test-service-6"},
-						"spec": map[string]interface{}{
-							"type":           "LoadBalancer",
-							"loadBalancerIP": "10.100.200.23",
-							"ports": []interface{}{
-								map[string]interface{}{
-									"name":       "test-service-port-6",
-									"port":       float64(86),
-									"targetPort": float64(8086)},
-								map[string]interface{}{
-									"name":       "test-service-node-port-6",
-									"nodePort":   float64(10206),
-									"port":       float64(86),
-									"targetPort": float64(8086)},
-							}},
-					},
-				},
-			},
-			expectedRelations: []*topology.Relation{
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" +
-						"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-6",
-					Type:     topology.Type{Name: "encloses"},
-					SourceID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
-					TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-6",
-					Data:     map[string]interface{}{},
-				},
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-6->" +
-						"urn:kubernetes:/test-cluster-name:pod-namespace:pod/some-pod-name",
-					Type:     topology.Type{Name: "exposes"},
-					SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-6",
-					TargetID: "urn:kubernetes:/test-cluster-name:pod-namespace:pod/some-pod-name",
-					Data:     map[string]interface{}{},
-				},
-			},
-		},
-		{
-			testCase: "Test Service 7 - ExternalName Service",
-			expectedComponents: []*topology.Component{
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-7",
-					Type:       topology.Type{Name: "service"},
-					Data: topology.Data{
-						"name":              "test-service-7",
-						"creationTimestamp": creationTime,
-						"tags": map[string]string{
-							"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ExternalName",
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-3",
+							Type:       topology.Type{Name: "service"},
+							Data: topology.Data{
+								"name": "test-service-3",
+								"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
+								"identifiers": []string{
+									"urn:endpoint:/34.100.200.12:83", "urn:endpoint:/34.100.200.13:83",
+									"urn:endpoint:/test-cluster-name:10.100.200.21",
+									"urn:service:/test-cluster-name:test-namespace:test-service-3",
+								},
+							},
+							SourceProperties: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": creationTimeFormatted,
+									"labels":            map[string]interface{}{"test": "label"},
+									"name":              "test-service-3",
+									"namespace":         "test-namespace",
+									"uid":               "test-service-3"},
+								"spec": map[string]interface{}{
+									"type":        "ClusterIP",
+									"clusterIP":   "10.100.200.21",
+									"externalIPs": []interface{}{"34.100.200.12", "34.100.200.13"},
+									"ports": []interface{}{
+										map[string]interface{}{
+											"name":       "test-service-port-3",
+											"port":       float64(83),
+											"targetPort": float64(8083)},
+									}},
+							},
 						},
-						"uid":         types.UID("test-service-7"),
-						"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-7"},
+					),
+				},
+				expectedRelations: []*topology.Relation{
+					{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-3",
+						Type:     topology.Type{Name: "encloses"},
+						SourceID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-3",
+						Data:     map[string]interface{}{},
 					},
-					SourceProperties: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"creationTimestamp": creationTimeFormatted,
-							"labels":            map[string]interface{}{"test": "label"},
+				},
+			},
+			{
+				testCase: "Test Service 4 - Minimal - Cluster IP",
+				expectedComponents: []*topology.Component{
+					chooseBySourcePropertiesFeature(
+						sourcePropertiesEnabled,
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-4",
+							Type:       topology.Type{Name: "service"},
+							Data: topology.Data{
+								"name":              "test-service-4",
+								"creationTimestamp": creationTime,
+								"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
+								"uid":               types.UID("test-service-4"),
+								"identifiers": []string{
+									"urn:endpoint:/test-cluster-name:10.100.200.22",
+									"urn:service:/test-cluster-name:test-namespace:test-service-4",
+								},
+							},
+						},
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-4",
+							Type:       topology.Type{Name: "service"},
+							Data: topology.Data{
+								"name": "test-service-4",
+								"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
+								"identifiers": []string{
+									"urn:endpoint:/test-cluster-name:10.100.200.22",
+									"urn:service:/test-cluster-name:test-namespace:test-service-4",
+								},
+							},
+							SourceProperties: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": creationTimeFormatted,
+									"labels":            map[string]interface{}{"test": "label"},
+									"name":              "test-service-4",
+									"namespace":         "test-namespace",
+									"uid":               "test-service-4"},
+								"spec": map[string]interface{}{
+									"type":      "ClusterIP",
+									"clusterIP": "10.100.200.22",
+									"ports": []interface{}{
+										map[string]interface{}{
+											"name":       "test-service-port-4",
+											"port":       float64(84),
+											"targetPort": float64(8084)},
+									}},
+							},
+						},
+					),
+				},
+				expectedRelations: []*topology.Relation{
+					{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-4",
+						Type:     topology.Type{Name: "encloses"},
+						SourceID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-4",
+						Data:     map[string]interface{}{},
+					},
+				},
+			},
+			{
+				testCase: "Test Service 5 - Minimal - Cluster IP - None",
+				expectedComponents: []*topology.Component{
+					chooseBySourcePropertiesFeature(
+						sourcePropertiesEnabled,
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-5",
+							Type:       topology.Type{Name: "service"},
+							Data: topology.Data{
+								"name":              "test-service-5",
+								"creationTimestamp": creationTime,
+								"tags": map[string]string{
+									"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service": "headless", "service-type": "ClusterIP",
+								},
+								"uid":         types.UID("test-service-5"),
+								"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-5"},
+							},
+						},
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-5",
+							Type:       topology.Type{Name: "service"},
+							Data: topology.Data{
+								"name": "test-service-5",
+								"tags": map[string]string{
+									"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service": "headless", "service-type": "ClusterIP",
+								},
+								"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-5"},
+							},
+							SourceProperties: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": creationTimeFormatted,
+									"labels":            map[string]interface{}{"test": "label"},
+									"name":              "test-service-5",
+									"namespace":         "test-namespace",
+									"uid":               "test-service-5"},
+								"spec": map[string]interface{}{
+									"type":      "ClusterIP",
+									"clusterIP": "None",
+									"ports": []interface{}{
+										map[string]interface{}{
+											"name":       "test-service-port-5",
+											"port":       float64(85),
+											"targetPort": float64(8085)},
+									}},
+							},
+						},
+					),
+				},
+				expectedRelations: []*topology.Relation{
+					{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-5",
+						Type:     topology.Type{Name: "encloses"},
+						SourceID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-5",
+						Data:     map[string]interface{}{},
+					},
+				},
+			},
+			{
+				testCase: "Test Service 6 - LoadBalancer + Ingress Points + Ingress Correlation",
+				expectedComponents: []*topology.Component{
+					chooseBySourcePropertiesFeature(
+						sourcePropertiesEnabled,
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-6",
+							Type:       topology.Type{Name: "service"},
+							Data: topology.Data{
+								"name":              "test-service-6",
+								"creationTimestamp": creationTime,
+								"tags": map[string]string{
+									"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "LoadBalancer",
+								},
+								"uid": types.UID("test-service-6"),
+								"identifiers": []string{
+									"urn:endpoint:/test-cluster-name:10.100.200.23", "urn:ingress-point:/34.100.200.15",
+									"urn:ingress-point:/64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+									"urn:service:/test-cluster-name:test-namespace:test-service-6"},
+							},
+						},
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-6",
+							Type:       topology.Type{Name: "service"},
+							Data: topology.Data{
+								"name": "test-service-6",
+								"tags": map[string]string{
+									"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "LoadBalancer",
+								},
+								"identifiers": []string{
+									"urn:endpoint:/test-cluster-name:10.100.200.23", "urn:ingress-point:/34.100.200.15",
+									"urn:ingress-point:/64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+									"urn:service:/test-cluster-name:test-namespace:test-service-6"},
+							},
+							SourceProperties: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": creationTimeFormatted,
+									"labels":            map[string]interface{}{"test": "label"},
+									"name":              "test-service-6",
+									"namespace":         "test-namespace",
+									"uid":               "test-service-6"},
+								"spec": map[string]interface{}{
+									"type":           "LoadBalancer",
+									"loadBalancerIP": "10.100.200.23",
+									"ports": []interface{}{
+										map[string]interface{}{
+											"name":       "test-service-port-6",
+											"port":       float64(86),
+											"targetPort": float64(8086)},
+										map[string]interface{}{
+											"name":       "test-service-node-port-6",
+											"nodePort":   float64(10206),
+											"port":       float64(86),
+											"targetPort": float64(8086)},
+									}},
+							},
+						},
+					),
+				},
+				expectedRelations: []*topology.Relation{
+					{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-6",
+						Type:     topology.Type{Name: "encloses"},
+						SourceID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-6",
+						Data:     map[string]interface{}{},
+					},
+					{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-6->" +
+							"urn:kubernetes:/test-cluster-name:pod-namespace:pod/some-pod-name",
+						Type:     topology.Type{Name: "exposes"},
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-6",
+						TargetID: "urn:kubernetes:/test-cluster-name:pod-namespace:pod/some-pod-name",
+						Data:     map[string]interface{}{},
+					},
+				},
+			},
+			{
+				testCase: "Test Service 7 - ExternalName Service",
+				expectedComponents: []*topology.Component{
+					chooseBySourcePropertiesFeature(
+						sourcePropertiesEnabled,
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-7",
+							Type:       topology.Type{Name: "service"},
+							Data: topology.Data{
+								"name":              "test-service-7",
+								"creationTimestamp": creationTime,
+								"tags": map[string]string{
+									"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ExternalName",
+								},
+								"uid":         types.UID("test-service-7"),
+								"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-7"},
+							},
+						},
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-7",
+							Type:       topology.Type{Name: "service"},
+							Data: topology.Data{
+								"name": "test-service-7",
+								"tags": map[string]string{
+									"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ExternalName",
+								},
+								"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-7"},
+							},
+							SourceProperties: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": creationTimeFormatted,
+									"labels":            map[string]interface{}{"test": "label"},
+									"name":              "test-service-7",
+									"namespace":         "test-namespace",
+									"uid":               "test-service-7"},
+								"spec": map[string]interface{}{
+									"type":         "ExternalName",
+									"externalName": "mysql-db.host.example.com",
+									"ports": []interface{}{
+										map[string]interface{}{
+											"name":       "test-service-port-7",
+											"port":       float64(87),
+											"targetPort": float64(8087)},
+									}},
+							},
+						},
+					),
+					{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:external-service/test-service-7",
+						Type:       topology.Type{Name: "external-service"},
+						Data: topology.Data{
 							"name":              "test-service-7",
-							"namespace":         "test-namespace",
-							"uid":               "test-service-7"},
-						"spec": map[string]interface{}{
-							"type":         "ExternalName",
-							"externalName": "mysql-db.host.example.com",
-							"ports": []interface{}{
-								map[string]interface{}{
-									"name":       "test-service-port-7",
-									"port":       float64(87),
-									"targetPort": float64(8087)},
-							}},
-					},
-				},
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:external-service/test-service-7",
-					Type:       topology.Type{Name: "external-service"},
-					Data: topology.Data{
-						"name":              "test-service-7",
-						"creationTimestamp": creationTime,
-						"tags": map[string]string{
-							"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace",
-						},
-						"uid": types.UID("test-service-7"),
-						"identifiers": []string{
-							"urn:endpoint:/mysql-db.host.example.com",
-							"urn:endpoint:/test-cluster-name:mysql-db.host.example.com:87",
-							"urn:endpoint:/test-cluster-name:10.10.42.42",
-							"urn:endpoint:/test-cluster-name:10.10.42.42:87",
-							"urn:endpoint:/test-cluster-name:10.10.42.43",
-							"urn:endpoint:/test-cluster-name:10.10.42.43:87",
-							"urn:external-service:/test-cluster-name:test-namespace:test-service-7",
+							"creationTimestamp": creationTime,
+							"tags": map[string]string{
+								"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace",
+							},
+							"uid": types.UID("test-service-7"),
+							"identifiers": []string{
+								"urn:endpoint:/mysql-db.host.example.com",
+								"urn:endpoint:/test-cluster-name:mysql-db.host.example.com:87",
+								"urn:endpoint:/test-cluster-name:10.10.42.42",
+								"urn:endpoint:/test-cluster-name:10.10.42.42:87",
+								"urn:endpoint:/test-cluster-name:10.10.42.43",
+								"urn:endpoint:/test-cluster-name:10.10.42.43:87",
+								"urn:external-service:/test-cluster-name:test-namespace:test-service-7",
+							},
 						},
 					},
 				},
-			},
-			expectedRelations: []*topology.Relation{
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-7->" +
-						"urn:kubernetes:/test-cluster-name:test-namespace:external-service/test-service-7",
-					Type:     topology.Type{Name: "uses"},
-					SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-7",
-					TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:external-service/test-service-7",
-					Data:     map[string]interface{}{},
+				expectedRelations: []*topology.Relation{
+					{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-7->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:external-service/test-service-7",
+						Type:     topology.Type{Name: "uses"},
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-7",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:external-service/test-service-7",
+						Data:     map[string]interface{}{},
+					},
+					{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-7",
+						Type:     topology.Type{Name: "encloses"},
+						SourceID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-7",
+						Data:     map[string]interface{}{},
+					},
 				},
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" +
-						"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-7",
-					Type:     topology.Type{Name: "encloses"},
-					SourceID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
-					TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-7",
-					Data:     map[string]interface{}{},
-				},
 			},
-		},
-	} {
-		t.Run(tc.testCase, func(t *testing.T) {
-			for _, expectedComponent := range tc.expectedComponents {
-				component := <-componentChannel
-				assert.EqualValues(t, expectedComponent, component)
-			}
+		} {
+			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
+				for _, expectedComponent := range tc.expectedComponents {
+					component := <-componentChannel
+					assert.EqualValues(t, expectedComponent, component)
+				}
 
-			for _, expectedRelation := range tc.expectedRelations {
-				serviceRelation := <-relationChannel
-				assert.EqualValues(t, expectedRelation, serviceRelation)
-			}
-		})
+				for _, expectedRelation := range tc.expectedRelations {
+					serviceRelation := <-relationChannel
+					assert.EqualValues(t, expectedRelation, serviceRelation)
+				}
+			})
+		}
 	}
 }
 

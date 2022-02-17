@@ -149,17 +149,20 @@ func (sc *ServiceCollector) serviceToStackStateComponent(service v1.Service) *to
 		ExternalID: serviceExternalID,
 		Type:       topology.Type{Name: "service"},
 		Data: map[string]interface{}{
-			"name":              service.Name,
-			"creationTimestamp": service.CreationTimestamp,
-			"tags":              tags,
-			"identifiers":       identifiers,
-			"uid":               service.UID,
+			"name":        service.Name,
+			"tags":        tags,
+			"identifiers": identifiers,
 		},
-		SourceProperties: makeSourceProperties(&service),
 	}
 
-	component.Data.PutNonEmpty("kind", service.Kind)
-	component.Data.PutNonEmpty("generateName", service.GenerateName)
+	if sc.IsSourcePropertiesFeatureEnabled() {
+		component.SourceProperties = makeSourceProperties(&service)
+	} else {
+		component.Data.PutNonEmpty("creationTimestamp", service.CreationTimestamp)
+		component.Data.PutNonEmpty("uid", service.UID)
+		component.Data.PutNonEmpty("kind", service.Kind)
+		component.Data.PutNonEmpty("generateName", service.GenerateName)
+	}
 
 	log.Tracef("Created StackState service component %s: %v", serviceExternalID, component.JSONString())
 

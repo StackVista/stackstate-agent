@@ -173,31 +173,33 @@ func (pc *PodCollector) podToStackStateComponent(pod v1.Pod) *topology.Component
 
 	podExternalID := pc.buildPodExternalID(pod.Namespace, pod.Name)
 
-	// clear out the unnecessary status array values
-	podStatus := pod.Status
-	podStatus.Conditions = make([]v1.PodCondition, 0)
-	podStatus.InitContainerStatuses = make([]v1.ContainerStatus, 0)
-	podStatus.ContainerStatuses = make([]v1.ContainerStatus, 0)
-
 	tags := pc.podTags(pod)
+
+	// clear out the unnecessary status array values
+	pod.Status.Conditions = nil
+	pod.Status.InitContainerStatuses = nil
+	pod.Status.ContainerStatuses = nil
 
 	component := &topology.Component{
 		ExternalID: podExternalID,
 		Type:       topology.Type{Name: "pod"},
 		Data: map[string]interface{}{
-			"name":              pod.Name,
-			"creationTimestamp": pod.CreationTimestamp,
-			"tags":              tags,
-			"status":            podStatus,
-			"identifiers":       identifiers,
-			"uid":               pod.UID,
+			"name":        pod.Name,
+			"tags":        tags,
+			"identifiers": identifiers,
 		},
-		SourceProperties: makeSourceProperties(&pod),
 	}
 
-	component.Data.PutNonEmpty("generateName", pod.GenerateName)
-	component.Data.PutNonEmpty("kind", pod.Kind)
-	component.Data.PutNonEmpty("restartPolicy", pod.Spec.RestartPolicy)
+	if pc.IsSourcePropertiesFeatureEnabled() {
+		component.SourceProperties = makeSourcePropertiesKS(&pod)
+	} else {
+		component.Data.PutNonEmpty("kind", pod.Kind)
+		component.Data.PutNonEmpty("creationTimestamp", pod.CreationTimestamp)
+		component.Data.PutNonEmpty("uid", pod.UID)
+		component.Data.PutNonEmpty("generateName", pod.GenerateName)
+		component.Data.PutNonEmpty("restartPolicy", pod.Spec.RestartPolicy)
+		component.Data.PutNonEmpty("status", pod.Status)
+	}
 
 	log.Tracef("Created StackState pod component %s: %v", podExternalID, component.JSONString())
 

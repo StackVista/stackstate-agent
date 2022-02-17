@@ -72,17 +72,20 @@ func (rsc *ReplicaSetCollector) replicaSetToStackStateComponent(replicaSet v1.Re
 		ExternalID: replicaSetExternalID,
 		Type:       topology.Type{Name: "replicaset"},
 		Data: map[string]interface{}{
-			"name":              replicaSet.Name,
-			"creationTimestamp": replicaSet.CreationTimestamp,
-			"tags":              tags,
-			"desiredReplicas":   replicaSet.Spec.Replicas,
-			"uid":               replicaSet.UID,
+			"name": replicaSet.Name,
+			"tags": tags,
 		},
-		SourceProperties: makeSourceProperties(&replicaSet),
 	}
 
-	component.Data.PutNonEmpty("kind", replicaSet.Kind)
-	component.Data.PutNonEmpty("generateName", replicaSet.GenerateName)
+	if rsc.IsSourcePropertiesFeatureEnabled() {
+		component.SourceProperties = makeSourceProperties(&replicaSet)
+	} else {
+		component.Data.PutNonEmpty("kind", replicaSet.Kind)
+		component.Data.PutNonEmpty("creationTimestamp", replicaSet.CreationTimestamp)
+		component.Data.PutNonEmpty("generateName", replicaSet.GenerateName)
+		component.Data.PutNonEmpty("uid", replicaSet.UID)
+		component.Data.PutNonEmpty("desiredReplicas", replicaSet.Spec.Replicas)
+	}
 
 	log.Tracef("Created StackState ReplicaSet component %s: %v", replicaSetExternalID, component.JSONString())
 

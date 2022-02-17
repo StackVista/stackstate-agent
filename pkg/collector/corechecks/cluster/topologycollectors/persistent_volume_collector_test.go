@@ -42,186 +42,236 @@ func TestPersistentVolumeCollector(t *testing.T) {
 		Type: &pathType,
 	}
 
-	cmc := NewPersistentVolumeCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockPersistentVolumeAPICollectorClient{}))
-	expectedCollectorName := "Persistent Volume Collector"
-	RunCollectorTest(t, cmc, expectedCollectorName)
+	for _, sourcePropertiesEnabled := range []bool{false, true} {
+		cmc := NewPersistentVolumeCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockPersistentVolumeAPICollectorClient{}, sourcePropertiesEnabled))
+		expectedCollectorName := "Persistent Volume Collector"
+		RunCollectorTest(t, cmc, expectedCollectorName)
 
-	for _, tc := range []struct {
-		testCase   string
-		assertions []func(t *testing.T)
-	}{
-		{
-			testCase: "Test Persistent Volume 1 - AWS Elastic Block Store",
-			assertions: []func(*testing.T){
-				func(t *testing.T) {
-					component := <-componentChannel
-					expected := &topology.Component{
-						ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume-1",
-						Type:       topology.Type{Name: "persistent-volume"},
-						Data: topology.Data{
-							"name":              "test-persistent-volume-1",
-							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-persistent-volume-1"),
-							"identifiers":       []string{},
-							"status":            coreV1.VolumeAvailable,
-							"statusMessage":     "Volume is available for use",
-							"storageClassName":  "Storage-Class-Name",
-						},
-						SourceProperties: map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"creationTimestamp": creationTimeFormatted,
-								"labels":            map[string]interface{}{"test": "label"},
-								"name":              "test-persistent-volume-1",
-								"namespace":         "test-namespace",
-								"uid":               "test-persistent-volume-1",
-							},
-							"spec": map[string]interface{}{
-								"persistentVolumeSource": map[string]interface{}{
-									"awsElasticBlockStore": map[string]interface{}{
-										"volumeID": "id-of-the-aws-block-store"}},
-								"storageClassName": "Storage-Class-Name"},
-						},
-					}
-					assert.EqualValues(t, expected, component)
-				},
-				func(t *testing.T) {
-					component := <-componentChannel
-					expected := &topology.Component{
-						ExternalID: "urn:kubernetes:external-volume:aws-ebs/id-of-the-aws-block-store/0",
-						Type:       topology.Type{Name: "volume-source"},
-						Data: topology.Data{
-							"name": "id-of-the-aws-block-store",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "partition": "0", "volume-id": "id-of-the-aws-block-store", "kind": "aws-ebs"},
-							"source": coreV1.PersistentVolumeSource{
-								AWSElasticBlockStore: &awsElasticBlockStore,
-							},
-						}}
-					assert.EqualValues(t, expected, component)
-				},
-				func(t *testing.T) {
-					relation := <-relationChannel
-					expectedRelation := &topology.Relation{
-						ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume-1->" +
-							"urn:kubernetes:external-volume:aws-ebs/id-of-the-aws-block-store/0",
-						Type:     topology.Type{Name: "exposes"},
-						SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume-1",
-						TargetID: "urn:kubernetes:external-volume:aws-ebs/id-of-the-aws-block-store/0",
-						Data:     map[string]interface{}{},
-					}
-					assert.EqualValues(t, expectedRelation, relation)
-				},
-			},
-		},
-		{
-			testCase: "Test Persistent Volume 2 - GCE Persistent Disk",
-			assertions: []func(*testing.T){
-				func(t *testing.T) {
-					component := <-componentChannel
-					expected := &topology.Component{
-						ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume-2",
-						Type:       topology.Type{Name: "persistent-volume"},
-						Data: topology.Data{
-							"name":              "test-persistent-volume-2",
-							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-persistent-volume-2"),
-							"identifiers":       []string{},
-							"status":            coreV1.VolumeAvailable,
-							"statusMessage":     "Volume is available for use",
-							"storageClassName":  "Storage-Class-Name",
-						},
-						SourceProperties: map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"creationTimestamp": creationTimeFormatted,
-								"labels":            map[string]interface{}{"test": "label"},
-								"name":              "test-persistent-volume-2",
-								"namespace":         "test-namespace",
-								"uid":               "test-persistent-volume-2",
-							},
-							"spec": map[string]interface{}{
-								"persistentVolumeSource": map[string]interface{}{
-									"gcePersistentDisk": map[string]interface{}{
-										"pdName": "name-of-the-gce-persistent-disk"}},
-								"storageClassName": "Storage-Class-Name"},
-						}}
-					assert.EqualValues(t, expected, component)
-				},
-				func(t *testing.T) {
-					component := <-componentChannel
-					expected := &topology.Component{
-						ExternalID: "urn:kubernetes:external-volume:gce-pd/name-of-the-gce-persistent-disk",
-						Type:       topology.Type{Name: "volume-source"},
-						Data: topology.Data{
-							"name": "name-of-the-gce-persistent-disk",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "kind": "gce-pd", "pd-name": "name-of-the-gce-persistent-disk"},
-							"source": coreV1.PersistentVolumeSource{
-								GCEPersistentDisk: &gcePersistentDisk,
-							},
-						}}
-					assert.EqualValues(t, expected, component)
-				},
-				func(t *testing.T) {
-					relation := <-relationChannel
-					expectedRelation := &topology.Relation{
-						ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume-2->" +
-							"urn:kubernetes:external-volume:gce-pd/name-of-the-gce-persistent-disk",
-						Type:     topology.Type{Name: "exposes"},
-						SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume-2",
-						TargetID: "urn:kubernetes:external-volume:gce-pd/name-of-the-gce-persistent-disk",
-						Data:     map[string]interface{}{},
-					}
-					assert.EqualValues(t, expectedRelation, relation)
+		for _, tc := range []struct {
+			testCase   string
+			assertions []func(t *testing.T)
+		}{
+			{
+				testCase: "Test Persistent Volume 1 - AWS Elastic Block Store",
+				assertions: []func(*testing.T){
+					func(t *testing.T) {
+						component := <-componentChannel
+						expected :=
+							chooseBySourcePropertiesFeature(
+								sourcePropertiesEnabled,
+								&topology.Component{
+									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume-1",
+									Type:       topology.Type{Name: "persistent-volume"},
+									Data: topology.Data{
+										"name":              "test-persistent-volume-1",
+										"creationTimestamp": creationTime,
+										"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+										"uid":               types.UID("test-persistent-volume-1"),
+										"identifiers":       []string{},
+										"status":            coreV1.VolumeAvailable,
+										"statusMessage":     "Volume is available for use",
+										"storageClassName":  "Storage-Class-Name",
+									},
+								},
+								&topology.Component{
+									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume-1",
+									Type:       topology.Type{Name: "persistent-volume"},
+									Data: topology.Data{
+										"name":        "test-persistent-volume-1",
+										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+										"identifiers": []string{},
+									},
+									SourceProperties: map[string]interface{}{
+										"metadata": map[string]interface{}{
+											"creationTimestamp": creationTimeFormatted,
+											"labels":            map[string]interface{}{"test": "label"},
+											"name":              "test-persistent-volume-1",
+											"namespace":         "test-namespace",
+											"uid":               "test-persistent-volume-1",
+										},
+										"spec": map[string]interface{}{
+											"persistentVolumeSource": map[string]interface{}{
+												"awsElasticBlockStore": map[string]interface{}{
+													"volumeID": "id-of-the-aws-block-store"}},
+											"storageClassName": "Storage-Class-Name"},
+										"status": map[string]interface{}{
+											"phase":   "Available",
+											"message": "Volume is available for use",
+										},
+									},
+								},
+							)
+						assert.EqualValues(t, expected, component)
+					},
+					func(t *testing.T) {
+						component := <-componentChannel
+						expected := &topology.Component{
+							ExternalID: "urn:kubernetes:external-volume:aws-ebs/id-of-the-aws-block-store/0",
+							Type:       topology.Type{Name: "volume-source"},
+							Data: topology.Data{
+								"name": "id-of-the-aws-block-store",
+								"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "partition": "0", "volume-id": "id-of-the-aws-block-store", "kind": "aws-ebs"},
+								"source": coreV1.PersistentVolumeSource{
+									AWSElasticBlockStore: &awsElasticBlockStore,
+								},
+							}}
+						assert.EqualValues(t, expected, component)
+					},
+					func(t *testing.T) {
+						relation := <-relationChannel
+						expectedRelation := &topology.Relation{
+							ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume-1->" +
+								"urn:kubernetes:external-volume:aws-ebs/id-of-the-aws-block-store/0",
+							Type:     topology.Type{Name: "exposes"},
+							SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume-1",
+							TargetID: "urn:kubernetes:external-volume:aws-ebs/id-of-the-aws-block-store/0",
+							Data:     map[string]interface{}{},
+						}
+						assert.EqualValues(t, expectedRelation, relation)
+					},
 				},
 			},
-		},
-		{
-			testCase: "Test Persistent Volume 3 - Host Path + Kind + Generate Name",
-			assertions: []func(*testing.T){
-				func(t *testing.T) {
-					component := <-componentChannel
-					expected := &topology.Component{
-						ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume-3",
-						Type:       topology.Type{Name: "persistent-volume"},
-						Data: topology.Data{
-							"name":              "test-persistent-volume-3",
-							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-persistent-volume-3"),
-							"identifiers":       []string{},
-							"kind":              "some-specified-kind",
-							"generateName":      "some-specified-generation",
-							"status":            coreV1.VolumeAvailable,
-							"statusMessage":     "Volume is available for use",
-							"storageClassName":  "Storage-Class-Name",
-						},
-						SourceProperties: map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"creationTimestamp": creationTimeFormatted,
-								"labels":            map[string]interface{}{"test": "label"},
-								"name":              "test-persistent-volume-3",
-								"namespace":         "test-namespace",
-								"uid":               "test-persistent-volume-3",
-								"generateName":      "some-specified-generation",
-							},
-							"spec": map[string]interface{}{
-								"persistentVolumeSource": map[string]interface{}{
-									"hostPath": map[string]interface{}{
-										"path": "some/path/to/the/volume",
-										"type": "FileOrCreate"}},
-								"storageClassName": "Storage-Class-Name"},
-						},
-					}
-					assert.EqualValues(t, expected, component)
+			{
+				testCase: "Test Persistent Volume 2 - GCE Persistent Disk",
+				assertions: []func(*testing.T){
+					func(t *testing.T) {
+						component := <-componentChannel
+						expected := chooseBySourcePropertiesFeature(
+							sourcePropertiesEnabled,
+							&topology.Component{
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume-2",
+								Type:       topology.Type{Name: "persistent-volume"},
+								Data: topology.Data{
+									"name":              "test-persistent-volume-2",
+									"creationTimestamp": creationTime,
+									"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+									"uid":               types.UID("test-persistent-volume-2"),
+									"identifiers":       []string{},
+									"status":            coreV1.VolumeAvailable,
+									"statusMessage":     "Volume is available for use",
+									"storageClassName":  "Storage-Class-Name",
+								}},
+							&topology.Component{
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume-2",
+								Type:       topology.Type{Name: "persistent-volume"},
+								Data: topology.Data{
+									"name":        "test-persistent-volume-2",
+									"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+									"identifiers": []string{},
+								},
+								SourceProperties: map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"creationTimestamp": creationTimeFormatted,
+										"labels":            map[string]interface{}{"test": "label"},
+										"name":              "test-persistent-volume-2",
+										"namespace":         "test-namespace",
+										"uid":               "test-persistent-volume-2",
+									},
+									"spec": map[string]interface{}{
+										"persistentVolumeSource": map[string]interface{}{
+											"gcePersistentDisk": map[string]interface{}{
+												"pdName": "name-of-the-gce-persistent-disk"}},
+										"storageClassName": "Storage-Class-Name"},
+									"status": map[string]interface{}{
+										"phase":   "Available",
+										"message": "Volume is available for use",
+									},
+								}},
+						)
+						assert.EqualValues(t, expected, component)
+					},
+					func(t *testing.T) {
+						component := <-componentChannel
+						expected := &topology.Component{
+							ExternalID: "urn:kubernetes:external-volume:gce-pd/name-of-the-gce-persistent-disk",
+							Type:       topology.Type{Name: "volume-source"},
+							Data: topology.Data{
+								"name": "name-of-the-gce-persistent-disk",
+								"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "kind": "gce-pd", "pd-name": "name-of-the-gce-persistent-disk"},
+								"source": coreV1.PersistentVolumeSource{
+									GCEPersistentDisk: &gcePersistentDisk,
+								},
+							}}
+						assert.EqualValues(t, expected, component)
+					},
+					func(t *testing.T) {
+						relation := <-relationChannel
+						expectedRelation := &topology.Relation{
+							ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume-2->" +
+								"urn:kubernetes:external-volume:gce-pd/name-of-the-gce-persistent-disk",
+							Type:     topology.Type{Name: "exposes"},
+							SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume-2",
+							TargetID: "urn:kubernetes:external-volume:gce-pd/name-of-the-gce-persistent-disk",
+							Data:     map[string]interface{}{},
+						}
+						assert.EqualValues(t, expectedRelation, relation)
+					},
 				},
 			},
-		},
-	} {
-		t.Run(tc.testCase, func(t *testing.T) {
-			for _, a := range tc.assertions {
-				a(t)
-			}
-		})
+			{
+				testCase: "Test Persistent Volume 3 - Host Path + Kind + Generate Name",
+				assertions: []func(*testing.T){
+					func(t *testing.T) {
+						component := <-componentChannel
+						expected := chooseBySourcePropertiesFeature(
+							sourcePropertiesEnabled,
+							&topology.Component{
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume-3",
+								Type:       topology.Type{Name: "persistent-volume"},
+								Data: topology.Data{
+									"name":              "test-persistent-volume-3",
+									"creationTimestamp": creationTime,
+									"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+									"uid":               types.UID("test-persistent-volume-3"),
+									"identifiers":       []string{},
+									"kind":              "some-specified-kind",
+									"generateName":      "some-specified-generation",
+									"status":            coreV1.VolumeAvailable,
+									"statusMessage":     "Volume is available for use",
+									"storageClassName":  "Storage-Class-Name",
+								},
+							},
+							&topology.Component{
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume-3",
+								Type:       topology.Type{Name: "persistent-volume"},
+								Data: topology.Data{
+									"name":        "test-persistent-volume-3",
+									"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+									"identifiers": []string{},
+								},
+								SourceProperties: map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"creationTimestamp": creationTimeFormatted,
+										"labels":            map[string]interface{}{"test": "label"},
+										"name":              "test-persistent-volume-3",
+										"namespace":         "test-namespace",
+										"uid":               "test-persistent-volume-3",
+										"generateName":      "some-specified-generation",
+									},
+									"spec": map[string]interface{}{
+										"persistentVolumeSource": map[string]interface{}{
+											"hostPath": map[string]interface{}{
+												"path": "some/path/to/the/volume",
+												"type": "FileOrCreate"}},
+										"storageClassName": "Storage-Class-Name"},
+									"status": map[string]interface{}{
+										"phase":   "Available",
+										"message": "Volume is available for use",
+									},
+								},
+							},
+						)
+						assert.EqualValues(t, expected, component)
+					},
+				},
+			},
+		} {
+			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
+				for _, a := range tc.assertions {
+					a(t)
+				}
+			})
+		}
 	}
 }
 

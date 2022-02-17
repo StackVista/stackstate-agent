@@ -55,29 +55,31 @@ func (cmc *ConfigMapCollector) configMapToStackStateComponent(configMap v1.Confi
 	tags := cmc.initTags(configMap.ObjectMeta)
 	configMapExternalID := cmc.buildConfigMapExternalID(configMap.Namespace, configMap.Name)
 
-	configMapCopy := configMap
-	configMapCopy.Data = cutData(configMap.Data, cmc.maxDataSize)
-	for k, data := range configMapCopy.BinaryData {
-		configMapCopy.BinaryData[k] = []byte(cutReplacement(data))
-	}
-	sourceProperties := makeSourceProperties(&configMapCopy)
-
 	component := &topology.Component{
 		ExternalID: configMapExternalID,
 		Type:       topology.Type{Name: "configmap"},
 		Data: map[string]interface{}{
-			"name":              configMap.Name,
-			"creationTimestamp": configMap.CreationTimestamp,
-			"tags":              tags,
-			"uid":               configMap.UID,
-			"identifiers":       []string{configMapExternalID},
+			"name":        configMap.Name,
+			"tags":        tags,
+			"identifiers": []string{configMapExternalID},
 		},
-		SourceProperties: sourceProperties,
 	}
 
-	component.Data.PutNonEmpty("generateName", configMap.GenerateName)
-	component.Data.PutNonEmpty("kind", configMap.Kind)
-	component.Data.PutNonEmpty("data", cutData(configMap.Data, cmc.maxDataSize))
+	if cmc.IsSourcePropertiesFeatureEnabled() {
+		configMapCopy := configMap
+		configMapCopy.Data = cutData(configMap.Data, cmc.maxDataSize)
+		for k, data := range configMapCopy.BinaryData {
+			configMapCopy.BinaryData[k] = []byte(cutReplacement(data))
+		}
+		sourceProperties := makeSourceProperties(&configMapCopy)
+		component.SourceProperties = sourceProperties
+	} else {
+		component.Data.PutNonEmpty("kind", configMap.Kind)
+		component.Data.PutNonEmpty("creationTimestamp", configMap.CreationTimestamp)
+		component.Data.PutNonEmpty("generateName", configMap.GenerateName)
+		component.Data.PutNonEmpty("uid", configMap.UID)
+		component.Data.PutNonEmpty("data", cutData(configMap.Data, cmc.maxDataSize))
+	}
 
 	log.Tracef("Created StackState ConfigMap component %s: %v", configMapExternalID, component.JSONString())
 

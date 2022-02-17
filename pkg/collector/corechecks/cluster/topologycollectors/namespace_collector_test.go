@@ -28,66 +28,91 @@ func TestNamespaceCollector(t *testing.T) {
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
-	nsc := NewNamespaceCollector(componentChannel, NewTestCommonClusterCollector(MockNamespaceAPICollectorClient{}))
-	expectedCollectorName := "Namespace Collector"
-	RunCollectorTest(t, nsc, expectedCollectorName)
+	for _, sourcePropertiesEnabled := range []bool{false, true} {
 
-	for _, tc := range []struct {
-		testCase string
-		expected *topology.Component
-	}{
-		{
-			testCase: "Test Namespace 1 - Complete",
-			expected: &topology.Component{
-				ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-1",
-				Type:       topology.Type{Name: "namespace"},
-				Data: topology.Data{
-					"name":              "test-namespace-1",
-					"creationTimestamp": creationTime,
-					"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name"},
-					"uid":               types.UID("test-namespace-1"),
-					"identifiers":       []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-1"},
-				},
-				SourceProperties: map[string]interface{}{
-					"metadata": map[string]interface{}{
-						"creationTimestamp": creationTimeFormatted,
-						"labels":            map[string]interface{}{"test": "label"},
+		nsc := NewNamespaceCollector(componentChannel, NewTestCommonClusterCollector(MockNamespaceAPICollectorClient{}, sourcePropertiesEnabled))
+		expectedCollectorName := "Namespace Collector"
+		RunCollectorTest(t, nsc, expectedCollectorName)
+
+		for _, tc := range []struct {
+			testCase     string
+			expectedSP   *topology.Component
+			expectedNoSP *topology.Component
+		}{
+			{
+				testCase: "Test Namespace 1 - Complete",
+				expectedNoSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-1",
+					Type:       topology.Type{Name: "namespace"},
+					Data: topology.Data{
 						"name":              "test-namespace-1",
-						"uid":               "test-namespace-1",
+						"creationTimestamp": creationTime,
+						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name"},
+						"uid":               types.UID("test-namespace-1"),
+						"identifiers":       []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-1"},
 					},
-					"spec": map[string]interface{}{},
+				},
+				expectedSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-1",
+					Type:       topology.Type{Name: "namespace"},
+					Data: topology.Data{
+						"name":        "test-namespace-1",
+						"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name"},
+						"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-1"},
+					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"labels":            map[string]interface{}{"test": "label"},
+							"name":              "test-namespace-1",
+							"uid":               "test-namespace-1",
+						},
+						"spec": map[string]interface{}{},
+					},
 				},
 			},
-		},
-		{
-			testCase: "Test Namespace 2 - Minimal",
-			expected: &topology.Component{
-				ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-2",
-				Type:       topology.Type{Name: "namespace"},
-				Data: topology.Data{
-					"name":              "test-namespace-2",
-					"creationTimestamp": creationTime,
-					"tags":              map[string]string{"cluster-name": "test-cluster-name"},
-					"uid":               types.UID("test-namespace-2"),
-					"identifiers":       []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
-				},
-				SourceProperties: map[string]interface{}{
-					"metadata": map[string]interface{}{
-						"creationTimestamp": creationTimeFormatted,
+			{
+				testCase: "Test Namespace 2 - Minimal",
+				expectedNoSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-2",
+					Type:       topology.Type{Name: "namespace"},
+					Data: topology.Data{
 						"name":              "test-namespace-2",
-						"uid":               "test-namespace-2",
+						"creationTimestamp": creationTime,
+						"tags":              map[string]string{"cluster-name": "test-cluster-name"},
+						"uid":               types.UID("test-namespace-2"),
+						"identifiers":       []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
 					},
-					"spec": map[string]interface{}{},
+				},
+				expectedSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-2",
+					Type:       topology.Type{Name: "namespace"},
+					Data: topology.Data{
+						"name":        "test-namespace-2",
+						"tags":        map[string]string{"cluster-name": "test-cluster-name"},
+						"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
+					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"name":              "test-namespace-2",
+							"uid":               "test-namespace-2",
+						},
+						"spec": map[string]interface{}{},
+					},
 				},
 			},
-		},
-	} {
-		t.Run(tc.testCase, func(t *testing.T) {
-			component := <-componentChannel
-			assert.EqualValues(t, tc.expected, component)
-		})
+		} {
+			t.Run(tc.testCase, func(t *testing.T) {
+				component := <-componentChannel
+				if sourcePropertiesEnabled {
+					assert.EqualValues(t, tc.expectedSP, component)
+				} else {
+					assert.EqualValues(t, tc.expectedNoSP, component)
+				}
+			})
+		}
 	}
-
 }
 
 type MockNamespaceAPICollectorClient struct {

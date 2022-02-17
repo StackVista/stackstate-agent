@@ -87,20 +87,23 @@ func (pvc *PersistentVolumeCollector) persistentVolumeToStackStateComponent(pers
 		ExternalID: persistentVolumeExternalID,
 		Type:       topology.Type{Name: "persistent-volume"},
 		Data: map[string]interface{}{
-			"name":              persistentVolume.Name,
-			"creationTimestamp": persistentVolume.CreationTimestamp,
-			"tags":              tags,
-			"uid":               persistentVolume.UID,
-			"identifiers":       identifiers,
-			"status":            persistentVolume.Status.Phase,
-			"statusMessage":     persistentVolume.Status.Message,
-			"storageClassName":  persistentVolume.Spec.StorageClassName,
+			"name":        persistentVolume.Name,
+			"tags":        tags,
+			"identifiers": identifiers,
 		},
-		SourceProperties: makeSourceProperties(&persistentVolume),
 	}
 
-	component.Data.PutNonEmpty("kind", persistentVolume.Kind)
-	component.Data.PutNonEmpty("generateName", persistentVolume.GenerateName)
+	if pvc.IsSourcePropertiesFeatureEnabled() {
+		component.SourceProperties = makeSourceProperties(&persistentVolume)
+	} else {
+		component.Data.PutNonEmpty("kind", persistentVolume.Kind)
+		component.Data.PutNonEmpty("uid", persistentVolume.UID)
+		component.Data.PutNonEmpty("creationTimestamp", persistentVolume.CreationTimestamp)
+		component.Data.PutNonEmpty("generateName", persistentVolume.GenerateName)
+		component.Data.PutNonEmpty("storageClassName", persistentVolume.Spec.StorageClassName)
+		component.Data.PutNonEmpty("status", persistentVolume.Status.Phase)
+		component.Data.PutNonEmpty("statusMessage", persistentVolume.Status.Message)
+	}
 
 	log.Tracef("Created StackState persistent volume component %s: %v", persistentVolumeExternalID, component.JSONString())
 

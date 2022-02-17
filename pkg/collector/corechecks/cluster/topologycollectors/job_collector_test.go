@@ -35,164 +35,195 @@ func TestJobCollector(t *testing.T) {
 	parralelism = int32(2)
 	backoffLimit = int32(5)
 
-	jc := NewJobCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockJobAPICollectorClient{}))
-	expectedCollectorName := "Job Collector"
-	RunCollectorTest(t, jc, expectedCollectorName)
+	for _, sourcePropertiesEnabled := range []bool{false, true} {
+		jc := NewJobCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockJobAPICollectorClient{}, sourcePropertiesEnabled))
+		expectedCollectorName := "Job Collector"
+		RunCollectorTest(t, jc, expectedCollectorName)
 
-	for _, tc := range []struct {
-		testCase          string
-		expectedComponent *topology.Component
-		expectedRelations []*topology.Relation
-	}{
-		{
-			testCase: "Test Job 1 + Cron Job Relations",
-			expectedComponent: &topology.Component{
-				ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-1",
-				Type:       topology.Type{Name: "job"},
-				Data: topology.Data{
-					"name":              "test-job-1",
-					"creationTimestamp": creationTime,
-					"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-					"uid":               types.UID("test-job-1"),
-					"backoffLimit":      &backoffLimit,
-					"parallelism":       &parralelism,
-				},
-				SourceProperties: map[string]interface{}{
-					"metadata": map[string]interface{}{
-						"creationTimestamp": creationTimeFormatted,
-						"labels":            map[string]interface{}{"test": "label"},
+		for _, tc := range []struct {
+			testCase              string
+			expectedComponentSP   *topology.Component
+			expectedComponentNoSP *topology.Component
+			expectedRelations     []*topology.Relation
+		}{
+			{
+				testCase: "Test Job 1 + Cron Job Relations",
+				expectedComponentNoSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-1",
+					Type:       topology.Type{Name: "job"},
+					Data: topology.Data{
 						"name":              "test-job-1",
-						"namespace":         "test-namespace",
-						"ownerReferences": []interface{}{
-							map[string]interface{}{"kind": "CronJob", "name": "test-cronjob-1"},
-						},
-						"uid": "test-job-1",
+						"creationTimestamp": creationTime,
+						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						"uid":               types.UID("test-job-1"),
+						"backoffLimit":      &backoffLimit,
+						"parallelism":       &parralelism,
 					},
-					"spec": map[string]interface{}{
-						"backoffLimit": float64(5),
-						"parallelism":  float64(2),
-						"template": map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"creationTimestamp": interface{}(nil),
+				},
+				expectedComponentSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-1",
+					Type:       topology.Type{Name: "job"},
+					Data: topology.Data{
+						"name": "test-job-1",
+						"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"labels":            map[string]interface{}{"test": "label"},
+							"name":              "test-job-1",
+							"namespace":         "test-namespace",
+							"ownerReferences": []interface{}{
+								map[string]interface{}{"kind": "CronJob", "name": "test-cronjob-1"},
 							},
-							"spec": map[string]interface{}{},
+							"uid": "test-job-1",
+						},
+						"spec": map[string]interface{}{
+							"backoffLimit": float64(5),
+							"parallelism":  float64(2),
+							"template": map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": interface{}(nil),
+								},
+								"spec": map[string]interface{}{},
+							},
 						},
 					},
 				},
-			},
-			expectedRelations: []*topology.Relation{
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:cronjob/test-cronjob-1->" +
-						"urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-1",
-					Type:     topology.Type{Name: "creates"},
-					SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:cronjob/test-cronjob-1",
-					TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-1",
-					Data:     map[string]interface{}{},
+				expectedRelations: []*topology.Relation{
+					{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:cronjob/test-cronjob-1->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-1",
+						Type:     topology.Type{Name: "creates"},
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:cronjob/test-cronjob-1",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-1",
+						Data:     map[string]interface{}{},
+					},
 				},
 			},
-		},
-		{
-			testCase: "Test Job 2",
-			expectedComponent: &topology.Component{
-				ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-2",
-				Type:       topology.Type{Name: "job"},
-				Data: topology.Data{
-					"name":              "test-job-2",
-					"creationTimestamp": creationTime,
-					"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-					"uid":               types.UID("test-job-2"),
-					"backoffLimit":      &backoffLimit,
-					"parallelism":       &parralelism,
-				},
-				SourceProperties: map[string]interface{}{
-					"metadata": map[string]interface{}{
-						"creationTimestamp": creationTimeFormatted,
-						"labels":            map[string]interface{}{"test": "label"},
+			{
+				testCase: "Test Job 2",
+				expectedComponentNoSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-2",
+					Type:       topology.Type{Name: "job"},
+					Data: topology.Data{
 						"name":              "test-job-2",
-						"namespace":         "test-namespace",
-						"uid":               "test-job-2",
+						"creationTimestamp": creationTime,
+						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						"uid":               types.UID("test-job-2"),
+						"backoffLimit":      &backoffLimit,
+						"parallelism":       &parralelism,
 					},
-					"spec": map[string]interface{}{
-						"backoffLimit": float64(5),
-						"parallelism":  float64(2),
-						"template": map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"creationTimestamp": interface{}(nil),
+				},
+				expectedComponentSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-2",
+					Type:       topology.Type{Name: "job"},
+					Data: topology.Data{
+						"name": "test-job-2",
+						"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"labels":            map[string]interface{}{"test": "label"},
+							"name":              "test-job-2",
+							"namespace":         "test-namespace",
+							"uid":               "test-job-2",
+						},
+						"spec": map[string]interface{}{
+							"backoffLimit": float64(5),
+							"parallelism":  float64(2),
+							"template": map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": interface{}(nil),
+								},
+								"spec": map[string]interface{}{},
 							},
-							"spec": map[string]interface{}{},
 						},
 					},
 				},
-			},
-			expectedRelations: []*topology.Relation{
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" +
-						"urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-2",
-					Type:     topology.Type{Name: "encloses"},
-					SourceID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
-					TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-2",
-					Data:     map[string]interface{}{},
+				expectedRelations: []*topology.Relation{
+					{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-2",
+						Type:     topology.Type{Name: "encloses"},
+						SourceID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-2",
+						Data:     map[string]interface{}{},
+					},
 				},
 			},
-		},
-		{
-			testCase: "Test Job 3 - Kind + Generate Name",
-			expectedComponent: &topology.Component{
-				ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-3",
-				Type:       topology.Type{Name: "job"},
-				Data: topology.Data{
-					"name":              "test-job-3",
-					"creationTimestamp": creationTime,
-					"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-					"uid":               types.UID("test-job-3"),
-					"kind":              "some-specified-kind",
-					"generateName":      "some-specified-generation",
-					"backoffLimit":      &backoffLimit,
-					"parallelism":       &parralelism,
-				},
-				SourceProperties: map[string]interface{}{
-					"metadata": map[string]interface{}{
-						"creationTimestamp": creationTimeFormatted,
-						"labels":            map[string]interface{}{"test": "label"},
+			{
+				testCase: "Test Job 3 - Kind + Generate Name",
+				expectedComponentNoSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-3",
+					Type:       topology.Type{Name: "job"},
+					Data: topology.Data{
 						"name":              "test-job-3",
-						"namespace":         "test-namespace",
-						"uid":               "test-job-3",
+						"creationTimestamp": creationTime,
+						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						"uid":               types.UID("test-job-3"),
+						"kind":              "some-specified-kind",
 						"generateName":      "some-specified-generation",
+						"backoffLimit":      &backoffLimit,
+						"parallelism":       &parralelism,
 					},
-					"spec": map[string]interface{}{
-						"backoffLimit": float64(5),
-						"parallelism":  float64(2),
-						"template": map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"creationTimestamp": interface{}(nil),
+				},
+				expectedComponentSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-3",
+					Type:       topology.Type{Name: "job"},
+					Data: topology.Data{
+						"name": "test-job-3",
+						"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"labels":            map[string]interface{}{"test": "label"},
+							"name":              "test-job-3",
+							"namespace":         "test-namespace",
+							"uid":               "test-job-3",
+							"generateName":      "some-specified-generation",
+						},
+						"spec": map[string]interface{}{
+							"backoffLimit": float64(5),
+							"parallelism":  float64(2),
+							"template": map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": interface{}(nil),
+								},
+								"spec": map[string]interface{}{},
 							},
-							"spec": map[string]interface{}{},
 						},
 					},
 				},
-			},
-			expectedRelations: []*topology.Relation{
-				{
-					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" +
-						"urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-3",
-					Type:     topology.Type{Name: "encloses"},
-					SourceID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
-					TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-3",
-					Data:     map[string]interface{}{},
+				expectedRelations: []*topology.Relation{
+					{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-3",
+						Type:     topology.Type{Name: "encloses"},
+						SourceID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-3",
+						Data:     map[string]interface{}{},
+					},
 				},
 			},
-		},
-	} {
-		t.Run(tc.testCase, func(t *testing.T) {
-			component := <-componentChannel
-			assert.EqualValues(t, tc.expectedComponent, component)
+		} {
+			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
+				component := <-componentChannel
+				if sourcePropertiesEnabled {
+					assert.EqualValues(t, tc.expectedComponentSP, component)
+				} else {
+					assert.EqualValues(t, tc.expectedComponentNoSP, component)
+				}
 
-			for _, expectedRelation := range tc.expectedRelations {
-				cronJobRelation := <-relationChannel
-				assert.EqualValues(t, expectedRelation, cronJobRelation)
-			}
+				for _, expectedRelation := range tc.expectedRelations {
+					cronJobRelation := <-relationChannel
+					assert.EqualValues(t, expectedRelation, cronJobRelation)
+				}
 
-		})
+			})
+		}
 	}
 }
 

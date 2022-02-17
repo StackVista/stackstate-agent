@@ -22,6 +22,15 @@ var componentID int
 var relationID int
 
 func TestRunClusterCollectors(t *testing.T) {
+	t.Run("with sourceProperties enabled", func(t *testing.T) {
+		testRunClusterCollectors(t, true)
+	})
+	t.Run("with sourceProperties disabled", func(t *testing.T) {
+		testRunClusterCollectors(t, false)
+	})
+}
+
+func testRunClusterCollectors(t *testing.T, sourceProperties bool) {
 	// set the initial id values
 	componentID = 1
 	relationID = 1
@@ -38,7 +47,7 @@ func TestRunClusterCollectors(t *testing.T) {
 	errChannel := make(chan error)
 	waitGroupChannel := make(chan bool)
 
-	clusterTopologyCommon := collectors.NewClusterTopologyCommon(instance, nil)
+	clusterTopologyCommon := collectors.NewClusterTopologyCommon(instance, nil, sourceProperties)
 	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
 
 	clusterCollectors := []collectors.ClusterTopologyCollector{

@@ -24,6 +24,7 @@ type ClusterTopologyCommon interface {
 	GetURNBuilder() urn.Builder
 	CreateRelation(sourceExternalID, targetExternalID, typeName string) *topology.Relation
 	CreateRelationData(sourceExternalID, targetExternalID, typeName string, data map[string]interface{}) *topology.Relation
+	IsSourcePropertiesFeatureEnabled() bool
 	initTags(meta metav1.ObjectMeta) map[string]string
 	buildClusterExternalID() string
 	buildConfigMapExternalID(namespace, configMapName string) string
@@ -46,17 +47,19 @@ type ClusterTopologyCommon interface {
 }
 
 type clusterTopologyCommon struct {
-	Instance           topology.Instance
-	APICollectorClient apiserver.APICollectorClient
-	urn                urn.Builder
+	Instance                topology.Instance
+	APICollectorClient      apiserver.APICollectorClient
+	urn                     urn.Builder
+	sourcePropertiesEnabled bool
 }
 
 // NewClusterTopologyCommon creates a clusterTopologyCommon
-func NewClusterTopologyCommon(instance topology.Instance, ac apiserver.APICollectorClient) ClusterTopologyCommon {
+func NewClusterTopologyCommon(instance topology.Instance, ac apiserver.APICollectorClient, spEnabled bool) ClusterTopologyCommon {
 	return &clusterTopologyCommon{
-		Instance:           instance,
-		APICollectorClient: ac,
-		urn:                urn.NewURNBuilder(urn.ClusterTypeFromString(instance.Type), instance.URL),
+		Instance:                instance,
+		APICollectorClient:      ac,
+		urn:                     urn.NewURNBuilder(urn.ClusterTypeFromString(instance.Type), instance.URL),
+		sourcePropertiesEnabled: spEnabled,
 	}
 }
 
@@ -108,6 +111,11 @@ func (c *clusterTopologyCommon) CreateRelation(sourceExternalID, targetExternalI
 		Type:       topology.Type{Name: typeName},
 		Data:       map[string]interface{}{},
 	}
+}
+
+// IsSourcePropertiesFeatureEnabled return value of Source Properties feature flag
+func (c *clusterTopologyCommon) IsSourcePropertiesFeatureEnabled() bool {
+	return c.sourcePropertiesEnabled
 }
 
 // buildClusterExternalID
@@ -232,8 +240,19 @@ func marshallK8sObjectToData(msg proto.Message) (map[string]interface{}, error) 
 	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
 		return nil, err
 	}
+	return result, nil
+}
 
-	delete(result, "status")
+func removeRedundantFields(result map[string]interface{}, keepStatus bool) {
+	if !keepStatus {
+		visitNestedMap(result, "status", true, func(status map[string]interface{}) {
+			for k := range status {
+				if !(k == "phase" || k == "nodeInfo" || k == "daemonEndpoints" || k == "message") {
+					delete(status, k)
+				}
+			}
+		})
+	}
 	visitNestedMap(result, "metadata", false, func(metadata map[string]interface{}) {
 		// managedFields contains information about who is able to modify certain parts of an object
 		// this information is irrelevant to runtime, hence is being dropped here to have smaller status
@@ -244,8 +263,6 @@ func marshallK8sObjectToData(msg proto.Message) (map[string]interface{}, error) 
 			delete(annotations, "kubectl.kubernetes.io/last-applied-configuration")
 		})
 	})
-
-	return result, nil
 }
 
 func visitNestedMap(parentMap map[string]interface{}, key string, removeEmpty bool, callback func(map[string]interface{})) {
@@ -274,5 +291,18 @@ func makeSourceProperties(object MarshalableKubernetesObject) map[string]interfa
 			"serialization_error": fmt.Sprintf("error occurred during serialization of this object: %v", err),
 		}
 	}
+	removeRedundantFields(sourceProperties, false)
+	return sourceProperties
+}
+
+func makeSourcePropertiesKS(object MarshalableKubernetesObject) map[string]interface{} {
+	sourceProperties, err := marshallK8sObjectToData(object)
+	if err != nil {
+		_ = log.Warnf("Can't serialize sourceProperties for %s: %v", object.GetSelfLink(), err)
+		sourceProperties = map[string]interface{}{
+			"serialization_error": fmt.Sprintf("error occurred during serialization of this object: %v", err),
+		}
+	}
+	removeRedundantFields(sourceProperties, true)
 	return sourceProperties
 }

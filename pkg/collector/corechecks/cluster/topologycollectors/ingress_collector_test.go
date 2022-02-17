@@ -31,266 +31,304 @@ func TestIngressCollector(t *testing.T) {
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
-	ic := NewIngressCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockIngressAPICollectorClient{}))
-	expectedCollectorName := "Ingress Collector"
-	RunCollectorTest(t, ic, expectedCollectorName)
+	for _, sourcePropertiesEnabled := range []bool{false, true} {
+		ic := NewIngressCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockIngressAPICollectorClient{}, sourcePropertiesEnabled))
+		expectedCollectorName := "Ingress Collector"
+		RunCollectorTest(t, ic, expectedCollectorName)
 
-	for _, tc := range []struct {
-		testCase   string
-		assertions []func(*testing.T, chan *topology.Component, chan *topology.Relation)
-	}{
-		{
-			testCase: "Test Service 1 - Minimal",
-			assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-				expectComponent(&topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
-					Type:       topology.Type{Name: "ingress"},
-					Data: topology.Data{
-						"name":              "test-ingress-1",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-						"uid":               types.UID("test-ingress-1"),
-						"identifiers":       []string{},
-					},
-					SourceProperties: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"creationTimestamp": creationTimeFormatted,
-							"labels":            map[string]interface{}{"test": "label"},
-							"name":              "test-ingress-1",
-							"namespace":         "test-namespace",
-							"uid":               "test-ingress-1",
-						},
-						"spec": map[string]interface{}{},
-					},
-				}),
-				expectComponent(&topology.Component{
-					ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15",
-					Type:       topology.Type{Name: "endpoint"},
-					Data: topology.Data{
-						"name":              "34.100.200.15",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-						"identifiers":       []string{},
-					},
-				}),
-				expectRelation(&topology.Relation{
-					ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
-					SourceID:   "urn:endpoint:/test-cluster-name:34.100.200.15",
-					TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
-					Type:       topology.Type{Name: "routes"},
-					Data:       map[string]interface{}{},
-				}),
-				expectComponent(&topology.Component{
-					ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
-					Type:       topology.Type{Name: "endpoint"},
-					Data: topology.Data{
-						"name":              "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-						"identifiers":       []string{},
-					},
-				}),
-				expectRelation(&topology.Relation{
-					ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
-					SourceID:   "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
-					TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
-					Type:       topology.Type{Name: "routes"},
-					Data:       map[string]interface{}{},
-				}),
-			},
-		},
-		{
-			testCase: "Test Service 2 - Default Backend",
-			assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-				expectComponent(&topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2",
-					Type:       topology.Type{Name: "ingress"},
-					Data: topology.Data{
-						"name":              "test-ingress-2",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-						"uid":               types.UID("test-ingress-2"),
-						"identifiers":       []string{},
-					},
-					SourceProperties: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"creationTimestamp": creationTimeFormatted,
-							"labels":            map[string]interface{}{"test": "label"},
-							"name":              "test-ingress-2",
-							"namespace":         "test-namespace",
-							"uid":               "test-ingress-2",
-						},
-						"spec": map[string]interface{}{
-							"backend": map[string]interface{}{
-								"serviceName": "test-service",
-								"servicePort": float64(0),
+		for _, tc := range []struct {
+			testCase   string
+			assertions []func(*testing.T, chan *topology.Component, chan *topology.Relation)
+		}{
+			{
+				testCase: "Test Service 1 - Minimal",
+				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
+					expectComponent(chooseBySourcePropertiesFeature(
+						sourcePropertiesEnabled,
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
+							Type:       topology.Type{Name: "ingress"},
+							Data: topology.Data{
+								"name":              "test-ingress-1",
+								"creationTimestamp": creationTime,
+								"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+								"uid":               types.UID("test-ingress-1"),
+								"identifiers":       []string{},
 							},
 						},
-					},
-				}),
-				expectRelation(&topology.Relation{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2->" +
-						"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service",
-					Type:     topology.Type{Name: "routes"},
-					SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2",
-					TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service",
-					Data:     map[string]interface{}{},
-				}),
-				expectComponent(&topology.Component{
-					ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15",
-					Type:       topology.Type{Name: "endpoint"},
-					Data: topology.Data{
-						"name":              "34.100.200.15",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-						"identifiers":       []string{},
-					},
-				}),
-				expectRelation(&topology.Relation{
-					ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2",
-					SourceID:   "urn:endpoint:/test-cluster-name:34.100.200.15",
-					TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2",
-					Type:       topology.Type{Name: "routes"},
-					Data:       map[string]interface{}{},
-				}),
-				expectComponent(&topology.Component{
-					ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
-					Type:       topology.Type{Name: "endpoint"},
-					Data: topology.Data{
-						"name":              "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-						"identifiers":       []string{},
-					},
-				}),
-				expectRelation(&topology.Relation{
-					ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2",
-					SourceID:   "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
-					TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2",
-					Type:       topology.Type{Name: "routes"},
-					Data:       map[string]interface{}{},
-				}),
-			},
-		},
-		{
-			testCase: "Test Service 3 - Ingress Rules",
-			assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-				expectComponent(&topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
-					Type:       topology.Type{Name: "ingress"},
-					Data: topology.Data{
-						"name":              "test-ingress-3",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-						"uid":               types.UID("test-ingress-3"),
-						"kind":              "some-specified-kind",
-						"generateName":      "some-specified-generation",
-						"identifiers":       []string{},
-					},
-					SourceProperties: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"creationTimestamp": creationTimeFormatted,
-							"labels":            map[string]interface{}{"test": "label"},
-							"name":              "test-ingress-3",
-							"namespace":         "test-namespace",
-							"uid":               "test-ingress-3",
-							"generateName":      "some-specified-generation",
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
+							Type:       topology.Type{Name: "ingress"},
+							Data: topology.Data{
+								"name":        "test-ingress-1",
+								"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+								"identifiers": []string{},
+							},
+							SourceProperties: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": creationTimeFormatted,
+									"labels":            map[string]interface{}{"test": "label"},
+									"name":              "test-ingress-1",
+									"namespace":         "test-namespace",
+									"uid":               "test-ingress-1",
+								},
+								"spec": map[string]interface{}{},
+							},
 						},
-						"spec": map[string]interface{}{
-							"rules": []interface{}{
-								map[string]interface{}{
-									"host": "host-1",
-									"ingressRuleValue": map[string]interface{}{
-										"http": map[string]interface{}{
-											"paths": []interface{}{
-												map[string]interface{}{
-													"backend": map[string]interface{}{
-														"serviceName": "test-service-1",
-														"servicePort": float64(0)},
-													"path": "host-1-path-1"},
-												map[string]interface{}{
-													"backend": map[string]interface{}{
-														"serviceName": "test-service-2",
-														"servicePort": float64(0)},
-													"path": "host-1-path-2"}}}}},
-								map[string]interface{}{
-									"host": "host-2",
-									"ingressRuleValue": map[string]interface{}{
-										"http": map[string]interface{}{
-											"paths": []interface{}{
-												map[string]interface{}{
-													"backend": map[string]interface{}{
-														"serviceName": "test-service-3",
-														"servicePort": float64(0)},
-													"path": "host-2-path-1"}}}}}}},
-					},
-				}),
-				expectRelation(&topology.Relation{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3->" +
-						"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1",
-					Type:     topology.Type{Name: "routes"},
-					SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
-					TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1",
-					Data:     map[string]interface{}{},
-				}),
-				expectRelation(&topology.Relation{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3->" +
-						"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-2",
-					Type:     topology.Type{Name: "routes"},
-					SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
-					TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-2",
-					Data:     map[string]interface{}{},
-				}),
-				expectRelation(&topology.Relation{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3->" +
-						"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-3",
-					Type:     topology.Type{Name: "routes"},
-					SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
-					TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-3",
-					Data:     map[string]interface{}{},
-				}),
-				expectComponent(&topology.Component{
-					ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15",
-					Type:       topology.Type{Name: "endpoint"},
-					Data: topology.Data{
-						"name":              "34.100.200.15",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-						"identifiers":       []string{},
-					},
-				}),
-				expectRelation(&topology.Relation{
-					ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
-					SourceID:   "urn:endpoint:/test-cluster-name:34.100.200.15",
-					TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
-					Type:       topology.Type{Name: "routes"},
-					Data:       map[string]interface{}{},
-				}),
-				expectComponent(&topology.Component{
-					ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
-					Type:       topology.Type{Name: "endpoint"},
-					Data: topology.Data{
-						"name":              "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-						"identifiers":       []string{},
-					},
-				}),
-				expectRelation(&topology.Relation{
-					ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
-					SourceID:   "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
-					TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
-					Type:       topology.Type{Name: "routes"},
-					Data:       map[string]interface{}{},
-				}),
+					)),
+					expectComponent(&topology.Component{
+						ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15",
+						Type:       topology.Type{Name: "endpoint"},
+						Data: topology.Data{
+							"name":              "34.100.200.15",
+							"creationTimestamp": creationTime,
+							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"identifiers":       []string{},
+						},
+					}),
+					expectRelation(&topology.Relation{
+						ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
+						SourceID:   "urn:endpoint:/test-cluster-name:34.100.200.15",
+						TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
+						Type:       topology.Type{Name: "routes"},
+						Data:       map[string]interface{}{},
+					}),
+					expectComponent(&topology.Component{
+						ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+						Type:       topology.Type{Name: "endpoint"},
+						Data: topology.Data{
+							"name":              "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+							"creationTimestamp": creationTime,
+							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"identifiers":       []string{},
+						},
+					}),
+					expectRelation(&topology.Relation{
+						ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
+						SourceID:   "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+						TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
+						Type:       topology.Type{Name: "routes"},
+						Data:       map[string]interface{}{},
+					}),
+				},
 			},
-		},
-	} {
-		t.Run(tc.testCase, func(t *testing.T) {
-			for _, a := range tc.assertions {
-				a(t, componentChannel, relationChannel)
-			}
-		})
+			{
+				testCase: "Test Service 2 - Default Backend",
+				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
+					expectComponent(chooseBySourcePropertiesFeature(
+						sourcePropertiesEnabled,
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2",
+							Type:       topology.Type{Name: "ingress"},
+							Data: topology.Data{
+								"name":              "test-ingress-2",
+								"creationTimestamp": creationTime,
+								"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+								"uid":               types.UID("test-ingress-2"),
+								"identifiers":       []string{},
+							},
+						},
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2",
+							Type:       topology.Type{Name: "ingress"},
+							Data: topology.Data{
+								"name":        "test-ingress-2",
+								"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+								"identifiers": []string{},
+							},
+							SourceProperties: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": creationTimeFormatted,
+									"labels":            map[string]interface{}{"test": "label"},
+									"name":              "test-ingress-2",
+									"namespace":         "test-namespace",
+									"uid":               "test-ingress-2",
+								},
+								"spec": map[string]interface{}{
+									"backend": map[string]interface{}{
+										"serviceName": "test-service",
+										"servicePort": float64(0),
+									},
+								},
+							},
+						},
+					)),
+					expectRelation(&topology.Relation{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service",
+						Type:     topology.Type{Name: "routes"},
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service",
+						Data:     map[string]interface{}{},
+					}),
+					expectComponent(&topology.Component{
+						ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15",
+						Type:       topology.Type{Name: "endpoint"},
+						Data: topology.Data{
+							"name":              "34.100.200.15",
+							"creationTimestamp": creationTime,
+							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"identifiers":       []string{},
+						},
+					}),
+					expectRelation(&topology.Relation{
+						ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2",
+						SourceID:   "urn:endpoint:/test-cluster-name:34.100.200.15",
+						TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2",
+						Type:       topology.Type{Name: "routes"},
+						Data:       map[string]interface{}{},
+					}),
+					expectComponent(&topology.Component{
+						ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+						Type:       topology.Type{Name: "endpoint"},
+						Data: topology.Data{
+							"name":              "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+							"creationTimestamp": creationTime,
+							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"identifiers":       []string{},
+						},
+					}),
+					expectRelation(&topology.Relation{
+						ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2",
+						SourceID:   "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+						TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2",
+						Type:       topology.Type{Name: "routes"},
+						Data:       map[string]interface{}{},
+					}),
+				},
+			},
+			{
+				testCase: "Test Service 3 - Ingress Rules",
+				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
+					expectComponent(chooseBySourcePropertiesFeature(
+						sourcePropertiesEnabled,
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
+							Type:       topology.Type{Name: "ingress"},
+							Data: topology.Data{
+								"name":              "test-ingress-3",
+								"creationTimestamp": creationTime,
+								"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+								"uid":               types.UID("test-ingress-3"),
+								"kind":              "some-specified-kind",
+								"generateName":      "some-specified-generation",
+								"identifiers":       []string{},
+							},
+						},
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
+							Type:       topology.Type{Name: "ingress"},
+							Data: topology.Data{
+								"name":        "test-ingress-3",
+								"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+								"identifiers": []string{},
+							},
+							SourceProperties: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": creationTimeFormatted,
+									"labels":            map[string]interface{}{"test": "label"},
+									"name":              "test-ingress-3",
+									"namespace":         "test-namespace",
+									"uid":               "test-ingress-3",
+									"generateName":      "some-specified-generation",
+								},
+								"spec": map[string]interface{}{
+									"rules": []interface{}{
+										map[string]interface{}{
+											"host": "host-1",
+											"ingressRuleValue": map[string]interface{}{
+												"http": map[string]interface{}{
+													"paths": []interface{}{
+														map[string]interface{}{
+															"backend": map[string]interface{}{
+																"serviceName": "test-service-1",
+																"servicePort": float64(0)},
+															"path": "host-1-path-1"},
+														map[string]interface{}{
+															"backend": map[string]interface{}{
+																"serviceName": "test-service-2",
+																"servicePort": float64(0)},
+															"path": "host-1-path-2"}}}}},
+										map[string]interface{}{
+											"host": "host-2",
+											"ingressRuleValue": map[string]interface{}{
+												"http": map[string]interface{}{
+													"paths": []interface{}{
+														map[string]interface{}{
+															"backend": map[string]interface{}{
+																"serviceName": "test-service-3",
+																"servicePort": float64(0)},
+															"path": "host-2-path-1"}}}}}}},
+							},
+						},
+					)),
+					expectRelation(&topology.Relation{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1",
+						Type:     topology.Type{Name: "routes"},
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1",
+						Data:     map[string]interface{}{},
+					}),
+					expectRelation(&topology.Relation{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-2",
+						Type:     topology.Type{Name: "routes"},
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-2",
+						Data:     map[string]interface{}{},
+					}),
+					expectRelation(&topology.Relation{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3->" +
+							"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-3",
+						Type:     topology.Type{Name: "routes"},
+						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
+						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-3",
+						Data:     map[string]interface{}{},
+					}),
+					expectComponent(&topology.Component{
+						ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15",
+						Type:       topology.Type{Name: "endpoint"},
+						Data: topology.Data{
+							"name":              "34.100.200.15",
+							"creationTimestamp": creationTime,
+							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"identifiers":       []string{},
+						},
+					}),
+					expectRelation(&topology.Relation{
+						ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
+						SourceID:   "urn:endpoint:/test-cluster-name:34.100.200.15",
+						TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
+						Type:       topology.Type{Name: "routes"},
+						Data:       map[string]interface{}{},
+					}),
+					expectComponent(&topology.Component{
+						ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+						Type:       topology.Type{Name: "endpoint"},
+						Data: topology.Data{
+							"name":              "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+							"creationTimestamp": creationTime,
+							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"identifiers":       []string{},
+						},
+					}),
+					expectRelation(&topology.Relation{
+						ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
+						SourceID:   "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+						TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
+						Type:       topology.Type{Name: "routes"},
+						Data:       map[string]interface{}{},
+					}),
+				},
+			},
+		} {
+			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
+				for _, a := range tc.assertions {
+					a(t, componentChannel, relationChannel)
+				}
+			})
+		}
 	}
 }
 

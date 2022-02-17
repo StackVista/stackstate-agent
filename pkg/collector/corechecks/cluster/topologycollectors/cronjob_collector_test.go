@@ -32,129 +32,151 @@ func TestCronJobCollector(t *testing.T) {
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
-	cjc := NewCronJobCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockCronJobAPICollectorClient{}))
-	expectedCollectorName := "CronJob Collector"
-	RunCollectorTest(t, cjc, expectedCollectorName)
+	for _, sourcePropertiesEnabled := range []bool{false, true} {
+		cjc := NewCronJobCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockCronJobAPICollectorClient{}, sourcePropertiesEnabled))
+		expectedCollectorName := "CronJob Collector"
+		RunCollectorTest(t, cjc, expectedCollectorName)
 
-	for _, tc := range []struct {
-		testCase string
-		expected *topology.Component
-	}{
-		{
-			testCase: "Test Cron Job 1 - Kind + Generate Name",
-			expected: &topology.Component{
-				ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:cronjob/test-cronjob-1",
-				Type:       topology.Type{Name: "cronjob"},
-				Data: topology.Data{
-					"schedule":          "0 0 * * *",
-					"name":              "test-cronjob-1",
-					"creationTimestamp": creationTime,
-					"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-					"uid":               types.UID("test-cronjob-1"),
-					"concurrencyPolicy": v1beta1.AllowConcurrent,
-					"kind":              "some-specified-kind",
-					"generateName":      "some-specified-generation",
-				},
-				SourceProperties: map[string]interface{}{
-					"metadata": map[string]interface{}{
-						"creationTimestamp": creationTimeFormatted,
-						"labels":            map[string]interface{}{"test": "label"},
+		for _, tc := range []struct {
+			testCase     string
+			expectedNoSP *topology.Component
+			expectedSP   *topology.Component
+		}{
+			{
+				testCase: "Test Cron Job 1 - Kind + Generate Name",
+				expectedNoSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:cronjob/test-cronjob-1",
+					Type:       topology.Type{Name: "cronjob"},
+					Data: topology.Data{
+						"schedule":          "0 0 * * *",
 						"name":              "test-cronjob-1",
-						"namespace":         "test-namespace",
-						"uid":               "test-cronjob-1",
+						"creationTimestamp": creationTime,
+						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						"uid":               types.UID("test-cronjob-1"),
+						"concurrencyPolicy": v1beta1.AllowConcurrent,
+						"kind":              "some-specified-kind",
 						"generateName":      "some-specified-generation",
 					},
-					"spec": map[string]interface{}{
-						"concurrencyPolicy": "Allow",
-						"jobTemplate": map[string]interface{}{
-							"metadata": map[string]interface{}{"creationTimestamp": interface{}(nil)},
-							"spec": map[string]interface{}{
-								"template": map[string]interface{}{
-									"metadata": map[string]interface{}{
-										"creationTimestamp": interface{}(nil),
-									},
-									"spec": map[string]interface{}{
-										"containers": []interface{}{
-											map[string]interface{}{
-												"image":     "busybox",
-												"name":      "job",
-												"resources": map[string]interface{}{},
-											},
+				},
+				expectedSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:cronjob/test-cronjob-1",
+					Type:       topology.Type{Name: "cronjob"},
+					Data: topology.Data{
+						"name": "test-cronjob-1",
+						"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"labels":            map[string]interface{}{"test": "label"},
+							"name":              "test-cronjob-1",
+							"namespace":         "test-namespace",
+							"uid":               "test-cronjob-1",
+							"generateName":      "some-specified-generation",
+						},
+						"spec": map[string]interface{}{
+							"concurrencyPolicy": "Allow",
+							"jobTemplate": map[string]interface{}{
+								"metadata": map[string]interface{}{"creationTimestamp": interface{}(nil)},
+								"spec": map[string]interface{}{
+									"template": map[string]interface{}{
+										"metadata": map[string]interface{}{
+											"creationTimestamp": interface{}(nil),
 										},
-										"restartPolicy": "OnFailure",
+										"spec": map[string]interface{}{
+											"containers": []interface{}{
+												map[string]interface{}{
+													"image":     "busybox",
+													"name":      "job",
+													"resources": map[string]interface{}{},
+												},
+											},
+											"restartPolicy": "OnFailure",
+										},
 									},
 								},
 							},
+							"schedule": "0 0 * * *",
 						},
-						"schedule": "0 0 * * *",
 					},
 				},
 			},
-		},
-		{
-			testCase: "Test Cron Job 2 - Minimal",
-			expected: &topology.Component{
-				ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:cronjob/test-cronjob-2",
-				Type:       topology.Type{Name: "cronjob"},
-				Data: topology.Data{
-					"schedule":          "0 0 * * *",
-					"name":              "test-cronjob-2",
-					"creationTimestamp": creationTime,
-					"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-					"uid":               types.UID("test-cronjob-2"),
-					"concurrencyPolicy": v1beta1.AllowConcurrent,
-				},
-				SourceProperties: map[string]interface{}{
-					"metadata": map[string]interface{}{
-						"creationTimestamp": creationTimeFormatted,
-						"labels":            map[string]interface{}{"test": "label"},
+			{
+				testCase: "Test Cron Job 2 - Minimal",
+				expectedNoSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:cronjob/test-cronjob-2",
+					Type:       topology.Type{Name: "cronjob"},
+					Data: topology.Data{
+						"schedule":          "0 0 * * *",
 						"name":              "test-cronjob-2",
-						"namespace":         "test-namespace",
-						"uid":               "test-cronjob-2",
+						"creationTimestamp": creationTime,
+						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						"uid":               types.UID("test-cronjob-2"),
+						"concurrencyPolicy": v1beta1.AllowConcurrent,
 					},
-					"spec": map[string]interface{}{
-						"concurrencyPolicy": "Allow",
-						"jobTemplate": map[string]interface{}{
-							"metadata": map[string]interface{}{"creationTimestamp": interface{}(nil)},
-							"spec": map[string]interface{}{
-								"template": map[string]interface{}{
-									"metadata": map[string]interface{}{
-										"creationTimestamp": interface{}(nil),
-									},
-									"spec": map[string]interface{}{
-										"containers": []interface{}{
-											map[string]interface{}{
-												"image":     "busybox",
-												"name":      "job",
-												"resources": map[string]interface{}{},
-											},
+				},
+				expectedSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:cronjob/test-cronjob-2",
+					Type:       topology.Type{Name: "cronjob"},
+					Data: topology.Data{
+						"name": "test-cronjob-2",
+						"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"labels":            map[string]interface{}{"test": "label"},
+							"name":              "test-cronjob-2",
+							"namespace":         "test-namespace",
+							"uid":               "test-cronjob-2",
+						},
+						"spec": map[string]interface{}{
+							"concurrencyPolicy": "Allow",
+							"jobTemplate": map[string]interface{}{
+								"metadata": map[string]interface{}{"creationTimestamp": interface{}(nil)},
+								"spec": map[string]interface{}{
+									"template": map[string]interface{}{
+										"metadata": map[string]interface{}{
+											"creationTimestamp": interface{}(nil),
 										},
-										"restartPolicy": "OnFailure",
+										"spec": map[string]interface{}{
+											"containers": []interface{}{
+												map[string]interface{}{
+													"image":     "busybox",
+													"name":      "job",
+													"resources": map[string]interface{}{},
+												},
+											},
+											"restartPolicy": "OnFailure",
+										},
 									},
 								},
 							},
+							"schedule": "0 0 * * *",
 						},
-						"schedule": "0 0 * * *",
 					},
 				},
 			},
-		},
-	} {
-		t.Run(tc.testCase, func(t *testing.T) {
-			cronJob := <-componentChannel
-			assert.EqualValues(t, tc.expected, cronJob)
+		} {
+			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
+				cronJob := <-componentChannel
+				if sourcePropertiesEnabled {
+					assert.EqualValues(t, tc.expectedSP, cronJob)
+				} else {
+					assert.EqualValues(t, tc.expectedNoSP, cronJob)
+				}
 
-			actualRelation := <-relationChannel
-			expectedRelation := &topology.Relation{
-				ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" + cronJob.ExternalID,
-				Type:       topology.Type{Name: "encloses"},
-				SourceID:   "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
-				TargetID:   cronJob.ExternalID,
-				Data:       map[string]interface{}{},
-			}
-			assert.EqualValues(t, expectedRelation, actualRelation)
-
-		})
+				actualRelation := <-relationChannel
+				expectedRelation := &topology.Relation{
+					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" + cronJob.ExternalID,
+					Type:       topology.Type{Name: "encloses"},
+					SourceID:   "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
+					TargetID:   cronJob.ExternalID,
+					Data:       map[string]interface{}{},
+				}
+				assert.EqualValues(t, expectedRelation, actualRelation)
+			})
+		}
 	}
 }
 
@@ -197,6 +219,12 @@ func (m MockCronJobAPICollectorClient) GetCronJobs() ([]v1beta1.CronJob, error) 
 						},
 					},
 				},
+			},
+			Status: v1beta1.CronJobStatus{
+				Active: []apiv1.ObjectReference{
+					{Kind: "Job", Name: "cronjob-job-1"},
+				},
+				LastScheduleTime: &creationTime,
 			},
 		}
 

@@ -53,17 +53,20 @@ func (nsc *NamespaceCollector) namespaceToStackStateComponent(namespace v1.Names
 		ExternalID: namespaceExternalID,
 		Type:       topology.Type{Name: "namespace"},
 		Data: map[string]interface{}{
-			"name":              namespace.Name,
-			"creationTimestamp": namespace.CreationTimestamp,
-			"tags":              tags,
-			"uid":               namespace.UID,
-			"identifiers":       []string{namespaceExternalID},
+			"name":        namespace.Name,
+			"tags":        tags,
+			"identifiers": []string{namespaceExternalID},
 		},
-		SourceProperties: makeSourceProperties(&namespace),
 	}
 
-	component.Data.PutNonEmpty("generateName", namespace.GenerateName)
-	component.Data.PutNonEmpty("kind", namespace.Kind)
+	if nsc.IsSourcePropertiesFeatureEnabled() {
+		component.SourceProperties = makeSourceProperties(&namespace)
+	} else {
+		component.Data.PutNonEmpty("creationTimestamp", namespace.CreationTimestamp)
+		component.Data.PutNonEmpty("uid", namespace.UID)
+		component.Data.PutNonEmpty("generateName", namespace.GenerateName)
+		component.Data.PutNonEmpty("kind", namespace.Kind)
+	}
 
 	log.Tracef("Created StackState Namespace component %s: %v", namespaceExternalID, component.JSONString())
 

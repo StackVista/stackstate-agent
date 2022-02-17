@@ -25,238 +25,338 @@ func TestNodeCollector(t *testing.T) {
 	var testClusterName = "test-cluster-name"
 	mockConfig.Set("cluster_name", testClusterName)
 
-	componentChannel := make(chan *topology.Component)
-	defer close(componentChannel)
-	relationChannel := make(chan *topology.Relation)
-	defer close(relationChannel)
-	nodeIdentifierCorrelationChannel := make(chan *NodeIdentifierCorrelation)
-
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
-	ic := NewNodeCollector(componentChannel, relationChannel, nodeIdentifierCorrelationChannel, NewTestCommonClusterCollector(MockNodeAPICollectorClient{}))
-	expectedCollectorName := "Node Collector"
-	RunCollectorTest(t, ic, expectedCollectorName)
+	for _, sourcePropertiesEnabled := range []bool{false, true} {
+		(func() {
 
-	for _, tc := range []struct {
-		testCase   string
-		assertions []func()
-	}{
-		{
-			testCase: "Test Node 1 - NodeInternalIP",
-			assertions: []func(){
-				func() {
-					component := <-componentChannel
-					expectedComponent := &topology.Component{
-						ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-1",
-						Type:       topology.Type{Name: "node"},
-						Data: topology.Data{
-							"name":              "test-node-1",
-							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-node-1"),
-							"instanceId":        "test-node-1",
-							"status": NodeStatus{
-								Phase: coreV1.NodeRunning,
-								NodeInfo: coreV1.NodeSystemInfo{
-									MachineID:     "test-machine-id-1",
-									KernelVersion: "4.19.0",
-									Architecture:  "x86_64",
-								},
-								KubeletEndpoint: coreV1.DaemonEndpoint{Port: 5000},
-							},
-							"identifiers": []string{
-								"urn:ip:/test-cluster-name:test-node-1:10.20.01.01",
-								"urn:host:/test-node-1",
-								"urn:host:/test-node-1-test-cluster-name",
-							},
-						},
-						SourceProperties: map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"clusterName":       "mycluster",
-								"creationTimestamp": creationTimeFormatted,
-								"labels":            map[string]interface{}{"test": "label"},
-								"name":              "test-node-1",
-								"namespace":         "test-namespace",
-								"uid":               "test-node-1",
-							},
-							"spec": map[string]interface{}{},
-						},
-					}
-					assert.EqualValues(t, expectedComponent, component)
-				},
-				func() {
-					relation := <-relationChannel
-					expectedRelation := &topology.Relation{
-						ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-1->urn:cluster:/kubernetes:test-cluster-name",
-						Type:       topology.Type{Name: "belongs_to"},
-						SourceID:   "urn:kubernetes:/test-cluster-name:node/test-node-1",
-						TargetID:   "urn:cluster:/kubernetes:test-cluster-name",
-						Data:       map[string]interface{}{},
-					}
-					assert.EqualValues(t, expectedRelation, relation)
-				},
-				func() {
-					nodeIdentifier := <-nodeIdentifierCorrelationChannel
-					expectedNodeIdentifier := &NodeIdentifierCorrelation{
-						NodeName:       "test-node-1",
-						NodeIdentifier: "test-node-1",
-						NodeExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-1",
-					}
-					assert.EqualValues(t, expectedNodeIdentifier, nodeIdentifier)
-				},
-			},
-		},
-		{
-			testCase: "Test Node 2 - NodeInternalIP + NodeExternalIP + Kind + Generate Name",
-			assertions: []func(){
-				func() {
-					component := <-componentChannel
-					expectedComponent := &topology.Component{
+			componentChannel := make(chan *topology.Component)
+			defer close(componentChannel)
+			relationChannel := make(chan *topology.Relation)
+			defer close(relationChannel)
+			nodeIdentifierCorrelationChannel := make(chan *NodeIdentifierCorrelation)
 
-						ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-2",
-						Type:       topology.Type{Name: "node"},
-						Data: topology.Data{
-							"name":              "test-node-2",
-							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-node-2"),
-							"instanceId":        "test-node-2",
-							"status": NodeStatus{
-								Phase: coreV1.NodeRunning,
-								NodeInfo: coreV1.NodeSystemInfo{
-									MachineID:     "test-machine-id-2",
-									KernelVersion: "4.19.0",
-									Architecture:  "x86_64",
-								},
-								KubeletEndpoint: coreV1.DaemonEndpoint{Port: 5000},
-							},
-							"identifiers": []string{
-								"urn:ip:/test-cluster-name:test-node-2:10.20.01.01",
-								"urn:ip:/test-cluster-name:10.20.01.02",
-								"urn:host:/test-node-2",
-								"urn:host:/test-node-2-test-cluster-name",
-							},
-							"kind":         "some-specified-kind",
-							"generateName": "some-specified-generation",
-						},
-						SourceProperties: map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"clusterName":       "mycluster",
-								"creationTimestamp": creationTimeFormatted,
-								"labels":            map[string]interface{}{"test": "label"},
-								"name":              "test-node-2",
-								"namespace":         "test-namespace",
-								"uid":               "test-node-2",
-								"generateName":      "some-specified-generation",
-							},
-							"spec": map[string]interface{}{},
-						},
-					}
-					assert.EqualValues(t, expectedComponent, component)
-				},
-				func() {
-					relation := <-relationChannel
-					expectedRelation := &topology.Relation{
-						ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-2->urn:cluster:/kubernetes:test-cluster-name",
-						Type:       topology.Type{Name: "belongs_to"},
-						SourceID:   "urn:kubernetes:/test-cluster-name:node/test-node-2",
-						TargetID:   "urn:cluster:/kubernetes:test-cluster-name",
-						Data:       map[string]interface{}{},
-					}
-					assert.EqualValues(t, expectedRelation, relation)
-				},
-				func() {
-					nodeIdentifier := <-nodeIdentifierCorrelationChannel
-					expectedNodeIdentifier := &NodeIdentifierCorrelation{
-						NodeName:       "test-node-2",
-						NodeIdentifier: "test-node-2",
-						NodeExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-2",
-					}
-					assert.EqualValues(t, expectedNodeIdentifier, nodeIdentifier)
-				},
-			},
-		},
-		{
-			testCase: "Test Node 3 - Complete",
-			assertions: []func(){
-				func() {
-					component := <-componentChannel
-					expectedComponent := &topology.Component{
-						ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-3",
-						Type:       topology.Type{Name: "node"},
-						Data: topology.Data{
-							"name":              "test-node-3",
-							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-node-3"),
-							"status": NodeStatus{
-								Phase: coreV1.NodeRunning,
-								NodeInfo: coreV1.NodeSystemInfo{
-									MachineID:     "test-machine-id-3",
-									KernelVersion: "4.19.0",
-									Architecture:  "x86_64",
-								},
-								KubeletEndpoint: coreV1.DaemonEndpoint{Port: 5000},
-							},
-							"identifiers": []string{
-								"urn:ip:/test-cluster-name:test-node-3:10.20.01.01",
-								"urn:ip:/test-cluster-name:10.20.01.02",
-								"urn:host:/test-cluster-name:cluster.internal.dns.test-node-3",
-								"urn:host:/my-organization.test-node-3",
-								"urn:host:/i-024b28584ed2e6321",
-								"urn:host:/i-024b28584ed2e6321-test-cluster-name",
-							},
-							"kind":         "some-specified-kind",
-							"generateName": "some-specified-generation",
-							"instanceId":   "i-024b28584ed2e6321",
-						},
-						SourceProperties: map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"clusterName":       "mycluster",
-								"creationTimestamp": creationTimeFormatted,
-								"labels":            map[string]interface{}{"test": "label"},
-								"name":              "test-node-3",
-								"namespace":         "test-namespace",
-								"uid":               "test-node-3",
-								"generateName":      "some-specified-generation",
-							},
-							"spec": map[string]interface{}{
-								"providerID": "aws:///us-east-1b/i-024b28584ed2e6321",
-							},
-						},
-					}
-					assert.EqualValues(t, expectedComponent, component)
-				},
-				func() {
+			ic := NewNodeCollector(componentChannel, relationChannel, nodeIdentifierCorrelationChannel, NewTestCommonClusterCollector(MockNodeAPICollectorClient{}, sourcePropertiesEnabled))
+			expectedCollectorName := "Node Collector"
+			RunCollectorTest(t, ic, expectedCollectorName)
 
-					relation := <-relationChannel
-					expectedRelation := &topology.Relation{
-						ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-3->urn:cluster:/kubernetes:test-cluster-name",
-						Type:       topology.Type{Name: "belongs_to"},
-						SourceID:   "urn:kubernetes:/test-cluster-name:node/test-node-3",
-						TargetID:   "urn:cluster:/kubernetes:test-cluster-name",
-						Data:       map[string]interface{}{},
-					}
-					assert.EqualValues(t, expectedRelation, relation)
+			for _, tc := range []struct {
+				testCase   string
+				assertions []func()
+			}{
+				{
+					testCase: "Test Node 1 - NodeInternalIP",
+					assertions: []func(){
+						func() {
+							component := <-componentChannel
+							expectedComponent := chooseBySourcePropertiesFeature(
+								sourcePropertiesEnabled,
+								&topology.Component{
+									ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-1",
+									Type:       topology.Type{Name: "node"},
+									Data: topology.Data{
+										"name":              "test-node-1",
+										"creationTimestamp": creationTime,
+										"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+										"uid":               types.UID("test-node-1"),
+										"instanceId":        "test-node-1",
+										"status": NodeStatus{
+											Phase: coreV1.NodeRunning,
+											NodeInfo: coreV1.NodeSystemInfo{
+												MachineID:     "test-machine-id-1",
+												KernelVersion: "4.19.0",
+												Architecture:  "x86_64",
+											},
+											KubeletEndpoint: coreV1.DaemonEndpoint{Port: 5000},
+										},
+										"identifiers": []string{
+											"urn:ip:/test-cluster-name:test-node-1:10.20.01.01",
+											"urn:host:/test-node-1",
+											"urn:host:/test-node-1-test-cluster-name",
+										},
+									},
+								},
+								&topology.Component{
+									ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-1",
+									Type:       topology.Type{Name: "node"},
+									Data: topology.Data{
+										"name":       "test-node-1",
+										"tags":       map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+										"instanceId": "test-node-1",
+										"identifiers": []string{
+											"urn:ip:/test-cluster-name:test-node-1:10.20.01.01",
+											"urn:host:/test-node-1",
+											"urn:host:/test-node-1-test-cluster-name",
+										},
+									},
+									SourceProperties: map[string]interface{}{
+										"metadata": map[string]interface{}{
+											"clusterName":       "mycluster",
+											"creationTimestamp": creationTimeFormatted,
+											"labels":            map[string]interface{}{"test": "label"},
+											"name":              "test-node-1",
+											"namespace":         "test-namespace",
+											"uid":               "test-node-1",
+										},
+										"spec": map[string]interface{}{},
+										"status": map[string]interface{}{
+											"phase": "Running",
+											"nodeInfo": map[string]interface{}{
+												"machineID":     "test-machine-id-1",
+												"kernelVersion": "4.19.0",
+												"architecture":  "x86_64",
+											},
+											"daemonEndpoints": map[string]interface{}{
+												"kubeletEndpoint": map[string]interface{}{
+													"Port": float64(5000),
+												},
+											},
+										},
+									},
+								},
+							)
+							assert.EqualValues(t, expectedComponent, component)
+						},
+						func() {
+							relation := <-relationChannel
+							expectedRelation := &topology.Relation{
+								ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-1->urn:cluster:/kubernetes:test-cluster-name",
+								Type:       topology.Type{Name: "belongs_to"},
+								SourceID:   "urn:kubernetes:/test-cluster-name:node/test-node-1",
+								TargetID:   "urn:cluster:/kubernetes:test-cluster-name",
+								Data:       map[string]interface{}{},
+							}
+							assert.EqualValues(t, expectedRelation, relation)
+						},
+						func() {
+							nodeIdentifier := <-nodeIdentifierCorrelationChannel
+							expectedNodeIdentifier := &NodeIdentifierCorrelation{
+								NodeName:       "test-node-1",
+								NodeIdentifier: "test-node-1",
+								NodeExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-1",
+							}
+							assert.EqualValues(t, expectedNodeIdentifier, nodeIdentifier)
+						},
+					},
 				},
-				func() {
-					nodeIdentifier := <-nodeIdentifierCorrelationChannel
-					expectedNodeIdentifier := &NodeIdentifierCorrelation{
-						NodeName:       "test-node-3",
-						NodeIdentifier: "i-024b28584ed2e6321",
-						NodeExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-3",
-					}
-					assert.EqualValues(t, expectedNodeIdentifier, nodeIdentifier)
+				{
+					testCase: "Test Node 2 - NodeInternalIP + NodeExternalIP + Kind + Generate Name",
+					assertions: []func(){
+						func() {
+							component := <-componentChannel
+							expectedComponent :=
+								chooseBySourcePropertiesFeature(
+									sourcePropertiesEnabled,
+									&topology.Component{
+										ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-2",
+										Type:       topology.Type{Name: "node"},
+										Data: topology.Data{
+											"name":              "test-node-2",
+											"creationTimestamp": creationTime,
+											"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+											"uid":               types.UID("test-node-2"),
+											"instanceId":        "test-node-2",
+											"status": NodeStatus{
+												Phase: coreV1.NodeRunning,
+												NodeInfo: coreV1.NodeSystemInfo{
+													MachineID:     "test-machine-id-2",
+													KernelVersion: "4.19.0",
+													Architecture:  "x86_64",
+												},
+												KubeletEndpoint: coreV1.DaemonEndpoint{Port: 5000},
+											},
+											"identifiers": []string{
+												"urn:ip:/test-cluster-name:test-node-2:10.20.01.01",
+												"urn:ip:/test-cluster-name:10.20.01.02",
+												"urn:host:/test-node-2",
+												"urn:host:/test-node-2-test-cluster-name",
+											},
+											"kind":         "some-specified-kind",
+											"generateName": "some-specified-generation",
+										},
+									},
+									&topology.Component{
+										ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-2",
+										Type:       topology.Type{Name: "node"},
+										Data: topology.Data{
+											"name":       "test-node-2",
+											"tags":       map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+											"instanceId": "test-node-2",
+											"identifiers": []string{
+												"urn:ip:/test-cluster-name:test-node-2:10.20.01.01",
+												"urn:ip:/test-cluster-name:10.20.01.02",
+												"urn:host:/test-node-2",
+												"urn:host:/test-node-2-test-cluster-name",
+											},
+										},
+										SourceProperties: map[string]interface{}{
+											"metadata": map[string]interface{}{
+												"clusterName":       "mycluster",
+												"creationTimestamp": creationTimeFormatted,
+												"labels":            map[string]interface{}{"test": "label"},
+												"name":              "test-node-2",
+												"namespace":         "test-namespace",
+												"uid":               "test-node-2",
+												"generateName":      "some-specified-generation",
+											},
+											"spec": map[string]interface{}{},
+											"status": map[string]interface{}{
+												"phase": "Running",
+												"nodeInfo": map[string]interface{}{
+													"machineID":     "test-machine-id-2",
+													"kernelVersion": "4.19.0",
+													"architecture":  "x86_64",
+												},
+												"daemonEndpoints": map[string]interface{}{
+													"kubeletEndpoint": map[string]interface{}{
+														"Port": float64(5000),
+													},
+												},
+											},
+										},
+									},
+								)
+							assert.EqualValues(t, expectedComponent, component)
+						},
+						func() {
+							relation := <-relationChannel
+							expectedRelation := &topology.Relation{
+								ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-2->urn:cluster:/kubernetes:test-cluster-name",
+								Type:       topology.Type{Name: "belongs_to"},
+								SourceID:   "urn:kubernetes:/test-cluster-name:node/test-node-2",
+								TargetID:   "urn:cluster:/kubernetes:test-cluster-name",
+								Data:       map[string]interface{}{},
+							}
+							assert.EqualValues(t, expectedRelation, relation)
+						},
+						func() {
+							nodeIdentifier := <-nodeIdentifierCorrelationChannel
+							expectedNodeIdentifier := &NodeIdentifierCorrelation{
+								NodeName:       "test-node-2",
+								NodeIdentifier: "test-node-2",
+								NodeExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-2",
+							}
+							assert.EqualValues(t, expectedNodeIdentifier, nodeIdentifier)
+						},
+					},
 				},
-			},
-		},
-	} {
-		t.Run(tc.testCase, func(t *testing.T) {
-			for _, assertion := range tc.assertions {
-				assertion()
+				{
+					testCase: "Test Node 3 - Complete",
+					assertions: []func(){
+						func() {
+							component := <-componentChannel
+							expectedComponent :=
+								chooseBySourcePropertiesFeature(
+									sourcePropertiesEnabled,
+									&topology.Component{
+										ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-3",
+										Type:       topology.Type{Name: "node"},
+										Data: topology.Data{
+											"name":              "test-node-3",
+											"creationTimestamp": creationTime,
+											"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+											"uid":               types.UID("test-node-3"),
+											"status": NodeStatus{
+												Phase: coreV1.NodeRunning,
+												NodeInfo: coreV1.NodeSystemInfo{
+													MachineID:     "test-machine-id-3",
+													KernelVersion: "4.19.0",
+													Architecture:  "x86_64",
+												},
+												KubeletEndpoint: coreV1.DaemonEndpoint{Port: 5000},
+											},
+											"identifiers": []string{
+												"urn:ip:/test-cluster-name:test-node-3:10.20.01.01",
+												"urn:ip:/test-cluster-name:10.20.01.02",
+												"urn:host:/test-cluster-name:cluster.internal.dns.test-node-3",
+												"urn:host:/my-organization.test-node-3",
+												"urn:host:/i-024b28584ed2e6321",
+												"urn:host:/i-024b28584ed2e6321-test-cluster-name",
+											},
+											"kind":         "some-specified-kind",
+											"generateName": "some-specified-generation",
+											"instanceId":   "i-024b28584ed2e6321",
+										},
+									},
+									&topology.Component{
+										ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-3",
+										Type:       topology.Type{Name: "node"},
+										Data: topology.Data{
+											"name": "test-node-3",
+											"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+											"identifiers": []string{
+												"urn:ip:/test-cluster-name:test-node-3:10.20.01.01",
+												"urn:ip:/test-cluster-name:10.20.01.02",
+												"urn:host:/test-cluster-name:cluster.internal.dns.test-node-3",
+												"urn:host:/my-organization.test-node-3",
+												"urn:host:/i-024b28584ed2e6321",
+												"urn:host:/i-024b28584ed2e6321-test-cluster-name",
+											},
+											"instanceId": "i-024b28584ed2e6321",
+										},
+										SourceProperties: map[string]interface{}{
+											"metadata": map[string]interface{}{
+												"clusterName":       "mycluster",
+												"creationTimestamp": creationTimeFormatted,
+												"labels":            map[string]interface{}{"test": "label"},
+												"name":              "test-node-3",
+												"namespace":         "test-namespace",
+												"uid":               "test-node-3",
+												"generateName":      "some-specified-generation",
+											},
+											"spec": map[string]interface{}{
+												"providerID": "aws:///us-east-1b/i-024b28584ed2e6321",
+											},
+											"status": map[string]interface{}{
+												"phase": "Running",
+												"nodeInfo": map[string]interface{}{
+													"machineID":     "test-machine-id-3",
+													"kernelVersion": "4.19.0",
+													"architecture":  "x86_64",
+												},
+												"daemonEndpoints": map[string]interface{}{
+													"kubeletEndpoint": map[string]interface{}{
+														"Port": float64(5000),
+													},
+												},
+											},
+										},
+									},
+								)
+							assert.EqualValues(t, expectedComponent, component)
+						},
+						func() {
+
+							relation := <-relationChannel
+							expectedRelation := &topology.Relation{
+								ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-3->urn:cluster:/kubernetes:test-cluster-name",
+								Type:       topology.Type{Name: "belongs_to"},
+								SourceID:   "urn:kubernetes:/test-cluster-name:node/test-node-3",
+								TargetID:   "urn:cluster:/kubernetes:test-cluster-name",
+								Data:       map[string]interface{}{},
+							}
+							assert.EqualValues(t, expectedRelation, relation)
+						},
+						func() {
+							nodeIdentifier := <-nodeIdentifierCorrelationChannel
+							expectedNodeIdentifier := &NodeIdentifierCorrelation{
+								NodeName:       "test-node-3",
+								NodeIdentifier: "i-024b28584ed2e6321",
+								NodeExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-3",
+							}
+							assert.EqualValues(t, expectedNodeIdentifier, nodeIdentifier)
+						},
+					},
+				},
+			} {
+				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
+					for _, assertion := range tc.assertions {
+						assertion()
+					}
+				})
 			}
-		})
+		})()
 	}
 }
 
