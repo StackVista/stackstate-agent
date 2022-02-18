@@ -424,7 +424,7 @@ func mapOtelTraces(openTelemetryTraces openTelemetryTrace.ExportTraceServiceRequ
 
 	for _, resourceSpan := range openTelemetryTraces.ResourceSpans {
 		// It is fine if this is not found the lower level script should handle
-		awsAccountID := otelAwsInstrumentationGetAccountId(resourceSpan)
+		awsAccountID := otelAwsInstrumentationGetAccountID(resourceSpan)
 
 		for _, instrumentationLibrarySpan := range resourceSpan.InstrumentationLibrarySpans {
 			// When we reach this point then it is safe to start building a trace
@@ -432,7 +432,7 @@ func mapOtelTraces(openTelemetryTraces openTelemetryTrace.ExportTraceServiceRequ
 
 			// Loop through the instrumentation's library spans
 			for _, instrumentationSpan := range instrumentationLibrarySpan.Spans {
-				httpSpanChildren := otelHttpInstrumentationChildren(instrumentationSpan, resourceSpan.InstrumentationLibrarySpans)
+				httpSpanChildren := otelHTTPInstrumentationChildren(instrumentationSpan, resourceSpan.InstrumentationLibrarySpans)
 
 				var meta = &map[string]string{
 					"instrumentation_library": instrumentationLibrarySpan.InstrumentationLibrary.Name,
@@ -453,7 +453,7 @@ func mapOtelTraces(openTelemetryTraces openTelemetryTrace.ExportTraceServiceRequ
 				}
 
 				otelExtractIds(instrumentationSpan, instrumentationLibrarySpan, &openTelemetrySpan)
-				otelHttpInstrumentationDetermineErrorState(&openTelemetrySpan, httpSpanChildren)
+				otelHTTPInstrumentationDetermineErrorState(&openTelemetrySpan, httpSpanChildren)
 
 				singleTrace = append(singleTrace, &openTelemetrySpan)
 			}
@@ -494,10 +494,10 @@ func otelExtractIds(instrumentationSpan *v12.Span, instrumentationLibrarySpan *v
 }
 
 // [STS]
-// otelAwsInstrumentationGetAccountId We attempt to extract the aws account id from the instrumentation-aws-lambda
+// otelAwsInstrumentationGetAccountID We attempt to extract the aws account id from the instrumentation-aws-lambda
 // library this is the root entry for the main lambda calling the script
 // This is not a requirement and will only trigger with the aws-lambda library
-func otelAwsInstrumentationGetAccountId(resourceSpan *v12.ResourceSpans) *string {
+func otelAwsInstrumentationGetAccountID(resourceSpan *v12.ResourceSpans) *string {
 	var awsAccountID *string = nil
 
 	// Attempt to extract information from the lambda library to enhance the sdk library
@@ -519,9 +519,9 @@ func otelAwsInstrumentationGetAccountId(resourceSpan *v12.ResourceSpans) *string
 }
 
 // [STS]
-// otelHttpInstrumentationChildren Find http instrumentation. The http library will show most of the libraries
+// otelHTTPInstrumentationChildren Find http instrumentation. The http library will show most of the libraries
 // communication where mos libraries do this type of interaction
-func otelHttpInstrumentationChildren(span *v12.Span, allResourceSpans []*v12.InstrumentationLibrarySpans) *[]v12.Span {
+func otelHTTPInstrumentationChildren(span *v12.Span, allResourceSpans []*v12.InstrumentationLibrarySpans) *[]v12.Span {
 	var relatedSpans *[]v12.Span
 
 	for _, resourceSpan := range allResourceSpans {
@@ -539,9 +539,9 @@ func otelHttpInstrumentationChildren(span *v12.Span, allResourceSpans []*v12.Ins
 }
 
 // [STS]
-// otelHttpInstrumentationDetermineErrorState Determine if the http-instrumentation contains error
+// otelHTTPInstrumentationDetermineErrorState Determine if the http-instrumentation contains error
 // If it does it will be mapped into the http and error states for the span
-func otelHttpInstrumentationDetermineErrorState(span *pb.Span, childrenSpans *[]v12.Span) {
+func otelHTTPInstrumentationDetermineErrorState(span *pb.Span, childrenSpans *[]v12.Span) {
 	if childrenSpans != nil && len(*childrenSpans) > 0 {
 		for _, childSpan := range *childrenSpans {
 			var statusCode *int64
