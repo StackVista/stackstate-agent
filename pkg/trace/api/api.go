@@ -423,7 +423,7 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 
 	openTelemetryTracesMarshal, openTelemetryTracesMarshalOk := json.Marshal(openTelemetryTraces)
 	if openTelemetryTracesMarshalOk == nil {
-		log.Debugf("[OTEL] [LAMBDA] Received the following traces from OTEL")
+		log.Debugf("[OTEL] Received the following traces from OTEL")
 		log.Debugf(string(openTelemetryTracesMarshal))
 	}
 
