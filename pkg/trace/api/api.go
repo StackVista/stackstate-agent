@@ -488,6 +488,9 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 					Start:    int64(librarySpan.StartTimeUnixNano),
 					Duration: int64(librarySpan.EndTimeUnixNano) - int64(librarySpan.StartTimeUnixNano),
 					Meta:     meta,
+					Service:  "openTelemetry",
+					Resource: "openTelemetry",
+					Type:     "openTelemetry",
 				}
 
 				if librarySpan.TraceId != nil && librarySpan.TraceId[:] != nil && len(string(librarySpan.TraceId[:])) > 0 {
