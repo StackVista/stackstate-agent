@@ -1,4 +1,4 @@
-package instrumentations
+package modules
 
 import (
 	"fmt"

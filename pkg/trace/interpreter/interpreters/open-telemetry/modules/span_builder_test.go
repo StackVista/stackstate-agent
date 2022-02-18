@@ -1,4 +1,4 @@
-package instrumentations
+package modules
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
