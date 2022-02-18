@@ -68,26 +68,14 @@ func (t *OpenTelemetryS3Interpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			var arn = strings.ToLower(fmt.Sprintf("arn:aws:s3:::%s", s3Bucket))
 			var urn = t.CreateServiceURN(arn)
 
-			modules.OpenTelemetrySpanBuilder(
+			modules.SpanBuilder(
 				span,
 				"consumer",
-				awsOperation,
 				"s3",
-				"S3 Bucket",
-				"Storage",
-				"test-eu-west-1",
+				awsOperation,
 				urn,
 				arn,
 			)
-
-			//  modules.SpanBuilder(
-			//  	span,
-			//  	"consumer",
-			//  	"s3",
-			//  	awsOperation,
-			//  	urn,
-			//  	arn,
-			//  )
 		} else {
 			_ = log.Errorf("[OTEL] [S3]: Unable to map the S3 request")
 

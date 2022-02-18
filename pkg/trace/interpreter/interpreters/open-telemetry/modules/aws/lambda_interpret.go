@@ -44,26 +44,14 @@ func (t *OpenTelemetryLambdaEntryInterpreter) Interpret(spans []*pb.Span) []*pb.
 			var urn = t.CreateServiceURN(strings.ToLower(arn))
 			arn = strings.ToLower(arn)
 
-			modules.OpenTelemetrySpanBuilder(
+			modules.SpanBuilder(
 				span,
 				"producer",
-				"execute",
 				"lambda",
-				"Lambda Function",
-				"Serverless",
-				"test-eu-west-1",
+				"execute",
 				urn,
 				arn,
 			)
-
-			//  modules.SpanBuilder(
-			//  	span,
-			//  	"producer",
-			//  	"lambda",
-			//  	"execute",
-			//  	urn,
-			//  	arn,
-			//  )
 		} else {
 			_ = log.Errorf("[OTEL] [LAMBDA-ENTRY]: Unable to determine the root Lambda Span")
 

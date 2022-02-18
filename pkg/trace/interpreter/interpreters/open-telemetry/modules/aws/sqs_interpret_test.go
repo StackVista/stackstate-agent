@@ -35,10 +35,8 @@ func TestOpenTelemetrySQSSpanInterpreter(t *testing.T) {
 			expected: []*pb.Span{{
 				Service:  "open.telemetry.sqs",
 				Resource: "aws.sqs",
-				Type:     "SQS Queue",
+				Type:     "open-telemetry",
 				Meta: map[string]string{
-					"domain":                  "test-eu-west-1",
-					"layer":                   "Messaging",
 					"aws.operation":           "publishMessage",
 					"aws.region":              "eu-west-1",
 					"messaging.destination":   "target-queue-destination",
@@ -46,7 +44,7 @@ func TestOpenTelemetrySQSSpanInterpreter(t *testing.T) {
 					"service":                 "open.telemetry.sqs",
 					"span.kind":               "consumer",
 					"span.serviceName":        "open.telemetry.sqs.publishMessage",
-					"span.serviceType":        "SQS Queue",
+					"span.serviceType":        "open-telemetry",
 					"span.serviceURN":         "urn:service:/https://sqs.eu-west-1.amazonaws.com/9876543210/target-queue-destination",
 					"sts.service.identifiers": "https://eu-west-1.queue.amazonaws.com/9876543210/target-queue-destination",
 				},
@@ -71,14 +69,12 @@ func TestOpenTelemetrySQSSpanInterpreter(t *testing.T) {
 			expected: []*pb.Span{{
 				Service:  "open.telemetry.sqs",
 				Resource: "aws.sqs",
-				Type:     "SQS Queue",
+				Type:     "open-telemetry",
 				Error:    1,
 				Metrics: map[string]float64{
 					"http.status_code": 404.0,
 				},
 				Meta: map[string]string{
-					"domain":                  "test-eu-west-1",
-					"layer":                   "Messaging",
 					"span.errorClass":         "4xx",
 					"aws.operation":           "publishMessage",
 					"aws.region":              "eu-west-1",
@@ -87,7 +83,7 @@ func TestOpenTelemetrySQSSpanInterpreter(t *testing.T) {
 					"service":                 "open.telemetry.sqs",
 					"span.kind":               "consumer",
 					"span.serviceName":        "open.telemetry.sqs.publishMessage",
-					"span.serviceType":        "SQS Queue",
+					"span.serviceType":        "open-telemetry",
 					"span.serviceURN":         "urn:service:/https://sqs.eu-west-1.amazonaws.com/9876543210/target-queue-destination",
 					"sts.service.identifiers": "https://eu-west-1.queue.amazonaws.com/9876543210/target-queue-destination",
 				},
@@ -112,14 +108,12 @@ func TestOpenTelemetrySQSSpanInterpreter(t *testing.T) {
 			expected: []*pb.Span{{
 				Service:  "open.telemetry.sqs",
 				Resource: "aws.sqs",
-				Type:     "SQS Queue",
+				Type:     "open-telemetry",
 				Error:    1,
 				Metrics: map[string]float64{
 					"http.status_code": 503.0,
 				},
 				Meta: map[string]string{
-					"domain":                  "test-eu-west-1",
-					"layer":                   "Messaging",
 					"span.errorClass":         "5xx",
 					"aws.operation":           "publishMessage",
 					"aws.region":              "eu-west-1",
@@ -128,7 +122,7 @@ func TestOpenTelemetrySQSSpanInterpreter(t *testing.T) {
 					"service":                 "open.telemetry.sqs",
 					"span.kind":               "consumer",
 					"span.serviceName":        "open.telemetry.sqs.publishMessage",
-					"span.serviceType":        "SQS Queue",
+					"span.serviceType":        "open-telemetry",
 					"span.serviceURN":         "urn:service:/https://sqs.eu-west-1.amazonaws.com/9876543210/target-queue-destination",
 					"sts.service.identifiers": "https://eu-west-1.queue.amazonaws.com/9876543210/target-queue-destination",
 				},
