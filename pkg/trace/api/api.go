@@ -421,6 +421,12 @@ const OpenTelemetrySource = "openTelemetry"
 func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceServiceRequest) pb.Traces {
 	var traces = pb.Traces{}
 
+	openTelemetryTracesMarshal, openTelemetryTracesMarshalOk := json.Marshal(openTelemetryTraces)
+	if openTelemetryTracesMarshalOk == nil {
+		log.Debugf("[OTEL] [LAMBDA] Received the following traces from OTEL")
+		log.Debugf(string(openTelemetryTracesMarshal))
+	}
+
 	for _, resourceSpan := range openTelemetryTraces.ResourceSpans {
 		var awsAccountID *string = nil
 
@@ -482,9 +488,6 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 					Start:    int64(librarySpan.StartTimeUnixNano),
 					Duration: int64(librarySpan.EndTimeUnixNano) - int64(librarySpan.StartTimeUnixNano),
 					Meta:     meta,
-					Service:  "openTelemetry",
-					Resource: "openTelemetry",
-					Type:     "openTelemetry",
 				}
 
 				if librarySpan.TraceId != nil && librarySpan.TraceId[:] != nil && len(string(librarySpan.TraceId[:])) > 0 {

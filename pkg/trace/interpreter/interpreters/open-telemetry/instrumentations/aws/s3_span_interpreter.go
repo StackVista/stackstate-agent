@@ -5,6 +5,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
+	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/instrumentations"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
@@ -33,11 +34,31 @@ func MakeOpenTelemetryS3Interpreter(config *config.Config) *OpenTelemetryS3Inter
 func (t *OpenTelemetryS3Interpreter) Interpret(spans []*pb.Span) []*pb.Span {
 	log.Debugf("[OTEL] [S3] Interpreting and mapping Open Telemetry data")
 
+	/*
+			lambda -> root span
+			aws-sdk sqs -> parentId === lambda
+			http -> parentId === aws-sdk
+
+			lambda -> root span
+			http -> parentId === lambda
+
+
+			[SQS] <- Lambda -> SQS -> (http.post.event removed from span)
+			[SQS] <- Lambda -> SQS (With http status)
+
+
+		404 -> sqs does not exist
+		400 -> access denied Permission
+	*/
+
 	for _, span := range spans {
 		// no meta, add a empty map
 		if span.Meta == nil {
 			span.Meta = map[string]string{}
 		}
+
+		// TODO: => interpretHTTPError
+		// span.Error = 400
 
 		// awsService, awsServiceOk := span.Meta["aws.service.api"]
 		awsOperation, awsOperationOk := span.Meta["aws.operation"]
@@ -47,14 +68,11 @@ func (t *OpenTelemetryS3Interpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			var arn = strings.ToLower(fmt.Sprintf("arn:aws:s3:::%s", s3Bucket))
 			var urn = t.CreateServiceURN(arn)
 
-			OpenTelemetrySpanBuilder(
+			instrumentations.SpanBuilder(
 				span,
 				"consumer",
-				awsOperation,
 				"s3",
-				"S3 Bucket",
-				"Storage",
-				"test-eu-west-1",
+				awsOperation,
 				urn,
 				arn,
 			)

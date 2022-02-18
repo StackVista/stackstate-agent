@@ -6,8 +6,8 @@ import (
 	interpreterConfig "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
 	openTelemetry "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry"
-	awsOpenTelemetry "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/aws"
-	httpOpenTelemetry "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/http"
+	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/instrumentations/aws"
+	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/instrumentations/http"
 	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/model"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/golang/protobuf/proto"
@@ -43,13 +43,13 @@ func NewSpanInterpreterEngine(agentConfig *config.AgentConfig) *SpanInterpreterE
 	sourceIns[interpreters.TraefikSpanInterpreterSpan] = interpreters.MakeTraefikInterpreter(interpreterConf)
 
 	// Open Telemetry
-	sourceIns[awsOpenTelemetry.OpenTelemetryLambdaEntryInterpreterSpan] = awsOpenTelemetry.MakeOpenTelemetryLambdaEntryInterpreter(interpreterConf)
-	sourceIns[awsOpenTelemetry.OpenTelemetryLambdaInterpreterSpan] = awsOpenTelemetry.MakeOpenTelemetryLambdaInterpreter(interpreterConf)
-	sourceIns[awsOpenTelemetry.OpenTelemetrySQSInterpreterSpan] = awsOpenTelemetry.MakeOpenTelemetrySQSInterpreter(interpreterConf)
-	sourceIns[awsOpenTelemetry.OpenTelemetryS3InterpreterSpan] = awsOpenTelemetry.MakeOpenTelemetryS3Interpreter(interpreterConf)
-	sourceIns[awsOpenTelemetry.OpenTelemetrySFNInterpreterSpan] = awsOpenTelemetry.MakeOpenTelemetryStepFunctionsInterpreter(interpreterConf)
-	sourceIns[awsOpenTelemetry.OpenTelemetrySNSInterpreterSpan] = awsOpenTelemetry.MakeOpenTelemetrySNSInterpreter(interpreterConf)
-	sourceIns[httpOpenTelemetry.OpenTelemetryHTTPInterpreterSpan] = httpOpenTelemetry.MakeOpenTelemetryHTTPInterpreter(interpreterConf)
+	sourceIns[aws.OpenTelemetryLambdaEntryInterpreterSpan] = aws.MakeOpenTelemetryLambdaEntryInterpreter(interpreterConf)
+	sourceIns[aws.OpenTelemetryLambdaInterpreterSpan] = aws.MakeOpenTelemetryLambdaInterpreter(interpreterConf)
+	sourceIns[aws.OpenTelemetrySQSInterpreterSpan] = aws.MakeOpenTelemetrySQSInterpreter(interpreterConf)
+	sourceIns[aws.OpenTelemetryS3InterpreterSpan] = aws.MakeOpenTelemetryS3Interpreter(interpreterConf)
+	sourceIns[aws.OpenTelemetrySFNInterpreterSpan] = aws.MakeOpenTelemetryStepFunctionsInterpreter(interpreterConf)
+	sourceIns[aws.OpenTelemetrySNSInterpreterSpan] = aws.MakeOpenTelemetrySNSInterpreter(interpreterConf)
+	sourceIns[http.OpenTelemetryHTTPInterpreterSpan] = http.MakeOpenTelemetryHTTPInterpreter(interpreterConf)
 
 	return MakeSpanInterpreterEngine(interpreterConf, typeIns, sourceIns)
 }

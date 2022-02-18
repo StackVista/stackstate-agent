@@ -3,8 +3,8 @@ package opentelemetry
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
-	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/aws"
-	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/http"
+	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/instrumentations/aws"
+	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/instrumentations/http"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )

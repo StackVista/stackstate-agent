@@ -5,6 +5,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
+	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/instrumentations"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
@@ -47,14 +48,11 @@ func (t *OpenTelemetryStepFunctionsInterpreter) Interpret(spans []*pb.Span) []*p
 			var arn = strings.ToLower(stateMachineArn)
 			var urn = t.CreateServiceURN(arn)
 
-			OpenTelemetrySpanBuilder(
+			instrumentations.SpanBuilder(
 				span,
 				"consumer",
-				awsOperation,
 				"step.function",
-				"Step Functions State Machine",
-				"Serverless",
-				"test-eu-west-1",
+				awsOperation,
 				urn,
 				arn,
 			)
