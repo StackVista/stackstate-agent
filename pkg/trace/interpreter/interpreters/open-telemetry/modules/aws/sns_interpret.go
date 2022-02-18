@@ -48,11 +48,23 @@ func (t *OpenTelemetrySNSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			var urn = t.CreateServiceURN(strings.ToLower(topicArn))
 			var arn = strings.ToLower(topicArn)
 
-			modules.SpanBuilder(
+			//  modules.SpanBuilder(
+			//  	span,
+			//  	"consumer",
+			//  	"sns",
+			//  	awsOperation,
+			//  	urn,
+			//  	arn,
+			//  )
+
+			modules.OpenTelemetrySpanBuilder(
 				span,
 				"consumer",
-				"sns",
 				awsOperation,
+				"sns",
+				"SNS Topic",
+				"Messaging",
+				"test-eu-west-1",
 				urn,
 				arn,
 			)

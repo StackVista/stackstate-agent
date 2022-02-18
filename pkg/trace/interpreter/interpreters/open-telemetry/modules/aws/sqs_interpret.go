@@ -55,14 +55,26 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 				var arn = strings.ToLower(
 					fmt.Sprintf("https://%s.queue.amazonaws.com/%s/%s", awsRegion, accountID, sqsQueueName))
 
-				modules.SpanBuilder(
+				modules.OpenTelemetrySpanBuilder(
 					span,
 					"consumer",
-					"sqs",
 					awsOperation,
+					"sqs",
+					"SQS Queue",
+					"Messaging",
+					"test-eu-west-1",
 					urn,
 					arn,
 				)
+
+				// modules.SpanBuilder(
+				// 	span,
+				// 	"consumer",
+				// 	"sqs",
+				// 	awsOperation,
+				// 	urn,
+				// 	arn,
+				// )
 			} else {
 				_ = log.Errorf("[OTEL] [SQS]: The SQS Endpoint URL is incorrect, Unable to parse %s.", sqsEndpointPieces)
 			}

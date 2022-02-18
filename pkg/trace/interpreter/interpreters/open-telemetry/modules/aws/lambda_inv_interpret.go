@@ -50,11 +50,23 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 			var arn = strings.ToLower(fmt.Sprintf("arn:aws:lambda:%s:%s:function:%s", region, accountID, functionName))
 			var urn = t.CreateServiceURN(arn)
 
-			modules.SpanBuilder(
+			//  modules.SpanBuilder(
+			//  	span,
+			//  	"consumer",
+			//  	"lambda",
+			//  	awsOperation,
+			//  	urn,
+			//  	arn,
+			//  )
+
+			modules.OpenTelemetrySpanBuilder(
 				span,
 				"consumer",
-				"lambda",
 				awsOperation,
+				"lambda",
+				"Lambda Function",
+				"Serverless",
+				"test-eu-west-1",
 				urn,
 				arn,
 			)
