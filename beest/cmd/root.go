@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	ScenariosPath = "./scenarios.yml"
+	ScenariosPath = "/go/src/app/scenarios.yml"
 
 	RunIdFlag          = "run-id"
 	AssumeYesFlag      = "assume-yes"

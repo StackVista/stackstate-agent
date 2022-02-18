@@ -24,6 +24,6 @@ func init() {
 	var err error
 	Cwd, err = os.Getwd()
 	if err != nil {
-		log.Fatalf("Error while retrieving cwd: %s", err)
+		log.Fatalf("Error retrieving cwd: %s", err)
 	}
 }
