@@ -1019,7 +1019,7 @@ func TestOtelHTTPInstrumentationChildren(t *testing.T) {
 }
 
 func TestOtelAwsInstrumentationGetAccountID(t *testing.T) {
-	noAccountId := v1.ResourceSpans{
+	noAccountID := v1.ResourceSpans{
 		InstrumentationLibrarySpans: []*v1.InstrumentationLibrarySpans{
 			{
 				InstrumentationLibrary: &v11.InstrumentationLibrary{
@@ -1059,7 +1059,7 @@ func TestOtelAwsInstrumentationGetAccountID(t *testing.T) {
 		},
 	}
 
-	accountId := v1.ResourceSpans{
+	accountID := v1.ResourceSpans{
 		InstrumentationLibrarySpans: []*v1.InstrumentationLibrarySpans{
 			{
 				InstrumentationLibrary: &v11.InstrumentationLibrary{
@@ -1107,14 +1107,14 @@ func TestOtelAwsInstrumentationGetAccountID(t *testing.T) {
 		},
 	}
 
-	assert.Nil(t, otelAwsInstrumentationGetAccountID(&noAccountId), "Should not be able to extract the account id from aws-lambda instrumentation with no id")
-	assert.Equal(t, *otelAwsInstrumentationGetAccountID(&accountId), "91234567890", "Should be able to extract the account id from aws-lambda instrumentation")
+	assert.Nil(t, otelAwsInstrumentationGetAccountID(&noAccountID), "Should not be able to extract the account id from aws-lambda instrumentation with no id")
+	assert.Equal(t, *otelAwsInstrumentationGetAccountID(&accountID), "91234567890", "Should be able to extract the account id from aws-lambda instrumentation")
 }
 
 func TestOtelExtractIds(t *testing.T) {
-	traceId := "YZ0T8B2Ll8IIzMv3EfFIqQ=="
-	spanId := "Y3OrG+/srMM="
-	parentSpanId := "RK3KTmkP93g="
+	traceID := "YZ0T8B2Ll8IIzMv3EfFIqQ=="
+	spanID := "Y3OrG+/srMM="
+	parentSpanID := "RK3KTmkP93g="
 
 	resourceSpan := v1.ResourceSpans{
 		InstrumentationLibrarySpans: []*v1.InstrumentationLibrarySpans{
@@ -1125,9 +1125,9 @@ func TestOtelExtractIds(t *testing.T) {
 				},
 				Spans: []*v1.Span{
 					{
-						TraceId:           []byte(traceId),
-						SpanId:            []byte(spanId),
-						ParentSpanId:      []byte(parentSpanId),
+						TraceId:           []byte(traceID),
+						SpanId:            []byte(spanID),
+						ParentSpanId:      []byte(parentSpanID),
 						Name:              "nn-observability-stack-dev-EntryLambdaToSQS",
 						Kind:              2,
 						StartTimeUnixNano: 1637684210732307968,
@@ -1162,16 +1162,16 @@ func TestOtelExtractIds(t *testing.T) {
 	otelExtractIds(selectedSpan, resourceSpan.InstrumentationLibrarySpans[0], &captureSpan)
 
 	assert.Equal(t, &pb.Span{
-		TraceID:  *convertStringToUint64(traceId),
-		ParentID: *convertStringToUint64(parentSpanId),
-		SpanID:   *convertStringToUint64(spanId),
+		TraceID:  *convertStringToUint64(traceID),
+		ParentID: *convertStringToUint64(parentSpanID),
+		SpanID:   *convertStringToUint64(spanID),
 	}, &captureSpan, "Extract ids from Open Telemetry span, convert to a uint64 and push into the main span")
 }
 
 func TestOtelExtractIdsMainLambda(t *testing.T) {
-	traceId := "YZ0T8B2Ll8IIzMv3EfFIqQ=="
-	spanId := "Y3OrG+/srMM="
-	parentSpanId := "RK3KTmkP93g="
+	traceID := "YZ0T8B2Ll8IIzMv3EfFIqQ=="
+	spanID := "Y3OrG+/srMM="
+	parentSpanID := "RK3KTmkP93g="
 
 	resourceSpan := v1.ResourceSpans{
 		InstrumentationLibrarySpans: []*v1.InstrumentationLibrarySpans{
@@ -1182,9 +1182,9 @@ func TestOtelExtractIdsMainLambda(t *testing.T) {
 				},
 				Spans: []*v1.Span{
 					{
-						TraceId:           []byte(traceId),
-						SpanId:            []byte(spanId),
-						ParentSpanId:      []byte(parentSpanId),
+						TraceId:           []byte(traceID),
+						SpanId:            []byte(spanID),
+						ParentSpanId:      []byte(parentSpanID),
 						Name:              "nn-observability-stack-dev-EntryLambdaToSQS",
 						Kind:              2,
 						StartTimeUnixNano: 1637684210732307968,
@@ -1219,7 +1219,7 @@ func TestOtelExtractIdsMainLambda(t *testing.T) {
 	otelExtractIds(selectedSpan, resourceSpan.InstrumentationLibrarySpans[0], &captureSpan)
 
 	assert.Equal(t, &pb.Span{
-		TraceID: *convertStringToUint64(traceId),
-		SpanID:  *convertStringToUint64(spanId),
+		TraceID: *convertStringToUint64(traceID),
+		SpanID:  *convertStringToUint64(spanID),
 	}, &captureSpan, "Extract ids from Open Telemetry span, convert to a uint64 and push into the main span. The main lambda should not have a parent")
 }
