@@ -437,10 +437,13 @@ func mapOtelTraces(openTelemetryTraces openTelemetryTrace.ExportTraceServiceRequ
 				var meta = &map[string]string{
 					"instrumentation_library": instrumentationLibrarySpan.InstrumentationLibrary.Name,
 					"source":                  OpenTelemetrySource,
-					"aws.account.id":          *awsAccountID,
 				}
 
-				otelExtractAndFormatAttributes(*meta, instrumentationSpan.Attributes)
+				if awsAccountID != nil {
+					(*meta)["aws.account.id"] = *awsAccountID
+				}
+
+				otelExtractAndFormatAttributes(meta, instrumentationSpan.Attributes)
 
 				openTelemetrySpan := pb.Span{
 					Name:     instrumentationSpan.Name,
@@ -578,26 +581,26 @@ func otelHTTPInstrumentationDetermineErrorState(span *pb.Span, childrenSpans *[]
 // [STS]
 // otelExtractAndFormatAttributes Extract data from the otel protobuf meta object
 // Apply the data into the metaobject for traces
-func otelExtractAndFormatAttributes(meta map[string]string, attributes []*v1.KeyValue) {
+func otelExtractAndFormatAttributes(meta *map[string]string, attributes []*v1.KeyValue) {
 	for _, attribute := range attributes {
 		attributeValue := attribute.Value.GetValue()
 
 		switch attributeValue.(type) {
 		case *v1.AnyValue_StringValue:
 			var stringValue = attributeValue.(*v1.AnyValue_StringValue).StringValue
-			meta[attribute.Key] = stringValue
+			(*meta)[attribute.Key] = stringValue
 
 		case *v1.AnyValue_BoolValue:
 			var boolValue = attributeValue.(*v1.AnyValue_BoolValue).BoolValue
-			meta[attribute.Key] = strconv.FormatBool(boolValue)
+			(*meta)[attribute.Key] = strconv.FormatBool(boolValue)
 
 		case *v1.AnyValue_IntValue:
 			var intValue = attributeValue.(*v1.AnyValue_IntValue).IntValue
-			meta[attribute.Key] = strconv.FormatInt(intValue, 10)
+			(*meta)[attribute.Key] = strconv.FormatInt(intValue, 10)
 
 		case *v1.AnyValue_DoubleValue:
 			var doubleValue = attributeValue.(*v1.AnyValue_DoubleValue).DoubleValue
-			meta[attribute.Key] = fmt.Sprintf("%f", doubleValue)
+			(*meta)[attribute.Key] = fmt.Sprintf("%f", doubleValue)
 
 		default:
 			log.Warnf("Open Telemetry, Unable to map the value '%v' of type '%T' into the meta struct.", attribute, attribute)
