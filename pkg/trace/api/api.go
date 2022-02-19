@@ -457,7 +457,7 @@ func mapOtelTraces(openTelemetryTraces openTelemetryTrace.ExportTraceServiceRequ
 				}
 
 				otelExtractIds(instrumentationSpan, instrumentationLibrarySpan, &openTelemetrySpan)
-				otelHTTPInstrumentationDetermineErrorState(&openTelemetrySpan, httpSpanChildren)
+				otelHTTPInstrumentationDetermineErrorState(&openTelemetrySpan, *httpSpanChildren)
 
 				singleTrace = append(singleTrace, &openTelemetrySpan)
 			}
@@ -546,9 +546,9 @@ func otelHTTPInstrumentationChildren(span *v12.Span, allResourceSpans []*v12.Ins
 // otelHTTPInstrumentationDetermineErrorState Determine if the http-instrumentation contains error
 // If it does it will be mapped into the http and error states for the span
 // TODO: Unit test
-func otelHTTPInstrumentationDetermineErrorState(span *pb.Span, childrenSpans *[]v12.Span) {
-	if childrenSpans != nil && len(*childrenSpans) > 0 {
-		for _, childSpan := range *childrenSpans {
+func otelHTTPInstrumentationDetermineErrorState(span *pb.Span, childrenSpans []v12.Span) {
+	if childrenSpans != nil && len(childrenSpans) > 0 {
+		for _, childSpan := range childrenSpans {
 			var statusCode *int64
 			var statusText *string
 
@@ -567,14 +567,15 @@ func otelHTTPInstrumentationDetermineErrorState(span *pb.Span, childrenSpans *[]
 				}
 			}
 
-			if *statusCode >= 400 && *statusCode < 500 {
+			if statusCode != nil && *statusCode >= 400 {
 				span.Error = int32(*statusCode)
-				span.Meta["span.errorDescription"] = *statusText
-				span.Metrics["http.status_code"] = float64(*statusCode)
-			} else if *statusCode > 500 {
-				span.Error = int32(*statusCode)
-				span.Meta["span.errorDescription"] = *statusText
-				span.Metrics["http.status_code"] = float64(*statusCode)
+				span.Metrics = map[string]float64{
+					"http.status_code": float64(*statusCode),
+				}
+
+				if statusText != nil {
+					span.Meta["span.errorDescription"] = *statusText
+				}
 			}
 		}
 	}

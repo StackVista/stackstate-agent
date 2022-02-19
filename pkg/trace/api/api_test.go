@@ -1168,6 +1168,118 @@ func TestOtelExtractIds(t *testing.T) {
 	}, &captureSpan, "Extract ids from Open Telemetry span, convert to a uint64 and push into the main span")
 }
 
+func TestOtelHTTPInstrumentationDetermineErrorState(t *testing.T) {
+	traceID := "YZ0T8B2Ll8IIzMv3EfFIqQ=="
+	spanID := "Y3OrG+/srMM="
+	parentSpanID := "RK3KTmkP93g="
+
+	spanStatusCode404 := []v1.Span{
+		{
+			TraceId:           []byte(traceID),
+			SpanId:            []byte(spanID),
+			ParentSpanId:      []byte(parentSpanID),
+			Name:              "ENTRY_A_SQS_QUEUE send",
+			Kind:              4,
+			StartTimeUnixNano: 1637684210743088640,
+			EndTimeUnixNano:   1637684210827280128,
+			Attributes: []*v11.KeyValue{
+				{
+					Key: "http.status_code",
+					Value: &v11.AnyValue{
+						Value: &v11.AnyValue_IntValue{
+							IntValue: 404,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	spanStatusCode200 := []v1.Span{
+		{
+			TraceId:           []byte(traceID),
+			SpanId:            []byte(spanID),
+			ParentSpanId:      []byte(parentSpanID),
+			Name:              "ENTRY_A_SQS_QUEUE send",
+			Kind:              4,
+			StartTimeUnixNano: 1637684210743088640,
+			EndTimeUnixNano:   1637684210827280128,
+			Attributes: []*v11.KeyValue{
+				{
+					Key: "http.status_code",
+					Value: &v11.AnyValue{
+						Value: &v11.AnyValue_IntValue{
+							IntValue: 200,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	spanNoStatusCode := []v1.Span{
+		{
+			TraceId:           []byte(traceID),
+			SpanId:            []byte(spanID),
+			ParentSpanId:      []byte(parentSpanID),
+			Name:              "ENTRY_A_SQS_QUEUE send",
+			Kind:              4,
+			StartTimeUnixNano: 1637684210743088640,
+			EndTimeUnixNano:   1637684210827280128,
+			Attributes:        []*v11.KeyValue{},
+		},
+	}
+
+	spanStatusTextAndStatusCode404 := []v1.Span{
+		{
+			TraceId:           []byte(traceID),
+			SpanId:            []byte(spanID),
+			ParentSpanId:      []byte(parentSpanID),
+			Name:              "ENTRY_A_SQS_QUEUE send",
+			Kind:              4,
+			StartTimeUnixNano: 1637684210743088640,
+			EndTimeUnixNano:   1637684210827280128,
+			Attributes: []*v11.KeyValue{
+				{
+					Key: "http.status_code",
+					Value: &v11.AnyValue{
+						Value: &v11.AnyValue_IntValue{
+							IntValue: 404,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	spanStatusCode200Capture := pb.Span{}
+	spanStatusCode404Capture := pb.Span{}
+	spanStatusCodeEmptyCapture := pb.Span{}
+	spanStatusCodeAndTextCapture := pb.Span{}
+
+	otelHTTPInstrumentationDetermineErrorState(&spanStatusCode200Capture, spanStatusCode200)
+	assert.Equal(t, pb.Span{}, spanStatusCode200Capture, "200 http status should not map any errors")
+
+	otelHTTPInstrumentationDetermineErrorState(&spanStatusCode404Capture, spanStatusCode404)
+	assert.Equal(t, pb.Span{
+		Error: 404,
+		Metrics: map[string]float64{
+			"http.status_code": float64(404),
+		},
+	}, spanStatusCode404Capture, "404 http status with no status text should map the correct errors")
+
+	otelHTTPInstrumentationDetermineErrorState(&spanStatusCodeEmptyCapture, spanNoStatusCode)
+	assert.Equal(t, pb.Span{}, spanStatusCodeEmptyCapture, "If there is no status code then nothing should be mapped")
+
+	otelHTTPInstrumentationDetermineErrorState(&spanStatusCodeAndTextCapture, spanStatusTextAndStatusCode404)
+	assert.Equal(t, pb.Span{
+		Error: 404,
+		Metrics: map[string]float64{
+			"http.status_code": float64(404),
+		},
+	}, spanStatusCodeAndTextCapture, "404 http status with status text should map the correct errors and status text to the meta")
+}
+
 func TestOtelExtractIdsMainLambda(t *testing.T) {
 	traceID := "YZ0T8B2Ll8IIzMv3EfFIqQ=="
 	spanID := "Y3OrG+/srMM="
