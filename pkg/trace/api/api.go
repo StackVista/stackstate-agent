@@ -382,6 +382,7 @@ func (r *HTTPReceiver) decodeOpenTelemetry(req *http.Request) (*openTelemetryTra
 
 // [sts]
 // convertStringToUint64 Current solution for convert a string that contains numbers and chars into an integer
+// TODO: Unit test
 func convertStringToUint64(input string) *uint64 {
 	// Int Ascii values representing the string values
 	runes := []rune(input)
@@ -501,7 +502,7 @@ func otelExtractIds(instrumentationSpan *v12.Span, instrumentationLibrarySpan *v
 // library this is the root entry for the main lambda calling the script
 // This is not a requirement and will only trigger with the aws-lambda library
 func otelAwsInstrumentationGetAccountID(resourceSpan *v12.ResourceSpans) *string {
-	var awsAccountID *string = nil
+	var awsAccountID *string
 
 	// Attempt to extract information from the lambda library to enhance the sdk library
 	// We need the account id for sections where it is not defined for example lambda to lambda
@@ -525,7 +526,7 @@ func otelAwsInstrumentationGetAccountID(resourceSpan *v12.ResourceSpans) *string
 // otelHTTPInstrumentationChildren Find http instrumentation. The http library will show most of the libraries
 // communication where mos libraries do this type of interaction
 func otelHTTPInstrumentationChildren(span *v12.Span, allResourceSpans []*v12.InstrumentationLibrarySpans) *[]v12.Span {
-	var relatedSpans *[]v12.Span
+	var relatedSpans *[]v12.Span = &[]v12.Span{}
 
 	for _, resourceSpan := range allResourceSpans {
 		for _, childSpan := range resourceSpan.Spans {
@@ -544,6 +545,7 @@ func otelHTTPInstrumentationChildren(span *v12.Span, allResourceSpans []*v12.Ins
 // [STS]
 // otelHTTPInstrumentationDetermineErrorState Determine if the http-instrumentation contains error
 // If it does it will be mapped into the http and error states for the span
+// TODO: Unit test
 func otelHTTPInstrumentationDetermineErrorState(span *pb.Span, childrenSpans *[]v12.Span) {
 	if childrenSpans != nil && len(*childrenSpans) > 0 {
 		for _, childSpan := range *childrenSpans {
@@ -581,6 +583,7 @@ func otelHTTPInstrumentationDetermineErrorState(span *pb.Span, childrenSpans *[]
 // [STS]
 // otelExtractAndFormatAttributes Extract data from the otel protobuf meta object
 // Apply the data into the metaobject for traces
+// TODO: Unit test
 func otelExtractAndFormatAttributes(meta *map[string]string, attributes []*v1.KeyValue) {
 	for _, attribute := range attributes {
 		attributeValue := attribute.Value.GetValue()

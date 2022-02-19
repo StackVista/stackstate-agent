@@ -928,3 +928,298 @@ func msgpTraces(t *testing.T, traces pb.Traces) []byte {
 	}
 	return body.Bytes()
 }
+
+func TestOtelHTTPInstrumentationChildren(t *testing.T) {
+	span := v1.Span{
+		TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
+		SpanId:            []byte("yjXK+2eLD+s="),
+		ParentSpanId:      []byte("Y3OrG+/srMM="),
+		Name:              "ENTRY_A_SQS_QUEUE send",
+		Kind:              4,
+		StartTimeUnixNano: 1637684210743088640,
+		EndTimeUnixNano:   1637684210827280128,
+		Attributes: []*v11.KeyValue{
+			{
+				Key: "aws.operation",
+				Value: &v11.AnyValue{
+					Value: &v11.AnyValue_StringValue{
+						StringValue: "sendMessage",
+					},
+				},
+			},
+			{
+				Key: "messaging.url",
+				Value: &v11.AnyValue{
+					Value: &v11.AnyValue_StringValue{
+						StringValue: "https://sqs.eu-west-1.amazonaws.com/120431062118/ENTRY_A_SQS_QUEUE",
+					},
+				},
+			},
+		},
+	}
+
+	httpSpan := v1.Span{
+		TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
+		SpanId:            []byte("edsf+2eLD+s="),
+		ParentSpanId:      []byte("yjXK+2eLD+s="),
+		Name:              "ENTRY_A_SQS_QUEUE send",
+		Kind:              4,
+		StartTimeUnixNano: 1637684210743088640,
+		EndTimeUnixNano:   1637684210827280128,
+		Attributes: []*v11.KeyValue{
+			{
+				Key: "aws.operation",
+				Value: &v11.AnyValue{
+					Value: &v11.AnyValue_StringValue{
+						StringValue: "sendMessage",
+					},
+				},
+			},
+			{
+				Key: "messaging.url",
+				Value: &v11.AnyValue{
+					Value: &v11.AnyValue_StringValue{
+						StringValue: "https://sqs.eu-west-1.amazonaws.com/120431062118/ENTRY_A_SQS_QUEUE",
+					},
+				},
+			},
+		},
+	}
+
+	trace := []*v1.InstrumentationLibrarySpans{
+		{
+			InstrumentationLibrary: &v11.InstrumentationLibrary{
+				Name:    "@opentelemetry/instrumentation-aws-sdk",
+				Version: "0.1.0",
+			},
+			Spans: []*v1.Span{
+				&span,
+			},
+		},
+		{
+			InstrumentationLibrary: &v11.InstrumentationLibrary{
+				Name:    "@opentelemetry/instrumentation-http",
+				Version: "0.1.0",
+			},
+			Spans: []*v1.Span{
+				&httpSpan,
+			},
+		},
+	}
+
+	relatedSpans := otelHTTPInstrumentationChildren(&span, trace)
+
+	assert.Equal(t, relatedSpans, &[]v1.Span{
+		httpSpan,
+	}, "The correct HTTP Span relationships is found for the instrumentation-aws-sdk span id")
+
+	noRelatedSpans := otelHTTPInstrumentationChildren(&span, []*v1.InstrumentationLibrarySpans{})
+
+	assert.Equal(t, noRelatedSpans, &[]v1.Span{}, "No relationship should be mapped if nothing is found")
+}
+
+func TestOtelAwsInstrumentationGetAccountID(t *testing.T) {
+	noAccountId := v1.ResourceSpans{
+		InstrumentationLibrarySpans: []*v1.InstrumentationLibrarySpans{
+			{
+				InstrumentationLibrary: &v11.InstrumentationLibrary{
+					Name:    "@opentelemetry/instrumentation-aws-lambda",
+					Version: "0.27.0",
+				},
+				Spans: []*v1.Span{
+					{
+						TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
+						SpanId:            []byte("Y3OrG+/srMM="),
+						ParentSpanId:      []byte("RK3KTmkP93g="),
+						Name:              "nn-observability-stack-dev-EntryLambdaToSQS",
+						Kind:              2,
+						StartTimeUnixNano: 1637684210732307968,
+						EndTimeUnixNano:   1637684210827808768,
+						Attributes: []*v11.KeyValue{
+							{
+								Key: "faas.execution",
+								Value: &v11.AnyValue{
+									Value: &v11.AnyValue_StringValue{
+										StringValue: "2ef7e384-cda2-46cc-bcf7-2268671e2cf5",
+									},
+								},
+							},
+							{
+								Key: "faas.id",
+								Value: &v11.AnyValue{
+									Value: &v11.AnyValue_StringValue{
+										StringValue: "arn:aws:lambda:eu-west-1:120431062118:function:nn-observability-stack-dev-EntryLambdaToSQS",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	accountId := v1.ResourceSpans{
+		InstrumentationLibrarySpans: []*v1.InstrumentationLibrarySpans{
+			{
+				InstrumentationLibrary: &v11.InstrumentationLibrary{
+					Name:    "@opentelemetry/instrumentation-aws-lambda",
+					Version: "0.27.0",
+				},
+				Spans: []*v1.Span{
+					{
+						TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
+						SpanId:            []byte("Y3OrG+/srMM="),
+						ParentSpanId:      []byte("RK3KTmkP93g="),
+						Name:              "nn-observability-stack-dev-EntryLambdaToSQS",
+						Kind:              2,
+						StartTimeUnixNano: 1637684210732307968,
+						EndTimeUnixNano:   1637684210827808768,
+						Attributes: []*v11.KeyValue{
+							{
+								Key: "faas.execution",
+								Value: &v11.AnyValue{
+									Value: &v11.AnyValue_StringValue{
+										StringValue: "2ef7e384-cda2-46cc-bcf7-2268671e2cf5",
+									},
+								},
+							},
+							{
+								Key: "faas.id",
+								Value: &v11.AnyValue{
+									Value: &v11.AnyValue_StringValue{
+										StringValue: "arn:aws:lambda:eu-west-1:120431062118:function:nn-observability-stack-dev-EntryLambdaToSQS",
+									},
+								},
+							},
+							{
+								Key: "cloud.account.id",
+								Value: &v11.AnyValue{
+									Value: &v11.AnyValue_StringValue{
+										StringValue: "91234567890",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	assert.Nil(t, otelAwsInstrumentationGetAccountID(&noAccountId), "Should not be able to extract the account id from aws-lambda instrumentation with no id")
+	assert.Equal(t, *otelAwsInstrumentationGetAccountID(&accountId), "91234567890", "Should be able to extract the account id from aws-lambda instrumentation")
+}
+
+func TestOtelExtractIds(t *testing.T) {
+	traceId := "YZ0T8B2Ll8IIzMv3EfFIqQ=="
+	spanId := "Y3OrG+/srMM="
+	parentSpanId := "RK3KTmkP93g="
+
+	resourceSpan := v1.ResourceSpans{
+		InstrumentationLibrarySpans: []*v1.InstrumentationLibrarySpans{
+			{
+				InstrumentationLibrary: &v11.InstrumentationLibrary{
+					Name:    "@opentelemetry/instrumentation-aws-sdk",
+					Version: "0.27.0",
+				},
+				Spans: []*v1.Span{
+					{
+						TraceId:           []byte(traceId),
+						SpanId:            []byte(spanId),
+						ParentSpanId:      []byte(parentSpanId),
+						Name:              "nn-observability-stack-dev-EntryLambdaToSQS",
+						Kind:              2,
+						StartTimeUnixNano: 1637684210732307968,
+						EndTimeUnixNano:   1637684210827808768,
+						Attributes: []*v11.KeyValue{
+							{
+								Key: "faas.execution",
+								Value: &v11.AnyValue{
+									Value: &v11.AnyValue_StringValue{
+										StringValue: "2ef7e384-cda2-46cc-bcf7-2268671e2cf5",
+									},
+								},
+							},
+							{
+								Key: "faas.id",
+								Value: &v11.AnyValue{
+									Value: &v11.AnyValue_StringValue{
+										StringValue: "arn:aws:lambda:eu-west-1:120431062118:function:nn-observability-stack-dev-EntryLambdaToSQS",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	captureSpan := pb.Span{}
+	selectedSpan := resourceSpan.InstrumentationLibrarySpans[0].Spans[0]
+
+	otelExtractIds(selectedSpan, resourceSpan.InstrumentationLibrarySpans[0], &captureSpan)
+
+	assert.Equal(t, &pb.Span{
+		TraceID:  *convertStringToUint64(traceId),
+		ParentID: *convertStringToUint64(parentSpanId),
+		SpanID:   *convertStringToUint64(spanId),
+	}, &captureSpan, "Extract ids from Open Telemetry span, convert to a uint64 and push into the main span")
+}
+
+func TestOtelExtractIdsMainLambda(t *testing.T) {
+	traceId := "YZ0T8B2Ll8IIzMv3EfFIqQ=="
+	spanId := "Y3OrG+/srMM="
+	parentSpanId := "RK3KTmkP93g="
+
+	resourceSpan := v1.ResourceSpans{
+		InstrumentationLibrarySpans: []*v1.InstrumentationLibrarySpans{
+			{
+				InstrumentationLibrary: &v11.InstrumentationLibrary{
+					Name:    "@opentelemetry/instrumentation-aws-lambda",
+					Version: "0.27.0",
+				},
+				Spans: []*v1.Span{
+					{
+						TraceId:           []byte(traceId),
+						SpanId:            []byte(spanId),
+						ParentSpanId:      []byte(parentSpanId),
+						Name:              "nn-observability-stack-dev-EntryLambdaToSQS",
+						Kind:              2,
+						StartTimeUnixNano: 1637684210732307968,
+						EndTimeUnixNano:   1637684210827808768,
+						Attributes: []*v11.KeyValue{
+							{
+								Key: "faas.execution",
+								Value: &v11.AnyValue{
+									Value: &v11.AnyValue_StringValue{
+										StringValue: "2ef7e384-cda2-46cc-bcf7-2268671e2cf5",
+									},
+								},
+							},
+							{
+								Key: "faas.id",
+								Value: &v11.AnyValue{
+									Value: &v11.AnyValue_StringValue{
+										StringValue: "arn:aws:lambda:eu-west-1:120431062118:function:nn-observability-stack-dev-EntryLambdaToSQS",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	captureSpan := pb.Span{}
+	selectedSpan := resourceSpan.InstrumentationLibrarySpans[0].Spans[0]
+
+	otelExtractIds(selectedSpan, resourceSpan.InstrumentationLibrarySpans[0], &captureSpan)
+
+	assert.Equal(t, &pb.Span{
+		TraceID: *convertStringToUint64(traceId),
+		SpanID:  *convertStringToUint64(spanId),
+	}, &captureSpan, "Extract ids from Open Telemetry span, convert to a uint64 and push into the main span. The main lambda should not have a parent")
+}
