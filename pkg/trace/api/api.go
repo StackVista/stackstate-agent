@@ -20,9 +20,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/metrics/timing"
 	"github.com/StackVista/stackstate-agent/pkg/trace/osutil"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
-	v1 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/common/v1"
 	openTelemetryTrace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/collector"
-	v12 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/v1"
 	"github.com/StackVista/stackstate-agent/pkg/trace/sampler"
 	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -418,23 +416,21 @@ func convertStringToUint64(input string) *uint64 {
 // OpenTelemetrySource Source Identifier for Open Telemetry
 const OpenTelemetrySource = "openTelemetry"
 
-// [sts]
+// [STS]
 // mapOtelTraces Converts the Open Telemetry structure into the accepted Traces structure
 func mapOtelTraces(openTelemetryTraces openTelemetryTrace.ExportTraceServiceRequest) pb.Traces {
 	var traces = pb.Traces{}
 
 	for _, resourceSpan := range openTelemetryTraces.ResourceSpans {
-		// It is fine if this is not found the lower level script should handle
-		awsAccountID := otelAwsInstrumentationGetAccountID(resourceSpan)
+		awsAccountID := lambdaInstrumentationGetAccountID(resourceSpan)
+		remappedInstrumentationLibrarySpans := determineInstrumentationSuccessFromHttp(resourceSpan.InstrumentationLibrarySpans)
 
-		for _, instrumentationLibrarySpan := range resourceSpan.InstrumentationLibrarySpans {
+		for _, instrumentationLibrarySpan := range remappedInstrumentationLibrarySpans {
 			// When we reach this point then it is safe to start building a trace
 			var singleTrace = pb.Trace{}
 
 			// Loop through the instrumentation's library spans
 			for _, instrumentationSpan := range instrumentationLibrarySpan.Spans {
-				httpSpanChildren := otelHTTPInstrumentationChildren(instrumentationSpan, resourceSpan.InstrumentationLibrarySpans)
-
 				var meta = &map[string]string{
 					"instrumentation_library": instrumentationLibrarySpan.InstrumentationLibrary.Name,
 					"source":                  OpenTelemetrySource,
@@ -443,8 +439,6 @@ func mapOtelTraces(openTelemetryTraces openTelemetryTrace.ExportTraceServiceRequ
 				if awsAccountID != nil {
 					(*meta)["aws.account.id"] = *awsAccountID
 				}
-
-				otelExtractAndFormatAttributes(meta, instrumentationSpan.Attributes)
 
 				openTelemetrySpan := pb.Span{
 					Name:     instrumentationSpan.Name,
@@ -456,8 +450,9 @@ func mapOtelTraces(openTelemetryTraces openTelemetryTrace.ExportTraceServiceRequ
 					Type:     "openTelemetry",
 				}
 
-				otelExtractIds(instrumentationSpan, instrumentationLibrarySpan, &openTelemetrySpan)
-				otelHTTPInstrumentationDetermineErrorState(&openTelemetrySpan, *httpSpanChildren)
+				remapAttributeArrayToDict(meta, instrumentationSpan.Attributes)
+				convertIdentifiersToStsIdentifiers(instrumentationSpan, instrumentationLibrarySpan, &openTelemetrySpan)
+				mapInstrumentationErrors(&openTelemetrySpan)
 
 				singleTrace = append(singleTrace, &openTelemetrySpan)
 			}
@@ -467,149 +462,6 @@ func mapOtelTraces(openTelemetryTraces openTelemetryTrace.ExportTraceServiceRequ
 	}
 
 	return traces
-}
-
-// [STS]
-// otelExtractIds extract all ids from the protobuf and map them into the span
-func otelExtractIds(instrumentationSpan *v12.Span, instrumentationLibrarySpan *v12.InstrumentationLibrarySpans, openTelemetrySpan *pb.Span) {
-	if instrumentationSpan.TraceId != nil && instrumentationSpan.TraceId[:] != nil && len(string(instrumentationSpan.TraceId[:])) > 0 {
-		traceID := convertStringToUint64(string(instrumentationSpan.TraceId[:]))
-		if traceID != nil {
-			openTelemetrySpan.TraceID = *traceID
-		}
-	}
-
-	if instrumentationSpan.SpanId != nil && instrumentationSpan.SpanId[:] != nil && len(string(instrumentationSpan.SpanId[:])) > 0 {
-		spanID := convertStringToUint64(string(instrumentationSpan.SpanId[:]))
-		if spanID != nil {
-			openTelemetrySpan.SpanID = *spanID
-		}
-	}
-
-	if instrumentationSpan.ParentSpanId != nil &&
-		instrumentationSpan.ParentSpanId[:] != nil &&
-		len(string(instrumentationSpan.ParentSpanId[:])) > 0 &&
-		instrumentationLibrarySpan.InstrumentationLibrary.Name != "@opentelemetry/instrumentation-aws-lambda" {
-		parentSpanID := convertStringToUint64(string(instrumentationSpan.ParentSpanId[:]))
-		if parentSpanID != nil {
-			openTelemetrySpan.ParentID = *parentSpanID
-		}
-	}
-}
-
-// [STS]
-// otelAwsInstrumentationGetAccountID We attempt to extract the aws account id from the instrumentation-aws-lambda
-// library this is the root entry for the main lambda calling the script
-// This is not a requirement and will only trigger with the aws-lambda library
-func otelAwsInstrumentationGetAccountID(resourceSpan *v12.ResourceSpans) *string {
-	var awsAccountID *string
-
-	// Attempt to extract information from the lambda library to enhance the sdk library
-	// We need the account id for sections where it is not defined for example lambda to lambda
-	for _, library := range resourceSpan.InstrumentationLibrarySpans {
-		if library.InstrumentationLibrary.Name == "@opentelemetry/instrumentation-aws-lambda" {
-			for _, span := range library.Spans {
-				for _, attribute := range span.Attributes {
-					if attribute.Key == "cloud.account.id" {
-						var accountID = attribute.Value.GetStringValue()
-						awsAccountID = &accountID
-					}
-				}
-			}
-		}
-	}
-
-	return awsAccountID
-}
-
-// [STS]
-// otelHTTPInstrumentationChildren Find http instrumentation. The http library will show most of the libraries
-// communication where mos libraries do this type of interaction
-func otelHTTPInstrumentationChildren(span *v12.Span, allResourceSpans []*v12.InstrumentationLibrarySpans) *[]v12.Span {
-	var relatedSpans *[]v12.Span = &[]v12.Span{}
-
-	for _, resourceSpan := range allResourceSpans {
-		for _, childSpan := range resourceSpan.Spans {
-			// We only care about http children to determine what the process task ended with
-			if resourceSpan.InstrumentationLibrary.Name == "@opentelemetry/instrumentation-http" &&
-				childSpan.ParentSpanId != nil && childSpan.SpanId != nil &&
-				string(childSpan.ParentSpanId)[:] == string(span.SpanId)[:] {
-				*relatedSpans = append(*relatedSpans, *childSpan)
-			}
-		}
-	}
-
-	return relatedSpans
-}
-
-// [STS]
-// otelHTTPInstrumentationDetermineErrorState Determine if the http-instrumentation contains error
-// If it does it will be mapped into the http and error states for the span
-// TODO: Unit test
-func otelHTTPInstrumentationDetermineErrorState(span *pb.Span, childrenSpans []v12.Span) {
-	if childrenSpans != nil && len(childrenSpans) > 0 {
-		for _, childSpan := range childrenSpans {
-			var statusCode *int64
-			var statusText *string
-
-			// There is supposed to be only
-			for _, attribute := range childSpan.Attributes {
-				switch attribute.Key {
-				case "http.status_code":
-					value := attribute.Value.GetIntValue()
-					statusCode = &value
-					break
-
-				case "http.status_text":
-					value := attribute.Value.GetStringValue()
-					statusText = &value
-					break
-				}
-			}
-
-			if statusCode != nil && *statusCode >= 400 {
-				span.Error = int32(*statusCode)
-				span.Metrics = map[string]float64{
-					"http.status_code": float64(*statusCode),
-				}
-
-				if statusText != nil {
-					span.Meta["span.errorDescription"] = *statusText
-				}
-			}
-		}
-	}
-}
-
-// [STS]
-// otelExtractAndFormatAttributes Extract data from the otel protobuf meta object
-// Apply the data into the metaobject for traces
-// TODO: Unit test
-func otelExtractAndFormatAttributes(meta *map[string]string, attributes []*v1.KeyValue) {
-	for _, attribute := range attributes {
-		attributeValue := attribute.Value.GetValue()
-
-		switch attributeValue.(type) {
-		case *v1.AnyValue_StringValue:
-			var stringValue = attributeValue.(*v1.AnyValue_StringValue).StringValue
-			(*meta)[attribute.Key] = stringValue
-
-		case *v1.AnyValue_BoolValue:
-			var boolValue = attributeValue.(*v1.AnyValue_BoolValue).BoolValue
-			(*meta)[attribute.Key] = strconv.FormatBool(boolValue)
-
-		case *v1.AnyValue_IntValue:
-			var intValue = attributeValue.(*v1.AnyValue_IntValue).IntValue
-			(*meta)[attribute.Key] = strconv.FormatInt(intValue, 10)
-
-		case *v1.AnyValue_DoubleValue:
-			var doubleValue = attributeValue.(*v1.AnyValue_DoubleValue).DoubleValue
-			(*meta)[attribute.Key] = fmt.Sprintf("%f", doubleValue)
-
-		default:
-			log.Warnf("Open Telemetry, Unable to map the value '%v' of type '%T' into the meta struct.", attribute, attribute)
-		}
-	}
 }
 
 func (r *HTTPReceiver) replyOK(v Version, w http.ResponseWriter) {
