@@ -342,7 +342,7 @@ func TestConvertOtelIdentifiersToStsIdentifiers(t *testing.T) {
 	captureSpan := pb.Span{}
 	selectedSpan := resourceSpan.InstrumentationLibrarySpans[0].Spans[0]
 
-	extractTraceSpanAndParentSpanId(selectedSpan, *resourceSpan.InstrumentationLibrarySpans[0], &captureSpan)
+	extractTraceSpanAndParentSpanID(selectedSpan, *resourceSpan.InstrumentationLibrarySpans[0], &captureSpan)
 
 	assert.Equal(t, &pb.Span{
 		TraceID:  *convertStringToUint64(traceID),
