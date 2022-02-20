@@ -42,11 +42,10 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 
 		// awsService, awsServiceOk := span.Meta["aws.service.api"]
 		awsRegion, awsRegionOk := span.Meta["aws.region"]
-		awsOperation, awsOperationOk := span.Meta["aws.operation"]
 		sqsEndpoint, sqsEndpointOk := span.Meta["messaging.url"]
 		sqsQueueName, sqsQueueNameOk := span.Meta["messaging.destination"]
 
-		if sqsQueueNameOk && sqsEndpointOk && awsOperationOk && awsRegionOk {
+		if sqsQueueNameOk && sqsEndpointOk && awsRegionOk {
 			sqsEndpointPieces := strings.Split(sqsEndpoint, "/") // Example Input: https://sqs.<region>.amazonaws.com/<account-id>/<queue-name>
 
 			if len(sqsEndpointPieces) >= 3 {
@@ -55,11 +54,13 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 				var arn = strings.ToLower(
 					fmt.Sprintf("https://%s.queue.amazonaws.com/%s/%s", awsRegion, accountID, sqsQueueName))
 
-				modules.SpanBuilder(
+				// aws.sqs.queue
+
+				modules.SqsSpanBuilderTesting(
 					span,
 					"consumer",
 					"sqs",
-					awsOperation,
+					"queue",
 					urn,
 					arn,
 				)
@@ -71,9 +72,6 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 
 			if !awsRegionOk {
 				_ = log.Errorf("[OTEL] [SQS]: 'aws.region' is not found in the span meta data, this value is required.")
-			}
-			if !awsOperationOk {
-				_ = log.Errorf("[OTEL] [SQS]: 'aws.operation' is not found in the span meta data, this value is required.")
 			}
 			if !sqsEndpointOk {
 				_ = log.Errorf("[OTEL] [SQS]: 'messaging.url' is not found in the span meta data, this value is required.")

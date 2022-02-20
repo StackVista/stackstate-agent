@@ -3,10 +3,349 @@ package api
 import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	v11 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/common/v1"
+	openTelemetryTrace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/collector"
 	v1 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/v1"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
+
+func TestMapOpenTelemetryTraces(t *testing.T) {
+	instrumentationAwsSdkLibrary := v1.InstrumentationLibrarySpans{
+		InstrumentationLibrary: &v11.InstrumentationLibrary{
+			Name:    "@opentelemetry/instrumentation-aws-sdk",
+			Version: "0.1.0",
+		},
+		Spans: []*v1.Span{
+			{
+				TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
+				SpanId:            []byte("12389ybsad32"),
+				ParentSpanId:      []byte("234/dsfs234=sd"),
+				Name:              "SQS Success",
+				Kind:              4,
+				StartTimeUnixNano: 1637684210743088640,
+				EndTimeUnixNano:   1637684210827280128,
+				Attributes: []*v11.KeyValue{
+					{
+						Key: "aws.operation",
+						Value: &v11.AnyValue{
+							Value: &v11.AnyValue_StringValue{
+								StringValue: "sendMessage",
+							},
+						},
+					},
+					{
+						Key: "messaging.url",
+						Value: &v11.AnyValue{
+							Value: &v11.AnyValue_StringValue{
+								StringValue: "https://sqs.eu-west-1.amazonaws.com/120431062118/ENTRY_A_SQS_QUEUE",
+							},
+						},
+					},
+				},
+			},
+			{
+				TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
+				SpanId:            []byte("sadkjnas832434"),
+				ParentSpanId:      []byte("234/dsfs234=sd"),
+				Name:              "SQS Failure",
+				Kind:              4,
+				StartTimeUnixNano: 1637684210743088640,
+				EndTimeUnixNano:   1637684210827280128,
+				Attributes: []*v11.KeyValue{
+					{
+						Key: "aws.operation",
+						Value: &v11.AnyValue{
+							Value: &v11.AnyValue_StringValue{
+								StringValue: "sendMessage",
+							},
+						},
+					},
+					{
+						Key: "messaging.url",
+						Value: &v11.AnyValue{
+							Value: &v11.AnyValue_StringValue{
+								StringValue: "https://sqs.eu-west-1.amazonaws.com/120431062118/RANDOM",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	instrumentationOtherLibrary := v1.InstrumentationLibrarySpans{
+		InstrumentationLibrary: &v11.InstrumentationLibrary{
+			Name:    "@opentelemetry/other-library",
+			Version: "0.1.0",
+		},
+		Spans: []*v1.Span{
+			{
+				TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
+				SpanId:            []byte("asdasd8324298"),
+				ParentSpanId:      []byte("234/dsfs234=sd"),
+				Name:              "Other Name",
+				Kind:              4,
+				StartTimeUnixNano: 1637684210743088640,
+				EndTimeUnixNano:   1637684210827280128,
+				Attributes: []*v11.KeyValue{
+					{
+						Key: "random.value",
+						Value: &v11.AnyValue{
+							Value: &v11.AnyValue_StringValue{
+								StringValue: "text",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	instrumentationHTTPLibrary := v1.InstrumentationLibrarySpans{
+		InstrumentationLibrary: &v11.InstrumentationLibrary{
+			Name:    "@opentelemetry/instrumentation-http",
+			Version: "0.1.0",
+		},
+		Spans: []*v1.Span{
+			{
+				TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
+				SpanId:            []byte("3423hbiusdf9a"),
+				ParentSpanId:      []byte("12389ybsad32"),
+				Name:              "HTTPS PUT",
+				Kind:              3,
+				StartTimeUnixNano: 1637684210743088640,
+				EndTimeUnixNano:   1637684210827280128,
+				Attributes: []*v11.KeyValue{
+					{
+						Key: "http.url",
+						Value: &v11.AnyValue{
+							Value: &v11.AnyValue_StringValue{
+								StringValue: "https://otel-example-nodejs-dev-s3-965323806078-eu-west-1.s3.eu-west-1.amazonaws.com/filename",
+							},
+						},
+					},
+					{
+						Key: "http.method",
+						Value: &v11.AnyValue{
+							Value: &v11.AnyValue_StringValue{
+								StringValue: "PUT",
+							},
+						},
+					},
+					{
+						Key: "http.status_code",
+						Value: &v11.AnyValue{
+							Value: &v11.AnyValue_IntValue{
+								IntValue: 200,
+							},
+						},
+					},
+					{
+						Key: "http.status_text",
+						Value: &v11.AnyValue{
+							Value: &v11.AnyValue_StringValue{
+								StringValue: "OK",
+							},
+						},
+					},
+				},
+			},
+			{
+				TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
+				SpanId:            []byte("asd234213sd"),
+				ParentSpanId:      []byte("sadkjnas832434"),
+				Name:              "HTTPS PUT",
+				Kind:              3,
+				StartTimeUnixNano: 1637684210743088640,
+				EndTimeUnixNano:   1637684210827280128,
+				Attributes: []*v11.KeyValue{
+					{
+						Key: "http.url",
+						Value: &v11.AnyValue{
+							Value: &v11.AnyValue_StringValue{
+								StringValue: "https://otel-example-nodejs-dev-s3-965323806078-eu-west-1.s3.eu-west-1.amazonaws.com/filename",
+							},
+						},
+					},
+					{
+						Key: "http.method",
+						Value: &v11.AnyValue{
+							Value: &v11.AnyValue_StringValue{
+								StringValue: "POST",
+							},
+						},
+					},
+					{
+						Key: "http.status_code",
+						Value: &v11.AnyValue{
+							Value: &v11.AnyValue_IntValue{
+								IntValue: 404,
+							},
+						},
+					},
+					{
+						Key: "http.status_text",
+						Value: &v11.AnyValue{
+							Value: &v11.AnyValue_StringValue{
+								StringValue: "NOT FOUND",
+							},
+						},
+					},
+				},
+			},
+			{
+				TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
+				SpanId:            []byte("asdkuh2349hbdasd"),
+				ParentSpanId:      []byte("234/dsfs234=sd"),
+				Name:              "HTTPS PUT",
+				Kind:              3,
+				StartTimeUnixNano: 1637684210743088640,
+				EndTimeUnixNano:   1637684210827280128,
+				Attributes: []*v11.KeyValue{
+					{
+						Key: "http.url",
+						Value: &v11.AnyValue{
+							Value: &v11.AnyValue_StringValue{
+								StringValue: "https://random/filename",
+							},
+						},
+					},
+					{
+						Key: "http.method",
+						Value: &v11.AnyValue{
+							Value: &v11.AnyValue_StringValue{
+								StringValue: "POST",
+							},
+						},
+					},
+					{
+						Key: "http.status_code",
+						Value: &v11.AnyValue{
+							Value: &v11.AnyValue_IntValue{
+								IntValue: 404,
+							},
+						},
+					},
+					{
+						Key: "http.status_text",
+						Value: &v11.AnyValue{
+							Value: &v11.AnyValue_StringValue{
+								StringValue: "Not Found - This has no parent span",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	traces := mapOpenTelemetryTraces(openTelemetryTrace.ExportTraceServiceRequest{
+		ResourceSpans: []*v1.ResourceSpans{
+			{
+				InstrumentationLibrarySpans: []*v1.InstrumentationLibrarySpans{
+					&instrumentationAwsSdkLibrary,
+					&instrumentationOtherLibrary,
+					&instrumentationHTTPLibrary,
+				},
+			},
+		},
+	})
+
+	expected := pb.Traces{
+		{
+			&pb.Span{
+				Name:     "HTTPS PUT",
+				Service:  OpenTelemetrySource,
+				Resource: OpenTelemetrySource,
+				Type:     OpenTelemetrySource,
+				TraceID:  280050,
+				SpanID:   288408,
+				ParentID: 159150,
+				Start:    1637684210743088640,
+				Duration: 84191488,
+				Error:    404,
+				Meta: map[string]string{
+					"http.method":             "POST",
+					"http.status_code":        "404",
+					"http.status_text":        "Not Found - This has no parent span",
+					"http.url":                "https://random/filename",
+					"instrumentation_library": "@opentelemetry/instrumentation-http",
+					"source":                  OpenTelemetrySource,
+				},
+				Metrics: map[string]float64{
+					"http.status_code": 404,
+				},
+			},
+		}, {
+			&pb.Span{
+				Name:     "SQS Success",
+				Service:  OpenTelemetrySource,
+				Resource: OpenTelemetrySource,
+				Type:     OpenTelemetrySource,
+				TraceID:  280050,
+				SpanID:   88605,
+				ParentID: 159150,
+				Start:    1637684210743088640,
+				Duration: 84191488,
+				Meta: map[string]string{
+					"http.method":             "PUT",
+					"http.status_code":        "200",
+					"http.status_text":        "OK",
+					"http.url":                "https://otel-example-nodejs-dev-s3-965323806078-eu-west-1.s3.eu-west-1.amazonaws.com/filename",
+					"aws.operation":           "sendMessage",
+					"instrumentation_library": "@opentelemetry/instrumentation-aws-sdk",
+					"messaging.url":           "https://sqs.eu-west-1.amazonaws.com/120431062118/ENTRY_A_SQS_QUEUE",
+					"source":                  OpenTelemetrySource,
+				},
+			},
+
+			&pb.Span{
+				Name:     "SQS Failure",
+				Service:  OpenTelemetrySource,
+				Resource: OpenTelemetrySource,
+				Type:     OpenTelemetrySource,
+				TraceID:  280050,
+				SpanID:   193553,
+				ParentID: 159150,
+				Start:    1637684210743088640,
+				Duration: 84191488,
+				Error:    404,
+				Meta: map[string]string{
+					"http.method":             "POST",
+					"http.status_code":        "404",
+					"http.status_text":        "NOT FOUND",
+					"http.url":                "https://otel-example-nodejs-dev-s3-965323806078-eu-west-1.s3.eu-west-1.amazonaws.com/filename",
+					"aws.operation":           "sendMessage",
+					"instrumentation_library": "@opentelemetry/instrumentation-aws-sdk",
+					"messaging.url":           "https://sqs.eu-west-1.amazonaws.com/120431062118/RANDOM",
+					"source":                  OpenTelemetrySource,
+				},
+				Metrics: map[string]float64{
+					"http.status_code": 404,
+				},
+			},
+		}, {
+			&pb.Span{
+				Name:     "Other Name",
+				Service:  OpenTelemetrySource,
+				Resource: OpenTelemetrySource,
+				Type:     OpenTelemetrySource,
+				TraceID:  280050,
+				SpanID:   152388,
+				ParentID: 159150,
+				Start:    1637684210743088640,
+				Duration: 84191488,
+				Meta: map[string]string{
+					"instrumentation_library": "@opentelemetry/other-library",
+					"random.value":            "text",
+					"source":                  OpenTelemetrySource,
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, &expected, &traces, "Total instrumentation library spans count")
+}
 
 func TestRemapOtelHttpLibraryStatusMappers(t *testing.T) {
 	instrumentationAwsSdkLibrary := v1.InstrumentationLibrarySpans{
