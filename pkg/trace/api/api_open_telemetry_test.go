@@ -73,7 +73,7 @@ func TestRemapOtelHttpLibraryStatusMappers(t *testing.T) {
 		},
 	}
 
-	instrumentationHttpLibrary := v1.InstrumentationLibrarySpans{
+	instrumentationHTTPLibrary := v1.InstrumentationLibrarySpans{
 		InstrumentationLibrary: &v11.InstrumentationLibrary{
 			Name:    "@opentelemetry/instrumentation-http",
 			Version: "0.1.0",
@@ -171,10 +171,10 @@ func TestRemapOtelHttpLibraryStatusMappers(t *testing.T) {
 	instrumentationLibrarySpans := []*v1.InstrumentationLibrarySpans{
 		&instrumentationAwsSdkLibrary,
 		&instrumentationOtherLibrary,
-		&instrumentationHttpLibrary,
+		&instrumentationHTTPLibrary,
 	}
 
-	newRemappedInstrumentationLibraries := determineInstrumentationSuccessFromHttp(instrumentationLibrarySpans)
+	newRemappedInstrumentationLibraries := determineInstrumentationSuccessFromHTTP(instrumentationLibrarySpans)
 
 	// Total Counts
 	assert.Equal(t, 3, len(instrumentationLibrarySpans), "Total instrumentation library spans count")
@@ -342,7 +342,7 @@ func TestConvertOtelIdentifiersToStsIdentifiers(t *testing.T) {
 	captureSpan := pb.Span{}
 	selectedSpan := resourceSpan.InstrumentationLibrarySpans[0].Spans[0]
 
-	convertIdentifiersToStsIdentifiers(selectedSpan, *resourceSpan.InstrumentationLibrarySpans[0], &captureSpan)
+	extractTraceSpanAndParentSpanId(selectedSpan, *resourceSpan.InstrumentationLibrarySpans[0], &captureSpan)
 
 	assert.Equal(t, &pb.Span{
 		TraceID:  *convertStringToUint64(traceID),

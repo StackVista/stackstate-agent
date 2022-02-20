@@ -417,13 +417,14 @@ func convertStringToUint64(input string) *uint64 {
 const OpenTelemetrySource = "openTelemetry"
 
 // [STS]
+// TODO: Shift this function to api_open_telemetry.go and add unit testing
 // mapOtelTraces Converts the Open Telemetry structure into the accepted Traces structure
 func mapOtelTraces(openTelemetryTraces openTelemetryTrace.ExportTraceServiceRequest) pb.Traces {
 	var traces = pb.Traces{}
 
 	for _, resourceSpan := range openTelemetryTraces.ResourceSpans {
 		awsAccountID := lambdaInstrumentationGetAccountID(resourceSpan)
-		remappedInstrumentationLibrarySpans := determineInstrumentationSuccessFromHttp(resourceSpan.InstrumentationLibrarySpans)
+		remappedInstrumentationLibrarySpans := determineInstrumentationSuccessFromHTTP(resourceSpan.InstrumentationLibrarySpans)
 
 		for _, instrumentationLibrarySpan := range remappedInstrumentationLibrarySpans {
 			// When we reach this point then it is safe to start building a trace
@@ -450,9 +451,9 @@ func mapOtelTraces(openTelemetryTraces openTelemetryTrace.ExportTraceServiceRequ
 					Type:     "openTelemetry",
 				}
 
-				remapAttributeArrayToDict(meta, instrumentationSpan.Attributes)
-				convertIdentifiersToStsIdentifiers(instrumentationSpan, instrumentationLibrarySpan, &openTelemetrySpan)
+				mapAttributesToMeta(instrumentationSpan.Attributes, meta)
 				mapInstrumentationErrors(&openTelemetrySpan)
+				extractTraceSpanAndParentSpanId(instrumentationSpan, instrumentationLibrarySpan, &openTelemetrySpan)
 
 				singleTrace = append(singleTrace, &openTelemetrySpan)
 			}

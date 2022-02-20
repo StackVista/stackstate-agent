@@ -62,13 +62,13 @@ If this is not removed then we will create http components for these states whic
 events
 **/
 
-// determineInstrumentationSuccessFromHttp We attempt to separate the http and other instrumentation's from each other
+// determineInstrumentationSuccessFromHTTP We attempt to separate the http and other instrumentation's from each other
 // We then use the http to determine if the other instrumentation calls failed or succeeded by matching up parentSpanIds
 // from the http instrumentation and the other instrumentation spanId.
 // If the http parentSpanIds does exist in the trace then we remove the http span and merge the attributes we found
 // with the relevant parent attributes. This allows the parent to contain the state for if the call failed or succeeded
 // whilst we do not create a useless http component by removing it
-func determineInstrumentationSuccessFromHttp(librarySpans []*v1.InstrumentationLibrarySpans) []v1.InstrumentationLibrarySpans {
+func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationLibrarySpans) []v1.InstrumentationLibrarySpans {
 	var httpInstrumentation []v1.InstrumentationLibrarySpans
 	var otherInstrumentation []v1.InstrumentationLibrarySpans
 
@@ -101,7 +101,7 @@ func determineInstrumentationSuccessFromHttp(librarySpans []*v1.InstrumentationL
 			newOtherSpanAttributes := *otherSpan
 
 			// This will be a new array of http libraries with the ones remove that contains parentSpanIds
-			var newHttpLibrary = make([]v1.InstrumentationLibrarySpans, 0)
+			var newHTTPLibrary = make([]v1.InstrumentationLibrarySpans, 0)
 
 			// Map through the current http instrumentation libraries and find ones with parentSpanId relations
 			for _, httpInstrumentationLibrary := range httpInstrumentation {
@@ -122,13 +122,13 @@ func determineInstrumentationSuccessFromHttp(librarySpans []*v1.InstrumentationL
 				}
 
 				// Add the new http span mappings into the new http library mapping
-				newHttpLibrary = append(newHttpLibrary, httpRemappingSpans)
+				newHTTPLibrary = append(newHTTPLibrary, httpRemappingSpans)
 			}
 
 			// We can not take the list of new http library mappings and set them as the list of available http
 			// instrumentation we want to show as components.
 			// This will be a list of http libraries that has no or there was not parentSpanId for
-			httpInstrumentation = newHttpLibrary
+			httpInstrumentation = newHTTPLibrary
 
 			// We append back the other span with the updated attribute information
 			// We then have an update list that contains the child http attributes allowing mappings from that
@@ -167,10 +167,10 @@ func lambdaInstrumentationGetAccountID(resourceSpan *v1.ResourceSpans) *string {
 	return awsAccountID
 }
 
-// convertIdentifiersToStsIdentifiers Open telemetry gives us ids that do not correspond to int number but contains string value
+// extractTraceSpanAndParentSpanId Open telemetry gives us ids that do not correspond to int number but contains string value
 // Thus we need to take those and generate a number from it that will always stay the same as long as the seed/string stays the same
 // we should receive the same int number
-func convertIdentifiersToStsIdentifiers(instrumentationSpan *v1.Span, instrumentationLibrarySpan v1.InstrumentationLibrarySpans, openTelemetrySpan *pb.Span) {
+func extractTraceSpanAndParentSpanId(instrumentationSpan *v1.Span, instrumentationLibrarySpan v1.InstrumentationLibrarySpans, openTelemetrySpan *pb.Span) {
 	if instrumentationSpan.TraceId != nil && instrumentationSpan.TraceId[:] != nil && len(string(instrumentationSpan.TraceId[:])) > 0 {
 		traceID := convertStringToUint64(string(instrumentationSpan.TraceId[:]))
 		if traceID != nil {
@@ -196,10 +196,10 @@ func convertIdentifiersToStsIdentifiers(instrumentationSpan *v1.Span, instrument
 	}
 }
 
-// remapOtelAttributeArrayToDict The open telemetry meta attributes' comes in a form of array if (dict type items)
+// mapAttributesToMeta The open telemetry meta attributes' comes in a form of array if (dict type items)
 // We can obv combine this to create one dict with a simple key value pair mapping
 // TODO: Unit Test
-func remapAttributeArrayToDict(meta *map[string]string, attributes []*v12.KeyValue) {
+func mapAttributesToMeta(attributes []*v12.KeyValue, meta *map[string]string) {
 	for _, attribute := range attributes {
 		attributeValue := attribute.Value.GetValue()
 
