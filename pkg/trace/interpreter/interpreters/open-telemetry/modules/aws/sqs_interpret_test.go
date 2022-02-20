@@ -34,8 +34,8 @@ func TestOpenTelemetrySQSSpanInterpreter(t *testing.T) {
 			}},
 			expected: []*pb.Span{{
 				Service:  "aws.sqs.queue",
-				Resource: "aws.sqs",
-				Type:     "open-telemetry",
+				Resource: "aws.sqs.queue",
+				Type:     "aws.sqs.queue",
 				Meta: map[string]string{
 					"aws.operation":           "publishMessage",
 					"aws.region":              "eu-west-1",
@@ -68,8 +68,8 @@ func TestOpenTelemetrySQSSpanInterpreter(t *testing.T) {
 			}},
 			expected: []*pb.Span{{
 				Service:  "aws.sqs.queue",
-				Resource: "aws.sqs",
-				Type:     "open-telemetry",
+				Resource: "aws.sqs.queue",
+				Type:     "aws.sqs.queue",
 				Error:    1,
 				Metrics: map[string]float64{
 					"http.status_code": 404.0,
@@ -107,8 +107,8 @@ func TestOpenTelemetrySQSSpanInterpreter(t *testing.T) {
 			}},
 			expected: []*pb.Span{{
 				Service:  "aws.sqs.queue",
-				Resource: "aws.sqs",
-				Type:     "open-telemetry",
+				Resource: "aws.sqs.queue",
+				Type:     "aws.sqs.queue",
 				Error:    1,
 				Metrics: map[string]float64{
 					"http.status_code": 503.0,

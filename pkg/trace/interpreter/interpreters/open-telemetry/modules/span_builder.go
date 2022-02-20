@@ -28,19 +28,15 @@ func SpanBuilder(span *pb.Span, kind string, resource string, event string, urn 
 
 // SqsSpanBuilderTesting Testing mappings
 func SqsSpanBuilderTesting(span *pb.Span, kind string, resource string, event string, urn string, arn string) {
-	// Producer or Consumer
-	span.Meta["span.kind"] = kind
-
-	// span.Meta["span.serviceName"] = fmt.Sprintf("%s.%s.%s", "open.telemetry", resource, event)
-	span.Meta["service"] = fmt.Sprintf("%s.%s.%s", "aws", resource, event)
+	span.Resource = fmt.Sprintf("%s.%s.%s", "aws", resource, event)
+	span.Type = fmt.Sprintf("%s.%s.%s", "aws", resource, event)
 	span.Service = fmt.Sprintf("%s.%s.%s", "aws", resource, event)
+	span.Meta["service"] = fmt.Sprintf("%s.%s.%s", "aws", resource, event)
 	span.Meta["span.serviceName"] = fmt.Sprintf("%s.%s.%s", "aws", resource, event)
 
-	span.Type = "open-telemetry"
+	span.Meta["span.kind"] = kind
 	span.Meta["span.serviceType"] = "open-telemetry"
-
-	span.Resource = fmt.Sprintf("%s.%s", "aws", resource)
-
 	span.Meta["span.serviceURN"] = urn
+
 	span.Meta["sts.service.identifiers"] = arn
 }
