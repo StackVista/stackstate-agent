@@ -413,9 +413,6 @@ func convertStringToUint64(input string) *uint64 {
 	return &uint64Representation
 }
 
-// OpenTelemetrySource Source Identifier for Open Telemetry
-const OpenTelemetrySource = "openTelemetry"
-
 // [STS]
 // TODO: Shift this function to api_open_telemetry.go and add unit testing
 // mapOtelTraces Converts the Open Telemetry structure into the accepted Traces structure
@@ -446,14 +443,14 @@ func mapOtelTraces(openTelemetryTraces openTelemetryTrace.ExportTraceServiceRequ
 					Start:    int64(instrumentationSpan.StartTimeUnixNano),
 					Duration: int64(instrumentationSpan.EndTimeUnixNano) - int64(instrumentationSpan.StartTimeUnixNano),
 					Meta:     *meta,
-					Service:  "openTelemetry",
-					Resource: "openTelemetry",
-					Type:     "openTelemetry",
+					Service:  OpenTelemetrySource,
+					Resource: OpenTelemetrySource,
+					Type:     OpenTelemetrySource,
 				}
 
 				mapAttributesToMeta(instrumentationSpan.Attributes, meta)
 				mapInstrumentationErrors(&openTelemetrySpan)
-				extractTraceSpanAndParentSpanId(instrumentationSpan, instrumentationLibrarySpan, &openTelemetrySpan)
+				extractTraceSpanAndParentSpanID(instrumentationSpan, instrumentationLibrarySpan, &openTelemetrySpan)
 
 				singleTrace = append(singleTrace, &openTelemetrySpan)
 			}

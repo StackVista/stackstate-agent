@@ -9,6 +9,9 @@ import (
 	"strconv"
 )
 
+// OpenTelemetrySource Source Identifier for Open Telemetry
+const OpenTelemetrySource = "openTelemetry"
+
 /**
 For Open Telemetry we receive the following groupings within the trace (Will differ based on the libraries used)
 
@@ -167,10 +170,10 @@ func lambdaInstrumentationGetAccountID(resourceSpan *v1.ResourceSpans) *string {
 	return awsAccountID
 }
 
-// extractTraceSpanAndParentSpanId Open telemetry gives us ids that do not correspond to int number but contains string value
+// extractTraceSpanAndParentSpanID Open telemetry gives us ids that do not correspond to int number but contains string value
 // Thus we need to take those and generate a number from it that will always stay the same as long as the seed/string stays the same
 // we should receive the same int number
-func extractTraceSpanAndParentSpanId(instrumentationSpan *v1.Span, instrumentationLibrarySpan v1.InstrumentationLibrarySpans, openTelemetrySpan *pb.Span) {
+func extractTraceSpanAndParentSpanID(instrumentationSpan *v1.Span, instrumentationLibrarySpan v1.InstrumentationLibrarySpans, openTelemetrySpan *pb.Span) {
 	if instrumentationSpan.TraceId != nil && instrumentationSpan.TraceId[:] != nil && len(string(instrumentationSpan.TraceId[:])) > 0 {
 		traceID := convertStringToUint64(string(instrumentationSpan.TraceId[:]))
 		if traceID != nil {
