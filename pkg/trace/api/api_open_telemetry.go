@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	v12 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/common/v1"
+	openTelemetryTrace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/collector"
 	v1 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/v1"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strconv"
 )
 
-// OpenTelemetrySource Source Identifier for Open Telemetry
-const OpenTelemetrySource = "openTelemetry"
-
 /**
+Open Telemetry Extra Information:
+
 For Open Telemetry we receive the following groupings within the trace (Will differ based on the libraries used)
 
 Groupings [
@@ -64,6 +64,71 @@ We removed the HTTP Instrumentation Library items that was merged so that we do 
 If this is not removed then we will create http components for these states which is incorrect, needs to be part of the
 events
 **/
+
+// OpenTelemetrySource Source Identifier for Open Telemetry
+const OpenTelemetrySource = "openTelemetry"
+
+// mapOtelTraces Converts the Open Telemetry structure into an accepted sts Traces structure
+func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceServiceRequest) pb.Traces {
+	var traces = pb.Traces{}
+
+	for _, resourceSpan := range openTelemetryTraces.ResourceSpans {
+		// [Graceful] We can continue without awsAccountID, Unable to map module will give warnings
+		awsAccountID := lambdaInstrumentationGetAccountID(resourceSpan)
+
+		// [Graceful] We can continue without determining the http status, This will then allow all the relevant information to still display
+		remappedInstrumentationLibrarySpans := determineInstrumentationSuccessFromHTTP(resourceSpan.InstrumentationLibrarySpans)
+
+		for _, instrumentationLibrarySpan := range remappedInstrumentationLibrarySpans {
+			// When we reach this point then it is safe to start building a trace
+			var singleTrace = pb.Trace{}
+
+			// Loop through the instrumentation's library spans
+			for _, instrumentationSpan := range instrumentationLibrarySpan.Spans {
+				var meta = &map[string]string{
+					"instrumentation_library": instrumentationLibrarySpan.InstrumentationLibrary.Name,
+					"source":                  OpenTelemetrySource,
+				}
+
+				if awsAccountID != nil {
+					(*meta)["aws.account.id"] = *awsAccountID
+				}
+
+				openTelemetrySpan := pb.Span{
+					Name:     instrumentationSpan.Name,
+					Start:    int64(instrumentationSpan.StartTimeUnixNano),
+					Duration: int64(instrumentationSpan.EndTimeUnixNano) - int64(instrumentationSpan.StartTimeUnixNano),
+					Meta:     *meta,
+					Service:  OpenTelemetrySource,
+					Resource: OpenTelemetrySource,
+					Type:     OpenTelemetrySource,
+				}
+
+				// Basic attribute[{}] mapping to a single dict {}
+				mapAttributesToMeta(instrumentationSpan.Attributes, meta)
+
+				// [Graceful] We can continue without determining the error state.
+				// Attempt to use the information determineInstrumentationSuccessFromHTTP mapped to determine the error state
+				mapInstrumentationErrors(&openTelemetrySpan)
+
+				// Attempt to extract the parent, span and trace id from the OTEL span.
+				// This does need a string to int conversion thus if anything fails we need to exit
+				idExtractError := extractTraceSpanAndParentSpanID(instrumentationSpan, instrumentationLibrarySpan, &openTelemetrySpan)
+
+				if idExtractError != nil {
+					log.Errorf("Rejecting instrumentation mapping: %v", idExtractError)
+					break
+				}
+
+				singleTrace = append(singleTrace, &openTelemetrySpan)
+			}
+
+			traces = append(traces, singleTrace)
+		}
+	}
+
+	return traces
+}
 
 // determineInstrumentationSuccessFromHTTP We attempt to separate the http and other instrumentation's from each other
 // We then use the http to determine if the other instrumentation calls failed or succeeded by matching up parentSpanIds
@@ -173,35 +238,39 @@ func lambdaInstrumentationGetAccountID(resourceSpan *v1.ResourceSpans) *string {
 // extractTraceSpanAndParentSpanID Open telemetry gives us ids that do not correspond to int number but contains string value
 // Thus we need to take those and generate a number from it that will always stay the same as long as the seed/string stays the same
 // we should receive the same int number
-func extractTraceSpanAndParentSpanID(instrumentationSpan *v1.Span, instrumentationLibrarySpan v1.InstrumentationLibrarySpans, openTelemetrySpan *pb.Span) {
+func extractTraceSpanAndParentSpanID(instrumentationSpan *v1.Span, instrumentationLibrarySpan v1.InstrumentationLibrarySpans, openTelemetrySpan *pb.Span) *error {
 	if instrumentationSpan.TraceId != nil && instrumentationSpan.TraceId[:] != nil && len(string(instrumentationSpan.TraceId[:])) > 0 {
-		traceID := convertStringToUint64(string(instrumentationSpan.TraceId[:]))
-		if traceID != nil {
-			openTelemetrySpan.TraceID = *traceID
+		traceID, err := convertStringToUint64(string(instrumentationSpan.TraceId[:]))
+		if err != nil {
+			return &err
 		}
+		openTelemetrySpan.TraceID = *traceID
 	}
 
 	if instrumentationSpan.SpanId != nil && instrumentationSpan.SpanId[:] != nil && len(string(instrumentationSpan.SpanId[:])) > 0 {
-		spanID := convertStringToUint64(string(instrumentationSpan.SpanId[:]))
-		if spanID != nil {
-			openTelemetrySpan.SpanID = *spanID
+		spanID, err := convertStringToUint64(string(instrumentationSpan.SpanId[:]))
+		if err != nil {
+			return &err
 		}
+		openTelemetrySpan.SpanID = *spanID
 	}
 
 	if instrumentationSpan.ParentSpanId != nil &&
 		instrumentationSpan.ParentSpanId[:] != nil &&
 		len(string(instrumentationSpan.ParentSpanId[:])) > 0 &&
 		instrumentationLibrarySpan.InstrumentationLibrary.Name != "@opentelemetry/instrumentation-aws-lambda" {
-		parentSpanID := convertStringToUint64(string(instrumentationSpan.ParentSpanId[:]))
-		if parentSpanID != nil {
-			openTelemetrySpan.ParentID = *parentSpanID
+		parentSpanID, err := convertStringToUint64(string(instrumentationSpan.ParentSpanId[:]))
+		if err != nil {
+			return &err
 		}
+		openTelemetrySpan.ParentID = *parentSpanID
 	}
+
+	return nil
 }
 
 // mapAttributesToMeta The open telemetry meta attributes' comes in a form of array if (dict type items)
 // We can obv combine this to create one dict with a simple key value pair mapping
-// TODO: Unit Test
 func mapAttributesToMeta(attributes []*v12.KeyValue, meta *map[string]string) {
 	for _, attribute := range attributes {
 		attributeValue := attribute.Value.GetValue()
@@ -243,4 +312,28 @@ func mapInstrumentationErrors(span *pb.Span) {
 			}
 		}
 	}
+}
+
+// convertStringToUint64 Current solution for convert Open Telemetry strings to integer id values
+// These strings will contain characters, numbers and strings. We need a solid uint at the end
+// Do note there is a change that we might get the same id but that will not matter as this is used in tracing and
+// Will be temp
+func convertStringToUint64(input string) (*uint64, error) {
+	if len(input) == 0 {
+		return nil, fmt.Errorf("unable to convert the string identifier to a uint64 representation: %v", input)
+	}
+
+	id := uint64(0)
+
+	// Convert the input to a list of runes that we can add together
+	runes := []rune(input)
+
+	// Attempt to create a multiplier using the last and first number
+	// This should randomize things a bit more
+	multiplier := runes[0] + runes[len(runes)-1]
+	for _, r := range runes {
+		id += uint64(r) * uint64(multiplier)
+	}
+
+	return &id, nil
 }

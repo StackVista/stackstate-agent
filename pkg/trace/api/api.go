@@ -30,7 +30,6 @@ import (
 	"io/ioutil"
 	stdlog "log"
 	"math"
-	"math/big"
 	"mime"
 	"net"
 	"net/http"
@@ -378,90 +377,6 @@ func (r *HTTPReceiver) decodeOpenTelemetry(req *http.Request) (*openTelemetryTra
 	return openTelemetryTraceData, nil
 }
 
-// [sts]
-// convertStringToUint64 Current solution for convert a string that contains numbers and chars into an integer
-// TODO: Unit test
-func convertStringToUint64(input string) *uint64 {
-	// Int Ascii values representing the string values
-	runes := []rune(input)
-
-	// We use string builder for performance
-	// The actual integer values are written to a string to create a massive big itn
-	var sb strings.Builder
-	var stringBuilderError error
-
-	for _, r := range runes {
-		runeIntToString := fmt.Sprintf("%v", r)
-		_, err := sb.WriteString(runeIntToString)
-		if err != nil {
-			stringBuilderError = err
-			break
-		}
-	}
-
-	if stringBuilderError != nil {
-		return nil
-	}
-
-	runeString := sb.String()
-
-	// Convert a massive number to an uint64 representation
-	bigInt := big.NewInt(0)
-	bigInt.SetString(runeString, 10)
-	var uint64Representation = uint64(math.Abs(float64(bigInt.Uint64())))
-
-	return &uint64Representation
-}
-
-// [STS]
-// TODO: Shift this function to api_open_telemetry.go and add unit testing
-// mapOtelTraces Converts the Open Telemetry structure into the accepted Traces structure
-func mapOtelTraces(openTelemetryTraces openTelemetryTrace.ExportTraceServiceRequest) pb.Traces {
-	var traces = pb.Traces{}
-
-	for _, resourceSpan := range openTelemetryTraces.ResourceSpans {
-		awsAccountID := lambdaInstrumentationGetAccountID(resourceSpan)
-		remappedInstrumentationLibrarySpans := determineInstrumentationSuccessFromHTTP(resourceSpan.InstrumentationLibrarySpans)
-
-		for _, instrumentationLibrarySpan := range remappedInstrumentationLibrarySpans {
-			// When we reach this point then it is safe to start building a trace
-			var singleTrace = pb.Trace{}
-
-			// Loop through the instrumentation's library spans
-			for _, instrumentationSpan := range instrumentationLibrarySpan.Spans {
-				var meta = &map[string]string{
-					"instrumentation_library": instrumentationLibrarySpan.InstrumentationLibrary.Name,
-					"source":                  OpenTelemetrySource,
-				}
-
-				if awsAccountID != nil {
-					(*meta)["aws.account.id"] = *awsAccountID
-				}
-
-				openTelemetrySpan := pb.Span{
-					Name:     instrumentationSpan.Name,
-					Start:    int64(instrumentationSpan.StartTimeUnixNano),
-					Duration: int64(instrumentationSpan.EndTimeUnixNano) - int64(instrumentationSpan.StartTimeUnixNano),
-					Meta:     *meta,
-					Service:  OpenTelemetrySource,
-					Resource: OpenTelemetrySource,
-					Type:     OpenTelemetrySource,
-				}
-
-				mapAttributesToMeta(instrumentationSpan.Attributes, meta)
-				mapInstrumentationErrors(&openTelemetrySpan)
-				extractTraceSpanAndParentSpanID(instrumentationSpan, instrumentationLibrarySpan, &openTelemetrySpan)
-
-				singleTrace = append(singleTrace, &openTelemetrySpan)
-			}
-
-			traces = append(traces, singleTrace)
-		}
-	}
-
-	return traces
-}
-
 func (r *HTTPReceiver) replyOK(v Version, w http.ResponseWriter) {
 	switch v {
 	case v01, v02, v03:
@@ -585,7 +500,7 @@ func (r *HTTPReceiver) handleOpenTelemetry(w http.ResponseWriter, req *http.Requ
 	}
 
 	// Open telemetry does not immediately fit into the pb.Traces structure and thus needs to be mapped into it
-	traces := mapOtelTraces(*openTelemetryTraces)
+	traces := mapOpenTelemetryTraces(*openTelemetryTraces)
 
 	httpOK(w)
 

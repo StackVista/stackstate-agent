@@ -344,10 +344,14 @@ func TestConvertOtelIdentifiersToStsIdentifiers(t *testing.T) {
 
 	extractTraceSpanAndParentSpanID(selectedSpan, *resourceSpan.InstrumentationLibrarySpans[0], &captureSpan)
 
+	traceIDIntValue, _ := convertStringToUint64(traceID)
+	parentSpanIDIntValue, _ := convertStringToUint64(parentSpanID)
+	spanIDIntValue, _ := convertStringToUint64(spanID)
+
 	assert.Equal(t, &pb.Span{
-		TraceID:  *convertStringToUint64(traceID),
-		ParentID: *convertStringToUint64(parentSpanID),
-		SpanID:   *convertStringToUint64(spanID),
+		TraceID:  *traceIDIntValue,
+		ParentID: *parentSpanIDIntValue,
+		SpanID:   *spanIDIntValue,
 	}, &captureSpan, "Extract ids from Open Telemetry span, convert to a uint64 and push into the main span")
 }
 
@@ -415,4 +419,33 @@ func TestMapInstrumentationErrors(t *testing.T) {
 	assert.Equal(t, int32(500), span500.Error, "[500] The status code meta needs to be mapped into the correct top level error value")
 	assert.Equal(t, "500", span500.Meta["http.status_code"], "[500] The status code still needs to be in the Meta dict")
 	assert.Equal(t, "ERROR", span500.Meta["http.status_text"], "[500] The status text still needs to be in the Meta dict")
+}
+
+func TestConvertStringToUint64(t *testing.T) {
+	sampleA, _ := convertStringToUint64("random-text-a")
+	assert.Equal(t, uint64(270291), *sampleA, "String to Int sample a should always have the same value")
+
+	sampleB, _ := convertStringToUint64("random-text-b")
+	assert.Equal(t, uint64(271784), *sampleB, "String to Int sample b should always have the same value")
+
+	sampleC, _ := convertStringToUint64("hello-world")
+	assert.Equal(t, uint64(230316), *sampleC, "String to Int sample c should always have the same value")
+
+	sampleD, _ := convertStringToUint64("012393498324789")
+	assert.Equal(t, uint64(83160), *sampleD, "String to Int sample d should always have the same value")
+
+	sampleE, _ := convertStringToUint64("ZXsadkjnjkASDsad")
+	assert.Equal(t, uint64(295260), *sampleE, "String to Int sample e should always have the same value")
+
+	sampleF, _ := convertStringToUint64("123SADbhsad372343")
+	assert.Equal(t, uint64(119000), *sampleF, "String to Int sample f should always have the same value")
+
+	sampleG, _ := convertStringToUint64("$%^348y2349987fjskdfh")
+	assert.Equal(t, uint64(218540), *sampleG, "String to Int sample g should always have the same value")
+
+	sampleH, _ := convertStringToUint64("random-text")
+	assert.Equal(t, uint64(261970), *sampleH, "String to Int sample h should always have the same value")
+
+	sampleI, _ := convertStringToUint64("ASDxkjchi8y349h234987hgfeiwundfuishf89234yh23uh4iu2rh8hsad")
+	assert.Equal(t, uint64(833580), *sampleI, "String to Int sample i should always have the same value")
 }
