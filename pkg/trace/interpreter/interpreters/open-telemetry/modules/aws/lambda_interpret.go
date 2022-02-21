@@ -32,7 +32,7 @@ func MakeOpenTelemetryLambdaEntryInterpreter(config *config.Config) *OpenTelemet
 
 // Interpret performs the interpretation for the OpenTelemetryLambdaEntryInterpreter
 func (t *OpenTelemetryLambdaEntryInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
-	log.Debugf("[OTEL] [LAMBDA-ENTRY] Interpreting and mapping Open Telemetry data")
+	log.Debugf("[OTEL] [LAMBDA] Interpreting and mapping Open Telemetry data")
 
 	for _, span := range spans {
 		// no meta, add a empty map
@@ -40,24 +40,49 @@ func (t *OpenTelemetryLambdaEntryInterpreter) Interpret(spans []*pb.Span) []*pb.
 			span.Meta = map[string]string{}
 		}
 
-		if arn, ok := span.Meta["faas.id"]; arn != "" && ok {
-			var urn = t.CreateServiceURN(strings.ToLower(arn))
-			arn = strings.ToLower(arn)
+		arn, arnOk := modules.RetrieveValidSpanMeta(span, "LAMBDA", "faas.id")
+		_, awsAccountIDOk := modules.RetrieveValidSpanMeta(span, "LAMBDA", "cloud.account.id")
 
-			modules.SpanBuilder(
-				span,
-				"producer",
-				"lambda",
-				"execute",
-				urn,
-				arn,
-			)
-		} else {
-			_ = log.Errorf("[OTEL] [LAMBDA-ENTRY]: Unable to determine the root Lambda Span")
+		if arnOk && awsAccountIDOk {
+			// Example Arn:
+			// arn:aws:lambda:eu-west-1:965323806078:function:otel-example-nodejs-dev-success-and-failure
+			arnParts := strings.Split(*arn, ":")
 
-			if !ok {
-				_ = log.Errorf("[OTEL] [LAMBDA-ENTRY]: 'faas.id' is not found in the span meta data, this value is required.")
+			if len(arnParts) >= 7 {
+				functionName := arnParts[6]
+
+				var urn = t.CreateServiceURN(strings.ToLower(*arn))
+
+				// Name of component displayed below the icon
+				span.Meta["span.serviceName"] = functionName
+
+				// Name of the trace displayed on the trace graph line
+				span.Name = fmt.Sprintf("%s: %s", "Lambda", functionName)
+
+				// Displayed on the trace properties
+				span.Resource = "aws.lambda"
+				span.Type = "aws"
+
+				// Mapping inside StackPack for capturing certain metrics
+				span.Meta["span.serviceType"] = "open-telemetry"
+				span.Meta["source"] = "open-telemetry"
+
+				// Unknown
+				span.Service = "aws.lambda"
+				span.Meta["service"] = "aws.lambda"
+				span.Meta["sts.origin"] = "open-telemetry"
+
+				// General mapping
+				span.Meta["span.kind"] = "server"
+				span.Meta["span.serviceURN"] = urn
+				span.Meta["sts.service.identifiers"] = *arn
+			} else {
+				_ = log.Errorf("[OTEL] [LAMBDA]: 'faas.id' invalid structure supplied '%s'", arn)
+
+				return nil
 			}
+		} else {
+			_ = log.Errorf("[OTEL] [LAMBDA]: Unable to map the LAMBDA request")
 
 			return nil
 		}
