@@ -1,5 +1,6 @@
 package modules
 
+/*
 import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/stretchr/testify/assert"
@@ -108,3 +109,4 @@ func TestSpanBuilderInterpreterEngine(t *testing.T) {
 		})
 	}
 }
+*/

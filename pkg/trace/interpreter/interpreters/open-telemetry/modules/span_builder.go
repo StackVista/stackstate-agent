@@ -7,14 +7,29 @@ import (
 )
 
 // SpanBuilder An generic function to map Open Telemetry AWS service traces to a format that STS understands
-func SpanBuilder(span *pb.Span, kind string, resource string, event string, urn string, arn string) {
-	span.Meta["span.kind"] = kind
-	span.Meta["span.serviceName"] = fmt.Sprintf("%s.%s.%s", "open.telemetry", resource, event)
-	span.Type = "open-telemetry"
+// serviceName (functionName)  namePrefix (Lambda)  service (lambda)
+func SpanBuilder(span *pb.Span, serviceName string, namePrefix string, service string, kind string, urn string, arn string) {
+	// Name of component displayed below the icon
+	span.Meta["span.serviceName"] = serviceName
+
+	// Name of the trace displayed on the trace graph line
+	span.Name = fmt.Sprintf("%s: %s", namePrefix, serviceName)
+
+	// Displayed on the trace properties
+	span.Resource = fmt.Sprintf("aws.%s", service)
+	span.Type = "aws"
+
+	// Mapping inside StackPack for capturing certain metrics
 	span.Meta["span.serviceType"] = "open-telemetry"
-	span.Resource = fmt.Sprintf("aws.%s", resource)
-	span.Meta["service"] = fmt.Sprintf("%s.%s", "open.telemetry", resource)
-	span.Service = fmt.Sprintf("%s.%s", "open.telemetry", resource)
+	span.Meta["source"] = "open-telemetry"
+
+	// Unknown
+	span.Service = fmt.Sprintf("aws.%s", service)
+	span.Meta["service"] = fmt.Sprintf("aws.%s", service)
+	span.Meta["sts.origin"] = "open-telemetry"
+
+	// General mapping
+	span.Meta["span.kind"] = kind
 	span.Meta["span.serviceURN"] = urn
 	span.Meta["sts.service.identifiers"] = arn
 }

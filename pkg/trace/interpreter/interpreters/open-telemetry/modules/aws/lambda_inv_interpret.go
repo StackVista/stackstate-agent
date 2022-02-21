@@ -40,57 +40,24 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 			span.Meta = map[string]string{}
 		}
 
-		functionName, functionNameOk := span.Meta["aws.request.function.name"]
-		accountID, accountIDOk := span.Meta["aws.account.id"]
-		region, regionOk := span.Meta["aws.region"]
-		awsOperation, awsOperationOk := span.Meta["aws.operation"]
+		functionName, functionNameOk := modules.RetrieveValidSpanMeta(span, "LAMBDA", "aws.request.function.name")
+		accountID, accountIDOk := modules.RetrieveValidSpanMeta(span, "LAMBDA", "aws.account.id")
+		region, regionOk := modules.RetrieveValidSpanMeta(span, "LAMBDA", "aws.region")
+		// awsOperation, awsOperationOk := modules.RetrieveValidSpanMeta(span, "LAMBDA", "aws.operation")
 
 		// Invoke will contain data to another Lambda function being invoked
-		if functionNameOk && accountIDOk && regionOk && awsOperationOk && span.Meta["aws.operation"] == "invoke" {
-			var arn = strings.ToLower(fmt.Sprintf("arn:aws:lambda:%s:%s:function:%s", region, accountID, functionName))
+		if functionNameOk && accountIDOk && regionOk && span.Meta["aws.operation"] == "invoke" {
+			var arn = strings.ToLower(fmt.Sprintf("arn:aws:lambda:%s:%s:function:%s", *region, *accountID, *functionName))
 			var urn = t.CreateServiceURN(arn)
 
-			modules.SpanBuilder(
-				span,
-				"consumer",
-				"lambda",
-				awsOperation,
-				urn,
-				arn,
-			)
+			modules.SpanBuilder(span, *functionName, "Lambda", "lambda", "consumer", urn, arn)
 		} else {
 			_ = log.Errorf("[OTEL] [LAMBDA]: Unable to map the invoked Lambda Function")
-
-			if !functionNameOk {
-				_ = log.Errorf("[OTEL] [LAMBDA]: 'aws.request.function.name' is not found in the span meta data, this value is required.")
-			}
-			if !accountIDOk {
-				_ = log.Errorf("[OTEL] [LAMBDA]: 'aws.account.id' is not found in the span meta data, this value is required.")
-			}
-			if !regionOk {
-				_ = log.Errorf("[OTEL] [LAMBDA]: 'aws.region' is not found in the span meta data, this value is required.")
-			}
-			if !awsOperationOk {
-				_ = log.Errorf("[OTEL] [LAMBDA]: 'aws.operation' is not found in the span meta data, this value is required.")
-			}
-
 			return nil
 		}
 
-		t.interpretHTTPError(span)
+		modules.InterpretHTTPError(span)
 	}
 
 	return spans
-}
-
-func (t *OpenTelemetryLambdaInterpreter) interpretHTTPError(span *pb.Span) {
-	if span.Error != 0 {
-		if httpStatus, found := span.Metrics["http.status_code"]; found {
-			if httpStatus >= 400 && httpStatus < 500 {
-				span.Meta["span.errorClass"] = "4xx"
-			} else if httpStatus >= 500 {
-				span.Meta["span.errorClass"] = "5xx"
-			}
-		}
-	}
 }

@@ -46,48 +46,21 @@ func (t *OpenTelemetryHTTPInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			span.Meta = map[string]string{}
 		}
 
-		httpURL, httpURLOk := span.Meta["http.url"]
-		httpMethod, httpMethodOk := span.Meta["http.method"]
+		httpURL, httpURLOk := modules.RetrieveValidSpanMeta(span, "HTTP", "http.url")
+		httpMethod, httpMethodOk := modules.RetrieveValidSpanMeta(span, "HTTP", "http.method")
 
-		if httpURLOk && httpMethodOk && len(httpURL) > 0 {
-			var url = sanitizeURL(httpURL)
-			var urn = t.CreateServiceURN(fmt.Sprintf("lambda-http-request/%s/%s", url, httpMethod))
+		if httpURLOk && httpMethodOk && len(*httpURL) > 0 {
+			var url = sanitizeURL(*httpURL)
+			var urn = t.CreateServiceURN(fmt.Sprintf("lambda-http-request/%s/%s", url, *httpMethod))
 
-			modules.SpanBuilder(
-				span,
-				"consumer",
-				"lambda.http",
-				httpMethod,
-				urn,
-				url,
-			)
+			modules.SpanBuilder(span, "HTTP Name Required", "Http", "http", "consumer", urn, url)
 		} else {
 			_ = log.Errorf("[OTEL] [LAMBDA.HTTP]: Unable to map the Lambda HTTP request")
-
-			if !httpURLOk {
-				_ = log.Errorf("[OTEL] [LAMBDA.HTTP]: 'http.url' is not found in the span meta data, this value is required.")
-			}
-			if !httpMethodOk {
-				_ = log.Errorf("[OTEL] [LAMBDA.HTTP]: 'http.method' is not found in the span meta data, this value is required.")
-			}
-
 			return nil
 		}
 
-		t.interpretHTTPError(span)
+		modules.InterpretHTTPError(span)
 	}
 
 	return spans
-}
-
-func (t *OpenTelemetryHTTPInterpreter) interpretHTTPError(span *pb.Span) {
-	if span.Error != 0 {
-		if httpStatus, found := span.Metrics["http.status_code"]; found {
-			if httpStatus >= 400 && httpStatus < 500 {
-				span.Meta["span.errorClass"] = "4xx"
-			} else if httpStatus >= 500 {
-				span.Meta["span.errorClass"] = "5xx"
-			}
-		}
-	}
 }

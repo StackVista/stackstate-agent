@@ -41,48 +41,21 @@ func (t *OpenTelemetrySNSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 		}
 
 		// awsService, awsServiceOk := span.Meta["aws.service.api"]
-		awsOperation, awsOperationOk := span.Meta["aws.operation"]
-		topicArn, topicArnOk := span.Meta["aws.request.topic.arn"]
+		// awsOperation, awsOperationOk := modules.RetrieveValidSpanMeta(span, "SNS", "aws.operation")
+		topicArn, topicArnOk := modules.RetrieveValidSpanMeta(span, "SNS", "aws.request.topic.arn")
 
-		if awsOperationOk && topicArnOk {
-			var urn = t.CreateServiceURN(strings.ToLower(topicArn))
-			var arn = strings.ToLower(topicArn)
+		if topicArnOk {
+			var urn = t.CreateServiceURN(strings.ToLower(*topicArn))
+			var arn = strings.ToLower(*topicArn)
 
-			modules.SpanBuilder(
-				span,
-				"consumer",
-				"sns",
-				awsOperation,
-				urn,
-				arn,
-			)
+			modules.SpanBuilder(span, "Topic Name Missing", "SNS", "sns", "consumer", urn, arn)
 		} else {
 			_ = log.Errorf("[OTEL] [SNS]: Unable to map the SNS request")
-
-			if !awsOperationOk {
-				_ = log.Errorf("[OTEL] [SNS]: 'aws.operation' is not found in the span meta data, this value is required.")
-			}
-			if !topicArnOk {
-				_ = log.Errorf("[OTEL] [SNS]: 'aws.request.topic.arn' is not found in the span meta data, this value is required.")
-			}
-
 			return nil
 		}
 
-		t.interpretHTTPError(span)
+		modules.InterpretHTTPError(span)
 	}
 
 	return spans
-}
-
-func (t *OpenTelemetrySNSInterpreter) interpretHTTPError(span *pb.Span) {
-	if span.Error != 0 {
-		if httpStatus, found := span.Metrics["http.status_code"]; found {
-			if httpStatus >= 400 && httpStatus < 500 {
-				span.Meta["span.errorClass"] = "4xx"
-			} else if httpStatus >= 500 {
-				span.Meta["span.errorClass"] = "5xx"
-			}
-		}
-	}
 }

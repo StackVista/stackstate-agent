@@ -44,38 +44,12 @@ func (t *OpenTelemetryLambdaEntryInterpreter) Interpret(spans []*pb.Span) []*pb.
 		_, awsAccountIDOk := modules.RetrieveValidSpanMeta(span, "LAMBDA", "cloud.account.id")
 
 		if arnOk && awsAccountIDOk {
-			// Example Arn:
-			// arn:aws:lambda:eu-west-1:965323806078:function:otel-example-nodejs-dev-success-and-failure
+			var urn = t.CreateServiceURN(strings.ToLower(*arn))
 			arnParts := strings.Split(*arn, ":")
 
 			if len(arnParts) >= 7 {
 				functionName := arnParts[6]
-
-				var urn = t.CreateServiceURN(strings.ToLower(*arn))
-
-				// Name of component displayed below the icon
-				span.Meta["span.serviceName"] = functionName
-
-				// Name of the trace displayed on the trace graph line
-				span.Name = fmt.Sprintf("%s: %s", "Lambda", functionName)
-
-				// Displayed on the trace properties
-				span.Resource = "aws.lambda"
-				span.Type = "aws"
-
-				// Mapping inside StackPack for capturing certain metrics
-				span.Meta["span.serviceType"] = "open-telemetry"
-				span.Meta["source"] = "open-telemetry"
-
-				// Unknown
-				span.Service = "aws.lambda"
-				span.Meta["service"] = "aws.lambda"
-				span.Meta["sts.origin"] = "open-telemetry"
-
-				// General mapping
-				span.Meta["span.kind"] = "server"
-				span.Meta["span.serviceURN"] = urn
-				span.Meta["sts.service.identifiers"] = *arn
+				modules.SpanBuilder(span, functionName, "Lambda", "lambda", "producer", urn, *arn)
 			} else {
 				_ = log.Errorf("[OTEL] [LAMBDA]: 'faas.id' invalid structure supplied '%s'", *arn)
 				return nil

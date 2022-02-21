@@ -41,48 +41,21 @@ func (t *OpenTelemetryStepFunctionsInterpreter) Interpret(spans []*pb.Span) []*p
 		}
 
 		// awsService, awsServiceOk := span.Meta["aws.service.api"]
-		awsOperation, awsOperationOk := span.Meta["aws.operation"]
-		stateMachineArn, stateMachineArnOk := span.Meta["aws.request.state.machine.arn"]
+		// awsOperation, awsOperationOk := modules.RetrieveValidSpanMeta(span, "SFN", "aws.operation")
+		stateMachineArn, stateMachineArnOk := modules.RetrieveValidSpanMeta(span, "SFN", "aws.request.state.machine.arn")
 
-		if awsOperationOk && stateMachineArnOk {
-			var arn = strings.ToLower(stateMachineArn)
+		if stateMachineArnOk {
+			var arn = strings.ToLower(*stateMachineArn)
 			var urn = t.CreateServiceURN(arn)
 
-			modules.SpanBuilder(
-				span,
-				"consumer",
-				"step.function",
-				awsOperation,
-				urn,
-				arn,
-			)
+			modules.SpanBuilder(span, "SFN Name Required", "State Machine", "step.function", "consumer", urn, arn)
 		} else {
 			_ = log.Errorf("[OTEL] [SFN]: Unable to map the Step Functions request")
-
-			if !awsOperationOk {
-				_ = log.Errorf("[OTEL] [SFN]: 'aws.operation' is not found in the span meta data, this value is required.")
-			}
-			if !stateMachineArnOk {
-				_ = log.Errorf("[OTEL] [SFN]: 'aws.request.state.machine.arn' is not found in the span meta data, this value is required.")
-			}
-
 			return nil
 		}
 
-		t.interpretHTTPError(span)
+		modules.InterpretHTTPError(span)
 	}
 
 	return spans
-}
-
-func (t *OpenTelemetryStepFunctionsInterpreter) interpretHTTPError(span *pb.Span) {
-	if span.Error != 0 {
-		if httpStatus, found := span.Metrics["http.status_code"]; found {
-			if httpStatus >= 400 && httpStatus < 500 {
-				span.Meta["span.errorClass"] = "4xx"
-			} else if httpStatus >= 500 {
-				span.Meta["span.errorClass"] = "5xx"
-			}
-		}
-	}
 }

@@ -34,75 +34,27 @@ func MakeOpenTelemetryS3Interpreter(config *config.Config) *OpenTelemetryS3Inter
 func (t *OpenTelemetryS3Interpreter) Interpret(spans []*pb.Span) []*pb.Span {
 	log.Debugf("[OTEL] [S3] Interpreting and mapping Open Telemetry data")
 
-	/*
-			lambda -> root span
-			aws-sdk sqs -> parentId === lambda
-			http -> parentId === aws-sdk
-
-			lambda -> root span
-			http -> parentId === lambda
-
-
-			[SQS] <- Lambda -> SQS -> (http.post.event removed from span)
-			[SQS] <- Lambda -> SQS (With http status)
-
-
-		404 -> sqs does not exist
-		400 -> access denied Permission
-	*/
-
 	for _, span := range spans {
 		// no meta, add a empty map
 		if span.Meta == nil {
 			span.Meta = map[string]string{}
 		}
 
-		// TODO: => interpretHTTPError
-		// span.Error = 400
+		// awsOperation, awsOperationOk := modules.RetrieveValidSpanMeta(span, "S3", "aws.operation")
+		s3Bucket, s3BucketOk := modules.RetrieveValidSpanMeta(span, "S3", "aws.request.bucket")
 
-		// awsService, awsServiceOk := span.Meta["aws.service.api"]
-		awsOperation, awsOperationOk := span.Meta["aws.operation"]
-		s3Bucket, s3BucketOk := span.Meta["aws.request.bucket"]
-
-		if awsOperationOk && s3BucketOk {
-			var arn = strings.ToLower(fmt.Sprintf("arn:aws:s3:::%s", s3Bucket))
+		if s3BucketOk {
+			var arn = strings.ToLower(fmt.Sprintf("arn:aws:s3:::%s", *s3Bucket))
 			var urn = t.CreateServiceURN(arn)
 
-			modules.SpanBuilder(
-				span,
-				"consumer",
-				"s3",
-				awsOperation,
-				urn,
-				arn,
-			)
+			modules.SpanBuilder(span, *s3Bucket, "S3", "s3", "consumer", urn, arn)
 		} else {
 			_ = log.Errorf("[OTEL] [S3]: Unable to map the S3 request")
-
-			if !awsOperationOk {
-				_ = log.Errorf("[OTEL] [S3]: 'aws.operation' is not found in the span meta data, this value is required.")
-			}
-			if !s3BucketOk {
-				_ = log.Errorf("[OTEL] [S3]: 'aws.request.bucket' is not found in the span meta data, this value is required.")
-			}
-
 			return nil
 		}
 
-		t.interpretHTTPError(span)
+		modules.InterpretHTTPError(span)
 	}
 
 	return spans
-}
-
-func (t *OpenTelemetryS3Interpreter) interpretHTTPError(span *pb.Span) {
-	if span.Error != 0 {
-		if httpStatus, found := span.Metrics["http.status_code"]; found {
-			if httpStatus >= 400 && httpStatus < 500 {
-				span.Meta["span.errorClass"] = "4xx"
-			} else if httpStatus >= 500 {
-				span.Meta["span.errorClass"] = "5xx"
-			}
-		}
-	}
 }

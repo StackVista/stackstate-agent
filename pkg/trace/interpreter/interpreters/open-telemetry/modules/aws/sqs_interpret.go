@@ -52,32 +52,9 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 				var urn = t.CreateServiceURN(*sqsEndpoint)
 				var arn = strings.ToLower(
 					fmt.Sprintf("https://%s.queue.amazonaws.com/%s/%s", *awsRegion, accountID, *sqsQueueName))
+				var queueIdentifier = fmt.Sprintf("%s-%s-%s", *sqsQueueName, accountID, *awsRegion)
 
-				// Name of component displayed below the icon
-				span.Meta["span.serviceName"] = fmt.Sprintf("%s-%s-%s", *sqsQueueName, accountID, *awsRegion)
-
-				// Name of the trace displayed on the trace graph line
-				span.Name = fmt.Sprintf("%s: %s-%s-%s", "SQS Queue", *sqsQueueName, accountID, *awsRegion)
-
-				// Displayed on the trace properties
-				span.Resource = "aws.sqs.queue"
-				span.Type = "aws"
-				span.Meta["http.host"] = "aws.lambda"
-
-				// Mapping inside StackPack for capturing certain metrics
-				span.Meta["span.serviceType"] = "open-telemetry"
-				span.Meta["source"] = "open-telemetry"
-
-				// Unknown
-				span.Service = "aws.sqs.queue"
-				span.Meta["service"] = "aws.sqs.queue"
-				span.Meta["sts.origin"] = "open-telemetry"
-
-				// General mapping
-				span.Meta["span.kind"] = "client"
-				span.Meta["span.serviceURN"] = urn
-				span.Meta["sts.service.identifiers"] = arn
-
+				modules.SpanBuilder(span, queueIdentifier, "SQS Queue", "sqs.queue", "consumer", urn, arn)
 			} else {
 				_ = log.Errorf("[OTEL] [SQS]: The SQS Endpoint URL is incorrect, Unable to parse %s.", sqsEndpointPieces)
 				return nil
