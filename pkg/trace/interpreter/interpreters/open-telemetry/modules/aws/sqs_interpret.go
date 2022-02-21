@@ -5,7 +5,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
-	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/modules"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
@@ -42,6 +41,7 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 
 		// awsService, awsServiceOk := span.Meta["aws.service.api"]
 		awsRegion, awsRegionOk := span.Meta["aws.region"]
+		// awsOperation, awsOperationOk := span.Meta["aws.operation"]
 		sqsEndpoint, sqsEndpointOk := span.Meta["messaging.url"]
 		sqsQueueName, sqsQueueNameOk := span.Meta["messaging.destination"]
 
@@ -54,16 +54,16 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 				var arn = strings.ToLower(
 					fmt.Sprintf("https://%s.queue.amazonaws.com/%s/%s", awsRegion, accountID, sqsQueueName))
 
-				// aws.sqs.queue
-
-				modules.SqsSpanBuilderTesting(
-					span,
-					"consumer",
-					"sqs",
-					"queue",
-					urn,
-					arn,
-				)
+				span.Name = "SQS Test Name"
+				span.Meta["span.serviceName"] = "Queue Name Test"
+				span.Meta["service"] = "sqs"
+				span.Service = "other"
+				span.Type = "other"
+				span.Meta["span.serviceType"] = "open-telemetry"
+				span.Meta["span.kind"] = "consumer"
+				span.Resource = "aws.sqs.queue"
+				span.Meta["span.serviceURN"] = urn
+				span.Meta["sts.service.identifiers"] = arn
 			} else {
 				_ = log.Errorf("[OTEL] [SQS]: The SQS Endpoint URL is incorrect, Unable to parse %s.", sqsEndpointPieces)
 			}
@@ -73,6 +73,9 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			if !awsRegionOk {
 				_ = log.Errorf("[OTEL] [SQS]: 'aws.region' is not found in the span meta data, this value is required.")
 			}
+			//  if !awsOperationOk {
+			//  	_ = log.Errorf("[OTEL] [SQS]: 'aws.operation' is not found in the span meta data, this value is required.")
+			//  }
 			if !sqsEndpointOk {
 				_ = log.Errorf("[OTEL] [SQS]: 'messaging.url' is not found in the span meta data, this value is required.")
 			}

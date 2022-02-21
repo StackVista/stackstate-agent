@@ -183,8 +183,10 @@ func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationL
 				// If it is not found then we add it back into the array for the original
 				for _, httpSpan := range httpInstrumentationLibrary.Spans {
 					if httpSpan.ParentSpanId != nil && otherSpan.SpanId != nil && string(httpSpan.ParentSpanId) != string(otherSpan.SpanId) {
+						// HTTP
 						httpRemappingSpans.Spans = append(httpRemappingSpans.Spans, httpSpan)
 					} else {
+						// OTHER
 						newOtherSpanAttributes.Attributes = append(newOtherSpanAttributes.Attributes, httpSpan.Attributes...)
 					}
 				}
