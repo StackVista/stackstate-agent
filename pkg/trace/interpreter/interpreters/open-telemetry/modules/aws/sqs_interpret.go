@@ -40,8 +40,8 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 		}
 
 		// awsService, awsServiceOk := span.Meta["aws.service.api"]
-		awsRegion, awsRegionOk := span.Meta["aws.region"]
 		// awsOperation, awsOperationOk := span.Meta["aws.operation"]
+		awsRegion, awsRegionOk := span.Meta["aws.region"]
 		sqsEndpoint, sqsEndpointOk := span.Meta["messaging.url"]
 		sqsQueueName, sqsQueueNameOk := span.Meta["messaging.destination"]
 
@@ -54,16 +54,31 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 				var arn = strings.ToLower(
 					fmt.Sprintf("https://%s.queue.amazonaws.com/%s/%s", awsRegion, accountID, sqsQueueName))
 
-				span.Name = "SQS Test Name"
-				span.Meta["span.serviceName"] = "Queue Name Test"
-				span.Meta["service"] = "sqs"
-				span.Service = "other"
-				span.Type = "other"
-				span.Meta["span.serviceType"] = "open-telemetry"
-				span.Meta["span.kind"] = "consumer"
+				// Name of component displayed below the icon
+				span.Meta["span.serviceName"] = fmt.Sprintf("%s-%s-%s", sqsQueueName, accountID, awsRegion)
+
+				// Name of the trace displayed on the trace graph line
+				span.Name = fmt.Sprintf("%s: %s-%s-%s", "SQS Queue", sqsQueueName, accountID, awsRegion)
+
+				// Displayed on the trace properties
 				span.Resource = "aws.sqs.queue"
+
+				// Unknown
+				span.Service = "aws.sqs.queue"
+				span.Meta["service"] = "aws.sqs.queue"
+
+				// The type displayed on the trace properties
+				span.Type = "aws"
+
+				// Mapping inside StackPack for capturing certain metrics
+				span.Meta["span.serviceType"] = "open-telemetry"
+				span.Meta["source"] = "open-telemetry"
+
+				span.Meta["http.host"] = "aws.lambda"
+				span.Meta["span.kind"] = "client"
 				span.Meta["span.serviceURN"] = urn
 				span.Meta["sts.service.identifiers"] = arn
+
 			} else {
 				_ = log.Errorf("[OTEL] [SQS]: The SQS Endpoint URL is incorrect, Unable to parse %s.", sqsEndpointPieces)
 			}
