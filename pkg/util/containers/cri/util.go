@@ -25,6 +25,14 @@ import (
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
+// sts begin
+const (
+	// Default CRI socket path
+	criDefaultSocketPath = "/var/run/crio/crio.sock"
+)
+
+// sts end
+
 var (
 	globalCRIUtil *CRIUtil
 	once          sync.Once
@@ -92,6 +100,12 @@ func GetUtil() (*CRIUtil, error) {
 			connectionTimeout: config.Datadog.GetDuration("cri_connection_timeout") * time.Second,
 			socketPath:        config.Datadog.GetString("cri_socket_path"),
 		}
+		// sts begin
+		if globalCRIUtil.socketPath == "" {
+			log.Info("No socket path was specified, defaulting to /var/run/crio/crio.sock")
+			globalCRIUtil.socketPath = criDefaultSocketPath
+		}
+		// sts end
 		globalCRIUtil.initRetry.SetupRetrier(&retry.Config{ //nolint:errcheck
 			Name:              "criutil",
 			AttemptMethod:     globalCRIUtil.init,

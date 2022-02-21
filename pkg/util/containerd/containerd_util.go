@@ -82,7 +82,7 @@ func GetContainerdUtil() (*ContainerdUtil, error) {
 		})
 	})
 	if err := globalContainerdUtil.initRetry.TriggerRetry(); err != nil {
-		log.Errorf("Containerd init error: %s", err.Error())
+		log.Debugf("Containerd init error: %s", err.Error()) // sts - changed log to DEBUG level
 		return nil, err
 	}
 	return globalContainerdUtil, nil
