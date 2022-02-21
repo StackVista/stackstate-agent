@@ -32,3 +32,16 @@ func RetrieveValidSpanMeta(span *pb.Span, logName string, target string) (*strin
 
 	return nil, false
 }
+
+// InterpretHTTPError TODO:
+func InterpretHTTPError(span *pb.Span) {
+	if span.Error != 0 {
+		if httpStatus, found := span.Metrics["http.status_code"]; found {
+			if httpStatus >= 400 && httpStatus < 500 {
+				span.Meta["span.errorClass"] = "4xx"
+			} else if httpStatus >= 500 {
+				span.Meta["span.errorClass"] = "5xx"
+			}
+		}
+	}
+}

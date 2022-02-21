@@ -51,13 +51,13 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 				var accountID = sqsEndpointPieces[3]
 				var urn = t.CreateServiceURN(*sqsEndpoint)
 				var arn = strings.ToLower(
-					fmt.Sprintf("https://%s.queue.amazonaws.com/%s/%s", awsRegion, accountID, sqsQueueName))
+					fmt.Sprintf("https://%s.queue.amazonaws.com/%s/%s", *awsRegion, accountID, *sqsQueueName))
 
 				// Name of component displayed below the icon
-				span.Meta["span.serviceName"] = fmt.Sprintf("%s-%s-%s", sqsQueueName, accountID, awsRegion)
+				span.Meta["span.serviceName"] = fmt.Sprintf("%s-%s-%s", *sqsQueueName, accountID, *awsRegion)
 
 				// Name of the trace displayed on the trace graph line
-				span.Name = fmt.Sprintf("%s: %s-%s-%s", "SQS Queue", sqsQueueName, accountID, awsRegion)
+				span.Name = fmt.Sprintf("%s: %s-%s-%s", "SQS Queue", *sqsQueueName, accountID, *awsRegion)
 
 				// Displayed on the trace properties
 				span.Resource = "aws.sqs.queue"
@@ -80,27 +80,15 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 
 			} else {
 				_ = log.Errorf("[OTEL] [SQS]: The SQS Endpoint URL is incorrect, Unable to parse %s.", sqsEndpointPieces)
+				return nil
 			}
 		} else {
 			_ = log.Errorf("[OTEL] [SQS]: Unable to map the SQS request")
-
 			return nil
 		}
 
-		t.interpretHTTPError(span)
+		modules.InterpretHTTPError(span)
 	}
 
 	return spans
-}
-
-func (t *OpenTelemetrySQSInterpreter) interpretHTTPError(span *pb.Span) {
-	if span.Error != 0 {
-		if httpStatus, found := span.Metrics["http.status_code"]; found {
-			if httpStatus >= 400 && httpStatus < 500 {
-				span.Meta["span.errorClass"] = "4xx"
-			} else if httpStatus >= 500 {
-				span.Meta["span.errorClass"] = "5xx"
-			}
-		}
-	}
 }

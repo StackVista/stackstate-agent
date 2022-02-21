@@ -77,30 +77,16 @@ func (t *OpenTelemetryLambdaEntryInterpreter) Interpret(spans []*pb.Span) []*pb.
 				span.Meta["span.serviceURN"] = urn
 				span.Meta["sts.service.identifiers"] = *arn
 			} else {
-				_ = log.Errorf("[OTEL] [LAMBDA]: 'faas.id' invalid structure supplied '%s'", arn)
-
+				_ = log.Errorf("[OTEL] [LAMBDA]: 'faas.id' invalid structure supplied '%s'", *arn)
 				return nil
 			}
 		} else {
 			_ = log.Errorf("[OTEL] [LAMBDA]: Unable to map the LAMBDA request")
-
 			return nil
 		}
 
-		t.interpretHTTPError(span)
+		modules.InterpretHTTPError(span)
 	}
 
 	return spans
-}
-
-func (t *OpenTelemetryLambdaEntryInterpreter) interpretHTTPError(span *pb.Span) {
-	if span.Error != 0 {
-		if httpStatus, found := span.Metrics["http.status_code"]; found {
-			if httpStatus >= 400 && httpStatus < 500 {
-				span.Meta["span.errorClass"] = "4xx"
-			} else if httpStatus >= 500 {
-				span.Meta["span.errorClass"] = "5xx"
-			}
-		}
-	}
 }
