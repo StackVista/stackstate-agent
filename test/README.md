@@ -187,5 +187,3 @@ you can also get the same information from console, like
 ```sh
  ansible localhost -m ec2_ami_info -a "image_ids=ami-09ae46ee3ab46c423" | grep root_device
 ```
-
-
