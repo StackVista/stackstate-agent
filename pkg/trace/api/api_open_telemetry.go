@@ -185,10 +185,11 @@ func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationL
 						// Adding http back into span because it has no parent
 						httpRemappingSpans.Spans = append(httpRemappingSpans.Spans, httpSpan)
 					} else {
-						// Adding http back into span but with parent information
+						// Mix the original Attributes and Http attributes
+						// We then add that http span into the otherLibrary to allow the correct interpreter
 						httpSpan.Attributes = append(httpSpan.Attributes, newOtherSpanAttributes.Attributes...)
 						httpSpan.Name = newOtherSpanAttributes.Name
-						httpRemappingSpans.Spans = append(httpRemappingSpans.Spans, httpSpan)
+						otherLibrary.Spans = append(otherLibrary.Spans, httpSpan)
 					}
 				}
 
