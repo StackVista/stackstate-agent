@@ -189,7 +189,7 @@ func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationL
 						// We then add that http span into the otherLibrary to allow the correct interpreter
 						httpSpan.Attributes = append(httpSpan.Attributes, newOtherSpanAttributes.Attributes...)
 						httpSpan.Name = newOtherSpanAttributes.Name
-						otherLibrary.Spans = append(otherLibrary.Spans, httpSpan)
+						newOtherLibrary.Spans = append(newOtherLibrary.Spans, httpSpan)
 					}
 				}
 
