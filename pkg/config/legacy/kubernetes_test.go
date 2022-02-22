@@ -147,6 +147,7 @@ func TestConvertKubernetes(t *testing.T) {
 	assert.Equal(t, true, config.Datadog.GetBool("collect_kubernetes_events"))
 	assert.Equal(t, true, config.Datadog.GetBool("collect_kubernetes_metrics"))
 	assert.Equal(t, true, config.Datadog.GetBool("collect_kubernetes_topology"))
+	assert.Equal(t, true, config.Datadog.GetBool("kubernetes_source_properties_enabled"))
 	assert.Equal(t, 10, config.Datadog.GetInt("collect_kubernetes_timeout"))
 	assert.Equal(t, true, config.Datadog.GetBool("leader_election"))
 	assert.Equal(t, 1200, config.Datadog.GetInt("leader_lease_duration"))
