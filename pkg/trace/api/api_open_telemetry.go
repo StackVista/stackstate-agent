@@ -180,14 +180,15 @@ func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationL
 				httpRemappingSpans.Spans = make([]*v1.Span, 0)
 
 				// Loop through the http library spans
-				// If it is not found then we add it back into the array for the original
 				for _, httpSpan := range httpInstrumentationLibrary.Spans {
 					if httpSpan.ParentSpanId != nil && otherSpan.SpanId != nil && string(httpSpan.ParentSpanId) != string(otherSpan.SpanId) {
-						// HTTP
+						// Adding http back into span because it has no parent
 						httpRemappingSpans.Spans = append(httpRemappingSpans.Spans, httpSpan)
 					} else {
-						// OTHER
-						newOtherSpanAttributes.Attributes = append(newOtherSpanAttributes.Attributes, httpSpan.Attributes...)
+						// Adding http back into span but with parent information
+						httpSpan.Attributes = append(httpSpan.Attributes, newOtherSpanAttributes.Attributes...)
+						httpSpan.Name = newOtherSpanAttributes.Name
+						httpRemappingSpans.Spans = append(httpRemappingSpans.Spans, httpSpan)
 					}
 				}
 

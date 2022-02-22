@@ -48,7 +48,15 @@ func (t *OpenTelemetryStepFunctionsInterpreter) Interpret(spans []*pb.Span) []*p
 			var arn = strings.ToLower(*stateMachineArn)
 			var urn = t.CreateServiceURN(arn)
 
-			modules.SpanBuilder(span, "SFN Name Required", "State Machine", "step.function", "consumer", urn, arn)
+			arnParts := strings.Split(arn, ":")
+
+			if len(arnParts) >= 7 {
+				stateFunctionName := arnParts[6]
+				modules.SpanBuilder(span, stateFunctionName, "State Machine", "step.function", "consumer", urn, arn)
+			} else {
+				_ = log.Errorf("[OTEL] [SFN]: 'arn' invalid structure supplied '%s'", arn)
+				return nil
+			}
 		} else {
 			_ = log.Errorf("[OTEL] [SFN]: Unable to map the Step Functions request")
 			return nil

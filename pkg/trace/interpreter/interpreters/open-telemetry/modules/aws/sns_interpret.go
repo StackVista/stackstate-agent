@@ -48,7 +48,15 @@ func (t *OpenTelemetrySNSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			var urn = t.CreateServiceURN(strings.ToLower(*topicArn))
 			var arn = strings.ToLower(*topicArn)
 
-			modules.SpanBuilder(span, "Topic Name Missing", "SNS", "sns", "consumer", urn, arn)
+			arnParts := strings.Split(arn, ":")
+
+			if len(arnParts) >= 7 {
+				topicName := arnParts[6]
+				modules.SpanBuilder(span, topicName, "SNS", "sns", "consumer", urn, arn)
+			} else {
+				_ = log.Errorf("[OTEL] [SFN]: 'arn' invalid structure supplied '%s'", arn)
+				return nil
+			}
 		} else {
 			_ = log.Errorf("[OTEL] [SNS]: Unable to map the SNS request")
 			return nil
