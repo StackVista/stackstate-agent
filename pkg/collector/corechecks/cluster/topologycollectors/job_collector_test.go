@@ -245,8 +245,18 @@ func (m MockJobAPICollectorClient) GetJobs() ([]batchV1.Job, error) {
 				Labels: map[string]string{
 					"test": "label",
 				},
-				UID:          types.UID(fmt.Sprintf("test-job-%d", i)),
-				GenerateName: "",
+				UID:             types.UID(fmt.Sprintf("test-job-%d", i)),
+				GenerateName:    "",
+				ResourceVersion: "123",
+				ManagedFields: []v1.ManagedFieldsEntry{
+					{
+						Manager:    "ignored",
+						Operation:  "Updated",
+						APIVersion: "whatever",
+						Time:       &v1.Time{Time: time.Now()},
+						FieldsType: "whatever",
+					},
+				},
 			},
 			Spec: batchV1.JobSpec{
 				Parallelism:  &parralelism,

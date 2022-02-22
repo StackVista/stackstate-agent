@@ -211,8 +211,18 @@ func (m MockDaemonSetAPICollectorClient) GetDaemonSets() ([]appsV1.DaemonSet, er
 				Labels: map[string]string{
 					"test": "label",
 				},
-				UID:          types.UID(fmt.Sprintf("test-daemonset-%d", i)),
-				GenerateName: "",
+				UID:             types.UID(fmt.Sprintf("test-daemonset-%d", i)),
+				GenerateName:    "",
+				ResourceVersion: "123",
+				ManagedFields: []v1.ManagedFieldsEntry{
+					{
+						Manager:    "ignored",
+						Operation:  "Updated",
+						APIVersion: "whatever",
+						Time:       &v1.Time{Time: time.Now()},
+						FieldsType: "whatever",
+					},
+				},
 			},
 			Spec: appsV1.DaemonSetSpec{
 				UpdateStrategy: appsV1.DaemonSetUpdateStrategy{

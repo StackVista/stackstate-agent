@@ -198,8 +198,18 @@ func (m MockCronJobAPICollectorClient) GetCronJobs() ([]v1beta1.CronJob, error) 
 				Labels: map[string]string{
 					"test": "label",
 				},
-				UID:          types.UID(fmt.Sprintf("test-cronjob-%d", i)),
-				GenerateName: "",
+				UID:             types.UID(fmt.Sprintf("test-cronjob-%d", i)),
+				GenerateName:    "",
+				ResourceVersion: "123",
+				ManagedFields: []v1.ManagedFieldsEntry{
+					{
+						Manager:    "ignored",
+						Operation:  "Updated",
+						APIVersion: "whatever",
+						Time:       &v1.Time{Time: time.Now()},
+						FieldsType: "whatever",
+					},
+				},
 			},
 			Spec: v1beta1.CronJobSpec{
 				Schedule:          "0 0 * * *",

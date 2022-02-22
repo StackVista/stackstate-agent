@@ -293,8 +293,18 @@ func (m MockPersistentVolumeAPICollectorClient) GetPersistentVolumes() ([]coreV1
 				Labels: map[string]string{
 					"test": "label",
 				},
-				UID:          types.UID(fmt.Sprintf("test-persistent-volume-%d", i)),
-				GenerateName: "",
+				UID:             types.UID(fmt.Sprintf("test-persistent-volume-%d", i)),
+				GenerateName:    "",
+				ResourceVersion: "123",
+				ManagedFields: []v1.ManagedFieldsEntry{
+					{
+						Manager:    "ignored",
+						Operation:  "Updated",
+						APIVersion: "whatever",
+						Time:       &v1.Time{Time: time.Now()},
+						FieldsType: "whatever",
+					},
+				},
 			},
 			Spec: coreV1.PersistentVolumeSpec{
 				StorageClassName: "Storage-Class-Name",

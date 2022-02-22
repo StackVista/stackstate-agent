@@ -175,6 +175,16 @@ func (m MockSecretAPICollectorClient) GetSecrets() ([]coreV1.Secret, error) {
 				Namespace:         "test-namespace",
 				UID:               types.UID(fmt.Sprintf("test-secret-%d", i)),
 				GenerateName:      "",
+				ResourceVersion:   "123",
+				ManagedFields: []v1.ManagedFieldsEntry{
+					{
+						Manager:    "ignored",
+						Operation:  "Updated",
+						APIVersion: "whatever",
+						Time:       &v1.Time{Time: time.Now()},
+						FieldsType: "whatever",
+					},
+				},
 			},
 		}
 

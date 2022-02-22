@@ -556,8 +556,18 @@ func (m MockServiceAPICollectorClient) GetServices() ([]coreV1.Service, error) {
 				Labels: map[string]string{
 					"test": "label",
 				},
-				UID:          types.UID(fmt.Sprintf("test-service-%d", i)),
-				GenerateName: "",
+				UID:             types.UID(fmt.Sprintf("test-service-%d", i)),
+				GenerateName:    "",
+				ResourceVersion: "123",
+				ManagedFields: []v1.ManagedFieldsEntry{
+					{
+						Manager:    "ignored",
+						Operation:  "Updated",
+						APIVersion: "whatever",
+						Time:       &v1.Time{Time: time.Now()},
+						FieldsType: "whatever",
+					},
+				},
 			},
 			Spec: coreV1.ServiceSpec{
 				Ports: []coreV1.ServicePort{

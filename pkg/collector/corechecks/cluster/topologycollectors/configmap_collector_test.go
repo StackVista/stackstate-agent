@@ -183,6 +183,16 @@ func (m MockConfigMapAPICollectorClient) GetConfigMaps() ([]coreV1.ConfigMap, er
 				Namespace:         "test-namespace",
 				UID:               types.UID(fmt.Sprintf("test-configmap-%d", i)),
 				GenerateName:      "",
+				ResourceVersion:   "123",
+				ManagedFields: []v1.ManagedFieldsEntry{
+					{
+						Manager:    "ignored",
+						Operation:  "Updated",
+						APIVersion: "whatever",
+						Time:       &v1.Time{Time: time.Now()},
+						FieldsType: "whatever",
+					},
+				},
 			},
 		}
 

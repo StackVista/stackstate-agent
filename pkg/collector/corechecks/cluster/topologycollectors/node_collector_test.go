@@ -372,9 +372,19 @@ func CreateBaseNode(id int) coreV1.Node {
 			Labels: map[string]string{
 				"test": "label",
 			},
-			UID:          types.UID(fmt.Sprintf("test-node-%d", id)),
-			GenerateName: "",
-			ClusterName:  "mycluster",
+			UID:             types.UID(fmt.Sprintf("test-node-%d", id)),
+			GenerateName:    "",
+			ClusterName:     "mycluster",
+			ResourceVersion: "123",
+			ManagedFields: []v1.ManagedFieldsEntry{
+				{
+					Manager:    "ignored",
+					Operation:  "Updated",
+					APIVersion: "whatever",
+					Time:       &v1.Time{Time: time.Now()},
+					FieldsType: "whatever",
+				},
+			},
 		},
 		Status: coreV1.NodeStatus{
 			Phase: coreV1.NodeRunning,

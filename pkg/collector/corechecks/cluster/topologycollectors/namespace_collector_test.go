@@ -132,6 +132,16 @@ func (m MockNamespaceAPICollectorClient) GetNamespaces() ([]coreV1.Namespace, er
 				CreationTimestamp: creationTime,
 				UID:               types.UID(fmt.Sprintf("test-namespace-%d", i)),
 				GenerateName:      "",
+				ResourceVersion:   "123",
+				ManagedFields: []v1.ManagedFieldsEntry{
+					{
+						Manager:    "ignored",
+						Operation:  "Updated",
+						APIVersion: "whatever",
+						Time:       &v1.Time{Time: time.Now()},
+						FieldsType: "whatever",
+					},
+				},
 			},
 		}
 

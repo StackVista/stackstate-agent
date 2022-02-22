@@ -227,8 +227,18 @@ func (m MockStatefulSetAPICollectorClient) GetStatefulSets() ([]appsV1.StatefulS
 				Labels: map[string]string{
 					"test": "label",
 				},
-				UID:          types.UID(fmt.Sprintf("test-statefulset-%d", i)),
-				GenerateName: "",
+				UID:             types.UID(fmt.Sprintf("test-statefulset-%d", i)),
+				GenerateName:    "",
+				ResourceVersion: "123",
+				ManagedFields: []v1.ManagedFieldsEntry{
+					{
+						Manager:    "ignored",
+						Operation:  "Updated",
+						APIVersion: "whatever",
+						Time:       &v1.Time{Time: time.Now()},
+						FieldsType: "whatever",
+					},
+				},
 			},
 			Spec: appsV1.StatefulSetSpec{
 				UpdateStrategy: appsV1.StatefulSetUpdateStrategy{
