@@ -180,16 +180,12 @@ func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationL
 				httpRemappingSpans.Spans = make([]*v1.Span, 0)
 
 				// Loop through the http library spans
+				// If it is not found then we add it back into the array for the original
 				for _, httpSpan := range httpInstrumentationLibrary.Spans {
 					if httpSpan.ParentSpanId != nil && otherSpan.SpanId != nil && string(httpSpan.ParentSpanId) != string(otherSpan.SpanId) {
-						// Adding http back into span because it has no parent
 						httpRemappingSpans.Spans = append(httpRemappingSpans.Spans, httpSpan)
 					} else {
-						// Mix the original Attributes and Http attributes
-						// We then add that http span into the otherLibrary to allow the correct interpreter
-						httpSpan.Attributes = append(httpSpan.Attributes, newOtherSpanAttributes.Attributes...)
-						httpSpan.Name = newOtherSpanAttributes.Name
-						newOtherLibrary.Spans = append(newOtherLibrary.Spans, httpSpan)
+						newOtherSpanAttributes.Attributes = append(newOtherSpanAttributes.Attributes, httpSpan.Attributes...)
 					}
 				}
 
@@ -199,6 +195,7 @@ func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationL
 
 			// We can not take the list of new http library mappings and set them as the list of available http
 			// instrumentation we want to show as components.
+			// This will be a list of http libraries that has no or there was not parentSpanId for
 			httpInstrumentation = newHTTPLibrary
 
 			// We append back the other span with the updated attribute information
