@@ -199,7 +199,6 @@ func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationL
 
 			// We can not take the list of new http library mappings and set them as the list of available http
 			// instrumentation we want to show as components.
-			// This will be a list of http libraries that has no or there was not parentSpanId for
 			httpInstrumentation = newHTTPLibrary
 
 			// We append back the other span with the updated attribute information
