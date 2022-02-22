@@ -40,22 +40,31 @@ func (t *OpenTelemetryLambdaEntryInterpreter) Interpret(spans []*pb.Span) []*pb.
 			span.Meta = map[string]string{}
 		}
 
+		// Extract meta information
 		arn, arnOk := modules.RetrieveValidSpanMeta(span, "LAMBDA", "faas.id")
 		_, awsAccountIDOk := modules.RetrieveValidSpanMeta(span, "LAMBDA", "cloud.account.id")
 
+		// Only continue if there is a cloud.account.id
+		// We do not use it but is important in mappings for the other aws-sdk libraries
+		// If this is not found then we attempt to leave out the parent thus causing no trace link
 		if arnOk && awsAccountIDOk {
 			var urn = t.CreateServiceURN(strings.ToLower(*arn))
+
+			// To reduce the amount of data mapped to the request we can extract the requirements from the ARN
 			arnParts := strings.Split(*arn, ":")
 
+			// Valid ARN will always have 7 parts
 			if len(arnParts) >= 7 {
 				functionName := arnParts[6]
+
+				// Map information for this span
 				modules.SpanBuilder(span, functionName, "Lambda", "lambda", "producer", urn, *arn)
 			} else {
-				_ = log.Errorf("[OTEL] [LAMBDA]: 'faas.id' invalid structure supplied '%s'", *arn)
+				_ = log.Errorf("[OTEL] [LAMBDA]: Unable to map LAMBDA because of a invalid arn, %s", *arn)
 				return nil
 			}
 		} else {
-			_ = log.Errorf("[OTEL] [LAMBDA]: Unable to map the LAMBDA request")
+			_ = log.Errorf("[OTEL] [LAMBDA]: Unable to map LAMBDA because of invalid data")
 			return nil
 		}
 

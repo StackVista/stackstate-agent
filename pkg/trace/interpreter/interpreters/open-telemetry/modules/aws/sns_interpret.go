@@ -50,11 +50,11 @@ func (t *OpenTelemetrySNSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 
 			arnParts := strings.Split(arn, ":")
 
-			if len(arnParts) >= 7 {
-				topicName := arnParts[6]
+			if len(arnParts) >= 6 {
+				topicName := arnParts[5]
 				modules.SpanBuilder(span, topicName, "SNS", "sns", "consumer", urn, arn)
 			} else {
-				_ = log.Errorf("[OTEL] [SFN]: 'arn' invalid structure supplied '%s'", arn)
+				_ = log.Errorf("[OTEL] [SNS]: 'arn' invalid structure supplied '%s'", arn)
 				return nil
 			}
 		} else {

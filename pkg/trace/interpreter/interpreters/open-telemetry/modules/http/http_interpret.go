@@ -53,7 +53,7 @@ func (t *OpenTelemetryHTTPInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			var url = sanitizeURL(*httpURL)
 			var urn = t.CreateServiceURN(fmt.Sprintf("lambda-http-request/%s/%s", url, *httpMethod))
 
-			modules.SpanBuilder(span, "HTTP Name Required", "Http", "http", "consumer", urn, url)
+			modules.SpanBuilder(span, fmt.Sprintf("HTTP %s", *httpMethod), "Http", "http", "consumer", urn, url)
 		} else {
 			_ = log.Errorf("[OTEL] [LAMBDA.HTTP]: Unable to map the Lambda HTTP request")
 			return nil

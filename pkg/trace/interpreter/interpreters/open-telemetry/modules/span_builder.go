@@ -6,8 +6,8 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
-// SpanBuilder An generic function to map Open Telemetry AWS service traces to a format that STS understands
-// serviceName (functionName)  namePrefix (Lambda)  service (lambda)
+// SpanBuilder Map span data for the Open Telemetry service.
+// This allows us to more easily change the data mapping for all the open telemetry services
 func SpanBuilder(span *pb.Span, serviceName string, namePrefix string, service string, kind string, urn string, arn string) {
 	// Name of component displayed below the icon
 	span.Meta["span.serviceName"] = serviceName
@@ -34,7 +34,7 @@ func SpanBuilder(span *pb.Span, serviceName string, namePrefix string, service s
 	span.Meta["sts.service.identifiers"] = arn
 }
 
-// RetrieveValidSpanMeta TODO:
+// RetrieveValidSpanMeta Retrieve span data or display a message saying what is missing in the agent logs and returning false
 func RetrieveValidSpanMeta(span *pb.Span, logName string, target string) (*string, bool) {
 	value, ok := span.Meta[target]
 	if ok && len(value) > 0 {
@@ -48,7 +48,7 @@ func RetrieveValidSpanMeta(span *pb.Span, logName string, target string) (*strin
 	return nil, false
 }
 
-// InterpretHTTPError TODO:
+// InterpretHTTPError Maps a proper error class if the instrumentation contains a error
 func InterpretHTTPError(span *pb.Span) {
 	if span.Error != 0 {
 		if httpStatus, found := span.Metrics["http.status_code"]; found {

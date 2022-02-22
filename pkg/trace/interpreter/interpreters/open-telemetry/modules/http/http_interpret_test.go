@@ -22,103 +22,110 @@ func TestOpenTelemetryHTTPSpanInterpreter(t *testing.T) {
 			trace:       []*pb.Span{},
 			expected:    []*pb.Span{},
 		},
-		/*
-			{
-				testCase:    "Open Telemetry data should be mapped if all the correct meta data has been passed",
-				interpreter: interpreter,
-				trace: []*pb.Span{{
-					Meta: map[string]string{
-						"http.url":    "http://www.example.com/user/testing?queue=1#random-data",
-						"http.method": "GET",
-					},
-				}},
-				expected: []*pb.Span{{
-					Service:  "open.telemetry.lambda.http",
-					Resource: "aws.lambda.http",
-					Type:     "open-telemetry",
-					Meta: map[string]string{
-						"http.method":             "GET",
-						"http.url":                "http://www.example.com/user/testing?queue=1#random-data",
-						"service":                 "open.telemetry.lambda.http",
-						"span.kind":               "consumer",
-						"span.serviceName":        "open.telemetry.lambda.http.GET",
-						"span.serviceType":        "open-telemetry",
-						"span.serviceURN":         "urn:service:/lambda-http-request/www.example.com/user/testing/GET",
-						"sts.service.identifiers": "www.example.com/user/testing",
-					},
-				}},
-			},
-			{
-				testCase:    "Should interpret 4xx http errors",
-				interpreter: interpreter,
-				trace: []*pb.Span{{
-					Service: "open.telemetry.lambda.http",
-					Error:   1,
-					Metrics: map[string]float64{
-						"http.status_code": 404.0,
-					},
-					Meta: map[string]string{
-						"http.url":    "http://www.example.com/user/testing?queue=1#random-data",
-						"http.method": "GET",
-					},
-				}},
-				expected: []*pb.Span{{
-					Service:  "open.telemetry.lambda.http",
-					Resource: "aws.lambda.http",
-					Type:     "open-telemetry",
-					Error:    1,
-					Metrics: map[string]float64{
-						"http.status_code": 404.0,
-					},
-					Meta: map[string]string{
-						"span.errorClass":         "4xx",
-						"http.method":             "GET",
-						"http.url":                "http://www.example.com/user/testing?queue=1#random-data",
-						"service":                 "open.telemetry.lambda.http",
-						"span.kind":               "consumer",
-						"span.serviceName":        "open.telemetry.lambda.http.GET",
-						"span.serviceType":        "open-telemetry",
-						"span.serviceURN":         "urn:service:/lambda-http-request/www.example.com/user/testing/GET",
-						"sts.service.identifiers": "www.example.com/user/testing",
-					},
-				}},
-			},
-			{
-				testCase:    "Should interpret 5xx http errors",
-				interpreter: interpreter,
-				trace: []*pb.Span{{
-					Service: "open.telemetry.lambda.http",
-					Error:   1,
-					Metrics: map[string]float64{
-						"http.status_code": 503.0,
-					},
-					Meta: map[string]string{
-						"http.url":    "http://www.example.com/user/testing?queue=1#random-data",
-						"http.method": "GET",
-					},
-				}},
-				expected: []*pb.Span{{
-					Service:  "open.telemetry.lambda.http",
-					Resource: "aws.lambda.http",
-					Type:     "open-telemetry",
-					Error:    1,
-					Metrics: map[string]float64{
-						"http.status_code": 503.0,
-					},
-					Meta: map[string]string{
-						"span.errorClass":         "5xx",
-						"http.method":             "GET",
-						"http.url":                "http://www.example.com/user/testing?queue=1#random-data",
-						"service":                 "open.telemetry.lambda.http",
-						"span.kind":               "consumer",
-						"span.serviceName":        "open.telemetry.lambda.http.GET",
-						"span.serviceType":        "open-telemetry",
-						"span.serviceURN":         "urn:service:/lambda-http-request/www.example.com/user/testing/GET",
-						"sts.service.identifiers": "www.example.com/user/testing",
-					},
-				}},
-			},
-		*/
+		{
+			testCase:    "Open Telemetry data should be mapped if all the correct meta data has been passed",
+			interpreter: interpreter,
+			trace: []*pb.Span{{
+				Meta: map[string]string{
+					"http.url":    "http://www.example.com/user/testing?queue=1#random-data",
+					"http.method": "GET",
+				},
+			}},
+			expected: []*pb.Span{{
+				Name:     "Http: HTTP GET",
+				Service:  "aws.http",
+				Resource: "aws.http",
+				Type:     "aws",
+				Meta: map[string]string{
+					"sts.origin":              "open-telemetry",
+					"source":                  "open-telemetry",
+					"http.method":             "GET",
+					"http.url":                "http://www.example.com/user/testing?queue=1#random-data",
+					"service":                 "aws.http",
+					"span.kind":               "consumer",
+					"span.serviceName":        "HTTP GET",
+					"span.serviceType":        "open-telemetry",
+					"span.serviceURN":         "urn:service:/lambda-http-request/www.example.com/user/testing/GET",
+					"sts.service.identifiers": "www.example.com/user/testing",
+				},
+			}},
+		},
+		{
+			testCase:    "Should interpret 4xx http errors",
+			interpreter: interpreter,
+			trace: []*pb.Span{{
+				Service: "aws.http",
+				Error:   1,
+				Metrics: map[string]float64{
+					"http.status_code": 404.0,
+				},
+				Meta: map[string]string{
+					"http.url":    "http://www.example.com/user/testing?queue=1#random-data",
+					"http.method": "GET",
+				},
+			}},
+			expected: []*pb.Span{{
+				Name:     "Http: HTTP GET",
+				Service:  "aws.http",
+				Resource: "aws.http",
+				Type:     "aws",
+				Error:    1,
+				Metrics: map[string]float64{
+					"http.status_code": 404.0,
+				},
+				Meta: map[string]string{
+					"sts.origin":              "open-telemetry",
+					"source":                  "open-telemetry",
+					"span.errorClass":         "4xx",
+					"http.method":             "GET",
+					"http.url":                "http://www.example.com/user/testing?queue=1#random-data",
+					"service":                 "aws.http",
+					"span.kind":               "consumer",
+					"span.serviceName":        "HTTP GET",
+					"span.serviceType":        "open-telemetry",
+					"span.serviceURN":         "urn:service:/lambda-http-request/www.example.com/user/testing/GET",
+					"sts.service.identifiers": "www.example.com/user/testing",
+				},
+			}},
+		},
+		{
+			testCase:    "Should interpret 5xx http errors",
+			interpreter: interpreter,
+			trace: []*pb.Span{{
+				Service: "aws.http",
+				Error:   1,
+				Metrics: map[string]float64{
+					"http.status_code": 503.0,
+				},
+				Meta: map[string]string{
+					"http.url":    "http://www.example.com/user/testing?queue=1#random-data",
+					"http.method": "GET",
+				},
+			}},
+			expected: []*pb.Span{{
+				Name:     "Http: HTTP GET",
+				Service:  "aws.http",
+				Resource: "aws.http",
+				Type:     "aws",
+				Error:    1,
+				Metrics: map[string]float64{
+					"http.status_code": 503.0,
+				},
+				Meta: map[string]string{
+					"sts.origin":              "open-telemetry",
+					"source":                  "open-telemetry",
+					"span.errorClass":         "5xx",
+					"http.method":             "GET",
+					"http.url":                "http://www.example.com/user/testing?queue=1#random-data",
+					"service":                 "aws.http",
+					"span.kind":               "consumer",
+					"span.serviceName":        "HTTP GET",
+					"span.serviceType":        "open-telemetry",
+					"span.serviceURN":         "urn:service:/lambda-http-request/www.example.com/user/testing/GET",
+					"sts.service.identifiers": "www.example.com/user/testing",
+				},
+			}},
+		},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
 			actual := tc.interpreter.Interpret(tc.trace)
