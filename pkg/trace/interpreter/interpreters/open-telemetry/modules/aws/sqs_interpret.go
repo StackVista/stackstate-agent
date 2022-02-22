@@ -45,7 +45,8 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 		sqsQueueName, sqsQueueNameOk := modules.RetrieveValidSpanMeta(span, "SQS", "messaging.destination")
 
 		if sqsQueueNameOk && sqsEndpointOk && awsRegionOk {
-			sqsEndpointPieces := strings.Split(*sqsEndpoint, "/") // Example Input: https://sqs.<region>.amazonaws.com/<account-id>/<queue-name>
+			// Example Input: https://sqs.<region>.amazonaws.com/<account-id>/<queue-name>
+			sqsEndpointPieces := strings.Split(*sqsEndpoint, "/")
 
 			if len(sqsEndpointPieces) >= 3 {
 				var accountID = sqsEndpointPieces[3]

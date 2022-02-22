@@ -1,6 +1,5 @@
 package api
 
-/*
 import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	v11 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/common/v1"
@@ -9,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
-
 
 func TestMapOpenTelemetryTraces(t *testing.T) {
 	instrumentationAwsSdkLibrary := v1.InstrumentationLibrarySpans{
@@ -517,25 +515,10 @@ func TestRemapOtelHttpLibraryStatusMappers(t *testing.T) {
 
 	newRemappedInstrumentationLibraries := determineInstrumentationSuccessFromHTTP(instrumentationLibrarySpans)
 
-	// Total Counts
-	assert.Equal(t, 3, len(instrumentationLibrarySpans), "Total instrumentation library spans count")
 	assert.Equal(t, 3, len(newRemappedInstrumentationLibraries), "We should still have the same amount of instrumentationLibraries even if HTTP spans was remapped")
-
-	// Span Lengths
-	assert.Equal(t, 1, len(instrumentationLibrarySpans[0].Spans), "[INSTRUMENTATION-AWS-SDK] Total library spans count")
-	assert.Equal(t, 1, len(instrumentationLibrarySpans[1].Spans), "[INSTRUMENTATION-*] Total library spans count")
-	assert.Equal(t, 2, len(instrumentationLibrarySpans[2].Spans), "[INSTRUMENTATION-HTTP] Total library spans count")
-
 	assert.Equal(t, 1, len(newRemappedInstrumentationLibraries[1].Spans), "[INSTRUMENTATION-AWS-SDK] should have the same amount of spans it started with")
 	assert.Equal(t, 1, len(newRemappedInstrumentationLibraries[2].Spans), "[INSTRUMENTATION-*] should have the same amount of spans it started with")
 	assert.Equal(t, 1, len(newRemappedInstrumentationLibraries[0].Spans), "[INSTRUMENTATION-HTTP] should have 1 less span, Only one should be mapped and removed because of a parentSpanId. The res")
-
-	// Total Attributes
-	assert.Equal(t, 2, len(instrumentationLibrarySpans[0].Spans[0].Attributes), "[INSTRUMENTATION-AWS-SDK] Original amount of attributes should stay the same after mappings")
-	assert.Equal(t, 1, len(instrumentationLibrarySpans[1].Spans[0].Attributes), "[INSTRUMENTATION-*] Original amount of attributes should stay the same after mappings")
-	assert.Equal(t, 4, len(instrumentationLibrarySpans[2].Spans[0].Attributes), "[INSTRUMENTATION-HTTP] Original amount of attributes should stay the same after mappings")
-	assert.Equal(t, 4, len(instrumentationLibrarySpans[2].Spans[1].Attributes), "[INSTRUMENTATION-HTTP] Original amount of attributes should stay the same after mappings")
-
 	assert.Equal(t, 6, len(newRemappedInstrumentationLibraries[1].Spans[0].Attributes), "[INSTRUMENTATION-AWS-SDK] The aws-sdk should have received more attributes since a http instrumentation would merge with this")
 	assert.Equal(t, 1, len(newRemappedInstrumentationLibraries[2].Spans[0].Attributes), "[INSTRUMENTATION-*] Should stay the same as there was no http mapping for this")
 	assert.Equal(t, 4, len(newRemappedInstrumentationLibraries[0].Spans[0].Attributes), "[INSTRUMENTATION-HTTP] Should stay the same and present as this http instrumentation span had no parentId")
@@ -790,4 +773,3 @@ func TestConvertStringToUint64(t *testing.T) {
 	sampleI, _ := convertStringToUint64("ASDxkjchi8y349h234987hgfeiwundfuishf89234yh23uh4iu2rh8hsad")
 	assert.Equal(t, uint64(833580), *sampleI, "String to Int sample i should always have the same value")
 }
-*/

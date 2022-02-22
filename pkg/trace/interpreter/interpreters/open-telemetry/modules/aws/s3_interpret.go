@@ -40,7 +40,6 @@ func (t *OpenTelemetryS3Interpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			span.Meta = map[string]string{}
 		}
 
-		// awsOperation, awsOperationOk := modules.RetrieveValidSpanMeta(span, "S3", "aws.operation")
 		s3Bucket, s3BucketOk := modules.RetrieveValidSpanMeta(span, "S3", "aws.request.bucket")
 
 		if s3BucketOk {

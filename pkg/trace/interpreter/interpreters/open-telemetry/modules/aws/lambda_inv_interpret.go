@@ -43,7 +43,6 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 		functionName, functionNameOk := modules.RetrieveValidSpanMeta(span, "LAMBDA", "aws.request.function.name")
 		accountID, accountIDOk := modules.RetrieveValidSpanMeta(span, "LAMBDA", "aws.account.id")
 		region, regionOk := modules.RetrieveValidSpanMeta(span, "LAMBDA", "aws.region")
-		// awsOperation, awsOperationOk := modules.RetrieveValidSpanMeta(span, "LAMBDA", "aws.operation")
 
 		// Invoke will contain data to another Lambda function being invoked
 		if functionNameOk && accountIDOk && regionOk && span.Meta["aws.operation"] == "invoke" {

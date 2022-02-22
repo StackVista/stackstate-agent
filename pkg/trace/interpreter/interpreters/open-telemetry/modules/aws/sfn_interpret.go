@@ -40,8 +40,6 @@ func (t *OpenTelemetryStepFunctionsInterpreter) Interpret(spans []*pb.Span) []*p
 			span.Meta = map[string]string{}
 		}
 
-		// awsService, awsServiceOk := span.Meta["aws.service.api"]
-		// awsOperation, awsOperationOk := modules.RetrieveValidSpanMeta(span, "SFN", "aws.operation")
 		stateMachineArn, stateMachineArnOk := modules.RetrieveValidSpanMeta(span, "SFN", "aws.request.state.machine.arn")
 
 		if stateMachineArnOk {

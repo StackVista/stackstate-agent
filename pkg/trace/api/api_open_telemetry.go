@@ -138,77 +138,68 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 // whilst we do not create a useless http component by removing it
 func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationLibrarySpans) []v1.InstrumentationLibrarySpans {
 	var httpInstrumentation []v1.InstrumentationLibrarySpans
-	var otherInstrumentation []v1.InstrumentationLibrarySpans
+	var instrumentation []v1.InstrumentationLibrarySpans
 
-	// We separate the http and any other instrumentation libraries
+	// We separate the http instrumentation from the other ones
+	// This is done because if they do have a parent, they'll be mapped into the parent
 	for _, library := range librarySpans {
 		switch library.InstrumentationLibrary.Name {
 		case "@opentelemetry/instrumentation-http":
 			httpInstrumentation = append(httpInstrumentation, *library)
 		default:
-			otherInstrumentation = append(otherInstrumentation, *library)
+			instrumentation = append(instrumentation, *library)
 		}
 	}
 
-	// This is the remapped other instrumentation libraries containing the merged
-	// http instrumentation attribute information
-	var newOtherInstrumentation = make([]v1.InstrumentationLibrarySpans, 0)
+	var httpWithParentSpans = make([]*v1.Span, 0)
+	var httpLibraryNoParentSpans []v1.InstrumentationLibrarySpans
 
-	for _, otherLibrary := range otherInstrumentation {
-		// We create an instance of this struct and empty out the Spans
-		// This allows us to repopulate the span with ones containing the correct information
-		// with the updated attributes
-		var newOtherLibrary = otherLibrary
-		newOtherLibrary.Spans = make([]*v1.Span, 0)
+	// We map through the http instrumentation and separate out the ones that has instrumentation parents
+	// and those who do not
+	// The ones that does have parents we will be merging them and the ones that does not have to go back into the
+	// list of spans to be mapped as c component
+	for _, httpLibrary := range httpInstrumentation {
+		libraryReference := httpLibrary
+		httpWithNoParentSpans := make([]*v1.Span, 0)
 
-		// We loop through the other instrumentation library spans
-		// Within the spans we can determine if there is children from the http libraries
-		// The http library http attributes needs to then be merged into this otherSpan attributes
-		// and not added into the new httpRemapped items
-		for _, otherSpan := range otherLibrary.Spans {
-			newOtherSpanAttributes := *otherSpan
+		for _, httpSpan := range httpLibrary.Spans {
+			// This variable is flagged if any span has this http request as a child
+			hasParentSpan := false
 
-			// This will be a new array of http libraries with the ones remove that contains parentSpanIds
-			var newHTTPLibrary = make([]v1.InstrumentationLibrarySpans, 0)
-
-			// Map through the current http instrumentation libraries and find ones with parentSpanId relations
-			for _, httpInstrumentationLibrary := range httpInstrumentation {
-				// We create an instance of this struct and empty out the Spans
-				// This allows us to repopulate the span with ones containing the correct information
-				// with the updated attributes
-				var httpRemappingSpans = httpInstrumentationLibrary
-				httpRemappingSpans.Spans = make([]*v1.Span, 0)
-
-				// Loop through the http library spans
-				// If it is not found then we add it back into the array for the original
-				for _, httpSpan := range httpInstrumentationLibrary.Spans {
-					if httpSpan.ParentSpanId != nil && otherSpan.SpanId != nil && string(httpSpan.ParentSpanId) != string(otherSpan.SpanId) {
-						httpRemappingSpans.Spans = append(httpRemappingSpans.Spans, httpSpan)
-					} else {
-						newOtherSpanAttributes.Attributes = append(newOtherSpanAttributes.Attributes, httpSpan.Attributes...)
+			for _, library := range instrumentation {
+				for _, span := range library.Spans {
+					if httpSpan.ParentSpanId != nil && span.SpanId != nil && string(httpSpan.ParentSpanId) == string(span.SpanId) {
+						hasParentSpan = true
 					}
 				}
-
-				// Add the new http span mappings into the new http library mapping
-				newHTTPLibrary = append(newHTTPLibrary, httpRemappingSpans)
 			}
 
-			// We can not take the list of new http library mappings and set them as the list of available http
-			// instrumentation we want to show as components.
-			// This will be a list of http libraries that has no or there was not parentSpanId for
-			httpInstrumentation = newHTTPLibrary
-
-			// We append back the other span with the updated attribute information
-			// We then have an update list that contains the child http attributes allowing mappings from that
-			newOtherLibrary.Spans = append(newOtherLibrary.Spans, &newOtherSpanAttributes)
+			// We can then divide it into a group that is separate
+			if hasParentSpan {
+				httpWithParentSpans = append(httpWithParentSpans, httpSpan)
+			} else {
+				httpWithNoParentSpans = append(httpWithNoParentSpans, httpSpan)
+			}
 		}
 
-		// Any finally we compose an array containing all the other libraries into an instrumentation
-		newOtherInstrumentation = append(newOtherInstrumentation, newOtherLibrary)
+		// For the reference that had not parents we need to map them back into a object that can merge back
+		libraryReference.Spans = httpWithNoParentSpans
+		httpLibraryNoParentSpans = append(httpLibraryNoParentSpans, libraryReference)
 	}
 
-	// Append the instrumentation libraries
-	return append(httpInstrumentation, newOtherInstrumentation...)
+	// For the libraries that had http children lets merge the http child with this instrumentation
+	for _, library := range instrumentation {
+		for _, span := range library.Spans {
+			for _, httpSpan := range httpWithParentSpans {
+				if httpSpan.ParentSpanId != nil && span.SpanId != nil && string(httpSpan.ParentSpanId) == string(span.SpanId) {
+					span.Attributes = append(span.Attributes, httpSpan.Attributes...)
+				}
+			}
+		}
+	}
+
+	// Now that we merged the above we can merge the two separate groups back into one
+	return append(httpLibraryNoParentSpans, instrumentation...)
 }
 
 // lambdaInstrumentationGetAccountID We attempt to extract the aws account id from the instrumentation-aws-lambda

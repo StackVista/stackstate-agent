@@ -40,8 +40,6 @@ func (t *OpenTelemetrySNSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			span.Meta = map[string]string{}
 		}
 
-		// awsService, awsServiceOk := span.Meta["aws.service.api"]
-		// awsOperation, awsOperationOk := modules.RetrieveValidSpanMeta(span, "SNS", "aws.operation")
 		topicArn, topicArnOk := modules.RetrieveValidSpanMeta(span, "SNS", "aws.request.topic.arn")
 
 		if topicArnOk {
