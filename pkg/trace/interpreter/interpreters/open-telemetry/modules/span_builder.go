@@ -10,7 +10,7 @@ import (
 // This allows us to more easily change the data mapping for all the open telemetry services
 func SpanBuilder(span *pb.Span, serviceName string, namePrefix string, service string, kind string, urn string, arn string) {
 	// Name of component displayed below the icon
-	span.Meta["span.serviceName"] = serviceName
+	span.Meta["span.serviceName"] = fmt.Sprintf("%s: %s", namePrefix, serviceName)
 
 	// Name of the trace displayed on the trace graph line
 	span.Name = fmt.Sprintf("%s: %s", namePrefix, serviceName)
@@ -38,12 +38,12 @@ func SpanBuilder(span *pb.Span, serviceName string, namePrefix string, service s
 func RetrieveValidSpanMeta(span *pb.Span, logName string, target string) (*string, bool) {
 	value, ok := span.Meta[target]
 	if ok && len(value) > 0 {
+		log.Debugf("[OTEL] [%s]: '%s' was found for this module, value content: %s", logName, target, value)
+
 		return &value, true
 	}
 
-	if !ok {
-		_ = log.Errorf("[OTEL] [%s]: '%s' is not found in the span meta data, this value is required.", logName, target)
-	}
+	_ = log.Errorf("[OTEL] [%s]: '%s' is not found in the span meta data, this value is required.", logName, target)
 
 	return nil, false
 }

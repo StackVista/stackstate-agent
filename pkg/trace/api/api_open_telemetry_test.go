@@ -522,7 +522,6 @@ func TestRemapOtelHttpLibraryStatusMappers(t *testing.T) {
 	assert.Equal(t, 6, len(newRemappedInstrumentationLibraries[1].Spans[0].Attributes), "[INSTRUMENTATION-AWS-SDK] The aws-sdk should have received more attributes since a http instrumentation would merge with this")
 	assert.Equal(t, 1, len(newRemappedInstrumentationLibraries[2].Spans[0].Attributes), "[INSTRUMENTATION-*] Should stay the same as there was no http mapping for this")
 	assert.Equal(t, 4, len(newRemappedInstrumentationLibraries[0].Spans[0].Attributes), "[INSTRUMENTATION-HTTP] Should stay the same and present as this http instrumentation span had no parentId")
-	assert.Equal(t, 1, len(newRemappedInstrumentationLibraries[0].Spans), "[INSTRUMENTATION-HTTP] Should not exist seeing that this http instrumentation span was suppose to merge")
 }
 
 func TestLambdaOtelInstrumentationGetAccountID(t *testing.T) {
