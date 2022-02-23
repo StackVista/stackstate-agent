@@ -148,6 +148,7 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 // with the relevant parent attributes. This allows the parent to contain the state for if the call failed or succeeded
 // whilst we do not create a useless http component by removing it
 func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationLibrarySpans) []v1.InstrumentationLibrarySpans {
+	var lambdaInstrumentation []v1.InstrumentationLibrarySpans
 	var httpInstrumentation []v1.InstrumentationLibrarySpans
 	var instrumentation []v1.InstrumentationLibrarySpans
 
@@ -157,6 +158,8 @@ func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationL
 		switch library.InstrumentationLibrary.Name {
 		case "@opentelemetry/instrumentation-http":
 			httpInstrumentation = append(httpInstrumentation, *library)
+		case "instrumentation-aws-lambda":
+			lambdaInstrumentation = append(lambdaInstrumentation, *library)
 		default:
 			instrumentation = append(instrumentation, *library)
 		}
@@ -210,7 +213,10 @@ func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationL
 	}
 
 	// Now that we merged the above we can merge the two separate groups back into one
-	return append(httpLibraryNoParentSpans, instrumentation...)
+	margeComponentInstrumentation := append(lambdaInstrumentation, instrumentation...)
+	margeHttpInstrumentation := append(httpLibraryNoParentSpans, margeComponentInstrumentation...)
+
+	return margeHttpInstrumentation
 }
 
 // lambdaInstrumentationGetAccountID We attempt to extract the aws account id from the instrumentation-aws-lambda
