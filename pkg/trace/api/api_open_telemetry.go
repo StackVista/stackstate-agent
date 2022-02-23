@@ -147,6 +147,7 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 // If the http parentSpanIds does exist in the trace then we remove the http span and merge the attributes we found
 // with the relevant parent attributes. This allows the parent to contain the state for if the call failed or succeeded
 // whilst we do not create a useless http component by removing it
+// TODO: Might be worth moving this to the
 func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationLibrarySpans) []v1.InstrumentationLibrarySpans {
 	var lambdaInstrumentation []v1.InstrumentationLibrarySpans
 	var httpInstrumentation []v1.InstrumentationLibrarySpans
