@@ -33,10 +33,12 @@ func GetContainers() ([]*containers.Container, error) {
 		// Container sources aren't configured, autodetect the best available source
 		detectors = []*collectors.Detector{collectors.NewDetector("")}
 	}
+	log.Infof("sts detectors = %v", detectors)
 
 	result := []*containers.Container{}
 	for _, detector := range detectors {
 		l, name, err := detector.GetPreferred()
+		log.Infof("sts preferred (l, name, err) = (%v, %v, %v)", l, name, err)
 		if err != nil {
 			return nil, err
 		}
