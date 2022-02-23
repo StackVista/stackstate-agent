@@ -182,7 +182,7 @@ func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationL
 
 			for _, library := range instrumentation {
 				for _, span := range library.Spans {
-					if httpSpan.ParentSpanId != nil && span.SpanId != nil && string(span.SpanId) != "0" && string(httpSpan.ParentSpanId) != "0" && string(httpSpan.ParentSpanId) == string(span.SpanId) {
+					if httpSpan.ParentSpanId != nil && span.SpanId != nil && len(string(span.SpanId)) > 1 && len(string(span.ParentSpanId)) > 1 && string(httpSpan.ParentSpanId) == string(span.SpanId) {
 						hasParentSpan = true
 					}
 				}
@@ -205,7 +205,7 @@ func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationL
 	for _, library := range instrumentation {
 		for _, span := range library.Spans {
 			for _, httpSpan := range httpWithParentSpans {
-				if httpSpan.ParentSpanId != nil && span.SpanId != nil && string(httpSpan.ParentSpanId) == string(span.SpanId) {
+				if httpSpan.ParentSpanId != nil && span.SpanId != nil && len(string(span.SpanId)) > 1 && len(string(span.ParentSpanId)) > 1 && string(httpSpan.ParentSpanId) == string(span.SpanId) {
 					span.Attributes = append(span.Attributes, httpSpan.Attributes...)
 				}
 			}
@@ -213,10 +213,7 @@ func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationL
 	}
 
 	// Now that we merged the above we can merge the two separate groups back into one
-	mergeComponentInstrumentation := append(lambdaInstrumentation, instrumentation...)
-	mergeHTTPInstrumentation := append(httpLibraryNoParentSpans, mergeComponentInstrumentation...)
-
-	return mergeHTTPInstrumentation
+	return append(append(httpLibraryNoParentSpans, lambdaInstrumentation...), instrumentation...)
 }
 
 // lambdaInstrumentationGetAccountID We attempt to extract the aws account id from the instrumentation-aws-lambda
