@@ -158,7 +158,7 @@ func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationL
 		switch library.InstrumentationLibrary.Name {
 		case "@opentelemetry/instrumentation-http":
 			httpInstrumentation = append(httpInstrumentation, *library)
-		case "instrumentation-aws-lambda":
+		case "@opentelemetry/instrumentation-aws-lambda":
 			lambdaInstrumentation = append(lambdaInstrumentation, *library)
 		default:
 			instrumentation = append(instrumentation, *library)
@@ -182,7 +182,7 @@ func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationL
 
 			for _, library := range instrumentation {
 				for _, span := range library.Spans {
-					if httpSpan.ParentSpanId != nil && span.SpanId != nil && string(httpSpan.ParentSpanId) == string(span.SpanId) {
+					if httpSpan.ParentSpanId != nil && span.SpanId != nil && string(span.SpanId) != "0" && string(httpSpan.ParentSpanId) != "0" && string(httpSpan.ParentSpanId) == string(span.SpanId) {
 						hasParentSpan = true
 					}
 				}
@@ -213,10 +213,10 @@ func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationL
 	}
 
 	// Now that we merged the above we can merge the two separate groups back into one
-	margeComponentInstrumentation := append(lambdaInstrumentation, instrumentation...)
-	margeHttpInstrumentation := append(httpLibraryNoParentSpans, margeComponentInstrumentation...)
+	mergeComponentInstrumentation := append(lambdaInstrumentation, instrumentation...)
+	mergeHTTPInstrumentation := append(httpLibraryNoParentSpans, mergeComponentInstrumentation...)
 
-	return margeHttpInstrumentation
+	return mergeHTTPInstrumentation
 }
 
 // lambdaInstrumentationGetAccountID We attempt to extract the aws account id from the instrumentation-aws-lambda
