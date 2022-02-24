@@ -8,7 +8,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/modules"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"strings"
 )
 
 // OpenTelemetryHTTPInterpreter default span interpreter for this data structure
@@ -27,15 +26,6 @@ func MakeOpenTelemetryHTTPInterpreter(config *config.Config) *OpenTelemetryHTTPI
 	return &OpenTelemetryHTTPInterpreter{interpreter.Interpreter{Config: config}}
 }
 
-func sanitizeURL(url string) string {
-	urlLowerCase := strings.ToLower(url)
-	hashFiltered := strings.Split(urlLowerCase, "#")
-	queryFiltered := strings.Split(hashFiltered[0], "?")
-	httpFiltered := strings.Replace(queryFiltered[0], "http://", "", 1)
-	httpsFiltered := strings.Replace(httpFiltered, "https://", "", 1)
-	return httpsFiltered
-}
-
 // Interpret performs the interpretation for the OpenTelemetryHTTPInterpreter
 func (t *OpenTelemetryHTTPInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 	log.Debugf("[OTEL] [HTTP] Interpreting and mapping Open Telemetry data")
@@ -50,7 +40,7 @@ func (t *OpenTelemetryHTTPInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 		httpMethod, httpMethodOk := modules.RetrieveValidSpanMeta(span, "HTTP", "http.method")
 
 		if httpURLOk && httpMethodOk && len(*httpURL) > 0 {
-			var url = sanitizeURL(*httpURL)
+			var url = *httpURL
 			var urn = t.CreateServiceURN(fmt.Sprintf("lambda-http-request/%s/%s", url, *httpMethod))
 
 			modules.SpanBuilder(span, fmt.Sprintf("%s - %s", *httpMethod, url), "Http", "http", "consumer", urn, url)
