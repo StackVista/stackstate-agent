@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -146,11 +147,11 @@ func InitConfig(config Config) {
 	config.SetDefault("proxy", nil)
 
 	// sts begin
-	skipSSLValidation := os.Getenv("SSL_SKIP_SSL_VALIDATION")
-	if len(skipSSLValidation) <= 0 {
-		skipSSLValidation = "false"
+	stsSkipSSLValidation, err := strconv.ParseBool(os.Getenv("STS_SKIP_SSL_VALIDATION"))
+	if err != nil {
+		log.Warnf("Could not parse `STS_SKIP_SSL_VALIDATION` environment variable to boolean. Error: %v", err)
 	}
-	config.BindEnvAndSetDefault("skip_ssl_validation", skipSSLValidation)
+	config.BindEnvAndSetDefault("skip_ssl_validation", stsSkipSSLValidation)
 	// sts end
 
 	config.BindEnvAndSetDefault("hostname", "")

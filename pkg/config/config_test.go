@@ -852,7 +852,7 @@ func TestSkipSSLValidationFromSTSPrefix(t *testing.T) {
 	config := setupConf()
 	assert.Equal(t, false, config.GetBool("skip_ssl_validation"))
 
-	os.Setenv("SSL_SKIP_SSL_VALIDATION", "true")
+	os.Setenv("STS_SKIP_SSL_VALIDATION", "true")
 	config2 := setupConf()
 	assert.Equal(t, true, config2.GetBool("skip_ssl_validation"))
 }
