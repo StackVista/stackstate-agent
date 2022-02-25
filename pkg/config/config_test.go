@@ -839,3 +839,22 @@ dogstatsd_mapper_profiles:
 	assert.Contains(t, err.Error(), expectedErrorMsg)
 	assert.Empty(t, profiles)
 }
+
+// sts begin
+func TestKubernetesKubeletHostFromSTSPrefix(t *testing.T) {
+	kubeletHost := "/host/kubelet"
+	os.Setenv("STS_KUBERNETES_KUBELET_HOST", kubeletHost)
+	config := setupConf()
+	assert.Equal(t, kubeletHost, config.GetString("kubernetes_kubelet_host"))
+}
+
+func TestSkipSSLValidationFromSTSPrefix(t *testing.T) {
+	config := setupConf()
+	assert.Equal(t, false, config.GetBool("skip_ssl_validation"))
+
+	os.Setenv("SSL_SKIP_SSL_VALIDATION", "true")
+	config2 := setupConf()
+	assert.Equal(t, true, config2.GetBool("skip_ssl_validation"))
+}
+
+// sts end

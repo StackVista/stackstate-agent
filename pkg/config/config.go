@@ -144,7 +144,15 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("app_key", "")
 	config.BindEnvAndSetDefault("cloud_provider_metadata", []string{"aws", "gcp", "azure", "alibaba"})
 	config.SetDefault("proxy", nil)
-	config.BindEnvAndSetDefault("skip_ssl_validation", false)
+
+	// sts begin
+	skipSSLValidation := os.Getenv("SSL_SKIP_SSL_VALIDATION")
+	if len(skipSSLValidation) <= 0 {
+		skipSSLValidation = "false"
+	}
+	config.BindEnvAndSetDefault("skip_ssl_validation", skipSSLValidation)
+	// sts end
+
 	config.BindEnvAndSetDefault("hostname", "")
 	config.BindEnvAndSetDefault("skip_hostname_validation", false)
 	config.BindEnvAndSetDefault("tags", []string{})
@@ -393,7 +401,7 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("collect_swarm_topology", false)
 
 	// Kubernetes
-	config.BindEnvAndSetDefault("kubernetes_kubelet_host", "")
+	config.BindEnvAndSetDefault("kubernetes_kubelet_host", os.Getenv("STS_KUBERNETES_KUBELET_HOST")) // sts
 	config.BindEnvAndSetDefault("kubernetes_kubelet_nodename", "")
 	config.BindEnvAndSetDefault("eks_fargate", false)
 	config.BindEnvAndSetDefault("kubernetes_http_kubelet_port", 10255)
