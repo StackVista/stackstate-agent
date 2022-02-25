@@ -147,9 +147,10 @@ func InitConfig(config Config) {
 	config.SetDefault("proxy", nil)
 
 	// sts begin
-	stsSkipSSLValidation, err := strconv.ParseBool(os.Getenv("STS_SKIP_SSL_VALIDATION"))
-	if err != nil {
-		log.Warnf("Could not parse `STS_SKIP_SSL_VALIDATION` environment variable to boolean. Error: %v", err)
+	stsSkipSSLValidationEnv := os.Getenv("STS_SKIP_SSL_VALIDATION")
+	stsSkipSSLValidation, err := strconv.ParseBool(stsSkipSSLValidationEnv)
+	if err != nil && len(stsSkipSSLValidationEnv) > 0 {
+		_ = log.Warnf("Could not parse `STS_SKIP_SSL_VALIDATION` environment variable to boolean: %v", err)
 	}
 	config.BindEnvAndSetDefault("skip_ssl_validation", stsSkipSSLValidation)
 	// sts end
