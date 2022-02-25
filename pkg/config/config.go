@@ -130,8 +130,7 @@ type Warnings struct {
 func init() {
 	osinit()
 	// Configure Datadog global configuration
-	// sts
-	Datadog = NewConfig("stackstate", "STS", strings.NewReplacer(".", "_"))
+	Datadog = NewConfig("datadog", "DD", strings.NewReplacer(".", "_"))
 	// Configuration defaults
 	InitConfig(Datadog)
 }
