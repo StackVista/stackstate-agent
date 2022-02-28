@@ -177,7 +177,15 @@ unit_tests:
     - inv -e rtloader.test
     - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
   tags:
-    - sts-aws
+    - sts-k8s-xl-runner
+  variables:
+    DOCKER_DRIVER: overlay
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    KUBERNETES_SERVICE_ACCOUNT_OVERWRITE: idontexist
+  services:
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
+      alias: docker
   retry:
     max: 2
   rules:
