@@ -168,7 +168,14 @@ unit_tests:
   needs:
     - deps_deb
   script:
-    - env
+    - unset KUBERNETES_PORT_443_TCP_PROTO
+    - unset KUBERNETES_PORT_443_TCP_ADDR
+    - unset KUBERNETES_PORT
+    - unset KUBERNETES_SERVICE_PORT_HTTPS
+    - unset KUBERNETES_PORT_443_TCP_PORT
+    - unset KUBERNETES_PORT_443_TCP
+    - unset KUBERNETES_SERVICE_PORT
+    - unset KUBERNETES_SERVICE_HOST
     - conda activate $CONDA_ENV
     # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
     - inv deps
@@ -183,7 +190,6 @@ unit_tests:
     DOCKER_DRIVER: overlay
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
-    KUBERNETES_SERVICE_ACCOUNT_OVERWRITE: idontexist
   services:
     - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
       alias: docker
