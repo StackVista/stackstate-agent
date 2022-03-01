@@ -168,6 +168,7 @@ unit_tests:
   needs:
     - deps_deb
   script:
+    - env
     - conda activate $CONDA_ENV
     # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
     - inv deps
