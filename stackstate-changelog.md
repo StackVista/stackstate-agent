@@ -5,6 +5,9 @@
 **Features**
 - Process agent now acknowledges STS_SKIP_SSL_VALIDATION environment variable. [(STAC-15225)](https://stackstate.atlassian.net/browse/STAC-15225)
 
+**Improvements**
+- Set process agent check intervals to be default 30 seconds, added ENV variable overrides for process agent check intervals. [(STAC-15661)](https://stackstate.atlassian.net/browse/STAC-15661)
+
 ## 2.15.0 (2021-12-20)
 
 **Features**

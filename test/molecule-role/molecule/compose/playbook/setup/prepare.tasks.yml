@@ -1,5 +1,4 @@
 ---
-- include_tasks: ../_shared/install-and-update/updates-ubuntu18-automatic.yml
 - include_tasks: ../_shared/docker/login.yml
 - include_tasks: ../_shared/copy/copy-configuration-files.yml
 - include_tasks: ../_shared/docker/copy-docker-base.yml
