@@ -792,17 +792,12 @@ process_config:
   ## @param intervals - custom object - optional - default: 10s for normal checks and 2s for others.
   ## The interval, in seconds, at which the Agent runs each check. If you want consistent
   ## behavior between real-time, set the `container_realtime` and `process_realtime` intervals to 10.
-  #
-  # intervals:
-  #   container: 10
-  #   container_realtime: 2
-  #   process: 10
-  #   process_realtime: 2
 
-  intervals:
-    container: 30
-    process: 30
-    connections: 30
+# Uncomment the lines below to configure check interval overrides for the process agent when installing from deb/rpm/msi
+#  intervals:
+#    container: 30
+#    process: 30
+#    connections: 30
 
     # [STS] Relation and Network cache
   ## Relation Cache is used to keep state of the known network relations for this agent, with items expiring after relation_cache_duration minutes. The default is 5 minutes.
