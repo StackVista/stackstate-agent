@@ -4,20 +4,22 @@
 #########################
 
 ## @param sts_url - string - required
-# The host of the StackState receiver to send Agent data to
+## The host of the StackState receiver to send Agent data to
+#
 sts_url:
 
 ## @param api_key - string - required
-# The StackState API key to associate your Agent's data with your organization.
+## The StackState API key to associate your Agent's data with your organization.
+#
 api_key:
 
 ## @param proxy - custom object - optional
-# If you need a proxy to connect to the Internet, provide it here (default:
-# disabled). You can use the 'no_proxy' list to specify hosts that should
-# bypass the proxy. These settings might impact your checks requests, please
-# refer to the specific check documentation for more details. Environment
-# variables STS_PROXY_HTTP, STS_PROXY_HTTPS and STS_PROXY_NO_PROXY (space-separated string)
-# will override the values set here. Refer to https://docs.stackstate.com/setup/agent/advanced-agent-configuration/
+## If you need a proxy to connect to the Internet, provide it here (default:
+## disabled). You can use the 'no_proxy' list to specify hosts that should
+## bypass the proxy. These settings might impact your checks requests, please
+## refer to the specific check documentation for more details. Environment
+## variables STS_PROXY_HTTP, STS_PROXY_HTTPS and STS_PROXY_NO_PROXY (space-separated string)
+## will override the values set here. Refer to https://docs.stackstate.com/setup/agent/advanced-agent-configuration/
 #
 # proxy:
 #   https: http://<USERNAME>:<PASSWORD>@<PROXY_SERVER_FOR_HTTPS>:<PORT>
@@ -32,13 +34,13 @@ api_key:
 # skip_ssl_validation: false
 
 ## @param force_tls_12 - boolean - optional - default: false
-# Setting this option to "true" will tell the agent to skip validation of SSL/TLS certificates.
-# This may be necessary if the agent is running behind a proxy.
+## Setting this option to "true" will tell the agent to skip validation of SSL/TLS certificates.
+## This may be necessary if the agent is running behind a proxy.
 #
 # skip_ssl_validation: false
 
-# Setting this option to "true" will force the agent to only use TLS 1.2 when
-# pushing data to the url specified in "sts_url".
+## Setting this option to "true" will force the agent to only use TLS 1.2 when
+## pushing data to the url specified in "sts_url".
 #
 # force_tls_12: false
 
