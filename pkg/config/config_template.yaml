@@ -3,12 +3,15 @@
 ## Basic Configuration ##
 #########################
 
+## @param sts_url - string - required
 # The host of the StackState receiver to send Agent data to
 sts_url:
 
+## @param api_key - string - required
 # The StackState API key to associate your Agent's data with your organization.
 api_key:
 
+## @param proxy - custom object - optional
 # If you need a proxy to connect to the Internet, provide it here (default:
 # disabled). You can use the 'no_proxy' list to specify hosts that should
 # bypass the proxy. These settings might impact your checks requests, please
