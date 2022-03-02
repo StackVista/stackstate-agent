@@ -7,6 +7,7 @@ import (
 	"github.com/apenella/go-ansible/pkg/options"
 	"github.com/apenella/go-ansible/pkg/playbook"
 	"log"
+	"strings"
 )
 
 type ConnectionContext interface {
@@ -18,6 +19,7 @@ type ConnectionContext interface {
 type AnsibleContext interface {
 	ConnectionContext
 	Playbook() string
+	Tags() []string
 	Variables() map[string]interface{}
 }
 
@@ -30,6 +32,7 @@ func AnsiblePlay(ctx AnsibleContext) {
 	runOption := &playbook.AnsiblePlaybookOptions{
 		Inventory: ctx.Inventory(),
 		ExtraVars: vars,
+		Tags:      strings.Join(ctx.Tags(), ","),
 	}
 	connectionOptions := &options.AnsibleConnectionOptions{
 		PrivateKey: ctx.PrivateKey(),
@@ -39,7 +42,7 @@ func AnsiblePlay(ctx AnsibleContext) {
 		Options:           runOption,
 		ConnectionOptions: connectionOptions,
 	}
-	log.Println(fmt.Sprintf("Play Ansible playbook %s ...", run.Playbooks))
+	log.Println(fmt.Sprintf("Play Ansible playbook: %s ...", run.String()))
 	var err = run.Run(context.Background())
 	if err != nil {
 		log.Fatalf("Error running playbook: %s", err)

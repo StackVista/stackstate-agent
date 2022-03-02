@@ -1,0 +1,94 @@
+---
+- name: Set helm stackstate release_name
+  set_fact:
+    release_name: stackstate-sut
+  tags: [ prepare, cleanup ]
+
+- name: StackState prepare tasks
+  tags: prepare
+  block:
+  - name: Add stable chart repo
+    kubernetes.core.helm_repository:
+      name: stable
+      repo_url: "https://charts.helm.sh/stable"
+
+  - name: Add stackstate-internal chart repo
+    kubernetes.core.helm_repository:
+      name: stackstate-internal
+      repo_url: "https://helm-internal.stackstate.io"
+
+  - name: Add stackstate chart repo
+    kubernetes.core.helm_repository:
+      name: stackstate
+      repo_url: "https://helm.stackstate.io"
+
+
+  - name: Generate sts-toolbox config
+    ansible.builtin.template:
+      src: sts-toolbox-config.yaml
+      dest: "{{ role_path }}/files/sts-toolbox.yml"
+
+  - name: Generate StackState values
+    ansible.builtin.command:
+      cmd: sts-toolbox generate-values --config "{{ role_path }}/files/sts-toolbox.yml" --output "{{ role_path }}/files/stackstate-values.yml"
+
+
+  - name: Deploy stackstate chart using values files
+    kubernetes.core.helm:
+      context: "{{ kubecontext }}"
+      chart_ref: stackstate-internal/stackstate
+      chart_version: ">0.0.0-0"  # use development versions
+      release_name: "{{ release_name }}"
+      release_namespace: "{{ namespace }}"
+      create_namespace: true
+      update_repo_cache: true
+      values_files:
+        - "{{ role_path }}/files/stackstate-values.yml"
+      values:
+        stackstate:
+          components:
+            e2es:
+              replicaCount: 0
+            mm2es:
+              replicaCount: 0
+            problemProducer:
+              replicaCount: 0
+            trace2es:
+              replicaCount: 0
+            ui:
+              replicaCount: 0
+
+  - name: Wait for stackstate to be ready # TODO does not wait (for all ?)
+    kubernetes.core.k8s:
+      context: "{{ kubecontext }}"
+      kind: Pod
+      namespace: "{{ namespace }}"
+      label_selectors: "app.kubernetes.io/instance={{ release_name }}"
+      wait: yes
+      wait_condition:
+        type: Ready
+        status: True
+      wait_timeout: 1200  # 20 min
+
+
+## Cleanup
+
+- name: StackState cleanup tasks
+  tags: cleanup
+  block:
+  - name: Undeploy stackstate
+    kubernetes.core.helm:
+      context: "{{ kubecontext }}"
+      release_name: "{{ release_name }}"
+      release_namespace: "{{ namespace }}"
+      state: absent
+      wait: true
+
+  - name: Delete namespace '{{namespace}}'
+    kubernetes.core.k8s:
+      context: "{{ kubecontext }}"
+      api_version: v1
+      kind: Namespace
+      name: "{{ namespace }}"
+      state: absent
+      wait: yes

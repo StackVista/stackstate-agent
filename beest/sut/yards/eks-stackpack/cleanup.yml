@@ -1,5 +1,5 @@
 ---
-- name: Prepare
+- name: Cleanup
   hosts: localhost
   gather_facts: false
   roles:
