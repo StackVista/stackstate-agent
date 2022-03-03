@@ -1,6 +1,6 @@
 # StackState Agent v2 releases
 
-## 2.16.0 (2022-??-??)
+## 2.16.0 (2022-03-??)
 
 **Features**
 - Container collector for Docker, ContainerD and CRI runtimes. [STAC-14483](https://stackstate.atlassian.net/browse/STAC-14483)
