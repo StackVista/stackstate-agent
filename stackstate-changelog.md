@@ -7,12 +7,10 @@
 
 **Bugfix**
 - Fixed agent's configuration example. [(STAC-15693)](https://stackstate.atlassian.net/browse/STAC-15693)
+- Fix missing HTTP response time charts (from process-agent version 3.0.2) [STAC-15754](https://stackstate.atlassian.net/browse/STAC-15754)
 
 **Improvements**
 - Set process agent check intervals to be default 30 seconds, added ENV variable overrides for process agent check intervals. [(STAC-15661)](https://stackstate.atlassian.net/browse/STAC-15661)
-
-**Bugfix**
-- Fix missing HTTP response time charts [STAC-15754](https://stackstate.atlassian.net/browse/STAC-15754)
 
 ## 2.15.0 (2021-12-20)
 
