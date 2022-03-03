@@ -768,7 +768,7 @@ pre_release_cluster_agent_image:
   stage: acceptance
   timeout: 80 minutes
   script:
-    - beest test $BEEST_SCENARIO
+    - beest test $BEEST_SCENARIO --no-destroy
 
 # Primary destroy steps for all the beest builds
 .beest_destroy: &beest_destroy

@@ -41,7 +41,7 @@ func AnsiblePlay(ctx AnsibleContext) {
 	log.Println(fmt.Sprintf("Play Ansible playbook %s ...", run.Playbooks))
 	var err = run.Run(context.Background())
 	if err != nil {
-		log.Fatalf("Error while preparing receiver: %s", err)
+		log.Fatalf("Error running playbook: %s", err)
 	}
 	log.Println("Ansible playbook finished")
 }

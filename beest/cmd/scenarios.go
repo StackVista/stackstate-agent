@@ -27,10 +27,11 @@ func (t *Test) path() string {
 }
 
 type Scenario struct {
-	Name      string                 `yaml:"name"`
-	Yard      Yard                   `yaml:"yard"`
-	Test      Test                   `yaml:"test"`
-	Variables map[string]interface{} `yaml:"variables"`
+	Name        string                 `yaml:"name"`
+	Description string                 `yaml:"description"`
+	Yard        Yard                   `yaml:"yard"`
+	Test        Test                   `yaml:"test"`
+	Variables   map[string]interface{} `yaml:"variables"`
 }
 
 func (s *Scenario) generateCreateStep(runId string) *step.CreationStep {
@@ -53,13 +54,13 @@ type Scenarios struct {
 func loadScenarios() *Scenarios {
 	scenariosYaml, err := ioutil.ReadFile(ScenariosPath)
 	if err != nil {
-		log.Fatalf("Error while reading scenarios file: %s", err)
+		log.Fatalf("Error reading scenarios file: %s", err)
 	}
 
 	availableScenarios := &Scenarios{}
 	err = yaml.UnmarshalStrict(scenariosYaml, availableScenarios)
 	if err != nil {
-		log.Fatalf("Error while unmarshalling scenarios: %s", err)
+		log.Fatalf("Error unmarshalling scenarios: %s", err)
 	}
 	return availableScenarios
 }

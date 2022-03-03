@@ -7,6 +7,12 @@
   * made object YAML definition available as "Component properties" in order to enable [Kubernetes changes events](https://docs.stackstate.com/stackpacks/integrations/kubernetes#events) ([STAC-15054](https://stackstate.atlassian.net/browse/STAC-15054))
 - Process agent now acknowledges STS_SKIP_SSL_VALIDATION environment variable. [(STAC-15225)](https://stackstate.atlassian.net/browse/STAC-15225)
 
+**Bugfix**
+- Fixed agent's configuration example. [(STAC-15693)](https://stackstate.atlassian.net/browse/STAC-15693)
+
+**Improvements**
+- Set process agent check intervals to be default 30 seconds, added ENV variable overrides for process agent check intervals. [(STAC-15661)](https://stackstate.atlassian.net/browse/STAC-15661)
+
 ## 2.15.0 (2021-12-20)
 
 **Features**
