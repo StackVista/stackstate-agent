@@ -10,7 +10,11 @@ export AWS_PROFILE=stackstate-sandbox
 
 export quay_user=TBD
 export quay_password=TBD
+export artifactory_user=TBD
+export artifactory_password=TBD
 
 export RUN_ID=$AGENT_CURRENT_BRANCH
 
 export STACKSTATE_BRANCH=master
+export STACKSTATE_HELM_CHART=">0.0.0-0"  # use development versions
+export STACKSTATE_LICENSE=TBD
