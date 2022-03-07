@@ -192,6 +192,10 @@ filename_linting:
     - inv -e lint-filenames
   rules:
     - when: on_success
+  retry:
+    max: 2
+    when:
+      - always
 
 # TODO:  Not observed in v7 in a direct form ?
 #docker_integration_tests:
