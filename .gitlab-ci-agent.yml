@@ -693,6 +693,8 @@ pre_release_cluster_agent_image:
       - $CI_PROJECT_DIR/.cache
       - $MOLECULE_EPHEMERAL_DIRECTORY
     expire_in: 1 week
+  retry:
+    max: 2
 
 # Primary create steps for all the molecule builds
 .molecule_create: &molecule_create
@@ -718,6 +720,8 @@ pre_release_cluster_agent_image:
   script:
     - cd $CI_PROJECT_DIR/test
     - ./molecule3.sh $MOLECULE_SCENARIO destroy
+  retry:
+    max: 2
 
 
 # Core Structure for all the beest steps
@@ -741,7 +745,7 @@ pre_release_cluster_agent_image:
     - mv /go/src/app/tests/$BEEST_TEST_GROUP/topic-*.json $CI_PROJECT_DIR/beest/ || true
     - mv /go/src/app/tests/$BEEST_TEST_GROUP/*.log $CI_PROJECT_DIR/beest/ || true
   retry:
-    max: 1
+    max: 2
 
 # Base artifacts for create and test steps
 .beest_artifacts: &beest_artifacts
