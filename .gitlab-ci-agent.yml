@@ -722,6 +722,7 @@ pre_release_cluster_agent_image:
     - ./molecule3.sh $MOLECULE_SCENARIO destroy
   retry:
     max: 2
+  allow_failure: true
 
 
 # Core Structure for all the beest steps
@@ -777,6 +778,7 @@ pre_release_cluster_agent_image:
   stage: cleanup
   script:
     - beest destroy $BEEST_SCENARIO -y
+
 
 
 # Job Seq: Molecule
