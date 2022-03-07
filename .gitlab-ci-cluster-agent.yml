@@ -69,10 +69,9 @@ deps_deb:
       - $CI_PROJECT_DIR/vendor.tar.gz
     expire_in: 1 week
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 ## build_and_test stage
 
@@ -97,10 +96,9 @@ unit_tests_cluster_agent:
   tags:
     - sts-aws
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 build_cluster_agent:
   stage: build_and_test
@@ -117,10 +115,9 @@ build_cluster_agent:
       - $CI_PROJECT_DIR/Dockerfiles/cluster-agent/stackstate-cluster.yaml
       - $CI_PROJECT_DIR/version.txt
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 build_deb:
   stage: build_and_test
@@ -174,10 +171,9 @@ build_deb:
       - $CI_PROJECT_DIR/outcomes/binary/trace-agent
     expire_in: 1 week
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 pre_release_deb:
   stage: pre_release
@@ -197,10 +193,9 @@ pre_release_deb:
     - cd $CI_PROJECT_DIR && inv release.generate-install -t
     - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET']).object('install.sh').upload_file('./install.sh', acl:'public-read')"
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 pre_release_main_agent_image: &pre_release_image
   stage: pre_release
@@ -224,10 +219,9 @@ pre_release_main_agent_image: &pre_release_image
   tags:
     - sts-k8s-m-runner
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 pre_release_cluster_agent_image:
   <<: *pre_release_image
@@ -251,7 +245,7 @@ pre_release_cluster_agent_image:
     - export LC_CTYPE=en_US.UTF-8
     - export LANG=en_US.UTF-8
   retry:
-    max: 2
+    max: 3
 
 # Base artifacts for create and test steps
 .molecule_artifacts: &molecule_artifacts

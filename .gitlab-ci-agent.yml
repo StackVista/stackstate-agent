@@ -88,10 +88,9 @@ deps_deb:
       - $CI_PROJECT_DIR/vendor.tar.gz
     expire_in: 1 week
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
   rules:
     - when: on_success
 
@@ -120,10 +119,9 @@ deps_rpm:
       - $CI_PROJECT_DIR/vendor.tar.gz
     expire_in: 1 week
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
   rules:
     - when: on_success
 
@@ -153,10 +151,9 @@ deps_win:
   tags:
     - windows_agent7_ps1
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
   rules:
     - when: on_success
 
@@ -179,7 +176,9 @@ unit_tests:
   tags:
     - sts-aws
   retry:
-    max: 2
+    max: 3
+    when:
+      - always
   rules:
     - when: on_success
 
@@ -225,7 +224,7 @@ build_binaries:
   tags:
     - sts-k8s-m-runner
   retry:
-    max: 2
+    max: 3
     when:
       - always
   rules:
@@ -248,7 +247,7 @@ build_cluster_agent:
   rules:
     - *cluster_agent
   retry:
-    max: 2
+    max: 3
     when:
       - always
 
@@ -304,7 +303,7 @@ build_deb:
       - $CI_PROJECT_DIR/outcomes/binary/trace-agent
     expire_in: 1 week
   retry:
-    max: 2
+    max: 3
     when:
       - always
   rules:
@@ -367,7 +366,7 @@ build_rpm:
       - $CI_PROJECT_DIR/version.txt
     expire_in: 1 week
   retry:
-    max: 2
+    max: 3
     when:
       - always
   rules:
@@ -401,7 +400,7 @@ build_win:
   tags:
     - windows_agent7_ps1
   retry:
-    max: 2
+    max: 3
     when:
       - always
   rules:
@@ -418,10 +417,9 @@ test_deb_renaming:
   script:
     - ./test/renaming/test_deb.sh $CI_PROJECT_DIR/outcomes/pkg/stackstate-agent_$MAJOR_VERSION*.deb
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
   rules:
     - when: on_success
 
@@ -435,10 +433,9 @@ test_rpm_renaming:
   script:
     - ./test/renaming/test_rpm.sh $CI_PROJECT_DIR/outcomes/pkg/stackstate-agent-$MAJOR_VERSION*.rpm
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
   rules:
     - when: on_success
 
@@ -461,10 +458,9 @@ pre_release_deb:
     - cd $CI_PROJECT_DIR && inv release.generate-install -t
     - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET']).object('install.sh').upload_file('./install.sh', acl:'public-read')"
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
   rules:
     - when: on_success
 
@@ -492,10 +488,9 @@ pre_release_win:
   tags:
     - windows_agent7_ps1
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
   rules:
     - when: on_success
 
@@ -510,10 +505,9 @@ pre_release_rpm:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_rpm_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package_rpm.sh $STS_AWS_TEST_BUCKET_YUM
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
   rules:
     - when: on_success
 
@@ -539,10 +533,9 @@ pre_release_main_agent_image: &pre_release_image
   tags:
     - sts-k8s-m-runner
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
   rules:
     - when: on_success
 
@@ -1307,10 +1300,9 @@ release_deb:
     - if: $CI_COMMIT_TAG || $CI_COMMIT_TRIGGERED == 'true'
       when: manual
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 release_rpm:
   interruptible: true
@@ -1328,10 +1320,9 @@ release_rpm:
     - if: $CI_COMMIT_TAG || $CI_COMMIT_TRIGGERED == 'true'
       when: manual
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 release_win:
   interruptible: true
@@ -1358,10 +1349,9 @@ release_win:
   tags:
     - windows_agent7_ps1
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 .base_release_image: &base_release_image
   stage: release
@@ -1379,10 +1369,9 @@ release_win:
   tags:
     - sts-k8s-m-runner
   retry:
-    max: 2
+    max: 3
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 release_main_agent_image:
   <<: *base_release_image
