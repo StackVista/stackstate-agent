@@ -69,7 +69,7 @@ deps_deb:
       - $CI_PROJECT_DIR/vendor.tar.gz
     expire_in: 1 week
   retry:
-    max: 3
+    max: 2
     when:
       - always
 
@@ -96,7 +96,7 @@ unit_tests_cluster_agent:
   tags:
     - sts-aws
   retry:
-    max: 3
+    max: 2
     when:
       - always
 
@@ -115,7 +115,7 @@ build_cluster_agent:
       - $CI_PROJECT_DIR/Dockerfiles/cluster-agent/stackstate-cluster.yaml
       - $CI_PROJECT_DIR/version.txt
   retry:
-    max: 3
+    max: 2
     when:
       - always
 
@@ -171,7 +171,7 @@ build_deb:
       - $CI_PROJECT_DIR/outcomes/binary/trace-agent
     expire_in: 1 week
   retry:
-    max: 3
+    max: 2
     when:
       - always
 
@@ -193,7 +193,7 @@ pre_release_deb:
     - cd $CI_PROJECT_DIR && inv release.generate-install -t
     - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET']).object('install.sh').upload_file('./install.sh', acl:'public-read')"
   retry:
-    max: 3
+    max: 2
     when:
       - always
 
@@ -219,7 +219,7 @@ pre_release_main_agent_image: &pre_release_image
   tags:
     - sts-k8s-m-runner
   retry:
-    max: 3
+    max: 2
     when:
       - always
 
@@ -245,7 +245,7 @@ pre_release_cluster_agent_image:
     - export LC_CTYPE=en_US.UTF-8
     - export LANG=en_US.UTF-8
   retry:
-    max: 3
+    max: 2
 
 # Base artifacts for create and test steps
 .molecule_artifacts: &molecule_artifacts

@@ -88,7 +88,7 @@ deps_deb:
       - $CI_PROJECT_DIR/vendor.tar.gz
     expire_in: 1 week
   retry:
-    max: 3
+    max: 2
     when:
       - always
   rules:
@@ -119,7 +119,7 @@ deps_rpm:
       - $CI_PROJECT_DIR/vendor.tar.gz
     expire_in: 1 week
   retry:
-    max: 3
+    max: 2
     when:
       - always
   rules:
@@ -151,7 +151,7 @@ deps_win:
   tags:
     - windows_agent7_ps1
   retry:
-    max: 3
+    max: 2
     when:
       - always
   rules:
@@ -176,7 +176,7 @@ unit_tests:
   tags:
     - sts-aws
   retry:
-    max: 3
+    max: 2
     when:
       - always
   rules:
@@ -224,7 +224,7 @@ build_binaries:
   tags:
     - sts-k8s-m-runner
   retry:
-    max: 3
+    max: 2
     when:
       - always
   rules:
@@ -247,7 +247,7 @@ build_cluster_agent:
   rules:
     - *cluster_agent
   retry:
-    max: 3
+    max: 2
     when:
       - always
 
@@ -303,7 +303,7 @@ build_deb:
       - $CI_PROJECT_DIR/outcomes/binary/trace-agent
     expire_in: 1 week
   retry:
-    max: 3
+    max: 2
     when:
       - always
   rules:
@@ -366,7 +366,7 @@ build_rpm:
       - $CI_PROJECT_DIR/version.txt
     expire_in: 1 week
   retry:
-    max: 3
+    max: 2
     when:
       - always
   rules:
@@ -400,7 +400,7 @@ build_win:
   tags:
     - windows_agent7_ps1
   retry:
-    max: 3
+    max: 2
     when:
       - always
   rules:
@@ -417,7 +417,7 @@ test_deb_renaming:
   script:
     - ./test/renaming/test_deb.sh $CI_PROJECT_DIR/outcomes/pkg/stackstate-agent_$MAJOR_VERSION*.deb
   retry:
-    max: 3
+    max: 2
     when:
       - always
   rules:
@@ -433,7 +433,7 @@ test_rpm_renaming:
   script:
     - ./test/renaming/test_rpm.sh $CI_PROJECT_DIR/outcomes/pkg/stackstate-agent-$MAJOR_VERSION*.rpm
   retry:
-    max: 3
+    max: 2
     when:
       - always
   rules:
@@ -458,7 +458,7 @@ pre_release_deb:
     - cd $CI_PROJECT_DIR && inv release.generate-install -t
     - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET']).object('install.sh').upload_file('./install.sh', acl:'public-read')"
   retry:
-    max: 3
+    max: 2
     when:
       - always
   rules:
@@ -488,7 +488,7 @@ pre_release_win:
   tags:
     - windows_agent7_ps1
   retry:
-    max: 3
+    max: 2
     when:
       - always
   rules:
@@ -505,7 +505,7 @@ pre_release_rpm:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_rpm_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package_rpm.sh $STS_AWS_TEST_BUCKET_YUM
   retry:
-    max: 3
+    max: 2
     when:
       - always
   rules:
@@ -533,7 +533,7 @@ pre_release_main_agent_image: &pre_release_image
   tags:
     - sts-k8s-m-runner
   retry:
-    max: 3
+    max: 2
     when:
       - always
   rules:
@@ -1300,7 +1300,7 @@ release_deb:
     - if: $CI_COMMIT_TAG || $CI_COMMIT_TRIGGERED == 'true'
       when: manual
   retry:
-    max: 3
+    max: 2
     when:
       - always
 
@@ -1320,7 +1320,7 @@ release_rpm:
     - if: $CI_COMMIT_TAG || $CI_COMMIT_TRIGGERED == 'true'
       when: manual
   retry:
-    max: 3
+    max: 2
     when:
       - always
 
@@ -1349,7 +1349,7 @@ release_win:
   tags:
     - windows_agent7_ps1
   retry:
-    max: 3
+    max: 2
     when:
       - always
 
@@ -1369,7 +1369,7 @@ release_win:
   tags:
     - sts-k8s-m-runner
   retry:
-    max: 3
+    max: 2
     when:
       - always
 
