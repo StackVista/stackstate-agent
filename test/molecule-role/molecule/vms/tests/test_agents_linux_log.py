@@ -63,11 +63,28 @@ def test_stackstate_process_agent_no_log_errors(host, hostname):
 
     util.wait_until(wait_for_check_successes, 30, 3)
 
+    ignored_errors_regex = [
+        "failed to create network tracer: failed to init module: error guessing offsets: error initializing tcptracer_status map: unable to update element: bad file descriptor. Retrying...",
+    ]
+
+    offset_guessing = "Offset guessing was completed successfully"
+    found_offset_guessing = False
     # Check for errors
     process_agent_log = _get_log(host, "{}-{}".format(hostname, "process-agent"), process_agent_log_path)
     for line in process_agent_log.splitlines():
+        # Ignore offset guessing for centos
+        if hostname == "agent-centos" or re.search(offset_guessing, line):
+            found_offset_guessing = True
+        ignored = False
+        for ignored_error in ignored_errors_regex:
+            if len(re.findall(ignored_error, line, re.DOTALL)) > 0:
+                ignored = True
+        if ignored:
+            continue
         print("Considering: %s" % line)
         assert not re.search("error", line, re.IGNORECASE)
+
+    assert found_offset_guessing, "Process agent could not guess offset"
 
 
 def test_stackstate_trace_agent_no_log_errors(host, hostname):
