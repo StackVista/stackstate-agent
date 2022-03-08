@@ -90,8 +90,7 @@ deps_deb:
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
   rules:
     - when: on_success
 
@@ -122,8 +121,7 @@ deps_rpm:
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
   rules:
     - when: on_success
 
@@ -155,8 +153,7 @@ deps_win:
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
   rules:
     - when: on_success
 
@@ -180,6 +177,8 @@ unit_tests:
     - sts-aws
   retry:
     max: 2
+    when:
+      - always
   rules:
     - when: on_success
 
@@ -193,6 +192,10 @@ filename_linting:
     - inv -e lint-filenames
   rules:
     - when: on_success
+  retry:
+    max: 2
+    when:
+      - always
 
 # TODO:  Not observed in v7 in a direct form ?
 #docker_integration_tests:
@@ -420,8 +423,7 @@ test_deb_renaming:
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
   rules:
     - when: on_success
 
@@ -437,8 +439,7 @@ test_rpm_renaming:
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
   rules:
     - when: on_success
 
@@ -463,8 +464,7 @@ pre_release_deb:
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
   rules:
     - when: on_success
 
@@ -494,8 +494,7 @@ pre_release_win:
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
   rules:
     - when: on_success
 
@@ -512,8 +511,7 @@ pre_release_rpm:
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
   rules:
     - when: on_success
 
@@ -541,8 +539,7 @@ pre_release_main_agent_image: &pre_release_image
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
   rules:
     - when: on_success
 
@@ -696,6 +693,8 @@ pre_release_cluster_agent_image:
       - $CI_PROJECT_DIR/.cache
       - $MOLECULE_EPHEMERAL_DIRECTORY
     expire_in: 1 week
+  retry:
+    max: 2
 
 # Primary create steps for all the molecule builds
 .molecule_create: &molecule_create
@@ -721,6 +720,9 @@ pre_release_cluster_agent_image:
   script:
     - cd $CI_PROJECT_DIR/test
     - ./molecule3.sh $MOLECULE_SCENARIO destroy
+  retry:
+    max: 2
+  allow_failure: true
 
 
 # Core Structure for all the beest steps
@@ -744,7 +746,7 @@ pre_release_cluster_agent_image:
     - mv /go/src/app/tests/$BEEST_TEST_GROUP/topic-*.json $CI_PROJECT_DIR/beest/ || true
     - mv /go/src/app/tests/$BEEST_TEST_GROUP/*.log $CI_PROJECT_DIR/beest/ || true
   retry:
-    max: 1
+    max: 2
 
 # Base artifacts for create and test steps
 .beest_artifacts: &beest_artifacts
@@ -776,6 +778,7 @@ pre_release_cluster_agent_image:
   stage: cleanup
   script:
     - beest destroy $BEEST_SCENARIO -y
+
 
 
 # Job Seq: Molecule
@@ -902,61 +905,115 @@ molecule_integrations_success_cleanup:
     if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[beest\-/ && $CI_COMMIT_MESSAGE !~ /\[beest\-kubernetes]/
     when: never
 
-.beest_kubernetes_variables: &beest_kubernetes_variables
+.beest_k8s_dockerd_variables: &beest_k8s_dockerd_variables
   variables:
     BEEST_SCENARIO: dockerd-eks
     BEEST_TEST_GROUP: k8s
 
-beest_kubernetes_create:
+.beest_k8s_containerd_variables: &beest_k8s_containerd_variables
+  variables:
+    BEEST_SCENARIO: containerd-eks
+    BEEST_TEST_GROUP: k8s
+
+beest_k8s_dockerd_create:
   <<: *beest
   <<: *beest_create
-  <<: *beest_kubernetes_variables
+  <<: *beest_k8s_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_always
 
-beest_kubernetes_test:
+beest_k8s_containerd_create:
+  <<: *beest
+  <<: *beest_create
+  <<: *beest_k8s_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_always
+
+beest_k8s_dockerd_test:
   <<: *beest
   <<: *beest_test
-  <<: *beest_kubernetes_variables
+  <<: *beest_k8s_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_kubernetes_create
+    - beest_k8s_dockerd_create
   needs:
-    - beest_kubernetes_create
+    - beest_k8s_dockerd_create
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
-beest_kubernetes_failure_cleanup:
+beest_k8s_containerd_test:
+  <<: *beest
+  <<: *beest_test
+  <<: *beest_k8s_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_k8s_containerd_create
+  needs:
+    - beest_k8s_containerd_create
+    - pre_release_cluster_agent_image
+    - pre_release_main_agent_image
+
+beest_k8s_dockerd_failure_cleanup:
   <<: *beest
   <<: *beest_destroy
-  <<: *beest_kubernetes_variables
+  <<: *beest_k8s_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_failure
     - when: never
   needs:
-    - beest_kubernetes_test
-    - beest_kubernetes_create
+    - beest_k8s_dockerd_test
+    - beest_k8s_dockerd_create
 
-beest_kubernetes_success_cleanup:
+beest_k8s_containerd_failure_cleanup:
   <<: *beest
   <<: *beest_destroy
-  <<: *beest_kubernetes_variables
+  <<: *beest_k8s_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_failure
+    - when: never
+  needs:
+    - beest_k8s_containerd_test
+    - beest_k8s_containerd_create
+
+beest_k8s_dockerd_success_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_k8s_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_kubernetes_test
-    - beest_kubernetes_create
+    - beest_k8s_dockerd_test
+    - beest_k8s_dockerd_create
   needs:
-    - beest_kubernetes_test
-    - beest_kubernetes_create
+    - beest_k8s_dockerd_test
+    - beest_k8s_dockerd_create
 
+beest_k8s_containerd_success_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_k8s_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_k8s_containerd_test
+    - beest_k8s_containerd_create
+  needs:
+    - beest_k8s_containerd_test
+    - beest_k8s_containerd_create
 
 # Job Seq: Molecule
 # Type: localinstall
@@ -1258,8 +1315,7 @@ release_deb:
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 release_rpm:
   interruptible: true
@@ -1279,8 +1335,7 @@ release_rpm:
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 release_win:
   interruptible: true
@@ -1309,8 +1364,7 @@ release_win:
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 .base_release_image: &base_release_image
   stage: release
@@ -1330,8 +1384,7 @@ release_win:
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 release_main_agent_image:
   <<: *base_release_image
