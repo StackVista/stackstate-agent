@@ -3,7 +3,6 @@
 package topologycollectors
 
 import (
-	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"k8s.io/api/apps/v1"
@@ -57,31 +56,26 @@ func (dmc *DeploymentCollector) deploymentToStackStateComponent(deployment v1.De
 
 	tags := dmc.initTags(deployment.ObjectMeta)
 
-	sourceProperties, err := marshallK8sObjectToData(&deployment)
-	if err != nil {
-		_ = log.Warnf("Can't serialize sourceProperties for Deployment %s/%s: %v", deployment.Namespace, deployment.Name, err)
-		sourceProperties = map[string]interface{}{
-			"serialization_error": fmt.Sprintf("error occurred during serialization of this object: %v", err),
-		}
-	}
-
 	deploymentExternalID := dmc.buildDeploymentExternalID(deployment.Namespace, deployment.Name)
 	component := &topology.Component{
 		ExternalID: deploymentExternalID,
 		Type:       topology.Type{Name: "deployment"},
 		Data: map[string]interface{}{
-			"name":               deployment.Name,
-			"creationTimestamp":  deployment.CreationTimestamp,
-			"tags":               tags,
-			"deploymentStrategy": deployment.Spec.Strategy.Type,
-			"desiredReplicas":    deployment.Spec.Replicas,
-			"uid":                deployment.UID,
+			"name": deployment.Name,
+			"tags": tags,
 		},
-		SourceProperties: sourceProperties,
 	}
 
-	component.Data.PutNonEmpty("generateName", deployment.GenerateName)
-	component.Data.PutNonEmpty("kind", deployment.Kind)
+	if dmc.IsSourcePropertiesFeatureEnabled() {
+		component.SourceProperties = makeSourceProperties(&deployment)
+	} else {
+		component.Data.PutNonEmpty("kind", deployment.Kind)
+		component.Data.PutNonEmpty("uid", deployment.UID)
+		component.Data.PutNonEmpty("creationTimestamp", deployment.CreationTimestamp)
+		component.Data.PutNonEmpty("generateName", deployment.GenerateName)
+		component.Data.PutNonEmpty("deploymentStrategy", deployment.Spec.Strategy.Type)
+		component.Data.PutNonEmpty("desiredReplicas", deployment.Spec.Replicas)
+	}
 
 	log.Tracef("Created StackState Deployment component %s: %v", deploymentExternalID, component.JSONString())
 
