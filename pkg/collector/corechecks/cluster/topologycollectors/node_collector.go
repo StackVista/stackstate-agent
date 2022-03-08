@@ -79,28 +79,33 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 
 	tags := nc.initTags(node.ObjectMeta)
 
+	instanceID := urn.GetInstanceID(node)
 	component := &topology.Component{
 		ExternalID: nodeExternalID,
 		Type:       topology.Type{Name: "node"},
 		Data: map[string]interface{}{
-			"name":              node.Name,
-			"creationTimestamp": node.CreationTimestamp,
-			"tags":              tags,
-			"status": NodeStatus{
-				Phase:           node.Status.Phase,
-				NodeInfo:        node.Status.NodeInfo,
-				KubeletEndpoint: node.Status.DaemonEndpoints.KubeletEndpoint,
-			},
+			"name":        node.Name,
+			"tags":        tags,
 			"identifiers": identifiers,
-			"uid":         node.UID,
-			//"taints": node.Spec.Taints,
+			// for backward compatibility with K8s/OpenShift stackpack
+			// we specify instanceId in data even if it's also in the sourceProperties
+			"instanceId": instanceID,
 		},
 	}
 
-	instanceID := urn.GetInstanceID(node)
-	component.Data.PutNonEmpty("generateName", node.GenerateName)
-	component.Data.PutNonEmpty("kind", node.Kind)
-	component.Data.PutNonEmpty("instanceId", instanceID)
+	if nc.IsSourcePropertiesFeatureEnabled() {
+		component.SourceProperties = makeSourceProperties(&node)
+	} else {
+		component.Data.PutNonEmpty("creationTimestamp", node.CreationTimestamp)
+		component.Data.PutNonEmpty("uid", node.UID)
+		component.Data.PutNonEmpty("generateName", node.GenerateName)
+		component.Data.PutNonEmpty("kind", node.Kind)
+		component.Data.PutNonEmpty("status", NodeStatus{
+			Phase:           node.Status.Phase,
+			NodeInfo:        node.Status.NodeInfo,
+			KubeletEndpoint: node.Status.DaemonEndpoints.KubeletEndpoint,
+		})
+	}
 
 	log.Tracef("Created StackState node component %s: %v", nodeExternalID, component.JSONString())
 

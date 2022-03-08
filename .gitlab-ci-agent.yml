@@ -1022,6 +1022,9 @@ beest_k8s_containerd_success_cleanup:
   - &localinstall_ignore_rule
     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-localinstall]/
     when: never
+  - &localinstall_master_only_rule
+    if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_PROTECTED)
+    when: always
   - &localinstall_acceptance_rule
     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-localinstall]/
     when: always
@@ -1100,7 +1103,7 @@ molecule_localinstall_success_cleanup:
     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-compose]/
     when: never
   - &secrets_master_only_rule
-    if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_PROTECTED)
     when: always
   - &secrets_acceptance_rule
     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-compose]/

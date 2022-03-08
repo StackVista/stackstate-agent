@@ -5,6 +5,8 @@
 **Features**
 - Container collector for Docker, ContainerD and CRI runtimes. [STAC-14483](https://stackstate.atlassian.net/browse/STAC-14483)
 - Process agent version 4.0.0 with support to Docker, CRI and ContainerD runtimes.
+- Kubernetes objects topology
+  * made object YAML definition available as "Component properties" in order to enable [Kubernetes changes events](https://docs.stackstate.com/stackpacks/integrations/kubernetes#events) ([STAC-15054](https://stackstate.atlassian.net/browse/STAC-15054))
 
 **Bugfix**
 - Process agent now acknowledges STS_SKIP_SSL_VALIDATION environment variable. [(STAC-15225)](https://stackstate.atlassian.net/browse/STAC-15225)
