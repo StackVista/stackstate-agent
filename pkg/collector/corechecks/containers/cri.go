@@ -56,7 +56,7 @@ func CRIFactory() check.Check {
 		CheckBase: core.NewCheckBase(criCheckName),
 		instance:  &CRIConfig{},
 		// sts
-		topologyCollector: topology.MakeContainerTopologyCollector(criCheckName),
+		topologyCollector: topology.MakeContainerTopologyCollector(),
 	}
 }
 
@@ -92,8 +92,11 @@ func (c *CRICheck) Run() error {
 
 	util, err := cri.GetUtil()
 	if err != nil {
-		c.Warnf("Error initialising check: %s", err) //nolint:errcheck
-		return err
+		// sts begin
+		//c.Warnf("Error initialising check: %s", err) //nolint:errcheck
+		log.Debugf("Error initialising CRI util: %v", err)
+		return nil
+		// sts end
 	}
 
 	containerStats, err := util.ListContainerStats()
