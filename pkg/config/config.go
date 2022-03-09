@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -144,7 +145,16 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("app_key", "")
 	config.BindEnvAndSetDefault("cloud_provider_metadata", []string{"aws", "gcp", "azure", "alibaba"})
 	config.SetDefault("proxy", nil)
-	config.BindEnvAndSetDefault("skip_ssl_validation", false)
+
+	// sts begin
+	stsSkipSSLValidationEnv := os.Getenv("STS_SKIP_SSL_VALIDATION")
+	stsSkipSSLValidation, err := strconv.ParseBool(stsSkipSSLValidationEnv)
+	if err != nil && len(stsSkipSSLValidationEnv) > 0 {
+		_ = log.Warnf("Could not parse `STS_SKIP_SSL_VALIDATION` environment variable to boolean: %v", err)
+	}
+	config.BindEnvAndSetDefault("skip_ssl_validation", stsSkipSSLValidation)
+	// sts end
+
 	config.BindEnvAndSetDefault("hostname", "")
 	config.BindEnvAndSetDefault("skip_hostname_validation", false)
 	config.BindEnvAndSetDefault("tags", []string{})
@@ -393,7 +403,7 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("collect_swarm_topology", false)
 
 	// Kubernetes
-	config.BindEnvAndSetDefault("kubernetes_kubelet_host", "")
+	config.BindEnvAndSetDefault("kubernetes_kubelet_host", os.Getenv("STS_KUBERNETES_KUBELET_HOST")) // sts
 	config.BindEnvAndSetDefault("kubernetes_kubelet_nodename", "")
 	config.BindEnvAndSetDefault("eks_fargate", false)
 	config.BindEnvAndSetDefault("kubernetes_http_kubelet_port", 10255)
@@ -407,6 +417,7 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("collect_kubernetes_topology", false)
 	config.BindEnvAndSetDefault("collect_kubernetes_timeout", 10)
 	config.BindEnvAndSetDefault("configmap_max_datasize", 0)
+	config.BindEnvAndSetDefault("kubernetes_source_properties_enabled", true)
 	config.BindEnvAndSetDefault("kubelet_client_ca", "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
 
 	config.BindEnvAndSetDefault("kubelet_auth_token_path", "")
