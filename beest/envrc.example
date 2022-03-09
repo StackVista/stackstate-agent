@@ -14,3 +14,5 @@ export quay_password=TBD
 export RUN_ID=$AGENT_CURRENT_BRANCH
 
 export STACKSTATE_BRANCH=master
+
+export BEEST_S3_BUCKET=beest-terraform-state
