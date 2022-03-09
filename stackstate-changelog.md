@@ -10,6 +10,17 @@
 
 **Bugfix**
 - Process agent now acknowledges STS_SKIP_SSL_VALIDATION environment variable. [(STAC-15225)](https://stackstate.atlassian.net/browse/STAC-15225)
+- Open Telemetry
+  - Added Trace Agent /open-telemetry endpoint
+  - Added Open Telemetry protobuf
+  - Added interpreter for open telemetry instrumentation routes
+    - Added interpreter for aws-sdk instrumentation lambda
+    - Added interpreter for aws-sdk instrumentation s3
+    - Added interpreter for aws-sdk instrumentation step function
+    - Added interpreter for aws-sdk instrumentation sqs
+    - Added interpreter for aws-sdk instrumentation sns
+    - Added interpreter for http instrumentation
+  - Added unit testing for Open Telemetry
 
 **Bugfix**
 - Fixed agent's configuration example. [(STAC-15693)](https://stackstate.atlassian.net/browse/STAC-15693)
