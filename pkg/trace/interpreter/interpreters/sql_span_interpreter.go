@@ -8,7 +8,7 @@ import (
 
 // SQLSpanInterpreter sets up the sql span interpreter
 type SQLSpanInterpreter struct {
-	interpreter
+	Interpreter
 }
 
 // SQLSpanInterpreterName is the name used for matching this interpreter
@@ -19,7 +19,7 @@ const DatabaseTypeName = "database"
 
 // MakeSQLSpanInterpreter creates an instance of the sql span interpreter
 func MakeSQLSpanInterpreter(config *config.Config) *SQLSpanInterpreter {
-	return &SQLSpanInterpreter{interpreter{Config: config}}
+	return &SQLSpanInterpreter{Interpreter{Config: config}}
 }
 
 // Interpret performs the interpretation for the SQLSpanInterpreter
