@@ -23,7 +23,7 @@ var hostPath coreV1.HostPathVolumeSource
 func NewTestCommonClusterCorrelator(client apiserver.APICollectorClient) ClusterTopologyCorrelator {
 	instance := topology.Instance{Type: "kubernetes", URL: "test-cluster-name"}
 
-	clusterTopologyCommon := NewClusterTopologyCommon(instance, client)
+	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, true)
 	return NewClusterTopologyCorrelator(clusterTopologyCommon)
 }
 
