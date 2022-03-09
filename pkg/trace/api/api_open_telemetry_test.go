@@ -614,7 +614,7 @@ func TestLambdaOtelInstrumentationGetAccountID(t *testing.T) {
 	}
 
 	assert.Nil(t, lambdaInstrumentationGetAccountID(&noAccountID), "Should not be able to extract the account id from aws-lambda instrumentation with no id")
-	assert.Equal(t, *lambdaInstrumentationGetAccountID(&accountID), "91234567890", "Should be able to extract the account id from aws-lambda instrumentation")
+	assert.Equal(t, lambdaInstrumentationGetAccountID(&accountID), "91234567890", "Should be able to extract the account id from aws-lambda instrumentation")
 }
 
 func TestConvertOtelIdentifiersToStsIdentifiers(t *testing.T) {

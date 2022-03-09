@@ -96,20 +96,24 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 
 			// Loop through the instrumentation's library spans
 			for _, instrumentationSpan := range instrumentationLibrarySpan.Spans {
-				var meta = &map[string]string{
+				var meta = map[string]string{
 					"instrumentation_library": instrumentationLibrarySpan.InstrumentationLibrary.Name,
 					"source":                  OpenTelemetrySource,
 				}
 
-				if awsAccountID != nil {
-					(*meta)["aws.account.id"] = *awsAccountID
+				if awsAccountID != "" {
+					meta["aws.account.id"] = awsAccountID
 				}
 
 				openTelemetrySpan := pb.Span{
 					Name:     instrumentationSpan.Name,
 					Start:    int64(instrumentationSpan.StartTimeUnixNano),
 					Duration: int64(instrumentationSpan.EndTimeUnixNano) - int64(instrumentationSpan.StartTimeUnixNano),
-					Meta:     *meta,
+					Meta:     meta,
+					// We set the Service, Resource, and Type to a default openTelemetry string, This allows us to
+					// use the interpreter to identify if this Span is OpenTelemetry and allow us to use internal data
+					// like the service type IE sqs sns and redirect it to the correct interpreter for OpenTelemetry
+					// If these are not defined then it will never even reach the interpreter.
 					Service:  OpenTelemetrySource,
 					Resource: OpenTelemetrySource,
 					Type:     OpenTelemetrySource,
@@ -141,13 +145,26 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 	return traces
 }
 
+/**
+
+AWS-SDK
+ -> SQS (AWS-HTTP +)
+
+AWS-HTTP
+ --- -> Response SQS parent SQS
+ -> Http parent
+
+
+
+*/
+
 // determineInstrumentationSuccessFromHTTP We attempt to separate the http and other instrumentation's from each other
 // We then use the http to determine if the other instrumentation calls failed or succeeded by matching up parentSpanIds
 // from the http instrumentation and the other instrumentation spanId.
 // If the http parentSpanIds does exist in the trace then we remove the http span and merge the attributes we found
 // with the relevant parent attributes. This allows the parent to contain the state for if the call failed or succeeded
 // whilst we do not create a useless http component by removing it
-// TODO: Might be worth moving this to the interpreter level
+// TODO: Optimize this function to be more memory sufficient
 func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationLibrarySpans) []v1.InstrumentationLibrarySpans {
 	var lambdaInstrumentation []v1.InstrumentationLibrarySpans
 	var httpInstrumentation []v1.InstrumentationLibrarySpans
@@ -220,9 +237,7 @@ func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationL
 // lambdaInstrumentationGetAccountID We attempt to extract the aws account id from the instrumentation-aws-lambda
 // library this is the root entry for the main lambda calling the script
 // This is not a requirement and will only trigger with the aws-lambda library
-func lambdaInstrumentationGetAccountID(resourceSpan *v1.ResourceSpans) *string {
-	var awsAccountID *string
-
+func lambdaInstrumentationGetAccountID(resourceSpan *v1.ResourceSpans) string {
 	// Attempt to extract information from the lambda library to enhance the sdk library
 	// We need the account id for sections where it is not defined for example lambda to lambda
 	for _, library := range resourceSpan.InstrumentationLibrarySpans {
@@ -230,15 +245,14 @@ func lambdaInstrumentationGetAccountID(resourceSpan *v1.ResourceSpans) *string {
 			for _, span := range library.Spans {
 				for _, attribute := range span.Attributes {
 					if attribute.Key == "cloud.account.id" {
-						var accountID = attribute.Value.GetStringValue()
-						awsAccountID = &accountID
+						return attribute.Value.GetStringValue()
 					}
 				}
 			}
 		}
 	}
 
-	return awsAccountID
+	return ""
 }
 
 // extractTraceSpanAndParentSpanID Open telemetry gives us ids that do not correspond to int number but contains string value
@@ -277,26 +291,26 @@ func extractTraceSpanAndParentSpanID(instrumentationSpan *v1.Span, instrumentati
 
 // mapAttributesToMeta The open telemetry meta attributes' comes in a form of array if (dict type items)
 // We can obv combine this to create one dict with a simple key value pair mapping
-func mapAttributesToMeta(attributes []*v12.KeyValue, meta *map[string]string) {
+func mapAttributesToMeta(attributes []*v12.KeyValue, meta map[string]string) {
 	for _, attribute := range attributes {
 		attributeValue := attribute.Value.GetValue()
 
 		switch attributeValue.(type) {
 		case *v12.AnyValue_StringValue:
 			var stringValue = attributeValue.(*v12.AnyValue_StringValue).StringValue
-			(*meta)[attribute.Key] = stringValue
+			meta[attribute.Key] = stringValue
 
 		case *v12.AnyValue_BoolValue:
 			var boolValue = attributeValue.(*v12.AnyValue_BoolValue).BoolValue
-			(*meta)[attribute.Key] = strconv.FormatBool(boolValue)
+			meta[attribute.Key] = strconv.FormatBool(boolValue)
 
 		case *v12.AnyValue_IntValue:
 			var intValue = attributeValue.(*v12.AnyValue_IntValue).IntValue
-			(*meta)[attribute.Key] = strconv.FormatInt(intValue, 10)
+			meta[attribute.Key] = strconv.FormatInt(intValue, 10)
 
 		case *v12.AnyValue_DoubleValue:
 			var doubleValue = attributeValue.(*v12.AnyValue_DoubleValue).DoubleValue
-			(*meta)[attribute.Key] = fmt.Sprintf("%f", doubleValue)
+			meta[attribute.Key] = fmt.Sprintf("%f", doubleValue)
 
 		default:
 			log.Warnf("Open Telemetry, Unable to map the value '%v' of type '%T' into the meta struct.", attribute, attribute)
