@@ -72,7 +72,8 @@ def test_stackstate_process_agent_no_log_errors(host, hostname):
     # Check for errors
     process_agent_log = _get_log(host, "{}-{}".format(hostname, "process-agent"), process_agent_log_path)
     for line in process_agent_log.splitlines():
-        if re.search(offset_guessing, line):
+        # Ignore offset guessing for centos
+        if hostname == "agent-centos" or re.search(offset_guessing, line):
             found_offset_guessing = True
         ignored = False
         for ignored_error in ignored_errors_regex:

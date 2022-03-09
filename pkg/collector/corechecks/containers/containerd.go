@@ -68,7 +68,7 @@ func ContainerdFactory() check.Check {
 		CheckBase:         corechecks.NewCheckBase(containerdCheckName),
 		instance:          &ContainerdConfig{},
 		sub:               &subscriber{},
-		topologyCollector: topology.MakeContainerTopologyCollector(containerdCheckName),
+		topologyCollector: topology.MakeContainerTopologyCollector(),
 	}
 }
 
@@ -115,8 +115,10 @@ func (c *ContainerdCheck) Run() error {
 	cu, errHealth := cutil.GetContainerdUtil()
 	if errHealth != nil {
 		sender.ServiceCheck("containerd.health", metrics.ServiceCheckCritical, "", nil, fmt.Sprintf("Connectivity error %v", errHealth))
-		log.Infof("Error ensuring connectivity with Containerd daemon %v", errHealth)
-		return errHealth
+		// sts begin
+		log.Debugf("Error initialising Containerd util %v", errHealth)
+		return nil
+		// sts end
 	}
 	sender.ServiceCheck("containerd.health", metrics.ServiceCheckOK, "", nil, "")
 	ns := cu.Namespace()
