@@ -17,7 +17,7 @@ ifeq ($(OS),Darwin)
 endif
 
 GIT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
-BRANCH = $(shell echo ${GIT_BRANCH} | cut -d'/' -f 2- | tr [:upper:] [:lower:])
+BRANCH = $(shell echo ${GIT_BRANCH} | cut -d'/' -f 2- | tr [:upper:] [:lower:] | tr . -)
 
 MAJOR_VERSION                ?= 2
 STS_AWS_TEST_BUCKET          ?= stackstate-agent-2-test
