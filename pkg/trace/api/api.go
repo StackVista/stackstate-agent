@@ -10,6 +10,22 @@ import (
 	"encoding/json"
 	"expvar"
 	"fmt"
+	mainconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/tagger"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config"
+	"github.com/StackVista/stackstate-agent/pkg/trace/info"
+	"github.com/StackVista/stackstate-agent/pkg/trace/logutil"
+	"github.com/StackVista/stackstate-agent/pkg/trace/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/trace/metrics/timing"
+	"github.com/StackVista/stackstate-agent/pkg/trace/osutil"
+	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	openTelemetryTrace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/collector"
+	"github.com/StackVista/stackstate-agent/pkg/trace/sampler"
+	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/gogo/protobuf/proto"
+	"github.com/tinylib/msgp/msgp"
 	"io"
 	"io/ioutil"
 	stdlog "log"
@@ -26,22 +42,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"github.com/tinylib/msgp/msgp"
-
-	mainconfig "github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/tagger"
-	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
-	"github.com/StackVista/stackstate-agent/pkg/trace/config"
-	"github.com/StackVista/stackstate-agent/pkg/trace/info"
-	"github.com/StackVista/stackstate-agent/pkg/trace/logutil"
-	"github.com/StackVista/stackstate-agent/pkg/trace/metrics"
-	"github.com/StackVista/stackstate-agent/pkg/trace/metrics/timing"
-	"github.com/StackVista/stackstate-agent/pkg/trace/osutil"
-	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
-	"github.com/StackVista/stackstate-agent/pkg/trace/sampler"
-	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // Version is a dumb way to version our collector handlers
@@ -122,6 +122,9 @@ func (r *HTTPReceiver) Start() {
 	mux.HandleFunc("/v0.4/traces", r.handleWithVersion(v04, r.handleTraces))
 	mux.HandleFunc("/v0.4/services", r.handleWithVersion(v04, r.handleServices))
 	mux.Handle("/profiling/v1/input", r.profileProxyHandler())
+
+	// [sts]
+	mux.HandleFunc("/open-telemetry", r.handleProtobuf(r.handleOpenTelemetry))
 
 	timeout := 5 * time.Second
 	if r.conf.ReceiverTimeout > 0 {
@@ -274,6 +277,21 @@ func (r *HTTPReceiver) handleWithVersion(v Version, f func(Version, http.Respons
 	}
 }
 
+// [sts]
+// Only accepts protobuf content types
+func (r *HTTPReceiver) handleProtobuf(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		if mediaType := getMediaType(req); mediaType != "application/x-protobuf" {
+			httpFormatErrorNoVersion(w, fmt.Errorf("unsupported media type: %q", mediaType))
+			return
+		}
+
+		req.Body = NewLimitedReader(req.Body, r.conf.MaxRequestBytes)
+
+		f(w, req)
+	}
+}
+
 func traceCount(req *http.Request) (int64, error) {
 	if _, ok := req.Header[headerTraceCount]; !ok {
 		return 0, fmt.Errorf("HTTP header %q not found", headerTraceCount)
@@ -342,6 +360,21 @@ func (r *HTTPReceiver) decodeTraces(v Version, req *http.Request) (pb.Traces, er
 		return nil, err
 	}
 	return traces, nil
+}
+
+// [sts]
+func (r *HTTPReceiver) decodeOpenTelemetry(req *http.Request) (*openTelemetryTrace.ExportTraceServiceRequest, error) {
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	openTelemetryTraceData := &openTelemetryTrace.ExportTraceServiceRequest{}
+	if err := proto.Unmarshal(body, openTelemetryTraceData); err != nil {
+		return nil, err
+	}
+
+	return openTelemetryTraceData, nil
 }
 
 func (r *HTTPReceiver) replyOK(v Version, w http.ResponseWriter) {
@@ -421,6 +454,7 @@ func (r *HTTPReceiver) processTraces(ts *info.TagStats, containerID string, trac
 
 		atomic.AddInt64(&ts.SpansReceived, int64(spans))
 
+		// Point of missing resource and service
 		err := normalizeTrace(ts, trace)
 		if err != nil {
 			log.Debug("Dropping invalid trace: %s", err)
@@ -434,6 +468,55 @@ func (r *HTTPReceiver) processTraces(ts *info.TagStats, containerID string, trac
 			Spans:         trace,
 		}
 	}
+}
+
+// [sts]
+// Open telemetry support - Uses protobuf
+func (r *HTTPReceiver) handleOpenTelemetry(w http.ResponseWriter, req *http.Request) {
+	ts := r.tagStats(req)
+	traceCount, err := traceCount(req)
+	if err != nil {
+		log.Warnf("Error getting trace count: %q. Functionality may be limited.", err)
+	}
+
+	if !r.RateLimiter.Permits(traceCount) {
+		// this payload can not be accepted
+		io.Copy(ioutil.Discard, req.Body)
+		w.WriteHeader(r.rateLimiterResponse)
+		httpOK(w)
+		atomic.AddInt64(&ts.PayloadRefused, 1)
+		return
+	}
+
+	openTelemetryTraces, err := r.decodeOpenTelemetry(req)
+	if err != nil {
+		if err == ErrLimitedReaderLimitReached {
+			atomic.AddInt64(&ts.TracesDropped.PayloadTooLarge, traceCount)
+		} else {
+			atomic.AddInt64(&ts.TracesDropped.DecodingError, traceCount)
+		}
+		log.Errorf("Cannot decode traces payload: %v", err)
+		return
+	}
+
+	// Open telemetry does not immediately fit into the pb.Traces structure and thus needs to be mapped into it
+	traces := mapOpenTelemetryTraces(*openTelemetryTraces)
+
+	httpOK(w)
+
+	atomic.AddInt64(&ts.TracesReceived, int64(len(traces)))
+	atomic.AddInt64(&ts.TracesBytes, req.Body.(*LimitedReader).Count)
+	atomic.AddInt64(&ts.PayloadAccepted, 1)
+
+	r.wg.Add(1)
+	go func() {
+		defer func() {
+			r.wg.Done()
+			watchdog.LogOnPanic()
+		}()
+		containerID := req.Header.Get(headerContainerID)
+		r.processTraces(ts, containerID, traces)
+	}()
 }
 
 // handleServices handle a request with a list of several services

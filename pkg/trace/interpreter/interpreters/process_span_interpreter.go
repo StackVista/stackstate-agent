@@ -8,7 +8,7 @@ import (
 
 // ProcessSpanInterpreter sets up the process span interpreter
 type ProcessSpanInterpreter struct {
-	interpreter
+	Interpreter
 }
 
 // ProcessSpanInterpreterName is the name used for matching this interpreter
@@ -19,7 +19,7 @@ const ProcessTypeName = "process"
 
 // MakeProcessSpanInterpreter creates an instance of the process span interpreter
 func MakeProcessSpanInterpreter(config *config.Config) *ProcessSpanInterpreter {
-	return &ProcessSpanInterpreter{interpreter{Config: config}}
+	return &ProcessSpanInterpreter{Interpreter{Config: config}}
 }
 
 // Interpret performs the interpretation for the ProcessSpanInterpreter

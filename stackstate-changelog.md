@@ -1,9 +1,24 @@
 # StackState Agent v2 releases
 
-## 2.16.0 (2022-02-??)
+## 2.16.0 (2022-03-11)
 
 **Features**
+- Container collector for Docker, ContainerD and CRI runtimes. [STAC-14483](https://stackstate.atlassian.net/browse/STAC-14483)
+- Kubernetes objects topology
+  * made object YAML definition available as "Component properties" in order to enable [Kubernetes changes events](https://docs.stackstate.com/stackpacks/integrations/kubernetes#events) ([STAC-15054](https://stackstate.atlassian.net/browse/STAC-15054))
+- Open Telemetry
+  - Added Trace Agent /open-telemetry endpoint
+  - Added Open Telemetry protobuf
+  - Added interpreter for open telemetry instrumentation routes
+    - Added interpreter for aws-sdk instrumentation lambda, s3, step function, sqs, and sns
+    - Added interpreter for http instrumentation
+  - Added unit testing for Open Telemetry
+
+**Bugfix**
 - Process agent now acknowledges STS_SKIP_SSL_VALIDATION environment variable. [(STAC-15225)](https://stackstate.atlassian.net/browse/STAC-15225)
+- Fixed agent's configuration example. [(STAC-15693)](https://stackstate.atlassian.net/browse/STAC-15693)
+- Fix missing HTTP response time charts (from process-agent version 4.0.1) [STAC-15754](https://stackstate.atlassian.net/browse/STAC-15754)
+- Big ConfigMap's are being cut to STS_CONFIGMAP_MAX_DATASIZE (default 100 KiB) before sending to StackState for better readability and performance. [STAC-15323](https://stackstate.atlassian.net/browse/STAC-15323)
 
 **Improvements**
 - Set process agent check intervals to be default 30 seconds, added ENV variable overrides for process agent check intervals. [(STAC-15661)](https://stackstate.atlassian.net/browse/STAC-15661)
@@ -11,7 +26,6 @@
 ## 2.15.0 (2021-12-20)
 
 **Features**
-
 - Raw Metrics API Endpoint
   * Add support for Raw Metrics in line with the current v2/v3 api format. [(STAC-12434)](https://stackstate.atlassian.net/browse/STAC-12434)
   * Convert v2/v3 api format into the v1 raw metric intake format, Allows compatibility with v1 [(STAC-12434)](https://stackstate.atlassian.net/browse/STAC-12434)

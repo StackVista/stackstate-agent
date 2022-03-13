@@ -165,9 +165,12 @@ func (d *DockerCheck) Run() error {
 	du, err := docker.GetDockerUtil()
 	if config.IsContainerized() {
 		if err != nil {
+			// sts begin
 			sender.ServiceCheck(DockerServiceUp, metrics.ServiceCheckCritical, "", nil, err.Error())
-			d.Warnf("Error initialising check: %s", err) //nolint:errcheck
-			return err
+			//d.Warnf("Error initialising check: %s", err) //nolint:errcheck
+			log.Debugf("Error initialising Docker util %v", err)
+			return nil
+			// sts end
 		}
 	} else {
 		log.Debugf("Agent is not running in container, skipping the Docker check")
@@ -471,7 +474,7 @@ func DockerFactory() check.Check {
 	return &DockerCheck{
 		CheckBase:         core.NewCheckBase(dockerCheckName),
 		instance:          &DockerConfig{},
-		topologyCollector: topology.MakeContainerTopologyCollector(dockerCheckName),
+		topologyCollector: topology.MakeContainerTopologyCollector(),
 	}
 }
 

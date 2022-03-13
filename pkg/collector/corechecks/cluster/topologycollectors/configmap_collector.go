@@ -1,4 +1,3 @@
-//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -60,26 +59,36 @@ func (cmc *ConfigMapCollector) configMapToStackStateComponent(configMap v1.Confi
 		ExternalID: configMapExternalID,
 		Type:       topology.Type{Name: "configmap"},
 		Data: map[string]interface{}{
-			"name":              configMap.Name,
-			"creationTimestamp": configMap.CreationTimestamp,
-			"tags":              tags,
-			"uid":               configMap.UID,
-			"identifiers":       []string{configMapExternalID},
+			"name":        configMap.Name,
+			"tags":        tags,
+			"identifiers": []string{configMapExternalID},
 		},
 	}
 
-	component.Data.PutNonEmpty("generateName", configMap.GenerateName)
-	component.Data.PutNonEmpty("kind", configMap.Kind)
-	component.Data.PutNonEmpty("data", cutData(configMap.Data, cmc.maxDataSize))
+	if cmc.IsSourcePropertiesFeatureEnabled() {
+		configMapCopy := configMap
+		configMapCopy.Data = cutData(configMap.Data, cmc.maxDataSize)
+		for k, data := range configMapCopy.BinaryData {
+			configMapCopy.BinaryData[k] = []byte(cutReplacement(data))
+		}
+		sourceProperties := makeSourceProperties(&configMapCopy)
+		component.SourceProperties = sourceProperties
+	} else {
+		component.Data.PutNonEmpty("kind", configMap.Kind)
+		component.Data.PutNonEmpty("creationTimestamp", configMap.CreationTimestamp)
+		component.Data.PutNonEmpty("generateName", configMap.GenerateName)
+		component.Data.PutNonEmpty("uid", configMap.UID)
+		component.Data.PutNonEmpty("data", cutData(configMap.Data, cmc.maxDataSize))
+	}
 
 	log.Tracef("Created StackState ConfigMap component %s: %v", configMapExternalID, component.JSONString())
 
 	return component
 }
 
-func cutReplacement(dropped string) string {
+func cutReplacement(dropped []byte) string {
 	hashing := sha256.New()
-	_, err := hashing.Write([]byte(dropped))
+	_, err := hashing.Write(dropped)
 	var hash string
 	if err != nil {
 		// doubt what error could happen, but just to satisfy linter, and in case...
@@ -103,7 +112,7 @@ func cutData(data map[string]string, maxSize int) map[string]string {
 	for k, v := range data {
 		valueSize := len(v)
 		if valueSize > maxPerKey {
-			newData[k] = v[0:maxPerKey] + cutReplacement(v[maxPerKey:])
+			newData[k] = v[0:maxPerKey] + cutReplacement([]byte(v[maxPerKey:]))
 		} else {
 			newData[k] = v
 		}
