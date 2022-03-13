@@ -1,0 +1,27 @@
+stages:
+  - build_runner
+
+variables:
+  RUNNER_BEEST_BASE: $CI_PROJECT_DIR/.ci-builders/beest-base
+  DOCKER_REGISTRY: docker.io
+  QUAY_REGISTRY: quay.io
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+
+before_script:
+  - echo "${docker_password}" | docker login --username=${docker_user} --password-stdin ${DOCKER_REGISTRY}
+  - echo "${quay_password}" | docker login --username=${quay_user} --password-stdin ${QUAY_REGISTRY}
+
+.docker_build_base: &docker_build_base
+  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
+  services:
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
+      alias: docker
+
+build-beest-base:
+  <<: *docker_build_base
+  stage: build_runners
+  script:
+    - cd $RUNNER_BEEST_BASE
+    - make

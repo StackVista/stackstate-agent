@@ -142,8 +142,6 @@ agent3:
    - if: $CI_COMMIT_BRANCH
    - if: $CI_COMMIT_TAG
 
-
-
 cluster_agent:
   stage: triggers
   variables:
@@ -155,3 +153,16 @@ cluster_agent:
   rules:
     - <<: *include_on_cluster_agent
     - when: never
+
+build_runners:
+  stage: triggers
+  trigger:
+    include: .gitlab-ci-builders.yml
+    strategy: depend
+  rules:
+    # make a manual job only on the master branch
+    - if: $CI_COMMIT_REF_NAME == "master"
+      when: manual
+    # make a manual job when the commit message includes [build_runners]
+    - if: $CI_COMMIT_MESSAGE =~ /\[build_runners]/
+      when: manual
