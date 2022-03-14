@@ -36,6 +36,7 @@ beest-keeper:
 
 beest-dummy-job:
   stage: succeed
+  before_script: []
   dependencies:
     - beest-keeper
   script:
