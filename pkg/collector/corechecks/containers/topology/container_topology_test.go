@@ -50,7 +50,8 @@ func TestMakeContainerTopologyCollector(t *testing.T) {
 			URL:  "agents",
 		}),
 		Hostname: hostname,
-	}, MakeContainerTopologyCollector())
+		Runtime:  "test",
+	}, MakeContainerTopologyCollector("test"))
 }
 
 func TestBuildContainerTopology(t *testing.T) {
@@ -60,6 +61,7 @@ func TestBuildContainerTopology(t *testing.T) {
 			URL:  "agents",
 		}),
 		Hostname: "host",
+		Runtime:  "test",
 	}
 
 	components, err := collector.collectContainers(MockUtil{})

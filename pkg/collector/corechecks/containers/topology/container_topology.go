@@ -22,10 +22,11 @@ const (
 type ContainerTopologyCollector struct {
 	corechecks.CheckTopologyCollector
 	Hostname string
+	Runtime  string
 }
 
 // MakeContainerTopologyCollector returns a new instance of DockerTopologyCollector
-func MakeContainerTopologyCollector() *ContainerTopologyCollector {
+func MakeContainerTopologyCollector(runtime string) *ContainerTopologyCollector {
 	hostname, err := util.GetHostname()
 	if err != nil {
 		log.Warnf("Can't get hostname from container collector, containers ExternalIDs will not have it: %s", err)
@@ -37,12 +38,13 @@ func MakeContainerTopologyCollector() *ContainerTopologyCollector {
 				URL:  "agents",
 			}),
 		Hostname: hostname,
+		Runtime:  runtime,
 	}
 }
 
 // BuildContainerTopology collects all docker container topology
 func (ctc *ContainerTopologyCollector) BuildContainerTopology(containerUtil spec.ContainerUtil) error {
-	log.Infof("Running container topology collector for '%s' runtime", ctc.TopologyInstance.Type)
+	log.Infof("Running container topology collector for '%s' runtime", ctc.Runtime)
 	sender := batcher.GetBatcher()
 	if sender == nil {
 		return errors.New("no batcher instance available, skipping BuildContainerTopology")
