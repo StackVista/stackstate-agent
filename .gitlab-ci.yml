@@ -166,5 +166,4 @@ build_runners:
     - if: $CI_MERGE_REQUEST_IID
     - if: $CI_OPEN_MERGE_REQUESTS
       when: never
-    # make a manual job when the commit message includes [build_runners]
-    - if: $CI_COMMIT_MESSAGE =~ /\[build_runners]/
+    - if: $CI_COMMIT_BRANCH
