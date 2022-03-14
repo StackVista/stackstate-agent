@@ -31,3 +31,4 @@ beest-keeper:
       when: always
     - if: $CI_COMMIT_MESSAGE
       when: manual
+      allow_failure: true
