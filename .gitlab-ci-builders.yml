@@ -27,9 +27,7 @@ beest-keeper:
     - cd $RUNNER_BEEST_BASE
     - make
   rules:
-    # make a manual job when the commit message includes [build_runners]
     - if: $CI_COMMIT_MESSAGE =~ /\[build_runner_beest]/
       when: always
-    - if: $CI_PIPELINE_TRIGGERED == 'true'
+    - if: $CI_COMMIT_MESSAGE
       when: manual
-      allow_failure: true
