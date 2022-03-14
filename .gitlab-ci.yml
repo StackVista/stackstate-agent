@@ -161,8 +161,6 @@ build_runners:
     strategy: depend
   rules:
     - if: $CI_MERGE_REQUEST_IID
-      allow_failure: true
     - if: $CI_OPEN_MERGE_REQUESTS
       when: never
     - if: $CI_COMMIT_BRANCH
-      allow_failure: true
