@@ -1,6 +1,6 @@
 stages:
   - build
-  - fallback-manual
+#  - fallback-manual
 
 variables:
   RUNNER_BEEST_BASE: $CI_PROJECT_DIR/.ci-builders/beest-base
@@ -24,6 +24,7 @@ before_script:
 beest-keeper:
   <<: *docker_build_base
   stage: build
+  allow_failure: true
   script:
     - cd $RUNNER_BEEST_BASE
     - make
@@ -35,12 +36,12 @@ beest-keeper:
       allow_failure: true
 
 # This ensures that triggers can achieve success status if manual jobs are not executed.
-ensure-success-manual:
-  stage: fallback-manual
-  before_script: []
-  dependencies:
-    - beest-keeper
-  script:
-    - echo "I will succeed"
-  rules:
-    - when: on_success
+#ensure-success-manual:
+#  stage: fallback-manual
+#  before_script: []
+#  dependencies:
+#    - beest-keeper
+#  script:
+#    - echo "I will succeed"
+#  rules:
+#    - when: on_success
