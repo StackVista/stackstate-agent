@@ -1,5 +1,5 @@
 stages:
-  - build_runner
+  - build
 
 variables:
   RUNNER_BEEST_BASE: $CI_PROJECT_DIR/.ci-builders/beest-base
@@ -19,9 +19,9 @@ before_script:
     - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
       alias: docker
 
-build-beest-base:
+beest-keeper:
   <<: *docker_build_base
-  stage: build_runners
+  stage: build
   script:
     - cd $RUNNER_BEEST_BASE
     - make
