@@ -12,6 +12,7 @@ variables:
 before_script:
   - echo "${docker_password}" | docker login --username=${docker_user} --password-stdin ${DOCKER_REGISTRY}
   - echo "${quay_password}" | docker login --username=${quay_user} --password-stdin ${QUAY_REGISTRY}
+  - apk add make
 
 .docker_build_base: &docker_build_base
   image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
