@@ -156,7 +156,6 @@ cluster_agent:
 
 build_runners:
   stage: triggers
-  allow_failure: true
   trigger:
     include: .gitlab-ci-builders.yml
     strategy: depend
