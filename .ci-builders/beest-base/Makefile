@@ -1,6 +1,6 @@
 .SHELLFLAGS = -ec
 
-SHELL         := /bin/bash
+SHELL         := /bin/sh
 .DEFAULT_GOAL := push
 
 RUNTIMETAG         := $(shell date +%Y%m%d)

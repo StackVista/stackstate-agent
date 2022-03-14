@@ -27,4 +27,5 @@ beest-keeper:
     - cd $RUNNER_BEEST_BASE
     - make
   rules:
-    - when: on_success
+    - when: manual
+      allow_failure: true
