@@ -26,3 +26,5 @@ beest-keeper:
   script:
     - cd $RUNNER_BEEST_BASE
     - make
+  rules:
+    - when: on_success

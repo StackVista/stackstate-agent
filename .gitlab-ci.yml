@@ -164,10 +164,6 @@ build_runners:
     - if: $CI_COMMIT_REF_NAME == "master"
       when: manual
       allow_failure: true
-    # make a manual job when the commit message includes [build_runners]
-    - if: $CI_COMMIT_MESSAGE =~ /\[build_runners]/
-      when: manual
-      allow_failure: true
     - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
       when: manual
       allow_failure: true
@@ -176,3 +172,7 @@ build_runners:
       allow_failure: true
     - if: $CI_OPEN_MERGE_REQUESTS
       when: never
+    # make a manual job when the commit message includes [build_runners]
+    - if: $CI_COMMIT_MESSAGE =~ /\[build_runners]/
+      when: manual
+      allow_failure: true
