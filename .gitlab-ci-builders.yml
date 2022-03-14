@@ -1,5 +1,6 @@
 stages:
   - build
+  - succeed
 
 variables:
   RUNNER_BEEST_BASE: $CI_PROJECT_DIR/.ci-builders/beest-base
@@ -32,3 +33,12 @@ beest-keeper:
     - if: $CI_COMMIT_MESSAGE
       when: manual
       allow_failure: true
+
+beest-dummy-job:
+  stage: succeed
+  dependencies:
+    - beest-keeper
+  script:
+    - echo "I will succeed"
+  rules:
+    - when: on_success
