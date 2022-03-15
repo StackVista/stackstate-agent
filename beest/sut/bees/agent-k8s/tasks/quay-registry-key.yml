@@ -1,12 +1,12 @@
 ---
-- name: Set docker registry key fact
+- name: Set quay.io registry key fact
   set_fact:
-    docker_registry_key:
+    quay_registry_key:
       auths:
         quay.io:
           auth: "{{ ':'.join((quay_user, quay_password)) | b64encode }}"
 
-- name: Create secret to allow pulling from private docker registry
+- name: Create docker secret to allow pulling from quay.io registry
   kubernetes.core.k8s:
     context: "{{ kubecontext }}"
     state: present
@@ -14,7 +14,7 @@
       apiVersion: v1
       kind: Secret
       data:
-        .dockerconfigjson: "{{ docker_registry_key | to_json | b64encode }}"
+        .dockerconfigjson: "{{ quay_registry_key | to_json | b64encode }}"
       metadata:
         name: "docker-registry-key"
         namespace: "{{ namespace }}"

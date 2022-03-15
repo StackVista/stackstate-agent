@@ -8,7 +8,7 @@
   - name: Copy Receiver files
     copy:
       src: ./
-      dest: "/home/ubuntu/"
+      dest: "/home/ubuntu/receiver"
       mode: preserve
 
   - name: Configure .env file used by docker-compose

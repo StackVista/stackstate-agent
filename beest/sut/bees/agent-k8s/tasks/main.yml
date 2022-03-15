@@ -31,7 +31,7 @@
       --set "clusterAgent.image.repository=stackstate/{{cluster_agent_docker_repo}}" \
       --set "clusterChecks.image.tag={{agent_current_branch}}" \
       --set "clusterChecks.image.repository=stackstate/{{agent_docker_repo}}" \
-      --values "{{ role_path }}/files/values.yml \
+      --values "{{ role_path }}/files/values.yml" \
       stackstate-cluster-agent stackstate/cluster-agent
 
   - name: Wait for the stackstate cluster agent to start doing it's thing
