@@ -474,7 +474,7 @@ func DockerFactory() check.Check {
 	return &DockerCheck{
 		CheckBase:         core.NewCheckBase(dockerCheckName),
 		instance:          &DockerConfig{},
-		topologyCollector: topology.MakeContainerTopologyCollector(),
+		topologyCollector: topology.MakeContainerTopologyCollector(dockerCheckName),
 	}
 }
 
