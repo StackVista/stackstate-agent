@@ -474,11 +474,23 @@ func (r *HTTPReceiver) processTraces(ts *info.TagStats, containerID string, trac
 // Open telemetry support - Uses protobuf
 func (r *HTTPReceiver) handleOpenTelemetry(w http.ResponseWriter, req *http.Request) {
 	ts := r.tagStats(req)
-	traceCount, err := traceCount(req)
+
+	openTelemetryTraces, err := r.decodeOpenTelemetry(req)
 	if err != nil {
-		log.Warnf("Error getting trace count: %q. Functionality may be limited.", err)
+		if err == ErrLimitedReaderLimitReached {
+			atomic.AddInt64(&ts.TracesDropped.PayloadTooLarge, 1)
+		} else {
+			atomic.AddInt64(&ts.TracesDropped.DecodingError, 1)
+		}
+		log.Errorf("Cannot decode traces payload: %v", err)
+		return
 	}
 
+	// Open telemetry does not immediately fit into the pb.Traces structure and thus needs to be mapped into it
+	traces := mapOpenTelemetryTraces(*openTelemetryTraces)
+	traceCount := int64(len(traces))
+
+	// Determine rate limit based on length of traces we decoded
 	if !r.RateLimiter.Permits(traceCount) {
 		// this payload can not be accepted
 		io.Copy(ioutil.Discard, req.Body)
@@ -487,20 +499,6 @@ func (r *HTTPReceiver) handleOpenTelemetry(w http.ResponseWriter, req *http.Requ
 		atomic.AddInt64(&ts.PayloadRefused, 1)
 		return
 	}
-
-	openTelemetryTraces, err := r.decodeOpenTelemetry(req)
-	if err != nil {
-		if err == ErrLimitedReaderLimitReached {
-			atomic.AddInt64(&ts.TracesDropped.PayloadTooLarge, traceCount)
-		} else {
-			atomic.AddInt64(&ts.TracesDropped.DecodingError, traceCount)
-		}
-		log.Errorf("Cannot decode traces payload: %v", err)
-		return
-	}
-
-	// Open telemetry does not immediately fit into the pb.Traces structure and thus needs to be mapped into it
-	traces := mapOpenTelemetryTraces(*openTelemetryTraces)
 
 	httpOK(w)
 
