@@ -16,10 +16,6 @@ func BeesPath() string {
 	return fmt.Sprintf("%s/sut/bees", Cwd)
 }
 
-func AnsibleTasksPath() string {
-	return fmt.Sprintf("%s/sut/bees/tasks", Cwd)
-}
-
 func TestPath(groupName string) string {
 	return fmt.Sprintf("%s/tests/%s", Cwd, groupName)
 }

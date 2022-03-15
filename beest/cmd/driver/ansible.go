@@ -25,8 +25,7 @@ type AnsibleContext interface {
 
 func AnsiblePlay(ctx AnsibleContext) {
 	vars := map[string]interface{}{
-		"ansibleTasksDir": sut.AnsibleTasksPath(),
-		"bees_path":       sut.BeesPath(),
+		"bees_path": sut.BeesPath(),
 	}
 
 	runOption := &playbook.AnsiblePlaybookOptions{

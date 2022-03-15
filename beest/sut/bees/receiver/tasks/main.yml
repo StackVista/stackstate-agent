@@ -18,7 +18,7 @@
         CLUSTER_NAME={{ cluster_name }}
       dest: /home/ubuntu/receiver/.env
 
-  - name: Run Docker compose
+  - name: Run docker-compose
     command: docker-compose up -d
     args:
       chdir: /home/ubuntu/receiver
@@ -46,7 +46,7 @@
 - name: StackState Receiver cleanup tasks
   tags: cleanup
   block:
-  - name: Stop and Remove Existing Docker Compose
+  - name: Stop docker-compose and remove volumes
     command: docker-compose down --volumes --remove-orphans
     args:
       chdir: /home/ubuntu/receiver
