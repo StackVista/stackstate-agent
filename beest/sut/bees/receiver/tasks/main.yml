@@ -1,0 +1,52 @@
+---
+- name: StackState Receiver prepare tasks
+  tags: prepare
+  block:
+  - name: Docker login
+    shell: "docker login -u={{ quay_user }} -p={{ quay_password }} quay.io"
+
+  - name: Copy Receiver files
+    copy:
+      src: ./
+      dest: "/home/ubuntu/"
+      mode: preserve
+
+  - name: Configure .env file used by docker-compose
+    copy:
+      content: |
+        STACKSTATE_BRANCH={{ stackstate_branch }}
+        CLUSTER_NAME={{ cluster_name }}
+      dest: /home/ubuntu/receiver/.env
+
+  - name: Run Docker compose
+    command: docker-compose up -d
+    args:
+      chdir: /home/ubuntu/receiver
+
+  - name: Wait for receiver port
+    wait_for:
+      port: 1618
+      delay: 10
+      timeout: 300
+      state: started
+
+  - name: Wait for receiver to be ready
+    uri:
+      url: http://localhost:1618/readiness
+      return_content: true
+    register: response
+    until: "'OK' in response.content"
+    retries: 20
+    delay: 5
+    changed_when: false
+
+
+## Cleanup
+
+- name: StackState Receiver cleanup tasks
+  tags: cleanup
+  block:
+  - name: Stop and Remove Existing Docker Compose
+    command: docker-compose down --volumes --remove-orphans
+    args:
+      chdir: /home/ubuntu/receiver

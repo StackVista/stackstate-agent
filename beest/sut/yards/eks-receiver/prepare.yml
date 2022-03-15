@@ -2,11 +2,11 @@
 - name: Prepare Receiver
   hosts: receiver
   gather_facts: true
-  tasks:
-    - include_tasks: ../../bees/receiver.yml
+  roles:
+    - role: "{{ bees_path }}/receiver"
 
 - name: Prepare Kubernetes Cluster
   hosts: localhost
   gather_facts: false
-  tasks:
-    - include_tasks: ../../bees/eks_agent.yml
+  roles:
+    - role: "{{ bees_path }}/agent-k8s"

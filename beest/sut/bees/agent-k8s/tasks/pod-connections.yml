@@ -1,0 +1,32 @@
+---
+- name: Apply the pod-to-service-cluster-ip scenario
+  command: kubectl --context={{ kubecontext }} -n={{ namespace }} apply -f pod-to-service-cluster-ip.yaml
+  args:
+    chdir: "{{ role_path }}/files/test_connections"
+
+- name: Apply the pod-localhost scenario
+  command: kubectl --context={{ kubecontext }} -n={{ namespace }} apply -f pod-localhost.yaml
+  args:
+    chdir: "{{ role_path }}/files/test_connections"
+
+- name: Apply the pod-to-pod-headless scenario
+  command: kubectl --context={{ kubecontext }} -n={{ namespace }} apply -f pod-to-pod-headless.yaml
+  args:
+    chdir: "{{ role_path }}/files/test_connections"
+
+- name: Apply the pod-http-metrics scenario
+  command: kubectl --context={{ kubecontext }} -n={{ namespace }} apply -f pod-http-metrics.yaml
+  args:
+    chdir: "{{ role_path }}/files/test_connections"
+
+- name: Wait for the pod-to-service-cluster-ip scenario to become ready
+  command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l test=pod-to-service-cluster-ip pod
+
+- name: Wait for the pod-localhost scenario to become ready
+  command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l test=pod-localhost pod
+
+- name: Wait for the pod-to-pod-headless scenario to become ready
+  command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l test=pod-to-pod-headless pod
+
+- name: Wait for the pod-http-metrics scenario to become ready
+  command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l test=pod-http-metrics pod

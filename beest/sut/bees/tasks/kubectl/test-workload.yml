@@ -1,4 +1,0 @@
----
-- name: Give the Test Workloads 5 minutes to start performing their actions and some http requests
-  pause:
-    minutes: 5
