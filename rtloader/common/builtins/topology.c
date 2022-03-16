@@ -11,18 +11,21 @@ static cb_submit_component_t cb_submit_component = NULL;
 static cb_submit_relation_t cb_submit_relation = NULL;
 static cb_submit_start_snapshot_t cb_submit_start_snapshot = NULL;
 static cb_submit_stop_snapshot_t cb_submit_stop_snapshot = NULL;
+static cb_submit_delete_t cb_submit_delete = NULL;
 
 // forward declarations
 static PyObject *submit_component(PyObject *self, PyObject *args);
 static PyObject *submit_relation(PyObject *self, PyObject *args);
 static PyObject *submit_start_snapshot(PyObject *self, PyObject *args);
 static PyObject *submit_stop_snapshot(PyObject *self, PyObject *args);
+static PyObject *submit_delete(PyObject *self, PyObject *args);
 
 static PyMethodDef methods[] = {
     {"submit_component", (PyCFunction)submit_component, METH_VARARGS, "Submit a component to the topology api."},
     {"submit_relation", (PyCFunction)submit_relation, METH_VARARGS, "Submit a relation to the topology api."},
     {"submit_start_snapshot", (PyCFunction)submit_start_snapshot, METH_VARARGS, "Submit a snapshot start to the topology api."},
     {"submit_stop_snapshot", (PyCFunction)submit_stop_snapshot, METH_VARARGS, "Submit a snapshot stop to the topology api."},
+    {"submit_delete", (PyCFunction)submit_delete, METH_VARARGS, "Submit a topology element delete."},
     {NULL, NULL}  // guards
 };
 
@@ -63,6 +66,11 @@ void _set_submit_start_snapshot_cb(cb_submit_start_snapshot_t cb)
 void _set_submit_stop_snapshot_cb(cb_submit_stop_snapshot_t cb)
 {
     cb_submit_stop_snapshot = cb;
+}
+
+void _set_submit_delete_cb(cb_submit_delete_t cb)
+{
+    cb_submit_delete = cb;
 }
 
 
@@ -344,4 +352,8 @@ static PyObject *submit_stop_snapshot(PyObject *self, PyObject *args) {
 error:
     PyGILState_Release(gstate);
     return NULL; // Failure
+}
+
+static PyObject *submit_delete(PyObject *self, PyObject *args) {
+    Py_RETURN_NONE; // Success
 }

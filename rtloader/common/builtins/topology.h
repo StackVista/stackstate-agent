@@ -79,6 +79,7 @@ void _set_submit_component_cb(cb_submit_component_t);
 void _set_submit_relation_cb(cb_submit_relation_t);
 void _set_submit_start_snapshot_cb(cb_submit_start_snapshot_t);
 void _set_submit_stop_snapshot_cb(cb_submit_stop_snapshot_t);
+void _set_submit_delete_cb(cb_submit_delete_t);
 
 #ifdef __cplusplus
 }
