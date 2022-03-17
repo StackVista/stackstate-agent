@@ -10,7 +10,7 @@ import (
 
 // TraefikInterpreter sets up the default span interpreter
 type TraefikInterpreter struct {
-	interpreter
+	Interpreter
 }
 
 // TraefikSpanInterpreterSpan is the name used for matching this interpreter
@@ -18,7 +18,7 @@ const TraefikSpanInterpreterSpan = "traefik"
 
 // MakeTraefikInterpreter creates an instance of the traefik span interpreter
 func MakeTraefikInterpreter(config *config.Config) *TraefikInterpreter {
-	return &TraefikInterpreter{interpreter{Config: config}}
+	return &TraefikInterpreter{Interpreter{Config: config}}
 }
 
 // Interpret performs the interpretation for the TraefikInterpreter

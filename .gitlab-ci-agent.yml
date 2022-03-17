@@ -2,7 +2,6 @@ image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-ag
 
 stages:
   - prepare
-  - prepare_temp
   - build
   - test
   - pre_release
@@ -724,7 +723,6 @@ pre_release_cluster_agent_image:
     max: 2
   allow_failure: true
 
-
 # Core Structure for all the beest steps
 .beest: &beest
   image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20220120
@@ -739,7 +737,7 @@ pre_release_cluster_agent_image:
     - export AWS_SECRET_ACCESS_KEY=${MOLECULE_AWS_SECRET_ACCESS_KEY}
     - export PATH=/go/src/app:${PATH}
     - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
-    - export RUN_ID=$CI_COMMIT_REF_NAME
+    - export RUN_ID=$(echo $CI_COMMIT_REF_NAME | tr . -)
     - export STACKSTATE_BRANCH=master
   after_script: # artifacts do not work with absolute path, so we move them inside the build dir
     - mv /go/src/app/terraform.log $CI_PROJECT_DIR/beest/ || true
@@ -1301,7 +1299,6 @@ release_deb:
   interruptible: true
   stage: release
   dependencies:
-    - deps_deb
     - build_deb
   script:
     - apt-get install -y apt-utils libtool debsigs
@@ -1310,7 +1307,7 @@ release_deb:
     - cd $CI_PROJECT_DIR && inv release.generate-install
     - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_RELEASE_BUCKET']).object('install.sh').upload_file('./install.sh', acl:'public-read')"
   rules:
-    - if: $CI_COMMIT_TAG || $CI_COMMIT_TRIGGERED == 'true'
+    - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
       when: manual
   retry:
     max: 2
@@ -1330,7 +1327,7 @@ release_rpm:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_rpm_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package_rpm.sh $STS_AWS_RELEASE_BUCKET_YUM stable
   rules:
-    - if: $CI_COMMIT_TAG || $CI_COMMIT_TRIGGERED == 'true'
+    - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
       when: manual
   retry:
     max: 2
@@ -1341,7 +1338,6 @@ release_win:
   interruptible: true
   stage: release
   dependencies:
-    - deps_win
     - build_win
   before_script:
     - *configure_windows_ps1_env_script
@@ -1357,7 +1353,7 @@ release_win:
     - aws.exe s3 ls s3://$Env:STS_AWS_RELEASE_BUCKET_WIN/windows/stable/
     - aws.exe s3 ls s3://$Env:STS_AWS_RELEASE_BUCKET_WIN/
   rules:
-    - if: $CI_COMMIT_TAG || $CI_COMMIT_TRIGGERED == 'true'
+    - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
       when: manual
   tags:
     - windows_agent7_ps1
@@ -1395,7 +1391,7 @@ release_main_agent_image:
     - cp ./outcomes/pkg/stackstate-agent_*_amd64.deb Dockerfiles/agent
     - ./omnibus/package-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO $CI_PROJECT_DIR/Dockerfiles/agent latest
   rules:
-    - if: $CI_COMMIT_TAG || $CI_COMMIT_TRIGGERED == 'true'
+    - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
       when: manual
 
 release_trace_agent_image:
