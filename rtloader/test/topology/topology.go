@@ -29,6 +29,7 @@ static void initTopologyTests(rtloader_t *rtloader) {
 	set_submit_relation_cb(rtloader, submitRelation);
 	set_submit_start_snapshot_cb(rtloader, submitStartSnapshot);
 	set_submit_stop_snapshot_cb(rtloader, submitStopSnapshot);
+	set_submit_delete_cb(rtloader, submitDelete);
 }
 */
 import "C"
@@ -64,6 +65,7 @@ func resetOuputValues() {
 	_sourceID = ""
 	_targetID = ""
 	_relationType = ""
+	_topologyElementId = ""
 }
 
 func setUp() error {
