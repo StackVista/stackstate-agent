@@ -18,5 +18,15 @@ func TestCreateWorkspace(t *testing.T) {
 	runId := "randomId"
 	create := findScenario(scenarioName).generateCreateStep(runId)
 
-	assert.True(t, create.RunId() == fmt.Sprintf("%s-%s", runId, scenarioName))
+	assert.Equal(t, fmt.Sprintf("%s:%s", "randomId", scenarioName), create.RunId())
+	assert.Equal(t, fmt.Sprintf("beest-%s-%s", runId, scenarioName), create.Variables()["yard_id"])
+}
+
+func TestRunIdWithNonAlphanumerics(t *testing.T) {
+	scenarioName := "dockerd-eks"
+	runId := "r.and:omI-d"
+	create := findScenario(scenarioName).generateCreateStep(runId)
+
+	assert.Equal(t, fmt.Sprintf("%s:%s", "r-and-omI-d", scenarioName), create.RunId())
+	assert.Equal(t, fmt.Sprintf("beest-%s-%s", "r-and-omI-d", scenarioName), create.Variables()["yard_id"])
 }
