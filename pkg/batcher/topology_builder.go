@@ -75,6 +75,14 @@ func (builder *TopologyBuilder) StopSnapshot(checkID check.ID, instance topology
 	return builder.Flush()
 }
 
+// DeleteID adds a delete identifier
+func (builder *TopologyBuilder) DeleteID(checkID check.ID, instance topology.Instance, topologyElementId string) Topologies {
+	topology := builder.getTopology(checkID, instance)
+	topology.DeleteIDs = append(topology.DeleteIDs, topologyElementId)
+	builder.topologies[checkID] = topology
+	return builder.incrementAndTryFlush()
+}
+
 // Flush the collected data. Returning the data and wiping the current build up topology
 func (builder *TopologyBuilder) Flush() Topologies {
 	data := builder.topologies
