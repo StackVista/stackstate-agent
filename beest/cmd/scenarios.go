@@ -89,5 +89,5 @@ func removeNonAlphanumeric(target string) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return reg.ReplaceAllString(target, "")
+	return reg.ReplaceAllString(target, "-")
 }

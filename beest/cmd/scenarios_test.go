@@ -27,6 +27,6 @@ func TestRunIdWithNonAlphanumerics(t *testing.T) {
 	runId := "r.and:omI-d"
 	create := findScenario(scenarioName).generateCreateStep(runId)
 
-	assert.Equal(t, fmt.Sprintf("%s:%s", "randomId", scenarioName), create.RunId())
-	assert.Equal(t, fmt.Sprintf("beest-%s-%s", "randomId", scenarioName), create.Variables()["yard_id"])
+	assert.Equal(t, fmt.Sprintf("%s:%s", "r-and-omI-d", scenarioName), create.RunId())
+	assert.Equal(t, fmt.Sprintf("beest-%s-%s", "r-and-omI-d", scenarioName), create.Variables()["yard_id"])
 }
