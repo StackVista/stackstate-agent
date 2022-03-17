@@ -23,6 +23,7 @@ extern void submitComponent(char *, instance_key_t *, char *, char *, char *);
 extern void submitRelation(char *, instance_key_t *, char *, char *, char *, char *);
 extern void submitStartSnapshot(char *, instance_key_t *);
 extern void submitStopSnapshot(char *, instance_key_t *);
+extern void submitDelete(char *, instance_key_t *, char *);
 
 static void initTopologyTests(rtloader_t *rtloader) {
 	set_submit_component_cb(rtloader, submitComponent);
