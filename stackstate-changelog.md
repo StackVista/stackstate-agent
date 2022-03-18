@@ -1,5 +1,10 @@
 # StackState Agent v2 releases
 
+## 2.16.1 (2022-03-xx)
+
+**Bugfix**
+- Remove HTTP Header X-Stackstate-Trace-Count for OTEL [STAC-16030](https://stackstate.atlassian.net/browse/STAC-16030)
+
 ## 2.16.0 (2022-03-11)
 
 **Features**
