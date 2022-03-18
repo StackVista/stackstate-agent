@@ -76,9 +76,9 @@ func (builder *TopologyBuilder) StopSnapshot(checkID check.ID, instance topology
 }
 
 // DeleteID adds a delete identifier
-func (builder *TopologyBuilder) DeleteID(checkID check.ID, instance topology.Instance, topologyElementId string) Topologies {
+func (builder *TopologyBuilder) DeleteID(checkID check.ID, instance topology.Instance, topologyElementID string) Topologies {
 	topology := builder.getTopology(checkID, instance)
-	topology.DeleteIDs = append(topology.DeleteIDs, topologyElementId)
+	topology.DeleteIDs = append(topology.DeleteIDs, topologyElementID)
 	builder.topologies[checkID] = topology
 	return builder.incrementAndTryFlush()
 }

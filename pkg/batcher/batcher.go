@@ -26,7 +26,7 @@ type Batcher interface {
 	SubmitRelation(checkID check.ID, instance topology.Instance, relation topology.Relation)
 	SubmitStartSnapshot(checkID check.ID, instance topology.Instance)
 	SubmitStopSnapshot(checkID check.ID, instance topology.Instance)
-	SubmitDelete(checkId check.ID, instance topology.Instance, topologyElementId string)
+	SubmitDelete(checkID check.ID, instance topology.Instance, topologyElementID string)
 
 	// Health
 	SubmitHealthCheckData(checkID check.ID, stream health.Stream, data health.CheckData)

@@ -38,8 +38,9 @@ func (batcher MockBatcher) SubmitStopSnapshot(checkID check.ID, instance topolog
 	batcher.CollectedTopology.TopologyStopSnapshot(checkID, instance)
 }
 
-func (batcher MockBatcher) SubmitDelete(checkID check.ID, instance topology.Instance, topologyElementId string) {
-	batcher.CollectedTopology.Delete(checkID, instance, topologyElementId)
+// SubmitDelete mock
+func (batcher MockBatcher) SubmitDelete(checkID check.ID, instance topology.Instance, topologyElementID string) {
+	batcher.CollectedTopology.Delete(checkID, instance, topologyElementID)
 }
 
 // SubmitHealthCheckData mock
