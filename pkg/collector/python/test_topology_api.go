@@ -182,7 +182,10 @@ func testDeleteTopologyElement(t *testing.T) {
 	instanceKey.url = C.CString("instacne-url")
 
 	SubmitStartSnapshot(checkID, &instanceKey)
-	SubmitDelete(checkID, &instanceKey, "topo-element-id")
+	SubmitDelete(
+		checkID,
+		&instanceKey,
+		C.CString("topo-element-id"))
 	SubmitStopSnapshot(checkID, &instanceKey)
 
 	expectedTopology := mockBatcher.CollectedTopology.Flush()
