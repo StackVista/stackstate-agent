@@ -86,7 +86,7 @@ func TestBatchFlushOnStopSnapshot(t *testing.T) {
 					Instance:      testInstance,
 					Components:    []topology.Component{},
 					Relations:     []topology.Relation{},
-					DeleteIDs:     []string(nil),
+					DeleteIDs:     []string{},
 				},
 			},
 			"health":  []health.Health{},
