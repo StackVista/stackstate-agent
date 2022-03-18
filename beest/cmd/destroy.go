@@ -11,10 +11,14 @@ var destroyCmd = &cobra.Command{
 	Short: "Destroy all resources associated with the yard",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		create := findScenario(args[0]).generateCreateStep(runId)
-		destroy := step.Destroy(create)
-		doDestroy(destroy, !assumeYes)
+		runDestroyCmd(args[0], runId)
 	},
+}
+
+func runDestroyCmd(scenarioName string, runId string) {
+	create := findScenario(scenarioName).generateCreateStep(runId)
+	destroy := step.Destroy(create)
+	doDestroy(destroy, !assumeYes)
 }
 
 func doDestroy(destroy *step.DestroyStep, prompt bool) {

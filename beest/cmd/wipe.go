@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"log"
 	"os"
@@ -31,9 +30,9 @@ s3 key: STAC-15754-zerouco:dockerd-eks/stackstate+gitlabci_agentv2/tf.tfstate
 // wipeCmd represents the wipe command
 var wipeCmd = &cobra.Command{
 	Use:   "wipe",
-	Short: "Wipe beest yards older than ",
+	Short: "Wipe beest yards older than 24 hours",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("wipe called")
+		assumeYes = true
 		doWipe()
 	},
 }
@@ -57,25 +56,37 @@ func doWipe() {
 
 	limit := time.Now().Add(-24 * time.Hour)
 	for _, object := range output.Contents {
-		if object.LastModified.After(limit) {
-			keyString := aws.ToString(object.Key)
-			workspace := strings.Split(keyString, "/")[0]
-			log.Printf("key=%s size=%d lastModified=%s", keyString, object.Size, object.LastModified)
-			log.Printf("workspace=%s", workspace)
+		keyString := aws.ToString(object.Key)
+		log.Printf("key=%s size=%d lastModified=%s", keyString, object.Size, object.LastModified)
+		workspace := strings.Split(keyString, "/")[0]
+		if object.LastModified.Before(limit) {
+			keyId := ""
+			scenarioName := ""
+			log.Printf("workspace '%s' more than 24 hours old. Cleaning up...", workspace)
 			if strings.Contains(workspace, ":") {
 				// Normalized RUN_ID
 				keyParts := strings.Split(workspace, ":")
-				log.Printf("key_id = %s | scenario = %s", keyParts[0], keyParts[1])
+				keyId, scenarioName = keyParts[0], keyParts[1]
 			} else {
 				// Non-normalized RUN_ID
 				for _, scenario := range scenarios {
 					if strings.Contains(workspace, scenario.Name) {
 						keyIdLength := len(workspace) - len(scenario.Name) - 1
-						keyId := workspace[:keyIdLength]
-						log.Printf("key_id = %s | scenario = %s", keyId, scenario.Name)
+						keyId, scenarioName = workspace[:keyIdLength], scenario.Name
 					}
 				}
 			}
+			log.Printf("key_id = %s | scenario = %s", keyId, scenarioName)
+			if keyId == "" || scenarioName == "" {
+				log.Println("Could not extract keyId or scenarioName from s3 object")
+				continue
+			}
+			runDestroyCmd(scenarioName, keyId)
+
+			// TODO: Destroy s3 object
+			// TODO: Destroy Dynamo entry
+		} else {
+			log.Printf("workspace '%s' was used in the last 24 hours.", workspace)
 		}
 	}
 }
