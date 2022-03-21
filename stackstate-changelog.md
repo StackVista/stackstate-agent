@@ -440,15 +440,15 @@
 
   Those configurations can be provided through environment variables as well:
 
-| Parameter                                        | Default               | Description                                                         |
-|--------------------------------------------------|-----------------------|---------------------------------------------------------------------|
-| `STS_PROCESS_BLACKLIST_PATTERNS`                 | [see github][pa-link] | A list of regex patterns that will exclude a process if matched     |
-| `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_CPU`       | 0                     | Number of processes to report that have a high CPU usage            |
-| `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_IO_READ`   | 0                     | Number of processes to report that have a high IO read usage        |
-| `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_IO_WRITE`  | 0                     | Number of processes to report that have a high IO write usage       |
-| `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_MEM`       | 0                     | Number of processes to report that have a high Memory usage         |
-| `STS_PROCESS_BLACKLIST_INCLUSIONS_CPU_THRESHOLD` |                       | Threshold that enables the reporting of high CPU usage processes    |
-| `STS_PROCESS_BLACKLIST_INCLUSIONS_MEM_THRESHOLD` |                       | Threshold that enables the reporting of high Memory usage processes |
+| Parameter                                        | Default         | Description                                                         |
+|--------------------------------------------------|-----------------|---------------------------------------------------------------------|
+| `STS_PROCESS_BLACKLIST_PATTERNS`                 | [see github][1] | A list of regex patterns that will exclude a process if matched     |
+| `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_CPU`       | 0               | Number of processes to report that have a high CPU usage            |
+| `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_IO_READ`   | 0               | Number of processes to report that have a high IO read usage        |
+| `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_IO_WRITE`  | 0               | Number of processes to report that have a high IO write usage       |
+| `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_MEM`       | 0               | Number of processes to report that have a high Memory usage         |
+| `STS_PROCESS_BLACKLIST_INCLUSIONS_CPU_THRESHOLD` |                 | Threshold that enables the reporting of high CPU usage processes    |
+| `STS_PROCESS_BLACKLIST_INCLUSIONS_MEM_THRESHOLD` |                 | Threshold that enables the reporting of high Memory usage processes |
 
 - Report localhost connections within the same network namespace _[(STAC-2891)](https://stackstate.atlassian.net/browse/STAC-2891)_
 
@@ -465,4 +465,4 @@
 - Disable resource snaps collection _[(STAC-2915)](https://stackstate.atlassian.net/browse/STAC-2915)_
 - Support CentOS 6 _[(STAC-4139)](https://stackstate.atlassian.net/browse/STAC-4139)_
 
-[pa-link](https://github.com/StackVista/stackstate-process-agent/blob/master/config/config_nix.go)
+[1]: (https://github.com/StackVista/stackstate-process-agent/blob/master/config/config_nix.go)
