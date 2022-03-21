@@ -442,7 +442,7 @@
 
 | Parameter                                        | Default         | Description                                                         |
 |--------------------------------------------------|-----------------|---------------------------------------------------------------------|
-| `STS_PROCESS_BLACKLIST_PATTERNS`                 | [see github][1] | A list of regex patterns that will exclude a process if matched     |
+| `STS_PROCESS_BLACKLIST_PATTERNS`                 | [see github](https://github.com/StackVista/stackstate-process-agent/blob/master/config/config_nix.go) | A list of regex patterns that will exclude a process if matched     |
 | `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_CPU`       | 0               | Number of processes to report that have a high CPU usage            |
 | `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_IO_READ`   | 0               | Number of processes to report that have a high IO read usage        |
 | `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_IO_WRITE`  | 0               | Number of processes to report that have a high IO write usage       |
@@ -464,5 +464,3 @@
 
 - Disable resource snaps collection _[(STAC-2915)](https://stackstate.atlassian.net/browse/STAC-2915)_
 - Support CentOS 6 _[(STAC-4139)](https://stackstate.atlassian.net/browse/STAC-4139)_
-
-[1]: (https://github.com/StackVista/stackstate-process-agent/blob/master/config/config_nix.go)
