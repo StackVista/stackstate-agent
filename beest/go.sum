@@ -92,6 +92,10 @@ github.com/aws/aws-sdk-go-v2/config v1.15.0 h1:cibCYF2c2uq0lsbu0Ggbg8RuGeiHCmXwU
 github.com/aws/aws-sdk-go-v2/config v1.15.0/go.mod h1:NccaLq2Z9doMmeQXHQRrt2rm+2FbkrcPvfdbCaQn5hY=
 github.com/aws/aws-sdk-go-v2/credentials v1.10.0 h1:M/FFpf2w31F7xqJqJLgiM0mFpLOtBvwZggORr6QCpo8=
 github.com/aws/aws-sdk-go-v2/credentials v1.10.0/go.mod h1:HWJMr4ut5X+Lt/7epc7I6Llg5QIcoFHKAeIzw32t6EE=
+github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.8.0 h1:XxTy21xVUkoCZOSGwf+AW22v8aK3eEbYMaGGQ3MbKKk=
+github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.8.0/go.mod h1:6WkjzWenkrj3IgLPIPBBz4Qh99jNDF8L4Wj03vfMhAA=
+github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.4.1 h1:MdHB3Zi95NbaHPunv/wO45pKlgcHpJfm5b3b6gA6Ldc=
+github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.4.1/go.mod h1:9yjgVGq8i1fI/PrlbZ7am6lnzbPe/aXD6wV44CGkk28=
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.0 h1:gUlb+I7NwDtqJUIRcFYDiheYa97PdVHG/5Iz+SwdoHE=
 github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.0/go.mod h1:prX26x9rmLwkEE1VVCelQOQgRN9sOVIssgowIJ270SE=
 github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.6 h1:xiGjGVQsem2cxoIX61uRGy+Jux2s9C/kKbTrWLdrU54=
@@ -100,10 +104,16 @@ github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.0 h1:bt3zw79tm209glISdMR
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.0/go.mod h1:viTrxhAuejD+LszDahzAE2x40YjYWhMqzHxv2ZiWaME=
 github.com/aws/aws-sdk-go-v2/internal/ini v1.3.7 h1:QOMEP8jnO8sm0SX/4G7dbaIq2eEP2wcWEsF0jzrXLJc=
 github.com/aws/aws-sdk-go-v2/internal/ini v1.3.7/go.mod h1:P5sjYYf2nc5dE6cZIzEMsVtq6XeLD7c4rM+kQJPrByA=
+github.com/aws/aws-sdk-go-v2/service/dynamodb v1.15.0 h1:qnx+WyIH9/AD+wAxi05WCMNanO236ceqHg6hChCWs3M=
+github.com/aws/aws-sdk-go-v2/service/dynamodb v1.15.0/go.mod h1:+Kc1UmbE37ijaAsb3KogW6FR8z0myjX6VtdcCkQEK0k=
+github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.13.0 h1:s71pGCiLqqGRoUWtdJ2j4PazwEpZVwQc16na/4FfXdk=
+github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.13.0/go.mod h1:YGzTq/joAih4HRZZtMBWGP4bI8xVucOBQ9RvuanpclA=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.0 h1:uhb7moM7VjqIEpWzTpCvceLDSwrWpaleXm39OnVjuLE=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.9.0/go.mod h1:pA2St3Pu2Ldy6fBPY45Azoh1WBG4oS7eIKOd4XN7Meg=
 github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.0 h1:IhiVUezzcKlszx6wXSDQYDjEn/bIO6Mc73uNQ1YfTmA=
 github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.1.0/go.mod h1:kLKc4lo+XKlMhENIpKbp7dCePpyUqUG1PqGIAXoxwNE=
+github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.7.0 h1:6Bc0KHhAyxGe15JUHrK+Udw7KhE5LN+5HKZjQGo4yDI=
+github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.7.0/go.mod h1:0nXuX9UrkN4r0PX9TSKfcueGRfsdEYIKG4rjTeJ61X8=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.0 h1:YQ3fTXACo7xeAqg0NiqcCmBOXJruUfh+4+O2qxF2EjQ=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.0/go.mod h1:R31ot6BgESRCIoxwfKtIHzZMo/vsZn2un81g9BJ4nmo=
 github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.13.0 h1:i+7ve93k5G0S2xWBu60CKtmzU5RjBj9g7fcSypQNLR0=
@@ -335,6 +345,7 @@ github.com/jessevdk/go-flags v1.5.0/go.mod h1:Fw0T6WPc1dYxT4mKEZRfG5kJhaTDP9pj1c
 github.com/jmespath/go-jmespath v0.0.0-20160202185014-0b12d6b521d8/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
 github.com/jmespath/go-jmespath v0.4.0 h1:BEgLn5cpjn8UN1mAw4NjwDrS35OdebyEtFe+9YPoQUg=
 github.com/jmespath/go-jmespath v0.4.0/go.mod h1:T8mJZnbsbmF+m6zOOFylbeCJqk5+pHWvzYPziyZiYoo=
+github.com/jmespath/go-jmespath/internal/testify v1.5.1 h1:shLQSRRSCCPj3f2gpwzGwWFoC7ycTf1rcQZHOlsJ6N8=
 github.com/jmespath/go-jmespath/internal/testify v1.5.1/go.mod h1:L3OGu8Wl2/fWfCI6z80xFu9LTZmf1ZRjMHUOPmWr69U=
 github.com/jonboulle/clockwork v0.1.0/go.mod h1:Ii8DK3G1RaLaWxj9trq07+26W01tbo22gdxWY5EU2bo=
 github.com/json-iterator/go v1.1.6/go.mod h1:+SdeFBvtyEkXs7REEP0seUULqWtbJapLOCVDaaPEHmU=
@@ -418,6 +429,7 @@ github.com/pelletier/go-toml v1.9.4 h1:tjENF6MfZAg8e4ZmZTeWaWiT2vXtsoO6+iuOjFhEC
 github.com/pelletier/go-toml v1.9.4/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/sftp v1.10.1/go.mod h1:lYOWFsE0bwd1+KfKJaKeuokY15vzFx25BLbzYYoAxZI=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

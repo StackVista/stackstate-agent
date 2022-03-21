@@ -5,7 +5,7 @@ remote_state {
     bucket               = get_env("BEEST_S3_BUCKET")
     key                  = format("%s_agentv%s/tf.tfstate", get_env("quay_user"), get_env("MAJOR_VERSION"))
     workspace_key_prefix = ""
-    dynamodb_table       = "beest-terraform-lock"
+    dynamodb_table       = get_env("BEEST_DYNAMODB_TABLE")
     encrypt              = true
     s3_bucket_tags = {
       owner = "beest"
