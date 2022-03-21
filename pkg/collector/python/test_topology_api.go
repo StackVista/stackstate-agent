@@ -175,18 +175,18 @@ func testStopSnapshotCheck(t *testing.T) {
 
 func testDeleteTopologyElement(t *testing.T) {
 	mockBatcher := batcher.NewMockBatcher()
+	topoElementId := "topo-element-id"
 
 	checkID := C.CString("check-id")
 	instanceKey := C.instance_key_t{}
 	instanceKey.type_ = C.CString("instance-type")
 	instanceKey.url = C.CString("instance-url")
-	topoElementId := C.CString("topo-element-id")
 
 	SubmitStartSnapshot(checkID, &instanceKey)
 	SubmitDelete(
 		checkID,
 		&instanceKey,
-		topoElementId)
+		C.CString(topoElementId))
 	SubmitStopSnapshot(checkID, &instanceKey)
 
 	expectedTopology := mockBatcher.CollectedTopology.Flush()
