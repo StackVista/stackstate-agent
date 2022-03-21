@@ -3,10 +3,10 @@
   hosts: local
   gather_facts: false
   roles:
-    - role: "{{ bees_path }}/agent-k8s"
+    - role: "{{ bees_path }}/k8s-agent"
 
 - name: Cleanup Receiver
   hosts: receiver
   gather_facts: false
   roles:
-    - role: "{{ bees_path }}/receiver"
+    - role: "{{ bees_path }}/vm-receiver"

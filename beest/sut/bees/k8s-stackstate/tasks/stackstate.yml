@@ -1,10 +1,4 @@
 ---
-- name: Set helm stackstate release_name
-  set_fact:
-    release_name: stackstate-sut
-  tags: [ prepare, cleanup ]
-
-
 - name: StackState prepare tasks
   tags: prepare
   block:
@@ -39,7 +33,7 @@
       context: "{{ kubecontext }}"
       chart_ref: stackstate-internal/stackstate
       chart_version: "{{ stackstate_helm_chart }}"
-      release_name: "{{ release_name }}"
+      release_name: stackstate
       release_namespace: "{{ namespace }}"
       create_namespace: true
       update_repo_cache: true
@@ -58,8 +52,6 @@
               replicaCount: 0
             trace2es:
               replicaCount: 0
-            ui:
-              replicaCount: 0
 
 
 ## Cleanup
@@ -70,7 +62,7 @@
   - name: Undeploy stackstate
     kubernetes.core.helm:
       context: "{{ kubecontext }}"
-      release_name: "{{ release_name }}"
+      release_name: stackstate
       release_namespace: "{{ namespace }}"
       state: absent
       wait: true

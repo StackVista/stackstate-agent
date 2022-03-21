@@ -3,10 +3,10 @@
   hosts: receiver
   gather_facts: true
   roles:
-    - role: "{{ bees_path }}/receiver"
+    - role: "{{ bees_path }}/vm-receiver"
 
 - name: Prepare Kubernetes Cluster
   hosts: localhost
   gather_facts: false
   roles:
-    - role: "{{ bees_path }}/agent-k8s"
+    - role: "{{ bees_path }}/k8s-agent"

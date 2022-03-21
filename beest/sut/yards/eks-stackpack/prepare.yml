@@ -3,4 +3,4 @@
   hosts: localhost
   gather_facts: false
   roles:
-    - role: "{{ bees_path }}/stackstate"
+    - role: "{{ bees_path }}/k8s-stackstate"
