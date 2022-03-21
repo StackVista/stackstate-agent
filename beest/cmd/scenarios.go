@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"log"
+	"regexp"
 	"strings"
 )
 
@@ -39,8 +40,9 @@ func (s *Scenario) generateCreateStep(runId string) *step.CreationStep {
 	for k, v := range s.Variables {
 		runVariables[k] = v
 	}
-	workspace := fmt.Sprintf("%s-%s", runId, s.Name)
-	runVariables["yard_id"] = fmt.Sprintf("beest-%s", workspace)
+	normalizedRunId := removeNonAlphanumeric(runId)
+	workspace := fmt.Sprintf("%s:%s", normalizedRunId, s.Name)
+	runVariables["yard_id"] = fmt.Sprintf("beest-%s-%s", normalizedRunId, s.Name)
 
 	return step.Create(workspace, s.Yard.path(), runVariables)
 }
@@ -79,4 +81,13 @@ func findScenario(name string) *Scenario {
 	log.Println(fmt.Sprintf("Available scenarios: %v", strings.Join(keys, ", ")))
 	log.Fatalf("Scenario not found: %s", name)
 	return nil
+}
+
+func removeNonAlphanumeric(target string) string {
+	// Make a Regex to say we only want letters and numbers
+	reg, err := regexp.Compile("[^a-zA-Z0-9]+")
+	if err != nil {
+		log.Fatal(err)
+	}
+	return reg.ReplaceAllString(target, "-")
 }

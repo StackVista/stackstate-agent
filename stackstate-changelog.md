@@ -1,5 +1,14 @@
 # StackState Agent v2 releases
 
+## 2.16.1 (2022-03-21)
+
+**Bugfix**
+- Remove HTTP Header X-Stackstate-Trace-Count for OTEL [STAC-16030](https://stackstate.atlassian.net/browse/STAC-16030)
+- Remove stale data from metrics collection in process-agent [STAC-15758](https://stackstate.atlassian.net/browse/STAC-15758)
+
+**Improvements**
+- Memory improvements for connection mapping and tracing in process-agent. [STAC-15999](https://stackstate.atlassian.net/browse/STAC-15999)
+
 ## 2.16.0 (2022-03-11)
 
 **Features**
