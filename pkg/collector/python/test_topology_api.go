@@ -179,13 +179,14 @@ func testDeleteTopologyElement(t *testing.T) {
 	checkID := C.CString("check-id")
 	instanceKey := C.instance_key_t{}
 	instanceKey.type_ = C.CString("instance-type")
-	instanceKey.url = C.CString("instacne-url")
+	instanceKey.url = C.CString("instance-url")
+	topoElementId := C.CString("topo-element-id")
 
 	SubmitStartSnapshot(checkID, &instanceKey)
 	SubmitDelete(
 		checkID,
 		&instanceKey,
-		C.CString("topo-element-id"))
+		topoElementId)
 	SubmitStopSnapshot(checkID, &instanceKey)
 
 	expectedTopology := mockBatcher.CollectedTopology.Flush()
@@ -201,7 +202,7 @@ func testDeleteTopologyElement(t *testing.T) {
 				Instance:      instance,
 				Components:    []topology.Component{},
 				Relations:     []topology.Relation{},
-				DeleteIDs:     []string{"topo-element-id"},
+				DeleteIDs:     []string{topoElementId},
 			},
 		},
 	}))
