@@ -38,9 +38,9 @@ func TerraformDestroy(ctx TerraformContext, prompt bool) {
 
 func apply(ctx TerraformContext, destroy bool, prompt bool) {
 	state := newTerraform(ctx)
+	state.selectWorkspace()
 	state.init()
 	state.validate()
-	state.selectWorkspace()
 	log.Println(fmt.Sprintf("Variables: %v", ctx.Variables()))
 	if state.plan(ctx.Variables(), destroy) {
 		state.apply(prompt)

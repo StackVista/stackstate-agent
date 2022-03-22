@@ -17,14 +17,14 @@ ifeq ($(OS),Darwin)
 endif
 
 GIT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
-BRANCH = $(shell echo ${GIT_BRANCH} | cut -d'/' -f 2- | tr [:upper:] [:lower:])
+BRANCH = $(shell echo ${GIT_BRANCH} | tr [:upper:] [:lower:])
 
 MAJOR_VERSION                ?= 2
 STS_AWS_TEST_BUCKET          ?= stackstate-agent-2-test
 STS_DOCKER_TEST_REPO         ?= stackstate-agent-2-test
 STS_DOCKER_TEST_REPO_CLUSTER ?= stackstate-cluster-agent-test
 
-BASE_KEEPER_IMAGE  = artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20220120
+BASE_KEEPER_IMAGE  = artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20220314
 KEEPER_IMAGE       = beest:${BRANCH}
 KEEPER_CONTAINER   = beest
 VOLUME_GO_PKG_NAME = beest-go-volume
@@ -59,3 +59,6 @@ shell:
 
 shell-root:
 	docker exec --user root -ti ${KEEPER_CONTAINER} bash
+
+
+.PHONY: build start shell shell-root
