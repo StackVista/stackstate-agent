@@ -48,6 +48,13 @@ var wipeCmd = &cobra.Command{
 	},
 }
 
+type Workspace struct {
+	keyId        string
+	scenario     string
+	username     string
+	majorVersion string
+}
+
 func doWipe2() {
 	runDestroyCmd("containerd-eks", "STAC-15758-fix-pro")
 	//"STAC-15758-fix-pro"
@@ -76,7 +83,7 @@ func doWipe() {
 				log.Println(err)
 				continue
 			}
-			//runDestroyCmd(scenarioName, keyId)
+			runDestroyCmd(scenarioName, keyId)
 
 			err = deleteDynamoDBItem(dynamodbClient, workspace)
 			if err != nil {
