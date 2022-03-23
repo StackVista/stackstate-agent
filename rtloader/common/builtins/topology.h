@@ -59,6 +59,13 @@
 
     The callback is expected to be provided by the rtloader caller - in go-context: CGO.
 */
+/*! \fn void _set_submit_delete_cb(cb_submit_delete_t)
+    \brief Sets the submit delete callback to be used by rtloader for topology element delete submission.
+    \param object A function pointer with cb_submit_delete_t function prototype to the
+    callback function.
+
+    The callback is expected to be provided by the rtloader caller - in go-context: CGO.
+*/
 
 #include <Python.h>
 #include <rtloader_types.h>
