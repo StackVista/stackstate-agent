@@ -50,6 +50,27 @@ def _find_relation(json_data, type_name, external_id_assert_fn):
     return None
 
 
+def _find_relation_cb(topic_content, assert_fn):
+    for message in topic_content["messages"]:
+        p = message["message"]["TopologyElement"]["payload"]
+        if "TopologyRelation" in p:
+            rel = p["TopologyRelation"]
+            if assert_fn(rel):
+                return rel
+    return None
+
+
+def _find_component_cb(topic_content, assert_fn):
+    for message in topic_content["messages"]:
+        p = message["message"]["TopologyElement"]["payload"]
+        if "TopologyComponent" in p:
+            comp = dict(p["TopologyComponent"])
+            comp["data"] = json.loads(comp["data"])
+            if assert_fn(comp):
+                return comp
+    return None
+
+
 def _find_component(json_data, type_name, external_id_assert_fn):
     for message in json_data["messages"]:
         p = message["message"]["TopologyElement"]["payload"]
@@ -97,22 +118,75 @@ def _container_runtime_component_data(json_data, external_id_assert_fn, runtime,
                 return component_data
     return None
 
+
+def test_process_agent_self_topology(host):
+    topic = "sts_topo_agent_integrations"
+
+    def assert_elements():
+        topic_content = util.get_topic_content(host, topic)
+
+        # we want to see the following
+        # 1. process agent process component
+        # 2. process agent integration for connections
+        # 3. process agent integration for processes
+        # 4. relations between process (1) and integrations (2, 3)
+
+        def is_process_agent(component):
+            agent_type = component["typeName"] == "stackstate-agent"
+            process_agent_name = component["data"]["name"].startswith("StackState Process Agent")
+            return agent_type and process_agent_name
+
+        process_agent_component = _find_component_cb(topic_content, is_process_agent)
+        assert process_agent_component is not None
+
+        agent_hostname = process_agent_component["data"]["hostname"]
+
+        def check_integration(name):
+            def is_check(component):
+                check_type = component["typeName"] == "agent-integration"
+                external_id = component["externalId"] == "urn:agent-integration:/%s:%s" % (agent_hostname, name)
+                return check_type and external_id
+            return is_check
+
+        process_check_component = _find_component_cb(topic_content, check_integration('process'))
+        connections_check_component = _find_component_cb(topic_content, check_integration('connections'))
+
+        process_check_id = 'urn:agent-integration:/%s:process' % agent_hostname
+        process_agent_to_process_check = \
+            _find_relation_cb(topic_content,
+                              lambda rel: rel["sourceId"] == process_agent_component["externalId"] and
+                                          rel["targetId"] == process_check_id
+                              )
+
+        connections_check_id = 'urn:agent-integration:/%s:connections' % agent_hostname
+        process_agent_to_connections_check = \
+            _find_relation_cb(topic_content,
+                              lambda rel: rel["sourceId"] == process_agent_component["externalId"] and
+                                          rel["targetId"] == connections_check_id
+                              )
+
+        assert process_agent_to_process_check is not None
+        assert process_agent_to_process_check["typeName"] == "runs"
+        assert process_agent_to_connections_check is not None
+        assert process_agent_to_connections_check["typeName"] == "runs"
+        assert process_check_component is not None
+        assert connections_check_component is not None
+
+    util.wait_until(assert_elements, 60, 3)
+
+
 def test_node_agent_container_topology(host, ansible_var):
     runtime = ansible_var("k8s_runtime")
     if runtime == "dockerd":
         runtime = "docker"
     topic = "sts_topo_container_agents"
-    url = "http://localhost:7070/api/topic/%s?limit=1000" % topic
 
     def wait_for_cluster_agent_components():
-        data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
-        with open("./topic-" + topic + ".json", 'w') as f:
-            json.dump(json_data, f, indent=4)
+        topic_content = util.get_topic_content(host, topic)
 
         container_match = re.compile("urn:container:%s:/" % runtime)
         assert _container_runtime_component_data(
-            json_data=json_data,
+            json_data=topic_content,
             external_id_assert_fn=lambda eid: container_match.findall(eid),
             runtime=runtime,
             identifiers_assert_fn=lambda identifiers: next(x for x in identifiers if x.startswith("urn:container:/i-"))
@@ -124,13 +198,9 @@ def test_cluster_agent_base_topology(host, ansible_var):
     cluster_name = ansible_var("cluster_name")
     namespace = ansible_var("namespace")
     topic = "sts_topo_kubernetes_%s" % cluster_name
-    url = "http://localhost:7070/api/topic/%s?limit=1000" % topic
 
     def wait_for_cluster_agent_components():
-        data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
-        with open("./topic-" + topic + ".json", 'w') as f:
-            json.dump(json_data, f, indent=4)
+        topic_content = util.get_topic_content(host, topic)
 
         process_data = host.check_output(
             "curl \"%s\"" % "http://localhost:7070/api/topic/sts_topo_process_agents?limit=1000")
@@ -140,7 +210,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
 
         # 1 namespace
         assert _find_component(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="namespace",
             external_id_assert_fn=lambda eid: eid.startswith(
                 "urn:kubernetes:/%s:namespace/%s" % (cluster_name, namespace)),
@@ -148,7 +218,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
         # TODO make sure we identify the 2 different ec2 instances using i-*
         # 2 nodes
         assert _component_data(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="node",
             external_id_assert_fn=lambda eid: eid.startswith("urn:kubernetes:/%s:node/" % cluster_name),
             cluster_name=cluster_name,
@@ -158,7 +228,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
         # 2 agent pods on each node, each pod 1 container
         node_agent_pod_match = re.compile("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*" % (cluster_name, namespace))
         assert _component_data(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="pod",
             external_id_assert_fn=lambda eid: node_agent_pod_match.findall(eid),
             cluster_name=cluster_name,
@@ -168,7 +238,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
         node_agent_container_match = re.compile("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*:"
                                                 "container/cluster-agent" % (cluster_name, namespace))
         assert _component_data(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="container",
             external_id_assert_fn=lambda eid: node_agent_container_match.findall(eid),
             cluster_name=cluster_name,
@@ -178,7 +248,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
         # 1 cluster agent pod with 1 container
         cluster_agent_pod_match = re.compile("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-.*-.*" % (cluster_name, namespace))
         assert _component_data(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="pod",
             external_id_assert_fn=lambda eid: cluster_agent_pod_match.findall(eid),
             cluster_name=cluster_name,
@@ -188,7 +258,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
         cluster_agent_container_match = re.compile("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-.*-.*"
                                                    ":container/cluster-agent" % (cluster_name, namespace))
         cluster_agent_container = _component_data(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="container",
             external_id_assert_fn=lambda eid: cluster_agent_container_match.findall(eid),
             cluster_name=cluster_name,
@@ -200,7 +270,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
         stackstate_cluster_agent_container_pod = cluster_agent_container["pod"]
         # 2 service, one for each agent
         assert _component_data(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="service",
             external_id_assert_fn=lambda eid: eid.startswith("urn:kubernetes:/%s:%s:service/"
                                                              "stackstate-cluster-agent-agent" % (cluster_name, namespace)),
@@ -209,7 +279,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                 x for x in identifiers if x.startswith("urn:endpoint:/%s:" % cluster_name))
         )
         assert _component_data(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="service",
             external_id_assert_fn=lambda eid: eid.startswith("urn:kubernetes:/%s:%s:service/"
                                                              "stackstate-cluster-agent" % (cluster_name, namespace)),
@@ -219,7 +289,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
         )
         # 1 service, pod-service for dnat
         assert _component_data(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="service",
             external_id_assert_fn=lambda eid: eid.startswith("urn:kubernetes:/%s:%s:service/"
                                                              "pod-service" % (cluster_name, namespace)),
@@ -229,13 +299,13 @@ def test_cluster_agent_base_topology(host, ansible_var):
         )
         # 1 externalname service with associated external-service component
         assert _find_component(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="service",
             external_id_assert_fn=lambda eid: eid.startswith("urn:kubernetes:/%s:%s:service/"
                                                              "google-service" % (cluster_name, namespace)),
         )
         assert _find_component(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="external-service",
             external_id_assert_fn=lambda eid: eid.startswith("urn:kubernetes:/%s:%s:external-service/"
                                                              "google-service" % (cluster_name, namespace))
@@ -244,7 +314,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
         configmap_match = re.compile("urn:kubernetes:/{}:{}:configmap/aws-auth"
                                      .format(cluster_name, "kube-system"))
         assert _find_component(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="configmap",
             external_id_assert_fn=lambda v: configmap_match.findall(v)
         )
@@ -253,7 +323,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
         agent_configmap_match = re.compile("urn:kubernetes:/{}:{}:configmap/stackstate-cluster-agent-agent"
                                            .format(cluster_name, namespace))
         assert _find_component(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="configmap",
             external_id_assert_fn=lambda v: agent_configmap_match.findall(v)
         )
@@ -261,14 +331,14 @@ def test_cluster_agent_base_topology(host, ansible_var):
         cluster_agent_configmap_match = re.compile("urn:kubernetes:/{}:{}:configmap/"
                                                    "stackstate-cluster-agent".format(cluster_name, namespace))
         assert _find_component(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="configmap",
             external_id_assert_fn=lambda v: cluster_agent_configmap_match.findall(v)
         )
         # 1 volume cgroups
         volume_match = re.compile("urn:kubernetes:external-volume:hostpath/.*/cgroup".format(cluster_name, namespace))
         assert _find_component(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="volume",
             external_id_assert_fn=lambda v: volume_match.findall(v)
         )
@@ -277,7 +347,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
         replicaset_match = re.compile("urn:kubernetes:/{}:{}:replicaset/"
                                       "stackstate-cluster-agent-.*".format(cluster_name, namespace))
         assert _find_component(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="replicaset",
             external_id_assert_fn=lambda v: replicaset_match.findall(v)
         )
@@ -285,7 +355,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
         deployment_match = re.compile("urn:kubernetes:/{}:{}:deployment/"
                                       "stackstate-cluster-agent".format(cluster_name, namespace))
         assert _find_component(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="deployment",
             external_id_assert_fn=lambda v: deployment_match.findall(v)
         )
@@ -293,21 +363,21 @@ def test_cluster_agent_base_topology(host, ansible_var):
         daemonset_match = re.compile("urn:kubernetes:/{}:{}:daemonset/"
                                      "stackstate-cluster-agent-agent".format(cluster_name, namespace))
         assert _find_component(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="daemonset",
             external_id_assert_fn=lambda v: daemonset_match.findall(v)
         )
         # 1 cronjob hello
         cronjob_match = re.compile("urn:kubernetes:/{}:{}:cronjob/hello".format(cluster_name, namespace))
         assert _find_component(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="cronjob",
             external_id_assert_fn=lambda v: cronjob_match.findall(v)
         )
         # 1 job countdown
         job_match = re.compile("urn:kubernetes:/{}:{}:job/countdown".format(cluster_name, namespace))
         assert _find_component(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="job",
             external_id_assert_fn=lambda v: job_match.findall(v)
         )
@@ -315,7 +385,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
         persistent_volume_match = re.compile("urn:kubernetes:/{}:persistent-volume/pvc-.*"
                                              .format(cluster_name))
         assert _find_component(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="persistent-volume",
             external_id_assert_fn=lambda v: persistent_volume_match.findall(v)
         )
@@ -323,7 +393,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
         statefulset_match = re.compile("urn:kubernetes:/{}:{}:statefulset/"
                                        "mehdb".format(cluster_name, namespace))
         assert _find_component(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="statefulset",
             external_id_assert_fn=lambda v: statefulset_match.findall(v)
         )
@@ -331,7 +401,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
         ingress_match = re.compile("urn:kubernetes:/{}:{}:ingress/"
                                    "example-ingress".format(cluster_name, namespace))
         assert _find_component(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="ingress",
             external_id_assert_fn=lambda v: ingress_match.findall(v)
         )
@@ -341,7 +411,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                                     "urn:kubernetes:/%s:node/ip-.*" % (cluster_name, namespace,
                                                                                        cluster_name))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="scheduled_on",
             external_id_assert_fn=lambda eid: node_agent_pod_scheduled_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-" % (cluster_name, namespace))
@@ -350,7 +420,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                                        "stackstate-cluster-agent-.*-.*->urn:kubernetes:/%s:node/ip-.*" %
                                                        (cluster_name, namespace, cluster_name))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="scheduled_on",
             external_id_assert_fn=lambda eid: cluster_agent_pod_scheduled_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-" % (cluster_name, namespace))
@@ -361,7 +431,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
             "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*:container/cluster-agent"
             % (cluster_name, namespace, cluster_name, namespace))
         pod_encloses_source_id = _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="encloses",
             external_id_assert_fn=lambda eid: node_agent_container_enclosed_match.findall(eid)
         )
@@ -374,7 +444,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
             "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-.*-.*:container/cluster-agent"
             % (cluster_name, namespace, cluster_name, namespace))
         pod_encloses_source_id = _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="encloses",
             external_id_assert_fn=lambda eid: cluster_agent_container_enclosed_match.findall(eid)
         )
@@ -386,7 +456,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                               "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*" %
                                               (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="exposes",
             external_id_assert_fn=lambda eid: node_agent_service_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:service/stackstate-cluster-agent-agent" % (cluster_name, namespace))
@@ -395,7 +465,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                                  "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*" %
                                                  (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="exposes",
             external_id_assert_fn=lambda eid: cluster_agent_service_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:service/stackstate-cluster-agent-agent" % (cluster_name, namespace))
@@ -404,7 +474,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                        "urn:kubernetes:/%s:%s:pod/pod-server" %
                                        (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="exposes",
             external_id_assert_fn=lambda eid: pod_service_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:service/pod-service" % (cluster_name, namespace))
@@ -413,7 +483,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                                "->urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-.*-.*" %
                                                (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="controls",
             external_id_assert_fn=lambda eid: replicaset_controls_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:replicaset/stackstate-cluster-agent" % (cluster_name, namespace))
@@ -422,7 +492,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                               "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*" %
                                               (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="controls",
             external_id_assert_fn=lambda eid: daemonset_controls_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:daemonset/stackstate-cluster-agent-agent" % (cluster_name, namespace))
@@ -431,7 +501,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                                "urn:kubernetes:/%s:%s:replicaset/stackstate-cluster-agent-.*"
                                                % (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="controls",
             external_id_assert_fn=lambda eid: deployment_controls_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:deployment/stackstate-cluster-agent" % (cluster_name, namespace))
@@ -440,7 +510,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                                 "urn:kubernetes:/%s:%s:pod/mehdb-.*" %
                                                 (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="controls",
             external_id_assert_fn=lambda eid: statefulset_controls_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:statefulset/mehdb" % (cluster_name, namespace))
@@ -449,7 +519,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                            "urn:kubernetes:/%s:%s:job/hello-.*" %
                                            (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="creates",
             external_id_assert_fn=lambda eid: cronjob_creates_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:cronjob/hello" % (cluster_name, namespace))
@@ -458,7 +528,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                              "urn:kubernetes:/%s:persistent-volume/pvc-.*" %
                                              (cluster_name, namespace, cluster_name))
         assert _relation_data(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="mounts",
             external_id_assert_fn=lambda eid: pod_claims_volume_match.findall(eid)
         )["mountPath"] == "/mehdbdata"
@@ -467,7 +537,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                                         "urn:kubernetes:external-volume:hostpath/.*/cgroup" %
                                                         (cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="mounts",
             external_id_assert_fn=lambda eid:  pod_claims_persistent_volume_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent" % (cluster_name, namespace))
@@ -476,7 +546,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                               "urn:kubernetes:/%s:%s:configmap/stackstate-cluster-agent-agent" %
                                               (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="mounts",
             external_id_assert_fn=lambda eid:  pod_uses_configmap_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent" % (cluster_name, namespace))
@@ -485,7 +555,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                            "urn:kubernetes:/%s:%s:secret/stackstate-cluster-agent" %
                                            (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="uses_value",
             external_id_assert_fn=lambda eid:  pod_uses_secret_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-" % (cluster_name, namespace))
@@ -494,7 +564,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                               "urn:kubernetes:/%s:%s:configmap/stackstate-cluster-agent" %
                                               (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="mounts",
             external_id_assert_fn=lambda eid:  pod_uses_configmap_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent" % (cluster_name, namespace))
@@ -503,7 +573,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                                   "urn:kubernetes:/%s:%s:service/banana-service" %
                                                   (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="routes",
             external_id_assert_fn=lambda eid: ingress_routes_service_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:ingress/example-ingress" % (cluster_name, namespace))
@@ -512,7 +582,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                         "urn:kubernetes:/%s:%s:pod/countdown-.*" %
                                         (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="controls",
             external_id_assert_fn=lambda eid: job_controls_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:job/countdown" % (cluster_name, namespace))
@@ -549,7 +619,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                                          "urn:kubernetes:/%s:%s:deployment/stackstate-cluster-agent" %
                                                          (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="encloses",
             external_id_assert_fn=lambda eid: namespace_deployment_encloses_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:namespace/%s" % (cluster_name, namespace))
@@ -558,7 +628,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                                           "urn:kubernetes:/%s:%s:statefulset/mehdb" %
                                                           (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="encloses",
             external_id_assert_fn=lambda eid: namespace_statefulset_encloses_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:namespace/%s" % (cluster_name, namespace))
@@ -567,7 +637,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                                         "urn:kubernetes:/%s:%s:daemonset/stackstate-cluster-agent-agent" %
                                                         (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="encloses",
             external_id_assert_fn=lambda eid: namespace_daemonset_encloses_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:namespace/%s" % (cluster_name, namespace))
@@ -576,7 +646,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                                         "urn:kubernetes:/%s:%s:replicaset/stackstate-cluster-agent-.*" %
                                                         (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="encloses",
             external_id_assert_fn=lambda eid: namespace_daemonset_encloses_match.findall(eid)
         ) is None
@@ -585,7 +655,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                                         "urn:kubernetes:/%s:%s:service/stackstate-cluster-agent-agent" %
                                                         (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="encloses",
             external_id_assert_fn=lambda eid: namespace_daemonset_encloses_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:namespace/%s" % (cluster_name, namespace))
@@ -593,7 +663,7 @@ def test_cluster_agent_base_topology(host, ansible_var):
                                                                "urn:kubernetes:/%s:%s:external-service/google-service" %
                                                                (cluster_name, namespace, cluster_name, namespace))
         assert _relation_sourceid(
-            json_data=json_data,
+            json_data=topic_content,
             type_name="uses",
             external_id_assert_fn=lambda eid: external_name_service_uses_external_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:service/google-service" % (cluster_name, namespace))
@@ -605,7 +675,6 @@ def test_cluster_agent_pod_mount_volume_relation(host, ansible_var):
     cluster_name = ansible_var("cluster_name")
     namespace = ansible_var("namespace")
     topic = "sts_topo_kubernetes_%s" % cluster_name
-    url = "http://localhost:7070/api/topic/%s?limit=1000" % topic
 
     def _find_mount_relation(json_data, pod_regex, volume_mount_regex):
         return _relation_sourceid(
@@ -616,22 +685,19 @@ def test_cluster_agent_pod_mount_volume_relation(host, ansible_var):
         )
 
     def wait_for_relation():
-        data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
-        with open("./topic-" + topic + ".json", 'w') as f:
-            json.dump(json_data, f, indent=4)
+        topic_content = util.get_topic_content(host, topic)
 
         # stackstate-cluster-agent Pod -> Volume mount (secret)
         cluster_agent_urn = \
             "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-.*-.*:container/cluster-agent" \
             % (cluster_name, namespace)
         before_1_21 = _find_mount_relation(
-            json_data,
+            topic_content,
             cluster_agent_urn,
             "urn:kubernetes:/%s:%s:secret/stackstate-cluster-agent-token-.*" % (cluster_name, namespace)
         )
         from_1_21 = _find_mount_relation(
-            json_data,
+            topic_content,
             cluster_agent_urn,
             "urn:kubernetes:external-volume:projected/.*"
         )
@@ -642,12 +708,12 @@ def test_cluster_agent_pod_mount_volume_relation(host, ansible_var):
         agent_urn = "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*:container/cluster-agent" \
                     % (cluster_name, namespace)
         before_1_21 = _find_mount_relation(
-            json_data,
+            topic_content,
             agent_urn,
             "urn:kubernetes:/%s:%s:secret/stackstate-cluster-agent-token-.*" % (cluster_name, namespace)
         )
         from_1_21 = _find_mount_relation(
-            json_data,
+            topic_content,
             agent_urn,
             "urn:kubernetes:external-volume:projected/.*"
         )

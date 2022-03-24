@@ -2,6 +2,15 @@ import time
 import json
 
 
+def get_topic_content(host, topic):
+    url = "http://localhost:7070/api/topic/%s?limit=1000" % topic
+    data = host.check_output("curl \"%s\"" % url)
+    topic_content = json.loads(data)
+    with open("./topic-" + topic + ".json", 'w') as f:
+        json.dump(topic_content, f, indent=4)
+    return topic_content
+
+
 def wait_until(someaction, timeout, period=0.25, *args, **kwargs):
     mustend = time.time() + timeout
     while True:
