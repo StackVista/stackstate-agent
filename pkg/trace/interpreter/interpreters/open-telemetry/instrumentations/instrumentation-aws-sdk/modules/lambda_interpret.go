@@ -1,11 +1,11 @@
-package aws
+package modules
 
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
-	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/modules"
+	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/instrumentations"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
@@ -41,8 +41,8 @@ func (t *OpenTelemetryLambdaEntryInterpreter) Interpret(spans []*pb.Span) []*pb.
 		}
 
 		// Extract meta information
-		arn, arnOk := modules.RetrieveValidSpanMeta(span, "LAMBDA", "faas.id")
-		_, awsAccountIDOk := modules.RetrieveValidSpanMeta(span, "LAMBDA", "cloud.account.id")
+		arn, arnOk := instrumentations.RetrieveValidSpanMeta(span, "LAMBDA", "faas.id")
+		_, awsAccountIDOk := instrumentations.RetrieveValidSpanMeta(span, "LAMBDA", "cloud.account.id")
 
 		// Only continue if there is a cloud.account.id
 		// We do not use it but is important in mappings for the other aws-sdk libraries
@@ -58,7 +58,7 @@ func (t *OpenTelemetryLambdaEntryInterpreter) Interpret(spans []*pb.Span) []*pb.
 				functionName := arnParts[6]
 
 				// Map information for this span
-				modules.SpanBuilder(span, functionName, "Lambda", "lambda", "producer", urn, *arn)
+				instrumentations.AwsSpanBuilder(span, functionName, "Lambda", "lambda", "producer", urn, *arn)
 			} else {
 				_ = log.Errorf("[OTEL] [LAMBDA]: Unable to map LAMBDA because of a invalid arn, %s", *arn)
 				return nil
@@ -68,7 +68,7 @@ func (t *OpenTelemetryLambdaEntryInterpreter) Interpret(spans []*pb.Span) []*pb.
 			return nil
 		}
 
-		modules.InterpretHTTPError(span)
+		instrumentations.InterpretHTTPError(span)
 	}
 
 	return spans

@@ -1,4 +1,4 @@
-package http
+package modules
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"

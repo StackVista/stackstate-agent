@@ -1,11 +1,11 @@
-package http
+package modules
 
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
-	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/modules"
+	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/instrumentations"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
@@ -36,20 +36,20 @@ func (t *OpenTelemetryHTTPInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			span.Meta = map[string]string{}
 		}
 
-		httpURL, httpURLOk := modules.RetrieveValidSpanMeta(span, "HTTP", "http.url")
-		httpMethod, httpMethodOk := modules.RetrieveValidSpanMeta(span, "HTTP", "http.method")
+		httpURL, httpURLOk := instrumentations.RetrieveValidSpanMeta(span, "HTTP", "http.url")
+		httpMethod, httpMethodOk := instrumentations.RetrieveValidSpanMeta(span, "HTTP", "http.method")
 
 		if httpURLOk && httpMethodOk && len(*httpURL) > 0 {
 			var url = *httpURL
 			var urn = t.CreateServiceURN(fmt.Sprintf("lambda-http-request/%s/%s", url, *httpMethod))
 
-			modules.SpanBuilder(span, fmt.Sprintf("%s - %s", *httpMethod, url), "Http", "http", "consumer", urn, url)
+			instrumentations.AwsSpanBuilder(span, fmt.Sprintf("%s - %s", *httpMethod, url), "Http", "http", "consumer", urn, url)
 		} else {
 			_ = log.Errorf("[OTEL] [LAMBDA.HTTP]: Unable to map the Lambda HTTP request")
 			return nil
 		}
 
-		modules.InterpretHTTPError(span)
+		instrumentations.InterpretHTTPError(span)
 	}
 
 	return spans

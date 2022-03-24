@@ -1,4 +1,4 @@
-package modules
+package instrumentations
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
@@ -116,7 +116,7 @@ func TestSpanBuilderInterpreterEngine(t *testing.T) {
 		},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
-			SpanBuilder(tc.span, tc.serviceName, tc.namePrefix, tc.service, tc.kind, tc.urn, tc.arn)
+			AwsSpanBuilder(tc.span, tc.serviceName, tc.namePrefix, tc.service, tc.kind, tc.urn, tc.arn)
 			assert.EqualValues(t, tc.expected, tc.span)
 		})
 	}

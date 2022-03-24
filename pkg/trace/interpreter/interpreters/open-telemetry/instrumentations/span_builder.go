@@ -1,4 +1,4 @@
-package modules
+package instrumentations
 
 import (
 	"fmt"
@@ -6,9 +6,9 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
-// SpanBuilder Map span data for the Open Telemetry service.
+// AwsSpanBuilder Map span data for the Open Telemetry service.
 // This allows us to more easily change the data mapping for all the open telemetry services
-func SpanBuilder(span *pb.Span, serviceName string, namePrefix string, service string, kind string, urn string, arn string) {
+func AwsSpanBuilder(span *pb.Span, serviceName string, namePrefix string, service string, kind string, urn string, arn string) {
 	// Name of component displayed below the icon
 	span.Meta["span.serviceName"] = fmt.Sprintf("%s: %s", namePrefix, serviceName)
 

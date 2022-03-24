@@ -1,11 +1,11 @@
-package aws
+package modules
 
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
-	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/modules"
+	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/instrumentations"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
@@ -40,22 +40,22 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 			span.Meta = map[string]string{}
 		}
 
-		functionName, functionNameOk := modules.RetrieveValidSpanMeta(span, "LAMBDA", "aws.request.function.name")
-		accountID, accountIDOk := modules.RetrieveValidSpanMeta(span, "LAMBDA", "aws.account.id")
-		region, regionOk := modules.RetrieveValidSpanMeta(span, "LAMBDA", "aws.region")
+		functionName, functionNameOk := instrumentations.RetrieveValidSpanMeta(span, "LAMBDA", "aws.request.function.name")
+		accountID, accountIDOk := instrumentations.RetrieveValidSpanMeta(span, "LAMBDA", "aws.account.id")
+		region, regionOk := instrumentations.RetrieveValidSpanMeta(span, "LAMBDA", "aws.region")
 
 		// Invoke will contain data to another Lambda function being invoked
 		if functionNameOk && accountIDOk && regionOk && span.Meta["aws.operation"] == "invoke" {
 			var arn = strings.ToLower(fmt.Sprintf("arn:aws:lambda:%s:%s:function:%s", *region, *accountID, *functionName))
 			var urn = t.CreateServiceURN(arn)
 
-			modules.SpanBuilder(span, *functionName, "Lambda", "lambda", "consumer", urn, arn)
+			instrumentations.AwsSpanBuilder(span, *functionName, "Lambda", "lambda", "consumer", urn, arn)
 		} else {
 			_ = log.Errorf("[OTEL] [LAMBDA]: Unable to map the invoked Lambda Function")
 			return nil
 		}
 
-		modules.InterpretHTTPError(span)
+		instrumentations.InterpretHTTPError(span)
 	}
 
 	return spans
