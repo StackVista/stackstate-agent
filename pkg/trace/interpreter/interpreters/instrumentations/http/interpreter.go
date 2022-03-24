@@ -3,7 +3,7 @@ package instrumentation_aws_sdk
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
-	instrumentationHttpModules "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/instrumentations/http/interpret"
+	instrumentationHttpModules "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/http/interpret"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 

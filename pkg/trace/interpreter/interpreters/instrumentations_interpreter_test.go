@@ -1,4 +1,4 @@
-package opentelemetry
+package interpreters
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
