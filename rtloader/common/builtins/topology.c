@@ -86,7 +86,8 @@ void _set_submit_delete_cb(cb_submit_delete_t cb)
 */
 static PyObject *submit_component(PyObject *self, PyObject *args) {
     if (cb_submit_component == NULL) {
-        Py_RETURN_NONE;
+        PyErr_SetString(PyExc_RuntimeError, "no callback set for submit_component");
+        goto error;
     }
 
     PyObject *check = NULL; // borrowed
@@ -171,7 +172,8 @@ done:
 */
 static PyObject *submit_relation(PyObject *self, PyObject *args) {
     if (cb_submit_relation == NULL) {
-        Py_RETURN_NONE;
+        PyErr_SetString(PyExc_RuntimeError, "no callback set for submit_relation");
+        goto error;
     }
 
     PyObject *check = NULL; // borrowed
@@ -258,7 +260,8 @@ done:
 */
 static PyObject *submit_start_snapshot(PyObject *self, PyObject *args) {
     if (cb_submit_start_snapshot == NULL) {
-        Py_RETURN_NONE;
+        PyErr_SetString(PyExc_RuntimeError, "no callback set for submit_start_snapshot");
+        goto error;
     }
 
     PyObject *check = NULL; // borrowed
@@ -312,7 +315,8 @@ error:
 */
 static PyObject *submit_stop_snapshot(PyObject *self, PyObject *args) {
     if (cb_submit_stop_snapshot == NULL) {
-        Py_RETURN_NONE;
+        PyErr_SetString(PyExc_RuntimeError, "no callback set for submit_stop_snapshot");
+        goto error;
     }
 
     PyObject *check = NULL; // borrowed
@@ -366,7 +370,8 @@ error:
 */
 static PyObject *submit_delete(PyObject *self, PyObject *args) {
     if (cb_submit_delete == NULL) {
-        Py_RETURN_NONE;
+        PyErr_SetString(PyExc_RuntimeError, "no callback set for submit_delete");
+        goto error;
     }
 
     PyObject *check = NULL; // borrowed
