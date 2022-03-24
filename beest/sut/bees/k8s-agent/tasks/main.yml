@@ -1,0 +1,65 @@
+---
+- name: StackState Agent prepare tasks
+  tags: prepare
+  block:
+  - name: Create test namespace '{{namespace}}'
+    kubernetes.core.k8s:
+      context: "{{ kubecontext }}"
+      api_version: v1
+      kind: Namespace
+      name: "{{ namespace }}"
+      state: present
+
+  - include_tasks: quay-registry-key.yml
+
+  - name: Add StackState chart repo
+    shell: helm repo add stackstate https://helm.stackstate.io && helm repo update
+
+  - name: Apply manifests for test workloads
+    command: kubectl --context={{ kubecontext }} -n={{ namespace }} apply -f {{ role_path }}/files/test_workloads
+
+  - name: Helm install StackState Agent
+    command: helm upgrade --install \
+      --namespace {{namespace}} \
+      --create-namespace \
+      --set-string 'stackstate.apiKey'='API_KEY' \
+      --set-string 'stackstate.cluster.name'='{{cluster_name}}' \
+      --set-string 'stackstate.url'='http://{{ groups['receiver'][0] }}:7077/stsAgent' \
+      --set "agent.image.tag={{agent_current_branch}}" \
+      --set "agent.image.repository=stackstate/{{agent_docker_repo}}" \
+      --set "clusterAgent.image.tag={{agent_current_branch}}" \
+      --set "clusterAgent.image.repository=stackstate/{{cluster_agent_docker_repo}}" \
+      --set "clusterChecks.image.tag={{agent_current_branch}}" \
+      --set "clusterChecks.image.repository=stackstate/{{agent_docker_repo}}" \
+      --values "{{ role_path }}/files/values.yml" \
+      stackstate-cluster-agent stackstate/cluster-agent
+
+  - name: Wait for the stackstate cluster agent to start doing it's thing
+    command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=cluster-agent pod
+
+  - name: Wait for the stackstate node agents to start doing their thing (otherwise connections might occur after agent startup)
+    command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=agent pod
+
+  - name: Wait for the stackstate cluster check agent to start
+    command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=clusterchecks pod
+
+  - name: Wait for the kube-state-metrics to be ready
+    command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/name=kube-state-metrics pod
+
+  - include_tasks: pod-connections.yml
+
+  - name: Give the Test Workloads 5 minutes to start performing their actions and some http requests
+    pause:
+      minutes: 5
+
+
+## Cleanup
+
+- name: StackState Agent cleanup tasks
+  tags: cleanup
+  block:
+  - name: Uninstall agent
+    shell: helm uninstall stackstate-cluster-agent --namespace {{namespace}}
+
+  - name: Delete namespace '{{namespace}}'
+    shell: kubectl --context={{ kubecontext }} delete ns {{ namespace }}

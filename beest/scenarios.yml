@@ -1,7 +1,7 @@
 scenarios:
   - name: dockerd-eks
     description: |
-      Provision an EKS cluster with Dockerd as container runtime and a ec2 machine.
+      Provision an EKS cluster with Dockerd as container runtime and an ec2 machine.
       Deploys the receiver on the ec2 and the agents with sample workloads on EKS.
     yard:
       name: eks-receiver
@@ -20,3 +20,11 @@ scenarios:
     variables:
       k8s_runtime: containerd
       k8s_version: "1.21"
+  - name: k8s-stackpack
+    description: |
+      Provision an EKS cluster.
+      Deploys stackstate on EKS and install the stackpacks.
+    yard:
+      name: eks-stackpack
+    test:
+      group: k8s
