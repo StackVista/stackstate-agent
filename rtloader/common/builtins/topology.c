@@ -158,9 +158,6 @@ done:
     Py_XDECREF(component);
     PyGILState_Release(gstate);
     return retval;
-error:
-    PyGILState_Release(gstate);
-    return NULL; // Failure
 }
 
 /*! \fn submit_relation(PyObject *self, PyObject *args)
@@ -249,9 +246,6 @@ done:
     Py_XDECREF(relation);
     PyGILState_Release(gstate);
     return retval;
-error:
-    PyGILState_Release(gstate);
-    return NULL; // Failure
 }
 
 /*! \fn submit_start_snapshot(PyObject *self, PyObject *args)
