@@ -1,4 +1,4 @@
-package modules
+package interpret
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
@@ -7,11 +7,11 @@ import (
 	"testing"
 )
 
-func TestOpenTelemetrySNSSpanInterpreter(t *testing.T) {
-	interpreter := MakeOpenTelemetrySNSInterpreter(config.DefaultInterpreterConfig())
+func TestOpenTelemetryS3SpanInterpreter(t *testing.T) {
+	interpreter := MakeOpenTelemetryS3Interpreter(config.DefaultInterpreterConfig())
 	for _, tc := range []struct {
 		testCase    string
-		interpreter *OpenTelemetrySNSInterpreter
+		interpreter *OpenTelemetryS3Interpreter
 		trace       []*pb.Span
 		expected    []*pb.Span
 	}{
@@ -26,26 +26,26 @@ func TestOpenTelemetrySNSSpanInterpreter(t *testing.T) {
 			interpreter: interpreter,
 			trace: []*pb.Span{{
 				Meta: map[string]string{
-					"aws.operation":         "postMessage",
-					"aws.request.topic.arn": "arn:aws:sns:eu-west-1:965323806078:topic-name",
+					"aws.request.bucket": "bucket-name",
+					"aws.operation":      "putObject",
 				},
 			}},
 			expected: []*pb.Span{{
-				Name:     "SNS: topic-name",
-				Service:  "aws.sns",
-				Resource: "aws.sns",
+				Name:     "S3: bucket-name",
+				Service:  "aws.s3",
+				Resource: "aws.s3",
 				Type:     "aws",
 				Meta: map[string]string{
 					"sts.origin":              "open-telemetry",
 					"source":                  "open-telemetry",
-					"aws.operation":           "postMessage",
-					"aws.request.topic.arn":   "arn:aws:sns:eu-west-1:965323806078:topic-name",
-					"service":                 "aws.sns",
+					"aws.operation":           "putObject",
+					"aws.request.bucket":      "bucket-name",
+					"service":                 "aws.s3",
 					"span.kind":               "consumer",
-					"span.serviceName":        "SNS: topic-name",
+					"span.serviceName":        "S3: bucket-name",
 					"span.serviceType":        "open-telemetry",
-					"span.serviceURN":         "urn:service:/arn:aws:sns:eu-west-1:965323806078:topic-name",
-					"sts.service.identifiers": "arn:aws:sns:eu-west-1:965323806078:topic-name",
+					"span.serviceURN":         "urn:service:/arn:aws:s3:::bucket-name",
+					"sts.service.identifiers": "arn:aws:s3:::bucket-name",
 				},
 			}},
 		},
@@ -53,20 +53,20 @@ func TestOpenTelemetrySNSSpanInterpreter(t *testing.T) {
 			testCase:    "Should interpret 4xx http errors",
 			interpreter: interpreter,
 			trace: []*pb.Span{{
-				Service: "service-name",
+				Service: "aws.s3",
 				Error:   1,
 				Metrics: map[string]float64{
 					"http.status_code": 404.0,
 				},
 				Meta: map[string]string{
-					"aws.operation":         "postMessage",
-					"aws.request.topic.arn": "arn:aws:sns:eu-west-1:965323806078:topic-name",
+					"aws.request.bucket": "bucket-name",
+					"aws.operation":      "putObject",
 				},
 			}},
 			expected: []*pb.Span{{
-				Name:     "SNS: topic-name",
-				Service:  "aws.sns",
-				Resource: "aws.sns",
+				Name:     "S3: bucket-name",
+				Service:  "aws.s3",
+				Resource: "aws.s3",
 				Type:     "aws",
 				Error:    1,
 				Metrics: map[string]float64{
@@ -76,14 +76,14 @@ func TestOpenTelemetrySNSSpanInterpreter(t *testing.T) {
 					"sts.origin":              "open-telemetry",
 					"source":                  "open-telemetry",
 					"span.errorClass":         "4xx",
-					"aws.operation":           "postMessage",
-					"aws.request.topic.arn":   "arn:aws:sns:eu-west-1:965323806078:topic-name",
-					"service":                 "aws.sns",
+					"aws.operation":           "putObject",
+					"aws.request.bucket":      "bucket-name",
+					"service":                 "aws.s3",
 					"span.kind":               "consumer",
-					"span.serviceName":        "SNS: topic-name",
+					"span.serviceName":        "S3: bucket-name",
 					"span.serviceType":        "open-telemetry",
-					"span.serviceURN":         "urn:service:/arn:aws:sns:eu-west-1:965323806078:topic-name",
-					"sts.service.identifiers": "arn:aws:sns:eu-west-1:965323806078:topic-name",
+					"span.serviceURN":         "urn:service:/arn:aws:s3:::bucket-name",
+					"sts.service.identifiers": "arn:aws:s3:::bucket-name",
 				},
 			}},
 		},
@@ -91,20 +91,20 @@ func TestOpenTelemetrySNSSpanInterpreter(t *testing.T) {
 			testCase:    "Should interpret 5xx http errors",
 			interpreter: interpreter,
 			trace: []*pb.Span{{
-				Service: "aws.sns",
+				Service: "open.telemetry.S3",
 				Error:   1,
 				Metrics: map[string]float64{
 					"http.status_code": 503.0,
 				},
 				Meta: map[string]string{
-					"aws.operation":         "postMessage",
-					"aws.request.topic.arn": "arn:aws:sns:eu-west-1:965323806078:topic-name",
+					"aws.request.bucket": "bucket-name",
+					"aws.operation":      "putObject",
 				},
 			}},
 			expected: []*pb.Span{{
-				Name:     "SNS: topic-name",
-				Service:  "aws.sns",
-				Resource: "aws.sns",
+				Name:     "S3: bucket-name",
+				Service:  "aws.s3",
+				Resource: "aws.s3",
 				Type:     "aws",
 				Error:    1,
 				Metrics: map[string]float64{
@@ -114,14 +114,14 @@ func TestOpenTelemetrySNSSpanInterpreter(t *testing.T) {
 					"sts.origin":              "open-telemetry",
 					"source":                  "open-telemetry",
 					"span.errorClass":         "5xx",
-					"aws.operation":           "postMessage",
-					"aws.request.topic.arn":   "arn:aws:sns:eu-west-1:965323806078:topic-name",
-					"service":                 "aws.sns",
+					"aws.operation":           "putObject",
+					"aws.request.bucket":      "bucket-name",
+					"service":                 "aws.s3",
 					"span.kind":               "consumer",
-					"span.serviceName":        "SNS: topic-name",
+					"span.serviceName":        "S3: bucket-name",
 					"span.serviceType":        "open-telemetry",
-					"span.serviceURN":         "urn:service:/arn:aws:sns:eu-west-1:965323806078:topic-name",
-					"sts.service.identifiers": "arn:aws:sns:eu-west-1:965323806078:topic-name",
+					"span.serviceURN":         "urn:service:/arn:aws:s3:::bucket-name",
+					"sts.service.identifiers": "arn:aws:s3:::bucket-name",
 				},
 			}},
 		},

@@ -2,10 +2,10 @@ package opentelemetry
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
-	instrumentationAwsLambda "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/instrumentations/instrumentation-aws-lambda"
-	instrumentationAwsSdk "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/instrumentations/instrumentation-aws-sdk"
-	instrumentationHttp "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/instrumentations/instrumentation-http"
-	instrumentationStackState "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/instrumentations/instrumentation-stackstate"
+	instrumentationAwsLambda "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/instrumentations/aws-lambda"
+	instrumentationAwsSdk "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/instrumentations/aws-sdk"
+	instrumentationHttp "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/instrumentations/http"
+	instrumentationStackState "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/instrumentations/stackstate"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )

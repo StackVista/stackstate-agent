@@ -1,4 +1,4 @@
-package modules
+package interpret
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
