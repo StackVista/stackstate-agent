@@ -1,4 +1,4 @@
-package modules
+package opentelemetry
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"

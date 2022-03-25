@@ -3,8 +3,8 @@ package opentelemetry
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
-	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/modules/aws"
-	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/modules/http"
+	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/aws-sdk"
+	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/http"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
@@ -16,7 +16,7 @@ func InterpretBasedOnInstrumentationLibrary(span *pb.Span, source string) string
 		instrumentationLibrary := span.Meta["instrumentation_library"]
 		switch instrumentationLibrary {
 		case "@opentelemetry/instrumentation-aws-lambda":
-			lambdaInterpreterIdentifier := fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws.OpenTelemetryLambdaEntryServiceIdentifier)
+			lambdaInterpreterIdentifier := fmt.Sprintf("%s%s", api.OpenTelemetrySource, aws_sdk.OpenTelemetryLambdaEntryServiceIdentifier)
 			log.Debugf("[OTEL] [INSTRUMENTATION-AWS-LAMBDA] Mapping service: %s", lambdaInterpreterIdentifier)
 			return lambdaInterpreterIdentifier
 
@@ -26,7 +26,7 @@ func InterpretBasedOnInstrumentationLibrary(span *pb.Span, source string) string
 			return httpInterpreterIdentifier
 
 		case "@opentelemetry/instrumentation-aws-sdk":
-			return aws.InterpretBuilderForAwsSdkInstrumentation(span, source)
+			return aws_sdk.InterpretBuilderForAwsSdkInstrumentation(span, source)
 
 		default:
 			log.Debugf("[OTEL] [INSTRUMENTATION] Unknown instrumentation library: %s", instrumentationLibrary)
