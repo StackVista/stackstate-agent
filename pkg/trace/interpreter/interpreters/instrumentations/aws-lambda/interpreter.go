@@ -1,4 +1,4 @@
-package awsLambdaInstrumentation
+package awslambdainstrumentation
 
 import (
 	"fmt"
@@ -12,10 +12,10 @@ import (
 // https://www.npmjs.com/package/@opentelemetry/instrumentation-aws-lambda
 var InstrumentationIdentifier = "@opentelemetry/instrumentation-aws-lambda"
 
-// InterpretBuilderForAwsLambdaInstrumentation Mapping for modules used within the Instrumentation library
+// InterpretBuilderForAwsLambdainstrumentation Mapping for modules used within the Instrumentation library
 // Modules are basically sub parts that have certain functionality. Based on that functionality different context
 // values needs to be mapped to be part of the span response
-func InterpretBuilderForAwsLambdaInstrumentation() string {
+func InterpretBuilderForAwsLambdainstrumentation() string {
 	lambdaInterpreterIdentifier := fmt.Sprintf("%s%s", api.OpenTelemetrySource, modules.OpenTelemetryLambdaEntryServiceIdentifier)
 	log.Debugf("[OTEL] [INSTRUMENTATION-AWS-LAMBDA] Mapping service: %s", lambdaInterpreterIdentifier)
 

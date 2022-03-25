@@ -5,7 +5,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
-	instrumentationBuilders "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentation-builders"
+	instrumentationbuilders "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentation-builders"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
@@ -40,7 +40,7 @@ func (t *OpenTelemetrySNSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			span.Meta = map[string]string{}
 		}
 
-		topicArn, topicArnOk := instrumentationBuilders.GetSpanMeta("SNS", span, "aws.request.topic.arn")
+		topicArn, topicArnOk := instrumentationbuilders.GetSpanMeta("SNS", span, "aws.request.topic.arn")
 
 		if topicArnOk {
 			var urn = t.CreateServiceURN(strings.ToLower(*topicArn))
@@ -50,7 +50,7 @@ func (t *OpenTelemetrySNSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 
 			if len(arnParts) >= 6 {
 				topicName := arnParts[5]
-				instrumentationBuilders.AwsSpanBuilder(span, topicName, "SNS", "sns", "consumer", urn, arn)
+				instrumentationbuilders.AwsSpanBuilder(span, topicName, "SNS", "sns", "consumer", urn, arn)
 			} else {
 				_ = log.Errorf("[OTEL] [SNS]: 'arn' invalid structure supplied '%s'", arn)
 				return nil
@@ -60,7 +60,7 @@ func (t *OpenTelemetrySNSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			return nil
 		}
 
-		instrumentationBuilders.InterpretSpanHTTPError(span)
+		instrumentationbuilders.InterpretSpanHTTPError(span)
 	}
 
 	return spans

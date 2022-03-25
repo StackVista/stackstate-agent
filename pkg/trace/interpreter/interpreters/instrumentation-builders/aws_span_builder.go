@@ -1,4 +1,4 @@
-package instrumentationBuilders
+package instrumentationbuilders
 
 import (
 	"fmt"

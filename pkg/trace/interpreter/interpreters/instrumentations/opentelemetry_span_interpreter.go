@@ -3,7 +3,7 @@ package instrumentations
 import (
 	awsLambdaInstrumentation "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/aws-lambda"
 	awsSdkInstrumentation "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/aws-sdk"
-	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/http"
+	httpInstrumentation "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/http"
 	stackStateInstrumentation "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/stackstate"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -19,19 +19,19 @@ func InterpretBasedOnInstrumentationLibrary(span *pb.Span, source string) string
 	switch instrumentationLibrary {
 	// @opentelemetry/instrumentation-aws-lambda
 	case awsLambdaInstrumentation.InstrumentationIdentifier:
-		return awsLambdaInstrumentation.InterpretBuilderForAwsLambdaInstrumentation()
+		return awsLambdaInstrumentation.InterpretBuilderForAwsLambdainstrumentation()
 
 	// @opentelemetry/instrumentation-http
 	case httpInstrumentation.InstrumentationIdentifier:
-		return httpInstrumentation.InterpretBuilderForHttpInstrumentation()
+		return httpInstrumentation.InterpretBuilderForHTTPInstrumentation()
 
 	// @opentelemetry/instrumentation-aws-sdk
 	case awsSdkInstrumentation.InstrumentationIdentifier:
-		return awsSdkInstrumentation.InterpretBuilderForAwsSdkInstrumentation(span, source)
+		return awsSdkInstrumentation.InterpretBuilderForAwsSdkinstrumentation(span, source)
 
 	// @opentelemetry/instrumentation-stackstate
 	case stackStateInstrumentation.InstrumentationIdentifier:
-		return stackStateInstrumentation.InterpretBuilderForStackStateInstrumentation()
+		return stackStateInstrumentation.InterpretBuilderForStackStateinstrumentation()
 
 	default:
 		log.Debugf("[OTEL] [INSTRUMENTATION] Unknown instrumentation library: %s. Routing required within the InterpretBasedOnInstrumentationLibrary function", instrumentationLibrary)
