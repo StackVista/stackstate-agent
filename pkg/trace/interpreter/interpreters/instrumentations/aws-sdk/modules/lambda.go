@@ -5,7 +5,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
-	instrumentation_builders "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentation-builders"
+	instrumentationBuilders "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentation-builders"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
@@ -40,22 +40,22 @@ func (t *OpenTelemetryLambdaInterpreter) Interpret(spans []*pb.Span) []*pb.Span 
 			span.Meta = map[string]string{}
 		}
 
-		functionName, functionNameOk := instrumentation_builders.GetSpanMeta("LAMBDA-INVOKED", span, "aws.request.function.name")
-		accountID, accountIDOk := instrumentation_builders.GetSpanMeta("LAMBDA-INVOKED", span, "aws.account.id")
-		region, regionOk := instrumentation_builders.GetSpanMeta("LAMBDA-INVOKED", span, "aws.region")
+		functionName, functionNameOk := instrumentationBuilders.GetSpanMeta("LAMBDA-INVOKED", span, "aws.request.function.name")
+		accountID, accountIDOk := instrumentationBuilders.GetSpanMeta("LAMBDA-INVOKED", span, "aws.account.id")
+		region, regionOk := instrumentationBuilders.GetSpanMeta("LAMBDA-INVOKED", span, "aws.region")
 
 		// Invoke will contain data to another Lambda function being invoked
 		if functionNameOk && accountIDOk && regionOk && span.Meta["aws.operation"] == "invoke" {
 			var arn = strings.ToLower(fmt.Sprintf("arn:aws:lambda:%s:%s:function:%s", *region, *accountID, *functionName))
 			var urn = t.CreateServiceURN(arn)
 
-			instrumentation_builders.AwsSpanBuilder(span, *functionName, "Lambda", "lambda", "consumer", urn, arn)
+			instrumentationBuilders.AwsSpanBuilder(span, *functionName, "Lambda", "lambda", "consumer", urn, arn)
 		} else {
 			_ = log.Errorf("[OTEL] [LAMBDA]: Unable to map the invoked Lambda Function")
 			return nil
 		}
 
-		instrumentation_builders.InterpretSpanHTTPError(span)
+		instrumentationBuilders.InterpretSpanHTTPError(span)
 	}
 
 	return spans

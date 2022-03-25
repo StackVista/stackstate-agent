@@ -1,4 +1,4 @@
-package aws_sdk
+package awsLambdaInstrumentation
 
 import (
 	"fmt"

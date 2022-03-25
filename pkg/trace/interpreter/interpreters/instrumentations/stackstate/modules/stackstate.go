@@ -5,7 +5,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
-	instrumentation_builders "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentation-builders"
+	instrumentationBuilders "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentation-builders"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
@@ -36,23 +36,23 @@ func (t *OpenTelemetryStackStateInterpreter) Interpret(spans []*pb.Span) []*pb.S
 			span.Meta = map[string]string{}
 		}
 
-		tracePerspectiveName, tracePerspectiveNameOk := instrumentation_builders.GetSpanMeta("CUSTOM-METRIC", span, "trace.perspective.name")
-		serviceName, serviceNameOk := instrumentation_builders.GetSpanMeta("CUSTOM-METRIC", span, "service.name")
-		serviceType, serviceTypeOk := instrumentation_builders.GetSpanMeta("CUSTOM-METRIC", span, "service.type")
-		serviceIdentifier, serviceIdentifierOk := instrumentation_builders.GetSpanMeta("CUSTOM-METRIC", span, "service.identifier")
-		resourceName, resourceNameOk := instrumentation_builders.GetSpanMeta("CUSTOM-METRIC", span, "resource.name")
+		tracePerspectiveName, tracePerspectiveNameOk := instrumentationBuilders.GetSpanMeta("CUSTOM-METRIC", span, "trace.perspective.name")
+		serviceName, serviceNameOk := instrumentationBuilders.GetSpanMeta("CUSTOM-METRIC", span, "service.name")
+		serviceType, serviceTypeOk := instrumentationBuilders.GetSpanMeta("CUSTOM-METRIC", span, "service.type")
+		serviceIdentifier, serviceIdentifierOk := instrumentationBuilders.GetSpanMeta("CUSTOM-METRIC", span, "service.identifier")
+		resourceName, resourceNameOk := instrumentationBuilders.GetSpanMeta("CUSTOM-METRIC", span, "resource.name")
 
 		if tracePerspectiveNameOk && serviceNameOk && serviceTypeOk && serviceIdentifierOk && resourceNameOk {
 			var kind = "consumer"
 			var urn = t.CreateServiceURN(*serviceIdentifier)
 
-			instrumentation_builders.StackStateSpanBuilder(span, *tracePerspectiveName, *serviceType, *serviceName, *serviceIdentifier, *resourceName, kind, urn)
+			instrumentationBuilders.StackStateSpanBuilder(span, *tracePerspectiveName, *serviceType, *serviceName, *serviceIdentifier, *resourceName, kind, urn)
 		} else {
 			_ = log.Errorf("[OTEL] [CUSTOM-METRIC]: Unable to map the custom metric request")
 			return nil
 		}
 
-		instrumentation_builders.InterpretSpanHTTPError(span)
+		instrumentationBuilders.InterpretSpanHTTPError(span)
 	}
 
 	return spans

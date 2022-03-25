@@ -1,4 +1,4 @@
-package aws_sdk
+package stackstateInstrumentation
 
 import (
 	"fmt"

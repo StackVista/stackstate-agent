@@ -5,7 +5,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
-	instrumentation_builders "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentation-builders"
+	instrumentationBuilders "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentation-builders"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
@@ -40,9 +40,9 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			span.Meta = map[string]string{}
 		}
 
-		awsRegion, awsRegionOk := instrumentation_builders.GetSpanMeta("SQS", span, "aws.region")
-		sqsEndpoint, sqsEndpointOk := instrumentation_builders.GetSpanMeta("SQS", span, "messaging.url")
-		sqsQueueName, sqsQueueNameOk := instrumentation_builders.GetSpanMeta("SQS", span, "messaging.destination")
+		awsRegion, awsRegionOk := instrumentationBuilders.GetSpanMeta("SQS", span, "aws.region")
+		sqsEndpoint, sqsEndpointOk := instrumentationBuilders.GetSpanMeta("SQS", span, "messaging.url")
+		sqsQueueName, sqsQueueNameOk := instrumentationBuilders.GetSpanMeta("SQS", span, "messaging.destination")
 
 		if sqsQueueNameOk && sqsEndpointOk && awsRegionOk {
 			// Example Input: https://sqs.<region>.amazonaws.com/<account-id>/<queue-name>
@@ -55,7 +55,7 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 					fmt.Sprintf("https://%s.queue.amazonaws.com/%s/%s", *awsRegion, accountID, *sqsQueueName))
 				var queueIdentifier = fmt.Sprintf("%s-%s-%s", *sqsQueueName, accountID, *awsRegion)
 
-				instrumentation_builders.AwsSpanBuilder(span, queueIdentifier, "SQS Queue", "sqs.queue", "consumer", urn, arn)
+				instrumentationBuilders.AwsSpanBuilder(span, queueIdentifier, "SQS Queue", "sqs.queue", "consumer", urn, arn)
 			} else {
 				_ = log.Errorf("[OTEL] [SQS]: The SQS Endpoint URL is incorrect, Unable to parse %s.", sqsEndpointPieces)
 				return nil
@@ -65,7 +65,7 @@ func (t *OpenTelemetrySQSInterpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			return nil
 		}
 
-		instrumentation_builders.InterpretSpanHTTPError(span)
+		instrumentationBuilders.InterpretSpanHTTPError(span)
 	}
 
 	return spans

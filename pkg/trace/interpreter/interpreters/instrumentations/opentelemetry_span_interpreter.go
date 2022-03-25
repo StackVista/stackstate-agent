@@ -3,7 +3,7 @@ package instrumentations
 import (
 	awsLambdaInstrumentation "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/aws-lambda"
 	awsSdkInstrumentation "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/aws-sdk"
-	httpInstrumentation "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/http"
+	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/http"
 	stackStateInstrumentation "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/stackstate"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
