@@ -1,4 +1,4 @@
-package opentelemetry
+package instrumentations
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
@@ -23,6 +23,16 @@ func TestSpanInterpreterEngine(t *testing.T) {
 				},
 			},
 			expected: api.OpenTelemetrySource,
+		},
+		{
+			testCase: "Instrumentation library 'instrumentation-stackstate' with no service identifiers should map a stackstate instrumentation id.",
+			source:   api.OpenTelemetrySource,
+			span: pb.Span{
+				Meta: map[string]string{
+					"instrumentation_library": "@opentelemetry/instrumentation-stackstate",
+				},
+			},
+			expected: "openTelemetryStackState",
 		},
 		{
 			testCase: "Instrumentation library 'instrumentation-aws-lambda' should map to a specific interpreter id.",
@@ -78,11 +88,11 @@ func TestSpanInterpreterEngine(t *testing.T) {
 			expected: "openTelemetryLambda",
 		},
 		{
-			testCase: "Instrumentation library 'instrumentation-aws-sdk' with the service identifier Lambda entry should map to a Lambda entry interpreter id.",
+			testCase: "Instrumentation library 'instrumentation-aws-lambda' with the service identifier Lambda entry should map to a Lambda entry interpreter id.",
 			source:   api.OpenTelemetrySource,
 			span: pb.Span{
 				Meta: map[string]string{
-					"instrumentation_library": "@opentelemetry/instrumentation-aws-sdk",
+					"instrumentation_library": "@opentelemetry/instrumentation-aws-lambda",
 					"aws.service.identifier":  "lambdaentry",
 				},
 			},

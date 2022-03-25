@@ -1,11 +1,11 @@
-package aws_sdk
+package modules
 
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
-	modules "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations"
+	instrumentation_builders "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentation-builders"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
@@ -40,19 +40,19 @@ func (t *OpenTelemetryS3Interpreter) Interpret(spans []*pb.Span) []*pb.Span {
 			span.Meta = map[string]string{}
 		}
 
-		s3Bucket, s3BucketOk := modules.RetrieveValidSpanMeta(span, "S3", "aws.request.bucket")
+		s3Bucket, s3BucketOk := instrumentation_builders.GetSpanMeta("S3", span, "aws.request.bucket")
 
 		if s3BucketOk {
 			var arn = strings.ToLower(fmt.Sprintf("arn:aws:s3:::%s", *s3Bucket))
 			var urn = t.CreateServiceURN(arn)
 
-			modules.SpanBuilder(span, *s3Bucket, "S3", "s3", "consumer", urn, arn)
+			instrumentation_builders.AwsSpanBuilder(span, *s3Bucket, "S3", "s3", "consumer", urn, arn)
 		} else {
 			_ = log.Errorf("[OTEL] [S3]: Unable to map the S3 request")
 			return nil
 		}
 
-		modules.InterpretHTTPError(span)
+		instrumentation_builders.InterpretSpanHTTPError(span)
 	}
 
 	return spans

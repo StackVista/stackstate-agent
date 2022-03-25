@@ -1,4 +1,4 @@
-package opentelemetry
+package instrumentation_builders
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
@@ -116,29 +116,34 @@ func TestSpanBuilderInterpreterEngine(t *testing.T) {
 		},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
-			SpanBuilder(tc.span, tc.serviceName, tc.namePrefix, tc.service, tc.kind, tc.urn, tc.arn)
+			AwsSpanBuilder(tc.span, tc.serviceName, tc.namePrefix, tc.service, tc.kind, tc.urn, tc.arn)
 			assert.EqualValues(t, tc.expected, tc.span)
 		})
 	}
 }
 
 func TestRetrieveValidSpanMeta(t *testing.T) {
-	validData, validOk := RetrieveValidSpanMeta(&pb.Span{
-		Meta: map[string]string{
-			"extra-item-a": "value-a",
-			"extra-item-b": "value-b",
-		},
-	}, "Valid Data", "extra-item-a")
+	validData, validOk := GetSpanMeta(
+		"Valid Data", &pb.Span{
+			Meta: map[string]string{
+				"extra-item-a": "value-a",
+				"extra-item-b": "value-b",
+			},
+		}, "extra-item-a",
+	)
 
 	assert.EqualValues(t, "value-a", *validData)
 	assert.EqualValues(t, true, validOk)
 
-	invalidData, invalidOk := RetrieveValidSpanMeta(&pb.Span{
-		Meta: map[string]string{
-			"extra-item-a": "value-a",
-			"extra-item-b": "value-b",
-		},
-	}, "Invalid Data", "extra-item-c")
+	invalidData, invalidOk := GetSpanMeta(
+		"Invalid Data",
+		&pb.Span{
+			Meta: map[string]string{
+				"extra-item-a": "value-a",
+				"extra-item-b": "value-b",
+			},
+		}, "extra-item-c",
+	)
 
 	assert.Nil(t, invalidData)
 	assert.EqualValues(t, false, invalidOk)
@@ -151,7 +156,7 @@ func TestInterpretHTTPError(t *testing.T) {
 			"extra-item-b": "value-b",
 		},
 	}
-	InterpretHTTPError(&span)
+	InterpretSpanHTTPError(&span)
 	assert.EqualValues(t, pb.Span{
 		Meta: map[string]string{
 			"extra-item-a": "value-a",
@@ -169,7 +174,7 @@ func TestInterpretHTTPError(t *testing.T) {
 			"extra-item-b": "value-b",
 		},
 	}
-	InterpretHTTPError(&spanWithError)
+	InterpretSpanHTTPError(&spanWithError)
 	assert.EqualValues(t, pb.Span{
 		Error: 404,
 		Meta: map[string]string{
