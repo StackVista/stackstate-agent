@@ -21,7 +21,7 @@ func InterpretBasedOnInstrumentationLibrary(span *pb.Span, source string) string
 			return instrumentationAwsSdk.ComposeInstrumentationIdentifier(span, source)
 
 		case instrumentationAwsLambda.InterpreterInstrumentationIdentifier:
-			return instrumentationAwsLambda.ComposeInstrumentationIdentifier()
+			return instrumentationAwsLambda.ComposeInstrumentationIdentifier(source)
 
 		case instrumentationHttp.InterpreterInstrumentationIdentifier:
 			return instrumentationHttp.ComposeInstrumentationIdentifier()
