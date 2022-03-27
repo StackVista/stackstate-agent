@@ -10,8 +10,8 @@ import (
 )
 
 func BenchmarkDetermineInstrumentationSuccessFromHTTP(b *testing.B) {
-	var traceId = []byte("YZ0T8B2Ll8IIzMv3EfFIqQ==")
-	var xRayParentSpanId = []byte("X-Ray-Y3OrG+/srMM=")
+	var traceID = []byte("YZ0T8B2Ll8IIzMv3EfFIqQ==")
+	var xRayParentSpanID = []byte("X-Ray-Y3OrG+/srMM=")
 
 	instrumentationStackStateLibrary := v1.InstrumentationLibrarySpans{
 		InstrumentationLibrary: &v11.InstrumentationLibrary{
@@ -20,9 +20,9 @@ func BenchmarkDetermineInstrumentationSuccessFromHTTP(b *testing.B) {
 		},
 		Spans: []*v1.Span{
 			{
-				TraceId:           traceId,
+				TraceId:           traceID,
 				SpanId:            []byte("random-custom-id-1"),
-				ParentSpanId:      xRayParentSpanId,
+				ParentSpanId:      xRayParentSpanID,
 				Name:              "My Custom Name",
 				Kind:              4,
 				StartTimeUnixNano: 1637684210743088640,
@@ -80,9 +80,9 @@ func BenchmarkDetermineInstrumentationSuccessFromHTTP(b *testing.B) {
 		},
 		Spans: []*v1.Span{
 			{
-				TraceId:           traceId,
+				TraceId:           traceID,
 				SpanId:            []byte("aws-sdk-sqs"),
-				ParentSpanId:      xRayParentSpanId,
+				ParentSpanId:      xRayParentSpanID,
 				Name:              "SQS",
 				Kind:              4,
 				StartTimeUnixNano: 1637684210743088640,
@@ -116,9 +116,9 @@ func BenchmarkDetermineInstrumentationSuccessFromHTTP(b *testing.B) {
 		},
 		Spans: []*v1.Span{
 			{
-				TraceId:           traceId,
+				TraceId:           traceID,
 				SpanId:            []byte("other-library-sqs"),
-				ParentSpanId:      xRayParentSpanId,
+				ParentSpanId:      xRayParentSpanID,
 				Name:              "SQS",
 				Kind:              4,
 				StartTimeUnixNano: 1637684210743088640,
@@ -144,7 +144,7 @@ func BenchmarkDetermineInstrumentationSuccessFromHTTP(b *testing.B) {
 		},
 		Spans: []*v1.Span{
 			{
-				TraceId:           traceId,
+				TraceId:           traceID,
 				SpanId:            []byte("instrumentation-http-post-1"),
 				ParentSpanId:      []byte("aws-sdk-sqs"),
 				Name:              "HTTP POST - SQS PARENT",
@@ -187,9 +187,9 @@ func BenchmarkDetermineInstrumentationSuccessFromHTTP(b *testing.B) {
 				},
 			},
 			{
-				TraceId:           traceId,
+				TraceId:           traceID,
 				SpanId:            []byte("instrumentation-http-put-1"),
-				ParentSpanId:      xRayParentSpanId,
+				ParentSpanId:      xRayParentSpanID,
 				Name:              "HTTPS PUT - XRAY PARENT",
 				Kind:              3,
 				StartTimeUnixNano: 1637684210743088640,
@@ -230,7 +230,7 @@ func BenchmarkDetermineInstrumentationSuccessFromHTTP(b *testing.B) {
 				},
 			},
 			{
-				TraceId:           traceId,
+				TraceId:           traceID,
 				SpanId:            []byte("instrumentation-http-post-2"),
 				ParentSpanId:      []byte("random-custom-id-1"),
 				Name:              "HTTP POST - STACKSTATE CUSTOM METRIC",
