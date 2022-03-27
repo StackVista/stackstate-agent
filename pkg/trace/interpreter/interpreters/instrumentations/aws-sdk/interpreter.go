@@ -13,10 +13,10 @@ import (
 // https://www.npmjs.com/package/@opentelemetry/instrumentation-aws-sdk
 var InstrumentationIdentifier = "@opentelemetry/instrumentation-aws-sdk"
 
-// InterpretBuilderForAwsSdkinstrumentation Mapping for modules used within the Instrumentation library
+// InterpretBuilderForAwsSdkInstrumentation Mapping for modules used within the Instrumentation library
 // Modules are basically sub parts that have certain functionality. Based on that functionality different context
 // values needs to be mapped to be part of the span response
-func InterpretBuilderForAwsSdkinstrumentation(span *pb.Span, source string) string {
+func InterpretBuilderForAwsSdkInstrumentation(span *pb.Span, source string) string {
 	serviceIdentifier := span.Meta["aws.service.identifier"]
 
 	fmt.Printf("AWS SDK ----------> %s\n", serviceIdentifier)

@@ -19,7 +19,7 @@ func InterpretBasedOnInstrumentationLibrary(span *pb.Span, source string) string
 	switch instrumentationLibrary {
 	// @opentelemetry/instrumentation-aws-lambda
 	case awsLambdaInstrumentation.InstrumentationIdentifier:
-		return awsLambdaInstrumentation.InterpretBuilderForAwsLambdainstrumentation()
+		return awsLambdaInstrumentation.InterpretBuilderForAwsLambdaInstrumentation()
 
 	// @opentelemetry/instrumentation-http
 	case httpInstrumentation.InstrumentationIdentifier:
@@ -27,11 +27,11 @@ func InterpretBasedOnInstrumentationLibrary(span *pb.Span, source string) string
 
 	// @opentelemetry/instrumentation-aws-sdk
 	case awsSdkInstrumentation.InstrumentationIdentifier:
-		return awsSdkInstrumentation.InterpretBuilderForAwsSdkinstrumentation(span, source)
+		return awsSdkInstrumentation.InterpretBuilderForAwsSdkInstrumentation(span, source)
 
 	// @opentelemetry/instrumentation-stackstate
 	case stackStateInstrumentation.InstrumentationIdentifier:
-		return stackStateInstrumentation.InterpretBuilderForStackStateinstrumentation()
+		return stackStateInstrumentation.InterpretBuilderForStackStateInstrumentation()
 
 	default:
 		log.Debugf("[OTEL] [INSTRUMENTATION] Unknown instrumentation library: %s. Routing required within the InterpretBasedOnInstrumentationLibrary function", instrumentationLibrary)

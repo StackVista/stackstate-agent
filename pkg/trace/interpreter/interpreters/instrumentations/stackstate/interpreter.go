@@ -12,10 +12,10 @@ import (
 // External link for this does not exist yet and might only be internal mappings
 var InstrumentationIdentifier = "@opentelemetry/instrumentation-stackstate"
 
-// InterpretBuilderForStackStateinstrumentation Mapping for modules used within the Instrumentation library
+// InterpretBuilderForStackStateInstrumentation Mapping for modules used within the Instrumentation library
 // Modules are basically sub parts that have certain functionality. Based on that functionality different context
 // values needs to be mapped to be part of the span response
-func InterpretBuilderForStackStateinstrumentation() string {
+func InterpretBuilderForStackStateInstrumentation() string {
 	// StackState Instrumentation has no sub routing as StackState is top level
 
 	stackStateInterpreterIdentifier := fmt.Sprintf("%s%s", api.OpenTelemetrySource, stackstateinstrumentationModules.OpenTelemetryStackStateServiceIdentifier)
