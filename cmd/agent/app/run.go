@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"runtime"
 	"syscall"
 
@@ -272,6 +273,8 @@ func StartAgent() error {
 
 	// [sts] init the batcher for topology production
 	batcher.InitBatcher(s, hostname, "agent", config.GetMaxCapacity())
+	// [sts] create the global check manager instance
+	common.CheckManager = check.MakeCheckManager()
 
 	// start dogstatsd
 	if config.Datadog.GetBool("use_dogstatsd") {
@@ -350,6 +353,12 @@ func StopAgent() {
 	if common.MetadataScheduler != nil {
 		common.MetadataScheduler.Stop()
 	}
+
+	// [sts] clear the check manager
+	if common.CheckManager != nil {
+		common.CheckManager.Clear()
+	}
+
 	api.StopServer()
 	clcrunnerapi.StopCLCRunnerServer()
 	jmx.StopJmxfetch()

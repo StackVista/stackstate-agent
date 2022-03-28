@@ -1,0 +1,128 @@
+package transactional
+
+import (
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/topology"
+)
+
+// TransactionalBatchBuilder
+type TransactionalBatchBuilder struct {
+	batchState *batcher.CheckInstanceBatchState
+	// Count the amount of elements we gathered
+	elementCount int
+	// Amount of elements when we flush
+	maxCapacity int
+}
+
+// MakeTransactionalBatchBuilder returns a instance of a TransactionalBatchBuilder
+func MakeTransactionalBatchBuilder(maxCapacity int) *TransactionalBatchBuilder {
+	return &TransactionalBatchBuilder{
+		batchState:   &batcher.CheckInstanceBatchState{},
+		elementCount: 0,
+		maxCapacity:  maxCapacity,
+	}
+}
+
+func (builder *TransactionalBatchBuilder) getOrCreateTopology(instance topology.Instance) *topology.Topology {
+	if builder.batchState.Topology != nil {
+		return builder.batchState.Topology
+	}
+
+	topology := &topology.Topology{
+		StartSnapshot: false,
+		StopSnapshot:  false,
+		Instance:      instance,
+		Components:    make([]topology.Component, 0),
+		Relations:     make([]topology.Relation, 0),
+	}
+	builder.batchState.Topology = topology
+	return topology
+}
+
+func (builder *TransactionalBatchBuilder) getOrCreateHealth(stream health.Stream) health.Health {
+	if builder.batchState.Health != nil {
+		if value, ok := builder.batchState.Health[stream.GoString()]; ok {
+			return value
+		}
+	} else {
+		builder.batchState.Health = map[string]health.Health{}
+	}
+
+	builder.batchState.Health[stream.GoString()] = health.Health{
+		StartSnapshot: nil,
+		StopSnapshot:  nil,
+		Stream:        stream,
+		CheckStates:   make([]health.CheckData, 0),
+	}
+
+	return builder.batchState.Health[stream.GoString()]
+}
+
+func (builder *TransactionalBatchBuilder) getOrCreateRawMetrics(checkID check.ID) *[]telemetry.RawMetrics {
+	if builder.batchState.Metrics != nil {
+		return builder.batchState.Metrics
+	}
+
+	builder.batchState.Metrics = &[]telemetry.RawMetrics{}
+
+	return builder.batchState.Metrics
+}
+
+// AddComponent adds a component
+func (builder *TransactionalBatchBuilder) AddComponent(instance topology.Instance, component topology.Component) *batcher.CheckInstanceBatchState {
+	topologyData := builder.getOrCreateTopology(instance)
+	topologyData.Components = append(topologyData.Components, component)
+	return builder.incrementAndTryFlush()
+}
+
+// AddRelation adds a relation
+func (builder *TransactionalBatchBuilder) AddRelation(instance topology.Instance, relation topology.Relation) *batcher.CheckInstanceBatchState {
+	topologyData := builder.getOrCreateTopology(instance)
+	topologyData.Relations = append(topologyData.Relations, relation)
+	return builder.incrementAndTryFlush()
+}
+
+// StartSnapshot starts a snapshot
+func (builder *TransactionalBatchBuilder) StartSnapshot(instance topology.Instance) *batcher.CheckInstanceBatchState {
+	topologyData := builder.getOrCreateTopology(instance)
+	topologyData.StartSnapshot = true
+	return builder.incrementAndTryFlush()
+}
+
+// StopSnapshot stops a snapshot. This will always flush
+func (builder *TransactionalBatchBuilder) StopSnapshot(instance topology.Instance) *batcher.CheckInstanceBatchState {
+	topologyData := builder.getOrCreateTopology(instance)
+	topologyData.StopSnapshot = true
+	// We always flush after a StopSnapshot to limit latency
+	return builder.Flush()
+}
+
+// Flush the collected data. Returning the data and wiping the current build up topology
+func (builder *TransactionalBatchBuilder) Flush() *batcher.CheckInstanceBatchState {
+	data := builder.batchState
+	builder.batchState = nil
+	builder.elementCount = 0
+	return data
+}
+
+func (builder *TransactionalBatchBuilder) incrementAndTryFlush() *batcher.CheckInstanceBatchState {
+	builder.elementCount = builder.elementCount + 1
+
+	if builder.elementCount >= builder.maxCapacity {
+		return builder.Flush()
+	}
+
+	return nil
+}
+
+// FlushIfDataProduced checks whether the check produced data, if so, flush
+func (builder *TransactionalBatchBuilder) FlushIfDataProduced(checkID check.ID) *batcher.CheckInstanceBatchState {
+	if builder.batchState != nil {
+		return builder.Flush()
+	}
+
+	return nil
+}

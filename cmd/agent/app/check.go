@@ -123,6 +123,8 @@ var checkCmd = &cobra.Command{
 
 		// [sts] init the batcher without the real serializer
 		batcher.InitBatcher(&printingAgentV1Serializer{}, hostname, "agent", config.GetMaxCapacity())
+		// [sts] create the global check manager instance
+		common.CheckManager = check.MakeCheckManager()
 
 		if config.Datadog.GetBool("inventories_enabled") {
 			metadata.SetupInventoriesExpvar(common.AC, common.Coll)

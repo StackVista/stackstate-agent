@@ -2,11 +2,9 @@ package batcher
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/serializer"
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"sync"
@@ -17,29 +15,6 @@ var (
 	batcherInit     sync.Once
 )
 
-// Batcher interface can receive data for sending to the intake and will accumulate the data in batches. This does
-// not work on a fixed schedule like the aggregator but flushes either when data exceeds a threshold, when
-// data is complete.
-type Batcher interface {
-	// Topology
-	SubmitComponent(checkID check.ID, instance topology.Instance, component topology.Component)
-	SubmitRelation(checkID check.ID, instance topology.Instance, relation topology.Relation)
-	SubmitStartSnapshot(checkID check.ID, instance topology.Instance)
-	SubmitStopSnapshot(checkID check.ID, instance topology.Instance)
-
-	// Health
-	SubmitHealthCheckData(checkID check.ID, stream health.Stream, data health.CheckData)
-	SubmitHealthStartSnapshot(checkID check.ID, stream health.Stream, intervalSeconds int, expirySeconds int)
-	SubmitHealthStopSnapshot(checkID check.ID, stream health.Stream)
-
-	// Raw Metrics
-	SubmitRawMetricsData(checkID check.ID, data telemetry.RawMetrics)
-
-	// lifecycle
-	SubmitComplete(checkID check.ID)
-	Shutdown()
-}
-
 // InitBatcher initializes the global batcher instance
 func InitBatcher(serializer serializer.AgentV1Serializer, hostname, agentName string, maxCapacity int) {
 	batcherInit.Do(func() {
@@ -49,11 +24,9 @@ func InitBatcher(serializer serializer.AgentV1Serializer, hostname, agentName st
 
 func newAsynchronousBatcher(serializer serializer.AgentV1Serializer, hostname, agentName string, maxCapacity int) AsynchronousBatcher {
 	batcher := AsynchronousBatcher{
-		builder:    NewBatchBuilder(maxCapacity),
-		hostname:   hostname,
-		agentName:  agentName,
-		input:      make(chan interface{}),
-		serializer: serializer,
+		BatcherBase: MakeBatcherBase(hostname, agentName, maxCapacity),
+		builder:     NewBatchBuilder(maxCapacity),
+		serializer:  serializer,
 	}
 	go batcher.run()
 	return batcher
@@ -73,62 +46,10 @@ func NewMockBatcher() MockBatcher {
 
 // AsynchronousBatcher is the implementation of the batcher. Works asynchronous. Publishes data to the serializer
 type AsynchronousBatcher struct {
-	builder             BatchBuilder
-	hostname, agentName string
-	input               chan interface{}
-	serializer          serializer.AgentV1Serializer
+	BatcherBase
+	builder    BatchBuilder
+	serializer serializer.AgentV1Serializer
 }
-
-type submitComponent struct {
-	checkID   check.ID
-	instance  topology.Instance
-	component topology.Component
-}
-
-type submitRelation struct {
-	checkID  check.ID
-	instance topology.Instance
-	relation topology.Relation
-}
-
-type submitStartSnapshot struct {
-	checkID  check.ID
-	instance topology.Instance
-}
-
-type submitStopSnapshot struct {
-	checkID  check.ID
-	instance topology.Instance
-}
-
-type submitHealthCheckData struct {
-	checkID check.ID
-	stream  health.Stream
-	data    health.CheckData
-}
-
-type submitHealthStartSnapshot struct {
-	checkID         check.ID
-	stream          health.Stream
-	intervalSeconds int
-	expirySeconds   int
-}
-
-type submitHealthStopSnapshot struct {
-	checkID check.ID
-	stream  health.Stream
-}
-
-type submitRawMetricsData struct {
-	checkID check.ID
-	rawMetric telemetry.RawMetrics
-}
-
-type submitComplete struct {
-	checkID check.ID
-}
-
-type submitShutdown struct{}
 
 func (batcher *AsynchronousBatcher) sendState(states CheckInstanceBatchStates) {
 	if states != nil {
@@ -200,120 +121,33 @@ func (batcher *AsynchronousBatcher) sendState(states CheckInstanceBatchStates) {
 
 func (batcher *AsynchronousBatcher) run() {
 	for {
-		s := <-batcher.input
+		s := <-batcher.Input
 		switch submission := s.(type) {
-		case submitComponent:
-			batcher.sendState(batcher.builder.AddComponent(submission.checkID, submission.instance, submission.component))
-		case submitRelation:
+		case SubmitComponent:
+			batcher.sendState(batcher.builder.AddComponent(submission.checkID, submission.Instance, submission.Component))
+		case SubmitRelation:
 			batcher.sendState(batcher.builder.AddRelation(submission.checkID, submission.instance, submission.relation))
-		case submitStartSnapshot:
+		case SubmitStartSnapshot:
 			batcher.sendState(batcher.builder.TopologyStartSnapshot(submission.checkID, submission.instance))
-		case submitStopSnapshot:
+		case SubmitStopSnapshot:
 			batcher.sendState(batcher.builder.TopologyStopSnapshot(submission.checkID, submission.instance))
 
-		case submitHealthCheckData:
+		case SubmitHealthCheckData:
 			batcher.sendState(batcher.builder.AddHealthCheckData(submission.checkID, submission.stream, submission.data))
-		case submitHealthStartSnapshot:
+		case SubmitHealthStartSnapshot:
 			batcher.sendState(batcher.builder.HealthStartSnapshot(submission.checkID, submission.stream, submission.intervalSeconds, submission.expirySeconds))
-		case submitHealthStopSnapshot:
+		case SubmitHealthStopSnapshot:
 			batcher.sendState(batcher.builder.HealthStopSnapshot(submission.checkID, submission.stream))
 
-		case submitRawMetricsData:
+		case SubmitRawMetricsData:
 			batcher.sendState(batcher.builder.AddRawMetricsData(submission.checkID, submission.rawMetric))
 
-		case submitComplete:
+		case SubmitComplete:
 			batcher.sendState(batcher.builder.FlushIfDataProduced(submission.checkID))
-		case submitShutdown:
+		case SubmitShutdown:
 			return
 		default:
 			panic(fmt.Sprint("Unknown submission type"))
 		}
 	}
-}
-
-// SubmitComponent submits a component to the batch
-func (batcher AsynchronousBatcher) SubmitComponent(checkID check.ID, instance topology.Instance, component topology.Component) {
-	batcher.input <- submitComponent{
-		checkID:   checkID,
-		instance:  instance,
-		component: component,
-	}
-}
-
-// SubmitRelation submits a relation to the batch
-func (batcher AsynchronousBatcher) SubmitRelation(checkID check.ID, instance topology.Instance, relation topology.Relation) {
-	batcher.input <- submitRelation{
-		checkID:  checkID,
-		instance: instance,
-		relation: relation,
-	}
-}
-
-// SubmitStartSnapshot submits start of a snapshot
-func (batcher AsynchronousBatcher) SubmitStartSnapshot(checkID check.ID, instance topology.Instance) {
-	batcher.input <- submitStartSnapshot{
-		checkID:  checkID,
-		instance: instance,
-	}
-}
-
-// SubmitStopSnapshot submits a stop of a snapshot. This always causes a flush of the data downstream
-func (batcher AsynchronousBatcher) SubmitStopSnapshot(checkID check.ID, instance topology.Instance) {
-	batcher.input <- submitStopSnapshot{
-		checkID:  checkID,
-		instance: instance,
-	}
-}
-
-// SubmitHealthCheckData submits a Health check data record to the batch
-func (batcher AsynchronousBatcher) SubmitHealthCheckData(checkID check.ID, stream health.Stream, data health.CheckData) {
-	log.Debugf("Submitting Health check data for check [%s] stream [%s]: %s", checkID, stream.GoString(), data.JSONString())
-	batcher.input <- submitHealthCheckData{
-		checkID: checkID,
-		stream:  stream,
-		data:    data,
-	}
-}
-
-// SubmitHealthStartSnapshot submits start of a Health snapshot
-func (batcher AsynchronousBatcher) SubmitHealthStartSnapshot(checkID check.ID, stream health.Stream, intervalSeconds int, expirySeconds int) {
-	batcher.input <- submitHealthStartSnapshot{
-		checkID:         checkID,
-		stream:          stream,
-		intervalSeconds: intervalSeconds,
-		expirySeconds:   expirySeconds,
-	}
-}
-
-// SubmitHealthStopSnapshot submits a stop of a Health snapshot. This always causes a flush of the data downstream
-func (batcher AsynchronousBatcher) SubmitHealthStopSnapshot(checkID check.ID, stream health.Stream) {
-	batcher.input <- submitHealthStopSnapshot{
-		checkID: checkID,
-		stream:  stream,
-	}
-}
-
-// SubmitRawMetricsData submits a raw metrics data record to the batch
-func (batcher AsynchronousBatcher) SubmitRawMetricsData(checkID check.ID, rawMetric telemetry.RawMetrics) {
-	if rawMetric.HostName == "" {
-		rawMetric.HostName = batcher.hostname
-	}
-
-	batcher.input <- submitRawMetricsData{
-		checkID: checkID,
-		rawMetric: rawMetric,
-	}
-}
-
-// SubmitComplete signals completion of a check. May trigger a flush only if the check produced data
-func (batcher AsynchronousBatcher) SubmitComplete(checkID check.ID) {
-	log.Debugf("Submitting complete for check [%s]", checkID)
-	batcher.input <- submitComplete{
-		checkID: checkID,
-	}
-}
-
-// Shutdown shuts down the batcher
-func (batcher AsynchronousBatcher) Shutdown() {
-	batcher.input <- submitShutdown{}
 }

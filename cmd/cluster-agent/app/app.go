@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package app
@@ -185,6 +186,8 @@ func start(cmd *cobra.Command, args []string) error {
 
 	// [sts] init the batcher for topology production
 	batcher.InitBatcher(s, hostname, "agent", config.GetMaxCapacity())
+	// [sts] create the global check manager instance
+	common.CheckManager = check.MakeCheckManager()
 
 	log.Infof("Datadog Cluster Agent is now running.")
 

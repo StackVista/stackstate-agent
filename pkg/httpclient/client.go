@@ -48,24 +48,39 @@ type ClientHost struct {
 	SkipSSLValidation bool
 }
 
+// RetryableHTTPClient describes the functionality of a http client with retries and backoff
+type RetryableHTTPClient interface {
+	Get(path string) *HTTPResponse
+	GetWithRetry(path string, retryInterval time.Duration, retryCount int) *HTTPResponse
+	Put(path string, body []byte) *HTTPResponse
+	PutWithRetry(path string, body []byte, retryInterval time.Duration, retryCount int) *HTTPResponse
+	Post(path string, body []byte) *HTTPResponse
+	PostWithRetry(path string, body []byte, retryInterval time.Duration, retryCount int) *HTTPResponse
+}
+
 // RetryableHTTPClient creates a http client to communicate to StackState
-type RetryableHTTPClient struct {
+type retryableHTTPClient struct {
 	*ClientHost
 	*http.Client
 	mux sync.Mutex
 }
 
+// StackStateClient creates a wrapper around the RetryableHTTPClient that is used for communication with StackState over http(s)
+type StackStateClient struct {
+	RetryableHTTPClient
+}
+
 // NewStackStateClient returns a RetryableHTTPClient containing a http.Client configured with the Agent options.
-func NewStackStateClient() *RetryableHTTPClient {
-	return retryableHTTPClient("sts_url")
+func NewStackStateClient() *StackStateClient {
+	return &StackStateClient{NewHTTPClient("sts_url")}
 }
 
 // NewHTTPClient returns a RetryableHTTPClient containing a http.Client configured with the Agent options.
-func NewHTTPClient(baseURLConfigKey string) *RetryableHTTPClient {
-	return retryableHTTPClient(baseURLConfigKey)
+func NewHTTPClient(baseURLConfigKey string) RetryableHTTPClient {
+	return makeRetryableHTTPClient(baseURLConfigKey)
 }
 
-func retryableHTTPClient(baseURLConfigKey string) *RetryableHTTPClient {
+func makeRetryableHTTPClient(baseURLConfigKey string) RetryableHTTPClient {
 	host := &ClientHost{}
 	if hostURL := config.Datadog.GetString(baseURLConfigKey); hostURL != "" {
 		host.Host = hostURL
@@ -92,7 +107,7 @@ func retryableHTTPClient(baseURLConfigKey string) *RetryableHTTPClient {
 		host.SkipSSLValidation = config.Datadog.GetBool("skip_ssl_validation")
 	}
 
-	return &RetryableHTTPClient{
+	return &retryableHTTPClient{
 		ClientHost: host,
 		Client:     newClient(host),
 	}
@@ -119,36 +134,36 @@ func newClient(host *ClientHost) *http.Client {
 }
 
 // Get performs a GET request to some path
-func (rc *RetryableHTTPClient) Get(path string) *HTTPResponse {
+func (rc *retryableHTTPClient) Get(path string) *HTTPResponse {
 	return rc.requestRetryHandler(GET, path, nil, 5*time.Second, 5)
 }
 
 // GetWithRetry performs a GET request to some path with a set retry interval and count
-func (rc *RetryableHTTPClient) GetWithRetry(path string, retryInterval time.Duration, retryCount int) *HTTPResponse {
+func (rc *retryableHTTPClient) GetWithRetry(path string, retryInterval time.Duration, retryCount int) *HTTPResponse {
 	return rc.requestRetryHandler(GET, path, nil, retryInterval, retryCount)
 }
 
 // Put performs a PUT request to some path
-func (rc *RetryableHTTPClient) Put(path string, body []byte) *HTTPResponse {
+func (rc *retryableHTTPClient) Put(path string, body []byte) *HTTPResponse {
 	return rc.requestRetryHandler(PUT, path, body, 5*time.Second, 5)
 }
 
 // PutWithRetry performs a PUT request to some path with a set retry interval and count
-func (rc *RetryableHTTPClient) PutWithRetry(path string, body []byte, retryInterval time.Duration, retryCount int) *HTTPResponse {
+func (rc *retryableHTTPClient) PutWithRetry(path string, body []byte, retryInterval time.Duration, retryCount int) *HTTPResponse {
 	return rc.requestRetryHandler(PUT, path, body, retryInterval, retryCount)
 }
 
 // Post performs a POST request to some path
-func (rc *RetryableHTTPClient) Post(path string, body []byte) *HTTPResponse {
+func (rc *retryableHTTPClient) Post(path string, body []byte) *HTTPResponse {
 	return rc.requestRetryHandler(POST, path, body, 5*time.Second, 5)
 }
 
 // PostWithRetry performs a POST request to some path with a set retry interval and count
-func (rc *RetryableHTTPClient) PostWithRetry(path string, body []byte, retryInterval time.Duration, retryCount int) *HTTPResponse {
+func (rc *retryableHTTPClient) PostWithRetry(path string, body []byte, retryInterval time.Duration, retryCount int) *HTTPResponse {
 	return rc.requestRetryHandler(POST, path, body, retryInterval, retryCount)
 }
 
-func (rc *RetryableHTTPClient) requestRetryHandler(method, path string, body []byte, retryInterval time.Duration, retryCount int) *HTTPResponse {
+func (rc *retryableHTTPClient) requestRetryHandler(method, path string, body []byte, retryInterval time.Duration, retryCount int) *HTTPResponse {
 	retryTicker := time.NewTicker(retryInterval)
 	retriesLeft := retryCount
 	responseChan := make(chan *HTTPResponse, 1)
@@ -184,7 +199,7 @@ func (rc *RetryableHTTPClient) requestRetryHandler(method, path string, body []b
 }
 
 // getSupportedFeatures returns the features supported by the StackState API
-func (rc *RetryableHTTPClient) handleRequest(method, path string, body []byte, retriesLeft int, responseChan chan *HTTPResponse) {
+func (rc *retryableHTTPClient) handleRequest(method, path string, body []byte, retriesLeft int, responseChan chan *HTTPResponse) {
 	rc.mux.Lock()
 	// Lock so only one goroutine at a time can access the map
 	if retriesLeft == 0 {
@@ -222,7 +237,7 @@ func (rc *RetryableHTTPClient) handleRequest(method, path string, body []byte, r
 }
 
 // makeRequest
-func (rc *RetryableHTTPClient) makeRequest(method, path string, body []byte) (*http.Response, error) {
+func (rc *retryableHTTPClient) makeRequest(method, path string, body []byte) (*http.Response, error) {
 	url := fmt.Sprintf("%s/%s", rc.Host, path)
 	var req *http.Request
 	var err error
@@ -259,7 +274,7 @@ func (rc *RetryableHTTPClient) makeRequest(method, path string, body []byte) (*h
 }
 
 // IsTimeout returns true if the error is due to reaching the timeout limit on the http.client
-func (rc *RetryableHTTPClient) isHTTPTimeout(err error) bool {
+func (rc *retryableHTTPClient) isHTTPTimeout(err error) bool {
 	if netErr, ok := err.(interface {
 		Timeout() bool
 	}); ok && netErr.Timeout() {
