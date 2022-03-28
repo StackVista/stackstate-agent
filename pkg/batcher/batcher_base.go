@@ -94,14 +94,14 @@ type SubmitShutdown struct{}
 
 // BatcherBase contains the base functionality of a batcher that can be extending with additional functionality
 type BatcherBase struct {
-	hostname, agentName string
+	Hostname, agentName string
 	Input               chan interface{}
 }
 
 // MakeBatcherBase creates a batcher base instance
 func MakeBatcherBase(hostname, agentName string, maxCapacity int) BatcherBase {
 	return BatcherBase{
-		hostname:  hostname,
+		Hostname:  hostname,
 		agentName: agentName,
 		Input:     make(chan interface{}, maxCapacity),
 	}
@@ -172,7 +172,7 @@ func (batcher BatcherBase) SubmitHealthStopSnapshot(checkID check.ID, stream hea
 // SubmitRawMetricsData submits a raw metrics data record to the batch
 func (batcher BatcherBase) SubmitRawMetricsData(checkID check.ID, rawMetric telemetry.RawMetrics) {
 	if rawMetric.HostName == "" {
-		rawMetric.HostName = batcher.hostname
+		rawMetric.HostName = batcher.Hostname
 	}
 
 	batcher.Input <- SubmitRawMetricsData{

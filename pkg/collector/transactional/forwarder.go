@@ -18,71 +18,75 @@ type Response struct {
 	Err        error
 }
 
-// TransactionalForwarder is a forwarder that works in transactional manner
-type TransactionalForwarder struct {
+// Forwarder is a forwarder that works in transactional manner
+type Forwarder struct {
 	stsClient *httpclient.StackStateClient
 }
 
-func MakeTransactionalForwarder() *TransactionalForwarder {
-	return &TransactionalForwarder{stsClient: httpclient.NewStackStateClient()}
+func MakeForwarder() *Forwarder {
+	return &Forwarder{stsClient: httpclient.NewStackStateClient()}
 }
 
 // Start initialize and runs the transactional forwarder.
-func (f *TransactionalForwarder) Start() error {
-
-	return nil
+func (f *Forwarder) Start() error {
+	for {
+		// handling high priority transactions first
+		select {
+		default:
+		}
+	}
 }
 
 // Stop stops running the transactional forwarder.
-func (f *TransactionalForwarder) Stop() error {
+func (f *Forwarder) Stop() error {
 
 	return nil
 }
 
-func (f *TransactionalForwarder) SubmitV1Intake(payload Payloads, extra http.Header) error {
+func (f *Forwarder) SubmitV1Intake(payload Payloads, extra http.Header) error {
 	return errors.New("NotImplemented")
 }
 
-func (f *TransactionalForwarder) SubmitV1Series(payload Payloads, extra http.Header) error {
+func (f *Forwarder) SubmitV1Series(payload Payloads, extra http.Header) error {
 	return errors.New("NotImplemented")
 }
 
-func (f *TransactionalForwarder) SubmitV1CheckRuns(payload Payloads, extra http.Header) error {
+func (f *Forwarder) SubmitV1CheckRuns(payload Payloads, extra http.Header) error {
 	return errors.New("NotImplemented")
 }
-func (f *TransactionalForwarder) SubmitSeries(payload Payloads, extra http.Header) error {
+func (f *Forwarder) SubmitSeries(payload Payloads, extra http.Header) error {
 	return errors.New("NotImplemented")
 }
-func (f *TransactionalForwarder) SubmitEvents(payload Payloads, extra http.Header) error {
+func (f *Forwarder) SubmitEvents(payload Payloads, extra http.Header) error {
 	return errors.New("NotImplemented")
 }
-func (f *TransactionalForwarder) SubmitServiceChecks(payload Payloads, extra http.Header) error {
+func (f *Forwarder) SubmitServiceChecks(payload Payloads, extra http.Header) error {
 	return errors.New("NotImplemented")
 }
-func (f *TransactionalForwarder) SubmitSketchSeries(payload Payloads, extra http.Header) error {
+func (f *Forwarder) SubmitSketchSeries(payload Payloads, extra http.Header) error {
 	return errors.New("NotImplemented")
 }
-func (f *TransactionalForwarder) SubmitHostMetadata(payload Payloads, extra http.Header) error {
+func (f *Forwarder) SubmitHostMetadata(payload Payloads, extra http.Header) error {
 	return errors.New("NotImplemented")
 }
-func (f *TransactionalForwarder) SubmitMetadata(payload Payloads, extra http.Header) error {
+func (f *Forwarder) SubmitMetadata(payload Payloads, extra http.Header) error {
 	return errors.New("NotImplemented")
 }
-func (f *TransactionalForwarder) SubmitProcessChecks(payload Payloads, extra http.Header) (chan Response, error) {
+func (f *Forwarder) SubmitProcessChecks(payload Payloads, extra http.Header) (chan Response, error) {
 	return nil, errors.New("NotImplemented")
 }
-func (f *TransactionalForwarder) SubmitRTProcessChecks(payload Payloads, extra http.Header) (chan Response, error) {
+func (f *Forwarder) SubmitRTProcessChecks(payload Payloads, extra http.Header) (chan Response, error) {
 	return nil, errors.New("NotImplemented")
 }
-func (f *TransactionalForwarder) SubmitContainerChecks(payload Payloads, extra http.Header) (chan Response, error) {
+func (f *Forwarder) SubmitContainerChecks(payload Payloads, extra http.Header) (chan Response, error) {
 	return nil, errors.New("NotImplemented")
 }
-func (f *TransactionalForwarder) SubmitRTContainerChecks(payload Payloads, extra http.Header) (chan Response, error) {
+func (f *Forwarder) SubmitRTContainerChecks(payload Payloads, extra http.Header) (chan Response, error) {
 	return nil, errors.New("NotImplemented")
 }
-func (f *TransactionalForwarder) SubmitConnectionChecks(payload Payloads, extra http.Header) (chan Response, error) {
+func (f *Forwarder) SubmitConnectionChecks(payload Payloads, extra http.Header) (chan Response, error) {
 	return nil, errors.New("NotImplemented")
 }
-func (f *TransactionalForwarder) SubmitPodChecks(payload Payloads, extra http.Header) (chan Response, error) {
+func (f *Forwarder) SubmitPodChecks(payload Payloads, extra http.Header) (chan Response, error) {
 	return nil, errors.New("NotImplemented")
 }

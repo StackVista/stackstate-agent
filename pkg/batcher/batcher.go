@@ -81,7 +81,7 @@ func (batcher *AsynchronousBatcher) sendState(states CheckInstanceBatchStates) {
 		}
 
 		payload := map[string]interface{}{
-			"internalHostname": batcher.hostname,
+			"internalHostname": batcher.Hostname,
 			"topologies":       topologies,
 			"health":           healthData,
 			"metrics":          rawMetrics,
@@ -124,26 +124,26 @@ func (batcher *AsynchronousBatcher) run() {
 		s := <-batcher.Input
 		switch submission := s.(type) {
 		case SubmitComponent:
-			batcher.sendState(batcher.builder.AddComponent(submission.checkID, submission.Instance, submission.Component))
+			batcher.sendState(batcher.builder.AddComponent(submission.CheckID, submission.Instance, submission.Component))
 		case SubmitRelation:
-			batcher.sendState(batcher.builder.AddRelation(submission.checkID, submission.instance, submission.relation))
+			batcher.sendState(batcher.builder.AddRelation(submission.CheckID, submission.Instance, submission.Relation))
 		case SubmitStartSnapshot:
-			batcher.sendState(batcher.builder.TopologyStartSnapshot(submission.checkID, submission.instance))
+			batcher.sendState(batcher.builder.TopologyStartSnapshot(submission.CheckID, submission.Instance))
 		case SubmitStopSnapshot:
-			batcher.sendState(batcher.builder.TopologyStopSnapshot(submission.checkID, submission.instance))
+			batcher.sendState(batcher.builder.TopologyStopSnapshot(submission.CheckID, submission.Instance))
 
 		case SubmitHealthCheckData:
-			batcher.sendState(batcher.builder.AddHealthCheckData(submission.checkID, submission.stream, submission.data))
+			batcher.sendState(batcher.builder.AddHealthCheckData(submission.CheckID, submission.Stream, submission.Data))
 		case SubmitHealthStartSnapshot:
-			batcher.sendState(batcher.builder.HealthStartSnapshot(submission.checkID, submission.stream, submission.intervalSeconds, submission.expirySeconds))
+			batcher.sendState(batcher.builder.HealthStartSnapshot(submission.CheckID, submission.Stream, submission.IntervalSeconds, submission.ExpirySeconds))
 		case SubmitHealthStopSnapshot:
-			batcher.sendState(batcher.builder.HealthStopSnapshot(submission.checkID, submission.stream))
+			batcher.sendState(batcher.builder.HealthStopSnapshot(submission.CheckID, submission.Stream))
 
 		case SubmitRawMetricsData:
-			batcher.sendState(batcher.builder.AddRawMetricsData(submission.checkID, submission.rawMetric))
+			batcher.sendState(batcher.builder.AddRawMetricsData(submission.CheckID, submission.RawMetric))
 
 		case SubmitComplete:
-			batcher.sendState(batcher.builder.FlushIfDataProduced(submission.checkID))
+			batcher.sendState(batcher.builder.FlushIfDataProduced(submission.CheckID))
 		case SubmitShutdown:
 			return
 		default:

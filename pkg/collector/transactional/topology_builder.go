@@ -2,13 +2,12 @@ package transactional
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 )
 
-// TransactionalBatchBuilder
+// TransactionalBatchBuilder builds topology for a check instance
 type TransactionalBatchBuilder struct {
 	batchState *batcher.CheckInstanceBatchState
 	// Count the amount of elements we gathered
@@ -31,15 +30,15 @@ func (builder *TransactionalBatchBuilder) getOrCreateTopology(instance topology.
 		return builder.batchState.Topology
 	}
 
-	topology := &topology.Topology{
+	topo := &topology.Topology{
 		StartSnapshot: false,
 		StopSnapshot:  false,
 		Instance:      instance,
 		Components:    make([]topology.Component, 0),
 		Relations:     make([]topology.Relation, 0),
 	}
-	builder.batchState.Topology = topology
-	return topology
+	builder.batchState.Topology = topo
+	return topo
 }
 
 func (builder *TransactionalBatchBuilder) getOrCreateHealth(stream health.Stream) health.Health {
@@ -61,7 +60,7 @@ func (builder *TransactionalBatchBuilder) getOrCreateHealth(stream health.Stream
 	return builder.batchState.Health[stream.GoString()]
 }
 
-func (builder *TransactionalBatchBuilder) getOrCreateRawMetrics(checkID check.ID) *[]telemetry.RawMetrics {
+func (builder *TransactionalBatchBuilder) getOrCreateRawMetrics() *[]telemetry.RawMetrics {
 	if builder.batchState.Metrics != nil {
 		return builder.batchState.Metrics
 	}
@@ -100,6 +99,41 @@ func (builder *TransactionalBatchBuilder) StopSnapshot(instance topology.Instanc
 	return builder.Flush()
 }
 
+// AddHealthCheckData adds a component
+func (builder *TransactionalBatchBuilder) AddHealthCheckData(stream health.Stream, data health.CheckData) *batcher.CheckInstanceBatchState {
+	healthData := builder.getOrCreateHealth(stream)
+	healthData.CheckStates = append(healthData.CheckStates, data)
+	builder.batchState.Health[stream.GoString()] = healthData
+	return builder.incrementAndTryFlush()
+}
+
+// HealthStartSnapshot starts a Health snapshot
+func (builder *TransactionalBatchBuilder) HealthStartSnapshot(stream health.Stream, repeatIntervalSeconds int, expirySeconds int) *batcher.CheckInstanceBatchState {
+	healthData := builder.getOrCreateHealth(stream)
+	healthData.StartSnapshot = &health.StartSnapshotMetadata{
+		RepeatIntervalS: repeatIntervalSeconds,
+		ExpiryIntervalS: expirySeconds,
+	}
+	builder.batchState.Health[stream.GoString()] = healthData
+	return nil
+}
+
+// HealthStopSnapshot stops a Health snapshot. This will always flush
+func (builder *TransactionalBatchBuilder) HealthStopSnapshot(stream health.Stream) *batcher.CheckInstanceBatchState {
+	healthData := builder.getOrCreateHealth(stream)
+	healthData.StopSnapshot = &health.StopSnapshotMetadata{}
+	builder.batchState.Health[stream.GoString()] = healthData
+	// We always flush after a TopologyStopSnapshot to limit latency
+	return builder.Flush()
+}
+
+// AddRawMetricsData adds raw metric data
+func (builder *TransactionalBatchBuilder) AddRawMetricsData(rawMetric telemetry.RawMetrics) *batcher.CheckInstanceBatchState {
+	rawMetricsData := builder.getOrCreateRawMetrics()
+	*rawMetricsData = append(*rawMetricsData, rawMetric)
+	return builder.incrementAndTryFlush()
+}
+
 // Flush the collected data. Returning the data and wiping the current build up topology
 func (builder *TransactionalBatchBuilder) Flush() *batcher.CheckInstanceBatchState {
 	data := builder.batchState
@@ -119,7 +153,7 @@ func (builder *TransactionalBatchBuilder) incrementAndTryFlush() *batcher.CheckI
 }
 
 // FlushIfDataProduced checks whether the check produced data, if so, flush
-func (builder *TransactionalBatchBuilder) FlushIfDataProduced(checkID check.ID) *batcher.CheckInstanceBatchState {
+func (builder *TransactionalBatchBuilder) FlushIfDataProduced() *batcher.CheckInstanceBatchState {
 	if builder.batchState != nil {
 		return builder.Flush()
 	}

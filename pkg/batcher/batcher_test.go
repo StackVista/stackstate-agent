@@ -46,7 +46,7 @@ var (
 	testRawMetricsData = telemetry.RawMetrics{
 		Name:      "name",
 		Timestamp: 1400000,
-		HostName:  "hostname",
+		HostName:  "Hostname",
 		Value:     200,
 		Tags: []string{
 			"foo",
@@ -56,7 +56,7 @@ var (
 	testRawMetricsData2 = telemetry.RawMetrics{
 		Name:      "name",
 		Timestamp: 1500000,
-		HostName:  "hostname",
+		HostName:  "Hostname",
 		Value:     100,
 		Tags: []string{
 			"hello",
@@ -64,7 +64,7 @@ var (
 		},
 	}
 
-	testRawMetricsDataIntakeMetric = testRawMetricsData.ConvertToIntakeMetric()
+	testRawMetricsDataIntakeMetric  = testRawMetricsData.ConvertToIntakeMetric()
 	testRawMetricsDataIntakeMetric2 = testRawMetricsData2.ConvertToIntakeMetric()
 )
 
@@ -318,7 +318,7 @@ func TestBatchFlushOnMaxRawMetricsElements(t *testing.T) {
 			"internalHostname": "myhost",
 			"topologies":       []topology.Topology{},
 			"health":           []health.Health{},
-			"metrics": 			[]interface{}{
+			"metrics": []interface{}{
 				testRawMetricsDataIntakeMetric, testRawMetricsDataIntakeMetric2},
 		})
 
