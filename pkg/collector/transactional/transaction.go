@@ -24,5 +24,6 @@ type Action struct {
 type IntakeTransaction struct {
 	TransactionID string
 	State         TransactionState
-	Actions       []Action
+	Actions       map[string]*Action
+	OnComplete    func(transaction *IntakeTransaction)
 }

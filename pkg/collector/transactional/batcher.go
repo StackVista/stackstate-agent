@@ -1,6 +1,7 @@
 package transactional
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
@@ -31,6 +32,7 @@ type CheckTransactionalBatcher struct {
 	CheckInstance check.ID
 	builder       TransactionalBatchBuilder
 	flushTicker   *time.Ticker
+	txManager     TransactionManager
 }
 
 // GetCheckInstance returns the check instance for this batcher
@@ -51,8 +53,18 @@ func (ctb *CheckTransactionalBatcher) listenForFlushTicker() {
 }
 
 // submitPayload submits the payload to the forwarder
-func (ctb *CheckTransactionalBatcher) submitPayload(payload map[string]interface{}) {
+func (ctb *CheckTransactionalBatcher) submitPayload(payload []byte, transactionID, actionID string) {
 
+}
+
+// marshallPayload submits the payload to the forwarder
+func (ctb *CheckTransactionalBatcher) marshallPayload(data map[string]interface{}) ([]byte, error) {
+	payload, err := json.Marshal(data)
+	if err != nil {
+		return nil, fmt.Errorf("could not serialize v1 payload: %s", err)
+	}
+
+	return payload, nil
 }
 
 // mapStateToPayload submits the payload to the forwarder
@@ -116,7 +128,7 @@ func (ctb *CheckTransactionalBatcher) mapStateToPayload(state *batcher.CheckInst
 // Start starts the transactional batcher
 func (ctb *CheckTransactionalBatcher) Start() {
 	for {
-		var state *batcher.CheckInstanceBatchState
+		var state *TxCheckInstanceBatchState
 		s := <-ctb.Input
 		switch submission := s.(type) {
 		case batcher.SubmitComponent:
@@ -143,7 +155,13 @@ func (ctb *CheckTransactionalBatcher) Start() {
 			panic(fmt.Sprint("Unknown submission type"))
 		}
 
-		ctb.mapStateToPayload(state)
+		data := ctb.mapStateToPayload(state.CheckInstanceBatchState)
+		_, err := ctb.marshallPayload(data)
+		if err != nil {
+			_ = log.Errorf("Marshall error in payload: %v", data)
+			//ctb.txManager.RollbackTransaction()
+		}
+
 	}
 }
 

@@ -7,9 +7,15 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 )
 
+// TxCheckInstanceBatchState is the type representing batched data per check instance
+type TxCheckInstanceBatchState struct {
+	*batcher.CheckInstanceBatchState
+	*IntakeTransaction
+}
+
 // TransactionalBatchBuilder builds topology for a check instance
 type TransactionalBatchBuilder struct {
-	batchState *batcher.CheckInstanceBatchState
+	batchState *TxCheckInstanceBatchState
 	// Count the amount of elements we gathered
 	elementCount int
 	// Amount of elements when we flush
@@ -19,7 +25,7 @@ type TransactionalBatchBuilder struct {
 // MakeTransactionalBatchBuilder returns a instance of a TransactionalBatchBuilder
 func MakeTransactionalBatchBuilder(maxCapacity int) *TransactionalBatchBuilder {
 	return &TransactionalBatchBuilder{
-		batchState:   &batcher.CheckInstanceBatchState{},
+		batchState:   &TxCheckInstanceBatchState{},
 		elementCount: 0,
 		maxCapacity:  maxCapacity,
 	}
@@ -71,28 +77,28 @@ func (builder *TransactionalBatchBuilder) getOrCreateRawMetrics() *[]telemetry.R
 }
 
 // AddComponent adds a component
-func (builder *TransactionalBatchBuilder) AddComponent(instance topology.Instance, component topology.Component) *batcher.CheckInstanceBatchState {
+func (builder *TransactionalBatchBuilder) AddComponent(instance topology.Instance, component topology.Component) *TxCheckInstanceBatchState {
 	topologyData := builder.getOrCreateTopology(instance)
 	topologyData.Components = append(topologyData.Components, component)
 	return builder.incrementAndTryFlush()
 }
 
 // AddRelation adds a relation
-func (builder *TransactionalBatchBuilder) AddRelation(instance topology.Instance, relation topology.Relation) *batcher.CheckInstanceBatchState {
+func (builder *TransactionalBatchBuilder) AddRelation(instance topology.Instance, relation topology.Relation) *TxCheckInstanceBatchState {
 	topologyData := builder.getOrCreateTopology(instance)
 	topologyData.Relations = append(topologyData.Relations, relation)
 	return builder.incrementAndTryFlush()
 }
 
 // StartSnapshot starts a snapshot
-func (builder *TransactionalBatchBuilder) StartSnapshot(instance topology.Instance) *batcher.CheckInstanceBatchState {
+func (builder *TransactionalBatchBuilder) StartSnapshot(instance topology.Instance) *TxCheckInstanceBatchState {
 	topologyData := builder.getOrCreateTopology(instance)
 	topologyData.StartSnapshot = true
 	return builder.incrementAndTryFlush()
 }
 
 // StopSnapshot stops a snapshot. This will always flush
-func (builder *TransactionalBatchBuilder) StopSnapshot(instance topology.Instance) *batcher.CheckInstanceBatchState {
+func (builder *TransactionalBatchBuilder) StopSnapshot(instance topology.Instance) *TxCheckInstanceBatchState {
 	topologyData := builder.getOrCreateTopology(instance)
 	topologyData.StopSnapshot = true
 	// We always flush after a StopSnapshot to limit latency
@@ -100,7 +106,7 @@ func (builder *TransactionalBatchBuilder) StopSnapshot(instance topology.Instanc
 }
 
 // AddHealthCheckData adds a component
-func (builder *TransactionalBatchBuilder) AddHealthCheckData(stream health.Stream, data health.CheckData) *batcher.CheckInstanceBatchState {
+func (builder *TransactionalBatchBuilder) AddHealthCheckData(stream health.Stream, data health.CheckData) *TxCheckInstanceBatchState {
 	healthData := builder.getOrCreateHealth(stream)
 	healthData.CheckStates = append(healthData.CheckStates, data)
 	builder.batchState.Health[stream.GoString()] = healthData
@@ -108,7 +114,7 @@ func (builder *TransactionalBatchBuilder) AddHealthCheckData(stream health.Strea
 }
 
 // HealthStartSnapshot starts a Health snapshot
-func (builder *TransactionalBatchBuilder) HealthStartSnapshot(stream health.Stream, repeatIntervalSeconds int, expirySeconds int) *batcher.CheckInstanceBatchState {
+func (builder *TransactionalBatchBuilder) HealthStartSnapshot(stream health.Stream, repeatIntervalSeconds int, expirySeconds int) *TxCheckInstanceBatchState {
 	healthData := builder.getOrCreateHealth(stream)
 	healthData.StartSnapshot = &health.StartSnapshotMetadata{
 		RepeatIntervalS: repeatIntervalSeconds,
@@ -119,7 +125,7 @@ func (builder *TransactionalBatchBuilder) HealthStartSnapshot(stream health.Stre
 }
 
 // HealthStopSnapshot stops a Health snapshot. This will always flush
-func (builder *TransactionalBatchBuilder) HealthStopSnapshot(stream health.Stream) *batcher.CheckInstanceBatchState {
+func (builder *TransactionalBatchBuilder) HealthStopSnapshot(stream health.Stream) *TxCheckInstanceBatchState {
 	healthData := builder.getOrCreateHealth(stream)
 	healthData.StopSnapshot = &health.StopSnapshotMetadata{}
 	builder.batchState.Health[stream.GoString()] = healthData
@@ -128,21 +134,21 @@ func (builder *TransactionalBatchBuilder) HealthStopSnapshot(stream health.Strea
 }
 
 // AddRawMetricsData adds raw metric data
-func (builder *TransactionalBatchBuilder) AddRawMetricsData(rawMetric telemetry.RawMetrics) *batcher.CheckInstanceBatchState {
+func (builder *TransactionalBatchBuilder) AddRawMetricsData(rawMetric telemetry.RawMetrics) *TxCheckInstanceBatchState {
 	rawMetricsData := builder.getOrCreateRawMetrics()
 	*rawMetricsData = append(*rawMetricsData, rawMetric)
 	return builder.incrementAndTryFlush()
 }
 
 // Flush the collected data. Returning the data and wiping the current build up topology
-func (builder *TransactionalBatchBuilder) Flush() *batcher.CheckInstanceBatchState {
+func (builder *TransactionalBatchBuilder) Flush() *TxCheckInstanceBatchState {
 	data := builder.batchState
 	builder.batchState = nil
 	builder.elementCount = 0
 	return data
 }
 
-func (builder *TransactionalBatchBuilder) incrementAndTryFlush() *batcher.CheckInstanceBatchState {
+func (builder *TransactionalBatchBuilder) incrementAndTryFlush() *TxCheckInstanceBatchState {
 	builder.elementCount = builder.elementCount + 1
 
 	if builder.elementCount >= builder.maxCapacity {
@@ -153,7 +159,7 @@ func (builder *TransactionalBatchBuilder) incrementAndTryFlush() *batcher.CheckI
 }
 
 // FlushIfDataProduced checks whether the check produced data, if so, flush
-func (builder *TransactionalBatchBuilder) FlushIfDataProduced() *batcher.CheckInstanceBatchState {
+func (builder *TransactionalBatchBuilder) FlushIfDataProduced() *TxCheckInstanceBatchState {
 	if builder.batchState != nil {
 		return builder.Flush()
 	}
