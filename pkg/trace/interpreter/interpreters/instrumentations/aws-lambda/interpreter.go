@@ -18,8 +18,5 @@ var InstrumentationIdentifier = "@opentelemetry/instrumentation-aws-lambda"
 func InterpretBuilderForAwsLambdaInstrumentation() string {
 	lambdaInterpreterIdentifier := fmt.Sprintf("%s%s", api.OpenTelemetrySource, modules.OpenTelemetryLambdaEntryServiceIdentifier)
 	log.Debugf("[OTEL] [INSTRUMENTATION-AWS-LAMBDA] Mapping service: %s", lambdaInterpreterIdentifier)
-
-	fmt.Printf("AWS Lambda ----------> %s\n", lambdaInterpreterIdentifier)
-
 	return lambdaInterpreterIdentifier
 }

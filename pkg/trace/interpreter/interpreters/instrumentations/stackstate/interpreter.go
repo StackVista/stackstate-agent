@@ -16,8 +16,6 @@ var InstrumentationIdentifier = "@opentelemetry/instrumentation-stackstate"
 // Modules are basically sub parts that have certain functionality. Based on that functionality different context
 // values needs to be mapped to be part of the span response
 func InterpretBuilderForStackStateInstrumentation() string {
-	// StackState Instrumentation has no sub routing as StackState is top level
-
 	stackStateInterpreterIdentifier := fmt.Sprintf("%s%s", api.OpenTelemetrySource, stackstateinstrumentationModules.OpenTelemetryStackStateServiceIdentifier)
 	log.Debugf("[OTEL] [STACKSTATE] Mapping service: %s", stackStateInterpreterIdentifier)
 	return stackStateInterpreterIdentifier

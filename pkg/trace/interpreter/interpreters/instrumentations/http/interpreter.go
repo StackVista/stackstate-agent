@@ -16,8 +16,6 @@ var InstrumentationIdentifier = "@opentelemetry/instrumentation-http"
 // Modules are basically sub parts that have certain functionality. Based on that functionality different context
 // values needs to be mapped to be part of the span response
 func InterpretBuilderForHTTPInstrumentation() string {
-	// HTTP Instrumentation has no sub routing as HTTP is top level
-
 	httpInterpreterIdentifier := fmt.Sprintf("%s%s", api.OpenTelemetrySource, httpinstrumentationModules.OpenTelemetryHTTPServiceIdentifier)
 	log.Debugf("[OTEL] [INSTRUMENTATION-HTTP] Mapping service: %s", httpInterpreterIdentifier)
 	return httpInterpreterIdentifier

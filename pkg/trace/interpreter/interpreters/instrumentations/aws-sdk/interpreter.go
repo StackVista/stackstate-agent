@@ -19,8 +19,6 @@ var InstrumentationIdentifier = "@opentelemetry/instrumentation-aws-sdk"
 func InterpretBuilderForAwsSdkInstrumentation(span *pb.Span, source string) string {
 	serviceIdentifier := span.Meta["aws.service.identifier"]
 
-	fmt.Printf("AWS SDK ----------> %s\n", serviceIdentifier)
-
 	// Mapping internal services that the instrumentation library uses to the correct modules inside the instrumentation
 	// Example of these submodules would be two services that has unique context that needs to be mapped to the span
 	// in a certain way, even the context data might be different per service

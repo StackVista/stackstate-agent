@@ -34,7 +34,7 @@ func InterpretBasedOnInstrumentationLibrary(span *pb.Span, source string) string
 		return stackStateInstrumentation.InterpretBuilderForStackStateInstrumentation()
 
 	default:
-		log.Debugf("[OTEL] [INSTRUMENTATION] Unknown instrumentation library: %s. Routing required within the InterpretBasedOnInstrumentationLibrary function", instrumentationLibrary)
+		log.Debugf("[OTEL] [INSTRUMENTATION] Unknown instrumentation library: %s.", instrumentationLibrary)
 	}
 
 	// If we do not find an instrumentation route then we return a blank value to drop the span value
