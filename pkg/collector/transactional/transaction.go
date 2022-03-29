@@ -15,15 +15,16 @@ const (
 // Action represents a single operation in a transaction, which consists of one or more actions
 type Action struct {
 	ActionID              string
-	Timestamp             time.Time
+	CommittedTimestamp    time.Time
 	Acknowledged          bool
 	AcknowledgedTimestamp time.Time
 }
 
 // IntakeTransaction represents an intake transaction which consists of one or more actions
 type IntakeTransaction struct {
-	TransactionID string
-	State         TransactionState
-	Actions       map[string]*Action
-	OnComplete    func(transaction *IntakeTransaction)
+	TransactionID        string
+	State                TransactionState
+	Actions              map[string]*Action
+	OnComplete           func(transaction *IntakeTransaction)
+	LastUpdatedTimestamp time.Time
 }

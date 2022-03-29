@@ -6,36 +6,82 @@ import (
 	"time"
 )
 
+type CommitAction struct {
+	txID, actionId string
+}
+
+type AckAction struct {
+	txID, actionId string
+}
+
+type RejectAction struct {
+	txID, actionId string
+	reason         string
+}
+
+type StopTxManager struct{}
+
 // TransactionManager ...
 type TransactionManager struct {
+	TxChan       <-chan interface{}
+	TxTicker     time.Ticker
 	Transactions map[string]*IntakeTransaction
 }
 
-// StartTransaction ...
-func (txm TransactionManager) StartTransaction() {
-	tx := &IntakeTransaction{
-		TransactionID: uuid.New().String(),
-		State:         InProgress,
-		Actions:       map[string]*Action{},
+func (txm TransactionManager) Start() {
+transactionHandler:
+	for {
+		select {
+		case input := <-txm.TxChan:
+			switch action := input.(type) {
+			case CommitAction:
+				txm.CommitAction(action.txID, action.actionId)
+			case AckAction:
+				txm.AckAction(action.txID, action.actionId)
+			case RejectAction:
+				txm.RollbackTransaction(action.txID)
+			case StopTxManager:
+				break transactionHandler
+			}
+		case <-txm.TxTicker.C:
+			// clean up old transactions
+		default:
+		}
 	}
-	txm.Transactions[tx.TransactionID] = tx
 }
 
-// CommitTransaction ...
-func (txm TransactionManager) CommitTransaction(txID, actionId string) {
+func (txm TransactionManager) Stop() {
+
+}
+
+// StartTransaction ...
+func (txm TransactionManager) StartTransaction() *IntakeTransaction {
+	tx := &IntakeTransaction{
+		TransactionID:        uuid.New().String(),
+		State:                InProgress,
+		Actions:              map[string]*Action{},
+		LastUpdatedTimestamp: time.Now(),
+	}
+	txm.Transactions[tx.TransactionID] = tx
+
+	return tx
+}
+
+// CommitAction ...
+func (txm TransactionManager) CommitAction(txID, actionId string) {
 	tx, exists := txm.Transactions[txID]
 	if exists {
 		action := &Action{
-			ActionID:  actionId,
-			Timestamp: time.Now(),
+			ActionID:           actionId,
+			CommittedTimestamp: time.Now(),
 		}
 		tx.Actions[actionId] = action
 		log.Debugf("Transaction %s, committing action %s", txID, actionId)
 	}
 }
 
-// AckTransaction ...
-func (txm TransactionManager) AckTransaction(txID, actionId string) {
+// AckAction ...
+func (txm TransactionManager) AckAction(txID, actionId string) {
 	tx, exists := txm.Transactions[txID]
 	if exists {
 		act, exists := tx.Actions[actionId]
@@ -60,6 +106,7 @@ func (txm TransactionManager) SucceedTransaction(txID string) {
 			}
 		}
 		tx.State = Succeeded
+		tx.LastUpdatedTimestamp = time.Now()
 		log.Debugf("Transaction succeeded %s", tx.TransactionID)
 	} else {
 		_ = log.Warnf("Transaction not found %s, no operation", tx.TransactionID)
@@ -74,6 +121,7 @@ func (txm TransactionManager) RollbackTransaction(txID string) {
 	if exists {
 		// transaction failed, rollback
 		tx.State = Failed
+		tx.LastUpdatedTimestamp = time.Now()
 		log.Debugf("Transaction failed %s", tx.TransactionID)
 	}
 
