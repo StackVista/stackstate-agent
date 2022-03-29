@@ -15,9 +15,9 @@
 #
 
 name "zlib"
-default_version "1.2.12"
+default_version "1.2.11"
 
-version "1.2.12" do
+version "1.2.11" do
   source sha256: "91844808532e5ce316b3c010929493c0244f3d37593afd6de04f71821d5136d9"
 end
 
@@ -28,7 +28,7 @@ version "1.2.6" do
   source md5: "618e944d7c7cd6521551e30b32322f4a"
 end
 
-source url: "https://zlib.net/zlib-#{version}.tar.gz",
+source url: "https://www.zlib.net/fossils/zlib-#{version}.tar.gz",
        extract: :seven_zip
 
 relative_path "zlib-#{version}"
