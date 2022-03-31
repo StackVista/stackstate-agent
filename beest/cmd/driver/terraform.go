@@ -42,11 +42,8 @@ func apply(ctx TerraformContext, destroy bool, prompt bool) {
 	state.init()
 	state.validate()
 	log.Println(fmt.Sprintf("Variables: %v", ctx.Variables()))
-	if state.plan(ctx.Variables(), destroy) {
-		state.apply(prompt)
-	} else {
-		log.Println("No Terraform changes detected.")
-	}
+	state.plan(ctx.Variables(), destroy)
+	state.apply(prompt)
 }
 
 func newTerraform(ctx TerraformContext) *TerraformState {

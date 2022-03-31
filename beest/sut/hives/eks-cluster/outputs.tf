@@ -13,6 +13,3 @@ output "ca_cert" {
 output "token" {
   value = data.aws_eks_cluster_auth.cluster.token
 }
-output "kubeconfig" {
-  value = local.kubeconfig
-}
