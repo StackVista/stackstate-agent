@@ -3,8 +3,8 @@ include "root" {
 }
 
 terraform {
-  after_hook "serialize_kubeconfig" {
+  after_hook "setup_kubeconfig" {
     commands = ["apply"]
-    execute  = ["./get-kubeconfig"]
+    execute  = ["/bin/bash", "-c", "./get-kubeconfig || true"]
   }
 }
