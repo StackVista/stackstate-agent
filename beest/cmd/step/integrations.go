@@ -6,10 +6,6 @@ func (yard *Yard) Inventory() string {
 	return fmt.Sprintf("%s/ansible_inventory", yard.dir)
 }
 
-func (yard *Yard) PrivateKey() string {
-	return fmt.Sprintf("%s/id_rsa", yard.dir)
-}
-
 ///
 
 type PrepareStep struct {

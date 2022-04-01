@@ -5,7 +5,7 @@
 tf.deploy
 
 # SUT related temp files
-*kubeconfig
+*kubeconfig*
 *inventory
 *id_rsa
 

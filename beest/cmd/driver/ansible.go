@@ -4,7 +4,6 @@ import (
 	"beest/sut"
 	"context"
 	"fmt"
-	"github.com/apenella/go-ansible/pkg/options"
 	"github.com/apenella/go-ansible/pkg/playbook"
 	"log"
 	"strings"
@@ -13,7 +12,6 @@ import (
 type ConnectionContext interface {
 	WorkingDir() string
 	Inventory() string
-	PrivateKey() string
 }
 
 type AnsibleContext interface {
@@ -33,13 +31,9 @@ func AnsiblePlay(ctx AnsibleContext) {
 		ExtraVars: vars,
 		Tags:      strings.Join(ctx.Tags(), ","),
 	}
-	connectionOptions := &options.AnsibleConnectionOptions{
-		PrivateKey: ctx.PrivateKey(),
-	}
 	run := &playbook.AnsiblePlaybookCmd{
-		Playbooks:         []string{ctx.Playbook()},
-		Options:           runOption,
-		ConnectionOptions: connectionOptions,
+		Playbooks: []string{ctx.Playbook()},
+		Options:   runOption,
 	}
 	log.Println(fmt.Sprintf("Play Ansible playbook: %s ...", run.String()))
 	var err = run.Run(context.Background())
