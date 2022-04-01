@@ -1,4 +1,4 @@
-output "node_ssh_priv_key" {
+output "node_ssh_key" {
   value = tls_private_key.eks_rsa.private_key_pem
 }
 output "k8s_aws_auth" {

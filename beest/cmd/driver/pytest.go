@@ -18,7 +18,6 @@ const (
 	DefaultPyTestBinary      = "py.test"
 	DefaultPyTestWatchBinary = "ptw"
 
-	SshIdentityFileFlag  = "--ssh-identity-file"
 	AnsibleInventoryFlag = "--ansible-inventory"
 	HostsFlag            = "--hosts"
 	ConnectionFlag       = "--connection"
@@ -47,7 +46,6 @@ func buildPyTestCmd(ctx PytestContext, watch bool, selection string) *exec.Cmd {
 
 	args = append(args, "-rap")
 
-	args = append(args, fmt.Sprintf("%s=%s", SshIdentityFileFlag, ctx.PrivateKey()))
 	// Ansible module is only available with ansible connection backend
 	args = append(args, fmt.Sprintf("%s=%s", ConnectionFlag, "ansible"))
 	args = append(args, fmt.Sprintf("%s=%s", AnsibleInventoryFlag, ctx.Inventory()))
