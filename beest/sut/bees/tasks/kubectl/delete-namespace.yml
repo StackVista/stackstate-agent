@@ -1,5 +1,0 @@
----
-- name: Delete namespace '{{namespace}}'
-  shell: kubectl --context={{ kubecontext }} delete ns {{ namespace }}
-  environment:
-    KUBECONFIG: "{{ kubeconfig }}"

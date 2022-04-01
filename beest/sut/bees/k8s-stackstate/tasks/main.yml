@@ -1,0 +1,7 @@
+---
+- include_tasks: stackstate.yml
+  tags: [ prepare, cleanup ]
+- include_tasks: cli.yml
+  tags: [ prepare, cleanup ]
+- include_tasks: stackpack.yml
+  tags: [ prepare, cleanup ]

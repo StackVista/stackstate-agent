@@ -1,7 +1,12 @@
-resource "local_file" "kubeconfig" {
-  filename        = "${pathexpand("~")}/.kube/config"
-  content         = module.eks_cluster.kubeconfig
-  file_permission = "0600"
+resource "local_file" "get_kubeconfig" {
+  filename        = "${path.module}/get-kubeconfig"
+  content         = <<KUBECONFIG
+#!/bin/bash
+
+echo "Getting kubeconfig for cluster ${local.cluster_name}"
+aws eks update-kubeconfig --name ${local.cluster_name} --alias ${var.yard_id}
+KUBECONFIG
+  file_permission = "0770"
 }
 
 resource "local_file" "ansible_inventory" {

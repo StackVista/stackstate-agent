@@ -7,5 +7,6 @@ direnv allow
 go install github.com/spf13/cobra/cobra
 
 go build .
-
 eval "$(/go/src/app/beest completion bash)"
+
+eval "$(sts-toolbox completion bash)"

@@ -1,0 +1,78 @@
+---
+- name: StackState CLI prepare tasks
+  tags: prepare
+  block:
+  - name: Create stackstate-admin Role
+    kubernetes.core.k8s:
+      context: "{{ kubecontext }}"
+      definition:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: Role
+        metadata:
+          name: stackstate-admin
+          namespace: "{{ namespace }}"
+
+  - name: Create CLI ServiceAccount
+    kubernetes.core.k8s:
+      context: "{{ kubecontext }}"
+      definition:
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          # NOTE: do not change the name, needs to be called this way for now, see https://stackstate.atlassian.net/browse/STAC-15814
+          name: stackstate-admin
+          namespace: "{{ namespace }}"
+
+  - name: Create CLI RoleBinding
+    kubernetes.core.k8s:
+      context: "{{ kubecontext }}"
+      definition:
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: RoleBinding
+        metadata:
+          name: stackstate-admin
+          namespace: "{{ namespace }}"
+        roleRef:
+          name: stackstate-admin
+          apiGroup: rbac.authorization.k8s.io
+          kind: Role
+        subjects:
+          - kind: ServiceAccount
+            name: stackstate-admin
+
+  - name: Create CLI entrypoint script ConfigMap
+    kubernetes.core.k8s:
+      context: "{{ kubecontext }}"
+      definition:
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: cli-config
+          namespace: "{{ namespace }}"
+        data:
+          cli-entrypoint.sh: "{{ lookup('file', 'cli-entrypoint.sh') }}"
+
+  - name: Start the CLI pod
+    kubernetes.core.k8s:
+      context: "{{ kubecontext }}"
+      definition:
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: stackstate-cli
+          namespace: "{{ namespace }}"
+        spec:
+          # this makes kubernetes.io/serviceaccount/token available and used for authenticating against stackstate-api
+          serviceAccount: stackstate-admin
+          containers:
+            - name: cli
+              image: stackstate/stackstate-cli:4.5.5
+              command: ["/root/cli/cli-entrypoint.sh"] # TODO: Can we find a better way to keep it running ?
+              volumeMounts:
+                - name: config-volume
+                  mountPath: /root/cli
+          volumes:
+            - name: config-volume
+              configMap:
+                name: cli-config
+                defaultMode: 0777
