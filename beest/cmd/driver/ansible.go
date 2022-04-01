@@ -12,7 +12,6 @@ import (
 type ConnectionContext interface {
 	WorkingDir() string
 	Inventory() string
-	PrivateKey() string
 }
 
 type AnsibleContext interface {
