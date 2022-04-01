@@ -38,6 +38,7 @@ INVENTORY
 }
 
 resource "local_file" "receiver_id_rsa" {
+  // path.cwd return the full path which is needed in the ansible_inventory
   filename        = "${path.cwd}/receiver_id_rsa"
   content         = module.receiver.ssh_key
   file_permission = "0600"
