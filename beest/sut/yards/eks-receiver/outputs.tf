@@ -1,10 +1,19 @@
+resource "local_file" "k8s_aws_auth" {
+  filename        = "${path.module}/k8s_aws_auth.yml"
+  content         = module.eks_cluster.k8s_aws_auth
+  file_permission = "0600"
+}
+
 resource "local_file" "get_kubeconfig" {
-  filename        = "${path.module}/get-kubeconfig"
+  filename        = "${path.module}/get_kubeconfig.sh"
   content         = <<KUBECONFIG
 #!/bin/bash
 
 echo "Getting kubeconfig for cluster ${local.cluster_name}"
 aws eks update-kubeconfig --name ${local.cluster_name} --alias ${var.yard_id}
+
+echo "Configure kubernetes cluster AWS authentication"
+kubectl --context ${var.yard_id} apply -f ${local_file.k8s_aws_auth.filename}
 KUBECONFIG
   file_permission = "0770"
 }
