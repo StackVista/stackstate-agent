@@ -7,6 +7,11 @@ package corechecks
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional"
+	agentConfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"time"
 
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
@@ -68,6 +73,14 @@ func (gl *GoCheckLoader) Load(config integration.Config, instance integration.Da
 		msg := fmt.Sprintf("Could not configure check %s: %s", c, err)
 		return c, fmt.Errorf(msg)
 	}
+
+	// [sts] register check handler
+	hostname, err := util.GetHostname()
+	if err != nil {
+		return nil, log.Errorf("Error while getting hostname, exiting: %v", err)
+	}
+	b := transactional.MakeCheckInstanceBatcher(c.ID(), hostname, "agent", agentConfig.GetMaxCapacity(), time.Second*30)
+	common.CheckManager.SubscribeCheckHandler(c, b)
 
 	return c, nil
 }

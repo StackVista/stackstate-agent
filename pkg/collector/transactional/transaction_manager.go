@@ -23,9 +23,21 @@ type StopTxManager struct{}
 
 // TransactionManager ...
 type TransactionManager struct {
-	TxChan       <-chan interface{}
-	TxTicker     time.Ticker
-	Transactions map[string]*IntakeTransaction
+	TxChan             chan interface{}
+	TxTicker           *time.Ticker
+	Transactions       map[string]*IntakeTransaction
+	txTimeoutDuration  time.Duration
+	txEvictionDuration time.Duration
+}
+
+func MakeTransactionManager(txChannelBufferSize int, tickerInterval, txTimeoutDuration, txEvictionDuration time.Duration) *TransactionManager {
+	return &TransactionManager{
+		TxChan:             make(chan interface{}, txChannelBufferSize),
+		TxTicker:           time.NewTicker(tickerInterval),
+		Transactions:       make(map[string]*IntakeTransaction),
+		txTimeoutDuration:  txTimeoutDuration,
+		txEvictionDuration: txEvictionDuration,
+	}
 }
 
 func (txm TransactionManager) Start() {
@@ -44,14 +56,24 @@ transactionHandler:
 				break transactionHandler
 			}
 		case <-txm.TxTicker.C:
-			// clean up old transactions
+			// expire stale transactions, clean up expired transactions that exceed the eviction duration
+			for _, tx := range txm.Transactions {
+				if tx.LastUpdatedTimestamp.After(time.Now().Add(-txm.txTimeoutDuration)) {
+					// last updated timestamp is before current time - transaction timeout duration => Tx is stale
+					tx.State = Stale
+				} else if tx.State == Stale && tx.LastUpdatedTimestamp.After(time.Now().Add(-txm.txEvictionDuration)) {
+					// last updated timestamp is before current time - transaction eviction duration => Tx can be evicted
+					txm.EvictTransaction(tx.TransactionID)
+				}
+			}
 		default:
 		}
 	}
 }
 
 func (txm TransactionManager) Stop() {
-
+	txm.TxChan <- StopTxManager{}
+	txm.TxTicker.Stop()
 }
 
 // StartTransaction ...
@@ -76,6 +98,8 @@ func (txm TransactionManager) CommitAction(txID, actionId string) {
 			CommittedTimestamp: time.Now(),
 		}
 		tx.Actions[actionId] = action
+		tx.State = InProgress
+		tx.LastUpdatedTimestamp = time.Now()
 		log.Debugf("Transaction %s, committing action %s", txID, actionId)
 	}
 }
@@ -89,6 +113,8 @@ func (txm TransactionManager) AckAction(txID, actionId string) {
 			act.Acknowledged = true
 			act.AcknowledgedTimestamp = time.Now()
 			tx.Actions[actionId] = act
+			tx.State = InProgress
+			tx.LastUpdatedTimestamp = time.Now()
 			log.Debugf("Transaction %s, acknowledged action %s", txID, actionId)
 		}
 	}
@@ -113,6 +139,13 @@ func (txm TransactionManager) SucceedTransaction(txID string) {
 	}
 
 	tx.OnComplete(tx)
+
+	txm.EvictTransaction(txID)
+}
+
+// EvictTransaction evicts the intake transaction due to failure or timeout
+func (txm TransactionManager) EvictTransaction(txID string) {
+	delete(txm.Transactions, txID)
 }
 
 // RollbackTransaction rolls back the intake transaction
@@ -126,4 +159,6 @@ func (txm TransactionManager) RollbackTransaction(txID string) {
 	}
 
 	tx.OnComplete(tx)
+
+	txm.EvictTransaction(txID)
 }

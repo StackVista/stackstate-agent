@@ -9,7 +9,7 @@ const (
 	InProgress TransactionState = iota
 	Failed
 	Succeeded
-	TimedOut
+	Stale
 )
 
 // Action represents a single operation in a transaction, which consists of one or more actions
