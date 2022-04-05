@@ -252,6 +252,7 @@ func (rc *retryableHTTPClient) makeRequest(method, path string, body []byte) (*h
 	}
 
 	req.Header.Add("content-encoding", "identity")
+	//req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("sts-api-key", rc.APIKey)
 	req.Header.Add("sts-hostname", rc.Host)
 	req.Header.Add("sts-agent-version", info.Version)

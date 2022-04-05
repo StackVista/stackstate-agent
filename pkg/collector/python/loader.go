@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build python
 // +build python
 
 package python
@@ -212,7 +213,7 @@ func (cl *PythonCheckLoader) Load(config integration.Config, instance integratio
 		return nil, log.Errorf("Error while getting hostname, exiting: %v", err)
 	}
 	b := transactional.MakeCheckInstanceBatcher(c.ID(), hostname, "agent", agentConfig.GetMaxCapacity(), time.Second*30)
-	common.CheckManager.SubscribeCheckHandler(c, b)
+	common.CheckManager.SubscribeCheckHandler(c, b, config.InitConfig, instance)
 
 	return c, nil
 }

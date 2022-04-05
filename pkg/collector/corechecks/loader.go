@@ -80,7 +80,7 @@ func (gl *GoCheckLoader) Load(config integration.Config, instance integration.Da
 		return nil, log.Errorf("Error while getting hostname, exiting: %v", err)
 	}
 	b := transactional.MakeCheckInstanceBatcher(c.ID(), hostname, "agent", agentConfig.GetMaxCapacity(), time.Second*30)
-	common.CheckManager.SubscribeCheckHandler(c, b)
+	common.CheckManager.SubscribeCheckHandler(c, b, config.InitConfig, instance)
 
 	return c, nil
 }

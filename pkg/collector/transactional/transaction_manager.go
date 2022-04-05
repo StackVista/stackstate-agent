@@ -120,8 +120,8 @@ func (txm TransactionManager) AckAction(txID, actionId string) {
 	}
 }
 
-// SucceedTransaction marks the transaction successful
-func (txm TransactionManager) SucceedTransaction(txID string) {
+// CompleteTransaction marks the transaction successful
+func (txm TransactionManager) CompleteTransaction(txID string) {
 	tx, exists := txm.Transactions[txID]
 	if exists {
 		// ensure all actions have been acknowledged

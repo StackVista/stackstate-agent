@@ -1,14 +1,21 @@
 package transactional
 
 import (
-	"errors"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common"
 	"github.com/StackVista/stackstate-agent/pkg/httpclient"
-	"net/http"
 )
 
 // Payloads is a slice of pointers to byte arrays, an alias for the slices of
 // payloads we pass into the forwarder
 type Payloads []*[]byte
+
+// TransactionalPayload contains the payload and transactional data
+type TransactionalPayload struct {
+	payload                 []byte
+	transactionID, actionID string
+}
+
+type ShutdownForwarder struct{}
 
 // Response contains the response details of a successfully posted transaction
 type Response struct {
@@ -20,7 +27,9 @@ type Response struct {
 
 // Forwarder is a forwarder that works in transactional manner
 type Forwarder struct {
-	stsClient *httpclient.StackStateClient
+	stsClient       *httpclient.StackStateClient
+	PayloadChannel  chan TransactionalPayload
+	ShutdownChannel chan ShutdownForwarder
 }
 
 func MakeForwarder() *Forwarder {
@@ -28,65 +37,35 @@ func MakeForwarder() *Forwarder {
 }
 
 // Start initialize and runs the transactional forwarder.
-func (f *Forwarder) Start() error {
+func (f *Forwarder) Start() {
+forwardHandler:
 	for {
 		// handling high priority transactions first
 		select {
+		case tPayload := <-f.PayloadChannel:
+			response := f.stsClient.Post("", tPayload.payload)
+			if response.Err != nil {
+				// payload failed, rollback transaction
+				common.TxManager.RollbackTransaction(tPayload.transactionID)
+			} else {
+				// payload succeeded, acknowledge action
+				common.TxManager.AckAction(tPayload.transactionID, tPayload.actionID)
+			}
+		case _ = <-f.ShutdownChannel:
+			break forwardHandler
 		default:
 		}
 	}
 }
 
 // Stop stops running the transactional forwarder.
-func (f *Forwarder) Stop() error {
-
-	return nil
+func (f *Forwarder) Stop() {
+	// Shut down the forwardHandler
+	f.ShutdownChannel <- ShutdownForwarder{}
+	defer close(f.PayloadChannel)
+	defer close(f.ShutdownChannel)
 }
 
-func (f *Forwarder) SubmitV1Intake(payload Payloads, extra http.Header) error {
-	return errors.New("NotImplemented")
-}
-
-func (f *Forwarder) SubmitV1Series(payload Payloads, extra http.Header) error {
-	return errors.New("NotImplemented")
-}
-
-func (f *Forwarder) SubmitV1CheckRuns(payload Payloads, extra http.Header) error {
-	return errors.New("NotImplemented")
-}
-func (f *Forwarder) SubmitSeries(payload Payloads, extra http.Header) error {
-	return errors.New("NotImplemented")
-}
-func (f *Forwarder) SubmitEvents(payload Payloads, extra http.Header) error {
-	return errors.New("NotImplemented")
-}
-func (f *Forwarder) SubmitServiceChecks(payload Payloads, extra http.Header) error {
-	return errors.New("NotImplemented")
-}
-func (f *Forwarder) SubmitSketchSeries(payload Payloads, extra http.Header) error {
-	return errors.New("NotImplemented")
-}
-func (f *Forwarder) SubmitHostMetadata(payload Payloads, extra http.Header) error {
-	return errors.New("NotImplemented")
-}
-func (f *Forwarder) SubmitMetadata(payload Payloads, extra http.Header) error {
-	return errors.New("NotImplemented")
-}
-func (f *Forwarder) SubmitProcessChecks(payload Payloads, extra http.Header) (chan Response, error) {
-	return nil, errors.New("NotImplemented")
-}
-func (f *Forwarder) SubmitRTProcessChecks(payload Payloads, extra http.Header) (chan Response, error) {
-	return nil, errors.New("NotImplemented")
-}
-func (f *Forwarder) SubmitContainerChecks(payload Payloads, extra http.Header) (chan Response, error) {
-	return nil, errors.New("NotImplemented")
-}
-func (f *Forwarder) SubmitRTContainerChecks(payload Payloads, extra http.Header) (chan Response, error) {
-	return nil, errors.New("NotImplemented")
-}
-func (f *Forwarder) SubmitConnectionChecks(payload Payloads, extra http.Header) (chan Response, error) {
-	return nil, errors.New("NotImplemented")
-}
-func (f *Forwarder) SubmitPodChecks(payload Payloads, extra http.Header) (chan Response, error) {
-	return nil, errors.New("NotImplemented")
+func (f *Forwarder) SubmitTransactionalIntake(payload TransactionalPayload) {
+	f.PayloadChannel <- payload
 }

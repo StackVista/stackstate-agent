@@ -3,12 +3,14 @@ package transactional
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/google/uuid"
 	"time"
 )
 
@@ -19,6 +21,7 @@ func MakeCheckInstanceBatcher(checkId check.ID, hostname, agentName string, maxC
 		BatcherBase:   batcher.MakeBatcherBase(hostname, agentName, maxCapacity),
 		CheckInstance: checkId,
 		flushTicker:   checkFlushInterval,
+		Forwarder:     MakeForwarder(),
 	}
 
 	go ctb.listenForFlushTicker()
@@ -32,7 +35,7 @@ type CheckTransactionalBatcher struct {
 	CheckInstance check.ID
 	builder       TransactionalBatchBuilder
 	flushTicker   *time.Ticker
-	txManager     TransactionManager
+	Forwarder     *Forwarder
 }
 
 // GetCheckInstance returns the check instance for this batcher
@@ -54,7 +57,11 @@ func (ctb *CheckTransactionalBatcher) listenForFlushTicker() {
 
 // submitPayload submits the payload to the forwarder
 func (ctb *CheckTransactionalBatcher) submitPayload(payload []byte, transactionID, actionID string) {
-
+	ctb.Forwarder.SubmitTransactionalIntake(TransactionalPayload{
+		payload:       payload,
+		transactionID: transactionID,
+		actionID:      actionID,
+	})
 }
 
 // marshallPayload submits the payload to the forwarder
@@ -155,14 +162,25 @@ func (ctb *CheckTransactionalBatcher) Start() {
 			panic(fmt.Sprint("Unknown submission type"))
 		}
 
-		data := ctb.mapStateToPayload(state.CheckInstanceBatchState)
-		_, err := ctb.marshallPayload(data)
-		if err != nil {
-			_ = log.Errorf("Marshall error in payload: %v", data)
-			//ctb.txManager.RollbackTransaction()
+		// submit the state
+		if state != nil {
+			go ctb.SubmitState(state)
 		}
 
 	}
+}
+
+func (ctb *CheckTransactionalBatcher) SubmitState(state *TxCheckInstanceBatchState) {
+	data := ctb.mapStateToPayload(state.CheckInstanceBatchState)
+	payload, err := ctb.marshallPayload(data)
+	if err != nil {
+		_ = log.Errorf("Marshall error in payload: %v", data)
+		common.TxManager.RollbackTransaction(state.TransactionID)
+	}
+	// commit this action to the transaction manager
+	actionUUID := uuid.New().String()
+	common.TxManager.CommitAction(state.TransactionID, actionUUID)
+	ctb.submitPayload(payload, state.TransactionID, actionUUID)
 }
 
 // Stop stops the transactional batcher
