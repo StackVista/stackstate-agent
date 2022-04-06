@@ -46,10 +46,13 @@ forwardHandler:
 			response := f.stsClient.Post("", tPayload.payload)
 			if response.Err != nil {
 				// payload failed, rollback transaction
-				common.TxManager.RollbackTransaction(tPayload.transactionID)
+				common.TxManager.TransactionChannel <- &RollbackTransaction{transactionID: tPayload.transactionID}
 			} else {
 				// payload succeeded, acknowledge action
-				common.TxManager.AckAction(tPayload.transactionID, tPayload.actionID)
+				common.TxManager.TransactionChannel <- &AckAction{
+					transactionID: tPayload.transactionID,
+					actionID:      tPayload.actionID,
+				}
 			}
 		case _ = <-f.ShutdownChannel:
 			break forwardHandler

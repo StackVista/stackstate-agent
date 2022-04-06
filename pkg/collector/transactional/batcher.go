@@ -175,11 +175,14 @@ func (ctb *CheckTransactionalBatcher) SubmitState(state *TxCheckInstanceBatchSta
 	payload, err := ctb.marshallPayload(data)
 	if err != nil {
 		_ = log.Errorf("Marshall error in payload: %v", data)
-		common.TxManager.RollbackTransaction(state.TransactionID)
+		common.TxManager.TransactionChannel <- &RollbackTransaction{transactionID: state.TransactionID}
 	}
 	// commit this action to the transaction manager
 	actionUUID := uuid.New().String()
-	common.TxManager.CommitAction(state.TransactionID, actionUUID)
+	common.TxManager.TransactionChannel <- &CommitAction{
+		transactionID: state.TransactionID,
+		actionID:      actionUUID,
+	}
 	ctb.submitPayload(payload, state.TransactionID, actionUUID)
 }
 

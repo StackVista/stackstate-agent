@@ -9,7 +9,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/manager"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional"
 	"runtime"
 	"syscall"
@@ -276,7 +276,7 @@ func StartAgent() error {
 	// [sts] init the batcher for topology production
 	batcher.InitBatcher(s, hostname, "agent", config.GetMaxCapacity())
 	// [sts] create the global check manager instance
-	common.CheckManager = check.MakeCheckManager()
+	common.CheckManager = manager.MakeCheckManager()
 	txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
 	common.TxManager = transactional.MakeTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
 

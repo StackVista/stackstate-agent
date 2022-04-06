@@ -6,64 +6,83 @@ import (
 	"time"
 )
 
+// CommitAction ...
 type CommitAction struct {
-	txID, actionId string
+	transactionID, actionID string
 }
 
+// AckAction ...
 type AckAction struct {
-	txID, actionId string
+	transactionID, actionID string
 }
 
+// RejectAction ...
 type RejectAction struct {
-	txID, actionId string
-	reason         string
+	transactionID, actionID string
+	reason                  error
 }
 
-type StopTxManager struct{}
+// RollbackTransaction ...
+type RollbackTransaction struct {
+	transactionID string
+	reason        error
+}
+
+// StopTransactionManager ...
+type StopTransactionManager struct{}
 
 // TransactionManager ...
 type TransactionManager struct {
-	TxChan             chan interface{}
-	TxTicker           *time.Ticker
-	Transactions       map[string]*IntakeTransaction
-	txTimeoutDuration  time.Duration
-	txEvictionDuration time.Duration
+	TransactionChannel          chan interface{}
+	TransactionTicker           *time.Ticker
+	Transactions                map[string]*IntakeTransaction
+	transactionTimeoutDuration  time.Duration
+	transactionEvictionDuration time.Duration
 }
 
-func MakeTransactionManager(txChannelBufferSize int, tickerInterval, txTimeoutDuration, txEvictionDuration time.Duration) *TransactionManager {
+// MakeTransactionManager ...
+func MakeTransactionManager(transactionChannelBufferSize int, tickerInterval, transactionTimeoutDuration,
+	transactionEvictionDuration time.Duration) *TransactionManager {
 	return &TransactionManager{
-		TxChan:             make(chan interface{}, txChannelBufferSize),
-		TxTicker:           time.NewTicker(tickerInterval),
-		Transactions:       make(map[string]*IntakeTransaction),
-		txTimeoutDuration:  txTimeoutDuration,
-		txEvictionDuration: txEvictionDuration,
+		TransactionChannel:          make(chan interface{}, transactionChannelBufferSize),
+		TransactionTicker:           time.NewTicker(tickerInterval),
+		Transactions:                make(map[string]*IntakeTransaction),
+		transactionTimeoutDuration:  transactionTimeoutDuration,
+		transactionEvictionDuration: transactionEvictionDuration,
 	}
 }
 
+// Start ...
 func (txm TransactionManager) Start() {
 transactionHandler:
 	for {
 		select {
-		case input := <-txm.TxChan:
-			switch action := input.(type) {
+		case input := <-txm.TransactionChannel:
+			switch msg := input.(type) {
 			case CommitAction:
-				txm.CommitAction(action.txID, action.actionId)
+				log.Debugf("Committing msg %s for transaction %s", msg.actionID, msg.transactionID)
+				txm.commitAction(msg.transactionID, msg.actionID)
 			case AckAction:
-				txm.AckAction(action.txID, action.actionId)
+				log.Debugf("Acknowledging msg %s for transaction %s", msg.actionID, msg.transactionID)
+				txm.ackAction(msg.transactionID, msg.actionID)
 			case RejectAction:
-				txm.RollbackTransaction(action.txID)
-			case StopTxManager:
+				_ = log.Errorf("Rejecting msg %s for transaction %s: %s", msg.actionID, msg.transactionID, msg.reason)
+				txm.rejectAction(msg.transactionID, msg.actionID)
+			case RollbackTransaction:
+				_ = log.Errorf("Rolling back transaction %s: %s", msg.transactionID, msg.reason)
+				txm.rollbackTransaction(msg.transactionID)
+			case StopTransactionManager:
 				break transactionHandler
 			}
-		case <-txm.TxTicker.C:
+		case <-txm.TransactionTicker.C:
 			// expire stale transactions, clean up expired transactions that exceed the eviction duration
-			for _, tx := range txm.Transactions {
-				if tx.LastUpdatedTimestamp.After(time.Now().Add(-txm.txTimeoutDuration)) {
+			for _, transaction := range txm.Transactions {
+				if transaction.LastUpdatedTimestamp.After(time.Now().Add(-txm.transactionTimeoutDuration)) {
 					// last updated timestamp is before current time - transaction timeout duration => Tx is stale
-					tx.State = Stale
-				} else if tx.State == Stale && tx.LastUpdatedTimestamp.After(time.Now().Add(-txm.txEvictionDuration)) {
+					transaction.State = Stale
+				} else if transaction.State == Stale && transaction.LastUpdatedTimestamp.After(time.Now().Add(-txm.transactionEvictionDuration)) {
 					// last updated timestamp is before current time - transaction eviction duration => Tx can be evicted
-					txm.EvictTransaction(tx.TransactionID)
+					txm.evictTransaction(transaction.TransactionID)
 				}
 			}
 		default:
@@ -71,94 +90,112 @@ transactionHandler:
 	}
 }
 
+// Stop ...
 func (txm TransactionManager) Stop() {
-	txm.TxChan <- StopTxManager{}
-	txm.TxTicker.Stop()
+	txm.TransactionChannel <- StopTransactionManager{}
+	txm.TransactionTicker.Stop()
 }
 
-// StartTransaction ...
-func (txm TransactionManager) StartTransaction() *IntakeTransaction {
-	tx := &IntakeTransaction{
+// startTransaction ...
+func (txm TransactionManager) startTransaction() *IntakeTransaction {
+	transaction := &IntakeTransaction{
 		TransactionID:        uuid.New().String(),
 		State:                InProgress,
 		Actions:              map[string]*Action{},
 		LastUpdatedTimestamp: time.Now(),
 	}
-	txm.Transactions[tx.TransactionID] = tx
+	txm.Transactions[transaction.TransactionID] = transaction
 
-	return tx
+	return transaction
 }
 
-// CommitAction ...
-func (txm TransactionManager) CommitAction(txID, actionId string) {
-	tx, exists := txm.Transactions[txID]
+// commitAction ...
+func (txm TransactionManager) commitAction(transactionID, actionID string) {
+	transaction, exists := txm.Transactions[transactionID]
 	if exists {
 		action := &Action{
-			ActionID:           actionId,
+			ActionID:           actionID,
 			CommittedTimestamp: time.Now(),
 		}
-		tx.Actions[actionId] = action
-		tx.State = InProgress
-		tx.LastUpdatedTimestamp = time.Now()
-		log.Debugf("Transaction %s, committing action %s", txID, actionId)
+		txm.updateAction(transaction, action, InProgress)
+		log.Debugf("Transaction %s, committing action %s", transactionID, actionID)
 	}
 }
 
-// AckAction ...
-func (txm TransactionManager) AckAction(txID, actionId string) {
-	tx, exists := txm.Transactions[txID]
+func (txm TransactionManager) updateAction(transaction *IntakeTransaction, action *Action, state TransactionState) {
+	transaction.Actions[action.ActionID] = action
+	transaction.State = state
+	transaction.LastUpdatedTimestamp = time.Now()
+}
+
+// ackAction ...
+func (txm TransactionManager) ackAction(transactionID, actionID string) {
+	transaction, exists := txm.Transactions[transactionID]
 	if exists {
-		act, exists := tx.Actions[actionId]
+		action, exists := transaction.Actions[actionID]
 		if exists {
-			act.Acknowledged = true
-			act.AcknowledgedTimestamp = time.Now()
-			tx.Actions[actionId] = act
-			tx.State = InProgress
-			tx.LastUpdatedTimestamp = time.Now()
-			log.Debugf("Transaction %s, acknowledged action %s", txID, actionId)
+			action.Acknowledged = true
+			action.AcknowledgedTimestamp = time.Now()
+			txm.updateAction(transaction, action, InProgress)
+			log.Debugf("Transaction %s, acknowledged action %s", transactionID, actionID)
 		}
 	}
 }
 
-// CompleteTransaction marks the transaction successful
-func (txm TransactionManager) CompleteTransaction(txID string) {
-	tx, exists := txm.Transactions[txID]
+// rejectAction ...
+func (txm TransactionManager) rejectAction(transactionID, actionID string) {
+	transaction, exists := txm.Transactions[transactionID]
+	if exists {
+		action, exists := transaction.Actions[actionID]
+		if exists {
+			action.Acknowledged = true
+			action.AcknowledgedTimestamp = time.Now()
+			txm.updateAction(transaction, action, Failed)
+			log.Debugf("Transaction %s, acknowledged action %s", transactionID, actionID)
+			txm.rollbackTransaction(transactionID)
+		}
+	}
+}
+
+// completeTransaction marks the transaction successful
+func (txm TransactionManager) completeTransaction(transactionID string) {
+	transaction, exists := txm.Transactions[transactionID]
 	if exists {
 		// ensure all actions have been acknowledged
-		for _, a := range tx.Actions {
-			if !a.Acknowledged {
-				_ = log.Errorf("Not all actions have been acknowledged, rolling back transaction: %s", tx.TransactionID)
-				txm.RollbackTransaction(txID)
+		for _, action := range transaction.Actions {
+			if !action.Acknowledged {
+				_ = log.Errorf("Not all actions have been acknowledged, rolling back transaction: %s", transaction.TransactionID)
+				txm.rollbackTransaction(transactionID)
 			}
 		}
-		tx.State = Succeeded
-		tx.LastUpdatedTimestamp = time.Now()
-		log.Debugf("Transaction succeeded %s", tx.TransactionID)
+		transaction.State = Succeeded
+		transaction.LastUpdatedTimestamp = time.Now()
+		log.Debugf("Transaction succeeded %s", transaction.TransactionID)
 	} else {
-		_ = log.Warnf("Transaction not found %s, no operation", tx.TransactionID)
+		_ = log.Warnf("Transaction not found %s, no operation", transaction.TransactionID)
 	}
 
-	tx.OnComplete(tx)
+	transaction.OnComplete(transaction)
 
-	txm.EvictTransaction(txID)
+	txm.evictTransaction(transactionID)
 }
 
-// EvictTransaction evicts the intake transaction due to failure or timeout
-func (txm TransactionManager) EvictTransaction(txID string) {
-	delete(txm.Transactions, txID)
+// evictTransaction evicts the intake transaction due to failure or timeout
+func (txm TransactionManager) evictTransaction(transactionID string) {
+	delete(txm.Transactions, transactionID)
 }
 
-// RollbackTransaction rolls back the intake transaction
-func (txm TransactionManager) RollbackTransaction(txID string) {
-	tx, exists := txm.Transactions[txID]
+// rollbackTransaction rolls back the intake transaction
+func (txm TransactionManager) rollbackTransaction(transactionID string) {
+	transaction, exists := txm.Transactions[transactionID]
 	if exists {
 		// transaction failed, rollback
-		tx.State = Failed
-		tx.LastUpdatedTimestamp = time.Now()
-		log.Debugf("Transaction failed %s", tx.TransactionID)
+		transaction.State = Failed
+		transaction.LastUpdatedTimestamp = time.Now()
+		log.Debugf("Transaction failed %s", transaction.TransactionID)
 	}
 
-	tx.OnComplete(tx)
+	transaction.OnComplete(transaction)
 
-	txm.EvictTransaction(txID)
+	txm.evictTransaction(transactionID)
 }

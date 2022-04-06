@@ -1,8 +1,9 @@
-package check
+package handler
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // CheckNoHandler ...
@@ -18,7 +19,7 @@ func MakeCheckNoHandler() CheckHandler {
 
 // ReloadCheck ...
 func (ch *CheckNoHandler) ReloadCheck() {
-	return
+	_ = log.Warnf("ReloadCheck called on CheckNoHandler. This should never happen.")
 }
 
 // GetCheckIdentifier ...
@@ -28,5 +29,5 @@ func (ch *CheckNoHandler) GetCheckIdentifier() CheckIdentifier {
 
 // GetConfig ...
 func (ch *CheckNoHandler) GetConfig() (integration.Data, integration.Data) {
-	return nil, nil
+	return []byte{}, []byte{}
 }

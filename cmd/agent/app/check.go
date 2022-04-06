@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/manager"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -124,7 +125,7 @@ var checkCmd = &cobra.Command{
 		// [sts] init the batcher without the real serializer
 		batcher.InitBatcher(&printingAgentV1Serializer{}, hostname, "agent", config.GetMaxCapacity())
 		// [sts] create the global check manager instance
-		common.CheckManager = check.MakeCheckManager()
+		common.CheckManager = manager.MakeCheckManager()
 
 		if config.Datadog.GetBool("inventories_enabled") {
 			metadata.SetupInventoriesExpvar(common.AC, common.Coll)
