@@ -15,3 +15,6 @@ cluster_name: "{{ namespace }}"
 
 kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/config"
 kubecontext: "{{ yard_id }}"
+
+helm_chart_version: "{{ lookup('env', 'HELM_CHART_VERSION') or 'latest' }}"
+helm_chart_repo: "{{ 'stackstate/cluster-agent' if (helm_chart_version == 'latest') else 'stackstate-test/cluster-agent --version ' + helm_chart_version }}"

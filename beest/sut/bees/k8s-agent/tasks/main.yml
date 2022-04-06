@@ -18,6 +18,10 @@
   - name: Apply manifests for test workloads
     command: kubectl --context={{ kubecontext }} -n={{ namespace }} apply -f {{ role_path }}/files/test_workloads
 
+  - name: Log helm_chart_repo
+    debug:
+      var: helm_chart_repo
+
   - name: Helm install StackState Agent
     command: helm upgrade --install \
       --namespace {{namespace}} \
@@ -32,7 +36,7 @@
       --set "clusterChecks.image.tag={{agent_current_branch}}" \
       --set "clusterChecks.image.repository=stackstate/{{agent_docker_repo}}" \
       --values "{{ role_path }}/files/values.yml" \
-      stackstate-cluster-agent stackstate/cluster-agent
+      stackstate-cluster-agent {{ helm_chart_repo }}
 
   - name: Wait for the stackstate cluster agent to start doing it's thing
     command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=cluster-agent pod
