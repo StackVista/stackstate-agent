@@ -10,3 +10,5 @@
   gather_facts: false
   roles:
     - role: "{{ bees_path }}/k8s-agent"
+      vars:
+        helm_chart_version: {{ helm_chart_version }}

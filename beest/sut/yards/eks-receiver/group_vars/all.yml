@@ -15,3 +15,5 @@ cluster_name: "{{ namespace }}"
 
 kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/config"
 kubecontext: "{{ yard_id }}"
+
+helm_chart_version: "{{ lookup('env', 'HELM_CHART_VERSION') or 'latest' }}"
