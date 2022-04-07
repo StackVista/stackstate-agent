@@ -110,7 +110,7 @@ type AgentConfig struct {
 	// It maps tag keys to a set of replacements. Only supported in A6.
 	ReplaceTags []*ReplaceRule
 
-	// transaction analytics
+	// manager analytics
 	AnalyzedRateByServiceLegacy map[string]float64
 	AnalyzedSpansByService      map[string]map[string]float64
 

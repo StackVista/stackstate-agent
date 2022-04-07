@@ -109,7 +109,7 @@ const (
 var defaultResponseTimeout = 30 * time.Second
 
 type endpoint struct {
-	// Route to hit in the HTTP transaction
+	// Route to hit in the HTTP manager
 	route string
 	// Name of the endpoint for the telemetry metrics
 	name string
@@ -123,7 +123,7 @@ func (e endpoint) String() string {
 // payloads we pass into the forwarder
 type Payloads []*[]byte
 
-// Response contains the response details of a successfully posted transaction
+// Response contains the response details of a successfully posted manager
 type Response struct {
 	Domain     string
 	Body       []byte

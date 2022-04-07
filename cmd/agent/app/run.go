@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/manager"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/manager"
 	"runtime"
 	"syscall"
 	"time"
@@ -278,7 +278,7 @@ func StartAgent() error {
 	// [sts] create the global check manager instance
 	common.CheckManager = manager.MakeCheckManager()
 	txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
-	common.TxManager = transactional.MakeTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
+	common.TxManager = manager.MakeTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
 
 	// start dogstatsd
 	if config.Datadog.GetBool("use_dogstatsd") {

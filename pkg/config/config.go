@@ -54,10 +54,10 @@ const (
 	// [sts]
 	DefaultBatcherBufferSize = 10000
 
-	// [sts] transaction manager
+	// [sts] manager manager
 	DefaultTxManagerChannelBufferSize       = 100     // concurrent transactions before the tx manager begins backpressure
-	DefaultTxManagerTimeoutDurationSeconds  = 60 * 5  // the amount of time before a transaction is marked as stale, 5 minutes by default
-	DefaultTxManagerEvictionDurationSeconds = 60 * 10 // the amount of time before a transaction is evicted and rolled back, 10 minutes by default
+	DefaultTxManagerTimeoutDurationSeconds  = 60 * 5  // the amount of time before a manager is marked as stale, 5 minutes by default
+	DefaultTxManagerEvictionDurationSeconds = 60 * 10 // the amount of time before a manager is evicted and rolled back, 10 minutes by default
 )
 
 var overrideVars = make(map[string]interface{})
@@ -1012,7 +1012,7 @@ func GetMaxCapacity() int {
 
 func GetTxManagerConfig() (int, time.Duration, time.Duration) {
 	txBufferSize := Datadog.GetInt("transaction_manager_channel_buffer_size")
-	// get the transaction duration and convert it to duration in seconds. Both transaction_timeout_duration_seconds and
+	// get the manager duration and convert it to duration in seconds. Both transaction_timeout_duration_seconds and
 	// transaction_eviction_duration_seconds have default values.
 	txTimeoutDuration := time.Second * time.Duration(Datadog.GetInt("transaction_timeout_duration_seconds"))
 	txEvictionDuration := time.Second * time.Duration(Datadog.GetInt("transaction_eviction_duration_seconds"))

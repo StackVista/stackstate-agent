@@ -244,7 +244,7 @@ func (f *domainForwarder) sendHTTPTransactions(transaction Transaction) error {
 	default:
 		transactionsDroppedOnInput.Add(1)
 		tlmTxDroppedOnInput.Inc(f.domain)
-		return fmt.Errorf("the forwarder input queue for %s is full: dropping transaction", f.domain)
+		return fmt.Errorf("the forwarder input queue for %s is full: dropping manager", f.domain)
 	}
 	return nil
 }

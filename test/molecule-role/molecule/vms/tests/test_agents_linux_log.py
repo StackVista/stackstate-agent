@@ -26,7 +26,7 @@ def test_stackstate_agent_log(host, hostname):
     ignored_errors_regex = [
         # TODO: Collecting processes snap -> Will be addressed with STAC-3531
         "Error code \"400 Bad Request\" received while "
-        "sending transaction to \"https://.*/stsAgent/intake/.*"
+        "sending manager to \"https://.*/stsAgent/intake/.*"
         "Failed to deserialize JSON on fields: , "
         "with message: Object is missing required member \'internalHostname\'",
         "net/ntp.go.*There was an error querying the ntp host",

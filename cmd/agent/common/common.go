@@ -11,7 +11,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/manager"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional"
+	transactionManager "github.com/StackVista/stackstate-agent/pkg/collector/transactional/manager"
 	"net/http"
 	"path/filepath"
 
@@ -50,8 +50,8 @@ var (
 	// CheckManager is the global instance of the check manager that contains check handlers
 	CheckManager *manager.CheckManager
 
-	// TxManager is the global instance of the transaction manager that manages lifecycles of checks
-	TxManager *transactional.TransactionManager
+	// TxManager is the global instance of the manager manager that manages lifecycles of checks
+	TxManager *transactionManager.TransactionManager
 
 	// utility variables
 	_here, _ = executable.Folder()

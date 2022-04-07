@@ -23,6 +23,7 @@ type CheckHandler interface {
 	ReloadCheck()
 	GetConfig() (config, initConfig integration.Data)
 	GetBatcher() batcher.Batcher
+	GetCheckReloader() CheckReloader
 }
 
 type CheckHandlerBase struct {
@@ -69,4 +70,9 @@ func (ch *checkHandler) GetConfig() (integration.Data, integration.Data) {
 // GetBatcher ...
 func (ch *checkHandler) GetBatcher() batcher.Batcher {
 	return ch.Batcher
+}
+
+// GetCheckReloader() returns the configured CheckReloader
+func (ch *checkHandler) GetCheckReloader() CheckReloader {
+	return ch.CheckReloader
 }

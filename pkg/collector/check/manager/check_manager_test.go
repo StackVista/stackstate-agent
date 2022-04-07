@@ -7,31 +7,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/stretchr/testify/assert"
 	"testing"
-	"time"
 )
-
-// FIXTURE
-type TestCheck struct {
-	Name string
-}
-
-func (c *TestCheck) String() string                                             { return c.Name }
-func (c *TestCheck) Version() string                                            { return "" }
-func (c *TestCheck) ConfigSource() string                                       { return "" }
-func (c *TestCheck) Stop()                                                      {}
-func (c *TestCheck) Configure(integration.Data, integration.Data, string) error { return nil }
-func (c *TestCheck) Interval() time.Duration                                    { return 1 }
-func (c *TestCheck) Run() error                                                 { return nil }
-func (c *TestCheck) ID() check.ID                                               { return check.ID(c.String()) }
-func (c *TestCheck) GetWarnings() []error                                       { return []error{} }
-func (c *TestCheck) GetMetricStats() (map[string]int64, error)                  { return make(map[string]int64), nil }
-func (c *TestCheck) IsTelemetryEnabled() bool                                   { return false }
-
-type TestCheckReloader struct{}
-
-func (_ TestCheckReloader) ReloadCheck(check.ID, integration.Data, integration.Data, string) error {
-	return nil
-}
 
 func TestMakeCheckManager(t *testing.T) {
 	checkManager := MakeCheckManager()
@@ -45,7 +21,7 @@ func TestMakeCheckManager(t *testing.T) {
 
 func TestCheckManagerSubscription(t *testing.T) {
 	checkManager := MakeCheckManager()
-	testCheck := &TestCheck{Name: "test-check-1"}
+	testCheck := &check.TestCheck{Name: "test-check-1"}
 
 	// assert that we start at an empty state
 	assert.EqualValues(t, checkManager.checkHandlers, map[string]handler.CheckHandler{})
@@ -55,7 +31,7 @@ func TestCheckManagerSubscription(t *testing.T) {
 	assert.EqualValues(t, checkManager.GetCheckHandler(testCheck.ID()), checkManager.fallbackCheckHandler)
 
 	// subscribe my test check, assert that we can get it with the check handler and that it's present in the inner map
-	checkManager.SubscribeCheckHandler(testCheck, TestCheckReloader{}, batcher.MockBatcher{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
+	checkManager.SubscribeCheckHandler(testCheck, check.TestCheckReloader{}, batcher.MockBatcher{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 	_, found := checkManager.checkHandlers[string(testCheck.ID())]
 	assert.True(t, found, "TestCheck handler not found in the checkManager.checkHandlers map")
 	ch := checkManager.GetCheckHandler(testCheck.ID())
@@ -66,8 +42,8 @@ func TestCheckManagerSubscription(t *testing.T) {
 	assert.EqualValues(t, integration.Data{0, 0, 0}, actualInitCfg)
 
 	// subscribe another check handler and assert it
-	testCheck2 := &TestCheck{Name: "test-check-2"}
-	checkManager.SubscribeCheckHandler(testCheck2, TestCheckReloader{}, batcher.MockBatcher{}, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
+	testCheck2 := &check.TestCheck{Name: "test-check-2"}
+	checkManager.SubscribeCheckHandler(testCheck2, check.TestCheckReloader{}, batcher.MockBatcher{}, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
 	_, found = checkManager.checkHandlers[string(testCheck.ID())]
 	assert.True(t, found, "TestCheck handler not found in the checkManager.checkHandlers map")
 	ch2 := checkManager.GetCheckHandler(testCheck2.ID())
@@ -87,7 +63,7 @@ func TestCheckManagerSubscription(t *testing.T) {
 	assert.False(t, found, "TestCheck handler not found in the checkManager.checkHandlers map")
 
 	// subscribe testCheck2 again
-	checkManager.SubscribeCheckHandler(testCheck2, TestCheckReloader{}, batcher.MockBatcher{}, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
+	checkManager.SubscribeCheckHandler(testCheck2, check.TestCheckReloader{}, batcher.MockBatcher{}, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
 	_, found = checkManager.checkHandlers[string(testCheck2.ID())]
 	assert.True(t, found, "TestCheck handler not found in the checkManager.checkHandlers map")
 

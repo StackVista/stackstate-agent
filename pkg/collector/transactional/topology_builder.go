@@ -2,6 +2,7 @@ package transactional
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/manager"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -10,7 +11,7 @@ import (
 // TxCheckInstanceBatchState is the type representing batched data per check instance
 type TxCheckInstanceBatchState struct {
 	*batcher.CheckInstanceBatchState
-	*IntakeTransaction
+	*manager.IntakeTransaction
 }
 
 // TransactionalBatchBuilder builds topology for a check instance

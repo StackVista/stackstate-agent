@@ -6,6 +6,7 @@ import (
 	"github.com/StackVista/stackstate-agent/cmd/agent/common"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/manager"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -175,13 +176,13 @@ func (ctb *CheckTransactionalBatcher) SubmitState(state *TxCheckInstanceBatchSta
 	payload, err := ctb.marshallPayload(data)
 	if err != nil {
 		_ = log.Errorf("Marshall error in payload: %v", data)
-		common.TxManager.TransactionChannel <- &RollbackTransaction{transactionID: state.TransactionID}
+		common.TxManager.TransactionChannel <- manager.RollbackTransaction{TransactionID: state.TransactionID}
 	}
-	// commit this action to the transaction manager
+	// commit this action to the manager manager
 	actionUUID := uuid.New().String()
-	common.TxManager.TransactionChannel <- &CommitAction{
-		transactionID: state.TransactionID,
-		actionID:      actionUUID,
+	common.TxManager.TransactionChannel <- manager.CommitAction{
+		TransactionID: state.TransactionID,
+		ActionID:      actionUUID,
 	}
 	ctb.submitPayload(payload, state.TransactionID, actionUUID)
 }

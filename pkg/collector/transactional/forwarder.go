@@ -2,6 +2,7 @@ package transactional
 
 import (
 	"github.com/StackVista/stackstate-agent/cmd/agent/common"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/manager"
 	"github.com/StackVista/stackstate-agent/pkg/httpclient"
 )
 
@@ -17,7 +18,7 @@ type TransactionalPayload struct {
 
 type ShutdownForwarder struct{}
 
-// Response contains the response details of a successfully posted transaction
+// Response contains the response details of a successfully posted manager
 type Response struct {
 	Domain     string
 	Body       []byte
@@ -45,13 +46,13 @@ forwardHandler:
 		case tPayload := <-f.PayloadChannel:
 			response := f.stsClient.Post("", tPayload.payload)
 			if response.Err != nil {
-				// payload failed, rollback transaction
-				common.TxManager.TransactionChannel <- &RollbackTransaction{transactionID: tPayload.transactionID}
+				// payload failed, rollback manager
+				common.TxManager.TransactionChannel <- &manager.RollbackTransaction{TransactionID: tPayload.transactionID}
 			} else {
 				// payload succeeded, acknowledge action
-				common.TxManager.TransactionChannel <- &AckAction{
-					transactionID: tPayload.transactionID,
-					actionID:      tPayload.actionID,
+				common.TxManager.TransactionChannel <- &manager.AckAction{
+					TransactionID: tPayload.transactionID,
+					ActionID:      tPayload.actionID,
 				}
 			}
 		case _ = <-f.ShutdownChannel:
