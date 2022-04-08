@@ -486,6 +486,14 @@ public:
     */
     virtual void setSubmitStopSnapshotCb(cb_submit_stop_snapshot_t) = 0;
 
+    //! setSubmitDeleteCb member.
+    /*!
+      \param A cb_submit_delete_t function pointer to the CGO callback.
+
+      Actual deleting of a topology element identifier is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setSubmitDeleteCb(cb_submit_delete_t) = 0;
+
     //! setSubmitTopologyEventCb member.
     /*!
       \param A cb_submit_topology_event_t function pointer to the CGO callback.
