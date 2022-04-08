@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -33,6 +34,7 @@ var allPersistentVolumeSourceMappers = []PersistentVolumeSourceMapper{
 	mapScaleIoPersistentVolume,
 	mapStorageOsPersistentVolume,
 	mapVspherePersistentVolume,
+	mapCSIPersistentVolume,
 }
 
 func mapAwsEbsPersistentVolume(pc *PersistentVolumeCollector, volume v1.PersistentVolume) (*topology.Component, error) {
@@ -397,4 +399,27 @@ func mapVspherePersistentVolume(pc *PersistentVolumeCollector, volume v1.Persist
 	}
 
 	return pc.createStackStateVolumeSourceComponent(volume, volume.Spec.VsphereVolume.VolumePath, extID, nil, tags)
+}
+
+func mapCSIPersistentVolume(pc *PersistentVolumeCollector, volume v1.PersistentVolume) (*topology.Component, error) {
+	if volume.Spec.CSI == nil {
+		return nil, nil
+	}
+
+	if volume.Spec.CSI.Driver == "" {
+		return nil, nil
+	}
+
+	extID := pc.GetURNBuilder().BuildExternalVolumeExternalID("csi", volume.Spec.CSI.Driver, volume.Spec.CSI.VolumeHandle)
+
+	// check if the VolumeAttributes is nil, initialize it to an empty map
+	if volume.Spec.CSI.VolumeAttributes == nil {
+		volume.Spec.CSI.VolumeAttributes = make(map[string]string)
+	}
+
+	volume.Spec.CSI.VolumeAttributes["kind"] = "csi"
+	volume.Spec.CSI.VolumeAttributes["driver"] = volume.Spec.CSI.Driver
+
+	return pc.createStackStateVolumeSourceComponent(volume, volume.Spec.CSI.VolumeHandle, extID, nil,
+		volume.Spec.CSI.VolumeAttributes)
 }

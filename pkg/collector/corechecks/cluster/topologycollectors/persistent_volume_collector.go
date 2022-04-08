@@ -68,7 +68,7 @@ func (pvc *PersistentVolumeCollector) persistentVolumeSourceToStackStateComponen
 		}
 	}
 
-	log.Errorf("Unknown PersistentVolumeSource for PersistentVolume '%s'", pv.Name)
+	log.Debugf("Unknown PersistentVolumeSource for PersistentVolume '%s', skipping it", pv.Name)
 
 	return nil, nil
 }
