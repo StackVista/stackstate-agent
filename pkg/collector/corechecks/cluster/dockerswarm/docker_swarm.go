@@ -57,11 +57,15 @@ func (s *SwarmCheck) Run() error {
 		}
 
 		log.Infof("Swarm check is enabled and running it")
-		err = s.topologyCollector.BuildSwarmTopology(hostname, sender)
-		if err != nil {
-			sender.ServiceCheck(SwarmServiceCheck, metrics.ServiceCheckCritical, "", nil, err.Error())
-			log.Errorf("Could not collect swarm topology: %s", err)
-			return err
+		if s.topologyCollector != nil {
+			err = s.topologyCollector.BuildSwarmTopology(hostname, sender)
+			if err != nil {
+				sender.ServiceCheck(SwarmServiceCheck, metrics.ServiceCheckCritical, "", nil, err.Error())
+				log.Errorf("Could not collect swarm topology: %s", err)
+				return err
+			}
+		} else {
+			return log.Errorf("docker swarm topology collector was not initialized")
 		}
 		sender.Commit()
 	} else {
@@ -94,15 +98,24 @@ func (s *SwarmCheck) Configure(config, initConfig integration.Data, source strin
 		_ = log.Error("could not parse the config for the Docker Swarm topology check")
 		return err
 	}
+
+	if s.instance.CollectSwarmTopology && s.topologyCollector == nil {
+		topologyCollector, err := MakeSwarmTopologyCollector()
+		if err != nil {
+			_ = log.Errorf("Error initialising docker swarm topology collector: %s", err)
+			return err
+		}
+		s.topologyCollector = topologyCollector
+	}
+
 	return nil
 }
 
 // SwarmFactory is exported for integration testing
 func SwarmFactory() check.Check {
 	return &SwarmCheck{
-		CheckBase:         core.NewCheckBase(SwarmCheckName),
-		instance:          &SwarmConfig{},
-		topologyCollector: MakeSwarmTopologyCollector(),
+		CheckBase: core.NewCheckBase(SwarmCheckName),
+		instance:  &SwarmConfig{},
 	}
 }
 
