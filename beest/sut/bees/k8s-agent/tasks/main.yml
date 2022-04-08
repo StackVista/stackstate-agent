@@ -12,8 +12,8 @@
 
   - include_tasks: quay-registry-key.yml
 
-  - name: Add StackState chart repo
-    shell: helm repo add stackstate https://helm.stackstate.io && helm repo update
+  - name: Add StackState and StackState-test chart repos
+    shell: helm repo add stackstate https://helm.stackstate.io && helm repo add stackstate-test https://helm-test.stackstate.io && helm repo update
 
   - name: Apply manifests for test workloads
     command: kubectl --context={{ kubecontext }} -n={{ namespace }} apply -f {{ role_path }}/files/test_workloads
