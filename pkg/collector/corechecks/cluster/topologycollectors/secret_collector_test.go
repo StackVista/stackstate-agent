@@ -157,6 +157,23 @@ func TestSecretCollector(t *testing.T) {
 
 }
 
+func TestSecretCollectorError(t *testing.T) {
+	componentChannel := make(chan *topology.Component)
+	defer close(componentChannel)
+
+	cmc := NewSecretCollector(componentChannel, NewTestCommonClusterCollector(MockSecretAPICollectorClientError{}, false))
+	expectedCollectorName := "Secret Collector"
+	RunCollectorTest(t, cmc, expectedCollectorName) // No error from CollectorFunction
+}
+
+type MockSecretAPICollectorClientError struct {
+	apiserver.APICollectorClient
+}
+
+func (m MockSecretAPICollectorClientError) GetSecrets() ([]coreV1.Secret, error) {
+	return []coreV1.Secret{}, fmt.Errorf("Secrets not allowed")
+}
+
 type MockSecretAPICollectorClient struct {
 	apiserver.APICollectorClient
 }
