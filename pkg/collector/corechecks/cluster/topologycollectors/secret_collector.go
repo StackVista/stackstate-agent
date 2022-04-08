@@ -16,6 +16,7 @@ import (
 // SecretCollector implements the ClusterTopologyCollector interface.
 type SecretCollector struct {
 	ComponentChan chan<- *topology.Component
+	disabledLog   bool
 	ClusterTopologyCollector
 }
 
@@ -24,6 +25,7 @@ func NewSecretCollector(componentChannel chan<- *topology.Component, clusterTopo
 	return &SecretCollector{
 		ComponentChan:            componentChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
+		disabledLog:              false,
 	}
 }
 
@@ -36,7 +38,11 @@ func (*SecretCollector) GetName() string {
 func (cmc *SecretCollector) CollectorFunction() error {
 	secrets, err := cmc.GetAPIClient().GetSecrets()
 	if err != nil {
-		return err
+		if !cmc.disabledLog {
+			log.Infof("Collection of secrets is disabled. To enable, add 'secrets' to the cluster agent ClusterRole using the `clusterAgent.collection.kubernetesResources` key on your helm values.yaml file")
+			cmc.disabledLog = true
+		}
+		return nil
 	}
 
 	for _, cm := range secrets {
