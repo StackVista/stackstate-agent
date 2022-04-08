@@ -57,16 +57,17 @@ func (s *SwarmCheck) Run() error {
 		}
 
 		log.Infof("Swarm check is enabled and running it")
-		if s.topologyCollector != nil {
-			err = s.topologyCollector.BuildSwarmTopology(hostname, sender)
-			if err != nil {
-				sender.ServiceCheck(SwarmServiceCheck, metrics.ServiceCheckCritical, "", nil, err.Error())
-				log.Errorf("Could not collect swarm topology: %s", err)
-				return err
-			}
-		} else {
+		if s.topologyCollector == nil {
 			return log.Errorf("docker swarm topology collector was not initialized")
 		}
+
+		err = s.topologyCollector.BuildSwarmTopology(hostname, sender)
+		if err != nil {
+			sender.ServiceCheck(SwarmServiceCheck, metrics.ServiceCheckCritical, "", nil, err.Error())
+			log.Errorf("Could not collect swarm topology: %s", err)
+			return err
+		}
+
 		sender.Commit()
 	} else {
 		log.Infof("Swarm check is not enabled to collect topology")
