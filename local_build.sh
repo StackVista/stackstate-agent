@@ -17,7 +17,7 @@ if [[ "$#" -eq "1" ]]; then
     if [[ "$1" =  "restart" ]]; then
         ( cd Dockerfiles/local_builder && docker build -t agent_build . )
 
-        docker rm -f agent_local_build || true
+        docker rm -f $NAME || true
 
         echo "This docker file will setup a docker container with a clone of the current agent directory."
         echo "The current directory will be mounted as a volume and can be pulled from, but the build is fully separated form the host system"
