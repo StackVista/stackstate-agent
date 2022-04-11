@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: example-ingress
@@ -16,11 +16,17 @@ spec:
   - host: anthonycornell.com
     http:
       paths:
-        - path: /apple
+        - pathType: Prefix
+          path: /apple
           backend:
-            serviceName: apple-service
-            servicePort: 5678
-        - path: /banana
+            service:
+              name: apple-service
+              port:
+                number: 5678
+        - pathType: Prefix
+          path: /banana
           backend:
-            serviceName: banana-service
-            servicePort: 5678
+            service:
+              name: banana-service
+              port:
+                number: 5678
