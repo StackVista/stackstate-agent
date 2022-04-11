@@ -19,8 +19,7 @@ type AckAction struct {
 
 // RejectAction ...
 type RejectAction struct {
-	TransactionID, ActionID string
-	Reason                  error
+	TransactionID, ActionID, Reason string
 }
 
 // StartTransaction ...
@@ -37,8 +36,7 @@ type CompleteTransaction struct {
 
 // RollbackTransaction ...
 type RollbackTransaction struct {
-	TransactionID string
-	Reason        string
+	TransactionID, Reason string
 }
 
 func (r RollbackTransaction) Error() string {
@@ -120,6 +118,10 @@ func (txm *TransactionManager) Start() {
 					_ = log.Errorf("Rejecting action %s for transaction %s: %s", msg.ActionID, msg.TransactionID, msg.Reason)
 					if err := txm.rejectAction(msg.TransactionID, msg.ActionID); err != nil {
 						txm.TransactionChannel <- err
+					} else {
+						// rollback the transaction
+						reason := fmt.Sprintf("rejected action %s for transaction %s: %s", msg.ActionID, msg.TransactionID, msg.Reason)
+						txm.TransactionChannel <- RollbackTransaction{TransactionID: msg.TransactionID, Reason: reason}
 					}
 				case CompleteTransaction:
 					log.Debugf("Completing transaction %s", msg.TransactionID)
@@ -135,7 +137,8 @@ func (txm *TransactionManager) Start() {
 				case TransactionNotFound:
 					_ = log.Errorf(msg.Error())
 				case ActionNotFound:
-					txm.TransactionChannel <- RollbackTransaction{TransactionID: msg.TransactionID, Reason: msg.Error()}
+					_ = log.Errorf(msg.Error())
+					//txm.TransactionChannel <- RollbackTransaction{TransactionID: msg.TransactionID, Reason: msg.Error()}
 				// shutdown transaction manager
 				case StopTransactionManager:
 					break transactionHandler
@@ -145,7 +148,7 @@ func (txm *TransactionManager) Start() {
 			case <-txm.TransactionTicker.C:
 				// expire stale transactions, clean up expired transactions that exceed the eviction duration
 				for _, transaction := range txm.Transactions {
-					if transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionTimeoutDuration)) {
+					if transaction.State != Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionTimeoutDuration)) {
 						// last updated timestamp is before current time - manager timeout duration => Tx is stale
 						transaction.State = Stale
 					} else if transaction.State == Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionEvictionDuration)) {
@@ -247,7 +250,6 @@ func (txm *TransactionManager) rejectAction(transactionID, actionID string) erro
 	}
 	action.Acknowledged = true
 	action.AcknowledgedTimestamp = time.Now()
-	txm.updateTransaction(transaction, action, Failed)
 	log.Debugf("Transaction %s, acknowledged action %s", transactionID, actionID)
 
 	return nil
