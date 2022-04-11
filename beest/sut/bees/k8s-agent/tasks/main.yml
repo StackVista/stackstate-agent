@@ -38,11 +38,33 @@
       --values "{{ role_path }}/files/values.yml" \
       stackstate-cluster-agent {{ helm_chart_repo }}
 
-  - name: Wait for the stackstate cluster agent to start doing it's thing
-    command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=cluster-agent pod
+  - name: Attempt to verify cluster agent ready
+    block:
+      - name: Wait for the stackstate cluster agent to start doing it's thing
+        command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=cluster-agent pod
+    rescue:
+      - name: Describe cluster agent pod
+        command: kubectl describe pods -l app.kubernetes.io/component=cluster-agent -n={{ namespace }} --context={{ kubecontext }}
+        register: cluster_agent_describe
+      - debug:
+          var: cluster_agent_describe
+      - debug:
+          msg: Cluster agent not ready yet
+        failed_when: true
 
-  - name: Wait for the stackstate node agents to start doing their thing (otherwise connections might occur after agent startup)
-    command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=agent pod
+  - name: Attempt to verify node agents ready
+    block:
+      - name: Wait for the stackstate node agents to start doing their thing (otherwise connections might occur after agent startup)
+        command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=agent pod
+    rescue:
+      - name: Describe node agent pods
+        command: kubectl describe pods -l app.kubernetes.io/component=agent -n={{ namespace }} --context={{ kubecontext }}
+        register: node_agent_describe
+      - debug:
+          var: node_agent_describe
+      - debug:
+          msg: Node agents not ready yet
+        failed_when: true
 
   - name: Wait for the stackstate cluster check agent to start
     command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=clusterchecks pod
