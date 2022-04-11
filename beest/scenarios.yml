@@ -9,7 +9,7 @@ scenarios:
       group: k8s
     variables:
       k8s_runtime: dockerd
-      k8s_version: "1.21"
+      k8s_version: "1.22"
   - name: containerd-eks
     description: |
       Same as dockerd-eks scenario, but the EKS cluster is configured to use Containerd as container runtime.
@@ -19,7 +19,7 @@ scenarios:
       group: k8s
     variables:
       k8s_runtime: containerd
-      k8s_version: "1.21"
+      k8s_version: "1.22"
   - name: k8s-stackpack
     description: |
       Provision an EKS cluster.
