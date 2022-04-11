@@ -63,7 +63,7 @@ func TestPersistentVolumeCollector(t *testing.T) {
 				testCase: "Test Persistent Volume 1 - AWS Elastic Block Store",
 				apiCollectorClientFactory: func() apiserver.APICollectorClient {
 					return &MockPersistentVolumeAPICollectorClient{getPersistentVolumes: func() ([]coreV1.PersistentVolume, error) {
-						persistentVolume := NewTestPV()
+						persistentVolume := NewTestPV("aws-elastic-block-store-volume")
 						persistentVolume.Spec.PersistentVolumeSource = coreV1.PersistentVolumeSource{
 							AWSElasticBlockStore: &awsElasticBlockStore,
 						}
@@ -77,13 +77,13 @@ func TestPersistentVolumeCollector(t *testing.T) {
 							chooseBySourcePropertiesFeature(
 								sourcePropertiesEnabled,
 								&topology.Component{
-									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume",
+									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume",
 									Type:       topology.Type{Name: "persistent-volume"},
 									Data: topology.Data{
-										"name":              "test-persistent-volume",
+										"name":              "aws-elastic-block-store-volume",
 										"creationTimestamp": creationTime,
 										"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"uid":               types.UID("test-persistent-volume"),
+										"uid":               types.UID("aws-elastic-block-store-volume"),
 										"identifiers":       []string{},
 										"status":            coreV1.VolumeAvailable,
 										"statusMessage":     "Volume is available for use",
@@ -91,10 +91,10 @@ func TestPersistentVolumeCollector(t *testing.T) {
 									},
 								},
 								&topology.Component{
-									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume",
+									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume",
 									Type:       topology.Type{Name: "persistent-volume"},
 									Data: topology.Data{
-										"name":        "test-persistent-volume",
+										"name":        "aws-elastic-block-store-volume",
 										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 										"identifiers": []string{},
 									},
@@ -102,9 +102,9 @@ func TestPersistentVolumeCollector(t *testing.T) {
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
-											"name":              "test-persistent-volume",
+											"name":              "aws-elastic-block-store-volume",
 											"namespace":         "test-namespace",
-											"uid":               "test-persistent-volume",
+											"uid":               "aws-elastic-block-store-volume",
 										},
 										"spec": map[string]interface{}{
 											"persistentVolumeSource": map[string]interface{}{
@@ -137,10 +137,10 @@ func TestPersistentVolumeCollector(t *testing.T) {
 					func(t *testing.T) {
 						relation := <-relationChannel
 						expectedRelation := &topology.Relation{
-							ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume->" +
+							ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume->" +
 								"urn:kubernetes:external-volume:aws-ebs/id-of-the-aws-block-store/0",
 							Type:     topology.Type{Name: "exposes"},
-							SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume",
+							SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume",
 							TargetID: "urn:kubernetes:external-volume:aws-ebs/id-of-the-aws-block-store/0",
 							Data:     map[string]interface{}{},
 						}
@@ -152,7 +152,7 @@ func TestPersistentVolumeCollector(t *testing.T) {
 				testCase: "Test Persistent Volume 2 - GCE Persistent Disk",
 				apiCollectorClientFactory: func() apiserver.APICollectorClient {
 					return &MockPersistentVolumeAPICollectorClient{getPersistentVolumes: func() ([]coreV1.PersistentVolume, error) {
-						persistentVolume := NewTestPV()
+						persistentVolume := NewTestPV("gce-persistent-disk-volume")
 						persistentVolume.Spec.PersistentVolumeSource = coreV1.PersistentVolumeSource{
 							GCEPersistentDisk: &gcePersistentDisk,
 						}
@@ -165,23 +165,23 @@ func TestPersistentVolumeCollector(t *testing.T) {
 						expected := chooseBySourcePropertiesFeature(
 							sourcePropertiesEnabled,
 							&topology.Component{
-								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume",
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/gce-persistent-disk-volume",
 								Type:       topology.Type{Name: "persistent-volume"},
 								Data: topology.Data{
-									"name":              "test-persistent-volume",
+									"name":              "gce-persistent-disk-volume",
 									"creationTimestamp": creationTime,
 									"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-									"uid":               types.UID("test-persistent-volume"),
+									"uid":               types.UID("gce-persistent-disk-volume"),
 									"identifiers":       []string{},
 									"status":            coreV1.VolumeAvailable,
 									"statusMessage":     "Volume is available for use",
 									"storageClassName":  "Storage-Class-Name",
 								}},
 							&topology.Component{
-								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume",
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/gce-persistent-disk-volume",
 								Type:       topology.Type{Name: "persistent-volume"},
 								Data: topology.Data{
-									"name":        "test-persistent-volume",
+									"name":        "gce-persistent-disk-volume",
 									"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 									"identifiers": []string{},
 								},
@@ -189,9 +189,9 @@ func TestPersistentVolumeCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": creationTimeFormatted,
 										"labels":            map[string]interface{}{"test": "label"},
-										"name":              "test-persistent-volume",
+										"name":              "gce-persistent-disk-volume",
 										"namespace":         "test-namespace",
-										"uid":               "test-persistent-volume",
+										"uid":               "gce-persistent-disk-volume",
 									},
 									"spec": map[string]interface{}{
 										"persistentVolumeSource": map[string]interface{}{
@@ -223,10 +223,10 @@ func TestPersistentVolumeCollector(t *testing.T) {
 					func(t *testing.T) {
 						relation := <-relationChannel
 						expectedRelation := &topology.Relation{
-							ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume->" +
+							ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/gce-persistent-disk-volume->" +
 								"urn:kubernetes:external-volume:gce-pd/name-of-the-gce-persistent-disk",
 							Type:     topology.Type{Name: "exposes"},
-							SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume",
+							SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume/gce-persistent-disk-volume",
 							TargetID: "urn:kubernetes:external-volume:gce-pd/name-of-the-gce-persistent-disk",
 							Data:     map[string]interface{}{},
 						}
@@ -238,7 +238,7 @@ func TestPersistentVolumeCollector(t *testing.T) {
 				testCase: "Test Persistent Volume 3 - Host Path + Kind + Generate Name",
 				apiCollectorClientFactory: func() apiserver.APICollectorClient {
 					return &MockPersistentVolumeAPICollectorClient{getPersistentVolumes: func() ([]coreV1.PersistentVolume, error) {
-						persistentVolume := NewTestPV()
+						persistentVolume := NewTestPV("host-path-volume")
 						persistentVolume.Spec.PersistentVolumeSource = coreV1.PersistentVolumeSource{
 							HostPath: &hostPath,
 						}
@@ -253,13 +253,13 @@ func TestPersistentVolumeCollector(t *testing.T) {
 						expected := chooseBySourcePropertiesFeature(
 							sourcePropertiesEnabled,
 							&topology.Component{
-								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume",
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/host-path-volume",
 								Type:       topology.Type{Name: "persistent-volume"},
 								Data: topology.Data{
-									"name":              "test-persistent-volume",
+									"name":              "host-path-volume",
 									"creationTimestamp": creationTime,
 									"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-									"uid":               types.UID("test-persistent-volume"),
+									"uid":               types.UID("host-path-volume"),
 									"identifiers":       []string{},
 									"kind":              "some-specified-kind",
 									"generateName":      "some-specified-generation",
@@ -269,10 +269,10 @@ func TestPersistentVolumeCollector(t *testing.T) {
 								},
 							},
 							&topology.Component{
-								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume",
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/host-path-volume",
 								Type:       topology.Type{Name: "persistent-volume"},
 								Data: topology.Data{
-									"name":        "test-persistent-volume",
+									"name":        "host-path-volume",
 									"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 									"identifiers": []string{},
 								},
@@ -280,9 +280,9 @@ func TestPersistentVolumeCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": creationTimeFormatted,
 										"labels":            map[string]interface{}{"test": "label"},
-										"name":              "test-persistent-volume",
+										"name":              "host-path-volume",
 										"namespace":         "test-namespace",
-										"uid":               "test-persistent-volume",
+										"uid":               "host-path-volume",
 										"generateName":      "some-specified-generation",
 									},
 									"spec": map[string]interface{}{
@@ -306,7 +306,7 @@ func TestPersistentVolumeCollector(t *testing.T) {
 				testCase: "Test Persistent Volume 4 - Trident CSI Storage",
 				apiCollectorClientFactory: func() apiserver.APICollectorClient {
 					return &MockPersistentVolumeAPICollectorClient{getPersistentVolumes: func() ([]coreV1.PersistentVolume, error) {
-						persistentVolume := NewTestPV()
+						persistentVolume := NewTestPV("trident-csi-storage-volume")
 						persistentVolume.Spec.PersistentVolumeSource = coreV1.PersistentVolumeSource{
 							CSI: &csiPersistentVolume,
 						}
@@ -320,13 +320,13 @@ func TestPersistentVolumeCollector(t *testing.T) {
 							chooseBySourcePropertiesFeature(
 								sourcePropertiesEnabled,
 								&topology.Component{
-									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume",
+									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/trident-csi-storage-volume",
 									Type:       topology.Type{Name: "persistent-volume"},
 									Data: topology.Data{
-										"name":              "test-persistent-volume",
+										"name":              "trident-csi-storage-volume",
 										"creationTimestamp": creationTime,
 										"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"uid":               types.UID("test-persistent-volume"),
+										"uid":               types.UID("trident-csi-storage-volume"),
 										"identifiers":       []string{},
 										"status":            coreV1.VolumeAvailable,
 										"statusMessage":     "Volume is available for use",
@@ -334,10 +334,10 @@ func TestPersistentVolumeCollector(t *testing.T) {
 									},
 								},
 								&topology.Component{
-									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume",
+									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/trident-csi-storage-volume",
 									Type:       topology.Type{Name: "persistent-volume"},
 									Data: topology.Data{
-										"name":        "test-persistent-volume",
+										"name":        "trident-csi-storage-volume",
 										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 										"identifiers": []string{},
 									},
@@ -345,9 +345,9 @@ func TestPersistentVolumeCollector(t *testing.T) {
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
-											"name":              "test-persistent-volume",
+											"name":              "trident-csi-storage-volume",
 											"namespace":         "test-namespace",
-											"uid":               "test-persistent-volume",
+											"uid":               "trident-csi-storage-volume",
 										},
 										"spec": map[string]interface{}{
 											"persistentVolumeSource": map[string]interface{}{
@@ -403,10 +403,10 @@ func TestPersistentVolumeCollector(t *testing.T) {
 					func(t *testing.T) {
 						relation := <-relationChannel
 						expectedRelation := &topology.Relation{
-							ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume->" +
+							ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/trident-csi-storage-volume->" +
 								"urn:kubernetes:external-volume:csi/csi.trident.netapp.io/pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
 							Type:     topology.Type{Name: "exposes"},
-							SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume/test-persistent-volume",
+							SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume/trident-csi-storage-volume",
 							TargetID: "urn:kubernetes:external-volume:csi/csi.trident.netapp.io/pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
 							Data:     map[string]interface{}{},
 						}
@@ -428,19 +428,19 @@ func TestPersistentVolumeCollector(t *testing.T) {
 	}
 }
 
-func NewTestPV() coreV1.PersistentVolume {
+func NewTestPV(volumeName string) coreV1.PersistentVolume {
 	return coreV1.PersistentVolume{
 		TypeMeta: v1.TypeMeta{
 			Kind: "",
 		},
 		ObjectMeta: v1.ObjectMeta{
-			Name:              "test-persistent-volume",
+			Name:              volumeName,
 			CreationTimestamp: creationTime,
 			Namespace:         "test-namespace",
 			Labels: map[string]string{
 				"test": "label",
 			},
-			UID:             types.UID("test-persistent-volume"),
+			UID:             types.UID(volumeName),
 			GenerateName:    "",
 			ResourceVersion: "123",
 			ManagedFields: []v1.ManagedFieldsEntry{
