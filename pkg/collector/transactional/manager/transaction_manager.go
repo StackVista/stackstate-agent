@@ -138,7 +138,6 @@ func (txm *TransactionManager) Start() {
 					_ = log.Errorf(msg.Error())
 				case ActionNotFound:
 					_ = log.Errorf(msg.Error())
-					//txm.TransactionChannel <- RollbackTransaction{TransactionID: msg.TransactionID, Reason: msg.Error()}
 				// shutdown transaction manager
 				case StopTransactionManager:
 					break transactionHandler

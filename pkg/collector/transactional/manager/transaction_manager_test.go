@@ -194,11 +194,11 @@ func TestTransactionManager_ErrorHandling(t *testing.T) {
 				assert.False(t, transactionManager.running)
 				assert.Empty(t, transactionManager.Transactions)
 
-				// start the transaction manager for the following tests
+				// start the transaction manager, the transaction sent before the start will be read immediately, assert it
 				transactionManager.Start()
 
 				assert.True(t, transactionManager.running)
-				assert.Len(t, transactionManager.Transactions, 0)
+				assertTransaction(t, transactionManager, txID, InProgress, map[string]*Action{})
 			},
 		},
 		{
@@ -208,9 +208,14 @@ func TestTransactionManager_ErrorHandling(t *testing.T) {
 				actID := uuid.New().String()
 				transactionManager.TransactionChannel <- CommitAction{TransactionID: txID, ActionID: actID}
 
-				// assert nothing was created and that the transaction manager is still running
+				// assert that we don't have a transaction for txID and no action for actID
 				assert.True(t, transactionManager.running)
-				assert.Len(t, transactionManager.Transactions, 0)
+				_, found := transactionManager.Transactions[txID]
+				assert.False(t, found, "Transaction %s not found in the transaction map", txID)
+				for _, tx := range transactionManager.Transactions {
+					_, found := tx.Actions[actID]
+					assert.False(t, found)
+				}
 			},
 		},
 		{
