@@ -155,26 +155,6 @@ def test_cluster_agent_base_topology(host, ansible_var):
             identifiers_assert_fn=lambda identifiers: next(
                 x for x in identifiers if x.startswith("urn:ip:/%s:" % cluster_name))
         )
-        # 2 agent pods on each node, each pod 1 container
-        node_agent_pod_match = re.compile("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*" % (cluster_name, namespace))
-        assert _component_data(
-            json_data=json_data,
-            type_name="pod",
-            external_id_assert_fn=lambda eid: node_agent_pod_match.findall(eid),
-            cluster_name=cluster_name,
-            identifiers_assert_fn=lambda identifiers: next(
-                x for x in identifiers if x.startswith("urn:ip:/%s:" % cluster_name))
-        )
-        node_agent_container_match = re.compile("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*:"
-                                                "container/cluster-agent" % (cluster_name, namespace))
-        assert _component_data(
-            json_data=json_data,
-            type_name="container",
-            external_id_assert_fn=lambda eid: node_agent_container_match.findall(eid),
-            cluster_name=cluster_name,
-            identifiers_assert_fn=lambda identifiers: next(x for x in identifiers if x.startswith("urn:container:/i-"))
-            # TODO ec2 i-*
-        )
         # 1 cluster agent pod with 1 container
         cluster_agent_pod_match = re.compile("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-.*-.*" % (cluster_name, namespace))
         assert _component_data(
@@ -655,3 +635,48 @@ def test_cluster_agent_pod_mount_volume_relation(host, ansible_var):
         assert relation.startswith("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent" % (cluster_name, namespace))
 
     util.wait_until(wait_for_relation, 120, 3)
+
+def test_node_agent_topology(host, ansible_var):
+    cluster_name = ansible_var("cluster_name")
+    namespace = ansible_var("namespace")
+    topic = "sts_topo_kubernetes_%s" % cluster_name
+    url = "http://localhost:7070/api/topic/%s?limit=1000" % topic
+
+    def wait_for_cluster_agent_components():
+        data = host.check_output("curl \"%s\"" % url)
+        json_data = json.loads(data)
+        with open("./topic-" + topic + ".json", 'w') as f:
+            json.dump(json_data, f, indent=4)
+
+        # 2 agent pods on each node, each pod 1 container
+        node_agent_pod_match = re.compile("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*" % (cluster_name, namespace))
+        assert _component_data(
+            json_data=json_data,
+            type_name="pod",
+            external_id_assert_fn=lambda eid: node_agent_pod_match.findall(eid),
+            cluster_name=cluster_name,
+            identifiers_assert_fn=lambda identifiers: next(
+                x for x in identifiers if x.startswith("urn:ip:/%s:" % cluster_name))
+        ), "No node agent pod found"
+        node_agent_container_match = re.compile("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*:"
+                                                "container/agent" % (cluster_name, namespace))
+        assert _component_data(
+            json_data=json_data,
+            type_name="container",
+            external_id_assert_fn=lambda eid: node_agent_container_match.findall(eid),
+            cluster_name=cluster_name,
+            identifiers_assert_fn=lambda identifiers: next(x for x in identifiers if x.startswith("urn:container:/i-"))
+            # TODO ec2 i-*
+        ), "No container 'agent' in node agent found"
+        node_process_agent_container_match = re.compile("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*:"
+                                                "container/process-agent" % (cluster_name, namespace))
+        assert _component_data(
+            json_data=json_data,
+            type_name="container",
+            external_id_assert_fn=lambda eid: node_process_agent_container_match.findall(eid),
+            cluster_name=cluster_name,
+            identifiers_assert_fn=lambda identifiers: next(x for x in identifiers if x.startswith("urn:container:/i-"))
+            # TODO ec2 i-*
+        ), "No container 'agent' in node agent found"
+
+    util.wait_until(wait_for_cluster_agent_components, 120, 3)
