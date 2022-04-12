@@ -2,7 +2,7 @@ package manager
 
 import "time"
 
-// TransactionState is an integer representing the state of the manager
+// TransactionState is an integer representing the state of the transaction
 type TransactionState int64
 
 const (
@@ -12,6 +12,7 @@ const (
 	Stale
 )
 
+// String returns a string representation of TransactionState
 func (state TransactionState) String() string {
 	switch state {
 	case Failed:

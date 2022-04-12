@@ -7,38 +7,39 @@ import (
 	"time"
 )
 
-// CommitAction ...
+// CommitAction is used to commit an action for a certain transaction.
 type CommitAction struct {
 	TransactionID, ActionID string
 }
 
-// AckAction ...
+// AckAction acknowledges an action for a given transaction.
 type AckAction struct {
 	TransactionID, ActionID string
 }
 
-// RejectAction ...
+// RejectAction rejects an action for a given transaction. This results in a failed transaction.
 type RejectAction struct {
 	TransactionID, ActionID, Reason string
 }
 
-// StartTransaction ...
+// StartTransaction starts a transaction for a given checkID, with an optional OnComplete callback function.
 type StartTransaction struct {
 	CheckID       check.ID
 	TransactionID string
 	OnComplete    func(transaction *IntakeTransaction)
 }
 
-// CompleteTransaction ...
+// CompleteTransaction completes a transaction. If all actions are acknowledges, the transaction is considered a success.
 type CompleteTransaction struct {
 	TransactionID string
 }
 
-// RollbackTransaction ...
+// RollbackTransaction rolls back a transaction and marks a transaction as a failure.
 type RollbackTransaction struct {
 	TransactionID, Reason string
 }
 
+// Error returns a string representing the RollbackTransaction
 func (r RollbackTransaction) Error() string {
 	return fmt.Sprintf("rolling back transaction %s. %s", r.TransactionID, r.Reason)
 }
@@ -206,7 +207,6 @@ func (txm *TransactionManager) commitAction(transactionID, actionID string) erro
 		CommittedTimestamp: time.Now(),
 	}
 	txm.updateTransaction(transaction, action, InProgress)
-	log.Debugf("Transaction %s, committing action %s", transactionID, actionID)
 
 	return nil
 }
@@ -231,7 +231,6 @@ func (txm *TransactionManager) ackAction(transactionID, actionID string) error {
 	action.Acknowledged = true
 	action.AcknowledgedTimestamp = time.Now()
 	txm.updateTransaction(transaction, action, InProgress)
-	log.Debugf("Transaction %s, acknowledged action %s", transactionID, actionID)
 
 	return nil
 }
@@ -249,12 +248,12 @@ func (txm *TransactionManager) rejectAction(transactionID, actionID string) erro
 	}
 	action.Acknowledged = true
 	action.AcknowledgedTimestamp = time.Now()
-	log.Debugf("Transaction %s, acknowledged action %s", transactionID, actionID)
 
 	return nil
 }
 
-// completeTransaction marks the manager successful
+// completeTransaction marks a transaction for a given transactionID as Succeeded, if all the committed actions
+// of a transaction has been acknowledged
 func (txm *TransactionManager) completeTransaction(transactionID string) error {
 	transaction, exists := txm.Transactions[transactionID]
 	if !exists {
@@ -270,7 +269,6 @@ func (txm *TransactionManager) completeTransaction(transactionID string) error {
 	}
 	transaction.State = Succeeded
 	transaction.LastUpdatedTimestamp = time.Now()
-	log.Debugf("Transaction succeeded %s", transaction.TransactionID)
 
 	if transaction.OnComplete != nil {
 		transaction.OnComplete(transaction)
@@ -279,22 +277,20 @@ func (txm *TransactionManager) completeTransaction(transactionID string) error {
 	return nil
 }
 
-// evictTransaction evicts the intake manager due to failure or timeout
+// evictTransaction delete a given transactionID from the transactions map
 func (txm *TransactionManager) evictTransaction(transactionID string) {
 	delete(txm.Transactions, transactionID)
 }
 
-// rollbackTransaction rolls back the intake manager
+// rollbackTransaction rolls back the transaction in the event of a failure
 func (txm *TransactionManager) rollbackTransaction(transactionID string) error {
 	transaction, exists := txm.Transactions[transactionID]
 	if !exists {
 		return TransactionNotFound{TransactionID: transactionID}
 	}
 
-	// manager failed, rollback
 	transaction.State = Failed
 	transaction.LastUpdatedTimestamp = time.Now()
-	log.Debugf("Transaction failed %s", transaction.TransactionID)
 
 	if transaction.OnComplete != nil {
 		transaction.OnComplete(transaction)

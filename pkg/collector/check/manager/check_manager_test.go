@@ -31,7 +31,7 @@ func TestCheckManagerSubscription(t *testing.T) {
 	assert.EqualValues(t, checkManager.GetCheckHandler(testCheck.ID()), checkManager.fallbackCheckHandler)
 
 	// subscribe my test check, assert that we can get it with the check handler and that it's present in the inner map
-	checkManager.SubscribeCheckHandler(testCheck, check.TestCheckReloader{}, batcher.MockBatcher{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
+	checkManager.SubscribeCheckHandler(testCheck, &check.TestCheckReloader{}, batcher.MockBatcher{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 	_, found := checkManager.checkHandlers[string(testCheck.ID())]
 	assert.True(t, found, "TestCheck handler not found in the checkManager.checkHandlers map")
 	ch := checkManager.GetCheckHandler(testCheck.ID())
@@ -43,7 +43,7 @@ func TestCheckManagerSubscription(t *testing.T) {
 
 	// subscribe another check handler and assert it
 	testCheck2 := &check.TestCheck{Name: "test-check-2"}
-	checkManager.SubscribeCheckHandler(testCheck2, check.TestCheckReloader{}, batcher.MockBatcher{}, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
+	checkManager.SubscribeCheckHandler(testCheck2, &check.TestCheckReloader{}, batcher.MockBatcher{}, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
 	_, found = checkManager.checkHandlers[string(testCheck.ID())]
 	assert.True(t, found, "TestCheck handler not found in the checkManager.checkHandlers map")
 	ch2 := checkManager.GetCheckHandler(testCheck2.ID())
@@ -63,7 +63,7 @@ func TestCheckManagerSubscription(t *testing.T) {
 	assert.False(t, found, "TestCheck handler not found in the checkManager.checkHandlers map")
 
 	// subscribe testCheck2 again
-	checkManager.SubscribeCheckHandler(testCheck2, check.TestCheckReloader{}, batcher.MockBatcher{}, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
+	checkManager.SubscribeCheckHandler(testCheck2, &check.TestCheckReloader{}, batcher.MockBatcher{}, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
 	_, found = checkManager.checkHandlers[string(testCheck2.ID())]
 	assert.True(t, found, "TestCheck handler not found in the checkManager.checkHandlers map")
 
