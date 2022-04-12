@@ -35,7 +35,7 @@
       --set "clusterAgent.image.repository=stackstate/{{cluster_agent_docker_repo}}" \
       --set "clusterChecks.image.tag={{agent_current_branch}}" \
       --set "clusterChecks.image.repository=stackstate/{{agent_docker_repo}}" \
-      --set "all.image.registry=artifactory.tooling.stackstate.io/docker-virtual" \
+      --set "all.image.registry=docker.io" \
       --values "{{ role_path }}/files/values.yml" \
       stackstate-cluster-agent {{ helm_chart_repo }}
 
