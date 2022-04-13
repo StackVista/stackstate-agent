@@ -695,7 +695,7 @@ def test_pod_encloses_container_relation(host, ansible_var):
         )
         assert re.match(
             "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*"
-            % (cluster_name, namespace), pod_encloses_source_id), "Node agent pod to agent container not found"
+            % (cluster_name, namespace), pod_encloses_source_id), "Node agent pod to process-agent container not found"
         # stackstate-cluster-agent pod encloses cluster-agent container (1 time)
         cluster_agent_container_enclosed_match = re.compile(
             "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-.*-.*->"
