@@ -334,32 +334,6 @@ def test_cluster_agent_base_topology(host, ansible_var):
             type_name="scheduled_on",
             external_id_assert_fn=lambda eid: cluster_agent_pod_scheduled_match.findall(eid)
         ).startswith("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-" % (cluster_name, namespace))
-        # Pod -> Container (encloses)
-        # stackstate-agent pod encloses a container (2 times)
-        node_agent_container_enclosed_match = re.compile(
-            "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*->"
-            "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*:container/cluster-agent"
-            % (cluster_name, namespace, cluster_name, namespace))
-        pod_encloses_source_id = _relation_sourceid(
-            json_data=json_data,
-            type_name="encloses",
-            external_id_assert_fn=lambda eid: node_agent_container_enclosed_match.findall(eid)
-        )
-        assert re.match(
-            "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*"
-            % (cluster_name, namespace), pod_encloses_source_id)
-        # stackstate-cluster-agent pod encloses a container (1 time)
-        cluster_agent_container_enclosed_match = re.compile(
-            "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-.*-.*->"
-            "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-.*-.*:container/cluster-agent"
-            % (cluster_name, namespace, cluster_name, namespace))
-        pod_encloses_source_id = _relation_sourceid(
-            json_data=json_data,
-            type_name="encloses",
-            external_id_assert_fn=lambda eid: cluster_agent_container_enclosed_match.findall(eid)
-        )
-        assert re.match("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-.*-.*" % (cluster_name, namespace),
-                        pod_encloses_source_id)
         # Pod -> Service (exposes)
         # stackstate-agent exposes stackstate-agent pods (2 times)
         node_agent_service_match = re.compile("urn:kubernetes:/%s:%s:service/stackstate-cluster-agent-agent->"
@@ -636,6 +610,7 @@ def test_cluster_agent_pod_mount_volume_relation(host, ansible_var):
 
     util.wait_until(wait_for_relation, 120, 3)
 
+
 def test_node_agent_topology(host, ansible_var):
     cluster_name = ansible_var("cluster_name")
     namespace = ansible_var("namespace")
@@ -678,5 +653,60 @@ def test_node_agent_topology(host, ansible_var):
             identifiers_assert_fn=lambda identifiers: next(x for x in identifiers if x.startswith("urn:container:/i-"))
             # TODO ec2 i-*
         ), "No container 'agent' in node agent found"
+
+    util.wait_until(wait_for_cluster_agent_components, 120, 3)
+
+
+def test_pod_encloses_container_relation(host, ansible_var):
+    cluster_name = ansible_var("cluster_name")
+    namespace = ansible_var("namespace")
+    topic = "sts_topo_kubernetes_%s" % cluster_name
+    url = "http://localhost:7070/api/topic/%s?limit=1000" % topic
+
+    def wait_for_cluster_agent_components():
+        data = host.check_output("curl \"%s\"" % url)
+        json_data = json.loads(data)
+        with open("./topic-" + topic + ".json", 'w') as f:
+            json.dump(json_data, f, indent=4)
+
+        # Pod -> Container (encloses)
+        # stackstate-agent pod encloses agent container (2 times)
+        node_agent_container_enclosed_match = re.compile(
+            "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*->"
+            "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*:container/agent"
+            % (cluster_name, namespace, cluster_name, namespace))
+        pod_encloses_source_id = _relation_sourceid(
+            json_data=json_data,
+            type_name="encloses",
+            external_id_assert_fn=lambda eid: node_agent_container_enclosed_match.findall(eid)
+        )
+        assert re.match(
+            "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*"
+            % (cluster_name, namespace), pod_encloses_source_id), "Node agent pod to agent container not found"
+        # stackstate-agent pod encloses process-agent container (2 times)
+        node_agent_container_enclosed_match = re.compile(
+            "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*->"
+            "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*:container/process-agent"
+            % (cluster_name, namespace, cluster_name, namespace))
+        pod_encloses_source_id = _relation_sourceid(
+            json_data=json_data,
+            type_name="encloses",
+            external_id_assert_fn=lambda eid: node_agent_container_enclosed_match.findall(eid)
+        )
+        assert re.match(
+            "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*"
+            % (cluster_name, namespace), pod_encloses_source_id), "Node agent pod to agent container not found"
+        # stackstate-cluster-agent pod encloses cluster-agent container (1 time)
+        cluster_agent_container_enclosed_match = re.compile(
+            "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-.*-.*->"
+            "urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-.*-.*:container/cluster-agent"
+            % (cluster_name, namespace, cluster_name, namespace))
+        pod_encloses_source_id = _relation_sourceid(
+            json_data=json_data,
+            type_name="encloses",
+            external_id_assert_fn=lambda eid: cluster_agent_container_enclosed_match.findall(eid)
+        )
+        assert re.match("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-.*-.*" % (cluster_name, namespace),
+                        pod_encloses_source_id)
 
     util.wait_until(wait_for_cluster_agent_components, 120, 3)
