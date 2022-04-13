@@ -31,11 +31,11 @@
       --set-string 'stackstate.url'='http://{{ groups['receiver'][0] }}:7077/stsAgent' \
       --set "agent.containers.agent.image.tag={{agent_current_branch}}" \
       --set "agent.containers.agent.image.repository=stackstate/{{agent_docker_repo}}" \
+      --set "agent.containers.processAgent.image.repository=stackstate/stackstate-process-agent-test" \
       --set "clusterAgent.image.tag={{agent_current_branch}}" \
       --set "clusterAgent.image.repository=stackstate/{{cluster_agent_docker_repo}}" \
       --set "clusterChecks.image.tag={{agent_current_branch}}" \
       --set "clusterChecks.image.repository=stackstate/{{agent_docker_repo}}" \
-      --set "all.image.registry=docker.io" \
       --values "{{ role_path }}/files/values.yml" \
       stackstate-cluster-agent {{ helm_chart_repo }}
 
