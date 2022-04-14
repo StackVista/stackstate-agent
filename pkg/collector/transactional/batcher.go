@@ -23,6 +23,7 @@ func MakeCheckInstanceBatcher(checkId check.ID, hostname, agentName string, maxC
 		CheckInstance: checkId,
 		flushTicker:   checkFlushInterval,
 		Forwarder:     MakeForwarder(),
+		builder:       MakeTransactionalBatchBuilder(maxCapacity),
 	}
 
 	go ctb.listenForFlushTicker()
@@ -34,7 +35,7 @@ func MakeCheckInstanceBatcher(checkId check.ID, hostname, agentName string, maxC
 type CheckTransactionalBatcher struct {
 	batcher.BatcherBase
 	CheckInstance check.ID
-	builder       TransactionalBatchBuilder
+	builder       *TransactionalBatchBuilder
 	flushTicker   *time.Ticker
 	Forwarder     *Forwarder
 }
@@ -171,6 +172,7 @@ func (ctb *CheckTransactionalBatcher) Start() {
 	}
 }
 
+// SubmitState submits the transactional check instance batch state and commits an action for this payload
 func (ctb *CheckTransactionalBatcher) SubmitState(state *TxCheckInstanceBatchState) {
 	data := ctb.mapStateToPayload(state.CheckInstanceBatchState)
 	payload, err := ctb.marshallPayload(data)

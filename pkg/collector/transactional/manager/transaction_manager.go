@@ -39,37 +39,44 @@ type RollbackTransaction struct {
 	TransactionID, Reason string
 }
 
-// Error returns a string representing the RollbackTransaction
+// Error returns a string representing the RollbackTransaction.
 func (r RollbackTransaction) Error() string {
 	return fmt.Sprintf("rolling back transaction %s. %s", r.TransactionID, r.Reason)
 }
 
-// StopTransactionManager ...
+// StopTransactionManager triggers the shutdown of the transaction manager.
 type StopTransactionManager struct{}
 
+// TransactionManagerNotRunning is triggered when trying to create a transaction when the transaction manager has not
+// been started yet.
 type TransactionManagerNotRunning struct{}
 
+// Error returns a string representation of the TransactionManagerNotRunning error and implements Error.
 func (t TransactionManagerNotRunning) Error() string {
 	return "transaction manager is not running, call TransactionManager.Start() to start it"
 }
 
+// TransactionNotFound is triggered when trying to look up a non-existing transaction in the transaction manager
 type TransactionNotFound struct {
 	TransactionID string
 }
 
+// Error returns a string representation of the TransactionNotFound error and implements Error.
 func (t TransactionNotFound) Error() string {
 	return fmt.Sprintf("transaction %s not found in transaction manager", t.TransactionID)
 }
 
+// ActionNotFound is triggered when trying to look up a non-existing action for a transaction in the transaction manager
 type ActionNotFound struct {
 	TransactionID, ActionID string
 }
 
+// Error returns a string representation of the ActionNotFound error and implements Error.
 func (a ActionNotFound) Error() string {
 	return fmt.Sprintf("action %s for transaction %s not found in transaction manager", a.ActionID, a.TransactionID)
 }
 
-// TransactionManager ...
+// TransactionManager keeps track of all transactions for agent checks
 type TransactionManager struct {
 	TransactionChannel          chan interface{}
 	TransactionTicker           *time.Ticker
@@ -79,7 +86,7 @@ type TransactionManager struct {
 	running                     bool
 }
 
-// MakeTransactionManager ...
+// MakeTransactionManager returns an instance of a TransactionManager
 func MakeTransactionManager(transactionChannelBufferSize int, tickerInterval, transactionTimeoutDuration,
 	transactionEvictionDuration time.Duration) *TransactionManager {
 	return &TransactionManager{
@@ -91,7 +98,8 @@ func MakeTransactionManager(transactionChannelBufferSize int, tickerInterval, tr
 	}
 }
 
-// Start ...
+// Start sets up the transaction manager to consume messages on the txm.TransactionChannel. It consumes one message at
+// a time using the `select` statement and populates / evicts transactions in the transaction manager.
 func (txm *TransactionManager) Start() {
 	go func() {
 	transactionHandler:
@@ -169,14 +177,14 @@ func (txm *TransactionManager) Start() {
 	txm.running = true
 }
 
-// Stop ...
+// Stop shuts down the transaction manager and stops the transactionHandler receiver loop
 func (txm *TransactionManager) Stop() {
 	txm.running = false
 	txm.TransactionChannel <- StopTransactionManager{}
 	txm.TransactionTicker.Stop()
 }
 
-// startTransaction ...
+// startTransaction creates a transaction and puts it into the transactions map
 func (txm *TransactionManager) startTransaction(transactionID string, onComplete func(transaction *IntakeTransaction)) (*IntakeTransaction, error) {
 	if !txm.running {
 		return nil, TransactionManagerNotRunning{}
@@ -195,7 +203,8 @@ func (txm *TransactionManager) startTransaction(transactionID string, onComplete
 	return transaction, nil
 }
 
-// commitAction ...
+// commitAction commits / promises an action for a certain transaction. A commit is only a promise that something needs
+// to be fulfilled. An unacknowledged action results in a transaction failure.
 func (txm *TransactionManager) commitAction(transactionID, actionID string) error {
 	transaction, exists := txm.Transactions[transactionID]
 	if !exists {
@@ -211,32 +220,27 @@ func (txm *TransactionManager) commitAction(transactionID, actionID string) erro
 	return nil
 }
 
+// updateTransaction is a helper function to set the state of a transaction as well as update it's LastUpdatedTimestamp.
 func (txm *TransactionManager) updateTransaction(transaction *IntakeTransaction, action *Action, state TransactionState) {
 	transaction.Actions[action.ActionID] = action
 	transaction.State = state
 	transaction.LastUpdatedTimestamp = time.Now()
 }
 
-// ackAction ...
+// ackAction acknowledges an action for a given transaction. This marks the action as acknowledged.
 func (txm *TransactionManager) ackAction(transactionID, actionID string) error {
-	transaction, exists := txm.Transactions[transactionID]
-	if !exists {
-		return TransactionNotFound{TransactionID: transactionID}
-	}
-
-	action, exists := transaction.Actions[actionID]
-	if !exists {
-		return ActionNotFound{ActionID: actionID, TransactionID: transactionID}
-	}
-	action.Acknowledged = true
-	action.AcknowledgedTimestamp = time.Now()
-	txm.updateTransaction(transaction, action, InProgress)
-
-	return nil
+	return txm.findAndUpdateAction(transactionID, actionID, true)
 }
 
-// rejectAction ...
+// rejectAction acknowledges an action for a given transaction. This marks the action as acknowledged and results in a
+// failed transaction and rollback.
 func (txm *TransactionManager) rejectAction(transactionID, actionID string) error {
+	return txm.findAndUpdateAction(transactionID, actionID, false)
+}
+
+// findAndUpdateAction is a helper function to find a transaction and action for the given ID's, marks the action as
+// acknowledged and updates the transaction is updateTransaction is set to true.
+func (txm *TransactionManager) findAndUpdateAction(transactionID, actionID string, updateTransaction bool) error {
 	transaction, exists := txm.Transactions[transactionID]
 	if !exists {
 		return TransactionNotFound{TransactionID: transactionID}
@@ -248,6 +252,10 @@ func (txm *TransactionManager) rejectAction(transactionID, actionID string) erro
 	}
 	action.Acknowledged = true
 	action.AcknowledgedTimestamp = time.Now()
+
+	if updateTransaction {
+		txm.updateTransaction(transaction, action, InProgress)
+	}
 
 	return nil
 }

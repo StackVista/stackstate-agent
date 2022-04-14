@@ -16,6 +16,7 @@ type TransactionalPayload struct {
 	transactionID, actionID string
 }
 
+// ShutdownForwarder shuts down the forwarder
 type ShutdownForwarder struct{}
 
 // Response contains the response details of a successfully posted manager
@@ -33,6 +34,7 @@ type Forwarder struct {
 	ShutdownChannel chan ShutdownForwarder
 }
 
+// MakeForwarder returns a instance of the forwarder
 func MakeForwarder() *Forwarder {
 	return &Forwarder{stsClient: httpclient.NewStackStateClient()}
 }
@@ -70,6 +72,7 @@ func (f *Forwarder) Stop() {
 	defer close(f.ShutdownChannel)
 }
 
+// SubmitTransactionalIntake publishes the payload to the PayloadChannel
 func (f *Forwarder) SubmitTransactionalIntake(payload TransactionalPayload) {
 	f.PayloadChannel <- payload
 }
