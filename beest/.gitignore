@@ -3,9 +3,9 @@
 # terraform related
 .terraform
 tf.deploy
-kubeconfig*
 
-# ansible related temp files
+# SUT related temp files
+*kubeconfig*
 *inventory
 *id_rsa
 

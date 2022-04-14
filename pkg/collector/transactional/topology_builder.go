@@ -43,6 +43,7 @@ func (builder *TransactionalBatchBuilder) getOrCreateTopology(instance topology.
 		Instance:      instance,
 		Components:    make([]topology.Component, 0),
 		Relations:     make([]topology.Relation, 0),
+		DeleteIDs:     make([]string, 0),
 	}
 	builder.batchState.Topology = topo
 	return topo
@@ -95,6 +96,13 @@ func (builder *TransactionalBatchBuilder) AddRelation(instance topology.Instance
 func (builder *TransactionalBatchBuilder) StartSnapshot(instance topology.Instance) *TxCheckInstanceBatchState {
 	topologyData := builder.getOrCreateTopology(instance)
 	topologyData.StartSnapshot = true
+	return builder.incrementAndTryFlush()
+}
+
+// Delete adds a delete identifier
+func (builder *TransactionalBatchBuilder) Delete(instance topology.Instance, topologyElementID string) *TxCheckInstanceBatchState {
+	topologyData := builder.getOrCreateTopology(instance)
+	topologyData.DeleteIDs = append(topologyData.DeleteIDs, topologyElementID)
 	return builder.incrementAndTryFlush()
 }
 

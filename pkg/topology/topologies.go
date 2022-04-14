@@ -7,4 +7,5 @@ type Topology struct {
 	Instance      Instance    `json:"instance"`
 	Components    []Component `json:"components"`
 	Relations     []Relation  `json:"relations"`
+	DeleteIDs     []string    `json:"delete_ids"`
 }

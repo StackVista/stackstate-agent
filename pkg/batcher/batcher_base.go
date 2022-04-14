@@ -17,6 +17,7 @@ type Batcher interface {
 	SubmitRelation(checkID check.ID, instance topology.Instance, relation topology.Relation)
 	SubmitStartSnapshot(checkID check.ID, instance topology.Instance)
 	SubmitStopSnapshot(checkID check.ID, instance topology.Instance)
+	SubmitDelete(checkID check.ID, instance topology.Instance, topologyElementID string)
 
 	// Health
 	SubmitHealthCheckData(checkID check.ID, stream health.Stream, data health.CheckData)
@@ -76,6 +77,13 @@ type SubmitHealthStartSnapshot struct {
 type SubmitHealthStopSnapshot struct {
 	CheckID check.ID
 	Stream  health.Stream
+}
+
+// SubmitDelete is used to submit a topology delete to the input channel
+type SubmitDelete struct {
+	checkID  check.ID
+	instance topology.Instance
+	deleteID string
 }
 
 // SubmitRawMetricsData is used to submit a raw metric value to the input channel
@@ -138,6 +146,15 @@ func (batcher BatcherBase) SubmitStopSnapshot(checkID check.ID, instance topolog
 	batcher.Input <- SubmitStopSnapshot{
 		CheckID:  checkID,
 		Instance: instance,
+	}
+}
+
+// SubmitDelete submits a deletion of topology element.
+func (batcher AsynchronousBatcher) SubmitDelete(checkID check.ID, instance topology.Instance, topologyElementID string) {
+	batcher.Input <- SubmitDelete{
+		checkID:  checkID,
+		instance: instance,
+		deleteID: topologyElementID,
 	}
 }
 

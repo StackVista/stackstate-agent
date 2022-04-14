@@ -1,3 +1,4 @@
+//go:build python && test
 // +build python,test
 
 package python
@@ -18,4 +19,8 @@ func TestStartSnapshotCheck(t *testing.T) {
 
 func TestStopSnapshotCheck(t *testing.T) {
 	testStopSnapshotCheck(t)
+}
+
+func TestDeleteTopologyElement(t *testing.T) {
+	testDeleteTopologyElement(t)
 }

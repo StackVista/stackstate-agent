@@ -131,7 +131,8 @@ func (batcher *AsynchronousBatcher) run() {
 			batcher.sendState(batcher.builder.TopologyStartSnapshot(submission.CheckID, submission.Instance))
 		case SubmitStopSnapshot:
 			batcher.sendState(batcher.builder.TopologyStopSnapshot(submission.CheckID, submission.Instance))
-
+		case SubmitDelete:
+			batcher.sendState(batcher.builder.Delete(submission.checkID, submission.instance, submission.deleteID))
 		case SubmitHealthCheckData:
 			batcher.sendState(batcher.builder.AddHealthCheckData(submission.CheckID, submission.Stream, submission.Data))
 		case SubmitHealthStartSnapshot:
