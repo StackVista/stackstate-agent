@@ -32,14 +32,12 @@ type SwarmTopologyCollector struct {
 }
 
 // MakeSwarmTopologyCollector returns a new instance of SwarmTopologyCollector
-func MakeSwarmTopologyCollector() *SwarmTopologyCollector {
+func MakeSwarmTopologyCollector() (*SwarmTopologyCollector, error) {
 	du, err := docker.GetDockerUtil()
 	if err != nil {
-		log.Warnf("Error initialising docker util for SwarmTopologyCollector: %s", err)
-		return nil
+		return nil, err
 	}
-
-	return makeSwarmTopologyCollector(du)
+	return makeSwarmTopologyCollector(du), nil
 }
 
 func makeSwarmTopologyCollector(client SwarmClient) *SwarmTopologyCollector {

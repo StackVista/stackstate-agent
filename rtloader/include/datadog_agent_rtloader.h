@@ -645,6 +645,16 @@ DATADOG_AGENT_RTLOADER_API void set_submit_start_snapshot_cb(rtloader_t *, cb_su
 */
 DATADOG_AGENT_RTLOADER_API void set_submit_stop_snapshot_cb(rtloader_t *, cb_submit_stop_snapshot_t);
 
+/*! \fn void set_submit_delete_cb(rtloader_t *, cb_submit_delete_t)
+    \brief Sets a callback to be used by rtloader to signal the stop of a topology snapshot.
+    \param rtloader_t A rtloader_t * pointer to the RtLoader instance.
+    \param object A function pointer with cb_submit_delete_t prototype to the callback
+    function.
+
+    The callback is expected to be provided by the rtloader caller - in go-context: CGO.
+*/
+DATADOG_AGENT_RTLOADER_API void set_submit_delete_cb(rtloader_t *, cb_submit_delete_t);
+
 /*! \fn void set_submit_topology_event_cb(rtloader_t *, cb_submit_topology_event_t)
     \brief Sets a callback to be used by rtloader to submit a topology event to StackState.
     \param rtloader_t A rtloader_t * pointer to the RtLoader instance.

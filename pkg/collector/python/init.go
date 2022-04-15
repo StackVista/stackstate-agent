@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build python
 // +build python
 
 package python
@@ -168,12 +169,14 @@ void initkubeutilModule(rtloader_t *rtloader) {
 
 void SubmitComponent(char *, instance_key_t *, char *, char *, char *);
 void SubmitRelation(char *, instance_key_t *, char *, char *, char *, char *);
+void SubmitDelete(char *, instance_key_t *, char *);
 void SubmitStartSnapshot(char *, instance_key_t *);
 void SubmitStopSnapshot(char *, instance_key_t *);
 
 void initTopologyModule(rtloader_t *rtloader) {
 	set_submit_component_cb(rtloader, SubmitComponent);
 	set_submit_relation_cb(rtloader, SubmitRelation);
+	set_submit_delete_cb(rtloader, SubmitDelete);
 	set_submit_start_snapshot_cb(rtloader, SubmitStartSnapshot);
 	set_submit_stop_snapshot_cb(rtloader, SubmitStopSnapshot);
 }
