@@ -5,6 +5,9 @@
 **Features**
 - Added topology element deletion [STAC-14816](https://stackstate.atlassian.net/browse/STAC-14816)
 
+**Bugfix**
+- If Kubernetes topology Secrets collector fails, it will log (INFO level) only once [STAC-14834](https://stackstate.atlassian.net/browse/STAC-14834)
+
 ## 2.16.1 (2022-03-21)
 
 **Bugfix**
