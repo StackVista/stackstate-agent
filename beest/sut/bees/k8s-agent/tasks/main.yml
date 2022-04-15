@@ -34,17 +34,82 @@
       --values "{{ role_path }}/files/values.yml" \
       stackstate-cluster-agent stackstate/cluster-agent
 
-  - name: Wait for the stackstate cluster agent to start doing it's thing
-    command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=cluster-agent pod
+  - name: Attempt to verify cluster agent ready
+    block:
+      - name: Wait for the stackstate cluster agent to start doing it's thing
+        command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=cluster-agent pod
+    rescue:
+      - name: Describe cluster agent pod
+        command: kubectl describe pods -l app.kubernetes.io/component=cluster-agent -n={{ namespace }} --context={{ kubecontext }}
+        register: cluster_agent_describe
+      - debug:
+          var: cluster_agent_describe
 
-  - name: Wait for the stackstate node agents to start doing their thing (otherwise connections might occur after agent startup)
-    command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=agent pod
+      - name: Log cluster agent pod
+        command: kubectl logs -l app.kubernetes.io/component=cluster-agent -n={{ namespace }} --context={{ kubecontext }} --all-containers
+        register: cluster_agent_logs
+      - debug:
+          var: cluster_agent_logs
 
-  - name: Wait for the stackstate cluster check agent to start
-    command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=clusterchecks pod
+      - debug:
+          msg: Cluster agent not ready yet
+        failed_when: true
 
-  - name: Wait for the kube-state-metrics to be ready
-    command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/name=kube-state-metrics pod
+  - name: Attempt to verify node agents ready
+    block:
+      - name: Wait for the stackstate node agents to start doing their thing (otherwise connections might occur after agent startup)
+        command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=agent pod
+    rescue:
+      - name: Describe node agent pods
+        command: kubectl describe pods -l app.kubernetes.io/component=agent -n={{ namespace }} --context={{ kubecontext }}
+        register: node_agent_describe
+      - debug:
+          var: node_agent_describe
+
+      - name: Log cluster agent pod
+        command: kubectl logs -l app.kubernetes.io/component=agent -n={{ namespace }} --context={{ kubecontext }} --all-containers
+        register: node_agent_logs
+      - debug:
+          var: node_agent_logs
+
+      - debug:
+          msg: Node agents not ready yet
+        failed_when: true
+
+
+  - name: Attempt to verify cluster check agent ready
+    block:
+      - name: Wait for the stackstate cluster check agent to start
+        command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=clusterchecks pod
+    rescue:
+      - name: Describe cluster check agent pod
+        command: kubectl describe pods -l app.kubernetes.io/component=clusterchecks -n={{ namespace }} --context={{ kubecontext }}
+        register: cluster_check_agent_describe
+      - debug:
+          var: cluster_check_agent_describe
+
+      - name: Log cluster check agent pod
+        command: kubectl logs -l app.kubernetes.io/component=clusterchecks -n={{ namespace }} --context={{ kubecontext }} --all-containers
+        register: cluster_check_agent_logs
+      - debug:
+          var: cluster_check_agent_logs
+
+  - name: Attempt to verify cluster check agent ready
+    block:
+      - name: Wait for the kube-state-metrics to be ready
+        command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/name=kube-state-metrics pod
+    rescue:
+      - name: Describe cluster check agent pod
+        command: kubectl describe pods -l app.kubernetes.io/name=kube-state-metrics -n={{ namespace }} --context={{ kubecontext }}
+        register: kube_state_metrics_describe
+      - debug:
+          var: kube_state_metrics_describe
+
+      - name: Log cluster check agent pod
+        command: kubectl logs -l app.kubernetes.io/name=kube-state-metrics -n={{ namespace }} --context={{ kubecontext }} --all-containers
+        register: kube_state_metrics_logs
+      - debug:
+          var: kube_state_metrics_logs
 
   - include_tasks: pod-connections.yml
 
