@@ -20,11 +20,11 @@ scenarios:
     variables:
       k8s_runtime: containerd
       k8s_version: "1.21"
-  - name: k8s-stackpack
+  - name: otel
     description: |
-      Provision an EKS cluster.
+      Provision an EKS cluster, lambda with OpenTelemetry support.
       Deploys stackstate on EKS and install the stackpacks.
     yard:
-      name: eks-stackpack
+      name: otel-custom
     test:
-      group: k8s
+      group: xxx
