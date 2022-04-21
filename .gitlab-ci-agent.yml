@@ -776,6 +776,10 @@ pre_release_cluster_agent_image:
   stage: cleanup
   script:
     - beest destroy $BEEST_SCENARIO -y
+  retry:
+    max: 2
+    when:
+      - always
 
 
 
