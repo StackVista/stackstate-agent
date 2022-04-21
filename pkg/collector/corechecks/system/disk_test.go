@@ -163,6 +163,7 @@ func TestDiskCheck(t *testing.T) {
 					},
 				},
 				Relations: []topology.Relation{},
+				DeleteIDs: []string{},
 			},
 		},
 	})

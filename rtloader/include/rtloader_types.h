@@ -173,6 +173,8 @@ typedef void (*cb_submit_relation_t)(char *, instance_key_t *, char *, char *, c
 typedef void (*cb_submit_start_snapshot_t)(char *, instance_key_t *);
 // (check_id, instance_key)
 typedef void (*cb_submit_stop_snapshot_t)(char *, instance_key_t *);
+// (check_id, instance_key, topology_element_id)
+typedef void (*cb_submit_delete_t)(char *, instance_key_t *, char *);
 
 // [sts] telemetry
 //

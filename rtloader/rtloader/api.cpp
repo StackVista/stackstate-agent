@@ -525,6 +525,10 @@ void set_submit_stop_snapshot_cb(rtloader_t *rtloader, cb_submit_stop_snapshot_t
 {
     AS_TYPE(RtLoader, rtloader)->setSubmitStopSnapshotCb(cb);
 }
+void set_submit_delete_cb(rtloader_t *rtloader, cb_submit_delete_t cb)
+{
+    AS_TYPE(RtLoader, rtloader)->setSubmitDeleteCb(cb);
+}
 
 /*
  * [sts] telemetry API

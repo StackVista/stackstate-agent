@@ -126,6 +126,7 @@ public:
     void setSubmitRelationCb(cb_submit_relation_t);
     void setSubmitStartSnapshotCb(cb_submit_start_snapshot_t);
     void setSubmitStopSnapshotCb(cb_submit_stop_snapshot_t);
+    void setSubmitDeleteCb(cb_submit_delete_t);
 
     // telemetry
     void setSubmitTopologyEventCb(cb_submit_topology_event_t);
