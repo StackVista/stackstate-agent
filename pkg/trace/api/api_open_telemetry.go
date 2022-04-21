@@ -74,7 +74,7 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 	var traces = pb.Traces{}
 
 	data, _ := json.Marshal(openTelemetryTraces)
-	log.Debugf("Received and Mapping the following trace, %s", data)
+	log.Debugf("[OTEL] Received and Mapping the following trace, %s", data)
 
 	for _, resourceSpan := range openTelemetryTraces.ResourceSpans {
 		// [Graceful] We can continue without awsAccountID, Unable to map module will give warnings
