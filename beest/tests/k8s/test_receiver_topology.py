@@ -416,15 +416,6 @@ def test_cluster_agent_base_topology(host, ansible_var):
             type_name="mounts",
             external_id_assert_fn=lambda eid: pod_claims_volume_match.findall(eid)
         )["mountPath"] == "/mehdbdata"
-        #  pod claims HostPath volume
-        pod_claims_persistent_volume_match = re.compile("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*:container/cluster-agent->"
-                                                        "urn:kubernetes:external-volume:hostpath/.*/cgroup" %
-                                                        (cluster_name, namespace))
-        assert _relation_sourceid(
-            json_data=json_data,
-            type_name="mounts",
-            external_id_assert_fn=lambda eid:  pod_claims_persistent_volume_match.findall(eid)
-        ).startswith("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent" % (cluster_name, namespace))
         #  pod mounts configmap node-agent -> stackstate-cluster-agent-agent
         pod_uses_configmap_match = re.compile("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*->"
                                               "urn:kubernetes:/%s:%s:configmap/stackstate-cluster-agent-agent" %
@@ -710,3 +701,41 @@ def test_pod_encloses_container_relation(host, ansible_var):
                         pod_encloses_source_id)
 
     util.wait_until(wait_for_cluster_agent_components, 120, 3)
+
+def test_agent_containers_mount_cgroup_volume(host, ansible_var):
+    cluster_name = ansible_var("cluster_name")
+    namespace = ansible_var("namespace")
+    topic = "sts_topo_kubernetes_%s" % cluster_name
+    url = "http://localhost:7070/api/topic/%s?limit=1000" % topic
+
+    def wait_for_cluster_agent_components():
+        data = host.check_output("curl \"%s\"" % url)
+        json_data = json.loads(data)
+        with open("./topic-" + topic + ".json", 'w') as f:
+            json.dump(json_data, f, indent=4)
+
+        # agent container claims cgroup volume
+        pod_claims_persistent_volume_match = re.compile("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*:container/agent->"
+                                                    "urn:kubernetes:external-volume:hostpath/.*/cgroup" %
+                                                    (cluster_name, namespace))
+        assert _relation_sourceid(
+            json_data=json_data,
+            type_name="mounts",
+            external_id_assert_fn=lambda eid:  pod_claims_persistent_volume_match.findall(eid)
+        ).startswith("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent" % (cluster_name, namespace)),\
+            "Agent container does not mount cgroup volume"
+
+        # processagent container claims cgroup volume
+        pod_claims_persistent_volume_match = re.compile("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent-.*:container/process-agent->"
+                                                        "urn:kubernetes:external-volume:hostpath/.*/cgroup" %
+                                                        (cluster_name, namespace))
+        assert _relation_sourceid(
+            json_data=json_data,
+            type_name="mounts",
+            external_id_assert_fn=lambda eid:  pod_claims_persistent_volume_match.findall(eid)
+        ).startswith("urn:kubernetes:/%s:%s:pod/stackstate-cluster-agent-agent" % (cluster_name, namespace)),\
+            "Process-agent container does not mount cgroup volume"
+
+    util.wait_until(wait_for_cluster_agent_components, 120, 3)
+
+
