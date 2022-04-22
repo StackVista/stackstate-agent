@@ -729,6 +729,8 @@ pre_release_cluster_agent_image:
   interruptible: true
   dependencies: []
   before_script:
+    - cd $CI_PROJECT_DIR
+    - export PROCESS_AGENT_VERSION=`cat stackstate-deps.json | jq -r '.PROCESS_AGENT_VERSION'`
     - mkdir /go/src/app
     - cp -R $CI_PROJECT_DIR/beest/* /go/src/app
     - cd /go/src/app
