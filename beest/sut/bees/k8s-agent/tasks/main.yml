@@ -32,7 +32,7 @@
       --set "agent.containers.agent.image.tag={{agent_current_branch}}" \
       --set "agent.containers.agent.image.repository=stackstate/{{agent_docker_repo}}" \
       --set "agent.containers.processAgent.image.tag={{process_agent_branch}}" \
-      --set "agent.containers.processAgent.image.repository={{process_agent_repo}}" \
+      --set "agent.containers.processAgent.image.repository=stackstate/{{process_agent_repo}}" \
       --set "clusterAgent.image.tag={{agent_current_branch}}" \
       --set "clusterAgent.image.repository=stackstate/{{cluster_agent_docker_repo}}" \
       --set "clusterChecks.image.tag={{agent_current_branch}}" \
