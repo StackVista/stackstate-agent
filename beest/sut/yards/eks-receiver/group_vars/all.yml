@@ -1,6 +1,8 @@
 ---
 agent_current_branch: "{{ lookup('env', 'AGENT_CURRENT_BRANCH') or AGENT_CURRENT_BRANCH }}"
 agent_docker_repo: "{{ lookup('env', 'STS_DOCKER_TEST_REPO') or STS_DOCKER_TEST_REPO }}"
+process_agent_branch: "{{ lookup('env', 'PROCESS_AGENT_BRANCH') or 'master' }}"
+process_agent_repo: "{{ lookup('env', 'PROCESS_AGENT_TEST_REPO') or PROCESS_AGENT_TEST_REPO }}"
 cluster_agent_docker_repo: "{{ lookup('env', 'STS_DOCKER_TEST_REPO_CLUSTER') or STS_DOCKER_TEST_REPO_CLUSTER }}"
 quay_password: "{{ lookup('env', 'quay_password') or QUAY_PASSWORD }}"
 quay_user: "{{ lookup('env', 'quay_user') or QUAY_USER }}"

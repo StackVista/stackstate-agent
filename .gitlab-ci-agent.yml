@@ -730,7 +730,7 @@ pre_release_cluster_agent_image:
   dependencies: []
   before_script:
     - cd $CI_PROJECT_DIR
-    - export PROCESS_AGENT_VERSION=`cat stackstate-deps.json | jq -r '.PROCESS_AGENT_VERSION'`
+    - export PROCESS_AGENT_BRANCH=`cat stackstate-deps.json | jq -r '.PROCESS_AGENT_BRANCH'`
     - mkdir /go/src/app
     - cp -R $CI_PROJECT_DIR/beest/* /go/src/app
     - cd /go/src/app
