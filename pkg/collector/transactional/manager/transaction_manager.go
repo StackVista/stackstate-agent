@@ -7,141 +7,129 @@ import (
 	"time"
 )
 
-// CommitAction is used to commit an action for a certain transaction.
-type CommitAction struct {
-	TransactionID, ActionID string
-}
-
-// AckAction acknowledges an action for a given transaction.
-type AckAction struct {
-	TransactionID, ActionID string
-}
-
-// RejectAction rejects an action for a given transaction. This results in a failed transaction.
-type RejectAction struct {
-	TransactionID, ActionID, Reason string
-}
-
-// StartTransaction starts a transaction for a given checkID, with an optional OnComplete callback function.
-type StartTransaction struct {
-	CheckID       check.ID
-	TransactionID string
-	OnComplete    func(transaction *IntakeTransaction)
-}
-
-// CompleteTransaction completes a transaction. If all actions are acknowledges, the transaction is considered a success.
-type CompleteTransaction struct {
-	TransactionID string
-}
-
-// RollbackTransaction rolls back a transaction and marks a transaction as a failure.
-type RollbackTransaction struct {
-	TransactionID, Reason string
-}
-
-// Error returns a string representing the RollbackTransaction.
-func (r RollbackTransaction) Error() string {
-	return fmt.Sprintf("rolling back transaction %s. %s", r.TransactionID, r.Reason)
-}
-
-// StopTransactionManager triggers the shutdown of the transaction manager.
-type StopTransactionManager struct{}
-
-// TransactionManagerNotRunning is triggered when trying to create a transaction when the transaction manager has not
-// been started yet.
-type TransactionManagerNotRunning struct{}
-
-// Error returns a string representation of the TransactionManagerNotRunning error and implements Error.
-func (t TransactionManagerNotRunning) Error() string {
-	return "transaction manager is not running, call TransactionManager.Start() to start it"
-}
-
-// TransactionNotFound is triggered when trying to look up a non-existing transaction in the transaction manager
-type TransactionNotFound struct {
-	TransactionID string
-}
-
-// Error returns a string representation of the TransactionNotFound error and implements Error.
-func (t TransactionNotFound) Error() string {
-	return fmt.Sprintf("transaction %s not found in transaction manager", t.TransactionID)
-}
-
-// ActionNotFound is triggered when trying to look up a non-existing action for a transaction in the transaction manager
-type ActionNotFound struct {
-	TransactionID, ActionID string
-}
-
-// Error returns a string representation of the ActionNotFound error and implements Error.
-func (a ActionNotFound) Error() string {
-	return fmt.Sprintf("action %s for transaction %s not found in transaction manager", a.ActionID, a.TransactionID)
+type TransactionManager interface {
+	StartTransaction(CheckID check.ID, TransactionID string, NotifyChannel chan interface{})
+	CompleteTransaction(transactionID string)
+	RollbackTransaction(transactionID, reason string)
+	CommitAction(transactionID, actionID string)
+	AcknowledgeAction(transactionID, actionID string)
+	RejectAction(transactionID, actionID, reason string)
 }
 
 // TransactionManager keeps track of all transactions for agent checks
-type TransactionManager struct {
-	TransactionChannel          chan interface{}
-	TransactionTicker           *time.Ticker
-	Transactions                map[string]*IntakeTransaction
+type transactionManager struct {
+	transactionChannel          chan interface{}
+	transactionTicker           *time.Ticker
+	transactions                map[string]*IntakeTransaction
 	transactionTimeoutDuration  time.Duration
 	transactionEvictionDuration time.Duration
 	running                     bool
 }
 
+func (txm *transactionManager) CompleteTransaction(transactionID string) {
+	txm.transactionChannel <- CompleteTransaction{
+		TransactionID: transactionID,
+	}
+}
+
+// StartTransaction ...
+func (txm *transactionManager) StartTransaction(checkID check.ID, transactionID string, notifyChannel chan interface{}) {
+	txm.transactionChannel <- StartTransaction{
+		CheckID:       checkID,
+		TransactionID: transactionID,
+		NotifyChannel: notifyChannel,
+	}
+}
+
+// RollbackTransaction ...
+func (txm *transactionManager) RollbackTransaction(transactionID, reason string) {
+	txm.transactionChannel <- RollbackTransaction{
+		TransactionID: transactionID,
+		Reason:        reason,
+	}
+}
+
+// CommitAction ...
+func (txm *transactionManager) CommitAction(transactionID, actionID string) {
+	txm.transactionChannel <- CommitAction{
+		TransactionID: transactionID,
+		ActionID:      actionID,
+	}
+}
+
+// AcknowledgeAction ...
+func (txm *transactionManager) AcknowledgeAction(transactionID, actionID string) {
+	txm.transactionChannel <- AckAction{
+		TransactionID: transactionID,
+		ActionID:      actionID,
+	}
+}
+
+// RejectAction ...
+func (txm *transactionManager) RejectAction(transactionID, actionID, reason string) {
+	txm.transactionChannel <- RejectAction{
+		TransactionID: transactionID,
+		ActionID:      actionID,
+		Reason:        reason,
+	}
+}
+
 // MakeTransactionManager returns an instance of a TransactionManager
 func MakeTransactionManager(transactionChannelBufferSize int, tickerInterval, transactionTimeoutDuration,
-	transactionEvictionDuration time.Duration) *TransactionManager {
-	return &TransactionManager{
-		TransactionChannel:          make(chan interface{}, transactionChannelBufferSize),
-		TransactionTicker:           time.NewTicker(tickerInterval),
-		Transactions:                make(map[string]*IntakeTransaction),
+	transactionEvictionDuration time.Duration) TransactionManager {
+	return &transactionManager{
+		transactionChannel:          make(chan interface{}, transactionChannelBufferSize),
+		transactionTicker:           time.NewTicker(tickerInterval),
+		transactions:                make(map[string]*IntakeTransaction),
 		transactionTimeoutDuration:  transactionTimeoutDuration,
 		transactionEvictionDuration: transactionEvictionDuration,
 	}
 }
 
-// Start sets up the transaction manager to consume messages on the txm.TransactionChannel. It consumes one message at
+// Start sets up the transaction manager to consume messages on the txm.transactionChannel. It consumes one message at
 // a time using the `select` statement and populates / evicts transactions in the transaction manager.
-func (txm *TransactionManager) Start() {
+func (txm *transactionManager) Start() {
 	go func() {
 	transactionHandler:
 		for {
 			select {
-			case input := <-txm.TransactionChannel:
+			case input := <-txm.transactionChannel:
 				switch msg := input.(type) {
 				// transaction operations
 				case StartTransaction:
 					log.Debugf("Creating new transaction %s for check %s", msg.TransactionID, msg.CheckID)
-					if _, err := txm.startTransaction(msg.TransactionID, msg.OnComplete); err != nil {
-						txm.TransactionChannel <- err
+					if _, err := txm.startTransaction(msg.TransactionID, msg.NotifyChannel); err != nil {
+						txm.transactionChannel <- err
 					}
 				case CommitAction:
 					log.Debugf("Committing action %s for transaction %s", msg.ActionID, msg.TransactionID)
 					if err := txm.commitAction(msg.TransactionID, msg.ActionID); err != nil {
-						txm.TransactionChannel <- err
+						txm.transactionChannel <- err
 					}
 				case AckAction:
 					log.Debugf("Acknowledging action %s for transaction %s", msg.ActionID, msg.TransactionID)
 					if err := txm.ackAction(msg.TransactionID, msg.ActionID); err != nil {
-						txm.TransactionChannel <- err
+						txm.transactionChannel <- err
 					}
 				case RejectAction:
 					_ = log.Errorf("Rejecting action %s for transaction %s: %s", msg.ActionID, msg.TransactionID, msg.Reason)
 					if err := txm.rejectAction(msg.TransactionID, msg.ActionID); err != nil {
-						txm.TransactionChannel <- err
+						txm.transactionChannel <- err
 					} else {
 						// rollback the transaction
 						reason := fmt.Sprintf("rejected action %s for transaction %s: %s", msg.ActionID, msg.TransactionID, msg.Reason)
-						txm.TransactionChannel <- RollbackTransaction{TransactionID: msg.TransactionID, Reason: reason}
+						txm.transactionChannel <- RollbackTransaction{TransactionID: msg.TransactionID, Reason: reason}
 					}
 				case CompleteTransaction:
 					log.Debugf("Completing transaction %s", msg.TransactionID)
 					if err := txm.completeTransaction(msg.TransactionID); err != nil {
-						txm.TransactionChannel <- err
+						txm.transactionChannel <- err
 					}
 				// error cases
 				case RollbackTransaction:
 					_ = log.Errorf(msg.Error())
 					if err := txm.rollbackTransaction(msg.TransactionID); err != nil {
-						txm.TransactionChannel <- err
+						txm.transactionChannel <- err
 					}
 				case TransactionNotFound:
 					_ = log.Errorf(msg.Error())
@@ -153,9 +141,9 @@ func (txm *TransactionManager) Start() {
 				default:
 					_ = log.Errorf("Got unexpected msg %v", msg)
 				}
-			case <-txm.TransactionTicker.C:
+			case <-txm.transactionTicker.C:
 				// expire stale transactions, clean up expired transactions that exceed the eviction duration
-				for _, transaction := range txm.Transactions {
+				for _, transaction := range txm.transactions {
 					if transaction.State != Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionTimeoutDuration)) {
 						// last updated timestamp is before current time - manager timeout duration => Tx is stale
 						transaction.State = Stale
@@ -164,7 +152,8 @@ func (txm *TransactionManager) Start() {
 						txm.evictTransaction(transaction.TransactionID)
 					} else if transaction.State == Failed || transaction.State == Succeeded {
 						log.Debugf("Cleaning up %s transaction: %s", transaction.State.String(), transaction.TransactionID)
-						txm.evictTransaction(transaction.TransactionID)
+						// delete the transaction, already notified on success or failure status so no need to notify again
+						delete(txm.transactions, transaction.TransactionID)
 					}
 				}
 
@@ -178,14 +167,14 @@ func (txm *TransactionManager) Start() {
 }
 
 // Stop shuts down the transaction manager and stops the transactionHandler receiver loop
-func (txm *TransactionManager) Stop() {
+func (txm *transactionManager) Stop() {
 	txm.running = false
-	txm.TransactionChannel <- StopTransactionManager{}
-	txm.TransactionTicker.Stop()
+	txm.transactionChannel <- StopTransactionManager{}
+	txm.transactionTicker.Stop()
 }
 
 // startTransaction creates a transaction and puts it into the transactions map
-func (txm *TransactionManager) startTransaction(transactionID string, onComplete func(transaction *IntakeTransaction)) (*IntakeTransaction, error) {
+func (txm *transactionManager) startTransaction(transactionID string, notify chan interface{}) (*IntakeTransaction, error) {
 	if !txm.running {
 		return nil, TransactionManagerNotRunning{}
 	}
@@ -194,19 +183,19 @@ func (txm *TransactionManager) startTransaction(transactionID string, onComplete
 		TransactionID:        transactionID,
 		State:                InProgress,
 		Actions:              map[string]*Action{},
+		NotifyChannel:        notify,
 		LastUpdatedTimestamp: time.Now(),
-		OnComplete:           onComplete,
 	}
 
-	txm.Transactions[transaction.TransactionID] = transaction
+	txm.transactions[transaction.TransactionID] = transaction
 
 	return transaction, nil
 }
 
 // commitAction commits / promises an action for a certain transaction. A commit is only a promise that something needs
 // to be fulfilled. An unacknowledged action results in a transaction failure.
-func (txm *TransactionManager) commitAction(transactionID, actionID string) error {
-	transaction, exists := txm.Transactions[transactionID]
+func (txm *transactionManager) commitAction(transactionID, actionID string) error {
+	transaction, exists := txm.transactions[transactionID]
 	if !exists {
 		return TransactionNotFound{TransactionID: transactionID}
 	}
@@ -221,27 +210,27 @@ func (txm *TransactionManager) commitAction(transactionID, actionID string) erro
 }
 
 // updateTransaction is a helper function to set the state of a transaction as well as update it's LastUpdatedTimestamp.
-func (txm *TransactionManager) updateTransaction(transaction *IntakeTransaction, action *Action, state TransactionState) {
+func (txm *transactionManager) updateTransaction(transaction *IntakeTransaction, action *Action, state TransactionState) {
 	transaction.Actions[action.ActionID] = action
 	transaction.State = state
 	transaction.LastUpdatedTimestamp = time.Now()
 }
 
 // ackAction acknowledges an action for a given transaction. This marks the action as acknowledged.
-func (txm *TransactionManager) ackAction(transactionID, actionID string) error {
+func (txm *transactionManager) ackAction(transactionID, actionID string) error {
 	return txm.findAndUpdateAction(transactionID, actionID, true)
 }
 
 // rejectAction acknowledges an action for a given transaction. This marks the action as acknowledged and results in a
 // failed transaction and rollback.
-func (txm *TransactionManager) rejectAction(transactionID, actionID string) error {
+func (txm *transactionManager) rejectAction(transactionID, actionID string) error {
 	return txm.findAndUpdateAction(transactionID, actionID, false)
 }
 
 // findAndUpdateAction is a helper function to find a transaction and action for the given ID's, marks the action as
 // acknowledged and updates the transaction is updateTransaction is set to true.
-func (txm *TransactionManager) findAndUpdateAction(transactionID, actionID string, updateTransaction bool) error {
-	transaction, exists := txm.Transactions[transactionID]
+func (txm *transactionManager) findAndUpdateAction(transactionID, actionID string, updateTransaction bool) error {
+	transaction, exists := txm.transactions[transactionID]
 	if !exists {
 		return TransactionNotFound{TransactionID: transactionID}
 	}
@@ -262,8 +251,8 @@ func (txm *TransactionManager) findAndUpdateAction(transactionID, actionID strin
 
 // completeTransaction marks a transaction for a given transactionID as Succeeded, if all the committed actions
 // of a transaction has been acknowledged
-func (txm *TransactionManager) completeTransaction(transactionID string) error {
-	transaction, exists := txm.Transactions[transactionID]
+func (txm *transactionManager) completeTransaction(transactionID string) error {
+	transaction, exists := txm.transactions[transactionID]
 	if !exists {
 		return TransactionNotFound{TransactionID: transactionID}
 	}
@@ -278,21 +267,26 @@ func (txm *TransactionManager) completeTransaction(transactionID string) error {
 	transaction.State = Succeeded
 	transaction.LastUpdatedTimestamp = time.Now()
 
-	if transaction.OnComplete != nil {
-		transaction.OnComplete(transaction)
-	}
+	transaction.NotifyChannel <- CompleteTransaction{}
 
 	return nil
 }
 
 // evictTransaction delete a given transactionID from the transactions map
-func (txm *TransactionManager) evictTransaction(transactionID string) {
-	delete(txm.Transactions, transactionID)
+func (txm *transactionManager) evictTransaction(transactionID string) {
+	transaction, exists := txm.transactions[transactionID]
+	if !exists {
+		return
+	}
+
+	delete(txm.transactions, transactionID)
+
+	transaction.NotifyChannel <- EvictedTransaction{}
 }
 
 // rollbackTransaction rolls back the transaction in the event of a failure
-func (txm *TransactionManager) rollbackTransaction(transactionID string) error {
-	transaction, exists := txm.Transactions[transactionID]
+func (txm *transactionManager) rollbackTransaction(transactionID string) error {
+	transaction, exists := txm.transactions[transactionID]
 	if !exists {
 		return TransactionNotFound{TransactionID: transactionID}
 	}
@@ -300,9 +294,7 @@ func (txm *TransactionManager) rollbackTransaction(transactionID string) error {
 	transaction.State = Failed
 	transaction.LastUpdatedTimestamp = time.Now()
 
-	if transaction.OnComplete != nil {
-		transaction.OnComplete(transaction)
-	}
+	transaction.NotifyChannel <- RollbackTransaction{}
 
 	return nil
 }

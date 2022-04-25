@@ -81,9 +81,9 @@ type SubmitHealthStopSnapshot struct {
 
 // SubmitDelete is used to submit a topology delete to the input channel
 type SubmitDelete struct {
-	checkID  check.ID
-	instance topology.Instance
-	deleteID string
+	CheckID  check.ID
+	Instance topology.Instance
+	DeleteID string
 }
 
 // SubmitRawMetricsData is used to submit a raw metric value to the input channel
@@ -106,12 +106,12 @@ type BatcherBase struct {
 	Input               chan interface{}
 }
 
-// MakeBatcherBase creates a batcher base instance
+// MakeBatcherBase creates a batcher base Instance
 func MakeBatcherBase(hostname, agentName string, maxCapacity int) BatcherBase {
 	return BatcherBase{
 		Hostname:  hostname,
 		agentName: agentName,
-		Input:     make(chan interface{}, maxCapacity),
+		Input:     make(chan interface{}, maxCapacity+1),
 	}
 }
 
@@ -150,11 +150,11 @@ func (batcher BatcherBase) SubmitStopSnapshot(checkID check.ID, instance topolog
 }
 
 // SubmitDelete submits a deletion of topology element.
-func (batcher AsynchronousBatcher) SubmitDelete(checkID check.ID, instance topology.Instance, topologyElementID string) {
+func (batcher BatcherBase) SubmitDelete(checkID check.ID, instance topology.Instance, topologyElementID string) {
 	batcher.Input <- SubmitDelete{
-		checkID:  checkID,
-		instance: instance,
-		deleteID: topologyElementID,
+		CheckID:  checkID,
+		Instance: instance,
+		DeleteID: topologyElementID,
 	}
 }
 

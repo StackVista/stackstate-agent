@@ -39,7 +39,7 @@ func initDomainForwarderExpvars() {
 	transactionsExpvars.Set("Requeued", &transactionsRequeued)
 }
 
-// domainForwarder is in charge of sending Transactions to Datadog backend over
+// domainForwarder is in charge of sending transactions to Datadog backend over
 // HTTP and retrying them if needed. One domainForwarder is created per HTTP
 // backend.
 type domainForwarder struct {

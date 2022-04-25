@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
@@ -13,14 +14,7 @@ type CheckNoHandler struct {
 
 // MakeCheckNoHandler returns an instance of CheckHandler which functions as a fallback
 func MakeCheckNoHandler() CheckHandler {
-	return &checkHandler{CheckHandlerBase{
-		Batcher: batcher.GetBatcher(),
-	}}
-}
-
-// ReloadCheck is the CheckNoHandler implementation which is a no-op
-func (ch *CheckNoHandler) ReloadCheck() {
-	_ = log.Warnf("ReloadCheck called on CheckNoHandler. This should never happen.")
+	return &CheckNoHandler{CheckHandlerBase: CheckHandlerBase{}}
 }
 
 // GetCheckIdentifier is the CheckNoHandler implementation which just returns nil. This should never be called.
@@ -33,4 +27,18 @@ func (ch *CheckNoHandler) GetCheckIdentifier() CheckIdentifier {
 func (ch *CheckNoHandler) GetConfig() (integration.Data, integration.Data) {
 	_ = log.Warnf("GetConfig called on CheckNoHandler. This should never happen.")
 	return nil, nil
+}
+
+func (ch *CheckNoHandler) GetBatcher() batcher.Batcher {
+	return batcher.GetBatcher()
+}
+
+func (ch *CheckNoHandler) GetCheckReloader() CheckReloader {
+	return NoCheckReloader{}
+}
+
+type NoCheckReloader struct{}
+
+func (n NoCheckReloader) ReloadCheck(id check.ID, config, initConfig integration.Data, newSource string) error {
+	return nil
 }

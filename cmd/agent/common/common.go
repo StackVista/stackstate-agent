@@ -51,7 +51,7 @@ var (
 	CheckManager *manager.CheckManager
 
 	// TxManager is the global instance of the manager manager that manages lifecycles of checks
-	TxManager *transactionManager.TransactionManager
+	TxManager transactionManager.TransactionManager
 
 	// utility variables
 	_here, _ = executable.Folder()

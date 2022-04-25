@@ -69,7 +69,7 @@ var (
 func init() {
 	transactionsExpvars.Init()
 	connectionEvents.Init()
-	forwarderExpvars.Set("Transactions", &transactionsExpvars)
+	forwarderExpvars.Set("transactions", &transactionsExpvars)
 	forwarderExpvars.Set("ConnectionEvents", &connectionEvents)
 	transactionsExpvars.Set("Series", &transactionsSeries)
 	transactionsExpvars.Set("Events", &transactionsEvents)

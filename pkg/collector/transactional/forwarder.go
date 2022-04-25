@@ -2,7 +2,6 @@ package transactional
 
 import (
 	"github.com/StackVista/stackstate-agent/cmd/agent/common"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/manager"
 	"github.com/StackVista/stackstate-agent/pkg/httpclient"
 )
 
@@ -27,6 +26,10 @@ type Response struct {
 	Err        error
 }
 
+type TransactionalForwarder interface {
+	SubmitTransactionalIntake(payload TransactionalPayload)
+}
+
 // Forwarder is a forwarder that works in transactional manner
 type Forwarder struct {
 	stsClient       *httpclient.StackStateClient
@@ -49,13 +52,10 @@ forwardHandler:
 			response := f.stsClient.Post("", tPayload.payload)
 			if response.Err != nil {
 				// payload failed, rollback manager
-				common.TxManager.TransactionChannel <- &manager.RollbackTransaction{TransactionID: tPayload.transactionID}
+				common.TxManager.RollbackTransaction(tPayload.transactionID, response.Err.Error())
 			} else {
 				// payload succeeded, acknowledge action
-				common.TxManager.TransactionChannel <- &manager.AckAction{
-					TransactionID: tPayload.transactionID,
-					ActionID:      tPayload.actionID,
-				}
+				common.TxManager.AcknowledgeAction(tPayload.transactionID, tPayload.actionID)
 			}
 		case _ = <-f.ShutdownChannel:
 			break forwardHandler

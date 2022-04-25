@@ -21,8 +21,9 @@ func TestCheckHandler(t *testing.T) {
 
 	cr := ch.GetCheckReloader().(*check.TestCheckReloader)
 	assert.Equal(t, 0, cr.Reloaded)
-	ch.ReloadCheck()
+	err := ch.ReloadCheck(ch.ID(), actualInstanceCfg, actualInitCfg, ch.ConfigSource())
+	assert.NoError(t, err)
 	assert.Equal(t, 1, cr.Reloaded)
-	ch.ReloadCheck()
+	err = ch.ReloadCheck(ch.ID(), actualInstanceCfg, actualInitCfg, ch.ConfigSource())
 	assert.Equal(t, 2, cr.Reloaded)
 }

@@ -6,7 +6,6 @@ import (
 	"github.com/StackVista/stackstate-agent/cmd/agent/common"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/manager"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -16,16 +15,18 @@ import (
 )
 
 // MakeCheckInstanceBatcher initializes the batcher instance for a check instance
-func MakeCheckInstanceBatcher(checkId check.ID, hostname, agentName string, maxCapacity int, flushInterval time.Duration) *CheckTransactionalBatcher {
+func MakeCheckInstanceBatcher(checkId check.ID, hostname, agentName string, maxCapacity int, flushInterval time.Duration,
+	forwarder TransactionalForwarder) *CheckTransactionalBatcher {
 	checkFlushInterval := time.NewTicker(flushInterval)
 	ctb := &CheckTransactionalBatcher{
 		BatcherBase:   batcher.MakeBatcherBase(hostname, agentName, maxCapacity),
 		CheckInstance: checkId,
 		flushTicker:   checkFlushInterval,
-		Forwarder:     MakeForwarder(),
+		Forwarder:     forwarder,
 		builder:       MakeTransactionalBatchBuilder(maxCapacity),
 	}
 
+	go ctb.Start()
 	go ctb.listenForFlushTicker()
 
 	return ctb
@@ -37,7 +38,7 @@ type CheckTransactionalBatcher struct {
 	CheckInstance check.ID
 	builder       *TransactionalBatchBuilder
 	flushTicker   *time.Ticker
-	Forwarder     *Forwarder
+	Forwarder     TransactionalForwarder
 }
 
 // GetCheckInstance returns the check instance for this batcher
@@ -148,6 +149,8 @@ func (ctb *CheckTransactionalBatcher) Start() {
 			state = ctb.builder.StartSnapshot(submission.Instance)
 		case batcher.SubmitStopSnapshot:
 			state = ctb.builder.StopSnapshot(submission.Instance)
+		case batcher.SubmitDelete:
+			state = ctb.builder.Delete(submission.Instance, submission.DeleteID)
 		case batcher.SubmitHealthCheckData:
 			state = ctb.builder.AddHealthCheckData(submission.Stream, submission.Data)
 		case batcher.SubmitHealthStartSnapshot:
@@ -165,7 +168,7 @@ func (ctb *CheckTransactionalBatcher) Start() {
 		}
 
 		// submit the state
-		if state != nil {
+		if state != nil && state.CheckInstanceBatchState != nil {
 			go ctb.SubmitState(state)
 		}
 
@@ -177,15 +180,11 @@ func (ctb *CheckTransactionalBatcher) SubmitState(state *TxCheckInstanceBatchSta
 	data := ctb.mapStateToPayload(state.CheckInstanceBatchState)
 	payload, err := ctb.marshallPayload(data)
 	if err != nil {
-		_ = log.Errorf("Marshall error in payload: %v", data)
-		common.TxManager.TransactionChannel <- manager.RollbackTransaction{TransactionID: state.TransactionID}
+		common.TxManager.RollbackTransaction(state.TransactionID, fmt.Sprintf("Marshall error in payload: %v", data))
 	}
-	// commit this action to the manager manager
+	// commit this action to the transaction manager
 	actionUUID := uuid.New().String()
-	common.TxManager.TransactionChannel <- manager.CommitAction{
-		TransactionID: state.TransactionID,
-		ActionID:      actionUUID,
-	}
+	common.TxManager.CommitAction(state.TransactionID, actionUUID)
 	ctb.submitPayload(payload, state.TransactionID, actionUUID)
 }
 

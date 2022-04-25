@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"github.com/StackVista/stackstate-agent/cmd/agent/common"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/manager"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
@@ -20,7 +22,7 @@ type CheckIdentifier interface {
 
 type CheckHandler interface {
 	CheckIdentifier
-	ReloadCheck()
+	CheckReloader
 	GetConfig() (config, initConfig integration.Data)
 	GetBatcher() batcher.Batcher
 	GetCheckReloader() CheckReloader
@@ -36,24 +38,66 @@ type CheckHandlerBase struct {
 // checkHandler provides an interface between the Agent Check and the transactional components
 type checkHandler struct {
 	CheckHandlerBase
+	CheckReloader
+	batcher.Batcher
+	shutdownChannel    chan interface{}
+	transactionChannel chan SubmitStartTransaction
 }
 
 func MakeCheckHandler(check check.Check, checkReloader CheckReloader, checkBatcher batcher.Batcher, config, initConfig integration.Data) CheckHandler {
-	return &checkHandler{CheckHandlerBase{
-		CheckIdentifier: check,
-		CheckReloader:   checkReloader,
-		Batcher:         checkBatcher,
-		config:          config,
-		initConfig:      initConfig,
-	}}
+	return &checkHandler{
+		CheckHandlerBase: CheckHandlerBase{
+			CheckIdentifier: check,
+			CheckReloader:   checkReloader,
+			config:          config,
+			initConfig:      initConfig,
+		},
+		Batcher: checkBatcher,
+	}
 }
 
-// ReloadCheck ...
-func (ch *checkHandler) ReloadCheck() {
-	err := ch.CheckReloader.ReloadCheck(ch.ID(), ch.config, ch.initConfig, ch.ConfigSource())
-	if err != nil {
-		_ = log.Errorf("Error reloading check %s, %s", ch.String(), err)
-		return
+type TxChan struct {
+	TransactionID string
+	TxChan        chan interface{}
+}
+
+// Start ...
+func (ch *checkHandler) Start() {
+txReceiverHandler:
+	select {
+	case startTx := <-ch.transactionChannel:
+		thisTransactionChannel := make(chan interface{}, 20)
+		common.TxManager.StartTransaction(startTx.CheckID, startTx.TransactionID, thisTransactionChannel)
+		defer close(thisTransactionChannel)
+		ch.handleCurrentTransaction(thisTransactionChannel)
+	case _ = <-ch.shutdownChannel:
+		break txReceiverHandler
+	}
+}
+
+func (ch *checkHandler) handleCurrentTransaction(txChan chan interface{}) {
+currentTxHandler:
+	select {
+	case tx := <-txChan:
+		switch _ := tx.(type) {
+		case manager.RollbackTransaction:
+			if err := ch.ReloadCheck(ch.ID(), ch.config, ch.initConfig, ch.ConfigSource()); err != nil {
+				_ = log.Errorf("failed to reload check %s: %s", ch.ID(), err)
+			}
+			break currentTxHandler
+		case manager.CompleteTransaction:
+			break currentTxHandler
+		}
+	default:
+		// received nothing
+	}
+}
+
+// StartTransaction ...
+func (ch *checkHandler) StartTransaction(CheckID check.ID, TransactionID string) {
+	ch.transactionChannel <- SubmitStartTransaction{
+		CheckID:       CheckID,
+		TransactionID: TransactionID,
 	}
 }
 
@@ -72,7 +116,13 @@ func (ch *checkHandler) GetBatcher() batcher.Batcher {
 	return ch.Batcher
 }
 
-// GetCheckReloader() returns the configured CheckReloader
+// GetCheckReloader returns the configured CheckReloader
 func (ch *checkHandler) GetCheckReloader() CheckReloader {
 	return ch.CheckReloader
+}
+
+// SubmitStartTransaction is used to start a transaction to the input channel
+type SubmitStartTransaction struct {
+	CheckID       check.ID
+	TransactionID string
 }

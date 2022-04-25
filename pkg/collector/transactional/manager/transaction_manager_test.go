@@ -9,90 +9,92 @@ import (
 )
 
 func TestTransactionManager_HappyFlow(t *testing.T) {
-	transactionManager := MakeTransactionManager(100, 100*time.Millisecond, 500*time.Millisecond,
-		500*time.Millisecond)
+	txManager := MakeTransactionManager(100, 100*time.Millisecond, 500*time.Millisecond,
+		500*time.Millisecond).(*transactionManager)
 
-	assert.False(t, transactionManager.running)
-	transactionManager.Start()
-	assert.True(t, transactionManager.running)
+	assert.False(t, txManager.running)
+	txManager.Start()
+	assert.True(t, txManager.running)
 
 	// assert that we're starting on a clean slate
-	assert.Len(t, transactionManager.Transactions, 0)
-
-	completeFunc := func(transaction *IntakeTransaction) {
-		// assert that LastUpdatedTimestamp was set in the last 50 milliseconds. i.e. just updated
-		assert.True(t, transaction.LastUpdatedTimestamp.After(time.Now().Add(-50*time.Millisecond)))
-		assert.Equal(t, Succeeded, transaction.State)
-	}
+	assert.Len(t, txManager.transactions, 0)
 
 	// start a transaction and assert it
 	txID := uuid.New().String()
-	transactionManager.TransactionChannel <- StartTransaction{TransactionID: txID, OnComplete: completeFunc}
-	assertTransaction(t, transactionManager, txID, InProgress, map[string]*Action{})
+	txNotifyChannel := make(chan interface{})
+	txManager.StartTransaction("checkID", txID, txNotifyChannel)
+	assertTransaction(t, txManager, txID, InProgress, map[string]*Action{})
 
 	// commit 15 actions and assert them
 	actions := make(map[string]*Action, 5)
 	for i := 0; i < 15; i++ {
 		actID := fmt.Sprintf("action-%d", i)
-		commitAssertAction(t, transactionManager, txID, actID, actions)
+		commitAssertAction(t, txManager, txID, actID, actions)
 	}
 	// acknowledge 15 action and assert them
 	for i := 0; i < 15; i++ {
 		actID := fmt.Sprintf("action-%d", i)
-		transactionManager.TransactionChannel <- AckAction{TransactionID: txID, ActionID: actID}
+		txManager.AcknowledgeAction(txID, actID)
 		actions[actID] = &Action{ActionID: actID, Acknowledged: true}
-		assertTransaction(t, transactionManager, txID, InProgress, actions)
+		assertTransaction(t, txManager, txID, InProgress, actions)
 	}
 
 	// start a transaction and assert it
-	transactionManager.TransactionChannel <- CompleteTransaction{TransactionID: txID}
-	assertTransaction(t, transactionManager, txID, Succeeded, actions)
+	txManager.CompleteTransaction(txID)
 
-	defer transactionManager.Stop()
+	select {
+	case completeMsg := <-txNotifyChannel:
+		assert.Equal(t, CompleteTransaction{}, completeMsg)
+	case <-time.After(1 * time.Second):
+		t.Fail()
+	}
+
+	assertTransaction(t, txManager, txID, Succeeded, actions)
+
+	defer txManager.Stop()
 
 	// sleep and wait for automatic cleanup to remove the successful transaction
 	time.Sleep(1 * time.Second)
-	assert.Len(t, transactionManager.Transactions, 0)
+	assert.Len(t, txManager.transactions, 0)
 }
 
 func TestTransactionManager_TransactionRollback(t *testing.T) {
-	transactionManager := MakeTransactionManager(100, 100*time.Millisecond, 500*time.Millisecond,
-		500*time.Millisecond)
+	txManager := MakeTransactionManager(100, 100*time.Millisecond, 500*time.Millisecond,
+		500*time.Millisecond).(*transactionManager)
 
-	transactionManager.Start()
+	txManager.Start()
+
+	txNotifyChannel := make(chan interface{})
 
 	for _, tc := range []struct {
 		testCase  string
-		operation func(txID string, t *testing.T, manager *TransactionManager) map[string]*Action
+		operation func(txID string, t *testing.T, manager *transactionManager) map[string]*Action
 	}{
 		{
 			testCase: "Transaction rollback triggered by external party (check handler)",
-			operation: func(txID string, t *testing.T, manager *TransactionManager) (actions map[string]*Action) {
-				transactionManager.TransactionChannel <- RollbackTransaction{TransactionID: txID, Reason: "check failed"}
+			operation: func(txID string, t *testing.T, manager *transactionManager) (actions map[string]*Action) {
+				txManager.RollbackTransaction(txID, "check failed")
 				return
 			},
 		},
 		{
 			testCase: "Transaction rollback triggered by an un-acknowledged action",
-			operation: func(txID string, t *testing.T, manager *TransactionManager) map[string]*Action {
+			operation: func(txID string, t *testing.T, manager *transactionManager) map[string]*Action {
 				actions := make(map[string]*Action, 1)
 				actID := uuid.New().String()
-				commitAssertAction(t, transactionManager, txID, actID, actions)
-
-				transactionManager.TransactionChannel <- CompleteTransaction{TransactionID: txID}
-
+				commitAssertAction(t, txManager, txID, actID, actions)
+				txManager.CompleteTransaction(txID)
 				return actions
 			},
 		},
 		{
 			testCase: "Transaction rollback triggered by rejected action",
-			operation: func(txID string, t *testing.T, manager *TransactionManager) map[string]*Action {
+			operation: func(txID string, t *testing.T, manager *transactionManager) map[string]*Action {
 				actions := make(map[string]*Action, 1)
 				actID := uuid.New().String()
-				commitAssertAction(t, transactionManager, txID, actID, actions)
+				commitAssertAction(t, txManager, txID, actID, actions)
 
-				transactionManager.TransactionChannel <- RejectAction{TransactionID: txID, ActionID: actID,
-					Reason: "forced rejection"}
+				txManager.RejectAction(txID, actID, "forced rejection")
 
 				actions[actID].Acknowledged = true
 
@@ -102,55 +104,61 @@ func TestTransactionManager_TransactionRollback(t *testing.T) {
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
 			txID := uuid.New().String()
-			transactionManager.TransactionChannel <- StartTransaction{TransactionID: txID}
-			assertTransaction(t, transactionManager, txID, InProgress, map[string]*Action{})
+			txManager.StartTransaction("checkID", txID, txNotifyChannel)
 
-			actions := tc.operation(txID, t, transactionManager)
+			assertTransaction(t, txManager, txID, InProgress, map[string]*Action{})
 
-			assertTransaction(t, transactionManager, txID, Failed, actions)
+			actions := tc.operation(txID, t, txManager)
+
+			completeMsg := <-txNotifyChannel
+			assert.Equal(t, RollbackTransaction{}, completeMsg)
+
+			assertTransaction(t, txManager, txID, Failed, actions)
 		})
 	}
 
-	defer transactionManager.Stop()
-
 	// sleep and wait for automatic cleanup to remove the successful transaction
-	time.Sleep(1 * time.Second)
-	assert.Len(t, transactionManager.Transactions, 0)
+	time.Sleep(2 * time.Second)
+	assert.Len(t, txManager.transactions, 0)
+
+	close(txNotifyChannel)
+	txManager.Stop()
 }
 
 func TestTransactionManager_TransactionTimeout(t *testing.T) {
-	staleTimeout := 50 * time.Millisecond
-	transactionManager := MakeTransactionManager(100, 10*time.Millisecond, staleTimeout,
-		500*time.Millisecond)
+	staleTimeout := 100 * time.Millisecond
+	txManager := MakeTransactionManager(100, 10*time.Millisecond, staleTimeout,
+		750*time.Millisecond).(*transactionManager)
 
-	transactionManager.Start()
+	txManager.Start()
+	txNotifyChannel := make(chan interface{})
 
 	for _, tc := range []struct {
 		testCase  string
-		operation func(txID string, t *testing.T, manager *TransactionManager) map[string]*Action
+		operation func(txID string, t *testing.T, manager *transactionManager) map[string]*Action
 	}{
 		{
 			testCase: "Transaction timeout after becoming stale (no actions)",
-			operation: func(txID string, t *testing.T, manager *TransactionManager) (actions map[string]*Action) {
+			operation: func(txID string, t *testing.T, manager *transactionManager) (actions map[string]*Action) {
 				return
 			},
 		},
 		{
 			testCase: "Transaction timeout after becoming stale for a second time with actions",
-			operation: func(txID string, t *testing.T, manager *TransactionManager) map[string]*Action {
+			operation: func(txID string, t *testing.T, manager *transactionManager) map[string]*Action {
 				// assert that we have a InProgress transaction
 				actions := make(map[string]*Action, 0)
-				assertTransaction(t, transactionManager, txID, InProgress, actions)
+				assertTransaction(t, txManager, txID, InProgress, actions)
 
 				// sleep for staleTimeout and assert that the transaction has become stale
 				time.Sleep(staleTimeout)
-				assertTransaction(t, transactionManager, txID, Stale, actions)
+				assertTransaction(t, txManager, txID, Stale, actions)
 
 				// commit an action and assert that the transaction is again in progress
 				actID := uuid.New().String()
-				commitAssertAction(t, transactionManager, txID, actID, actions)
+				commitAssertAction(t, txManager, txID, actID, actions)
 
-				assertTransaction(t, transactionManager, txID, InProgress, actions)
+				assertTransaction(t, txManager, txID, InProgress, actions)
 
 				return actions
 			},
@@ -158,61 +166,68 @@ func TestTransactionManager_TransactionTimeout(t *testing.T) {
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
 			txID := uuid.New().String()
-			transactionManager.TransactionChannel <- StartTransaction{TransactionID: txID}
-			assertTransaction(t, transactionManager, txID, InProgress, map[string]*Action{})
+			txManager.StartTransaction("CheckID", txID, txNotifyChannel)
+			assertTransaction(t, txManager, txID, InProgress, map[string]*Action{})
 
-			actions := tc.operation(txID, t, transactionManager)
+			actions := tc.operation(txID, t, txManager)
 
 			time.Sleep(staleTimeout)
 
-			assertTransaction(t, transactionManager, txID, Stale, actions)
+			assertTransaction(t, txManager, txID, Stale, actions)
 		})
 	}
 
-	defer transactionManager.Stop()
-
 	// sleep and wait for automatic cleanup to remove the successful transaction
 	time.Sleep(1 * time.Second)
-	assert.Len(t, transactionManager.Transactions, 0)
+
+	// assert all evictions
+	defer close(txNotifyChannel)
+	for notify := range txNotifyChannel {
+		assert.Equal(t, EvictedTransaction{}, notify)
+	}
+
+	assert.Len(t, txManager.transactions, 0)
+
+	defer txManager.Stop()
 }
 
 func TestTransactionManager_ErrorHandling(t *testing.T) {
-	transactionManager := MakeTransactionManager(100, 100*time.Millisecond, 500*time.Millisecond,
-		500*time.Millisecond)
+	txManager := MakeTransactionManager(100, 100*time.Millisecond, 500*time.Millisecond,
+		500*time.Millisecond).(*transactionManager)
 
 	for _, tc := range []struct {
 		testCase  string
-		operation func(t *testing.T, manager *TransactionManager)
+		operation func(t *testing.T, manager *transactionManager)
 	}{
 		{
 			testCase: "Transaction created before starting transaction manager",
-			operation: func(t *testing.T, manager *TransactionManager) {
+			operation: func(t *testing.T, manager *transactionManager) {
 				txID := uuid.New().String()
-				transactionManager.TransactionChannel <- StartTransaction{TransactionID: txID}
+				txManager.transactionChannel <- StartTransaction{TransactionID: txID}
 
 				// assert that the transaction manager is not running and that we have no transactions (nothing broke)
-				assert.False(t, transactionManager.running)
-				assert.Empty(t, transactionManager.Transactions)
+				assert.False(t, txManager.running)
+				assert.Empty(t, txManager.transactions)
 
 				// start the transaction manager, the transaction sent before the start will be read immediately, assert it
-				transactionManager.Start()
+				txManager.Start()
 
-				assert.True(t, transactionManager.running)
-				assertTransaction(t, transactionManager, txID, InProgress, map[string]*Action{})
+				assert.True(t, txManager.running)
+				assertTransaction(t, txManager, txID, InProgress, map[string]*Action{})
 			},
 		},
 		{
 			testCase: "Commit action for a non-existing transaction (FLAKY)",
-			operation: func(t *testing.T, manager *TransactionManager) {
+			operation: func(t *testing.T, manager *transactionManager) {
 				txID := uuid.New().String()
 				actID := uuid.New().String()
-				transactionManager.TransactionChannel <- CommitAction{TransactionID: txID, ActionID: actID}
+				txManager.transactionChannel <- CommitAction{TransactionID: txID, ActionID: actID}
 
 				// assert that we don't have a transaction for txID and no action for actID
-				assert.True(t, transactionManager.running)
-				_, found := transactionManager.Transactions[txID]
+				assert.True(t, txManager.running)
+				_, found := txManager.transactions[txID]
 				assert.False(t, found, "Transaction %s not found in the transaction map", txID)
-				for _, tx := range transactionManager.Transactions {
+				for _, tx := range txManager.transactions {
 					_, found := tx.Actions[actID]
 					assert.False(t, found)
 				}
@@ -220,39 +235,39 @@ func TestTransactionManager_ErrorHandling(t *testing.T) {
 		},
 		{
 			testCase: "Acknowledge a non-existing action for a transaction",
-			operation: func(t *testing.T, manager *TransactionManager) {
+			operation: func(t *testing.T, manager *transactionManager) {
 				txID := uuid.New().String()
 				actions := make(map[string]*Action, 0)
 
-				transactionManager.TransactionChannel <- StartTransaction{TransactionID: txID}
-				assertTransaction(t, transactionManager, txID, InProgress, actions)
+				txManager.transactionChannel <- StartTransaction{TransactionID: txID}
+				assertTransaction(t, txManager, txID, InProgress, actions)
 
 				actID := uuid.New().String()
-				commitAssertAction(t, transactionManager, txID, actID, actions)
+				commitAssertAction(t, txManager, txID, actID, actions)
 
-				transactionManager.TransactionChannel <- AckAction{TransactionID: txID, ActionID: "non-existing-action"}
-				assertTransaction(t, transactionManager, txID, InProgress, actions)
+				txManager.transactionChannel <- AckAction{TransactionID: txID, ActionID: "non-existing-action"}
+				assertTransaction(t, txManager, txID, InProgress, actions)
 
 			},
 		},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
-			tc.operation(t, transactionManager)
+			tc.operation(t, txManager)
 		})
 	}
 
-	defer transactionManager.Stop()
+	defer txManager.Stop()
 
 	// sleep and wait for automatic cleanup to remove the successful transaction
 	time.Sleep(1 * time.Second)
-	assert.Len(t, transactionManager.Transactions, 0)
+	assert.Len(t, txManager.transactions, 0)
 }
 
-func assertTransaction(t *testing.T, transactionManager *TransactionManager, txID string, state TransactionState,
+func assertTransaction(t *testing.T, txManager *transactionManager, txID string, state TransactionState,
 	actions map[string]*Action) {
 	// give the transaction manager a bit of time to insert the transaction before running the assertion
 	time.Sleep(10 * time.Millisecond)
-	transaction, found := transactionManager.Transactions[txID]
+	transaction, found := txManager.transactions[txID]
 	assert.True(t, found, "Transaction %s not found in the transaction map", txID)
 	assert.Equal(t, txID, transaction.TransactionID)
 	assert.Equal(t, state, transaction.State)
@@ -265,8 +280,8 @@ func assertTransaction(t *testing.T, transactionManager *TransactionManager, txI
 	}
 }
 
-func commitAssertAction(t *testing.T, transactionManager *TransactionManager, txID, actID string, actions map[string]*Action) {
-	transactionManager.TransactionChannel <- CommitAction{TransactionID: txID, ActionID: actID}
+func commitAssertAction(t *testing.T, txManager *transactionManager, txID, actID string, actions map[string]*Action) {
+	txManager.transactionChannel <- CommitAction{TransactionID: txID, ActionID: actID}
 	actions[actID] = &Action{ActionID: actID, Acknowledged: false}
-	assertTransaction(t, transactionManager, txID, InProgress, actions)
+	assertTransaction(t, txManager, txID, InProgress, actions)
 }

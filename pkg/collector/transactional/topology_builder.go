@@ -26,9 +26,10 @@ type TransactionalBatchBuilder struct {
 // MakeTransactionalBatchBuilder returns a instance of a TransactionalBatchBuilder
 func MakeTransactionalBatchBuilder(maxCapacity int) *TransactionalBatchBuilder {
 	return &TransactionalBatchBuilder{
-		batchState:   &TxCheckInstanceBatchState{},
-		elementCount: 0,
-		maxCapacity:  maxCapacity,
+		batchState: &TxCheckInstanceBatchState{
+			CheckInstanceBatchState: &batcher.CheckInstanceBatchState{},
+		},
+		maxCapacity: maxCapacity,
 	}
 }
 

@@ -15,7 +15,7 @@ var (
 	batcherInit     sync.Once
 )
 
-// InitBatcher initializes the global batcher instance
+// InitBatcher initializes the global batcher Instance
 func InitBatcher(serializer serializer.AgentV1Serializer, hostname, agentName string, maxCapacity int) {
 	batcherInit.Do(func() {
 		batcherInstance = newAsynchronousBatcher(serializer, hostname, agentName, maxCapacity)
@@ -32,7 +32,7 @@ func newAsynchronousBatcher(serializer serializer.AgentV1Serializer, hostname, a
 	return batcher
 }
 
-// GetBatcher returns a handle on the global batcher instance
+// GetBatcher returns a handle on the global batcher Instance
 func GetBatcher() Batcher {
 	return batcherInstance
 }
@@ -132,7 +132,7 @@ func (batcher *AsynchronousBatcher) run() {
 		case SubmitStopSnapshot:
 			batcher.sendState(batcher.builder.TopologyStopSnapshot(submission.CheckID, submission.Instance))
 		case SubmitDelete:
-			batcher.sendState(batcher.builder.Delete(submission.checkID, submission.instance, submission.deleteID))
+			batcher.sendState(batcher.builder.Delete(submission.CheckID, submission.Instance, submission.DeleteID))
 		case SubmitHealthCheckData:
 			batcher.sendState(batcher.builder.AddHealthCheckData(submission.CheckID, submission.Stream, submission.Data))
 		case SubmitHealthStartSnapshot:

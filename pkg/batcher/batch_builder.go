@@ -7,7 +7,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 )
 
-// CheckInstanceBatchState is the type representing batched data per check instance
+// CheckInstanceBatchState is the type representing batched data per check Instance
 type CheckInstanceBatchState struct {
 	Topology *topology.Topology
 	Metrics  *[]telemetry.RawMetrics
