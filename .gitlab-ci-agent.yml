@@ -729,6 +729,8 @@ pre_release_cluster_agent_image:
   interruptible: true
   dependencies: []
   before_script:
+    - cd $CI_PROJECT_DIR
+    - export PROCESS_AGENT_BRANCH=`cat stackstate-deps.json | jq -r '.PROCESS_AGENT_BRANCH'`
     - mkdir /go/src/app
     - cp -R $CI_PROJECT_DIR/beest/* /go/src/app
     - cd /go/src/app
@@ -739,6 +741,7 @@ pre_release_cluster_agent_image:
     - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
     - export RUN_ID=$CI_COMMIT_REF_NAME
     - export STACKSTATE_BRANCH=master
+    - export HELM_CHART_VERSION=$HELM_CHART_VERSION
   after_script: # artifacts do not work with absolute path, so we move them inside the build dir
     - mv /go/src/app/terraform.log $CI_PROJECT_DIR/beest/ || true
     - mv /go/src/app/tests/$BEEST_TEST_GROUP/topic-*.json $CI_PROJECT_DIR/beest/ || true

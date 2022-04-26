@@ -12,11 +12,15 @@
 
   - include_tasks: quay-registry-key.yml
 
-  - name: Add StackState chart repo
-    shell: helm repo add stackstate https://helm.stackstate.io && helm repo update
+  - name: Add StackState and StackState-test chart repos
+    shell: helm repo add stackstate https://helm.stackstate.io && helm repo add stackstate-test https://helm-test.stackstate.io && helm repo update
 
   - name: Apply manifests for test workloads
     command: kubectl --context={{ kubecontext }} -n={{ namespace }} apply -f {{ role_path }}/files/test_workloads
+
+  - name: Log helm_chart_repo
+    debug:
+      var: helm_chart_repo
 
   - name: Helm install StackState Agent
     command: helm upgrade --install \
@@ -25,14 +29,16 @@
       --set-string 'stackstate.apiKey'='API_KEY' \
       --set-string 'stackstate.cluster.name'='{{cluster_name}}' \
       --set-string 'stackstate.url'='http://{{ groups['receiver'][0] }}:7077/stsAgent' \
-      --set "agent.image.tag={{agent_current_branch}}" \
-      --set "agent.image.repository=stackstate/{{agent_docker_repo}}" \
+      --set "agent.containers.agent.image.tag={{agent_current_branch}}" \
+      --set "agent.containers.agent.image.repository=stackstate/{{agent_docker_repo}}" \
+      --set "agent.containers.processAgent.image.tag={{process_agent_branch}}" \
+      --set "agent.containers.processAgent.image.repository=stackstate/{{process_agent_repo}}" \
       --set "clusterAgent.image.tag={{agent_current_branch}}" \
       --set "clusterAgent.image.repository=stackstate/{{cluster_agent_docker_repo}}" \
       --set "clusterChecks.image.tag={{agent_current_branch}}" \
       --set "clusterChecks.image.repository=stackstate/{{agent_docker_repo}}" \
       --values "{{ role_path }}/files/values.yml" \
-      stackstate-cluster-agent stackstate/cluster-agent
+      stackstate-cluster-agent {{ helm_chart_repo }}
 
   - name: Attempt to verify cluster agent ready
     block:
