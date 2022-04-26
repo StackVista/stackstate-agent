@@ -105,6 +105,14 @@ def relation_data(json_data, type_name, external_id_assert_fn):
     return None
 
 
+def delete_topo_element_data(json_data, external_id):
+    for message in json_data["messages"]:
+        p = message["message"]["TopologyElement"]["payload"]
+        if "TopologyDelete" in p and p["TopologyDelete"]["externalId"] == external_id:
+            return True
+    return False
+
+
 def event_data(event, json_data, hostname):
     for message in json_data["messages"]:
         p = message["message"]

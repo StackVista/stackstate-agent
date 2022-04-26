@@ -3,6 +3,7 @@
 // This product includes software developed at StackState (https://www.stackstate.com).
 // Copyright 2021 StackState
 
+//go:build python
 // +build python
 
 package python
@@ -98,4 +99,18 @@ func SubmitStopSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 	}
 
 	batcher.GetBatcher().SubmitStopSnapshot(check.ID(goCheckID), _instance)
+}
+
+// SubmitDelete deletes a topology element
+//export SubmitDelete
+func SubmitDelete(id *C.char, instanceKey *C.instance_key_t, topoElementID *C.char) {
+	goCheckID := C.GoString(id)
+	topologyElementID := C.GoString(topoElementID)
+
+	_instance := topology.Instance{
+		Type: C.GoString(instanceKey.type_),
+		URL:  C.GoString(instanceKey.url),
+	}
+
+	batcher.GetBatcher().SubmitDelete(check.ID(goCheckID), _instance, topologyElementID)
 }

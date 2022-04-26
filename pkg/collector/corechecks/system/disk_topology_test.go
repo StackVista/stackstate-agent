@@ -111,6 +111,7 @@ func TestDiskTopologyCollector_BuildTopology(t *testing.T) {
 					},
 				},
 				Relations: []topology.Relation{},
+				DeleteIDs: []string{},
 			},
 		},
 	})

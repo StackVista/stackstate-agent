@@ -37,6 +37,7 @@ func (builder *TopologyBuilder) getTopology(checkID check.ID, instance topology.
 		Instance:      instance,
 		Components:    make([]topology.Component, 0),
 		Relations:     make([]topology.Relation, 0),
+		DeleteIDs:     make([]string, 0),
 	}
 	builder.topologies[checkID] = topology
 	return topology
@@ -73,6 +74,14 @@ func (builder *TopologyBuilder) StopSnapshot(checkID check.ID, instance topology
 	builder.topologies[checkID] = topology
 	// We always flush after a StopSnapshot to limit latency
 	return builder.Flush()
+}
+
+// Delete adds a delete identifier
+func (builder *TopologyBuilder) Delete(checkID check.ID, instance topology.Instance, topologyElementID string) Topologies {
+	topology := builder.getTopology(checkID, instance)
+	topology.DeleteIDs = append(topology.DeleteIDs, topologyElementID)
+	builder.topologies[checkID] = topology
+	return builder.incrementAndTryFlush()
 }
 
 // Flush the collected data. Returning the data and wiping the current build up topology

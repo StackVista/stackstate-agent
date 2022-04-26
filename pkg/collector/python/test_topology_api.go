@@ -1,3 +1,4 @@
+//go:build python && test
 // +build python,test
 
 package python
@@ -167,6 +168,41 @@ func testStopSnapshotCheck(t *testing.T) {
 				Instance:      instance,
 				Components:    []topology.Component{},
 				Relations:     []topology.Relation{},
+			},
+		},
+	}))
+}
+
+func testDeleteTopologyElement(t *testing.T) {
+	mockBatcher := batcher.NewMockBatcher()
+
+	checkID := C.CString("check-id")
+	instanceKey := C.instance_key_t{}
+	instanceKey.type_ = C.CString("instance-type")
+	instanceKey.url = C.CString("instance-url")
+	topoElementId := "topo-element-id"
+
+	SubmitStartSnapshot(checkID, &instanceKey)
+	SubmitDelete(
+		checkID,
+		&instanceKey,
+		C.CString(topoElementId))
+	SubmitStopSnapshot(checkID, &instanceKey)
+
+	expectedTopology := mockBatcher.CollectedTopology.Flush()
+	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
+
+	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
+		"check-id": {
+			Health:  make(map[string]health.Health),
+			Metrics: &[]telemetry.RawMetrics{},
+			Topology: &topology.Topology{
+				StartSnapshot: true,
+				StopSnapshot:  true,
+				Instance:      instance,
+				Components:    []topology.Component{},
+				Relations:     []topology.Relation{},
+				DeleteIDs:     []string{topoElementId},
 			},
 		},
 	}))

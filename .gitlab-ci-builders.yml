@@ -44,3 +44,5 @@ ensure-success-manual:
     - echo "I will succeed"
   rules:
     - when: on_success
+  retry:
+    max: 2

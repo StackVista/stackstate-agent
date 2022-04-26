@@ -280,7 +280,7 @@ func TestSubmitRelationCannotBeSerialized(t *testing.T) {
 	helpers.AssertMemoryUsage(t)
 }
 
-func TestStartSnapshot(t *testing.T) {
+func TestSubmitStartSnapshot(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
 
@@ -307,7 +307,7 @@ func TestStartSnapshot(t *testing.T) {
 	helpers.AssertMemoryUsage(t)
 }
 
-func TestStopSnapshot(t *testing.T) {
+func TestSubmitStopSnapshot(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
 
@@ -328,6 +328,36 @@ func TestStopSnapshot(t *testing.T) {
 	}
 	if _instance.URL != "instance.url" {
 		t.Fatalf("Unexpected instance url value: %s", _instance.URL)
+	}
+
+	// Check for leaks
+	helpers.AssertMemoryUsage(t)
+}
+
+func TestSubmitDelete(t *testing.T) {
+	// Reset memory counters
+	helpers.ResetMemoryStats()
+
+	out, err := run(`topology.submit_delete(None, "checkid", {"type": "instance.type", "url": "instance.url"}, "myidentifier")`)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out != "" {
+		t.Errorf("Unexpected printed value: '%s'", out)
+	}
+
+	if checkID != "checkid" {
+		t.Fatalf("Unexpected check id value: %s", checkID)
+	}
+	if _instance.Type != "instance.type" {
+		t.Fatalf("Unexpected instance type value: %s", _instance.Type)
+	}
+	if _instance.URL != "instance.url" {
+		t.Fatalf("Unexpected instance url value: %s", _instance.URL)
+	}
+	if _topologyElementId != "myidentifier" {
+		t.Fatalf("Unexpected topology element id value: %s", _topologyElementId)
 	}
 
 	// Check for leaks

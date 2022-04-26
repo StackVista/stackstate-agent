@@ -358,6 +358,8 @@ def test_agent_integration_sample_topology(host, hostname):
                 data_assert_fn=c["data"],
             ) is not None
 
+        assert util.delete_topo_element_data(json_data, "urn:example:/host:host_for_deletion")
+
     util.wait_until(assert_topology, 30, 3)
 
 
