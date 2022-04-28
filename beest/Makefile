@@ -63,4 +63,9 @@ shell-root:
 	docker exec --user root -ti ${KEEPER_CONTAINER} bash
 
 
+# Beest unit test
+test:
+	go test -v ./...
+
+
 .PHONY: build start shell shell-root

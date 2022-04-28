@@ -1,7 +1,9 @@
 package driver
 
 import (
+	"beest/cmd/step"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/hashicorp/terraform-config-inspect/tfconfig"
 	"github.com/hashicorp/terraform-exec/tfexec"
@@ -15,11 +17,7 @@ const (
 	DefaultTerraformBinary = "/usr/local/bin/terragrunt"
 )
 
-type TerraformContext interface {
-	RunId() string
-	WorkingDir() string
-	Variables() map[string]interface{}
-}
+type TerraformProvisioner struct{}
 
 type TerraformState struct {
 	module      *tfconfig.Module
@@ -28,86 +26,117 @@ type TerraformState struct {
 	workspaceId string
 }
 
-func TerraformApply(ctx TerraformContext, prompt bool) {
-	apply(ctx, false, prompt)
+func (tp *TerraformProvisioner) Create(step *step.CreationStep, prompt bool) error {
+	return apply(step.Yard, false, prompt)
 }
 
-func TerraformDestroy(ctx TerraformContext, prompt bool) {
-	apply(ctx, true, prompt)
+func (tp *TerraformProvisioner) Destroy(step *step.DestroyStep, prompt bool) error {
+	return apply(step.Yard, true, prompt)
 }
 
-func apply(ctx TerraformContext, destroy bool, prompt bool) {
-	state := newTerraform(ctx)
-	state.selectWorkspace()
-	state.init()
-	state.validate()
-	log.Println(fmt.Sprintf("Variables: %v", ctx.Variables()))
-	if state.plan(ctx.Variables(), destroy) {
-		state.apply(prompt)
+func apply(yard step.Yard, destroy bool, prompt bool) error {
+	state, newErr := newTerraform(yard)
+	if newErr != nil {
+		return newErr
+	}
+	if err := state.selectWorkspace(); err != nil {
+		return err
+	}
+	if err := state.init(); err != nil {
+		return err
+	}
+	if err := state.validate(); err != nil {
+		return err
+	}
+	log.Println(fmt.Sprintf("Variables: %v", yard.Variables()))
+	if hasChanges, planErr := state.plan(yard.Variables(), destroy); planErr == nil {
+		if hasChanges {
+			if applyErr := state.apply(prompt); applyErr != nil {
+				return applyErr
+			}
+		} else {
+			log.Println("No Terraform changes detected.")
+		}
+		return nil
 	} else {
-		log.Println("No Terraform changes detected.")
+		return planErr
 	}
 }
 
-func newTerraform(ctx TerraformContext) *TerraformState {
-	log.Println(fmt.Sprintf("Preparing Terraform to run from: %s", ctx.WorkingDir()))
+func newTerraform(yard step.Yard) (*TerraformState, error) {
+	log.Println(fmt.Sprintf("Terraform will run from: %s", yard.WorkingDir()))
 
-	tf, err := tfexec.NewTerraform(ctx.WorkingDir(), DefaultTerraformBinary)
-	if err != nil {
-		log.Fatalf("Error running NewTerraform: %s", err)
+	tf, newErr := tfexec.NewTerraform(yard.WorkingDir(), DefaultTerraformBinary)
+	if newErr != nil {
+		log.Printf("Error running NewTerraform: %s\n", newErr)
+		return nil, newErr
 	}
-	tf.SetLogPath("/go/src/app/terraform.log")
+	if err := tf.SetLogPath("/go/src/app/terraform.log"); err != nil {
+		return nil, err
+	}
 
-	return &TerraformState{
-		tf:          tf,
-		module:      loadModule(tf.WorkingDir()),
-		workspaceId: ctx.RunId(),
+	if module, err := loadModule(tf.WorkingDir()); err != nil {
+		return nil, err
+	} else {
+		return &TerraformState{
+			tf:          tf,
+			module:      module,
+			workspaceId: yard.RunId(),
+		}, nil
 	}
 }
 
-func loadModule(moduleDir string) *tfconfig.Module {
+func loadModule(moduleDir string) (*tfconfig.Module, error) {
 	module, diags := tfconfig.LoadModule(moduleDir)
 	if diags.HasErrors() {
-		log.Fatalf("Error reading module: %s", diags.Error())
+		log.Printf("Error loading module: %s\n", diags.Error())
+		return nil, errors.New(diags.Error())
 	}
-	return module
+	return module, nil
 }
 
-func (ts *TerraformState) init() {
+func (ts *TerraformState) init() error {
 	log.Println("Initializing Terraform ...")
-	err := ts.tf.Init(context.Background(), tfexec.Upgrade(true))
-	if err != nil {
-		log.Fatalf("Error running Init: %s", err)
+	if err := ts.tf.Init(context.Background(), tfexec.Upgrade(true)); err != nil {
+		log.Printf("Error running Init: %s\n", err)
+		return err
 	}
+	return nil
 }
 
-func (ts *TerraformState) selectWorkspace() {
+func (ts *TerraformState) selectWorkspace() error {
 	log.Printf("Selecting workspace %s ...\n", ts.workspaceId)
 	// create and switches to the new workspace
-	err := ts.tf.WorkspaceNew(context.Background(), ts.workspaceId)
-	if err != nil {
+	if err := ts.tf.WorkspaceNew(context.Background(), ts.workspaceId); err != nil {
 		// if new returns an error means that the workspace exists, so we select it
-		err = ts.tf.WorkspaceSelect(context.Background(), ts.workspaceId)
-		if err != nil {
-			return
+		if err = ts.tf.WorkspaceSelect(context.Background(), ts.workspaceId); err != nil {
+			log.Printf("Error selecting workspace: %s\n", err)
+			return err
 		}
 	}
+	return nil
 }
 
-func (ts *TerraformState) validate() {
+func (ts *TerraformState) validate() error {
 	log.Println("Validating Terraform manifests ...")
 	validated, err := ts.tf.Validate(context.Background())
 	if err != nil {
-		log.Fatalf("Error running Validate: %s", err)
+		log.Printf("Error running Validate: %s\n", err)
+		return err
 	}
 	if !validated.Valid {
+		summaryStr := "Manifests not valid:"
 		for _, d := range validated.Diagnostics {
-			log.Fatalf("Manifests not valid: %s\n\n  %s\n\n%s", d.Summary, d.Snippet.Code, d.Detail)
+			diagnosticStr := fmt.Sprintf("%s\n\n%s\n\n%s", d.Summary, d.Snippet.Code, d.Detail)
+			summaryStr = fmt.Sprintf("%s\n\n%s", summaryStr, diagnosticStr)
 		}
+		log.Println(summaryStr)
+		return errors.New(summaryStr)
 	}
+	return nil
 }
 
-func (ts *TerraformState) plan(vars map[string]interface{}, destroy bool) bool {
+func (ts *TerraformState) plan(vars map[string]interface{}, destroy bool) (bool, error) {
 	log.Println("Planning Terraform changes ...")
 	var tfPlanOptions []tfexec.PlanOption
 	for k, v := range vars {
@@ -122,18 +151,20 @@ func (ts *TerraformState) plan(vars map[string]interface{}, destroy bool) bool {
 
 	hasChanges, err := ts.tf.Plan(context.Background(), tfPlanOptions...)
 	if err != nil {
-		log.Fatalf("Error running Plan: %s", err)
+		log.Printf("Error running Plan: %s\n", err)
+		return false, err
 	}
 	ts.planPath = planPath
-	return hasChanges
+	return hasChanges, nil
 }
 
-func (ts *TerraformState) apply(prompt bool) {
-	changes, err := ts.tf.ShowPlanFileRaw(context.Background(), ts.planPath)
-	if err != nil {
-		log.Fatalf("Error showing Plan: %s", err)
+func (ts *TerraformState) apply(prompt bool) error {
+	if changes, err := ts.tf.ShowPlanFileRaw(context.Background(), ts.planPath); err != nil {
+		log.Printf("Error showing Plan: %s\n", err)
+		return err
+	} else {
+		log.Println(changes)
 	}
-	log.Println(changes)
 
 	confirmed := true //by default, we do not ask for confirmation
 	if prompt {
@@ -142,13 +173,14 @@ func (ts *TerraformState) apply(prompt bool) {
 
 	if confirmed {
 		log.Println("Applying Terraform changes ...")
-		err = ts.tf.Apply(context.Background(), tfexec.DirOrPlan(ts.planPath))
-		if err != nil {
-			log.Fatalf("Error running Plan: %s", err)
+		if err := ts.tf.Apply(context.Background(), tfexec.DirOrPlan(ts.planPath)); err != nil {
+			log.Printf("Error running Plan: %s\n", err)
+			return err
 		} else {
 			log.Println("Terraform changes are done")
 		}
 	}
+	return nil
 }
 
 func confirm() bool {
@@ -170,13 +202,14 @@ func confirm() bool {
 	}
 }
 
-func (ts *TerraformState) state() {
-	state, err := ts.tf.Show(context.Background())
-	if err != nil {
-		log.Fatalf("Error running Show: %s", err)
+func (ts *TerraformState) state() error {
+	if state, err := ts.tf.Show(context.Background()); err != nil {
+		log.Printf("Error running Show: %s\n", err)
+		return err
+	} else {
+		fmt.Println(state.FormatVersion)
+		return nil
 	}
-
-	fmt.Println(state.FormatVersion)
 }
 
 func (ts *TerraformState) output() {

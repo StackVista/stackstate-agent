@@ -6,23 +6,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func init() {
+	rootCmd.AddCommand(destroyCmd)
+
+	destroyCmd.Flags().BoolVarP(&assumeYes, AssumeYesFlag, AssumeYesShortFlag, false, "automatic yes to prompts")
+}
+
 var destroyCmd = &cobra.Command{
 	Use:   "destroy [scenario]",
 	Short: "Destroy all resources associated with the yard",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		create := findScenario(args[0]).generateCreateStep(runId)
-		destroy := step.Destroy(create)
-		doDestroy(destroy, !assumeYes)
+		scenario := findScenario(args[0])
+		cobra.CheckErr(destroy(&driver.TerraformProvisioner{}, scenario, !assumeYes))
 	},
 }
 
-func doDestroy(destroy *step.DestroyStep, prompt bool) {
-	driver.TerraformDestroy(destroy, prompt)
-}
-
-func init() {
-	rootCmd.AddCommand(destroyCmd)
-
-	destroyCmd.Flags().BoolVarP(&assumeYes, AssumeYesFlag, AssumeYesShortFlag, false, "automatic yes to prompts")
+func destroy(provisioner driver.Provisioner, scenario *Scenario, prompt bool) error {
+	create := scenario.generateCreateStep(runId)
+	destroy := step.Destroy(create)
+	return provisioner.Destroy(destroy, prompt)
 }
