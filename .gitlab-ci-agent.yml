@@ -913,6 +913,11 @@ molecule_integrations_success_cleanup:
     BEEST_SCENARIO: containerd-eks
     BEEST_TEST_GROUP: k8s
 
+.beest_k8s_containerd_22_variables: &beest_k8s_containerd_22_variables
+  variables:
+    BEEST_SCENARIO: containerd-eks-22
+    BEEST_TEST_GROUP: k8s
+
 beest_k8s_dockerd_create:
   <<: *beest
   <<: *beest_create
@@ -925,6 +930,14 @@ beest_k8s_containerd_create:
   <<: *beest
   <<: *beest_create
   <<: *beest_k8s_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_always
+
+beest_k8s_containerd_22_create:
+  <<: *beest
+  <<: *beest_create
+  <<: *beest_k8s_containerd_22_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_always
@@ -959,6 +972,21 @@ beest_k8s_containerd_test:
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
+beest_k8s_containerd_22_test:
+  <<: *beest
+  <<: *beest_test
+  <<: *beest_k8s_containerd_22_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_k8s_containerd_22_create
+  needs:
+    - beest_k8s_containerd_22_create
+    - pre_release_cluster_agent_image
+    - pre_release_main_agent_image
+
 beest_k8s_dockerd_failure_cleanup:
   <<: *beest
   <<: *beest_destroy
@@ -982,6 +1010,18 @@ beest_k8s_containerd_failure_cleanup:
   needs:
     - beest_k8s_containerd_test
     - beest_k8s_containerd_create
+
+beest_k8s_containerd_22_failure_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_k8s_containerd_22_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_failure
+    - when: never
+  needs:
+    - beest_k8s_containerd_22_test
+    - beest_k8s_containerd_22_create
 
 beest_k8s_dockerd_success_cleanup:
   <<: *beest
@@ -1012,6 +1052,22 @@ beest_k8s_containerd_success_cleanup:
   needs:
     - beest_k8s_containerd_test
     - beest_k8s_containerd_create
+
+
+beest_k8s_containerd_22_success_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_k8s_containerd_22_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_k8s_containerd_22_test
+    - beest_k8s_containerd_22_create
+  needs:
+    - beest_k8s_containerd_22_test
+    - beest_k8s_containerd_22_create
 
 # Job Seq: Molecule
 # Type: localinstall
