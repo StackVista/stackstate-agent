@@ -17,6 +17,11 @@ func MakeCheckNoHandler() CheckHandler {
 	return &CheckNoHandler{CheckHandlerBase: CheckHandlerBase{}}
 }
 
+// StartTransaction ...
+func (ch *CheckNoHandler) StartTransaction(check.ID, string) {
+	_ = log.Warnf("StartTransaction called on CheckNoHandler. This should never happen.")
+}
+
 // GetCheckIdentifier is the CheckNoHandler implementation which just returns nil. This should never be called.
 func (ch *CheckNoHandler) GetCheckIdentifier() CheckIdentifier {
 	_ = log.Warnf("GetCheckIdentifier called on CheckNoHandler. This should never happen.")

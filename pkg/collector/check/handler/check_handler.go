@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"github.com/StackVista/stackstate-agent/cmd/agent/common"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
@@ -26,6 +25,7 @@ type CheckHandler interface {
 	GetConfig() (config, initConfig integration.Data)
 	GetBatcher() batcher.Batcher
 	GetCheckReloader() CheckReloader
+	StartTransaction(CheckID check.ID, TransactionID string)
 }
 
 type CheckHandlerBase struct {
@@ -38,13 +38,13 @@ type CheckHandlerBase struct {
 // checkHandler provides an interface between the Agent Check and the transactional components
 type checkHandler struct {
 	CheckHandlerBase
-	CheckReloader
+	manager.TransactionManager
 	batcher.Batcher
-	shutdownChannel    chan interface{}
+	shutdownChannel    chan bool
 	transactionChannel chan SubmitStartTransaction
 }
 
-func MakeCheckHandler(check check.Check, checkReloader CheckReloader, checkBatcher batcher.Batcher, config, initConfig integration.Data) CheckHandler {
+func MakeCheckHandler(check check.Check, checkReloader CheckReloader, txManager manager.TransactionManager, checkBatcher batcher.Batcher, config, initConfig integration.Data) CheckHandler {
 	return &checkHandler{
 		CheckHandlerBase: CheckHandlerBase{
 			CheckIdentifier: check,
@@ -52,7 +52,10 @@ func MakeCheckHandler(check check.Check, checkReloader CheckReloader, checkBatch
 			config:          config,
 			initConfig:      initConfig,
 		},
-		Batcher: checkBatcher,
+		TransactionManager: txManager,
+		Batcher:            checkBatcher,
+		shutdownChannel:    make(chan bool, 1),
+		transactionChannel: make(chan SubmitStartTransaction, 1),
 	}
 }
 
@@ -63,33 +66,48 @@ type TxChan struct {
 
 // Start ...
 func (ch *checkHandler) Start() {
-txReceiverHandler:
-	select {
-	case startTx := <-ch.transactionChannel:
-		thisTransactionChannel := make(chan interface{}, 20)
-		common.TxManager.StartTransaction(startTx.CheckID, startTx.TransactionID, thisTransactionChannel)
-		defer close(thisTransactionChannel)
-		ch.handleCurrentTransaction(thisTransactionChannel)
-	case _ = <-ch.shutdownChannel:
-		break txReceiverHandler
-	}
+	go func() {
+	txReceiverHandler:
+		for {
+			select {
+			case startTx := <-ch.transactionChannel:
+				log.Debugf("Starting transaction: %s", startTx.TransactionID)
+				thisTransactionChannel := make(chan interface{}, 20)
+				ch.TransactionManager.StartTransaction(startTx.CheckID, startTx.TransactionID, thisTransactionChannel)
+				//ch.handleCurrentTransaction(thisTransactionChannel)
+				close(thisTransactionChannel)
+			case <-ch.shutdownChannel:
+				log.Debug("Shutting down check handler")
+				break txReceiverHandler
+			default:
+				log.Debug("got here")
+				// nothing
+			}
+		}
+	}()
+}
+
+// Stop ...
+func (ch *checkHandler) Stop() {
+	ch.shutdownChannel <- true
 }
 
 func (ch *checkHandler) handleCurrentTransaction(txChan chan interface{}) {
 currentTxHandler:
-	select {
-	case tx := <-txChan:
-		switch _ := tx.(type) {
-		case manager.RollbackTransaction:
-			if err := ch.ReloadCheck(ch.ID(), ch.config, ch.initConfig, ch.ConfigSource()); err != nil {
-				_ = log.Errorf("failed to reload check %s: %s", ch.ID(), err)
+	for {
+		select {
+		case tx := <-txChan:
+			switch txMsg := tx.(type) {
+			case manager.RollbackTransaction, manager.EvictedTransaction:
+				if err := ch.ReloadCheck(ch.ID(), ch.config, ch.initConfig, ch.ConfigSource()); err != nil {
+					_ = log.Errorf("failed to reload check %s: %s", ch.ID(), err)
+				}
+				break currentTxHandler
+			case manager.CompleteTransaction:
+				log.Debugf("Received: %s", txMsg.TransactionID)
+				break currentTxHandler
 			}
-			break currentTxHandler
-		case manager.CompleteTransaction:
-			break currentTxHandler
 		}
-	default:
-		// received nothing
 	}
 }
 

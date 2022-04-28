@@ -137,6 +137,8 @@ func (txm *transactionManager) Start() {
 					_ = log.Errorf(msg.Error())
 				// shutdown transaction manager
 				case StopTransactionManager:
+					// clean the transaction map
+					txm.transactions = make(map[string]*IntakeTransaction, 0)
 					break transactionHandler
 				default:
 					_ = log.Errorf("Got unexpected msg %v", msg)
@@ -144,16 +146,16 @@ func (txm *transactionManager) Start() {
 			case <-txm.transactionTicker.C:
 				// expire stale transactions, clean up expired transactions that exceed the eviction duration
 				for _, transaction := range txm.transactions {
-					if transaction.State != Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionTimeoutDuration)) {
+					if transaction.State == Failed || transaction.State == Succeeded {
+						log.Debugf("Cleaning up %s transaction: %s", transaction.State.String(), transaction.TransactionID)
+						// delete the transaction, already notified on success or failure status so no need to notify again
+						delete(txm.transactions, transaction.TransactionID)
+					} else if transaction.State != Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionTimeoutDuration)) {
 						// last updated timestamp is before current time - manager timeout duration => Tx is stale
 						transaction.State = Stale
 					} else if transaction.State == Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionEvictionDuration)) {
 						// last updated timestamp is before current time - manager eviction duration => Tx can be evicted
 						txm.evictTransaction(transaction.TransactionID)
-					} else if transaction.State == Failed || transaction.State == Succeeded {
-						log.Debugf("Cleaning up %s transaction: %s", transaction.State.String(), transaction.TransactionID)
-						// delete the transaction, already notified on success or failure status so no need to notify again
-						delete(txm.transactions, transaction.TransactionID)
 					}
 				}
 
