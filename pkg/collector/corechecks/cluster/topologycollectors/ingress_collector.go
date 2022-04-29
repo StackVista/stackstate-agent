@@ -9,14 +9,14 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
-	networkingV1 "k8s.io/api/networking/v1"
+	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
 type StsIngress struct {
 	v1beta1 *v1beta1.Ingress
-	netv1   *networkingV1.Ingress
+	netv1   *netv1.Ingress
 	MarshalableKubernetesObject
 }
 
@@ -45,22 +45,13 @@ func (*IngressCollector) GetName() string {
 // Collects and Published the Ingress Components
 func (ic *IngressCollector) CollectorFunction() error {
 	var ingresses []StsIngress
-	ingressesExt, err := ic.GetAPIClient().GetIngressesExtV1()
-	ingressesV1, err := ic.GetAPIClient().GetIngressesNetV1()
+	ingresses, err := getExtV1Ingresses(ic, ingresses)
 	if err != nil {
 		return err
 	}
-
-	for _, in := range ingressesExt {
-		//in.Spec.Rules[0].HTTP.Paths[0].Backend.ServiceName
-		ingresses = append(ingresses, StsIngress{
-			v1beta1: &in,
-		})
-	}
-	for _, in := range ingressesV1 {
-		//in.Spec.Rules[0].HTTP.Paths[0].Backend.Service.Name
-
-		ingresses = append(ingresses, StsIngress{netv1: &in})
+	ingresses, err = getNetV1Ingresses(ic, ingresses)
+	if err != nil {
+		return err
 	}
 
 	for _, in := range ingresses {
@@ -95,6 +86,32 @@ func (ic *IngressCollector) CollectorFunction() error {
 	}
 
 	return nil
+}
+
+func getExtV1Ingresses(ic *IngressCollector, ingresses []StsIngress) ([]StsIngress, error) {
+	ingressesExt, err := ic.GetAPIClient().GetIngressesExtV1()
+	if err != nil {
+		return nil, err
+	}
+	for _, in := range ingressesExt {
+		ingresses = append(ingresses, StsIngress{
+			v1beta1: &in,
+		})
+	}
+	return ingresses, nil
+}
+
+func getNetV1Ingresses(ic *IngressCollector, ingresses []StsIngress) ([]StsIngress, error) {
+	ingressesExt, err := ic.GetAPIClient().GetIngressesNetV1()
+	if err != nil {
+		return nil, err
+	}
+	for _, in := range ingressesExt {
+		ingresses = append(ingresses, StsIngress{
+			netv1: &in,
+		})
+	}
+	return ingresses, nil
 }
 
 // Creates a StackState ingress component from a Kubernetes / OpenShift Ingress

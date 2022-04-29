@@ -14,7 +14,7 @@ import (
 	batchV1B "k8s.io/api/batch/v1beta1"
 	coreV1 "k8s.io/api/core/v1"
 	extensionsV1B "k8s.io/api/extensions/v1beta1"
-	networkingV1 "k8s.io/api/networking/v1"
+	netv1 "k8s.io/api/networking/v1"
 )
 
 type APICollectorClient interface {
@@ -29,7 +29,7 @@ type APICollectorClient interface {
 	GetPods() ([]coreV1.Pod, error)
 	GetServices() ([]coreV1.Service, error)
 	GetIngressesExtV1() ([]extensionsV1B.Ingress, error)
-	GetIngressesNetV1() ([]networkingV1.Ingress, error)
+	GetIngressesNetV1() ([]netv1.Ingress, error)
 	GetConfigMaps() ([]coreV1.ConfigMap, error)
 	GetSecrets() ([]coreV1.Secret, error)
 	GetNamespaces() ([]coreV1.Namespace, error)

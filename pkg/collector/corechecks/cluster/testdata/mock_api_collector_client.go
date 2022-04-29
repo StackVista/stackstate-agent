@@ -8,7 +8,7 @@ import (
 	batchV1B1 "k8s.io/api/batch/v1beta1"
 	coreV1 "k8s.io/api/core/v1"
 	extensionsV1B1 "k8s.io/api/extensions/v1beta1"
-	networkingV1 "k8s.io/api/networking/v1"
+	netv1 "k8s.io/api/networking/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -262,10 +262,10 @@ func (m MockBenchmarkAPICollectorClient) GetIngressesExtV1() ([]extensionsV1B1.I
 	return ingresses, nil
 }
 
-func (m MockBenchmarkAPICollectorClient) GetIngressesNetV1() ([]networkingV1.Ingress, error) {
-	ingresses := make([]networkingV1.Ingress, 0)
+func (m MockBenchmarkAPICollectorClient) GetIngressesNetV1() ([]netv1.Ingress, error) {
+	ingresses := make([]netv1.Ingress, 0)
 	for i := 1; i <= 3; i++ {
-		ingress := networkingV1.Ingress{
+		ingress := netv1.Ingress{
 			TypeMeta: v1.TypeMeta{
 				Kind: "",
 			},
@@ -279,7 +279,7 @@ func (m MockBenchmarkAPICollectorClient) GetIngressesNetV1() ([]networkingV1.Ing
 				UID:          types.UID(fmt.Sprintf("test-ingress-%d", i)),
 				GenerateName: "",
 			},
-			Status: networkingV1.IngressStatus{
+			Status: netv1.IngressStatus{
 				LoadBalancer: coreV1.LoadBalancerStatus{
 					Ingress: []coreV1.LoadBalancerIngress{
 						{IP: "34.100.200.15"},
@@ -290,10 +290,10 @@ func (m MockBenchmarkAPICollectorClient) GetIngressesNetV1() ([]networkingV1.Ing
 		}
 
 		if i == 2 {
-			ingress.Spec.DefaultBackend = &networkingV1.IngressBackend{
-				Service: &networkingV1.IngressServiceBackend{
+			ingress.Spec.DefaultBackend = &netv1.IngressBackend{
+				Service: &netv1.IngressServiceBackend{
 					Name: "test-service",
-					Port: networkingV1.ServiceBackendPort{},
+					Port: netv1.ServiceBackendPort{},
 				},
 			}
 		}
@@ -301,28 +301,28 @@ func (m MockBenchmarkAPICollectorClient) GetIngressesNetV1() ([]networkingV1.Ing
 		if i == 3 {
 			ingress.TypeMeta.Kind = "some-specified-kind"
 			ingress.ObjectMeta.GenerateName = "some-specified-generation"
-			ingress.Spec.Rules = []networkingV1.IngressRule{
+			ingress.Spec.Rules = []netv1.IngressRule{
 				{
 					Host: "host-1",
-					IngressRuleValue: networkingV1.IngressRuleValue{
-						HTTP: &networkingV1.HTTPIngressRuleValue{
-							Paths: []networkingV1.HTTPIngressPath{
+					IngressRuleValue: netv1.IngressRuleValue{
+						HTTP: &netv1.HTTPIngressRuleValue{
+							Paths: []netv1.HTTPIngressPath{
 								{
 									Path: "host-1-path-1",
-									Backend: networkingV1.IngressBackend{
-										Service: &networkingV1.IngressServiceBackend{
+									Backend: netv1.IngressBackend{
+										Service: &netv1.IngressServiceBackend{
 											Name: "test-service-1",
-											Port: networkingV1.ServiceBackendPort{},
+											Port: netv1.ServiceBackendPort{},
 										},
 									},
 								},
 								{
 									Path: "host-1-path-2",
-									Backend: networkingV1.IngressBackend{
-										Service: &networkingV1.IngressServiceBackend{
+									Backend: netv1.IngressBackend{
+										Service: &netv1.IngressServiceBackend{
 											Name: "test-service-2",
 
-											Port: networkingV1.ServiceBackendPort{},
+											Port: netv1.ServiceBackendPort{},
 										},
 									},
 								},
@@ -332,15 +332,15 @@ func (m MockBenchmarkAPICollectorClient) GetIngressesNetV1() ([]networkingV1.Ing
 				},
 				{
 					Host: "host-2",
-					IngressRuleValue: networkingV1.IngressRuleValue{
-						HTTP: &networkingV1.HTTPIngressRuleValue{
-							Paths: []networkingV1.HTTPIngressPath{
+					IngressRuleValue: netv1.IngressRuleValue{
+						HTTP: &netv1.HTTPIngressRuleValue{
+							Paths: []netv1.HTTPIngressPath{
 								{
 									Path: "host-2-path-1",
-									Backend: networkingV1.IngressBackend{
-										Service: &networkingV1.IngressServiceBackend{
+									Backend: netv1.IngressBackend{
+										Service: &netv1.IngressServiceBackend{
 											Name: "test-service-3",
-											Port: networkingV1.ServiceBackendPort{},
+											Port: netv1.ServiceBackendPort{},
 										},
 									},
 								},
