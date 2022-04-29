@@ -16,14 +16,6 @@ func Prepare(create *CreationStep) *PrepareStep {
 	return &PrepareStep{create.Yard}
 }
 
-func (p *PrepareStep) Playbook() string {
-	return fmt.Sprintf("%s/prepare.yml", p.dir)
-}
-
-func (p *PrepareStep) Tags() []string {
-	return []string{"prepare"}
-}
-
 ///
 
 type VerificationStep struct {
@@ -56,12 +48,4 @@ type CleanupStep struct {
 
 func Cleanup(prepare *PrepareStep) *CleanupStep {
 	return &CleanupStep{prepare.Yard}
-}
-
-func (c *CleanupStep) Playbook() string {
-	return fmt.Sprintf("%s/cleanup.yml", c.dir)
-}
-
-func (c *CleanupStep) Tags() []string {
-	return []string{"cleanup"}
 }
