@@ -170,6 +170,7 @@ require (
 	k8s.io/klog/v2 v2.9.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7 // indirect
 	k8s.io/kube-state-metrics v1.8.1-0.20200108124505-369470d6ead8
+	k8s.io/kubernetes v1.21.5 // indirect
 	k8s.io/metrics v0.21.5
 	k8s.io/utils v0.0.0-20201110183641-67b214c5f920 // indirect
 )

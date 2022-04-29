@@ -2110,6 +2110,7 @@ k8s.io/kubernetes v1.13.0/go.mod h1:ocZa8+6APFNC2tX1DZASIbocyYT5jHzqFVsY5aoB7Jk=
 k8s.io/kubernetes v1.14.2/go.mod h1:ocZa8+6APFNC2tX1DZASIbocyYT5jHzqFVsY5aoB7Jk=
 k8s.io/kubernetes v1.15.4 h1:ykcH+DoCr9wYjYfHvd2xU0HoSo/Y9m4+/0+zHqkYjbw=
 k8s.io/kubernetes v1.15.4/go.mod h1:4Ggyo4AFgjbIzULOminzUJAvgbzY3j5ysXlW/a0PdcQ=
+k8s.io/kubernetes v1.21.5 h1:PpXs+a5FdF5Nwy+9vPjs5svULcTH923QCOjzdLqZmyw=
 k8s.io/kubernetes v1.21.5/go.mod h1:o8QsgtH5UB3z9BYhcUZt9S6zjcJ4vdFsj2ACinL44Ss=
 k8s.io/legacy-cloud-providers v0.0.0-20191016115753-cf0698c3a16b/go.mod h1:tKW3pKqdRW8pMveUTpF5pJuCjQxg6a25iLo+Z9BXVH0=
 k8s.io/legacy-cloud-providers v0.21.5/go.mod h1:VGdzalKK13Q8eJuhbrmPbuwyjc9vVaQ8T0asHpSJNBg=
