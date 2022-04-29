@@ -7,51 +7,6 @@ import (
 	"testing"
 )
 
-//func TestRunCleanupWhenPrepareFails(t *testing.T) {
-//	// create stub provisioner which succeed for create and destroy
-//	stubProvisioner := driver.NewStubProvisioner(nil, nil)
-//	// create stub deployer which fails prepare but succeed cleanup
-//	expectedPrepareFailure := errors.New("prepare fails miserably")
-//	stubDeployer := driver.NewStubDeployer(expectedPrepareFailure, nil)
-//	// create stub verifier which will not be called
-//	stubVerifier := driver.NewStubVerifier(nil)
-//	// given a scenario
-//	scenario := loadScenarios().Scenarios[0]
-//
-//	// run full test sequence
-//	errs := test(stubProvisioner, stubDeployer, stubVerifier, &scenario, false, false)
-//
-//	assert.Len(t, errs, 1)
-//	assert.ErrorIs(t, errs[0], expectedPrepareFailure)
-//
-//	assert.Equal(t, true, stubProvisioner.Created(), "not created")
-//	assert.Equal(t, true, stubDeployer.Prepared(), "not prepared")
-//	assert.Equal(t, false, stubVerifier.Verified(), "verified")
-//	assert.Equal(t, true, stubDeployer.Cleaned(), "not cleaned")
-//	assert.Equal(t, true, stubProvisioner.Destroyed(), "not destroyed")
-//}
-//
-//func TestPropagateVerifyError(t *testing.T) {
-//	stubProvisioner := driver.NewStubProvisioner(nil, nil)
-//	stubDeployer := driver.NewStubDeployer(nil, nil)
-//	expectedVerifyFailure := errors.New("verify fails miserably")
-//	stubVerifier := driver.NewStubVerifier(expectedVerifyFailure)
-//
-//	scenario := loadScenarios().Scenarios[0]
-//
-//	// run full test sequence
-//	errs := test(stubProvisioner, stubDeployer, stubVerifier, &scenario, false, false)
-//
-//	assert.Len(t, errs, 1)
-//	assert.ErrorIs(t, errs[1], expectedVerifyFailure)
-//
-//	assert.Equal(t, true, stubProvisioner.Created(), "not created")
-//	assert.Equal(t, true, stubDeployer.Prepared(), "not prepared")
-//	assert.Equal(t, true, stubVerifier.Verified(), "not verified")
-//	assert.Equal(t, true, stubDeployer.Cleaned(), "not cleaned")
-//	assert.Equal(t, true, stubProvisioner.Destroyed(), "not destroyed")
-//}
-
 type calls struct {
 	created   bool
 	prepared  bool
@@ -61,21 +16,57 @@ type calls struct {
 }
 
 func TestSequence(t *testing.T) {
+	// funny failures
+	createFails := errors.New("create, no cigars")
+	prepareFails := errors.New("prepare fails miserably")
+	verifyFails := errors.New("verify won't make it")
+	cleanupFails := errors.New("cleanup was an hazard")
+	destroyFails := errors.New("destroy never existed")
+
 	tests := []struct {
-		name        string
-		provisioner *driver.StubProvisioner
-		deployer    *driver.StubDeployer
-		verifier    *driver.StubVerifier
-		errors      []error
-		calls       calls
+		name           string
+		provisioner    *driver.StubProvisioner
+		deployer       *driver.StubDeployer
+		verifier       *driver.StubVerifier
+		reset          bool
+		noDestroy      bool
+		expectedErrors []error
+		expectedCalls  calls
 	}{
 		{
-			name:        "cleanup should run when prepare fails",
+			name:        "all happy",
 			provisioner: driver.NewStubProvisioner(nil, nil),
-			deployer:    driver.NewStubDeployer(errors.New("prepare fails miserably"), nil),
+			deployer:    driver.NewStubDeployer(nil, nil),
 			verifier:    driver.NewStubVerifier(nil),
-			errors:      []error{errors.New("prepare fails miserably")},
-			calls: calls{
+			expectedCalls: calls{
+				created:   true,
+				prepared:  true,
+				verified:  true,
+				cleaned:   true,
+				destroyed: true,
+			},
+		},
+		{
+			name:           "if create fails stop sequence",
+			provisioner:    driver.NewStubProvisioner(createFails, nil),
+			deployer:       driver.NewStubDeployer(nil, nil),
+			verifier:       driver.NewStubVerifier(nil),
+			expectedErrors: []error{createFails},
+			expectedCalls: calls{
+				created:   true,
+				prepared:  false,
+				verified:  false,
+				cleaned:   false,
+				destroyed: false,
+			},
+		},
+		{
+			name:           "if prepare fails do not verify, but complete sequence",
+			provisioner:    driver.NewStubProvisioner(nil, nil),
+			deployer:       driver.NewStubDeployer(prepareFails, nil),
+			verifier:       driver.NewStubVerifier(nil),
+			expectedErrors: []error{prepareFails},
+			expectedCalls: calls{
 				created:   true,
 				prepared:  true,
 				verified:  false,
@@ -83,18 +74,103 @@ func TestSequence(t *testing.T) {
 				destroyed: true,
 			},
 		},
+		{
+			name:           "if verify fails complete sequence",
+			provisioner:    driver.NewStubProvisioner(nil, nil),
+			deployer:       driver.NewStubDeployer(nil, nil),
+			verifier:       driver.NewStubVerifier(verifyFails),
+			expectedErrors: []error{verifyFails},
+			expectedCalls: calls{
+				created:   true,
+				prepared:  true,
+				verified:  true,
+				cleaned:   true,
+				destroyed: true,
+			},
+		},
+		{
+			name:           "if cleanup fails complete sequence",
+			provisioner:    driver.NewStubProvisioner(nil, nil),
+			deployer:       driver.NewStubDeployer(nil, cleanupFails),
+			verifier:       driver.NewStubVerifier(nil),
+			expectedErrors: []error{cleanupFails},
+			expectedCalls: calls{
+				created:   true,
+				prepared:  true,
+				verified:  true,
+				cleaned:   true,
+				destroyed: true,
+			},
+		},
+		{
+			name:           "if destroy fails complete sequence",
+			provisioner:    driver.NewStubProvisioner(nil, destroyFails),
+			deployer:       driver.NewStubDeployer(nil, nil),
+			verifier:       driver.NewStubVerifier(nil),
+			expectedErrors: []error{destroyFails},
+			expectedCalls: calls{
+				created:   true,
+				prepared:  true,
+				verified:  true,
+				cleaned:   true,
+				destroyed: true,
+			},
+		},
+		{
+			name:           "if all steps fail except for create expect all errors back",
+			provisioner:    driver.NewStubProvisioner(nil, destroyFails),
+			deployer:       driver.NewStubDeployer(prepareFails, cleanupFails),
+			verifier:       driver.NewStubVerifier(nil),
+			expectedErrors: []error{prepareFails, cleanupFails, destroyFails},
+			expectedCalls: calls{
+				created:   true,
+				prepared:  true,
+				verified:  false,
+				cleaned:   true,
+				destroyed: true,
+			},
+		},
+		{
+			name:           "if reset flag and cleanup fail stop sequence",
+			provisioner:    driver.NewStubProvisioner(nil, nil),
+			deployer:       driver.NewStubDeployer(nil, cleanupFails),
+			verifier:       driver.NewStubVerifier(nil),
+			reset:          true,
+			expectedErrors: []error{cleanupFails},
+			expectedCalls: calls{
+				created:   true,
+				prepared:  false,
+				verified:  false,
+				cleaned:   true,
+				destroyed: false,
+			},
+		},
+		{
+			name:        "if noDestroy flag do not destroy",
+			provisioner: driver.NewStubProvisioner(nil, nil),
+			deployer:    driver.NewStubDeployer(nil, nil),
+			verifier:    driver.NewStubVerifier(nil),
+			noDestroy:   true,
+			expectedCalls: calls{
+				created:   true,
+				prepared:  true,
+				verified:  true,
+				cleaned:   true,
+				destroyed: false,
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			scenario := loadScenarios().Scenarios[0]
-			errs := test(tt.provisioner, tt.deployer, tt.verifier, &scenario, false, false)
-			assert.Equal(t, tt.errors, errs)
-			assert.Equal(t, tt.calls.created, tt.provisioner.Created())
-			assert.Equal(t, tt.calls.prepared, tt.deployer.Prepared())
-			assert.Equal(t, tt.calls.verified, tt.verifier.Verified())
-			assert.Equal(t, tt.calls.cleaned, tt.deployer.Cleaned())
-			assert.Equal(t, tt.calls.destroyed, tt.provisioner.Destroyed())
+			errs := test(tt.provisioner, tt.deployer, tt.verifier, &scenario, tt.reset, tt.noDestroy)
+			assert.Equal(t, tt.expectedErrors, errs)
+			assert.Equal(t, tt.expectedCalls.created, tt.provisioner.Created())
+			assert.Equal(t, tt.expectedCalls.prepared, tt.deployer.Prepared())
+			assert.Equal(t, tt.expectedCalls.verified, tt.verifier.Verified())
+			assert.Equal(t, tt.expectedCalls.cleaned, tt.deployer.Cleaned())
+			assert.Equal(t, tt.expectedCalls.destroyed, tt.provisioner.Destroyed())
 		})
 	}
 }

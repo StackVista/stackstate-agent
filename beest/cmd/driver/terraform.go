@@ -48,7 +48,7 @@ func apply(yard step.Yard, destroy bool, prompt bool) error {
 	if err := state.validate(); err != nil {
 		return err
 	}
-	log.Println(fmt.Sprintf("Variables: %v", yard.Variables()))
+
 	if hasChanges, planErr := state.plan(yard.Variables(), destroy); planErr == nil {
 		if hasChanges {
 			if applyErr := state.apply(prompt); applyErr != nil {
@@ -72,6 +72,7 @@ func newTerraform(yard step.Yard) (*TerraformState, error) {
 		return nil, newErr
 	}
 	if err := tf.SetLogPath("/go/src/app/terraform.log"); err != nil {
+		log.Printf("Error setting log path: %s\n", err)
 		return nil, err
 	}
 
@@ -136,8 +137,16 @@ func (ts *TerraformState) validate() error {
 	return nil
 }
 
+func prettyVars(vars map[string]interface{}) string {
+	var pretty []string
+	for k, v := range vars {
+		pretty = append(pretty, fmt.Sprintf("%s: %s", k, v))
+	}
+	return strings.Join(pretty, ", ")
+}
+
 func (ts *TerraformState) plan(vars map[string]interface{}, destroy bool) (bool, error) {
-	log.Println("Planning Terraform changes ...")
+	log.Printf("Planning Terraform changes with variables [%s]...\n", prettyVars(vars))
 	var tfPlanOptions []tfexec.PlanOption
 	for k, v := range vars {
 		tfPlanOptions = append(tfPlanOptions, tfexec.Var(fmt.Sprintf("%s=%s", k, v)))
@@ -189,7 +198,8 @@ func confirm() bool {
 	var response string
 	_, err := fmt.Scanln(&response)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Error reading input: %s\n", err)
+		return false
 	}
 
 	switch strings.ToLower(response) {
@@ -212,29 +222,37 @@ func (ts *TerraformState) state() error {
 	}
 }
 
-func (ts *TerraformState) output() {
+func (ts *TerraformState) output() []error {
 	outs, err := ts.tf.Output(context.Background())
 	if err != nil {
-		log.Fatalf("Error running Output: %s", err)
+		log.Printf("Error running Output: %s\n", err)
+		return []error{err}
 	}
+	var errs []error
 	for k, v := range outs {
 		raw, err := v.Value.MarshalJSON()
 		if err != nil {
-			log.Fatalf("Error retrieving raw value '%s': %s", k, err)
+			log.Printf("Error retrieving raw value '%s': %s\n", k, err)
+			errs = append(errs, err)
+			continue
 		}
-		fmt.Println(fmt.Sprintf("Writing output %s ...", k))
+		fmt.Printf("Writing output %s ...\n", k)
 		outPath := fmt.Sprintf("%s/%s", ts.module.Path, k)
 
 		// output use -json option, but the out is not json, we just need to get the string and write it to a file
 		strOut, err := strconv.Unquote(string(raw))
 		if err != nil {
-			log.Fatalf("Error converting raw value: %s", outPath)
+			log.Printf("Error converting raw value: %s\n", outPath)
+			errs = append(errs, err)
+			continue
 		}
 
 		//by default we assume all outputs to be sensitive
 		err = os.WriteFile(outPath, []byte(strOut), 0600)
 		if err != nil {
-			log.Fatalf("Error writing output to: %s", outPath)
+			log.Printf("Error writing output to: %s\n", outPath)
+			errs = append(errs, err)
 		}
 	}
+	return errs
 }
