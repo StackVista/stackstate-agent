@@ -26,7 +26,6 @@ replace (
 	github.com/iovisor/gobpf => github.com/DataDog/gobpf v0.0.0-20200131184214-6763fd92fd3f
 	github.com/lxn/walk => github.com/lxn/walk v0.0.0-20180521183810-02935bac0ab8
 	github.com/mholt/archiver => github.com/mholt/archiver v2.0.1-0.20171012052341-26cf5bb32d07+incompatible
-	github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.2
 	github.com/spf13/viper => github.com/DataDog/viper v1.7.1
 	github.com/ugorji/go => github.com/ugorji/go v1.1.7
 )
@@ -87,7 +86,6 @@ require (
 	github.com/florianl/go-conntrack v0.1.0
 	github.com/go-ini/ini v1.55.0
 	github.com/go-ole/go-ole v1.2.4
-	github.com/go-sql-driver/mysql v1.5.0 // indirect
 	github.com/go-test/deep v1.0.5 // indirect
 	github.com/gobwas/glob v0.2.3
 	github.com/godbus/dbus v4.1.0+incompatible
@@ -104,7 +102,7 @@ require (
 	github.com/ianlancetaylor/cgosymbolizer v0.0.0-00010101000000-000000000000 // indirect
 	github.com/iovisor/gobpf v0.0.0-20200329161226-8b2cce9dac28
 	github.com/itchyny/gojq v0.10.2
-	github.com/json-iterator/go v1.1.10
+	github.com/json-iterator/go v1.1.12
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
 	github.com/kubernetes-incubator/custom-metrics-apiserver v0.0.0-00010101000000-000000000000
 	github.com/lxn/walk v0.0.0-20191128110447-55ccb3a9f5c1
@@ -115,15 +113,13 @@ require (
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/oliveagle/jsonpath v0.0.0-20180606110733-2e52cf6e6852 // indirect
-	github.com/opencontainers/runc v1.0.2 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/philhofer/fwd v1.0.0 // indirect
 	github.com/pierrec/lz4 v2.5.0+incompatible // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.11.0
-	github.com/prometheus/common v0.29.0 // indirect
+	github.com/prometheus/client_golang v1.12.1
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da
 	github.com/shirou/gopsutil v2.20.3+incompatible
@@ -147,7 +143,7 @@ require (
 	golang.org/x/mobile v0.0.0-20201217150744-e6ae53a27f4f
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1
+	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
 	golang.org/x/text v0.3.6
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	golang.org/x/tools v0.1.4 // indirect
@@ -168,11 +164,9 @@ require (
 	k8s.io/cri-api v0.21.5
 	k8s.io/klog v1.0.1-0.20200310124935-4ad0115ba9e4 // indirect; Min version that includes fix for Windows Nano
 	k8s.io/klog/v2 v2.9.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7 // indirect
 	k8s.io/kube-state-metrics v1.8.1-0.20200108124505-369470d6ead8
-	k8s.io/kubernetes v1.21.5 // indirect
+	k8s.io/kubernetes v1.21.5
 	k8s.io/metrics v0.21.5
-	k8s.io/utils v0.0.0-20201110183641-67b214c5f920 // indirect
 )
 
 // Pinned to kubernetes-1.16.2
