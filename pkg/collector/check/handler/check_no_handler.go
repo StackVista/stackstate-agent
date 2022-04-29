@@ -22,12 +22,6 @@ func (ch *CheckNoHandler) StartTransaction(check.ID, string) {
 	_ = log.Warnf("StartTransaction called on CheckNoHandler. This should never happen.")
 }
 
-// GetCheckIdentifier is the CheckNoHandler implementation which just returns nil. This should never be called.
-func (ch *CheckNoHandler) GetCheckIdentifier() CheckIdentifier {
-	_ = log.Warnf("GetCheckIdentifier called on CheckNoHandler. This should never happen.")
-	return nil
-}
-
 // GetConfig is the CheckNoHandler implementation which just returns nil. This should never be called.
 func (ch *CheckNoHandler) GetConfig() (integration.Data, integration.Data) {
 	_ = log.Warnf("GetConfig called on CheckNoHandler. This should never happen.")

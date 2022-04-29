@@ -38,14 +38,55 @@ func TestCheckHandler_Transactions(t *testing.T) {
 
 	ch.Start()
 
-	ch.StartTransaction("CheckID", "TransactionID")
+	for _, tc := range []struct {
+		testCase            string
+		completeTransaction func()
+	}{
+		{
+			testCase: "Transaction completed with transaction rollback",
+			completeTransaction: func() {
+				testTxManager.CurrentTransactionNotifyChannel <- manager.RollbackTransaction{}
+			},
+		},
+		{
+			testCase: "Transaction completed with transaction eviction",
+			completeTransaction: func() {
+				testTxManager.CurrentTransactionNotifyChannel <- manager.EvictedTransaction{}
+			},
+		},
+		{
+			testCase: "Transaction completed with transaction complete",
+			completeTransaction: func() {
+				testTxManager.CurrentTransactionNotifyChannel <- manager.CompleteTransaction{}
+			},
+		},
+	} {
+		t.Run(tc.testCase, func(t *testing.T) {
+			ch.StartTransaction("CheckID", "Transaction1")
 
-	time.Sleep(50 * time.Millisecond)
+			time.Sleep(50 * time.Millisecond)
+			assert.Equal(t, "Transaction1", testTxManager.CurrentTransaction)
 
-	assert.Equal(t, "TransactionID", testTxManager.CurrentTransaction)
+			// attempt to start new transaction before 1 has finished, this should be blocked
+			ch.StartTransaction("CheckID", "Transaction2")
 
-	//testTxManager.CurrentTransactionNotifyChannel <- manager.CompleteTransaction{}
+			// wait a bit and assert that we're still processing Transaction1 instead of the attempted Transaction2
+			time.Sleep(50 * time.Millisecond)
+			assert.Equal(t, "Transaction1", testTxManager.CurrentTransaction)
 
+			// complete Transaction1
+			tc.completeTransaction()
+
+			// wait a bit and assert that we've started processing Transaction2
+			time.Sleep(50 * time.Millisecond)
+			assert.Equal(t, "Transaction2", testTxManager.CurrentTransaction)
+
+			// complete Transaction2
+			testTxManager.CurrentTransactionNotifyChannel <- manager.CompleteTransaction{}
+		})
+	}
+
+	time.Sleep(100 * time.Millisecond)
 	ch.Stop()
 }
 

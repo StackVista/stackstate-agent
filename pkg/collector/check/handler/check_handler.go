@@ -74,7 +74,7 @@ func (ch *checkHandler) Start() {
 				log.Debugf("Starting transaction: %s", startTx.TransactionID)
 				thisTransactionChannel := make(chan interface{}, 20)
 				ch.TransactionManager.StartTransaction(startTx.CheckID, startTx.TransactionID, thisTransactionChannel)
-				//ch.handleCurrentTransaction(thisTransactionChannel)
+				ch.handleCurrentTransaction(thisTransactionChannel)
 				close(thisTransactionChannel)
 			case <-ch.shutdownChannel:
 				log.Debug("Shutting down check handler")
@@ -117,11 +117,6 @@ func (ch *checkHandler) StartTransaction(CheckID check.ID, TransactionID string)
 		CheckID:       CheckID,
 		TransactionID: TransactionID,
 	}
-}
-
-// GetCheckIdentifier ...
-func (ch *checkHandler) GetCheckIdentifier() CheckIdentifier {
-	return ch.CheckIdentifier
 }
 
 // GetConfig ...
