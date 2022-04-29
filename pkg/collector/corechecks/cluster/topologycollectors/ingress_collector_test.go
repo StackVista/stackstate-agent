@@ -17,11 +17,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
+	networkingV1 "k8s.io/api/networking/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func TestIngressCollector(t *testing.T) {
+func TestIngressCollectorExtV1(t *testing.T) {
 
 	componentChannel := make(chan *topology.Component)
 	defer close(componentChannel)
@@ -336,7 +337,7 @@ type MockIngressAPICollectorClient struct {
 	apiserver.APICollectorClient
 }
 
-func (m MockIngressAPICollectorClient) GetIngresses() ([]v1beta1.Ingress, error) {
+func (m MockIngressAPICollectorClient) GetIngressesExtV1() ([]v1beta1.Ingress, error) {
 	ingresses := make([]v1beta1.Ingress, 0)
 	for i := 1; i <= 3; i++ {
 		ingress := v1beta1.Ingress{
@@ -357,7 +358,7 @@ func (m MockIngressAPICollectorClient) GetIngresses() ([]v1beta1.Ingress, error)
 					{
 						Manager:    "ignored",
 						Operation:  "Updated",
-						APIVersion: "whatever",
+						APIVersion: "extensions/v1beta1",
 						Time:       &v1.Time{Time: time.Now()},
 						FieldsType: "whatever",
 					},
@@ -398,6 +399,109 @@ func (m MockIngressAPICollectorClient) GetIngresses() ([]v1beta1.Ingress, error)
 						HTTP: &v1beta1.HTTPIngressRuleValue{
 							Paths: []v1beta1.HTTPIngressPath{
 								{Path: "host-2-path-1", Backend: v1beta1.IngressBackend{ServiceName: "test-service-3"}},
+							},
+						},
+					},
+				},
+			}
+		}
+
+		ingresses = append(ingresses, ingress)
+	}
+
+	return ingresses, nil
+}
+
+func (m MockIngressAPICollectorClient) GetIngressesNetV1() ([]networkingV1.Ingress, error) {
+	ingresses := make([]networkingV1.Ingress, 0)
+	for i := 1; i <= 2; i++ {
+		ingress := networkingV1.Ingress{
+			TypeMeta: v1.TypeMeta{
+				Kind: "",
+			},
+			ObjectMeta: v1.ObjectMeta{
+				Name:              fmt.Sprintf("test-ingress-%d", i),
+				CreationTimestamp: creationTime,
+				Namespace:         "test-namespace-netv1",
+				Labels: map[string]string{
+					"test-netv1": "label-netv1",
+				},
+				UID:             types.UID(fmt.Sprintf("test-ingress-%d", i)),
+				GenerateName:    "",
+				ResourceVersion: "123",
+				ManagedFields: []v1.ManagedFieldsEntry{
+					{
+						Manager:    "ignored",
+						Operation:  "Updated",
+						APIVersion: "networking.k8s.io/v1",
+						Time:       &v1.Time{Time: time.Now()},
+						FieldsType: "whatever",
+					},
+				},
+			},
+			Status: networkingV1.IngressStatus{
+				LoadBalancer: coreV1.LoadBalancerStatus{
+					Ingress: []coreV1.LoadBalancerIngress{
+						{IP: "100.100.100.100"},
+						{Hostname: "100.eu-west-1.elb.amazonaws.com"},
+					},
+				},
+			},
+		}
+
+		if i == 2 {
+			ingress.Spec.DefaultBackend = &networkingV1.IngressBackend{
+				Service: &networkingV1.IngressServiceBackend{
+					Name: "test-service-netv1",
+					Port: networkingV1.ServiceBackendPort{},
+				},
+				Resource: nil,
+			}
+
+		}
+
+		if i == 3 {
+			ingress.TypeMeta.Kind = "some-specified-kind-netv1"
+			ingress.ObjectMeta.GenerateName = "some-specified-generation-netv1"
+			ingress.Spec.Rules = []networkingV1.IngressRule{
+				{
+					Host: "host-1-netv1",
+					IngressRuleValue: networkingV1.IngressRuleValue{
+						HTTP: &networkingV1.HTTPIngressRuleValue{
+							Paths: []networkingV1.HTTPIngressPath{
+								{
+									Path: "host-1-path-1-netv1",
+									Backend: networkingV1.IngressBackend{
+										Service: &networkingV1.IngressServiceBackend{
+											Name: "test-service-1-netv1",
+										},
+										Resource: nil,
+									},
+								},
+								{
+									Path: "host-1-path-2-netv1",
+									Backend: networkingV1.IngressBackend{
+										Service: &networkingV1.IngressServiceBackend{
+											Name: "test-service-2-netv1",
+											Port: networkingV1.ServiceBackendPort{},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Host: "host-2-netv1",
+					IngressRuleValue: networkingV1.IngressRuleValue{
+						HTTP: &networkingV1.HTTPIngressRuleValue{
+							Paths: []networkingV1.HTTPIngressPath{
+								{
+									Path: "host-2-path-1-netv1",
+									Backend: networkingV1.IngressBackend{
+										Service: &networkingV1.IngressServiceBackend{Name: "test-service-3-netv1"},
+									},
+								},
 							},
 						},
 					},

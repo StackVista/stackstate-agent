@@ -3,16 +3,19 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package apiserver
 
 import (
+	"context"
 	"fmt"
 	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "k8s.io/api/core/v1"
+	networkingV1 "k8s.io/api/networking/v1"
 )
 
 const kubeServiceIDPrefix = "kube_service_uid://"
@@ -42,7 +45,7 @@ func EntityForService(svc *v1.Service) string {
 
 // GetServices retrieves all the endpoints in the Kubernetes / OpenShift cluster across all namespaces.
 func (c *APIClient) GetServices() ([]v1.Service, error) {
-	serviceList, err := c.Cl.CoreV1().Services(metav1.NamespaceAll).List(metav1.ListOptions{})
+	serviceList, err := c.Cl.CoreV1().Services(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return []v1.Service{}, err
 	}
@@ -51,10 +54,20 @@ func (c *APIClient) GetServices() ([]v1.Service, error) {
 }
 
 // GetIngresses retrieves all the ingress endpoints linked to services in the Kubernetes / OpenShift cluster across all namespaces.
-func (c *APIClient) GetIngresses() ([]v1beta1.Ingress, error) {
-	ingressList, err := c.Cl.ExtensionsV1beta1().Ingresses(metav1.NamespaceAll).List(metav1.ListOptions{})
+func (c *APIClient) GetIngressesExtV1() ([]v1beta1.Ingress, error) {
+	ingressList, err := c.Cl.ExtensionsV1beta1().Ingresses(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return []v1beta1.Ingress{}, err
+	}
+
+	return ingressList.Items, nil
+}
+
+// GetIngresses retrieves all the ingress endpoints linked to services in the Kubernetes / OpenShift cluster across all namespaces.
+func (c *APIClient) GetIngressesNetV1() ([]networkingV1.Ingress, error) {
+	ingressList, err := c.Cl.NetworkingV1().Ingresses(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return []networkingV1.Ingress{}, err
 	}
 
 	return ingressList.Items, nil

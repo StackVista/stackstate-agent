@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package apiserver
@@ -13,6 +14,7 @@ import (
 	batchV1B "k8s.io/api/batch/v1beta1"
 	coreV1 "k8s.io/api/core/v1"
 	extensionsV1B "k8s.io/api/extensions/v1beta1"
+	networkingV1 "k8s.io/api/networking/v1"
 )
 
 type APICollectorClient interface {
@@ -26,7 +28,8 @@ type APICollectorClient interface {
 	GetNodes() ([]coreV1.Node, error)
 	GetPods() ([]coreV1.Pod, error)
 	GetServices() ([]coreV1.Service, error)
-	GetIngresses() ([]extensionsV1B.Ingress, error)
+	GetIngressesExtV1() ([]extensionsV1B.Ingress, error)
+	GetIngressesNetV1() ([]networkingV1.Ingress, error)
 	GetConfigMaps() ([]coreV1.ConfigMap, error)
 	GetSecrets() ([]coreV1.Secret, error)
 	GetNamespaces() ([]coreV1.Namespace, error)

@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package apiserver
@@ -350,7 +351,7 @@ func (c *APIClient) checkResourcesAuth() error {
 	var errorMessages []string
 
 	// We always want to collect events
-	_, err := c.Cl.CoreV1().Events("").List(metav1.ListOptions{Limit: 1, TimeoutSeconds: &c.timeoutSeconds})
+	_, err := c.Cl.CoreV1().Events("").List(context.TODO(), metav1.ListOptions{Limit: 1, TimeoutSeconds: &c.timeoutSeconds})
 	if err != nil {
 		errorMessages = append(errorMessages, fmt.Sprintf("event collection: %q", err.Error()))
 		if !isConnectVerbose {
@@ -362,7 +363,7 @@ func (c *APIClient) checkResourcesAuth() error {
 		return aggregateCheckResourcesErrors(errorMessages)
 	}
 
-	_, err = c.Cl.CoreV1().Services("").List(metav1.ListOptions{Limit: 1, TimeoutSeconds: &c.timeoutSeconds})
+	_, err = c.Cl.CoreV1().Services("").List(context.TODO(), metav1.ListOptions{Limit: 1, TimeoutSeconds: &c.timeoutSeconds})
 	if err != nil {
 		errorMessages = append(errorMessages, fmt.Sprintf("service collection: %q", err.Error()))
 		if !isConnectVerbose {
@@ -370,7 +371,7 @@ func (c *APIClient) checkResourcesAuth() error {
 		}
 	}
 
-	_, err = c.Cl.CoreV1().Pods("").List(metav1.ListOptions{Limit: 1, TimeoutSeconds: &c.timeoutSeconds})
+	_, err = c.Cl.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{Limit: 1, TimeoutSeconds: &c.timeoutSeconds})
 	if err != nil {
 		errorMessages = append(errorMessages, fmt.Sprintf("pod collection: %q", err.Error()))
 		if !isConnectVerbose {
@@ -378,7 +379,7 @@ func (c *APIClient) checkResourcesAuth() error {
 		}
 	}
 
-	_, err = c.Cl.CoreV1().Nodes().List(metav1.ListOptions{Limit: 1, TimeoutSeconds: &c.timeoutSeconds})
+	_, err = c.Cl.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{Limit: 1, TimeoutSeconds: &c.timeoutSeconds})
 	if err != nil {
 		errorMessages = append(errorMessages, fmt.Sprintf("node collection: %q", err.Error()))
 	}
@@ -395,19 +396,19 @@ func (c *APIClient) checkResourcesAuth() error {
 
 // ComponentStatuses returns the component status list from the APIServer
 func (c *APIClient) ComponentStatuses() (*v1.ComponentStatusList, error) {
-	return c.Cl.CoreV1().ComponentStatuses().List(metav1.ListOptions{TimeoutSeconds: &c.timeoutSeconds})
+	return c.Cl.CoreV1().ComponentStatuses().List(context.TODO(), metav1.ListOptions{TimeoutSeconds: &c.timeoutSeconds})
 }
 
 func (c *APIClient) getOrCreateConfigMap(name, namespace string) (cmEvent *v1.ConfigMap, err error) {
-	cmEvent, err = c.Cl.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
+	cmEvent, err = c.Cl.CoreV1().ConfigMaps(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		log.Errorf("Could not get the ConfigMap %s: %s, trying to create it.", name, err.Error())
-		cmEvent, err = c.Cl.CoreV1().ConfigMaps(namespace).Create(&v1.ConfigMap{
+		cmEvent, err = c.Cl.CoreV1().ConfigMaps(namespace).Create(context.TODO(), &v1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      name,
 				Namespace: namespace,
 			},
-		})
+		}, metav1.CreateOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("could not create the ConfigMap: %s", err.Error())
 		}
@@ -472,7 +473,7 @@ func (c *APIClient) UpdateTokenInConfigmap(token, tokenValue string, timestamp t
 	eventTokenTS := fmt.Sprintf("%s.%s", token, tokenTime)
 	tokenConfigMap.Data[eventTokenTS] = timestamp.Format(time.RFC3339) // Timestamps in the ConfigMap should all use the type int.
 
-	_, err = c.Cl.CoreV1().ConfigMaps(namespace).Update(tokenConfigMap)
+	_, err = c.Cl.CoreV1().ConfigMaps(namespace).Update(context.TODO(), tokenConfigMap, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
@@ -482,7 +483,7 @@ func (c *APIClient) UpdateTokenInConfigmap(token, tokenValue string, timestamp t
 
 // NodeLabels is used to fetch the labels attached to a given node.
 func (c *APIClient) NodeLabels(nodeName string) (map[string]string, error) {
-	node, err := c.Cl.CoreV1().Nodes().Get(nodeName, metav1.GetOptions{})
+	node, err := c.Cl.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -491,7 +492,7 @@ func (c *APIClient) NodeLabels(nodeName string) (map[string]string, error) {
 
 // GetNodeForPod retrieves a pod and returns the name of the node it is scheduled on
 func (c *APIClient) GetNodeForPod(namespace, podName string) (string, error) {
-	pod, err := c.Cl.CoreV1().Pods(namespace).Get(podName, metav1.GetOptions{})
+	pod, err := c.Cl.CoreV1().Pods(namespace).Get(context.TODO(), podName, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -549,7 +550,7 @@ func getMetadataMapBundle(nodeName string) (*metadataMapperBundle, error) {
 }
 
 func getNodeList(cl *APIClient) ([]v1.Node, error) {
-	nodes, err := cl.Cl.CoreV1().Nodes().List(metav1.ListOptions{TimeoutSeconds: &cl.timeoutSeconds})
+	nodes, err := cl.Cl.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{TimeoutSeconds: &cl.timeoutSeconds})
 	if err != nil {
 		log.Errorf("Can't list nodes from the API server: %s", err.Error())
 		return nil, err
@@ -559,7 +560,7 @@ func getNodeList(cl *APIClient) ([]v1.Node, error) {
 
 // GetNode retrieves a node by name
 func GetNode(cl *APIClient, name string) (*v1.Node, error) {
-	node, err := cl.Cl.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+	node, err := cl.Cl.CoreV1().Nodes().Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		log.Errorf("Can't get node from the API server: %s", err.Error())
 		return nil, err
@@ -569,7 +570,7 @@ func GetNode(cl *APIClient, name string) (*v1.Node, error) {
 
 // GetRESTObject allows to retrieve a custom resource from the APIserver
 func (c *APIClient) GetRESTObject(path string, output runtime.Object) error {
-	result := c.Cl.CoreV1().RESTClient().Get().AbsPath(path).Do()
+	result := c.Cl.CoreV1().RESTClient().Get().AbsPath(path).Do(context.TODO())
 	if result.Error() != nil {
 		return result.Error()
 	}
