@@ -11,6 +11,7 @@ replace (
 	// next line until pr https://github.com/ianlancetaylor/cgosymbolizer/pull/8 is merged
 	github.com/ianlancetaylor/cgosymbolizer => github.com/ianlancetaylor/cgosymbolizer v0.0.0-20170921033129-f5072df9c550
 	github.com/shuLhan/go-bindata => github.com/shuLhan/go-bindata v3.4.0+incompatible // indirect
+	k8s.io/api => k8s.io/api v0.21.5
 )
 
 // Internal deps fix version
@@ -22,6 +23,7 @@ replace (
 	github.com/coreos/go-systemd => github.com/coreos/go-systemd v0.0.0-20180202092358-40e2722dffea
 	github.com/docker/distribution => github.com/docker/distribution v2.7.1-0.20190104202606-0ac367fd6bee+incompatible
 	github.com/florianl/go-conntrack => github.com/florianl/go-conntrack v0.1.1-0.20191002182014-06743d3a59db
+	github.com/googleapis/gnostic => github.com/googleapis/gnostic v0.4.1
 	github.com/iovisor/gobpf => github.com/DataDog/gobpf v0.0.0-20200131184214-6763fd92fd3f
 	github.com/lxn/walk => github.com/lxn/walk v0.0.0-20180521183810-02935bac0ab8
 	github.com/mholt/archiver => github.com/mholt/archiver v2.0.1-0.20171012052341-26cf5bb32d07+incompatible
@@ -93,6 +95,7 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.5.2
 	github.com/google/gopacket v1.1.17
+	github.com/googleapis/gnostic v0.5.1 // indirect
 	github.com/gorilla/mux v1.7.4
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/hashicorp/consul/api v1.4.0
@@ -163,46 +166,18 @@ require (
 	k8s.io/apimachinery v0.21.5
 	k8s.io/apiserver v0.21.5
 	k8s.io/autoscaler/vertical-pod-autoscaler v0.9.2
-	k8s.io/client-go v12.0.0+incompatible
+	k8s.io/client-go v0.21.5
 	k8s.io/cri-api v0.21.5
 	k8s.io/klog v1.0.1-0.20200310124935-4ad0115ba9e4 // indirect; Min version that includes fix for Windows Nano
 	k8s.io/klog/v2 v2.9.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7 // indirect
 	k8s.io/kube-state-metrics v1.7.2
-	k8s.io/kubernetes v1.15.4
 	k8s.io/metrics v0.21.5
 	k8s.io/utils v0.0.0-20201110183641-67b214c5f920 // indirect
 )
 
 // Pinned to kubernetes-1.16.2
 replace github.com/kubernetes-incubator/custom-metrics-apiserver => github.com/kubernetes-incubator/custom-metrics-apiserver v0.0.0-20190918110929-3d9be26a50eb
-
-// Pinned to kubernetes-1.16.2
-replace (
-	k8s.io/api => k8s.io/api v0.0.0-20191016110408-35e52d86657a
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20191016113550-5357c4baaf65
-	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20191004115801-a2eda9f80ab8
-	k8s.io/apiserver => k8s.io/apiserver v0.0.0-20191016112112-5190913f932d
-	k8s.io/autoscaler => k8s.io/autoscaler v0.0.0-20191115143342-4cf961056038
-	k8s.io/cli-runtime => k8s.io/cli-runtime v0.0.0-20191016114015-74ad18325ed5
-	k8s.io/client-go => k8s.io/client-go v0.0.0-20191016111102-bec269661e48
-	k8s.io/cloud-provider => k8s.io/cloud-provider v0.0.0-20191016115326-20453efc2458
-	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.0.0-20191016115129-c07a134afb42
-	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20191004115455-8e001e5d1894
-	k8s.io/component-base => k8s.io/component-base v0.0.0-20191016111319-039242c015a9
-	k8s.io/cri-api => k8s.io/cri-api v0.0.0-20190828162817-608eb1dad4ac
-	k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.0.0-20191016115521-756ffa5af0bd
-	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.0.0-20191016112429-9587704a8ad4
-	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.0.0-20191016114939-2b2b218dc1df
-	k8s.io/kube-proxy => k8s.io/kube-proxy v0.0.0-20191016114407-2e83b6f20229
-	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.0.0-20191016114748-65049c67a58b
-	k8s.io/kube-state-metrics => k8s.io/kube-state-metrics v1.9.6-0.20200413182837-dbbe062e36a4
-	k8s.io/kubectl => k8s.io/kubectl v0.0.0-20191016120415-2ed914427d51
-	k8s.io/kubelet => k8s.io/kubelet v0.0.0-20191016114556-7841ed97f1b2
-	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.0.0-20191016115753-cf0698c3a16b
-	k8s.io/metrics => k8s.io/metrics v0.0.0-20191016113814-3b1a734dba6e
-	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.0.0-20191016112829-06bb3c9d77c9
-)
 
 // Pinned so it includes fix for Windows Nano
 replace k8s.io/klog => k8s.io/klog v1.0.1-0.20200310124935-4ad0115ba9e4
