@@ -169,7 +169,7 @@ require (
 	k8s.io/klog v1.0.1-0.20200310124935-4ad0115ba9e4 // indirect; Min version that includes fix for Windows Nano
 	k8s.io/klog/v2 v2.9.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7 // indirect
-	k8s.io/kube-state-metrics v1.7.2
+	k8s.io/kube-state-metrics v1.8.1-0.20200108124505-369470d6ead8
 	k8s.io/metrics v0.21.5
 	k8s.io/utils v0.0.0-20201110183641-67b214c5f920 // indirect
 )
@@ -186,6 +186,7 @@ replace (
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.21.5
 	k8s.io/apimachinery => k8s.io/apimachinery v0.21.5
 	k8s.io/apiserver => k8s.io/apiserver v0.21.5
+	k8s.io/autoscaler => k8s.io/autoscaler v0.0.0-20191115143342-4cf961056038
 	k8s.io/cli-runtime => k8s.io/cli-runtime v0.21.5
 	k8s.io/client-go => k8s.io/client-go v0.21.5
 	k8s.io/cloud-provider => k8s.io/cloud-provider v0.21.5
@@ -200,6 +201,7 @@ replace (
 	k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.21.5
 	k8s.io/kube-proxy => k8s.io/kube-proxy v0.21.5
 	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.21.5
+	k8s.io/kube-state-metrics => k8s.io/kube-state-metrics v1.9.6-0.20200413182837-dbbe062e36a4
 	k8s.io/kubectl => k8s.io/kubectl v0.21.5
 	k8s.io/kubelet => k8s.io/kubelet v0.21.5
 	k8s.io/kubernetes => k8s.io/kubernetes v1.21.5
