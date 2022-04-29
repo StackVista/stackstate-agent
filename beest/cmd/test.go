@@ -84,17 +84,16 @@ func test(provisioner driver.Provisioner, deployer driver.Deployer, verifier dri
 	}
 
 	var errors []error
+	errors = appendIfNotNil(prepareError, errors)
+	errors = appendIfNotNil(verifyError, errors)
+	errors = appendIfNotNil(cleanupError, errors)
+	errors = appendIfNotNil(destroyError, errors)
+	return errors
+}
+
+func appendIfNotNil(prepareError error, errors []error) []error {
 	if prepareError != nil {
 		errors = append(errors, prepareError)
-	}
-	if verifyError != nil {
-		errors = append(errors, verifyError)
-	}
-	if cleanupError != nil {
-		errors = append(errors, cleanupError)
-	}
-	if destroyError != nil {
-		errors = append(errors, destroyError)
 	}
 	return errors
 }
