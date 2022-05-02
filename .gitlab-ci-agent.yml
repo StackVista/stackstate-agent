@@ -148,7 +148,7 @@ deps_win:
       - $CI_PROJECT_DIR/vendor.tar.gz
     expire_in: 1 week
   tags:
-    - windows_agent7_ps1
+    - agent_windows_7_test
   retry:
     max: 2
     when:
@@ -401,7 +401,7 @@ build_win:
       - ./*.msi
       - "version.txt"
   tags:
-    - windows_agent7_ps1
+    - agent_windows_7_test
   retry:
     max: 2
     when:
@@ -489,7 +489,7 @@ pre_release_win:
     - aws.exe s3 ls s3://$Env:STS_AWS_TEST_BUCKET_WIN/windows/$Env:CI_COMMIT_REF_NAME/
     - aws.exe s3 ls s3://$Env:STS_AWS_TEST_BUCKET_WIN/
   tags:
-    - windows_agent7_ps1
+    - agent_windows_7_test
   retry:
     max: 2
     when:
@@ -1363,7 +1363,7 @@ release_win:
     - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
       when: manual
   tags:
-    - windows_agent7_ps1
+    - agent_windows_7_test
   retry:
     max: 2
     when:

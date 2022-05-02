@@ -51,7 +51,7 @@ clear_deps_win_cache:
     - "if (Test-Path %WIN_CI_PROJECT_DIR%\\venv) { Remove-Item -Force -Recurse %WIN_CI_PROJECT_DIR%\\venv }"
     - "if (Test-Path C:\\opt\\stackstate-agent) { Remove-Item -Force -Recurse C:\\opt\\stackstate-agent }"
   tags:
-    - windows_agent7_ps1
+    - agent_windows_7_test
   rules:
     - when: manual
 
