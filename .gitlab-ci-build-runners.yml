@@ -31,6 +31,12 @@ before_script:
     when:
       # TODO: figure out what causes flakiness in the docker builds, sometimes pulling fails on builder the image or the base image is not available yet for the runner to pull
       - always
+  rules:
+    - if: $CI_COMMIT_MESSAGE =~ /\[build_runners]/
+      when: always
+    - if: $CI_COMMIT_MESSAGE
+      when: manual
+      allow_failure: true
 
 ##################################################################################
 # BUILD IMAGES BASE FOR DEB + RPM
