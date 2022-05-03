@@ -1,9 +1,53 @@
 # StackState Agent v2 releases
 
+## 2.17.0 (2022-XX-XX)
+
+**Features**
+- Added topology element deletion [STAC-14816](https://stackstate.atlassian.net/browse/STAC-14816)
+- Added Dynatrace support for synthetic checks [STAC-14511](https://stackstate.atlassian.net/browse/STAC-14511)
+
+**Improvements**
+- Added collection level setting info [STAC-14671](https://stackstate.atlassian.net/browse/STAC-14671)
+- Process agent version 4.0.4
+
+**Bugfix**
+- If Kubernetes topology Secrets collector fails, it will log (INFO level) only once [STAC-14834](https://stackstate.atlassian.net/browse/STAC-14834)
+
+## 2.16.1 (2022-03-21)
+
+**Bugfix**
+- Remove HTTP Header X-Stackstate-Trace-Count for OTEL [STAC-16030](https://stackstate.atlassian.net/browse/STAC-16030)
+- Remove stale data from metrics collection in process-agent [STAC-15758](https://stackstate.atlassian.net/browse/STAC-15758)
+
+**Improvements**
+- Memory improvements for connection mapping and tracing in process-agent. [STAC-15999](https://stackstate.atlassian.net/browse/STAC-15999)
+
+## 2.16.0 (2022-03-11)
+
+**Features**
+- Container collector for Docker, ContainerD and CRI runtimes. [STAC-14483](https://stackstate.atlassian.net/browse/STAC-14483)
+- Kubernetes objects topology
+  * made object YAML definition available as "Component properties" in order to enable [Kubernetes changes events](https://docs.stackstate.com/stackpacks/integrations/kubernetes#events) ([STAC-15054](https://stackstate.atlassian.net/browse/STAC-15054))
+- Open Telemetry
+  - Added Trace Agent /open-telemetry endpoint
+  - Added Open Telemetry protobuf
+  - Added interpreter for open telemetry instrumentation routes
+    - Added interpreter for aws-sdk instrumentation lambda, s3, step function, sqs, and sns
+    - Added interpreter for http instrumentation
+  - Added unit testing for Open Telemetry
+
+**Bugfix**
+- Process agent now acknowledges STS_SKIP_SSL_VALIDATION environment variable. [(STAC-15225)](https://stackstate.atlassian.net/browse/STAC-15225)
+- Fixed agent's configuration example. [(STAC-15693)](https://stackstate.atlassian.net/browse/STAC-15693)
+- Fix missing HTTP response time charts (from process-agent version 4.0.1) [STAC-15754](https://stackstate.atlassian.net/browse/STAC-15754)
+- Big ConfigMap's are being cut to STS_CONFIGMAP_MAX_DATASIZE (default 100 KiB) before sending to StackState for better readability and performance. [STAC-15323](https://stackstate.atlassian.net/browse/STAC-15323)
+
+**Improvements**
+- Set process agent check intervals to be default 30 seconds, added ENV variable overrides for process agent check intervals. [(STAC-15661)](https://stackstate.atlassian.net/browse/STAC-15661)
+
 ## 2.15.0 (2021-12-20)
 
 **Features**
-
 - Raw Metrics API Endpoint
   * Add support for Raw Metrics in line with the current v2/v3 api format. [(STAC-12434)](https://stackstate.atlassian.net/browse/STAC-12434)
   * Convert v2/v3 api format into the v1 raw metric intake format, Allows compatibility with v1 [(STAC-12434)](https://stackstate.atlassian.net/browse/STAC-12434)
@@ -408,15 +452,15 @@
 
   Those configurations can be provided through environment variables as well:
 
-  | Parameter | Default | Description |
-  |-----------|---------|-------------|
-  | `STS_PROCESS_BLACKLIST_PATTERNS` | [see github](https://github.com/StackVista/stackstate-process-agent/blob/master/config/config_nix.go) | A list of regex patterns that will exclude a process if matched |
-  | `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_CPU` | 0 | Number of processes to report that have a high CPU usage |
-  | `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_IO_READ` | 0 | Number of processes to report that have a high IO read usage |
-  | `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_IO_WRITE` | 0 | Number of processes to report that have a high IO write usage |
-  | `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_MEM` | 0 | Number of processes to report that have a high Memory usage |
-  | `STS_PROCESS_BLACKLIST_INCLUSIONS_CPU_THRESHOLD` |  | Threshold that enables the reporting of high CPU usage processes |
-  | `STS_PROCESS_BLACKLIST_INCLUSIONS_MEM_THRESHOLD` |  | Threshold that enables the reporting of high Memory usage processes |
+| Parameter                                        | Default         | Description                                                         |
+|--------------------------------------------------|-----------------|---------------------------------------------------------------------|
+| `STS_PROCESS_BLACKLIST_PATTERNS`                 | [see github](https://github.com/StackVista/stackstate-process-agent/blob/master/config/config_nix.go) | A list of regex patterns that will exclude a process if matched     |
+| `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_CPU`       | 0               | Number of processes to report that have a high CPU usage            |
+| `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_IO_READ`   | 0               | Number of processes to report that have a high IO read usage        |
+| `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_IO_WRITE`  | 0               | Number of processes to report that have a high IO write usage       |
+| `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_MEM`       | 0               | Number of processes to report that have a high Memory usage         |
+| `STS_PROCESS_BLACKLIST_INCLUSIONS_CPU_THRESHOLD` |                 | Threshold that enables the reporting of high CPU usage processes    |
+| `STS_PROCESS_BLACKLIST_INCLUSIONS_MEM_THRESHOLD` |                 | Threshold that enables the reporting of high Memory usage processes |
 
 - Report localhost connections within the same network namespace _[(STAC-2891)](https://stackstate.atlassian.net/browse/STAC-2891)_
 

@@ -118,7 +118,7 @@ func (t *TopologyCheck) Run() error {
 	errChannel := make(chan error)
 	waitGroupChannel := make(chan bool)
 
-	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, t.ac)
+	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, t.ac, t.instance.SourcePropertiesEnabled)
 	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
 	clusterCollectors := []collectors.ClusterTopologyCollector{
 		// Register Cluster Component Collector
@@ -142,6 +142,7 @@ func (t *TopologyCheck) Run() error {
 		collectors.NewConfigMapCollector(
 			componentChannel,
 			commonClusterCollector,
+			t.instance.ConfigMapMaxDataSize,
 		),
 		// Register Secret Component Collector
 		collectors.NewSecretCollector(

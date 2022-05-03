@@ -1,0 +1,16 @@
+.envrc
+
+# terraform related
+.terraform
+tf.deploy
+
+# SUT related temp files
+*kubeconfig*
+*inventory
+*id_rsa
+
+# pytest related files
+topic-*.json
+
+# binary
+beest

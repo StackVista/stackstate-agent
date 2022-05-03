@@ -18,7 +18,7 @@ func (m MockUtil) GetContainers() ([]*cspec.Container, error) {
 	return []*cspec.Container{
 		{
 			Name:    "container1",
-			Runtime: "runtime",
+			Runtime: "containerd",
 			ID:      "containerId1",
 			Image:   "image1",
 			Mounts: []specs.Mount{
@@ -29,7 +29,7 @@ func (m MockUtil) GetContainers() ([]*cspec.Container, error) {
 		},
 		{
 			Name:    "container2",
-			Runtime: "runtime",
+			Runtime: "docker",
 			ID:      "containerId2",
 			Image:   "image2",
 			Mounts: []specs.Mount{
@@ -45,12 +45,13 @@ func TestMakeContainerTopologyCollector(t *testing.T) {
 	hostname, err := util.GetHostname()
 	assert.NoError(t, err)
 	assert.Equal(t, &ContainerTopologyCollector{
-		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector("checkName_topology", topology.Instance{
-			Type: "checkName",
+		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector("container_topology", topology.Instance{
+			Type: "container",
 			URL:  "agents",
 		}),
 		Hostname: hostname,
-	}, MakeContainerTopologyCollector("checkName"))
+		Runtime:  "test",
+	}, MakeContainerTopologyCollector("test"))
 }
 
 func TestBuildContainerTopology(t *testing.T) {
@@ -60,18 +61,19 @@ func TestBuildContainerTopology(t *testing.T) {
 			URL:  "agents",
 		}),
 		Hostname: "host",
+		Runtime:  "test",
 	}
 
 	components, err := collector.collectContainers(MockUtil{})
 	assert.NoError(t, err)
 	assert.Equal(t, []*topology.Component{
 		{
-			ExternalID: "urn:container:checkName:/host:containerId1",
+			ExternalID: "urn:container:containerd:/host:containerId1",
 			Type:       topology.Type{Name: "container"},
 			Data: topology.Data{
 				"name":        "container1",
 				"state":       "running",
-				"type":        "runtime",
+				"type":        "containerd",
 				"containerId": "containerId1",
 				"image":       "image1",
 				"mounts": []specs.Mount{
@@ -89,10 +91,11 @@ func TestBuildContainerTopology(t *testing.T) {
 					},
 				},
 				"identifiers": []string{"urn:container:/host:containerId1"},
+				"labels":      []string{"runtime:containerd"},
 			},
 		},
 		{
-			ExternalID: "urn:container:checkName:/host:containerId2",
+			ExternalID: "urn:container:docker:/host:containerId2",
 			Type: topology.Type{
 				Name: "container",
 			},
@@ -115,8 +118,9 @@ func TestBuildContainerTopology(t *testing.T) {
 				},
 				"name":        "container2",
 				"state":       "running",
-				"type":        "runtime",
+				"type":        "docker",
 				"identifiers": []string{"urn:container:/host:containerId2"},
+				"labels":      []string{"runtime:docker"},
 			},
 		},
 	}, components)

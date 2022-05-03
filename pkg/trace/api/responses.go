@@ -35,6 +35,16 @@ func httpFormatError(w http.ResponseWriter, v Version, err error) {
 	http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
 }
 
+// [sts]
+// httpFormatError is used for payload format errors
+// Versioning is ignored
+func httpFormatErrorNoVersion(w http.ResponseWriter, err error) {
+	log.Errorf("Rejecting client request: %v", err)
+	tags := []string{"error:format-error"}
+	metrics.Count(receiverErrorKey, 1, tags, 1)
+	http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
+}
+
 // httpDecodingError is used for errors happening in decoding
 func httpDecodingError(err error, tags []string, w http.ResponseWriter) {
 	status := http.StatusBadRequest

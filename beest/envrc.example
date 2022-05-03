@@ -1,0 +1,20 @@
+export PATH=$PWD:$PATH
+
+export AWS_DEFAULT_REGION=eu-west-1
+
+# Configure either the AWS profile or the AWS keys, not both
+export AWS_PROFILE=stackstate-sandbox
+#
+#export AWS_ACCESS_KEY_ID=TBD
+#export AWS_SECRET_ACCESS_KEY=TBD
+
+export quay_user=TBD
+export quay_password=TBD
+export artifactory_user=TBD
+export artifactory_password=TBD
+
+export RUN_ID=$AGENT_CURRENT_BRANCH
+
+export STACKSTATE_BRANCH=master
+export STACKSTATE_HELM_CHART=">0.0.0-0"  # use development versions
+export STACKSTATE_LICENSE=TBD

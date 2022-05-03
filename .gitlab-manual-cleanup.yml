@@ -1,0 +1,84 @@
+image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:latest7
+
+stages:
+  - manual_cleanup
+
+## prepare stage
+
+clear_deps_deb_cache:
+  stage: manual_cleanup
+  before_script: []
+  cache:
+    policy: push
+    key: "deps-deb-$STS_VER-$CI_COMMIT_REF_SLUG"
+    paths:
+      - vendor
+      - venv
+  script:
+    - rm -rf $CI_PROJECT_DIR/venv
+    - rm -rf $CI_PROJECT_DIR/vendor
+  rules:
+    - when: manual
+
+clear_deps_rpm_cache:
+  stage: manual_cleanup
+  before_script: []
+  cache:
+    policy: push
+    key: "deps-rpm-$STS_VER-$CI_COMMIT_REF_SLUG"
+    paths:
+      - vendor
+      - venv
+  script:
+    - rm -rf $CI_PROJECT_DIR/venv
+    - rm -rf $CI_PROJECT_DIR/vendor
+  rules:
+    - when: manual
+
+clear_deps_win_cache:
+  stage: manual_cleanup
+  before_script:
+    - set WIN_CI_PROJECT_DIR=%CD%
+    - set WORKON_HOME=%WIN_CI_PROJECT_DIR%
+  cache:
+    policy: push
+    key: "deps-win-$STS_VER-$CI_COMMIT_REF_SLUG"
+    paths:
+      - vendor
+      - venv
+  script:
+    - "if (Test-Path %WIN_CI_PROJECT_DIR%\\vendor) { Remove-Item -Force -Recurse %WIN_CI_PROJECT_DIR%\\vendor }"
+    - "if (Test-Path %WIN_CI_PROJECT_DIR%\\venv) { Remove-Item -Force -Recurse %WIN_CI_PROJECT_DIR%\\venv }"
+    - "if (Test-Path C:\\opt\\stackstate-agent) { Remove-Item -Force -Recurse C:\\opt\\stackstate-agent }"
+  tags:
+    - windows_agent7_ps1
+  rules:
+    - when: manual
+
+clear_build_deb_cache:
+  stage: manual_cleanup
+  interruptible: true
+  cache:
+    policy: push
+    key: "build-deb-$STS_VER-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .omnibus
+  script:
+    - mkdir -p .omnibus
+    - rm -rf .omnibus/*
+  rules:
+    - when: manual
+
+clear_build_rpm_cache:
+  stage: manual_cleanup
+  interruptible: true
+  cache:
+    policy: push
+    key: "build-rpm-$STS_VER-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .omnibus
+  script:
+    - mkdir -p .omnibus
+    - rm -rf .omnibus/*
+  rules:
+    - when: manual

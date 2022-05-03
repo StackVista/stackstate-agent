@@ -8,8 +8,6 @@ package clusteragent
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks/types"
@@ -56,17 +54,8 @@ func (c *DCAClient) doPostClusterCheckStatus(nodeName string, status types.NodeS
 	if err != nil {
 		return response, err
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return response, fmt.Errorf("unexpected response: %d - %s", resp.StatusCode, resp.Status)
-	}
-
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return response, err
-	}
-	err = json.Unmarshal(b, &response)
+	err = parseJSONResponse(resp, &response)
 	return response, err
 }
 
@@ -100,16 +89,7 @@ func (c *DCAClient) doGetClusterCheckConfigs(nodeName string) (types.ConfigRespo
 	if err != nil {
 		return configs, err
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return configs, fmt.Errorf("unexpected response: %d - %s", resp.StatusCode, resp.Status)
-	}
-
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return configs, err
-	}
-	err = json.Unmarshal(b, &configs)
+	err = parseJSONResponse(resp, &configs)
 	return configs, err
 }

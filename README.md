@@ -45,7 +45,7 @@ To start working on the Agent, you can build the `master` branch:
    Make sure that `$GOPATH/bin` is in your `$PATH` otherwise this step might fail.
 4. Create a development `datadog.yaml` configuration file in `dev/dist/datadog.yaml`, containing a valid API key: `api_key: <API_KEY>`
 5. Build the agent with `invoke agent.build --build-exclude=systemd`.
-   By default, the Agent will be built to use Python 3 but you can select which Python version you want to use:
+   By default, the Agent will be built to use Python 3, but you can select which Python version you want to use:
    - `invoke agent.build --python-runtimes 2` for Python2 only
    - `invoke agent.build --python-runtimes 3` for Python3 only
    - `invoke agent.build --python-runtimes 2,3` for both Python2 and Python3
@@ -93,7 +93,7 @@ To install the official release:
 
 ##### Test
 
-If you wanna install a branch version use the test repository:
+If you want to install a branch version use the test repository:
 
     $ curl -o- https://stackstate-agent-3-test.s3.amazonaws.com/install.sh | STS_API_KEY="xxx" STS_URL="yyy" CODE_NAME="PR_NAME" bash
      or
@@ -121,7 +121,7 @@ To install the official release:
 
 ##### Test
 
-If you wanna install a branch version use the test repository:
+If you want to install a branch version use the test repository:
 
     $ . { iwr -useb https://stackstate-agent-3-test.s3.amazonaws.com/install.ps1 } | iex; install -stsApiKey "xxx" -stsUrl "yyy" -codeName "PR_NAME"
 

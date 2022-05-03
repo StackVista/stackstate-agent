@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
 
+//go:build docker
 // +build docker
 
 package dockerswarm
@@ -61,6 +62,7 @@ func TestDockerSwarmCheck_True(t *testing.T) {
 				Relations: []topology.Relation{
 					*serviceRelation,
 				},
+				DeleteIDs: []string{},
 			},
 		},
 	})
@@ -109,6 +111,7 @@ func TestDockerSwarmCheck_FromEnv(t *testing.T) {
 				Relations: []topology.Relation{
 					*serviceRelation,
 				},
+				DeleteIDs: []string{},
 			},
 		},
 	})

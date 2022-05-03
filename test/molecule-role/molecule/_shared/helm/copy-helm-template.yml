@@ -1,5 +1,0 @@
----
-- name: Copy Helm values
-  copy:
-    src: "../../files/template"
-    dest: "/home/ubuntu/"

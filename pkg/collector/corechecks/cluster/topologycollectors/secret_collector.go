@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -6,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"sort"
+	"sync/atomic"
 
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -17,6 +19,8 @@ type SecretCollector struct {
 	ComponentChan chan<- *topology.Component
 	ClusterTopologyCollector
 }
+
+var SecretDisabledLog int32
 
 // NewSecretCollector creates a new instance of the secret collector
 func NewSecretCollector(componentChannel chan<- *topology.Component, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
@@ -35,7 +39,11 @@ func (*SecretCollector) GetName() string {
 func (cmc *SecretCollector) CollectorFunction() error {
 	secrets, err := cmc.GetAPIClient().GetSecrets()
 	if err != nil {
-		return err
+		if atomic.LoadInt32(&SecretDisabledLog) == 0 {
+			log.Infof("Collection of secrets is disabled. To enable, add 'secrets' to the cluster agent ClusterRole using the `clusterAgent.collection.kubernetesResources` key on your helm values.yaml file")
+			atomic.StoreInt32(&SecretDisabledLog, 1)
+		}
+		return nil
 	}
 
 	for _, cm := range secrets {
@@ -57,26 +65,35 @@ func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topo
 	tags := cmc.initTags(secret.ObjectMeta)
 	secretExternalID := cmc.buildSecretExternalID(secret.Namespace, secret.Name)
 
+	secretDataHash, err := secure(secret.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	prunedSecret := secret
+	prunedSecret.Data = map[string][]byte{
+		"<data hash>": []byte(secretDataHash),
+	}
+
 	component := &topology.Component{
 		ExternalID: secretExternalID,
 		Type:       topology.Type{Name: "secret"},
 		Data: map[string]interface{}{
-			"name":              secret.Name,
-			"creationTimestamp": secret.CreationTimestamp,
-			"tags":              tags,
-			"uid":               secret.UID,
-			"identifiers":       []string{secretExternalID},
+			"name":        secret.Name,
+			"tags":        tags,
+			"identifiers": []string{secretExternalID},
 		},
 	}
 
-	component.Data.PutNonEmpty("generateName", secret.GenerateName)
-	component.Data.PutNonEmpty("kind", secret.Kind)
-
-	hash, err := secure(secret.Data)
-	if err != nil {
-		return nil, err
+	if cmc.IsSourcePropertiesFeatureEnabled() {
+		component.SourceProperties = makeSourceProperties(&prunedSecret)
+	} else {
+		component.Data.PutNonEmpty("creationTimestamp", secret.CreationTimestamp)
+		component.Data.PutNonEmpty("uid", secret.UID)
+		component.Data.PutNonEmpty("generateName", secret.GenerateName)
+		component.Data.PutNonEmpty("kind", secret.Kind)
+		component.Data.PutNonEmpty("data", secretDataHash)
 	}
-	component.Data.PutNonEmpty("data", hash)
 
 	log.Tracef("Created StackState Secret component %s: %v", secretExternalID, component.JSONString())
 

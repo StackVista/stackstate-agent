@@ -71,8 +71,7 @@ deps_deb:
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 ## build_and_test stage
 
@@ -99,8 +98,7 @@ unit_tests_cluster_agent:
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 build_cluster_agent:
   stage: build_and_test
@@ -119,8 +117,7 @@ build_cluster_agent:
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 build_deb:
   stage: build_and_test
@@ -176,8 +173,7 @@ build_deb:
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 pre_release_deb:
   stage: pre_release
@@ -199,8 +195,7 @@ pre_release_deb:
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 pre_release_main_agent_image: &pre_release_image
   stage: pre_release
@@ -226,8 +221,7 @@ pre_release_main_agent_image: &pre_release_image
   retry:
     max: 2
     when:
-      - runner_system_failure
-      - stuck_or_timeout_failure
+      - always
 
 pre_release_cluster_agent_image:
   <<: *pre_release_image
@@ -242,7 +236,7 @@ pre_release_cluster_agent_image:
 # Core Molecule Structure for all the molecule steps
 .molecule: &molecule
   interruptible: true
-  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_BRANCH-$MOLECULE_SCENARIO-branch-lock"
+  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_SHORT_SHA-$MOLECULE_SCENARIO-branch-lock"
   dependencies: []
   before_script:
     - export AWS_ACCESS_KEY_ID=${MOLECULE_AWS_ACCESS_KEY_ID}

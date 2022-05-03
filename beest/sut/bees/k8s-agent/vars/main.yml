@@ -1,0 +1,4 @@
+---
+# vars file for agent-k8s
+
+helm_chart_repo: "{{ 'stackstate/cluster-agent' if (helm_chart_version == 'latest') else 'stackstate-test/cluster-agent --version ' + helm_chart_version }}"

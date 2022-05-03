@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -9,6 +10,7 @@ package topologycollectors
 import (
 	"encoding/base64"
 	"fmt"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -26,67 +28,153 @@ func TestSecretCollector(t *testing.T) {
 	defer close(componentChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
+	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
-	cmc := NewSecretCollector(componentChannel, NewTestCommonClusterCollector(MockSecretAPICollectorClient{}))
-	expectedCollectorName := "Secret Collector"
-	RunCollectorTest(t, cmc, expectedCollectorName)
+	for _, sourcePropertiesEnabled := range []bool{false, true} {
+		cmc := NewSecretCollector(componentChannel, NewTestCommonClusterCollector(MockSecretAPICollectorClient{}, sourcePropertiesEnabled))
+		expectedCollectorName := "Secret Collector"
+		RunCollectorTest(t, cmc, expectedCollectorName)
 
-	for _, tc := range []struct {
-		testCase string
-		expected *topology.Component
-	}{
-		{
-			testCase: "Test Secret 1 - Complete",
-			expected: &topology.Component{
-				ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-1",
-				Type:       topology.Type{Name: "secret"},
-				Data: topology.Data{
-					"name":              "test-secret-1",
-					"creationTimestamp": creationTime,
-					"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-					"uid":               types.UID("test-secret-1"),
-					"data":              "c20ca49dcb76feaaa1c14a2725263bf2290d0e5f3dc98d208b249f080fa64b45",
-					"identifiers":       []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-1"},
+		for _, tc := range []struct {
+			testCase     string
+			expectedSP   *topology.Component
+			expectedNoSP *topology.Component
+		}{
+			{
+				testCase: "Test Secret 1 - Complete",
+				expectedNoSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-1",
+					Type:       topology.Type{Name: "secret"},
+					Data: topology.Data{
+						"name":              "test-secret-1",
+						"creationTimestamp": creationTime,
+						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						"uid":               types.UID("test-secret-1"),
+						"data":              "c20ca49dcb76feaaa1c14a2725263bf2290d0e5f3dc98d208b249f080fa64b45",
+						"identifiers":       []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-1"},
+					},
+				},
+				expectedSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-1",
+					Type:       topology.Type{Name: "secret"},
+					Data: topology.Data{
+						"name":        "test-secret-1",
+						"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-1"},
+					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"labels":            map[string]interface{}{"test": "label"},
+							"name":              "test-secret-1",
+							"namespace":         "test-namespace",
+							"uid":               "test-secret-1"},
+						"data": map[string]interface{}{
+							"<data hash>": "YzIwY2E0OWRjYjc2ZmVhYWExYzE0YTI3MjUyNjNiZjIyOTBkMGU1ZjNkYzk4ZDIwOGIyNDlmMDgwZmE2NGI0NQ==",
+						},
+					},
 				},
 			},
-		},
-		{
-			testCase: "Test Secret 2 - Without Data",
-			expected: &topology.Component{
-				ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-2",
-				Type:       topology.Type{Name: "secret"},
-				Data: topology.Data{
-					"name":              "test-secret-2",
-					"creationTimestamp": creationTime,
-					"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-					"uid":               types.UID("test-secret-2"),
-					"data":              "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", // Empty data is represented as a hash to obscure it
-					"identifiers":       []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-2"},
+			{
+				testCase: "Test Secret 2 - Without Data",
+				expectedNoSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-2",
+					Type:       topology.Type{Name: "secret"},
+					Data: topology.Data{
+						"name":              "test-secret-2",
+						"creationTimestamp": creationTime,
+						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						"uid":               types.UID("test-secret-2"),
+						"data":              "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", // Empty data is represented as a hash to obscure it
+						"identifiers":       []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-2"},
+					},
+				},
+				expectedSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-2",
+					Type:       topology.Type{Name: "secret"},
+					Data: topology.Data{
+						"name":        "test-secret-2",
+						"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-2"},
+					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"labels":            map[string]interface{}{"test": "label"},
+							"name":              "test-secret-2",
+							"namespace":         "test-namespace",
+							"uid":               "test-secret-2"},
+						"data": map[string]interface{}{
+							"<data hash>": "ZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NQ==",
+						},
+					},
 				},
 			},
-		},
-		{
-			testCase: "Test Secret 3 - Minimal",
-			expected: &topology.Component{
-				ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-3",
-				Type:       topology.Type{Name: "secret"},
-				Data: topology.Data{
-					"name":              "test-secret-3",
-					"creationTimestamp": creationTime,
-					"tags":              map[string]string{"cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-					"uid":               types.UID("test-secret-3"),
-					"data":              "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", // Empty data is represented as a hash to obscure it
-					"identifiers":       []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-3"},
+			{
+				testCase: "Test Secret 3 - Minimal",
+				expectedNoSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-3",
+					Type:       topology.Type{Name: "secret"},
+					Data: topology.Data{
+						"name":              "test-secret-3",
+						"creationTimestamp": creationTime,
+						"tags":              map[string]string{"cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						"uid":               types.UID("test-secret-3"),
+						"data":              "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", // Empty data is represented as a hash to obscure it
+						"identifiers":       []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-3"},
+					},
+				},
+				expectedSP: &topology.Component{
+					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-3",
+					Type:       topology.Type{Name: "secret"},
+					Data: topology.Data{
+						"name":        "test-secret-3",
+						"tags":        map[string]string{"cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-3"},
+					},
+					SourceProperties: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"creationTimestamp": creationTimeFormatted,
+							"name":              "test-secret-3",
+							"namespace":         "test-namespace",
+							"uid":               "test-secret-3"},
+						"data": map[string]interface{}{
+							"<data hash>": "ZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NQ==",
+						},
+					},
 				},
 			},
-		},
-	} {
-		t.Run(tc.testCase, func(t *testing.T) {
-			component := <-componentChannel
-			assert.EqualValues(t, tc.expected, component)
-		})
+		} {
+			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
+				component := <-componentChannel
+				if sourcePropertiesEnabled {
+					assert.EqualValues(t, tc.expectedSP, component)
+				} else {
+					assert.EqualValues(t, tc.expectedNoSP, component)
+				}
+			})
+		}
 	}
 
+}
+
+func TestSecretCollectorError(t *testing.T) {
+	componentChannel := make(chan *topology.Component)
+	defer close(componentChannel)
+
+	secretCollector := NewSecretCollector(componentChannel, NewTestCommonClusterCollector(MockSecretAPICollectorClientError{}, false))
+	assert.EqualValues(t, int32(0), atomic.LoadInt32(&SecretDisabledLog))
+	err := secretCollector.CollectorFunction()
+	assert.Nil(t, err)
+	assert.EqualValues(t, int32(1), atomic.LoadInt32(&SecretDisabledLog))
+}
+
+type MockSecretAPICollectorClientError struct {
+	apiserver.APICollectorClient
+}
+
+func (m MockSecretAPICollectorClientError) GetSecrets() ([]coreV1.Secret, error) {
+	return []coreV1.Secret{}, fmt.Errorf("Secrets not allowed")
 }
 
 type MockSecretAPICollectorClient struct {
@@ -107,6 +195,16 @@ func (m MockSecretAPICollectorClient) GetSecrets() ([]coreV1.Secret, error) {
 				Namespace:         "test-namespace",
 				UID:               types.UID(fmt.Sprintf("test-secret-%d", i)),
 				GenerateName:      "",
+				ResourceVersion:   "123",
+				ManagedFields: []v1.ManagedFieldsEntry{
+					{
+						Manager:    "ignored",
+						Operation:  "Updated",
+						APIVersion: "whatever",
+						Time:       &v1.Time{Time: time.Now()},
+						FieldsType: "whatever",
+					},
+				},
 			},
 		}
 

@@ -926,6 +926,10 @@ void Two::setSubmitStopSnapshotCb(cb_submit_stop_snapshot_t cb)
     _set_submit_stop_snapshot_cb(cb);
 }
 
+void Two::setSubmitDeleteCb(cb_submit_delete_t cb)
+{
+    _set_submit_delete_cb(cb);
+}
 
 // [sts] telemetry
 void Two::setSubmitTopologyEventCb(cb_submit_topology_event_t cb)

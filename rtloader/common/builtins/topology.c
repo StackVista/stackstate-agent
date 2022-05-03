@@ -11,18 +11,21 @@ static cb_submit_component_t cb_submit_component = NULL;
 static cb_submit_relation_t cb_submit_relation = NULL;
 static cb_submit_start_snapshot_t cb_submit_start_snapshot = NULL;
 static cb_submit_stop_snapshot_t cb_submit_stop_snapshot = NULL;
+static cb_submit_delete_t cb_submit_delete = NULL;
 
 // forward declarations
 static PyObject *submit_component(PyObject *self, PyObject *args);
 static PyObject *submit_relation(PyObject *self, PyObject *args);
 static PyObject *submit_start_snapshot(PyObject *self, PyObject *args);
 static PyObject *submit_stop_snapshot(PyObject *self, PyObject *args);
+static PyObject *submit_delete(PyObject *self, PyObject *args);
 
 static PyMethodDef methods[] = {
     {"submit_component", (PyCFunction)submit_component, METH_VARARGS, "Submit a component to the topology api."},
     {"submit_relation", (PyCFunction)submit_relation, METH_VARARGS, "Submit a relation to the topology api."},
     {"submit_start_snapshot", (PyCFunction)submit_start_snapshot, METH_VARARGS, "Submit a snapshot start to the topology api."},
     {"submit_stop_snapshot", (PyCFunction)submit_stop_snapshot, METH_VARARGS, "Submit a snapshot stop to the topology api."},
+    {"submit_delete", (PyCFunction)submit_delete, METH_VARARGS, "Submit a topology element delete."},
     {NULL, NULL}  // guards
 };
 
@@ -63,6 +66,11 @@ void _set_submit_start_snapshot_cb(cb_submit_start_snapshot_t cb)
 void _set_submit_stop_snapshot_cb(cb_submit_stop_snapshot_t cb)
 {
     cb_submit_stop_snapshot = cb;
+}
+
+void _set_submit_delete_cb(cb_submit_delete_t cb)
+{
+    cb_submit_delete = cb;
 }
 
 
@@ -265,7 +273,7 @@ static PyObject *submit_start_snapshot(PyObject *self, PyObject *args) {
     }
 
     if (!PyDict_Check(instance_key_dict)) {
-        PyErr_SetString(PyExc_TypeError, "relation instance key must be a dict");
+        PyErr_SetString(PyExc_TypeError, "snapshot topology instance key must be a dict");
         goto error;
     }
 
@@ -319,7 +327,7 @@ static PyObject *submit_stop_snapshot(PyObject *self, PyObject *args) {
     }
 
     if (!PyDict_Check(instance_key_dict)) {
-        PyErr_SetString(PyExc_TypeError, "relation instance key must be a dict");
+        PyErr_SetString(PyExc_TypeError, "snapshot topology instance key must be a dict");
         goto error;
     }
 
@@ -333,6 +341,61 @@ static PyObject *submit_stop_snapshot(PyObject *self, PyObject *args) {
     instance_key->url = as_string(PyDict_GetItemString(instance_key_dict, "url"));
 
     cb_submit_stop_snapshot(check_id, instance_key);
+
+    _free(instance_key->type_);
+    _free(instance_key->url);
+    _free(instance_key);
+
+    PyGILState_Release(gstate);
+    Py_RETURN_NONE; // Success
+
+error:
+    PyGILState_Release(gstate);
+    return NULL; // Failure
+}
+
+/*! \fn submit_delete(PyObject *self, PyObject *args)
+    \brief Aggregator builtin class method to signal the start of topology submission.
+    \param self A PyObject * pointer to self - the aggregator module.
+    \param args A PyObject * pointer to the python args or kwargs.
+    \return This function returns a new reference to None (already INCREF'd), or NULL in case of error.
+
+    This function implements the `submit_delete` python callable in C and is used from the python code.
+    More specifically, in the context of rtloader and datadog-agent, this is called from our python base check
+    class to submit the start of topology collection to the aggregator.
+*/
+static PyObject *submit_delete(PyObject *self, PyObject *args) {
+    if (cb_submit_delete == NULL) {
+        Py_RETURN_NONE;
+    }
+
+    PyObject *check = NULL; // borrowed
+    char *check_id;
+    char *topology_element_id;
+    PyObject *instance_key_dict = NULL; // borrowed
+    instance_key_t *instance_key = NULL;
+
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    if (!PyArg_ParseTuple(args, "OsOs", &check, &check_id, &instance_key_dict, &topology_element_id)) {
+      goto error;
+    }
+
+    if (!PyDict_Check(instance_key_dict)) {
+        PyErr_SetString(PyExc_TypeError, "topology element instance key must be a dict");
+        goto error;
+    }
+
+    if (!(instance_key = (instance_key_t *)_malloc(sizeof(instance_key_t)))) {
+        PyErr_SetString(PyExc_RuntimeError, "could not allocate memory for topology instance key");
+        goto error;
+    }
+
+    // notice: PyDict_GetItemString returns a borrowed ref or NULL if key was not found
+    instance_key->type_ = as_string(PyDict_GetItemString(instance_key_dict, "type"));
+    instance_key->url = as_string(PyDict_GetItemString(instance_key_dict, "url"));
+
+    cb_submit_delete(check_id, instance_key, topology_element_id);
 
     _free(instance_key->type_);
     _free(instance_key->url);

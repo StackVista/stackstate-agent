@@ -1,0 +1,8 @@
+ansible-core==2.12.3
+awscli==1.22.73
+docker==5.0.3
+kubernetes==23.3.0
+openshift==0.13.1
+pytest-order==1.0.1
+pytest-testinfra==6.6.0
+pytest-watch==4.2.0

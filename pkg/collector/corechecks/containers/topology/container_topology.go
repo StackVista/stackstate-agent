@@ -22,27 +22,29 @@ const (
 type ContainerTopologyCollector struct {
 	corechecks.CheckTopologyCollector
 	Hostname string
+	Runtime  string
 }
 
 // MakeContainerTopologyCollector returns a new instance of DockerTopologyCollector
-func MakeContainerTopologyCollector(checkName string) *ContainerTopologyCollector {
+func MakeContainerTopologyCollector(runtime string) *ContainerTopologyCollector {
 	hostname, err := util.GetHostname()
 	if err != nil {
-		log.Warnf("Can't get hostname from %s, containers ExternalIDs will not have it: %s", checkName, err)
+		log.Warnf("Can't get hostname from container collector, containers ExternalIDs will not have it: %s", err)
 	}
 	return &ContainerTopologyCollector{
 		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector(
-			check.ID(fmt.Sprintf("%s_topology", checkName)), topology.Instance{
-				Type: checkName,
+			check.ID(fmt.Sprintf("%s_topology", containerType)), topology.Instance{
+				Type: containerType,
 				URL:  "agents",
 			}),
 		Hostname: hostname,
+		Runtime:  runtime,
 	}
 }
 
 // BuildContainerTopology collects all docker container topology
 func (ctc *ContainerTopologyCollector) BuildContainerTopology(containerUtil spec.ContainerUtil) error {
-	log.Infof("Running container topology collector for '%s' runtime", ctc.TopologyInstance.Type)
+	log.Infof("Running container topology collector for '%s' runtime", ctc.Runtime)
 	sender := batcher.GetBatcher()
 	if sender == nil {
 		return errors.New("no batcher instance available, skipping BuildContainerTopology")
@@ -73,6 +75,7 @@ func (ctc *ContainerTopologyCollector) MapContainerDataToTopologyData(container 
 		"image":       container.Image,
 		"mounts":      container.Mounts,
 		"state":       container.State,
+		"labels":      []string{runtimeLabel(container.Runtime)},
 	}
 	processAgentIdentifier, err := ctc.buildProcessAgentContainerIdentifier(container.ID)
 	if err != nil {
@@ -86,7 +89,7 @@ func (ctc *ContainerTopologyCollector) MapContainerDataToTopologyData(container 
 // MapContainerToComponent Maps a single spec.Container to a single topology.Component
 func (ctc *ContainerTopologyCollector) MapContainerToComponent(container *spec.Container) *topology.Component {
 	output := &topology.Component{
-		ExternalID: ctc.buildContainerExternalID(container.ID),
+		ExternalID: ctc.buildContainerExternalID(container),
 		Type: topology.Type{
 			Name: containerType,
 		},
@@ -119,11 +122,11 @@ func (ctc *ContainerTopologyCollector) collectContainers(containerUtil spec.Cont
 	return containerComponents, nil
 }
 
-func (ctc *ContainerTopologyCollector) buildContainerExternalID(containerID string) string {
+func (ctc *ContainerTopologyCollector) buildContainerExternalID(container *spec.Container) string {
 	if ctc.Hostname == "" {
-		return fmt.Sprintf("urn:%s:%s:/%s", containerType, ctc.TopologyInstance.Type, containerID)
+		return fmt.Sprintf("urn:%s:%s:/%s", containerType, container.Runtime, container.ID)
 	}
-	return fmt.Sprintf("urn:%s:%s:/%s:%s", containerType, ctc.TopologyInstance.Type, ctc.Hostname, containerID)
+	return fmt.Sprintf("urn:%s:%s:/%s:%s", containerType, container.Runtime, ctc.Hostname, container.ID)
 }
 
 // buildProcessAgentContainerIdentifier creates an identifier with the same format as in the process-agent
@@ -133,4 +136,8 @@ func (ctc *ContainerTopologyCollector) buildProcessAgentContainerIdentifier(cont
 		return "", fmt.Errorf("no hostname found, it's not possible to build the process-agent identifier")
 	}
 	return fmt.Sprintf("urn:%s:/%s:%s", containerType, ctc.Hostname, containerID), nil
+}
+
+func runtimeLabel(runtime string) string {
+	return fmt.Sprintf("runtime:%s", runtime)
 }

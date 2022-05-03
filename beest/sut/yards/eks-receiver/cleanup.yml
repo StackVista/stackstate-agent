@@ -1,0 +1,12 @@
+---
+- name: Cleanup Kubernetes Cluster
+  hosts: local
+  gather_facts: false
+  roles:
+    - role: "{{ bees_path }}/k8s-agent"
+
+- name: Cleanup Receiver
+  hosts: receiver
+  gather_facts: false
+  roles:
+    - role: "{{ bees_path }}/vm-receiver"
