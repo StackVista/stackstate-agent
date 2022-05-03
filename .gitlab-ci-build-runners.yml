@@ -1,6 +1,7 @@
 stages:
   - build_runner_base
   - build_runners
+  - fallback-manual
 
 variables:
   RUNNER_DEB_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-deb
@@ -129,3 +130,16 @@ build-centos7-runner:
 # TODO: centos6 is EOL. This might potentially work: https://arstech.net/centos-6-error-yumrepo-error-all-mirror-urls-are-not-using-ftp-http/
 # TODO: skipping it for now
 # produces the runner centos 6 image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos6_20190429
+
+# This ensures that triggers can achieve success status if manual jobs are not executed.
+ensure-success-manual:
+  stage: fallback-manual
+  before_script: []
+  dependencies:
+    - build-main-deb-runner
+  script:
+    - echo "I will succeed"
+  rules:
+    - when: on_success
+  retry:
+    max: 2
