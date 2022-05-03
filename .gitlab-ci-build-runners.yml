@@ -1,7 +1,6 @@
 stages:
   - build_runner_base
   - build_runners
-  - fallback-manual
 
 variables:
   RUNNER_DEB_BASE: $CI_PROJECT_DIR/.cd-builders/runner7-circle-deb
@@ -134,10 +133,8 @@ build-centos7-runner:
 
 # This ensures that triggers can achieve success status if manual jobs are not executed.
 ensure-success-manual:
-  stage: fallback-manual
+  stage: build_runner_base
   before_script: []
-  dependencies:
-    - build-main-deb-runner
   script:
     - echo "I will succeed"
   rules:
