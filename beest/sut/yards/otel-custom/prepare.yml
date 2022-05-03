@@ -1,0 +1,12 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Copy to s3
+      s3:
+        aws_access_key: "{{ lookup('env','aws_key') }}"
+        aws_secret_key: "{{ lookup('env','aws_secret') }}"
+        bucket: "{{ aws_packages_bucket }}"
+        object: "/JI79IML/my_part_X86_64_c7.15.tar.gz"
+        dest: "/data/parts/JI79IML/my_part_X86_64_c7.15.tar.gz"
+        mode: put
+        overwrite: no
