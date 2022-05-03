@@ -175,9 +175,7 @@ build_agent_runners:
     include: .gitlab-ci-build-runners.yml
     strategy: depend
   rules:
-    # make a manual job only on the master branch
-    - if: $CI_COMMIT_REF_NAME == "master"
-      when: manual
-    # make a manual job when the commit message includes [build_runners]
-    - if: $CI_COMMIT_MESSAGE =~ /\[build_runners]/
-      when: manual
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
