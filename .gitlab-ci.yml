@@ -156,7 +156,7 @@ cluster_agent:
     - <<: *include_on_cluster_agent
     - when: never
 
-build_runners:
+build_beest_runners:
   stage: triggers
   trigger:
     include: .gitlab-ci-builders.yml
@@ -167,7 +167,7 @@ build_runners:
       when: never
     - if: $CI_COMMIT_BRANCH
 
-build_runners_2:
+build_agent_runners:
   stage: triggers
   variables:
     <<: *commonvariables
