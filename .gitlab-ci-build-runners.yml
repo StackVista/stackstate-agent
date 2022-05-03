@@ -3,7 +3,7 @@ stages:
   - build_runners
 
 variables:
-  BUILDERS_FOLDER: CI_PROJECT_DIR/.ci-builders
+  BUILDERS_FOLDER: $CI_PROJECT_DIR/.ci-builders
   RUNNER_DEB_BASE: $BUILDERS_FOLDER/runner7-circle-deb
   RUNNER_DEB: $BUILDERS_FOLDER/runner7-gitlab-deb
   RUNNER_DEB_RPM_PUBLISHER: $BUILDERS_FOLDER/runner7-gitlab-deb-rpmpublisher
