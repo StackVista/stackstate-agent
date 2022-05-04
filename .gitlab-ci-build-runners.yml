@@ -109,15 +109,12 @@ build-centos7-base:
 #    - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
 #    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
 #    - docker push "${QUAY_TAG}"
-  rules:
-    - if: $CI_COMMIT_MESSAGE
-      when: on_success
 
 
 # produces the runner deb image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
 build-debian-runner:
   <<: *build_runner
-  dependencies:
+  needs:
     - build-debian-base
   variables:
     RUNNER_DIR: $RUNNER_DEBIAN
@@ -135,7 +132,7 @@ build-debian-rpmpublisher-runner:
 # produces the runner centos 7 image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
 build-centos7-runner:
   <<: *build_runner
-  dependencies:
+  needs:
     - build-centos7-base
   variables:
     RUNNER_DIR: $RUNNER_CENTOS7
