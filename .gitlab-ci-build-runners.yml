@@ -49,16 +49,17 @@ before_script:
     - cd $BUILDERS_FOLDER/$RUNNER_DIR
     # build the base image
     - BASE_RUNNER_TAG="${RUNNER_DIR}-$(date +%Y%m%d)"
-    - BUILD_TAG="stackstate-agent-runner-gitlab:${BASE_RUNNER_TAG}"
-    - docker build -t "${BUILD_TAG}" .
-    # tag the image, push to docker
-    - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
-    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
-    - docker push "${DOCKER_TAG}"
+#DEBUG    - BUILD_TAG="stackstate-agent-runner-gitlab:${BASE_RUNNER_TAG}"
+#DEBUG    - docker build -t "${BUILD_TAG}" .
+#DEBUG    # tag the image, push to docker
+#DEBUG    - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
+#DEBUG    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
+#DEBUG    - docker push "${DOCKER_TAG}"
   # tag the image, push to quay
 #    - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
 #    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
 #    - docker push "${QUAY_TAG}"
+    - echo "BASE_RUNNER_TAG=$BASE_RUNNER_TAG"
     - echo "BASE_RUNNER_TAG=$BASE_RUNNER_TAG" >> build.env
   artifacts:
     reports:
@@ -94,8 +95,8 @@ build-centos7-base:
   <<: *docker_build_base
   stage: build_runners
   script:
-    - echo $BASE_IMAGE
-    - echo $BASE_RUNNER_TAG
+    - echo "$BASE_IMAGE"
+    - echo "$BASE_RUNNER_TAG"
     - cd $BUILDERS_FOLDER/$RUNNER_DIR
     # get the current date as the base image version
     - BUILD_TAG="stackstate-agent-runner-gitlab:${RUNNER_DIR}-$(date +%Y%m%d)"
