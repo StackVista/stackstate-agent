@@ -94,10 +94,12 @@ build-centos7-base:
   <<: *docker_build_base
   stage: build_runners
   script:
+    - echo $BASE_IMAGE
+    - echo $BASE_RUNNER_TAG
     - cd $BUILDERS_FOLDER/$RUNNER_DIR
     # get the current date as the base image version
     - BUILD_TAG="stackstate-agent-runner-gitlab:${RUNNER_DIR}-$(date +%Y%m%d)"
-    - docker build --build-arg BASE_IMAGE=$BASE_IMAGE -t "${BUILD_TAG}" .
+    - docker build --build-arg BASE_IMAGE=$BASE_RUNNER_TAG -t "${BUILD_TAG}" .
     # tag the image, push to docker
     - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
     - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
