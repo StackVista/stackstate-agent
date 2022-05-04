@@ -41,7 +41,7 @@ var (
 	testStream2       = health.Stream{Urn: "urn"}
 	testStartSnapshot = &health.StartSnapshotMetadata{ExpiryIntervalS: 0, RepeatIntervalS: 1}
 	testStopSnapshot  = &health.StopSnapshotMetadata{}
-	testCheckData     = map[string]interface{}{}
+	testCheckData     = health.CheckData{UnstructuredCheckState: map[string]interface{}{}}
 
 	testRawMetricsData = telemetry.RawMetrics{
 		Name:      "name",

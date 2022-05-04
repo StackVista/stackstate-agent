@@ -15,18 +15,20 @@ import (
 import "C"
 
 var expectedCheckData = health.CheckData{
-	"key":        "value ®",
-	"stringlist": []interface{}{"a", "b", "c"},
-	"boollist":   []interface{}{true, false},
-	"intlist":    []interface{}{float64(1)},
-	"doublelist": []interface{}{0.7, 1.42},
-	"emptykey":   nil,
-	"nestedobject": map[string]interface{}{
-		"nestedkey": "nestedValue",
-		"animals": map[string]interface{}{
-			"legs":  "dog",
-			"wings": "eagle",
-			"tail":  "crocodile",
+	UnstructuredCheckState: map[string]interface{}{
+		"key":        "value ®",
+		"stringlist": []interface{}{"a", "b", "c"},
+		"boollist":   []interface{}{true, false},
+		"intlist":    []interface{}{float64(1)},
+		"doublelist": []interface{}{0.7, 1.42},
+		"emptykey":   nil,
+		"nestedobject": map[string]interface{}{
+			"nestedkey": "nestedValue",
+			"animals": map[string]interface{}{
+				"legs":  "dog",
+				"wings": "eagle",
+				"tail":  "crocodile",
+			},
 		},
 	},
 }

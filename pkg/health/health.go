@@ -5,6 +5,18 @@ import (
 	"fmt"
 )
 
+// State health state of a health stream
+type State string
+
+const (
+	// Clear designates healthy component
+	Clear State = "CLEAR"
+	// Deviating means a component is working but something is wrong[
+	Deviating State = "DEVIATING"
+	// Critical means that component is suffering
+	Critical State = "CRITICAL"
+)
+
 // Health is a batch of health synchronization data
 type Health struct {
 	StartSnapshot *StartSnapshotMetadata `json:"start_snapshot,omitempty"`
