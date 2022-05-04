@@ -1,4 +1,4 @@
-FROM docker.io/stackstate/stackstate-agent-runner-circle:centos6_latest_v7
+FROM docker.io/stackstate/stackstate-agent-runner-gitlab:centos6_latest_v7
 
 #workaround
 

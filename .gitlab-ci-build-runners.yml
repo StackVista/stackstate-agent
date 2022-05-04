@@ -48,7 +48,8 @@ before_script:
   script:
     - cd $BUILDERS_FOLDER/$RUNNER_DIR
     # build the base image
-    - BUILD_TAG="stackstate-agent-runner-gitlab:${RUNNER_DIR}-$(date +%Y%m%d)"
+    - BASE_RUNNER_TAG="${RUNNER_DIR}-$(date +%Y%m%d)"
+    - BUILD_TAG="stackstate-agent-runner-gitlab:${BASE_RUNNER_TAG}"
     - docker build -t "${BUILD_TAG}" .
     # tag the image, push to docker
     - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
@@ -58,7 +59,7 @@ before_script:
 #    - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
 #    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
 #    - docker push "${QUAY_TAG}"
-    - echo "BASE_RUNNER_TAG=$BUILD_TAG" >> build.env
+    - echo "BASE_RUNNER_TAG=$BASE_RUNNER_TAG" >> build.env
   artifacts:
     reports:
       dotenv: build.env
@@ -105,12 +106,16 @@ build-centos7-base:
 #    - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
 #    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
 #    - docker push "${QUAY_TAG}"
+  rules:
+    - if: $CI_COMMIT_MESSAGE
+      when: always
 
 
 # produces the runner deb image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
 build-debian-runner:
   <<: *build_runner
-  needs: [ build-debian-base ]
+  needs:
+    - build-debian-base
   variables:
     RUNNER_DIR: $RUNNER_DEBIAN
     RUNNER_IMAGE_VERSION: "deb7"
@@ -120,18 +125,19 @@ build-debian-runner:
 build-debian-rpmpublisher-runner:
   <<: *build_runner
   variables:
-    RUNNER_DIR: RUNNER_DEBIAN_RPM_PUBLISHER
+    RUNNER_DIR: $RUNNER_DEBIAN_RPM_PUBLISHER
     RUNNER_IMAGE_VERSION: "deb-rpmpublisher"
     BASE_IMAGE: "python:3.10.4-slim-buster"
 
 # produces the runner centos 7 image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
 build-centos7-runner:
   <<: *build_runner
-  needs: [ build-centos7-base ]
+  needs:
+    - build-centos7-base
   variables:
     RUNNER_DIR: $RUNNER_CENTOS7
     RUNNER_IMAGE_VERSION: "centos7"
-    BASE_IMAGE: "centos7"
+    BASE_IMAGE: $BASE_RUNNER_TAG
 
 # TODO: centos6 is EOL. This might potentially work: https://arstech.net/centos-6-error-yumrepo-error-all-mirror-urls-are-not-using-ftp-http/
 # TODO: skipping it for now

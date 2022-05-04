@@ -5,14 +5,14 @@ version:
 	echo $(RUNTIMETAG) | tail -1 > version.txt
 
 build:
-	docker build -t $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-circle:centos7_$(RUNTIMETAG) .
+	docker build -t $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-gitlab:centos7_$(RUNTIMETAG) .
 
 push:
-	docker push $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-circle:centos7_$(RUNTIMETAG)
+	docker push $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-gitlab:centos7_$(RUNTIMETAG)
 
 tag_latest:
-	docker tag $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-circle:centos7_$(RUNTIMETAG) $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-circle:centos7_latest
+	docker tag $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-gitlab:centos7_$(RUNTIMETAG) $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-gitlab:centos7_latest
 
 push_latest:
-	docker push $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-circle:centos7_latest
+	docker push $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-gitlab:centos7_latest
 

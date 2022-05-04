@@ -9,4 +9,4 @@ build:
 	docker build --build-arg BASE_IMAGE=$(BASE_IMAGE) -t $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-gitlab:centos7_$(RUNTIMETAG) .
 
 push:
-	docker push $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-circle:centos7_$(RUNTIMETAG)
+	docker push $(DOCKER_REPOSITORY)/stackstate/stackstate-agent-runner-gitlab:centos7_$(RUNTIMETAG)
