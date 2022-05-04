@@ -1,8 +1,6 @@
 package health
 
-import (
-	"encoding/json"
-)
+import "encoding/json"
 
 type CheckData struct {
 	Unstructured      map[string]interface{}
