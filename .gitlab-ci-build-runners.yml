@@ -87,7 +87,7 @@ build-centos7-base:
 # BUILD RUNNER IMAGES FROM BASE IMAGE
 #################################################################################
 
-.docker_main_runner_build_base: &docker_main_runner_build_base
+.docker_build_runner: &docker_build_runner
   <<: *docker_build_base
   stage: build_runners
   script:
@@ -109,7 +109,7 @@ build-centos7-base:
 
 # produces the runner deb image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
 build-main-deb-runner:
-  <<: *docker_main_runner_build_base
+  <<: *docker_build_runner
   needs: [ build-deb-base ]
   variables:
     RUNNER_DIR: $RUNNER_DEB
@@ -118,16 +118,15 @@ build-main-deb-runner:
 
 # produces the runner deb/rpm publisher image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_{yyyymmdd}
 build-deb-rpm-publisher-runner:
-  <<: *docker_main_runner_build_base
-  needs: [ build-deb-base ]
+  <<: *docker_build_runner
   variables:
     RUNNER_DIR: $RUNNER_DEB_RPM_PUBLISHER
     RUNNER_IMAGE_VERSION: "deb-rpmpublisher"
-    BASE_RUNNER_IMAGE_VERSION: "deb7"
+    BASE_RUNNER_IMAGE_VERSION: "python:3.10.4-slim-buster"
 
 # produces the runner centos 7 image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
 build-centos7-runner:
-  <<: *docker_main_runner_build_base
+  <<: *docker_build_runner
   needs: [ build-centos7-base ]
   variables:
     RUNNER_DIR: $RUNNER_CENTOS7
