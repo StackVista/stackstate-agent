@@ -19,7 +19,7 @@ func TestMarshallUnstructured(t *testing.T) {
 func TestMarshallStructuredState(t *testing.T) {
 	data := CheckData{
 		CheckState: &CheckState{
-			CheckStateId:              "checkStateId",
+			CheckStateID:              "checkStateId",
 			Message:                   "message",
 			Health:                    Critical,
 			TopologyElementIdentifier: "identifier",
@@ -35,7 +35,7 @@ func TestMarshallStructuredState(t *testing.T) {
 func TestMarshallStructuredDeleteState(t *testing.T) {
 	data := CheckData{
 		CheckStateDeleted: &CheckStateDeleted{
-			CheckStateId: "checkStateId",
+			CheckStateID: "checkStateId",
 			Delete:       true,
 		},
 	}
