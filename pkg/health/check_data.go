@@ -1,6 +1,8 @@
 package health
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type CheckData struct {
 	Unstructured      map[string]interface{}
@@ -22,6 +24,15 @@ func (c CheckData) MarshalJSON() ([]byte, error) {
 
 func (c *CheckData) IsEmpty() bool {
 	return c.CheckState == nil && c.CheckStateDeleted == nil && len(c.Unstructured) == 0
+}
+
+func (c *CheckData) UnmarshalJSON(buf []byte) error {
+	unstructured := map[string]interface{}{}
+	if err := json.Unmarshal(buf, &unstructured); err != nil {
+		return err
+	}
+	c.Unstructured = unstructured
+	return nil
 }
 
 // CheckState describes state of a health stream
