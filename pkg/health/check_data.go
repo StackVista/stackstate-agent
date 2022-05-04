@@ -1,17 +1,28 @@
 package health
 
+import "encoding/json"
+
 type CheckData struct {
-	UnstructuredCheckState
-	*CheckState
-	*CheckStateDeleted
+	Unstructured      map[string]interface{}
+	CheckState        *CheckState
+	CheckStateDeleted *CheckStateDeleted
+}
+
+var _ json.Marshaler = CheckData{}
+
+func (c CheckData) MarshalJSON() ([]byte, error) {
+	if c.CheckState != nil {
+		return json.Marshal(c.CheckState)
+	} else if c.CheckStateDeleted != nil {
+		return json.Marshal(c.CheckStateDeleted)
+	} else {
+		return json.Marshal(c.Unstructured)
+	}
 }
 
 func (c *CheckData) IsEmpty() bool {
-	return c.CheckState == nil && c.CheckStateDeleted == nil && len(c.UnstructuredCheckState) == 0
+	return c.CheckState == nil && c.CheckStateDeleted == nil && len(c.Unstructured) == 0
 }
-
-// UnstructuredCheckState is the data for a health check - usually that comes from Python check
-type UnstructuredCheckState map[string]interface{}
 
 // CheckState describes state of a health stream
 // see also:
