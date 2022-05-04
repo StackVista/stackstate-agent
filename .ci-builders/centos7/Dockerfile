@@ -1,5 +1,5 @@
-ARG BASE_RUNNER_IMAGE_VERSION=centos7_latest
-FROM docker.io/stackstate/stackstate-agent-runner-circle:${BASE_RUNNER_IMAGE_VERSION}
+ARG BASE_IMAGE=centos7_latest
+FROM docker.io/stackstate/stackstate-agent-runner-circle:${BASE_IMAGE}
 
 # force update root certificates, in particular might return DST Root CA X3
 RUN yum -y update ca-certificates && yum -y reinstall ca-certificates
