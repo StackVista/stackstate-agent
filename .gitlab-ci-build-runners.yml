@@ -48,7 +48,7 @@ before_script:
   script:
     - cd $BUILDERS_FOLDER/$RUNNER_DIR
     # build the base image
-    - BUILD_TAG="stackstate-agent-runner-gitlab:${$RUNNER_DIR}-$(date +%Y%m%d)"
+    - BUILD_TAG="stackstate-agent-runner-gitlab:${RUNNER_DIR}-$(date +%Y%m%d)"
     - docker build -t "${BUILD_TAG}" .
     # tag the image, push to docker
     - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
