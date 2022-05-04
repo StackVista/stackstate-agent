@@ -49,12 +49,12 @@ before_script:
     - cd $BUILDERS_FOLDER/$RUNNER_DIR
     # build the base image
     - BASE_RUNNER_TAG="${RUNNER_DIR}-$(date +%Y%m%d)"
-#DEBUG    - BUILD_TAG="stackstate-agent-runner-gitlab:${BASE_RUNNER_TAG}"
-#DEBUG    - docker build -t "${BUILD_TAG}" .
-#DEBUG    # tag the image, push to docker
-#DEBUG    - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
-#DEBUG    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
-#DEBUG    - docker push "${DOCKER_TAG}"
+    - BUILD_TAG="stackstate-agent-runner-gitlab:${BASE_RUNNER_TAG}"
+    - docker build -t "${BUILD_TAG}" .
+    # tag the image, push to docker
+    - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
+    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
+    - docker push "${DOCKER_TAG}"
   # tag the image, push to quay
 #    - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
 #    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
@@ -95,8 +95,6 @@ build-centos7-base:
   <<: *docker_build_base
   stage: build_runners
   script:
-    - echo "$BASE_IMAGE"
-    - echo "$BASE_RUNNER_TAG"
     - cd $BUILDERS_FOLDER/$RUNNER_DIR
     # get the current date as the base image version
     - BUILD_TAG="stackstate-agent-runner-gitlab:${RUNNER_DIR}-$(date +%Y%m%d)"
@@ -109,6 +107,9 @@ build-centos7-base:
 #    - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
 #    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
 #    - docker push "${QUAY_TAG}"
+  rules:
+    - if: $CI_COMMIT_MESSAGE
+      when: on_success
 
 
 # produces the runner deb image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
@@ -119,7 +120,6 @@ build-debian-runner:
   variables:
     RUNNER_DIR: $RUNNER_DEBIAN
     RUNNER_IMAGE_VERSION: "deb7"
-    BASE_IMAGE: $BASE_RUNNER_TAG
 
 # produces the runner deb/rpm publisher image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_{yyyymmdd}
 build-debian-rpmpublisher-runner:
@@ -137,7 +137,6 @@ build-centos7-runner:
   variables:
     RUNNER_DIR: $RUNNER_CENTOS7
     RUNNER_IMAGE_VERSION: "centos7"
-    BASE_IMAGE: $BASE_RUNNER_TAG
 
 # TODO: centos6 is EOL. This might potentially work: https://arstech.net/centos-6-error-yumrepo-error-all-mirror-urls-are-not-using-ftp-http/
 # TODO: skipping it for now
