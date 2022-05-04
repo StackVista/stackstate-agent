@@ -1,4 +1,4 @@
-image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_20211210
+image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220504
 
 stages:
   - prepare
@@ -96,7 +96,7 @@ deps_deb:
 deps_rpm:
   stage: prepare
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211210
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220504
   cache:
     key: "deps-rpm-$STS_VER-$CI_COMMIT_REF_SLUG"
     paths:
@@ -315,7 +315,7 @@ build_deb:
 build_rpm:
   stage: build
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211210
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220504
   needs:
     - deps_rpm
   tags:
@@ -429,7 +429,7 @@ test_deb_renaming:
 test_rpm_renaming:
   stage: test
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211210
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220504
   needs:
     - build_rpm
   before_script: []
@@ -500,7 +500,7 @@ pre_release_win:
 pre_release_rpm:
   stage: pre_release
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_20220107
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-rpmpublisher-20220504
   needs:
     - build_rpm
   before_script: []
@@ -1324,7 +1324,7 @@ release_deb:
 release_rpm:
   interruptible: true
   stage: release
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_20220107
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-rpmpublisher-20220504
   dependencies:
     - build_rpm
   before_script:
