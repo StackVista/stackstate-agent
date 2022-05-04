@@ -15,7 +15,7 @@ import (
 import "C"
 
 var expectedCheckData = health.CheckData{
-	UnstructuredCheckState: map[string]interface{}{
+	Unstructured: map[string]interface{}{
 		"key":        "value ®",
 		"stringlist": []interface{}{"a", "b", "c"},
 		"boollist":   []interface{}{true, false},
