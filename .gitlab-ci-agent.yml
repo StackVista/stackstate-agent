@@ -1324,7 +1324,7 @@ release_deb:
 release_rpm:
   interruptible: true
   stage: release
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-rpmpublisher-20220504
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-rpmpublisher-20220505
   dependencies:
     - build_rpm
   before_script:

@@ -30,7 +30,6 @@ before_script:
   retry:
     max: 2
     when:
-      # TODO: figure out what causes flakiness in the docker builds, sometimes pulling fails on builder the image or the base image is not available yet for the runner to pull
       - always
   rules:
     - if: $CI_COMMIT_MESSAGE =~ /\[build_runners]/
@@ -64,6 +63,11 @@ before_script:
   artifacts:
     reports:
       dotenv: build.env
+  rules:
+    - if: $CI_COMMIT_MESSAGE
+      when: manual
+    - if: $CI_COMMIT_MESSAGE =~ /\[build_runners]/
+      when: always
 
 # produces the base deb image: quay.io/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
 build-debian-base:
