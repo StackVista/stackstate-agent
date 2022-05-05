@@ -500,7 +500,7 @@ pre_release_win:
 pre_release_rpm:
   stage: pre_release
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-rpmpublisher-20220505
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220505
   needs:
     - build_rpm
   before_script: []
@@ -1324,7 +1324,7 @@ release_deb:
 release_rpm:
   interruptible: true
   stage: release
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-rpmpublisher-20220505
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220505
   dependencies:
     - build_rpm
   before_script:
