@@ -5,8 +5,7 @@ ARG GIMME_GO_VERSION=1.13.11
 ARG DD_CONDA_VERSION=4.7.10
 ARG DD_PIP_VERSION=19.1
 ARG DD_SETUPTOOLS_VERSION=41.0.1
-# 9.1.0.9
-ARG IBM_MQ_VERSION=9.2.0.0
+ARG IBM_MQ_VERSION=9.2.4.0
 ARG CMAKE_VERSION=3.14.4
 ARG CLANG_VERSION=8.0.0
 
@@ -53,9 +52,9 @@ RUN cd tmp/ && curl -OL https://www.kernel.org/pub/software/scm/git/git-2.10.1.t
 RUN git config --global user.email "gitlab@stackstate" && git config --global user.name "Gitlab Stackstate"
 
 # RVM
-COPY ./rvm/gpg-keys /gpg-keys
-RUN gpg --import /gpg-keys/*
-RUN rm -rf /gpg-keys
+#RUN gpg --keyserver hkp://pgp.mit.edu --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+RUN curl -sSL https://rvm.io/mpapis.asc | gpg --import -
+RUN curl -sSL https://rvm.io/pkuczynski.asc | gpg --import -
 RUN curl -sSL https://get.rvm.io | bash -s stable --version latest-1.29
 RUN /bin/bash -l -c "rvm requirements"
 RUN /bin/bash -l -c "rvm install 2.4.2 && rvm cleanup all"
@@ -158,7 +157,7 @@ RUN mkdir -p /go/src/github.com/DataDog/datadog-agent
 # Force umask to 0022
 RUN echo "umask 0022" >> /root/.bashrc
 
-RUN pip install awscli boto3 sa-rpm-s3
+RUN pip install awscli boto3 sts-rpm-s3
 
 RUN yum -y install net-snmp-devel python-deltarpm yum-utils libtool rpm-sign createrepo
 

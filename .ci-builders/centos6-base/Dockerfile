@@ -5,7 +5,7 @@ ARG GIMME_GO_VERSION=1.13.11
 ARG DD_CONDA_VERSION=4.7.10
 ARG DD_PIP_VERSION=19.1
 ARG DD_SETUPTOOLS_VERSION=41.0.1
-ARG IBM_MQ_VERSION=9.1.5.0
+ARG IBM_MQ_VERSION=9.2.4.0
 ARG CMAKE_VERSION=3.14.4
 ARG CLANG_VERSION=8.0.0
 
@@ -90,13 +90,13 @@ RUN conda init bash
 RUN source /root/.bashrc && conda activate ddpy2 \
     && pip install -i https://pypi.python.org/simple pip==${DD_PIP_VERSION} \
     && pip install --ignore-installed setuptools==${DD_SETUPTOOLS_VERSION} \
-    && pip install invoke distro==1.4.0 awscli==1.16.240
+    && pip install invoke distro==1.4.0 awscli==1.16.240 lexicon
 
 # Update pip, setuptools and misc deps
 RUN source /root/.bashrc && conda activate ddpy3 \
     && pip install -i https://pypi.python.org/simple pip==${DD_PIP_VERSION} \
     && pip install --ignore-installed setuptools==${DD_SETUPTOOLS_VERSION} \
-    && pip install invoke distro==1.4.0 awscli==1.16.240
+    && pip install invoke distro==1.4.0 awscli==1.16.240 lexicon
 
 # Add systemd headers
 COPY ./rpm-headers/systemd /usr/include/systemd
