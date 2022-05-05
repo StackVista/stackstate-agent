@@ -127,11 +127,10 @@ build-debian-runner:
 
 # produces the runner deb/rpm publisher image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_{yyyymmdd}
 build-debian-rpmpublisher-runner:
-  <<: *build_runner
+  <<: *build_runner_base
   variables:
     RUNNER_DIR: $RUNNER_DEBIAN_RPM_PUBLISHER
     RUNNER_IMAGE_VERSION: "deb-rpmpublisher"
-    BASE_RUNNER_TAG: "python:3.10.4-slim-buster"
 
 # produces the runner centos 7 image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
 build-centos7-runner:
