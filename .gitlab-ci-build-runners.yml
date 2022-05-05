@@ -56,7 +56,7 @@ before_script:
     - docker push "${DOCKER_TAG}"
     # tag the image, push to quay
     - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
-    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
+    - docker tag "${BUILD_TAG}" "${QUAY_TAG}"
     - docker push "${QUAY_TAG}"
     - echo "BASE_RUNNER_TAG=$BASE_RUNNER_TAG"
     - echo "BASE_RUNNER_TAG=$BASE_RUNNER_TAG" >> $CI_PROJECT_DIR/build.env
@@ -109,7 +109,7 @@ build-centos7-base:
     - docker push "${DOCKER_TAG}"
     # tag the image, push to quay
     - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
-    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
+    - docker tag "${BUILD_TAG}" "${QUAY_TAG}"
     - docker push "${QUAY_TAG}"
   rules:
     - if: $CI_COMMIT_MESSAGE
