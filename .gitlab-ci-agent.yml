@@ -449,6 +449,9 @@ pre_release_deb:
   needs:
     - deps_deb
     - build_deb
+  before_script:
+    - export AWS_ACCESS_KEY_ID=${MOLECULE_AWS_ACCESS_KEY_ID}
+    - export AWS_SECRET_ACCESS_KEY=${MOLECULE_AWS_SECRET_ACCESS_KEY}
   script:
     # //TODO: move to image
     - apt-get install -y apt-utils libtool debsigs
@@ -503,7 +506,9 @@ pre_release_rpm:
   image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
   needs:
     - build_rpm
-  before_script: []
+  before_script:
+    - export AWS_ACCESS_KEY_ID=${MOLECULE_AWS_ACCESS_KEY_ID}
+    - export AWS_SECRET_ACCESS_KEY=${MOLECULE_AWS_SECRET_ACCESS_KEY}
   script:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_rpm_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package_rpm.sh $STS_AWS_TEST_BUCKET_YUM
