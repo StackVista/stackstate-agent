@@ -32,7 +32,7 @@ RUN curl https://curl.se/ca/cacert.pem -o /etc/pki/tls/certs/ca-bundle.crt
 
 # /workaround
 
-RUN pip install awscli==1.16 boto3==1.22.7 sts-rpm-s3==0.3.3
+RUN pip install awscli==1.16 boto3==1.8.0 sts-rpm-s3==0.3.3
 
 RUN yum -y install net-snmp-devel python-deltarpm yum-utils libtool rpm-sign createrepo
 

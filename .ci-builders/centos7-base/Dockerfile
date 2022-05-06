@@ -157,7 +157,7 @@ RUN mkdir -p /go/src/github.com/DataDog/datadog-agent
 # Force umask to 0022
 RUN echo "umask 0022" >> /root/.bashrc
 
-RUN pip install awscli==1.16 boto3==1.22.7 sts-rpm-s3==0.3.3
+RUN pip install awscli==1.16 boto3==1.8.0 sts-rpm-s3==0.3.3
 
 RUN yum -y install net-snmp-devel python-deltarpm yum-utils libtool rpm-sign createrepo
 
