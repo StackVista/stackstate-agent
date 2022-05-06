@@ -106,13 +106,13 @@ RUN conda create -n ddpy3 python python=3.8
 RUN /bin/bash -c "source /root/.bashrc && conda activate ddpy2 \
     && pip install -i https://pypi.python.org/simple pip==${DD_PIP_VERSION} \
     && pip install --ignore-installed setuptools==${DD_SETUPTOOLS_VERSION} \
-    && pip install invoke distro==1.4.0 awscli==1.16.240 lexicon"
+    && pip install invoke==1.7.0 distro==1.4.0 awscli==1.16.240 lexicon==2.0.1"
 
 # Update pip, setuptools and misc deps for ddpy3
 RUN /bin/bash -c  "source /root/.bashrc && conda activate ddpy3 \
     && pip install -i https://pypi.python.org/simple pip==${DD_PIP_VERSION} \
     && pip install --ignore-installed setuptools==${DD_SETUPTOOLS_VERSION} \
-    && pip install invoke distro==1.4.0 awscli==1.16.240 lexicon"
+    && pip install invoke==1.7.0 distro==1.4.0 awscli==1.16.240 lexicon==2.0.1"
 
 # [VS] not needed if we base on GO base image.
 # Gimme
@@ -167,8 +167,6 @@ RUN apt-get install -y apt-utils libtool && apt-get install -y --only-upgrade li
 # For some tests
 RUN apt-get install sudo
 
-# TODO: to be moved to conda virtualenvs
-#RUN pip install awscli boto3 sts-rpm-s3
 ADD rpmmacros /root/.rpmmacros
 # yum-utils #https://pkgs.org/download/yum-utils
 #RUN apt-get install -y libkrb5-dev unixodbc-dev rpm python-deltarpm createrepo bison yum-utils

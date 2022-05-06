@@ -91,6 +91,6 @@ RUN mkdir -p "$GEM_HOME" "$BUNDLE_BIN" \
 
 RUN git config --global user.email "gitlab@stackstate" && git config --global user.name "Gitlab Stackstate"
 
-RUN pip install awscli boto3 sts-rpm-s3
+RUN pip install awscli==1.16 boto3==1.22.7 sts-rpm-s3==0.3.3
 
 RUN yum -y install net-snmp-devel python-deltarpm yum-utils libtool rpm-sign createrepo

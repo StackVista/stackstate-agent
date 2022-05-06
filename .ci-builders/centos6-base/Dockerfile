@@ -90,13 +90,13 @@ RUN conda init bash
 RUN source /root/.bashrc && conda activate ddpy2 \
     && pip install -i https://pypi.python.org/simple pip==${DD_PIP_VERSION} \
     && pip install --ignore-installed setuptools==${DD_SETUPTOOLS_VERSION} \
-    && pip install invoke distro==1.4.0 awscli==1.16.240 lexicon
+    && pip install invoke==1.7.0 distro==1.4.0 awscli==1.16.240 lexicon==2.0.1
 
 # Update pip, setuptools and misc deps
 RUN source /root/.bashrc && conda activate ddpy3 \
     && pip install -i https://pypi.python.org/simple pip==${DD_PIP_VERSION} \
     && pip install --ignore-installed setuptools==${DD_SETUPTOOLS_VERSION} \
-    && pip install invoke distro==1.4.0 awscli==1.16.240 lexicon
+    && pip install invoke==1.7.0 distro==1.4.0 awscli==1.16.240 lexicon==2.0.1
 
 # Add systemd headers
 COPY ./rpm-headers/systemd /usr/include/systemd

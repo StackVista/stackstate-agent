@@ -94,5 +94,5 @@ RUN apt-get install -y apt-utils libtool && apt-get install -y --only-upgrade li
 # For some tests
 RUN apt-get install sudo
 
-RUN pip install awscli boto3 sts-rpm-s3
+RUN pip install awscli==1.16 boto3==1.22.7 sts-rpm-s3==0.3.3
 RUN apt-get install -y libkrb5-dev unixodbc-dev rpm python-deltarpm createrepo yum-utils bison
