@@ -9,6 +9,8 @@ type Stream struct {
 	SubStream string `json:"sub_stream_id,omitempty"`
 }
 
+// UnmarshalJSON decodes Stream in a way to be compatible with Python check (sub_stream -> SubStream)
+// while keeping original encoding (SubStream `json:sub_stream_id`) compatible with intake API
 func (i *Stream) UnmarshalJSON(buf []byte) error {
 	data := map[string]string{}
 	if err := json.Unmarshal(buf, &data); err != nil {
