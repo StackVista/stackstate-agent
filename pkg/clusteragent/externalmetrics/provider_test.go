@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package externalmetrics
@@ -14,7 +15,7 @@ import (
 
 	"github.com/StackVista/stackstate-agent/pkg/clusteragent/externalmetrics/model"
 
-	"github.com/kubernetes-incubator/custom-metrics-apiserver/pkg/provider"
+	"github.com/kubernetes-sigs/custom-metrics-apiserver/pkg/provider"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"

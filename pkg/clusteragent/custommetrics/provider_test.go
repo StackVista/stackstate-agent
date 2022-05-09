@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package custommetrics
@@ -12,7 +13,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/kubernetes-incubator/custom-metrics-apiserver/pkg/provider"
+	"github.com/kubernetes-sigs/custom-metrics-apiserver/pkg/provider"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/metrics/pkg/apis/external_metrics"

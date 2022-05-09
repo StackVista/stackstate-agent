@@ -81,7 +81,6 @@ require (
 	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
 	github.com/dustin/go-humanize v1.0.0
 	github.com/elastic/go-libaudit v0.4.0
-	github.com/emicklei/go-restful v2.9.6+incompatible // indirect
 	github.com/fatih/color v1.9.0
 	github.com/florianl/go-conntrack v0.1.0
 	github.com/go-ini/ini v1.55.0
@@ -104,7 +103,7 @@ require (
 	github.com/itchyny/gojq v0.10.2
 	github.com/json-iterator/go v1.1.12
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
-	github.com/kubernetes-incubator/custom-metrics-apiserver v0.0.0-00010101000000-000000000000
+	github.com/kubernetes-sigs/custom-metrics-apiserver v0.0.0-20210311094424-0ca2b1909cdc
 	github.com/lxn/walk v0.0.0-20191128110447-55ccb3a9f5c1
 	github.com/lxn/win v0.0.0-20191128105842-2da648fda5b4
 	github.com/mdlayher/netlink v1.1.0
@@ -141,16 +140,15 @@ require (
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20200910180754-dd1b699fc489
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
 	golang.org/x/mobile v0.0.0-20201217150744-e6ae53a27f4f
-	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
+	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
 	golang.org/x/text v0.3.6
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	golang.org/x/tools v0.1.4 // indirect
 	gomodules.xyz/jsonpatch/v3 v3.0.1
-	google.golang.org/genproto v0.0.0-20201110150050-8816d57aaa9a
+	google.golang.org/genproto v0.0.0-20220107163113-42d7afdf6368
 	google.golang.org/grpc v1.42.0
-	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/DataDog/dd-trace-go.v1 v1.23.1
 	gopkg.in/Knetic/govaluate.v3 v3.0.0 // indirect
 	gopkg.in/ini.v1 v1.55.0 // indirect
@@ -168,9 +166,6 @@ require (
 	k8s.io/kubernetes v1.21.5
 	k8s.io/metrics v0.21.5
 )
-
-// Pinned to kubernetes-1.16.2
-replace github.com/kubernetes-incubator/custom-metrics-apiserver => github.com/kubernetes-incubator/custom-metrics-apiserver v0.0.0-20190918110929-3d9be26a50eb
 
 // Pinned so it includes fix for Windows Nano
 replace k8s.io/klog => k8s.io/klog v1.0.1-0.20200310124935-4ad0115ba9e4

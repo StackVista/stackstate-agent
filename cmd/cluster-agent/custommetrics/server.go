@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2017-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package custommetrics
@@ -12,9 +13,9 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/kubernetes-incubator/custom-metrics-apiserver/pkg/apiserver"
-	basecmd "github.com/kubernetes-incubator/custom-metrics-apiserver/pkg/cmd"
-	"github.com/kubernetes-incubator/custom-metrics-apiserver/pkg/provider"
+	"github.com/kubernetes-sigs/custom-metrics-apiserver/pkg/apiserver"
+	basecmd "github.com/kubernetes-sigs/custom-metrics-apiserver/pkg/cmd"
+	"github.com/kubernetes-sigs/custom-metrics-apiserver/pkg/provider"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
