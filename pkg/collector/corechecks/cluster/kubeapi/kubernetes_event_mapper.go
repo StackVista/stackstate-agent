@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2017 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package kubeapi
@@ -16,9 +17,9 @@ import (
 
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
+	"github.com/StackVista/stackstate-agent/internal/third_party/kubernetes/pkg/kubelet/events"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/kubernetes/pkg/kubelet/events"
 )
 
 type MetricsCategory string

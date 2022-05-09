@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
+	fakeremote "github.com/StackVista/stackstate-agent/internal/third_party/kubernetes/pkg/kubelet/cri/remote/fake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	fakeremote "k8s.io/kubernetes/pkg/kubelet/cri/remote/fake"
 )
 
 func TestCRIUtilInit(t *testing.T) {
