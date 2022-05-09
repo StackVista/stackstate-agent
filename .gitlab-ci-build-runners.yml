@@ -111,9 +111,6 @@ build-centos7-base:
     - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
     - docker tag "${BUILD_TAG}" "${QUAY_TAG}"
     - docker push "${QUAY_TAG}"
-  rules:
-    - if: $CI_COMMIT_MESSAGE
-      when: on_success
 
 
 # produces the runner deb image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
