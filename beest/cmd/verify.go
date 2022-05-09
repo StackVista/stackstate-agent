@@ -18,28 +18,26 @@ var (
 	testSelection string
 )
 
+func init() {
+	rootCmd.AddCommand(verifyCmd)
+
+	verifyCmd.Flags().BoolVarP(&watchTest, WatchFlag, WatchShortFlag, false, "watch for changes and re-run the tests")
+	verifyCmd.Flags().StringVar(&testSelection, TestSelectionFlag, "", "a selection of test names to run")
+}
+
 var verifyCmd = &cobra.Command{
 	Use:   "verify [scenario]",
 	Short: "Run the tests against the yard",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		scenario := findScenario(args[0])
-
-		create := scenario.generateCreateStep(runId)
-		prepare := step.Prepare(create)
-		verify := step.Verify(prepare, scenario.Test.path(), []string{})
-		testError := doVerify(verify, watchTest, testSelection)
-		cobra.CheckErr(testError)
+		cobra.CheckErr(verify(&driver.PyTestVerifier{}, scenario, watchTest, testSelection))
 	},
 }
 
-func doVerify(verify *step.VerificationStep, watch bool, selection string) error {
-	return driver.PyTestRun(verify, watch, selection)
-}
-
-func init() {
-	rootCmd.AddCommand(verifyCmd)
-
-	verifyCmd.Flags().BoolVarP(&watchTest, WatchFlag, WatchShortFlag, false, "watch for changes and re-run the tests")
-	verifyCmd.Flags().StringVar(&testSelection, TestSelectionFlag, "", "a selection of test names to run")
+func verify(verifier driver.Verifier, scenario *Scenario, watch bool, selection string) error {
+	create := scenario.generateCreateStep(runId)
+	prepare := step.Prepare(create)
+	verify := step.Verify(prepare, scenario.Test.path(), []string{})
+	return verifier.Verify(verify, watch, selection)
 }

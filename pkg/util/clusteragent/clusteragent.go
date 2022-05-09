@@ -408,3 +408,18 @@ func (c *DCAClient) GetKubernetesMetadataNames(nodeName, ns, podName string) ([]
 
 	return metadataNames, nil
 }
+
+func parseJSONResponse(resp *http.Response, result interface{}) error {
+	defer resp.Body.Close()
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("can't read body from %d %s response: %v", resp.StatusCode, resp.Status, err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected response: %d %s: %s", resp.StatusCode, resp.Status, string(b))
+	}
+
+	err = json.Unmarshal(b, result)
+	return err
+}

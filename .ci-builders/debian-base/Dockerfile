@@ -10,7 +10,7 @@ ARG GIMME_GO_VERSION=1.13.11
 ARG DD_CONDA_VERSION=4.7.10
 ARG DD_PIP_VERSION=19.1
 ARG DD_SETUPTOOLS_VERSION=41.0.1
-ARG IBM_MQ_VERSION=9.1.5.0
+ARG IBM_MQ_VERSION=9.2.4.0
 ARG CMAKE_VERSION=3.14.4
 ARG CLANG_VERSION=8.0.0
 
@@ -74,10 +74,9 @@ COPY ./conda.sh /etc/profile.d/
 
 # RVM
 # [VS]
-COPY ./rvm/gpg-keys /gpg-keys
-RUN gpg --import /gpg-keys/*
-RUN rm -rf /gpg-keys
-RUN curl -sSL https://get.rvm.io | bash -s stable --version latest-1.29
+RUN curl -sSL https://rvm.io/mpapis.asc | gpg --import -
+RUN curl -sSL https://rvm.io/pkuczynski.asc | gpg --import -
+RUN curl -sSL https://raw.githubusercontent.com/rvm/rvm/master/binscripts/rvm-installer | bash -s stable --version latest-1.29
 
 # # Ruby,,,
 RUN mkdir -p /usr/local/etc \
@@ -103,17 +102,17 @@ RUN conda init bash
 RUN conda create -n ddpy2 python python=2
 RUN conda create -n ddpy3 python python=3.8
 
-# Update pip, setuptools and misc deps
+# Update pip, setuptools and misc deps for ddpy2
 RUN /bin/bash -c "source /root/.bashrc && conda activate ddpy2 \
     && pip install -i https://pypi.python.org/simple pip==${DD_PIP_VERSION} \
     && pip install --ignore-installed setuptools==${DD_SETUPTOOLS_VERSION} \
-    && pip install invoke distro==1.4.0 awscli==1.16.240"
+    && pip install invoke==1.7.0 distro==1.4.0 awscli==1.16.240 lexicon==2.0.1"
 
-# Update pip, setuptools and misc deps
+# Update pip, setuptools and misc deps for ddpy3
 RUN /bin/bash -c  "source /root/.bashrc && conda activate ddpy3 \
     && pip install -i https://pypi.python.org/simple pip==${DD_PIP_VERSION} \
     && pip install --ignore-installed setuptools==${DD_SETUPTOOLS_VERSION} \
-    && pip install invoke distro==1.4.0 awscli==1.16.240"
+    && pip install invoke==1.7.0 distro==1.4.0 awscli==1.16.240 lexicon==2.0.1"
 
 # [VS] not needed if we base on GO base image.
 # Gimme
@@ -168,8 +167,6 @@ RUN apt-get install -y apt-utils libtool && apt-get install -y --only-upgrade li
 # For some tests
 RUN apt-get install sudo
 
-# TODO: to be moved to conda virtualenvs
-#RUN pip install awscli boto3 sa-rpm-s3
 ADD rpmmacros /root/.rpmmacros
 # yum-utils #https://pkgs.org/download/yum-utils
 #RUN apt-get install -y libkrb5-dev unixodbc-dev rpm python-deltarpm createrepo bison yum-utils

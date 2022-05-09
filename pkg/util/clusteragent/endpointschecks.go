@@ -6,9 +6,6 @@
 package clusteragent
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks/types"
@@ -50,16 +47,7 @@ func (c *DCAClient) doGetEndpointsCheckConfigs(nodeName string) (types.ConfigRes
 	if err != nil {
 		return configs, err
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return configs, fmt.Errorf("unexpected response: %d - %s", resp.StatusCode, resp.Status)
-	}
-
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return configs, err
-	}
-	err = json.Unmarshal(b, &configs)
+	err = parseJSONResponse(resp, &configs)
 	return configs, err
 }

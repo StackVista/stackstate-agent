@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"sort"
+	"sync/atomic"
 
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -18,6 +19,8 @@ type SecretCollector struct {
 	ComponentChan chan<- *topology.Component
 	ClusterTopologyCollector
 }
+
+var SecretDisabledLog int32
 
 // NewSecretCollector creates a new instance of the secret collector
 func NewSecretCollector(componentChannel chan<- *topology.Component, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
@@ -36,7 +39,11 @@ func (*SecretCollector) GetName() string {
 func (cmc *SecretCollector) CollectorFunction() error {
 	secrets, err := cmc.GetAPIClient().GetSecrets()
 	if err != nil {
-		return err
+		if atomic.LoadInt32(&SecretDisabledLog) == 0 {
+			log.Infof("Collection of secrets is disabled. To enable, add 'secrets' to the cluster agent ClusterRole using the `clusterAgent.collection.kubernetesResources` key on your helm values.yaml file")
+			atomic.StoreInt32(&SecretDisabledLog, 1)
+		}
+		return nil
 	}
 
 	for _, cm := range secrets {
