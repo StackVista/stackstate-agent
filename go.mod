@@ -164,6 +164,7 @@ require (
 	k8s.io/klog/v2 v2.9.0 // indirect
 	k8s.io/kube-state-metrics v1.9.7
 	k8s.io/metrics v0.21.5
+	k8s.io/utils v0.0.0-20201110183641-67b214c5f920
 )
 
 // Pinned so it includes fix for Windows Nano

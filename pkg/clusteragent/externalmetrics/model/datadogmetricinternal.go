@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package model
@@ -12,7 +13,7 @@ import (
 	"fmt"
 	"time"
 
-	datadoghq "github.com/DataDog/datadog-operator/pkg/apis/datadoghq/v1alpha1"
+	datadoghq "github.com/DataDog/datadog-operator/api/v1alpha1"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	corev1 "k8s.io/api/core/v1"
