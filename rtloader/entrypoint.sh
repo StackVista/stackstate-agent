@@ -1,9 +1,12 @@
 #!/bin/bash
 
-. /root/miniconda3/etc/profile.d/conda.sh
+source ~/.bashrc
 conda activate ddpy3
-. /usr/local/rvm/scripts/rvm
-
 cd /go/src/github.com/StackVista/stackstate-agent
 
+inv -e deps --verbose --dep-vendor-only
+
 inv rtloader.clean && inv rtloader.make --python-runtimes 3 && inv rtloader.test
+
+
+source ./.gitlab-scripts/setup_artifactory.sh
