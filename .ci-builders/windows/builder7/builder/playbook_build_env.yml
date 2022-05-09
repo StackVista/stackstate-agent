@@ -110,21 +110,25 @@
         timeout: 600
         package_params: "/InstallDir:c:\\python27-x64"
 
-    - name: Install vcpython27(1/2)
+    - name: Install vcpython27(1/3)
       win_command: choco install vcpython27 -y
-      # win_chocolatey:
-      #   name: vcpython27
-      #   state: present
-      #   timeout: 300
       ignore_errors: true
       register: vcpython27_try1
 
-    - name: Install vcpython27(2/2)
+    - name: Install vcpython27(2/3)
       win_chocolatey:
         name: vcpython27
         state: present
         timeout: 1200
       when: vcpython27_try1 is failed
+      ignore_errors: true
+      register: vcpython27_try2
+
+    - name: Install vcpython27(3/3)
+      win_command: powershell.exe -
+        args:
+          stdin: Start-Process C:\Windows\Temp\VCForPython27.msi -ArgumentList "/quiet"
+      when: vcpython27_try3 is failed
 
     - name: Install python virtualwrapper
       win_shell: pip install virtualenvwrapper-win

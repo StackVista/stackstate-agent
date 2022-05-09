@@ -1,15 +1,14 @@
 {
   "variables": {
-    "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
-    "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}"
+    "aws_profile": "{{env `AWS_PROFILE`}}"
   },
   "builders": [
     {
-      "access_key": "{{ user `aws_access_key` }}",
-      "secret_key": "{{ user `aws_secret_key` }}",
+      "iam_instance_profile": "AmazonSSMRoleForInstancesQuickSetup",
+      "profile": "{{user `aws_profile`}}",
       "type": "amazon-ebs",
       "region": "eu-west-1",
-      "instance_type": "t3.large",
+      "instance_type": "t3.xlarge",
       "source_ami_filter": {
         "filters": {
           "virtualization-type": "hvm",
@@ -20,6 +19,7 @@
         "owners": "amazon"
       },
       "ami_name": "lupulus-agentbuilder7-{{timestamp}}",
+      "skip_region_validation": true,
       "ami_block_device_mappings": [
         {
           "device_name": "/dev/sda1",
@@ -53,6 +53,11 @@
     }
   ],
   "provisioners": [
+    {
+      "type": "file",
+      "source": "/root/packages/VCForPython27.msi",
+      "destination": "C:\\Windows\\Temp\\VCForPython27.msi"
+    },
     {
       "type": "ansible",
       "playbook_file": "./runner/playbook_agent.yml",

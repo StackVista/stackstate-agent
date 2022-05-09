@@ -9,10 +9,10 @@
 
 
   roles:
-     - {
-        role: "sa_gitlab_runner_win",
-        option_gitlab_register_runner: false
-       }
+    - {
+      role: "softasap.sa_gitlab_runner_win",
+      option_gitlab_register_runner: false
+    }
 
   tasks:
 

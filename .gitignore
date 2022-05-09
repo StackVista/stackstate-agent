@@ -28,6 +28,7 @@ venv3[78]/
 *.exe
 *.syso
 *.log
+*.hcl
 
 #file generated at build time by message compiler
 agentmsg.h
@@ -174,6 +175,9 @@ deployment/kubernetes/k8s-*/
 
 # windows ami
 .cd-builders/windows/builder/runner/roles/sa_gitlab_runner_win
+
+# python 27 compiler for VS 2017
+.ci-builders/windows/builder7/VCForPython27.msi
 
 # msgpack gen files
 *_gen*.go
