@@ -36,7 +36,7 @@ type TransactionalForwarder interface {
 
 // Forwarder is a forwarder that works in transactional manner
 type Forwarder struct {
-	stsClient       *httpclient.StackStateClient
+	stsClient       httpclient.RetryableHTTPClient
 	PayloadChannel  chan TransactionalPayload
 	ShutdownChannel chan ShutdownForwarder
 }
