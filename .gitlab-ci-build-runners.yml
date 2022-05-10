@@ -1,6 +1,7 @@
 stages:
   - build_runner_base
   - build_runners
+  - fallback-manual
 
 variables:
   BUILDERS_FOLDER: $CI_PROJECT_DIR/.ci-builders
@@ -147,8 +148,10 @@ build-centos7-runner:
 
 # This ensures that triggers can achieve success status if manual jobs are not executed.
 ensure-success-manual:
-  stage: build_runner_base
+  stage: fallback-manual
   before_script: []
+  dependencies:
+    - build_runners
   script:
     - echo "I will succeed"
   rules:
