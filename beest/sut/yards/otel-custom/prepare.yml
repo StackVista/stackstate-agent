@@ -1,0 +1,10 @@
+- hosts: local
+
+  tasks:
+    - name: Upload files
+      tags: [ prepare]
+      s3_sync:
+        bucket: '{{bucket}}'
+        file_root: "{{code_zip}}"
+        permission: public-read
+        region: eu-central-1
