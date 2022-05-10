@@ -1,7 +1,8 @@
-package transactional
+package transactionalforwarder
 
 import (
-	"github.com/StackVista/stackstate-agent/cmd/agent/common"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/httpclient"
 )
 
@@ -9,16 +10,16 @@ import (
 // payloads we pass into the forwarder
 type Payloads []*[]byte
 
-// TransactionalPayload contains the payload and transactional data
+// TransactionalPayload contains the Payload and transactional data
 type TransactionalPayload struct {
-	payload                 []byte
-	transactionID, actionID string
+	Payload              []byte
+	TransactionActionMap map[string]transactional.PayloadTransaction
 }
 
 // ShutdownForwarder shuts down the forwarder
 type ShutdownForwarder struct{}
 
-// Response contains the response details of a successfully posted manager
+// Response contains the response details of a successfully posted checkmanager
 type Response struct {
 	Domain     string
 	Body       []byte
@@ -49,13 +50,22 @@ forwardHandler:
 		// handling high priority transactions first
 		select {
 		case tPayload := <-f.PayloadChannel:
-			response := f.stsClient.Post("", tPayload.payload)
+			response := f.stsClient.Post("", tPayload.Payload)
 			if response.Err != nil {
-				// payload failed, rollback manager
-				common.TxManager.RollbackTransaction(tPayload.transactionID, response.Err.Error())
+				// Payload failed, rollback checkmanager
+				for transactionID, payloadTransaction := range tPayload.TransactionActionMap {
+					transactionmanager.GetTransactionManager().RejectAction(transactionID, payloadTransaction.ActionID, response.Err.Error())
+				}
 			} else {
-				// payload succeeded, acknowledge action
-				common.TxManager.AcknowledgeAction(tPayload.transactionID, tPayload.actionID)
+				// Payload succeeded, acknowledge action
+				for transactionID, payloadTransaction := range tPayload.TransactionActionMap {
+					transactionmanager.GetTransactionManager().AcknowledgeAction(transactionID, payloadTransaction.ActionID)
+
+					// if the transaction of the payload is completed, submit a transaction complete
+					if payloadTransaction.CompletedTransaction {
+						transactionmanager.GetTransactionManager().CompleteTransaction(transactionID)
+					}
+				}
 			}
 		case _ = <-f.ShutdownChannel:
 			break forwardHandler
@@ -72,7 +82,7 @@ func (f *Forwarder) Stop() {
 	defer close(f.ShutdownChannel)
 }
 
-// SubmitTransactionalIntake publishes the payload to the PayloadChannel
+// SubmitTransactionalIntake publishes the Payload to the PayloadChannel
 func (f *Forwarder) SubmitTransactionalIntake(payload TransactionalPayload) {
 	f.PayloadChannel <- payload
 }

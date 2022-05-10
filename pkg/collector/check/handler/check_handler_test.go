@@ -2,39 +2,70 @@ package handler
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/manager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
 
 func TestCheckHandler(t *testing.T) {
-	ch := MakeCheckHandler(&check.TestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
-		manager.MakeTransactionManager(100, 100*time.Millisecond, 500*time.Millisecond,
-			500*time.Millisecond), batcher.MockBatcher{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 
-	assert.Equal(t, check.ID("my-check-handler-test-check"), ch.ID())
-	assert.EqualValues(t, ch.GetBatcher(), batcher.MockBatcher{})
-	actualInstanceCfg, actualInitCfg := ch.GetConfig()
-	assert.EqualValues(t, integration.Data{1, 2, 3}, actualInstanceCfg)
-	assert.EqualValues(t, integration.Data{0, 0, 0}, actualInitCfg)
-	assert.Equal(t, "test-config-source", ch.ConfigSource())
+	// init global transactionbatcher used by the check no handler
+	transactionbatcher.NewMockTransactionalBatcher()
 
-	cr := ch.GetCheckReloader().(*check.TestCheckReloader)
-	assert.Equal(t, 0, cr.Reloaded)
-	err := ch.ReloadCheck(ch.ID(), actualInstanceCfg, actualInitCfg, ch.ConfigSource())
-	assert.NoError(t, err)
-	assert.Equal(t, 1, cr.Reloaded)
-	err = ch.ReloadCheck(ch.ID(), actualInstanceCfg, actualInitCfg, ch.ConfigSource())
-	assert.Equal(t, 2, cr.Reloaded)
+	for _, tc := range []struct {
+		testCase             string
+		checkHandler         CheckHandler
+		expectedCHString     string
+		expectedCHName       string
+		expectedInitConfig   integration.Data
+		expectedConfig       integration.Data
+		expectedConfigSource string
+	}{
+		{
+			testCase: "my-check-handler-test-check check handler",
+			checkHandler: NewCheckHandler(&check.TestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+				integration.Data{1, 2, 3}, integration.Data{0, 0, 0}),
+			expectedCHString:     "my-check-handler-test-check",
+			expectedCHName:       "my-check-handler-test-check",
+			expectedInitConfig:   integration.Data{0, 0, 0},
+			expectedConfig:       integration.Data{1, 2, 3},
+			expectedConfigSource: "test-config-source",
+		},
+		{
+			testCase:             "no-check check handler",
+			checkHandler:         MakeCheckNoHandler("no-check", &check.TestCheckReloader{}),
+			expectedCHString:     "no-check-name",
+			expectedCHName:       "no-check",
+			expectedConfigSource: "no-source",
+		},
+	} {
+		t.Run(tc.testCase, func(t *testing.T) {
+			assert.Equal(t, tc.expectedCHString, tc.checkHandler.String())
+			assert.Equal(t, check.ID(tc.expectedCHName), tc.checkHandler.ID())
+			actualInstanceCfg, actualInitCfg := tc.checkHandler.GetConfig()
+			assert.EqualValues(t, tc.expectedConfig, actualInstanceCfg)
+			assert.EqualValues(t, tc.expectedInitConfig, actualInitCfg)
+			assert.Equal(t, tc.expectedConfigSource, tc.checkHandler.ConfigSource())
+
+			cr := tc.checkHandler.GetCheckReloader().(*check.TestCheckReloader)
+			assert.Equal(t, 0, cr.Reloaded)
+			tc.checkHandler.Reload()
+			assert.Equal(t, 1, cr.Reloaded)
+			tc.checkHandler.Reload()
+			assert.Equal(t, 2, cr.Reloaded)
+		})
+	}
+
 }
 
 func TestCheckHandler_Transactions(t *testing.T) {
-	testTxManager := &TestTransactionManager{}
-	ch := MakeCheckHandler(&check.TestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
-		testTxManager, batcher.MockBatcher{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*checkHandler)
+	testTxManager := transactionmanager.NewMockTransactionManager().(*transactionmanager.MockTransactionManager)
+
+	ch := NewCheckHandler(&check.TestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*checkHandler)
 
 	ch.Start()
 
@@ -45,44 +76,48 @@ func TestCheckHandler_Transactions(t *testing.T) {
 		{
 			testCase: "Transaction completed with transaction rollback",
 			completeTransaction: func() {
-				testTxManager.CurrentTransactionNotifyChannel <- manager.RollbackTransaction{}
+				testTxManager.CurrentTransactionNotifyChannel <- transactionmanager.RollbackTransaction{}
 			},
 		},
 		{
 			testCase: "Transaction completed with transaction eviction",
 			completeTransaction: func() {
-				testTxManager.CurrentTransactionNotifyChannel <- manager.EvictedTransaction{}
+				testTxManager.CurrentTransactionNotifyChannel <- transactionmanager.EvictedTransaction{}
 			},
 		},
 		{
 			testCase: "Transaction completed with transaction complete",
 			completeTransaction: func() {
-				testTxManager.CurrentTransactionNotifyChannel <- manager.CompleteTransaction{}
+				testTxManager.CurrentTransactionNotifyChannel <- transactionmanager.CompleteTransaction{}
 			},
 		},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
-			ch.StartTransaction("CheckID", "Transaction1")
+			ch.StartTransaction()
 
 			time.Sleep(50 * time.Millisecond)
-			assert.Equal(t, "Transaction1", testTxManager.CurrentTransaction)
+			transaction1 := ch.currentTransaction
+			assert.Equal(t, transaction1, testTxManager.CurrentTransaction)
 
 			// attempt to start new transaction before 1 has finished, this should be blocked
-			ch.StartTransaction("CheckID", "Transaction2")
+			ch.StartTransaction()
 
 			// wait a bit and assert that we're still processing Transaction1 instead of the attempted Transaction2
 			time.Sleep(50 * time.Millisecond)
-			assert.Equal(t, "Transaction1", testTxManager.CurrentTransaction)
+			assert.Equal(t, transaction1, testTxManager.CurrentTransaction)
 
 			// complete Transaction1
 			tc.completeTransaction()
-
-			// wait a bit and assert that we've started processing Transaction2
 			time.Sleep(50 * time.Millisecond)
-			assert.Equal(t, "Transaction2", testTxManager.CurrentTransaction)
+
+			transaction2 := ch.currentTransaction
+			// assert that the transaction changed
+			assert.NotEqual(t, transaction1, ch.currentTransaction)
+			// wait a bit and assert that we've started processing Transaction2
+			assert.Equal(t, transaction2, testTxManager.CurrentTransaction)
 
 			// complete Transaction2
-			testTxManager.CurrentTransactionNotifyChannel <- manager.CompleteTransaction{}
+			testTxManager.CurrentTransactionNotifyChannel <- transactionmanager.CompleteTransaction{}
 		})
 	}
 
@@ -90,27 +125,18 @@ func TestCheckHandler_Transactions(t *testing.T) {
 	ch.Stop()
 }
 
-type TestTransactionManager struct {
-	CurrentTransaction              string
-	CurrentTransactionNotifyChannel chan interface{}
-}
+func TestCheckHandler_Shutdown(t *testing.T) {
+	testTxManager := transactionmanager.NewMockTransactionManager().(*transactionmanager.MockTransactionManager)
+	ch := NewCheckHandler(&check.TestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*checkHandler)
 
-func (ttm *TestTransactionManager) StartTransaction(_ check.ID, TransactionID string, NotifyChannel chan interface{}) {
-	ttm.CurrentTransaction = TransactionID
-	ttm.CurrentTransactionNotifyChannel = NotifyChannel
-}
-func (ttm *TestTransactionManager) CompleteTransaction(transactionID string) {
+	ch.Start()
 
-}
-func (ttm *TestTransactionManager) RollbackTransaction(transactionID, reason string) {
+	ch.StartTransaction()
 
-}
-func (ttm *TestTransactionManager) CommitAction(transactionID, actionID string) {
+	time.Sleep(50 * time.Millisecond)
+	assert.Equal(t, ch.currentTransaction, testTxManager.CurrentTransaction)
 
-}
-func (ttm *TestTransactionManager) AcknowledgeAction(transactionID, actionID string) {
-
-}
-func (ttm *TestTransactionManager) RejectAction(transactionID, actionID, reason string) {
+	ch.Stop()
 
 }

@@ -1,10 +1,16 @@
-package manager
+package transactionmanager
 
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"sync"
 	"time"
+)
+
+var (
+	tmInstance TransactionManager
+	tmInit     sync.Once
 )
 
 type TransactionManager interface {
@@ -14,6 +20,39 @@ type TransactionManager interface {
 	CommitAction(transactionID, actionID string)
 	AcknowledgeAction(transactionID, actionID string)
 	RejectAction(transactionID, actionID, reason string)
+}
+
+// InitTransactionManager ...
+func InitTransactionManager(transactionChannelBufferSize int, tickerInterval, transactionTimeoutDuration,
+	transactionEvictionDuration time.Duration) {
+	tmInit.Do(func() {
+		tmInstance = newTransactionManager(transactionChannelBufferSize, tickerInterval, transactionTimeoutDuration,
+			transactionEvictionDuration)
+	})
+}
+
+// GetTransactionManager returns a handle on the global transactionbatcher Instance
+func GetTransactionManager() TransactionManager {
+	return tmInstance
+}
+
+// NewMockTransactionManager returns a handle on the global transactionbatcher Instance
+func NewMockTransactionManager() TransactionManager {
+	tm := newTestTransactionManager()
+	tmInstance = tm
+	return tmInstance
+}
+
+// newTransactionManager returns an instance of a TransactionManager
+func newTransactionManager(transactionChannelBufferSize int, tickerInterval, transactionTimeoutDuration,
+	transactionEvictionDuration time.Duration) TransactionManager {
+	return &transactionManager{
+		transactionChannel:          make(chan interface{}, transactionChannelBufferSize),
+		transactionTicker:           time.NewTicker(tickerInterval),
+		transactions:                make(map[string]*IntakeTransaction),
+		transactionTimeoutDuration:  transactionTimeoutDuration,
+		transactionEvictionDuration: transactionEvictionDuration,
+	}
 }
 
 // TransactionManager keeps track of all transactions for agent checks
@@ -74,20 +113,8 @@ func (txm *transactionManager) RejectAction(transactionID, actionID, reason stri
 	}
 }
 
-// MakeTransactionManager returns an instance of a TransactionManager
-func MakeTransactionManager(transactionChannelBufferSize int, tickerInterval, transactionTimeoutDuration,
-	transactionEvictionDuration time.Duration) TransactionManager {
-	return &transactionManager{
-		transactionChannel:          make(chan interface{}, transactionChannelBufferSize),
-		transactionTicker:           time.NewTicker(tickerInterval),
-		transactions:                make(map[string]*IntakeTransaction),
-		transactionTimeoutDuration:  transactionTimeoutDuration,
-		transactionEvictionDuration: transactionEvictionDuration,
-	}
-}
-
-// Start sets up the transaction manager to consume messages on the txm.transactionChannel. It consumes one message at
-// a time using the `select` statement and populates / evicts transactions in the transaction manager.
+// Start sets up the transaction checkmanager to consume messages on the txm.transactionChannel. It consumes one message at
+// a time using the `select` statement and populates / evicts transactions in the transaction checkmanager.
 func (txm *transactionManager) Start() {
 	go func() {
 	transactionHandler:
@@ -135,7 +162,7 @@ func (txm *transactionManager) Start() {
 					_ = log.Errorf(msg.Error())
 				case ActionNotFound:
 					_ = log.Errorf(msg.Error())
-				// shutdown transaction manager
+				// shutdown transaction checkmanager
 				case StopTransactionManager:
 					// clean the transaction map
 					txm.transactions = make(map[string]*IntakeTransaction, 0)
@@ -151,15 +178,15 @@ func (txm *transactionManager) Start() {
 						// delete the transaction, already notified on success or failure status so no need to notify again
 						delete(txm.transactions, transaction.TransactionID)
 					} else if transaction.State != Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionTimeoutDuration)) {
-						// last updated timestamp is before current time - manager timeout duration => Tx is stale
+						// last updated timestamp is before current time - checkmanager timeout duration => Tx is stale
 						transaction.State = Stale
 					} else if transaction.State == Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionEvictionDuration)) {
-						// last updated timestamp is before current time - manager eviction duration => Tx can be evicted
+						// last updated timestamp is before current time - checkmanager eviction duration => Tx can be evicted
 						txm.evictTransaction(transaction.TransactionID)
 					}
 				}
 
-				// TODO: produce some transaction manager metrics
+				// TODO: produce some transaction checkmanager metrics
 			default:
 			}
 		}
@@ -168,7 +195,7 @@ func (txm *transactionManager) Start() {
 	txm.running = true
 }
 
-// Stop shuts down the transaction manager and stops the transactionHandler receiver loop
+// Stop shuts down the transaction checkmanager and stops the transactionHandler receiver loop
 func (txm *transactionManager) Stop() {
 	txm.running = false
 	txm.transactionChannel <- StopTransactionManager{}
@@ -262,7 +289,7 @@ func (txm *transactionManager) completeTransaction(transactionID string) error {
 	// ensure all actions have been acknowledged
 	for _, action := range transaction.Actions {
 		if !action.Acknowledged {
-			reason := fmt.Sprintf("Not all actions have been acknowledged, rolling back manager: %s", transaction.TransactionID)
+			reason := fmt.Sprintf("Not all actions have been acknowledged, rolling back checkmanager: %s", transaction.TransactionID)
 			return RollbackTransaction{TransactionID: transactionID, Reason: reason}
 		}
 	}

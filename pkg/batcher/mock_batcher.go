@@ -7,7 +7,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 )
 
-// MockBatcher mocks implementation of a batcher
+// MockBatcher mocks implementation of a transactionbatcher
 type MockBatcher struct {
 	CollectedTopology BatchBuilder
 }

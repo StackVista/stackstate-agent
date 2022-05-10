@@ -332,7 +332,7 @@ func TestBatchFlushOnMaxRawMetricsElements(t *testing.T) {
 func TestBatchFlushOnMaxElementsEnv(t *testing.T) {
 	serializer := serializer2.NewAgentV1MockSerializer()
 
-	// set batcher max capacity via ENV var
+	// set transactionbatcher max capacity via ENV var
 	os.Setenv("DD_BATCHER_CAPACITY", "1")
 	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, config.GetMaxCapacity())
 	assert.Equal(t, 1, batcher.builder.maxCapacity)

@@ -10,8 +10,6 @@ package common
 import (
 	"context"
 	"encoding/json"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/manager"
-	transactionManager "github.com/StackVista/stackstate-agent/pkg/collector/transactional/manager"
 	"net/http"
 	"path/filepath"
 
@@ -46,12 +44,6 @@ var (
 
 	// MainCtxCancel cancels the main agent context
 	MainCtxCancel context.CancelFunc
-
-	// CheckManager is the global instance of the check manager that contains check handlers
-	CheckManager *manager.CheckManager
-
-	// TxManager is the global instance of the manager manager that manages lifecycles of checks
-	TxManager transactionManager.TransactionManager
 
 	// utility variables
 	_here, _ = executable.Folder()

@@ -9,8 +9,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/manager"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/manager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"runtime"
 	"syscall"
 	"time"
@@ -273,12 +274,13 @@ func StartAgent() error {
 	agg := aggregator.InitAggregator(s, hostname)
 	agg.AddAgentStartupTelemetry(version.AgentVersion)
 
-	// [sts] init the batcher for topology production
+	// [sts] init the transactionbatcher for topology production
 	batcher.InitBatcher(s, hostname, "agent", config.GetMaxCapacity())
-	// [sts] create the global check manager instance
-	common.CheckManager = manager.MakeCheckManager()
+	// [sts] create the global check checkmanager instance
+	transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity())
+	checkmanager.InitCheckManager()
 	txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
-	common.TxManager = manager.MakeTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
+	transactionmanager.InitTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
 
 	// start dogstatsd
 	if config.Datadog.GetBool("use_dogstatsd") {
@@ -358,7 +360,7 @@ func StopAgent() {
 		common.MetadataScheduler.Stop()
 	}
 
-	// [sts] clear the check manager
+	// [sts] clear the check checkmanager
 	if common.CheckManager != nil {
 		common.CheckManager.Clear()
 	}

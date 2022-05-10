@@ -13,11 +13,9 @@ import (
 	"expvar"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/cmd/agent/common"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional"
-	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
 	"strings"
 	"sync"
-	"time"
 	"unsafe"
 
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
@@ -208,15 +206,7 @@ func (cl *PythonCheckLoader) Load(config integration.Config, instance integratio
 	log.Debugf("python loader: done loading check %s (version %s)", moduleName, wheelVersion)
 
 	// [sts] register check handler
-	hostname, err := util.GetHostname()
-	if err != nil {
-		return nil, log.Errorf("Error while getting hostname, exiting: %v", err)
-	}
-
-	f := transactional.MakeForwarder()
-	b := transactional.MakeCheckInstanceBatcher(c.ID(), hostname, "agent", agentConfig.GetMaxCapacity(),
-		time.Second*30, f)
-	common.CheckManager.SubscribeCheckHandler(c, common.Coll, b, config.InitConfig, instance)
+	checkmanager.GetCheckManager().RegisterCheckHandler(c, common.Coll, config.InitConfig, instance)
 
 	return c, nil
 }

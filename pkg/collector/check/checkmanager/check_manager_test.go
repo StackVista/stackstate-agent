@@ -1,8 +1,7 @@
-package manager
+package checkmanager
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/stretchr/testify/assert"
@@ -10,45 +9,38 @@ import (
 )
 
 func TestMakeCheckManager(t *testing.T) {
-	checkManager := MakeCheckManager()
+	checkManager := newCheckManager()
 	expected := &CheckManager{
-		checkHandlers:        make(map[string]handler.CheckHandler),
-		fallbackCheckHandler: handler.MakeCheckNoHandler(),
+		checkHandlers: make(map[string]handler.CheckHandler),
 	}
 
 	assert.EqualValues(t, expected, checkManager)
 }
 
 func TestCheckManagerSubscription(t *testing.T) {
-	checkManager := MakeCheckManager()
+	checkManager := newCheckManager()
 	testCheck := &check.TestCheck{Name: "test-check-1"}
 
 	// assert that we start at an empty state
 	assert.EqualValues(t, checkManager.checkHandlers, map[string]handler.CheckHandler{})
-	assert.EqualValues(t, checkManager.fallbackCheckHandler, handler.MakeCheckNoHandler())
-
-	// attempt to get a non-existing check handler, should default to the fallback
-	assert.EqualValues(t, checkManager.GetCheckHandler(testCheck.ID()), checkManager.fallbackCheckHandler)
 
 	// subscribe my test check, assert that we can get it with the check handler and that it's present in the inner map
-	checkManager.SubscribeCheckHandler(testCheck, &check.TestCheckReloader{}, batcher.MockBatcher{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
+	checkManager.RegisterCheckHandler(testCheck, &check.TestCheckReloader{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 	_, found := checkManager.checkHandlers[string(testCheck.ID())]
 	assert.True(t, found, "TestCheck handler not found in the checkManager.checkHandlers map")
 	ch := checkManager.GetCheckHandler(testCheck.ID())
 	assert.Equal(t, ch.ID(), testCheck.ID())
-	assert.EqualValues(t, ch.GetBatcher(), batcher.MockBatcher{})
 	actualInstanceCfg, actualInitCfg := ch.GetConfig()
 	assert.EqualValues(t, integration.Data{1, 2, 3}, actualInstanceCfg)
 	assert.EqualValues(t, integration.Data{0, 0, 0}, actualInitCfg)
 
 	// subscribe another check handler and assert it
 	testCheck2 := &check.TestCheck{Name: "test-check-2"}
-	checkManager.SubscribeCheckHandler(testCheck2, &check.TestCheckReloader{}, batcher.MockBatcher{}, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
+	checkManager.RegisterCheckHandler(testCheck2, &check.TestCheckReloader{}, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
 	_, found = checkManager.checkHandlers[string(testCheck.ID())]
 	assert.True(t, found, "TestCheck handler not found in the checkManager.checkHandlers map")
 	ch2 := checkManager.GetCheckHandler(testCheck2.ID())
 	assert.Equal(t, ch2.ID(), testCheck2.ID())
-	assert.EqualValues(t, ch2.GetBatcher(), batcher.MockBatcher{})
 	actualInstanceCfg2, actualInitCfg2 := ch2.GetConfig()
 	assert.EqualValues(t, integration.Data{4, 5, 6}, actualInstanceCfg2)
 	assert.EqualValues(t, integration.Data{10, 10, 10}, actualInitCfg2)
@@ -63,7 +55,7 @@ func TestCheckManagerSubscription(t *testing.T) {
 	assert.False(t, found, "TestCheck handler not found in the checkManager.checkHandlers map")
 
 	// subscribe testCheck2 again
-	checkManager.SubscribeCheckHandler(testCheck2, &check.TestCheckReloader{}, batcher.MockBatcher{}, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
+	checkManager.RegisterCheckHandler(testCheck2, &check.TestCheckReloader{}, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
 	_, found = checkManager.checkHandlers[string(testCheck2.ID())]
 	assert.True(t, found, "TestCheck handler not found in the checkManager.checkHandlers map")
 

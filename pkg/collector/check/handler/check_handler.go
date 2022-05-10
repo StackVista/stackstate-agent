@@ -2,10 +2,14 @@ package handler
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/manager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
+	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/google/uuid"
 )
 
 type CheckReloader interface {
@@ -19,49 +23,124 @@ type CheckIdentifier interface {
 	ConfigSource() string // return the configuration source of the check
 }
 
-type CheckHandler interface {
-	CheckIdentifier
-	CheckReloader
-	GetConfig() (config, initConfig integration.Data)
-	GetBatcher() batcher.Batcher
-	GetCheckReloader() CheckReloader
-	StartTransaction(CheckID check.ID, TransactionID string)
+// CheckAPI ...
+type CheckAPI interface {
+	// Topology
+	SubmitComponent(instance topology.Instance, component topology.Component)
+	SubmitRelation(instance topology.Instance, relation topology.Relation)
+	SubmitStartSnapshot(instance topology.Instance)
+	SubmitStopSnapshot(instance topology.Instance)
+	SubmitDelete(instance topology.Instance, topologyElementID string)
+
+	// Health
+	SubmitHealthCheckData(stream health.Stream, data health.CheckData)
+	SubmitHealthStartSnapshot(stream health.Stream, intervalSeconds int, expirySeconds int)
+	SubmitHealthStopSnapshot(stream health.Stream)
+
+	// Raw Metrics
+	SubmitRawMetricsData(data telemetry.RawMetrics)
+
+	// lifecycle
+	SubmitComplete()
+	Shutdown()
 }
 
-type CheckHandlerBase struct {
+type CheckHandler interface {
 	CheckIdentifier
-	CheckReloader
-	batcher.Batcher
-	config, initConfig integration.Data
+	CheckAPI
+	GetConfig() (config, initConfig integration.Data)
+	GetCheckReloader() CheckReloader
+	Reload()
 }
 
 // checkHandler provides an interface between the Agent Check and the transactional components
 type checkHandler struct {
-	CheckHandlerBase
-	manager.TransactionManager
-	batcher.Batcher
-	shutdownChannel    chan bool
-	transactionChannel chan SubmitStartTransaction
+	CheckIdentifier
+	CheckReloader
+	config, initConfig        integration.Data
+	shutdownChannel           chan bool
+	transactionChannel        chan SubmitStartTransaction
+	currentTransactionChannel chan interface{}
+	currentTransaction        string
 }
 
-func MakeCheckHandler(check check.Check, checkReloader CheckReloader, txManager manager.TransactionManager, checkBatcher batcher.Batcher, config, initConfig integration.Data) CheckHandler {
-	return &checkHandler{
-		CheckHandlerBase: CheckHandlerBase{
-			CheckIdentifier: check,
-			CheckReloader:   checkReloader,
-			config:          config,
-			initConfig:      initConfig,
-		},
-		TransactionManager: txManager,
-		Batcher:            checkBatcher,
-		shutdownChannel:    make(chan bool, 1),
-		transactionChannel: make(chan SubmitStartTransaction, 1),
+func (ch *checkHandler) GetCheckReloader() CheckReloader {
+	return ch.CheckReloader
+}
+
+// SubmitComponent ...
+func (ch *checkHandler) SubmitComponent(instance topology.Instance, component topology.Component) {
+	transactionbatcher.GetTransactionalBatcher().SubmitComponent(ch.ID(), ch.currentTransaction, instance, component)
+}
+
+// SubmitRelation ...
+func (ch *checkHandler) SubmitRelation(instance topology.Instance, relation topology.Relation) {
+	transactionbatcher.GetTransactionalBatcher().SubmitRelation(ch.ID(), ch.currentTransaction, instance, relation)
+}
+
+// SubmitStartSnapshot ...
+func (ch *checkHandler) SubmitStartSnapshot(instance topology.Instance) {
+	transactionbatcher.GetTransactionalBatcher().SubmitStartSnapshot(ch.ID(), ch.currentTransaction, instance)
+}
+
+// SubmitStopSnapshot ...
+func (ch *checkHandler) SubmitStopSnapshot(instance topology.Instance) {
+	transactionbatcher.GetTransactionalBatcher().SubmitStopSnapshot(ch.ID(), ch.currentTransaction, instance)
+}
+
+// SubmitDelete ...
+func (ch *checkHandler) SubmitDelete(instance topology.Instance, topologyElementID string) {
+	transactionbatcher.GetTransactionalBatcher().SubmitDelete(ch.ID(), ch.currentTransaction, instance, topologyElementID)
+}
+
+// SubmitHealthCheckData ...
+func (ch *checkHandler) SubmitHealthCheckData(stream health.Stream, data health.CheckData) {
+	transactionbatcher.GetTransactionalBatcher().SubmitHealthCheckData(ch.ID(), ch.currentTransaction, stream, data)
+}
+
+// SubmitHealthStartSnapshot ...
+func (ch *checkHandler) SubmitHealthStartSnapshot(stream health.Stream, intervalSeconds int, expirySeconds int) {
+	transactionbatcher.GetTransactionalBatcher().SubmitHealthStartSnapshot(ch.ID(), ch.currentTransaction, stream, intervalSeconds, expirySeconds)
+}
+
+// SubmitHealthStopSnapshot ...
+func (ch *checkHandler) SubmitHealthStopSnapshot(stream health.Stream) {
+	transactionbatcher.GetTransactionalBatcher().SubmitHealthStopSnapshot(ch.ID(), ch.currentTransaction, stream)
+}
+
+// SubmitRawMetricsData ...
+func (ch *checkHandler) SubmitRawMetricsData(data telemetry.RawMetrics) {
+	transactionbatcher.GetTransactionalBatcher().SubmitRawMetricsData(ch.ID(), ch.currentTransaction, data)
+}
+
+// SubmitComplete ...
+func (ch *checkHandler) SubmitComplete() {
+	transactionbatcher.GetTransactionalBatcher().SubmitComplete(ch.ID())
+}
+
+// Shutdown ...
+func (ch *checkHandler) Shutdown() {
+	transactionbatcher.GetTransactionalBatcher().Shutdown()
+}
+
+// Reload ...
+func (ch *checkHandler) Reload() {
+	config, initConfig := ch.GetConfig()
+	if err := ch.ReloadCheck(ch.ID(), config, initConfig, ch.ConfigSource()); err != nil {
+		_ = log.Errorf("could not reload check %s", string(ch.ID()))
 	}
 }
 
-type TxChan struct {
-	TransactionID string
-	TxChan        chan interface{}
+// NewCheckHandler ...
+func NewCheckHandler(check check.Check, checkReloader CheckReloader, config, initConfig integration.Data) CheckHandler {
+	return &checkHandler{
+		CheckIdentifier:    check,
+		CheckReloader:      checkReloader,
+		config:             config,
+		initConfig:         initConfig,
+		shutdownChannel:    make(chan bool, 1),
+		transactionChannel: make(chan SubmitStartTransaction, 1),
+	}
 }
 
 // Start ...
@@ -70,14 +149,19 @@ func (ch *checkHandler) Start() {
 	txReceiverHandler:
 		for {
 			select {
-			case startTx := <-ch.transactionChannel:
-				log.Debugf("Starting transaction: %s", startTx.TransactionID)
-				thisTransactionChannel := make(chan interface{}, 20)
-				ch.TransactionManager.StartTransaction(startTx.CheckID, startTx.TransactionID, thisTransactionChannel)
-				ch.handleCurrentTransaction(thisTransactionChannel)
-				close(thisTransactionChannel)
+			case <-ch.transactionChannel:
+				// set the current transaction
+				ch.currentTransaction = uuid.New().String()
+				log.Debugf("Starting transaction: %s", ch.currentTransaction)
+				ch.currentTransactionChannel = make(chan interface{})
+				transactionmanager.GetTransactionManager().StartTransaction(ch.ID(), ch.currentTransaction, ch.currentTransactionChannel)
+				ch.handleCurrentTransaction(ch.currentTransactionChannel)
+				close(ch.currentTransactionChannel)
 			case <-ch.shutdownChannel:
-				log.Debug("Shutting down check handler")
+				log.Debug("Shutting down check handler. Closing transaction channels.")
+				// try closing currentTransactionChannel if the transaction is still in progress
+				safeCloseTransactionChannel(ch.currentTransactionChannel)
+				close(ch.transactionChannel)
 				break txReceiverHandler
 			default:
 				log.Debug("got here")
@@ -98,12 +182,12 @@ currentTxHandler:
 		select {
 		case tx := <-txChan:
 			switch txMsg := tx.(type) {
-			case manager.RollbackTransaction, manager.EvictedTransaction:
+			case transactionmanager.RollbackTransaction, transactionmanager.EvictedTransaction:
 				if err := ch.ReloadCheck(ch.ID(), ch.config, ch.initConfig, ch.ConfigSource()); err != nil {
 					_ = log.Errorf("failed to reload check %s: %s", ch.ID(), err)
 				}
 				break currentTxHandler
-			case manager.CompleteTransaction:
+			case transactionmanager.CompleteTransaction:
 				log.Debugf("Received: %s", txMsg.TransactionID)
 				break currentTxHandler
 			}
@@ -112,11 +196,8 @@ currentTxHandler:
 }
 
 // StartTransaction ...
-func (ch *checkHandler) StartTransaction(CheckID check.ID, TransactionID string) {
-	ch.transactionChannel <- SubmitStartTransaction{
-		CheckID:       CheckID,
-		TransactionID: TransactionID,
-	}
+func (ch *checkHandler) StartTransaction() {
+	ch.transactionChannel <- SubmitStartTransaction{}
 }
 
 // GetConfig ...
@@ -124,18 +205,18 @@ func (ch *checkHandler) GetConfig() (integration.Data, integration.Data) {
 	return ch.config, ch.initConfig
 }
 
-// GetBatcher ...
-func (ch *checkHandler) GetBatcher() batcher.Batcher {
-	return ch.Batcher
-}
-
-// GetCheckReloader returns the configured CheckReloader
-func (ch *checkHandler) GetCheckReloader() CheckReloader {
-	return ch.CheckReloader
-}
-
 // SubmitStartTransaction is used to start a transaction to the input channel
-type SubmitStartTransaction struct {
-	CheckID       check.ID
-	TransactionID string
+type SubmitStartTransaction struct{}
+
+// SubmitStopTransaction is used to start a transaction to the input channel
+type SubmitStopTransaction struct{}
+
+// safeCloseTransactionChannel closes the tx channel that can potentially already be closed. It handles the panic and does a no-op.
+func safeCloseTransactionChannel(ch chan interface{}) {
+	defer func() {
+		if recover() != nil {
+		}
+	}()
+
+	close(ch) // panic if ch is closed
 }

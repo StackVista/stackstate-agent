@@ -1,4 +1,4 @@
-package manager
+package transactionmanager
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 )
 
 func TestTransactionManager_HappyFlow(t *testing.T) {
-	txManager := MakeTransactionManager(100, 100*time.Millisecond, 500*time.Millisecond,
+	txManager := newTransactionManager(100, 100*time.Millisecond, 500*time.Millisecond,
 		500*time.Millisecond).(*transactionManager)
 
 	assert.False(t, txManager.running)
@@ -59,7 +59,7 @@ func TestTransactionManager_HappyFlow(t *testing.T) {
 }
 
 func TestTransactionManager_TransactionRollback(t *testing.T) {
-	txManager := MakeTransactionManager(100, 100*time.Millisecond, 1*time.Second,
+	txManager := newTransactionManager(100, 100*time.Millisecond, 1*time.Second,
 		1*time.Second).(*transactionManager)
 
 	txManager.Start()
@@ -128,7 +128,7 @@ func TestTransactionManager_TransactionRollback(t *testing.T) {
 
 func TestTransactionManager_TransactionTimeout(t *testing.T) {
 	staleTimeout := 100 * time.Millisecond
-	txManager := MakeTransactionManager(100, 10*time.Millisecond, staleTimeout,
+	txManager := newTransactionManager(100, 10*time.Millisecond, staleTimeout,
 		750*time.Millisecond).(*transactionManager)
 
 	txManager.Start()
@@ -189,7 +189,7 @@ func TestTransactionManager_TransactionTimeout(t *testing.T) {
 }
 
 func TestTransactionManager_ErrorHandling(t *testing.T) {
-	txManager := MakeTransactionManager(100, 100*time.Millisecond, 1*time.Second,
+	txManager := newTransactionManager(100, 100*time.Millisecond, 1*time.Second,
 		1*time.Second).(*transactionManager)
 
 	txNotifyChannel := make(chan interface{})
@@ -199,16 +199,16 @@ func TestTransactionManager_ErrorHandling(t *testing.T) {
 		operation func(t *testing.T, manager *transactionManager)
 	}{
 		{
-			testCase: "Transaction created before starting transaction manager",
+			testCase: "Transaction created before starting transaction checkmanager",
 			operation: func(t *testing.T, manager *transactionManager) {
 				txID := uuid.New().String()
 				txManager.StartTransaction("checkID", txID, txNotifyChannel)
 
-				// assert that the transaction manager is not running and that we have no transactions (nothing broke)
+				// assert that the transaction checkmanager is not running and that we have no transactions (nothing broke)
 				assert.False(t, txManager.running)
 				assert.Empty(t, txManager.transactions)
 
-				// start the transaction manager, the transaction sent before the start will be read immediately, assert it
+				// start the transaction checkmanager, the transaction sent before the start will be read immediately, assert it
 				txManager.Start()
 
 				assert.True(t, txManager.running)
@@ -267,7 +267,7 @@ func TestTransactionManager_ErrorHandling(t *testing.T) {
 
 func assertTransaction(t *testing.T, txManager *transactionManager, txID string, state TransactionState,
 	actions map[string]*Action) {
-	// give the transaction manager a bit of time to insert the transaction before running the assertion
+	// give the transaction checkmanager a bit of time to insert the transaction before running the assertion
 	time.Sleep(20 * time.Millisecond)
 	transaction, found := txManager.transactions[txID]
 	assert.True(t, found, "Transaction %s not found in the transaction map", txID)

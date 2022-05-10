@@ -15,7 +15,7 @@ var (
 	batcherInit     sync.Once
 )
 
-// InitBatcher initializes the global batcher Instance
+// InitBatcher initializes the global transactionbatcher Instance
 func InitBatcher(serializer serializer.AgentV1Serializer, hostname, agentName string, maxCapacity int) {
 	batcherInit.Do(func() {
 		batcherInstance = newAsynchronousBatcher(serializer, hostname, agentName, maxCapacity)
@@ -32,19 +32,19 @@ func newAsynchronousBatcher(serializer serializer.AgentV1Serializer, hostname, a
 	return batcher
 }
 
-// GetBatcher returns a handle on the global batcher Instance
+// GetBatcher returns a handle on the global transactionbatcher Instance
 func GetBatcher() Batcher {
 	return batcherInstance
 }
 
-// NewMockBatcher initializes the global batcher with a mock version, intended for testing
+// NewMockBatcher initializes the global transactionbatcher with a mock version, intended for testing
 func NewMockBatcher() MockBatcher {
 	batcher := createMockBatcher()
 	batcherInstance = batcher
 	return batcher
 }
 
-// AsynchronousBatcher is the implementation of the batcher. Works asynchronous. Publishes data to the serializer
+// AsynchronousBatcher is the implementation of the transactionbatcher. Works asynchronous. Publishes data to the serializer
 type AsynchronousBatcher struct {
 	BatcherBase
 	builder    BatchBuilder

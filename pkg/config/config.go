@@ -54,7 +54,7 @@ const (
 	// [sts]
 	DefaultBatcherBufferSize = 10000
 
-	// [sts] manager manager
+	// [sts] transaction manager
 	DefaultTxManagerChannelBufferSize       = 100     // concurrent transactions before the tx manager begins backpressure
 	DefaultTxManagerTimeoutDurationSeconds  = 60 * 5  // the amount of time before a manager is marked as stale, 5 minutes by default
 	DefaultTxManagerEvictionDurationSeconds = 60 * 10 // the amount of time before a manager is evicted and rolled back, 10 minutes by default
@@ -200,7 +200,7 @@ func InitConfig(config Config) {
 	// [sts] bind env for skip_validate_clustername, default is set in the config_template.yaml to avoid test failures.
 	config.BindEnv("skip_validate_clustername") //nolint:errcheck
 
-	// [sts] batcher environment variables
+	// [sts] transactionbatcher environment variables
 	config.BindEnvAndSetDefault("batcher_capacity", DefaultBatcherBufferSize)
 
 	// [sts] transactional environment variables
@@ -482,7 +482,7 @@ func InitConfig(config Config) {
 
 	// GCE
 	config.BindEnvAndSetDefault("collect_gce_tags", true)
-	config.BindEnvAndSetDefault("exclude_gce_tags", []string{"kube-env", "kubelet-config", "containerd-configure-sh", "startup-script", "shutdown-script", "configure-sh", "sshKeys", "ssh-keys", "user-data", "cli-cert", "ipsec-cert", "ssl-cert", "google-container-manifest", "bosh_settings", "windows-startup-script-ps1", "common-psm1", "k8s-node-setup-psm1", "serial-port-logging-enable", "enable-oslogin", "disable-address-manager", "disable-legacy-endpoints", "windows-keys"})
+	config.BindEnvAndSetDefault("exclude_gce_tags", []string{"kube-env", "kubelet-config", "containerd-configure-sh", "startup-script", "shutdown-script", "configure-sh", "sshKeys", "ssh-keys", "user-data", "cli-cert", "ipsec-cert", "ssl-cert", "google-container-manifest", "bosh_settings", "windows-startup-script-ps1", "common-psm1", "k8s-node-setup-psm1", "serial-port-logging-enable", "enable-oslogin", "disable-address-checkmanager", "disable-legacy-endpoints", "windows-keys"})
 	config.BindEnvAndSetDefault("gce_metadata_timeout", 1000) // value in milliseconds
 
 	// Cloud Foundry
@@ -1001,7 +1001,7 @@ func GetMultipleEndpoints() (map[string][]string, error) {
 	return getMultipleEndpointsWithConfig(Datadog)
 }
 
-// GetMaxCapacity returns the mximum amount of elements per batch for the batcher
+// GetMaxCapacity returns the mximum amount of elements per batch for the transactionbatcher
 func GetMaxCapacity() int {
 	if Datadog.IsSet("batcher_capacity") {
 		return Datadog.GetInt("batcher_capacity")
@@ -1012,7 +1012,7 @@ func GetMaxCapacity() int {
 
 func GetTxManagerConfig() (int, time.Duration, time.Duration) {
 	txBufferSize := Datadog.GetInt("transaction_manager_channel_buffer_size")
-	// get the manager duration and convert it to duration in seconds. Both transaction_timeout_duration_seconds and
+	// get the checkmanager duration and convert it to duration in seconds. Both transaction_timeout_duration_seconds and
 	// transaction_eviction_duration_seconds have default values.
 	txTimeoutDuration := time.Second * time.Duration(Datadog.GetInt("transaction_timeout_duration_seconds"))
 	txEvictionDuration := time.Second * time.Duration(Datadog.GetInt("transaction_eviction_duration_seconds"))

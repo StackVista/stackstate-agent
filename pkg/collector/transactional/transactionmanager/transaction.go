@@ -1,4 +1,4 @@
-package manager
+package transactionmanager
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ func (state TransactionState) String() string {
 	}
 }
 
-// Action represents a single operation in a manager, which consists of one or more actions
+// Action represents a single operation in a checkmanager, which consists of one or more actions
 type Action struct {
 	ActionID              string
 	CommittedTimestamp    time.Time
@@ -38,7 +38,7 @@ type Action struct {
 	AcknowledgedTimestamp time.Time
 }
 
-// IntakeTransaction represents an intake manager which consists of one or more actions
+// IntakeTransaction represents an intake checkmanager which consists of one or more actions
 type IntakeTransaction struct {
 	TransactionID        string
 	State                TransactionState
@@ -89,34 +89,34 @@ func (r RollbackTransaction) Error() string {
 	return fmt.Sprintf("rolling back transaction %s. %s", r.TransactionID, r.Reason)
 }
 
-// StopTransactionManager triggers the shutdown of the transaction manager.
+// StopTransactionManager triggers the shutdown of the transaction checkmanager.
 type StopTransactionManager struct{}
 
-// TransactionManagerNotRunning is triggered when trying to create a transaction when the transaction manager has not
+// TransactionManagerNotRunning is triggered when trying to create a transaction when the transaction checkmanager has not
 // been started yet.
 type TransactionManagerNotRunning struct{}
 
 // Error returns a string representation of the TransactionManagerNotRunning error and implements Error.
 func (t TransactionManagerNotRunning) Error() string {
-	return "transaction manager is not running, call TransactionManager.Start() to start it"
+	return "transaction checkmanager is not running, call TransactionManager.Start() to start it"
 }
 
-// TransactionNotFound is triggered when trying to look up a non-existing transaction in the transaction manager
+// TransactionNotFound is triggered when trying to look up a non-existing transaction in the transaction checkmanager
 type TransactionNotFound struct {
 	TransactionID string
 }
 
 // Error returns a string representation of the TransactionNotFound error and implements Error.
 func (t TransactionNotFound) Error() string {
-	return fmt.Sprintf("transaction %s not found in transaction manager", t.TransactionID)
+	return fmt.Sprintf("transaction %s not found in transaction checkmanager", t.TransactionID)
 }
 
-// ActionNotFound is triggered when trying to look up a non-existing action for a transaction in the transaction manager
+// ActionNotFound is triggered when trying to look up a non-existing action for a transaction in the transaction checkmanager
 type ActionNotFound struct {
 	TransactionID, ActionID string
 }
 
 // Error returns a string representation of the ActionNotFound error and implements Error.
 func (a ActionNotFound) Error() string {
-	return fmt.Sprintf("action %s for transaction %s not found in transaction manager", a.ActionID, a.TransactionID)
+	return fmt.Sprintf("action %s for transaction %s not found in transaction checkmanager", a.ActionID, a.TransactionID)
 }

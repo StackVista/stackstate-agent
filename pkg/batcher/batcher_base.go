@@ -97,16 +97,16 @@ type SubmitComplete struct {
 	CheckID check.ID
 }
 
-// SubmitShutdown is used to submit a shutdown of the batcher to the input channel
+// SubmitShutdown is used to submit a shutdown of the transactionbatcher to the input channel
 type SubmitShutdown struct{}
 
-// BatcherBase contains the base functionality of a batcher that can be extending with additional functionality
+// BatcherBase contains the base functionality of a transactionbatcher that can be extending with additional functionality
 type BatcherBase struct {
 	Hostname, agentName string
 	Input               chan interface{}
 }
 
-// MakeBatcherBase creates a batcher base Instance
+// MakeBatcherBase creates a transactionbatcher base Instance
 func MakeBatcherBase(hostname, agentName string, maxCapacity int) BatcherBase {
 	return BatcherBase{
 		Hostname:  hostname,
@@ -206,7 +206,7 @@ func (batcher BatcherBase) SubmitComplete(checkID check.ID) {
 	}
 }
 
-// Shutdown shuts down the batcher
+// Shutdown shuts down the transactionbatcher
 func (batcher BatcherBase) Shutdown() {
 	batcher.Input <- SubmitShutdown{}
 }
