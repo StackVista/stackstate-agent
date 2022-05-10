@@ -9,6 +9,22 @@
       "type": "amazon-ebs",
       "region": "eu-west-1",
       "instance_type": "t3.xlarge",
+      "temporary_iam_instance_profile_policy_document": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Action": [
+              "s3:GetObject",
+              "s3:ListBucket"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+              "arn:aws:s3:::vcpython27",
+              "arn:aws:s3:::vcpython27/*"
+            ]
+          }
+        ]
+      },
       "source_ami_filter": {
         "filters": {
           "virtualization-type": "hvm",
@@ -54,9 +70,19 @@
   ],
   "provisioners": [
     {
-      "type": "file",
-      "source": "/root/packages/VCForPython27.msi",
-      "destination": "C:\\Windows\\Temp\\VCForPython27.msi"
+      "type": "powershell",
+      "inline": [
+        "[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12",
+        "Set-ExecutionPolicy Bypass -Scope Process -Force",
+        "iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))",
+        "choco install -y awscli"
+      ]
+    },
+    {
+      "type": "powershell",
+      "inline": [
+        "aws s3 cp s3://vcpython27/VCForPython27.msi C:\\Windows\\Temp\\VCForPython27.msi"
+      ]
     },
     {
       "type": "ansible",
