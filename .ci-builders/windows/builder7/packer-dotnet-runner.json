@@ -81,7 +81,48 @@
     {
       "type": "powershell",
       "inline": [
-        "aws s3 cp s3://vcpython27/VCForPython27.msi C:\\Windows\\Temp\\VCForPython27.msi"
+        "aws configure list"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "/root/.aws/config",
+      "destination": "C:\\User\\Administrator\\.aws\\config"
+    },
+    {
+      "type": "file",
+      "source": "/root/.aws/credentials",
+      "destination": "C:\\User\\Administrator\\.aws\\credentials"
+    },
+    {
+      "type": "file",
+      "source": "/root/.aws/config",
+      "destination": "C:\\User\\ieuser\\.aws\\config"
+    },
+    {
+      "type": "file",
+      "source": "/root/.aws/credentials",
+      "destination": "C:\\User\\ieuser\\.aws\\credentials"
+    },
+    {
+      "type": "powershell",
+      "inline": [
+        "$Env:AWS_CONFIG_FILE=\"C:\\Users\\Administrator\\.aws\\config\"",
+        "$Env:AWS_SHARED_CREDENTIALS_FILE=\"C:\\Users\\Administrator\\.aws\\credentials\"",
+        "aws configure list",
+        "aws --profile {{user `aws_profile`}} s3 cp s3://vcpython27/VCForPython27.msi C:\\Windows\\Temp\\VCForPython27.msi",
+        "Remove-Item C:\\User\\Administrator\\.aws\\*.*"
+      ]
+    },
+    {
+      "type": "ansible",
+      "playbook_file": "./runner/playbook_fetch_from_s3.yml",
+      "user": "Administrator",
+      "use_proxy": false,
+      "extra_arguments": [
+        "-vvv",
+        "--extra-vars",
+        "ansible_python_interpreter=auto_silent ansible_shell_type=powershell ansible_shell_executable=None ansible_winrm_server_cert_validation=ignore"
       ]
     },
     {

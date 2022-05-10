@@ -1,0 +1,24 @@
+- name: Transfer file
+  hosts: localhost
+  tasks:
+#    - name: Set AWS PROFILE
+#      set_fact: aws_profile="{{ lookup('env','AWS_PROFILE') }}"
+#      delegate_to: 127.0.0.1
+#    - name: Get AWS PROFILE ID
+#      set_fact: aws_profile={{hostvars[inventory_hostname]['aws_profile']}}
+#    - name: ensure boto is available
+#      become: true
+#      pip: name=boto3 state=present
+    - name: copy file from bucket
+      become: yes
+      amazon.aws.aws_s3:
+        profile: stackstate-sandbox
+        bucket: vcpython27
+        object: "VCForPython27.msi"
+        dest: "C:\\Windows\\Temp\\VCForPython27.msi"
+        mode: get
+      register: awsgetresult
+
+    - debug:
+        msg="{{ awsgetresult.msg }}"
+      when: awsgetresult.changed
