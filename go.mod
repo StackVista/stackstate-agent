@@ -88,7 +88,7 @@ require (
 	github.com/fatih/color v1.9.0
 	github.com/florianl/go-conntrack v0.1.0
 	github.com/go-ini/ini v1.55.0
-	github.com/go-logr/logr v1.2.0 // indirect
+	github.com/go-logr/logr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.4
 	github.com/go-test/deep v1.0.5 // indirect
 	github.com/gobwas/glob v0.2.3
@@ -203,3 +203,5 @@ replace (
 )
 
 exclude github.com/containerd/containerd v1.5.0-beta.1
+
+replace github.com/go-logr/logr => github.com/go-logr/logr v0.4.0
