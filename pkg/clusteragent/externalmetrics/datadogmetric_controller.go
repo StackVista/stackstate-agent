@@ -9,6 +9,7 @@
 package externalmetrics
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -291,7 +292,7 @@ func (c *DatadogMetricController) createDatadogMetric(ns, name string, datadogMe
 			Name:      name,
 		},
 		Spec: datadoghq.DatadogMetricSpec{
-			Query: datadogMetricInternal.RawQuery(),
+			Query: datadogMetricInternal.Query,
 		},
 		Status: *datadogMetricInternal.BuildStatus(nil),
 	}

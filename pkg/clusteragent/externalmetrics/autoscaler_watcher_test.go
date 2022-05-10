@@ -162,7 +162,7 @@ func TestUpdateAutoscalerReferences(t *testing.T) {
 		UpdateTime: updateTime,
 		Error:      nil,
 	}
-	ddm.SetQueries("metric query0")
+	ddm.Query = "metric query0"
 	f.store.Set("default/dd-metric-0", ddm, "utest")
 
 	ddm = model.DatadogMetricInternal{
@@ -173,19 +173,18 @@ func TestUpdateAutoscalerReferences(t *testing.T) {
 		UpdateTime: updateTime,
 		Error:      nil,
 	}
-	ddm.SetQueries("metric query1")
+	ddm.Query = "metric query1"
 	f.store.Set("default/dd-metric-1", ddm, "utest")
 
 	ddm = model.DatadogMetricInternal{
-		ID:                   "default/dd-metric-2",
-		Active:               true,
-		Valid:                true,
-		Value:                12.0,
-		UpdateTime:           updateTime,
-		AutoscalerReferences: "hpa:ns1/hpa1",
-		Error:                nil,
+		ID:         "default/dd-metric-2",
+		Active:     true,
+		Valid:      true,
+		Value:      12.0,
+		UpdateTime: updateTime,
+		Error:      nil,
 	}
-	ddm.SetQueries("metric query2")
+	ddm.Query = "metric query2"
 	f.store.Set("default/dd-metric-2", ddm, "utest")
 
 	f.runWatcherUpdate()
@@ -193,39 +192,36 @@ func TestUpdateAutoscalerReferences(t *testing.T) {
 	// Check internal store content
 	assert.Equal(t, 3, f.store.Count())
 	ddm = model.DatadogMetricInternal{
-		ID:                   "default/dd-metric-0",
-		Active:               true,
-		Valid:                true,
-		Value:                10.0,
-		UpdateTime:           updateTime,
-		Error:                nil,
-		AutoscalerReferences: "hpa:ns0/hpa0",
+		ID:         "default/dd-metric-0",
+		Active:     true,
+		Valid:      true,
+		Value:      10.0,
+		UpdateTime: updateTime,
+		Error:      nil,
 	}
-	ddm.SetQueries("metric query0")
+	ddm.Query = "metric query0"
 	compareDatadogMetricInternal(t, &ddm, f.store.Get("default/dd-metric-0"))
 
 	ddm = model.DatadogMetricInternal{
-		ID:                   "default/dd-metric-1",
-		Active:               true,
-		Valid:                true,
-		Value:                11.0,
-		UpdateTime:           updateTime,
-		Error:                nil,
-		AutoscalerReferences: "wpa:ns0/wpa0",
+		ID:         "default/dd-metric-1",
+		Active:     true,
+		Valid:      true,
+		Value:      11.0,
+		UpdateTime: updateTime,
+		Error:      nil,
 	}
-	ddm.SetQueries("metric query1")
+	ddm.Query = "metric query1"
 	compareDatadogMetricInternal(t, &ddm, f.store.Get("default/dd-metric-1"))
 
 	ddm = model.DatadogMetricInternal{
-		ID:                   "default/dd-metric-2",
-		Active:               false,
-		Valid:                false,
-		Value:                12.0,
-		UpdateTime:           updateTime,
-		Error:                nil,
-		AutoscalerReferences: "",
+		ID:         "default/dd-metric-2",
+		Active:     false,
+		Valid:      false,
+		Value:      12.0,
+		UpdateTime: updateTime,
+		Error:      nil,
 	}
-	ddm.SetQueries("metric query2")
+	ddm.Query = "metric query2"
 	compareDatadogMetricInternal(t, &ddm, f.store.Get("default/dd-metric-2"))
 }
 
@@ -281,7 +277,7 @@ func TestCreateAutogenDatadogMetrics(t *testing.T) {
 		UpdateTime: updateTime,
 		Error:      nil,
 	}
-	ddm.SetQuery("metric query0")
+	ddm.Query = "metric query0"
 	f.store.Set("default/dd-metric-0", ddm, "utest")
 
 	f.runWatcherUpdate()
@@ -296,35 +292,33 @@ func TestCreateAutogenDatadogMetrics(t *testing.T) {
 		UpdateTime: updateTime,
 		Error:      nil,
 	}
-	ddm.SetQuery("metric query0")
+	ddm.Query = "metric query0"
 	compareDatadogMetricInternal(t, &ddm, f.store.Get("default/dd-metric-0"))
 
 	ddm = model.DatadogMetricInternal{
-		ID:                   "default/dcaautogen-f311ac1e6b29e3723d1445645c43afd4340d22",
-		Active:               true,
-		Valid:                false,
-		Autogen:              true,
-		ExternalMetricName:   "docker.cpu.usage",
-		Value:                0.0,
-		UpdateTime:           updateTime,
-		Error:                nil,
-		AutoscalerReferences: "hpa:ns0/hpa0",
+		ID:                 "default/dcaautogen-f311ac1e6b29e3723d1445645c43afd4340d22",
+		Active:             true,
+		Valid:              false,
+		Autogen:            true,
+		ExternalMetricName: "docker.cpu.usage",
+		Value:              0.0,
+		UpdateTime:         updateTime,
+		Error:              nil,
 	}
-	ddm.SetQuery("avg:docker.cpu.usage{foo:bar}.rollup(30)")
+	ddm.Query = "avg:docker.cpu.usage{foo:bar}.rollup(30)"
 	compareDatadogMetricInternal(t, &ddm, f.store.Get("default/dcaautogen-f311ac1e6b29e3723d1445645c43afd4340d22"))
 
 	ddm = model.DatadogMetricInternal{
-		ID:                   "default/dcaautogen-b6ea72b610c00aba6791b5eca1912e68dc7412",
-		Active:               true,
-		Valid:                false,
-		Autogen:              true,
-		ExternalMetricName:   "docker.cpu.usage",
-		Value:                0.0,
-		UpdateTime:           updateTime,
-		Error:                nil,
-		AutoscalerReferences: "wpa:ns0/wpa0",
+		ID:                 "default/dcaautogen-b6ea72b610c00aba6791b5eca1912e68dc7412",
+		Active:             true,
+		Valid:              false,
+		Autogen:            true,
+		ExternalMetricName: "docker.cpu.usage",
+		Value:              0.0,
+		UpdateTime:         updateTime,
+		Error:              nil,
 	}
-	ddm.SetQuery("avg:docker.cpu.usage{bar:foo}.rollup(30)")
+	ddm.Query = "avg:docker.cpu.usage{bar:foo}.rollup(30)"
 	compareDatadogMetricInternal(t, &ddm, f.store.Get("default/dcaautogen-b6ea72b610c00aba6791b5eca1912e68dc7412"))
 }
 
@@ -343,7 +337,7 @@ func TestCleanUpAutogenDatadogMetrics(t *testing.T) {
 		UpdateTime: expiredUpdateTime,
 		Error:      nil,
 	}
-	ddm.SetQueries("metric query0")
+	ddm.Query = "metric query0"
 	f.store.Set("default/dd-metric-0", ddm, "utest")
 
 	// HPA has been deleted but last update time was 30 minutes ago, we should keep it
@@ -358,7 +352,7 @@ func TestCleanUpAutogenDatadogMetrics(t *testing.T) {
 		UpdateTime:         oldUpdateTime,
 		Error:              nil,
 	}
-	ddm.SetQueries("avg:docker.cpu.usage{foo:bar}.rollup(30)")
+	ddm.Query = "avg:docker.cpu.usage{foo:bar}.rollup(30)"
 	f.store.Set("default/dcaautogen-f311ac1e6b29e3723d1445645c43afd4340d22", ddm, "utest")
 
 	// WPA has been deleted for 90 minutes, we should flag this as deleted
@@ -373,7 +367,7 @@ func TestCleanUpAutogenDatadogMetrics(t *testing.T) {
 		UpdateTime:         expiredUpdateTime,
 		Error:              nil,
 	}
-	ddm.SetQueries("avg:docker.cpu.usage{bar:foo}.rollup(30)")
+	ddm.Query = "avg:docker.cpu.usage{bar:foo}.rollup(30)"
 	f.store.Set("default/dcaautogen-b6ea72b610c00aba6791b5eca1912e68dc7412", ddm, "utest")
 
 	f.runWatcherUpdate()
@@ -389,7 +383,7 @@ func TestCleanUpAutogenDatadogMetrics(t *testing.T) {
 		UpdateTime: expiredUpdateTime,
 		Error:      nil,
 	}
-	ddm.SetQueries("metric query0")
+	ddm.Query = "metric query0"
 	compareDatadogMetricInternal(t, &ddm, f.store.Get("default/dd-metric-0"))
 
 	ddm = model.DatadogMetricInternal{
@@ -403,7 +397,7 @@ func TestCleanUpAutogenDatadogMetrics(t *testing.T) {
 		UpdateTime:         oldUpdateTime,
 		Error:              nil,
 	}
-	ddm.SetQueries("avg:docker.cpu.usage{foo:bar}.rollup(30)")
+	ddm.Query = "avg:docker.cpu.usage{foo:bar}.rollup(30)"
 	compareDatadogMetricInternal(t, &ddm, f.store.Get("default/dcaautogen-f311ac1e6b29e3723d1445645c43afd4340d22"))
 
 	ddm = model.DatadogMetricInternal{
@@ -417,6 +411,6 @@ func TestCleanUpAutogenDatadogMetrics(t *testing.T) {
 		UpdateTime:         expiredUpdateTime,
 		Error:              nil,
 	}
-	ddm.SetQueries("avg:docker.cpu.usage{bar:foo}.rollup(30)")
+	ddm.Query = "avg:docker.cpu.usage{bar:foo}.rollup(30)"
 	compareDatadogMetricInternal(t, &ddm, f.store.Get("default/dcaautogen-b6ea72b610c00aba6791b5eca1912e68dc7412"))
 }

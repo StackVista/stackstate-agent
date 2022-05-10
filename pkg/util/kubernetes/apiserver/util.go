@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package apiserver
@@ -10,6 +11,9 @@ package apiserver
 import (
 	"context"
 	"fmt"
+	"github.com/DataDog/watermarkpodautoscaler/api/v1alpha1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"time"
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
@@ -39,4 +43,21 @@ func SyncInformers(informers map[InformerName]cache.SharedInformer) error {
 		})
 	}
 	return g.Wait()
+}
+
+func UnstructuredIntoWPA(obj interface{}, structDest *v1alpha1.WatermarkPodAutoscaler) error {
+	unstrObj, ok := obj.(*unstructured.Unstructured)
+	if !ok {
+		return fmt.Errorf("could not cast Unstructured object: %v", obj)
+	}
+	return runtime.DefaultUnstructuredConverter.FromUnstructured(unstrObj.UnstructuredContent(), structDest)
+}
+
+func UnstructuredFromWPA(structIn *v1alpha1.WatermarkPodAutoscaler, unstructOut *unstructured.Unstructured) error {
+	content, err := runtime.DefaultUnstructuredConverter.ToUnstructured(structIn)
+	if err != nil {
+		return fmt.Errorf("Unable to convert WatermarkPodAutoscaler %v: %w", structIn, err)
+	}
+	unstructOut.SetUnstructuredContent(content)
+	return nil
 }

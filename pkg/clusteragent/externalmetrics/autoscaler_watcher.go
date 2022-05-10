@@ -10,7 +10,6 @@ package externalmetrics
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	autoscaler "k8s.io/api/autoscaling/v2beta1"
@@ -138,14 +137,10 @@ func (w *AutoscalerWatcher) processAutoscalers() {
 
 	// Go through all DatadogMetric and perform necessary actions
 	for _, datadogMetric := range w.store.GetAll() {
-		var autoscalerReferences string
-		externalMetric, active := datadogMetricReferences[datadogMetric.ID]
-		if externalMetric != nil {
-			autoscalerReferences = strings.Join(externalMetric.autoscalerReferences, autoscalerReferencesSep)
-		}
+		_, active := datadogMetricReferences[datadogMetric.ID]
 
 		// Update DatadogMetric active status
-		w.updateDatadogMetricStatus(active, autoscalerReferences, datadogMetric)
+		w.updateDatadogMetricStatus(active, datadogMetric)
 
 		// Delete autogen DatadogMetrics that haven't been updated for some time
 		w.cleanupAutogenDatadogMetric(active, datadogMetric)
@@ -159,26 +154,20 @@ func (w *AutoscalerWatcher) processAutoscalers() {
 	for datadogMetricID, externalMetric := range datadogMetricReferences {
 		if externalMetric != nil && len(externalMetric.metricName) > 0 {
 			autogenQuery := buildDatadogQueryForExternalMetric(externalMetric.metricName, externalMetric.metricLabels)
-			autogenDatadogMetric := model.NewDatadogMetricInternalFromExternalMetric(
-				datadogMetricID,
-				autogenQuery,
-				externalMetric.metricName,
-				strings.Join(externalMetric.autoscalerReferences, autoscalerReferencesSep),
-			)
+			autogenDatadogMetric := model.NewDatadogMetricInternalFromExternalMetric(datadogMetricID, autogenQuery, externalMetric.metricName)
 			log.Infof("Creating DatadogMetric: %s for ExternalMetric: %s, Query: %s", datadogMetricID, externalMetric.metricName, autogenQuery)
 			w.store.Set(datadogMetricID, autogenDatadogMetric, autoscalerWatcherStoreID)
 		}
 	}
 }
 
-func (w *AutoscalerWatcher) updateDatadogMetricStatus(active bool, autoscalerReferences string, datadogMetric model.DatadogMetricInternal) {
-	if active != datadogMetric.Active || autoscalerReferences != datadogMetric.AutoscalerReferences {
-		log.Debugf("Updating active status for: %s to: %t references: %s", datadogMetric.ID, active, autoscalerReferences)
+func (w *AutoscalerWatcher) updateDatadogMetricStatus(active bool, datadogMetric model.DatadogMetricInternal) {
+	if active != datadogMetric.Active {
+		log.Debugf("Updating active status for: %s to: %t", datadogMetric.ID, active)
 
 		if currentDatadogMetric := w.store.LockRead(datadogMetric.ID, false); currentDatadogMetric != nil {
 			currentDatadogMetric.UpdateTime = time.Now().UTC()
 			currentDatadogMetric.Active = active
-			currentDatadogMetric.AutoscalerReferences = autoscalerReferences
 			// If we move from Active to Inactive, we discard current valid state to avoid using unrefreshed metrics upon re-activation
 			if !currentDatadogMetric.Active {
 				currentDatadogMetric.Valid = false
