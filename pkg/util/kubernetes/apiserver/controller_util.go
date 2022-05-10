@@ -98,10 +98,19 @@ func (h *AutoscalersController) gc() {
 	var err error
 
 	if wpaEnabled {
-		wpaList, err = h.wpaLister.WatermarkPodAutoscalers(metav1.NamespaceAll).List(labels.Everything())
+		wpaListObj, err := h.wpaLister.ByNamespace(metav1.NamespaceAll).List(labels.Everything())
 		if err != nil {
 			log.Errorf("Error listing the WatermarkPodAutoscalers %v", err)
 			return
+		}
+		log.Debugf("Garbage collection over %d WPAs", len(wpaListObj))
+		for _, obj := range wpaListObj {
+			tmp := &v1alpha1.WatermarkPodAutoscaler{}
+			if err := UnstructuredIntoWPA(obj, tmp); err != nil {
+				log.Errorf("Unable to cast object from local cache into a WPA: %v", err)
+				continue
+			}
+			wpaList = append(wpaList, tmp)
 		}
 	}
 
@@ -123,7 +132,7 @@ func (h *AutoscalersController) gc() {
 		return
 	}
 	h.deleteFromLocalStore(toDelete.External)
-	log.Debugf("Done GC run. Deleted %d metrics", len(toDelete.External))
+	log.Infof("Done GC run. Deleted %d metrics", len(toDelete.External))
 }
 
 func (h *AutoscalersController) deleteFromLocalStore(toDelete []custommetrics.ExternalMetricValue) {

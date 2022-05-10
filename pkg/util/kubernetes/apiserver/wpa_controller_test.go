@@ -655,7 +655,7 @@ func configureLoggerForTest(t *testing.T) func() {
 		t.Fatalf("unable to configure logger, err: %v", err)
 	}
 	seelog.ReplaceLogger(logger) //nolint:errcheck
-	log.SetupLogger(logger, "trace")
+	log.SetupDatadogLogger(logger, "trace")
 	return log.Flush
 }
 
