@@ -3,11 +3,13 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package secret
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -190,7 +192,7 @@ func (c *Controller) createSecret() error {
 		Data: data,
 	}
 
-	_, err = c.clientSet.CoreV1().Secrets(c.config.GetNs()).Create(secret)
+	_, err = c.clientSet.CoreV1().Secrets(c.config.GetNs()).Create(context.TODO(), secret, metav1.CreateOptions{})
 	return err
 }
 
@@ -203,7 +205,7 @@ func (c *Controller) updateSecret(secret *corev1.Secret) error {
 
 	secret = secret.DeepCopy()
 	secret.Data = data
-	_, err = c.clientSet.CoreV1().Secrets(c.config.GetNs()).Update(secret)
+	_, err = c.clientSet.CoreV1().Secrets(c.config.GetNs()).Update(context.TODO(), secret, metav1.UpdateOptions{})
 	return err
 }
 

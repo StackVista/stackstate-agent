@@ -3,12 +3,14 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package certificate
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -143,7 +145,7 @@ func GetCertificateFromSecret(secretNs, secretName string, client kubernetes.Int
 		return &cert, nil
 	}
 
-	secret, err := client.CoreV1().Secrets(secretNs).Get(secretName, metav1.GetOptions{})
+	secret, err := client.CoreV1().Secrets(secretNs).Get(context.TODO(), secretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
