@@ -11,6 +11,12 @@ type MockTransactionManager struct {
 	CurrentTransactionNotifyChannel chan interface{}
 }
 
+func (ttm *MockTransactionManager) Start() {
+}
+
+func (ttm *MockTransactionManager) Stop() {
+}
+
 func (ttm *MockTransactionManager) StartTransaction(_ check.ID, TransactionID string, NotifyChannel chan interface{}) {
 	ttm.CurrentTransaction = TransactionID
 	ttm.CurrentTransactionNotifyChannel = NotifyChannel

@@ -11,6 +11,9 @@ import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionforwarder"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -124,8 +127,12 @@ var checkCmd = &cobra.Command{
 
 		// [sts] init the transactionbatcher without the real serializer
 		batcher.InitBatcher(&printingAgentV1Serializer{}, hostname, "agent", config.GetMaxCapacity())
-		// [sts] create the global check checkmanager instance
-		common.CheckManager = checkmanager.MakeCheckManager()
+		// [sts] create the global transactional components
+		transactionforwarder.InitTransactionalForwarder()
+		transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
+		checkmanager.InitCheckManager()
+		txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
+		transactionmanager.InitTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
 
 		if config.Datadog.GetBool("inventories_enabled") {
 			metadata.SetupInventoriesExpvar(common.AC, common.Coll)

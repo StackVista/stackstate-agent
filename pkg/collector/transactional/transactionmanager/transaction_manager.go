@@ -14,12 +14,14 @@ var (
 )
 
 type TransactionManager interface {
+	Start()
 	StartTransaction(CheckID check.ID, TransactionID string, NotifyChannel chan interface{})
 	CompleteTransaction(transactionID string)
 	RollbackTransaction(transactionID, reason string)
 	CommitAction(transactionID, actionID string)
 	AcknowledgeAction(transactionID, actionID string)
 	RejectAction(transactionID, actionID, reason string)
+	Stop()
 }
 
 // InitTransactionManager ...

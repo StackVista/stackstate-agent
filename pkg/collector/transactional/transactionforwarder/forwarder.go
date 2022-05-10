@@ -1,9 +1,10 @@
-package transactionalforwarder
+package transactionforwarder
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/httpclient"
+	"sync"
 )
 
 // Payloads is a slice of pointers to byte arrays, an alias for the slices of
@@ -28,7 +29,9 @@ type Response struct {
 }
 
 type TransactionalForwarder interface {
+	Start()
 	SubmitTransactionalIntake(payload TransactionalPayload)
+	Stop()
 }
 
 // Forwarder is a forwarder that works in transactional manner
@@ -38,8 +41,25 @@ type Forwarder struct {
 	ShutdownChannel chan ShutdownForwarder
 }
 
-// MakeForwarder returns a instance of the forwarder
-func MakeForwarder() *Forwarder {
+var (
+	transactionalForwarderInstance TransactionalForwarder
+	tfInit                         sync.Once
+)
+
+// InitTransactionalForwarder initializes the global transactional forwarder Instance
+func InitTransactionalForwarder() {
+	tfInit.Do(func() {
+		transactionalForwarderInstance = newTransactionalForwarder()
+	})
+}
+
+// GetTransactionalForwarder ...
+func GetTransactionalForwarder() TransactionalForwarder {
+	return transactionalForwarderInstance
+}
+
+// newTransactionalForwarder returns a instance of the forwarder
+func newTransactionalForwarder() *Forwarder {
 	return &Forwarder{stsClient: httpclient.NewStackStateClient()}
 }
 

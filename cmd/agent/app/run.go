@@ -11,6 +11,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionforwarder"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"runtime"
 	"syscall"
@@ -276,8 +277,9 @@ func StartAgent() error {
 
 	// [sts] init the transactionbatcher for topology production
 	batcher.InitBatcher(s, hostname, "agent", config.GetMaxCapacity())
-	// [sts] create the global check checkmanager instance
-	transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity())
+	// [sts] create the global transactional components
+	transactionforwarder.InitTransactionalForwarder()
+	transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
 	checkmanager.InitCheckManager()
 	txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
 	transactionmanager.InitTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
@@ -360,10 +362,11 @@ func StopAgent() {
 		common.MetadataScheduler.Stop()
 	}
 
-	// [sts] clear the check checkmanager
-	if common.CheckManager != nil {
-		common.CheckManager.Clear()
-	}
+	// [sts] stop the transactional components
+	transactionforwarder.GetTransactionalForwarder().Stop()
+	transactionbatcher.GetTransactionalBatcher().Shutdown()
+	checkmanager.GetCheckManager().Clear()
+	transactionmanager.GetTransactionManager().Stop()
 
 	api.StopServer()
 	clcrunnerapi.StopCLCRunnerServer()

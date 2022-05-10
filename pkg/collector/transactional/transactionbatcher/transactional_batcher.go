@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionalforwarder"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionforwarder"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/health"
@@ -23,15 +23,13 @@ var (
 )
 
 // InitTransactionalBatcher initializes the global transactional transactionbatcher Instance
-func InitTransactionalBatcher(hostname, agentName string, maxCapacity int,
-	flushInterval time.Duration, forwarder transactionalforwarder.TransactionalForwarder) {
+func InitTransactionalBatcher(hostname, agentName string, maxCapacity int, flushInterval time.Duration) {
 	batcherInit.Do(func() {
-		batcherInstance = newTransactionalBatcher(hostname, agentName, maxCapacity, flushInterval, forwarder)
+		batcherInstance = newTransactionalBatcher(hostname, agentName, maxCapacity, flushInterval)
 	})
 }
 
-func newTransactionalBatcher(hostname, agentName string, maxCapacity int,
-	flushInterval time.Duration, forwarder transactionalforwarder.TransactionalForwarder) *transactionalBatcher {
+func newTransactionalBatcher(hostname, agentName string, maxCapacity int, flushInterval time.Duration) *transactionalBatcher {
 	checkFlushInterval := time.NewTicker(flushInterval)
 	ctb := &transactionalBatcher{
 		Hostname:    hostname,
@@ -39,7 +37,6 @@ func newTransactionalBatcher(hostname, agentName string, maxCapacity int,
 		Input:       make(chan interface{}, maxCapacity),
 		builder:     NewTransactionalBatchBuilder(maxCapacity),
 		flushTicker: checkFlushInterval,
-		Forwarder:   forwarder,
 		maxCapacity: maxCapacity,
 	}
 
@@ -67,7 +64,6 @@ type transactionalBatcher struct {
 	Input               chan interface{}
 	builder             TransactionBatchBuilder
 	flushTicker         *time.Ticker
-	Forwarder           transactionalforwarder.TransactionalForwarder
 	maxCapacity         int
 }
 
@@ -80,7 +76,7 @@ func (ctb *transactionalBatcher) listenForFlushTicker() {
 
 // submitPayload submits the payload to the forwarder
 func (ctb *transactionalBatcher) submitPayload(payload []byte, transactionPayloadMap map[string]transactional.PayloadTransaction) {
-	ctb.Forwarder.SubmitTransactionalIntake(transactionalforwarder.TransactionalPayload{
+	transactionforwarder.GetTransactionalForwarder().SubmitTransactionalIntake(transactionforwarder.TransactionalPayload{
 		Payload:              payload,
 		TransactionActionMap: transactionPayloadMap,
 	})
