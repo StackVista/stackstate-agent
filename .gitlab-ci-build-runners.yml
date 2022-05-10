@@ -1,6 +1,7 @@
 stages:
   - build_runner_base
   - build_runners
+  - fallback-manual
 
 variables:
   BUILDERS_FOLDER: $CI_PROJECT_DIR/.ci-builders
@@ -31,12 +32,6 @@ before_script:
     max: 2
     when:
       - always
-  rules:
-    - if: $CI_COMMIT_MESSAGE =~ /\[build_runners]/
-      when: always
-    - if: $CI_COMMIT_MESSAGE
-      when: manual
-      allow_failure: true
 
 ##################################################################################
 # BUILD IMAGES BASE FOR DEB + RPM
@@ -64,10 +59,11 @@ before_script:
     reports:
       dotenv: build.env
   rules:
-    - if: $CI_COMMIT_MESSAGE
-      when: manual
     - if: $CI_COMMIT_MESSAGE =~ /\[build_runners]/
       when: always
+    - if: $CI_COMMIT_MESSAGE
+      when: manual
+      allow_failure: true
 
 # produces the base deb image: quay.io/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
 build-debian-base:
@@ -112,8 +108,11 @@ build-centos7-base:
     - docker tag "${BUILD_TAG}" "${QUAY_TAG}"
     - docker push "${QUAY_TAG}"
   rules:
-    - if: $CI_COMMIT_MESSAGE
+    - if: $CI_COMMIT_MESSAGE =~ /\[build_runners]/
       when: on_success
+    - if: $CI_COMMIT_MESSAGE
+      when: manual
+      allow_failure: true
 
 
 # produces the runner deb image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
@@ -147,8 +146,11 @@ build-centos7-runner:
 
 # This ensures that triggers can achieve success status if manual jobs are not executed.
 ensure-success-manual:
-  stage: build_runner_base
+  stage: fallback-manual
   before_script: []
+  dependencies:
+    - build-centos7-runner
+    - build-debian-runner
   script:
     - echo "I will succeed"
   rules:
