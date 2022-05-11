@@ -56,10 +56,19 @@
 
 # or way 3  choco install dotnet3.5 , although usually not
 
-    - name: Install .NET Core SDK 3.1
+    - name: Install .NET Core SDK All
       win_chocolatey:
         name: dotnetcore-sdk
         state: present
+      retries: 3
+      ignore_errors: true
+      register: dotnetcoresdkresult
+
+    - name: Install vcredist140
+      win_command: powershell.exe -
+      args:
+        stdin: Start-Process C:\Windows\Temp\VC_redist.x86.exe -ArgumentList "/q /norestart"
+      when: dotnetcoresdkresult is failed
 
     - name: Install nuget commandline
       win_chocolatey:

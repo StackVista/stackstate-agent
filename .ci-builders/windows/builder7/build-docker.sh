@@ -9,4 +9,4 @@ if [ ! -f "VCForPython27.msi" ]; then
     aws s3 cp s3://vcpython27/VCForPython27.msi .
 fi
 
-docker build -t wolverminion/packer-runner:0.0.5 .
+docker build -t wolverminion/packer-runner:0.0.6 .

@@ -1,5 +1,6 @@
 - name: Transfer file
-  hosts: localhost
+  hosts: all
+  connection: local
   tasks:
 #    - name: Set AWS PROFILE
 #      set_fact: aws_profile="{{ lookup('env','AWS_PROFILE') }}"
@@ -9,16 +10,34 @@
 #    - name: ensure boto is available
 #      become: true
 #      pip: name=boto3 state=present
+#    - name: copy file from bucket
+#      amazon.aws.aws_s3:
+#        profile: stackstate-sandbox
+#        bucket: vcpython27
+#        object: "VCForPython27.msi"
+#        dest: "C:\\Windows\\Temp\\VCForPython27.msi"
+#        mode: get
+#      register: awsgetresult
     - name: copy file from bucket
-      become: yes
       amazon.aws.aws_s3:
         profile: stackstate-sandbox
         bucket: vcpython27
-        object: "VCForPython27.msi"
-        dest: "C:\\Windows\\Temp\\VCForPython27.msi"
+        object: /VCForPython27.msi
+        dest: /etc/ansible/playbooks/VCForPython27.msi
         mode: get
+      delegate_to: localhost
       register: awsgetresult
 
     - debug:
         msg="{{ awsgetresult.msg }}"
       when: awsgetresult.changed
+
+    - name: copy to win server
+      win_copy:
+        src: /etc/ansible/playbooks/VCForPython27.msi
+        dest: C:/Windows/Temp/VCForPython27.msi
+      register: wincopyresult
+
+    - debug:
+        msg="{{ wincopyresult.msg }}"
+      when: wincopyresult.changed
