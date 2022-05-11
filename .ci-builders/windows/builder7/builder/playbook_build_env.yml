@@ -56,7 +56,7 @@
 
 # or way 3  choco install dotnet3.5 , although usually not
 
-    - name: Install .NET Core SDK All
+    - name: Install .NET Core SDK 3.1
       win_chocolatey:
         name: dotnetcore-sdk
         state: present
