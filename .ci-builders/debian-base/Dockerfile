@@ -6,7 +6,6 @@ RUN sed -i 's/^#\s*\(deb.*universe\)$/\1/g' /etc/apt/sources.list \
     && sed -i 's/main/main contrib non-free/' /etc/apt/sources.list
 
 # Build Args
-ARG GIMME_GO_VERSION=1.13.11
 ARG DD_CONDA_VERSION=4.7.10
 ARG DD_PIP_VERSION=19.1
 ARG DD_SETUPTOOLS_VERSION=41.0.1
@@ -16,7 +15,6 @@ ARG CLANG_VERSION=8.0.0
 
 # Environment
 ENV GOPATH /go
-ENV GIMME_GO_VERSION $GIMME_GO_VERSION
 ENV DD_PIP_VERSION $DD_PIP_VERSION
 ENV DD_SETUPTOOLS_VERSION $DD_SETUPTOOLS_VERSION
 ENV IBM_MQ_VERSION $IBM_MQ_VERSION
@@ -118,7 +116,6 @@ RUN /bin/bash -c  "source /root/.bashrc && conda activate ddpy3 \
 # Gimme
 #RUN curl -sL -o /bin/gimme https://raw.githubusercontent.com/travis-ci/gimme/master/gimme
 #RUN chmod +x /bin/gimme
-#RUN gimme $GIMME_GO_VERSION
 COPY ./gobin.sh /etc/profile.d/
 
 # Docker

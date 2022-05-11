@@ -51,7 +51,7 @@
             "type": "go"
         },
         "github.com/goware/modvendor": {
-            "version": "892bf4ecb805b052575eb45070a60f9db471df8e",
+            "version": "v0.5.0",
             "type": "go"
         }
     }
