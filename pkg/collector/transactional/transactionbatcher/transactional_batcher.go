@@ -83,77 +83,61 @@ func (ctb *transactionalBatcher) submitPayload(payload []byte, transactionPayloa
 }
 
 // marshallPayload submits the payload to the forwarder
-func (ctb *transactionalBatcher) marshallPayload(data map[string]interface{}) ([]byte, error) {
-	payload, err := json.Marshal(data)
+func (ctb *transactionalBatcher) marshallPayload(intake transactional.IntakePayload) ([]byte, error) {
+	payload, err := json.Marshal(intake)
 	if err != nil {
-		return nil, fmt.Errorf("could not serialize v1 payload: %s", err)
+		return nil, fmt.Errorf("could not serialize intake payload: %s", err)
 	}
 
 	return payload, nil
 }
 
 // mapStateToPayload submits the payload to the forwarder
-func (ctb *transactionalBatcher) mapStateToPayload(states TransactionCheckInstanceBatchStates) map[string]interface{} {
-	// Create the topologies
-	topologies := make([]topology.Topology, 0)
+func (ctb *transactionalBatcher) mapStateToPayload(states TransactionCheckInstanceBatchStates) transactional.IntakePayload {
+	intake := transactional.IntakePayload{InternalHostname: ctb.Hostname}
+
+	// Create the topologies payload
 	for _, state := range states {
 		if state.Topology != nil {
-			topologies = append(topologies, *state.Topology)
+			intake.Topologies = append(intake.Topologies, *state.Topology)
 		}
 	}
 
-	// Create the healthData payload
-	healthData := make([]health.Health, 0)
+	// Create the health payload
 	for _, state := range states {
 		for _, healthRecord := range state.Health {
-			healthData = append(healthData, healthRecord)
+			intake.Health = append(intake.Health, healthRecord)
 		}
 	}
 
-	// Create the rawMetricData payload
-	rawMetrics := make([]interface{}, 0)
+	// Create the metric payload
 	for _, state := range states {
 		if state.Metrics != nil {
 			for _, metric := range *state.Metrics {
-				rawMetrics = append(rawMetrics, metric.ConvertToIntakeMetric())
+				intake.Metrics = append(intake.Metrics, metric.ConvertToIntakeMetric())
 			}
 		}
 	}
 
-	payload := map[string]interface{}{
-		"internalHostname": ctb.Hostname,
-		"topologies":       topologies,
-		"health":           healthData,
-		"metrics":          rawMetrics,
-	}
-
 	// For debug purposes print out all topologies payload
 	if config.Datadog.GetBool("log_payloads") {
 		log.Debug("Flushing the following topologies:")
-		for _, topo := range topologies {
+		for _, topo := range intake.Topologies {
 			log.Debugf("%v", topo)
 		}
 
 		log.Debug("Flushing the following health data:")
-		for _, health := range healthData {
-			log.Debugf("%v", health)
+		for _, h := range intake.Health {
+			log.Debugf("%v", h)
 		}
 
 		log.Debug("Flushing the following raw metric data:")
-		for _, rawMetric := range rawMetrics {
+		for _, rawMetric := range intake.Metrics {
 			log.Debugf("%v", rawMetric)
 		}
 	}
 
-	// For debug purposes print out all topologies payload
-	if config.Datadog.GetBool("log_payloads") {
-		log.Debug("Flushing the following topologies:")
-		for _, topo := range topologies {
-			log.Debugf("%v", topo)
-		}
-	}
-
-	return payload
+	return intake
 }
 
 // Start starts the transactional transactionbatcher

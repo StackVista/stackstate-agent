@@ -39,10 +39,10 @@ func GetTransactionManager() TransactionManager {
 }
 
 // NewMockTransactionManager returns a handle on the global transactionbatcher Instance
-func NewMockTransactionManager() TransactionManager {
+func NewMockTransactionManager() *MockTransactionManager {
 	tm := newTestTransactionManager()
 	tmInstance = tm
-	return tmInstance
+	return tm
 }
 
 // newTransactionManager returns an instance of a TransactionManager

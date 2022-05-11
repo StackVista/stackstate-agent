@@ -62,7 +62,7 @@ func TestCheckHandler(t *testing.T) {
 }
 
 func TestCheckHandler_Transactions(t *testing.T) {
-	testTxManager := transactionmanager.NewMockTransactionManager().(*transactionmanager.MockTransactionManager)
+	testTxManager := transactionmanager.NewMockTransactionManager()
 
 	ch := NewCheckHandler(&check.TestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*checkHandler)
@@ -126,7 +126,7 @@ func TestCheckHandler_Transactions(t *testing.T) {
 }
 
 func TestCheckHandler_Shutdown(t *testing.T) {
-	testTxManager := transactionmanager.NewMockTransactionManager().(*transactionmanager.MockTransactionManager)
+	testTxManager := transactionmanager.NewMockTransactionManager()
 	ch := NewCheckHandler(&check.TestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*checkHandler)
 

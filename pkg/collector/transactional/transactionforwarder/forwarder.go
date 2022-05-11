@@ -58,6 +58,13 @@ func GetTransactionalForwarder() TransactionalForwarder {
 	return transactionalForwarderInstance
 }
 
+// NewMockTransactionalForwarder initializes the global TransactionalForwarder with a mock version, intended for testing
+func NewMockTransactionalForwarder() *mockForwarder {
+	mf := createMockForwarder()
+	transactionalForwarderInstance = mf
+	return mf
+}
+
 // newTransactionalForwarder returns a instance of the forwarder
 func newTransactionalForwarder() *Forwarder {
 	return &Forwarder{stsClient: httpclient.NewStackStateClient()}
@@ -67,12 +74,11 @@ func newTransactionalForwarder() *Forwarder {
 func (f *Forwarder) Start() {
 forwardHandler:
 	for {
-		// handling high priority transactions first
 		select {
 		case tPayload := <-f.PayloadChannel:
 			response := f.stsClient.Post("", tPayload.Payload)
 			if response.Err != nil {
-				// Payload failed, rollback checkmanager
+				// Payload failed, rollback transaction
 				for transactionID, payloadTransaction := range tPayload.TransactionActionMap {
 					transactionmanager.GetTransactionManager().RejectAction(transactionID, payloadTransaction.ActionID, response.Err.Error())
 				}
