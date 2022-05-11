@@ -3,11 +3,13 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package admission
 
 import (
+	"context"
 	"fmt"
 	"hash/fnv"
 	"strconv"
@@ -54,7 +56,7 @@ func GetStatus(apiCl kubernetes.Interface) map[string]interface{} {
 
 func getWebhookStatus(name string, apiCl kubernetes.Interface) (map[string]interface{}, error) {
 	webhookStatus := make(map[string]interface{})
-	webhook, err := apiCl.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Get(name, metav1.GetOptions{})
+	webhook, err := apiCl.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return webhookStatus, err
 	}
@@ -91,7 +93,7 @@ func getWebhookStatus(name string, apiCl kubernetes.Interface) (map[string]inter
 
 func getSecretStatus(ns, name string, apiCl kubernetes.Interface) (map[string]interface{}, error) {
 	secretStatus := make(map[string]interface{})
-	secret, err := apiCl.CoreV1().Secrets(ns).Get(name, metav1.GetOptions{})
+	secret, err := apiCl.CoreV1().Secrets(ns).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return secretStatus, err
 	}

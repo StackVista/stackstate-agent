@@ -3,11 +3,13 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package apiserver
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,7 +46,7 @@ func EntityForEndpoints(namespace, name, ip string) string {
 
 // GetEndpoints retrieves all the endpoints in the Kubernetes cluster across all namespaces.
 func (c *APIClient) GetEndpoints() ([]v1.Endpoints, error) {
-	endpointList, err := c.Cl.CoreV1().Endpoints(metav1.NamespaceAll).List(metav1.ListOptions{})
+	endpointList, err := c.Cl.CoreV1().Endpoints(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return []v1.Endpoints{}, err
 	}
