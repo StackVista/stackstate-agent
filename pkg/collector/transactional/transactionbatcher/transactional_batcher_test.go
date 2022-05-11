@@ -68,216 +68,257 @@ var (
 		},
 	}
 
-	testRawMetricsDataIntakeMetric  = testRawMetricsData.ConvertToIntakeMetric()
-	testRawMetricsDataIntakeMetric2 = testRawMetricsData2.ConvertToIntakeMetric()
+	testRawMetricsDataIntakeMetric  = testRawMetricsData.IntakeMetricJSON()
+	testRawMetricsDataIntakeMetric2 = testRawMetricsData2.IntakeMetricJSON()
 )
 
-func TestBatchFlushOnStopSnapshot(t *testing.T) {
+// TODO: these might hit nil pointers in the batcher because we only init the transaction manager and forwarder in the testBatcher function
+// TODO: after the batcher operations have been executed
+func testBatcher(t *testing.T, transactionState []TransactionState, expectedPayload transactional.IntakePayload) {
 	fwd := transactionforwarder.NewMockTransactionalForwarder()
 	tm := transactionmanager.NewMockTransactionManager()
-	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
-
-	batcher.SubmitStopSnapshot(testID, testTransactionID, testInstance)
-	batcher.SubmitComplete(testID)
 
 	// get the action commit made by the batcher from the transaction manager for this payload
-	commitAction := tm.NextAction().(transactionmanager.CommitAction)
-	assert.Equal(t, testTransactionID, commitAction.TransactionID)
+	commitActions := make([]transactionmanager.CommitAction, len(transactionState))
+	for i, tID := range transactionState {
+		commitAction := tm.NextAction().(transactionmanager.CommitAction)
+		assert.Equal(t, tID.TransactionID, commitAction.TransactionID)
+		commitActions[i] = commitAction
+	}
 
 	// get the intake payload that was produced for this action
 	payload := fwd.NextPayload()
-	actualPayload := transactional.IntakePayload{}
+	actualPayload := transactional.NewIntakePayload()
 	json.Unmarshal(payload.Payload, &actualPayload)
 
 	// assert the payload matches the expected payload for the data produced
-	expectedPayload := transactional.IntakePayload{
-		InternalHostname: "myhost",
-		Topologies: []topology.Topology{
-			{
-				StartSnapshot: false,
-				StopSnapshot:  true,
-				Instance:      testInstance,
-				Components:    []topology.Component{},
-				Relations:     []topology.Relation{},
-				DeleteIDs:     []string{},
-			},
-		},
-	}
-	assert.Equal(t, expectedPayload, actualPayload)
+	assert.ObjectsAreEqual(expectedPayload, actualPayload)
 
 	// assert the transaction map produced by the batcher contains the correct action id and completed status
-	expectedTxMap := map[string]transactional.PayloadTransaction{
-		commitAction.TransactionID: {
-			ActionID:             commitAction.ActionID,
-			CompletedTransaction: true,
-		},
+	expectedTransactionMap := make(map[string]transactional.PayloadTransaction, len(commitActions))
+	for i, ca := range commitActions {
+		expectedTransactionMap[ca.TransactionID] = transactional.PayloadTransaction{
+			ActionID:             ca.ActionID,
+			CompletedTransaction: transactionState[i].Completed,
+		}
 	}
-	assert.Equal(t, expectedTxMap, payload.TransactionActionMap)
 
-	batcher.Shutdown()
+	assert.Equal(t, expectedTransactionMap, payload.TransactionActionMap)
+
 	fwd.Stop()
 	tm.Stop()
 }
 
-//
-//func TestBatchFlushOnStopHealthSnapshot(t *testing.T) {
-//	fwd := transactionforwarder.NewMockTransactionalForwarder()
-//	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
-//
-//	batcher.SubmitHealthStopSnapshot(testID, testTransactionID, testStream)
-//
-//	message, _ := fwd.NextIntakePayload()
-//
-//	assert.Equal(t, message,
-//		map[string]interface{}{
-//			"internalHostname": "myhost",
-//			"topologies":       []topology.Topology{},
-//			"health": []health.Health{
-//				{
-//					StopSnapshot: testStopSnapshot,
-//					Stream:       testStream,
-//					CheckStates:  []health.CheckData{},
-//				},
-//			},
-//			"metrics": []interface{}{},
-//		})
-//
-//	batcher.Shutdown()
-//}
-//
-//func TestBatchFlushOnComplete(t *testing.T) {
-//	fwd := transactionforwarder.NewMockTransactionalForwarder()
-//	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
-//
-//	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent)
-//	batcher.SubmitHealthCheckData(testID, testTransactionID, testStream, testCheckData)
-//	batcher.SubmitRawMetricsData(testID, testTransactionID, testRawMetricsData)
-//	batcher.SubmitRawMetricsData(testID, testTransactionID, testRawMetricsData2)
-//	batcher.SubmitComplete(testID)
-//
-//	message, _ := fwd.NextIntakePayload()
-//
-//	assert.Equal(t, message,
-//		map[string]interface{}{
-//			"internalHostname": "myhost",
-//			"topologies": []topology.Topology{
-//				{
-//					StartSnapshot: false,
-//					StopSnapshot:  false,
-//					Instance:      testInstance,
-//					Components:    []topology.Component{testComponent},
-//					Relations:     []topology.Relation{},
-//					DeleteIDs:     []string{},
-//				},
-//			},
-//			"health": []health.Health{
-//				{
-//					Stream:      testStream,
-//					CheckStates: []health.CheckData{testCheckData},
-//				},
-//			},
-//			"metrics": []interface{}{testRawMetricsDataIntakeMetric, testRawMetricsDataIntakeMetric2},
-//		})
-//
-//	batcher.Shutdown()
-//}
-//
-//func TestBatchNoDataNoComplete(t *testing.T) {
-//	fwd := transactionforwarder.NewMockTransactionalForwarder()
-//	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
-//
-//	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent)
-//
-//	batcher.SubmitComplete(testID2)
-//
-//	// We now send a stop to trigger a combined commit
-//	batcher.SubmitStopSnapshot(testID, testTransactionID, testInstance)
-//
-//	message, _ := fwd.NextIntakePayload()
-//
-//	assert.Equal(t, message,
-//		map[string]interface{}{
-//			"internalHostname": "myhost",
-//			"topologies": []topology.Topology{
-//				{
-//					StartSnapshot: false,
-//					StopSnapshot:  true,
-//					Instance:      testInstance,
-//					Components:    []topology.Component{testComponent},
-//					Relations:     []topology.Relation{},
-//					DeleteIDs:     []string{},
-//				},
-//			},
-//			"health":  []health.Health{},
-//			"metrics": []interface{}{},
-//		})
-//
-//	batcher.Shutdown()
-//}
-//
-//func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
-//	fwd := transactionforwarder.NewMockTransactionalForwarder()
-//	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
-//
-//	batcher.SubmitStartSnapshot(testID, testTransactionID, testInstance)
-//	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent)
-//	batcher.SubmitComponent(testID2, testTransaction2ID, testInstance2, testComponent)
-//	batcher.SubmitComponent(testID2, testTransaction2ID, testInstance2, testComponent)
-//	batcher.SubmitComponent(testID2, testTransaction2ID, testInstance2, testComponent)
-//
-//	batcher.SubmitHealthStartSnapshot(testID, testTransactionID, testStream, 1, 0)
-//	batcher.SubmitHealthCheckData(testID, testTransactionID, testStream, testCheckData)
-//	batcher.SubmitHealthCheckData(testID2, testTransaction2ID, testStream2, testCheckData)
-//
-//	batcher.SubmitRawMetricsData(testID, testTransactionID, testRawMetricsData)
-//	batcher.SubmitRawMetricsData(testID2, testTransaction2ID, testRawMetricsData)
-//	batcher.SubmitRawMetricsData(testID, testTransactionID, testRawMetricsData2)
-//	batcher.SubmitRawMetricsData(testID2, testTransaction2ID, testRawMetricsData2)
-//
-//	batcher.SubmitStopSnapshot(testID, testTransactionID, testInstance)
-//
-//	message, _ := fwd.NextIntakePayload()
-//
-//	assert.ObjectsAreEqualValues(message, map[string]interface{}{
-//		"internalHostname": "myhost",
-//		"topologies": []topology.Topology{
-//			{
-//				StartSnapshot: true,
-//				StopSnapshot:  true,
-//				Instance:      testInstance,
-//				Components:    []topology.Component{testComponent},
-//				Relations:     []topology.Relation{},
-//			},
-//			{
-//				StartSnapshot: false,
-//				StopSnapshot:  false,
-//				Instance:      testInstance2,
-//				Components:    []topology.Component{testComponent, testComponent, testComponent},
-//				Relations:     []topology.Relation{},
-//			},
-//		},
-//		"health": []health.Health{
-//			{
-//				StartSnapshot: testStartSnapshot,
-//				Stream:        testStream,
-//				CheckStates:   []health.CheckData{testCheckData},
-//			},
-//			{
-//				Stream:      testStream2,
-//				CheckStates: []health.CheckData{testCheckData},
-//			},
-//		},
-//		"metrics": []interface{}{
-//			testRawMetricsDataIntakeMetric,
-//			testRawMetricsDataIntakeMetric,
-//			testRawMetricsDataIntakeMetric2,
-//			testRawMetricsDataIntakeMetric2,
-//		},
-//	})
-//
-//	batcher.Shutdown()
-//}
-//
+func TestBatchFlushSnapshotOnComplete(t *testing.T) {
+	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
+	batcher.SubmitStopSnapshot(testID, testTransactionID, testInstance)
+	batcher.SubmitComplete(testID)
+
+	expectedPayload := transactional.NewIntakePayload()
+	expectedPayload.InternalHostname = "myhost"
+	expectedPayload.Topologies = []topology.Topology{
+		{
+			StartSnapshot: false,
+			StopSnapshot:  true,
+			Instance:      testInstance,
+			Components:    []topology.Component{},
+			Relations:     []topology.Relation{},
+			DeleteIDs:     []string{},
+		},
+	}
+
+	transactionStates := []TransactionState{
+		{
+			TransactionID: testTransactionID,
+			Completed:     true,
+		},
+	}
+	testBatcher(t, transactionStates, expectedPayload)
+
+	batcher.Shutdown()
+}
+
+func TestBatchFlushHealthOnComplete(t *testing.T) {
+	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
+
+	batcher.SubmitHealthStopSnapshot(testID, testTransactionID, testStream)
+	batcher.SubmitComplete(testID)
+
+	expectedPayload := transactional.NewIntakePayload()
+	expectedPayload.InternalHostname = "myhost"
+	expectedPayload.Health = []health.Health{
+		{
+			StopSnapshot: testStopSnapshot,
+			Stream:       testStream,
+			CheckStates:  []health.CheckData{},
+		},
+	}
+
+	transactionStates := []TransactionState{
+		{
+			TransactionID: testTransactionID,
+			Completed:     true,
+		},
+	}
+	testBatcher(t, transactionStates, expectedPayload)
+
+	batcher.Shutdown()
+}
+
+func TestBatchFlushOnComplete(t *testing.T) {
+	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
+
+	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent)
+	batcher.SubmitHealthCheckData(testID, testTransactionID, testStream, testCheckData)
+	batcher.SubmitRawMetricsData(testID, testTransactionID, testRawMetricsData)
+	batcher.SubmitRawMetricsData(testID, testTransactionID, testRawMetricsData2)
+	batcher.SubmitComplete(testID)
+
+	expectedPayload := transactional.NewIntakePayload()
+	expectedPayload.InternalHostname = "myhost"
+	expectedPayload.Topologies = []topology.Topology{
+		{
+			StartSnapshot: false,
+			StopSnapshot:  false,
+			Instance:      testInstance,
+			Components:    []topology.Component{testComponent},
+			Relations:     []topology.Relation{},
+			DeleteIDs:     []string{},
+		},
+	}
+	expectedPayload.Health = []health.Health{
+		{
+			Stream:      testStream,
+			CheckStates: []health.CheckData{testCheckData},
+		},
+	}
+	expectedPayload.Metrics = []interface{}{testRawMetricsDataIntakeMetric, testRawMetricsDataIntakeMetric2}
+
+	transactionStates := []TransactionState{
+		{
+			TransactionID: testTransactionID,
+			Completed:     true,
+		},
+	}
+	testBatcher(t, transactionStates, expectedPayload)
+
+	batcher.Shutdown()
+}
+
+func TestBatchNoDataNoComplete(t *testing.T) {
+	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
+
+	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent)
+	batcher.SubmitComplete(testID2)
+
+	// We now send a stop to trigger a combined commit
+	batcher.SubmitStopSnapshot(testID, testTransactionID, testInstance)
+	batcher.SubmitComplete(testID)
+
+	expectedPayload := transactional.NewIntakePayload()
+	expectedPayload.InternalHostname = "myhost"
+	expectedPayload.Topologies = []topology.Topology{
+		{
+			StartSnapshot: false,
+			StopSnapshot:  true,
+			Instance:      testInstance,
+			Components:    []topology.Component{testComponent},
+			Relations:     []topology.Relation{},
+			DeleteIDs:     []string{},
+		},
+	}
+
+	transactionStates := []TransactionState{
+		{
+			TransactionID: testTransactionID,
+			Completed:     true,
+		},
+	}
+	testBatcher(t, transactionStates, expectedPayload)
+
+	batcher.Shutdown()
+}
+
+func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
+	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
+
+	batcher.SubmitStartSnapshot(testID, testTransactionID, testInstance)
+	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent)
+	batcher.SubmitComponent(testID2, testTransaction2ID, testInstance2, testComponent)
+	batcher.SubmitComponent(testID2, testTransaction2ID, testInstance2, testComponent)
+	batcher.SubmitComponent(testID2, testTransaction2ID, testInstance2, testComponent)
+
+	batcher.SubmitHealthStartSnapshot(testID, testTransactionID, testStream, 1, 0)
+	batcher.SubmitHealthCheckData(testID, testTransactionID, testStream, testCheckData)
+	batcher.SubmitHealthCheckData(testID2, testTransaction2ID, testStream2, testCheckData)
+
+	batcher.SubmitRawMetricsData(testID, testTransactionID, testRawMetricsData)
+	batcher.SubmitRawMetricsData(testID2, testTransaction2ID, testRawMetricsData)
+	batcher.SubmitRawMetricsData(testID, testTransactionID, testRawMetricsData2)
+	batcher.SubmitRawMetricsData(testID2, testTransaction2ID, testRawMetricsData2)
+
+	batcher.SubmitStopSnapshot(testID, testTransactionID, testInstance)
+	batcher.SubmitComplete(testID)
+
+	expectedPayload := transactional.NewIntakePayload()
+	expectedPayload.InternalHostname = "myhost"
+	expectedPayload.Topologies = []topology.Topology{
+		{
+			StartSnapshot: true,
+			StopSnapshot:  true,
+			Instance:      testInstance,
+			Components:    []topology.Component{testComponent},
+			Relations:     []topology.Relation{},
+			DeleteIDs:     []string{},
+		},
+		{
+			StartSnapshot: false,
+			StopSnapshot:  false,
+			Instance:      testInstance2,
+			Components:    []topology.Component{testComponent, testComponent, testComponent},
+			Relations:     []topology.Relation{},
+			DeleteIDs:     []string{},
+		},
+	}
+	expectedPayload.Health = []health.Health{
+		{
+			StartSnapshot: testStartSnapshot,
+			Stream:        testStream,
+			CheckStates:   []health.CheckData{testCheckData},
+		},
+		{
+			Stream:      testStream2,
+			CheckStates: []health.CheckData{testCheckData},
+		},
+	}
+	expectedPayload.Metrics = []interface{}{
+		testRawMetricsDataIntakeMetric,
+		testRawMetricsDataIntakeMetric,
+		testRawMetricsDataIntakeMetric2,
+		testRawMetricsDataIntakeMetric2,
+	}
+
+	transactionStates := []TransactionState{
+		{
+			TransactionID: testTransactionID,
+			Completed:     true,
+		},
+		{
+			TransactionID: testTransaction2ID,
+			Completed:     false,
+		},
+	}
+
+	testBatcher(t, transactionStates, expectedPayload)
+
+	batcher.Shutdown()
+}
+
+type TransactionState struct {
+	TransactionID string
+	Completed     bool
+}
+
 //func TestBatchFlushOnMaxElements(t *testing.T) {
 //	fwd := transactionforwarder.NewMockTransactionalForwarder()
 //	batcher := newTransactionalBatcher(testHost, testAgent, 2, 15*time.Second)

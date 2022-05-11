@@ -17,3 +17,16 @@ type IntakePayload struct {
 	Health           []health.Health     `json:"health"`
 	Metrics          []interface{}       `json:"metrics"`
 }
+
+func NewIntakePayload() IntakePayload {
+	return IntakePayload{
+		Topologies: make([]topology.Topology, 0),
+		Health:     make([]health.Health, 0),
+		Metrics:    make([]interface{}, 0),
+	}
+}
+
+//
+//func (ip IntakePayload) Equals(ip2 IntakePayload) bool {
+//
+//}

@@ -41,6 +41,14 @@ func (r RawMetrics) ConvertToIntakeMetric() []interface{} {
 	return data
 }
 
+// IntakeMetricJSON Converts RawMetricsCheckData struct to an older v1 metrics structure, parses it to JSON and returns
+// it as a interface. This is only used in batcher test assertions.
+func (r RawMetrics) IntakeMetricJSON() (jsonObject []interface{}) {
+	jsonString, _ := json.Marshal(r.ConvertToIntakeMetric())
+	json.Unmarshal(jsonString, &jsonObject)
+	return jsonObject
+}
+
 // JSONString returns a JSON string of the Component
 func (r RawMetrics) JSONString() string {
 	b, err := json.Marshal(r)

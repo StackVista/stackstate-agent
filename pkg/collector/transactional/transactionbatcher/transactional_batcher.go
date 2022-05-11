@@ -94,7 +94,8 @@ func (ctb *transactionalBatcher) marshallPayload(intake transactional.IntakePayl
 
 // mapStateToPayload submits the payload to the forwarder
 func (ctb *transactionalBatcher) mapStateToPayload(states TransactionCheckInstanceBatchStates) transactional.IntakePayload {
-	intake := transactional.IntakePayload{InternalHostname: ctb.Hostname}
+	intake := transactional.NewIntakePayload()
+	intake.InternalHostname = ctb.Hostname
 
 	// Create the topologies payload
 	for _, state := range states {

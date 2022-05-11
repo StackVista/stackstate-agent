@@ -178,8 +178,7 @@ func (builder *TransactionBatchBuilder) HealthStopSnapshot(checkID check.ID, tra
 	healthData := builder.getOrCreateHealth(checkID, transactionID, stream)
 	healthData.StopSnapshot = &health.StopSnapshotMetadata{}
 	builder.states[checkID].Health[stream.GoString()] = healthData
-	// We always flush after a TopologyStopSnapshot to limit latency
-	return builder.Flush()
+	return builder.incrementAndTryFlush()
 }
 
 // AddRawMetricsData adds raw metric data
