@@ -505,6 +505,8 @@ func InitConfig(config Config) {
 
 	// Go_expvar server port
 	config.BindEnvAndSetDefault("expvar_port", "5000")
+	// sts
+	config.BindEnvAndSetDefault("sts_expvar_address", "0.0.0.0")
 
 	// Profiling
 	config.BindEnvAndSetDefault("profiling.enabled", false)
@@ -646,6 +648,8 @@ func InitConfig(config Config) {
 	// This create a lot of billable custom metrics.
 	config.BindEnvAndSetDefault("telemetry.enabled", false)
 	config.SetKnown("telemetry.checks")
+	// sts
+	config.BindEnvAndSetDefault("telemetry.address", "0.0.0.0")
 
 	// Declare other keys that don't have a default/env var.
 	// Mostly, keys we use IsSet() on, because IsSet always returns true if a key has a default.
