@@ -39,8 +39,8 @@ type KSMConfig struct {
 
 type KSMCheck struct {
 	core.CheckBase
-	instance *KSMConfig
-	store    []cache.Store
+	instance  *KSMConfig
+	allStores [][]cache.Store
 }
 
 func init() {
@@ -86,10 +86,10 @@ func (k *KSMCheck) Configure(config, initConfig integration.Data, source string)
 	builder.WithKubeClient(c.Cl)
 	builder.WithContext(context.Background())
 	builder.WithResync(30 * time.Second) // TODO resync period should be configurable
-	builder.WithGenerateStoreFunc(builder.GenerateStore)
+	builder.WithGenerateStoresFunc(builder.GenerateStores)
 
 	// Start the collection process
-	k.store = builder.Build()
+	k.allStores = builder.BuildStores()
 
 	return nil
 }
@@ -107,9 +107,11 @@ func (k *KSMCheck) Run() error {
 
 	defer sender.Commit()
 
-	for _, store := range k.store {
-		metrics := store.(*ksmstore.MetricsStore).Push()
-		processMetrics(sender, metrics)
+	for _, stores := range k.allStores {
+		for _, store := range stores {
+			metrics := store.(*ksmstore.MetricsStore).Push()
+			processMetrics(sender, metrics)
+		}
 	}
 	return nil
 }
