@@ -137,7 +137,7 @@
       win_command: powershell.exe -
       args:
         stdin: Start-Process C:\Windows\Temp\VCForPython27.msi -ArgumentList "/quiet"
-      when: vcpython27_try3 is failed
+      when: vcpython27_try2 is failed
 
     - name: Install python virtualwrapper
       win_shell: pip install virtualenvwrapper-win
@@ -179,15 +179,22 @@
         package_params: "--norestart --wait --quiet --locale en-US --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Win81 --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Runtimes.x86.x64.Spectre --add Microsoft.VisualStudio.Component.Windows10SDK.17763"
 
 # choco install visualstudio2019community --package-parameters "...."
-    - name: Install Visual studio 2019 community
+    - name: Install Visual studio 2019 community (1/2)
       win_chocolatey:
         name: visualstudio2019community
         state: present
         package_params: "--norestart --wait --quiet --locale en-US"
         #package_params: "--norestart --wait --quiet --locale en-US --add Microsoft.VisualStudio.Workload.MSBuildTools --add Microsoft.VisualStudio.Workload.NativeDesktop  --add Microsoft.VisualStudio.Component.VC.CMake.Project --add Microsoft.VisualStudio.Component.VC.CLI.Support --add Microsoft.VisualStudio.Workload.UniversalBuildTools --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Win81"
-      register: result
-      until: result.rc == 0
+      register: resultvccommunity
+      until: resultvccommunity.rc == 0
       retries: 3
+      ignore_errors: true
+
+    - name: Install Visual studio 2019 community (2/2)
+      win_command: powershell.exe -
+      args:
+        stdin: Start-Process C:\Windows\Temp\vs_Community.exe -ArgumentList "/q /norestart"
+      when: resultvccommunity is failed
 
 # HANGS TODO: replace with exe install from  https://github.com/wixtoolset/wix3/releases/tag/wix3111rtm  ?
     - name: Install Wix tool set (1/2)
