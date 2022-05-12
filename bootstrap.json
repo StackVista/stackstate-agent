@@ -10,7 +10,22 @@
             "github.com/golangci/golangci-lint",
             "github.com/frapposelli/wwhrd",
             "github.com/goware/modvendor",
-            "github.com/shuLhan/go-bindata/cmd/go-bindata"
+            "github.com/shuLhan/go-bindata/cmd/go-bindata",
+            "code.cloudfoundry.org/clock",
+            "code.cloudfoundry.org/consuladapter",
+            "code.cloudfoundry.org/diego-logging-client",
+            "code.cloudfoundry.org/executor",
+            "code.cloudfoundry.org/locket",
+            "code.cloudfoundry.org/rep",
+            "github.com/PuerkitoBio/purell",
+            "github.com/go-sql-driver/mysql",
+            "github.com/go-test/deep",
+            "github.com/lib/pq",
+            "github.com/oliveagle/jsonpath",
+            "github.com/smartystreets/goconvey",
+            "github.com/tedsuo/ifrit",
+            "gopkg.in/ini.v1",
+            "sigs.k8s.io/json"
         ],
         "golang.org/x/tools/go/ast/astutil": {
             "version": "release-branch.go1.10",
