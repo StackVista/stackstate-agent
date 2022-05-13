@@ -442,7 +442,7 @@ func TestDiffExternalMetrics(t *testing.T) {
 				},
 				{
 					ObjectMeta: metav1.ObjectMeta{
-						UID:       types.UID(11),
+						UID:       types.UID(fmt.Sprint(11)),
 						Namespace: "zanzi",
 						Name:      "bar",
 					},
@@ -583,7 +583,7 @@ func TestDiffExternalMetrics(t *testing.T) {
 			[]*v1alpha1.WatermarkPodAutoscaler{
 				{
 					ObjectMeta: metav1.ObjectMeta{
-						UID:       types.UID(7),
+						UID:       types.UID(fmt.Sprint(7)),
 						Namespace: "zanzi",
 						Name:      "bar",
 					},
