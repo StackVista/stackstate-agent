@@ -286,8 +286,8 @@ def deps(
         start = datetime.datetime.now()
         verbosity = ' -v' if verbose else ''
 
-        ctx.run(f"go mod vendor{verbosity}")
-        ctx.run(f"go mod tidy{verbosity} -compat=1.17")
+        ctx.run("go mod vendor{}".format(verbosity))
+        ctx.run("go mod tidy{} -compat=1.17".format(verbosity))
 
         # use modvendor to copy missing files dependencies
         ctx.run('{}/bin/modvendor -copy="**/*.c **/*.h **/*.proto"{}'.format(get_gopath(ctx), verbosity))
