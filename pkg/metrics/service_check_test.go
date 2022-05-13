@@ -3,11 +3,13 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-//+build zlib
+//go:build zlib
+// +build zlib
 
 package metrics
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -172,7 +174,7 @@ func createServiceChecks(numberOfItem int) ServiceChecks {
 	var serviceCheckCollections []*ServiceCheck
 
 	for i := 0; i < numberOfItem; i++ {
-		serviceCheckCollections = append(serviceCheckCollections, createServiceCheck(string(i)))
+		serviceCheckCollections = append(serviceCheckCollections, createServiceCheck(fmt.Sprint(i)))
 	}
 	return ServiceChecks(serviceCheckCollections)
 }

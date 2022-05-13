@@ -3,11 +3,13 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package common
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,7 +25,7 @@ func TestGetOrCreateClusterID(t *testing.T) {
 	// kube-system doesn't exist
 	GetOrCreateClusterID(client)
 
-	cm, err := client.ConfigMaps("default").Get(defaultClusterIDMap, metav1.GetOptions{})
+	cm, err := client.ConfigMaps("default").Get(context.TODO(), defaultClusterIDMap, metav1.GetOptions{})
 	assert.True(t, errors.IsNotFound(err))
 
 	// kube-system does exist
@@ -34,11 +36,11 @@ func TestGetOrCreateClusterID(t *testing.T) {
 			Name:            "kube-system",
 		},
 	}
-	client.Namespaces().Create(&kNs)
+	client.Namespaces().Create(context.TODO(), &kNs, metav1.CreateOptions{})
 
 	GetOrCreateClusterID(client)
 
-	cm, err = client.ConfigMaps("default").Get(defaultClusterIDMap, metav1.GetOptions{})
+	cm, err = client.ConfigMaps("default").Get(context.TODO(), defaultClusterIDMap, metav1.GetOptions{})
 	assert.Nil(t, err)
 	id, found := cm.Data["id"]
 	assert.True(t, found)

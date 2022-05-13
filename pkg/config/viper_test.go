@@ -62,7 +62,8 @@ func TestConcurrencyUnmarshalling(t *testing.T) {
 		for n := 0; n <= 1000; n++ {
 			err := config.UnmarshalKey("foo", &s)
 			if err != nil {
-				t.Fatalf("unable to decode into struct, %v", err)
+				t.Errorf("unable to decode into struct, %v", err)
+				return
 			}
 		}
 	}()

@@ -900,7 +900,8 @@ func TestOOMKill(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			if _, err := http.Post("http://localhost:8126/v0.4/traces", "application/msgpack", bytes.NewReader(data)); err != nil {
-				t.Fatal(err)
+				t.Error(err)
+				return
 			}
 		}()
 	}

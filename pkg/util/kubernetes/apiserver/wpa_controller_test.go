@@ -47,11 +47,11 @@ import (
 )
 
 var (
-	scheme = kscheme.Scheme
+	wpaScheme = kscheme.Scheme
 )
 
 func init() {
-	v1alpha1.AddToScheme(scheme)
+	v1alpha1.AddToScheme(wpaScheme)
 }
 
 // TestupdateExternalMetrics checks the reconciliation between the local cache and the global store logic
@@ -175,7 +175,7 @@ func newFakeWPAController(t *testing.T, kubeClient kubernetes.Interface, client 
 	inf := wpa_informers.NewDynamicSharedInformerFactory(client, 0)
 	autoscalerController, _ := NewAutoscalersController(
 		kubeClient,
-		eventBroadcaster.NewRecorder(scheme, corev1.EventSource{Component: "FakeWPAController"}),
+		eventBroadcaster.NewRecorder(wpaScheme, corev1.EventSource{Component: "FakeWPAController"}),
 		isLeaderFunc,
 		dcl,
 	)
@@ -264,7 +264,7 @@ func TestWPAController(t *testing.T) {
 		map[string]string{"foo": "bar"},
 	)
 
-	wpaClient := fake.NewSimpleDynamicClient(scheme, mockedWPA)
+	wpaClient := fake.NewSimpleDynamicClient(wpaScheme, mockedWPA)
 
 	hctrl, inf := newFakeWPAController(t, client, wpaClient, alwaysLeader, autoscalers.DatadogClient(d))
 	hctrl.poller.refreshPeriod = 600
@@ -440,7 +440,7 @@ func TestWPAController(t *testing.T) {
 
 // TestWPASync tests the sync loop of the informer cache and the processing of the object
 func TestWPASync(t *testing.T) {
-	wpaClient := fake.NewSimpleDynamicClient(scheme)
+	wpaClient := fake.NewSimpleDynamicClient(wpaScheme)
 	client := fake_k.NewSimpleClientset()
 	d := &fakeDatadogClient{}
 	hctrl, inf := newFakeWPAController(t, client, wpaClient, alwaysLeader, d)
@@ -533,7 +533,7 @@ func TestWPAGC(t *testing.T) {
 		t.Run(fmt.Sprintf("#%d %s", i, testCase.caseName), func(t *testing.T) {
 			store, client := newFakeConfigMapStore(t, "default", fmt.Sprintf("test-%d", i), testCase.metrics)
 			d := &fakeDatadogClient{}
-			wpaCl := fake.NewSimpleDynamicClient(scheme)
+			wpaCl := fake.NewSimpleDynamicClient(wpaScheme)
 
 			hctrl, _ := newFakeAutoscalerController(t, client, alwaysLeader, d)
 			hctrl.wpaEnabled = true
