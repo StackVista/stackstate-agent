@@ -14,11 +14,12 @@ DOCKER_ENV		   = --env artifactory_user=${ARTIFACTORY_USER} \
 					 --env ARTIFACTORY_PYPI_URL="artifactory.tooling.stackstate.io/artifactory/api/pypi/pypi-local/simple"
 
 build:
+	cd Dockerfiles/local_builder && \
 	docker build -t ${LOCAL_BUILD_IMAGE} \
 		--build-arg BASE_IMAGE=${BASE_AGENT_IMAGE} \
 		--build-arg UID=${UID} \
 		--build-arg GID=${GID} \
-		-f ./Dockerfiles/local_builder/Dockerfile .
+		.
 
 start: build
 	docker run -it --rm \
@@ -27,18 +28,12 @@ start: build
         --mount source=${VOLUME_GO_PKG_NAME},target=/go/pkg \
         ${DOCKER_ENV} ${LOCAL_BUILD_IMAGE}
 
-orig:
-	docker run -it --rm \
-        --volume ${PWD}:/go/src/github.com/StackVista/stackstate-agent \
-        --mount source=${VOLUME_GO_PKG_NAME},target=/go/pkg \
-        --entrypoint /go/src/github.com/StackVista/stackstate-agent/Dockerfiles/local_builder/scripts/entry_point.sh \
-        ${DOCKER_ENV} ${BASE_AGENT_IMAGE}
-
 
 shell:
 	docker exec -ti ${LOCAL_BUILD_IMAGE} bash --init-file /shell_init.sh
 
 shell-root:
 	docker exec --user root -ti ${LOCAL_BUILD_IMAGE} bash
+
 
 .PHONY: build start shell shell-root
