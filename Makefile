@@ -18,7 +18,7 @@ build:
 		--build-arg BASE_IMAGE=${BASE_AGENT_IMAGE} \
 		--build-arg UID=${UID} \
 		--build-arg GID=${GID} \
-		-f ./rtloader/Dockerfile .
+		-f ./Dockerfiles/local_builder/Dockerfile .
 
 start: build
 	docker run -it --rm \
@@ -36,7 +36,7 @@ orig:
 
 
 shell:
-	docker exec -ti ${LOCAL_BUILD_IMAGE} bash --init-file ./bootstrap.sh
+	docker exec -ti ${LOCAL_BUILD_IMAGE} bash --init-file /shell_init.sh
 
 shell-root:
 	docker exec --user root -ti ${LOCAL_BUILD_IMAGE} bash
