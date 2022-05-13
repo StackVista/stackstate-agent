@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2017 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package kubeapi
@@ -32,7 +33,7 @@ const (
 
 // EventTypeMap contains a mapping of Kubernetes EventReason strings to specific Event Categories.
 // If an event is 'event.Type = warning' then we map it automatically to an 'Alert'
-var EventTypeMap map[string]MetricsCategory = map[string]MetricsCategory{
+var EventTypeMap = map[string]MetricsCategory{
 	// Container events
 	events.CreatedContainer:      Changes,
 	events.StartedContainer:      Activities,
@@ -63,7 +64,9 @@ var EventTypeMap map[string]MetricsCategory = map[string]MetricsCategory{
 	events.SandboxChanged:                       Changes,
 
 	// Seen in the wild, not keys of our current lib
-	"SuccesfulCreate":   Changes,
+	"SuccessfulCreate":  Changes,
+	"SuccessfulDelete":  Changes,
+	"Completed":         Changes,
 	"Scheduled":         Activities,
 	"NotTriggerScaleUp": Alerts,
 }
@@ -154,7 +157,7 @@ func getCategory(event *v1.Event) MetricsCategory {
 
 	v, ok := EventTypeMap[event.Reason]
 	if !ok {
-		log.Warnf("Unknown Reason '%s' found, Categorising as 'Others'", event.Reason)
+		log.Warnf("Kubernetes event has unknown reason '%s' found, categorising as 'Others'. Involved object: '%s'", event.Reason, event.InvolvedObject.Name)
 		return Others
 	}
 
