@@ -44,7 +44,7 @@ variables: &commonvariables
   # Directory in which we execute the omnibus build for SUSE
   # as we want to separate the RPM built for this distro.
   BCC_VERSION: v0.12.0
-  SYSTEM_PROBE_GO_VERSION: 1.13.11
+  SYSTEM_PROBE_GO_VERSION: 1.17.9
   DATADOG_AGENT_EMBEDDED_PATH: /opt/datadog-agent/embedded
   ARCH: amd64
   VCINSTALLDIR: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community"

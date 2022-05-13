@@ -6,6 +6,7 @@
 package checks
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -78,7 +79,7 @@ func (c *kubeApiserverCheck) Run() error {
 		if len(c.kubeResource.APIRequest.ResourceName) == 0 {
 			return fmt.Errorf("%s: unable to use 'get' apirequest without resource name", c.ruleID)
 		}
-		resource, err := resourceAPI.Get(c.kubeResource.APIRequest.ResourceName, metav1.GetOptions{})
+		resource, err := resourceAPI.Get(context.TODO(), c.kubeResource.APIRequest.ResourceName, metav1.GetOptions{})
 		if err != nil {
 			return fmt.Errorf("unable to get Kube resource:'%v', ns:'%s' name:'%s', err: %v", resourceSchema, c.kubeResource.Namespace, c.kubeResource.APIRequest.ResourceName, err)
 		}
@@ -89,7 +90,7 @@ func (c *kubeApiserverCheck) Run() error {
 			return fmt.Errorf("%s: unable to parse filters %v, err: %v", c.ruleID, c.kubeResource.Filter, err)
 		}
 
-		list, err := resourceAPI.List(listOptions)
+		list, err := resourceAPI.List(context.TODO(), listOptions)
 		if err != nil {
 			return fmt.Errorf("unable to list Kube resources:'%v', ns:'%s' name:'%s', err: %v", resourceSchema, c.kubeResource.Namespace, c.kubeResource.APIRequest.ResourceName, err)
 		}

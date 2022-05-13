@@ -21,7 +21,7 @@ stages:
   echo "~~~~~> /Trying..."
 
 .configure_centos_env_script: &configure_centos_env_script |
-  . /root/.gimme/envs/go1.13.11.env
+  . /root/.gimme/envs/go${SYSTEM_PROBE_GO_VERSION}.env
   . /root/miniconda3/etc/profile.d/conda.sh
   conda activate $CONDA_ENV
   mkdir -p /go/src/github.com/StackVista
