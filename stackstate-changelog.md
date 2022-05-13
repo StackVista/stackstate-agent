@@ -12,6 +12,7 @@
 
 **Bugfix**
 - If Kubernetes topology Secrets collector fails, it will log (INFO level) only once [STAC-14834](https://stackstate.atlassian.net/browse/STAC-14834)
+- Add SuccessfulCreate, SuccessfulDelete and Completed to list of known events [STAC-15506](https://stackstate.atlassian.net/browse/STAC-15506)
 
 ## 2.16.1 (2022-03-21)
 
