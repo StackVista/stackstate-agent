@@ -138,7 +138,6 @@ require (
 	code.cloudfoundry.org/clock v1.0.0 // indirect
 	code.cloudfoundry.org/consuladapter v0.0.0-20200131002136-ac1daf48ba97 // indirect
 	code.cloudfoundry.org/diego-logging-client v0.0.0-20200130234554-60ef08820a45 // indirect
-	code.cloudfoundry.org/ecrhelper v0.0.0-20200131001657-9a7c7e5a931d // indirect
 	code.cloudfoundry.org/executor v0.0.0-20200218194701-024d0bdd52d4 // indirect
 	code.cloudfoundry.org/go-diodes v0.0.0-20190809170250-f77fb823c7ee // indirect
 	code.cloudfoundry.org/go-loggregator v7.4.0+incompatible // indirect
@@ -152,23 +151,9 @@ require (
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Microsoft/hcsshim v0.9.1 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
-	github.com/PuerkitoBio/purell v1.1.1 // indirect
-	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/StackExchange/wmi v0.0.0-20181212234831-e0a55b97c705 // indirect
 	github.com/alecthomas/participle v0.4.4 // indirect
 	github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da // indirect
-	github.com/aws/aws-sdk-go-v2 v1.7.1 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.5.0 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.3.1 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.3.0 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.1.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ecr v1.4.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ecrpublic v1.4.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.2.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.3.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.6.0 // indirect
-	github.com/aws/smithy-go v1.6.0 // indirect
-	github.com/awslabs/amazon-ecr-credential-helper/ecr-login v0.0.0-20220324232016-7a06d24eebd7 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.2.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
@@ -268,11 +253,8 @@ require (
 	go.uber.org/multierr v1.5.0 // indirect
 	go.uber.org/zap v1.15.0 // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
-	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
-	golang.org/x/tools v0.1.4 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gomodules.xyz/orderedmap v0.1.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
@@ -284,7 +266,6 @@ require (
 	k8s.io/component-base v0.21.5 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.22 // indirect
 	sigs.k8s.io/controller-runtime v0.7.2 // indirect
-	sigs.k8s.io/json v0.0.0-20211020170558-c049b76a60c6 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )

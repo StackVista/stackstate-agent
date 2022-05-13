@@ -285,9 +285,13 @@ def deps(
         print("calling go mod vendor")
         start = datetime.datetime.now()
         verbosity = ' -v' if verbose else ''
-        ctx.run("go mod vendor{}".format(verbosity))
+
+        ctx.run(f"go mod vendor{verbosity}")
+        ctx.run(f"go mod tidy{verbosity} -compat=1.17")
+
         # use modvendor to copy missing files dependencies
         ctx.run('{}/bin/modvendor -copy="**/*.c **/*.h **/*.proto"{}'.format(get_gopath(ctx), verbosity))
+        ctx.run(f'modvendor -copy="**/*.c **/*.h **/*.proto **/*.java"{verbosity}')
         dep_done = datetime.datetime.now()
 
         # If github.com/DataDog/datadog-agent gets vendored too - nuke it
