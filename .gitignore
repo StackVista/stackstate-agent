@@ -155,6 +155,7 @@ pkg/network/netlink/testdata/message_dump*
 version.txt
 
 .cd-builders/windows/builder7/runner/roles/
+.cd-builders/windows/builder7/builder/hosts
 
 # molecule local json files
 /test/molecule-role/molecule/*/topic-*.json
@@ -181,3 +182,4 @@ deployment/kubernetes/k8s-*/
 
 # msgpack gen files
 *_gen*.go
+
