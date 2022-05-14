@@ -10,9 +10,16 @@ resource "aws_s3_bucket_acl" "bucket_acl" {
 // TODO zip the file
 resource "aws_s3_object" "code_zip" {
   bucket = aws_s3_bucket.bucket.id
-  key    = "hello.zip"
+  key    = "hello3.zip"
   source = "${path.module}/hello.zip"
   etag   = filemd5("${path.module}/hello.zip")
+}
+
+resource "aws_s3_bucket_versioning" "bucket_versioning" {
+  bucket = aws_s3_bucket.bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
 }
 
 resource "aws_sns_topic" "lambda_errors" {
@@ -85,3 +92,4 @@ resource "aws_lambda_permission" "permission" {
   # within API Gateway REST API.
   source_arn = "${aws_api_gateway_rest_api.api.execution_arn}/*/*/*"
 }
+
