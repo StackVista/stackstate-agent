@@ -10,6 +10,10 @@ import (
 	"fmt"
 )
 
+type Metrics struct {
+	Values []RawMetrics
+}
+
 // RawMetrics single payload structure
 type RawMetrics struct {
 	Name      string   `json:"name,omitempty"`

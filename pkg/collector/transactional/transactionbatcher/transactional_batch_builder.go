@@ -16,7 +16,7 @@ type BatchTransaction struct {
 type TransactionCheckInstanceBatchState struct {
 	Transaction *BatchTransaction
 	Topology    *topology.Topology
-	Metrics     *[]telemetry.RawMetrics
+	Metrics     *telemetry.Metrics
 	Health      map[string]health.Health
 }
 
@@ -100,7 +100,7 @@ func (builder *TransactionBatchBuilder) getOrCreateHealth(checkID check.ID, tran
 	return builder.states[checkID].Health[stream.GoString()]
 }
 
-func (builder *TransactionBatchBuilder) getOrCreateRawMetrics(checkID check.ID, transactionID string) *[]telemetry.RawMetrics {
+func (builder *TransactionBatchBuilder) getOrCreateRawMetrics(checkID check.ID, transactionID string) *telemetry.Metrics {
 	state := builder.getOrCreateState(checkID, transactionID)
 
 	if state.Metrics != nil {
@@ -113,7 +113,7 @@ func (builder *TransactionBatchBuilder) getOrCreateRawMetrics(checkID check.ID, 
 		},
 		Topology: state.Topology,
 		Health:   state.Health,
-		Metrics:  &[]telemetry.RawMetrics{},
+		Metrics:  &telemetry.Metrics{},
 	}
 
 	return builder.states[checkID].Metrics
@@ -184,7 +184,7 @@ func (builder *TransactionBatchBuilder) HealthStopSnapshot(checkID check.ID, tra
 // AddRawMetricsData adds raw metric data
 func (builder *TransactionBatchBuilder) AddRawMetricsData(checkID check.ID, transactionID string, rawMetric telemetry.RawMetrics) TransactionCheckInstanceBatchStates {
 	rawMetricsData := builder.getOrCreateRawMetrics(checkID, transactionID)
-	*rawMetricsData = append(*rawMetricsData, rawMetric)
+	rawMetricsData.Values = append(rawMetricsData.Values, rawMetric)
 	return builder.incrementAndTryFlush()
 }
 

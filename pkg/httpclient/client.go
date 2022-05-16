@@ -3,18 +3,15 @@ package httpclient
 import (
 	"bytes"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/trace/info"
-	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"io"
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
-	"strings"
 	"sync"
 	"time"
 )
@@ -61,7 +58,7 @@ type RetryableHTTPClient interface {
 // RetryableHTTPClient creates a http client to communicate to StackState
 type retryableHTTPClient struct {
 	*ClientHost
-	*http.Client
+	*retryablehttp.Client
 	mux sync.Mutex
 }
 
@@ -114,7 +111,7 @@ func makeRetryableHTTPClient(baseURLConfigKey string) RetryableHTTPClient {
 }
 
 // newClient returns a http.Client configured with the Agent options.
-func newClient(host *ClientHost) *http.Client {
+func newClient(host *ClientHost) *retryablehttp.Client {
 	transport := &http.Transport{
 		DialContext: (&net.Dialer{
 			Timeout:   30 * time.Second,
@@ -130,7 +127,11 @@ func newClient(host *ClientHost) *http.Client {
 		log.Infof("configuring proxy through: %s", host.ProxyURL.String())
 		transport.Proxy = http.ProxyURL(host.ProxyURL)
 	}
-	return &http.Client{Timeout: 30 * time.Second, Transport: transport}
+
+	retryableClient := retryablehttp.NewClient()
+	retryableClient.HTTPClient = &http.Client{Timeout: 30 * time.Second, Transport: transport}
+
+	return retryableClient
 }
 
 // Get performs a GET request to some path
@@ -160,52 +161,11 @@ func (rc *retryableHTTPClient) Post(path string, body []byte) *HTTPResponse {
 
 // PostWithRetry performs a POST request to some path with a set retry interval and count
 func (rc *retryableHTTPClient) PostWithRetry(path string, body []byte, retryInterval time.Duration, retryCount int) *HTTPResponse {
-	return rc.requestRetryHandler(POST, path, body, retryInterval, retryCount)
-}
-
-func (rc *retryableHTTPClient) requestRetryHandler(method, path string, body []byte, retryInterval time.Duration, retryCount int) *HTTPResponse {
-	retryTicker := time.NewTicker(retryInterval)
-	retriesLeft := retryCount
-	responseChan := make(chan *HTTPResponse, 1)
-	waitResponseChan := make(chan *HTTPResponse, 1)
-
-	defer watchdog.LogOnPanic()
-	defer close(responseChan)
-
-	go func() {
-	retry:
-		for {
-			select {
-			case <-retryTicker.C:
-				rc.handleRequest(method, path, body, retriesLeft, responseChan)
-				rc.mux.Lock()
-				// Lock so we can decrement the retriesLeft
-				retriesLeft = retriesLeft - 1
-				rc.mux.Unlock()
-			case response := <-responseChan:
-				// Stop retrying and return the response
-				retryTicker.Stop()
-				waitResponseChan <- response
-				break retry
-			}
-		}
-	}()
-
-	response := <-waitResponseChan
-	rc.mux.Lock()
-	response.RetriesLeft = retriesLeft
-	rc.mux.Unlock()
-	return response
+	return rc.handleRequest(POST, path, body)
 }
 
 // getSupportedFeatures returns the features supported by the StackState API
-func (rc *retryableHTTPClient) handleRequest(method, path string, body []byte, retriesLeft int, responseChan chan *HTTPResponse) {
-	rc.mux.Lock()
-	// Lock so only one goroutine at a time can access the map
-	if retriesLeft == 0 {
-		responseChan <- &HTTPResponse{Err: errors.New("failed after all retries")}
-	}
-	rc.mux.Unlock()
+func (rc *retryableHTTPClient) handleRequest(method, path string, body []byte) *HTTPResponse {
 
 	response, err := rc.makeRequest(method, path, body)
 
@@ -237,14 +197,14 @@ func (rc *retryableHTTPClient) handleRequest(method, path string, body []byte, r
 }
 
 // makeRequest
-func (rc *retryableHTTPClient) makeRequest(method, path string, body []byte) (*http.Response, error) {
+func (rc *retryableHTTPClient) makeRequest(method, path string, body []byte) (*retryablehttp.Request, error) {
 	url := fmt.Sprintf("%s/%s", rc.Host, path)
-	var req *http.Request
+	var req *retryablehttp.Request
 	var err error
 	if body != nil {
-		req, err = http.NewRequest(method, url, bytes.NewBuffer(body))
+		req, err = retryablehttp.NewRequest(method, url, bytes.NewBuffer(body))
 	} else {
-		req, err = http.NewRequest(method, url, nil)
+		req, err = retryablehttp.NewRequest(method, url, nil)
 	}
 
 	if err != nil {
@@ -252,36 +212,9 @@ func (rc *retryableHTTPClient) makeRequest(method, path string, body []byte) (*h
 	}
 
 	req.Header.Add("content-encoding", "identity")
-	//req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("sts-api-key", rc.APIKey)
 	req.Header.Add("sts-hostname", rc.Host)
 	req.Header.Add("sts-agent-version", info.Version)
 
-	resp, err := rc.Do(req)
-	if err != nil {
-		if rc.isHTTPTimeout(err) {
-			return nil, fmt.Errorf("timeout detected on %s, %s", url, err)
-		}
-		return nil, fmt.Errorf("error submitting payload to %s: %s", url, err)
-	}
-
-	if resp.StatusCode < 200 || resp.StatusCode > 300 {
-		defer resp.Body.Close()
-		_, _ = io.Copy(ioutil.Discard, resp.Body)
-		return resp, fmt.Errorf("unexpected response from %s. Status: %s", url, resp.Status)
-	}
-
-	return resp, nil
-}
-
-// IsTimeout returns true if the error is due to reaching the timeout limit on the http.client
-func (rc *retryableHTTPClient) isHTTPTimeout(err error) bool {
-	if netErr, ok := err.(interface {
-		Timeout() bool
-	}); ok && netErr.Timeout() {
-		return true
-	} else if strings.Contains(err.Error(), "use of closed network connection") { //To deprecate when using GO > 1.5
-		return true
-	}
-	return false
+	return req, nil
 }

@@ -5,6 +5,10 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 )
 
+const (
+	IntakePath = "intake"
+)
+
 // PayloadTransaction ...
 type PayloadTransaction struct {
 	ActionID             string
@@ -25,8 +29,3 @@ func NewIntakePayload() IntakePayload {
 		Metrics:    make([]interface{}, 0),
 	}
 }
-
-//
-//func (ip IntakePayload) Equals(ip2 IntakePayload) bool {
-//
-//}

@@ -78,6 +78,7 @@ func (ctb *transactionalBatcher) listenForFlushTicker() {
 func (ctb *transactionalBatcher) submitPayload(payload []byte, transactionPayloadMap map[string]transactional.PayloadTransaction) {
 	transactionforwarder.GetTransactionalForwarder().SubmitTransactionalIntake(transactionforwarder.TransactionalPayload{
 		Payload:              payload,
+		Path:                 transactional.IntakePath,
 		TransactionActionMap: transactionPayloadMap,
 	})
 }
@@ -114,7 +115,7 @@ func (ctb *transactionalBatcher) mapStateToPayload(states TransactionCheckInstan
 	// Create the metric payload
 	for _, state := range states {
 		if state.Metrics != nil {
-			for _, metric := range *state.Metrics {
+			for _, metric := range state.Metrics.Values {
 				intake.Metrics = append(intake.Metrics, metric.ConvertToIntakeMetric())
 			}
 		}
