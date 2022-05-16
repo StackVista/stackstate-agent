@@ -20,7 +20,7 @@ type Payloads []*[]byte
 
 // TransactionalPayload contains the Payload and transactional data
 type TransactionalPayload struct {
-	Payload              []byte
+	Body                 []byte
 	Path                 string
 	TransactionActionMap map[string]transactional.PayloadTransaction
 }
@@ -75,7 +75,15 @@ func NewMockTransactionalForwarder() *mockForwarder {
 
 // newTransactionalForwarder returns a instance of the forwarder
 func newTransactionalForwarder() *Forwarder {
-	return &Forwarder{stsClient: httpclient.NewStackStateClient()}
+	fwd := &Forwarder{
+		stsClient:       httpclient.NewStackStateClient(),
+		PayloadChannel:  make(chan TransactionalPayload, 100),
+		ShutdownChannel: make(chan ShutdownForwarder, 1),
+	}
+
+	go fwd.Start()
+
+	return fwd
 }
 
 // Start initialize and runs the transactional forwarder.
@@ -83,18 +91,18 @@ func (f *Forwarder) Start() {
 forwardHandler:
 	for {
 		select {
-		case tPayload := <-f.PayloadChannel:
-			response := f.stsClient.Post(tPayload.Path, tPayload.Payload)
+		case payload := <-f.PayloadChannel:
+			response := f.stsClient.Post(payload.Path, payload.Body)
 			if response.Err != nil {
-				// Payload failed, rollback transaction
-				for transactionID, payloadTransaction := range tPayload.TransactionActionMap {
+				// Payload failed, reject action
+				for transactionID, payloadTransaction := range payload.TransactionActionMap {
 					transactionmanager.GetTransactionManager().RejectAction(transactionID, payloadTransaction.ActionID, response.Err.Error())
 				}
 				_ = log.Errorf("Failed to send intake payload, content: %v. %s",
-					apiKeyRegExp.ReplaceAllString(string(tPayload.Payload), apiKeyReplacement), response.Err.Error())
+					apiKeyRegExp.ReplaceAllString(string(payload.Body), apiKeyReplacement), response.Err.Error())
 			} else {
 				// Payload succeeded, acknowledge action
-				for transactionID, payloadTransaction := range tPayload.TransactionActionMap {
+				for transactionID, payloadTransaction := range payload.TransactionActionMap {
 					transactionmanager.GetTransactionManager().AcknowledgeAction(transactionID, payloadTransaction.ActionID)
 
 					// if the transaction of the payload is completed, submit a transaction complete
@@ -103,12 +111,13 @@ forwardHandler:
 					}
 				}
 
-				log.Infof("Sent intake payload, size: %d bytes.", len(tPayload.Payload))
+				log.Infof("Sent intake payload, size: %d bytes.", len(payload.Body))
 				if config.Datadog.GetBool("log_payloads") {
-					log.Debugf("Sent intake payload, content: %v", apiKeyRegExp.ReplaceAllString(string(tPayload.Payload), apiKeyReplacement))
+					log.Debugf("Sent intake payload, content: %v", apiKeyRegExp.ReplaceAllString(string(payload.Body), apiKeyReplacement))
 				}
 			}
-		case _ = <-f.ShutdownChannel:
+		case sf := <-f.ShutdownChannel:
+			log.Infof("Shutting down forwarder %v", sf)
 			break forwardHandler
 		default:
 		}
@@ -119,8 +128,6 @@ forwardHandler:
 func (f *Forwarder) Stop() {
 	// Shut down the forwardHandler
 	f.ShutdownChannel <- ShutdownForwarder{}
-	defer close(f.PayloadChannel)
-	defer close(f.ShutdownChannel)
 }
 
 // SubmitTransactionalIntake publishes the Payload to the PayloadChannel

@@ -77,7 +77,7 @@ func (ctb *transactionalBatcher) listenForFlushTicker() {
 // submitPayload submits the payload to the forwarder
 func (ctb *transactionalBatcher) submitPayload(payload []byte, transactionPayloadMap map[string]transactional.PayloadTransaction) {
 	transactionforwarder.GetTransactionalForwarder().SubmitTransactionalIntake(transactionforwarder.TransactionalPayload{
-		Payload:              payload,
+		Body:                 payload,
 		Path:                 transactional.IntakePath,
 		TransactionActionMap: transactionPayloadMap,
 	})

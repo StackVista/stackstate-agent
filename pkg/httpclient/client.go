@@ -125,6 +125,13 @@ func newClient(host *ClientHost) *retryablehttp.Client {
 
 	retryableClient := retryablehttp.NewClient()
 	retryableClient.HTTPClient = &http.Client{Timeout: 30 * time.Second, Transport: transport}
+	if config.Datadog.IsSet("transactional_forwarder_retry_min") {
+		retryableClient.RetryWaitMin = config.Datadog.GetDuration("transactional_forwarder_retry_min")
+	}
+
+	if config.Datadog.IsSet("transactional_forwarder_retry_max") {
+		retryableClient.RetryWaitMax = config.Datadog.GetDuration("transactional_forwarder_retry_max")
+	}
 
 	return retryableClient
 }

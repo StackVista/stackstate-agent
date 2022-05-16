@@ -105,13 +105,14 @@ func testBatcher(t *testing.T, transactionState map[string]bool, expectedPayload
 	}
 
 	// ensure that we found all transactions in the transactionmanager that we expected to be there
+	sort.Strings(expectedTx)
 	sort.Strings(foundTx)
 	assert.Equal(t, expectedTx, foundTx)
 
 	// get the intake payload that was produced for this action
 	payload := fwd.NextPayload()
 	actualPayload := transactional.NewIntakePayload()
-	json.Unmarshal(payload.Payload, &actualPayload)
+	json.Unmarshal(payload.Body, &actualPayload)
 
 	// assert the payload matches the expected payload for the data produced
 	assert.Equal(t, expectedPayload.InternalHostname, actualPayload.InternalHostname)
