@@ -8,7 +8,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/info"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -27,10 +26,9 @@ const PUT = "PUT"
 
 // HTTPResponse is used to represent the response from the request
 type HTTPResponse struct {
-	Response    *http.Response
-	Body        []byte
-	RetriesLeft int
-	Err         error
+	Response       *http.Response
+	RequestPayload []byte
+	Err            error
 }
 
 // ClientHost specifies an host that the client communicates with.
@@ -48,11 +46,8 @@ type ClientHost struct {
 // RetryableHTTPClient describes the functionality of a http client with retries and backoff
 type RetryableHTTPClient interface {
 	Get(path string) *HTTPResponse
-	GetWithRetry(path string, retryInterval time.Duration, retryCount int) *HTTPResponse
 	Put(path string, body []byte) *HTTPResponse
-	PutWithRetry(path string, body []byte, retryInterval time.Duration, retryCount int) *HTTPResponse
 	Post(path string, body []byte) *HTTPResponse
-	PostWithRetry(path string, body []byte, retryInterval time.Duration, retryCount int) *HTTPResponse
 }
 
 // RetryableHTTPClient creates a http client to communicate to StackState
@@ -136,64 +131,31 @@ func newClient(host *ClientHost) *retryablehttp.Client {
 
 // Get performs a GET request to some path
 func (rc *retryableHTTPClient) Get(path string) *HTTPResponse {
-	return rc.requestRetryHandler(GET, path, nil, 5*time.Second, 5)
-}
-
-// GetWithRetry performs a GET request to some path with a set retry interval and count
-func (rc *retryableHTTPClient) GetWithRetry(path string, retryInterval time.Duration, retryCount int) *HTTPResponse {
-	return rc.requestRetryHandler(GET, path, nil, retryInterval, retryCount)
+	return rc.handleRequest(GET, path, nil)
 }
 
 // Put performs a PUT request to some path
 func (rc *retryableHTTPClient) Put(path string, body []byte) *HTTPResponse {
-	return rc.requestRetryHandler(PUT, path, body, 5*time.Second, 5)
-}
-
-// PutWithRetry performs a PUT request to some path with a set retry interval and count
-func (rc *retryableHTTPClient) PutWithRetry(path string, body []byte, retryInterval time.Duration, retryCount int) *HTTPResponse {
-	return rc.requestRetryHandler(PUT, path, body, retryInterval, retryCount)
+	return rc.handleRequest(PUT, path, body)
 }
 
 // Post performs a POST request to some path
 func (rc *retryableHTTPClient) Post(path string, body []byte) *HTTPResponse {
-	return rc.requestRetryHandler(POST, path, body, 5*time.Second, 5)
-}
-
-// PostWithRetry performs a POST request to some path with a set retry interval and count
-func (rc *retryableHTTPClient) PostWithRetry(path string, body []byte, retryInterval time.Duration, retryCount int) *HTTPResponse {
 	return rc.handleRequest(POST, path, body)
 }
 
 // getSupportedFeatures returns the features supported by the StackState API
 func (rc *retryableHTTPClient) handleRequest(method, path string, body []byte) *HTTPResponse {
 
-	response, err := rc.makeRequest(method, path, body)
-
-	// Handle error response
+	req, err := rc.makeRequest(method, path, body)
 	if err != nil {
-		// Soo we got a 404, meaning we were able to contact StackState, but it did not have the requested path. We can publish a result
-		if response != nil {
-			//responseChan <- &HTTPResponse{
-			//	RetriesLeft: retriesLeft,
-			//	Err: errors.New("found StackState version which does not have the requested path"),
-			//}
-			return
+		return &HTTPResponse{
+			Err: err,
 		}
-		// Log
-		_ = log.Error(err)
-		return
 	}
+	response, err := rc.Do(req)
 
-	defer response.Body.Close()
-
-	// Get byte array
-	body, err = ioutil.ReadAll(response.Body)
-	if err != nil {
-		_ = log.Errorf("could not decode response body from request: %s", err)
-		return
-	}
-
-	responseChan <- &HTTPResponse{Response: response, Body: body, Err: nil}
+	return &HTTPResponse{Response: response, RequestPayload: body, Err: err}
 }
 
 // makeRequest
