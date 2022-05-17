@@ -46,7 +46,7 @@ var (
 	testRawMetricsData = telemetry.RawMetrics{
 		Name:      "name",
 		Timestamp: 1400000,
-		HostName:  "Hostname",
+		HostName:  "hostname",
 		Value:     200,
 		Tags: []string{
 			"foo",
@@ -56,7 +56,7 @@ var (
 	testRawMetricsData2 = telemetry.RawMetrics{
 		Name:      "name",
 		Timestamp: 1500000,
-		HostName:  "Hostname",
+		HostName:  "hostname",
 		Value:     100,
 		Tags: []string{
 			"hello",
@@ -332,7 +332,7 @@ func TestBatchFlushOnMaxRawMetricsElements(t *testing.T) {
 func TestBatchFlushOnMaxElementsEnv(t *testing.T) {
 	serializer := serializer2.NewAgentV1MockSerializer()
 
-	// set transactionbatcher max capacity via ENV var
+	// set batcher max capacity via ENV var
 	os.Setenv("DD_BATCHER_CAPACITY", "1")
 	batcher := newAsynchronousBatcher(serializer, testHost, testAgent, config.GetMaxCapacity())
 	assert.Equal(t, 1, batcher.builder.maxCapacity)
