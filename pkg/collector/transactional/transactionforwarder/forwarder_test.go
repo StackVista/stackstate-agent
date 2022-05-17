@@ -92,7 +92,7 @@ func TestForwarder(t *testing.T) {
 			Attempts:                     maxRetries + 1,
 		},
 		{
-			TestCase: "Successful HTTP request after random number of attempts, expect AcknowledgeAction for each in " +
+			TestCase: "Successful HTTP request after 3 attempts, expect AcknowledgeAction for each in " +
 				"progress transaction.",
 			TestTransactionalPayload: TransactionalPayload{
 				Path: transactional.IntakePath,
@@ -120,6 +120,39 @@ func TestForwarder(t *testing.T) {
 				}
 			},
 			Attempts: 3,
+		},
+		{
+			TestCase: "Successful HTTP request after 1 attempt, expect AcknowledgeAction + " +
+				"CompleteTransaction for each completed transaction.",
+			TestTransactionalPayload: TransactionalPayload{
+				Path: transactional.IntakePath,
+				TransactionActionMap: map[string]transactional.PayloadTransaction{
+					testTransactionID: {
+						ActionID:             testActionID,
+						CompletedTransaction: true,
+					},
+					testTransaction2ID: {
+						ActionID:             testActionID2,
+						CompletedTransaction: true,
+					},
+				},
+			},
+			TransactionManagerAssertions: func(manager *transactionmanager.MockTransactionManager,
+				txMap map[string]transactional.PayloadTransaction) {
+				for i := 0; i < len(txMap); i++ {
+					ackAction := manager.NextAction().(transactionmanager.AckAction)
+					expectedPT, found := txMap[ackAction.TransactionID]
+					if !found {
+						assert.Fail(t, "Commit action for transaction %s, not found in expected transaction state: %v",
+							ackAction.TransactionID, txMap)
+					}
+					assert.Equal(t, expectedPT.ActionID, ackAction.ActionID)
+
+					completedTx := manager.NextAction().(transactionmanager.CompleteTransaction)
+					assert.Equal(t, ackAction.TransactionID, completedTx.TransactionID)
+				}
+			},
+			Attempts: 1,
 		},
 	} {
 		t.Run(tc.TestCase, func(t *testing.T) {
