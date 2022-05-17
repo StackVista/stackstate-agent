@@ -6,21 +6,21 @@ import (
 )
 
 // FIXTURE
-type TestCheck struct {
+type STSTestCheck struct {
 	Name string
 }
 
-func (c *TestCheck) String() string                                             { return c.Name }
-func (c *TestCheck) Version() string                                            { return "" }
-func (c *TestCheck) ConfigSource() string                                       { return "test-config-source" }
-func (c *TestCheck) Stop()                                                      {}
-func (c *TestCheck) Configure(integration.Data, integration.Data, string) error { return nil }
-func (c *TestCheck) Interval() time.Duration                                    { return 1 }
-func (c *TestCheck) Run() error                                                 { return nil }
-func (c *TestCheck) ID() ID                                                     { return ID(c.String()) }
-func (c *TestCheck) GetWarnings() []error                                       { return []error{} }
-func (c *TestCheck) GetMetricStats() (map[string]int64, error)                  { return make(map[string]int64), nil }
-func (c *TestCheck) IsTelemetryEnabled() bool                                   { return false }
+func (c *STSTestCheck) String() string                                             { return c.Name }
+func (c *STSTestCheck) Version() string                                            { return "" }
+func (c *STSTestCheck) ConfigSource() string                                       { return "test-config-source" }
+func (c *STSTestCheck) Stop()                                                      {}
+func (c *STSTestCheck) Configure(integration.Data, integration.Data, string) error { return nil }
+func (c *STSTestCheck) Interval() time.Duration                                    { return 1 }
+func (c *STSTestCheck) Run() error                                                 { return nil }
+func (c *STSTestCheck) ID() ID                                                     { return ID(c.String()) }
+func (c *STSTestCheck) GetWarnings() []error                                       { return []error{} }
+func (c *STSTestCheck) GetMetricStats() (map[string]int64, error)                  { return make(map[string]int64), nil }
+func (c *STSTestCheck) IsTelemetryEnabled() bool                                   { return false }
 
 // TestCheckReloader is an implementation of the CheckLoader
 type TestCheckReloader struct {

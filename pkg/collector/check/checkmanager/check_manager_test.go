@@ -21,7 +21,7 @@ func TestMakeCheckManager(t *testing.T) {
 
 func TestCheckManagerSubscription(t *testing.T) {
 	checkManager := newCheckManager(&check.TestCheckReloader{})
-	testCheck := &check.TestCheck{Name: "test-check-1"}
+	testCheck := &check.STSTestCheck{Name: "test-check-1"}
 
 	// assert that we start at an empty state
 	assert.EqualValues(t, checkManager.checkHandlers, map[string]handler.CheckHandler{})
@@ -37,7 +37,7 @@ func TestCheckManagerSubscription(t *testing.T) {
 	assert.EqualValues(t, integration.Data{0, 0, 0}, actualInitCfg)
 
 	// subscribe another check handler and assert it
-	testCheck2 := &check.TestCheck{Name: "test-check-2"}
+	testCheck2 := &check.STSTestCheck{Name: "test-check-2"}
 	checkManager.RegisterCheckHandler(testCheck2, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
 	_, found = checkManager.checkHandlers[string(testCheck.ID())]
 	assert.True(t, found, "TestCheck handler not found in the checkManager.checkHandlers map")

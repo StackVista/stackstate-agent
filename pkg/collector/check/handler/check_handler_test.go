@@ -26,7 +26,7 @@ func TestCheckHandler(t *testing.T) {
 	}{
 		{
 			testCase: "my-check-handler-test-check check handler",
-			checkHandler: NewCheckHandler(&check.TestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+			checkHandler: NewCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
 				integration.Data{1, 2, 3}, integration.Data{0, 0, 0}),
 			expectedCHString:     "my-check-handler-test-check",
 			expectedCHName:       "my-check-handler-test-check",
@@ -64,7 +64,7 @@ func TestCheckHandler(t *testing.T) {
 func TestCheckHandler_Transactions(t *testing.T) {
 	testTxManager := transactionmanager.NewMockTransactionManager()
 
-	ch := NewCheckHandler(&check.TestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+	ch := NewCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*checkHandler)
 
 	ch.Start()
@@ -127,7 +127,7 @@ func TestCheckHandler_Transactions(t *testing.T) {
 
 func TestCheckHandler_Shutdown(t *testing.T) {
 	testTxManager := transactionmanager.NewMockTransactionManager()
-	ch := NewCheckHandler(&check.TestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+	ch := NewCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*checkHandler)
 
 	ch.Start()

@@ -186,8 +186,6 @@ func start(cmd *cobra.Command, args []string) error {
 
 	// [sts] init the batcher for topology production
 	batcher.InitBatcher(s, hostname, "agent", config.GetMaxCapacity())
-	// [sts] create the global check manager instance
-	common.CheckManager = check.MakeCheckManager()
 
 	log.Infof("Datadog Cluster Agent is now running.")
 
