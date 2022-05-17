@@ -25,6 +25,10 @@ type CheckIdentifier interface {
 
 // CheckAPI ...
 type CheckAPI interface {
+	// Transactionality
+	SubmitStartTransaction()
+	SubmitStopTransaction()
+
 	// Topology
 	SubmitComponent(instance topology.Instance, component topology.Component)
 	SubmitRelation(instance topology.Instance, relation topology.Relation)
@@ -113,6 +117,16 @@ func (ch *checkHandler) SubmitRawMetricsData(data telemetry.RawMetrics) {
 	transactionbatcher.GetTransactionalBatcher().SubmitRawMetricsData(ch.ID(), ch.currentTransaction, data)
 }
 
+// SubmitStartTransaction ...
+func (ch *checkHandler) SubmitStartTransaction() {
+	ch.transactionChannel <- SubmitStartTransaction{}
+}
+
+// SubmitStopTransaction ...
+func (ch *checkHandler) SubmitStopTransaction() {
+	transactionbatcher.GetTransactionalBatcher().SubmitComplete(ch.ID())
+}
+
 // SubmitComplete ...
 func (ch *checkHandler) SubmitComplete() {
 	transactionbatcher.GetTransactionalBatcher().SubmitComplete(ch.ID())
@@ -195,12 +209,7 @@ currentTxHandler:
 	}
 }
 
-// StartTransaction ...
-func (ch *checkHandler) StartTransaction() {
-	ch.transactionChannel <- SubmitStartTransaction{}
-}
-
-// GetConfig ...
+// GetConfig returns the config and the init config of the check
 func (ch *checkHandler) GetConfig() (integration.Data, integration.Data) {
 	return ch.config, ch.initConfig
 }
@@ -208,7 +217,7 @@ func (ch *checkHandler) GetConfig() (integration.Data, integration.Data) {
 // SubmitStartTransaction is used to start a transaction to the input channel
 type SubmitStartTransaction struct{}
 
-// SubmitStopTransaction is used to start a transaction to the input channel
+// SubmitStopTransaction is used to stop a transaction to the input channel
 type SubmitStopTransaction struct{}
 
 // safeCloseTransactionChannel closes the tx channel that can potentially already be closed. It handles the panic and does a no-op.

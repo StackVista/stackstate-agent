@@ -85,9 +85,14 @@ func (ch *CheckNoHandler) Reload() {
 	_ = ch.CheckReloader.ReloadCheck(ch.ID(), config, initConfig, ch.ConfigSource())
 }
 
-// StartTransaction ...
-func (ch *CheckNoHandler) StartTransaction(check.ID, string) {
+// SubmitStartTransaction ...
+func (ch *CheckNoHandler) SubmitStartTransaction() {
 	_ = log.Warnf("StartTransaction called on CheckNoHandler. This should never happen.")
+}
+
+// SubmitStopTransaction ...
+func (ch *CheckNoHandler) SubmitStopTransaction() {
+	_ = log.Warnf("SubmitStopTransaction called on CheckNoHandler. This should never happen.")
 }
 
 // GetConfig is the CheckNoHandler implementation which just returns nil. This should never be called.
