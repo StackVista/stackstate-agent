@@ -1,25 +1,25 @@
 package transactionforwarder
 
-func createMockForwarder() *mockForwarder {
-	return &mockForwarder{PayloadChan: make(chan TransactionalPayload, 100)}
+func createMockForwarder() MockTransactionalForwarder {
+	return MockTransactionalForwarder{PayloadChan: make(chan TransactionalPayload, 100)}
 }
 
-type mockForwarder struct {
+type MockTransactionalForwarder struct {
 	PayloadChan chan TransactionalPayload
 }
 
 // Start is a noop
-func (mf *mockForwarder) Start() {}
+func (mf MockTransactionalForwarder) Start() {}
 
 // SubmitTransactionalIntake receives a TransactionalPayload and keeps it in the PayloadChan to be used in assertions
-func (mf *mockForwarder) SubmitTransactionalIntake(payload TransactionalPayload) {
+func (mf MockTransactionalForwarder) SubmitTransactionalIntake(payload TransactionalPayload) {
 	mf.PayloadChan <- payload
 }
 
 // NextPayload returns the next payload in the PayloadChan
-func (mf *mockForwarder) NextPayload() TransactionalPayload {
+func (mf MockTransactionalForwarder) NextPayload() TransactionalPayload {
 	return <-mf.PayloadChan
 }
 
 // Stop is a noop
-func (mf *mockForwarder) Stop() {}
+func (mf MockTransactionalForwarder) Stop() {}

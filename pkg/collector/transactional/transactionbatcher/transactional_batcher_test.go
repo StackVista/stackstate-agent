@@ -100,8 +100,8 @@ func testBatcher(t *testing.T, transactionState map[string]bool, expectedPayload
 
 	// get the expected transactions in the transactionState
 	var expectedTx []string
-	for txId, _ := range transactionState {
-		expectedTx = append(expectedTx, txId)
+	for txID, _ := range transactionState {
+		expectedTx = append(expectedTx, txID)
 	}
 
 	// ensure that we found all transactions in the transactionmanager that we expected to be there

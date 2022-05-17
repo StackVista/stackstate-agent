@@ -10,9 +10,13 @@ import (
 type TransactionState int64
 
 const (
+	// InProgress is used to represent a InProgress transaction
 	InProgress TransactionState = iota
+	// Failed is used to represent a Failed transaction
 	Failed
+	// Succeeded is used to represent a Succeeded transaction
 	Succeeded
+	// Stale is used to represent a Stale transaction
 	Stale
 )
 
@@ -92,12 +96,12 @@ func (r RollbackTransaction) Error() string {
 // StopTransactionManager triggers the shutdown of the transaction checkmanager.
 type StopTransactionManager struct{}
 
-// TransactionManagerNotRunning is triggered when trying to create a transaction when the transaction checkmanager has not
+// NotRunning is triggered when trying to create a transaction when the transaction checkmanager has not
 // been started yet.
-type TransactionManagerNotRunning struct{}
+type NotRunning struct{}
 
-// Error returns a string representation of the TransactionManagerNotRunning error and implements Error.
-func (t TransactionManagerNotRunning) Error() string {
+// Error returns a string representation of the NotRunning error and implements Error.
+func (t NotRunning) Error() string {
 	return "transaction checkmanager is not running, call TransactionManager.Start() to start it"
 }
 

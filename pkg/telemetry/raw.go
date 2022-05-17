@@ -10,6 +10,8 @@ import (
 	"fmt"
 )
 
+// Metrics is a container structure for a list of raw metric values. This allows us to set Metrics of a batch payload as
+// a pointer and append more metrics to the structure
 type Metrics struct {
 	Values []RawMetrics
 }

@@ -209,7 +209,7 @@ func (txm *transactionManager) Stop() {
 // startTransaction creates a transaction and puts it into the transactions map
 func (txm *transactionManager) startTransaction(transactionID string, notify chan interface{}) (*IntakeTransaction, error) {
 	if !txm.running {
-		return nil, TransactionManagerNotRunning{}
+		return nil, NotRunning{}
 	}
 
 	transaction := &IntakeTransaction{
