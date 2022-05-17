@@ -186,13 +186,17 @@
         state: present
         package_params: "--norestart --wait --quiet --locale en-US --add Microsoft.VisualStudio.Workload.MSBuildTools --add Microsoft.VisualStudio.Workload.UniversalBuildTools --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Win81 --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Runtimes.x86.x64.Spectre --add Microsoft.VisualStudio.Component.Windows10SDK.17763"
 
+    - name: Reboot a machine that takes time to settle after being booted
+      ansible.windows.win_reboot:
+        post_reboot_delay: 120
+
 # choco install visualstudio2019community --package-parameters "...."
     - name: Install Visual studio 2019 community
       win_chocolatey:
         name: visualstudio2019community
         state: present
         package_params: "--norestart --wait --quiet --locale en-US"
-        #package_params: "--norestart --wait --quiet --locale en-US --add Microsoft.VisualStudio.Workload.MSBuildTools --add Microsoft.VisualStudio.Workload.NativeDesktop  --add Microsoft.VisualStudio.Component.VC.CMake.Project --add Microsoft.VisualStudio.Component.VC.CLI.Support --add Microsoft.VisualStudio.Workload.UniversalBuildTools --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Win81"
+        #package_params: "--norestart --quiet --wait --locale en-US --add Microsoft.VisualStudio.Workload.MSBuildTools --add Microsoft.VisualStudio.Workload.NativeDesktop  --add Microsoft.VisualStudio.Component.VC.CMake.Project --add Microsoft.VisualStudio.Component.VC.CLI.Support --add Microsoft.VisualStudio.Workload.UniversalBuildTools --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Win81"
       register: result
       until: result.rc == 0
       retries: 3
@@ -410,7 +414,6 @@
         timeout: 90
       register: msys_try1
       ignore_errors: true
-      until: msys_try1.finished
 
     - name: Install msys2 (2/2)
       win_chocolatey:
