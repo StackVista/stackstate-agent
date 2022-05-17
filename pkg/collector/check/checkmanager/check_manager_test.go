@@ -9,8 +9,10 @@ import (
 )
 
 func TestMakeCheckManager(t *testing.T) {
-	checkManager := newCheckManager()
+	reloader := &check.TestCheckReloader{}
+	checkManager := newCheckManager(reloader)
 	expected := &CheckManager{
+		reloader:      reloader,
 		checkHandlers: make(map[string]handler.CheckHandler),
 	}
 
@@ -18,7 +20,7 @@ func TestMakeCheckManager(t *testing.T) {
 }
 
 func TestCheckManagerSubscription(t *testing.T) {
-	checkManager := newCheckManager()
+	checkManager := newCheckManager(&check.TestCheckReloader{})
 	testCheck := &check.TestCheck{Name: "test-check-1"}
 
 	// assert that we start at an empty state

@@ -280,7 +280,7 @@ func StartAgent() error {
 	// [sts] create the global transactional components
 	transactionforwarder.InitTransactionalForwarder()
 	transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
-	checkmanager.InitCheckManager()
+	checkmanager.InitCheckManager(common.Coll)
 	txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
 	transactionmanager.InitTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
 

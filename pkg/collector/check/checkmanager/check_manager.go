@@ -2,7 +2,6 @@ package checkmanager
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/cmd/agent/common"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
@@ -16,9 +15,9 @@ var (
 )
 
 // InitCheckManager ...
-func InitCheckManager() {
+func InitCheckManager(reloader handler.CheckReloader) {
 	cmInit.Do(func() {
-		cmInstance = newCheckManager()
+		cmInstance = newCheckManager(reloader)
 	})
 }
 
@@ -29,12 +28,14 @@ func GetCheckManager() *CheckManager {
 
 // CheckManager acts as the grouping of check handlers and deals with the "lifecycle" of check handlers.
 type CheckManager struct {
+	reloader      handler.CheckReloader
 	checkHandlers map[string]handler.CheckHandler
 }
 
 // newCheckManager returns a instance of the Check Manager
-func newCheckManager() *CheckManager {
+func newCheckManager(reloader handler.CheckReloader) *CheckManager {
 	return &CheckManager{
+		reloader:      reloader,
 		checkHandlers: make(map[string]handler.CheckHandler),
 	}
 }
@@ -51,7 +52,7 @@ func (cm *CheckManager) GetCheckHandler(checkID check.ID) handler.CheckHandler {
 
 // RegisterCheckHandler registers a check handler for the given check using a transactionbatcher for this instance
 func (cm *CheckManager) RegisterCheckHandler(check check.Check, config, initConfig integration.Data) handler.CheckHandler {
-	ch := handler.NewCheckHandler(check, common.Coll, config, initConfig)
+	ch := handler.NewCheckHandler(check, cm.reloader, config, initConfig)
 	log.Debugf("Registering Check Handler for: %s", ch.ID())
 	cm.checkHandlers[string(check.ID())] = ch
 	return ch
