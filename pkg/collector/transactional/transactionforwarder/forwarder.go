@@ -14,10 +14,6 @@ const apiKeyReplacement = "\"apiKey\":\"*************************$1"
 
 var apiKeyRegExp = regexp.MustCompile("\"apiKey\":\"*\\w+(\\w{5})")
 
-// Payloads is a slice of pointers to byte arrays, an alias for the slices of
-// payloads we pass into the forwarder
-type Payloads []*[]byte
-
 // TransactionalPayload contains the Payload and transactional data
 type TransactionalPayload struct {
 	Body                 []byte
@@ -28,14 +24,7 @@ type TransactionalPayload struct {
 // ShutdownForwarder shuts down the forwarder
 type ShutdownForwarder struct{}
 
-// Response contains the response details of a successfully posted checkmanager
-type Response struct {
-	Domain     string
-	Body       []byte
-	StatusCode int
-	Err        error
-}
-
+// TransactionalForwarder encapsulates the functionality for a transactional forwarder
 type TransactionalForwarder interface {
 	Start()
 	SubmitTransactionalIntake(payload TransactionalPayload)

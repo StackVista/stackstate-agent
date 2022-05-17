@@ -76,10 +76,6 @@ func (ch *CheckNoHandler) SubmitComplete() {
 	batcher.GetBatcher().SubmitComplete(ch.ID())
 }
 
-func (ch *CheckNoHandler) Shutdown() {
-	batcher.GetBatcher().Shutdown()
-}
-
 func (ch *CheckNoHandler) Reload() {
 	config, initConfig := ch.GetConfig()
 	_ = ch.CheckReloader.ReloadCheck(ch.ID(), config, initConfig, ch.ConfigSource())

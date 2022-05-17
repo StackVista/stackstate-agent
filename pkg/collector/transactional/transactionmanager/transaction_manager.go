@@ -13,6 +13,7 @@ var (
 	tmInit     sync.Once
 )
 
+// TransactionManager encapsulates all the functionality of the transaction manager to keep track of transactions
 type TransactionManager interface {
 	Start()
 	StartTransaction(CheckID check.ID, TransactionID string, NotifyChannel chan interface{})
@@ -67,13 +68,14 @@ type transactionManager struct {
 	running                     bool
 }
 
+// CompleteTransaction completes a transaction for a given transactionID
 func (txm *transactionManager) CompleteTransaction(transactionID string) {
 	txm.transactionChannel <- CompleteTransaction{
 		TransactionID: transactionID,
 	}
 }
 
-// StartTransaction ...
+// StartTransaction begins a transaction for a given check
 func (txm *transactionManager) StartTransaction(checkID check.ID, transactionID string, notifyChannel chan interface{}) {
 	txm.transactionChannel <- StartTransaction{
 		CheckID:       checkID,
@@ -82,7 +84,7 @@ func (txm *transactionManager) StartTransaction(checkID check.ID, transactionID 
 	}
 }
 
-// RollbackTransaction ...
+// RollbackTransaction rolls back a transaction for a given transactionID and a reason for the rollback
 func (txm *transactionManager) RollbackTransaction(transactionID, reason string) {
 	txm.transactionChannel <- RollbackTransaction{
 		TransactionID: transactionID,
@@ -90,7 +92,7 @@ func (txm *transactionManager) RollbackTransaction(transactionID, reason string)
 	}
 }
 
-// CommitAction ...
+// CommitAction commits an action for a given transaction. All actions must be acknowledged for a given transaction
 func (txm *transactionManager) CommitAction(transactionID, actionID string) {
 	txm.transactionChannel <- CommitAction{
 		TransactionID: transactionID,
@@ -98,7 +100,7 @@ func (txm *transactionManager) CommitAction(transactionID, actionID string) {
 	}
 }
 
-// AcknowledgeAction ...
+// AcknowledgeAction acknowledges an action for a given transaction
 func (txm *transactionManager) AcknowledgeAction(transactionID, actionID string) {
 	txm.transactionChannel <- AckAction{
 		TransactionID: transactionID,
@@ -106,7 +108,7 @@ func (txm *transactionManager) AcknowledgeAction(transactionID, actionID string)
 	}
 }
 
-// RejectAction ...
+// RejectAction rejects an action for a given transaction. This will result in a transaction failure
 func (txm *transactionManager) RejectAction(transactionID, actionID, reason string) {
 	txm.transactionChannel <- RejectAction{
 		TransactionID: transactionID,

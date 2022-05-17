@@ -206,6 +206,18 @@ func (builder *TransactionBatchBuilder) incrementAndTryFlush() TransactionCheckI
 	return nil
 }
 
+// MarkTransactionComplete marks a transaction as complete and flushes the data if produced
+func (builder *TransactionBatchBuilder) MarkTransactionComplete(checkID check.ID, transactionID string) TransactionCheckInstanceBatchStates {
+	if state, ok := builder.states[checkID]; ok {
+		if state.Transaction.TransactionID == transactionID {
+			state.Transaction.CompletedTransaction = true
+			return builder.Flush()
+		}
+	}
+
+	return nil
+}
+
 // FlushOnComplete checks whether the check produced data, if so, flush
 func (builder *TransactionBatchBuilder) FlushOnComplete(checkID check.ID) TransactionCheckInstanceBatchStates {
 	if state, ok := builder.states[checkID]; ok {

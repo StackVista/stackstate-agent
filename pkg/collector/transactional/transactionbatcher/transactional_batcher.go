@@ -165,6 +165,8 @@ func (ctb *transactionalBatcher) Start() {
 			ctb.SubmitState(ctb.builder.HealthStopSnapshot(submission.CheckID, submission.TransactionID, submission.Stream))
 		case SubmitRawMetricsData:
 			ctb.SubmitState(ctb.builder.AddRawMetricsData(submission.CheckID, submission.TransactionID, submission.RawMetric))
+		case SubmitCompleteTransaction:
+			ctb.SubmitState(ctb.builder.MarkTransactionComplete(submission.CheckID, submission.TransactionID))
 		case SubmitComplete:
 			ctb.SubmitState(ctb.builder.FlushOnComplete(submission.CheckID))
 		case SubmitShutdown:
@@ -292,6 +294,14 @@ func (ctb *transactionalBatcher) SubmitRawMetricsData(checkID check.ID, transact
 		CheckID:       checkID,
 		TransactionID: transactionID,
 		RawMetric:     rawMetric,
+	}
+}
+
+// SubmitCompleteTransaction submits a complete of a transaction
+func (ctb *transactionalBatcher) SubmitCompleteTransaction(checkID check.ID, transactionID string) {
+	ctb.Input <- SubmitCompleteTransaction{
+		CheckID:       checkID,
+		TransactionID: transactionID,
 	}
 }
 

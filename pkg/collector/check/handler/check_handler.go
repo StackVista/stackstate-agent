@@ -3,52 +3,25 @@ package handler
 import (
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
-	"github.com/StackVista/stackstate-agent/pkg/health"
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
-	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/google/uuid"
 )
 
+// CheckReloader is a interface wrapper around the Collector which controls all checks.
 type CheckReloader interface {
 	ReloadCheck(id check.ID, config, initConfig integration.Data, newSource string) error
 }
 
-// CheckIdentifier encapsulates all the functionality needed to describe and configure an agent check
+// CheckIdentifier encapsulates all the functionality needed to describe and configure an agent check.
 type CheckIdentifier interface {
 	String() string       // provide a printable version of the check name
 	ID() check.ID         // provide a unique identifier for every check instance
 	ConfigSource() string // return the configuration source of the check
 }
 
-// CheckAPI ...
-type CheckAPI interface {
-	// Transactionality
-	SubmitStartTransaction()
-	SubmitStopTransaction()
-
-	// Topology
-	SubmitComponent(instance topology.Instance, component topology.Component)
-	SubmitRelation(instance topology.Instance, relation topology.Relation)
-	SubmitStartSnapshot(instance topology.Instance)
-	SubmitStopSnapshot(instance topology.Instance)
-	SubmitDelete(instance topology.Instance, topologyElementID string)
-
-	// Health
-	SubmitHealthCheckData(stream health.Stream, data health.CheckData)
-	SubmitHealthStartSnapshot(stream health.Stream, intervalSeconds int, expirySeconds int)
-	SubmitHealthStopSnapshot(stream health.Stream)
-
-	// Raw Metrics
-	SubmitRawMetricsData(data telemetry.RawMetrics)
-
-	// lifecycle
-	SubmitComplete()
-	Shutdown()
-}
-
+// CheckHandler represents a wrapper around an Agent Check that allows us track data produced by an agent check, as well
+// as handle transactions for it.
 type CheckHandler interface {
 	CheckIdentifier
 	CheckAPI
@@ -57,7 +30,7 @@ type CheckHandler interface {
 	Reload()
 }
 
-// checkHandler provides an interface between the Agent Check and the transactional components
+// checkHandler provides an interface between the Agent Check and the transactional components.
 type checkHandler struct {
 	CheckIdentifier
 	CheckReloader
@@ -68,76 +41,7 @@ type checkHandler struct {
 	currentTransaction        string
 }
 
-func (ch *checkHandler) GetCheckReloader() CheckReloader {
-	return ch.CheckReloader
-}
-
-// SubmitComponent ...
-func (ch *checkHandler) SubmitComponent(instance topology.Instance, component topology.Component) {
-	transactionbatcher.GetTransactionalBatcher().SubmitComponent(ch.ID(), ch.currentTransaction, instance, component)
-}
-
-// SubmitRelation ...
-func (ch *checkHandler) SubmitRelation(instance topology.Instance, relation topology.Relation) {
-	transactionbatcher.GetTransactionalBatcher().SubmitRelation(ch.ID(), ch.currentTransaction, instance, relation)
-}
-
-// SubmitStartSnapshot ...
-func (ch *checkHandler) SubmitStartSnapshot(instance topology.Instance) {
-	transactionbatcher.GetTransactionalBatcher().SubmitStartSnapshot(ch.ID(), ch.currentTransaction, instance)
-}
-
-// SubmitStopSnapshot ...
-func (ch *checkHandler) SubmitStopSnapshot(instance topology.Instance) {
-	transactionbatcher.GetTransactionalBatcher().SubmitStopSnapshot(ch.ID(), ch.currentTransaction, instance)
-}
-
-// SubmitDelete ...
-func (ch *checkHandler) SubmitDelete(instance topology.Instance, topologyElementID string) {
-	transactionbatcher.GetTransactionalBatcher().SubmitDelete(ch.ID(), ch.currentTransaction, instance, topologyElementID)
-}
-
-// SubmitHealthCheckData ...
-func (ch *checkHandler) SubmitHealthCheckData(stream health.Stream, data health.CheckData) {
-	transactionbatcher.GetTransactionalBatcher().SubmitHealthCheckData(ch.ID(), ch.currentTransaction, stream, data)
-}
-
-// SubmitHealthStartSnapshot ...
-func (ch *checkHandler) SubmitHealthStartSnapshot(stream health.Stream, intervalSeconds int, expirySeconds int) {
-	transactionbatcher.GetTransactionalBatcher().SubmitHealthStartSnapshot(ch.ID(), ch.currentTransaction, stream, intervalSeconds, expirySeconds)
-}
-
-// SubmitHealthStopSnapshot ...
-func (ch *checkHandler) SubmitHealthStopSnapshot(stream health.Stream) {
-	transactionbatcher.GetTransactionalBatcher().SubmitHealthStopSnapshot(ch.ID(), ch.currentTransaction, stream)
-}
-
-// SubmitRawMetricsData ...
-func (ch *checkHandler) SubmitRawMetricsData(data telemetry.RawMetrics) {
-	transactionbatcher.GetTransactionalBatcher().SubmitRawMetricsData(ch.ID(), ch.currentTransaction, data)
-}
-
-// SubmitStartTransaction ...
-func (ch *checkHandler) SubmitStartTransaction() {
-	ch.transactionChannel <- SubmitStartTransaction{}
-}
-
-// SubmitStopTransaction ...
-func (ch *checkHandler) SubmitStopTransaction() {
-	transactionbatcher.GetTransactionalBatcher().SubmitComplete(ch.ID())
-}
-
-// SubmitComplete ...
-func (ch *checkHandler) SubmitComplete() {
-	transactionbatcher.GetTransactionalBatcher().SubmitComplete(ch.ID())
-}
-
-// Shutdown ...
-func (ch *checkHandler) Shutdown() {
-	transactionbatcher.GetTransactionalBatcher().Shutdown()
-}
-
-// Reload ...
+// Reload uses the Check Reloader (Collector) to reload the check: pkg/collector/collector.go:126
 func (ch *checkHandler) Reload() {
 	config, initConfig := ch.GetConfig()
 	if err := ch.ReloadCheck(ch.ID(), config, initConfig, ch.ConfigSource()); err != nil {
@@ -145,7 +49,7 @@ func (ch *checkHandler) Reload() {
 	}
 }
 
-// NewCheckHandler ...
+// NewCheckHandler creates a new check handler for a given check, check loader and configuration
 func NewCheckHandler(check check.Check, checkReloader CheckReloader, config, initConfig integration.Data) CheckHandler {
 	return &checkHandler{
 		CheckIdentifier:    check,
@@ -157,7 +61,7 @@ func NewCheckHandler(check check.Check, checkReloader CheckReloader, config, ini
 	}
 }
 
-// Start ...
+// Start starts the check handler to "listen" and handle check transactions or shutdown
 func (ch *checkHandler) Start() {
 	go func() {
 	txReceiverHandler:
@@ -167,9 +71,17 @@ func (ch *checkHandler) Start() {
 				// set the current transaction
 				ch.currentTransaction = uuid.New().String()
 				log.Debugf("Starting transaction: %s", ch.currentTransaction)
+
+				// try closing the currentTransactionChannel to ensure we never accidentally leak a channel before
+				// register a new one
+				safeCloseTransactionChannel(ch.currentTransactionChannel)
 				ch.currentTransactionChannel = make(chan interface{})
+
+				// create a new transaction in the transaction manager and wait for responses
 				transactionmanager.GetTransactionManager().StartTransaction(ch.ID(), ch.currentTransaction, ch.currentTransactionChannel)
 				ch.handleCurrentTransaction(ch.currentTransactionChannel)
+
+				// close the ch.currentTransactionChannel, making use ready to start a new transaction
 				close(ch.currentTransactionChannel)
 			case <-ch.shutdownChannel:
 				log.Debug("Shutting down check handler. Closing transaction channels.")
@@ -178,18 +90,17 @@ func (ch *checkHandler) Start() {
 				close(ch.transactionChannel)
 				break txReceiverHandler
 			default:
-				log.Debug("got here")
-				// nothing
 			}
 		}
 	}()
 }
 
-// Stop ...
+// Stop stops the check handler txReceiverHandler
 func (ch *checkHandler) Stop() {
 	ch.shutdownChannel <- true
 }
 
+// handleCurrentTransaction handles the current transaction
 func (ch *checkHandler) handleCurrentTransaction(txChan chan interface{}) {
 currentTxHandler:
 	for {
@@ -202,7 +113,7 @@ currentTxHandler:
 				}
 				break currentTxHandler
 			case transactionmanager.CompleteTransaction:
-				log.Debugf("Received: %s", txMsg.TransactionID)
+				log.Debugf("Completing transaction: %s for check %s", txMsg.TransactionID, ch.ID())
 				break currentTxHandler
 			}
 		}

@@ -170,7 +170,7 @@ func TestBatcherWithInProgressTransactionTimeBasedFlush(t *testing.T) {
 func TestBatchFlushSnapshotOnComplete(t *testing.T) {
 	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
 	batcher.SubmitStopSnapshot(testID, testTransactionID, testInstance)
-	batcher.SubmitComplete(testID)
+	batcher.SubmitCompleteTransaction(testID, testTransactionID)
 
 	expectedPayload := transactional.NewIntakePayload()
 	expectedPayload.InternalHostname = "myhost"
@@ -197,7 +197,7 @@ func TestBatchFlushHealthOnComplete(t *testing.T) {
 	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
 
 	batcher.SubmitHealthStopSnapshot(testID, testTransactionID, testStream)
-	batcher.SubmitComplete(testID)
+	batcher.SubmitCompleteTransaction(testID, testTransactionID)
 
 	expectedPayload := transactional.NewIntakePayload()
 	expectedPayload.InternalHostname = "myhost"
@@ -224,7 +224,7 @@ func TestBatchFlushOnComplete(t *testing.T) {
 	batcher.SubmitHealthCheckData(testID, testTransactionID, testStream, testCheckData)
 	batcher.SubmitRawMetricsData(testID, testTransactionID, testRawMetricsData)
 	batcher.SubmitRawMetricsData(testID, testTransactionID, testRawMetricsData2)
-	batcher.SubmitComplete(testID)
+	batcher.SubmitCompleteTransaction(testID, testTransactionID)
 
 	expectedPayload := transactional.NewIntakePayload()
 	expectedPayload.InternalHostname = "myhost"
@@ -258,11 +258,11 @@ func TestBatchNoDataNoComplete(t *testing.T) {
 	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
 
 	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent)
-	batcher.SubmitComplete(testID2)
+	batcher.SubmitCompleteTransaction(testID2, testTransactionID)
 
 	// We now send a stop to trigger a combined commit
 	batcher.SubmitStopSnapshot(testID, testTransactionID, testInstance)
-	batcher.SubmitComplete(testID)
+	batcher.SubmitCompleteTransaction(testID, testTransactionID)
 
 	expectedPayload := transactional.NewIntakePayload()
 	expectedPayload.InternalHostname = "myhost"
@@ -306,7 +306,7 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 	batcher.SubmitRawMetricsData(testID2, testTransaction2ID, testRawMetricsData2)
 
 	batcher.SubmitStopSnapshot(testID, testTransactionID, testInstance)
-	batcher.SubmitComplete(testID)
+	batcher.SubmitCompleteTransaction(testID, testTransactionID)
 
 	expectedPayload := transactional.NewIntakePayload()
 	expectedPayload.InternalHostname = "myhost"
@@ -472,7 +472,7 @@ func TestBatcherStartSnapshot(t *testing.T) {
 	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
 
 	batcher.SubmitStartSnapshot(testID, testTransactionID, testInstance)
-	batcher.SubmitComplete(testID)
+	batcher.SubmitCompleteTransaction(testID, testTransactionID)
 
 	expectedPayload := transactional.NewIntakePayload()
 	expectedPayload.InternalHostname = "myhost"
@@ -500,7 +500,7 @@ func TestBatcherRelation(t *testing.T) {
 	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
 
 	batcher.SubmitRelation(testID, testTransactionID, testInstance, testRelation)
-	batcher.SubmitComplete(testID)
+	batcher.SubmitCompleteTransaction(testID, testTransactionID)
 
 	expectedPayload := transactional.NewIntakePayload()
 	expectedPayload.InternalHostname = "myhost"
@@ -528,7 +528,7 @@ func TestBatcherHealthStartSnapshot(t *testing.T) {
 	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
 
 	batcher.SubmitHealthStartSnapshot(testID, testTransactionID, testStream, 1, 0)
-	batcher.SubmitComplete(testID)
+	batcher.SubmitCompleteTransaction(testID, testTransactionID)
 
 	expectedPayload := transactional.NewIntakePayload()
 	expectedPayload.InternalHostname = "myhost"
@@ -554,7 +554,7 @@ func TestBatchMultipleHealthStreams(t *testing.T) {
 
 	batcher.SubmitHealthStartSnapshot(testID, testTransactionID, testStream, 1, 0)
 	batcher.SubmitHealthStartSnapshot(testID, testTransactionID, testStream2, 1, 0)
-	batcher.SubmitComplete(testID)
+	batcher.SubmitCompleteTransaction(testID, testTransactionID)
 
 	expectedPayload := transactional.NewIntakePayload()
 	expectedPayload.InternalHostname = "myhost"

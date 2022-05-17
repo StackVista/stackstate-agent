@@ -105,5 +105,11 @@ type SubmitComplete struct {
 	CheckID check.ID
 }
 
+// SubmitCompleteTransaction is used to submit a transaction complete to the input channel
+type SubmitCompleteTransaction struct {
+	CheckID       check.ID
+	TransactionID string
+}
+
 // SubmitShutdown is used to submit a shutdown of the transactionbatcher to the input channel
 type SubmitShutdown struct{}
