@@ -6,38 +6,53 @@ func newTestTransactionManager() *MockTransactionManager {
 	return &MockTransactionManager{TransactionActions: make(chan interface{}, 100)}
 }
 
+// MockTransactionManager is a mock implementation of the transaction manager for tests
 type MockTransactionManager struct {
 	CurrentTransaction              string
 	CurrentTransactionNotifyChannel chan interface{}
 	TransactionActions              chan interface{}
 }
 
+// Start is a noop
 func (ttm *MockTransactionManager) Start() {
 }
 
+// Stop is a noop
 func (ttm *MockTransactionManager) Stop() {
 }
 
+// StartTransaction sets the current transaction value and updates the notify channel
 func (ttm *MockTransactionManager) StartTransaction(_ check.ID, TransactionID string, NotifyChannel chan interface{}) {
 	ttm.CurrentTransaction = TransactionID
 	ttm.CurrentTransactionNotifyChannel = NotifyChannel
 }
+
+// CompleteTransaction sends a CompleteTransaction to the TransactionActions channel to be used in assertions
 func (ttm *MockTransactionManager) CompleteTransaction(transactionID string) {
 	ttm.TransactionActions <- CompleteTransaction{TransactionID: transactionID}
 }
+
+// RollbackTransaction sends a RollbackTransaction to the TransactionActions channel to be used in assertions
 func (ttm *MockTransactionManager) RollbackTransaction(transactionID, reason string) {
 	ttm.TransactionActions <- RollbackTransaction{TransactionID: transactionID, Reason: reason}
 }
+
+// CommitAction sends a CommitAction to the TransactionActions channel to be used in assertions
 func (ttm *MockTransactionManager) CommitAction(transactionID, actionID string) {
 	ttm.TransactionActions <- CommitAction{TransactionID: transactionID, ActionID: actionID}
 }
+
+// AcknowledgeAction sends a AckAction to the TransactionActions channel to be used in assertions
 func (ttm *MockTransactionManager) AcknowledgeAction(transactionID, actionID string) {
 	ttm.TransactionActions <- AckAction{TransactionID: transactionID, ActionID: actionID}
 }
+
+// RejectAction sends a RejectAction to the TransactionActions channel to be used in assertions
 func (ttm *MockTransactionManager) RejectAction(transactionID, actionID, reason string) {
 	ttm.TransactionActions <- RejectAction{TransactionID: transactionID, ActionID: actionID, Reason: reason}
 }
 
+// NextAction returns the next action from the TransactionActions channel to be used in assertions
 func (ttm *MockTransactionManager) NextAction() interface{} {
 	return <-ttm.TransactionActions
 }

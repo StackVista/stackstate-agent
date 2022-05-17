@@ -9,12 +9,14 @@ const (
 	IntakePath = "intake"
 )
 
-// PayloadTransaction ...
+// PayloadTransaction is used to keep track of a given actionID and completion status of a transaction when submitting
+// payloads
 type PayloadTransaction struct {
 	ActionID             string
 	CompletedTransaction bool
 }
 
+// IntakePayload is a Go representation of the Receiver Intake structure
 type IntakePayload struct {
 	InternalHostname string              `json:"internalHostname"`
 	Topologies       []topology.Topology `json:"topologies"`
@@ -22,6 +24,7 @@ type IntakePayload struct {
 	Metrics          []interface{}       `json:"metrics"`
 }
 
+// NewIntakePayload returns a IntakePayload with default values
 func NewIntakePayload() IntakePayload {
 	return IntakePayload{
 		Topologies: make([]topology.Topology, 0),
