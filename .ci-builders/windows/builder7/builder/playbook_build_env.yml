@@ -165,6 +165,10 @@
 #        name: awscli
 #        state: present
 
+    - name: Reboot a machine that takes time to settle after being booted
+      ansible.windows.win_reboot:
+        post_reboot_delay: 120
+
 # choco install visualstudio2017community --package-parameters "...."
     - name: Backward compatibility - Install Visual studio 2017 community (1/2)
       win_chocolatey:
@@ -173,6 +177,10 @@
         package_params: "--norestart --wait --quiet --locale en-US --add Microsoft.VisualStudio.Workload.NativeDesktop  --add Microsoft.VisualStudio.Component.VC.CMake.Project --add Microsoft.VisualStudio.Component.VC.CLI.Support --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Win81"
 #      ignore_errors: true
 #      register: resultvccommunity2017
+
+    - name: Reboot a machine that takes time to settle after being booted
+      ansible.windows.win_reboot:
+        post_reboot_delay: 120
 
 #    - name: Backward compatibility - Install Visual studio 2017 community (2/2)
 #      win_command: powershell.exe -
@@ -467,6 +475,10 @@
 
     - name: Install powershell vssetup module
       win_command: powershell.exe -File C:\install_vssetup.ps1
+      tags:
+        - broken
+      register: msys_try1
+      ignore_errors: true
 
     - name: ENV | GOPATH
       win_environment:
@@ -495,10 +507,10 @@
     - name: Tune git config
       win_command: "git config --global user.name \"Windows Gitlab Runner Instance\""
 
-    - name: Template powershell vssetup module installation
-      win_copy:
-        src: files/install_vssetup.ps1
-        dest: C:\
-
-    - name: Install powershell vssetup module
-      win_command: powershell.exe -File C:\install_vssetup.ps1
+#    - name: Template powershell vssetup module installation
+#      win_copy:
+#        src: files/install_vssetup.ps1
+#        dest: C:\
+#
+#    - name: Install powershell vssetup module
+#      win_command: powershell.exe -File C:\install_vssetup.ps1
