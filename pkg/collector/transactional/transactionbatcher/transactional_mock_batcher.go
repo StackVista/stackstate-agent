@@ -63,6 +63,10 @@ func (mtb MockTransactionalBatcher) SubmitRawMetricsData(checkID check.ID, trans
 	mtb.CollectedTopology.AddRawMetricsData(checkID, transactionID, rawMetric)
 }
 
+// SubmitCompleteTransaction is a noop for the mock batcher
+func (mtb MockTransactionalBatcher) SubmitCompleteTransaction(checkID check.ID, transactionID string) {
+}
+
 // SubmitComplete signals completion of a check. May trigger a flush only if the check produced data
 func (mtb MockTransactionalBatcher) SubmitComplete(checkID check.ID) {
 }
