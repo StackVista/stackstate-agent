@@ -7,7 +7,6 @@ package corechecks
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/cmd/agent/common"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
@@ -71,7 +70,7 @@ func (gl *GoCheckLoader) Load(config integration.Config, instance integration.Da
 	}
 
 	// [sts] register check handler
-	checkmanager.GetCheckManager().RegisterCheckHandler(c, common.Coll, config.InitConfig, instance)
+	checkmanager.GetCheckManager().RegisterCheckHandler(c, config.InitConfig, instance)
 
 	return c, nil
 }

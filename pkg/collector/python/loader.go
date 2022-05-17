@@ -12,7 +12,6 @@ import (
 	"errors"
 	"expvar"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/cmd/agent/common"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
 	"strings"
 	"sync"
@@ -206,7 +205,7 @@ func (cl *PythonCheckLoader) Load(config integration.Config, instance integratio
 	log.Debugf("python loader: done loading check %s (version %s)", moduleName, wheelVersion)
 
 	// [sts] register check handler
-	checkmanager.GetCheckManager().RegisterCheckHandler(c, common.Coll, config.InitConfig, instance)
+	checkmanager.GetCheckManager().RegisterCheckHandler(c, config.InitConfig, instance)
 
 	return c, nil
 }

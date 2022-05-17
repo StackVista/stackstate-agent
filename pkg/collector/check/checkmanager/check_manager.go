@@ -2,6 +2,7 @@ package checkmanager
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
@@ -49,9 +50,8 @@ func (cm *CheckManager) GetCheckHandler(checkID check.ID) handler.CheckHandler {
 }
 
 // RegisterCheckHandler registers a check handler for the given check using a transactionbatcher for this instance
-func (cm *CheckManager) RegisterCheckHandler(check check.Check, checkReloader handler.CheckReloader,
-	config, initConfig integration.Data) handler.CheckHandler {
-	ch := handler.NewCheckHandler(check, checkReloader, config, initConfig)
+func (cm *CheckManager) RegisterCheckHandler(check check.Check, config, initConfig integration.Data) handler.CheckHandler {
+	ch := handler.NewCheckHandler(check, common.Coll, config, initConfig)
 	log.Debugf("Registering Check Handler for: %s", ch.ID())
 	cm.checkHandlers[string(check.ID())] = ch
 	return ch
