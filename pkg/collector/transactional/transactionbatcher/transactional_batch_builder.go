@@ -8,6 +8,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 )
 
+// BatchTransaction keeps state of the transaction for a given check
 type BatchTransaction struct {
 	TransactionID        string
 	CompletedTransaction bool

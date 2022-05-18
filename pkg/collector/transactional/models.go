@@ -6,6 +6,7 @@ import (
 )
 
 const (
+	// IntakePath is the path for the intake route on the receiver API
 	IntakePath = "intake"
 )
 

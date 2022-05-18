@@ -4,6 +4,7 @@ func createMockForwarder() MockTransactionalForwarder {
 	return MockTransactionalForwarder{PayloadChan: make(chan TransactionalPayload, 100)}
 }
 
+// MockTransactionalForwarder is a mock implementation of the transactional forwarder
 type MockTransactionalForwarder struct {
 	PayloadChan chan TransactionalPayload
 }
