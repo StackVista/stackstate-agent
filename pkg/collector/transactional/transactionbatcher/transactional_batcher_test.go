@@ -357,11 +357,6 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 	batcher.Shutdown()
 }
 
-type TransactionState struct {
-	TransactionID string
-	Completed     bool
-}
-
 func TestBatchFlushOnMaxElements(t *testing.T) {
 	batcher := newTransactionalBatcher(testHost, testAgent, 2, 15*time.Second)
 

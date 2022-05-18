@@ -51,7 +51,7 @@ func (r RawMetrics) ConvertToIntakeMetric() []interface{} {
 // it as a interface. This is only used in batcher test assertions.
 func (r RawMetrics) IntakeMetricJSON() (jsonObject []interface{}) {
 	jsonString, _ := json.Marshal(r.ConvertToIntakeMetric())
-	json.Unmarshal(jsonString, &jsonObject)
+	_ = json.Unmarshal(jsonString, &jsonObject)
 	return jsonObject
 }
 

@@ -11,7 +11,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"sync"
 	"time"
 )
 
@@ -54,7 +53,6 @@ type RetryableHTTPClient interface {
 type retryableHTTPClient struct {
 	*ClientHost
 	*retryablehttp.Client
-	mux sync.Mutex
 }
 
 // StackStateClient creates a wrapper around the RetryableHTTPClient that is used for communication with StackState over http(s)
