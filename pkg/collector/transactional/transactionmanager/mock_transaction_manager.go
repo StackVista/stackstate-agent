@@ -43,12 +43,7 @@ func (ttm *MockTransactionManager) StartTransaction(_ check.ID, TransactionID st
 	ttm.mux.Unlock()
 }
 
-func (ttm *MockTransactionManager) GetCurrentTransaction() string {
-	ttm.mux.Lock()
-	defer ttm.mux.Unlock()
-	return ttm.currentTransaction
-}
-
+// GetCurrentTransactionNotifyChannel returns the currentTransactionNotifyChannel
 func (ttm *MockTransactionManager) GetCurrentTransactionNotifyChannel() chan interface{} {
 	ttm.mux.Lock()
 	defer ttm.mux.Unlock()

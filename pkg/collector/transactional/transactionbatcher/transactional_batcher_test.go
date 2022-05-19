@@ -105,7 +105,7 @@ func testBatcher(t *testing.T, transactionState map[string]bool, expectedPayload
 
 	// get the expected transactions in the transactionState
 	var expectedTx []string
-	for txID, _ := range transactionState {
+	for txID := range transactionState {
 		expectedTx = append(expectedTx, txID)
 	}
 
