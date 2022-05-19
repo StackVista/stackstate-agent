@@ -5,13 +5,14 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/google/uuid"
 )
 
 // CheckAPI contains all the operations that can be done by an Agent Check. This acts as a proxy to forward data
 // where it needs to go.
 type CheckAPI interface {
 	// Transactionality
-	SubmitStartTransaction()
+	SubmitStartTransaction() string
 	SubmitStopTransaction()
 
 	// Topology
@@ -35,8 +36,12 @@ type CheckAPI interface {
 
 // SubmitStartTransaction submits a start transaction for the check handler. This blocks any future transactions until
 // this one completes, fails or is timed out.
-func (ch *checkHandler) SubmitStartTransaction() {
-	ch.transactionChannel <- SubmitStartTransaction{}
+func (ch *checkHandler) SubmitStartTransaction() string {
+	transactionID := uuid.New().String()
+	ch.transactionChannel <- SubmitStartTransaction{
+		TransactionID: transactionID,
+	}
+	return transactionID
 }
 
 // SubmitStopTransaction submits a complete to the Transactional Batcher, to send the final payload of the transaction

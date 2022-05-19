@@ -95,15 +95,10 @@ func (ch *CheckNoHandler) Reload() {
 	_ = ch.CheckReloader.ReloadCheck(ch.ID(), config, initConfig, ch.ConfigSource())
 }
 
-// GetCurrentTransaction returns an empty string for the CheckNoHandler
-func (ch *CheckNoHandler) GetCurrentTransaction() string {
-	_ = log.Warnf("GetCurrentTransaction called on CheckNoHandler. This should never happen.")
-	return ""
-}
-
 // SubmitStartTransaction logs a warning for the no check handler. This should never be called.
-func (ch *CheckNoHandler) SubmitStartTransaction() {
+func (ch *CheckNoHandler) SubmitStartTransaction() string {
 	_ = log.Warnf("StartTransaction called on CheckNoHandler. This should never happen.")
+	return ""
 }
 
 // SubmitStopTransaction logs a warning for the no check handler. This should never be called.

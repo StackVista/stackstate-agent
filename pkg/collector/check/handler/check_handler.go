@@ -5,7 +5,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/google/uuid"
 )
 
 // CheckReloader is a interface wrapper around the Collector which controls all checks.
@@ -27,7 +26,6 @@ type CheckHandler interface {
 	CheckAPI
 	GetConfig() (config, initConfig integration.Data)
 	GetCheckReloader() CheckReloader
-	GetCurrentTransaction() string
 	Reload()
 }
 
@@ -68,10 +66,10 @@ func (ch *checkHandler) Start() {
 	txReceiverHandler:
 		for {
 			select {
-			case <-ch.transactionChannel:
+			case transaction := <-ch.transactionChannel:
 				// set the current transaction
-				ch.currentTransaction = uuid.New().String()
-				log.Debugf("Starting transaction: %s", ch.currentTransaction)
+				log.Debugf("Starting transaction: %s", transaction.TransactionID)
+				ch.currentTransaction = transaction.TransactionID
 
 				// try closing the currentTransactionChannel to ensure we never accidentally leak a channel before
 				// register a new one
@@ -97,11 +95,6 @@ func (ch *checkHandler) Start() {
 			}
 		}
 	}()
-}
-
-// GetCurrentTransaction returns the current transaction wrapped in mutex lock to ensure "thread-safety"
-func (ch *checkHandler) GetCurrentTransaction() string {
-	return ch.currentTransaction
 }
 
 // Stop stops the check handler txReceiverHandler
@@ -135,7 +128,9 @@ func (ch *checkHandler) GetConfig() (integration.Data, integration.Data) {
 }
 
 // SubmitStartTransaction is used to start a transaction to the input channel
-type SubmitStartTransaction struct{}
+type SubmitStartTransaction struct {
+	TransactionID string
+}
 
 // SubmitStopTransaction is used to stop a transaction to the input channel
 type SubmitStopTransaction struct{}

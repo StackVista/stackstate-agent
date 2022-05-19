@@ -93,14 +93,13 @@ func TestCheckHandler_Transactions(t *testing.T) {
 		},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
-			ch.SubmitStartTransaction()
+			transaction1 := ch.SubmitStartTransaction()
 
 			time.Sleep(50 * time.Millisecond)
-			transaction1 := ch.GetCurrentTransaction()
 			assert.Equal(t, transaction1, testTxManager.GetCurrentTransaction())
 
 			// attempt to start new transaction before 1 has finished, this should be blocked
-			ch.SubmitStartTransaction()
+			transaction2 := ch.SubmitStartTransaction()
 
 			// wait a bit and assert that we're still processing Transaction1 instead of the attempted Transaction2
 			time.Sleep(50 * time.Millisecond)
@@ -110,9 +109,6 @@ func TestCheckHandler_Transactions(t *testing.T) {
 			tc.completeTransaction()
 			time.Sleep(50 * time.Millisecond)
 
-			transaction2 := ch.GetCurrentTransaction()
-			// assert that the transaction changed
-			assert.NotEqual(t, transaction1, ch.GetCurrentTransaction())
 			// wait a bit and assert that we've started processing Transaction2
 			assert.Equal(t, transaction2, testTxManager.GetCurrentTransaction())
 
@@ -132,10 +128,10 @@ func TestCheckHandler_Shutdown(t *testing.T) {
 
 	ch.Start()
 
-	ch.SubmitStartTransaction()
+	transactionID := ch.SubmitStartTransaction()
 
 	time.Sleep(50 * time.Millisecond)
-	assert.Equal(t, ch.GetCurrentTransaction(), testTxManager.GetCurrentTransaction())
+	assert.Equal(t, transactionID, testTxManager.GetCurrentTransaction())
 
 	ch.Stop()
 
