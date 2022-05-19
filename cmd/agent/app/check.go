@@ -128,9 +128,9 @@ var checkCmd = &cobra.Command{
 		// [sts] init the transactionbatcher without the real serializer
 		batcher.InitBatcher(&printingAgentV1Serializer{}, hostname, "agent", config.GetMaxCapacity())
 		// [sts] create the global transactional components
+		checkmanager.InitCheckManager(common.Coll)
 		transactionforwarder.InitTransactionalForwarder()
 		transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
-		checkmanager.InitCheckManager(common.Coll)
 		txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
 		transactionmanager.InitTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
 

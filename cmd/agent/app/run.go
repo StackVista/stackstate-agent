@@ -363,9 +363,9 @@ func StopAgent() {
 	}
 
 	// [sts] stop the transactional components
-	transactionforwarder.GetTransactionalForwarder().Stop()
-	transactionbatcher.GetTransactionalBatcher().Shutdown()
 	checkmanager.GetCheckManager().Clear()
+	transactionbatcher.GetTransactionalBatcher().Stop()
+	transactionforwarder.GetTransactionalForwarder().Stop()
 	transactionmanager.GetTransactionManager().Stop()
 
 	api.StopServer()
