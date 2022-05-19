@@ -29,7 +29,7 @@ type IntakePayload struct {
 }
 
 // JSONString returns a JSON string of the Component
-func (ip IntakePayload) JSONString() string {
+func (ip *IntakePayload) JSONString() string {
 	b, err := json.Marshal(ip)
 	if err != nil {
 		fmt.Println(err)
@@ -40,7 +40,7 @@ func (ip IntakePayload) JSONString() string {
 
 // EqualDataPayload compares the topology, health and metrics of two IntakePayloads and returns a bool indicating
 // whether the intake payloads are equal
-func (ip IntakePayload) EqualDataPayload(ip2 IntakePayload) bool {
+func (ip *IntakePayload) EqualDataPayload(ip2 IntakePayload) bool {
 	return reflect.DeepEqual(ip.Topologies, ip2.Topologies) &&
 		reflect.DeepEqual(ip.Health, ip2.Health) &&
 		reflect.DeepEqual(ip.Metrics, ip2.Metrics)

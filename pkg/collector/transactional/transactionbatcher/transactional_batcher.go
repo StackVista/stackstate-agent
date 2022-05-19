@@ -129,12 +129,18 @@ func (ctb *transactionalBatcher) SubmitState(states TransactionCheckInstanceBatc
 		// don't have to do anything special. The action will be committed and the transaction completed as part of that
 		// payload.
 		onlyMarkTransactions := false
-		if data.EqualDataPayload(transactional.NewIntakePayload()) {
+		emptyPayload := data.EqualDataPayload(transactional.NewIntakePayload())
+		if emptyPayload {
 			for _, state := range states {
 				if state.Transaction.CompletedTransaction {
 					onlyMarkTransactions = true
 				}
 			}
+		}
+
+		// if this is an empty payload, and we have no transactions to mark, return
+		if !onlyMarkTransactions && emptyPayload {
+			return
 		}
 
 		// create a transaction -> action map that can be used to acknowledge / reject actions

@@ -84,7 +84,7 @@ func init() {
 
 // TODO: these might hit nil pointers in the batcher because we only init the transaction manager and forwarder in the testBatcher function
 // TODO: after the batcher operations have been executed
-func testBatcher(t *testing.T, transactionState map[string]bool, expectedPayload *transactional.IntakePayload) {
+func testBatcher(t *testing.T, transactionState map[string]bool, expectedPayload transactional.IntakePayload) {
 	tm := transactionmanager.GetTransactionManager().(*transactionmanager.MockTransactionManager)
 	fwd := transactionforwarder.GetTransactionalForwarder().(*transactionforwarder.MockTransactionalForwarder)
 
@@ -114,35 +114,33 @@ func testBatcher(t *testing.T, transactionState map[string]bool, expectedPayload
 	sort.Strings(foundTx)
 	assert.Equal(t, expectedTx, foundTx)
 
-	if expectedPayload != nil {
-		// get the intake payload that was produced for this action
-		payload := fwd.NextPayload()
-		actualPayload := transactional.NewIntakePayload()
-		json.Unmarshal(payload.Body, &actualPayload)
+	// get the intake payload that was produced for this action
+	payload := fwd.NextPayload()
+	actualPayload := transactional.NewIntakePayload()
+	json.Unmarshal(payload.Body, &actualPayload)
 
-		// assert the payload matches the expected payload for the data produced
-		assert.Equal(t, expectedPayload.InternalHostname, actualPayload.InternalHostname)
-		sort.Slice(actualPayload.Topologies, func(i, j int) bool {
-			return actualPayload.Topologies[i].Instance.GoString() > actualPayload.Topologies[j].Instance.GoString()
-		})
-		assert.Equal(t, expectedPayload.Topologies, actualPayload.Topologies)
-		sort.Slice(actualPayload.Health, func(i, j int) bool {
-			return actualPayload.Health[i].Stream.GoString() < actualPayload.Health[j].Stream.GoString()
-		})
-		assert.Equal(t, expectedPayload.Health, actualPayload.Health)
-		assert.Equal(t, expectedPayload.Metrics, actualPayload.Metrics)
+	// assert the payload matches the expected payload for the data produced
+	assert.Equal(t, expectedPayload.InternalHostname, actualPayload.InternalHostname)
+	sort.Slice(actualPayload.Topologies, func(i, j int) bool {
+		return actualPayload.Topologies[i].Instance.GoString() > actualPayload.Topologies[j].Instance.GoString()
+	})
+	assert.Equal(t, expectedPayload.Topologies, actualPayload.Topologies)
+	sort.Slice(actualPayload.Health, func(i, j int) bool {
+		return actualPayload.Health[i].Stream.GoString() < actualPayload.Health[j].Stream.GoString()
+	})
+	assert.Equal(t, expectedPayload.Health, actualPayload.Health)
+	assert.Equal(t, expectedPayload.Metrics, actualPayload.Metrics)
 
-		// assert the transaction map produced by the batcher contains the correct action id and completed status
-		expectedTransactionMap := make(map[string]transactional.PayloadTransaction, len(commitActions))
-		for i, ca := range commitActions {
-			expectedTransactionMap[ca.TransactionID] = transactional.PayloadTransaction{
-				ActionID:             ca.ActionID,
-				CompletedTransaction: transactionState[i],
-			}
+	// assert the transaction map produced by the batcher contains the correct action id and completed status
+	expectedTransactionMap := make(map[string]transactional.PayloadTransaction, len(commitActions))
+	for i, ca := range commitActions {
+		expectedTransactionMap[ca.TransactionID] = transactional.PayloadTransaction{
+			ActionID:             ca.ActionID,
+			CompletedTransaction: transactionState[i],
 		}
-
-		assert.Equal(t, expectedTransactionMap, payload.TransactionActionMap)
 	}
+
+	assert.Equal(t, expectedTransactionMap, payload.TransactionActionMap)
 
 }
 
@@ -167,19 +165,22 @@ func TestBatcherWithInProgressTransactionTimeBasedFlush(t *testing.T) {
 		testTransactionID: false,
 	}
 
-	testBatcher(t, transactionStates, &expectedPayload)
+	testBatcher(t, transactionStates, expectedPayload)
 
 	GetTransactionalBatcher().Stop()
 }
 
-func TestBatchFlushNoPayloadButCompleteTransaction(t *testing.T) {
+func TestBatchNoPayloadOnlyCompleteTransaction(t *testing.T) {
 	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
 	batcher.SubmitCompleteTransaction(testID, testTransactionID)
 
 	transactionStates := map[string]bool{
 		testTransactionID: true,
 	}
-	testBatcher(t, transactionStates, nil)
+	expectedPayload := transactional.NewIntakePayload()
+	expectedPayload.InternalHostname = "myhost"
+
+	testBatcher(t, transactionStates, expectedPayload)
 
 	batcher.Stop()
 }
@@ -205,7 +206,7 @@ func TestBatchFlushSnapshotOnComplete(t *testing.T) {
 	transactionStates := map[string]bool{
 		testTransactionID: true,
 	}
-	testBatcher(t, transactionStates, &expectedPayload)
+	testBatcher(t, transactionStates, expectedPayload)
 
 	batcher.Stop()
 }
@@ -229,7 +230,7 @@ func TestBatchFlushHealthOnComplete(t *testing.T) {
 	transactionStates := map[string]bool{
 		testTransactionID: true,
 	}
-	testBatcher(t, transactionStates, &expectedPayload)
+	testBatcher(t, transactionStates, expectedPayload)
 
 	batcher.Stop()
 }
@@ -266,7 +267,7 @@ func TestBatchFlushOnComplete(t *testing.T) {
 	transactionStates := map[string]bool{
 		testTransactionID: true,
 	}
-	testBatcher(t, transactionStates, &expectedPayload)
+	testBatcher(t, transactionStates, expectedPayload)
 
 	batcher.Stop()
 }
@@ -297,7 +298,7 @@ func TestBatchNoDataNoComplete(t *testing.T) {
 	transactionStates := map[string]bool{
 		testTransactionID: true,
 	}
-	testBatcher(t, transactionStates, &expectedPayload)
+	testBatcher(t, transactionStates, expectedPayload)
 
 	batcher.Stop()
 }
@@ -369,7 +370,7 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 		testTransaction2ID: false,
 	}
 
-	testBatcher(t, transactionStates, &expectedPayload)
+	testBatcher(t, transactionStates, expectedPayload)
 
 	batcher.Stop()
 }
@@ -397,7 +398,7 @@ func TestBatchFlushOnMaxElements(t *testing.T) {
 		testTransactionID: false,
 	}
 
-	testBatcher(t, transactionStates, &expectedPayload)
+	testBatcher(t, transactionStates, expectedPayload)
 
 	batcher.Stop()
 }
@@ -421,7 +422,7 @@ func TestBatchFlushOnMaxHealthElements(t *testing.T) {
 		testTransactionID: false,
 	}
 
-	testBatcher(t, transactionStates, &expectedPayload)
+	testBatcher(t, transactionStates, expectedPayload)
 
 	batcher.Stop()
 }
@@ -442,7 +443,7 @@ func TestBatchFlushOnMaxRawMetricsElements(t *testing.T) {
 		testTransactionID: false,
 	}
 
-	testBatcher(t, transactionStates, &expectedPayload)
+	testBatcher(t, transactionStates, expectedPayload)
 
 	batcher.Stop()
 }
@@ -473,7 +474,7 @@ func TestBatchFlushOnMaxElementsEnv(t *testing.T) {
 		testTransactionID: false,
 	}
 
-	testBatcher(t, transactionStates, &expectedPayload)
+	testBatcher(t, transactionStates, expectedPayload)
 
 	batcher.Stop()
 
@@ -503,7 +504,7 @@ func TestBatcherStartSnapshot(t *testing.T) {
 		testTransactionID: true,
 	}
 
-	testBatcher(t, transactionStates, &expectedPayload)
+	testBatcher(t, transactionStates, expectedPayload)
 
 	batcher.Stop()
 }
@@ -531,7 +532,7 @@ func TestBatcherRelation(t *testing.T) {
 		testTransactionID: true,
 	}
 
-	testBatcher(t, transactionStates, &expectedPayload)
+	testBatcher(t, transactionStates, expectedPayload)
 
 	batcher.Stop()
 }
@@ -556,7 +557,7 @@ func TestBatcherHealthStartSnapshot(t *testing.T) {
 		testTransactionID: true,
 	}
 
-	testBatcher(t, transactionStates, &expectedPayload)
+	testBatcher(t, transactionStates, expectedPayload)
 
 	batcher.Stop()
 }
@@ -587,7 +588,7 @@ func TestBatchMultipleHealthStreams(t *testing.T) {
 		testTransactionID: true,
 	}
 
-	testBatcher(t, transactionStates, &expectedPayload)
+	testBatcher(t, transactionStates, expectedPayload)
 
 	batcher.Stop()
 }
