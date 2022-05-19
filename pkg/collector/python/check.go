@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build python
 // +build python
 
 package python
@@ -10,7 +11,7 @@ package python
 import (
 	"errors"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
 	"runtime"
 	"time"
 	"unsafe"
@@ -81,7 +82,7 @@ func (c *PythonCheck) runCheck(commitMetrics bool) error {
 	}
 	defer C.rtloader_free(rtloader, unsafe.Pointer(cResult))
 
-	batcher.GetBatcher().SubmitComplete(c.ID()) // [sts]
+	checkmanager.GetCheckManager().GetCheckHandler(c.ID()).SubmitComplete() // [sts]
 
 	if commitMetrics {
 		s, err := aggregator.GetSender(c.ID())

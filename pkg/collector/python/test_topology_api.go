@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -18,7 +19,7 @@ import (
 import "C"
 
 func testComponentTopology(t *testing.T) {
-	mockBatcher := batcher.NewMockBatcher()
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 
 	c := &topology.Component{
 		ExternalID: "external-id",
@@ -43,7 +44,7 @@ func testComponentTopology(t *testing.T) {
 		C.CString(string(data)))
 	SubmitStopSnapshot(checkId, &instanceKey)
 
-	expectedTopology := mockBatcher.CollectedTopology.Flush()
+	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
 	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
@@ -68,7 +69,7 @@ func testComponentTopology(t *testing.T) {
 }
 
 func testRelationTopology(t *testing.T) {
-	mockBatcher := batcher.NewMockBatcher()
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 
 	c := &topology.Relation{
 		SourceID: "source-id",
@@ -93,7 +94,7 @@ func testRelationTopology(t *testing.T) {
 		C.CString("relation-type"),
 		C.CString(string(data)))
 
-	expectedTopology := mockBatcher.CollectedTopology.Flush()
+	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
 	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
@@ -120,7 +121,7 @@ func testRelationTopology(t *testing.T) {
 }
 
 func testStartSnapshotCheck(t *testing.T) {
-	mockBatcher := batcher.NewMockBatcher()
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 
 	checkId := C.CString("check-id")
 	instanceKey := C.instance_key_t{}
@@ -128,7 +129,7 @@ func testStartSnapshotCheck(t *testing.T) {
 	instanceKey.url = C.CString("instance-url")
 	SubmitStartSnapshot(checkId, &instanceKey)
 
-	expectedTopology := mockBatcher.CollectedTopology.Flush()
+	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
 	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
@@ -147,7 +148,7 @@ func testStartSnapshotCheck(t *testing.T) {
 }
 
 func testStopSnapshotCheck(t *testing.T) {
-	mockBatcher := batcher.NewMockBatcher()
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 
 	checkId := C.CString("check-id")
 	instanceKey := C.instance_key_t{}
@@ -155,7 +156,7 @@ func testStopSnapshotCheck(t *testing.T) {
 	instanceKey.url = C.CString("instance-url")
 	SubmitStopSnapshot(checkId, &instanceKey)
 
-	expectedTopology := mockBatcher.CollectedTopology.Flush()
+	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
 	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
@@ -174,7 +175,7 @@ func testStopSnapshotCheck(t *testing.T) {
 }
 
 func testDeleteTopologyElement(t *testing.T) {
-	mockBatcher := batcher.NewMockBatcher()
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 
 	checkID := C.CString("check-id")
 	instanceKey := C.instance_key_t{}
@@ -189,7 +190,7 @@ func testDeleteTopologyElement(t *testing.T) {
 		C.CString(topoElementId))
 	SubmitStopSnapshot(checkID, &instanceKey)
 
-	expectedTopology := mockBatcher.CollectedTopology.Flush()
+	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
 	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{

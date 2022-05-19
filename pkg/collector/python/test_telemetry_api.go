@@ -1,3 +1,4 @@
+//go:build python && test
 // +build python,test
 
 package python
@@ -7,6 +8,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
@@ -152,7 +154,7 @@ var expectedRawMetricsData = telemetry.RawMetrics{
 }
 
 func testRawMetricsData(t *testing.T) {
-	mockBatcher := batcher.NewMockBatcher()
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 
 	checkId := C.CString("check-id")
 	name := C.CString(expectedRawMetricsData.Name)
@@ -163,12 +165,12 @@ func testRawMetricsData(t *testing.T) {
 
 	SubmitRawMetricsData(checkId, name, value, &tags[0], hostname, timestamp)
 
-	expectedState := mockBatcher.CollectedTopology.Flush()
+	expectedState := mockTransactionalBatcher.CollectedTopology.Flush()
 
 	assert.Exactly(t, expectedState, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
-			Health: make(map[string]health.Health),
-			Metrics: &[]telemetry.RawMetrics{expectedRawMetricsData},
+			Health:   make(map[string]health.Health),
+			Metrics:  &[]telemetry.RawMetrics{expectedRawMetricsData},
 			Topology: nil,
 		},
 	}))

@@ -3,6 +3,7 @@
 // This product includes software developed at StackState (https://www.stackstate.com).
 // Copyright 2021 StackState
 
+//go:build python
 // +build python
 
 package python
@@ -10,8 +11,8 @@ package python
 import (
 	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -66,7 +67,7 @@ func SubmitRawMetricsData(checkID *C.char, name *C.char, value C.float, tags **C
 	rawTimestamp := int64(timestamp)
 	rawTags := cStringArrayToSlice(tags)
 
-	batcher.GetBatcher().SubmitRawMetricsData(check.ID(goCheckID), telemetry.RawMetrics{
+	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitRawMetricsData(telemetry.RawMetrics{
 		Name:      rawName,
 		Timestamp: rawTimestamp,
 		HostName:  rawHostname,

@@ -3,13 +3,14 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build python && test
 // +build python,test
 
 package python
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"runtime"
 	"testing"
 	"time"
@@ -179,7 +180,7 @@ import "C"
 
 func testRunCheck(t *testing.T) {
 	check := NewPythonFakeCheck()
-	_ = batcher.NewMockBatcher()
+	_ = transactionbatcher.NewMockTransactionalBatcher()
 	check.instance = &C.rtloader_pyobject_t{}
 
 	C.reset_check_mock()
@@ -242,7 +243,7 @@ func testRunErrorReturn(t *testing.T) {
 func testRun(t *testing.T) {
 	sender := mocksender.NewMockSender(check.ID("testID"))
 	sender.SetupAcceptAll()
-	_ = batcher.NewMockBatcher()
+	_ = transactionbatcher.NewMockTransactionalBatcher()
 
 	c := NewPythonFakeCheck()
 

@@ -1,3 +1,4 @@
+//go:build python && test
 // +build python,test
 
 package python
@@ -6,6 +7,7 @@ import (
 	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -32,7 +34,7 @@ var expectedCheckData = health.CheckData{
 }
 
 func testHealthCheckData(t *testing.T) {
-	mockBatcher := batcher.NewMockBatcher()
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 
 	c := &health.Payload{
 		Stream: health.Stream{
@@ -55,7 +57,7 @@ func testHealthCheckData(t *testing.T) {
 		C.CString(string(data)))
 	SubmitHealthStopSnapshot(checkId, &stream)
 
-	expectedState := mockBatcher.CollectedTopology.Flush()
+	expectedState := mockTransactionalBatcher.CollectedTopology.Flush()
 	expectedStream := health.Stream{Urn: "myurn", SubStream: "substream"}
 
 	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
@@ -75,7 +77,7 @@ func testHealthCheckData(t *testing.T) {
 }
 
 func testHealthStartSnapshot(t *testing.T) {
-	mockBatcher := batcher.NewMockBatcher()
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 
 	checkId := C.CString("check-id")
 	stream := C.health_stream_t{}
@@ -83,7 +85,7 @@ func testHealthStartSnapshot(t *testing.T) {
 	stream.sub_stream = C.CString("substream")
 	SubmitHealthStartSnapshot(checkId, &stream, C.int(0), C.int(1))
 
-	expectedState := mockBatcher.CollectedTopology.Flush()
+	expectedState := mockTransactionalBatcher.CollectedTopology.Flush()
 	expectedStream := health.Stream{Urn: "myurn", SubStream: "substream"}
 
 	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
@@ -100,7 +102,7 @@ func testHealthStartSnapshot(t *testing.T) {
 }
 
 func testHealthStopSnapshot(t *testing.T) {
-	mockBatcher := batcher.NewMockBatcher()
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 
 	checkId := C.CString("check-id")
 	stream := C.health_stream_t{}
@@ -108,7 +110,7 @@ func testHealthStopSnapshot(t *testing.T) {
 	stream.sub_stream = C.CString("substream")
 	SubmitHealthStopSnapshot(checkId, &stream)
 
-	expectedState := mockBatcher.CollectedTopology.Flush()
+	expectedState := mockTransactionalBatcher.CollectedTopology.Flush()
 	expectedStream := health.Stream{Urn: "myurn", SubStream: "substream"}
 
 	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
@@ -125,7 +127,7 @@ func testHealthStopSnapshot(t *testing.T) {
 }
 
 func testNoSubStream(t *testing.T) {
-	mockBatcher := batcher.NewMockBatcher()
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 
 	checkId := C.CString("check-id")
 	stream := C.health_stream_t{}
@@ -133,7 +135,7 @@ func testNoSubStream(t *testing.T) {
 	stream.sub_stream = C.CString("")
 	SubmitHealthStartSnapshot(checkId, &stream, C.int(0), C.int(1))
 
-	expectedState := mockBatcher.CollectedTopology.Flush()
+	expectedState := mockTransactionalBatcher.CollectedTopology.Flush()
 	expectedStream := health.Stream{Urn: "myurn"}
 
 	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
