@@ -1,0 +1,70 @@
+package transactionmanager
+
+import "github.com/StackVista/stackstate-agent/pkg/collector/check"
+
+// TransactionManager encapsulates all the functionality of the transaction manager to keep track of transactions
+type TransactionManager interface {
+	Start()
+	StartTransaction(CheckID check.ID, TransactionID string, NotifyChannel chan interface{})
+	CompleteTransaction(transactionID string)
+	RollbackTransaction(transactionID, reason string)
+	CommitAction(transactionID, actionID string)
+	AcknowledgeAction(transactionID, actionID string)
+	RejectAction(transactionID, actionID, reason string)
+	Stop()
+}
+
+// StartTransaction begins a transaction for a given check
+func (txm *transactionManager) StartTransaction(checkID check.ID, transactionID string, notifyChannel chan interface{}) {
+	txm.transactionChannel <- StartTransaction{
+		CheckID:       checkID,
+		TransactionID: transactionID,
+		NotifyChannel: notifyChannel,
+	}
+}
+
+// CompleteTransaction completes a transaction for a given transactionID
+func (txm *transactionManager) CompleteTransaction(transactionID string) {
+	txm.transactionChannel <- CompleteTransaction{
+		TransactionID: transactionID,
+	}
+}
+
+// RollbackTransaction rolls back a transaction for a given transactionID and a reason for the rollback
+func (txm *transactionManager) RollbackTransaction(transactionID, reason string) {
+	txm.transactionChannel <- RollbackTransaction{
+		TransactionID: transactionID,
+		Reason:        reason,
+	}
+}
+
+// CommitAction commits an action for a given transaction. All actions must be acknowledged for a given transaction
+func (txm *transactionManager) CommitAction(transactionID, actionID string) {
+	txm.transactionChannel <- CommitAction{
+		TransactionID: transactionID,
+		ActionID:      actionID,
+	}
+}
+
+// AcknowledgeAction acknowledges an action for a given transaction
+func (txm *transactionManager) AcknowledgeAction(transactionID, actionID string) {
+	txm.transactionChannel <- AckAction{
+		TransactionID: transactionID,
+		ActionID:      actionID,
+	}
+}
+
+// RejectAction rejects an action for a given transaction. This will result in a transaction failure
+func (txm *transactionManager) RejectAction(transactionID, actionID, reason string) {
+	txm.transactionChannel <- RejectAction{
+		TransactionID: transactionID,
+		ActionID:      actionID,
+		Reason:        reason,
+	}
+}
+
+// Stop shuts down the transaction checkmanager and stops the transactionHandler receiver loop
+func (txm *transactionManager) Stop() {
+	txm.transactionChannel <- StopTransactionManager{}
+	txm.transactionTicker.Stop()
+}

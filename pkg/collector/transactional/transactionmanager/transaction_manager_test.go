@@ -12,9 +12,7 @@ func TestTransactionManager_HappyFlow(t *testing.T) {
 	txManager := newTransactionManager(100, 100*time.Millisecond, 500*time.Millisecond,
 		500*time.Millisecond).(*transactionManager)
 
-	assert.False(t, txManager.running)
 	txManager.Start()
-	assert.True(t, txManager.running)
 
 	// assert that we're starting on a clean slate
 	assert.Len(t, txManager.transactions, 0)
@@ -204,14 +202,12 @@ func TestTransactionManager_ErrorHandling(t *testing.T) {
 				txID := uuid.New().String()
 				txManager.StartTransaction("checkID", txID, txNotifyChannel)
 
-				// assert that the transaction checkmanager is not running and that we have no transactions (nothing broke)
-				assert.False(t, txManager.running)
+				// assert that we have no transactions (nothing broke)
 				assert.Empty(t, txManager.transactions)
 
 				// start the transaction checkmanager, the transaction sent before the start will be read immediately, assert it
 				txManager.Start()
 
-				assert.True(t, txManager.running)
 				assertTransaction(t, txManager, txID, InProgress, map[string]*Action{})
 
 				completeMsg := <-txNotifyChannel
@@ -226,7 +222,6 @@ func TestTransactionManager_ErrorHandling(t *testing.T) {
 				txManager.CommitAction(txID, actID)
 
 				// assert that we don't have a transaction for txID and no action for actID
-				assert.True(t, txManager.running)
 				_, found := txManager.transactions[txID]
 				assert.False(t, found, "Transaction %s not found in the transaction map", txID)
 				for _, tx := range txManager.transactions {

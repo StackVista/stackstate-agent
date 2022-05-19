@@ -32,7 +32,7 @@ type TransactionalBatcher interface {
 
 	// lifecycle
 	SubmitComplete(checkID check.ID)
-	Shutdown()
+	Stop()
 }
 
 // SubmitComponent is used to submit a component to the input channel
@@ -224,15 +224,4 @@ func (ctb *transactionalBatcher) SubmitComplete(checkID check.ID) {
 	ctb.Input <- SubmitComplete{
 		CheckID: checkID,
 	}
-}
-
-// Shutdown shuts down the transactionbatcher
-func (ctb *transactionalBatcher) Shutdown() {
-	ctb.Input <- SubmitShutdown{}
-}
-
-// Stop stops the transactional transactionbatcher
-func (ctb *transactionalBatcher) Stop() {
-	ctb.flushTicker.Stop()
-	ctb.Input <- SubmitShutdown{}
 }

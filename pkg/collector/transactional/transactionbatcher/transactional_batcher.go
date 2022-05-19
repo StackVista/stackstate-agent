@@ -37,7 +37,6 @@ func newTransactionalBatcher(hostname, agentName string, maxCapacity int, flushI
 	}
 
 	go ctb.Start()
-	go ctb.listenForFlushTicker()
 
 	return ctb
 }
@@ -65,43 +64,53 @@ type transactionalBatcher struct {
 
 // Start starts the transactional transactionbatcher
 func (ctb *transactionalBatcher) Start() {
+BatcherReceiver:
 	for {
-		s := <-ctb.Input
-		switch submission := s.(type) {
-		case SubmitComponent:
-			ctb.SubmitState(ctb.builder.AddComponent(submission.CheckID, submission.TransactionID, submission.Instance, submission.Component))
-		case SubmitRelation:
-			ctb.SubmitState(ctb.builder.AddRelation(submission.CheckID, submission.TransactionID, submission.Instance, submission.Relation))
-		case SubmitStartSnapshot:
-			ctb.SubmitState(ctb.builder.TopologyStartSnapshot(submission.CheckID, submission.TransactionID, submission.Instance))
-		case SubmitStopSnapshot:
-			ctb.SubmitState(ctb.builder.TopologyStopSnapshot(submission.CheckID, submission.TransactionID, submission.Instance))
-		case SubmitDelete:
-			ctb.SubmitState(ctb.builder.Delete(submission.CheckID, submission.TransactionID, submission.Instance, submission.DeleteID))
-		case SubmitHealthCheckData:
-			ctb.SubmitState(ctb.builder.AddHealthCheckData(submission.CheckID, submission.TransactionID, submission.Stream, submission.Data))
-		case SubmitHealthStartSnapshot:
-			ctb.SubmitState(ctb.builder.HealthStartSnapshot(submission.CheckID, submission.TransactionID, submission.Stream, submission.IntervalSeconds, submission.ExpirySeconds))
-		case SubmitHealthStopSnapshot:
-			ctb.SubmitState(ctb.builder.HealthStopSnapshot(submission.CheckID, submission.TransactionID, submission.Stream))
-		case SubmitRawMetricsData:
-			ctb.SubmitState(ctb.builder.AddRawMetricsData(submission.CheckID, submission.TransactionID, submission.RawMetric))
-		case SubmitCompleteTransaction:
-			ctb.SubmitState(ctb.builder.MarkTransactionComplete(submission.CheckID, submission.TransactionID))
-		case SubmitComplete:
-			ctb.SubmitState(ctb.builder.FlushOnComplete(submission.CheckID))
-		case SubmitShutdown:
-			return
-		default:
-			panic(fmt.Sprint("Unknown submission type"))
+		select {
+		case s := <-ctb.Input:
+			switch submission := s.(type) {
+			case SubmitComponent:
+				ctb.SubmitState(ctb.builder.AddComponent(submission.CheckID, submission.TransactionID, submission.Instance, submission.Component))
+			case SubmitRelation:
+				ctb.SubmitState(ctb.builder.AddRelation(submission.CheckID, submission.TransactionID, submission.Instance, submission.Relation))
+			case SubmitStartSnapshot:
+				ctb.SubmitState(ctb.builder.TopologyStartSnapshot(submission.CheckID, submission.TransactionID, submission.Instance))
+			case SubmitStopSnapshot:
+				ctb.SubmitState(ctb.builder.TopologyStopSnapshot(submission.CheckID, submission.TransactionID, submission.Instance))
+			case SubmitDelete:
+				ctb.SubmitState(ctb.builder.Delete(submission.CheckID, submission.TransactionID, submission.Instance, submission.DeleteID))
+			case SubmitHealthCheckData:
+				ctb.SubmitState(ctb.builder.AddHealthCheckData(submission.CheckID, submission.TransactionID, submission.Stream, submission.Data))
+			case SubmitHealthStartSnapshot:
+				ctb.SubmitState(ctb.builder.HealthStartSnapshot(submission.CheckID, submission.TransactionID, submission.Stream, submission.IntervalSeconds, submission.ExpirySeconds))
+			case SubmitHealthStopSnapshot:
+				ctb.SubmitState(ctb.builder.HealthStopSnapshot(submission.CheckID, submission.TransactionID, submission.Stream))
+			case SubmitRawMetricsData:
+				ctb.SubmitState(ctb.builder.AddRawMetricsData(submission.CheckID, submission.TransactionID, submission.RawMetric))
+			case SubmitCompleteTransaction:
+				ctb.SubmitState(ctb.builder.MarkTransactionComplete(submission.CheckID, submission.TransactionID))
+			case SubmitComplete:
+				ctb.SubmitState(ctb.builder.FlushOnComplete(submission.CheckID))
+			case SubmitShutdown:
+				break BatcherReceiver
+			default:
+				panic(fmt.Sprint("Unknown submission type"))
+			}
+		case <-ctb.flushTicker.C:
+			ctb.SubmitState(ctb.builder.Flush())
 		}
 	}
 }
 
+// Stop stops the transactional transactionbatcher
+func (ctb *transactionalBatcher) Stop() {
+	ctb.flushTicker.Stop()
+	ctb.Input <- SubmitShutdown{}
+}
+
 // SubmitState submits the transactional check instance batch state and commits an action for this payload
 func (ctb *transactionalBatcher) SubmitState(states TransactionCheckInstanceBatchStates) {
-	if states != nil {
-
+	if len(states) > 0 {
 		data := ctb.mapStateToPayload(states)
 		payload, err := ctb.marshallPayload(data)
 		if err != nil {
@@ -123,13 +132,6 @@ func (ctb *transactionalBatcher) SubmitState(states TransactionCheckInstanceBatc
 		}
 
 		ctb.submitPayload(payload, transactionPayloadMap)
-	}
-}
-
-// listenForFlushTicker waits for messages on the ticker channel and submits a flush for this check
-func (ctb *transactionalBatcher) listenForFlushTicker() {
-	for _ = range ctb.flushTicker.C {
-		ctb.SubmitState(ctb.builder.Flush())
 	}
 }
 

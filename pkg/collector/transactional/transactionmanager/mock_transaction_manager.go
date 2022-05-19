@@ -1,6 +1,9 @@
 package transactionmanager
 
-import "github.com/StackVista/stackstate-agent/pkg/collector/check"
+import (
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"sync"
+)
 
 func newTestTransactionManager() *MockTransactionManager {
 	return &MockTransactionManager{TransactionActions: make(chan interface{}, 100)}
@@ -8,8 +11,9 @@ func newTestTransactionManager() *MockTransactionManager {
 
 // MockTransactionManager is a mock implementation of the transaction manager for tests
 type MockTransactionManager struct {
-	CurrentTransaction              string
-	CurrentTransactionNotifyChannel chan interface{}
+	mux                             sync.Mutex
+	currentTransaction              string
+	currentTransactionNotifyChannel chan interface{}
 	TransactionActions              chan interface{}
 }
 
@@ -23,8 +27,22 @@ func (ttm *MockTransactionManager) Stop() {
 
 // StartTransaction sets the current transaction value and updates the notify channel
 func (ttm *MockTransactionManager) StartTransaction(_ check.ID, TransactionID string, NotifyChannel chan interface{}) {
-	ttm.CurrentTransaction = TransactionID
-	ttm.CurrentTransactionNotifyChannel = NotifyChannel
+	ttm.mux.Lock()
+	ttm.currentTransaction = TransactionID
+	ttm.currentTransactionNotifyChannel = NotifyChannel
+	ttm.mux.Unlock()
+}
+
+func (ttm *MockTransactionManager) GetCurrentTransaction() string {
+	ttm.mux.Lock()
+	defer ttm.mux.Unlock()
+	return ttm.currentTransaction
+}
+
+func (ttm *MockTransactionManager) GetCurrentTransactionNotifyChannel() chan interface{} {
+	ttm.mux.Lock()
+	defer ttm.mux.Unlock()
+	return ttm.currentTransactionNotifyChannel
 }
 
 // CompleteTransaction sends a CompleteTransaction to the TransactionActions channel to be used in assertions

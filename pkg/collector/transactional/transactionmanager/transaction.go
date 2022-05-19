@@ -46,7 +46,7 @@ type Action struct {
 type IntakeTransaction struct {
 	TransactionID        string
 	State                TransactionState
-	Actions              map[string]*Action
+	Actions              map[string]*Action // pointer to allow in-place mutation instead of setting the value again
 	NotifyChannel        chan interface{}
 	LastUpdatedTimestamp time.Time
 }
@@ -95,15 +95,6 @@ func (r RollbackTransaction) Error() string {
 
 // StopTransactionManager triggers the shutdown of the transaction checkmanager.
 type StopTransactionManager struct{}
-
-// NotRunning is triggered when trying to create a transaction when the transaction checkmanager has not
-// been started yet.
-type NotRunning struct{}
-
-// Error returns a string representation of the NotRunning error and implements Error.
-func (t NotRunning) Error() string {
-	return "transaction checkmanager is not running, call TransactionManager.Start() to start it"
-}
 
 // TransactionNotFound is triggered when trying to look up a non-existing transaction in the transaction checkmanager
 type TransactionNotFound struct {

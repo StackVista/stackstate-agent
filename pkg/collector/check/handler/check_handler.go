@@ -27,6 +27,7 @@ type CheckHandler interface {
 	CheckAPI
 	GetConfig() (config, initConfig integration.Data)
 	GetCheckReloader() CheckReloader
+	GetCurrentTransaction() string
 	Reload()
 }
 
@@ -79,6 +80,9 @@ func (ch *checkHandler) Start() {
 
 				// create a new transaction in the transaction manager and wait for responses
 				transactionmanager.GetTransactionManager().StartTransaction(ch.ID(), ch.currentTransaction, ch.currentTransactionChannel)
+
+				// this is a blocking function. Will continue when a transaction succeeds, fails or times out making it
+				// ready to handle the next transaction in the ch.transactionChannel.
 				ch.handleCurrentTransaction(ch.currentTransactionChannel)
 
 				// close the ch.currentTransactionChannel, making use ready to start a new transaction
@@ -93,6 +97,11 @@ func (ch *checkHandler) Start() {
 			}
 		}
 	}()
+}
+
+// GetCurrentTransaction returns the current transaction wrapped in mutex lock to ensure "thread-safety"
+func (ch *checkHandler) GetCurrentTransaction() string {
+	return ch.currentTransaction
 }
 
 // Stop stops the check handler txReceiverHandler

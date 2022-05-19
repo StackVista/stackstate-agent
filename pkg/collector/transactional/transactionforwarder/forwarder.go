@@ -56,7 +56,7 @@ func GetTransactionalForwarder() TransactionalForwarder {
 }
 
 // NewMockTransactionalForwarder initializes the global TransactionalForwarder with a mock version, intended for testing
-func NewMockTransactionalForwarder() MockTransactionalForwarder {
+func NewMockTransactionalForwarder() *MockTransactionalForwarder {
 	mf := createMockForwarder()
 	transactionalForwarderInstance = mf
 	return mf

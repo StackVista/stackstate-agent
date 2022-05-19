@@ -220,15 +220,15 @@ func (builder *TransactionBatchBuilder) MarkTransactionComplete(checkID check.ID
 			We don't have any state for this check which means that it was flushed as a result of another check completing,
 			the flush interval triggering a flush, etc.
 
-			We have a couple of options
+			We have a couple of options:
 			1. Create a new state for this check + transaction and wait for it to be flushed with a new check completion
 			  or the check interval, running the very likely risk of the handler starting a new transaction for this check
 			  in the meantime.
 			2. Complete this transaction immediately, assuming that the data has been successfully produced with the
 			  previous payload, running the risk that the previous payload is still in the forwarder attempting to be
 			  sent to StackState. In this case an Action would have been committed for this transaction already. If we
-			  complete too early, the transaction will be failed and the check rolled back. This is not ideal, but
-			  tolerable because we won't lose data.
+			  complete too early, the transaction will be failed because it will have an unacknowledged action and the
+			  check will be rolled back. This is not ideal, but tolerable because we won't lose data.
 
 			We have decided to go for option 2 which seems to be less likely to have undesired consequences.
 

@@ -81,7 +81,10 @@ var (
 // TODO: after the batcher operations have been executed
 func testBatcher(t *testing.T, transactionState map[string]bool, expectedPayload transactional.IntakePayload) {
 	fwd := transactionforwarder.NewMockTransactionalForwarder()
-	tm := transactionmanager.NewMockTransactionManager()
+	if transactionmanager.GetTransactionManager() == nil {
+		transactionmanager.NewMockTransactionManager()
+	}
+	tm := transactionmanager.GetTransactionManager().(*transactionmanager.MockTransactionManager)
 
 	// get the action commit made by the batcher from the transaction manager for all the transactions in this payload
 	commitActions := make(map[string]transactionmanager.CommitAction, len(transactionState))
@@ -139,6 +142,11 @@ func testBatcher(t *testing.T, transactionState map[string]bool, expectedPayload
 
 	fwd.Stop()
 	tm.Stop()
+
+	// NEVER REMOVE :D This sleep gives Go a bit of time to do garbage collection, otherwise the pointer of the forwarder
+	// gets re-used and causes subsequent tests to fail for bizarre reasons.
+	// TODO: refactor this a bit to avoid this issue and speed up tests a bit.
+	time.Sleep(100 * time.Millisecond)
 }
 
 func TestBatcherWithInProgressTransactionTimeBasedFlush(t *testing.T) {
@@ -164,7 +172,7 @@ func TestBatcherWithInProgressTransactionTimeBasedFlush(t *testing.T) {
 
 	testBatcher(t, transactionStates, expectedPayload)
 
-	GetTransactionalBatcher().Shutdown()
+	GetTransactionalBatcher().Stop()
 }
 
 func TestBatchFlushSnapshotOnComplete(t *testing.T) {
@@ -190,7 +198,7 @@ func TestBatchFlushSnapshotOnComplete(t *testing.T) {
 	}
 	testBatcher(t, transactionStates, expectedPayload)
 
-	batcher.Shutdown()
+	batcher.Stop()
 }
 
 func TestBatchFlushHealthOnComplete(t *testing.T) {
@@ -214,7 +222,7 @@ func TestBatchFlushHealthOnComplete(t *testing.T) {
 	}
 	testBatcher(t, transactionStates, expectedPayload)
 
-	batcher.Shutdown()
+	batcher.Stop()
 }
 
 func TestBatchFlushOnComplete(t *testing.T) {
@@ -251,14 +259,17 @@ func TestBatchFlushOnComplete(t *testing.T) {
 	}
 	testBatcher(t, transactionStates, expectedPayload)
 
-	batcher.Shutdown()
+	batcher.Stop()
 }
 
 func TestBatchNoDataNoComplete(t *testing.T) {
 	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
 
 	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent)
-	batcher.SubmitCompleteTransaction(testID2, testTransactionID)
+	batcher.SubmitCompleteTransaction(testID2, testTransaction2ID)
+	tm := transactionmanager.NewMockTransactionManager()
+	ct := tm.NextAction().(transactionmanager.CompleteTransaction)
+	assert.Equal(t, testTransaction2ID, ct.TransactionID)
 
 	// We now send a stop to trigger a combined commit
 	batcher.SubmitStopSnapshot(testID, testTransactionID, testInstance)
@@ -282,7 +293,7 @@ func TestBatchNoDataNoComplete(t *testing.T) {
 	}
 	testBatcher(t, transactionStates, expectedPayload)
 
-	batcher.Shutdown()
+	batcher.Stop()
 }
 
 func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
@@ -354,7 +365,7 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 
 	testBatcher(t, transactionStates, expectedPayload)
 
-	batcher.Shutdown()
+	batcher.Stop()
 }
 
 func TestBatchFlushOnMaxElements(t *testing.T) {
@@ -382,7 +393,7 @@ func TestBatchFlushOnMaxElements(t *testing.T) {
 
 	testBatcher(t, transactionStates, expectedPayload)
 
-	batcher.Shutdown()
+	batcher.Stop()
 }
 
 func TestBatchFlushOnMaxHealthElements(t *testing.T) {
@@ -406,7 +417,7 @@ func TestBatchFlushOnMaxHealthElements(t *testing.T) {
 
 	testBatcher(t, transactionStates, expectedPayload)
 
-	batcher.Shutdown()
+	batcher.Stop()
 }
 
 func TestBatchFlushOnMaxRawMetricsElements(t *testing.T) {
@@ -427,7 +438,7 @@ func TestBatchFlushOnMaxRawMetricsElements(t *testing.T) {
 
 	testBatcher(t, transactionStates, expectedPayload)
 
-	batcher.Shutdown()
+	batcher.Stop()
 }
 
 func TestBatchFlushOnMaxElementsEnv(t *testing.T) {
@@ -458,7 +469,7 @@ func TestBatchFlushOnMaxElementsEnv(t *testing.T) {
 
 	testBatcher(t, transactionStates, expectedPayload)
 
-	batcher.Shutdown()
+	batcher.Stop()
 
 	os.Unsetenv("STS_BATCHER_CAPACITY")
 }
@@ -488,7 +499,7 @@ func TestBatcherStartSnapshot(t *testing.T) {
 
 	testBatcher(t, transactionStates, expectedPayload)
 
-	batcher.Shutdown()
+	batcher.Stop()
 }
 
 func TestBatcherRelation(t *testing.T) {
@@ -516,7 +527,7 @@ func TestBatcherRelation(t *testing.T) {
 
 	testBatcher(t, transactionStates, expectedPayload)
 
-	batcher.Shutdown()
+	batcher.Stop()
 }
 
 func TestBatcherHealthStartSnapshot(t *testing.T) {
@@ -541,7 +552,7 @@ func TestBatcherHealthStartSnapshot(t *testing.T) {
 
 	testBatcher(t, transactionStates, expectedPayload)
 
-	batcher.Shutdown()
+	batcher.Stop()
 }
 
 func TestBatchMultipleHealthStreams(t *testing.T) {
@@ -572,5 +583,5 @@ func TestBatchMultipleHealthStreams(t *testing.T) {
 
 	testBatcher(t, transactionStates, expectedPayload)
 
-	batcher.Shutdown()
+	batcher.Stop()
 }

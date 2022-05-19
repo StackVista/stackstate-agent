@@ -1,6 +1,8 @@
 package transactional
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 )
@@ -23,6 +25,16 @@ type IntakePayload struct {
 	Topologies       []topology.Topology `json:"topologies"`
 	Health           []health.Health     `json:"health"`
 	Metrics          []interface{}       `json:"metrics"`
+}
+
+// JSONString returns a JSON string of the Component
+func (ip *IntakePayload) JSONString() string {
+	b, err := json.Marshal(ip)
+	if err != nil {
+		fmt.Println(err)
+		return fmt.Sprintf("{\"error\": \"%s\"}", err.Error())
+	}
+	return string(b)
 }
 
 // NewIntakePayload returns a IntakePayload with default values

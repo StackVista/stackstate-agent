@@ -76,19 +76,19 @@ func TestCheckHandler_Transactions(t *testing.T) {
 		{
 			testCase: "Transaction completed with transaction rollback",
 			completeTransaction: func() {
-				testTxManager.CurrentTransactionNotifyChannel <- transactionmanager.RollbackTransaction{}
+				testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.RollbackTransaction{}
 			},
 		},
 		{
 			testCase: "Transaction completed with transaction eviction",
 			completeTransaction: func() {
-				testTxManager.CurrentTransactionNotifyChannel <- transactionmanager.EvictedTransaction{}
+				testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.EvictedTransaction{}
 			},
 		},
 		{
 			testCase: "Transaction completed with transaction complete",
 			completeTransaction: func() {
-				testTxManager.CurrentTransactionNotifyChannel <- transactionmanager.CompleteTransaction{}
+				testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.CompleteTransaction{}
 			},
 		},
 	} {
@@ -96,28 +96,28 @@ func TestCheckHandler_Transactions(t *testing.T) {
 			ch.SubmitStartTransaction()
 
 			time.Sleep(50 * time.Millisecond)
-			transaction1 := ch.currentTransaction
-			assert.Equal(t, transaction1, testTxManager.CurrentTransaction)
+			transaction1 := ch.GetCurrentTransaction()
+			assert.Equal(t, transaction1, testTxManager.GetCurrentTransaction())
 
 			// attempt to start new transaction before 1 has finished, this should be blocked
 			ch.SubmitStartTransaction()
 
 			// wait a bit and assert that we're still processing Transaction1 instead of the attempted Transaction2
 			time.Sleep(50 * time.Millisecond)
-			assert.Equal(t, transaction1, testTxManager.CurrentTransaction)
+			assert.Equal(t, transaction1, testTxManager.GetCurrentTransaction())
 
 			// complete Transaction1
 			tc.completeTransaction()
 			time.Sleep(50 * time.Millisecond)
 
-			transaction2 := ch.currentTransaction
+			transaction2 := ch.GetCurrentTransaction()
 			// assert that the transaction changed
-			assert.NotEqual(t, transaction1, ch.currentTransaction)
+			assert.NotEqual(t, transaction1, ch.GetCurrentTransaction())
 			// wait a bit and assert that we've started processing Transaction2
-			assert.Equal(t, transaction2, testTxManager.CurrentTransaction)
+			assert.Equal(t, transaction2, testTxManager.GetCurrentTransaction())
 
 			// complete Transaction2
-			testTxManager.CurrentTransactionNotifyChannel <- transactionmanager.CompleteTransaction{}
+			testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.CompleteTransaction{}
 		})
 	}
 
@@ -135,7 +135,7 @@ func TestCheckHandler_Shutdown(t *testing.T) {
 	ch.SubmitStartTransaction()
 
 	time.Sleep(50 * time.Millisecond)
-	assert.Equal(t, ch.currentTransaction, testTxManager.CurrentTransaction)
+	assert.Equal(t, ch.GetCurrentTransaction(), testTxManager.GetCurrentTransaction())
 
 	ch.Stop()
 

@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
@@ -45,6 +46,8 @@ func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, _ignoredExternal
 	err := json.Unmarshal([]byte(rawComponent), &component)
 
 	if err == nil {
+		//check handler . submit component
+		checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitComponent(_instance, component)
 		batcher.GetBatcher().SubmitComponent(check.ID(goCheckID), _instance, component)
 	} else {
 		_ = log.Errorf("Empty topology component not sent. Raw: %v, Json: %v, Error: %v", rawComponent,

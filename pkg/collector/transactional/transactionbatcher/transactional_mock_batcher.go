@@ -71,6 +71,6 @@ func (mtb MockTransactionalBatcher) SubmitCompleteTransaction(checkID check.ID, 
 func (mtb MockTransactionalBatcher) SubmitComplete(checkID check.ID) {
 }
 
-// Shutdown shuts down the transactionbatcher
-func (mtb MockTransactionalBatcher) Shutdown() {
+// Stop shuts down the transactionbatcher
+func (mtb MockTransactionalBatcher) Stop() {
 }
