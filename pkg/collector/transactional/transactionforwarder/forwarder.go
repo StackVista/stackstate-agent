@@ -19,6 +19,7 @@ type TransactionalPayload struct {
 	Body                 []byte
 	Path                 string
 	TransactionActionMap map[string]transactional.PayloadTransaction
+	OnlyMarkTransactions bool // this is used to bypass the actual sending of data on empty payloads and just complete the transactions
 }
 
 // ShutdownForwarder shuts down the forwarder
@@ -81,6 +82,13 @@ forwardHandler:
 	for {
 		select {
 		case payload := <-f.PayloadChannel:
+
+			// check to see if this is an empty payload -> OnlyMarkTransactions == true
+			if payload.OnlyMarkTransactions {
+				f.ProgressTransactions(payload.TransactionActionMap)
+				return
+			}
+
 			response := f.stsClient.Post(payload.Path, payload.Body)
 			if response.Err != nil {
 				// Payload failed, reject action
@@ -90,15 +98,7 @@ forwardHandler:
 				_ = log.Errorf("Failed to send intake payload, content: %v. %s",
 					apiKeyRegExp.ReplaceAllString(string(payload.Body), apiKeyReplacement), response.Err.Error())
 			} else {
-				// Payload succeeded, acknowledge action
-				for transactionID, payloadTransaction := range payload.TransactionActionMap {
-					transactionmanager.GetTransactionManager().AcknowledgeAction(transactionID, payloadTransaction.ActionID)
-
-					// if the transaction of the payload is completed, submit a transaction complete
-					if payloadTransaction.CompletedTransaction {
-						transactionmanager.GetTransactionManager().CompleteTransaction(transactionID)
-					}
-				}
+				f.ProgressTransactions(payload.TransactionActionMap)
 
 				log.Infof("Sent intake payload, size: %d bytes.", len(payload.Body))
 				if config.Datadog.GetBool("log_payloads") {
@@ -109,6 +109,20 @@ forwardHandler:
 			log.Infof("Shutting down forwarder %v", sf)
 			break forwardHandler
 		default:
+		}
+	}
+}
+
+// ProgressTransactions is called on a successful payload post or when OnlyMarkTransactions is set to true. It acknowledges
+// the actions within a transaction and completes a completed transaction.
+func (f *Forwarder) ProgressTransactions(transactionMap map[string]transactional.PayloadTransaction) {
+	// Payload succeeded, acknowledge action
+	for transactionID, payloadTransaction := range transactionMap {
+		transactionmanager.GetTransactionManager().AcknowledgeAction(transactionID, payloadTransaction.ActionID)
+
+		// if the transaction of the payload is completed, submit a transaction complete
+		if payloadTransaction.CompletedTransaction {
+			transactionmanager.GetTransactionManager().CompleteTransaction(transactionID)
 		}
 	}
 }

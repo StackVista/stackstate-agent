@@ -154,6 +154,36 @@ func TestForwarder(t *testing.T) {
 			},
 			Attempts: 1,
 		},
+		{
+			TestCase: "Expect AcknowledgeAction + CompleteTransaction for each completed transaction without making any " +
+				"HTTP requests when setting OnlyMarkTransactions to true.",
+			TestTransactionalPayload: TransactionalPayload{
+				Path: transactional.IntakePath,
+				TransactionActionMap: map[string]transactional.PayloadTransaction{
+					testTransactionID: {
+						ActionID:             testActionID,
+						CompletedTransaction: true,
+					},
+				},
+				OnlyMarkTransactions: true,
+			},
+			TransactionManagerAssertions: func(manager *transactionmanager.MockTransactionManager,
+				txMap map[string]transactional.PayloadTransaction) {
+				for i := 0; i < len(txMap); i++ {
+					ackAction := manager.NextAction().(transactionmanager.AckAction)
+					expectedPT, found := txMap[ackAction.TransactionID]
+					if !found {
+						assert.Fail(t, "Commit action for transaction %s, not found in expected transaction state: %v",
+							ackAction.TransactionID, txMap)
+					}
+					assert.Equal(t, expectedPT.ActionID, ackAction.ActionID)
+
+					completedTx := manager.NextAction().(transactionmanager.CompleteTransaction)
+					assert.Equal(t, ackAction.TransactionID, completedTx.TransactionID)
+				}
+			},
+			Attempts: 0,
+		},
 	} {
 		t.Run(tc.TestCase, func(t *testing.T) {
 			// initial attempt counter to 0

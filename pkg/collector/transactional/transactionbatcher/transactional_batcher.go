@@ -119,6 +119,24 @@ func (ctb *transactionalBatcher) SubmitState(states TransactionCheckInstanceBatc
 				transactionmanager.GetTransactionManager().RollbackTransaction(state.Transaction.TransactionID, fmt.Sprintf("Marshall error in payload: %v", data))
 			}
 		}
+
+		// Catering for the edge case where the data produced for a given check and transaction was published in a
+		// previous payload. There is a very likely possibility that this payload is still in the forwarder being sent
+		// to StackState. The best way to guarantee that we're not prematurely marking a transaction as complete is to
+		// forward an empty payload to the forwarder, thereby committing one final (fake) action, acknowledging it in the
+		// forwarder and then marking the transaction as complete.
+		// In the event of the same happening, but ending up in a state where there is already data in the payload, we
+		// don't have to do anything special. The action will be committed and the transaction completed as part of that
+		// payload.
+		onlyMarkTransactions := false
+		if data.EqualDataPayload(transactional.NewIntakePayload()) {
+			for _, state := range states {
+				if state.Transaction.CompletedTransaction {
+					onlyMarkTransactions = true
+				}
+			}
+		}
+
 		// create a transaction -> action map that can be used to acknowledge / reject actions
 		transactionPayloadMap := make(map[string]transactional.PayloadTransaction, len(states))
 		for _, state := range states {
@@ -131,16 +149,18 @@ func (ctb *transactionalBatcher) SubmitState(states TransactionCheckInstanceBatc
 			transactionmanager.GetTransactionManager().CommitAction(state.Transaction.TransactionID, actionID)
 		}
 
-		ctb.submitPayload(payload, transactionPayloadMap)
+		ctb.submitPayload(payload, transactionPayloadMap, onlyMarkTransactions)
 	}
 }
 
 // submitPayload submits the payload to the forwarder
-func (ctb *transactionalBatcher) submitPayload(payload []byte, transactionPayloadMap map[string]transactional.PayloadTransaction) {
+func (ctb *transactionalBatcher) submitPayload(payload []byte, transactionPayloadMap map[string]transactional.PayloadTransaction,
+	onlyMarkTransactions bool) {
 	transactionforwarder.GetTransactionalForwarder().SubmitTransactionalIntake(transactionforwarder.TransactionalPayload{
 		Body:                 payload,
 		Path:                 transactional.IntakePath,
 		TransactionActionMap: transactionPayloadMap,
+		OnlyMarkTransactions: onlyMarkTransactions,
 	})
 }
 
