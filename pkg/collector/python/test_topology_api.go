@@ -5,11 +5,8 @@ package python
 
 import (
 	"encoding/json"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/StackVista/stackstate-agent/pkg/health"
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -47,25 +44,24 @@ func testComponentTopology(t *testing.T) {
 	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
-		"check-id": {
-			Health:  make(map[string]health.Health),
-			Metrics: &[]telemetry.RawMetrics{},
-			Topology: &topology.Topology{
-				StartSnapshot: true,
-				StopSnapshot:  true,
-				Instance:      instance,
-				Components: []topology.Component{
-					{
-						ExternalID: "external-id",
-						Type:       topology.Type{Name: "component-type"},
-						Data:       topology.Data{"some": "data"},
+	assert.ObjectsAreEqualValues(expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
+		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
+			"check-id": {
+				Topology: &topology.Topology{
+					StartSnapshot: true,
+					StopSnapshot:  true,
+					Instance:      instance,
+					Components: []topology.Component{
+						{
+							ExternalID: "external-id",
+							Type:       topology.Type{Name: "component-type"},
+							Data:       topology.Data{"some": "data"},
+						},
 					},
+					Relations: []topology.Relation{},
 				},
-				Relations: []topology.Relation{},
 			},
-		},
-	}))
+		}))
 }
 
 func testRelationTopology(t *testing.T) {
@@ -97,27 +93,26 @@ func testRelationTopology(t *testing.T) {
 	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
-		"check-id": {
-			Health:  make(map[string]health.Health),
-			Metrics: &[]telemetry.RawMetrics{},
-			Topology: &topology.Topology{
-				StartSnapshot: false,
-				StopSnapshot:  false,
-				Instance:      instance,
-				Components:    []topology.Component{},
-				Relations: []topology.Relation{
-					{
-						ExternalID: "source-id-relation-type-target-id",
-						SourceID:   "source-id",
-						TargetID:   "target-id",
-						Type:       topology.Type{Name: "relation-type"},
-						Data:       topology.Data{"some": "data"},
+	assert.ObjectsAreEqualValues(expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
+		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
+			"check-id": {
+				Topology: &topology.Topology{
+					StartSnapshot: false,
+					StopSnapshot:  false,
+					Instance:      instance,
+					Components:    []topology.Component{},
+					Relations: []topology.Relation{
+						{
+							ExternalID: "source-id-relation-type-target-id",
+							SourceID:   "source-id",
+							TargetID:   "target-id",
+							Type:       topology.Type{Name: "relation-type"},
+							Data:       topology.Data{"some": "data"},
+						},
 					},
 				},
 			},
-		},
-	}))
+		}))
 }
 
 func testStartSnapshotCheck(t *testing.T) {
@@ -132,19 +127,18 @@ func testStartSnapshotCheck(t *testing.T) {
 	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
-		"check-id": {
-			Health:  make(map[string]health.Health),
-			Metrics: &[]telemetry.RawMetrics{},
-			Topology: &topology.Topology{
-				StartSnapshot: true,
-				StopSnapshot:  false,
-				Instance:      instance,
-				Components:    []topology.Component{},
-				Relations:     []topology.Relation{},
+	assert.ObjectsAreEqualValues(expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
+		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
+			"check-id": {
+				Topology: &topology.Topology{
+					StartSnapshot: true,
+					StopSnapshot:  false,
+					Instance:      instance,
+					Components:    []topology.Component{},
+					Relations:     []topology.Relation{},
+				},
 			},
-		},
-	}))
+		}))
 }
 
 func testStopSnapshotCheck(t *testing.T) {
@@ -159,19 +153,18 @@ func testStopSnapshotCheck(t *testing.T) {
 	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
-		"check-id": {
-			Health:  make(map[string]health.Health),
-			Metrics: &[]telemetry.RawMetrics{},
-			Topology: &topology.Topology{
-				StartSnapshot: false,
-				StopSnapshot:  true,
-				Instance:      instance,
-				Components:    []topology.Component{},
-				Relations:     []topology.Relation{},
+	assert.ObjectsAreEqualValues(expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
+		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
+			"check-id": {
+				Topology: &topology.Topology{
+					StartSnapshot: false,
+					StopSnapshot:  true,
+					Instance:      instance,
+					Components:    []topology.Component{},
+					Relations:     []topology.Relation{},
+				},
 			},
-		},
-	}))
+		}))
 }
 
 func testDeleteTopologyElement(t *testing.T) {
@@ -193,18 +186,17 @@ func testDeleteTopologyElement(t *testing.T) {
 	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.ObjectsAreEqualValues(expectedTopology, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
-		"check-id": {
-			Health:  make(map[string]health.Health),
-			Metrics: &[]telemetry.RawMetrics{},
-			Topology: &topology.Topology{
-				StartSnapshot: true,
-				StopSnapshot:  true,
-				Instance:      instance,
-				Components:    []topology.Component{},
-				Relations:     []topology.Relation{},
-				DeleteIDs:     []string{topoElementId},
+	assert.ObjectsAreEqualValues(expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
+		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
+			"check-id": {
+				Topology: &topology.Topology{
+					StartSnapshot: true,
+					StopSnapshot:  true,
+					Instance:      instance,
+					Components:    []topology.Component{},
+					Relations:     []topology.Relation{},
+					DeleteIDs:     []string{topoElementId},
+				},
 			},
-		},
-	}))
+		}))
 }

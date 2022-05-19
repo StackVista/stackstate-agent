@@ -5,7 +5,6 @@ package python
 
 import (
 	"encoding/json"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/health"
@@ -60,20 +59,21 @@ func testHealthCheckData(t *testing.T) {
 	expectedState := mockTransactionalBatcher.CollectedTopology.Flush()
 	expectedStream := health.Stream{Urn: "myurn", SubStream: "substream"}
 
-	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
-		"check-id": {
-			Health: map[string]health.Health{
-				expectedStream.GoString(): {
-					StartSnapshot: &health.StartSnapshotMetadata{RepeatIntervalS: 1, ExpiryIntervalS: 0},
-					StopSnapshot:  &health.StopSnapshotMetadata{},
-					Stream:        expectedStream,
-					CheckStates: []health.CheckData{
-						expectedCheckData,
+	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
+		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
+			"check-id": {
+				Health: map[string]health.Health{
+					expectedStream.GoString(): {
+						StartSnapshot: &health.StartSnapshotMetadata{RepeatIntervalS: 1, ExpiryIntervalS: 0},
+						StopSnapshot:  &health.StopSnapshotMetadata{},
+						Stream:        expectedStream,
+						CheckStates: []health.CheckData{
+							expectedCheckData,
+						},
 					},
 				},
 			},
-		},
-	}), expectedState)
+		}), expectedState)
 }
 
 func testHealthStartSnapshot(t *testing.T) {
@@ -88,17 +88,18 @@ func testHealthStartSnapshot(t *testing.T) {
 	expectedState := mockTransactionalBatcher.CollectedTopology.Flush()
 	expectedStream := health.Stream{Urn: "myurn", SubStream: "substream"}
 
-	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
-		"check-id": {
-			Health: map[string]health.Health{
-				expectedStream.GoString(): {
-					StartSnapshot: &health.StartSnapshotMetadata{RepeatIntervalS: 1, ExpiryIntervalS: 0},
-					Stream:        expectedStream,
-					CheckStates:   []health.CheckData{},
+	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
+		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
+			"check-id": {
+				Health: map[string]health.Health{
+					expectedStream.GoString(): {
+						StartSnapshot: &health.StartSnapshotMetadata{RepeatIntervalS: 1, ExpiryIntervalS: 0},
+						Stream:        expectedStream,
+						CheckStates:   []health.CheckData{},
+					},
 				},
 			},
-		},
-	}), expectedState)
+		}), expectedState)
 }
 
 func testHealthStopSnapshot(t *testing.T) {
@@ -113,17 +114,18 @@ func testHealthStopSnapshot(t *testing.T) {
 	expectedState := mockTransactionalBatcher.CollectedTopology.Flush()
 	expectedStream := health.Stream{Urn: "myurn", SubStream: "substream"}
 
-	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
-		"check-id": {
-			Health: map[string]health.Health{
-				expectedStream.GoString(): {
-					StopSnapshot: &health.StopSnapshotMetadata{},
-					Stream:       expectedStream,
-					CheckStates:  []health.CheckData{},
+	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
+		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
+			"check-id": {
+				Health: map[string]health.Health{
+					expectedStream.GoString(): {
+						StopSnapshot: &health.StopSnapshotMetadata{},
+						Stream:       expectedStream,
+						CheckStates:  []health.CheckData{},
+					},
 				},
 			},
-		},
-	}), expectedState)
+		}), expectedState)
 }
 
 func testNoSubStream(t *testing.T) {
@@ -138,15 +140,16 @@ func testNoSubStream(t *testing.T) {
 	expectedState := mockTransactionalBatcher.CollectedTopology.Flush()
 	expectedStream := health.Stream{Urn: "myurn"}
 
-	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
-		"check-id": {
-			Health: map[string]health.Health{
-				expectedStream.GoString(): {
-					StartSnapshot: &health.StartSnapshotMetadata{RepeatIntervalS: 1, ExpiryIntervalS: 0},
-					Stream:        expectedStream,
-					CheckStates:   []health.CheckData{},
+	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
+		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
+			"check-id": {
+				Health: map[string]health.Health{
+					expectedStream.GoString(): {
+						StartSnapshot: &health.StartSnapshotMetadata{RepeatIntervalS: 1, ExpiryIntervalS: 0},
+						Stream:        expectedStream,
+						CheckStates:   []health.CheckData{},
+					},
 				},
 			},
-		},
-	}), expectedState)
+		}), expectedState)
 }

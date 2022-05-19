@@ -6,10 +6,8 @@ package python
 import (
 	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/stretchr/testify/assert"
@@ -167,11 +165,10 @@ func testRawMetricsData(t *testing.T) {
 
 	expectedState := mockTransactionalBatcher.CollectedTopology.Flush()
 
-	assert.Exactly(t, expectedState, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
-		"check-id": {
-			Health:   make(map[string]health.Health),
-			Metrics:  &[]telemetry.RawMetrics{expectedRawMetricsData},
-			Topology: nil,
-		},
-	}))
+	assert.Exactly(t, expectedState, transactionbatcher.TransactionCheckInstanceBatchStates(
+		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
+			"check-id": {
+				Metrics: &telemetry.Metrics{Values: []telemetry.RawMetrics{expectedRawMetricsData}},
+			},
+		}))
 }
