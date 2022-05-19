@@ -5,6 +5,8 @@ import "github.com/StackVista/stackstate-agent/pkg/collector/check"
 // TransactionManager encapsulates all the functionality of the transaction manager to keep track of transactions
 type TransactionManager interface {
 	Start()
+	GetTransaction(transactionID string) (*IntakeTransaction, error)
+	TransactionCount() int
 	StartTransaction(CheckID check.ID, TransactionID string, NotifyChannel chan interface{})
 	CompleteTransaction(transactionID string)
 	RollbackTransaction(transactionID, reason string)
@@ -12,6 +14,26 @@ type TransactionManager interface {
 	AcknowledgeAction(transactionID, actionID string)
 	RejectAction(transactionID, actionID, reason string)
 	Stop()
+}
+
+// GetTransaction returns the IntakeTransaction for a given checkID and transactionID or TransactionNotFound error.
+func (txm *transactionManager) GetTransaction(transactionID string) (*IntakeTransaction, error) {
+	txm.mux.RLock()
+	transaction, exists := txm.transactions[transactionID]
+	txm.mux.RUnlock()
+	if !exists {
+		return nil, TransactionNotFound{TransactionID: transactionID}
+	}
+
+	return transaction, nil
+}
+
+// TransactionCount returns the amount of transactions in the Transaction Manager.
+func (txm *transactionManager) TransactionCount() int {
+	txm.mux.RLock()
+	count := len(txm.transactions)
+	txm.mux.RUnlock()
+	return count
 }
 
 // StartTransaction begins a transaction for a given check

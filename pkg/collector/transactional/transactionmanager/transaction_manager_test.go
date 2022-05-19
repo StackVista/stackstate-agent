@@ -15,7 +15,7 @@ func TestTransactionManager_HappyFlow(t *testing.T) {
 	txManager.Start()
 
 	// assert that we're starting on a clean slate
-	assert.Len(t, txManager.transactions, 0)
+	assert.Equal(t, txManager.TransactionCount(), 0)
 
 	// start a transaction and assert it
 	txID := uuid.New().String()
@@ -53,7 +53,7 @@ func TestTransactionManager_HappyFlow(t *testing.T) {
 
 	// sleep and wait for automatic cleanup to remove the successful transaction
 	time.Sleep(1 * time.Second)
-	assert.Len(t, txManager.transactions, 0)
+	assert.Equal(t, txManager.TransactionCount(), 0)
 }
 
 func TestTransactionManager_TransactionRollback(t *testing.T) {
@@ -118,7 +118,7 @@ func TestTransactionManager_TransactionRollback(t *testing.T) {
 
 	// sleep and wait for automatic cleanup to remove the successful transaction
 	time.Sleep(1 * time.Second)
-	assert.Len(t, txManager.transactions, 0)
+	assert.Equal(t, txManager.TransactionCount(), 0)
 
 	close(txNotifyChannel)
 	txManager.Stop()
@@ -180,7 +180,7 @@ func TestTransactionManager_TransactionTimeout(t *testing.T) {
 		})
 	}
 
-	assert.Len(t, txManager.transactions, 0)
+	assert.Equal(t, txManager.TransactionCount(), 0)
 
 	close(txNotifyChannel)
 	txManager.Stop()
@@ -203,7 +203,7 @@ func TestTransactionManager_ErrorHandling(t *testing.T) {
 				txManager.StartTransaction("checkID", txID, txNotifyChannel)
 
 				// assert that we have no transactions (nothing broke)
-				assert.Empty(t, txManager.transactions)
+				assert.Equal(t, txManager.TransactionCount(), 0)
 
 				// start the transaction checkmanager, the transaction sent before the start will be read immediately, assert it
 				txManager.Start()
@@ -222,12 +222,14 @@ func TestTransactionManager_ErrorHandling(t *testing.T) {
 				txManager.CommitAction(txID, actID)
 
 				// assert that we don't have a transaction for txID and no action for actID
-				_, found := txManager.transactions[txID]
-				assert.False(t, found, "Transaction %s not found in the transaction map", txID)
+				_, notFoundError := txManager.GetTransaction(txID)
+				assert.Error(t, notFoundError, "Transaction %s not found in the transaction map", txID)
+				txManager.mux.RLock()
 				for _, tx := range txManager.transactions {
 					_, found := tx.Actions[actID]
 					assert.False(t, found)
 				}
+				txManager.mux.RUnlock()
 			},
 		},
 		{
@@ -257,13 +259,14 @@ func TestTransactionManager_ErrorHandling(t *testing.T) {
 	}
 
 	defer txManager.Stop()
-	assert.Len(t, txManager.transactions, 0)
+	assert.Equal(t, txManager.TransactionCount(), 0)
 }
 
 func assertTransaction(t *testing.T, txManager *transactionManager, txID string, state TransactionState,
 	actions map[string]*Action) {
 	// give the transaction checkmanager a bit of time to insert the transaction before running the assertion
 	time.Sleep(20 * time.Millisecond)
+	txManager.mux.RLock()
 	transaction, found := txManager.transactions[txID]
 	assert.True(t, found, "Transaction %s not found in the transaction map", txID)
 	assert.Equal(t, txID, transaction.TransactionID)
@@ -275,6 +278,7 @@ func assertTransaction(t *testing.T, txManager *transactionManager, txID string,
 		assert.Equal(t, expectedAction.ActionID, action.ActionID)
 		assert.Equal(t, expectedAction.Acknowledged, action.Acknowledged)
 	}
+	txManager.mux.RUnlock()
 }
 
 func commitAssertAction(t *testing.T, txManager *transactionManager, txID, actID string, actions map[string]*Action) {

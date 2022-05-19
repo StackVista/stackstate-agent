@@ -77,14 +77,16 @@ var (
 	testRawMetricsDataIntakeMetric2 = testRawMetricsData2.IntakeMetricJSON()
 )
 
+func init() {
+	transactionforwarder.NewMockTransactionalForwarder()
+	transactionmanager.NewMockTransactionManager()
+}
+
 // TODO: these might hit nil pointers in the batcher because we only init the transaction manager and forwarder in the testBatcher function
 // TODO: after the batcher operations have been executed
 func testBatcher(t *testing.T, transactionState map[string]bool, expectedPayload transactional.IntakePayload) {
-	fwd := transactionforwarder.NewMockTransactionalForwarder()
-	if transactionmanager.GetTransactionManager() == nil {
-		transactionmanager.NewMockTransactionManager()
-	}
 	tm := transactionmanager.GetTransactionManager().(*transactionmanager.MockTransactionManager)
+	fwd := transactionforwarder.GetTransactionalForwarder().(*transactionforwarder.MockTransactionalForwarder)
 
 	// get the action commit made by the batcher from the transaction manager for all the transactions in this payload
 	commitActions := make(map[string]transactionmanager.CommitAction, len(transactionState))
@@ -140,13 +142,6 @@ func testBatcher(t *testing.T, transactionState map[string]bool, expectedPayload
 
 	assert.Equal(t, expectedTransactionMap, payload.TransactionActionMap)
 
-	fwd.Stop()
-	tm.Stop()
-
-	// NEVER REMOVE :D This sleep gives Go a bit of time to do garbage collection, otherwise the pointer of the forwarder
-	// gets re-used and causes subsequent tests to fail for bizarre reasons.
-	// TODO: refactor this a bit to avoid this issue and speed up tests a bit.
-	time.Sleep(100 * time.Millisecond)
 }
 
 func TestBatcherWithInProgressTransactionTimeBasedFlush(t *testing.T) {
@@ -267,7 +262,7 @@ func TestBatchNoDataNoComplete(t *testing.T) {
 
 	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent)
 	batcher.SubmitCompleteTransaction(testID2, testTransaction2ID)
-	tm := transactionmanager.NewMockTransactionManager()
+	tm := transactionmanager.GetTransactionManager().(*transactionmanager.MockTransactionManager)
 	ct := tm.NextAction().(transactionmanager.CompleteTransaction)
 	assert.Equal(t, testTransaction2ID, ct.TransactionID)
 

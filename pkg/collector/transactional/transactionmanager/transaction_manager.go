@@ -52,6 +52,7 @@ type transactionManager struct {
 	transactions                map[string]*IntakeTransaction // pointer for in-place mutation
 	transactionTimeoutDuration  time.Duration
 	transactionEvictionDuration time.Duration
+	mux                         sync.RWMutex
 }
 
 // Start sets up the transaction checkmanager to consume messages on the txm.transactionChannel. It consumes one message at
@@ -106,13 +107,16 @@ func (txm *transactionManager) Start() {
 				// shutdown transaction checkmanager
 				case StopTransactionManager:
 					// clean the transaction map
+					txm.mux.Lock()
 					txm.transactions = make(map[string]*IntakeTransaction, 0)
+					txm.mux.Unlock()
 					break transactionHandler
 				default:
 					_ = log.Errorf("Got unexpected msg %v", msg)
 				}
 			case <-txm.transactionTicker.C:
 				// expire stale transactions, clean up expired transactions that exceed the eviction duration
+				txm.mux.Lock()
 				for _, transaction := range txm.transactions {
 					if transaction.State == Failed || transaction.State == Succeeded {
 						log.Debugf("Cleaning up %s transaction: %s", transaction.State.String(), transaction.TransactionID)
@@ -123,9 +127,11 @@ func (txm *transactionManager) Start() {
 						transaction.State = Stale
 					} else if transaction.State == Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionEvictionDuration)) {
 						// last updated timestamp is before current time - checkmanager eviction duration => Tx can be evicted
-						txm.evictTransaction(transaction.TransactionID)
+						delete(txm.transactions, transaction.TransactionID)
+						transaction.NotifyChannel <- EvictedTransaction{}
 					}
 				}
+				txm.mux.Unlock()
 
 				// TODO: produce some transaction checkmanager metrics
 			default:
@@ -143,8 +149,9 @@ func (txm *transactionManager) startTransaction(transactionID string, notify cha
 		NotifyChannel:        notify,
 		LastUpdatedTimestamp: time.Now(),
 	}
-
+	txm.mux.Lock()
 	txm.transactions[transaction.TransactionID] = transaction
+	txm.mux.Unlock()
 
 	return transaction, nil
 }
@@ -152,16 +159,17 @@ func (txm *transactionManager) startTransaction(transactionID string, notify cha
 // commitAction commits / promises an action for a certain transaction. A commit is only a promise that something needs
 // to be fulfilled. An unacknowledged action results in a transaction failure.
 func (txm *transactionManager) commitAction(transactionID, actionID string) error {
-	transaction, exists := txm.transactions[transactionID]
-	if !exists {
-		return TransactionNotFound{TransactionID: transactionID}
+	transaction, err := txm.GetTransaction(transactionID)
+	if err != nil {
+		return err
 	}
-
+	txm.mux.Lock()
 	action := &Action{
 		ActionID:           actionID,
 		CommittedTimestamp: time.Now(),
 	}
 	txm.updateTransaction(transaction, action, InProgress)
+	txm.mux.Unlock()
 
 	return nil
 }
@@ -187,13 +195,14 @@ func (txm *transactionManager) rejectAction(transactionID, actionID string) erro
 // findAndUpdateAction is a helper function to find a transaction and action for the given ID's, marks the action as
 // acknowledged and updates the transaction is updateTransaction is set to true.
 func (txm *transactionManager) findAndUpdateAction(transactionID, actionID string, updateTransaction bool) error {
-	transaction, exists := txm.transactions[transactionID]
-	if !exists {
-		return TransactionNotFound{TransactionID: transactionID}
+	transaction, err := txm.GetTransaction(transactionID)
+	if err != nil {
+		return err
 	}
-
+	txm.mux.Lock()
 	action, exists := transaction.Actions[actionID]
 	if !exists {
+		txm.mux.Unlock()
 		return ActionNotFound{ActionID: actionID, TransactionID: transactionID}
 	}
 	action.Acknowledged = true
@@ -202,6 +211,7 @@ func (txm *transactionManager) findAndUpdateAction(transactionID, actionID strin
 	if updateTransaction {
 		txm.updateTransaction(transaction, action, InProgress)
 	}
+	txm.mux.Unlock()
 
 	return nil
 }
@@ -209,47 +219,38 @@ func (txm *transactionManager) findAndUpdateAction(transactionID, actionID strin
 // completeTransaction marks a transaction for a given transactionID as Succeeded, if all the committed actions
 // of a transaction has been acknowledged
 func (txm *transactionManager) completeTransaction(transactionID string) error {
-	transaction, exists := txm.transactions[transactionID]
-	if !exists {
-		return TransactionNotFound{TransactionID: transactionID}
+	transaction, err := txm.GetTransaction(transactionID)
+	if err != nil {
+		return err
 	}
-
+	txm.mux.Lock()
 	// ensure all actions have been acknowledged
 	for _, action := range transaction.Actions {
 		if !action.Acknowledged {
 			reason := fmt.Sprintf("Not all actions have been acknowledged, rolling back checkmanager: %s", transaction.TransactionID)
+			txm.mux.Unlock()
 			return RollbackTransaction{TransactionID: transactionID, Reason: reason}
 		}
 	}
 	transaction.State = Succeeded
 	transaction.LastUpdatedTimestamp = time.Now()
+	txm.mux.Unlock()
 	transaction.NotifyChannel <- CompleteTransaction{}
 
 	return nil
 }
 
-// evictTransaction delete a given transactionID from the transactions map
-func (txm *transactionManager) evictTransaction(transactionID string) {
-	transaction, exists := txm.transactions[transactionID]
-	if !exists {
-		return
-	}
-
-	delete(txm.transactions, transactionID)
-
-	transaction.NotifyChannel <- EvictedTransaction{}
-}
-
 // rollbackTransaction rolls back the transaction in the event of a failure
 func (txm *transactionManager) rollbackTransaction(transactionID string) error {
-	transaction, exists := txm.transactions[transactionID]
-	if !exists {
-		return TransactionNotFound{TransactionID: transactionID}
+	transaction, err := txm.GetTransaction(transactionID)
+	if err != nil {
+		return err
 	}
 
+	txm.mux.Lock()
 	transaction.State = Failed
 	transaction.LastUpdatedTimestamp = time.Now()
-
+	txm.mux.Unlock()
 	transaction.NotifyChannel <- RollbackTransaction{}
 
 	return nil

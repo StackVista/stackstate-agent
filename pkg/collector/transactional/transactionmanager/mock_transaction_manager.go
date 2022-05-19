@@ -17,6 +17,16 @@ type MockTransactionManager struct {
 	TransactionActions              chan interface{}
 }
 
+// GetTransaction returns nil, nil
+func (ttm *MockTransactionManager) GetTransaction(string) (*IntakeTransaction, error) {
+	return nil, nil
+}
+
+// TransactionCount return 0
+func (ttm *MockTransactionManager) TransactionCount() int {
+	return 0
+}
+
 // Start is a noop
 func (ttm *MockTransactionManager) Start() {
 }
