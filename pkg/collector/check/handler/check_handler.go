@@ -50,7 +50,7 @@ func (ch *checkHandler) Reload() {
 
 // NewCheckHandler creates a new check handler for a given check, check loader and configuration
 func NewCheckHandler(check check.Check, checkReloader CheckReloader, config, initConfig integration.Data) CheckHandler {
-	return &checkHandler{
+	ch := &checkHandler{
 		CheckIdentifier:    check,
 		CheckReloader:      checkReloader,
 		config:             config,
@@ -58,6 +58,10 @@ func NewCheckHandler(check check.Check, checkReloader CheckReloader, config, ini
 		shutdownChannel:    make(chan bool, 1),
 		transactionChannel: make(chan SubmitStartTransaction, 1),
 	}
+
+	go ch.Start()
+
+	return ch
 }
 
 // Start starts the check handler to "listen" and handle check transactions or shutdown
@@ -110,6 +114,7 @@ currentTxHandler:
 		case tx := <-txChan:
 			switch txMsg := tx.(type) {
 			case transactionmanager.RollbackTransaction, transactionmanager.EvictedTransaction:
+				_ = log.Warnf("Reloading check %s after failed transaction", ch.ID())
 				if err := ch.ReloadCheck(ch.ID(), ch.config, ch.initConfig, ch.ConfigSource()); err != nil {
 					_ = log.Errorf("failed to reload check %s: %s", ch.ID(), err)
 				}

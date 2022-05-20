@@ -67,8 +67,6 @@ func TestCheckHandler_Transactions(t *testing.T) {
 	ch := NewCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*checkHandler)
 
-	ch.Start()
-
 	for _, tc := range []struct {
 		testCase            string
 		completeTransaction func()
@@ -125,8 +123,6 @@ func TestCheckHandler_Shutdown(t *testing.T) {
 	testTxManager := transactionmanager.NewMockTransactionManager()
 	ch := NewCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*checkHandler)
-
-	ch.Start()
 
 	transactionID := ch.SubmitStartTransaction()
 
