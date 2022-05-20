@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -110,6 +111,41 @@ func testRelationTopology(t *testing.T) {
 							Data:       topology.Data{"some": "data"},
 						},
 					},
+				},
+			},
+		}))
+}
+
+func testStartTransaction(t *testing.T) {
+	transactionManager := transactionmanager.NewMockTransactionManager()
+
+	checkId := C.CString("check-id")
+
+	SubmitStartTransaction(checkId)
+
+	transactionID := transactionManager.GetCurrentTransaction()
+	assert.NotEmpty(t, transactionID)
+}
+
+func testStopTransaction(t *testing.T) {
+	transactionManager := transactionmanager.NewMockTransactionManager()
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
+
+	checkId := C.CString("check-id")
+
+	SubmitStartTransaction(checkId)
+	transactionID := transactionManager.GetCurrentTransaction()
+
+	SubmitStopTransaction(checkId)
+
+	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
+
+	assert.ObjectsAreEqualValues(expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
+		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
+			"check-id": {
+				Transaction: &transactionbatcher.BatchTransaction{
+					TransactionID:        transactionID,
+					CompletedTransaction: true,
 				},
 			},
 		}))
