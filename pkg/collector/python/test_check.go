@@ -10,6 +10,7 @@ package python
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
@@ -182,6 +183,7 @@ import "C"
 
 func testRunCheck(t *testing.T) {
 	check := NewPythonFakeCheck()
+	_ = batcher.NewMockBatcher()
 	_ = transactionbatcher.NewMockTransactionalBatcher()
 	checkmanager.InitCheckManager(handler.NoCheckReloader{})
 	check.instance = &C.rtloader_pyobject_t{}
@@ -246,7 +248,9 @@ func testRunErrorReturn(t *testing.T) {
 func testRun(t *testing.T) {
 	sender := mocksender.NewMockSender(check.ID("testID"))
 	sender.SetupAcceptAll()
+	_ = batcher.NewMockBatcher()
 	_ = transactionbatcher.NewMockTransactionalBatcher()
+	checkmanager.InitCheckManager(handler.NoCheckReloader{})
 
 	c := NewPythonFakeCheck()
 
