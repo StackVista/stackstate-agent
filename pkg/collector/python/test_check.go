@@ -10,6 +10,8 @@ package python
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"runtime"
 	"testing"
@@ -181,6 +183,7 @@ import "C"
 func testRunCheck(t *testing.T) {
 	check := NewPythonFakeCheck()
 	_ = transactionbatcher.NewMockTransactionalBatcher()
+	checkmanager.InitCheckManager(handler.NoCheckReloader{})
 	check.instance = &C.rtloader_pyobject_t{}
 
 	C.reset_check_mock()

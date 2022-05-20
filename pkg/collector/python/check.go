@@ -73,6 +73,9 @@ func (c *PythonCheck) runCheck(commitMetrics bool) error {
 
 	log.Debugf("Running python check %s %s", c.ModuleName, c.id)
 
+	// temporary start transactions for all python checks - TODO: implement start_transaction c-bindings
+	checkmanager.GetCheckManager().GetCheckHandler(c.ID()).SubmitStartTransaction() // [sts]
+
 	cResult := C.run_check(rtloader, c.instance)
 	if cResult == nil {
 		if err := getRtLoaderError(); err != nil {
@@ -82,7 +85,9 @@ func (c *PythonCheck) runCheck(commitMetrics bool) error {
 	}
 	defer C.rtloader_free(rtloader, unsafe.Pointer(cResult))
 
-	checkmanager.GetCheckManager().GetCheckHandler(c.ID()).SubmitComplete() // [sts]
+	// temporary stop transactions for all python checks - TODO: implement start_transaction c-bindings
+	checkmanager.GetCheckManager().GetCheckHandler(c.ID()).SubmitStopTransaction() // [sts]
+	checkmanager.GetCheckManager().GetCheckHandler(c.ID()).SubmitComplete()        // [sts]
 
 	if commitMetrics {
 		s, err := aggregator.GetSender(c.ID())
