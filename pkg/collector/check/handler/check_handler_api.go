@@ -39,6 +39,7 @@ type CheckAPI interface {
 func (ch *checkHandler) SubmitStartTransaction() string {
 	transactionID := uuid.New().String()
 	ch.transactionChannel <- SubmitStartTransaction{
+		CheckID:       ch.ID(),
 		TransactionID: transactionID,
 	}
 	return transactionID
@@ -47,7 +48,7 @@ func (ch *checkHandler) SubmitStartTransaction() string {
 // SubmitStopTransaction submits a complete to the Transactional Batcher, to send the final payload of the transaction
 // and mark the current transaction as complete.
 func (ch *checkHandler) SubmitStopTransaction() {
-	transactionbatcher.GetTransactionalBatcher().SubmitComplete(ch.ID())
+	transactionbatcher.GetTransactionalBatcher().SubmitCompleteTransaction(ch.ID(), ch.currentTransaction)
 }
 
 // GetCheckReloader returns the configured CheckReloader.

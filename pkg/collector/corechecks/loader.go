@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
 	"github.com/StackVista/stackstate-agent/pkg/collector/loaders"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
@@ -68,9 +67,6 @@ func (gl *GoCheckLoader) Load(config integration.Config, instance integration.Da
 		msg := fmt.Sprintf("Could not configure check %s: %s", c, err)
 		return c, fmt.Errorf(msg)
 	}
-
-	// [sts] register check handler
-	checkmanager.GetCheckManager().RegisterCheckHandler(c, config.InitConfig, instance)
 
 	return c, nil
 }

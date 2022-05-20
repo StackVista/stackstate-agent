@@ -68,7 +68,7 @@ func (ch *checkHandler) Start() {
 			select {
 			case transaction := <-ch.transactionChannel:
 				// set the current transaction
-				log.Debugf("Starting transaction: %s", transaction.TransactionID)
+				log.Infof("starting transaction for check %s: %s", transaction.CheckID, transaction.TransactionID)
 				ch.currentTransaction = transaction.TransactionID
 
 				// try closing the currentTransactionChannel to ensure we never accidentally leak a channel before
@@ -129,6 +129,7 @@ func (ch *checkHandler) GetConfig() (integration.Data, integration.Data) {
 
 // SubmitStartTransaction is used to start a transaction to the input channel
 type SubmitStartTransaction struct {
+	CheckID       check.ID
 	TransactionID string
 }
 
