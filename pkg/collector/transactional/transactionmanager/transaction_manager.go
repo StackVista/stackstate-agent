@@ -36,13 +36,17 @@ func NewMockTransactionManager() *MockTransactionManager {
 // newTransactionManager returns an instance of a TransactionManager
 func newTransactionManager(transactionChannelBufferSize int, tickerInterval, transactionTimeoutDuration,
 	transactionEvictionDuration time.Duration) TransactionManager {
-	return &transactionManager{
+	tm := &transactionManager{
 		transactionChannel:          make(chan interface{}, transactionChannelBufferSize),
 		transactionTicker:           time.NewTicker(tickerInterval),
 		transactions:                make(map[string]*IntakeTransaction),
 		transactionTimeoutDuration:  transactionTimeoutDuration,
 		transactionEvictionDuration: transactionEvictionDuration,
 	}
+
+	go tm.Start()
+
+	return tm
 }
 
 // TransactionManager keeps track of all transactions for agent checks

@@ -12,8 +12,6 @@ func TestTransactionManager_HappyFlow(t *testing.T) {
 	txManager := newTransactionManager(100, 100*time.Millisecond, 500*time.Millisecond,
 		500*time.Millisecond).(*transactionManager)
 
-	txManager.Start()
-
 	// assert that we're starting on a clean slate
 	assert.Equal(t, txManager.TransactionCount(), 0)
 
@@ -59,8 +57,6 @@ func TestTransactionManager_HappyFlow(t *testing.T) {
 func TestTransactionManager_TransactionRollback(t *testing.T) {
 	txManager := newTransactionManager(100, 100*time.Millisecond, 1*time.Second,
 		1*time.Second).(*transactionManager)
-
-	txManager.Start()
 
 	txNotifyChannel := make(chan interface{})
 
@@ -129,7 +125,6 @@ func TestTransactionManager_TransactionTimeout(t *testing.T) {
 	txManager := newTransactionManager(100, 10*time.Millisecond, staleTimeout,
 		750*time.Millisecond).(*transactionManager)
 
-	txManager.Start()
 	txNotifyChannel := make(chan interface{})
 
 	for _, tc := range []struct {
@@ -196,24 +191,6 @@ func TestTransactionManager_ErrorHandling(t *testing.T) {
 		testCase  string
 		operation func(t *testing.T, manager *transactionManager)
 	}{
-		{
-			testCase: "Transaction created before starting transaction checkmanager",
-			operation: func(t *testing.T, manager *transactionManager) {
-				txID := uuid.New().String()
-				txManager.StartTransaction("checkID", txID, txNotifyChannel)
-
-				// assert that we have no transactions (nothing broke)
-				assert.Equal(t, txManager.TransactionCount(), 0)
-
-				// start the transaction checkmanager, the transaction sent before the start will be read immediately, assert it
-				txManager.Start()
-
-				assertTransaction(t, txManager, txID, InProgress, map[string]*Action{})
-
-				completeMsg := <-txNotifyChannel
-				assert.Equal(t, EvictedTransaction{}, completeMsg)
-			},
-		},
 		{
 			testCase: "Commit action for a non-existing transaction",
 			operation: func(t *testing.T, manager *transactionManager) {
