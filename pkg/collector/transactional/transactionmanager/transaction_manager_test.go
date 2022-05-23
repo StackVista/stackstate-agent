@@ -27,10 +27,12 @@ func TestTransactionManager_HappyFlow(t *testing.T) {
 		actID := fmt.Sprintf("action-%d", i)
 		commitAssertAction(t, txManager, txID, actID, actions)
 	}
+
 	// acknowledge 15 action and assert them
 	for i := 0; i < 15; i++ {
 		actID := fmt.Sprintf("action-%d", i)
 		txManager.AcknowledgeAction(txID, actID)
+		time.Sleep(50 * time.Millisecond) // give the transaction manager a bit of time to acknowledge the action before asserting
 		actions[actID] = &Action{ActionID: actID, Acknowledged: true}
 		assertTransaction(t, txManager, txID, InProgress, actions)
 	}

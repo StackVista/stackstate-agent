@@ -172,7 +172,7 @@ func testStopTransaction(t *testing.T) {
 
 	SubmitStopTransaction(checkId)
 	time.Sleep(100 * time.Millisecond) // sleep a bit for everything to complete
-	
+
 	actualTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 
 	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
@@ -182,6 +182,7 @@ func testStopTransaction(t *testing.T) {
 					TransactionID:        transactionID,
 					CompletedTransaction: true,
 				},
+				Health: map[string]health.Health{},
 			},
 		}), actualTopology)
 }
