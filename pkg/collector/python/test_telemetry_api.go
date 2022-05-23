@@ -176,6 +176,10 @@ func testRawMetricsData(t *testing.T) {
 	assert.Exactly(t, expectedState, transactionbatcher.TransactionCheckInstanceBatchStates(
 		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
 			"check-id": {
+				Transaction: &transactionbatcher.BatchTransaction{
+					TransactionID:        "", // no start transaction, so the transaction is empty in this case
+					CompletedTransaction: false,
+				},
 				Metrics: &telemetry.Metrics{Values: []telemetry.RawMetrics{expectedRawMetricsData}},
 			},
 		}))

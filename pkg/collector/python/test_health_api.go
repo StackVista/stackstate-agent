@@ -70,6 +70,10 @@ func testHealthCheckData(t *testing.T) {
 	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
 		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
 			"check-id": {
+				Transaction: &transactionbatcher.BatchTransaction{
+					TransactionID:        "", // no start transaction, so the transaction is empty in this case
+					CompletedTransaction: false,
+				},
 				Health: map[string]health.Health{
 					expectedStream.GoString(): {
 						StartSnapshot: &health.StartSnapshotMetadata{RepeatIntervalS: 1, ExpiryIntervalS: 0},
@@ -103,6 +107,10 @@ func testHealthStartSnapshot(t *testing.T) {
 	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
 		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
 			"check-id": {
+				Transaction: &transactionbatcher.BatchTransaction{
+					TransactionID:        "", // no start transaction, so the transaction is empty in this case
+					CompletedTransaction: false,
+				},
 				Health: map[string]health.Health{
 					expectedStream.GoString(): {
 						StartSnapshot: &health.StartSnapshotMetadata{RepeatIntervalS: 1, ExpiryIntervalS: 0},
@@ -133,6 +141,10 @@ func testHealthStopSnapshot(t *testing.T) {
 	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
 		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
 			"check-id": {
+				Transaction: &transactionbatcher.BatchTransaction{
+					TransactionID:        "", // no start transaction, so the transaction is empty in this case
+					CompletedTransaction: false,
+				},
 				Health: map[string]health.Health{
 					expectedStream.GoString(): {
 						StopSnapshot: &health.StopSnapshotMetadata{},
@@ -163,6 +175,10 @@ func testNoSubStream(t *testing.T) {
 	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
 		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
 			"check-id": {
+				Transaction: &transactionbatcher.BatchTransaction{
+					TransactionID:        "", // no start transaction, so the transaction is empty in this case
+					CompletedTransaction: false,
+				},
 				Health: map[string]health.Health{
 					expectedStream.GoString(): {
 						StartSnapshot: &health.StartSnapshotMetadata{RepeatIntervalS: 1, ExpiryIntervalS: 0},

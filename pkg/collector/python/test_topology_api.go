@@ -52,9 +52,13 @@ func testComponentTopology(t *testing.T) {
 	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.ObjectsAreEqualValues(expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
+	assert.Equal(t, expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
 		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
 			"check-id": {
+				Transaction: &transactionbatcher.BatchTransaction{
+					TransactionID:        "", // no start transaction, so the transaction is empty in this case
+					CompletedTransaction: false,
+				},
 				Topology: &topology.Topology{
 					StartSnapshot: true,
 					StopSnapshot:  true,
@@ -105,9 +109,13 @@ func testRelationTopology(t *testing.T) {
 	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.ObjectsAreEqualValues(expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
+	assert.Equal(t, expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
 		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
 			"check-id": {
+				Transaction: &transactionbatcher.BatchTransaction{
+					TransactionID:        "", // no start transaction, so the transaction is empty in this case
+					CompletedTransaction: false,
+				},
 				Topology: &topology.Topology{
 					StartSnapshot: false,
 					StopSnapshot:  false,
@@ -128,6 +136,9 @@ func testRelationTopology(t *testing.T) {
 }
 
 func testStartTransaction(t *testing.T) {
+	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	checkmanager.GetCheckManager().RegisterCheckHandler(&check.STSTestCheck{Name: "check-id"}, integration.Data{},
+		integration.Data{})
 	transactionManager := transactionmanager.NewMockTransactionManager()
 
 	checkId := C.CString("check-id")
@@ -154,7 +165,7 @@ func testStopTransaction(t *testing.T) {
 
 	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 
-	assert.ObjectsAreEqualValues(expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
+	assert.Equal(t, expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
 		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
 			"check-id": {
 				Transaction: &transactionbatcher.BatchTransaction{
@@ -181,9 +192,13 @@ func testStartSnapshotCheck(t *testing.T) {
 	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.ObjectsAreEqualValues(expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
+	assert.Equal(t, expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
 		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
 			"check-id": {
+				Transaction: &transactionbatcher.BatchTransaction{
+					TransactionID:        "", // no start transaction, so the transaction is empty in this case
+					CompletedTransaction: false,
+				},
 				Topology: &topology.Topology{
 					StartSnapshot: true,
 					StopSnapshot:  false,
@@ -211,9 +226,13 @@ func testStopSnapshotCheck(t *testing.T) {
 	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.ObjectsAreEqualValues(expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
+	assert.Equal(t, expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
 		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
 			"check-id": {
+				Transaction: &transactionbatcher.BatchTransaction{
+					TransactionID:        "", // no start transaction, so the transaction is empty in this case
+					CompletedTransaction: false,
+				},
 				Topology: &topology.Topology{
 					StartSnapshot: false,
 					StopSnapshot:  true,
@@ -248,9 +267,13 @@ func testDeleteTopologyElement(t *testing.T) {
 	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.ObjectsAreEqualValues(expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
+	assert.Equal(t, expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
 		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
 			"check-id": {
+				Transaction: &transactionbatcher.BatchTransaction{
+					TransactionID:        "", // no start transaction, so the transaction is empty in this case
+					CompletedTransaction: false,
+				},
 				Topology: &topology.Topology{
 					StartSnapshot: true,
 					StopSnapshot:  true,
