@@ -102,7 +102,7 @@ func (txm *transactionManager) Start() {
 				// error cases
 				case RollbackTransaction:
 					_ = log.Errorf(msg.Error())
-					if err := txm.rollbackTransaction(msg.TransactionID); err != nil {
+					if err := txm.rollbackTransaction(msg.TransactionID, msg.Reason); err != nil {
 						txm.transactionChannel <- err
 					}
 				case TransactionNotFound:
@@ -133,7 +133,7 @@ func (txm *transactionManager) Start() {
 					} else if transaction.State == Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionEvictionDuration)) {
 						// last updated timestamp is before current time - checkmanager eviction duration => Tx can be evicted
 						delete(txm.transactions, transaction.TransactionID)
-						transaction.NotifyChannel <- EvictedTransaction{}
+						transaction.NotifyChannel <- EvictedTransaction{TransactionID: transaction.TransactionID}
 					}
 				}
 				txm.mux.Unlock()
@@ -240,13 +240,13 @@ func (txm *transactionManager) completeTransaction(transactionID string) error {
 	transaction.State = Succeeded
 	transaction.LastUpdatedTimestamp = time.Now()
 	txm.mux.Unlock()
-	transaction.NotifyChannel <- CompleteTransaction{}
+	transaction.NotifyChannel <- CompleteTransaction{TransactionID: transactionID}
 
 	return nil
 }
 
 // rollbackTransaction rolls back the transaction in the event of a failure
-func (txm *transactionManager) rollbackTransaction(transactionID string) error {
+func (txm *transactionManager) rollbackTransaction(transactionID, reason string) error {
 	transaction, err := txm.GetTransaction(transactionID)
 	if err != nil {
 		return err
@@ -256,7 +256,7 @@ func (txm *transactionManager) rollbackTransaction(transactionID string) error {
 	transaction.State = Failed
 	transaction.LastUpdatedTimestamp = time.Now()
 	txm.mux.Unlock()
-	transaction.NotifyChannel <- RollbackTransaction{}
+	transaction.NotifyChannel <- RollbackTransaction{TransactionID: transactionID, Reason: reason}
 
 	return nil
 }
