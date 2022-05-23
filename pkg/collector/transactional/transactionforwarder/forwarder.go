@@ -102,6 +102,8 @@ forwardHandler:
 
 				log.Infof("Sent intake payload, size: %d bytes.", len(payload.Body))
 				if config.Datadog.GetBool("log_payloads") {
+					log.Debugf("Sent intake payload, response status: %s (%s).", response.Response.Status,
+						response.Response.StatusCode)
 					log.Debugf("Sent intake payload, content: %v", apiKeyRegExp.ReplaceAllString(string(payload.Body), apiKeyReplacement))
 				}
 			}
