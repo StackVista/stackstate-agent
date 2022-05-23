@@ -2,11 +2,12 @@ package httpclient
 
 import (
 	"bytes"
+	"compress/gzip"
 	"crypto/tls"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/trace/info"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"net"
 	"net/http"
@@ -40,6 +41,8 @@ type ClientHost struct {
 	NoProxy           bool
 	ProxyURL          *url.URL
 	SkipSSLValidation bool
+
+	ContentEncoding ContentEncoding // TODO: make this per request
 }
 
 // RetryableHTTPClient describes the functionality of a http client with retries and backoff
@@ -75,6 +78,10 @@ func makeRetryableHTTPClient(baseURLConfigKey string) RetryableHTTPClient {
 	if hostURL := config.Datadog.GetString(baseURLConfigKey); hostURL != "" {
 		host.Host = hostURL
 	}
+
+	host.APIKey = config.Datadog.GetString("api_key")
+
+	host.ContentEncoding = NewGzipContentEncoding(gzip.BestCompression)
 
 	proxyList := config.Datadog.GetStringSlice("proxy.no_proxy")
 	noProxy := make(map[string]bool, len(proxyList))
@@ -165,11 +172,20 @@ func (rc *retryableHTTPClient) handleRequest(method, path string, body []byte) *
 
 // makeRequest
 func (rc *retryableHTTPClient) makeRequest(method, path string, body []byte) (*retryablehttp.Request, error) {
-	url := fmt.Sprintf("%s/%s", rc.Host, path)
+	url := fmt.Sprintf("%s/%s%s", rc.Host, path, fmt.Sprintf("?api_key=%s", rc.APIKey))
 	var req *retryablehttp.Request
 	var err error
 	if body != nil {
-		req, err = retryablehttp.NewRequest(method, url, bytes.NewBuffer(body))
+		gzipped, err := rc.ContentEncoding.encode(body)
+		if err != nil {
+			log.Warnf("http client was not able to send payload as %s, reverting to uncompressed payload: %s",
+				rc.ContentEncoding.name(), err)
+			req, err = retryablehttp.NewRequest(method, url, bytes.NewBuffer(body))
+		} else {
+			log.Debugf("Using %s compression for payload", rc.ContentEncoding.name())
+			req, err = retryablehttp.NewRequest(method, url, gzipped)
+			req.Header.Add("content-encoding", rc.ContentEncoding.name())
+		}
 	} else {
 		req, err = retryablehttp.NewRequest(method, url, nil)
 	}
@@ -178,10 +194,10 @@ func (rc *retryableHTTPClient) makeRequest(method, path string, body []byte) (*r
 		return nil, fmt.Errorf("could not create request to %s/%s: %s", url, path, err)
 	}
 
-	req.Header.Add("content-encoding", "identity")
 	req.Header.Add("sts-api-key", rc.APIKey)
 	req.Header.Add("sts-hostname", rc.Host)
-	req.Header.Add("sts-agent-version", info.Version)
+	req.Header.Add("sts-agent-version", version.AgentVersion)
+	req.Header.Add("content-type", "application/json")
 
 	return req, nil
 }

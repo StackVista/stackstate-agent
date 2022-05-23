@@ -14,10 +14,6 @@ services:
     extends:
       file: ./test/molecule-role/molecule/_shared/files/docker-compose.base.yml
       service: kafka
-    volumes:
-      - "./test/molecule-role/molecule/verify-or-create-topics.sh:/usr/local/bin/verify-or-create-topics.sh"
-    environment:
-      KAFKA_CREATE_TOPICS: "sts_connection_beat_events:1:1,sts_correlate_endpoints:1:1,sts_generic_events:1:1,sts_intake_health:1:1,sts_multi_metrics:1:1,sts_state_events:1:1,sts_topo_agent_integrations:1:1,sts_topology_events:1:1,sts_topo_process_agents:1:1,sts_trace_events:1:1,sts_correlated_connections:1:1"
 
   receiver:
     depends_on:
@@ -26,6 +22,14 @@ services:
     extends:
       file: ./test/molecule-role/molecule/_shared/files/docker-compose.base.yml
       service: receiver
+
+  topic-api:
+    depends_on:
+      receiver:
+        condition: service_healthy
+    extends:
+      file: ./test/molecule-role/molecule/_shared/files/docker-compose.base.yml
+      service: topic-api
 
   stackstate-agent:
     image: docker.io/stackstate/${STS_DOCKER_TEST_REPO:-stackstate-agent-test}:${AGENT_VERSION-master}
