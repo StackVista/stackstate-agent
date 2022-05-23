@@ -51,11 +51,6 @@ func (ch *checkHandler) SubmitStopTransaction() {
 	transactionbatcher.GetTransactionalBatcher().SubmitCompleteTransaction(ch.ID(), ch.GetCurrentTransaction())
 }
 
-// GetCheckReloader returns the configured CheckReloader.
-func (ch *checkHandler) GetCheckReloader() CheckReloader {
-	return ch.CheckReloader
-}
-
 // SubmitComponent submits a component to the Transactional Batcher to be batched.
 func (ch *checkHandler) SubmitComponent(instance topology.Instance, component topology.Component) {
 	transactionbatcher.GetTransactionalBatcher().SubmitComponent(ch.ID(), ch.GetCurrentTransaction(), instance, component)

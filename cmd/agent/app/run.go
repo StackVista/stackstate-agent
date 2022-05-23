@@ -16,12 +16,11 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"net/http"
 	_ "net/http/pprof" // Blank import used because this isn't directly used in this file
+	"os"
+	"os/signal"
 	"runtime"
 	"syscall"
 	"time"
-
-	"os"
-	"os/signal"
 
 	"github.com/StackVista/stackstate-agent/cmd/agent/api"
 	"github.com/StackVista/stackstate-agent/cmd/agent/app/settings"
@@ -309,8 +308,6 @@ func StartAgent() error {
 
 	// create and setup the Autoconfig instance
 	common.SetupAutoConfig(config.Datadog.GetString("confd_path"))
-	// start the autoconfig, this will immediately run any configured check
-	common.StartAutoConfig()
 
 	// [STS] create the global transactional components
 	transactionforwarder.InitTransactionalForwarder()
@@ -318,6 +315,9 @@ func StartAgent() error {
 	checkmanager.InitCheckManager(common.Coll)
 	txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
 	transactionmanager.InitTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
+
+	// start the autoconfig, this will immediately run any configured check
+	common.StartAutoConfig()
 
 	// setup the metadata collector
 	common.MetadataScheduler = metadata.NewScheduler(s)

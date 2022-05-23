@@ -143,6 +143,11 @@ func (ch *checkHandler) GetConfig() (integration.Data, integration.Data) {
 	return ch.config, ch.initConfig
 }
 
+// GetCheckReloader returns the configured CheckReloader.
+func (ch *checkHandler) GetCheckReloader() CheckReloader {
+	return ch.CheckReloader
+}
+
 // SubmitStartTransaction is used to start a transaction to the input channel
 type SubmitStartTransaction struct {
 	CheckID       check.ID
