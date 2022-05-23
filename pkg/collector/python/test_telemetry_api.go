@@ -12,6 +12,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
+	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/stretchr/testify/assert"
@@ -171,9 +172,9 @@ func testRawMetricsData(t *testing.T) {
 
 	SubmitRawMetricsData(checkId, name, value, &tags[0], hostname, timestamp)
 
-	expectedState := mockTransactionalBatcher.CollectedTopology.Flush()
+	actualState := mockTransactionalBatcher.CollectedTopology.Flush()
 
-	assert.Exactly(t, expectedState, transactionbatcher.TransactionCheckInstanceBatchStates(
+	assert.Exactly(t, transactionbatcher.TransactionCheckInstanceBatchStates(
 		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
 			"check-id": {
 				Transaction: &transactionbatcher.BatchTransaction{
@@ -181,6 +182,7 @@ func testRawMetricsData(t *testing.T) {
 					CompletedTransaction: false,
 				},
 				Metrics: &telemetry.Metrics{Values: []telemetry.RawMetrics{expectedRawMetricsData}},
+				Health:  map[string]health.Health{},
 			},
-		}))
+		}), actualState)
 }

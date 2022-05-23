@@ -11,9 +11,11 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
+	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 // #include <datadog_agent_rtloader.h>
@@ -49,10 +51,10 @@ func testComponentTopology(t *testing.T) {
 		C.CString(string(data)))
 	SubmitStopSnapshot(checkId, &instanceKey)
 
-	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
+	actualTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.Equal(t, expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
+	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
 		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
 			"check-id": {
 				Transaction: &transactionbatcher.BatchTransaction{
@@ -71,9 +73,11 @@ func testComponentTopology(t *testing.T) {
 						},
 					},
 					Relations: []topology.Relation{},
+					DeleteIDs: []string{},
 				},
+				Health: map[string]health.Health{},
 			},
-		}))
+		}), actualTopology)
 }
 
 func testRelationTopology(t *testing.T) {
@@ -106,10 +110,10 @@ func testRelationTopology(t *testing.T) {
 		C.CString("relation-type"),
 		C.CString(string(data)))
 
-	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
+	actualTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.Equal(t, expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
+	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
 		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
 			"check-id": {
 				Transaction: &transactionbatcher.BatchTransaction{
@@ -130,9 +134,11 @@ func testRelationTopology(t *testing.T) {
 							Data:       topology.Data{"some": "data"},
 						},
 					},
+					DeleteIDs: []string{},
 				},
+				Health: map[string]health.Health{},
 			},
-		}))
+		}), actualTopology)
 }
 
 func testStartTransaction(t *testing.T) {
@@ -144,6 +150,7 @@ func testStartTransaction(t *testing.T) {
 	checkId := C.CString("check-id")
 
 	SubmitStartTransaction(checkId)
+	time.Sleep(100 * time.Millisecond) // sleep a bit for everything to complete
 
 	transactionID := transactionManager.GetCurrentTransaction()
 	assert.NotEmpty(t, transactionID)
@@ -159,13 +166,16 @@ func testStopTransaction(t *testing.T) {
 	checkId := C.CString("check-id")
 
 	SubmitStartTransaction(checkId)
+	time.Sleep(100 * time.Millisecond) // sleep a bit for everything to complete
+
 	transactionID := transactionManager.GetCurrentTransaction()
 
 	SubmitStopTransaction(checkId)
+	time.Sleep(100 * time.Millisecond) // sleep a bit for everything to complete
+	
+	actualTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 
-	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
-
-	assert.Equal(t, expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
+	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
 		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
 			"check-id": {
 				Transaction: &transactionbatcher.BatchTransaction{
@@ -173,7 +183,7 @@ func testStopTransaction(t *testing.T) {
 					CompletedTransaction: true,
 				},
 			},
-		}))
+		}), actualTopology)
 }
 
 func testStartSnapshotCheck(t *testing.T) {
@@ -189,10 +199,10 @@ func testStartSnapshotCheck(t *testing.T) {
 	instanceKey.url = C.CString("instance-url")
 	SubmitStartSnapshot(checkId, &instanceKey)
 
-	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
+	actualTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.Equal(t, expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
+	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
 		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
 			"check-id": {
 				Transaction: &transactionbatcher.BatchTransaction{
@@ -205,9 +215,11 @@ func testStartSnapshotCheck(t *testing.T) {
 					Instance:      instance,
 					Components:    []topology.Component{},
 					Relations:     []topology.Relation{},
+					DeleteIDs:     []string{},
 				},
+				Health: map[string]health.Health{},
 			},
-		}))
+		}), actualTopology)
 }
 
 func testStopSnapshotCheck(t *testing.T) {
@@ -223,10 +235,10 @@ func testStopSnapshotCheck(t *testing.T) {
 	instanceKey.url = C.CString("instance-url")
 	SubmitStopSnapshot(checkId, &instanceKey)
 
-	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
+	actualTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.Equal(t, expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
+	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
 		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
 			"check-id": {
 				Transaction: &transactionbatcher.BatchTransaction{
@@ -239,9 +251,11 @@ func testStopSnapshotCheck(t *testing.T) {
 					Instance:      instance,
 					Components:    []topology.Component{},
 					Relations:     []topology.Relation{},
+					DeleteIDs:     []string{},
 				},
+				Health: map[string]health.Health{},
 			},
-		}))
+		}), actualTopology)
 }
 
 func testDeleteTopologyElement(t *testing.T) {
@@ -264,10 +278,10 @@ func testDeleteTopologyElement(t *testing.T) {
 		C.CString(topoElementId))
 	SubmitStopSnapshot(checkID, &instanceKey)
 
-	expectedTopology := mockTransactionalBatcher.CollectedTopology.Flush()
+	actualTopology := mockTransactionalBatcher.CollectedTopology.Flush()
 	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
 
-	assert.Equal(t, expectedTopology, transactionbatcher.TransactionCheckInstanceBatchStates(
+	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
 		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
 			"check-id": {
 				Transaction: &transactionbatcher.BatchTransaction{
@@ -282,6 +296,7 @@ func testDeleteTopologyElement(t *testing.T) {
 					Relations:     []topology.Relation{},
 					DeleteIDs:     []string{topoElementId},
 				},
+				Health: map[string]health.Health{},
 			},
-		}))
+		}), actualTopology)
 }
