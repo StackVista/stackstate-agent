@@ -49,7 +49,7 @@ services:
           memory: 1G
 
   receiver:
-    image: "quay.io/stackstate/stackstate-receiver-stable:4.6.1"
+    image: "quay.io/stackstate/stackstate-receiver:${STACKSTATE_BRANCH}"
     ports:
       - 7077:7077
       - 1618:1618
@@ -57,16 +57,17 @@ services:
       - kafka
     environment:
       KAFKA_BROKERS: kafka:9092
-    restart: always
     deploy:
       placement:
         constraints: [ node.role == manager ]
+      restart_policy:
+        condition: on-failure
       resources:
         limits:
           memory: 1G
 
   topic-api:
-    image: "quay.io/stackstate/stackstate-topic-api:4.6.1"
+    image: "quay.io/stackstate/stackstate-topic-api:${STACKSTATE_BRANCH}"
     ports:
       - 7070:7070
     depends_on:
@@ -74,10 +75,11 @@ services:
     environment:
       KAFKA_BROKERS: kafka:9092
       ZOOKEEPER_QUORUM: kafka
-    restart: always
     deploy:
       placement:
         constraints: [ node.role == manager ]
+      restart_policy:
+        condition: on-failure
       resources:
         limits:
           memory: 1G
