@@ -176,9 +176,8 @@ func (rc *retryableHTTPClient) makeRequest(method, path string, body []byte) (*r
 	var req *retryablehttp.Request
 	var err error
 	if body != nil {
-		gzipped, err := rc.ContentEncoding.encode(body)
-		if err != nil {
-			log.Warnf("http client was not able to send payload as %s, reverting to uncompressed payload: %s",
+		if gzipped, encodingError := rc.ContentEncoding.encode(body); encodingError != nil {
+			_ = log.Warnf("http client was not able to send payload as %s, reverting to uncompressed payload: %s",
 				rc.ContentEncoding.name(), err)
 			req, err = retryablehttp.NewRequest(method, url, bytes.NewBuffer(body))
 		} else {
