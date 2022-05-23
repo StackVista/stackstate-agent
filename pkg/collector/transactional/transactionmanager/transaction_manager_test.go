@@ -9,7 +9,7 @@ import (
 )
 
 func TestTransactionManager_HappyFlow(t *testing.T) {
-	txManager := newTransactionManager(100, 100*time.Millisecond, 500*time.Millisecond,
+	txManager := newTransactionManager(100, 250*time.Millisecond, 500*time.Millisecond,
 		500*time.Millisecond).(*transactionManager)
 
 	// assert that we're starting on a clean slate
