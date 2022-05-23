@@ -57,6 +57,7 @@ services:
       - kafka
     environment:
       KAFKA_BROKERS: kafka:9092
+    restart: always
     deploy:
       placement:
         constraints: [ node.role == manager ]
@@ -73,6 +74,7 @@ services:
     environment:
       KAFKA_BROKERS: kafka:9092
       ZOOKEEPER_QUORUM: kafka
+    restart: always
     deploy:
       placement:
         constraints: [ node.role == manager ]
