@@ -5,6 +5,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"sync"
 )
 
 // CheckReloader is a interface wrapper around the Collector which controls all checks.
@@ -38,6 +39,7 @@ type checkHandler struct {
 	transactionChannel        chan SubmitStartTransaction
 	currentTransactionChannel chan interface{}
 	currentTransaction        string
+	mux                       sync.RWMutex
 }
 
 // Reload uses the Check Reloader (Collector) to reload the check: pkg/collector/collector.go:126
@@ -73,15 +75,16 @@ func (ch *checkHandler) Start() {
 			case transaction := <-ch.transactionChannel:
 				// set the current transaction
 				log.Infof("starting transaction for check %s: %s", transaction.CheckID, transaction.TransactionID)
+				ch.mux.Lock()
 				ch.currentTransaction = transaction.TransactionID
-
+				ch.mux.Unlock()
 				// try closing the currentTransactionChannel to ensure we never accidentally leak a channel before
 				// register a new one
 				safeCloseTransactionChannel(ch.currentTransactionChannel)
 				ch.currentTransactionChannel = make(chan interface{})
 
 				// create a new transaction in the transaction manager and wait for responses
-				transactionmanager.GetTransactionManager().StartTransaction(ch.ID(), ch.currentTransaction, ch.currentTransactionChannel)
+				transactionmanager.GetTransactionManager().StartTransaction(ch.ID(), ch.GetCurrentTransaction(), ch.currentTransactionChannel)
 
 				// this is a blocking function. Will continue when a transaction succeeds, fails or times out making it
 				// ready to handle the next transaction in the ch.transactionChannel.
@@ -104,6 +107,14 @@ func (ch *checkHandler) Start() {
 // Stop stops the check handler txReceiverHandler
 func (ch *checkHandler) Stop() {
 	ch.shutdownChannel <- true
+}
+
+// GetCurrentTransaction returns ch.currentTransaction with a mutex read lock
+func (ch *checkHandler) GetCurrentTransaction() string {
+	ch.mux.RLock()
+	currentTransaction := ch.currentTransaction
+	ch.mux.RUnlock()
+	return currentTransaction
 }
 
 // handleCurrentTransaction handles the current transaction

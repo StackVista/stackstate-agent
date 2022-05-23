@@ -48,7 +48,7 @@ func (ch *checkHandler) SubmitStartTransaction() string {
 // SubmitStopTransaction submits a complete to the Transactional Batcher, to send the final payload of the transaction
 // and mark the current transaction as complete.
 func (ch *checkHandler) SubmitStopTransaction() {
-	transactionbatcher.GetTransactionalBatcher().SubmitCompleteTransaction(ch.ID(), ch.currentTransaction)
+	transactionbatcher.GetTransactionalBatcher().SubmitCompleteTransaction(ch.ID(), ch.GetCurrentTransaction())
 }
 
 // GetCheckReloader returns the configured CheckReloader.
@@ -58,48 +58,48 @@ func (ch *checkHandler) GetCheckReloader() CheckReloader {
 
 // SubmitComponent submits a component to the Transactional Batcher to be batched.
 func (ch *checkHandler) SubmitComponent(instance topology.Instance, component topology.Component) {
-	transactionbatcher.GetTransactionalBatcher().SubmitComponent(ch.ID(), ch.currentTransaction, instance, component)
+	transactionbatcher.GetTransactionalBatcher().SubmitComponent(ch.ID(), ch.GetCurrentTransaction(), instance, component)
 }
 
 // SubmitRelation submits a relation to the Transactional Batcher to be batched.
 func (ch *checkHandler) SubmitRelation(instance topology.Instance, relation topology.Relation) {
-	transactionbatcher.GetTransactionalBatcher().SubmitRelation(ch.ID(), ch.currentTransaction, instance, relation)
+	transactionbatcher.GetTransactionalBatcher().SubmitRelation(ch.ID(), ch.GetCurrentTransaction(), instance, relation)
 }
 
 // SubmitStartSnapshot submits a start snapshot to the Transactional Batcher to be batched.
 func (ch *checkHandler) SubmitStartSnapshot(instance topology.Instance) {
-	transactionbatcher.GetTransactionalBatcher().SubmitStartSnapshot(ch.ID(), ch.currentTransaction, instance)
+	transactionbatcher.GetTransactionalBatcher().SubmitStartSnapshot(ch.ID(), ch.GetCurrentTransaction(), instance)
 }
 
 // SubmitStopSnapshot submits a stop snapshot to the Transactional Batcher to be batched.
 func (ch *checkHandler) SubmitStopSnapshot(instance topology.Instance) {
-	transactionbatcher.GetTransactionalBatcher().SubmitStopSnapshot(ch.ID(), ch.currentTransaction, instance)
+	transactionbatcher.GetTransactionalBatcher().SubmitStopSnapshot(ch.ID(), ch.GetCurrentTransaction(), instance)
 }
 
 // SubmitDelete submits a topology element delete to the Transactional Batcher to be batched.
 func (ch *checkHandler) SubmitDelete(instance topology.Instance, topologyElementID string) {
-	transactionbatcher.GetTransactionalBatcher().SubmitDelete(ch.ID(), ch.currentTransaction, instance, topologyElementID)
+	transactionbatcher.GetTransactionalBatcher().SubmitDelete(ch.ID(), ch.GetCurrentTransaction(), instance, topologyElementID)
 }
 
 // SubmitHealthCheckData submits health check data to the Transactional Batcher to be batched.
 func (ch *checkHandler) SubmitHealthCheckData(stream health.Stream, data health.CheckData) {
-	transactionbatcher.GetTransactionalBatcher().SubmitHealthCheckData(ch.ID(), ch.currentTransaction, stream, data)
+	transactionbatcher.GetTransactionalBatcher().SubmitHealthCheckData(ch.ID(), ch.GetCurrentTransaction(), stream, data)
 }
 
 // SubmitHealthStartSnapshot submits a health start snapshot to the Transactional Batcher to be batched.
 func (ch *checkHandler) SubmitHealthStartSnapshot(stream health.Stream, intervalSeconds int, expirySeconds int) {
-	transactionbatcher.GetTransactionalBatcher().SubmitHealthStartSnapshot(ch.ID(), ch.currentTransaction, stream,
+	transactionbatcher.GetTransactionalBatcher().SubmitHealthStartSnapshot(ch.ID(), ch.GetCurrentTransaction(), stream,
 		intervalSeconds, expirySeconds)
 }
 
 // SubmitHealthStopSnapshot submits a health stop snapshot to the Transactional Batcher to be batched.
 func (ch *checkHandler) SubmitHealthStopSnapshot(stream health.Stream) {
-	transactionbatcher.GetTransactionalBatcher().SubmitHealthStopSnapshot(ch.ID(), ch.currentTransaction, stream)
+	transactionbatcher.GetTransactionalBatcher().SubmitHealthStopSnapshot(ch.ID(), ch.GetCurrentTransaction(), stream)
 }
 
 // SubmitRawMetricsData submits a raw metric value to the Transactional Batcher to be batched.
 func (ch *checkHandler) SubmitRawMetricsData(data telemetry.RawMetrics) {
-	transactionbatcher.GetTransactionalBatcher().SubmitRawMetricsData(ch.ID(), ch.currentTransaction, data)
+	transactionbatcher.GetTransactionalBatcher().SubmitRawMetricsData(ch.ID(), ch.GetCurrentTransaction(), data)
 }
 
 // SubmitComplete submits a complete to the Transactional Batcher.

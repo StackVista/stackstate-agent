@@ -28,9 +28,10 @@ func GetTransactionManager() TransactionManager {
 
 // NewMockTransactionManager returns a handle on the global transactionbatcher Instance
 func NewMockTransactionManager() *MockTransactionManager {
-	tm := newTestTransactionManager()
-	tmInstance = tm
-	return tm
+	tmInit.Do(func() {
+		tmInstance = newTestTransactionManager()
+	})
+	return tmInstance.(*MockTransactionManager)
 }
 
 // newTransactionManager returns an instance of a TransactionManager
