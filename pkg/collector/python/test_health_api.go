@@ -5,8 +5,12 @@ package python
 
 import (
 	"encoding/json"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -33,7 +37,11 @@ var expectedCheckData = health.CheckData{
 }
 
 func testHealthCheckData(t *testing.T) {
+	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	checkmanager.GetCheckManager().RegisterCheckHandler(&check.STSTestCheck{Name: "check-id"}, integration.Data{},
+		integration.Data{})
 	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
+	transactionmanager.NewMockTransactionManager()
 
 	c := &health.Payload{
 		Stream: health.Stream{
@@ -77,7 +85,11 @@ func testHealthCheckData(t *testing.T) {
 }
 
 func testHealthStartSnapshot(t *testing.T) {
+	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	checkmanager.GetCheckManager().RegisterCheckHandler(&check.STSTestCheck{Name: "check-id"}, integration.Data{},
+		integration.Data{})
 	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
+	transactionmanager.NewMockTransactionManager()
 
 	checkId := C.CString("check-id")
 	stream := C.health_stream_t{}
@@ -103,7 +115,11 @@ func testHealthStartSnapshot(t *testing.T) {
 }
 
 func testHealthStopSnapshot(t *testing.T) {
+	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	checkmanager.GetCheckManager().RegisterCheckHandler(&check.STSTestCheck{Name: "check-id"}, integration.Data{},
+		integration.Data{})
 	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
+	transactionmanager.NewMockTransactionManager()
 
 	checkId := C.CString("check-id")
 	stream := C.health_stream_t{}
@@ -129,7 +145,11 @@ func testHealthStopSnapshot(t *testing.T) {
 }
 
 func testNoSubStream(t *testing.T) {
+	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	checkmanager.GetCheckManager().RegisterCheckHandler(&check.STSTestCheck{Name: "check-id"}, integration.Data{},
+		integration.Data{})
 	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
+	transactionmanager.NewMockTransactionManager()
 
 	checkId := C.CString("check-id")
 	stream := C.health_stream_t{}

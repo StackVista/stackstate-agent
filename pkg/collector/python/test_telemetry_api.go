@@ -6,8 +6,12 @@ package python
 import (
 	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/stretchr/testify/assert"
@@ -152,7 +156,11 @@ var expectedRawMetricsData = telemetry.RawMetrics{
 }
 
 func testRawMetricsData(t *testing.T) {
+	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	checkmanager.GetCheckManager().RegisterCheckHandler(&check.STSTestCheck{Name: "check-id"}, integration.Data{},
+		integration.Data{})
 	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
+	transactionmanager.NewMockTransactionManager()
 
 	checkId := C.CString("check-id")
 	name := C.CString(expectedRawMetricsData.Name)
