@@ -7,19 +7,18 @@ package app
 
 import (
 	"context"
+	_ "expvar" // Blank import used because this isn't directly used in this file
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionforwarder"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
+	"net/http"
+	_ "net/http/pprof" // Blank import used because this isn't directly used in this file
 	"runtime"
 	"syscall"
 	"time"
-
-	_ "expvar" // Blank import used because this isn't directly used in this file
-	"net/http"
-	_ "net/http/pprof" // Blank import used because this isn't directly used in this file
 
 	"os"
 	"os/signal"
@@ -277,12 +276,6 @@ func StartAgent() error {
 
 	// [sts] init the transactionbatcher for topology production
 	batcher.InitBatcher(s, hostname, "agent", config.GetMaxCapacity())
-	// [sts] create the global transactional components
-	transactionforwarder.InitTransactionalForwarder()
-	transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
-	checkmanager.InitCheckManager(common.Coll)
-	txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
-	transactionmanager.InitTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
 
 	// start dogstatsd
 	if config.Datadog.GetBool("use_dogstatsd") {
@@ -318,6 +311,13 @@ func StartAgent() error {
 	common.SetupAutoConfig(config.Datadog.GetString("confd_path"))
 	// start the autoconfig, this will immediately run any configured check
 	common.StartAutoConfig()
+
+	// [STS] create the global transactional components
+	transactionforwarder.InitTransactionalForwarder()
+	transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
+	checkmanager.InitCheckManager(common.Coll)
+	txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
+	transactionmanager.InitTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
 
 	// setup the metadata collector
 	common.MetadataScheduler = metadata.NewScheduler(s)
