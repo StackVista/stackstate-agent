@@ -63,9 +63,23 @@ func (mtb MockTransactionalBatcher) SubmitRawMetricsData(checkID check.ID, trans
 	mtb.CollectedTopology.AddRawMetricsData(checkID, transactionID, rawMetric)
 }
 
-// SubmitCompleteTransaction is a noop for the mock batcher
+// SubmitStartTransaction starts a transaction for the given check ID
+func (mtb MockTransactionalBatcher) SubmitStartTransaction(checkID check.ID, transactionID string) {
+	mtb.CollectedTopology.StartTransaction(checkID, transactionID)
+}
+
+// SubmitCompleteTransaction marks a transaction as complete
 func (mtb MockTransactionalBatcher) SubmitCompleteTransaction(checkID check.ID, transactionID string) {
-	mtb.CollectedTopology.MarkTransactionComplete(checkID, transactionID)
+	flushedStates := mtb.CollectedTopology.MarkTransactionComplete(checkID, transactionID)
+
+	// for the mock let's set this as the state again so we can assert it in the tests
+	mtb.CollectedTopology.states = flushedStates
+}
+
+// SubmitCompleteTransaction is a noop for the mock batcher
+func (mtb MockTransactionalBatcher) GetCheckState(checkID check.ID) (TransactionCheckInstanceBatchState, bool) {
+	state, ok := mtb.CollectedTopology.states[checkID]
+	return state, ok
 }
 
 // SubmitComplete signals completion of a check. May trigger a flush only if the check produced data

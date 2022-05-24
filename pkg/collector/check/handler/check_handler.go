@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"sync"
@@ -85,6 +86,9 @@ func (ch *checkHandler) Start() {
 
 				// create a new transaction in the transaction manager and wait for responses
 				transactionmanager.GetTransactionManager().StartTransaction(ch.ID(), ch.GetCurrentTransaction(), ch.currentTransactionChannel)
+
+				// create a new batch transaction in the transaction batcher
+				transactionbatcher.GetTransactionalBatcher().SubmitStartTransaction(ch.ID(), ch.GetCurrentTransaction())
 
 				// this is a blocking function. Will continue when a transaction succeeds, fails or times out making it
 				// ready to handle the next transaction in the ch.transactionChannel.
