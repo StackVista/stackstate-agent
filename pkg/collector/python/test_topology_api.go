@@ -189,8 +189,8 @@ func testStartSnapshotCheck(t *testing.T) {
 	checkmanager.InitCheckManager(handler.NoCheckReloader{})
 	checkmanager.GetCheckManager().RegisterCheckHandler(&check.STSTestCheck{Name: "check-id"}, integration.Data{},
 		integration.Data{})
-	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 	transactionmanager.NewMockTransactionManager()
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 
 	checkId := C.CString("check-id")
 	instanceKey := C.instance_key_t{}
