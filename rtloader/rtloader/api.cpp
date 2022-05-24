@@ -561,3 +561,16 @@ void set_submit_raw_metrics_data_cb(rtloader_t *rtloader, cb_submit_raw_metrics_
 {
     AS_TYPE(RtLoader, rtloader)->setSubmitRawMetricsDataCb(cb);
 }
+
+
+/*
+ * [sts] transactional state API
+ */
+void set_submit_start_transaction_cb(rtloader_t *rtloader, cb_submit_start_transaction_t cb)
+{
+    AS_TYPE(RtLoader, rtloader)->setSubmitStartTransactionCb(cb);
+}
+void set_submit_stop_transaction_cb(rtloader_t *rtloader, cb_submit_stop_transaction_t cb)
+{
+    AS_TYPE(RtLoader, rtloader)->setSubmitStopTransactionCb(cb);
+}

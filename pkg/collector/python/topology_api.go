@@ -75,22 +75,6 @@ func SubmitRelation(id *C.char, instanceKey *C.instance_key_t, _ignoredSourceID 
 	}
 }
 
-// SubmitStartTransaction starts a transaction
-//export SubmitStartTransaction
-func SubmitStartTransaction(id *C.char) {
-	goCheckID := C.GoString(id)
-
-	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitStartTransaction()
-}
-
-// SubmitStopTransaction stops a transaction
-//export SubmitStopTransaction
-func SubmitStopTransaction(id *C.char) {
-	goCheckID := C.GoString(id)
-
-	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitStopTransaction()
-}
-
 // SubmitStartSnapshot starts a snapshot
 //export SubmitStartSnapshot
 func SubmitStartSnapshot(id *C.char, instanceKey *C.instance_key_t) {

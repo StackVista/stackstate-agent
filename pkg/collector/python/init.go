@@ -207,6 +207,18 @@ void initHealthModule(rtloader_t *rtloader) {
 	set_submit_health_stop_snapshot_cb(rtloader, SubmitHealthStopSnapshot);
 }
 
+//
+// [sts] transactional state module
+//
+
+void SubmitStartTransaction(char *);
+void SubmitStopTransaction(char *);
+
+void initTransactionalStateModule(rtloader_t *rtloader) {
+	set_submit_start_transaction_cb(rtloader, SubmitStartTransaction);
+	set_submit_stop_transaction_cb(rtloader, SubmitStopTransaction);
+}
+
 */
 import "C"
 
@@ -392,6 +404,7 @@ func Initialize(paths ...string) error {
 	C.initTopologyModule(rtloader)
 	C.initTelemetryModule(rtloader)
 	C.initHealthModule(rtloader)
+	C.initTransactionalStateModule(rtloader)
 	// [sts]
 
 	// Init RtLoader machinery

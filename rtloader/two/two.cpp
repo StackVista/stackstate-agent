@@ -959,6 +959,16 @@ void Two::setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t cb)
     _set_submit_raw_metrics_data_cb(cb);
 }
 
+// [sts] transactional state
+void Two::setSubmitStartTransactionCb(cb_submit_start_transaction_t cb)
+{
+    _set_submit_start_transaction_cb(cb);
+}
+void Two::setSubmitStopTransactionCb(cb_submit_stop_transaction_t cb)
+{
+    _set_submit_stop_transaction_cb(cb);
+}
+
 // Python Helpers
 
 // get_integration_list return a list of every datadog's wheels installed.
