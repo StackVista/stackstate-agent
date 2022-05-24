@@ -92,10 +92,9 @@ func (mtb *MockTransactionalBatcher) SubmitStartTransaction(checkID check.ID, tr
 
 // SubmitCompleteTransaction marks a transaction as complete
 func (mtb *MockTransactionalBatcher) SubmitCompleteTransaction(checkID check.ID, transactionID string) {
-	flushedStates := mtb.CollectedTopology.MarkTransactionComplete(checkID, transactionID)
-
-	// for the mock let's set this as the state again so we can assert it in the tests
 	mtb.mux.Lock()
+	// for the mock let's set this as the state again so we can assert it in the tests
+	flushedStates := mtb.CollectedTopology.MarkTransactionComplete(checkID, transactionID)
 	mtb.CollectedTopology.states = flushedStates
 	mtb.mux.Unlock()
 }
