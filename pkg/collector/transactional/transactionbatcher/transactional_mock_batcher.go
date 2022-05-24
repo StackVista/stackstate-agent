@@ -14,7 +14,7 @@ type MockTransactionalBatcher struct {
 	mux               sync.Mutex
 }
 
-func createMockTransactionalBatcher() *MockTransactionalBatcher {
+func newMockTransactionalBatcher() *MockTransactionalBatcher {
 	return &MockTransactionalBatcher{
 		CollectedTopology: NewTransactionalBatchBuilder(1000),
 	}
