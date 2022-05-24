@@ -2,6 +2,10 @@ package testtransaction
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"io/ioutil"
 	"log"
 	"os"
@@ -28,15 +32,26 @@ static void initTransactionTests(rtloader_t *rtloader) {
 import "C"
 
 var (
-	rtloader *C.rtloader_t
-	checkID  string
+	rtloader                      *C.rtloader_t
+	checkID                       string
+	transactionID                 string
+	transactionInstanceBatchState transactionbatcher.TransactionCheckInstanceBatchState
+	transactionStarted            bool
+	transactionCompleted          bool
 )
 
 func resetOuputValues() {
 	checkID = ""
+	transactionID = ""
+	transactionInstanceBatchState = transactionbatcher.TransactionCheckInstanceBatchState{
+		Transaction: &transactionbatcher.BatchTransaction{},
+		Topology:    &topology.Topology{},
+		Metrics:     &telemetry.Metrics{},
+		Health:      map[string]health.Health{},
+	}
+	transactionStarted = false
+	transactionCompleted = false
 }
-
-// TODO: Melcom - Write the _test
 
 func setUp() error {
 	// Initialize memory tracking
@@ -98,11 +113,15 @@ except Exception as e:
 //export submitStartTransaction
 func submitStartTransaction(id *C.char) {
 	checkID = C.GoString(id)
-	// TODO: Melcom
+
+	transactionID = checkID + "-transaction-id"
+	transactionStarted = true
 }
 
 //export submitStopTransaction
 func submitStopTransaction(id *C.char) {
 	checkID = C.GoString(id)
-	// TODO: Melcom
+
+	transactionID = ""
+	transactionCompleted = true
 }

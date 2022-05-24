@@ -24,13 +24,12 @@ import "C"
 
 // NOTE
 // Beware that any changes made here MUST be reflected also in the test implementation
-// rtloader/test/transactional/transactional.go
+// rtloader/test/transaction/transaction.go
 
 // SubmitStartTransaction starts a transaction
 //export SubmitStartTransaction
 func SubmitStartTransaction(id *C.char) {
 	goCheckID := C.GoString(id)
-
 	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitStartTransaction()
 }
 
@@ -38,6 +37,5 @@ func SubmitStartTransaction(id *C.char) {
 //export SubmitStopTransaction
 func SubmitStopTransaction(id *C.char) {
 	goCheckID := C.GoString(id)
-
 	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitStopTransaction()
 }
