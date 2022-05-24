@@ -35,7 +35,7 @@ type CheckAPI interface {
 }
 
 // SubmitStartTransaction submits a start transaction for the check handler. This blocks any future transactions until
-// this one completes, fails or is timed out.
+// this one completes, fails or is timed out. TODO: rename to StartTransaction
 func (ch *checkHandler) SubmitStartTransaction() string {
 	transactionID := uuid.New().String()
 	ch.transactionChannel <- SubmitStartTransaction{
@@ -46,7 +46,7 @@ func (ch *checkHandler) SubmitStartTransaction() string {
 }
 
 // SubmitStopTransaction submits a complete to the Transactional Batcher, to send the final payload of the transaction
-// and mark the current transaction as complete.
+// and mark the current transaction as complete. TODO: rename to StopTransaction
 func (ch *checkHandler) SubmitStopTransaction() {
 	transactionbatcher.GetTransactionalBatcher().SubmitCompleteTransaction(ch.ID(), ch.GetCurrentTransaction())
 }
