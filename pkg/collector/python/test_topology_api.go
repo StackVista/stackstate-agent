@@ -171,7 +171,6 @@ func testStopTransaction(t *testing.T) {
 	transactionID := transactionManager.GetCurrentTransaction()
 
 	SubmitStopTransaction(checkId)
-	time.Sleep(100 * time.Millisecond) // sleep a bit for everything to complete
 
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
@@ -183,6 +182,7 @@ func testStopTransaction(t *testing.T) {
 		},
 		Health: map[string]health.Health{},
 	}, actualTopology)
+
 }
 
 func testStartSnapshotCheck(t *testing.T) {
