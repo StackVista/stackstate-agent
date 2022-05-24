@@ -20,6 +20,7 @@
 #include "topology.h"
 #include "telemetry.h"
 #include "health.h"
+#include "transaction.h"
 
 #include <algorithm>
 #include <sstream>
@@ -87,6 +88,7 @@ bool Three::init()
     PyImport_AppendInittab(TOPOLOGY_MODULE_NAME, PyInit_topology);
     PyImport_AppendInittab(TELEMETRY_MODULE_NAME, PyInit_telemetry);
     PyImport_AppendInittab(HEALTH_MODULE_NAME, PyInit_health);
+    PyImport_AppendInittab(TRANSACTION_MODULE_NAME, PyInit_transaction);
 
     Py_Initialize();
 
@@ -962,7 +964,7 @@ void Three::setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t cb)
     _set_submit_raw_metrics_data_cb(cb);
 }
 
-// [sts] transactional state
+// [sts] transaction state
 void Three::setSubmitStartTransactionCb(cb_submit_start_transaction_t cb)
 {
     _set_submit_start_transaction_cb(cb);

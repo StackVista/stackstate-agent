@@ -21,6 +21,7 @@
 #include "topology.h"
 #include "telemetry.h"
 #include "health.h"
+#include "transaction.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -120,6 +121,7 @@ bool Two::init()
     Py2_init_topology();
     Py2_init_telemetry();
     Py2_init_health();
+    Py2_init_transaction();
 
     // import the base class
     _baseClass = _importFrom("datadog_checks.checks", "AgentCheck");
@@ -959,7 +961,7 @@ void Two::setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t cb)
     _set_submit_raw_metrics_data_cb(cb);
 }
 
-// [sts] transactional state
+// [sts] transaction state
 void Two::setSubmitStartTransactionCb(cb_submit_start_transaction_t cb)
 {
     _set_submit_start_transaction_cb(cb);

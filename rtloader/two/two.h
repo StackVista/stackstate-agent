@@ -139,7 +139,7 @@ public:
     void setSubmitHealthStartSnapshotCb(cb_submit_health_start_snapshot_t);
     void setSubmitHealthStopSnapshotCb(cb_submit_health_stop_snapshot_t);
 
-    // transactional state
+    // transaction state
     void setSubmitStartTransactionCb(cb_submit_start_transaction_t);
     void setSubmitStopTransactionCb(cb_submit_stop_transaction_t);
 

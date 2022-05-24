@@ -47,6 +47,7 @@ add_library(datadog-agent-three SHARED
     ../common/builtins/kubeutil.c
     ../common/builtins/containers.c
     ../common/builtins/topology.c
+    ../common/builtins/transaction.c
     ../common/builtins/telemetry.c
     ../common/builtins/health.c
 )

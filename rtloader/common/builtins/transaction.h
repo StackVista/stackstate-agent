@@ -3,13 +3,13 @@
 // This product includes software developed at StackState (https://www.stackstate.com).
 // Copyright 2021 StackState
 
-#ifndef DATADOG_AGENT_RTLOADER_THREE_TOPOLOGY_H
-#define DATADOG_AGENT_RTLOADER_THREE_TOPOLOGY_H
+#ifndef DATADOG_AGENT_RTLOADER_THREE_TRANSACTION_H
+#define DATADOG_AGENT_RTLOADER_THREE_TRANSACTION_H
 
-/*! \file transactional.h
+/*! \file transaction.h
     \brief RtLoader transactional state builtin header file.
 
-    The prototypes here defined provide functions to initialize the python topology
+    The prototypes here defined provide functions to initialize the python transaction
     builtin module, and set its relevant callbacks for the rtloader caller.
 */
 /*! \def TRANSACTION_MODULE_NAME
@@ -19,15 +19,15 @@
     \brief Initializes the transaction state builtin python module.
 
     The python python builtin is created and registered here as per the module_def
-    PyMethodDef definition in `topology.c` with the corresponding C-implemented python
+    PyMethodDef definition in `transaction.c` with the corresponding C-implemented python
     methods. A fresh reference to the module is created here. This function is python3
     only.
 */
 /*! \fn void Py2_init_transaction()
     \brief Initializes the transaction state builtin python module.
 
-    The topology python builtin is created and registered here as per the module_def
-    PyMethodDef definition in `topology.c` with the corresponding C-implemented python
+    The transactional python builtin is created and registered here as per the module_def
+    PyMethodDef definition in `transaction.c` with the corresponding C-implemented python
     methods. A fresh reference to the module is created here. This function is python2
     only.
 */

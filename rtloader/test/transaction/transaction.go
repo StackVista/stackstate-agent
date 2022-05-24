@@ -1,4 +1,4 @@
-package testtransactional
+package testtransaction
 
 import (
 	"fmt"
@@ -69,7 +69,7 @@ func run(call string) (string, error) {
 
 	code := (*C.char)(helpers.TrackedCString(fmt.Sprintf(`
 try:
-	import transactional
+	import transaction
 	%s
 except Exception as e:
 	with open(r'%s', 'w') as f:
