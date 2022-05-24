@@ -76,7 +76,7 @@ func (mtb MockTransactionalBatcher) SubmitCompleteTransaction(checkID check.ID, 
 	mtb.CollectedTopology.states = flushedStates
 }
 
-// SubmitCompleteTransaction is a noop for the mock batcher
+// GetCheckState returns the TransactionCheckInstanceBatchState for a given check ID
 func (mtb MockTransactionalBatcher) GetCheckState(checkID check.ID) (TransactionCheckInstanceBatchState, bool) {
 	state, ok := mtb.CollectedTopology.states[checkID]
 	return state, ok
