@@ -232,7 +232,7 @@ func (txm *transactionManager) completeTransaction(transactionID string) error {
 	// ensure all actions have been acknowledged
 	for _, action := range transaction.Actions {
 		if !action.Acknowledged {
-			reason := fmt.Sprintf("Not all actions have been acknowledged, rolling back checkmanager: %s", transaction.TransactionID)
+			reason := fmt.Sprintf("Not all actions have been acknowledged, rolling back transaction: %s", transaction.TransactionID)
 			txm.mux.Unlock()
 			return RollbackTransaction{TransactionID: transactionID, Reason: reason}
 		}

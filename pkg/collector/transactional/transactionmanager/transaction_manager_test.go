@@ -42,7 +42,7 @@ func TestTransactionManager_HappyFlow(t *testing.T) {
 
 	select {
 	case completeMsg := <-txNotifyChannel:
-		assert.Equal(t, CompleteTransaction{}, completeMsg)
+		assert.Equal(t, CompleteTransaction{TransactionID: txID}, completeMsg)
 	case <-time.After(1 * time.Second):
 		t.Fail()
 	}
@@ -63,8 +63,9 @@ func TestTransactionManager_TransactionRollback(t *testing.T) {
 	txNotifyChannel := make(chan interface{})
 
 	for _, tc := range []struct {
-		testCase  string
-		operation func(txID string, t *testing.T, manager *transactionManager) map[string]*Action
+		testCase       string
+		operation      func(txID string, t *testing.T, manager *transactionManager) map[string]*Action
+		rollbackReason string
 	}{
 		{
 			testCase: "Transaction rollback triggered by external party (check handler)",
@@ -72,6 +73,7 @@ func TestTransactionManager_TransactionRollback(t *testing.T) {
 				txManager.RollbackTransaction(txID, "check failed")
 				return
 			},
+			rollbackReason: "check failed",
 		},
 		{
 			testCase: "Transaction rollback triggered by an un-acknowledged action",
@@ -82,6 +84,7 @@ func TestTransactionManager_TransactionRollback(t *testing.T) {
 				txManager.CompleteTransaction(txID)
 				return actions
 			},
+			rollbackReason: "Not all actions have been acknowledged, rolling back transaction",
 		},
 		{
 			testCase: "Transaction rollback triggered by rejected action",
@@ -96,6 +99,7 @@ func TestTransactionManager_TransactionRollback(t *testing.T) {
 
 				return actions
 			},
+			rollbackReason: "rejected action",
 		},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
@@ -109,7 +113,9 @@ func TestTransactionManager_TransactionRollback(t *testing.T) {
 			assertTransaction(t, txManager, txID, Failed, actions)
 
 			completeMsg := <-txNotifyChannel
-			assert.Equal(t, RollbackTransaction{}, completeMsg)
+			rollbackTransaction := completeMsg.(RollbackTransaction)
+			assert.Equal(t, txID, rollbackTransaction.TransactionID)
+			assert.Contains(t, rollbackTransaction.Reason, tc.rollbackReason)
 
 		})
 	}
@@ -173,7 +179,7 @@ func TestTransactionManager_TransactionTimeout(t *testing.T) {
 
 			// wait for the eviction notification
 			notify := <-txNotifyChannel
-			assert.Equal(t, EvictedTransaction{}, notify)
+			assert.Equal(t, EvictedTransaction{TransactionID: txID}, notify)
 		})
 	}
 
@@ -227,7 +233,7 @@ func TestTransactionManager_ErrorHandling(t *testing.T) {
 				assertTransaction(t, txManager, txID, InProgress, actions)
 
 				completeMsg := <-txNotifyChannel
-				assert.Equal(t, EvictedTransaction{}, completeMsg)
+				assert.Equal(t, EvictedTransaction{TransactionID: txID}, completeMsg)
 
 			},
 		},
