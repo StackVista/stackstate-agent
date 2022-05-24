@@ -1204,6 +1204,7 @@ molecule_swarm_test:
   rules:
     - *swarm_ignore_rule
     - *v2_merge_train_on_success
+    - allow_failure: true
   dependencies:
     - molecule_swarm_create
   variables:
