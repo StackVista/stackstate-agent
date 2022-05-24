@@ -53,6 +53,8 @@ variables: &commonvariables
   # IE VMS is a massive jobs and only has to run on either v2 or the v3 pipeline. With this variable you can control on which of the pipelines
   # do jobs like these run on
   PRIMARY_MAJOR_VERSION: '2'
+  HELM_CHART_VERSION: 'latest'
+  PROCESS_AGENT_TEST_REPO: stackstate-process-agent-test
 
 
 .agent2_variables: &agent2_variables
@@ -154,10 +156,23 @@ cluster_agent:
     - <<: *include_on_cluster_agent
     - when: never
 
-build_runners:
+build_beest_runners:
   stage: triggers
   trigger:
     include: .gitlab-ci-builders.yml
+    strategy: depend
+  rules:
+    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
+build_agent_runners:
+  stage: triggers
+  variables:
+    <<: *commonvariables
+  trigger:
+    include: .gitlab-ci-build-runners.yml
     strategy: depend
   rules:
     - if: $CI_MERGE_REQUEST_IID

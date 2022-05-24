@@ -4,6 +4,14 @@
 
 **Features**
 - Added topology element deletion [STAC-14816](https://stackstate.atlassian.net/browse/STAC-14816)
+- Added Dynatrace support for synthetic checks [STAC-14511](https://stackstate.atlassian.net/browse/STAC-14511)
+
+**Improvements**
+- Added collection level setting info [STAC-14671](https://stackstate.atlassian.net/browse/STAC-14671)
+- Process agent version 4.0.4
+
+**Bugfix**
+- If Kubernetes topology Secrets collector fails, it will log (INFO level) only once [STAC-14834](https://stackstate.atlassian.net/browse/STAC-14834)
 
 ## 2.16.1 (2022-03-21)
 
