@@ -9,9 +9,9 @@ services:
     environment:
       ALLOW_ANONYMOUS_LOGIN: "yes"
     healthcheck:
-      test: [ "CMD-SHELL", "echo ruok | nc -w 2 zookeeper 2181" ]
+      test: [ "CMD-SHELL", "echo ruok | nc -w 2 127.0.0.1 2181" ]
       interval: 5s
-      timeout: 10s
+      timeout: 30s
       retries: 3
     deploy:
       placement:
@@ -40,10 +40,11 @@ services:
       interval: 10s
       timeout: 45s
       retries: 10
-    restart: always
     deploy:
       placement:
         constraints: [ node.role == manager ]
+      restart_policy:
+        condition: on-failure
       resources:
         limits:
           memory: 1G
@@ -61,7 +62,8 @@ services:
       placement:
         constraints: [ node.role == manager ]
       restart_policy:
-        condition: on-failure
+        condition: any
+        window: 300s
       resources:
         limits:
           memory: 1G
