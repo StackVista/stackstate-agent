@@ -48,10 +48,9 @@ func GetTransactionalBatcher() TransactionalBatcher {
 
 // NewMockTransactionalBatcher initializes the global transactionbatcher with a mock version, intended for testing
 func NewMockTransactionalBatcher() *MockTransactionalBatcher {
-	batcherInit.Do(func() {
-		batcherInstance = createMockTransactionalBatcher()
-	})
-	return batcherInstance.(*MockTransactionalBatcher)
+	batcher := createMockTransactionalBatcher()
+	batcherInstance = batcher
+	return batcher
 }
 
 // transactionalBatcher is a instance of a transactionbatcher for a specific check instance

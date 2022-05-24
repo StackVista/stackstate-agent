@@ -158,8 +158,8 @@ func testStartTransaction(t *testing.T) {
 
 func testStopTransaction(t *testing.T) {
 	checkmanager.InitCheckManager(handler.NoCheckReloader{})
-	checkmanager.GetCheckManager().RegisterCheckHandler(&check.STSTestCheck{Name: "check-id"}, integration.Data{},
-		integration.Data{})
+	testCheck := &check.STSTestCheck{Name: "check-id"}
+	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 	transactionManager := transactionmanager.NewMockTransactionManager()
 	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 
@@ -173,26 +173,24 @@ func testStopTransaction(t *testing.T) {
 	SubmitStopTransaction(checkId)
 	time.Sleep(100 * time.Millisecond) // sleep a bit for everything to complete
 
-	actualTopology := mockTransactionalBatcher.CollectedTopology.Flush()
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 
-	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
-		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
-			"check-id": {
-				Transaction: &transactionbatcher.BatchTransaction{
-					TransactionID:        transactionID,
-					CompletedTransaction: true,
-				},
-				Health: map[string]health.Health{},
-			},
-		}), actualTopology)
+	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchState{
+		Transaction: &transactionbatcher.BatchTransaction{
+			TransactionID:        transactionID,
+			CompletedTransaction: true,
+		},
+		Health: map[string]health.Health{},
+	}, actualTopology)
 }
 
 func testStartSnapshotCheck(t *testing.T) {
 	checkmanager.InitCheckManager(handler.NoCheckReloader{})
 	checkmanager.GetCheckManager().RegisterCheckHandler(&check.STSTestCheck{Name: "check-id"}, integration.Data{},
 		integration.Data{})
-	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 	transactionmanager.NewMockTransactionManager()
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 
 	checkId := C.CString("check-id")
 	instanceKey := C.instance_key_t{}
