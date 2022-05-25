@@ -150,7 +150,9 @@ func testRelationTopology(t *testing.T) {
 }
 
 func testStartTransaction(t *testing.T) {
-	checkId := C.CString("check-id-start-transaction")
+	testCheck := &check.STSTestCheck{Name: "check-id-start-transaction"}
+	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	checkId := C.CString(string(testCheck.ID()))
 
 	SubmitStartTransaction(checkId)
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
@@ -195,27 +197,24 @@ func testStartSnapshotCheck(t *testing.T) {
 	instanceKey.url = C.CString("instance-url")
 	SubmitStartSnapshot(checkId, &instanceKey)
 
-	actualTopology := mockTransactionalBatcher.CollectedTopology.Flush()
-	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 
-	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
-		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
-			testCheck.ID(): {
-				Transaction: &transactionbatcher.BatchTransaction{
-					TransactionID:        "", // no start transaction, so the transaction is empty in this case
-					CompletedTransaction: false,
-				},
-				Topology: &topology.Topology{
-					StartSnapshot: true,
-					StopSnapshot:  false,
-					Instance:      instance,
-					Components:    []topology.Component{},
-					Relations:     []topology.Relation{},
-					DeleteIDs:     []string{},
-				},
-				Health: map[string]health.Health{},
-			},
-		}), actualTopology)
+	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchState{
+		Transaction: &transactionbatcher.BatchTransaction{
+			TransactionID:        "", // no start transaction, so the transaction is empty in this case
+			CompletedTransaction: false,
+		},
+		Topology: &topology.Topology{
+			StartSnapshot: true,
+			StopSnapshot:  false,
+			Instance:      topology.Instance{Type: "instance-type", URL: "instance-url"},
+			Components:    []topology.Component{},
+			Relations:     []topology.Relation{},
+			DeleteIDs:     []string{},
+		},
+		Health: map[string]health.Health{},
+	}, actualTopology)
 
 	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
