@@ -24,34 +24,3 @@ resource "aws_eks_cluster" "cluster" {
 data "aws_eks_cluster_auth" "cluster" {
   name = aws_eks_cluster.cluster.name
 }
-
-locals {
-  kubeconfig = <<KUBECONFIG
-apiVersion: v1
-kind: Config
-preferences: {}
-clusters:
-- cluster:
-    certificate-authority-data: ${aws_eks_cluster.cluster.certificate_authority[0].data}
-    server: ${aws_eks_cluster.cluster.endpoint}
-  name: kubernetes
-contexts:
-- context:
-    cluster: kubernetes
-    namespace: default
-    user: aws
-  name: ${var.environment}
-current-context: ${var.environment}
-users:
-- name: aws
-  user:
-    exec:
-      apiVersion: client.authentication.k8s.io/v1alpha1
-      command: aws
-      args:
-        - "eks"
-        - "get-token"
-        - "--cluster-name"
-        - "${var.k8s_cluster_name}"
-KUBECONFIG
-}

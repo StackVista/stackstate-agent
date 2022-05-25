@@ -3,6 +3,7 @@
 package driver
 
 import (
+	"beest/cmd/step"
 	"context"
 	"errors"
 	"fmt"
@@ -18,7 +19,6 @@ const (
 	DefaultPyTestBinary      = "py.test"
 	DefaultPyTestWatchBinary = "ptw"
 
-	SshIdentityFileFlag  = "--ssh-identity-file"
 	AnsibleInventoryFlag = "--ansible-inventory"
 	HostsFlag            = "--hosts"
 	ConnectionFlag       = "--connection"
@@ -26,19 +26,15 @@ const (
 	ExpressionFlag = "-k"
 )
 
-type PytestContext interface {
-	ConnectionContext
-	TestsPath() string
-	Hostnames() []string
-}
+type PyTestVerifier struct{}
 
-func PyTestRun(ctx PytestContext, watch bool, selection string) error {
-	cmd := buildPyTestCmd(ctx, watch, selection)
+func (pv *PyTestVerifier) Verify(step *step.VerificationStep, watch bool, selection string) error {
+	cmd := buildPyTestCmd(step, watch, selection)
 	log.Printf("Running Pytest cmd: %s", cmd)
 	return runPyTestCmd(context.Background(), cmd)
 }
 
-func buildPyTestCmd(ctx PytestContext, watch bool, selection string) *exec.Cmd {
+func buildPyTestCmd(step *step.VerificationStep, watch bool, selection string) *exec.Cmd {
 	var args []string
 
 	if watch {
@@ -47,14 +43,13 @@ func buildPyTestCmd(ctx PytestContext, watch bool, selection string) *exec.Cmd {
 
 	args = append(args, "-rap")
 
-	args = append(args, fmt.Sprintf("%s=%s", SshIdentityFileFlag, ctx.PrivateKey()))
 	// Ansible module is only available with ansible connection backend
 	args = append(args, fmt.Sprintf("%s=%s", ConnectionFlag, "ansible"))
-	args = append(args, fmt.Sprintf("%s=%s", AnsibleInventoryFlag, ctx.Inventory()))
+	args = append(args, fmt.Sprintf("%s=%s", AnsibleInventoryFlag, step.Inventory()))
 
-	if len(ctx.Hostnames()) > 0 {
+	if len(step.Hostnames()) > 0 {
 		var hosts []string
-		for _, hostName := range ctx.Hostnames() {
+		for _, hostName := range step.Hostnames() {
 			hosts = append(hosts, fmt.Sprintf("ansible://%s", hostName))
 		}
 		args = append(args, fmt.Sprintf("%s=%s", HostsFlag, strings.Join(hosts, ",")))
@@ -71,7 +66,7 @@ func buildPyTestCmd(ctx PytestContext, watch bool, selection string) *exec.Cmd {
 		cmd = exec.Command(DefaultPyTestBinary, args...)
 	}
 
-	cmd.Dir = ctx.TestsPath()
+	cmd.Dir = step.TestsPath()
 
 	return cmd
 }

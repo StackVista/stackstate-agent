@@ -1,50 +1,49 @@
 package driver
 
 import (
+	"beest/cmd/step"
 	"beest/sut"
 	"context"
 	"fmt"
-	"github.com/apenella/go-ansible/pkg/options"
 	"github.com/apenella/go-ansible/pkg/playbook"
 	"log"
 	"strings"
 )
 
-type ConnectionContext interface {
-	WorkingDir() string
-	Inventory() string
-	PrivateKey() string
+type AnsibleDeployer struct{}
+
+func (ad *AnsibleDeployer) Prepare(step *step.PrepareStep) error {
+	pb := fmt.Sprintf("%s/prepare.yml", step.WorkingDir())
+	tags := []string{"prepare"}
+	return play(step.Inventory(), pb, tags)
 }
 
-type AnsibleContext interface {
-	ConnectionContext
-	Playbook() string
-	Tags() []string
-	Variables() map[string]interface{}
+func (ad *AnsibleDeployer) Cleanup(step *step.CleanupStep) error {
+	pb := fmt.Sprintf("%s/cleanup.yml", step.WorkingDir())
+	tags := []string{"cleanup"}
+	return play(step.Inventory(), pb, tags)
 }
 
-func AnsiblePlay(ctx AnsibleContext) {
+func play(inv, pb string, tags []string) error {
 	vars := map[string]interface{}{
 		"bees_path": sut.BeesPath(),
 	}
 
 	runOption := &playbook.AnsiblePlaybookOptions{
-		Inventory: ctx.Inventory(),
+		Inventory: inv,
 		ExtraVars: vars,
-		Tags:      strings.Join(ctx.Tags(), ","),
-	}
-	connectionOptions := &options.AnsibleConnectionOptions{
-		PrivateKey: ctx.PrivateKey(),
+		Tags:      strings.Join(tags, ","),
 	}
 	run := &playbook.AnsiblePlaybookCmd{
-		Playbooks:         []string{ctx.Playbook()},
-		Options:           runOption,
-		ConnectionOptions: connectionOptions,
+		Playbooks: []string{pb},
+		Options:   runOption,
 	}
 	log.Println(fmt.Sprintf("Play Ansible playbook: %s ...", run.String()))
-	var err = run.Run(context.Background())
-	if err != nil {
-		log.Fatalf("Error running playbook: %s", err)
+	if err := run.Run(context.Background()); err != nil {
+		log.Printf("Error running playbook: %s\n", err)
+		return err
 	}
-	log.Println("Ansible playbook finished")
+
+	log.Println("Ansible playbook finished successfully")
+	return nil
 }

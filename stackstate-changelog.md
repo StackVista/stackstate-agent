@@ -1,5 +1,18 @@
 # StackState Agent v2 releases
 
+## 2.17.0 (2022-XX-XX)
+
+**Features**
+- Added topology element deletion [STAC-14816](https://stackstate.atlassian.net/browse/STAC-14816)
+- Added Dynatrace support for synthetic checks [STAC-14511](https://stackstate.atlassian.net/browse/STAC-14511)
+
+**Improvements**
+- Added collection level setting info [STAC-14671](https://stackstate.atlassian.net/browse/STAC-14671)
+- Process agent version 4.0.4
+
+**Bugfix**
+- If Kubernetes topology Secrets collector fails, it will log (INFO level) only once [STAC-14834](https://stackstate.atlassian.net/browse/STAC-14834)
+
 ## 2.16.1 (2022-03-21)
 
 **Bugfix**
@@ -439,15 +452,15 @@
 
   Those configurations can be provided through environment variables as well:
 
-  | Parameter | Default | Description |
-  |-----------|---------|-------------|
-  | `STS_PROCESS_BLACKLIST_PATTERNS` | [see github](https://github.com/StackVista/stackstate-process-agent/blob/master/config/config_nix.go) | A list of regex patterns that will exclude a process if matched |
-  | `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_CPU` | 0 | Number of processes to report that have a high CPU usage |
-  | `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_IO_READ` | 0 | Number of processes to report that have a high IO read usage |
-  | `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_IO_WRITE` | 0 | Number of processes to report that have a high IO write usage |
-  | `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_MEM` | 0 | Number of processes to report that have a high Memory usage |
-  | `STS_PROCESS_BLACKLIST_INCLUSIONS_CPU_THRESHOLD` |  | Threshold that enables the reporting of high CPU usage processes |
-  | `STS_PROCESS_BLACKLIST_INCLUSIONS_MEM_THRESHOLD` |  | Threshold that enables the reporting of high Memory usage processes |
+| Parameter                                        | Default         | Description                                                         |
+|--------------------------------------------------|-----------------|---------------------------------------------------------------------|
+| `STS_PROCESS_BLACKLIST_PATTERNS`                 | [see github](https://github.com/StackVista/stackstate-process-agent/blob/master/config/config_nix.go) | A list of regex patterns that will exclude a process if matched     |
+| `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_CPU`       | 0               | Number of processes to report that have a high CPU usage            |
+| `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_IO_READ`   | 0               | Number of processes to report that have a high IO read usage        |
+| `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_IO_WRITE`  | 0               | Number of processes to report that have a high IO write usage       |
+| `STS_PROCESS_BLACKLIST_INCLUSIONS_TOP_MEM`       | 0               | Number of processes to report that have a high Memory usage         |
+| `STS_PROCESS_BLACKLIST_INCLUSIONS_CPU_THRESHOLD` |                 | Threshold that enables the reporting of high CPU usage processes    |
+| `STS_PROCESS_BLACKLIST_INCLUSIONS_MEM_THRESHOLD` |                 | Threshold that enables the reporting of high Memory usage processes |
 
 - Report localhost connections within the same network namespace _[(STAC-2891)](https://stackstate.atlassian.net/browse/STAC-2891)_
 
