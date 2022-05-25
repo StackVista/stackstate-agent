@@ -308,8 +308,7 @@ def test_agent_integration_sample_topology(host, hostname):
             {
                 "assertion": "Should find the agent-integration-instance component",
                 "type": "agent-integration-instance",
-                "external_id": lambda e_id: (
-                                                "urn:agent-integration-instance:/%s:agent-integration:sample" % hostname) == e_id,
+                "external_id": lambda e_id: ("urn:agent-integration-instance:/%s:agent-integration:sample" % hostname) == e_id,
                 "data": lambda d: d == {
                     "checks": [
                         {
@@ -477,8 +476,7 @@ def test_agent_integration_sample_health_synchronization(host):
                 "IntakeHealthCheckStates": {
                     "consistencyModel": "REPEAT_SNAPSHOTS",
                     "intakeCheckStates": [
-                        {
-                            "data": "{\"checkStateId\":\"id\",\"health\":\"CRITICAL\",\"message\":\"msg\",\"name\":\"name\",\"topologyElementIdentifier\":\"identifier\"}"}
+                        {"data": "{\"checkStateId\":\"id\",\"health\":\"CRITICAL\",\"message\":\"msg\",\"name\":\"name\",\"topologyElementIdentifier\":\"identifier\"}"}
                     ]
                 }
             }
