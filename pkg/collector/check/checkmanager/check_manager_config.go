@@ -2,6 +2,7 @@ package checkmanager
 
 import "github.com/StackVista/stackstate-agent/pkg/config"
 
+// Config contains all the configuration values for the check manager
 type Config struct {
 	CheckTransactionalityEnabled bool
 }
