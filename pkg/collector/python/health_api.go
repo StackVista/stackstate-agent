@@ -3,6 +3,7 @@
 // This product includes software developed at StackState (https://www.stackstate.com).
 // Copyright 2021 StackState
 
+//go:build python
 // +build python
 
 package python

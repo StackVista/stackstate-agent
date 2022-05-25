@@ -1,3 +1,4 @@
+//go:build python && test
 // +build python,test
 
 package python
@@ -167,8 +168,8 @@ func testRawMetricsData(t *testing.T) {
 
 	assert.Exactly(t, expectedState, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
 		"check-id": {
-			Health: make(map[string]health.Health),
-			Metrics: &[]telemetry.RawMetrics{expectedRawMetricsData},
+			Health:   make(map[string]health.Health),
+			Metrics:  &[]telemetry.RawMetrics{expectedRawMetricsData},
 			Topology: nil,
 		},
 	}))
