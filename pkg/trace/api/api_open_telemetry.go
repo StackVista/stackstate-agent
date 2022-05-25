@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	v12 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/common/v1"
@@ -79,11 +78,6 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 
 		// [Graceful] We can continue without determining the http status, This will then allow all the relevant information to still display
 		determineInstrumentationStatus(resourceSpan.InstrumentationLibrarySpans)
-
-		afterResourceSpan, afterResourceSpanOk := json.Marshal(resourceSpan.InstrumentationLibrarySpans)
-		if afterResourceSpanOk == nil {
-			log.Debugf("Received the following resourceSpans after modifying the http instrumentation, %s", afterResourceSpan)
-		}
 
 		for _, instrumentationLibrarySpan := range resourceSpan.InstrumentationLibrarySpans {
 			// When we reach this point then it is safe to start building a trace
