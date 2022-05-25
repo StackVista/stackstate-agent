@@ -30,6 +30,7 @@ func GetCheckManager() *CheckManager {
 type CheckManager struct {
 	reloader      handler.CheckReloader
 	checkHandlers map[string]handler.CheckHandler
+	config        Config
 }
 
 // newCheckManager returns a instance of the Check Manager
@@ -37,6 +38,7 @@ func newCheckManager(reloader handler.CheckReloader) *CheckManager {
 	return &CheckManager{
 		reloader:      reloader,
 		checkHandlers: make(map[string]handler.CheckHandler),
+		config:        GetCheckManagerConfig(),
 	}
 }
 
@@ -44,14 +46,26 @@ func newCheckManager(reloader handler.CheckReloader) *CheckManager {
 func (cm *CheckManager) GetCheckHandler(checkID check.ID) handler.CheckHandler {
 	ch, found := cm.checkHandlers[string(checkID)]
 	if !found {
-		_ = log.Errorf(fmt.Sprintf("No check handler found for %s", checkID))
-		return handler.MakeCheckNoHandler(checkID, handler.NoCheckReloader{})
+		_ = log.Errorf(fmt.Sprintf("No check handler found for %s. Registering a non-transactional check handler.", checkID))
+		return cm.RegisterNonTransactionalCheckHandler(handler.NewCheckIdentifier(checkID))
 	}
+	return ch
+}
+
+// RegisterNonTransactionalCheckHandler registers a non-transactional check handler for a given check
+func (cm *CheckManager) RegisterNonTransactionalCheckHandler(check handler.CheckIdentifier) handler.CheckHandler {
+	ch := handler.MakeNonTransactionalCheckHandler(check, handler.NoCheckReloader{})
+	cm.checkHandlers[string(check.ID())] = ch
 	return ch
 }
 
 // RegisterCheckHandler registers a check handler for the given check using a transactionbatcher for this instance
 func (cm *CheckManager) RegisterCheckHandler(check check.Check, config, initConfig integration.Data) handler.CheckHandler {
+	if !cm.config.CheckTransactionalityEnabled {
+		log.Debugf("Check transaction is disabled, defaulting %s to non-transactional check", check.ID())
+		return cm.RegisterNonTransactionalCheckHandler(check)
+	}
+
 	ch := handler.NewCheckHandler(check, cm.reloader, config, initConfig)
 	log.Debugf("Registering Check Handler for: %s", ch.ID())
 	cm.checkHandlers[string(check.ID())] = ch

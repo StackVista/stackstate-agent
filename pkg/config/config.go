@@ -211,6 +211,9 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("transaction_timeout_duration_seconds", DefaultTxManagerTimeoutDurationSeconds)
 	config.BindEnvAndSetDefault("transaction_eviction_duration_seconds", DefaultTxManagerEvictionDurationSeconds)
 
+	// [sts] check manager environment variables
+	config.BindEnvAndSetDefault("check_transactionality_enabled", true)
+
 	// overridden in IoT Agent main
 	config.BindEnvAndSetDefault("iot_host", false)
 
