@@ -11,7 +11,7 @@
   copy:
     src: ./../../../verify-or-create-topics.sh
     dest: /home/ubuntu
-    mode: u+x
+    mode: a+x
 
 - name: Configure .env file used by docker-compose
   copy:
