@@ -58,33 +58,30 @@ func testComponentTopology(t *testing.T) {
 		C.CString(string(data)))
 	SubmitStopSnapshot(checkId, &instanceKey)
 
-	actualTopology := mockTransactionalBatcher.CollectedTopology.Flush()
-	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
-
-	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
-		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
-			testCheck.ID(): {
-				Transaction: &transactionbatcher.BatchTransaction{
-					TransactionID:        "", // no start transaction, so the transaction is empty in this case
-					CompletedTransaction: false,
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
+	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
+		Transaction: &transactionbatcher.BatchTransaction{
+			TransactionID:        "", // no start transaction, so the transaction is empty in this case
+			CompletedTransaction: false,
+		},
+		Topology: &topology.Topology{
+			StartSnapshot: true,
+			StopSnapshot:  true,
+			Instance:      topology.Instance{Type: "instance-type", URL: "instance-url"},
+			Components: []topology.Component{
+				{
+					ExternalID: "external-id",
+					Type:       topology.Type{Name: "component-type"},
+					Data:       topology.Data{"some": "data"},
 				},
-				Topology: &topology.Topology{
-					StartSnapshot: true,
-					StopSnapshot:  true,
-					Instance:      instance,
-					Components: []topology.Component{
-						{
-							ExternalID: "external-id",
-							Type:       topology.Type{Name: "component-type"},
-							Data:       topology.Data{"some": "data"},
-						},
-					},
-					Relations: []topology.Relation{},
-					DeleteIDs: []string{},
-				},
-				Health: map[string]health.Health{},
 			},
-		}), actualTopology)
+			Relations: []topology.Relation{},
+			DeleteIDs: []string{},
+		},
+		Health: map[string]health.Health{},
+	}
+	assert.Equal(t, expectedTopology, actualTopology)
 
 	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
@@ -116,35 +113,32 @@ func testRelationTopology(t *testing.T) {
 		C.CString("relation-type"),
 		C.CString(string(data)))
 
-	actualTopology := mockTransactionalBatcher.CollectedTopology.Flush()
-	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
-
-	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
-		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
-			testCheck.ID(): {
-				Transaction: &transactionbatcher.BatchTransaction{
-					TransactionID:        "", // no start transaction, so the transaction is empty in this case
-					CompletedTransaction: false,
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
+	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
+		Transaction: &transactionbatcher.BatchTransaction{
+			TransactionID:        "", // no start transaction, so the transaction is empty in this case
+			CompletedTransaction: false,
+		},
+		Topology: &topology.Topology{
+			StartSnapshot: false,
+			StopSnapshot:  false,
+			Instance:      topology.Instance{Type: "instance-type", URL: "instance-url"},
+			Components:    []topology.Component{},
+			Relations: []topology.Relation{
+				{
+					ExternalID: "source-id-relation-type-target-id",
+					SourceID:   "source-id",
+					TargetID:   "target-id",
+					Type:       topology.Type{Name: "relation-type"},
+					Data:       topology.Data{"some": "data"},
 				},
-				Topology: &topology.Topology{
-					StartSnapshot: false,
-					StopSnapshot:  false,
-					Instance:      instance,
-					Components:    []topology.Component{},
-					Relations: []topology.Relation{
-						{
-							ExternalID: "source-id-relation-type-target-id",
-							SourceID:   "source-id",
-							TargetID:   "target-id",
-							Type:       topology.Type{Name: "relation-type"},
-							Data:       topology.Data{"some": "data"},
-						},
-					},
-					DeleteIDs: []string{},
-				},
-				Health: map[string]health.Health{},
 			},
-		}), actualTopology)
+			DeleteIDs: []string{},
+		},
+		Health: map[string]health.Health{},
+	}
+	assert.Equal(t, expectedTopology, actualTopology)
 
 	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
@@ -229,27 +223,26 @@ func testStopSnapshotCheck(t *testing.T) {
 	instanceKey.url = C.CString("instance-url")
 	SubmitStopSnapshot(checkId, &instanceKey)
 
-	actualTopology := mockTransactionalBatcher.CollectedTopology.Flush()
-	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 
-	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
-		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
-			testCheck.ID(): {
-				Transaction: &transactionbatcher.BatchTransaction{
-					TransactionID:        "", // no start transaction, so the transaction is empty in this case
-					CompletedTransaction: false,
-				},
-				Topology: &topology.Topology{
-					StartSnapshot: false,
-					StopSnapshot:  true,
-					Instance:      instance,
-					Components:    []topology.Component{},
-					Relations:     []topology.Relation{},
-					DeleteIDs:     []string{},
-				},
-				Health: map[string]health.Health{},
-			},
-		}), actualTopology)
+	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
+		Transaction: &transactionbatcher.BatchTransaction{
+			TransactionID:        "", // no start transaction, so the transaction is empty in this case
+			CompletedTransaction: false,
+		},
+		Topology: &topology.Topology{
+			StartSnapshot: false,
+			StopSnapshot:  true,
+			Instance:      topology.Instance{Type: "instance-type", URL: "instance-url"},
+			Components:    []topology.Component{},
+			Relations:     []topology.Relation{},
+			DeleteIDs:     []string{},
+		},
+		Health: map[string]health.Health{},
+	}
+
+	assert.Equal(t, expectedTopology, actualTopology)
 
 	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
@@ -271,27 +264,24 @@ func testDeleteTopologyElement(t *testing.T) {
 		C.CString(topoElementId))
 	SubmitStopSnapshot(checkID, &instanceKey)
 
-	actualTopology := mockTransactionalBatcher.CollectedTopology.Flush()
-	instance := topology.Instance{Type: "instance-type", URL: "instance-url"}
-
-	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchStates(
-		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
-			testCheck.ID(): {
-				Transaction: &transactionbatcher.BatchTransaction{
-					TransactionID:        "", // no start transaction, so the transaction is empty in this case
-					CompletedTransaction: false,
-				},
-				Topology: &topology.Topology{
-					StartSnapshot: true,
-					StopSnapshot:  true,
-					Instance:      instance,
-					Components:    []topology.Component{},
-					Relations:     []topology.Relation{},
-					DeleteIDs:     []string{topoElementId},
-				},
-				Health: map[string]health.Health{},
-			},
-		}), actualTopology)
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
+	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
+		Transaction: &transactionbatcher.BatchTransaction{
+			TransactionID:        "", // no start transaction, so the transaction is empty in this case
+			CompletedTransaction: false,
+		},
+		Topology: &topology.Topology{
+			StartSnapshot: true,
+			StopSnapshot:  true,
+			Instance:      topology.Instance{Type: "instance-type", URL: "instance-url"},
+			Components:    []topology.Component{},
+			Relations:     []topology.Relation{},
+			DeleteIDs:     []string{topoElementId},
+		},
+		Health: map[string]health.Health{},
+	}
+	assert.Equal(t, expectedTopology, actualTopology)
 
 	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
