@@ -125,7 +125,7 @@ var checkCmd = &cobra.Command{
 		agg := aggregator.InitAggregatorWithFlushInterval(s, hostname, 0)
 		common.SetupAutoConfig(config.Datadog.GetString("confd_path"))
 
-		// [sts] init the transactionbatcher without the real serializer
+		// [sts] init the batcher without the real serializer
 		batcher.InitBatcher(&printingAgentV1Serializer{}, hostname, "agent", config.GetMaxCapacity())
 		// [sts] create the global transactional components
 		checkmanager.InitCheckManager(common.Coll)

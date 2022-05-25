@@ -19,16 +19,16 @@ import (
 )
 
 // Worker consumes Transaction (aka transactions) from the Forwarder and
-// processes them. If the manager fails to be processed the Worker will send
+// processes them. If the transaction fails to be processed the Worker will send
 // it back to the Forwarder to be retried later.
 type Worker struct {
 	// Client the http client used to processed transactions.
 	Client *http.Client
-	// HighPrio is the channel used to receive high priority manager from the Forwarder.
+	// HighPrio is the channel used to receive high priority transaction from the Forwarder.
 	HighPrio <-chan Transaction
-	// LowPrio is the channel used to receive low priority manager from the Forwarder.
+	// LowPrio is the channel used to receive low priority transaction from the Forwarder.
 	LowPrio <-chan Transaction
-	// RequeueChan is the channel used to send failed manager back to the Forwarder.
+	// RequeueChan is the channel used to send failed transaction back to the Forwarder.
 	RequeueChan chan<- Transaction
 
 	resetConnectionChan chan struct{}
@@ -72,7 +72,7 @@ func (w *Worker) Stop(purgeHighPrio bool) {
 		for {
 			select {
 			case t := <-w.HighPrio:
-				log.Debugf("Flushing one new manager before stopping Worker")
+				log.Debugf("Flushing one new transaction before stopping Worker")
 				w.callProcess(t) //nolint:errcheck
 			default:
 				break L
@@ -118,7 +118,7 @@ func (w *Worker) Start() {
 }
 
 // ScheduleConnectionReset allows signaling the worker that all connections should
-// be recreated before sending the next manager. Returns immediately.
+// be recreated before sending the next transaction. Returns immediately.
 func (w *Worker) ScheduleConnectionReset() {
 	select {
 	case w.resetConnectionChan <- struct{}{}:
@@ -127,7 +127,7 @@ func (w *Worker) ScheduleConnectionReset() {
 	}
 }
 
-// callProcess will process a manager and cancel it if we need to stop the
+// callProcess will process a transaction and cancel it if we need to stop the
 // worker.
 func (w *Worker) callProcess(t Transaction) error {
 	// poll for connection reset events first
@@ -163,7 +163,7 @@ func (w *Worker) process(ctx context.Context, t Transaction) {
 		select {
 		case w.RequeueChan <- t:
 		default:
-			log.Errorf("dropping manager because the retry goroutine is too busy to handle another one")
+			log.Errorf("dropping transaction because the retry goroutine is too busy to handle another one")
 		}
 	}
 
@@ -175,7 +175,7 @@ func (w *Worker) process(ctx context.Context, t Transaction) {
 	} else if err := t.Process(ctx, w.Client); err != nil {
 		w.blockedList.close(target)
 		requeue()
-		log.Errorf("Error while processing manager: %v", err)
+		log.Errorf("Error while processing transaction: %v", err)
 	} else {
 		w.blockedList.recover(target)
 	}
@@ -183,7 +183,7 @@ func (w *Worker) process(ctx context.Context, t Transaction) {
 
 // resetConnections resets the connections by replacing the HTTP client used by
 // the worker, in order to create new connections when the next transactions are processed.
-// It must not be called while a manager is being processed.
+// It must not be called while a transaction is being processed.
 func (w *Worker) resetConnections() {
 	log.Debug("Resetting worker's connections")
 	w.Client.CloseIdleConnections()

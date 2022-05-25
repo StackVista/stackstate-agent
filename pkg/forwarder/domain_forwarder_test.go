@@ -231,6 +231,6 @@ func TestForwarderRetryLimitQueue(t *testing.T) {
 	require.Len(t, forwarder.retryQueue, 1)
 	require.Len(t, forwarder.highPrio, 0)
 	require.Len(t, forwarder.lowPrio, 0)
-	// assert that the oldest manager was dropped
+	// assert that the oldest transaction was dropped
 	assert.Equal(t, transaction2, forwarder.retryQueue[0])
 }

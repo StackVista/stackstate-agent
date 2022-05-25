@@ -181,7 +181,7 @@ func TestSubmitV1Intake(t *testing.T) {
 		httpTr := tr.(*HTTPTransaction)
 		assert.Equal(t, "application/json", httpTr.Headers.Get("Content-Type"))
 	case <-time.After(1 * time.Second):
-		require.Fail(t, "highPrio queue should contain a manager")
+		require.Fail(t, "highPrio queue should contain a transaction")
 	}
 }
 

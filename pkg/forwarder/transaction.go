@@ -95,10 +95,10 @@ var trace = &httptrace.ClientTrace{
 // Compile-time check to ensure that HTTPTransaction conforms to the Transaction interface
 var _ Transaction = &HTTPTransaction{}
 
-// HTTPAttemptHandler is an event handler that will get called each time this manager is attempted
+// HTTPAttemptHandler is an event handler that will get called each time this transaction is attempted
 type HTTPAttemptHandler func(transaction *HTTPTransaction)
 
-// HTTPCompletionHandler is an  event handler that will get called after this manager has completed
+// HTTPCompletionHandler is an  event handler that will get called after this transaction has completed
 type HTTPCompletionHandler func(transaction *HTTPTransaction, statusCode int, body []byte, err error)
 
 var defaultAttemptHandler = func(transaction *HTTPTransaction) {}
@@ -137,12 +137,12 @@ type HTTPTransaction struct {
 	ErrorCount int
 
 	createdAt time.Time
-	// retryable indicates whether this manager can be retried
+	// retryable indicates whether this transaction can be retried
 	retryable bool
 
-	// attemptHandler will be called with a manager before the attempting to send the request
+	// attemptHandler will be called with a transaction before the attempting to send the request
 	attemptHandler HTTPAttemptHandler
-	// completionHandler will be called with a manager after it has been successfully sent
+	// completionHandler will be called with a transaction after it has been successfully sent
 	completionHandler HTTPCompletionHandler
 }
 
@@ -170,13 +170,13 @@ func (t *HTTPTransaction) GetCreatedAt() time.Time {
 	return t.createdAt
 }
 
-// GetTarget return the url used by the manager
+// GetTarget return the url used by the transaction
 func (t *HTTPTransaction) GetTarget() string {
 	url := t.Domain + t.Endpoint
 	return httputils.SanitizeURL(url) // sanitized url that can be logged
 }
 
-// Process sends the Payload of the manager to the right Endpoint and Domain.
+// Process sends the Payload of the transaction to the right Endpoint and Domain.
 func (t *HTTPTransaction) Process(ctx context.Context, client *http.Client) error {
 	t.attemptHandler(t)
 
@@ -204,7 +204,7 @@ func (t *HTTPTransaction) internalProcess(ctx context.Context, client *http.Clie
 
 	req, err := http.NewRequest("POST", url, reader)
 	if err != nil {
-		log.Errorf("Could not create request for manager to invalid URL %q (dropping manager): %s", logURL, err)
+		log.Errorf("Could not create request for transaction to invalid URL %q (dropping manager): %s", logURL, err)
 		transactionsErrors.Add(1)
 		tlmTxErrors.Inc(t.Domain, "invalid_request")
 		transactionsSentRequestErrors.Add(1)
@@ -215,14 +215,14 @@ func (t *HTTPTransaction) internalProcess(ctx context.Context, client *http.Clie
 	resp, err := client.Do(req)
 
 	if err != nil {
-		// Do not requeue manager if that one was canceled
+		// Do not requeue transaction if that one was canceled
 		if ctx.Err() == context.Canceled {
 			return 0, nil, nil
 		}
 		t.ErrorCount++
 		transactionsErrors.Add(1)
 		tlmTxErrors.Inc(t.Domain, "cant_send")
-		return 0, nil, fmt.Errorf("error while sending manager, rescheduling it: %s", httputils.SanitizeURL(err.Error()))
+		return 0, nil, fmt.Errorf("error while sending transaction, rescheduling it: %s", httputils.SanitizeURL(err.Error()))
 	}
 	defer func() { _ = resp.Body.Close() }()
 
@@ -247,12 +247,12 @@ func (t *HTTPTransaction) internalProcess(ctx context.Context, client *http.Clie
 	}
 
 	if resp.StatusCode == 400 || resp.StatusCode == 404 || resp.StatusCode == 413 {
-		log.Errorf("Error code %q received while sending manager to %q: %s, dropping it", resp.Status, logURL, string(body))
+		log.Errorf("Error code %q received while sending transaction to %q: %s, dropping it", resp.Status, logURL, string(body))
 		transactionsDropped.Add(1)
 		tlmTxDropped.Inc(t.Domain)
 		return resp.StatusCode, body, nil
 	} else if resp.StatusCode == 403 {
-		log.Errorf("API Key invalid, dropping manager for %s", logURL)
+		log.Errorf("API Key invalid, dropping transaction for %s", logURL)
 		transactionsDropped.Add(1)
 		tlmTxDropped.Inc(t.Domain)
 		return resp.StatusCode, body, nil
@@ -260,7 +260,7 @@ func (t *HTTPTransaction) internalProcess(ctx context.Context, client *http.Clie
 		t.ErrorCount++
 		transactionsErrors.Add(1)
 		tlmTxErrors.Inc(t.Domain, "gt_400")
-		return resp.StatusCode, body, fmt.Errorf("error %q while sending manager to %q, rescheduling it", resp.Status, logURL)
+		return resp.StatusCode, body, fmt.Errorf("error %q while sending transaction to %q, rescheduling it", resp.Status, logURL)
 	}
 
 	transactionsSuccessful.Add(1)
@@ -269,7 +269,7 @@ func (t *HTTPTransaction) internalProcess(ctx context.Context, client *http.Clie
 	loggingFrequency := config.Datadog.GetInt64("logging_frequency")
 
 	if transactionsSuccessful.Value() == 1 {
-		log.Infof("Successfully posted payload to %q, the agent will only log manager success every %d transactions", logURL, loggingFrequency)
+		log.Infof("Successfully posted payload to %q, the agent will only log transaction success every %d transactions", logURL, loggingFrequency)
 		log.Tracef("Url: %q payload: %s", logURL, string(body))
 		return resp.StatusCode, body, nil
 	}
