@@ -77,11 +77,6 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 		// [Graceful] We can continue without awsAccountID, Unable to map module will give warnings
 		awsAccountID := lambdaInstrumentationGetAccountID(resourceSpan)
 
-		originalResourceSpan, originalResourceSpanOk := json.Marshal(resourceSpan.InstrumentationLibrarySpans)
-		if originalResourceSpanOk == nil {
-			log.Debugf("Received the following resourceSpans before modifying the http instrumentation, %s", originalResourceSpan)
-		}
-
 		// [Graceful] We can continue without determining the http status, This will then allow all the relevant information to still display
 		determineInstrumentationStatus(resourceSpan.InstrumentationLibrarySpans)
 
