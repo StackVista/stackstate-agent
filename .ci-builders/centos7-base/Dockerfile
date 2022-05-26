@@ -145,7 +145,7 @@ ENV CPP=/opt/rh/devtoolset-7/root/usr/bin/cpp
 ENV CXX=/opt/rh/devtoolset-7/root/usr/bin/c++
 
 # Download and install golangci-lint
-RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $GOPATH/bin v1.21.0
+RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $GOPATH/bin v1.23.8
 
 # Entrypoint
 COPY ./entrypoint.sh /
