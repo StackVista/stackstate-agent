@@ -33,3 +33,7 @@ resource "aws_instance" "ec2-stackpack" {
   instance_type = "t3.micro"
 
 }
+
+data "aws_iam_role" "awsv2-stackpack" {
+  name = "StackStateAwsIntegrationRole"
+}
