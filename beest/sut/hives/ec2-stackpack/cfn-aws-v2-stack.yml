@@ -1,0 +1,495 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Main CloudFormation template to be placed in every account where information is being captured.
+  This template will capture information for one region, ensure it has been deployed in each region where you wish to capture events.
+
+Parameters:
+  StsAccountId:
+    Type: String
+    Description: The AWS account ID of the Stackstate agent
+    AllowedPattern: >-
+      ^[0-9]{12}$
+    ConstraintDescription: Value must be a valid AWS account ID
+  ExternalId:
+    Type: String
+    Description: External ID to be assigned to the IAM role
+    AllowedPattern: >-
+      [\w+=,.@:\/-]{2,1224}
+    ConstraintDescription: "The external ID provided is not valid. Allowed special characters: +=,.@:/-"
+  MainRegion:
+    Type: String
+    Description: The primary AWS region, global resources will be deployed here
+    AllowedPattern: >-
+      ^[a-z]{2}-([a-z]*-){1,2}[0-9]$
+    ConstraintDescription: Value must be a valid AWS region name
+  IncludeOpenTelemetryTracing:
+    Description: OpenTelemetry Lambda Layer v0.0.7
+    Default: false
+    Type: String
+    AllowedValues: [true, false]
+
+Conditions:
+  IsMainRegion: !Equals [!Ref MainRegion, !Ref "AWS::Region"]
+  ShouldIncludeOpenTelemetry:
+    !Equals [true, !Ref IncludeOpenTelemetryTracing]
+
+Metadata:
+  StackState::TemplateVersion: "1.2.0"
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Agent Access
+          Parameters:
+            - StackStateAccountId
+            - ExternalId
+            - MainRegion
+    ParameterLabels:
+      StsAccountId:
+        default: AWS account ID of the Stackstate agent
+      ExternalId:
+        default: External ID given by stackstate agent
+      MainRegion:
+        default: Primary AWS Region
+
+Resources:
+  StsRole:
+    Type: AWS::IAM::Role
+    Condition: IsMainRegion
+    Properties:
+      RoleName: StackStateAwsIntegrationRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Ref StsAccountId
+            Action:
+              - sts:AssumeRole
+            Condition:
+              StringEquals:
+                sts:ExternalId: !Ref ExternalId
+      Policies:
+        - PolicyName: STSIntegration
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: SelfAccess
+                Effect: Allow
+                Action:
+                  - cloudtrail:LookupEvents
+                  - iam:ListAccountAliases
+                Resource: "*"
+              - Sid: MetricsAccess
+                Effect: Allow
+                Action:
+                  - cloudwatch:GetMetricData
+                  - cloudwatch:ListMetrics
+                Resource: "*"
+              - Sid: EventsS3Access
+                Effect: Allow
+                Action:
+                  - s3:DeleteObject
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:ListBucket
+                Resource:
+                  - !Sub ${StsLogsBucket.Arn}
+                  - !Sub ${StsLogsBucket.Arn}/*
+              - Sid: Ec2Access
+                Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                  - ec2:DescribeInstanceTypes
+                  - ec2:DescribeSecurityGroups
+                  - ec2:DescribeSubnets
+                  - ec2:DescribeVpcs
+                  - ec2:DescribeVpnGateways
+                  - ec2:DescribeNetworkInterfaces
+                Resource: "*"
+              - Sid: LoadBalancingAccess
+                Effect: Allow
+                Action:
+                  - elasticloadbalancing:DescribeInstanceHealth
+                  - elasticloadbalancing:DescribeListeners
+                  - elasticloadbalancing:DescribeLoadBalancers
+                  - elasticloadbalancing:DescribeTags
+                  - elasticloadbalancing:DescribeTargetGroups
+                  - elasticloadbalancing:DescribeTargetHealth
+                Resource: "*"
+              - Sid: AutoScalingAccess
+                Effect: Allow
+                Action:
+                  - autoscaling:DescribeAutoScalingGroups
+                Resource: "*"
+              - Sid: RedshiftAccess
+                Effect: Allow
+                Action:
+                  - redshift:DescribeClusters
+                Resource: "*"
+              - Sid: EcsAccess
+                Effect: Allow
+                Action:
+                  - ecs:DescribeClusters
+                  - ecs:DescribeContainerInstances
+                  - ecs:DescribeServices
+                  - ecs:DescribeTasks
+                  - ecs:ListClusters
+                  - ecs:ListContainerInstances
+                  - ecs:ListServices
+                  - ecs:ListTasks
+                Resource: "*"
+              - Sid: ServiceDiscoveryAccess
+                Effect: Allow
+                Action:
+                  - servicediscovery:GetNamespace
+                  - servicediscovery:GetService
+                  - servicediscovery:ListInstances
+                  - servicediscovery:ListServices
+                Resource: "*"
+              - Sid: FirehoseAccess
+                Effect: Allow
+                Action:
+                  - firehose:DescribeDeliveryStream
+                  - firehose:ListDeliveryStreams
+                  - firehose:ListTagsForDeliveryStream
+                Resource: "*"
+              - Sid: S3Access
+                Effect: Allow
+                Action:
+                  - s3:GetBucketNotification
+                  - s3:GetBucketTagging
+                  - s3:ListAllMyBuckets
+                  - s3:ListBucket
+                  - s3:GetBucketVersioning
+                Resource: "*"
+              - Sid: RdsAccess
+                Effect: Allow
+                Action:
+                  - rds:DescribeDBClusters
+                  - rds:DescribeDBInstances
+                Resource: "*"
+              - Sid: Route53Access
+                Effect: Allow
+                Action:
+                  - route53:GetHostedZone
+                  - route53:ListHostedZones
+                  - route53:ListResourceRecordSets
+                  - route53:ListTagsForResource
+                  - route53domains:GetDomainDetail
+                  - route53domains:ListDomains
+                  - route53domains:ListTagsForDomain
+                Resource: "*"
+              - Sid: LambdaAccess
+                Effect: Allow
+                Action:
+                  - lambda:GetFunction
+                  - lambda:ListAliases
+                  - lambda:ListEventSourceMappings
+                  - lambda:ListFunctions
+                  - lambda:ListTags
+                Resource: "*"
+              - Sid: SnsAccess
+                Effect: Allow
+                Action:
+                  - sns:GetTopicAttributes
+                  - sns:ListSubscriptionsByTopic
+                  - sns:ListTagsForResource
+                  - sns:ListTopics
+                Resource: "*"
+              - Sid: SqsAccess
+                Effect: Allow
+                Action:
+                  - sqs:GetQueueAttributes
+                  - sqs:ListQueues
+                  - sqs:ListQueueTags
+                Resource: "*"
+              - Sid: DynamoDbAccess
+                Effect: Allow
+                Action:
+                  - dynamodb:DescribeTable
+                  - dynamodb:ListTables
+                  - dynamodb:ListTagsOfResource
+                Resource: "*"
+              - Sid: KinesisAccess
+                Effect: Allow
+                Action:
+                  - kinesis:DescribeStreamSummary
+                  - kinesis:ListStreams
+                  - kinesis:ListTagsForStream
+                Resource: "*"
+              - Sid: ApiGatewayAccess
+                Effect: Allow
+                Action:
+                  - apigateway:GET
+                Resource: "*"
+              - Sid: CloudFormationAccess
+                Effect: Allow
+                Action:
+                  - cloudformation:DescribeStackResources
+                  - cloudformation:DescribeStacks
+                Resource: "*"
+              - Sid: StepFunctionsAccess
+                Effect: Allow
+                Action:
+                  - states:DescribeStateMachine
+                  - states:ListActivities
+                  - states:ListStateMachines
+                  - states:ListTagsForResource
+                Resource: "*"
+
+  StsKmsKey:
+    Type: AWS::KMS::Key
+    Condition: IsMainRegion
+    Properties:
+      Description: StackState Integration Key
+      Enabled: true
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: 2012-10-17
+        Id: default
+        Statement:
+          - Sid: AllowKeyAdministration
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action:
+              - kms:Create*
+              - kms:Describe*
+              - kms:Enable*
+              - kms:List*
+              - kms:Put*
+              - kms:Update*
+              - kms:Revoke*
+              - kms:Disable*
+              - kms:Get*
+              - kms:Delete*
+              - kms:TagResource
+              - kms:UntagResource
+              - kms:ScheduleKeyDeletion
+              - kms:CancelKeyDeletion
+            Resource: "*"
+          - Sid: AllowS3Access
+            Effect: Allow
+            Principal:
+              AWS: "*"
+            Action:
+              - kms:Decrypt
+              - kms:DescribeKey
+              - kms:Encrypt
+              - kms:GenerateDataKey*
+              - kms:ReEncrypt*
+            Resource: "*"
+            Condition:
+              StringEquals:
+                kms:ViaService: !Sub s3.${AWS::Region}.${AWS::URLSuffix}
+          - Sid: AllowVpcFlowLogAccess
+            Effect: Allow
+            Principal:
+              Service: !Sub delivery.logs.${AWS::URLSuffix}
+            Action:
+              - kms:Decrypt
+              - kms:DescribeKey
+              - kms:Encrypt
+              - kms:GenerateDataKey*
+              - kms:ReEncrypt*
+            Resource: "*"
+  StsKmsKeyAlias:
+    Type: AWS::KMS::Alias
+    Condition: IsMainRegion
+    Properties:
+      AliasName: alias/stackstate-integration
+      TargetKeyId: !Ref StsKmsKey
+  StsLogsBucket:
+    Type: AWS::S3::Bucket
+    Condition: IsMainRegion
+    Properties:
+      BucketName: !Sub stackstate-logs-${AWS::AccountId}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !GetAtt StsKmsKey.Arn
+            BucketKeyEnabled: true
+      VersioningConfiguration:
+        Status: Enabled
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+      LifecycleConfiguration:
+        Rules:
+          - Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+            ExpirationInDays: 1
+            NoncurrentVersionExpirationInDays: 1
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - E3002 # New features BucketKeyEnabled, OwnershipControls not recognised
+  StsLogsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Condition: IsMainRegion
+    Properties:
+      Bucket: !Ref StsLogsBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AWSLogDeliveryWrite
+            Effect: Allow
+            Principal:
+              Service: !Sub delivery.logs.${AWS::URLSuffix}
+            Action: s3:PutObject
+            Resource: !Sub ${StsLogsBucket.Arn}/AWSLogs/${AWS::AccountId}/*
+            Condition:
+              StringEquals:
+                s3:x-amz-acl: bucket-owner-full-control
+          - Sid: AWSLogDeliveryAclCheck
+            Effect: Allow
+            Principal:
+              Service: !Sub delivery.logs.${AWS::URLSuffix}
+            Action:
+              - s3:GetBucketAcl
+              - s3:ListBucket
+              - s3:GetBucketVersioning
+            Resource: !Sub ${StsLogsBucket.Arn}
+          - Sid: DisableInsecureConnections
+            Effect: Deny
+            Principal: "*"
+            Action: s3:*
+            Resource:
+              - !Sub ${StsLogsBucket.Arn}
+              - !Sub ${StsLogsBucket.Arn}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: "false"
+  StsFirehoseRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: !Sub firehose.${AWS::URLSuffix}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: default
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:AbortMultipartUpload
+                  - s3:GetBucketLocation
+                  - s3:GetObject
+                  - s3:ListBucket
+                  - s3:ListBucketMultipartUploads
+                  - s3:PutObject
+                  - s3:PutObjectAcl
+                Resource:
+                  - !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}/AWSLogs/${AWS::AccountId}/EventBridge/${AWS::Region}/*
+                  - !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                  - kms:GenerateDataKey
+                Resource:
+                  - !Sub arn:${AWS::Partition}:kms:${MainRegion}:${AWS::AccountId}:alias/stackstate-integration
+                Condition:
+                  StringEquals:
+                    kms:ViaService: !Sub s3.${AWS::Region}.${AWS::URLSuffix}
+                  ArnLike:
+                    kms:EncryptionContext:aws:s3:arn: !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}/AWSLogs/${AWS::AccountId}/EventBridge/${AWS::Region}/*
+  StsEventBridgeFirehose:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      DeliveryStreamType: DirectPut
+      ExtendedS3DestinationConfiguration:
+        BucketARN: !If
+          - IsMainRegion
+          - !GetAtt StsLogsBucket.Arn
+          - !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}
+        RoleARN: !GetAtt StsFirehoseRole.Arn
+        CompressionFormat: GZIP
+        Prefix: !Sub AWSLogs/${AWS::AccountId}/EventBridge/${AWS::Region}/
+        ErrorOutputPrefix: !Sub AWSLogs/${AWS::AccountId}/EventBridge/${AWS::Region}/
+        BufferingHints:
+          IntervalInSeconds: 60
+          SizeInMBs: 8
+        EncryptionConfiguration:
+          KMSEncryptionConfig:
+            AWSKMSKeyARN: !Sub arn:${AWS::Partition}:kms:${MainRegion}:${AWS::AccountId}:alias/stackstate-integration
+  StsEventBridgeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: !Sub events.${AWS::URLSuffix}
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: default
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action:
+                  - firehose:PutRecord
+                  - firehose:PutRecordBatch
+                Resource:
+                  - !GetAtt StsEventBridgeFirehose.Arn
+  StsEventBridgeRule:
+    Type: AWS::Events::Rule
+    Properties:
+      EventPattern:
+        source:
+          - aws.apigateway
+          - aws.application-autoscaling
+          - aws.dynamodb
+          - aws.ec2
+          - aws.ecs
+          - aws.elasticloadbalancing
+          - aws.firehose
+          - aws.kinesis
+          - aws.lambda
+          - aws.rds
+          - aws.redshift
+          - aws.s3
+          - aws.sqs
+          - aws.states
+        detail-type:
+          - "EC2 Instance State-change Notification"
+          - "AWS API Call via CloudTrail"
+      Targets:
+        - Id: StsEventBridgeFirehose
+          Arn: !GetAtt StsEventBridgeFirehose.Arn
+          RoleArn: !GetAtt StsEventBridgeRole.Arn
+  StsOpenTelemetryLayer:
+    Type: AWS::Lambda::LayerVersion
+    Condition: ShouldIncludeOpenTelemetry
+    Properties:
+      Description: v0.0.7 - StackState OpenTelemetry NodeJS Lambda Layer
+      CompatibleRuntimes:
+        - nodejs14.x
+      Content:
+        S3Bucket: stackstate-integration-otel
+        S3Key: otel-nodejs-0.0.7.zip
+      LayerName: stackstate-otel-nodejs
+
+Outputs:
+  StackStateKmsKeyArn:
+    Value: !If
+      - IsMainRegion
+      - !GetAtt StsKmsKey.Arn
+      - !Sub arn:${AWS::Partition}:kms:${MainRegion}:${AWS::AccountId}:alias/stackstate-integration
+    Export:
+      Name: !Sub ${AWS::StackName}-StackStateKmsKeyArn
+  StackStateLogsBucketArn:
+    Value: !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}
+    Export:
+      Name: !Sub ${AWS::StackName}-StackStateLogsBucketArn

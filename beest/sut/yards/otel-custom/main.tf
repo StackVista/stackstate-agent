@@ -10,3 +10,8 @@ module "otel" {
 
 // RDS
 
+// ec2
+module "ec2-stackpack" {
+  source = "../../hives/ec2-stackpack"
+
+}
