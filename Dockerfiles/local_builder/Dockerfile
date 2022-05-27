@@ -12,18 +12,20 @@ RUN (groupadd -g $GID $MYUSER || true) && \
 # Ensure local user can run all root commands
 RUN usermod -aG root $MYUSER && \
     chmod g+rx /root && \
-    chown -R dev /go/src
+    chown -R $MYUSER /go/src
+
+# Ensure local user can run omnibus build
+RUN mkdir /opt/stackstate-agent && \
+    chown -R $MYUSER /opt/stackstate-agent
 
 USER $MYUSER
 
-COPY ./shell_init.sh /shell_init.sh
+COPY ./local_init.sh /local_init.sh
 
 # external docker volume
 # if we don't precreate it we do not get the permission we want
 RUN mkdir /go/pkg && \
     chmod a+w /go/pkg
 
-WORKDIR /go/src/github.com/StackVista/stackstate-agent
-
 ENTRYPOINT []
-CMD ["bash", "--init-file", "/shell_init.sh"]
+CMD ["bash", "--init-file", "/local_init.sh"]
