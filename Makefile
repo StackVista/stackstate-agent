@@ -5,7 +5,6 @@ SHELL         := /bin/bash
 UID    ?= $(shell id -u)
 GID    ?= $(shell id -g)
 
-BASE_AGENT_IMAGE   = "artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220505"
 LOCAL_BUILD_IMAGE  = stackstate-agent-local-build
 VOLUME_GO_PKG_NAME = ${LOCAL_BUILD_IMAGE}-go-volume
 AGENT_SOURCE_MOUNT = /stackstate-agent-mount
@@ -21,7 +20,6 @@ DOCKER_ENV		   = --env PROJECT_DIR=${PROJECT_DIR} \
 build:
 	cd Dockerfiles/local_builder && \
 	docker build -t ${LOCAL_BUILD_IMAGE} \
-		--build-arg BASE_IMAGE=${BASE_AGENT_IMAGE} \
 		--build-arg UID=${UID} \
 		--build-arg GID=${GID} \
 		.

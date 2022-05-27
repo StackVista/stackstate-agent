@@ -16,6 +16,7 @@ if [[ ! -z "${AGENT_SOURCE_MOUNT}" ]]; then
         cp -r ${AGENT_SOURCE_MOUNT}/.gitlab-scripts ${PROJECT_DIR}
     else
         echo "Mount directory does not exist!"
+        exit 1
     fi
 fi
 
