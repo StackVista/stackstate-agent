@@ -15,6 +15,8 @@ bucket="${module.otel.bucket}"
 code_zip="${module.otel.codepath}"
 lambda_role_arn="${module.otel.lambda_role_arn}"
 lambda_function_name="${module.otel.lambda_function_name}"
+agent_iam_role="${module.ec2-stackpack.agent_iam_role}"
+
 INVENTORY
   file_permission = "0777"
 }

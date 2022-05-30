@@ -16,3 +16,6 @@ variable "StsAccountId" {
   type = string
   default = "548105126730" ##Integrations Test Main
 }
+variable "yard_id" {
+  type = string
+}

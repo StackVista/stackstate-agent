@@ -12,6 +12,36 @@ resource "aws_cloudformation_stack" "cfn_stackpack" {
   template_body = file("${path.module}/cfn-aws-v2-stack.yml")
 }
 
+
+data "aws_iam_role" "awsv2-stackpack" {
+  name = "StackStateAwsIntegrationRole"
+  depends_on = [aws_cloudformation_stack.cfn_stackpack] #pr for cloudformation stack to output the role
+}
+
+data "aws_iam_policy_document" "policy_document" {
+  statement {
+    sid = "1"
+
+    actions = [
+      "sts:AssumeRole",
+    ]
+    resources = [
+      "arn:aws:iam::*:role/StackStateAwsIntegrationRole",
+    ]
+  }
+}
+
+resource "aws_iam_instance_profile" "integrations_profile" {
+  name = "ec2_profile"
+  role = aws_iam_role.role
+}
+
+resource "aws_iam_role" "role" {
+  name   = "ec2_role"
+  path   = "/"
+  assume_role_policy = data.aws_iam_policy_document.policy_document
+}
+
 data "aws_ami" "ubuntu" {
   most_recent = true
 
@@ -31,9 +61,6 @@ data "aws_ami" "ubuntu" {
 resource "aws_instance" "ec2-stackpack" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t3.micro"
+  iam_instance_profile = aws_iam_instance_profile.integrations_profile.name
 
-}
-
-data "aws_iam_role" "awsv2-stackpack" {
-  name = "StackStateAwsIntegrationRole"
 }
