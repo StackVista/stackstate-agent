@@ -36,10 +36,10 @@ func TestCheckHandler(t *testing.T) {
 		},
 		{
 			testCase:             "no-check check handler",
-			checkHandler:         MakeCheckNoHandler("no-check", &check.TestCheckReloader{}),
-			expectedCHString:     "no-check-name",
+			checkHandler:         MakeNonTransactionalCheckHandler(NewCheckIdentifier("no-check"), &check.TestCheckReloader{}),
+			expectedCHString:     "no-check",
 			expectedCHName:       "no-check",
-			expectedConfigSource: "no-source",
+			expectedConfigSource: "",
 		},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {

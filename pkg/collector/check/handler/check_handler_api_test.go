@@ -49,6 +49,17 @@ var (
 			"bar",
 		},
 	}
+
+	testRawMetricsData2 = telemetry.RawMetrics{
+		Name:      "name",
+		Timestamp: 1500000,
+		HostName:  "hostname",
+		Value:     100,
+		Tags: []string{
+			"hello",
+			"world",
+		},
+	}
 )
 
 // Each table test mutates the shared checkInstanceBatchState, so running individual table tests will not produce the

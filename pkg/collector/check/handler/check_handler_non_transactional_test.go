@@ -1,0 +1,64 @@
+package handler
+
+import (
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
+
+func TestCheckHandlerNonTransactionalAPI(t *testing.T) {
+	testCheck := &check.STSTestCheck{Name: "my-check-handler-non-transactional-check"}
+	nonTransactionCH := MakeNonTransactionalCheckHandler(testCheck, &check.TestCheckReloader{})
+
+	mockBatcher := batcher.NewMockBatcher()
+
+	nonTransactionCH.SubmitStartSnapshot(instance)
+	nonTransactionCH.SubmitComponent(instance, testComponent)
+	nonTransactionCH.SubmitRelation(instance, testRelation)
+	nonTransactionCH.SubmitDelete(instance, deleteID)
+
+	nonTransactionCH.SubmitHealthStartSnapshot(testStream, 1, 0)
+	nonTransactionCH.SubmitHealthCheckData(testStream, testCheckData)
+	nonTransactionCH.SubmitHealthStopSnapshot(testStream)
+
+	nonTransactionCH.SubmitRawMetricsData(testRawMetricsData)
+	nonTransactionCH.SubmitRawMetricsData(testRawMetricsData2)
+
+	nonTransactionCH.SubmitStopSnapshot(instance)
+
+	actualState := mockBatcher.CollectedTopology.Flush()
+
+	expectedState := batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
+		nonTransactionCH.ID(): {
+			Topology: &topology.Topology{
+				StartSnapshot: true,
+				StopSnapshot:  true,
+				Instance:      instance,
+				Components:    []topology.Component{testComponent},
+				Relations:     []topology.Relation{testRelation},
+				DeleteIDs:     []string{deleteID},
+			},
+			Metrics: &[]telemetry.RawMetrics{
+				testRawMetricsData,
+				testRawMetricsData2,
+			},
+			Health: map[string]health.Health{
+				testStream.GoString(): {
+					StartSnapshot: testStartSnapshot,
+					StopSnapshot:  testStopSnapshot,
+					Stream:        testStream,
+					CheckStates:   []health.CheckData{testCheckData},
+				},
+			},
+		},
+	})
+
+	assert.Equal(t, expectedState, actualState)
+
+	mockBatcher.Shutdown()
+
+}
