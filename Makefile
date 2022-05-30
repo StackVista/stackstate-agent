@@ -1,6 +1,7 @@
 .SHELLFLAGS = -ec
 
 SHELL         := /bin/bash
+.DEFAULT_GOAL := dev
 
 UID    ?= $(shell id -u)
 GID    ?= $(shell id -g)
@@ -24,15 +25,18 @@ build:
 		--build-arg GID=${GID} \
 		.
 
-source-shared: build
+# Volume sharing can be used for agent application development
+dev: build
 	docker run -it --rm \
         --name ${LOCAL_BUILD_IMAGE} \
         --mount source=${VOLUME_GO_PKG_NAME},target=/go/pkg \
         --volume ${PWD}:${PROJECT_DIR} \
         ${DOCKER_ENV} ${LOCAL_BUILD_IMAGE}
 
-source-copy: build
+# Source copy can be used for Omnibus package build
+omnibus: build
 	docker run -it --rm \
+        --user root \
         --name ${LOCAL_BUILD_IMAGE} \
         --mount source=${VOLUME_GO_PKG_NAME},target=/go/pkg \
         --volume ${PWD}:${AGENT_SOURCE_MOUNT}:ro \
@@ -43,8 +47,5 @@ source-copy: build
 shell:
 	docker exec -ti ${LOCAL_BUILD_IMAGE} bash --init-file /local_init.sh
 
-shell-root:
-	docker exec --user root -ti ${LOCAL_BUILD_IMAGE} bash
 
-
-.PHONY: build source-shared source-copy shell shell-root
+.PHONY: build dev omnibus shell

@@ -8,12 +8,23 @@ conda activate ddpy${PYTHON_RUNTIME}
 
 if [[ ! -z "${AGENT_SOURCE_MOUNT}" ]]; then
     echo "Agent source mount provided: ${AGENT_SOURCE_MOUNT}"
+
     if [[ -d ${AGENT_SOURCE_MOUNT} ]]; then
-        echo "Copying ..."
-        mkdir -p ${PROJECT_DIR}
-        cp -r ${AGENT_SOURCE_MOUNT}/* ${PROJECT_DIR}
-        cp -rf ${AGENT_SOURCE_MOUNT}/.git ${PROJECT_DIR}
-        cp -r ${AGENT_SOURCE_MOUNT}/.gitlab-scripts ${PROJECT_DIR}
+
+        pidof inotifywait
+        if [ $? -ne 0 ]; then
+            echo "inotifywait not running"
+
+            echo "Copying ..."
+            mkdir -p ${PROJECT_DIR}
+            rsync -a ${AGENT_SOURCE_MOUNT}/ ${PROJECT_DIR}
+            while inotifywait -r -e modify,create,delete,move ${AGENT_SOURCE_MOUNT}; do
+                rsync -avz ${AGENT_SOURCE_MOUNT}/ ${PROJECT_DIR}
+            done
+        else
+            echo "inotifywait already running"
+        fi
+
     else
         echo "Mount directory does not exist!"
         exit 1
@@ -43,6 +54,9 @@ Here few helpful commands to get you started (check .gitlab-ci-agent.yml for mor
 
   # Clean temporary objects and binary artifacts
   inv agent.clean
+
+  # Switch to python 3
+  export PYTHON_RUNTIME=3 && conda activate ddpy\$PYTHON_RUNTIME
 ---------------------------------------------------------------------------------------
 
 EOF

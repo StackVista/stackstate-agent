@@ -4,6 +4,9 @@ ARG UID
 ARG GID
 ARG MYUSER=dev
 
+# Used for copy agent source from mount point
+RUN apt-get install -y --no-install-recommends inotify-tools rsync
+
 # Add local user to match id/gid of host user
 RUN (groupadd -g $GID $MYUSER || true) && \
     useradd -m -u $UID -g $GID $MYUSER -s /bin/sh
@@ -12,12 +15,6 @@ RUN (groupadd -g $GID $MYUSER || true) && \
 RUN usermod -aG root $MYUSER && \
     chmod g+rx /root && \
     chown -R $MYUSER /go/src
-
-# Ensure local user can run omnibus build
-RUN mkdir /opt/stackstate-agent /etc/stackstate-agent /var/log/stackstate-agent \
-          /var/log/sa /etc/init && \
-    chown -R $MYUSER /opt/stackstate-agent /etc/stackstate-agent /var/log/stackstate-agent \
-                     /var/log/sa /etc/init /etc/init.d /lib/systemd/system /usr/bin
 
 USER $MYUSER
 
