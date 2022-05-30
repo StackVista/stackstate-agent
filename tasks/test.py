@@ -113,9 +113,11 @@ def test(
         ineffassign(ctx, targets=tool_targets)
 
         # for now we only run golangci_lint on Unix as the Windows env need more work
-        if sys.platform != 'win32':
-            print("--- golangci_lint:")
-            golangci_lint(ctx, targets=tool_targets, rtloader_root=rtloader_root, build_tags=build_tags)
+        # TODO Reenable golangci-ling
+        # if sys.platform != 'win32':
+        #     print("--- golangci_lint:")
+        #     golangci_lint(ctx, targets=tool_targets, rtloader_root=rtloader_root, build_tags=build_tags)
+        
 
     with open(PROFILE_COV, "w") as f_cov:
         f_cov.write("mode: count")
