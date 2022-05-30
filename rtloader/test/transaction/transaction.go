@@ -21,12 +21,12 @@ import (
 #include "rtloader_mem.h"
 #include "datadog_agent_rtloader.h"
 
-extern void submitStartTransaction(char *);
-extern void submitStopTransaction(char *);
+extern void startTransaction(char *);
+extern void stopTransaction(char *);
 
 static void initTransactionTests(rtloader_t *rtloader) {
-	set_submit_start_transaction_cb(rtloader, submitStartTransaction);
-	set_submit_stop_transaction_cb(rtloader, submitStopTransaction);
+	set_start_transaction_cb(rtloader, startTransaction);
+	set_stop_transaction_cb(rtloader, stopTransaction);
 }
 */
 import "C"
@@ -110,16 +110,16 @@ except Exception as e:
 	return strings.TrimSpace(string(output)), err
 }
 
-//export submitStartTransaction
-func submitStartTransaction(id *C.char) {
+//export startTransaction
+func startTransaction(id *C.char) {
 	checkID = C.GoString(id)
 
 	transactionID = checkID + "-transaction-id"
 	transactionStarted = true
 }
 
-//export submitStopTransaction
-func submitStopTransaction(id *C.char) {
+//export stopTransaction
+func stopTransaction(id *C.char) {
 	checkID = C.GoString(id)
 
 	transactionID = ""

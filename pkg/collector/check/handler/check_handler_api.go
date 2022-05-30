@@ -12,8 +12,8 @@ import (
 // where it needs to go.
 type CheckAPI interface {
 	// Transactionality
-	SubmitStartTransaction() string
-	SubmitStopTransaction()
+	StartTransaction() string
+	StopTransaction()
 
 	// Topology
 	SubmitComponent(instance topology.Instance, component topology.Component)
@@ -34,20 +34,20 @@ type CheckAPI interface {
 	SubmitComplete()
 }
 
-// SubmitStartTransaction submits a start transaction for the check handler. This blocks any future transactions until
-// this one completes, fails or is timed out. TODO: rename to StartTransaction
-func (ch *checkHandler) SubmitStartTransaction() string {
+// StartTransaction submits a start transaction for the check handler. This blocks any future transactions until
+// this one completes, fails or is timed out.
+func (ch *checkHandler) StartTransaction() string {
 	transactionID := uuid.New().String()
-	ch.transactionChannel <- SubmitStartTransaction{
+	ch.transactionChannel <- StartTransaction{
 		CheckID:       ch.ID(),
 		TransactionID: transactionID,
 	}
 	return transactionID
 }
 
-// SubmitStopTransaction submits a complete to the Transactional Batcher, to send the final payload of the transaction
-// and mark the current transaction as complete. TODO: rename to StopTransaction
-func (ch *checkHandler) SubmitStopTransaction() {
+// StopTransaction submits a complete to the Transactional Batcher, to send the final payload of the transaction
+// and mark the current transaction as complete.
+func (ch *checkHandler) StopTransaction() {
 	transactionbatcher.GetTransactionalBatcher().SubmitCompleteTransaction(ch.ID(), ch.GetCurrentTransaction())
 }
 

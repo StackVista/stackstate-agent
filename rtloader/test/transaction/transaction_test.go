@@ -18,11 +18,11 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestSubmitStartTransaction(t *testing.T) {
+func TestStartTransaction(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
 
-	out, err := run(`transaction.submit_start_transaction(None, "checkid")`)
+	out, err := run(`transaction.start_transaction(None, "checkid")`)
 
 	if err != nil {
 		t.Fatal(err)
@@ -44,11 +44,11 @@ func TestSubmitStartTransaction(t *testing.T) {
 	helpers.AssertMemoryUsage(t)
 }
 
-func TestSubmitStopTransaction(t *testing.T) {
+func TestStopTransaction(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()
 
-	out, err := run(`transaction.submit_stop_transaction(None, "checkid")`)
+	out, err := run(`transaction.stop_transaction(None, "checkid")`)
 
 	if err != nil {
 		t.Fatal(err)

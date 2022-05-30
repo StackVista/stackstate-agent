@@ -211,12 +211,12 @@ void initHealthModule(rtloader_t *rtloader) {
 // [sts] transactional state module
 //
 
-void SubmitStartTransaction(char *);
-void SubmitStopTransaction(char *);
+void StartTransaction(char *);
+void SubmitTransaction(char *);
 
 void initTransactionalStateModule(rtloader_t *rtloader) {
-	set_submit_start_transaction_cb(rtloader, SubmitStartTransaction);
-	set_submit_stop_transaction_cb(rtloader, SubmitStopTransaction);
+	set_start_transaction_cb(rtloader, StartTransaction);
+	set_stop_transaction_cb(rtloader, StopTransaction);
 }
 
 */

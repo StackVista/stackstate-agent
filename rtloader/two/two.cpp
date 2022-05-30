@@ -962,13 +962,13 @@ void Two::setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t cb)
 }
 
 // [sts] transaction state
-void Two::setSubmitStartTransactionCb(cb_submit_start_transaction_t cb)
+void Two::setStartTransactionCb(cb_start_transaction_t cb)
 {
-    _set_submit_start_transaction_cb(cb);
+    _set_start_transaction_cb(cb);
 }
-void Two::setSubmitStopTransactionCb(cb_submit_stop_transaction_t cb)
+void Two::setStopTransactionCb(cb_stop_transaction_t cb)
 {
-    _set_submit_stop_transaction_cb(cb);
+    _set_stop_transaction_cb(cb);
 }
 
 // Python Helpers

@@ -707,26 +707,26 @@ DATADOG_AGENT_RTLOADER_API void set_submit_health_stop_snapshot_cb(rtloader_t *,
 DATADOG_AGENT_RTLOADER_API void set_submit_raw_metrics_data_cb(rtloader_t *, cb_submit_raw_metrics_data_t);
 
 
-/*! \fn void set_submit_start_transaction_cb(rtloader_t *, cb_submit_start_transaction_t)
+/*! \fn void set_start_transaction_cb(rtloader_t *, cb_start_transaction_t)
     \brief Sets a callback to be used by rtloader to start a transactional state for the Agent Check.
     \param rtloader_t A rtloader_t * pointer to the RtLoader instance.
-    \param object A function pointer with cb_submit_start_transaction_t prototype to the callback
+    \param object A function pointer with cb_start_transaction_t prototype to the callback
     function.
 
     The callback is expected to be provided by the rtloader caller - in go-context: CGO.
 */
-DATADOG_AGENT_RTLOADER_API void set_submit_start_transaction_cb(rtloader_t *, cb_submit_start_transaction_t);
+DATADOG_AGENT_RTLOADER_API void set_start_transaction_cb(rtloader_t *, cb_start_transaction_t);
 
 
-/*! \fn void set_submit_stop_transaction_cb(rtloader_t *, cb_submit_stop_transaction_t)
+/*! \fn void set_stop_transaction_cb(rtloader_t *, cb_stop_transaction_t)
     \brief Sets a callback to be used by rtloader to stop a transactional state for the Agent Check.
     \param rtloader_t A rtloader_t * pointer to the RtLoader instance.
-    \param object A function pointer with cb_submit_stop_transaction_t prototype to the callback
+    \param object A function pointer with cb_stop_transaction_t prototype to the callback
     function.
 
     The callback is expected to be provided by the rtloader caller - in go-context: CGO.
 */
-DATADOG_AGENT_RTLOADER_API void set_submit_stop_transaction_cb(rtloader_t *, cb_submit_stop_transaction_t);
+DATADOG_AGENT_RTLOADER_API void set_stop_transaction_cb(rtloader_t *, cb_stop_transaction_t);
 
 #ifdef __cplusplus
 }

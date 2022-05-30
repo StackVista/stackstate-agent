@@ -82,7 +82,7 @@ func TestCheckHandlerAPI(t *testing.T) {
 		{
 			testCase: "Start transaction should produce a batch transaction in the TransactionCheckInstanceBatchState",
 			checkHandlerFunction: func(handler CheckHandler) {
-				transactionID = handler.SubmitStartTransaction()
+				transactionID = handler.StartTransaction()
 			},
 			stateMutation: func(state *transactionbatcher.TransactionCheckInstanceBatchState) {
 				state.Transaction = &transactionbatcher.BatchTransaction{
@@ -192,7 +192,7 @@ func TestCheckHandlerAPI(t *testing.T) {
 		{
 			testCase: "Stop transaction should mark a batch transaction as complete in the TransactionCheckInstanceBatchState",
 			checkHandlerFunction: func(handler CheckHandler) {
-				handler.SubmitStopTransaction()
+				handler.StopTransaction()
 			},
 			stateMutation: func(state *transactionbatcher.TransactionCheckInstanceBatchState) {
 				state.Transaction.CompletedTransaction = true

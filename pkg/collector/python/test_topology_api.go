@@ -148,7 +148,7 @@ func testStartTransaction(t *testing.T) {
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 	checkId := C.CString(string(testCheck.ID()))
 
-	SubmitStartTransaction(checkId)
+	StartTransaction(checkId)
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
 	transactionID := mockTransactionManager.GetCurrentTransaction()
@@ -160,12 +160,12 @@ func testStopTransaction(t *testing.T) {
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 	checkId := C.CString(string(testCheck.ID()))
 
-	SubmitStartTransaction(checkId)
+	StartTransaction(checkId)
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
 	transactionID := mockTransactionManager.GetCurrentTransaction()
 
-	SubmitStopTransaction(checkId)
+	StopTransaction(checkId)
 
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())

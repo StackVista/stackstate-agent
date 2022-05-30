@@ -8,16 +8,16 @@
 #include "util.h"
 
 // these must be set by the Agent
-static cb_submit_start_transaction_t cb_submit_start_transaction = NULL;
-static cb_submit_stop_transaction_t cb_submit_stop_transaction = NULL;
+static cb_start_transaction_t cb_start_transaction = NULL;
+static cb_stop_transaction_t cb_stop_transaction = NULL;
 
 // forward declarations
-static PyObject *submit_start_transaction(PyObject *self, PyObject *args);
-static PyObject *submit_stop_transaction(PyObject *self, PyObject *args);
+static PyObject *start_transaction(PyObject *self, PyObject *args);
+static PyObject *stop_transaction(PyObject *self, PyObject *args);
 
 static PyMethodDef methods[] = {
-    {"submit_start_transaction", (PyCFunction)submit_start_transaction, METH_VARARGS, "Starts a transactional state for a Agent Check."},
-    {"submit_stop_transaction", (PyCFunction)submit_stop_transaction, METH_VARARGS, "Stops a transactional state for a Agent Check."},
+    {"start_transaction", (PyCFunction)start_transaction, METH_VARARGS, "Starts a transactional state for a Agent Check."},
+    {"stop_transaction", (PyCFunction)stop_transaction, METH_VARARGS, "Stops a transactional state for a Agent Check."},
     {NULL, NULL}  // guards
 };
 
@@ -40,14 +40,14 @@ void Py2_init_transaction()
 #endif
 
 
-void _set_submit_start_transaction_cb(cb_submit_start_transaction_t cb)
+void _set_start_transaction_cb(cb_start_transaction_t cb)
 {
-    cb_submit_start_transaction = cb;
+    cb_start_transaction = cb;
 }
 
-static PyObject *submit_start_transaction(PyObject *self, PyObject *args) {
-    if (cb_submit_start_transaction == NULL) {
-        PyErr_SetString(PyExc_TypeError, "`submit_start_transaction` is set as NULL");
+static PyObject *start_transaction(PyObject *self, PyObject *args) {
+    if (cb_start_transaction == NULL) {
+        PyErr_SetString(PyExc_TypeError, "`start_transaction` is set as NULL");
         Py_RETURN_NONE;
     }
 
@@ -60,7 +60,7 @@ static PyObject *submit_start_transaction(PyObject *self, PyObject *args) {
       goto error;
     }
 
-    cb_submit_start_transaction(check_id);
+    cb_start_transaction(check_id);
 
     PyGILState_Release(gstate);
     Py_RETURN_NONE; // Success
@@ -70,14 +70,14 @@ error:
     return NULL; // Failure
 }
 
-void _set_submit_stop_transaction_cb(cb_submit_stop_transaction_t cb)
+void _set_stop_transaction_cb(cb_stop_transaction_t cb)
 {
-    cb_submit_stop_transaction = cb;
+    cb_stop_transaction = cb;
 }
 
-static PyObject *submit_stop_transaction(PyObject *self, PyObject *args) {
-    if (cb_submit_stop_transaction == NULL) {
-        PyErr_SetString(PyExc_TypeError, "`submit_stop_transaction` is set as NULL");
+static PyObject *stop_transaction(PyObject *self, PyObject *args) {
+    if (cb_stop_transaction == NULL) {
+        PyErr_SetString(PyExc_TypeError, "`stop_transaction` is set as NULL");
         Py_RETURN_NONE;
     }
 
@@ -90,7 +90,7 @@ static PyObject *submit_stop_transaction(PyObject *self, PyObject *args) {
       goto error;
     }
 
-    cb_submit_stop_transaction(check_id);
+    cb_stop_transaction(check_id);
 
     PyGILState_Release(gstate);
     Py_RETURN_NONE; // Success

@@ -199,9 +199,9 @@ typedef void (*cb_submit_health_stop_snapshot_t)(char *, health_stream_t *);
 typedef void (*cb_submit_raw_metrics_data_t)(char *, char *, float, char **, char *, long long);
 
 // (check_id)
-typedef void (*cb_submit_start_transaction_t)(char *);
+typedef void (*cb_start_transaction_t)(char *);
 // (check_id)
-typedef void (*cb_submit_stop_transaction_t)(char *);
+typedef void (*cb_stop_transaction_t)(char *);
 
 #ifdef __cplusplus
 }

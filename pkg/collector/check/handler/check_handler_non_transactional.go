@@ -80,15 +80,15 @@ func (ch *NonTransactionalCheckHandler) Reload() {
 	_ = ch.CheckReloader.ReloadCheck(ch.ID(), config, initConfig, ch.ConfigSource())
 }
 
-// SubmitStartTransaction logs a warning for the no check handler. This should never be called.
-func (ch *NonTransactionalCheckHandler) SubmitStartTransaction() string {
+// StartTransaction logs a warning for the no check handler. This should never be called.
+func (ch *NonTransactionalCheckHandler) StartTransaction() string {
 	_ = log.Warnf("StartTransaction called on NonTransactionalCheckHandler. This should never happen.")
 	return ""
 }
 
-// SubmitStopTransaction logs a warning for the no check handler. This should never be called.
-func (ch *NonTransactionalCheckHandler) SubmitStopTransaction() {
-	_ = log.Warnf("SubmitStopTransaction called on NonTransactionalCheckHandler. This should never happen.")
+// StopTransaction logs a warning for the no check handler. This should never be called.
+func (ch *NonTransactionalCheckHandler) StopTransaction() {
+	_ = log.Warnf("StopTransaction called on NonTransactionalCheckHandler. This should never happen.")
 }
 
 // GetConfig is the NonTransactionalCheckHandler implementation which just returns nil. This should never be called.

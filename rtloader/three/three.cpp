@@ -965,13 +965,13 @@ void Three::setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t cb)
 }
 
 // [sts] transaction state
-void Three::setSubmitStartTransactionCb(cb_submit_start_transaction_t cb)
+void Three::setStartTransactionCb(cb_start_transaction_t cb)
 {
-    _set_submit_start_transaction_cb(cb);
+    _set_start_transaction_cb(cb);
 }
-void Three::setSubmitStopTransactionCb(cb_submit_stop_transaction_t cb)
+void Three::setStopTransactionCb(cb_stop_transaction_t cb)
 {
-    _set_submit_stop_transaction_cb(cb);
+    _set_stop_transaction_cb(cb);
 }
 
 // Python Helpers

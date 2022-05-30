@@ -31,16 +31,16 @@
     methods. A fresh reference to the module is created here. This function is python2
     only.
 */
-/*! \fn void _set_submit_start_transaction_cb(cb_submit_start_transaction_t)
+/*! \fn void _set_start_transaction_cb(cb_start_transaction_t)
     \brief Sets the submit start transaction callback to be used by rtloader for transactional state.
-    \param object A function pointer with cb_submit_start_transaction_t function prototype to the
+    \param object A function pointer with cb_start_transaction_t function prototype to the
     callback function.
 
     The callback is expected to be provided by the rtloader caller - in go-context: CGO.
 */
-/*! \fn void _set_submit_stop_transaction_cb(cb_submit_stop_transaction_t)
+/*! \fn void _set_stop_transaction_cb(cb_stop_transaction_t)
     \brief Sets the submit stop transaction callback to be used by rtloader for transactional state.
-    \param object A function pointer with cb_submit_stop_transaction_t function prototype to the
+    \param object A function pointer with cb_stop_transaction_t function prototype to the
     callback function.
 
     The callback is expected to be provided by the rtloader caller - in go-context: CGO.
@@ -61,8 +61,8 @@ PyMODINIT_FUNC PyInit_transaction(void);
 void Py2_init_transaction();
 #endif
 
-void _set_submit_start_transaction_cb(cb_submit_start_transaction_t);
-void _set_submit_stop_transaction_cb(cb_submit_stop_transaction_t);
+void _set_start_transaction_cb(cb_start_transaction_t);
+void _set_stop_transaction_cb(cb_stop_transaction_t);
 
 #ifdef __cplusplus
 }

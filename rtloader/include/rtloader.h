@@ -534,21 +534,21 @@ public:
     */
     virtual void setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t) = 0;
 
-    //! setSubmitStartTransactionCb member.
+    //! setStartTransactionCb member.
     /*!
-      \param A cb_submit_start_transaction_t function pointer to the CGO callback.
+      \param A cb_start_transaction_t function pointer to the CGO callback.
 
       Actual check data is submitted from go-land, this allows us to set the CGO callback.
     */
-    virtual void setSubmitStartTransactionCb(cb_submit_start_transaction_t) = 0;
+    virtual void setStartTransactionCb(cb_start_transaction_t) = 0;
 
-    //! setSubmitStopTransactionCb member.
+    //! setStopTransactionCb member.
     /*!
-      \param A cb_submit_stop_transaction_t function pointer to the CGO callback.
+      \param A cb_stop_transaction_t function pointer to the CGO callback.
 
       Actual check data is submitted from go-land, this allows us to set the CGO callback.
     */
-    virtual void setSubmitStopTransactionCb(cb_submit_stop_transaction_t) = 0;
+    virtual void setStopTransactionCb(cb_stop_transaction_t) = 0;
 
 private:
     mutable std::string _error; /*!< string containing a RtLoader error */

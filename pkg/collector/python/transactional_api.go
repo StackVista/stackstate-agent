@@ -26,16 +26,16 @@ import "C"
 // Beware that any changes made here MUST be reflected also in the test implementation
 // rtloader/test/transaction/transaction.go
 
-// SubmitStartTransaction starts a transaction
-//export SubmitStartTransaction
-func SubmitStartTransaction(id *C.char) {
+// StartTransaction starts a transaction
+//export StartTransaction
+func StartTransaction(id *C.char) {
 	goCheckID := C.GoString(id)
-	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitStartTransaction()
+	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).StartTransaction()
 }
 
-// SubmitStopTransaction stops a transaction
-//export SubmitStopTransaction
-func SubmitStopTransaction(id *C.char) {
+// StopTransaction stops a transaction
+//export StopTransaction
+func StopTransaction(id *C.char) {
 	goCheckID := C.GoString(id)
-	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitStopTransaction()
+	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).StopTransaction()
 }
