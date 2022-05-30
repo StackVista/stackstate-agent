@@ -1,0 +1,9 @@
+---
+agent_current_branch: "{{ lookup('env', 'AGENT_CURRENT_BRANCH') or AGENT_CURRENT_BRANCH }}"
+stackstate_branch: "{{ lookup('env', 'STACKSTATE_BRANCH') or STACKSTATE_BRANCH }}"
+
+namespace: "{{ agent_current_branch.replace('.','-').replace('_','-') | lower }}"
+cluster_name: "{{ namespace }}"
+
+kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/config"
+kubecontext: "{{ yard_id }}"

@@ -42,6 +42,8 @@
       values_files:
         - "{{ playbook_dir }}/stackstate-values.yml"
       values:
+        global:
+          receiverApiKey: "{{ STS_API_KEY }}"  # TODO
         stackstate:
           components:
             e2es:

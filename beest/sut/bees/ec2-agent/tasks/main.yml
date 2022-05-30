@@ -1,0 +1,19 @@
+---
+- name: StackState Agent prepare tasks
+  tags: prepare
+  block:
+    - name: Install stackstate-agent
+      shell: "curl -o- {{ agent_repo_url }}/install.sh | bash"
+      register: agent_install_result
+      until: agent_install_result is not failed
+      retries: 5
+      delay: 60
+      environment:
+        STS_API_KEY: "{{ whatever we override when deploying sts helm chart }}"  # TODO
+        STS_URL: "{{ whatever we pass to the sts toolbox }}"  # TODO
+        STS_HOSTNAME: "{{ inventory_hostname }}"
+        CODE_NAME: "{{ agent_current_branch }}"
+        SKIP_SSL_VALIDATION: "true"
+
+#    Configure AWS check
+# render template and store it under /etc/stackstate-agent/conf.d/aws_topology/
