@@ -212,7 +212,7 @@ void initHealthModule(rtloader_t *rtloader) {
 //
 
 void StartTransaction(char *);
-void SubmitTransaction(char *);
+void StopTransaction(char *);
 
 void initTransactionalStateModule(rtloader_t *rtloader) {
 	set_start_transaction_cb(rtloader, StartTransaction);
