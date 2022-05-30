@@ -1,11 +1,11 @@
-FROM centos:6
+FROM centos:7
 
 # Build Args
 ARG GIMME_GO_VERSION=1.13.11
 ARG DD_CONDA_VERSION=4.7.10
 ARG DD_PIP_VERSION=19.1
 ARG DD_SETUPTOOLS_VERSION=41.0.1
-ARG IBM_MQ_VERSION=9.1.5.0
+ARG IBM_MQ_VERSION=9.2.4.0
 ARG CMAKE_VERSION=3.14.4
 ARG CLANG_VERSION=8.0.0
 
@@ -27,23 +27,37 @@ RUN yum -y install \
   curl-devel expat-devel gettext-devel openssl-devel zlib-devel bzip2 \
   glibc-static tar libtool
 
+# # openssl 1.1.1
+
+# RUN cd tmp && \
+#     wget https://ftp.openssl.org/source/old/1.1.1/openssl-1.1.1.tar.gz --no-check-certificate && \
+#     tar xvf openssl-1.1.1.tar.gz && \
+#     cd openssl-1.1.1/ && \
+#     ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic && \
+#     make && \
+#     make install && \
+#     rm -rf /tmp/openssl*
+
+# ENV LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64
+
+# # /openssl 1.1.1
+
 # Git
-RUN curl -OL https://www.kernel.org/pub/software/scm/git/git-2.10.1.tar.gz
-# --no-same-owner: git tarball has a file with UID 110493 which makes pulling this image fail, because we use docker user namespacing and we can't have >65K UIDs.
-RUN tar xzf git-2.10.1.tar.gz --no-same-owner
-RUN cd git-2.10.1 && make prefix=/usr/local all
-RUN cd git-2.10.1 && make prefix=/usr/local install
-RUN rm -rf git-2.10.1 git-2.10.1.tar.gz
+RUN cd tmp/ && curl -OL https://www.kernel.org/pub/software/scm/git/git-2.10.1.tar.gz && \
+    tar xzf git-2.10.1.tar.gz --no-same-owner && \
+    cd git-2.10.1 && make prefix=/usr/local all && \
+    make prefix=/usr/local install && \
+    rm -rf /tmp/git-2.10.1 /tmp/git-2.10.1.tar.gz
 
 RUN git config --global user.email "gitlab@stackstate" && git config --global user.name "Gitlab Stackstate"
 
 # RVM
-COPY ./rvm/gpg-keys /gpg-keys
-RUN gpg --import /gpg-keys/*
-RUN rm -rf /gpg-keys
+#RUN gpg --keyserver hkp://pgp.mit.edu --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
+RUN curl -sSL https://rvm.io/mpapis.asc | gpg --import -
+RUN curl -sSL https://rvm.io/pkuczynski.asc | gpg --import -
 RUN curl -sSL https://get.rvm.io | bash -s stable --version latest-1.29
 RUN /bin/bash -l -c "rvm requirements"
-RUN /bin/bash -l -c "rvm install 2.3 && rvm cleanup all"
+RUN /bin/bash -l -c "rvm install 2.4.2 && rvm cleanup all"
 RUN /bin/bash -l -c "gem install bundler --no-document"
 
 # Gimme
@@ -90,13 +104,13 @@ RUN conda init bash
 RUN source /root/.bashrc && conda activate ddpy2 \
     && pip install -i https://pypi.python.org/simple pip==${DD_PIP_VERSION} \
     && pip install --ignore-installed setuptools==${DD_SETUPTOOLS_VERSION} \
-    && pip install invoke distro==1.4.0 awscli==1.16.240
+    && pip install invoke==1.7.0 distro==1.4.0 awscli==1.16.240 lexicon==2.0.1
 
 # Update pip, setuptools and misc deps
 RUN source /root/.bashrc && conda activate ddpy3 \
     && pip install -i https://pypi.python.org/simple pip==${DD_PIP_VERSION} \
     && pip install --ignore-installed setuptools==${DD_SETUPTOOLS_VERSION} \
-    && pip install invoke distro==1.4.0 awscli==1.16.240
+    && pip install invoke==1.7.0 distro==1.4.0 awscli==1.16.240 lexicon==2.0.1
 
 # Add systemd headers
 COPY ./rpm-headers/systemd /usr/include/systemd
@@ -121,13 +135,14 @@ RUN rm -r /usr/src/kernels/* && \
     tar xf kernel-4.9-headers-rpm-x64.tgz --no-same-owner --strip 1 -C /usr && \
     rm kernel-4.9-headers-rpm-x64.tgz
 
-# Update GCC: CentOS6 gcc-4.4 is a little too far behind what we use with the debian builder
-RUN curl -o /etc/yum.repos.d/devtools-1.1.repo https://people.centos.org/tru/devtools-1.1/devtools-1.1.repo
-RUN yum --enablerepo=testing-1.1-devtools-6 -y install devtoolset-1.1-gcc devtoolset-1.1-gcc-c++
+# GCC toolset is different fron Centos6 runner
+RUN yum install -y centos-release-scl
+RUN yum install -y devtoolset-7-gcc*
 
-ENV CC=/opt/centos/devtoolset-1.1/root/usr/bin/gcc
-ENV CPP=/opt/centos/devtoolset-1.1/root/usr/bin/cpp
-ENV CXX=/opt/centos/devtoolset-1.1/root/usr/bin/c++
+
+ENV CC=/opt/rh/devtoolset-7/root/usr/bin/gcc
+ENV CPP=/opt/rh/devtoolset-7/root/usr/bin/cpp
+ENV CXX=/opt/rh/devtoolset-7/root/usr/bin/c++
 
 # Download and install golangci-lint
 RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $GOPATH/bin v1.21.0
@@ -141,5 +156,9 @@ RUN mkdir -p /go/src/github.com/DataDog/datadog-agent
 
 # Force umask to 0022
 RUN echo "umask 0022" >> /root/.bashrc
+
+RUN pip install awscli==1.16 boto3==1.8.0 sts-rpm-s3==0.3.3
+
+RUN yum -y install net-snmp-devel python-deltarpm yum-utils libtool rpm-sign createrepo
 
 ENTRYPOINT ["/entrypoint.sh"]

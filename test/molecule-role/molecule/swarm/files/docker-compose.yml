@@ -3,10 +3,19 @@ version: '3'
 
 services:
   zookeeper:
-    image: wurstmeister/zookeeper
+    image: quay.io/stackstate/zookeeper:3.6.3-focal-20220316-r302.20220411.1232
     ports:
       - 2181:2181
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+    healthcheck:
+      test: [ "CMD-SHELL", "echo ruok | nc -w 2 127.0.0.1 2181" ]
+      interval: 5s
+      timeout: 30s
+      retries: 3
     deploy:
+      restart_policy:
+        condition: on-failure
       placement:
         constraints: [ node.role == manager ]
       resources:
@@ -14,24 +23,29 @@ services:
           memory: 1G
 
   kafka:
-    image: wurstmeister/kafka:2.12-2.3.1
+    image: quay.io/stackstate/kafka:2.8.0-focal-20220316-r108.20220405.1511
     ports:
       - 9092:9092
     depends_on:
       - zookeeper
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: kafka
-      KAFKA_ADVERTISED_PORT: 9092
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_CREATE_TOPICS: "sts_connection_beat_events:1:1,sts_generic_events:1:1,sts_state_events:1:1,sts_multi_metrics:1:1,sts_correlate_endpoints:1:1,sts_topo_process_agents:1:1,sts_trace_events:1:1,sts_topology_events:1:1,sts_correlated_connections:1:1"
+      KAFKA_ADVERTISED_HOST_NAME: "kafka"
+      KAFKA_ADVERTISED_PORT: "9092"
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_CREATE_TOPICS: "sts_connection_beat_events:1:1,sts_correlate_endpoints:1:1,sts_generic_events:1:1,sts_intake_health:1:1,sts_multi_metrics:1:1,sts_state_events:1:1,sts_topo_agent_integrations:1:1,sts_topology_events:1:1,sts_topo_process_agents:1:1,sts_trace_events:1:1,sts_correlated_connections:1:1"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      DOCKER_API_VERSION: 1.22
+      KAFKA_HOME: "/opt/bitnami/kafka"
     volumes:
       - "./verify-or-create-topics.sh:/usr/local/bin/verify-or-create-topics.sh"
     healthcheck:
-      test: [ "CMD", "verify-or-create-topics.sh" ]
+      test: [ "CMD-SHELL", "/usr/local/bin/verify-or-create-topics.sh" ]
       interval: 10s
-      timeout: 45s
-      retries: 10
+      timeout: 65s
+      retries: 20
     deploy:
+      restart_policy:
+        condition: on-failure
       placement:
         constraints: [ node.role == manager ]
       resources:
@@ -48,6 +62,8 @@ services:
     environment:
       KAFKA_BROKERS: kafka:9092
     deploy:
+      restart_policy:
+        condition: any
       placement:
         constraints: [ node.role == manager ]
       resources:
@@ -64,6 +80,8 @@ services:
       KAFKA_BROKERS: kafka:9092
       ZOOKEEPER_QUORUM: kafka
     deploy:
+      restart_policy:
+        condition: on-failure
       placement:
         constraints: [ node.role == manager ]
       resources:
@@ -71,8 +89,10 @@ services:
           memory: 1G
 
   stackstate-agent:
-    image: docker.io/stackstate/stackstate-cluster-agent-test:${AGENT_VERSION}
+    image: quay.io/stackstate/stackstate-cluster-agent-test:${AGENT_VERSION}
     deploy:
+      restart_policy:
+        condition: on-failure
       placement:
         constraints: [ node.role == manager ]
     volumes:
