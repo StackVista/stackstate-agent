@@ -73,7 +73,7 @@ def test_docker_swarm_topology(host):
                     r"urn:swarm-service:/.*").findall(e_id),
                 "data": lambda d: (
                     d["name"] == "agent_stackstate-agent" and
-                    str(d["image"]).startswith("stackstate/stackstate-cluster-agent-test:{}@".format(os.environ['AGENT_CURRENT_BRANCH'])) and
+                    str(d["image"]).startswith("quay.io/stackstate/stackstate-cluster-agent-test:{}@".format(os.environ['AGENT_CURRENT_BRANCH'])) and
                     "spec" in d and
                     "Replicated" in d["spec"]["Mode"] and
                     d["spec"]["Mode"]["Replicated"]["Replicas"] == 1
@@ -112,7 +112,7 @@ def test_docker_swarm_topology(host):
                     r"urn:swarm-service:/.*").findall(e_id),
                 "data": lambda d: (
                     d["name"] == "agent_kafka" and
-                    str(d["image"]).startswith("wurstmeister/kafka:2.12-2.3.1@") and
+                    str(d["image"]).startswith("quay.io/stackstate/kafka:2.8.0-focal-20220316-r108.20220405.1511@") and
                     "spec" in d and
                     "Replicated" in d["spec"]["Mode"] and
                     d["spec"]["Mode"]["Replicated"]["Replicas"] == 1
@@ -125,7 +125,7 @@ def test_docker_swarm_topology(host):
                     r"urn:swarm-service:/.*").findall(e_id),
                 "data": lambda d: (
                     d["name"] == "agent_zookeeper" and
-                    str(d["image"]).startswith("wurstmeister/zookeeper:latest@") and
+                    str(d["image"]).startswith("quay.io/stackstate/zookeeper:3.6.3-focal-20220316-r302.20220411.1232@") and
                     "spec" in d and
                     "Replicated" in d["spec"]["Mode"] and
                     d["spec"]["Mode"]["Replicated"]["Replicas"] == 1
