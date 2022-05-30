@@ -42,8 +42,8 @@ data "aws_iam_policy_document" "lambda_assume" {
 
 data "aws_iam_policy_document" "lambda_to_sns" {
   statement {
-    effect = "Allow"
-    actions = ["SNS:Publish"]
+    effect    = "Allow"
+    actions   = ["SNS:Publish"]
     resources = ["arn:aws:sns:*:*:*"]
   }
 }
@@ -60,8 +60,8 @@ resource "aws_iam_role" "iam_for_lambda" {
 }
 
 resource "aws_iam_policy_attachment" "logs_sns_policy_attach" {
-  name  = "${var.environment}-lambda-sns"
-  roles = [aws_iam_role.iam_for_lambda.name]
+  name       = "${var.environment}-lambda-sns"
+  roles      = [aws_iam_role.iam_for_lambda.name]
   policy_arn = aws_iam_policy.lambda_to_sns.arn
 }
 

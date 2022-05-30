@@ -1,21 +1,23 @@
 variable "external_id" {
-  type = string
+  type    = string
   default = "pancakes-test"
 }
 
 variable "region" {
-  type = string
+  type    = string
   default = "eu-west-1"
 }
 
 variable "include_open_telemetry_tracing" {
-  type = string
+  type    = string
   default = "true"
 }
+
 variable "StsAccountId" {
-  type = string
+  type    = string
   default = "548105126730" ##Integrations Test Main
 }
-variable "yard_id" {
+
+variable "environment" {
   type = string
 }
