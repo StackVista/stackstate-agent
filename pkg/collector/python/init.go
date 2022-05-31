@@ -403,8 +403,8 @@ func Initialize(paths ...string) error {
 	// [sts]
 	C.initTopologyModule(rtloader)
 	C.initTelemetryModule(rtloader)
-	C.initHealthModule(rtloader)
 	C.initTransactionalStateModule(rtloader)
+	C.initHealthModule(rtloader)
 	// [sts]
 
 	// Init RtLoader machinery
