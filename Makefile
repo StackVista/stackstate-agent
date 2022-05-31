@@ -5,6 +5,8 @@ SHELL         := /bin/bash
 
 UID    ?= $(shell id -u)
 GID    ?= $(shell id -g)
+# Workaround for target completion, because Makefile does not like : in the target commands
+colon  := :
 
 LOCAL_BUILD_IMAGE  = stackstate-agent-local-build
 VOLUME_GO_PKG_NAME = ${LOCAL_BUILD_IMAGE}-go-volume
@@ -30,7 +32,7 @@ dev: build
 	docker run -it --rm \
         --name ${LOCAL_BUILD_IMAGE} \
         --mount source=${VOLUME_GO_PKG_NAME},target=/go/pkg \
-        --volume ${PWD}:${PROJECT_DIR} \
+        --volume ${PWD}${colon}${PROJECT_DIR} \
         ${DOCKER_ENV} ${LOCAL_BUILD_IMAGE}
 
 # Source copy can be used for Omnibus package build
@@ -39,7 +41,7 @@ omnibus: build
         --user root \
         --name ${LOCAL_BUILD_IMAGE} \
         --mount source=${VOLUME_GO_PKG_NAME},target=/go/pkg \
-        --volume ${PWD}:${AGENT_SOURCE_MOUNT}:ro \
+        --volume ${PWD}${colon}${AGENT_SOURCE_MOUNT}${colon}ro \
         --env AGENT_SOURCE_MOUNT=${AGENT_SOURCE_MOUNT} \
         ${DOCKER_ENV} ${LOCAL_BUILD_IMAGE} ${COPY_MOUNT}
 

@@ -15,11 +15,14 @@ if [[ ! -z "${AGENT_SOURCE_MOUNT}" ]]; then
         if [ $? -ne 0 ]; then
             echo "inotifywait not running"
 
-            echo "Copying ..."
+            echo -e "\nCopying ..."
             mkdir -p ${PROJECT_DIR}
             rsync -a ${AGENT_SOURCE_MOUNT}/ ${PROJECT_DIR}
+
+            echo -e "\n--> Open a new shell with 'make shell', so that this terminal will keep syncing changes\n"
+
             while inotifywait -r -e modify,create,delete,move ${AGENT_SOURCE_MOUNT}; do
-                rsync -avz ${AGENT_SOURCE_MOUNT}/ ${PROJECT_DIR}
+                rsync -av ${AGENT_SOURCE_MOUNT}/ ${PROJECT_DIR}
             done
         else
             echo "inotifywait already running"
