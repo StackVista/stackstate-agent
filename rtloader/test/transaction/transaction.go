@@ -113,7 +113,6 @@ except Exception as e:
 //export startTransaction
 func startTransaction(id *C.char) {
 	checkID = C.GoString(id)
-
 	transactionID = checkID + "-transaction-id"
 	transactionStarted = true
 }
@@ -121,7 +120,6 @@ func startTransaction(id *C.char) {
 //export stopTransaction
 func stopTransaction(id *C.char) {
 	checkID = C.GoString(id)
-
 	transactionID = ""
 	transactionCompleted = true
 }
