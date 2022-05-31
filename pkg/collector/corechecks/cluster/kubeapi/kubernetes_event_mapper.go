@@ -64,11 +64,14 @@ var EventTypeMap = map[string]MetricsCategory{
 	events.SandboxChanged:                       Changes,
 
 	// Seen in the wild, not keys of our current lib
+	"Completed":         Activities,
+	"NoPods":            Activities,
+	"NotTriggerScaleUp": Alerts,
+	"SawCompletedJob":   Activities,
+	"ScalingReplicaSet": Activities,
+	"Scheduled":         Activities,
 	"SuccessfulCreate":  Changes,
 	"SuccessfulDelete":  Changes,
-	"Completed":         Changes,
-	"Scheduled":         Activities,
-	"NotTriggerScaleUp": Alerts,
 }
 
 type KubernetesEventMapperFactory func(detector apiserver.OpenShiftDetector, clusterName string) *kubernetesEventMapper
