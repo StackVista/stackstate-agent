@@ -23,6 +23,7 @@ module "aws_stackpack_role" {
   source = "../../hives/aws-stackpack"
 
   environment = var.yard_id
+  external_id = var.external_id
 }
 
 module "ec2_agent" {

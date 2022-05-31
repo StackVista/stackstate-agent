@@ -4,6 +4,11 @@ variable "yard_id" {
 variable "aws_default_region" {
   default = "eu-west-1"
 }
+
+variable "external_id" {
+  type = string
+}
+
 locals {
   az1          = "${var.aws_default_region}a"
   az2          = "${var.aws_default_region}b"

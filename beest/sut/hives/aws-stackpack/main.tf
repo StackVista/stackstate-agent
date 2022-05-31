@@ -32,10 +32,10 @@ data "aws_iam_policy_document" "policy_document" {
 
 resource "aws_iam_instance_profile" "integrations_profile" {
   name = "${var.environment}-instance-profile"
-  role = aws_iam_role.role
+  role = aws_iam_role.role.name
 }
 
 resource "aws_iam_role" "role" {
   name               = "${var.environment}-ec2-role"
-  assume_role_policy = data.aws_iam_policy_document.policy_document
+  assume_role_policy = data.aws_iam_policy_document.policy_document.json
 }

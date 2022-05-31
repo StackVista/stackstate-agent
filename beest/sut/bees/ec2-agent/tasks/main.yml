@@ -17,3 +17,14 @@
 
 #    Configure AWS check
 # render template and store it under /etc/stackstate-agent/conf.d/aws_topology/
+
+- name: Template aws check
+  become: yes
+  ansible.builtin.template:
+    src: aws_conf.yml.j2
+    dest: /etc/stackstate-agent/conf.d/aws_topology/conf.yaml
+    owner: stackstate-agent
+    group: stackstate-agent
+    mode: '0644'
+
+
