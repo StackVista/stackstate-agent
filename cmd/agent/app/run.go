@@ -273,7 +273,7 @@ func StartAgent() error {
 	agg := aggregator.InitAggregator(s, hostname)
 	agg.AddAgentStartupTelemetry(version.AgentVersion)
 
-	// [sts] init the transactionbatcher for topology production
+	// [sts] init the batcher for topology production
 	batcher.InitBatcher(s, hostname, "agent", config.GetMaxCapacity())
 
 	// start dogstatsd

@@ -25,6 +25,19 @@ func InitTransactionalBatcher(hostname, agentName string, maxCapacity int, flush
 	})
 }
 
+// GetTransactionalBatcher returns a handle on the global transactionbatcher Instance
+func GetTransactionalBatcher() TransactionalBatcher {
+	return batcherInstance
+}
+
+// NewMockTransactionalBatcher initializes the global transactionbatcher with a mock version, intended for testing
+func NewMockTransactionalBatcher() *MockTransactionalBatcher {
+	batcherInit.Do(func() {
+		batcherInstance = newMockTransactionalBatcher()
+	})
+	return batcherInstance.(*MockTransactionalBatcher)
+}
+
 func newTransactionalBatcher(hostname, agentName string, maxCapacity int, flushInterval time.Duration) *transactionalBatcher {
 	checkFlushInterval := time.NewTicker(flushInterval)
 	ctb := &transactionalBatcher{
@@ -39,18 +52,6 @@ func newTransactionalBatcher(hostname, agentName string, maxCapacity int, flushI
 	go ctb.Start()
 
 	return ctb
-}
-
-// GetTransactionalBatcher returns a handle on the global transactionbatcher Instance
-func GetTransactionalBatcher() TransactionalBatcher {
-	return batcherInstance
-}
-
-// NewMockTransactionalBatcher initializes the global transactionbatcher with a mock version, intended for testing
-func NewMockTransactionalBatcher() MockTransactionalBatcher {
-	batcher := createMockTransactionalBatcher()
-	batcherInstance = batcher
-	return batcher
 }
 
 // transactionalBatcher is a instance of a transactionbatcher for a specific check instance
@@ -87,6 +88,8 @@ BatcherReceiver:
 				ctb.SubmitState(ctb.builder.HealthStopSnapshot(submission.CheckID, submission.TransactionID, submission.Stream))
 			case SubmitRawMetricsData:
 				ctb.SubmitState(ctb.builder.AddRawMetricsData(submission.CheckID, submission.TransactionID, submission.RawMetric))
+			case SubmitStartTransaction:
+				ctb.SubmitState(ctb.builder.StartTransaction(submission.CheckID, submission.TransactionID))
 			case SubmitCompleteTransaction:
 				ctb.SubmitState(ctb.builder.MarkTransactionComplete(submission.CheckID, submission.TransactionID))
 			case SubmitComplete:

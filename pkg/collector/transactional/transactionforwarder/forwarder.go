@@ -58,9 +58,18 @@ func GetTransactionalForwarder() TransactionalForwarder {
 
 // NewMockTransactionalForwarder initializes the global TransactionalForwarder with a mock version, intended for testing
 func NewMockTransactionalForwarder() *MockTransactionalForwarder {
-	mf := createMockForwarder()
-	transactionalForwarderInstance = mf
-	return mf
+	tfInit.Do(func() {
+		transactionalForwarderInstance = createMockForwarder()
+	})
+	return transactionalForwarderInstance.(*MockTransactionalForwarder)
+}
+
+// NewPrintingTransactionalForwarder initializes the global PrintingTransactionalForwarder used for the agent check command
+func NewPrintingTransactionalForwarder() *PrintingTransactionalForwarder {
+	tfInit.Do(func() {
+		transactionalForwarderInstance = createPrintingForwarder()
+	})
+	return transactionalForwarderInstance.(*PrintingTransactionalForwarder)
 }
 
 // newTransactionalForwarder returns a instance of the forwarder

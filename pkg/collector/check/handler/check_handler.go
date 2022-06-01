@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"sync"
@@ -68,40 +69,41 @@ func NewCheckHandler(check check.Check, checkReloader CheckReloader, config, ini
 
 // Start starts the check handler to "listen" and handle check transactions or shutdown
 func (ch *checkHandler) Start() {
-	go func() {
-	txReceiverHandler:
-		for {
-			select {
-			case transaction := <-ch.transactionChannel:
-				// set the current transaction
-				log.Infof("starting transaction for check %s: %s", transaction.CheckID, transaction.TransactionID)
-				ch.mux.Lock()
-				ch.currentTransaction = transaction.TransactionID
-				ch.mux.Unlock()
-				// try closing the currentTransactionChannel to ensure we never accidentally leak a channel before
-				// register a new one
-				safeCloseTransactionChannel(ch.currentTransactionChannel)
-				ch.currentTransactionChannel = make(chan interface{})
+txReceiverHandler:
+	for {
+		select {
+		case transaction := <-ch.transactionChannel:
+			// set the current transaction
+			log.Infof("starting transaction for check %s: %s", transaction.CheckID, transaction.TransactionID)
+			ch.mux.Lock()
+			ch.currentTransaction = transaction.TransactionID
+			ch.mux.Unlock()
+			// try closing the currentTransactionChannel to ensure we never accidentally leak a channel before
+			// register a new one
+			safeCloseTransactionChannel(ch.currentTransactionChannel)
+			ch.currentTransactionChannel = make(chan interface{})
 
-				// create a new transaction in the transaction manager and wait for responses
-				transactionmanager.GetTransactionManager().StartTransaction(ch.ID(), ch.GetCurrentTransaction(), ch.currentTransactionChannel)
+			// create a new transaction in the transaction manager and wait for responses
+			transactionmanager.GetTransactionManager().StartTransaction(ch.ID(), ch.GetCurrentTransaction(), ch.currentTransactionChannel)
 
-				// this is a blocking function. Will continue when a transaction succeeds, fails or times out making it
-				// ready to handle the next transaction in the ch.transactionChannel.
-				ch.handleCurrentTransaction(ch.currentTransactionChannel)
+			// create a new batch transaction in the transaction batcher
+			transactionbatcher.GetTransactionalBatcher().SubmitStartTransaction(ch.ID(), ch.GetCurrentTransaction())
 
-				// close the ch.currentTransactionChannel, making use ready to start a new transaction
-				close(ch.currentTransactionChannel)
-			case <-ch.shutdownChannel:
-				log.Debug("Shutting down check handler. Closing transaction channels.")
-				// try closing currentTransactionChannel if the transaction is still in progress
-				safeCloseTransactionChannel(ch.currentTransactionChannel)
-				close(ch.transactionChannel)
-				break txReceiverHandler
-			default:
-			}
+			// this is a blocking function. Will continue when a transaction succeeds, fails or times out making it
+			// ready to handle the next transaction in the ch.transactionChannel.
+			ch.handleCurrentTransaction(ch.currentTransactionChannel)
+
+			// close the ch.currentTransactionChannel, making use ready to start a new transaction
+			close(ch.currentTransactionChannel)
+		case <-ch.shutdownChannel:
+			log.Debug("Shutting down check handler. Closing transaction channels.")
+			// try closing currentTransactionChannel if the transaction is still in progress
+			safeCloseTransactionChannel(ch.currentTransactionChannel)
+			close(ch.transactionChannel)
+			break txReceiverHandler
+		default:
 		}
-	}()
+	}
 }
 
 // Stop stops the check handler txReceiverHandler

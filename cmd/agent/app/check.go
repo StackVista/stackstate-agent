@@ -125,11 +125,11 @@ var checkCmd = &cobra.Command{
 		agg := aggregator.InitAggregatorWithFlushInterval(s, hostname, 0)
 		common.SetupAutoConfig(config.Datadog.GetString("confd_path"))
 
-		// [sts] init the transactionbatcher without the real serializer
+		// [sts] init the batcher without the real serializer
 		batcher.InitBatcher(&printingAgentV1Serializer{}, hostname, "agent", config.GetMaxCapacity())
 		// [sts] create the global transactional components
 		checkmanager.InitCheckManager(common.Coll)
-		transactionforwarder.InitTransactionalForwarder()
+		transactionforwarder.NewPrintingTransactionalForwarder() // use the printing transactional forwarder for the agent check command
 		transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
 		txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
 		transactionmanager.InitTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)

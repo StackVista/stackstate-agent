@@ -63,86 +63,85 @@ type transactionManager struct {
 // Start sets up the transaction checkmanager to consume messages on the txm.transactionChannel. It consumes one message at
 // a time using the `select` statement and populates / evicts transactions in the transaction checkmanager.
 func (txm *transactionManager) Start() {
-	go func() {
-	transactionHandler:
-		for {
-			select {
-			case input := <-txm.transactionChannel:
-				switch msg := input.(type) {
-				// transaction operations
-				case StartTransaction:
-					log.Debugf("Creating new transaction %s for check %s", msg.TransactionID, msg.CheckID)
-					if _, err := txm.startTransaction(msg.TransactionID, msg.NotifyChannel); err != nil {
-						txm.transactionChannel <- err
-					}
-				case CommitAction:
-					log.Debugf("Committing action %s for transaction %s", msg.ActionID, msg.TransactionID)
-					if err := txm.commitAction(msg.TransactionID, msg.ActionID); err != nil {
-						txm.transactionChannel <- err
-					}
-				case AckAction:
-					log.Debugf("Acknowledging action %s for transaction %s", msg.ActionID, msg.TransactionID)
-					if err := txm.ackAction(msg.TransactionID, msg.ActionID); err != nil {
-						txm.transactionChannel <- err
-					}
-				case RejectAction:
-					_ = log.Errorf("Rejecting action %s for transaction %s: %s", msg.ActionID, msg.TransactionID, msg.Reason)
-					if err := txm.rejectAction(msg.TransactionID, msg.ActionID); err != nil {
-						txm.transactionChannel <- err
-					} else {
-						// rollback the transaction
-						reason := fmt.Sprintf("rejected action %s for transaction %s: %s", msg.ActionID, msg.TransactionID, msg.Reason)
-						txm.transactionChannel <- RollbackTransaction{TransactionID: msg.TransactionID, Reason: reason}
-					}
-				case CompleteTransaction:
-					log.Debugf("Completing transaction %s", msg.TransactionID)
-					if err := txm.completeTransaction(msg.TransactionID); err != nil {
-						txm.transactionChannel <- err
-					}
-				// error cases
-				case RollbackTransaction:
-					_ = log.Errorf(msg.Error())
-					if err := txm.rollbackTransaction(msg.TransactionID, msg.Reason); err != nil {
-						txm.transactionChannel <- err
-					}
-				case TransactionNotFound:
-					_ = log.Errorf(msg.Error())
-				case ActionNotFound:
-					_ = log.Errorf(msg.Error())
-				// shutdown transaction checkmanager
-				case StopTransactionManager:
-					// clean the transaction map
-					txm.mux.Lock()
-					txm.transactions = make(map[string]*IntakeTransaction, 0)
-					txm.mux.Unlock()
-					break transactionHandler
-				default:
-					_ = log.Errorf("Got unexpected msg %v", msg)
+transactionHandler:
+	for {
+		select {
+		case input := <-txm.transactionChannel:
+			switch msg := input.(type) {
+			// transaction operations
+			case StartTransaction:
+				log.Debugf("Creating new transaction %s for check %s", msg.TransactionID, msg.CheckID)
+				if _, err := txm.startTransaction(msg.TransactionID, msg.NotifyChannel); err != nil {
+					txm.transactionChannel <- err
 				}
-			case <-txm.transactionTicker.C:
-				// expire stale transactions, clean up expired transactions that exceed the eviction duration
+			case CommitAction:
+				log.Debugf("Committing action %s for transaction %s", msg.ActionID, msg.TransactionID)
+				if err := txm.commitAction(msg.TransactionID, msg.ActionID); err != nil {
+					txm.transactionChannel <- err
+				}
+			case AckAction:
+				log.Debugf("Acknowledging action %s for transaction %s", msg.ActionID, msg.TransactionID)
+				if err := txm.ackAction(msg.TransactionID, msg.ActionID); err != nil {
+					txm.transactionChannel <- err
+				}
+			case RejectAction:
+				_ = log.Errorf("Rejecting action %s for transaction %s: %s", msg.ActionID, msg.TransactionID, msg.Reason)
+				if err := txm.rejectAction(msg.TransactionID, msg.ActionID); err != nil {
+					txm.transactionChannel <- err
+				} else {
+					// rollback the transaction
+					reason := fmt.Sprintf("rejected action %s for transaction %s: %s", msg.ActionID, msg.TransactionID, msg.Reason)
+					txm.transactionChannel <- RollbackTransaction{TransactionID: msg.TransactionID, Reason: reason}
+				}
+			case CompleteTransaction:
+				log.Debugf("Completing transaction %s", msg.TransactionID)
+				if err := txm.completeTransaction(msg.TransactionID); err != nil {
+					txm.transactionChannel <- err
+				}
+			// error cases
+			case RollbackTransaction:
+				_ = log.Errorf(msg.Error())
+				if err := txm.rollbackTransaction(msg.TransactionID, msg.Reason); err != nil {
+					txm.transactionChannel <- err
+				}
+			case TransactionNotFound:
+				_ = log.Errorf(msg.Error())
+			case ActionNotFound:
+				_ = log.Errorf(msg.Error())
+			// shutdown transaction checkmanager
+			case StopTransactionManager:
+				// clean the transaction map
 				txm.mux.Lock()
-				for _, transaction := range txm.transactions {
-					if transaction.State == Failed || transaction.State == Succeeded {
-						log.Debugf("Cleaning up %s transaction: %s", transaction.State.String(), transaction.TransactionID)
-						// delete the transaction, already notified on success or failure status so no need to notify again
-						delete(txm.transactions, transaction.TransactionID)
-					} else if transaction.State != Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionTimeoutDuration)) {
-						// last updated timestamp is before current time - checkmanager timeout duration => Tx is stale
-						transaction.State = Stale
-					} else if transaction.State == Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionEvictionDuration)) {
-						// last updated timestamp is before current time - checkmanager eviction duration => Tx can be evicted
-						delete(txm.transactions, transaction.TransactionID)
-						transaction.NotifyChannel <- EvictedTransaction{TransactionID: transaction.TransactionID}
-					}
-				}
+				txm.transactions = make(map[string]*IntakeTransaction, 0)
 				txm.mux.Unlock()
-
-				// TODO: produce some transaction checkmanager metrics
+				break transactionHandler
 			default:
+				_ = log.Errorf("Got unexpected msg %v", msg)
 			}
+		case <-txm.transactionTicker.C:
+			// expire stale transactions, clean up expired transactions that exceed the eviction duration
+			txm.mux.Lock()
+			for _, transaction := range txm.transactions {
+				if transaction.State == Failed || transaction.State == Succeeded {
+					log.Debugf("Cleaning up %s transaction: %s", transaction.State.String(), transaction.TransactionID)
+					// delete the transaction, already notified on success or failure status so no need to notify again
+					delete(txm.transactions, transaction.TransactionID)
+				} else if transaction.State != Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionTimeoutDuration)) {
+					// last updated timestamp is before current time - checkmanager timeout duration => Tx is stale
+					_ = log.Warnf("Transaction: %s has become stale, last updated %s", transaction.TransactionID, transaction.LastUpdatedTimestamp.String())
+					transaction.State = Stale
+				} else if transaction.State == Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionEvictionDuration)) {
+					// last updated timestamp is before current time - checkmanager eviction duration => Tx can be evicted
+					delete(txm.transactions, transaction.TransactionID)
+					transaction.NotifyChannel <- EvictedTransaction{TransactionID: transaction.TransactionID}
+				}
+			}
+			txm.mux.Unlock()
+
+			// TODO: produce some transaction checkmanager metrics
+		default:
 		}
-	}()
+	}
 }
 
 // startTransaction creates a transaction and puts it into the transactions map
@@ -232,7 +231,7 @@ func (txm *transactionManager) completeTransaction(transactionID string) error {
 	// ensure all actions have been acknowledged
 	for _, action := range transaction.Actions {
 		if !action.Acknowledged {
-			reason := fmt.Sprintf("Not all actions have been acknowledged, rolling back checkmanager: %s", transaction.TransactionID)
+			reason := fmt.Sprintf("Not all actions have been acknowledged, rolling back transaction: %s", transaction.TransactionID)
 			txm.mux.Unlock()
 			return RollbackTransaction{TransactionID: transactionID, Reason: reason}
 		}

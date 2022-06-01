@@ -67,9 +67,7 @@ func (builder *TransactionBatchBuilder) getOrCreateTopology(checkID check.ID, tr
 	}
 
 	builder.states[checkID] = TransactionCheckInstanceBatchState{
-		Transaction: &BatchTransaction{
-			TransactionID: transactionID,
-		},
+		Transaction: state.Transaction,
 		Topology: &topology.Topology{
 			StartSnapshot: false,
 			StopSnapshot:  false,
@@ -109,12 +107,10 @@ func (builder *TransactionBatchBuilder) getOrCreateRawMetrics(checkID check.ID, 
 	}
 
 	builder.states[checkID] = TransactionCheckInstanceBatchState{
-		Transaction: &BatchTransaction{
-			TransactionID: transactionID,
-		},
-		Topology: state.Topology,
-		Health:   state.Health,
-		Metrics:  &telemetry.Metrics{},
+		Transaction: state.Transaction,
+		Topology:    state.Topology,
+		Health:      state.Health,
+		Metrics:     &telemetry.Metrics{},
 	}
 
 	return builder.states[checkID].Metrics
@@ -205,6 +201,16 @@ func (builder *TransactionBatchBuilder) incrementAndTryFlush() TransactionCheckI
 	}
 
 	return nil
+}
+
+// StartTransaction creates a batch transaction for the given check ID
+func (builder *TransactionBatchBuilder) StartTransaction(checkID check.ID, transactionID string) TransactionCheckInstanceBatchStates {
+	state := builder.getOrCreateState(checkID, transactionID)
+	state.Transaction = &BatchTransaction{
+		TransactionID:        transactionID,
+		CompletedTransaction: false,
+	}
+	return builder.incrementAndTryFlush()
 }
 
 // MarkTransactionComplete marks a transaction as complete and flushes the data if produced
