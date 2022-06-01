@@ -159,4 +159,29 @@ bump the ruby version > 2.6.5 because libyajl2 compiles proper on those ruby ver
 
 If you want to speed up the GitLab pipeline and run only the steps related to the cluster agent, include the string `[cluster-agent]` in your commit message.
 
+## Testing cluster-agent helm chart
+
+The acceptance tests in our pipeline use the cluster-agent helm chart to install the agent in a test cluster. If you make changes to the cluster-agent helm chart, you probably want to test if our acceptance tests will work after your changes.
+
+When you open a merge request on the helm-chart repository, a test version of that chart will be published to a test helm repository [stackstate-test](https://helm-test.stackstate.io). You can add that test repo in your machine by running the following commands:
+
+```shell
+helm repo add stackstate-test https://helm-test.stackstate.io && helm repo update
+```
+
+You can then install this version of the cluster-agent helm chart by running:
+
+```shell
+helm upgrade --install \
+  --create-namespace \
+  --namespace <namespace> \
+  --set-string 'stackstate.apiKey'='<api-key>' \
+  --set-string 'stackstate.cluster.name'='<cluster-name' \
+  --set-string 'stackstate.url'='<stackstate-url>' \
+  stackstate-cluster-agent stackstate-test/cluster-agent --version <version>
+```
+
+`<version>` is the new version you've set on `helm-charts/stable/cluster-agent/Chart.yaml` on your feature branch.
+
+To use this version in the `stackstate-agent` pipeline, create a branch and update the `HELM_CHART_VERSION` variable on `.gitlab-ci.yml`, with that the pipeline will use the test helm repository that was updated by the helm-charts pipeline.
 
