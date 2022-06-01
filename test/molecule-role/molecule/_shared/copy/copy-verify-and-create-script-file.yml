@@ -3,4 +3,4 @@
   copy:
     src: ./../../../verify-or-create-topics.sh
     dest: /home/ubuntu
-    mode: u+x
+    mode: a+x
