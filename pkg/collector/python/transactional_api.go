@@ -11,7 +11,6 @@ package python
 import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 /*
@@ -30,7 +29,6 @@ import "C"
 // StartTransaction starts a transaction
 //export StartTransaction
 func StartTransaction(id *C.char) {
-	log.Info("Running StartTransaction A")
 	goCheckID := C.GoString(id)
 	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).StartTransaction()
 }
@@ -38,7 +36,6 @@ func StartTransaction(id *C.char) {
 // StopTransaction stops a transaction
 //export StopTransaction
 func StopTransaction(id *C.char) {
-	log.Info("Running StopTransaction")
 	goCheckID := C.GoString(id)
 	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).StopTransaction()
 }
