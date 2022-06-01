@@ -5,7 +5,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/google/uuid"
 )
 
@@ -38,9 +37,7 @@ type CheckAPI interface {
 // StartTransaction submits a start transaction for the check handler. This blocks any future transactions until
 // this one completes, fails or is timed out.
 func (ch *checkHandler) StartTransaction() string {
-	log.Info("Running StartTransaction B")
 	transactionID := uuid.New().String()
-	log.Info("TransactionID: " + transactionID)
 	ch.transactionChannel <- StartTransaction{
 		CheckID:       ch.ID(),
 		TransactionID: transactionID,
