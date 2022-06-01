@@ -28,6 +28,12 @@ RUN curl -O "https://releases.hashicorp.com/packer/${PACKER_V}/packer_${PACKER_V
     rm packer_${PACKER_V}_linux_amd64.zip && \
     mv ./packer /usr/local/bin/
 
+ARG AWSCLI_V=2.7.4
+RUN curl -L "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWSCLI_V}.zip" -o "awscliv2.zip" && \
+    unzip awscliv2.zip && \
+    ./aws/install && \
+    rm awscliv2.zip
+
 ARG KUBECTL_V=1.22.4
 RUN curl -LO "https://dl.k8s.io/release/v${KUBECTL_V}/bin/linux/amd64/kubectl" && \
     chmod +x ./kubectl && \
@@ -69,7 +75,7 @@ RUN curl -O "https://download.docker.com/linux/static/stable/x86_64/docker-${DOC
     mv ./docker/docker /usr/local/bin/ && \
     rm -r docker-${DOCKER_V}.tgz docker
 
-ARG STSTOOLBOX_V=1.3.23
+ARG STSTOOLBOX_V=1.3.29
 RUN curl -O "https://stseuw1-tooling-main-homebrew.s3.amazonaws.com/sts-toolbox/v${STSTOOLBOX_V}/sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz" && \
     tar xvzf sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \
     rm -r sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \

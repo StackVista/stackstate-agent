@@ -6,4 +6,4 @@ namespace: "{{ agent_current_branch.replace('.','-').replace('_','-') | lower }}
 cluster_name: "{{ namespace }}"
 
 kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/config"
-kubecontext: "{{ yard_id }}"
+kubecontext: "sandbox-main.sandbox.stackstate.io"
