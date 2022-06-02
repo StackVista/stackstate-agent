@@ -157,6 +157,7 @@ version.txt
 
 # molecule local json files
 /test/molecule-role/molecule/*/topic-*.json
+/test/molecule-role/molecule/*/persistent-cache-*.json
 .cache
 
 # ignore manual test files
