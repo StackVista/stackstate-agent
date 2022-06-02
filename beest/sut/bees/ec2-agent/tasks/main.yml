@@ -21,7 +21,7 @@
 - name: Template aws check
   become: yes
   ansible.builtin.template:
-    src: aws_conf.yml.j2
+    src: aws_conf.yml.j2.j2
     dest: /etc/stackstate-agent/conf.d/aws_topology/conf.yaml
     owner: stackstate-agent
     group: stackstate-agent
