@@ -80,3 +80,9 @@ RUN curl -O "https://stseuw1-tooling-main-homebrew.s3.amazonaws.com/sts-toolbox/
     tar xvzf sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \
     rm -r sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \
     mv ./sts-toolbox /usr/local/bin/
+
+ARG STSCLI_V=0.3.7
+RUN curl --insecure -O "https://cli-dl.stackstate.com.s3.amazonaws.com/stackstate-cli/v${STSCLI_V}/stackstate-cli-full-${STSCLI_V}.linux-x86_64.tar.gz" && \
+    tar xvzf stackstate-cli-full-${STSCLI_V}.linux-x86_64.tar.gz && \
+    rm -r stackstate-cli-full-${STSCLI_V}.linux-x86_64.tar.gz && \
+    mv ./sts /usr/local/bin/
