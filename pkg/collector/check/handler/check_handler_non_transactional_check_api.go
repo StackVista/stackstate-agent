@@ -1,9 +1,8 @@
 package handler
 
 import (
-	"errors"
-	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	checkState "github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -29,12 +28,17 @@ func (ch *NonTransactionalCheckHandler) SetStateTransactional(string, string) er
 
 // SetState is used to commit state for a given state key and CheckState
 func (ch *NonTransactionalCheckHandler) SetState(key string, state string) error {
-	return errors.New(fmt.Sprintf("SetState is not implemented, state %s: %s", key, state))
+	return checkState.GetCheckStateManager().SetState(key, state)
 }
 
 // GetState returns a CheckState for a given key
-func (ch *NonTransactionalCheckHandler) GetState(string) string {
-	return "{}"
+func (ch *NonTransactionalCheckHandler) GetState(key string) string {
+	s, err := checkState.GetCheckStateManager().GetState(key)
+	if err != nil {
+		_ = log.Errorf("error occurred when reading state for check %s for key %s: %s", ch.ID(), key, err)
+		return "{}"
+	}
+	return s
 }
 
 // SubmitComponent submits a component to the Global Batcher to be batched.
