@@ -14,10 +14,17 @@ type MockTransactionManager struct {
 	mux                             sync.Mutex
 	currentTransaction              string
 	currentTransactionNotifyChannel chan interface{}
+	transactionState                *TransactionState
 	TransactionActions              chan interface{}
 }
 
-func (ttm *MockTransactionManager) SetState(string, string, string) {
+func (ttm *MockTransactionManager) SetState(string, key string, value string) {
+	ttm.mux.Lock()
+	ttm.transactionState = &TransactionState{
+		Key:   key,
+		State: value,
+	}
+	ttm.mux.Unlock()
 }
 
 // GetTransaction returns nil, nil
@@ -58,6 +65,13 @@ func (ttm *MockTransactionManager) GetCurrentTransactionNotifyChannel() chan int
 	ttm.mux.Lock()
 	defer ttm.mux.Unlock()
 	return ttm.currentTransactionNotifyChannel
+}
+
+// GetCurrentTransactionState returns the transactionState
+func (ttm *MockTransactionManager) GetCurrentTransactionState() *TransactionState {
+	ttm.mux.Lock()
+	defer ttm.mux.Unlock()
+	return ttm.transactionState
 }
 
 // CompleteTransaction sends a CompleteTransaction to the TransactionActions channel to be used in assertions

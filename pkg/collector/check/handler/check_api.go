@@ -21,7 +21,7 @@ type CheckAPI interface {
 type CheckTransactionalAPI interface {
 	StartTransaction() string
 	StopTransaction()
-	SetStateTransactional(key string, state string) error
+	SetStateTransactional(key string, state string)
 }
 
 // CheckStateAPI contains all the state operations for a check

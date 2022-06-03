@@ -21,9 +21,8 @@ func (ch *NonTransactionalCheckHandler) StopTransaction() {
 }
 
 // SetStateTransactional should never be called on the NonTransactionalCheckHandler
-func (ch *NonTransactionalCheckHandler) SetStateTransactional(string, string) error {
+func (ch *NonTransactionalCheckHandler) SetStateTransactional(string, string) {
 	_ = log.Warnf("SetStateTransactional called on NonTransactionalCheckHandler. This should never happen.")
-	return nil
 }
 
 // SetState is used to commit state for a given state key and CheckState

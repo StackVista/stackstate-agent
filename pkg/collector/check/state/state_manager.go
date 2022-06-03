@@ -104,7 +104,7 @@ func (cs *CheckStateManager) GetState(key string) (string, error) {
 	} else {
 		state, err := cs.readFromDisk(key)
 		if err != nil {
-			return "", err
+			return "{}", err
 		}
 		// update the cache
 		cs.Cache.Set(key, state, cache.DefaultExpiration)
@@ -119,7 +119,7 @@ func (cs *CheckStateManager) readFromDisk(key string) (string, error) {
 	}
 	_, err = os.Stat(path)
 	if os.IsNotExist(err) {
-		return "", nil
+		return "{}", nil
 	}
 	content, err := ioutil.ReadFile(path)
 	if err != nil {

@@ -1,10 +1,9 @@
 package handler
 
 import (
-	"errors"
-	"fmt"
 	checkState "github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -31,8 +30,8 @@ func (ch *checkHandler) StopTransaction() {
 
 // SetStateTransactional is used to set state transactionaly. This state is only committed once a transaction has been
 // completed successfully.
-func (ch *checkHandler) SetStateTransactional(key string, state string) error {
-	return errors.New(fmt.Sprintf("SetStateTransactional is not implemented, state %s: %s", key, state))
+func (ch *checkHandler) SetStateTransactional(key string, state string) {
+	transactionmanager.GetTransactionManager().SetState(ch.GetCurrentTransaction(), key, state)
 }
 
 // SetState is used to commit state for a given state key and CheckState
@@ -45,7 +44,6 @@ func (ch *checkHandler) GetState(key string) string {
 	s, err := checkState.GetCheckStateManager().GetState(key)
 	if err != nil {
 		_ = log.Errorf("error occurred when reading state for check %s for key %s: %s", ch.ID(), key, err)
-		return "{}"
 	}
 	return s
 }

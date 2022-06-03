@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"
@@ -65,6 +66,7 @@ func TestCheckHandler(t *testing.T) {
 
 func TestCheckHandler_Transactions(t *testing.T) {
 	testTxManager := transactionmanager.NewMockTransactionManager()
+	transactionbatcher.NewMockTransactionalBatcher()
 
 	ch := NewCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*checkHandler)
@@ -169,6 +171,39 @@ func TestCheckHandler_Reset_State(t *testing.T) {
 	checkState, err := state.GetCheckStateManager().GetState(stateKey)
 	assert.NoError(t, err, "unexpected error occured when trying to get state for", stateKey)
 	assert.Equal(t, expectedState, checkState)
+}
+
+func TestCheckHandler_State_Transactional(t *testing.T) {
+	os.Setenv("DD_CHECK_STATE_ROOT_PATH", "./testdata")
+	state.InitCheckStateManager()
+
+	txManager := transactionmanager.NewMockTransactionManager()
+	transactionbatcher.NewMockTransactionalBatcher()
+
+	ch := NewCheckHandler(&check.STSTestCheck{Name: "my-check-handler-transactional-state-check"}, &check.TestCheckReloader{},
+		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*checkHandler)
+
+	stateKey := fmt.Sprintf("%s:state", ch.String())
+	expectedState := "{\"state\":\"transactional\"}"
+
+	transactionID := ch.StartTransaction()
+
+	ch.SetStateTransactional(stateKey, expectedState)
+
+	assert.Equal(t, "{}", ch.GetState(stateKey))
+
+	txManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.CompleteTransaction{
+		TransactionID: transactionID,
+		State:         txManager.GetCurrentTransactionState(),
+	}
+
+	time.Sleep(100 * time.Millisecond)
+
+	assert.Equal(t, expectedState, ch.GetState(stateKey))
+
+	err := os.RemoveAll("./testdata/my-check-handler-transactional-state-check")
+	assert.NoError(t, err, "error cleaning up test data file")
+
 }
 
 func TestCheckHandler_Shutdown(t *testing.T) {
