@@ -404,11 +404,12 @@
 
 
 #    choco install ruby --version 2.4.3.1
-    - name: Install ruby 2.4.3.1
+#    replaced with 2.4.10.100 (possibly have to move to 2.7 if 2.4.10.100 does not work)
+    - name: Install ruby 2.7.6.1
       win_chocolatey:
         name: ruby
         state: present
-        version: 2.4.3.1
+        version: 2.7.6.1
 
 # ENV MSYS_VERSION "20190524.0.0.20191030"
 # cinst -y --no-progress msys2 --params \"/NoUpdate\" --version $ENV:MSYS_VERSION
@@ -418,7 +419,7 @@
         name: msys2
         state: present
         package_params: "/NoUpdate"
-        version: "20190524.0.0.20191030"
+        version: '20220503.0.0'
         timeout: 90
       register: msys_try1
       ignore_errors: true
@@ -475,8 +476,6 @@
 
     - name: Install powershell vssetup module
       win_command: powershell.exe -File C:\install_vssetup.ps1
-      tags:
-        - broken
       register: msys_try1
       ignore_errors: true
 
