@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionforwarder"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
@@ -310,6 +311,7 @@ func StartAgent() error {
 	common.SetupAutoConfig(config.Datadog.GetString("confd_path"))
 
 	// [STS] create the global transactional components
+	state.InitCheckStateManager()
 	transactionforwarder.InitTransactionalForwarder()
 	transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
 	checkmanager.InitCheckManager(common.Coll)
@@ -363,6 +365,7 @@ func StopAgent() {
 	}
 
 	// [sts] stop the transactional components
+	state.GetCheckStateManager().Clear()
 	checkmanager.GetCheckManager().Clear()
 	transactionbatcher.GetTransactionalBatcher().Stop()
 	transactionforwarder.GetTransactionalForwarder().Stop()

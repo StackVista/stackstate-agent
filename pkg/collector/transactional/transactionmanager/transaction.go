@@ -6,12 +6,12 @@ import (
 	"time"
 )
 
-// TransactionState is an integer representing the state of the transaction
-type TransactionState int64
+// TransactionStatus is an integer representing the state of the transaction
+type TransactionStatus int64
 
 const (
 	// InProgress is used to represent a InProgress transaction
-	InProgress TransactionState = iota
+	InProgress TransactionStatus = iota
 	// Failed is used to represent a Failed transaction
 	Failed
 	// Succeeded is used to represent a Succeeded transaction
@@ -20,8 +20,8 @@ const (
 	Stale
 )
 
-// String returns a string representation of TransactionState
-func (state TransactionState) String() string {
+// String returns a string representation of TransactionStatus
+func (state TransactionStatus) String() string {
 	switch state {
 	case Failed:
 		return "failed"
@@ -45,10 +45,21 @@ type Action struct {
 // IntakeTransaction represents an intake checkmanager which consists of one or more actions
 type IntakeTransaction struct {
 	TransactionID        string
-	State                TransactionState
+	Status               TransactionStatus
 	Actions              map[string]*Action // pointer to allow in-place mutation instead of setting the value again
 	NotifyChannel        chan interface{}
 	LastUpdatedTimestamp time.Time
+	State                *TransactionState // the State of the TransactionState will be updated each time, no need for a pointer
+}
+
+// TransactionState keeps the state for a given key
+type TransactionState struct {
+	Key, State string
+}
+
+// SetTransactionState is used to set transaction state for a given transactionID and Key.
+type SetTransactionState struct {
+	TransactionID, Key, State string
 }
 
 // CommitAction is used to commit an action for a certain transaction.
@@ -76,6 +87,7 @@ type StartTransaction struct {
 // CompleteTransaction completes a transaction. If all actions are acknowledges, the transaction is considered a success.
 type CompleteTransaction struct {
 	TransactionID string
+	State         *TransactionState
 }
 
 // EvictedTransaction is triggered once a stale transaction is evicted.

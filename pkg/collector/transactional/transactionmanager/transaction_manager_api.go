@@ -1,18 +1,13 @@
 package transactionmanager
 
-import "github.com/StackVista/stackstate-agent/pkg/collector/check"
+import (
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+)
 
 // TransactionManager encapsulates all the functionality of the transaction manager to keep track of transactions
 type TransactionManager interface {
 	Start()
-	GetTransaction(transactionID string) (*IntakeTransaction, error)
-	TransactionCount() int
-	StartTransaction(CheckID check.ID, TransactionID string, NotifyChannel chan interface{})
-	CompleteTransaction(transactionID string)
-	RollbackTransaction(transactionID, reason string) // TODO: rename to DiscardTransaction
-	CommitAction(transactionID, actionID string)
-	AcknowledgeAction(transactionID, actionID string)
-	RejectAction(transactionID, actionID, reason string)
+	TransactionAPI
 	Stop()
 }
 
@@ -49,6 +44,15 @@ func (txm *transactionManager) StartTransaction(checkID check.ID, transactionID 
 func (txm *transactionManager) CompleteTransaction(transactionID string) {
 	txm.transactionChannel <- CompleteTransaction{
 		TransactionID: transactionID,
+	}
+}
+
+// SetState adds a state to a transaction that will be committed on a successful transaction
+func (txm *transactionManager) SetState(transactionID, key string, state string) {
+	txm.transactionChannel <- SetTransactionState{
+		TransactionID: transactionID,
+		Key:           key,
+		State:         state,
 	}
 }
 

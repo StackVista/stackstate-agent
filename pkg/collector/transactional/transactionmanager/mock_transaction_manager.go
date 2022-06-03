@@ -17,6 +17,9 @@ type MockTransactionManager struct {
 	TransactionActions              chan interface{}
 }
 
+func (ttm *MockTransactionManager) SetState(string, string, string) {
+}
+
 // GetTransaction returns nil, nil
 func (ttm *MockTransactionManager) GetTransaction(string) (*IntakeTransaction, error) {
 	return nil, nil

@@ -1,0 +1,88 @@
+package handler
+
+import (
+	"errors"
+	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+)
+
+// StartTransaction logs a warning for the no check handler. This should never be called.
+func (ch *NonTransactionalCheckHandler) StartTransaction() string {
+	_ = log.Warnf("StartTransaction called on NonTransactionalCheckHandler. This should never happen.")
+	return ""
+}
+
+// StopTransaction logs a warning for the no check handler. This should never be called.
+func (ch *NonTransactionalCheckHandler) StopTransaction() {
+	_ = log.Warnf("StopTransaction called on NonTransactionalCheckHandler. This should never happen.")
+}
+
+// SetStateTransactional should never be called on the NonTransactionalCheckHandler
+func (ch *NonTransactionalCheckHandler) SetStateTransactional(string, string) error {
+	_ = log.Warnf("SetStateTransactional called on NonTransactionalCheckHandler. This should never happen.")
+	return nil
+}
+
+// SetState is used to commit state for a given state key and CheckState
+func (ch *NonTransactionalCheckHandler) SetState(key string, state string) error {
+	return errors.New(fmt.Sprintf("SetState is not implemented, state %s: %s", key, state))
+}
+
+// GetState returns a CheckState for a given key
+func (ch *NonTransactionalCheckHandler) GetState(string) string {
+	return "{}"
+}
+
+// SubmitComponent submits a component to the Global Batcher to be batched.
+func (ch *NonTransactionalCheckHandler) SubmitComponent(instance topology.Instance, component topology.Component) {
+	batcher.GetBatcher().SubmitComponent(ch.ID(), instance, component)
+}
+
+// SubmitRelation submits a relation to the Global Batcher to be batched.
+func (ch *NonTransactionalCheckHandler) SubmitRelation(instance topology.Instance, relation topology.Relation) {
+	batcher.GetBatcher().SubmitRelation(ch.ID(), instance, relation)
+}
+
+// SubmitStartSnapshot submits a start snapshot to the Global Batcher to be batched.
+func (ch *NonTransactionalCheckHandler) SubmitStartSnapshot(instance topology.Instance) {
+	batcher.GetBatcher().SubmitStartSnapshot(ch.ID(), instance)
+}
+
+// SubmitStopSnapshot submits a stop snapshot to the Global Batcher to be batched.
+func (ch *NonTransactionalCheckHandler) SubmitStopSnapshot(instance topology.Instance) {
+	batcher.GetBatcher().SubmitStopSnapshot(ch.ID(), instance)
+}
+
+// SubmitDelete submits a topology element delete to the Global Batcher to be batched.
+func (ch *NonTransactionalCheckHandler) SubmitDelete(instance topology.Instance, topologyElementID string) {
+	batcher.GetBatcher().SubmitDelete(ch.ID(), instance, topologyElementID)
+}
+
+// SubmitHealthCheckData submits health check data to the Global Batcher to be batched.
+func (ch *NonTransactionalCheckHandler) SubmitHealthCheckData(stream health.Stream, data health.CheckData) {
+	batcher.GetBatcher().SubmitHealthCheckData(ch.ID(), stream, data)
+}
+
+// SubmitHealthStartSnapshot submits a health start snapshot to the Global Batcher to be batched.
+func (ch *NonTransactionalCheckHandler) SubmitHealthStartSnapshot(stream health.Stream, intervalSeconds int, expirySeconds int) {
+	batcher.GetBatcher().SubmitHealthStartSnapshot(ch.ID(), stream, intervalSeconds, expirySeconds)
+}
+
+// SubmitHealthStopSnapshot submits a health stop snapshot to the Global Batcher to be batched.
+func (ch *NonTransactionalCheckHandler) SubmitHealthStopSnapshot(stream health.Stream) {
+	batcher.GetBatcher().SubmitHealthStopSnapshot(ch.ID(), stream)
+}
+
+// SubmitRawMetricsData submits a raw metric value to the Global Batcher to be batched.
+func (ch *NonTransactionalCheckHandler) SubmitRawMetricsData(data telemetry.RawMetrics) {
+	batcher.GetBatcher().SubmitRawMetricsData(ch.ID(), data)
+}
+
+// SubmitComplete submits a complete to the Global Batcher.
+func (ch *NonTransactionalCheckHandler) SubmitComplete() {
+	batcher.GetBatcher().SubmitComplete(ch.ID())
+}

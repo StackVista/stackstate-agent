@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	checkState "github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -134,6 +136,21 @@ currentTxHandler:
 				break currentTxHandler
 			case transactionmanager.CompleteTransaction:
 				log.Debugf("Completing transaction: %s for check %s", txMsg.TransactionID, ch.ID())
+
+				if txMsg.State != nil {
+					log.Debugf("Committing state for transaction: %s for check %s: %s", txMsg.TransactionID, ch.ID(),
+						txMsg.State)
+					err := checkState.GetCheckStateManager().SetState(txMsg.State.Key, txMsg.State.State)
+					if err != nil {
+						errorReason := fmt.Sprintf("Error while updating state for transaction: %s for check %s: %s. %s",
+							txMsg.TransactionID, ch.ID(), txMsg.State, err)
+						_ = log.Error(errorReason)
+						txChan <- transactionmanager.RollbackTransaction{TransactionID: txMsg.TransactionID, Reason: errorReason}
+					}
+
+					log.Debugf("Successfully committed state for transaction: %s for check %s: %s", txMsg.TransactionID, ch.ID(),
+						txMsg.State)
+				}
 				break currentTxHandler
 			}
 		}

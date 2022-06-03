@@ -3,9 +3,11 @@ package handler
 import (
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
 	"time"
 )
@@ -117,6 +119,56 @@ func TestCheckHandler_Transactions(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 	ch.Stop()
+}
+
+func TestCheckHandler_State(t *testing.T) {
+	os.Setenv("DD_CHECK_STATE_ROOT_PATH", "./testdata")
+	state.InitCheckStateManager()
+
+	ch := NewCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*checkHandler)
+
+	stateKey := "my-check-handler-test-check:state"
+
+	actualState := ch.GetState(stateKey)
+	expectedState := "{\"a\":\"b\"}"
+	assert.Equal(t, expectedState, actualState)
+
+	checkState, err := state.GetCheckStateManager().GetState(stateKey)
+	assert.NoError(t, err, "unexpected error occured when trying to get state for", stateKey)
+	assert.Equal(t, expectedState, checkState)
+
+	updatedState := "{\"e\":\"f\"}"
+	err = ch.SetState(stateKey, updatedState)
+	assert.NoError(t, err, "unexpected error occurred when setting state for %s", stateKey)
+
+	checkState, err = state.GetCheckStateManager().GetState(stateKey)
+	assert.NoError(t, err, "unexpected error occured when trying to get state for", stateKey)
+	assert.Equal(t, updatedState, checkState)
+
+	// reset to original
+	err = ch.SetState(stateKey, expectedState)
+	assert.NoError(t, err, "unexpected error occurred when setting state for %s", stateKey)
+}
+
+// Reset state to original, kept as a separate test in case of a test failure in TestCheckHandler_State
+func TestCheckHandler_Reset_State(t *testing.T) {
+	os.Setenv("DD_CHECK_STATE_ROOT_PATH", "./testdata")
+	state.InitCheckStateManager()
+
+	ch := NewCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*checkHandler)
+
+	stateKey := "my-check-handler-test-check:state"
+	expectedState := "{\"a\":\"b\"}"
+
+	// reset state to original
+	err := ch.SetState(stateKey, expectedState)
+	assert.NoError(t, err, "unexpected error occurred when setting state for %s", stateKey)
+
+	checkState, err := state.GetCheckStateManager().GetState(stateKey)
+	assert.NoError(t, err, "unexpected error occured when trying to get state for", stateKey)
+	assert.Equal(t, expectedState, checkState)
 }
 
 func TestCheckHandler_Shutdown(t *testing.T) {

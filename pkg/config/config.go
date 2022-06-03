@@ -61,6 +61,12 @@ const (
 	DefaultTxManagerTimeoutDurationSeconds = 60 * 5
 	// DefaultTxManagerEvictionDurationSeconds is the amount of time before a manager is evicted and rolled back, 10 minutes by default
 	DefaultTxManagerEvictionDurationSeconds = 60 * 10
+
+	// DefaultCheckStateExpirationDuration is the amount of time before an element is expired from the Check State cache, 10 minutes by default
+	// [sts]
+	DefaultCheckStateExpirationDuration = 10 * time.Minute
+	// DefaultCheckStatePurgeDuration is the amount of time before an element is removed from the Check State cache, 10 minutes by default
+	DefaultCheckStatePurgeDuration = 10 * time.Minute
 )
 
 var overrideVars = make(map[string]interface{})
@@ -210,6 +216,11 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("transaction_manager_channel_buffer_size", DefaultTxManagerChannelBufferSize)
 	config.BindEnvAndSetDefault("transaction_timeout_duration_seconds", DefaultTxManagerTimeoutDurationSeconds)
 	config.BindEnvAndSetDefault("transaction_eviction_duration_seconds", DefaultTxManagerEvictionDurationSeconds)
+
+	// [sts] check state manager environment variable
+	config.BindEnvAndSetDefault("check_state_root_path", defaultRunPath)
+	config.BindEnvAndSetDefault("check_state_expiration_duration", DefaultCheckStateExpirationDuration)
+	config.BindEnvAndSetDefault("check_state_purge_duration", DefaultCheckStatePurgeDuration)
 
 	// [sts] check manager environment variables
 	config.BindEnvAndSetDefault("check_transactionality_enabled", true)

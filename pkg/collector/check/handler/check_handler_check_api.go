@@ -1,38 +1,16 @@
 package handler
 
 import (
+	"errors"
+	"fmt"
+	checkState "github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/google/uuid"
 )
-
-// CheckAPI contains all the operations that can be done by an Agent Check. This acts as a proxy to forward data
-// where it needs to go.
-type CheckAPI interface {
-	// Transactionality
-	StartTransaction() string
-	StopTransaction()
-
-	// Topology
-	SubmitComponent(instance topology.Instance, component topology.Component)
-	SubmitRelation(instance topology.Instance, relation topology.Relation)
-	SubmitStartSnapshot(instance topology.Instance)
-	SubmitStopSnapshot(instance topology.Instance)
-	SubmitDelete(instance topology.Instance, topologyElementID string)
-
-	// Health
-	SubmitHealthCheckData(stream health.Stream, data health.CheckData)
-	SubmitHealthStartSnapshot(stream health.Stream, intervalSeconds int, expirySeconds int)
-	SubmitHealthStopSnapshot(stream health.Stream)
-
-	// Raw Metrics
-	SubmitRawMetricsData(data telemetry.RawMetrics)
-
-	// lifecycle
-	SubmitComplete()
-}
 
 // StartTransaction submits a start transaction for the check handler. This blocks any future transactions until
 // this one completes, fails or is timed out.
@@ -49,6 +27,27 @@ func (ch *checkHandler) StartTransaction() string {
 // and mark the current transaction as complete.
 func (ch *checkHandler) StopTransaction() {
 	transactionbatcher.GetTransactionalBatcher().SubmitCompleteTransaction(ch.ID(), ch.GetCurrentTransaction())
+}
+
+// SetStateTransactional is used to set state transactionaly. This state is only committed once a transaction has been
+// completed successfully.
+func (ch *checkHandler) SetStateTransactional(key string, state string) error {
+	return errors.New(fmt.Sprintf("SetStateTransactional is not implemented, state %s: %s", key, state))
+}
+
+// SetState is used to commit state for a given state key and CheckState
+func (ch *checkHandler) SetState(key string, state string) error {
+	return checkState.GetCheckStateManager().SetState(key, state)
+}
+
+// GetState returns a CheckState for a given key
+func (ch *checkHandler) GetState(key string) string {
+	s, err := checkState.GetCheckStateManager().GetState(key)
+	if err != nil {
+		_ = log.Errorf("error occurred when reading state for check %s for key %s: %s", ch.ID(), key, err)
+		return "{}"
+	}
+	return s
 }
 
 // SubmitComponent submits a component to the Transactional Batcher to be batched.

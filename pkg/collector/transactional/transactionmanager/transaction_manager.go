@@ -84,6 +84,11 @@ transactionHandler:
 				if err := txm.ackAction(msg.TransactionID, msg.ActionID); err != nil {
 					txm.transactionChannel <- err
 				}
+			case SetTransactionState:
+				log.Debugf("Setting state %s for transaction %s: %s", msg.Key, msg.TransactionID, msg.State)
+				if err := txm.setTransactionState(msg.TransactionID, msg.Key, msg.State); err != nil {
+					txm.transactionChannel <- err
+				}
 			case RejectAction:
 				_ = log.Errorf("Rejecting action %s for transaction %s: %s", msg.ActionID, msg.TransactionID, msg.Reason)
 				if err := txm.rejectAction(msg.TransactionID, msg.ActionID); err != nil {
@@ -122,15 +127,15 @@ transactionHandler:
 			// expire stale transactions, clean up expired transactions that exceed the eviction duration
 			txm.mux.Lock()
 			for _, transaction := range txm.transactions {
-				if transaction.State == Failed || transaction.State == Succeeded {
-					log.Debugf("Cleaning up %s transaction: %s", transaction.State.String(), transaction.TransactionID)
+				if transaction.Status == Failed || transaction.Status == Succeeded {
+					log.Debugf("Cleaning up %s transaction: %s", transaction.Status.String(), transaction.TransactionID)
 					// delete the transaction, already notified on success or failure status so no need to notify again
 					delete(txm.transactions, transaction.TransactionID)
-				} else if transaction.State != Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionTimeoutDuration)) {
+				} else if transaction.Status != Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionTimeoutDuration)) {
 					// last updated timestamp is before current time - checkmanager timeout duration => Tx is stale
 					_ = log.Warnf("Transaction: %s has become stale, last updated %s", transaction.TransactionID, transaction.LastUpdatedTimestamp.String())
-					transaction.State = Stale
-				} else if transaction.State == Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionEvictionDuration)) {
+					transaction.Status = Stale
+				} else if transaction.Status == Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionEvictionDuration)) {
 					// last updated timestamp is before current time - checkmanager eviction duration => Tx can be evicted
 					delete(txm.transactions, transaction.TransactionID)
 					transaction.NotifyChannel <- EvictedTransaction{TransactionID: transaction.TransactionID}
@@ -148,7 +153,7 @@ transactionHandler:
 func (txm *transactionManager) startTransaction(transactionID string, notify chan interface{}) (*IntakeTransaction, error) {
 	transaction := &IntakeTransaction{
 		TransactionID:        transactionID,
-		State:                InProgress,
+		Status:               InProgress,
 		Actions:              map[string]*Action{},
 		NotifyChannel:        notify,
 		LastUpdatedTimestamp: time.Now(),
@@ -179,15 +184,34 @@ func (txm *transactionManager) commitAction(transactionID, actionID string) erro
 }
 
 // updateTransaction is a helper function to set the state of a transaction as well as update it's LastUpdatedTimestamp.
-func (txm *transactionManager) updateTransaction(transaction *IntakeTransaction, action *Action, state TransactionState) {
+func (txm *transactionManager) updateTransaction(transaction *IntakeTransaction, action *Action, status TransactionStatus) {
 	transaction.Actions[action.ActionID] = action
-	transaction.State = state
+	transaction.Status = status
 	transaction.LastUpdatedTimestamp = time.Now()
 }
 
 // ackAction acknowledges an action for a given transaction. This marks the action as acknowledged.
 func (txm *transactionManager) ackAction(transactionID, actionID string) error {
 	return txm.findAndUpdateAction(transactionID, actionID, true)
+}
+
+// setTransactionState sets the state for a given key and CheckState. The state for a given transaction will be
+// committed on a successful completion of the transaction
+func (txm *transactionManager) setTransactionState(transactionID, key string, state string) error {
+	transaction, err := txm.GetTransaction(transactionID)
+	if err != nil {
+		return err
+	}
+	txm.mux.Lock()
+	transaction.State = &TransactionState{
+		Key:   key,
+		State: state,
+	}
+	transaction.Status = InProgress
+	transaction.LastUpdatedTimestamp = time.Now()
+	txm.mux.Unlock()
+
+	return nil
 }
 
 // rejectAction acknowledges an action for a given transaction. This marks the action as acknowledged and results in a
@@ -236,10 +260,11 @@ func (txm *transactionManager) completeTransaction(transactionID string) error {
 			return RollbackTransaction{TransactionID: transactionID, Reason: reason}
 		}
 	}
-	transaction.State = Succeeded
+	transaction.Status = Succeeded
 	transaction.LastUpdatedTimestamp = time.Now()
+	state := transaction.State
 	txm.mux.Unlock()
-	transaction.NotifyChannel <- CompleteTransaction{TransactionID: transactionID}
+	transaction.NotifyChannel <- CompleteTransaction{TransactionID: transactionID, State: state}
 
 	return nil
 }
@@ -252,7 +277,7 @@ func (txm *transactionManager) rollbackTransaction(transactionID, reason string)
 	}
 
 	txm.mux.Lock()
-	transaction.State = Failed
+	transaction.Status = Failed
 	transaction.LastUpdatedTimestamp = time.Now()
 	txm.mux.Unlock()
 	transaction.NotifyChannel <- RollbackTransaction{TransactionID: transactionID, Reason: reason}
