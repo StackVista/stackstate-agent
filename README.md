@@ -1,19 +1,12 @@
 # StackState Agent
 
-[![CircleCI](https://circleci.com/gh/StackVista/stackstate-agent/tree/master.svg?style=svg)](https://circleci.com/gh/StackVista/stackstate-agent/tree/master)
-[![Build status](https://ci.appveyor.com/api/projects/status/kcwhmlsc0oq3m49p/branch/master?svg=true)](https://ci.appveyor.com/project/StackVista/stackstate-agent/branch/master)
-[![GoDoc](https://godoc.org/github.com/StackVista/stackstate-agent?status.svg)](https://godoc.org/github.com/StackVista/stackstate-agent)
-[![Go Report Card](https://goreportcard.com/badge/github.com/StackVista/stackstate-agent)](https://goreportcard.com/report/github.com/StackVista/stackstate-agent)
+Contains the code for the StackState agent V2. Agent integrations are not included in this project and can be found [here](https://github.com/StackVista/stackstate-agent-integrations).
 
-The present repository contains the source code of the StackState Agent version 6. Please refer to the [Agent user documentation](docs/agent) for information about differences between Agent 5 and Agent 6. Additionally, we provide a list of prepackaged binaries for an easy install process [here](https://app.datadoghq.com/account/settings#agent)
-**Note:** the source code of StackState Agent 5 is located in the
+## Installation
 
-## Documentation
+Installation instructions are available on the [StackState docs site](https://docs.stackstate.com/stackpacks/integrations/agent).
 
-The general documentation of the project, including instructions for installation
-and development, is located under [the docs directory](docs) of the present repo.
-
-## Getting started
+## Getting development started
 
 To build the Agent you need:
  * [Go](https://golang.org/doc/install) 1.13 or later. You'll also need to set your `$GOPATH` and have `$GOPATH/bin` in your path.
@@ -61,10 +54,6 @@ To start working on the Agent, you can build the `master` branch:
   If you built an older version of the agent, you may have the error `make: *** No targets specified and no makefile found.  Stop.`.
   To solve the issue, you should remove `CMakeCache.txt` from `rtloader` folder with `rm rtloader/CMakeCache.txt`.
 
-
-
-Please refer to the [Agent Developer Guide](docs/dev/README.md) for more details.
-
 ## Run
 
 You can run the agent with:
@@ -73,11 +62,6 @@ You can run the agent with:
 ```
 
 The file `bin/agent/dist/datadog.yaml` is copied from `dev/dist/datadog.yaml` by `invoke agent.build` and must contain a valid api key.
-
-## Contributing code
-
-You'll find information and help on how to contribute code to this project under
-[the `docs/dev` directory](docs/dev) of the present repo.
 
 ## Install
 
@@ -145,10 +129,6 @@ Windows arguments:
 - `skipSSLValidation` = Skip ssl certificates validation when talking to the backend (defaults to `false`)
 - `agentVersion` = Version of the Agent to be installed (defaults to `latest`)
 
-## Install
-
-Installation instructions are available on the [StackState docs site](https://docs.stackstate.com/stackpacks/integrations/agent).
-
 ##### Omnibus notes for windows build process
 
 We ended up checking in a patched gem file under omnibus/vendor/cache/libyajl2-1.2.1.gem, to make windows builds work with newer msys toolchain.
@@ -159,4 +139,29 @@ bump the ruby version > 2.6.5 because libyajl2 compiles proper on those ruby ver
 
 If you want to speed up the GitLab pipeline and run only the steps related to the cluster agent, include the string `[cluster-agent]` in your commit message.
 
+## Testing cluster-agent helm chart
+
+The acceptance tests in our pipeline use the cluster-agent helm chart to install the agent in a test cluster. If you make changes to the cluster-agent helm chart, you probably want to test if our acceptance tests will work after your changes.
+
+When you open a merge request on the helm-chart repository, a test version of that chart will be published to a test helm repository [stackstate-test](https://helm-test.stackstate.io). You can add that test repo in your machine by running the following commands:
+
+```shell
+helm repo add stackstate-test https://helm-test.stackstate.io && helm repo update
+```
+
+You can then install this version of the cluster-agent helm chart by running:
+
+```shell
+helm upgrade --install \
+  --create-namespace \
+  --namespace <namespace> \
+  --set-string 'stackstate.apiKey'='<api-key>' \
+  --set-string 'stackstate.cluster.name'='<cluster-name' \
+  --set-string 'stackstate.url'='<stackstate-url>' \
+  stackstate-cluster-agent stackstate-test/cluster-agent --version <version>
+```
+
+`<version>` is the new version you've set on `helm-charts/stable/cluster-agent/Chart.yaml` on your feature branch.
+
+To use this version in the `stackstate-agent` pipeline, create a branch and update the `HELM_CHART_VERSION` variable on `.gitlab-ci.yml`, with that the pipeline will use the test helm repository that was updated by the helm-charts pipeline.
 

@@ -6,8 +6,7 @@ conda activate ddpy3
 pip install invoke distro==1.4.0 awscli
 inv deps
 
-inv rtloader.clean && inv rtloader.make --python-runtimes 3
-inv rtloader.test
+inv rtloader.clean && inv rtloader.make --python-runtimes 3 && inv rtloader.test
 ```
 
 # Agent Python2 build
