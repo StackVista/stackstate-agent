@@ -29,6 +29,8 @@ from .utils import (
     get_win_py_runtime_var,
     has_both_python,
     load_release_versions,
+    do_go_rename,  # sts
+    do_sed_rename,  # sts
 )
 
 # constants
