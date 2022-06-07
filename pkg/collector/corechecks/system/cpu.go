@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
+//go:build !windows
 // +build !windows
 
 package system
@@ -69,8 +70,10 @@ func (c *CPUCheck) Run() error {
 		sender.Gauge("system.cpu.idle", idle*toPercent, "", nil)
 		sender.Gauge("system.cpu.stolen", stolen*toPercent, "", nil)
 		sender.Gauge("system.cpu.guest", guest*toPercent, "", nil)
-		sender.Commit()
 	}
+
+	sender.Gauge("system.cpu.num_cores", c.nbCPU, "", nil)
+	sender.Commit()
 
 	c.lastNbCycle = nbCycle
 	c.lastTimes = t

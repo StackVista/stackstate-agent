@@ -7,8 +7,8 @@
 // github.com/StackVista/stackstate-agent/pkg/process/net depends on `github.com/DataDog/agent-payload/process`,
 // which has a hard dependency on `github.com/DataDog/zstd`, which requires CGO.
 // Should be removed once `github.com/DataDog/agent-payload/process` can be imported with CGO disabled.
-// +build cgo
-// +build linux
+//go:build cgo && linux
+// +build cgo,linux
 
 package ebpf
 
@@ -111,6 +111,7 @@ func (t *TCPQueueLengthCheck) Run() error {
 	for _, lineRaw := range data {
 		line, ok := lineRaw.(tcpqueuelength.Stats)
 		if !ok {
+			log.Error("Raw data has incorrect type")
 			continue
 		}
 		entityID := containers.BuildTaggerEntityName(line.ContainerID)

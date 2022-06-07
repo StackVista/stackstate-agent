@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build docker
 // +build docker
 
 package containers
@@ -45,6 +46,14 @@ func TestReportIOMetrics(t *testing.T) {
 			"sda": 671846400,
 			"sdb": 0,
 		},
+		DeviceReadOperations: map[string]uint64{
+			"sda": 1042,
+			"sdb": 42,
+		},
+		DeviceWriteOperations: map[string]uint64{
+			"sda": 2042,
+			"sdb": 1042,
+		},
 	}
 	sdaTags := append(tags, "device:sda", "device_name:sda")
 	sdbTags := append(tags, "device:sdb", "device_name:sdb")
@@ -53,6 +62,10 @@ func TestReportIOMetrics(t *testing.T) {
 	mockSender.AssertMetric(t, "Rate", "docker.io.write_bytes", float64(671846400), "", sdaTags)
 	mockSender.AssertMetric(t, "Rate", "docker.io.read_bytes", float64(1130496), "", sdbTags)
 	mockSender.AssertMetric(t, "Rate", "docker.io.write_bytes", float64(0), "", sdbTags)
+	mockSender.AssertMetric(t, "Rate", "docker.io.read_operations", float64(1042), "", sdaTags)
+	mockSender.AssertMetric(t, "Rate", "docker.io.write_operations", float64(2042), "", sdaTags)
+	mockSender.AssertMetric(t, "Rate", "docker.io.read_operations", float64(42), "", sdbTags)
+	mockSender.AssertMetric(t, "Rate", "docker.io.write_operations", float64(1042), "", sdbTags)
 }
 
 func TestReportUptime(t *testing.T) {

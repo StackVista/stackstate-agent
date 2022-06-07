@@ -1,5 +1,5 @@
-// +build linux
-// +build !android
+//go:build linux && !android
+// +build linux,!android
 
 package netlink
 
@@ -250,6 +250,8 @@ func (ctr *realConntracker) register(c ct.Con) int {
 		generation := getNthGeneration(generationLength, now, 3)
 		ctr.state[key] = formatIPTranslation(transTuple, generation)
 	}
+
+	log.Tracef("src=%s dst=%s sport=%d dport=%d src=%s dst=%s sport=%d dport=%d", c.Origin.Src, c.Origin.Dst, *c.Origin.Proto.SrcPort, *c.Origin.Proto.DstPort, c.Reply.Src, c.Reply.Dst, *c.Reply.Proto.SrcPort, *c.Reply.Proto.DstPort)
 
 	ctr.Lock()
 	defer ctr.Unlock()

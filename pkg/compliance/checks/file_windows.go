@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build windows
 // +build windows
 
 package checks
@@ -12,6 +13,10 @@ import (
 	"os"
 )
 
-func getFileOwner(fi os.FileInfo) (string, error) {
-	return "", errors.New("retrieving file owner not supported in windows")
+func getFileUser(fi os.FileInfo) (string, error) {
+	return "", errors.New("retrieving file user not supported in windows")
+}
+
+func getFileGroup(fi os.FileInfo) (string, error) {
+	return "", errors.New("retrieving file group not supported in windows")
 }

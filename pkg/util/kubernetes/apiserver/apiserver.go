@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package apiserver
@@ -125,7 +126,7 @@ func WaitForAPIClient(ctx context.Context) (*APIClient, error) {
 		case retry.PermaFail:
 			return nil, fmt.Errorf("Permanent failure while waiting for Kubernetes APIServer")
 		default:
-			sleepFor := time.Now().UTC().Sub(globalAPIClient.initRetry.NextRetry().UTC()) + time.Second
+			sleepFor := globalAPIClient.initRetry.NextRetry().UTC().Sub(time.Now().UTC()) + time.Second
 			log.Debugf("Waiting for APIServer, next retry: %v", sleepFor)
 			select {
 			case <-ctx.Done():

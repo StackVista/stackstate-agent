@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build !windows
 // +build !windows
 
 package system
@@ -89,6 +90,7 @@ func (c *MemoryCheck) linuxSpecificVirtualMemoryCheck(v *mem.VirtualMemoryStat) 
 	sender.Gauge("system.mem.buffered", float64(v.Buffers)/mbSize, "", nil)
 	sender.Gauge("system.mem.shared", float64(v.Shared)/mbSize, "", nil)
 	sender.Gauge("system.mem.slab", float64(v.Slab)/mbSize, "", nil)
+	sender.Gauge("system.mem.slab_reclaimable", float64(v.SReclaimable)/mbSize, "", nil)
 	sender.Gauge("system.mem.page_tables", float64(v.PageTables)/mbSize, "", nil)
 	sender.Gauge("system.mem.commit_limit", float64(v.CommitLimit)/mbSize, "", nil)
 	sender.Gauge("system.mem.committed_as", float64(v.CommittedAS)/mbSize, "", nil)

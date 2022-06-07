@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build !windows
 // +build !windows
 
 package system
@@ -34,6 +35,7 @@ func VirtualMemory() (*mem.VirtualMemoryStat, error) {
 		WritebackTmp: 0,
 		Shared:       327680000000,
 		Slab:         327680000000,
+		SReclaimable: 327680000000,
 		PageTables:   37790679040,
 		SwapCached:   25000000000,
 		CommitLimit:  785338368,
@@ -70,6 +72,7 @@ func TestMemoryCheckLinux(t *testing.T) {
 	mock.On("Gauge", "system.mem.buffered", 353818902528.0/mbSize, "", []string(nil)).Return().Times(1)
 	mock.On("Gauge", "system.mem.shared", 327680000000.0/mbSize, "", []string(nil)).Return().Times(1)
 	mock.On("Gauge", "system.mem.slab", 327680000000.0/mbSize, "", []string(nil)).Return().Times(1)
+	mock.On("Gauge", "system.mem.slab_reclaimable", 327680000000.0/mbSize, "", []string(nil)).Return().Times(1)
 	mock.On("Gauge", "system.mem.page_tables", 37790679040.0/mbSize, "", []string(nil)).Return().Times(1)
 	mock.On("Gauge", "system.mem.commit_limit", 785338368.0/mbSize, "", []string(nil)).Return().Times(1)
 	mock.On("Gauge", "system.mem.committed_as", 433750016.0/mbSize, "", []string(nil)).Return().Times(1)
@@ -84,7 +87,7 @@ func TestMemoryCheckLinux(t *testing.T) {
 	require.Nil(t, err)
 
 	mock.AssertExpectations(t)
-	mock.AssertNumberOfCalls(t, "Gauge", 17)
+	mock.AssertNumberOfCalls(t, "Gauge", 18)
 	mock.AssertNumberOfCalls(t, "Commit", 1)
 }
 
@@ -178,6 +181,7 @@ func TestSwapMemoryError(t *testing.T) {
 	mock.On("Gauge", "system.mem.buffered", 353818902528.0/mbSize, "", []string(nil)).Return().Times(1)
 	mock.On("Gauge", "system.mem.shared", 327680000000.0/mbSize, "", []string(nil)).Return().Times(1)
 	mock.On("Gauge", "system.mem.slab", 327680000000.0/mbSize, "", []string(nil)).Return().Times(1)
+	mock.On("Gauge", "system.mem.slab_reclaimable", 327680000000.0/mbSize, "", []string(nil)).Return().Times(1)
 	mock.On("Gauge", "system.mem.page_tables", 37790679040.0/mbSize, "", []string(nil)).Return().Times(1)
 	mock.On("Gauge", "system.mem.commit_limit", 785338368.0/mbSize, "", []string(nil)).Return().Times(1)
 	mock.On("Gauge", "system.mem.committed_as", 433750016.0/mbSize, "", []string(nil)).Return().Times(1)
@@ -187,7 +191,7 @@ func TestSwapMemoryError(t *testing.T) {
 	require.Nil(t, err)
 
 	mock.AssertExpectations(t)
-	mock.AssertNumberOfCalls(t, "Gauge", 13)
+	mock.AssertNumberOfCalls(t, "Gauge", 14)
 	mock.AssertNumberOfCalls(t, "Commit", 1)
 }
 

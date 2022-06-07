@@ -4,10 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strings"
 
+	"github.com/DataDog/ebpf"
 	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode"
 	"github.com/StackVista/stackstate-agent/pkg/process/util"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -37,7 +39,7 @@ var (
 // IsTracerSupportedByOS returns whether or not the current kernel version supports tracer functionality
 // along with some context on why it's not supported
 func IsTracerSupportedByOS(exclusionList []string) (bool, string) {
-	currentKernelCode, err := CurrentKernelVersion()
+	currentKernelCode, err := ebpf.CurrentKernelVersion()
 	if err == ErrNotImplemented {
 		log.Infof("Could not detect OS, will assume supported.")
 	} else if err != nil {
@@ -116,23 +118,25 @@ func snakeToCapInitialCamel(s string) string {
 }
 
 // processHeaders processes the `#include` of embedded headers.
-func processHeaders(fileName string) (bytes.Buffer, error) {
-	sourceRaw, err := bytecode.Asset(fileName)
+func processHeaders(bpfDir, fileName string) (*bytes.Buffer, error) {
+	sourceReader, err := bytecode.GetReader(bpfDir, fileName)
 	if err != nil {
-		return bytes.Buffer{}, err
+		return nil, err
 	}
 
 	// Note that embedded headers including other embedded headers is not managed because
 	// this would also require to properly handle inclusion guards.
 	includeRegexp := regexp.MustCompile(CIncludePattern)
-	var source bytes.Buffer
-	scanner := bufio.NewScanner(bytes.NewBuffer(sourceRaw))
+	source := new(bytes.Buffer)
+	scanner := bufio.NewScanner(sourceReader)
 	for scanner.Scan() {
 		match := includeRegexp.FindSubmatch(scanner.Bytes())
 		if len(match) == 2 {
-			header, err := bytecode.Asset(string(match[1]))
+			header, err := bytecode.GetReader(bpfDir, string(match[1]))
 			if err == nil {
-				source.Write(header)
+				if _, err := io.Copy(source, header); err != nil {
+					return source, err
+				}
 				continue
 			}
 		}

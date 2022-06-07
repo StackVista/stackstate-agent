@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubelet
 // +build kubelet
 
 package collectors
@@ -145,9 +146,15 @@ func (c *KubeletCollector) Fetch(entity string) ([]string, []string, []string, e
 func (c *KubeletCollector) parseExpires(idList []string) ([]*TagInfo, error) {
 	var output []*TagInfo
 	for _, id := range idList {
+		entityID, err := kubelet.KubeIDToTaggerEntityID(id)
+		if err != nil {
+			log.Warnf("error extracting tagger entity id from %q: %s", id, err)
+			continue
+		}
+
 		info := &TagInfo{
 			Source:       kubeletCollectorName,
-			Entity:       id,
+			Entity:       entityID,
 			DeleteEntity: true,
 		}
 		output = append(output, info)

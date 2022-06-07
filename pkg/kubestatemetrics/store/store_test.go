@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package store
@@ -12,7 +13,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -35,7 +36,7 @@ func TestExtract(t *testing.T) {
 			Name: metricName,
 			Metrics: []*metric.Metric{
 				{
-					LabelKeys:   []string{"uid", "node"},
+					LabelKeys:   []string{"node"},
 					LabelValues: []string{string(o.GetUID()), o.GetName()},
 					Value:       float64(o.GetCreationTimestamp().Unix()),
 				},
@@ -68,7 +69,6 @@ func TestExtract(t *testing.T) {
 			assert.Equal(t, storeName, metricFam.Type)
 			for _, metric := range metricFam.ListMetrics {
 				assert.Equal(t, idsToAdd[string(uid)], metric.Labels["node"])
-				assert.Equal(t, string(uid), metric.Labels["uid"])
 			}
 		}
 
@@ -121,9 +121,11 @@ func TestBuildTags(t *testing.T) {
 func TestPush(t *testing.T) {
 	storeName := "test"
 	tests := []struct {
-		name  string
-		toAdd map[types.UID][]DDMetricsFam
-		res   map[string][]DDMetricsFam
+		name        string
+		toAdd       map[types.UID][]DDMetricsFam
+		familyAllow FamilyAllow
+		metricAllow MetricAllow
+		res         map[string][]DDMetricsFam
 	}{
 		{
 			name: "adding single metric",
@@ -141,6 +143,8 @@ func TestPush(t *testing.T) {
 					},
 				},
 			},
+			familyAllow: GetAllFamilies,
+			metricAllow: GetAllMetrics,
 			res: map[string][]DDMetricsFam{
 				"kube_node_info": {
 					{
@@ -151,7 +155,6 @@ func TestPush(t *testing.T) {
 								Val: 1,
 								Labels: map[string]string{
 									"foo": "bar",
-									"uid": "123",
 								},
 							},
 						},
@@ -160,9 +163,11 @@ func TestPush(t *testing.T) {
 			},
 		},
 		{
-			name:  "no metrics",
-			toAdd: map[types.UID][]DDMetricsFam{},
-			res:   map[string][]DDMetricsFam{},
+			name:        "no metrics",
+			toAdd:       map[types.UID][]DDMetricsFam{},
+			familyAllow: GetAllFamilies,
+			metricAllow: GetAllMetrics,
+			res:         map[string][]DDMetricsFam{},
 		},
 		{
 			name: "complex case",
@@ -196,6 +201,8 @@ func TestPush(t *testing.T) {
 					},
 				},
 			},
+			familyAllow: GetAllFamilies,
+			metricAllow: GetAllMetrics,
 			res: map[string][]DDMetricsFam{
 				"kube_node_info": {
 					{
@@ -206,7 +213,6 @@ func TestPush(t *testing.T) {
 								Val: 1,
 								Labels: map[string]string{
 									"foo": "bar",
-									"uid": "123",
 								},
 							},
 						},
@@ -221,14 +227,160 @@ func TestPush(t *testing.T) {
 								Val: 1,
 								Labels: map[string]string{
 									"bar": "baz",
-									"uid": "456",
 								},
 							},
 							{
 								Val: 2,
 								Labels: map[string]string{
 									"cafe": "ole",
-									"uid":  "456",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "filter by family",
+			toAdd: map[types.UID][]DDMetricsFam{
+				"uid-1": {
+					{
+						Type: "*v1.Nodes",
+						Name: "kube_node_info",
+						ListMetrics: []DDMetric{
+							{
+								Val:    1,
+								Labels: map[string]string{"foo": "bar"},
+							},
+						},
+					},
+				},
+				"uid-2": {
+					{
+						Type: "*v1.Pods",
+						Name: "kube_pod_info",
+						ListMetrics: []DDMetric{
+							{
+								Val:    1,
+								Labels: map[string]string{"foo": "bar"},
+							},
+						},
+					},
+				},
+			},
+			familyAllow: func(f DDMetricsFam) bool { return f.Name == "kube_node_info" },
+			metricAllow: GetAllMetrics,
+			res: map[string][]DDMetricsFam{
+				"kube_node_info": {
+					{
+						Name: "kube_node_info",
+						Type: "*v1.Nodes",
+						ListMetrics: []DDMetric{
+							{
+								Val: 1,
+								Labels: map[string]string{
+									"foo": "bar",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "filter by metric",
+			toAdd: map[types.UID][]DDMetricsFam{
+				"uid-1": {
+					{
+						Type: "*v1.Nodes",
+						Name: "kube_node_info",
+						ListMetrics: []DDMetric{
+							{
+								Val:    1,
+								Labels: map[string]string{"foo": "bar"},
+							},
+						},
+					},
+				},
+				"uid-2": {
+					{
+						Type: "*v1.Pods",
+						Name: "kube_pod_info",
+						ListMetrics: []DDMetric{
+							{
+								Val:    2,
+								Labels: map[string]string{"foo": "bar"},
+							},
+						},
+					},
+				},
+			},
+			familyAllow: GetAllFamilies,
+			metricAllow: func(m DDMetric) bool { return m.Val == 1 },
+			res: map[string][]DDMetricsFam{
+				"kube_node_info": {
+					{
+						Name: "kube_node_info",
+						Type: "*v1.Nodes",
+						ListMetrics: []DDMetric{
+							{
+								Val: 1,
+								Labels: map[string]string{
+									"foo": "bar",
+								},
+							},
+						},
+					},
+				},
+				"kube_pod_info": {
+					{
+						Name:        "kube_pod_info",
+						Type:        "*v1.Pods",
+						ListMetrics: []DDMetric{},
+					},
+				},
+			},
+		},
+		{
+			name: "filter by metric and family",
+			toAdd: map[types.UID][]DDMetricsFam{
+				"uid-1": {
+					{
+						Type: "*v1.Nodes",
+						Name: "kube_node_info",
+						ListMetrics: []DDMetric{
+							{
+								Val:    1,
+								Labels: map[string]string{"foo": "bar"},
+							},
+						},
+					},
+				},
+				"uid-2": {
+					{
+						Type: "*v1.Pods",
+						Name: "kube_pod_info",
+						ListMetrics: []DDMetric{
+							{
+								Val:    2,
+								Labels: map[string]string{"foo": "bar"},
+							},
+						},
+					},
+				},
+			},
+			familyAllow: func(f DDMetricsFam) bool { return f.Name == "kube_node_info" },
+			metricAllow: func(m DDMetric) bool { return m.Val == 1 },
+			res: map[string][]DDMetricsFam{
+				"kube_node_info": {
+					{
+						Name: "kube_node_info",
+						Type: "*v1.Nodes",
+						ListMetrics: []DDMetric{
+							{
+								Val: 1,
+								Labels: map[string]string{
+									"foo": "bar",
 								},
 							},
 						},
@@ -241,7 +393,7 @@ func TestPush(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			ms := NewMetricsStore(func(i interface{}) []metric.FamilyInterface { return nil }, storeName)
 			ms.addMetrics(test.toAdd)
-			res := ms.Push()
+			res := ms.Push(test.familyAllow, test.metricAllow)
 			assert.Equal(t, res, test.res)
 		})
 	}

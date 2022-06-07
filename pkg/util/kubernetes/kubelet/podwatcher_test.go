@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubelet
 // +build kubelet
 
 package kubelet
@@ -331,9 +332,9 @@ func (suite *PodwatcherTestSuite) TestPodWatcherExpireDelay() {
 		lastSeen:       make(map[string]time.Time),
 		lastSeenReady:  make(map[string]time.Time),
 		tagsDigest:     make(map[string]string),
+		oldPhase:       make(map[string]string),
 		expiryDuration: 5 * time.Minute,
 	}
-
 	_, err = watcher.computeChanges(sourcePods)
 	require.Nil(suite.T(), err)
 	// 7 pods (including 2 statics) + 5 container statuses (static pods don't report these)
@@ -373,6 +374,7 @@ func (suite *PodwatcherTestSuite) TestPodWatcherExpireWholePod() {
 		lastSeen:       make(map[string]time.Time),
 		lastSeenReady:  make(map[string]time.Time),
 		tagsDigest:     make(map[string]string),
+		oldPhase:       make(map[string]string),
 		expiryDuration: 5 * time.Minute,
 	}
 
@@ -450,6 +452,7 @@ func (suite *PodwatcherTestSuite) TestPodWatcherLabelsValueChange() {
 		lastSeen:       make(map[string]time.Time),
 		lastSeenReady:  make(map[string]time.Time),
 		tagsDigest:     make(map[string]string),
+		oldPhase:       make(map[string]string),
 		expiryDuration: 5 * time.Minute,
 	}
 	twoPods := sourcePods[:2]
@@ -483,6 +486,52 @@ func (suite *PodwatcherTestSuite) TestPodWatcherLabelsValueChange() {
 	require.Len(suite.T(), changes, 2)
 }
 
+func (suite *PodwatcherTestSuite) TestPodWatcherPhaseChange() {
+	sourcePods, err := loadPodsFixture("./testdata/podlist_1.8-2.json")
+	require.Nil(suite.T(), err)
+	require.Len(suite.T(), sourcePods, 7)
+
+	watcher := &PodWatcher{
+		lastSeen:       make(map[string]time.Time),
+		lastSeenReady:  make(map[string]time.Time),
+		tagsDigest:     make(map[string]string),
+		oldPhase:       make(map[string]string),
+		expiryDuration: 5 * time.Minute,
+	}
+	twoPods := sourcePods[:2]
+	changes, err := watcher.computeChanges(twoPods)
+	require.Nil(suite.T(), err)
+	require.Len(suite.T(), changes, 2)
+
+	twoPods[0].Status.Phase = "Succeeded"
+	changes, err = watcher.computeChanges(twoPods)
+	require.Nil(suite.T(), err)
+	require.Len(suite.T(), changes, 1)
+}
+
+// TestPodWatcherPhaseChangeNotRegistered test makes sure that we only check for
+// pod phases in the tagger and not for auto discovery
+func (suite *PodwatcherTestSuite) TestPodWatcherPhaseChangeNotRegistered() {
+	sourcePods, err := loadPodsFixture("./testdata/podlist_1.8-2.json")
+	require.Nil(suite.T(), err)
+	require.Len(suite.T(), sourcePods, 7)
+
+	watcher := &PodWatcher{
+		lastSeen:       make(map[string]time.Time),
+		lastSeenReady:  make(map[string]time.Time),
+		expiryDuration: 5 * time.Minute,
+	}
+	twoPods := sourcePods[:2]
+	changes, err := watcher.computeChanges(twoPods)
+	require.Nil(suite.T(), err)
+	require.Len(suite.T(), changes, 2)
+
+	twoPods[0].Status.Phase = "Succeeded"
+	changes, err = watcher.computeChanges(twoPods)
+	require.Nil(suite.T(), err)
+	require.Len(suite.T(), changes, 0)
+}
+
 func (suite *PodwatcherTestSuite) TestPodWatcherAnnotationsValueChange() {
 	sourcePods, err := loadPodsFixture("./testdata/podlist_1.8-2.json")
 	require.Nil(suite.T(), err)
@@ -492,6 +541,7 @@ func (suite *PodwatcherTestSuite) TestPodWatcherAnnotationsValueChange() {
 		lastSeen:       make(map[string]time.Time),
 		lastSeenReady:  make(map[string]time.Time),
 		tagsDigest:     make(map[string]string),
+		oldPhase:       make(map[string]string),
 		expiryDuration: 5 * time.Minute,
 	}
 	twoPods := sourcePods[:2]

@@ -59,6 +59,7 @@ description 'StackState Monitoring Agent
 # .deb specific flags
 package :deb do
   vendor 'StackState <info@stackstate.com>'
+  epoch 1
   license 'Apache License Version 2.0'
   section 'utils'
   priority 'extra'
@@ -141,6 +142,10 @@ package :msi do
   if ENV['SIGN_PFX']
     signing_identity_file "#{ENV['SIGN_PFX']}", password: "#{ENV['SIGN_PFX_PW']}", algorithm: "SHA256"
   end
+  include_sysprobe = "false"
+  if not windows_arch_i386? and ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?
+    include_sysprobe = "true"
+  end
   parameters({
     'InstallDir' => install_dir,
     'InstallFiles' => "#{Omnibus::Config.source_dir()}/stackstate-agent/stackstate-agent/packaging/stackstate-agent/win32/install_files",
@@ -149,6 +154,7 @@ package :msi do
     'IncludePython2' => "#{with_python_runtime? '2'}",
     'IncludePython3' => "#{with_python_runtime? '3'}",
     'Platform' => "#{arch}",
+    'IncludeSysprobe' => "#{include_sysprobe}",
   })
 end
 
@@ -166,12 +172,7 @@ end
 # creates required build directories
 dependency 'datadog-agent-prepare'
 
-# [VS] missing in upstream
-# # Windows-specific dependencies
-# if windows?
-#   dependency 'pywin32'
-# end
-
+# Datadog agent
 dependency 'datadog-agent'
 
 # System-probe
@@ -181,8 +182,11 @@ end
 
 # Additional software
 if windows?
-  dependency 'cacerts_py2_local' if with_python_runtime? "2"
-  dependency 'cacerts_py3_local' if with_python_runtime? "3"
+  if ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?
+    dependency 'datadog-windows-filter-driver'
+  end
+  dependency 'cacerts_py2_local' if with_python_runtime? "2" # sts
+  dependency 'cacerts_py3_local' if with_python_runtime? "3" # sts
 else
   dependency 'cacerts'
 end
@@ -204,7 +208,6 @@ if with_python_runtime? "3"
   # [STS] stackstate agent integrations
   dependency 'stackstate-agent-integrations-py3'
 end
-
 
 # External agents
 dependency 'jmxfetch'
@@ -239,6 +242,7 @@ if linux?
     extra_package_file "/etc/init.d/stackstate-agent"
     extra_package_file "/etc/init.d/stackstate-agent-process"
     extra_package_file "/etc/init.d/stackstate-agent-trace"
+    # sts
     if $enable_security_agent
         extra_package_file "/etc/init.d/stackstate-agent-security"
     end
@@ -247,6 +251,7 @@ if linux?
     extra_package_file "/etc/init.d/stackstate-agent"
     extra_package_file "/etc/init.d/stackstate-agent-process"
     extra_package_file "/etc/init.d/stackstate-agent-trace"
+    # sts
     if $enable_security_agent
         extra_package_file "/etc/init.d/stackstate-agent-security"
     end

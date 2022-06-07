@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubelet
 // +build kubelet
 
 package collectors
@@ -143,7 +144,7 @@ func (c *KubeletCollector) parsePods(pods []*kubelet.Pod) ([]*TagInfo, error) {
 					tags.AddLow("kube_job", owner.Name)
 				}
 			case "ReplicaSet":
-				deployment := parseDeploymentForReplicaset(owner.Name)
+				deployment := parseDeploymentForReplicaSet(owner.Name)
 				if len(deployment) > 0 {
 					tags.AddOrchestrator("kube_replica_set", owner.Name)
 					tags.AddLow("kube_deployment", deployment)
@@ -253,9 +254,9 @@ func (c *KubeletCollector) parsePods(pods []*kubelet.Pod) ([]*TagInfo, error) {
 	return output, nil
 }
 
-// parseDeploymentForReplicaset gets the deployment name from a replicaset,
+// parseDeploymentForReplicaSet gets the deployment name from a replicaset,
 // or returns an empty string if no parent deployment is found.
-func parseDeploymentForReplicaset(name string) string {
+func parseDeploymentForReplicaSet(name string) string {
 	lastDash := strings.LastIndexAny(name, "-")
 	if lastDash == -1 {
 		// No dash

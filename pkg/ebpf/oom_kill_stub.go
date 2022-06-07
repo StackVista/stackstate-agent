@@ -1,14 +1,17 @@
+//go:build !linux_bpf || (linux_bpf && !bcc)
 // +build !linux_bpf linux_bpf,!bcc
 
 package ebpf
 
-import "github.com/StackVista/stackstate-agent/pkg/ebpf/oomkill"
+import (
+	"github.com/StackVista/stackstate-agent/pkg/ebpf/oomkill"
+)
 
 // OOMKillProbe is not implemented on non-linux systems
 type OOMKillProbe struct{}
 
 // NewOOMKillProbe is not implemented on non-linux systems
-func NewOOMKillProbe() (*OOMKillProbe, error) {
+func NewOOMKillProbe(cfg *Config) (*OOMKillProbe, error) {
 	return nil, ErrNotImplemented
 }
 

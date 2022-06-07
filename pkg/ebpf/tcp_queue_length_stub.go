@@ -1,14 +1,17 @@
+//go:build !linux_bpf || (linux_bpf && !bcc)
 // +build !linux_bpf linux_bpf,!bcc
 
 package ebpf
 
-import "github.com/StackVista/stackstate-agent/pkg/ebpf/tcpqueuelength"
+import (
+	"github.com/StackVista/stackstate-agent/pkg/ebpf/tcpqueuelength"
+)
 
 // TCPQueueLengthTracer is not implemented on non-linux systems
 type TCPQueueLengthTracer struct{}
 
 // NewTCPQueueLengthTracer is not implemented on non-linux systems
-func NewTCPQueueLengthTracer() (*TCPQueueLengthTracer, error) {
+func NewTCPQueueLengthTracer(cfg *Config) (*TCPQueueLengthTracer, error) {
 	return nil, ErrNotImplemented
 }
 

@@ -3,14 +3,10 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2020 Datadog, Inc.
 
+//go:build !docker
 // +build !docker
 
 package ecs
-
-const (
-	// CloudProviderName contains the inventory name of for ECS
-	CloudProviderName = "AWS"
-)
 
 // IsECSInstance returns whether the agent is running in ECS.
 func IsECSInstance() bool {

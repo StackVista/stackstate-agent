@@ -1,9 +1,13 @@
+//go:build !windows
 // +build !windows
 
 package config
 
 const (
 	defaultLogFilePath = "/var/log/datadog/process-agent.log"
+
+	// defaultSystemProbeLogFilePath is the default logging file for the system probe
+	defaultSystemProbeLogFilePath = "/var/log/datadog/system-probe.log"
 
 	// Agent 6
 	defaultDDAgentBin = "/opt/datadog-agent/bin/agent/agent"

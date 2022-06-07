@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
+//go:build windows
 // +build windows
 
 package app
@@ -38,6 +39,12 @@ var subservices = []Servicedef{
 		configKey:   "process_config.enabled",
 		serviceName: "datadog-process-agent",
 		serviceInit: processInit,
+	},
+	{
+		name:        "sysprobe",
+		configKey:   "system_probe_config.enabled",
+		serviceName: "datadog-system-probe",
+		serviceInit: sysprobeInit,
 	}}
 
 func apmInit() error {
@@ -47,6 +54,10 @@ func apmInit() error {
 }
 
 func processInit() error {
+	return nil
+}
+
+func sysprobeInit() error {
 	return nil
 }
 

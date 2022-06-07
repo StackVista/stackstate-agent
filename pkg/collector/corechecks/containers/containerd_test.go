@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build containerd
 // +build containerd
 
 package containers
@@ -92,7 +93,7 @@ func TestComputeEvents(t *testing.T) {
 	mocked := mocksender.NewMockSender(containerdCheck.ID())
 	var err error
 	defer containersutil.ResetSharedFilter()
-	containerdCheck.filters, err = containersutil.GetSharedFilter()
+	containerdCheck.filters, err = containersutil.GetSharedMetricFilter()
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -457,7 +458,7 @@ func TestIsExcluded(t *testing.T) {
 	config.Datadog.Set("container_exclude", "kube_namespace:shouldexclude")
 	defer config.Datadog.SetDefault("container_exclude", "")
 	defer containersutil.ResetSharedFilter()
-	containerdCheck.filters, err = containersutil.GetSharedFilter()
+	containerdCheck.filters, err = containersutil.GetSharedMetricFilter()
 	require.NoError(t, err)
 	c := containers.Container{
 		Image: "kubernetes/pause",

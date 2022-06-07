@@ -3,12 +3,14 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
-// +build python
-// +build !windows
+//go:build python && !windows
+// +build python,!windows
 
 package python
 
 import (
+	"unsafe"
+
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
@@ -18,6 +20,7 @@ import (
 #cgo !windows LDFLAGS: -ldatadog-agent-rtloader -ldl
 
 #include <datadog_agent_rtloader.h>
+#include <rtloader_mem.h>
 */
 import "C"
 
@@ -31,8 +34,12 @@ func initializePlatform() error {
 			cCoreDump = 1
 		}
 
-		if C.handle_crashes(rtloader, C.int(cCoreDump)) == 0 {
-			log.Errorf("Unable to install crash handler, C-land stacktraces and dumps will be unavailable")
+		var handlerErr *C.char = nil
+		if C.handle_crashes(C.int(cCoreDump), &handlerErr) == 0 {
+			log.Errorf("Unable to install crash handler, C-land stacktraces and dumps will be unavailable: %s", C.GoString(handlerErr))
+			if handlerErr != nil {
+				C._free(unsafe.Pointer(handlerErr))
+			}
 		}
 	}
 

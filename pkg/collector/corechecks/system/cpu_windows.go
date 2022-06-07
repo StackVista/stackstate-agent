@@ -7,6 +7,7 @@
 // https://github.com/shirou/gopsutil .  This code is licensed under the New BSD License
 // copyright WAKAYAMA Shirou, and the gopsutil contributors
 
+//go:build windows
 // +build windows
 
 package system
@@ -83,6 +84,7 @@ func (c *CPUCheck) Run() error {
 
 	nbCycle := t.Total() / c.nbCPU
 
+	sender.Gauge("system.cpu.num_cores", c.nbCPU, "", nil)
 	if c.lastNbCycle != 0 {
 		// gopsutil return the sum of every CPU
 		toPercent := 100 / (nbCycle - c.lastNbCycle)

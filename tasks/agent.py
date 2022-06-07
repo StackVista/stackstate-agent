@@ -2,6 +2,7 @@
 Agent namespaced tasks
 """
 from __future__ import print_function
+
 import datetime
 import glob
 import os
@@ -12,51 +13,27 @@ from distutils.dir_util import copy_tree
 from invoke import task
 from invoke.exceptions import Exit, ParseError
 
+from .build_tags import filter_incompatible_tags, get_build_tags, get_default_build_tags
+from .docker import pull_base_images
+from .go import deps, generate
+from .rtloader import clean as rtloader_clean
+from .rtloader import install as rtloader_install
+from .rtloader import make as rtloader_make
+from .ssm import get_pfx_pass, get_signing_cert
 from .utils import (
+    REPO_PATH,
     bin_name,
     get_build_flags,
-    get_version_numeric_only,
-    load_release_versions,
     get_version,
-    has_both_python,
+    get_version_numeric_only,
     get_win_py_runtime_var,
+    has_both_python,
+    load_release_versions,
 )
-from .utils import REPO_PATH
-from .utils import do_go_rename, do_sed_rename
-from .build_tags import get_build_tags, get_default_build_tags, LINUX_ONLY_TAGS, WINDOWS_32BIT_EXCLUDE_TAGS
-from .go import deps, generate
-from .docker import pull_base_images
-from .ssm import get_signing_cert, get_pfx_pass
-from .rtloader import make as rtloader_make
-from .rtloader import install as rtloader_install
-from .rtloader import clean as rtloader_clean
 
 # constants
 BIN_PATH = os.path.join(".", "bin", "agent")
 AGENT_TAG = "datadog/agent:master"
-DEFAULT_BUILD_TAGS = [
-    "apm",
-    "process",
-    "consul",
-    "containers",
-    "containerd",
-    "python",
-    "cri",
-    "docker",
-    "ec2",
-    "etcd",
-    "gce",
-    "jmx",
-    "kubeapiserver",
-    "kubelet",
-    "log",
-    "netcgo",
-    "systemd",
-    "process",
-    "zk",
-    "zlib",
-    "secrets",
-]
 
 AGENT_CORECHECKS = [
     "containerd",
@@ -579,11 +556,12 @@ def build(
     rtloader_root=None,
     python_home_2=None,
     python_home_3=None,
-    major_version='',
+    major_version='7',
     python_runtimes='3',
     arch='x64',
     exclude_rtloader=False,
     go_mod="vendor",
+    windows_sysprobe=False,
 ):
     """
     Build the agent. If the bits to include in the build are not specified,
@@ -596,8 +574,6 @@ def build(
     if not exclude_rtloader and not iot:
         rtloader_make(ctx, python_runtimes=python_runtimes)
         rtloader_install(ctx)
-    build_include = DEFAULT_BUILD_TAGS if build_include is None else build_include.split(",")
-    build_exclude = [] if build_exclude is None else build_exclude.split(",")
 
     ldflags, gcflags, env = get_build_flags(
         ctx,
@@ -609,16 +585,6 @@ def build(
         python_runtimes=python_runtimes,
         arch=arch,
     )
-
-    if not sys.platform.startswith('linux'):
-        for ex in LINUX_ONLY_TAGS:
-            if ex not in build_exclude:
-                build_exclude.append(ex)
-
-    if sys.platform == 'win32' and arch == "x86":
-        for ex in WINDOWS_32BIT_EXCLUDE_TAGS:
-            if ex not in build_exclude:
-                build_exclude.append(ex)
 
     if sys.platform == 'win32':
         py_runtime_var = get_win_py_runtime_var(python_runtimes)
@@ -654,8 +620,14 @@ def build(
 
     if iot:
         # Iot mode overrides whatever passed through `--build-exclude` and `--build-include`
-        build_tags = get_default_build_tags(iot=True)
+        build_tags = get_default_build_tags(build="iot", arch=arch)
     else:
+        build_include = (
+            get_default_build_tags(build="agent", arch=arch)
+            if build_include is None
+            else filter_incompatible_tags(build_include.split(","), arch=arch)
+        )
+        build_exclude = [] if build_exclude is None else build_exclude.split(",")
         build_tags = get_build_tags(build_include, build_exclude)
 
     # Generating go source from templates by running go generate on ./pkg/status
@@ -679,6 +651,7 @@ def build(
         ctx.run("echo %cd%", env=env)
     print("cmd: %s" % cmd.format(**args))
     ctx.run(cmd.format(**args), env=env)
+
     # Remove cross-compiling bits to render config
     env.update(
         {"GOOS": "", "GOARCH": "",}
@@ -697,22 +670,22 @@ def build(
         "go_file": "./pkg/config/render_config.go",
         "build_type": build_type,
         "template_file": "./pkg/config/config_template.yaml",
-        "output_file": "./cmd/agent/dist/stackstate.yaml",
+        "output_file": "./cmd/agent/dist/stackstate.yaml",  # sts
     }
 
     ctx.run(cmd.format(**args), env=env)
 
     # On Linux and MacOS, render the system-probe configuration file template
-    if sys.platform != 'win32':
+    if sys.platform != 'win32' or windows_sysprobe:
         cmd = "go run ./pkg/config/render_config.go system-probe ./pkg/config/config_template.yaml ./cmd/agent/dist/system-probe.yaml"
         ctx.run(cmd, env=env)
 
     if not skip_assets:
-        refresh_assets(ctx, build_tags, development=development, iot=iot)
+        refresh_assets(ctx, build_tags, development=development, iot=iot, windows_sysprobe=windows_sysprobe)
 
 
 @task
-def refresh_assets(ctx, build_tags, development=True, iot=False):
+def refresh_assets(ctx, build_tags, development=True, iot=False, windows_sysprobe=False):
     """
     Clean up and refresh Collector's assets and config files
     """
@@ -732,11 +705,11 @@ def refresh_assets(ctx, build_tags, development=True, iot=False):
     if not iot:
         shutil.copy("./cmd/agent/dist/dd-agent", os.path.join(dist_folder, "dd-agent"))
         # copy the dd-agent placeholder to the bin folder
-        bin_ddagent = os.path.join(BIN_PATH, "sts-agent")
+        bin_ddagent = os.path.join(BIN_PATH, "sts-agent")  # sts
         shutil.move(os.path.join(dist_folder, "dd-agent"), bin_ddagent)
 
     # System probe not supported on windows
-    if sys.platform.startswith('linux'):
+    if sys.platform.startswith('linux') or windows_sysprobe:
         shutil.copy("./cmd/agent/dist/system-probe.yaml", os.path.join(dist_folder, "system-probe.yaml"))
     shutil.copy("./cmd/agent/dist/stackstate.yaml", os.path.join(dist_folder, "stackstate.yaml"))
 
@@ -818,7 +791,7 @@ def image_build(ctx, arch='amd64', base_dir="omnibus", python_version="2", skip_
 
 
 @task
-def integration_tests(ctx, install_deps=False, race=False, remote_docker=False, go_mod="vendor"):
+def integration_tests(ctx, install_deps=False, race=False, remote_docker=False, go_mod="vendor", arch="x64"):
     """
     Run integration tests for the Agent
     """
@@ -827,7 +800,7 @@ def integration_tests(ctx, install_deps=False, race=False, remote_docker=False, 
 
     test_args = {
         "go_mod": go_mod,
-        "go_build_tags": " ".join(get_default_build_tags()),
+        "go_build_tags": " ".join(get_default_build_tags(build="test", arch=arch)),
         "race_opt": "-race" if race else "",
         "exec_opts": "",
     }
@@ -869,7 +842,7 @@ def omnibus_build(
     skip_deps=False,
     skip_sign=False,
     release_version="nightly",
-    major_version='',
+    major_version='7',
     python_runtimes='3',
     omnibus_s3_cache=False,
     hardened_runtime=False,
@@ -1012,7 +985,7 @@ def clean(ctx):
 
 
 @task
-def version(ctx, url_safe=False, git_sha_length=7, major_version=''):
+def version(ctx, url_safe=False, git_sha_length=7, major_version='7'):
     """
     Get the agent version.
     url_safe: get the version that is able to be addressed as a url

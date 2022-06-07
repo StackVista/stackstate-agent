@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2017-2020 Datadog, Inc.
 
+//go:build docker
 // +build docker
 
 package listeners
@@ -26,6 +27,7 @@ import (
 // new containers to monitor, and old containers to stop monitoring
 type ECSListener struct {
 	task       *v2.Task
+	client     *v2.Client
 	filters    *containerFilters
 	services   map[string]Service // maps container IDs to services
 	newService chan<- Service
@@ -61,11 +63,18 @@ func init() {
 
 // NewECSListener creates an ECSListener
 func NewECSListener() (ServiceListener, error) {
+	client, err := ecsmeta.V2()
+	if err != nil {
+		log.Debugf("error while initializing ECS metadata V2 client: %s", err)
+		return nil, err
+	}
+
 	filters, err := newContainerFilters()
 	if err != nil {
 		return nil, err
 	}
 	return &ECSListener{
+		client:   client,
 		services: make(map[string]Service),
 		stop:     make(chan bool),
 		filters:  filters,
@@ -104,7 +113,7 @@ func (l *ECSListener) Stop() {
 // compares the container list to the local cache and sends new/dead services
 // over newService and delService accordingly
 func (l *ECSListener) refreshServices(firstRun bool) {
-	meta, err := ecsmeta.V2().GetTask()
+	meta, err := l.client.GetTask()
 	if err != nil {
 		log.Errorf("failed to get task metadata, not refreshing services - %s", err)
 		return

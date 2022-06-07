@@ -6,6 +6,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/tagger"
 	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
@@ -18,6 +19,9 @@ var (
 	entityIDIgnoreValue = "none"
 
 	getTags tagRetriever = tagger.Tag
+
+	tlmUDPOriginDetectionError = telemetry.NewCounter("dogstatsd", "udp_origin_detection_error",
+		nil, "Dogstatsd UDP origin detection error count")
 )
 
 func enrichTags(tags []string, defaultHostname string, originTagsFunc func() []string, entityIDPrecedenceEnabled bool) ([]string, string) {
@@ -49,6 +53,7 @@ func enrichTags(tags []string, defaultHostname string, originTagsFunc func() []s
 		entityTags, err := getTags(entity, tagger.DogstatsdCardinality)
 		if err != nil {
 			log.Tracef("Cannot get tags for entity %s: %s", entity, err)
+			tlmUDPOriginDetectionError.Inc()
 		} else {
 			tags = append(tags, entityTags...)
 		}

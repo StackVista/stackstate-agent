@@ -3,18 +3,19 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubelet
 // +build kubelet
 
 package collectors
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
 )
 
@@ -1201,7 +1202,7 @@ func TestParsePodsWithClusterName(t *testing.T) {
 	clustername.ResetClusterName()
 }
 
-func TestParseDeploymentForReplicaset(t *testing.T) {
+func TestParseDeploymentForReplicaSet(t *testing.T) {
 	for in, out := range map[string]string{
 		// Nominal 1.6 cases
 		"frontend-2891696001":  "frontend",
@@ -1224,7 +1225,7 @@ func TestParseDeploymentForReplicaset(t *testing.T) {
 		"frontend-56a89cfff7": "", // no vowels allowed
 	} {
 		t.Run(fmt.Sprintf("case: %s", in), func(t *testing.T) {
-			assert.Equal(t, out, parseDeploymentForReplicaset(in))
+			assert.Equal(t, out, parseDeploymentForReplicaSet(in))
 		})
 	}
 }

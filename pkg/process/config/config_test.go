@@ -1,3 +1,4 @@
+//go:build linux || windows
 // +build linux windows
 
 package config
@@ -479,4 +480,34 @@ func TestIsAffirmative(t *testing.T) {
 	value, err = isAffirmative("ok")
 	assert.Nil(t, err)
 	assert.False(t, value)
+}
+
+func TestEnablingDNSStatsCollection(t *testing.T) {
+	config.Datadog = config.NewConfig("datadog", "DD", strings.NewReplacer(".", "_"))
+	defer restoreGlobalConfig()
+
+	t.Run("via YAML", func(t *testing.T) {
+		cfg, err := NewAgentConfig(
+			"test",
+			"./testdata/TestDDAgentConfigYamlAndSystemProbeConfig-EnableDNSStats.yaml",
+			"",
+		)
+
+		assert.Nil(t, err)
+		assert.True(t, cfg.CollectDNSStats)
+	})
+
+	t.Run("via ENV variable", func(t *testing.T) {
+		defer os.Unsetenv("DD_COLLECT_DNS_STATS")
+
+		os.Setenv("DD_COLLECT_DNS_STATS", "false")
+		cfg, err := NewAgentConfig("test", "", "")
+		assert.Nil(t, err)
+		assert.False(t, cfg.CollectDNSStats)
+
+		os.Setenv("DD_COLLECT_DNS_STATS", "true")
+		cfg, err = NewAgentConfig("test", "", "")
+		assert.Nil(t, err)
+		assert.True(t, cfg.CollectDNSStats)
+	})
 }

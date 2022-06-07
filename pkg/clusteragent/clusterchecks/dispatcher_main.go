@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build clusterchecks
 // +build clusterchecks
 
 package clusterchecks
@@ -194,10 +195,8 @@ func (d *dispatcher) run(ctx context.Context) {
 				runnerStatsTicker = time.NewTicker(time.Duration(runnerStatsMinutes) * time.Minute)
 			}
 
-			// Update runner stats and rebalance if needed
+			// Rebalance if needed
 			if d.advancedDispatching {
-				// Collect CLC runners stats and update cache
-				d.updateRunnersStats()
 				// Rebalance checks distribution
 				d.rebalance()
 			}

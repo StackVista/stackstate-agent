@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
+//go:build windows
 // +build windows
 
 package main
@@ -206,7 +207,7 @@ func requestFlare(caseID, customerEmail string) (response string, e error) {
 		}
 		log.Debug("Initiating flare locally.")
 
-		filePath, e = flare.CreateArchive(true, common.GetDistPath(), common.PyChecksPath, logFile)
+		filePath, e = flare.CreateArchive(true, common.GetDistPath(), common.PyChecksPath, logFile, nil)
 		if e != nil {
 			log.Errorf("The flare zipfile failed to be created: %s\n", e)
 			return

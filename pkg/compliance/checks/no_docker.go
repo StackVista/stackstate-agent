@@ -3,12 +3,17 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build !docker
 // +build !docker
 
 package checks
 
-import "errors"
+import (
+	"errors"
 
-func newDockerClient() (DockerClient, error) {
+	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
+)
+
+func newDockerClient() (env.DockerClient, error) {
 	return nil, errors.New("docker client requires docker build flag")
 }

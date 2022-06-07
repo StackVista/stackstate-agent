@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build clusterchecks
 // +build clusterchecks
 
 package clusterchecks
@@ -87,4 +88,26 @@ func (h *Handler) GetAllEndpointsCheckConfigs() (types.ConfigResponse, error) {
 		LastChange: 0,
 	}
 	return response, err
+}
+
+func (h *Handler) RebalanceClusterChecks() ([]types.RebalanceResponse, error) {
+	if !h.dispatcher.advancedDispatching {
+		return nil, fmt.Errorf("no checks to rebalance: advanced dispatching is not enabled")
+	}
+
+	rebalancingDecisions := h.dispatcher.rebalance()
+	response := []types.RebalanceResponse{}
+
+	for _, decision := range rebalancingDecisions {
+		response = append(response, types.RebalanceResponse{
+			CheckID:        decision.CheckID,
+			CheckWeight:    decision.CheckWeight,
+			SourceNodeName: decision.SourceNodeName,
+			SourceDiff:     decision.SourceDiff,
+			DestNodeName:   decision.DestNodeName,
+			DestDiff:       decision.DestDiff,
+		})
+	}
+
+	return response, nil
 }

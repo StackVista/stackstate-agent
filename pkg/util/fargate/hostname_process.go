@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build fargateprocess
 // +build fargateprocess
 
 package fargate
@@ -12,6 +13,7 @@ import (
 	"fmt"
 
 	ecsmeta "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // GetFargateHost returns the hostname to be used
@@ -36,8 +38,14 @@ func getFargateHost(orchestrator OrchestratorName, ecsFunc, eksFunc func() (stri
 }
 
 func getECSHost() (string, error) {
+	client, err := ecsmeta.V2()
+	if err != nil {
+		log.Debugf("error while initializing ECS metadata V2 client: %s", err)
+		return "", err
+	}
+
 	// Use the task ARN as hostname
-	taskMeta, err := ecsmeta.V2().GetTask()
+	taskMeta, err := client.GetTask()
 	if err != nil {
 		return "", err
 	}

@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package externalmetrics
@@ -68,9 +69,10 @@ func getAutogenDatadogMetricNameFromSelector(metricName string, labels labels.Se
 
 // We use query and not metricName + labels as key. It ensures we'll handle changes of config parameters.
 func getAutogenDatadogMetricName(query string) string {
-	// We keep 20 bytes (160 bits), it should provide a 40-chars hex string
+	// We keep 19 bytes (152 bits), it should provide a 38-chars hex string
+	// Not using 40chars as it conflicts with appKey scrubbing
 	sum := sha256.Sum256([]byte(query))
-	return autogenDatadogMetricPrefix + hex.EncodeToString(sum[0:20])
+	return autogenDatadogMetricPrefix + hex.EncodeToString(sum[0:19])
 }
 
 func buildDatadogQueryForExternalMetric(metricName string, labels map[string]string) string {

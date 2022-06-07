@@ -8,7 +8,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"runtime"
 	"syscall"
 
@@ -27,6 +26,7 @@ import (
 	"github.com/StackVista/stackstate-agent/cmd/agent/gui"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/api/healthprobe"
+	"github.com/StackVista/stackstate-agent/pkg/batcher" // sts
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/embed/jmx"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/dogstatsd"
@@ -36,6 +36,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/metadata/host"
 	"github.com/StackVista/stackstate-agent/pkg/pidfile"
 	"github.com/StackVista/stackstate-agent/pkg/serializer"
+	"github.com/StackVista/stackstate-agent/pkg/snmp/traps"
 	"github.com/StackVista/stackstate-agent/pkg/status/health"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/util"
@@ -283,6 +284,21 @@ func StartAgent() error {
 	}
 	log.Debugf("statsd started")
 
+	// Start SNMP trap server
+	if traps.IsEnabled() {
+		if config.Datadog.GetBool("logs_enabled") {
+			err = traps.StartServer()
+			if err != nil {
+				log.Errorf("Failed to start snmp-traps server: %s", err)
+			}
+		} else {
+			log.Warn(
+				"snmp-traps server did not start, as log collection is disabled. " +
+					"Please enable log collection to collect and forward traps.",
+			)
+		}
+	}
+
 	// start logs-agent
 	if config.Datadog.GetBool("logs_enabled") || config.Datadog.GetBool("log_enabled") {
 		if config.Datadog.GetBool("log_enabled") {
@@ -303,6 +319,9 @@ func StartAgent() error {
 	// Detect Cloud Provider
 	go util.DetectCloudProvider()
 
+	// Append version and timestamp to version history log file if this Agent is different than the last run version
+	util.LogVersionHistory()
+
 	// create and setup the Autoconfig instance
 	common.SetupAutoConfig(config.Datadog.GetString("confd_path"))
 	// start the autoconfig, this will immediately run any configured check
@@ -319,7 +338,7 @@ func StartAgent() error {
 			return err
 		}
 	} else {
-		log.Info("Metadata inventory collection disabled")
+		log.Info("Metadata inventory collection disabled") // sts
 	}
 
 	// start dependent services
@@ -350,6 +369,7 @@ func StopAgent() {
 	if common.MetadataScheduler != nil {
 		common.MetadataScheduler.Stop()
 	}
+	traps.StopServer()
 	api.StopServer()
 	clcrunnerapi.StopCLCRunnerServer()
 	jmx.StopJmxfetch()

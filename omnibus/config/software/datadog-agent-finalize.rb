@@ -21,7 +21,10 @@ build do
             conf_dir_root = "#{Omnibus::Config.source_dir()}/etc/stackstate-agent"
             conf_dir = "#{conf_dir_root}/extra_package_files/EXAMPLECONFSLOCATION"
             mkdir conf_dir
-            move "#{install_dir}/etc/stackstate-agent/stackstate.yaml.example", conf_dir_root, :force=>true
+            move "#{install_dir}/etc/stackstate-agent/datadog.yaml.example", conf_dir_root, :force=>true
+            if ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?
+              move "#{install_dir}/etc/stackstate-agent/system-probe.yaml.example", conf_dir_root, :force=>true
+            end
             move "#{install_dir}/etc/stackstate-agent/conf.d/*", conf_dir, :force=>true
             delete "#{install_dir}/bin/agent/agent.exe"
             # TODO why does this get generated at all
@@ -42,11 +45,11 @@ build do
             delete "#{conf_dir}/process_agent.yaml.default"
             # load isn't supported by windows
             delete "#{conf_dir}/load.d"
-            # disk isn't supported by windows
+            # sts disk isn't supported by windows
             delete "#{conf_dir}/disk.d"
-            # docker isn't supported by windows
+            # sts docker isn't supported by windows
             delete "#{conf_dir}/docker.d"
-            # docker swarm isn't supported by windows
+            # sts docker swarm isn't supported by windows
             delete "#{conf_dir}/docker_swarm.d"
 
             # cleanup clutter
@@ -58,14 +61,14 @@ build do
         elsif linux?
             # Fix pip after building on extended toolchain in CentOS builder
             if redhat?
-                unless arm?
-                    #[VS] path is /opt/centos/devtoolset-1.1/root for centos6 based runner
-                    rhel_toolchain_root = "/opt/rh/devtoolset-7/root"
-                    # lets be cautious - we first search for the expected toolchain path, if its not there, bail out
-                    command "find #{install_dir} -type f -iname '*_sysconfigdata*.py' -exec grep -inH '#{rhel_toolchain_root}' {} \\; |  egrep '.*'"
-                    # replace paths with expected target toolchain location
-                    command "find #{install_dir} -type f -iname '*_sysconfigdata*.py' -exec sed -i 's##{rhel_toolchain_root}##g' {} \\;"
-                end
+              unless arm?
+                # sts path is /opt/centos/devtoolset-1.1/root for centos6 based runner
+                rhel_toolchain_root = "/opt/rh/devtoolset-7/root"
+                # lets be cautious - we first search for the expected toolchain path, if its not there, bail out
+                command "find #{install_dir} -type f -iname '*_sysconfigdata*.py' -exec grep -inH '#{rhel_toolchain_root}' {} \\; |  egrep '.*'"
+                # replace paths with expected target toolchain location
+                command "find #{install_dir} -type f -iname '*_sysconfigdata*.py' -exec sed -i 's##{rhel_toolchain_root}##g' {} \\;"
+              end
             end
 
             # Move system service files
@@ -74,6 +77,7 @@ build do
             move "#{install_dir}/scripts/stackstate-agent-trace.conf", "/etc/init"
             move "#{install_dir}/scripts/stackstate-agent-process.conf", "/etc/init"
             move "#{install_dir}/scripts/stackstate-agent-sysprobe.conf", "/etc/init"
+            # sts
             if $enable_security_agent
                 move "#{install_dir}/scripts/stackstate-agent-security.conf", "/etc/init"
             end
@@ -87,6 +91,7 @@ build do
                 move "#{install_dir}/scripts/stackstate-agent", "/etc/init.d"
                 move "#{install_dir}/scripts/stackstate-agent-trace", "/etc/init.d"
                 move "#{install_dir}/scripts/stackstate-agent-process", "/etc/init.d"
+                # sts
                 if $enable_security_agent
                     move "#{install_dir}/scripts/stackstate-agent-security", "/etc/init.d"
                 end
@@ -96,6 +101,7 @@ build do
                 move "#{install_dir}/scripts/stackstate-agent", "/etc/init.d"
                 move "#{install_dir}/scripts/stackstate-agent-trace", "/etc/init.d"
                 move "#{install_dir}/scripts/stackstate-agent-process", "/etc/init.d"
+                # sts
                 if $enable_security_agent
                     move "#{install_dir}/scripts/stackstate-agent-security", "/etc/init.d"
                 end
@@ -105,6 +111,7 @@ build do
             move "#{install_dir}/scripts/stackstate-agent-trace.service", systemd_directory
             move "#{install_dir}/scripts/stackstate-agent-process.service", systemd_directory
             move "#{install_dir}/scripts/stackstate-agent-sysprobe.service", systemd_directory
+            # sts
             if $enable_security_agent
                 move "#{install_dir}/scripts/stackstate-agent-security.service", systemd_directory
             end
@@ -115,10 +122,11 @@ build do
             move "#{install_dir}/etc/stackstate-agent/stackstate.yaml.example", "/etc/stackstate-agent"
             move "#{install_dir}/etc/stackstate-agent/system-probe.yaml.example", "/etc/stackstate-agent"
             move "#{install_dir}/etc/stackstate-agent/conf.d", "/etc/stackstate-agent", :force=>true
+            move "#{install_dir}/etc/stackstate-agent/runtime-security.d", "/etc/datadog-agent", :force=>true
 
             # Move SELinux policy
             if debian? || redhat?
-                move "#{install_dir}/etc/datadog-agent/selinux", "/etc/datadog-agent/selinux"
+              move "#{install_dir}/etc/datadog-agent/selinux", "/etc/datadog-agent/selinux"
             end
 
             # Create empty directories so that they're owned by the package
@@ -166,9 +174,9 @@ build do
 
                 delete "#{install_dir}/embedded/bin/2to3"
                 link "#{install_dir}/embedded/bin/2to3-2.7", "#{install_dir}/embedded/bin/2to3"
-                # Setup script aliases, e.g. `/opt/datadog-agent/embedded/bin/pip` will
-                # default to `pip3` if the default Python runtime is Python 3 (Agent 7.x).
-                # Caution: we don't want to do this for Agent 6.x
+            # Setup script aliases, e.g. `/opt/datadog-agent/embedded/bin/pip` will
+            # default to `pip3` if the default Python runtime is Python 3 (Agent 7.x).
+            # Caution: we don't want to do this for Agent 6.x
             elsif with_python_runtime? "3"
                 delete "#{install_dir}/embedded/bin/pip"
                 link "#{install_dir}/embedded/bin/pip3", "#{install_dir}/embedded/bin/pip"
@@ -193,6 +201,11 @@ build do
             # skipped.
             strip_exclude("*psycopg2*")
             strip_exclude("*cffi_backend*")
+
+            # Do not strip eBPF programs
+            strip_exclude("*tracer-ebpf*")
+            strip_exclude("*offset-guess*")
+            strip_exclude("*runtime-security*")
 
         elsif osx?
             # Remove linux specific configs

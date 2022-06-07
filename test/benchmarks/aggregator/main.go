@@ -23,7 +23,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/forwarder"
 	"github.com/StackVista/stackstate-agent/pkg/serializer"
-	"github.com/StackVista/stackstate-agent/test/util"
 
 	"gopkg.in/zorkian/go-datadog-api.v2"
 )
@@ -206,7 +205,7 @@ func main() {
 		return
 	}
 
-	util.SetHostname("foo")
+	SetHostname("foo")
 
 	f := &forwarderBenchStub{}
 	s := serializer.NewSerializer(f)

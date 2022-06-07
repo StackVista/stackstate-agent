@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build linux
 // +build linux
 
 package cgroup
@@ -121,6 +122,22 @@ func (s *DiskMappingTestSuite) TestContainerCgroupIO() {
 		55:0 Total 55
 	`))
 
+	tempFolder.add("blkio/blkio.throttle.io_serviced", detab(`
+		8:16 Read 15
+		8:16 Write 0
+		8:16 Sync 15
+		8:16 Async 0
+		8:16 Discard 0
+		8:16 Total 15
+		8:0 Read 26
+		8:0 Write 512625
+		8:0 Sync 26
+		8:0 Async 512625
+		8:0 Discard 0
+		8:0 Total 512651
+		Total 512666
+	`))
+
 	cgroup := newDummyContainerCgroup(tempFolder.RootPath, "blkio", "blkio")
 
 	expectedStats := &metrics.ContainerIOStats{
@@ -132,6 +149,16 @@ func (s *DiskMappingTestSuite) TestContainerCgroupIO() {
 		},
 		DeviceWriteBytes: map[string]uint64{
 			"sda": 671846400,
+			"sdb": 0,
+		},
+		ReadOperations:  uint64(15 + 26),
+		WriteOperations: uint64(0 + 512625),
+		DeviceReadOperations: map[string]uint64{
+			"sda": 26,
+			"sdb": 15,
+		},
+		DeviceWriteOperations: map[string]uint64{
+			"sda": 512625,
 			"sdb": 0,
 		},
 	}
@@ -170,10 +197,12 @@ func (s *DiskMappingTestSuite) TestContainerCgroupIOFailedMapping() {
 	cgroup := newDummyContainerCgroup(tempFolder.RootPath, "blkio", "blkio")
 
 	expectedStats := &metrics.ContainerIOStats{
-		ReadBytes:        uint64(1130496 + 37858816 + 55),
-		WriteBytes:       uint64(0 + 671846400 + 55),
-		DeviceReadBytes:  map[string]uint64{},
-		DeviceWriteBytes: map[string]uint64{},
+		ReadBytes:             uint64(1130496 + 37858816 + 55),
+		WriteBytes:            uint64(0 + 671846400 + 55),
+		DeviceReadBytes:       map[string]uint64{},
+		DeviceWriteBytes:      map[string]uint64{},
+		DeviceReadOperations:  map[string]uint64{},
+		DeviceWriteOperations: map[string]uint64{},
 	}
 
 	ioStat, err := cgroup.IO()

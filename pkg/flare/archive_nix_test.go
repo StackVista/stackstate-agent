@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build !windows
 // +build !windows
 
 package flare
@@ -29,7 +30,7 @@ func TestPermsFile(t *testing.T) {
 	mockConfig.Set("confd_path", "./test/confd")
 	mockConfig.Set("log_file", "./test/logs/agent.log")
 	zipFilePath := getArchivePath()
-	filePath, err := createArchive(zipFilePath, true, SearchPaths{}, "")
+	filePath, err := createArchive(SearchPaths{}, true, zipFilePath, "", nil)
 	defer os.Remove(zipFilePath)
 
 	assert.Nil(err)

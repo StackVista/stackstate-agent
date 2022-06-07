@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubelet
 // +build kubelet
 
 package kubelet
@@ -83,6 +84,23 @@ func TestKubePodUIDToTaggerEntityID(t *testing.T) {
 	} {
 		t.Run(fmt.Sprintf("case: %s", in), func(t *testing.T) {
 			res, _ := KubePodUIDToTaggerEntityID(in)
+			assert.Equal(t, out, res)
+		})
+	}
+}
+
+func TestKubeIDToTaggerEntityID(t *testing.T) {
+	for in, out := range map[string]string{
+		"kubernetes_pod://deadbeef": "kubernetes_pod_uid://deadbeef",
+		"kubernetes_pod://d":        "kubernetes_pod_uid://d",
+		"docker://deadbeef":         "container_id://deadbeef",
+		"crio://deadbeef":           "container_id://deadbeef",
+		"kubernetes_pod://":         "",
+		"deadbeef":                  "",
+		"/deadbeef":                 "",
+	} {
+		t.Run(fmt.Sprintf("case: %s", in), func(t *testing.T) {
+			res, _ := KubeIDToTaggerEntityID(in)
 			assert.Equal(t, out, res)
 		})
 	}

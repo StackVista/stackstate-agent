@@ -9,9 +9,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	v11 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/common/v1"
-	openTelemetryTrace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/collector"
-	v1 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/v1"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -26,6 +23,9 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/config"
 	"github.com/StackVista/stackstate-agent/pkg/trace/info"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	v11 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/common/v1"
+	openTelemetryTrace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/collector"
+	v1 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/v1"
 	"github.com/StackVista/stackstate-agent/pkg/trace/sampler"
 	"github.com/StackVista/stackstate-agent/pkg/trace/test/testutil"
 
@@ -33,6 +33,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/tinylib/msgp/msgp"
+	vmsgp "github.com/vmihailenco/msgpack/v4"
 )
 
 // Traces shouldn't come from more than 5 different sources
@@ -49,7 +50,7 @@ var headerFields = map[string]string{
 func newTestReceiverFromConfig(conf *config.AgentConfig) *HTTPReceiver {
 	dynConf := sampler.NewDynamicConfig("none")
 
-	rawTraceChan := make(chan *Trace, 5000)
+	rawTraceChan := make(chan *Payload, 5000)
 	receiver := NewHTTPReceiver(conf, dynConf, rawTraceChan)
 
 	return receiver
@@ -153,13 +154,15 @@ func TestLegacyReceiver(t *testing.T) {
 
 			// now we should be able to read the trace data
 			select {
-			case rt := <-tc.r.out:
-				assert.Len(rt.Spans, 1)
-				span := rt.Spans[0]
+			case p := <-tc.r.out:
+				assert.Len(p.Traces, 1)
+				rt := p.Traces[0]
+				assert.Len(rt, 1)
+				span := rt[0]
 				assert.Equal(uint64(42), span.TraceID)
 				assert.Equal(uint64(52), span.SpanID)
-				assert.Equal("fennel_is_amazing", span.Service)
-				assert.Equal("something_that_should_be_a_metric", span.Name)
+				assert.Equal("fennel_IS amazing!", span.Service)
+				assert.Equal("something &&<@# that should be a metric!", span.Name)
 				assert.Equal("NOT touched because it is going to be hashed", span.Resource)
 				assert.Equal("192.168.0.1", span.Meta["http.host"])
 				assert.Equal(41.99, span.Metrics["http.monitor"])
@@ -216,13 +219,14 @@ func TestReceiverJSONDecoder(t *testing.T) {
 
 			// now we should be able to read the trace data
 			select {
-			case rt := <-tc.r.out:
-				assert.Len(rt.Spans, 1)
-				span := rt.Spans[0]
+			case p := <-tc.r.out:
+				rt := p.Traces[0]
+				assert.Len(rt, 1)
+				span := rt[0]
 				assert.Equal(uint64(42), span.TraceID)
 				assert.Equal(uint64(52), span.SpanID)
-				assert.Equal("fennel_is_amazing", span.Service)
-				assert.Equal("something_that_should_be_a_metric", span.Name)
+				assert.Equal("fennel_IS amazing!", span.Service)
+				assert.Equal("something &&<@# that should be a metric!", span.Name)
 				assert.Equal("NOT touched because it is going to be hashed", span.Resource)
 				assert.Equal("192.168.0.1", span.Meta["http.host"])
 				assert.Equal(41.99, span.Metrics["http.monitor"])
@@ -283,13 +287,14 @@ func TestReceiverMsgpackDecoder(t *testing.T) {
 
 				// now we should be able to read the trace data
 				select {
-				case rt := <-tc.r.out:
-					assert.Len(rt.Spans, 1)
-					span := rt.Spans[0]
+				case p := <-tc.r.out:
+					rt := p.Traces[0]
+					assert.Len(rt, 1)
+					span := rt[0]
 					assert.Equal(uint64(42), span.TraceID)
 					assert.Equal(uint64(52), span.SpanID)
-					assert.Equal("fennel_is_amazing", span.Service)
-					assert.Equal("something_that_should_be_a_metric", span.Name)
+					assert.Equal("fennel_IS amazing!", span.Service)
+					assert.Equal("something &&<@# that should be a metric!", span.Name)
 					assert.Equal("NOT touched because it is going to be hashed", span.Resource)
 					assert.Equal("192.168.0.1", span.Meta["http.host"])
 					assert.Equal(41.99, span.Metrics["http.monitor"])
@@ -305,13 +310,15 @@ func TestReceiverMsgpackDecoder(t *testing.T) {
 
 				// now we should be able to read the trace data
 				select {
-				case rt := <-tc.r.out:
-					assert.Len(rt.Spans, 1)
-					span := rt.Spans[0]
+				case p := <-tc.r.out:
+					rt := p.Traces[0]
+					assert.Len(rt, 1)
+					span := rt[0]
+					assert.Equal(uint64(42), span.TraceID)
 					assert.Equal(uint64(42), span.TraceID)
 					assert.Equal(uint64(52), span.SpanID)
-					assert.Equal("fennel_is_amazing", span.Service)
-					assert.Equal("something_that_should_be_a_metric", span.Name)
+					assert.Equal("fennel_IS amazing!", span.Service)
+					assert.Equal("something &&<@# that should be a metric!", span.Name)
 					assert.Equal("NOT touched because it is going to be hashed", span.Resource)
 					assert.Equal("192.168.0.1", span.Meta["http.host"])
 					assert.Equal(41.99, span.Metrics["http.monitor"])
@@ -349,7 +356,7 @@ func TestReceiverDecodingError(t *testing.T) {
 		assert.NoError(err)
 
 		assert.Equal(400, resp.StatusCode)
-		assert.EqualValues(0, r.Stats.GetTagStats(info.Tags{}).TracesDropped.DecodingError)
+		assert.EqualValues(0, r.Stats.GetTagStats(info.Tags{EndpointVersion: "v0.4"}).TracesDropped.DecodingError)
 	})
 
 	t.Run("with-header", func(t *testing.T) {
@@ -363,7 +370,7 @@ func TestReceiverDecodingError(t *testing.T) {
 		assert.NoError(err)
 
 		assert.Equal(400, resp.StatusCode)
-		assert.EqualValues(traceCount, r.Stats.GetTagStats(info.Tags{}).TracesDropped.DecodingError)
+		assert.EqualValues(traceCount, r.Stats.GetTagStats(info.Tags{EndpointVersion: "v0.4"}).TracesDropped.DecodingError)
 	})
 }
 
@@ -396,6 +403,86 @@ func TestTraceCount(t *testing.T) {
 		count, err := traceCount(req)
 		assert.NoError(t, err)
 		assert.Equal(t, count, int64(123))
+	})
+}
+
+func TestDecodeV05(t *testing.T) {
+	assert := assert.New(t)
+	data := [2]interface{}{
+		0: []string{
+			0:  "Service2",
+			1:  "Name2",
+			2:  "Resource",
+			3:  "Service",
+			4:  "Name",
+			5:  "A",
+			6:  "B",
+			7:  "X",
+			8:  "y",
+			9:  "sql",
+			10: "Resource2",
+			11: "c",
+			12: "d",
+		},
+		1: [][][12]interface{}{
+			{
+				{uint32(3), uint32(4), uint32(2), uint64(1), uint64(2), uint64(3), int64(123), int64(456), 1, map[uint32]uint32{5: 6}, map[uint32]float64{7: 1.2}, uint32(9)},
+				{uint32(0), uint32(1), uint32(10), uint64(2), uint64(3), uint64(3), int64(789), int64(456), 0, map[uint32]uint32{11: 12}, map[uint32]float64{8: 1.4}, uint32(9)},
+				{uint32(0), uint32(1), uint32(10), uint64(2), uint64(3), uint64(3), int64(789), int64(456), 0, map[uint32]uint32{11: 12}, map[uint32]float64{}, uint32(9)},
+			},
+		},
+	}
+	b, err := vmsgp.Marshal(&data)
+	assert.NoError(err)
+	req, err := http.NewRequest("POST", "/v0.5/traces", bytes.NewReader(b))
+	assert.NoError(err)
+	traces, err := decodeTraces(v05, req)
+	assert.NoError(err)
+	assert.EqualValues(traces, pb.Traces{
+		{
+			{
+				Service:  "Service",
+				Name:     "Name",
+				Resource: "Resource",
+				TraceID:  1,
+				SpanID:   2,
+				ParentID: 3,
+				Start:    123,
+				Duration: 456,
+				Error:    1,
+				Meta:     map[string]string{"A": "B"},
+				Metrics:  map[string]float64{"X": 1.2},
+				Type:     "sql",
+			},
+			{
+				Service:  "Service2",
+				Name:     "Name2",
+				Resource: "Resource2",
+				TraceID:  2,
+				SpanID:   3,
+				ParentID: 3,
+				Start:    789,
+				Duration: 456,
+				Error:    0,
+				Meta:     map[string]string{"c": "d"},
+				Metrics:  map[string]float64{"y": 1.4},
+				Type:     "sql",
+			},
+			{
+				Service:  "Service2",
+				Name:     "Name2",
+				Resource: "Resource2",
+				TraceID:  2,
+				SpanID:   3,
+				ParentID: 3,
+				Start:    789,
+				Duration: 456,
+				Error:    0,
+				Meta:     map[string]string{"c": "d"},
+				Metrics:  nil,
+				Type:     "sql",
+			},
+		},
 	})
 }
 
@@ -559,7 +646,7 @@ func TestHandleTraces(t *testing.T) {
 
 	// We test stats for each app
 	for _, lang := range langs {
-		ts, ok := rs.Stats[info.Tags{Lang: lang}]
+		ts, ok := rs.Stats[info.Tags{Lang: lang, EndpointVersion: "v0.4"}]
 		assert.True(ok)
 		assert.Equal(int64(20), ts.TracesReceived)
 		assert.Equal(int64(59222), ts.TracesBytes)
@@ -765,6 +852,24 @@ func BenchmarkWatchdog(b *testing.B) {
 	}
 }
 
+func TestReplyOKV5(t *testing.T) {
+	r := newTestReceiverFromConfig(config.New())
+	r.Start()
+	defer r.Stop()
+
+	data, err := vmsgp.Marshal([2][]interface{}{{}, {}})
+	assert.NoError(t, err)
+	path := fmt.Sprintf("http://%s:%d/v0.5/traces", r.conf.ReceiverHost, r.conf.ReceiverPort)
+	resp, err := http.Post(path, "application/msgpack", bytes.NewReader(data))
+	assert.NoError(t, err)
+	slurp, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	assert.Contains(t, string(slurp), `"rate_by_service"`)
+}
+
 func TestExpvar(t *testing.T) {
 	if testing.Short() {
 		return
@@ -862,63 +967,6 @@ func TestWatchdog(t *testing.T) {
 		r.watchdog(time.Now())
 		assert.NotEqual(t, 1.0, r.RateLimiter.TargetRate())
 	})
-}
-
-func TestOOMKill(t *testing.T) {
-	var kills uint64
-
-	defer func(old func(string, ...interface{})) { killProcess = old }(killProcess)
-	killProcess = func(format string, a ...interface{}) {
-		if format != "OOM" {
-			t.Fatalf("wrong message: %s", fmt.Sprintf(format, a...))
-		}
-		atomic.AddUint64(&kills, 1)
-	}
-
-	conf := config.New()
-	conf.Endpoints[0].APIKey = "apikey_2"
-	conf.WatchdogInterval = time.Millisecond
-	conf.MaxMemory = 0.5 * 1000 * 1000 // 0.5M
-
-	r := newTestReceiverFromConfig(conf)
-	r.Start()
-	defer r.Stop()
-	go func() {
-		for range r.out {
-		}
-	}()
-
-	var traces pb.Traces
-	for i := 0; i < 20; i++ {
-		traces = append(traces, testutil.RandomTrace(10, 20))
-	}
-	data := msgpTraces(t, traces)
-
-	var wg sync.WaitGroup
-	for tries := 0; tries < 50; tries++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			if _, err := http.Post("http://localhost:8126/v0.4/traces", "application/msgpack", bytes.NewReader(data)); err != nil {
-				t.Fatal(err)
-			}
-		}()
-	}
-	wg.Wait()
-	timeout := time.After(500 * time.Millisecond)
-loop:
-	for {
-		select {
-		case <-timeout:
-			break loop
-		default:
-			if atomic.LoadUint64(&kills) > 1 {
-				return
-			}
-			time.Sleep(conf.WatchdogInterval)
-		}
-	}
-	t.Fatal("didn't get OOM killed")
 }
 
 func msgpTraces(t *testing.T, traces pb.Traces) []byte {

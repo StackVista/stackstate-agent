@@ -2,6 +2,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build python
 // +build python
 
 package app
@@ -114,7 +115,7 @@ var freezeCmd = &cobra.Command{
 	Use:   "freeze",
 	Short: "Print the list of installed packages in the agent's python environment",
 	Long:  ``,
-	RunE:  freeze,
+	RunE:  list,
 }
 
 var showCmd = &cobra.Command{
@@ -701,7 +702,10 @@ func installedVersion(integration string) (*semver.Version, bool, error) {
 		return nil, false, nil
 	}
 
-	version, err := semver.NewVersion(outputStr)
+	replacer := strings.NewReplacer("alpha", "-alpha", "beta", "-beta", "rc", "-rc")
+	normalizedVersion := replacer.Replace(outputStr)
+
+	version, err := semver.NewVersion(normalizedVersion)
 	if err != nil {
 		return nil, true, fmt.Errorf("error parsing version %s: %s", version, err)
 	}
@@ -825,13 +829,14 @@ func remove(cmd *cobra.Command, args []string) error {
 	return pip(pipArgs, os.Stdout, os.Stderr)
 }
 
-func freeze(cmd *cobra.Command, args []string) error {
+func list(cmd *cobra.Command, args []string) error {
 	if err := loadPythonInfo(); err != nil {
 		return err
 	}
 
 	pipArgs := []string{
-		"freeze",
+		"list",
+		"--format=freeze",
 	}
 
 	pipStdo := bytes.NewBuffer(nil)

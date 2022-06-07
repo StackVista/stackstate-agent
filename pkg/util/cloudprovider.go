@@ -11,6 +11,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/azure"
 	"github.com/StackVista/stackstate-agent/pkg/util/ec2"
 	"github.com/StackVista/stackstate-agent/pkg/util/ecs"
+	ecscommon "github.com/StackVista/stackstate-agent/pkg/util/ecs/common"
 	"github.com/StackVista/stackstate-agent/pkg/util/gce"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/StackVista/stackstate-agent/pkg/util/tencent"
@@ -30,7 +31,7 @@ type cloudProviderDetector struct {
 // * Tencent
 func DetectCloudProvider() {
 	detectors := []cloudProviderDetector{
-		{name: ecs.CloudProviderName, callback: ecs.IsRunningOn},
+		{name: ecscommon.CloudProviderName, callback: ecs.IsRunningOn},
 		{name: ec2.CloudProviderName, callback: ec2.IsRunningOn},
 		{name: gce.CloudProviderName, callback: gce.IsRunningOn},
 		{name: azure.CloudProviderName, callback: azure.IsRunningOn},

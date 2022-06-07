@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package externalmetrics
@@ -65,7 +66,7 @@ func TestDatadogMetricNameGeneration(t *testing.T) {
 	idFromMap := getAutogenDatadogMetricNameFromLabels(testMetricName, testLabels)
 	idFromSelector := getAutogenDatadogMetricNameFromSelector(testMetricName, labels.Set(testLabels).AsSelector())
 
-	assert.Equal(t, "dcaautogen-595b170252cd5c77580b802084753c17ed1a181b", idRef)
+	assert.Equal(t, "dcaautogen-595b170252cd5c77580b802084753c17ed1a18", idRef)
 	assert.Equal(t, idRef, idFromMap)
 	assert.Equal(t, idRef, idFromSelector)
 }
@@ -79,7 +80,7 @@ func TestDatadogMetricNameGenerationNoLabels(t *testing.T) {
 	idFromMap := getAutogenDatadogMetricNameFromLabels(testMetricName, testLabels)
 	idFromSelector := getAutogenDatadogMetricNameFromSelector(testMetricName, labels.Set(testLabels).AsSelector())
 
-	assert.Equal(t, "dcaautogen-cb3c76c6adbd97b438d75e29a6a8efc4cefa8108", idRef)
+	assert.Equal(t, "dcaautogen-cb3c76c6adbd97b438d75e29a6a8efc4cefa81", idRef)
 	assert.Equal(t, idRef, idFromMap)
 	assert.Equal(t, idRef, idFromSelector)
 }

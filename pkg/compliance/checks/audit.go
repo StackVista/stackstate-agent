@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build linux
 // +build linux
 
 package checks
@@ -15,10 +16,11 @@ import (
 	"github.com/elastic/go-libaudit/rule"
 	"github.com/elastic/go-libaudit/rule/flags"
 
+	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
-func newAuditClient() (AuditClient, error) {
+func newAuditClient() (env.AuditClient, error) {
 	if os.Geteuid() != 0 {
 		return nil, errors.New("you must be root to receive audit data")
 	}

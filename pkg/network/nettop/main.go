@@ -6,12 +6,13 @@ import (
 	"os/signal"
 	"time"
 
+	ddebpf "github.com/DataDog/ebpf"
 	"github.com/StackVista/stackstate-agent/pkg/ebpf"
 	"github.com/StackVista/stackstate-agent/pkg/network"
 )
 
 func main() {
-	kernelVersion, err := ebpf.CurrentKernelVersion()
+	kernelVersion, err := ddebpf.CurrentKernelVersion()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)

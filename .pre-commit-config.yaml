@@ -1,24 +1,7 @@
 default_language_version:
-  python: 3.8.3
+  python: python3
 
 repos:
-- repo: git://github.com/pre-commit/pre-commit-hooks
-  rev: v2.2.3
-  hooks:
-    - id: check-added-large-files
-    - id: check-case-conflict
-    - id: check-executables-have-shebangs
-    - id: check-merge-conflict
-    - id: detect-private-key
-    - id: end-of-file-fixer
-    - id: trailing-whitespace
-    - id: detect-aws-credentials
-      args:
-        - --allow-missing-credentials
-- repo: https://github.com/voronenko/pre-commit-cdci.git
-  rev: a9a4baade8c0ef8fdcac73b03ad65b6b5c627595 # get latest tag from release tab
-  hooks:
-    - id: gitlabci_validate
 - repo: https://gitlab.com/pycqa/flake8
   rev: 3.8.3 # should match major Python version
   hooks:
@@ -29,9 +12,33 @@ repos:
   rev: 19.10b0
   hooks:
     - id: black
+- repo: https://github.com/timothycrosley/isort/
+  rev: 5.2.2
+  hooks:
+    - id: isort
 - repo: https://github.com/jumanjihouse/pre-commit-hooks
   rev: 2.1.1
   hooks:
     - id: shellcheck
       args: ["--severity=info", "-e", "SC2059", "-e", "SC2028"]
-
+- repo: local
+  hooks:
+    - id: golint
+      name: golint
+      description: golint
+      entry: 'python3 tasks/git-hooks/golint.py'
+      language: system
+      files: \.go$
+    - id: govet
+      name: govet
+      description: go vet
+      entry: 'python3 tasks/git-hooks/govet.py'
+      language: system
+      require_serial: true
+      files: \.go$
+    - id: gofmt
+      name: gofmt
+      description: go fmt
+      entry: 'python3 tasks/git-hooks/gofmt.py'
+      language: system
+      files: \.go$
