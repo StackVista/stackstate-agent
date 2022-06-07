@@ -80,7 +80,7 @@ func TestNonTransactionalCheckHandler_State(t *testing.T) {
 	assert.Equal(t, expectedState, actualState)
 
 	checkState, err := state.GetCheckStateManager().GetState(stateKey)
-	assert.NoError(t, err, "unexpected error occured when trying to get state for", stateKey)
+	assert.NoError(t, err, "unexpected error occurred when trying to get state for", stateKey)
 	assert.Equal(t, expectedState, checkState)
 
 	updatedState := "{\"e\":\"f\"}"
@@ -88,7 +88,7 @@ func TestNonTransactionalCheckHandler_State(t *testing.T) {
 	assert.NoError(t, err, "unexpected error occurred when setting state for %s", stateKey)
 
 	checkState, err = state.GetCheckStateManager().GetState(stateKey)
-	assert.NoError(t, err, "unexpected error occured when trying to get state for", stateKey)
+	assert.NoError(t, err, "unexpected error occurred when trying to get state for", stateKey)
 	assert.Equal(t, updatedState, checkState)
 
 	// reset to original
