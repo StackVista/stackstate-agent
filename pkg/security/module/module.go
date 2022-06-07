@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
+	"github.com/DataDog/datadog-go/statsd"
 	"github.com/StackVista/stackstate-agent/cmd/system-probe/api"
 	aconfig "github.com/StackVista/stackstate-agent/pkg/process/config"
 	sapi "github.com/StackVista/stackstate-agent/pkg/security/api"
@@ -33,7 +34,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/security/rules"
 	"github.com/StackVista/stackstate-agent/pkg/security/secl/eval"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/StackVista/stackstate-go/statsd"
 )
 
 // Module represents the system-probe module for the runtime security agent
