@@ -21,6 +21,7 @@
 #include "telemetry.h"
 #include "health.h"
 #include "transaction.h"
+#include "state.h"
 
 #include <algorithm>
 #include <sstream>
@@ -89,6 +90,7 @@ bool Three::init()
     PyImport_AppendInittab(TELEMETRY_MODULE_NAME, PyInit_telemetry);
     PyImport_AppendInittab(HEALTH_MODULE_NAME, PyInit_health);
     PyImport_AppendInittab(TRANSACTION_MODULE_NAME, PyInit_transaction);
+    PyImport_AppendInittab(STATE_MODULE_NAME, PyInit_state);
 
     Py_Initialize();
 
@@ -972,6 +974,16 @@ void Three::setStartTransactionCb(cb_start_transaction_t cb)
 void Three::setStopTransactionCb(cb_stop_transaction_t cb)
 {
     _set_stop_transaction_cb(cb);
+}
+
+// [sts] state
+void Three::setSetStateCb(cb_set_state_t cb)
+{
+    _set_set_state_cb(cb);
+}
+void Three::setGetStateCb(cb_get_state_t cb)
+{
+    _set_get_state_cb(cb);
 }
 
 // Python Helpers

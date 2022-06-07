@@ -11,6 +11,10 @@ import (
 // CheckAPI contains all the operations that can be done by an Agent Check. This acts as a proxy to forward data
 // where it needs to go.
 type CheckAPI interface {
+	// State
+	GetState(key string) string
+	SetState(key string, state string)
+
 	// Transactionality
 	StartTransaction() string
 	StopTransaction()
@@ -100,4 +104,15 @@ func (ch *checkHandler) SubmitRawMetricsData(data telemetry.RawMetrics) {
 // SubmitComplete submits a complete to the Transactional Batcher.
 func (ch *checkHandler) SubmitComplete() {
 	transactionbatcher.GetTransactionalBatcher().SubmitComplete(ch.ID())
+}
+
+// GetState Lorem Ipsum
+func (ch *checkHandler) GetState(key string) string {
+	// TODO: Melcom
+	return ""
+}
+
+// SetState Lorem Ipsum
+func (ch *checkHandler) SetState(key string, state string) {
+	// TODO: Melcom
 }

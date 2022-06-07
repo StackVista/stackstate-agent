@@ -91,6 +91,19 @@ func (ch *NonTransactionalCheckHandler) StopTransaction() {
 	_ = log.Warnf("StopTransaction called on NonTransactionalCheckHandler. This should never happen.")
 }
 
+// GetState Lorem Ipsum
+func (ch *NonTransactionalCheckHandler) GetState(key string) string {
+	// TODO: Melcom
+	_ = log.Warnf("TODO.")
+	return ""
+}
+
+// SetState Lorem Ipsum
+func (ch *NonTransactionalCheckHandler) SetState(key string, state string) {
+	// TODO: Melcom
+	_ = log.Warnf("TODO.")
+}
+
 // GetConfig is the NonTransactionalCheckHandler implementation which just returns nil. This should never be called.
 func (ch *NonTransactionalCheckHandler) GetConfig() (integration.Data, integration.Data) {
 	_ = log.Warnf("GetConfig called on NonTransactionalCheckHandler. This should never happen.")

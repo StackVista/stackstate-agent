@@ -203,6 +203,11 @@ typedef void (*cb_start_transaction_t)(char *);
 // (check_id)
 typedef void (*cb_stop_transaction_t)(char *);
 
+// (check_id, key, state)
+typedef void (*cb_set_state_t)(char *, char *, char *);
+// (check_id, key)
+typedef void (*cb_get_state_t)(char *, char *);
+
 #ifdef __cplusplus
 }
 #endif

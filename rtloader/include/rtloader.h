@@ -550,6 +550,22 @@ public:
     */
     virtual void setStopTransactionCb(cb_stop_transaction_t) = 0;
 
+    //! setSetStateCb member.
+    /*!
+      \param A cb_set_state_t function pointer to the CGO callback.
+
+      Actual check data is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setSetStateCb(cb_set_state_t) = 0;
+
+    //! setGetStateCb member.
+    /*!
+      \param A cb_get_state_t function pointer to the CGO callback.
+
+      Actual check data is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setGetStateCb(cb_get_state_t) = 0;
+
 private:
     mutable std::string _error; /*!< string containing a RtLoader error */
     mutable bool _errorFlag; /*!< boolean indicating whether an error was set on RtLoader */
