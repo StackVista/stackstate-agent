@@ -56,12 +56,13 @@ func (ch *checkHandler) Reload() {
 // NewCheckHandler creates a new check handler for a given check, check loader and configuration
 func NewCheckHandler(check check.Check, checkReloader CheckReloader, config, initConfig integration.Data) CheckHandler {
 	ch := &checkHandler{
-		CheckIdentifier:    check,
-		CheckReloader:      checkReloader,
-		config:             config,
-		initConfig:         initConfig,
-		shutdownChannel:    make(chan bool, 1),
-		transactionChannel: make(chan StartTransaction, 1),
+		CheckIdentifier:           check,
+		CheckReloader:             checkReloader,
+		config:                    config,
+		initConfig:                initConfig,
+		shutdownChannel:           make(chan bool, 1),
+		transactionChannel:        make(chan StartTransaction, 1),
+		currentTransactionChannel: make(chan interface{}, 100),
 	}
 
 	go ch.Start()
@@ -80,10 +81,6 @@ txReceiverHandler:
 			ch.mux.Lock()
 			ch.currentTransaction = transaction.TransactionID
 			ch.mux.Unlock()
-			// try closing the currentTransactionChannel to ensure we never accidentally leak a channel before
-			// register a new one
-			safeCloseTransactionChannel(ch.currentTransactionChannel)
-			ch.currentTransactionChannel = make(chan interface{})
 
 			// create a new transaction in the transaction manager and wait for responses
 			transactionmanager.GetTransactionManager().StartTransaction(ch.ID(), ch.GetCurrentTransaction(), ch.currentTransactionChannel)
@@ -95,8 +92,6 @@ txReceiverHandler:
 			// ready to handle the next transaction in the ch.transactionChannel.
 			ch.handleCurrentTransaction(ch.currentTransactionChannel)
 
-			// close the ch.currentTransactionChannel, making use ready to start a new transaction
-			close(ch.currentTransactionChannel)
 		case <-ch.shutdownChannel:
 			log.Debug("Shutting down check handler. Closing transaction channels.")
 			// try closing currentTransactionChannel if the transaction is still in progress
@@ -127,7 +122,15 @@ currentTxHandler:
 	for {
 		select {
 		case tx := <-txChan:
-			switch txMsg := tx.(type) {
+			switch msg := tx.(type) {
+			// current transaction operations
+			case StopTransaction:
+				log.Debugf("Stopping current transaction: %s for check %s", ch.GetCurrentTransaction(), ch.ID())
+				transactionbatcher.GetTransactionalBatcher().SubmitCompleteTransaction(ch.ID(), ch.GetCurrentTransaction())
+			//
+			case SubmitSetStateTransactional:
+				transactionmanager.GetTransactionManager().SetState(ch.GetCurrentTransaction(), msg.Key, msg.State)
+			// notifications from the transaction manager
 			case transactionmanager.RollbackTransaction, transactionmanager.EvictedTransaction:
 				_ = log.Warnf("Reloading check %s after failed transaction", ch.ID())
 				if err := ch.ReloadCheck(ch.ID(), ch.config, ch.initConfig, ch.ConfigSource()); err != nil {
@@ -135,21 +138,21 @@ currentTxHandler:
 				}
 				break currentTxHandler
 			case transactionmanager.CompleteTransaction:
-				log.Debugf("Completing transaction: %s for check %s", txMsg.TransactionID, ch.ID())
+				log.Debugf("Completing transaction: %s for check %s", msg.TransactionID, ch.ID())
 
-				if txMsg.State != nil {
-					log.Debugf("Committing state for transaction: %s for check %s: %s", txMsg.TransactionID, ch.ID(),
-						txMsg.State)
-					err := checkState.GetCheckStateManager().SetState(txMsg.State.Key, txMsg.State.State)
+				if msg.State != nil {
+					log.Debugf("Committing state for transaction: %s for check %s: %s", msg.TransactionID, ch.ID(),
+						msg.State)
+					err := checkState.GetCheckStateManager().SetState(msg.State.Key, msg.State.State)
 					if err != nil {
 						errorReason := fmt.Sprintf("Error while updating state for transaction: %s for check %s: %s. %s",
-							txMsg.TransactionID, ch.ID(), txMsg.State, err)
+							msg.TransactionID, ch.ID(), msg.State, err)
 						_ = log.Error(errorReason)
-						txChan <- transactionmanager.RollbackTransaction{TransactionID: txMsg.TransactionID, Reason: errorReason}
+						txChan <- transactionmanager.RollbackTransaction{TransactionID: msg.TransactionID, Reason: errorReason}
 					}
 
-					log.Debugf("Successfully committed state for transaction: %s for check %s: %s", txMsg.TransactionID, ch.ID(),
-						txMsg.State)
+					log.Debugf("Successfully committed state for transaction: %s for check %s: %s", msg.TransactionID, ch.ID(),
+						msg.State)
 				}
 				break currentTxHandler
 			}
@@ -166,15 +169,6 @@ func (ch *checkHandler) GetConfig() (integration.Data, integration.Data) {
 func (ch *checkHandler) GetCheckReloader() CheckReloader {
 	return ch.CheckReloader
 }
-
-// StartTransaction is used to start a transaction to the input channel
-type StartTransaction struct {
-	CheckID       check.ID
-	TransactionID string
-}
-
-// StopTransaction is used to stop a transaction to the input channel
-type StopTransaction struct{}
 
 // safeCloseTransactionChannel closes the tx channel that can potentially already be closed. It handles the panic and does a no-op.
 func safeCloseTransactionChannel(ch chan interface{}) {

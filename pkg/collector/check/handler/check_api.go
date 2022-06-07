@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -21,12 +22,26 @@ type CheckAPI interface {
 type CheckTransactionalAPI interface {
 	StartTransaction() string
 	StopTransaction()
-	SetStateTransactional(key string, state string)
+	SetStateTransactional(key, state string)
+}
+
+// StartTransaction is used to start a transaction to the input channel
+type StartTransaction struct {
+	CheckID       check.ID
+	TransactionID string
+}
+
+// StopTransaction is used to stop the current transaction
+type StopTransaction struct{}
+
+// SubmitSetStateTransactional is used to submit a set state transactional operation for the current transaction
+type SubmitSetStateTransactional struct {
+	Key, State string
 }
 
 // CheckStateAPI contains all the state operations for a check
 type CheckStateAPI interface {
-	SetState(key string, state string) error
+	SetState(key, state string) error
 	GetState(key string) string
 }
 

@@ -32,12 +32,13 @@ func GetTransactionalBatcher() TransactionalBatcher {
 
 // NewMockTransactionalBatcher initializes the global transactionbatcher with a mock version, intended for testing
 func NewMockTransactionalBatcher() *MockTransactionalBatcher {
-	batcherInit.Do(func() {
-		batcherInstance = newMockTransactionalBatcher()
-	})
+	//batcherInit.Do(func() {
+	batcherInstance = newMockTransactionalBatcher()
+	//})
 	return batcherInstance.(*MockTransactionalBatcher)
 }
 
+// newTransactionalBatcher returns an instance of the transactionalBatcher and starts listening for submissions
 func newTransactionalBatcher(hostname, agentName string, maxCapacity int, flushInterval time.Duration) *transactionalBatcher {
 	checkFlushInterval := time.NewTicker(flushInterval)
 	ctb := &transactionalBatcher{

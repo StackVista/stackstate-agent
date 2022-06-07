@@ -3,7 +3,6 @@ package handler
 import (
 	checkState "github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -25,13 +24,16 @@ func (ch *checkHandler) StartTransaction() string {
 // StopTransaction submits a complete to the Transactional Batcher, to send the final payload of the transaction
 // and mark the current transaction as complete.
 func (ch *checkHandler) StopTransaction() {
-	transactionbatcher.GetTransactionalBatcher().SubmitCompleteTransaction(ch.ID(), ch.GetCurrentTransaction())
+	ch.currentTransactionChannel <- StopTransaction{}
 }
 
 // SetStateTransactional is used to set state transactionaly. This state is only committed once a transaction has been
 // completed successfully.
 func (ch *checkHandler) SetStateTransactional(key string, state string) {
-	transactionmanager.GetTransactionManager().SetState(ch.GetCurrentTransaction(), key, state)
+	ch.currentTransactionChannel <- SubmitSetStateTransactional{
+		Key:   key,
+		State: state,
+	}
 }
 
 // SetState is used to commit state for a given state key and CheckState
