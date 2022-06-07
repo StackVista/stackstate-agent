@@ -40,10 +40,6 @@ stages:
   ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
 
 .configure_windows_ps1_env_script: &configure_windows_ps1_env_script |
-  [Environment]::SetEnvironmentVariable('GOPATH', $null, 'User')
-  [Environment]::SetEnvironmentVariable('GOBIN', $null, 'User')
-  [Environment]::SetEnvironmentVariable('GOPATH', 'C:\gopath', 'Machine')
-  [Environment]::SetEnvironmentVariable('GOBIN', 'C:\gopath\bin', 'Machine')
   Import-Module C:\tools\miniconda3\shell\condabin\conda-hook.ps1
   ./.gitlab-scripts/conda_env.ps1 $CONDA_ENV $PYTHON_RUNTIMES
   conda activate $CONDA_ENV
