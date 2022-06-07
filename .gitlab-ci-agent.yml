@@ -47,6 +47,7 @@ stages:
   New-Item -ItemType Directory -Force -Path "$Env:GOPATH\\src\\github.com\\StackVista"
   cmd /c if exist %GOPATH%\src\github.com\StackVista\stackstate-agent rd /s/q %GOPATH%\src\github.com\StackVista\stackstate-agent
   New-Item -ItemType SymbolicLink -Path "$Env:GOPATH\\src\\github.com\\StackVista\\stackstate-agent" -Target $current_dir -Force
+  Install-Module Pscx -AllowClobber
 
 .rules:
   # rules specific to the cluster agent, kubernetes, docker swarm. Currently we default to only running them on Python2
