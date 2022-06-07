@@ -13,8 +13,8 @@ import (
 	"syscall"
 	"testing"
 
-	"StackVista/stackstate-agent/pkg/security/policy"
-	sprobe "StackVista/stackstate-agent/pkg/security/probe"
+	"github.com/StackVista/stackstate-agent/pkg/security/policy"
+	sprobe "github.com/StackVista/stackstate-agent/pkg/security/probe"
 )
 
 type stressEventHandler struct {

@@ -24,16 +24,16 @@ import (
 	"github.com/cihub/seelog"
 	"github.com/pkg/errors"
 
-	"StackVista/stackstate-agent/cmd/system-probe/api"
-	aconfig "StackVista/stackstate-agent/pkg/config"
-	pconfig "StackVista/stackstate-agent/pkg/process/config"
-	"StackVista/stackstate-agent/pkg/security/config"
-	"StackVista/stackstate-agent/pkg/security/module"
-	"StackVista/stackstate-agent/pkg/security/policy"
-	sprobe "StackVista/stackstate-agent/pkg/security/probe"
-	"StackVista/stackstate-agent/pkg/security/rules"
-	"StackVista/stackstate-agent/pkg/security/secl/eval"
-	"StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/api"
+	aconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	pconfig "github.com/StackVista/stackstate-agent/pkg/process/config"
+	"github.com/StackVista/stackstate-agent/pkg/security/config"
+	"github.com/StackVista/stackstate-agent/pkg/security/module"
+	"github.com/StackVista/stackstate-agent/pkg/security/policy"
+	sprobe "github.com/StackVista/stackstate-agent/pkg/security/probe"
+	"github.com/StackVista/stackstate-agent/pkg/security/rules"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/eval"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 var (

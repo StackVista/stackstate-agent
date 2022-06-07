@@ -15,9 +15,9 @@ import (
 	"testing"
 	"time"
 
-	"StackVista/stackstate-agent/pkg/security/config"
-	"StackVista/stackstate-agent/pkg/security/policy"
-	sprobe "StackVista/stackstate-agent/pkg/security/probe"
+	"github.com/StackVista/stackstate-agent/pkg/security/config"
+	"github.com/StackVista/stackstate-agent/pkg/security/policy"
+	sprobe "github.com/StackVista/stackstate-agent/pkg/security/probe"
 )
 
 type testCase struct {

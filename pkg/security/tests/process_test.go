@@ -15,7 +15,7 @@ import (
 	"path"
 	"testing"
 
-	"StackVista/stackstate-agent/pkg/security/policy"
+	"github.com/StackVista/stackstate-agent/pkg/security/policy"
 )
 
 func TestProcess(t *testing.T) {

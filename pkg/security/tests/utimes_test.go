@@ -15,7 +15,7 @@ import (
 	"time"
 	"unsafe"
 
-	"StackVista/stackstate-agent/pkg/security/policy"
+	"github.com/StackVista/stackstate-agent/pkg/security/policy"
 )
 
 func TestUtime(t *testing.T) {

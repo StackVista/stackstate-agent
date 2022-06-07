@@ -16,7 +16,7 @@ import (
 	"syscall"
 	"testing"
 
-	"StackVista/stackstate-agent/pkg/security/policy"
+	"github.com/StackVista/stackstate-agent/pkg/security/policy"
 )
 
 func TestOpen(t *testing.T) {

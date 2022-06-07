@@ -15,9 +15,9 @@ import (
 	"testing"
 	"time"
 
-	"StackVista/stackstate-agent/pkg/security/policy"
-	"StackVista/stackstate-agent/pkg/security/probe"
-	sprobe "StackVista/stackstate-agent/pkg/security/probe"
+	"github.com/StackVista/stackstate-agent/pkg/security/policy"
+	"github.com/StackVista/stackstate-agent/pkg/security/probe"
+	sprobe "github.com/StackVista/stackstate-agent/pkg/security/probe"
 	"github.com/pkg/errors"
 )
 

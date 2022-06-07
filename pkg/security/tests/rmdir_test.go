@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"testing"
 
-	"StackVista/stackstate-agent/pkg/security/policy"
+	"github.com/StackVista/stackstate-agent/pkg/security/policy"
 )
 
 func TestRmdir(t *testing.T) {

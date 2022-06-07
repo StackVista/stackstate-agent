@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"StackVista/stackstate-agent/pkg/security/policy"
+	"github.com/StackVista/stackstate-agent/pkg/security/policy"
 )
 
 func TestMount(t *testing.T) {
