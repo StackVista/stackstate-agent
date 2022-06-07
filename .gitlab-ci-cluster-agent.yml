@@ -56,7 +56,7 @@ deps_deb:
       - venv
   script:
     - conda activate $CONDA_ENV
-    - inv -e deps --verbose --dep-vendor-only
+    - inv -e deps --verbose
     - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
     - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz .
     - cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz .

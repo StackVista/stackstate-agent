@@ -44,7 +44,7 @@ cat << EOF
 Here few helpful commands to get you started (check .gitlab-ci-agent.yml for more):
 
   # When starting the first time you always need to pull deps
-  inv -e deps --verbose --dep-vendor-only
+  inv -e deps --verbose
 
   # Build and test the rtloader
   inv rtloader.clean && inv rtloader.make --python-runtimes \$PYTHON_RUNTIME && inv rtloader.test

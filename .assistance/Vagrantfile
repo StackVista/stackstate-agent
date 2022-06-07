@@ -142,7 +142,7 @@ Vagrant.configure("2") do |config|
 
     conda activate $CONDA_ENV
     pip install -r requirements.txt
-    inv -e deps --verbose --dep-vendor-only
+    inv -e deps --verbose
     inv agent.version --major-version $MAJOR_VERSION -u > version.txt
     cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz .
     cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz .
