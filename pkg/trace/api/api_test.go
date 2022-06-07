@@ -16,7 +16,6 @@ import (
 	"os"
 	"strconv"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 

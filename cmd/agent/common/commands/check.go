@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -125,6 +126,9 @@ func Check(loggerName config.LoggerName, confFilePath *string, flagNoColor *bool
 			// Initializing the aggregator with a flush interval of 0 (which disable the flush goroutine)
 			agg := aggregator.InitAggregatorWithFlushInterval(s, hostname, 0)
 			common.SetupAutoConfig(config.Datadog.GetString("confd_path"))
+
+			// [sts] init the batcher without the real serializer
+			batcher.InitBatcher(&printingAgentV1Serializer{}, hostname, "agent", config.GetMaxCapacity())
 
 			if config.Datadog.GetBool("inventories_enabled") {
 				metadata.SetupInventoriesExpvar(common.AC, common.Coll)
@@ -426,6 +430,17 @@ func runCheck(c check.Check, agg *aggregator.BufferedAggregator) *check.Stats {
 	}
 
 	return s
+}
+
+// sts
+type printingAgentV1Serializer struct{}
+
+// sts
+func (printingAgentV1Serializer) SendJSONToV1Intake(data interface{}) error {
+	fmt.Fprintln(color.Output, fmt.Sprintf("=== %s ===", color.BlueString("Topology")))
+	j, _ := json.MarshalIndent(data, "", "  ")
+	fmt.Println(string(j))
+	return nil
 }
 
 func printMetrics(agg *aggregator.BufferedAggregator) {

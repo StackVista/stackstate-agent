@@ -192,7 +192,7 @@ func (a *Agent) Process(p *api.Payload, sublayerCalculator *stats.SublayerCalcul
 		}
 		a.Replacer.Replace(t)
 
-		t.Spans = a.SpanInterpreterEngine.Interpret(t.Spans) //sts
+		t = a.SpanInterpreterEngine.Interpret(t) //sts
 
 		{
 			// this section sets up any necessary tags on the root:
