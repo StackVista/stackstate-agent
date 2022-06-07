@@ -54,6 +54,27 @@ func (sc *ServiceCollector) CollectorFunction() error {
 		return err
 	}
 
+	podsExposedFromHost := map[string]struct {
+		Namespace string
+		Name      string
+	}{}
+	pods, _ := sc.GetAPIClient().GetPods()
+	for _, pod := range pods {
+		if pod.Spec.HostNetwork && pod.Status.Phase == v1.PodRunning && pod.Namespace != "" {
+			for _, container := range pod.Spec.Containers {
+				for _, port := range container.Ports {
+					podsExposedFromHost[fmt.Sprintf("%s:%d", pod.Status.PodIP, port.HostPort)] = struct {
+						Namespace string
+						Name      string
+					}{
+						Namespace: pod.Namespace,
+						Name:      pod.Name,
+					}
+				}
+			}
+		}
+	}
+
 	serviceEndpointIdentifiers := make(map[string][]EndpointID, 0)
 
 	// Get all the endpoints for the Service
@@ -78,6 +99,10 @@ func (sc *ServiceCollector) CollectorFunction() error {
 							}
 						// ignore different Kind's for now, create no relation
 						default:
+						}
+					} else {
+						if pod, ok := podsExposedFromHost[endpointID.URL]; ok {
+							endpointID.RefExternalID = sc.buildPodExternalID(pod.Namespace, pod.Name)
 						}
 					}
 
