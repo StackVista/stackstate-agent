@@ -4,7 +4,7 @@ resource "aws_cloudformation_stack" "cfn_stackpack" {
   name = "${var.environment}-cfn-aws-check"
   parameters = {
     StsAccountId                = data.aws_caller_identity.current.account_id
-    ExternalId                  = var.external_id
+    ExternalId                  = var.environment
     MainRegion                  = var.region
     IncludeOpenTelemetryTracing = var.include_open_telemetry_tracing
   }

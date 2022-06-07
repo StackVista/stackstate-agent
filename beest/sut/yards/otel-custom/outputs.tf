@@ -19,7 +19,6 @@ code_zip="${module.lambda_otel.codepath}"
 lambda_role_arn="${module.lambda_otel.lambda_role_arn}"
 lambda_function_name="${module.lambda_otel.lambda_function_name}"
 agent_iam_role="${module.aws_stackpack_role.integration_role}"
-external_id="${var.external_id}"
 aws_region="${var.aws_default_region}"
 INVENTORY
   file_permission = "0777"

@@ -15,3 +15,10 @@
       namespace: "{{ namespace }}"
       pod: stackstate-cli
       command: python -m stackstate_cli.cli stackpack install kubernetes -p kubernetes_cluster_name "{{ cluster_name }}"
+
+  - name: Install AWS-V2 StackPack
+      kubernetes.core.k8s_exec:
+        context: "{{ kubecontext }}"
+        namespace: "{{ namespace }}"
+        pod: stackstate-cli
+        command: python -m stackstate_cli.cli stackpack install aws-v2 -p aws_external_id "{{ yard_id }}" -p aws_role_arn "{{ aws_stackpack_role.integration_role }}"

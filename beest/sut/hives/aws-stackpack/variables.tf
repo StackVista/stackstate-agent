@@ -1,8 +1,3 @@
-variable "external_id" {
-  type    = string
-  default = "pancakes-test"
-}
-
 variable "region" {
   type    = string
   default = "eu-west-1"
