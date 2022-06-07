@@ -18,7 +18,8 @@ type MockTransactionManager struct {
 	TransactionActions              chan interface{}
 }
 
-func (ttm *MockTransactionManager) SetState(string, key string, value string) {
+// SetState sets the mock transactionState to the given key + value
+func (ttm *MockTransactionManager) SetState(_, key string, value string) {
 	ttm.mux.Lock()
 	ttm.transactionState = &TransactionState{
 		Key:   key,

@@ -38,10 +38,11 @@ type CheckStateAPI interface {
 
 // CheckStateManager is the default implementation for the CheckStateAPI that read / writes state from / to disk
 type CheckStateManager struct {
-	Config StateConfig
+	Config Config
 	Cache  *cache.Cache
 }
 
+// NewCheckStateManager returns a pointer to an instance of CheckStateManager which implements the CheckStateAPI
 func NewCheckStateManager() *CheckStateManager {
 	config := GetStateConfig()
 	return &CheckStateManager{
@@ -101,15 +102,15 @@ func (cs *CheckStateManager) GetState(key string) (string, error) {
 	// see if we have this key in the cache, otherwise read it from Disk
 	if value, found := cs.Cache.Get(key); found {
 		return value.(string), nil
-	} else {
-		state, err := cs.readFromDisk(key)
-		if err != nil {
-			return "{}", err
-		}
-		// update the cache
-		cs.Cache.Set(key, state, cache.DefaultExpiration)
-		return state, nil
 	}
+
+	state, err := cs.readFromDisk(key)
+	if err != nil {
+		return "{}", err
+	}
+	// update the cache
+	cs.Cache.Set(key, state, cache.DefaultExpiration)
+	return state, nil
 }
 
 func (cs *CheckStateManager) readFromDisk(key string) (string, error) {

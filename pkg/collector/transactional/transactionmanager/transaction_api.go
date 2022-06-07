@@ -4,6 +4,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 )
 
+// TransactionAPI contains the functions required for transactional behaviour
 type TransactionAPI interface {
 	GetTransaction(transactionID string) (*IntakeTransaction, error)
 	TransactionCount() int
