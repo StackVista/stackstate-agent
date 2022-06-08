@@ -158,7 +158,7 @@ var expectedRawMetricsData = telemetry.RawMetrics{
 
 func testRawMetricsData(t *testing.T) {
 	checkmanager.InitCheckManager(handler.NoCheckReloader{})
-	testCheck := &check.STSTestCheck{Name: "check-id"}
+	testCheck := &check.STSTestCheck{Name: "check-id-raw-metrics"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 	transactionmanager.NewMockTransactionManager()
