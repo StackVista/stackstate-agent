@@ -389,7 +389,16 @@ build_win:
     - *configure_windows_ps1_env_script
     - Import-VisualStudioVars 2017 -Architecture amd64
     - ridk enable
-    - del C:\omnibus-ruby\pkg\*
+    - |
+        $FolderName = "C:\omnibus-ruby\pkg\"
+        if (Test-Path $FolderName) {
+            Write-Host "Folder Exists"
+            del C:\omnibus-ruby\pkg\*
+        }
+        else
+        {
+            Write-Host "Folder Doesn't Exists"
+        }
   script:
     - cmd.exe /c "%GOPATH%\src\github.com\StackVista\stackstate-agent\.gitlab-scripts\setup_artifactory.cmd"
     - conda activate $CONDA_ENV
