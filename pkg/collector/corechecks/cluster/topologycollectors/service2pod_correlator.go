@@ -1,3 +1,6 @@
+//go:build kubeapiserver
+// +build kubeapiserver
+
 package topologycollectors
 
 import (
@@ -5,6 +8,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
+// Service2PodCorrelator
 type Service2PodCorrelator struct {
 	ComponentChan       chan<- *topology.Component
 	RelationChan        chan<- *topology.Relation
@@ -13,12 +17,14 @@ type Service2PodCorrelator struct {
 	ClusterTopologyCorrelator
 }
 
+// PodEndpointCorrelation an endpoint served by a pod
 type PodEndpointCorrelation struct {
 	Endpoint     string
 	PodNamespace string
 	PodName      string
 }
 
+// ServiceEndpointCorrelation an underlying endpoint for a service
 type ServiceEndpointCorrelation struct {
 	ServiceExternalID string
 	Endpoint          EndpointID
@@ -43,7 +49,7 @@ func NewService2PodCorrelator(
 }
 
 // GetName returns the name of the Collector
-func (*Service2PodCorrelator) GetName() string {
+func (Service2PodCorrelator) GetName() string {
 	return "Pod to Service Correlator"
 }
 
@@ -55,7 +61,7 @@ type podID struct {
 // CollectorFunction collects all endpoints exposed by pods within host network
 // then it collects all unmatched endpoints,
 // and then it creates corresponding relations
-func (crl *Service2PodCorrelator) CollectorFunction() error {
+func (crl *Service2PodCorrelator) CorrelateFunction() error {
 
 	// making a map from a host's endpoint (x.x.x.x:yyyy) to a pod that is serving it
 	podsExposedFromHost := map[string]podID{}
@@ -73,16 +79,11 @@ func (crl *Service2PodCorrelator) CollectorFunction() error {
 
 		if pod, ok := podsExposedFromHost[endpointID]; ok {
 			podID := crl.buildPodExternalID(pod.Namespace, pod.Name)
-			crl.serviceToPodStackStateRelation(serviceID, podID)
+			relation := crl.CreateRelation(serviceID, podID, "exposes")
+			log.Tracef("Correlated StackState service -> pod relation %s->%s", relation.SourceID, relation.TargetID)
+			crl.RelationChan <- relation
 		}
 	}
 
 	return nil
-}
-
-// Creates a StackState relation from a Kubernetes / OpenShift Service to Pod
-func (crl *Service2PodCorrelator) serviceToPodStackStateRelation(serviceExternalID, podExternalID string) *topology.Relation {
-	relation := crl.CreateRelation(serviceExternalID, podExternalID, "exposes")
-	log.Tracef("Correlated StackState service -> pod relation %s->%s", relation.SourceID, relation.TargetID)
-	return relation
 }
