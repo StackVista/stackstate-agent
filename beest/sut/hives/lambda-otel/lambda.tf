@@ -15,13 +15,6 @@ resource "aws_s3_object" "code_zip" {
   etag   = filemd5("${path.module}/hello.zip")
 }
 
-resource "aws_s3_bucket_versioning" "bucket_versioning" {
-  bucket = aws_s3_bucket.bucket.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
 resource "aws_sns_topic" "lambda_errors" {
   name = "${var.environment}-errors"
 }
