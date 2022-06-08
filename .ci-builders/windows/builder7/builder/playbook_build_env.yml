@@ -469,16 +469,6 @@
 
 # gitlab runner user level setup
 
-    - name: Template powershell vssetup module installation
-      win_copy:
-        src: files/install_vssetup.ps1
-        dest: C:\
-
-    - name: Install powershell vssetup module
-      win_command: powershell.exe -File C:\install_vssetup.ps1
-      register: msys_try1
-      ignore_errors: true
-
     - name: ENV | GOPATH
       win_environment:
         state: present
@@ -499,6 +489,24 @@
     - name: Tune git config
       win_command: "git config --global user.name \"Windows Gitlab Runner Instance\""
 
+    - name: Template powershell vssetup module installation
+      win_copy:
+        src: files/register_vssetup.ps1
+        dest: C:\
+
+    - name: Template powershell vssetup module installation
+      win_copy:
+        src: files/install_vssetup.ps1
+        dest: C:\
+
+    - name: Register powershell vssetup module
+      win_command: powershell.exe -File C:\register_vssetup.ps1
+      register: vssetup_try1
+      ignore_errors: true
+
+    - name: Install powershell vssetup module
+      win_command: powershell.exe -File C:\install_vssetup.ps1
+
 #    - name: Template powershell vssetup module installation
 #      win_copy:
 #        src: files/install_vssetup.ps1
@@ -506,3 +514,6 @@
 #
 #    - name: Install powershell vssetup module
 #      win_command: powershell.exe -File C:\install_vssetup.ps1
+
+
+# SSL_CERT_FILE='C:\cacert.pem'  File exists on old machine, not on new one
