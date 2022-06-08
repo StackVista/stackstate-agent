@@ -125,7 +125,6 @@ deps_rpm:
   rules:
     - when: on_success
 
-# Fake content for a fake commit to get a new runner to debug with
 deps_win:
   stage: prepare
   interruptible: true
