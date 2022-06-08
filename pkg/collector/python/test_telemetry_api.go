@@ -163,7 +163,7 @@ func testRawMetricsData(t *testing.T) {
 	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 	transactionmanager.NewMockTransactionManager()
 
-	checkId := C.CString(string(testCheck.ID()))
+	checkId := C.CString(testCheck.String())
 	name := C.CString(expectedRawMetricsData.Name)
 	value := C.float(expectedRawMetricsData.Value)
 	tags := []*C.char{C.CString("foo"), C.CString("bar"), nil}

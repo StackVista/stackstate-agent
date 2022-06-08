@@ -45,7 +45,7 @@ func testComponentTopology(t *testing.T) {
 	data, err := json.Marshal(c)
 	assert.NoError(t, err)
 
-	checkId := C.CString(string(testCheck.ID()))
+	checkId := C.CString(testCheck.String())
 	instanceKey := C.instance_key_t{}
 	instanceKey.type_ = C.CString("instance-type")
 	instanceKey.url = C.CString("instance-url")
@@ -100,7 +100,7 @@ func testRelationTopology(t *testing.T) {
 	data, err := json.Marshal(c)
 	assert.NoError(t, err)
 
-	checkId := C.CString(string(testCheck.ID()))
+	checkId := C.CString(testCheck.String())
 	instanceKey := C.instance_key_t{}
 	instanceKey.type_ = C.CString("instance-type")
 	instanceKey.url = C.CString("instance-url")
@@ -145,7 +145,7 @@ func testRelationTopology(t *testing.T) {
 func testStartTransaction(t *testing.T) {
 	testCheck := &check.STSTestCheck{Name: "check-id-start-transaction"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
-	checkId := C.CString(string(testCheck.ID()))
+	checkId := C.CString(testCheck.String())
 
 	StartTransaction(checkId)
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
@@ -157,7 +157,7 @@ func testStartTransaction(t *testing.T) {
 func testStopTransaction(t *testing.T) {
 	testCheck := &check.STSTestCheck{Name: "check-id-stop-transaction"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
-	checkId := C.CString(string(testCheck.ID()))
+	checkId := C.CString(testCheck.String())
 
 	StartTransaction(checkId)
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
@@ -184,7 +184,7 @@ func testStartSnapshotCheck(t *testing.T) {
 	testCheck := &check.STSTestCheck{Name: "check-id-start-snapshot"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
-	checkId := C.CString(string(testCheck.ID()))
+	checkId := C.CString(testCheck.String())
 	instanceKey := C.instance_key_t{}
 	instanceKey.type_ = C.CString("instance-type")
 	instanceKey.url = C.CString("instance-url")
@@ -215,7 +215,7 @@ func testStopSnapshotCheck(t *testing.T) {
 	testCheck := &check.STSTestCheck{Name: "check-id-stop-snapshot"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
-	checkId := C.CString(string(testCheck.ID()))
+	checkId := C.CString(testCheck.String())
 	instanceKey := C.instance_key_t{}
 	instanceKey.type_ = C.CString("instance-type")
 	instanceKey.url = C.CString("instance-url")
@@ -248,7 +248,7 @@ func testDeleteTopologyElement(t *testing.T) {
 	testCheck := &check.STSTestCheck{Name: "check-id-delete-element"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
-	checkID := C.CString(string(testCheck.ID()))
+	checkID := C.CString(testCheck.String())
 	instanceKey := C.instance_key_t{}
 	instanceKey.type_ = C.CString("instance-type")
 	instanceKey.url = C.CString("instance-url")

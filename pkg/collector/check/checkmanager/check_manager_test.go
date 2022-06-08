@@ -30,7 +30,7 @@ func TestCheckManagerSubscription(t *testing.T) {
 
 	// subscribe my test check, assert that we can get it with the check handler and that it's present in the inner map
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
-	_, found := checkManager.checkHandlers[string(testCheck.ID())]
+	_, found := checkManager.checkHandlers[testCheck.String()]
 	assert.True(t, found, "TestCheck handler not found in the checkManager.checkHandlers map")
 	ch := checkManager.GetCheckHandler(testCheck.ID())
 	assert.Equal(t, ch.ID(), testCheck.ID())
@@ -41,7 +41,7 @@ func TestCheckManagerSubscription(t *testing.T) {
 	// subscribe another check handler and assert it
 	testCheck2 := &check.STSTestCheck{Name: "test-check-2"}
 	checkManager.RegisterCheckHandler(testCheck2, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
-	_, found = checkManager.checkHandlers[string(testCheck.ID())]
+	_, found = checkManager.checkHandlers[testCheck.String()]
 	assert.True(t, found, "TestCheck handler not found in the checkManager.checkHandlers map")
 	ch2 := checkManager.GetCheckHandler(testCheck2.ID())
 	assert.Equal(t, ch2.ID(), testCheck2.ID())

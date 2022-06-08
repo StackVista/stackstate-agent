@@ -139,6 +139,11 @@ currentTxHandler:
 				transactionmanager.GetTransactionManager().SetState(ch.GetCurrentTransaction(), msg.Key, msg.State)
 
 			// Topology Operations for the current transaction
+			case SubmitStartSnapshot:
+				if config.Datadog.GetBool("log_payloads") {
+					log.Debugf("%s. Submitting topology start snapshot for instance: %s", logPrefix, msg.Instance.GoString())
+				}
+				transactionbatcher.GetTransactionalBatcher().SubmitStartSnapshot(ch.ID(), ch.GetCurrentTransaction(), msg.Instance)
 			case SubmitComponent:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Submitting topology component for instance: %s. %s", logPrefix, msg.Instance.GoString(), msg.Component.JSONString())
@@ -149,11 +154,6 @@ currentTxHandler:
 					log.Debugf("%s. Submitting topology relation for instance: %s. %s", logPrefix, msg.Instance.GoString(), msg.Relation.JSONString())
 				}
 				transactionbatcher.GetTransactionalBatcher().SubmitRelation(ch.ID(), ch.GetCurrentTransaction(), msg.Instance, msg.Relation)
-			case SubmitStartSnapshot:
-				if config.Datadog.GetBool("log_payloads") {
-					log.Debugf("%s. Submitting topology start snapshot for instance: %s", logPrefix, msg.Instance.GoString())
-				}
-				transactionbatcher.GetTransactionalBatcher().SubmitStartSnapshot(ch.ID(), ch.GetCurrentTransaction(), msg.Instance)
 			case SubmitStopSnapshot:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Submitting topology stop snapshot for instance: %s", logPrefix, msg.Instance.GoString())
@@ -166,12 +166,6 @@ currentTxHandler:
 				transactionbatcher.GetTransactionalBatcher().SubmitDelete(ch.ID(), ch.GetCurrentTransaction(), msg.Instance, msg.TopologyElementID)
 
 			// Health Operations for the current transaction
-			case SubmitHealthCheckData:
-				if config.Datadog.GetBool("log_payloads") {
-					log.Debugf("%s. Submitting health check data for stream %s. %s", logPrefix, msg.Stream.GoString(), msg.Data.JSONString())
-				}
-				transactionbatcher.GetTransactionalBatcher().SubmitHealthCheckData(ch.ID(), ch.GetCurrentTransaction(), msg.Stream, msg.Data)
-
 			case SubmitHealthStartSnapshot:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Submitting health start snapshot for stream: %s with interval %ds and expiry %ds", logPrefix, msg.Stream.GoString(), msg.IntervalSeconds, msg.ExpirySeconds)
@@ -179,6 +173,12 @@ currentTxHandler:
 
 				transactionbatcher.GetTransactionalBatcher().SubmitHealthStartSnapshot(ch.ID(), ch.GetCurrentTransaction(), msg.Stream,
 					msg.IntervalSeconds, msg.ExpirySeconds)
+
+			case SubmitHealthCheckData:
+				if config.Datadog.GetBool("log_payloads") {
+					log.Debugf("%s. Submitting health check data for stream %s. %s", logPrefix, msg.Stream.GoString(), msg.Data.JSONString())
+				}
+				transactionbatcher.GetTransactionalBatcher().SubmitHealthCheckData(ch.ID(), ch.GetCurrentTransaction(), msg.Stream, msg.Data)
 
 			case SubmitHealthStopSnapshot:
 				if config.Datadog.GetBool("log_payloads") {

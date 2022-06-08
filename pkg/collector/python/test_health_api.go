@@ -53,7 +53,7 @@ func testHealthCheckData(t *testing.T) {
 	data, err := json.Marshal(c)
 	assert.NoError(t, err)
 
-	checkId := C.CString(string(testCheck.ID()))
+	checkId := C.CString(testCheck.String())
 	stream := C.health_stream_t{}
 	stream.urn = C.CString("myurn")
 	stream.sub_stream = C.CString("substream")
@@ -91,7 +91,7 @@ func testHealthStartSnapshot(t *testing.T) {
 	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 	transactionmanager.NewMockTransactionManager()
 
-	checkId := C.CString(string(testCheck.ID()))
+	checkId := C.CString(testCheck.String())
 	stream := C.health_stream_t{}
 	stream.urn = C.CString("myurn")
 	stream.sub_stream = C.CString("substream")
@@ -121,7 +121,7 @@ func testHealthStopSnapshot(t *testing.T) {
 	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 	transactionmanager.NewMockTransactionManager()
 
-	checkId := C.CString(string(testCheck.ID()))
+	checkId := C.CString(testCheck.String())
 	stream := C.health_stream_t{}
 	stream.urn = C.CString("myurn")
 	stream.sub_stream = C.CString("substream")
@@ -151,7 +151,7 @@ func testNoSubStream(t *testing.T) {
 	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 	transactionmanager.NewMockTransactionManager()
 
-	checkId := C.CString(string(testCheck.ID()))
+	checkId := C.CString(testCheck.String())
 	stream := C.health_stream_t{}
 	stream.urn = C.CString("myurn")
 	stream.sub_stream = C.CString("")
