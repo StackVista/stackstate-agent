@@ -14,8 +14,9 @@ import (
 
 // ServiceCollector implements the ClusterTopologyCollector interface.
 type ServiceCollector struct {
-	ComponentChan chan<- *topology.Component
-	RelationChan  chan<- *topology.Relation
+	ComponentChan    chan<- *topology.Component
+	RelationChan     chan<- *topology.Relation
+	EndpointCorrChan chan<- *ServiceEndpointCorrelation
 	ClusterTopologyCollector
 	DNS dns.Resolver
 }
@@ -27,11 +28,11 @@ type EndpointID struct {
 }
 
 // NewServiceCollector
-func NewServiceCollector(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation,
-	clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
+func NewServiceCollector(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation, endpointCorrChannel chan *ServiceEndpointCorrelation, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &ServiceCollector{
 		ComponentChan:            componentChannel,
 		RelationChan:             relationChannel,
+		EndpointCorrChan:         endpointCorrChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 		DNS:                      dns.StandardResolver,
 	}
@@ -52,27 +53,6 @@ func (sc *ServiceCollector) CollectorFunction() error {
 	endpoints, err := sc.GetAPIClient().GetEndpoints()
 	if err != nil {
 		return err
-	}
-
-	podsExposedFromHost := map[string]struct {
-		Namespace string
-		Name      string
-	}{}
-	pods, _ := sc.GetAPIClient().GetPods()
-	for _, pod := range pods {
-		if pod.Spec.HostNetwork && pod.Status.Phase == v1.PodRunning && pod.Namespace != "" {
-			for _, container := range pod.Spec.Containers {
-				for _, port := range container.Ports {
-					podsExposedFromHost[fmt.Sprintf("%s:%d", pod.Status.PodIP, port.HostPort)] = struct {
-						Namespace string
-						Name      string
-					}{
-						Namespace: pod.Namespace,
-						Name:      pod.Name,
-					}
-				}
-			}
-		}
 	}
 
 	serviceEndpointIdentifiers := make(map[string][]EndpointID, 0)
@@ -99,10 +79,6 @@ func (sc *ServiceCollector) CollectorFunction() error {
 							}
 						// ignore different Kind's for now, create no relation
 						default:
-						}
-					} else {
-						if pod, ok := podsExposedFromHost[endpointID.URL]; ok {
-							endpointID.RefExternalID = sc.buildPodExternalID(pod.Namespace, pod.Name)
 						}
 					}
 
@@ -136,20 +112,30 @@ func (sc *ServiceCollector) CollectorFunction() error {
 		for _, endpoint := range serviceEndpointIdentifiers[serviceID] {
 			// create the relation between the service and the pod
 			podExternalID := endpoint.RefExternalID
-			relationExternalID := fmt.Sprintf("%s->%s", component.ExternalID, podExternalID)
+			if podExternalID != "" {
+				relationExternalID := fmt.Sprintf("%s->%s", component.ExternalID, podExternalID)
+				_, ok := publishedPodRelations[relationExternalID]
+				if !ok {
+					relation := sc.serviceToPodStackStateRelation(component.ExternalID, podExternalID)
 
-			_, ok := publishedPodRelations[relationExternalID]
-			if !ok && podExternalID != "" {
-				relation := sc.serviceToPodStackStateRelation(component.ExternalID, podExternalID)
+					sc.RelationChan <- relation
 
-				sc.RelationChan <- relation
-
-				publishedPodRelations[relationExternalID] = relationExternalID
+					publishedPodRelations[relationExternalID] = relationExternalID
+				}
+			} else {
+				sc.EndpointCorrChan <- &ServiceEndpointCorrelation{
+					ServiceExternalID: component.ExternalID,
+					Endpoint:          endpoint,
+				}
 			}
 		}
 
 		serviceMap[serviceID] = append(serviceMap[serviceID], component.ExternalID)
 	}
+
+	// close endpoint correlation channel
+	// it will signal service2pod correlator to proceed
+	close(sc.EndpointCorrChan)
 
 	return nil
 }

@@ -111,6 +111,8 @@ func (t *TopologyCheck) Run() error {
 	nodeIdentifierCorrelationChannel := make(chan *collectors.NodeIdentifierCorrelation)
 	containerCorrelationChannel := make(chan *collectors.ContainerCorrelation)
 	volumeCorrelationChannel := make(chan *collectors.VolumeCorrelation)
+	podCorrelationChannel := make(chan *collectors.PodEndpointCorrelation)
+	endpointCorrelationChannel := make(chan *collectors.ServiceEndpointCorrelation)
 
 	// make a channel that is responsible for publishing components and relations
 	componentChannel := make(chan *topology.Component)
@@ -185,12 +187,14 @@ func (t *TopologyCheck) Run() error {
 			relationChannel,
 			containerCorrelationChannel,
 			volumeCorrelationChannel,
+			podCorrelationChannel,
 			commonClusterCollector,
 		),
 		// Register Service Component Collector
 		collectors.NewServiceCollector(
 			componentChannel,
 			relationChannel,
+			endpointCorrelationChannel,
 			commonClusterCollector,
 		),
 		// Register Ingress Component Collector
@@ -227,6 +231,13 @@ func (t *TopologyCheck) Run() error {
 			componentChannel,
 			relationChannel,
 			volumeCorrelationChannel,
+			commonClusterCorrelator,
+		),
+		collectors.NewService2PodCorrelator(
+			componentChannel,
+			relationChannel,
+			podCorrelationChannel,
+			endpointCorrelationChannel,
 			commonClusterCorrelator,
 		),
 	}
