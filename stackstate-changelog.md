@@ -9,7 +9,10 @@
 
 **Improvements**
 - Added collection level setting info [STAC-14671](https://stackstate.atlassian.net/browse/STAC-14671)
-- Process agent version 4.0.4
+- Upgraded process agent version from 4.0.2 to 4.0.5 which includes:
+  - Reporting CPU throttling metrics for containers
+  - Process agent check topology for self-observability
+  - [other minor improvements](https://github.com/StackVista/stackstate-process-agent/blob/master/stackstate-changelog.md)
 
 **Bugfix**
 - If Kubernetes topology Secrets collector fails, it will log (INFO level) only once [STAC-14834](https://stackstate.atlassian.net/browse/STAC-14834)
