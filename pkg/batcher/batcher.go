@@ -8,6 +8,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/serializer"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"sync"
 )
@@ -285,7 +286,7 @@ func (batcher AsynchronousBatcher) SubmitDelete(checkID check.ID, instance topol
 
 // SubmitHealthCheckData submits a Health check data record to the batch
 func (batcher AsynchronousBatcher) SubmitHealthCheckData(checkID check.ID, stream health.Stream, data health.CheckData) {
-	log.Debugf("Submitting Health check data for check [%s] stream [%s]: %s", checkID, stream.GoString(), data.JSONString())
+	log.Debugf("Submitting Health check data for check [%s] stream [%s]: %s", checkID, stream.GoString(), util.JSONString(data))
 	batcher.input <- submitHealthCheckData{
 		checkID: checkID,
 		stream:  stream,
