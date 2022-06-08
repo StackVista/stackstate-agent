@@ -14,6 +14,10 @@ var (
 	cmInit     *sync.Once
 )
 
+func init() {
+	cmInit = new(sync.Once)
+}
+
 // InitCheckManager ...
 func InitCheckManager(reloader handler.CheckReloader) {
 	cmInit.Do(func() {
