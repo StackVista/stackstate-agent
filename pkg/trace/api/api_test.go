@@ -602,7 +602,7 @@ func TestProto(t *testing.T) {
 	assert.Equal(1, len(rs.Stats))
 
 	// Receiver State
-	ts, ok := rs.Stats[info.Tags{Lang: langs[0]}]
+	ts, ok := rs.Stats[info.Tags{Lang: langs[0], EndpointVersion: "v0.5"}]
 	assert.True(ok)
 	assert.Equal(int64(2), ts.TracesReceived)
 	assert.Equal(int64(616), ts.TracesBytes)
