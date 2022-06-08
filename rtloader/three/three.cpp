@@ -975,6 +975,10 @@ void Three::setStopTransactionCb(cb_stop_transaction_t cb)
 {
     _set_stop_transaction_cb(cb);
 }
+void Three::setSetTransactionStateCb(cb_set_transaction_state_t cb)
+{
+    _set_set_transaction_state_cb(cb);
+}
 
 // [sts] state
 void Three::setSetStateCb(cb_set_state_t cb)

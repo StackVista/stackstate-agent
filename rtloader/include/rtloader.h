@@ -550,6 +550,14 @@ public:
     */
     virtual void setStopTransactionCb(cb_stop_transaction_t) = 0;
 
+    //! setSetTransactionStateCb member.
+    /*!
+      \param A cb_set_transaction_state_t function pointer to the CGO callback.
+
+      Actual check data is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setSetTransactionStateCb(cb_set_transaction_state_t) = 0;
+
     //! setSetStateCb member.
     /*!
       \param A cb_set_state_t function pointer to the CGO callback.

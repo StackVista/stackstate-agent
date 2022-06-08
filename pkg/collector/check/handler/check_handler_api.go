@@ -3,8 +3,10 @@ package handler
 import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/persistentcache"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/google/uuid"
 )
 
@@ -18,6 +20,7 @@ type CheckAPI interface {
 	// Transactionality
 	StartTransaction() string
 	StopTransaction()
+	SetTransactionState(key string, state string)
 
 	// Topology
 	SubmitComponent(instance topology.Instance, component topology.Component)
@@ -53,6 +56,14 @@ func (ch *checkHandler) StartTransaction() string {
 // and mark the current transaction as complete.
 func (ch *checkHandler) StopTransaction() {
 	transactionbatcher.GetTransactionalBatcher().SubmitCompleteTransaction(ch.ID(), ch.GetCurrentTransaction())
+}
+
+// SetTransactionState Set state for a transactional event for a certain key
+func (ch *checkHandler) SetTransactionState(key string, state string) {
+	err := persistentcache.Write(key, state)
+	if err != nil {
+		_ = log.Errorf("Unable to set the transaction state, Received the following error: %s", err)
+	}
 }
 
 // SubmitComponent submits a component to the Transactional Batcher to be batched.
@@ -106,13 +117,21 @@ func (ch *checkHandler) SubmitComplete() {
 	transactionbatcher.GetTransactionalBatcher().SubmitComplete(ch.ID())
 }
 
-// GetState Lorem Ipsum
+// GetState Get the last stored state for a certain key
 func (ch *checkHandler) GetState(key string) string {
-	// TODO: Melcom
-	return ""
+	state, err := persistentcache.Read(key)
+	if err != nil {
+		_ = log.Errorf("Unable to retrieve the agent check state for the key '%s', Received the following error: %s", key, err)
+		return "{}"
+	}
+
+	return state
 }
 
-// SetState Lorem Ipsum
+// SetState Set a new state for a certain key
 func (ch *checkHandler) SetState(key string, state string) {
-	// TODO: Melcom
+	err := persistentcache.Write(key, state)
+	if err != nil {
+		_ = log.Errorf("Unable to set the agent check state for the key '%s', Received the following error: %s", key, err)
+	}
 }

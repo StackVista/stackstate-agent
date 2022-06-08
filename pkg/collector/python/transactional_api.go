@@ -39,3 +39,13 @@ func StopTransaction(id *C.char) {
 	goCheckID := C.GoString(id)
 	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).StopTransaction()
 }
+
+// SetTransactionState sets a state for a transaction
+//export SetTransactionState
+func SetTransactionState(id *C.char, key *C.char, state *C.char) {
+	goCheckID := C.GoString(id)
+	keyValue := C.GoString(key)
+	stateValue := C.GoString(state)
+
+	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SetTransactionState(keyValue, stateValue)
+}

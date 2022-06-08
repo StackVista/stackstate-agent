@@ -202,6 +202,8 @@ typedef void (*cb_submit_raw_metrics_data_t)(char *, char *, float, char **, cha
 typedef void (*cb_start_transaction_t)(char *);
 // (check_id)
 typedef void (*cb_stop_transaction_t)(char *);
+// (check_id, key, state)
+typedef void (*cb_set_transaction_state_t)(char *, char *, char *);
 
 // (check_id, key, state)
 typedef void (*cb_set_state_t)(char *, char *, char *);

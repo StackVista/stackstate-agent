@@ -972,6 +972,10 @@ void Two::setStopTransactionCb(cb_stop_transaction_t cb)
 {
     _set_stop_transaction_cb(cb);
 }
+void Two::setSetTransactionStateCb(cb_set_transaction_state_t cb)
+{
+    _set_set_transaction_state_cb(cb);
+}
 
 // [sts] state state
 void Two::setSetStateCb(cb_set_state_t cb)

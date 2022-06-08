@@ -213,10 +213,12 @@ void initHealthModule(rtloader_t *rtloader) {
 
 void StartTransaction(char *);
 void StopTransaction(char *);
+void SetTransactionState(char *, char *, char *);
 
 void initTransactionalStateModule(rtloader_t *rtloader) {
 	set_start_transaction_cb(rtloader, StartTransaction);
 	set_stop_transaction_cb(rtloader, StopTransaction);
+	set_set_transaction_state_cb(rtloader, SetTransactionState);
 }
 
 

@@ -143,6 +143,7 @@ public:
     // transaction state
     void setStartTransactionCb(cb_start_transaction_t);
     void setStopTransactionCb(cb_stop_transaction_t);
+    void setSetTransactionStateCb(cb_set_transaction_state_t);
 
     // state
     void setSetStateCb(cb_set_state_t);

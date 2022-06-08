@@ -69,3 +69,32 @@ func TestStopTransaction(t *testing.T) {
 	// Check for leaks
 	helpers.AssertMemoryUsage(t)
 }
+
+func TestSetTransactionState(t *testing.T) {
+	// Reset memory counters
+	helpers.ResetMemoryStats()
+
+	stateKey := "key"
+	stateBody := "state body"
+
+	out, err := run(fmt.Sprintf(`transaction.set_transaction_state(None, "checkid", "%s", "%s")`, stateKey, stateBody))
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out != "" {
+		t.Errorf("Unexpected printed value: '%s'", out)
+	}
+	if checkID != "checkid" {
+		t.Fatalf("Unexpected check id value: %s", checkID)
+	}
+	if transactionState.key != stateKey {
+		t.Fatalf("Unexpected transaction state key value: %s", stateKey)
+	}
+	if transactionState.value != stateBody {
+		t.Fatalf("Unexpected transaction state body value: %s", stateBody)
+	}
+
+	// Check for leaks
+	helpers.AssertMemoryUsage(t)
+}

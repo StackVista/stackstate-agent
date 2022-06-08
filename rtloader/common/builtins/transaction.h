@@ -38,9 +38,9 @@
 
     The callback is expected to be provided by the rtloader caller - in go-context: CGO.
 */
-/*! \fn void _set_stop_transaction_cb(cb_stop_transaction_t)
-    \brief Sets the submit stop transaction callback to be used by rtloader for transactional state.
-    \param object A function pointer with cb_stop_transaction_t function prototype to the
+/*! \fn void _set_set_transaction_state_cb(cb_set_transaction_state_t)
+    \brief Sets the transaction state callback to be used by rtloader for transactional state.
+    \param object A function pointer with cb_set_transaction_state_t function prototype to the
     callback function.
 
     The callback is expected to be provided by the rtloader caller - in go-context: CGO.
@@ -63,6 +63,7 @@ void Py2_init_transaction();
 
 void _set_start_transaction_cb(cb_start_transaction_t);
 void _set_stop_transaction_cb(cb_stop_transaction_t);
+void _set_set_transaction_state_cb(cb_set_transaction_state_t);
 
 #ifdef __cplusplus
 }
