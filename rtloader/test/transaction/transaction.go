@@ -28,7 +28,7 @@ extern void setTransactionState(char *, char *, char *);
 static void initTransactionTests(rtloader_t *rtloader) {
 	set_start_transaction_cb(rtloader, startTransaction);
 	set_stop_transaction_cb(rtloader, stopTransaction);
-	set_set_transaction_state_cb(rtloader, setTransactionState);
+	set_transaction_state_cb(rtloader, setTransactionState);
 }
 */
 import "C"

@@ -103,7 +103,7 @@ error:
     return NULL; // Failure
 }
 
-void _set_set_transaction_state_cb(cb_set_transaction_state_t cb)
+void _set_transaction_state_cb(cb_set_transaction_state_t cb)
 {
     cb_set_transaction_state = cb;
 }

@@ -574,18 +574,18 @@ void set_stop_transaction_cb(rtloader_t *rtloader, cb_stop_transaction_t cb)
 {
     AS_TYPE(RtLoader, rtloader)->setStopTransactionCb(cb);
 }
-void set_set_transaction_state_cb(rtloader_t *rtloader, cb_set_transaction_state_t cb)
+void set_transaction_state_cb(rtloader_t *rtloader, cb_set_transaction_state_t cb)
 {
-    AS_TYPE(RtLoader, rtloader)->setSetTransactionStateCb(cb);
+    AS_TYPE(RtLoader, rtloader)->setTransactionStateCb(cb);
 }
 
 
 /*
  * [sts] state API
  */
-void set_set_state_cb(rtloader_t *rtloader, cb_set_state_t cb)
+void set_state_cb(rtloader_t *rtloader, cb_set_state_t cb)
 {
-    AS_TYPE(RtLoader, rtloader)->setSetStateCb(cb);
+    AS_TYPE(RtLoader, rtloader)->setStateCb(cb);
 }
 void set_get_state_cb(rtloader_t *rtloader, cb_get_state_t cb)
 {

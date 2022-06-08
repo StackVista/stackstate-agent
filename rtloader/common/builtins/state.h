@@ -31,7 +31,7 @@
     methods. A fresh reference to the module is created here. This function is python2
     only.
 */
-/*! \fn void _set_set_state_cb(cb_set_state_t)
+/*! \fn void _set_state_cb(cb_set_state_t)
     \brief Sets the set state callback to be used by rtloader for state submission.
     \param object A function pointer with cb_set_state_t function prototype to the
     callback function.
@@ -61,7 +61,7 @@ PyMODINIT_FUNC PyInit_state(void);
 void Py2_init_state();
 #endif
 
-void _set_set_state_cb(cb_set_state_t);
+void _set_state_cb(cb_set_state_t);
 void _set_get_state_cb(cb_get_state_t);
 
 #ifdef __cplusplus

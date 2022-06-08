@@ -40,7 +40,7 @@ void Py2_init_state()
 #endif
 
 
-void _set_set_state_cb(cb_set_state_t cb)
+void _set_state_cb(cb_set_state_t cb)
 {
     cb_set_state = cb;
 }

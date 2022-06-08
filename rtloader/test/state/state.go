@@ -21,7 +21,7 @@ extern void setState(char *, char *, char *);
 extern void getState(char *, char *);
 
 static void initStateTests(rtloader_t *rtloader) {
-	set_set_state_cb(rtloader, setState);
+	set_state_cb(rtloader, setState);
 	set_get_state_cb(rtloader, getState);
 }
 */

@@ -861,7 +861,7 @@ void Three::setLogCb(cb_log_t cb)
     _set_log_cb(cb);
 }
 
-void Three::setSetCheckMetadataCb(cb_set_check_metadata_t cb)
+void Three::setCheckMetadataCb(cb_set_check_metadata_t cb)
 {
     _set_set_check_metadata_cb(cb);
 }
@@ -975,15 +975,15 @@ void Three::setStopTransactionCb(cb_stop_transaction_t cb)
 {
     _set_stop_transaction_cb(cb);
 }
-void Three::setSetTransactionStateCb(cb_set_transaction_state_t cb)
+void Three::setTransactionStateCb(cb_set_transaction_state_t cb)
 {
-    _set_set_transaction_state_cb(cb);
+    _set_transaction_state_cb(cb);
 }
 
 // [sts] state
-void Three::setSetStateCb(cb_set_state_t cb)
+void Three::setStateCb(cb_set_state_t cb)
 {
-    _set_set_state_cb(cb);
+    _set_state_cb(cb);
 }
 void Three::setGetStateCb(cb_get_state_t cb)
 {

@@ -218,7 +218,7 @@ void SetTransactionState(char *, char *, char *);
 void initTransactionalStateModule(rtloader_t *rtloader) {
 	set_start_transaction_cb(rtloader, StartTransaction);
 	set_stop_transaction_cb(rtloader, StopTransaction);
-	set_set_transaction_state_cb(rtloader, SetTransactionState);
+	set_transaction_state_cb(rtloader, SetTransactionState);
 }
 
 
@@ -230,7 +230,7 @@ void SetState(char *, char *, char *);
 void GetState(char *, char *);
 
 void initStateModule(rtloader_t *rtloader) {
-	set_set_state_cb(rtloader, SetState);
+	set_state_cb(rtloader, SetState);
 	set_get_state_cb(rtloader, GetState);
 }
 
