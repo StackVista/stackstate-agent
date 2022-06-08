@@ -21,19 +21,12 @@ import (
 // #include <datadog_agent_rtloader.h>
 import "C"
 
-var (
-	mockTransactionalBatcher = transactionbatcher.NewMockTransactionalBatcher()
-	mockTransactionManager   = transactionmanager.NewMockTransactionManager()
-)
-
-func init() {
-	checkmanager.InitCheckManager(handler.NoCheckReloader{})
-
-}
-
 func testComponentTopology(t *testing.T) {
+	checkmanager.InitCheckManager(handler.NoCheckReloader{})
 	testCheck := &check.STSTestCheck{Name: "check-id-component-test"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
+	mockTransactionalManager := transactionmanager.NewMockTransactionManager()
 
 	c := &topology.Component{
 		ExternalID: "external-id",
@@ -82,12 +75,17 @@ func testComponentTopology(t *testing.T) {
 	}
 	assert.Equal(t, expectedTopology, actualTopology)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkmanager.GetCheckManager().Stop()
+	mockTransactionalBatcher.Stop()
+	mockTransactionalManager.Stop()
 }
 
 func testRelationTopology(t *testing.T) {
+	checkmanager.InitCheckManager(handler.NoCheckReloader{})
 	testCheck := &check.STSTestCheck{Name: "check-id-relation-test"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
+	mockTransactionalManager := transactionmanager.NewMockTransactionManager()
 
 	c := &topology.Relation{
 		SourceID: "source-id",
@@ -140,9 +138,16 @@ func testRelationTopology(t *testing.T) {
 	assert.Equal(t, expectedTopology, actualTopology)
 
 	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkmanager.GetCheckManager().Stop()
+	mockTransactionalBatcher.Stop()
+	mockTransactionalManager.Stop()
 }
 
 func testStartTransaction(t *testing.T) {
+	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	mockTransactionalManager := transactionmanager.NewMockTransactionManager()
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
+
 	testCheck := &check.STSTestCheck{Name: "check-id-start-transaction"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 	checkId := C.CString(testCheck.String())
@@ -150,11 +155,19 @@ func testStartTransaction(t *testing.T) {
 	StartTransaction(checkId)
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	transactionID := mockTransactionManager.GetCurrentTransaction()
+	transactionID := mockTransactionalManager.GetCurrentTransaction()
 	assert.NotEmpty(t, transactionID)
+
+	checkmanager.GetCheckManager().Stop()
+	mockTransactionalBatcher.Stop()
+	mockTransactionalManager.Stop()
 }
 
 func testStopTransaction(t *testing.T) {
+	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
+	mockTransactionManager := transactionmanager.NewMockTransactionManager()
+
 	testCheck := &check.STSTestCheck{Name: "check-id-stop-transaction"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 	checkId := C.CString(testCheck.String())
@@ -178,9 +191,16 @@ func testStopTransaction(t *testing.T) {
 	}, actualTopology)
 
 	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkmanager.GetCheckManager().Stop()
+	mockTransactionalBatcher.Stop()
+	mockTransactionManager.Stop()
 }
 
 func testStartSnapshotCheck(t *testing.T) {
+	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
+	mockTransactionalManager := transactionmanager.NewMockTransactionManager()
+
 	testCheck := &check.STSTestCheck{Name: "check-id-start-snapshot"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
@@ -209,9 +229,16 @@ func testStartSnapshotCheck(t *testing.T) {
 	}, actualTopology)
 
 	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkmanager.GetCheckManager().Stop()
+	mockTransactionalManager.Stop()
+	mockTransactionalBatcher.Stop()
 }
 
 func testStopSnapshotCheck(t *testing.T) {
+	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
+	mockTransactionalManager := transactionmanager.NewMockTransactionManager()
+
 	testCheck := &check.STSTestCheck{Name: "check-id-stop-snapshot"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
@@ -242,9 +269,16 @@ func testStopSnapshotCheck(t *testing.T) {
 	assert.Equal(t, expectedTopology, actualTopology)
 
 	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkmanager.GetCheckManager().Stop()
+	mockTransactionalManager.Stop()
+	mockTransactionalBatcher.Stop()
 }
 
 func testDeleteTopologyElement(t *testing.T) {
+	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
+	mockTransactionalManager := transactionmanager.NewMockTransactionManager()
+
 	testCheck := &check.STSTestCheck{Name: "check-id-delete-element"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
@@ -279,4 +313,7 @@ func testDeleteTopologyElement(t *testing.T) {
 	assert.Equal(t, expectedTopology, actualTopology)
 
 	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	checkmanager.GetCheckManager().Stop()
+	mockTransactionalBatcher.Stop()
+	mockTransactionalManager.Stop()
 }

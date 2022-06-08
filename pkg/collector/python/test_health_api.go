@@ -41,7 +41,7 @@ func testHealthCheckData(t *testing.T) {
 	testCheck := &check.STSTestCheck{Name: "check-id-health-check-data"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
-	transactionmanager.NewMockTransactionManager()
+	mockTransactionalManager := transactionmanager.NewMockTransactionManager()
 
 	c := &health.Payload{
 		Stream: health.Stream{
@@ -82,6 +82,10 @@ func testHealthCheckData(t *testing.T) {
 			},
 		},
 	}, actualTopology)
+
+	checkmanager.GetCheckManager().Stop()
+	mockTransactionalBatcher.Stop()
+	mockTransactionalManager.Stop()
 }
 
 func testHealthStartSnapshot(t *testing.T) {
@@ -89,12 +93,13 @@ func testHealthStartSnapshot(t *testing.T) {
 	testCheck := &check.STSTestCheck{Name: "check-id-health-start-snapshot"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
-	transactionmanager.NewMockTransactionManager()
+	mockTransactionalManager := transactionmanager.NewMockTransactionManager()
 
 	checkId := C.CString(testCheck.String())
 	stream := C.health_stream_t{}
 	stream.urn = C.CString("myurn")
 	stream.sub_stream = C.CString("substream")
+
 	StartTransaction(checkId)
 	SubmitHealthStartSnapshot(checkId, &stream, C.int(0), C.int(1))
 
@@ -112,6 +117,10 @@ func testHealthStartSnapshot(t *testing.T) {
 			},
 		},
 	}, actualTopology)
+
+	checkmanager.GetCheckManager().Stop()
+	mockTransactionalBatcher.Stop()
+	mockTransactionalManager.Stop()
 }
 
 func testHealthStopSnapshot(t *testing.T) {
@@ -119,7 +128,7 @@ func testHealthStopSnapshot(t *testing.T) {
 	testCheck := &check.STSTestCheck{Name: "check-id-health-stop-snapshot"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
-	transactionmanager.NewMockTransactionManager()
+	mockTransactionalManager := transactionmanager.NewMockTransactionManager()
 
 	checkId := C.CString(testCheck.String())
 	stream := C.health_stream_t{}
@@ -142,6 +151,10 @@ func testHealthStopSnapshot(t *testing.T) {
 			},
 		},
 	}, actualTopology)
+
+	checkmanager.GetCheckManager().Stop()
+	mockTransactionalBatcher.Stop()
+	mockTransactionalManager.Stop()
 }
 
 func testNoSubStream(t *testing.T) {
@@ -149,7 +162,7 @@ func testNoSubStream(t *testing.T) {
 	testCheck := &check.STSTestCheck{Name: "check-id-health-no-sub-stream"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
-	transactionmanager.NewMockTransactionManager()
+	mockTransactionalManager := transactionmanager.NewMockTransactionManager()
 
 	checkId := C.CString(testCheck.String())
 	stream := C.health_stream_t{}
@@ -173,4 +186,8 @@ func testNoSubStream(t *testing.T) {
 			},
 		},
 	}, actualTopology)
+
+	checkmanager.GetCheckManager().Stop()
+	mockTransactionalBatcher.Stop()
+	mockTransactionalManager.Stop()
 }

@@ -11,7 +11,7 @@ import (
 
 var (
 	cmInstance *CheckManager
-	cmInit     sync.Once
+	cmInit     *sync.Once
 )
 
 // InitCheckManager ...
@@ -78,8 +78,9 @@ func (cm *CheckManager) UnsubscribeCheckHandler(checkID check.ID) {
 	delete(cm.checkHandlers, string(checkID))
 }
 
-// Clear removes any existing check handlers
-func (cm *CheckManager) Clear() {
+// Stop clears the check handlers and re-initializes the singleton init
+func (cm *CheckManager) Stop() {
 	log.Debug("Removing all Check Handlers")
 	cm.checkHandlers = make(map[string]handler.CheckHandler)
+	cmInit = new(sync.Once)
 }

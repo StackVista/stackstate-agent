@@ -161,7 +161,7 @@ func testRawMetricsData(t *testing.T) {
 	testCheck := &check.STSTestCheck{Name: "check-id-raw-metrics"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
-	transactionmanager.NewMockTransactionManager()
+	mockTransactionalManager := transactionmanager.NewMockTransactionManager()
 
 	checkId := C.CString(testCheck.String())
 	name := C.CString(expectedRawMetricsData.Name)
@@ -181,4 +181,8 @@ func testRawMetricsData(t *testing.T) {
 		Metrics:     &telemetry.Metrics{Values: []telemetry.RawMetrics{expectedRawMetricsData}},
 		Health:      map[string]health.Health{},
 	}, actualTopology)
+
+	checkmanager.GetCheckManager().Stop()
+	mockTransactionalBatcher.Stop()
+	mockTransactionalManager.Stop()
 }
