@@ -20,7 +20,7 @@
 
   - name: Generate sts-toolbox config
     ansible.builtin.template:
-      src: sts-toolbox-config.yaml
+      src: sts-toolbox-config.j2.yaml
       dest: "{{ playbook_dir }}/sts-toolbox.yml"
 
   - name: Generate StackState values
@@ -43,7 +43,7 @@
         - "{{ playbook_dir }}/stackstate-values.yml"
       values:
         global:
-          receiverApiKey: "{{ STS_API_KEY }}"  # TODO
+          receiverApiKey: "{{ sts_api_key }}"
         stackstate:
           components:
             e2es:

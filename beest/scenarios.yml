@@ -22,9 +22,9 @@ scenarios:
       k8s_version: "1.21"
   - name: otel
     description: |
-      Provision an EKS cluster, lambda with OpenTelemetry support.
-      Deploys stackstate on EKS and install the stackpacks.
+      Provision Lambda exposing it trough an API gateway, an EC2 machine, AWS integration Cloudformation stack.
+      Deploys StackState on sandbox k8s cluster, Agent on EC2 and install the StackPacks.
     yard:
       name: otel-custom
     test:
-      group: xxx
+      group: otel

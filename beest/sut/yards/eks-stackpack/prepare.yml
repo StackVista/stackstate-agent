@@ -1,6 +1,10 @@
 ---
-- name: Prepare
+- name: Prepare K3D StackState
   hosts: localhost
   gather_facts: false
   roles:
     - role: "{{ bees_path }}/k8s-stackstate"
+      vars:
+        sts_api_key: {{ yard_id }}
+        sts_url: "https://localhost"
+        sts_ingress: K3D

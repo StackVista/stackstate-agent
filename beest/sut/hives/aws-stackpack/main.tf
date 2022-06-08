@@ -14,7 +14,7 @@ resource "aws_cloudformation_stack" "cfn_stackpack" {
 
 data "aws_iam_role" "awsv2_stackpack" {
   name       = "StackStateAwsIntegrationRole"
-  depends_on = [aws_cloudformation_stack.cfn_stackpack] #pr for cloudformation stack to output the role
+  depends_on = [aws_cloudformation_stack.cfn_stackpack] # TODO PR for cloudformation stack to output the role
 }
 
 data "aws_iam_policy_document" "policy_document" {

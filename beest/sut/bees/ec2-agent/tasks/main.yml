@@ -9,22 +9,17 @@
       retries: 5
       delay: 60
       environment:
-        STS_API_KEY: "{{ whatever we override when deploying sts helm chart }}"  # TODO
-        STS_URL: "{{ whatever we pass to the sts toolbox }}"  # TODO
+        STS_API_KEY: "{{ sts_api_key }}"
+        STS_URL: "{{ sts_url }}"
         STS_HOSTNAME: "{{ inventory_hostname }}"
         CODE_NAME: "{{ agent_current_branch }}"
-        SKIP_SSL_VALIDATION: "true"
+        SKIP_SSL_VALIDATION: "false"
 
-#    Configure AWS check
-# render template and store it under /etc/stackstate-agent/conf.d/aws_topology/
-
-- name: Template aws check
-  become: yes
-  ansible.builtin.template:
-    src: aws_conf.yml.j2.j2
-    dest: /etc/stackstate-agent/conf.d/aws_topology/conf.yaml
-    owner: stackstate-agent
-    group: stackstate-agent
-    mode: '0644'
-
-
+    - name: Configure AWS topology check
+      become: yes
+      ansible.builtin.template:
+        src: aws_topology_conf.j2.yml
+        dest: /etc/stackstate-agent/conf.d/aws_topology/conf.yaml
+        owner: stackstate-agent
+        group: stackstate-agent
+        mode: '0644'
