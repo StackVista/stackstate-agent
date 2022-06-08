@@ -861,7 +861,7 @@ void Three::setLogCb(cb_log_t cb)
     _set_log_cb(cb);
 }
 
-void Three::setCheckMetadataCb(cb_set_check_metadata_t cb)
+void Three::setSetCheckMetadataCb(cb_set_check_metadata_t cb)
 {
     _set_set_check_metadata_cb(cb);
 }
