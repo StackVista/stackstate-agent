@@ -12,6 +12,7 @@ vars:
         sts_api_key: {{ sts_api_key }}
         sts_url: {{ sts_url }}
         sts_ingress: KOPS
+    - role: "{{ bees_path }}/otel-lambda"
 
 - name: Prepare VM Agent
   hosts: agent

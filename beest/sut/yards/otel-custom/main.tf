@@ -8,8 +8,6 @@ module "vpc" {
   common_tags = local.common_tags
 }
 
-// eks cluster
-
 module "lambda_otel" {
   source = "../../hives/lambda-otel"
 

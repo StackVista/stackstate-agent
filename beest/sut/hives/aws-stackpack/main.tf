@@ -8,6 +8,7 @@ resource "aws_cloudformation_stack" "cfn_stackpack" {
     MainRegion                  = var.region
     IncludeOpenTelemetryTracing = var.include_open_telemetry_tracing
   }
+  capabilities = ["CAPABILITY_NAMED_IAM"]
   // TODO  why the cloudformation template is hosted on a s3 bucket instead of being bundled as part of the stackpack resources and downloaded directly from the stackpack ?
   template_url = "https://stackstate-integrations-resources-eu-west-1.s3.eu-west-1.amazonaws.com/aws-topology/cloudformation/stackstate-resources-1.2.cfn.yaml"
 }
