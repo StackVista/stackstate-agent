@@ -7,6 +7,7 @@ import (
 	checkState "github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"sync"
 )
@@ -118,19 +119,91 @@ func (ch *checkHandler) GetCurrentTransaction() string {
 
 // handleCurrentTransaction handles the current transaction
 func (ch *checkHandler) handleCurrentTransaction(txChan chan interface{}) {
+	logPrefix := fmt.Sprintf("Check: %s, Transaction: %s.", ch.GetCurrentTransaction(), ch.ID())
 currentTxHandler:
 	for {
 		select {
 		case tx := <-txChan:
 			switch msg := tx.(type) {
-			// current transaction operations
+			// Transactional Operations for the current transaction
 			case StopTransaction:
-				log.Debugf("Stopping current transaction: %s for check %s", ch.GetCurrentTransaction(), ch.ID())
+				if config.Datadog.GetBool("log_payloads") {
+					log.Debugf("%s. Stopping current transaction", logPrefix)
+				}
 				transactionbatcher.GetTransactionalBatcher().SubmitCompleteTransaction(ch.ID(), ch.GetCurrentTransaction())
-			//
+
 			case SubmitSetStateTransactional:
+				if config.Datadog.GetBool("log_payloads") {
+					log.Debugf("%s. Submitting set state transactional: %s -> %s", logPrefix, msg.Key, msg.State)
+				}
 				transactionmanager.GetTransactionManager().SetState(ch.GetCurrentTransaction(), msg.Key, msg.State)
-			// notifications from the transaction manager
+
+			// Topology Operations for the current transaction
+			case SubmitComponent:
+				if config.Datadog.GetBool("log_payloads") {
+					log.Debugf("%s. Submitting topology component for instance: %s. %s", logPrefix, msg.Instance.GoString(), msg.Component.JSONString())
+				}
+				transactionbatcher.GetTransactionalBatcher().SubmitComponent(ch.ID(), ch.GetCurrentTransaction(), msg.Instance, msg.Component)
+			case SubmitRelation:
+				if config.Datadog.GetBool("log_payloads") {
+					log.Debugf("%s. Submitting topology relation for instance: %s. %s", logPrefix, msg.Instance.GoString(), msg.Relation.JSONString())
+				}
+				transactionbatcher.GetTransactionalBatcher().SubmitRelation(ch.ID(), ch.GetCurrentTransaction(), msg.Instance, msg.Relation)
+			case SubmitStartSnapshot:
+				if config.Datadog.GetBool("log_payloads") {
+					log.Debugf("%s. Submitting topology start snapshot for instance: %s", logPrefix, msg.Instance.GoString())
+				}
+				transactionbatcher.GetTransactionalBatcher().SubmitStartSnapshot(ch.ID(), ch.GetCurrentTransaction(), msg.Instance)
+			case SubmitStopSnapshot:
+				if config.Datadog.GetBool("log_payloads") {
+					log.Debugf("%s. Submitting topology stop snapshot for instance: %s", logPrefix, msg.Instance.GoString())
+				}
+				transactionbatcher.GetTransactionalBatcher().SubmitStopSnapshot(ch.ID(), ch.GetCurrentTransaction(), msg.Instance)
+			case SubmitDelete:
+				if config.Datadog.GetBool("log_payloads") {
+					log.Debugf("%s. Submitting topology delete for instance: %s, externalID: %s", logPrefix, msg.Instance.GoString(), msg.TopologyElementID)
+				}
+				transactionbatcher.GetTransactionalBatcher().SubmitDelete(ch.ID(), ch.GetCurrentTransaction(), msg.Instance, msg.TopologyElementID)
+
+			// Health Operations for the current transaction
+			case SubmitHealthCheckData:
+				if config.Datadog.GetBool("log_payloads") {
+					log.Debugf("%s. Submitting health check data for stream %s. %s", logPrefix, msg.Stream.GoString(), msg.Data.JSONString())
+				}
+				transactionbatcher.GetTransactionalBatcher().SubmitHealthCheckData(ch.ID(), ch.GetCurrentTransaction(), msg.Stream, msg.Data)
+
+			case SubmitHealthStartSnapshot:
+				if config.Datadog.GetBool("log_payloads") {
+					log.Debugf("%s. Submitting health start snapshot for stream: %s with interval %ds and expiry %ds", logPrefix, msg.Stream.GoString(), msg.IntervalSeconds, msg.ExpirySeconds)
+				}
+
+				transactionbatcher.GetTransactionalBatcher().SubmitHealthStartSnapshot(ch.ID(), ch.GetCurrentTransaction(), msg.Stream,
+					msg.IntervalSeconds, msg.ExpirySeconds)
+
+			case SubmitHealthStopSnapshot:
+				if config.Datadog.GetBool("log_payloads") {
+					log.Debugf("%s. Submitting health stop snapshot for stream: %s", logPrefix, msg.Stream.GoString())
+				}
+
+				transactionbatcher.GetTransactionalBatcher().SubmitHealthStopSnapshot(ch.ID(), ch.GetCurrentTransaction(), msg.Stream)
+
+			// Telemetry Operations for the current transaction
+			case SubmitRawMetric:
+				if config.Datadog.GetBool("log_payloads") {
+					log.Debugf("%s. Submitting raw metric: %s", logPrefix, msg.Value.JSONString())
+				}
+
+				transactionbatcher.GetTransactionalBatcher().SubmitRawMetricsData(ch.ID(), ch.GetCurrentTransaction(), msg.Value)
+
+			// Lifecycle operations for the current transaction
+			case SubmitComplete:
+				if config.Datadog.GetBool("log_payloads") {
+					log.Debugf("%s. Submitting complete for check run", logPrefix)
+				}
+
+				transactionbatcher.GetTransactionalBatcher().SubmitComplete(ch.ID())
+
+			// Notifications from the transaction manager
 			case transactionmanager.RollbackTransaction, transactionmanager.EvictedTransaction:
 				_ = log.Warnf("Reloading check %s after failed transaction", ch.ID())
 				if err := ch.ReloadCheck(ch.ID(), ch.config, ch.initConfig, ch.ConfigSource()); err != nil {

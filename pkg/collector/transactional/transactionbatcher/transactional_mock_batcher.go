@@ -111,6 +111,8 @@ func (mtb *MockTransactionalBatcher) GetCheckState(checkID check.ID) (Transactio
 func (mtb *MockTransactionalBatcher) SubmitComplete(checkID check.ID) {
 }
 
-// Stop shuts down the transactionbatcher
+// Stop shuts down the transactionbatcher and resets the singleton init
 func (mtb *MockTransactionalBatcher) Stop() {
+	// reset the tmInit to re-init the batcher
+	batcherInit = new(sync.Once)
 }

@@ -2,6 +2,7 @@ package transactionmanager
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"sync"
 )
 
 // TransactionManager encapsulates all the functionality of the transaction manager to keep track of transactions
@@ -93,4 +94,6 @@ func (txm *transactionManager) RejectAction(transactionID, actionID, reason stri
 func (txm *transactionManager) Stop() {
 	txm.transactionChannel <- StopTransactionManager{}
 	txm.transactionTicker.Stop()
+	// reset the tmInit to re-init the transaction manager
+	tmInit = new(sync.Once)
 }

@@ -34,7 +34,7 @@ type StartTransaction struct {
 // StopTransaction is used to stop the current transaction
 type StopTransaction struct{}
 
-// SubmitSetStateTransactional is used to submit a set state transactional operation for the current transaction
+// SubmitSetStateTransactional is used to submit a set state transactional for the current transaction
 type SubmitSetStateTransactional struct {
 	Key, State string
 }
@@ -54,6 +54,34 @@ type CheckTopologyAPI interface {
 	SubmitDelete(instance topology.Instance, topologyElementID string)
 }
 
+// SubmitComponent is used to submit a topology component for the current transaction
+type SubmitComponent struct {
+	Instance  topology.Instance
+	Component topology.Component
+}
+
+// SubmitRelation is used to submit a topology relation for the current transaction
+type SubmitRelation struct {
+	Instance topology.Instance
+	Relation topology.Relation
+}
+
+// SubmitStartSnapshot is used to submit a topology start snapshot for the current transaction
+type SubmitStartSnapshot struct {
+	Instance topology.Instance
+}
+
+// SubmitStopSnapshot is used to submit a topology stop snapshot for the current transaction
+type SubmitStopSnapshot struct {
+	Instance topology.Instance
+}
+
+// SubmitDelete is used to submit a topology delete for the current transaction
+type SubmitDelete struct {
+	Instance          topology.Instance
+	TopologyElementID string
+}
+
 // CheckHealthAPI contains all the health state operations for a check
 type CheckHealthAPI interface {
 	SubmitHealthCheckData(stream health.Stream, data health.CheckData)
@@ -61,12 +89,37 @@ type CheckHealthAPI interface {
 	SubmitHealthStopSnapshot(stream health.Stream)
 }
 
+// SubmitHealthCheckData is used to submit a health check data for the current transaction
+type SubmitHealthCheckData struct {
+	Stream health.Stream
+	Data   health.CheckData
+}
+
+// SubmitHealthStartSnapshot is used to submit a health start snapshot for the current transaction
+type SubmitHealthStartSnapshot struct {
+	Stream                         health.Stream
+	IntervalSeconds, ExpirySeconds int
+}
+
+// SubmitHealthStopSnapshot is used to submit a health stop snapshot for the current transaction
+type SubmitHealthStopSnapshot struct {
+	Stream health.Stream
+}
+
 // CheckTelemetryAPI contains all the telemetry operations for a check
 type CheckTelemetryAPI interface {
 	SubmitRawMetricsData(data telemetry.RawMetrics)
+}
+
+// SubmitRawMetric is used to submit a raw metric value for the current transaction
+type SubmitRawMetric struct {
+	Value telemetry.RawMetrics
 }
 
 // CheckLifecycleAPI contains all the lifecylce operations for a check
 type CheckLifecycleAPI interface {
 	SubmitComplete()
 }
+
+// SubmitComplete is used to submit a check complete for the current transaction
+type SubmitComplete struct{}

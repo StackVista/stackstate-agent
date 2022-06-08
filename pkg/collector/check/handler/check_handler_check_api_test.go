@@ -211,4 +211,8 @@ func TestCheckHandlerAPI(t *testing.T) {
 		})
 	}
 
+	// stop the transactional components
+	transactionbatcher.GetTransactionalBatcher().Stop()
+	transactionmanager.GetTransactionManager().Stop()
+
 }

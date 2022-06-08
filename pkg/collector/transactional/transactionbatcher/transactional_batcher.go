@@ -15,8 +15,12 @@ import (
 
 var (
 	batcherInstance TransactionalBatcher
-	batcherInit     sync.Once
+	batcherInit     *sync.Once
 )
+
+func init() {
+	batcherInit = new(sync.Once)
+}
 
 // InitTransactionalBatcher initializes the global transactional transactionbatcher Instance
 func InitTransactionalBatcher(hostname, agentName string, maxCapacity int, flushInterval time.Duration) {
@@ -32,9 +36,9 @@ func GetTransactionalBatcher() TransactionalBatcher {
 
 // NewMockTransactionalBatcher initializes the global transactionbatcher with a mock version, intended for testing
 func NewMockTransactionalBatcher() *MockTransactionalBatcher {
-	//batcherInit.Do(func() {
-	batcherInstance = newMockTransactionalBatcher()
-	//})
+	batcherInit.Do(func() {
+		batcherInstance = newMockTransactionalBatcher()
+	})
 	return batcherInstance.(*MockTransactionalBatcher)
 }
 
@@ -110,6 +114,9 @@ BatcherReceiver:
 func (ctb *transactionalBatcher) Stop() {
 	ctb.flushTicker.Stop()
 	ctb.Input <- SubmitShutdown{}
+
+	// reset the batcher init to re-init the batcher
+	batcherInit = new(sync.Once)
 }
 
 // SubmitState submits the transactional check instance batch state and commits an action for this payload

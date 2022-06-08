@@ -42,8 +42,10 @@ func (ttm *MockTransactionManager) TransactionCount() int {
 func (ttm *MockTransactionManager) Start() {
 }
 
-// Stop is a noop
+// Stop resets the singleton init
 func (ttm *MockTransactionManager) Stop() {
+	// reset the transaction manager init
+	tmInit = new(sync.Once)
 }
 
 // StartTransaction sets the current transaction value and updates the notify channel

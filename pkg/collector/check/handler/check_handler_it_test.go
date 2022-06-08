@@ -17,7 +17,11 @@ import (
 	"time"
 )
 
-func TestCheckHandler_State_Transactional(t *testing.T) {
+func TestCheckHandler_State_Transactional_Integration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping check handler transactional state integration test")
+	}
+
 	os.Setenv("DD_CHECK_STATE_ROOT_PATH", "./testdata")
 
 	httpServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -57,4 +61,8 @@ func TestCheckHandler_State_Transactional(t *testing.T) {
 	err := os.RemoveAll("./testdata/my-check-handler-transactional-state-check")
 	assert.NoError(t, err, "error cleaning up test data file")
 
+	// stop the transactional components
+	transactionforwarder.GetTransactionalForwarder().Stop()
+	transactionbatcher.GetTransactionalBatcher().Stop()
+	transactionmanager.GetTransactionManager().Stop()
 }

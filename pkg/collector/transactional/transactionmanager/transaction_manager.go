@@ -9,8 +9,12 @@ import (
 
 var (
 	tmInstance TransactionManager
-	tmInit     sync.Once
+	tmInit     *sync.Once
 )
+
+func init() {
+	tmInit = new(sync.Once)
+}
 
 // InitTransactionManager ...
 func InitTransactionManager(transactionChannelBufferSize int, tickerInterval, transactionTimeoutDuration,
@@ -28,9 +32,9 @@ func GetTransactionManager() TransactionManager {
 
 // NewMockTransactionManager returns a handle on the global transactionbatcher Instance
 func NewMockTransactionManager() *MockTransactionManager {
-	//tmInit.Do(func() {
-	tmInstance = newTestTransactionManager()
-	//})
+	tmInit.Do(func() {
+		tmInstance = newTestTransactionManager()
+	})
 	return tmInstance.(*MockTransactionManager)
 }
 

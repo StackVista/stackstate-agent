@@ -2,7 +2,6 @@ package handler
 
 import (
 	checkState "github.com/StackVista/stackstate-agent/pkg/collector/check/state"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -50,53 +49,74 @@ func (ch *checkHandler) GetState(key string) string {
 	return s
 }
 
-// SubmitComponent submits a component to the Transactional Batcher to be batched.
+// SubmitComponent submits a component to the current transaction channel to be forwarded.
 func (ch *checkHandler) SubmitComponent(instance topology.Instance, component topology.Component) {
-	transactionbatcher.GetTransactionalBatcher().SubmitComponent(ch.ID(), ch.GetCurrentTransaction(), instance, component)
+	ch.currentTransactionChannel <- SubmitComponent{
+		Instance:  instance,
+		Component: component,
+	}
 }
 
-// SubmitRelation submits a relation to the Transactional Batcher to be batched.
+// SubmitRelation submits a relation to the current transaction channel to be forwarded.
 func (ch *checkHandler) SubmitRelation(instance topology.Instance, relation topology.Relation) {
-	transactionbatcher.GetTransactionalBatcher().SubmitRelation(ch.ID(), ch.GetCurrentTransaction(), instance, relation)
+	ch.currentTransactionChannel <- SubmitRelation{
+		Instance: instance,
+		Relation: relation,
+	}
+
 }
 
-// SubmitStartSnapshot submits a start snapshot to the Transactional Batcher to be batched.
+// SubmitStartSnapshot submits a start snapshot to the current transaction channel to be forwarded.
 func (ch *checkHandler) SubmitStartSnapshot(instance topology.Instance) {
-	transactionbatcher.GetTransactionalBatcher().SubmitStartSnapshot(ch.ID(), ch.GetCurrentTransaction(), instance)
+	ch.currentTransactionChannel <- SubmitStartSnapshot{Instance: instance}
+
 }
 
-// SubmitStopSnapshot submits a stop snapshot to the Transactional Batcher to be batched.
+// SubmitStopSnapshot submits a stop snapshot to the current transaction channel to be forwarded.
 func (ch *checkHandler) SubmitStopSnapshot(instance topology.Instance) {
-	transactionbatcher.GetTransactionalBatcher().SubmitStopSnapshot(ch.ID(), ch.GetCurrentTransaction(), instance)
+	ch.currentTransactionChannel <- SubmitStopSnapshot{Instance: instance}
 }
 
-// SubmitDelete submits a topology element delete to the Transactional Batcher to be batched.
+// SubmitDelete submits a topology element delete to the current transaction channel to be forwarded.
 func (ch *checkHandler) SubmitDelete(instance topology.Instance, topologyElementID string) {
-	transactionbatcher.GetTransactionalBatcher().SubmitDelete(ch.ID(), ch.GetCurrentTransaction(), instance, topologyElementID)
+	ch.currentTransactionChannel <- SubmitDelete{
+		Instance:          instance,
+		TopologyElementID: topologyElementID,
+	}
 }
 
-// SubmitHealthCheckData submits health check data to the Transactional Batcher to be batched.
+// SubmitHealthCheckData submits health check data to the current transaction channel to be forwarded.
 func (ch *checkHandler) SubmitHealthCheckData(stream health.Stream, data health.CheckData) {
-	transactionbatcher.GetTransactionalBatcher().SubmitHealthCheckData(ch.ID(), ch.GetCurrentTransaction(), stream, data)
+	ch.currentTransactionChannel <- SubmitHealthCheckData{
+		Stream: stream,
+		Data:   data,
+	}
 }
 
-// SubmitHealthStartSnapshot submits a health start snapshot to the Transactional Batcher to be batched.
+// SubmitHealthStartSnapshot submits a health start snapshot to the current transaction channel to be forwarded.
 func (ch *checkHandler) SubmitHealthStartSnapshot(stream health.Stream, intervalSeconds int, expirySeconds int) {
-	transactionbatcher.GetTransactionalBatcher().SubmitHealthStartSnapshot(ch.ID(), ch.GetCurrentTransaction(), stream,
-		intervalSeconds, expirySeconds)
+	ch.currentTransactionChannel <- SubmitHealthStartSnapshot{
+		Stream:          stream,
+		IntervalSeconds: intervalSeconds,
+		ExpirySeconds:   expirySeconds,
+	}
 }
 
-// SubmitHealthStopSnapshot submits a health stop snapshot to the Transactional Batcher to be batched.
+// SubmitHealthStopSnapshot submits a health stop snapshot to the current transaction channel to be forwarded.
 func (ch *checkHandler) SubmitHealthStopSnapshot(stream health.Stream) {
-	transactionbatcher.GetTransactionalBatcher().SubmitHealthStopSnapshot(ch.ID(), ch.GetCurrentTransaction(), stream)
+	ch.currentTransactionChannel <- SubmitHealthStopSnapshot{
+		Stream: stream,
+	}
 }
 
-// SubmitRawMetricsData submits a raw metric value to the Transactional Batcher to be batched.
+// SubmitRawMetricsData submits a raw metric value to the current transaction channel to be forwarded.
 func (ch *checkHandler) SubmitRawMetricsData(data telemetry.RawMetrics) {
-	transactionbatcher.GetTransactionalBatcher().SubmitRawMetricsData(ch.ID(), ch.GetCurrentTransaction(), data)
+	ch.currentTransactionChannel <- SubmitRawMetric{
+		Value: data,
+	}
 }
 
-// SubmitComplete submits a complete to the Transactional Batcher.
+// SubmitComplete submits a complete to the current transaction channel to be forwarded.
 func (ch *checkHandler) SubmitComplete() {
-	transactionbatcher.GetTransactionalBatcher().SubmitComplete(ch.ID())
+	ch.currentTransactionChannel <- SubmitComplete{}
 }
