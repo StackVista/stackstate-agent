@@ -64,7 +64,7 @@ func TestCheckManagerSubscription(t *testing.T) {
 	assert.True(t, found, "TestCheck handler not found in the checkManager.checkHandlers map")
 
 	// remove all check handlers with clear
-	checkManager.Clear()
+	checkManager.Stop()
 	assert.Equal(t, 0, len(checkManager.checkHandlers))
 
 }
