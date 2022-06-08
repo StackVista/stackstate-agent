@@ -28,8 +28,8 @@ func (ch *checkHandler) StopTransaction() {
 
 // SetStateTransactional is used to set state transactionaly. This state is only committed once a transaction has been
 // completed successfully.
-func (ch *checkHandler) SetStateTransactional(key string, state string) {
-	ch.currentTransactionChannel <- SubmitSetStateTransactional{
+func (ch *checkHandler) SetTransactionState(key string, state string) {
+	ch.currentTransactionChannel <- SubmitSetTransactionState{
 		Key:   key,
 		State: state,
 	}

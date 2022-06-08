@@ -22,7 +22,7 @@ type CheckAPI interface {
 type CheckTransactionalAPI interface {
 	StartTransaction() string
 	StopTransaction()
-	SetStateTransactional(key, state string)
+	SetTransactionState(key, state string)
 }
 
 // StartTransaction is used to start a transaction to the input channel
@@ -34,8 +34,8 @@ type StartTransaction struct {
 // StopTransaction is used to stop the current transaction
 type StopTransaction struct{}
 
-// SubmitSetStateTransactional is used to submit a set state transactional for the current transaction
-type SubmitSetStateTransactional struct {
+// SubmitSetTransactionState is used to submit a set state transactional for the current transaction
+type SubmitSetTransactionState struct {
 	Key, State string
 }
 

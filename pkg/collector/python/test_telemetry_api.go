@@ -158,31 +158,27 @@ var expectedRawMetricsData = telemetry.RawMetrics{
 
 func testRawMetricsData(t *testing.T) {
 	checkmanager.InitCheckManager(handler.NoCheckReloader{})
-	checkmanager.GetCheckManager().RegisterCheckHandler(&check.STSTestCheck{Name: "check-id"}, integration.Data{},
-		integration.Data{})
+	testCheck := &check.STSTestCheck{Name: "check-id"}
+	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
 	transactionmanager.NewMockTransactionManager()
 
-	checkId := C.CString("check-id")
+	checkId := C.CString(string(testCheck.ID()))
 	name := C.CString(expectedRawMetricsData.Name)
 	value := C.float(expectedRawMetricsData.Value)
 	tags := []*C.char{C.CString("foo"), C.CString("bar"), nil}
 	hostname := C.CString(expectedRawMetricsData.HostName)
 	timestamp := C.longlong(expectedRawMetricsData.Timestamp)
 
+	StartTransaction(checkId)
 	SubmitRawMetricsData(checkId, name, value, &tags[0], hostname, timestamp)
 
-	actualState := mockTransactionalBatcher.CollectedTopology.Flush()
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 
-	assert.Exactly(t, transactionbatcher.TransactionCheckInstanceBatchStates(
-		map[check.ID]transactionbatcher.TransactionCheckInstanceBatchState{
-			"check-id": {
-				Transaction: &transactionbatcher.BatchTransaction{
-					TransactionID:        "", // no start transaction, so the transaction is empty in this case
-					CompletedTransaction: false,
-				},
-				Metrics: &telemetry.Metrics{Values: []telemetry.RawMetrics{expectedRawMetricsData}},
-				Health:  map[string]health.Health{},
-			},
-		}), actualState)
+	assert.Exactly(t, transactionbatcher.TransactionCheckInstanceBatchState{
+		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
+		Metrics:     &telemetry.Metrics{Values: []telemetry.RawMetrics{expectedRawMetricsData}},
+		Health:      map[string]health.Health{},
+	}, actualTopology)
 }

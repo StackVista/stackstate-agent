@@ -20,9 +20,9 @@ func (ch *NonTransactionalCheckHandler) StopTransaction() {
 	_ = log.Warnf("StopTransaction called on NonTransactionalCheckHandler. This should never happen.")
 }
 
-// SetStateTransactional should never be called on the NonTransactionalCheckHandler
-func (ch *NonTransactionalCheckHandler) SetStateTransactional(string, string) {
-	_ = log.Warnf("SetStateTransactional called on NonTransactionalCheckHandler. This should never happen.")
+// SetTransactionState should never be called on the NonTransactionalCheckHandler
+func (ch *NonTransactionalCheckHandler) SetTransactionState(string, string) {
+	_ = log.Warnf("SetTransactionState called on NonTransactionalCheckHandler. This should never happen.")
 }
 
 // SetState is used to commit state for a given state key and CheckState

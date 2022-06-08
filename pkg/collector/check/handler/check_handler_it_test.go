@@ -48,7 +48,7 @@ func TestCheckHandler_State_Transactional_Integration(t *testing.T) {
 
 	ch.StartTransaction()
 
-	ch.SetStateTransactional(stateKey, expectedState)
+	ch.SetTransactionState(stateKey, expectedState)
 
 	assert.Equal(t, "{}", ch.GetState(stateKey))
 
