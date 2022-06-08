@@ -283,7 +283,7 @@ func TestProcess(t *testing.T) {
 		}, stats.NewSublayerCalculator())
 
 		var gotCount int
-		timeout := time.After(3 * time.Second)
+		timeout := time.After(4 * time.Second)
 		// expect multiple payloads
 		for i := 0; i < payloadN+2; i++ {
 			select {
