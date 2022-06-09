@@ -384,14 +384,14 @@
     - name: ENV | PATH
       win_path:
         elements:
-        - 'C:\\tools\\ruby24\\bin'
-        - 'C:\\gopath\\bin'
-        - 'C:\\Program Files\\CMake\\bin\'
-        - 'C:\\python27-x64'
-        - 'C:\\python27-x64\\Scripts'
-        - 'C:\\Program Files\\Git\\usr\\bin'
-        - 'C:\\Program Files\\Amazon\\AWSCLI'
-        - 'C:\\Program Files\\Mercurial;C:\\Program Files (x86)\\WiX Toolset v3.11\\bin'
+        - 'C:\tools\ruby24\bin'
+        - 'C:\gopath\bin'
+        - 'C:\Program Files\CMake\bin\'
+        - 'C:\python27-x64'
+        - 'C:\python27-x64\Scripts'
+        - 'C:\Program Files\Git\usr\bin'
+        - 'C:\Program Files\Amazon\AWSCLI'
+        - 'C:\Program Files\Mercurial;C:\Program Files (x86)\WiX Toolset v3.11\bin'
 
         # msbuild get accessible via call %VCINSTALLDIR%\Common7\Tools\VsDevCmd.bat
 
@@ -514,6 +514,20 @@
 #
 #    - name: Install powershell vssetup module
 #      win_command: powershell.exe -File C:\install_vssetup.ps1
+
+    - name: Install ruby 2.4.3.1
+      win_chocolatey:
+        name: ruby
+        state: present
+        version: 2.4.3.1
+        allow_multiple: true
+      tags:
+        - broken
+
+    - name: Switch Ruby version
+      win_shell: "ridk use 1"
+      tags:
+        - next
 
 
 # SSL_CERT_FILE='C:\cacert.pem'  File exists on old machine, not on new one

@@ -66,7 +66,9 @@
       "inline": [
         "aws s3 cp s3://vcpython27/VCForPython27.msi C:\\Windows\\Temp\\VCForPython27.msi",
         "aws s3 cp s3://vcpython27/VC_redist.x86.exe C:\\Windows\\Temp\\VC_redist.x86.exe",
-        "aws s3 cp s3://vcpython27/vs_Community.exe C:\\Windows\\Temp\\vs_Community.exe"
+        "aws s3 cp s3://vcpython27/vs_Community.exe C:\\Windows\\Temp\\vs_Community.exe",
+        "aws s3 cp s3://vcpython27/ruby24.zip C:\\tools\\ruby24.zip",
+        "Expand-Archive -LiteralPath C:\\tools\\ruby24.zip -DestinationPath C:\\tools"
       ]
     },
     {
