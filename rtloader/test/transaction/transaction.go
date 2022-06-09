@@ -23,13 +23,20 @@ import (
 
 extern void startTransaction(char *);
 extern void stopTransaction(char *);
+extern void setTransactionState(char *, char *, char *);
 
 static void initTransactionTests(rtloader_t *rtloader) {
 	set_start_transaction_cb(rtloader, startTransaction);
 	set_stop_transaction_cb(rtloader, stopTransaction);
+	set_transaction_state_cb(rtloader, setTransactionState);
 }
 */
 import "C"
+
+type TransactionState struct {
+	key   string
+	value string
+}
 
 var (
 	rtloader                      *C.rtloader_t
@@ -38,11 +45,13 @@ var (
 	transactionInstanceBatchState transactionbatcher.TransactionCheckInstanceBatchState
 	transactionStarted            bool
 	transactionCompleted          bool
+	transactionState              TransactionState
 )
 
 func resetOuputValues() {
 	checkID = ""
 	transactionID = ""
+	transactionState = TransactionState{}
 	transactionInstanceBatchState = transactionbatcher.TransactionCheckInstanceBatchState{
 		Transaction: &transactionbatcher.BatchTransaction{},
 		Topology:    &topology.Topology{},
@@ -122,4 +131,16 @@ func stopTransaction(id *C.char) {
 	checkID = C.GoString(id)
 	transactionID = ""
 	transactionCompleted = true
+}
+
+//export setTransactionState
+func setTransactionState(id *C.char, key *C.char, state *C.char) {
+	checkID = C.GoString(id)
+	keyValue := C.GoString(key)
+	stateValue := C.GoString(state)
+
+	transactionState = TransactionState{
+		key:   keyValue,
+		value: stateValue,
+	}
 }

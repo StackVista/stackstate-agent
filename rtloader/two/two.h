@@ -142,6 +142,11 @@ public:
     // transaction state
     void setStartTransactionCb(cb_start_transaction_t);
     void setStopTransactionCb(cb_stop_transaction_t);
+    void setTransactionStateCb(cb_set_transaction_state_t);
+
+    // state
+    void setStateCb(cb_set_state_t);
+    void setGetStateCb(cb_get_state_t);
 
 private:
     //! initPythonHome member.

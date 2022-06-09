@@ -213,10 +213,25 @@ void initHealthModule(rtloader_t *rtloader) {
 
 void StartTransaction(char *);
 void StopTransaction(char *);
+void SetTransactionState(char *, char *, char *);
 
 void initTransactionalStateModule(rtloader_t *rtloader) {
 	set_start_transaction_cb(rtloader, StartTransaction);
 	set_stop_transaction_cb(rtloader, StopTransaction);
+	set_transaction_state_cb(rtloader, SetTransactionState);
+}
+
+
+//
+// [sts] state module
+//
+
+void SetState(char *, char *, char *);
+void GetState(char *, char *);
+
+void initStateModule(rtloader_t *rtloader) {
+	set_state_cb(rtloader, SetState);
+	set_get_state_cb(rtloader, GetState);
 }
 
 */
@@ -404,6 +419,7 @@ func Initialize(paths ...string) error {
 	C.initTopologyModule(rtloader)
 	C.initTelemetryModule(rtloader)
 	C.initTransactionalStateModule(rtloader)
+	C.initStateModule(rtloader)
 	C.initHealthModule(rtloader)
 	// [sts]
 

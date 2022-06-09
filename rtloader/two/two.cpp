@@ -22,6 +22,7 @@
 #include "telemetry.h"
 #include "health.h"
 #include "transaction.h"
+#include "state.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -121,6 +122,7 @@ bool Two::init()
     Py2_init_topology();
     Py2_init_telemetry();
     Py2_init_health();
+    Py2_init_state();
     Py2_init_transaction();
 
     // import the base class
@@ -969,6 +971,20 @@ void Two::setStartTransactionCb(cb_start_transaction_t cb)
 void Two::setStopTransactionCb(cb_stop_transaction_t cb)
 {
     _set_stop_transaction_cb(cb);
+}
+void Two::setTransactionStateCb(cb_set_transaction_state_t cb)
+{
+    _set_transaction_state_cb(cb);
+}
+
+// [sts] state state
+void Two::setStateCb(cb_set_state_t cb)
+{
+    _set_state_cb(cb);
+}
+void Two::setGetStateCb(cb_get_state_t cb)
+{
+    _set_get_state_cb(cb);
 }
 
 // Python Helpers

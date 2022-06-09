@@ -1,19 +1,12 @@
 # StackState Agent
 
-[![CircleCI](https://circleci.com/gh/StackVista/stackstate-agent/tree/master.svg?style=svg)](https://circleci.com/gh/StackVista/stackstate-agent/tree/master)
-[![Build status](https://ci.appveyor.com/api/projects/status/kcwhmlsc0oq3m49p/branch/master?svg=true)](https://ci.appveyor.com/project/StackVista/stackstate-agent/branch/master)
-[![GoDoc](https://godoc.org/github.com/StackVista/stackstate-agent?status.svg)](https://godoc.org/github.com/StackVista/stackstate-agent)
-[![Go Report Card](https://goreportcard.com/badge/github.com/StackVista/stackstate-agent)](https://goreportcard.com/report/github.com/StackVista/stackstate-agent)
+Contains the code for the StackState agent V2. Agent integrations are not included in this project and can be found [here](https://github.com/StackVista/stackstate-agent-integrations).
 
-The present repository contains the source code of the StackState Agent version 6. Please refer to the [Agent user documentation](docs/agent) for information about differences between Agent 5 and Agent 6. Additionally, we provide a list of prepackaged binaries for an easy install process [here](https://app.datadoghq.com/account/settings#agent)
-**Note:** the source code of StackState Agent 5 is located in the
+## Installation
 
-## Documentation
+Installation instructions are available on the [StackState docs site](https://docs.stackstate.com/stackpacks/integrations/agent).
 
-The general documentation of the project, including instructions for installation
-and development, is located under [the docs directory](docs) of the present repo.
-
-## Getting started
+## Getting development started
 
 To build the Agent you need:
  * [Go](https://golang.org/doc/install) 1.13 or later. You'll also need to set your `$GOPATH` and have `$GOPATH/bin` in your path.
@@ -61,10 +54,6 @@ To start working on the Agent, you can build the `master` branch:
   If you built an older version of the agent, you may have the error `make: *** No targets specified and no makefile found.  Stop.`.
   To solve the issue, you should remove `CMakeCache.txt` from `rtloader` folder with `rm rtloader/CMakeCache.txt`.
 
-
-
-Please refer to the [Agent Developer Guide](docs/dev/README.md) for more details.
-
 ## Run
 
 You can run the agent with:
@@ -73,11 +62,6 @@ You can run the agent with:
 ```
 
 The file `bin/agent/dist/datadog.yaml` is copied from `dev/dist/datadog.yaml` by `invoke agent.build` and must contain a valid api key.
-
-## Contributing code
-
-You'll find information and help on how to contribute code to this project under
-[the `docs/dev` directory](docs/dev) of the present repo.
 
 ## Install
 
@@ -144,10 +128,6 @@ Windows arguments:
 - `tags` = Agent host tags to use for all topology component (by default `os:windows` will be added)
 - `skipSSLValidation` = Skip ssl certificates validation when talking to the backend (defaults to `false`)
 - `agentVersion` = Version of the Agent to be installed (defaults to `latest`)
-
-## Install
-
-Installation instructions are available on the [StackState docs site](https://docs.stackstate.com/stackpacks/integrations/agent).
 
 ##### Omnibus notes for windows build process
 

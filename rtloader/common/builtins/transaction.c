@@ -10,14 +10,17 @@
 // these must be set by the Agent
 static cb_start_transaction_t cb_start_transaction = NULL;
 static cb_stop_transaction_t cb_stop_transaction = NULL;
+static cb_set_transaction_state_t cb_set_transaction_state = NULL;
 
 // forward declarations
 static PyObject *start_transaction(PyObject *self, PyObject *args);
 static PyObject *stop_transaction(PyObject *self, PyObject *args);
+static PyObject *set_transaction_state(PyObject *self, PyObject *args);
 
 static PyMethodDef methods[] = {
     {"start_transaction", (PyCFunction)start_transaction, METH_VARARGS, "Starts a transactional state for a Agent Check."},
     {"stop_transaction", (PyCFunction)stop_transaction, METH_VARARGS, "Stops a transactional state for a Agent Check."},
+    {"set_transaction_state", (PyCFunction)set_transaction_state, METH_VARARGS, "Set a transactional state for a Agent Check."},
     {NULL, NULL}  // guards
 };
 
@@ -91,6 +94,38 @@ static PyObject *stop_transaction(PyObject *self, PyObject *args) {
     }
 
     cb_stop_transaction(check_id);
+
+    PyGILState_Release(gstate);
+    Py_RETURN_NONE; // Success
+
+error:
+    PyGILState_Release(gstate);
+    return NULL; // Failure
+}
+
+void _set_transaction_state_cb(cb_set_transaction_state_t cb)
+{
+    cb_set_transaction_state = cb;
+}
+
+static PyObject *set_transaction_state(PyObject *self, PyObject *args) {
+    if (cb_set_transaction_state == NULL) {
+        PyErr_SetString(PyExc_TypeError, "`set_transaction_state` is set as NULL");
+        Py_RETURN_NONE;
+    }
+
+    PyObject *check = NULL; // borrowed
+    char *check_id;
+    char *key;
+    char *state;
+
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    if (!PyArg_ParseTuple(args, "Osss", &check, &check_id, &key, &state)) {
+      goto error;
+    }
+
+    cb_set_transaction_state(check_id, key, state);
 
     PyGILState_Release(gstate);
     Py_RETURN_NONE; // Success
