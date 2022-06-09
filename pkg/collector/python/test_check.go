@@ -10,6 +10,7 @@ package python
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
 	"runtime"
 	"testing"
@@ -180,10 +181,8 @@ import "C"
 
 func testRunCheck(t *testing.T) {
 	c := NewPythonFakeCheck()
-
 	SetupTransactionalComponents()
-	testCheck := &check.STSTestCheck{Name: "check-id-test-run-check"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	batcher.NewMockBatcher()
 
 	c.instance = &C.rtloader_pyobject_t{}
 
@@ -253,13 +252,14 @@ func testRunErrorReturn(t *testing.T) {
 }
 
 func testRun(t *testing.T) {
-	sender := mocksender.NewMockSender(check.ID("testID"))
+	testCheck := &check.STSTestCheck{Name: "check-id-test-run-python"}
+
+	sender := mocksender.NewMockSender(testCheck.ID())
 	sender.SetupAcceptAll()
 
 	c := NewPythonFakeCheck()
 
 	SetupTransactionalComponents()
-	testCheck := &check.STSTestCheck{Name: "check-id-test-run-python"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	c.instance = &C.rtloader_pyobject_t{}
@@ -284,10 +284,11 @@ func testRun(t *testing.T) {
 }
 
 func testRunSimple(t *testing.T) {
-	sender := mocksender.NewMockSender(check.ID("testID"))
+	testCheck := &check.STSTestCheck{Name: "check-id-test-run-simple-python"}
+
+	sender := mocksender.NewMockSender(testCheck.ID())
 	sender.SetupAcceptAll()
 
-	testCheck := &check.STSTestCheck{Name: "check-id-test-run-simple-python"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	c := NewPythonFakeCheck()
