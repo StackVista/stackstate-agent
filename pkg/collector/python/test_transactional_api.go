@@ -4,18 +4,13 @@
 package python
 
 import (
-	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
-	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"os"
 	"testing"
 	"time"
 )
@@ -70,34 +65,4 @@ func testStopTransaction(t *testing.T) {
 	}, actualTopology)
 
 	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
-}
-
-func testSetTransactionState(t *testing.T) {
-	// Create a temp directory to store the state results in
-	testDir, err := ioutil.TempDir("", "fake-datadog-run-")
-	require.Nil(t, err, fmt.Sprintf("%v", err))
-	defer os.RemoveAll(testDir)
-	mockConfig := config.Mock()
-
-	// Set the run path to the temp directory above, this will allow the persistent cache to have a folder to write into
-	// Without doing the above persistent cache will generate a folder does not exist error
-	mockConfig.Set("run_path", testDir)
-
-	SetupTransactionalComponents()
-	testCheck := &check.STSTestCheck{Name: "check-id-set-transaction-state"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
-
-	checkId := C.CString(testCheck.String())
-	stateKey := C.CString("key")
-	stateValue := C.CString("state value")
-
-	StartTransaction(checkId)
-	SetTransactionState(checkId, stateKey, stateValue)
-	StopTransaction(checkId)
-
-	time.Sleep(250 * time.Millisecond) // sleep a bit for everything to complete
-
-	retrievedStateValue := GetState(checkId, stateKey)
-
-	assert.Equal(t, "state value", retrievedStateValue)
 }
