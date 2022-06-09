@@ -107,6 +107,13 @@ func (mtb *MockTransactionalBatcher) GetCheckState(checkID check.ID) (Transactio
 	return state, ok
 }
 
+// SubmitClearState clears the batch state for a given checkID
+func (mtb *MockTransactionalBatcher) SubmitClearState(checkID check.ID) {
+	mtb.mux.Lock()
+	mtb.CollectedTopology.ClearState(checkID)
+	mtb.mux.Unlock()
+}
+
 // SubmitComplete signals completion of a check. May trigger a flush only if the check produced data
 func (mtb *MockTransactionalBatcher) SubmitComplete(checkID check.ID) {
 }

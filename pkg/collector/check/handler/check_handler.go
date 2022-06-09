@@ -132,6 +132,15 @@ currentTxHandler:
 				}
 				transactionbatcher.GetTransactionalBatcher().SubmitCompleteTransaction(ch.ID(), ch.GetCurrentTransaction())
 
+			case CancelTransaction:
+				if config.Datadog.GetBool("log_payloads") {
+					log.Debugf("%s. Cancelling current transaction", logPrefix)
+				}
+				// empty batcher state
+				transactionbatcher.GetTransactionalBatcher().SubmitClearState(ch.ID())
+				// trigger failed transaction
+				transactionmanager.GetTransactionManager().RollbackTransaction(ch.GetCurrentTransaction(), msg.Reason)
+
 			case SubmitSetTransactionState:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Submitting set transaction state: %s -> %s", logPrefix, msg.Key, msg.State)

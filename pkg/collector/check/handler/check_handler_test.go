@@ -147,16 +147,14 @@ func TestCheckHandler_State(t *testing.T) {
 	assert.Equal(t, expectedState, checkState)
 
 	updatedState := "{\"e\":\"f\"}"
-	err = ch.SetState(stateKey, updatedState)
-	assert.NoError(t, err, "unexpected error occurred when setting state for %s", stateKey)
+	ch.SetState(stateKey, updatedState)
 
 	checkState, err = state.GetCheckStateManager().GetState(stateKey)
 	assert.NoError(t, err, "unexpected error occurred when trying to get state for", stateKey)
 	assert.Equal(t, updatedState, checkState)
 
 	// reset to original
-	err = ch.SetState(stateKey, expectedState)
-	assert.NoError(t, err, "unexpected error occurred when setting state for %s", stateKey)
+	ch.SetState(stateKey, expectedState)
 }
 
 // Reset state to original, kept as a separate test in case of a test failure in TestCheckHandler_State
@@ -171,8 +169,7 @@ func TestCheckHandler_Reset_State(t *testing.T) {
 	expectedState := "{\"a\":\"b\"}"
 
 	// reset state to original
-	err := ch.SetState(stateKey, expectedState)
-	assert.NoError(t, err, "unexpected error occurred when setting state for %s", stateKey)
+	ch.SetState(stateKey, expectedState)
 
 	checkState, err := state.GetCheckStateManager().GetState(stateKey)
 	assert.NoError(t, err, "unexpected error occurred when trying to get state for", stateKey)

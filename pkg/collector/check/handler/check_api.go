@@ -22,6 +22,7 @@ type CheckAPI interface {
 type CheckTransactionalAPI interface {
 	StartTransaction() string
 	StopTransaction()
+	CancelTransaction(reason string)
 	SetTransactionState(key, state string)
 }
 
@@ -34,6 +35,11 @@ type StartTransaction struct {
 // StopTransaction is used to stop the current transaction
 type StopTransaction struct{}
 
+// CancelTransaction is used to cancel the current transaction, and reload the check
+type CancelTransaction struct {
+	Reason string
+}
+
 // SubmitSetTransactionState is used to submit a set state transactional for the current transaction
 type SubmitSetTransactionState struct {
 	Key, State string
@@ -41,7 +47,7 @@ type SubmitSetTransactionState struct {
 
 // CheckStateAPI contains all the state operations for a check
 type CheckStateAPI interface {
-	SetState(key, state string) error
+	SetState(key, state string)
 	GetState(key string) string
 }
 

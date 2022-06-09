@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	checkState "github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
@@ -26,6 +27,13 @@ func (ch *checkHandler) StopTransaction() {
 	ch.currentTransactionChannel <- StopTransaction{}
 }
 
+// CancelTransaction triggers a transaction failure and reloads the check
+func (ch *checkHandler) CancelTransaction(reason string) {
+	ch.currentTransactionChannel <- CancelTransaction{
+		Reason: reason,
+	}
+}
+
 // SetTransactionState is used to set state transactionaly. This state is only committed once a transaction has been
 // completed successfully.
 func (ch *checkHandler) SetTransactionState(key string, state string) {
@@ -36,8 +44,13 @@ func (ch *checkHandler) SetTransactionState(key string, state string) {
 }
 
 // SetState is used to commit state for a given state key and CheckState
-func (ch *checkHandler) SetState(key string, state string) error {
-	return checkState.GetCheckStateManager().SetState(key, state)
+func (ch *checkHandler) SetState(key string, state string) {
+	err := checkState.GetCheckStateManager().SetState(key, state)
+	if err != nil {
+		reason := fmt.Sprintf("error occurred when setting state for %s->%s, %s", key, state, err)
+		// trigger cancel transaction, check reload
+		ch.CancelTransaction(reason)
+	}
 }
 
 // GetState returns a CheckState for a given key

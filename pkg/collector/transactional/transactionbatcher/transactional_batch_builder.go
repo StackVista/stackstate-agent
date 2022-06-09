@@ -239,6 +239,13 @@ func (builder *TransactionBatchBuilder) MarkTransactionComplete(checkID check.ID
 	return nil
 }
 
+// ClearState removes the batch state for a given checkID
+func (builder *TransactionBatchBuilder) ClearState(checkID check.ID) TransactionCheckInstanceBatchStates {
+	delete(builder.states, checkID)
+
+	return nil
+}
+
 // FlushOnComplete checks whether the check produced data, if so, flush
 func (builder *TransactionBatchBuilder) FlushOnComplete(checkID check.ID) TransactionCheckInstanceBatchStates {
 	if _, ok := builder.states[checkID]; ok {

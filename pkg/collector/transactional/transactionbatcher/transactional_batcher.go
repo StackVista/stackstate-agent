@@ -97,6 +97,8 @@ BatcherReceiver:
 				ctb.SubmitState(ctb.builder.StartTransaction(submission.CheckID, submission.TransactionID))
 			case SubmitCompleteTransaction:
 				ctb.SubmitState(ctb.builder.MarkTransactionComplete(submission.CheckID, submission.TransactionID))
+			case SubmitClearState:
+				ctb.SubmitState(ctb.builder.ClearState(submission.CheckID))
 			case SubmitComplete:
 				ctb.SubmitState(ctb.builder.FlushOnComplete(submission.CheckID))
 			case SubmitShutdown:

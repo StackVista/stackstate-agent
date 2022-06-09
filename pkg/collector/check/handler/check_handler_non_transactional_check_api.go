@@ -9,25 +9,33 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
-// StartTransaction logs a warning for the no check handler. This should never be called.
+// StartTransaction logs a warning for the non-transactional check handler. This should never be called.
 func (ch *NonTransactionalCheckHandler) StartTransaction() string {
 	_ = log.Warnf("StartTransaction called on NonTransactionalCheckHandler. This should never happen.")
 	return ""
 }
 
-// StopTransaction logs a warning for the no check handler. This should never be called.
+// CancelTransaction logs a warning for the non-transactional check handler. This should never be called.
+func (ch *NonTransactionalCheckHandler) CancelTransaction(string) {
+	_ = log.Warnf("StopTransaction called on NonTransactionalCheckHandler. This should never happen.")
+}
+
+// StopTransaction logs a warning for the non-transactional check handler. This should never be called.
 func (ch *NonTransactionalCheckHandler) StopTransaction() {
 	_ = log.Warnf("StopTransaction called on NonTransactionalCheckHandler. This should never happen.")
 }
 
-// SetTransactionState should never be called on the NonTransactionalCheckHandler
+// SetTransactionState logs a warning for the non-transactional check handler. This should never be called.
 func (ch *NonTransactionalCheckHandler) SetTransactionState(string, string) {
 	_ = log.Warnf("SetTransactionState called on NonTransactionalCheckHandler. This should never happen.")
 }
 
 // SetState is used to commit state for a given state key and CheckState
-func (ch *NonTransactionalCheckHandler) SetState(key string, state string) error {
-	return checkState.GetCheckStateManager().SetState(key, state)
+func (ch *NonTransactionalCheckHandler) SetState(key string, state string) {
+	err := checkState.GetCheckStateManager().SetState(key, state)
+	if err != nil {
+		_ = log.Errorf("error occurred when setting state for check %s with value %s->%s, %s", ch.ID(), key, state, err)
+	}
 }
 
 // GetState returns a CheckState for a given key
