@@ -9,7 +9,7 @@
 
 **Improvements**
 - Added collection level setting info [STAC-14671](https://stackstate.atlassian.net/browse/STAC-14671)
-- Upgraded process agent version from 4.0.2 to 4.0.5 which includes:
+- Upgraded process agent version from 4.0.2 to 4.0.6 which includes:
   - Reporting CPU throttling metrics for containers
   - Process agent check topology for self-observability
   - [other minor improvements](https://github.com/StackVista/stackstate-process-agent/blob/master/stackstate-changelog.md)
