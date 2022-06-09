@@ -5,7 +5,9 @@ package python
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,6 +20,8 @@ import (
 import "C"
 
 func testSetAndGetState(t *testing.T) {
+	SetupTransactionalComponents()
+
 	// Create a temp directory to store the state results in
 	testDir, err := ioutil.TempDir("", "fake-datadog-run-")
 	require.Nil(t, err, fmt.Sprintf("%v", err))
@@ -29,6 +33,7 @@ func testSetAndGetState(t *testing.T) {
 	mockConfig.Set("run_path", testDir)
 
 	testCheck := &check.STSTestCheck{Name: "check-id-set-state"}
+	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(string(testCheck.ID()))
 	stateKey := C.CString("state-id")
