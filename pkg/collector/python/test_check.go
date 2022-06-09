@@ -10,10 +10,7 @@ package python
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"runtime"
 	"testing"
 	"time"
@@ -182,18 +179,20 @@ void reset_check_mock() {
 import "C"
 
 func testRunCheck(t *testing.T) {
-	check := NewPythonFakeCheck()
-	_ = batcher.NewMockBatcher()
-	_ = transactionbatcher.NewMockTransactionalBatcher()
-	checkmanager.InitCheckManager(handler.NoCheckReloader{})
-	check.instance = &C.rtloader_pyobject_t{}
+	c := NewPythonFakeCheck()
+
+	SetupTransactionalComponents()
+	testCheck := &check.STSTestCheck{Name: "check-id-test-run-check"}
+	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+
+	c.instance = &C.rtloader_pyobject_t{}
 
 	C.reset_check_mock()
 	C.run_check_return = C.CString("")
 	warn := []*C.char{C.CString("warn1"), C.CString("warn2"), nil}
 	C.get_checks_warnings_return = &warn[0]
 
-	err := check.runCheck(false)
+	err := c.runCheck(false)
 	assert.Nil(t, err)
 
 	assert.Equal(t, C.int(1), C.gil_locked_calls)
@@ -201,20 +200,24 @@ func testRunCheck(t *testing.T) {
 	assert.Equal(t, C.int(1), C.run_check_calls)
 	assert.Equal(t, C.int(1), C.get_checks_warnings_calls)
 
-	assert.Equal(t, check.instance, C.run_check_instance)
-	assert.Equal(t, check.lastWarnings, []error{fmt.Errorf("warn1"), fmt.Errorf("warn2")})
+	assert.Equal(t, c.instance, C.run_check_instance)
+	assert.Equal(t, c.lastWarnings, []error{fmt.Errorf("warn1"), fmt.Errorf("warn2")})
 }
 
 func testRunErrorNil(t *testing.T) {
-	check := NewPythonFakeCheck()
-	check.instance = &C.rtloader_pyobject_t{}
+	c := NewPythonFakeCheck()
+	c.instance = &C.rtloader_pyobject_t{}
+
+	SetupTransactionalComponents()
+	testCheck := &check.STSTestCheck{Name: "check-id-test-run-error-nil"}
+	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	C.reset_check_mock()
 	C.run_check_return = nil
 	C.has_error_return = 1
 	C.get_error_return = C.CString("some error")
 
-	err := check.runCheck(false)
+	err := c.runCheck(false)
 	assert.NotNil(t, err)
 	assert.NotNil(t, fmt.Errorf("some error"), err)
 
@@ -223,17 +226,21 @@ func testRunErrorNil(t *testing.T) {
 	assert.Equal(t, C.int(1), C.run_check_calls)
 	assert.Equal(t, C.int(0), C.get_checks_warnings_calls)
 
-	assert.Equal(t, check.instance, C.run_check_instance)
+	assert.Equal(t, c.instance, C.run_check_instance)
 }
 
 func testRunErrorReturn(t *testing.T) {
-	check := NewPythonFakeCheck()
-	check.instance = &C.rtloader_pyobject_t{}
+	c := NewPythonFakeCheck()
+	c.instance = &C.rtloader_pyobject_t{}
+
+	SetupTransactionalComponents()
+	testCheck := &check.STSTestCheck{Name: "check-id-test-run-error"}
+	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	C.reset_check_mock()
 	C.run_check_return = C.CString("not OK")
 
-	err := check.runCheck(false)
+	err := c.runCheck(false)
 	assert.NotNil(t, err)
 	assert.NotNil(t, fmt.Errorf("not OK"), err)
 
@@ -242,20 +249,21 @@ func testRunErrorReturn(t *testing.T) {
 	assert.Equal(t, C.int(1), C.run_check_calls)
 	assert.Equal(t, C.int(1), C.get_checks_warnings_calls)
 
-	assert.Equal(t, check.instance, C.run_check_instance)
+	assert.Equal(t, c.instance, C.run_check_instance)
 }
 
 func testRun(t *testing.T) {
 	sender := mocksender.NewMockSender(check.ID("testID"))
 	sender.SetupAcceptAll()
-	_ = batcher.NewMockBatcher()
-	_ = transactionbatcher.NewMockTransactionalBatcher()
-	checkmanager.InitCheckManager(handler.NoCheckReloader{})
 
 	c := NewPythonFakeCheck()
 
+	SetupTransactionalComponents()
+	testCheck := &check.STSTestCheck{Name: "check-id-test-run-python"}
+	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+
 	c.instance = &C.rtloader_pyobject_t{}
-	c.id = check.ID("testID")
+	c.id = testCheck.ID()
 
 	C.reset_check_mock()
 	C.run_check_return = C.CString("")
@@ -279,10 +287,13 @@ func testRunSimple(t *testing.T) {
 	sender := mocksender.NewMockSender(check.ID("testID"))
 	sender.SetupAcceptAll()
 
+	testCheck := &check.STSTestCheck{Name: "check-id-test-run-simple-python"}
+	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+
 	c := NewPythonFakeCheck()
 
 	c.instance = &C.rtloader_pyobject_t{}
-	c.id = check.ID("testID")
+	c.id = testCheck.ID()
 
 	C.reset_check_mock()
 	C.run_check_return = C.CString("")

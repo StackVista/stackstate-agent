@@ -12,6 +12,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 // #include <datadog_agent_rtloader.h>
@@ -63,6 +64,8 @@ func testHealthCheckData(t *testing.T) {
 		C.CString(string(data)))
 	SubmitHealthStopSnapshot(checkId, &stream)
 
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
+
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 	expectedStream := health.Stream{Urn: "myurn", SubStream: "substream"}
@@ -99,6 +102,8 @@ func testHealthStartSnapshot(t *testing.T) {
 	StartTransaction(checkId)
 	SubmitHealthStartSnapshot(checkId, &stream, C.int(0), C.int(1))
 
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
+
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 	expectedStream := health.Stream{Urn: "myurn", SubStream: "substream"}
@@ -130,6 +135,8 @@ func testHealthStopSnapshot(t *testing.T) {
 	stream.sub_stream = C.CString("substream")
 	StartTransaction(checkId)
 	SubmitHealthStopSnapshot(checkId, &stream)
+
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
@@ -163,6 +170,8 @@ func testNoSubStream(t *testing.T) {
 
 	StartTransaction(checkId)
 	SubmitHealthStartSnapshot(checkId, &stream, C.int(0), C.int(1))
+
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())

@@ -15,6 +15,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 // #include <datadog_agent_rtloader.h>
@@ -171,10 +172,12 @@ func testRawMetricsData(t *testing.T) {
 	StartTransaction(checkId)
 	SubmitRawMetricsData(checkId, name, value, &tags[0], hostname, timestamp)
 
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
+
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 
-	assert.Exactly(t, transactionbatcher.TransactionCheckInstanceBatchState{
+	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchState{
 		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
 		Metrics:     &telemetry.Metrics{Values: []telemetry.RawMetrics{expectedRawMetricsData}},
 		Health:      map[string]health.Health{},

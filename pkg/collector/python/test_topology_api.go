@@ -52,6 +52,8 @@ func testComponentTopology(t *testing.T) {
 		C.CString(string(data)))
 	SubmitStopSnapshot(checkId, &instanceKey)
 
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
+
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
@@ -109,6 +111,8 @@ func testRelationTopology(t *testing.T) {
 		C.CString("relation-type"),
 		C.CString(string(data)),
 	)
+
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
@@ -170,6 +174,8 @@ func testStopTransaction(t *testing.T) {
 
 	StopTransaction(checkId)
 
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
+
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 
@@ -198,6 +204,8 @@ func testStartSnapshotCheck(t *testing.T) {
 
 	StartTransaction(checkId)
 	SubmitStartSnapshot(checkId, &instanceKey)
+
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
@@ -232,6 +240,8 @@ func testStopSnapshotCheck(t *testing.T) {
 
 	StartTransaction(checkId)
 	SubmitStopSnapshot(checkId, &instanceKey)
+
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
@@ -274,6 +284,8 @@ func testDeleteTopologyElement(t *testing.T) {
 		&instanceKey,
 		C.CString(topoElementId))
 	SubmitStopSnapshot(checkID, &instanceKey)
+
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
