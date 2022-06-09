@@ -9,7 +9,12 @@ def test_stackstate_agent_is_installed(host, ansible_var):
     print(agent)
     assert agent.is_installed
     expected_major_version = ansible_var("major_version")
-    assert agent.version.startswith(expected_major_version + ".")
+    current_version = agent.version
+    if ":" in current_version:
+        # the debian package version could return a number + colon as a prefix if a new version scheme is identified
+        # https://askubuntu.com/questions/441879/why-do-some-packages-have-extra-numbers-before-a-colon-on-the-front-of-their-ver
+        current_version = current_version.split(":", 2)[1]
+    assert current_version.startswith(expected_major_version + ".")
 
 
 def test_stackstate_agent_status_output_no_datadog(host):

@@ -943,9 +943,7 @@ def omnibus_build(
             env['PACKAGE_VERSION'] = get_version(
                 ctx, include_git=True, url_safe=True, major_version=major_version, env=env
             )
-            print("env['PACKAGE_VERSION'] = " + env['PACKAGE_VERSION'])
             env['MAJOR_VERSION'] = major_version
-            print("env['MAJOR_VERSION'] = " + env['MAJOR_VERSION'])
             env['PY_RUNTIMES'] = python_runtimes
             if with_bcc:
                 env['WITH_BCC'] = 'true'
