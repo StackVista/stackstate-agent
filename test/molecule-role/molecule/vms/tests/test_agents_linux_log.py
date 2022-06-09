@@ -65,6 +65,8 @@ def test_stackstate_process_agent_no_log_errors(host, hostname):
 
     ignored_errors_regex = [
         "failed to create network tracer: failed to init module: error guessing offsets: error initializing tcptracer_status map: unable to update element: bad file descriptor. Retrying...",
+        # this warning (not an error) is due to missing container engine
+        "Check 'process' partially failed with an error: temporary failure in detector, will retry later: No collector detected",
     ]
 
     offset_guessing = "Offset guessing was completed successfully"
