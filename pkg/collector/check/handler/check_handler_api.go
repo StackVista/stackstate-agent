@@ -3,17 +3,24 @@ package handler
 import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/persistentcache"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/google/uuid"
 )
 
 // CheckAPI contains all the operations that can be done by an Agent Check. This acts as a proxy to forward data
 // where it needs to go.
 type CheckAPI interface {
+	// State
+	GetState(key string) string
+	SetState(key string, state string)
+
 	// Transactionality
-	SubmitStartTransaction() string
-	SubmitStopTransaction()
+	StartTransaction() string
+	StopTransaction()
+	SetTransactionState(key string, state string)
 
 	// Topology
 	SubmitComponent(instance topology.Instance, component topology.Component)
@@ -34,21 +41,29 @@ type CheckAPI interface {
 	SubmitComplete()
 }
 
-// SubmitStartTransaction submits a start transaction for the check handler. This blocks any future transactions until
-// this one completes, fails or is timed out. TODO: rename to StartTransaction
-func (ch *checkHandler) SubmitStartTransaction() string {
+// StartTransaction submits a start transaction for the check handler. This blocks any future transactions until
+// this one completes, fails or is timed out.
+func (ch *checkHandler) StartTransaction() string {
 	transactionID := uuid.New().String()
-	ch.transactionChannel <- SubmitStartTransaction{
+	ch.transactionChannel <- StartTransaction{
 		CheckID:       ch.ID(),
 		TransactionID: transactionID,
 	}
 	return transactionID
 }
 
-// SubmitStopTransaction submits a complete to the Transactional Batcher, to send the final payload of the transaction
-// and mark the current transaction as complete. TODO: rename to StopTransaction
-func (ch *checkHandler) SubmitStopTransaction() {
+// StopTransaction submits a complete to the Transactional Batcher, to send the final payload of the transaction
+// and mark the current transaction as complete.
+func (ch *checkHandler) StopTransaction() {
 	transactionbatcher.GetTransactionalBatcher().SubmitCompleteTransaction(ch.ID(), ch.GetCurrentTransaction())
+}
+
+// SetTransactionState Set state for a transactional event for a certain key
+func (ch *checkHandler) SetTransactionState(key string, state string) {
+	err := persistentcache.Write(key, state)
+	if err != nil {
+		_ = log.Errorf("Unable to set the transaction state, Received the following error: %s", err)
+	}
 }
 
 // SubmitComponent submits a component to the Transactional Batcher to be batched.
@@ -100,4 +115,23 @@ func (ch *checkHandler) SubmitRawMetricsData(data telemetry.RawMetrics) {
 // SubmitComplete submits a complete to the Transactional Batcher.
 func (ch *checkHandler) SubmitComplete() {
 	transactionbatcher.GetTransactionalBatcher().SubmitComplete(ch.ID())
+}
+
+// GetState Get the last stored state for a certain key
+func (ch *checkHandler) GetState(key string) string {
+	state, err := persistentcache.Read(key)
+	if err != nil {
+		_ = log.Errorf("Unable to retrieve the agent check state for the key '%s', Received the following error: %s", key, err)
+		return "{}"
+	}
+
+	return state
+}
+
+// SetState Set a new state for a certain key
+func (ch *checkHandler) SetState(key string, state string) {
+	err := persistentcache.Write(key, state)
+	if err != nil {
+		_ = log.Errorf("Unable to set the agent check state for the key '%s', Received the following error: %s", key, err)
+	}
 }

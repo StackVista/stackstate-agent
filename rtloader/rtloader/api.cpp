@@ -561,3 +561,33 @@ void set_submit_raw_metrics_data_cb(rtloader_t *rtloader, cb_submit_raw_metrics_
 {
     AS_TYPE(RtLoader, rtloader)->setSubmitRawMetricsDataCb(cb);
 }
+
+
+/*
+ * [sts] transaction state API
+ */
+void set_start_transaction_cb(rtloader_t *rtloader, cb_start_transaction_t cb)
+{
+    AS_TYPE(RtLoader, rtloader)->setStartTransactionCb(cb);
+}
+void set_stop_transaction_cb(rtloader_t *rtloader, cb_stop_transaction_t cb)
+{
+    AS_TYPE(RtLoader, rtloader)->setStopTransactionCb(cb);
+}
+void set_transaction_state_cb(rtloader_t *rtloader, cb_set_transaction_state_t cb)
+{
+    AS_TYPE(RtLoader, rtloader)->setTransactionStateCb(cb);
+}
+
+
+/*
+ * [sts] state API
+ */
+void set_state_cb(rtloader_t *rtloader, cb_set_state_t cb)
+{
+    AS_TYPE(RtLoader, rtloader)->setStateCb(cb);
+}
+void set_get_state_cb(rtloader_t *rtloader, cb_get_state_t cb)
+{
+    AS_TYPE(RtLoader, rtloader)->setGetStateCb(cb);
+}

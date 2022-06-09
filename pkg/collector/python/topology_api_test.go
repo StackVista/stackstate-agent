@@ -13,14 +13,6 @@ func TestRelationTopology(t *testing.T) {
 	testRelationTopology(t)
 }
 
-func TestStartTransaction(t *testing.T) {
-	testStartTransaction(t)
-}
-
-func TestStopTransaction(t *testing.T) {
-	testStopTransaction(t)
-}
-
 func TestStartSnapshotCheck(t *testing.T) {
 	testStartSnapshotCheck(t)
 }

@@ -37,7 +37,7 @@ type checkHandler struct {
 	CheckReloader
 	config, initConfig        integration.Data
 	shutdownChannel           chan bool
-	transactionChannel        chan SubmitStartTransaction
+	transactionChannel        chan StartTransaction
 	currentTransactionChannel chan interface{}
 	currentTransaction        string
 	mux                       sync.RWMutex
@@ -59,7 +59,7 @@ func NewCheckHandler(check check.Check, checkReloader CheckReloader, config, ini
 		config:             config,
 		initConfig:         initConfig,
 		shutdownChannel:    make(chan bool, 1),
-		transactionChannel: make(chan SubmitStartTransaction, 1),
+		transactionChannel: make(chan StartTransaction, 1),
 	}
 
 	go ch.Start()
@@ -87,7 +87,7 @@ txReceiverHandler:
 			transactionmanager.GetTransactionManager().StartTransaction(ch.ID(), ch.GetCurrentTransaction(), ch.currentTransactionChannel)
 
 			// create a new batch transaction in the transaction batcher
-			transactionbatcher.GetTransactionalBatcher().SubmitStartTransaction(ch.ID(), ch.GetCurrentTransaction())
+			transactionbatcher.GetTransactionalBatcher().StartTransaction(ch.ID(), ch.GetCurrentTransaction())
 
 			// this is a blocking function. Will continue when a transaction succeeds, fails or times out making it
 			// ready to handle the next transaction in the ch.transactionChannel.
@@ -150,14 +150,14 @@ func (ch *checkHandler) GetCheckReloader() CheckReloader {
 	return ch.CheckReloader
 }
 
-// SubmitStartTransaction is used to start a transaction to the input channel
-type SubmitStartTransaction struct {
+// StartTransaction is used to start a transaction to the input channel
+type StartTransaction struct {
 	CheckID       check.ID
 	TransactionID string
 }
 
-// SubmitStopTransaction is used to stop a transaction to the input channel
-type SubmitStopTransaction struct{}
+// StopTransaction is used to stop a transaction to the input channel
+type StopTransaction struct{}
 
 // safeCloseTransactionChannel closes the tx channel that can potentially already be closed. It handles the panic and does a no-op.
 func safeCloseTransactionChannel(ch chan interface{}) {

@@ -534,6 +534,46 @@ public:
     */
     virtual void setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t) = 0;
 
+    //! setStartTransactionCb member.
+    /*!
+      \param A cb_start_transaction_t function pointer to the CGO callback.
+
+      Actual check data is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setStartTransactionCb(cb_start_transaction_t) = 0;
+
+    //! setStopTransactionCb member.
+    /*!
+      \param A cb_stop_transaction_t function pointer to the CGO callback.
+
+      Actual check data is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setStopTransactionCb(cb_stop_transaction_t) = 0;
+
+    //! setTransactionStateCb member.
+    /*!
+      \param A cb_set_transaction_state_t function pointer to the CGO callback.
+
+      Actual check data is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setTransactionStateCb(cb_set_transaction_state_t) = 0;
+
+    //! setStateCb member.
+    /*!
+      \param A cb_set_state_t function pointer to the CGO callback.
+
+      Actual check data is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setStateCb(cb_set_state_t) = 0;
+
+    //! setGetStateCb member.
+    /*!
+      \param A cb_get_state_t function pointer to the CGO callback.
+
+      Actual check data is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setGetStateCb(cb_get_state_t) = 0;
+
 private:
     mutable std::string _error; /*!< string containing a RtLoader error */
     mutable bool _errorFlag; /*!< boolean indicating whether an error was set on RtLoader */

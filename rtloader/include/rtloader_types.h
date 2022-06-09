@@ -198,6 +198,18 @@ typedef void (*cb_submit_health_stop_snapshot_t)(char *, health_stream_t *);
 // (check_id, name, value, tags, hostname, timestamp)
 typedef void (*cb_submit_raw_metrics_data_t)(char *, char *, float, char **, char *, long long);
 
+// (check_id)
+typedef void (*cb_start_transaction_t)(char *);
+// (check_id)
+typedef void (*cb_stop_transaction_t)(char *);
+// (check_id, key, state)
+typedef void (*cb_set_transaction_state_t)(char *, char *, char *);
+
+// (check_id, key, state)
+typedef void (*cb_set_state_t)(char *, char *, char *);
+// (check_id, key)
+typedef void (*cb_get_state_t)(char *, char *);
+
 #ifdef __cplusplus
 }
 #endif
