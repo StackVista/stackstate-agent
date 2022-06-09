@@ -212,19 +212,6 @@ func InitConfig(config Config) {
 	// [sts] batcher environment variables
 	config.BindEnvAndSetDefault("batcher_capacity", DefaultBatcherBufferSize)
 
-	// [sts] transactional environment variables
-	config.BindEnvAndSetDefault("transaction_manager_channel_buffer_size", DefaultTxManagerChannelBufferSize)
-	config.BindEnvAndSetDefault("transaction_timeout_duration_seconds", DefaultTxManagerTimeoutDurationSeconds)
-	config.BindEnvAndSetDefault("transaction_eviction_duration_seconds", DefaultTxManagerEvictionDurationSeconds)
-
-	// [sts] check state manager environment variable
-	config.BindEnvAndSetDefault("check_state_root_path", defaultRunPath)
-	config.BindEnvAndSetDefault("check_state_expiration_duration", DefaultCheckStateExpirationDuration)
-	config.BindEnvAndSetDefault("check_state_purge_duration", DefaultCheckStatePurgeDuration)
-
-	// [sts] check manager environment variables
-	config.BindEnvAndSetDefault("check_transactionality_enabled", true)
-
 	// overridden in IoT Agent main
 	config.BindEnvAndSetDefault("iot_host", false)
 
@@ -236,6 +223,19 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("tracemalloc_whitelist", "")
 	config.BindEnvAndSetDefault("tracemalloc_blacklist", "")
 	config.BindEnvAndSetDefault("run_path", defaultRunPath)
+
+	// [sts] transactional environment variables
+	config.BindEnvAndSetDefault("transaction_manager_channel_buffer_size", DefaultTxManagerChannelBufferSize)
+	config.BindEnvAndSetDefault("transaction_timeout_duration_seconds", DefaultTxManagerTimeoutDurationSeconds)
+	config.BindEnvAndSetDefault("transaction_eviction_duration_seconds", DefaultTxManagerEvictionDurationSeconds)
+
+	// [sts] check state manager environment variable
+	config.BindEnvAndSetDefault("check_state_root_path", Datadog.GetString("run_path"))
+	config.BindEnvAndSetDefault("check_state_expiration_duration", DefaultCheckStateExpirationDuration)
+	config.BindEnvAndSetDefault("check_state_purge_duration", DefaultCheckStatePurgeDuration)
+
+	// [sts] check manager environment variables
+	config.BindEnvAndSetDefault("check_transactionality_enabled", true)
 
 	// Python 3 linter timeout, in seconds
 	// NOTE: linter is notoriously slow, in the absence of a better solution we

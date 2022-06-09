@@ -73,8 +73,6 @@ func testStopTransaction(t *testing.T) {
 }
 
 func testSetTransactionState(t *testing.T) {
-	SetupTransactionalComponents()
-
 	// Create a temp directory to store the state results in
 	testDir, err := ioutil.TempDir("", "fake-datadog-run-")
 	require.Nil(t, err, fmt.Sprintf("%v", err))
@@ -85,6 +83,7 @@ func testSetTransactionState(t *testing.T) {
 	// Without doing the above persistent cache will generate a folder does not exist error
 	mockConfig.Set("run_path", testDir)
 
+	SetupTransactionalComponents()
 	testCheck := &check.STSTestCheck{Name: "check-id-set-transaction-state"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
