@@ -9,9 +9,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
@@ -157,11 +155,11 @@ var expectedRawMetricsData = telemetry.RawMetrics{
 }
 
 func testRawMetricsData(t *testing.T) {
-	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	SetupTransactionalComponents()
+	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
+
 	testCheck := &check.STSTestCheck{Name: "check-id-raw-metrics"}
 	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
-	mockTransactionalBatcher := transactionbatcher.NewMockTransactionalBatcher()
-	mockTransactionalManager := transactionmanager.NewMockTransactionManager()
 
 	checkId := C.CString(testCheck.String())
 	name := C.CString(expectedRawMetricsData.Name)
@@ -182,7 +180,5 @@ func testRawMetricsData(t *testing.T) {
 		Health:      map[string]health.Health{},
 	}, actualTopology)
 
-	checkmanager.GetCheckManager().Stop()
-	mockTransactionalBatcher.Stop()
-	mockTransactionalManager.Stop()
+	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
