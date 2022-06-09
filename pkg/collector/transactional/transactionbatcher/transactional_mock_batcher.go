@@ -83,8 +83,8 @@ func (mtb *MockTransactionalBatcher) SubmitRawMetricsData(checkID check.ID, tran
 	mtb.mux.Unlock()
 }
 
-// SubmitStartTransaction starts a transaction for the given check ID
-func (mtb *MockTransactionalBatcher) SubmitStartTransaction(checkID check.ID, transactionID string) {
+// StartTransaction starts a transaction for the given check ID
+func (mtb *MockTransactionalBatcher) StartTransaction(checkID check.ID, transactionID string) {
 	mtb.mux.Lock()
 	mtb.CollectedTopology.StartTransaction(checkID, transactionID)
 	mtb.mux.Unlock()

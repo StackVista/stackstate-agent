@@ -5,6 +5,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/persistentcache"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -80,15 +81,39 @@ func (ch *NonTransactionalCheckHandler) Reload() {
 	_ = ch.CheckReloader.ReloadCheck(ch.ID(), config, initConfig, ch.ConfigSource())
 }
 
-// SubmitStartTransaction logs a warning for the no check handler. This should never be called.
-func (ch *NonTransactionalCheckHandler) SubmitStartTransaction() string {
+// StartTransaction logs a warning for the no check handler. This should never be called.
+func (ch *NonTransactionalCheckHandler) StartTransaction() string {
 	_ = log.Warnf("StartTransaction called on NonTransactionalCheckHandler. This should never happen.")
 	return ""
 }
 
-// SubmitStopTransaction logs a warning for the no check handler. This should never be called.
-func (ch *NonTransactionalCheckHandler) SubmitStopTransaction() {
-	_ = log.Warnf("SubmitStopTransaction called on NonTransactionalCheckHandler. This should never happen.")
+// StopTransaction logs a warning for the no check handler. This should never be called.
+func (ch *NonTransactionalCheckHandler) StopTransaction() {
+	_ = log.Warnf("StopTransaction called on NonTransactionalCheckHandler. This should never happen.")
+}
+
+// SetTransactionState logs a warning for the no check handler. This should never be called.
+func (ch *NonTransactionalCheckHandler) SetTransactionState(key string, state string) {
+	_ = log.Warnf("SetTransactionState called on NonTransactionalCheckHandler. This should never happen.")
+}
+
+// GetState Get the last stored state for a certain key
+func (ch *NonTransactionalCheckHandler) GetState(key string) string {
+	state, err := persistentcache.Read(key)
+	if err != nil {
+		_ = log.Errorf("Unable to retrieve the agent check state for the key '%s', Received the following error: %s", key, err)
+		return "{}"
+	}
+
+	return state
+}
+
+// SetState Set a new state for a certain key
+func (ch *NonTransactionalCheckHandler) SetState(key string, state string) {
+	err := persistentcache.Write(key, state)
+	if err != nil {
+		_ = log.Errorf("Unable to set the agent check state for the key '%s', Received the following error: %s", key, err)
+	}
 }
 
 // GetConfig is the NonTransactionalCheckHandler implementation which just returns nil. This should never be called.

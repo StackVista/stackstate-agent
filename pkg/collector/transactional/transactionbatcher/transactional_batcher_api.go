@@ -28,7 +28,7 @@ type TransactionalBatcher interface {
 	SubmitRawMetricsData(checkID check.ID, transactionID string, data telemetry.RawMetrics)
 
 	// Transactional
-	SubmitStartTransaction(checkID check.ID, transactionID string)
+	StartTransaction(checkID check.ID, transactionID string)
 	SubmitCompleteTransaction(checkID check.ID, transactionID string)
 
 	// lifecycle
@@ -110,8 +110,8 @@ type SubmitComplete struct {
 	CheckID check.ID
 }
 
-// SubmitStartTransaction is used to submit a start transaction to the input channel
-type SubmitStartTransaction struct {
+// StartTransaction is used to submit a start transaction to the input channel
+type StartTransaction struct {
 	CheckID       check.ID
 	TransactionID string
 }
@@ -217,9 +217,9 @@ func (ctb *transactionalBatcher) SubmitRawMetricsData(checkID check.ID, transact
 	}
 }
 
-// SubmitStartTransaction submits a start transaction
-func (ctb *transactionalBatcher) SubmitStartTransaction(checkID check.ID, transactionID string) {
-	ctb.Input <- SubmitStartTransaction{
+// StartTransaction submits a start transaction
+func (ctb *transactionalBatcher) StartTransaction(checkID check.ID, transactionID string) {
+	ctb.Input <- StartTransaction{
 		CheckID:       checkID,
 		TransactionID: transactionID,
 	}

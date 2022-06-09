@@ -88,7 +88,7 @@ BatcherReceiver:
 				ctb.SubmitState(ctb.builder.HealthStopSnapshot(submission.CheckID, submission.TransactionID, submission.Stream))
 			case SubmitRawMetricsData:
 				ctb.SubmitState(ctb.builder.AddRawMetricsData(submission.CheckID, submission.TransactionID, submission.RawMetric))
-			case SubmitStartTransaction:
+			case StartTransaction:
 				ctb.SubmitState(ctb.builder.StartTransaction(submission.CheckID, submission.TransactionID))
 			case SubmitCompleteTransaction:
 				ctb.SubmitState(ctb.builder.MarkTransactionComplete(submission.CheckID, submission.TransactionID))
