@@ -13,6 +13,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
@@ -38,14 +39,14 @@ func SubmitHealthCheckData(id *C.char, _ *C.health_stream_t, data *C.char) {
 	err := json.Unmarshal([]byte(rawHealthPayload), &healthPayload)
 
 	if err == nil {
-		if len(healthPayload.Data) != 0 {
+		if !healthPayload.Data.IsEmpty() {
 			checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitHealthCheckData(healthPayload.Stream, healthPayload.Data)
 		} else {
 			_ = log.Errorf("Empty json submitted to as check data, this is not allowed, data will not be forwarded.")
 		}
 	} else {
 		_ = log.Errorf("Empty health data event not sent. Raw: %v, Json: %v, Error: %v", rawHealthPayload,
-			healthPayload.JSONString(), err)
+			util.JSONString(healthPayload), err)
 	}
 }
 

@@ -113,7 +113,7 @@ func submitHealthCheckData(id *C.char, healthStream *C.health_stream_t, data *C.
 	_raw_data := C.GoString(data)
 	healthPayload := &health.Payload{}
 	json.Unmarshal([]byte(_raw_data), healthPayload)
-	result = healthPayload.Data
+	result = healthPayload.Data.Unstructured
 	_healthStream = &healthPayload.Stream
 }
 
