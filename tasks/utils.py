@@ -270,6 +270,7 @@ def get_version(
     version, pre, commits_since_version, git_sha = query_version(
         ctx, git_sha_length, prefix, major_version_hint=major_version
     )
+    print("version = {0}, pre = {1}, commits_since_version = {2}, git_sha = {3}".format(version, pre, commits_since_version, git_sha))
     if pre:
         version = "{0}-{1}".format(version, pre)
     if commits_since_version and include_git:
