@@ -75,9 +75,11 @@ func testSetTransactionState(t *testing.T) {
 
 	mockTransactionalManager := transactionmanager.GetTransactionManager().(*transactionmanager.MockTransactionManager)
 
+	stateKeyString := "key"
+	stateValueString := "state value"
 	checkId := C.CString(testCheck.String())
-	stateKey := C.CString("key")
-	stateValue := C.CString("state value")
+	stateKey := C.CString(stateKeyString)
+	stateValue := C.CString(stateValueString)
 
 	StartTransaction(checkId)
 	SetTransactionState(checkId, stateKey, stateValue)
@@ -86,8 +88,8 @@ func testSetTransactionState(t *testing.T) {
 	assert.NotEmpty(t, transactionID)
 
 	expectedState := &transactionmanager.TransactionState{
-		Key:   stateKey,
-		State: stateValue,
+		Key:   stateKeyString,
+		State: stateValueString,
 	}
 	actualState := mockTransactionalManager.GetCurrentTransactionState()
 	assert.Equal(t, expectedState, actualState)
