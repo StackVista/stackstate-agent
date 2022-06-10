@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"
@@ -15,7 +16,8 @@ import (
 
 func TestCheckHandlerNonTransactionalAPI(t *testing.T) {
 	testCheck := &check.STSTestCheck{Name: "my-check-handler-non-transactional-check"}
-	nonTransactionCH := MakeNonTransactionalCheckHandler(testCheck, &check.TestCheckReloader{})
+	nonTransactionCH := MakeNonTransactionalCheckHandler(testCheck, &check.TestCheckReloader{},
+		integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 
 	mockBatcher := batcher.NewMockBatcher()
 
@@ -71,7 +73,8 @@ func TestNonTransactionalCheckHandler_State(t *testing.T) {
 	state.InitCheckStateManager()
 
 	testCheck := &check.STSTestCheck{Name: "my-check-handler-non-transactional-check"}
-	nonTransactionCH := MakeNonTransactionalCheckHandler(testCheck, &check.TestCheckReloader{})
+	nonTransactionCH := MakeNonTransactionalCheckHandler(testCheck, &check.TestCheckReloader{},
+		integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 
 	stateKey := fmt.Sprintf("%s:state", testCheck.Name)
 

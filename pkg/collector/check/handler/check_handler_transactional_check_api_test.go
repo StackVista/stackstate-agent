@@ -69,7 +69,7 @@ func TestCheckHandlerAPI(t *testing.T) {
 	mockBatcher := transactionbatcher.NewMockTransactionalBatcher()
 	transactionmanager.NewMockTransactionManager()
 
-	checkHandler := NewCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+	checkHandler := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 	var transactionID string
 	checkInstanceBatchState := &transactionbatcher.TransactionCheckInstanceBatchState{}

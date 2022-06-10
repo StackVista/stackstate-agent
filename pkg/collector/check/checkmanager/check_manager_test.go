@@ -74,7 +74,7 @@ func TestCheckManagerSubscriptionTransactionalityDisabled(t *testing.T) {
 
 	checkManager := newCheckManager(&check.TestCheckReloader{})
 	testCheck := &check.STSTestCheck{Name: "test-check"}
-	nCH := handler.MakeNonTransactionalCheckHandler(testCheck, handler.NoCheckReloader{})
+	nCH := handler.MakeNonTransactionalCheckHandler(testCheck, handler.CheckNoReloader{}, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
 
 	ch := checkManager.RegisterCheckHandler(testCheck, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
 	// assert that the test check didn't register a transactional check handler and defaults to a non-transactional check handler
@@ -86,7 +86,7 @@ func TestCheckManagerSubscriptionTransactionalityDisabled(t *testing.T) {
 
 	nonRegisteredCheck := &check.STSTestCheck{Name: "non-registered-check"}
 	actualCH := checkManager.GetCheckHandler(nonRegisteredCheck.ID())
-	expectedCH := handler.MakeNonTransactionalCheckHandler(handler.NewCheckIdentifier(nonRegisteredCheck.ID()), handler.NoCheckReloader{})
+	expectedCH := handler.MakeNonTransactionalCheckHandler(handler.NewCheckIdentifier(nonRegisteredCheck.ID()), handler.CheckNoReloader{}, nil, nil)
 	assert.Equal(t, expectedCH, actualCH)
 
 	// default to true again

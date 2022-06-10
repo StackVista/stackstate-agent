@@ -114,7 +114,7 @@ func testLoadCustomCheck(t *testing.T) {
 	rtloader = &C.rtloader_t{}
 	defer func() { rtloader = nil }()
 
-	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	checkmanager.InitCheckManager(handler.CheckNoReloader{})
 	loader, err := NewPythonCheckLoader()
 	assert.Nil(t, err)
 
@@ -149,7 +149,7 @@ func testLoadWheelCheck(t *testing.T) {
 	rtloader = &C.rtloader_t{}
 	defer func() { rtloader = nil }()
 
-	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	checkmanager.InitCheckManager(handler.CheckNoReloader{})
 	loader, err := NewPythonCheckLoader()
 	assert.Nil(t, err)
 

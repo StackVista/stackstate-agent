@@ -22,7 +22,7 @@ import (
 import "C"
 
 func SetupTransactionalComponents() {
-	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	checkmanager.InitCheckManager(handler.CheckNoReloader{})
 	state.InitCheckStateManager()
 	transactionbatcher.NewMockTransactionalBatcher()
 	transactionmanager.NewMockTransactionManager()
