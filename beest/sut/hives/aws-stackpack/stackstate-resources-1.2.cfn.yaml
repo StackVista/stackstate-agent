@@ -61,7 +61,7 @@ Resources:
     Type: AWS::IAM::Role
     Condition: IsMainRegion
     Properties:
-      RoleName: StackStateAwsIntegrationRole-${PostFix}
+      RoleName: !Sub StackStateAwsIntegrationRole-${PostFix}
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -303,7 +303,7 @@ Resources:
     Type: AWS::KMS::Alias
     Condition: IsMainRegion
     Properties:
-      AliasName: alias/stackstate-integration-${PostFix}
+      AliasName: !Sub alias/stackstate-integration-${PostFix}
       TargetKeyId: !Ref StsKmsKey
   StsLogsBucket:
     Type: AWS::S3::Bucket
