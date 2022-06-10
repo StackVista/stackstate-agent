@@ -31,7 +31,7 @@ Parameters:
     Description: Post fix value to be used for resource names when deploying the stack multiple times in the same account (optional)
     Type: String
     AllowedPattern: >-
-      ^[0-9]{12}$
+      ^[-[0-9][a-z]]{1,20}$
 
 Conditions:
   IsMainRegion: !Equals [!Ref MainRegion, !Ref "AWS::Region"]
@@ -61,7 +61,7 @@ Resources:
     Type: AWS::IAM::Role
     Condition: IsMainRegion
     Properties:
-      RoleName: !Sub StackStateAwsIntegrationRole-${PostFix}
+      RoleName: !Sub StackStateAwsIntegrationRole${PostFix}
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -303,13 +303,13 @@ Resources:
     Type: AWS::KMS::Alias
     Condition: IsMainRegion
     Properties:
-      AliasName: !Sub alias/stackstate-integration-${PostFix}
+      AliasName: !Sub alias/stackstate-integration${PostFix}
       TargetKeyId: !Ref StsKmsKey
   StsLogsBucket:
     Type: AWS::S3::Bucket
     Condition: IsMainRegion
     Properties:
-      BucketName: !Sub stackstate-logs-${AWS::AccountId}-${PostFix}
+      BucketName: !Sub stackstate-logs-${AWS::AccountId}${PostFix}
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -397,19 +397,19 @@ Resources:
                   - s3:PutObject
                   - s3:PutObjectAcl
                 Resource:
-                  - !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}-${PostFix}/AWSLogs/${AWS::AccountId}/EventBridge/${AWS::Region}/*
-                  - !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}-${PostFix}
+                  - !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}${PostFix}/AWSLogs/${AWS::AccountId}/EventBridge/${AWS::Region}/*
+                  - !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}${PostFix}
               - Effect: Allow
                 Action:
                   - kms:Decrypt
                   - kms:GenerateDataKey
                 Resource:
-                  - !Sub arn:${AWS::Partition}:kms:${MainRegion}:${AWS::AccountId}:alias/stackstate-integration-${PostFix}
+                  - !Sub arn:${AWS::Partition}:kms:${MainRegion}:${AWS::AccountId}:alias/stackstate-integration${PostFix}
                 Condition:
                   StringEquals:
                     kms:ViaService: !Sub s3.${AWS::Region}.${AWS::URLSuffix}
                   ArnLike:
-                    kms:EncryptionContext:aws:s3:arn: !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}-${PostFix}/AWSLogs/${AWS::AccountId}/EventBridge/${AWS::Region}/*
+                    kms:EncryptionContext:aws:s3:arn: !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}${PostFix}/AWSLogs/${AWS::AccountId}/EventBridge/${AWS::Region}/*
   StsEventBridgeFirehose:
     Type: AWS::KinesisFirehose::DeliveryStream
     Properties:
@@ -418,7 +418,7 @@ Resources:
         BucketARN: !If
           - IsMainRegion
           - !GetAtt StsLogsBucket.Arn
-          - !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}-${PostFix}
+          - !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}${PostFix}
         RoleARN: !GetAtt StsFirehoseRole.Arn
         CompressionFormat: GZIP
         Prefix: !Sub AWSLogs/${AWS::AccountId}/EventBridge/${AWS::Region}/
@@ -428,7 +428,7 @@ Resources:
           SizeInMBs: 8
         EncryptionConfiguration:
           KMSEncryptionConfig:
-            AWSKMSKeyARN: !Sub arn:${AWS::Partition}:kms:${MainRegion}:${AWS::AccountId}:alias/stackstate-integration-${PostFix}
+            AWSKMSKeyARN: !Sub arn:${AWS::Partition}:kms:${MainRegion}:${AWS::AccountId}:alias/stackstate-integration${PostFix}
   StsEventBridgeRole:
     Type: AWS::IAM::Role
     Properties:
@@ -491,10 +491,10 @@ Outputs:
     Value: !If
       - IsMainRegion
       - !GetAtt StsKmsKey.Arn
-      - !Sub arn:${AWS::Partition}:kms:${MainRegion}:${AWS::AccountId}:alias/stackstate-integration-${PostFix}
+      - !Sub arn:${AWS::Partition}:kms:${MainRegion}:${AWS::AccountId}:alias/stackstate-integration${PostFix}
     Export:
       Name: !Sub ${AWS::StackName}-StackStateKmsKeyArn
   StackStateLogsBucketArn:
-    Value: !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}-${PostFix}
+    Value: !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}${PostFix}
     Export:
       Name: !Sub ${AWS::StackName}-StackStateLogsBucketArn

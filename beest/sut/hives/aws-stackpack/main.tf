@@ -1,5 +1,10 @@
 data "aws_caller_identity" "current" {}
 
+resource "random_integer" "cnf_postfix" {
+  min = 1
+  max = 50000
+}
+
 resource "aws_cloudformation_stack" "cfn_stackpack" {
   name = "${var.environment}-cfn-aws-check"
   parameters = {
@@ -7,7 +12,7 @@ resource "aws_cloudformation_stack" "cfn_stackpack" {
     ExternalId                  = var.environment
     MainRegion                  = var.region
     IncludeOpenTelemetryTracing = var.include_open_telemetry_tracing
-    PostFix                     = formatdate("DDMMYYYYhhmm", timestamp())
+    PostFix                     = "-${random_integer.cnf_postfix.id}"
   }
   on_failure = "DELETE"
   capabilities = ["CAPABILITY_NAMED_IAM"]
@@ -16,30 +21,46 @@ resource "aws_cloudformation_stack" "cfn_stackpack" {
   template_body = file("${path.module}/stackstate-resources-1.2.cfn.yaml")
 }
 
-data "aws_iam_role" "awsv2_stackpack" {
-  name       = "StackStateAwsIntegrationRole"
+data "aws_iam_role" "integration_role" {
+  name       = "StackStateAwsIntegrationRole${aws_cloudformation_stack.cfn_stackpack.parameters.PostFix}"
   depends_on = [aws_cloudformation_stack.cfn_stackpack] # TODO PR for cloudformation stack to output the role
 }
 
-data "aws_iam_policy_document" "policy_document" {
+data "aws_iam_policy_document" "assume_policy_doc" {
   statement {
     sid = "1"
 
     actions = [
       "sts:AssumeRole",
     ]
+    effect = "Allow"
     resources = [
-      "arn:aws:iam::*:role/StackStateAwsIntegrationRole",
+      data.aws_iam_role.integration_role.arn,
     ]
   }
 }
 
-resource "aws_iam_instance_profile" "integrations_profile" {
-  name = "${var.environment}-instance-profile"
-  role = aws_iam_role.role.name
+resource "aws_iam_role" "ec2_role" {
+  name               = "${var.environment}-ec2-role"
+  assume_role_policy = data.aws_iam_policy_document.assume_policy_doc.json
+
+#  inline_policy {
+#    name = "integration_policy"
+#
+#    policy = jsonencode({
+#      Version = "2012-10-17"
+#      Statement = [
+#        {
+#          Action   = ["sts:AssumeRole"]
+#          Effect   = "Allow"
+#          Resource = data.aws_iam_role.integration_role.arn
+#        },
+#      ]
+#    })
+#  }
 }
 
-resource "aws_iam_role" "role" {
-  name               = "${var.environment}-ec2-role"
-  assume_role_policy = data.aws_iam_policy_document.policy_document.json
+resource "aws_iam_instance_profile" "integrations_profile" {
+  name = "${var.environment}-instance-profile"
+  role = aws_iam_role.ec2_role.name
 }

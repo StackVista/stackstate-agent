@@ -1,5 +1,5 @@
 output "integration_role" {
-  value = data.aws_iam_role.awsv2_stackpack.arn
+  value = data.aws_iam_role.integration_role.arn
 }
 
 output "integration_profile" {
