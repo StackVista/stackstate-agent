@@ -14,7 +14,7 @@ resource "aws_cloudformation_stack" "cfn_stackpack" {
     IncludeOpenTelemetryTracing = var.include_open_telemetry_tracing
     PostFix                     = "-${random_integer.cnf_postfix.id}"
   }
-  on_failure = "DELETE"
+  on_failure   = "DELETE"
   capabilities = ["CAPABILITY_NAMED_IAM"]
   // TODO  why the cloudformation template is hosted on a s3 bucket instead of being bundled as part of the stackpack resources and downloaded directly from the stackpack ?
   #  template_url = "https://stackstate-integrations-resources-eu-west-1.s3.eu-west-1.amazonaws.com/aws-topology/cloudformation/stackstate-resources-1.2.cfn.yaml"
@@ -26,41 +26,7 @@ data "aws_iam_role" "integration_role" {
   depends_on = [aws_cloudformation_stack.cfn_stackpack] # TODO PR for cloudformation stack to output the role
 }
 
-data "aws_iam_policy_document" "assume_policy_doc" {
-  statement {
-    sid = "1"
-
-    actions = [
-      "sts:AssumeRole",
-    ]
-    effect = "Allow"
-    resources = [
-      data.aws_iam_role.integration_role.arn,
-    ]
-  }
-}
-
-resource "aws_iam_role" "ec2_role" {
-  name               = "${var.environment}-ec2-role"
-  assume_role_policy = data.aws_iam_policy_document.assume_policy_doc.json
-
-#  inline_policy {
-#    name = "integration_policy"
-#
-#    policy = jsonencode({
-#      Version = "2012-10-17"
-#      Statement = [
-#        {
-#          Action   = ["sts:AssumeRole"]
-#          Effect   = "Allow"
-#          Resource = data.aws_iam_role.integration_role.arn
-#        },
-#      ]
-#    })
-#  }
-}
-
 resource "aws_iam_instance_profile" "integrations_profile" {
   name = "${var.environment}-instance-profile"
-  role = aws_iam_role.ec2_role.name
+  role = data.aws_iam_role.integration_role.name
 }
