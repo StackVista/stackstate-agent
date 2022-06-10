@@ -59,7 +59,8 @@ description 'StackState Monitoring Agent
 # .deb specific flags
 package :deb do
   vendor 'StackState <info@stackstate.com>'
-  epoch 1
+  # sts - disabling epoch otherwise we get a `1:` as a prefix to the debian package version
+  # epoch 1
   license 'Apache License Version 2.0'
   section 'utils'
   priority 'extra'
