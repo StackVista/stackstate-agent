@@ -12,5 +12,3 @@ gem 'omnibus-software', git: 'https://github.com/DataDog/omnibus-software.git', 
 
 
 gem 'mixlib-cli', '~> 1.7.0'
-gem 'ffi', '~> 1.12.0'
-# gem "ffi-yajl",         "~> 2.3"
