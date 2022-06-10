@@ -66,3 +66,31 @@ func testStopTransaction(t *testing.T) {
 
 	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
+
+func testSetTransactionState(t *testing.T) {
+
+	SetupTransactionalComponents()
+	testCheck := &check.STSTestCheck{Name: "check-id-set-transaction-state"}
+	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+
+	mockTransactionalManager := transactionmanager.GetTransactionManager().(*transactionmanager.MockTransactionManager)
+
+	checkId := C.CString(testCheck.String())
+	stateKey := C.CString("key")
+	stateValue := C.CString("state value")
+
+	StartTransaction(checkId)
+	SetTransactionState(checkId, stateKey, stateValue)
+
+	transactionID := mockTransactionalManager.GetCurrentTransaction()
+	assert.NotEmpty(t, transactionID)
+
+	expectedState := &transactionmanager.TransactionState{
+		Key:   stateKey,
+		State: stateValue,
+	}
+	actualState := mockTransactionalManager.GetCurrentTransactionState()
+	assert.Equal(t, expectedState, actualState)
+
+	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+}
