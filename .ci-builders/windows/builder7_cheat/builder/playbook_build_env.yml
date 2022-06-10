@@ -5,6 +5,18 @@
 
   tasks:
 
+    - name: ENV | PATH
+      win_path:
+        elements:
+          - 'C:\tools\ruby24\bin'
+          - 'C:\gopath\bin'
+          - 'C:\Program Files\CMake\bin\'
+          - 'C:\python27-x64'
+          - 'C:\python27-x64\Scripts'
+          - 'C:\Program Files\Git\usr\bin'
+          - 'C:\Program Files\Amazon\AWSCLI'
+          - 'C:\Program Files\Mercurial;C:\Program Files (x86)\WiX Toolset v3.11\bin'
+
     - name: Disable defender realtime scan to speedup process
       win_command: powershell.exe -
       args:
@@ -29,3 +41,21 @@
 
     - name: Tune git config
       win_command: "git config --global user.name \"Windows Gitlab Runner Instance\""
+
+    - name: Template powershell vssetup module installation
+      win_copy:
+        src: files/register_vssetup.ps1
+        dest: C:\
+
+    - name: Template powershell vssetup module installation
+      win_copy:
+        src: files/install_vssetup.ps1
+        dest: C:\
+
+    - name: Register powershell vssetup module
+      win_command: powershell.exe -File C:\register_vssetup.ps1
+      register: vssetup_try1
+      ignore_errors: true
+
+    - name: Install powershell vssetup module
+      win_command: powershell.exe -File C:\install_vssetup.ps1
