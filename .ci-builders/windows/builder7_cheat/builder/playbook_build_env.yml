@@ -1,0 +1,31 @@
+- hosts: all
+
+  vars_files:
+    - builder_vars.yml
+
+  tasks:
+
+    - name: Disable defender realtime scan to speedup process
+      win_command: powershell.exe -
+      args:
+        stdin: Set-MpPreference -DisableRealtimeMonitoring $true
+
+    - name: ENV | GOPATH
+      win_environment:
+        state: present
+        name: GOPATH
+        value: "c:\\gopath"
+        level: user
+
+    - name: ENV | GOBIN
+      win_environment:
+        state: present
+        name: GOBIN
+        value: "c:\\gopath\\bin"
+        level: user
+
+    - name: Tune git config
+      win_command: "git config --global user.email \"gitlab@windowsrunner.local\""
+
+    - name: Tune git config
+      win_command: "git config --global user.name \"Windows Gitlab Runner Instance\""
