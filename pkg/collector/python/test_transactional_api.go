@@ -84,6 +84,8 @@ func testSetTransactionState(t *testing.T) {
 	StartTransaction(checkId)
 	SetTransactionState(checkId, stateKey, stateValue)
 
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
+
 	transactionID := mockTransactionalManager.GetCurrentTransaction()
 	assert.NotEmpty(t, transactionID)
 
