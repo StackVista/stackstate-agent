@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/stretchr/testify/assert"
@@ -42,7 +42,7 @@ func testHealthCheckData(t *testing.T) {
 	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
 	testCheck := &check.STSTestCheck{Name: "check-id-health-check-data"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	c := &health.Payload{
 		Stream: health.Stream{
@@ -86,7 +86,7 @@ func testHealthCheckData(t *testing.T) {
 		},
 	}, actualTopology)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testHealthStartSnapshot(t *testing.T) {
@@ -94,7 +94,7 @@ func testHealthStartSnapshot(t *testing.T) {
 	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
 	testCheck := &check.STSTestCheck{Name: "check-id-health-start-snapshot"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(testCheck.String())
 	stream := C.health_stream_t{}
@@ -121,7 +121,7 @@ func testHealthStartSnapshot(t *testing.T) {
 		},
 	}, actualTopology)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testHealthStopSnapshot(t *testing.T) {
@@ -129,7 +129,7 @@ func testHealthStopSnapshot(t *testing.T) {
 	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
 	testCheck := &check.STSTestCheck{Name: "check-id-health-stop-snapshot"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(testCheck.String())
 	stream := C.health_stream_t{}
@@ -155,7 +155,7 @@ func testHealthStopSnapshot(t *testing.T) {
 		},
 	}, actualTopology)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testNoSubStream(t *testing.T) {
@@ -163,7 +163,7 @@ func testNoSubStream(t *testing.T) {
 	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
 	testCheck := &check.STSTestCheck{Name: "check-id-health-no-sub-stream"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(testCheck.String())
 	stream := C.health_stream_t{}
@@ -190,5 +190,5 @@ func testNoSubStream(t *testing.T) {
 		},
 	}, actualTopology)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }

@@ -11,7 +11,10 @@ import (
 
 // StartTransaction logs a warning for the non-transactional check handler. This should never be called.
 func (ch *NonTransactionalCheckHandler) StartTransaction() string {
-	_ = log.Warnf("StartTransaction called on NonTransactionalCheckHandler. This should never happen.")
+	transactionalCheckHandler := GetCheckManager().MakeCheckHandlerTransactional(ch.ID())
+	if transactionalCheckHandler != nil {
+		return transactionalCheckHandler.StartTransaction()
+	}
 	return ""
 }
 

@@ -3,7 +3,6 @@ package handler
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	checkState "github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
@@ -23,7 +22,7 @@ type TransactionalCheckHandler struct {
 }
 
 // NewTransactionalCheckHandler creates a new check handler for a given check, check loader and configuration
-func NewTransactionalCheckHandler(check check.Check, checkReloader CheckReloader, config, initConfig integration.Data) CheckHandler {
+func NewTransactionalCheckHandler(check CheckIdentifier, checkReloader CheckReloader, config, initConfig integration.Data) CheckHandler {
 	ch := &TransactionalCheckHandler{
 		CheckHandlerBase: CheckHandlerBase{
 			CheckIdentifier: check,

@@ -1,9 +1,8 @@
-package checkmanager
+package handler
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -14,7 +13,7 @@ func TestMakeCheckManager(t *testing.T) {
 	checkManager := newCheckManager(reloader)
 	expected := &CheckManager{
 		reloader:      reloader,
-		checkHandlers: make(map[string]handler.CheckHandler),
+		checkHandlers: make(map[string]CheckHandler),
 		config:        GetCheckManagerConfig(),
 	}
 
@@ -26,7 +25,7 @@ func TestCheckManagerSubscription(t *testing.T) {
 	testCheck := &check.STSTestCheck{Name: "test-check-1"}
 
 	// assert that we start at an empty state
-	assert.EqualValues(t, checkManager.checkHandlers, map[string]handler.CheckHandler{})
+	assert.EqualValues(t, checkManager.checkHandlers, map[string]CheckHandler{})
 
 	// subscribe my test check, assert that we can get it with the check handler and that it's present in the inner map
 	checkManager.RegisterCheckHandler(testCheck, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
@@ -74,7 +73,7 @@ func TestCheckManagerSubscriptionTransactionalityDisabled(t *testing.T) {
 
 	checkManager := newCheckManager(&check.TestCheckReloader{})
 	testCheck := &check.STSTestCheck{Name: "test-check"}
-	nCH := handler.MakeNonTransactionalCheckHandler(testCheck, handler.CheckNoReloader{}, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
+	nCH := MakeNonTransactionalCheckHandler(testCheck, CheckNoReloader{}, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
 
 	ch := checkManager.RegisterCheckHandler(testCheck, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
 	// assert that the test check didn't register a transactional check handler and defaults to a non-transactional check handler
@@ -86,7 +85,7 @@ func TestCheckManagerSubscriptionTransactionalityDisabled(t *testing.T) {
 
 	nonRegisteredCheck := &check.STSTestCheck{Name: "non-registered-check"}
 	actualCH := checkManager.GetCheckHandler(nonRegisteredCheck.ID())
-	expectedCH := handler.MakeNonTransactionalCheckHandler(handler.NewCheckIdentifier(nonRegisteredCheck.ID()), handler.CheckNoReloader{}, nil, nil)
+	expectedCH := MakeNonTransactionalCheckHandler(NewCheckIdentifier(nonRegisteredCheck.ID()), CheckNoReloader{}, nil, nil)
 	assert.Equal(t, expectedCH, actualCH)
 
 	// default to true again

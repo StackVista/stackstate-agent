@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -24,7 +24,7 @@ func testComponentTopology(t *testing.T) {
 	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
 	testCheck := &check.STSTestCheck{Name: "check-id-component-test"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	c := &topology.Component{
 		ExternalID: "external-id",
@@ -75,7 +75,7 @@ func testComponentTopology(t *testing.T) {
 	}
 	assert.Equal(t, expectedTopology, actualTopology)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testRelationTopology(t *testing.T) {
@@ -83,7 +83,7 @@ func testRelationTopology(t *testing.T) {
 	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
 	testCheck := &check.STSTestCheck{Name: "check-id-relation-test"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	c := &topology.Relation{
 		SourceID: "source-id",
@@ -137,7 +137,7 @@ func testRelationTopology(t *testing.T) {
 	}
 	assert.Equal(t, expectedTopology, actualTopology)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testStartSnapshotCheck(t *testing.T) {
@@ -145,7 +145,7 @@ func testStartSnapshotCheck(t *testing.T) {
 	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
 	testCheck := &check.STSTestCheck{Name: "check-id-start-snapshot"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(testCheck.String())
 	instanceKey := C.instance_key_t{}
@@ -173,7 +173,7 @@ func testStartSnapshotCheck(t *testing.T) {
 		Health: map[string]health.Health{},
 	}, actualTopology)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testStopSnapshotCheck(t *testing.T) {
@@ -181,7 +181,7 @@ func testStopSnapshotCheck(t *testing.T) {
 	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
 	testCheck := &check.STSTestCheck{Name: "check-id-stop-snapshot"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(testCheck.String())
 	instanceKey := C.instance_key_t{}
@@ -211,7 +211,7 @@ func testStopSnapshotCheck(t *testing.T) {
 
 	assert.Equal(t, expectedTopology, actualTopology)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testDeleteTopologyElement(t *testing.T) {
@@ -219,7 +219,7 @@ func testDeleteTopologyElement(t *testing.T) {
 	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
 	testCheck := &check.STSTestCheck{Name: "check-id-delete-element"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkID := C.CString(testCheck.String())
 	instanceKey := C.instance_key_t{}
@@ -253,5 +253,5 @@ func testDeleteTopologyElement(t *testing.T) {
 	}
 	assert.Equal(t, expectedTopology, actualTopology)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
