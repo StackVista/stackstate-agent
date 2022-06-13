@@ -40,6 +40,11 @@ func NewTransactionalCheckHandler(check CheckIdentifier, checkReloader CheckRelo
 	return ch
 }
 
+// Name returns TransactionalCheckHandler for the transactional check handler
+func (ch *TransactionalCheckHandler) Name() string {
+	return "TransactionalCheckHandler"
+}
+
 // Start starts the check handler to "listen" and handle check transactions or shutdown
 func (ch *TransactionalCheckHandler) Start() {
 txReceiverHandler:

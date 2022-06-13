@@ -22,6 +22,7 @@ type CheckIdentifier interface {
 type CheckHandler interface {
 	CheckIdentifier
 	CheckAPI
+	Name() string
 	GetConfig() (config, initConfig integration.Data)
 	GetCheckReloader() CheckReloader
 	Reload()

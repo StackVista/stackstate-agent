@@ -36,6 +36,7 @@ func TestCheckManagerSubscription(t *testing.T) {
 	actualInstanceCfg, actualInitCfg := ch.GetConfig()
 	assert.EqualValues(t, integration.Data{1, 2, 3}, actualInstanceCfg)
 	assert.EqualValues(t, integration.Data{0, 0, 0}, actualInitCfg)
+	assert.Equal(t, "NonTransactionalCheckHandler", ch.Name())
 
 	// subscribe another check handler and assert it
 	testCheck2 := &check.STSTestCheck{Name: "test-check-2"}
@@ -47,6 +48,7 @@ func TestCheckManagerSubscription(t *testing.T) {
 	actualInstanceCfg2, actualInitCfg2 := ch2.GetConfig()
 	assert.EqualValues(t, integration.Data{4, 5, 6}, actualInstanceCfg2)
 	assert.EqualValues(t, integration.Data{10, 10, 10}, actualInitCfg2)
+	assert.Equal(t, "NonTransactionalCheckHandler", ch2.Name())
 
 	// assert that we have 2 check handlers in the map
 	assert.Equal(t, 2, len(checkManager.checkHandlers))

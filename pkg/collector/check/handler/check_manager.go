@@ -50,13 +50,13 @@ func (cm *CheckManager) GetCheckHandler(checkID check.ID) CheckHandler {
 	ch, found := cm.checkHandlers[string(checkID)]
 	if !found {
 		_ = log.Errorf(fmt.Sprintf("No check handler found for %s. Registering a non-transactional check handler.", checkID))
-		return cm.RegisterNonTransactionalCheckHandler(NewCheckIdentifier(checkID), nil, nil)
+		return cm.registerNonTransactionalCheckHandler(NewCheckIdentifier(checkID), nil, nil)
 	}
 	return ch
 }
 
-// RegisterNonTransactionalCheckHandler registers a non-transactional check handler for a given check
-func (cm *CheckManager) RegisterNonTransactionalCheckHandler(check CheckIdentifier, config, initConfig integration.Data) CheckHandler {
+// registerNonTransactionalCheckHandler registers a non-transactional check handler for a given check
+func (cm *CheckManager) registerNonTransactionalCheckHandler(check CheckIdentifier, config, initConfig integration.Data) CheckHandler {
 	ch := MakeNonTransactionalCheckHandler(check, CheckNoReloader{}, config, initConfig)
 	cm.checkHandlers[string(check.ID())] = ch
 	return ch
@@ -84,7 +84,7 @@ func (cm *CheckManager) MakeCheckHandlerTransactional(checkID check.ID) CheckHan
 
 // RegisterCheckHandler registers a check handler for the given check using a transactionbatcher for this instance
 func (cm *CheckManager) RegisterCheckHandler(check CheckIdentifier, config, initConfig integration.Data) CheckHandler {
-	ch := cm.RegisterNonTransactionalCheckHandler(check, config, initConfig)
+	ch := cm.registerNonTransactionalCheckHandler(check, config, initConfig)
 	log.Debugf("Registering Check Handler for: %s", ch.ID())
 	cm.checkHandlers[string(check.ID())] = ch
 	return ch
