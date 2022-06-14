@@ -14,3 +14,7 @@ locals {
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
   }
 }
+
+variable "iam_user" {
+  type =string
+}

@@ -21,4 +21,4 @@
         context: "{{ kubecontext }}"
         namespace: "{{ namespace }}"
         pod: stackstate-cli
-        command: python -m stackstate_cli.cli stackpack install aws-v2 -p aws_external_id "{{ yard_id }}" -p aws_role_arn "{{ agent_iam_role }}"
+        command: python -m stackstate_cli.cli stackpack install aws-v2 -p aws_external_id "{{ yard_id }}" -p aws_role_arn "{{ integration_iam_role }}" -p aws_access_key_id "{{ integration_access_key }}" -p aws_secret_access_key "{{ integration_secret_key }}"

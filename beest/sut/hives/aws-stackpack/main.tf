@@ -21,6 +21,32 @@ resource "aws_cloudformation_stack" "cfn_stackpack" {
   template_body = file("${path.module}/stackstate-resources-1.2.cfn.yaml")
 }
 
+resource "aws_iam_user" "integration_user" {
+  name = "${var.environment}-integration-user"
+}
+
+resource "aws_iam_access_key" "integration_user_key" {
+  user = aws_iam_user.integration_user.name
+}
+
+resource "aws_iam_user_policy" "integration_user_policy" {
+  name = "${var.environment}-integration-user-policy"
+  user = aws_iam_user.integration_user.name
+  policy = [data.aws_iam_policy_document.integration_assume_role_policy.json]
+}
+
+data "aws_iam_policy_document" "integration_assume_role_policy" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "AWS"
+      identifiers = [data.aws_iam_role.integration_role.arn]
+    }
+
+  }
+}
+
 data "aws_iam_role" "integration_role" {
   name       = "StackStateAwsIntegrationRole${aws_cloudformation_stack.cfn_stackpack.parameters.PostFix}"
   depends_on = [aws_cloudformation_stack.cfn_stackpack] # TODO PR for cloudformation stack to output the role
