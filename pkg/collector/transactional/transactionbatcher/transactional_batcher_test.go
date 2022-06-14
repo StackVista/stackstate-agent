@@ -601,6 +601,7 @@ func TestBatchClearState(t *testing.T) {
 	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent)
 	batcher.SubmitDelete(testID, testTransactionID, testInstance, testDeleteID1)
 
+	// testID2 + testTransaction2ID will be cancelled and therefore should not be in the final payload
 	batcher.StartTransaction(testID2, testTransaction2ID)
 	batcher.SubmitStartSnapshot(testID2, testTransaction2ID, testInstance)
 	batcher.SubmitComponent(testID2, testTransaction2ID, testInstance, testComponent)

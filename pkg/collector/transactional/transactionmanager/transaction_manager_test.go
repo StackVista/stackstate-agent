@@ -95,27 +95,27 @@ func TestTransactionManager_SetState(t *testing.T) {
 	assert.Equal(t, txManager.TransactionCount(), 0)
 }
 
-func TestTransactionManager_TransactionRollback(t *testing.T) {
+func TestTransactionManager_TransactionDiscard(t *testing.T) {
 	txManager := newTransactionManager(100, 100*time.Millisecond, 1*time.Second,
 		1*time.Second).(*transactionManager)
 
 	txNotifyChannel := make(chan interface{})
 
 	for _, tc := range []struct {
-		testCase       string
-		operation      func(txID string, t *testing.T, manager *transactionManager) map[string]*Action
-		rollbackReason string
+		testCase      string
+		operation     func(txID string, t *testing.T, manager *transactionManager) map[string]*Action
+		discardReason string
 	}{
 		{
-			testCase: "Transaction rollback triggered by external party (check handler)",
+			testCase: "Transaction discard triggered by external party (check handler)",
 			operation: func(txID string, t *testing.T, manager *transactionManager) (actions map[string]*Action) {
-				txManager.RollbackTransaction(txID, "check failed")
+				txManager.DiscardTransaction(txID, "check failed")
 				return
 			},
-			rollbackReason: "check failed",
+			discardReason: "check failed",
 		},
 		{
-			testCase: "Transaction rollback triggered by an un-acknowledged action",
+			testCase: "Transaction discard triggered by an un-acknowledged action",
 			operation: func(txID string, t *testing.T, manager *transactionManager) map[string]*Action {
 				actions := make(map[string]*Action, 1)
 				actID := uuid.New().String()
@@ -123,10 +123,10 @@ func TestTransactionManager_TransactionRollback(t *testing.T) {
 				txManager.CompleteTransaction(txID)
 				return actions
 			},
-			rollbackReason: "Not all actions have been acknowledged, rolling back transaction",
+			discardReason: "Not all actions have been acknowledged, rolling back transaction",
 		},
 		{
-			testCase: "Transaction rollback triggered by rejected action",
+			testCase: "Transaction discard triggered by rejected action",
 			operation: func(txID string, t *testing.T, manager *transactionManager) map[string]*Action {
 				actions := make(map[string]*Action, 1)
 				actID := uuid.New().String()
@@ -138,7 +138,7 @@ func TestTransactionManager_TransactionRollback(t *testing.T) {
 
 				return actions
 			},
-			rollbackReason: "rejected action",
+			discardReason: "rejected action",
 		},
 	} {
 		t.Run(tc.testCase, func(t *testing.T) {
@@ -152,9 +152,9 @@ func TestTransactionManager_TransactionRollback(t *testing.T) {
 			assertTransaction(t, txManager, txID, Failed, actions)
 
 			completeMsg := <-txNotifyChannel
-			rollbackTransaction := completeMsg.(RollbackTransaction)
-			assert.Equal(t, txID, rollbackTransaction.TransactionID)
-			assert.Contains(t, rollbackTransaction.Reason, tc.rollbackReason)
+			discardTransaction := completeMsg.(DiscardTransaction)
+			assert.Equal(t, txID, discardTransaction.TransactionID)
+			assert.Contains(t, discardTransaction.Reason, tc.discardReason)
 
 		})
 	}

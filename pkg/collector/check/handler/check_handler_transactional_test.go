@@ -83,7 +83,7 @@ func TestCheckHandler_Transactions(t *testing.T) {
 		{
 			testCase: "Transaction completed with transaction rollback",
 			completeTransaction: func() {
-				testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.RollbackTransaction{}
+				testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.DiscardTransaction{}
 			},
 		},
 		{

@@ -113,7 +113,7 @@ currentTxHandler:
 				// empty batcher state
 				transactionbatcher.GetTransactionalBatcher().SubmitClearState(ch.ID())
 				// trigger failed transaction
-				transactionmanager.GetTransactionManager().RollbackTransaction(ch.GetCurrentTransaction(), msg.Reason)
+				transactionmanager.GetTransactionManager().DiscardTransaction(ch.GetCurrentTransaction(), msg.Reason)
 
 			case SubmitSetTransactionState:
 				if config.Datadog.GetBool("log_payloads") {
@@ -187,7 +187,7 @@ currentTxHandler:
 				transactionbatcher.GetTransactionalBatcher().SubmitComplete(ch.ID())
 
 			// Notifications from the transaction manager
-			case transactionmanager.RollbackTransaction, transactionmanager.EvictedTransaction:
+			case transactionmanager.DiscardTransaction, transactionmanager.EvictedTransaction:
 				_ = log.Warnf("Reloading check %s after failed transaction", ch.ID())
 				if err := ch.ReloadCheck(ch.ID(), ch.config, ch.initConfig, ch.ConfigSource()); err != nil {
 					_ = log.Errorf("failed to reload check %s: %s", ch.ID(), err)
@@ -204,7 +204,7 @@ currentTxHandler:
 						errorReason := fmt.Sprintf("Error while updating state for transaction: %s for check %s: %s. %s",
 							msg.TransactionID, ch.ID(), msg.State, err)
 						_ = log.Error(errorReason)
-						txChan <- transactionmanager.RollbackTransaction{TransactionID: msg.TransactionID, Reason: errorReason}
+						txChan <- transactionmanager.DiscardTransaction{TransactionID: msg.TransactionID, Reason: errorReason}
 					}
 
 					log.Debugf("Successfully committed state for transaction: %s for check %s: %s", msg.TransactionID, ch.ID(),
