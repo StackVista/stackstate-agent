@@ -211,90 +211,74 @@ func TestCheckHandlerAPI(t *testing.T) {
 		})
 	}
 
-	// stop the transactional components
-	transactionbatcher.GetTransactionalBatcher().Stop()
-	transactionmanager.GetTransactionManager().Stop()
+	// test check handler cancel transaction
+	t.Run("check handler cancel transaction", func(t *testing.T) {
+		ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-cancel-transaction"},
+			&check.TestCheckReloader{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 
-}
+		txID := ch.StartTransaction()
+		ch.SubmitComponent(instance, testComponent)
 
-func TestCheckHandlerAPI_CancelTransaction(t *testing.T) {
-	mockBatcher := transactionbatcher.NewMockTransactionalBatcher()
-	transactionmanager.NewMockTransactionManager()
+		batchState := transactionbatcher.TransactionCheckInstanceBatchState{
+			Transaction: &transactionbatcher.BatchTransaction{
+				TransactionID:        txID,
+				CompletedTransaction: false,
+			},
+			Topology: &topology.Topology{
+				StartSnapshot: false,
+				StopSnapshot:  false,
+				Instance:      instance,
+				Components:    []topology.Component{testComponent},
+				Relations:     []topology.Relation{},
+				DeleteIDs:     []string{},
+			},
+			Health: map[string]health.Health{},
+		}
 
-	checkHandler := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-cancel-transaction"},
-		&check.TestCheckReloader{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
+		time.Sleep(100 * time.Millisecond)
 
-	transactionID := checkHandler.StartTransaction()
-	checkHandler.SubmitComponent(instance, testComponent)
+		actualState, found := mockBatcher.GetCheckState(ch.ID())
+		assert.True(t, found, "check state for %s was not found", ch.ID())
+		assert.EqualValues(t, batchState, actualState)
 
-	checkInstanceBatchState := transactionbatcher.TransactionCheckInstanceBatchState{
-		Transaction: &transactionbatcher.BatchTransaction{
-			TransactionID:        transactionID,
-			CompletedTransaction: false,
-		},
-		Topology: &topology.Topology{
-			StartSnapshot: false,
-			StopSnapshot:  false,
-			Instance:      instance,
-			Components:    []topology.Component{testComponent},
-			Relations:     []topology.Relation{},
-			DeleteIDs:     []string{},
-		},
-		Health: map[string]health.Health{},
-	}
+		ch.CancelTransaction("test cancel transaction")
 
-	time.Sleep(100 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
+		postCancelState, found := mockBatcher.GetCheckState(ch.ID())
+		assert.False(t, found, "check state for %s that should be cleaned up was found: %v", ch.ID(),
+			postCancelState.JSONString())
+	})
 
-	actualState, found := mockBatcher.GetCheckState(checkHandler.ID())
-	assert.True(t, found, "check state for %s was not found", checkHandler.ID())
-	assert.EqualValues(t, checkInstanceBatchState, actualState)
+	// test check handler submit complete
+	t.Run("check handler submit complete", func(t *testing.T) {
+		ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-submit-complete"},
+			&check.TestCheckReloader{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 
-	checkHandler.CancelTransaction("test cancel transaction")
+		txID := ch.StartTransaction()
+		ch.SubmitComponent(instance, testComponent)
+		ch.SubmitComplete()
 
-	time.Sleep(100 * time.Millisecond)
-	postCancelState, found := mockBatcher.GetCheckState(checkHandler.ID())
-	assert.False(t, found, "check state for %s that should be cleaned up was found: %v", checkHandler.ID(),
-		postCancelState.JSONString())
+		batchState := transactionbatcher.TransactionCheckInstanceBatchState{
+			Transaction: &transactionbatcher.BatchTransaction{
+				TransactionID:        txID,
+				CompletedTransaction: false,
+			},
+			Topology: &topology.Topology{
+				StartSnapshot: false,
+				StopSnapshot:  false,
+				Instance:      instance,
+				Components:    []topology.Component{testComponent},
+				Relations:     []topology.Relation{},
+				DeleteIDs:     []string{},
+			},
+			Health: map[string]health.Health{},
+		}
 
-	// stop the transactional components
-	transactionbatcher.GetTransactionalBatcher().Stop()
-	transactionmanager.GetTransactionManager().Stop()
-}
+		time.Sleep(100 * time.Millisecond)
 
-func TestCheckHandlerAPI_SubmitComplete(t *testing.T) {
-	mockBatcher := transactionbatcher.NewMockTransactionalBatcher()
-	transactionmanager.NewMockTransactionManager()
+		actualState, found := mockBatcher.GetCheckState(ch.ID())
+		assert.True(t, found, "check state for %s was not found", ch.ID())
+		assert.EqualValues(t, batchState, actualState)
+	})
 
-	checkHandler := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-submit-complete"},
-		&check.TestCheckReloader{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
-
-	transactionID := checkHandler.StartTransaction()
-	checkHandler.SubmitComponent(instance, testComponent)
-	checkHandler.SubmitComplete()
-
-	checkInstanceBatchState := transactionbatcher.TransactionCheckInstanceBatchState{
-		Transaction: &transactionbatcher.BatchTransaction{
-			TransactionID:        transactionID,
-			CompletedTransaction: false,
-		},
-		Topology: &topology.Topology{
-			StartSnapshot: false,
-			StopSnapshot:  false,
-			Instance:      instance,
-			Components:    []topology.Component{testComponent},
-			Relations:     []topology.Relation{},
-			DeleteIDs:     []string{},
-		},
-		Health: map[string]health.Health{},
-	}
-
-	time.Sleep(100 * time.Millisecond)
-
-	actualState, found := mockBatcher.GetCheckState(checkHandler.ID())
-	assert.True(t, found, "check state for %s was not found", checkHandler.ID())
-	assert.EqualValues(t, checkInstanceBatchState, actualState)
-
-	// stop the transactional components
-	transactionbatcher.GetTransactionalBatcher().Stop()
-	transactionmanager.GetTransactionManager().Stop()
 }

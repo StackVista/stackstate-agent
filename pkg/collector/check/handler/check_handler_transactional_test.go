@@ -126,10 +126,6 @@ func TestCheckHandler_Transactions(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 	ch.Stop()
-
-	// stop the transactional components
-	transactionbatcher.GetTransactionalBatcher().Stop()
-	transactionmanager.GetTransactionManager().Stop()
 }
 
 func TestCheckHandler_State(t *testing.T) {
@@ -190,8 +186,5 @@ func TestCheckHandler_Shutdown(t *testing.T) {
 	assert.Equal(t, transactionID, testTxManager.GetCurrentTransaction())
 
 	ch.Stop()
-
-	// stop the transactional components
-	transactionmanager.GetTransactionManager().Stop()
 
 }

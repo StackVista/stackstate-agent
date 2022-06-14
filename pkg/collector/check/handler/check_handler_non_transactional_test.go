@@ -97,12 +97,7 @@ func TestNonTransactionalCheckHandler_StartTransaction(t *testing.T) {
 	assert.Equal(t, "TransactionalCheckHandler", transactionalCheckHandler.Name())
 	assert.Equal(t, transactionID, transactionalCheckHandler.GetCurrentTransaction())
 
-	// stop the transactional components
-	transactionbatcher.GetTransactionalBatcher().Stop()
-	transactionmanager.GetTransactionManager().Stop()
-
 	GetCheckManager().Stop()
-
 }
 
 func TestNonTransactionalCheckHandler_State(t *testing.T) {
