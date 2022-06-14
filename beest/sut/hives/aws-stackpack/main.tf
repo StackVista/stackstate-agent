@@ -30,20 +30,16 @@ resource "aws_iam_access_key" "integration_user_key" {
 }
 
 resource "aws_iam_user_policy" "integration_user_policy" {
-  name = "${var.environment}-integration-user-policy"
-  user = aws_iam_user.integration_user.name
-  policy = [data.aws_iam_policy_document.integration_assume_role_policy.json]
+  name   = "${var.environment}-integration-user-policy"
+  user   = aws_iam_user.integration_user.name
+  policy = data.aws_iam_policy_document.integration_assume_role_policy.json
 }
 
 data "aws_iam_policy_document" "integration_assume_role_policy" {
   statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "AWS"
-      identifiers = [data.aws_iam_role.integration_role.arn]
-    }
-
+    actions   = ["sts:AssumeRole"]
+    resources = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${data.aws_iam_role.integration_role.name}"]
+    effect    = "Allow"
   }
 }
 
