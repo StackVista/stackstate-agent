@@ -145,6 +145,7 @@ variables: &commonvariables
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
     # Check if any MD files changed
     changes:
+      - "**/!(*)"
       - "**/*.md"
     # If agent v2 and any MD files changed, don't run the pipeline.
     when: manual
@@ -152,6 +153,7 @@ variables: &commonvariables
     allow_failure: true
   # agent v3 scenario
   - changes:
+      - "**/!(*)"
       - "**/*.md"
     when: manual
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
@@ -180,7 +182,6 @@ agent2:
     include: .gitlab-ci-agent.yml
     strategy: depend
   rules:
-    - *other_files_rule
     - *md_only_rule
     - <<: *exclude_on_cluster_agent
     # exclude this pipeline if we're running a v3 tag pipeline
