@@ -23,6 +23,7 @@ type TransactionCheckInstanceBatchState struct {
 	Health      map[string]health.Health
 }
 
+// JSONString returns a JSON string representation of a TransactionCheckInstanceBatchState
 func (t TransactionCheckInstanceBatchState) JSONString() string {
 	b, err := json.Marshal(t)
 	if err != nil {
