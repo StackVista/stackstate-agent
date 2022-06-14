@@ -119,7 +119,6 @@ variables: &commonvariables
 
 .other_files_rule: &other_files_rule
   # If it is an agent v2 child pipeline
-  # Adding comment
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
     # Check if any files (not MD) changed
     changes:
