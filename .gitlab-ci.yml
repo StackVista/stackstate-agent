@@ -180,6 +180,7 @@ agent2:
     include: .gitlab-ci-agent.yml
     strategy: depend
   rules:
+    - *other_files_rule
     - *md_only_rule
     - <<: *exclude_on_cluster_agent
     # exclude this pipeline if we're running a v3 tag pipeline
