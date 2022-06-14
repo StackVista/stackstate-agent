@@ -1,4 +1,4 @@
-# StackState Agent - test
+# StackState Agent - test mix
 
 Contains the code for the StackState agent V2. Agent integrations are not included in this project and can be found [here](https://github.com/StackVista/stackstate-agent-integrations).
 

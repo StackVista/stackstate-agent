@@ -129,6 +129,7 @@ variables: &commonvariables
   # If it is an agent v2 child pipeline
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
     # Check if any files (not MD) changed
+    # comment
     changes:
       - "**/*"
     # If agent v2 and any not-MD files changed, don't run the pipeline.
