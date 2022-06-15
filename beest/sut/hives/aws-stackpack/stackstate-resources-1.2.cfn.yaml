@@ -34,10 +34,10 @@ Metadata:
 
 Parameters:
   StsAccountId:
-    Type: CommaDelimitedList
+    Type: String
     Description: Comma separated list of AWS account IDs where StackState agent and StackState platform run
     AllowedPattern: >-
-      ^[0-9]{12}$
+      ^([0-9]{12},?)*$
     ConstraintDescription: Value must be a valid AWS account ID
   ExternalId:
     Type: String
@@ -58,9 +58,11 @@ Parameters:
     AllowedValues: [true, false]
   PostFix:
     Description: Value to append to all resource names when deploying the stack multiple times in the same account (optional)
+    Default: ""
     Type: String
     AllowedPattern: >-
-      ^[-[0-9][a-z]]{1,20}$
+      ^[-\w+]{0,20}$
+    ConstraintDescription: Value must only contain numbers, letter and hyphens
 
 Conditions:
   IsMainRegion: !Equals [!Ref MainRegion, !Ref "AWS::Region"]
@@ -78,7 +80,7 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Ref StsAccountId
+              AWS: !Split [",", !Ref StsAccountId]
             Action:
               - sts:AssumeRole
             Condition:
@@ -506,10 +508,10 @@ Outputs:
     Export:
       Name: !Sub ${AWS::StackName}-StackStateKmsKeyArn
   StackStateLogsBucketArn:
-    Value: !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}${PostFix}
+    Value: !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}
     Export:
       Name: !Sub ${AWS::StackName}-StackStateLogsBucketArn
-  StackStateIntegrationRoleArn:
-    Value: !Sub arn:${AWS::Partition}:iam:::StackStateAwsIntegrationRole${PostFix}
+  StackStateIntegrationRole:
+    Value: !Ref StsRole
     Export:
       Name: !Sub ${AWS::StackName}-StackStateIntegrationRole

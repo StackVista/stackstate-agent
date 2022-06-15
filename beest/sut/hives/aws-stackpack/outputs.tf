@@ -1,5 +1,5 @@
 output "integration_role" {
-  value = aws_cloudformation_stack.cfn_stackpack.outputs.StackStateIntegrationRoleArn
+  value = data.aws_iam_role.integration_role.arn
 }
 
 output "integration_profile" {

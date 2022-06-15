@@ -2,7 +2,7 @@ data "aws_caller_identity" "current" {}
 
 resource "random_integer" "cnf_postfix" {
   min = 1
-  max = 50000
+  max = 100000
 }
 
 resource "aws_cloudformation_stack" "cfn_stackpack" {
@@ -22,7 +22,11 @@ resource "aws_cloudformation_stack" "cfn_stackpack" {
   template_body = file("${path.module}/stackstate-resources-1.2.cfn.yaml")
 }
 
+data "aws_iam_role" "integration_role" {
+  name = aws_cloudformation_stack.cfn_stackpack.outputs.StackStateIntegrationRole
+}
+
 resource "aws_iam_instance_profile" "integrations_profile" {
   name = "${var.environment}-instance-profile"
-  role = aws_cloudformation_stack.cfn_stackpack.outputs.StackStateIntegrationRoleArn
+  role = data.aws_iam_role.integration_role.name
 }
