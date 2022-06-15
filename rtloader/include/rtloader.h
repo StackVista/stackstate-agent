@@ -556,7 +556,7 @@ public:
 
       Actual check data is submitted from go-land, this allows us to set the CGO callback.
     */
-    virtual void setStopTransactionCb(cb_discard_transaction_t) = 0;
+    virtual void setDiscardTransactionCb(cb_discard_transaction_t) = 0;
 
     //! setTransactionStateCb member.
     /*!
