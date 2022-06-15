@@ -122,11 +122,6 @@ variables: &commonvariables
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
     allow_failure: true
 
-.allfiles: &allfiles
-  - changes:
-      - "**/*"
-    when: always
-
 .rules:
   - &exclude_on_cluster_agent
     if: $CI_COMMIT_MESSAGE =~ /\[cluster-agent]/
@@ -152,7 +147,6 @@ agent2:
   rules:
     - *other_files_rule
     - *md_only_rule
-    - *allfiles
     - <<: *exclude_on_cluster_agent
     # exclude this pipeline if we're running a v3 tag pipeline
     - <<: *exclude_on_tag_v3
@@ -175,7 +169,6 @@ agent3:
  rules:
    - *other_files_rule
    - *md_only_rule
-   - *allfiles
    - <<: *exclude_on_cluster_agent
    # exclude this pipeline if we're running a v2 tag pipeline
    - <<: *exclude_on_tag_v2
