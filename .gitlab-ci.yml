@@ -111,6 +111,7 @@ variables: &commonvariables
     # Check if any MD files changed
     changes:
       - "**/*.md"
+      - "**/!(*.*)"
       - "**/!(*)"
     # If agent v2 and any MD files changed, don't run the pipeline.
     when: manual
@@ -119,6 +120,7 @@ variables: &commonvariables
   # agent v3 scenario
   - changes:
       - "**/*.md"
+      - "**/!(*.*)"
       - "**/!(*)"
     when: manual
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
