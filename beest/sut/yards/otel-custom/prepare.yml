@@ -1,16 +1,9 @@
----
-vars:
-  sts_api_key: {{ yard_id }}
-  sts_url: "https://{{ yard_id }}.sandbox-main.sandbox.stackstate.io"
-
 - name: Prepare Kubernetes Stackstate
   hosts: local
   gather_facts: false
   roles:
     - role: "{{ bees_path }}/k8s-stackstate"
       vars:
-        sts_api_key: {{ sts_api_key }}
-        sts_url: {{ sts_url }}
         sts_ingress: KOPS
     - role: "{{ bees_path }}/otel-lambda"
 
@@ -19,6 +12,3 @@ vars:
   gather_facts: true
   roles:
     - role: "{{ bees_path }}/ec2-agent"
-      vars:
-        sts_api_key: {{ sts_api_key }}
-        sts_url: {{ sts_url }}
