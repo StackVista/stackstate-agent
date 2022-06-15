@@ -98,7 +98,7 @@ variables: &commonvariables
       - "**/{,!(*.md),.*}"
     # If agent v2 and any not-MD files changed, don't run the pipeline.
     when: always
-  # agent v3 scenario
+  # agent v3 scenario test
   - changes:
       - "**/{,!(*.md),.*}"
     when: always
