@@ -544,7 +544,7 @@ pre_release_main_agent_image: &pre_release_image
 
 pre_release_swarm_agent_image:
   <<: *pre_release_image
-  dependencies:
+  needs:
     - pre_release_main_agent_image
   script:
     - cd $CI_PROJECT_DIR
@@ -1438,7 +1438,7 @@ release_cluster_agent_image:
 release_swarm_agent_image:
   <<: *base_release_image
   interruptible: true
-  dependencies:
+  needs:
     - release_main_agent_image
   script:
     - cd $CI_PROJECT_DIR
