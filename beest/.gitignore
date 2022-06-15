@@ -8,6 +8,8 @@ tf.deploy
 *kubeconfig*
 *inventory
 *id_rsa
+stackstate-values.yml
+sts-toolbox.yml
 
 # pytest related files
 topic-*.json

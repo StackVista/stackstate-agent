@@ -8,12 +8,11 @@ stackstate_branch: "{{ lookup('env', 'STACKSTATE_BRANCH') or STACKSTATE_BRANCH }
 stackstate_helm_chart: "{{ lookup('env', 'STACKSTATE_HELM_CHART') or STACKSTATE_HELM_CHART }}"
 stackstate_license: "{{ lookup('env', 'STACKSTATE_LICENSE') or STACKSTATE_LICENSE }}"
 
-namespace: "{{ agent_current_branch.replace('.','-').replace('_','-') | lower }}"
-cluster_name: "{{ namespace }}"
+namespace: "{{ yard_id.replace('.','-').replace('_','-') | lower }}"
+cluster_name: "sandbox-main.sandbox.stackstate.io"
 
 kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/config"
-kubecontext: "sandbox-main.sandbox.stackstate.io"
+kubecontext: "{{ cluster_name }}"
 
 sts_api_key: "{{ yard_id }}"
-sts_url: "https://{{ yard_id }}.sandbox-main.sandbox.stackstate.io"
-
+sts_url: "https://{{ yard_id }}.{{ cluster_name }}"

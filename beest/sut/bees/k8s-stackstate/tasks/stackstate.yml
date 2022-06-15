@@ -38,7 +38,7 @@
       create_namespace: true
       update_repo_cache: true
       wait: yes
-      wait_timeout: 10m
+      wait_timeout: 15m
       values_files:
         - "{{ playbook_dir }}/stackstate-values.yml"
       values:
