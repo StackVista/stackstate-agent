@@ -89,7 +89,7 @@ services:
           memory: 1G
 
   stackstate-agent:
-    image: quay.io/stackstate/${AGENT_DOCKER_REPO}:${AGENT_VERSION}
+    image: quay.io/stackstate/${SWARM_AGENT_DOCKER_REPO}:${AGENT_VERSION}
     deploy:
       restart_policy:
         condition: on-failure

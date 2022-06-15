@@ -542,6 +542,33 @@ pre_release_main_agent_image: &pre_release_image
   rules:
     - when: on_success
 
+pre_release_swarm_agent_image: &pre_release_image
+  stage: pre_release
+  interruptible: true
+  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
+  needs:
+    - pre_release_main_agent_image
+  variables:
+    DOCKER_DRIVER: overlay
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  services:
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
+      alias: docker
+  before_script: []
+  script:
+    - cd $CI_PROJECT_DIR
+    #                                                      $IMAGE_TAG              $IMAGE_REPO              $EXTRA_TAG            $BASE_REPO           $BASE_TAG
+    - ./omnibus/package-scripts/publish_swarm_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_SWARM $CI_COMMIT_SHORT_SHA $STS_DOCKER_TEST_REPO $CI_COMMIT_SHORT_SHA
+  tags:
+    - sts-k8s-m-runner
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+
 pre_release_trace_agent_image:
   <<: *pre_release_image
   interruptible: true
@@ -1209,8 +1236,7 @@ molecule_swarm_test:
   variables:
     MOLECULE_SCENARIO: swarm
   needs:
-    - pre_release_cluster_agent_image
-    - pre_release_main_agent_image
+    - pre_release_swarm_agent_image
     - molecule_swarm_create
 
 molecule_swarm_failure_cleanup:
@@ -1424,3 +1450,14 @@ release_cluster_agent_image:
     - ./omnibus/package-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent latest
   rules:
     - *cluster_agent_release
+
+release_swarm_agent_image:
+  <<: *base_release_image
+  interruptible: true
+  script:
+    - cd $CI_PROJECT_DIR
+    #                                                 $IMAGE_TAG          $IMAGE_REPO        $EXTRA_TAG      $BASE_REPO       $BASE_TAG
+    - ./omnibus/package-scripts/publish_swarm_image.sh $VERSION $STS_DOCKER_RELEASE_REPO_SWARM latest $STS_DOCKER_RELEASE_REPO $VERSION
+  rules:
+    - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
+      when: manual
