@@ -9,6 +9,7 @@ BASE_REPO="${4}"
 BASE_TAG="${5}"
 DOCKERFILE_PATH="${CI_PROJECT_DIR}/Dockerfiles/swarm-agent"
 REGISTRY="quay.io"
+REGISTRY_DOCKERHUB="docker.io"
 ORGANIZATION="stackstate"
 
 echo "BASE_TAG=${BASE_TAG}"
@@ -19,6 +20,7 @@ echo "DOCKERFILE_PATH=${DOCKERFILE_PATH}"
 
 BUILD_TAG="${IMAGE_REPO}:${IMAGE_TAG}"
 
+docker login -u "${docker_user}" -p "${docker_password}" "${REGISTRY_DOCKERHUB}"
 docker login -u "${quay_user}" -p "${quay_password}" "${REGISTRY}"
 
 docker build --build-arg BASE_REPO=${BASE_REPO} --build-arg BASE_TAG=${BASE_TAG} -t "${BUILD_TAG}" "${DOCKERFILE_PATH}"
