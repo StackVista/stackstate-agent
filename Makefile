@@ -5,7 +5,7 @@ SHELL         := /bin/bash
 
 UID    ?= $(shell id -u)
 GID    ?= $(shell id -g)
-# Workaround for target completion, because Makefile does not like : in the target commands test
+# Workaround for target completion, because Makefile does not like : in the target commands
 colon  := :
 
 LOCAL_BUILD_IMAGE  = stackstate-agent-local-build

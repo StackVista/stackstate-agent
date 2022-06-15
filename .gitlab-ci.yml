@@ -170,7 +170,7 @@ agent3:
    - *other_files_rule
    - *md_only_rule
    - <<: *exclude_on_cluster_agent
-   # exclude this pipeline if we're running a v2 tag pipeline
+   # exclude this pipeline if we're running a v2 tag pipeline test
    - <<: *exclude_on_tag_v2
    - if: $CI_COMMIT_MESSAGE =~ /\[py2]/
      when: never
