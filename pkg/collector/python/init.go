@@ -219,7 +219,7 @@ void SetTransactionState(char *, char *, char *);
 void initTransactionalStateModule(rtloader_t *rtloader) {
 	set_start_transaction_cb(rtloader, StartTransaction);
 	set_stop_transaction_cb(rtloader, StopTransaction);
-	set_discard_transaction_cb(rtlaoder, DiscardTransaction);
+	set_discard_transaction_cb(rtloader, DiscardTransaction);
 	set_transaction_state_cb(rtloader, SetTransactionState);
 }
 
