@@ -6,6 +6,7 @@
 - Support for using agents persistent cache [STAC-16162](https://stackstate.atlassian.net/browse/STAC-16162)
 - Added topology element deletion [STAC-14816](https://stackstate.atlassian.net/browse/STAC-14816)
 - Added Dynatrace support for synthetic checks [STAC-14511](https://stackstate.atlassian.net/browse/STAC-14511)
+- Discover relations from service to [static pods](https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/) (specifically, kubernetes service to kube-apiserver pods) [STAC-16815](https://stackstate.atlassian.net/browse/STAC-16815)
 
 **Improvements**
 - Added collection level setting info [STAC-14671](https://stackstate.atlassian.net/browse/STAC-14671)

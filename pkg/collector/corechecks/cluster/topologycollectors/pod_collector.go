@@ -17,6 +17,7 @@ type PodCollector struct {
 	RelationChan      chan<- *topology.Relation
 	ContainerCorrChan chan<- *ContainerCorrelation
 	VolumeCorrChan    chan<- *VolumeCorrelation
+	PodCorrChan       chan *PodEndpointCorrelation
 	ClusterTopologyCollector
 }
 
@@ -27,15 +28,21 @@ type ContainerPort struct {
 }
 
 // NewPodCollector
-func NewPodCollector(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation,
-	containerCorrChannel chan<- *ContainerCorrelation, volumeCorrChannel chan<- *VolumeCorrelation,
-	clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
+func NewPodCollector(
+	componentChannel chan<- *topology.Component,
+	relationChannel chan<- *topology.Relation,
+	containerCorrChannel chan<- *ContainerCorrelation,
+	volumeCorrChannel chan<- *VolumeCorrelation,
+	podCorrChannel chan *PodEndpointCorrelation,
+	clusterTopologyCollector ClusterTopologyCollector,
+) ClusterTopologyCollector {
 
 	return &PodCollector{
 		ComponentChan:            componentChannel,
 		RelationChan:             relationChannel,
 		ContainerCorrChan:        containerCorrChannel,
 		VolumeCorrChan:           volumeCorrChannel,
+		PodCorrChan:              podCorrChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
 }
@@ -101,6 +108,10 @@ func (pc *PodCollector) CollectorFunction() error {
 			pc.RelationChan <- pc.namespaceToPodStackStateRelation(pc.buildNamespaceExternalID(pod.Namespace), component.ExternalID)
 		}
 
+		isServingInHostNetwork :=
+			pod.Spec.HostNetwork && pod.Status.Phase == v1.PodRunning &&
+				pod.Status.PodIP == pod.Status.HostIP
+
 		for _, c := range pod.Spec.Containers {
 			// map relations to config map
 			for _, env := range c.EnvFrom {
@@ -117,6 +128,21 @@ func (pc *PodCollector) CollectorFunction() error {
 					pc.RelationChan <- pc.podToConfigMapVarStackStateRelation(component.ExternalID, pc.buildConfigMapExternalID(pod.Namespace, env.ValueFrom.ConfigMapKeyRef.LocalObjectReference.Name))
 				} else if env.ValueFrom != nil && env.ValueFrom.SecretKeyRef != nil {
 					pc.RelationChan <- pc.podToSecretVarStackStateRelation(component.ExternalID, pc.buildSecretExternalID(pod.Namespace, env.ValueFrom.SecretKeyRef.LocalObjectReference.Name))
+				}
+			}
+
+			if isServingInHostNetwork {
+				for _, port := range c.Ports {
+					if port.HostPort == 0 {
+						continue
+					}
+					podEndpointCorrelation := &PodEndpointCorrelation{
+						Endpoint:     fmt.Sprintf("%s:%d", pod.Status.HostIP, port.HostPort),
+						PodNamespace: pod.Namespace,
+						PodName:      pod.Name,
+					}
+					log.Debugf("publishing endpoint correlation for Pod: %v", podEndpointCorrelation)
+					pc.PodCorrChan <- podEndpointCorrelation
 				}
 			}
 		}
@@ -145,10 +171,11 @@ func (pc *PodCollector) CollectorFunction() error {
 		}
 	}
 
-	// close container correlation channel
+	// close correlation channels
+	// that will signal the correlators to proceed
 	close(pc.ContainerCorrChan)
-	// close container correlation channel
 	close(pc.VolumeCorrChan)
+	close(pc.PodCorrChan)
 
 	return nil
 }
