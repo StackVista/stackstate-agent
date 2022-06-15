@@ -90,60 +90,28 @@ variables: &commonvariables
   STS_DOCKER_TEST_REPO: stackstate-agent-test
   # we do not build trace-agent and cluster-agent for v2
 
-.changes_common: &changes_common
-  - "**/*.c"
-  - "**/*.cfg"
-  - "**/*.cmake"
-  - "**/*.cmd"
-  - "**/*.cpp"
-  - "**/*.cxx"
-  - "**/*.dockerignore"
-  - "**/*.dogsketch"
-  - "**/*.dot"
-  - "**/*.go"
-  - "**/*.gradle"
-  - "**/*.h"
-  - "**/*.hcl"
-  - "**/*.hpp"
-  - "**/*.ini"
-  - "**/*.jar"
-  - "**/*.java"
-  - "**/*.js"
-  - "**/*.json"
-  - "**/*.make"
-  - "**/*.mod"
-  - "**/*.proto"
-  - "**/*.py"
-  - "**/*.rb"
-  - "**/*.sh"
-  - "**/*.swift"
-  - "**/*.xml"
-  - "**/*.yml"
-  - "**/*.yaml"
-  - "**/Dockerfile*"
-  - "**/Gemfile*"
-  - "**/Makefile*"
-  - "**/Vagrantfile*"
-
 .other_files_rule: &other_files_rule
   # If it is an agent v2 child pipeline
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
     # Check if any files (not MD) changed
+    # Glob syntax that checks for changes in all files except files that end with .md extension.
+    # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
     changes:
-      *changes_common
-    # If agent v2 and any not-MD files changed, don't run the pipeline.
+      - "**/{.*,!(*.md)}"
+    # If agent v2 and any non-MD files changed, don't run the pipeline.
     when: always
   # agent v3 scenario
   - changes:
-      *changes_common
+      - "**/{.*,!(*.md)}"
     when: always
-
 
 # What happens if I updated CHANGELOG.md and some python file?
 .md_only_rule: &md_only_rule
   # If it is an agent v2 child pipeline
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
     # Check if any MD files changed
+    # Glob syntax that checks for changes in files ending with .md extension.
+    # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
     changes:
       - "**/*.md"
     # If agent v2 and any MD files changed, don't run the pipeline.
