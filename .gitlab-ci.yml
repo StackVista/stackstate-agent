@@ -110,14 +110,14 @@ variables: &commonvariables
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
     # Check if any MD files changed
     changes:
-      - /(.md)
+      - /\.md
     # If agent v2 and any MD files changed, don't run the pipeline.
     when: manual
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
     allow_failure: true
   # agent v3 scenario
   - changes:
-      - /(.md)
+      - /\.md
     when: manual
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
     allow_failure: true
