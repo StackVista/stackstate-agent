@@ -708,7 +708,7 @@ DATADOG_AGENT_RTLOADER_API void set_submit_raw_metrics_data_cb(rtloader_t *, cb_
 
 
 /*! \fn void set_start_transaction_cb(rtloader_t *, cb_start_transaction_t)
-    \brief Sets a callback to be used by rtloader to start a transactional state for the Agent Check.
+    \brief Sets a callback to be used by rtloader to start a transaction for the Agent Check.
     \param rtloader_t A rtloader_t * pointer to the RtLoader instance.
     \param object A function pointer with cb_start_transaction_t prototype to the callback
     function.
@@ -719,7 +719,7 @@ DATADOG_AGENT_RTLOADER_API void set_start_transaction_cb(rtloader_t *, cb_start_
 
 
 /*! \fn void set_stop_transaction_cb(rtloader_t *, cb_stop_transaction_t)
-    \brief Sets a callback to be used by rtloader to stop a transactional state for the Agent Check.
+    \brief Sets a callback to be used by rtloader to stop a transaction for the Agent Check.
     \param rtloader_t A rtloader_t * pointer to the RtLoader instance.
     \param object A function pointer with cb_stop_transaction_t prototype to the callback
     function.
@@ -728,6 +728,15 @@ DATADOG_AGENT_RTLOADER_API void set_start_transaction_cb(rtloader_t *, cb_start_
 */
 DATADOG_AGENT_RTLOADER_API void set_stop_transaction_cb(rtloader_t *, cb_stop_transaction_t);
 
+/*! \fn void set_discard_transaction_cb(rtloader_t *, cb_discard_transaction_t)
+    \brief Sets a callback to be used by rtloader to cancel a transaction for the Agent Check.
+    \param rtloader_t A rtloader_t * pointer to the RtLoader instance.
+    \param object A function pointer with cb_discard_transaction_t prototype to the callback
+    function.
+
+    The callback is expected to be provided by the rtloader caller - in go-context: CGO.
+*/
+DATADOG_AGENT_RTLOADER_API void set_discard_transaction_cb(rtloader_t *, cb_discard_transaction_t);
 
 /*! \fn void set_transaction_state_cb(rtloader_t *, cb_set_transaction_state_t)
     \brief Sets a callback to be used by rtloader to set a transactional state for the Agent Check.

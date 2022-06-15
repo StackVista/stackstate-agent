@@ -241,7 +241,7 @@ func TestCheckHandlerAPI(t *testing.T) {
 		assert.True(t, found, "check state for %s was not found", ch.ID())
 		assert.EqualValues(t, batchState, actualState)
 
-		ch.CancelTransaction("test cancel transaction")
+		ch.DiscardTransaction("test cancel transaction")
 
 		time.Sleep(100 * time.Millisecond)
 		postCancelState, found := mockBatcher.GetCheckState(ch.ID())

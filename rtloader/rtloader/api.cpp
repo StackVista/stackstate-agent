@@ -574,6 +574,10 @@ void set_stop_transaction_cb(rtloader_t *rtloader, cb_stop_transaction_t cb)
 {
     AS_TYPE(RtLoader, rtloader)->setStopTransactionCb(cb);
 }
+void set_discard_transaction_cb(rtloader_t *rtloader, cb_discard_transaction_t cb)
+{
+    AS_TYPE(RtLoader, rtloader)->setDiscardTransactionCb(cb);
+}
 void set_transaction_state_cb(rtloader_t *rtloader, cb_set_transaction_state_t cb)
 {
     AS_TYPE(RtLoader, rtloader)->setTransactionStateCb(cb);
