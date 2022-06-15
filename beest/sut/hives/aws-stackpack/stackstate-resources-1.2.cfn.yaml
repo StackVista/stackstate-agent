@@ -508,7 +508,7 @@ Outputs:
     Export:
       Name: !Sub ${AWS::StackName}-StackStateKmsKeyArn
   StackStateLogsBucketArn:
-    Value: !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}
+    Value: !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}${PostFix}
     Export:
       Name: !Sub ${AWS::StackName}-StackStateLogsBucketArn
   StackStateIntegrationRole:
