@@ -95,12 +95,12 @@ variables: &commonvariables
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
     # Check if any files (not MD) changed
     changes:
-      - "**/?(!(*.md))"
+      - "**/{,!(*.md),.*}"
     # If agent v2 and any not-MD files changed, don't run the pipeline.
     when: always
   # agent v3 scenario
   - changes:
-      - "**/?(!(*.md))"
+      - "**/{,!(*.md),.*}"
     when: always
 
 
