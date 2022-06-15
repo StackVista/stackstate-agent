@@ -153,6 +153,7 @@ variables: &commonvariables
   # agent v3 scenario
   - changes:
       - "**/*.md"
+      - "**/!(*)"
     when: manual
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
     allow_failure: true
