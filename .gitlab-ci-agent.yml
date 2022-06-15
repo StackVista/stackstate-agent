@@ -1439,6 +1439,7 @@ release_swarm_agent_image:
   <<: *base_release_image
   interruptible: true
   needs:
+    - build_deb
     - release_main_agent_image
   script:
     - cd $CI_PROJECT_DIR
