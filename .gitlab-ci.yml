@@ -104,7 +104,7 @@ variables: &commonvariables
     when: always
 
 
-# What happens if I updated CHANGELOG.md and some python file? test
+# What happens if I updated CHANGELOG.md and some python file?
 .md_only_rule: &md_only_rule
   # If it is an agent v2 child pipeline
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
