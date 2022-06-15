@@ -5,7 +5,6 @@ output "api_url" {
 resource "local_file" "ansible_inventory" {
   filename        = "${path.module}/ansible_inventory"
   content         = <<INVENTORY
-
 [local]
 localhost ansible_connection=local
 

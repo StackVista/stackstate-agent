@@ -1,60 +1,73 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  Main CloudFormation template to be placed in every account where information is being captured.
-  This template will capture information for one region, ensure it has been deployed in each region where you wish to capture events.
+  Main CloudFormation template to be placed in every account which need to be monitored.
+  This template will capture information for one region, ensure it has been deployed in each region which you want to monitor.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Agent Access
+        Parameters:
+          - StsAccountId
+          - MainRegion
+          - ExternalId
+      - Label:
+          default: Open Telemetry
+        Parameters:
+          - IncludeOpenTelemetryTracing
+      - Label:
+          default: Others
+        Parameters:
+          - PostFix
+    ParameterLabels:
+      StsAccountId:
+        default: Account IDs
+      MainRegion:
+        default: Region
+      ExternalId:
+        default: External ID
+      IncludeOpenTelemetryTracing:
+        default: Tracing
+      PostFix:
+        default: Post fix
 
 Parameters:
   StsAccountId:
     Type: String
-    Description: The AWS account ID of the Stackstate agent
+    Description: Comma separated list of AWS account IDs where StackState agent and StackState platform run
     AllowedPattern: >-
-      ^[0-9]{12}$
+      ^([0-9]{12},?)*$
     ConstraintDescription: Value must be a valid AWS account ID
   ExternalId:
     Type: String
-    Description: External ID to be assigned to the IAM role
+    Description: Secret used when assuming the integration IAM role
     AllowedPattern: >-
       [\w+=,.@:\/-]{2,1224}
     ConstraintDescription: "The external ID provided is not valid. Allowed special characters: +=,.@:/-"
   MainRegion:
     Type: String
-    Description: The primary AWS region, global resources will be deployed here
+    Description: Primary AWS region, global resources will be deployed here
     AllowedPattern: >-
       ^[a-z]{2}-([a-z]*-){1,2}[0-9]$
     ConstraintDescription: Value must be a valid AWS region name
   IncludeOpenTelemetryTracing:
-    Description: OpenTelemetry Lambda Layer v0.0.7
+    Description: Enable OpenTelemetry Lambda Layer v0.0.7
     Default: false
     Type: String
     AllowedValues: [true, false]
   PostFix:
-    Description: Post fix value to be used for resource names when deploying the stack multiple times in the same account (optional)
+    Description: Value to append to all resource names when deploying the stack multiple times in the same account (optional)
+    Default: ""
     Type: String
     AllowedPattern: >-
-      ^[-[0-9][a-z]]{1,20}$
+      ^[-\w+]{0,20}$
+    ConstraintDescription: Value must only contain numbers, letter and hyphens
 
 Conditions:
   IsMainRegion: !Equals [!Ref MainRegion, !Ref "AWS::Region"]
   ShouldIncludeOpenTelemetry:
     !Equals [true, !Ref IncludeOpenTelemetryTracing]
-
-Metadata:
-  StackState::TemplateVersion: "1.2.0"
-  AWS::CloudFormation::Interface:
-    ParameterGroups:
-      - Label:
-          default: Agent Access
-          Parameters:
-            - StackStateAccountId
-            - ExternalId
-            - MainRegion
-    ParameterLabels:
-      StsAccountId:
-        default: AWS account ID of the Stackstate agent
-      ExternalId:
-        default: External ID given by stackstate agent
-      MainRegion:
-        default: Primary AWS Region
 
 Resources:
   StsRole:
@@ -67,7 +80,7 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Ref StsAccountId
+              AWS: !Split [",", !Ref StsAccountId]
             Action:
               - sts:AssumeRole
             Condition:
@@ -498,3 +511,7 @@ Outputs:
     Value: !Sub arn:${AWS::Partition}:s3:::stackstate-logs-${AWS::AccountId}${PostFix}
     Export:
       Name: !Sub ${AWS::StackName}-StackStateLogsBucketArn
+  StackStateIntegrationRole:
+    Value: !Ref StsRole
+    Export:
+      Name: !Sub ${AWS::StackName}-StackStateIntegrationRole
