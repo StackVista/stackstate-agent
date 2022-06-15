@@ -544,6 +544,8 @@ pre_release_main_agent_image: &pre_release_image
 
 pre_release_swarm_agent_image:
   <<: *pre_release_image
+  dependencies:
+    - pre_release_main_agent_image
   script:
     - cd $CI_PROJECT_DIR
     #                     script                           $IMAGE_TAG              $IMAGE_REPO              $EXTRA_TAG            $BASE_REPO           $BASE_TAG
