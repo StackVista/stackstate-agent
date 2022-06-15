@@ -43,7 +43,8 @@ func testDiscardTransaction(t *testing.T) {
 	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(testCheck.String())
-	cancelReason := C.CString("test-transacation-cancel")
+	cancelReasonString := "test-transacation-cancel"
+	cancelReason := C.CString(cancelReasonString)
 
 	StartTransaction(checkId)
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
@@ -56,7 +57,9 @@ func testDiscardTransaction(t *testing.T) {
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
 	transactionID = mockTransactionalManager.GetCurrentTransaction()
-	assert.Empty(t, transactionID)
+
+	discardAction := mockTransactionalManager.NextAction().(transactionmanager.DiscardTransaction)
+	assert.Equal(t, transactionmanager.DiscardTransaction{TransactionID: transactionID, Reason: cancelReasonString}, discardAction)
 
 	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }

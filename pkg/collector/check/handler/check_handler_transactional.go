@@ -118,9 +118,6 @@ currentTxHandler:
 				// trigger failed transaction
 				transactionmanager.GetTransactionManager().DiscardTransaction(ch.GetCurrentTransaction(), msg.Reason)
 
-				// clear current transaction
-				ch.clearCurrentTransaction()
-
 			case SubmitSetTransactionState:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Submitting set transaction state: %s -> %s", logPrefix, msg.Key, msg.State)
