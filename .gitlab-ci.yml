@@ -90,41 +90,6 @@ variables: &commonvariables
   STS_DOCKER_TEST_REPO: stackstate-agent-test
   # we do not build trace-agent and cluster-agent for v2
 
-.changes_common: &changes_common
-  - "**/*.c"
-  - "**/*.cfg"
-  - "**/*.cmake"
-  - "**/*.cmd"
-  - "**/*.cpp"
-  - "**/*.cxx"
-  - "**/*.dockerignore"
-  - "**/*.dogsketch"
-  - "**/*.dot"
-  - "**/*.go"
-  - "**/*.gradle"
-  - "**/*.h"
-  - "**/*.hcl"
-  - "**/*.hpp"
-  - "**/*.ini"
-  - "**/*.jar"
-  - "**/*.java"
-  - "**/*.js"
-  - "**/*.json"
-  - "**/*.make"
-  - "**/*.mod"
-  - "**/*.proto"
-  - "**/*.py"
-  - "**/*.rb"
-  - "**/*.sh"
-  - "**/*.swift"
-  - "**/*.xml"
-  - "**/*.yml"
-  - "**/*.yaml"
-  - "**/Dockerfile*"
-  - "**/Gemfile*"
-  - "**/Makefile*"
-  - "**/Vagrantfile*"
-
 .other_files_rule: &other_files_rule
   # If it is an agent v2 child pipeline
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
