@@ -91,7 +91,7 @@ variables: &commonvariables
   # we do not build trace-agent and cluster-agent for v2
 
 .other_files_rule: &other_files_rule
-  # If it is an agent v2 child pipeline
+  # If it is an agent v2 child pipeline test
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
     # Check if any files (not MD) changed
     changes:
