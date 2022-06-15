@@ -23,6 +23,7 @@ import (
 
 extern void startTransaction(char *);
 extern void stopTransaction(char *);
+extern void discardTransaction(char *, char *);
 extern void setTransactionState(char *, char *, char *);
 
 static void initTransactionTests(rtloader_t *rtloader) {
