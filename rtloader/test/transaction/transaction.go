@@ -140,11 +140,11 @@ func stopTransaction(id *C.char) {
 //export discardTransaction
 func discardTransaction(id *C.char, reason *C.char) {
 	checkID = C.GoString(id)
-	reason = C.GoString(reason)
+	discardReason := C.GoString(reason)
 
 	transactionID = ""
 	transactionCompleted = true
-	transactionDiscardReason = reason
+	transactionDiscardReason = discardReason
 }
 
 //export setTransactionState
