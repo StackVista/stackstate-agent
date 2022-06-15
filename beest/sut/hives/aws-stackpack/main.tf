@@ -22,6 +22,20 @@ resource "aws_cloudformation_stack" "cfn_stackpack" {
   template_body = file("${path.module}/stackstate-resources-1.2.cfn.yaml")
 }
 
+data "aws_iam_role" "integration_role" {
+  name = aws_cloudformation_stack.cfn_stackpack.outputs.StackStateIntegrationRole
+}
+
+
+data "aws_iam_policy_document" "integration_assume_role_policy" {
+  statement {
+    actions   = ["sts:AssumeRole"]
+    resources = ["arn:aws:iam::*:role/${data.aws_iam_role.integration_role.name}"]
+    effect    = "Allow"
+  }
+}
+
+// for a IAM User
 resource "aws_iam_user" "integration_user" {
   name = "${var.environment}-integration-user"
 }
@@ -36,19 +50,32 @@ resource "aws_iam_user_policy" "integration_user_policy" {
   policy = data.aws_iam_policy_document.integration_assume_role_policy.json
 }
 
-data "aws_iam_policy_document" "integration_assume_role_policy" {
-  statement {
-    actions   = ["sts:AssumeRole"]
-    resources = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${data.aws_iam_role.integration_role.name}"]
-    effect    = "Allow"
-  }
+// for a EC2 instance
+resource "aws_iam_role" "agent_ec2_role" {
+  name = "${var.environment}-agent-ec2-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Sid    = ""
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      },
+    ]
+  })
 }
 
-data "aws_iam_role" "integration_role" {
-  name = aws_cloudformation_stack.cfn_stackpack.outputs.StackStateIntegrationRole
+resource "aws_iam_role_policy" "test_policy" {
+  name = "${var.environment}-agent-ec2-policy"
+  role = aws_iam_role.agent_ec2_role.id
+  policy = data.aws_iam_policy_document.integration_assume_role_policy.json
 }
 
 resource "aws_iam_instance_profile" "integrations_profile" {
   name = "${var.environment}-instance-profile"
-  role = data.aws_iam_role.integration_role.name
+  role = aws_iam_role.agent_ec2_role.name
 }

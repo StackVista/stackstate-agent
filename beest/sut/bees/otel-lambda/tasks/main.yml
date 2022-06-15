@@ -8,7 +8,7 @@
       community.aws.s3_sync:
         bucket: '{{ bucket }}'
         file_root: "{{ code_zip }}"
-        key_prefix: "{{ansible_date_time.iso8601_basic}}"
+        key_prefix: "{{ ansible_date_time.iso8601_basic }}"
         permission: public-read
         region: eu-west-1
       register: find_output

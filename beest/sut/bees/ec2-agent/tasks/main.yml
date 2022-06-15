@@ -10,7 +10,7 @@
       delay: 60
       environment:
         STS_API_KEY: "{{ sts_api_key }}"
-        STS_URL: "{{ sts_url }}"
+        STS_URL: "{{ sts_url }}/receiver/stsAgent"
         STS_HOSTNAME: "{{ inventory_hostname }}"
         CODE_NAME: "{{ agent_current_branch }}"
         SKIP_SSL_VALIDATION: "false"
@@ -19,7 +19,13 @@
       become: yes
       ansible.builtin.template:
         src: aws_topology_conf.j2.yml
-        dest: /etc/stackstate-agent/conf.d/aws_topology/conf.yaml
+        dest: /etc/stackstate-agent/conf.d/aws_topology.d/conf.yaml
         owner: stackstate-agent
         group: stackstate-agent
         mode: '0644'
+
+    - name: Restart stackstate-agent
+      become: yes
+      ansible.builtin.service:
+        name: stackstate-agent
+        state: restarted
