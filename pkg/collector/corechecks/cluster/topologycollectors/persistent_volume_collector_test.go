@@ -19,7 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func TestPersistentVolumeCollector(t *testing.T) {
+func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 
 	componentChannel := make(chan *topology.Component)
 	defer close(componentChannel)
@@ -416,7 +416,129 @@ func TestPersistentVolumeCollector(t *testing.T) {
 			},
 		} {
 			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
-				cmc := NewPersistentVolumeCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(tc.apiCollectorClientFactory(), sourcePropertiesEnabled))
+				cmc := NewPersistentVolumeCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(tc.apiCollectorClientFactory(), sourcePropertiesEnabled), true)
+				expectedCollectorName := "Persistent Volume Collector"
+				RunCollectorTest(t, cmc, expectedCollectorName)
+
+				for _, a := range tc.assertions {
+					a(t)
+				}
+			})
+		}
+	}
+}
+
+func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
+
+	componentChannel := make(chan *topology.Component)
+	defer close(componentChannel)
+
+	relationChannel := make(chan *topology.Relation)
+	defer close(relationChannel)
+
+	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
+	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
+	csiPersistentVolume := coreV1.CSIPersistentVolumeSource{
+		Driver:       "csi.trident.netapp.io",
+		VolumeHandle: "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+		ReadOnly:     false,
+		VolumeAttributes: map[string]string{
+			"backendUUID":  "127ebcb8-15gs-4fq1-acbn-021245ghgd05",
+			"internalName": "NPO_TEST_pvc_0c8f1r14_a12a_1234_x1v2_b8b12341c1ab",
+			"name":         "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+			"protocol":     "file",
+			"storage.kubernetes.io/csiProvisionerIdentity": "1245742285214-1234-csi.trident.netapp.io",
+		},
+	}
+
+	for _, sourcePropertiesEnabled := range []bool{false, true} {
+		for _, tc := range []struct {
+			testCase                  string
+			apiCollectorClientFactory func() apiserver.APICollectorClient
+			assertions                []func(t *testing.T)
+		}{
+			{
+				testCase: "Test Persistent Volume 4 - Trident CSI Storage",
+				apiCollectorClientFactory: func() apiserver.APICollectorClient {
+					return &MockPersistentVolumeAPICollectorClient{getPersistentVolumes: func() ([]coreV1.PersistentVolume, error) {
+						persistentVolume := NewTestPV("trident-csi-storage-volume")
+						persistentVolume.Spec.PersistentVolumeSource = coreV1.PersistentVolumeSource{
+							CSI: &csiPersistentVolume,
+						}
+						return []coreV1.PersistentVolume{persistentVolume}, nil
+					}}
+				},
+				assertions: []func(*testing.T){
+					func(t *testing.T) {
+						component := <-componentChannel
+						expected :=
+							chooseBySourcePropertiesFeature(
+								sourcePropertiesEnabled,
+								&topology.Component{
+									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/trident-csi-storage-volume",
+									Type:       topology.Type{Name: "persistent-volume"},
+									Data: topology.Data{
+										"name":              "trident-csi-storage-volume",
+										"creationTimestamp": creationTime,
+										"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+										"uid":               types.UID("trident-csi-storage-volume"),
+										"identifiers":       []string{},
+										"status":            coreV1.VolumeAvailable,
+										"statusMessage":     "Volume is available for use",
+										"storageClassName":  "Storage-Class-Name",
+									},
+								},
+								&topology.Component{
+									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/trident-csi-storage-volume",
+									Type:       topology.Type{Name: "persistent-volume"},
+									Data: topology.Data{
+										"name":        "trident-csi-storage-volume",
+										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+										"identifiers": []string{},
+									},
+									SourceProperties: map[string]interface{}{
+										"metadata": map[string]interface{}{
+											"creationTimestamp": creationTimeFormatted,
+											"labels":            map[string]interface{}{"test": "label"},
+											"name":              "trident-csi-storage-volume",
+											"namespace":         "test-namespace",
+											"uid":               "trident-csi-storage-volume",
+										},
+										"spec": map[string]interface{}{
+											"persistentVolumeSource": map[string]interface{}{
+												"csi": map[string]interface{}{
+													"driver":       "csi.trident.netapp.io",
+													"volumeHandle": "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+													"volumeAttributes": map[string]interface{}{
+														// Since the mapCSIPersistentVolume is disabled, `driver` and `kind` are not added
+														//"driver":       "csi.trident.netapp.io",
+														//"kind":         "csi",
+														"backendUUID":  "127ebcb8-15gs-4fq1-acbn-021245ghgd05",
+														"internalName": "NPO_TEST_pvc_0c8f1r14_a12a_1234_x1v2_b8b12341c1ab",
+														"name":         "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+														"protocol":     "file",
+														"storage.kubernetes.io/csiProvisionerIdentity": "1245742285214-1234-csi.trident.netapp.io",
+													},
+												},
+											},
+											"storageClassName": "Storage-Class-Name"},
+										"status": map[string]interface{}{
+											"phase":   "Available",
+											"message": "Volume is available for use",
+										},
+									},
+								},
+							)
+						assert.EqualValues(t, expected, component)
+					},
+					func(t *testing.T) {
+						assert.Equal(t, 0, len(relationChannel))
+					},
+				},
+			},
+		} {
+			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
+				cmc := NewPersistentVolumeCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(tc.apiCollectorClientFactory(), sourcePropertiesEnabled), false)
 				expectedCollectorName := "Persistent Volume Collector"
 				RunCollectorTest(t, cmc, expectedCollectorName)
 

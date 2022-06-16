@@ -34,7 +34,8 @@ var allPersistentVolumeSourceMappers = []PersistentVolumeSourceMapper{
 	mapScaleIoPersistentVolume,
 	mapStorageOsPersistentVolume,
 	mapVspherePersistentVolume,
-	mapCSIPersistentVolume,
+	// CSI PV mapper not enabled by default
+	//mapCSIPersistentVolume,
 }
 
 func mapAwsEbsPersistentVolume(pc *PersistentVolumeCollector, volume v1.PersistentVolume) (*topology.Component, error) {
