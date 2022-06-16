@@ -90,6 +90,41 @@ variables: &commonvariables
   STS_DOCKER_TEST_REPO: stackstate-agent-test
   # we do not build trace-agent and cluster-agent for v2
 
+.other_files_rule: &other_files_rule
+  # If it is an agent v2 child pipeline
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
+    # Check if any files (not MD) changed
+    # Glob syntax that checks for changes in all files except files that end with .md extension.
+    # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
+    changes:
+      - "**/{.*,!(*.md)}"
+    # If agent v2 and any non-MD files changed, don't run the pipeline.
+    when: always
+  # agent v3 scenario
+  - changes:
+      - "**/{.*,!(*.md)}"
+    when: always
+
+# What happens if I updated CHANGELOG.md and some python file?
+.md_only_rule: &md_only_rule
+  # If it is an agent v2 child pipeline
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
+    # Check if any MD files changed
+    # Glob syntax that checks for changes in files ending with .md extension.
+    # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
+    changes:
+      - "**/*.md"
+    # If agent v2 and any MD files changed, don't run the pipeline.
+    when: manual
+    # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
+    allow_failure: true
+  # agent v3 scenario
+  - changes:
+      - "**/*.md"
+    when: manual
+    # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
+    allow_failure: true
+
 .rules:
   - &exclude_on_cluster_agent
     if: $CI_COMMIT_MESSAGE =~ /\[cluster-agent]/
@@ -113,6 +148,8 @@ agent2:
     include: .gitlab-ci-agent.yml
     strategy: depend
   rules:
+    - *other_files_rule
+    - *md_only_rule
     - <<: *exclude_on_cluster_agent
     # exclude this pipeline if we're running a v3 tag pipeline
     - <<: *exclude_on_tag_v3
@@ -133,6 +170,8 @@ agent3:
    include: .gitlab-ci-agent.yml
    strategy: depend
  rules:
+   - *other_files_rule
+   - *md_only_rule
    - <<: *exclude_on_cluster_agent
    # exclude this pipeline if we're running a v2 tag pipeline
    - <<: *exclude_on_tag_v2
