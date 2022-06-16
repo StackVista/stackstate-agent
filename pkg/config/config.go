@@ -418,7 +418,7 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("collect_kubernetes_timeout", 10)
 	config.BindEnvAndSetDefault("configmap_max_datasize", 0)                  // sts
 	config.BindEnvAndSetDefault("kubernetes_source_properties_enabled", true) // sts
-	config.BindEnvAndSetDefault("kubernetes_csi_pv_mapper_enabled", true)     // sts
+	config.BindEnvAndSetDefault("kubernetes_csi_pv_mapper_enabled", false)     // sts
 	config.BindEnvAndSetDefault("kubelet_client_ca", "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
 
 	config.BindEnvAndSetDefault("kubelet_auth_token_path", "")
