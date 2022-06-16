@@ -82,9 +82,9 @@ func (ttm *MockTransactionManager) CompleteTransaction(transactionID string) {
 	ttm.TransactionActions <- CompleteTransaction{TransactionID: transactionID}
 }
 
-// RollbackTransaction sends a RollbackTransaction to the TransactionActions channel to be used in assertions
-func (ttm *MockTransactionManager) RollbackTransaction(transactionID, reason string) {
-	ttm.TransactionActions <- RollbackTransaction{TransactionID: transactionID, Reason: reason}
+// DiscardTransaction sends a DiscardTransaction to the TransactionActions channel to be used in assertions
+func (ttm *MockTransactionManager) DiscardTransaction(transactionID, reason string) {
+	ttm.TransactionActions <- DiscardTransaction{TransactionID: transactionID, Reason: reason}
 }
 
 // CommitAction sends a CommitAction to the TransactionActions channel to be used in assertions

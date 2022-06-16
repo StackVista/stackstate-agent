@@ -57,9 +57,9 @@ func (txm *transactionManager) SetState(transactionID, key string, state string)
 	}
 }
 
-// RollbackTransaction rolls back a transaction for a given transactionID and a reason for the rollback
-func (txm *transactionManager) RollbackTransaction(transactionID, reason string) {
-	txm.transactionChannel <- RollbackTransaction{
+// DiscardTransaction rolls back a transaction for a given transactionID and a reason for the discard
+func (txm *transactionManager) DiscardTransaction(transactionID, reason string) {
+	txm.transactionChannel <- DiscardTransaction{
 		TransactionID: transactionID,
 		Reason:        reason,
 	}

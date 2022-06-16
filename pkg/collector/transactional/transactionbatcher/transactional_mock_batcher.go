@@ -116,6 +116,11 @@ func (mtb *MockTransactionalBatcher) SubmitClearState(checkID check.ID) {
 
 // SubmitComplete signals completion of a check. May trigger a flush only if the check produced data
 func (mtb *MockTransactionalBatcher) SubmitComplete(checkID check.ID) {
+	mtb.mux.Lock()
+	// for the mock let's set this as the state again so we can assert it in the tests
+	flushedStates := mtb.CollectedTopology.FlushOnComplete(checkID)
+	mtb.CollectedTopology.states = flushedStates
+	mtb.mux.Unlock()
 }
 
 // Stop shuts down the transactionbatcher and resets the singleton init

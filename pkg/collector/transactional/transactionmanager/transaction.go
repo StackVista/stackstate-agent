@@ -95,13 +95,13 @@ type EvictedTransaction struct {
 	TransactionID string
 }
 
-// RollbackTransaction rolls back a transaction and marks a transaction as a failure.
-type RollbackTransaction struct {
+// DiscardTransaction rolls back a transaction and marks a transaction as a failure.
+type DiscardTransaction struct {
 	TransactionID, Reason string
 }
 
-// Error returns a string representing the RollbackTransaction.
-func (r RollbackTransaction) Error() string {
+// Error returns a string representing the DiscardTransaction.
+func (r DiscardTransaction) Error() string {
 	return fmt.Sprintf("rolling back transaction %s. %s", r.TransactionID, r.Reason)
 }
 

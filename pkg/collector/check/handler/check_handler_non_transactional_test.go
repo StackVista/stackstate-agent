@@ -22,6 +22,12 @@ func TestCheckHandlerNonTransactionalAPI(t *testing.T) {
 	nonTransactionCH := MakeNonTransactionalCheckHandler(testCheck, &check.TestCheckReloader{},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 
+	assert.Equal(t, "NonTransactionalCheckHandler", nonTransactionCH.Name())
+	// call these to ensure they cause no errors
+	nonTransactionCH.CancelTransaction("none")
+	nonTransactionCH.StopTransaction()
+	nonTransactionCH.SetTransactionState("", "")
+
 	mockBatcher := batcher.NewMockBatcher()
 
 	nonTransactionCH.SubmitStartSnapshot(instance)
@@ -91,12 +97,7 @@ func TestNonTransactionalCheckHandler_StartTransaction(t *testing.T) {
 	assert.Equal(t, "TransactionalCheckHandler", transactionalCheckHandler.Name())
 	assert.Equal(t, transactionID, transactionalCheckHandler.GetCurrentTransaction())
 
-	// stop the transactional components
-	transactionbatcher.GetTransactionalBatcher().Stop()
-	transactionmanager.GetTransactionManager().Stop()
-
 	GetCheckManager().Stop()
-
 }
 
 func TestNonTransactionalCheckHandler_State(t *testing.T) {

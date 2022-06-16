@@ -127,9 +127,9 @@ func (ctb *transactionalBatcher) SubmitState(states TransactionCheckInstanceBatc
 		data := ctb.mapStateToPayload(states)
 		payload, err := ctb.marshallPayload(data)
 		if err != nil {
-			// rollback all the transactions in the transactionbatcher states
+			// discard all the transactions in the transactionbatcher states
 			for _, state := range states {
-				transactionmanager.GetTransactionManager().RollbackTransaction(state.Transaction.TransactionID, fmt.Sprintf("Marshall error in payload: %v", data))
+				transactionmanager.GetTransactionManager().DiscardTransaction(state.Transaction.TransactionID, fmt.Sprintf("Marshall error in payload: %v", data))
 			}
 		}
 
