@@ -4,6 +4,10 @@
   block:
     # TODO name: Create code zip bundle
 
+    - setup:
+        gather_subset:
+          - min
+
     - name: Upload code zip bundle
       community.aws.s3_sync:
         bucket: '{{ bucket }}'
@@ -13,7 +17,7 @@
         region: eu-west-1
       register: find_output
 
-    - name: debug
+    - name: Lambda bundle s3 object
       debug:
         var: find_output.filelist_s3[0].s3_path
 

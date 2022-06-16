@@ -27,6 +27,9 @@
     ansible.builtin.command:
       cmd: sts-toolbox generate-values --config "{{ playbook_dir }}/sts-toolbox.yml" --output "{{ playbook_dir }}/stackstate-values.yml"
 
+  - name: StackState base url
+    debug:
+      var: sts_url
 
   - name: Deploy stackstate chart using values files
     kubernetes.core.helm:
@@ -55,6 +58,14 @@
             trace2es:
               replicaCount: 0
 
+  - name: Wait till StackState API is ready
+    kubernetes.core.k8s_info:
+      kind: Pod
+      namespace: "{{ namespace }}"
+      label_selectors:
+        - "app.kubernetes.io/component = api"
+      wait: yes
+      wait_timeout: 900 # in secs
 
 ## Cleanup
 
