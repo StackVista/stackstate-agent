@@ -1,5 +1,10 @@
 # StackState Agent v2 releases
 
+## 2.18.0 (2022-XX-XX)
+
+**Improvements**
+- Upstream upgrade to 7.22.1 _[STAC-16755](https://stackstate.atlassian.net/browse/STAC-16755)
+
 ## 2.17.0 (2022-XX-XX)
 
 **Features**
