@@ -1,5 +1,15 @@
 resource "aws_s3_bucket" "bucket" {
-  bucket = "${var.environment}-lambda-code"
+  bucket        = "${var.environment}-lambda-code"
+  force_destroy = true
+
+  tags = {
+    Environment           = var.environment
+    VantaContainsUserData = false
+    VantaDescription      = "OpenTelemetry Integration resources used in acceptance pipeline"
+    VantaNonProd          = true
+    VantaOwner            = "beest@stackstate.com"
+    VantaUserDataStored   = "NA"
+  }
 }
 
 resource "aws_s3_bucket_acl" "bucket_acl" {

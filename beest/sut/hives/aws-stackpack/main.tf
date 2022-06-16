@@ -16,6 +16,14 @@ resource "aws_cloudformation_stack" "cfn_stackpack" {
   }
   on_failure   = "DELETE"
   capabilities = ["CAPABILITY_NAMED_IAM"]
+  tags = {
+    Environment           = var.environment
+    VantaContainsUserData = false
+    VantaDescription      = "AWS Integration resources used in acceptance pipeline"
+    VantaNonProd          = true
+    VantaOwner            = "beest@stackstate.com"
+    VantaUserDataStored   = "NA"
+  }
 
   // TODO  why the cloudformation template is hosted on a s3 bucket instead of being bundled as part of the stackpack resources and downloaded directly from the stackpack ?
   #  template_url = "https://stackstate-integrations-resources-eu-west-1.s3.eu-west-1.amazonaws.com/aws-topology/cloudformation/stackstate-resources-1.2.cfn.yaml"
@@ -25,7 +33,6 @@ resource "aws_cloudformation_stack" "cfn_stackpack" {
 data "aws_iam_role" "integration_role" {
   name = aws_cloudformation_stack.cfn_stackpack.outputs.StackStateIntegrationRole
 }
-
 
 data "aws_iam_policy_document" "integration_assume_role_policy" {
   statement {
@@ -70,8 +77,8 @@ resource "aws_iam_role" "agent_ec2_role" {
 }
 
 resource "aws_iam_role_policy" "test_policy" {
-  name = "${var.environment}-agent-ec2-policy"
-  role = aws_iam_role.agent_ec2_role.id
+  name   = "${var.environment}-agent-ec2-policy"
+  role   = aws_iam_role.agent_ec2_role.id
   policy = data.aws_iam_policy_document.integration_assume_role_policy.json
 }
 
