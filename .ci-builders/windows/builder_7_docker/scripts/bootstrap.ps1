@@ -51,7 +51,7 @@ choco feature enable -n allowGlobalConfirmation
 Set-PSDebug -Trace 1
 
 Set-ExecutionPolicy Bypass -Scope Process -Force;
-iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/softasap/sa-win/master/bootstrap.ps1'))
+./bootstrap_runner.ps1
 
 # net user ${var.INSTANCE_USERNAME} '${var.INSTANCE_PASSWORD}' /add /y
 # net localgroup administrators ${var.INSTANCE_USERNAME} /add
