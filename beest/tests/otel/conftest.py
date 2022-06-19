@@ -5,7 +5,7 @@ import tempfile as tfile
 
 
 @pytest.fixture
-def cli(host):
+def cliv1(host):
     def topology(query):
         ctx = "context={{ kubecontext }}"
         ns = "namespace={{ namespace }}"
