@@ -76,3 +76,41 @@
               configMap:
                 name: cli-config
                 defaultMode: 0777
+
+  # We can only execute simple commands from pytest, pipes cannot be used directly
+  - name: Copy query script
+    kubernetes.core.k8s_cp:
+      context: "{{ kubecontext }}"
+      namespace: "{{ namespace }}"
+      pod: stackstate-cli
+      local_path: "{{ role_path }}/files/query.sh"
+      remote_path: "/query.sh"
+
+# TODO: Once cli v2 supports token_auth we can use the secret associated w the SA
+#  - name: Get ServiceAccount object
+#    kubernetes.core.k8s_info:
+#      context: "{{ kubecontext }}"
+#      namespace: "{{ namespace }}"
+#      kind: ServiceAccount
+#      name: stackstate-admin
+#    register: service_account_obj
+#
+#  - name: service_account_obj
+#    debug:
+#      var: service_account_obj.resources[0].secrets[0].name
+#
+#  - name: Get Secret object
+#    kubernetes.core.k8s_info:
+#      context: "{{ kubecontext }}"
+#      namespace: "{{ namespace }}"
+#      kind: Secret
+#      name: "{{ service_account_obj.resources[0].secrets[0].name }}"
+#    register: secret_obj
+#
+#  - name: Set a stackstate-admin-token
+#    ansible.builtin.set_fact:
+#      stackstate_admin_token: "{{ secret_obj.resources[0].data.token | b64decode }}"
+#
+#  - name: stackstate-admin token
+#    debug:
+#      var: stackstate_admin_token
