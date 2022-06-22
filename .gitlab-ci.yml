@@ -94,6 +94,9 @@ variables: &commonvariables
   - if: $CI_COMMIT_TAG || ($CI_COMMIT_REF_NAME == "master" && $CI_PIPELINE_SOURCE=="schedule")
     when: always
 
+# Check if any files (not MD) changed
+# Glob syntax that checks for changes in all files except files that end with .md extension.
+# (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
 .other_files_rule: &other_files_rule
   - changes:
       - "**/.*"
