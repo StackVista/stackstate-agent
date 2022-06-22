@@ -23,28 +23,31 @@ extern void submitComponent(char *, instance_key_t *, char *, char *, char *);
 extern void submitRelation(char *, instance_key_t *, char *, char *, char *, char *);
 extern void submitStartSnapshot(char *, instance_key_t *);
 extern void submitStopSnapshot(char *, instance_key_t *);
+extern void submitDelete(char *, instance_key_t *, char *);
 
 static void initTopologyTests(rtloader_t *rtloader) {
 	set_submit_component_cb(rtloader, submitComponent);
 	set_submit_relation_cb(rtloader, submitRelation);
 	set_submit_start_snapshot_cb(rtloader, submitStartSnapshot);
 	set_submit_stop_snapshot_cb(rtloader, submitStopSnapshot);
+	set_submit_delete_cb(rtloader, submitDelete);
 }
 */
 import "C"
 
 var (
-	rtloader       *C.rtloader_t
-	checkID        string
-	_instance      *Instance
-	_raw_data      string
-	_data          map[string]interface{}
-	result         map[string]interface{}
-	_externalID    string
-	_componentType string
-	_sourceID      string
-	_targetID      string
-	_relationType  string
+	rtloader           *C.rtloader_t
+	checkID            string
+	_instance          *Instance
+	_raw_data          string
+	_data              map[string]interface{}
+	result             map[string]interface{}
+	_externalID        string
+	_componentType     string
+	_sourceID          string
+	_targetID          string
+	_relationType      string
+	_topologyElementId string
 )
 
 type Instance struct {
@@ -63,6 +66,7 @@ func resetOuputValues() {
 	_sourceID = ""
 	_targetID = ""
 	_relationType = ""
+	_topologyElementId = ""
 }
 
 func setUp() error {
@@ -174,6 +178,17 @@ func submitStartSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 //export submitStopSnapshot
 func submitStopSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 	checkID = C.GoString(id)
+
+	_instance = &Instance{
+		Type: C.GoString(instanceKey.type_),
+		URL:  C.GoString(instanceKey.url),
+	}
+}
+
+//export submitDelete
+func submitDelete(id *C.char, instanceKey *C.instance_key_t, topoElementId *C.char) {
+	checkID = C.GoString(id)
+	_topologyElementId = C.GoString(topoElementId)
 
 	_instance = &Instance{
 		Type: C.GoString(instanceKey.type_),

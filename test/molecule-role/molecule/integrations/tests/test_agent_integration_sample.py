@@ -358,6 +358,8 @@ def test_agent_integration_sample_topology(host, hostname):
                 data_assert_fn=c["data"],
             ) is not None
 
+        assert util.delete_topo_element_data(json_data, "urn:example:/host:host_for_deletion")
+
     util.wait_until(assert_topology, 30, 3)
 
 
@@ -394,7 +396,6 @@ def test_agent_integration_sample_events(host, hostname):
             "message": "Http request to http://localhost timed out after 5.0 seconds."
         }
         assert util.event_data(http_event, json_data, hostname) is not None
-
 
     util.wait_until(wait_for_events, 60, 3)
 
@@ -461,24 +462,47 @@ def test_agent_integration_sample_health_synchronization(host):
             return None
 
         assert _health_contains_payload({
-                "IntakeHealthMainStreamStart": {
-                    "repeatIntervalMs":30000
-                }
+            "IntakeHealthMainStreamStart": {
+                "repeatIntervalMs": 30000
             }
+        }
         ) is not None
         assert _health_contains_payload({
-                "IntakeHealthMainStreamStop": {}
-            }
+            "IntakeHealthMainStreamStop": {}
+        }
         ) is not None
         assert _health_contains_payload(
             {
                 "IntakeHealthCheckStates": {
                     "consistencyModel": "REPEAT_SNAPSHOTS",
                     "intakeCheckStates": [
-                        {"data":"{\"checkStateId\":\"id\",\"health\":\"CRITICAL\",\"message\":\"msg\",\"name\":\"name\",\"topologyElementIdentifier\":\"identifier\"}"}
+                        {"data": "{\"checkStateId\":\"id\",\"health\":\"CRITICAL\",\"message\":\"msg\",\"name\":\"name\",\"topologyElementIdentifier\":\"identifier\"}"}
                     ]
                 }
             }
         ) is not None
 
     util.wait_until(wait_for_health_messages, 60, 3)
+
+
+def test_agent_integration_sample_persistent_cache(host):
+    def wait_for_persistent_cache():
+        data = host.check_output("docker exec ubuntu_stackstate-agent_1 "
+                                 "sh -c 'ls -d /opt/stackstate-agent/run/agent_integration_sample/* | xargs cat'")
+        json_data = json.loads(data)
+        with open("./persistent-cache-agent-integration-sample.json", 'w') as f:
+            json.dump(json_data, f, indent=4)
+
+        sample_data = {
+            "name": "some-application",
+            "domain": "Webshop",
+            "layer": "Applications",
+            "identifiers": ["another_identifier_for_some_application"],
+            "labels": ["application:some_application", "region:eu-west-1", "hosted_on:this-host"],
+            "environment": "Production",
+            "version": "0.2.0"
+        }
+
+        assert json_data == sample_data
+
+    util.wait_until(wait_for_persistent_cache, 60, 3)

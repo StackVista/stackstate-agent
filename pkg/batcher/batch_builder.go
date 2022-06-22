@@ -63,6 +63,7 @@ func (builder *BatchBuilder) getOrCreateTopology(checkID check.ID, instance topo
 			Instance:      instance,
 			Components:    make([]topology.Component, 0),
 			Relations:     make([]topology.Relation, 0),
+			DeleteIDs:     make([]string, 0),
 		},
 		Health:  state.Health,
 		Metrics: state.Metrics,
@@ -97,7 +98,7 @@ func (builder *BatchBuilder) getOrCreateRawMetrics(checkID check.ID) *[]telemetr
 	builder.states[checkID] = CheckInstanceBatchState{
 		Topology: state.Topology,
 		Health:   state.Health,
-		Metrics: &[]telemetry.RawMetrics{},
+		Metrics:  &[]telemetry.RawMetrics{},
 	}
 
 	return builder.states[checkID].Metrics
@@ -130,6 +131,13 @@ func (builder *BatchBuilder) TopologyStopSnapshot(checkID check.ID, instance top
 	topologyData.StopSnapshot = true
 	// We always flush after a TopologyStopSnapshot to limit latency
 	return builder.Flush()
+}
+
+// Delete deletes a topology element
+func (builder *BatchBuilder) Delete(checkID check.ID, instance topology.Instance, deleteID string) CheckInstanceBatchStates {
+	topologyData := builder.getOrCreateTopology(checkID, instance)
+	topologyData.DeleteIDs = append(topologyData.DeleteIDs, deleteID)
+	return builder.incrementAndTryFlush()
 }
 
 // AddHealthCheckData adds a component

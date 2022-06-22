@@ -52,8 +52,9 @@ func TestPodCollector(t *testing.T) {
 		relationChannel := make(chan *topology.Relation)
 		containerCorrelationChannel := make(chan *ContainerCorrelation)
 		volumeCorrelationChannel := make(chan *VolumeCorrelation)
+		podCorrelationChannel := make(chan *PodEndpointCorrelation)
 
-		ic := NewPodCollector(componentChannel, relationChannel, containerCorrelationChannel, volumeCorrelationChannel, NewTestCommonClusterCollector(MockPodAPICollectorClient{}, sourcePropertiesEnabled))
+		ic := NewPodCollector(componentChannel, relationChannel, containerCorrelationChannel, volumeCorrelationChannel, podCorrelationChannel, NewTestCommonClusterCollector(MockPodAPICollectorClient{}, sourcePropertiesEnabled))
 		expectedCollectorName := "Pod Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 

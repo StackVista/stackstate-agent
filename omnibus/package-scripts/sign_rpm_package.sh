@@ -30,6 +30,8 @@ python -mplatform | grep -qi debian && gpg-connect-agent RELOADAGENT /bye
 
 python -mplatform | grep -qi debian && export GPPPATH=/usr/lib/gnupg2
 
+python -mplatform | grep -q Linux && export GPPPATH=/usr/lib/gnupg2
+
 
 echo "$SIGNING_PUBLIC_KEY" | gpg --import
 echo "$SIGNING_PRIVATE_KEY" > gpg_private.key

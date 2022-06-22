@@ -8,6 +8,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/serializer"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"sync"
 )
@@ -26,6 +27,7 @@ type Batcher interface {
 	SubmitRelation(checkID check.ID, instance topology.Instance, relation topology.Relation)
 	SubmitStartSnapshot(checkID check.ID, instance topology.Instance)
 	SubmitStopSnapshot(checkID check.ID, instance topology.Instance)
+	SubmitDelete(checkID check.ID, instance topology.Instance, topologyElementID string)
 
 	// Health
 	SubmitHealthCheckData(checkID check.ID, stream health.Stream, data health.CheckData)
@@ -101,6 +103,12 @@ type submitStopSnapshot struct {
 	instance topology.Instance
 }
 
+type submitDelete struct {
+	checkID  check.ID
+	instance topology.Instance
+	deleteID string
+}
+
 type submitHealthCheckData struct {
 	checkID check.ID
 	stream  health.Stream
@@ -120,7 +128,7 @@ type submitHealthStopSnapshot struct {
 }
 
 type submitRawMetricsData struct {
-	checkID check.ID
+	checkID   check.ID
 	rawMetric telemetry.RawMetrics
 }
 
@@ -210,6 +218,8 @@ func (batcher *AsynchronousBatcher) run() {
 			batcher.sendState(batcher.builder.TopologyStartSnapshot(submission.checkID, submission.instance))
 		case submitStopSnapshot:
 			batcher.sendState(batcher.builder.TopologyStopSnapshot(submission.checkID, submission.instance))
+		case submitDelete:
+			batcher.sendState(batcher.builder.Delete(submission.checkID, submission.instance, submission.deleteID))
 
 		case submitHealthCheckData:
 			batcher.sendState(batcher.builder.AddHealthCheckData(submission.checkID, submission.stream, submission.data))
@@ -265,9 +275,18 @@ func (batcher AsynchronousBatcher) SubmitStopSnapshot(checkID check.ID, instance
 	}
 }
 
+// SubmitDelete submits a deletion of topology element.
+func (batcher AsynchronousBatcher) SubmitDelete(checkID check.ID, instance topology.Instance, topologyElementID string) {
+	batcher.input <- submitDelete{
+		checkID:  checkID,
+		instance: instance,
+		deleteID: topologyElementID,
+	}
+}
+
 // SubmitHealthCheckData submits a Health check data record to the batch
 func (batcher AsynchronousBatcher) SubmitHealthCheckData(checkID check.ID, stream health.Stream, data health.CheckData) {
-	log.Debugf("Submitting Health check data for check [%s] stream [%s]: %s", checkID, stream.GoString(), data.JSONString())
+	log.Debugf("Submitting Health check data for check [%s] stream [%s]: %s", checkID, stream.GoString(), util.JSONString(data))
 	batcher.input <- submitHealthCheckData{
 		checkID: checkID,
 		stream:  stream,
@@ -300,7 +319,7 @@ func (batcher AsynchronousBatcher) SubmitRawMetricsData(checkID check.ID, rawMet
 	}
 
 	batcher.input <- submitRawMetricsData{
-		checkID: checkID,
+		checkID:   checkID,
 		rawMetric: rawMetric,
 	}
 }
