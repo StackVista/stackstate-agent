@@ -1,4 +1,4 @@
-# Build and distribute StackState Agent in linux using Docker test
+# Build and distribute StackState Agent in linux using Docker
 
 Using our builder image clone and checkout the public repo and th <<branch>> you are interested of:
 ```bash
