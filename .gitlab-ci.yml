@@ -95,13 +95,44 @@ variables: &commonvariables
     when: always
 
 .other_files_rule: &other_files_rule
-  # Check if any files (not MD) changed
-  # Glob syntax that checks for changes in all files except files that end with .md extension.
-  # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
   - changes:
-      - "**/{.*,!(*.md)}"
-    # If any non-MD files changed, always run the pipeline.
-    when: always
+      - "**/.*"
+      - "**/*.a*"
+      - "**/*.b*"
+      - "**/*.c*"
+      - "**/*.d*"
+      - "**/*.e*"
+      - "**/*.f*"
+      - "**/*.g*"
+      - "**/*.h*"
+      - "**/*.i*"
+      - "**/*.j*"
+      - "**/*.k*"
+      - "**/*.l*"
+      - "**/*.make"
+      - "**/*.mod"
+      - "**/*.n*"
+      - "**/*.o*"
+      - "**/*.p*"
+      - "**/*.q*"
+      - "**/*.r*"
+      - "**/*.s*"
+      - "**/*.t*"
+      - "**/*.u*"
+      - "**/*.v*"
+      - "**/*.w*"
+      - "**/*.x*"
+      - "**/*.y*"
+      - "**/*.z*"
+
+#.other_files_rule: &other_files_rule
+#  # Check if any files (not MD) changed
+#  # Glob syntax that checks for changes in all files except files that end with .md extension.
+#  # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
+#  - changes:
+#      - "**/{.*,!(*.md)}"
+#    # If any non-MD files changed, always run the pipeline.
+#    when: always
 
 # What happens if I updated CHANGELOG.md and some python file?
 .md_only_rule: &md_only_rule
@@ -109,7 +140,9 @@ variables: &commonvariables
   # Glob syntax that checks for changes in files ending with .md extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
   - changes:
+      - "**/*.markdown"
       - "**/*.md"
+      - "**/*.mdown"
     # If any MD files changed, don't run the pipeline.
     when: manual
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
@@ -142,10 +175,10 @@ agent2:
     # exclude this pipeline if we're running a v3 tag pipeline
     - <<: *exclude_on_tag_v3
     - *always_scheduled_master
-    - *other_files_rule
-    - *md_only_rule
     - if: $CI_COMMIT_MESSAGE =~ /\[py3]/
       when: never
+    - *other_files_rule
+    - *md_only_rule
     - if: $CI_MERGE_REQUEST_IID
     - if: $CI_OPEN_MERGE_REQUESTS
       when: never
@@ -165,10 +198,10 @@ agent3:
    # exclude this pipeline if we're running a v2 tag pipeline
    - <<: *exclude_on_tag_v2
    - *always_scheduled_master
-   - *other_files_rule
-   - *md_only_rule
    - if: $CI_COMMIT_MESSAGE =~ /\[py2]/
      when: never
+   - *other_files_rule
+   - *md_only_rule
    - if: $CI_MERGE_REQUEST_IID
    - if: $CI_OPEN_MERGE_REQUESTS
      when: never
