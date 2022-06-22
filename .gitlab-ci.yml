@@ -142,8 +142,8 @@ agent2:
     # exclude this pipeline if we're running a v3 tag pipeline
     - <<: *exclude_on_tag_v3
     - *always_scheduled_master
-    - *other_files_rule
     - *md_only_rule
+    - *other_files_rule    
     - if: $CI_COMMIT_MESSAGE =~ /\[py3]/
       when: never
     - if: $CI_MERGE_REQUEST_IID
