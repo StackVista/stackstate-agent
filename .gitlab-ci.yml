@@ -99,7 +99,8 @@ variables: &commonvariables
   # Glob syntax that checks for changes in all files except files that end with .md extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
   - changes:
-      - "**/{.*,!(*.md)}"
+      - "**/.*"
+      - "**/*.!(markdown|md|mdown) && **/*.*"
     # If any non-MD files changed, always run the pipeline.
     when: always
 
@@ -109,7 +110,9 @@ variables: &commonvariables
   # Glob syntax that checks for changes in files ending with .md extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
   - changes:
-      - "**/*.{md,!(*)}"
+      - "**/*.markdown"
+      - "**/*.md"
+      - "**/*.mdown"
     # If any MD files changed, don't run the pipeline.
     when: manual
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
