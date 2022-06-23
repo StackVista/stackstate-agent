@@ -7,7 +7,7 @@ testinfra_hosts = AnsibleRunner(os.environ['MOLECULE_INVENTORY_FILE']).get_hosts
 
 
 def test_container_metrics(host):
-    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=1000"
+    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=3000"
 
     def wait_for_metrics():
         data = host.check_output("curl \"%s\"" % url)
@@ -30,7 +30,7 @@ def test_container_metrics(host):
 
 
 def test_no_datadog_metrics(host):
-    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=1000"
+    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=3000"
 
     def wait_for_metrics():
         data = host.check_output("curl \"%s\"" % url)

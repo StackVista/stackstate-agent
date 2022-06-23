@@ -1,0 +1,45 @@
+---
+- name: Increase VPS entropy (1/3)
+  become: true
+  apt:
+    name: haveged
+    state: present
+    update_cache: yes
+  ignore_errors: true
+  register: apt_res
+  retries: 10
+  delay: 2
+  until: apt_res is success
+
+- name: Kill python3 upgrade (1/2)
+  become: true
+  shell: kill -9 $(ps aux | grep unattended-upgrade | grep -v grep | awk '{print $2}')
+  when: apt_res is failed
+
+- name: Increase VPS entropy (2/3)
+  become: true
+  apt:
+    name: haveged
+    state: present
+    update_cache: yes
+  ignore_errors: true
+  register: apt_res
+  retries: 10
+  delay: 2
+  until: apt_res is success
+
+- name: Kill python3 upgrade (2/2)
+  become: true
+  shell: kill -9 $(ps aux | grep unattended-upgrade | grep -v grep | awk '{print $2}')
+  when: apt_res is failed
+
+- name: Increase VPS entropy (3/3)
+  become: true
+  apt:
+    name: haveged
+    state: present
+    update_cache: yes
+  register: apt_res_2
+  retries: 280
+  delay: 2
+  until: apt_res_2 is success
