@@ -18,12 +18,13 @@ def test_container_metrics(host):
         def get_keys(m_host):
             return next(set(message["message"]["MultiMetric"]["values"].keys())
                         for message in json_data["messages"]
-                        if message["message"]["MultiMetric"]["name"] == "containerMetrics" and
-                        message["message"]["MultiMetric"]["host"] == m_host
-                        )
+                        if message["message"]["MultiMetric"]["host"] == m_host and
+                           "containerId" in message["message"]["MultiMetric"]["tags"]
 
-        expected = {"netRcvdPs", "memCache", "totalPct", "wbps", "systemPct", "rbps", "memRss", "netSentBps",
-                    "netSentPs", "netRcvdBps", "userPct"}
+                        )
+                        
+        expected = {"cpuNrThrottled", "cpuThreadCount", "netRcvdPs", "memCache", "cpuThrottledTime", "totalPct", "wbps",
+                    "systemPct", "rbps", "memRss", "netSentBps", "netSentPs", "netRcvdBps", "userPct"}
         assert get_keys("trace-java-demo") == expected
 
     util.wait_until(wait_for_metrics, 180, 3)
