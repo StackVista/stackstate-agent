@@ -87,6 +87,7 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 			for _, instrumentationSpan := range instrumentationLibrarySpan.Spans {
 				var meta = map[string]string{
 					"instrumentation_library": instrumentationLibrarySpan.InstrumentationLibrary.Name,
+					"instrumentation_version": instrumentationLibrarySpan.InstrumentationLibrary.Version,
 					"source":                  OpenTelemetrySource,
 				}
 
