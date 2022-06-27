@@ -568,6 +568,7 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 					"http.url":                "https://otel-example-nodejs-dev-s3-965323806078-eu-west-1.s3.eu-west-1.amazonaws.com/filename",
 					"aws.operation":           "sendMessage",
 					"instrumentation_library": "@opentelemetry/instrumentation-aws-sdk",
+					"instrumentation_version": "0.1.0",
 					"messaging.url":           "https://sqs.eu-west-1.amazonaws.com/120431062118/ENTRY_A_SQS_QUEUE",
 					"source":                  OpenTelemetrySource,
 				},
@@ -591,6 +592,7 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 					"http.url":                "https://otel-example-nodejs-dev-s3-965323806078-eu-west-1.s3.eu-west-1.amazonaws.com/filename",
 					"aws.operation":           "sendMessage",
 					"instrumentation_library": "@opentelemetry/instrumentation-aws-sdk",
+					"instrumentation_version": "0.1.0",
 					"messaging.url":           "https://sqs.eu-west-1.amazonaws.com/120431062118/RANDOM",
 					"source":                  OpenTelemetrySource,
 				},
@@ -611,6 +613,7 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 				Duration: 84191488,
 				Meta: map[string]string{
 					"instrumentation_library": "@opentelemetry/other-library",
+					"instrumentation_version": "0.1.0",
 					"random.value":            "text",
 					"source":                  OpenTelemetrySource,
 				},
@@ -634,6 +637,7 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 					"http.status_text":        "Not Found - This has no parent span",
 					"http.url":                "https://random/filename",
 					"instrumentation_library": "@opentelemetry/instrumentation-http",
+					"instrumentation_version": "0.1.0",
 					"source":                  OpenTelemetrySource,
 				},
 				Metrics: map[string]float64{
