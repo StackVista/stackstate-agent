@@ -1,20 +1,7 @@
 import re
 
-
-def component_pretty_short(comp: dict):
-    return f"#{comp['id']}#[{comp['name']}](type={comp['type']},identifiers={','.join(map(str, comp['identifiers']))})"
-
-
-def relation_pretty_short(rel: dict):
-    return f"#{rel['source']}->[type={rel['type']}]->{rel['target']}"
-
-
-def components_short_print(comps, delimiter="\n\t\t"):
-    return delimiter.join(map(component_pretty_short, comps))
-
-
-def relations_short_print(rels, delimiter="\n\t\t"):
-    return delimiter.join(map(relation_pretty_short, rels))
+from .invariant_search import InvariantSearch
+from .util import *
 
 
 class TopologyMatcherResult:
@@ -33,11 +20,30 @@ class TopologyMatcher:
         return self
 
     def one_way_direction(self, source: str, target: str, **kwargs) -> 'TopologyMatcher':
+        source_found = False
+        target_found = False
+        for comp in self.components:
+            if comp.id == source:
+                source_found = True
+            if comp.id == target:
+                target_found = True
+        if not source_found:
+            raise KeyError(f"source `{source}` have not been found, use .component('{source}') to define a component "
+                           f"before defining a relation")
+        if not target_found:
+            raise KeyError(f"target `{target}` have not been found, use .component('{target}') to define a component "
+                           f"before defining a relation")
+
         kwargs['dependencyDirection'] = 'ONE_WAY'
         self.relations.append(RelationMatcher(source, target, kwargs))
         return self
 
     def find(self, topology_result):
+        errors = []
+
+        def add_error(message):
+            errors.append(message)
+
         # find all matching components and group them by virtual node (id) from a pattern
         matching_components = {}
         for comp_match in self.components:
@@ -49,13 +55,19 @@ class TopologyMatcher:
                     else:
                         matching_components[comp_match.id].append(component)
                     found = True
-            assert found, f"component {comp_match} has not been not found"
+            if not found:
+                add_error(f"component {comp_match} has not been not found")
 
         relation_by_id = {}
         for relation in topology_result['relations']:
             relation_by_id[relation['id']] = relation
 
+        invariant_search = InvariantSearch()
+        invariant_components = set()
+
         for comp_rel in self.relations:
+            invariant_components.add(comp_rel.source)
+            invariant_components.add(comp_rel.target)
             source_candidates = matching_components.get(comp_rel.source, [])
             target_candidates = matching_components.get(comp_rel.target, [])
             assert len(source_candidates) > 0 and len(target_candidates) > 0, \
@@ -71,13 +83,23 @@ class TopologyMatcher:
             for relation in relation_candidates:
                 if comp_rel.match(relation):
                     found = True
+                    invariant_search.add_partial_invariant({
+                        comp_rel.source: relation['source'],
+                        comp_rel.target: relation['target'],
+                    })
+            if not found:
+                add_error(
+                    f"relation {comp_rel} has not been matched,\n"
+                    f"\tsource candidates:\n\t\t{components_short_print(source_candidates)}\n"
+                    f"\ttarget candidates:\n\t\t{components_short_print(target_candidates)}\n"
+                    f"\tcandidate relations:\n\t\t{relations_short_print(relation_candidates)}"
+                )
 
-            assert found, \
-                f"relation {comp_rel} has not been matched,\n" \
-                f"\tsource candidates:\n\t\t{components_short_print(source_candidates)}\n" \
-                f"\ttarget candidates:\n\t\t{components_short_print(target_candidates)}\n" \
-                f"\tcandidate relations:\n\t\t{relations_short_print(relation_candidates)}"
-        # ensure isomorphism with a assertion graph
+        isomorphism_invariants = []
+        for invariant in invariant_search.get_invariants():
+            if len(invariant) == len(invariant_components):
+                isomorphism_invariants.append(invariant)
+                # TODO complete taking invariants into account
 
         result_components = {}
         for k, v in matching_components.items():

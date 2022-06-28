@@ -1,5 +1,5 @@
 import util
-from topology_assertion import TopologyMatcher
+from ststest import TopologyMatcher
 
 testinfra_hosts = ["local"]
 
