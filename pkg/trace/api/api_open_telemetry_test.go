@@ -1,5 +1,7 @@
 package api
 
+/*
+
 import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	v11 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/common/v1"
@@ -1081,3 +1083,5 @@ func TestConvertStringToUint64(t *testing.T) {
 	sampleI, _ := convertStringToUint64("ASDxkjchi8y349h234987hgfeiwundfuishf89234yh23uh4iu2rh8hsad")
 	assert.Equal(t, uint64(833580), *sampleI, "String to Int sample i should always have the same value")
 }
+
+*/

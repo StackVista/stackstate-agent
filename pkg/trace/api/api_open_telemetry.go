@@ -141,60 +141,130 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 // If the http parentSpanIds does exist in the trace then we remove the http span and merge the attributes we found
 // with the relevant parent attributes. This allows the parent to contain the state for if the call failed or succeeded
 // whilst we do not create a useless http component by removing it
-func determineInstrumentationStatus(librarySpans []*v1.InstrumentationLibrarySpans) []*v1.InstrumentationLibrarySpans {
-	SpanHTTPDictionary := make(map[string]*v1.Span)
+func determineInstrumentationStatus(librarySpans []*v1.InstrumentationLibrarySpans) []v1.InstrumentationLibrarySpans {
 
-	// Create a dictionary from the HTTP spans to allow instrumentation to map their values and attributes
-	// Break after the http is found, meaning that the performance might a slight increase dependent on where the http
-	// instrumentation is within the array
+	var lambdaInstrumentation []v1.InstrumentationLibrarySpans
+	var httpInstrumentation []v1.InstrumentationLibrarySpans
+	var instrumentation []v1.InstrumentationLibrarySpans
+
+	// We separate the http instrumentation from the other ones
+	// This is done because if they do have a parent, they'll be mapped into the parent
 	for _, library := range librarySpans {
-		if library.InstrumentationLibrary.Name == "@opentelemetry/instrumentation-http" {
-			for _, span := range library.Spans {
-				// We can map into the dictionary with the parent id even if there is multiples
-				// Reason for it is that there should never be multiple HTTP status for the same parentId
-				// Then the data passed is incorrect and the latest will be the HTTP status for the instrumentation
-				SpanHTTPDictionary[string(span.ParentSpanId)] = span
-			}
-			break
+		switch library.InstrumentationLibrary.Name {
+		case "@opentelemetry/instrumentation-http":
+			httpInstrumentation = append(httpInstrumentation, *library)
+		case "@opentelemetry/instrumentation-aws-lambda":
+			lambdaInstrumentation = append(lambdaInstrumentation, *library)
+		default:
+			instrumentation = append(instrumentation, *library)
 		}
 	}
 
-	// Loop through all the library spans except the instrumentation-http one and assign http statuses from the
-	// http dictionary if the span has a ParentSpanId that lives inside the HTTP dictionary
-	for _, library := range librarySpans {
-		if library.InstrumentationLibrary.Name != "@opentelemetry/instrumentation-http" {
-			for _, span := range library.Spans {
-				spanID := string(span.SpanId)
-				dictionaryHTTPItem, dictionaryHTTPItemOk := SpanHTTPDictionary[spanID]
+	var httpWithParentSpans = make([]*v1.Span, 0)
+	var httpLibraryNoParentSpans []v1.InstrumentationLibrarySpans
 
-				// Only allocate attribute data if there is a http value with the parentSpanId and actual attributes to allocate
-				if spanID != "" && dictionaryHTTPItemOk && dictionaryHTTPItem.Attributes != nil && len(dictionaryHTTPItem.Attributes) > 0 {
-					// Assign all the attributes that the HTTP instrumentation had into the child span
-					span.Attributes = append(span.Attributes, dictionaryHTTPItem.Attributes...)
+	// We map through the http instrumentation and separate out the ones that has instrumentation parents
+	// and those who do not
+	// The ones that does have parents we will be merging them and the ones that does not have to go back into the
+	// list of spans to be mapped as c component
+	for _, httpLibrary := range httpInstrumentation {
+		libraryReference := httpLibrary
+		httpWithNoParentSpans := make([]*v1.Span, 0)
 
-					// Remove the mapped HTTP instrumentation from the dictionary to allow the remaining ones to be mapped back
-					// into the original object
-					delete(SpanHTTPDictionary, spanID)
+		for _, httpSpan := range httpLibrary.Spans {
+			// This variable is flagged if any span has this http request as a child
+			hasParentSpan := false
+
+			for _, library := range instrumentation {
+				for _, span := range library.Spans {
+					if httpSpan.ParentSpanId != nil && span.SpanId != nil && len(string(span.SpanId)) > 1 && len(string(span.ParentSpanId)) > 1 && string(httpSpan.ParentSpanId) == string(span.SpanId) {
+						hasParentSpan = true
+					}
+				}
+			}
+
+			// We can then divide it into a group that is separate
+			if hasParentSpan {
+				httpWithParentSpans = append(httpWithParentSpans, httpSpan)
+			} else {
+				httpWithNoParentSpans = append(httpWithNoParentSpans, httpSpan)
+			}
+		}
+
+		// For the reference that had not parents we need to map them back into a object that can merge back
+		libraryReference.Spans = httpWithNoParentSpans
+		httpLibraryNoParentSpans = append(httpLibraryNoParentSpans, libraryReference)
+	}
+
+	// For the libraries that had http children lets merge the http child with this instrumentation
+	for _, library := range instrumentation {
+		for _, span := range library.Spans {
+			for _, httpSpan := range httpWithParentSpans {
+				if httpSpan.ParentSpanId != nil && span.SpanId != nil && len(string(span.SpanId)) > 1 && len(string(span.ParentSpanId)) > 1 && string(httpSpan.ParentSpanId) == string(span.SpanId) {
+					span.Attributes = append(span.Attributes, httpSpan.Attributes...)
 				}
 			}
 		}
 	}
 
-	// We attempt to add the HTTP instrumentation back into the original object, only the HTTP ones that was not mapped
-	for _, library := range librarySpans {
-		if library.InstrumentationLibrary.Name == "@opentelemetry/instrumentation-http" {
-			var remappedHTTPInstrumentation []*v1.Span
+	// Now that we merged the above we can merge the two separate groups back into one
+	return append(append(httpLibraryNoParentSpans, lambdaInstrumentation...), instrumentation...)
 
-			for _, span := range SpanHTTPDictionary {
-				remappedHTTPInstrumentation = append(remappedHTTPInstrumentation, span)
+	/*
+		SpanHTTPDictionary := make(map[string]*v1.Span)
+
+		// Create a dictionary from the HTTP spans to allow instrumentation to map their values and attributes
+		// Break after the http is found, meaning that the performance might a slight increase dependent on where the http
+		// instrumentation is within the array
+		for _, library := range librarySpans {
+			if library.InstrumentationLibrary.Name == "@opentelemetry/instrumentation-http" {
+				for _, span := range library.Spans {
+					// We can map into the dictionary with the parent id even if there is multiples
+					// Reason for it is that there should never be multiple HTTP status for the same parentId
+					// Then the data passed is incorrect and the latest will be the HTTP status for the instrumentation
+					SpanHTTPDictionary[string(span.ParentSpanId)] = span
+				}
+				break
 			}
-
-			library.Spans = remappedHTTPInstrumentation
-			break
 		}
-	}
 
-	return librarySpans
+		// Loop through all the library spans except the instrumentation-http one and assign http statuses from the
+		// http dictionary if the span has a ParentSpanId that lives inside the HTTP dictionary
+		for _, library := range librarySpans {
+			if library.InstrumentationLibrary.Name != "@opentelemetry/instrumentation-http" {
+				for _, span := range library.Spans {
+					spanID := string(span.SpanId)
+					dictionaryHTTPItem, dictionaryHTTPItemOk := SpanHTTPDictionary[spanID]
+
+					// Only allocate attribute data if there is a http value with the parentSpanId and actual attributes to allocate
+					if spanID != "" && dictionaryHTTPItemOk && dictionaryHTTPItem.Attributes != nil && len(dictionaryHTTPItem.Attributes) > 0 {
+						// Assign all the attributes that the HTTP instrumentation had into the child span
+						span.Attributes = append(span.Attributes, dictionaryHTTPItem.Attributes...)
+
+						// Remove the mapped HTTP instrumentation from the dictionary to allow the remaining ones to be mapped back
+						// into the original object
+						delete(SpanHTTPDictionary, spanID)
+					}
+				}
+			}
+		}
+
+		// We attempt to add the HTTP instrumentation back into the original object, only the HTTP ones that was not mapped
+		for _, library := range librarySpans {
+			if library.InstrumentationLibrary.Name == "@opentelemetry/instrumentation-http" {
+				var remappedHTTPInstrumentation []*v1.Span
+
+				for _, span := range SpanHTTPDictionary {
+					remappedHTTPInstrumentation = append(remappedHTTPInstrumentation, span)
+				}
+
+				library.Spans = remappedHTTPInstrumentation
+				break
+			}
+		}
+		return librarySpans
+
+	*/
 }
 
 // lambdaInstrumentationGetAccountID We attempt to extract the aws account id from the instrumentation-aws-lambda
