@@ -201,7 +201,7 @@ func determineInstrumentationStatus(librarySpans []*v1.InstrumentationLibrarySpa
 	// Thus if the index of the standAloneLibrarySpans does not match then something was done incorrectly
 	// We want to also reuse indexes to inject spans that was unmerged
 	if len(standAloneLibrarySpans) != len(librarySpans) {
-		fmt.Errorf("attempting to determine instrumentation http status failed, a mismatch occurred leaving the determination invalid. Mapping the trace will continue but the health states will be skipped")
+		_ = fmt.Errorf("attempting to determine instrumentation http status failed, a mismatch occurred leaving the determination invalid. Mapping the trace will continue but the health states will be skipped")
 
 		// Let's not bring back a error and break everything but rather allow the spans to still be created without a health state and log that there is a problem
 		var alternativeLibrarySpans []v1.InstrumentationLibrarySpans
