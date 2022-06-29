@@ -252,6 +252,32 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 	})
 
 	expected := pb.Traces{
+		{
+			&pb.Span{
+				Service:  OpenTelemetrySource,
+				Name:     "HTTPS PUT C",
+				Resource: OpenTelemetrySource,
+				TraceID:  280050,
+				SpanID:   288408,
+				ParentID: 159150,
+				Start:    1637684210743088640,
+				Duration: 84191488,
+				Error:    404,
+				Meta: map[string]string{
+					"http.method":             "POST",
+					"http.status_code":        "404",
+					"http.status_text":        "Not Found - This has no parent span",
+					"http.url":                "https://random/filename",
+					"instrumentation_library": "@opentelemetry/instrumentation-http",
+					"instrumentation_version": "0.1.0",
+					"source":                  OpenTelemetrySource,
+				},
+				Metrics: map[string]float64{
+					"http.status_code": 404,
+				},
+				Type: OpenTelemetrySource,
+			},
+		},
 		pb.Trace{
 			&pb.Span{
 				Service:  OpenTelemetrySource,
@@ -321,78 +347,6 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 				},
 				Metrics: nil,
 				Type:    OpenTelemetrySource,
-			},
-		},
-		{
-
-			&pb.Span{
-				Service:  OpenTelemetrySource,
-				Name:     "HTTPS PUT A",
-				Resource: OpenTelemetrySource,
-				TraceID:  280050,
-				SpanID:   162652,
-				ParentID: 88605,
-				Start:    1637684210743088640,
-				Duration: 84191488,
-				Meta: map[string]string{
-					"http.method":             "PUT",
-					"http.status_code":        "200",
-					"http.status_text":        "OK",
-					"http.url":                "https://otel-example-nodejs-dev-s3-965323806078-eu-west-1.s3.eu-west-1.amazonaws.com/filename",
-					"instrumentation_library": "@opentelemetry/instrumentation-http",
-					"instrumentation_version": "0.1.0",
-					"source":                  OpenTelemetrySource,
-				},
-				Metrics: nil,
-				Type:    OpenTelemetrySource,
-			},
-			&pb.Span{
-				Service:  OpenTelemetrySource,
-				Name:     "HTTPS PUT B",
-				Resource: OpenTelemetrySource,
-				TraceID:  280050,
-				SpanID:   163510,
-				ParentID: 193553,
-				Start:    1637684210743088640,
-				Duration: 84191488,
-				Error:    404,
-				Meta: map[string]string{
-					"http.method":             "POST",
-					"http.status_code":        "404",
-					"http.status_text":        "NOT FOUND",
-					"http.url":                "https://otel-example-nodejs-dev-s3-965323806078-eu-west-1.s3.eu-west-1.amazonaws.com/filename",
-					"instrumentation_library": "@opentelemetry/instrumentation-http",
-					"instrumentation_version": "0.1.0",
-					"source":                  OpenTelemetrySource,
-				},
-				Metrics: map[string]float64{
-					"http.status_code": 404,
-				},
-				Type: OpenTelemetrySource,
-			},
-			&pb.Span{
-				Service:  OpenTelemetrySource,
-				Name:     "HTTPS PUT C",
-				Resource: OpenTelemetrySource,
-				TraceID:  280050,
-				SpanID:   288408,
-				ParentID: 159150,
-				Start:    1637684210743088640,
-				Duration: 84191488,
-				Error:    404,
-				Meta: map[string]string{
-					"http.method":             "POST",
-					"http.status_code":        "404",
-					"http.status_text":        "Not Found - This has no parent span",
-					"http.url":                "https://random/filename",
-					"instrumentation_library": "@opentelemetry/instrumentation-http",
-					"instrumentation_version": "0.1.0",
-					"source":                  OpenTelemetrySource,
-				},
-				Metrics: map[string]float64{
-					"http.status_code": 404,
-				},
-				Type: OpenTelemetrySource,
 			},
 		},
 	}
