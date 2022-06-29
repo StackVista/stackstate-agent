@@ -77,9 +77,9 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 		awsAccountID := lambdaInstrumentationGetAccountID(resourceSpan)
 
 		// [Graceful] We can continue without determining the http status, This will then allow all the relevant information to still display
-		determineInstrumentationStatus(resourceSpan.InstrumentationLibrarySpans)
+		remappedInstrumentationLibrarySpans := determineInstrumentationStatus(resourceSpan.InstrumentationLibrarySpans)
 
-		for _, instrumentationLibrarySpan := range resourceSpan.InstrumentationLibrarySpans {
+		for _, instrumentationLibrarySpan := range remappedInstrumentationLibrarySpans {
 			// When we reach this point then it is safe to start building a trace
 			var singleTrace = pb.Trace{}
 
@@ -118,7 +118,7 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 
 				// Attempt to extract the parent, span and trace id from the OTEL span.
 				// This does need a string to int conversion thus if anything fails we need to exit
-				idExtractError := extractTraceSpanAndParentSpanID(instrumentationSpan, *instrumentationLibrarySpan, &openTelemetrySpan)
+				idExtractError := extractTraceSpanAndParentSpanID(instrumentationSpan, instrumentationLibrarySpan, &openTelemetrySpan)
 
 				if idExtractError != nil {
 					log.Errorf("Rejecting instrumentation mapping: %v", idExtractError)
