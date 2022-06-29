@@ -1,7 +1,5 @@
 package api
 
-/*
-
 import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	v11 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/common/v1"
@@ -10,304 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
-
-func BenchmarkDetermineInstrumentationSuccessFromHTTP(b *testing.B) {
-	var traceID = []byte("YZ0T8B2Ll8IIzMv3EfFIqQ==")
-	var xRayParentSpanID = []byte("X-Ray-Y3OrG+/srMM=")
-
-	instrumentationStackStateLibrary := v1.InstrumentationLibrarySpans{
-		InstrumentationLibrary: &v11.InstrumentationLibrary{
-			Name:    "@opentelemetry/instrumentation-stackstate",
-			Version: "0.1.0",
-		},
-		Spans: []*v1.Span{
-			{
-				TraceId:           traceID,
-				SpanId:            []byte("random-custom-id-1"),
-				ParentSpanId:      xRayParentSpanID,
-				Name:              "My Custom Name",
-				Kind:              4,
-				StartTimeUnixNano: 1637684210743088640,
-				EndTimeUnixNano:   1637684210827280128,
-				Attributes: []*v11.KeyValue{
-					{
-						Key: "trace.perspective.name",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_StringValue{
-								StringValue: "My custom perspective name",
-							},
-						},
-					},
-					{
-						Key: "service.name",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_StringValue{
-								StringValue: "My custom service name",
-							},
-						},
-					},
-					{
-						Key: "service.type",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_StringValue{
-								StringValue: "My custom service type",
-							},
-						},
-					},
-					{
-						Key: "service.identifier",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_StringValue{
-								StringValue: "My custom service identifier",
-							},
-						},
-					},
-					{
-						Key: "resource.name",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_StringValue{
-								StringValue: "My custom resource name",
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	instrumentationAwsSdkLibrary := v1.InstrumentationLibrarySpans{
-		InstrumentationLibrary: &v11.InstrumentationLibrary{
-			Name:    "@opentelemetry/instrumentation-aws-sdk",
-			Version: "0.1.0",
-		},
-		Spans: []*v1.Span{
-			{
-				TraceId:           traceID,
-				SpanId:            []byte("aws-sdk-sqs"),
-				ParentSpanId:      xRayParentSpanID,
-				Name:              "SQS",
-				Kind:              4,
-				StartTimeUnixNano: 1637684210743088640,
-				EndTimeUnixNano:   1637684210827280128,
-				Attributes: []*v11.KeyValue{
-					{
-						Key: "aws.operation",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_StringValue{
-								StringValue: "sendMessage",
-							},
-						},
-					},
-					{
-						Key: "messaging.url",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_StringValue{
-								StringValue: "https://sqs.eu-west-1.amazonaws.com/120431062118/ENTRY_A_SQS_QUEUE",
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	instrumentationOtherLibrary := v1.InstrumentationLibrarySpans{
-		InstrumentationLibrary: &v11.InstrumentationLibrary{
-			Name:    "@opentelemetry/other-library",
-			Version: "0.1.0",
-		},
-		Spans: []*v1.Span{
-			{
-				TraceId:           traceID,
-				SpanId:            []byte("other-library-sqs"),
-				ParentSpanId:      xRayParentSpanID,
-				Name:              "SQS",
-				Kind:              4,
-				StartTimeUnixNano: 1637684210743088640,
-				EndTimeUnixNano:   1637684210827280128,
-				Attributes: []*v11.KeyValue{
-					{
-						Key: "random.value",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_StringValue{
-								StringValue: "text",
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	instrumentationHTTPLibrary := v1.InstrumentationLibrarySpans{
-		InstrumentationLibrary: &v11.InstrumentationLibrary{
-			Name:    "@opentelemetry/instrumentation-http",
-			Version: "0.1.0",
-		},
-		Spans: []*v1.Span{
-			{
-				TraceId:           traceID,
-				SpanId:            []byte("instrumentation-http-post-1"),
-				ParentSpanId:      []byte("aws-sdk-sqs"),
-				Name:              "HTTP POST - SQS PARENT",
-				Kind:              3,
-				StartTimeUnixNano: 1637684210743088640,
-				EndTimeUnixNano:   1637684210827280128,
-				Attributes: []*v11.KeyValue{
-					{
-						Key: "http.url",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_StringValue{
-								StringValue: "https://sqs.eu-west-1.amazonaws.com/120431062118/ENTRY_A_SQS_QUEUE",
-							},
-						},
-					},
-					{
-						Key: "http.method",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_StringValue{
-								StringValue: "POST",
-							},
-						},
-					},
-					{
-						Key: "http.status_code",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_IntValue{
-								IntValue: 200,
-							},
-						},
-					},
-					{
-						Key: "http.status_text",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_StringValue{
-								StringValue: "OK",
-							},
-						},
-					},
-				},
-			},
-			{
-				TraceId:           traceID,
-				SpanId:            []byte("instrumentation-http-put-1"),
-				ParentSpanId:      xRayParentSpanID,
-				Name:              "HTTPS PUT - XRAY PARENT",
-				Kind:              3,
-				StartTimeUnixNano: 1637684210743088640,
-				EndTimeUnixNano:   1637684210827280128,
-				Attributes: []*v11.KeyValue{
-					{
-						Key: "http.url",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_StringValue{
-								StringValue: "https://random/filename",
-							},
-						},
-					},
-					{
-						Key: "http.method",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_StringValue{
-								StringValue: "PUT",
-							},
-						},
-					},
-					{
-						Key: "http.status_code",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_IntValue{
-								IntValue: 404,
-							},
-						},
-					},
-					{
-						Key: "http.status_text",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_StringValue{
-								StringValue: "Not Found",
-							},
-						},
-					},
-				},
-			},
-			{
-				TraceId:           traceID,
-				SpanId:            []byte("instrumentation-http-post-2"),
-				ParentSpanId:      []byte("random-custom-id-1"),
-				Name:              "HTTP POST - STACKSTATE CUSTOM METRIC",
-				Kind:              3,
-				StartTimeUnixNano: 1637684210743088640,
-				EndTimeUnixNano:   1637684210827280128,
-				Attributes: []*v11.KeyValue{
-					{
-						Key: "http.url",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_StringValue{
-								StringValue: "https://www.location-does-not-matter.com",
-							},
-						},
-					},
-					{
-						Key: "http.method",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_StringValue{
-								StringValue: "POST",
-							},
-						},
-					},
-					{
-						Key: "http.status_code",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_IntValue{
-								IntValue: 400,
-							},
-						},
-					},
-					{
-						Key: "http.status_text",
-						Value: &v11.AnyValue{
-							Value: &v11.AnyValue_StringValue{
-								StringValue: "NOT FOUND",
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	var instrumentationLibrarySpans []*v1.InstrumentationLibrarySpans
-
-	for i := 0; i < 5000; i++ {
-		instrumentationLibrarySpans = append(instrumentationLibrarySpans, &instrumentationStackStateLibrary)
-		instrumentationLibrarySpans = append(instrumentationLibrarySpans, &instrumentationAwsSdkLibrary)
-		instrumentationLibrarySpans = append(instrumentationLibrarySpans, &instrumentationOtherLibrary)
-		instrumentationLibrarySpans = append(instrumentationLibrarySpans, &instrumentationHTTPLibrary)
-	}
-
-	// Determine total instrumentation libraries before processing
-	assert.Equal(b, 20000, len(instrumentationLibrarySpans), "Total instrumentation libraries before determining http status")
-
-	// Determine total spans inside the instrumentation libraries before processing
-	totalSpansBefore := 0
-	for _, library := range instrumentationLibrarySpans {
-		totalSpansBefore += len(library.Spans)
-	}
-	assert.Equal(b, 30000, totalSpansBefore, "Total spans inside the instrumentation libraries before determining http status")
-
-	determineInstrumentationStatus(instrumentationLibrarySpans)
-
-	// Determine total instrumentation libraries before processing
-	assert.Equal(b, 20000, len(instrumentationLibrarySpans), "Total instrumentation libraries after determining http status")
-
-	// Determine total spans inside the instrumentation libraries before processing
-	totalSpansAfter := 0
-	for _, library := range instrumentationLibrarySpans {
-		totalSpansAfter += len(library.Spans)
-	}
-	assert.Equal(b, 20000, totalSpansAfter, "Total spans inside the instrumentation libraries after determining http status")
-}
 
 func TestMapOpenTelemetryTraces(t *testing.T) {
 	instrumentationAwsSdkLibrary := v1.InstrumentationLibrarySpans{
@@ -411,7 +111,7 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 				TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
 				SpanId:            []byte("3423hbiusdf9a"),
 				ParentSpanId:      []byte("12389ybsad32"),
-				Name:              "HTTPS PUT",
+				Name:              "HTTPS PUT A",
 				Kind:              3,
 				StartTimeUnixNano: 1637684210743088640,
 				EndTimeUnixNano:   1637684210827280128,
@@ -454,7 +154,7 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 				TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
 				SpanId:            []byte("asd234213sd"),
 				ParentSpanId:      []byte("sadkjnas832434"),
-				Name:              "HTTPS PUT",
+				Name:              "HTTPS PUT B",
 				Kind:              3,
 				StartTimeUnixNano: 1637684210743088640,
 				EndTimeUnixNano:   1637684210827280128,
@@ -497,7 +197,7 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 				TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
 				SpanId:            []byte("asdkuh2349hbdasd"),
 				ParentSpanId:      []byte("234/dsfs234=sd"),
-				Name:              "HTTPS PUT",
+				Name:              "HTTPS PUT C",
 				Kind:              3,
 				StartTimeUnixNano: 1637684210743088640,
 				EndTimeUnixNano:   1637684210827280128,
@@ -552,35 +252,34 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 	})
 
 	expected := pb.Traces{
-		{
+		pb.Trace{
 			&pb.Span{
-				Name:     "SQS Success",
 				Service:  OpenTelemetrySource,
+				Name:     "SQS Success",
 				Resource: OpenTelemetrySource,
-				Type:     OpenTelemetrySource,
 				TraceID:  280050,
 				SpanID:   88605,
 				ParentID: 159150,
 				Start:    1637684210743088640,
 				Duration: 84191488,
 				Meta: map[string]string{
-					"http.method":             "PUT",
-					"http.status_code":        "200",
-					"http.status_text":        "OK",
-					"http.url":                "https://otel-example-nodejs-dev-s3-965323806078-eu-west-1.s3.eu-west-1.amazonaws.com/filename",
 					"aws.operation":           "sendMessage",
-					"instrumentation_library": "@opentelemetry/instrumentation-aws-sdk",
+					"http.method":             "PUT",
 					"instrumentation_version": "0.1.0",
 					"messaging.url":           "https://sqs.eu-west-1.amazonaws.com/120431062118/ENTRY_A_SQS_QUEUE",
 					"source":                  OpenTelemetrySource,
+					"http.status_code":        "200",
+					"http.status_text":        "OK",
+					"http.url":                "https://otel-example-nodejs-dev-s3-965323806078-eu-west-1.s3.eu-west-1.amazonaws.com/filename",
+					"instrumentation_library": "@opentelemetry/instrumentation-aws-sdk",
 				},
+				Metrics: nil,
+				Type:    OpenTelemetrySource,
 			},
-
 			&pb.Span{
-				Name:     "SQS Failure",
 				Service:  OpenTelemetrySource,
+				Name:     "SQS Failure",
 				Resource: OpenTelemetrySource,
-				Type:     OpenTelemetrySource,
 				TraceID:  280050,
 				SpanID:   193553,
 				ParentID: 159150,
@@ -588,26 +287,27 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 				Duration: 84191488,
 				Error:    404,
 				Meta: map[string]string{
+					"aws.operation":           "sendMessage",
 					"http.method":             "POST",
+					"instrumentation_version": "0.1.0",
+					"source":                  OpenTelemetrySource,
 					"http.status_code":        "404",
 					"http.status_text":        "NOT FOUND",
 					"http.url":                "https://otel-example-nodejs-dev-s3-965323806078-eu-west-1.s3.eu-west-1.amazonaws.com/filename",
-					"aws.operation":           "sendMessage",
 					"instrumentation_library": "@opentelemetry/instrumentation-aws-sdk",
-					"instrumentation_version": "0.1.0",
 					"messaging.url":           "https://sqs.eu-west-1.amazonaws.com/120431062118/RANDOM",
-					"source":                  OpenTelemetrySource,
 				},
 				Metrics: map[string]float64{
 					"http.status_code": 404,
 				},
+				Type: OpenTelemetrySource,
 			},
-		}, {
+		},
+		pb.Trace{
 			&pb.Span{
-				Name:     "Other Name",
 				Service:  OpenTelemetrySource,
+				Name:     "Other Name",
 				Resource: OpenTelemetrySource,
-				Type:     OpenTelemetrySource,
 				TraceID:  280050,
 				SpanID:   152388,
 				ParentID: 159150,
@@ -619,14 +319,61 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 					"random.value":            "text",
 					"source":                  OpenTelemetrySource,
 				},
+				Metrics: nil,
+				Type:    OpenTelemetrySource,
 			},
 		},
 		{
+
 			&pb.Span{
-				Name:     "HTTPS PUT",
 				Service:  OpenTelemetrySource,
+				Name:     "HTTPS PUT A",
 				Resource: OpenTelemetrySource,
-				Type:     OpenTelemetrySource,
+				TraceID:  280050,
+				SpanID:   162652,
+				ParentID: 88605,
+				Start:    1637684210743088640,
+				Duration: 84191488,
+				Meta: map[string]string{
+					"http.method":             "PUT",
+					"http.status_code":        "200",
+					"http.status_text":        "OK",
+					"http.url":                "https://otel-example-nodejs-dev-s3-965323806078-eu-west-1.s3.eu-west-1.amazonaws.com/filename",
+					"instrumentation_library": "@opentelemetry/instrumentation-http",
+					"instrumentation_version": "0.1.0",
+					"source":                  OpenTelemetrySource,
+				},
+				Metrics: nil,
+				Type:    OpenTelemetrySource,
+			},
+			&pb.Span{
+				Service:  OpenTelemetrySource,
+				Name:     "HTTPS PUT B",
+				Resource: OpenTelemetrySource,
+				TraceID:  280050,
+				SpanID:   163510,
+				ParentID: 193553,
+				Start:    1637684210743088640,
+				Duration: 84191488,
+				Error:    404,
+				Meta: map[string]string{
+					"http.method":             "POST",
+					"http.status_code":        "404",
+					"http.status_text":        "NOT FOUND",
+					"http.url":                "https://otel-example-nodejs-dev-s3-965323806078-eu-west-1.s3.eu-west-1.amazonaws.com/filename",
+					"instrumentation_library": "@opentelemetry/instrumentation-http",
+					"instrumentation_version": "0.1.0",
+					"source":                  OpenTelemetrySource,
+				},
+				Metrics: map[string]float64{
+					"http.status_code": 404,
+				},
+				Type: OpenTelemetrySource,
+			},
+			&pb.Span{
+				Service:  OpenTelemetrySource,
+				Name:     "HTTPS PUT C",
+				Resource: OpenTelemetrySource,
 				TraceID:  280050,
 				SpanID:   288408,
 				ParentID: 159150,
@@ -645,6 +392,7 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 				Metrics: map[string]float64{
 					"http.status_code": 404,
 				},
+				Type: OpenTelemetrySource,
 			},
 		},
 	}
@@ -818,21 +566,15 @@ func TestRemapOtelHttpLibraryStatusMappers(t *testing.T) {
 		&instrumentationHTTPLibrary,
 	}
 
-	determineInstrumentationStatus(instrumentationLibrarySpans)
+	newRemappedInstrumentationLibraries := determineInstrumentationStatus(instrumentationLibrarySpans)
 
-	assert.Equal(t, 3, len(instrumentationLibrarySpans), "We should still have the same amount of instrumentationLibraries even if HTTP spans was remapped")
-
-	assert.Equal(t, "@opentelemetry/instrumentation-aws-sdk", instrumentationLibrarySpans[0].InstrumentationLibrary.Name, "[INSTRUMENTATION-AWS-SDK] Verify that the first instrumentation library is AWS-SDK")
-	assert.Equal(t, 1, len(instrumentationLibrarySpans[0].Spans), "[INSTRUMENTATION-AWS-SDK] Should have the same amount of spans it started with")
-	assert.Equal(t, 6, len(instrumentationLibrarySpans[0].Spans[0].Attributes), "[INSTRUMENTATION-AWS-SDK] Should have x amount of attributes after the mappings")
-
-	assert.Equal(t, "@opentelemetry/other-library", instrumentationLibrarySpans[1].InstrumentationLibrary.Name, "[INSTRUMENTATION-*] Verify that the second instrumentation library is OTHER")
-	assert.Equal(t, 1, len(instrumentationLibrarySpans[1].Spans), "[INSTRUMENTATION-*] Should have the same amount of spans it started with")
-	assert.Equal(t, 1, len(instrumentationLibrarySpans[1].Spans[0].Attributes), "[INSTRUMENTATION-*] Should have x amount of attributes after the mappings")
-
-	assert.Equal(t, "@opentelemetry/instrumentation-http", instrumentationLibrarySpans[2].InstrumentationLibrary.Name, "[INSTRUMENTATION-HTTP] Verify that the third instrumentation library is HTTP")
-	assert.Equal(t, 1, len(instrumentationLibrarySpans[2].Spans), "[INSTRUMENTATION-HTTP] should have one less span as it was mapped")
-	assert.Equal(t, 4, len(instrumentationLibrarySpans[2].Spans[0].Attributes), "[INSTRUMENTATION-HTTP] Should have x amount of attributes after the mappings")
+	assert.Equal(t, 3, len(newRemappedInstrumentationLibraries), "We should still have the same amount of instrumentationLibraries even if HTTP spans was remapped")
+	assert.Equal(t, 1, len(newRemappedInstrumentationLibraries[1].Spans), "[INSTRUMENTATION-AWS-SDK] should have the same amount of spans it started with")
+	assert.Equal(t, 1, len(newRemappedInstrumentationLibraries[2].Spans), "[INSTRUMENTATION-*] should have the same amount of spans it started with")
+	assert.Equal(t, 1, len(newRemappedInstrumentationLibraries[0].Spans), "[INSTRUMENTATION-HTTP] should have 1 less span, Only one should be mapped and removed because of a parentSpanId. The res")
+	assert.Equal(t, 6, len(newRemappedInstrumentationLibraries[1].Spans[0].Attributes), "[INSTRUMENTATION-AWS-SDK] The aws-sdk should have received more attributes since a http instrumentation would merge with this")
+	assert.Equal(t, 1, len(newRemappedInstrumentationLibraries[2].Spans[0].Attributes), "[INSTRUMENTATION-*] Should stay the same as there was no http mapping for this")
+	assert.Equal(t, 4, len(newRemappedInstrumentationLibraries[0].Spans[0].Attributes), "[INSTRUMENTATION-HTTP] Should stay the same and present as this http instrumentation span had no parentId")
 }
 
 func TestLambdaOtelInstrumentationGetAccountID(t *testing.T) {
@@ -1083,5 +825,3 @@ func TestConvertStringToUint64(t *testing.T) {
 	sampleI, _ := convertStringToUint64("ASDxkjchi8y349h234987hgfeiwundfuishf89234yh23uh4iu2rh8hsad")
 	assert.Equal(t, uint64(833580), *sampleI, "String to Int sample i should always have the same value")
 }
-
-*/

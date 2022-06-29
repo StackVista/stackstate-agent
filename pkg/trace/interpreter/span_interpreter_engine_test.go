@@ -1,7 +1,5 @@
 package interpreter
 
-/*
-
 import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	"github.com/StackVista/stackstate-agent/pkg/trace/config"
@@ -317,5 +315,3 @@ func TestSpanInterpreterEngine(t *testing.T) {
 		})
 	}
 }
-
-*/
