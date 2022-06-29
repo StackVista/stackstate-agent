@@ -21,15 +21,19 @@ def test_lambda_topology_is_present(cliv1):
     def assert_it():
         topology = cliv1.topology(
             "layer in ('Serverless') AND environment in ('Production')")
-        lambda_topology = lambda_api_topology.find(topology)
+        match_result = lambda_api_topology.find(topology)
+        assert match_result.errors == [], "should succeed"
 
     util.wait_until(assert_it, 5, 1)
 
 
-def test_gitlab_runner(cliv1):
-    topology = cliv1.topology(
-        "layer in ('Serverless') AND environment in ('Production')")
-    gitlab_runner_topology = TopologyMatcher().component('grl', name="windows-gitlab-runner7-function", type="Lambda Function")
-    gitlab_runner = gitlab_runner_topology.find(topology).components['grl']
-    runner_telemetry = cliv1.telemetry([gitlab_runner['id']])
-    assert False, str(runner_telemetry)
+# def test_gitlab_runner(cliv1):
+#     topology = cliv1.topology(
+#         "layer in ('Serverless') AND environment in ('Production')")
+#     gitlab_runner_topology = TopologyMatcher().component('grl', name="windows-gitlab-runner7-function", type="Lambda Function")
+#     match_result = gitlab_runner_topology.find(topology)
+#     assert match_result.errors == [], "should succeed"
+#     assert len(match_result.matches) == 1, "should find only one"
+#     gitlab_runner = match_result.matches[0].component("grl")
+#     runner_telemetry = cliv1.telemetry([gitlab_runner.id])
+#     assert False, str(runner_telemetry)

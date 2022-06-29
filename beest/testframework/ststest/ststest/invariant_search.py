@@ -8,27 +8,53 @@ def no_conflict(d1: dict, d2: dict):
     return True
 
 
-class InvariantSearch:
+class ConsistentGraphMatcher:
+    """
+    ConsistentGraphMatcher computes a set of graphs
+    where each one is consistent with one of the "node specifications" provided by `add_set_of_variants`
+
+    Every invocation of `add_choice_of_spec` provides this class with a list of specifications
+            (specification says that an abstract node A is a specific node A1)
+    For example, you could say that node A is either A1 or A2:
+    >>> cgm = ConsistentGraphMatcher()
+    >>> cgm.add_choice_of_spec([{'A': 'A1'}, {'A': 'A2'}])
+    ConsistentGraphMatcher will make sure that resulting graph will have either node A1 or node A2
+    Next invocation `add_set_of_variants` tells ConsistentGraphMatcher that one of option should also be true in the end
+    >>> cgm.add_choice_of_spec([{'B': 'B1'}, {'B': 'B2'}])
+    >>> cgm.add_choice_of_spec([{'A': 'A1', 'B': 'B2'}, {'A': 'A2', 'B': 'B2'}])
+    Note: that two relation to B2 are defined. So a graph with B=B1 is invalid.
+    >>> cgm.get_graphs()
+    """
+
     def __init__(self):
-        self.invariants: list[dict] = []
-        self.involved = set()
+        self.specifications: list[list[dict]] = []
 
     def _key(k, v):
         return f"{k}={v}"
 
-    def add_partial_invariant(self, partial_inv: dict):
-        self.involved = self.involved.union(partial_inv.keys())
-        extended = [partial_inv]
-        for inv in self.invariants:
-            if partial_inv != inv and no_conflict(partial_inv, inv):
-                extended.append(inv | partial_inv)
-        for inv in extended:
-            if inv not in self.invariants:
-                # TODO possible optimization: drop invariant that don't have all involved components
-                self.invariants.append(inv)
-        return self
+    def add_choice_of_spec(self, specs: list[dict]):
+        """
+        :param specs: list of specifications from virtual nodes A, B etc. to specific nodes A1, B1 etc.
+                      a consistent graph contain one of the specifications
+        :return:
+        """
+        self.specifications.append(specs)
 
-    def get_invariants(self, partial: bool = False):
-        if not partial:
-            return [inv for inv in self.invariants if inv.keys() == self.involved]
-        return self.invariants
+    def get_graphs(self) -> list[dict]:
+        """
+        :return: list of specifications (e.g. {A: A1, B: B3, C: C1}) that have all previously specified virtual nodes
+        """
+        if len(self.specifications) == 0:
+            return []
+
+        specifications = self.specifications.copy()
+        valid_specs = specifications.pop()
+        for specset in specifications:
+            valid_specs = [
+                vspec | spec
+                for vspec in valid_specs
+                for spec in specset
+                if no_conflict(vspec, spec)
+            ]
+
+        return valid_specs

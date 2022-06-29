@@ -23,6 +23,7 @@ func TestPath(groupName string) string {
 func TestFrameworkPaths() []string {
 	return []string{
 		fmt.Sprintf("%s/testframework/ststest", Cwd),
+		fmt.Sprintf("%s/testframework/stscliv1", Cwd),
 	}
 }
 

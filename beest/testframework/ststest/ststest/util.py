@@ -1,10 +1,12 @@
-
-def component_pretty_short(comp: dict):
-    return f"#{comp['id']}#[{comp['name']}](type={comp['type']},identifiers={','.join(map(str, comp['identifiers']))})"
+from stscliv1 import ComponentWrapper, RelationWrapper
 
 
-def relation_pretty_short(rel: dict):
-    return f"#{rel['source']}->[type={rel['type']}]->{rel['target']}"
+def component_pretty_short(comp: ComponentWrapper):
+    return f"#{comp.id}#[{comp.name}](type={comp.type},identifiers={','.join(map(str, comp.attributes.get('identifiers', [])))})"
+
+
+def relation_pretty_short(rel: RelationWrapper):
+    return f"#{rel.source}->[type={rel.type}]->{rel.target}"
 
 
 def components_short_print(comps, delimiter="\n\t\t"):
