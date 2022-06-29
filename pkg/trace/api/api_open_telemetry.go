@@ -135,80 +135,106 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 	return traces
 }
 
-// determineInstrumentationSuccessFromHTTP We attempt to separate the http and other instrumentation's from each other
-// We then use the http to determine if the other instrumentation calls failed or succeeded by matching up parentSpanIds
-// from the http instrumentation and the other instrumentation spanId.
-// If the http parentSpanIds does exist in the trace then we remove the http span and merge the attributes we found
-// with the relevant parent attributes. This allows the parent to contain the state for if the call failed or succeeded
-// whilst we do not create a useless http component by removing it
-// TODO: Optimize this function to be more memory sufficient
+// determineInstrumentationSuccessFromHTTP
+// We are faced with the current problem that the function below should solve
+// - A librarySpans[] contains instrumentations with the instrumentation identifier
+// - The librarySpan[] also contains a span[] which has a potential span type with a http status
+// Now the problem is the following:
+// If the librarySpan[:].name === "certain http instrumentation name" then check if the librarySpan[:].span[:]. has a parentId
+// if it does then it can potentially be a http status child, then next step will be to check if any of the librarySpan range -> spans range
+// contains the same spanId === parentSpanId. If it does then this http span should be removed and the attributes merged.
+// If not then it should stay as a separate span and not be moved. Yes the http span can have a parent that does not exist if we
+// are looking at lambda, so you can not remove it based on parent != nil
 func determineInstrumentationStatus(librarySpans []*v1.InstrumentationLibrarySpans) []v1.InstrumentationLibrarySpans {
-	var lambdaInstrumentation []v1.InstrumentationLibrarySpans
-	var httpInstrumentation []v1.InstrumentationLibrarySpans
-	var instrumentation []v1.InstrumentationLibrarySpans
-
-	// We separate the http instrumentation from the other ones
-	// This is done because if they do have a parent, they'll be mapped into the parent
-	for _, library := range librarySpans {
-		switch library.InstrumentationLibrary.Name {
-		case "@opentelemetry/instrumentation-http":
-			httpInstrumentation = append(httpInstrumentation, *library)
-		case "@opentelemetry/instrumentation-aws-lambda":
-			lambdaInstrumentation = append(lambdaInstrumentation, *library)
-		default:
-			instrumentation = append(instrumentation, *library)
-		}
+	// Index for httpStatusSpans
+	type HttpStatusSpans struct {
+		index int
+		span  *v1.Span
 	}
 
-	var httpWithParentSpans = make([]*v1.Span, 0)
-	var httpLibraryNoParentSpans []v1.InstrumentationLibrarySpans
+	// Instead of creating an entire index of the librarySpans to know if the parent exists that the Span needs to merge with
+	// let's take out the span and also take note of the index. The librarySpans index stays untouched meaning that we
+	// can insert the http spans back into the same InstrumentationLibrarySpans if it has no parent
+	// Thus we reduce the memory usage by not building up a useless dictionary
+	// int == index
+	httpStatusSpans := make(map[string]HttpStatusSpans)
+	var standAloneLibrarySpans []v1.InstrumentationLibrarySpans
 
-	// We map through the http instrumentation and separate out the ones that has instrumentation parents
-	// and those who do not
-	// The ones that does have parents we will be merging them and the ones that does not have to go back into the
-	// list of spans to be mapped as c component
-	for _, httpLibrary := range httpInstrumentation {
-		libraryReference := httpLibrary
-		httpWithNoParentSpans := make([]*v1.Span, 0)
+	for libraryIndex, library := range librarySpans {
+		// We only have to rebuild the instrumentation span lists for spans we want to remove as components
+		// These will be merged in, Thus we only remove instrumentation that contains http statuses and that has a parent
+		if library.InstrumentationLibrary.Name == "@opentelemetry/instrumentation-http" {
+			// Let's rebuild the http status instrumentation to only contain http requests that contains no parents
+			// The ones with parents we want to merge
+			var rebuildLibrary = v1.InstrumentationLibrarySpans{
+				InstrumentationLibrary: library.InstrumentationLibrary,
+				Spans:                  []*v1.Span{},
+				SchemaUrl:              library.SchemaUrl,
+				XXX_NoUnkeyedLiteral:   library.XXX_NoUnkeyedLiteral,
+				XXX_unrecognized:       library.XXX_unrecognized,
+				XXX_sizecache:          library.XXX_sizecache,
+			}
 
-		for _, httpSpan := range httpLibrary.Spans {
-			// This variable is flagged if any span has this http request as a child
-			hasParentSpan := false
-
-			for _, library := range instrumentation {
-				for _, span := range library.Spans {
-					if httpSpan.ParentSpanId != nil && span.SpanId != nil && len(string(span.SpanId)) > 1 && len(string(span.ParentSpanId)) > 1 && string(httpSpan.ParentSpanId) == string(span.SpanId) {
-						hasParentSpan = true
+			// If an HTTP span contains a parent then it will merge with the parent to bring its own health state into the parent
+			// If there is no parent then the http component is standalone
+			for _, span := range library.Spans {
+				if span.ParentSpanId == nil {
+					rebuildLibrary.Spans = append(rebuildLibrary.Spans, span)
+				} else {
+					// The span that we want to merge with the parent can be saved in an index to improve look up times
+					// If there is duplicate http status that needs to merge with the same component then there is already
+					// something wrong, and we will only use the latest one, the map key will overwrite
+					httpStatusSpans[string(span.ParentSpanId)] = HttpStatusSpans{
+						index: libraryIndex,
+						span:  span,
 					}
 				}
 			}
 
-			// We can then divide it into a group that is separate
-			if hasParentSpan {
-				httpWithParentSpans = append(httpWithParentSpans, httpSpan)
-			} else {
-				httpWithNoParentSpans = append(httpWithNoParentSpans, httpSpan)
-			}
+			standAloneLibrarySpans = append(standAloneLibrarySpans, rebuildLibrary)
+		} else {
+			standAloneLibrarySpans = append(standAloneLibrarySpans, *library)
 		}
-
-		// For the reference that had not parents we need to map them back into a object that can merge back
-		libraryReference.Spans = httpWithNoParentSpans
-		httpLibraryNoParentSpans = append(httpLibraryNoParentSpans, libraryReference)
 	}
 
-	// For the libraries that had http children lets merge the http child with this instrumentation
-	for _, library := range instrumentation {
+	// We are not removing any librarySpans only span inside the library span
+	// Thus if the index of the standAloneLibrarySpans does not match then something was done incorrectly
+	// We want to also reuse indexes to inject spans that was unmerged
+	if len(standAloneLibrarySpans) != len(librarySpans) {
+		fmt.Errorf("attempting to determine instrumentation http status failed, a mismatch occurred leaving the determination invalid. Mapping the trace will continue but the health states will be skipped")
+
+		// Let's not bring back a error and break everything but rather allow the spans to still be created without a health state and log that there is a problem
+		var alternativeLibrarySpans []v1.InstrumentationLibrarySpans
+		for _, library := range librarySpans {
+			alternativeLibrarySpans = append(alternativeLibrarySpans, *library)
+		}
+		return alternativeLibrarySpans
+	}
+
+	// Now lets loop through all the stand-alone library span and determine if there is a http status that can merge
+	// with this span to create a complete status span
+	// standAloneLibrarySpans will contain all the non http spans that can merge with http spans
+	for _, library := range standAloneLibrarySpans {
 		for _, span := range library.Spans {
-			for _, httpSpan := range httpWithParentSpans {
-				if httpSpan.ParentSpanId != nil && span.SpanId != nil && len(string(span.SpanId)) > 1 && len(string(span.ParentSpanId)) > 1 && string(httpSpan.ParentSpanId) == string(span.SpanId) {
-					span.Attributes = append(span.Attributes, httpSpan.Attributes...)
-				}
+			if httpStatus, ok := httpStatusSpans[string(span.SpanId)]; ok {
+				// Append the HTTP status attributes into the span attributes
+				span.Attributes = append(span.Attributes, httpStatus.span.Attributes...)
+
+				// We can now delete this key as a parentSpanId will only be used once reducing the map size increase lookup speeds
+				// Afterwards we can also determine if there is any left that had no parent
+				delete(httpStatusSpans, string(span.SpanId))
 			}
 		}
 	}
 
-	// Now that we merged the above we can merge the two separate groups back into one
-	return append(append(httpLibraryNoParentSpans, lambdaInstrumentation...), instrumentation...)
+	// We can now append back the http status spans that was not used as they had no parents and might be best to act as
+	// an individual span
+	for _, remainingHttpStatusSpan := range httpStatusSpans {
+		standAloneLibrarySpans[remainingHttpStatusSpan.index].Spans = append(standAloneLibrarySpans[remainingHttpStatusSpan.index].Spans, remainingHttpStatusSpan.span)
+	}
+
+	// Return the new merged spans
+	return standAloneLibrarySpans
 }
 
 // lambdaInstrumentationGetAccountID We attempt to extract the aws account id from the instrumentation-aws-lambda
