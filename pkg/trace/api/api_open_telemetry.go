@@ -229,8 +229,8 @@ func determineInstrumentationStatus(librarySpans []*v1.InstrumentationLibrarySpa
 
 	// We can now append back the http status spans that was not used as they had no parents and might be best to act as
 	// an individual span
-	for _, remainingHttpStatusSpan := range httpStatusSpans {
-		standAloneLibrarySpans[remainingHttpStatusSpan.index].Spans = append(standAloneLibrarySpans[remainingHttpStatusSpan.index].Spans, remainingHttpStatusSpan.span)
+	for _, remainingHTTPStatusSpan := range httpStatusSpans {
+		standAloneLibrarySpans[remainingHTTPStatusSpan.index].Spans = append(standAloneLibrarySpans[remainingHTTPStatusSpan.index].Spans, remainingHTTPStatusSpan.span)
 	}
 
 	// Return the new merged spans
