@@ -16,7 +16,7 @@ func BenchmarkDetermineInstrumentationStatus(b *testing.B) {
 
 	var instrumentationAwsSdkLibraries []*v1.InstrumentationLibrarySpans
 	var instrumentationStackStateLibraries []*v1.InstrumentationLibrarySpans
-	var instrumentationHttpLibraries []*v1.InstrumentationLibrarySpans
+	var instrumentationHTTPLibraries []*v1.InstrumentationLibrarySpans
 
 	for i := 1; i < benchmarkTotal/3; i++ {
 		id := strconv.Itoa(i)
@@ -126,12 +126,12 @@ func BenchmarkDetermineInstrumentationStatus(b *testing.B) {
 		id := strconv.Itoa(i)
 
 		// Combine every odd number with an existing component
-		var parentSpanId []byte = nil
+		var parentSpanID []byte = nil
 		if i%2 == 0 {
-			parentSpanId = []byte("yjXK+2eLD+s=" + id)
+			parentSpanID = []byte("yjXK+2eLD+s=" + id)
 		}
 
-		instrumentationHttpLibraries = append(instrumentationHttpLibraries, &v1.InstrumentationLibrarySpans{
+		instrumentationHTTPLibraries = append(instrumentationHTTPLibraries, &v1.InstrumentationLibrarySpans{
 			InstrumentationLibrary: &v11.InstrumentationLibrary{
 				Name:    "@opentelemetry/instrumentation-http",
 				Version: "0.1.0",
@@ -140,7 +140,7 @@ func BenchmarkDetermineInstrumentationStatus(b *testing.B) {
 				{
 					TraceId:           []byte("SADAD3423423nasdnsd=="),
 					SpanId:            []byte("sdajkn4234oinksjdfb=" + id),
-					ParentSpanId:      parentSpanId,
+					ParentSpanId:      parentSpanID,
 					Name:              "HTTP " + id,
 					Kind:              4,
 					StartTimeUnixNano: uint64(1637684210743088640 + i),
@@ -188,7 +188,7 @@ func BenchmarkDetermineInstrumentationStatus(b *testing.B) {
 
 	instrumentationLibrarySpans = append(instrumentationLibrarySpans, instrumentationAwsSdkLibraries...)
 	instrumentationLibrarySpans = append(instrumentationLibrarySpans, instrumentationStackStateLibraries...)
-	instrumentationLibrarySpans = append(instrumentationLibrarySpans, instrumentationHttpLibraries...)
+	instrumentationLibrarySpans = append(instrumentationLibrarySpans, instrumentationHTTPLibraries...)
 
 	for i := 0; i < 50000; i++ {
 		determineInstrumentationStatus(instrumentationLibrarySpans)
@@ -201,7 +201,7 @@ func TestBulkDetermineInstrumentationStatus(t *testing.T) {
 
 	var instrumentationAwsSdkLibraries []*v1.InstrumentationLibrarySpans
 	var instrumentationStackStateLibraries []*v1.InstrumentationLibrarySpans
-	var instrumentationHttpLibraries []*v1.InstrumentationLibrarySpans
+	var instrumentationHTTPLibraries []*v1.InstrumentationLibrarySpans
 
 	for i := 0; i < amountPerBlock; i++ {
 		id := strconv.Itoa(i)
@@ -326,21 +326,21 @@ func TestBulkDetermineInstrumentationStatus(t *testing.T) {
 		})
 	}
 
-	mergedHttpSpanName := "HTTP Merged"
-	unmergedHttpSpanName := "HTTP"
+	mergedHTTPSpanName := "HTTP Merged"
+	unmergedHTTPSpanName := "HTTP"
 
 	for i := 0; i < amountPerBlock; i++ {
 		id := strconv.Itoa(i)
 
 		// Combine every odd number with an existing component
-		var parentSpanId []byte = nil
-		name := unmergedHttpSpanName
+		var parentSpanID []byte = nil
+		name := unmergedHTTPSpanName
 		if i%2 == 0 {
-			parentSpanId = []byte("yjXK+2eLD+s=" + id)
-			name = mergedHttpSpanName
+			parentSpanID = []byte("yjXK+2eLD+s=" + id)
+			name = mergedHTTPSpanName
 		}
 
-		instrumentationHttpLibraries = append(instrumentationHttpLibraries, &v1.InstrumentationLibrarySpans{
+		instrumentationHTTPLibraries = append(instrumentationHTTPLibraries, &v1.InstrumentationLibrarySpans{
 			InstrumentationLibrary: &v11.InstrumentationLibrary{
 				Name:    "@opentelemetry/instrumentation-http",
 				Version: "0.1.0",
@@ -349,7 +349,7 @@ func TestBulkDetermineInstrumentationStatus(t *testing.T) {
 				{
 					TraceId:           []byte("SADAD3423423nasdnsd=="),
 					SpanId:            []byte("sdajkn4234oinksjdfb=" + id),
-					ParentSpanId:      parentSpanId,
+					ParentSpanId:      parentSpanID,
 					Name:              name,
 					Kind:              4,
 					StartTimeUnixNano: uint64(1637684210743088640 + i),
@@ -397,7 +397,7 @@ func TestBulkDetermineInstrumentationStatus(t *testing.T) {
 
 	instrumentationLibrarySpans = append(instrumentationLibrarySpans, instrumentationAwsSdkLibraries...)
 	instrumentationLibrarySpans = append(instrumentationLibrarySpans, instrumentationStackStateLibraries...)
-	instrumentationLibrarySpans = append(instrumentationLibrarySpans, instrumentationHttpLibraries...)
+	instrumentationLibrarySpans = append(instrumentationLibrarySpans, instrumentationHTTPLibraries...)
 
 	totalSpansBeforeInstrumentationStatus := 0
 	for _, instrumentation := range instrumentationLibrarySpans {
@@ -411,14 +411,14 @@ func TestBulkDetermineInstrumentationStatus(t *testing.T) {
 		totalSpansAfterInstrumentationStatus += len(instrumentation.Spans)
 	}
 
-	unmergedHttpSpans := 0
-	mergedHttpSpans := 0
+	unmergedHTTPSpans := 0
+	mergedHTTPSpans := 0
 	for _, instrumentation := range afterInstrumentationStatus {
 		for _, span := range instrumentation.Spans {
-			if span.Name == unmergedHttpSpanName {
-				unmergedHttpSpans += 1
-			} else if span.Name == mergedHttpSpanName {
-				mergedHttpSpans += 1
+			if span.Name == unmergedHTTPSpanName {
+				unmergedHTTPSpans++
+			} else if span.Name == mergedHTTPSpanName {
+				mergedHTTPSpans++
 			}
 		}
 	}
@@ -430,9 +430,9 @@ func TestBulkDetermineInstrumentationStatus(t *testing.T) {
 	// We have a one offset atm
 	assert.Equal(t, (amountPerBlock*4)-(amountPerBlock/2)-1, totalSpansAfterInstrumentationStatus, "The total instrumentation spans after determineInstrumentationStatus")
 	// We need to make sure that none of the spans that should have merged stayed behind, if they did then the merger failed
-	assert.Equal(t, mergedHttpSpans, 0, "All the spans merged successfully, Testing merged components")
+	assert.Equal(t, mergedHTTPSpans, 0, "All the spans merged successfully, Testing merged components")
 	// Next we make sure that all the alternative http spans did actually not merge
-	assert.Equal(t, unmergedHttpSpans, amountPerBlock/2, "All the spans merged successfully, Testing unmerged components")
+	assert.Equal(t, unmergedHTTPSpans, amountPerBlock/2, "All the spans merged successfully, Testing unmerged components")
 
 }
 

@@ -146,8 +146,8 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 // If not then it should stay as a separate span and not be moved. Yes the http span can have a parent that does not exist if we
 // are looking at lambda, so you can not remove it based on parent != nil
 func determineInstrumentationStatus(librarySpans []*v1.InstrumentationLibrarySpans) []v1.InstrumentationLibrarySpans {
-	// Index for httpStatusSpans
-	type HttpStatusSpans struct {
+	// Index for HTTPStatusSpans
+	type HTTPStatusSpans struct {
 		index int
 		span  *v1.Span
 	}
@@ -157,7 +157,7 @@ func determineInstrumentationStatus(librarySpans []*v1.InstrumentationLibrarySpa
 	// can insert the http spans back into the same InstrumentationLibrarySpans if it has no parent
 	// Thus we reduce the memory usage by not building up a useless dictionary
 	// int == index
-	httpStatusSpans := make(map[string]HttpStatusSpans)
+	httpStatusSpans := make(map[string]HTTPStatusSpans)
 	var standAloneLibrarySpans []v1.InstrumentationLibrarySpans
 
 	for libraryIndex, library := range librarySpans {
@@ -184,7 +184,7 @@ func determineInstrumentationStatus(librarySpans []*v1.InstrumentationLibrarySpa
 					// The span that we want to merge with the parent can be saved in an index to improve look up times
 					// If there is duplicate http status that needs to merge with the same component then there is already
 					// something wrong, and we will only use the latest one, the map key will overwrite
-					httpStatusSpans[string(span.ParentSpanId)] = HttpStatusSpans{
+					httpStatusSpans[string(span.ParentSpanId)] = HTTPStatusSpans{
 						index: libraryIndex,
 						span:  span,
 					}
