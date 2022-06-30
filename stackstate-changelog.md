@@ -10,7 +10,7 @@
 - Added support for Container Storage Interface (CSI) volume sources [STAC-15464](https://stackstate.atlassian.net/browse/STAC-15464)
 - Open Telemetry
   - Added manual instrumentation support [STAC-16407](https://stackstate.atlassian.net/browse/STAC-16407)
-  - Added interpreter suppoer for stackstate-instrumentation [STAC-16407](https://stackstate.atlassian.net/browse/STAC-16407)
+  - Added interpreter support for stackstate-instrumentation [STAC-16407](https://stackstate.atlassian.net/browse/STAC-16407)
 
 **Improvements**
 - Added collection level setting info [STAC-14671](https://stackstate.atlassian.net/browse/STAC-14671)
