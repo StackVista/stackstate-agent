@@ -1,11 +1,11 @@
-package aws
+package modules
 
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/trace/api"
 	config "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	interpreter "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
-	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/modules"
+	instrumentationbuilders "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentation-builders"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"strings"
@@ -40,7 +40,7 @@ func (t *OpenTelemetryStepFunctionsInterpreter) Interpret(spans []*pb.Span) []*p
 			span.Meta = map[string]string{}
 		}
 
-		stateMachineArn, stateMachineArnOk := modules.RetrieveValidSpanMeta(span, "SFN", "aws.request.state.machine.arn")
+		stateMachineArn, stateMachineArnOk := instrumentationbuilders.GetSpanMeta("SFN", span, "aws.request.state.machine.arn")
 
 		if stateMachineArnOk {
 			var arn = strings.ToLower(*stateMachineArn)
@@ -50,7 +50,7 @@ func (t *OpenTelemetryStepFunctionsInterpreter) Interpret(spans []*pb.Span) []*p
 
 			if len(arnParts) >= 7 {
 				stateFunctionName := arnParts[6]
-				modules.SpanBuilder(span, stateFunctionName, "State Machine", "step.function", "consumer", urn, arn)
+				instrumentationbuilders.AwsSpanBuilder(span, stateFunctionName, "State Machine", "step.function", "consumer", urn, arn)
 			} else {
 				_ = log.Errorf("[OTEL] [SFN]: 'arn' invalid structure supplied '%s'", arn)
 				return nil
@@ -60,7 +60,7 @@ func (t *OpenTelemetryStepFunctionsInterpreter) Interpret(spans []*pb.Span) []*p
 			return nil
 		}
 
-		modules.InterpretHTTPError(span)
+		instrumentationbuilders.InterpretSpanHTTPError(span)
 	}
 
 	return spans

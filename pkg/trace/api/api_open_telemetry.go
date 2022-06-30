@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	v12 "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/common/v1"
@@ -77,18 +76,8 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 		// [Graceful] We can continue without awsAccountID, Unable to map module will give warnings
 		awsAccountID := lambdaInstrumentationGetAccountID(resourceSpan)
 
-		originalResourceSpan, originalResourceSpanOk := json.Marshal(resourceSpan.InstrumentationLibrarySpans)
-		if originalResourceSpanOk == nil {
-			log.Debugf("Received the following resourceSpans before modifying the http instrumentation, %s", originalResourceSpan)
-		}
-
 		// [Graceful] We can continue without determining the http status, This will then allow all the relevant information to still display
-		remappedInstrumentationLibrarySpans := determineInstrumentationSuccessFromHTTP(resourceSpan.InstrumentationLibrarySpans)
-
-		afterResourceSpan, afterResourceSpanOk := json.Marshal(remappedInstrumentationLibrarySpans)
-		if afterResourceSpanOk == nil {
-			log.Debugf("Received the following resourceSpans after modifying the http instrumentation, %s", afterResourceSpan)
-		}
+		remappedInstrumentationLibrarySpans := determineInstrumentationStatus(resourceSpan.InstrumentationLibrarySpans)
 
 		for _, instrumentationLibrarySpan := range remappedInstrumentationLibrarySpans {
 			// When we reach this point then it is safe to start building a trace
@@ -98,6 +87,7 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 			for _, instrumentationSpan := range instrumentationLibrarySpan.Spans {
 				var meta = map[string]string{
 					"instrumentation_library": instrumentationLibrarySpan.InstrumentationLibrary.Name,
+					"instrumentation_version": instrumentationLibrarySpan.InstrumentationLibrary.Version,
 					"source":                  OpenTelemetrySource,
 				}
 
@@ -145,19 +135,6 @@ func mapOpenTelemetryTraces(openTelemetryTraces openTelemetryTrace.ExportTraceSe
 	return traces
 }
 
-/**
-
-AWS-SDK
- -> SQS (AWS-HTTP +)
-
-AWS-HTTP
- --- -> Response SQS parent SQS
- -> Http parent
-
-
-
-*/
-
 // determineInstrumentationSuccessFromHTTP We attempt to separate the http and other instrumentation's from each other
 // We then use the http to determine if the other instrumentation calls failed or succeeded by matching up parentSpanIds
 // from the http instrumentation and the other instrumentation spanId.
@@ -165,7 +142,7 @@ AWS-HTTP
 // with the relevant parent attributes. This allows the parent to contain the state for if the call failed or succeeded
 // whilst we do not create a useless http component by removing it
 // TODO: Optimize this function to be more memory sufficient
-func determineInstrumentationSuccessFromHTTP(librarySpans []*v1.InstrumentationLibrarySpans) []v1.InstrumentationLibrarySpans {
+func determineInstrumentationStatus(librarySpans []*v1.InstrumentationLibrarySpans) []v1.InstrumentationLibrarySpans {
 	var lambdaInstrumentation []v1.InstrumentationLibrarySpans
 	var httpInstrumentation []v1.InstrumentationLibrarySpans
 	var instrumentation []v1.InstrumentationLibrarySpans
@@ -349,7 +326,7 @@ func convertStringToUint64(input string) (*uint64, error) {
 	runes := []rune(input)
 
 	// Attempt to create a multiplier using the last and first number
-	// This should randomize things a bit more
+	// This should randomize things bit more
 	multiplier := runes[0] + runes[len(runes)-1]
 	for _, r := range runes {
 		id += uint64(r) * uint64(multiplier)
