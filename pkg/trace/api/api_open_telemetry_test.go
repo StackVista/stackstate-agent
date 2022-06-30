@@ -111,7 +111,7 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 				TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
 				SpanId:            []byte("3423hbiusdf9a"),
 				ParentSpanId:      []byte("12389ybsad32"),
-				Name:              "HTTPS PUT",
+				Name:              "HTTPS PUT A",
 				Kind:              3,
 				StartTimeUnixNano: 1637684210743088640,
 				EndTimeUnixNano:   1637684210827280128,
@@ -154,7 +154,7 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 				TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
 				SpanId:            []byte("asd234213sd"),
 				ParentSpanId:      []byte("sadkjnas832434"),
-				Name:              "HTTPS PUT",
+				Name:              "HTTPS PUT B",
 				Kind:              3,
 				StartTimeUnixNano: 1637684210743088640,
 				EndTimeUnixNano:   1637684210827280128,
@@ -197,7 +197,7 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 				TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
 				SpanId:            []byte("asdkuh2349hbdasd"),
 				ParentSpanId:      []byte("234/dsfs234=sd"),
-				Name:              "HTTPS PUT",
+				Name:              "HTTPS PUT C",
 				Kind:              3,
 				StartTimeUnixNano: 1637684210743088640,
 				EndTimeUnixNano:   1637684210827280128,
@@ -254,10 +254,9 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 	expected := pb.Traces{
 		{
 			&pb.Span{
-				Name:     "HTTPS PUT",
 				Service:  OpenTelemetrySource,
+				Name:     "HTTPS PUT C",
 				Resource: OpenTelemetrySource,
-				Type:     OpenTelemetrySource,
 				TraceID:  280050,
 				SpanID:   288408,
 				ParentID: 159150,
@@ -270,40 +269,43 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 					"http.status_text":        "Not Found - This has no parent span",
 					"http.url":                "https://random/filename",
 					"instrumentation_library": "@opentelemetry/instrumentation-http",
+					"instrumentation_version": "0.1.0",
 					"source":                  OpenTelemetrySource,
 				},
 				Metrics: map[string]float64{
 					"http.status_code": 404,
 				},
+				Type: OpenTelemetrySource,
 			},
-		}, {
+		},
+		pb.Trace{
 			&pb.Span{
-				Name:     "SQS Success",
 				Service:  OpenTelemetrySource,
+				Name:     "SQS Success",
 				Resource: OpenTelemetrySource,
-				Type:     OpenTelemetrySource,
 				TraceID:  280050,
 				SpanID:   88605,
 				ParentID: 159150,
 				Start:    1637684210743088640,
 				Duration: 84191488,
 				Meta: map[string]string{
+					"aws.operation":           "sendMessage",
 					"http.method":             "PUT",
+					"instrumentation_version": "0.1.0",
+					"messaging.url":           "https://sqs.eu-west-1.amazonaws.com/120431062118/ENTRY_A_SQS_QUEUE",
+					"source":                  OpenTelemetrySource,
 					"http.status_code":        "200",
 					"http.status_text":        "OK",
 					"http.url":                "https://otel-example-nodejs-dev-s3-965323806078-eu-west-1.s3.eu-west-1.amazonaws.com/filename",
-					"aws.operation":           "sendMessage",
 					"instrumentation_library": "@opentelemetry/instrumentation-aws-sdk",
-					"messaging.url":           "https://sqs.eu-west-1.amazonaws.com/120431062118/ENTRY_A_SQS_QUEUE",
-					"source":                  OpenTelemetrySource,
 				},
+				Metrics: nil,
+				Type:    OpenTelemetrySource,
 			},
-
 			&pb.Span{
-				Name:     "SQS Failure",
 				Service:  OpenTelemetrySource,
+				Name:     "SQS Failure",
 				Resource: OpenTelemetrySource,
-				Type:     OpenTelemetrySource,
 				TraceID:  280050,
 				SpanID:   193553,
 				ParentID: 159150,
@@ -311,25 +313,27 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 				Duration: 84191488,
 				Error:    404,
 				Meta: map[string]string{
+					"aws.operation":           "sendMessage",
 					"http.method":             "POST",
+					"instrumentation_version": "0.1.0",
+					"source":                  OpenTelemetrySource,
 					"http.status_code":        "404",
 					"http.status_text":        "NOT FOUND",
 					"http.url":                "https://otel-example-nodejs-dev-s3-965323806078-eu-west-1.s3.eu-west-1.amazonaws.com/filename",
-					"aws.operation":           "sendMessage",
 					"instrumentation_library": "@opentelemetry/instrumentation-aws-sdk",
 					"messaging.url":           "https://sqs.eu-west-1.amazonaws.com/120431062118/RANDOM",
-					"source":                  OpenTelemetrySource,
 				},
 				Metrics: map[string]float64{
 					"http.status_code": 404,
 				},
+				Type: OpenTelemetrySource,
 			},
-		}, {
+		},
+		pb.Trace{
 			&pb.Span{
-				Name:     "Other Name",
 				Service:  OpenTelemetrySource,
+				Name:     "Other Name",
 				Resource: OpenTelemetrySource,
-				Type:     OpenTelemetrySource,
 				TraceID:  280050,
 				SpanID:   152388,
 				ParentID: 159150,
@@ -337,9 +341,12 @@ func TestMapOpenTelemetryTraces(t *testing.T) {
 				Duration: 84191488,
 				Meta: map[string]string{
 					"instrumentation_library": "@opentelemetry/other-library",
+					"instrumentation_version": "0.1.0",
 					"random.value":            "text",
 					"source":                  OpenTelemetrySource,
 				},
+				Metrics: nil,
+				Type:    OpenTelemetrySource,
 			},
 		},
 	}
@@ -513,7 +520,7 @@ func TestRemapOtelHttpLibraryStatusMappers(t *testing.T) {
 		&instrumentationHTTPLibrary,
 	}
 
-	newRemappedInstrumentationLibraries := determineInstrumentationSuccessFromHTTP(instrumentationLibrarySpans)
+	newRemappedInstrumentationLibraries := determineInstrumentationStatus(instrumentationLibrarySpans)
 
 	assert.Equal(t, 3, len(newRemappedInstrumentationLibraries), "We should still have the same amount of instrumentationLibraries even if HTTP spans was remapped")
 	assert.Equal(t, 1, len(newRemappedInstrumentationLibraries[1].Spans), "[INSTRUMENTATION-AWS-SDK] should have the same amount of spans it started with")
