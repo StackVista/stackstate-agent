@@ -16,3 +16,7 @@ topic-*.json
 
 # binary
 beest
+
+stackstate-values.yml
+
+sts-toolbox.yml
