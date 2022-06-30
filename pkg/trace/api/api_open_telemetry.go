@@ -326,7 +326,7 @@ func convertStringToUint64(input string) (*uint64, error) {
 	runes := []rune(input)
 
 	// Attempt to create a multiplier using the last and first number
-	// This should randomize things a bit more
+	// This should randomize things bit more
 	multiplier := runes[0] + runes[len(runes)-1]
 	for _, r := range runes {
 		id += uint64(r) * uint64(multiplier)
