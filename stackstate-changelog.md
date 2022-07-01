@@ -3,21 +3,26 @@
 ## 2.18.0 (2022-XX-XX)
 
 **Improvements**
-- Upstream upgrade to 7.22.1 _[STAC-16755](https://stackstate.atlassian.net/browse/STAC-16755)
+- Upstream upgrade to 7.22.1 tag [STAC-16755](https://stackstate.atlassian.net/browse/STAC-16755)
 
-## 2.17.0 (2022-XX-XX)
+## 2.17.0 (2022-07-01)
 
 **Features**
 - Support for using agents persistent cache [STAC-16162](https://stackstate.atlassian.net/browse/STAC-16162)
 - Added topology element deletion [STAC-14816](https://stackstate.atlassian.net/browse/STAC-14816)
 - Added Dynatrace support for synthetic checks [STAC-14511](https://stackstate.atlassian.net/browse/STAC-14511)
 - Discover relations from service to [static pods](https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/) (specifically, kubernetes service to kube-apiserver pods) [STAC-16815](https://stackstate.atlassian.net/browse/STAC-16815)
+- Added support for Container Storage Interface (CSI) volume sources [STAC-15464](https://stackstate.atlassian.net/browse/STAC-15464)
+- Open Telemetry
+  - Added manual instrumentation support [STAC-16407](https://stackstate.atlassian.net/browse/STAC-16407)
+  - Added interpreter support for stackstate-instrumentation [STAC-16407](https://stackstate.atlassian.net/browse/STAC-16407)
 
 **Improvements**
 - Added collection level setting info [STAC-14671](https://stackstate.atlassian.net/browse/STAC-14671)
-- Upgraded process agent version from 4.0.2 to 4.0.6 which includes:
+- Upgraded process agent version from 4.0.2 to 4.0.7 which includes:
   - Reporting CPU throttling metrics for containers
   - Process agent check topology for self-observability
+  - Removed several processes from [the default blacklist](https://github.com/StackVista/stackstate-process-agent/pull/109/files)
   - [other minor improvements](https://github.com/StackVista/stackstate-process-agent/blob/master/stackstate-changelog.md)
 
 **Bugfix**

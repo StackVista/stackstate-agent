@@ -180,6 +180,7 @@ func (t *TopologyCheck) Run() error {
 			componentChannel,
 			relationChannel,
 			commonClusterCollector,
+			t.instance.CSIPVMapperEnabled,
 		),
 		// Register Pod Component Collector
 		collectors.NewPodCollector(

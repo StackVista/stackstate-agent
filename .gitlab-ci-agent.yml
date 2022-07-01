@@ -809,7 +809,7 @@ molecule_compose_create:
   <<: *molecule_create
   rules:
     - *compose_ignore_rule
-    - *merge_train_always
+    - *v2_merge_train_always
   variables:
     MOLECULE_SCENARIO: compose
 
@@ -818,7 +818,7 @@ molecule_compose_test:
   <<: *molecule_test
   rules:
     - *compose_ignore_rule
-    - *merge_train_on_success
+    - *v2_merge_train_on_success
   variables:
     MOLECULE_SCENARIO: compose
   dependencies:
@@ -831,7 +831,7 @@ molecule_compose_failure_cleanup:
   <<: *molecule_destroy
   rules:
     - *compose_ignore_rule
-    - *merge_train_on_failure
+    - *v2_merge_train_on_failure
   variables:
     MOLECULE_SCENARIO: compose
   needs:
@@ -842,7 +842,7 @@ molecule_compose_success_cleanup:
   <<: *molecule_destroy
   rules:
     - *compose_ignore_rule
-    - *merge_train_on_success
+    - *v2_merge_train_on_success
   variables:
     MOLECULE_SCENARIO: compose
   dependencies:

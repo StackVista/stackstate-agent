@@ -2,7 +2,7 @@
 - hosts: all
   tasks:
     - name: Install python for Ansible
-      raw: test -e /usr/bin/python || (apt -y update && apt install -y python3)
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y haveged python3)
       become: true
       changed_when: false
     - name: Install python-pip

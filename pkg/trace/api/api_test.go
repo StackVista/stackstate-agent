@@ -496,6 +496,57 @@ func TestProto(t *testing.T) {
 				InstrumentationLibrarySpans: []*v1.InstrumentationLibrarySpans{
 					{
 						InstrumentationLibrary: &v11.InstrumentationLibrary{
+							Name:    "@opentelemetry/instrumentation-http",
+							Version: "0.1.0",
+						},
+						Spans: []*v1.Span{
+							{
+								TraceId:           []byte("YZ0T8B2Ll8IIzMv3EfFIqQ=="),
+								SpanId:            []byte("sda322+asds+s="),
+								ParentSpanId:      []byte("yjXK+2eLD+s="),
+								Name:              "HTTPS PUT",
+								Kind:              4,
+								StartTimeUnixNano: 1637684210743088640,
+								EndTimeUnixNano:   1637684210827280128,
+								Attributes: []*v11.KeyValue{
+									{
+										Key: "http.method",
+										Value: &v11.AnyValue{
+											Value: &v11.AnyValue_StringValue{
+												StringValue: "POST",
+											},
+										},
+									},
+									{
+										Key: "http.status_code",
+										Value: &v11.AnyValue{
+											Value: &v11.AnyValue_StringValue{
+												StringValue: "404",
+											},
+										},
+									},
+									{
+										Key: "http.status_text",
+										Value: &v11.AnyValue{
+											Value: &v11.AnyValue_StringValue{
+												StringValue: "Not Found - This has no parent span",
+											},
+										},
+									},
+									{
+										Key: "http.url",
+										Value: &v11.AnyValue{
+											Value: &v11.AnyValue_StringValue{
+												StringValue: "https://random/filename",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					{
+						InstrumentationLibrary: &v11.InstrumentationLibrary{
 							Name:    "@opentelemetry/instrumentation-aws-sdk",
 							Version: "0.1.0",
 						},
@@ -573,7 +624,7 @@ func TestProto(t *testing.T) {
 	trace, err := proto.Marshal(traceStruct)
 	assert.Nil(err)
 	assert.IsType(make([]byte, 0), trace)
-	assert.Equal(616, len(trace))
+	assert.Equal(903, len(trace))
 
 	// prepare the receiver
 	conf := newTestReceiverConfig()
@@ -604,8 +655,8 @@ func TestProto(t *testing.T) {
 	// Receiver State
 	ts, ok := rs.Stats[info.Tags{Lang: langs[0], EndpointVersion: "v0.5"}]
 	assert.True(ok)
-	assert.Equal(int64(2), ts.TracesReceived)
-	assert.Equal(int64(616), ts.TracesBytes)
+	assert.Equal(int64(3), ts.TracesReceived)
+	assert.Equal(int64(903), ts.TracesBytes)
 }
 
 func TestHandleTraces(t *testing.T) {

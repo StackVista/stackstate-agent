@@ -1,4 +1,5 @@
 ---
+- include_tasks: ../_shared/install-and-update/increase-entropy.yml
 - include_tasks: ../_shared/process/gather-facts.yml
 - include_tasks: ../_shared/docker/compose-cleanup.yml
 - include_tasks: ../_shared/docker/compose-run.yml
