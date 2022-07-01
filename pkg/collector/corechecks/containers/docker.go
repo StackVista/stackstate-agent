@@ -163,7 +163,8 @@ func (d *DockerCheck) Run() error {
 	}
 
 	du, err := docker.GetDockerUtil()
-	if config.IsContainerized() {
+
+	if config.IsContainerized() || du != nil {
 		if err != nil {
 			// sts begin
 			sender.ServiceCheck(DockerServiceUp, metrics.ServiceCheckCritical, "", nil, err.Error())
