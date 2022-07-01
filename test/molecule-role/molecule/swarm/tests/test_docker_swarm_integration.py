@@ -24,9 +24,15 @@ def test_docker_swarm_metrics(host):
 
     def wait_for_metrics():
         data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
-        with open("./topic-docker-swarm-sts-multi-metrics.json", 'w') as f:
-            json.dump(json_data, f, indent=4)
+        try:
+            json_data = json.loads(data)
+            with open("./topic-docker-swarm-sts-multi-metrics.json", 'w') as f:
+                json.dump(json_data, f, indent=4)
+        except json.decoder.JSONDecodeError as exc:
+            print(host.check_output("docker ps"))
+            print(host.check_output("docker-compose ps"))
+            print(host.check_output("docker-compose logs"))
+            raise exc
 
         def get_keys():
             # Check for a swarm service which all metrics are we returning
@@ -49,9 +55,15 @@ def test_docker_swarm_topology(host):
     def assert_topology():
         topo_url = "http://localhost:7070/api/topic/sts_topo_docker-swarm_agents?limit=1500"
         data = host.check_output('curl "{}"'.format(topo_url))
-        json_data = json.loads(data)
-        with open("./topic-docker-swarm-integrations.json", 'w') as f:
-            json.dump(json_data, f, indent=4)
+        try:
+            json_data = json.loads(data)
+            with open("./topic-docker-swarm-integrations.json", 'w') as f:
+                json.dump(json_data, f, indent=4)
+        except json.decoder.JSONDecodeError as exc:
+            print(host.check_output("docker ps"))
+            print(host.check_output("docker-compose ps"))
+            print(host.check_output("docker-compose logs"))
+            raise exc
 
         components = [
             {
