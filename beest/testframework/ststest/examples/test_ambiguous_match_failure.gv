@@ -1,0 +1,57 @@
+digraph "Topology match debug" {
+subgraph cluster_1 {
+color=mediumslateblue;
+fontsize=30;
+label="Query result";
+penwidth=5;
+1 [color=black, label=a1];
+2 [color=black, label=a2];
+3 [color=black, label=b1];
+4 [color=black, label=b2];
+5 [color=black, label=c1];
+6 [color=black, label=c2];
+7 [color=black, label=to, shape=underline];
+1 -> 7  [color=black];
+7 -> 4  [color=black];
+8 [color=black, label=to, shape=underline];
+4 -> 8  [color=black];
+8 -> 5  [color=black];
+9 [color=black, label=to, shape=underline];
+2 -> 9  [color=black];
+9 -> 4  [color=black];
+10 [color=black, label=to, shape=underline];
+3 -> 10  [color=black];
+10 -> 5  [color=black];
+11 [color=black, label=to, shape=underline];
+3 -> 11  [color=black];
+11 -> 6  [color=black];
+}
+
+A -> 1  [color=orange, penwidth=5, style=dotted];
+A -> 2  [color=orange, penwidth=5, style=dotted];
+B -> 3  [color=orange, penwidth=5, style=dotted];
+B -> 4  [color=orange, penwidth=5, style=dotted];
+C -> 5  [color=orange, penwidth=5, style=dotted];
+C -> 6  [color=orange, penwidth=5, style=dotted];
+A_TO_B -> 9  [color=orange, penwidth=3, style=dotted];
+A_TO_B -> 7  [color=orange, penwidth=3, style=dotted];
+B_TO_C -> 8  [color=orange, penwidth=3, style=dotted];
+B_TO_C -> 10  [color=orange, penwidth=3, style=dotted];
+B_TO_C -> 11  [color=orange, penwidth=3, style=dotted];
+subgraph cluster_0 {
+color=grey;
+fontsize=30;
+label="Matching rule";
+penwidth=5;
+A [color=orange, label="A\nname~=a."];
+B [color=orange, label="B\nname~=b."];
+C [color=orange, label="C\nname~=c."];
+A_TO_B [color=orange, label="type~=to\ndependencyDirection~=ONE_WAY", shape=underline];
+A -> A_TO_B  [color=orange];
+A_TO_B -> B  [color=orange];
+B_TO_C [color=orange, label="type~=to\ndependencyDirection~=ONE_WAY", shape=underline];
+B -> B_TO_C  [color=orange];
+B_TO_C -> C  [color=orange];
+}
+
+}

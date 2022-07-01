@@ -41,6 +41,9 @@ class RelationMatcher:
         for k, v in props.items():
             self.matchers.append(StringPropertyMatcher(k, v))
 
+    def id(self):
+        return f"{self.source}_TO_{self.target}"
+
     def __str__(self):
         return f"{self.source}->{self.target}[{','.join([str(m) for m in self.matchers])}]"
 

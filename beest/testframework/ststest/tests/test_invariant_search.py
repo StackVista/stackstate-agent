@@ -26,8 +26,8 @@ class TestInvariantSearch(TestCase):
         invm.add_choice_of_spec([{'c': 'c2', 'a': 'a1'}, {'c': 'c1', 'a': 'a2'}])
         result2 = invm.get_graphs()
         expected2 = [
-            {'a': 'a2', 'b': 'b2', 'c': 'c1'},
             {'a': 'a1', 'b': 'b1', 'c': 'c2'},
+            {'a': 'a2', 'b': 'b2', 'c': 'c1'},
         ]
         self.assertEqual(expected2, result2)
 

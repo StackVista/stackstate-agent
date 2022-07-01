@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+import logging
 
 from testinfra.host import Host
 import hashlib
@@ -9,8 +10,10 @@ from .models import *
 
 
 class CLIv1:
-    def __init__(self, host: Host):
+    def __init__(self, host: Host, log: logging.Logger = logging, cache_enabled: bool = False):
+        self.log = log
         self.host = host
+        self.cache_enabled = cache_enabled
 
     def telemetry(self, component_ids):
         if len(component_ids) == 0:
@@ -38,12 +41,16 @@ class CLIv1:
         )
 
     def script(self, fullquery) -> dict:
+        log = self.log
+        log.info(f"querying StackState with CLIv1: %s, cache: %s", fullquery, self.cache_enabled)
         cachefile = hashlib.sha1(fullquery.encode('utf-8')).hexdigest() + '.json'
-        try:
-            with open(cachefile, 'r') as f:
-                return json.load(f)['result']
-        except IOError:
-            pass
+        if self.cache_enabled:
+            try:
+                with open(cachefile, 'r') as f:
+                    log.warning(f"using cached result from %s", cachefile)
+                    return json.load(f)['result']
+            except IOError:
+                pass
 
         ctx = "context={{ kubecontext }}"
         ns = "namespace={{ namespace }}"
@@ -61,17 +68,18 @@ class CLIv1:
             remote_path = "remote_path=\"/query.stql\""
             # then transfer it
             transfer_result = self.host.ansible("kubernetes.core.k8s_cp", f"{ctx} {ns} {pod} {local_path} {remote_path}", verbose=4)
-            print(f"[cli] transfer result: {transfer_result}")
+            log.info(f"transferred STSL script to CLI pod: {transfer_result}")
         finally:
             os.remove(path)
 
         # Execute the query
         command = f"command=\"bash query.sh\""
         executed = self.host.ansible("kubernetes.core.k8s_exec", f"{ctx} {ns} {pod} {command}", verbose=4)
-        print(f"[cli] executed query: {executed}")
+        log.info(f"executed STSL script: {executed}")
         json_data = json.loads(executed["stdout"])['result']
-        with open(cachefile, 'w') as f:
-            f.write(executed["stdout"])
+        if self.cache_enabled:
+            with open(cachefile, 'w') as f:
+                f.write(executed["stdout"])
         return json_data
 
     @staticmethod

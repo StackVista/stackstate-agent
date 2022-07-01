@@ -1,1 +1,3 @@
 stscliv1
+pydot
+pyshorteners
