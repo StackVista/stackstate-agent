@@ -9,7 +9,6 @@
 package python
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"runtime"
 	"testing"
@@ -114,7 +113,7 @@ func testLoadCustomCheck(t *testing.T) {
 	rtloader = &C.rtloader_t{}
 	defer func() { rtloader = nil }()
 
-	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	handler.InitCheckManager(handler.CheckNoReloader{})
 	loader, err := NewPythonCheckLoader()
 	assert.Nil(t, err)
 
@@ -149,7 +148,7 @@ func testLoadWheelCheck(t *testing.T) {
 	rtloader = &C.rtloader_t{}
 	defer func() { rtloader = nil }()
 
-	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	handler.InitCheckManager(handler.CheckNoReloader{})
 	loader, err := NewPythonCheckLoader()
 	assert.Nil(t, err)
 

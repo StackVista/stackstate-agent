@@ -12,7 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
@@ -45,7 +45,7 @@ func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, _ignoredExternal
 	err := json.Unmarshal([]byte(rawComponent), &component)
 
 	if err == nil {
-		checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitComponent(_instance, component)
+		handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitComponent(_instance, component)
 	} else {
 		_ = log.Errorf("Empty topology component not sent. Raw: %v, Json: %v, Error: %v", rawComponent,
 			component.JSONString(), err)
@@ -68,7 +68,7 @@ func SubmitRelation(id *C.char, instanceKey *C.instance_key_t, _ignoredSourceID 
 
 	if err == nil {
 		relation.ExternalID = fmt.Sprintf("%s-%s-%s", relation.SourceID, relation.Type.Name, relation.TargetID)
-		checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitRelation(_instance, relation)
+		handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitRelation(_instance, relation)
 	} else {
 		_ = log.Errorf("Empty topology relation not sent. Raw: %v, Json: %v, Error: %v", rawRelation,
 			relation.JSONString(), err)
@@ -85,7 +85,7 @@ func SubmitStartSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 		URL:  C.GoString(instanceKey.url),
 	}
 
-	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitStartSnapshot(_instance)
+	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitStartSnapshot(_instance)
 }
 
 // SubmitStopSnapshot stops a snapshot
@@ -98,7 +98,7 @@ func SubmitStopSnapshot(id *C.char, instanceKey *C.instance_key_t) {
 		URL:  C.GoString(instanceKey.url),
 	}
 
-	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitStopSnapshot(_instance)
+	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitStopSnapshot(_instance)
 }
 
 // SubmitDelete deletes a topology element
@@ -112,5 +112,5 @@ func SubmitDelete(id *C.char, instanceKey *C.instance_key_t, topoElementID *C.ch
 		URL:  C.GoString(instanceKey.url),
 	}
 
-	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitDelete(_instance, topologyElementID)
+	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitDelete(_instance, topologyElementID)
 }

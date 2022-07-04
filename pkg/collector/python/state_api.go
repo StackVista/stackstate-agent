@@ -18,7 +18,7 @@ package python
 import "C"
 import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 )
 
 // NOTE
@@ -32,7 +32,7 @@ func SetState(id *C.char, key *C.char, state *C.char) {
 	stateKey := C.GoString(key)
 	stateValue := C.GoString(state)
 
-	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SetState(stateKey, stateValue)
+	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SetState(stateKey, stateValue)
 }
 
 // GetState get the current state
@@ -41,5 +41,5 @@ func GetState(id *C.char, key *C.char) string {
 	goCheckID := C.GoString(id)
 	stateKey := C.GoString(key)
 
-	return checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).GetState(stateKey)
+	return handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).GetState(stateKey)
 }

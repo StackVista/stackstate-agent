@@ -12,7 +12,7 @@ import (
 	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -67,7 +67,7 @@ func SubmitRawMetricsData(checkID *C.char, name *C.char, value C.float, tags **C
 	rawTimestamp := int64(timestamp)
 	rawTags := cStringArrayToSlice(tags)
 
-	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitRawMetricsData(telemetry.RawMetrics{
+	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitRawMetricsData(telemetry.RawMetrics{
 		Name:      rawName,
 		Timestamp: rawTimestamp,
 		HostName:  rawHostname,

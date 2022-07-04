@@ -9,7 +9,6 @@
 package python
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
@@ -22,7 +21,7 @@ import (
 import "C"
 
 func SetupTransactionalComponents() {
-	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	handler.InitCheckManager(handler.CheckNoReloader{})
 	state.InitCheckStateManager()
 	transactionbatcher.NewMockTransactionalBatcher()
 	transactionmanager.NewMockTransactionManager()

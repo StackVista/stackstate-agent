@@ -69,7 +69,7 @@ func TestCheckHandlerAPI(t *testing.T) {
 	mockBatcher := transactionbatcher.NewMockTransactionalBatcher()
 	transactionmanager.NewMockTransactionManager()
 
-	checkHandler := NewCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+	checkHandler := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 	var transactionID string
 	checkInstanceBatchState := &transactionbatcher.TransactionCheckInstanceBatchState{}
@@ -211,8 +211,74 @@ func TestCheckHandlerAPI(t *testing.T) {
 		})
 	}
 
-	// stop the transactional components
-	transactionbatcher.GetTransactionalBatcher().Stop()
-	transactionmanager.GetTransactionManager().Stop()
+	// test check handler cancel transaction
+	t.Run("check handler cancel transaction", func(t *testing.T) {
+		ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-cancel-transaction"},
+			&check.TestCheckReloader{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
+
+		txID := ch.StartTransaction()
+		ch.SubmitComponent(instance, testComponent)
+
+		batchState := transactionbatcher.TransactionCheckInstanceBatchState{
+			Transaction: &transactionbatcher.BatchTransaction{
+				TransactionID:        txID,
+				CompletedTransaction: false,
+			},
+			Topology: &topology.Topology{
+				StartSnapshot: false,
+				StopSnapshot:  false,
+				Instance:      instance,
+				Components:    []topology.Component{testComponent},
+				Relations:     []topology.Relation{},
+				DeleteIDs:     []string{},
+			},
+			Health: map[string]health.Health{},
+		}
+
+		time.Sleep(100 * time.Millisecond)
+
+		actualState, found := mockBatcher.GetCheckState(ch.ID())
+		assert.True(t, found, "check state for %s was not found", ch.ID())
+		assert.EqualValues(t, batchState, actualState)
+
+		ch.CancelTransaction("test cancel transaction")
+
+		time.Sleep(100 * time.Millisecond)
+		postCancelState, found := mockBatcher.GetCheckState(ch.ID())
+		assert.False(t, found, "check state for %s that should be cleaned up was found: %v", ch.ID(),
+			postCancelState.JSONString())
+	})
+
+	// test check handler submit complete
+	t.Run("check handler submit complete", func(t *testing.T) {
+		ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-submit-complete"},
+			&check.TestCheckReloader{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
+
+		txID := ch.StartTransaction()
+		ch.SubmitComponent(instance, testComponent)
+		ch.SubmitComplete()
+
+		batchState := transactionbatcher.TransactionCheckInstanceBatchState{
+			Transaction: &transactionbatcher.BatchTransaction{
+				TransactionID:        txID,
+				CompletedTransaction: false,
+			},
+			Topology: &topology.Topology{
+				StartSnapshot: false,
+				StopSnapshot:  false,
+				Instance:      instance,
+				Components:    []topology.Component{testComponent},
+				Relations:     []topology.Relation{},
+				DeleteIDs:     []string{},
+			},
+			Health: map[string]health.Health{},
+		}
+
+		time.Sleep(100 * time.Millisecond)
+
+		actualState, found := mockBatcher.GetCheckState(ch.ID())
+		assert.True(t, found, "check state for %s was not found", ch.ID())
+		assert.EqualValues(t, batchState, actualState)
+	})
 
 }

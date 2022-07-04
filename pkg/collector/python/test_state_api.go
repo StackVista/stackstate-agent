@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,7 +32,7 @@ func testSetAndGetState(t *testing.T) {
 
 	SetupTransactionalComponents()
 	testCheck := &check.STSTestCheck{Name: "check-id-set-state"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(string(testCheck.ID()))
 	stateKey := C.CString("state-id")
