@@ -3,9 +3,11 @@ package handler
 import (
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
 	"time"
 )
@@ -25,8 +27,8 @@ func TestCheckHandler(t *testing.T) {
 		expectedConfigSource string
 	}{
 		{
-			testCase: "my-check-handler-test-check check handler",
-			checkHandler: NewCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+			testCase: "my-check-handler-test-check transactional check handler",
+			checkHandler: NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
 				integration.Data{1, 2, 3}, integration.Data{0, 0, 0}),
 			expectedCHString:     "my-check-handler-test-check",
 			expectedCHName:       "my-check-handler-test-check",
@@ -35,10 +37,13 @@ func TestCheckHandler(t *testing.T) {
 			expectedConfigSource: "test-config-source",
 		},
 		{
-			testCase:             "no-check check handler",
-			checkHandler:         MakeNonTransactionalCheckHandler(NewCheckIdentifier("no-check"), &check.TestCheckReloader{}),
-			expectedCHString:     "no-check",
-			expectedCHName:       "no-check",
+			testCase: "no-check check handler",
+			checkHandler: MakeNonTransactionalCheckHandler(NewCheckIdentifier("my-check-handler-test-check-2"), &check.TestCheckReloader{},
+				integration.Data{1, 2, 3}, integration.Data{0, 0, 0}),
+			expectedCHString:     "my-check-handler-test-check-2",
+			expectedCHName:       "my-check-handler-test-check-2",
+			expectedInitConfig:   integration.Data{0, 0, 0},
+			expectedConfig:       integration.Data{1, 2, 3},
 			expectedConfigSource: "",
 		},
 	} {
@@ -59,13 +64,17 @@ func TestCheckHandler(t *testing.T) {
 		})
 	}
 
+	// stop the transactional components
+	transactionbatcher.GetTransactionalBatcher().Stop()
+
 }
 
 func TestCheckHandler_Transactions(t *testing.T) {
 	testTxManager := transactionmanager.NewMockTransactionManager()
+	transactionbatcher.NewMockTransactionalBatcher()
 
-	ch := NewCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
-		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*checkHandler)
+	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*TransactionalCheckHandler)
 
 	for _, tc := range []struct {
 		testCase            string
@@ -74,7 +83,7 @@ func TestCheckHandler_Transactions(t *testing.T) {
 		{
 			testCase: "Transaction completed with transaction rollback",
 			completeTransaction: func() {
-				testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.RollbackTransaction{}
+				testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.DiscardTransaction{}
 			},
 		},
 		{
@@ -119,10 +128,57 @@ func TestCheckHandler_Transactions(t *testing.T) {
 	ch.Stop()
 }
 
+func TestCheckHandler_State(t *testing.T) {
+	os.Setenv("DD_CHECK_STATE_ROOT_PATH", "./testdata")
+	state.InitCheckStateManager()
+
+	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*TransactionalCheckHandler)
+
+	stateKey := "my-check-handler-test-check:state"
+
+	actualState := ch.GetState(stateKey)
+	expectedState := "{\"a\":\"b\"}"
+	assert.Equal(t, expectedState, actualState)
+
+	checkState, err := state.GetCheckStateManager().GetState(stateKey)
+	assert.NoError(t, err, "unexpected error occurred when trying to get state for", stateKey)
+	assert.Equal(t, expectedState, checkState)
+
+	updatedState := "{\"e\":\"f\"}"
+	ch.SetState(stateKey, updatedState)
+
+	checkState, err = state.GetCheckStateManager().GetState(stateKey)
+	assert.NoError(t, err, "unexpected error occurred when trying to get state for", stateKey)
+	assert.Equal(t, updatedState, checkState)
+
+	// reset to original
+	ch.SetState(stateKey, expectedState)
+}
+
+// Reset state to original, kept as a separate test in case of a test failure in TestCheckHandler_State
+func TestCheckHandler_Reset_State(t *testing.T) {
+	os.Setenv("DD_CHECK_STATE_ROOT_PATH", "./testdata")
+	state.InitCheckStateManager()
+
+	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*TransactionalCheckHandler)
+
+	stateKey := "my-check-handler-test-check:state"
+	expectedState := "{\"a\":\"b\"}"
+
+	// reset state to original
+	ch.SetState(stateKey, expectedState)
+
+	checkState, err := state.GetCheckStateManager().GetState(stateKey)
+	assert.NoError(t, err, "unexpected error occurred when trying to get state for", stateKey)
+	assert.Equal(t, expectedState, checkState)
+}
+
 func TestCheckHandler_Shutdown(t *testing.T) {
 	testTxManager := transactionmanager.NewMockTransactionManager()
-	ch := NewCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
-		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*checkHandler)
+	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*TransactionalCheckHandler)
 
 	transactionID := ch.StartTransaction()
 

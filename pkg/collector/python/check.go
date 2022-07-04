@@ -11,7 +11,7 @@ package python
 import (
 	"errors"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"runtime"
 	"time"
 	"unsafe"
@@ -82,7 +82,7 @@ func (c *PythonCheck) runCheck(commitMetrics bool) error {
 	}
 	defer C.rtloader_free(rtloader, unsafe.Pointer(cResult))
 
-	checkmanager.GetCheckManager().GetCheckHandler(c.ID()).SubmitComplete() // [sts]
+	handler.GetCheckManager().GetCheckHandler(c.ID()).SubmitComplete() // [sts]
 
 	if commitMetrics {
 		s, err := aggregator.GetSender(c.ID())

@@ -4,17 +4,13 @@
 package python
 
 import (
-	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"os"
 	"testing"
 	"time"
 )
@@ -23,28 +19,39 @@ import (
 import "C"
 
 func testStartTransaction(t *testing.T) {
+	SetupTransactionalComponents()
+	mockTransactionalManager := transactionmanager.GetTransactionManager().(*transactionmanager.MockTransactionManager)
+
 	testCheck := &check.STSTestCheck{Name: "check-id-start-transaction"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
-	checkId := C.CString(string(testCheck.ID()))
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	checkId := C.CString(testCheck.String())
 
 	StartTransaction(checkId)
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	transactionID := mockTransactionManager.GetCurrentTransaction()
+	transactionID := mockTransactionalManager.GetCurrentTransaction()
 	assert.NotEmpty(t, transactionID)
+
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testStopTransaction(t *testing.T) {
+	SetupTransactionalComponents()
+	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
+	mockTransactionalManager := transactionmanager.GetTransactionManager().(*transactionmanager.MockTransactionManager)
+
 	testCheck := &check.STSTestCheck{Name: "check-id-stop-transaction"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
-	checkId := C.CString(string(testCheck.ID()))
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	checkId := C.CString(testCheck.String())
 
 	StartTransaction(checkId)
 	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	transactionID := mockTransactionManager.GetCurrentTransaction()
+	transactionID := mockTransactionalManager.GetCurrentTransaction()
 
 	StopTransaction(checkId)
+
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
@@ -57,30 +64,37 @@ func testStopTransaction(t *testing.T) {
 		Health: map[string]health.Health{},
 	}, actualTopology)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testSetTransactionState(t *testing.T) {
-	// Create a temp directory to store the state results in
-	testDir, err := ioutil.TempDir("", "fake-datadog-run-")
-	require.Nil(t, err, fmt.Sprintf("%v", err))
-	defer os.RemoveAll(testDir)
-	mockConfig := config.Mock()
 
-	// Set the run path to the temp directory above, this will allow the persistent cache to have a folder to write into
-	// Without doing the above persistent cache will generate a folder does not exist error
-	mockConfig.Set("run_path", testDir)
-
+	SetupTransactionalComponents()
 	testCheck := &check.STSTestCheck{Name: "check-id-set-transaction-state"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
-	checkId := C.CString(string(testCheck.ID()))
-	stateKey := C.CString("key")
-	stateValue := C.CString("state value")
+	mockTransactionalManager := transactionmanager.GetTransactionManager().(*transactionmanager.MockTransactionManager)
 
+	stateKeyString := "key"
+	stateValueString := "state value"
+	checkId := C.CString(testCheck.String())
+	stateKey := C.CString(stateKeyString)
+	stateValue := C.CString(stateValueString)
+
+	StartTransaction(checkId)
 	SetTransactionState(checkId, stateKey, stateValue)
 
-	retrievedStateValue := GetState(checkId, stateKey)
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	assert.Equal(t, "state value", retrievedStateValue)
+	transactionID := mockTransactionalManager.GetCurrentTransaction()
+	assert.NotEmpty(t, transactionID)
+
+	expectedState := &transactionmanager.TransactionState{
+		Key:   stateKeyString,
+		State: stateValueString,
+	}
+	actualState := mockTransactionalManager.GetCurrentTransactionState()
+	assert.Equal(t, expectedState, actualState)
+
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }

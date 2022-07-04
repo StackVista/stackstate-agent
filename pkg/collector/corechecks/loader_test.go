@@ -7,7 +7,6 @@ package corechecks
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"testing"
 	"time"
@@ -62,7 +61,7 @@ func TestLoad(t *testing.T) {
 		integration.Data("foo: bar"),
 	}
 	cc := integration.Config{Name: "foo", Instances: i}
-	checkmanager.InitCheckManager(handler.NoCheckReloader{})
+	handler.InitCheckManager(handler.CheckNoReloader{})
 	l, _ := NewGoCheckLoader()
 
 	_, err := l.Load(cc, i[0])

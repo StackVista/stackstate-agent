@@ -1,6 +1,8 @@
 package transactionbatcher
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
@@ -19,6 +21,16 @@ type TransactionCheckInstanceBatchState struct {
 	Topology    *topology.Topology
 	Metrics     *telemetry.Metrics
 	Health      map[string]health.Health
+}
+
+// JSONString returns a JSON string representation of a TransactionCheckInstanceBatchState
+func (t TransactionCheckInstanceBatchState) JSONString() string {
+	b, err := json.Marshal(t)
+	if err != nil {
+		fmt.Println(err)
+		return fmt.Sprintf("{\"error\": \"%s\"}", err.Error())
+	}
+	return string(b)
 }
 
 // TransactionCheckInstanceBatchStates is the type representing batched data for all check instances
@@ -235,6 +247,13 @@ func (builder *TransactionBatchBuilder) MarkTransactionComplete(checkID check.ID
 		builder.getOrCreateState(checkID, transactionID).Transaction.CompletedTransaction = true
 		return builder.Flush()
 	}
+
+	return nil
+}
+
+// ClearState removes the batch state for a given checkID
+func (builder *TransactionBatchBuilder) ClearState(checkID check.ID) TransactionCheckInstanceBatchStates {
+	delete(builder.states, checkID)
 
 	return nil
 }

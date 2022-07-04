@@ -10,7 +10,8 @@ import (
 	_ "expvar" // Blank import used because this isn't directly used in this file
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionforwarder"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
@@ -310,9 +311,10 @@ func StartAgent() error {
 	common.SetupAutoConfig(config.Datadog.GetString("confd_path"))
 
 	// [STS] create the global transactional components
+	state.InitCheckStateManager()
 	transactionforwarder.InitTransactionalForwarder()
 	transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
-	checkmanager.InitCheckManager(common.Coll)
+	handler.InitCheckManager(common.Coll)
 	txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
 	transactionmanager.InitTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
 
@@ -363,7 +365,8 @@ func StopAgent() {
 	}
 
 	// [sts] stop the transactional components
-	checkmanager.GetCheckManager().Clear()
+	state.GetCheckStateManager().Clear()
+	handler.GetCheckManager().Stop()
 	transactionbatcher.GetTransactionalBatcher().Stop()
 	transactionforwarder.GetTransactionalForwarder().Stop()
 	transactionmanager.GetTransactionManager().Stop()

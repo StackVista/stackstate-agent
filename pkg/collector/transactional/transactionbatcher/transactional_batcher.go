@@ -15,8 +15,12 @@ import (
 
 var (
 	batcherInstance TransactionalBatcher
-	batcherInit     sync.Once
+	batcherInit     *sync.Once
 )
+
+func init() {
+	batcherInit = new(sync.Once)
+}
 
 // InitTransactionalBatcher initializes the global transactional transactionbatcher Instance
 func InitTransactionalBatcher(hostname, agentName string, maxCapacity int, flushInterval time.Duration) {
@@ -38,6 +42,7 @@ func NewMockTransactionalBatcher() *MockTransactionalBatcher {
 	return batcherInstance.(*MockTransactionalBatcher)
 }
 
+// newTransactionalBatcher returns an instance of the transactionalBatcher and starts listening for submissions
 func newTransactionalBatcher(hostname, agentName string, maxCapacity int, flushInterval time.Duration) *transactionalBatcher {
 	checkFlushInterval := time.NewTicker(flushInterval)
 	ctb := &transactionalBatcher{
@@ -92,6 +97,8 @@ BatcherReceiver:
 				ctb.SubmitState(ctb.builder.StartTransaction(submission.CheckID, submission.TransactionID))
 			case SubmitCompleteTransaction:
 				ctb.SubmitState(ctb.builder.MarkTransactionComplete(submission.CheckID, submission.TransactionID))
+			case SubmitClearState:
+				ctb.SubmitState(ctb.builder.ClearState(submission.CheckID))
 			case SubmitComplete:
 				ctb.SubmitState(ctb.builder.FlushOnComplete(submission.CheckID))
 			case SubmitShutdown:
@@ -109,6 +116,9 @@ BatcherReceiver:
 func (ctb *transactionalBatcher) Stop() {
 	ctb.flushTicker.Stop()
 	ctb.Input <- SubmitShutdown{}
+
+	// reset the batcher init to re-init the batcher
+	batcherInit = new(sync.Once)
 }
 
 // SubmitState submits the transactional check instance batch state and commits an action for this payload
@@ -117,9 +127,9 @@ func (ctb *transactionalBatcher) SubmitState(states TransactionCheckInstanceBatc
 		data := ctb.mapStateToPayload(states)
 		payload, err := ctb.marshallPayload(data)
 		if err != nil {
-			// rollback all the transactions in the transactionbatcher states
+			// discard all the transactions in the transactionbatcher states
 			for _, state := range states {
-				transactionmanager.GetTransactionManager().RollbackTransaction(state.Transaction.TransactionID, fmt.Sprintf("Marshall error in payload: %v", data))
+				transactionmanager.GetTransactionManager().DiscardTransaction(state.Transaction.TransactionID, fmt.Sprintf("Marshall error in payload: %v", data))
 			}
 		}
 

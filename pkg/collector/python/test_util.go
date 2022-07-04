@@ -3,17 +3,29 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build python && test
 // +build python,test
 
 package python
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 import "C"
+
+func SetupTransactionalComponents() {
+	handler.InitCheckManager(handler.CheckNoReloader{})
+	state.InitCheckStateManager()
+	transactionbatcher.NewMockTransactionalBatcher()
+	transactionmanager.NewMockTransactionManager()
+}
 
 func testGetSubprocessOutputEmptyArgs(t *testing.T) {
 	var argv **C.char

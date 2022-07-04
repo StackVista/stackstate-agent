@@ -10,7 +10,7 @@ package python
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 )
 
 /*
@@ -30,14 +30,14 @@ import "C"
 //export StartTransaction
 func StartTransaction(id *C.char) {
 	goCheckID := C.GoString(id)
-	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).StartTransaction()
+	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).StartTransaction()
 }
 
 // StopTransaction stops a transaction
 //export StopTransaction
 func StopTransaction(id *C.char) {
 	goCheckID := C.GoString(id)
-	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).StopTransaction()
+	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).StopTransaction()
 }
 
 // SetTransactionState sets a state for a transaction
@@ -47,5 +47,5 @@ func SetTransactionState(id *C.char, key *C.char, state *C.char) {
 	keyValue := C.GoString(key)
 	stateValue := C.GoString(state)
 
-	checkmanager.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SetTransactionState(keyValue, stateValue)
+	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SetTransactionState(keyValue, stateValue)
 }
