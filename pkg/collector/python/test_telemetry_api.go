@@ -8,7 +8,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
@@ -160,7 +160,7 @@ func testRawMetricsData(t *testing.T) {
 	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
 	testCheck := &check.STSTestCheck{Name: "check-id-raw-metrics"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(testCheck.String())
 	name := C.CString(expectedRawMetricsData.Name)
@@ -183,5 +183,5 @@ func testRawMetricsData(t *testing.T) {
 		Health:      map[string]health.Health{},
 	}, actualTopology)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }

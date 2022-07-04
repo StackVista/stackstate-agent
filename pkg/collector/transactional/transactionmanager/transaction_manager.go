@@ -98,9 +98,9 @@ transactionHandler:
 				if err := txm.rejectAction(msg.TransactionID, msg.ActionID); err != nil {
 					txm.transactionChannel <- err
 				} else {
-					// rollback the transaction
+					// discard the transaction
 					reason := fmt.Sprintf("rejected action %s for transaction %s: %s", msg.ActionID, msg.TransactionID, msg.Reason)
-					txm.transactionChannel <- RollbackTransaction{TransactionID: msg.TransactionID, Reason: reason}
+					txm.transactionChannel <- DiscardTransaction{TransactionID: msg.TransactionID, Reason: reason}
 				}
 			case CompleteTransaction:
 				log.Debugf("Completing transaction %s", msg.TransactionID)
@@ -108,9 +108,9 @@ transactionHandler:
 					txm.transactionChannel <- err
 				}
 			// error cases
-			case RollbackTransaction:
+			case DiscardTransaction:
 				_ = log.Errorf(msg.Error())
-				if err := txm.rollbackTransaction(msg.TransactionID, msg.Reason); err != nil {
+				if err := txm.discardTransaction(msg.TransactionID, msg.Reason); err != nil {
 					txm.transactionChannel <- err
 				}
 			case TransactionNotFound:
@@ -219,7 +219,7 @@ func (txm *transactionManager) setTransactionState(transactionID, key string, st
 }
 
 // rejectAction acknowledges an action for a given transaction. This marks the action as acknowledged and results in a
-// failed transaction and rollback.
+// failed transaction and discarding.
 func (txm *transactionManager) rejectAction(transactionID, actionID string) error {
 	return txm.findAndUpdateAction(transactionID, actionID, false)
 }
@@ -261,7 +261,7 @@ func (txm *transactionManager) completeTransaction(transactionID string) error {
 		if !action.Acknowledged {
 			reason := fmt.Sprintf("Not all actions have been acknowledged, rolling back transaction: %s", transaction.TransactionID)
 			txm.mux.Unlock()
-			return RollbackTransaction{TransactionID: transactionID, Reason: reason}
+			return DiscardTransaction{TransactionID: transactionID, Reason: reason}
 		}
 	}
 	transaction.Status = Succeeded
@@ -273,8 +273,8 @@ func (txm *transactionManager) completeTransaction(transactionID string) error {
 	return nil
 }
 
-// rollbackTransaction rolls back the transaction in the event of a failure
-func (txm *transactionManager) rollbackTransaction(transactionID, reason string) error {
+// discardTransaction rolls back the transaction in the event of a failure
+func (txm *transactionManager) discardTransaction(transactionID, reason string) error {
 	transaction, err := txm.GetTransaction(transactionID)
 	if err != nil {
 		return err
@@ -284,7 +284,7 @@ func (txm *transactionManager) rollbackTransaction(transactionID, reason string)
 	transaction.Status = Failed
 	transaction.LastUpdatedTimestamp = time.Now()
 	txm.mux.Unlock()
-	transaction.NotifyChannel <- RollbackTransaction{TransactionID: transactionID, Reason: reason}
+	transaction.NotifyChannel <- DiscardTransaction{TransactionID: transactionID, Reason: reason}
 
 	return nil
 }

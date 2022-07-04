@@ -1,10 +1,9 @@
-package checkmanager
+package handler
 
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"sync"
 )
@@ -19,7 +18,7 @@ func init() {
 }
 
 // InitCheckManager ...
-func InitCheckManager(reloader handler.CheckReloader) {
+func InitCheckManager(reloader CheckReloader) {
 	cmInit.Do(func() {
 		cmInstance = newCheckManager(reloader)
 	})
@@ -32,45 +31,60 @@ func GetCheckManager() *CheckManager {
 
 // CheckManager acts as the grouping of check handlers and deals with the "lifecycle" of check handlers.
 type CheckManager struct {
-	reloader      handler.CheckReloader
-	checkHandlers map[string]handler.CheckHandler
+	reloader      CheckReloader
+	checkHandlers map[string]CheckHandler
 	config        Config
 }
 
 // newCheckManager returns a instance of the Check Manager
-func newCheckManager(reloader handler.CheckReloader) *CheckManager {
+func newCheckManager(reloader CheckReloader) *CheckManager {
 	return &CheckManager{
 		reloader:      reloader,
-		checkHandlers: make(map[string]handler.CheckHandler),
+		checkHandlers: make(map[string]CheckHandler),
 		config:        GetCheckManagerConfig(),
 	}
 }
 
 // GetCheckHandler returns a check handler (if found) for a given check ID
-func (cm *CheckManager) GetCheckHandler(checkID check.ID) handler.CheckHandler {
+func (cm *CheckManager) GetCheckHandler(checkID check.ID) CheckHandler {
 	ch, found := cm.checkHandlers[string(checkID)]
 	if !found {
 		_ = log.Errorf(fmt.Sprintf("No check handler found for %s. Registering a non-transactional check handler.", checkID))
-		return cm.RegisterNonTransactionalCheckHandler(handler.NewCheckIdentifier(checkID))
+		return cm.registerNonTransactionalCheckHandler(NewCheckIdentifier(checkID), nil, nil)
 	}
 	return ch
 }
 
-// RegisterNonTransactionalCheckHandler registers a non-transactional check handler for a given check
-func (cm *CheckManager) RegisterNonTransactionalCheckHandler(check handler.CheckIdentifier) handler.CheckHandler {
-	ch := handler.MakeNonTransactionalCheckHandler(check, handler.NoCheckReloader{})
+// registerNonTransactionalCheckHandler registers a non-transactional check handler for a given check
+func (cm *CheckManager) registerNonTransactionalCheckHandler(check CheckIdentifier, config, initConfig integration.Data) CheckHandler {
+	ch := MakeNonTransactionalCheckHandler(check, CheckNoReloader{}, config, initConfig)
 	cm.checkHandlers[string(check.ID())] = ch
 	return ch
 }
 
-// RegisterCheckHandler registers a check handler for the given check using a transactionbatcher for this instance
-func (cm *CheckManager) RegisterCheckHandler(check check.Check, config, initConfig integration.Data) handler.CheckHandler {
+// MakeCheckHandlerTransactional converts a non-transactional check handler to a transactional check handler
+func (cm *CheckManager) MakeCheckHandlerTransactional(checkID check.ID) CheckHandler {
 	if !cm.config.CheckTransactionalityEnabled {
-		log.Debugf("Check transaction is disabled, defaulting %s to non-transactional check", check.ID())
-		return cm.RegisterNonTransactionalCheckHandler(check)
+		_ = log.Warnf("Check transaction is disabled, defaulting %s to non-transactional check", checkID)
+		return nil
 	}
 
-	ch := handler.NewCheckHandler(check, cm.reloader, config, initConfig)
+	ch, found := cm.checkHandlers[string(checkID)]
+	if !found {
+		_ = log.Errorf("No check handler found for %s.", checkID)
+		return nil
+	}
+
+	config, initConfig := ch.GetConfig()
+	transactionalCheckHandler := NewTransactionalCheckHandler(ch, cm.reloader, config, initConfig)
+	cm.checkHandlers[string(checkID)] = transactionalCheckHandler
+
+	return transactionalCheckHandler
+}
+
+// RegisterCheckHandler registers a check handler for the given check using a transactionbatcher for this instance
+func (cm *CheckManager) RegisterCheckHandler(check CheckIdentifier, config, initConfig integration.Data) CheckHandler {
+	ch := cm.registerNonTransactionalCheckHandler(check, config, initConfig)
 	log.Debugf("Registering Check Handler for: %s", ch.ID())
 	cm.checkHandlers[string(check.ID())] = ch
 	return ch
@@ -85,6 +99,6 @@ func (cm *CheckManager) UnsubscribeCheckHandler(checkID check.ID) {
 // Stop clears the check handlers and re-initializes the singleton init
 func (cm *CheckManager) Stop() {
 	log.Debug("Removing all Check Handlers")
-	cm.checkHandlers = make(map[string]handler.CheckHandler)
+	cm.checkHandlers = make(map[string]CheckHandler)
 	cmInit = new(sync.Once)
 }

@@ -9,9 +9,13 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
-// StartTransaction logs a warning for the non-transactional check handler. This should never be called.
+// StartTransaction "upgrades" the non-transactional check handler to a transactional check handler, registers it in the
+// check manager and calls StartTransaction on the newly created transactional check handler.
 func (ch *NonTransactionalCheckHandler) StartTransaction() string {
-	_ = log.Warnf("StartTransaction called on NonTransactionalCheckHandler. This should never happen.")
+	transactionalCheckHandler := GetCheckManager().MakeCheckHandlerTransactional(ch.ID())
+	if transactionalCheckHandler != nil {
+		return transactionalCheckHandler.StartTransaction()
+	}
 	return ""
 }
 
@@ -43,7 +47,6 @@ func (ch *NonTransactionalCheckHandler) GetState(key string) string {
 	s, err := checkState.GetCheckStateManager().GetState(key)
 	if err != nil {
 		_ = log.Errorf("error occurred when reading state for check %s for key %s: %s", ch.ID(), key, err)
-		return "{}"
 	}
 	return s
 }

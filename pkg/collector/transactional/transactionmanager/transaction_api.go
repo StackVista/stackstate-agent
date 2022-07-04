@@ -10,7 +10,7 @@ type TransactionAPI interface {
 	TransactionCount() int
 	StartTransaction(CheckID check.ID, TransactionID string, NotifyChannel chan interface{})
 	CompleteTransaction(transactionID string)
-	RollbackTransaction(transactionID, reason string) // TODO: rename to DiscardTransaction
+	DiscardTransaction(transactionID, reason string)
 	CommitAction(transactionID, actionID string)
 	AcknowledgeAction(transactionID, actionID string)
 	SetState(transactionID, key string, state string)

@@ -10,7 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionforwarder"
@@ -130,7 +130,7 @@ var checkCmd = &cobra.Command{
 		batcher.InitBatcher(&printingAgentV1Serializer{}, hostname, "agent", config.GetMaxCapacity())
 		// [sts] create the global transactional components
 		state.InitCheckStateManager()
-		checkmanager.InitCheckManager(common.Coll)
+		handler.InitCheckManager(common.Coll)
 		transactionforwarder.NewPrintingTransactionalForwarder() // use the printing transactional forwarder for the agent check command
 		transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
 		txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()

@@ -6,7 +6,7 @@ package python
 import (
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/health"
@@ -23,7 +23,7 @@ func testStartTransaction(t *testing.T) {
 	mockTransactionalManager := transactionmanager.GetTransactionManager().(*transactionmanager.MockTransactionManager)
 
 	testCheck := &check.STSTestCheck{Name: "check-id-start-transaction"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 	checkId := C.CString(testCheck.String())
 
 	StartTransaction(checkId)
@@ -32,7 +32,7 @@ func testStartTransaction(t *testing.T) {
 	transactionID := mockTransactionalManager.GetCurrentTransaction()
 	assert.NotEmpty(t, transactionID)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testStopTransaction(t *testing.T) {
@@ -41,7 +41,7 @@ func testStopTransaction(t *testing.T) {
 	mockTransactionalManager := transactionmanager.GetTransactionManager().(*transactionmanager.MockTransactionManager)
 
 	testCheck := &check.STSTestCheck{Name: "check-id-stop-transaction"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 	checkId := C.CString(testCheck.String())
 
 	StartTransaction(checkId)
@@ -64,14 +64,14 @@ func testStopTransaction(t *testing.T) {
 		Health: map[string]health.Health{},
 	}, actualTopology)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testSetTransactionState(t *testing.T) {
 
 	SetupTransactionalComponents()
 	testCheck := &check.STSTestCheck{Name: "check-id-set-transaction-state"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	mockTransactionalManager := transactionmanager.GetTransactionManager().(*transactionmanager.MockTransactionManager)
 
@@ -96,5 +96,5 @@ func testSetTransactionState(t *testing.T) {
 	actualState := mockTransactionalManager.GetCurrentTransactionState()
 	assert.Equal(t, expectedState, actualState)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
