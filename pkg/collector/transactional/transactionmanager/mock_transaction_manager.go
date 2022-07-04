@@ -14,7 +14,18 @@ type MockTransactionManager struct {
 	mux                             sync.Mutex
 	currentTransaction              string
 	currentTransactionNotifyChannel chan interface{}
+	transactionState                *TransactionState
 	TransactionActions              chan interface{}
+}
+
+// SetState sets the mock transactionState to the given key + value
+func (ttm *MockTransactionManager) SetState(_, key string, value string) {
+	ttm.mux.Lock()
+	ttm.transactionState = &TransactionState{
+		Key:   key,
+		State: value,
+	}
+	ttm.mux.Unlock()
 }
 
 // GetTransaction returns nil, nil
@@ -31,8 +42,10 @@ func (ttm *MockTransactionManager) TransactionCount() int {
 func (ttm *MockTransactionManager) Start() {
 }
 
-// Stop is a noop
+// Stop resets the singleton init
 func (ttm *MockTransactionManager) Stop() {
+	// reset the transaction manager init
+	tmInit = new(sync.Once)
 }
 
 // StartTransaction sets the current transaction value and updates the notify channel
@@ -57,14 +70,21 @@ func (ttm *MockTransactionManager) GetCurrentTransactionNotifyChannel() chan int
 	return ttm.currentTransactionNotifyChannel
 }
 
+// GetCurrentTransactionState returns the transactionState
+func (ttm *MockTransactionManager) GetCurrentTransactionState() *TransactionState {
+	ttm.mux.Lock()
+	defer ttm.mux.Unlock()
+	return ttm.transactionState
+}
+
 // CompleteTransaction sends a CompleteTransaction to the TransactionActions channel to be used in assertions
 func (ttm *MockTransactionManager) CompleteTransaction(transactionID string) {
 	ttm.TransactionActions <- CompleteTransaction{TransactionID: transactionID}
 }
 
-// RollbackTransaction sends a RollbackTransaction to the TransactionActions channel to be used in assertions
-func (ttm *MockTransactionManager) RollbackTransaction(transactionID, reason string) {
-	ttm.TransactionActions <- RollbackTransaction{TransactionID: transactionID, Reason: reason}
+// DiscardTransaction sends a DiscardTransaction to the TransactionActions channel to be used in assertions
+func (ttm *MockTransactionManager) DiscardTransaction(transactionID, reason string) {
+	ttm.TransactionActions <- DiscardTransaction{TransactionID: transactionID, Reason: reason}
 }
 
 // CommitAction sends a CommitAction to the TransactionActions channel to be used in assertions

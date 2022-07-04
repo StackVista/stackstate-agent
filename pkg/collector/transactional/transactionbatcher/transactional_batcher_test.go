@@ -592,3 +592,43 @@ func TestBatchMultipleHealthStreams(t *testing.T) {
 
 	batcher.Stop()
 }
+
+func TestBatchClearState(t *testing.T) {
+	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
+
+	batcher.StartTransaction(testID, testTransactionID)
+	batcher.SubmitStartSnapshot(testID, testTransactionID, testInstance)
+	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent)
+	batcher.SubmitDelete(testID, testTransactionID, testInstance, testDeleteID1)
+
+	// testID2 + testTransaction2ID will be cancelled and therefore should not be in the final payload
+	batcher.StartTransaction(testID2, testTransaction2ID)
+	batcher.SubmitStartSnapshot(testID2, testTransaction2ID, testInstance)
+	batcher.SubmitComponent(testID2, testTransaction2ID, testInstance, testComponent)
+	batcher.SubmitDelete(testID2, testTransaction2ID, testInstance, testDeleteID2)
+	batcher.SubmitClearState(testID2)
+
+	batcher.SubmitCompleteTransaction(testID, testTransactionID)
+
+	expectedPayload := transactional.NewIntakePayload()
+	expectedPayload.InternalHostname = "myhost"
+	expectedPayload.Topologies = []topology.Topology{
+		{
+			StartSnapshot: true,
+			StopSnapshot:  false,
+			Instance:      testInstance,
+			Components:    []topology.Component{testComponent},
+			Relations:     []topology.Relation{},
+			DeleteIDs:     []string{testDeleteID1},
+		},
+	}
+
+	transactionStates := map[string]bool{
+		testTransactionID: true,
+	}
+
+	testBatcher(t, transactionStates, expectedPayload)
+
+	batcher.Stop()
+
+}

@@ -41,8 +41,12 @@ type Forwarder struct {
 
 var (
 	transactionalForwarderInstance TransactionalForwarder
-	tfInit                         sync.Once
+	tfInit                         *sync.Once
 )
+
+func init() {
+	tfInit = new(sync.Once)
+}
 
 // InitTransactionalForwarder initializes the global transactional forwarder Instance
 func InitTransactionalForwarder() {
@@ -142,6 +146,9 @@ func (f *Forwarder) ProgressTransactions(transactionMap map[string]transactional
 func (f *Forwarder) Stop() {
 	// Shut down the forwardHandler
 	f.ShutdownChannel <- ShutdownForwarder{}
+
+	// reset the forwarder to re-init it later
+	tfInit = new(sync.Once)
 }
 
 // SubmitTransactionalIntake publishes the Payload to the PayloadChannel

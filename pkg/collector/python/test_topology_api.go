@@ -7,32 +7,24 @@ import (
 	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/checkmanager"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 // #include <datadog_agent_rtloader.h>
 import "C"
 
-var (
-	mockTransactionalBatcher = transactionbatcher.NewMockTransactionalBatcher()
-	mockTransactionManager   = transactionmanager.NewMockTransactionManager()
-)
-
-func init() {
-	checkmanager.InitCheckManager(handler.NoCheckReloader{})
-
-}
-
 func testComponentTopology(t *testing.T) {
+	SetupTransactionalComponents()
+	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
+
 	testCheck := &check.STSTestCheck{Name: "check-id-component-test"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	c := &topology.Component{
 		ExternalID: "external-id",
@@ -44,10 +36,12 @@ func testComponentTopology(t *testing.T) {
 	data, err := json.Marshal(c)
 	assert.NoError(t, err)
 
-	checkId := C.CString(string(testCheck.ID()))
+	checkId := C.CString(testCheck.String())
 	instanceKey := C.instance_key_t{}
 	instanceKey.type_ = C.CString("instance-type")
 	instanceKey.url = C.CString("instance-url")
+
+	StartTransaction(checkId)
 	SubmitStartSnapshot(checkId, &instanceKey)
 	SubmitComponent(
 		checkId,
@@ -57,13 +51,12 @@ func testComponentTopology(t *testing.T) {
 		C.CString(string(data)))
 	SubmitStopSnapshot(checkId, &instanceKey)
 
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
+
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
-		Transaction: &transactionbatcher.BatchTransaction{
-			TransactionID:        "", // no start transaction, so the transaction is empty in this case
-			CompletedTransaction: false,
-		},
+		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
 		Topology: &topology.Topology{
 			StartSnapshot: true,
 			StopSnapshot:  true,
@@ -82,12 +75,15 @@ func testComponentTopology(t *testing.T) {
 	}
 	assert.Equal(t, expectedTopology, actualTopology)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testRelationTopology(t *testing.T) {
+	SetupTransactionalComponents()
+	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
+
 	testCheck := &check.STSTestCheck{Name: "check-id-relation-test"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	c := &topology.Relation{
 		SourceID: "source-id",
@@ -100,25 +96,27 @@ func testRelationTopology(t *testing.T) {
 	data, err := json.Marshal(c)
 	assert.NoError(t, err)
 
-	checkId := C.CString(string(testCheck.ID()))
+	checkId := C.CString(testCheck.String())
 	instanceKey := C.instance_key_t{}
 	instanceKey.type_ = C.CString("instance-type")
 	instanceKey.url = C.CString("instance-url")
+
+	StartTransaction(checkId)
 	SubmitRelation(
 		checkId,
 		&instanceKey,
 		C.CString("source-id"),
 		C.CString("target-id"),
 		C.CString("relation-type"),
-		C.CString(string(data)))
+		C.CString(string(data)),
+	)
+
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
-		Transaction: &transactionbatcher.BatchTransaction{
-			TransactionID:        "", // no start transaction, so the transaction is empty in this case
-			CompletedTransaction: false,
-		},
+		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
 		Topology: &topology.Topology{
 			StartSnapshot: false,
 			StopSnapshot:  false,
@@ -139,27 +137,31 @@ func testRelationTopology(t *testing.T) {
 	}
 	assert.Equal(t, expectedTopology, actualTopology)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testStartSnapshotCheck(t *testing.T) {
-	testCheck := &check.STSTestCheck{Name: "check-id-start-snapshot"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	SetupTransactionalComponents()
+	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
-	checkId := C.CString(string(testCheck.ID()))
+	testCheck := &check.STSTestCheck{Name: "check-id-start-snapshot"}
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+
+	checkId := C.CString(testCheck.String())
 	instanceKey := C.instance_key_t{}
 	instanceKey.type_ = C.CString("instance-type")
 	instanceKey.url = C.CString("instance-url")
+
+	StartTransaction(checkId)
 	SubmitStartSnapshot(checkId, &instanceKey)
+
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 
 	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchState{
-		Transaction: &transactionbatcher.BatchTransaction{
-			TransactionID:        "", // no start transaction, so the transaction is empty in this case
-			CompletedTransaction: false,
-		},
+		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
 		Topology: &topology.Topology{
 			StartSnapshot: true,
 			StopSnapshot:  false,
@@ -171,27 +173,31 @@ func testStartSnapshotCheck(t *testing.T) {
 		Health: map[string]health.Health{},
 	}, actualTopology)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testStopSnapshotCheck(t *testing.T) {
-	testCheck := &check.STSTestCheck{Name: "check-id-stop-snapshot"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	SetupTransactionalComponents()
+	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
-	checkId := C.CString(string(testCheck.ID()))
+	testCheck := &check.STSTestCheck{Name: "check-id-stop-snapshot"}
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+
+	checkId := C.CString(testCheck.String())
 	instanceKey := C.instance_key_t{}
 	instanceKey.type_ = C.CString("instance-type")
 	instanceKey.url = C.CString("instance-url")
+
+	StartTransaction(checkId)
 	SubmitStopSnapshot(checkId, &instanceKey)
+
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 
 	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
-		Transaction: &transactionbatcher.BatchTransaction{
-			TransactionID:        "", // no start transaction, so the transaction is empty in this case
-			CompletedTransaction: false,
-		},
+		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
 		Topology: &topology.Topology{
 			StartSnapshot: false,
 			StopSnapshot:  true,
@@ -205,19 +211,23 @@ func testStopSnapshotCheck(t *testing.T) {
 
 	assert.Equal(t, expectedTopology, actualTopology)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testDeleteTopologyElement(t *testing.T) {
-	testCheck := &check.STSTestCheck{Name: "check-id-delete-element"}
-	checkmanager.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+	SetupTransactionalComponents()
+	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
-	checkID := C.CString(string(testCheck.ID()))
+	testCheck := &check.STSTestCheck{Name: "check-id-delete-element"}
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+
+	checkID := C.CString(testCheck.String())
 	instanceKey := C.instance_key_t{}
 	instanceKey.type_ = C.CString("instance-type")
 	instanceKey.url = C.CString("instance-url")
 	topoElementId := "topo-element-id"
 
+	StartTransaction(checkID)
 	SubmitStartSnapshot(checkID, &instanceKey)
 	SubmitDelete(
 		checkID,
@@ -225,13 +235,12 @@ func testDeleteTopologyElement(t *testing.T) {
 		C.CString(topoElementId))
 	SubmitStopSnapshot(checkID, &instanceKey)
 
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
+
 	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
 	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
-		Transaction: &transactionbatcher.BatchTransaction{
-			TransactionID:        "", // no start transaction, so the transaction is empty in this case
-			CompletedTransaction: false,
-		},
+		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
 		Topology: &topology.Topology{
 			StartSnapshot: true,
 			StopSnapshot:  true,
@@ -244,5 +253,5 @@ func testDeleteTopologyElement(t *testing.T) {
 	}
 	assert.Equal(t, expectedTopology, actualTopology)
 
-	checkmanager.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }

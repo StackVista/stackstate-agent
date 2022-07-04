@@ -1,4 +1,4 @@
-package checkmanager
+package handler
 
 import "github.com/StackVista/stackstate-agent/pkg/config"
 

@@ -5,7 +5,9 @@ package python
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,7 +30,9 @@ func testSetAndGetState(t *testing.T) {
 	// Without doing the above persistent cache will generate a folder does not exist error
 	mockConfig.Set("run_path", testDir)
 
+	SetupTransactionalComponents()
 	testCheck := &check.STSTestCheck{Name: "check-id-set-state"}
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(string(testCheck.ID()))
 	stateKey := C.CString("state-id")

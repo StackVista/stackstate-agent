@@ -1,18 +1,14 @@
 package transactionmanager
 
-import "github.com/StackVista/stackstate-agent/pkg/collector/check"
+import (
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"sync"
+)
 
 // TransactionManager encapsulates all the functionality of the transaction manager to keep track of transactions
 type TransactionManager interface {
 	Start()
-	GetTransaction(transactionID string) (*IntakeTransaction, error)
-	TransactionCount() int
-	StartTransaction(CheckID check.ID, TransactionID string, NotifyChannel chan interface{})
-	CompleteTransaction(transactionID string)
-	RollbackTransaction(transactionID, reason string) // TODO: rename to DiscardTransaction
-	CommitAction(transactionID, actionID string)
-	AcknowledgeAction(transactionID, actionID string)
-	RejectAction(transactionID, actionID, reason string)
+	TransactionAPI
 	Stop()
 }
 
@@ -52,9 +48,18 @@ func (txm *transactionManager) CompleteTransaction(transactionID string) {
 	}
 }
 
-// RollbackTransaction rolls back a transaction for a given transactionID and a reason for the rollback
-func (txm *transactionManager) RollbackTransaction(transactionID, reason string) {
-	txm.transactionChannel <- RollbackTransaction{
+// SetState adds a state to a transaction that will be committed on a successful transaction
+func (txm *transactionManager) SetState(transactionID, key string, state string) {
+	txm.transactionChannel <- SetTransactionState{
+		TransactionID: transactionID,
+		Key:           key,
+		State:         state,
+	}
+}
+
+// DiscardTransaction rolls back a transaction for a given transactionID and a reason for the discard
+func (txm *transactionManager) DiscardTransaction(transactionID, reason string) {
+	txm.transactionChannel <- DiscardTransaction{
 		TransactionID: transactionID,
 		Reason:        reason,
 	}
@@ -89,4 +94,6 @@ func (txm *transactionManager) RejectAction(transactionID, actionID, reason stri
 func (txm *transactionManager) Stop() {
 	txm.transactionChannel <- StopTransactionManager{}
 	txm.transactionTicker.Stop()
+	// reset the tmInit to re-init the transaction manager
+	tmInit = new(sync.Once)
 }
