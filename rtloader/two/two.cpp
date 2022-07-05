@@ -972,6 +972,10 @@ void Two::setStopTransactionCb(cb_stop_transaction_t cb)
 {
     _set_stop_transaction_cb(cb);
 }
+void Two::setDiscardTransactionCb(cb_discard_transaction_t cb)
+{
+    _set_discard_transaction_cb(cb);
+}
 void Two::setTransactionStateCb(cb_set_transaction_state_t cb)
 {
     _set_transaction_state_cb(cb);

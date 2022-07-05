@@ -106,9 +106,12 @@ currentTxHandler:
 				}
 				transactionbatcher.GetTransactionalBatcher().SubmitCompleteTransaction(ch.ID(), ch.GetCurrentTransaction())
 
-			case CancelTransaction:
+				// clear current transaction
+				ch.clearCurrentTransaction()
+
+			case DiscardTransaction:
 				if config.Datadog.GetBool("log_payloads") {
-					log.Debugf("%s. Cancelling current transaction", logPrefix)
+					log.Debugf("%s. Discarding current transaction", logPrefix)
 				}
 				// empty batcher state
 				transactionbatcher.GetTransactionalBatcher().SubmitClearState(ch.ID())
@@ -192,6 +195,10 @@ currentTxHandler:
 				if err := ch.ReloadCheck(ch.ID(), ch.config, ch.initConfig, ch.ConfigSource()); err != nil {
 					_ = log.Errorf("failed to reload check %s: %s", ch.ID(), err)
 				}
+
+				// clear current transaction
+				ch.clearCurrentTransaction()
+
 				break currentTxHandler
 			case transactionmanager.CompleteTransaction:
 				log.Debugf("Completing transaction: %s for check %s", msg.TransactionID, ch.ID())
@@ -210,10 +217,20 @@ currentTxHandler:
 					log.Debugf("Successfully committed state for transaction: %s for check %s: %s", msg.TransactionID, ch.ID(),
 						msg.State)
 				}
+
+				// clear current transaction
+				ch.clearCurrentTransaction()
+
 				break currentTxHandler
 			}
 		}
 	}
+}
+
+func (ch *TransactionalCheckHandler) clearCurrentTransaction() {
+	ch.mux.Lock()
+	ch.currentTransaction = ""
+	ch.mux.Unlock()
 }
 
 // safeCloseTransactionChannel closes the tx channel that can potentially already be closed. It handles the panic and does a no-op.

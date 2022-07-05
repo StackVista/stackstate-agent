@@ -70,6 +70,35 @@ func TestStopTransaction(t *testing.T) {
 	helpers.AssertMemoryUsage(t)
 }
 
+func TestDiscardTransaction(t *testing.T) {
+	// Reset memory counters
+	helpers.ResetMemoryStats()
+
+	out, err := run(`transaction.discard_transaction(None, "checkid", "my-transaction-discard-reason")`)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out != "" {
+		t.Errorf("Unexpected printed value: '%s'", out)
+	}
+	if checkID != "checkid" {
+		t.Fatalf("Unexpected check id value: %s", checkID)
+	}
+	if transactionID != "" {
+		t.Fatalf("Unexpected transaction id value: %s", transactionID)
+	}
+	if !transactionCompleted {
+		t.Fatalf("Unexpected transaction completed value: %v", transactionCompleted)
+	}
+	if transactionDiscardReason != "my-transaction-discard-reason" {
+		t.Fatalf("Unexpected transaction completed value: %v", transactionDiscardReason)
+	}
+
+	// Check for leaks
+	helpers.AssertMemoryUsage(t)
+}
+
 func TestSetTransactionState(t *testing.T) {
 	// Reset memory counters
 	helpers.ResetMemoryStats()

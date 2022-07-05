@@ -40,6 +40,14 @@ func StopTransaction(id *C.char) {
 	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).StopTransaction()
 }
 
+// DiscardTransaction cancels a transaction
+//export DiscardTransaction
+func DiscardTransaction(id *C.char, reason *C.char) {
+	goCheckID := C.GoString(id)
+	goReason := C.GoString(reason)
+	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).DiscardTransaction(goReason)
+}
+
 // SetTransactionState sets a state for a transaction
 //export SetTransactionState
 func SetTransactionState(id *C.char, key *C.char, state *C.char) {

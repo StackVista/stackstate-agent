@@ -24,7 +24,7 @@ func TestCheckHandlerNonTransactionalAPI(t *testing.T) {
 
 	assert.Equal(t, "NonTransactionalCheckHandler", nonTransactionCH.Name())
 	// call these to ensure they cause no errors
-	nonTransactionCH.CancelTransaction("none")
+	nonTransactionCH.DiscardTransaction("none")
 	nonTransactionCH.StopTransaction()
 	nonTransactionCH.SetTransactionState("", "")
 
