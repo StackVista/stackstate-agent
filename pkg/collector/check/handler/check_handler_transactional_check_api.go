@@ -27,9 +27,9 @@ func (ch *TransactionalCheckHandler) StopTransaction() {
 	ch.currentTransactionChannel <- StopTransaction{}
 }
 
-// CancelTransaction triggers a transaction failure and reloads the check
-func (ch *TransactionalCheckHandler) CancelTransaction(reason string) {
-	ch.currentTransactionChannel <- CancelTransaction{
+// DiscardTransaction triggers a transaction failure and reloads the check
+func (ch *TransactionalCheckHandler) DiscardTransaction(reason string) {
+	ch.currentTransactionChannel <- DiscardTransaction{
 		Reason: reason,
 	}
 }
@@ -49,7 +49,7 @@ func (ch *TransactionalCheckHandler) SetState(key string, state string) {
 	if err != nil {
 		reason := fmt.Sprintf("error occurred when setting state for %s->%s, %s", key, state, err)
 		// trigger cancel transaction, check reload
-		ch.CancelTransaction(reason)
+		ch.DiscardTransaction(reason)
 	}
 }
 

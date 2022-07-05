@@ -23,11 +23,13 @@ import (
 
 extern void startTransaction(char *);
 extern void stopTransaction(char *);
+extern void discardTransaction(char *, char *);
 extern void setTransactionState(char *, char *, char *);
 
 static void initTransactionTests(rtloader_t *rtloader) {
 	set_start_transaction_cb(rtloader, startTransaction);
 	set_stop_transaction_cb(rtloader, stopTransaction);
+	set_discard_transaction_cb(rtloader, discardTransaction);
 	set_transaction_state_cb(rtloader, setTransactionState);
 }
 */
@@ -45,6 +47,7 @@ var (
 	transactionInstanceBatchState transactionbatcher.TransactionCheckInstanceBatchState
 	transactionStarted            bool
 	transactionCompleted          bool
+	transactionDiscardReason      string
 	transactionState              TransactionState
 )
 
@@ -60,6 +63,7 @@ func resetOuputValues() {
 	}
 	transactionStarted = false
 	transactionCompleted = false
+	transactionDiscardReason = ""
 }
 
 func setUp() error {
@@ -131,6 +135,16 @@ func stopTransaction(id *C.char) {
 	checkID = C.GoString(id)
 	transactionID = ""
 	transactionCompleted = true
+}
+
+//export discardTransaction
+func discardTransaction(id *C.char, reason *C.char) {
+	checkID = C.GoString(id)
+	discardReason := C.GoString(reason)
+
+	transactionID = ""
+	transactionCompleted = true
+	transactionDiscardReason = discardReason
 }
 
 //export setTransactionState

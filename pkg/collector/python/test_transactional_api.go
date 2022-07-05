@@ -35,6 +35,35 @@ func testStartTransaction(t *testing.T) {
 	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
+func testDiscardTransaction(t *testing.T) {
+	SetupTransactionalComponents()
+	mockTransactionalManager := transactionmanager.GetTransactionManager().(*transactionmanager.MockTransactionManager)
+
+	testCheck := &check.STSTestCheck{Name: "check-id-cancel-transaction"}
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+
+	checkId := C.CString(testCheck.String())
+	cancelReasonString := "test-transacation-cancel"
+	cancelReason := C.CString(cancelReasonString)
+
+	StartTransaction(checkId)
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
+
+	transactionID := mockTransactionalManager.GetCurrentTransaction()
+	assert.NotEmpty(t, transactionID)
+
+	// discard transaction
+	DiscardTransaction(checkId, cancelReason)
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
+
+	transactionID = mockTransactionalManager.GetCurrentTransaction()
+
+	discardAction := mockTransactionalManager.NextAction().(transactionmanager.DiscardTransaction)
+	assert.Equal(t, transactionmanager.DiscardTransaction{TransactionID: transactionID, Reason: cancelReasonString}, discardAction)
+
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
+}
+
 func testStopTransaction(t *testing.T) {
 	SetupTransactionalComponents()
 	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)

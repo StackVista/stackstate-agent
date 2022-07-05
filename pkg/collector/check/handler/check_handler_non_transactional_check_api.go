@@ -19,9 +19,9 @@ func (ch *NonTransactionalCheckHandler) StartTransaction() string {
 	return ""
 }
 
-// CancelTransaction logs a warning for the non-transactional check handler. This should never be called.
-func (ch *NonTransactionalCheckHandler) CancelTransaction(string) {
-	_ = log.Warnf("StopTransaction called on NonTransactionalCheckHandler. This should never happen.")
+// DiscardTransaction logs a warning for the non-transactional check handler. This should never be called.
+func (ch *NonTransactionalCheckHandler) DiscardTransaction(string) {
+	_ = log.Warnf("DiscardTransaction called on NonTransactionalCheckHandler. This should never happen.")
 }
 
 // StopTransaction logs a warning for the non-transactional check handler. This should never be called.

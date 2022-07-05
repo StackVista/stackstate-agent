@@ -211,9 +211,9 @@ func TestCheckHandlerAPI(t *testing.T) {
 		})
 	}
 
-	// test check handler cancel transaction
-	t.Run("check handler cancel transaction", func(t *testing.T) {
-		ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-cancel-transaction"},
+	// test check handler discard transaction
+	t.Run("check handler discard transaction", func(t *testing.T) {
+		ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-discard-transaction"},
 			&check.TestCheckReloader{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 
 		txID := ch.StartTransaction()
@@ -241,7 +241,7 @@ func TestCheckHandlerAPI(t *testing.T) {
 		assert.True(t, found, "check state for %s was not found", ch.ID())
 		assert.EqualValues(t, batchState, actualState)
 
-		ch.CancelTransaction("test cancel transaction")
+		ch.DiscardTransaction("test cancel transaction")
 
 		time.Sleep(100 * time.Millisecond)
 		postCancelState, found := mockBatcher.GetCheckState(ch.ID())

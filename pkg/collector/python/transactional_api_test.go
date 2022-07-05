@@ -13,6 +13,10 @@ func TestStopTransaction(t *testing.T) {
 	testStopTransaction(t)
 }
 
+func TestDiscardTransaction(t *testing.T) {
+	testDiscardTransaction(t)
+}
+
 func TestSetTransactionState(t *testing.T) {
 	testSetTransactionState(t)
 }
