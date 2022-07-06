@@ -174,7 +174,7 @@ func (d *DockerCheck) Run() error {
 			// sts end
 		}
 	} else {
-		log.Debugf("Agent is not running in container, skipping the Docker check")
+		log.Debugf("Agent is not running in a container or does not have the required permissions, skipping the Docker check")
 		return nil
 	}
 
