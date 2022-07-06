@@ -8,6 +8,8 @@ package runner
 import (
 	"expvar"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/kubeapi"
+	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"strings"
 
 	"strconv"
@@ -236,13 +238,41 @@ func (r *Runner) StopCheck(id check.ID) error {
 	}
 }
 
+func checkComponent(ch check.Check) *topology.Component {
+	hostname, _ := util.GetHostname()
+	externalID := fmt.Sprintf("%s:%s", hostname, ch.ID())
+	return &topology.Component{
+		ExternalID: externalID,
+		Type: topology.Type{
+			Name: "agent-integration",
+		},
+		Data: topology.Data{
+			"name":               fmt.Sprintf("%s check on %s", ch.ID(), hostname),
+			"interval":           ch.Interval(),
+			"configSource":       ch.ConfigSource(),
+			"version":            ch.Version(),
+			"isTelemetryEnabled": ch.IsTelemetryEnabled(),
+			"tags":               []string{"agent-integration"},
+		},
+	}
+}
+
 // work waits for checks and run them as long as they arrive on the channel
 func (r *Runner) work() {
 	log.Debug("Ready to process checks...")
 	defer TestWg.Done()
 	defer runnerStats.Add("Workers", -1)
 
+	selfCheckID := check.ID("agent-checks-check")
+	selfCheckInstance := topology.Instance{
+		Type: "agent",
+		URL:  "integrations",
+	}
+	checkTopology := kubeapi.NewBatchTopologySubmitter(selfCheckID, selfCheckInstance)
+
 	for check := range r.pending {
+		checkTopology.SubmitComponent(checkComponent(check))
+
 		// see if the check is already running
 		r.m.Lock()
 		if _, isRunning := r.runningChecks[check.ID()]; isRunning {
@@ -335,6 +365,8 @@ func (r *Runner) work() {
 			return
 		}
 	}
+
+	checkTopology.SubmitComplete()
 
 	log.Debug("Finished processing checks.")
 }
