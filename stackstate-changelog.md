@@ -1,5 +1,10 @@
 # StackState Agent v2 releases
 
+## 2.17.1 (2022-XX-XX)
+
+**Improvements**
+- Added processing AWS Security Groups EventBridge events [STAC-17006](https://stackstate.atlassian.net/browse/STAC-17006)
+
 ## 2.17.0 (2022-07-01)
 
 **Features**
