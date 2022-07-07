@@ -18,13 +18,6 @@ net user ieuser 'Passw0rd!' /add /y
 net localgroup administrators ieuser /add
 net accounts /maxpwage:unlimited
 
-# Disable Internet Explorer Security
-# http://stackoverflow.com/a/9368555/2067999
-# $AdminKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}"
-# $UserKey = "HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}"
-# Set-ItemProperty -Path $AdminKey -Name "IsInstalled" -Value 0
-# Set-ItemProperty -Path $UserKey -Name "IsInstalled" -Value 0
-
 add-type @"
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
@@ -48,14 +41,13 @@ Set-ItemProperty -Path $Key -Name $Setting -Value 1 -Force
 iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))
 choco feature enable -n allowGlobalConfirmation
 
-Set-PSDebug -Trace 1
+# Set-PSDebug -Trace 1
 
+Set-ExecutionPolicy Unrestricted -Scope LocalMachine -Force -ErrorAction Ignore
 Set-ExecutionPolicy Bypass -Scope Process -Force;
-./bootstrap_runner.ps1
+#./bootstrap_runner.ps1
 
-# net user ${var.INSTANCE_USERNAME} '${var.INSTANCE_PASSWORD}' /add /y
-# net localgroup administrators ${var.INSTANCE_USERNAME} /add
+net user ${var.INSTANCE_USERNAME} '${var.INSTANCE_PASSWORD}' /add /y
+net localgroup administrators ${var.INSTANCE_USERNAME} /add
 
-# Set-ExecutionPolicy Unrestricted -Scope LocalMachine -Force -ErrorAction Ignore
-
-# $ErrorActionPreference = "stop"
+$ErrorActionPreference = "stop"
