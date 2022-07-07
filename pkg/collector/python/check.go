@@ -49,6 +49,8 @@ type PythonCheck struct {
 	telemetry    bool // whether or not the telemetry is enabled for this check
 }
 
+var _ check.Check = &PythonCheck{}
+
 // NewPythonCheck conveniently creates a PythonCheck instance
 func NewPythonCheck(name string, class *C.rtloader_pyobject_t) *PythonCheck {
 	glock := newStickyLock()
@@ -183,6 +185,12 @@ func (c *PythonCheck) setCollectionIntervalToInstanceData(data integration.Data)
 	rawInstance[string("collection_interval")] = int(c.interval.Seconds())
 
 	return yaml.Marshal(rawInstance)
+}
+
+func (c *PythonCheck) GetConfiguration() interface{} {
+	return map[string]interface{}{
+		"python-check": c.instance,
+	}
 }
 
 // Configure the Python check from YAML data
