@@ -44,6 +44,10 @@ func (c *baseCheck) Configure(config, initConfig integration.Data, source string
 	return nil
 }
 
+func (c *baseCheck) GetConfiguration() interface{} {
+	return c
+}
+
 func (c *baseCheck) Interval() time.Duration {
 	return c.interval
 }
