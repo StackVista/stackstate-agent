@@ -43,6 +43,7 @@ type CheckBase struct {
 	latestWarnings []error
 	checkInterval  time.Duration
 	source         string
+	commonConfig   *integration.CommonGlobalConfig
 	telemetry      bool
 }
 
@@ -101,6 +102,10 @@ func (c *CheckBase) Configure(data integration.Data, initConfig integration.Data
 	s.FinalizeCheckServiceTag()
 
 	return nil
+}
+
+func (c *CheckBase) GetConfiguration() interface{} {
+	return c.commonConfig
 }
 
 // CommonConfigure is called when checks implement their own Configure method,

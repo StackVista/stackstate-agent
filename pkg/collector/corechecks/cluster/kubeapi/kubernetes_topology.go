@@ -73,6 +73,10 @@ func (t *TopologyCheck) Configure(config, initConfig integration.Data, source st
 	return nil
 }
 
+func (t *TopologyCheck) GetConfiguration() interface{} {
+	return t.instance
+}
+
 // SetSubmitter sets the topology submitter for the Topology Check
 func (t *TopologyCheck) SetSubmitter(submitter TopologySubmitter) {
 	t.submitter = submitter

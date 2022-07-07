@@ -238,25 +238,6 @@ func (r *Runner) StopCheck(id check.ID) error {
 	}
 }
 
-func checkComponent(ch check.Check) *topology.Component {
-	hostname, _ := util.GetHostname()
-	externalID := fmt.Sprintf("%s:%s", hostname, ch.ID())
-	return &topology.Component{
-		ExternalID: externalID,
-		Type: topology.Type{
-			Name: "agent-integration",
-		},
-		Data: topology.Data{
-			"name":               fmt.Sprintf("%s check on %s", ch.ID(), hostname),
-			"interval":           ch.Interval(),
-			"configSource":       ch.ConfigSource(),
-			"version":            ch.Version(),
-			"isTelemetryEnabled": ch.IsTelemetryEnabled(),
-			"tags":               []string{"agent-integration"},
-		},
-	}
-}
-
 // work waits for checks and run them as long as they arrive on the channel
 func (r *Runner) work() {
 	log.Debug("Ready to process checks...")
@@ -268,10 +249,13 @@ func (r *Runner) work() {
 		Type: "agent",
 		URL:  "integrations",
 	}
+	selfCheckTopology := NewSelfCheckTopology()
 	checkTopology := kubeapi.NewBatchTopologySubmitter(selfCheckID, selfCheckInstance)
+	checkTopology.SubmitComponent(selfCheckTopology.AgentComponent())
 
 	for check := range r.pending {
-		checkTopology.SubmitComponent(checkComponent(check))
+		checkTopology.SubmitComponent(selfCheckTopology.CheckComponent(check))
+		checkTopology.SubmitRelation(selfCheckTopology.CheckToAgentRelation(check))
 
 		// see if the check is already running
 		r.m.Lock()
