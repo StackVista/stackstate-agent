@@ -73,6 +73,10 @@ func (c *JMXCheck) ConfigSource() string {
 	return c.source
 }
 
+func (c *JMXCheck) GetConfiguration() interface{} {
+	return nil
+}
+
 func (c *JMXCheck) Configure(config integration.Data, initConfig integration.Data, source string) error {
 	return nil
 }

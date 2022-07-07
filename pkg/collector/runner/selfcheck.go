@@ -63,5 +63,6 @@ func (sc *selfCheckTopology) CheckToAgentRelation(ch check.Check) *topology.Rela
 		Type: topology.Type{
 			Name: "runs",
 		},
+		Data: topology.Data{},
 	}
 }
