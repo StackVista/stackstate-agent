@@ -4,7 +4,7 @@ import os
 import pytest
 from stscliv1 import CLIv1
 
-USE_CACHE=True
+USE_CACHE = False
 
 @pytest.fixture
 def cliv1(host, caplog) -> CLIv1:
