@@ -180,7 +180,7 @@ class TopologyMatchingResult:
             logging.info("matching diagram was not request (generate_diagram_url=False)")
         else:
             try:
-                base_share_url = urllib.parse.urlparse("https://dreampuf.github.io/GraphvizOnline/")
+                base_share_url = urllib.parse.urlparse("https://graphviz.sandbox.stackstate.io/")
                 share_url = base_share_url._replace(fragment=urllib.parse.quote(graph_dot_str))
                 shortened_url = pyshorteners.Shortener().tinyurl.short(share_url.geturl())
                 logging.info("matching diagram is available at %s", shortened_url)
