@@ -47,6 +47,7 @@ type PythonCheck struct {
 	lastWarnings []error
 	source       string
 	telemetry    bool // whether or not the telemetry is enabled for this check
+	instanceData integration.Data
 }
 
 var _ check.Check = &PythonCheck{}
@@ -188,9 +189,7 @@ func (c *PythonCheck) setCollectionIntervalToInstanceData(data integration.Data)
 }
 
 func (c *PythonCheck) GetConfiguration() interface{} {
-	return map[string]interface{}{
-		"python-check": c.instance,
-	}
+	return c.instanceData
 }
 
 // Configure the Python check from YAML data
@@ -288,6 +287,7 @@ func (c *PythonCheck) Configure(data integration.Data, initConfig integration.Da
 	}
 	c.instance = check
 	c.source = source
+	c.instanceData = updatedInstanceData
 
 	// Add the possibly configured service as a tag for this check
 	s, err := aggregator.GetSender(c.id)
