@@ -44,13 +44,13 @@ func (sc *selfCheckTopology) AgentComponent() *topology.Component {
 	}
 }
 
-func (sc *selfCheckTopology) CheckID(ch check.Check) string {
-	return fmt.Sprintf("%s:%s", sc.Hostname, ch.ID())
+func (sc *selfCheckTopology) CheckID(id check.ID) string {
+	return fmt.Sprintf("%s:%s", sc.Hostname, id)
 }
 
 func (sc *selfCheckTopology) CheckComponent(ch check.Check) *topology.Component {
 	return &topology.Component{
-		ExternalID: sc.CheckID(ch),
+		ExternalID: sc.CheckID(ch.ID()),
 		Type: topology.Type{
 			Name: "agent-integration",
 		},
@@ -85,7 +85,7 @@ func (sc *selfCheckTopology) SyncToCheckRelation(instance topology.Instance, che
 	return &topology.Relation{
 		ExternalID: fmt.Sprintf("%s>%s", sc.AgentID(), checkID),
 		SourceID:   instance.GoString(),
-		TargetID:   string(checkID),
+		TargetID:   sc.CheckID(checkID),
 		Type: topology.Type{
 			Name: "populated_with",
 		},
@@ -95,9 +95,9 @@ func (sc *selfCheckTopology) SyncToCheckRelation(instance topology.Instance, che
 
 func (sc *selfCheckTopology) CheckToAgentRelation(ch check.Check) *topology.Relation {
 	return &topology.Relation{
-		ExternalID: fmt.Sprintf("%s>%s", sc.AgentID(), sc.CheckID(ch)),
+		ExternalID: fmt.Sprintf("%s>%s", sc.AgentID(), sc.CheckID(ch.ID())),
 		SourceID:   sc.AgentID(),
-		TargetID:   sc.CheckID(ch),
+		TargetID:   sc.CheckID(ch.ID()),
 		Type: topology.Type{
 			Name: "runs",
 		},
