@@ -144,24 +144,27 @@ func (batcher *AsynchronousBatcher) sendState(states CheckInstanceBatchStates) {
 	if states != nil {
 
 		selfChekTopo := selfcheck.NewSelfCheckTopology()
+		// building self topology without batcher to avoid recursion
+		selfTopo := topology.Topology{
+			Instance:   selfChekTopo.Instance(),
+			Components: []topology.Component{},
+			Relations:  []topology.Relation{},
+		}
 
 		// Create the topologies
 		topologies := make([]topology.Topology, 0)
 		for checkID, state := range states {
 			if state.Topology != nil {
-				batcher.SubmitComponent(
-					selfChekTopo.ID(), selfChekTopo.Instance(),
-					*selfChekTopo.SyncComponent(state.Topology.Instance),
-				)
-				batcher.SubmitRelation(
-					selfChekTopo.ID(), selfChekTopo.Instance(),
-					*selfChekTopo.SyncToCheckRelation(state.Topology.Instance, checkID),
-				)
+				selfTopo.Components = append(selfTopo.Components,
+					*selfChekTopo.SyncComponent(state.Topology.Instance))
+				selfTopo.Relations = append(selfTopo.Relations,
+					*selfChekTopo.SyncToCheckRelation(state.Topology.Instance, checkID))
 				topologies = append(topologies, *state.Topology)
 			}
 		}
-
-		batcher.SubmitComplete(selfChekTopo.ID())
+		if len(selfTopo.Components) > 0 || len(selfTopo.Relations) > 0 {
+			topologies = append(topologies, selfTopo)
+		}
 
 		// Create the healthData payload
 		healthData := make([]health.Health, 0)
