@@ -3,8 +3,11 @@ package selfcheck
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	collectorutils "github.com/StackVista/stackstate-agent/pkg/collector/util"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
+	"os"
 )
 
 type selfCheckTopology struct {
@@ -31,6 +34,12 @@ func (sc *selfCheckTopology) AgentID() string {
 	return fmt.Sprintf("urn:stackstate-agent:/%s", sc.Hostname)
 }
 
+func getCurrentProcessCreateTime() int64 {
+	pid := os.Getpid()
+	createTime, _ := collectorutils.GetProcessCreateTime(int32(pid))
+	return createTime
+}
+
 func (sc *selfCheckTopology) AgentComponent() *topology.Component {
 	name := fmt.Sprintf("StackState Agent:%s", sc.Hostname)
 	return &topology.Component{
@@ -39,7 +48,16 @@ func (sc *selfCheckTopology) AgentComponent() *topology.Component {
 			Name: "stackstate-agent",
 		},
 		Data: topology.Data{
-			"name": name,
+			"name":     name,
+			"hostname": sc.Hostname,
+			"cluster":  clustername.GetClusterName(),
+			"identifiers": []string{
+				fmt.Sprintf("urn:process:/%s:%d:%d", sc.Hostname, os.Getpid(), getCurrentProcessCreateTime()),
+			},
+			"tags": []string{
+				"stackstate-agent", "agent-integration", "self-observability",
+				fmt.Sprintf("hostname:%s", sc.Hostname),
+			},
 		},
 	}
 }
@@ -58,7 +76,6 @@ func (sc *selfCheckTopology) CheckComponent(ch check.Check) *topology.Component 
 			"name":               fmt.Sprintf("%s", ch.ID()),
 			"layer":              "Checks",
 			"interval":           ch.Interval(),
-			"configSource":       ch.ConfigSource(),
 			"config":             ch.GetConfiguration(),
 			"version":            ch.Version(),
 			"isTelemetryEnabled": ch.IsTelemetryEnabled(),
