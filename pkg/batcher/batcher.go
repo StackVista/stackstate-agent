@@ -149,6 +149,7 @@ func (batcher *AsynchronousBatcher) sendState(states CheckInstanceBatchStates) {
 			Instance:   selfChekTopo.Instance(),
 			Components: []topology.Component{},
 			Relations:  []topology.Relation{},
+			DeleteIDs:  []string{},
 		}
 
 		// Create the topologies
