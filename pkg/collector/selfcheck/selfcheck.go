@@ -1,4 +1,4 @@
-package runner
+package selfcheck
 
 import (
 	"fmt"
@@ -14,6 +14,17 @@ type selfCheckTopology struct {
 func NewSelfCheckTopology() *selfCheckTopology {
 	hostname, _ := util.GetHostname()
 	return &selfCheckTopology{Hostname: hostname}
+}
+
+func (sc *selfCheckTopology) ID() check.ID {
+	return check.ID("agent-checks-check")
+}
+
+func (sc *selfCheckTopology) Instance() topology.Instance {
+	return topology.Instance{
+		Type: "agent",
+		URL:  "integrations",
+	}
 }
 
 func (sc *selfCheckTopology) AgentID() string {
@@ -44,14 +55,41 @@ func (sc *selfCheckTopology) CheckComponent(ch check.Check) *topology.Component 
 			Name: "agent-integration",
 		},
 		Data: topology.Data{
-			"name":               fmt.Sprintf("%s check on %s", ch.ID(), sc.Hostname),
+			"name":               fmt.Sprintf("%s", ch.ID()),
 			"interval":           ch.Interval(),
 			"configSource":       ch.ConfigSource(),
 			"config":             ch.GetConfiguration(),
 			"version":            ch.Version(),
 			"isTelemetryEnabled": ch.IsTelemetryEnabled(),
-			"tags":               []string{"agent-integration"},
+			"tags":               []string{"agent-integration", "self-observability"},
 		},
+	}
+}
+
+func (sc *selfCheckTopology) SyncComponent(instance topology.Instance) *topology.Component {
+	return &topology.Component{
+		ExternalID: instance.GoString(),
+		Type: topology.Type{
+			Name: "topology-sync",
+		},
+		Data: topology.Data{
+			"name": fmt.Sprintf("%s %s", instance.Type, instance.URL),
+			"type": instance.Type,
+			"url":  instance.URL,
+			"tags": []string{"agent-integration", "self-observability"},
+		},
+	}
+}
+
+func (sc *selfCheckTopology) SyncToCheckRelation(instance topology.Instance, checkID check.ID) *topology.Relation {
+	return &topology.Relation{
+		ExternalID: fmt.Sprintf("%s>%s", sc.AgentID(), checkID),
+		SourceID:   instance.GoString(),
+		TargetID:   string(checkID),
+		Type: topology.Type{
+			Name: "populated_with",
+		},
+		Data: topology.Data{},
 	}
 }
 

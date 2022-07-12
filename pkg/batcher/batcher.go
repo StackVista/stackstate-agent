@@ -3,6 +3,7 @@ package batcher
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/selfcheck"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/serializer"
@@ -142,13 +143,25 @@ type submitShutdown struct{}
 func (batcher *AsynchronousBatcher) sendState(states CheckInstanceBatchStates) {
 	if states != nil {
 
+		selfChekTopo := selfcheck.NewSelfCheckTopology()
+
 		// Create the topologies
 		topologies := make([]topology.Topology, 0)
-		for _, state := range states {
+		for checkID, state := range states {
 			if state.Topology != nil {
+				batcher.SubmitComponent(
+					selfChekTopo.ID(), selfChekTopo.Instance(),
+					*selfChekTopo.SyncComponent(state.Topology.Instance),
+				)
+				batcher.SubmitRelation(
+					selfChekTopo.ID(), selfChekTopo.Instance(),
+					*selfChekTopo.SyncToCheckRelation(state.Topology.Instance, checkID),
+				)
 				topologies = append(topologies, *state.Topology)
 			}
 		}
+
+		batcher.SubmitComplete(selfChekTopo.ID())
 
 		// Create the healthData payload
 		healthData := make([]health.Health, 0)

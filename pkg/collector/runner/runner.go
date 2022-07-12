@@ -9,7 +9,7 @@ import (
 	"expvar"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/kubeapi"
-	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/StackVista/stackstate-agent/pkg/collector/selfcheck"
 	"strings"
 
 	"strconv"
@@ -244,13 +244,8 @@ func (r *Runner) work() {
 	defer TestWg.Done()
 	defer runnerStats.Add("Workers", -1)
 
-	selfCheckID := check.ID("agent-checks-check")
-	selfCheckInstance := topology.Instance{
-		Type: "agent",
-		URL:  "integrations",
-	}
-	selfCheckTopology := NewSelfCheckTopology()
-	checkTopology := kubeapi.NewBatchTopologySubmitter(selfCheckID, selfCheckInstance)
+	selfCheckTopology := selfcheck.NewSelfCheckTopology()
+	checkTopology := kubeapi.NewBatchTopologySubmitter(selfCheckTopology.ID(), selfCheckTopology.Instance())
 	checkTopology.SubmitComponent(selfCheckTopology.AgentComponent())
 
 	for check := range r.pending {
