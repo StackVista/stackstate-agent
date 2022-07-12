@@ -91,6 +91,12 @@ func KubernetesAPIEventsFactory() check.Check {
 	return NewKubernetesAPIEventsCheck(core.NewCheckBase(kubernetesAPIEventsCheckName), &EventsConfig{})
 }
 
+func (k *EventsCheck) GetConfiguration() interface{} {
+	return k.CheckBase.GetConfigurationWithCommon(map[string]interface{}{
+		"instance": k.instance,
+	})
+}
+
 // Configure parses the check configuration and init the check.
 func (k *EventsCheck) Configure(config, initConfig integration.Data, source string) error {
 	err := k.ConfigureKubeAPICheck(config, source)

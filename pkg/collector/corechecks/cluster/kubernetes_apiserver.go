@@ -92,6 +92,12 @@ func KubernetesASFactory() check.Check {
 	return NewKubeASCheck(core.NewCheckBase(kubernetesAPIServerCheckName), &KubeASConfig{})
 }
 
+func (k *KubeASCheck) GetConfiguration() interface{} {
+	return k.CheckBase.GetConfigurationWithCommon(map[string]interface{}{
+		"instance": k.instance,
+	})
+}
+
 // Configure parses the check configuration and init the check.
 func (k *KubeASCheck) Configure(config, initConfig integration.Data, source string) error {
 	err := k.CommonConfigure(config, source)

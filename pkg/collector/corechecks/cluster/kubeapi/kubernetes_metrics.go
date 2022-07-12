@@ -66,6 +66,12 @@ func KubernetesAPIMetricsFactory() check.Check {
 	return NewKubernetesAPIMetricsCheck(core.NewCheckBase(kubernetesAPIMetricsCheckName), &MetricsConfig{})
 }
 
+func (k *MetricsCheck) GetConfiguration() interface{} {
+	return k.CheckBase.GetConfigurationWithCommon(map[string]interface{}{
+		"instance": k.instance,
+	})
+}
+
 // Configure parses the check configuration and init the check.
 func (k *MetricsCheck) Configure(config, initConfig integration.Data, source string) error {
 	err := k.CommonConfigure(config, source)

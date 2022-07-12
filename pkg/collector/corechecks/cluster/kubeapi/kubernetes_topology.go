@@ -74,7 +74,9 @@ func (t *TopologyCheck) Configure(config, initConfig integration.Data, source st
 }
 
 func (t *TopologyCheck) GetConfiguration() interface{} {
-	return t.instance
+	return t.CheckBase.GetConfigurationWithCommon(map[string]interface{}{
+		"instance": t.instance,
+	})
 }
 
 // SetSubmitter sets the topology submitter for the Topology Check

@@ -44,6 +44,7 @@ type CheckBase struct {
 	checkInterval  time.Duration
 	source         string
 	commonConfig   *integration.CommonGlobalConfig
+	commonOptions  *integration.CommonInstanceConfig
 	telemetry      bool
 }
 
@@ -108,6 +109,12 @@ func (c *CheckBase) GetConfiguration() interface{} {
 	return c.commonConfig
 }
 
+func (c *CheckBase) GetConfigurationWithCommon(specific map[string]interface{}) interface{} {
+	specific["commonConfig"] = c.commonConfig
+	specific["commonOptions"] = c.commonOptions
+	return specific
+}
+
 // CommonConfigure is called when checks implement their own Configure method,
 // in order to setup common options (run interval, empty hostname)
 func (c *CheckBase) CommonConfigure(instance integration.Data, source string) error {
@@ -117,6 +124,7 @@ func (c *CheckBase) CommonConfigure(instance integration.Data, source string) er
 		log.Errorf("invalid instance section for check %s: %s", string(c.ID()), err)
 		return err
 	}
+	c.commonOptions = &commonOptions
 
 	// See if a collection interval was specified
 	// [sts] use new compatibility function

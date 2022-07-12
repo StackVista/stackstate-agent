@@ -46,6 +46,12 @@ func init() {
 	core.RegisterCheck(kubeStateMetricsCheckName, KubeStateMetricsFactory)
 }
 
+func (k *KSMCheck) GetConfiguration() interface{} {
+	return k.CheckBase.GetConfigurationWithCommon(map[string]interface{}{
+		"instance": k.instance,
+	})
+}
+
 func (k *KSMCheck) Configure(config, initConfig integration.Data, source string) error {
 	err := k.CommonConfigure(config, source)
 	if err != nil {
