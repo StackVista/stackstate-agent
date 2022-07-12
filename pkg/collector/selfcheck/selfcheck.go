@@ -56,6 +56,7 @@ func (sc *selfCheckTopology) CheckComponent(ch check.Check) *topology.Component 
 		},
 		Data: topology.Data{
 			"name":               fmt.Sprintf("%s", ch.ID()),
+			"layer":              "Checks",
 			"interval":           ch.Interval(),
 			"configSource":       ch.ConfigSource(),
 			"config":             ch.GetConfiguration(),
@@ -73,10 +74,11 @@ func (sc *selfCheckTopology) SyncComponent(instance topology.Instance) *topology
 			Name: "topology-sync",
 		},
 		Data: topology.Data{
-			"name": fmt.Sprintf("%s %s", instance.Type, instance.URL),
-			"type": instance.Type,
-			"url":  instance.URL,
-			"tags": []string{"agent-integration", "self-observability"},
+			"name":  fmt.Sprintf("%s %s", instance.Type, instance.URL),
+			"type":  instance.Type,
+			"layer": "Synchronization",
+			"url":   instance.URL,
+			"tags":  []string{"agent-integration", "self-observability"},
 		},
 	}
 }
