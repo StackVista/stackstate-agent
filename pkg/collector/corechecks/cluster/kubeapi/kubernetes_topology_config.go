@@ -26,7 +26,7 @@ const (
 
 // TopologyConfig is the config of the API server.
 type TopologyConfig struct {
-	ClusterName             string          `yaml:"cluster_name"`
+	ClusterName             string          `yaml:"cluster_name,omitempty"`
 	CollectTopology         bool            `yaml:"collect_topology"`
 	CollectTimeout          int             `yaml:"collect_timeout"`
 	SourcePropertiesEnabled bool            `yaml:"source_properties_enabled"`

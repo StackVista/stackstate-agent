@@ -110,18 +110,24 @@ func (c *CheckBase) GetConfiguration() interface{} {
 }
 
 func (c *CheckBase) GetConfigurationWithCommon(specific interface{}) interface{} {
-	// go back and forth with YAML encoding to serialize using yaml settings (field names)
-	var specificNormalized interface{}
-	specificYaml, err := yaml.Marshal(specific)
-	if err != nil {
-		specificNormalized = specific
-	} else {
-		if err = yaml.Unmarshal(specificYaml, specificNormalized); err != nil {
-			specificNormalized = specific
+	// go back and forth with YAML encoding to use YAML encoder settings (field names)
+	configMap := map[string]interface{}{}
+	if commonYaml, err := yaml.Marshal(c.commonOptions); err == nil {
+		if err = yaml.Unmarshal(commonYaml, configMap); err == nil {
+			instanceMap := map[string]interface{}{}
+			if instanceYaml, err := yaml.Marshal(specific); err == nil {
+				if err = yaml.Unmarshal(instanceYaml, instanceMap); err == nil {
+					for k, v := range configMap {
+						instanceMap[k] = v
+					}
+					return instanceMap
+				}
+			}
 		}
 	}
+
 	return map[string]interface{}{
-		"instance": specificNormalized,
+		"instance": specific,
 		"common":   c.commonOptions,
 	}
 }
