@@ -50,3 +50,4 @@
 
   - name: Empty StsLogsBucket
     shell: aws s3api delete-objects --bucket {{ sts_logs_bucket.stdout }} --delete {{ sts_logs_objects.stdout | quote }} --output=text
+    when: sts_logs_objects.stdout.find('Key') != -1
