@@ -244,11 +244,10 @@ func (r *Runner) work() {
 	defer TestWg.Done()
 	defer runnerStats.Add("Workers", -1)
 
-	selfCheckTopology := selfcheck.NewSelfCheckTopology()
-	checkTopology := kubeapi.NewBatchTopologySubmitter(selfCheckTopology.ID(), selfCheckTopology.Instance())
-	checkTopology.SubmitComponent(selfCheckTopology.AgentComponent())
-
 	for check := range r.pending {
+		selfCheckTopology := selfcheck.NewSelfCheckTopology()
+		checkTopology := kubeapi.NewBatchTopologySubmitter(selfCheckTopology.ID(), selfCheckTopology.Instance())
+		checkTopology.SubmitComponent(selfCheckTopology.AgentComponent())
 		checkTopology.SubmitComponent(selfCheckTopology.CheckComponent(check))
 		checkTopology.SubmitRelation(selfCheckTopology.CheckToAgentRelation(check))
 
@@ -338,14 +337,13 @@ func (r *Runner) work() {
 		} else {
 			log.Debugf(l, check)
 		}
+		checkTopology.SubmitComplete()
 
 		if check.Interval() == 0 {
 			log.Infof("Check %v one-time's execution has finished", check)
 			return
 		}
 	}
-
-	checkTopology.SubmitComplete()
 
 	log.Debug("Finished processing checks.")
 }
