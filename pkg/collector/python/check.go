@@ -189,12 +189,12 @@ func (c *PythonCheck) setCollectionIntervalToInstanceData(data integration.Data)
 }
 
 func (c *PythonCheck) GetConfiguration() interface{} {
-	var rawInstance interface{}
-	err := yaml.Unmarshal(c.instanceData, rawInstance)
+	instanceDataMap := map[string]interface{}{}
+	err := yaml.Unmarshal(c.instanceData, instanceDataMap)
 	if err != nil {
 		return string(c.instanceData)
 	}
-	return rawInstance
+	return instanceDataMap
 }
 
 // Configure the Python check from YAML data
