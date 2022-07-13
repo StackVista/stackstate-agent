@@ -109,10 +109,21 @@ func (c *CheckBase) GetConfiguration() interface{} {
 	return c.commonConfig
 }
 
-func (c *CheckBase) GetConfigurationWithCommon(specific map[string]interface{}) interface{} {
-	specific["commonConfig"] = c.commonConfig
-	specific["commonOptions"] = c.commonOptions
-	return specific
+func (c *CheckBase) GetConfigurationWithCommon(specific interface{}) interface{} {
+	// go back and forth with YAML encoding to serialize using yaml settings (field names)
+	var specificNormalized interface{}
+	specificYaml, err := yaml.Marshal(specific)
+	if err != nil {
+		specificNormalized = specific
+	} else {
+		if err = yaml.Unmarshal(specificYaml, specificNormalized); err != nil {
+			specificNormalized = specific
+		}
+	}
+	return map[string]interface{}{
+		"instance": specificNormalized,
+		"common":   c.commonOptions,
+	}
 }
 
 // CommonConfigure is called when checks implement their own Configure method,

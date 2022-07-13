@@ -119,11 +119,11 @@ func (sc *selfCheckTopology) SyncToCheckRelation(instance topology.Instance, che
 
 func (sc *selfCheckTopology) CheckToAgentRelation(ch check.Check) *topology.Relation {
 	return &topology.Relation{
-		ExternalID: fmt.Sprintf("%s>%s", sc.AgentID(), sc.CheckID(ch.ID())),
-		SourceID:   sc.AgentID(),
-		TargetID:   sc.CheckID(ch.ID()),
+		ExternalID: fmt.Sprintf("%s>%s", sc.CheckID(ch.ID()), sc.AgentID()),
+		SourceID:   sc.CheckID(ch.ID()),
+		TargetID:   sc.AgentID(),
 		Type: topology.Type{
-			Name: "runs",
+			Name: "run_with",
 		},
 		Data: topology.Data{},
 	}

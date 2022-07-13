@@ -92,9 +92,7 @@ func KubernetesAPIEventsFactory() check.Check {
 }
 
 func (k *EventsCheck) GetConfiguration() interface{} {
-	return k.CheckBase.GetConfigurationWithCommon(map[string]interface{}{
-		"instance": k.instance,
-	})
+	return k.CheckBase.GetConfigurationWithCommon(k.instance)
 }
 
 // Configure parses the check configuration and init the check.

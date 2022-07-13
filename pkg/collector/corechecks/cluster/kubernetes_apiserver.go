@@ -93,9 +93,7 @@ func KubernetesASFactory() check.Check {
 }
 
 func (k *KubeASCheck) GetConfiguration() interface{} {
-	return k.CheckBase.GetConfigurationWithCommon(map[string]interface{}{
-		"instance": k.instance,
-	})
+	return k.CheckBase.GetConfigurationWithCommon(k.instance)
 }
 
 // Configure parses the check configuration and init the check.

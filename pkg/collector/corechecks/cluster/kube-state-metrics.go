@@ -47,9 +47,7 @@ func init() {
 }
 
 func (k *KSMCheck) GetConfiguration() interface{} {
-	return k.CheckBase.GetConfigurationWithCommon(map[string]interface{}{
-		"instance": k.instance,
-	})
+	return k.CheckBase.GetConfigurationWithCommon(k.instance)
 }
 
 func (k *KSMCheck) Configure(config, initConfig integration.Data, source string) error {
