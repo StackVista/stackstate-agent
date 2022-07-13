@@ -22,3 +22,31 @@
       namespace: "{{ namespace }}"
       pod: stackstate-cli
       command: python -m stackstate_cli.cli stackpack install aws-v2 -p aws_external_id "{{ yard_id }}" -p aws_role_arn "{{ integration_iam_role }}" -p aws_access_key_id "{{ integration_access_key }}" -p aws_secret_access_key "{{ integration_secret_key }}"
+
+
+## Cleanup
+
+- name: StackPack cleanup tasks
+  tags: cleanup
+  block:
+  - name: Retrieve StsEventBridgeRule resource id
+    command: aws cloudformation describe-stack-resource --stack-name {{ cf_stack_name }} --logical-resource-id StsEventBridgeRule --query "StackResourceDetail.PhysicalResourceId" --output=text
+    register: sts_event_rule
+
+  - name: Disable StsEventBridgeRule
+    command: aws events disable-rule --name {{ sts_event_rule.stdout }}
+
+  - name: Retrieve StsLogsBucket resource id
+    command: aws cloudformation describe-stack-resource --stack-name {{ cf_stack_name }} --logical-resource-id StsLogsBucket --query "StackResourceDetail.PhysicalResourceId" --output=text
+    register: sts_logs_bucket
+
+  - name: Wait a bit for all objects to be saved to the bucket
+    pause:
+      seconds: 30
+
+  - name: Retrieve objects versions from StsLogsBucket
+    command: "aws s3api list-object-versions --bucket {{ sts_logs_bucket.stdout }} --output=json --query='{Objects: Versions[].{Key:Key,VersionId:VersionId}}'"
+    register: sts_logs_objects
+
+  - name: Empty StsLogsBucket
+    shell: aws s3api delete-objects --bucket {{ sts_logs_bucket.stdout }} --delete {{ sts_logs_objects.stdout | quote }} --output=text

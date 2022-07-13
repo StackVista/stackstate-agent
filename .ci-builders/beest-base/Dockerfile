@@ -39,7 +39,7 @@ RUN curl -LO "https://dl.k8s.io/release/v${KUBECTL_V}/bin/linux/amd64/kubectl" &
     chmod +x ./kubectl && \
     mv ./kubectl /usr/local/bin/
 
-ARG K9S_V=0.25.18
+ARG K9S_V=0.25.21
 RUN curl -LO "https://github.com/derailed/k9s/releases/download/v${K9S_V}/k9s_Linux_x86_64.tar.gz" && \
     mkdir -p tmp_k9s && \
     tar xvzf k9s_Linux_x86_64.tar.gz -C tmp_k9s && \
@@ -75,14 +75,14 @@ RUN curl -O "https://download.docker.com/linux/static/stable/x86_64/docker-${DOC
     mv ./docker/docker /usr/local/bin/ && \
     rm -r docker-${DOCKER_V}.tgz docker
 
-ARG STSTOOLBOX_V=1.3.29
+ARG STSTOOLBOX_V=1.3.31
 RUN curl -O "https://stseuw1-tooling-main-homebrew.s3.amazonaws.com/sts-toolbox/v${STSTOOLBOX_V}/sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz" && \
     tar xvzf sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \
     rm -r sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \
     mv ./sts-toolbox /usr/local/bin/
 
-ARG STSCLI_V=0.3.7
-RUN curl --insecure -O "https://cli-dl.stackstate.com.s3.amazonaws.com/stackstate-cli/v${STSCLI_V}/stackstate-cli-full-${STSCLI_V}.linux-x86_64.tar.gz" && \
-    tar xvzf stackstate-cli-full-${STSCLI_V}.linux-x86_64.tar.gz && \
-    rm -r stackstate-cli-full-${STSCLI_V}.linux-x86_64.tar.gz && \
+ARG STSCLI_V=2.0.0
+RUN curl --insecure -O "https://cli-dl.stackstate.com.s3.amazonaws.com/stackstate-cli/v${STSCLI_V}/stackstate-cli-${STSCLI_V}.linux-x86_64.tar.gz" && \
+    tar xvzf stackstate-cli-${STSCLI_V}.linux-x86_64.tar.gz && \
+    rm -r stackstate-cli-${STSCLI_V}.linux-x86_64.tar.gz && \
     mv ./sts /usr/local/bin/

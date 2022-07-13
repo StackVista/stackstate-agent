@@ -1,3 +1,7 @@
+output "stack_name" {
+  value = aws_cloudformation_stack.cfn_stackpack.name
+}
+
 output "integration_role" {
   value = data.aws_iam_role.integration_role.arn
 }

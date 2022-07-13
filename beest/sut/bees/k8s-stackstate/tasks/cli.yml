@@ -86,7 +86,9 @@
       local_path: "{{ role_path }}/files/query.sh"
       remote_path: "/query.sh"
 
-# TODO: Once cli v2 supports token_auth we can use the secret associated w the SA
+# TODO: Once cli v2 supports token_auth we can use the secret associated with the SA, see https://stackstate.atlassian.net/browse/STAC-16951
+# kubectl -n <namespace> get secret stackstate-admin-token-<xyz> -o jsonpath={.data.token} | base64 -d
+#
 #  - name: Get ServiceAccount object
 #    kubernetes.core.k8s_info:
 #      context: "{{ kubecontext }}"
