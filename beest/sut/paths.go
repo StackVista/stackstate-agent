@@ -20,6 +20,13 @@ func TestPath(groupName string) string {
 	return fmt.Sprintf("%s/tests/%s", Cwd, groupName)
 }
 
+func TestFrameworkPaths() []string {
+	return []string{
+		fmt.Sprintf("%s/testframework/ststest", Cwd),
+		fmt.Sprintf("%s/testframework/stscliv1", Cwd),
+	}
+}
+
 func init() {
 	var err error
 	Cwd, err = os.Getwd()

@@ -4,6 +4,7 @@ package driver
 
 import (
 	"beest/cmd/step"
+	"beest/sut"
 	"context"
 	"errors"
 	"fmt"
@@ -67,6 +68,13 @@ func buildPyTestCmd(step *step.VerificationStep, watch bool, selection string) *
 	}
 
 	cmd.Dir = step.TestsPath()
+
+	pyPaths := sut.TestFrameworkPaths()
+	if defPyPath := os.Getenv("PYTHONPATH"); defPyPath != "" {
+		pyPaths = append(pyPaths, defPyPath)
+	}
+	pyPath := strings.Join(pyPaths, ":")
+	cmd.Env = append(cmd.Env, fmt.Sprintf("PYTHONPATH=%s", pyPath))
 
 	return cmd
 }
