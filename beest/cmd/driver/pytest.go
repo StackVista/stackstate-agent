@@ -74,6 +74,7 @@ func buildPyTestCmd(step *step.VerificationStep, watch bool, selection string) *
 		pyPaths = append(pyPaths, defPyPath)
 	}
 	pyPath := strings.Join(pyPaths, ":")
+	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, fmt.Sprintf("PYTHONPATH=%s", pyPath))
 
 	return cmd
