@@ -9,7 +9,7 @@ import (
 	"expvar"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/kubeapi"
-	"github.com/StackVista/stackstate-agent/pkg/collector/selfcheck"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/selfcheck"
 	"strings"
 
 	"strconv"

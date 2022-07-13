@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/util"
 	"runtime"
 	"time"
 	"unsafe"
@@ -189,12 +190,12 @@ func (c *PythonCheck) setCollectionIntervalToInstanceData(data integration.Data)
 }
 
 func (c *PythonCheck) GetConfiguration() interface{} {
-	instanceDataMap := map[string]interface{}{}
+	instanceDataMap := map[interface{}]interface{}{}
 	err := yaml.Unmarshal(c.instanceData, instanceDataMap)
 	if err != nil {
 		return string(c.instanceData)
 	}
-	return instanceDataMap
+	return util.ConvertMapInterfaceToMapString(instanceDataMap)
 }
 
 // Configure the Python check from YAML data

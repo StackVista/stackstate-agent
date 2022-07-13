@@ -3,7 +3,7 @@ package batcher
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/selfcheck"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/selfcheck"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/serializer"

@@ -7,6 +7,7 @@ package corechecks
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/util"
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
@@ -106,23 +107,21 @@ func (c *CheckBase) Configure(data integration.Data, initConfig integration.Data
 }
 
 func (c *CheckBase) GetConfiguration() interface{} {
-	return c.commonConfig
+	return c.GetConfigurationWithCommon(nil)
 }
 
 func (c *CheckBase) GetConfigurationWithCommon(specific interface{}) interface{} {
+	if specific == nil {
+		return c.commonOptions
+	}
+
 	// go back and forth with YAML encoding to use YAML encoder settings (field names)
-	configMap := map[string]interface{}{}
-	if commonYaml, err := yaml.Marshal(c.commonOptions); err == nil {
-		if err = yaml.Unmarshal(commonYaml, configMap); err == nil {
-			instanceMap := map[string]interface{}{}
-			if instanceYaml, err := yaml.Marshal(specific); err == nil {
-				if err = yaml.Unmarshal(instanceYaml, instanceMap); err == nil {
-					for k, v := range configMap {
-						instanceMap[k] = v
-					}
-					return instanceMap
-				}
+	if configMap, err := PrepareForYAMLLikeJSON(c.commonOptions); err == nil {
+		if instanceMap, err := PrepareForYAMLLikeJSON(specific); err == nil {
+			for k, v := range configMap {
+				instanceMap[k] = v
 			}
+			return instanceMap
 		}
 	}
 
@@ -257,4 +256,17 @@ func (c *CheckBase) GetMetricStats() (map[string]int64, error) {
 		return nil, fmt.Errorf("failed to retrieve a sender: %v", err)
 	}
 	return sender.GetMetricStats(), nil
+}
+
+func PrepareForYAMLLikeJSON(object interface{}) (map[string]interface{}, error) {
+	encodedToYAML, err := yaml.Marshal(object)
+	if err != nil {
+		return nil, err
+	}
+	genericStruct := map[interface{}]interface{}{}
+	err = yaml.Unmarshal(encodedToYAML, genericStruct)
+	if err != nil {
+		return nil, err
+	}
+	return util.ConvertMapInterfaceToMapString(genericStruct).(map[string]interface{}), nil
 }
