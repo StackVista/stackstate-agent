@@ -142,7 +142,7 @@ func (c *ContainerdCheck) Run() error {
 	// sts begin
 	// Collect container topology
 	if c.instance.CollectContainerTopology {
-		err := c.topologyCollector.BuildContainerTopology(cu)
+		err := c.topologyCollector.BuildContainerTopology(c.ID(), cu)
 		if err != nil {
 			sender.ServiceCheck("containerd.health", metrics.ServiceCheckCritical, "", nil, err.Error())
 			log.Errorf("Could not collect container topology: %s", err)

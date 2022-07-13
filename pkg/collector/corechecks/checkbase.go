@@ -112,6 +112,9 @@ func (c *CheckBase) GetConfiguration() interface{} {
 
 func (c *CheckBase) GetConfigurationWithCommon(specific interface{}) interface{} {
 	if specific == nil {
+		if configMap, err := PrepareForYAMLLikeJSON(c.commonOptions); err == nil {
+			return configMap
+		}
 		return c.commonOptions
 	}
 

@@ -109,7 +109,7 @@ func (c *CRICheck) Run() error {
 	// sts begin
 	// Collect container topology
 	if c.instance.CollectContainerTopology {
-		err := c.topologyCollector.BuildContainerTopology(util)
+		err := c.topologyCollector.BuildContainerTopology(c.ID(), util)
 		if err != nil {
 			sender.ServiceCheck("cri.health", metrics.ServiceCheckCritical, "", nil, err.Error())
 			log.Errorf("Could not collect container topology: %s", err)

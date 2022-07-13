@@ -379,7 +379,7 @@ func (d *DockerCheck) Run() error {
 	//sts
 	// Collect container topology
 	if d.instance.CollectContainerTopology {
-		err := d.topologyCollector.BuildContainerTopology(du)
+		err := d.topologyCollector.BuildContainerTopology(d.ID(), du)
 		if err != nil {
 			sender.ServiceCheck(DockerServiceUp, metrics.ServiceCheckCritical, "", nil, err.Error())
 			log.Errorf("Could not collect container topology: %s", err)

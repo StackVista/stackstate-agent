@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util"
@@ -20,9 +19,9 @@ const (
 
 // ContainerTopologyCollector contains the checkID and topology instance for the container topology checks
 type ContainerTopologyCollector struct {
-	corechecks.CheckTopologyCollector
-	Hostname string
-	Runtime  string
+	TopologyInstance topology.Instance
+	Hostname         string
+	Runtime          string
 }
 
 // MakeContainerTopologyCollector returns a new instance of DockerTopologyCollector
@@ -32,18 +31,17 @@ func MakeContainerTopologyCollector(runtime string) *ContainerTopologyCollector 
 		log.Warnf("Can't get hostname from container collector, containers ExternalIDs will not have it: %s", err)
 	}
 	return &ContainerTopologyCollector{
-		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector(
-			check.ID(fmt.Sprintf("%s_topology", containerType)), topology.Instance{
-				Type: containerType,
-				URL:  "agents",
-			}),
+		TopologyInstance: topology.Instance{
+			Type: containerType,
+			URL:  "agents",
+		},
 		Hostname: hostname,
 		Runtime:  runtime,
 	}
 }
 
 // BuildContainerTopology collects all docker container topology
-func (ctc *ContainerTopologyCollector) BuildContainerTopology(containerUtil spec.ContainerUtil) error {
+func (ctc *ContainerTopologyCollector) BuildContainerTopology(checkID check.ID, containerUtil spec.ContainerUtil) error {
 	log.Infof("Running container topology collector for '%s' runtime", ctc.Runtime)
 	sender := batcher.GetBatcher()
 	if sender == nil {
@@ -58,10 +56,10 @@ func (ctc *ContainerTopologyCollector) BuildContainerTopology(containerUtil spec
 
 	// submit all collected topology components
 	for _, component := range containerComponents {
-		sender.SubmitComponent(ctc.CheckID, ctc.TopologyInstance, *component)
+		sender.SubmitComponent(checkID, ctc.TopologyInstance, *component)
 	}
 
-	sender.SubmitComplete(ctc.CheckID)
+	sender.SubmitComplete(checkID)
 
 	return nil
 }

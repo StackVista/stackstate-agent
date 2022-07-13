@@ -2,7 +2,6 @@
 package topology
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
 	cspec "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util"
@@ -45,10 +44,10 @@ func TestMakeContainerTopologyCollector(t *testing.T) {
 	hostname, err := util.GetHostname()
 	assert.NoError(t, err)
 	assert.Equal(t, &ContainerTopologyCollector{
-		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector("container_topology", topology.Instance{
+		TopologyInstance: topology.Instance{
 			Type: "container",
 			URL:  "agents",
-		}),
+		},
 		Hostname: hostname,
 		Runtime:  "test",
 	}, MakeContainerTopologyCollector("test"))
@@ -56,10 +55,10 @@ func TestMakeContainerTopologyCollector(t *testing.T) {
 
 func TestBuildContainerTopology(t *testing.T) {
 	collector := ContainerTopologyCollector{
-		CheckTopologyCollector: corechecks.MakeCheckTopologyCollector("checkName", topology.Instance{
+		TopologyInstance: topology.Instance{
 			Type: "checkName",
 			URL:  "agents",
-		}),
+		},
 		Hostname: "host",
 		Runtime:  "test",
 	}
