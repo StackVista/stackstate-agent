@@ -43,7 +43,7 @@ Write-Host "Choco installing main components" -ForegroundColor "Yellow"
 
 choco install git.install
 
-choco install jq
+#choco install jq
 
 iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/softasap/sa-win/master/ConfigureRemotingForAnsible.ps1'))
 .\GetPowershellLinuxRemoting.ps1
