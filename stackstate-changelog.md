@@ -1,5 +1,10 @@
 # StackState Agent v2 releases
 
+## 2.17.2 (2022-07-??)
+
+**Bugfix**
+- Fixed CloudTrail history retrieval fallback when there is no CloudTrail S3 bucket available. [STAC-17058](https://stackstate.atlassian.net/browse/STAC-17058)
+
 ## 2.17.1 (2022-07-11)
 
 **Improvements**
