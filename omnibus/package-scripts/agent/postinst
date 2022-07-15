@@ -69,7 +69,7 @@ if [ "$DISTRIBUTION" != "Darwin" ]; then
     fi
 
     # Make the system-probe binary and eBPF programs owned by root
-    # TODO Do we need system-probe?
+    # sts system-probe is disabled by default
     if [ -f "${INSTALL_DIR}/embedded/bin/system-probe" ]; then
       chown root:root ${INSTALL_DIR}/embedded/bin/system-probe
     fi
