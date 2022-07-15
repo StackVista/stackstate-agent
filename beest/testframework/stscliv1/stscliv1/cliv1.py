@@ -102,14 +102,18 @@ Topology.query("id in (__IDS__)")
     def topology_script(query):
         escaped_query = query.replace("\\", "\\\\").replace('"', '\\"').replace("'", "\\'")
         return """
+def emptyPromise() {
+  Async.sequence([])
+}
+    
 Topology.query('__QUERY__')
   .then { result ->
     components = result.queryResults[0].result.components
     relations = result.queryResults[0].result.relations
     compTypeIDs = components.collect { c -> c.type }.unique()
-    compTypesPromise = Graph.query{ it.V(compTypeIDs) }
+    compTypesPromise = (compTypeIDs.size() > 0) ? Graph.query{ it.V(compTypeIDs) } : emptyPromise()
     relTypeIDs = relations.collect { c -> c.type }.unique()
-    relTypesPromise = Graph.query{ it.V(relTypeIDs) }
+    relTypesPromise = (relTypeIDs.size() > 0) ? Graph.query{ it.V(relTypeIDs) } : emptyPromise()
     compTypesPromise.then { compTypes ->
       relTypesPromise.then { relTypes ->
         [

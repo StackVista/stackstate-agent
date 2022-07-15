@@ -62,7 +62,6 @@ class TopologyMatchingResult:
         return f"#{rel.source}->[type={rel.type}]->{rel.target}"
 
     def assert_exact_match(self, matching_graph_name=None, matching_graph_upload=True) -> TopologyMatch:
-        self.render_debug_dot(matching_graph_name, matching_graph_upload)
         if len(self._topology_matches) == 1:
             return self._topology_matches[0]
         errors = []

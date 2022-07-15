@@ -18,8 +18,7 @@ def test_lambda_topology_is_present(cliv1):
         .one_way_direction("gateway_method", "lambda", type="uses service")
 
     def assert_it():
-        topology = cliv1.topology(
-            "layer in ('Serverless') AND environment in ('Production')")
+        topology = cliv1.topology("layer in ('Serverless') AND environment in ('Production')")
         match_result = lambda_api_topology.find(topology)
         match_result.assert_exact_match()
 
