@@ -2,12 +2,24 @@
 - name: StackPack prepare tasks
   tags: prepare
   block:
+  - name: List StackPacks Installed
+    kubernetes.core.k8s_exec:
+      context: "{{ kubecontext }}"
+      namespace: "{{ namespace }}"
+      pod: stackstate-cli
+      command: python -m stackstate_cli.cli stackpack list
+    register: stackpack_list_raw
+  - name: set fact
+    set_fact:
+      stackpacklist: "{{ stackpack_list_raw.stdout }}"
+
   - name: Install stackstate-agent-v2 StackPack
     kubernetes.core.k8s_exec:
       context: "{{ kubecontext }}"
       namespace: "{{ namespace }}"
       pod: stackstate-cli
       command: python -m stackstate_cli.cli stackpack install stackstate-agent-v2
+    when: stackpacklist.find('stackstate-agent-v2') == -1
 
   - name: Install kubernetes StackPack
     kubernetes.core.k8s_exec:
@@ -15,6 +27,7 @@
       namespace: "{{ namespace }}"
       pod: stackstate-cli
       command: python -m stackstate_cli.cli stackpack install kubernetes -p kubernetes_cluster_name "{{ cluster_name }}"
+    when: stackpacklist.find('kubernetes') == -1
 
   - name: Install AWS-V2 StackPack
     kubernetes.core.k8s_exec:
@@ -22,7 +35,7 @@
       namespace: "{{ namespace }}"
       pod: stackstate-cli
       command: python -m stackstate_cli.cli stackpack install aws-v2 -p aws_external_id "{{ yard_id }}" -p aws_role_arn "{{ integration_iam_role }}" -p aws_access_key_id "{{ integration_access_key }}" -p aws_secret_access_key "{{ integration_secret_key }}"
-
+    when: stackpacklist.find('aws-v2') == -1
 
 ## Cleanup
 
