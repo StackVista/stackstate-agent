@@ -5,9 +5,11 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/config"
 	interpreterConfig "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters"
-	openTelemetry "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry"
-	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/modules/aws"
-	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/open-telemetry/modules/http"
+	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations"
+	awsLambdaInstrumentationModules "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/aws-lambda/modules"
+	awsSdkInstrumentationModules "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/aws-sdk/modules"
+	httpInstrumentationModules "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/http/modules"
+	stackStateInstrumentationModules "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/interpreters/instrumentations/stackstate/modules"
 	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/model"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/golang/protobuf/proto"
@@ -42,14 +44,21 @@ func NewSpanInterpreterEngine(agentConfig *config.AgentConfig) *SpanInterpreterE
 	sourceIns := make(map[string]interpreters.SourceInterpreter, 0)
 	sourceIns[interpreters.TraefikSpanInterpreterSpan] = interpreters.MakeTraefikInterpreter(interpreterConf)
 
-	// Open Telemetry
-	sourceIns[aws.OpenTelemetryLambdaEntryInterpreterSpan] = aws.MakeOpenTelemetryLambdaEntryInterpreter(interpreterConf)
-	sourceIns[aws.OpenTelemetryLambdaInterpreterSpan] = aws.MakeOpenTelemetryLambdaInterpreter(interpreterConf)
-	sourceIns[aws.OpenTelemetrySQSInterpreterSpan] = aws.MakeOpenTelemetrySQSInterpreter(interpreterConf)
-	sourceIns[aws.OpenTelemetryS3InterpreterSpan] = aws.MakeOpenTelemetryS3Interpreter(interpreterConf)
-	sourceIns[aws.OpenTelemetrySFNInterpreterSpan] = aws.MakeOpenTelemetryStepFunctionsInterpreter(interpreterConf)
-	sourceIns[aws.OpenTelemetrySNSInterpreterSpan] = aws.MakeOpenTelemetrySNSInterpreter(interpreterConf)
-	sourceIns[http.OpenTelemetryHTTPInterpreterSpan] = http.MakeOpenTelemetryHTTPInterpreter(interpreterConf)
+	// Open Telemetry - AWS Lambda Instrumentation - Modules
+	sourceIns[awsLambdaInstrumentationModules.OpenTelemetryLambdaEntryInterpreterSpan] = awsLambdaInstrumentationModules.MakeOpenTelemetryLambdaEntryInterpreter(interpreterConf)
+
+	// Open Telemetry - AWS SDK Instrumentation - Modules
+	sourceIns[awsSdkInstrumentationModules.OpenTelemetryLambdaInterpreterSpan] = awsSdkInstrumentationModules.MakeOpenTelemetryLambdaInterpreter(interpreterConf)
+	sourceIns[awsSdkInstrumentationModules.OpenTelemetrySQSInterpreterSpan] = awsSdkInstrumentationModules.MakeOpenTelemetrySQSInterpreter(interpreterConf)
+	sourceIns[awsSdkInstrumentationModules.OpenTelemetryS3InterpreterSpan] = awsSdkInstrumentationModules.MakeOpenTelemetryS3Interpreter(interpreterConf)
+	sourceIns[awsSdkInstrumentationModules.OpenTelemetrySFNInterpreterSpan] = awsSdkInstrumentationModules.MakeOpenTelemetryStepFunctionsInterpreter(interpreterConf)
+	sourceIns[awsSdkInstrumentationModules.OpenTelemetrySNSInterpreterSpan] = awsSdkInstrumentationModules.MakeOpenTelemetrySNSInterpreter(interpreterConf)
+
+	// Open Telemetry - HTTP Instrumentation - Modules
+	sourceIns[httpInstrumentationModules.OpenTelemetryHTTPInterpreterSpan] = httpInstrumentationModules.MakeOpenTelemetryHTTPInterpreter(interpreterConf)
+
+	// Open Telemetry - StackState Instrumentation - Modules
+	sourceIns[stackStateInstrumentationModules.OpenTelemetryStackStateInterpreterSpan] = stackStateInstrumentationModules.MakeOpenTelemetryStackStateInterpreter(interpreterConf)
 
 	return MakeSpanInterpreterEngine(interpreterConf, typeIns, sourceIns)
 }
@@ -74,8 +83,9 @@ func (se *SpanInterpreterEngine) Interpret(origTrace pb.Trace) pb.Trace {
 			// no metadata, let's look for the span's source.
 			if err != nil {
 				if source, found := span.Meta["source"]; found {
+					// Unique routing for OpenTelemetry
 					if source == api.OpenTelemetrySource {
-						source = openTelemetry.InterpretBasedOnInstrumentationLibrary(span, source)
+						source = instrumentations.InterpretBasedOnInstrumentationLibrary(span, source)
 					}
 
 					groupedSourceSpans[source] = append(groupedSourceSpans[source], span)

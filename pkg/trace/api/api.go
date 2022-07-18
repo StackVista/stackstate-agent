@@ -282,7 +282,7 @@ func (r *HTTPReceiver) handleWithVersion(v Version, f func(Version, http.Respons
 func (r *HTTPReceiver) handleProtobuf(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if mediaType := getMediaType(req); mediaType != "application/x-protobuf" {
-			httpFormatErrorNoVersion(w, fmt.Errorf("unsupported media type: %q", mediaType))
+			httpFormatErrorNoVersion(w, fmt.Errorf("unsupported media type: %q, OpenTelemetry only supports application/x-protobuf. If you are sending data from a custom instrumentation make sure your exporter is protobuf and not json", mediaType))
 			return
 		}
 
