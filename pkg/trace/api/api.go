@@ -449,7 +449,7 @@ type Payload struct {
 // [sts]
 // Open telemetry support - Uses protobuf
 func (r *HTTPReceiver) handleOpenTelemetry(w http.ResponseWriter, req *http.Request) {
-	ts := r.tagStats(v05, req) // TODO (sts) What to do with version?
+	ts := r.tagStats(v05, req)
 
 	openTelemetryTraces, err := r.decodeOpenTelemetry(req)
 	if err != nil {
