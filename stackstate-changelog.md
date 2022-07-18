@@ -5,6 +5,11 @@
 **Improvements**
 - Upstream upgrade to 7.22.1 tag [STAC-16755](https://stackstate.atlassian.net/browse/STAC-16755)
 
+## 2.17.1 (2022-07-11)
+
+**Improvements**
+- Added processing AWS Security Group Ingress changes triggered by EventBridge event. [STAC-17006](https://stackstate.atlassian.net/browse/STAC-17006)
+
 ## 2.17.0 (2022-07-01)
 
 **Features**
