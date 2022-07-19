@@ -146,11 +146,6 @@ func (t *TopologyCheck) Run() error {
 			commonClusterCollector,
 			t.instance.ConfigMapMaxDataSize,
 		),
-		// Register Secret Component Collector
-		collectors.NewSecretCollector(
-			componentChannel,
-			commonClusterCollector,
-		),
 		// Register Persistent Volume Component Collector
 		collectors.NewPersistentVolumeCollector(
 			componentChannel,
@@ -174,6 +169,14 @@ func (t *TopologyCheck) Run() error {
 			endpointCorrelationChannel,
 			commonClusterCollector,
 		),
+	}
+
+	if t.instance.Resources.Secrets {
+		clusterCollectors = append(clusterCollectors,
+			collectors.NewSecretCollector(
+				componentChannel,
+				commonClusterCollector,
+			))
 	}
 
 	if t.instance.Resources.Daemonsets {
