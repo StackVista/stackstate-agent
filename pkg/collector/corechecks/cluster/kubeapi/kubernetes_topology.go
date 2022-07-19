@@ -151,30 +151,6 @@ func (t *TopologyCheck) Run() error {
 			componentChannel,
 			commonClusterCollector,
 		),
-		// Register DaemonSet Component Collector
-		collectors.NewDaemonSetCollector(
-			componentChannel,
-			relationChannel,
-			commonClusterCollector,
-		),
-		// Register Deployment Component Collector
-		collectors.NewDeploymentCollector(
-			componentChannel,
-			relationChannel,
-			commonClusterCollector,
-		),
-		// Register ReplicaSet Component Collector
-		collectors.NewReplicaSetCollector(
-			componentChannel,
-			relationChannel,
-			commonClusterCollector,
-		),
-		// Register StatefulSet Component Collector
-		collectors.NewStatefulSetCollector(
-			componentChannel,
-			relationChannel,
-			commonClusterCollector,
-		),
 		// Register Persistent Volume Component Collector
 		collectors.NewPersistentVolumeCollector(
 			componentChannel,
@@ -198,24 +174,63 @@ func (t *TopologyCheck) Run() error {
 			endpointCorrelationChannel,
 			commonClusterCollector,
 		),
-		// Register Ingress Component Collector
-		collectors.NewIngressCollector(
-			componentChannel,
-			relationChannel,
-			commonClusterCollector,
-		),
-		// Register Job Component Collector
-		collectors.NewJobCollector(
-			componentChannel,
-			relationChannel,
-			commonClusterCollector,
-		),
-		// Register CronJob Component Collector
-		collectors.NewCronJobCollector(
-			componentChannel,
-			relationChannel,
-			commonClusterCollector,
-		),
+	}
+
+	if t.instance.Resources.Daemonsets {
+		clusterCollectors = append(clusterCollectors,
+			collectors.NewDaemonSetCollector(
+				componentChannel,
+				relationChannel,
+				commonClusterCollector,
+			))
+	}
+	if t.instance.Resources.Deployments {
+		clusterCollectors = append(clusterCollectors,
+			collectors.NewDeploymentCollector(
+				componentChannel,
+				relationChannel,
+				commonClusterCollector,
+			))
+	}
+	if t.instance.Resources.Replicasets {
+		clusterCollectors = append(clusterCollectors,
+			collectors.NewReplicaSetCollector(
+				componentChannel,
+				relationChannel,
+				commonClusterCollector,
+			))
+	}
+	if t.instance.Resources.Statefulsets {
+		clusterCollectors = append(clusterCollectors,
+			collectors.NewStatefulSetCollector(
+				componentChannel,
+				relationChannel,
+				commonClusterCollector,
+			))
+	}
+	if t.instance.Resources.Ingresses {
+		clusterCollectors = append(clusterCollectors,
+			collectors.NewIngressCollector(
+				componentChannel,
+				relationChannel,
+				commonClusterCollector,
+			))
+	}
+	if t.instance.Resources.Jobs {
+		clusterCollectors = append(clusterCollectors,
+			collectors.NewJobCollector(
+				componentChannel,
+				relationChannel,
+				commonClusterCollector,
+			))
+	}
+	if t.instance.Resources.CronJobs {
+		clusterCollectors = append(clusterCollectors,
+			collectors.NewCronJobCollector(
+				componentChannel,
+				relationChannel,
+				commonClusterCollector,
+			))
 	}
 
 	commonClusterCorrelator := collectors.NewClusterTopologyCorrelator(clusterTopologyCommon)

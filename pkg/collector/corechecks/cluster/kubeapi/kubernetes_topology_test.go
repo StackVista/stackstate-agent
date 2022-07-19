@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	collectors "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/topologycollectors"
+	agentConfig "github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -28,6 +29,52 @@ func TestRunClusterCollectors(t *testing.T) {
 	t.Run("with sourceProperties disabled", func(t *testing.T) {
 		testRunClusterCollectors(t, false)
 	})
+}
+
+func testConfigParsed(t *testing.T, input string, expected TopologyConfig) {
+	kCheck := KubernetesAPITopologyFactory().(*TopologyCheck)
+	err := kCheck.Configure([]byte(input), []byte(""), "whatever")
+	assert.NoError(t, err)
+	assert.EqualValues(t, &expected, kCheck.instance)
+}
+
+func TestConfigurationParsing(t *testing.T) {
+	defaultConfig := TopologyConfig{
+		// for empty config something is coming from global configuration
+		ClusterName:             agentConfig.Datadog.GetString("cluster_name"),
+		CollectTopology:         agentConfig.Datadog.GetBool("collect_kubernetes_topology"),
+		CollectTimeout:          agentConfig.Datadog.GetInt("collect_kubernetes_timeout"),
+		SourcePropertiesEnabled: agentConfig.Datadog.GetBool("kubernetes_source_properties_enabled"),
+		ConfigMapMaxDataSize:    DefaultConfigMapDataSizeLimit,
+		CSIPVMapperEnabled:      agentConfig.Datadog.GetBool("kubernetes_csi_pv_mapper_enabled"),
+		Resources: ResourcesConfig{
+			Daemonsets:   true,
+			Deployments:  true,
+			Replicasets:  true,
+			Statefulsets: true,
+			Ingresses:    true,
+			Jobs:         true,
+			CronJobs:     true,
+			Secrets:      true,
+		},
+	}
+	testConfigParsed(t, "", defaultConfig)
+
+	simpleConfig := `
+cluster_name: mycluster
+source_properties_enabled: false
+resources:
+  secrets: false
+  deployments: false
+  ingresses: false
+`
+	expectedSimple := defaultConfig
+	expectedSimple.ClusterName = "mycluster"
+	expectedSimple.SourcePropertiesEnabled = false
+	expectedSimple.Resources.Secrets = false
+	expectedSimple.Resources.Deployments = false
+	expectedSimple.Resources.Ingresses = false
+	testConfigParsed(t, simpleConfig, expectedSimple)
 }
 
 func testRunClusterCollectors(t *testing.T, sourceProperties bool) {

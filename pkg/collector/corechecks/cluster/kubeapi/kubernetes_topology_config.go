@@ -26,18 +26,42 @@ const (
 
 // TopologyConfig is the config of the API server.
 type TopologyConfig struct {
-	ClusterName             string `yaml:"cluster_name"`
-	CollectTopology         bool   `yaml:"collect_topology"`
-	CollectTimeout          int    `yaml:"collect_timeout"`
-	SourcePropertiesEnabled bool   `yaml:"source_properties_enabled"`
-	ConfigMapMaxDataSize    int    `yaml:"configmap_max_datasize"`
-	CSIPVMapperEnabled      bool   `yaml:"csi_pv_mapper_enabled"`
+	ClusterName             string          `yaml:"cluster_name"`
+	CollectTopology         bool            `yaml:"collect_topology"`
+	CollectTimeout          int             `yaml:"collect_timeout"`
+	SourcePropertiesEnabled bool            `yaml:"source_properties_enabled"`
+	ConfigMapMaxDataSize    int             `yaml:"configmap_max_datasize"`
+	CSIPVMapperEnabled      bool            `yaml:"csi_pv_mapper_enabled"`
+	Resources               ResourcesConfig `yaml:"resources"`
 	CheckID                 check.ID
 	Instance                topology.Instance
 }
 
+type ResourcesConfig struct {
+	Daemonsets   bool `yaml:"daemonsets"`
+	Deployments  bool `yaml:"deployments"`
+	Replicasets  bool `yaml:"replicasets"`
+	Statefulsets bool `yaml:"statefulsets"`
+	Ingresses    bool `yaml:"ingresses"`
+	Jobs         bool `yaml:"jobs"`
+	CronJobs     bool `yaml:"cronjobs"`
+	Secrets      bool `yaml:"secrets"`
+}
+
+var defaultResourcesConfig = ResourcesConfig{
+	Daemonsets:   true,
+	Deployments:  true,
+	Replicasets:  true,
+	Statefulsets: true,
+	Ingresses:    true,
+	Jobs:         true,
+	CronJobs:     true,
+	Secrets:      true,
+}
+
 func (c *TopologyConfig) parse(data []byte) error {
 	// default values
+	c.Resources = defaultResourcesConfig
 	c.ClusterName = config.Datadog.GetString("cluster_name")
 	c.CollectTopology = config.Datadog.GetBool("collect_kubernetes_topology")
 	c.CollectTimeout = config.Datadog.GetInt("collect_kubernetes_timeout")
