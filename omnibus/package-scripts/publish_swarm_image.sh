@@ -38,9 +38,9 @@ if [ -n "$EXTRA_TAG" ]; then
 fi
 
 # Comment out the if and fi lines to test anchore scanning on any branch.
-if [ ! -z "${CI_COMMIT_TAG}" ] || [ "${CI_COMMIT_BRANCH}" = "master" ]; then
-    # for Anchore use publicly accessible image tag
-    DOCKER_TAG="${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${EXTRA_TAG}"
-    echo "Scanning image ${DOCKER_TAG} for vulnerabilities"
-    omnibus/package-scripts/anchore_scan.sh -i "${DOCKER_TAG}" -n 0
-fi
+#if [ ! -z "${CI_COMMIT_TAG}" ] || [ "${CI_COMMIT_BRANCH}" = "master" ]; then
+# for Anchore use publicly accessible image tag
+DOCKER_TAG="${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${EXTRA_TAG}"
+echo "Scanning image ${DOCKER_TAG} for vulnerabilities"
+omnibus/package-scripts/anchore_scan.sh -i "${DOCKER_TAG}" -n 0
+#fi
