@@ -232,11 +232,7 @@ func executeCorrelation(t *testing.T, pods []coreV1.Pod, services []coreV1.Servi
 		podCorrChannel,
 		NewTestCommonClusterCollector(clusterAPIClient, false),
 	)
-	svcCollector := NewServiceCollector(
-		componentChannel, relationChannel,
-		serviceCorrChannel,
-		NewTestCommonClusterCollector(clusterAPIClient, false),
-	)
+	svcCollector := NewServiceCollector(componentChannel, relationChannel, serviceCorrChannel, NewTestCommonClusterCollector(clusterAPIClient, false), true)
 
 	collectorsFinishChan := make(chan bool)
 	correlatorFinishChan := make(chan bool)

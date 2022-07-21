@@ -44,6 +44,31 @@ func (t *TopologyCheck) Configure(config, initConfig integration.Data, source st
 		return err
 	}
 
+	warnDisabledResource := func(name string, additionalWarning string, isEnabled bool) {
+		if !isEnabled {
+			if additionalWarning != "" {
+				additionalWarning = ": " + additionalWarning
+			}
+			log.Infof("Collection of %s is disabled%s. "+
+				"To enable, set the `clusterAgent.collection.kubernetesResources.%s` setting "+
+				"to true in your helm values.yaml file", name, additionalWarning, name)
+		}
+	}
+
+	warnDisabledResource("persistentvolumes", "", t.instance.Resources.Persistentvolumes)
+	warnDisabledResource("persistentvolumeclaims", "it won't be possible to connect pods to a persistent volumes claimed by them", t.instance.Resources.Persistentvolumeclaims)
+	warnDisabledResource("endpoints", "it won't be possible to connect services to underlying pods", t.instance.Resources.Endpoints)
+	warnDisabledResource("namespaces", "", t.instance.Resources.Namespaces)
+	warnDisabledResource("configmaps", "", t.instance.Resources.ConfigMaps)
+	warnDisabledResource("daemonsets", "", t.instance.Resources.Daemonsets)
+	warnDisabledResource("deployments", "", t.instance.Resources.Deployments)
+	warnDisabledResource("replicasets", "", t.instance.Resources.Replicasets)
+	warnDisabledResource("statefulsets", "", t.instance.Resources.Statefulsets)
+	warnDisabledResource("ingresses", "", t.instance.Resources.Ingresses)
+	warnDisabledResource("jobs", "", t.instance.Resources.Jobs)
+	warnDisabledResource("cronjobs", "", t.instance.Resources.CronJobs)
+	warnDisabledResource("secrets", "", t.instance.Resources.Secrets)
+
 	log.Debugf("Running config %s", config)
 	return nil
 }
@@ -135,24 +160,6 @@ func (t *TopologyCheck) Run() error {
 			nodeIdentifierCorrelationChannel,
 			commonClusterCollector,
 		),
-		// Register Namespace Component Collector
-		collectors.NewNamespaceCollector(
-			componentChannel,
-			commonClusterCollector,
-		),
-		// Register ConfigMap Component Collector
-		collectors.NewConfigMapCollector(
-			componentChannel,
-			commonClusterCollector,
-			t.instance.ConfigMapMaxDataSize,
-		),
-		// Register Persistent Volume Component Collector
-		collectors.NewPersistentVolumeCollector(
-			componentChannel,
-			relationChannel,
-			commonClusterCollector,
-			t.instance.CSIPVMapperEnabled,
-		),
 		// Register Pod Component Collector
 		collectors.NewPodCollector(
 			componentChannel,
@@ -168,7 +175,35 @@ func (t *TopologyCheck) Run() error {
 			relationChannel,
 			endpointCorrelationChannel,
 			commonClusterCollector,
+			t.instance.Resources.Endpoints,
 		),
+	}
+
+	if t.instance.Resources.Persistentvolumes {
+		clusterCollectors = append(clusterCollectors,
+			collectors.NewPersistentVolumeCollector(
+				componentChannel,
+				relationChannel,
+				commonClusterCollector,
+				t.instance.CSIPVMapperEnabled,
+			))
+	}
+
+	if t.instance.Resources.Namespaces {
+		clusterCollectors = append(clusterCollectors,
+			collectors.NewNamespaceCollector(
+				componentChannel,
+				commonClusterCollector,
+			))
+	}
+
+	if t.instance.Resources.ConfigMaps {
+		clusterCollectors = append(clusterCollectors,
+			collectors.NewConfigMapCollector(
+				componentChannel,
+				commonClusterCollector,
+				t.instance.ConfigMapMaxDataSize,
+			))
 	}
 
 	if t.instance.Resources.Secrets {
@@ -251,6 +286,7 @@ func (t *TopologyCheck) Run() error {
 			relationChannel,
 			volumeCorrelationChannel,
 			commonClusterCorrelator,
+			t.instance.Resources.Persistentvolumeclaims,
 		),
 		collectors.NewService2PodCorrelator(
 			componentChannel,

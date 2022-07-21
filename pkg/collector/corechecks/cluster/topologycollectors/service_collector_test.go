@@ -33,7 +33,7 @@ func TestServiceCollector(t *testing.T) {
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
 		svcCorrelationChannel := make(chan *ServiceEndpointCorrelation)
-		cjc := NewServiceCollector(componentChannel, relationChannel, svcCorrelationChannel, NewTestCommonClusterCollector(MockServiceAPICollectorClient{}, sourcePropertiesEnabled))
+		cjc := NewServiceCollector(componentChannel, relationChannel, svcCorrelationChannel, NewTestCommonClusterCollector(MockServiceAPICollectorClient{}, sourcePropertiesEnabled), true)
 		// Mock out DNS resolution function for test
 		cjc.(*ServiceCollector).DNS = func(name string) ([]string, error) {
 			return []string{"10.10.42.42", "10.10.42.43"}, nil

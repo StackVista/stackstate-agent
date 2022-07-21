@@ -38,14 +38,19 @@ type TopologyConfig struct {
 }
 
 type ResourcesConfig struct {
-	Daemonsets   bool `yaml:"daemonsets"`
-	Deployments  bool `yaml:"deployments"`
-	Replicasets  bool `yaml:"replicasets"`
-	Statefulsets bool `yaml:"statefulsets"`
-	Ingresses    bool `yaml:"ingresses"`
-	Jobs         bool `yaml:"jobs"`
-	CronJobs     bool `yaml:"cronjobs"`
-	Secrets      bool `yaml:"secrets"`
+	Persistentvolumes      bool `yaml:"persistentvolumes"`
+	Persistentvolumeclaims bool `yaml:"persistentvolumeclaims"`
+	Endpoints              bool `yaml:"endpoints"`
+	Namespaces             bool `yaml:"namespaces"`
+	ConfigMaps             bool `yaml:"configmaps"`
+	Daemonsets             bool `yaml:"daemonsets"`
+	Deployments            bool `yaml:"deployments"`
+	Replicasets            bool `yaml:"replicasets"`
+	Statefulsets           bool `yaml:"statefulsets"`
+	Ingresses              bool `yaml:"ingresses"`
+	Jobs                   bool `yaml:"jobs"`
+	CronJobs               bool `yaml:"cronjobs"`
+	Secrets                bool `yaml:"secrets"`
 }
 
 var defaultResourcesConfig = ResourcesConfig{

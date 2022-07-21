@@ -5,6 +5,7 @@ package topologycollectors
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/util"
 
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/dns"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -18,7 +19,8 @@ type ServiceCollector struct {
 	RelationChan     chan<- *topology.Relation
 	EndpointCorrChan chan<- *ServiceEndpointCorrelation
 	ClusterTopologyCollector
-	DNS dns.Resolver
+	DNS             dns.Resolver
+	enpointsEnabled bool
 }
 
 // EndpointID contains the definition of a cluster ip
@@ -27,14 +29,23 @@ type EndpointID struct {
 	RefExternalID string
 }
 
+var EndpointDisabledWarning = util.NewRunOnce()
+
 // NewServiceCollector
-func NewServiceCollector(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation, endpointCorrChannel chan *ServiceEndpointCorrelation, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
+func NewServiceCollector(
+	componentChannel chan<- *topology.Component,
+	relationChannel chan<- *topology.Relation,
+	endpointCorrChannel chan *ServiceEndpointCorrelation,
+	clusterTopologyCollector ClusterTopologyCollector,
+	endpointsEnabled bool,
+) ClusterTopologyCollector {
 	return &ServiceCollector{
 		ComponentChan:            componentChannel,
 		RelationChan:             relationChannel,
 		EndpointCorrChan:         endpointCorrChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 		DNS:                      dns.StandardResolver,
+		enpointsEnabled:          endpointsEnabled,
 	}
 }
 
@@ -50,9 +61,12 @@ func (sc *ServiceCollector) CollectorFunction() error {
 		return err
 	}
 
-	endpoints, err := sc.GetAPIClient().GetEndpoints()
-	if err != nil {
-		return err
+	endpoints := []v1.Endpoints{}
+	if sc.enpointsEnabled {
+		endpoints, err = sc.GetAPIClient().GetEndpoints()
+		if err != nil {
+			return err
+		}
 	}
 
 	serviceEndpointIdentifiers := make(map[string][]EndpointID, 0)

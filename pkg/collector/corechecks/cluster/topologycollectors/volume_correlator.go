@@ -4,7 +4,6 @@ package topologycollectors
 
 import (
 	"fmt"
-
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/urn"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -41,15 +40,23 @@ type VolumeCorrelator struct {
 	RelationChan   chan<- *topology.Relation
 	VolumeCorrChan <-chan *VolumeCorrelation
 	ClusterTopologyCorrelator
+	discoverClaims bool
 }
 
 // NewVolumeCorrelator instantiates the VolumeCorrelator
-func NewVolumeCorrelator(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation, volumeCorrChannel chan *VolumeCorrelation, clusterTopologyCorrelator ClusterTopologyCorrelator) ClusterTopologyCorrelator {
+func NewVolumeCorrelator(
+	componentChannel chan<- *topology.Component,
+	relationChannel chan<- *topology.Relation,
+	volumeCorrChannel chan *VolumeCorrelation,
+	clusterTopologyCorrelator ClusterTopologyCorrelator,
+	claimsEnabled bool,
+) ClusterTopologyCorrelator {
 	return &VolumeCorrelator{
 		ComponentChan:             componentChannel,
 		RelationChan:              relationChannel,
 		VolumeCorrChan:            volumeCorrChannel,
 		ClusterTopologyCorrelator: clusterTopologyCorrelator,
+		discoverClaims:            claimsEnabled,
 	}
 }
 
@@ -60,9 +67,14 @@ func (VolumeCorrelator) GetName() string {
 
 // CorrelateFunction executes the Pod/Container to Volume correlation
 func (vc *VolumeCorrelator) CorrelateFunction() error {
-	pvcLookup, err := vc.buildPersistentVolumeClaimLookup()
-	if err != nil {
-		return err
+	var pvcLookup map[string]string
+	var err error
+
+	if vc.discoverClaims {
+		pvcLookup, err = vc.buildPersistentVolumeClaimLookup()
+		if err != nil {
+			return err
+		}
 	}
 
 	for volumeCorrelation := range vc.VolumeCorrChan {
@@ -124,7 +136,11 @@ func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, 
 		claimedPVExtID, ok := pvcMapping[volume.PersistentVolumeClaim.ClaimName]
 
 		if !ok {
-			log.Errorf("Unknown PersistentVolumeClaim '%s' referenced from Pod '%s'", volume.PersistentVolumeClaim.ClaimName, pod.ExternalID)
+			if vc.discoverClaims {
+				log.Errorf("Unknown PersistentVolumeClaim '%s' referenced from Pod '%s'", volume.PersistentVolumeClaim.ClaimName, pod.ExternalID)
+			} else {
+				log.Warnf("Can't resolve PersistentVolumeClaim '%s' reference in Pod '%s' to a PersistentVolume probably due to disabled collection of PersistentVolumeClaims", volume.PersistentVolumeClaim.ClaimName, pod.ExternalID)
+			}
 
 			return "", nil
 		}
