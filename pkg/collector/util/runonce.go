@@ -2,6 +2,7 @@ package util
 
 import "go.uber.org/atomic"
 
+// RunOnce ensures that given callback is being executed only at first time
 type RunOnce interface {
 	RunOnce(func())
 }
@@ -16,6 +17,7 @@ func (r *runOnce) RunOnce(f func()) {
 	}
 }
 
+// NewRunOnce create RunOnce structures that ensure single execution of desired piece of code
 func NewRunOnce() RunOnce {
 	return &runOnce{atomic.NewBool(false)}
 }
