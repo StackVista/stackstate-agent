@@ -252,13 +252,3 @@ build_agent_runners:
       when: never
     - if: $CI_COMMIT_BRANCH
 
-build_test_images:
-  stage: triggers
-  trigger:
-    include: .gitlab-ci-test.yml
-    strategy: depend
-  rules:
-    - if: $CI_MERGE_REQUEST_IID
-    - if: $CI_OPEN_MERGE_REQUESTS
-      when: never
-    - if: $CI_COMMIT_BRANCH
