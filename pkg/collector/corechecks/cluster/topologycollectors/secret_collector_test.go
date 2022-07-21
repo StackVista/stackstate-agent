@@ -10,7 +10,6 @@ package topologycollectors
 import (
 	"encoding/base64"
 	"fmt"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -156,17 +155,6 @@ func TestSecretCollector(t *testing.T) {
 		}
 	}
 
-}
-
-func TestSecretCollectorError(t *testing.T) {
-	componentChannel := make(chan *topology.Component)
-	defer close(componentChannel)
-
-	secretCollector := NewSecretCollector(componentChannel, NewTestCommonClusterCollector(MockSecretAPICollectorClientError{}, false))
-	assert.EqualValues(t, int32(0), atomic.LoadInt32(&SecretDisabledLog))
-	err := secretCollector.CollectorFunction()
-	assert.Nil(t, err)
-	assert.EqualValues(t, int32(1), atomic.LoadInt32(&SecretDisabledLog))
 }
 
 type MockSecretAPICollectorClientError struct {
