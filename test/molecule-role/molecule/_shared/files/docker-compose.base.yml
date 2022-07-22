@@ -108,7 +108,7 @@ services:
     container_name: nginx-1
 
   stackstate-books-app:
-    image: "quay.io/stackstate/trace-java-demo:books-app-20220720"
+    image: "quay.io/stackstate/trace-java-demo:books-app-STAC-17199"
     pid: "host"
     ports:
       - '8081-8091:8081'
