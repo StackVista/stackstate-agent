@@ -48,33 +48,46 @@ func TestConfigurationParsing(t *testing.T) {
 		ConfigMapMaxDataSize:    DefaultConfigMapDataSizeLimit,
 		CSIPVMapperEnabled:      agentConfig.Datadog.GetBool("kubernetes_csi_pv_mapper_enabled"),
 		Resources: ResourcesConfig{
-			Daemonsets:   true,
-			Deployments:  true,
-			Replicasets:  true,
-			Statefulsets: true,
-			Ingresses:    true,
-			Jobs:         true,
-			CronJobs:     true,
-			Secrets:      true,
+			Persistentvolumes:      true,
+			Persistentvolumeclaims: true,
+			Endpoints:              true,
+			Namespaces:             true,
+			ConfigMaps:             true,
+			Daemonsets:             true,
+			Deployments:            true,
+			Replicasets:            true,
+			Statefulsets:           true,
+			Ingresses:              true,
+			Jobs:                   true,
+			CronJobs:               true,
+			Secrets:                true,
 		},
 	}
 	testConfigParsed(t, "", defaultConfig)
 
-	simpleConfig := `
+	allResourcesAreDisabledConfig := `
 cluster_name: mycluster
 source_properties_enabled: false
 resources:
-  secrets: false
+  persistentvolumes: false
+  persistentvolumeclaims: false
+  endpoints: false
+  namespaces: false
+  configmaps: false
+  daemonsets: false
   deployments: false
+  replicasets: false
+  statefulsets: false
   ingresses: false
+  jobs: false
+  cronjobs: false
+  secrets: false
 `
 	expectedSimple := defaultConfig
 	expectedSimple.ClusterName = "mycluster"
 	expectedSimple.SourcePropertiesEnabled = false
-	expectedSimple.Resources.Secrets = false
-	expectedSimple.Resources.Deployments = false
-	expectedSimple.Resources.Ingresses = false
-	testConfigParsed(t, simpleConfig, expectedSimple)
+	expectedSimple.Resources = ResourcesConfig{}
+	testConfigParsed(t, allResourcesAreDisabledConfig, expectedSimple)
 }
 
 func testRunClusterCollectors(t *testing.T, sourceProperties bool) {

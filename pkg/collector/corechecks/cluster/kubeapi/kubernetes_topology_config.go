@@ -54,14 +54,19 @@ type ResourcesConfig struct {
 }
 
 var defaultResourcesConfig = ResourcesConfig{
-	Daemonsets:   true,
-	Deployments:  true,
-	Replicasets:  true,
-	Statefulsets: true,
-	Ingresses:    true,
-	Jobs:         true,
-	CronJobs:     true,
-	Secrets:      true,
+	Persistentvolumes:      true,
+	Persistentvolumeclaims: true,
+	Endpoints:              true,
+	Namespaces:             true,
+	ConfigMaps:             true,
+	Daemonsets:             true,
+	Deployments:            true,
+	Replicasets:            true,
+	Statefulsets:           true,
+	Ingresses:              true,
+	Jobs:                   true,
+	CronJobs:               true,
+	Secrets:                true,
 }
 
 func (c *TopologyConfig) parse(data []byte) error {

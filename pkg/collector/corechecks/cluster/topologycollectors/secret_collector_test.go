@@ -157,14 +157,6 @@ func TestSecretCollector(t *testing.T) {
 
 }
 
-type MockSecretAPICollectorClientError struct {
-	apiserver.APICollectorClient
-}
-
-func (m MockSecretAPICollectorClientError) GetSecrets() ([]coreV1.Secret, error) {
-	return []coreV1.Secret{}, fmt.Errorf("Secrets not allowed")
-}
-
 type MockSecretAPICollectorClient struct {
 	apiserver.APICollectorClient
 }

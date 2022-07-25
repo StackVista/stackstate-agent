@@ -96,7 +96,9 @@ func (vc *VolumeCorrelator) CorrelateFunction() error {
 			for _, mount := range container.VolumeMounts {
 				volumeExternalID, ok := volumeLookup[mount.Name]
 				if !ok {
-					log.Errorf("Container '%s' of Pod '%s' mounts an unknown volume '%s'", container.Name, pod.ExternalID, mount.Name)
+					if vc.discoverClaims {
+						log.Errorf("Container '%s' of Pod '%s' mounts an unknown volume '%s'", container.Name, pod.ExternalID, mount.Name)
+					}
 
 					continue
 				}
@@ -139,7 +141,7 @@ func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, 
 			if vc.discoverClaims {
 				log.Errorf("Unknown PersistentVolumeClaim '%s' referenced from Pod '%s'", volume.PersistentVolumeClaim.ClaimName, pod.ExternalID)
 			} else {
-				log.Warnf("Can't resolve PersistentVolumeClaim '%s' reference in Pod '%s' to a PersistentVolume probably due to disabled collection of PersistentVolumeClaims", volume.PersistentVolumeClaim.ClaimName, pod.ExternalID)
+				log.Warnf("Can't resolve PersistentVolumeClaim '%s' reference in Pod '%s' to a PersistentVolume, probably due to disabled collection of PersistentVolumeClaims", volume.PersistentVolumeClaim.ClaimName, pod.ExternalID)
 			}
 
 			return "", nil
