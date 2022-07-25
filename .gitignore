@@ -178,3 +178,6 @@ deployment/kubernetes/k8s-*/
 
 # msgpack gen files
 *_gen*.go
+
+# Temp State Files
+pkg/collector/check/state/temp-write-to-disk-test/*
