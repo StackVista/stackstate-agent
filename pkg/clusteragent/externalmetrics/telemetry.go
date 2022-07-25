@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package externalmetrics
@@ -10,9 +11,9 @@ package externalmetrics
 import (
 	corev1 "k8s.io/api/core/v1"
 
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	le "github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/leaderelection/metrics"
 	datadoghq "github.com/DataDog/datadog-operator/api/v1alpha1"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	le "github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/leaderelection/metrics"
 )
 
 const (

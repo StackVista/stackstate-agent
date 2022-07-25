@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	coreConfig "github.com/DataDog/datadog-agent/pkg/config"
+	coreConfig "github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/benbjohnson/clock"
 	"github.com/stretchr/testify/require"
 )

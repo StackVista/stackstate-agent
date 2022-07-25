@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"testing"
 
-	scrubberpkg "github.com/DataDog/datadog-agent/pkg/util/scrubber"
+	scrubberpkg "github.com/StackVista/stackstate-agent/pkg/util/scrubber"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 )

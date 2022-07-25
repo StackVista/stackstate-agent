@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config/resolver"
-	"github.com/DataDog/datadog-agent/pkg/forwarder/endpoints"
-	"github.com/DataDog/datadog-agent/pkg/forwarder/transaction"
-	utilhttp "github.com/DataDog/datadog-agent/pkg/util/http"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/config/resolver"
+	"github.com/StackVista/stackstate-agent/pkg/forwarder/endpoints"
+	"github.com/StackVista/stackstate-agent/pkg/forwarder/transaction"
+	utilhttp "github.com/StackVista/stackstate-agent/pkg/util/http"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // SyncForwarder is a very simple Forwarder synchronously sending

@@ -8,7 +8,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/config/settings"
+	"github.com/StackVista/stackstate-agent/pkg/config/settings"
 
 	"github.com/spf13/cobra"
 )

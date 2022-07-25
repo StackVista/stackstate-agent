@@ -17,7 +17,6 @@ retract (
 
 // Internal deps fix version
 replace (
-	bitbucket.org/ww/goautoneg => github.com/munnerz/goautoneg v0.0.0-20120707110453-a547fc61f48d
 	github.com/cihub/seelog => github.com/cihub/seelog v0.0.0-20151216151435-d2c6e5aa9fbf // v2.6
 	github.com/coreos/go-systemd => github.com/coreos/go-systemd v0.0.0-20180202092358-40e2722dffea
 	github.com/docker/distribution => github.com/docker/distribution v2.7.1-0.20190104202606-0ac367fd6bee+incompatible
@@ -35,12 +34,12 @@ replace (
 )
 
 replace (
-	github.com/DataDog/datadog-agent/pkg/otlp/model => ./pkg/otlp/model
-	github.com/DataDog/datadog-agent/pkg/quantile => ./pkg/quantile
-	github.com/DataDog/datadog-agent/pkg/security/secl => ./pkg/security/secl
-	github.com/DataDog/datadog-agent/pkg/util/log => ./pkg/util/log
-	github.com/DataDog/datadog-agent/pkg/util/scrubber => ./pkg/util/scrubber
-	github.com/DataDog/datadog-agent/pkg/util/winutil => ./pkg/util/winutil
+	github.com/StackVista/stackstate-agent/pkg/otlp/model => ./pkg/otlp/model
+	github.com/StackVista/stackstate-agent/pkg/quantile => ./pkg/quantile
+	github.com/StackVista/stackstate-agent/pkg/security/secl => ./pkg/security/secl
+	github.com/StackVista/stackstate-agent/pkg/util/log => ./pkg/util/log
+	github.com/StackVista/stackstate-agent/pkg/util/scrubber => ./pkg/util/scrubber
+	github.com/StackVista/stackstate-agent/pkg/util/winutil => ./pkg/util/winutil
 )
 
 require (
@@ -59,12 +58,6 @@ require (
 	code.cloudfoundry.org/rfc5424 v0.0.0-20180905210152-236a6d29298a // indirect
 	code.cloudfoundry.org/tlsconfig v0.0.0-20200131000646-bbe0f8da39b3 // indirect
 	github.com/DataDog/agent-payload/v5 v5.0.4
-	github.com/DataDog/datadog-agent/pkg/otlp/model v0.33.1
-	github.com/DataDog/datadog-agent/pkg/quantile v0.33.1
-	github.com/DataDog/datadog-agent/pkg/security/secl v0.33.1
-	github.com/DataDog/datadog-agent/pkg/util/log v0.33.1
-	github.com/DataDog/datadog-agent/pkg/util/scrubber v0.33.1
-	github.com/DataDog/datadog-agent/pkg/util/winutil v0.33.1
 	github.com/DataDog/datadog-go v4.8.2+incompatible
 	github.com/DataDog/datadog-operator v0.5.0-rc.2.0.20210402083916-25ba9a22e67a
 	github.com/DataDog/ebpf v0.0.0-20211116165855-af5870810f0b
@@ -83,6 +76,12 @@ require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/Microsoft/go-winio v0.5.1
 	github.com/Microsoft/hcsshim v0.9.0
+	github.com/StackVista/stackstate-agent/pkg/otlp/model v0.33.1
+	github.com/StackVista/stackstate-agent/pkg/quantile v0.33.1
+	github.com/StackVista/stackstate-agent/pkg/security/secl v0.33.1
+	github.com/StackVista/stackstate-agent/pkg/util/log v0.33.1
+	github.com/StackVista/stackstate-agent/pkg/util/scrubber v0.33.1
+	github.com/StackVista/stackstate-agent/pkg/util/winutil v0.33.1
 	github.com/alecthomas/jsonschema v0.0.0-20210526225647-edb03dcab7bc
 	github.com/alecthomas/participle v0.7.1
 	github.com/alecthomas/repr v0.0.0-20181024024818-d37bc2a10ba1

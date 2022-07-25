@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config/resolver"
-	"github.com/DataDog/datadog-agent/pkg/forwarder/transaction"
-	"github.com/DataDog/datadog-agent/pkg/util/common"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/config/resolver"
+	"github.com/StackVista/stackstate-agent/pkg/forwarder/transaction"
+	"github.com/StackVista/stackstate-agent/pkg/util/common"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	proto "github.com/golang/protobuf/proto"
 )

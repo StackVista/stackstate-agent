@@ -18,17 +18,17 @@ import (
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/DataDog/datadog-agent/cmd/agent/api/response"
-	"github.com/DataDog/datadog-agent/pkg/api/security"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	pb "github.com/DataDog/datadog-agent/pkg/proto/pbgo"
-	"github.com/DataDog/datadog-agent/pkg/status/health"
-	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
-	"github.com/DataDog/datadog-agent/pkg/tagger/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/tagger/types"
-	"github.com/DataDog/datadog-agent/pkg/tagset"
-	grpcutil "github.com/DataDog/datadog-agent/pkg/util/grpc"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/cmd/agent/api/response"
+	"github.com/StackVista/stackstate-agent/pkg/api/security"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	pb "github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
+	"github.com/StackVista/stackstate-agent/pkg/status/health"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/types"
+	"github.com/StackVista/stackstate-agent/pkg/tagset"
+	grpcutil "github.com/StackVista/stackstate-agent/pkg/util/grpc"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (

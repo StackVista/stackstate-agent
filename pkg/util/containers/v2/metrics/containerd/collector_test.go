@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build containerd
 // +build containerd
 
 package containerd
@@ -21,9 +22,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/DataDog/datadog-agent/pkg/util"
-	containerdutil "github.com/DataDog/datadog-agent/pkg/util/containerd"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/v2/metrics/provider"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	containerdutil "github.com/StackVista/stackstate-agent/pkg/util/containerd"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/v2/metrics/provider"
 )
 
 type mockedContainerdClient struct {

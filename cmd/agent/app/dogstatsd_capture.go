@@ -13,10 +13,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/DataDog/datadog-agent/cmd/agent/common"
-	"github.com/DataDog/datadog-agent/pkg/api/security"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	pb "github.com/DataDog/datadog-agent/pkg/proto/pbgo"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common"
+	"github.com/StackVista/stackstate-agent/pkg/api/security"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	pb "github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"

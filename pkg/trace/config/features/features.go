@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // features keeps a map of all APM features as defined by the DD_APM_FEATURES

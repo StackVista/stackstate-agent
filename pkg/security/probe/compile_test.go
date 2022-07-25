@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build linux_bpf
 // +build linux_bpf
 
 package probe
@@ -10,8 +11,8 @@ package probe
 import (
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode/runtime"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode/runtime"
 	"github.com/stretchr/testify/require"
 )
 

@@ -13,12 +13,12 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
-	cmdconfig "github.com/DataDog/datadog-agent/cmd/agent/common/commands/config"
-	"github.com/DataDog/datadog-agent/cmd/security-agent/common"
-	"github.com/DataDog/datadog-agent/pkg/api/util"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/config/settings"
-	settingshttp "github.com/DataDog/datadog-agent/pkg/config/settings/http"
+	cmdconfig "github.com/StackVista/stackstate-agent/cmd/agent/common/commands/config"
+	"github.com/StackVista/stackstate-agent/cmd/security-agent/common"
+	"github.com/StackVista/stackstate-agent/pkg/api/util"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config/settings"
+	settingshttp "github.com/StackVista/stackstate-agent/pkg/config/settings/http"
 )
 
 func init() {

@@ -8,9 +8,9 @@ import (
 	"code.cloudfoundry.org/garden/gardenfakes"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/providers"
-	providerMocks "github.com/DataDog/datadog-agent/pkg/util/containers/providers/mock"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/providers"
+	providerMocks "github.com/StackVista/stackstate-agent/pkg/util/containers/providers/mock"
 )
 
 func TestParseContainerPorts(t *testing.T) {

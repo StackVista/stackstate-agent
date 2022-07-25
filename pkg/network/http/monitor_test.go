@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package http
@@ -9,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/network/config"
-	"github.com/DataDog/datadog-agent/pkg/network/http/testutil"
-	netlink "github.com/DataDog/datadog-agent/pkg/network/netlink/testutil"
-	"github.com/DataDog/datadog-agent/pkg/util/kernel"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
+	"github.com/StackVista/stackstate-agent/pkg/network/http/testutil"
+	netlink "github.com/StackVista/stackstate-agent/pkg/network/netlink/testutil"
+	"github.com/StackVista/stackstate-agent/pkg/util/kernel"
 	"github.com/stretchr/testify/require"
 )
 

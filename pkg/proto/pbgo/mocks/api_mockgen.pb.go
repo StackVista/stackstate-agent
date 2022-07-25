@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	pbgo "github.com/DataDog/datadog-agent/pkg/proto/pbgo"
+	pbgo "github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
 	gomock "github.com/golang/mock/gomock"
 	grpc "google.golang.org/grpc"
 	metadata "google.golang.org/grpc/metadata"

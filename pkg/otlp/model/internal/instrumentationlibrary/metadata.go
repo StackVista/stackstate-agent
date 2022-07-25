@@ -17,7 +17,7 @@ package instrumentationlibrary
 import (
 	"go.opentelemetry.io/collector/model/pdata"
 
-	"github.com/DataDog/datadog-agent/pkg/otlp/model/internal/utils"
+	"github.com/StackVista/stackstate-agent/pkg/otlp/model/internal/utils"
 )
 
 const (

@@ -6,7 +6,7 @@
 package provider
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/util/retry"
+	"github.com/StackVista/stackstate-agent/pkg/util/retry"
 )
 
 // ConvertRetrierErr converts a retrier error into a metrics error

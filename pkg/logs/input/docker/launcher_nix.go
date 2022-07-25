@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build docker && !windows
 // +build docker,!windows
 
 package docker
@@ -11,7 +12,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	coreConfig "github.com/DataDog/datadog-agent/pkg/config"
+	coreConfig "github.com/StackVista/stackstate-agent/pkg/config"
 
 	"golang.org/x/sys/unix"
 )

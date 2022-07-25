@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package http
@@ -11,11 +12,11 @@ import (
 
 	"github.com/twmb/murmur3"
 
-	ddebpf "github.com/DataDog/datadog-agent/pkg/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/network/config"
-	"github.com/DataDog/datadog-agent/pkg/network/ebpf/probes"
 	"github.com/DataDog/ebpf"
 	"github.com/DataDog/ebpf/manager"
+	ddebpf "github.com/StackVista/stackstate-agent/pkg/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
+	"github.com/StackVista/stackstate-agent/pkg/network/ebpf/probes"
 )
 
 var sslProbes = []string{

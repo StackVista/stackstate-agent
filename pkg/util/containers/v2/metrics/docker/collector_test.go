@@ -4,7 +4,8 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build docker && (linux || windows)
-// +build docker,linux docker,windows
+// +build docker
+// +build linux windows
 
 package docker
 
@@ -17,9 +18,9 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/cache"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/v2/metrics/provider"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/cache"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/v2/metrics/provider"
 )
 
 func TestStats(t *testing.T) {

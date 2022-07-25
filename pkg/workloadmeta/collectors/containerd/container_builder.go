@@ -14,9 +14,9 @@ import (
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/errdefs"
 
-	cutil "github.com/DataDog/datadog-agent/pkg/util/containerd"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/workloadmeta"
+	cutil "github.com/StackVista/stackstate-agent/pkg/util/containerd"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta"
 )
 
 // buildWorkloadMetaContainer generates a workloadmeta.Container from a containerd.Container

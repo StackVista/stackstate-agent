@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package http
@@ -6,8 +7,8 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/DataDog/datadog-agent/pkg/network/ebpf"
 	"github.com/DataDog/ebpf/manager"
+	"github.com/StackVista/stackstate-agent/pkg/network/ebpf"
 
 	"github.com/davecgh/go-spew/spew"
 )

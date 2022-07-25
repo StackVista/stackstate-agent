@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package kernel
@@ -13,8 +14,8 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/DataDog/datadog-agent/pkg/metadata/host"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/metadata/host"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/mholt/archiver/v3"
 )
 

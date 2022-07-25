@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 	conventions "go.opentelemetry.io/collector/model/semconv/v1.5.0"
 
-	"github.com/DataDog/datadog-agent/pkg/otlp/model/internal/testutils"
+	"github.com/StackVista/stackstate-agent/pkg/otlp/model/internal/testutils"
 )
 
 var (

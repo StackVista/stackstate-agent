@@ -8,7 +8,7 @@ package tencent
 import (
 	"context"
 
-	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
+	"github.com/StackVista/stackstate-agent/pkg/diagnose/diagnosis"
 )
 
 func init() {

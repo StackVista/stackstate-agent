@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build !windows
 // +build !windows
 
 package util
@@ -11,7 +12,7 @@ import (
 	"fmt"
 	"runtime/debug"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 	"golang.org/x/sys/unix"
 )
 

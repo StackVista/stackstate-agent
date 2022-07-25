@@ -8,7 +8,7 @@ package check
 import (
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 )
 
 // StubCheck stubs a check, should only be used in tests

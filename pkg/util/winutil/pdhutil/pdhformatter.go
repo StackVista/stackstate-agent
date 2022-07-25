@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
+//go:build windows
 // +build windows
 
 package pdhutil
@@ -14,7 +15,7 @@ import (
 
 	"golang.org/x/sys/windows"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // PdhFormatter implements a formatter for PDH performance counters

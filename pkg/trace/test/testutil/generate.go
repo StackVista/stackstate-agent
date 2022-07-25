@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 )
 
 // SpanConfig defines the configuration for generating spans.

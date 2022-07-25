@@ -11,10 +11,10 @@ package system
 import (
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/cgroups"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/v2/metrics/provider"
-	utilsystem "github.com/DataDog/datadog-agent/pkg/util/system"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/cgroups"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/v2/metrics/provider"
+	utilsystem "github.com/StackVista/stackstate-agent/pkg/util/system"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 )

@@ -6,7 +6,7 @@
 package generic
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/workloadmeta"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta"
 )
 
 // MetricsAdapter provides a way to change metrics and tags before sending them out

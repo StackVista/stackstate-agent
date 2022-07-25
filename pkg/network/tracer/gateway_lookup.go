@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package tracer
@@ -7,12 +8,12 @@ import (
 	"net"
 	"time"
 
-	ddconfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/network"
-	"github.com/DataDog/datadog-agent/pkg/network/config"
-	"github.com/DataDog/datadog-agent/pkg/process/util"
-	"github.com/DataDog/datadog-agent/pkg/util/ec2"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	ddconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/network"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/ec2"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/hashicorp/golang-lru/simplelru"
 )
 

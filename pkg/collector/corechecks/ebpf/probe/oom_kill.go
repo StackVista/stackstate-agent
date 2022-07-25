@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 //go:generate go run ../../../../ebpf/include_headers.go ../c/runtime/oom-kill-kern.c ../../../../ebpf/bytecode/build/runtime/oom-kill.c ../../../../ebpf/c
@@ -15,9 +16,9 @@ import (
 	bpflib "github.com/DataDog/ebpf"
 	"github.com/DataDog/ebpf/manager"
 
-	"github.com/DataDog/datadog-agent/pkg/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode/runtime"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode/runtime"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 /*

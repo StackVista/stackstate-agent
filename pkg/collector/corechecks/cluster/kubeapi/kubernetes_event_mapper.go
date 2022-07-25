@@ -19,7 +19,6 @@ import (
 
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/kubernetes/pkg/kubelet/events"
 )
 
 type MetricsCategory string
@@ -35,33 +34,33 @@ const (
 // If an event is 'event.Type = warning' then we map it automatically to an 'Alert'
 var EventTypeMap = map[string]MetricsCategory{
 	// Container events
-	events.CreatedContainer:      Changes,
-	events.StartedContainer:      Activities,
-	events.KillingContainer:      Activities,
-	events.PreemptContainer:      Activities,
-	events.BackOffStartContainer: Activities,
-	events.ExceededGracePeriod:   Activities,
+	"Created":             Changes,
+	"Started":             Activities,
+	"Killing":             Activities,
+	"Preempting":          Activities,
+	"BackOff":             Activities,
+	"ExceededGracePeriod": Activities,
 
 	// Image events
-	events.PullingImage: Activities,
-	events.PulledImage:  Activities,
+	"Pulling": Activities,
+	"Pulled":  Activities,
 
 	// Kubelet events
-	events.NodeReady:               Changes,
-	events.NodeNotReady:            Activities,
-	events.NodeSchedulable:         Activities,
-	events.StartingKubelet:         Activities,
-	events.VolumeResizeSuccess:     Activities,
-	events.FileSystemResizeSuccess: Activities,
+	"NodeReady":                  Changes,
+	"NodeNotReady":               Activities,
+	"NodeSchedulable":            Activities,
+	"Starting":                   Activities,
+	"VolumeResizeSuccessful":     Activities,
+	"FileSystemResizeSuccessful": Activities,
 	//events.SuccessfulDetachVolume:               Activities, //TODO agent3
-	events.SuccessfulAttachVolume: Activities,
-	events.SuccessfulMountVolume:  Activities,
+	"SuccessfulAttachVolume": Activities,
+	"SuccessfulMountVolume":  Activities,
 	//events.SuccessfulUnMountVolume:              Activities, //TODO agent3
-	events.NodeRebooted:                         Activities,
-	events.ContainerGCFailed:                    Activities,
-	events.ImageGCFailed:                        Activities,
-	events.SuccessfulNodeAllocatableEnforcement: Activities,
-	events.SandboxChanged:                       Changes,
+	"Rebooted":                Activities,
+	"ContainerGCFailed":       Activities,
+	"ImageGCFailed":           Activities,
+	"NodeAllocatableEnforced": Activities,
+	"SandboxChanged":          Changes,
 
 	// Seen in the wild, not keys of our current lib
 	"Completed":         Activities,

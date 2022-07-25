@@ -1,8 +1,8 @@
 package settings
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/profiling"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/profiling"
 )
 
 // RuntimeBlockProfileRate wraps runtime.SetBlockProfileRate setting

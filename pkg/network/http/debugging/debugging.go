@@ -1,9 +1,9 @@
 package debugging
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/network/http"
-	"github.com/DataDog/datadog-agent/pkg/process/util"
 	"github.com/DataDog/sketches-go/ddsketch"
+	"github.com/StackVista/stackstate-agent/pkg/network/http"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
 )
 
 // RequestSummary represents a (debug-friendly) aggregated view of requests

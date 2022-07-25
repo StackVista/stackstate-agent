@@ -3,11 +3,12 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build linux
 // +build linux
 
 package model
 
-import "github.com/DataDog/datadog-agent/pkg/security/secl/compiler/eval"
+import "github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/eval"
 
 // SECLLegacyAttributes contains the list of the legacy attributes we need to support
 var SECLLegacyAttributes = map[eval.Field]eval.Field{

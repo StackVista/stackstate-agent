@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package webhook
@@ -10,9 +11,9 @@ package webhook
 import (
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/clusteragent/admission/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/admission/metrics"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"

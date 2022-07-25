@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build !windows
 // +build !windows
 
 package trace
@@ -13,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/config"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config"
 	"github.com/stretchr/testify/assert"
 )
 

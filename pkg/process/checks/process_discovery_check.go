@@ -5,8 +5,8 @@ import (
 	"time"
 
 	model "github.com/DataDog/agent-payload/v5/process"
-	"github.com/DataDog/datadog-agent/pkg/process/config"
-	"github.com/DataDog/datadog-agent/pkg/process/procutil"
+	"github.com/StackVista/stackstate-agent/pkg/process/config"
+	"github.com/StackVista/stackstate-agent/pkg/process/procutil"
 )
 
 // ProcessDiscovery is a ProcessDiscoveryCheck singleton. ProcessDiscovery should not be instantiated elsewhere.

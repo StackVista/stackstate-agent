@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package network
@@ -6,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
 	gomock "github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )

@@ -1,11 +1,12 @@
+//go:build linux_bpf && !ebpf_bindata
 // +build linux_bpf,!ebpf_bindata
 
 package probe
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode"
-	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode/runtime"
-	"github.com/DataDog/datadog-agent/pkg/security/config"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode/runtime"
+	"github.com/StackVista/stackstate-agent/pkg/security/config"
 )
 
 // TODO change probe.c path to runtime-compilation specific version

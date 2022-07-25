@@ -1,9 +1,10 @@
-//+build windows linux_bpf
+//go:build windows || linux_bpf
+// +build windows linux_bpf
 
 package dns
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
 )
 
 // NewNullReverseDNS returns a dummy implementation of ReverseDNS

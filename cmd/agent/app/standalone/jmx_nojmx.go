@@ -11,7 +11,7 @@ package standalone
 import (
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 )
 
 // ExecJMXCommandConsole is not supported when the 'jmx' build tag isn't included

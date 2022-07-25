@@ -3,12 +3,13 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build linux
 // +build linux
 
 package probe
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/security/utils"
+	"github.com/StackVista/stackstate-agent/pkg/security/utils"
 )
 
 // ContainerResolver is used to resolve the container context of the events

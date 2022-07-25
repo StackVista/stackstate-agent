@@ -7,7 +7,7 @@ package collector
 
 import (
 	"fmt"
-	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
+	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
 	"testing"
 
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"

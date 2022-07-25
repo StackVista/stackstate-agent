@@ -1,9 +1,9 @@
 package http
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/process/util"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/sketches-go/ddsketch"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // Method is the type used to represent HTTP request methods

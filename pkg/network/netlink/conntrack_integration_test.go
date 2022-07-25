@@ -1,5 +1,5 @@
-// +build linux_bpf
-// +build !android
+//go:build linux_bpf && !android
+// +build linux_bpf,!android
 
 package netlink
 
@@ -11,9 +11,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/DataDog/datadog-agent/pkg/network/netlink/testutil"
-	nettestutil "github.com/DataDog/datadog-agent/pkg/network/testutil"
-	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/network/netlink/testutil"
+	nettestutil "github.com/StackVista/stackstate-agent/pkg/network/testutil"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
 	ct "github.com/florianl/go-conntrack"
 	"github.com/stretchr/testify/require"
 	"github.com/vishvananda/netns"

@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/generators/accessors/common"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/generators/accessors/common"
 )
 
 type documentation struct {

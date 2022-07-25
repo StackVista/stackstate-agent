@@ -8,8 +8,8 @@ package local
 import (
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
-	"github.com/DataDog/datadog-agent/pkg/tagset"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/tagset"
 )
 
 func initTagger() *Tagger {

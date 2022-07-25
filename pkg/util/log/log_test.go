@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 // Go vet raise an error when test the "Warn" method: call has possible formatting directive %s
+//go:build !dovet
 // +build !dovet
 
 package log
@@ -17,7 +18,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/util/scrubber"
+	"github.com/StackVista/stackstate-agent/pkg/util/scrubber"
 	"github.com/cihub/seelog"
 	"github.com/stretchr/testify/assert"
 )

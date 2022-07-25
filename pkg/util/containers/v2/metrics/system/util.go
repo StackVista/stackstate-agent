@@ -9,7 +9,7 @@
 package system
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 )
 
 func convertField(s *uint64, t **float64) {

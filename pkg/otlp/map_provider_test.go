@@ -17,8 +17,8 @@ import (
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/config/configunmarshaler"
 
-	"github.com/DataDog/datadog-agent/pkg/otlp/internal/testutil"
-	"github.com/DataDog/datadog-agent/pkg/serializer"
+	"github.com/StackVista/stackstate-agent/pkg/otlp/internal/testutil"
+	"github.com/StackVista/stackstate-agent/pkg/serializer"
 )
 
 func TestNewMap(t *testing.T) {

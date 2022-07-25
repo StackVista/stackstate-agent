@@ -1,7 +1,7 @@
 package dns
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
 	"github.com/google/gopacket/layers"
 	"go4.org/intern"
 )

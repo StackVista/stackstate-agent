@@ -3,7 +3,8 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
-//+build functionaltests
+//go:build functionaltests
+// +build functionaltests
 
 package tests
 
@@ -15,7 +16,7 @@ import (
 
 	"github.com/xeipuuv/gojsonschema"
 
-	sprobe "github.com/DataDog/datadog-agent/pkg/security/probe"
+	sprobe "github.com/StackVista/stackstate-agent/pkg/security/probe"
 )
 
 //go:embed schemas

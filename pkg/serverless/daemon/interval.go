@@ -8,8 +8,8 @@ package daemon
 import (
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/serverless/flush"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/serverless/flush"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (

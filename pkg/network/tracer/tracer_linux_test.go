@@ -1,4 +1,5 @@
-//+build linux_bpf
+//go:build linux_bpf
+// +build linux_bpf
 
 package tracer
 
@@ -19,15 +20,15 @@ import (
 	"testing"
 	"time"
 
-	nettestutil "github.com/DataDog/datadog-agent/pkg/network/testutil"
-	tracertest "github.com/DataDog/datadog-agent/pkg/network/tracer/testutil"
-	"github.com/DataDog/datadog-agent/pkg/process/util"
+	nettestutil "github.com/StackVista/stackstate-agent/pkg/network/testutil"
+	tracertest "github.com/StackVista/stackstate-agent/pkg/network/tracer/testutil"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
 
-	ddconfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/network"
-	"github.com/DataDog/datadog-agent/pkg/network/config/sysctl"
-	"github.com/DataDog/datadog-agent/pkg/network/testutil"
-	"github.com/DataDog/datadog-agent/pkg/util/kernel"
+	ddconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/network"
+	"github.com/StackVista/stackstate-agent/pkg/network/config/sysctl"
+	"github.com/StackVista/stackstate-agent/pkg/network/testutil"
+	"github.com/StackVista/stackstate-agent/pkg/util/kernel"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

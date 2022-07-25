@@ -9,8 +9,8 @@
 package resolver
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/forwarder/endpoints"
-	"github.com/DataDog/datadog-agent/pkg/forwarder/transaction"
+	"github.com/StackVista/stackstate-agent/pkg/forwarder/endpoints"
+	"github.com/StackVista/stackstate-agent/pkg/forwarder/transaction"
 )
 
 // DestinationType is used to identified the expected endpoint

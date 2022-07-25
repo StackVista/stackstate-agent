@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package http
@@ -8,11 +9,11 @@ import (
 	"sync"
 	"time"
 
-	ddebpf "github.com/DataDog/datadog-agent/pkg/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/network/config"
-	filterpkg "github.com/DataDog/datadog-agent/pkg/network/filter"
 	"github.com/DataDog/ebpf"
 	"github.com/DataDog/ebpf/manager"
+	ddebpf "github.com/StackVista/stackstate-agent/pkg/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
+	filterpkg "github.com/StackVista/stackstate-agent/pkg/network/filter"
 )
 
 // Monitor is responsible for:

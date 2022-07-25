@@ -6,7 +6,7 @@
 package checks
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/compliance/eval"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
 
 	"github.com/stretchr/testify/mock"
 )

@@ -8,7 +8,7 @@ package packets
 import (
 	"sync"
 
-	telemetry_utils "github.com/DataDog/datadog-agent/pkg/telemetry/utils"
+	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
 )
 
 // Pool wraps the sync.Pool class for *Packet type.

@@ -7,12 +7,12 @@ import (
 	"github.com/cihub/seelog"
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/snmp/common"
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/snmp/gosnmplib"
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/snmp/session"
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/snmp/valuestore"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/snmp/common"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/snmp/gosnmplib"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/snmp/session"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/snmp/valuestore"
 )
 
 func fetchColumnOidsWithBatching(sess session.Session, oids map[string]string, oidBatchSize int, bulkMaxRepetitions uint32, fetchStrategy columnFetchStrategy) (valuestore.ColumnResultValuesType, error) {

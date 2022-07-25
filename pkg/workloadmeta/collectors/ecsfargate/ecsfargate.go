@@ -14,14 +14,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/errors"
-	ecsutil "github.com/DataDog/datadog-agent/pkg/util/ecs"
-	ecsmeta "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata"
-	v2 "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata/v2"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/workloadmeta"
-	"github.com/DataDog/datadog-agent/pkg/workloadmeta/collectors/util"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/errors"
+	ecsutil "github.com/StackVista/stackstate-agent/pkg/util/ecs"
+	ecsmeta "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata"
+	v2 "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata/v2"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta/collectors/util"
 )
 
 const (

@@ -8,9 +8,9 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/DataDog/datadog-agent/pkg/network"
-	netebpf "github.com/DataDog/datadog-agent/pkg/network/ebpf"
 	"github.com/DataDog/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/network"
+	netebpf "github.com/StackVista/stackstate-agent/pkg/network/ebpf"
 )
 
 const defaultExpiredStateInterval = 60 * time.Second

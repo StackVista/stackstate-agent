@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build !serverless
 // +build !serverless
 
 package util
@@ -189,7 +190,7 @@ func GetHostnameData(ctx context.Context) (HostnameData, error) {
 					"filename": configHostnameFilepath,
 				},
 			); err == nil {
-				return saveAndValidateHostnameData(ctx, cacheHostnameKey, hostname, "file"), nil
+				return saveAndValidateHostnameData(ctx, cacheHostnameKey, hostname, "file", []string{}), nil
 			}
 
 			expErr := new(expvar.String)

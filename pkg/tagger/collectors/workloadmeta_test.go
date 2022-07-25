@@ -11,11 +11,11 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/tagger/utils"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes"
-	"github.com/DataDog/datadog-agent/pkg/workloadmeta"
-	workloadmetatesting "github.com/DataDog/datadog-agent/pkg/workloadmeta/testing"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/utils"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta"
+	workloadmetatesting "github.com/StackVista/stackstate-agent/pkg/workloadmeta/testing"
 	"github.com/stretchr/testify/assert"
 )
 

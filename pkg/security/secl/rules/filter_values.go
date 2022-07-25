@@ -5,7 +5,7 @@
 
 package rules
 
-import "github.com/DataDog/datadog-agent/pkg/security/secl/compiler/eval"
+import "github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/eval"
 
 // Approvers associates field names with their filter values
 type Approvers map[eval.Field]FilterValues

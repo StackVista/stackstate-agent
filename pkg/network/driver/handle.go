@@ -1,4 +1,5 @@
-//+build windows
+//go:build windows
+// +build windows
 
 package driver
 
@@ -7,7 +8,7 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"golang.org/x/sys/windows"
 )
 

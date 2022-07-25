@@ -11,7 +11,7 @@ import (
 
 	"github.com/fatih/color"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // WorkloadDumpResponse is used to dump the store content.

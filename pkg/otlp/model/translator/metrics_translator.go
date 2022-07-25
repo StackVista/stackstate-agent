@@ -20,13 +20,13 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/DataDog/datadog-agent/pkg/quantile"
+	"github.com/StackVista/stackstate-agent/pkg/quantile"
 	"go.opentelemetry.io/collector/model/pdata"
 	"go.uber.org/zap"
 
-	"github.com/DataDog/datadog-agent/pkg/otlp/model/attributes"
-	"github.com/DataDog/datadog-agent/pkg/otlp/model/internal/instrumentationlibrary"
-	"github.com/DataDog/datadog-agent/pkg/otlp/model/internal/utils"
+	"github.com/StackVista/stackstate-agent/pkg/otlp/model/attributes"
+	"github.com/StackVista/stackstate-agent/pkg/otlp/model/internal/instrumentationlibrary"
+	"github.com/StackVista/stackstate-agent/pkg/otlp/model/internal/utils"
 )
 
 const metricName string = "metric name"

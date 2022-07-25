@@ -16,13 +16,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/serverless/daemon"
-	"github.com/DataDog/datadog-agent/pkg/serverless/flush"
-	"github.com/DataDog/datadog-agent/pkg/serverless/metrics"
-	"github.com/DataDog/datadog-agent/pkg/serverless/registration"
-	"github.com/DataDog/datadog-agent/pkg/serverless/tags"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/serverless/daemon"
+	"github.com/StackVista/stackstate-agent/pkg/serverless/flush"
+	"github.com/StackVista/stackstate-agent/pkg/serverless/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/serverless/registration"
+	"github.com/StackVista/stackstate-agent/pkg/serverless/tags"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (

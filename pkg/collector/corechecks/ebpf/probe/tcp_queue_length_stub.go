@@ -1,9 +1,10 @@
+//go:build !linux_bpf
 // +build !linux_bpf
 
 package probe
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf"
 )
 
 // TCPQueueLengthTracer is not implemented on non-linux systems

@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package kernel
@@ -7,7 +8,7 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
 )
 
 // LockdownMode defines a lockdown type

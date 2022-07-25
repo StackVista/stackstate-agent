@@ -17,10 +17,10 @@ import (
 
 	"github.com/theupdateframework/go-tuf/client"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/config/remote/service/meta"
-	"github.com/DataDog/datadog-agent/pkg/config/remote/store"
-	"github.com/DataDog/datadog-agent/pkg/proto/pbgo"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config/remote/service/meta"
+	"github.com/StackVista/stackstate-agent/pkg/config/remote/store"
+	"github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
 )
 
 type directorLocalStore struct {

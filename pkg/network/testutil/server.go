@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package testutil
@@ -8,7 +9,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
 	"github.com/stretchr/testify/require"
 	"github.com/vishvananda/netns"
 )

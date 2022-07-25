@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package tracer
@@ -8,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/network"
-	"github.com/DataDog/datadog-agent/pkg/network/config"
-	"github.com/DataDog/datadog-agent/pkg/network/netlink"
-	netlinktestutil "github.com/DataDog/datadog-agent/pkg/network/netlink/testutil"
-	nettestutil "github.com/DataDog/datadog-agent/pkg/network/testutil"
-	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/network"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
+	"github.com/StackVista/stackstate-agent/pkg/network/netlink"
+	netlinktestutil "github.com/StackVista/stackstate-agent/pkg/network/netlink/testutil"
+	nettestutil "github.com/StackVista/stackstate-agent/pkg/network/testutil"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vishvananda/netns"

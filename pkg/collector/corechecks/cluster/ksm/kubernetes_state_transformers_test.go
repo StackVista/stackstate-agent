@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package ksm
@@ -11,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
-	ksmstore "github.com/DataDog/datadog-agent/pkg/kubestatemetrics/store"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
+	ksmstore "github.com/StackVista/stackstate-agent/pkg/kubestatemetrics/store"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 
 	"github.com/stretchr/testify/assert"
 )

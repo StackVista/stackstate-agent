@@ -10,7 +10,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/config"
 )
 
 // MultiLineHandler makes sure that multiple lines from a same content

@@ -8,9 +8,9 @@ package tagger
 import (
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
-	"github.com/DataDog/datadog-agent/pkg/tagger/local"
-	"github.com/DataDog/datadog-agent/pkg/tagset"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/local"
+	"github.com/StackVista/stackstate-agent/pkg/tagset"
 	"github.com/stretchr/testify/assert"
 )
 

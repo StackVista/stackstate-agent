@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build secrets
 // +build secrets
 
 package providers
@@ -15,7 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	s "github.com/DataDog/datadog-agent/pkg/secrets"
+	s "github.com/StackVista/stackstate-agent/pkg/secrets"
 )
 
 func ReadKubernetesSecret(kubeClient kubernetes.Interface, path string) s.Secret {

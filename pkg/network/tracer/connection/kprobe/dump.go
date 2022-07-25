@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package kprobe
@@ -6,10 +7,10 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/DataDog/datadog-agent/pkg/network/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/network/ebpf/probes"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/ebpf/manager"
+	"github.com/StackVista/stackstate-agent/pkg/network/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/network/ebpf/probes"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	"github.com/davecgh/go-spew/spew"
 )

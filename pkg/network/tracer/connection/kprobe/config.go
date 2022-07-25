@@ -1,14 +1,15 @@
-//+build linux_bpf
+//go:build linux_bpf
+// +build linux_bpf
 
 package kprobe
 
 import (
 	"path/filepath"
 
-	"github.com/DataDog/datadog-agent/pkg/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/network/config"
-	"github.com/DataDog/datadog-agent/pkg/network/ebpf/probes"
-	"github.com/DataDog/datadog-agent/pkg/util/kernel"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
+	"github.com/StackVista/stackstate-agent/pkg/network/ebpf/probes"
+	"github.com/StackVista/stackstate-agent/pkg/util/kernel"
 )
 
 // enabledProbes returns a map of probes that are enabled per config settings.

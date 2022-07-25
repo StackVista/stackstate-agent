@@ -6,8 +6,8 @@
 package metrics
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/tagger"
-	"github.com/DataDog/datadog-agent/pkg/tagset"
+	"github.com/StackVista/stackstate-agent/pkg/tagger"
+	"github.com/StackVista/stackstate-agent/pkg/tagset"
 )
 
 // MetricType is the representation of an aggregator metric type

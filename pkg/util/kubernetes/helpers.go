@@ -8,7 +8,7 @@ package kubernetes
 import (
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/tagger/utils"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/utils"
 )
 
 // KubeAllowedEncodeStringAlphaNums holds the charactes allowed in replicaset names from as parent deployment

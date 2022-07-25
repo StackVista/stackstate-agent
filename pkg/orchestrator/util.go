@@ -8,7 +8,7 @@ package orchestrator
 import (
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // NodeType represents a kind of resource used by a container orchestrator.

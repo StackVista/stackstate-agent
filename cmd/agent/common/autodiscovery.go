@@ -9,14 +9,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery"
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/providers"
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/providers/names"
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/scheduler"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	confad "github.com/DataDog/datadog-agent/pkg/config/autodiscovery"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/providers"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/providers/names"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/scheduler"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	confad "github.com/StackVista/stackstate-agent/pkg/config/autodiscovery"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // This is due to an AD limitation that does not allow several listeners to work in parallel

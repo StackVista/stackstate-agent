@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2017-present Datadog, Inc.
 
+//go:build !serverless
 // +build !serverless
 
 package listeners
@@ -12,9 +13,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/workloadmeta"
-	workloadmetatesting "github.com/DataDog/datadog-agent/pkg/workloadmeta/testing"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta"
+	workloadmetatesting "github.com/StackVista/stackstate-agent/pkg/workloadmeta/testing"
 )
 
 type wlmListenerSvc struct {

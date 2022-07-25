@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/eval"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/eval"
 )
 
 type testFieldValues map[string][]interface{}

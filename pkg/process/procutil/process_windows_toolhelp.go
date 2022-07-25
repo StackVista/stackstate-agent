@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package procutil
@@ -11,9 +12,9 @@ import (
 	"github.com/shirou/w32"
 	"golang.org/x/sys/windows"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/util/winutil"
 	process "github.com/DataDog/gopsutil/process"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/winutil"
 )
 
 var (

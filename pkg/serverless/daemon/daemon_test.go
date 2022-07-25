@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/serverless/trace"
+	"github.com/StackVista/stackstate-agent/pkg/serverless/trace"
 	"github.com/stretchr/testify/assert"
 )
 

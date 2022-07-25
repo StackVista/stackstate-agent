@@ -12,10 +12,10 @@ import (
 	"sync" // might be unnecessary
 	"time"
 
-	pb "github.com/DataDog/datadog-agent/pkg/proto/pbgo"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/zstd"
+	pb "github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	proto "github.com/golang/protobuf/proto"
 	"github.com/h2non/filetype"

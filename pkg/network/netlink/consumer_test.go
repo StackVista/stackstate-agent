@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package netlink
@@ -8,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	nettestutil "github.com/DataDog/datadog-agent/pkg/network/testutil"
+	nettestutil "github.com/StackVista/stackstate-agent/pkg/network/testutil"
 	"github.com/stretchr/testify/require"
 )
 

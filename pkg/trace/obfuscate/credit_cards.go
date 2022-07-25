@@ -8,7 +8,7 @@ package obfuscate
 import (
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 )
 
 // ccObfuscator maintains credit card obfuscation state and processing.

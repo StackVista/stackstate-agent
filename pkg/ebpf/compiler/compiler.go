@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package compiler
@@ -25,7 +26,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	"github.com/DataDog/datadog-agent/pkg/util/kernel"
+	"github.com/StackVista/stackstate-agent/pkg/util/kernel"
 )
 
 type EBPFCompiler struct {

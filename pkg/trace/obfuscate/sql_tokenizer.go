@@ -11,7 +11,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/config/features"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config/features"
 )
 
 // tokenizer.go implemenents a lexer-like iterator that tokenizes SQL and CQL

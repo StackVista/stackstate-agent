@@ -12,7 +12,7 @@ import (
 
 	"go.etcd.io/bbolt"
 
-	"github.com/DataDog/datadog-agent/pkg/config/remote/store"
+	"github.com/StackVista/stackstate-agent/pkg/config/remote/store"
 )
 
 type localBoltStore struct {

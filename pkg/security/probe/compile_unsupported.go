@@ -1,3 +1,4 @@
+//go:build (linux && !linux_bpf) || ebpf_bindata
 // +build linux,!linux_bpf ebpf_bindata
 
 package probe
@@ -5,8 +6,8 @@ package probe
 import (
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode"
-	"github.com/DataDog/datadog-agent/pkg/security/config"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode"
+	"github.com/StackVista/stackstate-agent/pkg/security/config"
 )
 
 func getRuntimeCompiledProbe(config *config.Config, useSyscallWrapper bool) (bytecode.AssetReader, error) {

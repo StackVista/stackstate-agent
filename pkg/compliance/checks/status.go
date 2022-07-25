@@ -8,9 +8,9 @@ package checks
 import (
 	"sync"
 
-	"github.com/DataDog/datadog-agent/pkg/compliance"
-	"github.com/DataDog/datadog-agent/pkg/compliance/event"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/compliance"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // status maintains status updates for all configured checks

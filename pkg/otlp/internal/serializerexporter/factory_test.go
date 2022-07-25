@@ -16,7 +16,7 @@ import (
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/config/configtest"
 
-	"github.com/DataDog/datadog-agent/pkg/serializer"
+	"github.com/StackVista/stackstate-agent/pkg/serializer"
 )
 
 func TestNewFactory(t *testing.T) {

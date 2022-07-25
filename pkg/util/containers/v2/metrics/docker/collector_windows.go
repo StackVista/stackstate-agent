@@ -13,8 +13,8 @@ import (
 
 	"github.com/docker/docker/api/types"
 
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/v2/metrics/provider"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/v2/metrics/provider"
 )
 
 func convertContainerStats(stats *types.Stats) *provider.ContainerStats {

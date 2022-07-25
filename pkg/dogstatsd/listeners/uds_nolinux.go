@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build !linux
 // +build !linux
 
 package listeners
@@ -11,7 +12,7 @@ import (
 	"errors"
 	"net"
 
-	"github.com/DataDog/datadog-agent/pkg/dogstatsd/packets"
+	"github.com/StackVista/stackstate-agent/pkg/dogstatsd/packets"
 )
 
 // ErrLinuxOnly is emitted on non-linux platforms

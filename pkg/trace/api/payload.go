@@ -1,8 +1,8 @@
 package api
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/trace/info"
-	"github.com/DataDog/datadog-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/trace/info"
+	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 )
 
 // Payload specifies information about a set of traces received by the API.

@@ -19,7 +19,7 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 )
 
 func parseID(s string) (uint32, error) {

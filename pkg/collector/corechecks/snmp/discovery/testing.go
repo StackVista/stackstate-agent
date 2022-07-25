@@ -3,7 +3,7 @@ package discovery
 import (
 	"path/filepath"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 )
 
 // SetTestRunPath sets run_path for testing

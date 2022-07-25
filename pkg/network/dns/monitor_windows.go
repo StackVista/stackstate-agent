@@ -1,9 +1,10 @@
+//go:build windows && npm
 // +build windows,npm
 
 package dns
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/network/config"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
 )
 
 // NewReverseDNS starts snooping on DNS traffic to allow IP -> domain reverse resolution

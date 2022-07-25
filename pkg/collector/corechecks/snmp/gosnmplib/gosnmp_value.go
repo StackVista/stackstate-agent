@@ -7,9 +7,9 @@ import (
 
 	"github.com/gosnmp/gosnmp"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/snmp/valuestore"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/snmp/valuestore"
 )
 
 var strippableSpecialChars = map[byte]bool{'\r': true, '\n': true, '\t': true}

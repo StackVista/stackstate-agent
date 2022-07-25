@@ -11,10 +11,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/DataDog/datadog-agent/pkg/metadata/inventories"
-	v5 "github.com/DataDog/datadog-agent/pkg/metadata/v5"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/scrubber"
+	"github.com/StackVista/stackstate-agent/pkg/metadata/inventories"
+	v5 "github.com/StackVista/stackstate-agent/pkg/metadata/v5"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/scrubber"
 )
 
 func addMetadata(tempDir, hostname, filename string, data []byte) error {

@@ -9,16 +9,16 @@ import (
 	"context"
 	"time"
 
-	"github.com/DataDog/datadog-agent/cmd/agent/api/response"
-	pb "github.com/DataDog/datadog-agent/pkg/proto/pbgo"
-	pbutils "github.com/DataDog/datadog-agent/pkg/proto/utils"
-	"github.com/DataDog/datadog-agent/pkg/status/health"
-	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
-	"github.com/DataDog/datadog-agent/pkg/tagger/tagstore"
-	"github.com/DataDog/datadog-agent/pkg/tagger/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/tagger/types"
-	"github.com/DataDog/datadog-agent/pkg/tagset"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/cmd/agent/api/response"
+	pb "github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
+	pbutils "github.com/StackVista/stackstate-agent/pkg/proto/utils"
+	"github.com/StackVista/stackstate-agent/pkg/status/health"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/tagstore"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/types"
+	"github.com/StackVista/stackstate-agent/pkg/tagset"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // Tagger stores tags to entity as stored in a replay state.

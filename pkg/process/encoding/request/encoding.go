@@ -5,7 +5,7 @@ import (
 
 	"github.com/gogo/protobuf/jsonpb"
 
-	"github.com/DataDog/datadog-agent/pkg/proto/pbgo"
+	"github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
 )
 
 var (

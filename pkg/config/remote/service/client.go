@@ -12,9 +12,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/DataDog/datadog-agent/pkg/proto/pbgo"
-	httputils "github.com/DataDog/datadog-agent/pkg/util/http"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
+	httputils "github.com/StackVista/stackstate-agent/pkg/util/http"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	"github.com/tinylib/msgp/msgp"
 )

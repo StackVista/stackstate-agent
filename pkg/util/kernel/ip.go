@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package kernel
@@ -6,7 +7,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
 )
 
 // IsIPv6Enabled returns whether or not IPv6 has been enabled on the host

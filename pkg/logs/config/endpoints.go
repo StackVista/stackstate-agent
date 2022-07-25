@@ -8,7 +8,7 @@ package config
 import (
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 )
 
 // EPIntakeVersion is the events platform intake API version

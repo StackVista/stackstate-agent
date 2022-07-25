@@ -9,8 +9,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/util/hostname/validate"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname/validate"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // Provider is a generic function to grab the hostname and return it

@@ -11,7 +11,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/config/remote/store"
+	"github.com/StackVista/stackstate-agent/pkg/config/remote/store"
 	"github.com/stretchr/testify/assert"
 )
 
