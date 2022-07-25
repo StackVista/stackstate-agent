@@ -1,17 +1,33 @@
 # StackState Agent v2 releases
 
-## 2.17.0 (2022-XX-XX)
+## 2.17.1 (2022-07-11)
+
+**Improvements**
+- Added processing AWS Security Group Ingress changes triggered by EventBridge event. [STAC-17006](https://stackstate.atlassian.net/browse/STAC-17006)
+
+## 2.17.0 (2022-07-01)
 
 **Features**
+- Support for using agents persistent cache [STAC-16162](https://stackstate.atlassian.net/browse/STAC-16162)
 - Added topology element deletion [STAC-14816](https://stackstate.atlassian.net/browse/STAC-14816)
 - Added Dynatrace support for synthetic checks [STAC-14511](https://stackstate.atlassian.net/browse/STAC-14511)
+- Discover relations from service to [static pods](https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/) (specifically, kubernetes service to kube-apiserver pods) [STAC-16815](https://stackstate.atlassian.net/browse/STAC-16815)
+- Added support for Container Storage Interface (CSI) volume sources [STAC-15464](https://stackstate.atlassian.net/browse/STAC-15464)
+- Open Telemetry
+  - Added manual instrumentation support [STAC-16407](https://stackstate.atlassian.net/browse/STAC-16407)
+  - Added interpreter support for stackstate-instrumentation [STAC-16407](https://stackstate.atlassian.net/browse/STAC-16407)
 
 **Improvements**
 - Added collection level setting info [STAC-14671](https://stackstate.atlassian.net/browse/STAC-14671)
-- Process agent version 4.0.4
+- Upgraded process agent version from 4.0.2 to 4.0.7 which includes:
+  - Reporting CPU throttling metrics for containers
+  - Process agent check topology for self-observability
+  - Removed several processes from [the default blacklist](https://github.com/StackVista/stackstate-process-agent/pull/109/files)
+  - [other minor improvements](https://github.com/StackVista/stackstate-process-agent/blob/master/stackstate-changelog.md)
 
 **Bugfix**
 - If Kubernetes topology Secrets collector fails, it will log (INFO level) only once [STAC-14834](https://stackstate.atlassian.net/browse/STAC-14834)
+- Add SuccessfulCreate, SuccessfulDelete and Completed to list of known events [STAC-15506](https://stackstate.atlassian.net/browse/STAC-15506)
 
 ## 2.16.1 (2022-03-21)
 

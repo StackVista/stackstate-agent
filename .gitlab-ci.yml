@@ -90,6 +90,72 @@ variables: &commonvariables
   STS_DOCKER_TEST_REPO: stackstate-agent-test
   # we do not build trace-agent and cluster-agent for v2
 
+.always_scheduled_master_and_tags: &always_scheduled_master_and_tags
+  - if: $CI_COMMIT_TAG || ($CI_COMMIT_REF_NAME == "master" && $CI_PIPELINE_SOURCE=="schedule")
+    when: always
+
+# Check if any files (not MD) changed
+# Glob syntax that checks for changes in all files except files that end with .md extension.
+# (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
+.other_files_rule: &other_files_rule
+  - changes:
+      - "**/.*"
+      - "**/*.a*"
+      - "**/*.b*"
+      - "**/*.c*"
+      - "**/*.d*"
+      - "**/*.e*"
+      - "**/*.f*"
+      - "**/*.g*"
+      - "**/*.h*"
+      - "**/*.i*"
+      - "**/*.j*"
+      - "**/*.k*"
+      - "**/*.l*"
+      - "**/*.make"
+      - "**/*.mod"
+      - "**/*.n*"
+      - "**/*.o*"
+      - "**/*.p*"
+      - "**/*.q*"
+      - "**/*.r*"
+      - "**/*.s*"
+      - "**/*.t*"
+      - "**/*.u*"
+      - "**/*.v*"
+      - "**/*.w*"
+      - "**/*.x*"
+      - "**/*.y*"
+      - "**/*.z*"
+      - "**/Dockerfile"
+      - "**/Makefile"
+      - "**/Gemfile"
+      - "**/Vagrantfile"
+    when: always
+
+#.other_files_rule: &other_files_rule
+#  # Check if any files (not MD) changed
+#  # Glob syntax that checks for changes in all files except files that end with .md extension.
+#  # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
+#  - changes:
+#      - "**/{.*,!(*.md)}"
+#    # If any non-MD files changed, always run the pipeline.
+#    when: always
+
+# What happens if I updated CHANGELOG.md and some python file?
+.md_only_rule: &md_only_rule
+  # Check if any MD files changed
+  # Glob syntax that checks for changes in files ending with .md extension.
+  # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
+  - changes:
+      - "**/*.markdown"
+      - "**/*.md"
+      - "**/*.mdown"
+    # If any MD files changed, don't run the pipeline.
+    when: manual
+    # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
+    allow_failure: true
+
 .rules:
   - &exclude_on_cluster_agent
     if: $CI_COMMIT_MESSAGE =~ /\[cluster-agent]/
@@ -116,13 +182,17 @@ agent2:
     - <<: *exclude_on_cluster_agent
     # exclude this pipeline if we're running a v3 tag pipeline
     - <<: *exclude_on_tag_v3
+    - *always_scheduled_master_and_tags
     - if: $CI_COMMIT_MESSAGE =~ /\[py3]/
       when: never
+    - *other_files_rule
+    - *md_only_rule
     - if: $CI_MERGE_REQUEST_IID
     - if: $CI_OPEN_MERGE_REQUESTS
       when: never
     - if: $CI_COMMIT_BRANCH
-    - if: $CI_COMMIT_TAG
+
+# if MD only change, the only pipelines we want to run are scheduled masters and tags.
 
 agent3:
  stage: triggers
@@ -136,13 +206,15 @@ agent3:
    - <<: *exclude_on_cluster_agent
    # exclude this pipeline if we're running a v2 tag pipeline
    - <<: *exclude_on_tag_v2
+   - *always_scheduled_master_and_tags
    - if: $CI_COMMIT_MESSAGE =~ /\[py2]/
      when: never
+   - *other_files_rule
+   - *md_only_rule
    - if: $CI_MERGE_REQUEST_IID
    - if: $CI_OPEN_MERGE_REQUESTS
      when: never
    - if: $CI_COMMIT_BRANCH
-   - if: $CI_COMMIT_TAG
 
 cluster_agent:
   stage: triggers
@@ -179,3 +251,4 @@ build_agent_runners:
     - if: $CI_OPEN_MERGE_REQUESTS
       when: never
     - if: $CI_COMMIT_BRANCH
+
