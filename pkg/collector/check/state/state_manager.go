@@ -72,18 +72,13 @@ func (cs *CheckStateManager) getFileForKey(key string) (string, error) {
 }
 
 // SetState stores data on disk in the config.StateRootPath directory
-// TODO: Temp comment out for testing on a go routine bug
 func (cs *CheckStateManager) SetState(key, value string) error {
-	log.Info("Calling SetState")
-	log.Info(key)
-	log.Info(value)
-
-	//   err := cs.writeToDisk(key, value)
-	//   if err != nil {
-	//   	return err
-	//   }
-	//   // Insert / Update this in the CheckStateManager Cache
-	//   cs.Cache.Set(key, value, cache.DefaultExpiration)
+	err := cs.writeToDisk(key, value)
+	if err != nil {
+		return err
+	}
+	// Insert / Update this in the CheckStateManager Cache
+	cs.Cache.Set(key, value, cache.DefaultExpiration)
 
 	return nil
 }
