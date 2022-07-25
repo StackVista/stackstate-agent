@@ -116,7 +116,7 @@ func (cs *CheckStateManager) GetState(key string) (string, error) {
 func (cs *CheckStateManager) readFromDisk(key string) (string, error) {
 	path, err := cs.getFileForKey(key)
 	if err != nil {
-		return "", err
+		return "{}", err
 	}
 	_, err = os.Stat(path)
 	if os.IsNotExist(err) {
@@ -124,7 +124,7 @@ func (cs *CheckStateManager) readFromDisk(key string) (string, error) {
 	}
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
-		return "", err
+		return "{}", err
 	}
 	// return the string, removing any trailing new lines
 	return strings.TrimSuffix(string(content), "\n"), nil
