@@ -77,6 +77,22 @@ static PyObject *set_state(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "Osss", &check, &check_id, &key, &state)) {
       goto error;
     }
+    else if (check == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Invalid C set state check parameter");
+        goto error;
+    }
+    else if (check_id == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Invalid C set state check id parameter");
+        goto error;
+    }
+    else if (key == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Invalid C set state key parameter");
+        goto error;
+    }
+    else if (state == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Invalid C set state-state parameter");
+        goto error;
+    }
 
     cb_set_state(check_id, key, state);
 
@@ -112,6 +128,18 @@ static PyObject *get_state(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "Oss", &check, &check_id, &key)) {
       goto error;
+    }
+    else if (check == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Invalid C get state check parameter");
+        goto error;
+    }
+    else if (check_id == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Invalid C get state check id parameter");
+        goto error;
+    }
+    else if (key == NULL) {
+        PyErr_SetString(PyExc_TypeError, "Invalid C get state key parameter");
+        goto error;
     }
 
     cb_get_state(check_id, key);
