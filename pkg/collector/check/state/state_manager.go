@@ -1,6 +1,7 @@
 package state
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/patrickmn/go-cache"
 	"io/ioutil"
 	"os"
@@ -71,14 +72,18 @@ func (cs *CheckStateManager) getFileForKey(key string) (string, error) {
 }
 
 // SetState stores data on disk in the config.StateRootPath directory
+// TODO: Temp comment out for testing on a go routine bug
 func (cs *CheckStateManager) SetState(key, value string) error {
-	err := cs.writeToDisk(key, value)
-	if err != nil {
-		return err
-	}
+	log.Info("Calling SetState")
+	log.Info(key)
+	log.Info(value)
 
-	// Insert / Update this in the CheckStateManager Cache
-	cs.Cache.Set(key, value, cache.DefaultExpiration)
+	//   err := cs.writeToDisk(key, value)
+	//   if err != nil {
+	//   	return err
+	//   }
+	//   // Insert / Update this in the CheckStateManager Cache
+	//   cs.Cache.Set(key, value, cache.DefaultExpiration)
 
 	return nil
 }
@@ -98,19 +103,23 @@ func (cs *CheckStateManager) writeToDisk(key, value string) error {
 
 // GetState returns a value previously stored, or an error that occurred when trying to retrieve the state for a given
 // key
+// TODO: Temp comment out for testing on a go routine bug
 func (cs *CheckStateManager) GetState(key string) (string, error) {
-	// see if we have this key in the cache, otherwise read it from Disk
-	if value, found := cs.Cache.Get(key); found {
-		return value.(string), nil
-	}
+	log.Info("Calling GetState")
+	log.Info(key)
 
-	state, err := cs.readFromDisk(key)
-	if err != nil {
-		return "{}", err
-	}
-	// update the cache
-	cs.Cache.Set(key, state, cache.DefaultExpiration)
-	return state, nil
+	//  // see if we have this key in the cache, otherwise read it from Disk
+	//  if value, found := cs.Cache.Get(key); found {
+	//  	return value.(string), nil
+	//  }
+	//  state, err := cs.readFromDisk(key)
+	//  if err != nil {
+	//  	return "{}", err
+	//  }
+	//  // update the cache
+	//  cs.Cache.Set(key, state, cache.DefaultExpiration)
+	//  return state, nil
+	return "{}", nil
 }
 
 func (cs *CheckStateManager) readFromDisk(key string) (string, error) {
@@ -131,6 +140,7 @@ func (cs *CheckStateManager) readFromDisk(key string) (string, error) {
 }
 
 // Clear removes all the elements in the CheckStateManager Cache
+// TODO: Temp comment out for testing on a go routine bug
 func (cs *CheckStateManager) Clear() {
-	cs.Cache.Flush()
+	// cs.Cache.Flush()
 }
