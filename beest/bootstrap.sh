@@ -1,13 +1,14 @@
 #!/bin/bash
 
-go install github.com/spf13/cobra/cobra
-complete -C '/usr/local/bin/aws_completer' aws
-eval "$(sts-toolbox completion bash)"
-eval "$(sts completion bash)"
+. bootstrap_functions.sh
+# we export the function so we can call it in the .envrc, after BEEST_AWS variables have been set
+export -f configure_aws_beest_credentials
 
-source ~/.bashrc
-eval "$(direnv hook bash)"
-direnv allow
+setup_interactive_shell
 
-go build .
-eval "$(/go/src/app/beest completion bash)"
+# if this is an additional shell, no need to execute the following
+if [ ! -d /proc/1/ ]; then
+    install_cobra_cli
+    build_beest
+    generate_aws_config
+fi

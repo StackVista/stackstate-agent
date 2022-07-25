@@ -49,7 +49,6 @@ start: build
 	docker run -it --rm \
         --name ${KEEPER_CONTAINER} \
         --volume ${PWD}:/go/src/app \
-        --volume ${HOME}/.aws:/home/keeper/.aws \
         --volume /var/run/docker.sock:/var/run/docker.sock:ro \
         --mount source=${VOLUME_GO_PKG_NAME},target=/go/pkg \
         --network host \
