@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	event "github.com/DataDog/datadog-agent/pkg/compliance/event"
+	event "github.com/StackVista/stackstate-agent/pkg/compliance/event"
 	mock "github.com/stretchr/testify/mock"
 )
 

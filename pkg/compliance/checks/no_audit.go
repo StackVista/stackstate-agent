@@ -11,7 +11,7 @@ package checks
 import (
 	"errors"
 
-	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
 )
 
 func newAuditClient() (env.AuditClient, error) {
