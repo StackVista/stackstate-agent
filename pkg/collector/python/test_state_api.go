@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 )
 
 // #include <datadog_agent_rtloader.h>
@@ -40,14 +41,18 @@ func testSetAndGetState(t *testing.T) {
 	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(string(testCheck.ID()))
-	stateKey := C.CString("state-id")
+	stateKey := C.CString("random-state-id")
 
 	getFirstState := GetState(checkId, stateKey)
 	assert.Equal(t, "{}", getFirstState)
 
+	time.Sleep(5 * time.Second)
+
 	SetState(checkId, stateKey, C.CString("{\"persistent_counter\": 1}"))
 	getSecondState := GetState(checkId, stateKey)
 	assert.Equal(t, "{\"persistent_counter\": 1}", getSecondState)
+
+	time.Sleep(5 * time.Second)
 
 	SetState(checkId, stateKey, C.CString("{\"persistent_counter\": 2}"))
 	getThirdState := GetState(checkId, stateKey)
