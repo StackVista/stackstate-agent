@@ -1,12 +1,10 @@
 package state
 
 import (
-	"fmt"
 	"github.com/patrickmn/go-cache"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
 	"regexp"
 	"strings"
 	"sync"
@@ -101,26 +99,20 @@ func (cs *CheckStateManager) writeToDisk(key, value string) error {
 // key
 // TODO: Temp comment out for testing on a go routine bug
 func (cs *CheckStateManager) GetState(key string) (string, error) {
-	fmt.Println("Calling GetState")
-	fmt.Println(key)
-
 	// see if we have this key in the cache, otherwise read it from Disk
 	if value, found := cs.Cache.Get(key); found {
-		fmt.Printf("GetState Cache.Get Type: %s\n", reflect.TypeOf(value))
-		if val, ok := value.(string); ok {
-			fmt.Printf(val)
-			return "{}", nil
+		if typeAssertionValue, ok := value.(string); ok {
+			return typeAssertionValue, nil
 		}
 	}
 
-	//  state, err := cs.readFromDisk(key)
-	//  if err != nil {
-	//  	return "{}", err
-	//  }
-	//  // update the cache
-	//  cs.Cache.Set(key, state, cache.DefaultExpiration)
-	//  return state, nil
-	return "{}", nil
+	state, err := cs.readFromDisk(key)
+	if err != nil {
+		return "{}", err
+	}
+	// update the cache
+	cs.Cache.Set(key, state, cache.DefaultExpiration)
+	return state, nil
 }
 
 func (cs *CheckStateManager) readFromDisk(key string) (string, error) {

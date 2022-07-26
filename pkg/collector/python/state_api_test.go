@@ -2,7 +2,10 @@
 
 package python
 
-// TODO
-// func TestSetAndGetState(t *testing.T) {
-// 	testSetAndGetState(t)
-// }
+import (
+	"testing"
+)
+
+func TestSetAndGetState(t *testing.T) {
+	testSetAndGetState(t)
+}
