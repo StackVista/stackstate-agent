@@ -1,15 +1,18 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
 	"time"
 )
@@ -97,8 +100,6 @@ func TestNonTransactionalCheckHandler_StartTransaction(t *testing.T) {
 	GetCheckManager().Stop()
 }
 
-// TODO
-/*
 func TestNonTransactionalCheckHandler_State(t *testing.T) {
 	os.Setenv("DD_CHECK_STATE_ROOT_PATH", "./testdata")
 	state.InitCheckStateManager()
@@ -127,4 +128,3 @@ func TestNonTransactionalCheckHandler_State(t *testing.T) {
 	// reset to original
 	nonTransactionCH.SetState(stateKey, expectedState)
 }
-*/
