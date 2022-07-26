@@ -75,13 +75,14 @@ resource "aws_iam_role" "agent_ec2_role" {
   })
 }
 
-resource "aws_iam_role_policy" "test_policy" {
+resource "aws_iam_role_policy" "integration_role_policy" {
   name   = "${var.environment}-agent-ec2-policy"
   role   = aws_iam_role.agent_ec2_role.id
   policy = data.aws_iam_policy_document.integration_assume_role_policy.json
 }
 
-resource "aws_iam_instance_profile" "integrations_profile" {
+resource "aws_iam_instance_profile" "integration_profile" {
   name = "${var.environment}-instance-profile"
   role = aws_iam_role.agent_ec2_role.name
+  depends_on = [aws_iam_role_policy.integration_role_policy]
 }

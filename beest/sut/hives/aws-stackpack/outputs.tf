@@ -7,7 +7,7 @@ output "integration_role" {
 }
 
 output "integration_profile" {
-  value = aws_iam_instance_profile.integrations_profile.name
+  value = aws_iam_instance_profile.integration_profile.name
 }
 
 output "user_arn" {
