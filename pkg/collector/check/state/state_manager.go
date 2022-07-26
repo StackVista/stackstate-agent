@@ -77,7 +77,7 @@ func (cs *CheckStateManager) SetState(key, value string) error {
 		return err
 	}
 	// Insert / Update this in the CheckStateManager Cache
-	// cs.Cache.Set(key, value, cache.DefaultExpiration)
+	cs.Cache.Set(key, value, cache.DefaultExpiration)
 
 	return nil
 }
@@ -130,6 +130,7 @@ func (cs *CheckStateManager) readFromDisk(key string) (string, error) {
 	return strings.TrimSuffix(string(content), "\n"), nil
 }
 
+// Clear removes all the elements in the CheckStateManager Cache
 func (cs *CheckStateManager) Clear() {
 	cs.Cache.Flush()
 }
