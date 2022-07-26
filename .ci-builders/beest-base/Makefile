@@ -7,6 +7,13 @@ RUNTIMETAG         := $(shell date +%Y%m%d)
 DOCKER_REGISTRY    ?= docker.io
 BASE_KEEPER_IMAGE   = ${DOCKER_REGISTRY}/stackstate/beest:${RUNTIMETAG}
 
+ARTIFACTORY_PYPI_URL         ?= artifactory.tooling.stackstate.io/artifactory/api/pypi/pypi-local/simple
+ARTIFACTORY_USER             ?= NA
+ARTIFACTORY_PASSWORD         ?= NA
+DOCKER_BUILD_ARG              = --build-arg ARTIFACTORY_PYPI_URL=${ARTIFACTORY_PYPI_URL} \
+                                --build-arg ARTIFACTORY_USER=${ARTIFACTORY_USER} \
+                                --build-arg ARTIFACTORY_PASSWORD=${ARTIFACTORY_PASSWORD}
+
 GIT_BRANCH                    = $(shell git rev-parse --abbrev-ref HEAD)
 MAJOR_VERSION                ?= 2
 STS_AWS_TEST_BUCKET          ?= stackstate-agent-2-test
@@ -21,7 +28,7 @@ DOCKER_ENV		              = --env AGENT_CURRENT_BRANCH=${GIT_BRANCH} \
                                 --env PROCESS_AGENT_TEST_REPO=${PROCESS_AGENT_TEST_REPO}
 
 build:
-	docker build -t ${BASE_KEEPER_IMAGE} .
+	docker build ${DOCKER_BUILD_ARG} -t ${BASE_KEEPER_IMAGE} .
 
 push: build
 	docker push ${BASE_KEEPER_IMAGE}

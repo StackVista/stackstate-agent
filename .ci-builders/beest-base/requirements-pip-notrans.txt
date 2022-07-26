@@ -8,3 +8,4 @@ pyshorteners==1.0.1
 pytest-order==1.0.1
 pytest-testinfra==6.6.0
 pytest-watch==4.2.0
+stackstate-cli==5.0.0

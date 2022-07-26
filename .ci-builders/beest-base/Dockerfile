@@ -4,11 +4,22 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends less direnv unzip python3-pip bash-completion vim jq && \
     rm -rf /var/lib/apt/lists/*
 
+# configure python artifactory to pull stackstate-cli v1
+ARG ARTIFACTORY_PYPI_URL
+ARG ARTIFACTORY_USER
+ARG ARTIFACTORY_PASSWORD
+RUN mkdir ~/.pip/ && touch ~/.pip/pip.conf && \
+    echo "[global]" > ~/.pip/pip.conf && \
+    echo "extra-index-url = https://${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}@${ARTIFACTORY_PYPI_URL}" >> ~/.pip/pip.conf
+
 COPY requirements* ./
 RUN pip install -r requirements-pip-full.txt
 
 COPY ansible.cfg /etc/ansible/
 RUN ansible-galaxy collection install -r requirements-galaxy.yml
+
+# remove artifactory credentials
+RUN rm -rf ~/.pip
 
 ARG TERRAFORM_V=1.0.11
 RUN curl -O "https://releases.hashicorp.com/terraform/${TERRAFORM_V}/terraform_${TERRAFORM_V}_linux_amd64.zip" && \
@@ -51,15 +62,6 @@ RUN curl -L "https://github.com/wercker/stern/releases/download/${STERN_V}/stern
     chmod +x ./stern && \
     mv ./stern /usr/local/bin/
 
-#ARG KREW_V=0.4.2
-#RUN curl -LO "https://github.com/kubernetes-sigs/krew/releases/download/v${KREW_V}/krew-linux_amd64.tar.gz" && \
-#    tar zxvf krew-linux_amd64.tar.gz && \
-#    ./krew-linux_amd64 install krew && \
-#    PATH="/root/.krew/bin:$PATH" kubectl krew install ctx
-#
-#RUN kubectl krew install ctx && \
-#    kubectl krew install ns
-
 ARG HELM_V=3.7.1
 RUN curl -O "https://get.helm.sh/helm-v${HELM_V}-linux-amd64.tar.gz" && \
     tar xvzf helm-v${HELM_V}-linux-amd64.tar.gz && \
@@ -81,8 +83,8 @@ RUN curl -O "https://stseuw1-tooling-main-homebrew.s3.amazonaws.com/sts-toolbox/
     rm -r sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \
     mv ./sts-toolbox /usr/local/bin/
 
-ARG STSCLI_V=2.0.0
-RUN curl --insecure -O "https://cli-dl.stackstate.com.s3.amazonaws.com/stackstate-cli/v${STSCLI_V}/stackstate-cli-${STSCLI_V}.linux-x86_64.tar.gz" && \
-    tar xvzf stackstate-cli-${STSCLI_V}.linux-x86_64.tar.gz && \
-    rm -r stackstate-cli-${STSCLI_V}.linux-x86_64.tar.gz && \
+ARG STSCLI_V2=2.0.0
+RUN curl --insecure -O "https://cli-dl.stackstate.com.s3.amazonaws.com/stackstate-cli/v${STSCLI_V2}/stackstate-cli-${STSCLI_V2}.linux-x86_64.tar.gz" && \
+    tar xvzf stackstate-cli-${STSCLI_V2}.linux-x86_64.tar.gz && \
+    rm -r stackstate-cli-${STSCLI_V2}.linux-x86_64.tar.gz && \
     mv ./sts /usr/local/bin/
