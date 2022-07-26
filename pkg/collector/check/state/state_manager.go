@@ -77,7 +77,7 @@ func (cs *CheckStateManager) SetState(key, value string) error {
 		return err
 	}
 	// Insert / Update this in the CheckStateManager Cache
-	cs.Cache.Set(key, value, cache.DefaultExpiration)
+	// cs.Cache.Set(key, value, cache.DefaultExpiration)
 
 	return nil
 }
@@ -100,19 +100,19 @@ func (cs *CheckStateManager) writeToDisk(key, value string) error {
 // TODO: Temp comment out for testing on a go routine bug
 func (cs *CheckStateManager) GetState(key string) (string, error) {
 	// see if we have this key in the cache, otherwise read it from Disk
-	if value, found := cs.Cache.Get(key); found {
-		if _, ok := value.(string); ok {
-			// return typeAssertionValue, nil
-		}
-	}
+	//  if value, found := cs.Cache.Get(key); found {
+	//  	if _, ok := value.(string); ok {
+	//  		// return typeAssertionValue, nil
+	//  	}
+	//  }
 	state, err := cs.readFromDisk(key)
 	if err != nil {
-		// return "{}", err
+		return "{}", err
 	}
 	// update the cache
-	cs.Cache.Set(key, state, cache.DefaultExpiration)
-	// return state, nil
-	return "{\"persistent_counter\": 1}", nil
+	// cs.Cache.Set(key, state, cache.DefaultExpiration)
+	return state, nil
+	// return "{\"persistent_counter\": 1}", nil
 }
 
 func (cs *CheckStateManager) readFromDisk(key string) (string, error) {

@@ -43,6 +43,10 @@ func testSetAndGetState(t *testing.T) {
 	checkId := C.CString(string(testCheck.ID()))
 	stateKey := C.CString("random-state-id")
 
+	// Calling get state on nothing to make sure a empty works
+	GetState(checkId, stateKey)
+
+	SetState(checkId, stateKey, C.CString("{}"))
 	getFirstState := GetState(checkId, stateKey)
 	assert.Equal(t, "{}", getFirstState)
 
