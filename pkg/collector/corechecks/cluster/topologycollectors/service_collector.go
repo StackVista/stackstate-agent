@@ -5,8 +5,6 @@ package topologycollectors
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/collector/util"
-
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/dns"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -28,8 +26,6 @@ type EndpointID struct {
 	URL           string
 	RefExternalID string
 }
-
-var EndpointDisabledWarning = util.NewRunOnce()
 
 // NewServiceCollector
 func NewServiceCollector(
@@ -56,6 +52,10 @@ func (*ServiceCollector) GetName() string {
 
 // Collects and Published the Service Components
 func (sc *ServiceCollector) CollectorFunction() error {
+	// close endpoint correlation channel
+	// it will signal service2pod correlator to proceed
+	defer close(sc.EndpointCorrChan)
+
 	services, err := sc.GetAPIClient().GetServices()
 	if err != nil {
 		return err
@@ -146,10 +146,6 @@ func (sc *ServiceCollector) CollectorFunction() error {
 
 		serviceMap[serviceID] = append(serviceMap[serviceID], component.ExternalID)
 	}
-
-	// close endpoint correlation channel
-	// it will signal service2pod correlator to proceed
-	close(sc.EndpointCorrChan)
 
 	return nil
 }

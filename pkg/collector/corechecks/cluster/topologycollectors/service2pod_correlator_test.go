@@ -44,7 +44,7 @@ func TestService2PodCorrelator(t *testing.T) {
 		service,
 	}, []coreV1.Endpoints{
 		endpoint,
-	})
+	}, true)
 
 	expectedPod1ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod1Name)
 	expectedPod2ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod2Name)
@@ -70,6 +70,64 @@ func TestService2PodCorrelator(t *testing.T) {
 		simpleRelation(expectedSvcID, expectedPod2ID, "exposes"),
 		// no relation to pod3 - it's not mentioned in the endpoints and has different port
 		// no relation to pod4 - it's mentioned in the endpoints, but has different port
+	}
+
+	assert.EqualValues(t, expectedComponents, components)
+	assert.EqualValues(t, expectedRelations, relations)
+	return
+}
+
+func TestService2PodCorrelatorWhenEndpointsDisabled(t *testing.T) {
+	clusterName := "test-cluster-name"
+	namespace := "default"
+	svcName := "kubernetes"
+	hostPort := int32(443)
+	pod1Name := "kube-apiserver-1"
+	host1IP := "10.77.0.1"
+	pod2Name := "kube-apiserver-2"
+	host2IP := "10.77.0.2"
+	pod3Name := "unrelated-3"
+	host3IP := "10.77.0.3"
+	pod4Name := "unrelated-4"
+	host4IP := "10.77.0.4"
+	hostUnrelatedPort := int32(888)
+	someTimestamp := metav1.NewTime(time.Now())
+
+	pod1 := podWithHostPortExposed(namespace, pod1Name, someTimestamp, host1IP, hostPort)
+	pod2 := podWithHostPortExposed(namespace, pod2Name, someTimestamp, host2IP, hostPort)
+	pod3 := podWithHostPortExposed(namespace, pod3Name, someTimestamp, host3IP, hostUnrelatedPort)
+	pod4 := podWithHostPortExposed(namespace, pod4Name, someTimestamp, host4IP, hostUnrelatedPort)
+	service := serviceWithSinglePort(namespace, svcName, someTimestamp, hostPort)
+	endpoint := endpointsForASinglePort(namespace, svcName, someTimestamp, hostPort, host1IP, host2IP, host4IP)
+
+	components, relations := executeCorrelation(t, []coreV1.Pod{
+		pod1, pod2, pod3, pod4,
+	}, []coreV1.Service{
+		service,
+	}, []coreV1.Endpoints{
+		endpoint,
+	}, false)
+
+	expectedPod1ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod1Name)
+	expectedPod2ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod2Name)
+	expectedPod3ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod3Name)
+	expectedPod4ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod4Name)
+	expectedSvcID := fmt.Sprintf("urn:kubernetes:/%s:%s:service/%s", clusterName, namespace, svcName)
+	expectedNamespaceID := fmt.Sprintf("urn:kubernetes:/%s:namespace/%s", clusterName, namespace)
+	expectedComponents := []*topology.Component{
+		podComponentWithHostPortExposed(clusterName, namespace, pod1Name, expectedPod1ID, host1IP, someTimestamp, pod1.Status),
+		podComponentWithHostPortExposed(clusterName, namespace, pod2Name, expectedPod2ID, host2IP, someTimestamp, pod2.Status),
+		podComponentWithHostPortExposed(clusterName, namespace, pod3Name, expectedPod3ID, host3IP, someTimestamp, pod3.Status),
+		podComponentWithHostPortExposed(clusterName, namespace, pod4Name, expectedPod4ID, host4IP, someTimestamp, pod4.Status),
+		serviceComponentWithSinglePort(clusterName, namespace, expectedSvcID, svcName, someTimestamp),
+	}
+	expectedRelations := []*topology.Relation{
+		simpleRelation(expectedNamespaceID, expectedPod1ID, "encloses"),
+		simpleRelation(expectedNamespaceID, expectedPod2ID, "encloses"),
+		simpleRelation(expectedNamespaceID, expectedPod3ID, "encloses"),
+		simpleRelation(expectedNamespaceID, expectedPod4ID, "encloses"),
+		simpleRelation(expectedNamespaceID, expectedSvcID, "encloses"),
+		// no relations between svc and pods should appear
 	}
 
 	assert.EqualValues(t, expectedComponents, components)
@@ -205,7 +263,13 @@ func podWithHostPortExposed(namespace string, name string, timestamp metav1.Time
 	}
 }
 
-func executeCorrelation(t *testing.T, pods []coreV1.Pod, services []coreV1.Service, endpoints []coreV1.Endpoints) ([]*topology.Component, []*topology.Relation) {
+func executeCorrelation(
+	t *testing.T,
+	pods []coreV1.Pod,
+	services []coreV1.Service,
+	endpoints []coreV1.Endpoints,
+	endpointsEnabled bool,
+) ([]*topology.Component, []*topology.Relation) {
 
 	componentChannel := make(chan *topology.Component)
 	defer close(componentChannel)
@@ -232,7 +296,10 @@ func executeCorrelation(t *testing.T, pods []coreV1.Pod, services []coreV1.Servi
 		podCorrChannel,
 		NewTestCommonClusterCollector(clusterAPIClient, false),
 	)
-	svcCollector := NewServiceCollector(componentChannel, relationChannel, serviceCorrChannel, NewTestCommonClusterCollector(clusterAPIClient, false), true)
+	svcCollector := NewServiceCollector(
+		componentChannel, relationChannel, serviceCorrChannel,
+		NewTestCommonClusterCollector(clusterAPIClient, false),
+		endpointsEnabled)
 
 	collectorsFinishChan := make(chan bool)
 	correlatorFinishChan := make(chan bool)

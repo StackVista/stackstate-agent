@@ -31,6 +31,17 @@ type TopologyCheck struct {
 	submitter TopologySubmitter
 }
 
+func warnDisabledResource(name string, additionalWarning string, isEnabled bool) {
+	if !isEnabled {
+		if additionalWarning != "" {
+			additionalWarning = ": " + additionalWarning
+		}
+		log.Infof("Collection of %s is disabled%s. "+
+			"To enable, set the `clusterAgent.collection.kubernetesResources.%s` setting "+
+			"to true in your helm values.yaml file", name, additionalWarning, name)
+	}
+}
+
 // Configure parses the check configuration and init the check.
 func (t *TopologyCheck) Configure(config, initConfig integration.Data, source string) error {
 	err := t.ConfigureKubeAPICheck(config, source)
@@ -42,17 +53,6 @@ func (t *TopologyCheck) Configure(config, initConfig integration.Data, source st
 	if err != nil {
 		_ = log.Error("could not parse the config for the API topology check")
 		return err
-	}
-
-	warnDisabledResource := func(name string, additionalWarning string, isEnabled bool) {
-		if !isEnabled {
-			if additionalWarning != "" {
-				additionalWarning = ": " + additionalWarning
-			}
-			log.Infof("Collection of %s is disabled%s. "+
-				"To enable, set the `clusterAgent.collection.kubernetesResources.%s` setting "+
-				"to true in your helm values.yaml file", name, additionalWarning, name)
-		}
 	}
 
 	warnDisabledResource("persistentvolumes", "", t.instance.Resources.Persistentvolumes)
@@ -367,13 +367,13 @@ func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
 
 // runs all of the cluster collectors, notify the wait groups and submit errors to the error channel
 func (t *TopologyCheck) RunClusterCollectors(clusterCollectors []collectors.ClusterTopologyCollector, clusterCorrelators []collectors.ClusterTopologyCorrelator, waitGroup *sync.WaitGroup, errorChannel chan<- error) {
-	waitGroup.Add(len(clusterCollectors))
-	waitGroup.Add(len(clusterCorrelators))
+	waitGroup.Add(1 + len(clusterCorrelators))
 	go func() {
 		for _, collector := range clusterCollectors {
 			// add this collector to the wait group
-			runCollector(collector, errorChannel, waitGroup)
+			runCollector(collector, errorChannel)
 		}
+		waitGroup.Done()
 	}()
 	// Run all correlators in parallel to avoid blocking channels
 	for _, correlator := range clusterCorrelators {
@@ -382,7 +382,7 @@ func (t *TopologyCheck) RunClusterCollectors(clusterCollectors []collectors.Clus
 }
 
 // runCollector
-func runCollector(collector collectors.ClusterTopologyCollector, errorChannel chan<- error, wg *sync.WaitGroup) {
+func runCollector(collector collectors.ClusterTopologyCollector, errorChannel chan<- error) {
 	log.Debugf("Starting cluster topology collector: %s\n", collector.GetName())
 	err := collector.CollectorFunction()
 	if err != nil {
@@ -390,19 +390,17 @@ func runCollector(collector collectors.ClusterTopologyCollector, errorChannel ch
 	}
 	// mark this collector as complete
 	log.Debugf("Finished cluster topology collector: %s\n", collector.GetName())
-	wg.Done()
 }
 
 // runCorrelator
 func runCorrelator(correlator collectors.ClusterTopologyCorrelator, errorChannel chan<- error, wg *sync.WaitGroup) {
+	defer wg.Done()
 	log.Debugf("Starting cluster topology correlator: %s\n", correlator.GetName())
 	err := correlator.CorrelateFunction()
 	if err != nil {
 		errorChannel <- err
 	}
-	// mark this collector as complete
 	log.Debugf("Finished cluster topology correlator: %s\n", correlator.GetName())
-	wg.Done()
 }
 
 // KubernetesAPITopologyFactory is exported for integration testing.

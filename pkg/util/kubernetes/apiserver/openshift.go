@@ -18,7 +18,13 @@ var _ OpenShiftDetector = (*APIClient)(nil) // Compile-time check
 // non-standard `/oapi` URL prefix to standard api groups under the `/apis`
 // prefix in 3.6. Detecting both, with a preference for the new prefix.
 func (c *APIClient) DetectOpenShiftAPILevel() OpenShiftAPILevel {
-	err := c.Cl.CoreV1().RESTClient().Get().AbsPath("/apis/quota.openshift.io").Do().Error()
+	restClient := c.Cl.CoreV1().RESTClient()
+	if restClient == nil {
+		log.Errorf("No REST client in K8s corev1 client, this can happen only at test-time")
+		return NotOpenShift
+	}
+
+	err := restClient.Get().AbsPath("/apis/quota.openshift.io").Do().Error()
 	if err == nil {
 		log.Debugf("Found %s", OpenShiftAPIGroup)
 		return OpenShiftAPIGroup
