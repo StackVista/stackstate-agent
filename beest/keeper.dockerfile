@@ -14,8 +14,6 @@ RUN if [ $UNAME_S = "Linux" ]; then \
       usermod -a -G docker $MYUSER; \
     fi
 
-USER $MYUSER
-
 COPY direnv.toml /home/$MYUSER/.config/direnv/
 RUN chown -R $MYUSER:$MYUSER /home/$MYUSER/.config/
 
@@ -24,6 +22,7 @@ RUN chown -R $MYUSER:$MYUSER /home/$MYUSER/.config/
 RUN mkdir /go/pkg && \
     chmod a+w /go/pkg
 
+USER $MYUSER
 WORKDIR /go/src/app
 
 CMD ["bash", "--init-file", "./bootstrap.sh"]

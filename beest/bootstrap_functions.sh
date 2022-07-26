@@ -1,4 +1,5 @@
 enable_auto_completions() {
+    source  ~/.bashrc
     echo "Enable auto-completions ..."
     complete -C '/usr/local/bin/aws_completer' aws
     eval "$(sts-toolbox completion bash)"
