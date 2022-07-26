@@ -139,20 +139,12 @@ func TestProcessCheck(t *testing.T) {
 			},
 			processes: processes{
 				42: {
-					Name:    "proc1",
-					Cmdline: []string{"arg1"},
-				},
-				38: {
 					Name:    "proc2",
-					Cmdline: []string{"arg1", "--tlsverify"},
+					Cmdline: []string{"arg1", "--path=foo"},
 				},
-			},
-			expectReport: &compliance.Report{
-				Passed: true,
-				Data: event.Data{
-					"process.name":    "proc2",
-					"process.exe":     "",
-					"process.cmdLine": []string{"arg1", "--tlsverify"},
+				43: {
+					Name:    "proc3",
+					Cmdline: []string{"arg1", "--path=foo"},
 				},
 			},
 			expectReport: &compliance.Report{
@@ -171,12 +163,8 @@ func TestProcessCheck(t *testing.T) {
 			},
 			processes: processes{
 				42: {
-					Name:    "proc2",
-					Cmdline: []string{"arg1", "--path=foo"},
-				},
-				43: {
-					Name:    "proc3",
-					Cmdline: []string{"arg1", "--path=foo"},
+					Name:    "proc1",
+					Cmdline: []string{"arg1", "--paths=foo"},
 				},
 			},
 			expectReport: &compliance.Report{

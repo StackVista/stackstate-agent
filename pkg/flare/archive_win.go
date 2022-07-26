@@ -189,7 +189,7 @@ func exportWindowsEventLog(eventLogChannel, eventLogQuery, destFileName, tempDir
 		uintptr(unsafe.Pointer(eventLogChannelUtf16)),  // Channel name
 		uintptr(unsafe.Pointer(eventLogQueryUtf16)),    // Query
 		uintptr(unsafe.Pointer(destFullFileNameUtf16)), // Destination file name
-		uintptr(evtExportLogChannelPath)) // DWORD. Specify that the second parameter is a channel name
+		uintptr(evtExportLogChannelPath))               // DWORD. Specify that the second parameter is a channel name
 
 	// ret is a DWORD, TRUE for success, FALSE for failure.
 	if ret == 0 {

@@ -62,6 +62,9 @@ from .test import (
     test,
 )
 
+# [sts] Security agent
+enable_security_agent = False
+
 # the root namespace
 ns = Collection()
 
