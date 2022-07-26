@@ -105,8 +105,11 @@ func (cs *CheckStateManager) GetState(key string) (string, error) {
 
 	// see if we have this key in the cache, otherwise read it from Disk
 	if value, found := cs.Cache.Get(key); found {
-		return value.(string), nil
+		if typeAssertionValue, ok := value.(string); ok {
+			return typeAssertionValue, nil
+		}
 	}
+
 	//  state, err := cs.readFromDisk(key)
 	//  if err != nil {
 	//  	return "{}", err
