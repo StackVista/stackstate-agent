@@ -1,7 +1,7 @@
 package state
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"fmt"
 	"github.com/patrickmn/go-cache"
 	"io/ioutil"
 	"os"
@@ -100,11 +100,12 @@ func (cs *CheckStateManager) writeToDisk(key, value string) error {
 // key
 // TODO: Temp comment out for testing on a go routine bug
 func (cs *CheckStateManager) GetState(key string) (string, error) {
-	log.Info("Calling GetState")
-	log.Info(key)
+	fmt.Println("Calling GetState")
+	fmt.Println(key)
 
 	// see if we have this key in the cache, otherwise read it from Disk
 	if value, found := cs.Cache.Get(key); found {
+		fmt.Println("Type: %T", value)
 		if typeAssertionValue, ok := value.(string); ok {
 			return typeAssertionValue, nil
 		}
