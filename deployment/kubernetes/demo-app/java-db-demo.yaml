@@ -64,7 +64,7 @@ spec:
     spec:
       containers:
         - name: books-app
-          image: quay.io/stackstate/trace-java-demo:books-app-20220720
+          image: quay.io/stackstate/trace-java-demo:books-app-master
           imagePullPolicy: Always
           ports:
             - containerPort: 8081

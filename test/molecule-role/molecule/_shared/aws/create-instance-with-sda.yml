@@ -12,7 +12,7 @@
         ebs:
           delete_on_termination: true
           volume_size: 30
-          volume_type: "gp2"
+          volume_type: "gp3"
     tags:
       Name: "{{ item.name }}"
       instance: "{{ item.name }}"
