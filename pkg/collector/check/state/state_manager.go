@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"sync"
@@ -105,9 +106,10 @@ func (cs *CheckStateManager) GetState(key string) (string, error) {
 
 	// see if we have this key in the cache, otherwise read it from Disk
 	if value, found := cs.Cache.Get(key); found {
-		fmt.Println("Type: %T", value)
-		if typeAssertionValue, ok := value.(string); ok {
-			return typeAssertionValue, nil
+		fmt.Printf("GetState Cache.Get Type: %s\n", reflect.TypeOf(value))
+		if val, ok := value.(string); ok {
+			fmt.Printf(val)
+			return "{}", nil
 		}
 	}
 
