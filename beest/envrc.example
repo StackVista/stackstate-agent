@@ -16,5 +16,5 @@ export artifactory_password=TBD
 export RUN_ID=$AGENT_CURRENT_BRANCH
 
 export STACKSTATE_BRANCH=master
-export STACKSTATE_HELM_CHART=">0.0.0-0"  # use development versions
+export STACKSTATE_HELM_CHART_VERSION=">0.0.0-0"  # use development versions
 export STACKSTATE_LICENSE=TBD

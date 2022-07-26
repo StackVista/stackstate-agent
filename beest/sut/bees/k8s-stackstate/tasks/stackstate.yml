@@ -35,7 +35,7 @@
     kubernetes.core.helm:
       context: "{{ kubecontext }}"
       chart_ref: stackstate-internal/stackstate
-      chart_version: "{{ stackstate_helm_chart }}"
+      chart_version: "{{ stackstate_helm_chart_version }}"
       release_name: stackstate
       release_namespace: "{{ namespace }}"
       create_namespace: true
