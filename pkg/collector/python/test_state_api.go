@@ -48,17 +48,17 @@ func testSetAndGetState(t *testing.T) {
 
 	SetState(checkId, stateKey, C.CString("{}"))
 	getFirstState := GetState(checkId, stateKey)
-	assert.Equal(t, "{}", getFirstState)
+	assert.Equal(t, C.CString("{}"), getFirstState)
 
 	time.Sleep(5 * time.Second)
 
 	SetState(checkId, stateKey, C.CString("{\"persistent_counter\": 1}"))
 	getSecondState := GetState(checkId, stateKey)
-	assert.Equal(t, "{\"persistent_counter\": 1}", getSecondState)
+	assert.Equal(t, C.CString("{\"persistent_counter\": 1}"), getSecondState)
 
 	time.Sleep(5 * time.Second)
 
 	SetState(checkId, stateKey, C.CString("{\"persistent_counter\": 2}"))
 	getThirdState := GetState(checkId, stateKey)
-	assert.Equal(t, "{\"persistent_counter\": 2}", getThirdState)
+	assert.Equal(t, C.CString("{\"persistent_counter\": 2}"), getThirdState)
 }
