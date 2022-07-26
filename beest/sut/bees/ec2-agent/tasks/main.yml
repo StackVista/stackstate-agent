@@ -29,3 +29,21 @@
       ansible.builtin.service:
         name: stackstate-agent
         state: restarted
+
+
+## Cleanup
+
+- name: StackState Agent cleanup tasks
+  tags: cleanup
+  block:
+    - name: Uninstall stackstate-agent
+      become: yes
+      apt:
+        pkg: stackstate-agent
+        state: absent
+
+    - name: Remove configurations
+      become: yes
+      file:
+        path: /etc/stackstate-agent
+        state: absent
