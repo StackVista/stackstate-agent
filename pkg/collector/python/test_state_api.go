@@ -4,42 +4,61 @@
 package python
 
 import (
-	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"io/ioutil"
+	"log"
 	"os"
 	"testing"
+	"time"
 )
 
 // #include <datadog_agent_rtloader.h>
 import "C"
 
 func testSetAndGetState(t *testing.T) {
-	// Create a temp directory to store the state results in
-	testDir, err := ioutil.TempDir("", "fake-datadog-run-")
-	require.Nil(t, err, fmt.Sprintf("%v", err))
-	defer os.RemoveAll(testDir)
+	path := config.Datadog.Get("check_state_root_path").(string)
+	err := os.MkdirAll(path, os.ModePerm)
+	if err != nil {
+		log.Println(err)
+	}
+	defer os.RemoveAll(path)
+
 	mockConfig := config.Mock()
 
 	// Set the run path to the temp directory above, this will allow the persistent cache to have a folder to write into
 	// Without doing the above persistent cache will generate a folder does not exist error
-	mockConfig.Set("run_path", testDir)
+	mockConfig.Set("run_path", path)
+	mockConfig.Set("check_state_root_path", path)
 
 	SetupTransactionalComponents()
-	testCheck := &check.STSTestCheck{Name: "check-id-set-state"}
+	testCheck := &check.STSTestCheck{
+		Name: "check-id-set-state",
+	}
+
 	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	checkId := C.CString(string(testCheck.ID()))
-	stateKey := C.CString("state-id")
-	stateBody := C.CString("state-body")
+	stateKey := C.CString("random-state-id")
 
-	SetState(checkId, stateKey, stateBody)
-	retrievedStateBody := GetState(checkId, stateKey)
+	// Calling get state on nothing to make sure a empty works
+	GetState(checkId, stateKey)
 
-	assert.Equal(t, "state-body", retrievedStateBody)
+	SetState(checkId, stateKey, C.CString("{}"))
+	getFirstState := GetState(checkId, stateKey)
+	assert.Equal(t, C.CString("{}"), getFirstState)
+
+	time.Sleep(5 * time.Second)
+
+	SetState(checkId, stateKey, C.CString("{\"persistent_counter\": 1}"))
+	getSecondState := GetState(checkId, stateKey)
+	assert.Equal(t, C.CString("{\"persistent_counter\": 1}"), getSecondState)
+
+	time.Sleep(5 * time.Second)
+
+	SetState(checkId, stateKey, C.CString("{\"persistent_counter\": 2}"))
+	getThirdState := GetState(checkId, stateKey)
+	assert.Equal(t, C.CString("{\"persistent_counter\": 2}"), getThirdState)
 }

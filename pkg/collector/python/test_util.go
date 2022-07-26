@@ -13,6 +13,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,6 +22,9 @@ import (
 import "C"
 
 func SetupTransactionalComponents() {
+	// Set storage root for tests
+	config.Datadog.Set("check_state_root_path", "/tmp/fake-datadog-run")
+
 	handler.InitCheckManager(handler.CheckNoReloader{})
 	state.InitCheckStateManager()
 	transactionbatcher.NewMockTransactionalBatcher()

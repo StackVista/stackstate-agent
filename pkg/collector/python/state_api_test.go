@@ -2,7 +2,9 @@
 
 package python
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestSetAndGetState(t *testing.T) {
 	testSetAndGetState(t)

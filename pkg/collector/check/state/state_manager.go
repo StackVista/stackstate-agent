@@ -76,7 +76,6 @@ func (cs *CheckStateManager) SetState(key, value string) error {
 	if err != nil {
 		return err
 	}
-
 	// Insert / Update this in the CheckStateManager Cache
 	cs.Cache.Set(key, value, cache.DefaultExpiration)
 
@@ -101,9 +100,10 @@ func (cs *CheckStateManager) writeToDisk(key, value string) error {
 func (cs *CheckStateManager) GetState(key string) (string, error) {
 	// see if we have this key in the cache, otherwise read it from Disk
 	if value, found := cs.Cache.Get(key); found {
-		return value.(string), nil
+		if typeAssertionValue, ok := value.(string); ok {
+			return typeAssertionValue, nil
+		}
 	}
-
 	state, err := cs.readFromDisk(key)
 	if err != nil {
 		return "{}", err
@@ -116,7 +116,7 @@ func (cs *CheckStateManager) GetState(key string) (string, error) {
 func (cs *CheckStateManager) readFromDisk(key string) (string, error) {
 	path, err := cs.getFileForKey(key)
 	if err != nil {
-		return "", err
+		return "{}", err
 	}
 	_, err = os.Stat(path)
 	if os.IsNotExist(err) {
@@ -124,7 +124,7 @@ func (cs *CheckStateManager) readFromDisk(key string) (string, error) {
 	}
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
-		return "", err
+		return "{}", err
 	}
 	// return the string, removing any trailing new lines
 	return strings.TrimSuffix(string(content), "\n"), nil
