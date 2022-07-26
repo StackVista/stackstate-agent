@@ -1,10 +1,9 @@
 import json
-import os
-import tempfile
+import hashlib
 import logging
+import os
 
 from testinfra.host import Host
-import hashlib
 
 from .models import *
 
@@ -52,31 +51,16 @@ class CLIv1:
             except IOError:
                 pass
 
-        ctx = "context={{ kubecontext }}"
-        ns = "namespace={{ namespace }}"
-        pod = "pod=stackstate-cli"
-
-        # Transfer query to a file inside the cli pod
-        fd, path = tempfile.mkstemp()
-        try:
-            # Write topology query to a temporary file first
-            with os.fdopen(fd, 'w') as tmp_topo_query:
-                # do stuff with temp file
-                tmp_topo_query.write(fullquery)
-
-            local_path = f"local_path=\"{path}\""
-            remote_path = "remote_path=\"/query.stql\""
-            # then transfer it
-            transfer_result = self.host.ansible("kubernetes.core.k8s_cp", f"{ctx} {ns} {pod} {local_path} {remote_path}", verbose=4)
-            log.info(f"transferred STSL script to CLI pod: {transfer_result}")
-        finally:
-            os.remove(path)
+        # Write topology query into the expected file
+        home = os.path.expanduser("~")
+        with open(f"{home}/sts-query.stsl", 'w') as script_query:
+            # do stuff with temp file
+            script_query.write(fullquery)
 
         # Execute the query
-        command = f"command=\"bash query.sh\""
-        executed = self.host.ansible("kubernetes.core.k8s_exec", f"{ctx} {ns} {pod} {command}", verbose=4)
+        executed = self.host.run(f"{home}/sts-query.sh")
         log.info(f"executed STSL script: {executed}")
-        json_data = json.loads(executed["stdout"])['result']
+        json_data = json.loads(executed.stdout)['result']
         if self.cache_enabled:
             with open(cachefile, 'w') as f:
                 f.write(executed["stdout"])
@@ -126,4 +110,3 @@ Topology.query('__QUERY__')
     }
   }
 """.replace('__QUERY__', escaped_query)
-

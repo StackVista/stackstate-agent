@@ -40,79 +40,53 @@
           - kind: ServiceAccount
             name: stackstate-admin
 
-  - name: Create CLI entrypoint script ConfigMap
-    kubernetes.core.k8s:
-      context: "{{ kubecontext }}"
-      definition:
-        apiVersion: v1
-        kind: ConfigMap
-        metadata:
-          name: cli-config
-          namespace: "{{ namespace }}"
-        data:
-          cli-entrypoint.sh: "{{ lookup('file', 'cli-entrypoint.sh') }}"
-
-  - name: Start the CLI pod
-    kubernetes.core.k8s:
-      context: "{{ kubecontext }}"
-      definition:
-        apiVersion: v1
-        kind: Pod
-        metadata:
-          name: stackstate-cli
-          namespace: "{{ namespace }}"
-        spec:
-          # this makes kubernetes.io/serviceaccount/token available and used for authenticating against stackstate-api
-          serviceAccount: stackstate-admin
-          containers:
-            - name: cli
-              image: stackstate/stackstate-cli:4.5.5
-              command: ["/root/cli/cli-entrypoint.sh"] # TODO: Can we find a better way to keep it running ?
-              volumeMounts:
-                - name: config-volume
-                  mountPath: /root/cli
-          volumes:
-            - name: config-volume
-              configMap:
-                name: cli-config
-                defaultMode: 0777
-
-  # We can only execute simple commands from pytest, pipes cannot be used directly
-  - name: Copy query script
-    kubernetes.core.k8s_cp:
+  - name: Get ServiceAccount object
+    kubernetes.core.k8s_info:
       context: "{{ kubecontext }}"
       namespace: "{{ namespace }}"
-      pod: stackstate-cli
-      local_path: "{{ role_path }}/files/query.sh"
-      remote_path: "/query.sh"
+      kind: ServiceAccount
+      name: stackstate-admin
+    register: service_account_obj
+
+  - name: service_account_obj
+    debug:
+      var: service_account_obj.resources[0].secrets[0].name
+
+  - name: Get Secret object
+    kubernetes.core.k8s_info:
+      context: "{{ kubecontext }}"
+      namespace: "{{ namespace }}"
+      kind: Secret
+      name: "{{ service_account_obj.resources[0].secrets[0].name }}"
+    register: secret_obj
+
+  - name: Set a stackstate-admin-token
+    ansible.builtin.set_fact:
+      stackstate_admin_token: "{{ secret_obj.resources[0].data.token | b64decode }}"
+
+  - name: stackstate-admin token
+    debug:
+      var: stackstate_admin_token
 
 # TODO: Once cli v2 supports token_auth we can use the secret associated with the SA, see https://stackstate.atlassian.net/browse/STAC-16951
 # kubectl -n <namespace> get secret stackstate-admin-token-<xyz> -o jsonpath={.data.token} | base64 -d
 #
-#  - name: Get ServiceAccount object
-#    kubernetes.core.k8s_info:
-#      context: "{{ kubecontext }}"
-#      namespace: "{{ namespace }}"
-#      kind: ServiceAccount
-#      name: stackstate-admin
-#    register: service_account_obj
-#
-#  - name: service_account_obj
-#    debug:
-#      var: service_account_obj.resources[0].secrets[0].name
-#
-#  - name: Get Secret object
-#    kubernetes.core.k8s_info:
-#      context: "{{ kubecontext }}"
-#      namespace: "{{ namespace }}"
-#      kind: Secret
-#      name: "{{ service_account_obj.resources[0].secrets[0].name }}"
-#    register: secret_obj
-#
-#  - name: Set a stackstate-admin-token
-#    ansible.builtin.set_fact:
-#      stackstate_admin_token: "{{ secret_obj.resources[0].data.token | b64decode }}"
-#
-#  - name: stackstate-admin token
-#    debug:
-#      var: stackstate_admin_token
+# sts context save --url $STS_URL --api-token $STS_API_TOKEN
+
+  - name: Ensure .stackstate directory exists
+    file:
+      path: "~/.stackstate/cli"
+      state: directory
+      recurse: yes
+
+  - name: Generate CLI v1 config
+    ansible.builtin.template:
+      src: sts-cli-v1-config.j2.yml
+      dest: "~/.stackstate/cli/conf.yaml"
+
+  # We can only execute simple commands from pytest, pipes cannot be used directly
+  - name: Copy stackstate query script
+    ansible.builtin.copy:
+      src: "sts-query.sh"
+      dest: "~/sts-query.sh"
+      mode: preserve

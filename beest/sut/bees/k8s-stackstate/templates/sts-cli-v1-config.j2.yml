@@ -1,0 +1,17 @@
+instances:
+  default:
+    base_api:
+      url: "{{ sts_url }}"
+      token_auth:
+        token: "{{ stackstate_admin_token }}"
+    receiver_api:
+      url: "{{ sts_url }}/receiver"
+    admin_api:
+      url: "{{ sts_url }}/admin"
+      token_auth:
+        token: "{{ stackstate_admin_token }}"
+    clients:
+      default:
+        api_key: "{{ sts_api_key }}"
+        hostname: "beest-keeper"
+        internal_hostname: "beest-keeper"
