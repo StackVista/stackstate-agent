@@ -38,6 +38,7 @@ func NewBatchBuilder(maxCapacity int) BatchBuilder {
 	}
 }
 
+// DisabledForceFlush disables flushing data when topology/health snapshot stop signal is received
 func (builder *BatchBuilder) DisabledForceFlush() {
 	builder.noForceFlash = true
 }
