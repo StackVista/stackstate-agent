@@ -14,8 +14,10 @@ type MockBatcher struct {
 }
 
 func createMockBatcher() *MockBatcher {
+	batchBuilder := NewBatchBuilder(1000)
+	batchBuilder.DisabledForceFlush()
 	return &MockBatcher{
-		CollectedTopology: NewBatchBuilder(1000),
+		CollectedTopology: batchBuilder,
 	}
 }
 

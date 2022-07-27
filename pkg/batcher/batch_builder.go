@@ -24,6 +24,8 @@ type BatchBuilder struct {
 	elementCount int
 	// Amount of elements when we flush
 	maxCapacity int
+	// Disable flushing data when topology/health snapshot stop signal is received
+	noForceFlash bool
 }
 
 // NewBatchBuilder constructs a BatchBuilder
@@ -32,7 +34,12 @@ func NewBatchBuilder(maxCapacity int) BatchBuilder {
 		states:       make(map[check.ID]CheckInstanceBatchState),
 		elementCount: 0,
 		maxCapacity:  maxCapacity,
+		noForceFlash: false,
 	}
+}
+
+func (builder *BatchBuilder) DisabledForceFlush() {
+	builder.noForceFlash = true
 }
 
 func (builder *BatchBuilder) getOrCreateState(checkID check.ID) CheckInstanceBatchState {
@@ -130,7 +137,10 @@ func (builder *BatchBuilder) TopologyStopSnapshot(checkID check.ID, instance top
 	topologyData := builder.getOrCreateTopology(checkID, instance)
 	topologyData.StopSnapshot = true
 	// We always flush after a TopologyStopSnapshot to limit latency
-	return builder.Flush()
+	if !builder.noForceFlash {
+		return builder.Flush()
+	}
+	return nil
 }
 
 // Delete deletes a topology element
@@ -165,7 +175,10 @@ func (builder *BatchBuilder) HealthStopSnapshot(checkID check.ID, stream health.
 	healthData.StopSnapshot = &health.StopSnapshotMetadata{}
 	builder.states[checkID].Health[stream.GoString()] = healthData
 	// We always flush after a TopologyStopSnapshot to limit latency
-	return builder.Flush()
+	if !builder.noForceFlash {
+		return builder.Flush()
+	}
+	return nil
 }
 
 // AddRawMetricsData adds raw metric data
