@@ -26,7 +26,9 @@ beest-keeper:
   stage: build
   script:
     - cd $RUNNER_BEEST_BASE
-    - make
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"${docker_user}\",\"password\":\"${docker_password}\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context "$CI_PROJECT_DIR" --build-arg ARTIFACTORY_PYPI_URL=${ARTIFACTORY_PYPI_URL} --build-arg ARTIFACTORY_USER=${ARTIFACTORY_USER} --build-arg ARTIFACTORY_PASSWORD=${ARTIFACTORY_PASSWORD}--dockerfile "$RUNNER_BEEST_BASE/Dockerfile" --destination "docker.io/stackstate/beest:${CI_COMMIT_REF_NAME}" --destination "docker.io/stackstate/beest:${CI_COMMIT_SHORT_SHA}"
   rules:
     - if: $CI_COMMIT_MESSAGE =~ /\[build_runner_beest]/
       when: always
