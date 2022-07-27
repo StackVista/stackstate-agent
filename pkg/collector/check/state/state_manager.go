@@ -108,7 +108,7 @@ func (cs *CheckStateManager) GetState(key string) (string, error) {
 	// see if we have this key in the cache, otherwise read it from Disk
 	if value, found := cs.Cache.Get(key); found {
 		if typeAssertionValue, ok := value.(string); ok {
-			log.Infof("Get State retrieved from the cache")
+			log.Infof("Get State retrieved from the cache, Value from cache: %s", typeAssertionValue)
 			return typeAssertionValue, nil
 		}
 	}
