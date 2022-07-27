@@ -1,6 +1,7 @@
 package state
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/patrickmn/go-cache"
 	"io/ioutil"
 	"os"
@@ -72,8 +73,12 @@ func (cs *CheckStateManager) getFileForKey(key string) (string, error) {
 
 // SetState stores data on disk in the config.StateRootPath directory
 func (cs *CheckStateManager) SetState(key, value string) error {
+	log.Infof("Set State For Key: %s", key)
+	log.Infof("Set State For Value: %s", value)
+
 	err := cs.writeToDisk(key, value)
 	if err != nil {
+		_ = log.Errorf("Unable to set a new state to disk. Error: %v", err)
 		return err
 	}
 	// Insert / Update this in the CheckStateManager Cache
@@ -98,14 +103,19 @@ func (cs *CheckStateManager) writeToDisk(key, value string) error {
 // GetState returns a value previously stored, or an error that occurred when trying to retrieve the state for a given
 // key
 func (cs *CheckStateManager) GetState(key string) (string, error) {
+	log.Infof("Get State For Key: %s", key)
+
 	// see if we have this key in the cache, otherwise read it from Disk
 	if value, found := cs.Cache.Get(key); found {
 		if typeAssertionValue, ok := value.(string); ok {
+			log.Infof("Get State retrieved from the cache")
 			return typeAssertionValue, nil
 		}
 	}
 	state, err := cs.readFromDisk(key)
+	log.Infof("Get State retrieved from the disk")
 	if err != nil {
+		_ = log.Errorf("Error occurred loading state from disk. Error: %v", err)
 		return "{}", err
 	}
 	// update the cache
