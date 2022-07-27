@@ -734,14 +734,18 @@ pre_release_cluster_agent_image:
     - mkdir /go/src/app
     - cp -R $CI_PROJECT_DIR/beest/* /go/src/app
     - cd /go/src/app
-    - go build .
-    - export AWS_ACCESS_KEY_ID=${MOLECULE_AWS_ACCESS_KEY_ID}
-    - export AWS_SECRET_ACCESS_KEY=${MOLECULE_AWS_SECRET_ACCESS_KEY}
+    - . bootstrap_functions.sh
+    - build_beest
+    - generate_aws_config
+    - configure_aws_beest_credentials
     - export PATH=/go/src/app:${PATH}
-    - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
+    - export AWS_DEFAULT_REGION=eu-west-1
+    - export AWS_PROFILE=stackstate-sandbox
     - export RUN_ID=$CI_COMMIT_REF_NAME
-    - export STACKSTATE_BRANCH=master
+    - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
     - export AGENT_HELM_CHART_VERSION=latest
+    - export STACKSTATE_BRANCH=master
+    - export STACKSTATE_HELM_CHART_VERSION=">0.0.0-0"
   after_script: # artifacts do not work with absolute path, so we move them inside the build dir
     - mv /go/src/app/terraform.log $CI_PROJECT_DIR/beest/ || true
     - mv /go/src/app/tests/$BEEST_TEST_GROUP/topic-*.json $CI_PROJECT_DIR/beest/ || true

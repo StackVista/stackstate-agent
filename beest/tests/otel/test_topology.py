@@ -22,4 +22,4 @@ def test_lambda_topology_is_present(cliv1):
         match_result = lambda_api_topology.find(topology)
         match_result.assert_exact_match()
 
-    util.wait_until(assert_it, 5, 1)
+    util.wait_until(assert_it, 60, 5)
