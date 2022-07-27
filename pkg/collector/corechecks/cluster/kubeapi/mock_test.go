@@ -1,7 +1,6 @@
 package kubeapi
 
 import (
-	"errors"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 	"github.com/stretchr/testify/assert"
@@ -60,7 +59,7 @@ func MockAPIClient(restrictRules []Rule) *apiserver.APIClient {
 		for _, verb := range rule.Verbs {
 			reactor.
 				PrependReactor(verb, rule.ResourceName, func(action core.Action) (handled bool, ret runtime.Object, err error) {
-					return true, nil, errors.New(fmt.Sprintf("no permission to %s %s/%s", verb, rule.Group, rule.ResourceName))
+					return true, nil, fmt.Errorf("no permission to %s %s/%s", verb, rule.Group, rule.ResourceName)
 				})
 		}
 	}
