@@ -497,6 +497,7 @@ pre_release_win:
   rules:
     - when: on_success
 
+# Test flakiness
 pre_release_rpm:
   stage: pre_release
   interruptible: true
