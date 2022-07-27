@@ -18,9 +18,9 @@
   - name: Apply manifests for test workloads
     command: kubectl --context={{ kubecontext }} -n={{ namespace }} apply -f {{ role_path }}/files/test_workloads
 
-  - name: Log helm_chart_repo
+  - name: Log agent_helm_chart_repo
     debug:
-      var: helm_chart_repo
+      var: agent_helm_chart_repo
 
   - name: Helm install StackState Agent
     command: helm upgrade --install \
@@ -38,7 +38,7 @@
       --set "clusterChecks.image.tag={{agent_current_branch}}" \
       --set "clusterChecks.image.repository=stackstate/{{agent_docker_repo}}" \
       --values "{{ role_path }}/files/values.yml" \
-      stackstate-cluster-agent {{ helm_chart_repo }}
+      stackstate-cluster-agent {{ agent_helm_chart_repo }}
 
   - name: Attempt to verify cluster agent ready
     block:
