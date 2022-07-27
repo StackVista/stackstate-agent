@@ -986,7 +986,7 @@ void Two::setStateCb(cb_set_state_t cb)
 {
     _set_state_cb(cb);
 }
-void Two::setGetStateCb(cb_get_state_t cb)
+char *Two::setGetStateCb(cb_get_state_t cb)
 {
     _set_get_state_cb(cb);
 }

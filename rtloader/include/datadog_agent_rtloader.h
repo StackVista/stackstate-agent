@@ -768,7 +768,7 @@ DATADOG_AGENT_RTLOADER_API void set_state_cb(rtloader_t *, cb_set_state_t);
 
     The callback is expected to be provided by the rtloader caller - in go-context: CGO.
 */
-DATADOG_AGENT_RTLOADER_API void set_get_state_cb(rtloader_t *, cb_get_state_t);
+DATADOG_AGENT_RTLOADER_API char *set_get_state_cb(rtloader_t *, cb_get_state_t);
 
 #ifdef __cplusplus
 }

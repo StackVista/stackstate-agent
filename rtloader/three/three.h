@@ -148,7 +148,7 @@ public:
 
     // state
     void setStateCb(cb_set_state_t);
-    void setGetStateCb(cb_get_state_t);
+    char *setGetStateCb(cb_get_state_t);
 
 private:
     //! initPythonHome member.

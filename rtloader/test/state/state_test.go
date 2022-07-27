@@ -48,22 +48,26 @@ func TestGetState(t *testing.T) {
 	helpers.ResetMemoryStats()
 
 	stateKey := "key"
-	stateBody := "state body"
+	stateBody := "{}"
 
 	// Insert temp value into the state storage allow the get_state function to retrieve it
 	stateStorage[stateKey] = stateBody
 
-	out, err := run(fmt.Sprintf(`state.set_state(None, "checkid", "%s", "%s"); state.get_state(None, "checkid", "%s")`, stateKey, stateBody, stateKey))
+	// state.set_state(None, "checkid", "%s", "%s");
+	out, err := run(fmt.Sprintf(`state.get_state(None, "checkid", "%s")`, stateKey))
 
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if out != "" {
 		t.Errorf("Unexpected printed value: '%s'", out)
 	}
+
 	if checkID != "checkid" {
 		t.Fatalf("Unexpected check id value: %s", checkID)
 	}
+
 	if lastRetrievedState != stateBody {
 		t.Fatalf("Unexpected retieved state value: %s", lastRetrievedState)
 	}

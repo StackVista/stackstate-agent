@@ -123,6 +123,7 @@ static PyObject *get_state(PyObject *self, PyObject *args) {
     PyObject *check = NULL; // borrowed
     char *check_id;
     char *key;
+    char *state_value;
 
     PyGILState_STATE gstate = PyGILState_Ensure();
 
@@ -143,14 +144,16 @@ static PyObject *get_state(PyObject *self, PyObject *args) {
     }
 
 
-    PyObject *return_value = NULL;
-    char *state_value = cb_get_state(check_id, key);
+
+    state_value = cb_get_state(check_id, key);
+
     if (state_value != NULL) {
-        return_value = PyStringFromCString(state_value);
+        PyGILState_Release(gstate);
+        return PyStringFromCString(state_value);
     }
 
-    PyGILState_Release(gstate);
-    return return_value;
+    PyErr_SetString(PyExc_TypeError, "Error, Unable to GetState, Get state returned as null");
+    goto error;
 
 error:
     PyGILState_Release(gstate);

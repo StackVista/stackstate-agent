@@ -18,7 +18,7 @@ import (
 #include "datadog_agent_rtloader.h"
 
 extern void setState(char *, char *, char *);
-extern void getState(char *, char *);
+extern char* getState(char *, char *);
 
 static void initStateTests(rtloader_t *rtloader) {
 	set_state_cb(rtloader, setState);
@@ -107,9 +107,17 @@ func setState(id *C.char, key *C.char, state *C.char) {
 }
 
 //export getState
-func getState(id *C.char, key *C.char) {
+func getState(id *C.char, key *C.char) *C.char {
 	checkID = C.GoString(id)
 	stateKey := C.GoString(key)
 
-	lastRetrievedState = stateStorage[stateKey]
+	var retrievedState = "{}"
+
+	if val, ok := stateStorage[stateKey]; ok {
+		retrievedState = val
+	}
+
+	lastRetrievedState = retrievedState
+
+	return C.CString(retrievedState)
 }

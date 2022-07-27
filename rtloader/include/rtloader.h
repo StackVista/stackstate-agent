@@ -580,7 +580,7 @@ public:
 
       Actual check data is submitted from go-land, this allows us to set the CGO callback.
     */
-    virtual void setGetStateCb(cb_get_state_t) = 0;
+    virtual char *setGetStateCb(cb_get_state_t) = 0;
 
 private:
     mutable std::string _error; /*!< string containing a RtLoader error */

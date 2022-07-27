@@ -210,7 +210,7 @@ typedef void (*cb_set_transaction_state_t)(char *, char *, char *);
 // (check_id, key, state)
 typedef void (*cb_set_state_t)(char *, char *, char *);
 // (check_id, key)
-typedef char (*cb_get_state_t)(char *, char *);
+typedef char *(*cb_get_state_t)(char *, char *);
 
 #ifdef __cplusplus
 }

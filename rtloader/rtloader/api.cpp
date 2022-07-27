@@ -591,7 +591,7 @@ void set_state_cb(rtloader_t *rtloader, cb_set_state_t cb)
 {
     AS_TYPE(RtLoader, rtloader)->setStateCb(cb);
 }
-void set_get_state_cb(rtloader_t *rtloader, cb_get_state_t cb)
+char *set_get_state_cb(rtloader_t *rtloader, cb_get_state_t cb)
 {
     AS_TYPE(RtLoader, rtloader)->setGetStateCb(cb);
 }
