@@ -24,6 +24,9 @@ before_script:
 beest-keeper:
   <<: *docker_build_base
   stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
   script:
     - cd $RUNNER_BEEST_BASE
     - mkdir -p /kaniko/.docker
