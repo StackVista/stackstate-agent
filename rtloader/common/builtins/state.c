@@ -142,10 +142,15 @@ static PyObject *get_state(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    cb_get_state(check_id, key);
+
+    PyObject *return_value = NULL;
+    char *state_value = cb_get_state(check_id, key);
+    if (state_value != NULL) {
+        return_value = PyStringFromCString(state_value);
+    }
 
     PyGILState_Release(gstate);
-    Py_RETURN_NONE; // Success
+    return return_value;
 
 error:
     PyGILState_Release(gstate);
