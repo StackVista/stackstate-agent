@@ -19,7 +19,6 @@ import "C"
 import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // NOTE
@@ -43,8 +42,6 @@ func GetState(id *C.char, key *C.char) *C.char {
 	stateKey := C.GoString(key)
 
 	getStateResult := handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).GetState(stateKey)
-
-	log.Infof("CheckManager state value before sending back to the python script: %s", getStateResult)
 
 	return C.CString(getStateResult)
 }
