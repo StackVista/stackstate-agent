@@ -313,7 +313,7 @@ func (c *PythonCheck) ID() check.ID {
 	return c.id
 }
 
-// pythonCheckFinalizer is a finalizer that decreases the reference count on the PyObject refs owned
+// pythonCheckFinalizer is an finalizer that decreases the reference count on the PyObject refs owned
 // by the PythonCheck.
 func pythonCheckFinalizer(c *PythonCheck) {
 	// Run in a separate goroutine because acquiring the python lock might take some time,
