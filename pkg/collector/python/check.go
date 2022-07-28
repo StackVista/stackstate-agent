@@ -173,6 +173,21 @@ func (c *PythonCheck) getPythonWarnings(gstate *stickyLock) []error {
 }
 
 // [sts] Make sure collection_interval is always set
+func (c *PythonCheck) setCollectionAlt(data integration.Data) (integration.Data, error) {
+	// make sure collection_interval is set within the instance data
+	rawInstance := make(integration.RawMap)
+
+	err := yaml.Unmarshal(data, &rawInstance)
+	if err != nil {
+		return nil, err
+	}
+
+	rawInstance[string("collection_interval")] = int(c.interval.Seconds())
+
+	return yaml.Marshal(rawInstance)
+}
+
+// [sts] Make sure collection_interval is always set
 func (c *PythonCheck) setCollectionIntervalToInstanceData(data integration.Data) (integration.Data, error) {
 	// make sure collection_interval is set within the instance data
 	var rawInstance integration.RawMap

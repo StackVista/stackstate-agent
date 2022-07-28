@@ -372,6 +372,21 @@ func testConfigureDeprecated(t *testing.T) {
 	assert.Equal(t, c.instance, C.get_check_deprecated_check)
 }
 
+func testSetCollectionIntervalToInstanceData(t *testing.T) {
+	c := NewPythonFakeCheck()
+	data, _ := c.setCollectionAlt(integration.Data("{\"key\": \"value\"}"))
+
+	assert.Equal(t, "collection_interval: 40\nkey: value\n", string(data))
+}
+
+func testSetCollectionIntervalToInvalidDataWithInvalidData(t *testing.T) {
+	c := NewPythonFakeCheck()
+	data, err := c.setCollectionAlt(integration.Data("invalid:data"))
+
+	assert.Nil(t, data)
+	assert.NotNil(t, err)
+}
+
 func NewPythonFakeCheck() *PythonCheck {
 	c := NewPythonCheck("fake_check", nil)
 	// Remove check finalizer that may trigger race condition while testing
