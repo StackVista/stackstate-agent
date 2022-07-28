@@ -374,14 +374,14 @@ func testConfigureDeprecated(t *testing.T) {
 
 func testSetCollectionIntervalToInstanceData(t *testing.T) {
 	c := NewPythonFakeCheck()
-	data, _ := c.setCollectionAlt(integration.Data("{\"key\": \"value\"}"))
+	data, _ := c.setCollectionIntervalToInstanceData(integration.Data("{\"key\": \"value\"}"))
 
 	assert.Equal(t, "collection_interval: 40\nkey: value\n", string(data))
 }
 
 func testSetCollectionIntervalToInvalidDataWithInvalidData(t *testing.T) {
 	c := NewPythonFakeCheck()
-	data, err := c.setCollectionAlt(integration.Data("invalid:data"))
+	data, err := c.setCollectionIntervalToInstanceData(integration.Data("invalid:data"))
 
 	assert.Nil(t, data)
 	assert.NotNil(t, err)
