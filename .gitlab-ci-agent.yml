@@ -751,6 +751,8 @@ pre_release_cluster_agent_image:
     - export AGENT_HELM_CHART_VERSION=latest
     - export STACKSTATE_BRANCH=master
     - export STACKSTATE_HELM_CHART_VERSION=">0.0.0-0"
+    - unset AWS_ACCESS_KEY_ID
+    - unset AWS_SECRET_ACCESS_KEY
     - aws iam get-user || true
     - aws sts get-caller-identity || true
     - aws s3 ls || true
