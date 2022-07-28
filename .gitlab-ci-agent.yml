@@ -1303,6 +1303,70 @@ molecule_vms_success_cleanup:
     - molecule_vms_create
     - molecule_vms_test
 
+# Job Seq: Beest
+# Type: otel
+
+.beest_otel_rule:
+  # Currently we default to only running on Python2 build.
+  # TODO: Change this when V3 releases are finalized and the default.
+  - &beest_otel_ignore_rule
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[beest\-/ && $CI_COMMIT_MESSAGE !~ /\[beest\-otel]/
+    when: never
+
+.beest_otel_variables: &beest_otel_variables
+  variables:
+    BEEST_SCENARIO: otel
+    BEEST_TEST_GROUP: otel
+
+beest_otel_create:
+  <<: *beest
+  <<: *beest_create
+  <<: *beest_otel_variables
+  rules:
+    - *beest_otel_ignore_rule
+    - *v2_merge_train_always
+
+beest_otel_test:
+  <<: *beest
+  <<: *beest_test
+  <<: *beest_otel_variables
+  rules:
+    - *beest_otel_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_otel_create
+  needs:
+    - beest_otel_create
+    - pre_release_deb
+
+beest_otel_failure_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_otel_variables
+  rules:
+    - *beest_otel_ignore_rule
+    - *v2_merge_train_on_failure
+    - when: never
+  needs:
+    - beest_otel_test
+    - beest_otel_create
+
+beest_otel_success_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_otel_variables
+  rules:
+    - *beest_otel_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_otel_test
+    - beest_otel_create
+  needs:
+    - beest_otel_test
+    - beest_otel_create
+
 ## release stage
 
 release_deb:

@@ -8,6 +8,7 @@ resource "local_file" "get_kubeconfig" {
   filename        = "${path.module}/get_kubeconfig.sh"
   content         = <<KUBECONFIG
 #!/bin/bash
+set -euo pipefail
 
 echo "Getting kubeconfig for cluster ${local.cluster_name}"
 aws eks update-kubeconfig --profile stackstate-sandbox --name ${local.cluster_name} --alias ${var.yard_id}

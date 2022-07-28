@@ -1,8 +1,8 @@
-variable "yard_id" {
-  type = string
-}
 variable "aws_default_region" {
   default = "eu-west-1"
+}
+variable "yard_id" {
+  type = string
 }
 
 locals {
