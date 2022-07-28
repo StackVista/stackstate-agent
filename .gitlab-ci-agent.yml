@@ -738,6 +738,9 @@ pre_release_cluster_agent_image:
     - build_beest
     - generate_aws_config
     - configure_aws_beest_credentials
+    - echo $HOME
+    - ls -la ~/.aws
+    - head ~/.aws/config
     - export PATH=/go/src/app:${PATH}
     - export AWS_DEFAULT_REGION=eu-west-1
     - export AWS_PROFILE=stackstate-sandbox
