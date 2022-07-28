@@ -74,26 +74,31 @@ transactionHandler:
 			switch msg := input.(type) {
 			// transaction operations
 			case StartTransaction:
+				log.Infof("StartTransaction")
 				log.Debugf("Creating new transaction %s for check %s", msg.TransactionID, msg.CheckID)
 				if _, err := txm.startTransaction(msg.TransactionID, msg.NotifyChannel); err != nil {
 					txm.transactionChannel <- err
 				}
 			case CommitAction:
+				log.Infof("CommitAction")
 				log.Debugf("Committing action %s for transaction %s", msg.ActionID, msg.TransactionID)
 				if err := txm.commitAction(msg.TransactionID, msg.ActionID); err != nil {
 					txm.transactionChannel <- err
 				}
 			case AckAction:
+				log.Infof("AckAction")
 				log.Debugf("Acknowledging action %s for transaction %s", msg.ActionID, msg.TransactionID)
 				if err := txm.ackAction(msg.TransactionID, msg.ActionID); err != nil {
 					txm.transactionChannel <- err
 				}
 			case SetTransactionState:
+				log.Infof("SetTransactionState")
 				log.Debugf("Setting state %s for transaction %s: %s", msg.Key, msg.TransactionID, msg.State)
 				if err := txm.setTransactionState(msg.TransactionID, msg.Key, msg.State); err != nil {
 					txm.transactionChannel <- err
 				}
 			case RejectAction:
+				log.Infof("RejectAction")
 				_ = log.Errorf("Rejecting action %s for transaction %s: %s", msg.ActionID, msg.TransactionID, msg.Reason)
 				if err := txm.rejectAction(msg.TransactionID, msg.ActionID); err != nil {
 					txm.transactionChannel <- err
@@ -103,22 +108,27 @@ transactionHandler:
 					txm.transactionChannel <- DiscardTransaction{TransactionID: msg.TransactionID, Reason: reason}
 				}
 			case CompleteTransaction:
+				log.Infof("CompleteTransaction")
 				log.Debugf("Completing transaction %s", msg.TransactionID)
 				if err := txm.completeTransaction(msg.TransactionID); err != nil {
 					txm.transactionChannel <- err
 				}
 			// error cases
 			case DiscardTransaction:
+				log.Infof("DiscardTransaction")
 				_ = log.Errorf(msg.Error())
 				if err := txm.discardTransaction(msg.TransactionID, msg.Reason); err != nil {
 					txm.transactionChannel <- err
 				}
 			case TransactionNotFound:
+				log.Infof("TransactionNotFound")
 				_ = log.Errorf(msg.Error())
 			case ActionNotFound:
+				log.Infof("ActionNotFound")
 				_ = log.Errorf(msg.Error())
 			// shutdown transaction checkmanager
 			case StopTransactionManager:
+				log.Infof("StopTransactionManager")
 				// clean the transaction map
 				txm.mux.Lock()
 				txm.transactions = make(map[string]*IntakeTransaction, 0)

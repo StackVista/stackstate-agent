@@ -196,9 +196,11 @@ currentTxHandler:
 					_ = log.Errorf("failed to reload check %s: %s", ch.ID(), err)
 				}
 
+				log.Infof("Reloaded Check, clearing current transaction")
 				// clear current transaction
 				ch.clearCurrentTransaction()
 
+				log.Infof("Return tx handler")
 				break currentTxHandler
 			case transactionmanager.CompleteTransaction:
 				log.Debugf("Completing transaction: %s for check %s", msg.TransactionID, ch.ID())
