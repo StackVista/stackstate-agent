@@ -33,6 +33,8 @@ build:
 push: build
 	docker push ${BASE_KEEPER_IMAGE}
 
+kaniko:
+	/kaniko/executor ${DOCKER_BUILD_ARG} --destination ${BASE_KEEPER_IMAGE}
 
 try:
 	docker run -it --rm \

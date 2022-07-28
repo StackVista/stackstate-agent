@@ -13,6 +13,7 @@ variables:
 before_script:
   - echo "${docker_password}" | docker login --username=${docker_user} --password-stdin ${DOCKER_REGISTRY}
   - echo "${quay_password}" | docker login --username=${quay_user} --password-stdin ${QUAY_REGISTRY}
+  - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"${docker_user}\",\"password\":\"${docker_password}\"}}}" > /kaniko/.docker/config.json
   - apk add make
 
 .docker_build_base: &docker_build_base
@@ -20,19 +21,18 @@ before_script:
   services:
     - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
       alias: docker
+#  image:
+#    name: gcr.io/kaniko-project/executor:v1.8.1-debug
+#    entrypoint: [""]
 
 beest-keeper:
   <<: *docker_build_base
   stage: build
   before_script: []
-  image:
-    name: gcr.io/kaniko-project/executor:debug
-    entrypoint: [""]
   script:
     - cd $RUNNER_BEEST_BASE
     - mkdir -p /kaniko/.docker
-    - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"${docker_user}\",\"password\":\"${docker_password}\"}}}" > /kaniko/.docker/config.json
-    - /kaniko/executor --context "$RUNNER_BEEST_BASE" --build-arg ARTIFACTORY_PYPI_URL=${ARTIFACTORY_PYPI_URL} --build-arg ARTIFACTORY_USER=${ARTIFACTORY_USER} --build-arg ARTIFACTORY_PASSWORD=${ARTIFACTORY_PASSWORD} --dockerfile "$RUNNER_BEEST_BASE/Dockerfile" --destination "docker.io/stackstate/beest:${CI_COMMIT_REF_NAME}" --destination "docker.io/stackstate/beest:${CI_COMMIT_SHORT_SHA}"
+    - make
   rules:
     - if: $CI_COMMIT_MESSAGE =~ /\[build_runner_beest]/
       when: always
