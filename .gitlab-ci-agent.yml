@@ -738,22 +738,16 @@ pre_release_cluster_agent_image:
     - build_beest
     - generate_aws_config
     - configure_aws_beest_credentials
-    - echo $BEEST_AWS_ACCESS_KEY_ID
-    - echo $HOME
-    - ls -la ~/.aws
-    - head ~/.aws/config
-    - cat ~/.aws/credentials
+    - unset AWS_ACCESS_KEY_ID && unset AWS_SECRET_ACCESS_KEY  # Unset default AWS credentials which conflicts with Beest ~/.aws/credentials
     - export PATH=/go/src/app:${PATH}
-    - export AWS_DEFAULT_REGION=eu-west-1
-    - export AWS_PROFILE=stackstate-sandbox
     - export RUN_ID=$CI_COMMIT_REF_NAME
     - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
     - export AGENT_HELM_CHART_VERSION=latest
     - export STACKSTATE_BRANCH=master
     - export STACKSTATE_HELM_CHART_VERSION=">0.0.0-0"
-    - unset AWS_ACCESS_KEY_ID
-    - unset AWS_SECRET_ACCESS_KEY
-    - aws iam get-user || true
+    - ls -la ~/.aws
+    - head ~/.aws/config
+    - cat ~/.aws/credentials
     - aws sts get-caller-identity || true
     - aws s3 ls || true
   after_script: # artifacts do not work with absolute path, so we move them inside the build dir
@@ -777,6 +771,8 @@ pre_release_cluster_agent_image:
   <<: *beest_artifacts
   stage: prepare
   script:
+    - aws sts get-caller-identity || true
+    - aws s3 ls || true
     - beest create $BEEST_SCENARIO -y
 
 # Primary test steps for all the beest builds
