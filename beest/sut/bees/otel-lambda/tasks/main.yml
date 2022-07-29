@@ -35,6 +35,7 @@
 
 - name: OpenTelemetry lambda cleanup tasks
   tags: cleanup
+  ignore_errors: yes
   block:
     - name: Empty bucket
       community.aws.s3_sync:

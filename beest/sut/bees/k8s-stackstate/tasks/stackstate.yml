@@ -71,6 +71,7 @@
 
 - name: StackState cleanup tasks
   tags: cleanup
+  ignore_errors: yes
   block:
   - name: Undeploy stackstate
     kubernetes.core.helm:

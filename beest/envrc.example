@@ -1,6 +1,7 @@
 PATH_add $PWD
 
 export AWS_DEFAULT_REGION=eu-west-1
+export AWS_PROFILE=stackstate-sandbox
 
 # those are the credentials of a stackstate-infosec user
 export BEEST_AWS_ACCESS_KEY_ID=TBD

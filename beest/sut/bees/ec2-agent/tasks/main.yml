@@ -35,6 +35,7 @@
 
 - name: StackState Agent cleanup tasks
   tags: cleanup
+  ignore_errors: yes
   block:
     - name: Uninstall stackstate-agent
       become: yes

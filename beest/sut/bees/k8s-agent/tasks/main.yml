@@ -130,6 +130,7 @@
 
 - name: StackState Agent cleanup tasks
   tags: cleanup
+  ignore_errors: yes
   block:
   - name: Uninstall agent
     shell: helm uninstall stackstate-cluster-agent --namespace {{namespace}}

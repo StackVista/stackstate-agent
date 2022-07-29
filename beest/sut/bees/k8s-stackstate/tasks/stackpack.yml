@@ -27,6 +27,7 @@
 
 - name: StackPack cleanup tasks
   tags: cleanup
+  ignore_errors: yes
   block:
   - name: Retrieve StsEventBridgeRule resource id
     command: aws cloudformation describe-stack-resource --stack-name {{ cf_stack_name }} --logical-resource-id StsEventBridgeRule --query "StackResourceDetail.PhysicalResourceId" --output=text
