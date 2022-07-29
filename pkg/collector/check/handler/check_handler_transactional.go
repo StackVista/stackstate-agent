@@ -192,11 +192,12 @@ currentTxHandler:
 			// Notifications from the transaction manager
 			case transactionmanager.DiscardTransaction, transactionmanager.EvictedTransaction:
 				_ = log.Warnf("Reloading check %s after failed transaction", ch.ID())
-				if err := ch.ReloadCheck(ch.ID(), ch.config, ch.initConfig, ch.ConfigSource()); err != nil {
-					_ = log.Errorf("failed to reload check %s: %s", ch.ID(), err)
-				}
+				_ = log.Warnf("Debug: Ignoring Agent Check Reload For Testing GoRoutine")
+				//  if err := ch.ReloadCheck(ch.ID(), ch.config, ch.initConfig, ch.ConfigSource()); err != nil {
+				//  	_ = log.Errorf("failed to reload check %s: %s", ch.ID(), err)
+				//  }
 
-				log.Infof("Reloaded Check, clearing current transaction")
+				// log.Infof("Reloaded Check, clearing current transaction")
 				// clear current transaction
 				ch.clearCurrentTransaction()
 
@@ -230,6 +231,7 @@ currentTxHandler:
 }
 
 func (ch *TransactionalCheckHandler) clearCurrentTransaction() {
+	log.Infof("Debug: Clearing Transaction State")
 	ch.mux.Lock()
 	ch.currentTransaction = ""
 	ch.mux.Unlock()
