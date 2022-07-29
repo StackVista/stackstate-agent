@@ -191,7 +191,6 @@ currentTxHandler:
 
 			// Notifications from the transaction manager
 			case transactionmanager.DiscardTransaction, transactionmanager.EvictedTransaction:
-				_ = log.Warnf("Reloading check %s after failed transaction", ch.ID())
 				_ = log.Warnf("Debug: Ignoring Agent Check Reload For Testing GoRoutine")
 				//  if err := ch.ReloadCheck(ch.ID(), ch.config, ch.initConfig, ch.ConfigSource()); err != nil {
 				//  	_ = log.Errorf("failed to reload check %s: %s", ch.ID(), err)
