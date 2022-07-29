@@ -738,7 +738,7 @@ pre_release_cluster_agent_image:
     - build_beest
     - generate_aws_config
     - configure_aws_beest_credentials
-    - unset AWS_ACCESS_KEY_ID && unset AWS_SECRET_ACCESS_KEY  # Unset default AWS credentials which conflicts with Beest ~/.aws/credentials
+    - unset AWS_ACCESS_KEY_ID && unset AWS_SECRET_ACCESS_KEY && unset AWS_ROLE_ARN # Unset default AWS credentials which conflicts with Beest ~/.aws/credentials
     - export PATH=/go/src/app:${PATH}
     - export RUN_ID=$CI_COMMIT_REF_NAME
     - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
