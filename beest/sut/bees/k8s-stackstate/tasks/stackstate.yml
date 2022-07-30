@@ -31,6 +31,31 @@
     debug:
       var: sts_url
 
+# TODO: The ability to start just a receiver stack (zookeeper, kafka, receiver, correlator, router, api)
+# depends on https://stackstate.atlassian.net/browse/STAC-17313
+#hbase:
+#  enable: false
+#elasticsearch:
+#  enabled: false
+#stackstate:
+#  components:
+#    checks:
+#      replicaCount: 0  # does not exist
+#    healthSync:
+#      replicaCount: 0  # does not exist
+#    state:
+#      replicaCount: 0  # does not exist
+#    sync:
+#      replicaCount: 0  # does not exist
+#    slicing:
+#      replicaCount: 0  # does not exist
+#    viewHealth:
+#      replicaCount: 0  # does not exist
+#    problemProducer:
+#      replicaCount: 0  # does not exist
+#    ui:
+#      replicaCount: 0
+
   - name: Deploy stackstate chart using values files
     kubernetes.core.helm:
       context: "{{ kubecontext }}"
@@ -52,8 +77,6 @@
             e2es:
               replicaCount: 0
             mm2es:
-              replicaCount: 0
-            problemProducer:
               replicaCount: 0
             trace2es:
               replicaCount: 0
