@@ -6,6 +6,12 @@ import (
 )
 
 // CheckReloader is a interface wrapper around the Collector which controls all checks.
+// TODO BUG: 2022/08/01, Description of bug below
+// The ReloadCheck functionality works as intended but we noticed that when you run the reload check paired with
+// within a Check cycle, for example, within a Transaction Discard event if you call ReloadCheck you will get GoRoutine
+// Race conditions, This needs to be investigated and fixed if this function is used.
+// The functionality is left here so that we do not have to rewrite everything and only fix the bug if a reloadcheck
+// is require.
 type CheckReloader interface {
 	ReloadCheck(id check.ID, config, initConfig integration.Data, newSource string) error
 }
