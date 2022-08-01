@@ -1,11 +1,11 @@
 ---
-- name: Prepare VM Receiver
+- name: VM Receiver
   hosts: receiver
   gather_facts: true
   roles:
     - role: "{{ bees_path }}/vm-receiver"
 
-- name: Prepare Kubernetes Agent
+- name: Kubernetes Agent
   hosts: localhost
   gather_facts: false
   roles:
