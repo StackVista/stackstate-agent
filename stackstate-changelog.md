@@ -1,9 +1,10 @@
 # StackState Agent v2 releases
 
-## Next release (???)
+## 2.XX.X (2022-XX-XX)
 
 **Bugfix**
 - Fixed error messages and check hanging when disabling collection of certain types of resources [STAC-16347](https://stackstate.atlassian.net/browse/STAC-16347)
+- Fixed Process Agent's default checks [STAC-16953](https://stackstate.atlassian.net/browse/STAC-16953)
 
 ## 2.17.1 (2022-07-11)
 
