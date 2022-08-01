@@ -92,4 +92,4 @@ shell_set_python_3:
 	docker exec -ti ${LOCAL_BUILD_IMAGE} \
 		bash -c "source ${PROJECT_DIR}/${LOCAL_BUILDER_INIT} set-python-3;"
 
-.PHONY: build dev omnibus shell
+.PHONY: build dev omnibus stop shell shell_install_deps shell_rtloader_build_test shell_agent_build shell_agent_omnibus_build shell_go_tests_with_race shell_set_python_2 shell_set_python_3
