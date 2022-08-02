@@ -3,9 +3,8 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
-// +build apm
-// +build !windows
-// +build !linux
+//go:build apm && !windows && !linux
+// +build apm,!windows,!linux
 
 package embed
 
@@ -18,14 +17,14 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	telemetry_utils "github.com/DataDog/datadog-agent/pkg/telemetry/utils"
-	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	yaml "gopkg.in/yaml.v2"
 )
 

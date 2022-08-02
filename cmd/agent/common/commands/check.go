@@ -24,22 +24,22 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	"github.com/DataDog/datadog-agent/cmd/agent/app/standalone"
-	"github.com/DataDog/datadog-agent/cmd/agent/common"
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery"
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/epforwarder"
-	"github.com/DataDog/datadog-agent/pkg/logs/message"
-	"github.com/DataDog/datadog-agent/pkg/metadata"
-	"github.com/DataDog/datadog-agent/pkg/serializer"
-	"github.com/DataDog/datadog-agent/pkg/status"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/flavor"
-	"github.com/DataDog/datadog-agent/pkg/util/scrubber"
+	"github.com/StackVista/stackstate-agent/cmd/agent/app/standalone"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/collector"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/epforwarder"
+	"github.com/StackVista/stackstate-agent/pkg/logs/message"
+	"github.com/StackVista/stackstate-agent/pkg/metadata"
+	"github.com/StackVista/stackstate-agent/pkg/serializer"
+	"github.com/StackVista/stackstate-agent/pkg/status"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/flavor"
+	"github.com/StackVista/stackstate-agent/pkg/util/scrubber"
 )
 
 var (
@@ -617,7 +617,7 @@ func getMetricsData(agg *aggregator.BufferedAggregator) map[string]interface{} {
 	series, sketches := agg.GetSeriesAndSketches(time.Now())
 	if len(series) != 0 {
 		// Workaround to get the raw sequence of metrics, see:
-		// https://github.com/DataDog/datadog-agent/blob/b2d9527ec0ec0eba1a7ae64585df443c5b761610/pkg/metrics/series.go#L109-L122
+		// https://github.com/StackVista/stackstate-agent/blob/b2d9527ec0ec0eba1a7ae64585df443c5b761610/pkg/metrics/series.go#L109-L122
 		var data map[string]interface{}
 		sj, _ := json.Marshal(series)
 		json.Unmarshal(sj, &data) //nolint:errcheck

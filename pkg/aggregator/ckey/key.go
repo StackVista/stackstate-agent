@@ -6,7 +6,7 @@
 package ckey
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/tagset"
+	"github.com/StackVista/stackstate-agent/pkg/tagset"
 	"github.com/twmb/murmur3"
 )
 

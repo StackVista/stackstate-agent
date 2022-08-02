@@ -25,12 +25,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	"github.com/DataDog/datadog-agent/cmd/agent/api/agent"
-	"github.com/DataDog/datadog-agent/cmd/agent/api/check"
-	"github.com/DataDog/datadog-agent/pkg/api/util"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	remoteconfig "github.com/DataDog/datadog-agent/pkg/config/remote/service"
-	pb "github.com/DataDog/datadog-agent/pkg/proto/pbgo"
+	"github.com/StackVista/stackstate-agent/cmd/agent/api/agent"
+	"github.com/StackVista/stackstate-agent/cmd/agent/api/check"
+	"github.com/StackVista/stackstate-agent/pkg/api/util"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	remoteconfig "github.com/StackVista/stackstate-agent/pkg/config/remote/service"
+	pb "github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
 	gorilla "github.com/gorilla/mux"
 )
 

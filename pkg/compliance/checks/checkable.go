@@ -8,8 +8,8 @@ package checks
 import (
 	"errors"
 
-	"github.com/DataDog/datadog-agent/pkg/compliance"
-	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	"github.com/StackVista/stackstate-agent/pkg/compliance"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
 )
 
 // checkable abstracts a resource check

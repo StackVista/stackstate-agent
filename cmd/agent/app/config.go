@@ -8,12 +8,12 @@ package app
 import (
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/cmd/agent/app/settings"
-	"github.com/DataDog/datadog-agent/cmd/agent/common"
-	cmdconfig "github.com/DataDog/datadog-agent/cmd/agent/common/commands/config"
-	"github.com/DataDog/datadog-agent/pkg/api/util"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	commonsettings "github.com/DataDog/datadog-agent/pkg/config/settings"
+	"github.com/StackVista/stackstate-agent/cmd/agent/app/settings"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common"
+	cmdconfig "github.com/StackVista/stackstate-agent/cmd/agent/common/commands/config"
+	"github.com/StackVista/stackstate-agent/pkg/api/util"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	commonsettings "github.com/StackVista/stackstate-agent/pkg/config/settings"
 	"github.com/spf13/cobra"
 
 	"github.com/fatih/color"

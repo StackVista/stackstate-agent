@@ -6,7 +6,7 @@ import (
 	"time"
 
 	model "github.com/DataDog/agent-payload/v5/process"
-	"github.com/DataDog/datadog-agent/pkg/process/config"
+	"github.com/StackVista/stackstate-agent/pkg/process/config"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -8,7 +8,7 @@ package sender
 import (
 	"context"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	"github.com/StackVista/stackstate-agent/pkg/logs/message"
 	"github.com/StackVista/stackstate-agent/pkg/logs/metrics"

@@ -15,15 +15,16 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/common/types"
-	"github.com/DataDog/datadog-agent/pkg/collector/check/defaults"
-	"github.com/DataDog/datadog-agent/pkg/util/hostname/validate"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/common/types"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/defaults"
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname/validate"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	"github.com/StackVista/stackstate-agent/pkg/secrets"
 	"github.com/StackVista/stackstate-agent/pkg/version"
@@ -81,6 +82,10 @@ const (
 
 	// DefaultLogsSenderBackoffRecoveryInterval is the default logs sender backoff recovery interval
 	DefaultLogsSenderBackoffRecoveryInterval = 2
+
+	// DefaultBatcherBufferSize sets the default buffer size of the batcher to 10000
+	// [sts]
+	DefaultBatcherBufferSize = 10000
 )
 
 // Datadog is the global configuration object
@@ -198,6 +203,7 @@ func InitConfig(config Config) {
 
 	config.BindEnvAndSetDefault("hostname", "")
 	config.BindEnvAndSetDefault("hostname_file", "")
+	config.BindEnvAndSetDefault("skip_hostname_validation", false) // sts
 	config.BindEnvAndSetDefault("tags", []string{})
 	config.BindEnvAndSetDefault("extra_tags", []string{})
 	config.BindEnv("env")
@@ -262,6 +268,14 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("check_sampler_stateful_metric_expiration_time", 25*time.Hour)
 	config.BindEnvAndSetDefault("check_sampler_expire_metrics", true)
 	config.BindEnvAndSetDefault("host_aliases", []string{})
+
+	// [sts] skip datadog functionality
+	config.BindEnvAndSetDefault("skip_leader_election", true)
+	// [sts] bind env for skip_validate_clustername, default is set in the config_template.yaml to avoid test failures.
+	config.BindEnv("skip_validate_clustername") //nolint:errcheck
+
+	// [sts] batcher environment variables
+	config.BindEnvAndSetDefault("batcher_capacity", DefaultBatcherBufferSize)
 
 	// overridden in IoT Agent main
 	config.BindEnvAndSetDefault("iot_host", false)
@@ -379,7 +393,7 @@ func InitConfig(config Config) {
 	// Serializer
 	config.BindEnvAndSetDefault("enable_stream_payload_serialization", true)
 	config.BindEnvAndSetDefault("enable_service_checks_stream_payload_serialization", true)
-	config.BindEnvAndSetDefault("enable_events_stream_payload_serialization", true)
+	config.BindEnvAndSetDefault("enable_events_stream_payload_serialization", false) // sts - set to false
 	config.BindEnvAndSetDefault("enable_sketch_stream_payload_serialization", true)
 	config.BindEnvAndSetDefault("enable_json_stream_shared_compressor_buffers", true)
 
@@ -393,9 +407,9 @@ func InitConfig(config Config) {
 	// Serializer: allow user to blacklist any kind of payload to be sent
 	config.BindEnvAndSetDefault("enable_payloads.events", true)
 	config.BindEnvAndSetDefault("enable_payloads.series", true)
-	config.BindEnvAndSetDefault("enable_payloads.service_checks", false)
-	config.BindEnvAndSetDefault("enable_payloads.check_runs", false)
-	config.BindEnvAndSetDefault("enable_payloads.sketches", false)
+	config.BindEnvAndSetDefault("enable_payloads.service_checks", false) // sts - set to false
+	config.BindEnvAndSetDefault("enable_payloads.check_runs", false)     // sts - set to false
+	config.BindEnvAndSetDefault("enable_payloads.sketches", false)       // sts - set to false
 	config.BindEnvAndSetDefault("enable_payloads.json_to_v1_intake", true)
 
 	// Forwarder
@@ -532,7 +546,7 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("container_env_as_tags", map[string]string{})
 	config.BindEnvAndSetDefault("container_labels_as_tags", map[string]string{})
 
-	// Docker Swarm
+	// [sts] Docker Swarm
 	config.BindEnvAndSetDefault("collect_swarm_topology", false)
 
 	// Kubernetes
@@ -546,6 +560,12 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("kubelet_fallback_to_unverified_tls", true) // sts
 	config.BindEnvAndSetDefault("kubelet_fallback_to_insecure", true)       // sts
 	config.BindEnvAndSetDefault("collect_kubernetes_events", false)
+	config.BindEnvAndSetDefault("collect_kubernetes_metrics", false)          // sts
+	config.BindEnvAndSetDefault("collect_kubernetes_topology", false)         // sts
+	config.BindEnvAndSetDefault("collect_kubernetes_timeout", 10)             // sts
+	config.BindEnvAndSetDefault("configmap_max_datasize", 0)                  // sts
+	config.BindEnvAndSetDefault("kubernetes_source_properties_enabled", true) // sts
+	config.BindEnvAndSetDefault("kubernetes_csi_pv_mapper_enabled", false)    // sts
 	config.BindEnvAndSetDefault("kubelet_client_ca", "")
 
 	config.BindEnvAndSetDefault("kubelet_auth_token_path", "")
@@ -1195,7 +1215,7 @@ func load(config Config, origin string, loadSecret bool) (*Warnings, error) {
 
 // ResolveSecrets merges all the secret values from origin into config. Secret values
 // are identified by a value of the form "ENC[key]" where key is the secret key.
-// See: https://github.com/DataDog/datadog-agent/blob/main/docs/agent/secrets.md
+// See: https://github.com/StackVista/stackstate-agent/blob/master/docs/agent/secrets.md
 func ResolveSecrets(config Config, origin string) error {
 	// We have to init the secrets package before we can use it to decrypt
 	// anything.
@@ -1252,6 +1272,16 @@ func GetMainEndpoint(prefix string, ddURLKey string) string {
 // GetMultipleEndpoints returns the api keys per domain specified in the main agent config
 func GetMultipleEndpoints() (map[string][]string, error) {
 	return getMultipleEndpointsWithConfig(Datadog)
+}
+
+// GetMaxCapacity returns the mximum amount of elements per batch for the batcher
+// [sts]
+func GetMaxCapacity() int {
+	if Datadog.IsSet("batcher_capacity") {
+		return Datadog.GetInt("batcher_capacity")
+	}
+
+	return DefaultBatcherBufferSize
 }
 
 func bindEnvAndSetLogsConfigKeys(config Config, prefix string) {
@@ -1447,6 +1477,15 @@ func GetIPCAddress() (string, error) {
 		}
 	}
 	return "", fmt.Errorf("ipc_address was set to a non-loopback IP address: %s", address)
+}
+
+// IsDockerSwarm returns whether the Agent is running on a Swarm cluster
+// [sts]
+func IsDockerSwarm() bool {
+	if os.Getenv("DOCKER_SWARM") != "" {
+		return true
+	}
+	return false
 }
 
 // pathExists returns true if the given path exists

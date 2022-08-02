@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
+//go:build docker
 // +build docker
 
 package docker
@@ -11,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/logs/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/decoder"
+	"github.com/StackVista/stackstate-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/decoder"
 	"github.com/stretchr/testify/assert"
 )
 

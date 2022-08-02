@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
+	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
 
 	"github.com/DataDog/viper"
 	"github.com/gosnmp/gosnmp"

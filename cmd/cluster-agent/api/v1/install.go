@@ -8,9 +8,9 @@ package v1
 import (
 	"strconv"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/gorilla/mux"
 
 	"github.com/StackVista/stackstate-agent/pkg/clusteragent"

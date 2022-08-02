@@ -17,10 +17,10 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
-	"github.com/DataDog/datadog-agent/pkg/compliance/event"
-	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/security/api"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
+	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/security/api"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // RuntimeSecurityAgent represents the main wrapper for the Runtime Security product

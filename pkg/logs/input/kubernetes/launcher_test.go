@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubelet
 // +build kubelet
 
 package kubernetes
@@ -16,10 +17,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/errors"
-	"github.com/DataDog/datadog-agent/pkg/logs/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/service"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/kubelet"
+	"github.com/StackVista/stackstate-agent/pkg/errors"
+	"github.com/StackVista/stackstate-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/service"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
 
 	"github.com/stretchr/testify/assert"
 )

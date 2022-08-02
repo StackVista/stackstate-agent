@@ -8,11 +8,11 @@ package event
 import (
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/metrics"
-	"github.com/DataDog/datadog-agent/pkg/trace/pb"
-	"github.com/DataDog/datadog-agent/pkg/trace/sampler"
-	"github.com/DataDog/datadog-agent/pkg/trace/watchdog"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/trace/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/trace/sampler"
+	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const maxEPSReportFrequency = 10 * time.Second

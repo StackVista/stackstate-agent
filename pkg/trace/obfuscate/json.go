@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/config"
-	"github.com/DataDog/datadog-agent/pkg/trace/pb"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config"
+	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // obfuscateJSON obfuscates the given span's tag using the given obfuscator. If the obfuscator is

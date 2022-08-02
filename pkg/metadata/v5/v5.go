@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build linux || windows || darwin
 // +build linux windows darwin
 
 package v5
@@ -10,12 +11,12 @@ package v5
 import (
 	"context"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/metadata/common"
-	"github.com/DataDog/datadog-agent/pkg/metadata/gohai"
-	"github.com/DataDog/datadog-agent/pkg/metadata/host"
-	"github.com/DataDog/datadog-agent/pkg/metadata/resources"
-	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/metadata/common"
+	"github.com/StackVista/stackstate-agent/pkg/metadata/gohai"
+	"github.com/StackVista/stackstate-agent/pkg/metadata/host"
+	"github.com/StackVista/stackstate-agent/pkg/metadata/resources"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 )
 
 // GetPayload returns the complete metadata payload as seen in Agent v5

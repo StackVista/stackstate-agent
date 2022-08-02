@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build test
 // +build test
 
 package metrics
@@ -14,8 +15,8 @@ import (
 	"testing"
 
 	"github.com/DataDog/agent-payload/v5/gogen"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/serializer/marshaler"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/serializer/marshaler"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

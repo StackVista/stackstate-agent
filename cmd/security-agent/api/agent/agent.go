@@ -10,21 +10,20 @@ package agent
 
 import (
 	"encoding/json"
-	secagent "github.com/StackVista/stackstate-agent/pkg/security/agent"
 	"net/http"
 
 	"github.com/gorilla/mux"
 
-	"github.com/DataDog/datadog-agent/cmd/agent/common"
-	"github.com/DataDog/datadog-agent/cmd/agent/common/signals"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	settingshttp "github.com/DataDog/datadog-agent/pkg/config/settings/http"
-	"github.com/DataDog/datadog-agent/pkg/flare"
-	secagent "github.com/DataDog/datadog-agent/pkg/security/agent"
-	"github.com/DataDog/datadog-agent/pkg/status"
-	"github.com/DataDog/datadog-agent/pkg/status/health"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common/signals"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	settingshttp "github.com/StackVista/stackstate-agent/pkg/config/settings/http"
+	"github.com/StackVista/stackstate-agent/pkg/flare"
+	secagent "github.com/StackVista/stackstate-agent/pkg/security/agent"
+	"github.com/StackVista/stackstate-agent/pkg/status"
+	"github.com/StackVista/stackstate-agent/pkg/status/health"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // Agent handles REST API calls

@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/DataDog/datadog-agent/cmd/system-probe/config"
-	aconfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/security/utils"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/config"
+	aconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/security/utils"
 )
 
 // Policy represents a policy file in the configuration file

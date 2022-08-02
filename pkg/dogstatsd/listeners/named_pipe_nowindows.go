@@ -9,8 +9,8 @@ package listeners
 import (
 	"errors"
 
-	"github.com/DataDog/datadog-agent/pkg/dogstatsd/packets"
-	"github.com/DataDog/datadog-agent/pkg/dogstatsd/replay"
+	"github.com/StackVista/stackstate-agent/pkg/dogstatsd/packets"
+	"github.com/StackVista/stackstate-agent/pkg/dogstatsd/replay"
 )
 
 // NamedPipeListener implements the StatsdListener interface for named pipe protocol.

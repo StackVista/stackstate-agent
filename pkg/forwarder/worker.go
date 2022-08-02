@@ -12,8 +12,8 @@ import (
 	"net/http/httptrace"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/forwarder/transaction"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/forwarder/transaction"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	httputils "github.com/StackVista/stackstate-agent/pkg/util/http"

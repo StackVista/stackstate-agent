@@ -4,12 +4,12 @@ import (
 	"time"
 
 	model "github.com/DataDog/agent-payload/v5/process"
-	"github.com/DataDog/datadog-agent/pkg/process/config"
-	"github.com/DataDog/datadog-agent/pkg/process/net"
-	"github.com/DataDog/datadog-agent/pkg/process/procutil"
-	"github.com/DataDog/datadog-agent/pkg/process/util"
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/process/config"
+	"github.com/StackVista/stackstate-agent/pkg/process/net"
+	"github.com/StackVista/stackstate-agent/pkg/process/procutil"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/DataDog/gopsutil/cpu"
 )
 

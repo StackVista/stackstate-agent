@@ -12,13 +12,13 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config/resolver"
-	"github.com/DataDog/datadog-agent/pkg/forwarder/endpoints"
-	"github.com/DataDog/datadog-agent/pkg/forwarder/transaction"
-	"github.com/DataDog/datadog-agent/pkg/status/health"
-	httputils "github.com/DataDog/datadog-agent/pkg/util/http"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/version"
+	"github.com/StackVista/stackstate-agent/pkg/config/resolver"
+	"github.com/StackVista/stackstate-agent/pkg/forwarder/endpoints"
+	"github.com/StackVista/stackstate-agent/pkg/forwarder/transaction"
+	"github.com/StackVista/stackstate-agent/pkg/status/health"
+	httputils "github.com/StackVista/stackstate-agent/pkg/util/http"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 )
 
 const (

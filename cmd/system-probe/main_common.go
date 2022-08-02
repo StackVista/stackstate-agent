@@ -1,3 +1,4 @@
+//go:build linux || windows
 // +build linux windows
 
 package main
@@ -7,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/cmd/system-probe/app"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/app"
 )
 
 func subCommands() (commandNames []string) {

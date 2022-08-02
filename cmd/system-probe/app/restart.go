@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/DataDog/datadog-agent/cmd/system-probe/api"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/api"
 	"github.com/spf13/cobra"
 )
 

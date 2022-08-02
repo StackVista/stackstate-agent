@@ -21,8 +21,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	agentpayload "github.com/DataDog/agent-payload/v5/gogen"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/serializer/stream"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/serializer/stream"
 )
 
 func TestMarshal(t *testing.T) {

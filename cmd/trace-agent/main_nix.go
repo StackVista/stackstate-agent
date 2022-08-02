@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build !windows
 // +build !windows
 
 package main
@@ -11,9 +12,9 @@ import (
 	"context"
 	"flag"
 
-	"github.com/DataDog/datadog-agent/pkg/runtime"
-	"github.com/DataDog/datadog-agent/pkg/trace/agent"
-	"github.com/DataDog/datadog-agent/pkg/trace/watchdog"
+	"github.com/StackVista/stackstate-agent/pkg/runtime"
+	"github.com/StackVista/stackstate-agent/pkg/trace/agent"
+	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
 )
 
 // main is the main application entry point

@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build stresstests
 // +build stresstests
 
 package tests
@@ -17,9 +18,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/security/probe"
-	sprobe "github.com/DataDog/datadog-agent/pkg/security/probe"
-	"github.com/DataDog/datadog-agent/pkg/security/secl/rules"
+	"github.com/StackVista/stackstate-agent/pkg/security/probe"
+	sprobe "github.com/StackVista/stackstate-agent/pkg/security/probe"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/rules"
 )
 
 var (

@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2017-present Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package custommetrics
@@ -19,13 +20,13 @@ import (
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
-	"github.com/DataDog/datadog-agent/pkg/clusteragent/custommetrics"
-	generatedopenapi "github.com/DataDog/datadog-agent/pkg/clusteragent/custommetrics/api/generated/openapi"
-	"github.com/DataDog/datadog-agent/pkg/clusteragent/externalmetrics"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	as "github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/common"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/custommetrics"
+	generatedopenapi "github.com/StackVista/stackstate-agent/pkg/clusteragent/custommetrics/api/generated/openapi"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/externalmetrics"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	as "github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/common"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 var cmd *DatadogMetricsAdapter

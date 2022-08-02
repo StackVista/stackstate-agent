@@ -3,8 +3,8 @@ package ebpf
 import (
 	"strings"
 
-	aconfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/process/util"
+	aconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
 )
 
 const (

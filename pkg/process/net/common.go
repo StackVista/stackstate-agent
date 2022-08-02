@@ -1,3 +1,4 @@
+//go:build linux || windows
 // +build linux windows
 
 package net
@@ -14,12 +15,12 @@ import (
 	"time"
 
 	model "github.com/DataDog/agent-payload/v5/process"
-	netEncoding "github.com/DataDog/datadog-agent/pkg/network/encoding"
-	procEncoding "github.com/DataDog/datadog-agent/pkg/process/encoding"
-	reqEncoding "github.com/DataDog/datadog-agent/pkg/process/encoding/request"
-	"github.com/DataDog/datadog-agent/pkg/proto/pbgo"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/util/retry"
+	netEncoding "github.com/StackVista/stackstate-agent/pkg/network/encoding"
+	procEncoding "github.com/StackVista/stackstate-agent/pkg/process/encoding"
+	reqEncoding "github.com/StackVista/stackstate-agent/pkg/process/encoding/request"
+	"github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/retry"
 )
 
 // Conn is a wrapper over some net.Listener

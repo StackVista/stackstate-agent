@@ -1,10 +1,6 @@
 # StackState Agent
 
-[![CircleCI](https://circleci.com/gh/DataDog/datadog-agent/tree/main.svg?style=svg&circle-token=dbcee3f02b9c3fe5f142bfc5ecb735fdec34b643)](https://circleci.com/gh/DataDog/datadog-agent/tree/main)
-[![Build status](https://ci.appveyor.com/api/projects/status/kcwhmlsc0oq3m49p/branch/main?svg=true)](https://ci.appveyor.com/project/Datadog/datadog-agent/branch/main)
-[![Coverage status](https://codecov.io/github/DataDog/datadog-agent/coverage.svg?branch=main)](https://codecov.io/github/DataDog/datadog-agent?branch=main)
-[![GoDoc](https://godoc.org/github.com/DataDog/datadog-agent?status.svg)](https://godoc.org/github.com/DataDog/datadog-agent)
-[![Go Report Card](https://goreportcard.com/badge/github.com/DataDog/datadog-agent)](https://goreportcard.com/report/github.com/DataDog/datadog-agent)
+Contains the code for the StackState agent V2. Agent integrations are not included in this project and can be found [here](https://github.com/StackVista/stackstate-agent-integrations).
 
 ## Installation
 
@@ -34,10 +30,10 @@ To build the Agent you need:
 Builds and tests are orchestrated with `invoke`, type `invoke --list` on a shell
 to see the available tasks.
 
-To start working on the Agent, you can build the `main` branch:
+To start working on the Agent, you can build the `master` branch:
 
-1. Checkout the repo: `git clone https://github.com/DataDog/datadog-agent.git $GOPATH/src/github.com/DataDog/datadog-agent`.
-2. cd into the project folder: `cd $GOPATH/src/github.com/DataDog/datadog-agent`.
+1. Checkout the repo: `git clone https://github.com/StackVista/stackstate-agent.git $GOPATH/src/github.com/DataDog/datadog-agent`.
+2. cd into the project folder: `cd $GOPATH/src/github.com/StackVista/stackstate-agent`.
 3. Install go tools: `invoke install-tools`.
 4. Install go dependencies: `invoke deps`.
    Make sure that `$GOPATH/bin` is in your `$PATH` otherwise this step might fail.
@@ -55,8 +51,8 @@ To start working on the Agent, you can build the `main` branch:
 
        invoke agent.build \
          --python-runtimes 2,3 \
-         --python-home-2=$GOPATH/src/github.com/DataDog/datadog-agent/venv2 \
-         --python-home-3=$GOPATH/src/github.com/DataDog/datadog-agent/venv3 .
+         --python-home-2=$GOPATH/src/github.com/StackVista/stackstate-agent/venv2 \
+         --python-home-3=$GOPATH/src/github.com/StackVista/stackstate-agent/venv3 .
 
     Running `invoke agent.build`:
 
@@ -66,14 +62,9 @@ To start working on the Agent, you can build the `main` branch:
 
      If you built an older version of the agent, you may have the error `make: *** No targets specified and no makefile found.  Stop.`. To solve the issue, you should remove `CMakeCache.txt` from `rtloader` folder with `rm rtloader/CMakeCache.txt`.
 
-
-
-Please refer to the [Agent Developer Guide](docs/dev/README.md) for more details. For instructions
-on setting up a windows dev environment, refer to [Windows Dev Env](devenv).
-
 ## Testing
 
-Run tests using `invoke test`. During development, add the `--skip-linters` option to skip straight to the tests. 
+Run tests using `invoke test`. During development, add the `--skip-linters` option to skip straight to the tests.
 ```
 invoke test --targets=./pkg/aggregator/... --skip-linters
 ```
@@ -195,11 +186,3 @@ helm upgrade --install \
 
 To use this version in the `stackstate-agent` pipeline, create a branch and update the `HELM_CHART_VERSION` variable on `.gitlab-ci.yml`, with that the pipeline will use the test helm repository that was updated by the helm-charts pipeline.
 
-You'll find information and help on how to contribute code to this project under
-[the `docs/dev` directory](docs/dev) of the present repo.
-
-## License
-
-The Datadog agent user space components are licensed under the
-[Apache License, Version 2.0](LICENSE). The BPF code is licensed
-under the [General Public License, Version 2.0](pkg/ebpf/c/COPYING).

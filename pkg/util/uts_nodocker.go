@@ -1,3 +1,4 @@
+//go:build !docker
 // +build !docker
 
 package util
@@ -5,7 +6,7 @@ package util
 import (
 	"context"
 
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
 )
 
 // GetAgentUTSMode retrieves from Docker the UTS mode of the Agent container

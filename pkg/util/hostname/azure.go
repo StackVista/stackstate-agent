@@ -1,6 +1,6 @@
 package hostname
 
-import "github.com/DataDog/datadog-agent/pkg/util/cloudproviders/azure"
+import "github.com/StackVista/stackstate-agent/pkg/util/cloudproviders/azure"
 
 func init() {
 	RegisterHostnameProvider("azure", azure.GetHostname)

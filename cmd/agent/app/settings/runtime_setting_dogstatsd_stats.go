@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"github.com/DataDog/datadog-agent/cmd/agent/common"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/config/settings"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config/settings"
 )
 
 // DsdStatsRuntimeSetting wraps operations to change the collection of dogstatsd stats at runtime.

@@ -2,13 +2,13 @@
 # Preparation stage: layout and chmods #
 ########################################
 
-FROM ubuntu:21.10 as builder
+FROM debian:bullseye-slim as builder
 
 WORKDIR /output
 
-COPY datadog-cluster-agent.arm64 opt/datadog-agent/bin/datadog-cluster-agent
-COPY ./conf.d etc/datadog-agent/conf.d
-COPY ./datadog-cluster.yaml etc/datadog-agent/datadog-cluster.yaml
+COPY stackstate-cluster-agent.arm64 opt/stackstate-agent/bin/stackstate-cluster-agent
+COPY ./conf.d etc/stackstate-agent/conf.d
+COPY ./stackstate-cluster.yaml etc/stackstate-agent/stackstate-cluster.yaml
 COPY ./security-agent-policies/compliance/containers/ etc/datadog-agent/compliance.d
 COPY entrypoint.sh .
 COPY readsecret.sh readsecret_multiple_providers.sh ./
@@ -16,19 +16,19 @@ COPY readsecret.sh readsecret_multiple_providers.sh ./
 RUN chmod 755 entrypoint.sh \
     && chown root:root readsecret.sh readsecret_multiple_providers.sh \
     && chmod 550 readsecret.sh readsecret_multiple_providers.sh\
-    && chmod g+r,g+w,g+X -R etc/datadog-agent/ \
-    && chmod +x opt/datadog-agent/bin/datadog-cluster-agent \
-    && ln -s /opt/datadog-agent/bin/datadog-cluster-agent opt/datadog-agent/bin/agent
+    && chmod g+r,g+w,g+X -R etc/stackstate-agent/ \
+    && chmod +x opt/stackstate-agent/bin/stackstate-cluster-agent \
+    && ln -s /opt/stackstate-agent/bin/stackstate-cluster-agent opt/stackstate-agent/bin/agent
 
 ####################################
 # Actual docker image construction #
 ####################################
 
-FROM ubuntu:21.10
+FROM debian:bullseye-slim
 
 LABEL maintainer "StackState <info@stackstate.com>"
 
-ENV PATH="/opt/datadog-agent/bin/:$PATH" \
+ENV PATH="/opt/stackstate-agent/bin/:$PATH" \
     DOCKER_DD_AGENT="true" \
     # Allow User Group to exec the secret backend script.
     DD_SECRET_BACKEND_COMMAND_ALLOW_GROUP_EXEC_PERM="true"

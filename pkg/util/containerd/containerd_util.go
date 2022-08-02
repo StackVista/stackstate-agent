@@ -15,10 +15,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	dderrors "github.com/DataDog/datadog-agent/pkg/errors"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/util/retry"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	dderrors "github.com/StackVista/stackstate-agent/pkg/errors"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/retry"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/types"
@@ -165,6 +165,65 @@ func (c *ContainerdUtil) ContainerWithContext(ctx context.Context, id string) (c
 	}
 
 	return ctn, err
+}
+
+// GetContainers interfaces with the containerd api to get the list of containers.
+func (c *ContainerdUtil) GetContainers() ([]*cspec.Container, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.queryTimeout)
+	defer cancel()
+
+	dContainers, err := c.Containers()
+	if err != nil {
+		return nil, err
+	}
+
+	uContainers := make([]*cspec.Container, 0, len(dContainers))
+	for _, dContainer := range dContainers {
+		ctxNamespace := namespaces.WithNamespace(ctx, c.namespace)
+
+		info, err := dContainer.Info(ctxNamespace)
+		if err != nil {
+			_ = log.Errorf("Could not extract containerd %s from container '%s'. Error: %v", "Info", dContainer.ID(), err)
+			continue
+		}
+		name := info.ID
+		if nameLabel, ok := info.Labels["io.kubernetes.container.name"]; ok {
+			name = nameLabel
+		}
+
+		spec, err := dContainer.Spec(ctxNamespace)
+		if err != nil {
+			logExtractionError("Spec", dContainer, err)
+		}
+
+		state := ""
+		task, err := dContainer.Task(ctxNamespace, nil)
+		if err != nil {
+			logExtractionError("Task", dContainer, err)
+		} else {
+			status, err := task.Status(ctxNamespace)
+			if err != nil {
+				logExtractionError("Task Status", dContainer, err)
+			} else {
+				state = string(status.Status)
+			}
+		}
+
+		container := &cspec.Container{
+			Name:    name,
+			Runtime: "containerd",
+			ID:      dContainer.ID(),
+			Image:   info.Image,
+			Mounts:  spec.Mounts,
+			State:   state,
+		}
+		uContainers = append(uContainers, container)
+	}
+	return uContainers, nil
+}
+
+func logExtractionError(what string, container containerd.Container, err error) {
+	_ = log.Warnf("Could not extract containerd %s from container '%s'. Error: %v", what, container.ID(), err)
 }
 
 // Containers interfaces with the containerd api to get the list of Containers.

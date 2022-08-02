@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build python
 // +build python
 
 package python
@@ -15,16 +16,16 @@ import (
 	"github.com/mailru/easyjson/jlexer"
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/metadata/externalhost"
-	"github.com/DataDog/datadog-agent/pkg/metadata/inventories"
-	"github.com/DataDog/datadog-agent/pkg/persistentcache"
-	traceconfig "github.com/DataDog/datadog-agent/pkg/trace/config"
-	"github.com/DataDog/datadog-agent/pkg/trace/obfuscate"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/version"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/metadata/externalhost"
+	"github.com/StackVista/stackstate-agent/pkg/metadata/inventories"
+	"github.com/StackVista/stackstate-agent/pkg/persistentcache"
+	traceconfig "github.com/StackVista/stackstate-agent/pkg/trace/config"
+	"github.com/StackVista/stackstate-agent/pkg/trace/obfuscate"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 )
 
 /*

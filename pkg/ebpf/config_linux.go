@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/ebpf/manager"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const x64SyscallPrefix = "__x64_"

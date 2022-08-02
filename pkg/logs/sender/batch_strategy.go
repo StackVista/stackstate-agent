@@ -14,10 +14,10 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/DataDog/datadog-agent/pkg/logs/message"
-	"github.com/DataDog/datadog-agent/pkg/logs/metrics"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/logs/message"
+	"github.com/StackVista/stackstate-agent/pkg/logs/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 var (

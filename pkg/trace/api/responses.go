@@ -13,10 +13,10 @@ import (
 	"net/http"
 	"sync/atomic"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/api/apiutil"
-	"github.com/DataDog/datadog-agent/pkg/trace/metrics"
-	"github.com/DataDog/datadog-agent/pkg/trace/sampler"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/trace/api/apiutil"
+	"github.com/StackVista/stackstate-agent/pkg/trace/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/trace/sampler"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (

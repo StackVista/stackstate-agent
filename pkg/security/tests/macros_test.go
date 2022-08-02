@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build functionaltests
 // +build functionaltests
 
 package tests
@@ -13,8 +14,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	sprobe "github.com/DataDog/datadog-agent/pkg/security/probe"
-	"github.com/DataDog/datadog-agent/pkg/security/secl/rules"
+	sprobe "github.com/StackVista/stackstate-agent/pkg/security/probe"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/rules"
 )
 
 func TestMacros(t *testing.T) {

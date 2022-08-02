@@ -16,11 +16,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/cachedfetch"
-	"github.com/DataDog/datadog-agent/pkg/util/common"
-	httputils "github.com/DataDog/datadog-agent/pkg/util/http"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/cachedfetch"
+	"github.com/StackVista/stackstate-agent/pkg/util/common"
+	httputils "github.com/StackVista/stackstate-agent/pkg/util/http"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 type ec2Token struct {

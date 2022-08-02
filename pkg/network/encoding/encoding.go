@@ -5,10 +5,10 @@ import (
 	"sync"
 
 	model "github.com/DataDog/agent-payload/v5/process"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/network"
-	"github.com/DataDog/datadog-agent/pkg/network/http"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/network"
+	"github.com/StackVista/stackstate-agent/pkg/network/http"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/gogo/protobuf/jsonpb"
 )
 

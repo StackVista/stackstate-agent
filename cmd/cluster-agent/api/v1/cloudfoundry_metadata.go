@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2017-present Datadog, Inc.
 
+//go:build clusterchecks && !kubeapiserver
 // +build clusterchecks,!kubeapiserver
 
 package v1
@@ -12,8 +13,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/DataDog/datadog-agent/pkg/util/cloudproviders/cloudfoundry"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders/cloudfoundry"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/gorilla/mux"
 )
 

@@ -5,7 +5,7 @@
 require "./lib/ostools.rb"
 
 name 'agent'
-package_name 'datadog-agent'
+package_name 'stackstate-agent'
 license "Apache-2.0"
 license_file "../LICENSE"
 
@@ -264,16 +264,29 @@ if linux?
   if debian?
     systemd_directory = "/lib/systemd/system"
 
-    extra_package_file "/etc/init.d/datadog-agent"
-    extra_package_file "/etc/init.d/datadog-agent-process"
-    extra_package_file "/etc/init.d/datadog-agent-trace"
-    extra_package_file "/etc/init.d/datadog-agent-security"
+    extra_package_file "/etc/init.d/stackstate-agent"
+    extra_package_file "/etc/init.d/stackstate-agent-process"
+    extra_package_file "/etc/init.d/stackstate-agent-trace"
+    # sts
+    if $enable_security_agent
+      extra_package_file "/etc/init.d/stackstate-agent-security"
+    end
   end
   if suse?
-    extra_package_file "/etc/init.d/datadog-agent"
-    extra_package_file "/etc/init.d/datadog-agent-process"
-    extra_package_file "/etc/init.d/datadog-agent-trace"
-    extra_package_file "/etc/init.d/datadog-agent-security"
+    extra_package_file "/etc/init.d/stackstate-agent"
+    extra_package_file "/etc/init.d/stackstate-agent-process"
+    extra_package_file "/etc/init.d/stackstate-agent-trace"
+    # sts
+    if $enable_security_agent
+      extra_package_file "/etc/init.d/stackstate-agent-security"
+    end
+  end
+  extra_package_file "#{systemd_directory}/stackstate-agent.service"
+  extra_package_file "#{systemd_directory}/stackstate-agent-process.service"
+  extra_package_file "#{systemd_directory}/stackstate-agent-sysprobe.service"
+  extra_package_file "#{systemd_directory}/stackstate-agent-trace.service"
+  if $enable_security_agent
+    extra_package_file "#{systemd_directory}/stackstate-agent-security.service"
   end
   extra_package_file '/etc/stackstate-agent/'
   extra_package_file '/usr/bin/sts-agent'

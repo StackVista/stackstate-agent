@@ -3,13 +3,13 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
-// +build !windows
-// +build kubeapiserver
+//go:build !windows && kubeapiserver
+// +build !windows,kubeapiserver
 
 package app
 
 import (
-	"github.com/DataDog/datadog-agent/cmd/security-agent/app"
+	"github.com/StackVista/stackstate-agent/cmd/security-agent/app"
 	"github.com/spf13/cobra"
 )
 

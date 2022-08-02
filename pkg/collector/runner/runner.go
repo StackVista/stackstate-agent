@@ -12,12 +12,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/collector/runner/tracker"
-	"github.com/DataDog/datadog-agent/pkg/collector/scheduler"
-	"github.com/DataDog/datadog-agent/pkg/collector/worker"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/runner/tracker"
+	"github.com/StackVista/stackstate-agent/pkg/collector/scheduler"
+	"github.com/StackVista/stackstate-agent/pkg/collector/worker"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (

@@ -3,9 +3,9 @@ package api
 import (
 	"net/http"
 
-	"github.com/DataDog/datadog-agent/cmd/system-probe/api/module"
-	"github.com/DataDog/datadog-agent/cmd/system-probe/config"
-	"github.com/DataDog/datadog-agent/cmd/system-probe/modules"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/api/module"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/config"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/modules"
 	"github.com/gorilla/mux"
 )
 

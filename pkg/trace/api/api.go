@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"expvar"
 	"fmt"
+	openTelemetryTrace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/collector"
 	"io"
 	"io/ioutil"
 	stdlog "log"
@@ -30,23 +31,23 @@ import (
 
 	"github.com/tinylib/msgp/msgp"
 
-	"github.com/DataDog/datadog-agent/pkg/appsec"
-	mainconfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/proto/pbgo"
-	"github.com/DataDog/datadog-agent/pkg/tagger"
-	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
-	"github.com/DataDog/datadog-agent/pkg/trace/api/apiutil"
-	"github.com/DataDog/datadog-agent/pkg/trace/config"
-	"github.com/DataDog/datadog-agent/pkg/trace/config/features"
-	"github.com/DataDog/datadog-agent/pkg/trace/info"
-	"github.com/DataDog/datadog-agent/pkg/trace/logutil"
-	"github.com/DataDog/datadog-agent/pkg/trace/metrics"
-	"github.com/DataDog/datadog-agent/pkg/trace/metrics/timing"
-	"github.com/DataDog/datadog-agent/pkg/trace/osutil"
-	"github.com/DataDog/datadog-agent/pkg/trace/pb"
-	"github.com/DataDog/datadog-agent/pkg/trace/sampler"
-	"github.com/DataDog/datadog-agent/pkg/trace/watchdog"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/appsec"
+	mainconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
+	"github.com/StackVista/stackstate-agent/pkg/tagger"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/trace/api/apiutil"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config/features"
+	"github.com/StackVista/stackstate-agent/pkg/trace/info"
+	"github.com/StackVista/stackstate-agent/pkg/trace/logutil"
+	"github.com/StackVista/stackstate-agent/pkg/trace/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/trace/metrics/timing"
+	"github.com/StackVista/stackstate-agent/pkg/trace/osutil"
+	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/trace/sampler"
+	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 var bufferPool = sync.Pool{
@@ -143,6 +144,9 @@ func replyWithVersion(hash string, h http.Handler) http.Handler {
 // Start starts doing the HTTP server and is ready to receive traces
 func (r *HTTPReceiver) Start() {
 	mux := r.buildMux()
+
+	// [sts]
+	mux.HandleFunc("/open-telemetry", r.handleProtobuf(r.handleOpenTelemetry))
 
 	timeout := 5 * time.Second
 	if r.conf.ReceiverTimeout > 0 {
@@ -459,6 +463,21 @@ func decodeTracerPayload(v Version, req *http.Request, ts *info.TagStats) (tp *p
 	}
 }
 
+// [sts]
+func (r *HTTPReceiver) decodeOpenTelemetry(req *http.Request) (*openTelemetryTrace.ExportTraceServiceRequest, error) {
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	openTelemetryTraceData := &openTelemetryTrace.ExportTraceServiceRequest{}
+	if err := proto.Unmarshal(body, openTelemetryTraceData); err != nil {
+		return nil, err
+	}
+
+	return openTelemetryTraceData, nil
+}
+
 // replyOK replies to the given http.ReponseWriter w based on the endpoint version, with either status 200/OK
 // or with a list of rates by service. It returns the number of bytes written along with reporting if the operation
 // was successful.
@@ -675,6 +694,64 @@ func droppedTracesFromHeader(h http.Header, ts *info.TagStats) int64 {
 		}
 	}
 	return dropped
+}
+
+// [sts]
+// Open telemetry support - Uses protobuf
+func (r *HTTPReceiver) handleOpenTelemetry(w http.ResponseWriter, req *http.Request) {
+	ts := r.tagStats(v05, req)
+
+	openTelemetryTraces, err := r.decodeOpenTelemetry(req)
+	if err != nil {
+		if err == ErrLimitedReaderLimitReached {
+			atomic.AddInt64(&ts.TracesDropped.PayloadTooLarge, 1)
+		} else {
+			atomic.AddInt64(&ts.TracesDropped.DecodingError, 1)
+		}
+		log.Errorf("Cannot decode traces payload: %v", err)
+		return
+	}
+
+	// Open telemetry does not immediately fit into the pb.Traces structure and thus needs to be mapped into it
+	traces := mapOpenTelemetryTraces(*openTelemetryTraces)
+	traceCount := int64(len(traces))
+
+	// Determine rate limit based on length of traces we decoded
+	if !r.RateLimiter.Permits(traceCount) {
+		// this payload can not be accepted
+		io.Copy(ioutil.Discard, req.Body)
+		w.WriteHeader(r.rateLimiterResponse)
+		httpOK(w)
+		atomic.AddInt64(&ts.PayloadRefused, 1)
+		return
+	}
+
+	httpOK(w)
+
+	atomic.AddInt64(&ts.TracesReceived, int64(len(traces)))
+	atomic.AddInt64(&ts.TracesBytes, req.Body.(*LimitedReader).Count)
+	atomic.AddInt64(&ts.PayloadAccepted, 1)
+
+	payload := &Payload{
+		Source:        ts,
+		Traces:        traces,
+		ContainerTags: getContainerTags(req.Header.Get(headerContainerID)),
+	}
+	select {
+	case r.out <- payload:
+		// ok
+	default:
+		// channel blocked, add a goroutine to ensure we never drop
+		r.wg.Add(1)
+		go func() {
+			metrics.Count("datadog.trace_agent.receiver.queued_send", 1, nil, 1)
+			defer func() {
+				r.wg.Done()
+				watchdog.LogOnPanic()
+			}()
+			r.out <- payload
+		}()
+	}
 }
 
 // handleServices handle a request with a list of several services

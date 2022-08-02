@@ -11,8 +11,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/DataDog/datadog-agent/cmd/system-probe/api"
-	"github.com/DataDog/datadog-agent/pkg/api/util"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/api"
+	"github.com/StackVista/stackstate-agent/pkg/api/util"
 	"github.com/spf13/cobra"
 )
 

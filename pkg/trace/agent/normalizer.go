@@ -13,12 +13,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/config/features"
-	"github.com/DataDog/datadog-agent/pkg/trace/info"
-	"github.com/DataDog/datadog-agent/pkg/trace/pb"
-	"github.com/DataDog/datadog-agent/pkg/trace/sampler"
-	"github.com/DataDog/datadog-agent/pkg/trace/traceutil"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config/features"
+	"github.com/StackVista/stackstate-agent/pkg/trace/info"
+	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/trace/sampler"
+	"github.com/StackVista/stackstate-agent/pkg/trace/traceutil"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (

@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build functionaltests
 // +build functionaltests
 
 package tests
@@ -19,9 +20,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/DataDog/datadog-agent/pkg/security/probe"
-	"github.com/DataDog/datadog-agent/pkg/security/secl/model"
-	"github.com/DataDog/datadog-agent/pkg/security/secl/rules"
+	"github.com/StackVista/stackstate-agent/pkg/security/probe"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/model"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/rules"
 )
 
 func openTestFile(test *testModule, testFile string, flags int) (int, error) {

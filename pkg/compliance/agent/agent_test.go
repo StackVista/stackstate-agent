@@ -15,12 +15,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/compliance/checks"
-	"github.com/DataDog/datadog-agent/pkg/compliance/event"
-	"github.com/DataDog/datadog-agent/pkg/compliance/mocks"
-	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/checks"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/mocks"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

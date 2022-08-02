@@ -13,13 +13,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/status/health"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/clusteragent"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/status/health"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/clusteragent"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const firstRunnerStatsMinutes = 2  // collect runner stats after the first 2 minutes

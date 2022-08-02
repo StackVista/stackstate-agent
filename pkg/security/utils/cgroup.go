@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build linux
 // +build linux
 
 package utils
@@ -15,7 +16,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/security/secl/model"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/model"
 )
 
 // ContainerID is the type holding the container ID

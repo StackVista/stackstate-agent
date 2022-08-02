@@ -18,8 +18,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/sys/unix"
 
-	sprobe "github.com/DataDog/datadog-agent/pkg/security/probe"
-	"github.com/DataDog/datadog-agent/pkg/security/secl/rules"
+	sprobe "github.com/StackVista/stackstate-agent/pkg/security/probe"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/rules"
 )
 
 func TestRename(t *testing.T) {

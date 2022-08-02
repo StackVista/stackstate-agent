@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build linux
 // +build linux
 
 package module
@@ -20,14 +21,14 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/time/rate"
 
-	"github.com/DataDog/datadog-agent/pkg/security/api"
-	"github.com/DataDog/datadog-agent/pkg/security/config"
-	seclog "github.com/DataDog/datadog-agent/pkg/security/log"
-	"github.com/DataDog/datadog-agent/pkg/security/metrics"
-	sprobe "github.com/DataDog/datadog-agent/pkg/security/probe"
-	"github.com/DataDog/datadog-agent/pkg/security/secl/rules"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/version"
+	"github.com/StackVista/stackstate-agent/pkg/security/api"
+	"github.com/StackVista/stackstate-agent/pkg/security/config"
+	seclog "github.com/StackVista/stackstate-agent/pkg/security/log"
+	"github.com/StackVista/stackstate-agent/pkg/security/metrics"
+	sprobe "github.com/StackVista/stackstate-agent/pkg/security/probe"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/rules"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 )
 
 type pendingMsg struct {

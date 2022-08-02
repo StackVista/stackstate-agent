@@ -12,6 +12,7 @@ import (
 	"os"
 
 	"github.com/StackVista/stackstate-agent/cmd/agent/app"
+	// sts - import dockerswarm to load check
 	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/dockerswarm"
 )
 

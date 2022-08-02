@@ -8,15 +8,15 @@ package pipeline
 import (
 	"context"
 
-	"github.com/DataDog/datadog-agent/pkg/logs/client"
-	"github.com/DataDog/datadog-agent/pkg/logs/client/http"
-	"github.com/DataDog/datadog-agent/pkg/logs/client/tcp"
-	"github.com/DataDog/datadog-agent/pkg/logs/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/diagnostic"
-	"github.com/DataDog/datadog-agent/pkg/logs/message"
-	"github.com/DataDog/datadog-agent/pkg/logs/processor"
-	"github.com/DataDog/datadog-agent/pkg/logs/sender"
-	"github.com/DataDog/datadog-agent/pkg/security/log"
+	"github.com/StackVista/stackstate-agent/pkg/logs/client"
+	"github.com/StackVista/stackstate-agent/pkg/logs/client/http"
+	"github.com/StackVista/stackstate-agent/pkg/logs/client/tcp"
+	"github.com/StackVista/stackstate-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/diagnostic"
+	"github.com/StackVista/stackstate-agent/pkg/logs/message"
+	"github.com/StackVista/stackstate-agent/pkg/logs/processor"
+	"github.com/StackVista/stackstate-agent/pkg/logs/sender"
+	"github.com/StackVista/stackstate-agent/pkg/security/log"
 )
 
 // Pipeline processes and sends messages to the backend

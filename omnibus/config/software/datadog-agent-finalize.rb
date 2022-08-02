@@ -21,11 +21,11 @@ build do
             conf_dir_root = "#{Omnibus::Config.source_dir()}/etc/stackstate-agent"
             conf_dir = "#{conf_dir_root}/extra_package_files/EXAMPLECONFSLOCATION"
             mkdir conf_dir
-            move "#{install_dir}/etc/datadog-agent/datadog.yaml.example", conf_dir_root, :force=>true
+            move "#{install_dir}/etc/stackstate-agent/stackstate.yaml.example", conf_dir_root, :force=>true
             if ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty? and not windows_arch_i386?
-              move "#{install_dir}/etc/datadog-agent/system-probe.yaml.example", conf_dir_root, :force=>true
+              move "#{install_dir}/etc/stackstate-agent/system-probe.yaml.example", conf_dir_root, :force=>true
             end
-            move "#{install_dir}/etc/datadog-agent/conf.d/*", conf_dir, :force=>true
+            move "#{install_dir}/etc/stackstate-agent/conf.d/*", conf_dir, :force=>true
             delete "#{install_dir}/bin/agent/agent.exe"
             # TODO why does this get generated at all
             delete "#{install_dir}/bin/agent/agent.exe~"
@@ -88,7 +88,8 @@ build do
             # Fix pip after building on extended toolchain in CentOS builder
             if redhat?
               unless arm?
-                rhel_toolchain_root = "/opt/rh/devtoolset-1.1/root"
+                # sts path is /opt/centos/devtoolset-1.1/root for centos6 based runner
+                rhel_toolchain_root = "/opt/rh/devtoolset-7/root"
                 # lets be cautious - we first search for the expected toolchain path, if its not there, bail out
                 command "find #{install_dir} -type f -iname '*_sysconfigdata*.py' -exec grep -inH '#{rhel_toolchain_root}' {} \\; |  egrep '.*'"
                 # replace paths with expected target toolchain location
@@ -113,17 +114,23 @@ build do
 
                 # sysvinit support for debian only for now
                 mkdir "/etc/init.d"
-                move "#{install_dir}/scripts/datadog-agent", "/etc/init.d"
-                move "#{install_dir}/scripts/datadog-agent-trace", "/etc/init.d"
-                move "#{install_dir}/scripts/datadog-agent-process", "/etc/init.d"
-                move "#{install_dir}/scripts/datadog-agent-security", "/etc/init.d"
+                move "#{install_dir}/scripts/stackstate-agent", "/etc/init.d"
+                move "#{install_dir}/scripts/stackstate-agent-trace", "/etc/init.d"
+                move "#{install_dir}/scripts/stackstate-agent-process", "/etc/init.d"
+                # sts
+                if $enable_security_agent
+                    move "#{install_dir}/scripts/stackstate-agent-security", "/etc/init.d"
+                end
             end
             if suse?
                 mkdir "/etc/init.d"
-                move "#{install_dir}/scripts/datadog-agent", "/etc/init.d"
-                move "#{install_dir}/scripts/datadog-agent-trace", "/etc/init.d"
-                move "#{install_dir}/scripts/datadog-agent-process", "/etc/init.d"
-                move "#{install_dir}/scripts/datadog-agent-security", "/etc/init.d"
+                move "#{install_dir}/scripts/stackstate-agent", "/etc/init.d"
+                move "#{install_dir}/scripts/stackstate-agent-trace", "/etc/init.d"
+                move "#{install_dir}/scripts/stackstate-agent-process", "/etc/init.d"
+                # sts
+                if $enable_security_agent
+                    move "#{install_dir}/scripts/stackstate-agent-security", "/etc/init.d"
+                end
             end
             mkdir systemd_directory
             move "#{install_dir}/scripts/stackstate-agent.service", systemd_directory
@@ -136,18 +143,21 @@ build do
             end
 
             # Move configuration files
-            mkdir "/etc/datadog-agent"
-            move "#{install_dir}/bin/agent/dd-agent", "/usr/bin/dd-agent"
-            move "#{install_dir}/etc/datadog-agent/datadog.yaml.example", "/etc/datadog-agent"
-            move "#{install_dir}/etc/datadog-agent/system-probe.yaml.example", "/etc/datadog-agent"
-            move "#{install_dir}/etc/datadog-agent/conf.d", "/etc/datadog-agent", :force=>true
-            move "#{install_dir}/etc/datadog-agent/runtime-security.d", "/etc/datadog-agent", :force=>true
-            move "#{install_dir}/etc/datadog-agent/security-agent.yaml.example", "/etc/datadog-agent", :force=>true
-            move "#{install_dir}/etc/datadog-agent/compliance.d", "/etc/datadog-agent"
+            mkdir "/etc/stackstate-agent"
+            move "#{install_dir}/bin/agent/sts-agent", "/usr/bin/sts-agent"
+            move "#{install_dir}/etc/stackstate-agent/stackstate.yaml.example", "/etc/stackstate-agent"
+            move "#{install_dir}/etc/stackstate-agent/system-probe.yaml.example", "/etc/stackstate-agent"
+            move "#{install_dir}/etc/stackstate-agent/conf.d", "/etc/stackstate-agent", :force=>true
+            # sts
+            if $enable_security_agent
+                move "#{install_dir}/etc/stackstate-agent/runtime-security.d", "/etc/stackstate-agent", :force=>true
+                move "#{install_dir}/etc/stackstate-agent/security-agent.yaml.example", "/etc/stackstate-agent", :force=>true
+            end
+            move "#{install_dir}/etc/stackstate-agent/compliance.d", "/etc/stackstate-agent"
 
             # Move SELinux policy
             if debian? || redhat?
-              move "#{install_dir}/etc/datadog-agent/selinux", "/etc/datadog-agent/selinux"
+              move "#{install_dir}/etc/stackstate-agent/selinux", "/etc/stackstate-agent/selinux"
             end
 
             # Create empty directories so that they're owned by the package
@@ -219,7 +229,7 @@ build do
 
             # remove windows specific configs
             delete "#{install_dir}/etc/conf.d/winproc.d"
-            
+
             # remove docker configuration
             delete "#{install_dir}/etc/conf.d/docker.d"
 

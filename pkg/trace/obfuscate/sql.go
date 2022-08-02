@@ -13,10 +13,10 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/config/features"
-	"github.com/DataDog/datadog-agent/pkg/trace/pb"
-	"github.com/DataDog/datadog-agent/pkg/trace/traceutil"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config/features"
+	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/trace/traceutil"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const sqlQueryTag = "sql.query"

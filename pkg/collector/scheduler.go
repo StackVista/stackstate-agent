@@ -11,11 +11,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/collector/loaders"
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/loaders"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	yaml "gopkg.in/yaml.v2"
 )

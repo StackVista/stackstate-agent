@@ -16,17 +16,17 @@ import (
 
 	log "github.com/cihub/seelog"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/containers/docker"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/tagger"
-	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
-	"github.com/DataDog/datadog-agent/pkg/tagger/local"
-	"github.com/DataDog/datadog-agent/pkg/workloadmeta"
-	"github.com/DataDog/datadog-agent/test/integration/utils"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/docker"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/tagger"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/local"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta"
+	"github.com/StackVista/stackstate-agent/test/integration/utils"
 
-	_ "github.com/DataDog/datadog-agent/pkg/workloadmeta/collectors"
+	_ "github.com/StackVista/stackstate-agent/pkg/workloadmeta/collectors"
 )
 
 var (

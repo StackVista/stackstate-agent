@@ -9,11 +9,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/config"
-	"github.com/DataDog/datadog-agent/pkg/trace/info"
-	"github.com/DataDog/datadog-agent/pkg/trace/pb"
-	"github.com/DataDog/datadog-agent/pkg/trace/watchdog"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config"
+	"github.com/StackVista/stackstate-agent/pkg/trace/info"
+	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // defaultBufferLen represents the default buffer length; the number of bucket size

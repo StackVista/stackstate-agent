@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package app
@@ -10,12 +11,12 @@ package app
 import (
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/cmd/agent/common"
-	cmdconfig "github.com/DataDog/datadog-agent/cmd/agent/common/commands/config"
-	"github.com/DataDog/datadog-agent/pkg/api/util"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	commonsettings "github.com/DataDog/datadog-agent/pkg/config/settings"
-	settingshttp "github.com/DataDog/datadog-agent/pkg/config/settings/http"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common"
+	cmdconfig "github.com/StackVista/stackstate-agent/cmd/agent/common/commands/config"
+	"github.com/StackVista/stackstate-agent/pkg/api/util"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	commonsettings "github.com/StackVista/stackstate-agent/pkg/config/settings"
+	settingshttp "github.com/StackVista/stackstate-agent/pkg/config/settings/http"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"

@@ -2,26 +2,18 @@
 # (C) Datadog, Inc. 2010-present
 # All rights reserved
 # Licensed under Simplified BSD License (see LICENSE)
-# StackState Agent installation script: install and set up the Agent on supported Linux distributions
-# using the package manager and StackState repositories.
+# Datadog Agent installation script: install and set up the Agent on supported Linux distributions
+# using the package manager and Datadog repositories.
 
 set -e
 install_script_version=1.7.1.post
 logfile="ddagent-install.log"
 support_email=support@datadoghq.com
 
-PKG_NAME="stackstate-agent"
-PKG_USER="stackstate-agent"
-ETCDIR="/etc/stackstate-agent"
-CONF="$ETCDIR/stackstate.yaml"
-
-logfile="$PKG_NAME-install.log"
-
-if [ $(command -v curl) ]; then
-    dl_cmd="curl -f"
-else
-    dl_cmd="wget --quiet"
-fi
+LEGACY_ETCDIR="/etc/dd-agent"
+LEGACY_CONF="$LEGACY_ETCDIR/datadog.conf"
+ETCDIR="/etc/datadog-agent"
+CONF="$ETCDIR/datadog.yaml"
 
 # DATADOG_APT_KEY_CURRENT.public always contains key used to sign current
 # repodata and newly released packages
@@ -94,10 +86,10 @@ function get_email() {
 }
 
 function on_error() {
-    print_red "$ERROR_MESSAGE
-It looks like you hit an issue when trying to install the StackState Agent v2.
+    printf "\033[31m$ERROR_MESSAGE
+It looks like you hit an issue when trying to install the Agent.
 
-Basic information about the Agent are available at:
+Troubleshooting and basic usage information for the Agent are available at:
 
     https://docs.datadoghq.com/agent/basic_agent_usage/\n\033[0m\n"
 
@@ -152,27 +144,31 @@ if [ -n "$DD_HOSTNAME" ]; then
     hostname=$DD_HOSTNAME
 fi
 
-if [ -n "$STS_SITE" ]; then
-    site="$STS_SITE"
+site=
+if [ -n "$DD_SITE" ]; then
+    site="$DD_SITE"
 fi
 
-sts_url="http://localhost/stsAgent"
-if [ -n "$STS_URL" ]; then
-    sts_url=$STS_URL
+apikey=
+if [ -n "$DD_API_KEY" ]; then
+    apikey=$DD_API_KEY
 fi
 
 no_start=
-if [ -n "$STS_INSTALL_ONLY" ]; then
+if [ -n "$DD_INSTALL_ONLY" ]; then
     no_start=true
 fi
 
-no_repo=
-if [ ! -z "$STS_INSTALL_NO_REPO" ]; then
-    no_repo=true
+host_tags=
+# comma-separated list of tags
+if [ -n "$DD_HOST_TAGS" ]; then
+    host_tags=$DD_HOST_TAGS
 fi
 
-if [ -n "$STS_HOSTNAME" ]; then
-    hostname=$STS_HOSTNAME
+if [ -n "$REPO_URL" ]; then
+    repository_url=$REPO_URL
+else
+    repository_url="datadoghq.com"
 fi
 
 if [ -n "$TESTING_KEYS_URL" ]; then
@@ -210,10 +206,15 @@ if [ -n "$DD_UPGRADE" ]; then
   upgrade=$DD_UPGRADE
 fi
 
-if [ -n "$CODE_NAME" ]; then
-    code_name=$CODE_NAME
+agent_major_version=6
+if [ -n "$DD_AGENT_MAJOR_VERSION" ]; then
+  if [ "$DD_AGENT_MAJOR_VERSION" != "6" ] && [ "$DD_AGENT_MAJOR_VERSION" != "7" ]; then
+    echo "DD_AGENT_MAJOR_VERSION must be either 6 or 7. Current value: $DD_AGENT_MAJOR_VERSION"
+    exit 1;
+  fi
+  agent_major_version=$DD_AGENT_MAJOR_VERSION
 else
-    code_name="stable"
+  echo -e "\033[33mWarning: DD_AGENT_MAJOR_VERSION not set. Installing Agent version 6 by default.\033[0m"
 fi
 
 if [ -n "$DD_AGENT_MINOR_VERSION" ]; then
@@ -229,18 +230,25 @@ if [ -n "$DD_AGENT_FLAVOR" ]; then
     agent_flavor=$DD_AGENT_FLAVOR #Eg: datadog-iot-agent
 fi
 
-if [ -z "$YUM_REPO" ]; then
-    # for offline script remember default production repo address
-    YUM_REPO="https://stackstate-agent-3-rpm.s3.amazonaws.com"
+agent_dist_channel=stable
+if [ -n "$DD_AGENT_DIST_CHANNEL" ]; then
+  if [ "$DD_AGENT_DIST_CHANNEL" != "stable" ] && [ "$DD_AGENT_DIST_CHANNEL" != "beta" ]; then
+    echo "DD_AGENT_DIST_CHANNEL must be either 'stable' or 'beta'. Current value: $DD_AGENT_DIST_CHANNEL"
+    exit 1;
+  fi
+  agent_dist_channel=$DD_AGENT_DIST_CHANNEL
 fi
 
-if [ -n "$SKIP_SSL_VALIDATION" ]; then
-    skip_ssl_validation=$SKIP_SSL_VALIDATION
+if [ -n "$TESTING_YUM_VERSION_PATH" ]; then
+  yum_version_path=$TESTING_YUM_VERSION_PATH
+else
+  yum_version_path="${agent_dist_channel}/${agent_major_version}"
 fi
 
-if [ ! $api_key ]; then
-    print_red "API key not available in STS_API_KEY environment variable.\n"
-    exit 1
+if [ -n "$TESTING_APT_REPO_VERSION" ]; then
+  apt_repo_version=$TESTING_APT_REPO_VERSION
+else
+  apt_repo_version="${agent_dist_channel} ${agent_major_version}"
 fi
 
 report_failure_url="https://api.datadoghq.com/agent_stats/report_failure"
@@ -269,29 +277,29 @@ fi
 KNOWN_DISTRIBUTION="(Debian|Ubuntu|RedHat|CentOS|openSUSE|Amazon|Arista|SUSE|Rocky|AlmaLinux)"
 DISTRIBUTION=$(lsb_release -d 2>/dev/null | grep -Eo $KNOWN_DISTRIBUTION  || grep -Eo $KNOWN_DISTRIBUTION /etc/issue 2>/dev/null || grep -Eo $KNOWN_DISTRIBUTION /etc/Eos-release 2>/dev/null || grep -m1 -Eo $KNOWN_DISTRIBUTION /etc/os-release 2>/dev/null || uname -s)
 
-if [ $DISTRIBUTION = "Darwin" ]; then
-    print_red "This script does not support installing on the Mac.
+if [ "$DISTRIBUTION" = "Darwin" ]; then
+    printf "\033[31mThis script does not support installing on the Mac.
 
-Please use the 1-step script available at https://app.datadoghq.com/account/settings#agent/mac."
-    exit 1
+Please use the 1-step script available at https://app.datadoghq.com/account/settings#agent/mac.\033[0m\n"
+    exit 1;
 
-elif [ -f /etc/debian_version -o "$DISTRIBUTION" == "Debian" -o "$DISTRIBUTION" == "Ubuntu" ]; then
+elif [ -f /etc/debian_version ] || [ "$DISTRIBUTION" == "Debian" ] || [ "$DISTRIBUTION" == "Ubuntu" ]; then
     OS="Debian"
 elif [ -f /etc/redhat-release ] || [ "$DISTRIBUTION" == "RedHat" ] || [ "$DISTRIBUTION" == "CentOS" ] || [ "$DISTRIBUTION" == "Amazon" ] || [ "$DISTRIBUTION" == "Rocky" ] || [ "$DISTRIBUTION" == "AlmaLinux" ]; then
     OS="RedHat"
 # Some newer distros like Amazon may not have a redhat-release file
-elif [ -f /etc/system-release -o "$DISTRIBUTION" == "Amazon" ]; then
+elif [ -f /etc/system-release ] || [ "$DISTRIBUTION" == "Amazon" ]; then
     OS="RedHat"
 # Arista is based off of Fedora14/18 but do not have /etc/redhat-release
-elif [ -f /etc/Eos-release -o "$DISTRIBUTION" == "Arista" ]; then
+elif [ -f /etc/Eos-release ] || [ "$DISTRIBUTION" == "Arista" ]; then
     OS="RedHat"
 # openSUSE and SUSE use /etc/SuSE-release or /etc/os-release
-elif [ -f /etc/SuSE-release -o "$DISTRIBUTION" == "SUSE" -o "$DISTRIBUTION" == "openSUSE" ]; then
+elif [ -f /etc/SuSE-release ] || [ "$DISTRIBUTION" == "SUSE" ] || [ "$DISTRIBUTION" == "openSUSE" ]; then
     OS="SUSE"
 fi
 
 # Root user detection
-if [ $(echo "$UID") = "0" ]; then
+if [ "$(echo "$UID")" = "0" ]; then
     sudo_cmd=''
 else
     sudo_cmd='sudo'
@@ -345,10 +353,13 @@ if [ "$OS" = "RedHat" ]; then
 
     printf "\033[34m* Installing the Datadog Agent package\n\033[0m\n"
     $sudo_cmd yum -y clean metadata
-    if [ $INSTALL_MODE = "REPO" ]; then
-        $sudo_cmd yum -y --disablerepo='*' --enablerepo='stackstate' install $PKG_NAME || $sudo_cmd yum -y install $PKG_NAME
-    else
-        $sudo_cmd yum -y localinstall $LOCAL_PKG_NAME
+
+    dnf_flag=""
+    if [ -f "/etc/fedora-release" ] && [ -f "/usr/bin/dnf" ]; then
+      # On Fedora, yum is an alias of dnf, dnf install doesn't
+      # upgrade a package if a newer version is available, unless
+      # the --best flag is set
+      dnf_flag="--best"
     fi
 
     if [ -n "$agent_minor_version" ]; then
@@ -401,10 +412,10 @@ elif [ "$OS" = "Debian" ]; then
 
     printf "\033[34m\n* Installing the Datadog Agent package\n\033[0m\n"
     ERROR_MESSAGE="ERROR
-Failed to update the sources after adding the StackState repository.
+Failed to update the sources after adding the Datadog repository.
 This may be due to any of the configured APT sources failing -
 see the logs above to determine the cause.
-If the failing repository is StackState, please contact StackState support.
+If the failing repository is Datadog, please contact Datadog support.
 *****
 "
     $sudo_cmd apt-get update -o Dir::Etc::sourcelist="sources.list.d/datadog.list" -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0"
@@ -415,7 +426,7 @@ determine the cause.
 If the cause is unclear, please contact Datadog support.
 *****
 "
-    
+
     if [ -n "$agent_minor_version" ]; then
         # Example: datadog-agent=1:7.20.2-1
         pkg_pattern="([[:digit:]]:)?$agent_major_version\.${agent_minor_version%.}(\.[[:digit:]]+){0,1}(-[[:digit:]])?"
@@ -495,7 +506,7 @@ elif [ "$OS" = "SUSE" ]; then
 
   echo -e "\033[34m\n* Refreshing repositories\n\033[0m"
   $sudo_cmd zypper --non-interactive --no-gpg-checks refresh datadog
-  
+
   echo -e "\033[34m\n* Installing Datadog Agent\n\033[0m"
 
   # remove the patch version if the minor version includes it (eg: 33.1 -> 33)
@@ -544,47 +555,83 @@ elif [ "$OS" = "SUSE" ]; then
   fi
 
 else
-    print_red "Your OS or distribution is not supported yet.\n"
-    exit 1
+    printf "\033[31mYour OS or distribution are not supported by this install script.
+Please follow the instructions on the Agent setup page:
+
+    https://app.datadoghq.com/account/settings#agent\033[0m\n"
+    exit;
+fi
+
+if [ "$upgrade" ]; then
+  if [ -e $LEGACY_CONF ]; then
+    # try to import the config file from the previous version
+    icmd="datadog-agent import $LEGACY_ETCDIR $ETCDIR"
+    # shellcheck disable=SC2086
+    $sudo_cmd $icmd || printf "\033[31mAutomatic import failed, you can still try to manually run: $icmd\n\033[0m\n"
+    # fix file owner and permissions since the script moves around some files
+    $sudo_cmd chown -R dd-agent:dd-agent $ETCDIR
+    $sudo_cmd find $ETCDIR/ -type f -exec chmod 640 {} \;
+  else
+    printf "\033[31mYou don't have a datadog.conf file to convert.\n\033[0m\n"
+  fi
 fi
 
 # Set the configuration
-if [ ! -e $CONF ]; then
+if [ -e $CONF ] && [ -z "$upgrade" ]; then
+  printf "\033[34m\n* Keeping old datadog.yaml configuration file\n\033[0m\n"
+else
+  if [ ! -e $CONF ]; then
     $sudo_cmd cp $CONF.example $CONF
-fi
-if [ $api_key ]; then
-    print_blu "* Adding your API key to the Agent configuration: $CONF\n"
-    $sudo_cmd sh -c "sed -i 's/api_key:.*/api_key: $api_key/' $CONF"
-fi
-if [ $sts_url ]; then
-    sts_url_esc=$(sed 's/[/.&]/\\&/g' <<<"$sts_url")
-    print_blu "* Adding StackState url to the Agent configuration: $CONF\n"
-    $sudo_cmd sh -c "sed -i 's/sts_url:.*/sts_url: $sts_url_esc/' $CONF"
-fi
-if [ $hostname ]; then
-    print_blu "* Adding your STS_HOSTNAME to the Agent configuration: $CONF\n"
+  fi
+  if [ "$apikey" ]; then
+    printf "\033[34m\n* Adding your API key to the Agent configuration: $CONF\n\033[0m\n"
+    $sudo_cmd sh -c "sed -i 's/api_key:.*/api_key: $apikey/' $CONF"
+  else
+    # If the import script failed for any reason, we might end here also in case
+    # of upgrade, let's not start the agent or it would fail because the api key
+    # is missing
+    if ! $sudo_cmd grep -q -E '^api_key: .+' $CONF; then
+      printf "\033[31mThe Agent won't start automatically at the end of the script because the Api key is missing, please add one in datadog.yaml and start the agent manually.\n\033[0m\n"
+      no_start=true
+    fi
+  fi
+  if [ "$site" ]; then
+    printf "\033[34m\n* Setting SITE in the Agent configuration: $CONF\n\033[0m\n"
+    $sudo_cmd sh -c "sed -i 's/# site:.*/site: $site/' $CONF"
+  fi
+  if [ -n "$DD_URL" ]; then
+    printf "\033[34m\n* Setting DD_URL in the Agent configuration: $CONF\n\033[0m\n"
+    $sudo_cmd sh -c "sed -i 's|# dd_url:.*|dd_url: $DD_URL|' $CONF"
+  fi
+  if [ "$hostname" ]; then
+    printf "\033[34m\n* Adding your HOSTNAME to the Agent configuration: $CONF\n\033[0m\n"
     $sudo_cmd sh -c "sed -i 's/# hostname:.*/hostname: $hostname/' $CONF"
-fi
-if [ $host_tags ]; then
-    print_blu "* Adding your HOST TAGS to the Agent configuration: $CONF\n"
-    formatted_host_tags="['"$(echo "$host_tags" | sed "s/,/','/g")"']" # format `env:prod,foo:bar` to yaml-compliant `['env:prod','foo:bar']`
-    $sudo_cmd sh -c "sed -i \"s/# tags:.*/tags: "$formatted_host_tags"/\" $CONF"
-fi
-if [ $skip_ssl_validation ]; then
-    print_blu "* Skipping SSL validation in the Agent configuration: $CONF\n"
-    $sudo_cmd sh -c "sed -i 's/# skip_ssl_validation:.*/skip_ssl_validation: $skip_ssl_validation/' $CONF"
+  fi
+  if [ "$host_tags" ]; then
+      printf "\033[34m\n* Adding your HOST TAGS to the Agent configuration: $CONF\n\033[0m\n"
+      formatted_host_tags="['""$( echo "$host_tags" | sed "s/,/','/g" )""']"  # format `env:prod,foo:bar` to yaml-compliant `['env:prod','foo:bar']`
+      $sudo_cmd sh -c "sed -i \"s/# tags:.*/tags: ""$formatted_host_tags""/\" $CONF"
+  fi
+  $sudo_cmd chown dd-agent:dd-agent $CONF
+  $sudo_cmd chmod 640 $CONF
 fi
 
-function version_gt() {
-    test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"
-}
+# Creating or overriding the install information
+install_info_content="---
+install_method:
+  tool: install_script
+  tool_version: install_script
+  installer_version: install_script-$install_script_version
+"
+$sudo_cmd sh -c "echo '$install_info_content' > $ETCDIR/install_info"
 
-#Minimum kernel version required for network tracer https://github.com/StackVista/tcptracer-bpf/blob/master/pkg/tracer/common/common_linux.go#L28
-min_required_kernel="4.3.0"
-current_kernel=$(uname -r)
-if version_gt $min_required_kernel $current_kernel; then
-    print_cya "* The network tracer does not support your kernel version (min required $min_required_kernel), disabling it\n"
-    $sudo_cmd sh -c "sed -i \"s/network_tracing_enabled:.*/network_tracing_enabled: 'false'/\" $CONF"
+# On SUSE 11, sudo service datadog-agent start fails (because /sbin is not in a base user's path)
+# However, sudo /sbin/service datadog-agent does work.
+# Use which (from root user) to find the absolute path to service
+
+service_cmd="service"
+if [ "$SUSE11" == "yes" ]; then
+  service_cmd=`$sudo_cmd which service`
 fi
 
 # Use /usr/sbin/service by default.
@@ -606,23 +653,26 @@ elif /sbin/init --version 2>&1 | grep -q upstart; then
 fi
 
 if [ $no_start ]; then
-    print_blu "
-* STS_INSTALL_ONLY environment variable set: the newly installed version of the agent
+    printf "\033[34m
+* DD_INSTALL_ONLY environment variable set: the newly installed version of the agent
 will not be started. You will have to do it manually using the following
 command:
 
-    $restart_cmd
-\n"
+    $start_instructions
+
+\033[0m\n"
     exit
 fi
 
-print_blu "* Starting the Agent...\n"
-eval $restart_cmd
+printf "\033[34m* Starting the Agent...\n\033[0m\n"
+eval "$restart_cmd"
+
 
 # Metrics are submitted, echo some instructions and exit
-print_grn "
+printf "\033[32m
+
 Your Agent is running and functioning properly. It will continue to run in the
-background and submit metrics to StackState.
+background and submit metrics to Datadog.
 
 If you ever want to stop the Agent, run:
 
@@ -631,4 +681,5 @@ If you ever want to stop the Agent, run:
 And to run it again run:
 
     $start_instructions
-\n"
+
+\033[0m"

@@ -16,12 +16,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/otlp"
-	"github.com/DataDog/datadog-agent/pkg/trace/osutil"
-	"github.com/DataDog/datadog-agent/pkg/trace/traceutil"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/util/profiling"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/otlp"
+	"github.com/StackVista/stackstate-agent/pkg/trace/osutil"
+	"github.com/StackVista/stackstate-agent/pkg/trace/traceutil"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/profiling"
 )
 
 // apiEndpointPrefix is the URL prefix prepended to the default site value from YamlAgentConfig.
@@ -348,6 +348,9 @@ func (c *AgentConfig) applyDatadogConfig() error {
 			c.RejectTags = append(c.RejectTags, splitTag(tag))
 		}
 	}
+
+	// [sts]
+	c.InterpreterConfig = readInterpreterConfigYaml()
 
 	// undocumented
 	if config.Datadog.IsSet("apm_config.max_cpu_percent") {

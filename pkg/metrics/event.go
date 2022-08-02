@@ -17,10 +17,10 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	agentpayload "github.com/DataDog/agent-payload/v5/gogen"
-	"github.com/DataDog/datadog-agent/pkg/serializer/marshaler"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	utiljson "github.com/DataDog/datadog-agent/pkg/util/json"
+	"github.com/StackVista/stackstate-agent/pkg/serializer/marshaler"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	utiljson "github.com/StackVista/stackstate-agent/pkg/util/json"
 )
 
 // EventPriority represents the priority of an event
@@ -96,6 +96,7 @@ type Event struct {
 	OriginID       string         `json:"-"`
 	K8sOriginID    string         `json:"-"`
 	Cardinality    string         `json:"-"`
+	EventContext   *EventContext  `json:"context,omitempty"`
 }
 
 // EventContext enriches the event with some more context and allows correlation to topology in StackState

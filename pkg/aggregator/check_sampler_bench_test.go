@@ -8,11 +8,11 @@ package aggregator
 import (
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator/ckey"
-	"github.com/DataDog/datadog-agent/pkg/config/resolver"
-	"github.com/DataDog/datadog-agent/pkg/forwarder"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
-	"github.com/DataDog/datadog-agent/pkg/serializer"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/ckey"
+	"github.com/StackVista/stackstate-agent/pkg/config/resolver"
+	"github.com/StackVista/stackstate-agent/pkg/forwarder"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/serializer"
 )
 
 func benchmarkAddBucket(bucketValue int64, b *testing.B) {

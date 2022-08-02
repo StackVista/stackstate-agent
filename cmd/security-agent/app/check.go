@@ -3,8 +3,8 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
-// +build !windows
-// +build kubeapiserver
+//go:build !windows && kubeapiserver
+// +build !windows,kubeapiserver
 
 package app
 
@@ -14,17 +14,17 @@ import (
 	"os"
 	"time"
 
-	"github.com/DataDog/datadog-agent/cmd/security-agent/common"
-	"github.com/DataDog/datadog-agent/pkg/compliance/agent"
-	"github.com/DataDog/datadog-agent/pkg/compliance/checks"
-	"github.com/DataDog/datadog-agent/pkg/compliance/event"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/restart"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/flavor"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/cmd/security-agent/common"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/agent"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/checks"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/restart"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/flavor"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/cihub/seelog"
 	"github.com/spf13/cobra"
 )

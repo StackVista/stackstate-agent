@@ -1,3 +1,4 @@
+//go:build !linux
 // +build !linux
 
 // Unless explicitly stated otherwise all files in this repository are licensed
@@ -10,11 +11,11 @@ package app
 import (
 	"errors"
 
-	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/restart"
-	secagent "github.com/DataDog/datadog-agent/pkg/security/agent"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
 	ddgostatsd "github.com/DataDog/datadog-go/statsd"
+	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/restart"
+	secagent "github.com/StackVista/stackstate-agent/pkg/security/agent"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/spf13/cobra"
 )
 

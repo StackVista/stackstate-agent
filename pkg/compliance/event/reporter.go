@@ -9,16 +9,16 @@ import (
 	"encoding/json"
 	"time"
 
-	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/auditor"
-	"github.com/DataDog/datadog-agent/pkg/logs/client"
-	"github.com/DataDog/datadog-agent/pkg/logs/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/diagnostic"
-	"github.com/DataDog/datadog-agent/pkg/logs/message"
-	"github.com/DataDog/datadog-agent/pkg/logs/pipeline"
-	"github.com/DataDog/datadog-agent/pkg/logs/restart"
-	"github.com/DataDog/datadog-agent/pkg/status/health"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/auditor"
+	"github.com/StackVista/stackstate-agent/pkg/logs/client"
+	"github.com/StackVista/stackstate-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/diagnostic"
+	"github.com/StackVista/stackstate-agent/pkg/logs/message"
+	"github.com/StackVista/stackstate-agent/pkg/logs/pipeline"
+	"github.com/StackVista/stackstate-agent/pkg/logs/restart"
+	"github.com/StackVista/stackstate-agent/pkg/status/health"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // Reporter defines an interface for reporting rule events

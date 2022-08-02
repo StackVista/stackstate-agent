@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/cmd/agent/common"
-	"github.com/DataDog/datadog-agent/pkg/api/util"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/status/health"
-	"github.com/DataDog/datadog-agent/pkg/util/flavor"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common"
+	"github.com/StackVista/stackstate-agent/pkg/api/util"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/status/health"
+	"github.com/StackVista/stackstate-agent/pkg/util/flavor"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )

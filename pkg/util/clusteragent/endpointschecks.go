@@ -7,9 +7,6 @@ package clusteragent
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks/types"

@@ -15,10 +15,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/serializer/marshaler"
-	"github.com/DataDog/datadog-agent/pkg/serializer/split"
-	"github.com/DataDog/datadog-agent/pkg/serializer/stream"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/serializer/marshaler"
+	"github.com/StackVista/stackstate-agent/pkg/serializer/split"
+	"github.com/StackVista/stackstate-agent/pkg/serializer/stream"
 )
 
 func TestMarshalJSONServiceChecks(t *testing.T) {

@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/DataDog/datadog-agent/cmd/agent/common"
-	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common"
+	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
 )
 
 // MergeConfigurationFiles reads an array of configuration filenames and attempts to merge them. The userDefined value is used to specify that configurationFilesArray contains filenames defined on the command line

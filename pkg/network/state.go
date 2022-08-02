@@ -4,10 +4,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/network/dns"
-	"github.com/DataDog/datadog-agent/pkg/network/http"
-	"github.com/DataDog/datadog-agent/pkg/process/util"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/network/dns"
+	"github.com/StackVista/stackstate-agent/pkg/network/http"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"go4.org/intern"
 )
 

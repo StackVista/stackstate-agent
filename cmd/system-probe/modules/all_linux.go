@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package modules
@@ -5,7 +6,7 @@ package modules
 import (
 	"time"
 
-	"github.com/DataDog/datadog-agent/cmd/system-probe/api/module"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/api/module"
 )
 
 // All System Probe modules should register their factories here

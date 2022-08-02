@@ -16,18 +16,18 @@ import (
 	_ "expvar"         // Blank import used because this isn't directly used in this file
 	_ "net/http/pprof" // Blank import used because this isn't directly used in this file
 
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/ksm"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/kubernetesapiserver"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/orchestrator"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/net"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/system/cpu"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/system/disk"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/system/filehandles"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/system/memory"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/system/uptime"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/system/winproc"
-	"github.com/DataDog/datadog-agent/pkg/util/flavor"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/ksm"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/kubernetesapiserver"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/orchestrator"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/net"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/system/cpu"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/system/disk"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/system/filehandles"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/system/memory"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/system/uptime"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/system/winproc"
+	"github.com/StackVista/stackstate-agent/pkg/util/flavor"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	"github.com/StackVista/stackstate-agent/cmd/cluster-agent/app"
 )

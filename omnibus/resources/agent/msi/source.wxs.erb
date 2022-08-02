@@ -355,10 +355,10 @@
                  Guid="83461594-01AC-11E2-BE35-37EC6088709B"
                  NeverOverwrite="no"
                  Permanent="no">
-        <File Id="datadog.yaml.example"
-            Name="datadog.yaml.example"
+        <File Id="stackstate.yaml.example"
+            Name="stackstate.yaml.example"
             KeyPath="yes"
-            Source="$(var.EtcFiles)\datadog.yaml.example"/>
+            Source="$(var.EtcFiles)\stackstate.yaml.example"/>
       </Component>
 
       <?if $(var.IncludeSysprobe) = true ?>
@@ -459,7 +459,8 @@
       ConfigurableDirectory="APPLICATIONROOTDIRECTORY">
         <ComponentRef Id="conffolder" />
         <ComponentGroupRef Id="ProjectDir" />
-        <ComponentRef Id="datadog.yaml.example" />
+        <!-- sts -->
+        <ComponentRef Id="stackstate.yaml.example" />
         <ComponentRef Id="logs" />
         <ComponentRef Id="conf.d" />
         <ComponentRef Id="checks.d" />
@@ -597,8 +598,8 @@
       <Publish Dialog="LicenseAgreementDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg"></Publish>
 
       <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="3">1</Publish>
-      <Publish Dialog="SiteDlg" Control="Back" Event="NewDialog" Value="ApiKeyDlg">NOT PREVIOUSFOUND</Publish>
-      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="SiteDlg">NOT PREVIOUSFOUND</Publish>
+      <Publish Dialog="StsUrlDlg" Control="Back" Event="NewDialog" Value="ApiKeyDlg">NOT PREVIOUSFOUND</Publish>
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="StsUrlDlg">NOT PREVIOUSFOUND</Publish>
 
 
       <Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog" Value="MaintenanceTypeDlg">1</Publish>
@@ -686,6 +687,7 @@
             NPM=[NPM]
             EC2_USE_WINDOWS_PREFIX_DETECTION=[EC2_USE_WINDOWS_PREFIX_DETECTION]
             OVERRIDE_INSTALLATION_METHOD=[OVERRIDE_INSTALLATION_METHOD]
+            SKIP_SSL_VALIDATION=[SKIP_SSL_VALIDATION]
             ' />
     <CustomAction Id='FinalizeInstall' BinaryKey='wixcadll' DllEntry='FinalizeInstall' Execute='deferred' Return='check' Impersonate='no'/>
     <CustomAction Id='StopDDServices' BinaryKey='wixcadll' DllEntry='PreStopServices' Execute='deferred' Return='check' Impersonate='no'/>

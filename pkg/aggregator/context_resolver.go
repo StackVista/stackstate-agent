@@ -8,9 +8,9 @@ package aggregator
 import (
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator/ckey"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
-	"github.com/DataDog/datadog-agent/pkg/tagset"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/ckey"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/tagset"
 )
 
 // Context holds the elements that form a context, and can be serialized into a context key

@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build secrets
 // +build secrets
 
 package secrets
@@ -21,9 +22,9 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/DataDog/datadog-agent/cmd/secrets/providers"
-	s "github.com/DataDog/datadog-agent/pkg/secrets"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
+	"github.com/StackVista/stackstate-agent/cmd/secrets/providers"
+	s "github.com/StackVista/stackstate-agent/pkg/secrets"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 )
 
 // This executable provides a "read" command to fetch secrets. It can be used in

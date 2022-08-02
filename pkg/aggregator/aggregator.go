@@ -12,23 +12,23 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/epforwarder"
-	"github.com/DataDog/datadog-agent/pkg/logs/message"
-	"github.com/DataDog/datadog-agent/pkg/serializer/split"
-	"github.com/DataDog/datadog-agent/pkg/tagger"
-	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
-	"github.com/DataDog/datadog-agent/pkg/tagset"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/flavor"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/version"
+	"github.com/StackVista/stackstate-agent/pkg/epforwarder"
+	"github.com/StackVista/stackstate-agent/pkg/logs/message"
+	"github.com/StackVista/stackstate-agent/pkg/serializer/split"
+	"github.com/StackVista/stackstate-agent/pkg/tagger"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/tagset"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/flavor"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
-	"github.com/DataDog/datadog-agent/pkg/serializer"
-	"github.com/DataDog/datadog-agent/pkg/status/health"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/serializer"
+	"github.com/StackVista/stackstate-agent/pkg/status/health"
 )
 
 // DefaultFlushInterval aggregator default flush interval
@@ -248,6 +248,11 @@ type BufferedAggregator struct {
 
 	tlmContainerTagsEnabled bool                                              // Whether we should call the tagger to tag agent telemetry metrics
 	agentTags               func(collectors.TagCardinality) ([]string, error) // This function gets the agent tags from the tagger (defined as a struct field to ease testing)
+
+	// [sts]
+	MetricPrefix string // The prefix used for metrics generated in the aggregator.
+	// We use this prefix to override datadog metrics we can't brand when using the agent as a dependency in the process-agent
+	// [sts]
 }
 
 // NewBufferedAggregator instantiates a BufferedAggregator
@@ -299,6 +304,9 @@ func NewBufferedAggregator(s serializer.MetricSerializer, eventPlatformForwarder
 		agentTags:               tagger.AgentTags,
 		ServerlessFlush:         make(chan bool),
 		ServerlessFlushDone:     make(chan struct{}),
+
+		// [sts]
+		MetricPrefix: "datadog",
 	}
 
 	return aggregator
@@ -622,7 +630,7 @@ func (agg *BufferedAggregator) sendServiceChecks(start time.Time, serviceChecks 
 func (agg *BufferedAggregator) flushServiceChecks(start time.Time, waitForSerializer bool) {
 	// Add a simple service check for the Agent status
 	agg.addServiceCheck(metrics.ServiceCheck{
-		CheckName: fmt.Sprintf("datadog.%s.up", agg.agentName),
+		CheckName: fmt.Sprintf("%s.%s.up", agg.MetricPrefix, agg.agentName),
 		Status:    metrics.ServiceCheckOK,
 		Tags:      agg.tags(false),
 		Host:      agg.hostname,

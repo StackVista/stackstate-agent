@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build linux
 // +build linux
 
 package module
@@ -24,23 +25,23 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
-	"github.com/DataDog/datadog-agent/cmd/system-probe/api/module"
-	"github.com/DataDog/datadog-agent/pkg/config/remote/service"
-	"github.com/DataDog/datadog-agent/pkg/config/remote/service/tuf"
-	"github.com/DataDog/datadog-agent/pkg/proto/pbgo"
-	sapi "github.com/DataDog/datadog-agent/pkg/security/api"
-	sconfig "github.com/DataDog/datadog-agent/pkg/security/config"
-	skernel "github.com/DataDog/datadog-agent/pkg/security/ebpf/kernel"
-	seclog "github.com/DataDog/datadog-agent/pkg/security/log"
-	"github.com/DataDog/datadog-agent/pkg/security/metrics"
-	sprobe "github.com/DataDog/datadog-agent/pkg/security/probe"
-	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/eval"
-	"github.com/DataDog/datadog-agent/pkg/security/secl/model"
-	"github.com/DataDog/datadog-agent/pkg/security/secl/rules"
-	"github.com/DataDog/datadog-agent/pkg/util/kernel"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/version"
 	"github.com/DataDog/datadog-go/statsd"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/api/module"
+	"github.com/StackVista/stackstate-agent/pkg/config/remote/service"
+	"github.com/StackVista/stackstate-agent/pkg/config/remote/service/tuf"
+	"github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
+	sapi "github.com/StackVista/stackstate-agent/pkg/security/api"
+	sconfig "github.com/StackVista/stackstate-agent/pkg/security/config"
+	skernel "github.com/StackVista/stackstate-agent/pkg/security/ebpf/kernel"
+	seclog "github.com/StackVista/stackstate-agent/pkg/security/log"
+	"github.com/StackVista/stackstate-agent/pkg/security/metrics"
+	sprobe "github.com/StackVista/stackstate-agent/pkg/security/probe"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/eval"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/model"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/rules"
+	"github.com/StackVista/stackstate-agent/pkg/util/kernel"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 )
 
 // Module represents the system-probe module for the runtime security agent

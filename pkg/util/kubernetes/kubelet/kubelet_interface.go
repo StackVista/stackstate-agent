@@ -10,7 +10,7 @@ package kubelet
 import (
 	"context"
 
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
 )
 
 // KubeUtilInterface defines the interface for kubelet api

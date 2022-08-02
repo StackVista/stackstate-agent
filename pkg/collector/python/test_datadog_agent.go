@@ -3,12 +3,16 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build python && test
 // +build python,test
 
 package python
 
 import (
 	"context"
+	collectorutils "github.com/StackVista/stackstate-agent/pkg/collector/util"
+	"os"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

@@ -13,15 +13,15 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/DataDog/datadog-agent/cmd/system-probe/api/module"
-	"github.com/DataDog/datadog-agent/cmd/system-probe/config"
-	"github.com/DataDog/datadog-agent/cmd/system-probe/utils"
-	"github.com/DataDog/datadog-agent/pkg/network"
-	networkconfig "github.com/DataDog/datadog-agent/pkg/network/config"
-	"github.com/DataDog/datadog-agent/pkg/network/encoding"
-	"github.com/DataDog/datadog-agent/pkg/network/http/debugging"
-	"github.com/DataDog/datadog-agent/pkg/network/tracer"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/api/module"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/config"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/utils"
+	"github.com/StackVista/stackstate-agent/pkg/network"
+	networkconfig "github.com/StackVista/stackstate-agent/pkg/network/config"
+	"github.com/StackVista/stackstate-agent/pkg/network/encoding"
+	"github.com/StackVista/stackstate-agent/pkg/network/http/debugging"
+	"github.com/StackVista/stackstate-agent/pkg/network/tracer"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // ErrSysprobeUnsupported is the unsupported error prefix, for error-class matching from callers

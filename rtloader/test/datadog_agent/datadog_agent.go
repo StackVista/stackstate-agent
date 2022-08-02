@@ -12,9 +12,9 @@ import (
 	"github.com/mailru/easyjson/jlexer"
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/obfuscate"
-	common "github.com/DataDog/datadog-agent/rtloader/test/common"
-	"github.com/DataDog/datadog-agent/rtloader/test/helpers"
+	"github.com/StackVista/stackstate-agent/pkg/trace/obfuscate"
+	common "github.com/StackVista/stackstate-agent/rtloader/test/common"
+	"github.com/StackVista/stackstate-agent/rtloader/test/helpers"
 )
 
 /*

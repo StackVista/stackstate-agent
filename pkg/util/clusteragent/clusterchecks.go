@@ -56,6 +56,7 @@ func (c *DCAClient) doPostClusterCheckStatus(ctx context.Context, identifier str
 		return response, err
 	}
 
+	// sts
 	err = parseJSONResponse(resp, &response)
 	return response, err
 }
@@ -91,6 +92,7 @@ func (c *DCAClient) doGetClusterCheckConfigs(ctx context.Context, identifier str
 		return configs, err
 	}
 
+	// sts
 	err = parseJSONResponse(resp, &configs)
 	return configs, err
 }

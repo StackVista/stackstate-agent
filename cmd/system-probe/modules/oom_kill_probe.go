@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package modules
@@ -6,12 +7,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/DataDog/datadog-agent/cmd/system-probe/api/module"
-	"github.com/DataDog/datadog-agent/cmd/system-probe/config"
-	"github.com/DataDog/datadog-agent/cmd/system-probe/utils"
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/ebpf/probe"
-	"github.com/DataDog/datadog-agent/pkg/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/api/module"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/config"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/utils"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/ebpf/probe"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // OOMKillProbe Factory

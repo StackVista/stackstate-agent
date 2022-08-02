@@ -19,11 +19,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/config/resolver"
-	"github.com/DataDog/datadog-agent/pkg/forwarder/endpoints"
-	"github.com/DataDog/datadog-agent/pkg/forwarder/transaction"
-	"github.com/DataDog/datadog-agent/pkg/version"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config/resolver"
+	"github.com/StackVista/stackstate-agent/pkg/forwarder/endpoints"
+	"github.com/StackVista/stackstate-agent/pkg/forwarder/transaction"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 )
 
 var (
@@ -125,13 +125,13 @@ func TestSubmitIfStopped(t *testing.T) {
 	require.Equal(t, Stopped, forwarder.State())
 	assert.NotNil(t, forwarder.SubmitEvents(nil, make(http.Header)))
 	assert.NotNil(t, forwarder.SubmitServiceChecks(nil, make(http.Header)))
-	assert.NotNil(t, forwarder.SubmitSketchSeries(nil, make(http.Header)))
-	assert.NotNil(t, forwarder.SubmitHostMetadata(nil, make(http.Header)))
-	assert.NotNil(t, forwarder.SubmitMetadata(nil, make(http.Header)))
+	assert.NotNil(t, forwarder.SubmitSketchSeries(nil, make(http.Header))) // sts - deleted
+	assert.NotNil(t, forwarder.SubmitHostMetadata(nil, make(http.Header))) // sts - deleted
+	assert.NotNil(t, forwarder.SubmitMetadata(nil, make(http.Header)))     // sts - deleted
 	assert.NotNil(t, forwarder.SubmitV1Series(nil, make(http.Header)))
 	assert.NotNil(t, forwarder.SubmitSeries(nil, make(http.Header)))
 	assert.NotNil(t, forwarder.SubmitV1Intake(nil, make(http.Header)))
-	assert.NotNil(t, forwarder.SubmitV1CheckRuns(nil, make(http.Header)))
+	assert.NotNil(t, forwarder.SubmitV1CheckRuns(nil, make(http.Header))) // sts - deleted
 }
 
 func TestCreateHTTPTransactions(t *testing.T) {
@@ -371,12 +371,12 @@ func TestForwarderEndtoEnd(t *testing.T) {
 	assert.Nil(t, f.SubmitV1Series(payload, headers))
 	assert.Nil(t, f.SubmitSeries(payload, headers))
 	assert.Nil(t, f.SubmitV1Intake(payload, headers))
-	assert.Nil(t, f.SubmitV1CheckRuns(payload, headers))
+	assert.Nil(t, f.SubmitV1CheckRuns(payload, headers)) // sts - deleted
 	assert.Nil(t, f.SubmitEvents(payload, headers))
 	assert.Nil(t, f.SubmitServiceChecks(payload, headers))
-	assert.Nil(t, f.SubmitSketchSeries(payload, headers))
-	assert.Nil(t, f.SubmitHostMetadata(payload, headers))
-	assert.Nil(t, f.SubmitMetadata(payload, headers))
+	assert.Nil(t, f.SubmitSketchSeries(payload, headers)) // sts - deleted
+	assert.Nil(t, f.SubmitHostMetadata(payload, headers)) // sts - deleted
+	assert.Nil(t, f.SubmitMetadata(payload, headers))     // sts - deleted
 
 	// let's wait a second for every channel communication to trigger
 	<-time.After(1 * time.Second)
@@ -386,6 +386,13 @@ func TestForwarderEndtoEnd(t *testing.T) {
 	// - 2 requests to check the validity of the two api_key
 	ts.Close()
 	assert.Equal(t, int64(9*2*2+2), requests)
+	/* sts
+	// We should receive 22 requests:
+	// - 5 transactions * 2 payloads per transactions * 2 api_keys
+	// - 2 requests to check the validity of the two api_key
+	ts.Close()
+	assert.Equal(t, int64(22), requests)
+	*/
 }
 
 func TestTransactionEventHandlers(t *testing.T) {

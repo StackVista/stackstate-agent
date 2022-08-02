@@ -284,6 +284,11 @@ func TestSendV1ServiceChecks(t *testing.T) {
 	defer config.Datadog.Set("enable_service_checks_stream_payload_serialization", nil)
 
 	s := NewSerializer(f, nil)
+
+	// [sts] service checks are disabled by default for StackState
+	s.enableCheckRuns = true
+	s.enableServiceChecks = true
+
 	payload := &testPayload{}
 	err := s.SendServiceChecks(payload)
 	require.Nil(t, err)
@@ -332,10 +337,13 @@ func TestSendSeries(t *testing.T) {
 
 func TestSendSketch(t *testing.T) {
 	f := &forwarder.MockedForwarder{}
-	payloads, _ := mkPayloads(protobufString, false)
-	f.On("SubmitSketchSeries", payloads, protobufExtraHeaders).Return(nil).Times(1)
+	payloads, _ := mkPayloads(protobufString, false)                                // sts
+	f.On("SubmitSketchSeries", payloads, protobufExtraHeaders).Return(nil).Times(1) // sts
 
 	s := NewSerializer(f, nil)
+
+	// [sts] check runs are disabled by default for StackState
+	s.enableSketches = true
 
 	payload := &testPayload{}
 	err := s.SendSketch(payload)

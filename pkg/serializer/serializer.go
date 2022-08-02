@@ -14,14 +14,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/forwarder"
-	"github.com/DataDog/datadog-agent/pkg/process/util/api/headers"
-	"github.com/DataDog/datadog-agent/pkg/serializer/marshaler"
-	"github.com/DataDog/datadog-agent/pkg/serializer/split"
-	"github.com/DataDog/datadog-agent/pkg/serializer/stream"
-	"github.com/DataDog/datadog-agent/pkg/util/compression"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/forwarder"
+	"github.com/StackVista/stackstate-agent/pkg/process/util/api/headers"
+	"github.com/StackVista/stackstate-agent/pkg/serializer/marshaler"
+	"github.com/StackVista/stackstate-agent/pkg/serializer/split"
+	"github.com/StackVista/stackstate-agent/pkg/serializer/stream"
+	"github.com/StackVista/stackstate-agent/pkg/util/compression"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (
@@ -101,6 +101,7 @@ type MetricSerializer interface {
 	SendOrchestratorMetadata(msgs []ProcessMessageBody, hostName, clusterID string, payloadType int) error
 }
 
+// [sts] begin
 // AgentV1Serializer is a serializer for just agent v1 data
 type AgentV1Serializer interface {
 	SendJSONToV1Intake(data interface{}) error
@@ -135,6 +136,8 @@ func (serializer AgentV1MockSerializer) GetJSONToV1IntakeMessage() interface{} {
 	}
 }
 
+// [sts] end
+
 // Serializer serializes metrics to the correct format and routes the payloads to the correct endpoint in the Forwarder
 type Serializer struct {
 	Forwarder             forwarder.Forwarder
@@ -151,7 +154,7 @@ type Serializer struct {
 	enableEvents                  bool
 	enableSeries                  bool
 	enableServiceChecks           bool
-	enableCheckRuns               bool
+	enableCheckRuns               bool // [sts]
 	enableSketches                bool
 	enableJSONToV1Intake          bool
 	enableJSONStream              bool
@@ -169,7 +172,7 @@ func NewSerializer(forwarder forwarder.Forwarder, orchestratorForwarder forwarde
 		enableEvents:                  config.Datadog.GetBool("enable_payloads.events"),
 		enableSeries:                  config.Datadog.GetBool("enable_payloads.series"),
 		enableServiceChecks:           config.Datadog.GetBool("enable_payloads.service_checks"),
-		enableCheckRuns:               config.Datadog.GetBool("enable_payloads.check_runs"),
+		enableCheckRuns:               config.Datadog.GetBool("enable_payloads.check_runs"), // [sts]
 		enableSketches:                config.Datadog.GetBool("enable_payloads.sketches"),
 		enableJSONToV1Intake:          config.Datadog.GetBool("enable_payloads.json_to_v1_intake"),
 		enableJSONStream:              stream.Available && config.Datadog.GetBool("enable_stream_payload_serialization"),
@@ -187,7 +190,7 @@ func NewSerializer(forwarder forwarder.Forwarder, orchestratorForwarder forwarde
 	if !s.enableServiceChecks {
 		log.Warn("service_checks payloads are disabled: all service_checks will be dropped")
 	}
-	if !s.enableCheckRuns {
+	if !s.enableCheckRuns { // [sts]
 		log.Warn("check_runs payloads are disabled: all check_runs will be dropped")
 	}
 	if !s.enableSketches {
@@ -383,7 +386,7 @@ func (s *Serializer) SendSketch(sketches marshaler.Marshaler) error {
 		log.Warnf("Error: %v trying to stream compress SketchSeriesList - falling back to split/compress method", err)
 	}
 
-	compress := true
+	compress := false // TODO [sts]: enable compression once the backend supports it on this endpoint
 	useV1API := false // Sketches only have a v2 endpoint
 	splitSketches, extraHeaders, err := s.serializePayload(sketches, compress, useV1API)
 	if err != nil {
@@ -448,8 +451,8 @@ func (s *Serializer) SendProcessesMetadata(data interface{}) error {
 		return err
 	}
 
-	log.Infof("Sent processes metadata payload, size: %d bytes.", len(payload))
-	log.Debugf("Sent processes metadata payload, content: %v", string(payload))
+	log.Infof("Sent intake payload, size: %d bytes.", len(payload)) // [sts]
+	log.Debugf("Sent intake payload, content: %v", string(payload)) // [sts]
 	return nil
 }
 

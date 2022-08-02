@@ -12,22 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-<<<<<<< HEAD
-	"github.com/StackVista/stackstate-agent/cmd/agent/common"
-	"github.com/StackVista/stackstate-agent/pkg/collector/runner"
-	"github.com/StackVista/stackstate-agent/pkg/collector/scheduler"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/agent"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/checks"
-	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
-	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/logs/auditor"
-	"github.com/StackVista/stackstate-agent/pkg/logs/client"
-	"github.com/StackVista/stackstate-agent/pkg/logs/config"
-	"github.com/StackVista/stackstate-agent/pkg/logs/pipeline"
-	"github.com/StackVista/stackstate-agent/pkg/logs/restart"
-	"github.com/StackVista/stackstate-agent/pkg/status/health"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-=======
+	ddgostatsd "github.com/DataDog/datadog-go/statsd"
 	secagentcommon "github.com/StackVista/stackstate-agent/cmd/security-agent/common"
 	"github.com/StackVista/stackstate-agent/pkg/collector/runner"
 	"github.com/StackVista/stackstate-agent/pkg/collector/scheduler"
@@ -40,7 +25,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/logs/config"
 	"github.com/StackVista/stackstate-agent/pkg/logs/restart"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	ddgostatsd "github.com/DataDog/datadog-go/statsd"
 )
 
 var (

@@ -11,13 +11,13 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/process/util"
-	apicfg "github.com/DataDog/datadog-agent/pkg/process/util/api/config"
-	httputils "github.com/DataDog/datadog-agent/pkg/util/http"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/util/profiling"
-	"github.com/DataDog/datadog-agent/pkg/version"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
+	apicfg "github.com/StackVista/stackstate-agent/pkg/process/util/api/config"
+	httputils "github.com/StackVista/stackstate-agent/pkg/util/http"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/profiling"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 )
 
 const (

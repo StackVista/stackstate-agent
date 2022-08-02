@@ -65,6 +65,7 @@ build do
     # //TODO: sts mkdir workaround
     mkdir "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent/"
     command "mv rtloader/bin/*.dll  #{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent/"
+    command "echo %PATH%" # TODO:sts
     command "inv -e agent.build --exclude-rtloader --python-runtimes #{py_runtimes_arg} --major-version #{major_version_arg} --rebuild --no-development --embedded-path=#{install_dir}/embedded --arch #{platform} #{do_windows_sysprobe}", env: env
     command "inv -e systray.build --major-version #{major_version_arg} --rebuild --arch #{platform}", env: env
   else
@@ -100,7 +101,7 @@ build do
   end
 
   # move around bin and config files
-  move 'bin/agent/dist/datadog.yaml', "#{conf_dir}/datadog.yaml.example"
+  move 'bin/agent/dist/stackstate.yaml', "#{conf_dir}/stackstate.yaml.example"
   if linux? or (windows? and not windows_arch_i386? and ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?)
       move 'bin/agent/dist/system-probe.yaml', "#{conf_dir}/system-probe.yaml.example"
   end
@@ -129,24 +130,25 @@ build do
     end
   end
 
-  if windows?
-    platform = windows_arch_i386? ? "x86" : "x64"
-    # Build the process-agent with the correct go version for windows
-    command "invoke -e process-agent.build --python-runtimes #{py_runtimes_arg} --major-version #{major_version_arg} --arch #{platform}", :env => env
-
-    copy 'bin/process-agent/process-agent.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
-
-    unless windows_arch_i386?
-      if ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?
-        ## don't bother with system probe build on x86.
-        command "invoke -e system-probe.build --windows"
-        copy 'bin/system-probe/system-probe.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
-      end
-    end
-  else
-    command "invoke -e process-agent.build --python-runtimes #{py_runtimes_arg} --major-version #{major_version_arg}", :env => env
-    copy 'bin/process-agent/process-agent', "#{install_dir}/embedded/bin"
-  end
+# [STS] Do not want to build the DD Process Agent
+#   if windows?
+#     platform = windows_arch_i386? ? "x86" : "x64"
+#     # Build the process-agent with the correct go version for windows
+#     command "invoke -e process-agent.build --python-runtimes #{py_runtimes_arg} --major-version #{major_version_arg} --arch #{platform}", :env => env
+#
+#     copy 'bin/process-agent/process-agent.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
+#
+#     unless windows_arch_i386?
+#       if ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?
+#         ## don't bother with system probe build on x86.
+#         command "invoke -e system-probe.build --windows"
+#         copy 'bin/system-probe/system-probe.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
+#       end
+#     end
+#   else
+#     command "invoke -e process-agent.build --python-runtimes #{py_runtimes_arg} --major-version #{major_version_arg}", :env => env
+#     copy 'bin/process-agent/process-agent', "#{install_dir}/embedded/bin"
+#   end
 
   # Add SELinux policy for system-probe
   if debian? || redhat?
@@ -194,13 +196,16 @@ build do
           mode: 0755,
           vars: { install_dir: install_dir, etc_dir: etc_dir }
       erb source: "sysvinit_debian.trace.erb",
-          dest: "#{install_dir}/scripts/datadog-agent-trace",
+          dest: "#{install_dir}/scripts/stackstate-agent-trace",
           mode: 0755,
           vars: { install_dir: install_dir, etc_dir: etc_dir }
-      erb source: "sysvinit_debian.security.erb",
-          dest: "#{install_dir}/scripts/datadog-agent-security",
-          mode: 0755,
-          vars: { install_dir: install_dir, etc_dir: etc_dir }
+      # sts
+      if $enable_security_agent
+          erb source: "sysvinit_debian.security.erb",
+              dest: "#{install_dir}/scripts/stackstate-agent-security",
+              mode: 0755,
+              vars: { install_dir: install_dir, etc_dir: etc_dir }
+      end
     elsif redhat? || suse?
       # Ship a different upstart job definition on RHEL to accommodate the old
       # version of upstart (0.6.5) that RHEL 6 provides.
@@ -238,13 +243,16 @@ build do
           mode: 0755,
           vars: { install_dir: install_dir, etc_dir: etc_dir }
       erb source: "sysvinit_suse.trace.erb",
-          dest: "#{install_dir}/scripts/datadog-agent-trace",
+          dest: "#{install_dir}/scripts/stackstate-agent-trace",
           mode: 0755,
           vars: { install_dir: install_dir, etc_dir: etc_dir }
-      erb source: "sysvinit_suse.security.erb",
-          dest: "#{install_dir}/scripts/datadog-agent-security",
-          mode: 0755,
-          vars: { install_dir: install_dir, etc_dir: etc_dir }
+      # sts
+      if $enable_security_agent
+          erb source: "sysvinit_suse.security.erb",
+              dest: "#{install_dir}/scripts/stackstate-agent-security",
+              mode: 0755,
+              vars: { install_dir: install_dir, etc_dir: etc_dir }
+      end
     end
 
     erb source: "systemd.service.erb",

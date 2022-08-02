@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build process && (darwin || freebsd)
 // +build process
 // +build darwin freebsd
 
@@ -19,13 +20,13 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	telemetry_utils "github.com/DataDog/datadog-agent/pkg/telemetry/utils"
-	"github.com/DataDog/datadog-agent/pkg/util/executable"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
+	"github.com/StackVista/stackstate-agent/pkg/util/executable"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 type processAgentCheckConf struct {

@@ -11,9 +11,9 @@ package apiserver
 import (
 	"context"
 
-	a "github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	a "github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 func HostnameProvider(ctx context.Context, options map[string]interface{}) (string, error) {

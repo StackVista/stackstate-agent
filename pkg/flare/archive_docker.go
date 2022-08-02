@@ -19,9 +19,9 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/DataDog/datadog-agent/pkg/util/docker"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/util/scrubber"
+	"github.com/StackVista/stackstate-agent/pkg/util/docker"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/scrubber"
 
 	"github.com/docker/docker/api/types"
 )

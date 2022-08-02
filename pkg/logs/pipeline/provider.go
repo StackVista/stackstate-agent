@@ -9,13 +9,13 @@ import (
 	"context"
 	"sync/atomic"
 
-	"github.com/DataDog/datadog-agent/pkg/logs/diagnostic"
+	"github.com/StackVista/stackstate-agent/pkg/logs/diagnostic"
 
-	"github.com/DataDog/datadog-agent/pkg/logs/auditor"
-	"github.com/DataDog/datadog-agent/pkg/logs/client"
-	"github.com/DataDog/datadog-agent/pkg/logs/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/message"
-	"github.com/DataDog/datadog-agent/pkg/logs/restart"
+	"github.com/StackVista/stackstate-agent/pkg/logs/auditor"
+	"github.com/StackVista/stackstate-agent/pkg/logs/client"
+	"github.com/StackVista/stackstate-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/message"
+	"github.com/StackVista/stackstate-agent/pkg/logs/restart"
 )
 
 // Provider provides message channels

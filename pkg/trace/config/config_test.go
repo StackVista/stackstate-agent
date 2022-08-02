@@ -17,8 +17,8 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/trace/config/features"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config/features"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,6 +31,8 @@ func cleanConfig() func() {
 
 func TestConfigHostname(t *testing.T) {
 	t.Run("fail", func(t *testing.T) {
+		// [sts] changed hostname detection, we always fallback to os.Hostname
+		t.Skip()
 		defer cleanConfig()()
 		config.Datadog.Set("apm_config.dd_agent_bin", "/not/exist")
 		assert := assert.New(t)

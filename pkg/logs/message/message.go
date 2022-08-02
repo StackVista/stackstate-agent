@@ -9,8 +9,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/logs/config"
-	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 )
 
 // Message represents a log line sent to datadog, with its metadata

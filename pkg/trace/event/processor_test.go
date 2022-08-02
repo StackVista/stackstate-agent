@@ -9,9 +9,9 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/pb"
-	"github.com/DataDog/datadog-agent/pkg/trace/sampler"
-	"github.com/DataDog/datadog-agent/pkg/trace/test/testutil"
+	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/trace/sampler"
+	"github.com/StackVista/stackstate-agent/pkg/trace/test/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
