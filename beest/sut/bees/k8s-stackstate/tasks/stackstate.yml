@@ -83,12 +83,14 @@
 
   - name: Wait till StackState API is ready
     kubernetes.core.k8s_info:
+      context: "{{ kubecontext }}"
       kind: Pod
       namespace: "{{ namespace }}"
       label_selectors:
         - "app.kubernetes.io/component = api"
       wait: yes
       wait_timeout: 900 # in secs
+
 
 ## Cleanup
 
