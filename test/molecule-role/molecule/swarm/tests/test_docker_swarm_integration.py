@@ -49,7 +49,13 @@ def test_docker_swarm_topology(host):
     def assert_topology():
         topo_url = "http://localhost:7070/api/topic/sts_topo_docker-swarm_agents?limit=1500"
         data = host.check_output('curl "{}"'.format(topo_url))
-        json_data = json.loads(data)
+        try:
+            json_data = json.loads(data)
+        except json.decoder.JSONDecodeError as e:
+            with open("./topic-docker-swarm-integrations.txt", 'w') as f:
+                f.write(data)
+            raise e
+
         with open("./topic-docker-swarm-integrations.json", 'w') as f:
             json.dump(json_data, f, indent=4)
 
