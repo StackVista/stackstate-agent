@@ -78,7 +78,7 @@ resource "aws_instance" "agent" {
     VantaContainsUserData = false
     VantaDescription      = "Machine used used in acceptance pipeline"
     VantaNonProd          = true
-    VantaOwner            = "beest@stackstate.com"
+    VantaOwner            = "stackstate@stackstate.com"
     VantaUserDataStored   = "NA"
   }
 }
