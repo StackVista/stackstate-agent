@@ -45,6 +45,7 @@
 
 - name: StackState Receiver cleanup tasks
   tags: cleanup
+  ignore_errors: yes
   block:
   - name: Stop docker-compose and remove volumes
     command: docker-compose down --volumes --remove-orphans

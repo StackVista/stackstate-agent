@@ -1,0 +1,32 @@
+digraph "Topology match debug" {
+subgraph cluster_1 {
+color=mediumslateblue;
+fontsize=30;
+label="Query result";
+penwidth=5;
+1 [color=black, label=a];
+2 [color=black, label=b];
+3 [color=black, label=c];
+4 [color=black, label=before, shape=underline];
+2 -> 4  [color=black];
+4 -> 3  [color=black];
+5 [color=black, label=after, shape=underline];
+1 -> 5  [color=black];
+5 -> 2  [color=black];
+}
+
+A -> 1  [color=darkgreen, penwidth=5, style=dotted];
+B -> 2  [color=darkgreen, penwidth=5, style=dotted];
+subgraph cluster_0 {
+color=grey;
+fontsize=30;
+label="Matching rule";
+penwidth=5;
+A [color=darkgreen, label="A\nname~=a"];
+B [color=darkgreen, label="B\nname~=b"];
+A_TO_B [color=red, label="type~=before\ndependencyDirection~=ONE_WAY", shape=underline];
+A -> A_TO_B  [color=red];
+A_TO_B -> B  [color=red];
+}
+
+}
