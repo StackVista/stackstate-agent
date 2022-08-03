@@ -12,9 +12,9 @@ from subprocess import check_output
 from invoke import task
 
 # constants
-ORG_PATH = "github.com/DataDog"
-DEFAULT_BRANCH = "main"
-REPO_PATH = "{}/datadog-agent".format(ORG_PATH)
+ORG_PATH = "github.com/StackVista"  # sts
+DEFAULT_BRANCH = "master"  # sts
+REPO_PATH = "{}/stackstate-agent".format(ORG_PATH)  # sts
 ALLOWED_REPO_NON_NIGHTLY_BRANCHES = {"stable", "beta", "none"}
 ALLOWED_REPO_NIGHTLY_BRANCHES = {"nightly", "oldnightly"}
 ALLOWED_REPO_ALL_BRANCHES = ALLOWED_REPO_NON_NIGHTLY_BRANCHES.union(ALLOWED_REPO_NIGHTLY_BRANCHES)
@@ -180,6 +180,9 @@ def get_build_flags(
     if nikos_embedded_path:
         env['PKG_CONFIG_PATH'] = env.get('PKG_CONFIG_PATH', '') + ':' + nikos_embedded_path + '/lib/pkgconfig'
         env["CGO_LDFLAGS"] = env.get('CGO_LDFLAGS', '') + get_nikos_linker_flags(nikos_embedded_path + '/lib')
+
+    # sts
+    print(env)
 
     # if `static` was passed ignore setting rpath, even if `embedded_path` was passed as well
     if static:
@@ -378,7 +381,8 @@ def get_version_numeric_only(ctx, major_version='7'):
 
 
 def load_release_versions(_, target_version):
-    with open("release.json", "r") as f:
+    print("[load_release_versions] Loading deps for version ", target_version)
+    with open("stackstate-deps.json", "r") as f:
         versions = json.load(f)
         print("Using the following build environment:")
         for k, v in versions.items():
@@ -438,3 +442,14 @@ def nightly_entry_for(agent_major_version):
 
 def release_entry_for(agent_major_version):
     return "release-a{}".format(agent_major_version)
+
+def do_go_rename(ctx, rename, at):
+    ctx.run("gofmt -l -w -r {} {}".format(rename, at))
+
+
+def do_sed_rename(ctx, rename, at):
+    ctx.run("sed -i '{}' {}".format(rename, at))
+
+
+def do_sed_rename_quoted(ctx, rename, at):
+    ctx.run("sed -i \"{}\" {}".format(rename, at))

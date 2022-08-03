@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubelet
 // +build kubelet
 
 package kubernetes
@@ -40,7 +41,7 @@ func (suite *InsecureTestSuite) TestHTTP() {
 	mockConfig.Set("kubernetes_https_kubelet_port", 10255)
 	mockConfig.Set("kubelet_auth_token_path", "")
 	mockConfig.Set("kubelet_tls_verify", false)
-	mockConfig.Set("kubelet_fallback_to_insecure", true)
+	mockConfig.Set("kubelet_fallback_to_insecure", true) // sts
 	mockConfig.Set("kubernetes_kubelet_host", "127.0.0.1")
 
 	ku, err := kubelet.GetKubeUtil()
@@ -64,10 +65,11 @@ func (suite *InsecureTestSuite) TestHTTP() {
 	require.EqualValues(suite.T(),
 		map[string]string{
 			"url":        "http://127.0.0.1:10255",
-			"verify_tls": "false",
+			"verify_tls": "false", // sts
 		}, ku.GetRawConnectionInfo())
 }
 
+// sts
 func (suite *InsecureTestSuite) TestHTTPNotAllowed() {
 	mockConfig := config.Mock()
 
@@ -93,7 +95,7 @@ func (suite *InsecureTestSuite) TestInsecureHTTPS() {
 	mockConfig.Set("kubernetes_https_kubelet_port", 10250)
 	mockConfig.Set("kubelet_auth_token_path", "")
 	mockConfig.Set("kubelet_tls_verify", false)
-	mockConfig.Set("kubelet_fallback_to_insecure", true)
+	mockConfig.Set("kubelet_fallback_to_insecure", true) // sts
 	mockConfig.Set("kubernetes_kubelet_host", "127.0.0.1")
 
 	ku, err := kubelet.GetKubeUtil()

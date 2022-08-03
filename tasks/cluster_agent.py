@@ -15,8 +15,8 @@ from .go import deps
 from .utils import load_release_versions
 
 # constants
-BIN_PATH = os.path.join(".", "bin", "datadog-cluster-agent")
-AGENT_TAG = "datadog/cluster_agent:master"
+BIN_PATH = os.path.join(".", "bin", "stackstate-cluster-agent")
+AGENT_TAG = "stackstate/cluster_agent:master"
 POLICIES_REPO = "https://github.com/DataDog/security-agent-policies.git"
 
 @task
@@ -136,7 +136,7 @@ def clean(ctx):
     """
     Remove temporary objects and binary artifacts
     """
-    clean_common(ctx, "stackstate-cluster-agent")
+    clean_common(ctx, "stackstate-cluster-agent")  # sts
 
 
 @task
@@ -181,7 +181,7 @@ def image_build(ctx, arch='amd64', tag=AGENT_TAG, push=False):
     Build the docker image
     """
 
-    dca_binary = glob.glob(os.path.join(BIN_PATH, "stackstate-cluster-agent"))
+    dca_binary = glob.glob(os.path.join(BIN_PATH, "stackstate-cluster-agent"))  # sts
     # get the last debian package built
     if not dca_binary:
         print("No bin found in {}".format(BIN_PATH))
@@ -191,7 +191,7 @@ def image_build(ctx, arch='amd64', tag=AGENT_TAG, push=False):
     ctx.run("chmod +x {}".format(latest_file))
 
     build_context = "Dockerfiles/cluster-agent"
-    exec_path = "{}/stackstate-cluster-agent.{}".format(build_context, arch)
+    exec_path = "{}/stackstate-cluster-agent.{}".format(build_context, arch)  # sts
     dockerfile_path = "{}/{}/Dockerfile".format(build_context, arch)
 
     shutil.copy2(latest_file, exec_path)

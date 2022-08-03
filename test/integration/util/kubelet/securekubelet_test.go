@@ -3,16 +3,13 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubelet
 // +build kubelet
 
 package kubernetes
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"testing"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -44,7 +41,7 @@ func (suite *SecureTestSuite) TestWithTLSCA() {
 	mockConfig.Set("kubernetes_http_kubelet_port", 10255)
 	mockConfig.Set("kubelet_auth_token_path", "")
 	mockConfig.Set("kubelet_tls_verify", true)
-	mockConfig.Set("kubelet_fallback_to_unverified_tls", false)
+	mockConfig.Set("kubelet_fallback_to_unverified_tls", false) // sts
 	mockConfig.Set("kubelet_client_ca", suite.certsConfig.CertFilePath)
 	mockConfig.Set("kubernetes_kubelet_host", "127.0.0.1")
 
@@ -87,7 +84,7 @@ func (suite *SecureTestSuite) TestTLSWithoutCA() {
 	mockConfig.Set("kubelet_client_crt", "")
 	mockConfig.Set("kubelet_client_key", "")
 	mockConfig.Set("kubelet_tls_verify", true)
-	mockConfig.Set("kubelet_fallback_to_unverified_tls", false)
+	mockConfig.Set("kubelet_fallback_to_unverified_tls", false) // sts
 	mockConfig.Set("kubelet_client_ca", "")
 	mockConfig.Set("kubernetes_kubelet_host", "127.0.0.1")
 
@@ -96,10 +93,12 @@ func (suite *SecureTestSuite) TestTLSWithoutCA() {
 	assert.Contains(suite.T(), err.Error(), "impossible to reach Kubelet with host: 127.0.0.1. Please check if your setup requires kubelet_tls_verify = false")
 }
 
-// TestSecureUnknownAuthHTTPSKubelet with:
-// - https
-// - kubelet_fallback_to_unverified_tls
-// - WITHOUT cacert (expecting success)
+/* sts
+TestSecureUnknownAuthHTTPSKubelet with:
+- https
+- kubelet_fallback_to_unverified_tls
+- WITHOUT cacert (expecting success)
+*/
 func (suite *SecureTestSuite) TestTLSWithoutCAFallbackToUnverified() {
 	mockConfig := config.Mock()
 
@@ -107,7 +106,7 @@ func (suite *SecureTestSuite) TestTLSWithoutCAFallbackToUnverified() {
 	mockConfig.Set("kubernetes_http_kubelet_port", 10255)
 	mockConfig.Set("kubelet_auth_token_path", "")
 	mockConfig.Set("kubelet_tls_verify", true)
-	mockConfig.Set("kubelet_fallback_to_unverified_tls", true)
+	mockConfig.Set("kubelet_fallback_to_unverified_tls", true) // sts
 	mockConfig.Set("kubelet_client_ca", "")
 	mockConfig.Set("kubernetes_kubelet_host", "127.0.0.1")
 

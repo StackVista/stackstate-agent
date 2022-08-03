@@ -479,7 +479,8 @@ def build_compatible_version_re(allowed_major_versions, minor_version):
 
 
 def _get_highest_repo_version(
-    auth, repo, version_prefix, version_re, allowed_major_versions=None, max_version: Version = None
+    auth, repo, version_prefix, version_re, allowed_major_versions=None, max_version: Version = None,
+    vendor="DataDog"  # sts
 ):
     # If allowed_major_versions is not specified, search for all versions by using an empty
     # major version prefix.
@@ -489,7 +490,8 @@ def _get_highest_repo_version(
     highest_version = None
 
     for major_version in allowed_major_versions:
-        url = "https://api.github.com/repos/DataDog/{}/git/matching-refs/tags/{}{}".format(
+        url = "https://api.github.com/repos/{}/{}/git/matching-refs/tags/{}{}".format(  # sts
+            vendor,  # sts
             repo, version_prefix, major_version
         )
 
@@ -617,6 +619,7 @@ def _fetch_dependency_repo_version(
         compatible_version_re,
         allowed_major_versions,
         max_version=max_allowed_version,
+        vendor="StackVista",
     )
 
     if check_for_rc and version.is_rc():
@@ -660,7 +663,8 @@ def _fetch_independent_dependency_repo_version(
         release_json_key=release_json_key,
     )
     # NOTE: This assumes that the repository doesn't change the way it prefixes versions.
-    version = _get_highest_repo_version(github_token, repo_name, previous_version.prefix, VERSION_RE)
+    version = _get_highest_repo_version(github_token, repo_name, previous_version.prefix, VERSION_RE,
+                                        vendor="StackVista")  # sts
 
     version = _confirm_independent_dependency_repo_version(repo_name, version, previous_version)
     print(TAG_FOUND_TEMPLATE.format(repo_name, version))
@@ -1505,3 +1509,23 @@ def unfreeze(ctx, base_directory="~/dd", major_versions="6,7", upstream="origin"
     )
 
     tag_version(ctx, devel_tag, tag_modules=False, push=False, force=redo)
+
+@task
+def generate_install(ctx, test_repo=False):
+    """
+    Task to generate Agent install.sh script that will use either the official or test debian repository
+    """
+    deb_official_repo = os.environ.get("STS_AWS_RELEASE_BUCKET")
+    deb_test_repo = os.environ.get("STS_AWS_TEST_BUCKET")
+    deb_repo = deb_test_repo if test_repo else deb_official_repo
+    yum_official_repo = os.environ.get("STS_AWS_RELEASE_BUCKET_YUM")
+    yum_test_repo = os.environ.get("STS_AWS_TEST_BUCKET_YUM")
+    yum_repo = yum_test_repo if test_repo else yum_official_repo
+    win_official_repo = os.environ.get("STS_AWS_RELEASE_BUCKET_WIN")
+    win_test_repo = os.environ.get("STS_AWS_TEST_BUCKET_WIN")
+    win_repo = win_test_repo if test_repo else win_official_repo
+    print("Generating install.sh and install.ps1 ...")
+    ctx.run("sed -e 's/$DEBIAN_REPO/https:\/\/{0}.s3.amazonaws.com/g' ./cmd/agent/install_script.sh > ./cmd/agent/install_1.sh".format(deb_repo))
+    ctx.run("sed -e 's/$YUM_REPO/https:\/\/{0}.s3.amazonaws.com/g' ./cmd/agent/install_1.sh > ./cmd/agent/install.sh".format(yum_repo))
+    ctx.run("rm ./cmd/agent/install_1.sh")
+    ctx.run("sed -e 's/$env:WIN_REPO/https:\/\/{0}.s3.amazonaws.com\/windows/g' ./cmd/agent/install_script.ps1 > ./cmd/agent/install.ps1".format(win_repo))
