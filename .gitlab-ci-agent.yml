@@ -725,7 +725,7 @@ pre_release_cluster_agent_image:
 
 # Core Structure for all the beest steps
 .beest: &beest
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20220314
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20220728
   interruptible: true
   dependencies: []
   before_script:
@@ -734,14 +734,18 @@ pre_release_cluster_agent_image:
     - mkdir /go/src/app
     - cp -R $CI_PROJECT_DIR/beest/* /go/src/app
     - cd /go/src/app
-    - go build .
-    - export AWS_ACCESS_KEY_ID=${MOLECULE_AWS_ACCESS_KEY_ID}
-    - export AWS_SECRET_ACCESS_KEY=${MOLECULE_AWS_SECRET_ACCESS_KEY}
+    - . bootstrap_functions.sh
+    - build_beest
+    - generate_aws_config
+    - configure_aws_beest_credentials
+    - unset AWS_ACCESS_KEY_ID && unset AWS_SECRET_ACCESS_KEY && unset AWS_ROLE_ARN && unset AWS_WEB_IDENTITY_TOKEN_FILE  # Unset gitlab runner AWS credentials which conflicts with Beest ~/.aws/credentials
+    - export AWS_PROFILE=stackstate-sandbox
     - export PATH=/go/src/app:${PATH}
-    - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
     - export RUN_ID=$CI_COMMIT_REF_NAME
+    - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
+    - export AGENT_HELM_CHART_VERSION=latest
     - export STACKSTATE_BRANCH=master
-    - export HELM_CHART_VERSION=$HELM_CHART_VERSION
+    - export STACKSTATE_HELM_CHART_VERSION=">0.0.0-0"
   after_script: # artifacts do not work with absolute path, so we move them inside the build dir
     - mv /go/src/app/terraform.log $CI_PROJECT_DIR/beest/ || true
     - mv /go/src/app/tests/$BEEST_TEST_GROUP/topic-*.json $CI_PROJECT_DIR/beest/ || true
@@ -1299,6 +1303,70 @@ molecule_vms_success_cleanup:
   needs:
     - molecule_vms_create
     - molecule_vms_test
+
+# Job Seq: Beest
+# Type: otel
+
+.beest_otel_rule:
+  # Currently we default to only running on Python2 build.
+  # TODO: Change this when V3 releases are finalized and the default.
+  - &beest_otel_ignore_rule
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[beest\-/ && $CI_COMMIT_MESSAGE !~ /\[beest\-otel]/
+    when: never
+
+.beest_otel_variables: &beest_otel_variables
+  variables:
+    BEEST_SCENARIO: otel
+    BEEST_TEST_GROUP: otel
+
+beest_otel_create:
+  <<: *beest
+  <<: *beest_create
+  <<: *beest_otel_variables
+  rules:
+    - *beest_otel_ignore_rule
+    - *v2_merge_train_always
+
+beest_otel_test:
+  <<: *beest
+  <<: *beest_test
+  <<: *beest_otel_variables
+  rules:
+    - *beest_otel_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_otel_create
+  needs:
+    - beest_otel_create
+    - pre_release_deb
+
+beest_otel_failure_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_otel_variables
+  rules:
+    - *beest_otel_ignore_rule
+    - *v2_merge_train_on_failure
+    - when: never
+  needs:
+    - beest_otel_test
+    - beest_otel_create
+
+beest_otel_success_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_otel_variables
+  rules:
+    - *beest_otel_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_otel_test
+    - beest_otel_create
+  needs:
+    - beest_otel_test
+    - beest_otel_create
 
 ## release stage
 

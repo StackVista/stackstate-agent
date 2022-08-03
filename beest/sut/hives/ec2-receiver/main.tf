@@ -82,11 +82,10 @@ resource "aws_instance" "receiver" {
   tags = {
     Name                  = "${var.environment}-receiver"
     Environment           = var.environment
-    VantaOwner            = "stackstate@stackstate.com"
-    VantaNonProd          = true
-    VantaDescription      = "Machines used by CI pipeline"
     VantaContainsUserData = false
+    VantaDescription      = "Machine used used in acceptance pipeline"
+    VantaNonProd          = true
+    VantaOwner            = "beest@stackstate.com"
     VantaUserDataStored   = "NA"
-    VantaNoAlert          = "This is for test isn't part of our production systems."
   }
 }

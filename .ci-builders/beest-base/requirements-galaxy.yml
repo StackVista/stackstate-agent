@@ -2,3 +2,6 @@
 collections:
   - name: kubernetes.core
     version: 2.2.3
+  - name: community.aws
+    version: 3.2.1
+
