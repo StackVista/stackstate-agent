@@ -293,8 +293,11 @@ def deps(ctx, verbose=False):
 
     print("downloading dependencies")
     start = datetime.datetime.now()
-    verbosity = ' -x' if verbose else ''
-    ctx.run("go mod download{}".format(verbosity))
+    # TODO [sts]: check if `go mod download` can be used
+    # verbosity = ' -x' if verbose else ''
+    # ctx.run("go mod download{}".format(verbosity))
+    verbosity = ' -v' if verbose else ''
+    ctx.run("go mod vendor{}".format(verbosity))
     dep_done = datetime.datetime.now()
     print("go mod download, elapsed: {}".format(dep_done - start))
 
