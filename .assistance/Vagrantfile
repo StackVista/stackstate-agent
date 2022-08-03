@@ -30,7 +30,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision "versioning", type: "shell", inline: <<-SCRIPT
     echo "export SRC_PATH=/go/src/github.com/StackVista/stackstate-agent" >> /home/vagrant/.env
     echo "export BCC_VERSION=v0.12.0" >> /home/vagrant/.env
-    echo "export SYSTEM_PROBE_GO_VERSION=1.13.11" >> /home/vagrant/.env
+    echo "export SYSTEM_PROBE_GO_VERSION=1.16.7" >> /home/vagrant/.env
     echo "export DATADOG_AGENT_EMBEDDED_PATH=/opt/datadog-agent/embedded" >> /home/vagrant/.env
     echo "export ARCH=amd64" >> /home/vagrant/.env
     echo "export OMNIBUS_BASE_DIR=/.omnibus" >> /home/vagrant/.env
