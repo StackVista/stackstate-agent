@@ -12,12 +12,12 @@ import (
 	"context"
 	"expvar"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/util/azure"
 	"net"
 	"os"
 	"runtime"
 
 	"github.com/StackVista/stackstate-agent/pkg/metadata/inventories"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders/azure"
 	"github.com/StackVista/stackstate-agent/pkg/util/containers"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
@@ -129,8 +129,8 @@ func saveHostnameData(cacheHostnameKey string, hostname string, provider string,
 	return hostnameData
 }
 
-func saveAndValidateHostnameData(ctx context.Context, cacheHostnameKey string, hostname string, provider string) HostnameData {
-	hostnameData := saveHostnameData(cacheHostnameKey, hostname, HostnameProviderConfiguration)
+func saveAndValidateHostnameData(ctx context.Context, cacheHostnameKey string, hostname string, provider string, identifiers []string) HostnameData {
+	hostnameData := saveHostnameData(cacheHostnameKey, hostname, HostnameProviderConfiguration, identifiers)
 	if !isHostnameCanonicalForIntake(ctx, hostname) && !config.Datadog.GetBool("hostname_force_config_as_canonical") {
 		log.Warnf(
 			"Hostname '%s' defined in configuration will not be used as the in-app hostname. "+
@@ -160,6 +160,7 @@ func GetHostnameData(ctx context.Context) (HostnameData, error) {
 	var hostName string
 	var err error
 	var provider string
+	identifiers := []string{}
 
 	// Try the name provided in the configuration file
 	configName := config.Datadog.GetString("hostname")
@@ -170,6 +171,7 @@ func GetHostnameData(ctx context.Context) (HostnameData, error) {
 			cacheHostnameKey,
 			configName,
 			HostnameProviderConfiguration,
+			identifiers,
 		), nil
 	}
 
@@ -190,7 +192,7 @@ func GetHostnameData(ctx context.Context) (HostnameData, error) {
 					"filename": configHostnameFilepath,
 				},
 			); err == nil {
-				return saveAndValidateHostnameData(ctx, cacheHostnameKey, hostname, "file", []string{}), nil
+				return saveAndValidateHostnameData(ctx, cacheHostnameKey, hostname, "file", identifiers), nil
 			}
 
 			expErr := new(expvar.String)
@@ -204,7 +206,7 @@ func GetHostnameData(ctx context.Context) (HostnameData, error) {
 
 	// If fargate we strip the hostname
 	if fargate.IsFargateInstance(ctx) {
-		hostnameData := saveHostnameData(cacheHostnameKey, "", "")
+		hostnameData := saveHostnameData(cacheHostnameKey, "", "", identifiers)
 		return hostnameData, nil
 	}
 
@@ -213,31 +215,13 @@ func GetHostnameData(ctx context.Context) (HostnameData, error) {
 	if getGCEHostname := hostname.GetProvider("gce"); getGCEHostname != nil {
 		gceName, err := getGCEHostname(ctx, nil)
 		if err == nil {
-			hostnameData := saveHostnameData(cacheHostnameKey, gceName, "gce", []string{})
+			hostnameData := saveHostnameData(cacheHostnameKey, gceName, "gce", identifiers)
 			return hostnameData, err
 		}
 		expErr := new(expvar.String)
 		expErr.Set(err.Error())
 		hostnameErrors.Set("gce", expErr)
 		log.Debug("Unable to get hostname from GCE: ", err)
-	}
-
-	// Azure metadata
-	log.Debug("GetHostname trying Azure metadata...")
-	if getAzureHostname, found := hostname.ProviderCatalog["azure"]; found {
-		azureName, err := getAzureHostname()
-		if err == nil {
-			azureIdentifiers, idsErr := azure.HostnameIdentifiers()
-			if idsErr != nil {
-				log.Warnf("Failed to get Azure host identifiers: %v", idsErr)
-			}
-			hostnameData := saveHostnameData(cacheHostnameKey, azureName, "azure", azureIdentifiers)
-			return hostnameData, err
-		}
-		expErr := new(expvar.String)
-		expErr.Set(err.Error())
-		hostnameErrors.Set("azure", expErr)
-		log.Debug("Unable to get hostname from Azure: ", err)
 	}
 
 	// FQDN
@@ -336,6 +320,14 @@ func GetHostnameData(ctx context.Context) (HostnameData, error) {
 		if err == nil {
 			hostName = azureHostname
 			provider = "azure"
+			// sts begin
+			azureIdentifiers, idsErr := azure.HostnameIdentifiers(ctx)
+			if idsErr != nil {
+				log.Warnf("Failed to get Azure host identifiers: %v", idsErr)
+			} else {
+				identifiers = azureIdentifiers
+			}
+			// sts end
 		} else {
 			expErr := new(expvar.String)
 			expErr.Set(err.Error())
@@ -365,7 +357,7 @@ func GetHostnameData(ctx context.Context) (HostnameData, error) {
 		err = nil
 	}
 
-	hostnameData := saveHostnameData(cacheHostnameKey, hostName, provider, []string{})
+	hostnameData := saveHostnameData(cacheHostnameKey, hostName, provider, identifiers)
 	if err != nil {
 		expErr := new(expvar.String)
 		expErr.Set(fmt.Sprintf(err.Error()))
