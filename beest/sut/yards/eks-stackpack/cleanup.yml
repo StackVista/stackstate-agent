@@ -1,6 +1,0 @@
----
-- name: Cleanup
-  hosts: localhost
-  gather_facts: false
-  roles:
-    - role: "{{ bees_path }}/k8s-stackstate"

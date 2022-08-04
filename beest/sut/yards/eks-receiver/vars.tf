@@ -1,3 +1,6 @@
+variable "aws_default_region" {
+  default = "eu-west-1"
+}
 variable "yard_id" {
   type = string
 }
@@ -16,9 +19,6 @@ variable "k8s_node_type" {
 }
 variable "k8s_size" {
   default = 2
-}
-variable "aws_default_region" {
-  default = "eu-west-1"
 }
 
 locals {
