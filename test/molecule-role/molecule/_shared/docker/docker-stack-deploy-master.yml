@@ -1,5 +1,11 @@
 ---
-- name: Create StacSktate Agent Service on Master
+- name: Remove StackState Agent if running
+  ignore_errors: true
+  command: docker stack rm agent
+  args:
+    chdir: /home/ubuntu/
+
+- name: Create StackState Agent Service on Master
   command: docker stack deploy -c docker-compose.yml --with-registry-auth agent
   args:
     chdir: /home/ubuntu/
