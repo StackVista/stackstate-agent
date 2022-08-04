@@ -1,10 +1,12 @@
 # StackState Agent v2 releases
 
-## Next release (???)
+## 2.18.0 (????-??-??)
 
 **Improvements**
 - Added Support for Transactional State [STAC-13620](https://stackstate.atlassian.net/browse/STAC-13620)
 - Added Support for Stateful Persistent State [STAC-16579](https://stackstate.atlassian.net/browse/STAC-16579)
+
+## 2.17.2 (2022-08-04)
 
 **Bugfix**
 - Fixed error messages and check hanging when disabling collection of certain types of resources [STAC-16347](https://stackstate.atlassian.net/browse/STAC-16347)
