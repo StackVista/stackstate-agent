@@ -99,6 +99,7 @@ type MetricSerializer interface {
 	SendHostMetadata(m marshaler.JSONMarshaler) error
 	SendProcessesMetadata(data interface{}) error
 	SendOrchestratorMetadata(msgs []ProcessMessageBody, hostName, clusterID string, payloadType int) error
+	SendJSONToV1Intake(data interface{}) error // sts
 }
 
 // [sts] begin
@@ -429,6 +430,13 @@ func (s *Serializer) sendMetadata(m marshaler.JSONMarshaler, submit func(payload
 
 	log.Infof("Sent metadata payload, size (raw/compressed): %d/%d bytes.", len(payload), len(compressedPayload))
 	return nil
+}
+
+// SendJSONToV1Intake serializes a payload and sends it to the forwarder.
+// Used only by the legacy processes metadata collector.
+// sts
+func (s *Serializer) SendJSONToV1Intake(data interface{}) error {
+	return s.SendProcessesMetadata(data)
 }
 
 // SendProcessesMetadata serializes a payload and sends it to the forwarder.
