@@ -67,6 +67,12 @@
   tasks:
     - include_tasks: ./prepare.tasks.prepare.linux.agent.yml
 
+- name: Add user to docker group
+  hosts: agent-connection-namespaces
+  gather_facts: false
+  tasks:
+    - include_tasks: ./prepare.tasks.prepare.ubuntu.agent.short.yml
+
 - name: Prepare Ubuntu Agent for Short-Lived tests (post installation configuration)
   hosts: agent-ubuntu
   gather_facts: false
