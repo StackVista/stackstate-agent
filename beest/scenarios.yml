@@ -28,3 +28,10 @@ scenarios:
       name: otel-custom
     test:
       group: otel
+  - name: integrations
+    description: |
+      Deploys StackState Agent Cluster Checks Agent and StackState on sandbox k8s cluster.
+    yard:
+      name: integrations
+    test:
+      group: integrations

@@ -27,6 +27,8 @@ generate_aws_config() {
     mkdir -p ~/.aws
     touch ~/.aws/config
     sts-toolbox aws generate -p developer
+    # temporary fix to rename Administrator -> Developer role for the stackstate sandbox
+    sed -i 's#arn:aws:iam::672574731473:role/Administrator#arn:aws:iam::672574731473:role/Developer#g' ~/.aws/config
 }
 
 configure_aws_beest_credentials() {
