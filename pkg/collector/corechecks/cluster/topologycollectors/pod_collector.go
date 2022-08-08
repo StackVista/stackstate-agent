@@ -54,6 +54,12 @@ func (*PodCollector) GetName() string {
 
 // Collects and Published the Pod Components
 func (pc *PodCollector) CollectorFunction() error {
+	// close correlation channels
+	// that will signal the correlators to proceed
+	defer close(pc.ContainerCorrChan)
+	defer close(pc.VolumeCorrChan)
+	defer close(pc.PodCorrChan)
+
 	pods, err := pc.GetAPIClient().GetPods()
 	if err != nil {
 		return err
@@ -170,12 +176,6 @@ func (pc *PodCollector) CollectorFunction() error {
 			pc.ContainerCorrChan <- containerCorrelation
 		}
 	}
-
-	// close correlation channels
-	// that will signal the correlators to proceed
-	close(pc.ContainerCorrChan)
-	close(pc.VolumeCorrChan)
-	close(pc.PodCorrChan)
 
 	return nil
 }

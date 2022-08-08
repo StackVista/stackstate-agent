@@ -8,8 +8,10 @@ package kubeapi
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	collectors "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/topologycollectors"
+	agentConfig "github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -21,6 +23,75 @@ import (
 var componentID int
 var relationID int
 
+var optionalRules = []string{
+	"namespaces+get,list,watch",
+	"configmaps+list,watch", // get is a required permission
+	"endpoints+get,list,watch",
+	"persistentvolumeclaims+get,list,watch",
+	"persistentvolumes+get,list,watch",
+	"secrets+get,list,watch",
+	"apps/daemonsets+get,list,watch",
+	"apps/deployments+get,list,watch",
+	"apps/replicasets+get,list,watch",
+	"apps/statefulsets+get,list,watch",
+	"extensions/ingresses+get,list,watch",
+	"batch/cronjobs+get,list,watch",
+	"batch/jobs+get,list,watch",
+}
+
+func TestDisablingAnyResourceWithoutDisablingCollectorCauseAnError(t *testing.T) {
+	for _, rule := range optionalRules {
+		mBatcher := batcher.NewMockBatcher()
+		kCheck := KubernetesAPITopologyFactory().(*TopologyCheck)
+		kCheck.ac = MockAPIClient([]Rule{parseRule(rule)})
+
+		nothingIsDisabledConfig := `
+cluster_name: mycluster
+collect_topology: true
+csi_pv_mapper_enabled: true
+`
+		err := kCheck.Configure([]byte(nothingIsDisabledConfig), nil, "")
+		assert.NoError(t, err)
+
+		err = kCheck.Run()
+		assert.NoError(t, err, "check itself should succeed despite failures of a particular collector")
+
+		assert.NotEmpty(t, mBatcher.Errors, "Disabling %v should cause an error", rule)
+	}
+}
+
+func TestDisablingAllPossibleCollectorsKeepErrorsOff(t *testing.T) {
+	mBatcher := batcher.NewMockBatcher()
+	kCheck := KubernetesAPITopologyFactory().(*TopologyCheck)
+	kCheck.ac = MockAPIClient(parseRules(optionalRules))
+	allResourcesAreDisabledConfig := `
+cluster_name: mycluster
+collect_topology: true
+csi_pv_mapper_enabled: true
+resources:
+  persistentvolumes: false
+  persistentvolumeclaims: false
+  endpoints: false
+  namespaces: false
+  configmaps: false
+  daemonsets: false
+  deployments: false
+  replicasets: false
+  statefulsets: false
+  ingresses: false
+  jobs: false
+  cronjobs: false
+  secrets: false
+`
+	err := kCheck.Configure([]byte(allResourcesAreDisabledConfig), nil, "")
+	assert.NoError(t, err)
+
+	err = kCheck.Run()
+	assert.NoError(t, err, "check should succeed")
+
+	assert.Empty(t, mBatcher.Errors, "No errors are expected because all resources are disabled in config")
+}
+
 func TestRunClusterCollectors(t *testing.T) {
 	t.Run("with sourceProperties enabled", func(t *testing.T) {
 		testRunClusterCollectors(t, true)
@@ -28,6 +99,65 @@ func TestRunClusterCollectors(t *testing.T) {
 	t.Run("with sourceProperties disabled", func(t *testing.T) {
 		testRunClusterCollectors(t, false)
 	})
+}
+
+func testConfigParsed(t *testing.T, input string, expected TopologyConfig) {
+	kCheck := KubernetesAPITopologyFactory().(*TopologyCheck)
+	err := kCheck.Configure([]byte(input), []byte(""), "whatever")
+	assert.NoError(t, err)
+	assert.EqualValues(t, &expected, kCheck.instance)
+}
+
+func TestConfigurationParsing(t *testing.T) {
+	defaultConfig := TopologyConfig{
+		// for empty config something is coming from global configuration
+		ClusterName:             agentConfig.Datadog.GetString("cluster_name"),
+		CollectTopology:         agentConfig.Datadog.GetBool("collect_kubernetes_topology"),
+		CollectTimeout:          agentConfig.Datadog.GetInt("collect_kubernetes_timeout"),
+		SourcePropertiesEnabled: agentConfig.Datadog.GetBool("kubernetes_source_properties_enabled"),
+		ConfigMapMaxDataSize:    DefaultConfigMapDataSizeLimit,
+		CSIPVMapperEnabled:      agentConfig.Datadog.GetBool("kubernetes_csi_pv_mapper_enabled"),
+		Resources: ResourcesConfig{
+			Persistentvolumes:      true,
+			Persistentvolumeclaims: true,
+			Endpoints:              true,
+			Namespaces:             true,
+			ConfigMaps:             true,
+			Daemonsets:             true,
+			Deployments:            true,
+			Replicasets:            true,
+			Statefulsets:           true,
+			Ingresses:              true,
+			Jobs:                   true,
+			CronJobs:               true,
+			Secrets:                true,
+		},
+	}
+	testConfigParsed(t, "", defaultConfig)
+
+	allResourcesAreDisabledConfig := `
+cluster_name: mycluster
+source_properties_enabled: false
+resources:
+  persistentvolumes: false
+  persistentvolumeclaims: false
+  endpoints: false
+  namespaces: false
+  configmaps: false
+  daemonsets: false
+  deployments: false
+  replicasets: false
+  statefulsets: false
+  ingresses: false
+  jobs: false
+  cronjobs: false
+  secrets: false
+`
+	expectedSimple := defaultConfig
+	expectedSimple.ClusterName = "mycluster"
+	expectedSimple.SourcePropertiesEnabled = false
+	expectedSimple.Resources = ResourcesConfig{}
+	testConfigParsed(t, allResourcesAreDisabledConfig, expectedSimple)
 }
 
 func testRunClusterCollectors(t *testing.T, sourceProperties bool) {
