@@ -242,7 +242,6 @@ def apply_branding(ctx):
     do_sed_rename(ctx, sts_lower_replace, "./cmd/agent/app/integrations.go")
     do_sed_rename(ctx, 's/Datadog integration/StackState integration/g', "./cmd/agent/app/integrations.go")
     do_go_rename(ctx, '"\\"Collect a flare and send it to Datadog\\" -> \\"Collect a flare and send it to StackState\\""', "./cmd/agent/app")
-    do_sed_rename(ctx, sts_lower_replace, "./cmd/agent/app/regimport_windows.go")
 
     # Trace agent
     do_go_rename(ctx, '"\\"DD_PROXY_HTTPS\\" -> \\"STS_PROXY_HTTPS\\""', "./pkg/trace")
@@ -490,13 +489,12 @@ def apply_branding(ctx):
     do_sed_rename(ctx, 's/ad.datadoghq.com/ad.stackstate.com/g', "./pkg/autodiscovery/listeners/kube_services.go")
     do_sed_rename(ctx, 's/ad.datadoghq.com/ad.stackstate.com/g', "./pkg/autodiscovery/providers/kubelet.go")
     do_sed_rename(ctx, 's/ad.datadoghq.com/ad.stackstate.com/g', "./pkg/autodiscovery/providers/kube_services.go")
-    do_sed_rename(ctx, 's/ad.datadoghq.com/ad.stackstate.com/g', "./pkg/tagger/collectors/kubelet_extract.go")
+    do_sed_rename(ctx, 's/ad.datadoghq.com/ad.stackstate.com/g', "./pkg/tagger/collectors/workloadmeta_extract.go")
     do_sed_rename(ctx, 's/ad.datadoghq.com/ad.stackstate.com/g', "./pkg/util/kubernetes/kubelet/kubelet.go")
 
     # docker/ecs openmetrics annotations
     do_sed_rename(ctx, 's/com.datadoghq.ad/com.stackstate.ad/g', "./pkg/autodiscovery/listeners/common.go")
-    do_sed_rename(ctx, 's/com.datadoghq.ad/com.stackstate.ad/g', "./pkg/autodiscovery/providers/docker.go")
-    do_sed_rename(ctx, 's/com.datadoghq.ad/com.stackstate.ad/g', "./pkg/autodiscovery/providers/ecs.go")
+    do_sed_rename(ctx, 's/com.datadoghq.ad/com.stackstate.ad/g', "./pkg/autodiscovery/providers/container.go")
 
     # rtloader branding
     do_sed_rename(ctx, datadog_checks_replace, "./rtloader/two/two.cpp")
