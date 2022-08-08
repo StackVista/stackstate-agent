@@ -102,6 +102,7 @@ const (
 	apiHTTPHeaderKey       = "DD-Api-Key"
 	versionHTTPHeaderKey   = "DD-Agent-Version"
 	useragentHTTPHeaderKey = "User-Agent"
+	stsClusterName         = "STS-Cluster-Name"
 )
 
 // The amount of time the forwarder will wait to receive process-like response payloads before giving up
@@ -329,6 +330,7 @@ func (f *DefaultForwarder) createHTTPTransactions(endpoint endpoint, payloads Pa
 				t.Headers.Set(apiHTTPHeaderKey, apiKey)
 				t.Headers.Set(versionHTTPHeaderKey, version.AgentVersion)
 				t.Headers.Set(useragentHTTPHeaderKey, fmt.Sprintf("datadog-agent/%s", version.AgentVersion))
+				t.Headers.Set(stsClusterName, config.Datadog.GetString("cluster_name"))
 
 				tlm.Inc(domain, endpoint.name)
 
