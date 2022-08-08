@@ -7,7 +7,7 @@ resource "aws_s3_bucket" "bucket" {
     VantaContainsUserData = false
     VantaDescription      = "OpenTelemetry Integration resources used in acceptance pipeline"
     VantaNonProd          = true
-    VantaOwner            = "beest@stackstate.com"
+    VantaOwner            = "stackstate@stackstate.com"
     VantaUserDataStored   = "NA"
   }
 }

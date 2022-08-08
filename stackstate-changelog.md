@@ -1,9 +1,10 @@
 # StackState Agent v2 releases
 
-## Next release (???)
+## 2.17.2 (2022-08-04)
 
 **Bugfix**
 - Fixed error messages and check hanging when disabling collection of certain types of resources [STAC-16347](https://stackstate.atlassian.net/browse/STAC-16347)
+- Fixed CloudTrail history retrieval fallback when there is no CloudTrail S3 bucket available. [STAC-17058](https://stackstate.atlassian.net/browse/STAC-17058)
 
 ## 2.17.1 (2022-07-11)
 
