@@ -341,7 +341,7 @@ def test_docker_metrics(host):
                     "docker.thread.count", "docker.cpu.system", "docker.cpu.limit", "docker.cpu.throttled",
                     "docker.cpu.user"}
 
-        assert get_keys("agent-connection-namespaces") == expected
+        assert expected.issubset(get_keys("agent-connection-namespaces"))
     
     util.wait_until(wait_for_metrics, 30, 3)
 

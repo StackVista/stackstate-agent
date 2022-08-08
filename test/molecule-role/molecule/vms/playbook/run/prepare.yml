@@ -71,7 +71,7 @@
   hosts: agent-connection-namespaces
   gather_facts: false
   tasks:
-    - include_tasks: ./prepare.tasks.prepare.ubuntu.agent.short.yml
+    - include_tasks: ./prepare.tasks.prepare.user.group.yml
 
 - name: Prepare Ubuntu Agent for Short-Lived tests (post installation configuration)
   hosts: agent-ubuntu

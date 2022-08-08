@@ -2,7 +2,7 @@
 - name: Add user to docker group
   become: true
   user:
-    name: ubuntu
+    name: stackstate-agent
     groups: docker
     append: True
 - name: "Restart StackState Agent Service"
