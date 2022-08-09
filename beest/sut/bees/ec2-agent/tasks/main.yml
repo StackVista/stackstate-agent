@@ -15,14 +15,9 @@
         CODE_NAME: "{{ agent_current_branch }}"
         SKIP_SSL_VALIDATION: "false"
 
-    - name: Configure AWS topology check
-      become: yes
-      ansible.builtin.template:
-        src: aws_topology_conf.j2.yml
-        dest: /etc/stackstate-agent/conf.d/aws_topology.d/conf.yaml
-        owner: stackstate-agent
-        group: stackstate-agent
-        mode: '0644'
+    - include_tasks: aws.yml
+      tags: [ prepare ]
+      when: aws_integration is defined
 
     - name: Restart stackstate-agent
       become: yes

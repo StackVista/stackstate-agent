@@ -12,3 +12,7 @@
   gather_facts: true
   roles:
     - role: "{{ bees_path }}/ec2-agent"
+      vars:
+          aws_integration:
+            integration_iam_role: {{ integration_iam_role }}
+            region: {{ aws_region }}

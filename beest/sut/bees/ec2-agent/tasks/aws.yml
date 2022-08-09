@@ -1,0 +1,9 @@
+---
+- name: Configure AWS topology check
+  become: yes
+  ansible.builtin.template:
+    src: aws_topology_conf.j2.yml
+    dest: /etc/stackstate-agent/conf.d/aws_topology.d/conf.yaml
+    owner: stackstate-agent
+    group: stackstate-agent
+    mode: '0644'

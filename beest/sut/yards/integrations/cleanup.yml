@@ -1,7 +1,13 @@
 ---
-- name: Cleanup Kubernetes Cluster
+- name: Cleanup VM Agent
+  hosts: agent
+  gather_facts: true
+  roles:
+    - role: "{{ bees_path }}/ec2-agent"
+
+- name: Cleanup Kubernetes Stackstate
   hosts: local
   gather_facts: false
   roles:
-    - role: "{{ bees_path }}/k8s-cluster-checks-agent"
     - role: "{{ bees_path }}/k8s-stackstate"
+
