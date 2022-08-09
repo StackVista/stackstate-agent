@@ -21,7 +21,7 @@ resource "aws_cloudformation_stack" "cfn_stackpack" {
     VantaContainsUserData = false
     VantaDescription      = "AWS Integration resources used in acceptance pipeline"
     VantaNonProd          = true
-    VantaOwner            = "beest@stackstate.com"
+    VantaOwner            = "stackstate@stackstate.com"
     VantaUserDataStored   = "NA"
   }
 

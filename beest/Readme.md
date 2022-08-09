@@ -4,15 +4,18 @@ Beest is a black-box testing framework that allow to test StackState integration
 by provisioning infrastructure and deploy applications in an isolated and reproducible way.
 
 We love bees, and we drew inspiration from their world:
-- bee: application
-- (bee)hive: infrastructure where to place bees
-- (bee)yard: set of hives with their configured bees in it
-- (bee)keeper: controller from which to execute tests and intermediate actions
+- _bee_: application
+- (bee)_hive_: infrastructure where to place bees
+- (bee)_yard_: set of hives with their configured bees in it
+- (bee)_keeper_: container from which to execute test steps
 
 ## Prerequisites
 
 * Docker
-* AWS account
+* StackState
+  * AWS InfoSec account
+  * Artifactory account
+  * License
 
 ## Configure
 
@@ -36,13 +39,12 @@ Beest also support tab completion, just press `[tab]` twice after typing `beest`
 
 ### Run state
 
-By default, the state of your test yard is kept in the Terraform state which is configured to be stored in AWS S3 object.
-That way Terraform ca keep track of the resources it manages, and everyone working with a given collection of 
-infrastructure resources must be able to access the same state data.
+By default, the state of your test _yard_ is kept in the Terraform state which is configured to be stored in AWS S3 object.
+That way Terraform can keep track of the resources it manages, and everyone working on the same _yard_ must be able to use the same state.
 
 For the value of the Terraform state file (therefore the S3 object key) we chose to use the name of the git branch
 you are currently on (among other important variables).
 
-In some cases if you need to spin up the same testing yard multiple times (or just want a more explicit identifier),
+In some cases if you need to spin up the same testing _yard_ multiple times (or just want a more explicit identifier),
 you can set a different value for the `RUN_ID` variable in your `.envrc`. The `RUN_ID` is not only used for the
 Terraform state file name, but also used in the names of the infrastructure resources.

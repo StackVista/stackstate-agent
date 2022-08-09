@@ -1,4 +1,4 @@
-- name: Prepare Kubernetes Stackstate
+- name: Kubernetes Stackstate
   hosts: local
   gather_facts: false
   roles:
@@ -7,7 +7,7 @@
         sts_ingress: KOPS
     - role: "{{ bees_path }}/otel-lambda"
 
-- name: Prepare VM Agent
+- name: VM Agent
   hosts: agent
   gather_facts: true
   roles:

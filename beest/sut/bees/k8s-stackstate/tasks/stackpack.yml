@@ -42,7 +42,7 @@
 
   - name: Wait a bit for all objects to be saved to the bucket
     pause:
-      seconds: 30
+      seconds: 60
 
   - name: Retrieve objects versions from StsLogsBucket
     command: "aws s3api list-object-versions --bucket {{ sts_logs_bucket.stdout }} --output=json --query='{Objects: Versions[].{Key:Key,VersionId:VersionId}}'"
