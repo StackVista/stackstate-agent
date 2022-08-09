@@ -9,7 +9,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/StackVista/stackstate-agent/pkg/config/validate" // sts
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname/validate"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 

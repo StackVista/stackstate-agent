@@ -11,7 +11,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/StackVista/stackstate-agent/pkg/config/validate" // sts
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname/validate"
 )
 
 // HostnameProvider parses a file from the 'filename' option and returns the content

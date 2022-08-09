@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/config/validate" // sts
 	"github.com/StackVista/stackstate-agent/pkg/util/cachedfetch"
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname/validate"
 	httputils "github.com/StackVista/stackstate-agent/pkg/util/http"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )

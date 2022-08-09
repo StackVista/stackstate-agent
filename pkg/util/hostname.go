@@ -22,12 +22,12 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/config/validate" // sts
 	"github.com/StackVista/stackstate-agent/pkg/util/cache"
 	"github.com/StackVista/stackstate-agent/pkg/util/ec2"
 	"github.com/StackVista/stackstate-agent/pkg/util/ecs"
 	"github.com/StackVista/stackstate-agent/pkg/util/fargate"
 	"github.com/StackVista/stackstate-agent/pkg/util/hostname"
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname/validate"
 )
 
 var (
