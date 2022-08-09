@@ -1,0 +1,9 @@
+---
+- name: Prepare docker logs backup script
+  copy:
+    src: /home/ubuntu/docker_logs.tar.gz
+    dest: ./
+    owner: "{{ ansible_user_id }}"
+    group: root
+    mode: u=rwx,g=rx,o=rx
+  become: yes
