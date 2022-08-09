@@ -23,7 +23,7 @@ import (
 
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/common/types"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/defaults"
-	"github.com/StackVista/stackstate-agent/pkg/util/hostname/validate"
+	"github.com/StackVista/stackstate-agent/pkg/config/validate" // sts
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	"github.com/StackVista/stackstate-agent/pkg/secrets"

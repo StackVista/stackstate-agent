@@ -12,7 +12,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/hostname/validate"
+	"github.com/StackVista/stackstate-agent/pkg/config/validate" // sts
 )
 
 // GetHostAlias uses the "kubelet" hostname provider to fetch the kubernetes alias
