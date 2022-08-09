@@ -27,7 +27,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/ecs"
 	"github.com/StackVista/stackstate-agent/pkg/util/fargate"
 	"github.com/StackVista/stackstate-agent/pkg/util/hostname"
-	"github.com/StackVista/stackstate-agent/pkg/util/hostname/validate"
 )
 
 var (
@@ -164,7 +163,7 @@ func GetHostnameData(ctx context.Context) (HostnameData, error) {
 
 	// Try the name provided in the configuration file
 	configName := config.Datadog.GetString("hostname")
-	err = validate.ValidHostname(configName)
+	err = config.ValidHostname(configName)
 	if err == nil {
 		return saveAndValidateHostnameData(
 			ctx,
@@ -381,7 +380,7 @@ func isHostnameCanonicalForIntake(ctx context.Context, hostname string) bool {
 func getValidEC2Hostname(ctx context.Context, ec2Provider hostname.Provider) (string, error) {
 	instanceID, err := ec2Provider(ctx, nil)
 	if err == nil {
-		err = validate.ValidHostname(instanceID)
+		err = config.ValidHostname(instanceID)
 		if err == nil {
 			return instanceID, nil
 		}

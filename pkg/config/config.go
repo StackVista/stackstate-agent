@@ -1591,7 +1591,7 @@ func GetValidHostAliases() []string {
 func getValidHostAliasesWithConfig(config Config) []string {
 	aliases := []string{}
 	for _, alias := range config.GetStringSlice("host_aliases") {
-		if err := validate.ValidHostname(alias); err == nil {
+		if err := ValidHostname(alias); err == nil {
 			aliases = append(aliases, alias)
 		} else {
 			log.Warnf("skipping invalid host alias '%s': %s", alias, err)
@@ -1599,6 +1599,18 @@ func getValidHostAliasesWithConfig(config Config) []string {
 	}
 
 	return aliases
+}
+
+// ValidHostname determines whether the passed string is a valid hostname.
+// sts
+func ValidHostname(hostname string) error {
+	// [sts] If hostname validation is disabled just return nil
+	skipHostnameValidation := Datadog.GetBool("skip_hostname_validation")
+	if skipHostnameValidation {
+		log.Debugf("Hostname validation is disabled, accepting %s as a valid hostname", hostname)
+		return nil
+	}
+	return validate.ValidHostname(hostname)
 }
 
 // GetConfiguredTags returns complete list of user configured tags

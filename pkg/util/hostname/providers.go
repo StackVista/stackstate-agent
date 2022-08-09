@@ -8,8 +8,8 @@ package hostname
 import (
 	"context"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/hostname/validate"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
@@ -40,7 +40,7 @@ func GetHostname(ctx context.Context, providerName string, options map[string]in
 		if err != nil {
 			return "", err
 		}
-		if validate.ValidHostname(name) != nil {
+		if config.ValidHostname(name) != nil {
 			return "", fmt.Errorf("Invalid hostname '%s' from %s provider", name, providerName)
 		}
 		return name, nil

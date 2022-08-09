@@ -25,7 +25,6 @@ import (
 	pb "github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
 	"github.com/StackVista/stackstate-agent/pkg/util/fargate"
 	ddgrpc "github.com/StackVista/stackstate-agent/pkg/util/grpc"
-	"github.com/StackVista/stackstate-agent/pkg/util/hostname/validate"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/StackVista/stackstate-agent/pkg/util/profiling"
 	"google.golang.org/grpc"
@@ -348,7 +347,8 @@ func NewAgentConfig(loggerName config.LoggerName, yamlPath, netYamlPath string) 
 		cfg.LogLevel = "warn"
 	}
 
-	if err := validate.ValidHostname(cfg.HostName); err != nil {
+	// sts
+	if err := config.ValidHostname(cfg.HostName); err != nil {
 		// lookup hostname if there is no config override or if the override is invalid
 		if hostname, err := getHostname(context.TODO(), cfg.DDAgentBin, cfg.grpcConnectionTimeout); err == nil {
 			cfg.HostName = hostname

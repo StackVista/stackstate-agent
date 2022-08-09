@@ -14,7 +14,6 @@ import (
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/util/cachedfetch"
-	"github.com/StackVista/stackstate-agent/pkg/util/hostname/validate"
 	httputils "github.com/StackVista/stackstate-agent/pkg/util/http"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
@@ -130,8 +129,9 @@ var instanceMetaFetcher = cachedfetch.Fetcher{
 	},
 }
 
-func getHostnameWithConfig(ctx context.Context, config config.Config) (string, error) {
-	style := config.GetString(hostnameStyleSetting)
+// sts - renamed config variable to avoid conflicting with package
+func getHostnameWithConfig(ctx context.Context, conf config.Config) (string, error) {
+	style := conf.GetString(hostnameStyleSetting)
 
 	if style == "os" {
 		return "", fmt.Errorf("azure_hostname_style is set to 'os'")
@@ -166,7 +166,7 @@ func getHostnameWithConfig(ctx context.Context, config config.Config) (string, e
 		return "", fmt.Errorf("invalid azure_hostname_style value: %s", style)
 	}
 
-	if err := validate.ValidHostname(name); err != nil {
+	if err := config.ValidHostname(name); err != nil {
 		return "", err
 	}
 
