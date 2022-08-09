@@ -14,6 +14,8 @@ venv/
 .python-version
 venv27/
 venv3[78]/
+.gems/
+omnibus/omnibus/
 
 **/*.tmp
 **/debug.test
@@ -25,6 +27,7 @@ venv3[78]/
 *.exe
 *.syso
 *.log
+
 
 # local development environment control files
 .env
