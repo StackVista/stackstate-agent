@@ -11,6 +11,7 @@
 
     # Default tasks from this script
     - include_tasks: ./prepare.tasks.prepare.receiver.yml
+    - include_tasks: ../_shared/copy/copy-docker-log-backup-script.yml
 
 - name: Prepare Linux Agents (pre)
   hosts: agent_linux_vm
