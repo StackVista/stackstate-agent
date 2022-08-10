@@ -13,5 +13,5 @@ module "ec2_agent" {
   environment         = var.yard_id
   vpc_id              = module.vpc.vpc_id
   subnet_id           = module.vpc.private_subnet_1_id
-  integration_profile = module.aws_stackpack_role.integration_profile
+  integration_profile = ""
 }

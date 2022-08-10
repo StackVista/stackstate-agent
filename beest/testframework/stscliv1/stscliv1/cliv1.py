@@ -14,6 +14,13 @@ class CLIv1:
         self.host = host
         self.cache_enabled = cache_enabled
 
+    def topic_api(self, topic, limit=1000) -> dict:
+        executed = self.host.run(f"sts-cli topic show {topic} -l {limit}")
+        self.log.info(f"executed sts-cli topic show for topic {topic}: {executed}")
+        json_data = json.loads(executed.stdout)
+
+        return json_data
+
     def telemetry(self, component_ids):
         if len(component_ids) == 0:
             return []
@@ -89,7 +96,7 @@ Topology.query("id in (__IDS__)")
 def emptyPromise() {
   Async.sequence([])
 }
-    
+
 Topology.query('__QUERY__')
   .then { result ->
     components = result.queryResults[0].result.components

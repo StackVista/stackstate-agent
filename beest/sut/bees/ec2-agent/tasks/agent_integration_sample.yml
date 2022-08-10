@@ -1,0 +1,9 @@
+---
+- name: Configure Agent Integration Sample check
+  become: yes
+  ansible.builtin.template:
+    src: agent_integration_sample_conf.j2.yml
+    dest: /etc/stackstate-agent/conf.d/agent_integration_sample.d/conf.yaml
+    owner: stackstate-agent
+    group: stackstate-agent
+    mode: '0644'

@@ -18,6 +18,10 @@
     - include_tasks: aws.yml
       tags: [ prepare ]
       when: aws_integration is defined
+    
+    - include_tasks: agent_integration_sample.yml
+      tags: [ prepare ]
+      when: agent_integration_sample is defined
 
     - name: Restart stackstate-agent
       become: yes

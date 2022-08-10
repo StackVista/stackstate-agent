@@ -70,7 +70,7 @@ resource "aws_instance" "agent" {
   associate_public_ip_address = true
   key_name                    = aws_key_pair.agent_key_pair.key_name
   vpc_security_group_ids      = [aws_security_group.agent_group.id]
-  iam_instance_profile        = var.integration_profile
+  iam_instance_profile        = var.integration_profile == "" ? null : var.integration_profile
 
   tags = {
     Name                  = "${var.environment}-agent"

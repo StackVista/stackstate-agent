@@ -5,3 +5,4 @@
   tags: [ prepare, cleanup ]
 - include_tasks: stackpack.yml
   tags: [ prepare, cleanup ]
+  when: install_stackpacks is defined

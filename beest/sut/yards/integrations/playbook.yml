@@ -13,3 +13,5 @@
   roles:
     - role: "{{ bees_path }}/ec2-agent"
       vars:
+        agent_integration_sample:
+          enabled: true
