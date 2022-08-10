@@ -31,8 +31,7 @@
     debug:
       var: sts_url
 
-# TODO: The ability to start just a receiver stack (zookeeper, kafka, receiver, correlator, router, api)
-# depends on https://stackstate.atlassian.net/browse/STAC-17313
+# TODO: Start just a receiver stack (zookeeper, kafka, receiver, correlator, router, api), see https://stackstate.atlassian.net/browse/STAC-17313
 #hbase:
 #  enable: false
 #elasticsearch:
@@ -113,4 +112,4 @@
       kind: Namespace
       name: "{{ namespace }}"
       state: absent
-      wait: yes
+      wait: true

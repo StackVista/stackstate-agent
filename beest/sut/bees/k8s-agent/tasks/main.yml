@@ -12,33 +12,46 @@
 
   - include_tasks: quay-registry-key.yml
 
-  - name: Add StackState and StackState-test chart repos
-    shell: helm repo add stackstate https://helm.stackstate.io && helm repo add stackstate-test https://helm-test.stackstate.io && helm repo update
+  - name: Add stackstate chart repo
+    kubernetes.core.helm_repository:
+      name: stackstate
+      repo_url: "https://helm.stackstate.io"
+
+  - name: Add stackstate-test chart repo
+    kubernetes.core.helm_repository:
+      name: stackstate-test
+      repo_url: "https://helm-test.stackstate.io"
 
   - name: Apply manifests for test workloads
-    command: kubectl --context={{ kubecontext }} -n={{ namespace }} apply -f {{ role_path }}/files/test_workloads
+    kubernetes.core.k8s:
+      context: "{{ kubecontext }}"
+      namespace: "{{ namespace }}"
+      definition: "{{ lookup('file', '{{ item }}') }}"
+    with_fileglob: "test_workloads/*.yaml"
 
   - name: Log agent_helm_chart_repo
     debug:
       var: agent_helm_chart_repo
 
-  - name: Helm install StackState Agent
-    command: helm upgrade --install \
-      --namespace {{namespace}} \
-      --create-namespace \
-      --set-string 'stackstate.apiKey'='API_KEY' \
-      --set-string 'stackstate.cluster.name'='{{cluster_name}}' \
-      --set-string 'stackstate.url'='http://{{ groups['receiver'][0] }}:7077/stsAgent' \
-      --set "agent.containers.agent.image.tag={{agent_current_branch}}" \
-      --set "agent.containers.agent.image.repository=stackstate/{{agent_docker_repo}}" \
-      --set "agent.containers.processAgent.image.tag={{process_agent_branch}}" \
-      --set "agent.containers.processAgent.image.repository=stackstate/{{process_agent_repo}}" \
-      --set "clusterAgent.image.tag={{agent_current_branch}}" \
-      --set "clusterAgent.image.repository=stackstate/{{cluster_agent_docker_repo}}" \
-      --set "clusterChecks.image.tag={{agent_current_branch}}" \
-      --set "clusterChecks.image.repository=stackstate/{{agent_docker_repo}}" \
-      --values "{{ role_path }}/files/values.yml" \
-      stackstate-cluster-agent {{ agent_helm_chart_repo }}
+  - name: Generate agent values
+    ansible.builtin.template:
+      src: agent-extra-values.j2.yml
+      dest: "{{ playbook_dir }}/agent-extra-values.yml"
+
+  - name: Deploy stackstate chart using values files
+    kubernetes.core.helm:
+      context: "{{ kubecontext }}"
+      chart_ref: "{{ agent_helm_chart_repo }}"
+      chart_version: "{{ stackstate_helm_chart_version }}"
+      release_name: stackstate-cluster-agent
+      release_namespace: "{{ namespace }}"
+      create_namespace: true
+      update_repo_cache: true
+      wait: yes
+      wait_timeout: 15m
+      values_files:
+        - "{{ role_path }}/files/agent-values.yml"
+        - "{{ playbook_dir }}/agent-extra-values.yml"
 
   - name: Attempt to verify cluster agent ready
     block:
@@ -132,8 +145,19 @@
   tags: cleanup
   ignore_errors: yes
   block:
-  - name: Uninstall agent
-    shell: helm uninstall stackstate-cluster-agent --namespace {{namespace}}
+  - name: Undeploy agent
+    kubernetes.core.helm:
+      context: "{{ kubecontext }}"
+      release_name: stackstate-cluster-agent
+      release_namespace: "{{ namespace }}"
+      state: absent
+      wait: true
 
   - name: Delete namespace '{{namespace}}'
-    shell: kubectl --context={{ kubecontext }} delete ns {{ namespace }}
+    kubernetes.core.k8s:
+      context: "{{ kubecontext }}"
+      api_version: v1
+      kind: Namespace
+      name: "{{ namespace }}"
+      state: absent
+      wait: true

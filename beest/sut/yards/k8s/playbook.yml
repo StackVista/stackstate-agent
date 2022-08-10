@@ -1,0 +1,21 @@
+---
+- name: Kubernetes Stackstate
+  hosts: local
+  gather_facts: false
+  roles:
+    - role: "{{ bees_path }}/k8s-stackstate"
+      vars:
+        sts_ingress: KOPS
+        kubecontext: "{{ stackstate_kubecontext }}"
+        cluster_name: "{{ stackstate_cluster_name }}"
+        k8s_integration:
+          cluster_name: "{{ agent_cluster_name }}"
+
+- name: Kubernetes Agent
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - role: "{{ bees_path }}/k8s-agent"
+      vars:
+        kubecontext: "{{ agent_kubecontext }}"
+        cluster_name: "{{ agent_cluster_name }}"

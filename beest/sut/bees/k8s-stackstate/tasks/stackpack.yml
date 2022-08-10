@@ -15,12 +15,16 @@
     when: stackpacklist.find('stackstate-agent-v2') == -1
 
   - name: Install kubernetes StackPack
-    command: sts-cli stackpack install kubernetes -p kubernetes_cluster_name "{{ cluster_name }}"
-    when: stackpacklist.find('kubernetes') == -1
+    command: sts-cli stackpack install kubernetes -p kubernetes_cluster_name "{{ k8s_integration.cluster_name }}"
+    when:
+      - k8s_integration is defined
+      - stackpacklist.find('kubernetes') == -1
 
   - name: Install AWS-V2 StackPack
     command: sts-cli stackpack install aws-v2 -p aws_external_id "{{ yard_id }}" -p aws_role_arn "{{ integration_iam_role }}" -p aws_access_key_id "{{ integration_access_key }}" -p aws_secret_access_key "{{ integration_secret_key }}"
-    when: stackpacklist.find('aws-v2') == -1
+    when:
+      - stackpacklist.find('aws-v2') == -1
+      - integration_iam_role is defined
 
 
 ## Cleanup
@@ -28,6 +32,7 @@
 - name: StackPack cleanup tasks
   tags: cleanup
   ignore_errors: yes
+  when: integration_iam_role is defined
   block:
   - name: Retrieve StsEventBridgeRule resource id
     command: aws cloudformation describe-stack-resource --stack-name {{ cf_stack_name }} --logical-resource-id StsEventBridgeRule --query "StackResourceDetail.PhysicalResourceId" --output=text
