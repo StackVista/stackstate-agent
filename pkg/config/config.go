@@ -53,6 +53,10 @@ const (
 	// DefaultBatcherBufferSize sets the default buffer size of the batcher to 10000
 	// [sts]
 	DefaultBatcherBufferSize = 10000
+
+	// DeafultBatcherMaxMessageSize sets the default buffer size of the batcher to 10000
+	// [sts]
+	DeafultBatcherMaxMessageSize = 1024 * 1024
 )
 
 var overrideVars = make(map[string]interface{})
@@ -196,6 +200,7 @@ func InitConfig(config Config) {
 	config.BindEnv("skip_validate_clustername") //nolint:errcheck
 
 	// [sts] batcher environment variables
+	config.BindEnvAndSetDefault("batcher_capacity", DefaultBatcherBufferSize)
 	config.BindEnvAndSetDefault("batcher_capacity", DefaultBatcherBufferSize)
 
 	// overridden in IoT Agent main
@@ -992,13 +997,22 @@ func GetMultipleEndpoints() (map[string][]string, error) {
 	return getMultipleEndpointsWithConfig(Datadog)
 }
 
-// GetMaxCapacity returns the mximum amount of elements per batch for the batcher
+// GetMaxCapacity returns the maximum amount of elements per batch for the batcher
 func GetMaxCapacity() int {
 	if Datadog.IsSet("batcher_capacity") {
 		return Datadog.GetInt("batcher_capacity")
 	}
 
 	return DefaultBatcherBufferSize
+}
+
+// GetBatcherMaxMessageSize returns the maximum size for message sent to intake
+func GetBatcherMaxMessageSize() int {
+	if Datadog.IsSet("batcher_max_message_size") {
+		return Datadog.GetInt("batcher_max_message_size")
+	}
+
+	return DeafultBatcherMaxMessageSize
 }
 
 // getDomainPrefix provides the right prefix for agent X.Y.Z
