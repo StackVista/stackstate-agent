@@ -246,7 +246,7 @@ func (builder *BatchBuilder) tryIncrementAndFlush(checkID check.ID, element inte
 }
 
 func (builder *BatchBuilder) increment(elementSize int) {
-	builder.elementCount += 1
+	builder.elementCount++
 	builder.currentBatchSize += elementSize
 }
 
