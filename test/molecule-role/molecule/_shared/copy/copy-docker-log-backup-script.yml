@@ -1,9 +1,8 @@
 ---
-- name: Prepare docker logs backup script
+- name: Copy docker logs backup script
   copy:
-    src: ../../files/docker-logs.sh
+    src: ../files/docker-logs.sh
     dest: /home/ubuntu/docker-logs.sh
-    owner: "{{ ansible_user_id }}"
-    group: root
-    mode: u=rwx,g=rx,o=rx
-  become: yes
+    mode: preserve
+  ignore_errors: true
+  become: true

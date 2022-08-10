@@ -1,5 +1,3 @@
 ---
 - include_tasks: ../../../_shared/docker/container-logs.yml
 - include_tasks: ../../../_shared/copy/fetch-docker-log-archive.yml
-- include_tasks: ../../../_shared/aws/destroy-instance.yml
-- include_tasks: ../../../_shared/keypair/revoke-only.yml
