@@ -1044,4 +1044,39 @@ func TestSkipSSLValidationFromSTSPrefix(t *testing.T) {
 	assert.Equal(t, true, config2.GetBool("skip_ssl_validation"))
 }
 
+func TestValidHostname(t *testing.T) {
+	var err error
+	err = ValidHostname("")
+	assert.NotNil(t, err)
+	err = ValidHostname("localhost")
+	assert.NotNil(t, err)
+	err = ValidHostname(strings.Repeat("a", 256))
+	assert.NotNil(t, err)
+	err = ValidHostname("data🐕hq.com")
+	assert.NotNil(t, err)
+
+	// switch of hostname validation
+	os.Setenv("DD_SKIP_HOSTNAME_VALIDATION", "true")
+	err = ValidHostname("")
+	assert.Nil(t, err)
+	err = ValidHostname("localhost")
+	assert.Nil(t, err)
+	err = ValidHostname(strings.Repeat("a", 256))
+	assert.Nil(t, err)
+	err = ValidHostname("data🐕hq.com")
+	assert.Nil(t, err)
+
+	// switch of hostname validation
+	os.Setenv("DD_SKIP_HOSTNAME_VALIDATION", "false")
+	Datadog.Set("skip_hostname_validation", "true")
+	err = ValidHostname("")
+	assert.Nil(t, err)
+	err = ValidHostname("localhost")
+	assert.Nil(t, err)
+	err = ValidHostname(strings.Repeat("a", 256))
+	assert.Nil(t, err)
+	err = ValidHostname("data🐕hq.com")
+	assert.Nil(t, err)
+}
+
 // sts end
