@@ -165,7 +165,7 @@
 
 - name: StackState Agent cleanup tasks
   tags: cleanup
-  ignore_errors: yes
+  ignore_errors: true
   block:
     - name: Undeploy agent
       kubernetes.core.helm:
