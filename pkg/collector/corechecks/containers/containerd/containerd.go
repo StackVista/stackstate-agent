@@ -26,6 +26,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
 	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/topology"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/tagger"
@@ -52,10 +53,9 @@ type ContainerdCheck struct {
 
 // ContainerdConfig contains the custom options and configurations set by the user.
 type ContainerdConfig struct {
-	ContainerdFilters []string `yaml:"filters"`
-	CollectEvents     bool     `yaml:"collect_events"`
-	// sts
-	CollectContainerTopology bool `yaml:"collect_container_topology"`
+	ContainerdFilters        []string `yaml:"filters"`
+	CollectEvents            bool     `yaml:"collect_events"`
+	CollectContainerTopology bool     `yaml:"collect_container_topology"` // sts
 }
 
 func init() {
@@ -74,6 +74,8 @@ func ContainerdFactory() check.Check {
 
 // Parse is used to get the configuration set by the user
 func (co *ContainerdConfig) Parse(data []byte) error {
+	co.CollectContainerTopology = true // sts
+
 	return yaml.Unmarshal(data, co)
 }
 
@@ -110,10 +112,8 @@ func (c *ContainerdCheck) Run() error {
 	cu, errHealth := cutil.GetContainerdUtil()
 	if errHealth != nil {
 		sender.ServiceCheck("containerd.health", metrics.ServiceCheckCritical, "", nil, fmt.Sprintf("Connectivity error %v", errHealth))
-		// sts begin
-		log.Debugf("Error initialising Containerd util %v", errHealth)
-		return nil
-		// sts end
+		log.Infof("Error ensuring connectivity with Containerd daemon %v", errHealth)
+		return errHealth
 	}
 	sender.ServiceCheck("containerd.health", metrics.ServiceCheckOK, "", nil, "")
 	ns := cu.Namespace()
