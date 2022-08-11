@@ -201,7 +201,7 @@ func InitConfig(config Config) {
 
 	// [sts] batcher environment variables
 	config.BindEnvAndSetDefault("batcher_capacity", DefaultBatcherBufferSize)
-	config.BindEnvAndSetDefault("batcher_capacity", DefaultBatcherBufferSize)
+	config.BindEnvAndSetDefault("batcher_max_message_size", DeafultBatcherMaxMessageSize)
 
 	// overridden in IoT Agent main
 	config.BindEnvAndSetDefault("iot_host", false)

@@ -408,26 +408,3 @@ func (s *Serializer) SendJSONToV1Intake(data interface{}) error {
 	log.Debugf("Sent intake payload, content: %v", apiKeyRegExp.ReplaceAllString(string(payload), apiKeyReplacement))
 	return nil
 }
-
-/*
-http://nightly-champagne.preprod.stackstate.io/stsAgent/intake/?api_key=0663dbc0-f20e-4c9d-8205-c854c18f65f5 (3147826): 503 Service Unavailable |
-List(
-	Timeout-Access: <function1>,
-	Remote-Address,
-	Host,
-	x-request-id: 9da792e356cf2fc89a2e1abbc99d7d42,
-	X-Real-Ip,
-	X-Forwarded-For,
-	X-Forwarded-Host,
-	x-forwarded-port: 443,
-	X-Forwarded-Proto: https,
-	x-forwarded-scheme: https,
-	x-scheme: https,
-	x-original-forwarded-for: 54.154.244.202, 10.0.25.96,
-	User-Agent: datadog-agent/6.0.0,
-	dd-agent-version: 6.0.0,
-	Accept-Encoding: gzip,
-	dd-api-key: 0663dbc0-f20e-4c9d-8205-c854c18f65f5,
-	x-envoy-original-path: /receiver/stsAgent/intake/?api_key=0663dbc0-f20e-4c9d-8205-c854c18f65f5
-)
-*/
