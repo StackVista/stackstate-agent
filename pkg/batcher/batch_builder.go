@@ -1,8 +1,6 @@
 package batcher
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/health"
@@ -123,16 +121,16 @@ func (builder *BatchBuilder) getOrCreateRawMetrics(checkID check.ID) *[]telemetr
 }
 
 // AddComponent adds a component
-func (builder *BatchBuilder) AddComponent(checkID check.ID, instance topology.Instance, component topology.Component) CheckInstanceBatchStates {
-	return builder.tryIncrementAndFlush(checkID, component, func() {
+func (builder *BatchBuilder) AddComponent(checkID check.ID, instance topology.Instance, component topology.Component, componentSize int) CheckInstanceBatchStates {
+	return builder.tryIncrementAndFlush(checkID, component, componentSize, func() {
 		topologyData := builder.getOrCreateTopology(checkID, instance)
 		topologyData.Components = append(topologyData.Components, component)
 	})
 }
 
 // AddRelation adds a relation
-func (builder *BatchBuilder) AddRelation(checkID check.ID, instance topology.Instance, relation topology.Relation) CheckInstanceBatchStates {
-	return builder.tryIncrementAndFlush(checkID, relation, func() {
+func (builder *BatchBuilder) AddRelation(checkID check.ID, instance topology.Instance, relation topology.Relation, relationSize int) CheckInstanceBatchStates {
+	return builder.tryIncrementAndFlush(checkID, relation, relationSize, func() {
 		topologyData := builder.getOrCreateTopology(checkID, instance)
 		topologyData.Relations = append(topologyData.Relations, relation)
 	})
@@ -158,15 +156,15 @@ func (builder *BatchBuilder) TopologyStopSnapshot(checkID check.ID, instance top
 
 // Delete deletes a topology element
 func (builder *BatchBuilder) Delete(checkID check.ID, instance topology.Instance, deleteID string) CheckInstanceBatchStates {
-	return builder.tryIncrementAndFlush(checkID, deleteID, func() {
+	return builder.tryIncrementAndFlush(checkID, deleteID, len(deleteID), func() {
 		topologyData := builder.getOrCreateTopology(checkID, instance)
 		topologyData.DeleteIDs = append(topologyData.DeleteIDs, deleteID)
 	})
 }
 
 // AddHealthCheckData adds a component
-func (builder *BatchBuilder) AddHealthCheckData(checkID check.ID, stream health.Stream, data health.CheckData) CheckInstanceBatchStates {
-	return builder.tryIncrementAndFlush(checkID, data, func() {
+func (builder *BatchBuilder) AddHealthCheckData(checkID check.ID, stream health.Stream, data health.CheckData, dataSize int) CheckInstanceBatchStates {
+	return builder.tryIncrementAndFlush(checkID, data, dataSize, func() {
 		healthData := builder.getOrCreateHealth(checkID, stream)
 		healthData.CheckStates = append(healthData.CheckStates, data)
 		builder.states[checkID].Health[stream.GoString()] = healthData
@@ -197,8 +195,8 @@ func (builder *BatchBuilder) HealthStopSnapshot(checkID check.ID, stream health.
 }
 
 // AddRawMetricsData adds raw metric data
-func (builder *BatchBuilder) AddRawMetricsData(checkID check.ID, rawMetric telemetry.RawMetrics) CheckInstanceBatchStates {
-	return builder.tryIncrementAndFlush(checkID, rawMetric, func() {
+func (builder *BatchBuilder) AddRawMetricsData(checkID check.ID, rawMetric telemetry.RawMetrics, rawMetricSize int) CheckInstanceBatchStates {
+	return builder.tryIncrementAndFlush(checkID, rawMetric, rawMetricSize, func() {
 		rawMetricsData := builder.getOrCreateRawMetrics(checkID)
 		*rawMetricsData = append(*rawMetricsData, rawMetric)
 	})
@@ -214,20 +212,7 @@ func (builder *BatchBuilder) Flush() CheckInstanceBatchStates {
 	return data
 }
 
-func getElementSize(element interface{}) (int, error) {
-	jsonData, err := json.Marshal(element)
-	if err != nil {
-		return 0, fmt.Errorf("unable to marshal element %+v", element)
-	}
-	return len(jsonData), nil
-}
-
-func (builder *BatchBuilder) tryIncrementAndFlush(checkID check.ID, element interface{}, getAndAppend func()) CheckInstanceBatchStates {
-	elementSize, err := getElementSize(element)
-	if err != nil {
-		log.Errorf("Could not get size of element from check %s. The element will be ignored: %v", checkID, err)
-		return nil
-	}
+func (builder *BatchBuilder) tryIncrementAndFlush(checkID check.ID, element interface{}, elementSize int, getAndAppend func()) CheckInstanceBatchStates {
 	if elementSize > builder.maxBatchSize {
 		log.Errorf("Element size (%d) is bigger than maximum batch size (%d). The element will be ignored", elementSize, builder.maxBatchSize)
 		return nil
@@ -248,16 +233,6 @@ func (builder *BatchBuilder) tryIncrementAndFlush(checkID check.ID, element inte
 func (builder *BatchBuilder) increment(elementSize int) {
 	builder.elementCount++
 	builder.currentBatchSize += elementSize
-}
-
-func (builder *BatchBuilder) incrementAndTryFlush() CheckInstanceBatchStates {
-	builder.elementCount = builder.elementCount + 1
-
-	if builder.elementCount >= builder.maxCapacity {
-		return builder.Flush()
-	}
-
-	return nil
 }
 
 // FlushIfDataProduced checks whether the check produced data, if so, flush

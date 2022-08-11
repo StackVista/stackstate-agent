@@ -1,6 +1,7 @@
 package batcher
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/config"
@@ -24,7 +25,9 @@ var (
 type Batcher interface {
 	// Topology
 	SubmitComponent(checkID check.ID, instance topology.Instance, component topology.Component)
+	SubmitComponentWithSize(checkID check.ID, instance topology.Instance, component topology.Component, size int)
 	SubmitRelation(checkID check.ID, instance topology.Instance, relation topology.Relation)
+	SubmitRelationWithSize(checkID check.ID, instance topology.Instance, relation topology.Relation, size int)
 	SubmitStartSnapshot(checkID check.ID, instance topology.Instance)
 	SubmitStopSnapshot(checkID check.ID, instance topology.Instance)
 	SubmitDelete(checkID check.ID, instance topology.Instance, topologyElementID string)
@@ -83,15 +86,17 @@ type AsynchronousBatcher struct {
 }
 
 type submitComponent struct {
-	checkID   check.ID
-	instance  topology.Instance
-	component topology.Component
+	checkID       check.ID
+	instance      topology.Instance
+	component     topology.Component
+	componentSize int
 }
 
 type submitRelation struct {
-	checkID  check.ID
-	instance topology.Instance
-	relation topology.Relation
+	checkID      check.ID
+	instance     topology.Instance
+	relation     topology.Relation
+	relationSize int
 }
 
 type submitStartSnapshot struct {
@@ -111,9 +116,10 @@ type submitDelete struct {
 }
 
 type submitHealthCheckData struct {
-	checkID check.ID
-	stream  health.Stream
-	data    health.CheckData
+	checkID  check.ID
+	stream   health.Stream
+	data     health.CheckData
+	dataSize int
 }
 
 type submitHealthStartSnapshot struct {
@@ -129,8 +135,9 @@ type submitHealthStopSnapshot struct {
 }
 
 type submitRawMetricsData struct {
-	checkID   check.ID
-	rawMetric telemetry.RawMetrics
+	checkID       check.ID
+	rawMetric     telemetry.RawMetrics
+	rawMetricSize int
 }
 
 type submitComplete struct {
@@ -212,9 +219,9 @@ func (batcher *AsynchronousBatcher) run() {
 		s := <-batcher.input
 		switch submission := s.(type) {
 		case submitComponent:
-			batcher.sendState(batcher.builder.AddComponent(submission.checkID, submission.instance, submission.component))
+			batcher.sendState(batcher.builder.AddComponent(submission.checkID, submission.instance, submission.component, submission.componentSize))
 		case submitRelation:
-			batcher.sendState(batcher.builder.AddRelation(submission.checkID, submission.instance, submission.relation))
+			batcher.sendState(batcher.builder.AddRelation(submission.checkID, submission.instance, submission.relation, submission.relationSize))
 		case submitStartSnapshot:
 			batcher.sendState(batcher.builder.TopologyStartSnapshot(submission.checkID, submission.instance))
 		case submitStopSnapshot:
@@ -223,14 +230,14 @@ func (batcher *AsynchronousBatcher) run() {
 			batcher.sendState(batcher.builder.Delete(submission.checkID, submission.instance, submission.deleteID))
 
 		case submitHealthCheckData:
-			batcher.sendState(batcher.builder.AddHealthCheckData(submission.checkID, submission.stream, submission.data))
+			batcher.sendState(batcher.builder.AddHealthCheckData(submission.checkID, submission.stream, submission.data, submission.dataSize))
 		case submitHealthStartSnapshot:
 			batcher.sendState(batcher.builder.HealthStartSnapshot(submission.checkID, submission.stream, submission.intervalSeconds, submission.expirySeconds))
 		case submitHealthStopSnapshot:
 			batcher.sendState(batcher.builder.HealthStopSnapshot(submission.checkID, submission.stream))
 
 		case submitRawMetricsData:
-			batcher.sendState(batcher.builder.AddRawMetricsData(submission.checkID, submission.rawMetric))
+			batcher.sendState(batcher.builder.AddRawMetricsData(submission.checkID, submission.rawMetric, submission.rawMetricSize))
 
 		case submitComplete:
 			batcher.sendState(batcher.builder.FlushIfDataProduced(submission.checkID))
@@ -244,19 +251,33 @@ func (batcher *AsynchronousBatcher) run() {
 
 // SubmitComponent submits a component to the batch
 func (batcher AsynchronousBatcher) SubmitComponent(checkID check.ID, instance topology.Instance, component topology.Component) {
+	size := getElementSize(component)
+	batcher.SubmitComponentWithSize(checkID, instance, component, size)
+}
+
+// SubmitComponentWithSize submits a component to the batch
+func (batcher AsynchronousBatcher) SubmitComponentWithSize(checkID check.ID, instance topology.Instance, component topology.Component, size int) {
 	batcher.input <- submitComponent{
-		checkID:   checkID,
-		instance:  instance,
-		component: component,
+		checkID:       checkID,
+		instance:      instance,
+		component:     component,
+		componentSize: size,
 	}
 }
 
 // SubmitRelation submits a relation to the batch
 func (batcher AsynchronousBatcher) SubmitRelation(checkID check.ID, instance topology.Instance, relation topology.Relation) {
+	size := getElementSize(relation)
+	batcher.SubmitRelationWithSize(checkID, instance, relation, size)
+}
+
+// SubmitRelation submits a relation to the batch
+func (batcher AsynchronousBatcher) SubmitRelationWithSize(checkID check.ID, instance topology.Instance, relation topology.Relation, size int) {
 	batcher.input <- submitRelation{
-		checkID:  checkID,
-		instance: instance,
-		relation: relation,
+		checkID:      checkID,
+		instance:     instance,
+		relation:     relation,
+		relationSize: size,
 	}
 }
 
@@ -287,11 +308,13 @@ func (batcher AsynchronousBatcher) SubmitDelete(checkID check.ID, instance topol
 
 // SubmitHealthCheckData submits a Health check data record to the batch
 func (batcher AsynchronousBatcher) SubmitHealthCheckData(checkID check.ID, stream health.Stream, data health.CheckData) {
-	log.Debugf("Submitting Health check data for check [%s] stream [%s]: %s", checkID, stream.GoString(), util.JSONString(data))
+	dataJson := util.JSONString(data)
+	log.Debugf("Submitting Health check data for check [%s] stream [%s]: %s", checkID, stream.GoString(), dataJson)
 	batcher.input <- submitHealthCheckData{
-		checkID: checkID,
-		stream:  stream,
-		data:    data,
+		checkID:  checkID,
+		stream:   stream,
+		data:     data,
+		dataSize: len(dataJson),
 	}
 }
 
@@ -318,10 +341,12 @@ func (batcher AsynchronousBatcher) SubmitRawMetricsData(checkID check.ID, rawMet
 	if rawMetric.HostName == "" {
 		rawMetric.HostName = batcher.hostname
 	}
+	size := getElementSize(rawMetric)
 
 	batcher.input <- submitRawMetricsData{
-		checkID:   checkID,
-		rawMetric: rawMetric,
+		checkID:       checkID,
+		rawMetric:     rawMetric,
+		rawMetricSize: size,
 	}
 }
 
@@ -340,4 +365,13 @@ func (batcher AsynchronousBatcher) Shutdown() {
 
 // SubmitError takes error in the testing code, not yet accounted for health or anything else
 func (batcher AsynchronousBatcher) SubmitError(checkID check.ID, err error) {
+}
+
+func getElementSize(element interface{}) int {
+	jsonData, err := json.Marshal(element)
+	if err != nil {
+		log.Errorf("unable to marshal element %+v", element)
+		return 0
+	}
+	return len(jsonData)
 }

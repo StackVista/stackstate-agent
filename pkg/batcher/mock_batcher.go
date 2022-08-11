@@ -23,12 +23,20 @@ func createMockBatcher() *MockBatcher {
 
 // SubmitComponent mock
 func (batcher *MockBatcher) SubmitComponent(checkID check.ID, instance topology.Instance, component topology.Component) {
-	batcher.CollectedTopology.AddComponent(checkID, instance, component)
+	batcher.SubmitComponentWithSize(checkID, instance, component, 0)
+}
+
+func (batcher *MockBatcher) SubmitComponentWithSize(checkID check.ID, instance topology.Instance, component topology.Component, size int) {
+	batcher.CollectedTopology.AddComponent(checkID, instance, component, size)
 }
 
 // SubmitRelation mock
 func (batcher *MockBatcher) SubmitRelation(checkID check.ID, instance topology.Instance, relation topology.Relation) {
-	batcher.CollectedTopology.AddRelation(checkID, instance, relation)
+	batcher.SubmitRelationWithSize(checkID, instance, relation, 0)
+}
+
+func (batcher *MockBatcher) SubmitRelationWithSize(checkID check.ID, instance topology.Instance, relation topology.Relation, size int) {
+	batcher.CollectedTopology.AddRelation(checkID, instance, relation, size)
 }
 
 // SubmitStartSnapshot mock
@@ -48,7 +56,7 @@ func (batcher *MockBatcher) SubmitDelete(checkID check.ID, instance topology.Ins
 
 // SubmitHealthCheckData mock
 func (batcher *MockBatcher) SubmitHealthCheckData(checkID check.ID, stream health.Stream, data health.CheckData) {
-	batcher.CollectedTopology.AddHealthCheckData(checkID, stream, data)
+	batcher.CollectedTopology.AddHealthCheckData(checkID, stream, data, 1000)
 }
 
 // SubmitHealthStartSnapshot mock
@@ -63,7 +71,7 @@ func (batcher *MockBatcher) SubmitHealthStopSnapshot(checkID check.ID, stream he
 
 // SubmitRawMetricsData mock
 func (batcher *MockBatcher) SubmitRawMetricsData(checkID check.ID, rawMetric telemetry.RawMetrics) {
-	batcher.CollectedTopology.AddRawMetricsData(checkID, rawMetric)
+	batcher.CollectedTopology.AddRawMetricsData(checkID, rawMetric, 1000)
 }
 
 // SubmitComplete mock

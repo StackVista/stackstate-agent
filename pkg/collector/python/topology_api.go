@@ -45,7 +45,7 @@ func SubmitComponent(id *C.char, instanceKey *C.instance_key_t, _ignoredExternal
 	err := json.Unmarshal([]byte(rawComponent), &component)
 
 	if err == nil {
-		batcher.GetBatcher().SubmitComponent(check.ID(goCheckID), _instance, component)
+		batcher.GetBatcher().SubmitComponentWithSize(check.ID(goCheckID), _instance, component, len(rawComponent))
 	} else {
 		_ = log.Errorf("Empty topology component not sent. Raw: %v, Json: %v, Error: %v", rawComponent,
 			component.JSONString(), err)
@@ -68,7 +68,7 @@ func SubmitRelation(id *C.char, instanceKey *C.instance_key_t, _ignoredSourceID 
 
 	if err == nil {
 		relation.ExternalID = fmt.Sprintf("%s-%s-%s", relation.SourceID, relation.Type.Name, relation.TargetID)
-		batcher.GetBatcher().SubmitRelation(check.ID(goCheckID), _instance, relation)
+		batcher.GetBatcher().SubmitRelationWithSize(check.ID(goCheckID), _instance, relation, len(rawRelation))
 	} else {
 		_ = log.Errorf("Empty topology relation not sent. Raw: %v, Json: %v, Error: %v", rawRelation,
 			relation.JSONString(), err)
