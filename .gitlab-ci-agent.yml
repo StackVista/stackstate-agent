@@ -952,7 +952,7 @@ beest_integrations_create:
   <<: *beest_create
   <<: *beest_integrations_variables
   rules:
-    - *molecule_integrations_rule
+    - *integrations_ignore_rule
     - *v2_merge_train_always
 
 beest_k8s_dockerd_test:
@@ -990,7 +990,7 @@ beest_integrations_test:
   <<: *beest_test
   <<: *beest_integrations_variables
   rules:
-    - *molecule_integrations_rule
+    - *integrations_ignore_rule
     - *v2_merge_train_on_success
     - when: never
   dependencies:
@@ -1028,7 +1028,7 @@ beest_integrations_failure_cleanup:
   <<: *beest_destroy
   <<: *beest_integrations_variables
   rules:
-    - *molecule_integrations_rule
+    - *integrations_ignore_rule
     - *v2_merge_train_on_failure
     - when: never
   needs:
@@ -1055,7 +1055,7 @@ beest_integrations_success_cleanup:
   <<: *beest_destroy
   <<: *beest_integrations_variables
   rules:
-    - *molecule_integrations_rule
+    - *integrations_ignore_rule
     - *v2_merge_train_on_success
     - when: never
   dependencies:
