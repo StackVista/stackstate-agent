@@ -1,6 +1,7 @@
 package urn
 
 import (
+	"context"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	"github.com/stretchr/testify/assert"
@@ -30,7 +31,7 @@ func TestUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
 	var testClusterName = "mycluster"
 	mockConfig.Set("cluster_name", testClusterName)
 
-	clustername.GetClusterName()
+	clustername.GetClusterName(context.TODO(), "")
 
 	builder := NewURNBuilder(Kubernetes, "uurrll")
 
