@@ -1,9 +1,10 @@
 //go:build !windows
 // +build !windows
 
-package system
+package disk
 
 import (
+	"context"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
@@ -35,7 +36,7 @@ func (dtc *DiskTopologyCollector) BuildTopology(partitions []disk.PartitionStat)
 	sender := batcher.GetBatcher()
 
 	// try to get the agent hostname to use in the host component
-	hostnameData, err := util.GetHostnameData()
+	hostnameData, err := util.GetHostnameData(context.TODO())
 	if err != nil {
 		log.Warnf("Can't get hostname for host running the disk integration, not reporting a host: %s", err)
 		return err

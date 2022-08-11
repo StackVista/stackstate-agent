@@ -183,7 +183,8 @@ func (c *Check) applyDeviceTags(device, mountpoint string, tags []string) []stri
 
 func diskFactory() check.Check {
 	return &Check{
-		CheckBase: core.NewCheckBase(checkName),
+		CheckBase:         core.NewCheckBase(checkName),
+		topologyCollector: MakeTopologyCollector(),
 	}
 }
 
