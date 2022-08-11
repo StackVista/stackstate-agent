@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build docker
 // +build docker
 
 package docker
@@ -13,6 +14,7 @@ import "gopkg.in/yaml.v2"
 const (
 	DockerServiceUp = "docker.service_up"
 	DockerExit      = "docker.exit"
+	DockerRestart   = "docker.restart"
 )
 
 type DockerConfig struct {
@@ -28,12 +30,16 @@ type DockerConfig struct {
 	CollectEvent             bool               `yaml:"collect_events"`
 	FilteredEventType        []string           `yaml:"filtered_event_types"`
 	CappedMetrics            map[string]float64 `yaml:"capped_metrics"`
+	CollectContainerTopology bool               `yaml:"collect_container_topology"` // sts
 }
 
 func (c *DockerConfig) Parse(data []byte) error {
 	// default values
 	c.CollectEvent = true
 	c.CollectContainerSizeFreq = 5
+
+	// sts
+	c.CollectContainerTopology = true
 
 	return yaml.Unmarshal(data, c)
 }

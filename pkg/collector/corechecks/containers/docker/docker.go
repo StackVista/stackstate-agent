@@ -49,6 +49,7 @@ type DockerCheck struct {
 	collectContainerSizeCounter uint64
 	containerFilter             *containers.Filter
 	okExitCodes                 map[int]struct{}
+	topologyCollector           *topology.ContainerTopologyCollector // sts
 }
 
 func updateContainerRunningCount(images map[string]*containerPerImage, c *containers.Container) {
@@ -132,18 +133,10 @@ func (d *DockerCheck) Run() error {
 	}
 
 	du, err := docker.GetDockerUtil()
-	if config.IsContainerized() {
-		if err != nil {
-			// sts begin
-			sender.ServiceCheck(DockerServiceUp, metrics.ServiceCheckCritical, "", nil, err.Error())
-			//d.Warnf("Error initialising check: %s", err) //nolint:errcheck
-			log.Debugf("Error initialising Docker util %v", err)
-			return nil
-			// sts end
-		}
-	} else {
-		log.Debugf("Agent is not running in container, skipping the Docker check")
-		return nil
+	if err != nil {
+		sender.ServiceCheck(DockerServiceUp, metrics.ServiceCheckCritical, "", nil, err.Error())
+		d.Warnf("Error initialising check: %s", err) //nolint:errcheck
+		return err
 	}
 	cList, err := du.ListContainers(context.TODO(), &docker.ContainerListConfig{IncludeExited: true, FlagExcluded: true})
 	if err != nil {
