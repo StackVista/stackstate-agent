@@ -16,7 +16,7 @@ class CLIv1:
 
     def topic_api(self, topic, limit=1000) -> dict:
         executed = self.host.run(f"sts-cli topic show {topic} -l {limit}")
-        self.log.info(f"executed sts-cli topic show for topic {topic}: {executed}")
+        self.log.info(f"executed sts-cli topic show for topic {topic}")
         json_data = json.loads(executed.stdout)
 
         return json_data
