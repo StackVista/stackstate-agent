@@ -61,6 +61,7 @@ services:
       - kafka
     environment:
       KAFKA_BROKERS: kafka:9092
+      STACKSTATE_RECEIVER_HTTP_LOG_LEVEL: DEBUG
     deploy:
       restart_policy:
         condition: any

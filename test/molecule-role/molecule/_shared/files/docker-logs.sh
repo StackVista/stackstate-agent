@@ -17,4 +17,6 @@ for CONTAINER_NAME in ${CONTAINER_NAMES}; do
         fi
 done
 
+journalctl -u docker -S today --no-tail > "${FOLDER}/dockerd.log"
+
 tar -zcvf "${FOLDER}.tar.gz" "${FOLDER}"

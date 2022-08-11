@@ -5,5 +5,3 @@
     dest: ./logs
   ignore_errors: true
   become: true
-
-# ./docker_logs.tar.gz/machine-name/home/ubuntu/docker_logs.tar.gz
