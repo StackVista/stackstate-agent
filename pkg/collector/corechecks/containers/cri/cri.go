@@ -44,6 +44,8 @@ type CRICheck struct {
 	core.CheckBase
 	instance *CRIConfig
 	filter   *containers.Filter
+	// sts
+	topologyCollector *topology.ContainerTopologyCollector
 }
 
 func init() {
@@ -95,11 +97,8 @@ func (c *CRICheck) Run() error {
 
 	util, err := cri.GetUtil()
 	if err != nil {
-		// sts begin
-		//c.Warnf("Error initialising check: %s", err) //nolint:errcheck
-		log.Debugf("Error initialising CRI util: %v", err)
-		return nil
-		// sts end
+		c.Warnf("Error initialising check: %s", err) //nolint:errcheck
+		return err
 	}
 
 	containerStats, err := util.ListContainerStats()
