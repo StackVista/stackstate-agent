@@ -10,6 +10,9 @@ package python
 
 import (
 	"context"
+	collectorutils "github.com/StackVista/stackstate-agent/pkg/collector/util"
+	"os"
+	"strconv"
 	"sync"
 	"unsafe"
 
