@@ -3,11 +3,13 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
 
+//go:build docker
 // +build docker
 
 package dockerswarm
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
@@ -85,7 +87,7 @@ func (dt *SwarmTopologyCollector) collectSwarmServices(hostname string, sender a
 		return nil, nil, err
 	}
 
-	clusterName := clustername.GetClusterName()
+	clusterName := clustername.GetClusterName(context.TODO(), "")
 	taskContainerComponents := make([]*topology.Component, 0)
 	swarmServiceComponents := make([]*topology.Component, 0)
 	swarmServiceRelations := make([]*topology.Relation, 0)
