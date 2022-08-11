@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	cspec "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec" // sts
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	dderrors "github.com/StackVista/stackstate-agent/pkg/errors"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -168,7 +169,7 @@ func (c *ContainerdUtil) ContainerWithContext(ctx context.Context, id string) (c
 }
 
 // GetContainers interfaces with the containerd api to get the list of containers.
-func (c *ContainerdUtil) GetContainers() ([]*cspec.Container, error) {
+func (c *ContainerdUtil) GetContainers(ctx context.Context) ([]*cspec.Container, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.queryTimeout)
 	defer cancel()
 

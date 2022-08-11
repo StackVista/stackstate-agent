@@ -132,7 +132,7 @@ var ContainerStateMap = map[pb.ContainerState]string{
 	pb.ContainerState_CONTAINER_UNKNOWN: containers.ContainerUnknownState,
 }
 
-func (c *CRIUtil) GetContainers() ([]*spec.Container, error) {
+func (c *CRIUtil) GetContainers(ctx context.Context) ([]*spec.Container, error) {
 	containerStats, err := c.ListContainerStats()
 	if err != nil {
 		return nil, err

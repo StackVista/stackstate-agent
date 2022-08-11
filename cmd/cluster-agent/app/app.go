@@ -33,6 +33,7 @@ import (
 	"github.com/StackVista/stackstate-agent/cmd/cluster-agent/custommetrics"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/api/healthprobe"
+	"github.com/StackVista/stackstate-agent/pkg/batcher" // sts
 	"github.com/StackVista/stackstate-agent/pkg/clusteragent"
 	admissionpkg "github.com/StackVista/stackstate-agent/pkg/clusteragent/admission"
 	"github.com/StackVista/stackstate-agent/pkg/clusteragent/admission/mutate"
@@ -234,6 +235,10 @@ func start(cmd *cobra.Command, args []string) error {
 	// [sts] init the batcher for topology production
 	batcher.InitBatcher(s, hostname, "agent", config.GetMaxCapacity())
 
+	isLeader := func() bool {
+		return false
+	}
+
 	// [sts] - skipping leader election because we don't need it.
 	skipLeaderElection := config.Datadog.GetBool("skip_leader_election")
 	if !skipLeaderElection {
@@ -242,6 +247,8 @@ func start(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
+
+		isLeader = le.IsLeader
 
 		// Create event recorder
 		eventBroadcaster := record.NewBroadcaster()
@@ -366,7 +373,7 @@ func start(cmd *cobra.Command, args []string) error {
 		go func() {
 			defer wg.Done()
 
-			if err := runCompliance(mainCtx, apiCl, le.IsLeader); err != nil {
+			if err := runCompliance(mainCtx, apiCl, isLeader); err != nil { // sts
 				log.Errorf("Error while running compliance agent: %v", err)
 			}
 		}()
