@@ -7,3 +7,4 @@
 - include_tasks: ../_shared/copy/copy-nagios-files.yml
 - include_tasks: ../_shared/copy/copy-nagios-config-files.yml
 - include_tasks: ../_shared/copy/copy-agent-integration-files.yml
+- include_tasks: ../_shared/copy/copy-docker-log-backup-script.yml

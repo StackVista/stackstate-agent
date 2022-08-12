@@ -1,0 +1,6 @@
+---
+- name: Cleanup
+  hosts: trace-java-demo-compose
+  gather_facts: true
+  tasks:
+    - include_tasks: ./cleanup.tasks.yml

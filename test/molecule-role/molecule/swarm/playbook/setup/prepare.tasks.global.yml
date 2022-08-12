@@ -8,3 +8,4 @@
 - include_tasks: ../_shared/copy/copy-verify-and-create-script-file.yml
 - include_tasks: ../_shared/docker/docker-stack-rm-agent.yml
 - include_tasks: ../_shared/docker/compose-pull.yml
+- include_tasks: ../_shared/copy/copy-docker-log-backup-script.yml
