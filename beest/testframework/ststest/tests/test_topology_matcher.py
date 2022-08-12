@@ -1,5 +1,5 @@
 from unittest import TestCase
-from ststest import TopologyMatcher, TopologyMatch
+from ststest.ststest import TopologyMatcher, TopologyMatch
 from .fixtures import *
 
 

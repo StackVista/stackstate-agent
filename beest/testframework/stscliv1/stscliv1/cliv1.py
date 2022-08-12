@@ -21,6 +21,10 @@ class CLIv1:
 
         return json_data
 
+    def topology_topic(self, topic, limit=1000) -> TopologyResult:
+        json_data = self.topic_api(topic, limit)
+
+
     def telemetry(self, component_ids):
         if len(component_ids) == 0:
             return []

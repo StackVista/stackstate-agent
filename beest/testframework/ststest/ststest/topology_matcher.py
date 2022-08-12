@@ -1,30 +1,52 @@
 import hashlib
 import logging
+from typing import Optional
 
-from stscliv1 import TopologyResult, ComponentWrapper, RelationWrapper
+from stscliv1 import TopologyResult, ComponentWrapper, RelationWrapper, TopologyDeleteWrapper, \
+    TopologyStartSnapshotWrapper, TopologyStopSnapshotWrapper
 import pydot
 import urllib.parse
 import pyshorteners
 
-from .primitive_matchers import ComponentMatcher, RelationMatcher
+from .primitive_matchers import ComponentMatcher, RelationMatcher, DeleteMatcher, StartSnapshotMatcher, \
+    StopSnapshotMatcher
 from .invariant_search import ConsistentGraphMatcher
 
 
 class TopologyMatch:
-    def __init__(self, components: dict[str, ComponentWrapper], relations: dict[str, RelationWrapper]):
+    def __init__(self, components: dict[str, ComponentWrapper], relations: dict[str, RelationWrapper],
+                 deletes: dict[str, TopologyDeleteWrapper], start_snapshot: Optional[TopologyStartSnapshotWrapper],
+                 stop_snapshot: Optional[TopologyStopSnapshotWrapper]):
         self._components = components
         self._relations = relations
+        self._deletes = deletes
+        self._start_snapshot = start_snapshot
+        self._stop_snapshot = stop_snapshot
 
     def __repr__(self):
+        components = "\n\t".join([f"{key}: {comp}" for key, comp in self._components.items()])
+        relations = "\n\t".join([f"{source} > {target}: {comp}" for (source, target), comp in self._relations.items()])
+        deletes = "\n\t".join([f"{key}: {comp}" for key, comp in self._deletes.items()])
+        start_snapshot = "\n\t" + str(self._start_snapshot) + "\n\t" if self._start_snapshot else ''
+        stop_snapshot = "\n\t" + str(self._stop_snapshot) + "\n\t" if self._stop_snapshot else ''
+
         return "Match[\n\t" \
-               + "\n\t".join([f"{key}: {comp}" for key, comp in self._components.items()]) \
+               + start_snapshot \
+               + components \
                + "\n\t" \
-               + "\n\t".join([f"{source} > {target}: {comp}" for (source, target), comp in self._relations.items()]) \
+               + relations \
+               + "\n\t" \
+               + deletes \
+               + stop_snapshot \
                + "\n]"
 
     def __eq__(self, other):
         if isinstance(other, TopologyMatch):
-            return self._components == other._components and self._relations == other._relations
+            return self._components == other._components and \
+                   self._relations == other._relations and \
+                   self._deletes == other._deletes and \
+                   self._start_snapshot == other._start_snapshot and \
+                   self._stop_snapshot == other._stop_snapshot
         return False
 
     def component(self, key: str) -> ComponentWrapper:
@@ -36,6 +58,15 @@ class TopologyMatch:
     def has_relation(self, id: int) -> bool:
         return next((True for rel in self._relations.values() if rel.id == id), False)
 
+    def delete(self, key) -> TopologyDeleteWrapper:
+        return self._deletes.get(key)
+
+    def start_snapshot(self) -> Optional[TopologyStartSnapshotWrapper]:
+        return self._start_snapshot
+
+    def stop_snapshot(self) -> Optional[TopologyStopSnapshotWrapper]:
+        return self._stop_snapshot
+
 
 class TopologyMatchingResult:
     def __init__(self,
@@ -44,10 +75,16 @@ class TopologyMatchingResult:
                  source: TopologyResult,
                  component_matches: dict[str, list[ComponentWrapper]],
                  relation_matches: dict[str, list[RelationWrapper]],
+                 delete_matches: dict[str, list[TopologyDeleteWrapper]],
+                 start_snapshot_match: Optional[TopologyStartSnapshotWrapper],
+                 stop_snapshot_match: Optional[TopologyStopSnapshotWrapper]
                  ):
         self._topology_matches = matches
         self._relation_matches = relation_matches
         self._component_matches = component_matches
+        self._delete_matches = delete_matches
+        self._start_snapshot_match = start_snapshot_match
+        self._stop_snapshot_match = stop_snapshot_match
         self._matcher = matcher
         self._source = source
 
@@ -61,27 +98,49 @@ class TopologyMatchingResult:
         # TODO print attributes related to a matcher
         return f"#{rel.source}->[type={rel.type}]->{rel.target}"
 
+    def _assert_single_match(self, matches, matcher_dict) -> list[str]:
+        errors = []
+        delimiter = "\n\t\t"
+
+        for key, items in matches.items():
+            matcher = matcher_dict[key]
+            if len(items) == 0:
+                errors.append(f"\t{matcher.matcher_type()} {matcher} was not found")
+            elif len(items) > 1:
+                errors.append(f"\tmultiple matches for {matcher.matcher_type()} {matcher}:"
+                              f"{delimiter}{delimiter.join(map(self.component_pretty_short, items))}")
+
+        return errors
+
     def assert_exact_match(self, matching_graph_name=None, matching_graph_upload=True) -> TopologyMatch:
         if len(self._topology_matches) == 1:
             return self._topology_matches[0]
         errors = []
-        delimiter = "\n\t\t"
+
+        # component matchers
         comp_matchers = {matcher.id: matcher for matcher in self._matcher.components}
-        for key, components in self._component_matches.items():
-            matcher = comp_matchers[key]
-            if len(components) == 0:
-                errors.append(f"\tcomponent {matcher} was not found")
-            elif len(components) > 1:
-                errors.append(f"\tmultiple matches for component {matcher}:"
-                              f"{delimiter}{delimiter.join(map(self.component_pretty_short, components))}")
+        errors = errors + self._assert_single_match(self._component_matches, comp_matchers)
+
+        # relation matchers
         rel_matchers = {matcher.id(): matcher for matcher in self._matcher.relations}
-        for key, relations in self._relation_matches.items():
-            matcher = rel_matchers[key]
-            if len(relations) == 0:
-                errors.append(f"\trelation {matcher} was not found")
-            elif len(relations) > 1:
-                errors.append(f"\tmultiple matches for relation {matcher}:"
-                              f"{delimiter}{delimiter.join(map(self.relation_pretty_short, relations))}")
+        errors = errors + self._assert_single_match(self._relation_matches, rel_matchers)
+
+        # delete matchers
+        del_matchers = {matcher.id(): matcher for matcher in self._matcher.deletes}
+        errors = errors + self._assert_single_match(self._delete_matches, del_matchers)
+
+        # start snapshot match
+        if self._start_snapshot_match:
+            if not self._matcher._start_snapshot:
+                errors.append(f"\t{self._matcher._start_snapshot.matcher_type()} "
+                              f"{self._matcher._start_snapshot} was not found")
+
+        # stop snapshot match
+        if self._stop_snapshot_match:
+            if not self._matcher._stop_snapshot:
+                errors.append(f"\t{self._matcher._stop_snapshot.matcher_type()} "
+                              f"{self._matcher._stop_snapshot} was not found")
+
         self.render_debug_dot(matching_graph_name, matching_graph_upload)
         error_sep = "\n"
         assert False, f"desired topology was not matched:\n{error_sep.join(errors)}"
@@ -198,6 +257,9 @@ class TopologyMatcher:
     def __init__(self):
         self.components: list[ComponentMatcher] = []
         self.relations: list[RelationMatcher] = []
+        self.deletes: list[DeleteMatcher] = []
+        self.start_snapshot: Optional[StartSnapshotMatcher] = None
+        self.stop_snapshot: Optional[StopSnapshotMatcher] = None
 
     def component(self, id: str, **kwargs) -> 'TopologyMatcher':
         self.components.append(ComponentMatcher(id, kwargs))

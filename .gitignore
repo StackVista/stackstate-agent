@@ -178,3 +178,8 @@ deployment/kubernetes/k8s-*/
 
 # msgpack gen files
 *_gen*.go
+
+# beest related
+*.egg-info/
+.pytest_cache/
+*.gv

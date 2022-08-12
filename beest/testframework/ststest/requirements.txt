@@ -1,3 +1,3 @@
-stscliv1
+-e ../stscliv1
 pydot
 pyshorteners

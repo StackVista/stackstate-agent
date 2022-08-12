@@ -1,5 +1,5 @@
 from unittest import TestCase
-from .context import ConsistentGraphMatcher, no_conflict
+from ststest.ststest import ConsistentGraphMatcher, no_conflict
 
 
 class TestInvariantSearch(TestCase):
