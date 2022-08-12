@@ -17,7 +17,10 @@ class TestTopologyMatcher(TestCase):
         self.assertEqual(TopologyMatch(
             components={'A': input_topology.get('a'),
                         'B': input_topology.get('b')},
-            relations={'A_TO_B': input_topology.get('a>before>b')}
+            relations={'A_TO_B': input_topology.get('a>before>b')},
+            deletes={},
+            start_snapshot=None,
+            stop_snapshot=None
         ), match)
 
     def test_complex_positive(self):
@@ -36,7 +39,10 @@ class TestTopologyMatcher(TestCase):
                         'B': input_topology.get('b2'),
                         'C': input_topology.get('c1')},
             relations={'A_TO_B': input_topology.get('a1>to>b2'),
-                       'B_TO_C': input_topology.get('b2>to>c1')}
+                       'B_TO_C': input_topology.get('b2>to>c1')},
+            deletes={},
+            start_snapshot=None,
+            stop_snapshot=None
         ), match)
 
     def test_ambiguous_match_failure(self):

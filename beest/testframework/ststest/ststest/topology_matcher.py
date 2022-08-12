@@ -98,7 +98,7 @@ class TopologyMatchingResult:
         # TODO print attributes related to a matcher
         return f"#{rel.source}->[type={rel.type}]->{rel.target}"
 
-    def _assert_single_match(self, matches, matcher_dict) -> list[str]:
+    def _assert_single_match(self, matches, matcher_dict, printer) -> list[str]:
         errors = []
         delimiter = "\n\t\t"
 
@@ -108,7 +108,7 @@ class TopologyMatchingResult:
                 errors.append(f"\t{matcher.matcher_type()} {matcher} was not found")
             elif len(items) > 1:
                 errors.append(f"\tmultiple matches for {matcher.matcher_type()} {matcher}:"
-                              f"{delimiter}{delimiter.join(map(self.component_pretty_short, items))}")
+                              f"{delimiter}{delimiter.join(map(printer, items))}")
 
         return errors
 
@@ -119,27 +119,27 @@ class TopologyMatchingResult:
 
         # component matchers
         comp_matchers = {matcher.id: matcher for matcher in self._matcher.components}
-        errors = errors + self._assert_single_match(self._component_matches, comp_matchers)
+        errors = errors + self._assert_single_match(self._component_matches, comp_matchers, self.component_pretty_short)
 
         # relation matchers
         rel_matchers = {matcher.id(): matcher for matcher in self._matcher.relations}
-        errors = errors + self._assert_single_match(self._relation_matches, rel_matchers)
+        errors = errors + self._assert_single_match(self._relation_matches, rel_matchers, self.relation_pretty_short)
 
         # delete matchers
-        del_matchers = {matcher.id(): matcher for matcher in self._matcher.deletes}
-        errors = errors + self._assert_single_match(self._delete_matches, del_matchers)
+        del_matchers = {matcher.id: matcher for matcher in self._matcher.deletes}
+        errors = errors + self._assert_single_match(self._delete_matches, del_matchers, str)
 
         # start snapshot match
         if self._start_snapshot_match:
-            if not self._matcher._start_snapshot:
-                errors.append(f"\t{self._matcher._start_snapshot.matcher_type()} "
-                              f"{self._matcher._start_snapshot} was not found")
+            if not self._matcher.start_snapshot:
+                errors.append(f"\t{self._matcher.start_snapshot.matcher_type()} "
+                              f"{self._matcher.start_snapshot} was not found")
 
         # stop snapshot match
         if self._stop_snapshot_match:
-            if not self._matcher._stop_snapshot:
-                errors.append(f"\t{self._matcher._stop_snapshot.matcher_type()} "
-                              f"{self._matcher._stop_snapshot} was not found")
+            if not self._matcher.stop_snapshot:
+                errors.append(f"\t{self._matcher.stop_snapshot.matcher_type()} "
+                              f"{self._matcher.stop_snapshot} was not found")
 
         self.render_debug_dot(matching_graph_name, matching_graph_upload)
         error_sep = "\n"
@@ -330,7 +330,7 @@ class TopologyMatcher:
                     relations[key] = relation_by_id[id]
                 else:
                     components[key] = component_by_id[id]
-            return TopologyMatch(components, relations)
+            return TopologyMatch(components, relations, {}, None, None)
 
         result_graph_specs = consistent_graph_matcher.get_graphs()
         return TopologyMatchingResult(
@@ -339,4 +339,7 @@ class TopologyMatcher:
             topology,
             matching_components,
             matching_relations,
+            {},
+            None,
+            None
         )
