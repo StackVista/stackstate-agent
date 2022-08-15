@@ -62,6 +62,11 @@ services:
     environment:
       KAFKA_BROKERS: kafka:9092
       STACKSTATE_RECEIVER_HTTP_LOG_LEVEL: DEBUG
+    volumes:
+      - type: bind
+        source: ./logback.groovy
+        target: /opt/docker/etc_log/logback.groovy
+        read_only: true
     deploy:
       restart_policy:
         condition: any

@@ -5,6 +5,12 @@
     dest: /home/ubuntu/
     mode: preserve
 
+- name: Copy docker compose file
+  copy:
+    src: ../../../_shared/files/logback.groovy
+    dest: /home/ubuntu/
+    mode: preserve
+
 - name: Copy docker compose base file
   copy:
     src: ../../../_shared/files/docker-compose.base.yml
