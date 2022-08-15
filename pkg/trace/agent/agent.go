@@ -252,8 +252,7 @@ func (a *Agent) Process(p *api.Payload) {
 		}
 		a.Replacer.Replace(chunk.Spans)
 
-		// TODO [sts]: fix me!
-		t = a.SpanInterpreterEngine.Interpret(t) // sts
+		chunk.Spans = a.SpanInterpreterEngine.Interpret(chunk.Spans) // sts
 
 		{
 			// this section sets up any necessary tags on the root:
