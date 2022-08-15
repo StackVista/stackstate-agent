@@ -52,10 +52,7 @@ services:
     environment:
       KAFKA_BROKERS: kafka:9092
     volumes:
-      - type: bind
-        source: ./logback.groovy
-        target: /opt/docker/etc_log/logback.groovy
-        read_only: true
+      - ./logback.groovy:/opt/docker/etc_log/logback.groovy
     restart: always
     mem_limit: 1G
 
