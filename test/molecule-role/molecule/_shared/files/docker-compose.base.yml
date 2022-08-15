@@ -48,10 +48,7 @@ services:
       # STACKSTATE_RECEIVER_HTTP_LOG_LEVEL: DEBUG
       # STACKSTATE_CORRELATE_LOG_LEVEL: DEBUG
     volumes:
-      - type: bind
-        source: ./logback.groovy
-        target: /opt/docker/etc_log/logback.groovy
-        read_only: true
+      - ./logback.groovy:/opt/docker/etc_log/logback.groovy
     restart: always
     mem_limit: 1G
 
