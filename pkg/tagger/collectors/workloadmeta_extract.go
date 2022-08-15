@@ -6,9 +6,11 @@
 package collectors
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	"strings"
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
@@ -243,6 +245,13 @@ func (c *WorkloadMetaCollector) handleKubePod(ev workloadmeta.Event) []*TagInfo 
 	tags.AddLow(kubernetes.NamespaceTagName, pod.Namespace)
 	tags.AddLow("pod_phase", strings.ToLower(pod.Phase))
 	tags.AddLow("kube_priority_class", pod.PriorityClass)
+
+	// sts begin
+	clusterName := clustername.GetClusterName(context.TODO(), "")
+	if clusterName != "" {
+		tags.AddLow("kube_cluster_name", clusterName)
+	}
+	// sts end
 
 	c.extractTagsFromPodLabels(pod, tags)
 
