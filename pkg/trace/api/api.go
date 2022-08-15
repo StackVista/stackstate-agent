@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"expvar"
 	"fmt"
-	openTelemetryTrace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/collector"
 	"io"
 	"io/ioutil"
 	stdlog "log"
@@ -29,6 +28,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/gogo/protobuf/proto" // sts
 	"github.com/tinylib/msgp/msgp"
 
 	"github.com/StackVista/stackstate-agent/pkg/appsec"
@@ -45,6 +45,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/metrics/timing"
 	"github.com/StackVista/stackstate-agent/pkg/trace/osutil"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	openTelemetryTrace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/collector" // sts
 	"github.com/StackVista/stackstate-agent/pkg/trace/sampler"
 	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -324,7 +325,7 @@ func (r *HTTPReceiver) handleProtobuf(f func(http.ResponseWriter, *http.Request)
 			return
 		}
 
-		req.Body = NewLimitedReader(req.Body, r.conf.MaxRequestBytes)
+		req.Body = apiutil.NewLimitedReader(req.Body, r.conf.MaxRequestBytes)
 
 		f(w, req)
 	}
@@ -699,11 +700,11 @@ func droppedTracesFromHeader(h http.Header, ts *info.TagStats) int64 {
 // [sts]
 // Open telemetry support - Uses protobuf
 func (r *HTTPReceiver) handleOpenTelemetry(w http.ResponseWriter, req *http.Request) {
-	ts := r.tagStats(v05, req)
+	ts := r.tagStats(v05, req.Header)
 
 	openTelemetryTraces, err := r.decodeOpenTelemetry(req)
 	if err != nil {
-		if err == ErrLimitedReaderLimitReached {
+		if err == apiutil.ErrLimitedReaderLimitReached {
 			atomic.AddInt64(&ts.TracesDropped.PayloadTooLarge, 1)
 		} else {
 			atomic.AddInt64(&ts.TracesDropped.DecodingError, 1)
@@ -729,13 +730,23 @@ func (r *HTTPReceiver) handleOpenTelemetry(w http.ResponseWriter, req *http.Requ
 	httpOK(w)
 
 	atomic.AddInt64(&ts.TracesReceived, int64(len(traces)))
-	atomic.AddInt64(&ts.TracesBytes, req.Body.(*LimitedReader).Count)
+	atomic.AddInt64(&ts.TracesBytes, req.Body.(*apiutil.LimitedReader).Count)
 	atomic.AddInt64(&ts.PayloadAccepted, 1)
 
+	tracerPayload := pb.TracerPayload{
+		LanguageName:    ts.Lang,
+		LanguageVersion: ts.LangVersion,
+		ContainerID:     req.Header.Get(headerContainerID),
+		Chunks:          traceChunksFromTraces(traces),
+		TracerVersion:   ts.TracerVersion,
+	}
+
 	payload := &Payload{
-		Source:        ts,
-		Traces:        traces,
-		ContainerTags: getContainerTags(req.Header.Get(headerContainerID)),
+		Source:                 ts,
+		TracerPayload:          &tracerPayload,
+		ClientComputedTopLevel: req.Header.Get(headerComputedTopLevel) != "",
+		ClientComputedStats:    req.Header.Get(headerComputedStats) != "",
+		ClientDroppedP0s:       droppedTracesFromHeader(req.Header, ts),
 	}
 	select {
 	case r.out <- payload:
