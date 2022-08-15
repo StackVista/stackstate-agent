@@ -145,7 +145,6 @@ def test_cluster_agent_base_topology(host, ansible_var):
             external_id_assert_fn=lambda eid: eid.startswith(
                 "urn:kubernetes:/%s:namespace/%s" % (cluster_name, namespace)),
         )
-        #
         # TODO make sure we identify the 2 different ec2 instances using i-*
         # 2 nodes
         assert _component_data(
@@ -475,50 +474,6 @@ def test_cluster_agent_base_topology(host, ansible_var):
                 "cluster-name:%s" % cluster_name
             ] if assertTag in tags])
         )
-
-
-
-
-        expected_agent_topology = \
-            TopologyMatcher() \
-                .component("namespace", type="namespace", name=namespace) \
-                .component("node1", type="node") \
-                .component("node2", type="node") \
-                .component("cluster-agent", type="pod", name=r"stackstate-cluster-agent-.*") \
-                .component("cluster-agent-rs", type="replicaset", name=r"stackstate-cluster-agent-.*") \
-                .component("cluster-agent-container", type="container", name=r"stackstate-cluster-agent") \
-                .component("cluster-agent-deployment", type="deployment", name=r"stackstate-cluster-agent") \
-                .component("checks-agent", type="pod", name=r"stackstate-checks-agent-.*") \
-                .component("checks-agent-rs", type="replicaset", name=r"stackstate-checks-agent-.*") \
-                .component("checks-agent-container", type="container", name=r"stackstate-checks-agent") \
-                .component("checks-agent-deployment", type="deployment", name=r"stackstate-checks-agent") \
-                .component("node-agent1", type="pod", name=r"stackstate-cluster-agent-agent-.*") \
-                .component("node-agent2", type="pod", name=r"stackstate-cluster-agent-agent-.*") \
-                .component("node-agent-service", type="service", name=r"stackstate-cluster-agent-agent") \
-                .component("node-agent-ds", type="daemonset", name=r"stackstate-cluster-agent-agent") \
-                .one_way_direction("cluster-agent", "node1", type="scheduled_on") \
-                .one_way_direction("cluster-agent-rs", "cluster-agent", type="controls") \
-                .one_way_direction("node-agent1", "node1", type="scheduled_on") \
-                .one_way_direction("node-agent2", "node2", type="scheduled_on") \
-                .one_way_direction("node-agent-service", "node-agent1", type="exposes") \
-                .one_way_direction("node-agent-service", "node-agent2", type="exposes") \
-                .one_way_direction("node-agent-ds", "node-agent1", type="controls") \
-                .one_way_direction("node-agent-ds", "node-agent2", type="controls") \
-
-
-        current_agent_topology = cliv1.topology("label IN ('namespace:monitoring')")
-        possible_matches = expected_agent_topology.find(current_agent_topology)
-        match_result = possible_matches.assert_exact_match()
-        assert match_result.component("cluster-agent-container").attributes["tags"] is [
-            "pod-name:%s" % stackstate_cluster_agent_container_pod,
-            "namespace:%s" % namespace,
-            "cluster-name:%s" % cluster_name
-        ]
-
-        current_workload_topology = cliv1.topology(f"label IN ('namespace:{namespace}')")
-
-
-
         stackstate_cluster_agent_process_match = re.compile("urn:process:/%s.*" %
                                                             stackstate_cluster_agent_container["host"])
         assert _container_process_component(

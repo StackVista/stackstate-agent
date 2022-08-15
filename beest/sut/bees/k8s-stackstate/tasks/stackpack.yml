@@ -21,10 +21,10 @@
       - stackpacklist.find('kubernetes') == -1
 
   - name: Install AWS-V2 StackPack
-    command: sts-cli stackpack install aws-v2 -p aws_external_id "{{ yard_id }}" -p aws_role_arn "{{ integration_iam_role }}" -p aws_access_key_id "{{ integration_access_key }}" -p aws_secret_access_key "{{ integration_secret_key }}"
+    command: sts-cli stackpack install aws-v2 -p aws_external_id "{{ yard_id }}" -p aws_role_arn "{{ aws_integration.integration_iam_role }}" -p aws_access_key_id "{{ aws_integration.integration_access_key }}" -p aws_secret_access_key "{{ aws_integration.integration_secret_key }}"
     when:
+      - aws_integration is defined
       - stackpacklist.find('aws-v2') == -1
-      - integration_iam_role is defined
 
 
 ## Cleanup
@@ -32,17 +32,17 @@
 - name: StackPack cleanup tasks
   tags: cleanup
   ignore_errors: yes
-  when: integration_iam_role is defined
+  when: aws_integration is defined
   block:
   - name: Retrieve StsEventBridgeRule resource id
-    command: aws cloudformation describe-stack-resource --stack-name {{ cf_stack_name }} --logical-resource-id StsEventBridgeRule --query "StackResourceDetail.PhysicalResourceId" --output=text
+    command: aws cloudformation describe-stack-resource --stack-name {{ aws_integration.cf_stack_name }} --logical-resource-id StsEventBridgeRule --query "StackResourceDetail.PhysicalResourceId" --output=text
     register: sts_event_rule
 
   - name: Disable StsEventBridgeRule
     command: aws events disable-rule --name {{ sts_event_rule.stdout }}
 
   - name: Retrieve StsLogsBucket resource id
-    command: aws cloudformation describe-stack-resource --stack-name {{ cf_stack_name }} --logical-resource-id StsLogsBucket --query "StackResourceDetail.PhysicalResourceId" --output=text
+    command: aws cloudformation describe-stack-resource --stack-name {{ aws_integration.cf_stack_name }} --logical-resource-id StsLogsBucket --query "StackResourceDetail.PhysicalResourceId" --output=text
     register: sts_logs_bucket
 
   - name: Wait a bit for all objects to be saved to the bucket

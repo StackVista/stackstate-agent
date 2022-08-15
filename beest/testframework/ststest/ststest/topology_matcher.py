@@ -125,7 +125,7 @@ class TopologyMatchingResult:
         # graph_name should cluster_{i}, otherwise the renderer does not recognize styles
         query_graph = pydot.Subgraph(graph_name="cluster_1", label="Query result", **self.QueryResultSubgraphStyle)
         for mcomp in self._source.components:
-            label = f"{mcomp.name}"
+            label = f"{mcomp.name}\ntype={mcomp.type}"
             color = 'black'
             if exact_match is not None and exact_match.has_component(mcomp.id):
                 color = 'darkgreen'
