@@ -103,6 +103,7 @@ type MetricSerializer interface {
 }
 
 // [sts] begin
+
 // AgentV1Serializer is a serializer for just agent v1 data
 type AgentV1Serializer interface {
 	SendJSONToV1Intake(data interface{}) error

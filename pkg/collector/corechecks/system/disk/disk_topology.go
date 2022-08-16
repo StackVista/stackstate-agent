@@ -17,13 +17,13 @@ import (
 const diskCheckID = "disk_topology"
 
 // DiskTopologyCollector contains all the metadata needed to produce disk topology
-type DiskTopologyCollector struct {
+type TopologyCollector struct {
 	corechecks.CheckTopologyCollector
 }
 
 // MakeTopologyCollector returns an instance of the DiskTopologyCollector
-func MakeTopologyCollector() *DiskTopologyCollector {
-	return &DiskTopologyCollector{
+func MakeTopologyCollector() *TopologyCollector {
+	return &TopologyCollector{
 		corechecks.MakeCheckTopologyCollector(diskCheckID, topology.Instance{
 			Type: "disk",
 			URL:  "agents",
@@ -32,7 +32,7 @@ func MakeTopologyCollector() *DiskTopologyCollector {
 }
 
 // BuildTopology creates / collects and produces disk topology
-func (dtc *DiskTopologyCollector) BuildTopology(partitions []disk.PartitionStat) error {
+func (dtc *TopologyCollector) BuildTopology(partitions []disk.PartitionStat) error {
 	sender := batcher.GetBatcher()
 
 	// try to get the agent hostname to use in the host component
@@ -52,7 +52,7 @@ func (dtc *DiskTopologyCollector) BuildTopology(partitions []disk.PartitionStat)
 }
 
 // createDiskComponent creates a topology.Component given a hostname and disk partitions
-func (dtc *DiskTopologyCollector) createDiskComponent(hostname string, identifiers []string, partitions []disk.PartitionStat) topology.Component {
+func (dtc *TopologyCollector) createDiskComponent(hostname string, identifiers []string, partitions []disk.PartitionStat) topology.Component {
 	deviceMap := make(map[string]bool, 0)
 	hostDevices := make([]string, 0)
 	for _, part := range partitions {

@@ -32,7 +32,7 @@ type Check struct {
 	cfg *diskConfig
 	// sts
 	// topologyCollector collects all disk topology and produces it using the Batcher
-	topologyCollector *DiskTopologyCollector
+	topologyCollector *TopologyCollector
 }
 
 // Run executes the check
