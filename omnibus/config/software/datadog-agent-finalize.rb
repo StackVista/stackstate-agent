@@ -152,8 +152,8 @@ build do
             if $enable_security_agent
                 move "#{install_dir}/etc/stackstate-agent/runtime-security.d", "/etc/stackstate-agent", :force=>true
                 move "#{install_dir}/etc/stackstate-agent/security-agent.yaml.example", "/etc/stackstate-agent", :force=>true
+                move "#{install_dir}/etc/stackstate-agent/compliance.d", "/etc/stackstate-agent"
             end
-            move "#{install_dir}/etc/stackstate-agent/compliance.d", "/etc/stackstate-agent"
 
             # Move SELinux policy
             if debian? || redhat?
