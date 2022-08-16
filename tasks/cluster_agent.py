@@ -12,12 +12,17 @@ from invoke.exceptions import Exit
 from .build_tags import get_build_tags, get_default_build_tags
 from .cluster_agent_helpers import build_common, clean_common, refresh_assets_common, version_common
 from .go import deps
-from .utils import load_release_versions
+from .utils import (
+    load_release_versions,
+    do_go_rename,  # sts
+    do_sed_rename,  # sts
+)
 
 # constants
 BIN_PATH = os.path.join(".", "bin", "stackstate-cluster-agent")
 AGENT_TAG = "stackstate/cluster_agent:master"
 POLICIES_REPO = "https://github.com/DataDog/security-agent-policies.git"
+
 
 @task
 def apply_branding(ctx):
@@ -41,7 +46,8 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"/opt/datadog-agent/run\\" -> \\"/opt/stackstate-agent/run\\""', "./pkg/config")
 
     # [sts] turn of the metadata collection, the receiver does not recognize these payloads
-    do_sed_rename(ctx, 's/"enable_metadata_collection"\\, true/"enable_metadata_collection"\\, false/g', "./pkg/config/config.go")
+    do_sed_rename(ctx, 's/"enable_metadata_collection"\\, true/"enable_metadata_collection"\\, false/g',
+                  "./pkg/config/config.go")
     do_sed_rename(ctx, 's/"enable_gohai"\\, true/"enable_gohai"\\, false/g', "./pkg/config/config.go")
     do_sed_rename(ctx, 's/"inventories_enabled"\\, true/"inventories_enabled"\\, false/g', "./pkg/config/config.go")
 
@@ -75,6 +81,7 @@ def apply_branding(ctx):
 
     # Hardcoded checks and metrics
     do_sed_rename(ctx, sts_lower_replace, "./pkg/aggregator/aggregator.go")
+
 
 @task
 def build(
