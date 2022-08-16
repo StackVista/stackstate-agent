@@ -2,11 +2,13 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package kubeapi
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"testing"
@@ -104,6 +106,7 @@ func TestProcessBundledEvents(t *testing.T) {
 		ev3,
 		ev4,
 	}
+	clusterName := clustername.GetClusterName(context.TODO(), "")
 	modifiedNewDatadogEvents := metrics.Event{
 		Title:    "Events from the machine-blue Node",
 		Text:     "%%% \n30 **MissingClusterDNS**: MountVolume.SetUp succeeded\n \n _Events emitted by the kubelet seen at " + time.Unix(709675200, 0).String() + "_ \n\n %%%",
@@ -118,7 +121,7 @@ func TestProcessBundledEvents(t *testing.T) {
 			Source:   "kubernetes",
 			Category: "Alerts",
 			ElementIdentifiers: []string{
-				fmt.Sprintf("urn:kubernetes:/%s:node/localhost", clustername.GetClusterName()),
+				fmt.Sprintf("urn:kubernetes:/%s:node/localhost", clusterName),
 			},
 			Data: map[string]interface{}{},
 		},
@@ -154,7 +157,7 @@ func TestProcessBundledEvents(t *testing.T) {
 			Source:   "kubernetes",
 			Category: "Alerts",
 			ElementIdentifiers: []string{
-				fmt.Sprintf("urn:kubernetes:/%s:node/localhost", clustername.GetClusterName()),
+				fmt.Sprintf("urn:kubernetes:/%s:node/localhost", clusterName),
 			},
 			Data: map[string]interface{}{},
 		},
@@ -210,7 +213,7 @@ func TestProcessEvent(t *testing.T) {
 			Source:   "kubernetes",
 			Category: "Activities",
 			ElementIdentifiers: []string{
-				fmt.Sprintf("urn:kubernetes:/%s:default:replicaset/dca-789976f5d7-2ljx6", clustername.GetClusterName()),
+				fmt.Sprintf("urn:kubernetes:/%s:default:replicaset/dca-789976f5d7-2ljx6", clustername.GetClusterName(context.TODO(), "")),
 			},
 			Data: map[string]interface{}{},
 		},

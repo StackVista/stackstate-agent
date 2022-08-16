@@ -261,7 +261,7 @@ func TestReportContainerRestart(t *testing.T) {
 		ContainerName: "book-app",
 	})
 	mockSender.On("ServiceCheck", "docker.restart", metrics.ServiceCheckWarning, "",
-		mock.AnythingOfType("[]string"), "Container book-app restarted")
+		[]string{"event_name:docker.restart"}, "Container book-app restarted")
 
 	err = reportContainerRestart(events, mockSender)
 	assert.Nil(t, err)
