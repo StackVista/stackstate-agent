@@ -1,6 +1,22 @@
+import random
+from itertools import permutations
+from typing import Callable, TypeVar
 from unittest import TestCase
 from ststest import TopologyMatcher, TopologyMatch
 from .fixtures import *
+
+T = TypeVar('T')
+
+
+def assert_permuted(elements: list[any], code: Callable[[any], any]):
+    last_error = None
+    for input in permutations(elements):
+        try:
+            code(*input)
+            return
+        except AssertionError as e:
+            last_error = e
+    raise last_error
 
 
 class TestTopologyMatcher(TestCase):
@@ -17,8 +33,42 @@ class TestTopologyMatcher(TestCase):
         self.assertEqual(TopologyMatch(
             components={'A': input_topology.get('a'),
                         'B': input_topology.get('b')},
-            relations={'A_TO_B': input_topology.get('a>before>b')}
+            relations={('A', 'B'): input_topology.get('a>before>b')}
         ), match)
+
+    def test_repeated(self):
+        node1 = f"node-{random.randint(100, 200)}"
+        node2 = f"node-{random.randint(100, 200)}"
+        input_topology = TopologyFixture(f"cluster,{node1},{node2},{node1}>belongs>cluster,{node2}>belongs>cluster")
+        matcher = TopologyMatcher() \
+            .component("C", name=r"cluster") \
+            .repeated(2,
+                      lambda m: m
+                      .component("N", name=r"node-\d+")
+                      .one_way_direction("N", "C", type="belongs")
+                      )
+
+        result = matcher.find(input_topology.topology())
+        match = result.assert_exact_match(matching_graph_name=self._testMethodName, matching_graph_upload=False)
+
+        def assert_option(node1, node2):
+            self.assertEqual(TopologyMatch(
+                components={'C': input_topology.get('cluster'),
+                            'N.0': input_topology.get(node1),
+                            'N.1': input_topology.get(node2)},
+                relations={('N.0', 'C'): input_topology.get(f'{node1}>belongs>cluster'),
+                           ('N.1', 'C'): input_topology.get(f'{node2}>belongs>cluster')
+                           }
+            ), match)
+            self.assertEqual(input_topology.get('cluster'), match.component('C'))
+            assert_permuted([node1, node2],
+                            lambda node1, node2:
+                            self.assertEqual(
+                                [input_topology.get(node1), input_topology.get(node2)],
+                                match.components('N'))
+                            )
+
+        assert_permuted([node1, node2], assert_option)
 
     def test_complex_positive(self):
         input_topology = TopologyFixture("a1,a2,b1,b2,c1,c2,a1>to>b1,a1>to>b2,a2>to>b1,b1>to>a2,b2>to>c1")
@@ -35,8 +85,8 @@ class TestTopologyMatcher(TestCase):
             components={'A': input_topology.get('a1'),
                         'B': input_topology.get('b2'),
                         'C': input_topology.get('c1')},
-            relations={'A_TO_B': input_topology.get('a1>to>b2'),
-                       'B_TO_C': input_topology.get('b2>to>c1')}
+            relations={('A', 'B'): input_topology.get('a1>to>b2'),
+                       ('B', 'C'): input_topology.get('b2>to>c1')}
         ), match)
 
     def test_ambiguous_match_failure(self):
@@ -54,7 +104,7 @@ class TestTopologyMatcher(TestCase):
 
         exception_message = str(exc.exception)
         self.assertEqual(exception_message,
-"""
+                         """
 desired topology was not matched:
 	multiple matches for component A[name~=a.]:
 		#1#[a1](type=component,identifiers=)
@@ -87,7 +137,7 @@ desired topology was not matched:
         exception_message = str(exc.exception)
 
         self.assertEqual(exception_message,
-"""
+                         """
 desired topology was not matched:
 	relation A->B[type~=before,dependencyDirection~=ONE_WAY] was not found
  """.strip())

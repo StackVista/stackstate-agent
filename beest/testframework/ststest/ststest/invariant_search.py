@@ -1,4 +1,3 @@
-
 def no_conflict(d1: dict, d2: dict):
     if len(d2) < len(d1):
         return no_conflict(d2, d1)
@@ -6,6 +5,10 @@ def no_conflict(d1: dict, d2: dict):
         if d2.get(k, v1) != v1:
             return False
     return True
+
+
+def no_double_match(d: dict):
+    return len(d) == len(set(d.values()))
 
 
 class ConsistentGraphMatcher:
@@ -47,14 +50,18 @@ class ConsistentGraphMatcher:
         if len(self.specifications) == 0:
             return []
 
-        specifications = self.specifications.copy()
-        valid_specs = specifications.pop()
-        for specset in specifications:
+        specsets = self.specifications.copy()
+        if len(specsets) == 0:
+            return []
+
+        valid_specs = specsets.pop()
+        for specset in specsets:
             valid_specs = [
-                vspec | spec
+                combined
                 for vspec in valid_specs
                 for spec in specset
                 if no_conflict(vspec, spec)
+                   and no_double_match((combined := vspec | spec))
             ]
 
         return valid_specs

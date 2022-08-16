@@ -13,7 +13,8 @@ def test_agent_base_topology(ansible_var, cliv1):
 
     # TODO:
     # match on component labels
-    # fix node-agent pods ambiguity
+
+    NODE_COUNT = 2
 
     expected_agent_topology = \
         TopologyMatcher() \
@@ -28,10 +29,12 @@ def test_agent_base_topology(ansible_var, cliv1):
             .one_way_direction("checks-agent-deployment", "checks-agent-rs", type="controls") \
             .one_way_direction("checks-agent-rs", "checks-agent", type="controls") \
             .component("node-agent-daemonset", type="daemonset", name=node_agent) \
-            .component("node-agent1", type="pod", name=fr"{node_agent}-.*") \
-            .component("node-agent2", type="pod", name=fr"{node_agent}-.*") \
-            .one_way_direction("node-agent-daemonset", "node-agent1", type="controls") \
-            .one_way_direction("node-agent-daemonset", "node-agent2", type="controls") \
+            .repeated(
+                NODE_COUNT,
+                lambda matcher: matcher
+                .component("node-agent", type="pod", name=fr"{node_agent}-.*")
+                .one_way_direction("node-agent-daemonset", "node-agent", type="controls")
+            )
             # .component("namespace", type="namespace", name=namespace) \
             # .component("node1", type="node") \
             # .component("node2", type="node") \

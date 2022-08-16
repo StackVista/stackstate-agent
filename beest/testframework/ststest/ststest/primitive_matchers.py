@@ -42,7 +42,7 @@ class RelationMatcher:
             self.matchers.append(StringPropertyMatcher(k, v))
 
     def id(self):
-        return f"{self.source}_TO_{self.target}"
+        return (self.source, self.target)
 
     def __str__(self):
         return f"{self.source}->{self.target}[{','.join([str(m) for m in self.matchers])}]"
