@@ -1219,6 +1219,7 @@ molecule_swarm_test:
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
     - molecule_swarm_create
+  allow_failure: true
 
 molecule_swarm_failure_cleanup:
   variables:
