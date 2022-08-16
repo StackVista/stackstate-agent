@@ -159,6 +159,7 @@ version.txt
 /test/molecule-role/molecule/*/topic-*.json
 /test/molecule-role/molecule/*/persistent-cache-*.json
 .cache
+/test/molecule-role/molecule/*/playbook/run/logs/
 
 # ignore manual test files
 test/manual/*
