@@ -16,7 +16,7 @@ import (
 
 const diskCheckID = "disk_topology"
 
-// DiskTopologyCollector contains all the metadata needed to produce disk topology
+// TopologyCollector contains all the metadata needed to produce disk topology
 type TopologyCollector struct {
 	corechecks.CheckTopologyCollector
 }
