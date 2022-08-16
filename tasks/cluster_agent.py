@@ -24,6 +24,7 @@ AGENT_TAG = "stackstate/cluster_agent:master"
 POLICIES_REPO = "https://github.com/DataDog/security-agent-policies.git"
 
 
+# sts begin
 @task
 def apply_branding(ctx):
     """
@@ -83,6 +84,8 @@ def apply_branding(ctx):
     do_sed_rename(ctx, sts_lower_replace, "./pkg/aggregator/aggregator.go")
 
 
+# sts end
+
 @task
 def build(
     ctx,
@@ -115,19 +118,21 @@ def build(
         skip_assets,
     )
 
-    if policies_version is None:
-        print("Loading release versions for {}".format(release_version))
-        env = load_release_versions(ctx, release_version)
-        if "SECURITY_AGENT_POLICIES_VERSION" in env:
-            policies_version = env["SECURITY_AGENT_POLICIES_VERSION"]
-            print("Security Agent polices for {}: {}".format(release_version, policies_version))
+    # sts - ignore security policies (we don't use the security agent)
 
-    build_context = "Dockerfiles/cluster-agent"
-    policies_path = "{}/security-agent-policies".format(build_context)
-    ctx.run("rm -rf {}".format(policies_path))
-    ctx.run("git clone {} {}".format(POLICIES_REPO, policies_path))
-    if policies_version != "master":
-        ctx.run("cd {} && git checkout {}".format(policies_path, policies_version))
+    # if policies_version is None:
+    #     print("Loading release versions for {}".format(release_version))
+    #     env = load_release_versions(ctx, release_version)
+    #     if "SECURITY_AGENT_POLICIES_VERSION" in env:
+    #         policies_version = env["SECURITY_AGENT_POLICIES_VERSION"]
+    #         print("Security Agent polices for {}: {}".format(release_version, policies_version))
+    #
+    # build_context = "Dockerfiles/cluster-agent"
+    # policies_path = "{}/security-agent-policies".format(build_context)
+    # ctx.run("rm -rf {}".format(policies_path))
+    # ctx.run("git clone {} {}".format(POLICIES_REPO, policies_path))
+    # if policies_version != "master":
+    #     ctx.run("cd {} && git checkout {}".format(policies_path, policies_version))
 
 
 @task
