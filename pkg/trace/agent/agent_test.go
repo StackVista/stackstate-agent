@@ -241,35 +241,6 @@ func TestProcess(t *testing.T) {
 				Source:        want,
 			})
 		}
-		assert.Equal(t, "unnamed_operation", span.Name)
-		assert.Equal(t, "something_that_should_be_a_metric", span.Service)
-	})
-
-	t.Run("chunking", func(t *testing.T) {
-		cfg := config.New()
-		cfg.Endpoints[0].APIKey = "test"
-		ctx, cancel := context.WithCancel(context.Background())
-		agnt := NewAgent(ctx, cfg)
-		defer cancel()
-
-		payloadN := 2
-		trace := pb.Trace{{
-			TraceID:  1,
-			SpanID:   1,
-			Resource: "SELECT name FROM people WHERE age = 42 AND extra = 55",
-			Type:     "sql",
-			Start:    time.Now().Add(-time.Second).UnixNano(),
-			Duration: (500 * time.Millisecond).Nanoseconds(),
-			Metrics:  map[string]float64{sampler.KeySamplingPriority: 2},
-		}}
-		var traces pb.Traces
-		for size := 0; size < writer.MaxPayloadSize*payloadN; size += trace.Msgsize() {
-			traces = append(traces, trace)
-		}
-		go agnt.Process(&api.Payload{
-			Traces: traces,
-			Source: agnt.Receiver.Stats.GetTagStats(info.Tags{}),
-		}, stats.NewSublayerCalculator())
 
 		samplingPriorityTagValues := want.TracesPerSamplingPriority.TagValues()
 		assert.EqualValues(t, 1, want.TracesPriorityNone)
