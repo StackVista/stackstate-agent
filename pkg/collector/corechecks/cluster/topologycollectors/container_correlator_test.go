@@ -156,7 +156,7 @@ func populateData(nodeIdentifierCorrelationChannel chan *NodeIdentifierCorrelati
 }
 
 func CreateContainerCorrelation(id int, isRunning bool, hasPort bool) *ContainerCorrelation {
-	var running *v1.ContainerStateRunning = nil
+	var running *v1.ContainerStateRunning
 	if isRunning {
 		running = &v1.ContainerStateRunning{
 			StartedAt: startedAtTime,

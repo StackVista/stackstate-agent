@@ -219,9 +219,9 @@ func getKubeletClient(ctx context.Context) (*kubeletClient, error) {
 
 		// sts begin
 		if clientConfig.tlsVerify && config.Datadog.GetBool("kubelet_fallback_to_unverified_tls") {
-			unverifiedTlsClientConfig := clientConfig
-			unverifiedTlsClientConfig.tlsVerify = false
-			httpsErr = checkKubeletConnection(ctx, "https", kubeletHTTPSPort, kubeletPathPrefix, potentialHosts, &unverifiedTlsClientConfig)
+			unverifiedTLSClientConfig := clientConfig
+			unverifiedTLSClientConfig.tlsVerify = false
+			httpsErr = checkKubeletConnection(ctx, "https", kubeletHTTPSPort, kubeletPathPrefix, potentialHosts, &unverifiedTLSClientConfig)
 			if httpsErr != nil {
 				log.Debug("Impossible to reach Kubelet through HTTPS without TLS certificate verification")
 				if kubeletHTTPPort <= 0 {
