@@ -10,9 +10,12 @@ package kubernetes
 
 import (
 	"context"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"os"
+	"testing"
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
@@ -102,6 +105,7 @@ TestSecureUnknownAuthHTTPSKubelet with:
 func (suite *SecureTestSuite) TestTLSWithoutCAFallbackToUnverified() {
 	mockConfig := config.Mock()
 
+	ctx := context.TODO()
 	mockConfig.Set("kubernetes_https_kubelet_port", 10250)
 	mockConfig.Set("kubernetes_http_kubelet_port", 10255)
 	mockConfig.Set("kubelet_auth_token_path", "")
@@ -112,18 +116,18 @@ func (suite *SecureTestSuite) TestTLSWithoutCAFallbackToUnverified() {
 
 	ku, err := kubelet.GetKubeUtil()
 	require.NoError(suite.T(), err)
-	assert.Equal(suite.T(), "https://127.0.0.1:10250", ku.GetKubeletApiEndpoint())
-	b, code, err := ku.QueryKubelet("/healthz")
+	assert.Equal(suite.T(), "https://127.0.0.1:10250", ku.GetKubeletAPIEndpoint())
+	b, code, err := ku.QueryKubelet(ctx, "/healthz")
 	require.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 200, code)
 	assert.Equal(suite.T(), "ok", string(b))
 
-	b, code, err = ku.QueryKubelet("/pods")
+	b, code, err = ku.QueryKubelet(ctx, "/pods")
 	require.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 200, code)
 	assert.Equal(suite.T(), emptyPodList, string(b))
 
-	podList, err := ku.GetLocalPodList()
+	podList, err := ku.GetLocalPodList(ctx)
 	require.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 0, len(podList))
 
