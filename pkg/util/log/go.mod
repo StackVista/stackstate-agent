@@ -5,6 +5,7 @@ go 1.16
 replace github.com/StackVista/stackstate-agent/pkg/util/scrubber => ../scrubber
 
 require (
+	github.com/StackVista/stackstate-agent/pkg/util/scrubber v0.0.0-20220817145424-3be3d1923f93 // indirect
 	github.com/cihub/seelog v0.0.0-20170130134532-f561c5e57575
 	github.com/kr/text v0.2.0 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
