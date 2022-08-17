@@ -91,7 +91,7 @@ COPY s6-services /etc/services.d/
 # STS: We do not use the dd network agent embedded in the main agent (we use our tcptracer-bpf which is embedded in the process-agent)
 RUN rm -rf /etc/services.d/network
 
-COPY entrypoint /etc/cont-init.d/
+COPY cont-init.d /etc/cont-init.d/
 COPY probe.sh initlog.sh secrets-helper/readsecret.py /
 
 # Extract s6-overlay
