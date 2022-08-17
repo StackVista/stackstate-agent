@@ -563,7 +563,7 @@ func testConfigure(t *testing.T) {
 
 	C.get_check_return = 1
 	C.get_check_check = newMockPyObjectPtr()
-	err := c.Configure(integration.Data("\"val\": 21"), integration.Data("\"val\": 21"), "test")
+	err = c.Configure(integration.Data("\"val\": 21"), integration.Data("\"val\": 21"), "test")
 	assert.Nil(t, err)
 
 	assert.Equal(t, 40*time.Second, c.interval)
@@ -599,7 +599,7 @@ func testConfigureDeprecated(t *testing.T) {
 	C.get_check_return = 0
 	C.get_check_deprecated_check = newMockPyObjectPtr()
 	C.get_check_deprecated_return = 1
-	err := c.Configure(integration.Data("min_collection_interval: 30\ncollection_interval: 25\nval: 21"), integration.Data("\"val\": 21"), "test")
+	err = c.Configure(integration.Data("min_collection_interval: 30\ncollection_interval: 25\nval: 21"), integration.Data("\"val\": 21"), "test")
 	assert.Nil(t, err)
 
 	assert.Equal(t, 25*time.Second, c.interval)
