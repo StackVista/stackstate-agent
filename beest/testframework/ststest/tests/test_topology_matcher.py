@@ -6,11 +6,12 @@ from .fixtures import *
 class TestTopologyMatcher(TestCase):
 
     def test_simple_positive(self):
-        input_topology = TopologyFixture("a,b,c,a>before>b,c>before>b")
+        input_topology = TopologyFixture("a,b,c,a>before>b,c>before>b,del y")
         matcher = TopologyMatcher() \
             .component("A", name="a") \
             .component("B", name="b") \
-            .one_way_direction("A", "B", type="before")
+            .one_way_direction("A", "B", type="before") \
+            .delete("y")
 
         result = matcher.find(input_topology.topology())
         match = result.assert_exact_match(matching_graph_name=self._testMethodName, matching_graph_upload=False)
@@ -18,19 +19,22 @@ class TestTopologyMatcher(TestCase):
             components={'A': input_topology.get('a'),
                         'B': input_topology.get('b')},
             relations={'A_TO_B': input_topology.get('a>before>b')},
-            deletes={},
+            deletes={'y': input_topology.get('del y')},
             start_snapshot=None,
             stop_snapshot=None
         ), match)
 
     def test_complex_positive(self):
-        input_topology = TopologyFixture("a1,a2,b1,b2,c1,c2,a1>to>b1,a1>to>b2,a2>to>b1,b1>to>a2,b2>to>c1")
+        input_topology = TopologyFixture("a1,a2,b1,del a10,b2,c1,c2,a1>to>b1,a1>to>b2,a2>to>b1,b1>to>a2,b2>to>c1,"
+                                         "del c5")
         matcher = TopologyMatcher() \
             .component("A", name="a.") \
             .component("B", name="b.") \
             .component("C", name="c.") \
             .one_way_direction("A", "B", type="to") \
-            .one_way_direction("B", "C", type="to")
+            .one_way_direction("B", "C", type="to") \
+            .delete('a10') \
+            .delete('c5')
 
         result = matcher.find(input_topology.topology())
         match = result.assert_exact_match(matching_graph_name=self._testMethodName, matching_graph_upload=False)
@@ -40,7 +44,8 @@ class TestTopologyMatcher(TestCase):
                         'C': input_topology.get('c1')},
             relations={'A_TO_B': input_topology.get('a1>to>b2'),
                        'B_TO_C': input_topology.get('b2>to>c1')},
-            deletes={},
+            deletes={'a10': input_topology.get('del a10'),
+                     'c5': input_topology.get('del c5')},
             start_snapshot=None,
             stop_snapshot=None
         ), match)
@@ -98,16 +103,40 @@ desired topology was not matched:
 	relation A->B[type~=before,dependencyDirection~=ONE_WAY] was not found
  """.strip())
 
+    def test_simple_wrong_delete(self):
+        matcher = TopologyMatcher() \
+            .component("A", name="a") \
+            .component("B", name="b") \
+            .delete("Z")
+
+        result = matcher.find(TopologyFixture("a,b").topology())
+
+        with self.assertRaises(AssertionError) as exc:
+            result.assert_exact_match(matching_graph_name=self._testMethodName, matching_graph_upload=False)
+        exception_message = str(exc.exception)
+
+        self.assertEqual(exception_message,
+"""
+desired topology was not matched:
+\tdelete Z[id~=Z] was not found
+""".strip())
+
     def test_topology_fixture(self):
         self.assertEqual(TopologyResult(
             components=[component_fixture(1, 'a')],
-            relations=[]
+            relations=[],
+            deletes=[],
+            start_snapshot=None,
+            stop_snapshot=None,
         ), TopologyFixture("a").topology())
 
         self.assertEqual(TopologyResult(
             components=[component_fixture(1, 'a', outgoing=[3]),
                         component_fixture(2, 'b', incoming=[3])],
-            relations=[relation_fixture(3, 1, 2, 'to')]
+            relations=[relation_fixture(3, 1, 2, 'to')],
+            deletes=[],
+            start_snapshot=None,
+            stop_snapshot=None,
         ), TopologyFixture("a,b,a>to>b").topology())
 
         self.assertEqual(TopologyResult(
@@ -117,8 +146,40 @@ desired topology was not matched:
             relations=[relation_fixture(3, 1, 2, 'to'),
                        relation_fixture(5, 2, 4, 'goes'),
                        relation_fixture(6, 4, 1, 'backto'),
-                       relation_fixture(7, 4, 2, 'alsoto')]
+                       relation_fixture(7, 4, 2, 'alsoto')],
+            deletes=[],
+            start_snapshot=None,
+            stop_snapshot=None,
         ), TopologyFixture("a,b,a>to>b,c,b>goes>c,c>backto>a,c>alsoto>b").topology())
+
+        self.assertEqual(TopologyResult(
+            components=[],
+            relations=[],
+            deletes=[delete_fixture(1, 'Y')],
+            start_snapshot=None,
+            stop_snapshot=None,
+        ), TopologyFixture("del Y").topology())
+
+        self.assertEqual(TopologyResult(
+            components=[],
+            relations=[],
+            deletes=[delete_fixture(1, 'X'), delete_fixture(2, 'Y'), delete_fixture(3, 'Z')],
+            start_snapshot=None,
+            stop_snapshot=None,
+        ), TopologyFixture("del X,del Y,del Z").topology())
+
+        self.assertEqual(TopologyResult(
+            components=[component_fixture(1, 'a', incoming=[6], outgoing=[3]),
+                        component_fixture(2, 'b', incoming=[3, 7], outgoing=[5]),
+                        component_fixture(4, 'c', incoming=[5], outgoing=[6, 7])],
+            relations=[relation_fixture(3, 1, 2, 'to'),
+                       relation_fixture(5, 2, 4, 'goes'),
+                       relation_fixture(6, 4, 1, 'backto'),
+                       relation_fixture(7, 4, 2, 'alsoto')],
+            deletes=[delete_fixture(1, 'X'), delete_fixture(2, 'Y'), delete_fixture(3, 'Z')],
+            start_snapshot=None,
+            stop_snapshot=None,
+        ), TopologyFixture("a,b,a>to>b,c,b>goes>c,c>backto>a,c>alsoto>b,del X,del Y,del Z").topology())
 
         with self.assertRaises(KeyError, msg="forward reference should be rejected in constructor"):
             TopologyFixture("a,a>to>b,b")

@@ -73,7 +73,7 @@ class RelationMatcher(Matcher):
 class DeleteMatcher(Matcher):
     def __init__(self, id: str, props: dict):
         self.id = id
-        self.matchers = []
+        self.matchers = [StringPropertyMatcher('id', id)]
         for k, v in props.items():
             self.matchers.append(StringPropertyMatcher(k, v))
 

@@ -1,4 +1,4 @@
-from stscliv1 import ComponentWrapper, RelationWrapper, TopologyResult
+from stscliv1 import ComponentWrapper, RelationWrapper, TopologyDeleteWrapper, TopologyResult
 
 
 def component_fixture(id: int, name: str, outgoing: list[int] = None, incoming=None) -> ComponentWrapper:
@@ -19,22 +19,35 @@ def relation_fixture(id: int, source: int, target: int, type: str, direction: st
     })
 
 
+def delete_fixture(_: int, delete_id: str) -> TopologyDeleteWrapper:
+    return TopologyDeleteWrapper({
+        'id': delete_id
+    })
+
+
 class TopologyFixture:
     def __init__(self, definition: str):
         self.elements = {}
         self.components = []
         self.relations = []
+        self.deletes = []
 
         element_id = 1
         component_ids = {}
         for element_definition in definition.split(","):
             elem_def_parts = element_definition.split(">")
             if len(elem_def_parts) == 1:
-                name = elem_def_parts[0]
-                component = component_fixture(element_id, name)
-                component_ids[name] = component
-                self.elements[element_definition] = component
-                self.components.append(component)
+                if element_definition.startswith("del"):
+                    delete_id = element_definition.split("del ")[1]
+                    component = delete_fixture(element_id, delete_id)
+                    self.elements[element_definition] = component
+                    self.deletes.append(component)
+                else:
+                    name = elem_def_parts[0]
+                    component = component_fixture(element_id, name)
+                    component_ids[name] = component
+                    self.elements[element_definition] = component
+                    self.components.append(component)
             elif len(elem_def_parts) == 3:
                 source = component_ids[elem_def_parts[0]]
                 type = elem_def_parts[1]
@@ -53,4 +66,4 @@ class TopologyFixture:
         return self.elements.get(definition)
 
     def topology(self):
-        return TopologyResult(self.components, self.relations)
+        return TopologyResult(self.components, self.relations, self.deletes)
