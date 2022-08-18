@@ -17,9 +17,9 @@ const (
 
 const (
 	// MaxNameLen the maximum length a name can have
-	MaxNameLen = 100
+	MaxNameLen = 500 // sts
 	// MaxServiceLen the maximum length a service can have
-	MaxServiceLen = 100
+	MaxServiceLen = 500 // sts
 )
 
 var (
