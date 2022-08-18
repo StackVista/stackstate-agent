@@ -99,6 +99,7 @@ func TestProcessBundledEvents(t *testing.T) {
 	assert.Contains(t, res1.Title, "Scheduled - dca-789976f5d7-2ljx6 Pod")
 	assert.Equal(t, "Activities", res1.EventContext.Category)
 	mocked.AssertNumberOfCalls(t, "Event", 2)
+	// failing
 	mocked.AssertExpectations(t)
 
 	// Several modified events, timestamp is the latest, event submitted has the correct key and count.
@@ -106,7 +107,6 @@ func TestProcessBundledEvents(t *testing.T) {
 		ev3,
 		ev4,
 	}
-	clusterName := clustername.GetClusterName(context.TODO(), "")
 	modifiedNewDatadogEvents := metrics.Event{
 		Title:    "Events from the machine-blue Node",
 		Text:     "%%% \n30 **MissingClusterDNS**: MountVolume.SetUp succeeded\n \n _Events emitted by the kubelet seen at " + time.Unix(709675200, 0).String() + "_ \n\n %%%",
@@ -121,7 +121,7 @@ func TestProcessBundledEvents(t *testing.T) {
 			Source:   "kubernetes",
 			Category: "Alerts",
 			ElementIdentifiers: []string{
-				fmt.Sprintf("urn:kubernetes:/%s:node/localhost", clusterName),
+				fmt.Sprintf("urn:kubernetes:/%s:node/localhost", clustername.GetClusterName(context.TODO(), "")),
 			},
 			Data: map[string]interface{}{},
 		},
@@ -157,7 +157,7 @@ func TestProcessBundledEvents(t *testing.T) {
 			Source:   "kubernetes",
 			Category: "Alerts",
 			ElementIdentifiers: []string{
-				fmt.Sprintf("urn:kubernetes:/%s:node/localhost", clusterName),
+				fmt.Sprintf("urn:kubernetes:/%s:node/localhost", clustername.GetClusterName(context.TODO(), "")),
 			},
 			Data: map[string]interface{}{},
 		},
@@ -168,7 +168,9 @@ func TestProcessBundledEvents(t *testing.T) {
 
 	_ = kubeAPIEventsCheck.processEvents(mocked, modifiedKubeEventsBundle)
 
+	// failing
 	mocked.AssertEvent(t, modifiedNewDatadogEventsWithClusterName, 0)
+
 	mocked.AssertExpectations(t)
 }
 

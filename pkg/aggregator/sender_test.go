@@ -452,7 +452,7 @@ func TestCheckSenderInterface(t *testing.T) {
 	assert.EqualValues(t, checkID1, commitSenderSample.id)
 	assert.Equal(t, true, commitSenderSample.commit)
 
-	serviceCheck := <-eventChan
+	serviceCheck := <-s.eventChan
 	assert.Equal(t, "my_service.can_connect", serviceCheck.Title)
 	assert.Equal(t, "service-check", serviceCheck.SourceTypeName)
 	assert.Equal(t, "my_service.can_connect", serviceCheck.AggregationKey)

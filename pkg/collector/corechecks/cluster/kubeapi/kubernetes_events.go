@@ -118,7 +118,7 @@ func (k *EventsCheck) Configure(config, initConfig integration.Data, source stri
 	}
 	k.ignoredEvents = convertFilter(k.instance.FilteredEventTypes)
 
-	// sts
+	// sts - Retrieve cluster name
 	k.getClusterName()
 
 	log.Debugf("Running config %s", config)
