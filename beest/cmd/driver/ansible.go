@@ -14,22 +14,25 @@ type AnsibleDeployer struct{}
 
 func (ad *AnsibleDeployer) Prepare(step *step.PrepareStep) error {
 	tags := []string{"prepare"}
-	return play(step.Inventory(), step.Playbook(), tags)
+	return play(step.Inventory(), step.Playbook(), step.Variables(), tags)
 }
 
 func (ad *AnsibleDeployer) Cleanup(step *step.CleanupStep) error {
 	tags := []string{"cleanup"}
-	return play(step.Inventory(), step.Playbook(), tags)
+	return play(step.Inventory(), step.Playbook(), step.Variables(), tags)
 }
 
-func play(inv, pb string, tags []string) error {
-	vars := map[string]interface{}{
+func play(inv, pb string, vars map[string]interface{}, tags []string) error {
+	ansibleVars := map[string]interface{}{
 		"bees_path": sut.BeesPath(),
+	}
+	for k, v := range vars {
+		ansibleVars[k] = v
 	}
 
 	runOption := &playbook.AnsiblePlaybookOptions{
 		Inventory: inv,
-		ExtraVars: vars,
+		ExtraVars: ansibleVars,
 		Tags:      strings.Join(tags, ","),
 	}
 	run := &playbook.AnsiblePlaybookCmd{

@@ -29,11 +29,6 @@ ${module.receiver.receiver_ip} ansible_connection=ssh ansible_ssh_private_key_fi
 
 [local]
 localhost ansible_connection=local
-
-[all:vars]
-yard_id=${var.yard_id}
-k8s_runtime=${var.k8s_runtime}
-k8s_version=${var.k8s_version}
 INVENTORY
   file_permission = "0777"
 }
