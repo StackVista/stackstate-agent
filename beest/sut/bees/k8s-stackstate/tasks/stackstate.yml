@@ -59,7 +59,7 @@
   - name: Deploy stackstate chart using values files
     kubernetes.core.helm:
       context: "{{ kubecontext }}"
-      chart_ref: stackstate-internal/stackstate
+      chart_ref: stackstate/stackstate
       chart_version: "{{ stackstate_helm_chart_version }}"
       release_name: stackstate
       release_namespace: "{{ namespace }}"
