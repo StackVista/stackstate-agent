@@ -1,6 +1,8 @@
 import hashlib
 import logging
 
+from pyshorteners.exceptions import ShorteningErrorException
+
 from stscliv1 import TopologyResult, ComponentWrapper, RelationWrapper
 import pydot
 import urllib.parse
@@ -27,7 +29,8 @@ class TopologyMatchingResult:
     @staticmethod
     def component_pretty_short(comp: ComponentWrapper):
         # TODO print attributes related to a matcher
-        return f"#{comp.id}#[{comp.name}](type={comp.type},identifiers={','.join(map(str, comp.attributes.get('identifiers', [])))})"
+        properties = f"type={comp.type},identifiers={','.join(map(str, comp.attributes.get('identifiers', [])))}"
+        return f"#{comp.id}#[{comp.name}]({properties})"
 
     @staticmethod
     def relation_pretty_short(rel: RelationWrapper):
@@ -39,7 +42,7 @@ class TopologyMatchingResult:
             return self._topology_matches[0]
         errors = []
         delimiter = "\n\t\t"
-        comp_matchers = {matcher.id: matcher for matcher in self._matcher.components}
+        comp_matchers = {matcher.id: matcher for matcher in self._matcher._components}
         for key, components in self._component_matches.items():
             matcher = comp_matchers[key]
             if len(components) == 0:
@@ -47,7 +50,7 @@ class TopologyMatchingResult:
             elif len(components) > 1:
                 errors.append(f"\tmultiple matches for component {matcher}:"
                               f"{delimiter}{delimiter.join(map(self.component_pretty_short, components))}")
-        rel_matchers = {matcher.id(): matcher for matcher in self._matcher.relations}
+        rel_matchers = {matcher.id(): matcher for matcher in self._matcher._relations}
         for key, relations in self._relation_matches.items():
             matcher = rel_matchers[key]
             if len(relations) == 0:
@@ -114,7 +117,7 @@ class TopologyMatchingResult:
         graph.add_subgraph(query_graph)
 
         matcher_graph = pydot.Subgraph(graph_name="cluster_0", label="Matching rule", **self.MatchingRuleSubgraphStyle)
-        for mcomp in self._matcher.components:
+        for mcomp in self._matcher._components:
             id = mcomp.id
             rules = "\n".join([str(m) for m in mcomp.matchers])
             label = f"{id}\n{rules}"
@@ -124,7 +127,7 @@ class TopologyMatchingResult:
             for comp in matches:
                 graph.add_edge(pydot.Edge(id, comp.id, color=color, style="dotted", penwidth=5))
 
-        for rel in self._matcher.relations:
+        for rel in self._matcher._relations:
             rules = "\n".join([str(m) for m in rel.matchers])
 
             rel_id = str(rel.id())
@@ -157,5 +160,5 @@ class TopologyMatchingResult:
                 share_url = base_share_url._replace(fragment=urllib.parse.quote(graph_dot_str))
                 shortened_url = pyshorteners.Shortener().tinyurl.short(share_url.geturl())
                 logging.info("matching diagram is available at %s", shortened_url)
-            except Exception:
+            except ShorteningErrorException:
                 logging.warning("could not make matching diagram available at URL", exc_info=True)

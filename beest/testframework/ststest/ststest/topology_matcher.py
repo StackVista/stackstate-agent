@@ -5,7 +5,7 @@ from stscliv1 import TopologyResult, ComponentWrapper
 
 from .primitive_matchers import ComponentMatcher, RelationMatcher
 from .invariant_search import ConsistentGraphMatcher
-from .topology_match import TopologyMatch
+from .topology_match import TopologyMatch, RepeatedComponentKey, ComponentKey, SingleComponentKey
 from .topology_matching_result import TopologyMatchingResult
 
 
@@ -14,6 +14,7 @@ def get_common_relations(sources: list[ComponentWrapper], targets: list[Componen
     source_relations = set([id for source in sources for id in source.outgoing_relations])
     target_relations = set([id for target in targets for id in target.incoming_relations])
     return list(source_relations & target_relations)
+
 
 def filter_out_repeated_specs(specs: list[dict], ambiguous_elements: set[str]):
     def two_are_equivalent(spec1: dict, spec2: dict):
@@ -37,11 +38,11 @@ def filter_out_repeated_specs(specs: list[dict], ambiguous_elements: set[str]):
 
 class TopologyMatcherBuilder:
     @abstractmethod
-    def component(self, id: str, **kwargs) -> 'TopologyMatcherBuilder':
+    def component(self, id, **kwargs) -> 'TopologyMatcherBuilder':
         raise NotImplementedError()
 
     @abstractmethod
-    def one_way_direction(self, source: str, target: str, **kwargs) -> 'TopologyMatcherBuilder':
+    def one_way_direction(self, source, target, **kwargs) -> 'TopologyMatcherBuilder':
         raise NotImplementedError()
 
 
@@ -53,10 +54,10 @@ class RepeatedMatcher(TopologyMatcherBuilder):
         self.repeated_elements_flat = set()
 
     @staticmethod
-    def _n_comp_key(id: str, i: int):
-        return f'{id}.{i}'
+    def _n_comp_key(id: str, i: int) -> RepeatedComponentKey:
+        return (id, i)
 
-    def component(self, id: str, **kwargs) -> 'RepeatedMatcher':
+    def component(self, id: SingleComponentKey, **kwargs) -> 'RepeatedMatcher':
         self.repeated_components.add(id)
         for i in range(0, self.times):
             idN = self._n_comp_key(id, i)
@@ -64,7 +65,7 @@ class RepeatedMatcher(TopologyMatcherBuilder):
             self.repeated_elements_flat.add(idN)
         return self
 
-    def one_way_direction(self, source: str, target: str, **kwargs) -> 'RepeatedMatcher':
+    def one_way_direction(self, source: SingleComponentKey, target: SingleComponentKey, **kwargs) -> 'RepeatedMatcher':
         for i in range(0, self.times):
             source_i = self._n_comp_key(source, i) if source in self.repeated_components else source
             target_i = self._n_comp_key(target, i) if target in self.repeated_components else target
@@ -75,24 +76,24 @@ class RepeatedMatcher(TopologyMatcherBuilder):
 
 class TopologyMatcher(TopologyMatcherBuilder):
     def __init__(self):
-        self.components: list[ComponentMatcher] = []
-        self.relations: list[RelationMatcher] = []
-        self.ambiguous_elements: set = set()
+        self._components: list[ComponentMatcher] = []
+        self._relations: list[RelationMatcher] = []
+        self._ambiguous_elements: set = set()
 
     def repeated(self, times: int, define_submatch: Callable[[TopologyMatcherBuilder], TopologyMatcherBuilder]):
         repeated_matcher = RepeatedMatcher(times, self)
         define_submatch(repeated_matcher)
-        self.ambiguous_elements = self.ambiguous_elements | repeated_matcher.repeated_elements_flat
+        self._ambiguous_elements = self._ambiguous_elements | repeated_matcher.repeated_elements_flat
         return self
 
-    def component(self, id: str, **kwargs) -> 'TopologyMatcher':
-        self.components.append(ComponentMatcher(id, kwargs))
+    def component(self, id: ComponentKey, **kwargs) -> 'TopologyMatcher':
+        self._components.append(ComponentMatcher(id, kwargs))
         return self
 
     def one_way_direction(self, source: str, target: str, **kwargs) -> 'TopologyMatcher':
         source_found = False
         target_found = False
-        for comp in self.components:
+        for comp in self._components:
             if comp.id == source:
                 source_found = True
             if comp.id == target:
@@ -105,7 +106,7 @@ class TopologyMatcher(TopologyMatcherBuilder):
                            f"before defining a relation")
 
         kwargs['dependencyDirection'] = 'ONE_WAY'
-        self.relations.append(RelationMatcher(source, target, kwargs))
+        self._relations.append(RelationMatcher(source, target, kwargs))
         return self
 
     def find(self, topology: TopologyResult) -> TopologyMatchingResult:
@@ -116,7 +117,7 @@ class TopologyMatcher(TopologyMatcherBuilder):
 
         # find all matching components and group them by virtual node (id) from a pattern
         matching_components: dict[str, list[ComponentWrapper]] = {}
-        for comp_match in self.components:
+        for comp_match in self._components:
             matching_components[comp_match.id] = [comp for comp in topology.components if comp_match.match(comp)]
 
         # tell CGM that for every virtual node (A) there is a list of possible options (A1..An)
@@ -125,7 +126,7 @@ class TopologyMatcher(TopologyMatcherBuilder):
 
         # now we are looking for relations (e.g. A1>B2..Ax>By) that possibly represents a defined relation A>B
         matching_relations = {}
-        for comp_rel in self.relations:
+        for comp_rel in self._relations:
             source_candidates = matching_components.get(comp_rel.source, [])
             target_candidates = matching_components.get(comp_rel.target, [])
             relation_candidate_ids = get_common_relations(source_candidates, target_candidates)
@@ -152,7 +153,7 @@ class TopologyMatcher(TopologyMatcherBuilder):
             return TopologyMatch(components, relations)
 
         result_graph_specs = consistent_graph_matcher.get_graphs()
-        distinct_graph_specs = filter_out_repeated_specs(result_graph_specs, self.ambiguous_elements)
+        distinct_graph_specs = filter_out_repeated_specs(result_graph_specs, self._ambiguous_elements)
         return TopologyMatchingResult(
             list(map(build_topo_match_from_spec, distinct_graph_specs)),
             self,

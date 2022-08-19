@@ -1,10 +1,18 @@
-import re
+from typing import Tuple
 
 from stscliv1 import ComponentWrapper, RelationWrapper
 
+SingleComponentKey = str
+SingleRelationKey = Tuple[str, str]
+RepeatedComponentKey = Tuple[SingleComponentKey, int]
+RepeatedRelationKey = Tuple[SingleRelationKey, int]
+
+ComponentKey = SingleComponentKey | RepeatedComponentKey
+RelationKey = SingleRelationKey | RepeatedRelationKey
+
 
 class TopologyMatch:
-    def __init__(self, components: dict[str, ComponentWrapper], relations: dict[(str, str), RelationWrapper]):
+    def __init__(self, components: dict[ComponentKey, ComponentWrapper], relations: dict[RelationKey, RelationWrapper]):
         self._components = components
         self._relations = relations
 
@@ -20,11 +28,11 @@ class TopologyMatch:
             return self._components == other._components and self._relations == other._relations
         return False
 
-    def component(self, key: str) -> ComponentWrapper:
+    def component(self, key: SingleComponentKey) -> ComponentWrapper:
         return self._components.get(key)
 
-    def components(self, key: str) -> list[ComponentWrapper]:
-        return [comp for (ckey, comp) in self._components.items() if re.findall(f'^{key}\\.\d+$', ckey)]
+    def repeated_components(self, key: SingleComponentKey) -> list[ComponentWrapper]:
+        return [comp for (ckey, comp) in self._components.items() if isinstance(ckey, tuple) and ckey[0] == key]
 
     def has_component(self, id: int) -> bool:
         return next((True for comp in self._components.values() if comp.id == id), False)

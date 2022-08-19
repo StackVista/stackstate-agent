@@ -12,6 +12,9 @@ class ComponentWrapper:
     def __str__(self):
         return 'C[' + ','.join([f"{k}={v}" for k, v in self.attributes.items()]) + ']'
 
+    def __repr__(self):
+        return str(self)
+
     def __eq__(self, other):
         if isinstance(other, ComponentWrapper):
             return self.attributes == other.attributes

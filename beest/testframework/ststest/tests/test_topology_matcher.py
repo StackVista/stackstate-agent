@@ -1,22 +1,8 @@
 import random
-from itertools import permutations
-from typing import Callable, TypeVar
 from unittest import TestCase
-from ststest import TopologyMatcher, TopologyMatch
+
+from ststest import TopologyMatcher
 from .fixtures import *
-
-T = TypeVar('T')
-
-
-def assert_permuted(elements: list[any], code: Callable[[any], any]):
-    last_error = None
-    for input in permutations(elements):
-        try:
-            code(*input)
-            return
-        except AssertionError as e:
-            last_error = e
-    raise last_error
 
 
 class TestTopologyMatcher(TestCase):
@@ -30,11 +16,9 @@ class TestTopologyMatcher(TestCase):
 
         result = matcher.find(input_topology.topology())
         match = result.assert_exact_match(matching_graph_name=self._testMethodName, matching_graph_upload=False)
-        self.assertEqual(TopologyMatch(
-            components={'A': input_topology.get('a'),
-                        'B': input_topology.get('b')},
-            relations={('A', 'B'): input_topology.get('a>before>b')}
-        ), match)
+
+        self.assertEqual(input_topology.get('a'), match.component('A'))
+        self.assertEqual(input_topology.get('b'), match.component('B'))
 
     def test_repeated(self):
         node1 = f"node-{random.randint(100, 200)}"
@@ -51,24 +35,62 @@ class TestTopologyMatcher(TestCase):
         result = matcher.find(input_topology.topology())
         match = result.assert_exact_match(matching_graph_name=self._testMethodName, matching_graph_upload=False)
 
-        def assert_option(node1, node2):
-            self.assertEqual(TopologyMatch(
-                components={'C': input_topology.get('cluster'),
-                            'N.0': input_topology.get(node1),
-                            'N.1': input_topology.get(node2)},
-                relations={('N.0', 'C'): input_topology.get(f'{node1}>belongs>cluster'),
-                           ('N.1', 'C'): input_topology.get(f'{node2}>belongs>cluster')
-                           }
-            ), match)
-            self.assertEqual(input_topology.get('cluster'), match.component('C'))
-            assert_permuted([node1, node2],
-                            lambda node1, node2:
-                            self.assertEqual(
-                                [input_topology.get(node1), input_topology.get(node2)],
-                                match.components('N'))
-                            )
+        self.assertEqual(input_topology.get('cluster'), match.component('C'))
+        self.assertUnorderedComponents(
+            [input_topology.get(node1), input_topology.get(node2)],
+            match.repeated_components('N')
+        )
 
-        assert_permuted([node1, node2], assert_option)
+    def test_repeated_complex(self):
+        node1 = f"node-{random.randint(100, 200)}"
+        node2 = f"node-{random.randint(100, 200)}"
+        daemonset = "my-daemonset"
+        configmap = "my-cm"
+        pod1 = f"{daemonset}-pod-{node1}"
+        pod2 = f"{daemonset}-pod-{node2}"
+        cluster = "cluster"
+
+        input_topology = TopologyFixture(','.join([
+            node1, node2, pod1, pod2,
+            daemonset, configmap, cluster,
+            f"{pod1}>scheduled_on>{node1}",
+            f"{pod2}>scheduled_on>{node2}",
+            f"{node1}>runs_on>{cluster}",
+            f"{node2}>runs_on>{cluster}",
+            f"{pod1}>uses>{configmap}",
+            f"{pod2}>uses>{configmap}",
+            f"{daemonset}>controls>{pod1}",
+            f"{daemonset}>controls>{pod2}",
+        ]))
+
+        matcher = TopologyMatcher() \
+            .component("CLUSTER", name=r"^cluster") \
+            .component("DaemonSet", name=r"^my-daemonset$") \
+            .component("ConfigMap", name=r"^my-cm$") \
+            .repeated(2,
+                      lambda m: m
+                      .component("DsPod", name=r"my-daemonset-pod-.*")
+                      .component("Node", name=r"^node-\d+")
+                      .one_way_direction("DsPod", "Node", type="scheduled_on")
+                      .one_way_direction("DsPod", "ConfigMap", type="uses")
+                      .one_way_direction("DaemonSet", "DsPod", type="controls")
+                      .one_way_direction("Node", "CLUSTER", type="runs_on")
+                      )
+
+        result = matcher.find(input_topology.topology())
+        match = result.assert_exact_match(matching_graph_name=self._testMethodName, matching_graph_upload=False)
+
+        self.assertEqual(input_topology.get('cluster'), match.component('CLUSTER'))
+        self.assertEqual(input_topology.get('my-daemonset'), match.component('DaemonSet'))
+        self.assertEqual(input_topology.get('my-cm'), match.component('ConfigMap'))
+        self.assertUnorderedComponents(
+            [input_topology.get(node1), input_topology.get(node2)],
+            match.repeated_components('Node')
+        )
+        self.assertUnorderedComponents(
+            [input_topology.get(pod1), input_topology.get(pod2)],
+            match.repeated_components('DsPod')
+        )
 
     def test_complex_positive(self):
         input_topology = TopologyFixture("a1,a2,b1,b2,c1,c2,a1>to>b1,a1>to>b2,a2>to>b1,b1>to>a2,b2>to>c1")
@@ -81,13 +103,10 @@ class TestTopologyMatcher(TestCase):
 
         result = matcher.find(input_topology.topology())
         match = result.assert_exact_match(matching_graph_name=self._testMethodName, matching_graph_upload=False)
-        self.assertEqual(TopologyMatch(
-            components={'A': input_topology.get('a1'),
-                        'B': input_topology.get('b2'),
-                        'C': input_topology.get('c1')},
-            relations={('A', 'B'): input_topology.get('a1>to>b2'),
-                       ('B', 'C'): input_topology.get('b2>to>c1')}
-        ), match)
+
+        self.assertEqual(input_topology.get('a1'), match.component('A'))
+        self.assertEqual(input_topology.get('b2'), match.component('B'))
+        self.assertEqual(input_topology.get('c1'), match.component('C'))
 
     def test_ambiguous_match_failure(self):
         input_topology = TopologyFixture("a1,a2,b1,b2,c1,c2,a1>to>b2,b2>to>c1,a2>to>b2,b1>to>c1,b1>to>c2")
@@ -166,3 +185,9 @@ desired topology was not matched:
 
         with self.assertRaises(KeyError, msg="forward reference should be rejected in constructor"):
             TopologyFixture("a,a>to>b,b")
+
+    def assertUnorderedComponents(self, expected: list[ComponentWrapper], actual: list[ComponentWrapper]):
+        self.assertEqual(
+            sorted(expected, key=lambda c: c.id),
+            sorted(actual, key=lambda c: c.id)
+        )
