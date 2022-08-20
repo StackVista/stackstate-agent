@@ -20,6 +20,7 @@ resource "local_file" "ansible_inventory" {
         }
       }
       vars : {
+        yard_id : var.yard_id
         bucket : module.lambda_otel.bucket
         code_zip : module.lambda_otel.codepath
         lambda_role_arn : module.lambda_otel.lambda_role_arn

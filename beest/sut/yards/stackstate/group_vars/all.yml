@@ -9,7 +9,6 @@ stackstate_license: "{{ lookup('env', 'STACKSTATE_LICENSE') or STACKSTATE_LICENS
 namespace: "{{ yard_id.replace('.','-').replace('_','-') | lower }}"
 cluster_name: "sandbox-main.sandbox.stackstate.io"
 
-kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/config"
 kubecontext: "{{ cluster_name }}"
 
 sts_api_key: "{{ yard_id }}"
