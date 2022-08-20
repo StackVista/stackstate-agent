@@ -58,7 +58,7 @@
   - name: Deploy stackstate chart using values files
     kubernetes.core.helm:
       context: "{{ kubecontext }}"
-      chart_ref: stackstate-internal/stackstate
+      chart_ref: stackstate/stackstate
       chart_version: "{{ stackstate_helm_chart_version }}"
       release_name: stackstate
       release_namespace: "{{ namespace }}"
@@ -71,14 +71,6 @@
       values:
         global:
           receiverApiKey: "{{ sts_api_key }}"
-        stackstate:
-          components:
-            e2es:
-              replicaCount: 0
-            mm2es:
-              replicaCount: 0
-            trace2es:
-              replicaCount: 0
 
   - name: Wait till StackState API is ready
     kubernetes.core.k8s_info:

@@ -77,7 +77,7 @@ RUN curl -O "https://download.docker.com/linux/static/stable/x86_64/docker-${DOC
     mv ./docker/docker /usr/local/bin/ && \
     rm -r docker-${DOCKER_V}.tgz docker
 
-ARG STSTOOLBOX_V=1.3.31
+ARG STSTOOLBOX_V=1.3.34
 RUN curl -O "https://stseuw1-tooling-main-homebrew.s3.amazonaws.com/sts-toolbox/v${STSTOOLBOX_V}/sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz" && \
     tar xvzf sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \
     rm -r sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \

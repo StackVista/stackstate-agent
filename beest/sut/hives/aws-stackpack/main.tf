@@ -43,7 +43,8 @@ data "aws_iam_policy_document" "integration_assume_role_policy" {
 
 // for a IAM User
 resource "aws_iam_user" "integration_user" {
-  name = "${var.environment}-integration-user"
+  name                 = "${var.environment}-integration-user"
+  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/DeveloperBoundaries"
 }
 
 resource "aws_iam_access_key" "integration_user_key" {
@@ -82,7 +83,7 @@ resource "aws_iam_role_policy" "integration_role_policy" {
 }
 
 resource "aws_iam_instance_profile" "integration_profile" {
-  name = "${var.environment}-instance-profile"
-  role = aws_iam_role.agent_ec2_role.name
+  name       = "${var.environment}-instance-profile"
+  role       = aws_iam_role.agent_ec2_role.name
   depends_on = [aws_iam_role_policy.integration_role_policy]
 }
