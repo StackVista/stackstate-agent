@@ -1,15 +1,12 @@
 import json
 import util
 
-testinfra_hosts = ["receiver"]
+testinfra_hosts = ["local"]
 
 
-def test_agents_running(host):
-    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=1000"
-
+def test_agents_running(cliv1):
     def wait_for_metrics():
-        data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
+        json_data = cliv1.topic_api("sts_multi_metrics")
         with open("./topic-sts-multi-metrics.json", 'w') as f:
             json.dump(json_data, f, indent=4)
 
@@ -34,12 +31,9 @@ def test_agents_running(host):
     util.wait_until(wait_for_metrics, 60, 3)
 
 
-def test_agent_http_metrics(host):
-    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=1000"
-
+def test_agent_http_metrics(cliv1):
     def wait_for_metrics():
-        data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
+        json_data = cliv1.topic_api("sts_multi_metrics")
         with open("./topic-multi-metrics-http.json", 'w') as f:
             json.dump(json_data, f, indent=4)
 
@@ -58,12 +52,9 @@ def test_agent_http_metrics(host):
     util.wait_until(wait_for_metrics, 30, 3)
 
 
-def test_agent_kubernetes_metrics(host):
-    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=1000"
-
+def test_agent_kubernetes_metrics(cliv1):
     def wait_for_metrics():
-        data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
+        json_data = cliv1.topic_api("sts_multi_metrics")
         with open("./topic-multi-metrics-kubernetes.json", 'w') as f:
             json.dump(json_data, f, indent=4)
 
@@ -81,12 +72,9 @@ def test_agent_kubernetes_metrics(host):
     util.wait_until(wait_for_metrics, 60, 3)
 
 
-def test_agent_kubernetes_state_metrics(host):
-    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=1000"
-
+def test_agent_kubernetes_state_metrics(cliv1):
     def wait_for_metrics():
-        data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
+        json_data = cliv1.topic_api("sts_multi_metrics")
         with open("./topic-multi-metrics-kubernetes_state.json", 'w') as f:
             json.dump(json_data, f, indent=4)
 
@@ -104,12 +92,9 @@ def test_agent_kubernetes_state_metrics(host):
     util.wait_until(wait_for_metrics, 60, 3)
 
 
-def test_agent_kubelet_metrics(host):
-    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=1000"
-
+def test_agent_kubelet_metrics(cliv1):
     def wait_for_metrics():
-        data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
+        json_data = cliv1.topic_api("sts_multi_metrics")
         with open("./topic-multi-metrics-kubelet.json", 'w') as f:
             json.dump(json_data, f, indent=4)
 

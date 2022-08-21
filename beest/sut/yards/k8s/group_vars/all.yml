@@ -24,7 +24,6 @@ namespace: "{{ yard_id.replace('.','-').replace('_','-') | lower }}"
 agent_cluster_name: "{{ namespace }}"
 stackstate_cluster_name: "sandbox-main.sandbox.stackstate.io"
 
-kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/config"
 agent_kubecontext: "{{ yard_id }}"
 stackstate_kubecontext: "{{ stackstate_cluster_name }}"
 

@@ -3,7 +3,7 @@ import re
 
 import util
 
-testinfra_hosts = ["receiver"]
+testinfra_hosts = ["local"]
 
 
 def _component_data(json_data, type_name, external_id_assert_fn, cluster_name, identifiers_assert_fn):
@@ -736,5 +736,3 @@ def test_agent_containers_mount_cgroup_volume(host, ansible_var):
             "Process-agent container does not mount cgroup volume"
 
     util.wait_until(wait_for_cluster_agent_components, 120, 3)
-
-

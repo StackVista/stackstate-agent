@@ -15,12 +15,9 @@ def wait_until(someaction, timeout, period=0.25, *args, **kwargs):
             time.sleep(period)
 
 
-def assert_topology_events(host, test_name, topic, expected_topology_events):
-    url = "http://localhost:7070/api/topic/%s?limit=1000" % topic
-
+def assert_topology_events(cliv1, test_name, topic, expected_topology_events):
     def wait_for_topology_events():
-        data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
+        json_data = cliv1.topic_api(topic)
         with open("./topic-%s-%s.json" % (test_name, topic), 'w') as f:
             json.dump(json_data, f, indent=4)
 
@@ -60,14 +57,9 @@ def assert_topology(host, test_name, topic, expected_components):
     wait_until(assert_topology, 30, 3)
 
 
-def assert_metrics(host, test_name, expected_metrics):
-    hostname = host.ansible.get_variables()["inventory_hostname"]
-    print(hostname)
-    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=1000"
-
+def assert_metrics(cliv1, hostname, test_name, expected_metrics):
     def wait_for_metrics():
-        data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
+        json_data = cliv1.topic_api("sts_multi_metrics")
         with open("./topic-%s-sts-multi-metrics.json" % test_name, 'w') as f:
             json.dump(json_data, f, indent=4)
 

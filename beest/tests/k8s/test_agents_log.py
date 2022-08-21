@@ -4,17 +4,17 @@ import util
 testinfra_hosts = ["local"]
 
 
-def _get_pods(kubeconfig, kubecontext, host, controller_name):
+def _get_pods(kubecontext, host, controller_name):
     jsonpath = "'{.items[?(@.spec.containers[*].name==\"%s\")].metadata.name}'" % controller_name
-    cmd = host.run("KUBECONFIG={0} kubectl --context={1} get pod -o jsonpath={2}".format(kubeconfig, kubecontext, jsonpath))
+    cmd = host.run("kubectl --context={0} get pod -o jsonpath={1}".format(kubecontext, jsonpath))
     assert cmd.rc == 0
     pods = cmd.stdout.split()
     print(pods)
     return pods
 
 
-def _get_log(kubeconfig, kubecontext, host, pod):
-    cmd = host.ansible("shell", "KUBECONFIG={0} kubectl --context={1} logs {2}".format(kubeconfig, kubecontext, pod), check=False)
+def _get_log(kubecontext, host, pod):
+    cmd = host.ansible("shell", "kubectl --context={0} logs {1}".format(kubecontext, pod), check=False)
     assert cmd["rc"] == 0
     agent_log = cmd["stdout"]
     with open("./stackstate-agent-%s.log" % pod, 'wb') as f:
@@ -22,16 +22,16 @@ def _get_log(kubeconfig, kubecontext, host, pod):
     return agent_log
 
 
-def _check_logs(kubeconfig, kubecontext, host, controller_name, success_regex, ignored_errors_regex):
+def _check_logs(kubecontext, host, controller_name, success_regex, ignored_errors_regex):
     def wait_for_successful_post():
-        for pod in _get_pods(kubeconfig, kubecontext, host, controller_name):
-            log = _get_log(kubeconfig, kubecontext, host, pod)
+        for pod in _get_pods(kubecontext, host, controller_name):
+            log = _get_log(kubecontext, host, pod)
             assert re.search(success_regex, log)
 
     util.wait_until(wait_for_successful_post, 30, 3)
 
-    for pod in _get_pods(kubeconfig, kubecontext, host, controller_name):
-        log = _get_log(kubeconfig, kubecontext, host, pod)
+    for pod in _get_pods(kubecontext, host, controller_name):
+        log = _get_log(kubecontext, host, pod)
         for line in log.splitlines():
             ignored = False
             for ignored_error in ignored_errors_regex:
@@ -57,9 +57,8 @@ def test_stackstate_agent_log_no_errors(host, ansible_var):
         "collectors/kubernetes_main.go.*temporary failure in clusterAgentClient",
         "kubernetes/apiserver/apiserver.go.*temporary failure in apiserver",
     ]
-    kubeconfig = ansible_var("kubeconfig")
-    kubecontext = ansible_var("kubecontext")
-    _check_logs(kubeconfig, kubecontext, host, "stackstate-agent", "Successfully posted payload to.*stsAgent/api/v1", ignored_errors_regex)
+    kubecontext = ansible_var("agent_kubecontext")
+    _check_logs(kubecontext, host, "stackstate-agent", "Successfully posted payload to.*stsAgent/api/v1", ignored_errors_regex)
 
 
 def test_stackstate_cluster_agent_log_no_errors(host, ansible_var):
@@ -68,6 +67,5 @@ def test_stackstate_cluster_agent_log_no_errors(host, ansible_var):
         "kubeapi/kubernetes_topology_config.go.*urn:/kubernetes.*configmap:kube-system:coredns",  # this configmap container the word `errors`
         "serializer/serializer.go.*urn:/kubernetes.*configmap:kube-system:coredns",
     ]
-    kubeconfig = ansible_var("kubeconfig")
-    kubecontext = ansible_var("kubecontext")
-    _check_logs(kubeconfig, kubecontext, host, "stackstate-cluster-agent", "Sent processes metadata payload", ignored_errors_regex)
+    kubecontext = ansible_var("agent_kubecontext")
+    _check_logs(kubecontext, host, "stackstate-cluster-agent", "Sent processes metadata payload", ignored_errors_regex)

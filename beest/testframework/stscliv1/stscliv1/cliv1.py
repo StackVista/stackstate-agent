@@ -41,12 +41,12 @@ class CLIv1:
 
     def script(self, fullquery) -> dict:
         log = self.log
-        log.info(f"querying StackState with CLIv1: %s, cache: %s", fullquery, self.cache_enabled)
+        log.info(f"querying StackState Script API with CLIv1: {fullquery}, cache: {self.cache_enabled}")
         cachefile = hashlib.sha1(fullquery.encode('utf-8')).hexdigest() + '.json'
         if self.cache_enabled:
             try:
                 with open(cachefile, 'r') as f:
-                    log.warning(f"using cached result from %s", cachefile)
+                    log.warning(f"using cached result from {cachefile}")
                     return json.load(f)['result']
             except IOError:
                 pass
@@ -110,3 +110,9 @@ Topology.query('__QUERY__')
     }
   }
 """.replace('__QUERY__', escaped_query)
+
+    def topic_api(self, topic, limit=1000) -> dict:
+        self.log.info(f"querying StackState Topic API: {topic}")
+        executed = self.host.run(f"sts-cli topic show {topic} -l {limit}")
+        self.log.info(f"queried {topic}: {executed}")
+        return json.loads(executed.stdout)
