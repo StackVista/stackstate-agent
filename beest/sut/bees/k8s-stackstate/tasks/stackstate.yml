@@ -55,7 +55,7 @@
 #    ui:
 #      replicaCount: 0
 
-  - name: Deploy stackstate chart using values files
+  - name: Deploy stackstate chart using values '{{ stackstate_helm_chart_version }}'
     kubernetes.core.helm:
       context: "{{ kubecontext }}"
       chart_ref: stackstate/stackstate

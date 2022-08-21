@@ -2,7 +2,7 @@
 - name: StackState Agent prepare tasks
   tags: prepare
   block:
-  - name: Create test namespace '{{namespace}}'
+  - name: Create test namespace '{{ namespace }}'
     kubernetes.core.k8s:
       context: "{{ kubecontext }}"
       api_version: v1
@@ -29,20 +29,16 @@
       definition: "{{ lookup('file', '{{ item }}') }}"
     with_fileglob: "test_workloads/*.yaml"
 
-  - name: Log agent_helm_chart_repo
-    debug:
-      var: agent_helm_chart_repo
-
   - name: Generate agent values
     ansible.builtin.template:
       src: agent-extra-values.j2.yml
       dest: "{{ playbook_dir }}/agent-extra-values.yml"
 
-  - name: Deploy stackstate chart using values files
+  - name: Deploy stackstate chart using values '{{ agent_helm_chart_version }}'
     kubernetes.core.helm:
       context: "{{ kubecontext }}"
-      chart_ref: "{{ agent_helm_chart_repo }}"
-      chart_version: "{{ stackstate_helm_chart_version }}"
+      chart_ref: stackstate/cluster-agent
+      chart_version: "{{ agent_helm_chart_version }}"
       release_name: stackstate-cluster-agent
       release_namespace: "{{ namespace }}"
       create_namespace: true

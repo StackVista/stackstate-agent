@@ -25,16 +25,22 @@ KUBECONFIG
 //
 
 resource "local_file" "ansible_inventory" {
-  filename        = "${path.module}/ansible_inventory"
-  content         = <<INVENTORY
-[local]
-localhost ansible_connection=local
-
-[all:vars]
-yard_id=${var.yard_id}
-agent_k8s_runtime=${var.agent_eks_runtime}
-agent_k8s_version=${var.agent_eks_version}
-INVENTORY
+  filename = "${path.module}/ansible_inventory"
+  content = yamlencode({
+    all : {
+      hosts : {
+        local : {
+          ansible_host : "localhost"
+          ansible_connection : "local"
+        }
+      }
+      vars : {
+        yard_id : var.yard_id
+        agent_k8s_runtime : var.agent_eks_runtime
+        agent_k8s_version : var.agent_eks_version
+      }
+    }
+  })
   file_permission = "0777"
 }
 

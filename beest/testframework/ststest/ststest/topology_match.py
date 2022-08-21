@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Union
 
 from stscliv1 import ComponentWrapper, RelationWrapper
 
@@ -7,8 +7,8 @@ SingleRelationKey = Tuple[str, str]
 RepeatedComponentKey = Tuple[SingleComponentKey, int]
 RepeatedRelationKey = Tuple[SingleRelationKey, int]
 
-ComponentKey = SingleComponentKey | RepeatedComponentKey
-RelationKey = SingleRelationKey | RepeatedRelationKey
+ComponentKey = Union[SingleComponentKey, RepeatedComponentKey]
+RelationKey = Union[SingleRelationKey, RepeatedRelationKey]
 
 
 class TopologyMatch:
