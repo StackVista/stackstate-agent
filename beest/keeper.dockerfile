@@ -15,7 +15,7 @@ RUN if [ $UNAME_S = "Linux" ]; then \
     fi
 
 COPY direnv.toml /home/$MYUSER/.config/direnv/
-RUN chown -R $MYUSER:$MYUSER /home/$MYUSER/.config/
+RUN chown -R $MYUSER /home/$MYUSER/.config/
 
 # external docker volume
 # if we don't precreate it we do not get the permission we want

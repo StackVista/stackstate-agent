@@ -1,0 +1,30 @@
+---
+# tasks file for ec2-splunk
+- name: Splunk prepare tasks
+  tags: prepare
+  become: yes
+  block:
+    - name: Download Copy of Splunk Enterprise
+      get_url:
+        url: https://www.dl.dropboxusercontent.com/s/vgq62m727y2zl8c/splunk-8.2.7-2e1fca123028-linux-2.6-amd64.deb
+        dest: /home/ubuntu/splunk.deb
+        mode: '0755'
+        timeout: 20
+      register: downloaded
+
+    - name: Install Splunk Binary
+      tags:
+        - install
+      apt: deb=/home/ubuntu/splunk.deb
+
+    - name: Accept Licence
+      tags:
+        - install
+      shell: "{{ splunk_home }}/bin/splunk start --answer-yes --auto-ports --no-prompt --accept-license"
+      become: yes
+
+    - name: Enable init script
+      tags:
+        - install
+      shell: /opt/splunk/bin/splunk enable boot-start
+

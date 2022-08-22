@@ -28,3 +28,10 @@ scenarios:
       name: otel-custom
     test:
       group: otel
+  - name: splunk
+    description: |
+      Provision Splunk Enterprise Cloud to have data in that can be used to send as Topology for Stackstate
+    yard:
+      name: splunk
+    test:
+      group: splunk
