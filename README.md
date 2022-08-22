@@ -184,5 +184,5 @@ helm upgrade --install \
 
 `<version>` is the new version you've set on `helm-charts/stable/cluster-agent/Chart.yaml` on your feature branch.
 
-To use this version in the `stackstate-agent` pipeline, create a branch and update the `HELM_CHART_VERSION` variable on `.gitlab-ci.yml`, with that the pipeline will use the test helm repository that was updated by the helm-charts pipeline.
+To use this version in the `stackstate-agent` pipeline, create a branch and update the `AGENT_HELM_CHART_VERSION` variable on `.gitlab-ci.yml`, with that the pipeline will use the test helm repository that was updated by the helm-charts pipeline.
 

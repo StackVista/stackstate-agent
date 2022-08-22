@@ -21,6 +21,9 @@ omnibus/omnibus/
 **/debug.test
 # files
 .DS_Store
+.vscode
+.env
+.envrc
 *.cov
 *.pyc
 *.swp
@@ -40,6 +43,7 @@ agentmsg.h
 # go-generated files
 stackstate.yaml
 system-probe.yaml
+network-tracer.yaml
 security-agent.yaml
 dogstatsd.yaml
 cloudfoundry.yaml
@@ -171,3 +175,37 @@ pkg/network/netlink/testdata/message_dump*
 # serverless
 .layers
 .extension
+
+# Merge artifacts
+*.orig
+
+
+#sts
+version.txt
+
+.cd-builders/windows/builder7/runner/roles/
+
+# molecule local json files
+/test/molecule-role/molecule/*/topic-*.json
+/test/molecule-role/molecule/*/persistent-cache-*.json
+.cache
+/test/molecule-role/molecule/*/playbook/run/logs/
+
+# ignore manual test files
+test/manual/*
+
+# cluster agent generated files
+Dockerfiles/cluster-agent/stackstate-cluster.yaml
+Dockerfiles/cluster-agent/auth_token
+Dockerfiles/cluster-agent/cluster_agent.auth_token
+Dockerfiles/cluster-agent/stackstate-cluster-agent
+Dockerfiles/cluster-agent/dist/
+
+# kubernetes test deployment
+deployment/kubernetes/k8s-*/
+
+# windows ami
+.cd-builders/windows/builder/runner/roles/sa_gitlab_runner_win
+
+# msgpack gen files
+*_gen*.go

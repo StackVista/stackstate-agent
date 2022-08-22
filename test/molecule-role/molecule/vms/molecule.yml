@@ -12,7 +12,7 @@ lint: |
 platforms:
   - name: agent-ubuntu
     image: ami-00c25f7948e360133    # Ubuntu 18.04 (EBS-Backed x86_64)
-    instance_type: t3.micro
+    instance_type: t3.small
     vpc_subnet_id: subnet-fa36adb2  # eu-west-1a
     region: eu-west-1
     groups:
@@ -21,7 +21,7 @@ platforms:
 
   - name: agent-fedora
     image: ami-420d213b             # Fedora-Cloud-Base-28-1.1.x86_64-hvm-eu-west-1-standard-0
-    instance_type: t3.micro
+    instance_type: t3.small
     vpc_subnet_id: subnet-fa36adb2  # eu-west-1a
     region: eu-west-1
     groups:
@@ -30,7 +30,7 @@ platforms:
 
   - name: agent-centos
     image: ami-04f5641b0d178a27a    # CentOS 7 7.9.2009
-    instance_type: t3.micro
+    instance_type: t3.small
     vpc_subnet_id: subnet-fa36adb2  # eu-west-1a
     region: eu-west-1
     groups:
@@ -40,7 +40,7 @@ platforms:
   - name: agent-win
     image: ami-044597ab9209135b1  #  Our Packer image based on Windows Server 2016 preconfigured for ansible (EBS-Backed)
     # image: ami-01854c1e9e35eb2ed  # Our packer image based on Windows Server 2012 preconfigured for ansible (EBS Backed)
-    instance_type: t3.small
+    instance_type: t3.medium
     vpc_subnet_id: subnet-fa36adb2  # eu-west-1a
     region: eu-west-1
     groups:
@@ -51,7 +51,7 @@ platforms:
 
   - name: agent-connection-namespaces
     image: ami-00c25f7948e360133    # Ubuntu 18.04 (EBS-Backed x86_64)
-    instance_type: t3.micro
+    instance_type: t3.small
     vpc_subnet_id: subnet-fa36adb2  # eu-west-1a
     region: eu-west-1
     groups:
@@ -60,7 +60,7 @@ platforms:
 
   - name: receiver
     image: ami-09153889bcbb64887    # Our Packer image based on Ubuntu 18.04 (EBS-Backed x86_64)
-    instance_type: t3.medium
+    instance_type: t3.large
     vpc_subnet_id: subnet-fa36adb2  # eu-west-1a
     region: eu-west-1
     groups:
@@ -71,7 +71,6 @@ scenario:
   name: vms
   create_sequence:
     - dependency
-    - cleanup
     - destroy
     - syntax
     - create
@@ -86,9 +85,9 @@ scenario:
     - lint
     - side_effect
     - verify
+    - cleanup
   destroy_sequence:
     - dependency
-    - cleanup
     - destroy
 
 verifier:

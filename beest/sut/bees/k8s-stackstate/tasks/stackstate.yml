@@ -20,44 +20,75 @@
 
   - name: Generate sts-toolbox config
     ansible.builtin.template:
-      src: sts-toolbox-config.yaml
+      src: sts-toolbox-config.j2.yaml
       dest: "{{ playbook_dir }}/sts-toolbox.yml"
 
   - name: Generate StackState values
     ansible.builtin.command:
       cmd: sts-toolbox generate-values --config "{{ playbook_dir }}/sts-toolbox.yml" --output "{{ playbook_dir }}/stackstate-values.yml"
 
+  - name: StackState base url
+    debug:
+      var: sts_url
+
+# TODO: The ability to start just a receiver stack (zookeeper, kafka, receiver, correlator, router, api)
+# depends on https://stackstate.atlassian.net/browse/STAC-17313
+#hbase:
+#  enable: false
+#elasticsearch:
+#  enabled: false
+#stackstate:
+#  components:
+#    checks:
+#      replicaCount: 0  # does not exist
+#    healthSync:
+#      replicaCount: 0  # does not exist
+#    state:
+#      replicaCount: 0  # does not exist
+#    sync:
+#      replicaCount: 0  # does not exist
+#    slicing:
+#      replicaCount: 0  # does not exist
+#    viewHealth:
+#      replicaCount: 0  # does not exist
+#    problemProducer:
+#      replicaCount: 0  # does not exist
+#    ui:
+#      replicaCount: 0
 
   - name: Deploy stackstate chart using values files
     kubernetes.core.helm:
       context: "{{ kubecontext }}"
-      chart_ref: stackstate-internal/stackstate
-      chart_version: "{{ stackstate_helm_chart }}"
+      chart_ref: stackstate/stackstate
+      chart_version: "{{ stackstate_helm_chart_version }}"
       release_name: stackstate
       release_namespace: "{{ namespace }}"
       create_namespace: true
       update_repo_cache: true
       wait: yes
-      wait_timeout: 10m
+      wait_timeout: 15m
       values_files:
         - "{{ playbook_dir }}/stackstate-values.yml"
       values:
-        stackstate:
-          components:
-            e2es:
-              replicaCount: 0
-            mm2es:
-              replicaCount: 0
-            problemProducer:
-              replicaCount: 0
-            trace2es:
-              replicaCount: 0
+        global:
+          receiverApiKey: "{{ sts_api_key }}"
+
+  - name: Wait till StackState API is ready
+    kubernetes.core.k8s_info:
+      context: "{{ kubecontext }}"
+      kind: Pod
+      namespace: "{{ namespace }}"
+      label_selectors:
+        - "app.kubernetes.io/component = api"
+      wait: yes
+      wait_timeout: 900 # in secs
 
 
 ## Cleanup
 
 - name: StackState cleanup tasks
   tags: cleanup
+  ignore_errors: yes
   block:
   - name: Undeploy stackstate
     kubernetes.core.helm:

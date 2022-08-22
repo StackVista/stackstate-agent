@@ -10,9 +10,9 @@ backgroundImage: url('https://marp.app/assets/hero-background.svg')
 
 ---
 
-# Black-box testing
+# Black-box API testing
 
-Examines functionalities without poking into the product.
+Examines functionalities without poking into the product, instead verification happens using APIs.
 
 Testers know what the software is supposed to do but is not aware of how it does it.
 

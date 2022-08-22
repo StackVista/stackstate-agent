@@ -33,6 +33,7 @@ type Batcher interface {
 	SubmitHealthCheckData(checkID check.ID, stream health.Stream, data health.CheckData)
 	SubmitHealthStartSnapshot(checkID check.ID, stream health.Stream, intervalSeconds int, expirySeconds int)
 	SubmitHealthStopSnapshot(checkID check.ID, stream health.Stream)
+	SubmitError(checkID check.ID, err error)
 
 	// Raw Metrics
 	SubmitRawMetricsData(checkID check.ID, data telemetry.RawMetrics)
@@ -67,7 +68,7 @@ func GetBatcher() Batcher {
 }
 
 // NewMockBatcher initializes the global batcher with a mock version, intended for testing
-func NewMockBatcher() MockBatcher {
+func NewMockBatcher() *MockBatcher {
 	batcher := createMockBatcher()
 	batcherInstance = batcher
 	return batcher
@@ -335,4 +336,8 @@ func (batcher AsynchronousBatcher) SubmitComplete(checkID check.ID) {
 // Shutdown shuts down the batcher
 func (batcher AsynchronousBatcher) Shutdown() {
 	batcher.input <- submitShutdown{}
+}
+
+// SubmitError takes error in the testing code, not yet accounted for health or anything else
+func (batcher AsynchronousBatcher) SubmitError(checkID check.ID, err error) {
 }

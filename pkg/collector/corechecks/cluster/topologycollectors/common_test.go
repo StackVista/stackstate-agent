@@ -4,9 +4,11 @@ import "github.com/StackVista/stackstate-agent/pkg/topology"
 
 func testCaseName(baseName string, sourcePropertiesEnabled bool) string {
 	if sourcePropertiesEnabled {
-		return baseName + " with sourceProperties"
+		baseName = baseName + " w/ sourceProps"
+	} else {
+		baseName = baseName + " w/o sourceProps"
 	}
-	return baseName + " without sourceProperties"
+	return baseName
 }
 
 func chooseBySourcePropertiesFeature(

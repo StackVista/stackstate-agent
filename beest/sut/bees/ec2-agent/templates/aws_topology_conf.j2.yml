@@ -1,0 +1,16 @@
+init_config:
+  aws_access_key_id: '' # Empty because the Agent is running on an EC2 instance with an IAM role
+  aws_secret_access_key: '' # Empty because the Agent is running on an EC2 instance with an IAM role
+  external_id: {{ yard_id }} # Same external ID when creating the CloudFormation stack
+  # full_run_interval: 3600 # Time in seconds between a full AWS topology scan. Intermediate runs only fetch events. Is not required.
+
+instances:
+  - role_arn: {{ aws_integration.integration_iam_role }}
+    regions:
+      - global # global is a special "region" for global resources such as Route53
+      - {{ aws_integration.region }}
+    collection_interval: 60
+    # apis_to_run: # Optionally whitelist specific AWS services. It is not recommended to set this; instead rely on IAM permissions.
+    #   - ec2
+    # log_bucket_name: '' # The S3 bucket that the agent should read events from. This value should only be set in custom implementations.
+    # flowlog_bucket_name: '' # The S3 bucket that the agent should read flowlogs from. This value should only be set in custom implementations.

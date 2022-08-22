@@ -1,12 +1,15 @@
 #!/bin/bash
 
-source ~/.bashrc
-eval "$(direnv hook bash)"
-direnv allow
+. bootstrap_functions.sh
 
-go install github.com/spf13/cobra/cobra
+# if this is an additional shell, no need to execute the following
+if [ `echo $$` == 1 ]; then
+    install_cobra_cli
+    build_beest
+    generate_aws_config
+fi
 
-go build .
-eval "$(/go/src/app/beest completion bash)"
+# we export the function so we can call it in the .envrc, after BEEST_AWS variables have been set
+export -f configure_aws_beest_credentials
 
-eval "$(sts-toolbox completion bash)"
+setup_interactive_shell

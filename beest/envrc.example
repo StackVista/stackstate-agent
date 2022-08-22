@@ -1,12 +1,12 @@
-export PATH=$PWD:$PATH
+PATH_add $PWD
 
 export AWS_DEFAULT_REGION=eu-west-1
-
-# Configure either the AWS profile or the AWS keys, not both
 export AWS_PROFILE=stackstate-sandbox
-#
-#export AWS_ACCESS_KEY_ID=TBD
-#export AWS_SECRET_ACCESS_KEY=TBD
+
+# those are the credentials of a stackstate-infosec user
+export BEEST_AWS_ACCESS_KEY_ID=TBD
+export BEEST_AWS_SECRET_ACCESS_KEY=TBD
+configure_aws_beest_credentials
 
 export quay_user=TBD
 export quay_password=TBD
@@ -16,5 +16,5 @@ export artifactory_password=TBD
 export RUN_ID=$AGENT_CURRENT_BRANCH
 
 export STACKSTATE_BRANCH=master
-export STACKSTATE_HELM_CHART=">0.0.0-0"  # use development versions
+export STACKSTATE_HELM_CHART_VERSION=">0.0.0-0"  # use development versions
 export STACKSTATE_LICENSE=TBD

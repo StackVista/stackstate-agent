@@ -6,6 +6,10 @@ func (yard *Yard) Inventory() string {
 	return fmt.Sprintf("%s/ansible_inventory", yard.dir)
 }
 
+func (yard *Yard) Playbook() string {
+	return fmt.Sprintf("%s/playbook.yml", yard.dir)
+}
+
 ///
 
 type PrepareStep struct {

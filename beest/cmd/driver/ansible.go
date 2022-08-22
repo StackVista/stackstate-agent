@@ -13,15 +13,13 @@ import (
 type AnsibleDeployer struct{}
 
 func (ad *AnsibleDeployer) Prepare(step *step.PrepareStep) error {
-	pb := fmt.Sprintf("%s/prepare.yml", step.WorkingDir())
 	tags := []string{"prepare"}
-	return play(step.Inventory(), pb, tags)
+	return play(step.Inventory(), step.Playbook(), tags)
 }
 
 func (ad *AnsibleDeployer) Cleanup(step *step.CleanupStep) error {
-	pb := fmt.Sprintf("%s/cleanup.yml", step.WorkingDir())
 	tags := []string{"cleanup"}
-	return play(step.Inventory(), pb, tags)
+	return play(step.Inventory(), step.Playbook(), tags)
 }
 
 func play(inv, pb string, tags []string) error {
