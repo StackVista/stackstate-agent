@@ -100,12 +100,12 @@ class TopologyMatchingResult:
 
         # graph_name should cluster_{i}, otherwise the renderer does not recognize styles
         query_graph = pydot.Subgraph(graph_name="cluster_1", label="Query result", **self.QueryResultSubgraphStyle)
-        for mcomp in self._source.components:
-            label = f"{mcomp.name}\ntype={mcomp.type}"
+        for scomp in self._source.components:
+            label = f"{scomp.name}\ntype={scomp.type}"
             color = 'black'
-            if exact_match is not None and exact_match.has_component(mcomp.id):
+            if exact_match is not None and exact_match.has_component(scomp.id):
                 color = 'darkgreen'
-            query_graph.add_node(pydot.Node(mcomp.id, label=label, color=color))
+            query_graph.add_node(pydot.Node(scomp.id, label=label, color=color))
         for rel in self._source.relations:
             relation_node_id = rel.id
             color = 'black'
@@ -118,7 +118,7 @@ class TopologyMatchingResult:
 
         matcher_graph = pydot.Subgraph(graph_name="cluster_0", label="Matching rule", **self.MatchingRuleSubgraphStyle)
         for mcomp in self._matcher._components:
-            id = mcomp.id
+            id = str(mcomp.id)
             rules = "\n".join([str(m) for m in mcomp.matchers])
             label = f"{id}\n{rules}"
             matches = self._component_matches.get(id, [])
@@ -128,17 +128,16 @@ class TopologyMatchingResult:
                 graph.add_edge(pydot.Edge(id, comp.id, color=color, style="dotted", penwidth=5))
 
         for rel in self._matcher._relations:
-            rules = "\n".join([str(m) for m in rel.matchers])
-
             rel_id = str(rel.id())
+            rules = "\n".join([str(m) for m in rel.matchers])
             matches = self._relation_matches.get(rel.id(), [])
             color = self._color_for_matches_count(len(matches))
             self._add_compound_relation(
-                matcher_graph, rel_id, rel.source, rel.target, color,
+                matcher_graph, rel_id, str(rel.source), str(rel.target), color,
                 shape="underline", label=rules)
             # connect to matched relations
             for mrel in matches:
-                graph.add_edge(pydot.Edge(rel_id, mrel.id, color=color, style="dotted", penwidth=3))
+                graph.add_edge(pydot.Edge(rel_id, str(mrel.id), color=color, style="dotted", penwidth=3))
 
         graph.add_subgraph(matcher_graph)
 

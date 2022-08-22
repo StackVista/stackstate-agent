@@ -63,7 +63,7 @@ class CLIv1:
         json_data = json.loads(executed.stdout)['result']
         if self.cache_enabled:
             with open(cachefile, 'w') as f:
-                f.write(executed["stdout"])
+                f.write(executed.stdout)
         return json_data
 
     @staticmethod

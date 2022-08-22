@@ -90,7 +90,7 @@ class TopologyMatcher(TopologyMatcherBuilder):
         self._components.append(ComponentMatcher(id, kwargs))
         return self
 
-    def one_way_direction(self, source: str, target: str, **kwargs) -> 'TopologyMatcher':
+    def one_way_direction(self, source: ComponentKey, target: ComponentKey, **kwargs) -> 'TopologyMatcher':
         source_found = False
         target_found = False
         for comp in self._components:

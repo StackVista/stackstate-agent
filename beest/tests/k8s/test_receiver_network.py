@@ -111,7 +111,7 @@ def test_pod_container_to_container(host, ansible_var, topic_api):
     url = "{0}/sts_topo_process_agents?limit=1000".format(topic_api)
 
     server_port = int(ansible_var("container_to_container_server_port"))
-    cluster_name = ansible_var("cluster_name")
+    cluster_name = ansible_var("agent_cluster_name")
 
     def wait_for_components():
         data = host.check_output("curl \"%s\"" % url)
@@ -161,7 +161,7 @@ def test_headless_pod_to_pod(host, ansible_var, topic_api):
 
     # Server and service port are equal
     server_port = int(ansible_var("headless_service_port"))
-    cluster_name = ansible_var("cluster_name")
+    cluster_name = ansible_var("agent_cluster_name")
 
     def wait_for_components():
         data = host.check_output("curl \"%s\"" % url)
