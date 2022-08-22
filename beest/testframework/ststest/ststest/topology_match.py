@@ -1,14 +1,7 @@
 from typing import Tuple, Union
 
 from stscliv1 import ComponentWrapper, RelationWrapper
-
-SingleComponentKey = str
-SingleRelationKey = Tuple[str, str]
-RepeatedComponentKey = Tuple[SingleComponentKey, int]
-RepeatedRelationKey = Tuple[SingleRelationKey, int]
-
-ComponentKey = Union[SingleComponentKey, RepeatedComponentKey]
-RelationKey = Union[SingleRelationKey, RepeatedRelationKey]
+from .match_keys import ComponentKey, RelationKey, SingleComponentKey
 
 
 class TopologyMatch:

@@ -5,7 +5,8 @@ from stscliv1 import TopologyResult, ComponentWrapper
 
 from .primitive_matchers import ComponentMatcher, RelationMatcher
 from .invariant_search import ConsistentGraphMatcher
-from .topology_match import TopologyMatch, RepeatedComponentKey, ComponentKey, SingleComponentKey
+from .topology_match import TopologyMatch
+from .match_keys import RepeatedComponentKey, ComponentKey, SingleComponentKey
 from .topology_matching_result import TopologyMatchingResult
 
 
@@ -132,12 +133,12 @@ class TopologyMatcher(TopologyMatcherBuilder):
             relation_candidate_ids = get_common_relations(source_candidates, target_candidates)
             relation_candidates = [relation_by_id[id] for id in relation_candidate_ids if id in relation_by_id]
             matching = [rel for rel in relation_candidates if comp_rel.match(rel)]
-            matching_relations[comp_rel.id()] = matching
+            matching_relations[comp_rel.id] = matching
             consistent_graph_matcher.add_choice_of_spec([
                 {
                     comp_rel.source: rel.source,
                     comp_rel.target: rel.target,
-                    comp_rel.id(): rel.id,
+                    comp_rel.id: rel.id,
                 }
                 for rel in matching
             ])

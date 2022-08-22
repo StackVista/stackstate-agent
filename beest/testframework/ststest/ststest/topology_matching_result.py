@@ -8,17 +8,20 @@ import pydot
 import urllib.parse
 import pyshorteners
 
-from .topology_match import TopologyMatch
+from .match_keys import ComponentKey
+from .topology_match import TopologyMatch, RelationKey
 
 
 class TopologyMatchingResult:
+
+    _matcher: 'TopologyMatcher'
 
     def __init__(self,
                  matches: list[TopologyMatch],
                  matcher: 'TopologyMatcher',
                  source: TopologyResult,
-                 component_matches: dict[str, list[ComponentWrapper]],
-                 relation_matches: dict[str, list[RelationWrapper]],
+                 component_matches: dict[ComponentKey, list[ComponentWrapper]],
+                 relation_matches: dict[RelationKey, list[RelationWrapper]],
                  ):
         self._topology_matches = matches
         self._relation_matches = relation_matches
@@ -50,7 +53,7 @@ class TopologyMatchingResult:
             elif len(components) > 1:
                 errors.append(f"\tmultiple matches for component {matcher}:"
                               f"{delimiter}{delimiter.join(map(self.component_pretty_short, components))}")
-        rel_matchers = {matcher.id(): matcher for matcher in self._matcher._relations}
+        rel_matchers = {matcher.id: matcher for matcher in self._matcher._relations}
         for key, relations in self._relation_matches.items():
             matcher = rel_matchers[key]
             if len(relations) == 0:
@@ -91,6 +94,25 @@ class TopologyMatchingResult:
         graph.add_edge(pydot.Edge(source, id, color=color))
         graph.add_edge(pydot.Edge(id, target, color=color))
 
+    def _component_matcher_label(self, matcher: 'ComponentMatcher'):
+        rules = "\n".join([str(m) for m in matcher.matchers])
+        return f"{matcher.id}\n{rules}"
+
+    def _relation_matcher_label(self, matcher: 'RelationMatcher'):
+        return "\n".join([str(m) for m in matcher.matchers])
+
+    def _get_comp_matcher_by_key(self, key):
+        for m in self._matcher._components:
+            if m.id == key:
+                return m
+        return None
+
+    def _get_rel_matcher_by_key(self, key):
+        for m in self._matcher._relations:
+            if m.id == key:
+                return m
+        return None
+
     def render_debug_dot(self, matching_graph_name=None, generate_diagram_url=True):
         graph = pydot.Dot("Topology match debug", graph_type="digraph")
 
@@ -98,43 +120,72 @@ class TopologyMatchingResult:
         if len(self._topology_matches) == 1:
             exact_match = self._topology_matches[0]
 
+        # inverted index of matchers for specific component
+        exact_component_matches = {}
+        for mkey, comps in self._component_matches.items():
+            for comp in comps:
+                matchers = exact_component_matches[comp.id] if comp.id in exact_component_matches else []
+                matchers.append(mkey)
+                exact_component_matches[comp.id] = matchers
+
+        exact_relation_matches = {}
+        for mkey, rels in self._relation_matches.items():
+            for rel in rels:
+                matchers = exact_relation_matches[rel.id] if rel.id in exact_component_matches else []
+                matchers.append(mkey)
+                exact_relation_matches[rel.id] = matchers
+
+        exact_matchers = set()
+        for _, matchers in exact_component_matches.items():
+            if len(matchers) == 1:
+                exact_matchers.add(matchers[0])
+
+
         # graph_name should cluster_{i}, otherwise the renderer does not recognize styles
         query_graph = pydot.Subgraph(graph_name="cluster_1", label="Query result", **self.QueryResultSubgraphStyle)
         for scomp in self._source.components:
             label = f"{scomp.name}\ntype={scomp.type}"
             color = 'black'
-            if exact_match is not None and exact_match.has_component(scomp.id):
+            if scomp.id in exact_component_matches and len(exact_component_matches[scomp.id]) == 1:
                 color = 'darkgreen'
+                matcher = self._get_comp_matcher_by_key(exact_component_matches[scomp.id][0])
+                label += f"\n-----\n{self._component_matcher_label(matcher)}"
             query_graph.add_node(pydot.Node(scomp.id, label=label, color=color))
         for rel in self._source.relations:
             relation_node_id = rel.id
             color = 'black'
-            if exact_match is not None and exact_match.has_relation(rel.id):
+            label = rel.type
+            if rel.id in exact_relation_matches and len(exact_relation_matches[rel.id]) == 1:
                 color = 'darkgreen'
+                matcher = self._get_rel_matcher_by_key(exact_relation_matches[rel.id][0])
+                label += f"\n-----\n{self._relation_matcher_label(matcher)}"
             self._add_compound_relation(
                 query_graph, relation_node_id, rel.source, rel.target, color,
-                shape="underline", label=rel.type)
+                shape="underline", label=label)
         graph.add_subgraph(query_graph)
 
         matcher_graph = pydot.Subgraph(graph_name="cluster_0", label="Matching rule", **self.MatchingRuleSubgraphStyle)
         for mcomp in self._matcher._components:
             id = str(mcomp.id)
-            rules = "\n".join([str(m) for m in mcomp.matchers])
-            label = f"{id}\n{rules}"
             matches = self._component_matches.get(id, [])
             color = self._color_for_matches_count(len(matches))
-            matcher_graph.add_node(pydot.Node(id, label=label, color=color))
-            for comp in matches:
-                graph.add_edge(pydot.Edge(id, comp.id, color=color, style="dotted", penwidth=5))
+            if len(matches) != 1:
+                matcher_graph.add_node(pydot.Node(id, label=self._component_matcher_label(mcomp), color=color))
+                for comp in matches:
+                    graph.add_edge(pydot.Edge(id, comp.id, color=color, style="dotted", penwidth=5))
 
         for rel in self._matcher._relations:
-            rel_id = str(rel.id())
-            rules = "\n".join([str(m) for m in rel.matchers])
-            matches = self._relation_matches.get(rel.id(), [])
+            rel_id = str(rel.id)
+            label = self._relation_matcher_label(rel)
+            matches = self._relation_matches.get(rel.id, [])
             color = self._color_for_matches_count(len(matches))
+            if len(matches) == 1:
+                continue
+            source = str(rel.source) if rel.source not in exact_matchers else self._component_matches[rel.source][0].id
+            target = str(rel.target) if rel.target not in exact_matchers else self._component_matches[rel.target][0].id
             self._add_compound_relation(
-                matcher_graph, rel_id, str(rel.source), str(rel.target), color,
-                shape="underline", label=rules)
+                matcher_graph, rel_id, source, target, color,
+                shape="underline", label=label)
             # connect to matched relations
             for mrel in matches:
                 graph.add_edge(pydot.Edge(rel_id, str(mrel.id), color=color, style="dotted", penwidth=3))
