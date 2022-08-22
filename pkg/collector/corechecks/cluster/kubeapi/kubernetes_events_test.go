@@ -99,7 +99,6 @@ func TestProcessBundledEvents(t *testing.T) {
 	assert.Contains(t, res1.Title, "Scheduled - dca-789976f5d7-2ljx6 Pod")
 	assert.Equal(t, "Activities", res1.EventContext.Category)
 	mocked.AssertNumberOfCalls(t, "Event", 2)
-	// failing
 	mocked.AssertExpectations(t)
 
 	// Several modified events, timestamp is the latest, event submitted has the correct key and count.
@@ -142,6 +141,7 @@ func TestProcessBundledEvents(t *testing.T) {
 	// defer a reset of the state so that future hostname fetches are not impacted
 	defer mockConfig.Set("cluster_name", nil)
 	defer clustername.ResetClusterName()
+	kubeAPIEventsCheck.clusterName = clustername.GetClusterName(context.TODO(), "")
 
 	modifiedNewDatadogEventsWithClusterName := metrics.Event{
 		Title:    "Events from the machine-blue Node",
@@ -170,7 +170,6 @@ func TestProcessBundledEvents(t *testing.T) {
 
 	// failing
 	mocked.AssertEvent(t, modifiedNewDatadogEventsWithClusterName, 0)
-
 	mocked.AssertExpectations(t)
 }
 
