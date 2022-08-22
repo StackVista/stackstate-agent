@@ -116,10 +116,6 @@ class TopologyMatchingResult:
     def render_debug_dot(self, matching_graph_name=None, generate_diagram_url=True):
         graph = pydot.Dot("Topology match debug", graph_type="digraph")
 
-        exact_match = None
-        if len(self._topology_matches) == 1:
-            exact_match = self._topology_matches[0]
-
         # inverted index of matchers for specific component
         exact_component_matches = {}
         for mkey, comps in self._component_matches.items():
@@ -167,7 +163,7 @@ class TopologyMatchingResult:
         matcher_graph = pydot.Subgraph(graph_name="cluster_0", label="Matching rule", **self.MatchingRuleSubgraphStyle)
         for mcomp in self._matcher._components:
             id = str(mcomp.id)
-            matches = self._component_matches.get(id, [])
+            matches = self._component_matches.get(mcomp.id, [])
             color = self._color_for_matches_count(len(matches))
             if len(matches) != 1:
                 matcher_graph.add_node(pydot.Node(id, label=self._component_matcher_label(mcomp), color=color))
