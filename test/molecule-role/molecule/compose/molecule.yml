@@ -23,7 +23,6 @@ scenario:
   name: compose
   create_sequence:
     - dependency
-    - cleanup
     - destroy
     - syntax
     - create

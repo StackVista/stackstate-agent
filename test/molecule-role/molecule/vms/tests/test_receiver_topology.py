@@ -137,7 +137,7 @@ def test_dnat(host, ansible_var):
             type_name="directional_connection",
             external_id_assert_fn=lambda v: service_to_proc_id_match.findall(v))["incoming"]["ip"] == ubuntu_private_ip
 
-    util.wait_until(wait_for_components, 600, 3)
+    util.wait_until(wait_for_components, 900, 3)
 
 
 def test_topology_filtering(host, ansible_var):
