@@ -2,13 +2,16 @@
 - name: StackState Agent prepare tasks
   tags: prepare
   block:
-  - name: Create test namespace '{{ namespace }}'
+  - name: Create namespaces
     kubernetes.core.k8s:
       context: "{{ kubecontext }}"
       api_version: v1
       kind: Namespace
-      name: "{{ namespace }}"
+      name: "{{ item }}"
       state: present
+    with_items:
+      - "{{ monitoring_namespace }}"
+      - "{{ test_namespace }}"
 
   - include_tasks: quay-registry-key.yml
 
@@ -25,7 +28,7 @@
   - name: Apply manifests for test workloads
     kubernetes.core.k8s:
       context: "{{ kubecontext }}"
-      namespace: "{{ namespace }}"
+      namespace: "{{ test_namespace }}"
       definition: "{{ lookup('file', '{{ item }}') }}"
     with_fileglob: "test_workloads/*.yaml"
 
@@ -40,7 +43,7 @@
       chart_ref: stackstate/cluster-agent
       chart_version: "{{ agent_helm_chart_version }}"
       release_name: stackstate-cluster-agent
-      release_namespace: "{{ namespace }}"
+      release_namespace: "{{ monitoring_namespace }}"
       create_namespace: true
       update_repo_cache: true
       wait: yes
@@ -52,16 +55,16 @@
   - name: Attempt to verify cluster agent ready
     block:
       - name: Wait for the stackstate cluster agent to start doing it's thing
-        command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=cluster-agent pod
+        command: kubectl --context={{ kubecontext }} -n={{ monitoring_namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=cluster-agent pod
     rescue:
       - name: Describe cluster agent pod
-        command: kubectl describe pods -l app.kubernetes.io/component=cluster-agent -n={{ namespace }} --context={{ kubecontext }}
+        command: kubectl describe pods -l app.kubernetes.io/component=cluster-agent -n={{ monitoring_namespace }} --context={{ kubecontext }}
         register: cluster_agent_describe
       - debug:
           var: cluster_agent_describe
 
       - name: Log cluster agent pod
-        command: kubectl logs -l app.kubernetes.io/component=cluster-agent -n={{ namespace }} --context={{ kubecontext }} --all-containers
+        command: kubectl logs -l app.kubernetes.io/component=cluster-agent -n={{ monitoring_namespace }} --context={{ kubecontext }} --all-containers
         register: cluster_agent_logs
       - debug:
           var: cluster_agent_logs
@@ -73,16 +76,16 @@
   - name: Attempt to verify node agents ready
     block:
       - name: Wait for the stackstate node agents to start doing their thing (otherwise connections might occur after agent startup)
-        command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=agent pod
+        command: kubectl --context={{ kubecontext }} -n={{ monitoring_namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=agent pod
     rescue:
       - name: Describe node agent pods
-        command: kubectl describe pods -l app.kubernetes.io/component=agent -n={{ namespace }} --context={{ kubecontext }}
+        command: kubectl describe pods -l app.kubernetes.io/component=agent -n={{ monitoring_namespace }} --context={{ kubecontext }}
         register: node_agent_describe
       - debug:
           var: node_agent_describe
 
       - name: Log cluster agent pod
-        command: kubectl logs -l app.kubernetes.io/component=agent -n={{ namespace }} --context={{ kubecontext }} --all-containers
+        command: kubectl logs -l app.kubernetes.io/component=agent -n={{ monitoring_namespace }} --context={{ kubecontext }} --all-containers
         register: node_agent_logs
       - debug:
           var: node_agent_logs
@@ -95,34 +98,34 @@
   - name: Attempt to verify cluster check agent ready
     block:
       - name: Wait for the stackstate cluster check agent to start
-        command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=clusterchecks pod
+        command: kubectl --context={{ kubecontext }} -n={{ monitoring_namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=clusterchecks pod
     rescue:
       - name: Describe cluster check agent pod
-        command: kubectl describe pods -l app.kubernetes.io/component=clusterchecks -n={{ namespace }} --context={{ kubecontext }}
+        command: kubectl describe pods -l app.kubernetes.io/component=clusterchecks -n={{ monitoring_namespace }} --context={{ kubecontext }}
         register: cluster_check_agent_describe
       - debug:
           var: cluster_check_agent_describe
 
       - name: Log cluster check agent pod
-        command: kubectl logs -l app.kubernetes.io/component=clusterchecks -n={{ namespace }} --context={{ kubecontext }} --all-containers
+        command: kubectl logs -l app.kubernetes.io/component=clusterchecks -n={{ monitoring_namespace }} --context={{ kubecontext }} --all-containers
         register: cluster_check_agent_logs
       - debug:
           var: cluster_check_agent_logs
         failed_when: true
 
-  - name: Attempt to verify cluster check agent ready
+  - name: Attempt to verify kube state metrics ready
     block:
-      - name: Wait for the kube-state-metrics to be ready
-        command: kubectl --context={{ kubecontext }} -n={{ namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/name=kube-state-metrics pod
+      - name: Wait for the kube state metrics to be ready
+        command: kubectl --context={{ kubecontext }} -n={{ monitoring_namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/name=kube-state-metrics pod
     rescue:
-      - name: Describe cluster check agent pod
-        command: kubectl describe pods -l app.kubernetes.io/name=kube-state-metrics -n={{ namespace }} --context={{ kubecontext }}
+      - name: Describe kube state metrics pod
+        command: kubectl describe pods -l app.kubernetes.io/name=kube-state-metrics -n={{ monitoring_namespace }} --context={{ kubecontext }}
         register: kube_state_metrics_describe
       - debug:
           var: kube_state_metrics_describe
 
-      - name: Log cluster check agent pod
-        command: kubectl logs -l app.kubernetes.io/name=kube-state-metrics -n={{ namespace }} --context={{ kubecontext }} --all-containers
+      - name: Log kube state metrics pod
+        command: kubectl logs -l app.kubernetes.io/name=kube-state-metrics -n={{ monitoring_namespace }} --context={{ kubecontext }} --all-containers
         register: kube_state_metrics_logs
       - debug:
           var: kube_state_metrics_logs
@@ -145,15 +148,18 @@
     kubernetes.core.helm:
       context: "{{ kubecontext }}"
       release_name: stackstate-cluster-agent
-      release_namespace: "{{ namespace }}"
+      release_namespace: "{{ monitoring_namespace }}"
       state: absent
       wait: true
 
-  - name: Delete namespace '{{namespace}}'
+  - name: Delete namespaces
     kubernetes.core.k8s:
       context: "{{ kubecontext }}"
       api_version: v1
       kind: Namespace
-      name: "{{ namespace }}"
+      name: "{{ item }}"
       state: absent
       wait: true
+    with_items:
+      - "{{ monitoring_namespace }}"
+      - "{{ test_namespace }}"

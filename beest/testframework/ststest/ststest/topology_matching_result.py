@@ -77,7 +77,7 @@ class TopologyMatchingResult:
     }
     UnmatchedColor = 'red'
     MultipleMatches = 'orange'
-    ExactMatchColor = 'darkgreen'
+    ExactMatchColor = 'green'
 
     @staticmethod
     def _color_for_matches_count(count: int):
@@ -143,7 +143,7 @@ class TopologyMatchingResult:
             label = f"{scomp.name}\ntype={scomp.type}"
             color = 'black'
             if scomp.id in exact_component_matches and len(exact_component_matches[scomp.id]) == 1:
-                color = 'darkgreen'
+                color = TopologyMatchingResult.ExactMatchColor
                 matcher = self._get_comp_matcher_by_key(exact_component_matches[scomp.id][0])
                 label += f"\n-----\n{self._component_matcher_label(matcher)}"
             query_graph.add_node(pydot.Node(scomp.id, label=label, color=color))
@@ -152,7 +152,7 @@ class TopologyMatchingResult:
             color = 'black'
             label = rel.type
             if rel.id in exact_relation_matches and len(exact_relation_matches[rel.id]) == 1:
-                color = 'darkgreen'
+                color = TopologyMatchingResult.ExactMatchColor
                 matcher = self._get_rel_matcher_by_key(exact_relation_matches[rel.id][0])
                 label += f"\n-----\n{self._relation_matcher_label(matcher)}"
             self._add_compound_relation(

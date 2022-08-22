@@ -20,8 +20,9 @@ stackstate_branch: "{{ lookup('env', 'STACKSTATE_BRANCH') or STACKSTATE_BRANCH }
 stackstate_helm_chart_version: "{{ lookup('env', 'STACKSTATE_HELM_CHART_VERSION') or STACKSTATE_HELM_CHART_VERSION }}"
 stackstate_license: "{{ lookup('env', 'STACKSTATE_LICENSE') or STACKSTATE_LICENSE }}"
 
-namespace: "{{ yard_id.replace('.','-').replace('_','-') | lower }}"
-agent_cluster_name: "{{ namespace }}"
+monitoring_namespace: "monitoring"
+test_namespace: "{{ yard_id.replace('.','-').replace('_','-') }}"
+agent_cluster_name: "{{ test_namespace }}"
 stackstate_cluster_name: "sandbox-main.sandbox.stackstate.io"
 
 agent_kubecontext: "{{ yard_id }}"
