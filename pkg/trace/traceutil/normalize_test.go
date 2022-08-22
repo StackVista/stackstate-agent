@@ -104,9 +104,14 @@ func TestNormalizeName(t *testing.T) {
 		},
 		{
 			name:       "Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.",
-			normalized: "Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.",
-			err:        ErrTooLong,
+			normalized: "Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.", // sts
+			err:        nil,                                                                                                   // sts
 		},
+		{ // sts begin
+			name:       strings.Repeat("Too-Long-.", 51),
+			normalized: strings.Repeat("Too_Long.", 50),
+			err:        ErrTooLong,
+		}, // sts end
 		{
 			name:       "bad-name",
 			normalized: "bad_name",
@@ -138,9 +143,14 @@ func TestNormalizeService(t *testing.T) {
 		},
 		{
 			service:    "Too$Long$.Too$Long$.Too$Long$.Too$Long$.Too$Long$.Too$Long$.Too$Long$.Too$Long$.Too$Long$.Too$Long$.Too$Long$.",
-			normalized: "too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.",
-			err:        ErrTooLong,
+			normalized: "too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.", // sts
+			err:        nil,                                                                                                              // sts
 		},
+		{ // sts begin
+			service:    strings.Repeat("Too$Long$.", 51),
+			normalized: strings.Repeat("too_long_.", 25),
+			err:        ErrTooLong,
+		}, // sts end
 		{
 			service:    "bad$service",
 			normalized: "bad_service",
