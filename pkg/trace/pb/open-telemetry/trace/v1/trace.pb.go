@@ -798,16 +798,16 @@ func (m *Status) GetCode() Status_StatusCode {
 }
 
 func init() {
-	proto.RegisterEnum("opentelemetry.proto.trace.v1.Span_SpanKind", Span_SpanKind_name, Span_SpanKind_value)
-	proto.RegisterEnum("opentelemetry.proto.trace.v1.Status_DeprecatedStatusCode", Status_DeprecatedStatusCode_name, Status_DeprecatedStatusCode_value)
-	proto.RegisterEnum("opentelemetry.proto.trace.v1.Status_StatusCode", Status_StatusCode_name, Status_StatusCode_value)
-	proto.RegisterType((*TracesData)(nil), "opentelemetry.proto.trace.v1.TracesData")
-	proto.RegisterType((*ResourceSpans)(nil), "opentelemetry.proto.trace.v1.ResourceSpans")
-	proto.RegisterType((*InstrumentationLibrarySpans)(nil), "opentelemetry.proto.trace.v1.InstrumentationLibrarySpans")
-	proto.RegisterType((*Span)(nil), "opentelemetry.proto.trace.v1.Span")
-	proto.RegisterType((*Span_Event)(nil), "opentelemetry.proto.trace.v1.Span.Event")
-	proto.RegisterType((*Span_Link)(nil), "opentelemetry.proto.trace.v1.Span.Link")
-	proto.RegisterType((*Status)(nil), "opentelemetry.proto.trace.v1.Status")
+	proto.RegisterEnum("sts.opentelemetry.proto.trace.v1.Span_SpanKind", Span_SpanKind_name, Span_SpanKind_value)
+	proto.RegisterEnum("sts.opentelemetry.proto.trace.v1.Status_DeprecatedStatusCode", Status_DeprecatedStatusCode_name, Status_DeprecatedStatusCode_value)
+	proto.RegisterEnum("sts.opentelemetry.proto.trace.v1.Status_StatusCode", Status_StatusCode_name, Status_StatusCode_value)
+	proto.RegisterType((*TracesData)(nil), "sts.opentelemetry.proto.trace.v1.TracesData")
+	proto.RegisterType((*ResourceSpans)(nil), "sts.opentelemetry.proto.trace.v1.ResourceSpans")
+	proto.RegisterType((*InstrumentationLibrarySpans)(nil), "sts.opentelemetry.proto.trace.v1.InstrumentationLibrarySpans")
+	proto.RegisterType((*Span)(nil), "sts.opentelemetry.proto.trace.v1.Span")
+	proto.RegisterType((*Span_Event)(nil), "sts.opentelemetry.proto.trace.v1.Span.Event")
+	proto.RegisterType((*Span_Link)(nil), "sts.opentelemetry.proto.trace.v1.Span.Link")
+	proto.RegisterType((*Status)(nil), "sts.opentelemetry.proto.trace.v1.Status")
 }
 
 func init() {

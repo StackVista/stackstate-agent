@@ -402,12 +402,12 @@ func (m *InstrumentationLibrary) GetVersion() string {
 }
 
 func init() {
-	proto.RegisterType((*AnyValue)(nil), "opentelemetry.proto.common.v1.AnyValue")
-	proto.RegisterType((*ArrayValue)(nil), "opentelemetry.proto.common.v1.ArrayValue")
-	proto.RegisterType((*KeyValueList)(nil), "opentelemetry.proto.common.v1.KeyValueList")
-	proto.RegisterType((*KeyValue)(nil), "opentelemetry.proto.common.v1.KeyValue")
-	proto.RegisterType((*StringKeyValue)(nil), "opentelemetry.proto.common.v1.StringKeyValue")
-	proto.RegisterType((*InstrumentationLibrary)(nil), "opentelemetry.proto.common.v1.InstrumentationLibrary")
+	proto.RegisterType((*AnyValue)(nil), "sts.opentelemetry.proto.common.v1.AnyValue")
+	proto.RegisterType((*ArrayValue)(nil), "sts.opentelemetry.proto.common.v1.ArrayValue")
+	proto.RegisterType((*KeyValueList)(nil), "sts.opentelemetry.proto.common.v1.KeyValueList")
+	proto.RegisterType((*KeyValue)(nil), "sts.opentelemetry.proto.common.v1.KeyValue")
+	proto.RegisterType((*StringKeyValue)(nil), "sts.opentelemetry.proto.common.v1.StringKeyValue")
+	proto.RegisterType((*InstrumentationLibrary)(nil), "sts.opentelemetry.proto.common.v1.InstrumentationLibrary")
 }
 
 func init() {

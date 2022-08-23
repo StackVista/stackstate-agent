@@ -99,8 +99,8 @@ func (m *ExportTraceServiceResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_ExportTraceServiceResponse proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*ExportTraceServiceRequest)(nil), "opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest")
-	proto.RegisterType((*ExportTraceServiceResponse)(nil), "opentelemetry.proto.collector.trace.v1.ExportTraceServiceResponse")
+	proto.RegisterType((*ExportTraceServiceRequest)(nil), "sts.opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest")
+	proto.RegisterType((*ExportTraceServiceResponse)(nil), "sts.opentelemetry.proto.collector.trace.v1.ExportTraceServiceResponse")
 }
 
 func init() {
