@@ -45,9 +45,6 @@ func apply(yard step.Yard, destroy bool, prompt bool) error {
 	if err := state.init(); err != nil {
 		return err
 	}
-	if err := state.validate(); err != nil {
-		return err
-	}
 
 	if hasChanges, planErr := state.plan(yard.Variables(), destroy); planErr == nil {
 		if hasChanges {
@@ -146,7 +143,7 @@ func prettyVars(vars map[string]interface{}) string {
 }
 
 func (ts *TerraformState) plan(vars map[string]interface{}, destroy bool) (bool, error) {
-	log.Printf("Planning Terraform changes with variables [%s]...\n", prettyVars(vars))
+	log.Printf("Planning Terraform changes with variables [%s] ...\n", prettyVars(vars))
 	var tfPlanOptions []tfexec.PlanOption
 	for k, v := range vars {
 		tfPlanOptions = append(tfPlanOptions, tfexec.Var(fmt.Sprintf("%s=%s", k, v)))

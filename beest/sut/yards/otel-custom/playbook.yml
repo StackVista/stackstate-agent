@@ -5,6 +5,11 @@
     - role: "{{ bees_path }}/k8s-stackstate"
       vars:
         sts_ingress: KOPS
+
+- name: Otel Lambda
+  hosts: local
+  gather_facts: false
+  roles:
     - role: "{{ bees_path }}/otel-lambda"
 
 - name: VM Agent

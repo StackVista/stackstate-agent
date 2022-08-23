@@ -603,6 +603,22 @@ pre_release_cluster_agent_image:
     when: on_success
     allow_failure: false
 
+.v2_merge_train_on_success_allow_failure: &v2_merge_train_on_success_allow_failure
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: on_success
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_success
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
+    when: on_success
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
+    when: on_success
+    allow_failure: true
+
 .v2_merge_train_on_failure: &v2_merge_train_on_failure
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
     when: on_failure
@@ -690,6 +706,7 @@ pre_release_cluster_agent_image:
       - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/topic-*
       - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/*.log
       - $CI_PROJECT_DIR/.cache
+      - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/**/*.tar.gz
       - $MOLECULE_EPHEMERAL_DIRECTORY
     expire_in: 1 week
   retry:
@@ -725,7 +742,7 @@ pre_release_cluster_agent_image:
 
 # Core Structure for all the beest steps
 .beest: &beest
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20220728
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20220818
   interruptible: true
   dependencies: []
   before_script:
@@ -744,8 +761,8 @@ pre_release_cluster_agent_image:
     - export RUN_ID=$CI_COMMIT_REF_NAME
     - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
     - export AGENT_HELM_CHART_VERSION=latest
-    - export STACKSTATE_BRANCH=master
-    - export STACKSTATE_HELM_CHART_VERSION=">0.0.0-0"
+    - export STACKSTATE_BRANCH="5.0.2"
+    - export STACKSTATE_HELM_CHART_VERSION="5.0.2"
   after_script: # artifacts do not work with absolute path, so we move them inside the build dir
     - mv /go/src/app/terraform.log $CI_PROJECT_DIR/beest/ || true
     - mv /go/src/app/tests/$BEEST_TEST_GROUP/topic-* $CI_PROJECT_DIR/beest/ || true
@@ -1209,7 +1226,7 @@ molecule_swarm_test:
   <<: *molecule_test
   rules:
     - *swarm_ignore_rule
-    - *v2_merge_train_on_success
+    - *v2_merge_train_on_success_allow_failure
   dependencies:
     - molecule_swarm_create
   variables:

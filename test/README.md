@@ -43,6 +43,12 @@ Prerequisites:
 * export AWS_ACCESS_KEY_ID=
 * export AWS_SECRET_ACCESS_KEY=
 * export AWS_REGION=eu-west-1
+* export quay_password=
+* export quay_user=
+
+If you are running the script on macOS (possibly M1) and the script crashes (due to a Python crash), add the following as well:
+* export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+
 
 Install miniconda: https://docs.conda.io/en/latest/miniconda.html
 
