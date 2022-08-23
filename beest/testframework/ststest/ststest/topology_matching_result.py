@@ -12,8 +12,27 @@ from .match_keys import ComponentKey
 from .topology_match import TopologyMatch, RelationKey
 
 
-class TopologyMatchingResult:
+class ExactMatches:
+    matcher_to_relation: dict[RelationKey, any]
+    relation_to_matcher: dict[any, RelationKey]
+    matcher_to_component: dict[ComponentKey, any]
+    component_to_matcher: dict[any, ComponentKey]
 
+    def __init__(self,
+                 matcher_to_relation: dict[RelationKey, any],
+                 relation_to_matcher: dict[any, RelationKey],
+                 matcher_to_component: dict[ComponentKey, any],
+                 component_to_matcher: dict[any, ComponentKey],
+                 ):
+        self.component_to_matcher = component_to_matcher
+        self.matcher_to_component = matcher_to_component
+        self.relation_to_matcher = relation_to_matcher
+        self.matcher_to_relation = matcher_to_relation
+
+
+class TopologyMatchingResult:
+    _relation_matches: dict[RelationKey, list[RelationWrapper]]
+    _component_matches: dict[ComponentKey, list[ComponentWrapper]]
     _matcher: 'TopologyMatcher'
 
     def __init__(self,
@@ -24,8 +43,10 @@ class TopologyMatchingResult:
                  relation_matches: dict[RelationKey, list[RelationWrapper]],
                  ):
         self._topology_matches = matches
-        self._relation_matches = relation_matches
         self._component_matches = component_matches
+        self._relation_matches = relation_matches
+        self._component_matchers_index = {matcher.id: matcher for matcher in matcher._components}
+        self._relation_matchers_index = {matcher.id: matcher for matcher in matcher._relations}
         self._matcher = matcher
         self._source = source
 
@@ -45,17 +66,15 @@ class TopologyMatchingResult:
             return self._topology_matches[0]
         errors = []
         delimiter = "\n\t\t"
-        comp_matchers = {matcher.id: matcher for matcher in self._matcher._components}
         for key, components in self._component_matches.items():
-            matcher = comp_matchers[key]
+            matcher = self._component_matchers_index[key]
             if len(components) == 0:
                 errors.append(f"\tcomponent {matcher} was not found")
             elif len(components) > 1:
                 errors.append(f"\tmultiple matches for component {matcher}:"
                               f"{delimiter}{delimiter.join(map(self.component_pretty_short, components))}")
-        rel_matchers = {matcher.id: matcher for matcher in self._matcher._relations}
         for key, relations in self._relation_matches.items():
-            matcher = rel_matchers[key]
+            matcher = self._relation_matchers_index[key]
             if len(relations) == 0:
                 errors.append(f"\trelation {matcher} was not found")
             elif len(relations) > 1:
@@ -113,78 +132,85 @@ class TopologyMatchingResult:
                 return m
         return None
 
+    def _compute_exact_matches(self):
+        if len(self._topology_matches) == 1:
+            topo_match = self._topology_matches[0]
+            return ExactMatches(
+                matcher_to_component={mkey: comp.id for mkey, comp in topo_match._components.items()},
+                component_to_matcher={comp.id: mkey for mkey, comp in topo_match._components.items()},
+                matcher_to_relation={mkey: rel.id for mkey, rel in topo_match._relations.items()},
+                relation_to_matcher={rel.id: mkey for mkey, rel in topo_match._relations.items()},
+            )
+        else:
+            matcher_to_component = {mkey: comps[0].id for mkey, comps in self._component_matches.items() if len(comps) == 1}
+            matcher_to_relation = {mkey: rels[0].id for mkey, rels in self._relation_matches.items() if len(rels) == 1}
+            return ExactMatches(
+                matcher_to_component=matcher_to_component,
+                matcher_to_relation=matcher_to_relation,
+                component_to_matcher={c: m for m, c in matcher_to_component.items()},
+                relation_to_matcher={r: m for m, r in matcher_to_relation.items()},
+            )
+
     def render_debug_dot(self, matching_graph_name=None, generate_diagram_url=True):
         graph = pydot.Dot("Topology match debug", graph_type="digraph")
 
-        # inverted index of matchers for specific component
-        exact_component_matches = {}
-        for mkey, comps in self._component_matches.items():
-            for comp in comps:
-                matchers = exact_component_matches[comp.id] if comp.id in exact_component_matches else []
-                matchers.append(mkey)
-                exact_component_matches[comp.id] = matchers
-
-        exact_relation_matches = {}
-        for mkey, rels in self._relation_matches.items():
-            for rel in rels:
-                matchers = exact_relation_matches[rel.id] if rel.id in exact_component_matches else []
-                matchers.append(mkey)
-                exact_relation_matches[rel.id] = matchers
-
-        exact_matchers = set()
-        for _, matchers in exact_component_matches.items():
-            if len(matchers) == 1:
-                exact_matchers.add(matchers[0])
-
+        # we need to know which component/relations are matched exactly to overlay them on the diagram
+        exact_matches = self._compute_exact_matches()
 
         # graph_name should cluster_{i}, otherwise the renderer does not recognize styles
         query_graph = pydot.Subgraph(graph_name="cluster_1", label="Query result", **self.QueryResultSubgraphStyle)
-        for scomp in self._source.components:
-            label = f"{scomp.name}\ntype={scomp.type}"
+        for component in self._source.components:
+            component_gv_id = component.id
+            label = f"{component.name}\ntype={component.type}"
             color = 'black'
-            if scomp.id in exact_component_matches and len(exact_component_matches[scomp.id]) == 1:
+            if component.id in exact_matches.component_to_matcher:
                 color = TopologyMatchingResult.ExactMatchColor
-                matcher = self._get_comp_matcher_by_key(exact_component_matches[scomp.id][0])
+                matcher = self._component_matchers_index[exact_matches.component_to_matcher[component.id]]
                 label += f"\n-----\n{self._component_matcher_label(matcher)}"
-            query_graph.add_node(pydot.Node(scomp.id, label=label, color=color))
-        for rel in self._source.relations:
-            relation_node_id = rel.id
+            query_graph.add_node(pydot.Node(component_gv_id, label=label, color=color))
+        for relation in self._source.relations:
+            relation_gv_id = relation.id
             color = 'black'
-            label = rel.type
-            if rel.id in exact_relation_matches and len(exact_relation_matches[rel.id]) == 1:
+            label = relation.type
+            if relation.id in exact_matches.relation_to_matcher:
                 color = TopologyMatchingResult.ExactMatchColor
-                matcher = self._get_rel_matcher_by_key(exact_relation_matches[rel.id][0])
+                matcher = self._relation_matchers_index[exact_matches.relation_to_matcher[relation.id]]
                 label += f"\n-----\n{self._relation_matcher_label(matcher)}"
             self._add_compound_relation(
-                query_graph, relation_node_id, rel.source, rel.target, color,
+                query_graph, relation_gv_id, relation.source, relation.target, color,
                 shape="underline", label=label)
         graph.add_subgraph(query_graph)
 
         matcher_graph = pydot.Subgraph(graph_name="cluster_0", label="Matching rule", **self.MatchingRuleSubgraphStyle)
-        for mcomp in self._matcher._components:
-            id = str(mcomp.id)
-            matches = self._component_matches.get(mcomp.id, [])
-            color = self._color_for_matches_count(len(matches))
-            if len(matches) != 1:
-                matcher_graph.add_node(pydot.Node(id, label=self._component_matcher_label(mcomp), color=color))
-                for comp in matches:
-                    graph.add_edge(pydot.Edge(id, comp.id, color=color, style="dotted", penwidth=5))
-
-        for rel in self._matcher._relations:
-            rel_id = str(rel.id)
-            label = self._relation_matcher_label(rel)
-            matches = self._relation_matches.get(rel.id, [])
-            color = self._color_for_matches_count(len(matches))
-            if len(matches) == 1:
+        for matcher in self._matcher._components:
+            if matcher.id in exact_matches.matcher_to_component:
                 continue
-            source = str(rel.source) if rel.source not in exact_matchers else self._component_matches[rel.source][0].id
-            target = str(rel.target) if rel.target not in exact_matchers else self._component_matches[rel.target][0].id
+            matcher_gv_id = f"{matcher.id}_matcher"
+            matches = self._component_matches.get(matcher.id, [])
+            color = self._color_for_matches_count(len(matches))
+            matcher_graph.add_node(pydot.Node(matcher_gv_id, label=self._component_matcher_label(matcher), color=color))
+            for comp in matches:
+                graph.add_edge(pydot.Edge(matcher_gv_id, comp.id, color=color, style="dotted", penwidth=5))
+
+        def component_gv_id(comp_matcher: ComponentKey):
+            if comp_matcher in exact_matches.matcher_to_component:
+                # connect relation to the exact component that was matched by the matcher
+                return exact_matches.matcher_to_component[comp_matcher]
+            return f"{comp_matcher}_matcher"
+
+        for matcher in self._matcher._relations:
+            if matcher.id in exact_matches.matcher_to_relation:
+                continue
+            matcher_gv_id = str(matcher.id)
+            label = self._relation_matcher_label(matcher)
+            matches = self._relation_matches.get(matcher.id, [])
+            color = self._color_for_matches_count(len(matches))
             self._add_compound_relation(
-                matcher_graph, rel_id, source, target, color,
+                matcher_graph, matcher_gv_id, component_gv_id(matcher.source), component_gv_id(matcher.target), color,
                 shape="underline", label=label)
             # connect to matched relations
             for mrel in matches:
-                graph.add_edge(pydot.Edge(rel_id, str(mrel.id), color=color, style="dotted", penwidth=3))
+                graph.add_edge(pydot.Edge(matcher_gv_id, str(mrel.id), color=color, style="dotted", penwidth=3))
 
         graph.add_subgraph(matcher_graph)
 

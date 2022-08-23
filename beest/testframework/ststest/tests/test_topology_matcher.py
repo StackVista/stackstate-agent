@@ -108,6 +108,104 @@ class TestTopologyMatcher(TestCase):
         self.assertEqual(input_topology.get('b2'), match.component('B'))
         self.assertEqual(input_topology.get('c1'), match.component('C'))
 
+    def test_render_dot(self):
+        input_topology = TopologyFixture(
+            'a,b,c1,c2,d1,d2,e,a>to>b,b>to>c1,b>to>c2,c1>to>d1,c2>to>d2,d1>to>e,d2>to>e,f1,f2,e>to>f1,e>to>f2'
+        )
+        matcher = TopologyMatcher() \
+            .component('A', name='a') \
+            .component('B', name='b') \
+            .one_way_direction('A', 'B') \
+            .component('C1', name='c1') \
+            .component('C2', name='c_miss') \
+            .component('D1', name='d1') \
+            .component('D2', name='d2') \
+            .one_way_direction('B', 'C2') \
+            .one_way_direction('C2', 'D2') \
+            .one_way_direction('C1', 'D1', type='cd_miss') \
+            .component('E', name='e') \
+            .component('F', name='f.') \
+            .one_way_direction('E', 'F')
+
+        expected_dot_file = '''digraph "Topology match debug" {
+subgraph cluster_1 {
+color=mediumslateblue;
+fontsize=30;
+label="Query result";
+penwidth=5;
+1 [color=darkgreen, label="a\\ntype=component\\n-----\\nA\\nname~=a"];
+2 [color=darkgreen, label="b\\ntype=component\\n-----\\nB\\nname~=b"];
+3 [color=darkgreen, label="c1\\ntype=component\\n-----\\nC1\\nname~=c1"];
+4 [color=black, label="c2\\ntype=component"];
+5 [color=darkgreen, label="d1\\ntype=component\\n-----\\nD1\\nname~=d1"];
+6 [color=darkgreen, label="d2\\ntype=component\\n-----\\nD2\\nname~=d2"];
+7 [color=darkgreen, label="e\\ntype=component\\n-----\\nE\\nname~=e"];
+15 [color=black, label="f1\\ntype=component"];
+16 [color=black, label="f2\\ntype=component"];
+8 [color=darkgreen, label="to\\n-----\\ndependencyDirection~=ONE_WAY", shape=underline];
+1 -> 8  [color=darkgreen];
+8 -> 2  [color=darkgreen];
+9 [color=black, label=to, shape=underline];
+2 -> 9  [color=black];
+9 -> 3  [color=black];
+10 [color=black, label=to, shape=underline];
+2 -> 10  [color=black];
+10 -> 4  [color=black];
+11 [color=black, label=to, shape=underline];
+3 -> 11  [color=black];
+11 -> 5  [color=black];
+12 [color=black, label=to, shape=underline];
+4 -> 12  [color=black];
+12 -> 6  [color=black];
+13 [color=black, label=to, shape=underline];
+5 -> 13  [color=black];
+13 -> 7  [color=black];
+14 [color=black, label=to, shape=underline];
+6 -> 14  [color=black];
+14 -> 7  [color=black];
+17 [color=black, label=to, shape=underline];
+7 -> 17  [color=black];
+17 -> 15  [color=black];
+18 [color=black, label=to, shape=underline];
+7 -> 18  [color=black];
+18 -> 16  [color=black];
+}
+
+F_matcher -> 15  [color=orange, penwidth=5, style=dotted];
+F_matcher -> 16  [color=orange, penwidth=5, style=dotted];
+"('E', 'F')" -> 17  [color=orange, penwidth=3, style=dotted];
+"('E', 'F')" -> 18  [color=orange, penwidth=3, style=dotted];
+subgraph cluster_0 {
+color=grey;
+fontsize=30;
+label="Matching rule";
+penwidth=5;
+C2_matcher [color=red, label="C2\\nname~=c_miss"];
+F_matcher [color=orange, label="F\\nname~=f."];
+"('B', 'C2')" [color=red, label="dependencyDirection~=ONE_WAY", shape=underline];
+2 -> "('B', 'C2')"  [color=red];
+"('B', 'C2')" -> C2_matcher  [color=red];
+"('C2', 'D2')" [color=red, label="dependencyDirection~=ONE_WAY", shape=underline];
+C2_matcher -> "('C2', 'D2')"  [color=red];
+"('C2', 'D2')" -> 6  [color=red];
+"('C1', 'D1')" [color=red, label="type~=cd_miss\\ndependencyDirection~=ONE_WAY", shape=underline];
+3 -> "('C1', 'D1')"  [color=red];
+"('C1', 'D1')" -> 5  [color=red];
+"('E', 'F')" [color=orange, label="dependencyDirection~=ONE_WAY", shape=underline];
+7 -> "('E', 'F')"  [color=orange];
+"('E', 'F')" -> F_matcher  [color=orange];
+}
+
+}
+'''
+
+        result = matcher.find(input_topology.topology())
+        with self.assertRaises(AssertionError) as exc:
+            result.assert_exact_match(matching_graph_name=self._testMethodName, matching_graph_upload=False)
+        with open(f"{self._testMethodName}.gv", 'r') as dot:
+            test = ''.join(dot.readlines())
+            self.assertEqual(expected_dot_file, test)
+
     def test_ambiguous_match_failure(self):
         input_topology = TopologyFixture("a1,a2,b1,b2,c1,c2,a1>to>b2,b2>to>c1,a2>to>b2,b1>to>c1,b1>to>c2")
         matcher = TopologyMatcher() \
