@@ -1,8 +1,8 @@
 ---
-clusterChecks:
+checksAgent:
   # clusterChecks.enabled -- Enables the cluster checks functionality _and_ the clustercheck pods.
   enabled: true
-agent:
+nodeAgent:
   config:
     override:
       # agent.config.override -- Create a configmap that can be used as the state file to keep track of agent integration
