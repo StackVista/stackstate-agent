@@ -2,10 +2,6 @@ package api
 
 import (
 	"fmt"
-	v1common "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/common/v1"
-	v1resource "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/resource/v1"
-	"github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/collector"
-	v1trace "github.com/StackVista/stackstate-agent/pkg/trace/pb/open-telemetry/trace/v1"
 	"net/http"
 	"strings"
 	"testing"
@@ -14,43 +10,44 @@ import (
 
 	"github.com/StackVista/stackstate-agent/pkg/trace/config"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/trace/pb/otlppb"
 	"github.com/StackVista/stackstate-agent/pkg/trace/test/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
-func makeOTLPTestSpan(start uint64) *v1trace.Span {
-	return &v1trace.Span{
+func makeOTLPTestSpan(start uint64) *otlppb.Span {
+	return &otlppb.Span{
 		TraceId:           otlpTestID128,
 		SpanId:            otlpTestID128,
 		TraceState:        "state",
 		ParentSpanId:      []byte{0},
 		Name:              "/path",
-		Kind:              v1trace.Span_SPAN_KIND_SERVER,
+		Kind:              otlppb.Span_SPAN_KIND_SERVER,
 		StartTimeUnixNano: start,
 		EndTimeUnixNano:   start + 200000000,
-		Attributes: []*v1common.KeyValue{
-			{Key: "name", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "john"}}},
-			{Key: "name", Value: &v1common.AnyValue{Value: &v1common.AnyValue_DoubleValue{DoubleValue: 1.2}}},
-			{Key: "count", Value: &v1common.AnyValue{Value: &v1common.AnyValue_IntValue{IntValue: 2}}},
+		Attributes: []*otlppb.KeyValue{
+			{Key: "name", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "john"}}},
+			{Key: "name", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_DoubleValue{DoubleValue: 1.2}}},
+			{Key: "count", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_IntValue{IntValue: 2}}},
 		},
 		DroppedAttributesCount: 0,
-		Events: []*v1trace.Span_Event{
+		Events: []*otlppb.Span_Event{
 			{
 				TimeUnixNano: 123,
 				Name:         "boom",
-				Attributes: []*v1common.KeyValue{
-					{Key: "message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "Out of memory"}}},
-					{Key: "accuracy", Value: &v1common.AnyValue{Value: &v1common.AnyValue_DoubleValue{DoubleValue: 2.4}}},
+				Attributes: []*otlppb.KeyValue{
+					{Key: "message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "Out of memory"}}},
+					{Key: "accuracy", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_DoubleValue{DoubleValue: 2.4}}},
 				},
 				DroppedAttributesCount: 2,
 			},
 			{
 				TimeUnixNano: 456,
 				Name:         "exception",
-				Attributes: []*v1common.KeyValue{
-					{Key: "exception.message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "Out of memory"}}},
-					{Key: "exception.type", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "mem"}}},
-					{Key: "exception.stacktrace", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "1/2/3"}}},
+				Attributes: []*otlppb.KeyValue{
+					{Key: "exception.message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "Out of memory"}}},
+					{Key: "exception.type", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "mem"}}},
+					{Key: "exception.stacktrace", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "1/2/3"}}},
 				},
 				DroppedAttributesCount: 2,
 			},
@@ -58,9 +55,9 @@ func makeOTLPTestSpan(start uint64) *v1trace.Span {
 		DroppedEventsCount: 0,
 		Links:              nil,
 		DroppedLinksCount:  0,
-		Status: &v1trace.Status{
+		Status: &otlppb.Status{
 			Message: "Error",
-			Code:    v1trace.Status_STATUS_CODE_ERROR,
+			Code:    otlppb.Status_STATUS_CODE_ERROR,
 		},
 	}
 }
@@ -69,41 +66,41 @@ var (
 	// otlpTestID128 is an Opentelemetry compatible 128-bit ID represented as a 16-element byte array.
 	otlpTestID128 = []byte{0x72, 0xdf, 0x52, 0xa, 0xf2, 0xbd, 0xe7, 0xa5, 0x24, 0x0, 0x31, 0xea, 0xd7, 0x50, 0xe5, 0xf3}
 	// otlpTestTraceServiceReq holds a basic trace request used for testing.
-	otlpTestTraceServiceReq = &collector.ExportTraceServiceRequest{
-		ResourceSpans: []*v1trace.ResourceSpans{
+	otlpTestTraceServiceReq = &otlppb.ExportTraceServiceRequest{
+		ResourceSpans: []*otlppb.ResourceSpans{
 			{
-				Resource: &v1resource.Resource{
-					Attributes: []*v1common.KeyValue{
-						{Key: "service.name", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "mongodb"}}},
-						{Key: "binary", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "rundb"}}},
+				Resource: &otlppb.Resource{
+					Attributes: []*otlppb.KeyValue{
+						{Key: "service.name", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "mongodb"}}},
+						{Key: "binary", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "rundb"}}},
 					},
 					DroppedAttributesCount: 2,
 				},
-				InstrumentationLibrarySpans: []*v1trace.InstrumentationLibrarySpans{
+				InstrumentationLibrarySpans: []*otlppb.InstrumentationLibrarySpans{
 					{
-						InstrumentationLibrary: &v1common.InstrumentationLibrary{
+						InstrumentationLibrary: &otlppb.InstrumentationLibrary{
 							Name:    "libname",
-							Version: "v1trace.2.3",
+							Version: "v1.2.3",
 						},
-						Spans: []*v1trace.Span{makeOTLPTestSpan(uint64(time.Now().UnixNano()))},
+						Spans: []*otlppb.Span{makeOTLPTestSpan(uint64(time.Now().UnixNano()))},
 					},
 				},
 			},
 			{
-				Resource: &v1resource.Resource{
-					Attributes: []*v1common.KeyValue{
-						{Key: "service.name", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "pylons"}}},
-						{Key: "binary", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "runweb"}}},
+				Resource: &otlppb.Resource{
+					Attributes: []*otlppb.KeyValue{
+						{Key: "service.name", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "pylons"}}},
+						{Key: "binary", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "runweb"}}},
 					},
 					DroppedAttributesCount: 1,
 				},
-				InstrumentationLibrarySpans: []*v1trace.InstrumentationLibrarySpans{
+				InstrumentationLibrarySpans: []*otlppb.InstrumentationLibrarySpans{
 					{
-						InstrumentationLibrary: &v1common.InstrumentationLibrary{
+						InstrumentationLibrary: &otlppb.InstrumentationLibrary{
 							Name:    "othername",
-							Version: "v1trace.2.0",
+							Version: "v1.2.0",
 						},
-						Spans: []*v1trace.Span{makeOTLPTestSpan(uint64(time.Now().UnixNano()))},
+						Spans: []*otlppb.Span{makeOTLPTestSpan(uint64(time.Now().UnixNano()))},
 					},
 				},
 			},
@@ -149,7 +146,7 @@ func TestOTLPReceiver(t *testing.T) {
 		assert := assert.New(t)
 		assert.Nil(o.httpsrv)
 		assert.NotNil(o.grpcsrv)
-		svc, ok := o.grpcsrv.GetServiceInfo()["opentelemetry.proto.collector.trace.v1trace.TraceService"]
+		svc, ok := o.grpcsrv.GetServiceInfo()["opentelemetry.proto.collector.trace.v1.TraceService"]
 		assert.True(ok)
 		assert.Equal("trace_service.proto", svc.Metadata)
 		assert.Equal("Export", svc.Methods[0].Name)
@@ -193,26 +190,26 @@ func TestOTLPReceiver(t *testing.T) {
 
 func TestOTLPHelpers(t *testing.T) {
 	t.Run("AnyValueString", func(t *testing.T) {
-		for in, out := range map[*v1common.AnyValue]string{
-			{Value: &v1common.AnyValue_StringValue{StringValue: "string"}}: "string",
-			{Value: &v1common.AnyValue_BoolValue{BoolValue: true}}:         "true",
-			{Value: &v1common.AnyValue_BoolValue{BoolValue: false}}:        "false",
-			{Value: &v1common.AnyValue_IntValue{IntValue: 12}}:             "12",
-			{Value: &v1common.AnyValue_DoubleValue{DoubleValue: 2.12345}}:  "2.12",
-			{Value: &v1common.AnyValue_ArrayValue{
-				ArrayValue: &v1common.ArrayValue{
-					Values: []*v1common.AnyValue{
-						{Value: &v1common.AnyValue_DoubleValue{DoubleValue: 2.12345}},
-						{Value: &v1common.AnyValue_StringValue{StringValue: "string"}},
-						{Value: &v1common.AnyValue_BoolValue{BoolValue: true}},
+		for in, out := range map[*otlppb.AnyValue]string{
+			{Value: &otlppb.AnyValue_StringValue{StringValue: "string"}}: "string",
+			{Value: &otlppb.AnyValue_BoolValue{BoolValue: true}}:         "true",
+			{Value: &otlppb.AnyValue_BoolValue{BoolValue: false}}:        "false",
+			{Value: &otlppb.AnyValue_IntValue{IntValue: 12}}:             "12",
+			{Value: &otlppb.AnyValue_DoubleValue{DoubleValue: 2.12345}}:  "2.12",
+			{Value: &otlppb.AnyValue_ArrayValue{
+				ArrayValue: &otlppb.ArrayValue{
+					Values: []*otlppb.AnyValue{
+						{Value: &otlppb.AnyValue_DoubleValue{DoubleValue: 2.12345}},
+						{Value: &otlppb.AnyValue_StringValue{StringValue: "string"}},
+						{Value: &otlppb.AnyValue_BoolValue{BoolValue: true}},
 					},
 				},
 			}}: "2.12,string,true",
-			{Value: &v1common.AnyValue_KvlistValue{
-				KvlistValue: &v1common.KeyValueList{
-					Values: []*v1common.KeyValue{
-						{Key: "key1", Value: &v1common.AnyValue{Value: &v1common.AnyValue_BoolValue{BoolValue: true}}},
-						{Key: "key2", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "string"}}},
+			{Value: &otlppb.AnyValue_KvlistValue{
+				KvlistValue: &otlppb.KeyValueList{
+					Values: []*otlppb.KeyValue{
+						{Key: "key1", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_BoolValue{BoolValue: true}}},
+						{Key: "key2", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "string"}}},
 					},
 				},
 			}}: "key1:true,key2:string",
@@ -231,14 +228,14 @@ func TestOTLPHelpers(t *testing.T) {
 	})
 
 	t.Run("spanKindNames", func(t *testing.T) {
-		for in, out := range map[v1trace.Span_SpanKind]string{
-			v1trace.Span_SPAN_KIND_UNSPECIFIED: "unspecified",
-			v1trace.Span_SPAN_KIND_INTERNAL:    "internal",
-			v1trace.Span_SPAN_KIND_SERVER:      "server",
-			v1trace.Span_SPAN_KIND_CLIENT:      "client",
-			v1trace.Span_SPAN_KIND_PRODUCER:    "producer",
-			v1trace.Span_SPAN_KIND_CONSUMER:    "consumer",
-			99:                                 "unknown",
+		for in, out := range map[otlppb.Span_SpanKind]string{
+			otlppb.Span_SPAN_KIND_UNSPECIFIED: "unspecified",
+			otlppb.Span_SPAN_KIND_INTERNAL:    "internal",
+			otlppb.Span_SPAN_KIND_SERVER:      "server",
+			otlppb.Span_SPAN_KIND_CLIENT:      "client",
+			otlppb.Span_SPAN_KIND_PRODUCER:    "producer",
+			otlppb.Span_SPAN_KIND_CONSUMER:    "consumer",
+			99:                                "unknown",
 		} {
 			assert.Equal(t, out, spanKindName(in))
 		}
@@ -246,19 +243,19 @@ func TestOTLPHelpers(t *testing.T) {
 
 	t.Run("status2Error", func(t *testing.T) {
 		for _, tt := range []struct {
-			status *v1trace.Status
-			events []*v1trace.Span_Event
+			status *otlppb.Status
+			events []*otlppb.Span_Event
 			out    pb.Span
 		}{
 			{
-				status: &v1trace.Status{Code: v1trace.Status_STATUS_CODE_ERROR},
-				events: []*v1trace.Span_Event{
+				status: &otlppb.Status{Code: otlppb.Status_STATUS_CODE_ERROR},
+				events: []*otlppb.Span_Event{
 					{
 						Name: "exception",
-						Attributes: []*v1common.KeyValue{
-							{Key: "exception.message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "Out of memory"}}},
-							{Key: "exception.type", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "mem"}}},
-							{Key: "exception.stacktrace", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "1/2/3"}}},
+						Attributes: []*otlppb.KeyValue{
+							{Key: "exception.message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "Out of memory"}}},
+							{Key: "exception.type", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "mem"}}},
+							{Key: "exception.stacktrace", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "1/2/3"}}},
 						},
 					},
 				},
@@ -272,12 +269,12 @@ func TestOTLPHelpers(t *testing.T) {
 				},
 			},
 			{
-				status: &v1trace.Status{Code: v1trace.Status_STATUS_CODE_ERROR},
-				events: []*v1trace.Span_Event{
+				status: &otlppb.Status{Code: otlppb.Status_STATUS_CODE_ERROR},
+				events: []*otlppb.Span_Event{
 					{
 						Name: "exception",
-						Attributes: []*v1common.KeyValue{
-							{Key: "exception.message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "Out of memory"}}},
+						Attributes: []*otlppb.KeyValue{
+							{Key: "exception.message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "Out of memory"}}},
 						},
 					},
 				},
@@ -287,12 +284,12 @@ func TestOTLPHelpers(t *testing.T) {
 				},
 			},
 			{
-				status: &v1trace.Status{Code: v1trace.Status_STATUS_CODE_ERROR},
-				events: []*v1trace.Span_Event{
+				status: &otlppb.Status{Code: otlppb.Status_STATUS_CODE_ERROR},
+				events: []*otlppb.Span_Event{
 					{
 						Name: "EXCEPTION",
-						Attributes: []*v1common.KeyValue{
-							{Key: "exception.message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "Out of memory"}}},
+						Attributes: []*otlppb.KeyValue{
+							{Key: "exception.message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "Out of memory"}}},
 						},
 					},
 				},
@@ -302,34 +299,34 @@ func TestOTLPHelpers(t *testing.T) {
 				},
 			},
 			{
-				status: &v1trace.Status{Code: v1trace.Status_STATUS_CODE_ERROR},
-				events: []*v1trace.Span_Event{
+				status: &otlppb.Status{Code: otlppb.Status_STATUS_CODE_ERROR},
+				events: []*otlppb.Span_Event{
 					{
 						Name: "OTher",
-						Attributes: []*v1common.KeyValue{
-							{Key: "exception.message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "Out of memory"}}},
+						Attributes: []*otlppb.KeyValue{
+							{Key: "exception.message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "Out of memory"}}},
 						},
 					},
 				},
 				out: pb.Span{Error: 1},
 			},
 			{
-				status: &v1trace.Status{Code: v1trace.Status_STATUS_CODE_ERROR},
+				status: &otlppb.Status{Code: otlppb.Status_STATUS_CODE_ERROR},
 				out:    pb.Span{Error: 1},
 			},
 			{
-				status: &v1trace.Status{Code: v1trace.Status_STATUS_CODE_OK},
+				status: &otlppb.Status{Code: otlppb.Status_STATUS_CODE_OK},
 				out:    pb.Span{Error: 0},
 			},
 			{
-				status: &v1trace.Status{Code: v1trace.Status_STATUS_CODE_OK},
-				events: []*v1trace.Span_Event{
+				status: &otlppb.Status{Code: otlppb.Status_STATUS_CODE_OK},
+				events: []*otlppb.Span_Event{
 					{
 						Name: "exception",
-						Attributes: []*v1common.KeyValue{
-							{Key: "exception.message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "Out of memory"}}},
-							{Key: "exception.type", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "mem"}}},
-							{Key: "exception.stacktrace", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "1/2/3"}}},
+						Attributes: []*otlppb.KeyValue{
+							{Key: "exception.message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "Out of memory"}}},
+							{Key: "exception.type", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "mem"}}},
+							{Key: "exception.stacktrace", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "1/2/3"}}},
 						},
 					},
 				},
@@ -387,47 +384,47 @@ func TestOTLPHelpers(t *testing.T) {
 
 	t.Run("spanKind2Type", func(t *testing.T) {
 		for _, tt := range []struct {
-			kind v1trace.Span_SpanKind
+			kind otlppb.Span_SpanKind
 			meta map[string]string
 			out  string
 		}{
 			{
-				kind: v1trace.Span_SPAN_KIND_SERVER,
+				kind: otlppb.Span_SPAN_KIND_SERVER,
 				out:  "web",
 			},
 			{
-				kind: v1trace.Span_SPAN_KIND_CLIENT,
+				kind: otlppb.Span_SPAN_KIND_CLIENT,
 				out:  "http",
 			},
 			{
-				kind: v1trace.Span_SPAN_KIND_CLIENT,
+				kind: otlppb.Span_SPAN_KIND_CLIENT,
 				meta: map[string]string{"db.system": "redis"},
 				out:  "cache",
 			},
 			{
-				kind: v1trace.Span_SPAN_KIND_CLIENT,
+				kind: otlppb.Span_SPAN_KIND_CLIENT,
 				meta: map[string]string{"db.system": "memcached"},
 				out:  "cache",
 			},
 			{
-				kind: v1trace.Span_SPAN_KIND_CLIENT,
+				kind: otlppb.Span_SPAN_KIND_CLIENT,
 				meta: map[string]string{"db.system": "other"},
 				out:  "db",
 			},
 			{
-				kind: v1trace.Span_SPAN_KIND_PRODUCER,
+				kind: otlppb.Span_SPAN_KIND_PRODUCER,
 				out:  "custom",
 			},
 			{
-				kind: v1trace.Span_SPAN_KIND_CONSUMER,
+				kind: otlppb.Span_SPAN_KIND_CONSUMER,
 				out:  "custom",
 			},
 			{
-				kind: v1trace.Span_SPAN_KIND_INTERNAL,
+				kind: otlppb.Span_SPAN_KIND_INTERNAL,
 				out:  "custom",
 			},
 			{
-				kind: v1trace.Span_SPAN_KIND_UNSPECIFIED,
+				kind: otlppb.Span_SPAN_KIND_UNSPECIFIED,
 				out:  "custom",
 			},
 		} {
@@ -450,17 +447,17 @@ func TestOTLPConvertSpan(t *testing.T) {
 	now := uint64(time.Now().UnixNano())
 	for i, tt := range []struct {
 		rattr map[string]string
-		lib   *v1common.InstrumentationLibrary
-		in    *v1trace.Span
+		lib   *otlppb.InstrumentationLibrary
+		in    *otlppb.Span
 		out   *pb.Span
 	}{
 		{
 			rattr: map[string]string{
 				"service.name":    "pylons",
-				"service.version": "v1trace.2.3",
+				"service.version": "v1.2.3",
 				"env":             "staging",
 			},
-			lib: &v1common.InstrumentationLibrary{
+			lib: &otlppb.InstrumentationLibrary{
 				Name:    "ddtracer",
 				Version: "v2",
 			},
@@ -482,9 +479,9 @@ func TestOTLPConvertSpan(t *testing.T) {
 					"instrumentation_library.name":    "ddtracer",
 					"instrumentation_library.version": "v2",
 					"service.name":                    "pylons",
-					"service.version":                 "v1trace.2.3",
+					"service.version":                 "v1.2.3",
 					"trace_state":                     "state",
-					"version":                         "v1trace.2.3",
+					"version":                         "v1.2.3",
 					"events":                          "[{\"time_unix_nano\":123,\"name\":\"boom\",\"attributes\":{\"message\":\"Out of memory\",\"accuracy\":\"2.40\"},\"dropped_attributes_count\":2},{\"time_unix_nano\":456,\"name\":\"exception\",\"attributes\":{\"exception.message\":\"Out of memory\",\"exception.type\":\"mem\",\"exception.stacktrace\":\"1/2/3\"},\"dropped_attributes_count\":2}]",
 					"error.msg":                       "Out of memory",
 					"error.type":                      "mem",
@@ -498,48 +495,48 @@ func TestOTLPConvertSpan(t *testing.T) {
 			},
 		}, {
 			rattr: map[string]string{
-				"service.version": "v1trace.2.3",
+				"service.version": "v1.2.3",
 			},
-			lib: &v1common.InstrumentationLibrary{
+			lib: &otlppb.InstrumentationLibrary{
 				Name:    "ddtracer",
 				Version: "v2",
 			},
-			in: &v1trace.Span{
+			in: &otlppb.Span{
 				TraceId:           otlpTestID128,
 				SpanId:            otlpTestID128,
 				TraceState:        "state",
 				ParentSpanId:      []byte{0},
 				Name:              "/path",
-				Kind:              v1trace.Span_SPAN_KIND_SERVER,
+				Kind:              otlppb.Span_SPAN_KIND_SERVER,
 				StartTimeUnixNano: now,
 				EndTimeUnixNano:   now + 200000000,
-				Attributes: []*v1common.KeyValue{
-					{Key: "name", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "john"}}},
-					{Key: "peer.service", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "userbase"}}},
-					{Key: "deployment.environment", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "prod"}}},
-					{Key: "http.method", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "GET"}}},
-					{Key: "http.route", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "/path"}}},
-					{Key: "name", Value: &v1common.AnyValue{Value: &v1common.AnyValue_DoubleValue{DoubleValue: 1.2}}},
-					{Key: "count", Value: &v1common.AnyValue{Value: &v1common.AnyValue_IntValue{IntValue: 2}}},
+				Attributes: []*otlppb.KeyValue{
+					{Key: "name", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "john"}}},
+					{Key: "peer.service", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "userbase"}}},
+					{Key: "deployment.environment", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "prod"}}},
+					{Key: "http.method", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "GET"}}},
+					{Key: "http.route", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "/path"}}},
+					{Key: "name", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_DoubleValue{DoubleValue: 1.2}}},
+					{Key: "count", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_IntValue{IntValue: 2}}},
 				},
 				DroppedAttributesCount: 0,
-				Events: []*v1trace.Span_Event{
+				Events: []*otlppb.Span_Event{
 					{
 						TimeUnixNano: 123,
 						Name:         "boom",
-						Attributes: []*v1common.KeyValue{
-							{Key: "message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "Out of memory"}}},
-							{Key: "accuracy", Value: &v1common.AnyValue{Value: &v1common.AnyValue_DoubleValue{DoubleValue: 2.4}}},
+						Attributes: []*otlppb.KeyValue{
+							{Key: "message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "Out of memory"}}},
+							{Key: "accuracy", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_DoubleValue{DoubleValue: 2.4}}},
 						},
 						DroppedAttributesCount: 2,
 					},
 					{
 						TimeUnixNano: 456,
 						Name:         "exception",
-						Attributes: []*v1common.KeyValue{
-							{Key: "exception.message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "Out of memory"}}},
-							{Key: "exception.type", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "mem"}}},
-							{Key: "exception.stacktrace", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "1/2/3"}}},
+						Attributes: []*otlppb.KeyValue{
+							{Key: "exception.message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "Out of memory"}}},
+							{Key: "exception.type", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "mem"}}},
+							{Key: "exception.stacktrace", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "1/2/3"}}},
 						},
 						DroppedAttributesCount: 2,
 					},
@@ -547,9 +544,9 @@ func TestOTLPConvertSpan(t *testing.T) {
 				DroppedEventsCount: 0,
 				Links:              nil,
 				DroppedLinksCount:  0,
-				Status: &v1trace.Status{
+				Status: &otlppb.Status{
 					Message: "Error",
-					Code:    v1trace.Status_STATUS_CODE_ERROR,
+					Code:    otlppb.Status_STATUS_CODE_ERROR,
 				},
 			},
 			out: &pb.Span{
@@ -569,9 +566,9 @@ func TestOTLPConvertSpan(t *testing.T) {
 					"instrumentation_library.name":    "ddtracer",
 					"otlp.trace_id":                   "72df520af2bde7a5240031ead750e5f3",
 					"instrumentation_library.version": "v2",
-					"service.version":                 "v1trace.2.3",
+					"service.version":                 "v1.2.3",
 					"trace_state":                     "state",
-					"version":                         "v1trace.2.3",
+					"version":                         "v1.2.3",
 					"events":                          "[{\"time_unix_nano\":123,\"name\":\"boom\",\"attributes\":{\"message\":\"Out of memory\",\"accuracy\":\"2.40\"},\"dropped_attributes_count\":2},{\"time_unix_nano\":456,\"name\":\"exception\",\"attributes\":{\"exception.message\":\"Out of memory\",\"exception.type\":\"mem\",\"exception.stacktrace\":\"1/2/3\"},\"dropped_attributes_count\":2}]",
 					"error.msg":                       "Out of memory",
 					"error.type":                      "mem",
@@ -589,47 +586,47 @@ func TestOTLPConvertSpan(t *testing.T) {
 		}, {
 			rattr: map[string]string{
 				"service.name":    "pylons",
-				"service.version": "v1trace.2.3",
+				"service.version": "v1.2.3",
 				"env":             "staging",
 			},
-			lib: &v1common.InstrumentationLibrary{
+			lib: &otlppb.InstrumentationLibrary{
 				Name:    "ddtracer",
 				Version: "v2",
 			},
-			in: &v1trace.Span{
+			in: &otlppb.Span{
 				TraceId:           otlpTestID128,
 				SpanId:            otlpTestID128,
 				TraceState:        "state",
 				ParentSpanId:      []byte{0},
 				Name:              "/path",
-				Kind:              v1trace.Span_SPAN_KIND_SERVER,
+				Kind:              otlppb.Span_SPAN_KIND_SERVER,
 				StartTimeUnixNano: now,
 				EndTimeUnixNano:   now + 200000000,
-				Attributes: []*v1common.KeyValue{
-					{Key: "name", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "john"}}},
-					{Key: "http.method", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "GET"}}},
-					{Key: "http.route", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "/path"}}},
-					{Key: "name", Value: &v1common.AnyValue{Value: &v1common.AnyValue_DoubleValue{DoubleValue: 1.2}}},
-					{Key: "count", Value: &v1common.AnyValue{Value: &v1common.AnyValue_IntValue{IntValue: 2}}},
+				Attributes: []*otlppb.KeyValue{
+					{Key: "name", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "john"}}},
+					{Key: "http.method", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "GET"}}},
+					{Key: "http.route", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "/path"}}},
+					{Key: "name", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_DoubleValue{DoubleValue: 1.2}}},
+					{Key: "count", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_IntValue{IntValue: 2}}},
 				},
 				DroppedAttributesCount: 0,
-				Events: []*v1trace.Span_Event{
+				Events: []*otlppb.Span_Event{
 					{
 						TimeUnixNano: 123,
 						Name:         "boom",
-						Attributes: []*v1common.KeyValue{
-							{Key: "message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "Out of memory"}}},
-							{Key: "accuracy", Value: &v1common.AnyValue{Value: &v1common.AnyValue_DoubleValue{DoubleValue: 2.4}}},
+						Attributes: []*otlppb.KeyValue{
+							{Key: "message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "Out of memory"}}},
+							{Key: "accuracy", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_DoubleValue{DoubleValue: 2.4}}},
 						},
 						DroppedAttributesCount: 2,
 					},
 					{
 						TimeUnixNano: 456,
 						Name:         "exception",
-						Attributes: []*v1common.KeyValue{
-							{Key: "exception.message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "Out of memory"}}},
-							{Key: "exception.type", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "mem"}}},
-							{Key: "exception.stacktrace", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "1/2/3"}}},
+						Attributes: []*otlppb.KeyValue{
+							{Key: "exception.message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "Out of memory"}}},
+							{Key: "exception.type", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "mem"}}},
+							{Key: "exception.stacktrace", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "1/2/3"}}},
 						},
 						DroppedAttributesCount: 2,
 					},
@@ -637,9 +634,9 @@ func TestOTLPConvertSpan(t *testing.T) {
 				DroppedEventsCount: 0,
 				Links:              nil,
 				DroppedLinksCount:  0,
-				Status: &v1trace.Status{
+				Status: &otlppb.Status{
 					Message: "Error",
-					Code:    v1trace.Status_STATUS_CODE_ERROR,
+					Code:    otlppb.Status_STATUS_CODE_ERROR,
 				},
 			},
 			out: &pb.Span{
@@ -658,9 +655,9 @@ func TestOTLPConvertSpan(t *testing.T) {
 					"instrumentation_library.name":    "ddtracer",
 					"instrumentation_library.version": "v2",
 					"service.name":                    "pylons",
-					"service.version":                 "v1trace.2.3",
+					"service.version":                 "v1.2.3",
 					"trace_state":                     "state",
-					"version":                         "v1trace.2.3",
+					"version":                         "v1.2.3",
 					"otlp.trace_id":                   "72df520af2bde7a5240031ead750e5f3",
 					"events":                          "[{\"time_unix_nano\":123,\"name\":\"boom\",\"attributes\":{\"message\":\"Out of memory\",\"accuracy\":\"2.40\"},\"dropped_attributes_count\":2},{\"time_unix_nano\":456,\"name\":\"exception\",\"attributes\":{\"exception.message\":\"Out of memory\",\"exception.type\":\"mem\",\"exception.stacktrace\":\"1/2/3\"},\"dropped_attributes_count\":2}]",
 					"error.msg":                       "Out of memory",
@@ -683,14 +680,14 @@ func TestOTLPConvertSpan(t *testing.T) {
 
 func TestMarshalEvents(t *testing.T) {
 	for _, tt := range []struct {
-		in  []*v1trace.Span_Event
+		in  []*otlppb.Span_Event
 		out string
 	}{
 		{
-			in: []*v1trace.Span_Event{
+			in: []*otlppb.Span_Event{
 				{
-					Attributes: []*v1common.KeyValue{
-						{Key: "message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "OOM"}}},
+					Attributes: []*otlppb.KeyValue{
+						{Key: "message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "OOM"}}},
 					},
 					DroppedAttributesCount: 3,
 				},
@@ -700,18 +697,18 @@ func TestMarshalEvents(t *testing.T) {
 					"dropped_attributes_count":3
 				}]`,
 		}, {
-			in: []*v1trace.Span_Event{
+			in: []*otlppb.Span_Event{
 				{
 					Name: "boom",
 				},
 			},
 			out: `[{"name":"boom"}]`,
 		}, {
-			in: []*v1trace.Span_Event{
+			in: []*otlppb.Span_Event{
 				{
 					Name: "boom",
-					Attributes: []*v1common.KeyValue{
-						{Key: "message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "OOM"}}},
+					Attributes: []*otlppb.KeyValue{
+						{Key: "message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "OOM"}}},
 					},
 					DroppedAttributesCount: 3,
 				},
@@ -722,12 +719,12 @@ func TestMarshalEvents(t *testing.T) {
 					"dropped_attributes_count":3
 				}]`,
 		}, {
-			in: []*v1trace.Span_Event{
+			in: []*otlppb.Span_Event{
 				{
 					TimeUnixNano: 123,
 					Name:         "boom",
-					Attributes: []*v1common.KeyValue{
-						{Key: "message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "OOM"}}},
+					Attributes: []*otlppb.KeyValue{
+						{Key: "message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "OOM"}}},
 					},
 					DroppedAttributesCount: 2,
 				},
@@ -739,19 +736,19 @@ func TestMarshalEvents(t *testing.T) {
 					"dropped_attributes_count":2
 				}]`,
 		}, {
-			in: []*v1trace.Span_Event{
+			in: []*otlppb.Span_Event{
 				{
 					DroppedAttributesCount: 2,
 				},
 			},
 			out: `[{"dropped_attributes_count":2}]`,
 		}, {
-			in: []*v1trace.Span_Event{
+			in: []*otlppb.Span_Event{
 				{
 					TimeUnixNano: 123,
-					Attributes: []*v1common.KeyValue{
-						{Key: "message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "OOM"}}},
-						{Key: "accuracy", Value: &v1common.AnyValue{Value: &v1common.AnyValue_DoubleValue{DoubleValue: 2.4}}},
+					Attributes: []*otlppb.KeyValue{
+						{Key: "message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "OOM"}}},
+						{Key: "accuracy", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_DoubleValue{DoubleValue: 2.4}}},
 					},
 					DroppedAttributesCount: 2,
 				},
@@ -765,13 +762,13 @@ func TestMarshalEvents(t *testing.T) {
 					"dropped_attributes_count":2
 				}]`,
 		}, {
-			in: []*v1trace.Span_Event{
+			in: []*otlppb.Span_Event{
 				{
 					TimeUnixNano: 123,
 					Name:         "boom",
-					Attributes: []*v1common.KeyValue{
-						{Key: "message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "OOM"}}},
-						{Key: "accuracy", Value: &v1common.AnyValue{Value: &v1common.AnyValue_DoubleValue{DoubleValue: 2.4}}},
+					Attributes: []*otlppb.KeyValue{
+						{Key: "message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "OOM"}}},
+						{Key: "accuracy", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_DoubleValue{DoubleValue: 2.4}}},
 					},
 				},
 			},
@@ -784,7 +781,7 @@ func TestMarshalEvents(t *testing.T) {
 					}
 				}]`,
 		}, {
-			in: []*v1trace.Span_Event{
+			in: []*otlppb.Span_Event{
 				{
 					TimeUnixNano:           123,
 					Name:                   "boom",
@@ -797,13 +794,13 @@ func TestMarshalEvents(t *testing.T) {
 					"dropped_attributes_count":2
 				}]`,
 		}, {
-			in: []*v1trace.Span_Event{
+			in: []*otlppb.Span_Event{
 				{
 					TimeUnixNano: 123,
 					Name:         "boom",
-					Attributes: []*v1common.KeyValue{
-						{Key: "message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "OOM"}}},
-						{Key: "accuracy", Value: &v1common.AnyValue{Value: &v1common.AnyValue_DoubleValue{DoubleValue: 2.4}}},
+					Attributes: []*otlppb.KeyValue{
+						{Key: "message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "OOM"}}},
+						{Key: "accuracy", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_DoubleValue{DoubleValue: 2.4}}},
 					},
 					DroppedAttributesCount: 2,
 				},
@@ -818,23 +815,23 @@ func TestMarshalEvents(t *testing.T) {
 					"dropped_attributes_count":2
 				}]`,
 		}, {
-			in: []*v1trace.Span_Event{
+			in: []*otlppb.Span_Event{
 				{
 					TimeUnixNano: 123,
 					Name:         "boom",
-					Attributes: []*v1common.KeyValue{
-						{Key: "message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "OOM"}}},
-						{Key: "accuracy", Value: &v1common.AnyValue{Value: &v1common.AnyValue_DoubleValue{DoubleValue: 2.4}}},
+					Attributes: []*otlppb.KeyValue{
+						{Key: "message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "OOM"}}},
+						{Key: "accuracy", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_DoubleValue{DoubleValue: 2.4}}},
 					},
 					DroppedAttributesCount: 2,
 				},
 				{
 					TimeUnixNano: 456,
 					Name:         "exception",
-					Attributes: []*v1common.KeyValue{
-						{Key: "exception.message", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "OOM"}}},
-						{Key: "exception.type", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "mem"}}},
-						{Key: "exception.stacktrace", Value: &v1common.AnyValue{Value: &v1common.AnyValue_StringValue{StringValue: "1/2/3"}}},
+					Attributes: []*otlppb.KeyValue{
+						{Key: "exception.message", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "OOM"}}},
+						{Key: "exception.type", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "mem"}}},
+						{Key: "exception.stacktrace", Value: &otlppb.AnyValue{Value: &otlppb.AnyValue_StringValue{StringValue: "1/2/3"}}},
 					},
 					DroppedAttributesCount: 2,
 				},
