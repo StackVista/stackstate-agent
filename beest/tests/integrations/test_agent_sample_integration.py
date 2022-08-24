@@ -1,7 +1,7 @@
 import util
 import json
 from util import assert_metrics
-from ststest import TopologyMatcher
+from ststest import TopicTopologyMatcher
 
 testinfra_hosts = ["local"]
 
@@ -17,47 +17,144 @@ def kubernetes_event_data(event, json_data):
     return False
 
 
-# def test_agent_sample_integration_generic_events(cliv1):
+def test_agent_sample_integration_generic_events(cliv1):
 
-#     def wait_for_events():
-#         json_data = cliv1.topic_api("sts_generic_events")
-#         with open("./topic-agent-integration-sample-sts-generic-events.json", 'w') as f:
-#             json.dump(json_data, f, indent=4)
+    def wait_for_events():
+        json_data = cliv1.topic_api("sts_generic_events")
+        with open("./topic-agent-integration-sample-sts-generic-events.json", 'w') as f:
+            json.dump(json_data, f, indent=4)
 
-#         service_event = {
-#             "name": "service-check.service-check",
-#             "title": "stackstate.agent.check_status",
-#             "eventType": "service-check",
-#             "tags": {
-#                 "source_type_name": "service-check",
-#                 "status": "OK",
-#                 "check": "cpu"
-#             },
-#         }
-#         assert kubernetes_event_data(service_event, json_data), f"no matches found for Kubernetes event: {service_event}"
+        service_event = {
+            "name": "service-check.service-check",
+            "title": "stackstate.agent.check_status",
+            "eventType": "service-check",
+            "tags": {
+                "source_type_name": "service-check",
+                "status": "OK",
+                "check": "cpu"
+            },
+        }
+        assert kubernetes_event_data(service_event, json_data), f"no matches found for Kubernetes event: {service_event}"
 
-#         http_event = {
-#             "name": "HTTP_TIMEOUT",
-#             "title": "URL timeout",
-#             "eventType": "HTTP_TIMEOUT",
-#             "tags": {
-#                 "source_type_name": "HTTP_TIMEOUT"
-#             },
-#             "message": "Http request to http://localhost timed out after 5.0 seconds."
-#         }
-#         assert kubernetes_event_data(http_event, json_data), f"no matches found for Kubernetes event: {service_event}"
+        http_event = {
+            "name": "HTTP_TIMEOUT",
+            "title": "URL timeout",
+            "eventType": "HTTP_TIMEOUT",
+            "tags": {
+                "source_type_name": "HTTP_TIMEOUT"
+            },
+            "message": "Http request to http://localhost timed out after 5.0 seconds."
+        }
+        assert kubernetes_event_data(http_event, json_data), f"no matches found for Kubernetes event: {service_event}"
 
-#     util.wait_until(wait_for_events, 10, 5)
+    util.wait_until(wait_for_events, 10, 5)
 
 
-# def test_agent_integration_sample_metrics(host, cliv1):
-#     expected = {'system.cpu.usage', 'location.availability', '2xx.responses', '5xx.responses', 'check_runs'}
-#     json_data = cliv1.topic_api("sts_multi_metrics")
+def test_agent_integration_sample_metrics(host, cliv1):
+    expected = {'system.cpu.usage', 'location.availability', '2xx.responses', '5xx.responses', 'check_runs'}
+    json_data = cliv1.topic_api("sts_multi_metrics")
 
-#     with open("./topic-agent-integration-sample-sts-metrics.json", 'w') as f:
-#             json.dump(json_data, f, indent=4)
+    with open("./topic-agent-integration-sample-sts-metrics.json", 'w') as f:
+            json.dump(json_data, f, indent=4)
 
-#     assert_metrics(host, json_data, expected)
+    assert_metrics(host, json_data, expected)
+
+
+def test_agent_integration_sample_topology_events(host, cliv1):
+
+    def wait_for_topology_events():
+        json_data = cliv1.topic_api("sts_topology_events")
+        with open("./topic-agent-integration-sample-sts-topology-events.json", 'w') as f:
+            json.dump(json_data, f, indent=4)
+
+        def _topology_event_data(event):
+            for message in json_data["messages"]:
+                p = message["message"]
+                if "TopologyEvent" in p:
+                    _data = p["TopologyEvent"]
+                    if _data == dict(_data, **event):
+                        return _data
+            return None
+
+        assert _topology_event_data(
+            {
+                "category": "my_category",
+                "name": "URL timeout",
+                "tags": [],
+                "data": "{\"another_thing\":1,\"big_black_hole\":\"here\",\"test\":{\"1\":\"test\"}}",
+                "source_identifier": "source_identifier_value",
+                "source": "source_value",
+                "element_identifiers": [
+                    "urn:host:/123"
+                ],
+                "source_links": [
+                    {
+                        "url": "http://localhost",
+                        "name": "my_event_external_link"
+                    }
+                ],
+                "type": "HTTP_TIMEOUT",
+                "description": "Http request to http://localhost timed out after 5.0 seconds."
+            }
+        ) is not None
+
+    util.wait_until(wait_for_topology_events, 10, 3)
+
+
+def test_agent_integration_sample_health_synchronization(host, cliv1):
+
+    def wait_for_health_messages():
+        json_data = cliv1.topic_api("sts_intake_health", 100)
+        with open("./topic-agent-integration-sample-sts-health-messages.json", 'w') as f:
+            json.dump(json_data, f, indent=4)
+
+        def _health_contains_payload(event):
+            for message in json_data["messages"]:
+                p = message["message"]
+                if "IntakeHealthMessage" in p:
+                    _data = p["IntakeHealthMessage"]["payload"]
+                    if _data == dict(_data, **event):
+                        return _data
+            return None
+
+        assert _health_contains_payload({
+            "IntakeHealthMainStreamStart": {
+                "repeatIntervalMs": 30000
+            }
+        }
+        ) is not None
+        assert _health_contains_payload({
+            "IntakeHealthMainStreamStop": {}
+        }
+        ) is not None
+        assert _health_contains_payload(
+            {
+                "IntakeHealthCheckStates": {
+                    "consistencyModel": "REPEAT_SNAPSHOTS",
+                    "intakeCheckStates": [
+                        {"data": "{\"checkStateId\":\"id\",\"health\":\"CRITICAL\",\"message\":\"msg\",\"name\":\"name\",\"topologyElementIdentifier\":\"identifier\"}"}
+                    ]
+                }
+            }
+        ) is not None
+
+    util.wait_until(wait_for_health_messages, 10, 3)
+
+
+def test_agent_integration_sample_topology_topic_api(host, agent_hostname, cliv1):
+
+    agent_integration_sample_topology = TopicTopologyMatcher()\
+        .component("this-host-assertion", name=r"this-host")\
+        .component("some-application-assertion", name=r"some-application")
+
+    def assert_topology():
+        topology_result = cliv1.topology_topic(topic="sts_topo_agent-integration_sample", limit=20)
+
+        match_result = agent_integration_sample_topology.find(topology_result)
+        match_result.assert_exact_match(strict=False)
+
+    util.wait_until(assert_topology, 10, 3)
+
 
 
 # def test_agent_integration_sample_topology(host, agent_hostname, cliv1):
@@ -376,101 +473,3 @@ def kubernetes_event_data(event, json_data):
 #         assert util.delete_topo_element_data(json_data, "urn:example:/host:host_for_deletion")
 
 #     util.wait_until(assert_topology, 10, 3)
-
-
-# def test_agent_integration_sample_topology_events(host, cliv1):
-
-#     def wait_for_topology_events():
-#         json_data = cliv1.topic_api("sts_topology_events")
-#         with open("./topic-agent-integration-sample-sts-topology-events.json", 'w') as f:
-#             json.dump(json_data, f, indent=4)
-
-#         def _topology_event_data(event):
-#             for message in json_data["messages"]:
-#                 p = message["message"]
-#                 if "TopologyEvent" in p:
-#                     _data = p["TopologyEvent"]
-#                     if _data == dict(_data, **event):
-#                         return _data
-#             return None
-
-#         assert _topology_event_data(
-#             {
-#                 "category": "my_category",
-#                 "name": "URL timeout",
-#                 "tags": [],
-#                 "data": "{\"another_thing\":1,\"big_black_hole\":\"here\",\"test\":{\"1\":\"test\"}}",
-#                 "source_identifier": "source_identifier_value",
-#                 "source": "source_value",
-#                 "element_identifiers": [
-#                     "urn:host:/123"
-#                 ],
-#                 "source_links": [
-#                     {
-#                         "url": "http://localhost",
-#                         "name": "my_event_external_link"
-#                     }
-#                 ],
-#                 "type": "HTTP_TIMEOUT",
-#                 "description": "Http request to http://localhost timed out after 5.0 seconds."
-#             }
-#         ) is not None
-
-#     util.wait_until(wait_for_topology_events, 10, 3)
-
-
-# def test_agent_integration_sample_health_synchronization(host, cliv1):
-
-#     def wait_for_health_messages():
-#         json_data = cliv1.topic_api("sts_intake_health", 100)
-#         with open("./topic-agent-integration-sample-sts-health-messages.json", 'w') as f:
-#             json.dump(json_data, f, indent=4)
-
-#         def _health_contains_payload(event):
-#             for message in json_data["messages"]:
-#                 p = message["message"]
-#                 if "IntakeHealthMessage" in p:
-#                     _data = p["IntakeHealthMessage"]["payload"]
-#                     if _data == dict(_data, **event):
-#                         return _data
-#             return None
-
-#         assert _health_contains_payload({
-#             "IntakeHealthMainStreamStart": {
-#                 "repeatIntervalMs": 30000
-#             }
-#         }
-#         ) is not None
-#         assert _health_contains_payload({
-#             "IntakeHealthMainStreamStop": {}
-#         }
-#         ) is not None
-#         assert _health_contains_payload(
-#             {
-#                 "IntakeHealthCheckStates": {
-#                     "consistencyModel": "REPEAT_SNAPSHOTS",
-#                     "intakeCheckStates": [
-#                         {"data": "{\"checkStateId\":\"id\",\"health\":\"CRITICAL\",\"message\":\"msg\",\"name\":\"name\",\"topologyElementIdentifier\":\"identifier\"}"}
-#                     ]
-#                 }
-#             }
-#         ) is not None
-
-#     util.wait_until(wait_for_health_messages, 10, 3)
-
-
-def test_agent_integration_sample_topology_topic_api(host, agent_hostname, cliv1):
-
-    lambda_api_topology = TopologyMatcher()\
-        .component("this-host-assertion", name=r"this-host")\
-        .component("delete-test-host-assertion", name=r"delete-test-host")
-
-    def assert_topology():
-        topology_result = cliv1.topology_topic(topic="sts_topo_agent-integration_sample", limit=20)
-
-        match_result = lambda_api_topology.find(topology_result)
-        match_result.assert_exact_match(strict=False)
-
-        assert True is False
-
-    util.wait_until(assert_topology, 10, 3)
