@@ -481,6 +481,7 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"An error occurred while grabbing the python datadog integration list\\" -> \\"An error occurred while grabbing the python StackState integration list\\""', "./pkg/collector/python")
     #    do_sed_rename(ctx, datadog_checks_replace, "./pkg/collector/python/loader.go")
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/collector/runner/runner.go")
+    do_sed_rename(ctx, datadog_metrics_replace, "./pkg/collector/worker/worker.go")
 
     # cluster agent client
     do_go_rename(ctx, '"\\"datadog-cluster-agent\\" -> \\"stackstate-cluster-agent\\""', "./pkg/config")
