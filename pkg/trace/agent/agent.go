@@ -252,6 +252,7 @@ func (a *Agent) Process(p *api.Payload) {
 		}
 		a.Replacer.Replace(chunk.Spans)
 
+		// sts - interpret spans
 		chunk.Spans = a.SpanInterpreterEngine.Interpret(chunk.Spans) // sts
 
 		{
