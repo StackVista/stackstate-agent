@@ -1,6 +1,9 @@
 # StackState Agent v2 releases
 
-## 2.18.0 (????-??-??)
+## Next release (???)
+
+**Bugfix**
+- Fixed an issue where the docker check would not start in a Linux environment. [STAC-16788](https://stackstate.atlassian.net/browse/STAC-16788)
 
 **Improvements**
 - Added Support for Transactional State [STAC-13620](https://stackstate.atlassian.net/browse/STAC-13620)

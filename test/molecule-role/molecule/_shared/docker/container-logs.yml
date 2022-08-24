@@ -1,0 +1,7 @@
+---
+- name: Run Docker logs backup
+  command: ./docker-logs.sh
+  args:
+    chdir: /home/ubuntu/
+  ignore_errors: true
+  become: true

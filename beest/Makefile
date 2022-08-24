@@ -25,7 +25,7 @@ STS_DOCKER_TEST_REPO         ?= stackstate-agent-2-test
 STS_DOCKER_TEST_REPO_CLUSTER ?= stackstate-cluster-agent-test
 PROCESS_AGENT_TEST_REPO      ?= stackstate-process-agent-test
 
-BASE_KEEPER_IMAGE  = artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20220728
+BASE_KEEPER_IMAGE  = artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20220818
 KEEPER_IMAGE       = beest:${BRANCH}
 KEEPER_CONTAINER   = beest
 VOLUME_GO_PKG_NAME = beest-go-volume
@@ -62,9 +62,12 @@ shell-root:
 	docker exec --user root -ti ${KEEPER_CONTAINER} bash
 
 
-# Beest unit test
-test:
+# Beest go unit test
+go-test:
 	go test -v ./...
 
+# Beest verification fixture tests
+matcher-test:
+	PYTHONPATH=./testframework/stscliv1/ pytest testframework
 
-.PHONY: build start shell shell-root
+.PHONY: build start shell shell-root go-test matcher-test

@@ -1,0 +1,8 @@
+---
+- name: Copy docker logs backup script
+  copy:
+    src: ../files/docker-logs.sh
+    dest: /home/ubuntu/docker-logs.sh
+    mode: preserve
+  ignore_errors: true
+  become: true

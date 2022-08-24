@@ -2,6 +2,7 @@ enable_auto_completions() {
     source  ~/.bashrc
     echo "Enable auto-completions ..."
     complete -C '/usr/local/bin/aws_completer' aws
+    eval "$(helm completion bash)"
     eval "$(sts-toolbox completion bash)"
     eval "$(sts completion bash)"
 }
@@ -24,8 +25,6 @@ install_cobra_cli() {
 
 generate_aws_config() {
     echo "Generate AWS config StackState profiles ..."
-    mkdir -p ~/.aws
-    touch ~/.aws/config
     sts-toolbox aws generate -p developer
 }
 

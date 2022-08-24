@@ -16,6 +16,7 @@
         SKIP_SSL_VALIDATION: "false"
 
     - name: Configure AWS topology check
+      when: aws_integration is defined
       become: yes
       ansible.builtin.template:
         src: aws_topology_conf.j2.yml

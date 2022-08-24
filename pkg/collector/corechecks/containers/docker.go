@@ -163,7 +163,8 @@ func (d *DockerCheck) Run() error {
 	}
 
 	du, err := docker.GetDockerUtil()
-	if config.IsContainerized() {
+
+	if config.IsContainerized() || du != nil {
 		if err != nil {
 			// sts begin
 			sender.ServiceCheck(DockerServiceUp, metrics.ServiceCheckCritical, "", nil, err.Error())
@@ -173,7 +174,7 @@ func (d *DockerCheck) Run() error {
 			// sts end
 		}
 	} else {
-		log.Debugf("Agent is not running in container, skipping the Docker check")
+		log.Debugf("Agent is not running in a container or it does not have the required permissions, skipping the Docker check: %v", err)
 		return nil
 	}
 
