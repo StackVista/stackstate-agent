@@ -88,39 +88,3 @@ class DeleteMatcher(Matcher):
 
     def matcher_type(self) -> str:
         return "delete"
-
-
-class StartSnapshotMatcher(Matcher):
-    def __init__(self, id: str):
-        self.id = id
-
-    def __str__(self):
-        return 'START_SNAPSHOT['
-
-    # Topology Start Snapshot contains no metadata and is therefore not "unique" within a topic. We can only match on
-    # the presence of a topology start snapshot.
-    def match(self, start_snapshot: TopologyStartSnapshotWrapper) -> bool:
-        if start_snapshot:
-            return True
-        return False
-
-    def matcher_type(self) -> str:
-        return "start_snapshot"
-
-
-class StopSnapshotMatcher(Matcher):
-    def __init__(self, id: str):
-        self.id = id
-
-    def __str__(self):
-        return ']STOP_SNAPSHOT'
-
-    # Topology Stop Snapshot contains no metadata and is therefore not "unique" within a topic. We can only match on
-    # the presence of a topology stop snapshot.
-    def match(self, stop_snapshot: TopologyDeleteWrapper) -> bool:
-        if stop_snapshot:
-            return True
-        return False
-
-    def matcher_type(self) -> str:
-        return "stop_snapshot"

@@ -18,8 +18,8 @@
     - include_tasks: aws.yml
       tags: [ prepare ]
       when: aws_integration is defined
-    
-    - include_tasks: agent_integration_sample.yml
+
+    - include_tasks: my_agent_integration_sample.yml
       tags: [ prepare ]
       when: agent_integration_sample is defined
 

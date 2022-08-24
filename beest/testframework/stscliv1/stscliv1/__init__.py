@@ -1,3 +1,3 @@
-from .models import TopologyResult, ComponentWrapper, RelationWrapper, TopologyDeleteWrapper, \
-    TopologyStartSnapshotWrapper, TopologyStopSnapshotWrapper
+from .models import TopologyResult, TopicTopologyResult, TopologySnapshotResult, ComponentWrapper, RelationWrapper, \
+    TopologyDeleteWrapper, TopologyStartSnapshotWrapper, TopologyStopSnapshotWrapper, Wrapper
 from .cliv1 import CLIv1

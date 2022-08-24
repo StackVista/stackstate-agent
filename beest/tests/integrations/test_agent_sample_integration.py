@@ -461,18 +461,15 @@ def kubernetes_event_data(event, json_data):
 
 def test_agent_integration_sample_topology_topic_api(host, agent_hostname, cliv1):
 
-    lambda_api_topology = \
-        TopologyMatcher() \
-        .component("Host", name=r"this-host")
+    lambda_api_topology = TopologyMatcher()\
+        .component("this-host-assertion", name=r"this-host")\
+        .component("delete-test-host-assertion", name=r"delete-test-host")
 
     def assert_topology():
-        snapshots = cliv1.topology_topic(topic="sts_topo_agent_integrations", limit=1000)
+        topology_result = cliv1.topology_topic(topic="sts_topo_agent-integration_sample", limit=20)
 
-        print(snapshots)
-
-        for snapshot in snapshots:
-            match_result = lambda_api_topology.find(snapshot)
-            match_result.assert_exact_match()
+        match_result = lambda_api_topology.find(topology_result)
+        match_result.assert_exact_match(strict=False)
 
         assert True is False
 

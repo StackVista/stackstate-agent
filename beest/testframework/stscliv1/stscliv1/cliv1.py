@@ -1,10 +1,7 @@
-import json
 import hashlib
 import logging
 import os
 import uuid
-
-from marshmallow import EXCLUDE
 
 from testinfra.host import Host
 
@@ -24,8 +21,38 @@ class CLIv1:
 
         return json_data
 
-    def topology_topic(self, topic: str, limit: int = 1000) -> dict[str, TopologySnapshotResult]:
+    def topology_topic(self, topic: str, limit: int = 1000) -> TopicTopologyResult:
         json_data = self.topic_api(topic, limit)
+
+        with open(f"./topic-{topic}.json", 'w') as f:
+            json.dump(json_data, f, indent=4)
+
+        schema = TopicAPIResponseSchema()
+        topic_response: TopicAPIResponse = schema.load(json_data)
+        topic_result = TopicTopologyResult()
+
+        for msg in topic_response.messages:
+            payload = msg.message.topology_element.payload
+
+            if payload.topology_component:
+                topic_result.components.append(payload.topology_component.wrap())
+
+            elif payload.topology_relation:
+                topic_result.relations.append(payload.topology_relation.wrap())
+
+            elif payload.topology_delete:
+                topic_result.deletes.append(payload.topology_delete.wrap())
+            else:
+                pass
+
+        return topic_result
+
+    def topology_topic_snapshot(self, topic: str, limit: int = 1000) -> dict[str, TopologySnapshotResult]:
+        json_data = self.topic_api(topic, limit)
+
+        with open(f"./topic-{topic}.json", 'w') as f:
+            json.dump(json_data, f, indent=4)
+
         schema = TopicAPIResponseSchema()
         topic_response: TopicAPIResponse = schema.load(json_data)
 
@@ -34,7 +61,7 @@ class CLIv1:
         for msg in topic_response.messages:
             payload = msg.message.topology_element.payload
 
-            if payload.topology_start_snapshot:
+            if payload.topology_start_snapshot is not None:
                 # if we reach start snapshot, we've reached the end of the current snapshot
                 snapshot_topology_results[current_id].start_snapshot(msg.offset)
 
@@ -42,35 +69,14 @@ class CLIv1:
                 current_id = None
 
             elif current_id and payload.topology_component:
-                component = ComponentWrapper({
-                    'id': payload.topology_component.externalId,
-                    'name': payload.topology_component.data.get('name', payload.topology_component.externalId),
-                    'type': payload.topology_component.typeName,
-                    **vars(payload.topology_component)
-                })
-                snapshot_topology_results[current_id].component(component)
+                snapshot_topology_results[current_id].component(payload.topology_component.wrap())
 
             elif current_id and payload.topology_relation:
-                relation = RelationWrapper({
-                    'id': payload.topology_relation.externalId,
-                    'source': payload.topology_relation.source_id,
-                    'target': payload.topology_relation.target_id,
-                    'type': payload.topology_relation.typeName,
-                    **vars(payload.topology_relation)
-                })
-                snapshot_topology_results[current_id].relation(relation)
+                snapshot_topology_results[current_id].relation(payload.topology_relation.wrap())
 
-            elif current_id and payload.topology_delete:
-                delete = TopologyDeleteWrapper({
-                    'id': payload.topology_delete.external_id,
-                    **vars(payload.topology_delete)
-                })
-                snapshot_topology_results[current_id].delete(delete)
-
-            elif payload.topology_stop_snapshot:
-                print('stop ', payload.topology_stop_snapshot)
+            elif payload.topology_stop_snapshot is not None:
                 # if we reach stop snapshot, we've reached the start of the current snapshot
-                current_id = str(uuid.UUID())
+                current_id = str(uuid.uuid4())
                 snapshot_topology_results[current_id] = TopologySnapshotResult()
 
                 snapshot_topology_results[current_id].stop_snapshot(msg.offset)
@@ -78,7 +84,6 @@ class CLIv1:
             else:
                 pass
 
-        print('snapshot_topology_results ', snapshot_topology_results)
         return snapshot_topology_results
 
     def telemetry(self, component_ids):
