@@ -15,8 +15,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util"
 )
 
-// ResourcesCollector disabled by default, we will not support the resource collector on it's own.
-
 // ResourcesCollector sends the old metadata payload used in the
 // Agent v5
 type ResourcesCollector struct{}
@@ -39,6 +37,7 @@ func (rp *ResourcesCollector) Send(ctx context.Context, s *serializer.Serializer
 	return nil
 }
 
-func init() {
-	RegisterCollector("resources", new(ResourcesCollector))
-}
+// sts - ResourcesCollector disabled by default, we will not support the resource collector on it's own.
+//func init() {
+//	RegisterCollector("resources", new(ResourcesCollector))
+//}
