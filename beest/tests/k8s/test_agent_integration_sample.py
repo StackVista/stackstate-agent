@@ -5,11 +5,6 @@ import integration_sample
 testinfra_hosts = ["local"]
 
 
-def _get_key_value(tag_list):
-    for key, value in (pair.split(':', 1) for pair in tag_list):
-        yield key, value
-
-
 def kubernetes_event_data(event, json_data):
     for message in json_data["messages"]:
         p = message["message"]
@@ -25,9 +20,9 @@ def test_agent_integration_sample_metrics(cliv1, hostname):
     util.assert_metrics(cliv1, hostname, "agent-integration-sample", expected)
 
 
-def test_agent_integration_sample_topology(host):
+def test_agent_integration_sample_topology(cliv1):
     expected_components = integration_sample.get_agent_integration_sample_expected_topology()
-    util.assert_topology(host, "agent-integration-sample", "sts_topo_agent_integrations", expected_components)
+    util.assert_topology(cliv1, "agent-integration-sample", "sts_topo_agent_integrations", expected_components)
 
 
 def test_agent_integration_sample_events(cliv1):

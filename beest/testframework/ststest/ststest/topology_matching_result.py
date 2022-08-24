@@ -1,12 +1,8 @@
 import hashlib
 import logging
 
-from pyshorteners.exceptions import ShorteningErrorException
-
 from stscliv1 import TopologyResult, ComponentWrapper, RelationWrapper
 import pydot
-import urllib.parse
-import pyshorteners
 
 from .match_keys import ComponentKey
 from .topology_match import TopologyMatch, RelationKey
@@ -61,7 +57,8 @@ class TopologyMatchingResult:
         # TODO print attributes related to a matcher
         return f"#{rel.source}->[type={rel.type}]->{rel.target}"
 
-    def assert_exact_match(self, matching_graph_name=None, matching_graph_upload=True) -> TopologyMatch:
+    def assert_exact_match(self, matching_graph_name=None) -> TopologyMatch:
+        # self.render_debug_dot(matching_graph_name)
         if len(self._topology_matches) == 1:
             return self._topology_matches[0]
         errors = []
@@ -80,7 +77,7 @@ class TopologyMatchingResult:
             elif len(relations) > 1:
                 errors.append(f"\tmultiple matches for relation {matcher}:"
                               f"{delimiter}{delimiter.join(map(self.relation_pretty_short, relations))}")
-        self.render_debug_dot(matching_graph_name, matching_graph_upload)
+        self.render_debug_dot(matching_graph_name)
         error_sep = "\n"
         assert False, f"desired topology was not matched:\n{error_sep.join(errors)}"
 
@@ -151,7 +148,7 @@ class TopologyMatchingResult:
                 relation_to_matcher={r: m for m, r in matcher_to_relation.items()},
             )
 
-    def render_debug_dot(self, matching_graph_name=None, generate_diagram_url=True):
+    def render_debug_dot(self, matching_graph_name=None):
         graph = pydot.Dot("Topology match debug", graph_type="digraph")
 
         # we need to know which component/relations are matched exactly to overlay them on the diagram
@@ -223,14 +220,3 @@ class TopologyMatchingResult:
         with open(dot_file, 'w') as dfp:
             dfp.write(graph_dot_str)
             logging.info("saved match in a DOT file at %s", dot_file)
-
-        if not generate_diagram_url:
-            logging.info("matching diagram was not request (generate_diagram_url=False)")
-        else:
-            try:
-                base_share_url = urllib.parse.urlparse("https://graphviz.sandbox.stackstate.io/")
-                share_url = base_share_url._replace(fragment=urllib.parse.quote(graph_dot_str))
-                shortened_url = pyshorteners.Shortener().tinyurl.short(share_url.geturl())
-                logging.info("matching diagram is available at %s", shortened_url)
-            except ShorteningErrorException:
-                logging.warning("could not make matching diagram available at URL", exc_info=True)

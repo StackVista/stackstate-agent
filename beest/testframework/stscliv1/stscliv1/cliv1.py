@@ -41,12 +41,12 @@ class CLIv1:
 
     def script(self, fullquery) -> dict:
         log = self.log
-        log.info(f"querying StackState Script API with CLIv1: {fullquery}, cache: {self.cache_enabled}")
+        log.info(f"Querying StackState Script API with CLIv1: {fullquery}, cache: {self.cache_enabled}")
         cachefile = hashlib.sha1(fullquery.encode('utf-8')).hexdigest() + '.json'
         if self.cache_enabled:
             try:
                 with open(cachefile, 'r') as f:
-                    log.warning(f"using cached result from {cachefile}")
+                    log.warning(f"Using cached result from {cachefile}")
                     return json.load(f)['result']
             except IOError:
                 pass
@@ -59,11 +59,11 @@ class CLIv1:
 
         # Execute the query
         executed = self.host.run(f"{home}/sts-query.sh")
-        log.info(f"executed STSL script: {executed}")
+        log.info(f"STSL script exit status: {executed.exit_status}")
         json_data = json.loads(executed.stdout)['result']
-        if self.cache_enabled:
-            with open(cachefile, 'w') as f:
-                f.write(executed.stdout)
+        with open(cachefile, 'w') as f:
+            log.info(f"Query result saved in file {cachefile}")
+            f.write(executed.stdout)
         return json_data
 
     @staticmethod

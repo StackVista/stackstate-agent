@@ -5,6 +5,7 @@ class ComponentWrapper:
         self.id = attributes['id']
         self.name = attributes['name']
         self.type = attributes['type']
+        self.tags = attributes['tags']
         self.outgoing_relations = attributes.get('outgoingRelations', [])
         self.incoming_relations = attributes.get('incomingRelations', [])
         self.attributes = attributes

@@ -37,11 +37,9 @@ def assert_topology_events(cliv1, test_name, topic, expected_topology_events):
     wait_until(wait_for_topology_events, 60, 3)
 
 
-def assert_topology(host, test_name, topic, expected_components):
+def assert_topology(cliv1, test_name, topic, expected_components):
     def assert_topology():
-        topo_url = "http://localhost:7070/api/topic/%s?limit=1500" % topic
-        data = host.check_output('curl "{}"'.format(topo_url))
-        json_data = json.loads(data)
+        json_data = cliv1.topic_api(topic, limit=1500)
         with open("./topic-%s-%s.json" % (test_name, topic), 'w') as f:
             json.dump(json_data, f, indent=4)
 
@@ -85,16 +83,6 @@ def component_data(json_data, type_name, external_id_assert_fn, data_assert_fn):
             data = json.loads(p["TopologyComponent"]["data"])
             if data and data_assert_fn(data):
                 return p["TopologyComponent"]["externalId"]
-    return None
-
-
-def relation_data(json_data, type_name, external_id_assert_fn):
-    for message in json_data["messages"]:
-        p = message["message"]["TopologyElement"]["payload"]
-        if "TopologyRelation" in p and \
-            p["TopologyRelation"]["typeName"] == type_name and \
-                external_id_assert_fn(p["TopologyRelation"]["externalId"]):
-            return json.loads(p["TopologyRelation"]["data"])
     return None
 
 

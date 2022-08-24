@@ -15,7 +15,7 @@ class TestTopologyMatcher(TestCase):
             .one_way_direction("A", "B", type="before")
 
         result = matcher.find(input_topology.topology())
-        match = result.assert_exact_match(matching_graph_name=self._testMethodName, matching_graph_upload=False)
+        match = result.assert_exact_match(matching_graph_name=self._testMethodName)
 
         self.assertEqual(input_topology.get('a'), match.component('A'))
         self.assertEqual(input_topology.get('b'), match.component('B'))
@@ -33,7 +33,7 @@ class TestTopologyMatcher(TestCase):
                       )
 
         result = matcher.find(input_topology.topology())
-        match = result.assert_exact_match(matching_graph_name=self._testMethodName, matching_graph_upload=False)
+        match = result.assert_exact_match(matching_graph_name=self._testMethodName)
 
         self.assertEqual(input_topology.get('cluster'), match.component('C'))
         self.assertUnorderedComponents(
@@ -78,7 +78,7 @@ class TestTopologyMatcher(TestCase):
                       )
 
         result = matcher.find(input_topology.topology())
-        match = result.assert_exact_match(matching_graph_name=self._testMethodName, matching_graph_upload=False)
+        match = result.assert_exact_match(matching_graph_name=self._testMethodName)
 
         self.assertEqual(input_topology.get('cluster'), match.component('CLUSTER'))
         self.assertEqual(input_topology.get('my-daemonset'), match.component('DaemonSet'))
@@ -102,7 +102,7 @@ class TestTopologyMatcher(TestCase):
             .one_way_direction("B", "C", type="to")
 
         result = matcher.find(input_topology.topology())
-        match = result.assert_exact_match(matching_graph_name=self._testMethodName, matching_graph_upload=False)
+        match = result.assert_exact_match(matching_graph_name=self._testMethodName)
 
         self.assertEqual(input_topology.get('a1'), match.component('A'))
         self.assertEqual(input_topology.get('b2'), match.component('B'))
@@ -133,18 +133,18 @@ color=mediumslateblue;
 fontsize=30;
 label="Query result";
 penwidth=5;
-1 [color=darkgreen, label="a\\ntype=component\\n-----\\nA\\nname~=a"];
-2 [color=darkgreen, label="b\\ntype=component\\n-----\\nB\\nname~=b"];
-3 [color=darkgreen, label="c1\\ntype=component\\n-----\\nC1\\nname~=c1"];
+1 [color=green, label="a\\ntype=component\\n-----\\nA\\nname~=a"];
+2 [color=green, label="b\\ntype=component\\n-----\\nB\\nname~=b"];
+3 [color=green, label="c1\\ntype=component\\n-----\\nC1\\nname~=c1"];
 4 [color=black, label="c2\\ntype=component"];
-5 [color=darkgreen, label="d1\\ntype=component\\n-----\\nD1\\nname~=d1"];
-6 [color=darkgreen, label="d2\\ntype=component\\n-----\\nD2\\nname~=d2"];
-7 [color=darkgreen, label="e\\ntype=component\\n-----\\nE\\nname~=e"];
+5 [color=green, label="d1\\ntype=component\\n-----\\nD1\\nname~=d1"];
+6 [color=green, label="d2\\ntype=component\\n-----\\nD2\\nname~=d2"];
+7 [color=green, label="e\\ntype=component\\n-----\\nE\\nname~=e"];
 15 [color=black, label="f1\\ntype=component"];
 16 [color=black, label="f2\\ntype=component"];
-8 [color=darkgreen, label="to\\n-----\\ndependencyDirection~=ONE_WAY", shape=underline];
-1 -> 8  [color=darkgreen];
-8 -> 2  [color=darkgreen];
+8 [color=green, label="to\\n-----\\ndependencyDirection~=ONE_WAY", shape=underline];
+1 -> 8  [color=green];
+8 -> 2  [color=green];
 9 [color=black, label=to, shape=underline];
 2 -> 9  [color=black];
 9 -> 3  [color=black];
@@ -201,7 +201,7 @@ C2_matcher -> "('C2', 'D2')"  [color=red];
 
         result = matcher.find(input_topology.topology())
         with self.assertRaises(AssertionError) as exc:
-            result.assert_exact_match(matching_graph_name=self._testMethodName, matching_graph_upload=False)
+            result.assert_exact_match(matching_graph_name=self._testMethodName)
         with open(f"{self._testMethodName}.gv", 'r') as dot:
             test = ''.join(dot.readlines())
             self.assertEqual(expected_dot_file, test)
@@ -217,7 +217,7 @@ C2_matcher -> "('C2', 'D2')"  [color=red];
 
         result = matcher.find(input_topology.topology())
         with self.assertRaises(AssertionError) as exc:
-            result.assert_exact_match(matching_graph_name=self._testMethodName, matching_graph_upload=False)
+            result.assert_exact_match(matching_graph_name=self._testMethodName)
 
         exception_message = str(exc.exception)
         self.assertEqual(exception_message,
@@ -250,7 +250,7 @@ desired topology was not matched:
         result = matcher.find(TopologyFixture("a,b,c,b>before>c,a>after>b").topology())
 
         with self.assertRaises(AssertionError) as exc:
-            result.assert_exact_match(matching_graph_name=self._testMethodName, matching_graph_upload=False)
+            result.assert_exact_match(matching_graph_name=self._testMethodName)
         exception_message = str(exc.exception)
 
         self.assertEqual(exception_message,
