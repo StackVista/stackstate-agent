@@ -16,5 +16,5 @@ type Deployer interface {
 
 // The Verifier runs the actual verifications
 type Verifier interface {
-	Verify(step *step.VerificationStep, watch bool, selection string) error
+	Verify(step *step.VerificationStep, watch bool, selection string, installDeps bool) error
 }

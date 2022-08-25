@@ -69,7 +69,7 @@ func test(provisioner driver.Provisioner, deployer driver.Deployer, verifier dri
 	var verifyError error
 	if prepareError == nil {
 		// if prepare did not fail, verify
-		verifyError = verifier.Verify(verify, false, "")
+		verifyError = verifier.Verify(verify, false, "", true)
 	} else {
 		// if prepare failed, skip verify, but continue test sequence
 		log.Printf("Not running verify step because prepare failed: %s\n", prepareError)

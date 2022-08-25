@@ -75,7 +75,7 @@ func NewStubVerifier(failVerify error) *StubVerifier {
 	return &StubVerifier{failVerify: failVerify}
 }
 
-func (sv *StubVerifier) Verify(*step.VerificationStep, bool, string) error {
+func (sv *StubVerifier) Verify(*step.VerificationStep, bool, string, bool) error {
 	sv.verifyCalled = true
 	if sv.failVerify != nil {
 		return sv.failVerify

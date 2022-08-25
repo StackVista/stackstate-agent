@@ -29,13 +29,13 @@ const (
 
 type PyTestVerifier struct{}
 
-func (pv *PyTestVerifier) Verify(step *step.VerificationStep, watch bool, selection string) error {
-	cmd := buildPyTestCmd(step, watch, selection)
+func (pv *PyTestVerifier) Verify(step *step.VerificationStep, watch bool, selection string, installDeps bool) error {
+	cmd := buildPyTestCmd(step, watch, selection, installDeps)
 	log.Printf("Running Pytest cmd: %s", cmd)
 	return runPyTestCmd(context.Background(), cmd)
 }
 
-func buildPyTestCmd(step *step.VerificationStep, watch bool, selection string) *exec.Cmd {
+func buildPyTestCmd(step *step.VerificationStep, watch bool, selection string, installDeps bool) *exec.Cmd {
 	var args []string
 
 	if watch {
@@ -76,6 +76,16 @@ func buildPyTestCmd(step *step.VerificationStep, watch bool, selection string) *
 	pyPath := strings.Join(pyPaths, ":")
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, fmt.Sprintf("PYTHONPATH=%s", pyPath))
+
+	if installDeps {
+		for _, pkg := range pyPaths {
+			log.Printf("install dependencies for: %s", pkg)
+			err := exec.Command("pip", "install", "-r", fmt.Sprintf("%s/requirements.txt", pkg)).Run()
+			if err != nil {
+				log.Printf("Error installing test framework dependencies: %s", err)
+			}
+		}
+	}
 
 	return cmd
 }
