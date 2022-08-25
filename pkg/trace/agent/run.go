@@ -176,7 +176,7 @@ func Run(ctx context.Context) {
 	log.Infof("Trace agent running on host %s", cfg.Hostname)
 
 	// sts
-	log.Infof("[sts] Trace agent sending data to %v", cfg.Endpoints)
+	log.Infof("[sts] Trace agent sending data to %+v", cfg.Endpoints)
 
 	if cfg.ProfilingSettings != nil {
 		cfg.ProfilingSettings.Tags = []string{fmt.Sprintf("version:%s", info.Version)}
