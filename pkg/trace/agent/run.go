@@ -129,6 +129,10 @@ func Run(ctx context.Context) {
 
 	agnt := NewAgent(ctx, cfg)
 	log.Infof("Trace agent running on host %s", cfg.Hostname)
+
+	// sts
+	log.Infof("[sts] Trace agent sending data to %+v", cfg.Endpoints)
+
 	agnt.Run()
 
 	// collect memory profile
