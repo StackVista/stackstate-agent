@@ -35,7 +35,7 @@ def get_go_env(ctx, go_version):
         for line in lines:
             for env_var in GIMME_ENV_VARS:
                 if env_var in line:
-                    goenv[env_var] = line[line.find(env_var) + len(env_var) + 1 : -1].strip('\'\"')
+                    goenv[env_var] = line[line.find(env_var) + len(env_var) + 1: -1].strip('\'\"')
 
     # extend PATH from gimme with the one from get_build_flags
     if "PATH" in os.environ and "PATH" in goenv:
@@ -99,7 +99,7 @@ def build(
         for line in lines:
             for env_var in GIMME_ENV_VARS:
                 if env_var in line:
-                    goenv[env_var] = line[line.find(env_var) + len(env_var) + 1 : -1].strip('\'\"')
+                    goenv[env_var] = line[line.find(env_var) + len(env_var) + 1: -1].strip('\'\"')
         ld_vars["GoVersion"] = go_version
 
     # Generating go source from templates by running go generate on ./pkg/status
@@ -159,7 +159,7 @@ def gen_mocks(ctx):
         "Scheduler",
     ]
 
-    interface_regex = "|".join(f"^{i}$" for i in interfaces)
+    interface_regex = "|".join("^{}$".format(i) for i in interfaces)  # [sts] refactored to be compatible with py2
 
     with ctx.cd("./pkg/compliance"):
         ctx.run("mockery --case snake -r --name=\"{}\"".format(interface_regex))

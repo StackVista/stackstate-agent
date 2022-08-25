@@ -1,3 +1,4 @@
+# coding: utf-8
 """
 Release helper tasks
 """
@@ -480,7 +481,7 @@ def build_compatible_version_re(allowed_major_versions, minor_version):
 
 
 def _get_highest_repo_version(
-    auth, repo, version_prefix, version_re, allowed_major_versions=None, max_version: Version = None,
+    auth, repo, version_prefix, version_re, allowed_major_versions=None, max_version = None, # sts - removed type, not supported by py2
     vendor="DataDog"  # sts
 ):
     # If allowed_major_versions is not specified, search for all versions by using an empty
@@ -762,7 +763,7 @@ def _update_release_json_entry(
 ##
 
 
-def _update_release_json(ctx, release_json, release_entry, new_version: Version, github_token):
+def _update_release_json(ctx, release_json, release_entry, new_version, github_token):  # [sts] - not supported in py2
     """
     Updates the provided release.json object by fetching compatible versions for all dependencies
     of the provided Agent version, constructing the new entry, adding it to the release.json object
@@ -833,7 +834,7 @@ def _update_release_json(ctx, release_json, release_entry, new_version: Version,
     )
 
 
-def update_release_json(ctx, github_token, new_version: Version):
+def update_release_json(ctx, github_token, new_version): # [sts] - not supported in py2
     """
     Updates the release entries in release.json to prepare the next RC or final build.
     """
@@ -917,21 +918,21 @@ def tag_version(ctx, agent_version, commit="HEAD", verify=True, tag_modules=True
                     ),
                 )
                 if not ok:
-                    message = f"Could not create tag {tag}. Please rerun the task to retry creating the tags (you may need the --force option)"
+                    message = "Could not create tag {}. Please rerun the task to retry creating the tags (you may need the --force option)".format(tag) # [sts] refactored to be compatible with py2
                     raise Exit(color_message(message, "red"), code=1)
-                print("Created tag {tag}".format(tag=tag))
+                print("Created tag {}".format(tag))# [sts] refactored to be compatible with py2
                 if push:
-                    ctx.run("git push origin {tag}{force_option}".format(tag=tag, force_option=force_option))
-                    print("Pushed tag {tag}".format(tag=tag))
+                    ctx.run("git push origin {}{}".format(tag, force_option))# [sts] refactored to be compatible with py2
+                    print("Pushed tag {}".format(tag))
 
     print("Created all tags for version {}".format(agent_version))
 
 
-def current_version(ctx, major_version) -> Version:
+def current_version(ctx, major_version): # -> Version:  [sts] not supported in py2
     return _create_version_from_match(VERSION_RE.search(get_version(ctx, major_version=major_version)))
 
 
-def next_final_version(ctx, major_version) -> Version:
+def next_final_version(ctx, major_version): # -> Version:  [sts] not supported in py2
     previous_version = current_version(ctx, major_version)
 
     # Set the new version
@@ -943,7 +944,7 @@ def next_final_version(ctx, major_version) -> Version:
     return previous_version.next_version(rc=False)
 
 
-def next_rc_version(ctx, major_version, patch_version=False) -> Version:
+def next_rc_version(ctx, major_version, patch_version=False): # -> Version:  [sts] not supported in py2
     # Fetch previous version from the most recent tag on the branch
     previous_version = current_version(ctx, major_version)
 
@@ -1367,7 +1368,7 @@ def get_release_json_value(_, key):
 
     for element in path:
         if element not in release_json:
-            raise Exit(code=1, message=f"Couldn't find '{key}' in release.json")
+            raise Exit(code=1, message="Couldn't find '{}' in release.json".format(key))  # [sts] - py2 compatible format
 
         release_json = release_json.get(element)
 

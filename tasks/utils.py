@@ -376,7 +376,7 @@ def get_version(
 def get_version_numeric_only(ctx, major_version='7'):
     # we only need the git info for the non omnibus builds, omnibus includes all this information by default
 
-    version, *_ = query_version(ctx, major_version_hint=major_version)
+    version = query_version(ctx, major_version_hint=major_version)[0]  # sts - py2 doesn't support *_
     return version
 
 

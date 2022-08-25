@@ -1121,7 +1121,7 @@ def check_supports_python_version(_, filename, python):
     for node in ast.walk(tree):
         if isinstance(node, ast.keyword) and node.arg == "classifiers":
             classifiers = ast.literal_eval(node.value)
-            print(any(cls.startswith(prefix) for cls in classifiers), end="")
+            print(any(cls.startswith(prefix) for cls in classifiers))  # [sts] - py2 doesn't support end parameter
             return
 
 

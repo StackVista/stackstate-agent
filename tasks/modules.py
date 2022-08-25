@@ -113,7 +113,7 @@ def generate_dummy_package(ctx, folder):
 
     os.mkdir(folder)
     with ctx.cd(folder):
-        print("Creating dummy 'main.go' file... ", end="")
+        print("Creating dummy 'main.go' file... ")  # sts - py2 doesn't support 'end' parameter
         with open(os.path.join(ctx.cwd, 'main.go'), 'w') as main_file:
             main_file.write(
                 MAIN_TEMPLATE.format(imports="\n".join(PACKAGE_TEMPLATE.format(path) for path in import_paths))

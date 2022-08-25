@@ -12,7 +12,7 @@ class Test:
         self.owners = self.__get_owners(owners)
 
     def __removeprefix(self, package):
-        return package[len(self.PACKAGE_PREFIX) :]
+        return package[len(self.PACKAGE_PREFIX):]
 
     def __find_file(self):
         # Find the *_test.go file in the package folder that has the test
@@ -52,7 +52,7 @@ class SlackMessage:
         self.failed_tests[test.key].append(job)
 
     def __render_jobs_section(self, buffer):
-        print(self.JOBS_SECTION_HEADER, file=buffer)
+        print(self.JOBS_SECTION_HEADER)  # , file=buffer)  # [sts] - not used
 
         jobs_per_stage = defaultdict(list)
         for job in self.failed_jobs:
@@ -70,27 +70,28 @@ class SlackMessage:
 
             print(
                 "- {jobs} (`{stage}` stage)".format(jobs=", ".join(jobs_info), stage=stage),
-                file=buffer,
+                # file=buffer)  # [sts] - not used
             )
 
     def __render_tests_section(self, buffer):
-        print(self.TEST_SECTION_HEADER, file=buffer)
+        print(self.TEST_SECTION_HEADER)  # , file=buffer)  #  [sts] - not used
         for (test_name, test_package), jobs in self.failed_tests.items():
             job_list = ", ".join("<{}|{}>".format(job["url"], job["name"]) for job in jobs[: self.MAX_JOBS_PER_TEST])
             if len(jobs) > self.MAX_JOBS_PER_TEST:
                 job_list += " and {} more".format(len(jobs) - self.MAX_JOBS_PER_TEST)
-            print("- `{}` from package `{}` (in {})".format(test_name, test_package, job_list), file=buffer)
+            print("- `{}` from package `{}` (in {})".format(test_name, test_package,
+                                                            job_list))  # , file=buffer)  # [sts] - not used
 
     def __str__(self):
         buffer = io.StringIO()
         if self.base_message:
-            print(self.base_message, file=buffer)
+            print(self.base_message)  # , file=buffer)  # [sts] - not used
         if self.failed_jobs:
             self.__render_jobs_section(buffer)
         if self.failed_tests:
             self.__render_tests_section(buffer)
         if self.coda:
-            print(self.coda, file=buffer)
+            print(self.coda)  # , file=buffer)  #  sts - not used
         return buffer.getvalue()
 
 
