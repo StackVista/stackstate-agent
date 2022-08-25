@@ -175,8 +175,12 @@ func Run(ctx context.Context) {
 	agnt := NewAgent(ctx, cfg)
 	log.Infof("Trace agent running on host %s", cfg.Hostname)
 
-	// sts
-	log.Infof("[sts] Trace agent sending data to %+v", cfg.Endpoints)
+	// sts debug
+	var endpointsString string
+	for _, e := range cfg.Endpoints {
+		endpointsString += fmt.Sprintf("(host: %s, apiKey: %s),", e.Host, e.APIKey)
+	}
+	log.Infof("[sts] Trace agent sending data to %+v", endpointsString)
 
 	if cfg.ProfilingSettings != nil {
 		cfg.ProfilingSettings.Tags = []string{fmt.Sprintf("version:%s", info.Version)}
