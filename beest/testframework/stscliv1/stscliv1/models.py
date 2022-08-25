@@ -208,7 +208,7 @@ class TopologyComponent:
             'id': self.externalId,
             'name': self.data.get('name', self.externalId),
             'type': self.typeName,
-            **vars(self)
+            **self.data
         })
 
 
@@ -243,7 +243,7 @@ class TopologyRelation:
             'source': self.source_id,
             'target': self.target_id,
             'type': self.typeName,
-            **vars(self)
+            **self.data
         })
 
 

@@ -47,7 +47,7 @@ def test_agent_sample_integration_generic_events(cliv1):
         }
         assert kubernetes_event_data(http_event, json_data), f"no matches found for Kubernetes event: {service_event}"
 
-    util.wait_until(wait_for_events, 10, 5)
+    util.wait_until(wait_for_events, 60, 5)
 
 
 def test_agent_integration_sample_metrics(host, cliv1):
@@ -98,7 +98,7 @@ def test_agent_integration_sample_topology_events(host, cliv1):
             }
         ) is not None
 
-    util.wait_until(wait_for_topology_events, 10, 3)
+    util.wait_until(wait_for_topology_events, 60, 3)
 
 
 def test_agent_integration_sample_health_synchronization(host, cliv1):
@@ -138,14 +138,16 @@ def test_agent_integration_sample_health_synchronization(host, cliv1):
             }
         ) is not None
 
-    util.wait_until(wait_for_health_messages, 10, 3)
+    util.wait_until(wait_for_health_messages, 60, 3)
 
 
 def test_agent_integration_sample_topology_topic_api(host, agent_hostname, cliv1):
 
     agent_integration_sample_topology = TopicTopologyMatcher()\
-        .component("this-host-assertion", name=r"this-host")\
-        .component("some-application-assertion", name=r"some-application")
+        .component("this-host-assertion", name=r"this-host", domain=r"Webshop")\
+        .component("some-application-assertion", name=r"some-application")\
+        .component("delete-test-host-assertion", name=r"delete-test-host")\
+        .delete(r"urn:example:/host:host_for_deletion")
 
     def assert_topology():
         topology_result = cliv1.topology_topic(topic="sts_topo_agent-integration_sample", limit=20)
@@ -153,8 +155,22 @@ def test_agent_integration_sample_topology_topic_api(host, agent_hostname, cliv1
         match_result = agent_integration_sample_topology.find(topology_result)
         match_result.assert_exact_match(strict=False)
 
-    util.wait_until(assert_topology, 10, 3)
+    util.wait_until(assert_topology, 60, 3)
 
+
+def test_agent_integration_monitoring_topology_topic_api(host, agent_hostname, cliv1):
+    agent_integration_sample_topology = TopicTopologyMatcher() \
+        .component("stackstate-agent-assertion", name=rf"StackState Agent:{agent_hostname}") \
+        .component("agent-integration-assertion", name=rf"{agent_hostname}:agent-integration") \
+        .component("agent-integration-sample-assertion", name=r"agent-integration:sample")
+
+    def assert_topology():
+        topology_result = cliv1.topology_topic(topic="sts_topo_agent_integrations", limit=20)
+
+        match_result = agent_integration_sample_topology.find(topology_result)
+        match_result.assert_exact_match(strict=False)
+
+    util.wait_until(assert_topology, 60, 3)
 
 
 # def test_agent_integration_sample_topology(host, agent_hostname, cliv1):
