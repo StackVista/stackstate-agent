@@ -106,7 +106,7 @@ RUN conda create -n ddpy3 python python=3.8
 RUN /bin/bash -c "source /root/.bashrc && conda activate ddpy2 \
     && pip install -i https://pypi.python.org/simple pip==${DD_PIP_VERSION} \
     && pip install --ignore-installed setuptools==${DD_SETUPTOOLS_VERSION} \
-    && pip install invoke==1.7.0 distro==1.4.0 awscli==1.16.240 lexicon==2.0.1"
+    && pip install invoke==1.7.0 distro==1.4.0 awscli==1.16.240 lexicon==2.0.1 pathlib==1.0.1"
 
 # Update pip, setuptools and misc deps for ddpy3
 RUN /bin/bash -c  "source /root/.bashrc && conda activate ddpy3 \
