@@ -339,6 +339,8 @@ def apply_branding(ctx):
     # Trace Agent Metrics
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/api/api.go")
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/api/responses.go")
+    do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/api/listener.go")
+    do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/sampler/rare_sampler.go")
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/agent/run.go")
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/agent/agent.go")
     do_go_rename(ctx, '"\\"datadog.conf\\" -> \\"stackstate.conf\\""', "./pkg/trace/agent")
