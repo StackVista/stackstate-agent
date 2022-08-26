@@ -51,7 +51,7 @@ def test_workload_topology(ansible_var, cliv1):
 
     current_agent_topology = cliv1.topology(
         f"(label IN ('cluster-name:{cluster_name}') AND label IN ('namespace:{namespace}'))"
-        f" OR type IN ('namespace', 'persistent-volume')")
+        f" OR type IN ('namespace', 'persistent-volume')", "workload")
     possible_matches = expected_agent_topology.find(current_agent_topology)
     possible_matches.assert_exact_match()
 
@@ -61,6 +61,6 @@ def test_container_runtime(ansible_var, cliv1):
     if runtime == "dockerd":
         runtime = "docker"
 
-    topo = cliv1.topology("type = 'container'")
+    topo = cliv1.topology("type = 'container'", "container-runtime")
     for c in topo.components:
         assert f"runtime:{runtime}" in c.tags

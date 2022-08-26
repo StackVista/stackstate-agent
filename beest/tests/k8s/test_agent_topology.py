@@ -118,6 +118,6 @@ def test_checks_agent_topology(ansible_var, cliv1):
 def query_and_assert(cliv1, cluster_name: str, namespace: str, expected_topology: TopologyMatcher):
     current_agent_topology = cliv1.topology(
         f"(label IN ('cluster-name:{cluster_name}') AND label IN ('namespace:{namespace}'))"
-        f" OR (type IN ('node', 'namespace'))")
+        f" OR (type IN ('node', 'namespace'))", "agent")
     possible_matches = expected_topology.find(current_agent_topology)
     return possible_matches.assert_exact_match()

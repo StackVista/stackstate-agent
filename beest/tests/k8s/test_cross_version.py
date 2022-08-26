@@ -4,7 +4,7 @@ from ststest import TopologyMatcher
 testinfra_hosts = ["local"]
 
 
-def test_projected_volume(ansible_var, cliv1):
+def test_projected_volume_topology(ansible_var, cliv1):
     k8s_version = ansible_var("agent_k8s_version")
     if k8s_version == "1.21":
         namespace = ansible_var("monitoring_namespace")
@@ -20,7 +20,7 @@ def test_projected_volume(ansible_var, cliv1):
             .one_way_direction("cluster-agent-container", "kube-api-access", type="mounts") \
             .one_way_direction("kube-api-access", "kube-root-ca", type="projects")
 
-        current_topology = cliv1.topology(f"label IN ('namespace:{namespace}')")
+        current_topology = cliv1.topology(f"label IN ('namespace:{namespace}')", "projected-volume")
         possible_matches = expected_topology.find(current_topology)
         matched_res = possible_matches.assert_exact_match()
 

@@ -7,8 +7,6 @@ testinfra_hosts = ["local"]
 def test_agents_running(cliv1):
     def wait_for_metrics():
         json_data = cliv1.topic_api("sts_multi_metrics")
-        with open("./topic-sts-multi-metrics.json", 'w') as f:
-            json.dump(json_data, f, indent=4)
 
         metrics = {}
         for message in json_data["messages"]:
@@ -34,8 +32,6 @@ def test_agents_running(cliv1):
 def test_agent_http_metrics(cliv1):
     def wait_for_metrics():
         json_data = cliv1.topic_api("sts_multi_metrics")
-        with open("./topic-multi-metrics-http.json", 'w') as f:
-            json.dump(json_data, f, indent=4)
 
         def get_keys():
             return next(set(message["message"]["MultiMetric"]["values"].keys())
@@ -55,8 +51,6 @@ def test_agent_http_metrics(cliv1):
 def test_agent_kubernetes_metrics(cliv1):
     def wait_for_metrics():
         json_data = cliv1.topic_api("sts_multi_metrics")
-        with open("./topic-multi-metrics-kubernetes.json", 'w') as f:
-            json.dump(json_data, f, indent=4)
 
         def contains_key():
             for message in json_data["messages"]:
@@ -75,8 +69,6 @@ def test_agent_kubernetes_metrics(cliv1):
 def test_agent_kubernetes_state_metrics(cliv1):
     def wait_for_metrics():
         json_data = cliv1.topic_api("sts_multi_metrics")
-        with open("./topic-multi-metrics-kubernetes_state.json", 'w') as f:
-            json.dump(json_data, f, indent=4)
 
         def contains_key():
             for message in json_data["messages"]:
@@ -95,8 +87,6 @@ def test_agent_kubernetes_state_metrics(cliv1):
 def test_agent_kubelet_metrics(cliv1):
     def wait_for_metrics():
         json_data = cliv1.topic_api("sts_multi_metrics")
-        with open("./topic-multi-metrics-kubelet.json", 'w') as f:
-            json.dump(json_data, f, indent=4)
 
         def contains_key():
             for message in json_data["messages"]:

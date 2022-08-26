@@ -1,4 +1,3 @@
-import json
 import util
 import integration_sample
 
@@ -17,19 +16,17 @@ def kubernetes_event_data(event, json_data):
 
 def test_agent_integration_sample_metrics(cliv1, hostname):
     expected = {'system.cpu.usage', 'location.availability', '2xx.responses', '5xx.responses', 'check_runs'}
-    util.assert_metrics(cliv1, hostname, "agent-integration-sample", expected)
+    util.assert_metrics(cliv1, hostname, expected)
 
 
 def test_agent_integration_sample_topology(cliv1):
     expected_components = integration_sample.get_agent_integration_sample_expected_topology()
-    util.assert_topology(cliv1, "agent-integration-sample", "sts_topo_agent_integrations", expected_components)
+    util.assert_topology(cliv1, "sts_topo_agent_integrations", expected_components)
 
 
 def test_agent_integration_sample_events(cliv1):
     def wait_for_events():
         json_data = cliv1.topic_api("sts_generic_events")
-        with open("./topic-agent-integration-sample-sts-generic-events.json", 'w') as f:
-            json.dump(json_data, f, indent=4)
 
         service_event = {
             "name": "service-check.service-check",
