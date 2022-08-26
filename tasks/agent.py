@@ -295,7 +295,9 @@ def apply_branding(ctx):
     apm_dd_url_replace = 's/apm_dd_url/apm_sts_url/g'
     do_sed_rename(ctx, apm_dd_url_replace, "./pkg/trace/config/apply.go")
     do_sed_rename(ctx, apm_dd_url_replace, "./pkg/trace/config/env.go")
+    do_sed_rename(ctx, apm_dd_url_replace, "./pkg/config/apm.go")
     do_sed_rename(ctx, 's/DD_APM_ENABLED/STS_APM_ENABLED/g', "./pkg/trace/agent/run.go")
+    do_sed_rename(ctx, 's/DD_APM_ENABLED/STS_APM_ENABLED/g', "./pkg/config/apm.go")
     dd_agent_bin_replace = 's/dd_agent_bin/sts_agent_bin/g'
     do_sed_rename(ctx, dd_agent_bin_replace, "./pkg/trace/config/apply.go")
     DD_API_KEY_replace = 's/DD_API_KEY/STS_API_KEY/g'
