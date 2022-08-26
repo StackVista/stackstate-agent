@@ -14,3 +14,5 @@
 - name: "Restart StackState Agent Service"
   win_command: |
     "C:\\Program Files\\StackState\\StackState Agent\\embedded\\agent.exe" restart-service
+  register: restart_result
+- debug: var="restart_result"
