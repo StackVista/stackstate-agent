@@ -241,7 +241,7 @@ build_cluster_agent:
     - deps_deb
   script:
     - conda activate $CONDA_ENV
-    - inv -e cluster-agent.build --go-mod-cache $CI_PROJECT_DIR/vendor
+    - inv -e cluster-agent.build
     - ls -la $CI_PROJECT_DIR/bin/
   artifacts:
     paths:
