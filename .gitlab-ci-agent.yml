@@ -241,7 +241,7 @@ build_cluster_agent:
     - deps_deb
   script:
     - conda activate $CONDA_ENV
-    - inv -e cluster-agent.build
+    - inv -e cluster-agent.build --go-mod-cache $CI_PROJECT_DIR/vendor
     - ls -la $CI_PROJECT_DIR/bin/
   artifacts:
     paths:
@@ -277,7 +277,7 @@ build_deb:
     - cat version.txt || true
     - source ./.gitlab-scripts/setup_artifactory.sh
 
-    - inv -e agent.omnibus-build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --skip-deps --skip-sign --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
+    - inv -e agent.omnibus-build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --go-mod-cache $CI_PROJECT_DIR/vendor --skip-deps --skip-sign --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
 
     # Prepare outputs
     - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles && mkdir -p $CI_PROJECT_DIR/outcomes/binary
@@ -295,6 +295,7 @@ build_deb:
     # Drop symlink because it will fail the build when coming from a cache
     - rm /omnibus/src/datadog-agent/src/github.com/StackVista/stackstate-agent/vendor/github.com/coreos/etcd/cmd/etcd || echo "Not found"
     - mv /omnibus $CI_PROJECT_DIR/.omnibus
+    - cd $CI_PROJECT_DIR/vendor && tar czf $CI_PROJECT_DIR/vendor.tar.gz . # TODO: Remove it, only for debug
   artifacts:
     paths:
       - $CI_PROJECT_DIR/outcomes/pkg/*.deb
@@ -305,6 +306,7 @@ build_deb:
       - $CI_PROJECT_DIR/outcomes/Dockerfiles/manifests
       - $CI_PROJECT_DIR/version.txt
       - $CI_PROJECT_DIR/outcomes/binary/trace-agent
+      - $CI_PROJECT_DIR/vendor.tar.gz # TODO: Remove it, only for debug
     expire_in: 1 week
   retry:
     max: 2
