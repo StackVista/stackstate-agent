@@ -53,7 +53,7 @@ def _find_process_by_command_args(json_data, type_name, cmd_assert_fn):
 
 def test_dnat(host, ansible_var, cliv1):
     dnat_service_port = int(ansible_var("dnat_service_port"))
-    namespace = ansible_var("namespace")
+    namespace = ansible_var("test_namespace")
     kubecontext = ansible_var("agent_kubecontext")
 
     def wait_for_components():
