@@ -175,8 +175,12 @@ func (c *AgentConfig) applyDatadogConfig() error {
 	if site != "" {
 		c.Endpoints[0].Host = apiEndpointPrefix + site
 	}
+	log.Infof("[sts] STS_APM_URL = %s", config.GetEnvDefault("STS_APM_URL", ""))
+	log.Infof("[sts] DD_APM_DD_URL = %s", config.GetEnvDefault("DD_APM_DD_URL", ""))
+	log.Infof("[sts] apm_config.apm_dd_url = %s", config.Datadog.GetString("apm_config.apm_dd_url"))
 	if host := config.Datadog.GetString("apm_config.apm_dd_url"); host != "" {
 		c.Endpoints[0].Host = host
+		log.Infof("[sts] set endpoint to host '%s'", host)
 		if site != "" {
 			log.Infof("'site' and 'apm_dd_url' are both set, using endpoint: %q", host)
 		}
