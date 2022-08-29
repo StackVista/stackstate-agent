@@ -91,6 +91,7 @@ deps_deb:
     when:
       - always
   rules:
+    - !reference [.v2_test_rules, rules]
     - when: on_success
 
 deps_rpm:
@@ -122,6 +123,7 @@ deps_rpm:
     when:
       - always
   rules:
+    - !reference [.v2_test_rules, rules]
     - when: on_success
 
 deps_win:
@@ -154,6 +156,7 @@ deps_win:
     when:
       - always
   rules:
+    - !reference [.v2_test_rules, rules]
     - when: on_success
 
 ## build stage
