@@ -1,14 +1,12 @@
+# TODO Verify defender disabled
+#Set-MpPreference -DisableRealtimeMonitoring $true
+#Get-MpComputerStatus
 
-#[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-#Set-ExecutionPolicy Bypass -Scope Process -Force
-#iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+#Enable-WindowsOptionalFeature -Online -FeatureName "NetFx3" -All -LogLevel WarningsInfo
+Install-WindowsFeature NET-Framework-Core -Source C:\sxs
 
+C:\Windows\Temp\VCForPython27.msi -ArgumentList "/quiet"
 
-choco install -y awscli
-#aws s3 cp s3://vcpython27/VCForPython27.msi C:\\Windows\\Temp\\VCForPython27.msi
-#aws s3 cp s3://vcpython27/VC_redist.x86.exe C:\\Windows\\Temp\\VC_redist.x86.exe
-#aws s3 cp s3://vcpython27/vs_Community.exe C:\\Windows\\Temp\\vs_Community.exe
+python -m pip install --upgrade pip
 
-# Install Gitlab Runner
-choco install -y gitlab-runner
-
+pip install virtualenvwrapper-win

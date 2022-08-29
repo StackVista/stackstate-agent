@@ -1,0 +1,1 @@
+choco install -y --ignore-package-exit-codes=3010 visualstudio2017community --pkgparameters="--norestart --wait --quiet --locale en-US --add Microsoft.VisualStudio.Workload.NativeDesktop  --add Microsoft.VisualStudio.Component.VC.CMake.Project --add Microsoft.VisualStudio.Component.VC.CLI.Support --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Win81"

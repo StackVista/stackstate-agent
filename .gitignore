@@ -183,3 +183,5 @@ deployment/kubernetes/k8s-*/
 # msgpack gen files
 *_gen*.go
 
+.ci-builders/**/binaries/
+.ci-builders/**/sxs/

@@ -1,0 +1,1 @@
+choco install -y visualstudio2019-workload-manageddesktop visualstudio2019-workload-nativedesktop visualstudio2019-workload-netcoretools visualstudio2019-workload-netweb visualstudio2019-workload-nativecrossplat visualstudio2019-workload-vctools netfx-4.7-devpack hg pkgconfiglite wget git wixtoolset
