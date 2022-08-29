@@ -7,6 +7,7 @@ package writer
 
 import (
 	"compress/gzip"
+	"encoding/json"
 	"errors"
 	"math"
 	"strings"
@@ -235,6 +236,9 @@ func (w *TraceWriter) flush() {
 		ErrorTPS:       w.errorTPS,
 		TracerPayloads: w.tracerPayloads,
 	}
+	apJson, _ := json.Marshal(p)
+	log.Debugf("[sts] Tracer payloads = %+v", apJson)
+
 	b, err := proto.Marshal(&p)
 	if err != nil {
 		log.Errorf("Failed to serialize payload, data dropped: %v", err)

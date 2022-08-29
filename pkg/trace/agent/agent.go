@@ -296,6 +296,7 @@ func (a *Agent) Process(p *api.Payload) {
 		numEvents, keep := a.sample(ts, pt)
 		if !keep && numEvents == 0 {
 			// the trace was dropped and no analyzed span were kept
+			log.Infof("[sts] the trace was dropped and no analyzed span were kept (keep = %v, numEvents = %d)", keep, numEvents)
 			p.RemoveChunk(i)
 			continue
 		}
@@ -317,6 +318,7 @@ func (a *Agent) Process(p *api.Payload) {
 	}
 	ss.TracerPayload = p.TracerPayload
 	if ss.Size > 0 {
+		log.Infof("[sts] Sending ss: %+v", ss)
 		a.TraceWriter.In <- ss
 	}
 	if len(envtraces) > 0 {
@@ -326,6 +328,7 @@ func (a *Agent) Process(p *api.Payload) {
 			// and it's not prohibited by the disable_cid_stats feature flag.
 			in.ContainerID = p.TracerPayload.ContainerID
 		}
+		log.Infof("[sts] Sending in: %+v", in)
 		a.Concentrator.In <- in
 	}
 }

@@ -119,7 +119,7 @@ func (se *SpanInterpreterEngine) Interpret(origTrace pb.Trace) pb.Trace {
 		}
 	}
 
-	log.Info("[sts] Interpreted %v spans", len(interpretedTrace))
+	log.Infof("[sts] Interpreted %d spans", len(interpretedTrace))
 
 	return interpretedTrace
 }
