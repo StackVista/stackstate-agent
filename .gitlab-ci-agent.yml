@@ -91,8 +91,6 @@ deps_deb:
     when:
       - always
   rules:
-    - !reference [.v2_test_rules, rules]
-    - !reference [.test_rules, rules]
     - when: on_success
 
 deps_rpm:
@@ -124,8 +122,6 @@ deps_rpm:
     when:
       - always
   rules:
-    - !reference [.v2_test_rules, rules]
-    - !reference [.test_rules, rules]
     - when: on_success
 
 deps_win:
@@ -158,8 +154,6 @@ deps_win:
     when:
       - always
   rules:
-    - !reference [.v2_test_rules, rules]
-    - !reference [.test_rules, rules]
     - when: on_success
 
 ## build stage
@@ -571,28 +565,6 @@ pre_release_cluster_agent_image:
   rules:
     - *cluster_agent
 
-.other_files_rule: &other_files_rule
-  # Check if any files (not MD) changed
-  # Glob syntax that checks for changes in all files except files that end with .md extension.
-  # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
-  - changes:
-      - "**/{.*,!(*.md)}"
-    # If any non-MD files changed, always run the pipeline.
-    when: always
-
-.md_only_rule: &md_only_rule
-  # Check if any MD files changed
-  # Glob syntax that checks for changes in files ending with .md extension.
-  # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
-  - changes:
-      - "**/*.markdown"
-      - "**/*.md"
-      - "**/*.mdown"
-    # If any MD files changed, don't run the pipeline.
-    when: manual
-    # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
-    allow_failure: true
-
 # Merge train rules for agent v2
 .v2_merge_train_always: &v2_merge_train_always
   # If the major version is 2, and it is the master branch or a tag, always execute this step
@@ -711,24 +683,6 @@ pre_release_cluster_agent_image:
   - if: $CI_COMMIT_BRANCH
     when: on_failure
     allow_failure: false
-
-.v2_test_rules:
-  rules:
-    - *v2_merge_train_always
-    - *other_files_rule
-    - *md_only_rule
-    - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-      when: always
-      allow_failure: false
-
-.test_rules:
-  rules:
-    - *merge_train_always
-    - *other_files_rule
-    - *md_only_rule
-    - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-      when: always
-      allow_failure: false
 
 # Core Molecule Structure for all the molecule steps
 .molecule: &molecule
@@ -866,7 +820,7 @@ molecule_compose_create:
   <<: *molecule_create
   rules:
     - *compose_ignore_rule
-    - !reference [.v2_test_rules, rules]
+    - *v2_merge_train_always
   variables:
     MOLECULE_SCENARIO: compose
 
@@ -923,7 +877,7 @@ molecule_integrations_create:
   <<: *molecule_create
   rules:
     - *integrations_ignore_rule
-    - !reference [.test_rules, rules]
+    - *merge_train_always
   variables:
     MOLECULE_SCENARIO: integrations
 
@@ -994,7 +948,7 @@ beest_k8s_dockerd_create:
   <<: *beest_k8s_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - !reference [.v2_test_rules, rules]
+    - *v2_merge_train_always
 
 beest_k8s_containerd_create:
   <<: *beest
@@ -1002,7 +956,7 @@ beest_k8s_containerd_create:
   <<: *beest_k8s_containerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - !reference [.v2_test_rules, rules]
+    - *v2_merge_train_always
 
 beest_k8s_dockerd_test:
   <<: *beest
@@ -1114,7 +1068,7 @@ molecule_localinstall_create:
   rules:
     - *localinstall_ignore_rule
     - *localinstall_acceptance_rule
-    - !reference [.test_rules, rules]
+    - *merge_train_always
     - when: never
   variables:
     MOLECULE_SCENARIO: localinstall
@@ -1194,7 +1148,7 @@ molecule_secrets_create:
   rules:
     - *secrets_ignore_rule
     - *secrets_acceptance_rule
-    - !reference [.test_rules, rules]
+    - *merge_train_always
     - when: never
   variables:
     MOLECULE_SCENARIO: secrets
@@ -1262,7 +1216,7 @@ molecule_swarm_create:
   <<: *molecule_create
   rules:
     - *swarm_ignore_rule
-    - !reference [.v2_test_rules, rules]
+    - *v2_merge_train_always
   variables:
     MOLECULE_SCENARIO: swarm
 
@@ -1321,7 +1275,7 @@ molecule_vms_create:
   <<: *molecule_create
   rules:
     - *vms_ignore_rule
-    - !reference [.v2_test_rules, rules]
+    - *v2_merge_train_always
   variables:
     MOLECULE_SCENARIO: vms
 
@@ -1389,7 +1343,7 @@ beest_otel_create:
   <<: *beest_otel_variables
   rules:
     - *beest_otel_ignore_rule
-    - !reference [.v2_test_rules, rules]
+    - *v2_merge_train_always
 
 beest_otel_test:
   <<: *beest
