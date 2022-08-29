@@ -128,6 +128,7 @@ func (c *AgentConfig) applyDatadogConfig() error {
 		c.Endpoints[0].Host = apiEndpointPrefix + site
 	}
 	if host := config.Datadog.GetString("apm_config.apm_dd_url"); host != "" {
+		// check rebranding
 		c.Endpoints[0].Host = host
 		if site != "" {
 			log.Infof("'site' and 'apm_dd_url' are both set, using endpoint: %q", host)
