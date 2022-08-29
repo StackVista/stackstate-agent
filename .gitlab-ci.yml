@@ -145,7 +145,7 @@ agent2:
     - *other_files_rule
     - *md_only_rule
     - if: $CI_MERGE_REQUEST_IID
-    - if: $CI_OPEN_MERGE_REQUESTS
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
       when: never
     - if: $CI_COMMIT_BRANCH
 
@@ -169,7 +169,7 @@ agent3:
    - *other_files_rule
    - *md_only_rule
    - if: $CI_MERGE_REQUEST_IID
-   - if: $CI_OPEN_MERGE_REQUESTS
+   - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
      when: never
    - if: $CI_COMMIT_BRANCH
 
@@ -192,7 +192,7 @@ build_beest_runners:
     strategy: depend
   rules:
     - if: $CI_MERGE_REQUEST_IID
-    - if: $CI_OPEN_MERGE_REQUESTS
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
       when: never
     - if: $CI_COMMIT_BRANCH
 
@@ -205,7 +205,7 @@ build_agent_runners:
     strategy: depend
   rules:
     - if: $CI_MERGE_REQUEST_IID
-    - if: $CI_OPEN_MERGE_REQUESTS
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
       when: never
     - if: $CI_COMMIT_BRANCH
 
