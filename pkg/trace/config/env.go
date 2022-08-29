@@ -54,6 +54,10 @@ func loadEnv() {
 			config.Datadog.Set(override.key, v)
 		}
 	}
+	log.Infof("[sts] BindEnv %s -> %s", "apm_config.apm_dd_url", "DD_APM_DD_URL")
+	log.Infof("[sts] STS_APM_URL = %s", config.Datadog.GetString("STS_APM_URL"))
+	log.Infof("[sts] DD_APM_DD_URL = %s", config.Datadog.GetString("DD_APM_DD_URL"))
+	log.Infof("[sts] apm_config.apm_dd_url = %s", config.Datadog.GetString("apm_config.apm_dd_url"))
 	for _, envKey := range []string{
 		"DD_IGNORE_RESOURCE", // deprecated
 		"DD_APM_IGNORE_RESOURCES",
