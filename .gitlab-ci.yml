@@ -109,23 +109,23 @@ variables: &commonvariables
   # Check if any files (not MD) changed
   # Glob syntax that checks for changes in all files except files that end with .md extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
-  changes:
-  - "**/{.*,!(*.md)}"
-  # If any non-MD files changed, always run the pipeline.
-  when: always
+  - changes:
+    - "**/{.*,!(*.md)}"
+    # If any non-MD files changed, always run the pipeline.
+    when: always
 
 .md_only_rule: &md_only_rule
   # Check if any MD files changed
   # Glob syntax that checks for changes in files ending with .md extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
-  changes:
-    - "**/*.markdown"
-    - "**/*.md"
-    - "**/*.mdown"
-    # If any MD files changed, don't run the pipeline.
-  when: manual
-  # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
-  allow_failure: true
+  - changes:
+      - "**/*.markdown"
+      - "**/*.md"
+      - "**/*.mdown"
+      # If any MD files changed, don't run the pipeline.
+    when: manual
+    # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
+    allow_failure: true
 
 agent2:
   stage: triggers
