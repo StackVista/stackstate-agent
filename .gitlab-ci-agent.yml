@@ -708,15 +708,21 @@ pre_release_cluster_agent_image:
 
 .v2_test_rules:
   rules:
+    - *v2_merge_train_always
     - *other_files_rule
     - *md_only_rule
-    - *v2_merge_train_always
+    - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+      when: always
+      allow_failure: false
 
 .test_rules:
   rules:
+    - *merge_train_always
     - *other_files_rule
     - *md_only_rule
-    - *merge_train_always
+    - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+      when: always
+      allow_failure: false
 
 # Core Molecule Structure for all the molecule steps
 .molecule: &molecule
