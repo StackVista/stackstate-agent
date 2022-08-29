@@ -257,6 +257,7 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"DD_API_KEY\\" -> \\"STS_API_KEY\\""', "./pkg/trace")
     do_go_rename(ctx, '"\\"DD_SITE\\" -> \\"STS_SITE\\""', "./pkg/trace")
     do_go_rename(ctx, '"\\"DD_APM_ENABLED\\" -> \\"STS_APM_ENABLED\\""', "./pkg/trace")
+    do_go_rename(ctx, '"\\"DD_APM_ENABLED\\" -> \\"STS_APM_ENABLED\\""', "./pkg/config")
     do_go_rename(ctx, '"\\"DD_APM_DD_URL\\" -> \\"STS_APM_URL\\""', "./pkg/trace")
     do_go_rename(ctx, '"\\"DD_APM_DD_URL\\" -> \\"STS_APM_URL\\""', "./pkg/config")
     do_go_rename(ctx, '"\\"DD_HOSTNAME\\" -> \\"STS_HOSTNAME\\""', "./pkg/trace")

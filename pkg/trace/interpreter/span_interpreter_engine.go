@@ -66,7 +66,7 @@ func NewSpanInterpreterEngine(agentConfig *config.AgentConfig) *SpanInterpreterE
 
 // Interpret interprets the trace using the configured SpanInterpreterEngine
 func (se *SpanInterpreterEngine) Interpret(origTrace pb.Trace) pb.Trace {
-	log.Info("[sts] Interpreting %v spans", len(origTrace))
+	log.Infof("[sts] Interpreting %d spans", len(origTrace))
 	// we do not mutate the original trace
 	var interpretedTrace = make(pb.Trace, 0)
 	groupedSourceSpans := make(map[string][]*pb.Span)
@@ -80,6 +80,7 @@ func (se *SpanInterpreterEngine) Interpret(origTrace pb.Trace) pb.Trace {
 			interpretedTrace = append(interpretedTrace, span)
 			log.Info("[sts] Skipping interpretation for SpanID %v", span.SpanID)
 		} else {
+			log.Info("[sts] Interpreting span %+v", span)
 			se.DefaultSpanInterpreter.Interpret(span)
 
 			meta, err := se.extractSpanMetadata(span)
@@ -113,7 +114,7 @@ func (se *SpanInterpreterEngine) Interpret(origTrace pb.Trace) pb.Trace {
 
 	for source, spans := range groupedSourceSpans {
 		if interpreter, found := se.SourceInterpreters[source]; found {
-			log.Info("[sts] interpreting source '%s' span", source)
+			log.Infof("[sts] interpreted source '%s' span", source)
 			interpretedTrace = append(interpretedTrace, interpreter.Interpret(spans)...)
 		}
 	}
