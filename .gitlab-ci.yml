@@ -142,12 +142,12 @@ agent2:
     - <<: *exclude_on_tag_v3
     - if: $CI_COMMIT_MESSAGE =~ /\[py3]/
       when: never
+    - *other_files_rule
+    - *md_only_rule
     - if: $CI_MERGE_REQUEST_IID
     - if: $CI_OPEN_MERGE_REQUESTS
       when: never
     - if: $CI_COMMIT_BRANCH
-    - *other_files_rule
-    - *md_only_rule
 
 # if MD only change, the only pipelines we want to run are scheduled masters and tags.
 
@@ -165,12 +165,12 @@ agent3:
    - <<: *exclude_on_tag_v2
    - if: $CI_COMMIT_MESSAGE =~ /\[py2]/
      when: never
+   - *other_files_rule
+   - *md_only_rule
    - if: $CI_MERGE_REQUEST_IID
    - if: $CI_OPEN_MERGE_REQUESTS
      when: never
    - if: $CI_COMMIT_BRANCH
-   - *other_files_rule
-   - *md_only_rule
 
 cluster_agent:
   stage: triggers
