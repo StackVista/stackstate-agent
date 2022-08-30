@@ -145,7 +145,7 @@ agent2:
       when: never
     - <<: *scheduled_master_pipeline
     - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE != "push"
-    - if: $CI_OPEN_MERGE_REQUESTS
+    - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH
       when: never
     - *other_files_rule
     - *md_only_rule
@@ -172,7 +172,6 @@ agent3:
    - <<: *scheduled_master_pipeline
    - *other_files_rule
    - *md_only_rule
-   - if: $CI_COMMIT_BRANCH
 
 cluster_agent:
   stage: triggers
