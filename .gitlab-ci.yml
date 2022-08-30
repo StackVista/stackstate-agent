@@ -115,7 +115,7 @@ variables: &commonvariables
     when: never
 
   # Run pipeline for merge requsts and not for commits when code is not pushed
-  - if: ($CI_MERGE_REQUEST_IID || $CI_PIPELINE_SOURCE == "merge_request_event") && $CI_PIPELINE_SOURCE != "push"
+  - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PIPELINE_SOURCE != "push"
     changes:
       - "**/{,*.!(markdown|mdown|md),.*}"
     # If any non-MD files changed, always run the pipeline.
