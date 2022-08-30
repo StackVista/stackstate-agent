@@ -134,9 +134,6 @@ agent2:
     <<: *agent2_variables
     if: $CI_OPEN_MERGE_REQUESTS
     $RUN_FULL_PIPELINE: "false"
-  trigger:
-    include: .gitlab-ci-agent.yml
-    strategy: depend
   script:
     - echo "$RUN_FULL_PIPELINE"
   rules:
