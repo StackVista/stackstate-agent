@@ -122,14 +122,14 @@ variables: &commonvariables
     when: always
 
   # Add comment
-  - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
+  - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
     changes:
       - "**/{,*.!(markdown|mdown|md),.*}"
     # If any non-MD files changed, always run the pipeline.
     when: always
 
   # Add comment
-  - if: $CI_PIPELINE_SOURCE != "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
+  - if: ($CI_MERGE_REQUEST_IID) && $CI_PIPELINE_SOURCE != "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
     changes:
       - "**/{,*.!(markdown|mdown|md),.*}"
     # If any non-MD files changed, always run the pipeline.
@@ -180,7 +180,7 @@ agent2:
     #include: .gitlab-ci-agent.yml
     #strategy: depend
   script:
-    - echo test
+    - echo "$CI_MERGE_REQUEST_IID"
   rules:
     - <<: *exclude_on_cluster_agent
     # exclude this pipeline if we're running a v3 tag pipeline
@@ -202,7 +202,7 @@ agent3:
    #include: .gitlab-ci-agent.yml
    #strategy: depend
  script:
-  - echo test
+  - echo "$CI_MERGE_REQUEST_IID"
  rules:
    - <<: *exclude_on_cluster_agent
    # exclude this pipeline if we're running a v2 tag pipeline
