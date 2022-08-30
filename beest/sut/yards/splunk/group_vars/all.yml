@@ -18,6 +18,21 @@ kubecontext: "{{ cluster_name }}"
 sts_api_key: "{{ yard_id }}"
 sts_url: "https://{{ yard_id }}.{{ cluster_name }}"
 
+# Username and password for Splunk Enterprise admin user
+#   (modified during initial install, not during upgrade)
+splunk_user: admin
+splunk_pass: splunk123
+
+# Username and password for Splunk Universal Forwarder admin user
+#   (modified during initial install, not during upgrade)
+splunk_uf_user: ufadmin
+splunk_uf_pass: splunk123
+
+#User and group that will run splunkd on the OS and own Splunk files
+os_user: splunk
+os_group: splunk
+
+# $SPLUNK_HOME path
 splunk_home: /opt/splunk
 splunk_uf_home: /opt/splunkforwarder
 splunk_base_path: /opt

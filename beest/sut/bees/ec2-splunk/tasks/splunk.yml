@@ -13,18 +13,57 @@
       register: downloaded
 
     - name: Install Splunk Binary
-      tags:
-        - install
       apt: deb=/home/ubuntu/splunk.deb
 
+    - name: "Create symlink to splunk in /usr/local/bin"
+      file:
+        src: "{{ splunk_home }}/bin/splunk"
+        path: /usr/local/bin/splunk
+        state: link
+        owner: "{{ os_user }}"
+        group: "{{ os_group }}"
+
+
+    - name: Create file for default admin creds
+      template:
+        src: user-seed.conf.j2
+        dest: "{{ splunk_home }}/etc/system/local/user-seed.conf"
+
+    - name: "-.ui_login- Touch {{ splunk_home }}/etc/.ui_login"
+      file:
+        path: "{{ splunk_home }}/etc/.ui_login"
+        state: touch
+        mode: '0644'
+        owner: "{{ os_user }}"
+        group: "{{ os_group }}"
+
+    - name: Create file for default user/UI preferences
+      template:
+        src: user-prefs.conf.j2
+        dest: "{{ splunk_home }}/etc/system/local/user-prefs.conf"
+
+    - name: Create file to disable default search tour
+      template:
+        src: ui-tour.conf.j2
+        dest: "{{ splunk_home }}/etc/system/local/ui-tour.conf"
+
     - name: Accept Licence
-      tags:
-        - install
       shell: "{{ splunk_home }}/bin/splunk start --answer-yes --auto-ports --no-prompt --accept-license"
-      become: yes
 
-    - name: Enable init script
-      tags:
-        - install
-      shell: /opt/splunk/bin/splunk enable boot-start
+#    - name : Restart Splunk
+#      service:
+#        name: splunkd
+#        state: restarted
 
+#    - name: Define Values From CSV File, this reads file in one go, but you could also use col= to read each in it's own lookup.
+#      ansible.builtin.set_fact:
+#        loop_ip: "{{ csvline[0] }}"
+#        int_ip: "{{ csvline[1] }}"
+#        int_mask: "{{ csvline[2] }}"
+#        int_name: "{{ csvline[3] }}"
+#        local_as: "{{ csvline[4] }}"
+#        neighbor_as: "{{ csvline[5] }}"
+#        neigh_int_ip: "{{ csvline[6] }}"
+#      vars:
+#        csvline = "{{ lookup('ansible.builtin.csvfile', bgp_neighbor_ip, file='bgp_neighbors.csv', delimiter=',') }}"
+#      delegate_to: localhost
