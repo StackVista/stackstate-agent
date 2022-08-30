@@ -147,6 +147,7 @@ agent2:
     - *other_files_rule
     - *md_only_rule
     - if: $CI_MERGE_REQUEST_IID
+      when: always
     - if: $CI_COMMIT_BRANCH
 
 # if MD only change, the only pipelines we want to run are scheduled masters and tags.
@@ -171,6 +172,7 @@ agent3:
    - *other_files_rule
    - *md_only_rule
    - if: $CI_MERGE_REQUEST_IID
+     when: always
    - if: $CI_COMMIT_BRANCH
 
 cluster_agent:
