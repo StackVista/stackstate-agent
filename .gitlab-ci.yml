@@ -126,7 +126,14 @@ variables: &commonvariables
     changes:
       - "**/{,*.!(markdown|mdown|md),.*}"
     # If any non-MD files changed, always run the pipeline.
-    when: always  
+    when: always
+
+  # Add comment
+  - if: $CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH
+    changes:
+      - "**/{,*.!(markdown|mdown|md),.*}"
+    # If any non-MD files changed, always run the pipeline.
+    when: always
 
 .md_only_rule: &md_only_rule
   # Check if any MD files changed
@@ -148,6 +155,15 @@ variables: &commonvariables
 
 # Add comment
   - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
+    changes:
+      - "**/*.{markdown,mdown,md}"
+      # If any MD files changed, don't run the pipeline.
+    when: manual
+    # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
+    allow_failure: true
+
+  # Add comment
+  - if: $CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH
     changes:
       - "**/*.{markdown,mdown,md}"
       # If any MD files changed, don't run the pipeline.
