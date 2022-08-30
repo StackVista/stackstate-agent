@@ -110,38 +110,7 @@ variables: &commonvariables
   # Glob syntax that checks for changes in all files except files that end with .md extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
   changes:
-    - "**/.*"
-    - "**/*.a*"
-    - "**/*.b*"
-    - "**/*.c*"
-    - "**/*.d*"
-    - "**/*.e*"
-    - "**/*.f*"
-    - "**/*.g*"
-    - "**/*.h*"
-    - "**/*.i*"
-    - "**/*.j*"
-    - "**/*.k*"
-    - "**/*.l*"
-    - "**/*.make"
-    - "**/*.mod"
-    - "**/*.n*"
-    - "**/*.o*"
-    - "**/*.p*"
-    - "**/*.q*"
-    - "**/*.r*"
-    - "**/*.s*"
-    - "**/*.t*"
-    - "**/*.u*"
-    - "**/*.v*"
-    - "**/*.w*"
-    - "**/*.x*"
-    - "**/*.y*"
-    - "**/*.z*"
-    - "**/Dockerfile"
-    - "**/Makefile"
-    - "**/Gemfile"
-    - "**/Vagrantfile"
+    - "**/{,*.!(markdown|mdown|md),.*}"
   # If any non-MD files changed, always run the pipeline.
   when: always
 
@@ -150,9 +119,7 @@ variables: &commonvariables
   # Glob syntax that checks for changes in files ending with .md extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
   changes:
-    - "**/*.markdown"
-    - "**/*.md"
-    - "**/*.mdown"
+    - "**/*.{markdown,mdown,md}"
     # If any MD files changed, don't run the pipeline.
   when: manual
   # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
