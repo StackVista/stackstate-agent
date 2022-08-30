@@ -180,8 +180,8 @@ agent2:
     #include: .gitlab-ci-agent.yml
     #strategy: depend
   script:
-    - echo "CI_MERGE_REQUEST_IID"
-    - echo "CI_COMMIT_BRANCH"
+    - echo "$CI_MERGE_REQUEST_IID"
+    - echo "$CI_COMMIT_BRANCH"
   rules:
     - <<: *exclude_on_cluster_agent
     # exclude this pipeline if we're running a v3 tag pipeline
@@ -203,8 +203,8 @@ agent3:
    #include: .gitlab-ci-agent.yml
    #strategy: depend
  script:
-  - echo "CI_MERGE_REQUEST_IID"
-  - echo "CI_COMMIT_BRANCH"
+  - echo "$CI_MERGE_REQUEST_IID"
+  - echo "$CI_COMMIT_BRANCH"
  rules:
    - <<: *exclude_on_cluster_agent
    # exclude this pipeline if we're running a v2 tag pipeline
