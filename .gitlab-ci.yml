@@ -109,6 +109,14 @@ variables: &commonvariables
   # Check if any files (not MD) changed
   # Glob syntax that checks for changes in all files except files that end with .md extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
+
+
+  - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_IID
+    changes:
+      - "**/{,*.!(markdown|mdown|md),.*}"
+    when: manual
+    allow_failure: true
+
   - if: $CI_MERGE_REQUEST_IID || $CI_PIPELINE_SOURCE == "push"
     changes:
       - "**/{,*.!(markdown|mdown|md),.*}"
@@ -144,12 +152,8 @@ agent2:
     - if: $CI_COMMIT_MESSAGE =~ /\[py3]/
       when: never
     - <<: *scheduled_master_pipeline
-    - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE != "push"
-    - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH
-      when: never
     - *other_files_rule
     - *md_only_rule
-    - if: $CI_COMMIT_BRANCH
 
 # if MD only change, the only pipelines we want to run are scheduled masters and tags.
 
