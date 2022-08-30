@@ -131,7 +131,7 @@ agent2:
   variables:
     <<: *commonvariables
     <<: *agent2_variables
-    if: $CI_OPEN_MERGE_REQUESTS
+    if: $RUN_FULL_PIPELINE
     RUN_FULL_PIPELINE: "false"
   script:
     - echo "$RUN_FULL_PIPELINE"
