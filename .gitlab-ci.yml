@@ -114,7 +114,7 @@ variables: &commonvariables
   - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
     when: never
 
-  # Add comment
+  # Run pipeline for merge requsts and not for commits when code is not pushed
   - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PIPELINE_SOURCE != "push"
     changes:
       - "**/{,*.!(markdown|mdown|md),.*}"
@@ -137,7 +137,7 @@ variables: &commonvariables
   - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
     when: never
 
-  # Add comment
+  # Run pipeline for merge requsts and not for commits when code is not pushed
   - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PIPELINE_SOURCE != "push"
     changes:
       - "**/*.{markdown,mdown,md}"
