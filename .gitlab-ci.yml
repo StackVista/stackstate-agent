@@ -120,7 +120,7 @@ variables: &commonvariables
     when: always
 
 
-  - if: && $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
     changes:
       - "**/{,*.!(markdown|mdown|md),.*}"
     when: always
