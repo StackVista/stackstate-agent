@@ -8,4 +8,3 @@ For any other support request, please reach out through one of the following:
  * Contact our [support](https://docs.datadoghq.com/help/)
  * Join us [on Slack](http://datadoghq.slack.com)
 
-Edit this file for testing - Small Update again
