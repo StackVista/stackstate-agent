@@ -155,7 +155,7 @@ agent2:
       when: never
     - <<: *scheduled_master_pipeline
     - *other_files_rule
-    - *md_only_rule
+    #- *md_only_rule
 
 # if MD only change, the only pipelines we want to run are scheduled masters and tags.
 
@@ -177,7 +177,7 @@ agent3:
      when: never
    - <<: *scheduled_master_pipeline
    - *other_files_rule
-   - *md_only_rule
+   #- *md_only_rule
 
 cluster_agent:
   stage: triggers
