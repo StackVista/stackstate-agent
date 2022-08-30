@@ -111,25 +111,25 @@ variables: &commonvariables
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
 
   # Do not run pipeline for a normal branch when there is an open merge request
-  - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
+  - if: ($CI_MERGE_REQUEST_IID || $CI_PIPELINE_SOURCE == "merge_request_event") && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
     when: never
 
   # Run pipeline for merge requsts and not for commits when code is not pushed
-  - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PIPELINE_SOURCE != "push"
+  - if: ($CI_MERGE_REQUEST_IID || $CI_PIPELINE_SOURCE == "merge_request_event") && $CI_PIPELINE_SOURCE != "push"
     changes:
       - "**/{,*.!(markdown|mdown|md),.*}"
     # If any non-MD files changed, always run the pipeline.
     when: always
 
   # Add comment
-  - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
+  - if: ($CI_MERGE_REQUEST_IID || $CI_PIPELINE_SOURCE == "merge_request_event") && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
     changes:
       - "**/{,*.!(markdown|mdown|md),.*}"
     # If any non-MD files changed, always run the pipeline.
     when: always
 
   # Add comment
-  - if: ($CI_MERGE_REQUEST_IID) && $CI_PIPELINE_SOURCE != "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
+  - if: $CI_PIPELINE_SOURCE != "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
     changes:
       - "**/{,*.!(markdown|mdown|md),.*}"
     # If any non-MD files changed, always run the pipeline.
@@ -141,11 +141,11 @@ variables: &commonvariables
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
 
   # Do not run pipeline for a normal branch when there is an open merge request
-  - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
+  - if: ($CI_MERGE_REQUEST_IID || $CI_PIPELINE_SOURCE == "merge_request_event") && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
     when: never
 
   # Run pipeline for merge requsts and not for commits when code is not pushed
-  - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PIPELINE_SOURCE != "push"
+  - if: ($CI_MERGE_REQUEST_IID || $CI_PIPELINE_SOURCE == "merge_request_event") && $CI_PIPELINE_SOURCE != "push"
     changes:
       - "**/*.{markdown,mdown,md}"
     # If any non-MD files changed, always run the pipeline.
@@ -154,7 +154,7 @@ variables: &commonvariables
     allow_failure: true
 
 # Add comment
-  - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
+  - if: ($CI_MERGE_REQUEST_IID || $CI_PIPELINE_SOURCE == "merge_request_event") && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
     changes:
       - "**/*.{markdown,mdown,md}"
       # If any MD files changed, don't run the pipeline.
