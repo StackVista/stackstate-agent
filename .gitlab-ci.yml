@@ -109,21 +109,23 @@ variables: &commonvariables
   # Check if any files (not MD) changed
   # Glob syntax that checks for changes in all files except files that end with .md extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
-  changes:
-    - "**/{,*.!(markdown|mdown|md),.*}"
-  # If any non-MD files changed, always run the pipeline.
-  when: always
+  - if: $CI_MERGE_REQUEST_IID || $CI_PIPELINE_SOURCE == "push"
+    changes:
+      - "**/{,*.!(markdown|mdown|md),.*}"
+    # If any non-MD files changed, always run the pipeline.
+    when: always
 
 .md_only_rule: &md_only_rule
   # Check if any MD files changed
   # Glob syntax that checks for changes in files ending with .md extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
-  changes:
-    - "**/*.{markdown,mdown,md}"
-    # If any MD files changed, don't run the pipeline.
-  when: manual
-  # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
-  allow_failure: true
+  - if: $CI_MERGE_REQUEST_IID || $CI_PIPELINE_SOURCE == "push"
+    changes:
+      - "**/*.{markdown,mdown,md}"
+      # If any MD files changed, don't run the pipeline.
+    when: manual
+    # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
+    allow_failure: true
 
 agent2:
   stage: triggers
@@ -140,8 +142,7 @@ agent2:
     - if: $CI_COMMIT_MESSAGE =~ /\[py3]/
       when: never
     - <<: *scheduled_master_pipeline
-    - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "push"
-      when: never
+    - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_OPEN_MERGE_REQUESTS
       when: never
     - *other_files_rule
@@ -165,12 +166,12 @@ agent3:
    - if: $CI_COMMIT_MESSAGE =~ /\[py2]/
      when: never
    - <<: *scheduled_master_pipeline
-   - *other_files_rule
-   - *md_only_rule
-   - if: $CI_MERGE_REQUEST_IID && $CI_COMMIT_BRANCH
-     when: never
+   - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event"
    - if: $CI_OPEN_MERGE_REQUESTS
      when: never
+   - *other_files_rule
+   - *md_only_rule
+   - if: $CI_COMMIT_BRANCH
 
 cluster_agent:
   stage: triggers
