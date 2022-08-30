@@ -129,7 +129,7 @@ variables: &commonvariables
     when: always
 
   # Add comment
-  - if: $CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH
+  - if: $CI_PIPELINE_SOURCE != "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
     changes:
       - "**/{,*.!(markdown|mdown|md),.*}"
     # If any non-MD files changed, always run the pipeline.
@@ -163,7 +163,7 @@ variables: &commonvariables
     allow_failure: true
 
   # Add comment
-  - if: $CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH
+  - if: $CI_PIPELINE_SOURCE != "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
     changes:
       - "**/*.{markdown,mdown,md}"
       # If any MD files changed, don't run the pipeline.
