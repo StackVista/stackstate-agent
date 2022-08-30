@@ -110,7 +110,7 @@ variables: &commonvariables
   # Glob syntax that checks for changes in all files except files that end with .md extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
 
-  # Add comment
+  # Do not run pipeline for a normal branch when there is an open merge request
   - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
     when: never
 
@@ -133,7 +133,7 @@ variables: &commonvariables
   # Glob syntax that checks for changes in files ending with .md extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
 
-  # Add comment
+  # Do not run pipeline for a normal branch when there is an open merge request
   - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
     when: never
 
