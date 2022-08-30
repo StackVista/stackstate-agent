@@ -110,29 +110,44 @@ variables: &commonvariables
   # Glob syntax that checks for changes in all files except files that end with .md extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
 
+  # Add comment
   - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
     when: never
 
+  # Add comment
   - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event"
     changes:
       - "**/{,*.!(markdown|mdown|md),.*}"
     # If any non-MD files changed, always run the pipeline.
     when: always
 
-
+  # Add comment
   - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
     changes:
       - "**/{,*.!(markdown|mdown|md),.*}"
-    when: always
-    allow_failure: true
-
-  
+    # If any non-MD files changed, always run the pipeline.
+    when: always  
 
 .md_only_rule: &md_only_rule
   # Check if any MD files changed
   # Glob syntax that checks for changes in files ending with .md extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
-  - if: $CI_MERGE_REQUEST_IID || $CI_PIPELINE_SOURCE == "push"
+
+  # Add comment
+  - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
+    when: never
+
+  # Add comment
+    - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event"
+    changes:
+      - "**/*.{markdown,mdown,md}"
+    # If any non-MD files changed, always run the pipeline.
+    when: manual
+    # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
+    allow_failure: true
+
+# Add comment
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
     changes:
       - "**/*.{markdown,mdown,md}"
       # If any MD files changed, don't run the pipeline.
