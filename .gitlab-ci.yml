@@ -72,6 +72,7 @@ variables: &commonvariables
   STS_DOCKER_TEST_REPO_TRACE: stackstate-trace-agent-test
   STS_DOCKER_RELEASE_REPO_CLUSTER: stackstate-cluster-agent
   STS_DOCKER_TEST_REPO_CLUSTER: stackstate-cluster-agent-test
+  RUN_FULL_PIPELINE: "true"
 
 .agent3_variables: &agent3_variables
   CONDA_ENV: ddpy3
@@ -86,6 +87,7 @@ variables: &commonvariables
   STS_AWS_TEST_BUCKET_WIN: stackstate-agent-3-test
   STS_DOCKER_RELEASE_REPO: stackstate-agent
   STS_DOCKER_TEST_REPO: stackstate-agent-test
+  RUN_FULL_PIPELINE: "true"
   # we do not build trace-agent and cluster-agent for v2
 
 .rules:
@@ -130,9 +132,13 @@ agent2:
   variables:
     <<: *commonvariables
     <<: *agent2_variables
+    if: $CI_OPEN_MERGE_REQUESTS
+    $RUN_FULL_PIPELINE: "false"
   trigger:
     include: .gitlab-ci-agent.yml
     strategy: depend
+  script:
+    - echo "$RUN_FULL_PIPELINE"
   rules:
     - <<: *exclude_on_cluster_agent
     # exclude this pipeline if we're running a v3 tag pipeline
@@ -140,7 +146,7 @@ agent2:
     - if: $CI_COMMIT_MESSAGE =~ /\[py3]/
       when: never
     - <<: *scheduled_master_pipeline
-    - if: $CI_MERGE_REQUEST_IID
+    - if: $CI_MERGE_REQUEST_IID && $RUN_FULL_PIPELINE
     - if: $CI_OPEN_MERGE_REQUESTS
       when: never
     - *other_files_rule
