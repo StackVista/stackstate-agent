@@ -140,10 +140,10 @@ agent2:
     - if: $CI_COMMIT_MESSAGE =~ /\[py3]/
       when: never
     - <<: *scheduled_master_pipeline
+    - *other_files_rule
     - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_OPEN_MERGE_REQUESTS
       when: never
-    - *other_files_rule
     - *md_only_rule
     - if: $CI_COMMIT_BRANCH
 
@@ -167,7 +167,7 @@ agent3:
    - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event"
    - if: $CI_OPEN_MERGE_REQUESTS
      when: never
-   - *other_files_rule
+   #- *other_files_rule
    - *md_only_rule
    - if: $CI_COMMIT_BRANCH
 
