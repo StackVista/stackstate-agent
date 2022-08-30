@@ -102,7 +102,7 @@ variables: &commonvariables
     if: $CI_COMMIT_TAG =~ /3\..*/
     when: never
   - &scheduled_master_pipeline
-    if: $CI_COMMIT_TAG || ($CI_COMMIT_REF_NAME == "master" && $CI_PIPELINE_SOURCE=="schedule")
+    if: $CI_COMMIT_TAG || ($CI_COMMIT_REF_NAME == "master" && $CI_PIPELINE_SOURCE == "schedule")
     when: always
   
 .other_files_rule: &other_files_rule
@@ -110,17 +110,17 @@ variables: &commonvariables
   # Glob syntax that checks for changes in all files except files that end with .md extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
 
-  - if: $CI_MERGE_REQUEST_IID || $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH
+  - if: $CI_MERGE_REQUEST_IID || $CI_PIPELINE_SOURCE == "merge_request_event"
     changes:
       - "**/{,*.!(markdown|mdown|md),.*}"
     # If any non-MD files changed, always run the pipeline.
     when: always
 
 
-  - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_IID
+  - if: $CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH
     changes:
       - "**/{,*.!(markdown|mdown|md),.*}"
-    when: manual
+    when: always
     allow_failure: true
 
   
@@ -155,7 +155,7 @@ agent2:
       when: never
     - <<: *scheduled_master_pipeline
     - *other_files_rule
-    #- *md_only_rule
+    - *md_only_rule
 
 # if MD only change, the only pipelines we want to run are scheduled masters and tags.
 
@@ -177,7 +177,7 @@ agent3:
      when: never
    - <<: *scheduled_master_pipeline
    - *other_files_rule
-   #- *md_only_rule
+   - *md_only_rule
 
 cluster_agent:
   stage: triggers
