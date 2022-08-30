@@ -121,7 +121,7 @@ variables: &commonvariables
   changes:
     - "**/*.{markdown,mdown,md}"
     # If any MD files changed, don't run the pipeline.
-  when: always
+  when: manual
   # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
   allow_failure: true
 
@@ -140,12 +140,9 @@ agent2:
     - if: $CI_COMMIT_MESSAGE =~ /\[py3]/
       when: never
     - <<: *scheduled_master_pipeline
-    - if: $CI_OPEN_MERGE_REQUESTS
-      when: never
     - *other_files_rule
     - *md_only_rule
     - if: $CI_MERGE_REQUEST_IID
-      when: always
     - if: $CI_COMMIT_BRANCH
 
 # if MD only change, the only pipelines we want to run are scheduled masters and tags.
@@ -165,12 +162,9 @@ agent3:
    - if: $CI_COMMIT_MESSAGE =~ /\[py2]/
      when: never
    - <<: *scheduled_master_pipeline
-   - if: $CI_OPEN_MERGE_REQUESTS
-     when: never
    - *other_files_rule
    - *md_only_rule
    - if: $CI_MERGE_REQUEST_IID
-     when: always
    - if: $CI_COMMIT_BRANCH
 
 cluster_agent:
