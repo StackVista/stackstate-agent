@@ -121,7 +121,7 @@ variables: &commonvariables
   changes:
     - "**/*.{markdown,mdown,md}"
     # If any MD files changed, don't run the pipeline.
-  when: manual
+  when: always
   # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
   allow_failure: true
 
