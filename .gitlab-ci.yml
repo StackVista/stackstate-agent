@@ -110,6 +110,12 @@ variables: &commonvariables
   # Glob syntax that checks for changes in all files except files that end with .md extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
 
+  - if: $CI_MERGE_REQUEST_IID || $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH
+    changes:
+      - "**/{,*.!(markdown|mdown|md),.*}"
+    # If any non-MD files changed, always run the pipeline.
+    when: always
+
 
   - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH && $CI_MERGE_REQUEST_IID
     changes:
@@ -117,11 +123,7 @@ variables: &commonvariables
     when: manual
     allow_failure: true
 
-  - if: $CI_MERGE_REQUEST_IID || $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH
-    changes:
-      - "**/{,*.!(markdown|mdown|md),.*}"
-    # If any non-MD files changed, always run the pipeline.
-    when: always
+  
 
 .md_only_rule: &md_only_rule
   # Check if any MD files changed
