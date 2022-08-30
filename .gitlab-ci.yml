@@ -132,7 +132,7 @@ agent2:
     <<: *commonvariables
     <<: *agent2_variables
     if: $RUN_FULL_PIPELINE
-    RUN_FULL_PIPELINE: "false"
+    RUN_FULL_PIPELINE: "test"
   script:
     - echo "$RUN_FULL_PIPELINE"
   rules:
