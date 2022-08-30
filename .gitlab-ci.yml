@@ -138,7 +138,7 @@ variables: &commonvariables
     when: never
 
   # Add comment
-    - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event"
+  - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event"
     changes:
       - "**/*.{markdown,mdown,md}"
     # If any non-MD files changed, always run the pipeline.
