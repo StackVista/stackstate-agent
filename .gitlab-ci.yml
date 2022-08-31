@@ -153,7 +153,7 @@ variables: &commonvariables
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
     allow_failure: true
 
-# Add comment
+# Add comment test
   - if: $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
     changes:
       - "**/*.{markdown,mdown,md}"
