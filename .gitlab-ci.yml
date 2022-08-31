@@ -107,12 +107,8 @@ variables: &commonvariables
   
 .other_files_rule: &other_files_rule
   # Check if any files (not MD) changed
-  # Glob syntax that checks for changes in all files except files that end with .md extension.
+  # Glob syntax that checks for changes in all files except files that end with .md, .mdown or .markdown extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
-
-  # Do not run pipeline for a normal branch when there is an open merge request
-  - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
-    when: never
 
   # Run pipeline for merge requests and not for branch commits when a commit is pushed
   - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PIPELINE_SOURCE != "push"
@@ -120,6 +116,10 @@ variables: &commonvariables
       - "**/{,*.!(markdown|mdown|md),.*}"
     # If any non-MD files changed, always run the pipeline.
     when: always
+
+  # Do not run pipeline for branch commits when there is an open merge request available
+  - if: $CI_OPEN_MERGE_REQUESTS && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
+    when: never
 
   # Run pipeline for branch commits when no merge requests are available
   - if: $CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH
@@ -130,12 +130,8 @@ variables: &commonvariables
 
 .md_only_rule: &md_only_rule
   # Check if any MD files changed
-  # Glob syntax that checks for changes in files ending with .md extension.
+  # Glob syntax that checks for changes in files ending with .md, .mdown or .markdown extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
-
-  # Do not run pipeline for a normal branch when there is an open merge request
-  - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
-    when: never
 
   # Run pipeline for merge requests and not for branch commits when a commit is pushed
   - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PIPELINE_SOURCE != "push"
@@ -146,11 +142,15 @@ variables: &commonvariables
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
     allow_failure: true
 
-  # Add comment
-  - if: $CI_PIPELINE_SOURCE != "merge_request_event" && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
+    # Do not run pipeline for branch commits when there is an open merge request available
+  - if: $CI_OPEN_MERGE_REQUESTS && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
+    when: never
+
+  # Run pipeline for branch commits when no merge requests are available
+  - if: $CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH
     changes:
       - "**/*.{markdown,mdown,md}"
-      # If any MD files changed, don't run the pipeline.
+    # If any MD files changed, don't run the pipeline.
     when: manual
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
     allow_failure: true
