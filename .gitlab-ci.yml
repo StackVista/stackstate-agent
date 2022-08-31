@@ -110,7 +110,7 @@ variables: &commonvariables
   # Glob syntax that checks for changes in all files except files that end with .md, .mdown or .markdown extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
 
-  # Run pipeline for merge requests and not for branch commits when a commit is pushed
+  # Run pipeline for merge requests and not for branch pipelines when a commit is pushed
   - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PIPELINE_SOURCE != "push"
     changes:
       - "**/{,*.!(markdown|mdown|md),.*}"
@@ -133,7 +133,7 @@ variables: &commonvariables
   # Glob syntax that checks for changes in files ending with .md, .mdown or .markdown extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
 
-  # Run pipeline for merge requests and not for branch commits when a commit is pushed
+  # Run pipeline for merge requests and not for branch pipelines when a commit is pushed
   - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PIPELINE_SOURCE != "push"
     changes:
       - "**/*.{markdown,mdown,md}"
