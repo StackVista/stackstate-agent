@@ -121,7 +121,7 @@ variables: &commonvariables
     # If any non-MD files changed, always run the pipeline.
     when: always
 
-  # Add comment
+  # Run pipeline for branch commits when no merge requests are available
   - if: $CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH
     changes:
       - "**/{,*.!(markdown|mdown|md),.*}"
