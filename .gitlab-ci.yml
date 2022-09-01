@@ -137,7 +137,7 @@ variables: &commonvariables
   - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PIPELINE_SOURCE != "push"
     changes:
       - "**/*.{markdown,mdown,md}"
-    # If any non-MD files changed, always run the pipeline.
+    # If only MD files changed, don't run the pipeline.
     when: manual
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
     allow_failure: true
@@ -150,7 +150,7 @@ variables: &commonvariables
   - if: $CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH
     changes:
       - "**/*.{markdown,mdown,md}"
-    # If any MD files changed, don't run the pipeline.
+    # If only MD files changed, don't run the pipeline.
     when: manual
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
     allow_failure: true
