@@ -1,0 +1,18 @@
+FROM wolverminion/windows_runner_7:base-0.0.3 as base
+ARG GO_VERSION='1.18.0'
+
+SHELL ["cmd", "/S", "/C"]
+
+RUN C:/choco.ps1 -goVersion $env:GO_VERSION
+
+FROM base as intermediate_1
+
+RUN C:/provisioner.ps1
+
+FROM intermediate_1 as intermediate_2
+
+RUN C:/provisioner_part2.ps1
+
+FROM intermediate_2
+
+RUN C:/choco_part5.ps1

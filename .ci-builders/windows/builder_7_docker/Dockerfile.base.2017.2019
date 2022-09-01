@@ -1,0 +1,26 @@
+# escape=`
+
+# Use the latest Windows Server Core 2019 image.
+FROM wolverminion/windows_runner_7:base-0.0.2
+# Restore the default Windows shell for correct batch processing.
+SHELL ["cmd", "/S", "/C"]
+WORKDIR C:/
+
+RUN `
+    # Install Build Tools with the Microsoft.VisualStudio.Workload.AzureBuildTools workload, excluding workloads and components with known issues.
+    (C:\Windows\Temp\vs_buildtools2019.exe --quiet --wait --norestart --nocache `
+            --installPath "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\BuildTools" `
+            --add Microsoft.VisualStudio.Workload.AzureBuildTools `
+            --remove Microsoft.VisualStudio.Component.Windows10SDK.10240 `
+            --remove Microsoft.VisualStudio.Component.Windows10SDK.10586 `
+            --remove Microsoft.VisualStudio.Component.Windows10SDK.14393 `
+            --remove Microsoft.VisualStudio.Component.Windows81SDK `
+            || IF "%ERRORLEVEL%"=="3010" EXIT 0)
+
+RUN C:\Windows\Temp\dotNetFx40_Full_setup.exe /q
+RUN del /q C:\Windows\Temp\*.exe
+RUN del /q C:\Windows\Temp\*.msi
+
+# Define the entry point for the Docker container.
+# This entry point starts the developer command prompt and launches the PowerShell shell.
+#ENTRYPOINT ["C:\\BuildTools\\Common7\\Tools\\VsDevCmd.bat", "&&", "powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass"]

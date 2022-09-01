@@ -1,0 +1,15 @@
+FROM vinogradoff/windows-ruby:2.4.3.2 as base
+
+SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
+
+WORKDIR C:/
+
+ADD extras/scripts .
+ADD extras/binaries C:/Windows/Temp
+ADD extras/files C:/files/
+ADD extras/sxs C:/sxs/
+#RUN Write-Host "Go Version: $env:GO_VERSION"
+
+FROM base as intermediate_1
+
+RUN C:/bootstrap.ps1
