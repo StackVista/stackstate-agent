@@ -23,6 +23,9 @@ var (
 // not work on a fixed schedule like the aggregator but flushes either when data exceeds a threshold, when
 // data is complete.
 type Batcher interface {
+	// Runtime data
+	UpdateLastCheck(id check.ID, c check.Check)
+
 	// Topology
 	SubmitComponent(checkID check.ID, instance topology.Instance, component topology.Component)
 	SubmitRelation(checkID check.ID, instance topology.Instance, relation topology.Relation)
@@ -53,11 +56,12 @@ func InitBatcher(serializer serializer.AgentV1Serializer, hostname, agentName st
 
 func newAsynchronousBatcher(serializer serializer.AgentV1Serializer, hostname, agentName string, maxCapacity int) AsynchronousBatcher {
 	batcher := AsynchronousBatcher{
-		builder:    NewBatchBuilder(maxCapacity),
-		hostname:   hostname,
-		agentName:  agentName,
-		input:      make(chan interface{}),
-		serializer: serializer,
+		builder:            NewBatchBuilder(maxCapacity),
+		hostname:           hostname,
+		agentName:          agentName,
+		input:              make(chan interface{}),
+		serializer:         serializer,
+		lastCheckInstances: map[check.ID]check.Check{},
 	}
 	go batcher.run()
 	return batcher
@@ -81,6 +85,7 @@ type AsynchronousBatcher struct {
 	hostname, agentName string
 	input               chan interface{}
 	serializer          serializer.AgentV1Serializer
+	lastCheckInstances  map[check.ID]check.Check
 }
 
 type submitComponent struct {
@@ -155,17 +160,22 @@ func (batcher *AsynchronousBatcher) sendState(states CheckInstanceBatchStates) {
 		// Create the topologies
 		topologies := make([]topology.Topology, 0)
 		for checkID, state := range states {
-			if state.Topology != nil && checkID != selfcheck.SelfCheckID {
-				selfTopo.Components = append(selfTopo.Components,
-					*selfChekTopo.SyncComponent(state.Topology.Instance))
-				selfTopo.Relations = append(selfTopo.Relations,
-					*selfChekTopo.SyncToCheckRelation(state.Topology.Instance, checkID))
+			if state.Topology != nil {
 				topologies = append(topologies, *state.Topology)
+
+				// agent topology regarding topology result
+				if ch, ok := batcher.lastCheckInstances[checkID]; ok {
+					selfTopo.Components = append(selfTopo.Components,
+						*selfChekTopo.CheckComponent(ch),
+						*selfChekTopo.SyncComponent(state.Topology.Instance),
+					)
+					selfTopo.Relations = append(selfTopo.Relations,
+						*selfChekTopo.SyncToCheckRelation(state.Topology.Instance, checkID),
+					)
+				}
 			}
 		}
-		if len(selfTopo.Components) > 0 || len(selfTopo.Relations) > 0 {
-			topologies = append(topologies, selfTopo)
-		}
+		topologies = append(topologies, selfTopo)
 
 		// Create the healthData payload
 		healthData := make([]health.Health, 0)
@@ -257,6 +267,11 @@ func (batcher *AsynchronousBatcher) run() {
 			panic(fmt.Sprint("Unknown submission type"))
 		}
 	}
+}
+
+// UpdateLastCheck keeps track of the recent state of check by its id
+func (batcher AsynchronousBatcher) UpdateLastCheck(id check.ID, c check.Check) {
+	batcher.lastCheckInstances[id] = c
 }
 
 // SubmitComponent submits a component to the batch

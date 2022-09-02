@@ -21,6 +21,10 @@ func createMockBatcher() *MockBatcher {
 	}
 }
 
+// UpdateLastCheck does nothing for mock
+func (batcher *MockBatcher) UpdateLastCheck(id check.ID, c check.Check) {
+}
+
 // SubmitComponent mock
 func (batcher *MockBatcher) SubmitComponent(checkID check.ID, instance topology.Instance, component topology.Component) {
 	batcher.CollectedTopology.AddComponent(checkID, instance, component)

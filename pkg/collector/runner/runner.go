@@ -8,6 +8,7 @@ package runner
 import (
 	"expvar"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/kubeapi"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/selfcheck"
 	"strings"
@@ -245,6 +246,10 @@ func (r *Runner) work() {
 	defer runnerStats.Add("Workers", -1)
 
 	for check := range r.pending {
+		batch := batcher.GetBatcher()
+		// update last check for the ID for making self topology
+		batch.UpdateLastCheck(check.ID(), check)
+
 		selfCheckTopology := selfcheck.NewSelfCheckTopology()
 		checkTopology := kubeapi.NewBatchTopologySubmitter(selfCheckTopology.ID(), selfCheckTopology.Instance())
 		checkTopology.SubmitComponent(selfCheckTopology.AgentComponent())
