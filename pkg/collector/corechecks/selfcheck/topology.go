@@ -11,6 +11,8 @@ import (
 	"os"
 )
 
+const SelfCheckID check.ID = "agent-checks-check"
+
 type selfCheckTopology struct {
 	Hostname string
 }
@@ -21,7 +23,7 @@ func NewSelfCheckTopology() *selfCheckTopology {
 }
 
 func (sc *selfCheckTopology) ID() check.ID {
-	return check.ID("agent-checks-check")
+	return SelfCheckID
 }
 
 func (sc *selfCheckTopology) Instance() topology.Instance {
@@ -76,7 +78,7 @@ func (sc *selfCheckTopology) CheckComponent(ch check.Check) *topology.Component 
 		},
 		Data: topology.Data{
 			"name":               fmt.Sprintf("%s", ch.ID()),
-			"layer":              "Checks",
+			"hostname":           sc.Hostname,
 			"interval":           ch.Interval(),
 			"config":             ch.GetConfiguration(),
 			"version":            ch.Version(),

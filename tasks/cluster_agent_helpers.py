@@ -35,7 +35,8 @@ def build_common(
     build_tags = get_build_tags(build_include, build_exclude)
 
     # We rely on the go libs embedded in the debian stretch image to build dynamically
-    ldflags, gcflags, env = get_build_flags(ctx, static=False, prefix='dca')
+    # [sts] prefix removed because we release cluster agent along with main agent
+    ldflags, gcflags, env = get_build_flags(ctx, static=False)
 
     # Generating go source from templates by running go generate on ./pkg/status
     generate(ctx)
@@ -105,4 +106,5 @@ def version_common(ctx, url_safe, git_sha_length):
     """
     Get the agent version.
     """
-    print(get_version(ctx, include_git=True, url_safe=url_safe, git_sha_length=git_sha_length, prefix='dca'))
+    # [sts] prefix removed because we release cluster agent along with main agent
+    print(get_version(ctx, include_git=True, url_safe=url_safe, git_sha_length=git_sha_length))

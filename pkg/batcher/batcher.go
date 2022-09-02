@@ -155,7 +155,7 @@ func (batcher *AsynchronousBatcher) sendState(states CheckInstanceBatchStates) {
 		// Create the topologies
 		topologies := make([]topology.Topology, 0)
 		for checkID, state := range states {
-			if state.Topology != nil {
+			if state.Topology != nil && checkID != selfcheck.SelfCheckID {
 				selfTopo.Components = append(selfTopo.Components,
 					*selfChekTopo.SyncComponent(state.Topology.Instance))
 				selfTopo.Relations = append(selfTopo.Relations,
