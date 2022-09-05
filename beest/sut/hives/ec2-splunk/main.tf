@@ -89,6 +89,13 @@ resource "aws_instance" "splunk" {
   key_name                    = aws_key_pair.splunk_key_pair.key_name
   vpc_security_group_ids      = [aws_security_group.splunk_group.id]
 
+  root_block_device {
+    volume_size = 30 # in GB <<----- I increased this!
+    volume_type = "gp3"
+    encrypted   = true
+#    kms_key_id  = data.aws_kms_key.customer_master_key.arn
+  }
+
   tags = {
     Name                  = "${var.environment}-splunk"
     Environment           = var.environment

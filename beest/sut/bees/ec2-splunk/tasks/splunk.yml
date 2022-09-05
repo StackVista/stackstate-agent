@@ -50,10 +50,7 @@
     - name: Accept Licence
       shell: "{{ splunk_home }}/bin/splunk start --answer-yes --auto-ports --no-prompt --accept-license"
 
-#    - name : Restart Splunk
-#      service:
-#        name: splunkd
-#        state: restarted
+#    - name: Add Saved Searches
 
 #    - name: Define Values From CSV File, this reads file in one go, but you could also use col= to read each in it's own lookup.
 #      ansible.builtin.set_fact:
