@@ -236,8 +236,8 @@ func (w *TraceWriter) flush() {
 		ErrorTPS:       w.errorTPS,
 		TracerPayloads: w.tracerPayloads,
 	}
-	apJson, _ := json.Marshal(p)
-	log.Debugf("[sts] Tracer payloads = %+v", apJson)
+	apJSON, _ := json.Marshal(p)
+	log.Debugf("[sts] Tracer payloads = %+v", apJSON)
 
 	b, err := proto.Marshal(&p)
 	if err != nil {

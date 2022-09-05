@@ -17,3 +17,9 @@ if [[ ! -e /etc/stackstate-agent/stackstate.yaml ]]; then
     ln -s  /etc/stackstate-agent/stackstate-docker.yaml \
            /etc/stackstate-agent/stackstate.yaml
 fi
+
+# Enable the docker corecheck
+if [[ ! -e /etc/stackstate-agent/conf.d/docker.d/conf.yaml.default && -e /etc/stackstate-agent/conf.d/docker.d/conf.yaml.example ]]; then
+    mv /etc/stackstate-agent/conf.d/docker.d/conf.yaml.example \
+    /etc/stackstate-agent/conf.d/docker.d/conf.yaml.default
+fi

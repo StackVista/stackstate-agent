@@ -78,7 +78,7 @@ func (se *SpanInterpreterEngine) Interpret(origTrace pb.Trace) pb.Trace {
 		// check if span is pre-interpreted by the trace client
 		if _, found := span.Meta["span.serviceURN"]; found {
 			interpretedTrace = append(interpretedTrace, span)
-			log.Info("[sts] Skipping interpretation for SpanID %v", span.SpanID)
+			log.Info("[sts] Append interpretedTrace for SpanID %v", span.SpanID)
 		} else {
 			log.Info("[sts] Interpreting span %+v", span)
 			se.DefaultSpanInterpreter.Interpret(span)

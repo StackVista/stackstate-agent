@@ -12,4 +12,4 @@ if [[ ! -e /etc/stackstate-agent/stackstate.yaml ]]; then
 fi
 
 # Remove all default checks, AD will automatically enable fargate check
-find /etc/datadog-agent/conf.d/ -iname "*.yaml.default" | xargs grep -L 'ad_identifiers' | xargs rm -f
+find /etc/stackstate-agent/conf.d/ -iname "*.yaml.default" | xargs grep -L 'ad_identifiers' | xargs rm -f
