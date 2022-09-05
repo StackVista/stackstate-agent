@@ -238,11 +238,13 @@ func (a *Agent) Process(t *api.Trace) {
 		a.sample(ts, pt)
 	}
 
-	a.Concentrator.In <- &stats.Input{
+	in := &stats.Input{
 		Trace:     pt.WeightedTrace,
 		Sublayers: pt.Sublayers,
 		Env:       pt.Env,
 	}
+	log.Infof("[sts] Sending in: %+v", in)
+	a.Concentrator.In <- in
 }
 
 // sample decides whether the trace will be kept and extracts any APM events
@@ -263,6 +265,7 @@ func (a *Agent) sample(ts *info.TagStats, pt ProcessedTrace) {
 	atomic.AddInt64(&ts.EventsSampled, int64(len(events)))
 
 	if !ss.Empty() {
+		log.Infof("[sts] Sending ss: %+v", ss)
 		a.Out <- &ss
 	}
 }
