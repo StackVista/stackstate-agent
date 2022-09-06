@@ -69,7 +69,10 @@ if [ "$DISTRIBUTION" != "Darwin" ]; then
     fi
 
     # Make security-agent config read-only
-    chmod 0440 ${CONFIG_DIR}/security-agent.yaml.example || true
+    # [sts]
+    if [ -f "$CONFIG_DIR/security-agent.yaml.example" ]; then
+      chmod 0440 ${CONFIG_DIR}/security-agent.yaml.example || true
+    fi
     if [ -f "$CONFIG_DIR/security-agent.yaml" ]; then
       chmod 0440 ${CONFIG_DIR}/security-agent.yaml || true
     fi
@@ -90,7 +93,10 @@ if [ "$DISTRIBUTION" != "Darwin" ]; then
     if [ -f "${INSTALL_DIR}/embedded/share/system-probe/ebpf" ]; then
       chown -R root:root ${INSTALL_DIR}/embedded/share/system-probe/ebpf
     fi
-    chown root:root ${INSTALL_DIR}/embedded/bin/security-agent
+    # [sts]
+    if [ -f "${INSTALL_DIR}/embedded/bin/security-agent" ]; then
+      chown root:root ${INSTALL_DIR}/embedded/bin/security-agent
+    fi
     chown -R root:root ${INSTALL_DIR}/embedded/share/system-probe/ebpf
 
     # Enable and restart the agent service here on Debian platforms
