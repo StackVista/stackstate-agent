@@ -5,7 +5,7 @@
   when: ansible_distribution == "Ubuntu"
 
 - name: Install stackstate-agent
-  shell: "/tmp/install_script.sh {{ custom_installer }}"
+  shell: "/tmp/sts_install_script.sh {{ custom_installer }}"
   environment:
     STS_API_KEY: "API_KEY"
     STS_URL: "https://test-stackstate-agent.sts/stsAgent"
