@@ -368,6 +368,9 @@ class TopicMessageSchema(Schema):
     offset = fields.Number()
     message = fields.Nested(MessageSchema())
 
+    class Meta:
+        unknown = EXCLUDE
+
     @post_load
     def new_model(self, data, **kwargs):
         return TopicMessage(

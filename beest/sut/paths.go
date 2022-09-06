@@ -27,6 +27,10 @@ func TestFrameworkPaths() []string {
 	}
 }
 
+func TestRequirementsPath() string {
+	return "/go/requirements-pip-tests.txt"
+}
+
 func init() {
 	var err error
 	Cwd, err = os.Getwd()

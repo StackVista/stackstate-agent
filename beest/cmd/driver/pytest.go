@@ -78,12 +78,11 @@ func buildPyTestCmd(step *step.VerificationStep, watch bool, selection string, i
 	cmd.Env = append(cmd.Env, fmt.Sprintf("PYTHONPATH=%s", pyPath))
 
 	if installDeps {
-		for _, pkg := range pyPaths {
-			log.Printf("install dependencies for: %s", pkg)
-			err := exec.Command("pip", "install", "-r", fmt.Sprintf("%s/requirements.txt", pkg)).Run()
-			if err != nil {
-				log.Printf("Error installing test framework dependencies: %s", err)
-			}
+		testDepsPath := sut.TestRequirementsPath()
+		log.Printf("install dependencies at: %s", testDepsPath)
+		err := exec.Command("pip", "install", "-r", testDepsPath).Run()
+		if err != nil {
+			log.Printf("Error installing test framework dependencies: %s", err)
 		}
 	}
 

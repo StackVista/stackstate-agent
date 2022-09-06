@@ -14,6 +14,7 @@ RUN mkdir ~/.pip/ && touch ~/.pip/pip.conf && \
 
 COPY requirements* ./
 RUN pip install -r requirements-pip-full.txt
+RUN pip install -r requirements-pip-tests.txt
 
 COPY ansible.cfg /etc/ansible/
 RUN ansible-galaxy collection install -r requirements-galaxy.yml
