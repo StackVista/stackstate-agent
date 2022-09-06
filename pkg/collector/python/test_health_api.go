@@ -1,14 +1,18 @@
+//go:build python && test
 // +build python,test
 
 package python
 
 import (
 	"encoding/json"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 // #include <datadog_agent_rtloader.h>
@@ -34,7 +38,11 @@ var expectedCheckData = health.CheckData{
 }
 
 func testHealthCheckData(t *testing.T) {
-	mockBatcher := batcher.NewMockBatcher()
+	SetupTransactionalComponents()
+	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
+
+	testCheck := &check.STSTestCheck{Name: "check-id-health-check-data"}
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	c := &health.Payload{
 		Stream: health.Stream{
@@ -46,10 +54,11 @@ func testHealthCheckData(t *testing.T) {
 	data, err := json.Marshal(c)
 	assert.NoError(t, err)
 
-	checkId := C.CString("check-id")
+	checkId := C.CString(testCheck.String())
 	stream := C.health_stream_t{}
 	stream.urn = C.CString("myurn")
 	stream.sub_stream = C.CString("substream")
+	StartTransaction(checkId)
 	SubmitHealthStartSnapshot(checkId, &stream, C.int(0), C.int(1))
 	SubmitHealthCheckData(
 		checkId,
@@ -57,96 +66,129 @@ func testHealthCheckData(t *testing.T) {
 		C.CString(string(data)))
 	SubmitHealthStopSnapshot(checkId, &stream)
 
-	expectedState := mockBatcher.CollectedTopology.Flush()
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
+
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 	expectedStream := health.Stream{Urn: "myurn", SubStream: "substream"}
 
-	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
-		"check-id": {
-			Health: map[string]health.Health{
-				expectedStream.GoString(): {
-					StartSnapshot: &health.StartSnapshotMetadata{RepeatIntervalS: 1, ExpiryIntervalS: 0},
-					StopSnapshot:  &health.StopSnapshotMetadata{},
-					Stream:        expectedStream,
-					CheckStates: []health.CheckData{
-						expectedCheckData,
-					},
+	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchState{
+		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
+		Health: map[string]health.Health{
+			expectedStream.GoString(): {
+				StartSnapshot: &health.StartSnapshotMetadata{RepeatIntervalS: 1, ExpiryIntervalS: 0},
+				StopSnapshot:  &health.StopSnapshotMetadata{},
+				Stream:        expectedStream,
+				CheckStates: []health.CheckData{
+					expectedCheckData,
 				},
 			},
 		},
-	}), expectedState)
+	}, actualTopology)
+
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testHealthStartSnapshot(t *testing.T) {
-	mockBatcher := batcher.NewMockBatcher()
+	SetupTransactionalComponents()
+	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
-	checkId := C.CString("check-id")
+	testCheck := &check.STSTestCheck{Name: "check-id-health-start-snapshot"}
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+
+	checkId := C.CString(testCheck.String())
 	stream := C.health_stream_t{}
 	stream.urn = C.CString("myurn")
 	stream.sub_stream = C.CString("substream")
+
+	StartTransaction(checkId)
 	SubmitHealthStartSnapshot(checkId, &stream, C.int(0), C.int(1))
 
-	expectedState := mockBatcher.CollectedTopology.Flush()
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
+
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 	expectedStream := health.Stream{Urn: "myurn", SubStream: "substream"}
 
-	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
-		"check-id": {
-			Health: map[string]health.Health{
-				expectedStream.GoString(): {
-					StartSnapshot: &health.StartSnapshotMetadata{RepeatIntervalS: 1, ExpiryIntervalS: 0},
-					Stream:        expectedStream,
-					CheckStates:   []health.CheckData{},
-				},
+	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchState{
+		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
+		Health: map[string]health.Health{
+			expectedStream.GoString(): {
+				StartSnapshot: &health.StartSnapshotMetadata{RepeatIntervalS: 1, ExpiryIntervalS: 0},
+				Stream:        expectedStream,
+				CheckStates:   []health.CheckData{},
 			},
 		},
-	}), expectedState)
+	}, actualTopology)
+
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testHealthStopSnapshot(t *testing.T) {
-	mockBatcher := batcher.NewMockBatcher()
+	SetupTransactionalComponents()
+	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
-	checkId := C.CString("check-id")
+	testCheck := &check.STSTestCheck{Name: "check-id-health-stop-snapshot"}
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+
+	checkId := C.CString(testCheck.String())
 	stream := C.health_stream_t{}
 	stream.urn = C.CString("myurn")
 	stream.sub_stream = C.CString("substream")
+	StartTransaction(checkId)
 	SubmitHealthStopSnapshot(checkId, &stream)
 
-	expectedState := mockBatcher.CollectedTopology.Flush()
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
+
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 	expectedStream := health.Stream{Urn: "myurn", SubStream: "substream"}
 
-	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
-		"check-id": {
-			Health: map[string]health.Health{
-				expectedStream.GoString(): {
-					StopSnapshot: &health.StopSnapshotMetadata{},
-					Stream:       expectedStream,
-					CheckStates:  []health.CheckData{},
-				},
+	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchState{
+		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
+		Health: map[string]health.Health{
+			expectedStream.GoString(): {
+				StopSnapshot: &health.StopSnapshotMetadata{},
+				Stream:       expectedStream,
+				CheckStates:  []health.CheckData{},
 			},
 		},
-	}), expectedState)
+	}, actualTopology)
+
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testNoSubStream(t *testing.T) {
-	mockBatcher := batcher.NewMockBatcher()
+	SetupTransactionalComponents()
+	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
-	checkId := C.CString("check-id")
+	testCheck := &check.STSTestCheck{Name: "check-id-health-no-sub-stream"}
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+
+	checkId := C.CString(testCheck.String())
 	stream := C.health_stream_t{}
 	stream.urn = C.CString("myurn")
 	stream.sub_stream = C.CString("")
+
+	StartTransaction(checkId)
 	SubmitHealthStartSnapshot(checkId, &stream, C.int(0), C.int(1))
 
-	expectedState := mockBatcher.CollectedTopology.Flush()
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
+
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
 	expectedStream := health.Stream{Urn: "myurn"}
 
-	assert.Equal(t, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
-		"check-id": {
-			Health: map[string]health.Health{
-				expectedStream.GoString(): {
-					StartSnapshot: &health.StartSnapshotMetadata{RepeatIntervalS: 1, ExpiryIntervalS: 0},
-					Stream:        expectedStream,
-					CheckStates:   []health.CheckData{},
-				},
+	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchState{
+		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
+		Health: map[string]health.Health{
+			expectedStream.GoString(): {
+				StartSnapshot: &health.StartSnapshotMetadata{RepeatIntervalS: 1, ExpiryIntervalS: 0},
+				Stream:        expectedStream,
+				CheckStates:   []health.CheckData{},
 			},
 		},
-	}), expectedState)
+	}, actualTopology)
+
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
