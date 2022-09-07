@@ -21,8 +21,8 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/trace/metrics/timing"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	stspb "github.com/StackVista/stackstate-agent/pkg/trace/pb/sts"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/StackVista/stackstate-agent/pkg/version"
 
 	"github.com/gogo/protobuf/proto"
 )
@@ -218,6 +218,43 @@ func (w *TraceWriter) resetBuffer() {
 
 const headerLanguages = "X-Datadog-Reported-Languages"
 
+func (w *TraceWriter) stsTracePayload() stspb.TracePayload {
+	var traces []*stspb.APITrace
+	for _, tp := range w.tracerPayloads {
+		var spans []*stspb.Span
+		for _, chunk := range tp.Chunks {
+			for _, span := range chunk.Spans {
+				spans = append(spans, &stspb.Span{
+					Service:  span.Service,
+					Name:     span.Name,
+					Resource: span.Resource,
+					TraceID:  span.TraceID,
+					SpanID:   span.SpanID,
+					ParentID: span.ParentID,
+					Start:    span.Start,
+					Duration: span.Duration,
+					Error:    span.Error,
+					Meta:     span.Meta,
+					Metrics:  span.Metrics,
+					Type:     span.Type,
+				})
+			}
+			traces = append(traces, &stspb.APITrace{
+				TraceID:   chunk.Spans[0].TraceID,
+				Spans:     spans,
+				StartTime: 0,
+				EndTime:   0,
+			})
+		}
+	}
+	return stspb.TracePayload{
+		HostName:     w.hostname,
+		Env:          w.env,
+		Traces:       traces,
+		Transactions: []*stspb.Span{},
+	}
+}
+
 func (w *TraceWriter) flush() {
 	if len(w.tracerPayloads) == 0 {
 		// nothing to do
@@ -228,18 +265,21 @@ func (w *TraceWriter) flush() {
 	defer w.resetBuffer()
 
 	log.Debugf("Serializing %d tracer payloads.", len(w.tracerPayloads))
-	p := pb.AgentPayload{
-		AgentVersion:   version.AgentVersion,
-		HostName:       w.hostname,
-		Env:            w.env,
-		TargetTPS:      w.targetTPS,
-		ErrorTPS:       w.errorTPS,
-		TracerPayloads: w.tracerPayloads,
-	}
-	apJSON, _ := json.Marshal(p)
+	//p := pb.AgentPayload{
+	//	AgentVersion:   version.AgentVersion,
+	//	HostName:       w.hostname,
+	//	Env:            w.env,
+	//	TargetTPS:      w.targetTPS,
+	//	ErrorTPS:       w.errorTPS,
+	//	TracerPayloads: w.tracerPayloads,
+	//}
+
+	stsp := w.stsTracePayload()
+
+	apJSON, _ := json.Marshal(stsp)
 	log.Debugf("[sts] Tracer payloads = %+v", apJSON)
 
-	b, err := proto.Marshal(&p)
+	b, err := proto.Marshal(&stsp) // sts
 	if err != nil {
 		log.Errorf("Failed to serialize payload, data dropped: %v", err)
 		return
