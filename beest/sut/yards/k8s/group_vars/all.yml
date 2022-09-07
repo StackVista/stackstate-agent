@@ -14,10 +14,9 @@ agent_docker_repo: "{{ lookup('env', 'STS_DOCKER_TEST_REPO') or STS_DOCKER_TEST_
 process_agent_branch: "{{ lookup('env', 'PROCESS_AGENT_BRANCH') or 'master' }}"
 process_agent_repo: "{{ lookup('env', 'PROCESS_AGENT_TEST_REPO') or PROCESS_AGENT_TEST_REPO }}"
 cluster_agent_docker_repo: "{{ lookup('env', 'STS_DOCKER_TEST_REPO_CLUSTER') or STS_DOCKER_TEST_REPO_CLUSTER }}"
-agent_helm_chart_version: "{{ lookup('env', 'AGENT_HELM_CHART_VERSION') or 'latest' }}"
+agent_helm_chart_version: "{{ lookup('env', 'AGENT_HELM_CHART_VERSION') }}"
 
-stackstate_branch: "{{ lookup('env', 'STACKSTATE_BRANCH') or STACKSTATE_BRANCH }}"
-stackstate_helm_chart_version: "{{ lookup('env', 'STACKSTATE_HELM_CHART_VERSION') or STACKSTATE_HELM_CHART_VERSION }}"
+stackstate_helm_chart_version: "{{ lookup('env', 'STACKSTATE_HELM_CHART_VERSION') }}"
 stackstate_license: "{{ lookup('env', 'STACKSTATE_LICENSE') or STACKSTATE_LICENSE }}"
 
 monitoring_namespace: "monitoring"

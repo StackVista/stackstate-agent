@@ -11,7 +11,7 @@ def test_projected_volume_topology(ansible_var, cliv1):
     if version.parse(k8s_version) >= version.parse("1.21"):
         namespace = ansible_var("monitoring_namespace")
 
-        cluster_agent = "stackstate-cluster-agent"
+        cluster_agent = "cluster-agent"
 
         expected_topology = TopologyMatcher() \
             .component("cluster-agent", type="pod", name=fr"{cluster_agent}-\w{{9,10}}-\w{{5}}") \

@@ -7,7 +7,7 @@ def test_cluster_agent_topology(ansible_var, cliv1):
     cluster_name = ansible_var("agent_cluster_name")
     namespace = ansible_var("monitoring_namespace")
 
-    cluster_agent = "stackstate-cluster-agent"
+    cluster_agent = "cluster-agent"
 
     expected_topology = TopologyMatcher() \
         .component("namespace", type="namespace", name=namespace) \
@@ -40,8 +40,8 @@ def test_node_agent_topology(ansible_var, cliv1):
     cluster_name = ansible_var("agent_cluster_name")
     namespace = ansible_var("monitoring_namespace")
 
-    node_agent = "stackstate-cluster-agent-agent"
-    cluster_agent = "stackstate-cluster-agent"
+    node_agent = "cluster-agent-agent"
+    cluster_agent = "cluster-agent"
 
     expected_topology = TopologyMatcher() \
         .component("namespace", type="namespace", name=namespace) \
@@ -92,8 +92,8 @@ def test_checks_agent_topology(ansible_var, cliv1):
     cluster_name = ansible_var("agent_cluster_name")
     namespace = ansible_var("monitoring_namespace")
 
-    checks_agent = "stackstate-cluster-agent-clusterchecks"
-    cluster_agent = "stackstate-cluster-agent"
+    checks_agent = "cluster-agent-clusterchecks"
+    cluster_agent = "cluster-agent"
 
     expected_topology = TopologyMatcher() \
         .component("namespace", type="namespace", name=namespace) \
