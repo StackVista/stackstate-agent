@@ -160,9 +160,11 @@ agent2:
   variables:
     <<: *commonvariables
     <<: *agent2_variables
-  trigger:
-    include: .gitlab-ci-agent.yml
-    strategy: depend
+  #trigger:
+  #  include: .gitlab-ci-agent.yml
+  #  strategy: depend
+  script:
+    - echo "Hello World"
   rules:
     - <<: *exclude_on_cluster_agent
     # exclude this pipeline if we're running a v3 tag pipeline
@@ -178,9 +180,11 @@ agent3:
  variables:
    <<: *commonvariables
    <<: *agent3_variables
- trigger:
-   include: .gitlab-ci-agent.yml
-   strategy: depend
+ #trigger:
+ #  include: .gitlab-ci-agent.yml
+ #  strategy: depend
+ script:
+    - echo "Hello World"
  rules:
    - <<: *exclude_on_cluster_agent
    # exclude this pipeline if we're running a v2 tag pipeline
