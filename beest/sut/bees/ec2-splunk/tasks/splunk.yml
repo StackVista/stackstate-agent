@@ -50,17 +50,13 @@
     - name: Accept Licence
       shell: "{{ splunk_home }}/bin/splunk start --answer-yes --auto-ports --no-prompt --accept-license"
 
-#    - name: Add Saved Searches
+    - name: Copy CSV to remote
+      ansible.builtin.copy:
+        src: "{{ role_path }}/files/data/components1.csv"
+        dest: "{{ splunk_home }}/etc/system/local"
+        owner: "{{ os_user }}"
+        mode: '0644'
 
-#    - name: Define Values From CSV File, this reads file in one go, but you could also use col= to read each in it's own lookup.
-#      ansible.builtin.set_fact:
-#        loop_ip: "{{ csvline[0] }}"
-#        int_ip: "{{ csvline[1] }}"
-#        int_mask: "{{ csvline[2] }}"
-#        int_name: "{{ csvline[3] }}"
-#        local_as: "{{ csvline[4] }}"
-#        neighbor_as: "{{ csvline[5] }}"
-#        neigh_int_ip: "{{ csvline[6] }}"
-#      vars:
-#        csvline = "{{ lookup('ansible.builtin.csvfile', bgp_neighbor_ip, file='bgp_neighbors.csv', delimiter=',') }}"
-#      delegate_to: localhost
+    - name: Add Splunk Monitor
+      shell: "{{ splunk_home }}/bin/splunk add monitor -source {{ splunk_home }}/etc/system/local/components1.csv"
+
