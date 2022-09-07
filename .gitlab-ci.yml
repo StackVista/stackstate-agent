@@ -111,18 +111,18 @@ variables: &commonvariables
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
 
   # Run pipeline for merge requests and not for branch pipelines when a commit is pushed
-  - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PIPELINE_SOURCE != "push"
+  - if: $CI_MERGE_REQUEST_IID
     changes:
       - "**/{!(*.markdown|*.mdown|*.md),.*}"
     # If any non-MD files changed, always run the pipeline.
     when: always
 
   # Do not run pipeline for branch commits when there is an open merge request available
-  - if: $CI_OPEN_MERGE_REQUESTS && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
+  - if: $CI_OPEN_MERGE_REQUESTS
     when: never
 
   # Run pipeline for branch commits when no merge requests are available
-  - if: $CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH
+  - if: $CI_COMMIT_BRANCH || $CI_COMMIT_REF_NAME == "master"
     changes:
       - "**/{!(*.markdown|*.mdown|*.md),.*}"
     # If any non-MD files changed, always run the pipeline.
@@ -134,7 +134,7 @@ variables: &commonvariables
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
 
   # Run pipeline for merge requests and not for branch pipelines when a commit is pushed
-  - if: $CI_MERGE_REQUEST_IID && $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PIPELINE_SOURCE != "push"
+  - if: $CI_MERGE_REQUEST_IID
     changes:
       - "**/*.{markdown,mdown,md}"
     # If only MD files changed, don't run the pipeline.
@@ -143,11 +143,11 @@ variables: &commonvariables
     allow_failure: true
 
   # Do not run pipeline for branch commits when there is an open merge request available
-  - if: $CI_OPEN_MERGE_REQUESTS && ($CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH)
+  - if: $CI_OPEN_MERGE_REQUESTS
     when: never
 
   # Run pipeline for branch commits when no merge requests are available
-  - if: $CI_PIPELINE_SOURCE == "push" || $CI_COMMIT_BRANCH
+  - if: $CI_COMMIT_BRANCH || $CI_COMMIT_REF_NAME == "master"
     changes:
       - "**/*.{markdown,mdown,md}"
     # If only MD files changed, don't run the pipeline.
