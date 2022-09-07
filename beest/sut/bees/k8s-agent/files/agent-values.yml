@@ -1,7 +1,4 @@
 ---
-checksAgent:
-  # clusterChecks.enabled -- Enables the cluster checks functionality _and_ the clustercheck pods.
-  enabled: true
 nodeAgent:
   config:
     override:
