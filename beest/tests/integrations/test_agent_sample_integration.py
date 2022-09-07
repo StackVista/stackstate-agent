@@ -119,7 +119,7 @@ def test_agent_integration_sample_health_synchronization(host, cliv1):
 
         assert _health_contains_payload({
             "IntakeHealthMainStreamStart": {
-                "repeatIntervalMs": 30000
+                "repeatIntervalMs": 10000
             }
         }
         ) is not None
