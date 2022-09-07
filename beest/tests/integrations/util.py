@@ -15,6 +15,17 @@ def wait_until(someaction, timeout, period=0.25, *args, **kwargs):
             time.sleep(period)
 
 
+def match_partial_event(event, json_data):
+    for message in json_data["messages"]:
+        p = message["message"]
+        if "GenericEvent" in p:
+            _data = p["GenericEvent"]
+            if _data == dict(_data, **event):
+                return True
+
+    return False
+
+
 def assert_topology_events(host, test_name, topic, expected_topology_events):
     url = "http://localhost:7070/api/topic/%s?limit=1000" % topic
 

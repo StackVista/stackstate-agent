@@ -1,20 +1,9 @@
 import util
 import json
-from util import assert_metrics
+from util import assert_metrics, match_partial_event
 from ststest import TopicTopologyMatcher
 
 testinfra_hosts = ["local"]
-
-
-def kubernetes_event_data(event, json_data):
-    for message in json_data["messages"]:
-        p = message["message"]
-        if "GenericEvent" in p:
-            _data = p["GenericEvent"]
-            if _data == dict(_data, **event):
-                return True
-
-    return False
 
 
 def test_agent_sample_integration_generic_events(cliv1):
@@ -34,7 +23,7 @@ def test_agent_sample_integration_generic_events(cliv1):
                 "check": "cpu"
             },
         }
-        assert kubernetes_event_data(service_event, json_data), f"no matches found for Kubernetes event: {service_event}"
+        assert match_partial_event(service_event, json_data), f"no matches found for Kubernetes event: {service_event}"
 
         http_event = {
             "name": "HTTP_TIMEOUT",
@@ -45,7 +34,7 @@ def test_agent_sample_integration_generic_events(cliv1):
             },
             "message": "Http request to http://localhost timed out after 5.0 seconds."
         }
-        assert kubernetes_event_data(http_event, json_data), f"no matches found for Kubernetes event: {service_event}"
+        assert match_partial_event(http_event, json_data), f"no matches found for Kubernetes event: {service_event}"
 
     util.wait_until(wait_for_events, 60, 5)
 

@@ -23,7 +23,7 @@ class AgentIntegrationSampleStatefulCheck(StatefulAgentCheck):
 
     def stateful_check(self, instance, persistent_state):
         agent_v2_integration_base(self, instance, "agent-v2-integration-stateful-sample")
-        persistent_state = agent_v2_integration_stateful_base(self, persistent_state)
+        persistent_state = agent_v2_integration_stateful_base(self, instance, persistent_state)
 
         return CheckResponse(persistent_state=persistent_state)
 
@@ -37,6 +37,8 @@ def agent_v2_integration_base(self, instance, agent_v2_base_identifier):
     default_timeout = self.init_config.get('default_timeout', 5)
     # gets the value of the `timeout` property or defaults `default_timeout` and casts it to a float data type
     timeout = float(instance.get('timeout', default_timeout))
+
+    check_identifier = "{}-{}".format(instance.get('type'), instance.get('url'))
 
     this_host_availability = MetricStream("Host Availability", "location.availability",
                                           conditions={"tags.hostname": "this-host", "tags.region": "eu-west-1"},
@@ -70,18 +72,24 @@ def agent_v2_integration_base(self, instance, agent_v2_base_identifier):
                        "domain": "Webshop",
                        "layer": "Machines",
                        "identifiers": ["another_identifier_for_this_host"],
-                       "labels": ["host:this_host", "region:eu-west-1"],
-                       "environment": "Production"
+                       "labels": ["host:this_host", "region:eu-west-1", check_identifier],
+                       "environment": check_identifier
                    },
                    streams=[this_host_cpu_usage, this_host_availability],
                    checks=[cpu_max_average_check, cpu_max_last_check, cpu_min_average_check, cpu_min_last_check])
 
-    self.gauge("system.cpu.usage", randint(0, 100), tags=["hostname:this-host", "region:eu-west-1"])
-    self.gauge("system.cpu.usage", randint(0, 100), tags=["hostname:this-host", "region:eu-west-1"])
-    self.gauge("system.cpu.usage", randint(0, 100), tags=["hostname:this-host", "region:eu-west-1"])
-    self.gauge("location.availability", randint(0, 100), tags=["hostname:this-host", "region:eu-west-1"])
-    self.gauge("location.availability", randint(0, 100), tags=["hostname:this-host", "region:eu-west-1"])
-    self.gauge("location.availability", randint(0, 100), tags=["hostname:this-host", "region:eu-west-1"])
+    self.gauge("system.cpu.usage", randint(0, 100),
+               tags=["hostname:this-host", "region:eu-west-1", check_identifier])
+    self.gauge("system.cpu.usage", randint(0, 100),
+               tags=["hostname:this-host", "region:eu-west-1", check_identifier])
+    self.gauge("system.cpu.usage", randint(0, 100),
+               tags=["hostname:this-host", "region:eu-west-1", check_identifier])
+    self.gauge("location.availability", randint(0, 100),
+               tags=["hostname:this-host", "region:eu-west-1", check_identifier])
+    self.gauge("location.availability", randint(0, 100),
+               tags=["hostname:this-host", "region:eu-west-1", check_identifier])
+    self.gauge("location.availability", randint(0, 100),
+               tags=["hostname:this-host", "region:eu-west-1", check_identifier])
 
     some_application_2xx_responses = MetricStream("2xx Responses", "2xx.responses",
                                                   conditions={"tags.application": "some_application",
@@ -115,8 +123,9 @@ def agent_v2_integration_base(self, instance, agent_v2_base_identifier):
                        "domain": "Webshop",
                        "layer": "Applications",
                        "identifiers": ["another_identifier_for_some_application"],
-                       "labels": ["application:some_application", "region:eu-west-1", "hosted_on:this-host"],
-                       "environment": "Production",
+                       "labels": ["application:some_application", "region:eu-west-1", "hosted_on:this-host",
+                                  check_identifier],
+                       "environment": check_identifier,
                        "version": "0.2.0"
                    },
                    streams=[some_application_2xx_responses, some_application_5xx_responses],
@@ -129,8 +138,8 @@ def agent_v2_integration_base(self, instance, agent_v2_base_identifier):
                        "domain": "default-domain",
                        "layer": "default-layer",
                        "identifiers": ["default-identifiers"],
-                       "labels": ["default:true"],
-                       "environment": "default-environment",
+                       "labels": ["default:true", check_identifier],
+                       "environment": check_identifier,
                        "version": "0.2.0",
                        "tags": [
                            "stackstate-layer:tag-layer",
@@ -145,20 +154,28 @@ def agent_v2_integration_base(self, instance, agent_v2_base_identifier):
 
     self.relation("urn:example:/application:some_application", "urn:example:/host:this_host", "IS_HOSTED_ON", {})
 
-    self.gauge("2xx.responses", randint(0, 100), tags=["application:some_application", "region:eu-west-1"])
-    self.gauge("2xx.responses", randint(0, 100), tags=["application:some_application", "region:eu-west-1"])
-    self.gauge("2xx.responses", randint(0, 100), tags=["application:some_application", "region:eu-west-1"])
-    self.gauge("2xx.responses", randint(0, 100), tags=["application:some_application", "region:eu-west-1"])
-    self.gauge("5xx.responses", randint(0, 100), tags=["application:some_application", "region:eu-west-1"])
-    self.gauge("5xx.responses", randint(0, 100), tags=["application:some_application", "region:eu-west-1"])
-    self.gauge("5xx.responses", randint(0, 100), tags=["application:some_application", "region:eu-west-1"])
-    self.gauge("5xx.responses", randint(0, 100), tags=["application:some_application", "region:eu-west-1"])
+    self.gauge("2xx.responses", randint(0, 100),
+               tags=["application:some_application", "region:eu-west-1", check_identifier])
+    self.gauge("2xx.responses", randint(0, 100),
+               tags=["application:some_application", "region:eu-west-1", check_identifier])
+    self.gauge("2xx.responses", randint(0, 100),
+               tags=["application:some_application", "region:eu-west-1", check_identifier])
+    self.gauge("2xx.responses", randint(0, 100),
+               tags=["application:some_application", "region:eu-west-1", check_identifier])
+    self.gauge("5xx.responses", randint(0, 100),
+               tags=["application:some_application", "region:eu-west-1", check_identifier])
+    self.gauge("5xx.responses", randint(0, 100),
+               tags=["application:some_application", "region:eu-west-1", check_identifier])
+    self.gauge("5xx.responses", randint(0, 100),
+               tags=["application:some_application", "region:eu-west-1", check_identifier])
+    self.gauge("5xx.responses", randint(0, 100),
+               tags=["application:some_application", "region:eu-west-1", check_identifier])
 
     self.event({
         "timestamp": int(time.time()),
         # test old api - source type name instead of event type
         "source_type_name": "HTTP_TIMEOUT",
-        "msg_title": "URL timeout",
+        "msg_title": "URL timeout - {}".format(check_identifier),
         "msg_text": "Http request to %s timed out after %s seconds." % (instance_url, timeout),
         "aggregation_key": "instance-request-%s" % instance_url
     })
@@ -167,7 +184,7 @@ def agent_v2_integration_base(self, instance, agent_v2_base_identifier):
         "timestamp": int(time.time()),
         # test old api - source type name instead of event type
         "event_type": "HTTP_TIMEOUT_EVENT_TYPE",
-        "msg_title": "URL timeout (event type)",
+        "msg_title": "URL timeout (event type) - {}".format(check_identifier),
         "msg_text": "Http request to %s timed out after %s seconds.(event type)" % (instance_url, timeout),
         "aggregation_key": "instance-request-%s" % instance_url
     })
@@ -175,7 +192,7 @@ def agent_v2_integration_base(self, instance, agent_v2_base_identifier):
     self.event({
         "timestamp": int(1),
         "event_type": "HTTP_TIMEOUT",
-        "msg_title": "URL timeout",
+        "msg_title": "URL timeout - {}".format(check_identifier),
         "msg_text": "Http request to %s timed out after %s seconds." % (instance_url, timeout),
         "aggregation_key": "instance-request-%s" % instance_url,
         "context": {
@@ -191,25 +208,36 @@ def agent_v2_integration_base(self, instance, agent_v2_base_identifier):
     })
 
     # some logic here to test our connection and if successful:
-    self.service_check("example.can_connect", AgentCheckV2.OK, tags=["instance_url:%s" % instance_url])
+    self.service_check("example.can_connect", AgentCheckV2.OK,
+                       tags=["instance_url:%s" % instance_url, check_identifier])
 
     # produce current state as a count metric for assertions
     state = instance.get('state', {'run_count': 0})
     state['run_count'] = state['run_count'] + 1
     instance.update({'state': state})
-    self.count("check_runs", state['run_count'], tags=["integration:" + agent_v2_base_identifier.replace("-", "_")])
+    self.count("check_runs", state['run_count'], tags=["integration:" + agent_v2_base_identifier.replace("-", "_"),
+                                                       check_identifier])
 
     # produce health snapshot
     self.health.start_snapshot()
-    self.health.check_state("id", "name", Health.CRITICAL, "identifier", "msg")
+    self.health.check_state("id", "name", Health.CRITICAL, check_identifier, "msg")
     self.health.stop_snapshot()
 
     # raw metrics
-    self.raw("raw.metrics", hostname="hostname", value=10,
-             tags=["application:some_application", "region:eu-west-1"], timestamp=int(time.time()))
-    self.raw("raw.metrics", hostname="hostname", value=10,
-             tags=["application:some_application", "region:eu-west-1"], timestamp=int(time.time()))
-    self.raw("raw.metrics", value=30, tags=["no:hostname", "region:eu-west-1"], timestamp=int(time.time()))
+    self.raw("raw.metrics",
+             hostname="hostname",
+             value=10,
+             tags=["application:some_application", "region:eu-west-1", check_identifier],
+             timestamp=int(time.time()))
+    self.raw("raw.metrics",
+             hostname="hostname",
+             value=10,
+             tags=["application:some_application", "region:eu-west-1", check_identifier],
+             timestamp=int(time.time()))
+    self.raw("raw.metrics",
+             value=30,
+             tags=["no:hostname", "region:eu-west-1", check_identifier],
+             timestamp=int(time.time()))
 
     # delete topology element
     delete_component_id = "urn:example:/host:host_for_deletion"
@@ -219,8 +247,8 @@ def agent_v2_integration_base(self, instance, agent_v2_base_identifier):
                        "domain": "Webshop",
                        "layer": "Machines",
                        "identifiers": ["another_identifier_for_delete_test_host"],
-                       "labels": ["host:delete_test_host", "region:eu-west-1"],
-                       "environment": "Production"
+                       "labels": ["host:delete_test_host", "region:eu-west-1", check_identifier],
+                       "environment": check_identifier
                    }, )
     self.log.info("deleting " + delete_component_id)
     self.delete(delete_component_id)
@@ -232,8 +260,8 @@ def agent_v2_integration_base(self, instance, agent_v2_base_identifier):
         "domain": "Webshop",
         "layer": "Applications",
         "identifiers": ["another_identifier_for_some_application"],
-        "labels": ["application:some_application", "region:eu-west-1", "hosted_on:this-host"],
-        "environment": "Production",
+        "labels": ["application:some_application", "region:eu-west-1", "hosted_on:this-host", check_identifier],
+        "environment": check_identifier,
         "version": "0.2.0"
     }
 
@@ -245,6 +273,9 @@ def agent_v2_integration_base(self, instance, agent_v2_base_identifier):
     else:
         # Write into the persistent cache for the next cycle
         self.write_persistent_cache("prev_write_persistent_cache", str(1))
+
+    cache_from_previous_run = self.read_persistent_cache("prev_write_persistent_cache")
+    self.count("{}_persistent_key".format(check_identifier), int(int(cache_from_previous_run)), tags=[check_identifier])
 
     # Read a non-existing persistent cache key
     self.log.info("Read key that doesn't exist in persistent cache")
@@ -262,7 +293,9 @@ def agent_v2_integration_base(self, instance, agent_v2_base_identifier):
 
 # Agent V2 integration stateful base that can be reused in the agent_v2_integration_transactional_sample
 # base classes to retest the same functionality in the new base classes
-def agent_v2_integration_stateful_base(self, persistent_state):
+def agent_v2_integration_stateful_base(self, instance, persistent_state):
+    check_identifier = "{}-{}".format(instance.get('type'), instance.get('url'))
+
     # Find the persistent state counter
     persistent_counter = persistent_state.get("persistent_counter")
 
@@ -275,5 +308,7 @@ def agent_v2_integration_stateful_base(self, persistent_state):
         self.log.info("The 'persistent_counter' state does not exist")
         persistent_state["persistent_counter"] = 1
         self.log.info("Writing '" + str(persistent_state["persistent_counter"]) + "' to the 'persistent_counter' state")
+
+    self.count("{}_stateful".format(check_identifier), int(persistent_state["persistent_counter"]), tags=[check_identifier])
 
     return persistent_state
