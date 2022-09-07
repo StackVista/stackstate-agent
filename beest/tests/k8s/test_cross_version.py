@@ -1,3 +1,4 @@
+from packaging import version
 import pytest
 from ststest import TopologyMatcher
 
@@ -6,7 +7,8 @@ testinfra_hosts = ["local"]
 
 def test_projected_volume_topology(ansible_var, cliv1):
     k8s_version = ansible_var("agent_k8s_version")
-    if k8s_version == "1.21":
+
+    if version.parse(k8s_version) >= version.parse("1.21"):
         namespace = ansible_var("monitoring_namespace")
 
         cluster_agent = "stackstate-cluster-agent"
