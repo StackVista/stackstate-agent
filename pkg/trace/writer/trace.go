@@ -7,7 +7,6 @@ package writer
 
 import (
 	"compress/gzip"
-	"encoding/json"
 	"errors"
 	"math"
 	"strings"
@@ -218,6 +217,7 @@ func (w *TraceWriter) resetBuffer() {
 
 const headerLanguages = "X-Datadog-Reported-Languages"
 
+// stsTracePayload converts Datadog TracerPayloads to sts TracePayloads
 func (w *TraceWriter) stsTracePayload() stspb.TracePayload {
 	var traces []*stspb.APITrace
 	for _, tp := range w.tracerPayloads {
@@ -251,7 +251,7 @@ func (w *TraceWriter) stsTracePayload() stspb.TracePayload {
 		HostName:     w.hostname,
 		Env:          w.env,
 		Traces:       traces,
-		Transactions: []*stspb.Span{},
+		Transactions: []*stspb.Span{}, // [sts]
 	}
 }
 
@@ -265,19 +265,17 @@ func (w *TraceWriter) flush() {
 	defer w.resetBuffer()
 
 	log.Debugf("Serializing %d tracer payloads.", len(w.tracerPayloads))
-	//p := pb.AgentPayload{
-	//	AgentVersion:   version.AgentVersion,
-	//	HostName:       w.hostname,
-	//	Env:            w.env,
-	//	TargetTPS:      w.targetTPS,
-	//	ErrorTPS:       w.errorTPS,
-	//	TracerPayloads: w.tracerPayloads,
-	//}
-
+	/* sts
+	p := pb.AgentPayload{
+		AgentVersion:   version.AgentVersion,
+		HostName:       w.hostname,
+		Env:            w.env,
+		TargetTPS:      w.targetTPS,
+		ErrorTPS:       w.errorTPS,
+		TracerPayloads: w.tracerPayloads,
+	}
+	*/
 	stsp := w.stsTracePayload()
-
-	apJSON, _ := json.Marshal(stsp)
-	log.Debugf("[sts] Tracer payloads = %+v", apJSON)
 
 	b, err := proto.Marshal(&stsp) // sts
 	if err != nil {
