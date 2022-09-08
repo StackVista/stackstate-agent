@@ -1,13 +1,13 @@
 import util
 import json
-from util import assert_metrics, match_partial_event
+from util import assert_metrics_check_instance, match_partial_event
 from ststest import TopicTopologyMatcher
 
 testinfra_hosts = ["local"]
 test_component = "agent_integration_sample_v2_stateful"
 check_type = "agent-v2-integration-stateful"
 check_url = "sample"
-check_identifier = f"{check_type}-{check_url}"
+check_identifier = f"{check_type}_{check_url}"
 
 
 def test_agent_sample_integration_generic_events(cliv1):
@@ -18,13 +18,15 @@ def test_agent_sample_integration_generic_events(cliv1):
             json.dump(json_data, f, indent=4)
 
         service_event = {
+            "message": "agent_integration_sample_v2_stateful check was processed successfully",
             "name": "service-check.service-check",
-            "title": "stackstate.agent.check_status",
+            "title": "agent_integration_sample_v2_stateful",
             "eventType": "service-check",
             "tags": {
+                "integration-type": "agent-v2-integration-stateful",
+                "integration-url": "sample",
                 "source_type_name": "service-check",
-                "status": "OK",
-                "check": "cpu"
+                "status": "OK"
             },
         }
         assert match_partial_event(service_event, json_data), f"no matches found for event: {service_event}"
@@ -40,17 +42,18 @@ def test_agent_sample_integration_generic_events(cliv1):
         }
         assert match_partial_event(http_event, json_data), f"no matches found for event: {service_event}"
 
-    util.wait_until(wait_for_events, 60, 5)
+    util.wait_until(wait_for_events, 3, 5)
 
 
 def test_agent_integration_sample_metrics(host, cliv1):
-    expected = {'system.cpu.usage', 'location.availability', '2xx.responses', '5xx.responses', 'check_runs'}
+    expected = {'system.cpu.usage', 'location.availability', '2xx.responses', '5xx.responses', 'check_runs',
+                f'{check_identifier}_persistent_key', f'{check_identifier}_stateful'}
     json_data = cliv1.topic_api("sts_multi_metrics")
 
     with open(f"./topic-{test_component}-sts-metrics.json", 'w') as f:
-            json.dump(json_data, f, indent=4)
+        json.dump(json_data, f, indent=4)
 
-    assert_metrics(host, json_data, expected)
+    assert_metrics_check_instance(host, json_data, expected, check_identifier)
 
 
 def test_agent_integration_sample_topology_events(host, cliv1):
@@ -72,7 +75,7 @@ def test_agent_integration_sample_topology_events(host, cliv1):
         assert _topology_event_data(
             {
                 "category": "my_category",
-                "name": "URL timeout",
+                "name": f"URL timeout - {check_identifier}",
                 "tags": [],
                 "data": "{\"another_thing\":1,\"big_black_hole\":\"here\",\"test\":{\"1\":\"test\"}}",
                 "source_identifier": "source_identifier_value",
@@ -120,13 +123,19 @@ def test_agent_integration_sample_health_synchronization(host, cliv1):
             "IntakeHealthMainStreamStop": {}
         }
         ) is not None
+        data = {
+            'checkStateId': 'id',
+            'health': 'CRITICAL',
+            'message': 'msg',
+            'name': 'name',
+            'topologyElementIdentifier': check_identifier
+        }
         assert _health_contains_payload(
             {
                 "IntakeHealthCheckStates": {
                     "consistencyModel": "REPEAT_SNAPSHOTS",
                     "intakeCheckStates": [
-                        {"data": "{\"checkStateId\":\"id\",\"health\":\"CRITICAL\",\"message\":\"msg\","
-                                 "\"name\":\"name\",\"topologyElementIdentifier\":\""+check_identifier+"\"}"}
+                        {"data": json.dumps(data, separators=(',', ':'))}
                     ]
                 }
             }
@@ -150,3 +159,46 @@ def test_agent_integration_sample_topology_topic_api(host, agent_hostname, cliv1
         match_result.assert_exact_match(strict=False)
 
     util.wait_until(assert_topology, 60, 3)
+
+
+def test_agent_integration_stateful_increment(host, agent_hostname, cliv1):
+    json_data = cliv1.topic_api("sts_multi_metrics")
+
+    with open(f"./topic-{test_component}-sts-metrics-stateful.json", 'w') as f:
+        json.dump(json_data, f, indent=4)
+
+    persistent_metric = f'{check_identifier}_persistent_key'
+    persistent_metrics_values = []
+    stateful_metric = f'{check_identifier}_stateful'
+    stateful_metric_values = []
+
+    def wait_for_metrics():
+        def get_keys(m_host):
+            host_metrics = list(
+                message["message"]["MultiMetric"]["values"]
+                for message in json_data["messages"]
+                if message["message"]["MultiMetric"]["name"] == "convertedMetric" and
+                message["message"]["MultiMetric"]["host"] == m_host and
+                check_identifier in message["message"]["MultiMetric"]["labels"]
+            )
+
+            for converted_metric in host_metrics:
+                print('host_metrics: ', host_metrics)
+                for metric_key, metric_value in converted_metric.items():
+                    print('metric_key: ', metric_key)
+                    print('metric_value: ', metric_value)
+                    if metric_key == persistent_metric:
+                        persistent_metrics_values.append(metric_value)
+                    if metric_key == stateful_metric:
+                        stateful_metric_values.append(metric_value)
+
+        get_keys(agent_hostname)
+
+        print('Persistent metric values: ', persistent_metrics_values)
+        assert all(x > y for x, y in zip(persistent_metrics_values, persistent_metrics_values[1:]))
+        print('Stateful metric values: ', persistent_metrics_values)
+        assert all(x > y for x, y in zip(stateful_metric_values, stateful_metric_values[1:]))
+
+        assert False
+
+    util.wait_until(wait_for_metrics, 30, 3)

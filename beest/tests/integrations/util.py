@@ -89,6 +89,25 @@ def assert_metrics(host, test_data, expected_metrics):
     wait_until(wait_for_metrics, 30, 3)
 
 
+def assert_metrics_check_instance(host, test_data, expected_metrics, check_instance):
+    hostname = host.ansible.get_variables()["inventory_hostname"]
+    print(hostname)
+
+    def wait_for_metrics():
+        def get_keys(m_host):
+            return set(
+                ''.join(message["message"]["MultiMetric"]["values"].keys())
+                for message in test_data["messages"]
+                if message["message"]["MultiMetric"]["name"] == "convertedMetric" and
+                message["message"]["MultiMetric"]["host"] == m_host and
+                check_instance in message["message"]["MultiMetric"]["labels"]
+            )
+
+        assert all([expected_metric for expected_metric in expected_metrics if expected_metric in get_keys(hostname)])
+
+    wait_until(wait_for_metrics, 30, 3)
+
+
 def component_data(json_data, type_name, external_id_assert_fn, data_assert_fn):
     for message in json_data["messages"]:
         p = message["message"]["TopologyElement"]["payload"]

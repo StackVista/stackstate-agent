@@ -14,14 +14,14 @@ class CLIv1:
         self.host = host
         self.cache_enabled = cache_enabled
 
-    def topic_api(self, topic: str, limit: int = 1000) -> dict:
+    def topic_api(self, topic: str, limit: int = 250) -> dict:
         executed = self.host.run(f"sts-cli topic show {topic} -l {limit}")
         self.log.info(f"executed sts-cli topic show for topic {topic}")
         json_data = json.loads(executed.stdout)
 
         return json_data
 
-    def topology_topic(self, topic: str, limit: int = 1000) -> TopicTopologyResult:
+    def topology_topic(self, topic: str, limit: int = 250) -> TopicTopologyResult:
         json_data = self.topic_api(topic, limit)
 
         with open(f"./topic-{topic}.json", 'w') as f:

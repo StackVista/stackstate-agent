@@ -22,7 +22,7 @@ class AgentV2IntegrationTransactionalSampleCheck(TransactionalAgentCheck):
         return StackPackInstance("agent-v2-integration-transactional", "sample")
 
     def transactional_check(self, instance, transactional_state, persistent_state):
-        check_identifier = "{}-{}".format(instance.get('type'), instance.get('url'))
+        check_identifier = self.get_instance_key(instance).to_string()
 
         agent_v2_integration_base(self, instance, "agent-v2-integration-transactional-sample")
         persistent_state = agent_v2_integration_stateful_base(self, instance, persistent_state)
@@ -60,7 +60,7 @@ def agent_v2_integration_base(self, instance, agent_v2_base_identifier):
     # gets the value of the `timeout` property or defaults `default_timeout` and casts it to a float data type
     timeout = float(instance.get('timeout', default_timeout))
 
-    check_identifier = "{}-{}".format(instance.get('type'), instance.get('url'))
+    check_identifier = self.get_instance_key(instance).to_string()
 
     this_host_availability = MetricStream("Host Availability", "location.availability",
                                           conditions={"tags.hostname": "this-host", "tags.region": "eu-west-1"},
@@ -316,7 +316,7 @@ def agent_v2_integration_base(self, instance, agent_v2_base_identifier):
 # Agent V2 integration stateful base that can be reused in the agent_v2_integration_transactional_sample
 # base classes to retest the same functionality in the new base classes
 def agent_v2_integration_stateful_base(self, instance, persistent_state):
-    check_identifier = "{}-{}".format(instance.get('type'), instance.get('url'))
+    check_identifier = self.get_instance_key(instance).to_string()
 
     # Find the persistent state counter
     persistent_counter = persistent_state.get("persistent_counter")

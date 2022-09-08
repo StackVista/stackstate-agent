@@ -35,7 +35,7 @@ def agent_v2_integration_base(self, instance, agent_v2_base_identifier):
     # gets the value of the `timeout` property or defaults `default_timeout` and casts it to a float data type
     timeout = float(instance.get('timeout', default_timeout))
 
-    check_identifier = "{}-{}".format(instance.get('type'), instance.get('url'))
+    check_identifier = self.get_instance_key(instance).to_string()
 
     this_host_availability = MetricStream("Host Availability", "location.availability",
                                           conditions={"tags.hostname": "this-host", "tags.region": "eu-west-1"},
