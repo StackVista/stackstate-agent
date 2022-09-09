@@ -120,8 +120,8 @@ resource "aws_security_group_rule" "nodes_ssh" {
   type              = "ingress"
   from_port         = 22
   to_port           = 22
-  protocol          = "-1"
+  protocol          = "tcp"
   description       = "allow SSH into nodes"
+  cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.eks_nodes_sg.id
-  self              = true
 }
