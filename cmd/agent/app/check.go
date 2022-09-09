@@ -132,7 +132,7 @@ var checkCmd = &cobra.Command{
 		state.InitCheckStateManager()
 		handler.InitCheckManager(common.Coll)
 		transactionforwarder.NewPrintingTransactionalForwarder() // use the printing transactional forwarder for the agent check command
-		transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
+		transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity())
 		txChannelBufferSize, txTimeoutDuration, txEvictionDuration, txTickerInterval := config.GetTxManagerConfig()
 		transactionmanager.InitTransactionManager(txChannelBufferSize, txTickerInterval, txTimeoutDuration, txEvictionDuration)
 
