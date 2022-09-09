@@ -86,6 +86,20 @@ const (
 	// DefaultBatcherBufferSize sets the default buffer size of the batcher to 10000
 	// [sts]
 	DefaultBatcherBufferSize = 10000
+
+	// DefaultTxManagerChannelBufferSize is the concurrent transactions before the tx manager begins backpressure
+	// [sts] transaction manager
+	DefaultTxManagerChannelBufferSize = 100
+	// DefaultTxManagerTimeoutDurationSeconds is the amount of time before a manager is marked as stale, 5 minutes by default
+	DefaultTxManagerTimeoutDurationSeconds = 60 * 5
+	// DefaultTxManagerEvictionDurationSeconds is the amount of time before a manager is evicted and rolled back, 10 minutes by default
+	DefaultTxManagerEvictionDurationSeconds = 60 * 10
+
+	// DefaultCheckStateExpirationDuration is the amount of time before an element is expired from the Check State cache, 10 minutes by default
+	// [sts]
+	DefaultCheckStateExpirationDuration = 10 * time.Minute
+	// DefaultCheckStatePurgeDuration is the amount of time before an element is removed from the Check State cache, 10 minutes by default
+	DefaultCheckStatePurgeDuration = 10 * time.Minute
 )
 
 // Datadog is the global configuration object
@@ -294,6 +308,19 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("tracemalloc_blacklist", "") // deprecated
 	config.BindEnvAndSetDefault("run_path", defaultRunPath)
 	config.BindEnvAndSetDefault("no_proxy_nonexact_match", false)
+
+	// [sts] transactional environment variables
+	config.BindEnvAndSetDefault("transaction_manager_channel_buffer_size", DefaultTxManagerChannelBufferSize)
+	config.BindEnvAndSetDefault("transaction_timeout_duration_seconds", DefaultTxManagerTimeoutDurationSeconds)
+	config.BindEnvAndSetDefault("transaction_eviction_duration_seconds", DefaultTxManagerEvictionDurationSeconds)
+
+	// [sts] check state manager environment variable
+	config.BindEnvAndSetDefault("check_state_root_path", Datadog.GetString("run_path"))
+	config.BindEnvAndSetDefault("check_state_expiration_duration", DefaultCheckStateExpirationDuration)
+	config.BindEnvAndSetDefault("check_state_purge_duration", DefaultCheckStatePurgeDuration)
+
+	// [sts] check manager environment variables
+	config.BindEnvAndSetDefault("check_transactionality_enabled", true)
 
 	// Python 3 linter timeout, in seconds
 	// NOTE: linter is notoriously slow, in the absence of a better solution we
@@ -1274,7 +1301,7 @@ func GetMultipleEndpoints() (map[string][]string, error) {
 	return getMultipleEndpointsWithConfig(Datadog)
 }
 
-// GetMaxCapacity returns the mximum amount of elements per batch for the batcher
+// GetMaxCapacity returns the maximum amount of elements per batch for the transactionbatcher
 // [sts]
 func GetMaxCapacity() int {
 	if Datadog.IsSet("batcher_capacity") {
@@ -1282,6 +1309,18 @@ func GetMaxCapacity() int {
 	}
 
 	return DefaultBatcherBufferSize
+}
+
+// GetTxManagerConfig returns the transaction manager configuration. The buffer size, the time duration and the eviction duration
+// [sts]
+func GetTxManagerConfig() (int, time.Duration, time.Duration) {
+	txBufferSize := Datadog.GetInt("transaction_manager_channel_buffer_size")
+	// get the checkmanager duration and convert it to duration in seconds. Both transaction_timeout_duration_seconds and
+	// transaction_eviction_duration_seconds have default values.
+	txTimeoutDuration := time.Second * time.Duration(Datadog.GetInt("transaction_timeout_duration_seconds"))
+	txEvictionDuration := time.Second * time.Duration(Datadog.GetInt("transaction_eviction_duration_seconds"))
+
+	return txBufferSize, txTimeoutDuration, txEvictionDuration
 }
 
 func bindEnvAndSetLogsConfigKeys(config Config, prefix string) {

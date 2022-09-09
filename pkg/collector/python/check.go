@@ -11,7 +11,6 @@ package python
 import (
 	"errors"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"runtime"
 	"time"
 	"unsafe"
@@ -22,6 +21,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/defaults"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler" // sts
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -91,7 +91,7 @@ func (c *PythonCheck) runCheck(commitMetrics bool) error {
 	}
 	defer C.rtloader_free(rtloader, unsafe.Pointer(cResult))
 
-	batcher.GetBatcher().SubmitComplete(c.ID()) // [sts]
+	handler.GetCheckManager().GetCheckHandler(c.ID()).SubmitComplete() // [sts]
 
 	if commitMetrics {
 		s, err := aggregator.GetSender(c.ID())
@@ -201,7 +201,8 @@ func (c *PythonCheck) getPythonWarnings(gstate *stickyLock) []error {
 // [sts] Make sure collection_interval is always set
 func (c *PythonCheck) setCollectionIntervalToInstanceData(data integration.Data) (integration.Data, error) {
 	// make sure collection_interval is set within the instance data
-	var rawInstance integration.RawMap
+	rawInstance := make(integration.RawMap)
+
 	err := yaml.Unmarshal(data, &rawInstance)
 	if err != nil {
 		return nil, err

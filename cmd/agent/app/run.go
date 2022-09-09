@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
+	"time"
 
 	_ "expvar" // Blank import used because this isn't directly used in this file
 
@@ -28,8 +29,13 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/api/healthprobe"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery"
-	"github.com/StackVista/stackstate-agent/pkg/batcher" // sts
+	"github.com/StackVista/stackstate-agent/pkg/batcher"                 // sts
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler" // sts
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"   // sts
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/embed/jmx"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"   // sts
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionforwarder" // sts
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"   // sts
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	remoteconfig "github.com/StackVista/stackstate-agent/pkg/config/remote/service"
 	"github.com/StackVista/stackstate-agent/pkg/config/settings"
@@ -456,6 +462,14 @@ func StartAgent() error {
 	// start the autoconfig, this will immediately run any configured check
 	common.StartAutoConfig()
 
+	// [STS] create the global transactional components
+	state.InitCheckStateManager()
+	transactionforwarder.InitTransactionalForwarder()
+	transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
+	handler.InitCheckManager(common.Coll)
+	txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
+	transactionmanager.InitTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
+
 	// check for common misconfigurations and report them to log
 	misconfig.ToLog()
 
@@ -505,6 +519,14 @@ func StopAgent() {
 	if common.MetadataScheduler != nil {
 		common.MetadataScheduler.Stop()
 	}
+
+	// [sts] stop the transactional components
+	state.GetCheckStateManager().Clear()
+	handler.GetCheckManager().Stop()
+	transactionbatcher.GetTransactionalBatcher().Stop()
+	transactionforwarder.GetTransactionalForwarder().Stop()
+	transactionmanager.GetTransactionManager().Stop()
+
 	traps.StopServer()
 	api.StopServer()
 	clcrunnerapi.StopCLCRunnerServer()

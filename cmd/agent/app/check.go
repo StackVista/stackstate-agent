@@ -11,4 +11,5 @@ import (
 
 func init() {
 	AgentCmd.AddCommand(commands.Check(loggerName, &confFilePath, &flagNoColor))
+	// TODO [sts]: reimplement master changes
 }

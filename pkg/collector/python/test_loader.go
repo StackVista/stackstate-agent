@@ -3,11 +3,13 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build python && test
 // +build python,test
 
 package python
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"runtime"
 	"testing"
 
@@ -92,6 +94,7 @@ func testLoadCustomCheck(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
 
+	handler.InitCheckManager(handler.CheckNoReloader{})
 	loader, err := NewPythonCheckLoader()
 	assert.Nil(t, err)
 
@@ -125,6 +128,7 @@ func testLoadWheelCheck(t *testing.T) {
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
 
+	handler.InitCheckManager(handler.CheckNoReloader{})
 	loader, err := NewPythonCheckLoader()
 	assert.Nil(t, err)
 

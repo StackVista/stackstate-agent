@@ -72,3 +72,11 @@ func TestConfigure(t *testing.T) {
 func TestConfigureDeprecated(t *testing.T) {
 	testConfigureDeprecated(t)
 }
+
+func TestSetCollectionIntervalToInstanceData(t *testing.T) {
+	testSetCollectionIntervalToInstanceData(t)
+}
+
+func TestSetCollectionIntervalToInvalidInstanceData(t *testing.T) {
+	testSetCollectionIntervalToInvalidDataWithInvalidData(t)
+}

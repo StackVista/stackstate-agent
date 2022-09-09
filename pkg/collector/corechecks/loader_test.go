@@ -7,6 +7,7 @@ package corechecks
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"testing"
 
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
@@ -51,6 +52,7 @@ func TestLoad(t *testing.T) {
 		integration.Data("foo: bar"),
 	}
 	cc := integration.Config{Name: "foo", Instances: i}
+	handler.InitCheckManager(handler.CheckNoReloader{})
 	l, _ := NewGoCheckLoader()
 
 	_, err := l.Load(cc, i[0])
