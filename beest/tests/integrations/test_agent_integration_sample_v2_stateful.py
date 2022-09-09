@@ -167,26 +167,24 @@ def test_agent_integration_stateful_increment(host, agent_hostname, cliv1):
     with open(f"./topic-{test_component}-sts-metrics-stateful.json", 'w') as f:
         json.dump(json_data, f, indent=4)
 
-    persistent_metric = f'{check_identifier}_persistent_key'
-    persistent_metrics_values = []
-    stateful_metric = f'{check_identifier}_stateful'
-    stateful_metric_values = []
-
     def wait_for_metrics():
+        persistent_metric = f'{check_identifier}_persistent_key'
+        persistent_metrics_values = []
+        stateful_metric = f'{check_identifier}_stateful'
+        stateful_metric_values = []
+
         def get_keys(m_host):
-            host_metrics = list(
-                message["message"]["MultiMetric"]["values"]
+            host_metrics = sorted(list(
+                {'timestamp': message["message"]["MultiMetric"]["timestamp"],
+                 'metrics': message["message"]["MultiMetric"]["values"]}
                 for message in json_data["messages"]
                 if message["message"]["MultiMetric"]["name"] == "convertedMetric" and
                 message["message"]["MultiMetric"]["host"] == m_host and
                 check_identifier in message["message"]["MultiMetric"]["labels"]
-            )
+            ), key=lambda m: m['timestamp'], reverse=True)
 
             for converted_metric in host_metrics:
-                print('host_metrics: ', host_metrics)
-                for metric_key, metric_value in converted_metric.items():
-                    print('metric_key: ', metric_key)
-                    print('metric_value: ', metric_value)
+                for metric_key, metric_value in converted_metric["metrics"].items():
                     if metric_key == persistent_metric:
                         persistent_metrics_values.append(metric_value)
                     if metric_key == stateful_metric:
@@ -194,11 +192,7 @@ def test_agent_integration_stateful_increment(host, agent_hostname, cliv1):
 
         get_keys(agent_hostname)
 
-        print('Persistent metric values: ', persistent_metrics_values)
         assert all(x > y for x, y in zip(persistent_metrics_values, persistent_metrics_values[1:]))
-        print('Stateful metric values: ', persistent_metrics_values)
         assert all(x > y for x, y in zip(stateful_metric_values, stateful_metric_values[1:]))
 
-        assert False
-
-    util.wait_until(wait_for_metrics, 30, 3)
+    util.wait_until(wait_for_metrics, 60, 3)

@@ -161,3 +161,45 @@ def test_agent_integration_sample_topology_topic_api(host, agent_hostname, cliv1
         match_result.assert_exact_match(strict=False)
 
     util.wait_until(assert_topology, 60, 3)
+
+
+def test_agent_integration_transactional_stateful_increment(host, agent_hostname, cliv1):
+    json_data = cliv1.topic_api("sts_multi_metrics")
+
+    with open(f"./topic-{test_component}-sts-metrics-transactional-stateful.json", 'w') as f:
+        json.dump(json_data, f, indent=4)
+
+    def wait_for_metrics():
+        persistent_metric = f'{check_identifier}_persistent_key'
+        persistent_metrics_values = []
+        stateful_metric = f'{check_identifier}_stateful'
+        stateful_metric_values = []
+        transactional_metric = f'{check_identifier}_transactional'
+        transactional_metric_values = []
+
+        def get_keys(m_host):
+            host_metrics = sorted(list(
+                {'timestamp': message["message"]["MultiMetric"]["timestamp"],
+                 'metrics': message["message"]["MultiMetric"]["values"]}
+                for message in json_data["messages"]
+                if message["message"]["MultiMetric"]["name"] == "convertedMetric" and
+                message["message"]["MultiMetric"]["host"] == m_host and
+                check_identifier in message["message"]["MultiMetric"]["labels"]
+            ), key=lambda m: m['timestamp'], reverse=True)
+
+            for converted_metric in host_metrics:
+                for metric_key, metric_value in converted_metric["metrics"].items():
+                    if metric_key == persistent_metric:
+                        persistent_metrics_values.append(metric_value)
+                    if metric_key == stateful_metric:
+                        stateful_metric_values.append(metric_value)
+                    if metric_key == transactional_metric:
+                        transactional_metric_values.append(metric_value)
+
+        get_keys(agent_hostname)
+
+        assert all(x > y for x, y in zip(persistent_metrics_values, persistent_metrics_values[1:]))
+        assert all(x > y for x, y in zip(stateful_metric_values, stateful_metric_values[1:]))
+        assert all(x > y for x, y in zip(transactional_metric_values, transactional_metric_values[1:]))
+
+    util.wait_until(wait_for_metrics, 60, 3)
