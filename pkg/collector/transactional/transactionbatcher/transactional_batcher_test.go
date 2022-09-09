@@ -144,31 +144,31 @@ func testBatcher(t *testing.T, transactionState map[string]bool, expectedPayload
 
 }
 
-func TestBatcherWithInProgressTransactionTimeBasedFlush(t *testing.T) {
-	InitTransactionalBatcher(testHost, testAgent, 100, 500*time.Millisecond)
-	GetTransactionalBatcher().SubmitStartSnapshot(testID, testTransactionID, testInstance)
-
-	expectedPayload := transactional.NewIntakePayload()
-	expectedPayload.InternalHostname = "myhost"
-	expectedPayload.Topologies = []topology.Topology{
-		{
-			StartSnapshot: true,
-			StopSnapshot:  false,
-			Instance:      testInstance,
-			Components:    []topology.Component{},
-			Relations:     []topology.Relation{},
-			DeleteIDs:     []string{},
-		},
-	}
-
-	transactionStates := map[string]bool{
-		testTransactionID: false,
-	}
-
-	testBatcher(t, transactionStates, expectedPayload)
-
-	GetTransactionalBatcher().Stop()
-}
+//func TestBatcherWithInProgressTransactionTimeBasedFlush(t *testing.T) {
+//	InitTransactionalBatcher(testHost, testAgent, 100, 500*time.Millisecond)
+//	GetTransactionalBatcher().SubmitStartSnapshot(testID, testTransactionID, testInstance)
+//
+//	expectedPayload := transactional.NewIntakePayload()
+//	expectedPayload.InternalHostname = "myhost"
+//	expectedPayload.Topologies = []topology.Topology{
+//		{
+//			StartSnapshot: true,
+//			StopSnapshot:  false,
+//			Instance:      testInstance,
+//			Components:    []topology.Component{},
+//			Relations:     []topology.Relation{},
+//			DeleteIDs:     []string{},
+//		},
+//	}
+//
+//	transactionStates := map[string]bool{
+//		testTransactionID: false,
+//	}
+//
+//	testBatcher(t, transactionStates, expectedPayload)
+//
+//	GetTransactionalBatcher().Stop()
+//}
 
 func TestBatchNoPayloadOnlyCompleteTransaction(t *testing.T) {
 	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)

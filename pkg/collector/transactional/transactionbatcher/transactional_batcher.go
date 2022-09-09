@@ -44,13 +44,13 @@ func NewMockTransactionalBatcher() *MockTransactionalBatcher {
 
 // newTransactionalBatcher returns an instance of the transactionalBatcher and starts listening for submissions
 func newTransactionalBatcher(hostname, agentName string, maxCapacity int, flushInterval time.Duration) *transactionalBatcher {
-	checkFlushInterval := time.NewTicker(flushInterval)
+	//checkFlushInterval := time.NewTicker(flushInterval)
 	ctb := &transactionalBatcher{
-		Hostname:    hostname,
-		agentName:   agentName,
-		Input:       make(chan interface{}, maxCapacity),
-		builder:     NewTransactionalBatchBuilder(maxCapacity),
-		flushTicker: checkFlushInterval,
+		Hostname:  hostname,
+		agentName: agentName,
+		Input:     make(chan interface{}, maxCapacity),
+		builder:   NewTransactionalBatchBuilder(maxCapacity),
+		//flushTicker: checkFlushInterval,
 		maxCapacity: maxCapacity,
 	}
 
@@ -64,8 +64,8 @@ type transactionalBatcher struct {
 	Hostname, agentName string
 	Input               chan interface{}
 	builder             TransactionBatchBuilder
-	flushTicker         *time.Ticker
-	maxCapacity         int
+	//flushTicker         *time.Ticker
+	maxCapacity int
 }
 
 // Start starts the transactional transactionbatcher
@@ -106,15 +106,15 @@ BatcherReceiver:
 			default:
 				panic(fmt.Sprint("Unknown submission type"))
 			}
-		case <-ctb.flushTicker.C:
-			ctb.SubmitState(ctb.builder.Flush())
+			//case <-ctb.flushTicker.C:
+			//	ctb.SubmitState(ctb.builder.Flush())
 		}
 	}
 }
 
 // Stop stops the transactional transactionbatcher
 func (ctb *transactionalBatcher) Stop() {
-	ctb.flushTicker.Stop()
+	//ctb.flushTicker.Stop()
 	ctb.Input <- SubmitShutdown{}
 
 	// reset the batcher init to re-init the batcher
