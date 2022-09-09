@@ -31,7 +31,7 @@
       debug:
         var: sts_url
 
-
+    # if stackstate chart version is passed, install from stackstate-internal repo, otherwise use latest stable from stackstate repo
     - name: Use helm stackstate test repo
       when: stackstate_helm_chart_version | trim | length > 0
       set_fact:
@@ -48,12 +48,9 @@
         set_fact:
           stackstate_helm_search_yaml: "{{ stackstate_helm_search.stdout | from_yaml }}"
 
-      - name: Set stackstate helm version
+      - name: Set stackstate helm version and repo
         set_fact:
           stackstate_version: "{{ stackstate_helm_search_yaml[0].version }}"
-
-      - name: Use helm stackstate official repo
-        set_fact:
           stackstate_helm_chart_repo: stackstate/stackstate
 
 
