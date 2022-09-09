@@ -135,6 +135,7 @@ deps_win:
       - vendor
   script:
     - conda activate $CONDA_ENV
+    - pip install pathlib==1.0.1
     - inv deps
     - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
     - cd $Env:GOPATH/pkg ; tar --force-local -czf $CI_PROJECT_DIR/go-pkg.tar.gz .
