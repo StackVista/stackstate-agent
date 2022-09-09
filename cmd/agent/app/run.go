@@ -311,12 +311,17 @@ func StartAgent() error {
 	common.SetupAutoConfig(config.Datadog.GetString("confd_path"))
 
 	// [STS] create the global transactional components
-	state.InitCheckStateManager()
-	transactionforwarder.InitTransactionalForwarder()
-	transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
-	handler.InitCheckManager(common.Coll)
-	txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
-	transactionmanager.InitTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
+	if config.Datadog.GetBool("check_transactionality_enabled") {
+		state.InitCheckStateManager()
+		transactionforwarder.InitTransactionalForwarder()
+		transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
+		handler.InitCheckManager(common.Coll)
+		txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
+		transactionmanager.InitTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
+	} else {
+		state.InitCheckStateManager()
+		handler.InitCheckManager(common.Coll)
+	}
 
 	// start the autoconfig, this will immediately run any configured check
 	common.StartAutoConfig()
@@ -365,11 +370,16 @@ func StopAgent() {
 	}
 
 	// [sts] stop the transactional components
-	state.GetCheckStateManager().Clear()
-	handler.GetCheckManager().Stop()
-	transactionbatcher.GetTransactionalBatcher().Stop()
-	transactionforwarder.GetTransactionalForwarder().Stop()
-	transactionmanager.GetTransactionManager().Stop()
+	if config.Datadog.GetBool("check_transactionality_enabled") {
+		state.GetCheckStateManager().Clear()
+		handler.GetCheckManager().Stop()
+		transactionbatcher.GetTransactionalBatcher().Stop()
+		transactionforwarder.GetTransactionalForwarder().Stop()
+		transactionmanager.GetTransactionManager().Stop()
+	} else {
+		state.GetCheckStateManager().Clear()
+		handler.GetCheckManager().Stop()
+	}
 
 	api.StopServer()
 	clcrunnerapi.StopCLCRunnerServer()

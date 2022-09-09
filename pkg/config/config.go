@@ -235,7 +235,7 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("check_state_purge_duration", DefaultCheckStatePurgeDuration)
 
 	// [sts] check manager environment variables
-	config.BindEnvAndSetDefault("check_transactionality_enabled", true)
+	config.BindEnvAndSetDefault("check_transactionality_enabled", false)
 
 	// Python 3 linter timeout, in seconds
 	// NOTE: linter is notoriously slow, in the absence of a better solution we
