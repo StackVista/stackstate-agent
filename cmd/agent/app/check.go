@@ -133,8 +133,8 @@ var checkCmd = &cobra.Command{
 		handler.InitCheckManager(common.Coll)
 		transactionforwarder.NewPrintingTransactionalForwarder() // use the printing transactional forwarder for the agent check command
 		transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
-		txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
-		transactionmanager.InitTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
+		txChannelBufferSize, txTimeoutDuration, txEvictionDuration, txTickerInterval := config.GetTxManagerConfig()
+		transactionmanager.InitTransactionManager(txChannelBufferSize, txTickerInterval, txTimeoutDuration, txEvictionDuration)
 
 		if config.Datadog.GetBool("inventories_enabled") {
 			metadata.SetupInventoriesExpvar(common.AC, common.Coll)

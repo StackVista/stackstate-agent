@@ -315,8 +315,8 @@ func StartAgent() error {
 	transactionforwarder.InitTransactionalForwarder()
 	transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
 	handler.InitCheckManager(common.Coll)
-	txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
-	transactionmanager.InitTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
+	txChannelBufferSize, txTimeoutDuration, txEvictionDuration, txTickerInterval := config.GetTxManagerConfig()
+	transactionmanager.InitTransactionManager(txChannelBufferSize, txTickerInterval, txTimeoutDuration, txEvictionDuration)
 
 	// start the autoconfig, this will immediately run any configured check
 	common.StartAutoConfig()
