@@ -172,7 +172,6 @@ agent2:
     - <<: *scheduled_master_pipeline
     - *other_files_rule
     - *md_only_rule
-    - when: manual
 
 agent3:
  stage: triggers
