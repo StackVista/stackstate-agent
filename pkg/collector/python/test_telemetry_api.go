@@ -1,3 +1,4 @@
+//go:build python && test
 // +build python,test
 
 package python
@@ -5,13 +6,16 @@ package python
 import (
 	"encoding/json"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 // #include <datadog_agent_rtloader.h>
@@ -152,24 +156,32 @@ var expectedRawMetricsData = telemetry.RawMetrics{
 }
 
 func testRawMetricsData(t *testing.T) {
-	mockBatcher := batcher.NewMockBatcher()
+	SetupTransactionalComponents()
+	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
-	checkId := C.CString("check-id")
+	testCheck := &check.STSTestCheck{Name: "check-id-raw-metrics"}
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+
+	checkId := C.CString(testCheck.String())
 	name := C.CString(expectedRawMetricsData.Name)
 	value := C.float(expectedRawMetricsData.Value)
 	tags := []*C.char{C.CString("foo"), C.CString("bar"), nil}
 	hostname := C.CString(expectedRawMetricsData.HostName)
 	timestamp := C.longlong(expectedRawMetricsData.Timestamp)
 
+	StartTransaction(checkId)
 	SubmitRawMetricsData(checkId, name, value, &tags[0], hostname, timestamp)
 
-	expectedState := mockBatcher.CollectedTopology.Flush()
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
 
-	assert.Exactly(t, expectedState, batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
-		"check-id": {
-			Health: make(map[string]health.Health),
-			Metrics: &[]telemetry.RawMetrics{expectedRawMetricsData},
-			Topology: nil,
-		},
-	}))
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
+
+	assert.Equal(t, transactionbatcher.TransactionCheckInstanceBatchState{
+		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
+		Metrics:     &telemetry.Metrics{Values: []telemetry.RawMetrics{expectedRawMetricsData}},
+		Health:      map[string]health.Health{},
+	}, actualTopology)
+
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }

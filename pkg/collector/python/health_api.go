@@ -3,14 +3,15 @@
 // This product includes software developed at StackState (https://www.stackstate.com).
 // Copyright 2021 StackState
 
+//go:build python
 // +build python
 
 package python
 
 import (
 	"encoding/json"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/health"
 	"github.com/StackVista/stackstate-agent/pkg/util"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -39,7 +40,7 @@ func SubmitHealthCheckData(id *C.char, _ *C.health_stream_t, data *C.char) {
 
 	if err == nil {
 		if !healthPayload.Data.IsEmpty() {
-			batcher.GetBatcher().SubmitHealthCheckData(check.ID(goCheckID), healthPayload.Stream, healthPayload.Data)
+			handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitHealthCheckData(healthPayload.Stream, healthPayload.Data)
 		} else {
 			_ = log.Errorf("Empty json submitted to as check data, this is not allowed, data will not be forwarded.")
 		}
@@ -55,7 +56,7 @@ func SubmitHealthStartSnapshot(id *C.char, healthStream *C.health_stream_t, expi
 	goCheckID := C.GoString(id)
 	_stream := convertStream(healthStream)
 
-	batcher.GetBatcher().SubmitHealthStartSnapshot(check.ID(goCheckID), _stream, int(repeatIntervalSeconds), int(expirySeconds))
+	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitHealthStartSnapshot(_stream, int(repeatIntervalSeconds), int(expirySeconds))
 }
 
 // SubmitHealthStopSnapshot stops a health snapshot
@@ -64,7 +65,7 @@ func SubmitHealthStopSnapshot(id *C.char, healthStream *C.health_stream_t) {
 	goCheckID := C.GoString(id)
 	_stream := convertStream(healthStream)
 
-	batcher.GetBatcher().SubmitHealthStopSnapshot(check.ID(goCheckID), _stream)
+	handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitHealthStopSnapshot(_stream)
 }
 
 func convertStream(healthStream *C.health_stream_t) health.Stream {

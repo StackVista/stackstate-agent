@@ -6,6 +6,11 @@
       vars:
         sts_ingress: KOPS
         install_stackpacks: [stackstate-agent-v2, kubernetes, aws-v2]
+
+- name: Otel Lambda
+  hosts: local
+  gather_facts: false
+  roles:
     - role: "{{ bees_path }}/otel-lambda"
 
 - name: VM Agent

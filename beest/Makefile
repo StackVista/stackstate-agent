@@ -62,9 +62,12 @@ shell-root:
 	docker exec --user root -ti ${KEEPER_CONTAINER} bash
 
 
-# Beest unit test
-test:
+# Beest go unit test
+go-test:
 	go test -v ./...
 
+# Beest verification fixture tests
+matcher-test:
+	PYTHONPATH=./testframework/stscliv1/ pytest testframework
 
-.PHONY: build start shell shell-root
+.PHONY: build start shell shell-root go-test matcher-test

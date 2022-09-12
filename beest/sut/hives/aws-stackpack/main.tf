@@ -25,8 +25,7 @@ resource "aws_cloudformation_stack" "cfn_stackpack" {
     VantaUserDataStored   = "NA"
   }
 
-  # template_url = "https://stackstate-integrations-resources-eu-west-1.s3.eu-west-1.amazonaws.com/aws-topology/cloudformation/stackstate-resources-1.2.cfn.yaml"
-  template_body = file("${path.module}/stackstate-resources-1.2.cfn.yaml")
+   template_url = "https://stackstate-integrations-resources-eu-west-1.s3.eu-west-1.amazonaws.com/aws-topology/cloudformation/stackstate-resources-1.3.cfn.yaml"
 }
 
 data "aws_iam_role" "integration_role" {
@@ -43,7 +42,8 @@ data "aws_iam_policy_document" "integration_assume_role_policy" {
 
 // for a IAM User
 resource "aws_iam_user" "integration_user" {
-  name = "${var.environment}-integration-user"
+  name                 = "${var.environment}-integration-user"
+  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/DeveloperBoundaries"
 }
 
 resource "aws_iam_access_key" "integration_user_key" {
@@ -82,7 +82,7 @@ resource "aws_iam_role_policy" "integration_role_policy" {
 }
 
 resource "aws_iam_instance_profile" "integration_profile" {
-  name = "${var.environment}-instance-profile"
-  role = aws_iam_role.agent_ec2_role.name
+  name       = "${var.environment}-instance-profile"
+  role       = aws_iam_role.agent_ec2_role.name
   depends_on = [aws_iam_role_policy.integration_role_policy]
 }

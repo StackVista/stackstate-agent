@@ -159,6 +159,7 @@ version.txt
 /test/molecule-role/molecule/*/topic-*.json
 /test/molecule-role/molecule/*/persistent-cache-*.json
 .cache
+/test/molecule-role/molecule/*/playbook/run/logs/
 
 # ignore manual test files
 test/manual/*
@@ -178,6 +179,9 @@ deployment/kubernetes/k8s-*/
 
 # msgpack gen files
 *_gen*.go
+
+# Temp State Files
+pkg/collector/check/state/temp-write-to-disk-test/*
 
 # beest related
 *.egg-info/

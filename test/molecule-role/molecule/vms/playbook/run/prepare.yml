@@ -11,6 +11,7 @@
 
     # Default tasks from this script
     - include_tasks: ./prepare.tasks.prepare.receiver.yml
+    - include_tasks: ../../../_shared/copy/copy-docker-log-backup-script.yml
 
 - name: Prepare Linux Agents (pre)
   hosts: agent_linux_vm
@@ -65,6 +66,12 @@
   gather_facts: false
   tasks:
     - include_tasks: ./prepare.tasks.prepare.linux.agent.yml
+
+- name: Add user to docker group
+  hosts: agent-connection-namespaces
+  gather_facts: false
+  tasks:
+    - include_tasks: ./prepare.tasks.prepare.user.group.permissions.yml
 
 - name: Prepare Ubuntu Agent for Short-Lived tests (post installation configuration)
   hosts: agent-ubuntu
