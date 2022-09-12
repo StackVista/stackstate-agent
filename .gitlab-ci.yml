@@ -145,7 +145,7 @@ pre-check:
     - echo $CI_MERGE_REQUEST_TARGET_BRANCH_SHA
     - git diff-tree --no-commit-id --name-only -r $CI_COMMIT_BEFORE_SHA $CI_COMMIT_SHA
     - git diff-tree --no-commit-id --name-only -r $CI_MERGE_REQUEST_TARGET_BRANCH_SHA -r $CI_COMMIT_SHA
-    - changes=$(git diff-tree --no-commit-id --name-only -r $CI_COMMIT_BEFORE_SHA -r $CI_COMMIT_SHA)
+    - changes=$(git diff-tree --no-commit-id --name-only -r $CI_MERGE_REQUEST_TARGET_BRANCH_SHA -r $CI_COMMIT_SHA)
     - python3 gitlab-ci-pipeline-check.py $changes
     - source .env
     - echo RUN_FULL_PIPELINE=$RUN_FULL_PIPELINE >> build.env
