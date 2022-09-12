@@ -35,8 +35,7 @@ func TestCheckHandler_State_Transactional_Integration(t *testing.T) {
 
 	state.InitCheckStateManager()
 	transactionforwarder.InitTransactionalForwarder()
-	transactionbatcher.InitTransactionalBatcher("test-hostname", "test-agent-name", 100,
-		10*time.Second)
+	transactionbatcher.InitTransactionalBatcher("test-hostname", "test-agent-name", 100)
 	transactionmanager.InitTransactionManager(100, 250*time.Millisecond, 500*time.Millisecond,
 		500*time.Millisecond)
 

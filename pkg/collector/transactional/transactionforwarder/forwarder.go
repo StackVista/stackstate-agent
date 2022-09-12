@@ -123,7 +123,6 @@ forwardHandler:
 		case sf := <-f.ShutdownChannel:
 			log.Infof("Shutting down forwarder %v", sf)
 			break forwardHandler
-		default:
 		}
 	}
 }
