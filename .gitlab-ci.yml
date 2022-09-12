@@ -140,13 +140,11 @@ variables: &commonvariables
 pre-check:
   stage: pre-check
   script:
-    - git diff-tree --no-commit-id --name-only -r $CI_COMMIT_SHA -r $CI_COMMIT_BEFORE_SHA
+    - git diff-tree --no-commit-id --name-only -r $CI_COMMIT_BEFORE_SHA -r $CI_COMMIT_SHA
     - git diff-tree --no-commit-id --name-only -r $CI_MERGE_REQUEST_TARGET_BRANCH_SHA -r $CI_COMMIT_SHA
-    - changes=$(git diff-tree --no-commit-id --name-only -r $CI_COMMIT_SHA)
+    - changes=$(git diff-tree --no-commit-id --name-only -r $CI_COMMIT_BEFORE_SHA -r $CI_COMMIT_SHA)
     - python3 gitlab-ci-pipeline-check.py $changes
-    - echo "$RUN_FULL_PIPELINE"
     - source .env
-    - echo $RUN_FULL_PIPELINE
     - echo RUN_FULL_PIPELINE=$RUN_FULL_PIPELINE >> build.env
   artifacts:
     reports:
@@ -168,6 +166,7 @@ printEnv:
     - if: $RUN_FULL_PIPELINE == "true" 
       when: always
     - when: manual
+      allow_failure: true
 
 agent2:
   stage: triggers
