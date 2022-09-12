@@ -125,14 +125,17 @@ func (k *EventsCheck) Configure(config, initConfig integration.Data, source stri
 	return nil
 }
 
+// sts begin
+
 // getClusterName retrieves the name of the cluster, if found
-// sts
 func (k *EventsCheck) getClusterName() {
 	hostname, _ := util.GetHostname(context.TODO())
 	if clusterName := clustername.GetClusterName(context.TODO(), hostname); clusterName != "" {
 		k.clusterName = clusterName
 	}
 }
+
+// sts end
 
 func convertFilter(conf []string) string {
 	var formatedFilters []string
