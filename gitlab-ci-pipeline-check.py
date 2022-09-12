@@ -17,7 +17,7 @@ print(run_full_pipeline)
 
 if run_full_pipeline:
     with open('.env', 'w') as writer:
-        writer.write(f'export RUN_FULL_PIPELINE="true"')
+        writer.write(f'export RUN_FULL_PIPELINE="false"')
 else:
     with open('.env', 'w') as writer:
         writer.write(f'export RUN_FULL_PIPELINE="false"')

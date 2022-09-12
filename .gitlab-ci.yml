@@ -109,7 +109,7 @@ variables: &commonvariables
     if: $CI_COMMIT_TAG || ($CI_COMMIT_REF_NAME == "master" && $CI_PIPELINE_SOURCE == "schedule")
     when: always
 
-.other_files_rule: &other_files_rule
+.pipeline_run_rules: &pipeline_run_rules
   # Check if any files (not MD) changed
   # Glob syntax that checks for changes in all files except files that end with .md, .mdown or .markdown extension.
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
@@ -119,17 +119,12 @@ variables: &commonvariables
     when: always
 
   # Do not run pipeline for branch commits when there is an open merge request available
-  - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH && $RUN_FULL_PIPELINE == "true"
+  - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH
     when: never
 
   # Run pipeline for branch commits when no merge requests are available
   - if: ($CI_COMMIT_BRANCH || $CI_COMMIT_REF_NAME == "master") && $RUN_FULL_PIPELINE == "true"
     when: always
-
-.md_only_rule: &md_only_rule
-  # Check if any MD files changed
-  # Glob syntax that checks for changes in files ending with .md, .mdown or .markdown extension.
-  # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
 
   # Run pipeline for merge requests and not for branch pipelines when a commit is pushed
   - if: $CI_MERGE_REQUEST_IID
@@ -137,11 +132,6 @@ variables: &commonvariables
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
     allow_failure: true
 
-  # Do not run pipeline for branch commits when there is an open merge request available
-  - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH
-    when: never
-
-  # Run pipeline for branch commits when no merge requests are available
   - if: $CI_COMMIT_BRANCH || $CI_COMMIT_REF_NAME == "master"
     when: manual
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
@@ -150,7 +140,8 @@ variables: &commonvariables
 pre-check:
   stage: pre-check
   script:
-    - git diff-tree --no-commit-id --name-only -r $CI_COMMIT_SHA
+    - git diff-tree --no-commit-id --name-only -r $CI_COMMIT_SHA -r $CI_COMMIT_BEFORE_SHA
+    - git diff-tree --no-commit-id --name-only -r $CI_MERGE_REQUEST_TARGET_BRANCH_SHA -r $CI_COMMIT_SHA
     - changes=$(git diff-tree --no-commit-id --name-only -r $CI_COMMIT_SHA)
     - python3 gitlab-ci-pipeline-check.py $changes
     - echo "$RUN_FULL_PIPELINE"
@@ -165,13 +156,18 @@ printEnv:
   stage: triggers
   dependencies:
     - pre-check
+  variables: 
+    RUN_FULL_PIPELINE: $RUN_FULL_PIPELINE
   script: 
     - echo "$CI_MERGE_REQUEST_IID"
     - echo "$CI_OPEN_MERGE_REQUESTS"
     - echo "$CI_COMMIT_BRANCH"
     - echo "$CI_COMMIT_REF_NAME"
     - echo "$RUN_FULL_PIPELINE"
-  when: always
+  rules:
+    - if: $RUN_FULL_PIPELINE == "true" 
+      when: always
+    - when: manual
 
 agent2:
   stage: triggers
@@ -180,6 +176,7 @@ agent2:
   variables:
     <<: *commonvariables
     <<: *agent2_variables
+    RUN_FULL_PIPELINE: $RUN_FULL_PIPELINE
   script: 
     - echo "$CI_MERGE_REQUEST_IID"
     - echo "$CI_OPEN_MERGE_REQUESTS"
@@ -193,8 +190,7 @@ agent2:
     - if: $CI_COMMIT_MESSAGE =~ /\[py3]/
       when: never
     - <<: *scheduled_master_pipeline
-    - *other_files_rule
-    - *md_only_rule
+    - *pipeline_run_rules
     - when: manual
       allow_failure: true
 
@@ -205,6 +201,7 @@ agent3:
   variables:
     <<: *commonvariables
     <<: *agent3_variables
+    RUN_FULL_PIPELINE: $RUN_FULL_PIPELINE
   script: 
     - echo "$CI_MERGE_REQUEST_IID"
     - echo "$CI_OPEN_MERGE_REQUESTS"
@@ -218,8 +215,7 @@ agent3:
     - if: $CI_COMMIT_MESSAGE =~ /\[py2]/
       when: never
     - <<: *scheduled_master_pipeline
-    - *other_files_rule
-    - *md_only_rule
+    - *pipeline_run_rules
     - when: manual
       allow_failure: true
 
