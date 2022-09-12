@@ -9,20 +9,6 @@ import (
 	"context"
 	_ "expvar" // Blank import used because this isn't directly used in this file
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
-	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionforwarder"
-	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
-	"net/http"
-	_ "net/http/pprof" // Blank import used because this isn't directly used in this file
-	"os"
-	"os/signal"
-	"runtime"
-	"syscall"
-	"time"
-
 	"github.com/StackVista/stackstate-agent/cmd/agent/api"
 	"github.com/StackVista/stackstate-agent/cmd/agent/app/settings"
 	"github.com/StackVista/stackstate-agent/cmd/agent/clcrunnerapi"
@@ -31,7 +17,13 @@ import (
 	"github.com/StackVista/stackstate-agent/cmd/agent/gui"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/api/healthprobe"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/embed/jmx"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionforwarder"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/dogstatsd"
 	"github.com/StackVista/stackstate-agent/pkg/forwarder"
@@ -47,6 +39,12 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/version"
 	"github.com/spf13/cobra"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
+	"net/http"
+	_ "net/http/pprof" // Blank import used because this isn't directly used in this file
+	"os"
+	"os/signal"
+	"runtime"
+	"syscall"
 
 	// register core checks
 	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster"
@@ -314,10 +312,10 @@ func StartAgent() error {
 	if config.Datadog.GetBool("check_transactionality_enabled") {
 		state.InitCheckStateManager()
 		transactionforwarder.InitTransactionalForwarder()
-		transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
+		transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity())
 		handler.InitCheckManager(common.Coll)
-		txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
-		transactionmanager.InitTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
+		txChannelBufferSize, txTimeoutDuration, txEvictionDuration, txTickerInterval := config.GetTxManagerConfig()
+		transactionmanager.InitTransactionManager(txChannelBufferSize, txTickerInterval, txTimeoutDuration, txEvictionDuration)
 	} else {
 		state.InitCheckStateManager()
 		handler.InitCheckManager(common.Coll)

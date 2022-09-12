@@ -218,3 +218,107 @@ func TestForwarder(t *testing.T) {
 		})
 	}
 }
+
+func TestForwarder_Multiple(t *testing.T) {
+	httpServer := func() *httptest.Server {
+		return httptest.NewServer(
+			http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			}),
+		)
+	}
+
+	manager := transactionmanager.NewMockTransactionManager()
+
+	server := httpServer()
+
+	config.Datadog.Set("sts_url", server.URL)
+	config.Datadog.Set("api_key", "my-test-api-key")
+	config.Datadog.Set("transactional_forwarder_retry_min", 100*time.Millisecond)
+	config.Datadog.Set("transactional_forwarder_retry_max", 500*time.Millisecond)
+
+	fwd := newTransactionalForwarder()
+
+	for i := 0; i < 5; i++ {
+		txMap := map[string]transactional.PayloadTransaction{
+			testTransactionID: {
+				ActionID:             testActionID,
+				CompletedTransaction: true,
+			},
+		}
+
+		testTransactionPayload := TransactionalPayload{
+			Path:                 transactional.IntakePath,
+			TransactionActionMap: txMap,
+		}
+
+		fwd.SubmitTransactionalIntake(testTransactionPayload)
+
+		ackAction := manager.NextAction().(transactionmanager.AckAction)
+		expectedPT, found := txMap[ackAction.TransactionID]
+		if !found {
+			assert.Fail(t, "Commit action for transaction %s, not found in expected transaction state: %v",
+				ackAction.TransactionID, txMap)
+		}
+		assert.Equal(t, expectedPT.ActionID, ackAction.ActionID)
+
+		completedTx := manager.NextAction().(transactionmanager.CompleteTransaction)
+		assert.Equal(t, ackAction.TransactionID, completedTx.TransactionID)
+	}
+
+	for i := 0; i < 5; i++ {
+		txMap := map[string]transactional.PayloadTransaction{
+			testTransactionID: {
+				ActionID:             testActionID,
+				CompletedTransaction: true,
+			},
+		}
+
+		testTransactionPayload := TransactionalPayload{
+			Path:                 transactional.IntakePath,
+			TransactionActionMap: txMap,
+			OnlyMarkTransactions: true,
+		}
+
+		fwd.SubmitTransactionalIntake(testTransactionPayload)
+
+		ackAction := manager.NextAction().(transactionmanager.AckAction)
+		expectedPT, found := txMap[ackAction.TransactionID]
+		if !found {
+			assert.Fail(t, "Commit action for transaction %s, not found in expected transaction state: %v",
+				ackAction.TransactionID, txMap)
+		}
+		assert.Equal(t, expectedPT.ActionID, ackAction.ActionID)
+
+		completedTx := manager.NextAction().(transactionmanager.CompleteTransaction)
+		assert.Equal(t, ackAction.TransactionID, completedTx.TransactionID)
+	}
+
+	for i := 0; i < 5; i++ {
+		txMap := map[string]transactional.PayloadTransaction{
+			testTransactionID: {
+				ActionID:             testActionID,
+				CompletedTransaction: true,
+			},
+		}
+
+		testTransactionPayload := TransactionalPayload{
+			Path:                 transactional.IntakePath,
+			TransactionActionMap: txMap,
+		}
+
+		fwd.SubmitTransactionalIntake(testTransactionPayload)
+
+		ackAction := manager.NextAction().(transactionmanager.AckAction)
+		expectedPT, found := txMap[ackAction.TransactionID]
+		if !found {
+			assert.Fail(t, "Commit action for transaction %s, not found in expected transaction state: %v",
+				ackAction.TransactionID, txMap)
+		}
+		assert.Equal(t, expectedPT.ActionID, ackAction.ActionID)
+
+		completedTx := manager.NextAction().(transactionmanager.CompleteTransaction)
+		assert.Equal(t, ackAction.TransactionID, completedTx.TransactionID)
+	}
+
+}

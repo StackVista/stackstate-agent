@@ -10,7 +10,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/google/uuid"
 	"sync"
-	"time"
 )
 
 var (
@@ -23,9 +22,9 @@ func init() {
 }
 
 // InitTransactionalBatcher initializes the global transactional transactionbatcher Instance
-func InitTransactionalBatcher(hostname, agentName string, maxCapacity int, flushInterval time.Duration) {
+func InitTransactionalBatcher(hostname, agentName string, maxCapacity int) {
 	batcherInit.Do(func() {
-		batcherInstance = newTransactionalBatcher(hostname, agentName, maxCapacity, flushInterval)
+		batcherInstance = newTransactionalBatcher(hostname, agentName, maxCapacity)
 	})
 }
 
@@ -43,14 +42,12 @@ func NewMockTransactionalBatcher() *MockTransactionalBatcher {
 }
 
 // newTransactionalBatcher returns an instance of the transactionalBatcher and starts listening for submissions
-func newTransactionalBatcher(hostname, agentName string, maxCapacity int, flushInterval time.Duration) *transactionalBatcher {
-	checkFlushInterval := time.NewTicker(flushInterval)
+func newTransactionalBatcher(hostname, agentName string, maxCapacity int) *transactionalBatcher {
 	ctb := &transactionalBatcher{
 		Hostname:    hostname,
 		agentName:   agentName,
 		Input:       make(chan interface{}, maxCapacity),
 		builder:     NewTransactionalBatchBuilder(maxCapacity),
-		flushTicker: checkFlushInterval,
 		maxCapacity: maxCapacity,
 	}
 
@@ -64,7 +61,6 @@ type transactionalBatcher struct {
 	Hostname, agentName string
 	Input               chan interface{}
 	builder             TransactionBatchBuilder
-	flushTicker         *time.Ticker
 	maxCapacity         int
 }
 
@@ -106,15 +102,12 @@ BatcherReceiver:
 			default:
 				panic(fmt.Sprint("Unknown submission type"))
 			}
-		case <-ctb.flushTicker.C:
-			ctb.SubmitState(ctb.builder.Flush())
 		}
 	}
 }
 
 // Stop stops the transactional transactionbatcher
 func (ctb *transactionalBatcher) Stop() {
-	ctb.flushTicker.Stop()
 	ctb.Input <- SubmitShutdown{}
 
 	// reset the batcher init to re-init the batcher

@@ -106,9 +106,6 @@ currentTxHandler:
 				}
 				transactionbatcher.GetTransactionalBatcher().SubmitCompleteTransaction(ch.ID(), ch.GetCurrentTransaction())
 
-				// clear current transaction
-				ch.clearCurrentTransaction()
-
 			case DiscardTransaction:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Discarding current transaction", logPrefix)
