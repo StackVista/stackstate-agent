@@ -1,4 +1,7 @@
+image: "python:3.7" 
+
 stages:
+  - pre-check
   - triggers
 
 # Gitlab CI Process:
@@ -54,6 +57,7 @@ variables: &commonvariables
   # do jobs like these run on
   PRIMARY_MAJOR_VERSION: '2'
   PROCESS_AGENT_TEST_REPO: stackstate-process-agent-test
+  RUN_FULL_PIPELINE: "true"
 
 .agent2_variables: &agent2_variables
   CONDA_ENV: ddpy2
@@ -111,21 +115,15 @@ variables: &commonvariables
   # (Glob syntax tester: https://toools.cloud/miscellaneous/glob-tester)
 
   # Run pipeline for merge requests and not for branch pipelines when a commit is pushed
-  - if: $CI_MERGE_REQUEST_IID
-    changes:
-      - "**/{!(*.markdown|*.mdown|*.md),.*}"
-    # If any non-MD files changed, always run the pipeline.
+  - if: $CI_MERGE_REQUEST_IID && $RUN_FULL_PIPELINE == "true"
     when: always
 
   # Do not run pipeline for branch commits when there is an open merge request available
-  - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH
+  - if: $CI_OPEN_MERGE_REQUESTS && $CI_COMMIT_BRANCH && $RUN_FULL_PIPELINE == "true"
     when: never
 
   # Run pipeline for branch commits when no merge requests are available
-  - if: $CI_COMMIT_BRANCH || $CI_COMMIT_REF_NAME == "master"
-    changes:
-      - "**/{!(*.markdown|*.mdown|*.md),.*}"
-    # If any non-MD files changed, always run the pipeline.
+  - if: ($CI_COMMIT_BRANCH || $CI_COMMIT_REF_NAME == "master") && $RUN_FULL_PIPELINE == "true"
     when: always
 
 .md_only_rule: &md_only_rule
@@ -135,9 +133,6 @@ variables: &commonvariables
 
   # Run pipeline for merge requests and not for branch pipelines when a commit is pushed
   - if: $CI_MERGE_REQUEST_IID
-    changes:
-      - "**/*.{markdown,mdown,md}"
-    # If only MD files changed, don't run the pipeline.
     when: manual
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
     allow_failure: true
@@ -148,31 +143,49 @@ variables: &commonvariables
 
   # Run pipeline for branch commits when no merge requests are available
   - if: $CI_COMMIT_BRANCH || $CI_COMMIT_REF_NAME == "master"
-    changes:
-      - "**/*.{markdown,mdown,md}"
-    # If only MD files changed, don't run the pipeline.
     when: manual
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
     allow_failure: true
 
+pre-check:
+  stage: pre-check
+  script:
+    - git diff-tree --no-commit-id --name-only -r $CI_COMMIT_SHA
+    - changes=$(git diff-tree --no-commit-id --name-only -r $CI_COMMIT_SHA)
+    - python3 gitlab-ci-pipeline-check.py $changes
+    - echo "$RUN_FULL_PIPELINE"
+    - source .env
+    - echo $RUN_FULL_PIPELINE
+    - echo RUN_FULL_PIPELINE=$RUN_FULL_PIPELINE >> build.env
+  artifacts:
+    reports:
+      dotenv: build.env
+
 printEnv:
   stage: triggers
+  dependencies:
+    - pre-check
   script: 
     - echo "$CI_MERGE_REQUEST_IID"
     - echo "$CI_OPEN_MERGE_REQUESTS"
     - echo "$CI_COMMIT_BRANCH"
     - echo "$CI_COMMIT_REF_NAME"
-  when: manual
-  allow_failure: true
+    - echo "$RUN_FULL_PIPELINE"
+  when: always
 
 agent2:
   stage: triggers
+  dependencies:
+    - pre-check
   variables:
     <<: *commonvariables
     <<: *agent2_variables
-  trigger:
-    include: .gitlab-ci-agent.yml
-    strategy: depend
+  script: 
+    - echo "$CI_MERGE_REQUEST_IID"
+    - echo "$CI_OPEN_MERGE_REQUESTS"
+    - echo "$CI_COMMIT_BRANCH"
+    - echo "$CI_COMMIT_REF_NAME"
+    - echo "$RUN_FULL_PIPELINE"
   rules:
     - <<: *exclude_on_cluster_agent
     # exclude this pipeline if we're running a v3 tag pipeline
@@ -187,12 +200,17 @@ agent2:
 
 agent3:
   stage: triggers
+  dependencies:
+    - pre-check
   variables:
     <<: *commonvariables
     <<: *agent3_variables
-  trigger:
-    include: .gitlab-ci-agent.yml
-    strategy: depend
+  script: 
+    - echo "$CI_MERGE_REQUEST_IID"
+    - echo "$CI_OPEN_MERGE_REQUESTS"
+    - echo "$CI_COMMIT_BRANCH"
+    - echo "$CI_COMMIT_REF_NAME"
+    - echo "$RUN_FULL_PIPELINE"
   rules:
     - <<: *exclude_on_cluster_agent
     # exclude this pipeline if we're running a v2 tag pipeline
