@@ -93,7 +93,7 @@ func TestCheckHandlerAPI(t *testing.T) {
 	mockBatcher := transactionbatcher.NewMockTransactionalBatcher()
 	transactionmanager.NewMockTransactionManager()
 
-	checkHandler := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+	checkHandler := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 	var transactionID string
 	checkInstanceBatchState := &transactionbatcher.TransactionCheckInstanceBatchState{}
@@ -247,7 +247,7 @@ func TestCheckHandlerAPI(t *testing.T) {
 	// test check handler discard transaction
 	t.Run("check handler discard transaction", func(t *testing.T) {
 		ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-discard-transaction"},
-			&check.TestCheckReloader{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
+			integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 
 		txID := ch.StartTransaction()
 		ch.SubmitComponent(instance, testComponent)
@@ -285,7 +285,7 @@ func TestCheckHandlerAPI(t *testing.T) {
 	// test check handler submit complete
 	t.Run("check handler submit complete", func(t *testing.T) {
 		ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-submit-complete"},
-			&check.TestCheckReloader{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
+			integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 
 		txID := ch.StartTransaction()
 		ch.SubmitComponent(instance, testComponent)

@@ -61,7 +61,7 @@ func TestLoad(t *testing.T) {
 		integration.Data("foo: bar"),
 	}
 	cc := integration.Config{Name: "foo", Instances: i}
-	handler.InitCheckManager(handler.CheckNoReloader{})
+	handler.InitCheckManager()
 	l, _ := NewGoCheckLoader()
 
 	_, err := l.Load(cc, i[0])
