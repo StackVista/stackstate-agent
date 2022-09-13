@@ -8,12 +8,14 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"sort"
 	"testing"
+	"time"
 )
 
 var (
@@ -74,6 +76,15 @@ var (
 
 	testRawMetricsDataIntakeMetric  = testRawMetricsData.IntakeMetricJSON()
 	testRawMetricsDataIntakeMetric2 = testRawMetricsData2.IntakeMetricJSON()
+
+	testEvent = metrics.Event{
+		Ts:             time.Now().Unix(),
+		EventType:      "docker",
+		Tags:           []string{"my", "test", "tags"},
+		AggregationKey: "docker:redis",
+		SourceTypeName: "docker",
+		Priority:       metrics.EventPriorityNormal,
+	}
 )
 
 func init() {
@@ -129,6 +140,7 @@ func testBatcher(t *testing.T, transactionState map[string]bool, expectedPayload
 	})
 	assert.Equal(t, expectedPayload.Health, actualPayload.Health)
 	assert.Equal(t, expectedPayload.Metrics, actualPayload.Metrics)
+	assert.Equal(t, expectedPayload.Events, actualPayload.Events)
 
 	// assert the transaction map produced by the batcher contains the correct action id and completed status
 	expectedTransactionMap := make(map[string]transactional.PayloadTransaction, len(commitActions))
@@ -215,6 +227,7 @@ func TestBatchFlushOnComplete(t *testing.T) {
 	batcher.SubmitHealthCheckData(testID, testTransactionID, testStream, testCheckData)
 	batcher.SubmitRawMetricsData(testID, testTransactionID, testRawMetricsData)
 	batcher.SubmitRawMetricsData(testID, testTransactionID, testRawMetricsData2)
+	batcher.SubmitEvent(testID, testTransactionID, testEvent)
 	batcher.SubmitCompleteTransaction(testID, testTransactionID)
 
 	expectedPayload := transactional.NewIntakePayload()
@@ -236,6 +249,7 @@ func TestBatchFlushOnComplete(t *testing.T) {
 		},
 	}
 	expectedPayload.Metrics = []interface{}{testRawMetricsDataIntakeMetric, testRawMetricsDataIntakeMetric2}
+	expectedPayload.Events = []metrics.Event{testEvent}
 
 	transactionStates := map[string]bool{
 		testTransactionID: true,
