@@ -14,17 +14,9 @@ module "eks_cluster" {
   vpc_id              = module.eks_vpc.vpc_id
   private_subnet_1_id = module.eks_vpc.private_subnet_1_id
   private_subnet_2_id = module.eks_vpc.private_subnet_2_id
-  k8s_cluster_name    = local.cluster_name
-  k8s_version         = var.k8s_version
-  k8s_runtime         = var.k8s_runtime
-  k8s_node_type       = var.k8s_node_type
-  k8s_size            = var.k8s_size
-}
-
-module "receiver" {
-  source = "../../hives/ec2-receiver"
-
-  vpc_id      = module.eks_vpc.vpc_id
-  subnet_id   = module.eks_vpc.private_subnet_1_id
-  environment = var.yard_id
+  k8s_cluster_name    = local.agent_cluster_name
+  k8s_version         = var.agent_eks_version
+  k8s_runtime         = var.agent_eks_runtime
+  k8s_node_type       = var.agent_eks_node_type
+  k8s_size            = var.agent_eks_size
 }

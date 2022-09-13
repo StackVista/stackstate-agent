@@ -54,6 +54,8 @@ variables: &commonvariables
   # do jobs like these run on
   PRIMARY_MAJOR_VERSION: '2'
   PROCESS_AGENT_TEST_REPO: stackstate-process-agent-test
+  AGENT_HELM_CHART_VERSION: ""
+  STACKSTATE_HELM_CHART_VERSION: ""
 
 .agent2_variables: &agent2_variables
   CONDA_ENV: ddpy2

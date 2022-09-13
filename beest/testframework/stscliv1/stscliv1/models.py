@@ -5,12 +5,16 @@ class ComponentWrapper:
         self.id = attributes['id']
         self.name = attributes['name']
         self.type = attributes['type']
+        self.tags = attributes['tags']
         self.outgoing_relations = attributes.get('outgoingRelations', [])
         self.incoming_relations = attributes.get('incomingRelations', [])
         self.attributes = attributes
 
     def __str__(self):
         return 'C[' + ','.join([f"{k}={v}" for k, v in self.attributes.items()]) + ']'
+
+    def __repr__(self):
+        return str(self)
 
     def __eq__(self, other):
         if isinstance(other, ComponentWrapper):
