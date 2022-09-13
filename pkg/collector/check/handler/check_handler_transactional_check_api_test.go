@@ -221,6 +221,14 @@ func TestCheckHandlerAPI(t *testing.T) {
 			stateMutation: func(state *transactionbatcher.TransactionCheckInstanceBatchState) {
 				state.Events = &metrics.IntakeEvents{Events: []metrics.Event{testEvent}}
 			},
+		}, {
+			testCase: "Submit topology event should produce an event in the TransactionCheckInstanceBatchState",
+			checkHandlerFunction: func(handler CheckHandler) {
+				handler.SubmitEvent(testEvent2)
+			},
+			stateMutation: func(state *transactionbatcher.TransactionCheckInstanceBatchState) {
+				state.Events.Events = append(state.Events.Events, testEvent2)
+			},
 		},
 		{
 			testCase: "Stop transaction should mark a batch transaction as complete in the TransactionCheckInstanceBatchState",
