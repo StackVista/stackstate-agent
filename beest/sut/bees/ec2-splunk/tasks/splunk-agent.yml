@@ -1,0 +1,45 @@
+---
+- name: StackState Agent prepare tasks
+  tags: prepare
+  block:
+    - name: Install stackstate-agent
+      shell: "curl -o- {{ agent_repo_url }}/install.sh | bash"
+      register: agent_install_result
+      until: agent_install_result is not failed
+      retries: 5
+      delay: 60
+      environment:
+        STS_API_KEY: "{{ sts_api_key }}"
+        STS_URL: "{{ sts_url }}/receiver/stsAgent"
+        STS_HOSTNAME: "{{ inventory_hostname }}"
+        CODE_NAME: "{{ agent_current_branch }}"
+        SKIP_SSL_VALIDATION: "false"
+
+    - name: Configure AWS topology check
+      when: aws_integration is defined
+      become: yes
+      ansible.builtin.template:
+        src: aws_topology_conf.j2.yml
+        dest: /etc/stackstate-agent/conf.d/aws_topology.d/conf.yaml
+        owner: stackstate-agent
+        group: stackstate-agent
+        mode: '0644'
+
+    - name: Restart stackstate-agent
+      become: yes
+      ansible.builtin.service:
+        name: stackstate-agent
+        state: restarted
+
+
+## Cleanup
+
+- name: StackState Agent cleanup tasks
+  tags: cleanup
+  ignore_errors: yes
+  block:
+    - name: Uninstall stackstate-agent
+      become: yes
+      apt:
+        pkg: stackstate-agent
+        state: absent

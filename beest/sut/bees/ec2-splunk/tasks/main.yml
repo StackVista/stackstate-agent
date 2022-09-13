@@ -1,3 +1,5 @@
 ---
 - include_tasks: splunk.yml
   tags: [ prepare, cleanup ]
+- include_tasks: splunk-agent.yml
+  tags: [ prepare, cleanup ]
