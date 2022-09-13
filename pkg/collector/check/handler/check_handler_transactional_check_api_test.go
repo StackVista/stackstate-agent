@@ -6,6 +6,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
@@ -58,6 +59,29 @@ var (
 		Tags: []string{
 			"hello",
 			"world",
+		},
+	}
+
+	testEvent = metrics.Event{
+		Ts:             time.Now().Unix(),
+		EventType:      "docker",
+		Tags:           []string{"my", "test", "tags"},
+		AggregationKey: "docker:redis",
+		SourceTypeName: "docker",
+		Priority:       metrics.EventPriorityNormal,
+	}
+	testEvent2 = metrics.Event{
+		Ts:             time.Now().Unix(),
+		EventType:      "docker",
+		Tags:           []string{"my", "test", "tags"},
+		AggregationKey: "docker:mysql",
+		SourceTypeName: "docker",
+		Priority:       metrics.EventPriorityNormal,
+		EventContext: &metrics.EventContext{
+			Data:        map[string]interface{}{},
+			Source:      "docker",
+			Category:    "containers",
+			SourceLinks: []metrics.SourceLink{{Title: "source-link", URL: "source-url"}},
 		},
 	}
 )
@@ -187,6 +211,15 @@ func TestCheckHandlerAPI(t *testing.T) {
 			},
 			stateMutation: func(state *transactionbatcher.TransactionCheckInstanceBatchState) {
 				state.Metrics = &telemetry.Metrics{Values: []telemetry.RawMetrics{testRawMetricsData}}
+			},
+		},
+		{
+			testCase: "Submit event should produce an event in the TransactionCheckInstanceBatchState",
+			checkHandlerFunction: func(handler CheckHandler) {
+				handler.SubmitEvent(testEvent)
+			},
+			stateMutation: func(state *transactionbatcher.TransactionCheckInstanceBatchState) {
+				state.Events = &metrics.IntakeEvents{Events: []metrics.Event{testEvent}}
 			},
 		},
 		{

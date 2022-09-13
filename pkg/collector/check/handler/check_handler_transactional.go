@@ -177,7 +177,12 @@ currentTxHandler:
 				}
 
 				transactionbatcher.GetTransactionalBatcher().SubmitRawMetricsData(ch.ID(), ch.GetCurrentTransaction(), msg.Value)
+			case SubmitEvent:
+				if config.Datadog.GetBool("log_payloads") {
+					log.Debugf("%s. Submitting event: %s", logPrefix, msg.Event.String())
+				}
 
+				transactionbatcher.GetTransactionalBatcher().SubmitEvent(ch.ID(), ch.GetCurrentTransaction(), msg.Event)
 			// Lifecycle operations for the current transaction
 			case SubmitComplete:
 				if config.Datadog.GetBool("log_payloads") {

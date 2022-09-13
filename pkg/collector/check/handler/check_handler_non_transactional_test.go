@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
@@ -12,6 +13,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"os"
 	"testing"
 	"time"
@@ -29,6 +31,9 @@ func TestCheckHandlerNonTransactionalAPI(t *testing.T) {
 	nonTransactionCH.SetTransactionState("", "")
 
 	mockBatcher := batcher.NewMockBatcher()
+	// sender for non-transactional events
+	sender := mocksender.NewMockSender(testCheck.ID())
+	sender.On("Event", mock.AnythingOfType("metrics.Event"))
 
 	nonTransactionCH.SubmitStartSnapshot(instance)
 	nonTransactionCH.SubmitComponent(instance, testComponent)
@@ -41,6 +46,7 @@ func TestCheckHandlerNonTransactionalAPI(t *testing.T) {
 
 	nonTransactionCH.SubmitRawMetricsData(testRawMetricsData)
 	nonTransactionCH.SubmitRawMetricsData(testRawMetricsData2)
+	nonTransactionCH.SubmitEvent(testEvent)
 
 	nonTransactionCH.SubmitStopSnapshot(instance)
 
@@ -72,6 +78,8 @@ func TestCheckHandlerNonTransactionalAPI(t *testing.T) {
 	})
 
 	assert.Equal(t, expectedState, actualState)
+
+	sender.AssertEvent(t, testEvent, 0)
 
 	mockBatcher.Shutdown()
 
