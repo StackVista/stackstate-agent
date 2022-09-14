@@ -12,4 +12,3 @@ generate-values:
   default-password: admin
   api-password: api-admin
   extra-api-key: xxx #  <api-key for champagne-intake, see 1password> # in case you want to receive the same traffic as nightly champagne
-  override-sts-image-tag: {{ stackstate_branch }}
