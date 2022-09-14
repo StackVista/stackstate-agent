@@ -173,7 +173,7 @@ func testTopologyEventWrongFieldType(t *testing.T) {
 	SetupTransactionalComponents()
 	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
-	testCheck := &check.STSTestCheck{Name: "check-id-topology-event-missing-fields-test"}
+	testCheck := &check.STSTestCheck{Name: "check-id-topology-event-wrong-field-type-test"}
 	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	sender := mocksender.NewMockSender("testID")
