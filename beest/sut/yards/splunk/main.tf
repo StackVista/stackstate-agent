@@ -15,11 +15,3 @@ module "ec2_splunk" {
   vpc_id              = module.vpc.vpc_id
   subnet_id           = module.vpc.private_subnet_1_id
 }
-
-module "ec2_agent" {
-  source = "../../hives/ec2-agent"
-
-  environment         = var.yard_id
-  vpc_id              = module.vpc.vpc_id
-  subnet_id           = module.vpc.private_subnet_1_id
-}

@@ -47,7 +47,7 @@
         src: ui-tour.conf.j2
         dest: "{{ splunk_home }}/etc/system/local/ui-tour.conf"
 
-    - name: Accept Licence
+    - name: Start and Accept Licence
       shell: "{{ splunk_home }}/bin/splunk start --answer-yes --auto-ports --no-prompt --accept-license"
 
     - name: Copy CSV to remote
