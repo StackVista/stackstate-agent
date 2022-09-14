@@ -1,11 +1,13 @@
 import hashlib
 import logging
 
-from stscliv1 import TopologyResult, ComponentWrapper, RelationWrapper
+from stscliv1 import TopologyResult, ComponentWrapper, RelationWrapper, Wrapper
 import pydot
 
 from .match_keys import ComponentKey
-from .topology_match import TopologyMatch, RelationKey
+from .matches.topology_match import TopologyMatch, RelationKey
+from .dot_graph_drawer import DotGraphDrawer
+from .primitive_matchers import Matcher
 
 
 class ExactMatches:
@@ -261,6 +263,7 @@ class MatchingResult:
         error_sep = "\n"
         logging.error(f"desired topology was not matched:\n{error_sep.join(errors)}")
         assert False, f"desired topology was not matched:\n{error_sep.join(errors)}"
+
 
 
 class TopicTopologyMatchingResult(TopologyMatchingResult):

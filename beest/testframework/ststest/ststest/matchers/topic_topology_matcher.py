@@ -3,7 +3,7 @@ from stscliv1 import TopicTopologyResult, ComponentWrapper, RelationWrapper, Top
 from .topology_matcher import TopologyMatcher
 from ..primitive_matchers import DeleteMatcher
 from ..invariant_search import ConsistentGraphMatcher
-from ..topology_match import TopicTopologyMatch
+from ..matches import TopicTopologyMatch
 from ..topology_matching_result import TopologyMatchingResult, TopicTopologyMatchingResult
 
 

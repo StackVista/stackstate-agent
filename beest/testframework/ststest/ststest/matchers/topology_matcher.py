@@ -1,10 +1,14 @@
-from stscliv1 import TopologyResult, ComponentWrapper, RelationWrapper, TopologyDeleteWrapper
-
+from stscliv1 import TopologyResult, ComponentWrapper, RelationWrapper
+from typing import Callable
 from .graph_matcher import GraphMatcher
+from .matcher_builder import TopologyMatcherBuilder
+from repeated_matcher import RepeatedMatcher
+from .common import get_common_relations, filter_out_repeated_specs
 from ..primitive_matchers import ComponentMatcher, RelationMatcher
 from ..invariant_search import ConsistentGraphMatcher
-from ..topology_match import TopologyMatch
+from ..matches import TopologyMatch
 from ..topology_matching_result import TopologyMatchingResult
+from ..match_keys import ComponentKey
 
 
 class TopologyMatcher(GraphMatcher):
@@ -13,12 +17,19 @@ class TopologyMatcher(GraphMatcher):
         super(TopologyMatcher, self).__init__()
         self.component_matchers: list[ComponentMatcher] = []
         self.relation_matchers: list[RelationMatcher] = []
+        self._ambiguous_elements: set = set()
 
-    def component(self, id: str, **kwargs) -> 'TopologyMatcher':
+    def repeated(self, times: int, define_submatch: Callable[[TopologyMatcherBuilder], TopologyMatcherBuilder]):
+        repeated_matcher = RepeatedMatcher(times, self)
+        define_submatch(repeated_matcher)
+        self._ambiguous_elements = self._ambiguous_elements | repeated_matcher.repeated_elements_flat
+        return self
+
+    def component(self, id: ComponentKey, **kwargs) -> 'TopologyMatcher':
         self.component_matchers.append(ComponentMatcher(id, kwargs))
         return self
 
-    def one_way_direction(self, source: str, target: str, **kwargs) -> 'TopologyMatcher':
+    def one_way_direction(self, source: ComponentKey, target: ComponentKey, **kwargs) -> 'TopologyMatcher':
         source_found = False
         target_found = False
         for comp in self.component_matchers:
@@ -38,13 +49,6 @@ class TopologyMatcher(GraphMatcher):
         kwargs['dependencyDirection'] = 'ONE_WAY'
         self.relation_matchers.append(RelationMatcher(source, target, kwargs))
         return self
-
-    @staticmethod
-    def get_common_relations(sources: list[ComponentWrapper], targets: list[ComponentWrapper]):
-        # TODO consider BOTH_WAY type of relations
-        source_relations = set([id for source in sources for id in source.outgoing_relations])
-        target_relations = set([id for target in targets for id in target.incoming_relations])
-        return list(source_relations & target_relations)
 
     def _match_components(self, topology: TopologyResult,
                           cgm: ConsistentGraphMatcher) -> dict[str, list[ComponentWrapper]]:
@@ -69,15 +73,15 @@ class TopologyMatcher(GraphMatcher):
         for comp_rel in self.relation_matchers:
             source_candidates = matching_components.get(comp_rel.source, [])
             target_candidates = matching_components.get(comp_rel.target, [])
-            relation_candidate_ids = self.get_common_relations(source_candidates, target_candidates)
+            relation_candidate_ids = get_common_relations(source_candidates, target_candidates)
             relation_candidates = [relation_by_id[id] for id in relation_candidate_ids if id in relation_by_id]
             matching = [rel for rel in relation_candidates if comp_rel.match(rel)]
-            matching_relations[comp_rel.id()] = matching
+            matching_relations[comp_rel.id] = matching
             cgm.add_choice_of_spec([
                 {
                     comp_rel.source: rel.source,
                     comp_rel.target: rel.target,
-                    comp_rel.id(): rel.id,
+                    comp_rel.id: rel.id,
                 }
                 for rel in matching
             ])
@@ -104,9 +108,10 @@ class TopologyMatcher(GraphMatcher):
                       relation_by_id: dict[str, RelationWrapper]) -> list[TopologyMatch]:
 
         result_graph_specs = cgm.get_graphs()
+        distinct_graph_specs = filter_out_repeated_specs(result_graph_specs, self._ambiguous_elements)
 
         matches: list[TopologyMatch] = []
-        for spec in result_graph_specs:
+        for spec in distinct_graph_specs:
             topology_match = self._build_topo_match_from_cgm_spec(
                 cgm_spec=spec,
                 component_by_id=component_by_id,

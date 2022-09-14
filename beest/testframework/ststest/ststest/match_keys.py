@@ -7,3 +7,7 @@ ComponentKey = Union[SingleComponentKey, RepeatedComponentKey]
 SingleRelationKey = Tuple[ComponentKey, ComponentKey]
 RepeatedRelationKey = Tuple[SingleRelationKey, int]
 RelationKey = Union[SingleRelationKey, RepeatedRelationKey]
+
+SingleDeleteKey = str
+RepeatedDeleteKey = Tuple[SingleDeleteKey, int]
+DeleteKey = Union[SingleDeleteKey, RepeatedDeleteKey]

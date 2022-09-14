@@ -1,17 +1,14 @@
 import pydot
 import hashlib
 import logging
-import urllib.parse
-import pyshorteners
 
 from stscliv1 import TopologyResult, ComponentWrapper, RelationWrapper
 
-from .topology_match import TopologyMatch
+from ststest.ststest.matches.topology_match import TopologyMatch
 from .primitive_matchers import ComponentMatcher, RelationMatcher
 
 
 class DotGraphDrawer:
-
     QueryResultSubgraphStyle = {
         'fontsize': 30,
         'color': 'mediumslateblue',
@@ -24,7 +21,7 @@ class DotGraphDrawer:
     }
     UnmatchedColor = 'red'
     MultipleMatches = 'orange'
-    ExactMatchColor = 'darkgreen'
+    ExactMatchColor = 'green'
 
     def __init__(self):
         pass
@@ -44,6 +41,13 @@ class DotGraphDrawer:
         graph.add_edge(pydot.Edge(source, id, color=color))
         graph.add_edge(pydot.Edge(id, target, color=color))
 
+    def _component_matcher_label(self, matcher: 'ComponentMatcher'):
+        rules = "\n".join([str(m) for m in matcher.matchers])
+        return f"{matcher.id}\n{rules}"
+
+    def _relation_matcher_label(self, matcher: 'RelationMatcher'):
+        return "\n".join([str(m) for m in matcher.matchers])
+
     def render_debug_dot(self,
                          topology_matches: list[TopologyMatch],
                          source: TopologyResult,
@@ -56,50 +60,66 @@ class DotGraphDrawer:
                          ):
         graph = pydot.Dot("Topology match debug", graph_type="digraph")
 
-        exact_match = None
-        if len(topology_matches) == 1:
-            exact_match = topology_matches[0]
+        # we need to know which component/relations are matched exactly to overlay them on the diagram
+        exact_matches = self._compute_exact_matches()
 
         # graph_name should cluster_{i}, otherwise the renderer does not recognize styles
         query_graph = pydot.Subgraph(graph_name="cluster_1", label="Query result", **self.QueryResultSubgraphStyle)
-        for mcomp in source.components:
-            label = f"{mcomp.name}"
+        for component in self._source.components:
+            component_gv_id = component.id
+            label = f"{component.name}\ntype={component.type}"
             color = 'black'
-            if exact_match is not None and exact_match.has_component(mcomp.id):
-                color = 'darkgreen'
-            query_graph.add_node(pydot.Node(mcomp.id, label=label, color=color))
-        for rel in source.relations:
-            relation_node_id = rel.id
+            if component.id in exact_matches.component_to_matcher:
+                color = DotGraphDrawer.ExactMatchColor
+                matcher = self._component_matchers_index[exact_matches.component_to_matcher[component.id]]
+                label += f"\n-----\n{self._component_matcher_label(matcher)}"
+            query_graph.add_node(pydot.Node(component_gv_id, label=label, color=color))
+        for relation in self._source.relations:
+            relation_gv_id = relation.id
             color = 'black'
-            if exact_match is not None and exact_match.has_relation(rel.id):
-                color = 'darkgreen'
+            label = relation.type
+            if relation.id in exact_matches.relation_to_matcher:
+                color = DotGraphDrawer.ExactMatchColor
+                matcher = self._relation_matchers_index[exact_matches.relation_to_matcher[relation.id]]
+                label += f"\n-----\n{self._relation_matcher_label(matcher)}"
             self._add_compound_relation(
-                query_graph, relation_node_id, rel.source, rel.target, color,
-                shape="underline", label=rel.type)
+                query_graph, relation_gv_id, relation.source, relation.target, color,
+                shape="underline", label=label)
         graph.add_subgraph(query_graph)
 
-        matcher_graph = pydot.Subgraph(graph_name="cluster_0", label="Matching rule", **self.MatchingRuleSubgraphStyle)
-        for mcomp in component_matchers:
-            id = mcomp.id
-            rules = "\n".join([str(m) for m in mcomp.matchers])
-            label = f"{id}\n{rules}"
-            matches = component_matches.get(id, [])
+        matcher_graph = pydot.Subgraph(graph_name="cluster_0", label="Matching rule",
+                                       **self.MatchingRuleSubgraphStyle)
+        for matcher in self._matcher._components:
+            if matcher.id in exact_matches.matcher_to_component:
+                continue
+            matcher_gv_id = f"{matcher.id}_matcher"
+            matches = self._component_matches.get(matcher.id, [])
             color = self._color_for_matches_count(len(matches))
-            matcher_graph.add_node(pydot.Node(id, label=label, color=color))
+            matcher_graph.add_node(
+                pydot.Node(matcher_gv_id, label=self._component_matcher_label(matcher), color=color))
             for comp in matches:
-                graph.add_edge(pydot.Edge(id, comp.id, color=color, style="dotted", penwidth=5))
+                graph.add_edge(pydot.Edge(matcher_gv_id, comp.id, color=color, style="dotted", penwidth=5))
 
-        for rel in relation_matchers:
-            rules = "\n".join([str(m) for m in rel.matchers])
+        def component_gv_id(comp_matcher: ComponentKey):
+            if comp_matcher in exact_matches.matcher_to_component:
+                # connect relation to the exact component that was matched by the matcher
+                return exact_matches.matcher_to_component[comp_matcher]
+            return f"{comp_matcher}_matcher"
 
-            matches = relation_matches.get(rel.id(), [])
+        for matcher in self._matcher._relations:
+            if matcher.id in exact_matches.matcher_to_relation:
+                continue
+            matcher_gv_id = str(matcher.id)
+            label = self._relation_matcher_label(matcher)
+            matches = self._relation_matches.get(matcher.id, [])
             color = self._color_for_matches_count(len(matches))
             self._add_compound_relation(
-                matcher_graph, rel.id(), rel.source, rel.target, color,
-                shape="underline", label=rules)
+                matcher_graph, matcher_gv_id, component_gv_id(matcher.source), component_gv_id(matcher.target),
+                color,
+                shape="underline", label=label)
             # connect to matched relations
             for mrel in matches:
-                graph.add_edge(pydot.Edge(rel.id(), mrel.id, color=color, style="dotted", penwidth=3))
+                graph.add_edge(pydot.Edge(matcher_gv_id, str(mrel.id), color=color, style="dotted", penwidth=3))
 
         graph.add_subgraph(matcher_graph)
 
@@ -112,14 +132,3 @@ class DotGraphDrawer:
         with open(dot_file, 'w') as dfp:
             dfp.write(graph_dot_str)
             logging.info("saved match in a DOT file at %s", dot_file)
-
-        if not generate_diagram_url:
-            logging.info("matching diagram was not request (generate_diagram_url=False)")
-        else:
-            try:
-                base_share_url = urllib.parse.urlparse("https://graphviz.sandbox.stackstate.io/")
-                share_url = base_share_url._replace(fragment=urllib.parse.quote(graph_dot_str))
-                shortened_url = pyshorteners.Shortener().tinyurl.short(share_url.geturl())
-                logging.info("matching diagram is available at %s", shortened_url)
-            except Exception:
-                logging.warning("could not make matching diagram available at URL", exc_info=True)
