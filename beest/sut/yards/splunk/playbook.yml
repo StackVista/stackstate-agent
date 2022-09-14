@@ -12,4 +12,8 @@
   roles:
     - role: "{{ bees_path }}/ec2-splunk"
 
-
+- name: VM Agent
+  hosts: splunk
+  gather_facts: true
+  roles:
+    - role: "{{ bees_path }}/ec2-agent"

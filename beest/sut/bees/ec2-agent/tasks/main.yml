@@ -25,6 +25,16 @@
         group: stackstate-agent
         mode: '0644'
 
+    - name: Configure Splunk topology check
+      when: splunk_integration is defined
+      become: yes
+      ansible.builtin.template:
+        src: splunk_topology_conf.j2.yml
+        dest: /etc/stackstate-agent/conf.d/splunk_topology.d/conf.yaml
+        owner: stackstate-agent
+        group: stackstate-agent
+        mode: '0644'
+
     - name: Restart stackstate-agent
       become: yes
       ansible.builtin.service:
