@@ -393,6 +393,7 @@ build_win:
     - Import-VisualStudioVars 2019 -Architecture amd64
     - ridk enable
     - del C:\omnibus-ruby\pkg\*
+    - gem update --system
   script:
     - cmd.exe /c "%GOPATH%\src\github.com\StackVista\stackstate-agent\.gitlab-scripts\setup_artifactory.cmd"
     - conda activate $CONDA_ENV
