@@ -5,10 +5,11 @@
 tf.deploy
 
 # SUT related temp files
-*kubeconfig*
 *inventory
 *id_rsa
-stackstate-values.yml
+*kubeconfig*
+*aws_auth.yml
+*-values.yml
 sts-toolbox.yml
 
 # pytest related files
@@ -16,7 +17,3 @@ topic-*.json
 
 # binary
 beest
-
-stackstate-values.yml
-
-sts-toolbox.yml

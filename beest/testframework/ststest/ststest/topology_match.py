@@ -1,23 +1,22 @@
+from typing import Tuple, Union
+
 from stscliv1 import ComponentWrapper, RelationWrapper, TopologyDeleteWrapper
+from .match_keys import ComponentKey, RelationKey, DeleteKey, SingleComponentKey
 
 
 class TopologyMatch:
     def __init__(self,
-                 components: dict[str, ComponentWrapper],
-                 relations: dict[str, RelationWrapper]):
+                 components: dict[ComponentKey, ComponentWrapper],
+                 relations: dict[RelationKey, RelationWrapper]):
         self._components = components
         self._relations = relations
 
     def __repr__(self):
-        components = "\n".join([f"{key}: {comp}" for key, comp in self._components.items()])
-        relations = "\n".join([f"{rel.source} > {rel.target}: {rel}" for _, rel in self._relations.items()])
-
-        return f"Match" \
-               f"\n[Components]\n" \
-               f"{components}" \
-               f"\n[Relations]\n" \
-               f"{relations}" \
-               "\n"
+        return "Match[\n\t" \
+               + "\n\t".join([f"{key}: {comp}" for key, comp in self._components.items()]) \
+               + "\n\t" \
+               + "\n\t".join([f"{source} > {target}: {comp}" for (source, target), comp in self._relations.items()]) \
+               + "\n]"
 
     def __eq__(self, other):
         if isinstance(other, TopologyMatch):
@@ -25,8 +24,11 @@ class TopologyMatch:
                    self._relations == other._relations
         return False
 
-    def component(self, key: str) -> ComponentWrapper:
+    def component(self, key: SingleComponentKey) -> ComponentWrapper:
         return self._components.get(key)
+
+    def repeated_components(self, key: SingleComponentKey) -> list[ComponentWrapper]:
+        return [comp for (ckey, comp) in self._components.items() if isinstance(ckey, tuple) and ckey[0] == key]
 
     def has_component(self, id: int) -> bool:
         return next((True for comp in self._components.values() if comp.id == id), False)
@@ -37,9 +39,9 @@ class TopologyMatch:
 
 class TopicTopologyMatch(TopologyMatch):
     def __init__(self,
-                 components: dict[str, ComponentWrapper],
-                 relations: dict[str, RelationWrapper],
-                 deletes: dict[str, TopologyDeleteWrapper]):
+                 components: dict[ComponentKey, ComponentWrapper],
+                 relations: dict[RelationKey, RelationWrapper],
+                 deletes: dict[DeleteKey, TopologyDeleteWrapper]):
         super(TopicTopologyMatch, self).__init__(components, relations)
         self._deletes = deletes
 
@@ -49,14 +51,13 @@ class TopicTopologyMatch(TopologyMatch):
                    self._deletes == other._deletes
         return False
 
-    def delete(self, key) -> TopologyDeleteWrapper:
+    def delete(self, key: DeleteKey) -> TopologyDeleteWrapper:
         return self._deletes.get(key)
 
     def __repr__(self):
-        parent_repr = super(TopicTopologyMatch, self).__repr__()
-        deletes = "\n".join([f"{key}: {dlt}" for key, dlt in self._deletes.items()])
+        parent_repr = super(TopicTopologyMatch, self).__repr__().removesuffix("\n]")
 
         return f"{parent_repr}" \
-               f"\n[Deletes]\n" \
-               f"{deletes}" \
-               "\n"
+               + "\n\t" \
+               + "\n\t".join([f"{key}: {dlt}" for key, dlt in self._deletes.items()]) \
+               + "\n]"

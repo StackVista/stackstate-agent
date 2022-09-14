@@ -13,12 +13,16 @@ class ComponentWrapper(Wrapper):
         self.id = attributes['id']
         self.name = attributes['name']
         self.type = attributes['type']
+        self.tags = attributes['tags']
         self.outgoing_relations = attributes.get('outgoingRelations', [])
         self.incoming_relations = attributes.get('incomingRelations', [])
         self.attributes = attributes
 
     def __str__(self) -> str:
         return 'C[' + ','.join([f"{k}={v}" for k, v in self.attributes.items()]) + ']'
+
+    def __repr__(self):
+        return str(self)
 
     def pretty_print(self) -> str:
         return f"#{self.id}#[{self.name}]" \

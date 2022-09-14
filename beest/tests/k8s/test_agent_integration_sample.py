@@ -1,13 +1,7 @@
-import json
 import util
 import integration_sample
 
-testinfra_hosts = ["receiver"]
-
-
-def _get_key_value(tag_list):
-    for key, value in (pair.split(':', 1) for pair in tag_list):
-        yield key, value
+testinfra_hosts = ["local"]
 
 
 def kubernetes_event_data(event, json_data):
@@ -20,24 +14,19 @@ def kubernetes_event_data(event, json_data):
     return None
 
 
-def test_agent_integration_sample_metrics(host):
+def test_agent_integration_sample_metrics(cliv1, hostname):
     expected = {'system.cpu.usage', 'location.availability', '2xx.responses', '5xx.responses', 'check_runs'}
-    util.assert_metrics(host, "agent-integration-sample", expected)
+    util.assert_metrics(cliv1, hostname, expected)
 
 
-def test_agent_integration_sample_topology(host):
+def test_agent_integration_sample_topology(cliv1):
     expected_components = integration_sample.get_agent_integration_sample_expected_topology()
-    util.assert_topology(host, "agent-integration-sample", "sts_topo_agent_integrations", expected_components)
+    util.assert_topology(cliv1, "sts_topo_agent_integrations", expected_components)
 
 
-def test_agent_integration_sample_events(host):
-    url = "http://localhost:7070/api/topic/sts_generic_events?limit=1000"
-
+def test_agent_integration_sample_events(cliv1):
     def wait_for_events():
-        data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
-        with open("./topic-agent-integration-sample-sts-generic-events.json", 'w') as f:
-            json.dump(json_data, f, indent=4)
+        json_data = cliv1.topic_api("sts_generic_events")
 
         service_event = {
             "name": "service-check.service-check",
@@ -65,7 +54,7 @@ def test_agent_integration_sample_events(host):
     util.wait_until(wait_for_events, 60, 3)
 
 
-def test_agent_integration_sample_topology_events(host):
+def test_agent_integration_sample_topology_events(cliv1):
     expected_topology_events = [
         {
             "assertion": "find the URL timeout topology event",
@@ -90,4 +79,4 @@ def test_agent_integration_sample_topology_events(host):
             }
         }
     ]
-    util.assert_topology_events(host, "agent-integration-sample", "sts_topology_events", expected_topology_events)
+    util.assert_topology_events(cliv1, "agent-integration-sample", "sts_topology_events", expected_topology_events)

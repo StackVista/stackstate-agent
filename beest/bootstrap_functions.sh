@@ -5,6 +5,7 @@ enable_auto_completions() {
     eval "$(helm completion bash)"
     eval "$(sts-toolbox completion bash)"
     eval "$(sts completion bash)"
+    eval "$(/go/src/app/beest completion bash)"
 }
 
 activate_direnv() {
@@ -38,5 +39,4 @@ configure_aws_beest_credentials() {
 build_beest() {
     echo "Build Beest ..."
     go build .
-    eval "$(/go/src/app/beest completion bash)"
 }

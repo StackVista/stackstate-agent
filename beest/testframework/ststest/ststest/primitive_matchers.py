@@ -1,7 +1,7 @@
 import re
-from stscliv1 import RelationWrapper, ComponentWrapper, TopologyDeleteWrapper, TopologyStartSnapshotWrapper, \
-    TopologyStopSnapshotWrapper
-
+from stscliv1 import RelationWrapper, ComponentWrapper, TopologyDeleteWrapper
+from .match_keys import ComponentKey
+from .topology_match import RelationKey
 
 class Matcher:
     @staticmethod
@@ -25,9 +25,8 @@ class StringPropertyMatcher(Matcher):
     def matcher_type(self) -> str:
         return "string_property"
 
-
 class ComponentMatcher(Matcher):
-    def __init__(self, id: str, props: dict):
+    def __init__(self, id: ComponentKey, props: dict):
         self.id = id
         self.matchers = []
         for k, v in props.items():
@@ -45,17 +44,14 @@ class ComponentMatcher(Matcher):
     def matcher_type(self) -> str:
         return "component"
 
-
 class RelationMatcher(Matcher):
-    def __init__(self, source: str, target: str, props: dict):
+    def __init__(self, source: ComponentKey, target: ComponentKey, props: dict):
+        self.id = (source, target)
         self.source = source
         self.target = target
         self.matchers = []
         for k, v in props.items():
             self.matchers.append(StringPropertyMatcher(k, v))
-
-    def id(self):
-        return f"{self.source}_TO_{self.target}"
 
     def __str__(self):
         return f"{self.source}->{self.target}[{','.join([str(m) for m in self.matchers])}]"
@@ -71,7 +67,7 @@ class RelationMatcher(Matcher):
 
 
 class DeleteMatcher(Matcher):
-    def __init__(self, id: str, props: dict):
+    def __init__(self, id: ComponentKey, props: dict):
         self.id = id
         self.matchers = [StringPropertyMatcher('id', id)]
         for k, v in props.items():
