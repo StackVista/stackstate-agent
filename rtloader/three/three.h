@@ -140,6 +140,16 @@ public:
     void setSubmitHealthStartSnapshotCb(cb_submit_health_start_snapshot_t);
     void setSubmitHealthStopSnapshotCb(cb_submit_health_stop_snapshot_t);
 
+    // transaction state
+    void setStartTransactionCb(cb_start_transaction_t);
+    void setStopTransactionCb(cb_stop_transaction_t);
+    void setDiscardTransactionCb(cb_discard_transaction_t);
+    void setTransactionStateCb(cb_set_transaction_state_t);
+
+    // state
+    void setStateCb(cb_set_state_t);
+    char *setGetStateCb(cb_get_state_t);
+
 private:
     //! initPythonHome member.
     /*!

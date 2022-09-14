@@ -10,6 +10,12 @@ import (
 	"fmt"
 )
 
+// Metrics is a container structure for a list of raw metric values. This allows us to set Metrics of a batch payload as
+// a pointer and append more metrics to the structure
+type Metrics struct {
+	Values []RawMetrics
+}
+
 // RawMetrics single payload structure
 type RawMetrics struct {
 	Name      string   `json:"name,omitempty"`
@@ -39,6 +45,14 @@ func (r RawMetrics) ConvertToIntakeMetric() []interface{} {
 		},
 	}
 	return data
+}
+
+// IntakeMetricJSON Converts RawMetricsCheckData struct to an older v1 metrics structure, parses it to JSON and returns
+// it as a interface. This is only used in batcher test assertions.
+func (r RawMetrics) IntakeMetricJSON() (jsonObject []interface{}) {
+	jsonString, _ := json.Marshal(r.ConvertToIntakeMetric())
+	_ = json.Unmarshal(jsonString, &jsonObject)
+	return jsonObject
 }
 
 // JSONString returns a JSON string of the Component

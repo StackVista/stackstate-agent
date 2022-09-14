@@ -204,7 +204,7 @@ func (t *HTTPTransaction) internalProcess(ctx context.Context, client *http.Clie
 
 	req, err := http.NewRequest("POST", url, reader)
 	if err != nil {
-		log.Errorf("Could not create request for transaction to invalid URL %q (dropping transaction): %s", logURL, err)
+		log.Errorf("Could not create request for transaction to invalid URL %q (dropping manager): %s", logURL, err)
 		transactionsErrors.Add(1)
 		tlmTxErrors.Inc(t.Domain, "invalid_request")
 		transactionsSentRequestErrors.Add(1)

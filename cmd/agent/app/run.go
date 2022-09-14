@@ -7,18 +7,8 @@ package app
 
 import (
 	"context"
-	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/batcher"
-	"runtime"
-	"syscall"
-
 	_ "expvar" // Blank import used because this isn't directly used in this file
-	"net/http"
-	_ "net/http/pprof" // Blank import used because this isn't directly used in this file
-
-	"os"
-	"os/signal"
-
+	"fmt"
 	"github.com/StackVista/stackstate-agent/cmd/agent/api"
 	"github.com/StackVista/stackstate-agent/cmd/agent/app/settings"
 	"github.com/StackVista/stackstate-agent/cmd/agent/clcrunnerapi"
@@ -27,7 +17,13 @@ import (
 	"github.com/StackVista/stackstate-agent/cmd/agent/gui"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/api/healthprobe"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/embed/jmx"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionforwarder"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/dogstatsd"
 	"github.com/StackVista/stackstate-agent/pkg/forwarder"
@@ -43,6 +39,12 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/version"
 	"github.com/spf13/cobra"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
+	"net/http"
+	_ "net/http/pprof" // Blank import used because this isn't directly used in this file
+	"os"
+	"os/signal"
+	"runtime"
+	"syscall"
 
 	// register core checks
 	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster"
@@ -305,6 +307,15 @@ func StartAgent() error {
 
 	// create and setup the Autoconfig instance
 	common.SetupAutoConfig(config.Datadog.GetString("confd_path"))
+
+	// [STS] create the global transactional components
+	state.InitCheckStateManager()
+	transactionforwarder.InitTransactionalForwarder()
+	transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity())
+	handler.InitCheckManager(common.Coll)
+	txChannelBufferSize, txTimeoutDuration, txEvictionDuration, txTickerInterval := config.GetTxManagerConfig()
+	transactionmanager.InitTransactionManager(txChannelBufferSize, txTickerInterval, txTimeoutDuration, txEvictionDuration)
+
 	// start the autoconfig, this will immediately run any configured check
 	common.StartAutoConfig()
 
@@ -350,6 +361,14 @@ func StopAgent() {
 	if common.MetadataScheduler != nil {
 		common.MetadataScheduler.Stop()
 	}
+
+	// [sts] stop the transactional components
+	state.GetCheckStateManager().Clear()
+	handler.GetCheckManager().Stop()
+	transactionbatcher.GetTransactionalBatcher().Stop()
+	transactionforwarder.GetTransactionalForwarder().Stop()
+	transactionmanager.GetTransactionManager().Stop()
+
 	api.StopServer()
 	clcrunnerapi.StopCLCRunnerServer()
 	jmx.StopJmxfetch()
