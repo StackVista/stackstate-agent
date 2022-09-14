@@ -110,7 +110,7 @@ func (c *CRICheck) Run() error {
 
 	// sts begin
 	// Collect container topology
-	if c.instance.CollectContainerTopology {
+	if c.instance.CollectContainerTopology && !config.IsFeaturePresent(config.Containerd) {
 		err := c.topologyCollector.BuildContainerTopology(util)
 		if err != nil {
 			sender.ServiceCheck("cri.health", metrics.ServiceCheckCritical, "", nil, err.Error())
