@@ -16,10 +16,18 @@ module "ec2_splunk" {
   subnet_id           = module.vpc.private_subnet_1_id
 }
 
+module "aws_stackpack_role" {
+  source = "../../hives/aws-stackpack"
+
+  environment = var.yard_id
+  region      = var.aws_default_region
+}
+
 module "ec2_agent" {
   source = "../../hives/ec2-agent"
 
   environment         = var.yard_id
   vpc_id              = module.vpc.vpc_id
   subnet_id           = module.vpc.private_subnet_1_id
+  integration_profile = module.aws_stackpack_role.integration_profile
 }
