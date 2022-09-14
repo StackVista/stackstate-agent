@@ -63,22 +63,6 @@ resource "aws_security_group" "eks_nodes_sg" {
   description = "Security group for all nodes in the cluster [${var.environment}] "
   vpc_id      = var.vpc_id
 
-  //    ingress {
-  //      from_port       = 0
-  //      to_port         = 0
-  //      protocol        = "-1"
-  //      description = "allow nodes to communicate with each other"
-  //      self = true
-  //    }
-
-  //    ingress {
-  //      from_port       = 1025
-  //      to_port         = 65535
-  //      protocol        = "tcp"
-  //      description = "Allow worker Kubelets and pods to receive communication from the cluster control plane"
-  //      security_groups = ["${aws_security_group.eks-control-plane.id}"]
-  //    }
-
   egress {
     from_port   = 0
     to_port     = 0
@@ -132,3 +116,12 @@ resource "aws_security_group_rule" "nodes_internode_communications" {
   self              = true
 }
 
+resource "aws_security_group_rule" "nodes_ssh" {
+  type              = "ingress"
+  from_port         = 22
+  to_port           = 22
+  protocol          = "tcp"
+  description       = "allow SSH into nodes"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.eks_nodes_sg.id
+}

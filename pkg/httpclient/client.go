@@ -2,20 +2,16 @@ package httpclient
 
 import (
 	"bytes"
+	"compress/gzip"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/trace/info"
-	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"io"
-	"io/ioutil"
+	"github.com/StackVista/stackstate-agent/pkg/version"
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"net"
 	"net/http"
 	"net/url"
-	"strings"
-	"sync"
 	"time"
 )
 
@@ -30,10 +26,9 @@ const PUT = "PUT"
 
 // HTTPResponse is used to represent the response from the request
 type HTTPResponse struct {
-	Response    *http.Response
-	Body        []byte
-	RetriesLeft int
-	Err         error
+	Response       *http.Response
+	RequestPayload []byte
+	Err            error
 }
 
 // ClientHost specifies an host that the client communicates with.
@@ -46,30 +41,47 @@ type ClientHost struct {
 	NoProxy           bool
 	ProxyURL          *url.URL
 	SkipSSLValidation bool
+
+	ContentEncoding ContentEncoding // TODO: make this per request
+}
+
+// RetryableHTTPClient describes the functionality of a http client with retries and backoff
+type RetryableHTTPClient interface {
+	Get(path string) *HTTPResponse
+	Put(path string, body []byte) *HTTPResponse
+	Post(path string, body []byte) *HTTPResponse
 }
 
 // RetryableHTTPClient creates a http client to communicate to StackState
-type RetryableHTTPClient struct {
+type retryableHTTPClient struct {
 	*ClientHost
-	*http.Client
-	mux sync.Mutex
+	*retryablehttp.Client
+}
+
+// StackStateClient creates a wrapper around the RetryableHTTPClient that is used for communication with StackState over http(s)
+type StackStateClient struct {
+	RetryableHTTPClient
 }
 
 // NewStackStateClient returns a RetryableHTTPClient containing a http.Client configured with the Agent options.
-func NewStackStateClient() *RetryableHTTPClient {
-	return retryableHTTPClient("sts_url")
+func NewStackStateClient() RetryableHTTPClient {
+	return &StackStateClient{NewHTTPClient("sts_url")}
 }
 
 // NewHTTPClient returns a RetryableHTTPClient containing a http.Client configured with the Agent options.
-func NewHTTPClient(baseURLConfigKey string) *RetryableHTTPClient {
-	return retryableHTTPClient(baseURLConfigKey)
+func NewHTTPClient(baseURLConfigKey string) RetryableHTTPClient {
+	return makeRetryableHTTPClient(baseURLConfigKey)
 }
 
-func retryableHTTPClient(baseURLConfigKey string) *RetryableHTTPClient {
+func makeRetryableHTTPClient(baseURLConfigKey string) RetryableHTTPClient {
 	host := &ClientHost{}
 	if hostURL := config.Datadog.GetString(baseURLConfigKey); hostURL != "" {
 		host.Host = hostURL
 	}
+
+	host.APIKey = config.Datadog.GetString("api_key")
+
+	host.ContentEncoding = NewGzipContentEncoding(gzip.BestCompression)
 
 	proxyList := config.Datadog.GetStringSlice("proxy.no_proxy")
 	noProxy := make(map[string]bool, len(proxyList))
@@ -92,14 +104,14 @@ func retryableHTTPClient(baseURLConfigKey string) *RetryableHTTPClient {
 		host.SkipSSLValidation = config.Datadog.GetBool("skip_ssl_validation")
 	}
 
-	return &RetryableHTTPClient{
+	return &retryableHTTPClient{
 		ClientHost: host,
 		Client:     newClient(host),
 	}
 }
 
 // newClient returns a http.Client configured with the Agent options.
-func newClient(host *ClientHost) *http.Client {
+func newClient(host *ClientHost) *retryablehttp.Client {
 	transport := &http.Transport{
 		DialContext: (&net.Dialer{
 			Timeout:   30 * time.Second,
@@ -115,157 +127,76 @@ func newClient(host *ClientHost) *http.Client {
 		log.Infof("configuring proxy through: %s", host.ProxyURL.String())
 		transport.Proxy = http.ProxyURL(host.ProxyURL)
 	}
-	return &http.Client{Timeout: 30 * time.Second, Transport: transport}
+
+	retryableClient := retryablehttp.NewClient()
+	retryableClient.HTTPClient = &http.Client{Timeout: 30 * time.Second, Transport: transport}
+	if config.Datadog.IsSet("transactional_forwarder_retry_min") {
+		retryableClient.RetryWaitMin = config.Datadog.GetDuration("transactional_forwarder_retry_min")
+	}
+
+	if config.Datadog.IsSet("transactional_forwarder_retry_max") {
+		retryableClient.RetryWaitMax = config.Datadog.GetDuration("transactional_forwarder_retry_max")
+	}
+
+	return retryableClient
 }
 
 // Get performs a GET request to some path
-func (rc *RetryableHTTPClient) Get(path string) *HTTPResponse {
-	return rc.requestRetryHandler(GET, path, nil, 5*time.Second, 5)
-}
-
-// GetWithRetry performs a GET request to some path with a set retry interval and count
-func (rc *RetryableHTTPClient) GetWithRetry(path string, retryInterval time.Duration, retryCount int) *HTTPResponse {
-	return rc.requestRetryHandler(GET, path, nil, retryInterval, retryCount)
+func (rc *retryableHTTPClient) Get(path string) *HTTPResponse {
+	return rc.handleRequest(GET, path, nil)
 }
 
 // Put performs a PUT request to some path
-func (rc *RetryableHTTPClient) Put(path string, body []byte) *HTTPResponse {
-	return rc.requestRetryHandler(PUT, path, body, 5*time.Second, 5)
-}
-
-// PutWithRetry performs a PUT request to some path with a set retry interval and count
-func (rc *RetryableHTTPClient) PutWithRetry(path string, body []byte, retryInterval time.Duration, retryCount int) *HTTPResponse {
-	return rc.requestRetryHandler(PUT, path, body, retryInterval, retryCount)
+func (rc *retryableHTTPClient) Put(path string, body []byte) *HTTPResponse {
+	return rc.handleRequest(PUT, path, body)
 }
 
 // Post performs a POST request to some path
-func (rc *RetryableHTTPClient) Post(path string, body []byte) *HTTPResponse {
-	return rc.requestRetryHandler(POST, path, body, 5*time.Second, 5)
-}
-
-// PostWithRetry performs a POST request to some path with a set retry interval and count
-func (rc *RetryableHTTPClient) PostWithRetry(path string, body []byte, retryInterval time.Duration, retryCount int) *HTTPResponse {
-	return rc.requestRetryHandler(POST, path, body, retryInterval, retryCount)
-}
-
-func (rc *RetryableHTTPClient) requestRetryHandler(method, path string, body []byte, retryInterval time.Duration, retryCount int) *HTTPResponse {
-	retryTicker := time.NewTicker(retryInterval)
-	retriesLeft := retryCount
-	responseChan := make(chan *HTTPResponse, 1)
-	waitResponseChan := make(chan *HTTPResponse, 1)
-
-	defer watchdog.LogOnPanic()
-	defer close(responseChan)
-
-	go func() {
-	retry:
-		for {
-			select {
-			case <-retryTicker.C:
-				rc.handleRequest(method, path, body, retriesLeft, responseChan)
-				rc.mux.Lock()
-				// Lock so we can decrement the retriesLeft
-				retriesLeft = retriesLeft - 1
-				rc.mux.Unlock()
-			case response := <-responseChan:
-				// Stop retrying and return the response
-				retryTicker.Stop()
-				waitResponseChan <- response
-				break retry
-			}
-		}
-	}()
-
-	response := <-waitResponseChan
-	rc.mux.Lock()
-	response.RetriesLeft = retriesLeft
-	rc.mux.Unlock()
-	return response
+func (rc *retryableHTTPClient) Post(path string, body []byte) *HTTPResponse {
+	return rc.handleRequest(POST, path, body)
 }
 
 // getSupportedFeatures returns the features supported by the StackState API
-func (rc *RetryableHTTPClient) handleRequest(method, path string, body []byte, retriesLeft int, responseChan chan *HTTPResponse) {
-	rc.mux.Lock()
-	// Lock so only one goroutine at a time can access the map
-	if retriesLeft == 0 {
-		responseChan <- &HTTPResponse{Err: errors.New("failed after all retries")}
-	}
-	rc.mux.Unlock()
+func (rc *retryableHTTPClient) handleRequest(method, path string, body []byte) *HTTPResponse {
 
-	response, err := rc.makeRequest(method, path, body)
-
-	// Handle error response
+	req, err := rc.makeRequest(method, path, body)
 	if err != nil {
-		// Soo we got a 404, meaning we were able to contact StackState, but it did not have the requested path. We can publish a result
-		if response != nil {
-			//responseChan <- &HTTPResponse{
-			//	RetriesLeft: retriesLeft,
-			//	Err: errors.New("found StackState version which does not have the requested path"),
-			//}
-			return
+		return &HTTPResponse{
+			Err: err,
 		}
-		// Log
-		_ = log.Error(err)
-		return
 	}
+	response, err := rc.Do(req)
 
-	defer response.Body.Close()
-
-	// Get byte array
-	body, err = ioutil.ReadAll(response.Body)
-	if err != nil {
-		_ = log.Errorf("could not decode response body from request: %s", err)
-		return
-	}
-
-	responseChan <- &HTTPResponse{Response: response, Body: body, Err: nil}
+	return &HTTPResponse{Response: response, RequestPayload: body, Err: err}
 }
 
 // makeRequest
-func (rc *RetryableHTTPClient) makeRequest(method, path string, body []byte) (*http.Response, error) {
-	url := fmt.Sprintf("%s/%s", rc.Host, path)
-	var req *http.Request
+func (rc *retryableHTTPClient) makeRequest(method, path string, body []byte) (*retryablehttp.Request, error) {
+	url := fmt.Sprintf("%s/%s%s", rc.Host, path, fmt.Sprintf("?api_key=%s", rc.APIKey))
+	var req *retryablehttp.Request
 	var err error
 	if body != nil {
-		req, err = http.NewRequest(method, url, bytes.NewBuffer(body))
+		if gzipped, encodingError := rc.ContentEncoding.encode(body); encodingError != nil {
+			_ = log.Warnf("http client was not able to send payload as %s, reverting to uncompressed payload: %s",
+				rc.ContentEncoding.name(), err)
+			req, err = retryablehttp.NewRequest(method, url, bytes.NewBuffer(body))
+		} else {
+			log.Debugf("Using %s compression for payload", rc.ContentEncoding.name())
+			req, err = retryablehttp.NewRequest(method, url, gzipped)
+			req.Header.Add("content-encoding", rc.ContentEncoding.name())
+		}
 	} else {
-		req, err = http.NewRequest(method, url, nil)
+		req, err = retryablehttp.NewRequest(method, url, nil)
 	}
 
 	if err != nil {
 		return nil, fmt.Errorf("could not create request to %s/%s: %s", url, path, err)
 	}
 
-	req.Header.Add("content-encoding", "identity")
 	req.Header.Add("sts-api-key", rc.APIKey)
 	req.Header.Add("sts-hostname", rc.Host)
-	req.Header.Add("sts-agent-version", info.Version)
+	req.Header.Add("sts-agent-version", version.AgentVersion)
+	req.Header.Add("content-type", "application/json")
 
-	resp, err := rc.Do(req)
-	if err != nil {
-		if rc.isHTTPTimeout(err) {
-			return nil, fmt.Errorf("timeout detected on %s, %s", url, err)
-		}
-		return nil, fmt.Errorf("error submitting payload to %s: %s", url, err)
-	}
-
-	if resp.StatusCode < 200 || resp.StatusCode > 300 {
-		defer resp.Body.Close()
-		_, _ = io.Copy(ioutil.Discard, resp.Body)
-		return resp, fmt.Errorf("unexpected response from %s. Status: %s", url, resp.Status)
-	}
-
-	return resp, nil
-}
-
-// IsTimeout returns true if the error is due to reaching the timeout limit on the http.client
-func (rc *RetryableHTTPClient) isHTTPTimeout(err error) bool {
-	if netErr, ok := err.(interface {
-		Timeout() bool
-	}); ok && netErr.Timeout() {
-		return true
-	} else if strings.Contains(err.Error(), "use of closed network connection") { //To deprecate when using GO > 1.5
-		return true
-	}
-	return false
+	return req, nil
 }

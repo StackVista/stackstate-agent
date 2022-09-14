@@ -5,34 +5,18 @@ import util
 testinfra_hosts = ["local"]
 
 
-def _get_pod_ip(kubeconfig, kubecontext, host, namespace, pod_name):
-    pod_server_c = "KUBECONFIG={0} kubectl --context={1} get pods/{2} -o json --namespace={3}".format(kubeconfig, kubecontext, pod_name, namespace)
+def _get_pod_ip(kubecontext, host, namespace, pod_name):
+    pod_server_c = "kubectl --context={0} get pods/{1} -o json --namespace={2}".format(kubecontext, pod_name, namespace)
     pod_server_exec = host.check_output(pod_server_c)
     pod_server_data = json.loads(pod_server_exec)
     return pod_server_data["status"]["podIP"]
 
 
-def _get_service_ip(kubeconfig, kubecontext, host, namespace):
-    service_c = "KUBECONFIG={0} kubectl --context={1} get service/pod-service -o json --namespace={2}".format(kubeconfig, kubecontext, namespace)
+def _get_service_ip(kubecontext, host, namespace):
+    service_c = "kubectl --context={0} get service/pod-service -o json --namespace={1}".format(kubecontext, namespace)
     pod_service_exec = host.check_output(service_c)
     pod_service_data = json.loads(pod_service_exec)
     return pod_service_data["spec"]["clusterIP"]
-
-
-def _component_data(json_data, type_name, external_id_prefix, command):
-    for message in json_data["messages"]:
-        p = message["message"]["TopologyElement"]["payload"]
-        if "TopologyComponent" in p and \
-            p["TopologyComponent"]["typeName"] == type_name and \
-                p["TopologyComponent"]["externalId"].startswith(external_id_prefix):
-            component_data = json.loads(p["TopologyComponent"]["data"])
-            if command:
-                if "args" in component_data["command"]:
-                    if component_data["command"]["args"][0] == command:
-                        return component_data
-            else:
-                return component_data
-    return None
 
 
 def _find_component(json_data, type_name, external_id_assert_fn):
@@ -67,29 +51,19 @@ def _find_process_by_command_args(json_data, type_name, cmd_assert_fn):
     return None
 
 
-def test_dnat(host, ansible_var, topic_api):
-    url = "{0}/sts_topo_process_agents?limit=1000".format(topic_api)
-    correlate_url = "{0}/sts_correlate_endpoints?limit=100".format(topic_api)
-
+def test_dnat(host, ansible_var, cliv1):
     dnat_service_port = int(ansible_var("dnat_service_port"))
-    namespace = ansible_var("namespace")
-    kubeconfig = ansible_var("kubeconfig")
-    kubecontext = ansible_var("kubecontext")
+    namespace = ansible_var("test_namespace")
+    kubecontext = ansible_var("agent_kubecontext")
 
     def wait_for_components():
-        data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
-        with open("./topic-topo-process-agents-dnat.json", 'w') as f:
-            json.dump(json_data, f, indent=4)
+        json_data = cliv1.topic_api("sts_topo_process_agents")
 
         # This is here for debugging
-        correlate_data = host.check_output("curl \"%s\"" % correlate_url)
-        correlate_json_data = json.loads(correlate_data)
-        with open("./topic-topo-process-agents-dnat-correlate.json", 'w') as f:
-            json.dump(correlate_json_data, f, indent=4)
+        cliv1.topic_api("sts_correlate_endpoints", limit=100)
 
-        pod_service_ip = _get_service_ip(kubeconfig, kubecontext, host, namespace)
-        pod_client = _get_pod_ip(kubeconfig, kubecontext, host, namespace, "pod-client")
+        pod_service_ip = _get_service_ip(kubecontext, host, namespace)
+        pod_client = _get_pod_ip(kubecontext, host, namespace, "pod-client")
 
         endpoint_match = re.compile("urn:endpoint:/.*:{}".format(pod_service_ip))
         endpoint = _find_component(
@@ -108,17 +82,12 @@ def test_dnat(host, ansible_var, topic_api):
     util.wait_until(wait_for_components, 120, 3)
 
 
-def test_pod_container_to_container(host, ansible_var, topic_api):
-    url = "{0}/sts_topo_process_agents?limit=1000".format(topic_api)
-
+def test_pod_container_to_container(ansible_var, cliv1):
     server_port = int(ansible_var("container_to_container_server_port"))
-    cluster_name = ansible_var("cluster_name")
+    cluster_name = ansible_var("agent_cluster_name")
 
     def wait_for_components():
-        data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
-        with open("./topic-topo-process-agents-container-container.json", 'w') as f:
-            json.dump(json_data, f, indent=4)
+        json_data = cliv1.topic_api("sts_topo_process_agents")
 
         server_process_match = re.compile("nc -l -p {}".format(server_port))
         server_process = _find_process_by_command_args(
@@ -157,18 +126,13 @@ def test_pod_container_to_container(host, ansible_var, topic_api):
     util.wait_until(wait_for_components, 120, 3)
 
 
-def test_headless_pod_to_pod(host, ansible_var, topic_api):
-    url = "{0}/sts_topo_process_agents?limit=1000".format(topic_api)
-
+def test_headless_pod_to_pod(ansible_var, cliv1):
     # Server and service port are equal
     server_port = int(ansible_var("headless_service_port"))
-    cluster_name = ansible_var("cluster_name")
+    cluster_name = ansible_var("agent_cluster_name")
 
     def wait_for_components():
-        data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
-        with open("./topic-topo-process-agents-headless.json", 'w') as f:
-            json.dump(json_data, f, indent=4)
+        json_data = cliv1.topic_api("sts_topo_process_agents")
 
         server_process_match = re.compile("ncat -vv --broker --listen -p {}".format(server_port))
         server_process = _find_process_by_command_args(

@@ -25,8 +25,7 @@ resource "aws_cloudformation_stack" "cfn_stackpack" {
     VantaUserDataStored   = "NA"
   }
 
-  # template_url = "https://stackstate-integrations-resources-eu-west-1.s3.eu-west-1.amazonaws.com/aws-topology/cloudformation/stackstate-resources-1.2.cfn.yaml"
-  template_body = file("${path.module}/stackstate-resources-1.2.cfn.yaml")
+  template_url = "https://stackstate-integrations-resources-eu-west-1.s3.eu-west-1.amazonaws.com/aws-topology/cloudformation/stackstate-resources-1.3.cfn.yaml"
 }
 
 data "aws_iam_role" "integration_role" {

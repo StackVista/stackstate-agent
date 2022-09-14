@@ -1,6 +1,10 @@
 package health
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+)
 
 // CheckData describes state of a health stream
 // it's an enumeration - only one of the fields should be filled
@@ -38,6 +42,16 @@ func (c *CheckData) UnmarshalJSON(buf []byte) error {
 	}
 	c.Unstructured = unstructured
 	return nil
+}
+
+// JSONString encodes input into JSON while also encoding an error - for logging purpose
+func (c *CheckData) JSONString() string {
+	b, err := c.MarshalJSON()
+	if err != nil {
+		_ = log.Warnf("Failed to serialize JSON: %v", err)
+		return fmt.Sprintf("{\"error\": \"%s\"}", err.Error())
+	}
+	return string(b)
 }
 
 // CheckState describes state of a health stream

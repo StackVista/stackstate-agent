@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build python
 // +build python
 
 package python
@@ -11,6 +12,7 @@ import (
 	"errors"
 	"expvar"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"strings"
 	"sync"
 	"unsafe"
@@ -201,6 +203,10 @@ func (cl *PythonCheckLoader) Load(config integration.Config, instance integratio
 	C.rtloader_decref(rtloader, checkModule)
 
 	log.Debugf("python loader: done loading check %s (version %s)", moduleName, wheelVersion)
+
+	// [sts] register check handler
+	handler.GetCheckManager().RegisterCheckHandler(c, config.InitConfig, instance)
+
 	return c, nil
 }
 
