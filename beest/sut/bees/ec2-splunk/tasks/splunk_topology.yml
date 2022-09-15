@@ -9,10 +9,10 @@
         source_type: "sts_test_data"
 
         saved_search_relations_name: "relations"
-        saved_search_relations_fields: "fields type, sourceId, targetId, description"
-
         saved_search_components_name: "components"
-        saved_search_components_fields: "fields id, type, description, running"
+
+        saved_search_relations_format: "fields type, sourceId, targetId, description"
+        saved_search_components_format: "fields id, type, description, running"
 
     - name: "Delete Splunk Relations Saved Search"
       command: |
@@ -29,11 +29,11 @@
         curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" \
         https://localhost:{{ splunk_port }}/services/saved/searches \
         -d name="{{ saved_search_relations_name }}" \
-        --data-urlencode search="'* topo_type=relation | dedup type, sourceId, targetId | {{ saved_search_relations_fields }}"
+        --data-urlencode search="* topo_type=relation | dedup type, sourceId, targetId | {{ saved_search_relations_format }}"
 
     - name: "Create Splunk Components Saved Search"
       command: |
         curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" \
         https://localhost:{{ splunk_port }}/services/saved/searches \
         -d name="{{ saved_search_components_name }}" \
-        --data-urlencode search="* topo_type=component | dedup id | sort - id | {{ saved_search_components_fields }}"
+        --data-urlencode search="* topo_type=component | dedup id | sort - id | {{ saved_search_components_format }}"

@@ -11,10 +11,13 @@
     - name: "Retrieve Splunk Version"
       shell: "{{ splunk }} --version"
       register: splunk_version
-      ignore_errors: true
 
+    - name: "Splunk Version"
+      debug:
+        msg: "{{ splunk_version.stdout }}"
+
+  rescue:
     - name: "Download Copy of Splunk Enterprise"
-      when: splunk_version.rc != 0
       get_url:
         url: https://www.dl.dropboxusercontent.com/s/vgq62m727y2zl8c/splunk-8.2.7-2e1fca123028-linux-2.6-amd64.deb
         dest: /home/ubuntu/splunk.deb
@@ -23,11 +26,9 @@
       register: downloaded
 
     - name: "Install Splunk Binary"
-      when: splunk_version.rc != 0
       apt: deb=/home/ubuntu/splunk.deb
 
     - name: "Create symlink to splunk in /usr/local/bin"
-      when: splunk_version.rc != 0
       file:
         src: "{{ splunk }}"
         path: /usr/local/bin/splunk
@@ -36,13 +37,11 @@
         group: "{{ os_group }}"
 
     - name: "Create file for default admin credentials"
-      when: splunk_version.rc != 0
       template:
         src: user-seed.conf.j2
         dest: "{{ splunk_home }}/etc/system/local/user-seed.conf"
 
     - name: "-.ui_login- Touch {{ splunk_home }}/etc/.ui_login"
-      when: splunk_version.rc != 0
       file:
         path: "{{ splunk_home }}/etc/.ui_login"
         state: touch
@@ -51,17 +50,14 @@
         group: "{{ os_group }}"
 
     - name: "Create file for default user/UI preferences"
-      when: splunk_version.rc != 0
       template:
         src: user-prefs.conf.j2
         dest: "{{ splunk_home }}/etc/system/local/user-prefs.conf"
 
     - name: "Create file to disable default search tour"
-      when: splunk_version.rc != 0
       template:
         src: ui-tour.conf.j2
         dest: "{{ splunk_home }}/etc/system/local/ui-tour.conf"
 
     - name: "Start and Accept Licence"
-      when: splunk_version.rc != 0
       shell: "{{ splunk }} start --answer-yes --auto-ports --no-prompt --accept-license"
