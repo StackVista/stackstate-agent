@@ -1,10 +1,11 @@
 from stscliv1 import TopicTopologyResult, ComponentWrapper, RelationWrapper, TopologyDeleteWrapper
 
+from .common import filter_out_repeated_specs
 from .topology_matcher import TopologyMatcher
 from ..primitive_matchers import DeleteMatcher
 from ..invariant_search import ConsistentGraphMatcher
 from ..matches import TopicTopologyMatch
-from ..topology_matching_result import TopologyMatchingResult, TopicTopologyMatchingResult
+from ..matching_results import TopicTopologyMatchingResult
 
 
 class TopicTopologyMatcher(TopologyMatcher):
@@ -55,9 +56,10 @@ class TopicTopologyMatcher(TopologyMatcher):
                       delete_by_id: dict[str, TopologyDeleteWrapper] = ()) -> list[TopicTopologyMatch]:
 
         result_graph_specs = cgm.get_graphs()
+        distinct_graph_specs = filter_out_repeated_specs(result_graph_specs, self._ambiguous_elements)
 
         matches: list[TopicTopologyMatch] = []
-        for spec in result_graph_specs:
+        for spec in distinct_graph_specs:
             topology_match = self._build_topic_topo_match_from_cgm_spec(
                 cgm_spec=spec,
                 component_by_id=component_by_id,
@@ -68,7 +70,7 @@ class TopicTopologyMatcher(TopologyMatcher):
 
         return matches
 
-    def find(self, topology: TopicTopologyResult) -> TopologyMatchingResult:
+    def find(self, topology: TopicTopologyResult) -> TopicTopologyMatchingResult:
         # Take the topology -> TopicTopologyResult and group all data by id
         component_by_id: dict[str, ComponentWrapper] = {comp.id: comp for comp in topology.components}
         relation_by_id: dict[str, RelationWrapper] = {rel.id: rel for rel in topology.relations}

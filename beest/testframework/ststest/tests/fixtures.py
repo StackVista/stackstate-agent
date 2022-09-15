@@ -1,11 +1,12 @@
 from stscliv1 import ComponentWrapper, RelationWrapper, TopologyDeleteWrapper, TopologyResult, TopicTopologyResult
 
 
-def component_fixture(id: int, name: str, outgoing: list[int] = None, incoming=None) -> ComponentWrapper:
+def component_fixture(id: int, name: str, outgoing: list[int] = None, incoming=None, tags: list[str] = ()) -> ComponentWrapper:
     return ComponentWrapper({
         'id': id, 'name': name, 'type': 'component',
         'incomingRelations': incoming if incoming is not None else [],
         'outgoingRelations': outgoing if outgoing is not None else [],
+        'tags': tags
     })
 
 

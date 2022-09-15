@@ -187,3 +187,4 @@ pkg/collector/check/state/temp-write-to-disk-test/*
 *.egg-info/
 .pytest_cache/
 *.gv
+/beest/*.json

@@ -135,14 +135,13 @@ def test_agent_integration_sample_topology_topic_api(host, agent_hostname, cliv1
     agent_integration_sample_topology = TopicTopologyMatcher()\
         .component("this-host-assertion", name=r"this-host", domain=r"Webshop")\
         .component("some-application-assertion", name=r"some-application")\
-        .component("delete-test-host-assertion", name=r"delete-test-host")\
         .delete(r"urn:example:/host:host_for_deletion")
 
     def assert_topology():
         topology_result = cliv1.topology_topic(topic="sts_topo_agent-integration_sample", limit=20)
 
         match_result = agent_integration_sample_topology.find(topology_result)
-        match_result.assert_exact_match(strict=False)
+        match_result.assert_exact_match()
 
     util.wait_until(assert_topology, 60, 3)
 
@@ -157,7 +156,7 @@ def test_agent_integration_monitoring_topology_topic_api(host, agent_hostname, c
         topology_result = cliv1.topology_topic(topic="sts_topo_agent_integrations", limit=20)
 
         match_result = agent_integration_sample_topology.find(topology_result)
-        match_result.assert_exact_match(strict=False)
+        match_result.assert_exact_match()
 
     util.wait_until(assert_topology, 60, 3)
 

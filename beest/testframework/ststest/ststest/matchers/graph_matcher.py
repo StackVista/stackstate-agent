@@ -1,6 +1,6 @@
 from stscliv1 import TopologyResult
 
-from ..topology_matching_result import MatchingResult
+from ..matching_results import MatchingResult
 
 
 class GraphMatcher:
