@@ -78,8 +78,12 @@ var DefaultEventCategoriesMap = map[string]EventCategory{
 	"SuccessfulDelete":  Changes,
 
 	// HPA events
-	"SuccessfulRescale":       Activities,
-	"DesiredReplicasComputed": Others,
+	// https://github.com/kubernetes/kubernetes/blob/master/pkg/controller/podautoscaler/horizontal.go
+	// https://github.com/kubernetes/kubernetes/blob/v1.25.0/pkg/controller/podautoscaler/horizontal_test.go
+	"SuccessfulRescale":            Activities,
+	"DesiredReplicasComputed":      Others,
+	"FailedComputeMetricsReplicas": Alerts,
+	"FailedRescale":                Alerts,
 
 	"EnsuringLoadBalancer":        Activities,
 	"AddedInterface":              Changes,
