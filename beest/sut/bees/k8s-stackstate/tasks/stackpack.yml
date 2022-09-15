@@ -17,7 +17,7 @@
         - availablestackpacks.find('stackstate-agent-v2') == -1
 
     - name: Install kubernetes StackPack
-      command: sts-cli stackpack install kubernetes -p kubernetes_cluster_name "{{ cluster_name }}"
+      command: sts-cli stackpack install kubernetes -p kubernetes_cluster_name "{{ k8s_integration.cluster_name }}"
       when:
         - k8s_integration is defined
         - 'kubernetes' in install_stackpacks
