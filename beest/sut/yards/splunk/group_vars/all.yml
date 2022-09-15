@@ -16,6 +16,8 @@ kubecontext: "{{ cluster_name }}"
 sts_api_key: "{{ yard_id }}"
 sts_url: "https://{{ yard_id }}.{{ cluster_name }}"
 
+splunk_port: 8089
+
 # Username and password for Splunk Enterprise admin user
 #   (modified during initial install, not during upgrade)
 splunk_user: admin

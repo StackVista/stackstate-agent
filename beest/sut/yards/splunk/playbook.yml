@@ -1,16 +1,16 @@
-# - name: Kubernetes Stackstate
-#   hosts: local
-#   gather_facts: false
-#   roles:
-#     - role: "{{ bees_path }}/k8s-stackstate"
-#       vars:
-#         sts_ingress: KOPS
+- name: Kubernetes Stackstate
+  hosts: local
+  gather_facts: false
+  roles:
+    - role: "{{ bees_path }}/k8s-stackstate"
+      vars:
+        sts_ingress: KOPS
 
-# - name: VM Splunk
-#   hosts: splunk
-#   gather_facts: false
-#   roles:
-#     - role: "{{ bees_path }}/ec2-splunk"
+- name: VM Splunk
+  hosts: splunk
+  gather_facts: false
+  roles:
+    - role: "{{ bees_path }}/ec2-splunk"
 
 - name: VM Agent
   hosts: splunk
