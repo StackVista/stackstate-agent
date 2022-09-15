@@ -8,6 +8,7 @@
 **Improvements**
 - Added Support for Transactional State [STAC-13620](https://stackstate.atlassian.net/browse/STAC-13620)
 - Added Support for Stateful Persistent State [STAC-16579](https://stackstate.atlassian.net/browse/STAC-16579)
+- Disabled validation of cluster name (leaving this concern for Helm chart and Stackpack) [STAC-16382](https://stackstate.atlassian.net/browse/STAC-16382)
 
 ## 2.17.2 (2022-08-04)
 
