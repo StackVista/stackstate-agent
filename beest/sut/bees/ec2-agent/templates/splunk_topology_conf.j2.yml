@@ -41,7 +41,7 @@ instances:
     authentication:
       basic_auth:
         username: "admin"
-        password: "admin"
+        password: "splunk123"
         # token_auth:
         ## Token for the user who will be using it
         # name: "api-user"

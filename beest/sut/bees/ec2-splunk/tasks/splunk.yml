@@ -47,16 +47,16 @@
         src: ui-tour.conf.j2
         dest: "{{ splunk_home }}/etc/system/local/ui-tour.conf"
 
-    - name: Accept Licence
+    - name: Start and Accept Licence
       shell: "{{ splunk_home }}/bin/splunk start --answer-yes --auto-ports --no-prompt --accept-license"
 
-    - name: Copy CSV to remote
-      ansible.builtin.copy:
-        src: "{{ role_path }}/files/data/components1.csv"
-        dest: "{{ splunk_home }}/etc/system/local"
-        owner: "{{ os_user }}"
-        mode: '0644'
+    # - name: Copy CSV to remote
+    #   ansible.builtin.copy:
+    #     src: "{{ role_path }}/files/data/components1.csv"
+    #     dest: "{{ splunk_home }}/etc/system/local"
+    #     owner: "{{ os_user }}"
+    #     mode: '0644'
 
-    - name: Add Splunk Monitor
-      shell: "{{ splunk_home }}/bin/splunk add monitor -source {{ splunk_home }}/etc/system/local/components1.csv"
+    # - name: Add Splunk Monitor
+    #   shell: "{{ splunk_home }}/bin/splunk add monitor -source {{ splunk_home }}/etc/system/local/components1.csv"
 

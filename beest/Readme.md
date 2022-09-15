@@ -48,3 +48,9 @@ you are currently on (among other important variables).
 In some cases if you need to spin up the same testing _yard_ multiple times (or just want a more explicit identifier),
 you can set a different value for the `RUN_ID` variable in your `.envrc`. The `RUN_ID` is not only used for the
 Terraform state file name, but also used in the names of the infrastructure resources.
+
+
+### Feedback / Feature Requests
+
+- Allow beast to run in the background, you can then shell in and out without the risk of closing the "make terminal window"
+- Force Cleanup to be ran before Destroy instead of running them separately
