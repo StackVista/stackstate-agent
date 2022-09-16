@@ -1,10 +1,23 @@
 ---
 # tasks file for ec2-splunk
-- name: Splunk prepare tasks
+- name: Splunk Prepare Tasks
   tags: prepare
   become: yes
   block:
-    - name: Download Copy of Splunk Enterprise
+    - name: "Create variable pointing to the Splunk Executable"
+      set_fact:
+        splunk: "{{ splunk_home }}/bin/splunk"
+
+    - name: "Retrieve Splunk Version"
+      shell: "{{ splunk }} --version"
+      register: splunk_version
+
+    - name: "Splunk Version"
+      debug:
+        msg: "{{ splunk_version.stdout }}"
+
+  rescue:
+    - name: "Download Copy of Splunk Enterprise"
       get_url:
         url: https://www.dl.dropboxusercontent.com/s/vgq62m727y2zl8c/splunk-8.2.7-2e1fca123028-linux-2.6-amd64.deb
         dest: /home/ubuntu/splunk.deb
@@ -12,19 +25,18 @@
         timeout: 20
       register: downloaded
 
-    - name: Install Splunk Binary
+    - name: "Install Splunk Binary"
       apt: deb=/home/ubuntu/splunk.deb
 
     - name: "Create symlink to splunk in /usr/local/bin"
       file:
-        src: "{{ splunk_home }}/bin/splunk"
+        src: "{{ splunk }}"
         path: /usr/local/bin/splunk
         state: link
         owner: "{{ os_user }}"
         group: "{{ os_group }}"
 
-
-    - name: Create file for default admin creds
+    - name: "Create file for default admin credentials"
       template:
         src: user-seed.conf.j2
         dest: "{{ splunk_home }}/etc/system/local/user-seed.conf"
@@ -37,26 +49,15 @@
         owner: "{{ os_user }}"
         group: "{{ os_group }}"
 
-    - name: Create file for default user/UI preferences
+    - name: "Create file for default user/UI preferences"
       template:
         src: user-prefs.conf.j2
         dest: "{{ splunk_home }}/etc/system/local/user-prefs.conf"
 
-    - name: Create file to disable default search tour
+    - name: "Create file to disable default search tour"
       template:
         src: ui-tour.conf.j2
         dest: "{{ splunk_home }}/etc/system/local/ui-tour.conf"
 
-    - name: Start and Accept Licence
-      shell: "{{ splunk_home }}/bin/splunk start --answer-yes --auto-ports --no-prompt --accept-license"
-
-#    - name: Copy CSV to remote
-#      ansible.builtin.copy:
-#        src: "{{ role_path }}/files/data/components1.csv"
-#        dest: "{{ splunk_home }}/etc/system/local"
-#        owner: "{{ os_user }}"
-#        mode: '0644'
-#
-#    - name: Add Splunk Monitor
-#      shell: "{{ splunk_home }}/bin/splunk add monitor -source {{ splunk_home }}/etc/system/local/components1.csv"
-
+    - name: "Start and Accept Licence"
+      shell: "{{ splunk }} start --answer-yes --auto-ports --no-prompt --accept-license"

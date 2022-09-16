@@ -50,6 +50,12 @@ you can set a different value for the `RUN_ID` variable in your `.envrc`. The `R
 Terraform state file name, but also used in the names of the infrastructure resources.
 
 
+### Feedback / Feature Requests
+
+- Allow beast to run in the background, you can then shell in and out without the risk of closing the "make terminal window"
+- Force Cleanup to be ran before Destroy instead of running them separately
+
+
 ## How to setup development environment for test
 
 We need python 3.9 for Beest.
