@@ -16,6 +16,14 @@ kubecontext: "{{ cluster_name }}"
 sts_api_key: "{{ yard_id }}"
 sts_url: "https://{{ yard_id }}.{{ cluster_name }}"
 
+# Integrations
+splunk_integration: true
+
+# Splunk Versioning
+splunk_deb_download_version: 8.2.7
+splunk_deb_download_hash: 2e1fca123028
+
+# Splunk Network
 splunk_port: 8089
 
 # Username and password for Splunk Enterprise admin user

@@ -29,7 +29,7 @@ init_config:
 # Currently it is not possible to specify multiple instances with the same url.
 # It is possible to specify multiple saved_searches on a single instance.
 instances:
-  - url: "https://localhost:8089"
+  - url: "https://localhost:{{ splunk_port }}"
 
     # username: "admin" ## deprecated; use basic_auth.username under authentication section
     # password: "admin" ## deprecated; use basic_auth.password under authentication section
@@ -40,8 +40,8 @@ instances:
     ## Token based authentication is preferred before basic authentication.
     authentication:
       basic_auth:
-        username: "admin"
-        password: "splunk123"
+        username: "{{ splunk_user }}"
+        password: "{{ splunk_pass }}"
         # token_auth:
         ## Token for the user who will be using it
         # name: "api-user"
