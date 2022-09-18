@@ -13,6 +13,15 @@
       register: splunk_version
 
   rescue:
+    - name: Wait for the reboot and reconnect (Cleans Lock Files)
+      reboot:
+        msg: "Reboot initiated by Ansible"
+        connect_timeout: 5
+        reboot_timeout: 600
+        pre_reboot_delay: 0
+        post_reboot_delay: 30
+        test_command: whoami
+
     - name: Download Copy of Splunk Enterprise
       get_url:
         url: "https://download.splunk.com/products/splunk/releases/{{ splunk_deb_download_version }}/linux/splunk-{{ splunk_deb_download_version }}-{{ splunk_deb_download_hash }}-linux-2.6-amd64.deb"
@@ -20,16 +29,6 @@
         mode: '0755'
         timeout: 20
       register: downloaded
-
-    - name: Remove file (delete file)
-      file:
-        path: /var/lib/dpkg/lock
-        state: absent
-
-    - name: Remove file (delete file)
-      file:
-        path: /var/lib/dpkg/lock-frontend
-        state: absent
 
     - name: Install Splunk Binary
       apt: deb=/home/ubuntu/splunk.deb
