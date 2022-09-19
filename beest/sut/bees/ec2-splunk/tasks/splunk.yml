@@ -6,7 +6,7 @@
   block:
     - name: Download Copy of Splunk Enterprise
       get_url:
-        url: https://www.dl.dropboxusercontent.com/s/vgq62m727y2zl8c/splunk-8.2.7-2e1fca123028-linux-2.6-amd64.deb
+        url: https://download.splunk.com/products/splunk/releases/8.2.7/linux/splunk-8.2.7-2e1fca123028-linux-2.6-amd64.deb
         dest: /home/ubuntu/splunk.deb
         mode: '0755'
         timeout: 20
@@ -50,13 +50,13 @@
     - name: Start and Accept Licence
       shell: "{{ splunk_home }}/bin/splunk start --answer-yes --auto-ports --no-prompt --accept-license"
 
-    - name: Copy CSV to remote
-      ansible.builtin.copy:
-        src: "{{ role_path }}/files/data/components1.csv"
-        dest: "{{ splunk_home }}/etc/system/local"
-        owner: "{{ os_user }}"
-        mode: '0644'
-
-    - name: Add Splunk Monitor
-      shell: "{{ splunk_home }}/bin/splunk add monitor -source {{ splunk_home }}/etc/system/local/components1.csv"
+#    - name: Copy CSV to remote
+#      ansible.builtin.copy:
+#        src: "{{ role_path }}/files/data/components1.csv"
+#        dest: "{{ splunk_home }}/etc/system/local"
+#        owner: "{{ os_user }}"
+#        mode: '0644'
+#
+#    - name: Add Splunk Monitor
+#      shell: "{{ splunk_home }}/bin/splunk add monitor -source {{ splunk_home }}/etc/system/local/components1.csv"
 
