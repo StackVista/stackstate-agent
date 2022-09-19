@@ -25,7 +25,7 @@ func SetupTransactionalComponents() {
 	// Set storage root for tests
 	config.Datadog.Set("check_state_root_path", "/tmp/fake-datadog-run")
 
-	handler.InitCheckManager(handler.CheckNoReloader{})
+	handler.InitCheckManager()
 	state.InitCheckStateManager()
 	transactionbatcher.NewMockTransactionalBatcher()
 	transactionmanager.NewMockTransactionManager()

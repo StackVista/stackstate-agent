@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 )
@@ -115,11 +116,17 @@ type SubmitHealthStopSnapshot struct {
 // CheckTelemetryAPI contains all the telemetry operations for a check
 type CheckTelemetryAPI interface {
 	SubmitRawMetricsData(data telemetry.RawMetrics)
+	SubmitEvent(event metrics.Event)
 }
 
 // SubmitRawMetric is used to submit a raw metric value for the current transaction
 type SubmitRawMetric struct {
 	Value telemetry.RawMetrics
+}
+
+// SubmitEvent is used to submit an event for the current transaction
+type SubmitEvent struct {
+	Event metrics.Event
 }
 
 // CheckLifecycleAPI contains all the lifecylce operations for a check

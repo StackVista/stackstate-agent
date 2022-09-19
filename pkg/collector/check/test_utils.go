@@ -42,19 +42,3 @@ func (c *STSTestCheck) GetMetricStats() (map[string]int64, error) { return make(
 
 // IsTelemetryEnabled false for STSTestCheck
 func (c *STSTestCheck) IsTelemetryEnabled() bool { return false }
-
-// TestCheckReloader is an implementation of the CheckLoader
-type TestCheckReloader struct {
-	Reloaded int
-}
-
-// GetReloaded returns the integer representing the amount of time reloaded was called
-func (tcr *TestCheckReloader) GetReloaded() int {
-	return tcr.Reloaded
-}
-
-// ReloadCheck increments the reloaded integer
-func (tcr *TestCheckReloader) ReloadCheck(ID, integration.Data, integration.Data, string) error {
-	tcr.Reloaded = tcr.Reloaded + 1
-	return nil
-}
