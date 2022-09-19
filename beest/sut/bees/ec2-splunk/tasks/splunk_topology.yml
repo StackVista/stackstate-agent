@@ -17,23 +17,23 @@
     - name: "Delete Splunk Relations Saved Search"
       command: |
         curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" \
-        https://localhost:{{ splunk_port }}/services/saved/searches/{{ saved_search_relations_name }}
+        {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches/{{ saved_search_relations_name }}
 
     - name: "Delete Splunk Components Saved Search"
       command: |
         curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" \
-        https://localhost:{{ splunk_port }}/services/saved/searches/{{ saved_search_components_name }}
+        {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches/{{ saved_search_components_name }}
 
     - name: "Create Splunk Relations Saved Search"
       command: |
         curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" \
-        https://localhost:{{ splunk_port }}/services/saved/searches \
+        {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches \
         -d name="{{ saved_search_relations_name }}" \
         --data-urlencode search="* topo_type=relation | dedup type, sourceId, targetId | {{ saved_search_relations_format }}"
 
     - name: "Create Splunk Components Saved Search"
       command: |
         curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" \
-        https://localhost:{{ splunk_port }}/services/saved/searches \
+        {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches \
         -d name="{{ saved_search_components_name }}" \
         --data-urlencode search="* topo_type=component | dedup id | sort - id | {{ saved_search_components_format }}"

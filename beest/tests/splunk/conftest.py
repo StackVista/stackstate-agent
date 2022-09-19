@@ -1,8 +1,24 @@
 import logging
 import pytest
+import testinfra.utils.ansible_runner
 from stscliv1 import CLIv1
 
 USE_CACHE = False
+
+
+@pytest.fixture
+def splunk_instance():
+    # Explicitly select the splunk instance to retrieve the dynamic IP for the instance
+    splunk_ansible_inventory = testinfra.utils.ansible_runner.AnsibleRunner('../../sut/yards/splunk/ansible_inventory')
+
+    # Get the splunk instance information from the inventory and conf
+    splunk_protocol = splunk_ansible_inventory.get_variables("splunk")['splunk_instance_protocol']
+    splunk_host = splunk_ansible_inventory.get_variables("splunk")['ansible_host']
+    splunk_port = splunk_ansible_inventory.get_variables("splunk")['splunk_instance_port']
+
+    splunk_instance = "{}://{}:{}".format(splunk_protocol, splunk_host, splunk_port)
+
+    return splunk_instance
 
 
 @pytest.fixture

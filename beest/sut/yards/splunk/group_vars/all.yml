@@ -24,7 +24,9 @@ splunk_deb_download_version: 8.2.7
 splunk_deb_download_hash: 2e1fca123028
 
 # Splunk Network
-splunk_port: 8089
+splunk_instance_protocol: https
+splunk_instance_url: localhost
+splunk_instance_port: 8089
 
 # Username and password for Splunk Enterprise admin user
 #   (modified during initial install, not during upgrade)
