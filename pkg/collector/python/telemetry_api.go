@@ -10,7 +10,6 @@ package python
 
 import (
 	"encoding/json"
-	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
@@ -36,21 +35,15 @@ import "C"
 func SubmitTopologyEvent(id *C.char, data *C.char) {
 	goCheckID := C.GoString(id)
 
-	var sender aggregator.Sender
 	var err error
-
-	sender, err = aggregator.GetSender(check.ID(goCheckID))
-	if err != nil || sender == nil {
-		_ = log.Errorf("Error submitting topology event to the Sender: %v", err)
-		return
-	}
 
 	var topologyEvent metrics.Event
 	rawEvent := C.GoString(data)
 	err = json.Unmarshal([]byte(rawEvent), &topologyEvent)
 
 	if err == nil {
-		sender.Event(topologyEvent)
+		// [sts] send events via die check handler
+		handler.GetCheckManager().GetCheckHandler(check.ID(goCheckID)).SubmitEvent(topologyEvent)
 	} else {
 		_ = log.Errorf("Empty topology event not sent. Raw: %v, Json: %v, Error: %v", rawEvent,
 			topologyEvent.String(), err)

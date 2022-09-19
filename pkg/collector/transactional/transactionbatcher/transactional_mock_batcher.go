@@ -3,6 +3,7 @@ package transactionbatcher
 import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"sync"
@@ -80,6 +81,13 @@ func (mtb *MockTransactionalBatcher) SubmitHealthStopSnapshot(checkID check.ID, 
 func (mtb *MockTransactionalBatcher) SubmitRawMetricsData(checkID check.ID, transactionID string, rawMetric telemetry.RawMetrics) {
 	mtb.mux.Lock()
 	mtb.CollectedTopology.AddRawMetricsData(checkID, transactionID, rawMetric)
+	mtb.mux.Unlock()
+}
+
+// SubmitEvent submits an event to the batch
+func (mtb *MockTransactionalBatcher) SubmitEvent(checkID check.ID, transactionID string, event metrics.Event) {
+	mtb.mux.Lock()
+	mtb.CollectedTopology.AddEvent(checkID, transactionID, event)
 	mtb.mux.Unlock()
 }
 

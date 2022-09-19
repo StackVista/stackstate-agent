@@ -3,6 +3,7 @@ package transactionbatcher
 import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -26,6 +27,9 @@ type TransactionalBatcher interface {
 
 	// Raw Metrics
 	SubmitRawMetricsData(checkID check.ID, transactionID string, data telemetry.RawMetrics)
+
+	// Events
+	SubmitEvent(checkID check.ID, transactionID string, event metrics.Event)
 
 	// Transactional
 	StartTransaction(checkID check.ID, transactionID string)
@@ -104,6 +108,13 @@ type SubmitRawMetricsData struct {
 	CheckID       check.ID
 	TransactionID string
 	RawMetric     telemetry.RawMetrics
+}
+
+// SubmitEvent is used to submit a event to the input channel
+type SubmitEvent struct {
+	CheckID       check.ID
+	TransactionID string
+	Event         metrics.Event
 }
 
 // SubmitComplete is used to submit a check run completion to the input channel
@@ -220,6 +231,15 @@ func (ctb *transactionalBatcher) SubmitRawMetricsData(checkID check.ID, transact
 		CheckID:       checkID,
 		TransactionID: transactionID,
 		RawMetric:     rawMetric,
+	}
+}
+
+// SubmitEvent submits an event to the batch
+func (ctb *transactionalBatcher) SubmitEvent(checkID check.ID, transactionID string, event metrics.Event) {
+	ctb.Input <- SubmitEvent{
+		CheckID:       checkID,
+		TransactionID: transactionID,
+		Event:         event,
 	}
 }
 
