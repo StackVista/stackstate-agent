@@ -1,0 +1,23 @@
+---
+# tasks file for ec2-splunk
+- name: Splunk Metrics Prepare Tasks
+  tags: prepare
+  become: yes
+  block:
+    - name: "Splunk Metrics Saved Search Setup"
+      set_fact:
+        source_type: "sts_test_data"
+        saved_search_name: "metrics"
+        saved_search_format: "table _bkt _cd _time metric value qa"
+
+    - name: "Delete Splunk Metrics Saved Search"
+      command: |
+        curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" \
+        {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches/{{ saved_search_name }}
+
+    - name: "Create Splunk Metrics Saved Search"
+      command: |
+        curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" \
+        {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches \
+        -d name="{{ saved_search_name }}" \
+        --data-urlencode search="sourcetype=\"{{ source_type }}\" AND topo_type=\"{{ saved_search_name }}\" AND value!=\"\" AND metric!=\"\" | {{ saved_search_format }}"

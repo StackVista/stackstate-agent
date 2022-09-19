@@ -1,3 +1,5 @@
+include sut/yards/splunk/Makefile
+
 .SHELLFLAGS = -ec
 
 SHELL         := /bin/bash
@@ -36,6 +38,7 @@ DOCKER_ENV		   = --env AGENT_CURRENT_BRANCH=${GIT_BRANCH} \
 					 --env STS_DOCKER_TEST_REPO_CLUSTER=${STS_DOCKER_TEST_REPO_CLUSTER} \
 					 --env PROCESS_AGENT_TEST_REPO=${PROCESS_AGENT_TEST_REPO}
 
+# Core commands
 build:
 	docker build -t ${KEEPER_IMAGE} \
 		--build-arg BASE_IMAGE=${BASE_KEEPER_IMAGE} \
@@ -46,7 +49,7 @@ build:
 		-f ./keeper.dockerfile .
 
 start: build
-	docker run -it --rm \
+	docker run -dit --rm \
         --name ${KEEPER_CONTAINER} \
         --volume ${PWD}:/go/src/app \
         --volume /var/run/docker.sock:/var/run/docker.sock:ro \
@@ -55,12 +58,14 @@ start: build
         ${DOCKER_ENV} \
         ${KEEPER_IMAGE}
 
+stop:
+	-docker kill ${KEEPER_CONTAINER}
+
 shell:
 	docker exec -ti ${KEEPER_CONTAINER} bash --init-file ./bootstrap.sh
 
 shell-root:
 	docker exec --user root -ti ${KEEPER_CONTAINER} bash
-
 
 # Beest go unit test
 go-test:

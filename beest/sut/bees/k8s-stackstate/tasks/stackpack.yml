@@ -20,6 +20,12 @@
         - k8s_integration is defined
         - stackpacklist.find('kubernetes') == -1
 
+    - name: Install Splunk StackPack
+      command: sts-cli stackpack install splunk-topology -p splunk_instance_name "{{ yard_id }}" -p sts_instance_url "{{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}"
+      when:
+        - splunk_integration is defined
+        - stackpacklist.find('splunk-topology') == -1
+
     - name: Install AWS-V2 StackPack
       command: sts-cli stackpack install aws-v2 -p aws_external_id "{{ yard_id }}" -p aws_role_arn "{{ aws_integration.integration_iam_role }}" -p aws_access_key_id "{{ aws_integration.integration_access_key }}" -p aws_secret_access_key "{{ aws_integration.integration_secret_key }}"
       when:

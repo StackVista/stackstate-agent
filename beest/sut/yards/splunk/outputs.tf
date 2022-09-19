@@ -16,8 +16,6 @@ resource "local_file" "ansible_inventory" {
         }
       }
 
-
-
       vars : {
         yard_id : var.yard_id
         region : var.aws_default_region

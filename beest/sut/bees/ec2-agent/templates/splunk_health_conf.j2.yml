@@ -31,6 +31,9 @@ init_config:
 instances:
   - url: "{{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}"
 
+    # Interval when running saved searches
+    collection_interval: 120
+
     # username: "admin" ## deprecated; use basic_auth.username under authentication section
     # password: "admin" ## deprecated; use basic_auth.password under authentication section
 
@@ -63,14 +66,13 @@ instances:
 
     # Determine whether to produce topology in snapshots, defaults to true
     # snapshot: true
-    # collection_interval: 300
     # saved_searches_parallel: 5
 
     # make the agent less strict and allow for saved searches to be failing or missing
     ignore_saved_search_errors: true
 
-    component_saved_searches:
-      - name: "components"
+    saved_searches:
+      - name: "health"
         # Wilcard match to find component queries, can be used instead of name
         # match: "comp.*"
         # app: "search"
@@ -81,18 +83,8 @@ instances:
         # parameters:
         #   force_dispatch: true
         #   dispatch.now: true
-    relation_saved_searches:
-    #- name: "relations"
-    # Wilcard match to find relation queries, can be used instead of name
-    #  match: "relation*"
-    #  app: "search"
-    #  request_timeout_seconds: 10
-    #  search_max_retry_count: 5
-    #  search_seconds_between_retries: 1
-    #  parameters:
-    #    force_dispatch: true
-    #    dispatch.now: true
 
+    # Used when reporting errors
     # tags:
     #      - optional_tag1
     #      - optional_tag2

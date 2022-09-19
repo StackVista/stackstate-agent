@@ -35,6 +35,15 @@ resource "aws_security_group" "splunk_group" {
   }
 
   ingress {
+    description      = "Splunk API"
+    from_port        = 8089
+    to_port          = 8089
+    protocol         = "all"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  ingress {
     description      = "HTTPS"
     from_port        = 443
     to_port          = 443
