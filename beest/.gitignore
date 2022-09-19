@@ -11,6 +11,7 @@ tf.deploy
 *aws_auth.yml
 *-values.yml
 sts-toolbox.yml
+sut/yards/*/conf.yaml
 
 # pytest related files
 topic-*.json
@@ -74,6 +75,10 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+*.gv
+tests/*/test_*-*.json
+tests/conf.d
+tests/*/conf.d
 
 # Translations
 *.mo

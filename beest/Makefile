@@ -49,7 +49,7 @@ build:
 		-f ./keeper.dockerfile .
 
 start: build
-	docker run -dit --rm \
+	docker run -it --rm \
         --name ${KEEPER_CONTAINER} \
         --volume ${PWD}:/go/src/app \
         --volume /var/run/docker.sock:/var/run/docker.sock:ro \

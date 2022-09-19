@@ -84,6 +84,11 @@
         src: sts-cli-v1-config.j2.yml
         dest: "~/.stackstate/cli/conf.yaml"
 
+    - name: Generate CLI v1 config for local tests
+      ansible.builtin.template:
+        src: sts-cli-v1-config.j2.yml
+        dest: "{{ playbook_dir }}/conf.yaml"
+
     # We can only execute simple commands from pytest, pipes cannot be used directly
     - name: Copy stackstate query script
       ansible.builtin.copy:
