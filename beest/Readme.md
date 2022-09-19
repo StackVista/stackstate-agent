@@ -68,3 +68,19 @@ pip install -r ../.ci-builders/beest-base/requirements-pip-full.txt
 pip install -e testframework/stscliv1/
 pip install -e testframework/ststest/
 ```
+
+## How to run the pytests outside of the Beest Docker Instance (IDE)
+- First you need to deploy the required instances before you can run them inside your IDE. Your pytests will still use these remote resources but will execute the test from your local machine
+
+```shell
+- make
+- beest create <INTEGRATION>
+- beest prepare <INTEGRATION>
+
+# Now you are ready to run things locally, you can either close Beest or leave it running in the background, the local
+# execution of py files is not dependant on the Beest docker instance (I will recommend leaving the docker instance
+# open so that you can kill your resource when you are done)
+```
+
+- Exit the beest docker container, or leave it open, your choice.
+- Head over to the `beest/tests/<INTEGRATION>` folder and run any of the python scripts for the same `<INTEGRATION>` you ran the `create` and `prepare` for.
