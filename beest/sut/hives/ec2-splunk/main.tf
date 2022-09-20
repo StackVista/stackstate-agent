@@ -24,16 +24,14 @@ resource "aws_security_group" "splunk_group" {
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
-
   ingress {
-    description      = "Splunk"
+    description      = "Splunk User Interface"
     from_port        = 8000
     to_port          = 8000
     protocol         = "tcp"
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
-
   ingress {
     description      = "Splunk API"
     from_port        = 8089
@@ -42,7 +40,6 @@ resource "aws_security_group" "splunk_group" {
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
-
   ingress {
     description      = "HTTPS"
     from_port        = 443
@@ -67,7 +64,14 @@ resource "aws_security_group" "splunk_group" {
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
-
+  ingress {
+    description      = "StackState Simulator Receiver API port"
+    from_port        = 7078
+    to_port          = 7078
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
   ingress {
     description      = "Ping"
     from_port        = 8

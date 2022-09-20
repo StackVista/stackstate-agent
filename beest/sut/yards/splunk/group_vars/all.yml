@@ -2,6 +2,9 @@
 agent_current_branch: "{{ lookup('env', 'AGENT_CURRENT_BRANCH') or AGENT_CURRENT_BRANCH }}"
 agent_repo_url: "https://{{ lookup('env', 'STS_AWS_TEST_BUCKET') or STS_AWS_TEST_BUCKET }}.s3.amazonaws.com"
 
+quay_password: "{{ lookup('env', 'quay_password') or QUAY_PASSWORD }}"
+quay_user: "{{ lookup('env', 'quay_user') or QUAY_USER }}"
+
 artifactory_user: "{{ lookup('env', 'artifactory_user') or ARTIFACTORY_USER }}"
 artifactory_password: "{{ lookup('env', 'artifactory_password') or ARTIFACTORY_PASSWORD }}"
 
@@ -15,6 +18,9 @@ kubecontext: "{{ cluster_name }}"
 
 sts_api_key: "{{ yard_id }}"
 sts_url: "https://{{ yard_id }}.{{ cluster_name }}"
+
+# Use a simulator instead of StackState
+enable_sts_simulator: true
 
 # Integrations
 splunk_integration: true

@@ -53,7 +53,13 @@ Terraform state file name, but also used in the names of the infrastructure reso
 ### Feedback / Feature Requests
 
 - Allow beast to run in the background, you can then shell in and out without the risk of closing the "make terminal window"
-- Force Cleanup to be ran before Destroy instead of running them separately
+- Force Cleanup to be run before Destroy instead of running them separately
+- Expose the scenario in the scenarios.yml file that is being ran to the wild. (Similar as with the yard_id)
+  - This will allow some flexibility on selecting files in the same env and knowing the testing and root dir
+- Group the .gv file + test_*-*.json file under a folder structure with the root folder the test name as seen with
+  the json file and the sub folder should be date-time
+- Allow the beest command to include --exclude command to ignore a certain playbook cycle
+  - For example `beest prepare splunk --exclude k8s-stackstate` this will allow cli level ignoring op a playbook section
 
 
 ## How to setup development environment for test

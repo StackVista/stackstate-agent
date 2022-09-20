@@ -82,16 +82,16 @@ instances:
         #   force_dispatch: true
         #   dispatch.now: true
     relation_saved_searches:
-    #- name: "relations"
-    # Wilcard match to find relation queries, can be used instead of name
-    #  match: "relation*"
-    #  app: "search"
-    #  request_timeout_seconds: 10
-    #  search_max_retry_count: 5
-    #  search_seconds_between_retries: 1
-    #  parameters:
-    #    force_dispatch: true
-    #    dispatch.now: true
+      - name: "relations"
+      # Wilcard match to find relation queries, can be used instead of name
+      #  match: "relation*"
+      #  app: "search"
+      #  request_timeout_seconds: 10
+      #  search_max_retry_count: 5
+      #  search_seconds_between_retries: 1
+      #  parameters:
+      #    force_dispatch: true
+      #    dispatch.now: true
 
     # tags:
     #      - optional_tag1

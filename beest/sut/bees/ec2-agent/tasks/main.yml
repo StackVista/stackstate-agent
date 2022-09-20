@@ -8,8 +8,37 @@
         name: stackstate-agent
         state: started
 
-  rescue:
+    # If the agent does not exist then it will not reach the tasks below and continue to the always block
+    # If it does exist tho then the agent needs to be cleaned up to make sure we do no contaminate results
+    - name: Uninstall stackstate-agent
+      become: yes
+      apt:
+        pkg: stackstate-agent
+        state: absent
+
+    - name: Remove configurations
+      become: yes
+      file:
+        path: /etc/stackstate-agent
+        state: absent
+
+  always:
+    - name: "Install stackstate-agent (WARNING: Pointing to the Simulator instead of StackState, and the packets is then forwarded to StackState)"
+      when: enable_sts_simulator is defined and enable_sts_simulator == true
+      shell: "curl -o- {{ agent_repo_url }}/install.sh | bash"
+      register: agent_install_result
+      until: agent_install_result is not failed
+      retries: 5
+      delay: 60
+      environment:
+        STS_API_KEY: "{{ sts_api_key }}"
+        STS_URL: "http://localhost:7078/stsAgent"
+        STS_HOSTNAME: "{{ inventory_hostname }}"
+        CODE_NAME: "{{ agent_current_branch }}"
+        SKIP_SSL_VALIDATION: "false"
+
     - name: Install stackstate-agent
+      when: enable_sts_simulator is not defined or enable_sts_simulator == false
       shell: "curl -o- {{ agent_repo_url }}/install.sh | bash"
       register: agent_install_result
       until: agent_install_result is not failed
@@ -22,7 +51,6 @@
         CODE_NAME: "{{ agent_current_branch }}"
         SKIP_SSL_VALIDATION: "false"
 
-  always:
     # AWS Check
     - name: Creates AWS topology check directory
       become: yes

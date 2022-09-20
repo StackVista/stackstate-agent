@@ -1,0 +1,34 @@
+---
+- name: StackState Simulator prepare tasks
+  tags: prepare
+  block:
+    - name: Stopping the Docker StackState Simulator Instance if it is running.
+      ignore_errors: true
+      shell: "docker kill simulator"
+
+    - name: Display Simulator Warning Message
+      when:
+        enable_sts_simulator is defined and enable_sts_simulator == true
+      debug:
+        msg: |
+          "******************* WARNING: ONLY RUN THE SIMULATOR FOR DEBUGGING PURPOSES AND NOT PERMANENTLY *******************"
+
+    - name: Login Quay.io
+      when:
+        enable_sts_simulator is defined and enable_sts_simulator == true
+      shell: "docker login -u \"{{ quay_user }}\" -p \"{{ quay_password }}\" \"quay.io\""
+
+    - name: Start StackState Simulator Docker Instance
+      when:
+        enable_sts_simulator is defined and enable_sts_simulator == true
+      shell: "docker run --name simulator -dit --rm -p 7078:7078 quay.io/stackstate/simulator:latest -v record -p 7078 -t tpl.json -u {{ sts_url }}/receiver/stsAgent"
+
+## Cleanup
+- name: StackState Simulator cleanup tasks
+  tags: cleanup
+  ignore_errors: yes
+  block:
+    - name: Stop the Simulator Docker instance
+      ignore_errors: true
+      shell: "docker kill simulator"
+
