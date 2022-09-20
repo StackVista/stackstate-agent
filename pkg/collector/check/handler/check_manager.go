@@ -47,7 +47,7 @@ func newCheckManager() *CheckManager {
 func (cm *CheckManager) GetCheckHandler(checkID check.ID) CheckHandler {
 	ch, found := cm.checkHandlers[string(checkID)]
 	if !found {
-		_ = log.Errorf(fmt.Sprintf("No check handler found for %s. Registering a non-transactional check handler.", checkID))
+		log.Debugf(fmt.Sprintf("No check handler found for %s. Registering a non-transactional check handler.", checkID))
 		return cm.registerNonTransactionalCheckHandler(NewCheckIdentifier(checkID), nil, nil)
 	}
 	return ch

@@ -129,6 +129,20 @@ type IntakeEvents struct {
 	Events []Event
 }
 
+// IntakeFormat returns a map of events grouped by source type name
+func (ie IntakeEvents) IntakeFormat() map[string][]Event {
+	eventsBySourceType := make(map[string][]Event)
+	for _, e := range ie.Events {
+		sourceTypeName := e.SourceTypeName
+		if sourceTypeName == "" {
+			sourceTypeName = "api"
+		}
+
+		eventsBySourceType[sourceTypeName] = append(eventsBySourceType[sourceTypeName], e)
+	}
+	return eventsBySourceType
+}
+
 // Marshal serialize events using agent-payload definition
 func (events Events) Marshal() ([]byte, error) {
 	payload := &agentpayload.EventsPayload{

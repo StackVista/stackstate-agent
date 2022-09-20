@@ -99,6 +99,20 @@ var (
 			SourceLinks: []metrics.SourceLink{{Title: "source-link", URL: "source-url"}},
 		},
 	}
+	testEvent3 = metrics.Event{
+		Ts:             time.Now().Unix(),
+		EventType:      "docker",
+		Tags:           []string{"my", "test", "tags"},
+		AggregationKey: "docker:mysql",
+		SourceTypeName: "docker-other",
+		Priority:       metrics.EventPriorityNormal,
+		EventContext: &metrics.EventContext{
+			Data:        map[string]interface{}{},
+			Source:      "docker",
+			Category:    "containers",
+			SourceLinks: []metrics.SourceLink{{Title: "source-link", URL: "source-url"}},
+		},
+	}
 )
 
 func init() {
@@ -263,7 +277,9 @@ func TestBatchFlushOnComplete(t *testing.T) {
 		},
 	}
 	expectedPayload.Metrics = []interface{}{testRawMetricsDataIntakeMetric, testRawMetricsDataIntakeMetric2}
-	expectedPayload.Events = []metrics.Event{testEvent}
+	expectedPayload.Events = map[string][]metrics.Event{
+		"docker": {testEvent},
+	}
 
 	transactionStates := map[string]bool{
 		testTransactionID: true,
@@ -325,6 +341,7 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 	batcher.SubmitRawMetricsData(testID2, testTransaction2ID, testRawMetricsData2)
 
 	batcher.SubmitEvent(testID, testTransactionID, testEvent)
+	batcher.SubmitEvent(testID, testTransactionID, testEvent3)
 	batcher.SubmitEvent(testID2, testTransaction2ID, testEvent2)
 
 	batcher.SubmitStopSnapshot(testID, testTransactionID, testInstance)
@@ -369,7 +386,10 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 		testRawMetricsDataIntakeMetric2,
 	}
 
-	expectedPayload.Events = []metrics.Event{testEvent, testEvent2}
+	expectedPayload.Events = map[string][]metrics.Event{
+		"docker":       {testEvent, testEvent2},
+		"docker-other": {testEvent3},
+	}
 
 	transactionStates := map[string]bool{
 		testTransactionID:  true,
@@ -462,7 +482,9 @@ func TestBatchFlushOnMaxEvents(t *testing.T) {
 
 	expectedPayload := transactional.NewIntakePayload()
 	expectedPayload.InternalHostname = "myhost"
-	expectedPayload.Events = []metrics.Event{testEvent, testEvent2}
+	expectedPayload.Events = map[string][]metrics.Event{
+		"docker": {testEvent, testEvent2},
+	}
 
 	transactionStates := map[string]bool{
 		testTransactionID: false,
@@ -649,7 +671,9 @@ func TestBatchClearState(t *testing.T) {
 			DeleteIDs:     []string{testDeleteID1},
 		},
 	}
-	expectedPayload.Events = []metrics.Event{testEvent}
+	expectedPayload.Events = map[string][]metrics.Event{
+		"docker": {testEvent},
+	}
 
 	transactionStates := map[string]bool{
 		testTransactionID: true,
