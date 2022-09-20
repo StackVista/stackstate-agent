@@ -15,11 +15,10 @@ func (ch *NonTransactionalCheckHandler) Name() string {
 }
 
 // MakeNonTransactionalCheckHandler returns an instance of CheckHandler which functions as a fallback.
-func MakeNonTransactionalCheckHandler(check CheckIdentifier, cr CheckReloader, config, initConfig integration.Data) CheckHandler {
+func MakeNonTransactionalCheckHandler(check CheckIdentifier, config, initConfig integration.Data) CheckHandler {
 	return &NonTransactionalCheckHandler{
 		CheckHandlerBase: CheckHandlerBase{
 			CheckIdentifier: check,
-			CheckReloader:   cr,
 			config:          config,
 			initConfig:      initConfig,
 		},

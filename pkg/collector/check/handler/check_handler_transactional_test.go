@@ -28,7 +28,7 @@ func TestCheckHandler(t *testing.T) {
 	}{
 		{
 			testCase: "my-check-handler-test-check transactional check handler",
-			checkHandler: NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+			checkHandler: NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"},
 				integration.Data{1, 2, 3}, integration.Data{0, 0, 0}),
 			expectedCHString:     "my-check-handler-test-check",
 			expectedCHName:       "my-check-handler-test-check",
@@ -38,7 +38,7 @@ func TestCheckHandler(t *testing.T) {
 		},
 		{
 			testCase: "no-check check handler",
-			checkHandler: MakeNonTransactionalCheckHandler(NewCheckIdentifier("my-check-handler-test-check-2"), &check.TestCheckReloader{},
+			checkHandler: MakeNonTransactionalCheckHandler(NewCheckIdentifier("my-check-handler-test-check-2"),
 				integration.Data{1, 2, 3}, integration.Data{0, 0, 0}),
 			expectedCHString:     "my-check-handler-test-check-2",
 			expectedCHName:       "my-check-handler-test-check-2",
@@ -54,13 +54,6 @@ func TestCheckHandler(t *testing.T) {
 			assert.EqualValues(t, tc.expectedConfig, actualInstanceCfg)
 			assert.EqualValues(t, tc.expectedInitConfig, actualInitCfg)
 			assert.Equal(t, tc.expectedConfigSource, tc.checkHandler.ConfigSource())
-
-			cr := tc.checkHandler.GetCheckReloader().(*check.TestCheckReloader)
-			assert.Equal(t, 0, cr.Reloaded)
-			tc.checkHandler.Reload()
-			assert.Equal(t, 1, cr.Reloaded)
-			tc.checkHandler.Reload()
-			assert.Equal(t, 2, cr.Reloaded)
 		})
 	}
 
@@ -73,7 +66,7 @@ func TestCheckHandler_Transactions(t *testing.T) {
 	testTxManager := transactionmanager.NewMockTransactionManager()
 	transactionbatcher.NewMockTransactionalBatcher()
 
-	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*TransactionalCheckHandler)
 
 	for _, tc := range []struct {
@@ -132,7 +125,7 @@ func TestCheckHandler_State(t *testing.T) {
 	os.Setenv("DD_CHECK_STATE_ROOT_PATH", "./testdata")
 	state.InitCheckStateManager()
 
-	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*TransactionalCheckHandler)
 
 	stateKey := "my-check-handler-test-check:state"
@@ -161,7 +154,7 @@ func TestCheckHandler_Reset_State(t *testing.T) {
 	os.Setenv("DD_CHECK_STATE_ROOT_PATH", "./testdata")
 	state.InitCheckStateManager()
 
-	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*TransactionalCheckHandler)
 
 	stateKey := "my-check-handler-test-check:state"
@@ -177,7 +170,7 @@ func TestCheckHandler_Reset_State(t *testing.T) {
 
 func TestCheckHandler_Shutdown(t *testing.T) {
 	testTxManager := transactionmanager.NewMockTransactionManager()
-	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*TransactionalCheckHandler)
 
 	transactionID := ch.StartTransaction()

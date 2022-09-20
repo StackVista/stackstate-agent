@@ -124,6 +124,11 @@ func (e *Event) String() string {
 // Events represents a list of events ready to be serialize
 type Events []*Event
 
+// IntakeEvents are used in the transactional batcher to keep state of events in a payload [sts]
+type IntakeEvents struct {
+	Events []Event
+}
+
 // Marshal serialize events using agent-payload definition
 func (events Events) Marshal() ([]byte, error) {
 	payload := &agentpayload.EventsPayload{

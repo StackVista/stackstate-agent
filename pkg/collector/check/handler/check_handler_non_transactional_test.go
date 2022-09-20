@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
@@ -12,6 +13,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"os"
 	"testing"
 	"time"
@@ -19,7 +21,7 @@ import (
 
 func TestCheckHandlerNonTransactionalAPI(t *testing.T) {
 	testCheck := &check.STSTestCheck{Name: "my-check-handler-non-transactional-check"}
-	nonTransactionCH := MakeNonTransactionalCheckHandler(testCheck, &check.TestCheckReloader{},
+	nonTransactionCH := MakeNonTransactionalCheckHandler(testCheck,
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 
 	assert.Equal(t, "NonTransactionalCheckHandler", nonTransactionCH.Name())
@@ -29,6 +31,9 @@ func TestCheckHandlerNonTransactionalAPI(t *testing.T) {
 	nonTransactionCH.SetTransactionState("", "")
 
 	mockBatcher := batcher.NewMockBatcher()
+	// sender for non-transactional events
+	sender := mocksender.NewMockSender(testCheck.ID())
+	sender.On("Event", mock.AnythingOfType("metrics.Event"))
 
 	nonTransactionCH.SubmitStartSnapshot(instance)
 	nonTransactionCH.SubmitComponent(instance, testComponent)
@@ -41,6 +46,7 @@ func TestCheckHandlerNonTransactionalAPI(t *testing.T) {
 
 	nonTransactionCH.SubmitRawMetricsData(testRawMetricsData)
 	nonTransactionCH.SubmitRawMetricsData(testRawMetricsData2)
+	nonTransactionCH.SubmitEvent(testEvent)
 
 	nonTransactionCH.SubmitStopSnapshot(instance)
 
@@ -73,12 +79,14 @@ func TestCheckHandlerNonTransactionalAPI(t *testing.T) {
 
 	assert.Equal(t, expectedState, actualState)
 
+	sender.AssertEvent(t, testEvent, 0)
+
 	mockBatcher.Shutdown()
 
 }
 
 func TestNonTransactionalCheckHandler_StartTransaction(t *testing.T) {
-	InitCheckManager(CheckNoReloader{})
+	InitCheckManager()
 	transactionbatcher.NewMockTransactionalBatcher()
 	transactionmanager.NewMockTransactionManager()
 
@@ -105,7 +113,7 @@ func TestNonTransactionalCheckHandler_State(t *testing.T) {
 	state.InitCheckStateManager()
 
 	testCheck := &check.STSTestCheck{Name: "my-check-handler-non-transactional-check"}
-	nonTransactionCH := MakeNonTransactionalCheckHandler(testCheck, &check.TestCheckReloader{},
+	nonTransactionCH := MakeNonTransactionalCheckHandler(testCheck,
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 
 	stateKey := fmt.Sprintf("%s:state", testCheck.Name)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 )
@@ -21,6 +22,7 @@ type TransactionCheckInstanceBatchState struct {
 	Topology    *topology.Topology
 	Metrics     *telemetry.Metrics
 	Health      map[string]health.Health
+	Events      *metrics.IntakeEvents
 }
 
 // JSONString returns a JSON string representation of a TransactionCheckInstanceBatchState
@@ -63,9 +65,7 @@ func (builder *TransactionBatchBuilder) getOrCreateState(checkID check.ID, trans
 		Transaction: &BatchTransaction{
 			TransactionID: transactionID,
 		},
-		Topology: nil,
-		Health:   make(map[string]health.Health),
-		Metrics:  nil,
+		Health: make(map[string]health.Health),
 	}
 	builder.states[checkID] = state
 	return state
@@ -90,6 +90,7 @@ func (builder *TransactionBatchBuilder) getOrCreateTopology(checkID check.ID, tr
 		},
 		Health:  state.Health,
 		Metrics: state.Metrics,
+		Events:  state.Events,
 	}
 	return builder.states[checkID].Topology
 }
@@ -122,10 +123,29 @@ func (builder *TransactionBatchBuilder) getOrCreateRawMetrics(checkID check.ID, 
 		Transaction: state.Transaction,
 		Topology:    state.Topology,
 		Health:      state.Health,
+		Events:      state.Events,
 		Metrics:     &telemetry.Metrics{},
 	}
 
 	return builder.states[checkID].Metrics
+}
+
+func (builder *TransactionBatchBuilder) getOrCreateEvents(checkID check.ID, transactionID string) *metrics.IntakeEvents {
+	state := builder.getOrCreateState(checkID, transactionID)
+
+	if state.Events != nil {
+		return state.Events
+	}
+
+	builder.states[checkID] = TransactionCheckInstanceBatchState{
+		Transaction: state.Transaction,
+		Topology:    state.Topology,
+		Health:      state.Health,
+		Metrics:     state.Metrics,
+		Events:      &metrics.IntakeEvents{},
+	}
+
+	return builder.states[checkID].Events
 }
 
 // AddComponent adds a component
@@ -194,6 +214,13 @@ func (builder *TransactionBatchBuilder) HealthStopSnapshot(checkID check.ID, tra
 func (builder *TransactionBatchBuilder) AddRawMetricsData(checkID check.ID, transactionID string, rawMetric telemetry.RawMetrics) TransactionCheckInstanceBatchStates {
 	rawMetricsData := builder.getOrCreateRawMetrics(checkID, transactionID)
 	rawMetricsData.Values = append(rawMetricsData.Values, rawMetric)
+	return builder.incrementAndTryFlush()
+}
+
+// AddEvent adds a event
+func (builder *TransactionBatchBuilder) AddEvent(checkID check.ID, transactionID string, event metrics.Event) TransactionCheckInstanceBatchStates {
+	events := builder.getOrCreateEvents(checkID, transactionID)
+	events.Events = append(events.Events, event)
 	return builder.incrementAndTryFlush()
 }
 

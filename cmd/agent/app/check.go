@@ -130,7 +130,7 @@ var checkCmd = &cobra.Command{
 		batcher.InitBatcher(&printingAgentV1Serializer{}, hostname, "agent", config.GetMaxCapacity())
 		// [sts] create the global transactional components
 		state.InitCheckStateManager()
-		handler.InitCheckManager(common.Coll)
+		handler.InitCheckManager()
 		transactionforwarder.NewPrintingTransactionalForwarder() // use the printing transactional forwarder for the agent check command
 		transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity())
 		txChannelBufferSize, txTimeoutDuration, txEvictionDuration, txTickerInterval := config.GetTxManagerConfig()
