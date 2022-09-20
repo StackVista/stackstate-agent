@@ -211,7 +211,9 @@ func (ctb *transactionalBatcher) mapStateToPayload(states TransactionCheckInstan
 			}
 		}
 
-		allEvents.Events = append(allEvents.Events, state.Events.Events...)
+		if state.Events != nil {
+			allEvents.Events = append(allEvents.Events, state.Events.Events...)
+		}
 	}
 
 	intake.Events = allEvents.IntakeFormat()
