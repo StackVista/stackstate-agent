@@ -715,7 +715,7 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("cloud_foundry_garden.listen_address", "/var/vcap/data/garden/garden.sock")
 
 	// Azure
-	config.BindEnvAndSetDefault("azure_hostname_style", "os")
+	config.BindEnvAndSetDefault("azure_hostname_style", "name")
 
 	// JMXFetch
 	config.BindEnvAndSetDefault("jmx_custom_jars", []string{})
