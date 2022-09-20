@@ -231,7 +231,7 @@ func getKubeletClient(ctx context.Context) (*kubeletClient, error) {
 				log.Warn("Successfully connected to the kubelet over HTTPS without TLS certificate verification")
 				log.Warn("This can be disabled via configuration setting 'kubelet_fallback_to_unverified_tls'")
 				log.Warn("To fix certificate verification make sure the Kubelet uses a certificate signed by a well-known CA or by the configured CA, which usually is the CA of the Kubernetes API server")
-				return newForConfig(clientConfig, kubeletTimeout)
+				return newForConfig(unverifiedTLSClientConfig, kubeletTimeout)
 			}
 		}
 		// sts end
