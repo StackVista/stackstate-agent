@@ -13,7 +13,6 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
-	"time"
 
 	_ "expvar" // Blank import used because this isn't directly used in this file
 
