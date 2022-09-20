@@ -155,7 +155,7 @@ deps_win:
     when:
       - always
   rules:
-    - when: on_success
+    - when: never
 
 ## build stage
 
