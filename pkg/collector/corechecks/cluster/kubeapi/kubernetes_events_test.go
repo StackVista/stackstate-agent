@@ -72,11 +72,12 @@ func TestProcessBundledEvents(t *testing.T) {
 			CheckBase:             core.NewCheckBase(kubernetesAPIEventsCheckName),
 			KubeAPIServerHostname: "hostname",
 		},
-		mapperFactory: func(d apiserver.OpenShiftDetector, clusterName string) *kubernetesEventMapper {
+		mapperFactory: func(d apiserver.OpenShiftDetector, clusterName string, eventCategoriesOverride map[string]EventCategory) *kubernetesEventMapper {
 			return &kubernetesEventMapper{
-				urn:         urn.NewURNBuilder(urn.Kubernetes, clusterName),
-				clusterName: clusterName,
-				sourceType:  string(urn.Kubernetes),
+				urn:                     urn.NewURNBuilder(urn.Kubernetes, clusterName),
+				clusterName:             clusterName,
+				sourceType:              string(urn.Kubernetes),
+				eventCategoriesOverride: eventCategoriesOverride,
 			}
 		},
 	}
@@ -187,11 +188,12 @@ func TestProcessEvent(t *testing.T) {
 			CheckBase:             core.NewCheckBase(kubernetesAPIEventsCheckName),
 			KubeAPIServerHostname: "hostname",
 		},
-		mapperFactory: func(d apiserver.OpenShiftDetector, clusterName string) *kubernetesEventMapper {
+		mapperFactory: func(d apiserver.OpenShiftDetector, clusterName string, eventCategoriesOverride map[string]EventCategory) *kubernetesEventMapper {
 			return &kubernetesEventMapper{
-				urn:         urn.NewURNBuilder(urn.Kubernetes, clusterName),
-				clusterName: clusterName,
-				sourceType:  string(urn.Kubernetes),
+				urn:                     urn.NewURNBuilder(urn.Kubernetes, clusterName),
+				clusterName:             clusterName,
+				sourceType:              string(urn.Kubernetes),
+				eventCategoriesOverride: eventCategoriesOverride,
 			}
 		},
 	}
@@ -277,11 +279,12 @@ func TestProcessEventsType(t *testing.T) {
 	ev3 := createEvent(4, "default", "dca-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "BackOff", "Back-off restarting failed container", 709662600, "Warning")
 
 	kubeAPIEventsCheck := NewKubernetesAPIEventsCheck(core.NewCheckBase(kubernetesAPIEventsCheckName), &EventsConfig{})
-	kubeAPIEventsCheck.mapperFactory = func(d apiserver.OpenShiftDetector, clusterName string) *kubernetesEventMapper {
+	kubeAPIEventsCheck.mapperFactory = func(d apiserver.OpenShiftDetector, clusterName string, eventCategoriesOverride map[string]EventCategory) *kubernetesEventMapper {
 		return &kubernetesEventMapper{
-			urn:         urn.NewURNBuilder(urn.Kubernetes, clusterName),
-			clusterName: clusterName,
-			sourceType:  string(urn.Kubernetes),
+			urn:                     urn.NewURNBuilder(urn.Kubernetes, clusterName),
+			clusterName:             clusterName,
+			sourceType:              string(urn.Kubernetes),
+			eventCategoriesOverride: eventCategoriesOverride,
 		}
 	}
 	newKubeEventsBundle := []*v1.Event{
@@ -312,4 +315,55 @@ func TestProcessEventsType(t *testing.T) {
 
 	mocked.AssertNumberOfCalls(t, "Event", 3)
 	mocked.AssertExpectations(t)
+}
+
+func TestEventsOverride(t *testing.T) {
+	evCheck := KubernetesAPIEventsFactory().(*EventsCheck)
+	evCheck.ac = MockAPIClient(nil)
+	mappingOfCustomEvents := `
+event_categories:
+  MysteryActivity: Activities
+  MysteryChange: Changes
+  MysteryAlert: Alerts
+  DarkMystery: V0ID
+  EnsuringLoadBalancer: Activities
+`
+	err := evCheck.Configure([]byte(mappingOfCustomEvents), nil, "")
+	assert.NoError(t, err)
+
+	mockSender := mocksender.NewMockSender(evCheck.ID())
+	mockSender.On("Event", mock.AnythingOfType("metrics.Event"))
+
+	createEventShort := func(reason, alertType, message string) *v1.Event {
+		return createEvent(1, "default", "pearl-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "component1", "pearl.host", reason, message, 709662600, alertType)
+	}
+
+	err = evCheck.processEvents(mockSender, []*v1.Event{
+		createEventShort("MysteryActivity", "normal", "one"),
+		createEventShort("MysteryActivity", "warning", "two"),
+		createEventShort("MysteryChange", "normal", "three"),
+		createEventShort("MysteryAlert", "normal", "four"),
+		createEventShort("DarkMystery", "normal", "five"),
+		createEventShort("EnsuringLoadBalancer", "normal", "six"),
+	})
+	assert.NoError(t, err)
+
+	getCategoryForEventWithMessage := func(message string) string {
+		for _, call := range mockSender.Calls {
+			event := call.Arguments.Get(0).(metrics.Event)
+			if event.Text == message {
+				return event.EventContext.Category
+			}
+		}
+		return "not found"
+	}
+	assert.Equal(t, "Activities", getCategoryForEventWithMessage("one"))
+	assert.Equal(t, "Activities", getCategoryForEventWithMessage("two"), "should be Activities despite of alertType")
+	assert.Equal(t, "Changes", getCategoryForEventWithMessage("three"))
+	assert.Equal(t, "Alerts", getCategoryForEventWithMessage("four"))
+	assert.Equal(t, "Others", getCategoryForEventWithMessage("five"), "should be others because V0ID is not recognizable category")
+	assert.Equal(t, "Activities", getCategoryForEventWithMessage("six"), "should be Activities because it is specified in the default mapping")
+
+	mockSender.AssertNumberOfCalls(t, "Event", 6)
+	mockSender.AssertExpectations(t)
 }

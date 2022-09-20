@@ -10,7 +10,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/google/uuid"
 	"sync"
-	"time"
 )
 
 var (
@@ -23,9 +22,9 @@ func init() {
 }
 
 // InitTransactionalBatcher initializes the global transactional transactionbatcher Instance
-func InitTransactionalBatcher(hostname, agentName string, maxCapacity int, flushInterval time.Duration) {
+func InitTransactionalBatcher(hostname, agentName string, maxCapacity int) {
 	batcherInit.Do(func() {
-		batcherInstance = newTransactionalBatcher(hostname, agentName, maxCapacity, flushInterval)
+		batcherInstance = newTransactionalBatcher(hostname, agentName, maxCapacity)
 	})
 }
 
@@ -43,14 +42,12 @@ func NewMockTransactionalBatcher() *MockTransactionalBatcher {
 }
 
 // newTransactionalBatcher returns an instance of the transactionalBatcher and starts listening for submissions
-func newTransactionalBatcher(hostname, agentName string, maxCapacity int, flushInterval time.Duration) *transactionalBatcher {
-	checkFlushInterval := time.NewTicker(flushInterval)
+func newTransactionalBatcher(hostname, agentName string, maxCapacity int) *transactionalBatcher {
 	ctb := &transactionalBatcher{
 		Hostname:    hostname,
 		agentName:   agentName,
 		Input:       make(chan interface{}, maxCapacity),
 		builder:     NewTransactionalBatchBuilder(maxCapacity),
-		flushTicker: checkFlushInterval,
 		maxCapacity: maxCapacity,
 	}
 
@@ -64,7 +61,6 @@ type transactionalBatcher struct {
 	Hostname, agentName string
 	Input               chan interface{}
 	builder             TransactionBatchBuilder
-	flushTicker         *time.Ticker
 	maxCapacity         int
 }
 
@@ -93,6 +89,8 @@ BatcherReceiver:
 				ctb.SubmitState(ctb.builder.HealthStopSnapshot(submission.CheckID, submission.TransactionID, submission.Stream))
 			case SubmitRawMetricsData:
 				ctb.SubmitState(ctb.builder.AddRawMetricsData(submission.CheckID, submission.TransactionID, submission.RawMetric))
+			case SubmitEvent:
+				ctb.SubmitState(ctb.builder.AddEvent(submission.CheckID, submission.TransactionID, submission.Event))
 			case StartTransaction:
 				ctb.SubmitState(ctb.builder.StartTransaction(submission.CheckID, submission.TransactionID))
 			case SubmitCompleteTransaction:
@@ -106,15 +104,12 @@ BatcherReceiver:
 			default:
 				panic(fmt.Sprint("Unknown submission type"))
 			}
-		case <-ctb.flushTicker.C:
-			ctb.SubmitState(ctb.builder.Flush())
 		}
 	}
 }
 
 // Stop stops the transactional transactionbatcher
 func (ctb *transactionalBatcher) Stop() {
-	ctb.flushTicker.Stop()
 	ctb.Input <- SubmitShutdown{}
 
 	// reset the batcher init to re-init the batcher
@@ -203,20 +198,20 @@ func (ctb *transactionalBatcher) mapStateToPayload(states TransactionCheckInstan
 		if state.Topology != nil {
 			intake.Topologies = append(intake.Topologies, *state.Topology)
 		}
-	}
 
-	// Create the health payload
-	for _, state := range states {
 		for _, healthRecord := range state.Health {
 			intake.Health = append(intake.Health, healthRecord)
 		}
-	}
 
-	// Create the metric payload
-	for _, state := range states {
 		if state.Metrics != nil {
 			for _, metric := range state.Metrics.Values {
 				intake.Metrics = append(intake.Metrics, metric.ConvertToIntakeMetric())
+			}
+		}
+
+		if state.Events != nil {
+			for _, event := range state.Events.Events {
+				intake.Events = append(intake.Events, event)
 			}
 		}
 	}
@@ -236,6 +231,11 @@ func (ctb *transactionalBatcher) mapStateToPayload(states TransactionCheckInstan
 		log.Debug("Flushing the following raw metric data:")
 		for _, rawMetric := range intake.Metrics {
 			log.Debugf("%v", rawMetric)
+		}
+
+		log.Debug("Flushing the following event data:")
+		for _, e := range intake.Events {
+			log.Debugf("%v", e)
 		}
 	}
 

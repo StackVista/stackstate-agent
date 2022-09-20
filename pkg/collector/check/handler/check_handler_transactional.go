@@ -22,11 +22,10 @@ type TransactionalCheckHandler struct {
 }
 
 // NewTransactionalCheckHandler creates a new check handler for a given check, check loader and configuration
-func NewTransactionalCheckHandler(check CheckIdentifier, checkReloader CheckReloader, config, initConfig integration.Data) CheckHandler {
+func NewTransactionalCheckHandler(check CheckIdentifier, config, initConfig integration.Data) CheckHandler {
 	ch := &TransactionalCheckHandler{
 		CheckHandlerBase: CheckHandlerBase{
 			CheckIdentifier: check,
-			CheckReloader:   checkReloader,
 			config:          config,
 			initConfig:      initConfig,
 		},
@@ -106,9 +105,6 @@ currentTxHandler:
 				}
 				transactionbatcher.GetTransactionalBatcher().SubmitCompleteTransaction(ch.ID(), ch.GetCurrentTransaction())
 
-				// clear current transaction
-				ch.clearCurrentTransaction()
-
 			case DiscardTransaction:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Discarding current transaction", logPrefix)
@@ -180,7 +176,12 @@ currentTxHandler:
 				}
 
 				transactionbatcher.GetTransactionalBatcher().SubmitRawMetricsData(ch.ID(), ch.GetCurrentTransaction(), msg.Value)
+			case SubmitEvent:
+				if config.Datadog.GetBool("log_payloads") {
+					log.Debugf("%s. Submitting event: %s", logPrefix, msg.Event.String())
+				}
 
+				transactionbatcher.GetTransactionalBatcher().SubmitEvent(ch.ID(), ch.GetCurrentTransaction(), msg.Event)
 			// Lifecycle operations for the current transaction
 			case SubmitComplete:
 				if config.Datadog.GetBool("log_payloads") {

@@ -148,7 +148,6 @@ transactionHandler:
 			txm.mux.Unlock()
 
 			// TODO: produce some transaction checkmanager metrics
-		default:
 		}
 	}
 }

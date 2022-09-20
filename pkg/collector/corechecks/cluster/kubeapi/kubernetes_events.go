@@ -44,12 +44,13 @@ const (
 
 // EventsConfig is the config of the API server.
 type EventsConfig struct {
-	CollectEvent             bool     `yaml:"collect_events"`
-	FilteredEventTypes       []string `yaml:"filtered_event_types"`
-	EventCollectionTimeoutMs int      `yaml:"kubernetes_event_read_timeout_ms"`
-	MaxEventCollection       int      `yaml:"max_events_per_run"`
-	LeaderSkip               bool     `yaml:"skip_leader_election"`
-	ResyncPeriodEvents       int      `yaml:"kubernetes_event_resync_period_s"`
+	CollectEvent             bool                     `yaml:"collect_events"`
+	FilteredEventTypes       []string                 `yaml:"filtered_event_types"`
+	EventCollectionTimeoutMs int                      `yaml:"kubernetes_event_read_timeout_ms"`
+	MaxEventCollection       int                      `yaml:"max_events_per_run"`
+	LeaderSkip               bool                     `yaml:"skip_leader_election"`
+	ResyncPeriodEvents       int                      `yaml:"kubernetes_event_resync_period_s"`
+	EventCategories          map[string]EventCategory `yaml:"event_categories"`
 }
 
 // EventC holds the information pertaining to which event we collected last and when we last re-synced.
@@ -107,6 +108,17 @@ func (k *EventsCheck) Configure(config, initConfig integration.Data, source stri
 	if err != nil {
 		_ = log.Error("could not parse the config for the API events check")
 		return err
+	}
+
+goOverCategories:
+	for evType, category := range k.instance.EventCategories {
+		for _, validCategory := range ValidCategories {
+			if category == validCategory {
+				continue goOverCategories
+			}
+		}
+		_ = log.Warnf("event_categories for kubernetes_evens maps type `%s` to unknown category `%s`, valid categories are: %v", evType, category, ValidCategories)
+		delete(k.instance.EventCategories, evType)
 	}
 
 	if k.instance.EventCollectionTimeoutMs == 0 {
@@ -262,7 +274,7 @@ func (k *EventsCheck) eventCollectionCheck() (newEvents []*v1.Event, err error) 
 // - extracts some attributes and builds a structure ready to be submitted as a StackState event
 // - convert each K8s event to a metrics event to be processed by the intake
 func (k *EventsCheck) processEvents(sender aggregator.Sender, events []*v1.Event) error {
-	mapper := k.mapperFactory(k.ac, k.clusterName)
+	mapper := k.mapperFactory(k.ac, k.clusterName, k.instance.EventCategories)
 	for _, event := range events {
 		mappedEvent, err := mapper.mapKubernetesEvent(event, false)
 		if err != nil {

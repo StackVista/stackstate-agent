@@ -94,6 +94,8 @@ const (
 	DefaultTxManagerTimeoutDurationSeconds = 60 * 5
 	// DefaultTxManagerEvictionDurationSeconds is the amount of time before a manager is evicted and rolled back, 10 minutes by default
 	DefaultTxManagerEvictionDurationSeconds = 60 * 10
+	// DefaultTxManagerTickerIntervalSeconds is the ticker interval to mark transactions as stale / timeout.
+	DefaultTxManagerTickerIntervalSeconds = 30
 
 	// DefaultCheckStateExpirationDuration is the amount of time before an element is expired from the Check State cache, 10 minutes by default
 	// [sts]
@@ -313,6 +315,7 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("transaction_manager_channel_buffer_size", DefaultTxManagerChannelBufferSize)
 	config.BindEnvAndSetDefault("transaction_timeout_duration_seconds", DefaultTxManagerTimeoutDurationSeconds)
 	config.BindEnvAndSetDefault("transaction_eviction_duration_seconds", DefaultTxManagerEvictionDurationSeconds)
+	config.BindEnvAndSetDefault("transaction_ticket_interval_seconds", DefaultTxManagerTickerIntervalSeconds)
 
 	// [sts] check state manager environment variable
 	config.BindEnvAndSetDefault("check_state_root_path", Datadog.GetString("run_path"))
@@ -1313,14 +1316,15 @@ func GetMaxCapacity() int {
 
 // GetTxManagerConfig returns the transaction manager configuration. The buffer size, the time duration and the eviction duration
 // [sts]
-func GetTxManagerConfig() (int, time.Duration, time.Duration) {
+func GetTxManagerConfig() (int, time.Duration, time.Duration, time.Duration) {
 	txBufferSize := Datadog.GetInt("transaction_manager_channel_buffer_size")
 	// get the checkmanager duration and convert it to duration in seconds. Both transaction_timeout_duration_seconds and
 	// transaction_eviction_duration_seconds have default values.
 	txTimeoutDuration := time.Second * time.Duration(Datadog.GetInt("transaction_timeout_duration_seconds"))
 	txEvictionDuration := time.Second * time.Duration(Datadog.GetInt("transaction_eviction_duration_seconds"))
+	txTickerInterval := time.Second * time.Duration(Datadog.GetInt("transaction_ticket_interval_seconds"))
 
-	return txBufferSize, txTimeoutDuration, txEvictionDuration
+	return txBufferSize, txTimeoutDuration, txEvictionDuration, txTickerInterval
 }
 
 func bindEnvAndSetLogsConfigKeys(config Config, prefix string) {

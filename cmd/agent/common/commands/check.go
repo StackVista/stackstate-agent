@@ -156,11 +156,11 @@ func Check(loggerName config.LoggerName, confFilePath *string, flagNoColor *bool
 			batcher.InitBatcher(&printingAgentV1Serializer{}, hostname, "agent", config.GetMaxCapacity())
 			// [sts] create the global transactional components
 			state.InitCheckStateManager()
-			handler.InitCheckManager(common.Coll)
+			handler.InitCheckManager()
 			transactionforwarder.NewPrintingTransactionalForwarder() // use the printing transactional forwarder for the agent check command
-			transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
-			txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
-			transactionmanager.InitTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
+			transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity())
+			txChannelBufferSize, txTimeoutDuration, txEvictionDuration, txTickerInterval := config.GetTxManagerConfig()
+			transactionmanager.InitTransactionManager(txChannelBufferSize, txTickerInterval, txTimeoutDuration, txEvictionDuration)
 
 			if config.Datadog.GetBool("inventories_enabled") {
 				metadata.SetupInventoriesExpvar(common.AC, common.Coll)

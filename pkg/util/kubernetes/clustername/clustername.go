@@ -73,7 +73,9 @@ func getClusterName(ctx context.Context, data *clusterNameData, hostname string)
 		data.clusterName = config.Datadog.GetString("cluster_name")
 		if data.clusterName != "" {
 			log.Infof("Got cluster name %s from config", data.clusterName)
-			skipValidateClusterName := config.Datadog.GetBool("skip_validate_clustername")
+			// [sts] skip cluster name validation by default
+			skipFlagIsDefined := config.Datadog.IsSet("skip_validate_clustername")
+			skipValidateClusterName := !skipFlagIsDefined || config.Datadog.GetBool("skip_validate_clustername")
 			if !skipValidateClusterName {
 				// the host alias "hostname-clustername" must not exceed 255 chars
 				hostAlias := hostname + "-" + data.clusterName

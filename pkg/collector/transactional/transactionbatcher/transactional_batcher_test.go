@@ -8,6 +8,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
@@ -75,6 +76,29 @@ var (
 
 	testRawMetricsDataIntakeMetric  = testRawMetricsData.IntakeMetricJSON()
 	testRawMetricsDataIntakeMetric2 = testRawMetricsData2.IntakeMetricJSON()
+
+	testEvent = metrics.Event{
+		Ts:             time.Now().Unix(),
+		EventType:      "docker",
+		Tags:           []string{"my", "test", "tags"},
+		AggregationKey: "docker:redis",
+		SourceTypeName: "docker",
+		Priority:       metrics.EventPriorityNormal,
+	}
+	testEvent2 = metrics.Event{
+		Ts:             time.Now().Unix(),
+		EventType:      "docker",
+		Tags:           []string{"my", "test", "tags"},
+		AggregationKey: "docker:mysql",
+		SourceTypeName: "docker",
+		Priority:       metrics.EventPriorityNormal,
+		EventContext: &metrics.EventContext{
+			Data:        map[string]interface{}{},
+			Source:      "docker",
+			Category:    "containers",
+			SourceLinks: []metrics.SourceLink{{Title: "source-link", URL: "source-url"}},
+		},
+	}
 )
 
 func init() {
@@ -130,6 +154,7 @@ func testBatcher(t *testing.T, transactionState map[string]bool, expectedPayload
 	})
 	assert.Equal(t, expectedPayload.Health, actualPayload.Health)
 	assert.Equal(t, expectedPayload.Metrics, actualPayload.Metrics)
+	assert.Equal(t, expectedPayload.Events, actualPayload.Events)
 
 	// assert the transaction map produced by the batcher contains the correct action id and completed status
 	expectedTransactionMap := make(map[string]transactional.PayloadTransaction, len(commitActions))
@@ -144,34 +169,8 @@ func testBatcher(t *testing.T, transactionState map[string]bool, expectedPayload
 
 }
 
-func TestBatcherWithInProgressTransactionTimeBasedFlush(t *testing.T) {
-	InitTransactionalBatcher(testHost, testAgent, 100, 500*time.Millisecond)
-	GetTransactionalBatcher().SubmitStartSnapshot(testID, testTransactionID, testInstance)
-
-	expectedPayload := transactional.NewIntakePayload()
-	expectedPayload.InternalHostname = "myhost"
-	expectedPayload.Topologies = []topology.Topology{
-		{
-			StartSnapshot: true,
-			StopSnapshot:  false,
-			Instance:      testInstance,
-			Components:    []topology.Component{},
-			Relations:     []topology.Relation{},
-			DeleteIDs:     []string{},
-		},
-	}
-
-	transactionStates := map[string]bool{
-		testTransactionID: false,
-	}
-
-	testBatcher(t, transactionStates, expectedPayload)
-
-	GetTransactionalBatcher().Stop()
-}
-
 func TestBatchNoPayloadOnlyCompleteTransaction(t *testing.T) {
-	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
+	batcher := newTransactionalBatcher(testHost, testAgent, 100)
 	batcher.SubmitCompleteTransaction(testID, testTransactionID)
 
 	transactionStates := map[string]bool{
@@ -186,7 +185,7 @@ func TestBatchNoPayloadOnlyCompleteTransaction(t *testing.T) {
 }
 
 func TestBatchFlushSnapshotOnComplete(t *testing.T) {
-	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
+	batcher := newTransactionalBatcher(testHost, testAgent, 100)
 	batcher.SubmitStopSnapshot(testID, testTransactionID, testInstance)
 	batcher.SubmitCompleteTransaction(testID, testTransactionID)
 
@@ -212,7 +211,7 @@ func TestBatchFlushSnapshotOnComplete(t *testing.T) {
 }
 
 func TestBatchFlushHealthOnComplete(t *testing.T) {
-	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
+	batcher := newTransactionalBatcher(testHost, testAgent, 100)
 
 	batcher.SubmitHealthStopSnapshot(testID, testTransactionID, testStream)
 	batcher.SubmitCompleteTransaction(testID, testTransactionID)
@@ -236,12 +235,13 @@ func TestBatchFlushHealthOnComplete(t *testing.T) {
 }
 
 func TestBatchFlushOnComplete(t *testing.T) {
-	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
+	batcher := newTransactionalBatcher(testHost, testAgent, 100)
 
 	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent)
 	batcher.SubmitHealthCheckData(testID, testTransactionID, testStream, testCheckData)
 	batcher.SubmitRawMetricsData(testID, testTransactionID, testRawMetricsData)
 	batcher.SubmitRawMetricsData(testID, testTransactionID, testRawMetricsData2)
+	batcher.SubmitEvent(testID, testTransactionID, testEvent)
 	batcher.SubmitCompleteTransaction(testID, testTransactionID)
 
 	expectedPayload := transactional.NewIntakePayload()
@@ -263,6 +263,7 @@ func TestBatchFlushOnComplete(t *testing.T) {
 		},
 	}
 	expectedPayload.Metrics = []interface{}{testRawMetricsDataIntakeMetric, testRawMetricsDataIntakeMetric2}
+	expectedPayload.Events = []metrics.Event{testEvent}
 
 	transactionStates := map[string]bool{
 		testTransactionID: true,
@@ -273,7 +274,7 @@ func TestBatchFlushOnComplete(t *testing.T) {
 }
 
 func TestBatchNoDataNoComplete(t *testing.T) {
-	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
+	batcher := newTransactionalBatcher(testHost, testAgent, 100)
 
 	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent)
 	batcher.SubmitComplete(testID2)
@@ -304,7 +305,7 @@ func TestBatchNoDataNoComplete(t *testing.T) {
 }
 
 func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
-	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
+	batcher := newTransactionalBatcher(testHost, testAgent, 100)
 
 	batcher.SubmitStartSnapshot(testID, testTransactionID, testInstance)
 	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent)
@@ -322,6 +323,9 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 	batcher.SubmitRawMetricsData(testID2, testTransaction2ID, testRawMetricsData)
 	batcher.SubmitRawMetricsData(testID, testTransactionID, testRawMetricsData2)
 	batcher.SubmitRawMetricsData(testID2, testTransaction2ID, testRawMetricsData2)
+
+	batcher.SubmitEvent(testID, testTransactionID, testEvent)
+	batcher.SubmitEvent(testID2, testTransaction2ID, testEvent2)
 
 	batcher.SubmitStopSnapshot(testID, testTransactionID, testInstance)
 	batcher.SubmitCompleteTransaction(testID, testTransactionID)
@@ -365,6 +369,8 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 		testRawMetricsDataIntakeMetric2,
 	}
 
+	expectedPayload.Events = []metrics.Event{testEvent, testEvent2}
+
 	transactionStates := map[string]bool{
 		testTransactionID:  true,
 		testTransaction2ID: false,
@@ -376,7 +382,7 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 }
 
 func TestBatchFlushOnMaxElements(t *testing.T) {
-	batcher := newTransactionalBatcher(testHost, testAgent, 2, 15*time.Second)
+	batcher := newTransactionalBatcher(testHost, testAgent, 2)
 
 	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent)
 	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent2)
@@ -404,7 +410,7 @@ func TestBatchFlushOnMaxElements(t *testing.T) {
 }
 
 func TestBatchFlushOnMaxHealthElements(t *testing.T) {
-	batcher := newTransactionalBatcher(testHost, testAgent, 2, 15*time.Second)
+	batcher := newTransactionalBatcher(testHost, testAgent, 2)
 
 	batcher.SubmitHealthCheckData(testID, testTransactionID, testStream, testCheckData)
 	batcher.SubmitHealthCheckData(testID, testTransactionID, testStream, testCheckData)
@@ -428,7 +434,7 @@ func TestBatchFlushOnMaxHealthElements(t *testing.T) {
 }
 
 func TestBatchFlushOnMaxRawMetricsElements(t *testing.T) {
-	batcher := newTransactionalBatcher(testHost, testAgent, 2, 15*time.Second)
+	batcher := newTransactionalBatcher(testHost, testAgent, 2)
 
 	batcher.SubmitRawMetricsData(testID, testTransactionID, testRawMetricsData)
 	batcher.SubmitRawMetricsData(testID, testTransactionID, testRawMetricsData2)
@@ -448,10 +454,29 @@ func TestBatchFlushOnMaxRawMetricsElements(t *testing.T) {
 	batcher.Stop()
 }
 
+func TestBatchFlushOnMaxEvents(t *testing.T) {
+	batcher := newTransactionalBatcher(testHost, testAgent, 2)
+
+	batcher.SubmitEvent(testID, testTransactionID, testEvent)
+	batcher.SubmitEvent(testID, testTransactionID, testEvent2)
+
+	expectedPayload := transactional.NewIntakePayload()
+	expectedPayload.InternalHostname = "myhost"
+	expectedPayload.Events = []metrics.Event{testEvent, testEvent2}
+
+	transactionStates := map[string]bool{
+		testTransactionID: false,
+	}
+
+	testBatcher(t, transactionStates, expectedPayload)
+
+	batcher.Stop()
+}
+
 func TestBatchFlushOnMaxElementsEnv(t *testing.T) {
 	// set transactionbatcher max capacity via ENV var
 	os.Setenv("DD_BATCHER_CAPACITY", "1")
-	batcher := newTransactionalBatcher(testHost, testAgent, config.GetMaxCapacity(), 15*time.Second)
+	batcher := newTransactionalBatcher(testHost, testAgent, config.GetMaxCapacity())
 
 	assert.Equal(t, 1, batcher.builder.maxCapacity)
 
@@ -482,7 +507,7 @@ func TestBatchFlushOnMaxElementsEnv(t *testing.T) {
 }
 
 func TestBatcherStartSnapshot(t *testing.T) {
-	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
+	batcher := newTransactionalBatcher(testHost, testAgent, 100)
 
 	batcher.SubmitStartSnapshot(testID, testTransactionID, testInstance)
 	batcher.SubmitCompleteTransaction(testID, testTransactionID)
@@ -510,7 +535,7 @@ func TestBatcherStartSnapshot(t *testing.T) {
 }
 
 func TestBatcherRelation(t *testing.T) {
-	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
+	batcher := newTransactionalBatcher(testHost, testAgent, 100)
 
 	batcher.SubmitRelation(testID, testTransactionID, testInstance, testRelation)
 	batcher.SubmitCompleteTransaction(testID, testTransactionID)
@@ -538,7 +563,7 @@ func TestBatcherRelation(t *testing.T) {
 }
 
 func TestBatcherHealthStartSnapshot(t *testing.T) {
-	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
+	batcher := newTransactionalBatcher(testHost, testAgent, 100)
 
 	batcher.SubmitHealthStartSnapshot(testID, testTransactionID, testStream, 1, 0)
 	batcher.SubmitCompleteTransaction(testID, testTransactionID)
@@ -563,7 +588,7 @@ func TestBatcherHealthStartSnapshot(t *testing.T) {
 }
 
 func TestBatchMultipleHealthStreams(t *testing.T) {
-	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
+	batcher := newTransactionalBatcher(testHost, testAgent, 100)
 
 	batcher.SubmitHealthStartSnapshot(testID, testTransactionID, testStream, 1, 0)
 	batcher.SubmitHealthStartSnapshot(testID, testTransactionID, testStream2, 1, 0)
@@ -594,18 +619,20 @@ func TestBatchMultipleHealthStreams(t *testing.T) {
 }
 
 func TestBatchClearState(t *testing.T) {
-	batcher := newTransactionalBatcher(testHost, testAgent, 100, 15*time.Second)
+	batcher := newTransactionalBatcher(testHost, testAgent, 100)
 
 	batcher.StartTransaction(testID, testTransactionID)
 	batcher.SubmitStartSnapshot(testID, testTransactionID, testInstance)
 	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent)
 	batcher.SubmitDelete(testID, testTransactionID, testInstance, testDeleteID1)
+	batcher.SubmitEvent(testID, testTransactionID, testEvent)
 
 	// testID2 + testTransaction2ID will be cancelled and therefore should not be in the final payload
 	batcher.StartTransaction(testID2, testTransaction2ID)
 	batcher.SubmitStartSnapshot(testID2, testTransaction2ID, testInstance)
 	batcher.SubmitComponent(testID2, testTransaction2ID, testInstance, testComponent)
 	batcher.SubmitDelete(testID2, testTransaction2ID, testInstance, testDeleteID2)
+	batcher.SubmitEvent(testID2, testTransaction2ID, testEvent2)
 	batcher.SubmitClearState(testID2)
 
 	batcher.SubmitCompleteTransaction(testID, testTransactionID)
@@ -622,6 +649,7 @@ func TestBatchClearState(t *testing.T) {
 			DeleteIDs:     []string{testDeleteID1},
 		},
 	}
+	expectedPayload.Events = []metrics.Event{testEvent}
 
 	transactionStates := map[string]bool{
 		testTransactionID: true,

@@ -8,3 +8,9 @@ instances:
     #
     # If the API Server is slow to respond under load, the event collection might fail. You can increase the read timeout here.
     # kubernetes_event_read_timeout_ms: 100
+    #
+    # Override category for events based on event's reason
+    # Valid categories are Changes, Alerts, Activities, Others
+    #
+    # event_categories:
+    #   CustomReasonFromCRD: Alerts

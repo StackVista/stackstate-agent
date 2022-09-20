@@ -6,6 +6,8 @@
 - Upstream upgrade to 7.22.1 tag [STAC-16755](https://stackstate.atlassian.net/browse/STAC-16755)
 
 ## Next release (???)
+**Features**
+- Added [configuration options](https://github.com/StackVista/stackstate-agent/blob/master/Dockerfiles/cluster-agent/conf.d/kubernetes_api_events.d/conf.yaml.default) to override category of an event based on event's reason [STAC-16668](https://stackstate.atlassian.net/browse/STAC-16668)
 
 **Bugfix**
 - Fixed an issue where the docker check would not start in a Linux environment. [STAC-16788](https://stackstate.atlassian.net/browse/STAC-16788)
@@ -13,6 +15,8 @@
 **Improvements**
 - Added Support for Transactional State [STAC-13620](https://stackstate.atlassian.net/browse/STAC-13620)
 - Added Support for Stateful Persistent State [STAC-16579](https://stackstate.atlassian.net/browse/STAC-16579)
+- Categorized a bunch of event reasons [STAC-16668](https://stackstate.atlassian.net/browse/STAC-16668)
+- Disabled validation of cluster name (leaving this concern for Helm chart and Stackpack) [STAC-16382](https://stackstate.atlassian.net/browse/STAC-16382)
 
 ## 2.17.2 (2022-08-04)
 

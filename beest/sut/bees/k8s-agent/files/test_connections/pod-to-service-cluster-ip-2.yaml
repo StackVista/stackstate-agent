@@ -39,6 +39,6 @@ spec:
     - image: jgkamat/netcat
       imagePullPolicy: IfNotPresent
       name: client-2
-      command: ["/bin/bash", "-c", "yes | nc -vv pod-service-2 654"]
+      command: ["/bin/bash", "-c", "while echo y; do sleep 0.1; done | nc -vv pod-service-2 654"]
   nodeSelector:
     failure-domain.beta.kubernetes.io/zone: us-east-1b

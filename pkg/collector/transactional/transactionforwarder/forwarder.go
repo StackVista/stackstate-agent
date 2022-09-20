@@ -99,7 +99,7 @@ forwardHandler:
 			// check to see if this is an empty payload -> OnlyMarkTransactions == true
 			if payload.OnlyMarkTransactions {
 				f.ProgressTransactions(payload.TransactionActionMap)
-				return
+				continue
 			}
 
 			response := f.stsClient.Post(payload.Path, payload.Body)
@@ -123,7 +123,6 @@ forwardHandler:
 		case sf := <-f.ShutdownChannel:
 			log.Infof("Shutting down forwarder %v", sf)
 			break forwardHandler
-		default:
 		}
 	}
 }

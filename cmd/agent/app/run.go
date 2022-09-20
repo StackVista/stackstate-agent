@@ -465,10 +465,10 @@ func StartAgent() error {
 	// [STS] create the global transactional components
 	state.InitCheckStateManager()
 	transactionforwarder.InitTransactionalForwarder()
-	transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity(), 15*time.Second)
-	handler.InitCheckManager(common.Coll)
-	txChannelBufferSize, txTimeoutDuration, txEvictionDuration := config.GetTxManagerConfig()
-	transactionmanager.InitTransactionManager(txChannelBufferSize, 5*time.Second, txTimeoutDuration, txEvictionDuration)
+	transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity())
+	handler.InitCheckManager()
+	txChannelBufferSize, txTimeoutDuration, txEvictionDuration, txTickerInterval := config.GetTxManagerConfig()
+	transactionmanager.InitTransactionManager(txChannelBufferSize, txTickerInterval, txTimeoutDuration, txEvictionDuration)
 
 	// check for common misconfigurations and report them to log
 	misconfig.ToLog()

@@ -40,7 +40,7 @@ type ContainerListConfig struct {
 
 // sts begin
 func (d *DockerUtil) GetContainers(ctx context.Context) ([]*spec.Container, error) {
-	dockerContainers, err := d.ListContainers(ctx, &ContainerListConfig{IncludeExited: false, FlagExcluded: true})
+	dockerContainers, err := d.ListContainers(ctx, &ContainerListConfig{IncludeExited: true, FlagExcluded: true})
 	if err != nil {
 		return nil, err
 	}

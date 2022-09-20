@@ -18,9 +18,9 @@ func init() {
 }
 
 // InitCheckManager ...
-func InitCheckManager(reloader CheckReloader) {
+func InitCheckManager() {
 	cmInit.Do(func() {
-		cmInstance = newCheckManager(reloader)
+		cmInstance = newCheckManager()
 	})
 }
 
@@ -31,15 +31,13 @@ func GetCheckManager() *CheckManager {
 
 // CheckManager acts as the grouping of check handlers and deals with the "lifecycle" of check handlers.
 type CheckManager struct {
-	reloader      CheckReloader
 	checkHandlers map[string]CheckHandler
 	config        Config
 }
 
 // newCheckManager returns a instance of the Check Manager
-func newCheckManager(reloader CheckReloader) *CheckManager {
+func newCheckManager() *CheckManager {
 	return &CheckManager{
-		reloader:      reloader,
 		checkHandlers: make(map[string]CheckHandler),
 		config:        GetCheckManagerConfig(),
 	}
@@ -57,7 +55,7 @@ func (cm *CheckManager) GetCheckHandler(checkID check.ID) CheckHandler {
 
 // registerNonTransactionalCheckHandler registers a non-transactional check handler for a given check
 func (cm *CheckManager) registerNonTransactionalCheckHandler(check CheckIdentifier, config, initConfig integration.Data) CheckHandler {
-	ch := MakeNonTransactionalCheckHandler(check, CheckNoReloader{}, config, initConfig)
+	ch := MakeNonTransactionalCheckHandler(check, config, initConfig)
 	cm.checkHandlers[string(check.ID())] = ch
 	return ch
 }
@@ -76,7 +74,7 @@ func (cm *CheckManager) MakeCheckHandlerTransactional(checkID check.ID) CheckHan
 	}
 
 	config, initConfig := ch.GetConfig()
-	transactionalCheckHandler := NewTransactionalCheckHandler(ch, cm.reloader, config, initConfig)
+	transactionalCheckHandler := NewTransactionalCheckHandler(ch, config, initConfig)
 	cm.checkHandlers[string(checkID)] = transactionalCheckHandler
 
 	return transactionalCheckHandler
