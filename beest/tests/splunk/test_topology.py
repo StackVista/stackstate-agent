@@ -6,8 +6,8 @@ from stscliv1 import CLIv1
 from ststest import TopologyMatcher
 
 # Create a connection through a specific inventory host
-# When running the script outside of Beest we need a relative location for ansible_inventory file.
-# This works inside the Beest container and outside of Beest so this can be as it for both.
+# When running the script outside Beest we need a relative location for ansible_inventory file.
+# This works inside the Beest container and outside Beest so this can be as it for both.
 testinfra_hosts = [f"ansible://local?ansible_inventory={YARD_LOCATION}/ansible_inventory"]
 
 
