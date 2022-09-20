@@ -7,6 +7,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionforwarder"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/google/uuid"
 	"sync"
@@ -194,6 +195,7 @@ func (ctb *transactionalBatcher) mapStateToPayload(states TransactionCheckInstan
 	intake.InternalHostname = ctb.Hostname
 
 	// Create the topologies payload
+	allEvents := &metrics.IntakeEvents{}
 	for _, state := range states {
 		if state.Topology != nil {
 			intake.Topologies = append(intake.Topologies, *state.Topology)
@@ -209,12 +211,10 @@ func (ctb *transactionalBatcher) mapStateToPayload(states TransactionCheckInstan
 			}
 		}
 
-		if state.Events != nil {
-			for _, event := range state.Events.Events {
-				intake.Events = append(intake.Events, event)
-			}
-		}
+		allEvents.Events = append(allEvents.Events, state.Events.Events...)
 	}
+
+	intake.Events = allEvents.IntakeFormat()
 
 	// For debug purposes print out all topologies payload
 	if config.Datadog.GetBool("log_payloads") {
