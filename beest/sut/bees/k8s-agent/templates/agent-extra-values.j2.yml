@@ -3,7 +3,7 @@ stackstate:
   url: {{ sts_url }}/receiver/stsAgent
   cluster:
     name: {{ cluster_name }}
-agent:
+nodeAgent:
   containers:
     agent:
       image:
@@ -17,7 +17,7 @@ clusterAgent:
   image:
     tag: {{ agent_current_branch }}
     repository: "stackstate/{{cluster_agent_docker_repo}}"
-clusterChecks:
+checksAgent:
   image:
     tag: {{agent_current_branch}}
     repository: "stackstate/{{agent_docker_repo}}"

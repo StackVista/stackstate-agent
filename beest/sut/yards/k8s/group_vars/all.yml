@@ -20,6 +20,7 @@ stackstate_helm_chart_version: "{{ lookup('env', 'STACKSTATE_HELM_CHART_VERSION'
 stackstate_license: "{{ lookup('env', 'STACKSTATE_LICENSE') or STACKSTATE_LICENSE }}"
 
 monitoring_namespace: "monitoring"
+agent_release_name: "stackstate-agent"
 test_namespace: "{{ yard_id.replace('.','-').replace('_','-') }}"
 agent_cluster_name: "{{ test_namespace }}"
 stackstate_cluster_name: "sandbox-main.sandbox.stackstate.io"

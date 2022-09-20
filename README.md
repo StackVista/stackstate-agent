@@ -158,10 +158,10 @@ helm upgrade --install \
   --set-string 'stackstate.apiKey'='<api-key>' \
   --set-string 'stackstate.cluster.name'='<cluster-name' \
   --set-string 'stackstate.url'='<stackstate-url>' \
-  stackstate-cluster-agent stackstate-test/stackstate-agent --version <version>
+  stackstate-agent stackstate-test/stackstate-agent --version <version>
 ```
 
-`<version>` is the new version you've set on `helm-charts/stable/cluster-agent/Chart.yaml` on your feature branch.
+`<version>` is the new version you've set on `helm-charts/stable/stackstate-agent/Chart.yaml` on your feature branch.
 
 To use this version in the `stackstate-agent` pipeline, create a branch and update the `AGENT_HELM_CHART_VERSION` variable on `.gitlab-ci-agent.yml`, with that the pipeline will use the test helm repository that was updated by the helm-charts pipeline.
 
