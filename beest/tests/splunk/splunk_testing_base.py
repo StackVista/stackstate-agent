@@ -7,7 +7,7 @@ from ststest import TopologyMatcher
 from urllib3.exceptions import InsecureRequestWarning
 
 
-class SplunkTestingBase:
+class SplunkBase:
     def __init__(self, host, ansible_var, log, yard_location):
         self.host = host
         self.log: logging.Logger = log
@@ -16,7 +16,16 @@ class SplunkTestingBase:
 
         self.yard_id = ansible_var("yard_id")
         self.splunk_instance = self.set_splunk_instance(yard_location)
-        self.topology = SplunkTestingTopologyBase(ansible_var, self.splunk_instance)
+
+        # Authentication Details
+        splunk_user = ansible_var("splunk_user")
+        splunk_pass = ansible_var("splunk_pass")
+
+        # Types of Splunk Integrations
+        self.topology = SplunkTopologyBase(ansible_var, self.splunk_instance, splunk_user, splunk_pass)
+        self.event = SplunkEventBase(ansible_var, self.splunk_instance, splunk_user, splunk_pass)
+        self.health = SplunkHealthBase(ansible_var, self.splunk_instance, splunk_user, splunk_pass)
+        self.metric = SplunkMetricBase(ansible_var, self.splunk_instance, splunk_user, splunk_pass)
 
     # Force the query to be in the Splunk StackPack with the yard id as the instance
     def stackpack_topology_query(self, query_suffix: str):
@@ -47,9 +56,9 @@ class SplunkTestingBase:
         return splunk_instance
 
 
-class SplunkTestingTopologyBase:
-    def __init__(self, ansible_var, splunk_instance):
-        # The calaculated splunk instance
+class SplunkCommonBase:
+    def __init__(self, ansible_var, splunk_instance, splunk_user, splunk_pass):
+        # The calculated splunk instance
         self.splunk_instance = splunk_instance
 
         # Create a session to control all requests
@@ -57,36 +66,114 @@ class SplunkTestingTopologyBase:
         self.session.verify = False
 
         # Authentication Details
-        self.splunk_user = ansible_var("splunk_user")
-        self.splunk_pass = ansible_var("splunk_pass")
+        self.splunk_user = splunk_user
+        self.splunk_pass = splunk_pass
 
         # Disable Security Warning
         requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
-    # Posts a component to splunk with the type of server
+    def post_to_services_receivers_simple(self, json_data, param_data=None):
+        self.session.post("%s/services/receivers/simple" % self.splunk_instance,
+                          json=json_data,
+                          params=param_data,
+                          auth=(self.splunk_user, self.splunk_pass)) \
+            .raise_for_status()
+
+
+class SplunkTopologyBase(SplunkCommonBase):
+    def __init__(self, ansible_var, splunk_instance, splunk_user, splunk_pass):
+        super().__init__(ansible_var, splunk_instance, splunk_user, splunk_pass)
+
     def publish_random_server_component(self) -> str:
         component_id = "server_{}".format(random.randint(0, 10000))
 
         self._post_component(component_id=component_id,
                              component_type="server",
-                             component_description="Topology Server Component",
-                             component_topo_type="component")
+                             description="Topology Server Component")
 
         return component_id
 
-    # Core method for posting components to Splunk
-    def _post_component(self,
-                        component_id: str,
-                        component_type: str,
-                        component_description: str,
-                        component_topo_type: str):
+    def _post_component(self, component_id: str, component_type: str,
+                        description: str = "Component Description",
+                        topo_type: str = "component"):
         json_data = {
-            "topo_type": component_topo_type,
+            "topo_type": topo_type,
             "id": component_id,
             "type": component_type,
-            "description": component_description
+            "description": description
         }
-        self.session.post("%s/services/receivers/simple" % self.splunk_instance,
-                          json=json_data,
-                          auth=(self.splunk_user, self.splunk_pass)) \
-            .raise_for_status()
+        self.post_to_services_receivers_simple(json_data=json_data)
+
+    def _post_relation(self, relation_type: str, source_id: str, target_id: str,
+                       description: str = "Relation Description",
+                       topo_type: str = "relation"):
+        json_data = {
+            "topo_type": topo_type,
+            "type": relation_type,
+            "sourceId": source_id,
+            "targetId": target_id,
+            "description": description
+        }
+        self.post_to_services_receivers_simple(json_data=json_data)
+
+
+class SplunkHealthBase(SplunkCommonBase):
+    def __init__(self, ansible_var, splunk_instance, splunk_user, splunk_pass):
+        super().__init__(ansible_var, splunk_instance, splunk_user, splunk_pass)
+
+    # Core method for posting events to Splunk
+    def _post_health(self, check_state_id: str, name: str, status: str, topology_element_identifier: str,
+                     message: str = None):
+
+        json_data = {
+            "check_state_id": check_state_id,
+            "name": name,
+            "health": status,
+            "topology_element_identifier": topology_element_identifier
+            }
+
+        if message is not None:
+            json_data["message"] = message
+
+        self.post_to_services_receivers_simple(json_data=json_data)
+
+
+class SplunkEventBase(SplunkCommonBase):
+    def __init__(self, ansible_var, splunk_instance, splunk_user, splunk_pass):
+        super().__init__(ansible_var, splunk_instance, splunk_user, splunk_pass)
+
+    # Core method for posting events to Splunk
+    def _post_event(self, status: str, host: str, source_type: str,
+                    description: str = "Event Description"):
+        param_data = {
+            "host": host,
+            "sourcetype": source_type
+        }
+
+        json_data = {
+            "status": status,
+            "description": description
+        }
+
+        self.post_to_services_receivers_simple(json_data=json_data, param_data=param_data)
+
+
+class SplunkMetricBase(SplunkCommonBase):
+    def __init__(self, ansible_var, splunk_instance, splunk_user, splunk_pass):
+        super().__init__(ansible_var, splunk_instance, splunk_user, splunk_pass)
+
+    # Core method for posting events to Splunk
+    def _post_metric(self, topo_type: str, identifier: str, value: int, qa: str, host: str, source_type: str):
+        param_data = {
+            "host": host,
+            "sourcetype": source_type
+        }
+
+        json_data = {
+            "topo_type": topo_type,
+            "metric": identifier,
+            "value": value,
+            "qa": qa
+        }
+
+        self.post_to_services_receivers_simple(json_data=json_data, param_data=param_data)

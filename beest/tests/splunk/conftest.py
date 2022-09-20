@@ -3,7 +3,7 @@ import pytest
 import os
 import shutil
 
-from splunk_testing_base import SplunkTestingBase
+from splunk_testing_base import SplunkBase
 from typing import Callable
 from stscliv1 import CLIv1
 
@@ -16,11 +16,11 @@ YARD_LOCATION = f"../../sut/yards/splunk"
 # Create a Splunk Testing Base class to group all the functionality for splunk
 # Allowing it to be used on other testing script if need be
 @pytest.fixture
-def splunk(ansible_var, host) -> SplunkTestingBase:
-    return SplunkTestingBase(host,
-                             ansible_var=ansible_var,
-                             log=logging.getLogger("Splunk"),
-                             yard_location=YARD_LOCATION)
+def splunk(ansible_var, host) -> SplunkBase:
+    return SplunkBase(host,
+                      ansible_var=ansible_var,
+                      log=logging.getLogger("Splunk"),
+                      yard_location=YARD_LOCATION)
 
 
 # Copy and cleanup all the necessary files to be able to run the cli.
