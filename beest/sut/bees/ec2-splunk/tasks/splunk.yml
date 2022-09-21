@@ -4,15 +4,6 @@
   tags: prepare
   become: yes
   block:
-    - name: Create variable pointing to the Splunk Executable
-      set_fact:
-        splunk: "{{ splunk_home }}/bin/splunk"
-
-    - name: Check if Splunk Exists
-      shell: "{{ splunk }} --version"
-      register: splunk_version
-
-  rescue:
     - name: Wait for the reboot and reconnect (Cleans Lock Files)
       reboot:
         msg: "Reboot initiated by Ansible"
@@ -21,6 +12,10 @@
         pre_reboot_delay: 0
         post_reboot_delay: 30
         test_command: whoami
+
+    - name: Create variable pointing to the Splunk Executable
+      set_fact:
+        splunk: "{{ splunk_home }}/bin/splunk"
 
     - name: Download Copy of Splunk Enterprise
       get_url:

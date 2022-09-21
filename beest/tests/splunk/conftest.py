@@ -17,19 +17,20 @@ YARD_LOCATION = f"../../sut/yards/splunk"
 
 
 @pytest.fixture
-def simulator_dump(request, ansible_var, splunk):
-    def retrieve_data(max_results=100):
+def simulator(request, ansible_var, splunk):
+    def dump_data(max_results=100):
         # Retrieve if the sts simulator is enabled in the playbook scenario
         ansible_sts_simulator_var = "enable_sts_simulator"
         is_simulator_enabled = ansible_var(ansible_sts_simulator_var, True)
 
-        # If it is the we continue with pulling the simulator data
+        # If is_simulator_enabled is enabled then we will continue with pulling the simulator data
         if is_simulator_enabled is True:
             data_dump_filename = "{}-{}-simulator_dump.json".format(
                 Path(str(request.node.fspath)).stem,
                 request.node.originalname,
             )
 
+            # Attempt to pull data from the splunk host as the simulator will run on the same host
             response = requests.get(url=f"http://{splunk.splunk_host}:7078/download")
             response_data = response.json()
 
@@ -37,6 +38,7 @@ def simulator_dump(request, ansible_var, splunk):
             with open(data_dump_filename, "w") as outfile:
                 json.dump(response_data, outfile, indent=4)
 
+            # Trim data to be smaller when used in a debugger
             if len(response_data) > max_results:
                 # Reverse the order so that the newer results is first in the array before trimming
                 response_data.reverse()
@@ -61,7 +63,7 @@ def simulator_dump(request, ansible_var, splunk):
             logging.warning("Skipping: Simulator is disabled, skipping a simulator data dump")
             return None
 
-    return retrieve_data
+    return dump_data
 
 
 # Create a Splunk Testing Base class to group all the functionality for splunk

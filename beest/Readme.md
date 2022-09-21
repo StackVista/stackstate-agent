@@ -63,7 +63,6 @@ Terraform state file name, but also used in the names of the infrastructure reso
 
 
 ## How to setup development environment for test
-
 We need python 3.9 for Beest.
 
 ```shell

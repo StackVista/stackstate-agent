@@ -19,7 +19,8 @@ kubecontext: "{{ cluster_name }}"
 sts_api_key: "{{ yard_id }}"
 sts_url: "https://{{ yard_id }}.{{ cluster_name }}"
 
-# Use a simulator instead of StackState
+# Enable a StackState Receiver simulator. The data will still be forwarded to StackState but can be pulled from the
+# host machine. If this is enabled then the testing will automatically attempt to pull the Simulator logs on failure
 enable_sts_simulator: true
 
 # Integrations

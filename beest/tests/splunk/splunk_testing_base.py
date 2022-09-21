@@ -1,4 +1,3 @@
-import logging
 import testinfra.utils.ansible_runner
 import requests
 import random
@@ -95,9 +94,6 @@ class SplunkCommonBase:
 
 
 class SplunkTopologyBase(SplunkCommonBase):
-    def __init__(self, ansible_var, splunk_instance, splunk_user, splunk_pass):
-        super().__init__(ansible_var, splunk_instance, splunk_user, splunk_pass)
-
     def publish_random_server_component(self) -> str:
         component_id = "server_{}".format(random.randint(0, 10000))
 
@@ -132,50 +128,40 @@ class SplunkTopologyBase(SplunkCommonBase):
 
 
 class SplunkHealthBase(SplunkCommonBase):
-    def __init__(self, ansible_var, splunk_instance, splunk_user, splunk_pass):
-        super().__init__(ansible_var, splunk_instance, splunk_user, splunk_pass)
-
     # Core method for posting events to Splunk
-    def _post_health(self, check_state_id: str, name: str, status: str, topology_element_identifier: str,
-                     message: str = None):
+    def _post_health(self):
 
         json_data = {
-            "check_state_id": check_state_id,
-            "name": name,
-            "health": status,
-            "topology_element_identifier": topology_element_identifier
+            "check_state_id": "disk_sda",
+            "name": "Disk sda",
+            "health": "clear",
+            "topology_element_identifier": "server_1",
+            "message": "sda message"
             }
 
-        if message is not None:
-            json_data["message"] = message
+        # if message is not None:
+        #     json_data["message"] = message
 
         self.post_to_services_receivers_simple(json_data=json_data)
 
 
 class SplunkEventBase(SplunkCommonBase):
-    def __init__(self, ansible_var, splunk_instance, splunk_user, splunk_pass):
-        super().__init__(ansible_var, splunk_instance, splunk_user, splunk_pass)
-
     # Core method for posting events to Splunk
-    def _post_event(self, status: str, host: str, source_type: str,
-                    description: str = "Event Description"):
+    def _post_event(self):
         param_data = {
-            "host": host,
-            "sourcetype": source_type
+            "host": "host01",
+            "sourcetype": "sts_test_data"
         }
 
         json_data = {
-            "status": status,
-            "description": description
+            "status": "CRITICAL",
+            "description": "host01 test critical event"
         }
 
         self.post_to_services_receivers_simple(json_data=json_data, param_data=param_data)
 
 
 class SplunkMetricBase(SplunkCommonBase):
-    def __init__(self, ansible_var, splunk_instance, splunk_user, splunk_pass):
-        super().__init__(ansible_var, splunk_instance, splunk_user, splunk_pass)
-
     # Core method for posting events to Splunk
     def _post_metric(self):
         param_data = {
