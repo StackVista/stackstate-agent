@@ -83,6 +83,7 @@ func (cm *CheckManager) MakeCheckHandlerTransactional(checkID check.ID) CheckHan
 // RegisterCheckHandler registers a check handler for the given check using a transactionbatcher for this instance
 func (cm *CheckManager) RegisterCheckHandler(check CheckIdentifier, config, initConfig integration.Data) CheckHandler {
 	log.Debugf("RegisterCheckHandler check = %+v, config = %s, initConfig = %s", check, string(config), string(initConfig))
+	log.Flush()
 	ch := cm.registerNonTransactionalCheckHandler(check, config, initConfig)
 	log.Debugf("Registering Check Handler for: %s", ch.ID())
 	cm.checkHandlers[string(check.ID())] = ch
