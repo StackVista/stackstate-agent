@@ -213,6 +213,7 @@ func (cl *PythonCheckLoader) Load(config integration.Config, instance integratio
 	C.rtloader_decref(rtloader, checkModule)
 
 	log.Debugf("python loader: done loading check %s (version %s)", moduleName, wheelVersion)
+	log.Flush() // sts
 
 	// [sts] register check handler
 	handler.GetCheckManager().RegisterCheckHandler(c, config.InitConfig, instance)
