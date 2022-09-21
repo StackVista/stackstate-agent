@@ -15,6 +15,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/opencontainers/runtime-spec/specs-go"
+
 	cspec "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec" // sts
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	dderrors "github.com/StackVista/stackstate-agent/pkg/errors"
@@ -192,9 +194,12 @@ func (c *ContainerdUtil) GetContainers(ctx context.Context) ([]*cspec.Container,
 			name = nameLabel
 		}
 
+		var mounts []specs.Mount
 		spec, err := dContainer.Spec(ctxNamespace)
 		if err != nil {
-			logExtractionError("Spec", dContainer, err)
+			logExtractionError("mounts (Spec)", dContainer, err)
+		} else {
+			mounts = spec.Mounts
 		}
 
 		state := ""
@@ -215,7 +220,7 @@ func (c *ContainerdUtil) GetContainers(ctx context.Context) ([]*cspec.Container,
 			Runtime: "containerd",
 			ID:      dContainer.ID(),
 			Image:   info.Image,
-			Mounts:  spec.Mounts,
+			Mounts:  mounts,
 			State:   state,
 		}
 		uContainers = append(uContainers, container)
