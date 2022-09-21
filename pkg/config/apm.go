@@ -90,11 +90,6 @@ func setupAPM(config Config) {
 	config.BindEnv("apm_config.obfuscation.credit_cards.enabled", "DD_APM_OBFUSCATION_CREDIT_CARDS_ENABLED")
 	config.BindEnv("apm_config.obfuscation.credit_cards.luhn", "DD_APM_OBFUSCATION_CREDIT_CARDS_LUHN")
 
-	log.Infof("[sts] BindEnv %s -> %s", "apm_config.apm_dd_url", "DD_APM_DD_URL")
-	log.Infof("[sts] STS_APM_URL = %s", config.GetString("STS_APM_URL"))
-	log.Infof("[sts] DD_APM_DD_URL = %s", config.GetString("DD_APM_DD_URL"))
-	log.Infof("[sts] apm_config.apm_dd_url = %s", config.GetString("apm_config.apm_dd_url"))
-
 	config.SetEnvKeyTransformer("apm_config.ignore_resources", func(in string) interface{} {
 		r, err := splitCSVString(in, ',')
 		if err != nil {

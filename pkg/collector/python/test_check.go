@@ -647,6 +647,8 @@ func testConfigureDeprecated(t *testing.T) {
 
 // sts begin
 func testSetCollectionIntervalToInstanceData(t *testing.T) {
+	rtloader = newMockRtLoaderPtr()
+	defer func() { rtloader = nil }()
 	c, err := NewPythonFakeCheck()
 	if !assert.Nil(t, err) {
 		return
@@ -657,6 +659,8 @@ func testSetCollectionIntervalToInstanceData(t *testing.T) {
 }
 
 func testSetCollectionIntervalToInvalidDataWithInvalidData(t *testing.T) {
+	rtloader = newMockRtLoaderPtr()
+	defer func() { rtloader = nil }()
 	c, err := NewPythonFakeCheck()
 	if !assert.Nil(t, err) {
 		return

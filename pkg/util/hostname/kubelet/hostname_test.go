@@ -71,6 +71,9 @@ func TestHostnameProviderInvalid(t *testing.T) {
 	ctx := context.Background()
 	mockConfig := config.Mock()
 
+	// [sts] validtion is skipped by default, so we set it to "dont skip" explicitly
+	mockConfig.Set("skip_validate_clustername", false)
+
 	ku := &kubeUtilMock{}
 
 	ku.On("GetNodename").Return("node-name", nil)
