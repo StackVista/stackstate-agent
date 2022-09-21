@@ -1299,6 +1299,7 @@ molecule_vms_test:
   rules:
     - *vms_ignore_rule
     - *v2_merge_train_on_success
+    - when: never
   variables:
     MOLECULE_SCENARIO: vms
   dependencies:
