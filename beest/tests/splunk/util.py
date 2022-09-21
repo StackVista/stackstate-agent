@@ -2,6 +2,7 @@ import time
 import logging
 import re
 
+from copy import copy
 from typing import Callable, Union, Optional
 from stscliv1 import CLIv1
 from ststest import TopologyMatcher
@@ -58,19 +59,23 @@ def find_in_topic(cliv1: CLIv1,
             if len(remaining_query) > 0:
                 # Remove the first item from the remaining_query array and test the dict with this key
                 key: str = remaining_query.pop(0)
+                loop_through_all_values: bool = False
                 after_key_index: Optional[int] = None
 
-                # Do a check if the key contains the possible pattern for a index, before running the more
-                # expensive regex operation to find the int value
                 try:
-                    if key.find("[") > -1 and key.find("]") > -1:
-                        # if the key ends with [*] then it means that it can be any of the values in the array
-                        # so no need to do regex for the number we just need to rerun the loop on every entry and see
-                        # if something matches. This is an expensive operation so do not run this if the array is
-                        # always 1 entry
-                        if key.endswith("[*]"):
-                            print("TODO: ")
+                    # if the key ends with [*] then it means that it can be any of the values in the array
+                    # so no need to do regex for the number we just need to rerun the loop on every entry and see
+                    # if something matches. This is an expensive operation so do not run this if the array is
+                    # always 1 entry
+                    if key.endswith("[*]"):
+                        loop_through_all_values = True
 
+                        # Cleanup the key value to allow us and still use it in the dict
+                        key = key.replace(f"[*]", "")
+
+                    # Do a check if the key contains the possible pattern for a index, before running the more
+                    # expensive regex operation to find the int value
+                    elif key.find("[") > -1 and key.find("]") > -1:
                         # Find if the key has a array int attached
                         array_index_after_key = re.search(r".*\[([0-9]+)]$", key)
                         if array_index_after_key is not None:
@@ -89,9 +94,22 @@ def find_in_topic(cliv1: CLIv1,
                 if key in message_target:
                     nested_dict = message_target[key]
 
-                    # If there is a index to be fetched from the nested result
-                    if after_key_index is not None:
-                        try:
+                    try:
+                        # If we need to loop through all the items to possibly find a match
+                        if loop_through_all_values is True:
+                            # Make sure we are testing a array
+                            if type(nested_dict) is list:
+                                for nested_dict_item in nested_dict:
+                                    result = loop(nested_dict_item, copy(remaining_query))
+
+                                    # If a valid result is found then return it and break the loop
+                                    if result is not None:
+                                        return result
+                            else:
+                                return None
+
+                        # If there is a index to be fetched from the nested result
+                        elif after_key_index is not None:
                             # Let's make sure the nested result is a dict and contains a element on that index
                             # after_key_index will be a 0 for 1 to we need to match it with the len value
                             if type(nested_dict) is list and len(nested_dict) >= after_key_index + 1:
@@ -100,9 +118,10 @@ def find_in_topic(cliv1: CLIv1,
                             # so we can move on to the next result
                             else:
                                 return None
-                        except Exception as e:
-                            raise KeyError(f"An array index was specified but failed when attempting to be "
-                                           f"used in the nested value: {e}")
+
+                    except Exception as e:
+                        raise KeyError(f"An array index was specified but failed when attempting to be "
+                                       f"used in the nested value: {e}")
 
                     # Rerun the loop with the new information
                     return loop(nested_dict, remaining_query)

@@ -35,7 +35,7 @@ def test_splunk_server_health(splunk: SplunkBase,
     # Wait until we find the results in the Topic
     result = wait_until_topic_match(cliv1,
                                     topic="sts_health_sync",
-                                    query="message.HealthSyncMessage.payload.CheckStates.checkStates[0]",
+                                    query="message.HealthSyncMessage.payload.CheckStates.checkStates[*]",
                                     contains_dict={
                                         "name": health_name,
                                         "checkStateId": health_state_id,
@@ -45,7 +45,8 @@ def test_splunk_server_health(splunk: SplunkBase,
                                     },
                                     first_match=True,
                                     timeout=120,
-                                    period=10,
-                                    on_failure_action=lambda: simulator())
+                                    period=10)
+
+    # on_failure_action=lambda: simulator()
 
     logging.info(f"Found the following results: {result}")
