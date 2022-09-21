@@ -9,6 +9,7 @@ def test_cluster_agent_topology(ansible_var, cliv1):
     cluster_name = ansible_var("agent_cluster_name")
     namespace = ansible_var("monitoring_namespace")
     release_name = ansible_var("agent_release_name")
+    branch_name = ansible_var("agent_current_branch")
 
     cluster_agent = release_name + "-cluster-agent"
     
@@ -22,8 +23,8 @@ def test_cluster_agent_topology(ansible_var, cliv1):
         .component("node", type="node", name=r"ip-.*") \
         .component("cluster-agent-svc", type="service", name=cluster_agent) \
         .component("cluster-agent-deployment", type="deployment", name=cluster_agent) \
-        .component("cluster-agent-rs", type="replicaset", name=fr"{cluster_agent}-\w{{9,10}}") \
-        .component("cluster-agent", type="pod", name=fr"{cluster_agent}-\w{{9,10}}-\w{{5}}") \
+        .component("cluster-agent-rs", type="replicaset", name=fr"{cluster_agent}-\w{{8,10}}") \
+        .component("cluster-agent", type="pod", name=fr"{cluster_agent}-\w{{8,10}}-\w{{5}}") \
         .component("cluster-agent-container", type="container", name="cluster-agent") \
         .component("cluster-agent-cm", type="configmap", name=cluster_agent) \
         .component("cluster-agent-secret", type="secret", name=secret_name) \
@@ -40,7 +41,8 @@ def test_cluster_agent_topology(ansible_var, cliv1):
         .one_way_direction("cluster-agent", "cluster-agent-secret", type="uses_value") \
         .one_way_direction("cluster-agent-container", "cluster-agent-cluster-agent", type="runs")
 
-    query_and_assert(cliv1, cluster_name, namespace, expected_topology)
+    matched_res = query_and_assert(cliv1, cluster_name, namespace, expected_topology)
+    assert f"image_tag:{branch_name}" in matched_res.component("cluster-agent-container").tags
 
 
 def test_node_agent_topology(ansible_var, cliv1):
@@ -48,6 +50,7 @@ def test_node_agent_topology(ansible_var, cliv1):
     cluster_name = ansible_var("agent_cluster_name")
     namespace = ansible_var("monitoring_namespace")
     release_name = ansible_var("agent_release_name")
+    branch_name = ansible_var("agent_current_branch")
 
     node_agent = release_name + "-node-agent"
 
@@ -100,11 +103,14 @@ def test_node_agent_topology(ansible_var, cliv1):
     assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-trace-agent", 0)).tags
     assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-main-agent", 0)).tags
 
+    assert f"image_tag:{branch_name}" in matched_res.component(("node-agent-main-container", 0)).tags
+
 
 def test_checks_agent_topology(ansible_var, cliv1):
     cluster_name = ansible_var("agent_cluster_name")
     namespace = ansible_var("monitoring_namespace")
     release_name = ansible_var("agent_release_name")
+    branch_name = ansible_var("agent_current_branch")
 
     checks_agent = release_name + "-checks-agent"
     
@@ -130,7 +136,8 @@ def test_checks_agent_topology(ansible_var, cliv1):
         .one_way_direction("checks-agent", "checks-agent-secret", type="uses_value") \
         .one_way_direction("checks-agent-container", "checks-agent-main-agent", type="runs")
 
-    query_and_assert(cliv1, cluster_name, namespace, expected_topology)
+    matched_res = query_and_assert(cliv1, cluster_name, namespace, expected_topology)
+    assert f"image_tag:{branch_name}" in matched_res.component("checks-agent-container").tags
 
 
 def query_and_assert(cliv1, cluster_name: str, namespace: str, expected_topology: TopologyMatcher):
