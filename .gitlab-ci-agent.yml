@@ -411,7 +411,7 @@ build_win:
     when:
       - always
   rules:
-    - when: on_success
+    - when: never
 
 ## pre_release stage
 
@@ -499,7 +499,7 @@ pre_release_win:
     when:
       - always
   rules:
-    - when: on_success
+    - when: never
 
 pre_release_rpm:
   stage: pre_release
