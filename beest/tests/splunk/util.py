@@ -1,4 +1,6 @@
 import time
+import logging
+import re
 
 from typing import Callable, Union, Optional
 from stscliv1 import CLIv1
@@ -55,13 +57,55 @@ def find_in_topic(cliv1: CLIv1,
             # If the remaining_query still contains values in the arr then we have not satisfied the condition
             if len(remaining_query) > 0:
                 # Remove the first item from the remaining_query array and test the dict with this key
-                query_selection: str = remaining_query.pop(0)
+                key: str = remaining_query.pop(0)
+                after_key_index: Optional[int] = None
+
+                # Do a check if the key contains the possible pattern for a index, before running the more
+                # expensive regex operation to find the int value
+                try:
+                    if key.find("[") > -1 and key.find("]") > -1:
+                        # if the key ends with [*] then it means that it can be any of the values in the array
+                        # so no need to do regex for the number we just need to rerun the loop on every entry and see
+                        # if something matches. This is an expensive operation so do not run this if the array is
+                        # always 1 entry
+                        if key.endswith("[*]"):
+                            print("TODO: ")
+
+                        # Find if the key has a array int attached
+                        array_index_after_key = re.search(r".*\[([0-9]+)]$", key)
+                        if array_index_after_key is not None:
+                            index_position = array_index_after_key.group(1)
+
+                            # Cleanup the key value to allow us and still use it in the dict
+                            key = key.replace(f"[{index_position}]", "")
+                            after_key_index = int(index_position)
+                except Exception as e:
+                    raise ValueError(f"Unable to determine if there is a array index requirement, "
+                                     f"Error received: {e}")
 
                 # if the popped query value is in the dict we can rerun the loop but with the drilled down result.
                 # We will continue the loop with the new lower level dict object, and the new remaining_query list
                 # that does not contain the popped value.
-                if query_selection in message_target:
-                    return loop(message_target[query_selection], remaining_query)
+                if key in message_target:
+                    nested_dict = message_target[key]
+
+                    # If there is a index to be fetched from the nested result
+                    if after_key_index is not None:
+                        try:
+                            # Let's make sure the nested result is a dict and contains a element on that index
+                            # after_key_index will be a 0 for 1 to we need to match it with the len value
+                            if type(nested_dict) is list and len(nested_dict) >= after_key_index + 1:
+                                nested_dict = nested_dict[after_key_index]
+                            # If the array does not match then it means what we are looking at does not match the query
+                            # so we can move on to the next result
+                            else:
+                                return None
+                        except Exception as e:
+                            raise KeyError(f"An array index was specified but failed when attempting to be "
+                                           f"used in the nested value: {e}")
+
+                    # Rerun the loop with the new information
+                    return loop(nested_dict, remaining_query)
 
                 # If we are unable to find the key in the dict then the dict we are testing against is invalid
                 # and we can stop testing this dict
@@ -164,8 +208,9 @@ def wait_until(someaction: Callable[[any, any], any],
             return someaction(*args, **kwargs)
         except:
             if time.time() >= mustend:
-                print("Waiting timed out after %d" % timeout)
+                logging.error("Waiting timed out after %d" % timeout)
                 if on_failure_action is not None:
+                    logging.error("Running on_failure_action action")
                     on_failure_action()
                 raise
             time.sleep(period)

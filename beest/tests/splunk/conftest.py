@@ -19,6 +19,9 @@ YARD_LOCATION = f"../../sut/yards/splunk"
 @pytest.fixture
 def simulator(request, ansible_var, splunk):
     def dump_data(max_results=100):
+        logging.error("Dumping the StackState Simulator logs. This may take some time depending on how long the"
+                      " simulator has been running for ...")
+
         # Retrieve if the sts simulator is enabled in the playbook scenario
         ansible_sts_simulator_var = "enable_sts_simulator"
         is_simulator_enabled = ansible_var(ansible_sts_simulator_var, True)

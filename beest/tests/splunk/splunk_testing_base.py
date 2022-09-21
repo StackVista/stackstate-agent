@@ -1,3 +1,5 @@
+from typing import Optional
+
 import testinfra.utils.ansible_runner
 import requests
 import random
@@ -129,18 +131,22 @@ class SplunkTopologyBase(SplunkCommonBase):
 
 class SplunkHealthBase(SplunkCommonBase):
     # Core method for posting events to Splunk
-    def _post_health(self):
+    def _post_health(self,
+                     name: str,
+                     check_state_id: str,
+                     health: str,
+                     topology_element_identifier: str,
+                     message: Optional[str]):
 
         json_data = {
-            "check_state_id": "disk_sda",
-            "name": "Disk sda",
-            "health": "clear",
-            "topology_element_identifier": "server_1",
-            "message": "sda message"
+            "check_state_id": check_state_id,
+            "name": name,
+            "health": health,
+            "topology_element_identifier": topology_element_identifier,
             }
 
-        # if message is not None:
-        #     json_data["message"] = message
+        if message is not None:
+            json_data["message"] = message
 
         self.post_to_services_receivers_simple(json_data=json_data)
 
