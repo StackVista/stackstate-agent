@@ -215,13 +215,14 @@ func (cl *PythonCheckLoader) Load(config integration.Config, instance integratio
 
 	cJson, err := json.Marshal(c)
 	log.Debugf("Check c = %s", string(cJson))
+	log.Debugf("Check c.id = %s", string(c.id))
 	configJson, err := json.Marshal(config)
 	log.Debugf("Check config = %s", string(configJson))
 	log.Debugf("python loader: done loading check %s (version %s)", moduleName, wheelVersion)
 	log.Flush() // sts
 
 	// [sts] register check handler
-	handler.GetCheckManager().RegisterCheckHandler(c, config.InitConfig, instance)
+	handler.GetCheckManager().RegisterCheckHandler(handler.NewCheckIdentifier(c.id), config.InitConfig, instance)
 
 	return c, nil
 }
