@@ -93,10 +93,9 @@ var (
 		SourceTypeName: "docker",
 		Priority:       metrics.EventPriorityNormal,
 		EventContext: &metrics.EventContext{
-			Data:        map[string]interface{}{},
-			Source:      "docker",
-			Category:    "containers",
-			SourceLinks: []metrics.SourceLink{{Title: "source-link", URL: "source-url"}},
+			Data:     map[string]interface{}{},
+			Source:   "docker",
+			Category: "containers",
 		},
 	}
 	testEvent3 = metrics.Event{
@@ -107,10 +106,11 @@ var (
 		SourceTypeName: "docker-other",
 		Priority:       metrics.EventPriorityNormal,
 		EventContext: &metrics.EventContext{
-			Data:        map[string]interface{}{},
-			Source:      "docker",
-			Category:    "containers",
-			SourceLinks: []metrics.SourceLink{{Title: "source-link", URL: "source-url"}},
+			Data:               map[string]interface{}{},
+			Source:             "docker",
+			Category:           "containers",
+			ElementIdentifiers: []string{"element-identifier"},
+			SourceLinks:        []metrics.SourceLink{{Title: "source-link", URL: "source-url"}},
 		},
 	}
 )
@@ -168,8 +168,22 @@ func testBatcher(t *testing.T, transactionState map[string]bool, expectedPayload
 	})
 	assert.Equal(t, expectedPayload.Health, actualPayload.Health)
 	assert.Equal(t, expectedPayload.Metrics, actualPayload.Metrics)
-	assert.Equal(t, expectedPayload.Events, actualPayload.Events)
+	assert.Equal(t, len(expectedPayload.Events), len(actualPayload.Events))
+	for key, expectedEvents := range expectedPayload.Events {
+		actualEvents := actualPayload.Events[key]
 
+		sort.Slice(actualEvents, func(i, j int) bool {
+			return actualEvents[i].Title < actualEvents[j].Title
+		})
+
+		sort.Slice(expectedEvents, func(i, j int) bool {
+			return expectedEvents[i].Title < expectedEvents[j].Title
+		})
+
+		for i, ev := range actualEvents {
+			assert.Equal(t, expectedEvents[i].String(), ev.String())
+		}
+	}
 	// assert the transaction map produced by the batcher contains the correct action id and completed status
 	expectedTransactionMap := make(map[string]transactional.PayloadTransaction, len(commitActions))
 	for i, ca := range commitActions {

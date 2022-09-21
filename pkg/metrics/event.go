@@ -101,7 +101,7 @@ type EventContext struct {
 	ElementIdentifiers []string               `json:"element_identifiers" msg:"element_identifiers"`
 	Source             string                 `json:"source" msg:"source"`
 	Category           string                 `json:"category" msg:"category"`
-	Data               map[string]interface{} `json:"data" msg:"data"`
+	Data               map[string]interface{} `json:"data,omitempty" msg:"data,omitempty"`
 	SourceLinks        []SourceLink           `json:"source_links" msg:"source_links"`
 } // [sts]
 
@@ -136,6 +136,17 @@ func (ie IntakeEvents) IntakeFormat() map[string][]Event {
 		sourceTypeName := e.SourceTypeName
 		if sourceTypeName == "" {
 			sourceTypeName = "api"
+		}
+
+		// ensure that event context lists are not empty. ie serialized to null
+		if e.EventContext != nil {
+			if e.EventContext.SourceLinks == nil {
+				e.EventContext.SourceLinks = make([]SourceLink, 0)
+			}
+
+			if e.EventContext.ElementIdentifiers == nil {
+				e.EventContext.ElementIdentifiers = make([]string, 0)
+			}
 		}
 
 		eventsBySourceType[sourceTypeName] = append(eventsBySourceType[sourceTypeName], e)
