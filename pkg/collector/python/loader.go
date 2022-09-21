@@ -9,6 +9,7 @@
 package python
 
 import (
+	"encoding/json"
 	"errors"
 	"expvar"
 	"fmt"
@@ -212,6 +213,8 @@ func (cl *PythonCheckLoader) Load(config integration.Config, instance integratio
 	C.rtloader_decref(rtloader, checkClass)
 	C.rtloader_decref(rtloader, checkModule)
 
+	cJson, err := json.Marshal(c)
+	log.Debugf("Check c = %s", string(cJson))
 	log.Debugf("python loader: done loading check %s (version %s)", moduleName, wheelVersion)
 	log.Flush() // sts
 
