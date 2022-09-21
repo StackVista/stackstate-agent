@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build python
 // +build python
 
 package python
@@ -10,6 +11,7 @@ package python
 import (
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	chk "github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
@@ -88,12 +90,6 @@ func eventParseString(value *C.char, fieldName string) string {
 func SubmitEvent(checkID *C.char, event *C.event_t) {
 	goCheckID := C.GoString(checkID)
 
-	sender, err := aggregator.GetSender(chk.ID(goCheckID))
-	if err != nil || sender == nil {
-		log.Errorf("Error submitting metric to the Sender: %v", err)
-		return
-	}
-
 	_event := metrics.Event{
 		Title:          eventParseString(event.title, "msg_title"),
 		Text:           eventParseString(event.text, "msg_text"),
@@ -106,7 +102,9 @@ func SubmitEvent(checkID *C.char, event *C.event_t) {
 		Ts:             int64(event.ts),
 	}
 
-	sender.Event(_event)
+	// [sts] send events via die check handler
+	handler.GetCheckManager().GetCheckHandler(chk.ID(goCheckID)).SubmitEvent(_event)
+
 	return
 }
 
