@@ -222,7 +222,7 @@ func (cl *PythonCheckLoader) Load(config integration.Config, instance integratio
 	log.Flush() // sts
 
 	// [sts] register check handler
-	handler.GetCheckManager().RegisterCheckHandler(handler.NewCheckIdentifier(c.id), config.InitConfig, instance)
+	handler.GetCheckManager().RegisterCheckHandler(c, config.InitConfig, instance)
 
 	return c, nil
 }

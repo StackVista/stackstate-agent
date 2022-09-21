@@ -458,8 +458,6 @@ func StartAgent() error {
 
 	// create and setup the Autoconfig instance
 	common.LoadComponents(config.Datadog.GetString("confd_path"))
-	// start the autoconfig, this will immediately run any configured check
-	common.StartAutoConfig()
 
 	// [STS] create the global transactional components
 	state.InitCheckStateManager()
@@ -468,6 +466,9 @@ func StartAgent() error {
 	handler.InitCheckManager()
 	txChannelBufferSize, txTimeoutDuration, txEvictionDuration, txTickerInterval := config.GetTxManagerConfig()
 	transactionmanager.InitTransactionManager(txChannelBufferSize, txTickerInterval, txTimeoutDuration, txEvictionDuration)
+
+	// start the autoconfig, this will immediately run any configured check
+	common.StartAutoConfig()
 
 	// check for common misconfigurations and report them to log
 	misconfig.ToLog()
