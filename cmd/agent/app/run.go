@@ -313,12 +313,12 @@ func StartAgent() error {
 		state.InitCheckStateManager()
 		transactionforwarder.InitTransactionalForwarder()
 		transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity())
-		handler.InitCheckManager(common.Coll)
+		handler.InitCheckManager()
 		txChannelBufferSize, txTimeoutDuration, txEvictionDuration, txTickerInterval := config.GetTxManagerConfig()
 		transactionmanager.InitTransactionManager(txChannelBufferSize, txTickerInterval, txTimeoutDuration, txEvictionDuration)
 	} else {
 		state.InitCheckStateManager()
-		handler.InitCheckManager(common.Coll)
+		handler.InitCheckManager()
 	}
 
 	// start the autoconfig, this will immediately run any configured check

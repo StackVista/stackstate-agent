@@ -39,7 +39,7 @@ func TestCheckHandler_State_Transactional_Integration(t *testing.T) {
 	transactionmanager.InitTransactionManager(100, 250*time.Millisecond, 500*time.Millisecond,
 		500*time.Millisecond)
 
-	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-transactional-state-check"}, &check.TestCheckReloader{},
+	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-transactional-state-check"},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*TransactionalCheckHandler)
 
 	stateKey := fmt.Sprintf("%s:state", ch.String())

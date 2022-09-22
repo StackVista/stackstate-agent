@@ -13,4 +13,4 @@ spec:
     - image: jgkamat/netcat
       imagePullPolicy: IfNotPresent
       name: client
-      command: ["/bin/bash", "-c", "yes | nc localhost 234"]
+      command: ["/bin/bash", "-c", "while echo y; do sleep 0.1; done | nc localhost 234"]

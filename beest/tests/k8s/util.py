@@ -15,14 +15,9 @@ def wait_until(someaction, timeout, period=0.25, *args, **kwargs):
             time.sleep(period)
 
 
-def assert_topology_events(host, test_name, topic, expected_topology_events):
-    url = "http://localhost:7070/api/topic/%s?limit=1000" % topic
-
+def assert_topology_events(cliv1, test_name, topic, expected_topology_events):
     def wait_for_topology_events():
-        data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
-        with open("./topic-%s-%s.json" % (test_name, topic), 'w') as f:
-            json.dump(json_data, f, indent=4)
+        json_data = cliv1.topic_api(topic)
 
         def _topology_event_data(event):
             for message in json_data["messages"]:
@@ -40,13 +35,9 @@ def assert_topology_events(host, test_name, topic, expected_topology_events):
     wait_until(wait_for_topology_events, 60, 3)
 
 
-def assert_topology(host, test_name, topic, expected_components):
+def assert_topology(cliv1, topic, expected_components):
     def assert_topology():
-        topo_url = "http://localhost:7070/api/topic/%s?limit=1500" % topic
-        data = host.check_output('curl "{}"'.format(topo_url))
-        json_data = json.loads(data)
-        with open("./topic-%s-%s.json" % (test_name, topic), 'w') as f:
-            json.dump(json_data, f, indent=4)
+        json_data = cliv1.topic_api(topic, limit=1500)
 
         for c in expected_components:
             print("Running assertion for: " + c["assertion"])
@@ -60,16 +51,9 @@ def assert_topology(host, test_name, topic, expected_components):
     wait_until(assert_topology, 30, 3)
 
 
-def assert_metrics(host, test_name, expected_metrics):
-    hostname = host.ansible.get_variables()["inventory_hostname"]
-    print(hostname)
-    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=1000"
-
+def assert_metrics(cliv1, hostname, expected_metrics):
     def wait_for_metrics():
-        data = host.check_output("curl \"%s\"" % url)
-        json_data = json.loads(data)
-        with open("./topic-%s-sts-multi-metrics.json" % test_name, 'w') as f:
-            json.dump(json_data, f, indent=4)
+        json_data = cliv1.topic_api("sts_multi_metrics")
 
         def get_keys(m_host):
             return set(
@@ -93,16 +77,6 @@ def component_data(json_data, type_name, external_id_assert_fn, data_assert_fn):
             data = json.loads(p["TopologyComponent"]["data"])
             if data and data_assert_fn(data):
                 return p["TopologyComponent"]["externalId"]
-    return None
-
-
-def relation_data(json_data, type_name, external_id_assert_fn):
-    for message in json_data["messages"]:
-        p = message["message"]["TopologyElement"]["payload"]
-        if "TopologyRelation" in p and \
-            p["TopologyRelation"]["typeName"] == type_name and \
-                external_id_assert_fn(p["TopologyRelation"]["externalId"]):
-            return json.loads(p["TopologyRelation"]["data"])
     return None
 
 

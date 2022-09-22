@@ -89,6 +89,8 @@ BatcherReceiver:
 				ctb.SubmitState(ctb.builder.HealthStopSnapshot(submission.CheckID, submission.TransactionID, submission.Stream))
 			case SubmitRawMetricsData:
 				ctb.SubmitState(ctb.builder.AddRawMetricsData(submission.CheckID, submission.TransactionID, submission.RawMetric))
+			case SubmitEvent:
+				ctb.SubmitState(ctb.builder.AddEvent(submission.CheckID, submission.TransactionID, submission.Event))
 			case StartTransaction:
 				ctb.SubmitState(ctb.builder.StartTransaction(submission.CheckID, submission.TransactionID))
 			case SubmitCompleteTransaction:
@@ -196,20 +198,20 @@ func (ctb *transactionalBatcher) mapStateToPayload(states TransactionCheckInstan
 		if state.Topology != nil {
 			intake.Topologies = append(intake.Topologies, *state.Topology)
 		}
-	}
 
-	// Create the health payload
-	for _, state := range states {
 		for _, healthRecord := range state.Health {
 			intake.Health = append(intake.Health, healthRecord)
 		}
-	}
 
-	// Create the metric payload
-	for _, state := range states {
 		if state.Metrics != nil {
 			for _, metric := range state.Metrics.Values {
 				intake.Metrics = append(intake.Metrics, metric.ConvertToIntakeMetric())
+			}
+		}
+
+		if state.Events != nil {
+			for _, event := range state.Events.Events {
+				intake.Events = append(intake.Events, event)
 			}
 		}
 	}
@@ -229,6 +231,11 @@ func (ctb *transactionalBatcher) mapStateToPayload(states TransactionCheckInstan
 		log.Debug("Flushing the following raw metric data:")
 		for _, rawMetric := range intake.Metrics {
 			log.Debugf("%v", rawMetric)
+		}
+
+		log.Debug("Flushing the following event data:")
+		for _, e := range intake.Events {
+			log.Debugf("%v", e)
 		}
 	}
 

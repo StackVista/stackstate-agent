@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/urn"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
@@ -22,18 +23,21 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/events"
 )
 
-type MetricsCategory string
+type EventCategory string
 
 const (
-	Alerts     MetricsCategory = "Alerts"
-	Changes                    = "Changes"
-	Activities                 = "Activities"
-	Others                     = "Others"
+	Alerts     EventCategory = "Alerts"
+	Changes                  = "Changes"
+	Activities               = "Activities"
+	Others                   = "Others"
 )
 
-// EventTypeMap contains a mapping of Kubernetes EventReason strings to specific Event Categories.
+// ValidCategories contains categories that are only expected in StackState
+var ValidCategories = []EventCategory{Alerts, Changes, Activities, Others}
+
+// DefaultEventCategoriesMap contains a mapping of Kubernetes EventReason strings to specific Event Categories.
 // If an event is 'event.Type = warning' then we map it automatically to an 'Alert'
-var EventTypeMap = map[string]MetricsCategory{
+var DefaultEventCategoriesMap = map[string]EventCategory{
 	// Container events
 	events.CreatedContainer:      Changes,
 	events.StartedContainer:      Activities,
@@ -72,22 +76,64 @@ var EventTypeMap = map[string]MetricsCategory{
 	"Scheduled":         Activities,
 	"SuccessfulCreate":  Changes,
 	"SuccessfulDelete":  Changes,
+
+	// HPA events
+	// https://github.com/kubernetes/kubernetes/blob/master/pkg/controller/podautoscaler/horizontal.go
+	// https://github.com/kubernetes/kubernetes/blob/v1.25.0/pkg/controller/podautoscaler/horizontal_test.go
+	"SuccessfulRescale":            Activities,
+	"DesiredReplicasComputed":      Others,
+	"FailedComputeMetricsReplicas": Alerts,
+	"FailedRescale":                Alerts,
+
+	"EnsuringLoadBalancer":        Activities,
+	"AddedInterface":              Changes,
+	"BuildStarted":                Activities,
+	"ScaleDown":                   Activities,
+	"BuildCompleted":              Activities,
+	"DeploymentCreated":           Changes,
+	"OperationStarted":            Activities,
+	"ResourceUpdated":             Changes,
+	"OperationCompleted":          Activities,
+	"WaitForFirstConsumer":        Others,
+	"Running":                     Activities,
+	"Pending":                     Others,
+	"ProvisioningSucceeded":       Activities,
+	"Succeeded":                   Activities,
+	"NodeNotSchedulable":          Alerts,
+	"Updated":                     Changes,
+	"Deleted":                     Changes,
+	"Inject":                      Others,
+	"DeletingNode":                Activities,
+	"RemovingNode":                Activities,
+	"ReplicationControllerScaled": Activities,
+	"DetectedUnhealthy":           Alerts,
+	"ConnectivityRestored":        Alerts,
+	"DeletingLoadBalancer":        Changes,
+	"JobAlreadyActive":            Others,
+	"BuildFailed":                 Alerts,
+	"NeedsReinstall":              Alerts,
+	"AllRequirementsMet":          Activities,
+	"InstallSucceeded":            Activities,
+	"InstallWaiting":              Others,
+	"CreatedSCCRanges":            Changes,
 }
 
-type KubernetesEventMapperFactory func(detector apiserver.OpenShiftDetector, clusterName string) *kubernetesEventMapper
+type KubernetesEventMapperFactory func(detector apiserver.OpenShiftDetector, clusterName string, eventCategoriesOverride map[string]EventCategory) *kubernetesEventMapper
 
 type kubernetesEventMapper struct {
-	urn         urn.Builder
-	clusterName string
-	sourceType  string
+	urn                     urn.Builder
+	clusterName             string
+	sourceType              string
+	eventCategoriesOverride map[string]EventCategory
 }
 
-func newKubernetesEventMapper(detector apiserver.OpenShiftDetector, clusterName string) *kubernetesEventMapper {
+func newKubernetesEventMapper(detector apiserver.OpenShiftDetector, clusterName string, eventCategoriesOverride map[string]EventCategory) *kubernetesEventMapper {
 	f := kubernetesFlavour(detector)
 	return &kubernetesEventMapper{
-		urn:         urn.NewURNBuilder(f, clusterName),
-		clusterName: clusterName,
-		sourceType:  string(f),
+		urn:                     urn.NewURNBuilder(f, clusterName),
+		clusterName:             clusterName,
+		sourceType:              string(f),
+		eventCategoriesOverride: eventCategoriesOverride,
 	}
 }
 
@@ -112,7 +158,7 @@ func (k *kubernetesEventMapper) mapKubernetesEvent(event *v1.Event, modified boo
 		Tags:           k.getTags(event),
 		EventContext: &metrics.EventContext{
 			Source:           k.sourceType,
-			Category:         string(getCategory(event)),
+			Category:         string(k.getCategory(event)),
 			SourceIdentifier: string(event.GetUID()),
 			ElementIdentifiers: []string{
 				k.externalIdentifierForInvolvedObject(event),
@@ -152,19 +198,25 @@ func getHostName(event *v1.Event, clusterName string) string {
 	return ""
 }
 
-func getCategory(event *v1.Event) MetricsCategory {
+var thrownCategoryWarnings sync.Map
+
+func (k *kubernetesEventMapper) getCategory(event *v1.Event) EventCategory {
+	if category, ok := k.eventCategoriesOverride[event.Reason]; ok {
+		return category
+	}
+
 	alertType := getAlertType(event)
 	if alertType == metrics.EventAlertTypeWarning || alertType == metrics.EventAlertTypeError {
 		return Alerts
 	}
 
-	v, ok := EventTypeMap[event.Reason]
-	if !ok {
-		log.Warnf("Kubernetes event has unknown reason '%s' found, categorising as 'Others'. Involved object: '%s'", event.Reason, event.InvolvedObject.Name)
-		return Others
+	if category, ok := DefaultEventCategoriesMap[event.Reason]; ok {
+		return category
 	}
-
-	return v
+	if _, exists := thrownCategoryWarnings.LoadOrStore(event.Reason, true); !exists {
+		_ = log.Warnf("Kubernetes event has unknown reason '%s' found, categorising as 'Others'. Involved object: '%s/%s'", event.Reason, event.InvolvedObject.Kind, event.InvolvedObject.Name)
+	}
+	return Others
 }
 
 func getAlertType(event *v1.Event) metrics.EventAlertType {

@@ -9,10 +9,8 @@ import (
 )
 
 func TestMakeCheckManager(t *testing.T) {
-	reloader := &check.TestCheckReloader{}
-	checkManager := newCheckManager(reloader)
+	checkManager := newCheckManager()
 	expected := &CheckManager{
-		reloader:      reloader,
 		checkHandlers: make(map[string]CheckHandler),
 		config:        GetCheckManagerConfig(),
 	}
@@ -21,7 +19,7 @@ func TestMakeCheckManager(t *testing.T) {
 }
 
 func TestCheckManagerSubscription(t *testing.T) {
-	checkManager := newCheckManager(&check.TestCheckReloader{})
+	checkManager := newCheckManager()
 	testCheck := &check.STSTestCheck{Name: "test-check-1"}
 
 	// assert that we start at an empty state
@@ -73,9 +71,9 @@ func TestCheckManagerSubscription(t *testing.T) {
 func TestCheckManagerSubscriptionTransactionalityDisabled(t *testing.T) {
 	config.Datadog.Set("check_transactionality_enabled", false)
 
-	checkManager := newCheckManager(&check.TestCheckReloader{})
+	checkManager := newCheckManager()
 	testCheck := &check.STSTestCheck{Name: "test-check"}
-	nCH := MakeNonTransactionalCheckHandler(testCheck, CheckNoReloader{}, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
+	nCH := MakeNonTransactionalCheckHandler(testCheck, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
 
 	ch := checkManager.RegisterCheckHandler(testCheck, integration.Data{4, 5, 6}, integration.Data{10, 10, 10})
 	// assert that the test check didn't register a transactional check handler and defaults to a non-transactional check handler
@@ -87,7 +85,7 @@ func TestCheckManagerSubscriptionTransactionalityDisabled(t *testing.T) {
 
 	nonRegisteredCheck := &check.STSTestCheck{Name: "non-registered-check"}
 	actualCH := checkManager.GetCheckHandler(nonRegisteredCheck.ID())
-	expectedCH := MakeNonTransactionalCheckHandler(NewCheckIdentifier(nonRegisteredCheck.ID()), CheckNoReloader{}, nil, nil)
+	expectedCH := MakeNonTransactionalCheckHandler(NewCheckIdentifier(nonRegisteredCheck.ID()), nil, nil)
 	assert.Equal(t, expectedCH, actualCH)
 
 	// default to true again

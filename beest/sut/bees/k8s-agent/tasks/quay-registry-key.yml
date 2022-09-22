@@ -17,5 +17,5 @@
         .dockerconfigjson: "{{ quay_registry_key | to_json | b64encode }}"
       metadata:
         name: "docker-registry-key"
-        namespace: "{{ namespace }}"
+        namespace: "{{ monitoring_namespace }}"
       type: "kubernetes.io/dockerconfigjson"

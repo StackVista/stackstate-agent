@@ -1,4 +1,9 @@
+import logging
 import pytest
+from stscliv1 import CLIv1
+
+
+USE_CACHE = False
 
 
 @pytest.fixture
@@ -28,6 +33,6 @@ def ansible_var(host):
 
 
 @pytest.fixture
-def topic_api(host):
-    receiver_ip = host.ansible.get_variables()["groups"]["receiver"][0]
-    return "http://{0}:7070/api/topic".format(receiver_ip)
+def cliv1(host, caplog) -> CLIv1:
+    caplog.set_level(logging.INFO)
+    return CLIv1(host, log=logging.getLogger("CLIv1"), cache_enabled=USE_CACHE)
