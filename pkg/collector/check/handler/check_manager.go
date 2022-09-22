@@ -22,7 +22,6 @@ func init() {
 func InitCheckManager() {
 	cmInit.Do(func() {
 		cmInstance = newCheckManager()
-		cmInitialized = true
 	})
 }
 
@@ -39,6 +38,8 @@ type CheckManager struct {
 
 // newCheckManager returns a instance of the Check Manager
 func newCheckManager() *CheckManager {
+	cmInitialized = true
+
 	return &CheckManager{
 		checkHandlers: make(map[string]CheckHandler),
 		config:        GetCheckManagerConfig(),
@@ -51,7 +52,7 @@ func (cm *CheckManager) GetCheckHandler(checkID check.ID) CheckHandler {
 		_ = log.Errorf("CheckManager not initialized, initialize it using handler.InitCheckManager()")
 		return nil
 	}
-	
+
 	ch, found := cm.checkHandlers[string(checkID)]
 	if !found {
 		_ = log.Errorf(fmt.Sprintf("No check handler found for %s. Registering a non-transactional check handler.", checkID))
