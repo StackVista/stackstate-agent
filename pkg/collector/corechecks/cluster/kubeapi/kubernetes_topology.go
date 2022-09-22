@@ -28,9 +28,9 @@ const (
 // TopologyCheck grabs events from the API server.
 type TopologyCheck struct {
 	CommonCheck
-	instance    *TopologyConfig
-	submitter   TopologySubmitter
-	kubeVersion *version.Info
+	instance   *TopologyConfig
+	submitter  TopologySubmitter
+	k8sVersion *version.Info
 }
 
 func warnDisabledResource(name string, additionalWarning string, isEnabled bool) {
@@ -90,7 +90,7 @@ func (t *TopologyCheck) setKubernetesVersion() {
 	} else {
 		log.Debugf("Kubernetes version: %+v", info)
 	}
-	t.kubeVersion = info
+	t.k8sVersion = info
 }
 
 // SetSubmitter sets the topology submitter for the Topology Check
@@ -266,6 +266,7 @@ func (t *TopologyCheck) Run() error {
 				componentChannel,
 				relationChannel,
 				commonClusterCollector,
+				t.k8sVersion,
 			))
 	}
 	if t.instance.Resources.Jobs {
@@ -330,7 +331,7 @@ func (t *TopologyCheck) Run() error {
 	return nil
 }
 
-// sets up the receiver that handles the component and relation channel and publishes it to StackState, returns when all the collectors have finished or the timeout was reached.
+// WaitForTopology sets up the receiver that handles the component and relation channel and publishes it to StackState, returns when all the collectors have finished or the timeout was reached.
 func (t *TopologyCheck) WaitForTopology(componentChannel <-chan *topology.Component, relationChannel <-chan *topology.Relation,
 	errorChannel <-chan error, waitGroup *sync.WaitGroup, waitGroupChannel chan bool) {
 	log.Debugf("Waiting for Cluster Collectors to Finish")
@@ -379,7 +380,7 @@ func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
 	}
 }
 
-// runs all of the cluster collectors, notify the wait groups and submit errors to the error channel
+// RunClusterCollectors runs all of the cluster collectors, notify the wait groups and submit errors to the error channel
 func (t *TopologyCheck) RunClusterCollectors(clusterCollectors []collectors.ClusterTopologyCollector, clusterCorrelators []collectors.ClusterTopologyCorrelator, waitGroup *sync.WaitGroup, errorChannel chan<- error) {
 	waitGroup.Add(1 + len(clusterCorrelators))
 	go func() {

@@ -4,21 +4,24 @@
 package topologycollectors
 
 import (
+	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/apimachinery/pkg/version"
+	"strconv"
 )
 
 // IngressCollector implements the ClusterTopologyCollector interface.
 type IngressCollector struct {
 	ComponentChan chan<- *topology.Component
 	RelationChan  chan<- *topology.Relation
+	k8sVersion    *version.Info
 	ClusterTopologyCollector
 }
 
 // NewIngressCollector
 func NewIngressCollector(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation,
-	clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
+	clusterTopologyCollector ClusterTopologyCollector, k8sVersion *version.Info) ClusterTopologyCollector {
 	return &IngressCollector{
 		ComponentChan:            componentChannel,
 		RelationChan:             relationChannel,
@@ -33,7 +36,12 @@ func (*IngressCollector) GetName() string {
 
 // Collects and Published the Ingress Components
 func (ic *IngressCollector) CollectorFunction() error {
-	ingresses, err := ic.GetAPIClient().GetIngresses()
+	var ingresses []IngressInterface
+	ingresses, err := ic.getExtV1Ingresses(ingresses)
+	if err != nil {
+		return err
+	}
+	ingresses, err = ic.getNetV1Ingresses(ingresses)
 	if err != nil {
 		return err
 	}
@@ -42,8 +50,8 @@ func (ic *IngressCollector) CollectorFunction() error {
 		component := ic.ingressToStackStateComponent(in)
 		ic.ComponentChan <- component
 		// submit relation to service name for correlation
-		if in.Spec.Backend != nil && in.Spec.Backend.ServiceName != "" {
-			serviceExternalID := ic.buildServiceExternalID(in.Namespace, in.Spec.Backend.ServiceName)
+		if in.GetServiceName() != "" {
+			serviceExternalID := ic.buildServiceExternalID(in.GetNamespace(), in.GetServiceName())
 
 			// publish the ingress -> service relation
 			relation := ic.ingressToServiceStackStateRelation(component.ExternalID, serviceExternalID)
@@ -51,63 +59,94 @@ func (ic *IngressCollector) CollectorFunction() error {
 		}
 
 		// submit relation to service name in the ingress rules for correlation
-		for _, rules := range in.Spec.Rules {
-			for _, path := range rules.HTTP.Paths {
-				serviceExternalID := ic.buildServiceExternalID(in.Namespace, path.Backend.ServiceName)
+		for _, serviceName := range in.GetServiceNames() {
+			serviceExternalID := ic.buildServiceExternalID(in.GetNamespace(), serviceName)
 
-				// publish the ingress -> service relation
-				relation := ic.ingressToServiceStackStateRelation(component.ExternalID, serviceExternalID)
-				ic.RelationChan <- relation
-			}
+			// publish the ingress -> service relation
+			relation := ic.ingressToServiceStackStateRelation(component.ExternalID, serviceExternalID)
+			ic.RelationChan <- relation
 		}
 
 		// submit relation to loadbalancer
-		for _, ingressPoints := range in.Status.LoadBalancer.Ingress {
-			if ingressPoints.Hostname != "" {
-				endpoint := ic.endpointStackStateComponentFromIngress(in, ingressPoints.Hostname)
 
-				ic.ComponentChan <- endpoint
-				ic.RelationChan <- ic.endpointToIngressStackStateRelation(endpoint.ExternalID, component.ExternalID)
-			}
+		for _, ingressPoint := range in.GetIngressPoints() {
+			endpoint := ic.endpointStackStateComponentFromIngress(in, ingressPoint)
 
-			if ingressPoints.IP != "" {
-				endpoint := ic.endpointStackStateComponentFromIngress(in, ingressPoints.IP)
-
-				ic.ComponentChan <- endpoint
-				ic.RelationChan <- ic.endpointToIngressStackStateRelation(endpoint.ExternalID, component.ExternalID)
-			}
+			ic.ComponentChan <- endpoint
+			ic.RelationChan <- ic.endpointToIngressStackStateRelation(endpoint.ExternalID, component.ExternalID)
 		}
 	}
 
 	return nil
 }
 
+func (ic *IngressCollector) getExtV1Ingresses(ingresses []IngressInterface) ([]IngressInterface, error) {
+	if ic.k8sVersion != nil && ic.k8sVersion.Major == "1" {
+		log.Debugf("Kubernetes version is Major=%s, Minor=%s", ic.k8sVersion.Major, ic.k8sVersion.Minor)
+		minor, err := strconv.Atoi(ic.k8sVersion.Minor[:2])
+		if err != nil {
+			return ingresses, fmt.Errorf("cannot parse server minor version %q: %w", ic.k8sVersion.Minor[:2], err)
+		}
+		if minor >= 22 {
+			log.Debugf("Kubernetes version is >= 1.22, the topology collector will NOT query ingresses from 'extensions/v1beta1' version")
+			return ingresses, nil
+		} else {
+			log.Debugf("Kubernetes version is <= 1.21, the topology collector will query ingresses from 'extensions/v1beta1' version")
+		}
+	}
+	ingressesExt, err := ic.GetAPIClient().GetIngressesExtV1Beta1()
+	if err != nil {
+		return nil, err
+	}
+	for _, in := range ingressesExt {
+		ingresses = append(ingresses, V1Beta1Ingress{
+			&in,
+		})
+	}
+	return ingresses, nil
+}
+
+func (ic *IngressCollector) getNetV1Ingresses(ingresses []IngressInterface) ([]IngressInterface, error) {
+	ingressesExt, err := ic.GetAPIClient().GetIngressesNetV1()
+	if err != nil {
+		return nil, err
+	}
+	for _, in := range ingressesExt {
+		ingresses = append(ingresses, NetV1Ingress{
+			&in,
+		})
+	}
+	return ingresses, nil
+}
+
 // Creates a StackState ingress component from a Kubernetes / OpenShift Ingress
-func (ic *IngressCollector) ingressToStackStateComponent(ingress v1beta1.Ingress) *topology.Component {
+func (ic *IngressCollector) ingressToStackStateComponent(ingress IngressInterface) *topology.Component {
 	log.Tracef("Mapping Ingress to StackState component: %s", ingress.String())
 
-	tags := ic.initTags(ingress.ObjectMeta)
+	tags := ic.initTags(ingress.GetObjectMeta())
 
 	identifiers := make([]string, 0)
 
-	ingressExternalID := ic.buildIngressExternalID(ingress.Namespace, ingress.Name)
+	name := ingress.GetName()
+	ingressExternalID := ic.buildIngressExternalID(ingress.GetNamespace(), name)
 	component := &topology.Component{
 		ExternalID: ingressExternalID,
 		Type:       topology.Type{Name: "ingress"},
 		Data: map[string]interface{}{
-			"name":        ingress.Name,
+			"name":        name,
 			"tags":        tags,
 			"identifiers": identifiers,
 		},
 	}
 
 	if ic.IsSourcePropertiesFeatureEnabled() {
-		component.SourceProperties = makeSourceProperties(&ingress)
+		object := ingress.GetKubernetesObject()
+		component.SourceProperties = makeSourceProperties(object)
 	} else {
-		component.Data.PutNonEmpty("creationTimestamp", ingress.CreationTimestamp)
-		component.Data.PutNonEmpty("uid", ingress.UID)
-		component.Data.PutNonEmpty("generateName", ingress.GenerateName)
-		component.Data.PutNonEmpty("kind", ingress.Kind)
+		component.Data.PutNonEmpty("creationTimestamp", ingress.GetCreationTimestamp())
+		component.Data.PutNonEmpty("uid", ingress.GetUID())
+		component.Data.PutNonEmpty("generateName", ingress.GetGenerateName())
+		component.Data.PutNonEmpty("kind", ingress.GetKind())
 	}
 
 	log.Tracef("Created StackState Ingress component %s: %v", ingressExternalID, component.JSONString())
@@ -116,10 +155,10 @@ func (ic *IngressCollector) ingressToStackStateComponent(ingress v1beta1.Ingress
 }
 
 // Creates a StackState loadbalancer component from a Kubernetes / OpenShift Ingress
-func (ic *IngressCollector) endpointStackStateComponentFromIngress(ingress v1beta1.Ingress, ingressPoint string) *topology.Component {
+func (ic *IngressCollector) endpointStackStateComponentFromIngress(ingress IngressInterface, ingressPoint string) *topology.Component {
 	log.Tracef("Mapping Ingress to StackState endpoint component: %s", ingressPoint)
 
-	tags := ic.initTags(ingress.ObjectMeta)
+	tags := ic.initTags(ingress.GetObjectMeta())
 	identifiers := make([]string, 0)
 	endpointExternalID := ic.buildEndpointExternalID(ingressPoint)
 
@@ -128,7 +167,7 @@ func (ic *IngressCollector) endpointStackStateComponentFromIngress(ingress v1bet
 		Type:       topology.Type{Name: "endpoint"},
 		Data: map[string]interface{}{
 			"name":              ingressPoint,
-			"creationTimestamp": ingress.CreationTimestamp,
+			"creationTimestamp": ingress.GetCreationTimestamp(),
 			"tags":              tags,
 			"identifiers":       identifiers,
 		},
