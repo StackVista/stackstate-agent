@@ -1,5 +1,5 @@
 import util
-import logging
+import random
 
 from splunk_testing_base import SplunkBase
 from conftest import YARD_LOCATION
@@ -15,36 +15,42 @@ testinfra_hosts = [f"ansible://local?ansible_inventory={YARD_LOCATION}/ansible_i
 def test_splunk_server_relation(splunk: SplunkBase,
                                 cliv1: CLIv1,
                                 simulator):
-    # Publish a Splunk Component to the Splunk Instance to be used in testing
-    source_component_id = splunk.topology.publish_random_server_component()
-    target_component_id = splunk.topology.publish_random_server_component()
+    # Component A
+    component_id_source = "server_{}".format(random.randint(0, 10000))
+    component_type = "server"
+    component_description = "Topology Server Component"
 
-    logging.debug(f"Attempting to find a source component with the name '{source_component_id}' on StackState")
-    logging.debug(f"Attempting to find a target component with the name '{target_component_id}' on StackState")
+    splunk.topology.publish_component(component_id=component_id_source,
+                                      component_type=component_type,
+                                      description=component_description)
+
+    # Component B
+    component_id_target = "server_{}".format(random.randint(0, 10000))
+    component_type = "server"
+    component_description = "Topology Server Component"
+
+    splunk.topology.publish_component(component_id=component_id_target,
+                                      component_type=component_type,
+                                      description=component_description)
 
     # Publish a Splunk Relation to the Splunk Instance to be used in testing
-    splunk.topology._post_relation(relation_type="CONNECTED",
-                                   source_id=source_component_id,
-                                   target_id=target_component_id)
+    splunk.topology.publish_relation(relation_type="CONNECTED",
+                                     source_id=component_id_source,
+                                     target_id=component_id_target)
 
     # The topology_matcher process that will be executed every x seconds in the wait_until_topology_match cycle
     def topology_matcher():
         return TopologyMatcher()\
-            .component("random-server-component-source", name=source_component_id, type="server")\
-            .component("random-server-component-target", name=target_component_id, type="server")\
-            .one_way_direction(source="random-server-component-source",
-                               target="random-server-component-target")
-
-    # The topology_query process that will be executed every x seconds in the wait_until_topology_match cycle
-    def topology_query():
-        return f"name = '{source_component_id}' OR name = '{target_component_id}'"
+            .component(component_id_source, name=component_id_source, type="server")\
+            .component(component_id_target, name=component_id_target, type="server")\
+            .one_way_direction(source=component_id_source, target=component_id_target)
 
     # Wait until we find this component in StackState. If it does not succeed after x seconds then we will dump the
     # simulator logs if it is available.
     util.wait_until_topology_match(
         cliv1,
         topology_matcher=topology_matcher,
-        topology_query=topology_query,
+        topology_query=lambda: f"name = '{component_id_source}' OR name = '{component_id_target}'",
         timeout=120,  # Run for a total of x seconds, Sometimes the Agent check can take some time so to be safe
         period=5,  # Run the 'topology_matcher' and 'topology_query' every x seconds
         on_failure_action=lambda: simulator()  # Dump the simulator logs if the cycle failed (If enabled)

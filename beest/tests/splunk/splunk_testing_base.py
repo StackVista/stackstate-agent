@@ -2,7 +2,6 @@ from typing import Optional
 
 import testinfra.utils.ansible_runner
 import requests
-import random
 
 from urllib3.exceptions import InsecureRequestWarning
 
@@ -96,47 +95,47 @@ class SplunkCommonBase:
 
 
 class SplunkTopologyBase(SplunkCommonBase):
-    def publish_random_server_component(self) -> str:
-        component_id = "server_{}".format(random.randint(0, 10000))
+    def publish_component(self,
+                          component_id: str,
+                          component_type: str,
+                          description: str = "Component Description",
+                          topo_type: str = "component"):
 
-        self._post_component(component_id=component_id,
-                             component_type="server",
-                             description="Topology Server Component")
+        self.post_to_services_receivers_simple(
+            json_data={
+                "topo_type": topo_type,
+                "id": component_id,
+                "type": component_type,
+                "description": description
+            }
+        )
 
-        return component_id
+    def publish_relation(self,
+                         relation_type: str,
+                         source_id: str,
+                         target_id: str,
+                         description: str = "Relation Description",
+                         topo_type: str = "relation"):
 
-    def _post_component(self, component_id: str, component_type: str,
-                        description: str = "Component Description",
-                        topo_type: str = "component"):
-        json_data = {
-            "topo_type": topo_type,
-            "id": component_id,
-            "type": component_type,
-            "description": description
-        }
-        self.post_to_services_receivers_simple(json_data=json_data)
-
-    def _post_relation(self, relation_type: str, source_id: str, target_id: str,
-                       description: str = "Relation Description",
-                       topo_type: str = "relation"):
-        json_data = {
-            "topo_type": topo_type,
-            "type": relation_type,
-            "sourceId": source_id,
-            "targetId": target_id,
-            "description": description
-        }
-        self.post_to_services_receivers_simple(json_data=json_data)
+        self.post_to_services_receivers_simple(
+            json_data={
+                "topo_type": topo_type,
+                "type": relation_type,
+                "sourceId": source_id,
+                "targetId": target_id,
+                "description": description
+            }
+        )
 
 
 class SplunkHealthBase(SplunkCommonBase):
     # Core method for posting events to Splunk
-    def _post_health(self,
-                     name: str,
-                     check_state_id: str,
-                     health: str,
-                     topology_element_identifier: str,
-                     message: Optional[str]):
+    def publish_health(self,
+                       name: str,
+                       check_state_id: str,
+                       health: str,
+                       topology_element_identifier: str,
+                       message: Optional[str]):
 
         json_data = {
             "check_state_id": check_state_id,
@@ -153,33 +152,43 @@ class SplunkHealthBase(SplunkCommonBase):
 
 class SplunkEventBase(SplunkCommonBase):
     # Core method for posting events to Splunk
-    def _post_event(self):
-        param_data = {
-            "host": "host01",
-            "sourcetype": "sts_test_data"
-        }
+    def publish_event(self,
+                      host: str,
+                      source_type: str,
+                      status: str,
+                      description: str):
 
-        json_data = {
-            "status": "CRITICAL",
-            "description": "host01 test critical event"
-        }
-
-        self.post_to_services_receivers_simple(json_data=json_data, param_data=param_data)
+        self.post_to_services_receivers_simple(
+            json_data={
+                "status": status,
+                "description": description
+            },
+            param_data={
+                "host": host,
+                "sourcetype": source_type
+            }
+        )
 
 
 class SplunkMetricBase(SplunkCommonBase):
     # Core method for posting events to Splunk
-    def _post_metric(self):
-        param_data = {
-            "host": "host01",
-            "sourcetype": "sts_test_data"
-        }
+    def publish_metric(self,
+                       host: str,
+                       source_type: str,
+                       topo_type: str,
+                       metric: str,
+                       value: str,
+                       qa: str):
 
-        json_data = {
-            "topo_type": "metrics",
-            "metric": "raw.metrics",
-            "value": 3,
-            "qa": "splunk"
-        }
-
-        self.post_to_services_receivers_simple(json_data=json_data, param_data=param_data)
+        self.post_to_services_receivers_simple(
+            json_data={
+                "topo_type": topo_type,
+                "metric": metric,
+                "value": value,
+                "qa": qa
+            },
+            param_data={
+                "host": host,
+                "sourcetype": source_type
+            }
+        )

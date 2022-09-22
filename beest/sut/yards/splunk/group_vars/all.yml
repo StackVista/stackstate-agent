@@ -21,7 +21,7 @@ sts_url: "https://{{ yard_id }}.{{ cluster_name }}"
 
 # Enable a StackState Receiver simulator. The data will still be forwarded to StackState but can be pulled from the
 # host machine. If this is enabled then the testing will automatically attempt to pull the Simulator logs on failure
-enable_sts_simulator: true
+enable_sts_simulator: false
 
 # Integrations
 splunk_integration: true
