@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package kubeapi
@@ -27,6 +28,7 @@ func (k *CommonCheck) ConfigureKubeAPICheck(config integration.Data, source stri
 }
 
 func (k *CommonCheck) InitKubeAPICheck() error {
+	log.Debugf("Initializing Kubernetes APIClient")
 	if config.Datadog.GetBool("cluster_agent.enabled") {
 		var errMsg = "cluster agent is enabled. Not running Kubernetes API Server check or collecting Kubernetes Events"
 		log.Debug(errMsg)

@@ -14,6 +14,7 @@ import (
 	batchV1B "k8s.io/api/batch/v1beta1"
 	coreV1 "k8s.io/api/core/v1"
 	extensionsV1B "k8s.io/api/extensions/v1beta1"
+	"k8s.io/apimachinery/pkg/version"
 )
 
 type APICollectorClient interface {
@@ -33,4 +34,5 @@ type APICollectorClient interface {
 	GetNamespaces() ([]coreV1.Namespace, error)
 	GetPersistentVolumes() ([]coreV1.PersistentVolume, error)
 	GetPersistentVolumeClaims() ([]coreV1.PersistentVolumeClaim, error)
+	GetVersion() (*version.Info, error)
 }

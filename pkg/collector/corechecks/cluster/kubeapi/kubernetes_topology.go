@@ -8,6 +8,7 @@
 package kubeapi
 
 import (
+	"k8s.io/apimachinery/pkg/version"
 	"sync"
 	"time"
 
@@ -27,8 +28,9 @@ const (
 // TopologyCheck grabs events from the API server.
 type TopologyCheck struct {
 	CommonCheck
-	instance  *TopologyConfig
-	submitter TopologySubmitter
+	instance    *TopologyConfig
+	submitter   TopologySubmitter
+	kubeVersion *version.Info
 }
 
 func warnDisabledResource(name string, additionalWarning string, isEnabled bool) {
@@ -55,6 +57,14 @@ func (t *TopologyCheck) Configure(config, initConfig integration.Data, source st
 		return err
 	}
 
+	// initialize kube api check
+	err = t.InitKubeAPICheck()
+	if err != nil {
+		return err
+	}
+
+	t.setKubernetesVersion()
+
 	warnDisabledResource("persistentvolumes", "", t.instance.Resources.Persistentvolumes)
 	warnDisabledResource("persistentvolumeclaims", "it won't be possible to connect pods to a persistent volumes claimed by them", t.instance.Resources.Persistentvolumeclaims)
 	warnDisabledResource("endpoints", "it won't be possible to connect services to underlying pods", t.instance.Resources.Endpoints)
@@ -71,6 +81,16 @@ func (t *TopologyCheck) Configure(config, initConfig integration.Data, source st
 
 	log.Debugf("Running config %s", config)
 	return nil
+}
+
+func (t *TopologyCheck) setKubernetesVersion() {
+	info, err := t.ac.GetVersion()
+	if err != nil {
+		_ = log.Warnf("Could not set Kubernetes version for topology collector: ", err)
+	} else {
+		log.Debugf("Kubernetes version: %+v", info)
+	}
+	t.kubeVersion = info
 }
 
 // SetSubmitter sets the topology submitter for the Topology Check
@@ -103,12 +123,6 @@ func (t *TopologyCheck) Run() error {
 	// Running the event collection.
 	if !t.instance.CollectTopology {
 		return nil
-	}
-
-	// initialize kube api check
-	err := t.InitKubeAPICheck()
-	if err != nil {
-		return err
 	}
 
 	// set the check "instance id" for snapshots
