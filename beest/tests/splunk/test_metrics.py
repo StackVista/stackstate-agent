@@ -187,7 +187,7 @@ def test_splunk_metric_transactional_check(agent: AgentTestingBase,
                                        "raw.metrics": int(metric.get("value")),
                                    },
                                    first_match=True,
-                                   timeout=180,
+                                   timeout=360,
                                    period=5)
         except Exception as e:
             if expect_failure is True:
@@ -211,8 +211,8 @@ def test_splunk_metric_transactional_check(agent: AgentTestingBase,
     # Attempt to check the prev component we posted should be in the agent including the
     # new one we posted
     def find_metric_while_routes_is_open():
-        post_metric(expected_metric=metric_posted_while_agent_was_down)
-        # post_metric()
+        # post_metric(expected_metric=metric_posted_while_agent_was_down)
+        post_metric()
 
     # Run a stateful test for the agent
     agent.transactional_run_cycle_test(
@@ -220,3 +220,11 @@ def test_splunk_metric_transactional_check(agent: AgentTestingBase,
         func_after_blocking_routes=find_metric_while_routes_is_blocked,
         rerun_func_unblocking_blocked_routes=find_metric_while_routes_is_open
     )
+
+# Logging
+# sudo systemctl edit stackstate-agent.service --force --full
+# Environment="LOG_PAYLOADS=true"
+# Environment="STS_LOG_LEVEL=debug"
+
+# Committing state for transaction
+#  rolling back transaction

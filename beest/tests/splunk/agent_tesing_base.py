@@ -149,7 +149,7 @@ class AgentTestingBase:
                                      func_before_blocking_routes: Callable[[], any],
                                      func_after_blocking_routes: Callable[[], any],
                                      rerun_func_unblocking_blocked_routes: Callable[[], any],
-                                     wait_after_blocking_routes: int = 120):
+                                     wait_after_blocking_routes: int = 60):
         # Open up the routing from the agent to sts instance
         self.allow_routing_to_sts_instance()
         # Make sure the agent is running on the host
