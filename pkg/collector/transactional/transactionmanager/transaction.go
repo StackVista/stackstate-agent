@@ -46,7 +46,7 @@ const (
 	Rejected
 )
 
-// String returns a string representation of TransactionStatus
+// String returns a string representation of ActionStatus
 func (state ActionStatus) String() string {
 	switch state {
 	case Acknowledged:
@@ -54,7 +54,7 @@ func (state ActionStatus) String() string {
 	case Rejected:
 		return "rejected"
 	default:
-		return "comitted"
+		return "committed"
 	}
 }
 
