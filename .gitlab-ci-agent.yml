@@ -155,7 +155,7 @@ deps_win:
     when:
       - always
   rules:
-    - when: never
+    - when: on_success
 
 ## build stage
 
@@ -413,7 +413,7 @@ build_win:
     when:
       - always
   rules:
-    - when: never
+    - when: on_success
 
 win_cleanup:
   stage: test
@@ -432,6 +432,8 @@ win_cleanup:
     max: 2
     when:
       - always
+  rules:
+    - when: on_success
   allow_failure: true
 
 ## pre_release stage
