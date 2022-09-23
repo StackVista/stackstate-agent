@@ -201,6 +201,12 @@ currentTxHandler:
 				break currentTxHandler
 
 			case transactionmanager.CompleteTransaction:
+				if msg.TransactionID != ch.GetCurrentTransaction() {
+					log.Warnf("Attempting to complete transaction that is not the current transaction for this"+
+						"check. Current transaction: %s, completed transaction: %s",
+						ch.GetCurrentTransaction(), msg.TransactionID)
+					continue
+				}
 				log.Debugf("Completing transaction: %s for check %s", msg.TransactionID, ch.ID())
 
 				if msg.State != nil {
