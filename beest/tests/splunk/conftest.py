@@ -7,6 +7,7 @@ import json
 
 from pathlib import Path
 from splunk_testing_base import SplunkBase
+from agent_tesing_base import AgentTestingBase
 from typing import Callable
 from stscliv1 import CLIv1
 
@@ -67,6 +68,19 @@ def simulator(request, ansible_var, splunk):
             return None
 
     return dump_data
+
+
+# Create a Agent Testing Base class to group all the functionality for the agent
+@pytest.fixture
+def agent(ansible_var, host, splunk) -> AgentTestingBase:
+    agent_interface = AgentTestingBase(ansible_var,
+                                       hostname=f'{splunk.splunk_host}',
+                                       username=f'ubuntu',
+                                       key_file_path=f'{YARD_LOCATION}/splunk_id_rsa')
+
+    yield agent_interface
+
+    agent_interface.close_connection()
 
 
 # Create a Splunk Testing Base class to group all the functionality for splunk

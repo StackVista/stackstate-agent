@@ -1,8 +1,11 @@
 from typing import Optional
 
 import testinfra.utils.ansible_runner
+import logging
 import requests
+import random
 
+from typing import TypedDict
 from urllib3.exceptions import InsecureRequestWarning
 
 
@@ -86,6 +89,13 @@ class SplunkCommonBase:
         # Disable Security Warning
         requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
+    @staticmethod
+    def get_or_else(value: Optional[any] = None, alternative: [any] = None):
+        if value is not None:
+            return value
+        else:
+            return alternative
+
     def post_to_services_receivers_simple(self, json_data, param_data=None):
         self.session.post("%s/services/receivers/simple" % self.splunk_instance,
                           json=json_data,
@@ -94,69 +104,151 @@ class SplunkCommonBase:
             .raise_for_status()
 
 
+class SplunkTopologyComponent(TypedDict):
+    id: str
+    type: str
+    description: str
+    topo_type: str
+
+
+class SplunkTopologyRelation(TypedDict):
+    relation_type: str
+    source_id: str
+    target_id: str
+    description: str
+    topo_type: str
+
+
 class SplunkTopologyBase(SplunkCommonBase):
+
     def publish_component(self,
-                          component_id: str,
-                          component_type: str,
-                          description: str = "Component Description",
-                          topo_type: str = "component"):
+                          component_id: Optional[str] = None,
+                          component_type: Optional[str] = None,
+                          component_description: Optional[str] = None,
+                          component_topo_type: Optional[str] = None) -> SplunkTopologyComponent:
+
+        # Create a type safe structure with the component we are psoting
+        component = SplunkTopologyComponent(
+            id=self.get_or_else(component_id, "server_{}".format(random.randint(0, 10000))),
+            type=self.get_or_else(component_type, "server"),
+            topo_type=self.get_or_else(component_topo_type, "component"),
+            description=self.get_or_else(component_description, "Topology Server Component"),
+        )
 
         self.post_to_services_receivers_simple(
             json_data={
-                "topo_type": topo_type,
-                "id": component_id,
-                "type": component_type,
-                "description": description
+                "id": component.get("id"),
+                "type": component.get("type"),
+                "topo_type": component.get("topo_type"),
+                "description": component.get("description")
             }
         )
+
+        logging.debug(f"Publishing component with the name '{component.get('id')}' on StackState")
+
+        return component
 
     def publish_relation(self,
-                         relation_type: str,
                          source_id: str,
                          target_id: str,
-                         description: str = "Relation Description",
-                         topo_type: str = "relation"):
+                         relation_type: Optional[str] = None,
+                         description: Optional[str] = None,
+                         topo_type: Optional[str] = None) -> SplunkTopologyRelation:
+
+        # Create a type safe structure with the relation we are posting
+        relation = SplunkTopologyRelation(
+            source_id=source_id,
+            target_id=target_id,
+            relation_type=self.get_or_else(relation_type, "CONNECTED"),
+            description=self.get_or_else(description, "Relation Description"),
+            topo_type=self.get_or_else(topo_type, "relation"),
+        )
 
         self.post_to_services_receivers_simple(
             json_data={
-                "topo_type": topo_type,
-                "type": relation_type,
-                "sourceId": source_id,
-                "targetId": target_id,
-                "description": description
+                "topo_type": relation.get("topo_type"),
+                "type": relation.get("relation_type"),
+                "sourceId": relation.get("source_id"),
+                "targetId": relation.get("target_id"),
+                "description": relation.get("description")
             }
         )
+
+        logging.debug(f"Publishing relation from '{relation.get('source_id')}' to '{relation.get('target_id')}'"
+                      f" on StackState")
+
+        return relation
+
+
+class SplunkHealth(TypedDict):
+    name: str
+    check_state_id: str
+    health: str
+    topology_element_identifier: str
+    message: Optional[str]
 
 
 class SplunkHealthBase(SplunkCommonBase):
     # Core method for posting events to Splunk
     def publish_health(self,
-                       name: str,
-                       check_state_id: str,
-                       health: str,
-                       topology_element_identifier: str,
-                       message: Optional[str]):
+                       name: Optional[str] = None,
+                       check_state_id: Optional[str] = None,
+                       health: Optional[str] = None,
+                       topology_element_identifier: Optional[str] = None,
+                       message: Optional[str] = None) -> SplunkHealth:
 
-        json_data = {
-            "check_state_id": check_state_id,
-            "name": name,
-            "health": health,
-            "topology_element_identifier": topology_element_identifier,
+        # Prepare the data that will be sent to StackState
+        random_disk_id = random.randint(0, 10000)
+        random_server_id = random.randint(0, 10000)
+
+        # Create a type safe structure with the health we are posting
+        health = SplunkHealth(
+            name=self.get_or_else(name, "Disk {} SDA".format(random_disk_id)),
+            check_state_id=self.get_or_else(check_state_id, "disk_{}_sda".format(random_disk_id)),
+            health=self.get_or_else(health, random.choice(["CLEAR", "CRITICAL"])),
+            message=self.get_or_else(message, "SDA Disk {} Message".format(random_disk_id)),
+            topology_element_identifier=self.get_or_else(topology_element_identifier,
+                                                         "server_{}".format(random_server_id)),
+        )
+
+        self.post_to_services_receivers_simple(
+            json_data={
+                "check_state_id": health.get("check_state_id"),
+                "name": health.get("name"),
+                "health": health.get("health"),
+                "topology_element_identifier": health.get("topology_element_identifier"),
+                "message": health.get("message"),
             }
+        )
 
-        if message is not None:
-            json_data["message"] = message
+        return health
 
-        self.post_to_services_receivers_simple(json_data=json_data)
+
+class SplunkEvent(TypedDict):
+    host: str
+    source_type: str
+    status: str
+    description: str
 
 
 class SplunkEventBase(SplunkCommonBase):
     # Core method for posting events to Splunk
     def publish_event(self,
-                      host: str,
-                      source_type: str,
-                      status: str,
-                      description: str):
+                      host: Optional[str] = None,
+                      source_type: Optional[str] = None,
+                      status: Optional[str] = None,
+                      description: Optional[str] = None):
+
+        # Prepare the data that will be sent to StackState
+        random_host_id = random.randint(0, 10000)
+
+        # Create a type safe structure with the health we are posting
+        event = SplunkEvent(
+            host=self.get_or_else(host, "host{}".format(random_host_id)),
+            source_type=self.get_or_else(source_type, "sts_test_data"),
+            status=self.get_or_else(status, random.choice(["CRITICAL", "OK"])),
+            description=self.get_or_else(description, "Test host{} Event".format(random_host_id))
+        )
 
         self.post_to_services_receivers_simple(
             json_data={
@@ -169,26 +261,52 @@ class SplunkEventBase(SplunkCommonBase):
             }
         )
 
+        return event
+
+
+class SplunkMetric(TypedDict):
+    host: str
+    source_type: str
+    topo_type: str
+    metric: str
+    value: str
+    qa: str
+
 
 class SplunkMetricBase(SplunkCommonBase):
     # Core method for posting events to Splunk
     def publish_metric(self,
-                       host: str,
-                       source_type: str,
-                       topo_type: str,
-                       metric: str,
-                       value: str,
-                       qa: str):
+                       host: Optional[str] = None,
+                       source_type: Optional[str] = None,
+                       topo_type: Optional[str] = None,
+                       metric: Optional[str] = None,
+                       value: Optional[int] = None,
+                       qa: Optional[str] = None) -> SplunkMetric:
+
+        # Prepare the data that will be sent to StackState
+        random_host_id = random.randint(0, 10000)
+
+        # Create a type safe structure with the health we are posting
+        metric = SplunkMetric(
+            host=self.get_or_else(host, "host{}".format(random_host_id)),
+            source_type=self.get_or_else(source_type, "sts_test_data"),
+            topo_type=self.get_or_else(topo_type, "metrics"),
+            metric=self.get_or_else(metric, "raw.metrics"),
+            value=self.get_or_else(value, random.randint(1, 100000)),
+            qa=self.get_or_else(qa, "splunk"),
+        )
 
         self.post_to_services_receivers_simple(
             json_data={
-                "topo_type": topo_type,
-                "metric": metric,
-                "value": value,
-                "qa": qa
+                "topo_type": metric.get("topo_type"),
+                "metric": metric.get("metric"),
+                "value": int(metric.get("value")),
+                "qa": metric.get("qa")
             },
             param_data={
-                "host": host,
-                "sourcetype": source_type
+                "host": metric.get("host"),
+                "sourcetype": metric.get("source_type")
             }
         )
+
+        return metric
