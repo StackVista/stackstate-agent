@@ -34,12 +34,36 @@ func (state TransactionStatus) String() string {
 	}
 }
 
+// ActionStatus is an integer representing the state of the action
+type ActionStatus int64
+
+const (
+	// Committed is used to represent a Committed action
+	Committed ActionStatus = iota
+	// Acknowledged is used to represent an Acknowledged action. ie successfully "completed" action
+	Acknowledged
+	// Rejected is used to represent an Rejected action. ie unsuccessfully "completed" action
+	Rejected
+)
+
+// String returns a string representation of TransactionStatus
+func (state ActionStatus) String() string {
+	switch state {
+	case Acknowledged:
+		return "acknowledged"
+	case Rejected:
+		return "rejected"
+	default:
+		return "comitted"
+	}
+}
+
 // Action represents a single operation in a checkmanager, which consists of one or more actions
 type Action struct {
-	ActionID              string
-	CommittedTimestamp    time.Time
-	Acknowledged          bool
-	AcknowledgedTimestamp time.Time
+	ActionID               string
+	CommittedTimestamp     time.Time
+	Status                 ActionStatus
+	StatusUpdatedTimestamp time.Time
 }
 
 // IntakeTransaction represents an intake checkmanager which consists of one or more actions

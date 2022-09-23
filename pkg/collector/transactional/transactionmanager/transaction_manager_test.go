@@ -33,7 +33,7 @@ func TestTransactionManager_HappyFlow(t *testing.T) {
 		actID := fmt.Sprintf("action-%d", i)
 		txManager.AcknowledgeAction(txID, actID)
 		time.Sleep(50 * time.Millisecond) // give the transaction manager a bit of time to acknowledge the action before asserting
-		actions[actID] = &Action{ActionID: actID, Acknowledged: true}
+		actions[actID] = &Action{ActionID: actID, Status: Acknowledged}
 		assertTransaction(t, txManager, txID, InProgress, actions)
 	}
 
@@ -132,7 +132,7 @@ func TestTransactionManager_TransactionDiscard(t *testing.T) {
 
 				txManager.RejectAction(txID, actID, "forced rejection")
 
-				actions[actID].Acknowledged = true
+				actions[actID].Status = Rejected
 
 				return actions
 			},
@@ -298,13 +298,13 @@ func assertTransaction(t *testing.T, txManager *transactionManager, txID string,
 		expectedAction, found := actions[action.ActionID]
 		assert.True(t, found)
 		assert.Equal(t, expectedAction.ActionID, action.ActionID)
-		assert.Equal(t, expectedAction.Acknowledged, action.Acknowledged)
+		assert.Equal(t, expectedAction.Status, action.Status)
 	}
 	txManager.mux.RUnlock()
 }
 
 func commitAssertAction(t *testing.T, txManager *transactionManager, txID, actID string, actions map[string]*Action) {
 	txManager.CommitAction(txID, actID)
-	actions[actID] = &Action{ActionID: actID, Acknowledged: false}
+	actions[actID] = &Action{ActionID: actID, Status: Committed}
 	assertTransaction(t, txManager, txID, InProgress, actions)
 }

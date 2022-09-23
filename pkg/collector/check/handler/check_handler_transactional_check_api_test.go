@@ -91,7 +91,7 @@ var (
 func TestCheckHandlerAPI(t *testing.T) {
 	// init global transactionbatcher used by the check no handler
 	mockBatcher := transactionbatcher.NewMockTransactionalBatcher()
-	transactionmanager.NewMockTransactionManager()
+	mockTM := transactionmanager.NewMockTransactionManager()
 
 	checkHandler := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
@@ -283,6 +283,10 @@ func TestCheckHandlerAPI(t *testing.T) {
 		assert.EqualValues(t, batchState, actualState)
 
 		ch.DiscardTransaction("test cancel transaction")
+
+		discardMsg := <-mockTM.TransactionActions
+		assert.IsType(t, transactionmanager.DiscardTransaction{}, discardMsg)
+		ch.(*TransactionalCheckHandler).currentTransactionChannel <- discardMsg
 
 		time.Sleep(100 * time.Millisecond)
 		postCancelState, found := mockBatcher.GetCheckState(ch.ID())
