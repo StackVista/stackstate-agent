@@ -62,7 +62,7 @@ RUN curl -L "https://github.com/wercker/stern/releases/download/${STERN_V}/stern
     chmod +x ./stern && \
     mv ./stern /usr/local/bin/
 
-ARG HELM_V=3.7.1
+ARG HELM_V=3.9.4
 RUN curl -O "https://get.helm.sh/helm-v${HELM_V}-linux-amd64.tar.gz" && \
     tar xvzf helm-v${HELM_V}-linux-amd64.tar.gz && \
     mv ./linux-amd64/helm /usr/local/bin/ && \
@@ -83,7 +83,7 @@ RUN curl -O "https://stseuw1-tooling-main-homebrew.s3.amazonaws.com/sts-toolbox/
     rm -r sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \
     mv ./sts-toolbox /usr/local/bin/
 
-ARG STSCLI_V2=2.0.0
+ARG STSCLI_V2=2.1.0
 RUN curl --insecure -O "https://cli-dl.stackstate.com.s3.amazonaws.com/stackstate-cli/v${STSCLI_V2}/stackstate-cli-${STSCLI_V2}.linux-x86_64.tar.gz" && \
     tar xvzf stackstate-cli-${STSCLI_V2}.linux-x86_64.tar.gz && \
     rm -r stackstate-cli-${STSCLI_V2}.linux-x86_64.tar.gz && \
