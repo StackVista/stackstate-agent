@@ -78,6 +78,7 @@ var (
 	testRawMetricsDataIntakeMetric2 = testRawMetricsData2.IntakeMetricJSON()
 
 	testEvent = metrics.Event{
+		Title:          "test-event-1",
 		Ts:             time.Now().Unix(),
 		EventType:      "docker",
 		Tags:           []string{"my", "test", "tags"},
@@ -86,6 +87,7 @@ var (
 		Priority:       metrics.EventPriorityNormal,
 	}
 	testEvent2 = metrics.Event{
+		Title:          "test-event-2",
 		Ts:             time.Now().Unix(),
 		EventType:      "docker",
 		Tags:           []string{"my", "test", "tags"},
@@ -99,6 +101,7 @@ var (
 		},
 	}
 	testEvent3 = metrics.Event{
+		Title:          "test-event-3",
 		Ts:             time.Now().Unix(),
 		EventType:      "docker",
 		Tags:           []string{"my", "test", "tags"},

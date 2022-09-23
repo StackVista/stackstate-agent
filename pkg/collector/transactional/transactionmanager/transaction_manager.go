@@ -177,8 +177,10 @@ func (txm *transactionManager) commitAction(transactionID, actionID string) erro
 	}
 	txm.mux.Lock()
 	action := &Action{
-		ActionID:           actionID,
-		CommittedTimestamp: time.Now(),
+		ActionID:               actionID,
+		CommittedTimestamp:     time.Now(),
+		Status:                 Committed,
+		StatusUpdatedTimestamp: time.Now(),
 	}
 	txm.updateTransaction(transaction, action, InProgress)
 	txm.mux.Unlock()
@@ -195,7 +197,26 @@ func (txm *transactionManager) updateTransaction(transaction *IntakeTransaction,
 
 // ackAction acknowledges an action for a given transaction. This marks the action as acknowledged.
 func (txm *transactionManager) ackAction(transactionID, actionID string) error {
-	return txm.findAndUpdateAction(transactionID, actionID, true)
+	transaction, err := txm.GetTransaction(transactionID)
+	if err != nil {
+		return err
+	}
+
+	txm.mux.Lock()
+
+	action, exists := transaction.Actions[actionID]
+	if !exists {
+		txm.mux.Unlock()
+		return ActionNotFound{ActionID: actionID, TransactionID: transactionID}
+	}
+	action.Status = Acknowledged
+	action.StatusUpdatedTimestamp = time.Now()
+
+	txm.updateTransaction(transaction, action, InProgress)
+
+	txm.mux.Unlock()
+
+	return nil
 }
 
 // setTransactionState sets the state for a given key and CheckState. The state for a given transaction will be
@@ -217,31 +238,24 @@ func (txm *transactionManager) setTransactionState(transactionID, key string, st
 	return nil
 }
 
-// rejectAction acknowledges an action for a given transaction. This marks the action as acknowledged and results in a
+// rejectAction rejects an action for a given transaction. This marks the action as rejected and results in a
 // failed transaction and discarding.
 func (txm *transactionManager) rejectAction(transactionID, actionID string) error {
-	return txm.findAndUpdateAction(transactionID, actionID, false)
-}
-
-// findAndUpdateAction is a helper function to find a transaction and action for the given ID's, marks the action as
-// acknowledged and updates the transaction is updateTransaction is set to true.
-func (txm *transactionManager) findAndUpdateAction(transactionID, actionID string, updateTransaction bool) error {
 	transaction, err := txm.GetTransaction(transactionID)
 	if err != nil {
 		return err
 	}
+
 	txm.mux.Lock()
+
 	action, exists := transaction.Actions[actionID]
 	if !exists {
 		txm.mux.Unlock()
 		return ActionNotFound{ActionID: actionID, TransactionID: transactionID}
 	}
-	action.Acknowledged = true
-	action.AcknowledgedTimestamp = time.Now()
+	action.Status = Rejected
+	action.StatusUpdatedTimestamp = time.Now()
 
-	if updateTransaction {
-		txm.updateTransaction(transaction, action, InProgress)
-	}
 	txm.mux.Unlock()
 
 	return nil
@@ -257,7 +271,7 @@ func (txm *transactionManager) completeTransaction(transactionID string) error {
 	txm.mux.Lock()
 	// ensure all actions have been acknowledged
 	for _, action := range transaction.Actions {
-		if !action.Acknowledged {
+		if action.Status != Acknowledged {
 			reason := fmt.Sprintf("Not all actions have been acknowledged, rolling back transaction: %s", transaction.TransactionID)
 			txm.mux.Unlock()
 			return DiscardTransaction{TransactionID: transactionID, Reason: reason}

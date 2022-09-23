@@ -109,8 +109,6 @@ currentTxHandler:
 				if config.Datadog.GetBool("log_payloads") {
 					log.Debugf("%s. Discarding current transaction", logPrefix)
 				}
-				// empty batcher state
-				transactionbatcher.GetTransactionalBatcher().SubmitClearState(ch.ID())
 				// trigger failed transaction
 				transactionmanager.GetTransactionManager().DiscardTransaction(ch.GetCurrentTransaction(), msg.Reason)
 
@@ -193,6 +191,10 @@ currentTxHandler:
 			// Notifications from the transaction manager
 			case transactionmanager.DiscardTransaction, transactionmanager.EvictedTransaction:
 				log.Debugf("Discarded/Evicted transaction for check %s", ch.ID())
+
+				// empty batcher state
+				transactionbatcher.GetTransactionalBatcher().SubmitClearState(ch.ID())
+
 				// clear current transaction
 				ch.clearCurrentTransaction()
 
