@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from beest.tests.splunk.agent_tesing_base import AgentTestingBase
+from agent_tesing_base import AgentTestingBase
 from splunk_testing_base import SplunkBase, SplunkHealth
 from conftest import YARD_LOCATION
 from stscliv1 import CLIv1

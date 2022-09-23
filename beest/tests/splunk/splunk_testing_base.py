@@ -252,12 +252,12 @@ class SplunkEventBase(SplunkCommonBase):
 
         self.post_to_services_receivers_simple(
             json_data={
-                "status": status,
-                "description": description
+                "status": event.get("status"),
+                "description": event.get("description")
             },
             param_data={
-                "host": host,
-                "sourcetype": source_type
+                "host": event.get("host"),
+                "sourcetype": event.get("source_type")
             }
         )
 

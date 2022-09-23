@@ -2,7 +2,7 @@ import time
 import logging
 from typing import Optional
 
-from beest.tests.splunk.agent_tesing_base import AgentTestingBase
+from agent_tesing_base import AgentTestingBase
 from splunk_testing_base import SplunkBase, SplunkEvent
 from conftest import YARD_LOCATION
 from stscliv1 import CLIv1
@@ -33,12 +33,14 @@ def test_splunk_event(agent: AgentTestingBase,
                                     topic="sts_generic_events",
                                     query="message.GenericEvent.tags",
                                     contains_dict={
+                                        "source_type_name": "generic_splunk_event",
                                         "host": event.get("host"),
+                                        "description": event.get("description"),
                                         "status": event.get("status")
                                     },
                                     first_match=True,
-                                    timeout=260,
-                                    period=10,
+                                    timeout=120,
+                                    period=5,
                                     on_failure_action=lambda: simulator())
 
     logging.info(f"Found the following results: {result}")
@@ -68,7 +70,7 @@ def test_splunk_multiple_events(agent: AgentTestingBase,
                                     topic="sts_generic_events",
                                     query="message.GenericEvent.tags",
                                     contains_dict={
-                                        "source_type_name": event_a.get("source_type"),
+                                        "source_type_name": "generic_splunk_event",
                                         "host": event_a.get("host"),
                                         "description": event_a.get("description"),
                                         "status": event_a.get("status")
@@ -84,7 +86,7 @@ def test_splunk_multiple_events(agent: AgentTestingBase,
                                     topic="sts_generic_events",
                                     query="message.GenericEvent.tags",
                                     contains_dict={
-                                        "source_type_name": event_b.get("source_type"),
+                                        "source_type_name": "generic_splunk_event",
                                         "host": event_b.get("host"),
                                         "description": event_b.get("description"),
                                         "status": event_b.get("status")
@@ -124,7 +126,7 @@ def test_splunk_event_stateful_state(agent: AgentTestingBase,
                                    topic="sts_generic_events",
                                    query="message.GenericEvent.tags",
                                    contains_dict={
-                                       "source_type_name": event.get("source_type"),
+                                       "source_type_name": "generic_splunk_event",
                                        "host": event.get("host"),
                                        "description": event.get("description"),
                                        "status": event.get("status")
@@ -190,7 +192,7 @@ def test_splunk_event_transactional_check(agent: AgentTestingBase,
                                    topic="sts_generic_events",
                                    query="message.GenericEvent.tags",
                                    contains_dict={
-                                       "source_type_name": event.get("source_type"),
+                                       "source_type_name": "generic_splunk_event",
                                        "host": event.get("host"),
                                        "description": event.get("description"),
                                        "status": event.get("status")

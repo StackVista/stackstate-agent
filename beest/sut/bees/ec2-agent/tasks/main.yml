@@ -24,6 +24,8 @@
       retries: 5
       delay: 60
       environment:
+        LOG_PAYLOADS: "true"
+        STS_LOG_LEVEL: "debug"
         STS_API_KEY: "{{ sts_api_key }}"
         STS_URL: "http://localhost:7078/stsAgent"
         STS_HOSTNAME: "{{ inventory_hostname }}"
@@ -38,6 +40,8 @@
       retries: 5
       delay: 60
       environment:
+        LOG_PAYLOADS: "true"
+        STS_LOG_LEVEL: "debug"
         STS_API_KEY: "{{ sts_api_key }}"
         STS_URL: "{{ sts_url }}/receiver/stsAgent"
         STS_HOSTNAME: "{{ inventory_hostname }}"
