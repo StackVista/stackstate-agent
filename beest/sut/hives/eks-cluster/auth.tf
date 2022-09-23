@@ -1,5 +1,5 @@
-data "aws_iam_role" "administrator" {
-  name = "Administrator"
+data "aws_iam_role" "developer" {
+  name = "Developer"
 }
 
 locals {
@@ -16,8 +16,8 @@ data:
       groups:
         - system:bootstrappers
         - system:nodes
-    - rolearn: ${data.aws_iam_role.administrator.arn}
-      username: ${data.aws_iam_role.administrator.name}
+    - rolearn: ${data.aws_iam_role.developer.arn}
+      username: ${data.aws_iam_role.developer.name}
       groups:
         - system:masters
 CONFIGMAPAWSAUTH

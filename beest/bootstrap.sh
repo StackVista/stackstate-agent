@@ -9,7 +9,4 @@ if [ `echo $$` == 1 ]; then
     generate_aws_config
 fi
 
-# we export the function so we can call it in the .envrc, after BEEST_AWS variables have been set
-export -f configure_aws_beest_credentials
-
 setup_interactive_shell

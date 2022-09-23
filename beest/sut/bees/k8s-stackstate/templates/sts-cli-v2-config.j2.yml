@@ -1,0 +1,6 @@
+contexts:
+  - name: default
+    context:
+      url: "{{ sts_url }}"
+      api-path: /api
+current-context: default
