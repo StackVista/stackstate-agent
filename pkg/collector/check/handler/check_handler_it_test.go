@@ -98,6 +98,7 @@ func TestCheckHandler_State_Transactional_Integration(t *testing.T) {
 
 		// start with a clean state
 		err := os.RemoveAll(fmt.Sprintf("%s/%s", config.Datadog.Get("check_state_root_path"), ch.ID()))
+		assert.NoError(t, err, "error cleaning up test data file")
 
 		baseState := "{\"state\":\"base\"}"
 		updatedState := "{\"state\":\"updated\"}"
