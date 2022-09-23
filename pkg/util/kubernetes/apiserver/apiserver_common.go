@@ -29,7 +29,7 @@ type APICollectorClient interface {
 	GetNodes() ([]coreV1.Node, error)
 	GetPods() ([]coreV1.Pod, error)
 	GetServices() ([]coreV1.Service, error)
-	GetIngressesExtV1Beta1() ([]extensionsV1B.Ingress, error)
+	GetIngressesExtV1B1() ([]extensionsV1B.Ingress, error)
 	GetIngressesNetV1() ([]netV1.Ingress, error)
 	GetConfigMaps() ([]coreV1.ConfigMap, error)
 	GetSecrets() ([]coreV1.Secret, error)

@@ -54,7 +54,7 @@ func (c *APIClient) GetServices() ([]v1.Service, error) {
 }
 
 // GetIngressesExtV1Beta1 retrieves all the (extensions/v1beta1) ingress endpoints linked to services in the Kubernetes / OpenShift cluster across all namespaces.
-func (c *APIClient) GetIngressesExtV1Beta1() ([]v1beta1.Ingress, error) {
+func (c *APIClient) GetIngressesExtV1B1() ([]v1beta1.Ingress, error) {
 	ingressList, err := c.Cl.ExtensionsV1beta1().Ingresses(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return []v1beta1.Ingress{}, err

@@ -26,6 +26,7 @@ func NewIngressCollector(componentChannel chan<- *topology.Component, relationCh
 		ComponentChan:            componentChannel,
 		RelationChan:             relationChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
+		k8sVersion:               k8sVersion,
 	}
 }
 
@@ -81,6 +82,7 @@ func (ic *IngressCollector) CollectorFunction() error {
 }
 
 func (ic *IngressCollector) getExtV1Ingresses(ingresses []IngressInterface) ([]IngressInterface, error) {
+	log.Debugf("Kubernetes version is %+v", ic.k8sVersion)
 	if ic.k8sVersion != nil && ic.k8sVersion.Major == "1" {
 		log.Debugf("Kubernetes version is Major=%s, Minor=%s", ic.k8sVersion.Major, ic.k8sVersion.Minor)
 		minor, err := strconv.Atoi(ic.k8sVersion.Minor[:2])
@@ -94,13 +96,13 @@ func (ic *IngressCollector) getExtV1Ingresses(ingresses []IngressInterface) ([]I
 			log.Debugf("Kubernetes version is <= 1.21, the topology collector will query ingresses from 'extensions/v1beta1' version")
 		}
 	}
-	ingressesExt, err := ic.GetAPIClient().GetIngressesExtV1Beta1()
+	ingressesExt, err := ic.GetAPIClient().GetIngressesExtV1B1()
 	if err != nil {
 		return nil, err
 	}
 	for _, in := range ingressesExt {
 		ingresses = append(ingresses, V1Beta1Ingress{
-			&in,
+			o: in,
 		})
 	}
 	return ingresses, nil
@@ -113,7 +115,7 @@ func (ic *IngressCollector) getNetV1Ingresses(ingresses []IngressInterface) ([]I
 	}
 	for _, in := range ingressesExt {
 		ingresses = append(ingresses, NetV1Ingress{
-			&in,
+			o: in,
 		})
 	}
 	return ingresses, nil
