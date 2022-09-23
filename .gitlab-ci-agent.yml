@@ -154,8 +154,6 @@ deps_win:
     max: 2
     when:
       - always
-  rules:
-    - when: never
 
 ## build stage
 
@@ -410,8 +408,6 @@ build_win:
     max: 2
     when:
       - always
-  rules:
-    - when: never
 
 ## pre_release stage
 
