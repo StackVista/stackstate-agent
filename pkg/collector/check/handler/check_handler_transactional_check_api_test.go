@@ -93,7 +93,7 @@ func TestCheckHandlerAPI(t *testing.T) {
 	mockBatcher := transactionbatcher.NewMockTransactionalBatcher()
 	mockTM := transactionmanager.NewMockTransactionManager()
 
-	checkHandler := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"},
+	checkHandler := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-api-test-check"},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 	var transactionID string
 	checkInstanceBatchState := &transactionbatcher.TransactionCheckInstanceBatchState{}
@@ -284,14 +284,22 @@ func TestCheckHandlerAPI(t *testing.T) {
 
 		ch.DiscardTransaction("test cancel transaction")
 
-		discardMsg := <-mockTM.TransactionActions
-		assert.IsType(t, transactionmanager.DiscardTransaction{}, discardMsg)
-		ch.(*TransactionalCheckHandler).currentTransactionChannel <- discardMsg
+		select {
+		case input := <-mockTM.TransactionActions:
+			switch msg := input.(type) {
+			case transactionmanager.DiscardTransaction:
+				assert.IsType(t, transactionmanager.DiscardTransaction{}, msg)
+				ch.(*TransactionalCheckHandler).currentTransactionChannel <- msg
+			default:
+				// ignore
+			}
+		}
 
-		time.Sleep(100 * time.Millisecond)
-		postCancelState, found := mockBatcher.GetCheckState(ch.ID())
-		assert.False(t, found, "check state for %s that should be cleaned up was found: %v", ch.ID(),
-			postCancelState.JSONString())
+		assert.Eventually(t, func() bool {
+			s, hasState := mockBatcher.GetCheckState(ch.ID())
+			println(s.JSONString())
+			return !hasState
+		}, 150*time.Millisecond, 15*time.Millisecond)
 	})
 
 	// test check handler submit complete

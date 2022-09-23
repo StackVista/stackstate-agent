@@ -135,7 +135,7 @@ func TestCheckHandler_State_Transactional_Integration(t *testing.T) {
 	})
 
 	// stop the transactional components
-	//transactionforwarder.GetTransactionalForwarder().Stop()
+	transactionforwarder.GetTransactionalForwarder().Stop()
 	transactionbatcher.GetTransactionalBatcher().Stop()
 	transactionmanager.GetTransactionManager().Stop()
 
