@@ -12,6 +12,7 @@ function cleanup_test_directories () {
     # Delete Files
     find "./tests" -type f -name '*.gv' "-$1"
     find "./tests" -type f -name 'test_*-*.json' "-$1"
+    find "./tests" -type f -name 'test_*-*.xml' "-$1"
 
     # Delete Directories
     if [ $1 == "delete" ]; then

@@ -1,10 +1,14 @@
 from typing import Optional
+from xml.etree.ElementTree import Element
 
 import testinfra.utils.ansible_runner
+import json
 import logging
 import requests
 import random
 
+from xml.etree import ElementTree
+from pathlib import Path
 from typing import TypedDict
 from urllib3.exceptions import InsecureRequestWarning
 
@@ -19,12 +23,15 @@ class SplunkBase:
     splunk_user: str
     splunk_pass: str
 
-    def __init__(self, host, ansible_var, yard_location):
+    def __init__(self, host, ansible_var, request, yard_location):
         # Store the ansible infra host in the base class
         self.host = host
 
         # The location where the yard is located for splunk
         self.yard_location: str = yard_location
+
+        # The location where the yard is located for splunk
+        self.request: str = request
 
         # A reference to the ansible_var variable selector
         self.ansible_var = ansible_var
@@ -41,10 +48,14 @@ class SplunkBase:
         self.set_splunk_instance(yard_location)
 
         # Types of Splunk Integrations
-        self.topology = SplunkTopologyBase(ansible_var, self.splunk_instance, self.splunk_user, self.splunk_pass)
-        self.event = SplunkEventBase(ansible_var, self.splunk_instance, self.splunk_user, self.splunk_pass)
-        self.health = SplunkHealthBase(ansible_var, self.splunk_instance, self.splunk_user, self.splunk_pass)
-        self.metric = SplunkMetricBase(ansible_var, self.splunk_instance, self.splunk_user, self.splunk_pass)
+        self.topology = SplunkTopologyBase(ansible_var, request, self.splunk_instance, self.splunk_user,
+                                           self.splunk_pass)
+        self.event = SplunkEventBase(ansible_var, request, self.splunk_instance, self.splunk_user,
+                                     self.splunk_pass)
+        self.health = SplunkHealthBase(ansible_var, request, self.splunk_instance, self.splunk_user,
+                                       self.splunk_pass)
+        self.metric = SplunkMetricBase(ansible_var, request, self.splunk_instance, self.splunk_user,
+                                       self.splunk_pass)
 
     # We are selecting local in the testinfra_hosts, This will expose all the local ansible variables
     # Only problem is that given local the ansible_host will be localhost and not the dynamic splunk instance ip
@@ -74,7 +85,7 @@ class SplunkBase:
 
 
 class SplunkCommonBase:
-    def __init__(self, ansible_var, splunk_instance, splunk_user, splunk_pass):
+    def __init__(self, ansible_var, request, splunk_instance, splunk_user, splunk_pass):
         # The calculated splunk instance
         self.splunk_instance = splunk_instance
 
@@ -86,6 +97,10 @@ class SplunkCommonBase:
         self.splunk_user = splunk_user
         self.splunk_pass = splunk_pass
 
+        # Addons
+        self.request = request
+        self.ansible_var = ansible_var
+
         # Disable Security Warning
         requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
@@ -96,12 +111,35 @@ class SplunkCommonBase:
         else:
             return alternative
 
-    def post_to_services_receivers_simple(self, json_data, param_data=None):
-        self.session.post("%s/services/receivers/simple" % self.splunk_instance,
-                          json=json_data,
-                          params=param_data,
-                          auth=(self.splunk_user, self.splunk_pass)) \
-            .raise_for_status()
+    def post_to_services_receivers_simple(self, json_data, param_data=None) -> str:
+        data_dump_request_filename = "{}-{}_request.json".format(
+            Path(str(self.request.node.fspath)).stem,
+            self.request.node.originalname,
+        )
+
+        with open(data_dump_request_filename, "w") as outfile:
+            json.dump({
+                "json": json_data,
+                "params": param_data
+            }, outfile, indent=4)
+
+        response = self.session.post("%s/services/receivers/simple" % self.splunk_instance,
+                                     json=json_data,
+                                     params=param_data,
+                                     auth=(self.splunk_user, self.splunk_pass))
+
+        data_dump_response_filename = "{}-{}_response.xml".format(
+            Path(str(self.request.node.fspath)).stem,
+            self.request.node.originalname,
+        )
+
+        xml: Element = ElementTree.fromstring(response.content)
+        doc = ElementTree.SubElement(xml.find("results"), "doc")
+        ElementTree.SubElement(doc, "http_response").text = "{}".format(response.status_code)
+        root: ElementTree = ElementTree.ElementTree(xml)
+        root.write(data_dump_response_filename)
+
+        return response.raise_for_status()
 
 
 class SplunkTopologyComponent(TypedDict):
@@ -126,7 +164,6 @@ class SplunkTopologyBase(SplunkCommonBase):
                           component_type: Optional[str] = None,
                           component_description: Optional[str] = None,
                           component_topo_type: Optional[str] = None) -> SplunkTopologyComponent:
-
         # Create a type safe structure with the component we are psoting
         component = SplunkTopologyComponent(
             id=self.get_or_else(component_id, "server_{}".format(random.randint(0, 10000))),
@@ -135,7 +172,7 @@ class SplunkTopologyBase(SplunkCommonBase):
             description=self.get_or_else(component_description, "Topology Server Component"),
         )
 
-        self.post_to_services_receivers_simple(
+        response = self.post_to_services_receivers_simple(
             json_data={
                 "id": component.get("id"),
                 "type": component.get("type"),
@@ -143,6 +180,11 @@ class SplunkTopologyBase(SplunkCommonBase):
                 "description": component.get("description")
             }
         )
+
+        print("-------->")
+        print("-------->")
+        print(response)
+        print("-------->")
 
         logging.debug(f"Publishing component with the name '{component.get('id')}' on StackState")
 
@@ -154,7 +196,6 @@ class SplunkTopologyBase(SplunkCommonBase):
                          relation_type: Optional[str] = None,
                          description: Optional[str] = None,
                          topo_type: Optional[str] = None) -> SplunkTopologyRelation:
-
         # Create a type safe structure with the relation we are posting
         relation = SplunkTopologyRelation(
             source_id=source_id,
@@ -196,7 +237,6 @@ class SplunkHealthBase(SplunkCommonBase):
                        health: Optional[str] = None,
                        topology_element_identifier: Optional[str] = None,
                        message: Optional[str] = None) -> SplunkHealth:
-
         # Prepare the data that will be sent to StackState
         random_disk_id = random.randint(0, 10000)
         random_server_id = random.randint(0, 10000)
@@ -238,7 +278,6 @@ class SplunkEventBase(SplunkCommonBase):
                       source_type: Optional[str] = None,
                       status: Optional[str] = None,
                       description: Optional[str] = None):
-
         # Prepare the data that will be sent to StackState
         random_host_id = random.randint(0, 10000)
 
@@ -282,7 +321,6 @@ class SplunkMetricBase(SplunkCommonBase):
                        metric: Optional[str] = None,
                        value: Optional[int] = None,
                        qa: Optional[str] = None) -> SplunkMetric:
-
         # Prepare the data that will be sent to StackState
         random_host_id = random.randint(0, 10000)
 

@@ -16,7 +16,7 @@ testinfra_hosts = [f"ansible://local?ansible_inventory={YARD_LOCATION}/ansible_i
 def test_splunk_component(agent: AgentTestingBase,
                           splunk: SplunkBase,
                           cliv1: CLIv1,
-                          simulator):
+                          simulator_dump):
     # Make sure we have routing enabled
     agent.allow_routing_to_sts_instance()
 
@@ -39,14 +39,14 @@ def test_splunk_component(agent: AgentTestingBase,
         topology_query=lambda: f"name = '{component.get('id')}'",
         timeout=120,  # Run for a total of x seconds, Sometimes the Agent check can take some time so to be safe
         period=5,  # Run the 'topology_matcher' and 'topology_query' every x seconds
-        on_failure_action=lambda: simulator()  # Dump the simulator logs if the cycle failed (If enabled)
+        on_failure_action=lambda: simulator_dump()  # Dump the simulator logs if the cycle failed (If enabled)
     )
 
 
 def test_splunk_multiple_component(agent: AgentTestingBase,
                                    splunk: SplunkBase,
                                    cliv1: CLIv1,
-                                   simulator):
+                                   simulator_dump):
     # Make sure we have routing enabled
     agent.allow_routing_to_sts_instance()
 
@@ -75,7 +75,7 @@ def test_splunk_multiple_component(agent: AgentTestingBase,
                                f"name = '{component_c.get('id')}'",
         timeout=120,  # Run for a total of x seconds, Sometimes the Agent check can take some time so to be safe
         period=5,  # Run the 'topology_matcher' and 'topology_query' every x seconds
-        on_failure_action=lambda: simulator()  # Dump the simulator logs if the cycle failed (If enabled)
+        on_failure_action=lambda: simulator_dump()  # Dump the simulator logs if the cycle failed (If enabled)
     )
 
 
@@ -86,7 +86,7 @@ def test_splunk_multiple_component(agent: AgentTestingBase,
 # And wait to find the second component
 def test_splunk_component_stateful_state(agent: AgentTestingBase,
                                          cliv1: CLIv1,
-                                         simulator,
+                                         simulator_dump,
                                          splunk: SplunkBase):
     # Make sure we have routing enabled
     agent.allow_routing_to_sts_instance()
@@ -113,7 +113,7 @@ def test_splunk_component_stateful_state(agent: AgentTestingBase,
                 topology_query=lambda: f"name = '{component.get('id')}'",
                 timeout=80,  # Run for a total of x seconds, Sometimes the Agent check can take some time so to be safe
                 period=5,  # Run the 'topology_matcher' and 'topology_query' every x seconds
-                on_failure_action=lambda: simulator()  # Dump the simulator logs if the cycle failed (If enabled)
+                on_failure_action=lambda: simulator_dump()  # Dump the simulator logs if the cycle failed (If enabled)
             )
         except Exception as e:
             if expect_failure is True:
@@ -155,7 +155,7 @@ def test_splunk_component_stateful_state(agent: AgentTestingBase,
 def test_splunk_component_transactional_check(agent: AgentTestingBase,
                                               cliv1: CLIv1,
                                               splunk: SplunkBase,
-                                              simulator):
+                                              simulator_dump):
     # Make sure we have routing enabled
     agent.allow_routing_to_sts_instance()
 
@@ -181,7 +181,7 @@ def test_splunk_component_transactional_check(agent: AgentTestingBase,
                 topology_query=lambda: f"name = '{component.get('id')}'",
                 timeout=80,  # Run for a total of x seconds, Sometimes the Agent check can take some time so to be safe
                 period=5,  # Run the 'topology_matcher' and 'topology_query' every x seconds
-                on_failure_action=lambda: simulator()  # Dump the simulator logs if the cycle failed (If enabled)
+                on_failure_action=lambda: simulator_dump()  # Dump the simulator logs if the cycle failed (If enabled)
             )
         except Exception as e:
             if expect_failure is True:

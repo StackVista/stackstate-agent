@@ -17,7 +17,7 @@ testinfra_hosts = [f"ansible://local?ansible_inventory={YARD_LOCATION}/ansible_i
 def test_splunk_relations(splunk: SplunkBase,
                           cliv1: CLIv1,
                           agent: AgentTestingBase,
-                          simulator):
+                          simulator_dump):
     # Make sure we have routing enabled
     agent.allow_routing_to_sts_instance()
 
@@ -47,14 +47,14 @@ def test_splunk_relations(splunk: SplunkBase,
         topology_query=lambda: f"name = '{source.get('id')}' OR name = '{target.get('id')}'",
         timeout=120,  # Run for a total of x seconds, Sometimes the Agent check can take some time so to be safe
         period=5,  # Run the 'topology_matcher' and 'topology_query' every x seconds
-        on_failure_action=lambda: simulator()  # Dump the simulator logs if the cycle failed (If enabled)
+        on_failure_action=lambda: simulator_dump()  # Dump the simulator logs if the cycle failed (If enabled)
     )
 
 
 def test_splunk_multiple_relation(splunk: SplunkBase,
                                   agent: AgentTestingBase,
                                   cliv1: CLIv1,
-                                  simulator):
+                                  simulator_dump):
     # Make sure we have routing enabled
     agent.allow_routing_to_sts_instance()
 
@@ -90,7 +90,7 @@ def test_splunk_multiple_relation(splunk: SplunkBase,
                                f"OR name = '{target_b.get('id')}'",
         timeout=120,  # Run for a total of x seconds, Sometimes the Agent check can take some time so to be safe
         period=5,  # Run the 'topology_matcher' and 'topology_query' every x seconds
-        on_failure_action=lambda: simulator()  # Dump the simulator logs if the cycle failed (If enabled)
+        on_failure_action=lambda: simulator_dump()  # Dump the simulator logs if the cycle failed (If enabled)
     )
 
 

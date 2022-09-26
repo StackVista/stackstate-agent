@@ -1386,6 +1386,70 @@ beest_otel_success_cleanup:
     - beest_otel_test
     - beest_otel_create
 
+# Job Seq: Beest
+# Type: splunk
+
+.beest_splunk_rule:
+  # Currently we default to only running on Python2 build.
+  # TODO: Change this when V3 releases are finalized and the default.
+  - &beest_splunk_ignore_rule
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[beest\-/ && $CI_COMMIT_MESSAGE !~ /\[beest\-splunk]/
+    when: never
+
+.beest_splunk_variables: &beest_splunk_variables
+  variables:
+    BEEST_SCENARIO: splunk
+    BEEST_TEST_GROUP: splunk
+
+beest_splunk_create:
+  <<: *beest
+  <<: *beest_create
+  <<: *beest_splunk_variables
+  rules:
+    - *beest_splunk_ignore_rule
+    - *v2_merge_train_always
+
+beest_splunk_test:
+  <<: *beest
+  <<: *beest_test
+  <<: *beest_splunk_variables
+  rules:
+    - *beest_splunk_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_splunk_create
+  needs:
+    - beest_splunk_create
+    - pre_release_deb
+
+beest_splunk_failure_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_splunk_variables
+  rules:
+    - *beest_splunk_ignore_rule
+    - *v2_merge_train_on_failure
+    - when: never
+  needs:
+    - beest_splunk_test
+    - beest_splunk_create
+
+beest_splunk_success_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_splunk_variables
+  rules:
+    - *beest_splunk_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_splunk_test
+    - beest_splunk_create
+  needs:
+    - beest_splunk_test
+    - beest_splunk_create
+
 ## release stage
 
 release_deb:

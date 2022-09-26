@@ -3,7 +3,9 @@ from typing import Callable
 import paramiko
 import logging
 import time
+import json
 
+from pathlib import Path
 from paramiko import SSHClient
 
 
@@ -192,6 +194,30 @@ class AgentTestingBase:
         self.start_agent_on_host()
         # Run a function after the agent has started up again
         func_after_agent_startup()
+
+    def get_current_time_on_agent_machine(self) -> str:
+        _, stdout, _ = self.client.exec_command(f'date +"%Y-%m-%d %H:%M:%S"')
+        host_response = stdout.read().decode().rstrip()
+        return host_response
+
+    def dump_logs(self, request, from_date_time):
+        print(f"Dumping all StackState Agent logs from the time: {from_date_time}")
+        print(f"Executing the following command for the agent logs: "
+              f"journalctl -u stackstate-agent.service --since '{from_date_time}'")
+
+        _, stdout, _ = self.client.exec_command(f'journalctl -u stackstate-agent.service '
+                                                f'--since "{from_date_time}"')
+
+        agent_docker_logs = stdout.read().decode()
+
+        data_dump_filename = "{}-{}-agent_dump.log".format(
+            Path(str(request.node.fspath)).stem,
+            request.node.originalname,
+        )
+
+        # Dump the data before starting to play around with it like trimming it
+        with open(data_dump_filename, "w") as outfile:
+            outfile.write(agent_docker_logs)
 
 
 

@@ -66,41 +66,41 @@
         group: stackstate-agent
         mode: '0644'
 
-#    # Splunk Event Check
-#    - name: Creates Splunk Event check directory
-#      become: yes
-#      when: splunk_integration is defined
-#      file:
-#        path: /etc/stackstate-agent/conf.d/splunk_event.d
-#        state: directory
-#
-#    - name: Configure Splunk Event check
-#      when: splunk_integration is defined
-#      become: yes
-#      template:
-#        src: "splunk_event_conf.j2.yml"
-#        dest: /etc/stackstate-agent/conf.d/splunk_event.d/splunk_event.yaml
-#        owner: stackstate-agent
-#        group: stackstate-agent
-#        mode: '0644'
-#
-#    # Splunk Health Check
-#    - name: Creates Splunk Health check directory
-#      become: yes
-#      when: splunk_integration is defined
-#      file:
-#        path: /etc/stackstate-agent/conf.d/splunk_health.d
-#        state: directory
-#
-#    - name: Configure Splunk Health check
-#      when: splunk_integration is defined
-#      become: yes
-#      template:
-#        src: "splunk_health_conf.j2.yml"
-#        dest: /etc/stackstate-agent/conf.d/splunk_health.d/splunk_health.yaml
-#        owner: stackstate-agent
-#        group: stackstate-agent
-#        mode: '0644'
+    # Splunk Event Check
+    - name: Creates Splunk Event check directory
+      become: yes
+      when: splunk_integration is defined
+      file:
+        path: /etc/stackstate-agent/conf.d/splunk_event.d
+        state: directory
+
+    - name: Configure Splunk Event check
+      when: splunk_integration is defined
+      become: yes
+      template:
+        src: "splunk_event_conf.j2.yml"
+        dest: /etc/stackstate-agent/conf.d/splunk_event.d/splunk_event.yaml
+        owner: stackstate-agent
+        group: stackstate-agent
+        mode: '0644'
+
+    # Splunk Health Check
+    - name: Creates Splunk Health check directory
+      become: yes
+      when: splunk_integration is defined
+      file:
+        path: /etc/stackstate-agent/conf.d/splunk_health.d
+        state: directory
+
+    - name: Configure Splunk Health check
+      when: splunk_integration is defined
+      become: yes
+      template:
+        src: "splunk_health_conf.j2.yml"
+        dest: /etc/stackstate-agent/conf.d/splunk_health.d/splunk_health.yaml
+        owner: stackstate-agent
+        group: stackstate-agent
+        mode: '0644'
 
     # Splunk Metric Check
     - name: Creates Splunk Metric check directory
@@ -120,23 +120,23 @@
         group: stackstate-agent
         mode: '0644'
 
-#    # Splunk Topology Check
-#    - name: Creates Splunk Topology check directory
-#      become: yes
-#      when: splunk_integration is defined
-#      file:
-#        path: /etc/stackstate-agent/conf.d/splunk_topology.d
-#        state: directory
-#
-#    - name: Configure Splunk Topology check
-#      when: splunk_integration is defined
-#      become: yes
-#      template:
-#        src: "splunk_topology_conf.j2.yml"
-#        dest: /etc/stackstate-agent/conf.d/splunk_topology.d/splunk_topology.yaml
-#        owner: stackstate-agent
-#        group: stackstate-agent
-#        mode: '0644'
+    # Splunk Topology Check
+    - name: Creates Splunk Topology check directory
+      become: yes
+      when: splunk_integration is defined
+      file:
+        path: /etc/stackstate-agent/conf.d/splunk_topology.d
+        state: directory
+
+    - name: Configure Splunk Topology check
+      when: splunk_integration is defined
+      become: yes
+      template:
+        src: "splunk_topology_conf.j2.yml"
+        dest: /etc/stackstate-agent/conf.d/splunk_topology.d/splunk_topology.yaml
+        owner: stackstate-agent
+        group: stackstate-agent
+        mode: '0644'
 
     - name: Restart stackstate-agent
       become: yes

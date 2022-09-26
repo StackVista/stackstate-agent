@@ -18,7 +18,7 @@ YARD_LOCATION = f"../../sut/yards/splunk"
 
 
 @pytest.fixture
-def simulator(request, ansible_var, splunk):
+def simulator_dump(request, ansible_var, splunk):
     def dump_data(max_results=100):
         logging.error("Dumping the StackState Simulator logs. This may take some time depending on how long the"
                       " simulator has been running for ...")
@@ -86,8 +86,9 @@ def agent(ansible_var, host, splunk) -> AgentTestingBase:
 # Create a Splunk Testing Base class to group all the functionality for splunk
 # Allowing it to be used on other testing script if need be
 @pytest.fixture
-def splunk(ansible_var, host) -> SplunkBase:
+def splunk(ansible_var, request, host) -> SplunkBase:
     return SplunkBase(host,
+                      request=request,
                       ansible_var=ansible_var,
                       yard_location=YARD_LOCATION)
 

@@ -17,7 +17,7 @@ testinfra_hosts = [f"ansible://local?ansible_inventory={YARD_LOCATION}/ansible_i
 def test_splunk_event(agent: AgentTestingBase,
                       splunk: SplunkBase,
                       cliv1: CLIv1,
-                      simulator):
+                      simulator_dump):
     # Make sure we have routing enabled
     agent.allow_routing_to_sts_instance()
 
@@ -41,14 +41,14 @@ def test_splunk_event(agent: AgentTestingBase,
                                     first_match=True,
                                     timeout=120,
                                     period=5,
-                                    on_failure_action=lambda: simulator())
+                                    on_failure_action=lambda: simulator_dump())
 
     logging.info(f"Found the following results: {result}")
 
 
 def test_splunk_multiple_events(agent: AgentTestingBase,
                                 splunk: SplunkBase,
-                                simulator,
+                                simulator_dump,
                                 cliv1: CLIv1):
     # Make sure we have routing enabled
     agent.allow_routing_to_sts_instance()
@@ -94,7 +94,7 @@ def test_splunk_multiple_events(agent: AgentTestingBase,
                                     first_match=True,
                                     timeout=180,
                                     period=10,
-                                    on_failure_action=lambda: simulator())
+                                    on_failure_action=lambda: simulator_dump())
 
     logging.info(f"Found the following results: {result}")
 

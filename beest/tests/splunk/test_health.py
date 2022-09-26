@@ -16,7 +16,7 @@ testinfra_hosts = [f"ansible://local?ansible_inventory={YARD_LOCATION}/ansible_i
 def test_splunk_health(agent: AgentTestingBase,
                        splunk: SplunkBase,
                        cliv1: CLIv1,
-                       simulator):
+                       simulator_dump):
     # Make sure we have routing enabled
     agent.allow_routing_to_sts_instance()
 
@@ -37,9 +37,9 @@ def test_splunk_health(agent: AgentTestingBase,
                                         "topologyElementIdentifier": health.get("topology_element_identifier"),
                                     },
                                     first_match=True,
-                                    timeout=240,
-                                    period=10,
-                                    on_failure_action=lambda: simulator())
+                                    timeout=180,
+                                    period=5,
+                                    on_failure_action=lambda: simulator_dump())
 
     logging.info(f"Found the following results: {result}")
 
@@ -47,7 +47,7 @@ def test_splunk_health(agent: AgentTestingBase,
 def test_splunk_multiple_health(agent: AgentTestingBase,
                                 splunk: SplunkBase,
                                 cliv1: CLIv1,
-                                simulator):
+                                simulator_dump):
     # Make sure we have routing enabled
     agent.allow_routing_to_sts_instance()
 
@@ -69,9 +69,9 @@ def test_splunk_multiple_health(agent: AgentTestingBase,
                                         "topologyElementIdentifier": health_a.get("topology_element_identifier"),
                                     },
                                     first_match=True,
-                                    timeout=240,
-                                    period=10,
-                                    on_failure_action=lambda: simulator())
+                                    timeout=180,
+                                    period=5,
+                                    on_failure_action=lambda: simulator_dump())
 
     logging.info(f"Found the following results: {result}")
 
@@ -87,9 +87,9 @@ def test_splunk_multiple_health(agent: AgentTestingBase,
                                         "topologyElementIdentifier": health_b.get("topology_element_identifier"),
                                     },
                                     first_match=True,
-                                    timeout=240,
-                                    period=10,
-                                    on_failure_action=lambda: simulator())
+                                    timeout=180,
+                                    period=5,
+                                    on_failure_action=lambda: simulator_dump())
 
     logging.info(f"Found the following results: {result}")
 
@@ -125,8 +125,8 @@ def test_splunk_health_stateful_state(agent: AgentTestingBase,
                                        "topologyElementIdentifier": health.get("topology_element_identifier"),
                                    },
                                    first_match=True,
-                                   timeout=120,
-                                   period=10)
+                                   timeout=180,
+                                   period=5)
         except Exception as e:
             if expect_failure is True:
                 return health
@@ -168,7 +168,7 @@ def test_splunk_health_stateful_state(agent: AgentTestingBase,
 def test_splunk_health_transactional_check(agent: AgentTestingBase,
                                            cliv1: CLIv1,
                                            splunk: SplunkBase,
-                                           simulator):
+                                           simulator_dump):
     # Make sure we have routing enabled
     agent.allow_routing_to_sts_instance()
 
@@ -191,8 +191,8 @@ def test_splunk_health_transactional_check(agent: AgentTestingBase,
                                        "topologyElementIdentifier": health.get("topology_element_identifier"),
                                    },
                                    first_match=True,
-                                   timeout=120,
-                                   period=10)
+                                   timeout=180,
+                                   period=5)
         except Exception as e:
             if expect_failure is True:
                 return health
