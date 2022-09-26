@@ -839,6 +839,7 @@ func (m MockIngressAPICollectorClient) GetIngressesNetV1() ([]netV1.Ingress, err
 
 	return ingresses, nil
 }
+
 func (m MockIngressAPICollectorClient) GetIngressesExtV1B1() ([]v1beta1.Ingress, error) {
 	ingresses := make([]v1beta1.Ingress, 0)
 	for i := 1; i <= 3; i++ {
@@ -912,6 +913,176 @@ func (m MockIngressAPICollectorClient) GetIngressesExtV1B1() ([]v1beta1.Ingress,
 	}
 
 	return ingresses, nil
+}
+
+type MockIngressAPICollectorClientNoHttpRule struct {
+	apiserver.APICollectorClient
+}
+
+func (m MockIngressAPICollectorClientNoHttpRule) GetIngressesNetV1() ([]netV1.Ingress, error) {
+	ingresses := make([]netV1.Ingress, 0)
+	return ingresses, nil
+}
+
+func (m MockIngressAPICollectorClientNoHttpRule) GetIngressesExtV1B1() ([]v1beta1.Ingress, error) {
+	ingresses := make([]v1beta1.Ingress, 0)
+	ingress := v1beta1.Ingress{
+		TypeMeta: v1.TypeMeta{
+			Kind: "",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:              "test-ingress",
+			CreationTimestamp: creationTime,
+			Namespace:         "test-namespace",
+			Labels: map[string]string{
+				"test": "label",
+			},
+			UID:             types.UID("test-ingress"),
+			GenerateName:    "",
+			ResourceVersion: "123",
+			ManagedFields: []v1.ManagedFieldsEntry{
+				{
+					Manager:    "ignored",
+					Operation:  "Updated",
+					APIVersion: "whatever",
+					Time:       &v1.Time{Time: time.Now()},
+					FieldsType: "whatever",
+				},
+			},
+		},
+		Status: v1beta1.IngressStatus{
+			LoadBalancer: coreV1.LoadBalancerStatus{
+				Ingress: []coreV1.LoadBalancerIngress{
+					{IP: "34.100.200.15"},
+					{Hostname: "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com"},
+				},
+			},
+		},
+		Spec: v1beta1.IngressSpec{
+			Rules: []v1beta1.IngressRule{
+				{
+					Host: "host-1",
+				},
+			},
+		},
+	}
+
+	ingresses = append(ingresses, ingress)
+	return ingresses, nil
+}
+
+// Test for bug STAC-17811
+func TestIngressCollector_NoHttpRule(t *testing.T) {
+
+	componentChannel := make(chan *topology.Component)
+	defer close(componentChannel)
+	relationChannel := make(chan *topology.Relation)
+	defer close(relationChannel)
+
+	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
+	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
+
+	versionInfo := version.Info{
+		Major: "1",
+		Minor: "21",
+	}
+
+	for _, sourcePropertiesEnabled := range []bool{false, true} {
+		ic := NewIngressCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockIngressAPICollectorClientNoHttpRule{}, sourcePropertiesEnabled), &versionInfo)
+		expectedCollectorName := "Ingress Collector"
+		RunCollectorTest(t, ic, expectedCollectorName)
+
+		for _, tc := range []struct {
+			testCase   string
+			assertions []func(*testing.T, chan *topology.Component, chan *topology.Relation)
+		}{
+			{
+				testCase: "Test Service 1.21 1 - Minimal",
+				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
+					expectComponent(chooseBySourcePropertiesFeature(
+						sourcePropertiesEnabled,
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
+							Type:       topology.Type{Name: "ingress"},
+							Data: topology.Data{
+								"name":              "test-ingress",
+								"creationTimestamp": creationTime,
+								"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+								"uid":               types.UID("test-ingress"),
+								"identifiers":       []string{},
+							},
+						},
+						&topology.Component{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
+							Type:       topology.Type{Name: "ingress"},
+							Data: topology.Data{
+								"name":        "test-ingress",
+								"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+								"identifiers": []string{},
+							},
+							SourceProperties: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": creationTimeFormatted,
+									"labels":            map[string]interface{}{"test": "label"},
+									"name":              "test-ingress",
+									"namespace":         "test-namespace",
+									"uid":               "test-ingress",
+								},
+								"spec": map[string]interface{}{
+									"rules": []interface{}{
+										map[string]interface{}{
+											"host":             "host-1",
+											"ingressRuleValue": map[string]interface{}{},
+										},
+									},
+								},
+							},
+						},
+					)),
+					expectComponent(&topology.Component{
+						ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15",
+						Type:       topology.Type{Name: "endpoint"},
+						Data: topology.Data{
+							"name":              "34.100.200.15",
+							"creationTimestamp": creationTime,
+							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"identifiers":       []string{},
+						},
+					}),
+					expectRelation(&topology.Relation{
+						ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
+						SourceID:   "urn:endpoint:/test-cluster-name:34.100.200.15",
+						TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
+						Type:       topology.Type{Name: "routes"},
+						Data:       map[string]interface{}{},
+					}),
+					expectComponent(&topology.Component{
+						ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+						Type:       topology.Type{Name: "endpoint"},
+						Data: topology.Data{
+							"name":              "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+							"creationTimestamp": creationTime,
+							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"identifiers":       []string{},
+						},
+					}),
+					expectRelation(&topology.Relation{
+						ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
+						SourceID:   "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+						TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
+						Type:       topology.Type{Name: "routes"},
+						Data:       map[string]interface{}{},
+					}),
+				},
+			},
+		} {
+			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
+				for _, a := range tc.assertions {
+					a(t, componentChannel, relationChannel)
+				}
+			})
+		}
+	}
 }
 
 func expectComponent(expected *topology.Component) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
