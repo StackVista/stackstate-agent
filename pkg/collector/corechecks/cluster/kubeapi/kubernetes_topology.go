@@ -159,7 +159,7 @@ func (t *TopologyCheck) Run() error {
 	errChannel := make(chan error)
 	waitGroupChannel := make(chan bool)
 
-	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, t.ac, t.instance.SourcePropertiesEnabled)
+	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, t.ac, t.instance.SourcePropertiesEnabled, t.k8sVersion)
 	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
 	clusterCollectors := []collectors.ClusterTopologyCollector{
 		// Register Cluster Component Collector
@@ -266,7 +266,6 @@ func (t *TopologyCheck) Run() error {
 				componentChannel,
 				relationChannel,
 				commonClusterCollector,
-				t.k8sVersion,
 			))
 	}
 	if t.instance.Resources.Jobs {

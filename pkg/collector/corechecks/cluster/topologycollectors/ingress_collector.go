@@ -4,29 +4,24 @@
 package topologycollectors
 
 import (
-	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"k8s.io/apimachinery/pkg/version"
-	"strconv"
 )
 
 // IngressCollector implements the ClusterTopologyCollector interface.
 type IngressCollector struct {
 	ComponentChan chan<- *topology.Component
 	RelationChan  chan<- *topology.Relation
-	k8sVersion    *version.Info
 	ClusterTopologyCollector
 }
 
-// NewIngressCollector
+// NewIngressCollector creates a new Ingress collector
 func NewIngressCollector(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation,
-	clusterTopologyCollector ClusterTopologyCollector, k8sVersion *version.Info) ClusterTopologyCollector {
+	clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &IngressCollector{
 		ComponentChan:            componentChannel,
 		RelationChan:             relationChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
-		k8sVersion:               k8sVersion,
 	}
 }
 
@@ -35,7 +30,7 @@ func (*IngressCollector) GetName() string {
 	return "Ingress Collector"
 }
 
-// Collects and Published the Ingress Components
+// CollectorFunction Collects and Published the Ingress Components
 func (ic *IngressCollector) CollectorFunction() error {
 	var ingresses []IngressInterface
 	ingresses, err := ic.getExtV1Ingresses(ingresses)
@@ -82,18 +77,13 @@ func (ic *IngressCollector) CollectorFunction() error {
 }
 
 func (ic *IngressCollector) getExtV1Ingresses(ingresses []IngressInterface) ([]IngressInterface, error) {
-	log.Debugf("Kubernetes version is %+v", ic.k8sVersion)
-	if ic.k8sVersion != nil && ic.k8sVersion.Major == "1" {
-		log.Debugf("Kubernetes version is Major=%s, Minor=%s", ic.k8sVersion.Major, ic.k8sVersion.Minor)
-		minor, err := strconv.Atoi(ic.k8sVersion.Minor[:2])
-		if err != nil {
-			return ingresses, fmt.Errorf("cannot parse server minor version %q: %w", ic.k8sVersion.Minor[:2], err)
-		}
-		if minor >= 22 {
-			log.Debugf("Kubernetes version is >= 1.22, the topology collector will NOT query ingresses from 'extensions/v1beta1' version")
-			return ingresses, nil
-		}
-		log.Debugf("Kubernetes version is <= 1.21, the topology collector will query ingresses from 'extensions/v1beta1' version")
+	supported, err := ic.ClusterTopologyCollector.maximumMinorVersion(21)
+	if err != nil {
+		return ingresses, err
+	}
+	if !supported {
+		log.Debugf("Ingresses from extensions/v1beta1 are not supported in this Kubernetes version")
+		return ingresses, nil
 	}
 	ingressesExt, err := ic.GetAPIClient().GetIngressesExtV1B1()
 	if err != nil {
@@ -108,6 +98,14 @@ func (ic *IngressCollector) getExtV1Ingresses(ingresses []IngressInterface) ([]I
 }
 
 func (ic *IngressCollector) getNetV1Ingresses(ingresses []IngressInterface) ([]IngressInterface, error) {
+	supported, err := ic.ClusterTopologyCollector.minimumMinorVersion(19)
+	if err != nil {
+		return ingresses, err
+	}
+	if !supported {
+		log.Debugf("Ingresses from networking.k8s.io/v1 are not supported in this Kubernetes version")
+		return ingresses, nil
+	}
 	ingressesNetV1, err := ic.GetAPIClient().GetIngressesNetV1()
 	if err != nil {
 		return nil, err

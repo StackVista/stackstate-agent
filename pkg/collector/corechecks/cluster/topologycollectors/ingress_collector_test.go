@@ -33,13 +33,13 @@ func TestIngressCollector_1_21(t *testing.T) {
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
-	versionInfo := version.Info{
+	k8sVersion := version.Info{
 		Major: "1",
 		Minor: "21",
 	}
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		ic := NewIngressCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockIngressAPICollectorClient{}, sourcePropertiesEnabled), &versionInfo)
+		ic := NewIngressCollector(componentChannel, relationChannel, NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClient{}, sourcePropertiesEnabled, &k8sVersion))
 		expectedCollectorName := "Ingress Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 
@@ -383,13 +383,13 @@ func TestIngressCollector_1_22(t *testing.T) {
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
-	versionInfo := version.Info{
+	k8sVersion := version.Info{
 		Major: "1",
 		Minor: "22",
 	}
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		ic := NewIngressCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockIngressAPICollectorClient{}, sourcePropertiesEnabled), &versionInfo)
+		ic := NewIngressCollector(componentChannel, relationChannel, NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClient{}, sourcePropertiesEnabled, &k8sVersion))
 		expectedCollectorName := "Ingress Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 
@@ -988,7 +988,7 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 	}
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		ic := NewIngressCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockIngressAPICollectorClientNoHTTPRule{}, sourcePropertiesEnabled), &versionInfo)
+		ic := NewIngressCollector(componentChannel, relationChannel, NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClientNoHTTPRule{}, sourcePropertiesEnabled, &versionInfo))
 		expectedCollectorName := "Ingress Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 

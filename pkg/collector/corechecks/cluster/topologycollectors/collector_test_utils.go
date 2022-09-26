@@ -12,13 +12,26 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/version"
 	"testing"
 )
 
 func NewTestCommonClusterCollector(client apiserver.APICollectorClient, sourcePropertiesEnabled bool) ClusterTopologyCollector {
 	instance := topology.Instance{Type: "kubernetes", URL: "test-cluster-name"}
 
-	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, sourcePropertiesEnabled)
+	k8sVersion := version.Info{
+		Major: "1",
+		Minor: "21",
+	}
+
+	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, sourcePropertiesEnabled, &k8sVersion)
+	return NewClusterTopologyCollector(clusterTopologyCommon)
+}
+
+func NewTestCommonClusterCollectorWithVersion(client apiserver.APICollectorClient, sourcePropertiesEnabled bool, k8sVersion *version.Info) ClusterTopologyCollector {
+	instance := topology.Instance{Type: "kubernetes", URL: "test-cluster-name"}
+
+	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, sourcePropertiesEnabled, k8sVersion)
 	return NewClusterTopologyCollector(clusterTopologyCommon)
 }
 

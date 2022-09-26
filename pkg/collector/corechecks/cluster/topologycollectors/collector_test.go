@@ -2,12 +2,14 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"k8s.io/apimachinery/pkg/version"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,7 +27,7 @@ func TestCollectorInterface(t *testing.T) {
 func testCollectorInterface(t *testing.T, sourcePropertiesEnabled bool) {
 
 	instance := topology.Instance{Type: "kubernetes", URL: "Test-Cluster-Name"}
-	clusterTopologyCommon := NewClusterTopologyCommon(instance, nil, sourcePropertiesEnabled)
+	clusterTopologyCommon := NewClusterTopologyCommon(instance, nil, sourcePropertiesEnabled, &version.Info{Major: "1", Minor: "21"})
 	testCollector := NewTestCollector(NewClusterTopologyCollector(clusterTopologyCommon))
 
 	actualClusterExternalID := testCollector.buildClusterExternalID()
