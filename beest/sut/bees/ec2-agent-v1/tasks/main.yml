@@ -1,0 +1,28 @@
+---
+# tasks file for ec2-agent-v1
+- name: Splunk Prepare Tasks
+  tags: prepare
+  become: yes
+  block:
+    - name: Copy Docker Compose to remote
+        ansible.builtin.copy:
+          src: "{{ role_path }}/files/docker-compose.yml"
+          dest: "/home/ubuntu"
+          owner: "{{ os_user }}"
+          mode: '0644'
+
+    - name: Copy Agent-v1 Conf to remote
+        ansible.builtin.template:
+          src: "stackstate_conf.j2.yml"
+          dest: "/home/ubuntu/example-conf"
+          owner: "{{ os_user }}"
+          mode: '0644
+
+    - name: deploy Docker Compose stack
+      community.docker.docker_compose:
+        project_src: "/home/ubuntu"
+        files:
+          - docker-compose.yml
+
+
+

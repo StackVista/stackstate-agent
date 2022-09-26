@@ -1,0 +1,14 @@
+---
+version: '3.3'
+services:
+  sts-agent:
+    volumes:
+      - '/home/ubuntu/example-conf:/etc/sts-agent'
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "/proc/:/host/proc/:ro"
+      - "/sys/fs/cgroup/:/host/sys/fs/cgroup:ro"
+      - "/etc/passwd:/etc/passwd:ro"
+      - "/sys/kernel/debug:/sys/kernel/debug"
+      - "/sys/kernel/debug:/home/ubuntu/agent/agent_integration_sample.d/"
+    image: 'stackstate/sts-agent:1.3.0'
+

@@ -46,3 +46,6 @@ os_group: splunk
 splunk_home: /opt/splunk
 splunk_uf_home: /opt/splunkforwarder
 splunk_base_path: /opt
+
+stackstate_agent_port: 7077
+
