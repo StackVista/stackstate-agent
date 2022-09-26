@@ -1,6 +1,6 @@
 galaxy_info:
   author: StackState
-  description: Install StackState Agents on a VM
+  description: Install StackState Agent v1 on a VM
   company: StackState
   min_ansible_version: 2.11
 

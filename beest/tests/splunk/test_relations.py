@@ -1,7 +1,7 @@
-from typing import Optional
-
 import util
+import pytest
 
+from typing import Optional
 from agent_tesing_base import AgentTestingBase
 from splunk_testing_base import SplunkBase, SplunkTopologyComponent, SplunkTopologyRelation
 from conftest import YARD_LOCATION
@@ -14,6 +14,7 @@ from ststest import TopologyMatcher
 testinfra_hosts = [f"ansible://local?ansible_inventory={YARD_LOCATION}/ansible_inventory"]
 
 
+@pytest.mark.order(1)
 def test_splunk_relations(splunk: SplunkBase,
                           cliv1: CLIv1,
                           agent: AgentTestingBase,
@@ -51,6 +52,7 @@ def test_splunk_relations(splunk: SplunkBase,
     )
 
 
+@pytest.mark.order(2)
 def test_splunk_multiple_relation(splunk: SplunkBase,
                                   agent: AgentTestingBase,
                                   cliv1: CLIv1,
@@ -99,6 +101,7 @@ def test_splunk_multiple_relation(splunk: SplunkBase,
 # When we find it then we will stop the agent and post a second relation
 # After a few minutes we start the agent up again
 # And wait to find the second relation
+@pytest.mark.order(3)
 def test_splunk_relation_stateful_state(agent: AgentTestingBase,
                                         cliv1: CLIv1,
                                         splunk: SplunkBase):
@@ -190,6 +193,7 @@ def test_splunk_relation_stateful_state(agent: AgentTestingBase,
 # We will produce a relation while the routing is open
 # Then we will close the routes, post another relation and make sure that the relation does not exist
 # After that we will open the routes and test if the relation eventually end up in STS
+@pytest.mark.order(4)
 def test_splunk_relation_transactional_check(agent: AgentTestingBase,
                                              cliv1: CLIv1,
                                              splunk: SplunkBase):

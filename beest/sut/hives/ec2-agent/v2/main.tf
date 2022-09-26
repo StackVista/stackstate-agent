@@ -4,7 +4,7 @@ resource "tls_private_key" "rsa_key" {
 }
 
 resource "aws_key_pair" "agent_key_pair" {
-  key_name   = "${var.environment}-agent-key"
+  key_name   = "${var.environment}-agent-v2-key"
   public_key = tls_private_key.rsa_key.public_key_openssh
 
   tags = {
@@ -13,7 +13,7 @@ resource "aws_key_pair" "agent_key_pair" {
 }
 
 resource "aws_security_group" "agent_group" {
-  name   = "${var.environment}-agent-sg"
+  name   = "${var.environment}-agent-v2-sg"
   vpc_id = var.vpc_id
 
   ingress {
@@ -73,7 +73,7 @@ resource "aws_instance" "agent" {
   iam_instance_profile        = var.integration_profile
 
   tags = {
-    Name                  = "${var.environment}-agent"
+    Name                  = "${var.environment}-agent-v2"
     Environment           = var.environment
     VantaContainsUserData = false
     VantaDescription      = "Machine used used in acceptance pipeline"

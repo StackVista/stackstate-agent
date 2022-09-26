@@ -1,4 +1,5 @@
 import util
+import pytest
 
 from typing import Optional
 from splunk_testing_base import SplunkBase, SplunkTopologyComponent
@@ -13,6 +14,7 @@ from ststest import TopologyMatcher
 testinfra_hosts = [f"ansible://local?ansible_inventory={YARD_LOCATION}/ansible_inventory"]
 
 
+@pytest.mark.order(1)
 def test_splunk_component(agent: AgentTestingBase,
                           splunk: SplunkBase,
                           cliv1: CLIv1,
@@ -37,12 +39,13 @@ def test_splunk_component(agent: AgentTestingBase,
         cliv1,
         topology_matcher=topology_matcher,
         topology_query=lambda: f"name = '{component.get('id')}'",
-        timeout=120,  # Run for a total of x seconds, Sometimes the Agent check can take some time so to be safe
+        timeout=80,  # Run for a total of x seconds, Sometimes the Agent check can take some time so to be safe
         period=5,  # Run the 'topology_matcher' and 'topology_query' every x seconds
         on_failure_action=lambda: simulator_dump()  # Dump the simulator logs if the cycle failed (If enabled)
     )
 
 
+@pytest.mark.order(2)
 def test_splunk_multiple_component(agent: AgentTestingBase,
                                    splunk: SplunkBase,
                                    cliv1: CLIv1,
@@ -73,7 +76,7 @@ def test_splunk_multiple_component(agent: AgentTestingBase,
         topology_query=lambda: f"name = '{component_a.get('id')}' OR "
                                f"name = '{component_b.get('id')}' OR "
                                f"name = '{component_c.get('id')}'",
-        timeout=120,  # Run for a total of x seconds, Sometimes the Agent check can take some time so to be safe
+        timeout=80,  # Run for a total of x seconds, Sometimes the Agent check can take some time so to be safe
         period=5,  # Run the 'topology_matcher' and 'topology_query' every x seconds
         on_failure_action=lambda: simulator_dump()  # Dump the simulator logs if the cycle failed (If enabled)
     )
@@ -84,6 +87,7 @@ def test_splunk_multiple_component(agent: AgentTestingBase,
 # When we find it then we will stop the agent and post a second component
 # After a few minutes we start the agent up again
 # And wait to find the second component
+@pytest.mark.order(3)
 def test_splunk_component_stateful_state(agent: AgentTestingBase,
                                          cliv1: CLIv1,
                                          simulator_dump,
@@ -152,6 +156,7 @@ def test_splunk_component_stateful_state(agent: AgentTestingBase,
 # We will produce a component while the routing is open
 # Then we will close the routes, post another component and make sure that the component does not exist
 # After that we will open the routes and test if the component eventually end up in STS
+@pytest.mark.order(4)
 def test_splunk_component_transactional_check(agent: AgentTestingBase,
                                               cliv1: CLIv1,
                                               splunk: SplunkBase,

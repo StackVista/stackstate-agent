@@ -776,6 +776,7 @@ pre_release_cluster_agent_image:
     when: always
     paths:
       - beest/test_*.json
+      - beest/test_*.xml
       - beest/*.log
       - beest/*.gv
     expire_in: 1 week
@@ -1413,6 +1414,8 @@ beest_splunk_test:
   <<: *beest
   <<: *beest_test
   <<: *beest_splunk_variables
+  # Increase timeout as failure may cause it to run over and block debugging
+  timeout: 105 minutes
   rules:
     - *beest_splunk_ignore_rule
     - *v2_merge_train_on_success

@@ -1,0 +1,22 @@
+---
+- name: StackState Agent prepare tasks
+  tags: prepare
+  block:
+    - name: Uninstall stackstate-agent v1
+      ignore_errors: true
+      become: yes
+      apt:
+        pkg: stackstate-agent
+        state: absent
+
+## Cleanup
+- name: StackState Agent cleanup tasks
+  tags: cleanup
+  ignore_errors: yes
+  block:
+    - name: Uninstall stackstate-agent v1
+      ignore_errors: true
+      become: yes
+      apt:
+        pkg: stackstate-agent
+        state: absent

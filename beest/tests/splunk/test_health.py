@@ -1,6 +1,7 @@
 import logging
-from typing import Optional
+import pytest
 
+from typing import Optional
 from agent_tesing_base import AgentTestingBase
 from splunk_testing_base import SplunkBase, SplunkHealth
 from conftest import YARD_LOCATION
@@ -13,6 +14,7 @@ from util import wait_until_topic_match
 testinfra_hosts = [f"ansible://local?ansible_inventory={YARD_LOCATION}/ansible_inventory"]
 
 
+@pytest.mark.order(1)
 def test_splunk_health(agent: AgentTestingBase,
                        splunk: SplunkBase,
                        cliv1: CLIv1,
@@ -44,6 +46,7 @@ def test_splunk_health(agent: AgentTestingBase,
     logging.info(f"Found the following results: {result}")
 
 
+@pytest.mark.order(2)
 def test_splunk_multiple_health(agent: AgentTestingBase,
                                 splunk: SplunkBase,
                                 cliv1: CLIv1,
@@ -99,6 +102,7 @@ def test_splunk_multiple_health(agent: AgentTestingBase,
 # When we find it then we will stop the agent and post a second health state
 # After a few minutes we start the agent up again
 # And wait to find the second health state
+@pytest.mark.order(3)
 def test_splunk_health_stateful_state(agent: AgentTestingBase,
                                       cliv1: CLIv1,
                                       splunk: SplunkBase):
@@ -165,6 +169,7 @@ def test_splunk_health_stateful_state(agent: AgentTestingBase,
 # We will produce health while the routing is open
 # Then we will close the routes, post another health state and make sure that the health does not exist
 # After that we will open the routes and test if the health eventually end up in STS
+@pytest.mark.order(4)
 def test_splunk_health_transactional_check(agent: AgentTestingBase,
                                            cliv1: CLIv1,
                                            splunk: SplunkBase,
