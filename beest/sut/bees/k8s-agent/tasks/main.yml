@@ -32,6 +32,22 @@
         definition: "{{ lookup('file', '{{ item }}') }}"
       with_fileglob: "test_workloads/*.yaml"
 
+    - name: Apply manifests for ingress >= 1.22
+      when: agent_k8s_version|float >= 1.22
+      kubernetes.core.k8s:
+        context: "{{ kubecontext }}"
+        namespace: "{{ test_namespace }}"
+        definition: "{{ lookup('file', '{{ item }}') }}"
+      with_fileglob: "test_ingress/example-ingress-1-22.yaml"
+
+    - name: Apply manifests for ingress <= 1.21
+      when: agent_k8s_version|float <= 1.21
+      kubernetes.core.k8s:
+        context: "{{ kubecontext }}"
+        namespace: "{{ test_namespace }}"
+        definition: "{{ lookup('file', '{{ item }}') }}"
+      with_fileglob: "test_ingress/example-ingress-1-21.yaml"
+
     - name: Generate agent values
       ansible.builtin.template:
         src: agent-extra-values.j2.yml
