@@ -100,7 +100,7 @@ func (ic *IngressCollector) getExtV1Ingresses(ingresses []IngressInterface) ([]I
 		return nil, err
 	}
 	for _, in := range ingressesExt {
-		ingresses = append(ingresses, V1Beta1Ingress{
+		ingresses = append(ingresses, IngressV1B1{
 			o: in,
 		})
 	}
@@ -108,12 +108,12 @@ func (ic *IngressCollector) getExtV1Ingresses(ingresses []IngressInterface) ([]I
 }
 
 func (ic *IngressCollector) getNetV1Ingresses(ingresses []IngressInterface) ([]IngressInterface, error) {
-	ingressesExt, err := ic.GetAPIClient().GetIngressesNetV1()
+	ingressesNetV1, err := ic.GetAPIClient().GetIngressesNetV1()
 	if err != nil {
 		return nil, err
 	}
-	for _, in := range ingressesExt {
-		ingresses = append(ingresses, NetV1Ingress{
+	for _, in := range ingressesNetV1 {
+		ingresses = append(ingresses, IngressNetV1{
 			o: in,
 		})
 	}

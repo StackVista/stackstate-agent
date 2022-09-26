@@ -915,16 +915,16 @@ func (m MockIngressAPICollectorClient) GetIngressesExtV1B1() ([]v1beta1.Ingress,
 	return ingresses, nil
 }
 
-type MockIngressAPICollectorClientNoHttpRule struct {
+type MockIngressAPICollectorClientNoHTTPRule struct {
 	apiserver.APICollectorClient
 }
 
-func (m MockIngressAPICollectorClientNoHttpRule) GetIngressesNetV1() ([]netV1.Ingress, error) {
+func (m MockIngressAPICollectorClientNoHTTPRule) GetIngressesNetV1() ([]netV1.Ingress, error) {
 	ingresses := make([]netV1.Ingress, 0)
 	return ingresses, nil
 }
 
-func (m MockIngressAPICollectorClientNoHttpRule) GetIngressesExtV1B1() ([]v1beta1.Ingress, error) {
+func (m MockIngressAPICollectorClientNoHTTPRule) GetIngressesExtV1B1() ([]v1beta1.Ingress, error) {
 	ingresses := make([]v1beta1.Ingress, 0)
 	ingress := v1beta1.Ingress{
 		TypeMeta: v1.TypeMeta{
@@ -988,7 +988,7 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 	}
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		ic := NewIngressCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockIngressAPICollectorClientNoHttpRule{}, sourcePropertiesEnabled), &versionInfo)
+		ic := NewIngressCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockIngressAPICollectorClientNoHTTPRule{}, sourcePropertiesEnabled), &versionInfo)
 		expectedCollectorName := "Ingress Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 
