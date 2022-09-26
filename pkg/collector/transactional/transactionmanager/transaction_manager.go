@@ -2,6 +2,7 @@ package transactionmanager
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"sync"
 	"time"
@@ -75,7 +76,7 @@ transactionHandler:
 			// transaction operations
 			case StartTransaction:
 				log.Debugf("Creating new transaction %s for check %s", msg.TransactionID, msg.CheckID)
-				if _, err := txm.startTransaction(msg.TransactionID, msg.NotifyChannel); err != nil {
+				if _, err := txm.startTransaction(msg.TransactionID, msg.CheckID, msg.NotifyChannel); err != nil {
 					txm.transactionChannel <- err
 				}
 			case CommitAction:
@@ -132,12 +133,14 @@ transactionHandler:
 			txm.mux.Lock()
 			for _, transaction := range txm.transactions {
 				if transaction.Status == Failed || transaction.Status == Succeeded {
-					log.Debugf("Cleaning up %s transaction: %s", transaction.Status.String(), transaction.TransactionID)
+					log.Debugf("Cleaning up %s transaction: %s for check: %s", transaction.Status.String(),
+						transaction.TransactionID, transaction.CheckID)
 					// delete the transaction, already notified on success or failure status so no need to notify again
 					delete(txm.transactions, transaction.TransactionID)
 				} else if transaction.Status != Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionTimeoutDuration)) {
 					// last updated timestamp is before current time - checkmanager timeout duration => Tx is stale
-					_ = log.Warnf("Transaction: %s has become stale, last updated %s", transaction.TransactionID, transaction.LastUpdatedTimestamp.String())
+					_ = log.Warnf("Transaction: %s for check %s has become stale, last updated %s",
+						transaction.TransactionID, transaction.CheckID, transaction.LastUpdatedTimestamp.String())
 					transaction.Status = Stale
 				} else if transaction.Status == Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionEvictionDuration)) {
 					// last updated timestamp is before current time - checkmanager eviction duration => Tx can be evicted
@@ -153,9 +156,10 @@ transactionHandler:
 }
 
 // startTransaction creates a transaction and puts it into the transactions map
-func (txm *transactionManager) startTransaction(transactionID string, notify chan interface{}) (*IntakeTransaction, error) {
+func (txm *transactionManager) startTransaction(transactionID string, checkID check.ID, notify chan interface{}) (*IntakeTransaction, error) {
 	transaction := &IntakeTransaction{
 		TransactionID:        transactionID,
+		CheckID:              checkID,
 		Status:               InProgress,
 		Actions:              map[string]*Action{},
 		NotifyChannel:        notify,
@@ -171,7 +175,7 @@ func (txm *transactionManager) startTransaction(transactionID string, notify cha
 // commitAction commits / promises an action for a certain transaction. A commit is only a promise that something needs
 // to be fulfilled. An unacknowledged action results in a transaction failure.
 func (txm *transactionManager) commitAction(transactionID, actionID string) error {
-	transaction, err := txm.GetTransaction(transactionID)
+	transaction, err := txm.GetActiveTransaction(transactionID)
 	if err != nil {
 		return err
 	}
@@ -197,7 +201,7 @@ func (txm *transactionManager) updateTransaction(transaction *IntakeTransaction,
 
 // ackAction acknowledges an action for a given transaction. This marks the action as acknowledged.
 func (txm *transactionManager) ackAction(transactionID, actionID string) error {
-	transaction, err := txm.GetTransaction(transactionID)
+	transaction, err := txm.GetActiveTransaction(transactionID)
 	if err != nil {
 		return err
 	}
@@ -222,7 +226,7 @@ func (txm *transactionManager) ackAction(transactionID, actionID string) error {
 // setTransactionState sets the state for a given key and CheckState. The state for a given transaction will be
 // committed on a successful completion of the transaction
 func (txm *transactionManager) setTransactionState(transactionID, key string, state string) error {
-	transaction, err := txm.GetTransaction(transactionID)
+	transaction, err := txm.GetActiveTransaction(transactionID)
 	if err != nil {
 		return err
 	}
@@ -241,7 +245,7 @@ func (txm *transactionManager) setTransactionState(transactionID, key string, st
 // rejectAction rejects an action for a given transaction. This marks the action as rejected and results in a
 // failed transaction and discarding.
 func (txm *transactionManager) rejectAction(transactionID, actionID string) error {
-	transaction, err := txm.GetTransaction(transactionID)
+	transaction, err := txm.GetActiveTransaction(transactionID)
 	if err != nil {
 		return err
 	}
@@ -264,7 +268,7 @@ func (txm *transactionManager) rejectAction(transactionID, actionID string) erro
 // completeTransaction marks a transaction for a given transactionID as Succeeded, if all the committed actions
 // of a transaction has been acknowledged
 func (txm *transactionManager) completeTransaction(transactionID string) error {
-	transaction, err := txm.GetTransaction(transactionID)
+	transaction, err := txm.GetActiveTransaction(transactionID)
 	if err != nil {
 		return err
 	}
@@ -272,7 +276,9 @@ func (txm *transactionManager) completeTransaction(transactionID string) error {
 	// ensure all actions have been acknowledged
 	for _, action := range transaction.Actions {
 		if action.Status != Acknowledged {
-			reason := fmt.Sprintf("Not all actions have been acknowledged, rolling back transaction: %s", transaction.TransactionID)
+			_ = log.Errorf("Action %s for transaction %s has not been acknowledged. Discarding transaction",
+				action.ActionID, transaction.TransactionID)
+			reason := fmt.Sprintf("Not all actions have been acknowledged, discarding transaction: %s", transaction.TransactionID)
 			txm.mux.Unlock()
 			return DiscardTransaction{TransactionID: transactionID, Reason: reason}
 		}
@@ -288,7 +294,7 @@ func (txm *transactionManager) completeTransaction(transactionID string) error {
 
 // discardTransaction rolls back the transaction in the event of a failure
 func (txm *transactionManager) discardTransaction(transactionID, reason string) error {
-	transaction, err := txm.GetTransaction(transactionID)
+	transaction, err := txm.GetActiveTransaction(transactionID)
 	if err != nil {
 		return err
 	}

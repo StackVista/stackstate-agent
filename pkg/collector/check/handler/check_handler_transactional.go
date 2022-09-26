@@ -72,7 +72,6 @@ txReceiverHandler:
 			safeCloseTransactionChannel(ch.currentTransactionChannel)
 			close(ch.transactionChannel)
 			break txReceiverHandler
-		default:
 		}
 	}
 }
@@ -92,7 +91,7 @@ func (ch *TransactionalCheckHandler) GetCurrentTransaction() string {
 
 // handleCurrentTransaction handles the current transaction
 func (ch *TransactionalCheckHandler) handleCurrentTransaction(txChan chan interface{}) {
-	logPrefix := fmt.Sprintf("Check: %s, Transaction: %s.", ch.GetCurrentTransaction(), ch.ID())
+	logPrefix := fmt.Sprintf("Check: %s, Transaction: %s.", ch.ID(), ch.GetCurrentTransaction())
 currentTxHandler:
 	for {
 		select {
@@ -189,8 +188,34 @@ currentTxHandler:
 				transactionbatcher.GetTransactionalBatcher().SubmitComplete(ch.ID())
 
 			// Notifications from the transaction manager
-			case transactionmanager.DiscardTransaction, transactionmanager.EvictedTransaction:
-				log.Debugf("Discarded/Evicted transaction for check %s", ch.ID())
+			case transactionmanager.DiscardTransaction:
+				if msg.TransactionID != ch.GetCurrentTransaction() {
+					_ = log.Warnf("Attempting to discard transaction that is not the current transaction for this"+
+						"check. Current transaction: %s, discarded transaction: %s",
+						ch.GetCurrentTransaction(), msg.TransactionID)
+					continue
+				}
+
+				log.Debugf("Discarding failed transaction %s for check %s. Reason %s", msg.TransactionID, ch.ID(),
+					msg.Reason)
+
+				// empty batcher state
+				transactionbatcher.GetTransactionalBatcher().SubmitClearState(ch.ID())
+
+				// clear current transaction
+				ch.clearCurrentTransaction()
+
+				break currentTxHandler
+
+			case transactionmanager.EvictedTransaction:
+				if msg.TransactionID != ch.GetCurrentTransaction() {
+					_ = log.Warnf("Attempting to evict transaction that is not the current transaction for this"+
+						"check. Current transaction: %s, evicted transaction: %s",
+						ch.GetCurrentTransaction(), msg.TransactionID)
+					continue
+				}
+
+				log.Debugf("Evicted failed transaction %s for check %s", msg.TransactionID, ch.ID())
 
 				// empty batcher state
 				transactionbatcher.GetTransactionalBatcher().SubmitClearState(ch.ID())
@@ -207,6 +232,7 @@ currentTxHandler:
 						ch.GetCurrentTransaction(), msg.TransactionID)
 					continue
 				}
+
 				log.Infof("Completing transaction: %s for check %s", msg.TransactionID, ch.ID())
 
 				if msg.State != nil {
