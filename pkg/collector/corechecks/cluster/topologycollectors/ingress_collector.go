@@ -122,7 +122,7 @@ func (ic *IngressCollector) getNetV1Ingresses(ingresses []IngressInterface) ([]I
 
 // Creates a StackState ingress component from a Kubernetes / OpenShift Ingress
 func (ic *IngressCollector) ingressToStackStateComponent(ingress IngressInterface) *topology.Component {
-	log.Tracef("Mapping Ingress to StackState component: %s", ingress.String())
+	log.Tracef("Mapping Ingress to StackState component: %s", ingress.GetString())
 
 	tags := ic.initTags(ingress.GetObjectMeta())
 

@@ -11,18 +11,18 @@ import (
 )
 
 type IngressInterface interface {
-	GetServiceName() string
-	String() string
 	GetCreationTimestamp() metav1.Time
-	GetUID() types.UID
 	GetGenerateName() string
+	GetIngressPoints() []string
 	GetKind() string
 	GetKubernetesObject() MarshalableKubernetesObject
-	GetObjectMeta() metav1.ObjectMeta
 	GetName() string
 	GetNamespace() string
+	GetObjectMeta() metav1.ObjectMeta
+	GetServiceName() string
 	GetServiceNames() []string
-	GetIngressPoints() []string
+	GetString() string
+	GetUID() types.UID
 }
 
 type V1Beta1Ingress struct {
@@ -44,7 +44,7 @@ func (in V1Beta1Ingress) GetServiceName() string {
 	return ""
 }
 
-func (in V1Beta1Ingress) String() string {
+func (in V1Beta1Ingress) GetString() string {
 	return in.o.String()
 }
 
@@ -115,7 +115,7 @@ func (in NetV1Ingress) GetServiceName() string {
 	return ""
 }
 
-func (in NetV1Ingress) String() string {
+func (in NetV1Ingress) GetString() string {
 	return in.o.String()
 }
 

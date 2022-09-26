@@ -332,35 +332,35 @@ func TestIngressCollector_1_21(t *testing.T) {
 			{
 				testCase: "Test Service 1.22 1 - Minimal",
 				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-					expectIngress22_1(sourcePropertiesEnabled, creationTimeFormatted),
-					expectEndpointIP22_1(),
-					expectRelationEndpointIngress22_1(),
+					expectIngress221(sourcePropertiesEnabled, creationTimeFormatted),
+					expectEndpointIP221(),
+					expectRelationEndpointIngress221(),
 					expectEndpointAmazon22(),
-					expectRelationEndpointAmazonIngress22_1(),
+					expectRelationEndpointAmazonIngress221(),
 				},
 			},
 			{
 				testCase: "Test Service 1.22 2 - Default Backend",
 				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-					expectIngress22_2(sourcePropertiesEnabled, creationTimeFormatted),
-					expectRelationIngressService22_2(),
-					expectEndpointIP22_2(),
-					expectRelationEndpointIPIngress22_2(),
+					expectIngress222(sourcePropertiesEnabled, creationTimeFormatted),
+					expectRelationIngressService222(),
+					expectEndpointIP222(),
+					expectRelationEndpointIPIngress222(),
 					expectEndpointAmazon22(),
-					expectRelationEndpointAmazonIngress22_2(),
+					expectRelationEndpointAmazonIngress222(),
 				},
 			},
 			{
 				testCase: "Test Service 1.22 3 - Ingress Rules",
 				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-					expectIngress22_3(sourcePropertiesEnabled, creationTimeFormatted),
-					expectRelationIngressService22_3(),
-					expectRelationIngress22_3_Service_2(),
-					expectRelationIngress22_3_Service_3(),
-					expectEndpointIP22_3(),
-					expectRelationEndpointIP22_Ingress22_3(),
+					expectIngress223(sourcePropertiesEnabled, creationTimeFormatted),
+					expectRelationIngressService223(),
+					expectRelationIngress223Service2(),
+					expectRelationIngress223Service3(),
+					expectEndpointIP223(),
+					expectRelationEndpointIP22Ingress223(),
 					expectEndpointAmazon22(),
-					expectRelationEndpointAmazonIngress22_3(),
+					expectRelationEndpointAmazonIngress223(),
 				},
 			},
 		} {
@@ -400,35 +400,35 @@ func TestIngressCollector_1_22(t *testing.T) {
 			{
 				testCase: "Test Service 1.22 1 - Minimal",
 				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-					expectIngress22_1(sourcePropertiesEnabled, creationTimeFormatted),
-					expectEndpointIP22_1(),
-					expectRelationEndpointIngress22_1(),
+					expectIngress221(sourcePropertiesEnabled, creationTimeFormatted),
+					expectEndpointIP221(),
+					expectRelationEndpointIngress221(),
 					expectEndpointAmazon22(),
-					expectRelationEndpointAmazonIngress22_1(),
+					expectRelationEndpointAmazonIngress221(),
 				},
 			},
 			{
 				testCase: "Test Service 1.22 2 - Default Backend",
 				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-					expectIngress22_2(sourcePropertiesEnabled, creationTimeFormatted),
-					expectRelationIngressService22_2(),
-					expectEndpointIP22_2(),
-					expectRelationEndpointIPIngress22_2(),
+					expectIngress222(sourcePropertiesEnabled, creationTimeFormatted),
+					expectRelationIngressService222(),
+					expectEndpointIP222(),
+					expectRelationEndpointIPIngress222(),
 					expectEndpointAmazon22(),
-					expectRelationEndpointAmazonIngress22_2(),
+					expectRelationEndpointAmazonIngress222(),
 				},
 			},
 			{
 				testCase: "Test Service 1.22 3 - Ingress Rules",
 				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-					expectIngress22_3(sourcePropertiesEnabled, creationTimeFormatted),
-					expectRelationIngressService22_3(),
-					expectRelationIngress22_3_Service_2(),
-					expectRelationIngress22_3_Service_3(),
-					expectEndpointIP22_3(),
-					expectRelationEndpointIP22_Ingress22_3(),
+					expectIngress223(sourcePropertiesEnabled, creationTimeFormatted),
+					expectRelationIngressService223(),
+					expectRelationIngress223Service2(),
+					expectRelationIngress223Service3(),
+					expectEndpointIP223(),
+					expectRelationEndpointIP22Ingress223(),
 					expectEndpointAmazon22(),
-					expectRelationEndpointAmazonIngress22_3(),
+					expectRelationEndpointAmazonIngress223(),
 				},
 			},
 		} {
@@ -441,7 +441,7 @@ func TestIngressCollector_1_22(t *testing.T) {
 	}
 }
 
-func expectRelationEndpointAmazonIngress22_3() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectRelationEndpointAmazonIngress223() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectRelation(&topology.Relation{
 		ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-3",
 		SourceID:   "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
@@ -464,7 +464,7 @@ func expectEndpointAmazon22() func(*testing.T, chan *topology.Component, chan *t
 	})
 }
 
-func expectRelationEndpointIP22_Ingress22_3() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectRelationEndpointIP22Ingress223() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectRelation(&topology.Relation{
 		ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.22->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-3",
 		SourceID:   "urn:endpoint:/test-cluster-name:34.100.200.22",
@@ -474,7 +474,7 @@ func expectRelationEndpointIP22_Ingress22_3() func(*testing.T, chan *topology.Co
 	})
 }
 
-func expectEndpointIP22_3() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectEndpointIP223() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectComponent(&topology.Component{
 		ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.22",
 		Type:       topology.Type{Name: "endpoint"},
@@ -487,7 +487,7 @@ func expectEndpointIP22_3() func(*testing.T, chan *topology.Component, chan *top
 	})
 }
 
-func expectRelationIngress22_3_Service_3() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectRelationIngress223Service3() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectRelation(&topology.Relation{
 		ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-3->" +
 			"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service22-3",
@@ -498,7 +498,7 @@ func expectRelationIngress22_3_Service_3() func(*testing.T, chan *topology.Compo
 	})
 }
 
-func expectRelationIngress22_3_Service_2() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectRelationIngress223Service2() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectRelation(&topology.Relation{
 		ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-3->" +
 			"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service22-2",
@@ -509,7 +509,7 @@ func expectRelationIngress22_3_Service_2() func(*testing.T, chan *topology.Compo
 	})
 }
 
-func expectRelationIngressService22_3() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectRelationIngressService223() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectRelation(&topology.Relation{
 		ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-3->" +
 			"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service22-1",
@@ -520,7 +520,7 @@ func expectRelationIngressService22_3() func(*testing.T, chan *topology.Componen
 	})
 }
 
-func expectIngress22_3(sourcePropertiesEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectIngress223(sourcePropertiesEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectComponent(chooseBySourcePropertiesFeature(
 		sourcePropertiesEnabled,
 		&topology.Component{
@@ -594,7 +594,7 @@ func expectIngress22_3(sourcePropertiesEnabled bool, creationTimeFormatted strin
 	))
 }
 
-func expectRelationEndpointAmazonIngress22_2() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectRelationEndpointAmazonIngress222() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectRelation(&topology.Relation{
 		ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-2",
 		SourceID:   "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
@@ -604,7 +604,7 @@ func expectRelationEndpointAmazonIngress22_2() func(*testing.T, chan *topology.C
 	})
 }
 
-func expectRelationEndpointIPIngress22_2() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectRelationEndpointIPIngress222() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectRelation(&topology.Relation{
 		ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.22->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-2",
 		SourceID:   "urn:endpoint:/test-cluster-name:34.100.200.22",
@@ -614,7 +614,7 @@ func expectRelationEndpointIPIngress22_2() func(*testing.T, chan *topology.Compo
 	})
 }
 
-func expectEndpointIP22_2() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectEndpointIP222() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectComponent(&topology.Component{
 		ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.22",
 		Type:       topology.Type{Name: "endpoint"},
@@ -627,7 +627,7 @@ func expectEndpointIP22_2() func(*testing.T, chan *topology.Component, chan *top
 	})
 }
 
-func expectRelationIngressService22_2() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectRelationIngressService222() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectRelation(&topology.Relation{
 		ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-2->" +
 			"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service22",
@@ -638,7 +638,7 @@ func expectRelationIngressService22_2() func(*testing.T, chan *topology.Componen
 	})
 }
 
-func expectIngress22_2(sourcePropertiesEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectIngress222(sourcePropertiesEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectComponent(chooseBySourcePropertiesFeature(
 		sourcePropertiesEnabled,
 		&topology.Component{
@@ -681,7 +681,7 @@ func expectIngress22_2(sourcePropertiesEnabled bool, creationTimeFormatted strin
 	))
 }
 
-func expectRelationEndpointAmazonIngress22_1() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectRelationEndpointAmazonIngress221() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectRelation(&topology.Relation{
 		ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-1",
 		SourceID:   "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
@@ -691,7 +691,7 @@ func expectRelationEndpointAmazonIngress22_1() func(*testing.T, chan *topology.C
 	})
 }
 
-func expectRelationEndpointIngress22_1() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectRelationEndpointIngress221() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectRelation(&topology.Relation{
 		ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.22->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-1",
 		SourceID:   "urn:endpoint:/test-cluster-name:34.100.200.22",
@@ -701,7 +701,7 @@ func expectRelationEndpointIngress22_1() func(*testing.T, chan *topology.Compone
 	})
 }
 
-func expectEndpointIP22_1() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectEndpointIP221() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectComponent(&topology.Component{
 		ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.22",
 		Type:       topology.Type{Name: "endpoint"},
@@ -714,7 +714,7 @@ func expectEndpointIP22_1() func(*testing.T, chan *topology.Component, chan *top
 	})
 }
 
-func expectIngress22_1(sourcePropertiesEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectIngress221(sourcePropertiesEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectComponent(chooseBySourcePropertiesFeature(
 		sourcePropertiesEnabled,
 		&topology.Component{
