@@ -28,7 +28,7 @@ func (ttm *MockTransactionManager) SetState(_, key string, value string) {
 	ttm.mux.Unlock()
 }
 
-// GetTransaction returns nil, nil
+// GetActiveTransaction returns nil, nil
 func (ttm *MockTransactionManager) GetActiveTransaction(string) (*IntakeTransaction, error) {
 	return nil, nil
 }
