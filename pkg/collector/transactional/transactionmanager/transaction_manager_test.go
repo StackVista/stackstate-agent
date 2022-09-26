@@ -121,7 +121,7 @@ func TestTransactionManager_TransactionDiscard(t *testing.T) {
 				txManager.CompleteTransaction(txID)
 				return actions
 			},
-			discardReason: "Not all actions have been acknowledged, rolling back transaction",
+			discardReason: "Not all actions have been acknowledged, discarding transaction",
 		},
 		{
 			testCase: "Transaction discard triggered by rejected action",

@@ -29,7 +29,7 @@ func (ttm *MockTransactionManager) SetState(_, key string, value string) {
 }
 
 // GetTransaction returns nil, nil
-func (ttm *MockTransactionManager) GetTransaction(string) (*IntakeTransaction, error) {
+func (ttm *MockTransactionManager) GetActiveTransaction(string) (*IntakeTransaction, error) {
 	return nil, nil
 }
 

@@ -69,6 +69,7 @@ type Action struct {
 // IntakeTransaction represents an intake checkmanager which consists of one or more actions
 type IntakeTransaction struct {
 	TransactionID        string
+	CheckID              check.ID
 	Status               TransactionStatus
 	Actions              map[string]*Action // pointer to allow in-place mutation instead of setting the value again
 	NotifyChannel        chan interface{}
@@ -126,7 +127,7 @@ type DiscardTransaction struct {
 
 // Error returns a string representing the DiscardTransaction.
 func (r DiscardTransaction) Error() string {
-	return fmt.Sprintf("rolling back transaction %s. %s", r.TransactionID, r.Reason)
+	return fmt.Sprintf("discarding transaction %s. %s", r.TransactionID, r.Reason)
 }
 
 // StopTransactionManager triggers the shutdown of the transaction checkmanager.
