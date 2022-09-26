@@ -212,15 +212,18 @@ def test_splunk_metric_transactional_check(agent: AgentTestingBase,
 
         try:
             # Wait until we find the results in the Topic
-            wait_until_topic_match(cliv1,
-                                   topic="sts_multi_metrics",
-                                   query="message.MultiMetric.values",
-                                   contains_dict={
-                                       "raw.metrics": int(metric.get("value")),
-                                   },
-                                   first_match=True,
-                                   timeout=180,
-                                   period=5)
+            result = wait_until_topic_match(cliv1,
+                                            topic="sts_multi_metrics",
+                                            query="message.MultiMetric.values",
+                                            contains_dict={
+                                                "raw.metrics": int(metric.get("value")),
+                                            },
+                                            first_match=True,
+                                            timeout=180,
+                                            period=5)
+
+            logging.info(f"Found the following results: {result}")
+
         except Exception as e:
             if expect_failure is True:
                 return metric
@@ -239,10 +242,12 @@ def test_splunk_metric_transactional_check(agent: AgentTestingBase,
     def find_metric_while_routes_is_blocked():
         nonlocal metric_posted_while_agent_was_down
         metric_posted_while_agent_was_down = post_metric(expect_failure=True)
+        logging.info(f"Posting Metric: {metric_posted_while_agent_was_down}")
 
     # Attempt to check the prev component we posted should be in the agent including the
     # new one we posted
     def find_metric_while_routes_is_open():
+        logging.info(f"Looking for Metric: {metric_posted_while_agent_was_down}")
         post_metric(expected_metric=metric_posted_while_agent_was_down)
         # post_metric()
 
