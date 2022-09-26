@@ -92,9 +92,8 @@ func (ic *IngressCollector) getExtV1Ingresses(ingresses []IngressInterface) ([]I
 		if minor >= 22 {
 			log.Debugf("Kubernetes version is >= 1.22, the topology collector will NOT query ingresses from 'extensions/v1beta1' version")
 			return ingresses, nil
-		} else {
-			log.Debugf("Kubernetes version is <= 1.21, the topology collector will query ingresses from 'extensions/v1beta1' version")
 		}
+		log.Debugf("Kubernetes version is <= 1.21, the topology collector will query ingresses from 'extensions/v1beta1' version")
 	}
 	ingressesExt, err := ic.GetAPIClient().GetIngressesExtV1B1()
 	if err != nil {
