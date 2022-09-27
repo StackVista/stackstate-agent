@@ -472,6 +472,8 @@ def apply_branding(ctx):
     do_sed_rename(ctx, tray_replace, "./cmd/systray/systray.rc")
     do_sed_rename(ctx, tray_replace, "./omnibus/resources/agent/msi/source.wxs.erb")
     do_sed_rename(ctx, tray_replace, "./tasks/systray.py")
+    do_sed_rename(ctx, tray_replace, "./omnibus/config/projects/agent.rb")
+    do_sed_rename(ctx, tray_replace, "./omnibus/config/software/datadog-agent.rb")
     do_sed_rename(ctx, sts_lower_replace, "./cmd/agent/gui/views/templates/index.tmpl")
     do_sed_rename(ctx, 's/"DataDog Agent 6"/"StackState Agent 2"/', "./cmd/agent/gui/views/templates/index.tmpl")
     do_sed_rename(ctx, sts_camel_replace, "./cmd/agent/gui/views/templates/index.tmpl")
