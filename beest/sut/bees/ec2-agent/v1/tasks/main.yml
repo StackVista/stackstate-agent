@@ -46,7 +46,6 @@
         src: "splunk_event_conf.j2.yml"
         dest: /home/ubuntu/conf.d/splunk_event.yaml
         owner: sts-agent
-        group: sts-agent
         mode: '0644'
 
     - name: Configure Splunk Health check
@@ -56,7 +55,6 @@
         src: "splunk_health_conf.j2.yml"
         dest: /home/ubuntu/conf.d/splunk_health.yaml
         owner: sts-agent
-        group: sts-agent
         mode: '0644'
 
     - name: Configure Splunk Metric check
@@ -66,7 +64,6 @@
         src: "splunk_metric_conf.j2.yml"
         dest: /home/ubuntu/conf.d/splunk_metric.yaml
         owner: sts-agent
-        group: sts-agent
         mode: '0644'
 
     - name: Configure Splunk Topology check
@@ -76,7 +73,6 @@
         src: "splunk_topology_conf.j2.yml"
         dest: /home/ubuntu/conf.d/splunk_topology.yaml
         owner: sts-agent
-        group: sts-agent
         mode: '0644'
 
     - name: Deploy StackState Agent v1

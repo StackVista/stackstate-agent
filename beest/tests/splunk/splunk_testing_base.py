@@ -162,6 +162,7 @@ class SplunkTopologyRelation(TypedDict):
 class SplunkTopologyBase(SplunkCommonBase):
 
     def publish_component(self,
+                          version: str = "v2",
                           component_id: Optional[str] = None,
                           component_type: Optional[str] = None,
                           component_description: Optional[str] = None,
@@ -176,7 +177,7 @@ class SplunkTopologyBase(SplunkCommonBase):
 
         self.post_to_services_receivers_simple(
             json_data={
-                "version": "v2",
+                "version": version,
                 "id": component.get("id"),
                 "type": component.get("type"),
                 "topo_type": component.get("topo_type"),
@@ -191,6 +192,7 @@ class SplunkTopologyBase(SplunkCommonBase):
     def publish_relation(self,
                          source_id: str,
                          target_id: str,
+                         version: str = "v2",
                          relation_type: Optional[str] = None,
                          description: Optional[str] = None,
                          topo_type: Optional[str] = None) -> SplunkTopologyRelation:
@@ -205,7 +207,7 @@ class SplunkTopologyBase(SplunkCommonBase):
 
         self.post_to_services_receivers_simple(
             json_data={
-                "version": "v2",
+                "version": version,
                 "topo_type": relation.get("topo_type"),
                 "type": relation.get("relation_type"),
                 "sourceId": relation.get("source_id"),
@@ -231,6 +233,7 @@ class SplunkHealth(TypedDict):
 class SplunkHealthBase(SplunkCommonBase):
     # Core method for posting events to Splunk
     def publish_health(self,
+                       version: str = "v2",
                        name: Optional[str] = None,
                        check_state_id: Optional[str] = None,
                        health: Optional[str] = None,
@@ -252,7 +255,7 @@ class SplunkHealthBase(SplunkCommonBase):
 
         self.post_to_services_receivers_simple(
             json_data={
-                "version": "v2",
+                "version": version,
                 "check_state_id": health.get("check_state_id"),
                 "name": health.get("name"),
                 "health": health.get("health"),
@@ -274,6 +277,7 @@ class SplunkEvent(TypedDict):
 class SplunkEventBase(SplunkCommonBase):
     # Core method for posting events to Splunk
     def publish_event(self,
+                      version: str = "v2",
                       host: Optional[str] = None,
                       source_type: Optional[str] = None,
                       status: Optional[str] = None,
@@ -291,7 +295,7 @@ class SplunkEventBase(SplunkCommonBase):
 
         self.post_to_services_receivers_simple(
             json_data={
-                "version": "v2",
+                "version": version,
                 "status": event.get("status"),
                 "description": event.get("description")
             },
@@ -316,6 +320,7 @@ class SplunkMetric(TypedDict):
 class SplunkMetricBase(SplunkCommonBase):
     # Core method for posting events to Splunk
     def publish_metric(self,
+                       version: str = "v2",
                        host: Optional[str] = None,
                        source_type: Optional[str] = None,
                        topo_type: Optional[str] = None,
@@ -337,7 +342,7 @@ class SplunkMetricBase(SplunkCommonBase):
 
         self.post_to_services_receivers_simple(
             json_data={
-                "version": "v2",
+                "version": version,
                 "topo_type": metric.get("topo_type"),
                 "metric": metric.get("metric"),
                 "value": int(metric.get("value")),
