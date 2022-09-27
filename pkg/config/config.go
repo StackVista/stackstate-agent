@@ -57,9 +57,9 @@ const (
 	// DefaultTxManagerChannelBufferSize is the concurrent transactions before the tx manager begins backpressure
 	// [sts] transaction manager
 	DefaultTxManagerChannelBufferSize = 100
-	// DefaultTxManagerTimeoutDurationSeconds is the amount of time before a manager is marked as stale, 5 minutes by default
+	// DefaultTxManagerTimeoutDurationSeconds is the amount of time before a transaction is marked as stale, 5 minutes by default
 	DefaultTxManagerTimeoutDurationSeconds = 60 * 5
-	// DefaultTxManagerEvictionDurationSeconds is the amount of time before a manager is evicted and rolled back, 10 minutes by default
+	// DefaultTxManagerEvictionDurationSeconds is the amount of time before a transaction is evicted and rolled back, 10 minutes by default
 	DefaultTxManagerEvictionDurationSeconds = 60 * 10
 	// DefaultTxManagerTickerIntervalSeconds is the ticker interval to mark transactions as stale / timeout.
 	DefaultTxManagerTickerIntervalSeconds = 30

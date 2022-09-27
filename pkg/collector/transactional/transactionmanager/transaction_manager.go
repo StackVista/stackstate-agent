@@ -144,6 +144,8 @@ transactionHandler:
 					transaction.Status = Stale
 				} else if transaction.Status == Stale && transaction.LastUpdatedTimestamp.Before(time.Now().Add(-txm.transactionEvictionDuration)) {
 					// last updated timestamp is before current time - checkmanager eviction duration => Tx can be evicted
+					_ = log.Warnf("Transaction: %s for check %s is stale and will be evicted, last updated %s",
+						transaction.TransactionID, transaction.CheckID, transaction.LastUpdatedTimestamp.String())
 					delete(txm.transactions, transaction.TransactionID)
 					transaction.NotifyChannel <- EvictedTransaction{TransactionID: transaction.TransactionID}
 				}
