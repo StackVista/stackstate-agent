@@ -143,6 +143,16 @@ func (t TransactionNotFound) Error() string {
 	return fmt.Sprintf("transaction %s not found in transaction checkmanager", t.TransactionID)
 }
 
+// TransactionCompleted is triggered when trying to look up a transaction that is already in a failed / succeeded state.
+type TransactionCompleted struct {
+	TransactionID string
+}
+
+// Error returns a string representation of the TransactionCompleted error and implements Error.
+func (t TransactionCompleted) Error() string {
+	return fmt.Sprintf("transaction %s has already been completed", t.TransactionID)
+}
+
 // ActionNotFound is triggered when trying to look up a non-existing action for a transaction in the transaction checkmanager
 type ActionNotFound struct {
 	TransactionID, ActionID string

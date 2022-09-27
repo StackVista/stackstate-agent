@@ -39,7 +39,7 @@ func (txm *transactionManager) GetActiveTransaction(transactionID string) (*Inta
 	default:
 		_ = log.Warnf("GetActiveTransaction called for transaction %s that is in %s state. Returning TransactionNotFound",
 			transactionID, transaction.Status)
-		return nil, TransactionNotFound{TransactionID: transactionID}
+		return nil, TransactionCompleted{TransactionID: transactionID}
 	}
 }
 

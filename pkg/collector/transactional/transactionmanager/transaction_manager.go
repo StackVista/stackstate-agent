@@ -118,6 +118,8 @@ transactionHandler:
 				_ = log.Errorf(msg.Error())
 			case ActionNotFound:
 				_ = log.Errorf(msg.Error())
+			case TransactionCompleted:
+				log.Debugf(msg.Error())
 			// shutdown transaction checkmanager
 			case StopTransactionManager:
 				// clean the transaction map

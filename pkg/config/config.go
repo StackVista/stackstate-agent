@@ -240,6 +240,10 @@ func InitConfig(config Config) {
 	// [sts] check manager environment variables
 	config.BindEnvAndSetDefault("check_transactionality_enabled", true)
 
+	// [sts] retryable http client environment variables
+	config.BindEnvAndSetDefault("transactional_forwarder_retry_min", 1*time.Second)
+	config.BindEnvAndSetDefault("transactional_forwarder_retry_max", 10*time.Second)
+
 	// Python 3 linter timeout, in seconds
 	// NOTE: linter is notoriously slow, in the absence of a better solution we
 	//       can only increase this timeout value. Linting operation is async.
