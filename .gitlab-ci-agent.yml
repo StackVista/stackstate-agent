@@ -1036,9 +1036,9 @@ beest_k8s_1_22_dockerd_test:
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_k8s_1_21_dockerd_create
+    - beest_k8s_1_22_dockerd_create
   needs:
-    - beest_k8s_1_21_dockerd_create
+    - beest_k8s_1_22_dockerd_create
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
@@ -1051,9 +1051,9 @@ beest_k8s_1_22_containerd_test:
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_k8s_1_21_containerd_create
+    - beest_k8s_1_22_containerd_create
   needs:
-    - beest_k8s_1_21_containerd_create
+    - beest_k8s_1_22_containerd_create
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
@@ -1120,8 +1120,8 @@ beest_k8s_1_22_dockerd_failure_cleanup:
     - *v2_merge_train_on_failure
     - when: never
   needs:
-    - beest_k8s_1_21_dockerd_test
-    - beest_k8s_1_21_dockerd_create
+    - beest_k8s_1_22_dockerd_test
+    - beest_k8s_1_22_dockerd_create
 
 beest_k8s_1_22_containerd_failure_cleanup:
   <<: *beest
@@ -1132,8 +1132,8 @@ beest_k8s_1_22_containerd_failure_cleanup:
     - *v2_merge_train_on_failure
     - when: never
   needs:
-    - beest_k8s_1_21_containerd_test
-    - beest_k8s_1_21_containerd_create
+    - beest_k8s_1_22_containerd_test
+    - beest_k8s_1_22_containerd_create
 
 beest_k8s_1_22_dockerd_success_cleanup:
   <<: *beest
@@ -1144,11 +1144,11 @@ beest_k8s_1_22_dockerd_success_cleanup:
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_k8s_1_21_dockerd_test
-    - beest_k8s_1_21_dockerd_create
+    - beest_k8s_1_22_dockerd_test
+    - beest_k8s_1_22_dockerd_create
   needs:
-    - beest_k8s_1_21_dockerd_test
-    - beest_k8s_1_21_dockerd_create
+    - beest_k8s_1_22_dockerd_test
+    - beest_k8s_1_22_dockerd_create
 
 beest_k8s_1_22_containerd_success_cleanup:
   <<: *beest
@@ -1159,11 +1159,11 @@ beest_k8s_1_22_containerd_success_cleanup:
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_k8s_1_21_containerd_test
-    - beest_k8s_1_21_containerd_create
+    - beest_k8s_1_22_containerd_test
+    - beest_k8s_1_22_containerd_create
   needs:
-    - beest_k8s_1_21_containerd_test
-    - beest_k8s_1_21_containerd_create
+    - beest_k8s_1_22_containerd_test
+    - beest_k8s_1_22_containerd_create
 
 # Job Seq: Molecule
 # Type: localinstall
