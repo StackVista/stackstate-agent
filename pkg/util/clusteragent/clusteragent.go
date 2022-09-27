@@ -87,6 +87,7 @@ func GetClusterAgentClient() (DCAClientInterface, error) {
 			MaxRetryDelay:     5 * time.Minute,
 		})
 	}
+	log.Debugf("DEBUG LOG 7: globalClusterAgentClient port = %s", globalClusterAgentClient.clusterAgentAPIEndpoint)
 	if err := globalClusterAgentClient.initRetry.TriggerRetry(); err != nil {
 		log.Debugf("Cluster Agent init error: %v", err)
 		return nil, err
@@ -179,9 +180,13 @@ func getClusterAgentEndpoint() (string, error) {
 	dcaSvc = strings.ToUpper(dcaSvc)
 	dcaSvc = strings.Replace(dcaSvc, "-", "_", -1) // Kubernetes replaces "-" with "_" in the service names injected in the env var.
 
+	log.Debugf("DEBUG LOG 1: dcaSVC = %s", dcaSvc)
+
 	// host
 	dcaSvcHostEnv := fmt.Sprintf("%s_SERVICE_HOST", dcaSvc)
 	dcaSvcHost := os.Getenv(dcaSvcHostEnv)
+	log.Debugf("DEBUG LOG 2: dcaSvcHostEnv = %s", dcaSvcHostEnv)
+	log.Debugf("DEBUG LOG 3: dcaSvcHost = %s", dcaSvcHost)
 	if dcaSvcHost == "" {
 		return "", fmt.Errorf("cannot get a cluster agent endpoint for kubernetes service %s, env %s is empty", dcaSvc, dcaSvcHostEnv)
 	}
@@ -192,12 +197,16 @@ func getClusterAgentEndpoint() (string, error) {
 		return "", fmt.Errorf("cannot get a cluster agent endpoint for kubernetes service %s, env %s is empty", dcaSvc, dcaSvcPort)
 	}
 
+	log.Debugf("DEBUG LOG 4: dcaSvcPort = %s", dcaSvcPort)
+
 	// validate the URL
 	dcaURL = fmt.Sprintf("https://%s:%s", dcaSvcHost, dcaSvcPort)
 	u, err := url.Parse(dcaURL)
 	if err != nil {
 		return "", err
 	}
+
+	log.Debugf("DEBUG LOG 5: dcaURL = %s", dcaURL)
 
 	return u.String(), nil
 }

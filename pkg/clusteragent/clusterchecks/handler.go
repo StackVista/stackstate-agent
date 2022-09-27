@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build clusterchecks
 // +build clusterchecks
 
 package clusterchecks
@@ -68,6 +69,8 @@ func NewHandler(ac pluggableAutoConfig) (*Handler, error) {
 		dispatcher:       newDispatcher(),
 		port:             config.Datadog.GetInt("cluster_agent.cmd_port"),
 	}
+
+	log.Debugf("DEBUG LOG 6: Handler port = %s", config.Datadog.GetInt("cluster_agent.cmd_port"))
 
 	if config.Datadog.GetBool("leader_election") {
 		callback, err := getLeaderIPCallback()
