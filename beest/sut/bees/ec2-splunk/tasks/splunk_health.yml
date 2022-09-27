@@ -10,14 +10,26 @@
         saved_search_name: "health"
         saved_search_format: "fields check_state_id, name, health, topology_element_identifier, message"
 
-    - name: "Delete Splunk Health Saved Search"
+    - name: "V1 - Delete Splunk Health Saved Search"
       command: |
         curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" \
-        {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches/{{ saved_search_name }}
+        {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches/{{ saved_search_name }}-v1
 
-    - name: "Create Splunk Health Saved Search"
+    - name: "V1 - Create Splunk Health Saved Search"
       command: |
         curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" \
         {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches \
-        -d name="{{ saved_search_name }}" \
-        --data-urlencode search="* | dedup check_state_id | sort - check_state_id | {{ saved_search_format }}"
+        -d name="{{ saved_search_name }}-v1" \
+        --data-urlencode search="* version=\"v1\" | dedup check_state_id | sort - check_state_id | {{ saved_search_format }}"
+
+    - name: "V2 - Delete Splunk Health Saved Search"
+      command: |
+        curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" \
+        {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches/{{ saved_search_name }}-v2
+
+    - name: "V2 - Create Splunk Health Saved Search"
+      command: |
+        curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" \
+        {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches \
+        -d name="{{ saved_search_name }}-v2" \
+        --data-urlencode search="* version=\"v2\" | dedup check_state_id | sort - check_state_id | {{ saved_search_format }}"

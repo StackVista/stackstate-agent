@@ -111,7 +111,9 @@ class SplunkCommonBase:
         else:
             return alternative
 
-    def post_to_services_receivers_simple(self, json_data, param_data=None) -> str:
+    def post_to_services_receivers_simple(self,
+                                          json_data,
+                                          param_data=None) -> str:
         data_dump_request_filename = "{}-{}_request.json".format(
             Path(str(self.request.node.fspath)).stem,
             self.request.node.originalname,
@@ -172,7 +174,7 @@ class SplunkTopologyBase(SplunkCommonBase):
             description=self.get_or_else(component_description, "Topology Server Component"),
         )
 
-        response = self.post_to_services_receivers_simple(
+        self.post_to_services_receivers_simple(
             json_data={
                 "id": component.get("id"),
                 "type": component.get("type"),
@@ -180,11 +182,6 @@ class SplunkTopologyBase(SplunkCommonBase):
                 "description": component.get("description")
             }
         )
-
-        print("-------->")
-        print("-------->")
-        print(response)
-        print("-------->")
 
         logging.debug(f"Publishing component with the name '{component.get('id')}' on StackState")
 

@@ -70,7 +70,7 @@ instances:
     ignore_saved_search_errors: true
 
     component_saved_searches:
-      - name: "components"
+      - name: "components-v2"
         # Wilcard match to find component queries, can be used instead of name
         # match: "comp.*"
         # app: "search"
@@ -82,7 +82,7 @@ instances:
         #   force_dispatch: true
         #   dispatch.now: true
     relation_saved_searches:
-      - name: "relations"
+      - name: "relations-v2"
       # Wilcard match to find relation queries, can be used instead of name
       #  match: "relation*"
       #  app: "search"

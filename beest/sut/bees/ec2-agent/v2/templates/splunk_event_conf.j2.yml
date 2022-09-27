@@ -81,7 +81,7 @@ instances:
     # initial_delay_seconds: 600 // 10 minutes
     saved_searches:
       # Splunk name of the saved search
-      - name: "events"
+      - name: "events-v2"
         # Wilcard match to find event queries, can be used instead of name
         # match: "events.*"
         # app: "search"

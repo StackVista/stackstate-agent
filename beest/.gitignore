@@ -80,6 +80,7 @@ tests/*/test_*-*.json
 tests/*/test_*-*.xml
 tests/conf.d
 tests/*/conf.d
+tests/*/temp
 
 # Translations
 *.mo

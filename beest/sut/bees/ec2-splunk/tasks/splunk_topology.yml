@@ -14,26 +14,50 @@
         saved_search_relations_format: "fields type, sourceId, targetId, description"
         saved_search_components_format: "fields id, type, description, running"
 
-    - name: "Delete Splunk Relations Saved Search"
+    - name: "V1 - Delete Splunk Relations Saved Search"
       command: |
         curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" \
-        {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches/{{ saved_search_relations_name }}
+        {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches/{{ saved_search_relations_name }}-v1
 
-    - name: "Delete Splunk Components Saved Search"
+    - name: "V1 - Delete Splunk Components Saved Search"
       command: |
         curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" \
-        {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches/{{ saved_search_components_name }}
+        {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches/{{ saved_search_components_name }}-v1
 
-    - name: "Create Splunk Relations Saved Search"
+    - name: "V1 - Create Splunk Relations Saved Search"
       command: |
         curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" \
         {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches \
-        -d name="{{ saved_search_relations_name }}" \
-        --data-urlencode search="* topo_type=relation | dedup type, sourceId, targetId | {{ saved_search_relations_format }}"
+        -d name="{{ saved_search_relations_name }}-v1" \
+        --data-urlencode search="* topo_type=relation AND version=\"v1\" | dedup type, sourceId, targetId | {{ saved_search_relations_format }}"
 
-    - name: "Create Splunk Components Saved Search"
+    - name: "V1 - Create Splunk Components Saved Search"
       command: |
         curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" \
         {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches \
-        -d name="{{ saved_search_components_name }}" \
-        --data-urlencode search="* topo_type=component | dedup id | sort - id | {{ saved_search_components_format }}"
+        -d name="{{ saved_search_components_name }}-v1" \
+        --data-urlencode search="* topo_type=component AND version=\"v1\" | dedup id | sort - id | {{ saved_search_components_format }}"
+
+    - name: "V2 - Delete Splunk Relations Saved Search"
+      command: |
+        curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" \
+        {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches/{{ saved_search_relations_name }}-v2
+
+    - name: "V2 - Delete Splunk Components Saved Search"
+      command: |
+        curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" \
+        {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches/{{ saved_search_components_name }}-v2
+
+    - name: "V2 - Create Splunk Relations Saved Search"
+      command: |
+        curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" \
+        {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches \
+        -d name="{{ saved_search_relations_name }}-v2" \
+        --data-urlencode search="* topo_type=relation AND version=\"v2\" | dedup type, sourceId, targetId | {{ saved_search_relations_format }}"
+
+    - name: "V2 - Create Splunk Components Saved Search"
+      command: |
+        curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" \
+        {{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}/services/saved/searches \
+        -d name="{{ saved_search_components_name }}-v2" \
+        --data-urlencode search="* topo_type=component AND version=\"v2\" | dedup id | sort - id | {{ saved_search_components_format }}"

@@ -86,7 +86,7 @@ instances:
     # initial_delay_seconds: 600 // 10 minutes
     saved_searches:
       # Splunk name of the saved search
-      - name: "metrics"
+      - name: "metrics-v2"
         # metric_name_field: "metric"
         # The metric value field should contain numerical data in the splunk results
         # metric_value_field: "value"

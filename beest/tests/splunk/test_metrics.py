@@ -206,10 +206,8 @@ def test_splunk_metric_transactional_check(agent: AgentTestingBase,
     agent.allow_routing_to_sts_instance()
 
     def post_metric(expect_failure: bool = False,
-                    expected_metric: SplunkMetric = None) -> Optional[SplunkMetric]:
-        # Add sleep to make sure the splunk data has time between data points and when the agent started up
-        time.sleep(30)
-
+                    expected_metric: SplunkMetric = None,
+                    timeout: int = 180) -> Optional[SplunkMetric]:
         metric: SplunkMetric = expected_metric
 
         if metric is None:
@@ -224,7 +222,7 @@ def test_splunk_metric_transactional_check(agent: AgentTestingBase,
                                                 "raw.metrics": int(metric.get("value")),
                                             },
                                             first_match=True,
-                                            timeout=180,
+                                            timeout=timeout,
                                             period=5)
 
             logging.info(f"Found the following results: {result}")
@@ -246,14 +244,16 @@ def test_splunk_metric_transactional_check(agent: AgentTestingBase,
     # Post a component while the agent is stopped, when then assign this to a variable to test again after wards
     def find_metric_while_routes_is_blocked():
         nonlocal metric_posted_while_agent_was_down
-        metric_posted_while_agent_was_down = post_metric(expect_failure=True)
         logging.info(f"Posting Metric: {metric_posted_while_agent_was_down}")
+        metric_posted_while_agent_was_down = post_metric(expect_failure=True,
+                                                         timeout=180)
 
     # Attempt to check the prev component we posted should be in the agent including the
     # new one we posted
     def find_metric_while_routes_is_open():
         logging.info(f"Looking for Metric: {metric_posted_while_agent_was_down}")
-        post_metric(expected_metric=metric_posted_while_agent_was_down)
+        post_metric(expected_metric=metric_posted_while_agent_was_down,
+                    timeout=180)
         # post_metric()
 
     try:

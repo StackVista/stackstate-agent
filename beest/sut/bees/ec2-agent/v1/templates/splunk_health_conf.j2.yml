@@ -72,7 +72,7 @@ instances:
     ignore_saved_search_errors: true
 
     saved_searches:
-      - name: "health-v2"
+      - name: "health-v1"
         # Wilcard match to find component queries, can be used instead of name
         # match: "comp.*"
         # app: "search"
