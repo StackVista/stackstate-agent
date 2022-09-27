@@ -328,7 +328,7 @@ func (c *clusterTopologyCommon) maximumMinorVersion(maximumVersion int) (bool, e
 }
 
 func (c *clusterTopologyCommon) checkVersion(compare func(version int) bool) (bool, error) {
-	if c.k8sVersion != nil {
+	if c.k8sVersion != nil && c.k8sVersion.Major != "" {
 		if c.k8sVersion.Major == "1" {
 			minor, err := strconv.Atoi(c.k8sVersion.Minor[:2])
 			if err != nil {
@@ -339,6 +339,6 @@ func (c *clusterTopologyCommon) checkVersion(compare func(version int) bool) (bo
 		log.Debugf("Kubernetes major version is not '1'")
 		return false, nil
 	}
-	log.Debugf("k8sVersion is nil")
+	log.Debugf("Kubernetes version is undefined")
 	return true, nil
 }
