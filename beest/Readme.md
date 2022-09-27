@@ -60,7 +60,8 @@ Terraform state file name, but also used in the names of the infrastructure reso
   the json file and the sub folder should be date-time
 - Allow the beest command to include --exclude command to ignore a certain playbook cycle
   - For example `beest prepare splunk --exclude k8s-stackstate` this will allow cli level ignoring op a playbook section
-- Add functionality to reuse parts within the tests such as conftest.py instead of copying the same file
+- Add functionality to reuse parts within the tests such as Conftest.py instead of copying the same file
+- Add --reset to prepare, so cleanup will run before it
 
 
 ## How to setup development environment for test
