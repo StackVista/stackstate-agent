@@ -176,6 +176,7 @@ class SplunkTopologyBase(SplunkCommonBase):
 
         self.post_to_services_receivers_simple(
             json_data={
+                "version": "v2",
                 "id": component.get("id"),
                 "type": component.get("type"),
                 "topo_type": component.get("topo_type"),
@@ -204,6 +205,7 @@ class SplunkTopologyBase(SplunkCommonBase):
 
         self.post_to_services_receivers_simple(
             json_data={
+                "version": "v2",
                 "topo_type": relation.get("topo_type"),
                 "type": relation.get("relation_type"),
                 "sourceId": relation.get("source_id"),
@@ -250,6 +252,7 @@ class SplunkHealthBase(SplunkCommonBase):
 
         self.post_to_services_receivers_simple(
             json_data={
+                "version": "v2",
                 "check_state_id": health.get("check_state_id"),
                 "name": health.get("name"),
                 "health": health.get("health"),
@@ -288,6 +291,7 @@ class SplunkEventBase(SplunkCommonBase):
 
         self.post_to_services_receivers_simple(
             json_data={
+                "version": "v2",
                 "status": event.get("status"),
                 "description": event.get("description")
             },
@@ -333,6 +337,7 @@ class SplunkMetricBase(SplunkCommonBase):
 
         self.post_to_services_receivers_simple(
             json_data={
+                "version": "v2",
                 "topo_type": metric.get("topo_type"),
                 "metric": metric.get("metric"),
                 "value": int(metric.get("value")),
