@@ -28,9 +28,8 @@ const (
 // TopologyCheck grabs events from the API server.
 type TopologyCheck struct {
 	CommonCheck
-	instance   *TopologyConfig
-	submitter  TopologySubmitter
-	k8sVersion *version.Info
+	instance  *TopologyConfig
+	submitter TopologySubmitter
 }
 
 func warnDisabledResource(name string, additionalWarning string, isEnabled bool) {
@@ -57,14 +56,6 @@ func (t *TopologyCheck) Configure(config, initConfig integration.Data, source st
 		return err
 	}
 
-	// initialize kube api check
-	err = t.InitKubeAPICheck()
-	if err != nil {
-		return err
-	}
-
-	t.setKubernetesVersion()
-
 	warnDisabledResource("persistentvolumes", "", t.instance.Resources.Persistentvolumes)
 	warnDisabledResource("persistentvolumeclaims", "it won't be possible to connect pods to a persistent volumes claimed by them", t.instance.Resources.Persistentvolumeclaims)
 	warnDisabledResource("endpoints", "it won't be possible to connect services to underlying pods", t.instance.Resources.Endpoints)
@@ -83,14 +74,13 @@ func (t *TopologyCheck) Configure(config, initConfig integration.Data, source st
 	return nil
 }
 
-func (t *TopologyCheck) setKubernetesVersion() {
+func (t *TopologyCheck) getKubernetesVersion() *version.Info {
 	info, err := t.ac.GetVersion()
-	if err != nil {
+	if err == nil {
 		_ = log.Warnf("Could not set Kubernetes version for topology collector: ", err)
-	} else {
-		log.Debugf("Kubernetes version: %+v", info)
 	}
-	t.k8sVersion = info
+	log.Debugf("Kubernetes version: %+v", info)
+	return info
 }
 
 // SetSubmitter sets the topology submitter for the Topology Check
@@ -123,6 +113,12 @@ func (t *TopologyCheck) Run() error {
 	// Running the event collection.
 	if !t.instance.CollectTopology {
 		return nil
+	}
+
+	// initialize kube api check
+	err := t.InitKubeAPICheck()
+	if err != nil {
+		return err
 	}
 
 	// set the check "instance id" for snapshots
@@ -159,7 +155,7 @@ func (t *TopologyCheck) Run() error {
 	errChannel := make(chan error)
 	waitGroupChannel := make(chan bool)
 
-	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, t.ac, t.instance.SourcePropertiesEnabled, t.k8sVersion)
+	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, t.ac, t.instance.SourcePropertiesEnabled, t.getKubernetesVersion())
 	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
 	clusterCollectors := []collectors.ClusterTopologyCollector{
 		// Register Cluster Component Collector

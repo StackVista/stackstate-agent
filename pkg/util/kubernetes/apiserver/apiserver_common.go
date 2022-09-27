@@ -11,7 +11,7 @@ package apiserver
 import (
 	appsV1 "k8s.io/api/apps/v1"
 	batchV1 "k8s.io/api/batch/v1"
-	batchV1B "k8s.io/api/batch/v1beta1"
+ 	batchV1B1 "k8s.io/api/batch/v1beta1"
 	coreV1 "k8s.io/api/core/v1"
 	extensionsV1B "k8s.io/api/extensions/v1beta1"
 	netV1 "k8s.io/api/networking/v1"
@@ -24,7 +24,8 @@ type APICollectorClient interface {
 	GetDeployments() ([]appsV1.Deployment, error)
 	GetStatefulSets() ([]appsV1.StatefulSet, error)
 	GetJobs() ([]batchV1.Job, error)
-	GetCronJobs() ([]batchV1B.CronJob, error)
+	GetCronJobsV1B1() ([]batchV1B1.CronJob, error)
+	GetCronJobsV1() ([]batchV1.CronJob, error)
 	GetEndpoints() ([]coreV1.Endpoints, error)
 	GetNodes() ([]coreV1.Node, error)
 	GetPods() ([]coreV1.Pod, error)

@@ -340,5 +340,5 @@ func (c *clusterTopologyCommon) checkVersion(compare func(version int) bool) (bo
 		return false, nil
 	}
 	log.Debugf("k8sVersion is nil")
-	return false, nil
+	return true, nil
 }
