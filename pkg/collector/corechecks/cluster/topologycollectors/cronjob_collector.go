@@ -51,14 +51,14 @@ func (cjc *CronJobCollector) CollectorFunction() error {
 	return nil
 }
 
-func (ic *CronJobCollector) getCronJobsV1B1(cronJobs []CronJobInterface) ([]CronJobInterface, error) {
-	if supported, err := ic.ClusterTopologyCollector.maximumMinorVersion(24); err != nil || !supported {
+func (cjc *CronJobCollector) getCronJobsV1B1(cronJobs []CronJobInterface) ([]CronJobInterface, error) {
+	if supported, err := cjc.ClusterTopologyCollector.maximumMinorVersion(24); err != nil || !supported {
 		if !supported {
 			log.Debugf("CronJobs from batch/v1beta1 are not supported in this Kubernetes version")
 		}
 		return cronJobs, err
 	}
-	ingressesExt, err := ic.GetAPIClient().GetCronJobsV1B1()
+	ingressesExt, err := cjc.GetAPIClient().GetCronJobsV1B1()
 	if err != nil {
 		return nil, err
 	}
@@ -70,14 +70,14 @@ func (ic *CronJobCollector) getCronJobsV1B1(cronJobs []CronJobInterface) ([]Cron
 	return cronJobs, nil
 }
 
-func (ic *CronJobCollector) getCronJobsV1(cronJobs []CronJobInterface) ([]CronJobInterface, error) {
-	if supported, err := ic.ClusterTopologyCollector.minimumMinorVersion(21); err != nil || !supported {
+func (cjc *CronJobCollector) getCronJobsV1(cronJobs []CronJobInterface) ([]CronJobInterface, error) {
+	if supported, err := cjc.ClusterTopologyCollector.minimumMinorVersion(21); err != nil || !supported {
 		if !supported {
 			log.Debugf("CronJobs from batch/v1 are not supported in this Kubernetes version")
 		}
 		return cronJobs, err
 	}
-	ingressesExt, err := ic.GetAPIClient().GetCronJobsV1()
+	ingressesExt, err := cjc.GetAPIClient().GetCronJobsV1()
 	if err != nil {
 		return nil, err
 	}

@@ -11,7 +11,7 @@ package apiserver
 import (
 	appsV1 "k8s.io/api/apps/v1"
 	batchV1 "k8s.io/api/batch/v1"
- 	batchV1B1 "k8s.io/api/batch/v1beta1"
+	batchV1B1 "k8s.io/api/batch/v1beta1"
 	coreV1 "k8s.io/api/core/v1"
 	extensionsV1B "k8s.io/api/extensions/v1beta1"
 	netV1 "k8s.io/api/networking/v1"
