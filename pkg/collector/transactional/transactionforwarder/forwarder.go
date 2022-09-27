@@ -19,7 +19,6 @@ type TransactionalPayload struct {
 	Body                 []byte
 	Path                 string
 	TransactionActionMap map[string]transactional.PayloadTransaction
-	OnlyMarkTransactions bool // this is used to bypass the actual sending of data on empty payloads and just complete the transactions
 }
 
 // ShutdownForwarder shuts down the forwarder
@@ -95,14 +94,6 @@ forwardHandler:
 	for {
 		select {
 		case payload := <-f.PayloadChannel:
-
-			// check to see if this is an empty payload -> OnlyMarkTransactions == true
-			if payload.OnlyMarkTransactions {
-				log.Debugf("No payload, progressing transactions: %v", payload.TransactionActionMap)
-				f.ProgressTransactions(payload.TransactionActionMap)
-				continue
-			}
-
 			log.Debugf("Attempting to send transactional payload,\ntransactions: %v,content: %v",
 				payload.TransactionActionMap, apiKeyRegExp.ReplaceAllString(string(payload.Body), apiKeyReplacement))
 

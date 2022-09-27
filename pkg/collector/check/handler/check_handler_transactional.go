@@ -185,8 +185,6 @@ currentTxHandler:
 					log.Debugf("%s. Submitting complete for check run", logPrefix)
 				}
 
-				transactionbatcher.GetTransactionalBatcher().SubmitComplete(ch.ID())
-
 			// Notifications from the transaction manager
 			case transactionmanager.DiscardTransaction:
 				if msg.TransactionID != ch.GetCurrentTransaction() {

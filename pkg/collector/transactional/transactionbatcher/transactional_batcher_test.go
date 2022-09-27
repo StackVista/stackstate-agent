@@ -306,22 +306,19 @@ func TestBatchFlushOnComplete(t *testing.T) {
 	batcher.Stop()
 }
 
-func TestBatchNoDataNoComplete(t *testing.T) {
+func TestBatchDataCompleteTransaction(t *testing.T) {
 	batcher := newTransactionalBatcher(testHost, testAgent, 100)
 
+	batcher.StartTransaction(testID, testTransactionID)
 	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent)
-	batcher.SubmitComplete(testID2)
-
-	// We now send a stop to trigger a combined commit
-	batcher.SubmitStopSnapshot(testID, testTransactionID, testInstance)
-	batcher.SubmitCompleteTransaction(testID, testTransactionID)
+	batcher.SubmitCompleteTransaction(testID2, testTransaction2ID)
 
 	expectedPayload := transactional.NewIntakePayload()
 	expectedPayload.InternalHostname = "myhost"
 	expectedPayload.Topologies = []topology.Topology{
 		{
 			StartSnapshot: false,
-			StopSnapshot:  true,
+			StopSnapshot:  false,
 			Instance:      testInstance,
 			Components:    []topology.Component{testComponent},
 			Relations:     []topology.Relation{},
@@ -330,6 +327,29 @@ func TestBatchNoDataNoComplete(t *testing.T) {
 	}
 
 	transactionStates := map[string]bool{
+		testTransactionID:  false,
+		testTransaction2ID: true,
+	}
+	testBatcher(t, transactionStates, expectedPayload)
+
+	// We now send a stop to trigger a combined commit
+	batcher.SubmitStopSnapshot(testID, testTransactionID, testInstance)
+	batcher.SubmitCompleteTransaction(testID, testTransactionID)
+
+	expectedPayload = transactional.NewIntakePayload()
+	expectedPayload.InternalHostname = "myhost"
+	expectedPayload.Topologies = []topology.Topology{
+		{
+			StartSnapshot: false,
+			StopSnapshot:  true,
+			Instance:      testInstance,
+			Components:    []topology.Component{},
+			Relations:     []topology.Relation{},
+			DeleteIDs:     []string{},
+		},
+	}
+
+	transactionStates = map[string]bool{
 		testTransactionID: true,
 	}
 	testBatcher(t, transactionStates, expectedPayload)
