@@ -52,16 +52,18 @@ Terraform state file name, but also used in the names of the infrastructure reso
 
 ### Feedback / Feature Requests
 
-- Allow beast to run in the background, you can then shell in and out without the risk of closing the "make terminal window"
-- Force Cleanup to be run before Destroy instead of running them separately
-- Expose the scenario in the scenarios.yml file that is being ran to the wild. (Similar as with the yard_id)
+- [Minor] Allow beast to run in the background, you can then shell in and out without the risk of closing the "make terminal window"
+- [Minor] Have the option to run cleanup and destroy at the same time, For example remove command will run both
+- [Major] Expose the active scenario in the scenarios.yml file to the python tests. (Similar as with the yard_id)
   - This will allow some flexibility on selecting files in the same env and knowing the testing and root dir
-- Group the .gv file + test_*-*.json file under a folder structure with the root folder the test name as seen with
-  the json file and the sub folder should be date-time
-- Allow the beest command to include --exclude command to ignore a certain playbook cycle
-  - For example `beest prepare splunk --exclude k8s-stackstate` this will allow cli level ignoring op a playbook section
-- Add functionality to reuse parts within the tests such as Conftest.py instead of copying the same file
-- Add --reset to prepare, so cleanup will run before it
+- [Moderate] Group the .gv file + test_*-*.json file under a folder structure with the root folder the test name as seen with
+  the json file and the sub folder should be date-time.
+  - At the moment it creates a lot of span if you rerun the tests multiple times
+- [Major] Allow the beest command to include --exclude command to ignore a certain playbook cycle
+  - For example `beest prepare splunk --exclude k8s-stackstate` this will allow cli level ignoring of a playbook section (For example through a set variable)
+- [Major] Add functionality to reuse parts within the tests such as conftest.py instead of copying the same file and logic
+- [Major] Move the --reset command to prepare stage instead of verify, This will allow the cleanup to be ran before running the prepare
+  - This will assist in the development cycle of rerunning without destroying the infra
 
 
 ## How to setup development environment for test
