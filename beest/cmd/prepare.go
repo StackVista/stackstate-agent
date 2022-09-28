@@ -6,8 +6,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	ExclusionsFlag      = "exclusion"
+	ExclusionsShortFlag = "x"
+)
+
+var (
+	prepareExclusions []string
+)
+
 func init() {
 	rootCmd.AddCommand(prepareCmd)
+
+	prepareCmd.Flags().StringArrayVarP(&prepareExclusions, ExclusionsFlag, ExclusionsShortFlag, []string{}, "exclude certain bees")
 }
 
 var prepareCmd = &cobra.Command{
@@ -23,5 +34,5 @@ var prepareCmd = &cobra.Command{
 func prepare(deployer driver.Deployer, scenario *Scenario) error {
 	create := scenario.generateCreateStep(runId)
 	prepare := step.Prepare(create)
-	return deployer.Prepare(prepare)
+	return deployer.Prepare(prepare, prepareExclusions)
 }

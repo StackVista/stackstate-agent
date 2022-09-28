@@ -60,12 +60,12 @@ func test(provisioner driver.Provisioner, deployer driver.Deployer, verifier dri
 	var cleanupError error
 	if reset {
 		// if cleanup fails during reset, stop
-		if err := deployer.Cleanup(cleanup); err != nil {
+		if err := deployer.Cleanup(cleanup, []string{}); err != nil {
 			return []error{err}
 		}
 	}
 
-	prepareError := deployer.Prepare(prepare)
+	prepareError := deployer.Prepare(prepare, []string{})
 	var verifyError error
 	if prepareError == nil {
 		// if prepare did not fail, verify
@@ -75,7 +75,7 @@ func test(provisioner driver.Provisioner, deployer driver.Deployer, verifier dri
 		log.Printf("Not running verify step because prepare failed: %s\n", prepareError)
 	}
 
-	cleanupError = deployer.Cleanup(cleanup)
+	cleanupError = deployer.Cleanup(cleanup, []string{})
 	var destroyError error
 	if !noDestroy {
 		destroyError = provisioner.Destroy(destroy, false)
