@@ -247,6 +247,7 @@ build_cluster_agent:
       - $CI_PROJECT_DIR/bin/stackstate-cluster-agent
       - $CI_PROJECT_DIR/Dockerfiles/cluster-agent/stackstate-cluster.yaml
       - $CI_PROJECT_DIR/version.txt
+    expire_in: 1 week
   rules:
     - *cluster_agent
   retry:
@@ -398,7 +399,7 @@ build_win:
   after_script:
     - cmd.exe /c "copy %GOPATH%\src\github.com\StackVista\stackstate-agent\omnibus\pkg\*.msi"
   artifacts:
-    expire_in: 2 weeks
+    expire_in: 1 week
     paths:
       - ./*.msi
       - "version.txt"
