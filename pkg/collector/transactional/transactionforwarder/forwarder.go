@@ -19,7 +19,6 @@ type TransactionalPayload struct {
 	Body                 []byte
 	Path                 string
 	TransactionActionMap map[string]transactional.PayloadTransaction
-	OnlyMarkTransactions bool // this is used to bypass the actual sending of data on empty payloads and just complete the transactions
 }
 
 // ShutdownForwarder shuts down the forwarder
@@ -95,29 +94,27 @@ forwardHandler:
 	for {
 		select {
 		case payload := <-f.PayloadChannel:
-
-			// check to see if this is an empty payload -> OnlyMarkTransactions == true
-			if payload.OnlyMarkTransactions {
-				f.ProgressTransactions(payload.TransactionActionMap)
-				continue
-			}
+			log.Debugf("Attempting to send transactional payload,\ntransactions: %v,content: %v",
+				payload.TransactionActionMap, apiKeyRegExp.ReplaceAllString(string(payload.Body), apiKeyReplacement))
 
 			response := f.stsClient.Post(payload.Path, payload.Body)
 			if response.Err != nil {
 				// Payload failed, reject action
 				for transactionID, payloadTransaction := range payload.TransactionActionMap {
+					log.Debugf("Sending transactional payload failed, rejecting action %s for transaction %s",
+						payloadTransaction.ActionID, transactionID)
 					transactionmanager.GetTransactionManager().RejectAction(transactionID, payloadTransaction.ActionID, response.Err.Error())
 				}
-				_ = log.Errorf("Failed to send intake payload, content: %v. %s",
+				_ = log.Errorf("Sending transactional payload failed, content: %v. %s",
 					apiKeyRegExp.ReplaceAllString(string(payload.Body), apiKeyReplacement), response.Err.Error())
 			} else {
 				f.ProgressTransactions(payload.TransactionActionMap)
 
-				log.Infof("Sent intake payload, size: %d bytes.", len(payload.Body))
+				log.Infof("Sent transactional payload, size: %d bytes.", len(payload.Body))
 				if config.Datadog.GetBool("log_payloads") {
-					log.Debugf("Sent intake payload, response status: %s (%d).", response.Response.Status,
+					log.Debugf("Sent transactional payload, response status: %s (%d).", response.Response.Status,
 						response.Response.StatusCode)
-					log.Debugf("Sent intake payload, content: %v", apiKeyRegExp.ReplaceAllString(string(payload.Body), apiKeyReplacement))
+					log.Debugf("Sent transactional payload, content: %v", apiKeyRegExp.ReplaceAllString(string(payload.Body), apiKeyReplacement))
 				}
 			}
 		case sf := <-f.ShutdownChannel:
@@ -132,10 +129,13 @@ forwardHandler:
 func (f *Forwarder) ProgressTransactions(transactionMap map[string]transactional.PayloadTransaction) {
 	// Payload succeeded, acknowledge action
 	for transactionID, payloadTransaction := range transactionMap {
+		log.Debugf("Sent transactional payload successfully, acknowledging action %s for transaction %s",
+			payloadTransaction.ActionID, transactionID)
 		transactionmanager.GetTransactionManager().AcknowledgeAction(transactionID, payloadTransaction.ActionID)
 
 		// if the transaction of the payload is completed, submit a transaction complete
 		if payloadTransaction.CompletedTransaction {
+			log.Debugf("Sent transactional payload successfully, completing transaction %s", transactionID)
 			transactionmanager.GetTransactionManager().CompleteTransaction(transactionID)
 		}
 	}
