@@ -2,18 +2,6 @@
 - name: StackState Agent prepare tasks
   tags: prepare
   block:
-    - name: Cleanup StackState Agent v1 Docker - Kill running process
-      ignore_errors: true
-      shell: "docker kill agent-v1"
-
-    - name: Cleanup StackState Agent v1 Docker - Remove container
-      ignore_errors: true
-      shell: "docker rm -f agent-v1"
-
-    - name: Cleanup StackState Agent v1 Docker - Remove image
-      ignore_errors: true
-      shell: "docker rmi agent-v1 --force"
-
     - name: Create the sts-agent user
       become: yes
       user:

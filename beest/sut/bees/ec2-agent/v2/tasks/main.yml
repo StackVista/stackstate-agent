@@ -2,20 +2,6 @@
 - name: StackState Agent prepare tasks
   tags: prepare
   block:
-    - name: Uninstall stackstate-agent
-      ignore_errors: true
-      become: yes
-      apt:
-        pkg: stackstate-agent
-        state: absent
-
-    - name: Remove configurations
-      ignore_errors: true
-      become: yes
-      file:
-        path: /etc/stackstate-agent
-        state: absent
-
     - name: "Install stackstate-agent (WARNING: Pointing to the Simulator instead of StackState, and the packets is then forwarded to StackState)"
       when: enable_sts_simulator is defined and enable_sts_simulator == true
       shell: "curl -o- {{ agent_repo_url }}/install.sh | bash"
