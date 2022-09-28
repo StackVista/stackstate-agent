@@ -4,8 +4,6 @@ dnat_server_port: 123
 container_to_container_server_port: 234
 headless_service_port: 543
 
-quay_password: "{{ lookup('env', 'quay_password') or QUAY_PASSWORD }}"
-quay_user: "{{ lookup('env', 'quay_user') or QUAY_USER }}"
 artifactory_user: "{{ lookup('env', 'artifactory_user') or ARTIFACTORY_USER }}"
 artifactory_password: "{{ lookup('env', 'artifactory_password') or ARTIFACTORY_PASSWORD }}"
 
@@ -20,6 +18,7 @@ stackstate_helm_chart_version: "{{ lookup('env', 'STACKSTATE_HELM_CHART_VERSION'
 stackstate_license: "{{ lookup('env', 'STACKSTATE_LICENSE') or STACKSTATE_LICENSE }}"
 
 monitoring_namespace: "monitoring"
+agent_release_name: "stackstate-agent"
 test_namespace: "{{ yard_id.replace('.','-').replace('_','-') }}"
 agent_cluster_name: "{{ test_namespace }}"
 stackstate_cluster_name: "sandbox-main.sandbox.stackstate.io"

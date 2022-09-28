@@ -34,7 +34,14 @@ configure_aws_beest_credentials() {
     echo -e "[default]\naws_access_key_id=$BEEST_AWS_ACCESS_KEY_ID\naws_secret_access_key=$BEEST_AWS_SECRET_ACCESS_KEY" > ~/.aws/credentials
 }
 
+connect_to_stackstate_sandbox() {
+    echo "Connect to StackState sandbox cluster ..."
+    sts-toolbox cluster connect sandbox-main.sandbox.stackstate.io
+}
+
 build_beest() {
     echo "Build Beest ..."
     go build .
 }
+
+export -f configure_aws_beest_credentials

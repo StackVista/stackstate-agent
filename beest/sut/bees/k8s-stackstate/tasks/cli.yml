@@ -64,16 +64,12 @@
       ansible.builtin.set_fact:
         stackstate_admin_token: "{{ secret_obj.resources[0].data.token | b64decode }}"
 
+    # Equivalent to: kubectl -n <namespace> get secret stackstate-admin-token-<xyz> -o jsonpath={.data.token} | base64 -d
     - name: stackstate-admin token
       debug:
         var: stackstate_admin_token
 
-    # TODO: Once cli v2 supports token_auth we can use the secret associated with the SA, see https://stackstate.atlassian.net/browse/STAC-16951
-    # kubectl -n <namespace> get secret stackstate-admin-token-<xyz> -o jsonpath={.data.token} | base64 -d
-    #
-    # sts context save --url $STS_URL --api-token $STS_API_TOKEN
-
-    - name: Ensure .stackstate directory exists
+    - name: Create CLI v1 config directory
       file:
         path: "~/.stackstate/cli"
         state: directory
@@ -84,9 +80,37 @@
         src: sts-cli-v1-config.j2.yml
         dest: "~/.stackstate/cli/conf.yaml"
 
+    - name: Create CLI v2 config directory
+      file:
+        path: "~/.config/stackstate-cli"
+        state: directory
+        recurse: yes
+
+    - name: Generate CLI v2 config
+      ansible.builtin.template:
+        src: sts-cli-v2-config.j2.yml
+        dest: "~/.config/stackstate-cli/config.yaml"
+
     # We can only execute simple commands from pytest, pipes cannot be used directly
     - name: Copy stackstate query script
       ansible.builtin.copy:
         src: "sts-query.sh"
         dest: "~/sts-query.sh"
         mode: preserve
+
+
+## Cleanup
+
+- name: StackState CLI cleanup tasks
+  tags: cleanup
+  ignore_errors: yes
+  block:
+    - name: Remove CLI v1 config
+      file:
+        path: "~/.stackstate/cli"
+        state: absent
+
+    - name: Remove CLI v2 config
+      file:
+        path: "~/.config/stackstate-cli"
+        state: absent
