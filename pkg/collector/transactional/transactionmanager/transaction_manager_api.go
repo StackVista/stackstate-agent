@@ -2,6 +2,7 @@ package transactionmanager
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"sync"
 )
 
@@ -22,6 +23,24 @@ func (txm *transactionManager) GetTransaction(transactionID string) (*IntakeTran
 	}
 
 	return transaction, nil
+}
+
+// GetActiveTransaction returns the IntakeTransaction for a given checkID and transactionID or TransactionNotFound error
+// for all 'active' (InProgress | Stale) transactions
+func (txm *transactionManager) GetActiveTransaction(transactionID string) (*IntakeTransaction, error) {
+	transaction, err := txm.GetTransaction(transactionID)
+	if err != nil {
+		return nil, err
+	}
+
+	switch transaction.Status {
+	case InProgress, Stale:
+		return transaction, nil
+	default:
+		_ = log.Warnf("GetActiveTransaction called for transaction %s that is in %s state. Returning TransactionNotFound",
+			transactionID, transaction.Status)
+		return nil, TransactionCompleted{TransactionID: transactionID}
+	}
 }
 
 // TransactionCount returns the amount of transactions in the Transaction Manager.

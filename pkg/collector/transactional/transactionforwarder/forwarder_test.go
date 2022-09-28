@@ -155,8 +155,8 @@ func TestForwarder(t *testing.T) {
 			Attempts: 1,
 		},
 		{
-			TestCase: "Expect AcknowledgeAction + CompleteTransaction for each completed transaction without making any " +
-				"HTTP requests when setting OnlyMarkTransactions to true.",
+			TestCase: "Expect AcknowledgeAction + CompleteTransaction for each completed transaction while sending " +
+				"an empty HTTP request.",
 			TestTransactionalPayload: TransactionalPayload{
 				Path: transactional.IntakePath,
 				TransactionActionMap: map[string]transactional.PayloadTransaction{
@@ -165,7 +165,6 @@ func TestForwarder(t *testing.T) {
 						CompletedTransaction: true,
 					},
 				},
-				OnlyMarkTransactions: true,
 			},
 			TransactionManagerAssertions: func(manager *transactionmanager.MockTransactionManager,
 				txMap map[string]transactional.PayloadTransaction) {
@@ -182,7 +181,7 @@ func TestForwarder(t *testing.T) {
 					assert.Equal(t, ackAction.TransactionID, completedTx.TransactionID)
 				}
 			},
-			Attempts: 0,
+			Attempts: 1,
 		},
 	} {
 		t.Run(tc.TestCase, func(t *testing.T) {
@@ -277,7 +276,6 @@ func TestForwarder_Multiple(t *testing.T) {
 		testTransactionPayload := TransactionalPayload{
 			Path:                 transactional.IntakePath,
 			TransactionActionMap: txMap,
-			OnlyMarkTransactions: true,
 		}
 
 		fwd.SubmitTransactionalIntake(testTransactionPayload)

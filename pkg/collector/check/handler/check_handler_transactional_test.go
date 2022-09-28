@@ -66,29 +66,31 @@ func TestCheckHandler_Transactions(t *testing.T) {
 	testTxManager := transactionmanager.NewMockTransactionManager()
 	transactionbatcher.NewMockTransactionalBatcher()
 
-	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"},
+	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-transactions-test-check"},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*TransactionalCheckHandler)
 
 	for _, tc := range []struct {
 		testCase            string
-		completeTransaction func()
+		completeTransaction func(transaction string)
 	}{
 		{
 			testCase: "Transaction completed with transaction rollback",
-			completeTransaction: func() {
-				testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.DiscardTransaction{}
+			completeTransaction: func(transaction string) {
+				testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.DiscardTransaction{
+					TransactionID: transaction, Reason: "",
+				}
 			},
 		},
 		{
 			testCase: "Transaction completed with transaction eviction",
-			completeTransaction: func() {
-				testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.EvictedTransaction{}
+			completeTransaction: func(transaction string) {
+				testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.EvictedTransaction{TransactionID: transaction}
 			},
 		},
 		{
 			testCase: "Transaction completed with transaction complete",
-			completeTransaction: func() {
-				testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.CompleteTransaction{}
+			completeTransaction: func(transaction string) {
+				testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.CompleteTransaction{TransactionID: transaction}
 			},
 		},
 	} {
@@ -106,14 +108,79 @@ func TestCheckHandler_Transactions(t *testing.T) {
 			assert.Equal(t, transaction1, testTxManager.GetCurrentTransaction())
 
 			// complete Transaction1
-			tc.completeTransaction()
+			tc.completeTransaction(transaction1)
 			time.Sleep(50 * time.Millisecond)
 
 			// wait a bit and assert that we've started processing Transaction2
 			assert.Equal(t, transaction2, testTxManager.GetCurrentTransaction())
 
 			// complete Transaction2
-			testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.CompleteTransaction{}
+			testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.CompleteTransaction{TransactionID: transaction2}
+		})
+	}
+
+	time.Sleep(100 * time.Millisecond)
+	ch.Stop()
+}
+
+func TestCheckHandler_TransactionsIncorrectComplete(t *testing.T) {
+	testTxManager := transactionmanager.NewMockTransactionManager()
+	transactionbatcher.NewMockTransactionalBatcher()
+
+	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-transactions-incorrect-complete-test-check"},
+		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*TransactionalCheckHandler)
+
+	for _, tc := range []struct {
+		testCase            string
+		completeTransaction func(transaction string)
+	}{
+		{
+			testCase: "Transaction completed with transaction rollback",
+			completeTransaction: func(transaction string) {
+				testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.DiscardTransaction{
+					TransactionID: transaction, Reason: "",
+				}
+			},
+		},
+		{
+			testCase: "Transaction completed with transaction eviction",
+			completeTransaction: func(transaction string) {
+				testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.EvictedTransaction{TransactionID: transaction}
+			},
+		},
+		{
+			testCase: "Transaction completed with transaction complete",
+			completeTransaction: func(transaction string) {
+				testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.CompleteTransaction{TransactionID: transaction}
+			},
+		},
+	} {
+		t.Run(tc.testCase, func(t *testing.T) {
+			transaction1 := ch.StartTransaction()
+
+			assert.Eventually(t, func() bool {
+				return transaction1 == testTxManager.GetCurrentTransaction()
+			}, 50*time.Millisecond, 10*time.Millisecond)
+
+			// complete Transaction1
+			incorrectTransactionID := "incorrect-transaction-id"
+			tc.completeTransaction(incorrectTransactionID)
+
+			assert.Eventually(t, func() bool {
+				return transaction1 == testTxManager.GetCurrentTransaction()
+			}, 50*time.Millisecond, 10*time.Millisecond)
+
+			assert.Never(t, func() bool {
+				return incorrectTransactionID == testTxManager.GetCurrentTransaction()
+			}, 50*time.Millisecond, 10*time.Millisecond)
+
+			transaction2 := ch.StartTransaction()
+			assert.Never(t, func() bool {
+				return transaction2 == testTxManager.GetCurrentTransaction()
+			}, 50*time.Millisecond, 10*time.Millisecond)
+
+			testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.CompleteTransaction{TransactionID: transaction1}
+			testTxManager.GetCurrentTransactionNotifyChannel() <- transactionmanager.CompleteTransaction{TransactionID: transaction2}
 		})
 	}
 
@@ -125,7 +192,7 @@ func TestCheckHandler_State(t *testing.T) {
 	os.Setenv("DD_CHECK_STATE_ROOT_PATH", "./testdata")
 	state.InitCheckStateManager()
 
-	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"},
+	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-state-test-check"},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*TransactionalCheckHandler)
 
 	stateKey := "my-check-handler-test-check:state"
@@ -154,7 +221,7 @@ func TestCheckHandler_Reset_State(t *testing.T) {
 	os.Setenv("DD_CHECK_STATE_ROOT_PATH", "./testdata")
 	state.InitCheckStateManager()
 
-	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"},
+	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-reset-state-test-check"},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*TransactionalCheckHandler)
 
 	stateKey := "my-check-handler-test-check:state"
@@ -170,7 +237,7 @@ func TestCheckHandler_Reset_State(t *testing.T) {
 
 func TestCheckHandler_Shutdown(t *testing.T) {
 	testTxManager := transactionmanager.NewMockTransactionManager()
-	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"},
+	ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-shutdown-test-check"},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0}).(*TransactionalCheckHandler)
 
 	transactionID := ch.StartTransaction()
