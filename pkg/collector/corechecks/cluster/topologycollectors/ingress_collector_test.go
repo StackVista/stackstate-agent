@@ -106,7 +106,7 @@ func TestIngressCollector_1_21(t *testing.T) {
 				testCase: "Test Service 1.22 3 - Ingress Rules",
 				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
 					expectIngress223(sourcePropertiesEnabled, creationTimeFormatted),
-					expectRelationIngressService223(),
+					expectRelationIngress223Service1(),
 					expectRelationIngress223Service2(),
 					expectRelationIngress223Service3(),
 					expectEndpointIP223(),
@@ -174,7 +174,7 @@ func TestIngressCollector_1_22(t *testing.T) {
 				testCase: "Test Service 1.22 3 - Ingress Rules",
 				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
 					expectIngress223(sourcePropertiesEnabled, creationTimeFormatted),
-					expectRelationIngressService223(),
+					expectRelationIngress223Service1(),
 					expectRelationIngress223Service2(),
 					expectRelationIngress223Service3(),
 					expectEndpointIP223(),
@@ -585,7 +585,7 @@ func expectRelationIngress223Service2() func(*testing.T, chan *topology.Componen
 	})
 }
 
-func expectRelationIngressService223() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectRelationIngress223Service1() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectRelation(&topology.Relation{
 		ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-3->" +
 			"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service22-1",
