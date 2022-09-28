@@ -6,7 +6,8 @@ vendor/
 outcomes/
 .vendor-new/
 bin/
-/dev/
+/dev/*
+!/dev/pickle-conversion/
 __pycache__
 .pytest_cache
 venv/
@@ -14,6 +15,15 @@ venv/
 .python-version
 venv27/
 venv3[78]/
+
+# dev tools for pickle conversion
+/dev/pickle-conversion/.tox
+/dev/pickle-conversion/venv
+/dev/pickle-conversion/*.egg-info
+/dev/pickle-conversion/run/v2/*
+!/dev/pickle-conversion/run/v2/__example__*
+!/dev/pickle-conversion/.python-version
+/dev/pickle-conversion/__bac__*
 
 **/*.tmp
 **/debug.test

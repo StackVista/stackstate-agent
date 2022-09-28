@@ -1,10 +1,11 @@
-import util
+from typing import Optional
+
 import pytest
 
-from typing import Optional
-from splunk_testing_base import SplunkBase, SplunkTopologyComponent
+import util
 from agent_tesing_base import AgentTestingBase
 from conftest import YARD_LOCATION
+from splunk_testing_base import SplunkBase, SplunkTopologyComponent
 from stscliv1 import CLIv1
 from ststest import TopologyMatcher
 
@@ -30,19 +31,23 @@ def test_splunk_component(agent: AgentTestingBase,
 
     # The topology_matcher process that will be executed every x seconds in the wait_until_topology_match cycle
     def topology_matcher():
-        return TopologyMatcher()\
+        return TopologyMatcher() \
             .component(component.get("id"), name=component.get("id"), type=component.get("type"))
+
+    topology_query = f"name = '{component.get('id')}'"
 
     # Wait until we find this component in StackState. If it does not succeed after x seconds then we will dump the
     # simulator logs if it is available.
     util.wait_until_topology_match(
         cliv1,
         topology_matcher=topology_matcher,
-        topology_query=lambda: f"name = '{component.get('id')}'",
+        topology_query=lambda: topology_query,
         timeout=80,  # Run for a total of x seconds, Sometimes the Agent check can take some time so to be safe
         period=5,  # Run the 'topology_matcher' and 'topology_query' every x seconds
         on_failure_action=lambda: simulator_dump()  # Dump the simulator logs if the cycle failed (If enabled)
     )
+
+    print(f"Found the following topology query: {topology_query}")
 
 
 @pytest.mark.order(2)
@@ -68,18 +73,22 @@ def test_splunk_multiple_component(agent: AgentTestingBase,
             .component(component_b.get("id"), name=component_b.get("id"), type=component_b.get("type")) \
             .component(component_c.get("id"), name=component_c.get("id"), type=component_c.get("type"))
 
+    topology_query = f"name = '{component_a.get('id')}' OR " \
+                     f"name = '{component_b.get('id')}' OR " \
+                     f"name = '{component_c.get('id')}'"
+
     # Wait until we find this component in StackState. If it does not succeed after x seconds then we will dump the
     # simulator logs if it is available.
     util.wait_until_topology_match(
         cliv1,
         topology_matcher=topology_matcher,
-        topology_query=lambda: f"name = '{component_a.get('id')}' OR "
-                               f"name = '{component_b.get('id')}' OR "
-                               f"name = '{component_c.get('id')}'",
+        topology_query=lambda: topology_query,
         timeout=80,  # Run for a total of x seconds, Sometimes the Agent check can take some time so to be safe
         period=5,  # Run the 'topology_matcher' and 'topology_query' every x seconds
         on_failure_action=lambda: simulator_dump()  # Dump the simulator logs if the cycle failed (If enabled)
     )
+
+    print(f"Found the following topology query: {topology_query}")
 
 
 # Stateful State
@@ -109,6 +118,8 @@ def test_splunk_component_stateful_state(agent: AgentTestingBase,
                                                    name=component.get("id"),
                                                    type=component.get("type"))
 
+            topology_query = f"name = '{component.get('id')}'"
+
             # Wait until we find this component in StackState. If it does not succeed after x
             # seconds then we will dump the simulator logs if it is available.
             util.wait_until_topology_match(
@@ -119,6 +130,9 @@ def test_splunk_component_stateful_state(agent: AgentTestingBase,
                 period=5,  # Run the 'topology_matcher' and 'topology_query' every x seconds
                 on_failure_action=lambda: simulator_dump()  # Dump the simulator logs if the cycle failed (If enabled)
             )
+
+            print(f"Found the following topology query: {topology_query}")
+
         except Exception as e:
             if expect_failure is True:
                 return component
@@ -178,16 +192,21 @@ def test_splunk_component_transactional_check(agent: AgentTestingBase,
                                                    name=component.get("id"),
                                                    type=component.get("type"))
 
+            topology_query = f"name = '{component.get('id')}'"
+
             # Wait until we find this component in StackState. If it does not succeed after x
             # seconds then we will dump the simulator logs if it is available.
             util.wait_until_topology_match(
                 cliv1,
                 topology_matcher=topology_matcher,
-                topology_query=lambda: f"name = '{component.get('id')}'",
+                topology_query=lambda: topology_query,
                 timeout=80,  # Run for a total of x seconds, Sometimes the Agent check can take some time so to be safe
                 period=5,  # Run the 'topology_matcher' and 'topology_query' every x seconds
                 on_failure_action=lambda: simulator_dump()  # Dump the simulator logs if the cycle failed (If enabled)
             )
+
+            print(f"Found the following topology query: {topology_query}")
+
         except Exception as e:
             if expect_failure is True:
                 return component

@@ -1,10 +1,11 @@
 import logging
+from typing import Optional
+
 import pytest
 
-from typing import Optional
 from agent_tesing_base import AgentTestingBase
-from splunk_testing_base import SplunkBase, SplunkHealth
 from conftest import YARD_LOCATION
+from splunk_testing_base import SplunkBase, SplunkHealth
 from stscliv1 import CLIv1
 from util import wait_until_topic_match
 
@@ -39,7 +40,7 @@ def test_splunk_health(agent: AgentTestingBase,
                                         "topologyElementIdentifier": health.get("topology_element_identifier"),
                                     },
                                     first_match=True,
-                                    timeout=180,
+                                    timeout=120,
                                     period=5,
                                     on_failure_action=lambda: simulator_dump())
 
@@ -72,7 +73,7 @@ def test_splunk_multiple_health(agent: AgentTestingBase,
                                         "topologyElementIdentifier": health_a.get("topology_element_identifier"),
                                     },
                                     first_match=True,
-                                    timeout=180,
+                                    timeout=120,
                                     period=5,
                                     on_failure_action=lambda: simulator_dump())
 
@@ -90,7 +91,7 @@ def test_splunk_multiple_health(agent: AgentTestingBase,
                                         "topologyElementIdentifier": health_b.get("topology_element_identifier"),
                                     },
                                     first_match=True,
-                                    timeout=180,
+                                    timeout=120,
                                     period=5,
                                     on_failure_action=lambda: simulator_dump())
 
@@ -118,19 +119,21 @@ def test_splunk_health_stateful_state(agent: AgentTestingBase,
 
         try:
             # Wait until we find the results in the Topic
-            wait_until_topic_match(cliv1,
-                                   topic="sts_health_sync",
-                                   query="message.HealthSyncMessage.payload.CheckStates.checkStates[*]",
-                                   contains_dict={
-                                       "name": health.get("name"),
-                                       "checkStateId": health.get("check_state_id"),
-                                       "health": health.get("health"),
-                                       "message": health.get("message"),
-                                       "topologyElementIdentifier": health.get("topology_element_identifier"),
-                                   },
-                                   first_match=True,
-                                   timeout=180,
-                                   period=5)
+            result = wait_until_topic_match(cliv1,
+                                            topic="sts_health_sync",
+                                            query="message.HealthSyncMessage.payload.CheckStates.checkStates[*]",
+                                            contains_dict={
+                                                "name": health.get("name"),
+                                                "checkStateId": health.get("check_state_id"),
+                                                "health": health.get("health"),
+                                                "message": health.get("message"),
+                                                "topologyElementIdentifier": health.get("topology_element_identifier"),
+                                            },
+                                            first_match=True,
+                                            timeout=120,
+                                            period=5)
+
+            logging.info(f"Found the following results: {result}")
         except Exception as e:
             if expect_failure is True:
                 return health
@@ -177,7 +180,9 @@ def test_splunk_health_transactional_check(agent: AgentTestingBase,
     # Make sure we have routing enabled
     agent.allow_routing_to_sts_instance()
 
-    def post_health(expect_failure: bool = False, expected_health: SplunkHealth = None) -> Optional[SplunkHealth]:
+    def post_health(expect_failure: bool = False,
+                    expected_health: SplunkHealth = None,
+                    timeout: int = 120) -> Optional[SplunkHealth]:
         health: SplunkHealth = expected_health
 
         if health is None:
@@ -185,19 +190,22 @@ def test_splunk_health_transactional_check(agent: AgentTestingBase,
 
         try:
             # Wait until we find the results in the Topic
-            wait_until_topic_match(cliv1,
-                                   topic="sts_health_sync",
-                                   query="message.HealthSyncMessage.payload.CheckStates.checkStates[*]",
-                                   contains_dict={
-                                       "name": health.get("name"),
-                                       "checkStateId": health.get("check_state_id"),
-                                       "health": health.get("health"),
-                                       "message": health.get("message"),
-                                       "topologyElementIdentifier": health.get("topology_element_identifier"),
-                                   },
-                                   first_match=True,
-                                   timeout=180,
-                                   period=5)
+            result = wait_until_topic_match(cliv1,
+                                            topic="sts_health_sync",
+                                            query="message.HealthSyncMessage.payload.CheckStates.checkStates[*]",
+                                            contains_dict={
+                                                "name": health.get("name"),
+                                                "checkStateId": health.get("check_state_id"),
+                                                "health": health.get("health"),
+                                                "message": health.get("message"),
+                                                "topologyElementIdentifier": health.get("topology_element_identifier"),
+                                            },
+                                            first_match=True,
+                                            timeout=timeout,
+                                            period=5)
+
+            logging.info(f"Found the following results: {result}")
+
         except Exception as e:
             if expect_failure is True:
                 return health
@@ -215,7 +223,7 @@ def test_splunk_health_transactional_check(agent: AgentTestingBase,
     # Post a component while the agent is stopped, when then assign this to a variable to test again after wards
     def find_health_while_routes_is_blocked():
         nonlocal health_posted_while_agent_was_down
-        health_posted_while_agent_was_down = post_health(expect_failure=True)
+        health_posted_while_agent_was_down = post_health(expect_failure=True, timeout=200)
 
     # Attempt to check the prev component we posted should be in the agent including the
     # new one we posted

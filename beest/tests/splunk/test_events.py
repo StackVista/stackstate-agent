@@ -1,11 +1,12 @@
-import time
 import logging
+import time
+from typing import Optional
+
 import pytest
 
-from typing import Optional
 from agent_tesing_base import AgentTestingBase
-from splunk_testing_base import SplunkBase, SplunkEvent
 from conftest import YARD_LOCATION
+from splunk_testing_base import SplunkBase, SplunkEvent
 from stscliv1 import CLIv1
 from util import wait_until_topic_match
 
@@ -41,7 +42,7 @@ def test_splunk_event(agent: AgentTestingBase,
                                         "status": event.get("status")
                                     },
                                     first_match=True,
-                                    timeout=120,
+                                    timeout=80,
                                     period=5,
                                     on_failure_action=lambda: simulator_dump())
 
@@ -79,8 +80,8 @@ def test_splunk_multiple_events(agent: AgentTestingBase,
                                         "status": event_a.get("status")
                                     },
                                     first_match=True,
-                                    timeout=180,
-                                    period=10)
+                                    timeout=80,
+                                    period=5)
 
     logging.info(f"Found the following results: {result}")
 
@@ -95,8 +96,8 @@ def test_splunk_multiple_events(agent: AgentTestingBase,
                                         "status": event_b.get("status")
                                     },
                                     first_match=True,
-                                    timeout=180,
-                                    period=10,
+                                    timeout=80,
+                                    period=5,
                                     on_failure_action=lambda: simulator_dump())
 
     logging.info(f"Found the following results: {result}")
@@ -116,9 +117,6 @@ def test_splunk_event_stateful_state(agent: AgentTestingBase,
 
     def post_event(expect_failure: bool = False,
                    expected_event: SplunkEvent = None) -> Optional[SplunkEvent]:
-        # Add sleep to make sure the splunk data has time between data points and when the agent started up
-        time.sleep(30)
-
         event: SplunkEvent = expected_event
 
         if event is None:
@@ -126,18 +124,21 @@ def test_splunk_event_stateful_state(agent: AgentTestingBase,
 
         try:
             # Wait until we find the results in the Topic
-            wait_until_topic_match(cliv1,
-                                   topic="sts_generic_events",
-                                   query="message.GenericEvent.tags",
-                                   contains_dict={
-                                       "source_type_name": "generic_splunk_event",
-                                       "host": event.get("host"),
-                                       "description": event.get("description"),
-                                       "status": event.get("status")
-                                   },
-                                   first_match=True,
-                                   timeout=180,
-                                   period=10)
+            result = wait_until_topic_match(cliv1,
+                                            topic="sts_generic_events",
+                                            query="message.GenericEvent.tags",
+                                            contains_dict={
+                                                "source_type_name": "generic_splunk_event",
+                                                "host": event.get("host"),
+                                                "description": event.get("description"),
+                                                "status": event.get("status")
+                                            },
+                                            first_match=True,
+                                            timeout=80,
+                                            period=5)
+
+            logging.info(f"Found the following results: {result}")
+
         except Exception as e:
             if expect_failure is True:
                 return event
@@ -182,10 +183,8 @@ def test_splunk_event_transactional_check(agent: AgentTestingBase,
     agent.allow_routing_to_sts_instance()
 
     def post_event(expect_failure: bool = False,
-                   expected_event: SplunkEvent = None) -> Optional[SplunkEvent]:
-        # Add sleep to make sure the splunk data has time between data points and when the agent started up
-        time.sleep(30)
-
+                   expected_event: SplunkEvent = None,
+                   timeout: int = 80) -> Optional[SplunkEvent]:
         event: SplunkEvent = expected_event
 
         if event is None:
@@ -193,18 +192,21 @@ def test_splunk_event_transactional_check(agent: AgentTestingBase,
 
         try:
             # Wait until we find the results in the Topic
-            wait_until_topic_match(cliv1,
-                                   topic="sts_generic_events",
-                                   query="message.GenericEvent.tags",
-                                   contains_dict={
-                                       "source_type_name": "generic_splunk_event",
-                                       "host": event.get("host"),
-                                       "description": event.get("description"),
-                                       "status": event.get("status")
-                                   },
-                                   first_match=True,
-                                   timeout=180,
-                                   period=10)
+            result = wait_until_topic_match(cliv1,
+                                            topic="sts_generic_events",
+                                            query="message.GenericEvent.tags",
+                                            contains_dict={
+                                                "source_type_name": "generic_splunk_event",
+                                                "host": event.get("host"),
+                                                "description": event.get("description"),
+                                                "status": event.get("status")
+                                            },
+                                            first_match=True,
+                                            timeout=timeout,
+                                            period=5)
+
+            logging.info(f"Found the following results: {result}")
+
         except Exception as e:
             if expect_failure is True:
                 return event
@@ -222,7 +224,7 @@ def test_splunk_event_transactional_check(agent: AgentTestingBase,
     # Post a component while the agent is stopped, when then assign this to a variable to test again after wards
     def find_event_while_routes_is_blocked():
         nonlocal event_posted_while_agent_was_down
-        event_posted_while_agent_was_down = post_event(expect_failure=True)
+        event_posted_while_agent_was_down = post_event(expect_failure=True, timeout=200)
 
     # Attempt to check the prev component we posted should be in the agent including the
     # new one we posted

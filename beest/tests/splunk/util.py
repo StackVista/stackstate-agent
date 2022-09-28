@@ -166,8 +166,15 @@ def find_in_topic(cliv1: CLIv1,
         elif query_results is not None:
             matched_results.append(query_results)
 
-    if matched_results is None and on_failure_action is not None:
-        on_failure_action()
+    if matched_results is None or \
+       matched_results == "" or \
+       matched_results is dict and len(matched_results) <= 0:
+
+        if on_failure_action is not None:
+            on_failure_action()
+            return matched_results
+        else:
+            raise Exception(f"Value not found in topic, Topic: {topic}, Query: {query}")
 
     return matched_results
 
@@ -183,7 +190,7 @@ def wait_until_topic_match(cliv1: CLIv1,
                            on_failure_action: Callable[[], None] = None) -> Optional[Union[list[dict], dict]]:
     def loop() -> Optional[Union[list[dict], dict]]:
         def raise_not_found():
-            raise ValueError("Value not found in topic")
+            raise Exception(f"Value not found in topic, Topic: {topic}, Query: {query}")
 
         return find_in_topic(cliv1,
                              topic=topic,
