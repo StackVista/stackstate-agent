@@ -202,4 +202,7 @@ cython_debug/
 pyvenv.cfg
 pip-selfcheck.json
 
+# Contains potential sensitive information
+*.tfstate
+
 # End of https://www.toptal.com/developers/gitignore/api/python,venv
