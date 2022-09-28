@@ -1,4 +1,0 @@
-datadog-checks-dev==17.0.1
-dill==0.3.5.1
--e git+git@github.com:StackVista/stackstate-agent-integrations.git@d2224b9446c0a1024a23fe34b563a223ecac7b4b#egg=stackstate_checks_base&subdirectory=stackstate_checks_base
--e git+git@github.com:StackVista/stackstate-agent-integrations.git@d2224b9446c0a1024a23fe34b563a223ecac7b4b#egg=stackstate_checks_dev&subdirectory=stackstate_checks_dev

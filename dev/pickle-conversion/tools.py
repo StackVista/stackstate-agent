@@ -87,9 +87,10 @@ class PickleConversion:
         # If this fails then let's still continue
         try:
             os.rename("{}/{}".format(v2_directory, filename),
-                      "{}/__old__{}".format(v2_directory, filename))
+                      "{}/__old__{}__{}".format(v2_directory, str(time.time()), filename))
         except:
             pass
+
 
         # Dump the check state that was generated
         content = json.dumps(self.general_state, indent=4)
@@ -118,7 +119,8 @@ class PickleConversion:
     # conversion on a later stage
     def convert_pickle_file(self, v1_directory, v1_filename, saved_search_name, v2_file_prefix=None):
         # Write the dumped state into the v2 directory
-        shutil.copyfile("{}/{}.pickle".format(v1_directory, v1_filename), "__bac__{}".format(v1_filename))
+        shutil.copyfile("{}/{}.pickle".format(v1_directory, v1_filename), "__bac__{}__{}".format(str(time.time()),
+                                                                                                 v1_filename))
 
 
         if self.instance_url is None:
@@ -176,4 +178,4 @@ class PickleConversion:
             self.state[saved_search_name]['timestamp'] = timestamp
 
         except:
-            print("No timestamp to map, Ignoring ...")
+            pass
