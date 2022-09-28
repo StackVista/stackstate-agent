@@ -284,6 +284,91 @@ func TestTransactionManager_ErrorHandling(t *testing.T) {
 	assert.Equal(t, txManager.TransactionCount(), 0)
 }
 
+func TestTransactionCompleted(t *testing.T) {
+	txManager := newTransactionManager(100, 250*time.Millisecond, 1*time.Second,
+		1*time.Second).(*transactionManager)
+
+	txNotifyChannel := make(chan interface{})
+
+	txID := uuid.New().String()
+	actID := uuid.New().String()
+	actions := make(map[string]*Action, 0)
+
+	txManager.StartTransaction("checkID", txID, txNotifyChannel)
+	assertTransactionEvt(t, txManager, txID, InProgress, actions)
+
+	commitAssertAction(t, txManager, txID, actID, actions)
+
+	txManager.CommitAction(txID, actID)
+	actions[actID] = &Action{ActionID: actID, Status: Committed}
+
+	commitAssertAction(t, txManager, txID, actID, actions)
+
+	txManager.RejectAction(txID, actID, "test-rejection")
+	actions[actID] = &Action{ActionID: actID, Status: Rejected}
+
+	assertTransactionEvt(t, txManager, txID, Failed, actions)
+
+	txManager.AcknowledgeAction(txID, actID)
+	txManager.CommitAction(txID, uuid.New().String())
+	txManager.CommitAction(txID, uuid.New().String())
+	txManager.CompleteTransaction(txID)
+
+	// assert that there are no updates to the transaction after this rejected action
+	assertTransactionEvt(t, txManager, txID, Failed, actions)
+
+}
+
+func assertTransactionEvt(t *testing.T, txManager *transactionManager, txID string, state TransactionStatus,
+	actions map[string]*Action) {
+
+	assert.Eventually(t, func() bool {
+		txManager.mux.RLock()
+		transaction, found := txManager.transactions[txID]
+		if found != true {
+			t.Errorf("Transaction %s not found in the transaction map", txID)
+			return false
+		}
+
+		if txID != transaction.TransactionID {
+			t.Errorf("Expected Transaction ID %s != Transaction ID %s", txID, transaction.TransactionID)
+			return false
+		}
+
+		if state != transaction.Status {
+			t.Errorf("Expected Status %s != Status %s", state, transaction.Status)
+			return false
+		}
+
+		if len(actions) != len(transaction.Actions) {
+			t.Errorf("Expected Actions len %d != actions len %d", len(actions), len(transaction.Actions))
+			return false
+		}
+
+		for _, action := range transaction.Actions {
+			expectedAction, found := actions[action.ActionID]
+
+			if found != true {
+				t.Errorf("Action %s not found in the action map", action.ActionID)
+				return false
+			}
+
+			if expectedAction.ActionID != action.ActionID {
+				t.Errorf("Expected Action %s != Action %s", expectedAction.ActionID, action.ActionID)
+				return false
+			}
+
+			if expectedAction.Status != action.Status {
+				t.Errorf("Expected Action Status %s != Action Status %s", expectedAction.Status, action.Status)
+				return false
+			}
+		}
+		txManager.mux.RUnlock()
+
+		return true
+	}, 100*time.Millisecond, 10*time.Millisecond)
+}
+
 func assertTransaction(t *testing.T, txManager *transactionManager, txID string, state TransactionStatus,
 	actions map[string]*Action) {
 	// give the transaction checkmanager a bit of time to insert the transaction before running the assertion
