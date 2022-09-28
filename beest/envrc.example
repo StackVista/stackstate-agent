@@ -8,8 +8,6 @@ export BEEST_AWS_ACCESS_KEY_ID=TBD
 export BEEST_AWS_SECRET_ACCESS_KEY=TBD
 configure_aws_beest_credentials
 
-export quay_user=TBD
-export quay_password=TBD
 export artifactory_user=TBD
 export artifactory_password=TBD
 
