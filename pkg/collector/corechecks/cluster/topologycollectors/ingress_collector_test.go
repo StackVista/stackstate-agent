@@ -50,56 +50,9 @@ func TestIngressCollector_1_21(t *testing.T) {
 			{
 				testCase: "Test Service 1.21 1 - Minimal",
 				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-					expectComponent(chooseBySourcePropertiesFeature(
-						sourcePropertiesEnabled,
-						&topology.Component{
-							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
-							Type:       topology.Type{Name: "ingress"},
-							Data: topology.Data{
-								"name":              "test-ingress-1",
-								"creationTimestamp": creationTime,
-								"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-								"uid":               types.UID("test-ingress-1"),
-								"identifiers":       []string{},
-							},
-						},
-						&topology.Component{
-							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
-							Type:       topology.Type{Name: "ingress"},
-							Data: topology.Data{
-								"name":        "test-ingress-1",
-								"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-								"identifiers": []string{},
-							},
-							SourceProperties: map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"creationTimestamp": creationTimeFormatted,
-									"labels":            map[string]interface{}{"test": "label"},
-									"name":              "test-ingress-1",
-									"namespace":         "test-namespace",
-									"uid":               "test-ingress-1",
-								},
-								"spec": map[string]interface{}{},
-							},
-						},
-					)),
-					expectComponent(&topology.Component{
-						ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15",
-						Type:       topology.Type{Name: "endpoint"},
-						Data: topology.Data{
-							"name":              "34.100.200.15",
-							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"identifiers":       []string{},
-						},
-					}),
-					expectRelation(&topology.Relation{
-						ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
-						SourceID:   "urn:endpoint:/test-cluster-name:34.100.200.15",
-						TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
-						Type:       topology.Type{Name: "routes"},
-						Data:       map[string]interface{}{},
-					}),
+					expectIngress211(sourcePropertiesEnabled, creationTimeFormatted),
+					expectEndpoint211(),
+					expectRelationEndpointIPIngress211(),
 					expectComponent(&topology.Component{
 						ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
 						Type:       topology.Type{Name: "endpoint"},
@@ -371,6 +324,65 @@ func TestIngressCollector_1_21(t *testing.T) {
 			})
 		}
 	}
+}
+
+func expectRelationEndpointIPIngress211() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+	return expectRelation(&topology.Relation{
+		ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
+		SourceID:   "urn:endpoint:/test-cluster-name:34.100.200.15",
+		TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
+		Type:       topology.Type{Name: "routes"},
+		Data:       map[string]interface{}{},
+	})
+}
+
+func expectEndpoint211() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+	return expectComponent(&topology.Component{
+		ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15",
+		Type:       topology.Type{Name: "endpoint"},
+		Data: topology.Data{
+			"name":              "34.100.200.15",
+			"creationTimestamp": creationTime,
+			"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+			"identifiers":       []string{},
+		},
+	})
+}
+
+func expectIngress211(sourcePropertiesEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+	return expectComponent(chooseBySourcePropertiesFeature(
+		sourcePropertiesEnabled,
+		&topology.Component{
+			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
+			Type:       topology.Type{Name: "ingress"},
+			Data: topology.Data{
+				"name":              "test-ingress-1",
+				"creationTimestamp": creationTime,
+				"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+				"uid":               types.UID("test-ingress-1"),
+				"identifiers":       []string{},
+			},
+		},
+		&topology.Component{
+			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
+			Type:       topology.Type{Name: "ingress"},
+			Data: topology.Data{
+				"name":        "test-ingress-1",
+				"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+				"identifiers": []string{},
+			},
+			SourceProperties: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"creationTimestamp": creationTimeFormatted,
+					"labels":            map[string]interface{}{"test": "label"},
+					"name":              "test-ingress-1",
+					"namespace":         "test-namespace",
+					"uid":               "test-ingress-1",
+				},
+				"spec": map[string]interface{}{},
+			},
+		},
+	))
 }
 
 func TestIngressCollector_1_22(t *testing.T) {
