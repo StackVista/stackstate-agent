@@ -192,3 +192,7 @@ deployment/kubernetes/k8s-*/
 
 # Temp State Files
 pkg/collector/check/state/temp-write-to-disk-test/*
+
+# Beest test generated files
+beest/tests/k8s/*.gv
+beest/tests/k8s/*.json
