@@ -9,16 +9,20 @@ import (
 const (
 	ExclusionsFlag      = "exclusion"
 	ExclusionsShortFlag = "x"
+
+	CleanupFlag = "cleanup"
 )
 
 var (
 	prepareExclusions []string
+	cleanupFlag       bool
 )
 
 func init() {
 	rootCmd.AddCommand(prepareCmd)
 
 	prepareCmd.Flags().StringArrayVarP(&prepareExclusions, ExclusionsFlag, ExclusionsShortFlag, []string{}, "exclude certain bees")
+	prepareCmd.Flags().BoolVar(&cleanupFlag, CleanupFlag, false, "optionally run cleanup before prepare")
 }
 
 var prepareCmd = &cobra.Command{
@@ -34,5 +38,12 @@ var prepareCmd = &cobra.Command{
 func prepare(deployer driver.Deployer, scenario *Scenario) error {
 	create := scenario.generateCreateStep(runId)
 	prepare := step.Prepare(create)
+	if cleanupFlag {
+		cleanup := step.Cleanup(prepare)
+		err := deployer.Cleanup(cleanup, prepareExclusions)
+		if err != nil {
+			return err
+		}
+	}
 	return deployer.Prepare(prepare, prepareExclusions)
 }
