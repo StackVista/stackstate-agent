@@ -13,7 +13,7 @@
         - "{{ monitoring_namespace }}"
         - "{{ test_namespace }}"
 
-    - include_tasks: quay-registry-key.yml
+    - include_tasks: artifactory-registry-key.yml
 
     - name: Add stackstate chart repo
       kubernetes.core.helm_repository:
