@@ -1,7 +1,7 @@
 # Convert Agent v1 Pickle files to a Agent v2 JSON format
 
+- If you installed Agent v2 make sure it is not running when doing this process by running `service stackstate-agent stop`
 - CD into the `agent-v1-to-v2-pickle-conversion` directory
-- Using the tool `pyenv` set your environment to python 2.7.8 (You can read more about this online) or if you already have python 2.7.8 installed then ignore this step
 - Before executing the python script edit the following variables in the `config.yaml` file
   - `splunk_instance_url`
     - The instance url should match the url that is passed into the splunk conf files for example: `instances[].url` in `splunk_event_conf.yml`
@@ -17,9 +17,13 @@
     - Change this value to match the `relation_saved_search` name in the `splunk_topology_conf.yml` file
   - `components_search_name`
     - Change this value to match the `component_saved_search` name in the `splunk_topology_conf.yml` file
-- Run the following command `./run.sh` this will verify your environment and execute the python script
-  - `./.tox/py27/bin/python main.py`
+- Run the following command `sudo ./run.sh` this will execute the python script
 - Confirm that the json files has been generated with content, this can be verified in the `v2_sts_splunk_cache_folder` directory
+  - Make sure the ownership of these files and permission is correct and the correct user. If stackstate does not have permissions to these files then things will fail
+  - The owner of the files is usually be stackstate. This can be done with this command `chown stackstate-agent:stackstate-agent splunk_*`
+- Start the Agent v2 back up by running `service stackstate-agent start`
+- Verify the logs for no errors
+
 
 Notes:
 - What if something went wrong?
