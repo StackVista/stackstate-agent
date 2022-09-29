@@ -52,6 +52,7 @@ start: build
 	docker run -it --rm \
         --name ${KEEPER_CONTAINER} \
         --volume ${PWD}:/go/src/app \
+        --volume ${PWD}/../dev/agent-v1-to-v2-pickle-conversion:/go/src/app/tools/agent-v1-to-v2-pickle-conversion \
         --volume /var/run/docker.sock:/var/run/docker.sock:ro \
         --mount source=${VOLUME_GO_PKG_NAME},target=/go/pkg \
         --network host \

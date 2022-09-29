@@ -1,15 +1,18 @@
 ---
-- include_tasks: splunk.yml
+#- include_tasks: splunk.yml
+#  tags: [ prepare, cleanup ]
+
+- include_tasks: splunk_pickle_conversion.yml
   tags: [ prepare, cleanup ]
 
-- include_tasks: splunk_topology.yml
-  tags: [ prepare, cleanup ]
-
-- include_tasks: splunk_health.yml
-  tags: [ prepare, cleanup ]
-
-- include_tasks: splunk_event.yml
-  tags: [ prepare, cleanup ]
-
-- include_tasks: splunk_metric.yml
-  tags: [ prepare, cleanup ]
+#- include_tasks: splunk_topology.yml
+#  tags: [ prepare, cleanup ]
+#
+#- include_tasks: splunk_health.yml
+#  tags: [ prepare, cleanup ]
+#
+#- include_tasks: splunk_event.yml
+#  tags: [ prepare, cleanup ]
+#
+#- include_tasks: splunk_metric.yml
+#  tags: [ prepare, cleanup ]
