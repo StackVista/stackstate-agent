@@ -3,6 +3,8 @@ import hashlib
 import inspect
 import logging
 import os
+import time
+from pathlib import Path
 from typing import Callable
 
 from testinfra.host import Host
@@ -128,8 +130,14 @@ Topology.query('__QUERY__')
 
     def _cached_json(self, api_call: Callable, alias: str):
         log = self.log
-        caller = self._find_test_fn_name()
-        cachefile = f"{caller}-{alias}.json"
+        test_file, test_fn_name = self._find_test_fn_name()
+        test_file = Path(test_file).stem
+
+        # Creates debug dir under test group dir, where json files will be saved
+        parent_path = Path(f"debug/{test_file}/{test_fn_name}")
+        parent_path.mkdir(parents=True, exist_ok=True)
+
+        cachefile = f"{parent_path}/{alias}_{time.time_ns()}.json"
         if self.cache_enabled:
             try:
                 with open(cachefile, 'r') as f:
@@ -146,9 +154,9 @@ Topology.query('__QUERY__')
         return json_data
 
     @staticmethod
-    def _find_test_fn_name():
+    def _find_test_fn_name() -> (str, str):
         frames = inspect.stack()
         for f in frames:
             if f.function.startswith("test_"):
-                return f.function
+                return f.filename, f.function
         return "test_NA"
