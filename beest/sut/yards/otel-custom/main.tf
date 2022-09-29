@@ -25,7 +25,7 @@ module "aws_stackpack_role" {
 }
 
 module "ec2_agent" {
-  source = "../../hives/ec2-agent"
+  source = "../../hives/ec2-agent/v2"
 
   environment         = var.yard_id
   vpc_id              = module.vpc.vpc_id
