@@ -13,6 +13,7 @@ export artifactory_password=TBD
 
 export RUN_ID=$AGENT_CURRENT_BRANCH
 
+# Keep the Agent Helm and StackState Helm charts empty to get the latest official version
 export AGENT_HELM_CHART_VERSION="2.1.2"
 export STACKSTATE_HELM_CHART_VERSION="5.0.2"  # use >0.0.0-0 development versions
 export STACKSTATE_LICENSE=TBD
