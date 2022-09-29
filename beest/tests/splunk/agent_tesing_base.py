@@ -83,6 +83,20 @@ class AgentTestingBase:
         else:
             logging.info("Success, The StackState Agent is stopped")
 
+    # Remove Agent v2 run cache
+    def remove_agent_run_cache(self):
+        logging.info("Removing StackState-Agent v2 Run Cache")
+
+        # Execute the shell command to start the agent service
+        self.client.exec_command('sudo rm -rf /opt/stackstate-agent/run')
+
+    # Convert Agent v1 to v2 cache
+    def convert_agent_v1_run_cache_to_v2(self):
+        logging.info("Converting StackState Agent v1 Cache to v2 format")
+
+        # Execute the shell command to convert the run cache files
+        self.client.exec_command('sudo ./home/ubuntu/agent-v1-to-v2-pickle-conversion/run.sh')
+
     def cache_delete_stateful_check_state(self):
         logging.info("Clearing the Agent Stateful Cache ...")
         self.client.exec_command('cd /opt/stackstate-agent/run/ && sudo find . -type f -name "*_check_state" '

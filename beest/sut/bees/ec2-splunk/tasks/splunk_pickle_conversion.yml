@@ -48,3 +48,15 @@
         name: [python-pip]
         state: present
         update_cache: yes
+
+## Cleanup
+- name: Splunk v1 to v2 pickle conversion cleanup
+  tags: cleanup
+  ignore_errors: yes
+  block:
+    - name: Remove pickle conversion project
+      become: true
+      file:
+        path: /home/ubuntu/agent-v1-to-v2-pickle-conversion
+        state: absent
+
