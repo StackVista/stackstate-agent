@@ -42,7 +42,7 @@ def test_splunk_event(agent: AgentTestingBase,
                                         "status": event.get("status")
                                     },
                                     first_match=True,
-                                    timeout=80,
+                                    timeout=180,
                                     period=5,
                                     on_failure_action=lambda: simulator_dump())
 
@@ -80,7 +80,7 @@ def test_splunk_multiple_events(agent: AgentTestingBase,
                                         "status": event_a.get("status")
                                     },
                                     first_match=True,
-                                    timeout=80,
+                                    timeout=180,
                                     period=5)
 
     logging.info(f"Found the following results: {result}")
@@ -96,7 +96,7 @@ def test_splunk_multiple_events(agent: AgentTestingBase,
                                         "status": event_b.get("status")
                                     },
                                     first_match=True,
-                                    timeout=80,
+                                    timeout=180,
                                     period=5,
                                     on_failure_action=lambda: simulator_dump())
 
@@ -134,7 +134,7 @@ def test_splunk_event_stateful_state(agent: AgentTestingBase,
                                                 "status": event.get("status")
                                             },
                                             first_match=True,
-                                            timeout=80,
+                                            timeout=180,
                                             period=5)
 
             logging.info(f"Found the following results: {result}")
@@ -184,7 +184,7 @@ def test_splunk_event_transactional_check(agent: AgentTestingBase,
 
     def post_event(expect_failure: bool = False,
                    expected_event: SplunkEvent = None,
-                   timeout: int = 80) -> Optional[SplunkEvent]:
+                   timeout: int = 180) -> Optional[SplunkEvent]:
         event: SplunkEvent = expected_event
 
         if event is None:
@@ -224,7 +224,7 @@ def test_splunk_event_transactional_check(agent: AgentTestingBase,
     # Post a component while the agent is stopped, when then assign this to a variable to test again after wards
     def find_event_while_routes_is_blocked():
         nonlocal event_posted_while_agent_was_down
-        event_posted_while_agent_was_down = post_event(expect_failure=True, timeout=200)
+        event_posted_while_agent_was_down = post_event(expect_failure=True, timeout=180)
 
     # Attempt to check the prev component we posted should be in the agent including the
     # new one we posted
