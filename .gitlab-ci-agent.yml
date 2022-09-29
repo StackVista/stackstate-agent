@@ -957,7 +957,7 @@ molecule_integrations_success_cleanup:
 
 .beest_k8s_1_23_containerd_variables: &beest_k8s_1_23_containerd_variables
   variables:
-    BEEST_SCENARIO: contd-eks-1-22
+    BEEST_SCENARIO: contd-eks-1-23
     BEEST_TEST_GROUP: k8s
 
 beest_k8s_1_21_dockerd_create:
