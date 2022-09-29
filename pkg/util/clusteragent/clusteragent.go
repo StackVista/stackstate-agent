@@ -101,11 +101,13 @@ func (c *DCAClient) init() error {
 	if err != nil {
 		return err
 	}
+	log.Infof("[sts] c.clusterAgentAPIEndpoint = %s", c.clusterAgentAPIEndpoint)
 
 	authToken, err := security.GetClusterAgentAuthToken()
 	if err != nil {
 		return err
 	}
+	log.Infof("[sts] authToken = %s", authToken)
 
 	c.clusterAgentAPIRequestHeaders = http.Header{}
 	c.clusterAgentAPIRequestHeaders.Set(authorizationHeaderKey, fmt.Sprintf("Bearer %s", authToken))
@@ -216,6 +218,8 @@ func (c *DCAClient) GetVersion() (version.Version, error) {
 		return version, err
 	}
 	req.Header = c.clusterAgentAPIRequestHeaders
+
+	log.Infof("[sts] req = %+v", req)
 
 	resp, err := c.clusterAgentAPIClient.Do(req)
 	if err != nil {
