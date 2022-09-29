@@ -44,7 +44,7 @@ func (s *Scenario) generateCreateStep(runId string) *step.CreationStep {
 	workspace := fmt.Sprintf("%s:%s", normalizedRunId, s.Name)
 	runVariables["yard_id"] = fmt.Sprintf("beest-%s-%s", normalizedRunId, s.Name)
 
-	return step.Create(workspace, s.Yard.path(), runVariables)
+	return step.Create(workspace, s.Yard.path(), s.Test.path(), runVariables)
 }
 
 type Scenarios struct {

@@ -38,6 +38,6 @@ var verifyCmd = &cobra.Command{
 func verify(verifier driver.Verifier, scenario *Scenario, watch bool, selection string) error {
 	create := scenario.generateCreateStep(runId)
 	prepare := step.Prepare(create)
-	verify := step.Verify(prepare, scenario.Test.path(), []string{})
+	verify := step.Verify(prepare, []string{})
 	return verifier.Verify(verify, watch, selection)
 }

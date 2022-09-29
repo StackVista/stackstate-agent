@@ -50,7 +50,7 @@ func test(provisioner driver.Provisioner, deployer driver.Deployer, verifier dri
 	create := scenario.generateCreateStep(runId)
 	prepare := step.Prepare(create)
 	cleanup := step.Cleanup(prepare)
-	verify := step.Verify(prepare, scenario.Test.path(), []string{})
+	verify := step.Verify(prepare, []string{})
 	destroy := step.Destroy(create)
 
 	if err := provisioner.Create(create, false); err != nil {

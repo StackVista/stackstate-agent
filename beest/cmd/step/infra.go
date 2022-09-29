@@ -1,9 +1,10 @@
 package step
 
 type Yard struct {
-	runId string
-	dir   string
-	vars  map[string]interface{}
+	runId      string
+	workingDir string
+	testingDir string
+	vars       map[string]interface{}
 }
 
 func (yard *Yard) RunId() string {
@@ -11,7 +12,11 @@ func (yard *Yard) RunId() string {
 }
 
 func (yard *Yard) WorkingDir() string {
-	return yard.dir
+	return yard.workingDir
+}
+
+func (yard *Yard) TestingDir() string {
+	return yard.testingDir
 }
 
 func (yard *Yard) Variables() map[string]interface{} {
@@ -24,8 +29,8 @@ type CreationStep struct {
 	Yard
 }
 
-func Create(runId, workingDir string, vars map[string]interface{}) *CreationStep {
-	return &CreationStep{Yard{runId, workingDir, vars}}
+func Create(runId, workingDir, testingDir string, vars map[string]interface{}) *CreationStep {
+	return &CreationStep{Yard{runId, workingDir, testingDir, vars}}
 }
 
 ///

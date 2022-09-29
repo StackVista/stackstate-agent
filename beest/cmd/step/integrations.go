@@ -3,11 +3,11 @@ package step
 import "fmt"
 
 func (yard *Yard) Inventory() string {
-	return fmt.Sprintf("%s/ansible_inventory", yard.dir)
+	return fmt.Sprintf("%s/ansible_inventory", yard.workingDir)
 }
 
 func (yard *Yard) Playbook() string {
-	return fmt.Sprintf("%s/playbook.yml", yard.dir)
+	return fmt.Sprintf("%s/playbook.yml", yard.workingDir)
 }
 
 ///
@@ -24,20 +24,18 @@ func Prepare(create *CreationStep) *PrepareStep {
 
 type VerificationStep struct {
 	Yard
-	testsPath string
-	hosts     []string
+	hosts []string
 }
 
-func Verify(prepare *PrepareStep, testsPath string, hosts []string) *VerificationStep {
+func Verify(prepare *PrepareStep, hosts []string) *VerificationStep {
 	return &VerificationStep{
 		prepare.Yard,
-		testsPath,
 		hosts,
 	}
 }
 
 func (v *VerificationStep) TestsPath() string {
-	return v.testsPath
+	return v.Yard.testingDir
 }
 
 func (v *VerificationStep) Hostnames() []string {
