@@ -2,8 +2,9 @@
 - include_tasks: splunk.yml
   tags: [ prepare, cleanup ]
 
-- include_tasks: splunk_pickle_conversion.yml
-  tags: [ prepare, cleanup ]
+# Only required when testing, No automated process
+# - include_tasks: splunk_pickle_conversion.yml
+#   tags: [ prepare, cleanup ]
 
 - include_tasks: splunk_topology.yml
   tags: [ prepare, cleanup ]
