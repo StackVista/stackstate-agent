@@ -1,6 +1,6 @@
 resource "local_file" "ansible_inventory" {
-  filename        = "${path.module}/ansible_inventory"
-  content         = yamlencode({
+  filename = "${path.module}/ansible_inventory"
+  content = yamlencode({
     all : {
       hosts : {
         local : {
@@ -15,10 +15,12 @@ resource "local_file" "ansible_inventory" {
           ansible_password : ""
         }
       }
-
       vars : {
         yard_id : var.yard_id
-        region : var.aws_default_region
+        splunk_integration : {
+          host : module.ec2_splunk.splunk_ip
+          url : "https://${module.ec2_splunk.splunk_ip}:8089"
+        }
       }
     }
   })

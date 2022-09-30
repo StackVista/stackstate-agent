@@ -5,7 +5,7 @@ v1_sts_splunk_cache_folder: /opt/stackstate-agent/run-v1
 v2_sts_splunk_cache_folder: /opt/stackstate-agent/run
 
 # Splunk Settings
-splunk_instance_url: https://localhost:8089
+splunk_instance_url: "{{ splunk_integration.url }}"
 
 events_search_name: events-v1
 metrics_search_name: metrics-v1

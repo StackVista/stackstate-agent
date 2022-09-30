@@ -6,7 +6,6 @@ import os
 import time
 from pathlib import Path
 from typing import Callable
-from pathlib import Path
 
 from testinfra.host import Host
 

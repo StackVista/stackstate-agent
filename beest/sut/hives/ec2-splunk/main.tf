@@ -36,7 +36,7 @@ resource "aws_security_group" "splunk_group" {
     description      = "Splunk API"
     from_port        = 8089
     to_port          = 8089
-    protocol         = "all"
+    protocol         = "tcp"
     cidr_blocks      = ["0.0.0.0/0"]
     ipv6_cidr_blocks = ["::/0"]
   }
@@ -106,7 +106,6 @@ resource "aws_instance" "splunk" {
     volume_size = 30 # in GB <<----- I increased this!
     volume_type = "gp3"
     encrypted   = true
-#    kms_key_id  = data.aws_kms_key.customer_master_key.arn
   }
 
   tags = {

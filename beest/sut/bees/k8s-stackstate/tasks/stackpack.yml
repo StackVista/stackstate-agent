@@ -21,7 +21,7 @@
         - stackpacklist.find('kubernetes') == -1
 
     - name: Install Splunk StackPack
-      command: sts-cli stackpack install splunk-topology -p splunk_instance_name "{{ yard_id }}" -p sts_instance_url "{{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}"
+      command: sts-cli stackpack install splunk-topology -p splunk_instance_name "{{ yard_id }}" -p sts_instance_url "{{ splunk_integration.url }}"
       when:
         - splunk_integration is defined
         - stackpacklist.find('splunk-topology') == -1
