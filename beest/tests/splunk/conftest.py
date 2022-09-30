@@ -144,4 +144,3 @@ def ansible_var(host) -> Callable[[str], str]:
             # https://stackoverflow.com/questions/57820998/accessing-ansible-variables-in-molecule-test-testinfra
             return host.ansible("debug", "msg={{ " + name + " }}")["msg"]
     return _retrieve_var
-
