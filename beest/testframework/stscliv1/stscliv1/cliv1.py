@@ -6,6 +6,7 @@ import os
 import time
 from pathlib import Path
 from typing import Callable
+from pathlib import Path
 
 from testinfra.host import Host
 
@@ -59,14 +60,32 @@ class CLIv1:
         log = self.log
         log.info(f"Querying StackState Script API with CLIv1: {fullquery}, cache: {self.cache_enabled}")
 
+        def find_file_or_alt(file_path, alt_file_path, error_message):
+            if Path(file_path).is_file():
+                return file_path
+            elif Path(alt_file_path).is_file():
+                return alt_file_path
+            else:
+                raise FileNotFoundError(error_message)
+
         def query():
             # Write topology query into the expected file
             home = os.path.expanduser("~")
             with open(f"{home}/sts-query.stsl", 'w') as script_query:
                 # do stuff with temp file
                 script_query.write(fullquery)
+
+            # Find the sts-query.sh in the root, if it does not exist then attempt to find it in the bees dir
+            # The alt will mainly be for local dev
+            # TODO: Find a alternative to get to the './../../sut/bees/k8s-stackstate/files' dir if possible
+            # TODO: The path of this file will never change but still feels horrible selecting it with a path like this
+            file = find_file_or_alt(f"{home}/sts-query.sh",
+                                    f"./../../sut/bees/k8s-stackstate/files/sts-query.sh",
+                                    "Unable to find the sts-query.sh script")
+            logging.info(f"Found the sts-query.sh at the following location: '{file}'")
+
             # Execute the query
-            executed = self.host.run(f"{home}/sts-query.sh")
+            executed = self.host.run(file)
             log.info(f"STSL script exit status: {executed.exit_status}")
             return executed.stdout
 
@@ -95,7 +114,7 @@ Topology.query("id in (__IDS__)")
 def emptyPromise() {
   Async.sequence([])
 }
-    
+
 Topology.query('__QUERY__')
   .then { result ->
     components = result.queryResults[0].result.components

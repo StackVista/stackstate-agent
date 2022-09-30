@@ -34,17 +34,42 @@ func (state TransactionStatus) String() string {
 	}
 }
 
+// ActionStatus is an integer representing the state of the action
+type ActionStatus int64
+
+const (
+	// Committed is used to represent a Committed action
+	Committed ActionStatus = iota
+	// Acknowledged is used to represent an Acknowledged action. ie successfully "completed" action
+	Acknowledged
+	// Rejected is used to represent an Rejected action. ie unsuccessfully "completed" action
+	Rejected
+)
+
+// String returns a string representation of ActionStatus
+func (state ActionStatus) String() string {
+	switch state {
+	case Acknowledged:
+		return "acknowledged"
+	case Rejected:
+		return "rejected"
+	default:
+		return "committed"
+	}
+}
+
 // Action represents a single operation in a checkmanager, which consists of one or more actions
 type Action struct {
-	ActionID              string
-	CommittedTimestamp    time.Time
-	Acknowledged          bool
-	AcknowledgedTimestamp time.Time
+	ActionID               string
+	CommittedTimestamp     time.Time
+	Status                 ActionStatus
+	StatusUpdatedTimestamp time.Time
 }
 
 // IntakeTransaction represents an intake checkmanager which consists of one or more actions
 type IntakeTransaction struct {
 	TransactionID        string
+	CheckID              check.ID
 	Status               TransactionStatus
 	Actions              map[string]*Action // pointer to allow in-place mutation instead of setting the value again
 	NotifyChannel        chan interface{}
@@ -102,7 +127,7 @@ type DiscardTransaction struct {
 
 // Error returns a string representing the DiscardTransaction.
 func (r DiscardTransaction) Error() string {
-	return fmt.Sprintf("rolling back transaction %s. %s", r.TransactionID, r.Reason)
+	return fmt.Sprintf("discarding transaction %s. %s", r.TransactionID, r.Reason)
 }
 
 // StopTransactionManager triggers the shutdown of the transaction checkmanager.
@@ -116,6 +141,16 @@ type TransactionNotFound struct {
 // Error returns a string representation of the TransactionNotFound error and implements Error.
 func (t TransactionNotFound) Error() string {
 	return fmt.Sprintf("transaction %s not found in transaction checkmanager", t.TransactionID)
+}
+
+// TransactionCompleted is triggered when trying to look up a transaction that is already in a failed / succeeded state.
+type TransactionCompleted struct {
+	TransactionID string
+}
+
+// Error returns a string representation of the TransactionCompleted error and implements Error.
+func (t TransactionCompleted) Error() string {
+	return fmt.Sprintf("transaction %s has already been completed", t.TransactionID)
 }
 
 // ActionNotFound is triggered when trying to look up a non-existing action for a transaction in the transaction checkmanager

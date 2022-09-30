@@ -6,7 +6,7 @@ import (
 
 // TransactionAPI contains the functions required for transactional behaviour
 type TransactionAPI interface {
-	GetTransaction(transactionID string) (*IntakeTransaction, error)
+	GetActiveTransaction(transactionID string) (*IntakeTransaction, error)
 	TransactionCount() int
 	StartTransaction(CheckID check.ID, TransactionID string, NotifyChannel chan interface{})
 	CompleteTransaction(transactionID string)

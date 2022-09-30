@@ -1,0 +1,94 @@
+---
+- name: StackState Agent prepare tasks
+  tags: prepare
+  block:
+    - name: Create the sts-agent user
+      become: yes
+      user:
+        name: sts-agent
+        group: sudo
+
+    - name: Copy StackState Agent v1 conf to the remote machine
+      template:
+        src: stackstate.j2.conf
+        dest: "/home/ubuntu/stackstate.conf"
+
+    - name: Create a StackState Agent v1 run directory
+      become: yes
+      file:
+        path: /opt/stackstate-agent/run-v1
+        state: directory
+        mode: '0777'
+
+    - name: Create splunk conf.d directory
+      become: yes
+      when: splunk_integration is defined
+      file:
+        path: /home/ubuntu/conf.d
+        state: directory
+
+    - name: Configure Splunk Event check
+      when: splunk_integration is defined
+      become: yes
+      template:
+        src: "splunk_event_conf.j2.yml"
+        dest: /home/ubuntu/conf.d/splunk_event.yaml
+        owner: sts-agent
+        mode: '0644'
+
+    - name: Configure Splunk Health check
+      when: splunk_integration is defined
+      become: yes
+      template:
+        src: "splunk_health_conf.j2.yml"
+        dest: /home/ubuntu/conf.d/splunk_health.yaml
+        owner: sts-agent
+        mode: '0644'
+
+    - name: Configure Splunk Metric check
+      when: splunk_integration is defined
+      become: yes
+      template:
+        src: "splunk_metric_conf.j2.yml"
+        dest: /home/ubuntu/conf.d/splunk_metric.yaml
+        owner: sts-agent
+        mode: '0644'
+
+    - name: Configure Splunk Topology check
+      when: splunk_integration is defined
+      become: yes
+      template:
+        src: "splunk_topology_conf.j2.yml"
+        dest: /home/ubuntu/conf.d/splunk_topology.yaml
+        owner: sts-agent
+        mode: '0644'
+
+    - name: Deploy StackState Agent v1
+      become: yes
+      shell: "docker run -dit --name agent-v1 --restart unless-stopped --network='host' --add-host host.docker.internal:host-gateway -v /home/ubuntu/conf.d/:/etc/sts-agent/conf.d/ -v /home/ubuntu/stackstate.conf:/etc/sts-agent/stackstate.conf -v /opt/stackstate-agent/run-v1:/opt/stackstate-agent/run/ stackstate/sts-agent:1.3.0"
+
+## Cleanup
+- name: StackState Agent cleanup tasks
+  tags: cleanup
+  ignore_errors: yes
+  block:
+    - name: Cleanup StackState Agent v1 Docker - Kill running process
+      shell: "docker kill agent-v1"
+
+    - name: Cleanup StackState Agent v1 Docker - Remove container
+      shell: "docker rm -f agent-v1"
+
+    - name: Cleanup StackState Agent v1 Docker - Remove image
+      shell: "docker rmi agent-v1 --force"
+
+    - name: Remove run cache configurations
+      become: yes
+      file:
+        path: /opt/stackstate-agent/run-v1
+        state: absent
+
+    - name: Remove conf.d files
+      become: yes
+      file:
+        path: /home/ubuntu/conf.d
+        state: absent

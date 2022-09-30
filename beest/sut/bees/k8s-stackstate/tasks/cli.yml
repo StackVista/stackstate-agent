@@ -80,6 +80,11 @@
         src: sts-cli-v1-config.j2.yml
         dest: "~/.stackstate/cli/conf.yaml"
 
+    - name: Generate CLI v1 config for local tests
+      ansible.builtin.template:
+        src: sts-cli-v1-config.j2.yml
+        dest: "{{ playbook_dir }}/conf.yaml"
+
     - name: Create CLI v2 config directory
       file:
         path: "~/.config/stackstate-cli"

@@ -1,0 +1,161 @@
+---
+- name: StackState Agent prepare tasks
+  tags: prepare
+  block:
+    - name: "Install stackstate-agent (WARNING: Pointing to the Simulator instead of StackState, and the packets is then forwarded to StackState)"
+      when: enable_sts_simulator is defined and enable_sts_simulator == true
+      shell: "curl -o- {{ agent_repo_url }}/install.sh | bash"
+      register: agent_install_result
+      until: agent_install_result is not failed
+      retries: 5
+      delay: 60
+      environment:
+        LOG_PAYLOADS: "true"
+        STS_LOG_LEVEL: "debug"
+        STS_API_KEY: "{{ sts_api_key }}"
+        STS_URL: "http://localhost:7078/stsAgent"
+        STS_HOSTNAME: "{{ inventory_hostname }}"
+        CODE_NAME: "{{ agent_current_branch }}"
+        SKIP_SSL_VALIDATION: "false"
+
+    - name: Install stackstate-agent
+      when: enable_sts_simulator is not defined or enable_sts_simulator == false
+      shell: "curl -o- {{ agent_repo_url }}/install.sh | bash"
+      register: agent_install_result
+      until: agent_install_result is not failed
+      retries: 5
+      delay: 60
+      environment:
+        LOG_PAYLOADS: "true"
+        STS_LOG_LEVEL: "debug"
+        STS_API_KEY: "{{ sts_api_key }}"
+        STS_URL: "{{ sts_url }}/receiver/stsAgent"
+        STS_HOSTNAME: "{{ inventory_hostname }}"
+        CODE_NAME: "{{ agent_current_branch }}"
+        SKIP_SSL_VALIDATION: "false"
+
+    # AWS Check
+    - name: Creates AWS topology check directory
+      become: yes
+      when: aws_integration is defined
+      file:
+        path: /etc/stackstate-agent/conf.d/aws_topology.d
+        state: directory
+
+    - name: Configure AWS topology check
+      when: aws_integration is defined
+      become: yes
+      ansible.builtin.template:
+        src: "aws_topology_conf.j2.yml"
+        dest: /etc/stackstate-agent/conf.d/aws_topology.d/conf.yaml
+        owner: stackstate-agent
+        group: stackstate-agent
+        mode: '0644'
+
+    # Splunk Event Check
+    - name: Creates Splunk Event check directory
+      become: yes
+      when: splunk_integration is defined
+      file:
+        path: /etc/stackstate-agent/conf.d/splunk_event.d
+        state: directory
+
+    - name: Configure Splunk Event check
+      when: splunk_integration is defined
+      become: yes
+      template:
+        src: "splunk_event_conf.j2.yml"
+        dest: /etc/stackstate-agent/conf.d/splunk_event.d/splunk_event.yaml
+        owner: stackstate-agent
+        group: stackstate-agent
+        mode: '0644'
+
+    # Splunk Health Check
+    - name: Creates Splunk Health check directory
+      become: yes
+      when: splunk_integration is defined
+      file:
+        path: /etc/stackstate-agent/conf.d/splunk_health.d
+        state: directory
+
+    - name: Configure Splunk Health check
+      when: splunk_integration is defined
+      become: yes
+      template:
+        src: "splunk_health_conf.j2.yml"
+        dest: /etc/stackstate-agent/conf.d/splunk_health.d/splunk_health.yaml
+        owner: stackstate-agent
+        group: stackstate-agent
+        mode: '0644'
+
+    # Splunk Metric Check
+    - name: Creates Splunk Metric check directory
+      become: yes
+      when: splunk_integration is defined
+      file:
+        path: /etc/stackstate-agent/conf.d/splunk_metric.d
+        state: directory
+
+    - name: Configure Splunk Metric check
+      when: splunk_integration is defined
+      become: yes
+      template:
+        src: "splunk_metric_conf.j2.yml"
+        dest: /etc/stackstate-agent/conf.d/splunk_metric.d/splunk_metric.yaml
+        owner: stackstate-agent
+        group: stackstate-agent
+        mode: '0644'
+
+    # Splunk Topology Check
+    - name: Creates Splunk Topology check directory
+      become: yes
+      when: splunk_integration is defined
+      file:
+        path: /etc/stackstate-agent/conf.d/splunk_topology.d
+        state: directory
+
+    - name: Configure Splunk Topology check
+      when: splunk_integration is defined
+      become: yes
+      template:
+        src: "splunk_topology_conf.j2.yml"
+        dest: /etc/stackstate-agent/conf.d/splunk_topology.d/splunk_topology.yaml
+        owner: stackstate-agent
+        group: stackstate-agent
+        mode: '0644'
+
+    - name: Restart stackstate-agent
+      become: yes
+      service:
+        name: stackstate-agent
+        state: restarted
+
+
+## Cleanup
+- name: StackState Agent cleanup tasks
+  tags: cleanup
+  ignore_errors: yes
+  block:
+    - name: Uninstall stackstate-agent
+      become: yes
+      apt:
+        pkg: stackstate-agent
+        state: absent
+
+    - name: Remove configurations
+      become: yes
+      file:
+        path: /etc/stackstate-agent
+        state: absent
+
+    - name: Remove run cache configurations
+      become: yes
+      file:
+        path: /opt/stackstate-agent/run
+        state: absent
+
+    - name: Remove conf.d files
+      become: yes
+      file:
+        path: /etc/stackstate-agent/conf.d
+        state: absent
