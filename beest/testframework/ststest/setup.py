@@ -11,6 +11,5 @@ setup(
     install_requires=[
         "stscliv1",
         "pydot",
-        "pyshorteners"
     ]
 )

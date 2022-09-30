@@ -4,6 +4,7 @@ import (
 	"fmt"
 	checkState "github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -59,6 +60,7 @@ func (ch *TransactionalCheckHandler) GetState(key string) string {
 	if err != nil {
 		_ = log.Errorf("error occurred when reading state for check %s for key %s: %s", ch.ID(), key, err)
 	}
+	log.Infof("Retrieved state for check %s, state key: %s, value: %s", ch.ID(), key, s)
 	return s
 }
 
@@ -126,6 +128,13 @@ func (ch *TransactionalCheckHandler) SubmitHealthStopSnapshot(stream health.Stre
 func (ch *TransactionalCheckHandler) SubmitRawMetricsData(data telemetry.RawMetrics) {
 	ch.currentTransactionChannel <- SubmitRawMetric{
 		Value: data,
+	}
+}
+
+// SubmitEvent submits an event to the current transaction channel to be forwarded.
+func (ch *TransactionalCheckHandler) SubmitEvent(event metrics.Event) {
+	ch.currentTransactionChannel <- SubmitEvent{
+		Event: event,
 	}
 }
 

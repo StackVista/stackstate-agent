@@ -12,11 +12,6 @@ conda create -n testframework python=3.10
 pip install -r .ci-builders/beest-base/requirements-pip-verify.txt
 ```
 
-- Install framework requirements (including the stscliv1 package)
-```commandline
-pip install -r requirements.txt
-```
-
 - Add existing Python Interpreter (PyCharm)
 
 ![img.png](img.png)

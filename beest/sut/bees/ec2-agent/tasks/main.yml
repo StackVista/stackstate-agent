@@ -16,27 +16,19 @@
         SKIP_SSL_VALIDATION: "false"
 
     - include_tasks: aws.yml
-      tags: [ prepare ]
       when: aws_integration is defined
 
-    - include_tasks: my_agent_integration_sample.yml
-      tags: [ prepare ]
-      when: agent_integration_sample is defined
-
     - include_tasks: setup_sample_check.yml
-      tags: [ prepare ]
       when: agent_integration_sample_v2 is defined
       vars:
         check_name: "agent_integration_sample_v2"
 
     - include_tasks: setup_sample_check.yml
-      tags: [ prepare ]
       when: agent_integration_sample_v2_stateful is defined
       vars:
         check_name: "agent_integration_sample_v2_stateful"
 
     - include_tasks: setup_sample_check.yml
-      tags: [ prepare ]
       when: agent_integration_sample_v2_transactional is defined
       vars:
         check_name: "agent_integration_sample_v2_transactional"

@@ -1,29 +1,26 @@
 ---
-- name: "{{check_name}} prepare tasks"
-  tags: prepare
-  block:
-    - name: Copy check file
-      become: yes
-      ansible.builtin.copy:
-        src: "{{check_name}}.py"
-        dest: "/etc/stackstate-agent/checks.d/{{check_name}}.py"
-        owner: "stackstate-agent"
-        group: "stackstate-agent"
-        mode: '0644'
-    - name: "Create {{check_name}}.d folder"
-      become: yes
-      file:
-        path: "/etc/stackstate-agent/conf.d/{{check_name}}.d"
-        recurse: "yes"
-        state: "directory"
-        owner: "stackstate-agent"
-        group: "stackstate-agent"
-        mode: '0755'
-    - name: "Configure {{check_name}} check"
-      become: "yes"
-      ansible.builtin.template:
-        src: "{{check_name}}_conf.j2.yml"
-        dest: "/etc/stackstate-agent/conf.d/{{check_name}}.d/conf.yaml"
-        owner: "stackstate-agent"
-        group: "stackstate-agent"
-        mode: '0644'
+- name: "Copy {{check_name}}"
+  become: yes
+  ansible.builtin.copy:
+    src: "{{check_name}}.py"
+    dest: "/etc/stackstate-agent/checks.d/{{check_name}}.py"
+    owner: "stackstate-agent"
+    group: "stackstate-agent"
+    mode: '0644'
+- name: "Create {{check_name}}.d folder"
+  become: yes
+  file:
+    path: "/etc/stackstate-agent/conf.d/{{check_name}}.d"
+    recurse: "yes"
+    state: "directory"
+    owner: "stackstate-agent"
+    group: "stackstate-agent"
+    mode: '0755'
+- name: "Configure {{check_name}} check"
+  become: "yes"
+  ansible.builtin.template:
+    src: "{{check_name}}_conf.j2.yml"
+    dest: "/etc/stackstate-agent/conf.d/{{check_name}}.d/conf.yaml"
+    owner: "stackstate-agent"
+    group: "stackstate-agent"
+    mode: '0644'

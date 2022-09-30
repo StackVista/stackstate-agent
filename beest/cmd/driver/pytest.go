@@ -78,7 +78,7 @@ func buildPyTestCmd(step *step.VerificationStep, watch bool, selection string, i
 	cmd.Env = append(cmd.Env, fmt.Sprintf("PYTHONPATH=%s", pyPath))
 
 	if installDeps {
-		testDepsPath := sut.TestRequirementsPath()
+		testDepsPath := sut.VerifyRequirementsPath()
 		log.Printf("install dependencies at: %s", testDepsPath)
 		err := exec.Command("pip", "install", "-r", testDepsPath).Run()
 		if err != nil {

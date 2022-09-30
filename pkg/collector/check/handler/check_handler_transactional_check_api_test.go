@@ -6,6 +6,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/stretchr/testify/assert"
@@ -60,6 +61,29 @@ var (
 			"world",
 		},
 	}
+
+	testEvent = metrics.Event{
+		Ts:             time.Now().Unix(),
+		EventType:      "docker",
+		Tags:           []string{"my", "test", "tags"},
+		AggregationKey: "docker:redis",
+		SourceTypeName: "docker",
+		Priority:       metrics.EventPriorityNormal,
+	}
+	testEvent2 = metrics.Event{
+		Ts:             time.Now().Unix(),
+		EventType:      "docker",
+		Tags:           []string{"my", "test", "tags"},
+		AggregationKey: "docker:mysql",
+		SourceTypeName: "docker",
+		Priority:       metrics.EventPriorityNormal,
+		EventContext: &metrics.EventContext{
+			Data:        map[string]interface{}{},
+			Source:      "docker",
+			Category:    "containers",
+			SourceLinks: []metrics.SourceLink{{Title: "source-link", URL: "source-url"}},
+		},
+	}
 )
 
 // Each table test mutates the shared checkInstanceBatchState, so running individual table tests will not produce the
@@ -67,9 +91,9 @@ var (
 func TestCheckHandlerAPI(t *testing.T) {
 	// init global transactionbatcher used by the check no handler
 	mockBatcher := transactionbatcher.NewMockTransactionalBatcher()
-	transactionmanager.NewMockTransactionManager()
+	mockTM := transactionmanager.NewMockTransactionManager()
 
-	checkHandler := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-test-check"}, &check.TestCheckReloader{},
+	checkHandler := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-api-test-check"},
 		integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 	var transactionID string
 	checkInstanceBatchState := &transactionbatcher.TransactionCheckInstanceBatchState{}
@@ -190,6 +214,23 @@ func TestCheckHandlerAPI(t *testing.T) {
 			},
 		},
 		{
+			testCase: "Submit event should produce an event in the TransactionCheckInstanceBatchState",
+			checkHandlerFunction: func(handler CheckHandler) {
+				handler.SubmitEvent(testEvent)
+			},
+			stateMutation: func(state *transactionbatcher.TransactionCheckInstanceBatchState) {
+				state.Events = &metrics.IntakeEvents{Events: []metrics.Event{testEvent}}
+			},
+		}, {
+			testCase: "Submit topology event should produce an event in the TransactionCheckInstanceBatchState",
+			checkHandlerFunction: func(handler CheckHandler) {
+				handler.SubmitEvent(testEvent2)
+			},
+			stateMutation: func(state *transactionbatcher.TransactionCheckInstanceBatchState) {
+				state.Events.Events = append(state.Events.Events, testEvent2)
+			},
+		},
+		{
 			testCase: "Stop transaction should mark a batch transaction as complete in the TransactionCheckInstanceBatchState",
 			checkHandlerFunction: func(handler CheckHandler) {
 				handler.StopTransaction()
@@ -214,7 +255,7 @@ func TestCheckHandlerAPI(t *testing.T) {
 	// test check handler discard transaction
 	t.Run("check handler discard transaction", func(t *testing.T) {
 		ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-discard-transaction"},
-			&check.TestCheckReloader{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
+			integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 
 		txID := ch.StartTransaction()
 		ch.SubmitComponent(instance, testComponent)
@@ -243,16 +284,28 @@ func TestCheckHandlerAPI(t *testing.T) {
 
 		ch.DiscardTransaction("test cancel transaction")
 
-		time.Sleep(100 * time.Millisecond)
-		postCancelState, found := mockBatcher.GetCheckState(ch.ID())
-		assert.False(t, found, "check state for %s that should be cleaned up was found: %v", ch.ID(),
-			postCancelState.JSONString())
+		select {
+		case input := <-mockTM.TransactionActions:
+			switch msg := input.(type) {
+			case transactionmanager.DiscardTransaction:
+				assert.IsType(t, transactionmanager.DiscardTransaction{}, msg)
+				ch.(*TransactionalCheckHandler).currentTransactionChannel <- msg
+			default:
+				// ignore
+			}
+		}
+
+		assert.Eventually(t, func() bool {
+			s, hasState := mockBatcher.GetCheckState(ch.ID())
+			println(s.JSONString())
+			return !hasState
+		}, 150*time.Millisecond, 15*time.Millisecond)
 	})
 
 	// test check handler submit complete
 	t.Run("check handler submit complete", func(t *testing.T) {
 		ch := NewTransactionalCheckHandler(&check.STSTestCheck{Name: "my-check-handler-submit-complete"},
-			&check.TestCheckReloader{}, integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
+			integration.Data{1, 2, 3}, integration.Data{0, 0, 0})
 
 		txID := ch.StartTransaction()
 		ch.SubmitComponent(instance, testComponent)

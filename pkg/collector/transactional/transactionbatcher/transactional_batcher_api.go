@@ -3,6 +3,7 @@ package transactionbatcher
 import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -27,12 +28,14 @@ type TransactionalBatcher interface {
 	// Raw Metrics
 	SubmitRawMetricsData(checkID check.ID, transactionID string, data telemetry.RawMetrics)
 
+	// Events
+	SubmitEvent(checkID check.ID, transactionID string, event metrics.Event)
+
 	// Transactional
 	StartTransaction(checkID check.ID, transactionID string)
 	SubmitCompleteTransaction(checkID check.ID, transactionID string)
 
 	// lifecycle
-	SubmitComplete(checkID check.ID)
 	SubmitClearState(checkID check.ID)
 	Stop()
 }
@@ -106,9 +109,11 @@ type SubmitRawMetricsData struct {
 	RawMetric     telemetry.RawMetrics
 }
 
-// SubmitComplete is used to submit a check run completion to the input channel
-type SubmitComplete struct {
-	CheckID check.ID
+// SubmitEvent is used to submit a event to the input channel
+type SubmitEvent struct {
+	CheckID       check.ID
+	TransactionID string
+	Event         metrics.Event
 }
 
 // SubmitClearState is used to clear batcher state for a given CheckID
@@ -223,6 +228,15 @@ func (ctb *transactionalBatcher) SubmitRawMetricsData(checkID check.ID, transact
 	}
 }
 
+// SubmitEvent submits an event to the batch
+func (ctb *transactionalBatcher) SubmitEvent(checkID check.ID, transactionID string, event metrics.Event) {
+	ctb.Input <- SubmitEvent{
+		CheckID:       checkID,
+		TransactionID: transactionID,
+		Event:         event,
+	}
+}
+
 // StartTransaction submits a start transaction
 func (ctb *transactionalBatcher) StartTransaction(checkID check.ID, transactionID string) {
 	ctb.Input <- StartTransaction{
@@ -243,14 +257,6 @@ func (ctb *transactionalBatcher) SubmitCompleteTransaction(checkID check.ID, tra
 func (ctb *transactionalBatcher) SubmitClearState(checkID check.ID) {
 	log.Debugf("Submitting clear state for check [%s]", checkID)
 	ctb.Input <- SubmitClearState{
-		CheckID: checkID,
-	}
-}
-
-// SubmitComplete signals completion of a check. May trigger a flush only if the check produced data
-func (ctb *transactionalBatcher) SubmitComplete(checkID check.ID) {
-	log.Debugf("Submitting complete for check [%s]", checkID)
-	ctb.Input <- SubmitComplete{
 		CheckID: checkID,
 	}
 }

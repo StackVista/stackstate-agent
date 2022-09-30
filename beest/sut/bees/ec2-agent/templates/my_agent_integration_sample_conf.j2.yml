@@ -1,6 +1,0 @@
-init_config:
-
-instances:
-  - url: 'http://localhost'
-    collection_interval: 10
-

@@ -8,27 +8,31 @@
 
     - name: set fact
       set_fact:
-        availablestackpacks: "{{ stackpack_list_raw.stdout }}"
+        installed_stackpacks: "{{ stackpack_list_raw.stdout.split(',') }}"
+
+    - name: List installed StackPacks
+      debug:
+        var: installed_stackpacks
 
     - name: Install stackstate-agent-v2 StackPack
       command: sts-cli stackpack install stackstate-agent-v2
       when:
         - 'stackstate-agent-v2' in install_stackpacks
-        - availablestackpacks.find('stackstate-agent-v2') == -1
+        - 'stackstate-agent-v2' not in installed_stackpacks
 
     - name: Install kubernetes StackPack
       command: sts-cli stackpack install kubernetes -p kubernetes_cluster_name "{{ k8s_integration.cluster_name }}"
       when:
         - k8s_integration is defined
         - 'kubernetes' in install_stackpacks
-        - availablestackpacks.find('kubernetes') == -1
+        - 'kubernetes' not in installed_stackpacks
 
     - name: Install AWS-V2 StackPack
       command: sts-cli stackpack install aws-v2 -p aws_external_id "{{ yard_id }}" -p aws_role_arn "{{ aws_integration.integration_iam_role }}" -p aws_access_key_id "{{ aws_integration.integration_access_key }}" -p aws_secret_access_key "{{ aws_integration.integration_secret_key }}"
       when:
         - 'aws-v2' in install_stackpacks
         - aws_integration is defined
-        - availablestackpacks.find('aws-v2') == -1
+        - 'aws-v2' not in installed_stackpacks
 
 
 ## Cleanup

@@ -3,6 +3,7 @@ package transactionbatcher
 import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"sync"
@@ -83,6 +84,13 @@ func (mtb *MockTransactionalBatcher) SubmitRawMetricsData(checkID check.ID, tran
 	mtb.mux.Unlock()
 }
 
+// SubmitEvent submits an event to the batch
+func (mtb *MockTransactionalBatcher) SubmitEvent(checkID check.ID, transactionID string, event metrics.Event) {
+	mtb.mux.Lock()
+	mtb.CollectedTopology.AddEvent(checkID, transactionID, event)
+	mtb.mux.Unlock()
+}
+
 // StartTransaction starts a transaction for the given check ID
 func (mtb *MockTransactionalBatcher) StartTransaction(checkID check.ID, transactionID string) {
 	mtb.mux.Lock()
@@ -111,15 +119,6 @@ func (mtb *MockTransactionalBatcher) GetCheckState(checkID check.ID) (Transactio
 func (mtb *MockTransactionalBatcher) SubmitClearState(checkID check.ID) {
 	mtb.mux.Lock()
 	mtb.CollectedTopology.ClearState(checkID)
-	mtb.mux.Unlock()
-}
-
-// SubmitComplete signals completion of a check. May trigger a flush only if the check produced data
-func (mtb *MockTransactionalBatcher) SubmitComplete(checkID check.ID) {
-	mtb.mux.Lock()
-	// for the mock let's set this as the state again so we can assert it in the tests
-	flushedStates := mtb.CollectedTopology.FlushOnComplete(checkID)
-	mtb.CollectedTopology.states = flushedStates
 	mtb.mux.Unlock()
 }
 

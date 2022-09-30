@@ -41,9 +41,6 @@ class CLIv1:
     def topology_topic(self, topic: str, limit: int = 250) -> TopicTopologyResult:
         json_data = self.topic_api(topic, limit)
 
-        with open(f"./topic-{topic}.json", 'w') as f:
-            json.dump(json_data, f, indent=4)
-
         schema = TopicAPIResponseSchema()
         topic_response: TopicAPIResponse = schema.load(json_data)
         topic_result = TopicTopologyResult()
@@ -66,9 +63,6 @@ class CLIv1:
 
     def topology_topic_snapshot(self, topic: str, limit: int = 1000) -> dict[str, TopologySnapshotResult]:
         json_data = self.topic_api(topic, limit)
-
-        with open(f"./topic-{topic}.json", 'w') as f:
-            json.dump(json_data, f, indent=4)
 
         schema = TopicAPIResponseSchema()
         topic_response: TopicAPIResponse = schema.load(json_data)

@@ -27,8 +27,8 @@ func TestFrameworkPaths() []string {
 	}
 }
 
-func TestRequirementsPath() string {
-	return "/go/requirements-pip-tests.txt"
+func VerifyRequirementsPath() string {
+	return "/go/requirements-pip-verify.txt"
 }
 
 func init() {

@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	checkState "github.com/StackVista/stackstate-agent/pkg/collector/check/state"
 	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -48,7 +50,7 @@ func (ch *NonTransactionalCheckHandler) GetState(key string) string {
 	if err != nil {
 		_ = log.Errorf("error occurred when reading state for check %s for key %s: %s", ch.ID(), key, err)
 	}
-	log.Infof("Retrieved state for NonTransactionalCheckHandler, State value: %s", s)
+	log.Infof("Retrieved state for check %s, state key: %s, value: %s", ch.ID(), key, s)
 	return s
 }
 
@@ -95,6 +97,17 @@ func (ch *NonTransactionalCheckHandler) SubmitHealthStopSnapshot(stream health.S
 // SubmitRawMetricsData submits a raw metric value to the Global Batcher to be batched.
 func (ch *NonTransactionalCheckHandler) SubmitRawMetricsData(data telemetry.RawMetrics) {
 	batcher.GetBatcher().SubmitRawMetricsData(ch.ID(), data)
+}
+
+// SubmitEvent submits an event to the forwarder.
+func (ch *NonTransactionalCheckHandler) SubmitEvent(event metrics.Event) {
+	sender, err := aggregator.GetSender(ch.ID())
+	if err != nil || sender == nil {
+		_ = log.Errorf("Error submitting metric to the Sender: %v", err)
+		return
+	}
+
+	sender.Event(event)
 }
 
 // SubmitComplete submits a complete to the Global Batcher.

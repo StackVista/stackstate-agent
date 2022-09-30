@@ -13,7 +13,7 @@
         - "{{ monitoring_namespace }}"
         - "{{ test_namespace }}"
 
-    - include_tasks: quay-registry-key.yml
+    - include_tasks: artifactory-registry-key.yml
 
     - name: Add stackstate chart repo
       kubernetes.core.helm_repository:
@@ -41,13 +41,13 @@
     - name: Use helm agent test repo
       when: agent_helm_chart_version | trim | length > 0
       set_fact:
-        agent_helm_chart_repo: stackstate-test/cluster-agent
+        agent_helm_chart_repo: stackstate-test/stackstate-agent
         agent_version: "{{ agent_helm_chart_version }}"
 
     - when: agent_helm_chart_version | trim | length == 0
       block:
         - name: Search last official cluster agent version
-          command: helm search repo --regexp '\vstackstate/cluster-agent\v' -o yaml
+          command: helm search repo --regexp '\vstackstate/stackstate-agent\v' -o yaml
           register: agent_helm_search
 
         - name: Helm search result to yaml
@@ -57,7 +57,7 @@
         - name: Set agent helm version and repo
           set_fact:
             agent_version: "{{ agent_helm_search_yaml[0].version }}"
-            agent_helm_chart_repo: stackstate/cluster-agent
+            agent_helm_chart_repo: stackstate/stackstate-agent
 
 
     - name: Deploy cluster agent chart '{{ agent_version }}' from '{{ agent_helm_chart_repo }}'
@@ -65,7 +65,7 @@
         context: "{{ kubecontext }}"
         chart_ref: "{{ agent_helm_chart_repo }}"
         chart_version: "{{ agent_version }}"
-        release_name: cluster-agent
+        release_name: "{{ agent_release_name }}"
         release_namespace: "{{ monitoring_namespace }}"
         create_namespace: true
         update_repo_cache: true
@@ -99,16 +99,16 @@
     - name: Attempt to verify node agents ready
       block:
         - name: Wait for the stackstate node agents to start doing their thing (otherwise connections might occur after agent startup)
-          command: kubectl --context={{ kubecontext }} -n={{ monitoring_namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=agent pod
+          command: kubectl --context={{ kubecontext }} -n={{ monitoring_namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=node-agent pod
       rescue:
         - name: Describe node agent pods
-          command: kubectl describe pods -l app.kubernetes.io/component=agent -n={{ monitoring_namespace }} --context={{ kubecontext }}
+          command: kubectl describe pods -l app.kubernetes.io/component=node-agent -n={{ monitoring_namespace }} --context={{ kubecontext }}
           register: node_agent_describe
         - debug:
             var: node_agent_describe
 
         - name: Log cluster agent pod
-          command: kubectl logs -l app.kubernetes.io/component=agent -n={{ monitoring_namespace }} --context={{ kubecontext }} --all-containers
+          command: kubectl logs -l app.kubernetes.io/component=node-agent -n={{ monitoring_namespace }} --context={{ kubecontext }} --all-containers
           register: node_agent_logs
         - debug:
             var: node_agent_logs
@@ -121,16 +121,16 @@
     - name: Attempt to verify cluster check agent ready
       block:
         - name: Wait for the stackstate cluster check agent to start
-          command: kubectl --context={{ kubecontext }} -n={{ monitoring_namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=clusterchecks pod
+          command: kubectl --context={{ kubecontext }} -n={{ monitoring_namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=checks-agent pod
       rescue:
         - name: Describe cluster check agent pod
-          command: kubectl describe pods -l app.kubernetes.io/component=clusterchecks -n={{ monitoring_namespace }} --context={{ kubecontext }}
+          command: kubectl describe pods -l app.kubernetes.io/component=checks-agent -n={{ monitoring_namespace }} --context={{ kubecontext }}
           register: cluster_check_agent_describe
         - debug:
             var: cluster_check_agent_describe
 
         - name: Log cluster check agent pod
-          command: kubectl logs -l app.kubernetes.io/component=clusterchecks -n={{ monitoring_namespace }} --context={{ kubecontext }} --all-containers
+          command: kubectl logs -l app.kubernetes.io/component=checks-agent -n={{ monitoring_namespace }} --context={{ kubecontext }} --all-containers
           register: cluster_check_agent_logs
         - debug:
             var: cluster_check_agent_logs
@@ -165,12 +165,12 @@
 
 - name: StackState Agent cleanup tasks
   tags: cleanup
-  ignore_errors: yes
+  ignore_errors: true
   block:
     - name: Undeploy agent
       kubernetes.core.helm:
         context: "{{ kubecontext }}"
-        release_name: stackstate-cluster-agent
+        release_name: "{{ agent_release_name }}"
         release_namespace: "{{ monitoring_namespace }}"
         state: absent
         wait: true
