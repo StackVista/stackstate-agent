@@ -63,7 +63,7 @@
 
 
 ## Cleanup
-- name: Splunk Events cleanup tasks
+- name: Splunk Cleanup tasks
   tags: cleanup
   ignore_errors: yes
   block:
