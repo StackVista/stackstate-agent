@@ -78,6 +78,7 @@ var (
 	testRawMetricsDataIntakeMetric2 = testRawMetricsData2.IntakeMetricJSON()
 
 	testEvent = metrics.Event{
+		Title:          "test-event-1",
 		Ts:             time.Now().Unix(),
 		EventType:      "docker",
 		Tags:           []string{"my", "test", "tags"},
@@ -86,6 +87,7 @@ var (
 		Priority:       metrics.EventPriorityNormal,
 	}
 	testEvent2 = metrics.Event{
+		Title:          "test-event-2",
 		Ts:             time.Now().Unix(),
 		EventType:      "docker",
 		Tags:           []string{"my", "test", "tags"},
@@ -93,10 +95,25 @@ var (
 		SourceTypeName: "docker",
 		Priority:       metrics.EventPriorityNormal,
 		EventContext: &metrics.EventContext{
-			Data:        map[string]interface{}{},
-			Source:      "docker",
-			Category:    "containers",
-			SourceLinks: []metrics.SourceLink{{Title: "source-link", URL: "source-url"}},
+			Data:     map[string]interface{}{},
+			Source:   "docker",
+			Category: "containers",
+		},
+	}
+	testEvent3 = metrics.Event{
+		Title:          "test-event-3",
+		Ts:             time.Now().Unix(),
+		EventType:      "docker",
+		Tags:           []string{"my", "test", "tags"},
+		AggregationKey: "docker:mysql",
+		SourceTypeName: "docker-other",
+		Priority:       metrics.EventPriorityNormal,
+		EventContext: &metrics.EventContext{
+			Data:               map[string]interface{}{},
+			Source:             "docker",
+			Category:           "containers",
+			ElementIdentifiers: []string{"element-identifier"},
+			SourceLinks:        []metrics.SourceLink{{Title: "source-link", URL: "source-url"}},
 		},
 	}
 )
@@ -154,8 +171,22 @@ func testBatcher(t *testing.T, transactionState map[string]bool, expectedPayload
 	})
 	assert.Equal(t, expectedPayload.Health, actualPayload.Health)
 	assert.Equal(t, expectedPayload.Metrics, actualPayload.Metrics)
-	assert.Equal(t, expectedPayload.Events, actualPayload.Events)
+	assert.Equal(t, len(expectedPayload.Events), len(actualPayload.Events))
+	for key, expectedEvents := range expectedPayload.Events {
+		actualEvents := actualPayload.Events[key]
 
+		sort.Slice(actualEvents, func(i, j int) bool {
+			return actualEvents[i].Title < actualEvents[j].Title
+		})
+
+		sort.Slice(expectedEvents, func(i, j int) bool {
+			return expectedEvents[i].Title < expectedEvents[j].Title
+		})
+
+		for i, ev := range actualEvents {
+			assert.Equal(t, expectedEvents[i].String(), ev.String())
+		}
+	}
 	// assert the transaction map produced by the batcher contains the correct action id and completed status
 	expectedTransactionMap := make(map[string]transactional.PayloadTransaction, len(commitActions))
 	for i, ca := range commitActions {
@@ -263,7 +294,9 @@ func TestBatchFlushOnComplete(t *testing.T) {
 		},
 	}
 	expectedPayload.Metrics = []interface{}{testRawMetricsDataIntakeMetric, testRawMetricsDataIntakeMetric2}
-	expectedPayload.Events = []metrics.Event{testEvent}
+	expectedPayload.Events = map[string][]metrics.Event{
+		"docker": {testEvent},
+	}
 
 	transactionStates := map[string]bool{
 		testTransactionID: true,
@@ -273,22 +306,19 @@ func TestBatchFlushOnComplete(t *testing.T) {
 	batcher.Stop()
 }
 
-func TestBatchNoDataNoComplete(t *testing.T) {
+func TestBatchDataCompleteTransaction(t *testing.T) {
 	batcher := newTransactionalBatcher(testHost, testAgent, 100)
 
+	batcher.StartTransaction(testID, testTransactionID)
 	batcher.SubmitComponent(testID, testTransactionID, testInstance, testComponent)
-	batcher.SubmitComplete(testID2)
-
-	// We now send a stop to trigger a combined commit
-	batcher.SubmitStopSnapshot(testID, testTransactionID, testInstance)
-	batcher.SubmitCompleteTransaction(testID, testTransactionID)
+	batcher.SubmitCompleteTransaction(testID2, testTransaction2ID)
 
 	expectedPayload := transactional.NewIntakePayload()
 	expectedPayload.InternalHostname = "myhost"
 	expectedPayload.Topologies = []topology.Topology{
 		{
 			StartSnapshot: false,
-			StopSnapshot:  true,
+			StopSnapshot:  false,
 			Instance:      testInstance,
 			Components:    []topology.Component{testComponent},
 			Relations:     []topology.Relation{},
@@ -297,6 +327,29 @@ func TestBatchNoDataNoComplete(t *testing.T) {
 	}
 
 	transactionStates := map[string]bool{
+		testTransactionID:  false,
+		testTransaction2ID: true,
+	}
+	testBatcher(t, transactionStates, expectedPayload)
+
+	// We now send a stop to trigger a combined commit
+	batcher.SubmitStopSnapshot(testID, testTransactionID, testInstance)
+	batcher.SubmitCompleteTransaction(testID, testTransactionID)
+
+	expectedPayload = transactional.NewIntakePayload()
+	expectedPayload.InternalHostname = "myhost"
+	expectedPayload.Topologies = []topology.Topology{
+		{
+			StartSnapshot: false,
+			StopSnapshot:  true,
+			Instance:      testInstance,
+			Components:    []topology.Component{},
+			Relations:     []topology.Relation{},
+			DeleteIDs:     []string{},
+		},
+	}
+
+	transactionStates = map[string]bool{
 		testTransactionID: true,
 	}
 	testBatcher(t, transactionStates, expectedPayload)
@@ -325,6 +378,7 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 	batcher.SubmitRawMetricsData(testID2, testTransaction2ID, testRawMetricsData2)
 
 	batcher.SubmitEvent(testID, testTransactionID, testEvent)
+	batcher.SubmitEvent(testID, testTransactionID, testEvent3)
 	batcher.SubmitEvent(testID2, testTransaction2ID, testEvent2)
 
 	batcher.SubmitStopSnapshot(testID, testTransactionID, testInstance)
@@ -369,7 +423,10 @@ func TestBatchMultipleTopologiesAndHealthStreams(t *testing.T) {
 		testRawMetricsDataIntakeMetric2,
 	}
 
-	expectedPayload.Events = []metrics.Event{testEvent, testEvent2}
+	expectedPayload.Events = map[string][]metrics.Event{
+		"docker":       {testEvent, testEvent2},
+		"docker-other": {testEvent3},
+	}
 
 	transactionStates := map[string]bool{
 		testTransactionID:  true,
@@ -462,7 +519,9 @@ func TestBatchFlushOnMaxEvents(t *testing.T) {
 
 	expectedPayload := transactional.NewIntakePayload()
 	expectedPayload.InternalHostname = "myhost"
-	expectedPayload.Events = []metrics.Event{testEvent, testEvent2}
+	expectedPayload.Events = map[string][]metrics.Event{
+		"docker": {testEvent, testEvent2},
+	}
 
 	transactionStates := map[string]bool{
 		testTransactionID: false,
@@ -649,7 +708,9 @@ func TestBatchClearState(t *testing.T) {
 			DeleteIDs:     []string{testDeleteID1},
 		},
 	}
-	expectedPayload.Events = []metrics.Event{testEvent}
+	expectedPayload.Events = map[string][]metrics.Event{
+		"docker": {testEvent},
+	}
 
 	transactionStates := map[string]bool{
 		testTransactionID: true,

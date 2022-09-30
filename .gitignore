@@ -6,7 +6,7 @@ vendor/
 outcomes/
 .vendor-new/
 bin/
-/dev/
+/dev/*
 __pycache__
 .pytest_cache
 venv/
@@ -16,6 +16,16 @@ venv27/
 venv3[78]/
 .gems/
 omnibus/omnibus/
+
+# dev tools for pickle conversion
+!/dev/agent-v1-to-v2-pickle-conversion/
+/dev/agent-v1-to-v2-pickle-conversion/.tox
+/dev/agent-v1-to-v2-pickle-conversion/venv
+/dev/agent-v1-to-v2-pickle-conversion/*.egg-info
+/dev/agent-v1-to-v2-pickle-conversion/run/v2/*
+!/dev/agent-v1-to-v2-pickle-conversion/run/v2/__example__*
+!/dev/agent-v1-to-v2-pickle-conversion/.python-version
+/dev/agent-v1-to-v2-pickle-conversion/backups
 
 **/*.tmp
 **/debug.test

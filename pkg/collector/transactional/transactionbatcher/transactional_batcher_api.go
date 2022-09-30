@@ -36,7 +36,6 @@ type TransactionalBatcher interface {
 	SubmitCompleteTransaction(checkID check.ID, transactionID string)
 
 	// lifecycle
-	SubmitComplete(checkID check.ID)
 	SubmitClearState(checkID check.ID)
 	Stop()
 }
@@ -115,11 +114,6 @@ type SubmitEvent struct {
 	CheckID       check.ID
 	TransactionID string
 	Event         metrics.Event
-}
-
-// SubmitComplete is used to submit a check run completion to the input channel
-type SubmitComplete struct {
-	CheckID check.ID
 }
 
 // SubmitClearState is used to clear batcher state for a given CheckID
@@ -263,14 +257,6 @@ func (ctb *transactionalBatcher) SubmitCompleteTransaction(checkID check.ID, tra
 func (ctb *transactionalBatcher) SubmitClearState(checkID check.ID) {
 	log.Debugf("Submitting clear state for check [%s]", checkID)
 	ctb.Input <- SubmitClearState{
-		CheckID: checkID,
-	}
-}
-
-// SubmitComplete signals completion of a check. May trigger a flush only if the check produced data
-func (ctb *transactionalBatcher) SubmitComplete(checkID check.ID) {
-	log.Debugf("Submitting complete for check [%s]", checkID)
-	ctb.Input <- SubmitComplete{
 		CheckID: checkID,
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionforwarder"
 	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
 	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/google/uuid"
 	"sync"
@@ -97,8 +98,6 @@ BatcherReceiver:
 				ctb.SubmitState(ctb.builder.MarkTransactionComplete(submission.CheckID, submission.TransactionID))
 			case SubmitClearState:
 				ctb.SubmitState(ctb.builder.ClearState(submission.CheckID))
-			case SubmitComplete:
-				ctb.SubmitState(ctb.builder.FlushOnComplete(submission.CheckID))
 			case SubmitShutdown:
 				break BatcherReceiver
 			default:
@@ -136,18 +135,18 @@ func (ctb *transactionalBatcher) SubmitState(states TransactionCheckInstanceBatc
 		// In the event of the same happening, but ending up in a state where there is already data in the payload, we
 		// don't have to do anything special. The action will be committed and the transaction completed as part of that
 		// payload.
-		onlyMarkTransactions := false
+		progressTransactions := false
 		emptyPayload := data.EqualDataPayload(transactional.NewIntakePayload())
 		if emptyPayload {
 			for _, state := range states {
 				if state.Transaction.CompletedTransaction {
-					onlyMarkTransactions = true
+					progressTransactions = true
 				}
 			}
 		}
 
 		// if this is an empty payload, and we have no transactions to mark, return
-		if !onlyMarkTransactions && emptyPayload {
+		if !progressTransactions && emptyPayload {
 			return
 		}
 
@@ -163,18 +162,18 @@ func (ctb *transactionalBatcher) SubmitState(states TransactionCheckInstanceBatc
 			transactionmanager.GetTransactionManager().CommitAction(state.Transaction.TransactionID, actionID)
 		}
 
-		ctb.submitPayload(payload, transactionPayloadMap, onlyMarkTransactions)
+		log.Debugf("Marshalled payload for transactions: %v, payload: %s", transactionPayloadMap, string(payload))
+
+		ctb.submitPayload(payload, transactionPayloadMap)
 	}
 }
 
 // submitPayload submits the payload to the forwarder
-func (ctb *transactionalBatcher) submitPayload(payload []byte, transactionPayloadMap map[string]transactional.PayloadTransaction,
-	onlyMarkTransactions bool) {
+func (ctb *transactionalBatcher) submitPayload(payload []byte, transactionPayloadMap map[string]transactional.PayloadTransaction) {
 	transactionforwarder.GetTransactionalForwarder().SubmitTransactionalIntake(transactionforwarder.TransactionalPayload{
 		Body:                 payload,
 		Path:                 transactional.IntakePath,
 		TransactionActionMap: transactionPayloadMap,
-		OnlyMarkTransactions: onlyMarkTransactions,
 	})
 }
 
@@ -194,6 +193,7 @@ func (ctb *transactionalBatcher) mapStateToPayload(states TransactionCheckInstan
 	intake.InternalHostname = ctb.Hostname
 
 	// Create the topologies payload
+	allEvents := &metrics.IntakeEvents{}
 	for _, state := range states {
 		if state.Topology != nil {
 			intake.Topologies = append(intake.Topologies, *state.Topology)
@@ -210,11 +210,11 @@ func (ctb *transactionalBatcher) mapStateToPayload(states TransactionCheckInstan
 		}
 
 		if state.Events != nil {
-			for _, event := range state.Events.Events {
-				intake.Events = append(intake.Events, event)
-			}
+			allEvents.Events = append(allEvents.Events, state.Events.Events...)
 		}
 	}
+
+	intake.Events = allEvents.IntakeFormat()
 
 	// For debug purposes print out all topologies payload
 	if config.Datadog.GetBool("log_payloads") {

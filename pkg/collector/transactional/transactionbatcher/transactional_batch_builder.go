@@ -284,12 +284,3 @@ func (builder *TransactionBatchBuilder) ClearState(checkID check.ID) Transaction
 
 	return nil
 }
-
-// FlushOnComplete checks whether the check produced data, if so, flush
-func (builder *TransactionBatchBuilder) FlushOnComplete(checkID check.ID) TransactionCheckInstanceBatchStates {
-	if _, ok := builder.states[checkID]; ok {
-		return builder.Flush()
-	}
-
-	return nil
-}
