@@ -45,7 +45,7 @@ init_config:
 # Currently it is not possible to specify multiple instances with the same url.
 # It is possible to specify multiple saved_searches on a single instance.
 instances:
-  - url: "{{ splunk_instance_protocol }}://{{ splunk_instance_url }}:{{ splunk_instance_port }}"
+  - url: "{{ splunk_integration.url }}"
 
     # username: "admin" ## deprecated; use basic_auth.username under authentication section
     # password: "admin" ## deprecated; use basic_auth.password under authentication section

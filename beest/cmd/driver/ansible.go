@@ -12,25 +12,27 @@ import (
 
 type AnsibleDeployer struct{}
 
-func (ad *AnsibleDeployer) Prepare(step *step.PrepareStep) error {
+func (ad *AnsibleDeployer) Prepare(step *step.PrepareStep, exclusions []string) error {
 	tags := []string{"prepare"}
-	return play(step.Inventory(), step.Playbook(), tags)
+	return play(step.Inventory(), step.Playbook(), step.Yard.TestingDir(), tags, exclusions)
 }
 
-func (ad *AnsibleDeployer) Cleanup(step *step.CleanupStep) error {
+func (ad *AnsibleDeployer) Cleanup(step *step.CleanupStep, exclusions []string) error {
 	tags := []string{"cleanup"}
-	return play(step.Inventory(), step.Playbook(), tags)
+	return play(step.Inventory(), step.Playbook(), step.Yard.TestingDir(), tags, exclusions)
 }
 
-func play(inv, pb string, tags []string) error {
+func play(inv, pb, testingDir string, tags []string, exclusions []string) error {
 	vars := map[string]interface{}{
-		"bees_path": sut.BeesPath(),
+		"bees_path":           sut.BeesPath(),
+		"scenario_test_group": testingDir,
 	}
 
 	runOption := &playbook.AnsiblePlaybookOptions{
 		Inventory: inv,
 		ExtraVars: vars,
 		Tags:      strings.Join(tags, ","),
+		SkipTags:  strings.Join(exclusions, ","),
 	}
 	run := &playbook.AnsiblePlaybookCmd{
 		Playbooks: []string{pb},

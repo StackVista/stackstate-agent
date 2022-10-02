@@ -70,12 +70,10 @@ class SplunkBase:
 
         # From this host we can extract a few common variables but the important one is the ansible_host variable.
         # The ansible_host will contain the actual IP of the Splunk Machine and not Localhost
-        self.splunk_protocol = splunk_variables.get("splunk_instance_protocol")
-        self.splunk_host = splunk_variables.get("ansible_host")
-        self.splunk_port = splunk_variables.get("splunk_instance_port")
+        self.splunk_host = splunk_variables.get("splunk_integration")["host"]
 
         # Combine the results in a valid URL that we can query splunk with
-        self.splunk_instance = "{}://{}:{}".format(self.splunk_protocol, self.splunk_host, self.splunk_port)
+        self.splunk_instance = splunk_variables.get("splunk_integration")["url"]
 
     # Force the query to be in the Splunk StackPack with the yard id as the instance
     # This reduces boilerplate that has to be written on the queries
