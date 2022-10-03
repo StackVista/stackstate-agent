@@ -1,13 +1,16 @@
 image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220505
 
 stages:
-  - prepare
+  - acceptance_create_infra
+  - build_dependencies
   - build
-  - test
-  - pre_release
-  - acceptance
-  - cleanup
-  - release
+  - build_test
+  - pre_release_agent
+  - general_acceptance_tests
+  - receiver_acceptance_tests
+  - optional_qa_sts_acceptance_tests
+  - acceptance_cleanup_infra
+  - release_agent
 
 ######################### pipeline bricks
 
@@ -65,7 +68,7 @@ before_script:
   - *retrieve_linux_go_deps_script
 
 deps_deb:
-  stage: prepare
+  stage: build_dependencies
   interruptible: true
   cache:
     key: "deps-deb-$STS_VER-$CI_COMMIT_REF_SLUG"
@@ -94,7 +97,7 @@ deps_deb:
     - when: on_success
 
 deps_rpm:
-  stage: prepare
+  stage: build_dependencies
   interruptible: true
   image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220505
   cache:
@@ -125,7 +128,7 @@ deps_rpm:
     - when: on_success
 
 deps_win:
-  stage: prepare
+  stage: build_dependencies
   interruptible: true
   before_script:
     - *configure_windows_ps1_env_script
@@ -159,7 +162,7 @@ deps_win:
 ## build stage
 
 unit_tests:
-  stage: test
+  stage: build_test
   interruptible: true
   needs:
     - deps_deb
@@ -182,7 +185,7 @@ unit_tests:
     - when: on_success
 
 filename_linting:
-  stage: test
+  stage: build_test
   interruptible: true
   needs:
     - deps_deb
@@ -198,7 +201,7 @@ filename_linting:
 
 # TODO:  Not observed in v7 in a direct form ?
 #docker_integration_tests:
-#  stage: test
+#  stage: build_test
 #  needs:
 #    - deps_deb
 #  variables:
@@ -412,7 +415,7 @@ build_win:
 ## pre_release stage
 
 test_deb_renaming:
-  stage: test
+  stage: build_test
   interruptible: true
   needs:
     - build_deb
@@ -427,7 +430,7 @@ test_deb_renaming:
     - when: on_success
 
 test_rpm_renaming:
-  stage: test
+  stage: build_test
   interruptible: true
   image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220505
   needs:
@@ -444,7 +447,7 @@ test_rpm_renaming:
 
 
 pre_release_deb:
-  stage: pre_release
+  stage: pre_release_agent
   interruptible: true
   needs:
     - deps_deb
@@ -468,7 +471,7 @@ pre_release_deb:
     - when: on_success
 
 pre_release_win:
-  stage: pre_release
+  stage: pre_release_agent
   interruptible: true
   needs:
     - deps_win
@@ -498,7 +501,7 @@ pre_release_win:
     - when: on_success
 
 pre_release_rpm:
-  stage: pre_release
+  stage: pre_release_agent
   interruptible: true
   image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
   needs:
@@ -515,7 +518,7 @@ pre_release_rpm:
     - when: on_success
 
 pre_release_main_agent_image: &pre_release_image
-  stage: pre_release
+  stage: pre_release_agent
   interruptible: true
   image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
   needs:
@@ -715,7 +718,7 @@ pre_release_cluster_agent_image:
 # Primary create steps for all the molecule builds
 .molecule_create: &molecule_create
   <<: *molecule_artifacts
-  stage: prepare
+  stage: acceptance_create_infra
   script:
     - cd $CI_PROJECT_DIR/test
     - ./molecule3.sh $MOLECULE_SCENARIO create
@@ -723,7 +726,7 @@ pre_release_cluster_agent_image:
 # Primary test steps for all the molecule builds
 .molecule_test: &molecule_test
   <<: *molecule_artifacts
-  stage: acceptance
+  stage: general_acceptance_tests
   timeout: 80 minutes
   script:
     - cd $CI_PROJECT_DIR/test
@@ -731,7 +734,7 @@ pre_release_cluster_agent_image:
 
 # Primary destroy steps for all the molecule builds
 .molecule_destroy: &molecule_destroy
-  stage: cleanup
+  stage: acceptance_cleanup_infra
   interruptible: true
   script:
     - cd $CI_PROJECT_DIR/test
@@ -781,14 +784,14 @@ pre_release_cluster_agent_image:
 # Primary create steps for all the beest builds
 .beest_create: &beest_create
   <<: *beest_artifacts
-  stage: prepare
+  stage: acceptance_create_infra
   script:
     - beest create $BEEST_SCENARIO -y
 
 # Primary test steps for all the beest builds
 .beest_test: &beest_test
   <<: *beest_artifacts
-  stage: acceptance
+  stage: general_acceptance_tests
   timeout: 80 minutes
   script:
     - beest test $BEEST_SCENARIO --no-destroy
@@ -796,7 +799,7 @@ pre_release_cluster_agent_image:
 # Primary destroy steps for all the beest builds
 .beest_destroy: &beest_destroy
   <<: *beest_artifacts
-  stage: cleanup
+  stage: acceptance_cleanup_infra
   script:
     - beest destroy $BEEST_SCENARIO -y
   retry:
@@ -998,29 +1001,14 @@ beest_k8s_containerd_test:
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
-beest_k8s_containerd_failure_cleanup:
+beest_k8s_containerd_cleanup:
   <<: *beest
   <<: *beest_destroy
   <<: *beest_k8s_containerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_on_failure
+    - *v2_merge_train_always
     - when: never
-  needs:
-    - beest_k8s_containerd_test
-    - beest_k8s_containerd_create
-
-beest_k8s_containerd_success_cleanup:
-  <<: *beest
-  <<: *beest_destroy
-  <<: *beest_k8s_containerd_variables
-  rules:
-    - *kubernetes_ignore_rule
-    - *v2_merge_train_on_success
-    - when: never
-  dependencies:
-    - beest_k8s_containerd_test
-    - beest_k8s_containerd_create
   needs:
     - beest_k8s_containerd_test
     - beest_k8s_containerd_create
@@ -1342,29 +1330,14 @@ beest_otel_test:
     - beest_otel_create
     - pre_release_deb
 
-beest_otel_failure_cleanup:
+beest_otel_cleanup:
   <<: *beest
   <<: *beest_destroy
   <<: *beest_otel_variables
   rules:
     - *beest_otel_ignore_rule
-    - *v2_merge_train_on_failure
+    - *v2_merge_train_always
     - when: never
-  needs:
-    - beest_otel_test
-    - beest_otel_create
-
-beest_otel_success_cleanup:
-  <<: *beest
-  <<: *beest_destroy
-  <<: *beest_otel_variables
-  rules:
-    - *beest_otel_ignore_rule
-    - *v2_merge_train_on_success
-    - when: never
-  dependencies:
-    - beest_otel_test
-    - beest_otel_create
   needs:
     - beest_otel_test
     - beest_otel_create
@@ -1408,29 +1381,14 @@ beest_splunk_test:
     - beest_splunk_create
     - pre_release_deb
 
-beest_splunk_failure_cleanup:
+beest_splunk_cleanup:
   <<: *beest
   <<: *beest_destroy
   <<: *beest_splunk_variables
   rules:
     - *beest_splunk_ignore_rule
-    - *v2_merge_train_on_failure
+    - *v2_merge_train_always
     - when: never
-  needs:
-    - beest_splunk_test
-    - beest_splunk_create
-
-beest_splunk_success_cleanup:
-  <<: *beest
-  <<: *beest_destroy
-  <<: *beest_splunk_variables
-  rules:
-    - *beest_splunk_ignore_rule
-    - *v2_merge_train_on_success
-    - when: never
-  dependencies:
-    - beest_splunk_test
-    - beest_splunk_create
   needs:
     - beest_splunk_test
     - beest_splunk_create
@@ -1439,7 +1397,7 @@ beest_splunk_success_cleanup:
 
 release_deb:
   interruptible: true
-  stage: release
+  stage: release_agent
   dependencies:
     - build_deb
   script:
@@ -1458,7 +1416,7 @@ release_deb:
 
 release_rpm:
   interruptible: true
-  stage: release
+  stage: release_agent
   image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
   dependencies:
     - build_rpm
@@ -1478,7 +1436,7 @@ release_rpm:
 
 release_win:
   interruptible: true
-  stage: release
+  stage: release_agent
   dependencies:
     - build_win
   before_script:
@@ -1505,7 +1463,7 @@ release_win:
       - always
 
 .base_release_image: &base_release_image
-  stage: release
+  stage: release_agent
   image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
   dependencies:
     - build_deb
