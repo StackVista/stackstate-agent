@@ -9,8 +9,9 @@ import (
 )
 
 var (
-	cmInstance *CheckManager
-	cmInit     *sync.Once
+	cmInstance    *CheckManager
+	cmInit        *sync.Once
+	cmInitialized bool
 )
 
 func init() {
@@ -37,6 +38,8 @@ type CheckManager struct {
 
 // newCheckManager returns a instance of the Check Manager
 func newCheckManager() *CheckManager {
+	cmInitialized = true
+
 	return &CheckManager{
 		checkHandlers: make(map[string]CheckHandler),
 		config:        GetCheckManagerConfig(),
@@ -45,6 +48,11 @@ func newCheckManager() *CheckManager {
 
 // GetCheckHandler returns a check handler (if found) for a given check ID
 func (cm *CheckManager) GetCheckHandler(checkID check.ID) CheckHandler {
+	if !cmInitialized {
+		_ = log.Errorf("CheckManager not initialized, initialize it using handler.InitCheckManager()")
+		return nil
+	}
+
 	ch, found := cm.checkHandlers[string(checkID)]
 	if !found {
 		_ = log.Errorf(fmt.Sprintf("No check handler found for %s. Registering a non-transactional check handler.", checkID))
@@ -82,6 +90,11 @@ func (cm *CheckManager) MakeCheckHandlerTransactional(checkID check.ID) CheckHan
 
 // RegisterCheckHandler registers a check handler for the given check using a transactionbatcher for this instance
 func (cm *CheckManager) RegisterCheckHandler(check CheckIdentifier, config, initConfig integration.Data) CheckHandler {
+	if !cmInitialized {
+		_ = log.Errorf("CheckManager not initialized, initialize it using handler.InitCheckManager()")
+		return nil
+	}
+
 	ch := cm.registerNonTransactionalCheckHandler(check, config, initConfig)
 	log.Debugf("Registering Check Handler for: %s", ch.ID())
 	cm.checkHandlers[string(check.ID())] = ch
@@ -99,4 +112,5 @@ func (cm *CheckManager) Stop() {
 	log.Debug("Removing all Check Handlers")
 	cm.checkHandlers = make(map[string]CheckHandler)
 	cmInit = new(sync.Once)
+	cmInitialized = false
 }
