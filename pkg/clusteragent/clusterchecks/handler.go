@@ -70,7 +70,7 @@ func NewHandler(ac pluggableAutoConfig) (*Handler, error) {
 		port:             config.Datadog.GetInt("cluster_agent.cmd_port"),
 	}
 
-	log.Debugf("DEBUG LOG 6: Handler port = %s", config.Datadog.GetInt("cluster_agent.cmd_port"))
+	log.Debugf("DEBUG LOG 6: Handler port = %d", config.Datadog.GetInt("cluster_agent.cmd_port"))
 
 	if config.Datadog.GetBool("leader_election") {
 		callback, err := getLeaderIPCallback()
