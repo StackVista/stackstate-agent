@@ -940,7 +940,6 @@ molecule_integrations_success_cleanup:
     BEEST_SCENARIO: containerd-eks
     BEEST_TEST_GROUP: k8s
 
-# K8S DockerD
 beest_k8s_dockerd_create:
   <<: *beest
   <<: *beest_create
@@ -948,7 +947,7 @@ beest_k8s_dockerd_create:
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_always
-    -
+
 beest_k8s_dockerd_test:
   <<: *beest
   <<: *beest_test
@@ -976,7 +975,6 @@ beest_k8s_dockerd_cleanup:
     - beest_k8s_dockerd_test
     - beest_k8s_dockerd_create
 
-# K8S DockerD
 beest_k8s_containerd_create:
   <<: *beest
   <<: *beest_create
@@ -1000,14 +998,29 @@ beest_k8s_containerd_test:
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
-beest_k8s_containerd_cleanup:
+beest_k8s_containerd_failure_cleanup:
   <<: *beest
   <<: *beest_destroy
   <<: *beest_k8s_containerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_always
+    - *v2_merge_train_on_failure
     - when: never
+  needs:
+    - beest_k8s_containerd_test
+    - beest_k8s_containerd_create
+
+beest_k8s_containerd_success_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_k8s_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_k8s_containerd_test
+    - beest_k8s_containerd_create
   needs:
     - beest_k8s_containerd_test
     - beest_k8s_containerd_create
@@ -1329,14 +1342,29 @@ beest_otel_test:
     - beest_otel_create
     - pre_release_deb
 
-beest_otel_cleanup:
+beest_otel_failure_cleanup:
   <<: *beest
   <<: *beest_destroy
   <<: *beest_otel_variables
   rules:
     - *beest_otel_ignore_rule
-    - *v2_merge_train_always
+    - *v2_merge_train_on_failure
     - when: never
+  needs:
+    - beest_otel_test
+    - beest_otel_create
+
+beest_otel_success_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_otel_variables
+  rules:
+    - *beest_otel_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_otel_test
+    - beest_otel_create
   needs:
     - beest_otel_test
     - beest_otel_create
@@ -1380,14 +1408,29 @@ beest_splunk_test:
     - beest_splunk_create
     - pre_release_deb
 
-beest_splunk_cleanup:
+beest_splunk_failure_cleanup:
   <<: *beest
   <<: *beest_destroy
   <<: *beest_splunk_variables
   rules:
     - *beest_splunk_ignore_rule
-    - *v2_merge_train_always
+    - *v2_merge_train_on_failure
     - when: never
+  needs:
+    - beest_splunk_test
+    - beest_splunk_create
+
+beest_splunk_success_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_splunk_variables
+  rules:
+    - *beest_splunk_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_splunk_test
+    - beest_splunk_create
   needs:
     - beest_splunk_test
     - beest_splunk_create
