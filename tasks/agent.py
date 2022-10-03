@@ -491,7 +491,7 @@ def apply_branding(ctx):
     # cluster agent client
     do_go_rename(ctx, '"\\"datadog-cluster-agent\\" -> \\"stackstate-cluster-agent\\""', "./pkg/config")
     do_sed_rename(ctx, 's/Datadog Cluster Agent/StackState Cluster Agent/g', "./pkg/util/clusteragent/clusteragent.go")
-    do_go_rename(ctx, 'Datadog Cluster Agent -> StackState Cluster Agent', "../pkg/status/templates/clusteragent.tmpl")
+    do_go_rename(ctx, 'Datadog Cluster Agent -> StackState Cluster Agent', "./pkg/status/templates/clusteragent.tmpl")
     do_sed_rename(ctx, 's/Datadog Cluster Agent/StackState Cluster Agent/g', "./pkg/status/templates/clusteragent.tmpl")
 
     # kubernetes openmetrics annotations
