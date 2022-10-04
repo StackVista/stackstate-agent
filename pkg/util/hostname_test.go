@@ -55,7 +55,6 @@ func TestGetHostnameCaching(t *testing.T) {
 }
 
 func TestGetHostnameFromHostnameFileConfig(t *testing.T) {
-	config.Datadog.Set("skip_hostname_validation", false)
 	hostnameFile, err := writeTempHostnameFile("expectedfilehostname")
 	if !assert.Nil(t, err) {
 		return

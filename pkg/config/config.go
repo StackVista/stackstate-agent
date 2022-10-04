@@ -219,7 +219,7 @@ func InitConfig(config Config) {
 
 	config.BindEnvAndSetDefault("hostname", "")
 	config.BindEnvAndSetDefault("hostname_file", "")
-	config.BindEnvAndSetDefault("skip_hostname_validation", true) // sts
+	config.BindEnvAndSetDefault("skip_hostname_validation", false) // sts
 	config.BindEnvAndSetDefault("tags", []string{})
 	config.BindEnvAndSetDefault("extra_tags", []string{})
 	config.BindEnv("env")
