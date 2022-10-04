@@ -520,7 +520,7 @@ def apply_branding(ctx):
                   "./omnibus/config/projects/agent-binaries.rb")
     do_sed_rename(ctx, 's/\\\\\\\\etc\\\\\\\\datadog-agent\\\\\\\\extra_package_files/\\\\\\\\etc\\\\\\\\stackstate-agent\\\\\\\\extra_package_files/g',
                   "./omnibus/config/projects/iot-agent.rb")
-    do_sed_rename(ctx, 's/DataDog\\\\\\\\datadog-agent/Stackvista\\\\\\\\stackstate-agent/g', "./omnibus/config/projects/agent.rb")
+    do_sed_rename(ctx, 's/DataDog\\\\datadog-agent/Stackvista\\\\stackstate-agent/g', "./omnibus/config/projects/agent.rb")
     do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/projects/iot-agent.rb")
     do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/software/datadog-agent-finalize.rb")
     do_sed_rename(ctx, 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g', "./omnibus/config/software/datadog-cf-finalize.rb")
