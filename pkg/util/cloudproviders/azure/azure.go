@@ -166,10 +166,9 @@ func getHostnameWithConfig(ctx context.Context, conf config.Config) (string, err
 		return "", fmt.Errorf("invalid azure_hostname_style value: %s", style)
 	}
 
-	// [sts] No validation when hostname comes from Azure
-	//if err := config.ValidHostname(name); err != nil {
-	//	return "", err
-	//}
+	if err := config.ValidHostname(name); err != nil {
+		return "", err
+	}
 
 	return name, nil
 }
