@@ -43,14 +43,14 @@ type StubDeployer struct {
 func NewStubDeployer(failPrepare, failCleanup error) *StubDeployer {
 	return &StubDeployer{failPrepare: failPrepare, failCleanup: failCleanup}
 }
-func (sd *StubDeployer) Prepare(*step.PrepareStep) error {
+func (sd *StubDeployer) Prepare(*step.PrepareStep, []string) error {
 	sd.prepareCalled = true
 	if sd.failPrepare != nil {
 		return sd.failPrepare
 	}
 	return nil
 }
-func (sd *StubDeployer) Cleanup(*step.CleanupStep) error {
+func (sd *StubDeployer) Cleanup(*step.CleanupStep, []string) error {
 	sd.cleanupCalled = true
 	if sd.failCleanup != nil {
 		return sd.failCleanup

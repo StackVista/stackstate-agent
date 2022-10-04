@@ -73,26 +73,21 @@
   ignore_errors: yes
   block:
     - name: Cleanup StackState Agent v1 Docker - Kill running process
-      ignore_errors: true
       shell: "docker kill agent-v1"
 
     - name: Cleanup StackState Agent v1 Docker - Remove container
-      ignore_errors: true
       shell: "docker rm -f agent-v1"
 
     - name: Cleanup StackState Agent v1 Docker - Remove image
-      ignore_errors: true
       shell: "docker rmi agent-v1 --force"
 
     - name: Remove run cache configurations
-      ignore_errors: true
       become: yes
       file:
         path: /opt/stackstate-agent/run-v1
         state: absent
 
     - name: Remove conf.d files
-      ignore_errors: true
       become: yes
       file:
         path: /home/ubuntu/conf.d

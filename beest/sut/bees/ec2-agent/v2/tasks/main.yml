@@ -108,14 +108,12 @@
         state: absent
 
     - name: Remove run cache configurations
-      ignore_errors: true
       become: yes
       file:
         path: /opt/stackstate-agent/run
         state: absent
 
     - name: Remove conf.d files
-      ignore_errors: true
       become: yes
       file:
         path: /etc/stackstate-agent/conf.d

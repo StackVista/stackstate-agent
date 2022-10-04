@@ -1,5 +1,4 @@
 ---
-# tasks file for ec2-splunk
 - name: Splunk Prepare Tasks
   tags: prepare
   become: yes
@@ -33,8 +32,8 @@
         src: "{{ splunk }}"
         path: /usr/local/bin/splunk
         state: link
-        owner: "{{ os_user }}"
-        group: "{{ os_group }}"
+        owner: splunk
+        group: splunk
 
     - name: Create file for default admin credentials
       template:
@@ -46,8 +45,8 @@
         path: "{{ splunk_home }}/etc/.ui_login"
         state: touch
         mode: '0644'
-        owner: "{{ os_user }}"
-        group: "{{ os_group }}"
+        owner: splunk
+        group: splunk
 
     - name: Create file for default user/UI preferences
       template:
@@ -61,3 +60,24 @@
 
     - name: Start and Accept Licence
       shell: "{{ splunk }} start --answer-yes --auto-ports --no-prompt --accept-license"
+
+
+## Cleanup
+- name: Splunk Cleanup tasks
+  tags: cleanup
+  ignore_errors: yes
+  block:
+    - name: Uninstall splunk
+      become: yes
+      apt:
+        pkg: splunk
+        state: absent
+
+    - name: Remove configurations and packages
+      become: yes
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - "{{ splunk_home }}"
+        - /home/ubuntu/splunk.deb

@@ -1,5 +1,4 @@
 ---
-# tasks file for ec2-splunk
 - name: Splunk v1 to v2 pickle conversion
   tags: prepare
   become: yes
