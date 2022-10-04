@@ -1,0 +1,122 @@
+---
+- name: StackState Agent prepare tasks
+  tags: prepare
+  block:
+    - name: "Install stackstate-agent (WARNING: Pointing to the Simulator instead of StackState, and the packets is then forwarded to StackState)"
+      when: enable_sts_simulator is defined and enable_sts_simulator == true
+      shell: "curl -o- {{ agent_repo_url }}/install.sh | bash"
+      register: agent_install_result
+      until: agent_install_result is not failed
+      retries: 5
+      delay: 60
+      environment:
+        LOG_PAYLOADS: "true"
+        STS_LOG_LEVEL: "debug"
+        STS_API_KEY: "{{ sts_api_key }}"
+        STS_URL: "http://localhost:7078/stsAgent"
+        STS_HOSTNAME: "{{ inventory_hostname }}"
+        CODE_NAME: "{{ agent_current_branch }}"
+        SKIP_SSL_VALIDATION: "false"
+
+    - name: Install stackstate-agent
+      when: enable_sts_simulator is not defined or enable_sts_simulator == false
+      shell: "curl -o- {{ agent_repo_url }}/install.sh | bash"
+      register: agent_install_result
+      until: agent_install_result is not failed
+      retries: 5
+      delay: 60
+      environment:
+        LOG_PAYLOADS: "true"
+        STS_LOG_LEVEL: "debug"
+        STS_API_KEY: "{{ sts_api_key }}"
+        STS_URL: "{{ sts_url }}/receiver/stsAgent"
+        STS_HOSTNAME: "{{ inventory_hostname }}"
+        CODE_NAME: "{{ agent_current_branch }}"
+        SKIP_SSL_VALIDATION: "false"
+
+    # AWS Check
+    - include_tasks: configure_check.yml
+      when: aws_integration is defined
+      vars:
+        check_name: "aws_topology"
+
+    # Splunk Event Check
+    - include_tasks: configure_check.yml
+      when: splunk_integration is defined
+      vars:
+        check_name: "splunk_event"
+
+    # Splunk Health Check
+    - include_tasks: configure_check.yml
+      when: splunk_integration is defined
+      vars:
+        check_name: "splunk_health"
+
+    # Splunk Metric Check
+    - include_tasks: configure_check.yml
+      when: splunk_integration is defined
+      vars:
+        check_name: "splunk_metric"
+
+    # Splunk Topology Check
+    - include_tasks: configure_check.yml
+      when: splunk_integration is defined
+      vars:
+        check_name: "splunk_topology"
+
+    # Agent V2 Sample Check
+    - include_tasks: ../v2/tasks/setup_sample_check.yml
+      when: agent_integration_sample_v2 is defined
+      vars:
+        check_name: "agent_integration_sample_v2"
+
+    # Agent V2 Sample Stateful Check
+    - include_tasks: ../v2/tasks/setup_sample_check.yml
+      when: agent_integration_sample_v2_stateful is defined
+      vars:
+        check_name: "agent_integration_sample_v2_stateful"
+
+    # Agent V2 Sample Transactional Check
+    - include_tasks: ../v2/tasks/setup_sample_check.yml
+      when: agent_integration_sample_v2_transactional is defined
+      vars:
+        check_name: "agent_integration_sample_v2_transactional"
+
+    # Restart Agent after configuring checks
+    - name: Restart stackstate-agent
+      become: yes
+      service:
+        name: stackstate-agent
+        state: restarted
+
+
+## Cleanup
+- name: StackState Agent cleanup tasks
+  tags: cleanup
+  ignore_errors: yes
+  block:
+    - name: Uninstall stackstate-agent
+      become: yes
+      apt:
+        pkg: stackstate-agent
+        state: absent
+
+    - name: Remove configurations
+      become: yes
+      file:
+        path: /etc/stackstate-agent
+        state: absent
+
+    - name: Remove run cache configurations
+      ignore_errors: true
+      become: yes
+      file:
+        path: /opt/stackstate-agent/run
+        state: absent
+
+    - name: Remove conf.d files
+      ignore_errors: true
+      become: yes
+      file:
+        path: /etc/stackstate-agent/conf.d
+        state: absent

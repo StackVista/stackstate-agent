@@ -48,3 +48,48 @@ you are currently on (among other important variables).
 In some cases if you need to spin up the same testing _yard_ multiple times (or just want a more explicit identifier),
 you can set a different value for the `RUN_ID` variable in your `.envrc`. The `RUN_ID` is not only used for the
 Terraform state file name, but also used in the names of the infrastructure resources.
+
+
+### Feedback / Feature Requests
+
+- [Minor] Allow beast to run in the background, you can then shell in and out without the risk of closing the "make terminal window"
+- [Minor] Have the option to run cleanup and destroy at the same time, For example remove command will run both
+- [Major] Expose the active scenario in the scenarios.yml file to the python tests. (Similar as with the yard_id)
+  - This will allow some flexibility on selecting files in the same env and knowing the testing and root dir
+- [Moderate] Group the .gv file + test_*-*.json file under a folder structure with the root folder the test name as seen with
+  the json file and the sub folder should be date-time.
+  - At the moment it creates a lot of span if you rerun the tests multiple times
+- [Major] Allow the beest command to include --exclude command to ignore a certain playbook cycle
+  - For example `beest prepare splunk --exclude k8s-stackstate` this will allow cli level ignoring of a playbook section (For example through a set variable)
+- [Major] Add functionality to reuse parts within the tests such as conftest.py instead of copying the same file and logic
+- [Major] Move the --reset command to prepare stage instead of verify, This will allow the cleanup to be ran before running the prepare
+  - This will assist in the development cycle of rerunning without destroying the infra
+
+
+## How to setup development environment for test
+We need python 3.9 for Beest.
+
+```shell
+cd beest
+python3 -m venv venv
+source venv/bin/activate
+pip install -r ../.ci-builders/beest-base/requirements-pip-full.txt
+pip install -e testframework/stscliv1/
+pip install -e testframework/ststest/
+```
+
+## How to run the pytests outside of the Beest Docker Instance (IDE)
+- First you need to deploy the required instances before you can run them inside your IDE. Your pytests will still use these remote resources but will execute the test from your local machine
+
+```shell
+- make
+- beest create <INTEGRATION>
+- beest prepare <INTEGRATION>
+
+# Now you are ready to run things locally, you can either close Beest or leave it running in the background, the local
+# execution of py files is not dependant on the Beest docker instance (I will recommend leaving the docker instance
+# open so that you can kill your resource when you are done)
+```
+
+- Exit the beest docker container, or leave it open, your choice.
+- Head over to the `beest/tests/<INTEGRATION>` folder and run any of the python scripts for the same `<INTEGRATION>` you ran the `create` and `prepare` for.

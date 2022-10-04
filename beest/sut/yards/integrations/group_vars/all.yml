@@ -19,3 +19,8 @@ sts_api_key: "{{ yard_id }}"
 sts_url: "https://{{ yard_id }}.{{ cluster_name }}"
 
 agent_helm_chart_version: "{{ lookup('env', 'AGENT_HELM_CHART_VERSION') or 'latest' }}"
+
+# Integrations
+agent_integration_sample_v2: true
+agent_integration_sample_v2_stateful: true
+agent_integration_sample_v2_transactional: true

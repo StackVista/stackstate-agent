@@ -1,3 +1,5 @@
+include sut/yards/splunk/Makefile
+
 .SHELLFLAGS = -ec
 
 SHELL         := /bin/bash
@@ -25,7 +27,7 @@ STS_DOCKER_TEST_REPO         ?= stackstate-agent-2-test
 STS_DOCKER_TEST_REPO_CLUSTER ?= stackstate-cluster-agent-test
 PROCESS_AGENT_TEST_REPO      ?= stackstate-process-agent-test
 
-BASE_KEEPER_IMAGE  = artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20220922
+BASE_KEEPER_IMAGE  = artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20220926
 KEEPER_IMAGE       = beest:${BRANCH}
 KEEPER_CONTAINER   = beest
 VOLUME_GO_PKG_NAME = beest-go-volume
@@ -36,6 +38,7 @@ DOCKER_ENV		   = --env AGENT_CURRENT_BRANCH=${GIT_BRANCH} \
 					 --env STS_DOCKER_TEST_REPO_CLUSTER=${STS_DOCKER_TEST_REPO_CLUSTER} \
 					 --env PROCESS_AGENT_TEST_REPO=${PROCESS_AGENT_TEST_REPO}
 
+# Core commands
 build:
 	docker build -t ${KEEPER_IMAGE} \
 		--build-arg BASE_IMAGE=${BASE_KEEPER_IMAGE} \
@@ -49,18 +52,21 @@ start: build
 	docker run -it --rm \
         --name ${KEEPER_CONTAINER} \
         --volume ${PWD}:/go/src/app \
+        --volume ${PWD}/../dev/agent-v1-to-v2-pickle-conversion:/go/src/app/tools/agent-v1-to-v2-pickle-conversion \
         --volume /var/run/docker.sock:/var/run/docker.sock:ro \
         --mount source=${VOLUME_GO_PKG_NAME},target=/go/pkg \
         --network host \
         ${DOCKER_ENV} \
         ${KEEPER_IMAGE}
 
+stop:
+	-docker kill ${KEEPER_CONTAINER}
+
 shell:
 	docker exec -ti ${KEEPER_CONTAINER} bash --init-file ./bootstrap.sh
 
 shell-root:
 	docker exec --user root -ti ${KEEPER_CONTAINER} bash
-
 
 # Beest go unit test
 go-test:
