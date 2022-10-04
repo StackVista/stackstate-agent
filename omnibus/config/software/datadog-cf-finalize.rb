@@ -28,7 +28,9 @@ build do
             mkdir "#{cf_bin_root_bin}/agent"
 
             copy "#{cf_source_root}/agent/agent.exe", "#{cf_bin_root_bin}"
-            copy "#{cf_source_root}/agent/libdatadog-agent-three.dll", "#{cf_bin_root_bin}"
+            if with_python_runtime? "3"
+                copy "#{cf_source_root}/agent/libdatadog-agent-three.dll", "#{cf_bin_root_bin}"
+            end
             if with_python_runtime? "2"
                 copy "#{cf_source_root}/agent/libdatadog-agent-two.dll", "#{cf_bin_root_bin}"
             end
