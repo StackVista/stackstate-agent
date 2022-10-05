@@ -8,12 +8,13 @@ import (
 
 var (
 	verifyExclusions []string
+	verifyInclusions []string
 )
 
 func init() {
 	rootCmd.AddCommand(cleanupCmd)
-
 	cleanupCmd.Flags().StringArrayVarP(&verifyExclusions, ExclusionsFlag, ExclusionsShortFlag, []string{}, "exclude certain bees")
+	cleanupCmd.Flags().StringArrayVarP(&verifyInclusions, InclusionsFlag, InclusionsShortFlag, []string{}, "cleanup only the specified yard role")
 }
 
 var cleanupCmd = &cobra.Command{
@@ -30,5 +31,5 @@ func cleanup(deployer driver.Deployer, scenario *Scenario) error {
 	create := scenario.generateCreateStep(runId)
 	prepare := step.Prepare(create)
 	cleanup := step.Cleanup(prepare)
-	return deployer.Cleanup(cleanup, verifyExclusions)
+	return deployer.Cleanup(cleanup, verifyExclusions, verifyInclusions)
 }

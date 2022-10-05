@@ -10,8 +10,8 @@ type Provisioner interface {
 
 // The Deployer provisions applications and its configurations
 type Deployer interface {
-	Prepare(step *step.PrepareStep, exclusions []string) error
-	Cleanup(step *step.CleanupStep, exclusions []string) error
+	Prepare(step *step.PrepareStep, exclusions []string, inclusions []string) error
+	Cleanup(step *step.CleanupStep, exclusions []string, inclusions []string) error
 }
 
 // The Verifier runs the actual verifications
