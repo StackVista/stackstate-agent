@@ -4,7 +4,7 @@
   tags: stackstate
   roles:
     - role: "{{ bees_path }}/k8s-stackstate"
-      when: ("stackstate" in includes) or includes|length == 0
+      when: ("stackstate" in only) or only | length == 0
       vars:
         sts_ingress: KOPS
         kubecontext: "{{ stackstate_kubecontext }}"
@@ -13,7 +13,7 @@
         k8s_integration:
           cluster_name: "{{ agent_cluster_name }}"
     - role: "{{ bees_path }}/k8s-agent"
-      when: ("stackstate" in includes) or includes|length == 0
+      when: ("stackstate" in only) or only | length == 0
       vars:
         kubecontext: "{{ agent_kubecontext }}"
         cluster_name: "{{ agent_cluster_name }}"

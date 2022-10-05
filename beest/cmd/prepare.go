@@ -9,21 +9,21 @@ import (
 const (
 	ExclusionsFlag      = "exclusion"
 	ExclusionsShortFlag = "x"
-	InclusionsFlag      = "inclusion"
-	InclusionsShortFlag = "r"
+	OnlyFlag            = "only"
+	OnlyShortFlag       = "r"
 	CleanupFlag         = "cleanup"
 )
 
 var (
 	prepareExclusions []string
-	prepareInclusions []string
+	prepareOnly       []string
 	cleanupFlag       bool
 )
 
 func init() {
 	rootCmd.AddCommand(prepareCmd)
 	prepareCmd.Flags().StringArrayVarP(&prepareExclusions, ExclusionsFlag, ExclusionsShortFlag, []string{}, "exclude certain bees")
-	prepareCmd.Flags().StringArrayVarP(&prepareInclusions, InclusionsFlag, InclusionsShortFlag, []string{}, "include only certain bees")
+	prepareCmd.Flags().StringArrayVarP(&prepareOnly, OnlyFlag, OnlyShortFlag, []string{}, "include only certain bees")
 	prepareCmd.Flags().BoolVar(&cleanupFlag, CleanupFlag, false, "optionally run cleanup before prepare")
 }
 
@@ -42,10 +42,10 @@ func prepare(deployer driver.Deployer, scenario *Scenario) error {
 	prepare := step.Prepare(create)
 	if cleanupFlag {
 		cleanup := step.Cleanup(prepare)
-		err := deployer.Cleanup(cleanup, prepareExclusions, prepareInclusions)
+		err := deployer.Cleanup(cleanup, prepareExclusions, prepareOnly)
 		if err != nil {
 			return err
 		}
 	}
-	return deployer.Prepare(prepare, prepareExclusions, prepareInclusions)
+	return deployer.Prepare(prepare, prepareExclusions, prepareOnly)
 }

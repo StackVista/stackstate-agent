@@ -794,7 +794,7 @@ pre_release_cluster_agent_image:
   stage: acceptance_create_infra
   script:
     - beest create $BEEST_SCENARIO -y
-    - beest prepare $BEEST_SCENARIO --inclusion stackstate
+    - beest prepare $BEEST_SCENARIO --only stackstate
 
 # Primary test steps for all the beest builds
 .beest_test: &beest_test
@@ -802,10 +802,10 @@ pre_release_cluster_agent_image:
   stage: acceptance_tests_general
   timeout: 80 minutes
   script:
-    - beest test $BEEST_SCENARIO --no-destroy
+    - beest test $BEEST_SCENARIO --no-destroy --exclusion stackstate
 
 # Primary test steps for all the beest builds
-.beest_test_ignore_stackstate_deploy: &beest_test_ignore_stackstate_redeploy
+.beest_test_ignore_stackstate: &beest_test_ignore_stackstate
   <<: *beest_artifacts
   stage: acceptance_tests_general
   timeout: 80 minutes
@@ -967,7 +967,7 @@ beest_k8s_dockerd_create:
 
 beest_k8s_dockerd_test:
   <<: *beest
-  <<: *beest_test_ignore_stackstate_redeploy
+  <<: *beest_test_ignore_stackstate
   <<: *beest_k8s_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
@@ -1002,7 +1002,7 @@ beest_k8s_containerd_create:
 
 beest_k8s_containerd_test:
   <<: *beest
-  <<: *beest_test_ignore_stackstate_redeploy
+  <<: *beest_test_ignore_stackstate
   <<: *beest_k8s_containerd_variables
   rules:
     - *kubernetes_ignore_rule
@@ -1332,7 +1332,7 @@ beest_otel_create:
 
 beest_otel_test:
   <<: *beest
-  <<: *beest_test_ignore_stackstate_redeploy
+  <<: *beest_test_ignore_stackstate
   <<: *beest_otel_variables
   rules:
     - *beest_otel_ignore_rule
@@ -1381,7 +1381,7 @@ beest_splunk_create:
 
 beest_splunk_test:
   <<: *beest
-  <<: *beest_test_ignore_stackstate_redeploy
+  <<: *beest_test_ignore_stackstate
   <<: *beest_splunk_variables
   # Increase timeout as failure may cause it to run over and block debugging
   timeout: 105 minutes

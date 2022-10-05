@@ -4,7 +4,7 @@
   tags: stackstate
   roles:
     - role: "{{ bees_path }}/k8s-stackstate"
-      when: ("stackstate" in includes) or includes|length == 0
+      when: ("stackstate" in only) or only | length == 0
       vars:
         sts_ingress: KOPS
 
@@ -14,7 +14,7 @@
   tags: otel
   roles:
     - role: "{{ bees_path }}/otel-lambda"
-      when: ("otel" in includes) or includes|length == 0
+      when: ("otel" in only) or only | length == 0
 
 - name: VM Agent
   hosts: agent
@@ -22,4 +22,4 @@
   tags: ec2-agent-v2
   roles:
     - role: "{{ bees_path }}/ec2-agent/v2"
-      when: ("ec2-agent-v2" in includes) or includes|length == 0
+      when: ("ec2-agent-v2" in only) or only | length == 0

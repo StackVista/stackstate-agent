@@ -18,13 +18,13 @@ var (
 	noDestroy      bool
 	reset          bool
 	testExclusions []string
-	testInclusions []string
+	testOnly       []string
 )
 
 func init() {
 	rootCmd.AddCommand(testCmd)
 	testCmd.Flags().StringArrayVarP(&testExclusions, ExclusionsFlag, ExclusionsShortFlag, []string{}, "exclude certain bees")
-	testCmd.Flags().StringArrayVarP(&testInclusions, InclusionsFlag, InclusionsShortFlag, []string{}, "include only certain bees")
+	testCmd.Flags().StringArrayVarP(&testOnly, OnlyFlag, OnlyShortFlag, []string{}, "include only certain bees")
 	testCmd.Flags().BoolVar(&noDestroy, NoDestroyFlag, false, "do not destroy the yard")
 	testCmd.Flags().BoolVar(&reset, ResetFlag, false, "execute a cleanup before prepare if tests run already")
 }
@@ -63,15 +63,12 @@ func test(provisioner driver.Provisioner, deployer driver.Deployer, verifier dri
 	// var cleanupError error
 	if reset {
 		// if cleanup fails during reset, stop
-		if err := deployer.Cleanup(cleanup, testExclusions, testInclusions); err != nil {
+		if err := deployer.Cleanup(cleanup, testExclusions, testOnly); err != nil {
 			return []error{err}
 		}
 	}
 
-	log.Printf("%s", testExclusions)
-	log.Printf("%s", testInclusions)
-
-	prepareError := deployer.Prepare(prepare, testExclusions, testInclusions)
+	prepareError := deployer.Prepare(prepare, testExclusions, testOnly)
 	var verifyError error
 	if prepareError == nil {
 		// if prepare did not fail, verify
@@ -81,7 +78,7 @@ func test(provisioner driver.Provisioner, deployer driver.Deployer, verifier dri
 		log.Printf("Not running verify step because prepare failed: %s\n", prepareError)
 	}
 
-	cleanupError := deployer.Cleanup(cleanup, testExclusions, testInclusions)
+	cleanupError := deployer.Cleanup(cleanup, testExclusions, testOnly)
 	var destroyError error
 	if !noDestroy {
 		destroyError = provisioner.Destroy(destroy, false)

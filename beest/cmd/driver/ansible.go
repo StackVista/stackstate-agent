@@ -26,21 +26,21 @@ type AnsibleInventory struct {
 
 type AnsibleDeployer struct{}
 
-func (ad *AnsibleDeployer) Prepare(step *step.PrepareStep, exclusions []string, inclusions []string) error {
+func (ad *AnsibleDeployer) Prepare(step *step.PrepareStep, exclusions []string, only []string) error {
 	tags := []string{"prepare"}
-	return play(step.Inventory(), step.Playbook(), step.Yard.TestingDir(), tags, exclusions, inclusions)
+	return play(step.Inventory(), step.Playbook(), step.Yard.TestingDir(), tags, exclusions, only)
 }
 
-func (ad *AnsibleDeployer) Cleanup(step *step.CleanupStep, exclusions []string, inclusions []string) error {
+func (ad *AnsibleDeployer) Cleanup(step *step.CleanupStep, exclusions []string, only []string) error {
 	tags := []string{"cleanup"}
-	return play(step.Inventory(), step.Playbook(), step.Yard.TestingDir(), tags, exclusions, inclusions)
+	return play(step.Inventory(), step.Playbook(), step.Yard.TestingDir(), tags, exclusions, only)
 }
 
-func play(inv, pb, testingDir string, tags []string, exclusions []string, inclusions []string) error {
+func play(inv, pb, testingDir string, tags []string, exclusions []string, only []string) error {
 	vars := map[string]interface{}{
 		"bees_path":           sut.BeesPath(),
 		"scenario_test_group": testingDir,
-		"includes":            inclusions,
+		"only":                only,
 	}
 
 	runOption := &playbook.AnsiblePlaybookOptions{

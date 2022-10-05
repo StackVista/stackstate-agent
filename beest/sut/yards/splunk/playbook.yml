@@ -5,7 +5,7 @@
   tags: stackstate
   roles:
     - role: "{{ bees_path }}/k8s-stackstate"
-      when: ("stackstate" in includes) or includes | length == 0
+      when: ("stackstate" in only) or only | length == 0
       vars:
         sts_ingress: KOPS
 
@@ -16,7 +16,7 @@
   tags: ec2-splunk
   roles:
     - role: "{{ bees_path }}/ec2-splunk"
-      when: ("ec2-splunk" in includes) or includes | length == 0
+      when: ("ec2-splunk" in only) or only | length == 0
 
 # We always run the ec2-simulator even if it is disabled to clean up if it goes from enabled to disabled
 # Always keep this after the ec2-splunk role as the ec2-splunk restarts the host machine to get rid of certain locks
@@ -28,7 +28,7 @@
   tags: stackstate-simulator
   roles:
     - role: "{{ bees_path }}/ec2-simulator"
-      when: ("stackstate-simulator" in includes) or includes | length == 0
+      when: ("stackstate-simulator" in only) or only | length == 0
 
 ## Install Agent V1 alongside Agent V2
 ## Warning do not run this at the same time as agent v2 as it might create unexpected behaviour
@@ -38,7 +38,7 @@
 #  tags: ec2-agent-v1
 #  roles:
 #    - role: "{{ bees_path }}/ec2-agent/v1"
-#      when: ("ec2-agent-v1" in includes) or includes | length == 0
+#      when: ("ec2-agent-v1" in only) or only | length == 0
 
 # The Agent will automatically point to the simulator if it is enabled
 # Install Agent V2
@@ -48,4 +48,4 @@
   tags: ec2-agent-v2
   roles:
     - role: "{{ bees_path }}/ec2-agent/v2"
-      when: ("ec2-agent-v2" in includes) or includes | length == 0
+      when: ("ec2-agent-v2" in only) or only | length == 0
