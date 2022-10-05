@@ -118,13 +118,13 @@ def apply_branding(ctx):
     do_sed_rename(ctx, 's/DisableAPIKeyChecking:    false/DisableAPIKeyChecking:    true/g', "./pkg/forwarder/forwarder.go")
 
     # cmd/agent/common/common_windows.go
-    do_sed_rename(ctx, 's/"programdata\\\\\\\\datadog"/"programdata\\\\\\\\stackstate"/g',
+    do_sed_rename(ctx, 's/"programdata\\\\\\\\\\\\\\\\datadog"/"programdata\\\\\\\\\\\\\\\\stackstate"/g',
                   "./cmd/agent/common/common_windows.go")
-    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\datadog"/"ProgramData\\\\\\\\StackState"/g',
+    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\\\\\\\\\datadog"/"ProgramData\\\\\\\\\\\\\\\\StackState"/g',
                   "./cmd/agent/common/common_windows.go")
     do_sed_rename(ctx, 's/"Datadog"/"StackState"/g',
                   "./cmd/agent/common/common_windows.go")
-    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\DataDog"/"ProgramData\\\\\\\\StackState"/g',
+    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\\\\\\\\\DataDog"/"ProgramData\\\\\\\\\\\\\\\\StackState"/g',
                   "./cmd/agent/common/common_windows.go")
     do_sed_rename(ctx, 's/"SOFTWARE\\\\DataDog\\\\"/"SOFTWARE\\\\\StackState\\\\"/g',
                   "./cmd/agent/common/common_windows.go")
@@ -134,26 +134,26 @@ def apply_branding(ctx):
                   "./tools/windows/install-help/cal/stringtable.rc")
     do_sed_rename(ctx, 's/"\\StackState\\StackVista"/"\\StackState\\StackState Agent"/g',
                   "./tools/windows/install-help/cal/stringtable.rc")
-    do_sed_rename(ctx, 's/"\\\\\\\\StackState\\\\\\\\StackVista"/"\\\\\\\\StackState\\\\\\\\StackState Agent"/g',
+    do_sed_rename(ctx, 's/"\\\\\\\\\\\\\\\\StackState\\\\\\\\\\\\\\\\StackVista"/"\\\\\\\\\\\\\\\\StackState\\\\\\\\\\\\\\\\StackState Agent"/g',
                   "./tools/windows/install-help/cal/stringtable.rc")
 
     # systray.go
-    do_sed_rename(ctx, 's/"programdata\\\\\\\\datadog"/"programdata\\\\\\\\stackstate"/g',
+    do_sed_rename(ctx, 's/"programdata\\\\\\\\\\\\\\\\datadog"/"programdata\\\\\\\\\\\\\\\\stackstate"/g',
                   "./cmd/systray/systray.go")
-    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\datadog"/"ProgramData\\\\\\\\StackState"/g',
+    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\\\\\\\\\datadog"/"ProgramData\\\\\\\\\\\\\\\\StackState"/g',
                   "./cmd/systray/systray.go")
     do_sed_rename(ctx, 's/"Datadog"/"Stackstate"/g',
                   "./cmd/systray/systray.go")
-    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\DataDog"/"ProgramData\\\\\\\\StackState"/g',
+    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\\\\\\\\\DataDog"/"ProgramData\\\\\\\\\\\\\\\\StackState"/g',
                   "./cmd/systray/systray.go")
     # pkg/config/config_windows.go
-    do_sed_rename(ctx, 's/"programdata\\\\\\\\datadog"/"programdata\\\\\\\\stackstate"/g',
+    do_sed_rename(ctx, 's/"programdata\\\\\\\\\\\\\\\\datadog"/"programdata\\\\\\\\\\\\\\\\stackstate"/g',
                   "./pkg/config/config_windows.go")
-    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\datadog"/"ProgramData\\\\\\\\StackState"/g',
+    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\\\\\\\\\datadog"/"ProgramData\\\\\\\\\\\\\\\\StackState"/g',
                   "./pkg/config/config_windows.go")
     do_sed_rename(ctx, 's/"Datadog"/"Stackstate"/g',
                   "./pkg/config/config_windows.go")
-    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\DataDog"/"ProgramData\\\\\\\\StackState"/g',
+    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\\\\\\\\\DataDog"/"ProgramData\\\\\\\\\\\\\\\\StackState"/g',
                   "./pkg/config/config_windows.go")
     do_sed_rename(ctx, 's/"SOFTWARE\\\\DataDog\\\\"/"SOFTWARE\\\\\StackState\\\\"/g',
                   "./pkg/config/config_windows.go")
@@ -171,45 +171,45 @@ def apply_branding(ctx):
                   "./cmd/process-agent/main_windows.go")
     do_sed_rename(ctx, 's/"datadog-trace-agent"/"stackstate-trace-agent"/g',
                   "./cmd/trace-agent/main_windows.go")
-    do_sed_rename(ctx, 's/"c:\\\\\\\\programdata\\\\\\\\datadog\\\\\\\\datadog.yaml"/"c:\\\\\\\\programdata\\\\\\\\stackstate\\\\\\\\stackstate.yaml"/g',
+    do_sed_rename(ctx, 's/"c:\\\\\\\\\\\\\\\\programdata\\\\\\\\\\\\\\\\datadog\\\\\\\\\\\\\\\\datadog.yaml"/"c:\\\\\\\\\\\\\\\\programdata\\\\\\\\\\\\\\\\stackstate\\\\\\\\\\\\\\\\stackstate.yaml"/g',
                   "./cmd/process-agent/main_windows.go")
-    do_sed_rename(ctx, 's/"c:\\\\\\\\programdata\\\\\\\\datadog\\\\\\\\system-probe.yaml"/"c:\\\\\\\\programdata\\\\\\\\stackstate\\\\\\\\system-probe.yaml"/g',
+    do_sed_rename(ctx, 's/"c:\\\\\\\\\\\\\\\\programdata\\\\\\\\\\\\\\\\datadog\\\\\\\\\\\\\\\\system-probe.yaml"/"c:\\\\\\\\\\\\\\\\programdata\\\\\\\\\\\\\\\\stackstate\\\\\\\\\\\\\\\\system-probe.yaml"/g',
                   "./cmd/process-agent/main_windows.go")
-    do_sed_rename(ctx, 's/"c:\\\\\\\\programdata\\\\\\\\datadog\\\\\\\\conf.d"/"c:\\\\\\\\programdata\\\\\\\\stackstate\\\\\\\\conf.d"/g',
+    do_sed_rename(ctx, 's/"c:\\\\\\\\\\\\\\\\programdata\\\\\\\\\\\\\\\\datadog\\\\\\\\\\\\\\\\conf.d"/"c:\\\\\\\\\\\\\\\\programdata\\\\\\\\\\\\\\\\stackstate\\\\\\\\\\\\\\\\conf.d"/g',
                   "./cmd/process-agent/main_windows.go")
-    do_sed_rename(ctx, 's/"c:\\\\\\\\programdata\\\\\\\\datadog\\\\\\\\logs\\\\\\\\process-agent.log"/"c:\\\\\\\\programdata\\\\\\\\stackstate\\\\\\\\logs\\\\\\\\process-agent.log"/g',
+    do_sed_rename(ctx, 's/"c:\\\\\\\\\\\\\\\\programdata\\\\\\\\\\\\\\\\datadog\\\\\\\\\\\\\\\\logs\\\\\\\\\\\\\\\\process-agent.log"/"c:\\\\\\\\\\\\\\\\programdata\\\\\\\\\\\\\\\\stackstate\\\\\\\\\\\\\\\\logs\\\\\\\\\\\\\\\\process-agent.log"/g',
                   "./cmd/process-agent/main_windows.go")
     do_sed_rename(ctx, 's/"datadog.yaml"/"stackstate.yaml"/g',
                   "./cmd/process-agent/main_windows.go")
     # pkg/pidfile/pidfile_windows.go
-    do_sed_rename(ctx, 's/"programdata\\\\\\\\datadog"/"programdata\\\\\\\\stackstate"/g',
+    do_sed_rename(ctx, 's/"programdata\\\\\\\\\\\\\\\\datadog"/"programdata\\\\\\\\\\\\\\\\stackstate"/g',
                   "./pkg/pidfile/pidfile_windows.go")
-    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\datadog"/"ProgramData\\\\\\\\StackState"/g',
+    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\\\\\\\\\datadog"/"ProgramData\\\\\\\\\\\\\\\\StackState"/g',
                   "./pkg/pidfile/pidfile_windows.go")
-    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\DataDog"/"ProgramData\\\\\\\\StackState"/g',
+    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\\\\\\\\\DataDog"/"ProgramData\\\\\\\\\\\\\\\\StackState"/g',
                   "./pkg/pidfile/pidfile_windows.go")
     do_sed_rename(ctx, 's/"Datadog"/"Stackstate"/g',
                   "./pkg/pidfile/pidfile_windows.go")
     do_sed_rename(ctx, 's/"datadog"/"stackstate"/g',
                   "./pkg/pidfile/pidfile_windows.go")
-    do_sed_rename(ctx, 's/DataDog\\\\\\\\datadog-agent.pid"/StackState\\\\\\\\stackstate-agent.pid"/g',
+    do_sed_rename(ctx, 's/DataDog\\\\\\\\\\\\\\\\datadog-agent.pid"/StackState\\\\\\\\\\\\\\\\stackstate-agent.pid"/g',
                   "./pkg/pidfile/pidfile_windows.go")
     # pkg/trace/flags/flags_windows.go
-    do_sed_rename(ctx, 's/"programdata\\\\\\\\datadog"/"programdata\\\\\\\\stackstate"/g',
+    do_sed_rename(ctx, 's/"programdata\\\\\\\\\\\\\\\\datadog"/"programdata\\\\\\\\\\\\\\\\stackstate"/g',
                   "./pkg/trace/flags/flags_windows.go")
-    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\datadog"/"ProgramData\\\\\\\\StackState"/g',
+    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\\\\\\\\\datadog"/"ProgramData\\\\\\\\\\\\\\\\StackState"/g',
                   "./pkg/trace/flags/flags_windows.go")
     do_sed_rename(ctx, 's/"Datadog"/"Stackstate"/g',
                   "./pkg/trace/flags/flags_windows.go")
-    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\DataDog"/"ProgramData\\\\\\\\StackState"/g',
+    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\\\\\\\\\DataDog"/"ProgramData\\\\\\\\\\\\\\\\StackState"/g',
                   "./pkg/trace/flags/flags_windows.go")
-    do_sed_rename(ctx, 's/"c:\\\\\\\\programdata\\\\\\\\datadog\\\\\\\\datadog.yaml"/"c:\\\\\\\\programdata\\\\\\\\StackState\\\\\\\\stackstate.yaml"/g',
+    do_sed_rename(ctx, 's/"c:\\\\\\\\\\\\\\\\programdata\\\\\\\\\\\\\\\\datadog\\\\\\\\\\\\\\\\datadog.yaml"/"c:\\\\\\\\\\\\\\\\programdata\\\\\\\\\\\\\\\\StackState\\\\\\\\\\\\\\\\stackstate.yaml"/g',
                   "./pkg/trace/flags/flags_windows.go")
     do_sed_rename(ctx, 's/"Datadog"/"StackState"/g',
                   "./pkg/util/winutil/shutil.go")
     do_sed_rename(ctx, 's/"Datadog Agent"/"StackState Agent"/g',
                   "./pkg/util/winutil/shutil.go")
-    do_sed_rename(ctx, 's/"SOFTWARE\\\\\\\\Datadog\\\\\\\\"/"SOFTWARE\\\\\\\\StackState\\\\\\\\"/g',
+    do_sed_rename(ctx, 's/"SOFTWARE\\\\\\\\\\\\\\\\Datadog\\\\\\\\\\\\\\\\"/"SOFTWARE\\\\\\\\\\\\\\\\StackState\\\\\\\\\\\\\\\\"/g',
                   "./pkg/util/winutil/shutil.go")
 
     # ApiKeys
@@ -316,25 +316,25 @@ def apply_branding(ctx):
     do_sed_rename(ctx, apm_dd_tags_replace, "./pkg/trace/agent/agent.go")
 
     # pkg/trace/config/config_windows.go
-    do_sed_rename(ctx, 's/"programdata\\\\\\\\datadog"/"programdata\\\\\\\\stackstate"/g',
+    do_sed_rename(ctx, 's/"programdata\\\\\\\\\\\\\\\\datadog"/"programdata\\\\\\\\\\\\\\\\stackstate"/g',
                   "./pkg/trace/config/config_windows.go")
-    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\datadog"/"ProgramData\\\\\\\\StackState"/g',
+    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\\\\\\\\\datadog"/"ProgramData\\\\\\\\\\\\\\\\StackState"/g',
                   "./pkg/trace/config/config_windows.go")
     do_sed_rename(ctx, 's/"Datadog"/"Stackstate"/g',
                   "./pkg/trace/config/config_windows.go")
-    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\DataDog"/"ProgramData\\\\\\\\StackState"/g',
+    do_sed_rename(ctx, 's/"ProgramData\\\\\\\\\\\\\\\\DataDog"/"ProgramData\\\\\\\\\\\\\\\\StackState"/g',
                   "./pkg/trace/config/config_windows.go")
     do_sed_rename(ctx, 's/"datadog.conf"/"stackstate.conf"/g',
                   "./pkg/trace/config/config_windows.go")
-    do_sed_rename(ctx, 's/"c:\\\\\\\\programdata\\\\\\\\datadog\\\\\\\\logs\\\\\\\\process-agent.log"/"c:\\\\\\\\programdata\\\\\\\\stackstate\\\\\\\\logs\\\\\\\\process-agent.log"/g',
+    do_sed_rename(ctx, 's/"c:\\\\\\\\\\\\\\\\programdata\\\\\\\\\\\\\\\\datadog\\\\\\\\\\\\\\\\logs\\\\\\\\\\\\\\\\process-agent.log"/"c:\\\\\\\\\\\\\\\\programdata\\\\\\\\\\\\\\\\stackstate\\\\\\\\\\\\\\\\logs\\\\\\\\\\\\\\\\process-agent.log"/g',
                   "./pkg/process/config/config_windows.go")
-    do_sed_rename(ctx, 's/"c:\\\\\\\\Program Files\\\\\\\\Datadog\\\\\\\\Datadog Agent\\\\\\\\bin\\\\\\\\agent.exe"/"c:\\\\\\\\Program Files\\\\\\\\StackState\\\\\\\\StackState Agent\\\\\\\\bin\\\\\\\\agent.exe"/g',
+    do_sed_rename(ctx, 's/"c:\\\\\\\\\\\\\\\\Program Files\\\\\\\\\\\\\\\\Datadog\\\\\\\\\\\\\\\\Datadog Agent\\\\\\\\\\\\\\\\bin\\\\\\\\\\\\\\\\agent.exe"/"c:\\\\\\\\\\\\\\\\Program Files\\\\\\\\\\\\\\\\StackState\\\\\\\\\\\\\\\\StackState Agent\\\\\\\\\\\\\\\\bin\\\\\\\\\\\\\\\\agent.exe"/g',
                   "./pkg/process/config/config_windows.go")
-    do_sed_rename(ctx, 's/c:\\\\\\\\programdata\\\\\\\\datadog/c:\\\\\\\\programdata\\\\\\\\StackState/g',
+    do_sed_rename(ctx, 's/c:\\\\\\\\\\\\\\\\programdata\\\\\\\\\\\\\\\\datadog/c:\\\\\\\\\\\\\\\\programdata\\\\\\\\\\\\\\\\StackState/g',
                   "./pkg/config/config_windows.go")
-    do_sed_rename(ctx, 's/datadog\\\\\\\\logs\\\\\\\\trace-agent.log"/StackState\\\\\\\\logs\\\\\\\\trace-agent.log"/g',
+    do_sed_rename(ctx, 's/datadog\\\\\\\\\\\\\\\\logs\\\\\\\\\\\\\\\\trace-agent.log"/StackState\\\\\\\\\\\\\\\\logs\\\\\\\\\\\\\\\\trace-agent.log"/g',
                   "./pkg/trace/config/config_windows.go")
-    do_sed_rename(ctx, 's/Datadog\\\\\\\\Datadog Agent\\\\\\\\bin\\\\\\\\agent.exe"/StackState\\\\\\\\StackState Agent\\\\\\\\bin\\\\\\\\agent.exe"/g',
+    do_sed_rename(ctx, 's/Datadog\\\\\\\\\\\\\\\\Datadog Agent\\\\\\\\\\\\\\\\bin\\\\\\\\\\\\\\\\agent.exe"/StackState\\\\\\\\\\\\\\\\StackState Agent\\\\\\\\\\\\\\\\bin\\\\\\\\\\\\\\\\agent.exe"/g',
                   "./pkg/trace/config/config_windows.go")
 
 
@@ -428,13 +428,13 @@ def apply_branding(ctx):
                   "./Dockerfiles/agent/install.ps1")
 
     # tools/windows/install-help/uninstall-cmd/cmdline.cpp
-    do_sed_rename(ctx, 's/"C:\\\\\\\\Program Files\\\\\\\\Datadog\\\\\\\\Datadog Agent\\\\\\\\"/"C:\\\\\\\\Program Files\\\\\\\\StackState\\\\\\\\StackState Agent\\\\\\\\"/g',
+    do_sed_rename(ctx, 's/"C:\\\\\\\\\\\\\\\\Program Files\\\\\\\\\\\\\\\\Datadog\\\\\\\\\\\\\\\\Datadog Agent\\\\\\\\\\\\\\\\"/"C:\\\\\\\\\\\\\\\\Program Files\\\\\\\\\\\\\\\\StackState\\\\\\\\\\\\\\\\StackState Agent\\\\\\\\\\\\\\\\"/g',
                   "./tools/windows/install-help/install-cmd/cmdline.cpp")
-    do_sed_rename(ctx, 's/"C:\\\\\\\\ProgramData\\\\\\\\Datadog\\\\\\\\"/"C:\\\\\\\\ProgramData\\\\\\\\StackState\\\\\\\\"/g',
+    do_sed_rename(ctx, 's/"C:\\\\\\\\\\\\\\\\ProgramData\\\\\\\\\\\\\\\\Datadog\\\\\\\\\\\\\\\\"/"C:\\\\\\\\\\\\\\\\ProgramData\\\\\\\\\\\\\\\\StackState\\\\\\\\\\\\\\\\"/g',
                   "./tools/windows/install-help/install-cmd/cmdline.cpp")
-    do_sed_rename(ctx, 's/"C:\\\\\\\\Program Files\\\\\\\\Datadog\\\\\\\\Datadog Agent\\\\\\\\"/"C:\\\\\\\\Program Files\\\\\\\\StackState\\\\\\\\StackState Agent\\\\\\\\"/g',
+    do_sed_rename(ctx, 's/"C:\\\\\\\\\\\\\\\\Program Files\\\\\\\\\\\\\\\\Datadog\\\\\\\\\\\\\\\\Datadog Agent\\\\\\\\\\\\\\\\"/"C:\\\\\\\\\\\\\\\\Program Files\\\\\\\\\\\\\\\\StackState\\\\\\\\\\\\\\\\StackState Agent\\\\\\\\\\\\\\\\"/g',
                   "./tools/windows/install-help/uninstall-cmd/cmdline.cpp")
-    do_sed_rename(ctx, 's/"C:\\\\\\\\ProgramData\\\\\\\\Datadog\\\\\\\\"/"C:\\\\\\\\ProgramData\\\\\\\\StackState\\\\\\\\"/g',
+    do_sed_rename(ctx, 's/"C:\\\\\\\\\\\\\\\\ProgramData\\\\\\\\\\\\\\\\Datadog\\\\\\\\\\\\\\\\"/"C:\\\\\\\\\\\\\\\\ProgramData\\\\\\\\\\\\\\\\StackState\\\\\\\\\\\\\\\\"/g',
                   "./tools/windows/install-help/uninstall-cmd/cmdline.cpp")
 
     # chocolatey/tools-offline/chocolateyinstall.ps1
@@ -514,13 +514,13 @@ def apply_branding(ctx):
 
     # omnibus
     do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/projects/agent.rb")
-    do_sed_rename(ctx, 's/\\\\\\\\etc\\\\\\\\datadog-agent\\\\\\\\extra_package_files/\\\\\\\\etc\\\\\\\\stackstate-agent\\\\\\\\extra_package_files/g',
+    do_sed_rename(ctx, 's/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\datadog-agent\\\\\\\\\\\\\\\\extra_package_files/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\stackstate-agent\\\\\\\\\\\\\\\\extra_package_files/g',
                   "./omnibus/config/projects/agent.rb")
-    do_sed_rename(ctx, 's/\\\\\\\\etc\\\\\\\\datadog-agent\\\\\\\\extra_package_files/\\\\\\\\etc\\\\\\\\stackstate-agent\\\\\\\\extra_package_files/g',
+    do_sed_rename(ctx, 's/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\datadog-agent\\\\\\\\\\\\\\\\extra_package_files/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\stackstate-agent\\\\\\\\\\\\\\\\extra_package_files/g',
                   "./omnibus/config/projects/agent-binaries.rb")
-    do_sed_rename(ctx, 's/\\\\\\\\etc\\\\\\\\datadog-agent\\\\\\\\extra_package_files/\\\\\\\\etc\\\\\\\\stackstate-agent\\\\\\\\extra_package_files/g',
+    do_sed_rename(ctx, 's/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\datadog-agent\\\\\\\\\\\\\\\\extra_package_files/\\\\\\\\\\\\\\\\etc\\\\\\\\\\\\\\\\stackstate-agent\\\\\\\\\\\\\\\\extra_package_files/g',
                   "./omnibus/config/projects/iot-agent.rb")
-    do_sed_rename(ctx, 's/DataDog\\\\\\\\datadog-agent/Stackvista\\\\\\\\stackstate-agent/g', "./omnibus/config/projects/agent.rb")
+    do_sed_rename(ctx, 's/DataDog\\\\\\\\\\\\\\\\datadog-agent/Stackvista\\\\\\\\\\\\\\\\stackstate-agent/g', "./omnibus/config/projects/agent.rb")
     do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/projects/iot-agent.rb")
     do_sed_rename(ctx, 's/\/opt\/datadog/\/opt\/stackstate/g', "./omnibus/config/software/datadog-agent-finalize.rb")
     do_sed_rename(ctx, 's/DataDog\/datadog-agent/StackVista\/stackstate-agent/g', "./omnibus/config/software/datadog-cf-finalize.rb")
