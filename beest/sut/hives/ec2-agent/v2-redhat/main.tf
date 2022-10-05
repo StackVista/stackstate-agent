@@ -3,8 +3,8 @@ resource "tls_private_key" "rsa_key" {
   rsa_bits  = 4096
 }
 
-resource "aws_key_pair" "agent_key_pair" {
-  key_name   = "${var.environment}-agent-v2-key"
+resource "aws_key_pair" "agent_redhat_key_pair" {
+  key_name   = "${var.environment}-agent-redhat-v2-key"
   public_key = tls_private_key.rsa_key.public_key_openssh
 
   tags = {
@@ -12,8 +12,8 @@ resource "aws_key_pair" "agent_key_pair" {
   }
 }
 
-resource "aws_security_group" "agent_group" {
-  name   = "${var.environment}-agent-v2-sg"
+resource "aws_security_group" "agent_redhat_group" {
+  name   = "${var.environment}-agent-redhat-v2-sg"
   vpc_id = var.vpc_id
 
   ingress {
@@ -47,33 +47,28 @@ resource "aws_security_group" "agent_group" {
   }
 }
 
-data "aws_ami" "ubuntu_ami" {
+data "aws_ami" "redhat_ami" {
   most_recent = true
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+    values = ["RHEL-8.6.0_HVM-20220503-x86_64-2-Hourly2-GP2"]
   }
 
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  owners = ["099720109477"] # Canonical
+  owners = ["309956199498"] # amazon
 }
 
-resource "aws_instance" "agent" {
-  ami                         = data.aws_ami.ubuntu_ami.id
+resource "aws_instance" "agent_redhat" {
+  ami                         = data.aws_ami.redhat_ami.id
   instance_type               = "t3.small"
   subnet_id                   = var.subnet_id
   associate_public_ip_address = true
-  key_name                    = aws_key_pair.agent_key_pair.key_name
-  vpc_security_group_ids      = [aws_security_group.agent_group.id]
+  key_name                    = aws_key_pair.agent_redhat_key_pair.key_name
+  vpc_security_group_ids      = [aws_security_group.agent_redhat_group.id]
   iam_instance_profile        = var.integration_profile
 
   tags = {
-    Name                  = "${var.environment}-agent-v2"
+    Name                  = "${var.environment}-agent-redhat-v2"
     Environment           = var.environment
     VantaContainsUserData = false
     VantaDescription      = "Machine used used in acceptance pipeline"

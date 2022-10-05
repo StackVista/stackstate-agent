@@ -16,4 +16,4 @@
   hosts: agent
   gather_facts: true
   roles:
-    - role: "{{ bees_path }}/ec2-agent/v2"
+    - role: "{{ bees_path }}/ec2-agent/v2-ubuntu"

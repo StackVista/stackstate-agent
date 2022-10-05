@@ -30,7 +30,7 @@
   hosts: splunk
   gather_facts: true
   roles:
-    - role: "{{ bees_path }}/ec2-agent/v2"
+    - role: "{{ bees_path }}/ec2-agent/v2-ubuntu"
 
 # Install Agent V1 alongside Agent V2
 #- name: VM Agent V1
