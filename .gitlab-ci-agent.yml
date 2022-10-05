@@ -802,7 +802,7 @@ pre_release_cluster_agent_image:
   stage: acceptance_tests_general
   timeout: 80 minutes
   script:
-    - beest test $BEEST_SCENARIO --no-destroy --exclusion stackstate
+    - beest test $BEEST_SCENARIO --no-destroy
 
 # Primary test steps for all the beest builds
 .beest_test_ignore_stackstate: &beest_test_ignore_stackstate
@@ -810,7 +810,7 @@ pre_release_cluster_agent_image:
   stage: acceptance_tests_general
   timeout: 80 minutes
   script:
-    - beest test $BEEST_SCENARIO --no-destroy
+    - beest test $BEEST_SCENARIO --no-destroy --exclusion stackstate
 
 # Primary destroy steps for all the beest builds
 .beest_destroy: &beest_destroy
