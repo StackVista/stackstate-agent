@@ -412,6 +412,23 @@ build_win:
     when:
       - always
 
+win_cleanup:
+  stage: test
+  interruptible: true
+  needs:
+    - build_win
+  script:
+    - cd C:\ ; Remove-Item workspaces/builds/* -Recurse -Force -Confirm:$false
+    - cd C:\ ; Remove-Item workspaces/caches/* -Recurse -Force -Confirm:$false
+  tags:
+    - windows_agent7_juliano
+  retry:
+    max: 2
+    when:
+      - always
+  allow_failure: true
+
+
 ## pre_release stage
 
 test_deb_renaming:
