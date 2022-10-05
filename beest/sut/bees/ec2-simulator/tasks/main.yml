@@ -1,9 +1,10 @@
 ---
-- name: StackState Simulator prepare tasks
-  tags: prepare
+# We stop the simulator in every case because the more it runs the more it becomes slow and the captured data keeps accumulating
+- name: StackState Simulator stop tasks
+  tags: [prepare, cleanup]
+  when: enable_sts_simulator is defined and enable_sts_simulator == true
   block:
-    - name: Stopping the StackState Simulator docker instance (Pre-Startup Cleanup).
-      ignore_errors: true
+    - name: Stop the Simulator Docker instance
       shell: "docker kill simulator"
 
     - name: Removing the StackState Simulator docker container (Pre-Startup Cleanup).
@@ -12,47 +13,30 @@
 
     - name: Cleaning up any pre-existing simulator images (Pre-Startup Cleanup).
       ignore_errors: true
-      shell: "docker rmi quay.io/stackstate/simulator --force"
+      shell: "docker rmi stackstate/simulator --force"
 
-    - name: Login quay.io to allow access to the 'quay.io/stackstate/simulator' image
-      shell: "docker login -u \"{{ quay_user }}\" -p \"{{ quay_password }}\" \"quay.io\""
-      when:
-        enable_sts_simulator is defined and enable_sts_simulator == true
 
+- name: StackState Simulator prepare tasks
+  tags: prepare
+  when: enable_sts_simulator is defined and enable_sts_simulator == true
+  block:
     - name: "Start the StackState Receiver Simulator (Forward Data To {{ sts_url }}/receiver/stsAgent)"
-      shell: "docker run -dit --restart unless-stopped --name simulator -p 7078:7078 quay.io/stackstate/simulator:latest -v record -p 7078 -t tpl.json --upstream '{{ sts_url }}/receiver'"
-      when:
-        enable_sts_simulator is defined and enable_sts_simulator == true and sts_url is defined
+      shell: "docker run -dit --restart unless-stopped --name simulator -p 7078:7078 stackstate/simulator:latest -v record -p 7078 -t tpl.json --upstream '{{ sts_url }}/receiver'"
+      when: sts_url is defined
 
     - name: Start the StackState Receiver Simulator (No Forwarder)
-      shell: "docker run -dit --restart unless-stopped --name simulator -p 7078:7078 quay.io/stackstate/simulator:latest -v record -p 7078 -t tpl.json"
-      when:
-        enable_sts_simulator is defined and enable_sts_simulator == true and sts_url is not defined
+      shell: "docker run -dit --restart unless-stopped --name simulator -p 7078:7078 stackstate/simulator:latest -v record -p 7078 -t tpl.json"
+      when: sts_url is not defined
 
     - name: Give the StackState Receiver Simulator time to start up (10 sec)
       pause:
         seconds: 10
-      when:
-        enable_sts_simulator is defined and enable_sts_simulator == true
 
     - name: Test The StackState Receiver Simulator
       shell: "curl -o splunk.json http://localhost:7078/download"
       register: simulator_test_result
-      when:
-        enable_sts_simulator is defined and enable_sts_simulator == true
 
     - name: StackState Receiver Simulator Test Results
       debug:
         msg: "{{ simulator_test_result }}"
-      when:
-        enable_sts_simulator is defined and enable_sts_simulator == true and simulator_test_result is defined
-
-## Cleanup
-- name: StackState Simulator cleanup tasks
-  tags: cleanup
-  ignore_errors: yes
-  block:
-    - name: Stop the Simulator Docker instance
-      ignore_errors: true
-      shell: "docker kill simulator"
-
+      when: simulator_test_result is defined

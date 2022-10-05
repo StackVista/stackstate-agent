@@ -54,16 +54,8 @@ Terraform state file name, but also used in the names of the infrastructure reso
 
 - [Minor] Allow beast to run in the background, you can then shell in and out without the risk of closing the "make terminal window"
 - [Minor] Have the option to run cleanup and destroy at the same time, For example remove command will run both
-- [Major] Expose the active scenario in the scenarios.yml file to the python tests. (Similar as with the yard_id)
-  - This will allow some flexibility on selecting files in the same env and knowing the testing and root dir
-- [Moderate] Group the .gv file + test_*-*.json file under a folder structure with the root folder the test name as seen with
-  the json file and the sub folder should be date-time.
-  - At the moment it creates a lot of span if you rerun the tests multiple times
-- [Major] Allow the beest command to include --exclude command to ignore a certain playbook cycle
-  - For example `beest prepare splunk --exclude k8s-stackstate` this will allow cli level ignoring of a playbook section (For example through a set variable)
+- [Moderate] Group the .gv file under the test debug folder
 - [Major] Add functionality to reuse parts within the tests such as conftest.py instead of copying the same file and logic
-- [Major] Move the --reset command to prepare stage instead of verify, This will allow the cleanup to be ran before running the prepare
-  - This will assist in the development cycle of rerunning without destroying the infra
 
 
 ## How to setup development environment for test

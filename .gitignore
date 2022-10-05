@@ -211,9 +211,6 @@ Dockerfiles/cluster-agent/cluster_agent.auth_token
 Dockerfiles/cluster-agent/stackstate-cluster-agent
 Dockerfiles/cluster-agent/dist/
 
-# kubernetes test deployment
-deployment/kubernetes/k8s-*/
-
 # windows ami
 .cd-builders/windows/builder/runner/roles/sa_gitlab_runner_win
 
@@ -222,7 +219,3 @@ deployment/kubernetes/k8s-*/
 
 # Temp State Files
 pkg/collector/check/state/temp-write-to-disk-test/*
-
-# Beest test generated files
-beest/tests/k8s/*.gv
-beest/tests/k8s/*.json

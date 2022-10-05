@@ -460,12 +460,17 @@ func StartAgent() error {
 	common.LoadComponents(config.Datadog.GetString("confd_path"))
 
 	// [STS] create the global transactional components
-	state.InitCheckStateManager()
-	transactionforwarder.InitTransactionalForwarder()
-	transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity())
-	handler.InitCheckManager()
-	txChannelBufferSize, txTimeoutDuration, txEvictionDuration, txTickerInterval := config.GetTxManagerConfig()
-	transactionmanager.InitTransactionManager(txChannelBufferSize, txTickerInterval, txTimeoutDuration, txEvictionDuration)
+	if config.Datadog.GetBool("check_transactionality_enabled") {
+		state.InitCheckStateManager()
+		transactionforwarder.InitTransactionalForwarder()
+		transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity())
+		handler.InitCheckManager()
+		txChannelBufferSize, txTimeoutDuration, txEvictionDuration, txTickerInterval := config.GetTxManagerConfig()
+		transactionmanager.InitTransactionManager(txChannelBufferSize, txTickerInterval, txTimeoutDuration, txEvictionDuration)
+	} else {
+		state.InitCheckStateManager()
+		handler.InitCheckManager()
+	}
 
 	// start the autoconfig, this will immediately run any configured check
 	common.StartAutoConfig()
@@ -521,11 +526,16 @@ func StopAgent() {
 	}
 
 	// [sts] stop the transactional components
-	state.GetCheckStateManager().Clear()
-	handler.GetCheckManager().Stop()
-	transactionbatcher.GetTransactionalBatcher().Stop()
-	transactionforwarder.GetTransactionalForwarder().Stop()
-	transactionmanager.GetTransactionManager().Stop()
+	if config.Datadog.GetBool("check_transactionality_enabled") {
+		state.GetCheckStateManager().Clear()
+		handler.GetCheckManager().Stop()
+		transactionbatcher.GetTransactionalBatcher().Stop()
+		transactionforwarder.GetTransactionalForwarder().Stop()
+		transactionmanager.GetTransactionManager().Stop()
+	} else {
+		state.GetCheckStateManager().Clear()
+		handler.GetCheckManager().Stop()
+	}
 
 	traps.StopServer()
 	api.StopServer()
