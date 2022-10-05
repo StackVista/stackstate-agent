@@ -80,9 +80,10 @@ func buildPyTestCmd(step *step.VerificationStep, watch bool, selection string, i
 	if installDeps {
 		testDepsPath := sut.VerifyRequirementsPath()
 		log.Printf("install dependencies at: %s", testDepsPath)
-		err := exec.Command("pip", "install", "-r", testDepsPath).Run()
+		installDepsCmd := exec.Command("pip", "install", "-r", testDepsPath)
+		err := installDepsCmd.Run()
 		if err != nil {
-			log.Printf("Error installing test framework dependencies: %s", err)
+			log.Printf("Error installing test framework dependencies: %s. Command: %s", err, installDepsCmd)
 		}
 	}
 
