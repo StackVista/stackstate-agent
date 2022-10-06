@@ -1,10 +1,8 @@
 - name: Kubernetes Stackstate
   hosts: local
   gather_facts: false
-  tags: stackstate
   roles:
     - role: "{{ bees_path }}/k8s-stackstate"
-      when: ("stackstate" in only) or only | length == 0
       vars:
         sts_ingress: KOPS
 
@@ -21,5 +19,5 @@
   gather_facts: true
   tags: ec2-agent-v2
   roles:
-    - role: "{{ bees_path }}/ec2-agent/v2"
+    - role: "{{ bees_path }}/ec2-agent/v2/ubuntu"
       when: ("ec2-agent-v2" in only) or only | length == 0

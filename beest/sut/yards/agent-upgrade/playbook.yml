@@ -1,0 +1,6 @@
+# Install Agent V2
+- name: VM Agent V2
+  hosts: agent_ubuntu
+  gather_facts: true
+  roles:
+    - role: "{{ bees_path }}/ec2-agent/v2"

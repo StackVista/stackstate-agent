@@ -8,27 +8,18 @@ module "vpc" {
   common_tags = local.common_tags
 }
 
-module "lambda_otel" {
-  source = "../../hives/lambda-otel"
-
-  environment = var.yard_id
-  // TODO pass vpc
-}
-
-// RDS
-
-module "aws_stackpack_role" {
-  source = "../../hives/aws-stackpack"
-
-  environment = var.yard_id
-  region      = var.aws_default_region
-}
-
-module "ec2_agent" {
-  source = "../../hives/ec2-agent/v2/ubuntu"
-
+module "ec2_agent_redhat" {
+  source = "../../hives/ec2-agent/v2/redhat"
   environment         = var.yard_id
   vpc_id              = module.vpc.vpc_id
   subnet_id           = module.vpc.private_subnet_1_id
-  integration_profile = module.aws_stackpack_role.integration_profile
+  integration_profile = ""
+}
+
+module "ec2_agent_ubuntu" {
+  source = "../../hives/ec2-agent/v2/ubuntu"
+  environment         = var.yard_id
+  vpc_id              = module.vpc.vpc_id
+  subnet_id           = module.vpc.private_subnet_1_id
+  integration_profile = ""
 }

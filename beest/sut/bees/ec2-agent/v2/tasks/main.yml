@@ -2,8 +2,7 @@
 - name: StackState Agent prepare tasks
   tags: prepare
   block:
-    - name: "Install stackstate-agent (WARNING: Pointing to the Simulator instead of StackState, and the packets is then forwarded to StackState)"
-      when: enable_sts_simulator is defined and enable_sts_simulator == true
+    - name: "Install stackstate-agent {{ '(WARNING: Pointing to the Simulator instead of StackState, and the packets is then forwarded to StackState)' if enable_sts_simulator is defined and enable_sts_simulator == true else '' }}"
       shell: "curl -o- {{ agent_repo_url }}/install.sh | bash"
       register: agent_install_result
       until: agent_install_result is not failed
@@ -13,25 +12,11 @@
         LOG_PAYLOADS: "true"
         STS_LOG_LEVEL: "debug"
         STS_API_KEY: "{{ sts_api_key }}"
-        STS_URL: "http://localhost:7078/stsAgent"
+        # STS_URL: "{{ 'http://localhost:7078/stsAgent' if enable_sts_simulator is defined and enable_sts_simulator == true else '{{ sts_url }}/receiver/stsAgent' }}"
+        STS_URL: "{{ '{{ sts_url }}/receiver/stsAgent' }}"
         STS_HOSTNAME: "{{ inventory_hostname }}"
-        CODE_NAME: "{{ agent_current_branch }}"
-        SKIP_SSL_VALIDATION: "false"
-
-    - name: Install stackstate-agent
-      when: enable_sts_simulator is not defined or enable_sts_simulator == false
-      shell: "curl -o- {{ agent_repo_url }}/install.sh | bash"
-      register: agent_install_result
-      until: agent_install_result is not failed
-      retries: 5
-      delay: 60
-      environment:
-        LOG_PAYLOADS: "true"
-        STS_LOG_LEVEL: "debug"
-        STS_API_KEY: "{{ sts_api_key }}"
-        STS_URL: "{{ sts_url }}/receiver/stsAgent"
-        STS_HOSTNAME: "{{ inventory_hostname }}"
-        CODE_NAME: "{{ agent_current_branch }}"
+        # CODE_NAME: "{{ 'random-custom-branch-name' if agent_custom_branch is defined else agent_current_branch }}"
+        CODE_NAME: "{{ agent_current_branch  }}"
         SKIP_SSL_VALIDATION: "false"
 
     # AWS Check

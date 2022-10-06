@@ -2,10 +2,8 @@
 - name: Kubernetes Stackstate
   hosts: local
   gather_facts: false
-  tags: stackstate
   roles:
     - role: "{{ bees_path }}/k8s-stackstate"
-      when: ("stackstate" in only) or only | length == 0
       vars:
         sts_ingress: KOPS
 
