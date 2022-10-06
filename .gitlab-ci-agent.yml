@@ -417,9 +417,11 @@ win_cleanup:
   interruptible: true
   needs:
     - build_win
+  before_script:
+    - ls
   script:
-    - cd C:\ ; Remove-Item workspaces/builds/* -Recurse -Force -Confirm:$false
-    - cd C:\ ; Remove-Item workspaces/caches/* -Recurse -Force -Confirm:$false
+    - cd C:\ ; Get-ChildItem -Path C:\workspaces\builds -Recurse | Remove-Item -force -recurse
+    - cd C:\ ; Get-ChildItem -Path C:\workspaces\caches -Recurse | Remove-Item -force -recurse
   tags:
     - windows_agent7_juliano
   retry:
