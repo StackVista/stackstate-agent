@@ -2,7 +2,7 @@
 - name: "Copy {{check_name}}"
   become: yes
   ansible.builtin.copy:
-    src: "{{check_name}}.py"
+    src: "{{check_name}}.j2.py"
     dest: "/etc/stackstate-agent/checks.d/{{check_name}}.py"
     owner: "stackstate-agent"
     group: "stackstate-agent"
