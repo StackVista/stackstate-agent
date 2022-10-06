@@ -87,7 +87,7 @@ def test_pod_container_to_container(ansible_var, cliv1):
     cluster_name = ansible_var("agent_cluster_name")
 
     def wait_for_components():
-        json_data = cliv1.topic_api("sts_topo_process_agents")
+        json_data = cliv1.topic_api("sts_topo_process_agents", limit=3000)
 
         server_process_match = re.compile("nc -l -p {}".format(server_port))
         server_process = _find_process_by_command_args(
