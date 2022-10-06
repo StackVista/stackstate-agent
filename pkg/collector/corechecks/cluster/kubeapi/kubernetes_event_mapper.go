@@ -10,6 +10,7 @@ package kubeapi
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -157,14 +158,12 @@ func (k *kubernetesEventMapper) mapKubernetesEvent(event *v1.Event) (metrics.Eve
 		Ts:             getTimeStamp(event),
 		Tags:           k.getTags(event),
 		EventContext: &metrics.EventContext{
-			Source:           k.sourceType,
-			Category:         string(k.getCategory(event)),
-			SourceIdentifier: string(event.GetUID()),
-			ElementIdentifiers: []string{
-				k.externalIdentifierForInvolvedObject(event),
-			},
-			SourceLinks: []metrics.SourceLink{},
-			Data:        map[string]interface{}{},
+			Source:             k.sourceType,
+			Category:           string(k.getCategory(event)),
+			SourceIdentifier:   string(event.GetUID()),
+			ElementIdentifiers: k.externalIdentifierForInvolvedObject(event),
+			SourceLinks:        []metrics.SourceLink{},
+			Data:               map[string]interface{}{},
 		},
 		Text: event.Message,
 	}
@@ -242,6 +241,10 @@ func (k *kubernetesEventMapper) getTags(event *v1.Event) []string {
 		tags = append(tags, fmt.Sprintf("kube_namespace:%s", event.InvolvedObject.Namespace))
 	}
 
+	if event.InvolvedObject.FieldPath != "" {
+		tags = append(tags, fmt.Sprintf("kube_container_name:%s", getContainerNameFromEvent(event)))
+	}
+
 	tags = append(tags, fmt.Sprintf("source_component:%s", event.Source.Component))
 	tags = append(tags, fmt.Sprintf("kube_object_name:%s", event.InvolvedObject.Name))
 	tags = append(tags, fmt.Sprintf("kube_object_kind:%s", event.InvolvedObject.Kind))
@@ -252,17 +255,42 @@ func (k *kubernetesEventMapper) getTags(event *v1.Event) []string {
 	return tags
 }
 
-func (k *kubernetesEventMapper) externalIdentifierForInvolvedObject(event *v1.Event) string {
+func (k *kubernetesEventMapper) externalIdentifierForInvolvedObject(event *v1.Event) []string {
+	identifiers := []string{}
 	namespace := event.InvolvedObject.Namespace
 	obj := event.InvolvedObject
 
-	urn, err := k.urn.BuildExternalID(obj.Kind, namespace, obj.Name)
-	if err != nil {
-		log.Warnf("Unknown InvolvedObject type '%s' for obj '%s/%s' in event '%s'", obj.Kind, namespace, obj.Name, event.Name)
-		return ""
+	if event.InvolvedObject.FieldPath != "" {
+		identifiers = append(identifiers, k.urn.BuildContainerExternalID(namespace, obj.Name, getContainerNameFromEvent(event)))
 	}
 
-	return urn
+	urn, err := k.urn.BuildExternalID(obj.Kind, namespace, obj.Name)
+	identifiers = append(identifiers, urn)
+	if err != nil {
+		log.Warnf("Unknown InvolvedObject type '%s' for obj '%s/%s' in event '%s'", obj.Kind, namespace, obj.Name, event.Name)
+		identifiers = append(identifiers, "")
+	}
+
+	return identifiers
+}
+
+func getContainerNameFromEvent(event *v1.Event) string {
+
+	if event.InvolvedObject.FieldPath != "" {
+		r, _ := regexp.Compile("spec.containers{.*?}")
+
+		containerName := r.FindString(event.InvolvedObject.FieldPath)
+
+		if containerName != "" {
+			containerName = containerName[len("spec.containers{") : len(containerName)-1]
+		}
+
+		log.Debugf("Container name '%s' extracted from event '%s'", containerName, event.InvolvedObject)
+
+		return containerName
+	}
+
+	return ""
 }
 
 func kubernetesFlavour(detector apiserver.OpenShiftDetector) urn.ClusterType {
