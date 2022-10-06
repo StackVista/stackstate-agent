@@ -1,0 +1,27 @@
+---
+- name: StackState prepare sts-toolbox
+  tags: prepare
+  block:
+    - name: Add stable chart repo
+      kubernetes.core.helm_repository:
+        name: stable
+        repo_url: "https://charts.helm.sh/stable"
+
+    - name: Add stackstate-internal chart repo
+      kubernetes.core.helm_repository:
+        name: stackstate-internal
+        repo_url: "https://helm-internal.stackstate.io"
+
+    - name: Add stackstate chart repo
+      kubernetes.core.helm_repository:
+        name: stackstate
+        repo_url: "https://helm.stackstate.io"
+
+    - name: Generate sts-toolbox config
+      ansible.builtin.template:
+        src: sts-toolbox-config.j2.yaml
+        dest: "{{ playbook_dir }}/sts-toolbox.yml"
+
+    - name: Generate StackState values
+      ansible.builtin.command:
+        cmd: sts-toolbox generate-values --config "{{ playbook_dir }}/sts-toolbox.yml" --output "{{ playbook_dir }}/stackstate-values.yml"

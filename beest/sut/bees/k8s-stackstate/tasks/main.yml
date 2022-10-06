@@ -1,7 +1,16 @@
 ---
-- include_tasks: stackstate.yml
+# Always generate this regards if only stackstate is ignored
+- include_tasks: cli-sts-toolbox.yml
   tags: [ prepare, cleanup ]
+
+- include_tasks: stackstate.yml
+  when: ("stackstate" in only) or only | length == 0
+  tags: [ prepare, cleanup, stackstate ]
+
+# Always generate this regards if only stackstate is ignored
 - include_tasks: cli.yml
   tags: [ prepare, cleanup ]
+
 - include_tasks: stackpack.yml
-  tags: [ prepare, cleanup ]
+  when: ("stackstate" in only) or only | length == 0
+  tags: [ prepare, cleanup, stackstate ]
