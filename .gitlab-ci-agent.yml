@@ -987,10 +987,12 @@ beest_k8s_dockerd_cleanup:
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_always
-    - when: never
+    - when: always
   needs:
-    - beest_k8s_dockerd_test
-    - beest_k8s_dockerd_create
+    - job: beest_k8s_dockerd_test
+      optional: true
+    - job: beest_k8s_dockerd_create
+      optional: true
 
 beest_k8s_containerd_create:
   <<: *beest
@@ -1022,10 +1024,12 @@ beest_k8s_containerd_cleanup:
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_always
-    - when: never
+    - when: always
   needs:
-    - beest_k8s_containerd_test
-    - beest_k8s_containerd_create
+    - job: beest_k8s_containerd_test
+      optional: true
+    - job: beest_k8s_containerd_create
+      optional: true
 
 # Job Seq: Molecule
 # Type: localinstall
@@ -1351,10 +1355,12 @@ beest_otel_cleanup:
   rules:
     - *beest_otel_ignore_rule
     - *v2_merge_train_always
-    - when: never
+    - when: always
   needs:
-    - beest_otel_test
-    - beest_otel_create
+    - job: beest_otel_test
+      optional: true
+    - job: beest_otel_create
+      optional: true
 
 # Job Seq: Beest
 # Type: splunk
@@ -1402,10 +1408,12 @@ beest_splunk_cleanup:
   rules:
     - *beest_splunk_ignore_rule
     - *v2_merge_train_always
-    - when: never
+    - when: always
   needs:
-    - beest_splunk_test
-    - beest_splunk_create
+    - job: beest_splunk_create
+      optional: true
+    - job: beest_splunk_test
+      optional: true
 
 ## release stage
 
