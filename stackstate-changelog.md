@@ -1,11 +1,11 @@
 # StackState Agent v2 releases
 
-## Next Next release (???)
+## Next release (???)
 
 **Improvements**
 - Upstream upgrade to 7.22.1 tag [STAC-16755](https://stackstate.atlassian.net/browse/STAC-16755)
 
-## Next release (???)
+## 2.18.0 (2022-10-07)
 **Features**
 - Added [configuration options](https://github.com/StackVista/stackstate-agent/blob/master/Dockerfiles/cluster-agent/conf.d/kubernetes_api_events.d/conf.yaml.default) to override category of an event based on event's reason [STAC-16668](https://stackstate.atlassian.net/browse/STAC-16668)
 
