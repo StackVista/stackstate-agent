@@ -420,8 +420,7 @@ win_cleanup:
   before_script:
     - ls
   script:
-    - cd C:\ ; Get-ChildItem -Path C:\workspaces\builds -Recurse | Remove-Item -force -recurse
-    - cd C:\ ; Get-ChildItem -Path C:\workspaces\caches -Recurse | Remove-Item -force -recurse
+    - Start-Process powershell.exe -ArgumentList "-FilePath ./.gitlab-scripts/clean-runner-dir.ps1", "-RedirectStandardOutput C:\stdout.txt", "-RedirectStandardError C:\stderr.txt"
   tags:
     - windows_agent7_juliano
   retry:
