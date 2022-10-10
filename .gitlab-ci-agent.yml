@@ -995,7 +995,6 @@ beest_k8s_dockerd_failure_cleanup:
     - *v2_merge_train_on_failure
     - when: never
   needs:
-    - beest_k8s_dockerd_test
     - beest_k8s_dockerd_create
 
 beest_k8s_containerd_failure_cleanup:
@@ -1007,7 +1006,6 @@ beest_k8s_containerd_failure_cleanup:
     - *v2_merge_train_on_failure
     - when: never
   needs:
-    - beest_k8s_containerd_test
     - beest_k8s_containerd_create
 
 beest_k8s_dockerd_success_cleanup:
@@ -1366,7 +1364,6 @@ beest_otel_failure_cleanup:
     - *v2_merge_train_on_failure
     - when: never
   needs:
-    - beest_otel_test
     - beest_otel_create
 
 beest_otel_success_cleanup:
@@ -1432,7 +1429,6 @@ beest_splunk_failure_cleanup:
     - *v2_merge_train_on_failure
     - when: never
   needs:
-    - beest_splunk_test
     - beest_splunk_create
 
 beest_splunk_success_cleanup:
