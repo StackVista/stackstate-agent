@@ -241,7 +241,7 @@ func (k *kubernetesEventMapper) getTags(event *v1.Event) []string {
 		tags = append(tags, fmt.Sprintf("kube_namespace:%s", event.InvolvedObject.Namespace))
 	}
 
-	if event.InvolvedObject.FieldPath != "" {
+	if event.InvolvedObject.FieldPath != "" && getContainerNameFromEvent(event) != "" {
 		tags = append(tags, fmt.Sprintf("kube_container_name:%s", getContainerNameFromEvent(event)))
 	}
 
@@ -260,7 +260,7 @@ func (k *kubernetesEventMapper) externalIdentifierForInvolvedObject(event *v1.Ev
 	namespace := event.InvolvedObject.Namespace
 	obj := event.InvolvedObject
 
-	if event.InvolvedObject.FieldPath != "" {
+	if event.InvolvedObject.FieldPath != "" && getContainerNameFromEvent(event) != "" {
 		identifiers = append(identifiers, k.urn.BuildContainerExternalID(namespace, obj.Name, getContainerNameFromEvent(event)))
 	}
 
