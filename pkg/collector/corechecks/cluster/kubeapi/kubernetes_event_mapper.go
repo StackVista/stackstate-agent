@@ -139,7 +139,7 @@ func newKubernetesEventMapper(detector apiserver.OpenShiftDetector, clusterName 
 
 var _ KubernetesEventMapperFactory = newKubernetesEventMapper // Compile-time check
 
-func (k *kubernetesEventMapper) mapKubernetesEvent(event *v1.Event, modified bool) (metrics.Event, error) {
+func (k *kubernetesEventMapper) mapKubernetesEvent(event *v1.Event) (metrics.Event, error) {
 	if err := checkEvent(event); err != nil {
 		return metrics.Event{}, err
 	}
@@ -154,7 +154,7 @@ func (k *kubernetesEventMapper) mapKubernetesEvent(event *v1.Event, modified boo
 		Priority:       metrics.EventPriorityNormal,
 		AlertType:      getAlertType(event),
 		EventType:      event.Reason,
-		Ts:             getTimeStamp(event, modified),
+		Ts:             getTimeStamp(event),
 		Tags:           k.getTags(event),
 		EventContext: &metrics.EventContext{
 			Source:           k.sourceType,
@@ -231,12 +231,8 @@ func getAlertType(event *v1.Event) metrics.EventAlertType {
 	}
 }
 
-func getTimeStamp(event *v1.Event, modified bool) int64 {
-	if modified {
-		return event.LastTimestamp.Unix()
-	}
-
-	return event.FirstTimestamp.Unix()
+func getTimeStamp(event *v1.Event) int64 {
+	return event.LastTimestamp.Unix()
 }
 
 func (k *kubernetesEventMapper) getTags(event *v1.Event) []string {

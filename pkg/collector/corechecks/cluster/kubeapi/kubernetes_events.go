@@ -258,7 +258,7 @@ func (k *EventsCheck) processEvents(sender aggregator.Sender, events []*v1.Event
 	clusterName := clustername.GetClusterName()
 	mapper := k.mapperFactory(k.ac, clusterName, k.instance.EventCategories)
 	for _, event := range events {
-		mappedEvent, err := mapper.mapKubernetesEvent(event, false)
+		mappedEvent, err := mapper.mapKubernetesEvent(event)
 		if err != nil {
 			_ = k.Warnf("Error while mapping event, %s.", err.Error())
 			continue
