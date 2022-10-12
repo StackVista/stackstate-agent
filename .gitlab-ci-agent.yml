@@ -144,9 +144,9 @@ deps_win:
   artifacts:
     paths:
       - $CI_PROJECT_DIR/version.txt
-      - $CI_PROJECT_DIR/go-pkg.tar.gz
-      - $CI_PROJECT_DIR/go-bin.tar.gz
       - $CI_PROJECT_DIR/vendor.tar.gz
+#      - $CI_PROJECT_DIR/go-pkg.tar.gz
+#      - $CI_PROJECT_DIR/go-bin.tar.gz
     expire_in: 1 week
   tags:
     - windows_agent7_juliano
@@ -249,6 +249,7 @@ build_cluster_agent:
       - $CI_PROJECT_DIR/bin/stackstate-cluster-agent
       - $CI_PROJECT_DIR/Dockerfiles/cluster-agent/stackstate-cluster.yaml
       - $CI_PROJECT_DIR/version.txt
+    expire_in: 1 week
   rules:
     - *cluster_agent
   retry:
@@ -399,8 +400,9 @@ build_win:
     - inv -e agent.omnibus-build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR_WIN --skip-sign --log-level debug --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
   after_script:
     - cmd.exe /c "copy %GOPATH%\src\github.com\StackVista\stackstate-agent\omnibus\pkg\*.msi"
+    - attrib.exe * /D /S -h -r -s
   artifacts:
-    expire_in: 2 weeks
+    expire_in: 1 week
     paths:
       - ./*.msi
       - "version.txt"
@@ -412,6 +414,25 @@ build_win:
       - always
   rules:
     - when: never
+
+win_cleanup:
+  stage: test
+  interruptible: true
+  needs:
+    - build_win
+  before_script:
+    - ls
+  script:
+    - cd C:\workspaces\builds ; attrib.exe * /D /S -h -r -s
+    - cd C:\ ; Get-ChildItem -Path C:\workspaces\builds -Recurse | Remove-Item -force -recurse
+    - cd C:\ ; Get-ChildItem -Path C:\workspaces\caches -Recurse | Remove-Item -force -recurse
+  tags:
+    - windows_agent7_juliano
+  retry:
+    max: 2
+    when:
+      - always
+  allow_failure: true
 
 ## pre_release stage
 
@@ -479,7 +500,7 @@ pre_release_win:
     - build_win
   before_script:
     - *configure_windows_ps1_env_script
-    - Import-VisualStudioVars 2017 -Architecture amd64
+    - Import-VisualStudioVars 2019 -Architecture amd64
     - ridk enable
   script:
     - $env:VERSION = Get-Content version.txt -First 1
