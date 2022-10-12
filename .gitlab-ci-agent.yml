@@ -522,7 +522,7 @@ pre_release_win:
     when:
       - always
   rules:
-    - when: never
+    - when: on_success
 
 pre_release_rpm:
   stage: pre_release
@@ -1327,7 +1327,7 @@ molecule_vms_test:
   needs:
     - pre_release_deb
     - pre_release_rpm
-#    - pre_release_win
+    - pre_release_win
     - molecule_vms_create
 
 molecule_vms_failure_cleanup:
