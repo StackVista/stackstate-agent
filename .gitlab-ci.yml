@@ -68,8 +68,8 @@ variables: &commonvariables
   STS_AWS_TEST_BUCKET_YUM: stackstate-agent-$AGENT_VERSION-rpm-test
   STS_AWS_RELEASE_BUCKET_WIN: stackstate-agent-$AGENT_VERSION
   STS_AWS_TEST_BUCKET_WIN: stackstate-agent-$AGENT_VERSION-test
-  STS_DOCKER_RELEASE_REPO: stackstate-agent-$AGENT_VERSION
-  STS_DOCKER_TEST_REPO: stackstate-agent-$AGENT_VERSION-test
+  STS_DOCKER_RELEASE_REPO: stackstate-agent$AGENT_RELEASE_POSTFIX_VERSION
+  STS_DOCKER_TEST_REPO: stackstate-agent$AGENT_RELEASE_POSTFIX_VERSION-test
   STS_DOCKER_RELEASE_REPO_TRACE: stackstate-trace-agent
   STS_DOCKER_TEST_REPO_TRACE: stackstate-trace-agent-test
   STS_DOCKER_RELEASE_REPO_CLUSTER: stackstate-cluster-agent
@@ -146,6 +146,7 @@ agent2:
   stage: triggers
   variables:
     AGENT_VERSION: 2
+    AGENT_RELEASE_POSTFIX_VERSION: "-2"
     <<: *commonvariables
     <<: *agent_variables
   trigger:
@@ -166,6 +167,7 @@ agent3:
   stage: triggers
   variables:
     AGENT_VERSION: 3
+    AGENT_RELEASE_POSTFIX_VERSION: ""
     <<: *commonvariables
     <<: *agent_variables
   trigger:
@@ -186,6 +188,7 @@ cluster_agent:
   stage: triggers
   variables:
     AGENT_VERSION: 3
+    AGENT_RELEASE_POSTFIX_VERSION: ""
     <<: *commonvariables
     <<: *agent_variables
   trigger:
