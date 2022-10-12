@@ -57,38 +57,23 @@ variables: &commonvariables
   AGENT_HELM_CHART_VERSION: ""
   STACKSTATE_HELM_CHART_VERSION: ""
 
-.agent2_variables: &agent2_variables
-  CONDA_ENV: ddpy2
-  PYTHON_RUNTIMES: '2'
-  MAJOR_VERSION: '2'
-  STS_VER: 'v2'
-  STS_AWS_RELEASE_BUCKET: stackstate-agent-2
-  STS_AWS_TEST_BUCKET: stackstate-agent-2-test
-  STS_AWS_RELEASE_BUCKET_YUM: stackstate-agent-2-rpm
-  STS_AWS_TEST_BUCKET_YUM: stackstate-agent-2-rpm-test
-  STS_AWS_RELEASE_BUCKET_WIN: stackstate-agent-2
-  STS_AWS_TEST_BUCKET_WIN: stackstate-agent-2-test
-  STS_DOCKER_RELEASE_REPO: stackstate-agent-2
-  STS_DOCKER_TEST_REPO: stackstate-agent-2-test
+.agent_variables: &agent_variables
+  CONDA_ENV: ddpy$AGENT_VERSION
+  PYTHON_RUNTIMES: $AGENT_VERSION
+  MAJOR_VERSION: $AGENT_VERSION
+  STS_VER: v$AGENT_VERSION
+  STS_AWS_RELEASE_BUCKET: stackstate-agent-$AGENT_VERSION
+  STS_AWS_TEST_BUCKET: stackstate-agent-$AGENT_VERSION-test
+  STS_AWS_RELEASE_BUCKET_YUM: stackstate-agent-$AGENT_VERSION-rpm
+  STS_AWS_TEST_BUCKET_YUM: stackstate-agent-$AGENT_VERSION-rpm-test
+  STS_AWS_RELEASE_BUCKET_WIN: stackstate-agent-$AGENT_VERSION
+  STS_AWS_TEST_BUCKET_WIN: stackstate-agent-$AGENT_VERSION-test
+  STS_DOCKER_RELEASE_REPO: stackstate-agent-$AGENT_VERSION
+  STS_DOCKER_TEST_REPO: stackstate-agent-$AGENT_VERSION-test
   STS_DOCKER_RELEASE_REPO_TRACE: stackstate-trace-agent
   STS_DOCKER_TEST_REPO_TRACE: stackstate-trace-agent-test
   STS_DOCKER_RELEASE_REPO_CLUSTER: stackstate-cluster-agent
   STS_DOCKER_TEST_REPO_CLUSTER: stackstate-cluster-agent-test
-
-.agent3_variables: &agent3_variables
-  CONDA_ENV: ddpy3
-  PYTHON_RUNTIMES: '3'
-  MAJOR_VERSION: '3'
-  STS_VER: 'v3'
-  STS_AWS_RELEASE_BUCKET: stackstate-agent-3
-  STS_AWS_TEST_BUCKET: stackstate-agent-3-test
-  STS_AWS_RELEASE_BUCKET_YUM: stackstate-agent-3-rpm
-  STS_AWS_TEST_BUCKET_YUM: stackstate-agent-3-rpm-test
-  STS_AWS_RELEASE_BUCKET_WIN: stackstate-agent-3
-  STS_AWS_TEST_BUCKET_WIN: stackstate-agent-3-test
-  STS_DOCKER_RELEASE_REPO: stackstate-agent
-  STS_DOCKER_TEST_REPO: stackstate-agent-test
-  # we do not build trace-agent and cluster-agent for v2
 
 .rules:
   - &exclude_on_cluster_agent
@@ -160,8 +145,9 @@ variables: &commonvariables
 agent2:
   stage: triggers
   variables:
+    AGENT_VERSION: 2
     <<: *commonvariables
-    <<: *agent2_variables
+    <<: *agent_variables
   trigger:
     include: .gitlab-ci-agent.yml
     strategy: depend
@@ -179,8 +165,9 @@ agent2:
 agent3:
   stage: triggers
   variables:
+    AGENT_VERSION: 3
     <<: *commonvariables
-    <<: *agent3_variables
+    <<: *agent_variables
   trigger:
     include: .gitlab-ci-agent.yml
     strategy: depend
@@ -198,8 +185,9 @@ agent3:
 cluster_agent:
   stage: triggers
   variables:
+    AGENT_VERSION: 3
     <<: *commonvariables
-    <<: *agent3_variables
+    <<: *agent_variables
   trigger:
     include: .gitlab-ci-cluster-agent.yml
     strategy: depend
