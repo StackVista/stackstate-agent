@@ -12,14 +12,17 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/urn"
 )
 
+var firstTimestamp = int64(709662600)
+var laterTimeSTamp = int64(709662800)
+
+var eventContainer1 = "stackstate-agent"
+var eventContainer2 = "cluster-agent"
+
+var event1 = createEvent(2, "default", "dca-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "Unhealthy", "Liveness probe errored:", firstTimestamp, firstTimestamp, "Alerts", eventContainer1)
+var event2 = createEvent(2, "default", "dca-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "Unhealthy", "Liveness probe errored:", firstTimestamp, laterTimeSTamp, "Alerts", eventContainer2)
+var event3 = createEvent(2, "default", "dca-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "Unhealthy", "Liveness probe errored:", laterTimeSTamp, firstTimestamp, "Alerts", "")
+
 func TestEventTimestamps(t *testing.T) {
-
-	firstTimestamp := int64(709662600)
-	laterTimeSTamp := int64(709662800)
-
-	event1 := createEvent(2, "default", "dca-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "Unhealthy", "Liveness probe errored:", firstTimestamp, firstTimestamp, "Alerts")
-	event2 := createEvent(2, "default", "dca-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "Unhealthy", "Liveness probe errored:", firstTimestamp, laterTimeSTamp, "Alerts")
-	event3 := createEvent(2, "default", "dca-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "Unhealthy", "Liveness probe errored:", laterTimeSTamp, firstTimestamp, "Alerts")
 
 	mapper := &kubernetesEventMapper{
 		urn:                     urn.NewURNBuilder(urn.Kubernetes, "testCluster"),
@@ -39,21 +42,6 @@ func TestEventTimestamps(t *testing.T) {
 
 func TestContainerNameFromEvent(t *testing.T) {
 
-	firstTimestamp := int64(709662600)
-	laterTimeSTamp := int64(709662800)
-
-	eventContainer1 := "stackstate-agent"
-	eventContainer2 := "cluster-agent"
-
-	event1 := createEvent(2, "default", "dca-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "Unhealthy", "Liveness probe errored:", firstTimestamp, laterTimeSTamp, "Alerts")
-	event1.InvolvedObject.FieldPath = "{Pod default stackstate-agent-checks-agent-8f65d8466-w89vb f107ac9f-5d15-495e-8953-781bbe23c2f2 v1 5017 spec.containers{" + eventContainer1 + "}}"
-
-	event2 := createEvent(2, "default", "dca-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "Unhealthy", "Liveness probe errored:", firstTimestamp, laterTimeSTamp, "Alerts")
-	event2.InvolvedObject.FieldPath = "{Pod default stackstate-agent-checks-agent-8f65d8466-w89vb f107ac9f-5d15-495e-8953-781bbe23c2f2 v1 5017 spec.containers{" + eventContainer2 + "}}"
-
-	event3 := createEvent(2, "default", "dca-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "Unhealthy", "Liveness probe errored:", firstTimestamp, laterTimeSTamp, "Alerts")
-	event3.InvolvedObject.FieldPath = "{Pod default stackstate-agent-checks-agent-8f65d8466-w89vb f107ac9f-5d15-495e-8953-781bbe23c2f2 v1 5017}"
-
 	containerName1 := getContainerNameFromEvent(event1)
 	containerName2 := getContainerNameFromEvent(event2)
 	containerName3 := getContainerNameFromEvent(event3)
@@ -64,21 +52,6 @@ func TestContainerNameFromEvent(t *testing.T) {
 }
 
 func TestEventTags(t *testing.T) {
-
-	firstTimestamp := int64(709662600)
-	laterTimeSTamp := int64(709662800)
-
-	eventContainer1 := "stackstate-agent"
-	eventContainer2 := "cluster-agent"
-
-	event1 := createEvent(2, "default", "dca-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "Unhealthy", "Liveness probe errored:", firstTimestamp, laterTimeSTamp, "Alerts")
-	event1.InvolvedObject.FieldPath = "{Pod default stackstate-agent-checks-agent-8f65d8466-w89vb f107ac9f-5d15-495e-8953-781bbe23c2f2 v1 5017 spec.containers{" + eventContainer1 + "}}"
-
-	event2 := createEvent(2, "default", "dca-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "Unhealthy", "Liveness probe errored:", firstTimestamp, laterTimeSTamp, "Alerts")
-	event2.InvolvedObject.FieldPath = "{Pod default stackstate-agent-checks-agent-8f65d8466-w89vb f107ac9f-5d15-495e-8953-781bbe23c2f2 v1 5017 spec.containers{" + eventContainer2 + "}}"
-
-	event3 := createEvent(2, "default", "dca-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "Unhealthy", "Liveness probe errored:", firstTimestamp, laterTimeSTamp, "Alerts")
-	event3.InvolvedObject.FieldPath = "{Pod default stackstate-agent-checks-agent-8f65d8466-w89vb f107ac9f-5d15-495e-8953-781bbe23c2f2 v1 5017}"
 
 	mapper := &kubernetesEventMapper{
 		urn:                     urn.NewURNBuilder(urn.Kubernetes, "testCluster"),
@@ -97,21 +70,6 @@ func TestEventTags(t *testing.T) {
 }
 
 func TestEventElementIdentifiers(t *testing.T) {
-
-	firstTimestamp := int64(709662600)
-	laterTimeSTamp := int64(709662800)
-
-	eventContainer1 := "stackstate-agent"
-	eventContainer2 := "cluster-agent"
-
-	event1 := createEvent(2, "default", "dca-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "Unhealthy", "Liveness probe errored:", firstTimestamp, laterTimeSTamp, "Alerts")
-	event1.InvolvedObject.FieldPath = "{Pod default stackstate-agent-checks-agent-8f65d8466-w89vb f107ac9f-5d15-495e-8953-781bbe23c2f2 v1 5017 spec.containers{" + eventContainer1 + "}}"
-
-	event2 := createEvent(2, "default", "dca-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "Unhealthy", "Liveness probe errored:", firstTimestamp, laterTimeSTamp, "Alerts")
-	event2.InvolvedObject.FieldPath = "{Pod default stackstate-agent-checks-agent-8f65d8466-w89vb f107ac9f-5d15-495e-8953-781bbe23c2f2 v1 5017 spec.containers{" + eventContainer2 + "}}"
-
-	event3 := createEvent(2, "default", "dca-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "default-scheduler", "machine-blue", "Unhealthy", "Liveness probe errored:", firstTimestamp, laterTimeSTamp, "Alerts")
-	event3.InvolvedObject.FieldPath = "{Pod default stackstate-agent-checks-agent-8f65d8466-w89vb f107ac9f-5d15-495e-8953-781bbe23c2f2 v1 5017}"
 
 	mapper := &kubernetesEventMapper{
 		urn:                     urn.NewURNBuilder(urn.Kubernetes, "testCluster"),

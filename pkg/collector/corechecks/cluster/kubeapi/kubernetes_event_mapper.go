@@ -276,21 +276,23 @@ func (k *kubernetesEventMapper) externalIdentifierForInvolvedObject(event *v1.Ev
 
 func getContainerNameFromEvent(event *v1.Event) string {
 
+	containerName := ""
+
 	if event.InvolvedObject.FieldPath != "" {
-		r, _ := regexp.Compile("spec.containers{.*?}")
+		r := regexp.MustCompile("spec.containers{(.*?)}")
 
-		containerName := r.FindString(event.InvolvedObject.FieldPath)
+		containerNameSubmatch := r.FindStringSubmatch(event.InvolvedObject.FieldPath)
 
-		if containerName != "" {
-			containerName = containerName[len("spec.containers{") : len(containerName)-1]
+		if len(containerNameSubmatch) == 2 {
+			containerName = containerNameSubmatch[1]
+		} else {
+			log.Warnf("Could not extract container name from event '%s'", event.InvolvedObject.FieldPath)
 		}
 
 		log.Debugf("Container name '%s' extracted from event '%s'", containerName, event.InvolvedObject)
-
-		return containerName
 	}
 
-	return ""
+	return containerName
 }
 
 func kubernetesFlavour(detector apiserver.OpenShiftDetector) urn.ClusterType {
