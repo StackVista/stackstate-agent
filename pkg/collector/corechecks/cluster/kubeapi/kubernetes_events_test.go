@@ -41,7 +41,7 @@ func createEvent(count int32, namespace, objname, objkind, objuid, component, ho
 			Kind:      objkind,
 			UID:       types.UID(objuid),
 			Namespace: namespace,
-			FieldPath: "{" + string(objkind) + " " + string(namespace) + " " + string(objname) + " " + string(types.UID(objuid)) + containername + "}",
+			FieldPath: fmt.Sprintf("{%s %s %s %s %s}", objkind, namespace, objname, objuid, containername),
 		},
 		Count: count,
 		Type:  alertType,
