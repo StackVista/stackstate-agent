@@ -140,6 +140,8 @@ def apply_branding(ctx):
                   "./tools/windows/install-help/cal/stringtable.rc")
     do_sed_rename(ctx, sts_win_stackvista_replace,
                   "./tools/windows/install-help/cal/stringtable.rc")
+    do_sed_rename(ctx, 's/datadog/stackstate/g',
+                  "./cmd/agent/common/common_windows.go")
 
     # systray.go
     do_sed_rename(ctx, sts_win_programdata_replace,
@@ -369,7 +371,7 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"datadog.yaml\\" -> \\"stackstate.yaml\\""', "./pkg/config")
     do_go_rename(ctx, '"\\"datadog.conf\\" -> \\"stackstate.conf\\""', "./cmd/agent")
     do_go_rename(ctx, '"\\"path to directory containing datadog.yaml\\" -> \\"path to directory containing stackstate.yaml\\""', "./cmd")
-    do_go_rename(ctx, '"\\"unable to load Datadog config file: %s\\" -> \\"unable to load StackState config file: %s\\""', "./cmd/agent/common")
+    do_go_rename(ctx, '"\\"unable to load Datadog config file:\\" -> \\"unable to load StackState config file:\\""', "./cmd/agent/common")
     do_go_rename(ctx, '"\\"Starting Datadog Agent v%v\\" -> \\"Starting StackState Agent v%v\\""', "./cmd/agent/app")
 
     # Dist config templates

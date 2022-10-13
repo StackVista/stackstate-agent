@@ -78,7 +78,7 @@ def apply_branding(ctx):
                  '"\\"path to directory containing datadog.yaml\\" -> \\"path to directory containing stackstate.yaml\\""',
                  "./cmd")
     do_go_rename(ctx,
-                 '"\\"unable to load Datadog config file: %s\\" -> \\"unable to load StackState config file: %s\\""',
+                 '"\\"unable to load Datadog config file:\\" -> \\"unable to load StackState config file:\\""',
                  "./cmd/agent/common")
 
     # Hardcoded checks and metrics
