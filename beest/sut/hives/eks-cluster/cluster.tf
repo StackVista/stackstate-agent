@@ -24,3 +24,10 @@ resource "aws_eks_cluster" "cluster" {
 data "aws_eks_cluster_auth" "cluster" {
   name = aws_eks_cluster.cluster.name
 }
+
+resource "aws_eks_addon" "ebs_csi_driver" {
+  count = tonumber(var.k8s_version) > 1.23 ? 1 : 0
+  addon_name   = "aws-ebs-csi-driver"
+  cluster_name = aws_eks_cluster.cluster
+  addon_version = "v1.11.4-eksbuild.1"
+}
