@@ -285,8 +285,6 @@ func getContainerNameFromEvent(event *v1.Event) string {
 
 		if len(containerNameSubmatch) == 2 {
 			containerName = containerNameSubmatch[1]
-		} else {
-			log.Warnf("Could not extract container name from event '%s'", event.InvolvedObject.FieldPath)
 		}
 
 		log.Debugf("Container name '%s' extracted from event '%s'", containerName, event.InvolvedObject)
