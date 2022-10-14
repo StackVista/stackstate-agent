@@ -47,7 +47,7 @@ resource "aws_iam_role_policy_attachment" "eks_ecr_readonly" {
 
 resource "aws_iam_role_policy_attachment" "eks_ebs_csi_driver_policy" {
   count = tonumber(var.k8s_version) >= 1.23 ? 1 : 0
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEBSCSIDriverPolicy"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
   role       = aws_iam_role.eks_node_role.name
 }
 
