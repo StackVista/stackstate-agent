@@ -137,6 +137,16 @@ def apply_branding(ctx):
     do_sed_rename(ctx, 's/"\\\\\\\\\\\\\\\\StackState\\\\\\\\\\\\\\\\StackVista"/"\\\\\\\\\\\\\\\\StackState\\\\\\\\\\\\\\\\StackState Agent"/g',
                   "./tools/windows/install-help/cal/stringtable.rc")
 
+    # DD 7.33 Upstream Merge changes
+    do_sed_rename(ctx, 's/"unable to load Datadog config file"/"unable to load StackState config file"/g',
+                       "./cmd/agent/common/import.go")
+    do_sed_rename(ctx, 's/"datadog.yaml"/"stackstate.yaml"/g',
+                       "./cmd/agent/common/import.go")
+    do_sed_rename(ctx, 's/"datadog.conf"/"stackstate.conf"/g',
+                       "./cmd/agent/common/import.go")
+    do_sed_rename(ctx, 's/"unable to load Datadog config file"/"unable to load StackState config file"/g',
+                       "./cmd/agent/common/helpers.go")
+
     # systray.go
     do_sed_rename(ctx, 's/"programdata\\\\\\\\\\\\\\\\datadog"/"programdata\\\\\\\\\\\\\\\\stackstate"/g',
                   "./cmd/systray/systray.go")
