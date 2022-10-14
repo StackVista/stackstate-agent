@@ -149,7 +149,7 @@ deps_win:
 #      - $CI_PROJECT_DIR/go-bin.tar.gz
     expire_in: 1 week
   tags:
-    - windows_agent7_juliano
+    - windows_agent7_louis
   retry:
     max: 2
     when:
@@ -407,7 +407,7 @@ build_win:
       - ./*.msi
       - "version.txt"
   tags:
-    - windows_agent7_juliano
+    - windows_agent7_louis
   retry:
     max: 2
     when:
@@ -415,26 +415,26 @@ build_win:
   rules:
     - when: on_success
 
-win_cleanup:
-  stage: test
-  interruptible: true
-  needs:
-    - build_win
-  before_script:
-    - ls
-  script:
-    - cd C:\workspaces\builds ; attrib.exe * /D /S -h -r -s
-    - cd C:\ ; Get-ChildItem -Path C:\workspaces\builds -Recurse | Remove-Item -force -recurse
-    - cd C:\ ; Get-ChildItem -Path C:\workspaces\caches -Recurse | Remove-Item -force -recurse
-  tags:
-    - windows_agent7_juliano
-  retry:
-    max: 2
-    when:
-      - always
-  rules:
-    - when: on_success
-  allow_failure: true
+#win_cleanup:
+#  stage: test
+#  interruptible: true
+#  needs:
+#    - build_win
+#  before_script:
+#    - ls
+#  script:
+#    - cd C:\workspaces\builds ; attrib.exe * /D /S -h -r -s
+#    - cd C:\ ; Get-ChildItem -Path C:\workspaces\builds -Recurse | Remove-Item -force -recurse
+#    - cd C:\ ; Get-ChildItem -Path C:\workspaces\caches -Recurse | Remove-Item -force -recurse
+#  tags:
+#    - windows_agent7_louis
+#  retry:
+#    max: 2
+#    when:
+#      - always
+#  rules:
+#    - when: on_success
+#  allow_failure: true
 
 ## pre_release stage
 
@@ -516,7 +516,7 @@ pre_release_win:
     - aws.exe s3 ls s3://$Env:STS_AWS_TEST_BUCKET_WIN/windows/$Env:CI_COMMIT_REF_NAME/
     - aws.exe s3 ls s3://$Env:STS_AWS_TEST_BUCKET_WIN/
   tags:
-    - windows_agent7_juliano
+    - windows_agent7_louis
   retry:
     max: 2
     when:
@@ -1550,7 +1550,7 @@ release_win:
     - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
       when: manual
   tags:
-    - windows_agent7_juliano
+    - windows_agent7_louis
   retry:
     max: 2
     when:
