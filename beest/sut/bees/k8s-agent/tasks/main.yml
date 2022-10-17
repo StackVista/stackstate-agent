@@ -13,6 +13,9 @@
         - "{{ monitoring_namespace }}"
         - "{{ test_namespace }}"
 
+    - include_tasks: add-eks-addon.yml
+      when: agent_k8s_version|float >= 1.23
+
     - include_tasks: artifactory-registry-key.yml
 
     - name: Add stackstate chart repo
