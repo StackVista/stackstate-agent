@@ -2,6 +2,13 @@
 - name: StackPack prepare tasks
   tags: prepare
   block:
+    - name: CF Template Event Bridge - Resource ID
+      command: aws cloudformation describe-stack-resource --stack-name {{ aws_integration.cf_stack_name }} --logical-resource-id StsEventBridgeRule --query "StackResourceDetail.PhysicalResourceId" --output=text
+      register: sts_event_rule
+
+    - name: CF Template Event Bridge - Enable Rule
+      command: aws events enable-rule --name {{ sts_event_rule.stdout }}
+
     - name: List installed StackPacks
       command: sts-cli stackpack list -i
       register: stackpack_list_raw
@@ -53,7 +60,7 @@
 
     - name: Wait a bit for all objects to be saved to the bucket
       pause:
-        seconds: 60
+        seconds: 180
 
     - name: Retrieve objects versions from StsLogsBucket
       command: "aws s3api list-object-versions --bucket {{ sts_logs_bucket.stdout }} --output=json --query='{Objects: Versions[].{Key:Key,VersionId:VersionId}}'"

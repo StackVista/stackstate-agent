@@ -86,3 +86,36 @@ resource "aws_iam_instance_profile" "integration_profile" {
   role       = aws_iam_role.agent_ec2_role.name
   depends_on = [aws_iam_role_policy.integration_role_policy]
 }
+
+# After the create phase has ran let's stop the event bridge and remove any objects (if there was any generated in the
+# s3 bucket). This solves the problem where if the prepare phase never executes then there is at least no objects
+# generated in the s3 bucket (This can happen when gitlab stops a previous build without executing the prepare phase).
+# If the destroy should run without the prepare triggering then it can at least still
+# cleanup. The prepare starts the event bridge up again, if it fails to clean the bucket in the prepare phase
+# then we will run in the same issue with missing resources, but the chance for this might be reduced or prevented
+# as we always expect the prepare to run cleanup.
+# To prevent this further we need locks on gitlab events that use the sts aws template
+resource "null_resource" "aws_cf_cleanup_existing_s3_resources" {
+  depends_on = [
+    aws_cloudformation_stack.cfn_stackpack
+  ]
+  # Let's always run this when the create is executed
+  triggers = {
+    always_run = timestamp()
+  }
+  provisioner "local-exec" {
+    when = create
+    interpreter = ["bash", "-c"]
+    command = <<-EOT
+      STS_EVENT_BRIDGE_RULE_RESOURCE_ID=$(aws cloudformation describe-stack-resource --stack-name "$STACK_NAME" --logical-resource-id StsEventBridgeRule --query "StackResourceDetail.PhysicalResourceId" --output=text)
+      aws events disable-rule --name "$STS_EVENT_BRIDGE_RULE_RESOURCE_ID"
+      STS_LOGS_BUCKET=$(aws cloudformation describe-stack-resource --stack-name "$STACK_NAME" --logical-resource-id StsLogsBucket --query "StackResourceDetail.PhysicalResourceId" --output=text)
+      sleep 180
+      STS_LOGS_BUCKET_OBJECTS=$(aws s3api list-object-versions --bucket "$STS_LOGS_BUCKET" --output=json --query='{Objects: Versions[].{Key:Key,VersionId:VersionId}}')
+      aws s3api delete-objects --bucket "$STS_LOGS_BUCKET" --delete "$STS_LOGS_BUCKET_OBJECTS" --output=text || true
+    EOT
+    environment = {
+      STACK_NAME = "${var.environment}-cfn-aws-check"
+    }
+  }
+}

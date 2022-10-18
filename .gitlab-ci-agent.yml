@@ -1351,6 +1351,9 @@ beest_otel_test:
     - *beest_otel_ignore_rule
     - *v2_merge_train_on_success
     - when: never
+  # To prevent sts cf event bridge cleanup issues this job should not be interruptible
+  interruptible: false
+  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_SHORT_SHA-beest-otel-branch-lock"
   dependencies:
     - beest_otel_create
   needs:
@@ -1365,6 +1368,9 @@ beest_otel_failure_cleanup:
     - *beest_otel_ignore_rule
     - *v2_merge_train_on_failure
     - when: never
+  # To prevent sts cf event bridge cleanup issues this job should not be interruptible
+  interruptible: false
+  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_SHORT_SHA-beest-otel-branch-lock"
   needs:
     - beest_otel_test
     - beest_otel_create
@@ -1377,6 +1383,9 @@ beest_otel_success_cleanup:
     - *beest_otel_ignore_rule
     - *v2_merge_train_on_success
     - when: never
+  # To prevent sts cf event bridge cleanup issues this job should not be interruptible and locked
+  interruptible: false
+  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_SHORT_SHA-beest-otel-branch-lock"
   dependencies:
     - beest_otel_test
     - beest_otel_create
