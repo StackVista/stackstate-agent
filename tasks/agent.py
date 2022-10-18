@@ -138,14 +138,10 @@ def apply_branding(ctx):
                   "./tools/windows/install-help/cal/stringtable.rc")
 
     # DD 7.33 Upstream Merge changes
-    do_sed_rename(ctx, 's/"unable to load Datadog config file"/"unable to load StackState config file"/g',
-                       "./cmd/agent/common/import.go")
     do_sed_rename(ctx, 's/"datadog.yaml"/"stackstate.yaml"/g',
                        "./cmd/agent/common/import.go")
     do_sed_rename(ctx, 's/"datadog.conf"/"stackstate.conf"/g',
                        "./cmd/agent/common/import.go")
-    do_sed_rename(ctx, 's/"unable to load Datadog config file"/"unable to load StackState config file"/g',
-                       "./cmd/agent/common/helpers.go")
 
     # systray.go
     do_sed_rename(ctx, 's/"programdata\\\\\\\\\\\\\\\\datadog"/"programdata\\\\\\\\\\\\\\\\stackstate"/g',
@@ -374,6 +370,7 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"datadog.conf\\" -> \\"stackstate.conf\\""', "./cmd/agent")
     do_go_rename(ctx, '"\\"path to directory containing datadog.yaml\\" -> \\"path to directory containing stackstate.yaml\\""', "./cmd")
     do_go_rename(ctx, '"\\"unable to load Datadog config file: %s\\" -> \\"unable to load StackState config file: %s\\""', "./cmd/agent/common")
+    do_go_rename(ctx, '"\\"unable to load Datadog config file: %w\\" -> \\"unable to load StackState config file: %w\\""', "./cmd/agent/common")
     do_go_rename(ctx, '"\\"Starting Datadog Agent v%v\\" -> \\"Starting StackState Agent v%v\\""', "./cmd/agent/app")
 
     # Dist config templates
