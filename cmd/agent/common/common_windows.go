@@ -51,7 +51,7 @@ var (
 func init() {
 	pd, err := winutil.GetProgramDataDir()
 	if err == nil {
-		DefaultConfPath = pd
+		DefaultConfPath = "c:\\programdata\\datadog-test-9"
 		DefaultLogFile = filepath.Join(pd, "logs", "agent.log")
 		DefaultDCALogFile = filepath.Join(pd, "logs", "cluster-agent.log")
 	} else {
