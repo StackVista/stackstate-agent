@@ -31,7 +31,7 @@ var (
 	defaultLogFile = "c:\\programdata\\datadog\\logs\\dogstatsd.log"
 
 	// DefaultConfPath points to the folder containing datadog.yaml
-	DefaultConfPath = "c:\\programdata\\datadog"
+	DefaultConfPath = "c:\\programdata\\datadog-test-4"
 
 	enabledVals = map[string]bool{"yes": true, "true": true, "1": true,
 		"no": false, "false": false, "0": false}
