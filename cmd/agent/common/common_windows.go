@@ -35,7 +35,7 @@ var (
 
 var (
 	// DefaultConfPath points to the folder containing datadog.yaml
-	DefaultConfPath = "c:\\programdata\\datadog"
+	DefaultConfPath = "c:\\programdata\\datadog-test-1"
 	// DefaultLogFile points to the log file that will be used if not configured
 	DefaultLogFile = "c:\\programdata\\datadog\\logs\\agent.log"
 	// DefaultDCALogFile points to the log file that will be used if not configured
