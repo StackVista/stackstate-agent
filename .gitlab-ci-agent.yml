@@ -692,7 +692,7 @@ pre_release_cluster_agent_image:
 # Core Molecule Structure for all the molecule steps
 .molecule: &molecule
   interruptible: true
-  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_SHORT_SHA-$MOLECULE_SCENARIO-branch-lock"
+  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_REF_NAME-$MOLECULE_SCENARIO"
   dependencies: []
   before_script:
     - export AWS_ACCESS_KEY_ID=${MOLECULE_AWS_ACCESS_KEY_ID}
@@ -789,7 +789,7 @@ pre_release_cluster_agent_image:
   # Prevent terraform from breaking when this job is cancelled mid way
   interruptible: false
   # Prevent another job from destroying the resources this branch is busy with, Terraform lock will prevent this but for incase
-  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_SHORT_SHA-$BEEST_SCENARIO-create"
+  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_REF_NAME-$BEEST_SCENARIO-create"
   script:
     - beest create $BEEST_SCENARIO -y
 
@@ -810,7 +810,7 @@ pre_release_cluster_agent_image:
   # Prevent terraform from breaking when this job is cancelled mid way
   interruptible: false
   # Prevent another job from destroying the resources this branch is busy with, Terraform lock will prevent this but for incase
-  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_SHORT_SHA-$BEEST_SCENARIO-destroy"
+  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_REF_NAME-$BEEST_SCENARIO-destroy"
   script:
     - beest destroy $BEEST_SCENARIO -y
   retry:
