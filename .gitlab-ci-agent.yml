@@ -748,7 +748,6 @@ pre_release_cluster_agent_image:
 # Core Structure for all the beest steps
 .beest: &beest
   image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20220926
-  interruptible: true
   dependencies: []
   before_script:
     - cd $CI_PROJECT_DIR
@@ -787,12 +786,18 @@ pre_release_cluster_agent_image:
 .beest_create: &beest_create
   <<: *beest_artifacts
   stage: prepare
+  # Prevent terraform from breaking when this job is cancelled mid way
+  interruptible: false
+  # Prevent another job from destroying the resources this branch is busy with, Terraform lock will prevent this but for incase
+  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_SHORT_SHA-$BEEST_SCENARIO-create"
   script:
     - beest create $BEEST_SCENARIO -y
 
 # Primary test steps for all the beest builds
 .beest_test: &beest_test
   <<: *beest_artifacts
+  # We allow test jobs to be cancelled by other pipeline as they do not affect deployed resources
+  interruptible: true
   stage: acceptance
   timeout: 80 minutes
   script:
@@ -802,6 +807,10 @@ pre_release_cluster_agent_image:
 .beest_destroy: &beest_destroy
   <<: *beest_artifacts
   stage: cleanup
+  # Prevent terraform from breaking when this job is cancelled mid way
+  interruptible: false
+  # Prevent another job from destroying the resources this branch is busy with, Terraform lock will prevent this but for incase
+  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_SHORT_SHA-$BEEST_SCENARIO-destroy"
   script:
     - beest destroy $BEEST_SCENARIO -y
   retry:
@@ -1356,9 +1365,6 @@ beest_otel_test:
     - *beest_otel_ignore_rule
     - *v2_merge_train_on_success
     - when: never
-  # To prevent sts cf event bridge cleanup issues this job should not be interruptible
-  interruptible: false
-  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_SHORT_SHA-beest-otel-branch-lock"
   dependencies:
     - beest_otel_create
   needs:
@@ -1373,9 +1379,6 @@ beest_otel_failure_cleanup:
     - *beest_otel_ignore_rule
     - *v2_merge_train_on_failure
     - when: never
-  # To prevent sts cf event bridge cleanup issues this job should not be interruptible
-  interruptible: false
-  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_SHORT_SHA-beest-otel-branch-lock"
   needs:
     - beest_otel_test
     - beest_otel_create
@@ -1388,9 +1391,6 @@ beest_otel_success_cleanup:
     - *beest_otel_ignore_rule
     - *v2_merge_train_on_success
     - when: never
-  # To prevent sts cf event bridge cleanup issues this job should not be interruptible and locked
-  interruptible: false
-  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_SHORT_SHA-beest-otel-branch-lock"
   dependencies:
     - beest_otel_test
     - beest_otel_create
