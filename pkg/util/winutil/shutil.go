@@ -9,6 +9,7 @@ package winutil
 
 import (
 	"C"
+	"fmt"
 	"path/filepath"
 
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -16,10 +17,10 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-func getDefaultProgramDataDir() (path string, err error) {
+func getDefaultProgramDataDir(origin string) (path string, err error) {
 	res, err := windows.KnownFolderPath(windows.FOLDERID_ProgramData, 0)
 	if err == nil {
-		path = filepath.Join(res, "Datadog")
+		path = filepath.Join(res, fmt.Sprintf("Datadog-%s", origin))
 	}
 	return
 }
@@ -34,6 +35,8 @@ func GetProgramDataDir() (path string, err error) {
 // GetProgramDataDirForProduct returns the current programdatadir, usually
 // c:\programdata\Datadog given a product key name
 func GetProgramDataDirForProduct(product string) (path string, err error) {
+	// Get-ItemProperty -Path "HKLM:\SOFTWARE\StackState\StackState Agent" -Name "ConfigRoot"
+	// "C:\\Program Files\\StackState\\StackState Agent\\embedded\\agent.exe" status
 	// [sts] Datadog rename to StackState
 	keyname := "SOFTWARE\\Datadog\\" + product
 	k, err := registry.OpenKey(registry.LOCAL_MACHINE,
@@ -42,15 +45,15 @@ func GetProgramDataDirForProduct(product string) (path string, err error) {
 	if err != nil {
 		// if the key isn't there, we might be running a standalone binary that wasn't installed through MSI
 		log.Debugf("Windows installation key root (%s) not found, using default program data dir", keyname)
-		return getDefaultProgramDataDir()
+		return getDefaultProgramDataDir("RegLookupFailed")
 	}
 	defer k.Close()
 	val, _, err := k.GetStringValue("ConfigRoot")
 	if err != nil {
 		log.Warnf("Windows installation key config not found, using default program data dir")
-		return getDefaultProgramDataDir()
+		return getDefaultProgramDataDir("ConfigRootFailed")
 	}
-	path = val
+	path = fmt.Sprintf("%s-ConfigRoot", val)
 	return
 }
 
