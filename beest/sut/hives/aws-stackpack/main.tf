@@ -91,10 +91,9 @@ resource "aws_iam_instance_profile" "integration_profile" {
 # s3 bucket). This solves the problem where if the prepare phase never executes then there is at least no objects
 # generated in the s3 bucket (This can happen when gitlab stops a previous build without executing the prepare phase).
 # If the destroy should run without the prepare triggering then it can at least still
-# cleanup. The prepare starts the event bridge up again, if it fails to clean the bucket in the prepare phase
-# then we will run in the same issue with missing resources, but the chance for this might be reduced or prevented
-# as we always expect the prepare to run cleanup.
-# To prevent this further we need locks on gitlab events that use the sts aws template
+# cleanup. At this moment we do not require a event bridge as we are not testing against it, If in the future we do
+# then we will have to rethink cleaning up
+# At the moment with the event bridge stopped things can never break if the prepare phase is interrupted
 resource "null_resource" "aws_cf_cleanup_existing_s3_resources" {
   depends_on = [
     aws_cloudformation_stack.cfn_stackpack
