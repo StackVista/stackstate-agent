@@ -60,6 +60,10 @@ stages:
 
 ######################### /pipeline bricks
 
+# Core Molecule Structure for all the molecule steps
+.artifacts_expire_in: &artifacts_expire_in
+  expire_in: 1 week
+
 before_script:
   - *configure_debian_env_script
   - *retrieve_linux_go_deps_script
@@ -80,12 +84,12 @@ deps_deb:
     - cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz .
     - cd $CI_PROJECT_DIR/vendor && tar czf $CI_PROJECT_DIR/vendor.tar.gz .
   artifacts:
+    <<: *artifacts_expire_in
     paths:
       - $CI_PROJECT_DIR/version.txt
       - $CI_PROJECT_DIR/go-pkg.tar.gz
       - $CI_PROJECT_DIR/go-bin.tar.gz
       - $CI_PROJECT_DIR/vendor.tar.gz
-    expire_in: 1 week
   retry:
     max: 2
     when:
@@ -111,12 +115,12 @@ deps_rpm:
     - cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz .
     - cd $CI_PROJECT_DIR/vendor && tar czf $CI_PROJECT_DIR/vendor.tar.gz .
   artifacts:
+    <<: *artifacts_expire_in
     paths:
       - $CI_PROJECT_DIR/version.txt
       - $CI_PROJECT_DIR/go-pkg.tar.gz
       - $CI_PROJECT_DIR/go-bin.tar.gz
       - $CI_PROJECT_DIR/vendor.tar.gz
-    expire_in: 1 week
   retry:
     max: 2
     when:
@@ -141,12 +145,12 @@ deps_win:
     - cd $Env:GOPATH/bin ; tar --force-local -czf $CI_PROJECT_DIR/go-bin.tar.gz .
     - cd $Env:CI_PROJECT_DIR/vendor ; tar --force-local -czf $CI_PROJECT_DIR/vendor.tar.gz .
   artifacts:
+    <<: *artifacts_expire_in
     paths:
       - $CI_PROJECT_DIR/version.txt
       - $CI_PROJECT_DIR/go-pkg.tar.gz
       - $CI_PROJECT_DIR/go-bin.tar.gz
       - $CI_PROJECT_DIR/vendor.tar.gz
-    expire_in: 1 week
   tags:
     - windows_agent7_ps1
   retry:
@@ -247,6 +251,7 @@ build_cluster_agent:
       - $CI_PROJECT_DIR/bin/stackstate-cluster-agent
       - $CI_PROJECT_DIR/Dockerfiles/cluster-agent/stackstate-cluster.yaml
       - $CI_PROJECT_DIR/version.txt
+    <<: *artifacts_expire_in
   rules:
     - *cluster_agent
   retry:
@@ -304,7 +309,7 @@ build_deb:
       - $CI_PROJECT_DIR/outcomes/Dockerfiles/manifests
       - $CI_PROJECT_DIR/version.txt
       - $CI_PROJECT_DIR/outcomes/binary/trace-agent
-    expire_in: 1 week
+    <<: *artifacts_expire_in
   retry:
     max: 2
     when:
@@ -367,7 +372,7 @@ build_rpm:
       - $CI_PROJECT_DIR/outcomes/Dockerfiles/dogstatsd
       - $CI_PROJECT_DIR/outcomes/Dockerfiles/manifests
       - $CI_PROJECT_DIR/version.txt
-    expire_in: 1 week
+    <<: *artifacts_expire_in
   retry:
     max: 2
     when:
@@ -396,7 +401,7 @@ build_win:
   after_script:
     - cmd.exe /c "copy %GOPATH%\src\github.com\StackVista\stackstate-agent\omnibus\pkg\*.msi"
   artifacts:
-    expire_in: 2 weeks
+    <<: *artifacts_expire_in
     paths:
       - ./*.msi
       - "version.txt"
@@ -701,6 +706,7 @@ pre_release_cluster_agent_image:
 # Base artifacts for create and test steps
 .molecule_artifacts: &molecule_artifacts
   artifacts:
+    <<: *artifacts_expire_in
     when: always
     paths:
       - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/topic-*
@@ -708,7 +714,6 @@ pre_release_cluster_agent_image:
       - $CI_PROJECT_DIR/.cache
       - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/**/*.tar.gz
       - $MOLECULE_EPHEMERAL_DIRECTORY
-    expire_in: 1 week
   retry:
     max: 2
 
@@ -776,7 +781,7 @@ pre_release_cluster_agent_image:
     paths:
       - beest/debug
       - beest/*.gv
-    expire_in: 1 week
+    <<: *artifacts_expire_in
 
 # Primary create steps for all the beest builds
 .beest_create: &beest_create
