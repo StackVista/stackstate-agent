@@ -1,0 +1,24 @@
+---
+- name: Register Swarm Master Node
+  tags: prepare
+  become: yes
+  block:
+
+    - name: Register Swarm Master Node
+      hosts: swarm_master
+      gather_facts: true
+      tasks:
+        - include_tasks: ./prepare.tasks.master.yml
+
+    - name: Join Worker node to Master
+      hosts: swarm_worker
+      gather_facts: true
+      tasks:
+        - include_tasks: ./prepare.tasks.worker.yml
+
+    - name: Create global service on Master
+      hosts: swarm_master
+      gather_facts: true
+      tasks:
+        - include_tasks: ./prepare.tasks.global.yml
+

@@ -1,7 +1,7 @@
 ---
 - name: Docker login
   docker_login:
-    registry: quay.io
-    username: "{{ quay_user }}"
-    password: "{{ quay_password }}"
+    registry: artifactory.tooling.stackstate.io
+    username: "{{ artifactory_user }}"
+    password: "{{ artifactory_password }}"
     reauthorize: yes

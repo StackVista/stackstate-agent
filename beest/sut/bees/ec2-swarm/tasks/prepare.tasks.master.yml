@@ -1,0 +1,14 @@
+---
+- name: Check if Swarm has already been Initialized
+  shell: docker node ls
+  register: swarm_status
+  ignore_errors: true
+
+- name: Initialize Docker Swarm
+  shell: "docker swarm init --advertise-addr={{ swarm_master_ip }}:2377"
+  when: swarm_status.rc != 0
+  run_once: true
+
+- name: Get the worker join-token
+  shell: docker swarm join-token --quiet worker
+  register: worker_token

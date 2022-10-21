@@ -1,0 +1,8 @@
+---
+- name: Check to see if swarm is already active before trying to join
+  shell: "docker info --format '{{ '{{' }} .Swarm.LocalNodeState {{ '}}' }}'"  # weird format required to avoid replacement
+  register: swarm_status
+
+- name: Add Worker to the Swarm
+  shell: "docker swarm join --token {{ hostvars['agent-swarm-master']['worker_token']['stdout'] }} {{ hostvars['agent-swarm-master']['ansible_default_ipv4']['address'] }}:2377"
+  when: swarm_status.stdout != 'active'

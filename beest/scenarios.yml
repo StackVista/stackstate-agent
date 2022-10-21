@@ -44,3 +44,12 @@ scenarios:
       name: stackstate
     test:
       group: NA
+  - name: swarm
+    description: |
+      Provisions 2 VMs (master and worker).
+      Deploys Splunk Enterprise Cloud and both Agent v1 and V2 on that VM, configuring all Splunk checks.
+      Deploys StackState on sandbox k8s cluster and installs the Splunk StackPack.
+    yard:
+      name: swarm
+    test:
+      group: swarm

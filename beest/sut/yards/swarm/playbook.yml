@@ -1,0 +1,15 @@
+# No need to disable the StackState instance if you enable the Simulator, The data will be forwarded form the Simulator
+- name: Kubernetes Stackstate
+  hosts: local
+  gather_facts: false
+  roles:
+    - role: "{{ bees_path }}/k8s-stackstate"
+      vars:
+        sts_ingress: KOPS
+
+# Do note ec2-swarm restarts the host machine to get rid of frontend-locks
+- name: VM Swarm
+  hosts: all
+  gather_facts: false
+  roles:
+    - role: "{{ bees_path }}/ec2-swarm"

@@ -1,0 +1,36 @@
+---
+- name: Configure .env file used by docker-compose
+  copy:
+    content: |
+      AGENT_DOCKER_REPO={{ agent_docker_repo }}
+      AGENT_VERSION={{ agent_current_branch }}
+      DOCKER_HOST_IP={{ ansible_docker0['ipv4']['address'] }}
+      STACKSTATE_BRANCH={{ stackstate_branch }}
+    dest: /home/ubuntu/.env
+
+- name: Check if nginx service already exists, otherwise create it
+  shell: "docker service ps nginx"
+  register: nginx_status
+  ignore_errors: true
+
+- name: Create a global nginx service
+  shell: "docker service create --name nginx --mode global nginx"
+  when: nginx_status.rc != 0
+  run_once: true
+
+- name: Installing docker in Ansible
+  pip:
+    name: docker
+
+- name: Docker login
+  docker_login:
+    registry: artifactory.tooling.stackstate.io
+    username: "{{ artifactory_user }}"
+    password: "{{ artifactory_password }}"
+    reauthorize: yes
+
+- include_tasks: ../_shared/docker/compose-copy.yml
+- include_tasks: ../_shared/copy/copy-verify-and-create-script-file.yml
+- include_tasks: ../_shared/docker/docker-stack-rm-agent.yml
+- include_tasks: ../_shared/docker/compose-pull.yml
+- include_tasks: ../_shared/copy/copy-docker-log-backup-script.yml

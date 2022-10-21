@@ -11,11 +11,13 @@ import (
 
 const (
 	NoDestroyFlag = "no-destroy"
+	NoCleanupFlag = "no-cleanup"
 	ResetFlag     = "reset"
 )
 
 var (
 	noDestroy bool
+	noCleanup bool
 	reset     bool
 )
 
@@ -23,6 +25,7 @@ func init() {
 	rootCmd.AddCommand(testCmd)
 
 	testCmd.Flags().BoolVar(&noDestroy, NoDestroyFlag, false, "do not destroy the yard")
+	testCmd.Flags().BoolVar(&noCleanup, NoCleanupFlag, false, "do not cleanup the yard")
 	testCmd.Flags().BoolVar(&reset, ResetFlag, false, "execute a cleanup before prepare if tests run already")
 }
 
@@ -75,7 +78,9 @@ func test(provisioner driver.Provisioner, deployer driver.Deployer, verifier dri
 		log.Printf("Not running verify step because prepare failed: %s\n", prepareError)
 	}
 
-	cleanupError = deployer.Cleanup(cleanup, []string{})
+	if !noCleanup {
+		cleanupError = deployer.Cleanup(cleanup, []string{})
+	}
 	var destroyError error
 	if !noDestroy {
 		destroyError = provisioner.Destroy(destroy, false)
