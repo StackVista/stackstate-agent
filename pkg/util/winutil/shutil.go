@@ -9,7 +9,6 @@ package winutil
 
 import (
 	"C"
-	"fmt"
 	"path/filepath"
 
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -20,7 +19,7 @@ import (
 func getDefaultProgramDataDir(origin string) (path string, err error) {
 	res, err := windows.KnownFolderPath(windows.FOLDERID_ProgramData, 0)
 	if err == nil {
-		path = filepath.Join(res, fmt.Sprintf("StackState-%s", origin))
+		path = filepath.Join(res, "StackState")
 	}
 	return
 }
@@ -45,15 +44,15 @@ func GetProgramDataDirForProduct(product string) (path string, err error) {
 	if err != nil {
 		// if the key isn't there, we might be running a standalone binary that wasn't installed through MSI
 		log.Debugf("Windows installation key root (%s) not found, using default program data dir", keyname)
-		return getDefaultProgramDataDir("RegLookupFailed")
+		return getDefaultProgramDataDir()
 	}
 	defer k.Close()
 	val, _, err := k.GetStringValue("ConfigRoot")
 	if err != nil {
 		log.Warnf("Windows installation key config not found, using default program data dir")
-		return getDefaultProgramDataDir("ConfigRootFailed")
+		return getDefaultProgramDataDir()
 	}
-	path = fmt.Sprintf("%s-ConfigRoot", val)
+	path = val
 	return
 }
 
