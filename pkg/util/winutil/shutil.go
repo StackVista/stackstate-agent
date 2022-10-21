@@ -16,7 +16,7 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-func getDefaultProgramDataDir(origin string) (path string, err error) {
+func getDefaultProgramDataDir() (path string, err error) {
 	res, err := windows.KnownFolderPath(windows.FOLDERID_ProgramData, 0)
 	if err == nil {
 		path = filepath.Join(res, "StackState")
