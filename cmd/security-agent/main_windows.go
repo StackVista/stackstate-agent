@@ -37,7 +37,7 @@ var (
 	defaultLogFile = "c:\\programdata\\datadog\\logs\\security-agent.log"
 
 	// DefaultConfPath points to the folder containing datadog.yaml
-	DefaultConfPath = "c:\\programdata\\datadog-test-5"
+	DefaultConfPath = "c:\\programdata\\datadog"
 )
 
 func init() {

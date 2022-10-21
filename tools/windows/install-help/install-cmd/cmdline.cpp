@@ -9,7 +9,7 @@ const wchar_t *calargs[] = {L"PROJECTLOCATION",  L"APPLICATIONDATADIRECTORY",
                             L"PROXY_USER",       L"PROXY_PASSWORD"};
 
 const wchar_t *defaults[] = {L"C:\\Program Files\\Datadog\\Datadog Agent\\",
-                             L"C:\\ProgramData\\Datadog-Test-3\\",
+                             L"C:\\ProgramData\\Datadog\\",
                              L"",
                              L"",
                              L"",

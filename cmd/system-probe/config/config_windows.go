@@ -20,7 +20,7 @@ const (
 )
 
 var (
-	defaultConfigDir              = "c:\\programdata\\datadog-test-2\\"
+	defaultConfigDir              = "c:\\programdata\\datadog\\"
 	defaultSystemProbeLogFilePath = "c:\\programdata\\datadog\\logs\\system-probe.log"
 )
 

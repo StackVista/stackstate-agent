@@ -11,7 +11,7 @@ const wchar_t *calargs[] = {
     L"DDAGENTUSER_NAME",
 };
 
-const wchar_t *defaults[] = {L"C:\\Program Files\\Datadog\\Datadog Agent\\", L"C:\\ProgramData\\Datadog-test-6\\", L"", L""};
+const wchar_t *defaults[] = {L"C:\\Program Files\\Datadog\\Datadog Agent\\", L"C:\\ProgramData\\Datadog\\", L"", L""};
 typedef enum _cmdargs
 {
     ARG_BINDIR = 0,
