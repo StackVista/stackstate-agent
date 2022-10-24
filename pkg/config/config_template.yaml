@@ -4,30 +4,17 @@
 #########################
 
 ## @param api_key - string - required
-## @env DD_API_KEY - string - required
+## @env STS_API_KEY - string - required
 ## The Datadog API key to associate your Agent's data with your organization.
 ## Create a new API key here: https://app.datadoghq.com/account/settings
 #
-sts_url:
-
-## @param site - string - optional - default: datadoghq.com
-## @env DD_SITE - string - optional - default: datadoghq.com
-## The site of the Datadog intake to send Agent data to.
-## Set to 'datadoghq.eu' to send data to the EU site.
-## Set to 'us3.datadoghq.com' to send data to the US3 site.
-## Set to 'us5.datadoghq.com' to send data to the US5 site.
-## Set to 'ddog-gov.com' to send data to the US1-FED site.
-#
-# site: datadoghq.com
-
-## @param dd_url - string - optional - default: https://app.datadoghq.com
-## @env DD_URL - string - optional - default: https://app.datadoghq.com
-## The host of the Datadog intake server to send metrics to, only set this option
-## if you need the Agent to send metrics to a custom URL, it overrides the site
-## setting defined in "site". It does not affect APM, Logs or Live Process intake which have their
-## own "*_dd_url" settings.
-#
 api_key:
+
+## @param sts_url - string - required
+## @env STS_URL - string - required
+## The host of the StackState intake server to send data to
+#
+sts_url:
 
 ## @param proxy - custom object - optional
 ## @env DD_PROXY_HTTP - string - optional
@@ -1170,16 +1157,59 @@ process_config:
   #
   # log_file: <PROCESS_LOG_FILE_PATH>
 
-  ## @param intervals - custom object - optional - default: 10s for normal checks and 2s for others.
-  ## @env DD_PROCESS_CONFIG_INTERVALS_CONTAINER - integer - optional - default: 10
-  ## @env DD_PROCESS_CONFIG_INTERVALS_CONTAINER_REALTIME - integer - optional - default: 2
-  ## @env DD_PROCESS_CONFIG_INTERVALS_PROCESS - integer - optional - default: 10
-  ## @env DD_PROCESS_CONFIG_INTERVALS_PROCESS_REALTIME - integer - optional - default: 2
-  ## The interval, in seconds, at which the Agent runs each check. If you want consistent
-  ## behavior between real-time, set the `container_realtime` and `process_realtime` intervals to 10.
+  ## @param intervals - custom object - optional - default: 30s
+  ## @env DD_PROCESS_CONFIG_INTERVALS_CONTAINER - integer - optional - default: 30
+  ## @env DD_PROCESS_CONFIG_INTERVALS_PROCESS - integer - optional - default: 30
+  ## @env DD_PROCESS_CONFIG_INTERVALS_CONNECTIONS - integer - optional - default: 30
+  ## The interval, in seconds, at which the Agent runs each check.
+  # Uncomment the lines below to configure check interval overrides for the process agent when installing from deb/rpm/msi
+  #
+  # intervals:
+  #   container: 30
+  #   process: 30
+  #   connections: 30
+
+  ## @param relation_cache_duration_min - integer - optional - default: 5
+  ## [sts] Relation Cache is used to keep state of the known network relations for this agent, with items expiring after relation_cache_duration minutes. The default is 5 minutes.
+  #
+  # relation_cache_duration_min: 5
+
+  ## @param filters - custom object - optional
+  ## [sts] Filters are used to filter out processes or network connections based on some condition
+  #
+  #  filters:
+  ##   The Short-Lived Processes filter is used to filter out process that are observed for less than x seconds, with the default being 60 seconds.
+  #    short_lived_processes:
+  #      enabled: true
+  #      qualifier_secs: 60
+  ##   The Short-Lived Relations filter is used to filter out network relations that are observed for less than x seconds, with the default being 60 seconds.
+  ##   Short-Lived network relations are defined as network connections that do not occur frequently between processes / services. Multiple short-lived connections
+  ##   between the same processes / services are considered a Long-Lived network relation, while a once-off network connection is filtered out and not reported to StackState.
+  #    short_lived_network_relations:
+  #      enabled: true
+  #      qualifier_secs: 60
+
+  ## [STS] DEFAULTS for agent 2.6.0
+  ##  Process blacklisting is used to filter out unwanted processes and not report them to StackState.
+  process_blacklist:
+    #    patterns:
+    #      - "regex-pattern"
+    ##    Inclusions override the blacklist patterns, these are used to include process that consume a lot of resources.
+    ##    Each inclusion type: top_cpu, top_io_read, top_io_write and top_mem have an amount of processes that get's considered
+    ##    as the top x resource using processes. For top_cpu and top_mem there is a threshold that needs to be met first, meaning
+    ##    the process needs to consume more resource % than the threshold.
+    inclusions:
+      amount_top_cpu_pct_usage: 3
+      cpu_pct_usage_threshold: 20
+      amount_top_io_read_usage: 3
+      amount_top_io_write_usage: 3
+      amount_top_mem_usage: 3
+      mem_usage_threshold: 35
+      # /[STS] DEFAULTS
 
   ## @param process_discovery - custom object - optional
   ## Specifies custom settings for the `process_discovery` object.
+  #
   # process_discovery:
       ## @param enabled - boolean - optional - default: false
       ## Toggles the `process_discovery` check. If enabled, this check gathers information about possible running integrations.
@@ -1248,7 +1278,7 @@ network_tracer_config:
   initial_connections_from_proc: "true"
 # /[STS] defaults
 
-  {{- if .NetworkTracer }}
+{{- if .NetworkTracer }}
 # Network tracer specific settings
 #
 # network_tracer_config:
