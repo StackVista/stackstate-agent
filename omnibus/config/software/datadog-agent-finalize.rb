@@ -31,8 +31,12 @@ build do
             delete "#{install_dir}/bin/agent/agent.exe~"
 
             #remove unneccessary copies caused by blanked copy of bin to #{install_dir} in datadog-agent recipe
-            delete "#{install_dir}/bin/agent/libdatadog-agent-three.dll"
-            delete "#{install_dir}/bin/agent/libdatadog-agent-two.dll"
+            if with_python_runtime? "2"
+                delete "#{install_dir}/bin/agent/libdatadog-agent-two.dll"
+            end
+            if with_python_runtime? "3"
+                delete "#{install_dir}/bin/agent/libdatadog-agent-three.dll"
+            end
             delete "#{install_dir}/bin/agent/customaction.dll"
 
             # not sure where it's coming from, but we're being left with an `embedded` dir.

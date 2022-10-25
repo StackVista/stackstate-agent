@@ -1,6 +1,6 @@
 # StackState Agent v2 releases
 
-## Next release (???)
+## 2.19.0 (???)
 
 **Features**
 - Add support to Kubernetes 1.22 (Ingress (networking.k8s.io/v1) and CronJob (batch/v1)) [STAC-15344](https://stackstate.atlassian.net/browse/STAC-15344)
@@ -9,6 +9,8 @@
 - Fixed issue when an Ingress does not have any HTTP rule [STAC-17811](https://stackstate.atlassian.net/browse/STAC-17811)
 
 **Improvements**
+- Upgraded process-agent version from 4.0.7 to 4.0.8 which includes:
+  - Reduce unimportant warning logs [STAC-17982](https://stackstate.atlassian.net/browse/STAC-17982)
 - Upstream upgrade to 7.22.1 tag [STAC-16755](https://stackstate.atlassian.net/browse/STAC-16755)
 
 ## 2.18.0 (2022-10-07)

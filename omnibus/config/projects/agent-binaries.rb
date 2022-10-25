@@ -56,12 +56,14 @@ package :zip do
 
 
   additional_sign_files [
-    "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\security-agent.exe",
     "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\process-agent.exe",
     "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\trace-agent.exe",
     "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\dogstatsd.exe",
     "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent.exe",
   ]
+  if $enable_security_agent
+    additional_sign_files << "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\security-agent.exe"
+  end
   if ENV['SIGN_PFX']
     signing_identity_file "#{ENV['SIGN_PFX']}", password: "#{ENV['SIGN_PFX_PW']}", algorithm: "SHA256"
   end
