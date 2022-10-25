@@ -29,8 +29,6 @@ api_key:
 #
 sts_url:
 
-dd_url:
-
 ## @param proxy - custom object - optional
 ## @env DD_PROXY_HTTP - string - optional
 ## @env DD_PROXY_HTTPS - string - optional
