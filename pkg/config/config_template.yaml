@@ -8,7 +8,7 @@
 ## The Datadog API key to associate your Agent's data with your organization.
 ## Create a new API key here: https://app.datadoghq.com/account/settings
 #
-sts_url:
+api_key:
 
 ## @param site - string - optional - default: datadoghq.com
 ## @env DD_SITE - string - optional - default: datadoghq.com
@@ -27,7 +27,9 @@ sts_url:
 ## setting defined in "site". It does not affect APM, Logs or Live Process intake which have their
 ## own "*_dd_url" settings.
 #
-api_key:
+sts_url:
+
+dd_url:
 
 ## @param proxy - custom object - optional
 ## @env DD_PROXY_HTTP - string - optional
