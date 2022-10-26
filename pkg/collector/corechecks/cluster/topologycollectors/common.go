@@ -332,13 +332,14 @@ func (c *clusterTopologyCommon) checkVersion(compare func(version int) bool) (bo
 		if c.k8sVersion.Major == "1" {
 			minor, err := strconv.Atoi(c.k8sVersion.Minor[:2])
 			if err != nil {
-				return false, fmt.Errorf("cannot parse server minor version %q: %w", c.k8sVersion.Minor[:2], err)
+				log.Warnf("cannot parse server minor version %q: %w", c.k8sVersion.Minor[:2], err)
+				return true, nil
 			}
 			return compare(minor), nil
 		}
-		log.Debugf("Kubernetes major version is not '1'")
+		log.Warnf("Kubernetes versions check failed (Major version is not '1')")
 		return false, nil
 	}
-	log.Debugf("Kubernetes version is undefined")
+	log.Warnf("Kubernetes version is undefined")
 	return true, nil
 }

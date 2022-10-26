@@ -76,7 +76,7 @@ func (t *TopologyCheck) Configure(config, initConfig integration.Data, source st
 
 func (t *TopologyCheck) getKubernetesVersion() *version.Info {
 	info, err := t.ac.GetVersion()
-	if err == nil {
+	if err != nil {
 		_ = log.Warnf("Could not set Kubernetes version for topology collector: ", err)
 	}
 	log.Debugf("Kubernetes version: %+v", info)
