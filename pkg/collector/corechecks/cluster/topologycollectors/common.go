@@ -47,8 +47,8 @@ type ClusterTopologyCommon interface {
 	buildVolumeExternalID(namespace, volumeName string) string
 	buildPersistentVolumeExternalID(persistentVolumeName string) string
 	buildEndpointExternalID(endpointID string) string
-	maximumMinorVersion(version int) (bool, error)
-	minimumMinorVersion(version int) (bool, error)
+	maximumMinorVersion(version int) bool
+	minimumMinorVersion(version int) bool
 }
 
 type clusterTopologyCommon struct {
@@ -315,31 +315,31 @@ func makeSourcePropertiesKS(object MarshalableKubernetesObject) map[string]inter
 	return sourceProperties
 }
 
-func (c *clusterTopologyCommon) minimumMinorVersion(minimumVersion int) (bool, error) {
+func (c *clusterTopologyCommon) minimumMinorVersion(minimumVersion int) bool {
 	return c.checkVersion(func(version int) bool {
 		return version >= minimumVersion
 	})
 }
 
-func (c *clusterTopologyCommon) maximumMinorVersion(maximumVersion int) (bool, error) {
+func (c *clusterTopologyCommon) maximumMinorVersion(maximumVersion int) bool {
 	return c.checkVersion(func(version int) bool {
 		return version <= maximumVersion
 	})
 }
 
-func (c *clusterTopologyCommon) checkVersion(compare func(version int) bool) (bool, error) {
+func (c *clusterTopologyCommon) checkVersion(compare func(version int) bool) bool {
 	if c.k8sVersion != nil && c.k8sVersion.Major != "" {
 		if c.k8sVersion.Major == "1" {
 			minor, err := strconv.Atoi(c.k8sVersion.Minor[:2])
 			if err != nil {
 				log.Warnf("cannot parse server minor version %q: %w", c.k8sVersion.Minor[:2], err)
-				return true, nil
+				return true
 			}
-			return compare(minor), nil
+			return compare(minor)
 		}
 		log.Warnf("Kubernetes versions check failed (Major version is not '1')")
-		return false, nil
+		return false
 	}
 	log.Warnf("Kubernetes version is undefined")
-	return true, nil
+	return true
 }

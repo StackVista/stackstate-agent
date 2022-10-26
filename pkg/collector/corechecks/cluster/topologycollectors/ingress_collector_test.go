@@ -23,7 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func TestIngressCollector_1_21(t *testing.T) {
+func TestIngressCollector_1_18(t *testing.T) {
 
 	componentChannel := make(chan *topology.Component)
 	defer close(componentChannel)
@@ -35,7 +35,7 @@ func TestIngressCollector_1_21(t *testing.T) {
 
 	k8sVersion := version.Info{
 		Major: "1",
-		Minor: "21",
+		Minor: "18",
 	}
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
@@ -79,40 +79,6 @@ func TestIngressCollector_1_21(t *testing.T) {
 					expectRelationEndpointIPIngress213(),
 					expectEndpointAmazon213(),
 					expectRelationEndpointAmazonIngress213(),
-				},
-			},
-			{
-				testCase: "Test Service 1.22 1 - Minimal",
-				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-					expectIngress221(sourcePropertiesEnabled, creationTimeFormatted),
-					expectEndpointIP221(),
-					expectRelationEndpointIngress221(),
-					expectEndpointAmazon22(),
-					expectRelationEndpointAmazonIngress221(),
-				},
-			},
-			{
-				testCase: "Test Service 1.22 2 - Default Backend",
-				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-					expectIngress222(sourcePropertiesEnabled, creationTimeFormatted),
-					expectRelationIngressService222(),
-					expectEndpointIP222(),
-					expectRelationEndpointIPIngress222(),
-					expectEndpointAmazon22(),
-					expectRelationEndpointAmazonIngress222(),
-				},
-			},
-			{
-				testCase: "Test Service 1.22 3 - Ingress Rules",
-				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-					expectIngress223(sourcePropertiesEnabled, creationTimeFormatted),
-					expectRelationIngress223Service1(),
-					expectRelationIngress223Service2(),
-					expectRelationIngress223Service3(),
-					expectEndpointIP223(),
-					expectRelationEndpointIP22Ingress223(),
-					expectEndpointAmazon22(),
-					expectRelationEndpointAmazonIngress223(),
 				},
 			},
 		} {
@@ -1060,7 +1026,7 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 
 	versionInfo := version.Info{
 		Major: "1",
-		Minor: "21",
+		Minor: "18",
 	}
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {

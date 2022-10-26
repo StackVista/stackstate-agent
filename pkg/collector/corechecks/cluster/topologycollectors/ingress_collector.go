@@ -33,11 +33,12 @@ func (*IngressCollector) GetName() string {
 // CollectorFunction Collects and Published the Ingress Components
 func (ic *IngressCollector) CollectorFunction() error {
 	var ingresses []IngressInterface
-	ingresses, err := ic.getExtV1Ingresses(ingresses)
-	if err != nil {
-		return err
+	var err error
+	if supported := ic.ClusterTopologyCollector.minimumMinorVersion(19); supported {
+		ingresses, err = ic.getNetV1Ingresses(ingresses)
+	} else {
+		ingresses, err = ic.getExtV1Ingresses(ingresses)
 	}
-	ingresses, err = ic.getNetV1Ingresses(ingresses)
 	if err != nil {
 		return err
 	}
@@ -77,12 +78,6 @@ func (ic *IngressCollector) CollectorFunction() error {
 }
 
 func (ic *IngressCollector) getExtV1Ingresses(ingresses []IngressInterface) ([]IngressInterface, error) {
-	if supported, err := ic.ClusterTopologyCollector.maximumMinorVersion(21); err != nil || !supported {
-		if !supported {
-			log.Debug("Ingresses from extensions/v1beta1 are not supported in this Kubernetes version")
-		}
-		return ingresses, err
-	}
 	ingressesExt, err := ic.GetAPIClient().GetIngressesExtV1B1()
 	if err != nil {
 		return nil, err
@@ -97,12 +92,6 @@ func (ic *IngressCollector) getExtV1Ingresses(ingresses []IngressInterface) ([]I
 }
 
 func (ic *IngressCollector) getNetV1Ingresses(ingresses []IngressInterface) ([]IngressInterface, error) {
-	if supported, err := ic.ClusterTopologyCollector.minimumMinorVersion(19); err != nil || !supported {
-		if !supported {
-			log.Debugf("Ingresses from networking.k8s.io/v1 are not supported in this Kubernetes version")
-		}
-		return ingresses, err
-	}
 	ingressesNetV1, err := ic.GetAPIClient().GetIngressesNetV1()
 	if err != nil {
 		return nil, err

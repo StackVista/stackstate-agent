@@ -61,16 +61,6 @@ func TestCronJobCollector_21(t *testing.T) {
 	}
 	expectedComponents := []ComponentExpected{
 		{
-			testCase:     "Test Cron Job v1b1 1 - Kind + Generate Name",
-			expectedNoSP: cronJobV1B1NoSP1(),
-			expectedSP:   cronJobV1B1SP1(),
-		},
-		{
-			testCase:     "Test Cron Job v1b1 2 - Minimal",
-			expectedNoSP: cronJobV1B1NoSP2(),
-			expectedSP:   cronJobV1B1SP2(),
-		},
-		{
 			testCase:     "Test Cron Job v1 - Minimal",
 			expectedNoSP: cronJobV1NoSP(),
 			expectedSP:   cronJobV1SP(),
