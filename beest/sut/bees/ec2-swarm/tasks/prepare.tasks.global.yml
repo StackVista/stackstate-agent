@@ -29,8 +29,31 @@
     password: "{{ artifactory_password }}"
     reauthorize: yes
 
-- include_tasks: ../_shared/docker/compose-copy.yml
-- include_tasks: ../_shared/copy/copy-verify-and-create-script-file.yml
-- include_tasks: ../_shared/docker/docker-stack-rm-agent.yml
-- include_tasks: ../_shared/docker/compose-pull.yml
-- include_tasks: ../_shared/copy/copy-docker-log-backup-script.yml
+- name: Copy docker compose file
+  copy:
+    src: ../../files/docker-compose.yml
+    dest: /home/ubuntu/
+    mode: preserve
+
+- name: Stop docker stack
+  command: docker stack rm agent
+  args:
+    chdir: /home/ubuntu/
+  environment:
+    AGENT_VERSION: "{{ agent_current_branch }}"
+    STACKSTATE_BRANCH: "{{ stackstate_branch }}"
+
+- name: Docker compose pull images (cache purposes)
+  shell:
+    cmd: docker-compose pull
+    chdir: /home/ubuntu/
+  ignore_errors: true
+  register: compose
+
+- name: Copy docker logs backup script
+  copy:
+    src: ../files/docker-logs.sh
+    dest: /home/ubuntu/docker-logs.sh
+    mode: preserve
+  ignore_errors: true
+  become: true
