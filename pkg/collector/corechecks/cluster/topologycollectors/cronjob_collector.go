@@ -62,9 +62,10 @@ func (cjc *CronJobCollector) getCronJobsV1B1(cronJobs []CronJobInterface) ([]Cro
 	if err != nil {
 		return nil, err
 	}
-	for _, in := range ingressesExt {
+	for _, cj := range ingressesExt {
+		log.Debugf("Got CronJob '%s' from batch/v1beta1", cj.Name)
 		cronJobs = append(cronJobs, CronJobV1B1{
-			o: in,
+			o: cj,
 		})
 	}
 	return cronJobs, nil
@@ -81,9 +82,10 @@ func (cjc *CronJobCollector) getCronJobsV1(cronJobs []CronJobInterface) ([]CronJ
 	if err != nil {
 		return nil, err
 	}
-	for _, in := range ingressesExt {
+	for _, cj := range ingressesExt {
+		log.Debugf("Got CronJob '%s' from batch/v1", cj.Name)
 		cronJobs = append(cronJobs, CronJobV1{
-			o: in,
+			o: cj,
 		})
 	}
 	return cronJobs, nil

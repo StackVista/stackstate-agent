@@ -88,6 +88,7 @@ func (ic *IngressCollector) getExtV1Ingresses(ingresses []IngressInterface) ([]I
 		return nil, err
 	}
 	for _, in := range ingressesExt {
+		log.Debugf("Got Ingress '%s' from extensions/v1beta1", in.Name)
 		ingresses = append(ingresses, IngressV1B1{
 			o: in,
 		})
@@ -107,6 +108,7 @@ func (ic *IngressCollector) getNetV1Ingresses(ingresses []IngressInterface) ([]I
 		return nil, err
 	}
 	for _, in := range ingressesNetV1 {
+		log.Debugf("Got Ingress '%s' from networking.k8s.io/v1", in.Name)
 		ingresses = append(ingresses, IngressNetV1{
 			o: in,
 		})
