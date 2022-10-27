@@ -29,15 +29,18 @@ def test_stackstate_agent_status_output_no_datadog(host):
 
 
 def test_stackstate_agent_running_and_enabled(host):
+    print(host.ansible("service", "name=stackstate-agent enabled=true state=started"))
     assert not host.ansible("service", "name=stackstate-agent enabled=true state=started")['changed']
 
 
 def test_stackstate_process_agent_running_and_enabled(host):
+    print(host.ansible("service", "name=stackstate-agent-process state=started", become=True))
     # We don't check enabled because on systemd redhat is not needed check omnibus/package-scripts/agent/posttrans
     assert not host.ansible("service", "name=stackstate-agent-process state=started", become=True)['changed']
 
 
 def test_stackstate_trace_agent_running_and_enabled(host):
+    print(host.ansible("service", "name=stackstate-agent-trace state=started", become=True))
     assert not host.ansible("service", "name=stackstate-agent-trace state=started", become=True)['changed']
 
 
