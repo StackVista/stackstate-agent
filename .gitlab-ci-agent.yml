@@ -155,7 +155,7 @@ deps_win:
     when:
       - always
   rules:
-    - when: on_success
+    - when: never # TODO: Reenable
 
 ## build stage
 
@@ -413,7 +413,7 @@ build_win:
     when:
       - always
   rules:
-    - when: on_success
+    - when: never # TODO: Reenable
 
 #win_cleanup:
 #  stage: test
@@ -522,7 +522,7 @@ pre_release_win:
     when:
       - always
   rules:
-    - when: on_success
+    - when: never # TODO: Reenable
 
 pre_release_rpm:
   stage: pre_release
@@ -1327,8 +1327,8 @@ molecule_vms_test:
   needs:
     - pre_release_deb
     - pre_release_rpm
-    - pre_release_win
     - molecule_vms_create
+#    - pre_release_win # TODO: Reenable
 
 molecule_vms_failure_cleanup:
   variables:
@@ -1547,6 +1547,7 @@ release_win:
     - aws.exe s3 ls s3://$Env:STS_AWS_RELEASE_BUCKET_WIN/windows/stable/
     - aws.exe s3 ls s3://$Env:STS_AWS_RELEASE_BUCKET_WIN/
   rules:
+    - when: never # TODO: Reenable
     - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
       when: manual
   tags:
