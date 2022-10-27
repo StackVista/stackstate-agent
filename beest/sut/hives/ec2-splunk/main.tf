@@ -12,9 +12,20 @@ resource "aws_key_pair" "splunk_key_pair" {
   }
 }
 
+data "http" "local_ip" {
+  url = "http://ipv4.icanhazip.com"
+}
+
 resource "aws_security_group" "splunk_group" {
   name   = "${var.environment}-splunk-sg"
   vpc_id = var.vpc_id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["${chomp(data.http.local_ip.body)}/32"]
+  }
 
   ingress {
     description      = "Splunk User Interface"
