@@ -37,17 +37,18 @@ platforms:
       - agent_linux_vm
     ssh_user: centos
 
-  - name: agent-win
-    image: ami-044597ab9209135b1  #  Our Packer image based on Windows Server 2016 preconfigured for ansible (EBS-Backed)
-    # image: ami-01854c1e9e35eb2ed  # Our packer image based on Windows Server 2012 preconfigured for ansible (EBS Backed)
-    instance_type: t3.medium
-    vpc_subnet_id: subnet-fa36adb2  # eu-west-1a
-    region: eu-west-1
-    groups:
-      - agent_win_vm
-    ssh_user: test
-    test_user: test
-    test_user_pwd: Bionic!
+# TODO: Reenable
+#  - name: agent-win
+#    image: ami-044597ab9209135b1  #  Our Packer image based on Windows Server 2016 preconfigured for ansible (EBS-Backed)
+#    # image: ami-01854c1e9e35eb2ed  # Our packer image based on Windows Server 2012 preconfigured for ansible (EBS Backed)
+#    instance_type: t3.medium
+#    vpc_subnet_id: subnet-fa36adb2  # eu-west-1a
+#    region: eu-west-1
+#    groups:
+#      - agent_win_vm
+#    ssh_user: test
+#    test_user: test
+#    test_user_pwd: Bionic!
 
   - name: agent-connection-namespaces
     image: ami-00c25f7948e360133    # Ubuntu 18.04 (EBS-Backed x86_64)

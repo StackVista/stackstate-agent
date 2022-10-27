@@ -25,11 +25,12 @@
   tasks:
     - include_tasks: ./prepare.tasks.prepare.network.yml
 
-- name: Prepare Windows Agent (pre)
-  hosts: agent_win_vm
-  gather_facts: false
-  tasks:
-    - include_tasks: ./prepare.tasks.prepare.windows.yml
+# TODO: Reenable
+#- name: Prepare Windows Agent (pre)
+#  hosts: agent_win_vm
+#  gather_facts: false
+#  tasks:
+#    - include_tasks: ./prepare.tasks.prepare.windows.yml
 
 - name: Prepare Ubuntu Agent listening before start
   hosts: agent-ubuntu
@@ -43,23 +44,26 @@
   tasks:
     - include_tasks: ./prepare.tasks.prepare.fedora.yml
 
-- name: Prepare Windows Agent connecting before start
-  hosts: agent-win
-  gather_facts: false
-  tasks:
-    - include_tasks: ./prepare.tasks.prepare.windows.agent.connecting.yml
+# TODO: Reenable
+#- name: Prepare Windows Agent connecting before start
+#  hosts: agent-win
+#  gather_facts: false
+#  tasks:
+#    - include_tasks: ./prepare.tasks.prepare.windows.agent.connecting.yml
 
-- name: Prepare Windows Agents (post)
-  hosts: agent_win_vm
-  gather_facts: false
-  tasks:
-    - include_tasks: ./prepare.tasks.prepare.windows.agent.yml
+# TODO: Reenable
+#- name: Prepare Windows Agents (post)
+#  hosts: agent_win_vm
+#  gather_facts: false
+#  tasks:
+#    - include_tasks: ./prepare.tasks.prepare.windows.agent.yml
 
-- name: Prepare Win Agent for Short-Lived tests (post installation configuration)
-  hosts: agent_win_vm
-  gather_facts: false
-  tasks:
-    - include_tasks: ./prepare.tasks.prepare.windows.agent.short.yml
+# TODO: Reenable
+#- name: Prepare Win Agent for Short-Lived tests (post installation configuration)
+#  hosts: agent_win_vm
+#  gather_facts: false
+#  tasks:
+#    - include_tasks: ./prepare.tasks.prepare.windows.agent.short.yml
 
 - name: Prepare Linux Agents (post)
   hosts: agent_linux_vm
@@ -91,11 +95,12 @@
   tasks:
     - include_tasks: ./prepare.tasks.prepare.fedora.agent.after.yml
 
-- name: Prepare Windows Agent connecting after start
-  hosts: agent-win
-  gather_facts: false
-  tasks:
-    - include_tasks: ./prepare.tasks.prepare.windows.agent.after.yml
+# TODO: Reenable
+#- name: Prepare Windows Agent connecting after start
+#  hosts: agent-win
+#  gather_facts: false
+#  tasks:
+#    - include_tasks: ./prepare.tasks.prepare.windows.agent.after.yml
 
 - name: Prepare Agent for blacklist inclusion test
   hosts: agent-ubuntu, agent-fedora, agent-centos
