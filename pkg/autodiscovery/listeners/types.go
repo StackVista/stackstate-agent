@@ -61,7 +61,7 @@ func Register(name string, factory ServiceListenerFactory) {
 	}
 	_, registered := ServiceListenerFactories[name]
 	if registered {
-		log.Errorf("Service listener factory %s already registered. Ignoring.", name)
+		log.Warnf("Service listener factory %s already registered. Ignoring.", name)
 	}
 	ServiceListenerFactories[name] = factory
 }

@@ -30,6 +30,7 @@ def test_stackstate_agent_log(host, hostname):
         "Failed to deserialize JSON on fields: , "
         "with message: Object is missing required member \'internalHostname\'",
         "net/ntp.go.*There was an error querying the ntp host",
+        "Service listener factory .* already registered"
     ]
 
     # Check for errors
