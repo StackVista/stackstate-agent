@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	coreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"testing"
 	"time"
 )
@@ -17,48 +18,53 @@ import (
 func TestVolumeCorrelator(t *testing.T) {
 	clusterName := "test-cluster-name"
 	namespace := "default"
-	svcName := "kubernetes"
-	pod1Name := "kube-apiserver-1"
-	host1IP := "10.77.0.1"
-	pod2Name := "kube-apiserver-2"
-	host2IP := "10.77.0.2"
-	pod3Name := "unrelated-3"
-	host3IP := "10.77.0.3"
-	pod4Name := "unrelated-4"
+	pod1Name := "pod-1"
+	pod2Name := "pod-2"
+	pod3Name := "pod-3"
+	pvcName := "data"
+	containerName := "client-container"
+	configMapName := "config-map"
 	someTimestamp := metav1.NewTime(time.Now())
 
-	pod1 := podWithDownwardAPIVolume(namespace, pod1Name, someTimestamp)
-	pod2 := podWithPersistentVolume(namespace, pod2Name, someTimestamp)
-	pod3 := podWithConfigMapVolume(namespace, pod3Name, someTimestamp)
+	pod1 := podWithDownwardAPIVolume(namespace, pod1Name, containerName, someTimestamp)
+	pod2 := podWithPersistentVolume(namespace, pod2Name, pvcName, someTimestamp)
+	pod3 := podWithConfigMapVolume(namespace, pod3Name, configMapName, someTimestamp)
+	pvc1 := pvc(pvcName)
 
 	components, relations := executeVolumeCorrelation(t,
 		[]coreV1.Pod{pod1, pod2, pod3},
-		[]coreV1.PersistentVolumeClaim{},
+		[]coreV1.PersistentVolumeClaim{pvc1},
 		true)
 
+	expectedNamespaceID := fmt.Sprintf("urn:kubernetes:/%s:namespace/%s", clusterName, namespace)
 	expectedPod1ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod1Name)
 	expectedPod2ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod2Name)
 	expectedPod3ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod3Name)
-	expectedPod4ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod4Name)
-	expectedSvcID := fmt.Sprintf("urn:kubernetes:/%s:%s:service/%s", clusterName, namespace, svcName)
-	expectedNamespaceID := fmt.Sprintf("urn:kubernetes:/%s:namespace/%s", clusterName, namespace)
+	expectedPVID := fmt.Sprintf("urn:kubernetes:/%s:persistent-volume/%s", clusterName, pvc1.Spec.VolumeName)
+	expectedCMID := fmt.Sprintf("urn:kubernetes:/%s:%s:configmap/%s", clusterName, namespace, "config-map")
+	expectedContainerID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s:container/%s", clusterName, namespace, pod1Name, containerName)
+	var expectedPropagation *coreV1.MountPropagationMode
+
 	expectedComponents := []*topology.Component{
-		podComponentWithHostPortExposed(clusterName, namespace, pod1Name, expectedPod1ID, host1IP, someTimestamp, pod1.Status),
-		podComponentWithHostPortExposed(clusterName, namespace, pod2Name, expectedPod2ID, host2IP, someTimestamp, pod2.Status),
-		podComponentWithHostPortExposed(clusterName, namespace, pod3Name, expectedPod3ID, host3IP, someTimestamp, pod3.Status),
-		serviceComponentWithSinglePort(clusterName, namespace, expectedSvcID, svcName, someTimestamp),
+		podComponent(namespace, pod1Name, someTimestamp),
+		podComponent(namespace, pod2Name, someTimestamp),
+		podComponent(namespace, pod3Name, someTimestamp),
 	}
 	expectedRelations := []*topology.Relation{
 		simpleRelation(expectedNamespaceID, expectedPod1ID, "encloses"),
+		// DownwardAPI volume mounts the pod with some data (STAC-14851)
+		simpleRelationWithData(expectedContainerID, expectedPod1ID, "mounts",
+			map[string]interface{}{
+				"mountPath":        "/etc/podinfo",
+				"mountPropagation": expectedPropagation,
+				"name":             "podinfo",
+				"readOnly":         true,
+				"subPath":          "",
+			}),
 		simpleRelation(expectedNamespaceID, expectedPod2ID, "encloses"),
+		simpleRelation(expectedPod2ID, expectedPVID, "claims"),
 		simpleRelation(expectedNamespaceID, expectedPod3ID, "encloses"),
-		simpleRelation(expectedNamespaceID, expectedPod4ID, "encloses"),
-		simpleRelation(expectedNamespaceID, expectedSvcID, "encloses"),
-		// these are the most important in our test case
-		simpleRelation(expectedSvcID, expectedPod1ID, "exposes"),
-		simpleRelation(expectedSvcID, expectedPod2ID, "exposes"),
-		// no relation to pod3 - it's not mentioned in the endpoints and has different port
-		// no relation to pod4 - it's mentioned in the endpoints, but has different port
+		simpleRelation(expectedPod3ID, expectedCMID, "claims"),
 	}
 
 	assert.EqualValues(t, expectedComponents, components)
@@ -66,7 +72,42 @@ func TestVolumeCorrelator(t *testing.T) {
 	return
 }
 
-func podWithPersistentVolume(namespace string, name string, timestamp metav1.Time) coreV1.Pod {
+func podComponent(namespace string, name string, timestamp metav1.Time) *topology.Component {
+	return &topology.Component{
+		ExternalID: fmt.Sprintf("urn:kubernetes:/test-cluster-name:%s:pod/%s", namespace, name),
+		Type: topology.Type{
+			Name: "pod",
+		},
+		Data: topology.Data{
+			"name": name,
+			"tags": map[string]string{
+				"cluster-name": "test-cluster-name",
+				"namespace":    namespace,
+			},
+			"identifiers":       []string{},
+			"creationTimestamp": timestamp,
+			"uid":               types.UID(""),
+			"restartPolicy":     coreV1.RestartPolicy(""),
+			"status": coreV1.PodStatus{
+				Phase:                      "",
+				Conditions:                 nil,
+				Message:                    "",
+				Reason:                     "",
+				NominatedNodeName:          "",
+				HostIP:                     "",
+				PodIP:                      "",
+				PodIPs:                     nil,
+				StartTime:                  nil,
+				InitContainerStatuses:      nil,
+				ContainerStatuses:          nil,
+				QOSClass:                   "",
+				EphemeralContainerStatuses: nil,
+			},
+		},
+	}
+}
+
+func podWithPersistentVolume(namespace string, name string, pvcName string, timestamp metav1.Time) coreV1.Pod {
 	return coreV1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              name,
@@ -95,7 +136,7 @@ func podWithPersistentVolume(namespace string, name string, timestamp metav1.Tim
 					Name: "volume1",
 					VolumeSource: coreV1.VolumeSource{
 						PersistentVolumeClaim: &coreV1.PersistentVolumeClaimVolumeSource{
-							ClaimName: "data",
+							ClaimName: pvcName,
 							ReadOnly:  false,
 						},
 					},
@@ -105,7 +146,7 @@ func podWithPersistentVolume(namespace string, name string, timestamp metav1.Tim
 	}
 }
 
-func podWithDownwardAPIVolume(namespace string, name string, timestamp metav1.Time) coreV1.Pod {
+func podWithDownwardAPIVolume(namespace string, name string, containerName string, timestamp metav1.Time) coreV1.Pod {
 	return coreV1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              name,
@@ -117,6 +158,7 @@ func podWithDownwardAPIVolume(namespace string, name string, timestamp metav1.Ti
 			HostNetwork: true,
 			Containers: []coreV1.Container{
 				{
+					Name: containerName,
 					VolumeMounts: []coreV1.VolumeMount{
 						{
 							Name:        "podinfo",
@@ -153,7 +195,7 @@ func podWithDownwardAPIVolume(namespace string, name string, timestamp metav1.Ti
 	}
 }
 
-func podWithConfigMapVolume(namespace string, name string, timestamp metav1.Time) coreV1.Pod {
+func podWithConfigMapVolume(namespace string, name string, configMapName string, timestamp metav1.Time) coreV1.Pod {
 	return coreV1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              name,
@@ -177,11 +219,11 @@ func podWithConfigMapVolume(namespace string, name string, timestamp metav1.Time
 			},
 			Volumes: []coreV1.Volume{
 				{
-					Name: "config-map",
+					Name: configMapName,
 					VolumeSource: coreV1.VolumeSource{
 						ConfigMap: &coreV1.ConfigMapVolumeSource{
 							LocalObjectReference: coreV1.LocalObjectReference{
-								Name: "config-map",
+								Name: configMapName,
 							},
 							Items: []coreV1.KeyToPath{
 								{
@@ -194,6 +236,17 @@ func podWithConfigMapVolume(namespace string, name string, timestamp metav1.Time
 					},
 				},
 			},
+		},
+	}
+}
+
+func pvc(name string) coreV1.PersistentVolumeClaim {
+	return coreV1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Spec: coreV1.PersistentVolumeClaimSpec{
+			VolumeName: fmt.Sprintf("pvc-%s", name),
 		},
 	}
 }

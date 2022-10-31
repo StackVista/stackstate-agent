@@ -135,16 +135,6 @@ func TestService2PodCorrelatorWhenEndpointsDisabled(t *testing.T) {
 	return
 }
 
-func simpleRelation(sourceID string, targetID string, typ string) *topology.Relation {
-	return &topology.Relation{
-		ExternalID: fmt.Sprintf("%s->%s", sourceID, targetID),
-		SourceID:   sourceID,
-		TargetID:   targetID,
-		Type:       topology.Type{Name: typ},
-		Data:       map[string]interface{}{},
-	}
-}
-
 func serviceComponentWithSinglePort(clusterName string, namespace string, externalID string, name string, timestamp metav1.Time) *topology.Component {
 	return &topology.Component{
 		ExternalID: externalID,
