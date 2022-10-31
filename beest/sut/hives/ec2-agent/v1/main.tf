@@ -24,7 +24,7 @@ resource "aws_security_group" "agent_group" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["${chomp(data.http.local_ip.body)}/32"]
+    cidr_blocks = ["54.220.174.98/32"]
   }
 
   ingress {
