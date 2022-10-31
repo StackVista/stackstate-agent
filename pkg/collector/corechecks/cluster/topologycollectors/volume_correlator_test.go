@@ -68,7 +68,13 @@ func TestVolumeCorrelator(t *testing.T) {
 	}
 
 	assert.EqualValues(t, expectedComponents, components)
-	assert.EqualValues(t, expectedRelations, relations)
+	for _, expected := range expectedRelations {
+		for _, actual := range relations {
+			if expected.ExternalID == actual.ExternalID {
+				assert.EqualValues(t, expected, actual)
+			}
+		}
+	}
 	return
 }
 
