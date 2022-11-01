@@ -17,3 +17,6 @@ export RUN_ID=$AGENT_CURRENT_BRANCH
 export AGENT_HELM_CHART_VERSION="2.1.2"
 export STACKSTATE_HELM_CHART_VERSION="5.0.2"  # use >0.0.0-0 development versions
 export STACKSTATE_LICENSE=TBD
+
+# The IP of the NAT Gateway of the tooling account (Where runners live)
+export RUNNERS_IP=TBD
