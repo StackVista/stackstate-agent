@@ -30,7 +30,9 @@ def test_stackstate_agent_log(host, hostname):
         "Failed to deserialize JSON on fields: , "
         "with message: Object is missing required member \'internalHostname\'",
         "net/ntp.go.*There was an error querying the ntp host",
-        "Service listener factory .* already registered"
+        "Service listener factory .* already registered",  # double register of the ECS service listener factory
+        "workloadmeta collector .* could not start. error",  # ignoring INFO log containing the word error
+        "For verbose messaging see aws.Config.CredentialsChainVerboseErrors"  # ignoring => contains the word error
     ]
 
     # Check for errors
