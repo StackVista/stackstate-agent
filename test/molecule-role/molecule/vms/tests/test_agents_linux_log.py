@@ -32,7 +32,8 @@ def test_stackstate_agent_log(host, hostname):
         "net/ntp.go.*There was an error querying the ntp host",
         "Service listener factory .* already registered",  # double register of the ECS service listener factory
         "workloadmeta collector .* could not start. error",  # ignoring INFO log containing the word error
-        "For verbose messaging see aws.Config.CredentialsChainVerboseErrors"  # ignoring => contains the word error
+        "For verbose messaging see aws.Config.CredentialsChainVerboseErrors",  # ignoring => contains the word error
+        "unable to get tags from gce and cache is empty"  # ignoring when tags lookup don't work for gce collector
     ]
 
     # Check for errors
@@ -105,7 +106,20 @@ def test_stackstate_trace_agent_no_log_errors(host, hostname):
     util.wait_until(wait_for_check_successes, 30, 3)
 
     # Check for errors
+    ignored_errors_regex = [
+        "workloadmeta collector .* could not start. error",  # ignoring INFO log containing the word error
+    ]
     trace_agent_log = _get_log(host, "{}-{}".format(hostname, "trace-agent"), trace_agent_log_path)
     for line in trace_agent_log.splitlines():
+        ignored = False
+        for ignored_error in ignored_errors_regex:
+            if len(re.findall(ignored_error, line, re.DOTALL)) > 0:
+                ignored = True
+        if "0.datadog.pool.ntp.org" in line:
+            print("Datadog default host still exist for ntp in line {}".format(line))
+            ignored = False
+        if ignored:
+            continue
+
         print("Considering: %s" % line)
         assert not re.search("error", line, re.IGNORECASE)
