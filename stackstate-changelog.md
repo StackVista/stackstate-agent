@@ -1,5 +1,11 @@
 # StackState Agent v2 releases
 
+## Next release (???)
+
+**Improvements**
+- Upgraded process-agent version from 4.0.7 to 4.0.8 which includes:
+  - Reduce unimportant warning logs [STAC-17982](https://stackstate.atlassian.net/browse/STAC-17982)
+
 ## 2.18.0 (2022-10-07)
 **Features**
 - Added [configuration options](https://github.com/StackVista/stackstate-agent/blob/master/Dockerfiles/cluster-agent/conf.d/kubernetes_api_events.d/conf.yaml.default) to override category of an event based on event's reason [STAC-16668](https://stackstate.atlassian.net/browse/STAC-16668)
