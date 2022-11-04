@@ -210,7 +210,7 @@ def test_created_connection_before_start(host, ansible_var):
 
 
 def test_host_metrics(host):
-    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=2000"
+    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=4000"
 
     def wait_for_metrics():
         data = host.check_output("curl \"%s\"" % url)
@@ -342,7 +342,7 @@ def test_docker_metrics(host):
                     "docker.cpu.user"}
 
         assert expected.issubset(get_keys("agent-connection-namespaces"))
-    
+
     util.wait_until(wait_for_metrics, 30, 3)
 
 
