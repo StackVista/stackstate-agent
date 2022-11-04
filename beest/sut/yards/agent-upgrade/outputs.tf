@@ -24,6 +24,14 @@ resource "local_file" "ansible_inventory" {
       }
       vars : {
         yard_id : var.yard_id
+        agent_redhat : {
+          host : module.ec2_agent_redhat.agent_ip
+          user : "ec2-user"
+        }
+        agent_ubuntu : {
+          host : module.ec2_agent_ubuntu.agent_ip
+          user : "ubuntu"
+        }
       }
     }
   })

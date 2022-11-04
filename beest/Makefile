@@ -21,11 +21,20 @@ endif
 GIT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
 BRANCH = $(shell echo ${GIT_BRANCH} | tr [:upper:] [:lower:])
 
-MAJOR_VERSION                ?= 2
-STS_AWS_TEST_BUCKET          ?= stackstate-agent-2-test
-STS_DOCKER_TEST_REPO         ?= stackstate-agent-2-test
-STS_DOCKER_TEST_REPO_CLUSTER ?= stackstate-cluster-agent-test
-PROCESS_AGENT_TEST_REPO      ?= stackstate-process-agent-test
+RELEASED_MAJOR_VERSION              ?= 2
+RELEASED_STS_AWS_BUCKET          	?= stackstate-agent-2
+RELEASED_STS_AWS_TEST_BUCKET        ?= stackstate-agent-2-test
+RELEASED_STS_DOCKER_REPO         	?= stackstate-agent-2
+RELEASED_STS_DOCKER_TEST_REPO       ?= stackstate-agent-2-test
+
+MAJOR_VERSION                       ?= 3
+STS_AWS_BUCKET          	        ?= stackstate-agent-3
+STS_AWS_TEST_BUCKET                 ?= stackstate-agent-3-test
+STS_DOCKER_REPO         	        ?= stackstate-agent
+STS_DOCKER_TEST_REPO                ?= stackstate-agent-test
+
+STS_DOCKER_TEST_REPO_CLUSTER        ?= stackstate-cluster-agent-test
+PROCESS_AGENT_TEST_REPO             ?= stackstate-process-agent-test
 
 BASE_KEEPER_IMAGE  = artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20220926
 KEEPER_IMAGE       = beest:${BRANCH}
@@ -33,8 +42,15 @@ KEEPER_CONTAINER   = beest
 VOLUME_GO_PKG_NAME = beest-go-volume
 DOCKER_ENV		   = --env AGENT_CURRENT_BRANCH=${GIT_BRANCH} \
 					 --env MAJOR_VERSION=${MAJOR_VERSION} \
+					 --env RELEASED_MAJOR_VERSION=${RELEASED_MAJOR_VERSION} \
+					 --env STS_AWS_BUCKET=${STS_AWS_BUCKET} \
 					 --env STS_AWS_TEST_BUCKET=${STS_AWS_TEST_BUCKET} \
+					 --env STS_DOCKER_REPO=${STS_DOCKER_REPO} \
 					 --env STS_DOCKER_TEST_REPO=${STS_DOCKER_TEST_REPO} \
+					 --env RELEASED_STS_AWS_BUCKET=${RELEASED_STS_AWS_BUCKET} \
+					 --env RELEASED_STS_AWS_TEST_BUCKET=${RELEASED_STS_AWS_TEST_BUCKET} \
+					 --env RELEASED_STS_DOCKER_REPO=${RELEASED_STS_DOCKER_REPO} \
+					 --env RELEASED_STS_DOCKER_TEST_REPO=${RELEASED_STS_DOCKER_TEST_REPO} \
 					 --env STS_DOCKER_TEST_REPO_CLUSTER=${STS_DOCKER_TEST_REPO_CLUSTER} \
 					 --env PROCESS_AGENT_TEST_REPO=${PROCESS_AGENT_TEST_REPO}
 

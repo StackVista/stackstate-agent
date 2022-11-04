@@ -1,9 +1,8 @@
 import logging
 import time
-from typing import Optional
-
 import pytest
 
+from typing import Optional
 from agent_tesing_base import AgentTestingBase
 from conftest import YARD_LOCATION
 from splunk_testing_base import SplunkBase, SplunkMetric

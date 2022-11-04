@@ -1330,6 +1330,57 @@ molecule_vms_success_cleanup:
     - molecule_vms_test
 
 # Job Seq: Beest
+# Type: agent_upgrade
+
+.beest_agent_upgrade_rule:
+  # Currently we default to only running on Python2 build.
+  # TODO: Change this when V3 releases are finalized and the default.
+  - &beest_agent_upgrade_ignore_rule
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[beest\-/ && $CI_COMMIT_MESSAGE !~ /\[beest\-agent\-upgrade]/
+    when: never
+
+.beest_agent_upgrade_variables: &beest_agent_upgrade_variables
+  variables:
+    BEEST_SCENARIO: agent-upgrade
+    BEEST_TEST_GROUP: agent-upgrade
+
+beest_agent_upgrade_create:
+  <<: *beest
+  <<: *beest_create_with_stackstate
+  <<: *beest_agent_upgrade_variables
+  rules:
+    - *beest_agent_upgrade_ignore_rule
+    - *v2_merge_train_always
+
+beest_agent_upgrade_test:
+  <<: *beest
+  <<: *beest_test_ignore_stackstate
+  <<: *beest_agent_upgrade_variables
+  rules:
+    - *beest_agent_upgrade_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_agent_upgrade_create
+  needs:
+    - beest_agent_upgrade_create
+    - pre_release_deb
+
+beest_agent_upgrade_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_agent_upgrade_variables
+  rules:
+    - *beest_agent_upgrade_ignore_rule
+    - *v2_merge_train_always
+    - when: always
+  needs:
+    - job: beest_agent_upgrade_test
+      optional: true
+    - job: beest_agent_upgrade_create
+      optional: true
+
+# Job Seq: Beest
 # Type: otel
 
 .beest_otel_rule:

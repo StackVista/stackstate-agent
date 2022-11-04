@@ -41,7 +41,7 @@ scenarios:
     description: |
       Provisions a VM.
       Deploys Agent V2 on a VM.
-      Deploys StackState on sandbox k8s cluster and installs the Splunk StackPack.
+      Deploys StackState on sandbox k8s cluster and install the Agent StackPack testing Agent Upgrade.
     yard:
       name: agent-upgrade
     test:

@@ -1,6 +1,22 @@
-# Install Agent V2
-- name: VM Agent V2
+# No need to disable the StackState instance if you enable the Simulator, The data will be forwarded form the Simulator
+- name: Kubernetes Stackstate
+  hosts: local
+  gather_facts: false
+  roles:
+    - role: "{{ bees_path }}/k8s-stackstate"
+      vars:
+        sts_ingress: KOPS
+
+# Install Agent V2 on the Ubuntu host - Debian Tests
+- name: VM Agent V2 on Ubuntu
   hosts: agent_ubuntu
+  gather_facts: true
+  roles:
+    - role: "{{ bees_path }}/ec2-agent/v2"
+
+# Install Agent V2 on the Redhat host - RPM tests
+- name: VM Agent V2 on Redhat
+  hosts: agent_redhat
   gather_facts: true
   roles:
     - role: "{{ bees_path }}/ec2-agent/v2"

@@ -12,8 +12,7 @@
         LOG_PAYLOADS: "true"
         STS_LOG_LEVEL: "debug"
         STS_API_KEY: "{{ sts_api_key }}"
-        # STS_URL: "{{ 'http://localhost:7078/stsAgent' if enable_sts_simulator is defined and enable_sts_simulator == true else '{{ sts_url }}/receiver/stsAgent' }}"
-        STS_URL: "{{ '{{ sts_url }}/receiver/stsAgent' }}"
+        STS_URL: "{{ 'http://localhost:7078/stsAgent' if enable_sts_simulator is defined and enable_sts_simulator == true else '{{ sts_url }}/receiver/stsAgent' }}"
         STS_HOSTNAME: "{{ inventory_hostname }}"
         # CODE_NAME: "{{ 'random-custom-branch-name' if agent_custom_branch is defined else agent_current_branch }}"
         CODE_NAME: "{{ agent_current_branch  }}"
@@ -123,9 +122,9 @@
   block:
     - name: Uninstall stackstate-agent
       become: yes
-      apt:
-        pkg: stackstate-agent
-        state: absent
+      package: >
+        name=stackstate-agent
+        state=absent
 
     - name: Remove configurations
       become: yes
