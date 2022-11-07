@@ -6,7 +6,7 @@ testinfra_hosts = ["local"]
 
 def test_agents_running(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics")
+         json_data = cliv1.topic_api("sts_multi_metrics")
 
         metrics = {}
         for message in json_data["messages"]:
@@ -28,6 +28,31 @@ def test_agents_running(cliv1):
 
     util.wait_until(wait_for_metrics, 60, 3)
 
+def test_container_metrics(cliv1):
+    def wait_for_metrics():
+        json_data = cliv1.topic_api("sts_multi_metrics", limit=4000)
+
+        metrics = {}
+        for message in json_data["messages"]:
+            for m_name in message["message"]["MultiMetric"]["values"].keys():
+                if m_name not in metrics:
+                    metrics[m_name] = []
+
+                values = [message["message"]["MultiMetric"]["values"][m_name]]
+                metrics[m_name] += values
+
+        expected = {"cpuNrThrottled", "cpuThreadCount", "netRcvdPs", "memCache", "cpuThrottledTime", "totalPct", "wbps",
+                    "systemPct", "rbps", "memRss", "netSentBps", "netSentPs", "netRcvdBps", "userPct"}
+        for e in expected:
+            assert e in metrics, "%s metric was not found".format(e)
+
+        for v in metrics["memRss"]:
+            assert v > 0, "memRss metric is '0'"
+
+        for v in metrics["systemPct"]:
+            assert v > 0, "systemPct metric is '0'"
+
+    util.wait_until(wait_for_metrics, 60, 3)
 
 def test_agent_http_metrics(cliv1):
     def wait_for_metrics():
