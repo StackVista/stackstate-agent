@@ -19,7 +19,7 @@ def test_stackstate_agent_log(host, hostname):
     # Check for presence of success
     def wait_for_check_successes():
         agent_log = _get_log(host, "{}-{}".format(hostname, "agent"), agent_log_path)
-        assert re.search("Successfully posted payload to.*stsAgent/intake", agent_log)
+        assert re.search("Successfully posted payload to.*stsAgent", agent_log)
 
     util.wait_until(wait_for_check_successes, 60, 3)
 
