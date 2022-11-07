@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -97,7 +98,7 @@ func (vc *VolumeCorrelator) CorrelateFunction() error {
 				volumeExternalID, ok := volumeLookup[mount.Name]
 				if !ok {
 					if vc.discoverClaims {
-						log.Errorf("Container '%s' of Pod '%s' mounts an unknown volume '%s'", container.Name, pod.ExternalID, mount.Name)
+						log.Warnf("Container '%s' of Pod '%s' mounts an unknown volume '%s'", container.Name, pod.ExternalID, mount.Name)
 					}
 
 					continue
@@ -133,7 +134,7 @@ func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, 
 	var volumeExternalID string
 
 	if volume.DownwardAPI != nil {
-		return "", nil // The downward API does not need a volume
+		return pod.ExternalID, nil // The downward API mounts the pod
 	} else if volume.PersistentVolumeClaim != nil {
 		claimedPVExtID, ok := pvcMapping[volume.PersistentVolumeClaim.ClaimName]
 
