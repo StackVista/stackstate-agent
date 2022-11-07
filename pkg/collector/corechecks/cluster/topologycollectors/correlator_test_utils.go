@@ -4,6 +4,7 @@
 package topologycollectors
 
 import (
+	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -40,4 +41,24 @@ func RunCorrelatorTest(t *testing.T, correlator ClusterTopologyCorrelator, expec
 		// mark this correlator as complete
 		log.Debugf("Finished cluster topology correlator: %s\n", correlator.GetName())
 	}()
+}
+
+func simpleRelation(sourceID string, targetID string, typ string) *topology.Relation {
+	return &topology.Relation{
+		ExternalID: fmt.Sprintf("%s->%s", sourceID, targetID),
+		SourceID:   sourceID,
+		TargetID:   targetID,
+		Type:       topology.Type{Name: typ},
+		Data:       map[string]interface{}{},
+	}
+}
+
+func simpleRelationWithData(sourceID string, targetID string, typ string, data map[string]interface{}) *topology.Relation {
+	return &topology.Relation{
+		ExternalID: fmt.Sprintf("%s->%s", sourceID, targetID),
+		SourceID:   sourceID,
+		TargetID:   targetID,
+		Type:       topology.Type{Name: typ},
+		Data:       data,
+	}
 }

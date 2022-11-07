@@ -185,7 +185,7 @@ pre_release_deb:
     # //TODO: move to image
     - apt-get install -y apt-utils libtool debsigs
     - ls -la /usr/local/rvm/gems/ruby-2.4.2/bin/
-    - source /usr/local/rvm/scripts/rvm && gem install deb-s3
+    - source /usr/local/rvm/scripts/rvm && gem install deb-s3 -v 0.10.0
     # //
     - source /usr/local/rvm/scripts/rvm
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
