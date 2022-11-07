@@ -276,7 +276,7 @@ func (k *EventsCheck) eventCollectionCheck() (newEvents []*v1.Event, err error) 
 func (k *EventsCheck) processEvents(sender aggregator.Sender, events []*v1.Event) error {
 	mapper := k.mapperFactory(k.ac, k.clusterName, k.instance.EventCategories)
 	for _, event := range events {
-		mappedEvent, err := mapper.mapKubernetesEvent(event, false)
+		mappedEvent, err := mapper.mapKubernetesEvent(event)
 		if err != nil {
 			_ = k.Warnf("Error while mapping event, %s.", err.Error())
 			continue
