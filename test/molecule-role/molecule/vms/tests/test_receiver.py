@@ -210,7 +210,7 @@ def test_created_connection_before_start(host, ansible_var):
 
 
 def test_host_metrics(host):
-    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=4000"
+    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=5000"
 
     def wait_for_metrics():
         data = host.check_output("curl \"%s\"" % url)
@@ -276,8 +276,8 @@ def test_host_metrics(host):
         # Agent metrics
         assert_metric("stackstate.agent.running", lambda v: v == 1.0, lambda v: v == 1.0, lambda v: v == 1.0)
         assert_metric("stackstate.process_agent.running", lambda v: v == 1.0, lambda v: v == 1.0, lambda v: v == 1.0)
-        assert_metric("stackstate.process_agent.processes.host_count", lambda v: v > 1.0, lambda v: v > 1.0, lambda v: v > 1.0)
-        assert_metric("stackstate.process_agent.containers.host_count", lambda v: v == 0.0, lambda v: v == 0.0, lambda v: v == 0.0)
+        assert_metric("stackstate.process_agent.processes.total_count", lambda v: v > 1.0, lambda v: v > 1.0, lambda v: v > 1.0)
+        assert_metric("stackstate.process_agent.containers.total_count", lambda v: v == 0.0, lambda v: v == 0.0, lambda v: v == 0.0)
 
         # Assert that we don't see any Datadog metrics
         datadog_metrics = [(key, value) for key, value in metrics.items() if key.startswith("datadog")]
