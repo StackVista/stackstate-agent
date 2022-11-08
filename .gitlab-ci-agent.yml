@@ -591,9 +591,10 @@ pre_release_cluster_agent_image:
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
     when: never
   # Else, if the major version is 3, and code was committed to a branch, manually execute this step
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
-    when: manual
-    allow_failure: true
+  # TODO: May be bad defaulting to manual for a cleanup process on success or failure
+  # - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
+  #   when: manual
+  #   allow_failure: true
 
 .v2_merge_train_on_success: &v2_merge_train_on_success
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
