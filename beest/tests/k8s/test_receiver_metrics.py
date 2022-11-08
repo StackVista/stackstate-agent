@@ -6,7 +6,7 @@ testinfra_hosts = ["local"]
 
 def test_agents_running(cliv1):
     def wait_for_metrics():
-         json_data = cliv1.topic_api("sts_multi_metrics")
+        json_data = cliv1.topic_api("sts_multi_metrics")
 
         metrics = {}
         for message in json_data["messages"]:
@@ -24,9 +24,11 @@ def test_agents_running(cliv1):
 
         # assert that we don't see any datadog metrics
         datadog_metrics = [(key, value) for key, value in metrics.items() if key.startswith("datadog")]
-        assert len(datadog_metrics) == 0, 'datadog metrics found in sts_multi_metrics: [%s]' % ', '.join(map(str, datadog_metrics))
+        assert len(datadog_metrics) == 0, 'datadog metrics found in sts_multi_metrics: [%s]' % ', '.join(
+            map(str, datadog_metrics))
 
     util.wait_until(wait_for_metrics, 60, 3)
+
 
 def test_container_metrics(cliv1):
     def wait_for_metrics():
@@ -53,6 +55,7 @@ def test_container_metrics(cliv1):
             assert v > 0, "systemPct metric is '0'"
 
     util.wait_until(wait_for_metrics, 60, 3)
+
 
 def test_agent_http_metrics(cliv1):
     def wait_for_metrics():
