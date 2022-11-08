@@ -19,5 +19,5 @@
   gather_facts: true
   tags: ec2-agent-v2
   roles:
-    - role: "{{ bees_path }}/ec2-agent/v2/ubuntu"
+    - role: "{{ bees_path }}/ec2-agent/v2"
       when: ("ec2-agent-v2" in only) or only | length == 0

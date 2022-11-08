@@ -575,22 +575,22 @@ pre_release_cluster_agent_image:
 
 # Merge train rules for agent v2
 .v2_merge_train_always: &v2_merge_train_always
-  # If the major version is 2, and it is the master branch or a tag, always execute this step
+  # If the major version is 3, and it is the master branch or a tag, always execute this step
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
     when: always
     allow_failure: false
-  # Else, if the major version is 2, and it is a merge train job, always execute this step
+  # Else, if the major version is 3, and it is a merge train job, always execute this step
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
     when: always
     allow_failure: false
-  # Else, if the major version is 2, and there is a valid MR internal ID, manually execute this step
+  # Else, if the major version is 3, and there is a valid MR internal ID, manually execute this step
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
     when: manual
     allow_failure: true
-  # Else, if the major version is 2, and there is an open merge request (but no MR IID), never execute this step
+  # Else, if the major version is 3, and there is an open merge request (but no MR IID), never execute this step
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
     when: never
-  # Else, if the major version is 2, and code was committed to a branch, manually execute this step
+  # Else, if the major version is 3, and code was committed to a branch, manually execute this step
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
     when: manual
     allow_failure: true
@@ -1006,11 +1006,6 @@ beest_k8s_dockerd_cleanup:
     - *kubernetes_ignore_rule
     - *v2_merge_train_always
     - when: always
-  needs:
-    - job: beest_k8s_dockerd_test
-      optional: true
-    - job: beest_k8s_dockerd_create
-      optional: true
 
 beest_k8s_containerd_create:
   <<: *beest
@@ -1043,11 +1038,6 @@ beest_k8s_containerd_cleanup:
     - *kubernetes_ignore_rule
     - *v2_merge_train_always
     - when: always
-  needs:
-    - job: beest_k8s_containerd_test
-      optional: true
-    - job: beest_k8s_containerd_create
-      optional: true
 
 # Job Seq: Molecule
 # Type: localinstall
@@ -1374,11 +1364,6 @@ beest_agent_upgrade_cleanup:
     - *beest_agent_upgrade_ignore_rule
     - *v2_merge_train_always
     - when: always
-  needs:
-    - job: beest_agent_upgrade_test
-      optional: true
-    - job: beest_agent_upgrade_create
-      optional: true
 
 # Job Seq: Beest
 # Type: otel
@@ -1425,11 +1410,6 @@ beest_otel_cleanup:
     - *beest_otel_ignore_rule
     - *v2_merge_train_always
     - when: always
-  needs:
-    - job: beest_otel_test
-      optional: true
-    - job: beest_otel_create
-      optional: true
 
 # Job Seq: Beest
 # Type: splunk
@@ -1478,11 +1458,6 @@ beest_splunk_cleanup:
     - *beest_splunk_ignore_rule
     - *v2_merge_train_always
     - when: always
-  needs:
-    - job: beest_splunk_create
-      optional: true
-    - job: beest_splunk_test
-      optional: true
 
 ## release stage
 
