@@ -24,7 +24,7 @@ resource "aws_security_group" "splunk_group" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["${var.runners_ip}/16"]
+    cidr_blocks = ["${var.runners_ip}/32"]
   }
 
   ingress {
