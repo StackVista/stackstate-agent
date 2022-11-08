@@ -1336,7 +1336,8 @@ beest_agent_upgrade_test:
   dependencies:
     - beest_agent_upgrade_create
   needs:
-    - beest_agent_upgrade_create
+    - job: beest_agent_upgrade_create
+      optional: true
     - pre_release_deb
 
 beest_agent_upgrade_cleanup:
