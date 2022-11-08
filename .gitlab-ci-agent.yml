@@ -129,7 +129,6 @@ deps_deb:
     when:
       - always
   rules:
-    - *other_files_rule
     - *md_only_rule
     - when: on_success
 
@@ -162,7 +161,6 @@ deps_rpm:
     when:
       - always
   rules:
-    - *other_files_rule
     - *md_only_rule
     - when: on_success
 
@@ -196,7 +194,6 @@ deps_win:
     when:
       - always
   rules:
-    - *other_files_rule
     - *md_only_rule
     - when: on_success
 
@@ -223,7 +220,6 @@ unit_tests:
     when:
       - always
   rules:
-    - *other_files_rule
     - *md_only_rule
     - when: on_success
 
@@ -236,29 +232,12 @@ filename_linting:
     - conda activate ddpy3
     - inv -e lint-filenames
   rules:
-    - *other_files_rule
     - *md_only_rule
     - when: on_success
   retry:
     max: 2
     when:
       - always
-
-# TODO:  Not observed in v7 in a direct form ?
-#docker_integration_tests:
-#  stage: build_test
-#  needs:
-#    - deps_deb
-#  variables:
-#      DOCKER_DRIVER: overlay
-#      DOCKER_HOST: tcp://docker:2375
-#      DOCKER_TLS_CERTDIR: ""
-#  services:
-#    - docker:18.09-dind
-#  script:
-#    - inv -e docker.integration-tests
-#  tags:
-#    - sts-aws
 
 build_binaries:
   stage: build
@@ -279,7 +258,6 @@ build_binaries:
     when:
       - always
   rules:
-    - *other_files_rule
     - *md_only_rule
     - when: on_success
 
@@ -287,7 +265,6 @@ build_cluster_agent:
   stage: build
   interruptible: true
   rules:
-    - *other_files_rule
     - *md_only_rule
   needs:
     - deps_deb
@@ -362,7 +339,6 @@ build_deb:
     when:
       - always
   rules:
-    - *other_files_rule
     - *md_only_rule
     - when: on_success
 
@@ -427,7 +403,6 @@ build_rpm:
     when:
       - always
   rules:
-    - *other_files_rule
     - *md_only_rule
     - when: on_success
 
@@ -463,7 +438,6 @@ build_win:
     when:
       - always
   rules:
-    - *other_files_rule
     - *md_only_rule
     - when: on_success
 
@@ -482,7 +456,6 @@ test_deb_renaming:
     when:
       - always
   rules:
-    - *other_files_rule
     - *md_only_rule
     - when: on_success
 
@@ -500,7 +473,6 @@ test_rpm_renaming:
     when:
       - always
   rules:
-    - *other_files_rule
     - *md_only_rule
     - when: on_success
 
@@ -527,7 +499,6 @@ pre_release_deb:
     when:
       - always
   rules:
-    - *other_files_rule
     - *md_only_rule
     - when: on_success
 
@@ -559,7 +530,6 @@ pre_release_win:
     when:
       - always
   rules:
-    - *other_files_rule
     - *md_only_rule
     - when: on_success
 
@@ -578,7 +548,6 @@ pre_release_rpm:
     when:
       - always
   rules:
-    - *other_files_rule
     - *md_only_rule
     - when: on_success
 
@@ -608,7 +577,6 @@ pre_release_main_agent_image: &pre_release_image
     when:
       - always
   rules:
-    - *other_files_rule
     - *md_only_rule
     - when: on_success
 
@@ -616,7 +584,6 @@ pre_release_trace_agent_image:
   <<: *pre_release_image
   interruptible: true
   rules:
-    - *other_files_rule
     - *md_only_rule
   script:
     - cd $CI_PROJECT_DIR
@@ -628,7 +595,6 @@ pre_release_cluster_agent_image:
   <<: *pre_release_image
   interruptible: true
   rules:
-    - *other_files_rule
     - *md_only_rule
   needs:
     - build_cluster_agent
@@ -638,7 +604,6 @@ pre_release_cluster_agent_image:
     - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent $CI_COMMIT_SHORT_SHA
 
 .v2_merge_train_on_success: &v2_merge_train_on_success
-  - *other_files_rule
   - *md_only_rule
   - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
     when: on_success
@@ -656,7 +621,6 @@ pre_release_cluster_agent_image:
     allow_failure: false
 
 .v2_merge_train_on_success_allow_failure: &v2_merge_train_on_success_allow_failure
-  - *other_files_rule
   - *md_only_rule
   - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
     when: on_success
@@ -674,7 +638,6 @@ pre_release_cluster_agent_image:
     allow_failure: true
 
 .v2_merge_train_on_failure: &v2_merge_train_on_failure
-  - *other_files_rule
   - *md_only_rule
   - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
     when: on_failure
@@ -693,7 +656,6 @@ pre_release_cluster_agent_image:
 
 # Merge train rules for all agents
 .merge_train_always: &merge_train_always
-  - *other_files_rule
   - *md_only_rule
   - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
     when: always
@@ -711,7 +673,6 @@ pre_release_cluster_agent_image:
     allow_failure: true
 
 .merge_train_on_success: &merge_train_on_success
-  - *other_files_rule
   - *md_only_rule
   - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
     when: on_success
@@ -729,7 +690,6 @@ pre_release_cluster_agent_image:
     allow_failure: false
 
 .merge_train_on_failure: &merge_train_on_failure
-  - *other_files_rule
   - *md_only_rule
   - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
     when: on_failure
@@ -1514,7 +1474,6 @@ release_deb:
     - cd $CI_PROJECT_DIR && inv release.generate-install
     - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_RELEASE_BUCKET']).object('install.sh').upload_file('./install.sh', acl:'public-read')"
   rules:
-    - *other_files_rule
     - *md_only_rule
     - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
       when: manual
@@ -1536,7 +1495,6 @@ release_rpm:
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_rpm_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package_rpm.sh $STS_AWS_RELEASE_BUCKET_YUM stable
   rules:
-    - *other_files_rule
     - *md_only_rule
     - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
       when: manual
@@ -1564,7 +1522,6 @@ release_win:
     - aws.exe s3 ls s3://$Env:STS_AWS_RELEASE_BUCKET_WIN/windows/stable/
     - aws.exe s3 ls s3://$Env:STS_AWS_RELEASE_BUCKET_WIN/
   rules:
-    - *other_files_rule
     - *md_only_rule
     - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
       when: manual
@@ -1604,7 +1561,6 @@ release_main_agent_image:
     - cp ./outcomes/pkg/stackstate-agent_*_amd64.deb Dockerfiles/agent
     - ./omnibus/package-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO $CI_PROJECT_DIR/Dockerfiles/agent latest
   rules:
-    - *other_files_rule
     - *md_only_rule
     - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
       when: manual
@@ -1618,7 +1574,6 @@ release_trace_agent_image:
     - cp ./outcomes/binary/trace-agent Dockerfiles/trace-agent
     - ./omnibus/package-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO_TRACE $CI_PROJECT_DIR/Dockerfiles/trace-agent latest
   rules:
-    - *other_files_rule
     - *md_only_rule
     - *cluster_agent_release
 
@@ -1633,6 +1588,5 @@ release_cluster_agent_image:
     - cp -r ./bin/stackstate-cluster-agent/* ./Dockerfiles/cluster-agent
     - ./omnibus/package-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent latest
   rules:
-    - *other_files_rule
     - *md_only_rule
     - *cluster_agent_release
