@@ -266,6 +266,7 @@ build_cluster_agent:
   interruptible: true
   rules:
     - *md_only_rule
+    - when: on_success
   needs:
     - deps_deb
   script:
@@ -585,6 +586,7 @@ pre_release_trace_agent_image:
   interruptible: true
   rules:
     - *md_only_rule
+    - when: on_success
   script:
     - cd $CI_PROJECT_DIR
     - export VERSION=`cat version.txt`
@@ -596,6 +598,7 @@ pre_release_cluster_agent_image:
   interruptible: true
   rules:
     - *md_only_rule
+    - when: on_success
   needs:
     - build_cluster_agent
   script:
