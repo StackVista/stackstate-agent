@@ -1,17 +1,3 @@
-image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220505
-
-stages:
-  - acceptance_create_infra
-  - build_dependencies
-  - build
-  - build_test
-  - pre_release_agent
-  - acceptance_tests_general
-  - acceptance_tests_receiver
-  - acceptance_tests_optional_qa_sts
-  - acceptance_cleanup_infra
-  - release_agent
-
 ######################### pipeline bricks
 
 .retrieve_linux_go_deps_script: &retrieve_linux_go_deps_script |
