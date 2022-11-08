@@ -854,7 +854,8 @@ molecule_compose_test:
     - molecule_compose_create
   needs:
     - pre_release_main_agent_image
-    - molecule_compose_create
+    - job: molecule_compose_create
+      optional: true
 
 molecule_compose_failure_cleanup:
   <<: *molecule_destroy
@@ -911,7 +912,8 @@ molecule_integrations_test:
     - molecule_integrations_create
   needs:
     - pre_release_main_agent_image
-    - molecule_integrations_create
+    - job: molecule_integrations_create
+      optional: true
 
 molecule_integrations_failure_cleanup:
   <<: *molecule
@@ -979,7 +981,8 @@ beest_k8s_dockerd_test:
   dependencies:
     - beest_k8s_dockerd_create
   needs:
-    - beest_k8s_dockerd_create
+    - job: beest_k8s_dockerd_create
+      optional: true
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
@@ -1011,7 +1014,8 @@ beest_k8s_containerd_test:
   dependencies:
     - beest_k8s_containerd_create
   needs:
-    - beest_k8s_containerd_create
+    - job: beest_k8s_containerd_create
+      optional: true
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
@@ -1070,7 +1074,8 @@ molecule_localinstall_test:
   needs:
     - pre_release_deb
     - pre_release_rpm
-    - molecule_localinstall_create
+    - job: molecule_localinstall_create
+      optional: true
 
 molecule_localinstall_failure_cleanup:
   variables:
@@ -1149,7 +1154,8 @@ molecule_secrets_test:
     - molecule_secrets_create
   needs:
     - pre_release_deb
-    - molecule_secrets_create
+    - job: molecule_secrets_create
+      optional: true
 
 molecule_secrets_failure_cleanup:
   variables:
@@ -1215,7 +1221,8 @@ molecule_swarm_test:
   needs:
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
-    - molecule_swarm_create
+    - job: molecule_swarm_create
+      optional: true
 
 molecule_swarm_failure_cleanup:
   variables:
@@ -1275,7 +1282,8 @@ molecule_vms_test:
     - pre_release_deb
     - pre_release_rpm
     - pre_release_win
-    - molecule_vms_create
+    - job: molecule_vms_create
+      optional: true
 
 molecule_vms_failure_cleanup:
   variables:
@@ -1384,7 +1392,8 @@ beest_otel_test:
   dependencies:
     - beest_otel_create
   needs:
-    - beest_otel_create
+    - job: beest_otel_create
+      optional: true
     - pre_release_deb
 
 beest_otel_cleanup:
@@ -1430,7 +1439,8 @@ beest_splunk_test:
   dependencies:
     - beest_splunk_create
   needs:
-    - beest_splunk_create
+    - job: beest_splunk_create
+      optional: true
     - pre_release_deb
 
 beest_splunk_cleanup:
