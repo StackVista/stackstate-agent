@@ -675,6 +675,21 @@ pre_release_cluster_agent_image:
     when: manual
     allow_failure: true
 
+# Merge train rules for all agents
+.merge_train_no_default: &merge_train_no_default
+  - *md_only_rule
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: always
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: always
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_IID
+    when: manual
+    allow_failure: true
+  - if: $CI_OPEN_MERGE_REQUESTS
+    when: never
+
 .merge_train_on_success: &merge_train_on_success
   - *md_only_rule
   - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
@@ -1368,7 +1383,7 @@ beest_agent_upgrade_cleanup:
   <<: *beest_agent_upgrade_variables
   rules:
     - *beest_agent_upgrade_ignore_rule
-    - *merge_train_always
+    - *merge_train_no_default
     - when: on_success
     - when: on_failure
   needs:
