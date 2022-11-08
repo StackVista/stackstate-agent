@@ -54,6 +54,10 @@ variables:
   STACKSTATE_HELM_CHART_VERSION: ""
 
   # Agent Variables
+  CONDA_ENV: ddpy3
+  PYTHON_RUNTIMES: '3'
+  MAJOR_VERSION: '3'
+  STS_VER: 'v3'
   STS_AWS_RELEASE_BUCKET: stackstate-agent-3
   STS_AWS_TEST_BUCKET: stackstate-agent-3-test
   STS_AWS_RELEASE_BUCKET_YUM: stackstate-agent-3-rpm
