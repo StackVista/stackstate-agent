@@ -877,7 +877,6 @@ molecule_compose_success_cleanup:
     MOLECULE_SCENARIO: compose
   dependencies:
     - molecule_compose_test
-    - molecule_compose_create
   needs:
     - job: molecule_compose_test
       optional: true
