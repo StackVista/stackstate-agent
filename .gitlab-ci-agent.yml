@@ -709,61 +709,61 @@ pre_release_cluster_agent_image:
     when: on_failure
     allow_failure: false
 
-# Core Molecule Structure for all the molecule steps
-.molecule: &molecule
-  interruptible: true
-  resource_group: "V3-3-3-$CI_COMMIT_REF_NAME-$MOLECULE_SCENARIO"
-  dependencies: []
-  before_script:
-    - export AWS_ACCESS_KEY_ID=${MOLECULE_AWS_ACCESS_KEY_ID}
-    - export AWS_SECRET_ACCESS_KEY=${MOLECULE_AWS_SECRET_ACCESS_KEY}
-    - export MOLECULE_RUN_ID=${CI_JOB_ID}
-    - export LC_CTYPE=en_US.UTF-8
-    - export LANG=en_US.UTF-8
-  retry:
-    max: 2
-
-# Base artifacts for create and test steps
-.molecule_artifacts: &molecule_artifacts
-  artifacts:
-    <<: *artifacts_expire_in
-    when: always
-    paths:
-      - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/topic-*
-      - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/*.log
-      - $CI_PROJECT_DIR/.cache
-      - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/**/*.tar.gz
-      - $MOLECULE_EPHEMERAL_DIRECTORY
-  retry:
-    max: 2
-
-# Primary create steps for all the molecule builds
-.molecule_create: &molecule_create
-  <<: *molecule_artifacts
-  stage: acceptance_create_infra
-  script:
-    - cd $CI_PROJECT_DIR/test
-    - ./molecule3.sh $MOLECULE_SCENARIO create
-
-# Primary test steps for all the molecule builds
-.molecule_test: &molecule_test
-  <<: *molecule_artifacts
-  stage: acceptance_tests_general
-  timeout: 80 minutes
-  script:
-    - cd $CI_PROJECT_DIR/test
-    - ./molecule3.sh $MOLECULE_SCENARIO test
-
-# Primary destroy steps for all the molecule builds
-.molecule_destroy: &molecule_destroy
-  stage: acceptance_cleanup_infra
-  interruptible: true
-  script:
-    - cd $CI_PROJECT_DIR/test
-    - ./molecule3.sh $MOLECULE_SCENARIO destroy
-  retry:
-    max: 2
-  allow_failure: true
+#  # Core Molecule Structure for all the molecule steps
+#  .molecule: &molecule
+#    interruptible: true
+#    resource_group: "V3-3-3-$CI_COMMIT_REF_NAME-$MOLECULE_SCENARIO"
+#    dependencies: []
+#    before_script:
+#      - export AWS_ACCESS_KEY_ID=${MOLECULE_AWS_ACCESS_KEY_ID}
+#      - export AWS_SECRET_ACCESS_KEY=${MOLECULE_AWS_SECRET_ACCESS_KEY}
+#      - export MOLECULE_RUN_ID=${CI_JOB_ID}
+#      - export LC_CTYPE=en_US.UTF-8
+#      - export LANG=en_US.UTF-8
+#    retry:
+#      max: 2
+#
+#  # Base artifacts for create and test steps
+#  .molecule_artifacts: &molecule_artifacts
+#    artifacts:
+#      <<: *artifacts_expire_in
+#      when: always
+#      paths:
+#        - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/topic-*
+#        - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/*.log
+#        - $CI_PROJECT_DIR/.cache
+#        - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/**/*.tar.gz
+#        - $MOLECULE_EPHEMERAL_DIRECTORY
+#    retry:
+#      max: 2
+#
+#  # Primary create steps for all the molecule builds
+#  .molecule_create: &molecule_create
+#    <<: *molecule_artifacts
+#    stage: acceptance_create_infra
+#    script:
+#      - cd $CI_PROJECT_DIR/test
+#      - ./molecule3.sh $MOLECULE_SCENARIO create
+#
+#  # Primary test steps for all the molecule builds
+#  .molecule_test: &molecule_test
+#    <<: *molecule_artifacts
+#    stage: acceptance_tests_general
+#    timeout: 80 minutes
+#    script:
+#      - cd $CI_PROJECT_DIR/test
+#      - ./molecule3.sh $MOLECULE_SCENARIO test
+#
+#  # Primary destroy steps for all the molecule builds
+#  .molecule_destroy: &molecule_destroy
+#    stage: acceptance_cleanup_infra
+#    interruptible: true
+#    script:
+#      - cd $CI_PROJECT_DIR/test
+#      - ./molecule3.sh $MOLECULE_SCENARIO destroy
+#    retry:
+#      max: 2
+#    allow_failure: true
 
 # Core Structure for all the beest steps
 .beest: &beest
@@ -858,115 +858,115 @@ pre_release_cluster_agent_image:
     when:
       - always
 
-# Job Seq: Molecule
-# Type: Compose
-.molecule_compose_rule:
-  - &compose_ignore_rule
-    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-compose]/
-    when: never
+# # Job Seq: Molecule
+# # Type: Compose
+# .molecule_compose_rule:
+#   - &compose_ignore_rule
+#     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-compose]/
+#     when: never
+#
+# molecule_compose_create:
+#   <<: *molecule
+#   <<: *molecule_create
+#   rules:
+#     - *compose_ignore_rule
+#     - *merge_train_always
+#   variables:
+#     MOLECULE_SCENARIO: compose
+#
+# molecule_compose_test:
+#   <<: *molecule
+#   <<: *molecule_test
+#   rules:
+#     - *compose_ignore_rule
+#     - *v2_merge_train_on_success
+#   variables:
+#     MOLECULE_SCENARIO: compose
+#   dependencies:
+#     - molecule_compose_create
+#   needs:
+#     - pre_release_main_agent_image
+#     - job: molecule_compose_create
+#       optional: true
+#
+# molecule_compose_failure_cleanup:
+#   <<: *molecule_destroy
+#   rules:
+#     - *compose_ignore_rule
+#     - *v2_merge_train_on_failure
+#   variables:
+#     MOLECULE_SCENARIO: compose
+#   needs:
+#     - job: molecule_compose_test
+#       optional: true
+#
+# molecule_compose_success_cleanup:
+#   <<: *molecule_destroy
+#   rules:
+#     - *compose_ignore_rule
+#     - *v2_merge_train_on_success
+#   variables:
+#     MOLECULE_SCENARIO: compose
+#   needs:
+#     - job: molecule_compose_test
+#       optional: true
 
-molecule_compose_create:
-  <<: *molecule
-  <<: *molecule_create
-  rules:
-    - *compose_ignore_rule
-    - *merge_train_always
-  variables:
-    MOLECULE_SCENARIO: compose
 
-molecule_compose_test:
-  <<: *molecule
-  <<: *molecule_test
-  rules:
-    - *compose_ignore_rule
-    - *v2_merge_train_on_success
-  variables:
-    MOLECULE_SCENARIO: compose
-  dependencies:
-    - molecule_compose_create
-  needs:
-    - pre_release_main_agent_image
-    - job: molecule_compose_create
-      optional: true
-
-molecule_compose_failure_cleanup:
-  <<: *molecule_destroy
-  rules:
-    - *compose_ignore_rule
-    - *v2_merge_train_on_failure
-  variables:
-    MOLECULE_SCENARIO: compose
-  needs:
-    - job: molecule_compose_test
-      optional: true
-
-molecule_compose_success_cleanup:
-  <<: *molecule_destroy
-  rules:
-    - *compose_ignore_rule
-    - *v2_merge_train_on_success
-  variables:
-    MOLECULE_SCENARIO: compose
-  needs:
-    - job: molecule_compose_test
-      optional: true
-
-
-# Job Seq: Molecule
-# Type: Integrations
-
-.molecule_integrations_rule:
-  - &integrations_ignore_rule
-    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-integrations]/
-    when: never
-
-molecule_integrations_create:
-  <<: *molecule
-  <<: *molecule_create
-  rules:
-    - *integrations_ignore_rule
-    - *merge_train_always
-  variables:
-    MOLECULE_SCENARIO: integrations
-
-molecule_integrations_test:
-  <<: *molecule
-  <<: *molecule_test
-  rules:
-    - *integrations_ignore_rule
-    - *merge_train_on_success
-  variables:
-    MOLECULE_SCENARIO: integrations
-  dependencies:
-    - molecule_integrations_create
-  needs:
-    - pre_release_main_agent_image
-    - job: molecule_integrations_create
-      optional: true
-
-molecule_integrations_failure_cleanup:
-  <<: *molecule
-  <<: *molecule_destroy
-  rules:
-    - *integrations_ignore_rule
-    - *merge_train_on_failure
-  variables:
-    MOLECULE_SCENARIO: integrations
-  needs:
-    - job: molecule_integrations_test
-      optional: true
-
-molecule_integrations_success_cleanup:
-  <<: *molecule
-  <<: *molecule_destroy
-  rules:
-    - *integrations_ignore_rule
-    - *merge_train_on_success
-  variables:
-    MOLECULE_SCENARIO: integrations
-  needs:
-    - job: molecule_integrations_test
-      optional: true
+# # Job Seq: Molecule
+# # Type: Integrations
+#
+# .molecule_integrations_rule:
+#   - &integrations_ignore_rule
+#     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-integrations]/
+#     when: never
+#
+# molecule_integrations_create:
+#   <<: *molecule
+#   <<: *molecule_create
+#   rules:
+#     - *integrations_ignore_rule
+#     - *merge_train_always
+#   variables:
+#     MOLECULE_SCENARIO: integrations
+#
+# molecule_integrations_test:
+#   <<: *molecule
+#   <<: *molecule_test
+#   rules:
+#     - *integrations_ignore_rule
+#     - *merge_train_on_success
+#   variables:
+#     MOLECULE_SCENARIO: integrations
+#   dependencies:
+#     - molecule_integrations_create
+#   needs:
+#     - pre_release_main_agent_image
+#     - job: molecule_integrations_create
+#       optional: true
+#
+# molecule_integrations_failure_cleanup:
+#   <<: *molecule
+#   <<: *molecule_destroy
+#   rules:
+#     - *integrations_ignore_rule
+#     - *merge_train_on_failure
+#   variables:
+#     MOLECULE_SCENARIO: integrations
+#   needs:
+#     - job: molecule_integrations_test
+#       optional: true
+#
+# molecule_integrations_success_cleanup:
+#   <<: *molecule
+#   <<: *molecule_destroy
+#   rules:
+#     - *integrations_ignore_rule
+#     - *merge_train_on_success
+#   variables:
+#     MOLECULE_SCENARIO: integrations
+#   needs:
+#     - job: molecule_integrations_test
+#       optional: true
 
 # Job Seq: Beest
 # Type: kubernetes
@@ -1052,279 +1052,279 @@ beest_k8s_containerd_cleanup:
     - *kubernetes_ignore_rule
     - *merge_train_always
 
-# Job Seq: Molecule
-# Type: localinstall
-
-.molecule_localinstall_rule:
-  - &localinstall_ignore_rule
-    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-localinstall]/
-    when: never
-  - &localinstall_master_only_rule
-    if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_PROTECTED)
-    when: always
-  - &localinstall_acceptance_rule
-    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-localinstall]/
-    when: always
-  - &localinstall_acceptance_on_success_rule
-    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-localinstall]/
-    when: on_success
-  - &localinstall_acceptance_on_failure_rule
-    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-localinstall]/
-    when: on_failure
-
-molecule_localinstall_create:
-  <<: *molecule
-  <<: *molecule_create
-  rules:
-    - *localinstall_ignore_rule
-    - *localinstall_acceptance_rule
-    - *merge_train_always
-    - when: never
-  variables:
-    MOLECULE_SCENARIO: localinstall
-
-molecule_localinstall_test:
-  <<: *molecule
-  <<: *molecule_test
-  rules:
-    - *localinstall_ignore_rule
-    - *localinstall_acceptance_rule
-    - *merge_train_on_success
-    - when: never
-  variables:
-    MOLECULE_SCENARIO: localinstall
-  dependencies:
-    - molecule_localinstall_create
-  needs:
-    - pre_release_deb
-    - pre_release_rpm
-    - job: molecule_localinstall_create
-      optional: true
-
-molecule_localinstall_failure_cleanup:
-  variables:
-    MOLECULE_SCENARIO: localinstall
-  <<: *molecule
-  <<: *molecule_destroy
-  rules:
-    - *localinstall_ignore_rule
-    - *localinstall_acceptance_on_failure_rule
-    - *merge_train_on_failure
-    - when: never
-  needs:
-    - job: molecule_localinstall_test
-      optional: true
-
-molecule_localinstall_success_cleanup:
-  variables:
-    MOLECULE_SCENARIO: localinstall
-  <<: *molecule
-  <<: *molecule_destroy
-  rules:
-    - *localinstall_ignore_rule
-    - *localinstall_acceptance_on_success_rule
-    - *merge_train_on_success
-    - when: never
-  needs:
-    - job: molecule_localinstall_test
-      optional: true
-
-
-# Job Seq: Molecule
-# Type: secrets
-
-.molecule_secrets_rule:
-  - &secrets_ignore_rule
-    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-compose]/
-    when: never
-  - &secrets_master_only_rule
-    if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_PROTECTED)
-    when: always
-  - &secrets_acceptance_rule
-    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-compose]/
-    when: always
-  - &secrets_acceptance_on_success_rule
-    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-compose]/
-    when: on_success
-  - &secrets_acceptance_on_failure_rule
-    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-compose]/
-    when: on_failure
-
-molecule_secrets_create:
-  <<: *molecule
-  <<: *molecule_create
-  rules:
-    - *secrets_ignore_rule
-    - *secrets_acceptance_rule
-    - *merge_train_always
-    - when: never
-  variables:
-    MOLECULE_SCENARIO: secrets
-
-molecule_secrets_test:
-  <<: *molecule
-  <<: *molecule_test
-  rules:
-    - *secrets_ignore_rule
-    - *secrets_acceptance_rule
-    - *merge_train_on_success
-    - when: never
-  variables:
-    MOLECULE_SCENARIO: secrets
-  dependencies:
-    - molecule_secrets_create
-  needs:
-    - pre_release_deb
-    - job: molecule_secrets_create
-      optional: true
-
-molecule_secrets_failure_cleanup:
-  variables:
-    MOLECULE_SCENARIO: secrets
-  <<: *molecule
-  <<: *molecule_destroy
-  rules:
-    - *secrets_ignore_rule
-    - *secrets_acceptance_on_failure_rule
-    - *merge_train_on_failure
-    - when: never
-  dependencies:
-    - molecule_secrets_test
-  needs:
-    - job: molecule_secrets_test
-      optional: true
-
-molecule_secrets_success_cleanup:
-  variables:
-    MOLECULE_SCENARIO: secrets
-  <<: *molecule
-  <<: *molecule_destroy
-  rules:
-    - *secrets_ignore_rule
-    - *secrets_acceptance_on_success_rule
-    - *merge_train_on_success
-    - when: never
-  needs:
-    - job: molecule_secrets_test
-      optional: true
+# # Job Seq: Molecule
+# # Type: localinstall
+#
+# .molecule_localinstall_rule:
+#   - &localinstall_ignore_rule
+#     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-localinstall]/
+#     when: never
+#   - &localinstall_master_only_rule
+#     if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_PROTECTED)
+#     when: always
+#   - &localinstall_acceptance_rule
+#     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-localinstall]/
+#     when: always
+#   - &localinstall_acceptance_on_success_rule
+#     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-localinstall]/
+#     when: on_success
+#   - &localinstall_acceptance_on_failure_rule
+#     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-localinstall]/
+#     when: on_failure
+#
+# molecule_localinstall_create:
+#   <<: *molecule
+#   <<: *molecule_create
+#   rules:
+#     - *localinstall_ignore_rule
+#     - *localinstall_acceptance_rule
+#     - *merge_train_always
+#     - when: never
+#   variables:
+#     MOLECULE_SCENARIO: localinstall
+#
+# molecule_localinstall_test:
+#   <<: *molecule
+#   <<: *molecule_test
+#   rules:
+#     - *localinstall_ignore_rule
+#     - *localinstall_acceptance_rule
+#     - *merge_train_on_success
+#     - when: never
+#   variables:
+#     MOLECULE_SCENARIO: localinstall
+#   dependencies:
+#     - molecule_localinstall_create
+#   needs:
+#     - pre_release_deb
+#     - pre_release_rpm
+#     - job: molecule_localinstall_create
+#       optional: true
+#
+# molecule_localinstall_failure_cleanup:
+#   variables:
+#     MOLECULE_SCENARIO: localinstall
+#   <<: *molecule
+#   <<: *molecule_destroy
+#   rules:
+#     - *localinstall_ignore_rule
+#     - *localinstall_acceptance_on_failure_rule
+#     - *merge_train_on_failure
+#     - when: never
+#   needs:
+#     - job: molecule_localinstall_test
+#       optional: true
+#
+# molecule_localinstall_success_cleanup:
+#   variables:
+#     MOLECULE_SCENARIO: localinstall
+#   <<: *molecule
+#   <<: *molecule_destroy
+#   rules:
+#     - *localinstall_ignore_rule
+#     - *localinstall_acceptance_on_success_rule
+#     - *merge_train_on_success
+#     - when: never
+#   needs:
+#     - job: molecule_localinstall_test
+#       optional: true
 
 
-# Job Seq: Molecule
-# Type: swarm
+# # Job Seq: Molecule
+# # Type: secrets
+#
+# .molecule_secrets_rule:
+#   - &secrets_ignore_rule
+#     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-compose]/
+#     when: never
+#   - &secrets_master_only_rule
+#     if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_PROTECTED)
+#     when: always
+#   - &secrets_acceptance_rule
+#     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-compose]/
+#     when: always
+#   - &secrets_acceptance_on_success_rule
+#     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-compose]/
+#     when: on_success
+#   - &secrets_acceptance_on_failure_rule
+#     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-compose]/
+#     when: on_failure
+#
+# molecule_secrets_create:
+#   <<: *molecule
+#   <<: *molecule_create
+#   rules:
+#     - *secrets_ignore_rule
+#     - *secrets_acceptance_rule
+#     - *merge_train_always
+#     - when: never
+#   variables:
+#     MOLECULE_SCENARIO: secrets
+#
+# molecule_secrets_test:
+#   <<: *molecule
+#   <<: *molecule_test
+#   rules:
+#     - *secrets_ignore_rule
+#     - *secrets_acceptance_rule
+#     - *merge_train_on_success
+#     - when: never
+#   variables:
+#     MOLECULE_SCENARIO: secrets
+#   dependencies:
+#     - molecule_secrets_create
+#   needs:
+#     - pre_release_deb
+#     - job: molecule_secrets_create
+#       optional: true
+#
+# molecule_secrets_failure_cleanup:
+#   variables:
+#     MOLECULE_SCENARIO: secrets
+#   <<: *molecule
+#   <<: *molecule_destroy
+#   rules:
+#     - *secrets_ignore_rule
+#     - *secrets_acceptance_on_failure_rule
+#     - *merge_train_on_failure
+#     - when: never
+#   dependencies:
+#     - molecule_secrets_test
+#   needs:
+#     - job: molecule_secrets_test
+#       optional: true
+#
+# molecule_secrets_success_cleanup:
+#   variables:
+#     MOLECULE_SCENARIO: secrets
+#   <<: *molecule
+#   <<: *molecule_destroy
+#   rules:
+#     - *secrets_ignore_rule
+#     - *secrets_acceptance_on_success_rule
+#     - *merge_train_on_success
+#     - when: never
+#   needs:
+#     - job: molecule_secrets_test
+#       optional: true
 
-.molecule_swarm_rule:
-  # Currently we default to only running on Python2 build.
-  # TODO: Change this when V3 releases are finalized and the default.
-  - &swarm_ignore_rule
-    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-swarm]/
-    when: never
 
-molecule_swarm_create:
-  <<: *molecule
-  <<: *molecule_create
-  rules:
-    - *swarm_ignore_rule
-    - *merge_train_always
-  variables:
-    MOLECULE_SCENARIO: swarm
-
-molecule_swarm_test:
-  <<: *molecule
-  <<: *molecule_test
-  rules:
-    - *swarm_ignore_rule
-    - *v2_merge_train_on_success_allow_failure
-  dependencies:
-    - molecule_swarm_create
-  variables:
-    MOLECULE_SCENARIO: swarm
-  needs:
-    - pre_release_cluster_agent_image
-    - pre_release_main_agent_image
-    - job: molecule_swarm_create
-      optional: true
-
-molecule_swarm_failure_cleanup:
-  variables:
-    MOLECULE_SCENARIO: swarm
-  <<: *molecule
-  <<: *molecule_destroy
-  rules:
-    - *swarm_ignore_rule
-    - *v2_merge_train_on_failure
-  needs:
-    - job: molecule_swarm_test
-      optional: true
-
-molecule_swarm_success_cleanup:
-  variables:
-    MOLECULE_SCENARIO: swarm
-  <<: *molecule
-  <<: *molecule_destroy
-  rules:
-    - *swarm_ignore_rule
-    - *v2_merge_train_on_success
-  needs:
-    - job: molecule_swarm_test
-      optional: true
-
-# Job Seq: Molecule
-# Type: vms
-
-.molecule_vms_rule:
-  - &vms_ignore_rule
-    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-vms]/
-    when: never
-
-molecule_vms_create:
-  <<: *molecule
-  <<: *molecule_create
-  rules:
-    - *vms_ignore_rule
-    - *merge_train_always
-  variables:
-    MOLECULE_SCENARIO: vms
-
-molecule_vms_test:
-  <<: *molecule
-  <<: *molecule_test
-  rules:
-    - *vms_ignore_rule
-    - *v2_merge_train_on_success
-  variables:
-    MOLECULE_SCENARIO: vms
-  dependencies:
-    - molecule_vms_create
-  needs:
-    - pre_release_deb
-    - pre_release_rpm
-    - pre_release_win
-    - job: molecule_vms_create
-      optional: true
-
-molecule_vms_failure_cleanup:
-  variables:
-    MOLECULE_SCENARIO: vms
-  <<: *molecule
-  <<: *molecule_destroy
-  rules:
-    - *vms_ignore_rule
-    - *v2_merge_train_on_failure
-  needs:
-    - job: molecule_vms_test
-      optional: true
-
-molecule_vms_success_cleanup:
-  variables:
-    MOLECULE_SCENARIO: vms
-  <<: *molecule
-  <<: *molecule_destroy
-  rules:
-    - *vms_ignore_rule
-    - *v2_merge_train_on_success
-  needs:
-    - job: molecule_vms_test
-      optional: true
+# # Job Seq: Molecule
+# # Type: swarm
+#
+# .molecule_swarm_rule:
+#   # Currently we default to only running on Python2 build.
+#   # TODO: Change this when V3 releases are finalized and the default.
+#   - &swarm_ignore_rule
+#     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-swarm]/
+#     when: never
+#
+# molecule_swarm_create:
+#   <<: *molecule
+#   <<: *molecule_create
+#   rules:
+#     - *swarm_ignore_rule
+#     - *merge_train_always
+#   variables:
+#     MOLECULE_SCENARIO: swarm
+#
+# molecule_swarm_test:
+#   <<: *molecule
+#   <<: *molecule_test
+#   rules:
+#     - *swarm_ignore_rule
+#     - *v2_merge_train_on_success_allow_failure
+#   dependencies:
+#     - molecule_swarm_create
+#   variables:
+#     MOLECULE_SCENARIO: swarm
+#   needs:
+#     - pre_release_cluster_agent_image
+#     - pre_release_main_agent_image
+#     - job: molecule_swarm_create
+#       optional: true
+#
+# molecule_swarm_failure_cleanup:
+#   variables:
+#     MOLECULE_SCENARIO: swarm
+#   <<: *molecule
+#   <<: *molecule_destroy
+#   rules:
+#     - *swarm_ignore_rule
+#     - *v2_merge_train_on_failure
+#   needs:
+#     - job: molecule_swarm_test
+#       optional: true
+#
+# molecule_swarm_success_cleanup:
+#   variables:
+#     MOLECULE_SCENARIO: swarm
+#   <<: *molecule
+#   <<: *molecule_destroy
+#   rules:
+#     - *swarm_ignore_rule
+#     - *v2_merge_train_on_success
+#   needs:
+#     - job: molecule_swarm_test
+#       optional: true
+#
+# # Job Seq: Molecule
+# # Type: vms
+#
+# .molecule_vms_rule:
+#   - &vms_ignore_rule
+#     if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-vms]/
+#     when: never
+#
+# molecule_vms_create:
+#   <<: *molecule
+#   <<: *molecule_create
+#   rules:
+#     - *vms_ignore_rule
+#     - *merge_train_always
+#   variables:
+#     MOLECULE_SCENARIO: vms
+#
+# molecule_vms_test:
+#   <<: *molecule
+#   <<: *molecule_test
+#   rules:
+#     - *vms_ignore_rule
+#     - *v2_merge_train_on_success
+#   variables:
+#     MOLECULE_SCENARIO: vms
+#   dependencies:
+#     - molecule_vms_create
+#   needs:
+#     - pre_release_deb
+#     - pre_release_rpm
+#     - pre_release_win
+#     - job: molecule_vms_create
+#       optional: true
+#
+# molecule_vms_failure_cleanup:
+#   variables:
+#     MOLECULE_SCENARIO: vms
+#   <<: *molecule
+#   <<: *molecule_destroy
+#   rules:
+#     - *vms_ignore_rule
+#     - *v2_merge_train_on_failure
+#   needs:
+#     - job: molecule_vms_test
+#       optional: true
+#
+# molecule_vms_success_cleanup:
+#   variables:
+#     MOLECULE_SCENARIO: vms
+#   <<: *molecule
+#   <<: *molecule_destroy
+#   rules:
+#     - *vms_ignore_rule
+#     - *v2_merge_train_on_success
+#   needs:
+#     - job: molecule_vms_test
+#       optional: true
 
 # Job Seq: Beest
 # Type: agent_upgrade
