@@ -865,8 +865,8 @@ molecule_compose_failure_cleanup:
   variables:
     MOLECULE_SCENARIO: compose
   needs:
-    - molecule_compose_test
-    - molecule_compose_create
+    - job: molecule_compose_test
+      optional: true
 
 molecule_compose_success_cleanup:
   <<: *molecule_destroy
@@ -879,8 +879,8 @@ molecule_compose_success_cleanup:
     - molecule_compose_test
     - molecule_compose_create
   needs:
-    - molecule_compose_test
-    - molecule_compose_create
+    - job: molecule_compose_test
+      optional: true
 
 
 # Job Seq: Molecule
@@ -924,8 +924,8 @@ molecule_integrations_failure_cleanup:
   variables:
     MOLECULE_SCENARIO: integrations
   needs:
-    - molecule_integrations_test
-    - molecule_integrations_create
+    - job: molecule_integrations_test
+      optional: true
 
 molecule_integrations_success_cleanup:
   <<: *molecule
@@ -939,8 +939,8 @@ molecule_integrations_success_cleanup:
     - molecule_integrations_test
     - molecule_integrations_create
   needs:
-    - molecule_integrations_test
-    - molecule_integrations_create
+    - job: molecule_integrations_test
+      optional: true
 
 # Job Seq: Beest
 # Type: kubernetes
@@ -1088,8 +1088,8 @@ molecule_localinstall_failure_cleanup:
     - *merge_train_on_failure
     - when: never
   needs:
-    - molecule_localinstall_test
-    - molecule_localinstall_create
+    - job: molecule_localinstall_test
+      optional: true
 
 molecule_localinstall_success_cleanup:
   variables:
@@ -1105,8 +1105,8 @@ molecule_localinstall_success_cleanup:
     - molecule_localinstall_test
     - molecule_localinstall_create
   needs:
-    - molecule_localinstall_test
-    - molecule_localinstall_create
+    - job: molecule_localinstall_test
+      optional: true
 
 
 # Job Seq: Molecule
@@ -1233,8 +1233,8 @@ molecule_swarm_failure_cleanup:
     - *swarm_ignore_rule
     - *v2_merge_train_on_failure
   needs:
-    - molecule_swarm_create
-    - molecule_swarm_test
+    - job: molecule_swarm_test
+      optional: true
 
 molecule_swarm_success_cleanup:
   variables:
@@ -1248,8 +1248,8 @@ molecule_swarm_success_cleanup:
     - molecule_swarm_create
     - molecule_swarm_test
   needs:
-    - molecule_swarm_create
-    - molecule_swarm_test
+    - job: molecule_swarm_test
+      optional: true
 
 # Job Seq: Molecule
 # Type: vms
@@ -1294,8 +1294,8 @@ molecule_vms_failure_cleanup:
     - *vms_ignore_rule
     - *v2_merge_train_on_failure
   needs:
-    - molecule_vms_create
-    - molecule_vms_test
+    - job: molecule_vms_test
+      optional: true
 
 molecule_vms_success_cleanup:
   variables:
@@ -1309,8 +1309,8 @@ molecule_vms_success_cleanup:
     - molecule_vms_create
     - molecule_vms_test
   needs:
-    - molecule_vms_create
-    - molecule_vms_test
+    - job: molecule_vms_test
+      optional: true
 
 # Job Seq: Beest
 # Type: agent_upgrade
