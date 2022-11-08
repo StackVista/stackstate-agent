@@ -875,8 +875,6 @@ molecule_compose_success_cleanup:
     - *v2_merge_train_on_success
   variables:
     MOLECULE_SCENARIO: compose
-  dependencies:
-    - molecule_compose_test
   needs:
     - job: molecule_compose_test
       optional: true
@@ -934,9 +932,6 @@ molecule_integrations_success_cleanup:
     - *merge_train_on_success
   variables:
     MOLECULE_SCENARIO: integrations
-  dependencies:
-    - molecule_integrations_test
-    - molecule_integrations_create
   needs:
     - job: molecule_integrations_test
       optional: true
@@ -1100,9 +1095,6 @@ molecule_localinstall_success_cleanup:
     - *localinstall_acceptance_on_success_rule
     - *merge_train_on_success
     - when: never
-  dependencies:
-    - molecule_localinstall_test
-    - molecule_localinstall_create
   needs:
     - job: molecule_localinstall_test
       optional: true
@@ -1166,9 +1158,11 @@ molecule_secrets_failure_cleanup:
     - *secrets_acceptance_on_failure_rule
     - *merge_train_on_failure
     - when: never
-  needs:
+  dependencies:
     - molecule_secrets_test
-    - molecule_secrets_create
+  needs:
+    - job: molecule_secrets_test
+      optional: true
 
 molecule_secrets_success_cleanup:
   variables:
@@ -1180,12 +1174,9 @@ molecule_secrets_success_cleanup:
     - *secrets_acceptance_on_success_rule
     - *merge_train_on_success
     - when: never
-  dependencies:
-    - molecule_secrets_test
-    - molecule_secrets_create
   needs:
-    - molecule_secrets_test
-    - molecule_secrets_create
+    - job: molecule_secrets_test
+      optional: true
 
 
 # Job Seq: Molecule
@@ -1243,9 +1234,6 @@ molecule_swarm_success_cleanup:
   rules:
     - *swarm_ignore_rule
     - *v2_merge_train_on_success
-  dependencies:
-    - molecule_swarm_create
-    - molecule_swarm_test
   needs:
     - job: molecule_swarm_test
       optional: true
@@ -1304,9 +1292,6 @@ molecule_vms_success_cleanup:
   rules:
     - *vms_ignore_rule
     - *v2_merge_train_on_success
-  dependencies:
-    - molecule_vms_create
-    - molecule_vms_test
   needs:
     - job: molecule_vms_test
       optional: true
