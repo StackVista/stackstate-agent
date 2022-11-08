@@ -59,6 +59,7 @@ func GetProgramDataDirForProduct(product string) (path string, err error) {
 // GetProgramFilesDirForProduct returns the root of the installatoin directory,
 // usually c:\program files\datadog\datadog agent
 func GetProgramFilesDirForProduct(product string) (path string, err error) {
+	// [sts] Datadog rename to StackState
 	keyname := "SOFTWARE\\StackState\\" + product
 	k, err := registry.OpenKey(registry.LOCAL_MACHINE,
 		keyname,
@@ -81,6 +82,7 @@ func GetProgramFilesDirForProduct(product string) (path string, err error) {
 func getDefaultProgramFilesDir() (path string, err error) {
 	res, err := windows.KnownFolderPath(windows.FOLDERID_ProgramFiles, 0)
 	if err == nil {
+		// [sts] Datadog rename to StackState
 		path = filepath.Join(res, "StackState", "StackState Agent")
 	}
 	return

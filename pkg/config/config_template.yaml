@@ -37,8 +37,7 @@ sts_url:
 ## @param skip_ssl_validation - boolean - optional - default: false
 ## @env DD_SKIP_SSL_VALIDATION - boolean - optional - default: false
 ## Setting this option to "true" tells the Agent to skip validation of SSL/TLS certificates.
-# TODO: revert
-skip_ssl_validation: true
+# skip_ssl_validation: false
 
 ## @param force_tls_12 - boolean - optional - default: false
 ## @env DD_FORCE_TLS_12 - boolean - optional - default: false

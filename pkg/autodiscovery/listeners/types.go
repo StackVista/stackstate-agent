@@ -61,6 +61,7 @@ func Register(name string, factory ServiceListenerFactory) {
 	}
 	_, registered := ServiceListenerFactories[name]
 	if registered {
+		// [sts] make this a warning instead
 		log.Warnf("Service listener factory %s already registered. Ignoring.", name)
 	}
 	ServiceListenerFactories[name] = factory

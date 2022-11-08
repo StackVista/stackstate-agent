@@ -155,7 +155,7 @@ std::wstring replace_yaml_properties(
          {L"LOGS_DD_URL",                       L"^[ #]*logs_config:.*",                                    simple_replace(L"logs_config:")},
          {L"LOGS_DD_URL",                       L"^[ #]*logs_dd_url:.*",                                    format_simple_value(L"  logs_dd_url: ")},
          {L"PROCESS_ENABLED",                   L"^[ #]*process_config:.*",                                 simple_replace(L"process_config:")},
-         {L"PROCESS_DD_URL",                    L"^[ #]*process_config:.*",                                 format_simple_value(L"process_config:\n  process_dd_url: ")},
+         {L"PROCESS_DD_URL",                    L"^[ #]*process_config:.*",                                 format_simple_value(L"process_config:\n  process_sts_url: ")},
          {L"PROCESS_DISCOVERY_ENABLED",         L"^[ #]*process_config:.*",                                 simple_replace(L"process_config:")},
          {L"PROCESS_DISCOVERY_ENABLED",         L"^[ #]*process_discovery:.*",                              simple_replace(L"  process_discovery:")},
          {L"APM_ENABLED",                       L"^[ #]*apm_config:.*",                                     simple_replace(L"apm_config:")},
