@@ -592,11 +592,8 @@ pre_release_cluster_agent_image:
     when: never
   # Else, if the major version is 3, and code was committed to a branch, manually execute this step
   # If it is the alternative build and not major
-  - if: $MAJOR_VERSION != $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
-    when: manual
+  - when: manual
     allow_failure: true
-  # Otherwise we want to always run to prevent issues
-  - when: always
 
 .v2_merge_train_on_success: &v2_merge_train_on_success
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
