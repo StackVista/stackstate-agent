@@ -48,11 +48,17 @@ def test_container_metrics(cliv1):
         for e in expected:
             assert e in metrics, "%s metric was not found".format(e)
 
-        for v in metrics["memRss"]:
-            assert v > 0, "memRss metric is '0'"
-
+        non_zero_memRss = False
         for v in metrics["systemPct"]:
-            assert v > 0, "systemPct metric is '0'"
+            non_zero_memRss = True
+        if not non_zero_memRss:
+            assert not non_zero_memRss, "all 'memRss' metric are '0'"
+
+        non_zero_systemPct = False
+        for v in metrics["systemPct"]:
+            non_zero_systemPct = True
+        if not non_zero_systemPct:
+            assert not non_zero_systemPct, "all 'systemPct' metric are '0'"
 
     util.wait_until(wait_for_metrics, 60, 3)
 
