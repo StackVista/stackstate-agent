@@ -1384,8 +1384,7 @@ beest_agent_upgrade_cleanup:
   rules:
     - *beest_agent_upgrade_ignore_rule
     - *merge_train_no_default
-    - when: on_success
-    - when: on_failure
+    - when: always
   needs:
     - job: beest_agent_upgrade_test
       optional: true
