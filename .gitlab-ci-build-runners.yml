@@ -61,7 +61,7 @@ before_script:
       allow_failure: true
 
 # produces the base deb image: quay.io/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
-build_debian_runner_base:
+runner_debian_base:
   <<: *build_runner_base
   variables:
     RUNNER_DIR: $RUNNER_DEBIAN_BASE
@@ -76,7 +76,7 @@ build_debian_runner_base:
 #    BASE_IMAGE: "centos6"
 
 # produces the base rpm image: quay.io/stackstate/stackstate-agent-runner-gitlab:centos7_{yyyymmdd}
-build_centos7_runner_base:
+runner_centos7_base:
   <<: *build_runner_base
   variables:
     RUNNER_DIR: $RUNNER_CENTOS7_BASE
@@ -110,26 +110,26 @@ build_centos7_runner_base:
 
 
 # produces the runner deb image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
-build_debian_runner:
+runner_debian:
   <<: *build_runner
   needs:
-    - build_debian_runner_base
+    - runner_debian_base
   variables:
     RUNNER_DIR: $RUNNER_DEBIAN
     RUNNER_IMAGE_VERSION: "deb7"
 
 # produces the runner deb/rpm publisher image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_{yyyymmdd}
-build_debian_rpm_publisher_runner:
+runner_debian_rpm_publisher:
   <<: *build_runner_base
   variables:
     RUNNER_DIR: $RUNNER_DEBIAN_RPM_PUBLISHER
     RUNNER_IMAGE_VERSION: "deb-rpmpublisher"
 
 # produces the runner centos 7 image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
-build_centos7_runner:
+runner_centos7:
   <<: *build_runner
   needs:
-    - build_centos7_runner_base
+    - runner_centos7_base
   variables:
     RUNNER_DIR: $RUNNER_CENTOS7
     RUNNER_IMAGE_VERSION: "centos7"
