@@ -50,6 +50,7 @@ def test_container_metrics(cliv1):
 
         check_non_zero("memRss", metrics)
         check_non_zero("systemPct", metrics)
+        check_non_zero("cpuThreadCount", metrics)
 
     util.wait_until(wait_for_metrics, 60, 3)
 
