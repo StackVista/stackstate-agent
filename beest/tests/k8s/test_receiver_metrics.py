@@ -53,11 +53,14 @@ def test_container_metrics(cliv1):
 
     util.wait_until(wait_for_metrics, 60, 3)
 
+
 def check_non_zero(metric, metrics):
     for v in metrics[metric]:
         if v > 0:
             return
     assert False, "all '%s' metric are '0'".format(metric)
+
+
 def test_agent_http_metrics(cliv1):
     def wait_for_metrics():
         json_data = cliv1.topic_api("sts_multi_metrics")
