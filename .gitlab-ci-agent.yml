@@ -1,3 +1,4 @@
+
 .other_files_rule: &other_files_rule
   # Check if any files (not MD) changed
   # Glob syntax that checks for changes in all files except files that end with .md, .mdown or .markdown extension.

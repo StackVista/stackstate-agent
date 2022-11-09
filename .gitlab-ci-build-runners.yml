@@ -1,8 +1,3 @@
-stages:
-  - build_runner_base
-  - build_runners
-  - fallback-manual
-
 variables:
   BUILDERS_FOLDER: $CI_PROJECT_DIR/.ci-builders
   RUNNER_DEBIAN_BASE: debian-base
@@ -38,7 +33,7 @@ before_script:
 #################################################################################
 .build_runner_base: &build_runner_base
   <<: *docker_build_base
-  stage: build_runner_base
+  stage: build
   script:
     - cd $BUILDERS_FOLDER/$RUNNER_DIR
     # build the base image
@@ -66,9 +61,8 @@ before_script:
       allow_failure: true
 
 # produces the base deb image: quay.io/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
-build-debian-base:
+build_debian_runner_base:
   <<: *build_runner_base
-  stage: build_runner_base
   variables:
     RUNNER_DIR: $RUNNER_DEBIAN_BASE
 
@@ -82,7 +76,7 @@ build-debian-base:
 #    BASE_IMAGE: "centos6"
 
 # produces the base rpm image: quay.io/stackstate/stackstate-agent-runner-gitlab:centos7_{yyyymmdd}
-build-centos7-base:
+build_centos7_runner_base:
   <<: *build_runner_base
   variables:
     RUNNER_DIR: $RUNNER_CENTOS7_BASE
@@ -93,7 +87,7 @@ build-centos7-base:
 
 .build_runner: &build_runner
   <<: *docker_build_base
-  stage: build_runners
+  stage: build
   script:
     - cd $BUILDERS_FOLDER/$RUNNER_DIR
     # get the current date as the base image version
@@ -125,7 +119,7 @@ build-debian-runner:
     RUNNER_IMAGE_VERSION: "deb7"
 
 # produces the runner deb/rpm publisher image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_{yyyymmdd}
-build-debian-rpmpublisher-runner:
+build_debian_rpm_publisher_runner:
   <<: *build_runner_base
   variables:
     RUNNER_DIR: $RUNNER_DEBIAN_RPM_PUBLISHER
@@ -143,17 +137,3 @@ build-centos7-runner:
 # TODO: centos6 is EOL. This might potentially work: https://arstech.net/centos-6-error-yumrepo-error-all-mirror-urls-are-not-using-ftp-http/
 # TODO: skipping it for now
 # produces the runner centos 6 image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos6_20190429
-
-# This ensures that triggers can achieve success status if manual jobs are not executed.
-ensure-success-manual:
-  stage: fallback-manual
-  before_script: []
-  dependencies:
-    - build-centos7-runner
-    - build-debian-runner
-  script:
-    - echo "I will succeed"
-  rules:
-    - when: on_success
-  retry:
-    max: 2
