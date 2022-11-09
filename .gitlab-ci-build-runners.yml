@@ -113,7 +113,7 @@ build_centos7_runner_base:
 build_debian_runner:
   <<: *build_runner
   needs:
-    - build_debian_base
+    - build_debian_runner_base
   variables:
     RUNNER_DIR: $RUNNER_DEBIAN
     RUNNER_IMAGE_VERSION: "deb7"
@@ -129,7 +129,7 @@ build_debian_rpm_publisher_runner:
 build_centos7_runner:
   <<: *build_runner
   needs:
-    - build_centos7_base
+    - build_centos7_runner_base
   variables:
     RUNNER_DIR: $RUNNER_CENTOS7
     RUNNER_IMAGE_VERSION: "centos7"
