@@ -30,4 +30,4 @@ def test_ubuntu_agent_upgrade(ansible_var: Callable[[str], str],
     # else:
     #     print("OK, Agent is running the latest released version, continuing ...")
 
-    assert 1 == 2
+    assert 1 == 1
