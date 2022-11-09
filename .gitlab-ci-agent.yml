@@ -131,7 +131,7 @@ deps_deb:
       - always
   rules:
     - *md_only_rule
-    - when: on_success
+    - when: always
 
 deps_rpm:
   stage: build_dependencies
@@ -163,7 +163,7 @@ deps_rpm:
       - always
   rules:
     - *md_only_rule
-    - when: on_success
+    - when: always
 
 deps_win:
   stage: build_dependencies
@@ -196,7 +196,7 @@ deps_win:
       - always
   rules:
     - *md_only_rule
-    - when: on_success
+    - when: always
 
 ## build stage
 

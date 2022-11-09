@@ -12,7 +12,7 @@
 #    name: gcr.io/kaniko-project/executor:v1.8.1-debug
 #    entrypoint: [""]
 
-beest_keeper_build_latest:
+beest-keeper-build-latest:
   <<: *docker_build_base
   stage: optional_builds
   script:
