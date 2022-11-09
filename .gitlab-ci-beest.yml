@@ -12,7 +12,7 @@
 #    name: gcr.io/kaniko-project/executor:v1.8.1-debug
 #    entrypoint: [""]
 
-beest-keeper-build-latest:
+beest_keeper_build_latest:
   <<: *docker_build_base
   stage: optional_builds
   script:
@@ -25,14 +25,3 @@ beest-keeper-build-latest:
     - if: $CI_COMMIT_MESSAGE
       when: manual
       allow_failure: true
-
-# This ensures that triggers can achieve success status if manual jobs are not executed.
-continue-from-manual-builders:
-  stage: optional_builds
-  before_script: []
-  script:
-    - echo "I will succeed"
-  rules:
-    - when: on_success
-  retry:
-    max: 2
