@@ -15,7 +15,7 @@ before_script:
 
 beest-keeper-build-latest:
   <<: *docker_build_base
-  stage: build
+  stage: optional_builds
   script:
     - cd $RUNNER_BEEST_BASE
     - mkdir -p /kaniko/.docker

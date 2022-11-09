@@ -4,6 +4,7 @@ include:
   - '/.gitlab-ci-beest.yml'
 
 stages:
+  - optional_builds
   - acceptance_create_infra
   - build_dependencies
   - build

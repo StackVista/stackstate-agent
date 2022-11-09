@@ -33,7 +33,7 @@ before_script:
 #################################################################################
 .build_runner_base: &build_runner_base
   <<: *docker_build_base
-  stage: build
+  stage: optional_builds
   script:
     - cd $BUILDERS_FOLDER/$RUNNER_DIR
     # build the base image
@@ -87,7 +87,7 @@ runner_centos7_base:
 
 .build_runner: &build_runner
   <<: *docker_build_base
-  stage: build
+  stage: optional_builds
   script:
     - cd $BUILDERS_FOLDER/$RUNNER_DIR
     # get the current date as the base image version
