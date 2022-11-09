@@ -25,3 +25,16 @@ beest-keeper-build-latest:
     - if: $CI_COMMIT_MESSAGE
       when: manual
       allow_failure: true
+
+# This ensures that triggers can achieve success status if manual jobs are not executed.
+continue-from-manual-builders:
+  stage: optional_builds
+  before_script: []
+  dependencies:
+    - beest-keeper
+  script:
+    - echo "I will succeed"
+  rules:
+    - when: on_success
+  retry:
+    max: 2
