@@ -13,3 +13,14 @@ git merge x.y.z
 git commit
 git push
 ```
+
+# Upgrade submodules interdependencies
+
+```shell
+# setup new versions
+inv -e release.update-modules 2.19.0[-rc.4]
+# make commit
+git commit
+# tag new versions
+inv -e release.tag-version 2.19.0-rc.4 [--no-push] [--force]`
+```

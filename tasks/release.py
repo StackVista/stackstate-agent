@@ -851,9 +851,9 @@ def update_release_json(ctx, github_token, new_version): # [sts] - not supported
 
 def check_version(agent_version):
     """Check Agent version to see if it is valid."""
-    version_re = re.compile(r'7[.](\d+)[.](\d+)(-rc\.(\d+))?')
+    version_re = re.compile(r'2[.](\d+)[.](\d+)(-rc\.(\d+))?')
     if not version_re.match(agent_version):
-        raise Exit(message="Version should be of the form 7.Y.Z or 7.Y.Z-rc.t")
+        raise Exit(message="Version should be of the form 2.Y.Z or 2.Y.Z-rc.t")
 
 
 @task
