@@ -4,7 +4,6 @@ include:
   - '/.gitlab-ci-beest.yml'
 
 stages:
-  - optional_builds
   - acceptance_create_infra
   - build_dependencies
   - build
@@ -16,6 +15,7 @@ stages:
   - acceptance_cleanup_success_infra
   - acceptance_cleanup_failed_infra
   - release_agent
+  - optional_builds
 
 
 image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220505
