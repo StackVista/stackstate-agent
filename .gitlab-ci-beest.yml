@@ -1,10 +1,9 @@
-before_script:
-  - apk add make
-  - echo "${docker_password}" | docker login --username=${docker_user} --password-stdin ${DOCKER_REGISTRY}
-  - echo "${quay_password}" | docker login --username=${quay_user} --password-stdin ${QUAY_REGISTRY}
-#  - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"${docker_user}\",\"password\":\"${docker_password}\"}}}" > /kaniko/.docker/config.json
-
 .docker_build_base: &docker_build_base
+  before_script:
+    - apk add make
+    - echo "${docker_password}" | docker login --username=${docker_user} --password-stdin ${DOCKER_REGISTRY}
+    - echo "${quay_password}" | docker login --username=${quay_user} --password-stdin ${QUAY_REGISTRY}
+  #  - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"${docker_user}\",\"password\":\"${docker_password}\"}}}" > /kaniko/.docker/config.json
   image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
   services:
     - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind

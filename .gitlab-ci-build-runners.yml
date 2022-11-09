@@ -12,12 +12,11 @@ variables:
   DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: ""
 
-before_script:
-  # login to both docker registries
-  - docker login -u "${docker_user}" -p "${docker_password}" "${DOCKER_REGISTRY}"
-  - docker login -u "${quay_user}" -p "${quay_password}" "${QUAY_REGISTRY}"
-
 .docker_build_base: &docker_build_base
+  before_script:
+    # login to both docker registries
+    - docker login -u "${docker_user}" -p "${docker_password}" "${DOCKER_REGISTRY}"
+    - docker login -u "${quay_user}" -p "${quay_password}" "${QUAY_REGISTRY}"
   # use docker as the image builder
   image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
   services:
