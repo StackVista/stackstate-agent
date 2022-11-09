@@ -30,8 +30,6 @@ beest-keeper-build-latest:
 continue-from-manual-builders:
   stage: optional_builds
   before_script: []
-  dependencies:
-    - beest-keeper
   script:
     - echo "I will succeed"
   rules:
