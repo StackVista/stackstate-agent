@@ -110,10 +110,10 @@ build_centos7_runner_base:
 
 
 # produces the runner deb image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
-build-debian-runner:
+build_debian_runner:
   <<: *build_runner
   needs:
-    - build-debian-base
+    - build_debian_base
   variables:
     RUNNER_DIR: $RUNNER_DEBIAN
     RUNNER_IMAGE_VERSION: "deb7"
@@ -126,10 +126,10 @@ build_debian_rpm_publisher_runner:
     RUNNER_IMAGE_VERSION: "deb-rpmpublisher"
 
 # produces the runner centos 7 image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
-build-centos7-runner:
+build_centos7_runner:
   <<: *build_runner
   needs:
-    - build-centos7-base
+    - build_centos7_base
   variables:
     RUNNER_DIR: $RUNNER_CENTOS7
     RUNNER_IMAGE_VERSION: "centos7"
