@@ -52,7 +52,7 @@ class GoModule:
         >>> [mod.import_path for mod in mods]
         ["github.com/DataDog/datadog-agent", "github.com/DataDog/datadog-agent/pkg/util/log"]
         """
-        path = "github.com/DataDog/datadog-agent"
+        path = "github.com/StackVista/stackstate-agent"
         if self.path != ".":
             path += "/" + self.path
         return path
@@ -78,6 +78,7 @@ DEFAULT_MODULES = {
             "pkg/otlp/model",
             "pkg/security/secl",
         ],
+        should_tag=False,
     ),
     "pkg/util/scrubber": GoModule("pkg/util/scrubber"),
     "pkg/util/log": GoModule("pkg/util/log", dependencies=["pkg/util/scrubber"]),
