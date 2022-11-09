@@ -672,7 +672,7 @@ pre_release_cluster_agent_image:
   - if: $CI_OPEN_MERGE_REQUESTS
     when: never
   - if: $CI_COMMIT_BRANCH
-    when: manual
+    when: always
     allow_failure: true
 
 # Merge train rules for all agents
@@ -1382,8 +1382,8 @@ beest_agent_upgrade_cleanup:
   <<: *beest_agent_upgrade_variables
   rules:
     - *beest_agent_upgrade_ignore_rule
-    - *merge_train_no_default
-    - when: always
+    - *merge_train_always
+    - when: never
   dependencies:
     - beest_agent_upgrade_test
   needs:
