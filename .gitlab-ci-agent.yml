@@ -103,6 +103,17 @@ before_script:
   - *configure_debian_env_script
   - *retrieve_linux_go_deps_script
 
+# This ensures that triggers can achieve success status if manual jobs are not executed.
+acceptance_infra_create:
+  stage: acceptance_create_infra
+  before_script: []
+  script:
+    - echo "I will succeed"
+  rules:
+    - when: on_success
+  retry:
+    max: 2
+
 deps_deb:
   stage: build_dependencies
   interruptible: true
