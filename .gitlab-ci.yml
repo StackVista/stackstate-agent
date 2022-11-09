@@ -1,6 +1,7 @@
 include:
   - '/.gitlab-ci-agent.yml'
   - '/.gitlab-ci-build-runners.yml'
+  - '/.gitlab-ci-beest.yml'
 
 stages:
   - acceptance_create_infra
@@ -19,6 +20,9 @@ stages:
 image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220505
 
 variables:
+  # Beest
+  RUNNER_BEEST_BASE: $CI_PROJECT_DIR/.ci-builders/beest-base
+
   # Gitlab CI Builers
   BUILDERS_FOLDER: $CI_PROJECT_DIR/.ci-builders
   RUNNER_DEBIAN_BASE: debian-base
@@ -75,30 +79,6 @@ variables:
   STS_DOCKER_RELEASE_REPO_CLUSTER: stackstate-cluster-agent
   STS_DOCKER_TEST_REPO_CLUSTER: stackstate-cluster-agent-test
 
-# agent:
-#   stage: triggers
-#   trigger:
-#     include: .gitlab-ci-agent.yml
-#     strategy: depend
-#   rules:
-#     - <<: *exclude_on_cluster_agent
-#     - <<: *scheduled_master_pipeline
-#     - *other_files_rule
-#     - *md_only_rule
-#     - when: always
-
-# cluster_agent:
-#   stage: triggers
-#   variables:
-#     <<: *commonvariables
-#     <<: *agent_variables
-#   trigger:
-#     include: .gitlab-ci-cluster-agent.yml
-#     strategy: depend
-#   rules:
-#     - <<: *include_on_cluster_agent
-#     - when: never
-#
 # build_beest_runners:
 #   stage: triggers
 #   trigger:
@@ -109,17 +89,3 @@ variables:
 #     - if: $CI_OPEN_MERGE_REQUESTS
 #       when: never
 #     - if: $CI_COMMIT_BRANCH
-#
-# build_agent_runners:
-#   stage: triggers
-#   variables:
-#     <<: *commonvariables
-#   trigger:
-#     include: .gitlab-ci-build-runners.yml
-#     strategy: depend
-#   rules:
-#     - if: $CI_MERGE_REQUEST_IID
-#     - if: $CI_OPEN_MERGE_REQUESTS
-#       when: never
-#     - if: $CI_COMMIT_BRANCH
-#
