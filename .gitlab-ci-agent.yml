@@ -657,6 +657,23 @@ pre_release_cluster_agent_image:
     when: on_failure
     allow_failure: false
 
+.v2_merge_train_always: &v2_merge_train_always
+  - *md_only_rule
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: on_failure
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_failure
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_IID
+    when: on_failure
+    allow_failure: false
+  - if: $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $CI_COMMIT_BRANCH
+    when: always
+    allow_failure: false
+
 # Merge train rules for all agents
 .merge_train_always: &merge_train_always
   - *md_only_rule
@@ -1382,12 +1399,12 @@ beest_agent_upgrade_cleanup:
   <<: *beest_agent_upgrade_variables
   rules:
     - *beest_agent_upgrade_ignore_rule
-    - *merge_train_always
+    - *v2_merge_train_always
     - when: never
-  dependencies:
-    - beest_agent_upgrade_test
   needs:
+    - beest_agent_upgrade_create
     - beest_agent_upgrade_test
+    - pre_release_deb
 
 # Job Seq: Beest
 # Type: otel
