@@ -106,9 +106,6 @@ before_script:
 deps_deb:
   stage: build_dependencies
   interruptible: true
-  needs:
-    - job: runner_debian
-      optional: true
   cache:
     key: "deps-deb-V3-$CI_COMMIT_REF_SLUG"
     paths:
@@ -139,9 +136,6 @@ deps_deb:
 deps_rpm:
   stage: build_dependencies
   interruptible: true
-  needs:
-    - job: runner_centos7
-      optional: true
   image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220505
   cache:
     key: "deps-rpm-V3-$CI_COMMIT_REF_SLUG"
@@ -1265,9 +1259,6 @@ beest_k8s_dockerd_create:
   rules:
     - *kubernetes_ignore_rule
     - *merge_train_always
-  needs:
-    - job: beest_keeper_build_latest
-      optional: true
 
 beest_k8s_dockerd_test:
   <<: *beest
@@ -1318,9 +1309,6 @@ beest_k8s_containerd_create:
   rules:
     - *kubernetes_ignore_rule
     - *merge_train_always
-  needs:
-    - job: beest_keeper_build_latest
-      optional: true
 
 beest_k8s_containerd_test:
   <<: *beest
@@ -1381,9 +1369,6 @@ beest_agent_upgrade_create:
   rules:
     - *beest_agent_upgrade_ignore_rule
     - *merge_train_always
-  needs:
-    - job: beest_keeper_build_latest
-      optional: true
 
 beest_agent_upgrade_test:
   <<: *beest
@@ -1444,9 +1429,6 @@ beest_otel_create:
   rules:
     - *beest_otel_ignore_rule
     - *merge_train_always
-  needs:
-    - job: beest_keeper_build_latest
-      optional: true
 
 beest_otel_test:
   <<: *beest
@@ -1506,9 +1488,6 @@ beest_splunk_create:
   rules:
     - *beest_splunk_ignore_rule
     - *merge_train_always
-  needs:
-    - job: beest_keeper_build_latest
-      optional: true
 
 beest_splunk_test:
   <<: *beest
