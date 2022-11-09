@@ -107,7 +107,8 @@ deps_deb:
   stage: build_dependencies
   interruptible: true
   needs:
-    - runner_debian
+    - job: runner_debian
+      optional: true
   cache:
     key: "deps-deb-V3-$CI_COMMIT_REF_SLUG"
     paths:
@@ -139,7 +140,8 @@ deps_rpm:
   stage: build_dependencies
   interruptible: true
   needs:
-    - runner_centos7
+    - job: runner_centos7
+      optional: true
   image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220505
   cache:
     key: "deps-rpm-V3-$CI_COMMIT_REF_SLUG"
