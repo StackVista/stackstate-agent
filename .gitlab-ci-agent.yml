@@ -861,7 +861,6 @@ pre_release_cluster_agent_image:
 # Primary destroy steps for all the beest builds
 .beest_destroy: &beest_destroy
   <<: *beest_artifacts
-  stage: acceptance_cleanup_infra
   # Prevent terraform from breaking when this job is cancelled mid way
   interruptible: false
   # Prevent another job from destroying the resources this branch is busy with, Terraform lock will prevent this but for incase
@@ -982,90 +981,6 @@ pre_release_cluster_agent_image:
 #   needs:
 #     - job: molecule_integrations_test
 #       optional: true
-
-# Job Seq: Beest
-# Type: kubernetes
-
-.beest_kubernetes_rule:
-  # Currently we default to only running on Python2 build.
-  # TODO: Change this when V3 releases are finalized and the default.
-  - &kubernetes_ignore_rule
-    if: $CI_COMMIT_MESSAGE =~ /\[beest\-/ && $CI_COMMIT_MESSAGE !~ /\[beest\-kubernetes]/
-    when: never
-
-.beest_k8s_dockerd_variables: &beest_k8s_dockerd_variables
-  variables:
-    BEEST_SCENARIO: dockerd-eks
-    BEEST_TEST_GROUP: k8s
-
-.beest_k8s_containerd_variables: &beest_k8s_containerd_variables
-  variables:
-    BEEST_SCENARIO: containerd-eks
-    BEEST_TEST_GROUP: k8s
-
-beest_k8s_dockerd_create:
-  <<: *beest
-  <<: *beest_create_with_stackstate
-  <<: *beest_k8s_dockerd_variables
-  rules:
-    - *kubernetes_ignore_rule
-    - *merge_train_always
-
-beest_k8s_dockerd_test:
-  <<: *beest
-  <<: *beest_test_ignore_stackstate
-  <<: *beest_k8s_dockerd_variables
-  rules:
-    - *kubernetes_ignore_rule
-    - *v2_merge_train_on_success
-    - when: never
-  dependencies:
-    - beest_k8s_dockerd_create
-  needs:
-    - job: beest_k8s_dockerd_create
-      optional: true
-    - pre_release_cluster_agent_image
-    - pre_release_main_agent_image
-
-beest_k8s_dockerd_cleanup:
-  <<: *beest
-  <<: *beest_destroy
-  <<: *beest_k8s_dockerd_variables
-  rules:
-    - *kubernetes_ignore_rule
-    - *merge_train_always
-
-beest_k8s_containerd_create:
-  <<: *beest
-  <<: *beest_create_with_stackstate
-  <<: *beest_k8s_containerd_variables
-  rules:
-    - *kubernetes_ignore_rule
-    - *merge_train_always
-
-beest_k8s_containerd_test:
-  <<: *beest
-  <<: *beest_test_ignore_stackstate
-  <<: *beest_k8s_containerd_variables
-  rules:
-    - *kubernetes_ignore_rule
-    - *v2_merge_train_on_success
-    - when: never
-  dependencies:
-    - beest_k8s_containerd_create
-  needs:
-    - job: beest_k8s_containerd_create
-      optional: true
-    - pre_release_cluster_agent_image
-    - pre_release_main_agent_image
-
-beest_k8s_containerd_cleanup:
-  <<: *beest
-  <<: *beest_destroy
-  <<: *beest_k8s_containerd_variables
-  rules:
-    - *kubernetes_ignore_rule
-    - *merge_train_always
 
 # # Job Seq: Molecule
 # # Type: localinstall
@@ -1341,6 +1256,124 @@ beest_k8s_containerd_cleanup:
 #     - job: molecule_vms_test
 #       optional: true
 
+
+# Job Seq: Beest
+# Type: kubernetes
+
+.beest_kubernetes_rule:
+  # Currently we default to only running on Python2 build.
+  # TODO: Change this when V3 releases are finalized and the default.
+  - &kubernetes_ignore_rule
+    if: $CI_COMMIT_MESSAGE =~ /\[beest\-/ && $CI_COMMIT_MESSAGE !~ /\[beest\-kubernetes]/
+    when: never
+
+.beest_k8s_dockerd_variables: &beest_k8s_dockerd_variables
+  variables:
+    BEEST_SCENARIO: dockerd-eks
+    BEEST_TEST_GROUP: k8s
+
+.beest_k8s_containerd_variables: &beest_k8s_containerd_variables
+  variables:
+    BEEST_SCENARIO: containerd-eks
+    BEEST_TEST_GROUP: k8s
+
+beest_k8s_dockerd_create:
+  <<: *beest
+  <<: *beest_create_with_stackstate
+  <<: *beest_k8s_dockerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *merge_train_always
+
+beest_k8s_dockerd_test:
+  <<: *beest
+  <<: *beest_test_ignore_stackstate
+  <<: *beest_k8s_dockerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_k8s_dockerd_create
+  needs:
+    - beest_k8s_dockerd_create
+    - pre_release_cluster_agent_image
+    - pre_release_main_agent_image
+
+beest_k8s_dockerd_success_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_k8s_dockerd_variables
+  stage: acceptance_cleanup_success_infra
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  needs:
+    - beest_k8s_dockerd_test
+
+beest_k8s_dockerd_failure_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_k8s_dockerd_variables
+  stage: acceptance_cleanup_failed_infra
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_failure
+    - when: never
+  needs:
+    - beest_k8s_dockerd_test
+
+# Job Seq: Beest
+# Type: k8s_containerd
+
+beest_k8s_containerd_create:
+  <<: *beest
+  <<: *beest_create_with_stackstate
+  <<: *beest_k8s_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *merge_train_always
+
+beest_k8s_containerd_test:
+  <<: *beest
+  <<: *beest_test_ignore_stackstate
+  <<: *beest_k8s_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_k8s_containerd_create
+  needs:
+    - beest_k8s_containerd_create
+    - pre_release_cluster_agent_image
+    - pre_release_main_agent_image
+
+beest_k8s_containerd_success_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_k8s_containerd_variables
+  stage: acceptance_cleanup_success_infra
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  needs:
+    - beest_k8s_containerd_test
+
+beest_k8s_containerd_failure_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_k8s_containerd_variables
+  stage: acceptance_cleanup_failed_infra
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_failure
+    - when: never
+  needs:
+    - beest_k8s_containerd_test
+
 # Job Seq: Beest
 # Type: agent_upgrade
 
@@ -1376,16 +1409,30 @@ beest_agent_upgrade_test:
     - beest_agent_upgrade_create
     - pre_release_deb
 
-beest_agent_upgrade_cleanup:
+beest_agent_upgrade_success_cleanup:
   <<: *beest
   <<: *beest_destroy
   <<: *beest_agent_upgrade_variables
+  stage: acceptance_cleanup_success_infra
+  rules:
+    - *beest_agent_upgrade_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  needs:
+    - beest_agent_upgrade_test
+
+beest_agent_upgrade_failure_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_agent_upgrade_variables
+  stage: acceptance_cleanup_failed_infra
   rules:
     - *beest_agent_upgrade_ignore_rule
     - *v2_merge_train_on_failure
     - when: never
   needs:
     - beest_agent_upgrade_test
+
 
 # Job Seq: Beest
 # Type: otel
@@ -1419,17 +1466,32 @@ beest_otel_test:
   dependencies:
     - beest_otel_create
   needs:
-    - job: beest_otel_create
-      optional: true
+    - beest_otel_create
     - pre_release_deb
 
-beest_otel_cleanup:
+beest_otel_success_cleanup:
   <<: *beest
   <<: *beest_destroy
   <<: *beest_otel_variables
+  stage: acceptance_cleanup_success_infra
   rules:
     - *beest_otel_ignore_rule
-    - *merge_train_always
+    - *v2_merge_train_on_success
+    - when: never
+  needs:
+    - beest_otel_test
+
+beest_otel_failure_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_otel_variables
+  stage: acceptance_cleanup_failed_infra
+  rules:
+    - *beest_otel_ignore_rule
+    - *v2_merge_train_on_failure
+    - when: never
+  needs:
+    - beest_otel_test
 
 # Job Seq: Beest
 # Type: splunk
@@ -1465,17 +1527,32 @@ beest_splunk_test:
   dependencies:
     - beest_splunk_create
   needs:
-    - job: beest_splunk_create
-      optional: true
+    - beest_splunk_create
     - pre_release_deb
 
-beest_splunk_cleanup:
+beest_splunk_success_cleanup:
   <<: *beest
   <<: *beest_destroy
   <<: *beest_splunk_variables
+  stage: acceptance_cleanup_success_infra
   rules:
     - *beest_splunk_ignore_rule
-    - *merge_train_always
+    - *v2_merge_train_on_success
+    - when: never
+  needs:
+    - beest_splunk_test
+
+beest_splunk_failure_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_splunk_variables
+  stage: acceptance_cleanup_failed_infra
+  rules:
+    - *beest_splunk_ignore_rule
+    - *v2_merge_train_on_failure
+    - when: never
+  needs:
+    - beest_splunk_test
 
 ## release stage
 

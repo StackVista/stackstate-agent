@@ -11,7 +11,8 @@ stages:
   - acceptance_tests_general
   - acceptance_tests_receiver
   - acceptance_tests_optional_qa_sts
-  - acceptance_cleanup_infra
+  - acceptance_cleanup_success_infra
+  - acceptance_cleanup_failed_infra
   - release_agent
 
 variables:
