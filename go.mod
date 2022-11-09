@@ -76,12 +76,13 @@ require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/Microsoft/go-winio v0.5.1
 	github.com/Microsoft/hcsshim v0.9.0
-	github.com/StackVista/stackstate-agent/pkg/otlp/model v0.33.1
-	github.com/StackVista/stackstate-agent/pkg/quantile v0.33.1
-	github.com/StackVista/stackstate-agent/pkg/security/secl v0.33.1
-	github.com/StackVista/stackstate-agent/pkg/util/log v0.33.1
-	github.com/StackVista/stackstate-agent/pkg/util/scrubber v0.33.1
-	github.com/StackVista/stackstate-agent/pkg/util/winutil v0.33.1
+	// use `inv -e release.tag-version 2.19.0-rc.1 [--no-push] [--force]` command to create new tags
+	github.com/StackVista/stackstate-agent/pkg/otlp/model v0.19.0-rc.2
+	github.com/StackVista/stackstate-agent/pkg/quantile v0.19.0-rc.2
+	github.com/StackVista/stackstate-agent/pkg/security/secl v0.19.0-rc.2
+	github.com/StackVista/stackstate-agent/pkg/util/log v0.19.0-rc.2
+	github.com/StackVista/stackstate-agent/pkg/util/scrubber v0.19.0-rc.2
+	github.com/StackVista/stackstate-agent/pkg/util/winutil v0.19.0-rc.2
 	github.com/alecthomas/jsonschema v0.0.0-20210526225647-edb03dcab7bc
 	github.com/alecthomas/participle v0.7.1
 	github.com/alecthomas/repr v0.0.0-20181024024818-d37bc2a10ba1

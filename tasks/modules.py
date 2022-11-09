@@ -78,6 +78,7 @@ DEFAULT_MODULES = {
             "pkg/otlp/model",
             "pkg/security/secl",
         ],
+        should_tag=False,
     ),
     "pkg/util/scrubber": GoModule("pkg/util/scrubber"),
     "pkg/util/log": GoModule("pkg/util/log", dependencies=["pkg/util/scrubber"]),
