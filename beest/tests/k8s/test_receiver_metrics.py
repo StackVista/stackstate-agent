@@ -48,21 +48,16 @@ def test_container_metrics(cliv1):
         for e in expected:
             assert e in metrics, "%s metric was not found".format(e)
 
-        non_zero_memRss = False
-        for v in metrics["systemPct"]:
-            non_zero_memRss = True
-        if not non_zero_memRss:
-            assert not non_zero_memRss, "all 'memRss' metric are '0'"
-
-        non_zero_systemPct = False
-        for v in metrics["systemPct"]:
-            non_zero_systemPct = True
-        if not non_zero_systemPct:
-            assert not non_zero_systemPct, "all 'systemPct' metric are '0'"
+        check_non_zero("memRss", metrics)
+        check_non_zero("systemPct", metrics)
 
     util.wait_until(wait_for_metrics, 60, 3)
 
-
+def check_non_zero(metric, metrics):
+    for v in metrics[metric]:
+        if v > 0:
+            return
+    assert False, "all '%s' metric are '0'".format(metric)
 def test_agent_http_metrics(cliv1):
     def wait_for_metrics():
         json_data = cliv1.topic_api("sts_multi_metrics")
