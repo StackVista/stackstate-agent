@@ -1373,8 +1373,7 @@ beest_agent_upgrade_test:
   dependencies:
     - beest_agent_upgrade_create
   needs:
-    - job: beest_agent_upgrade_create
-      optional: true
+    - beest_agent_upgrade_create
     - pre_release_deb
 
 beest_agent_upgrade_cleanup:
@@ -1386,8 +1385,7 @@ beest_agent_upgrade_cleanup:
     - *merge_train_no_default
     - when: always
   needs:
-    - job: beest_agent_upgrade_test
-      optional: true
+    - beest_agent_upgrade_test
 
 # Job Seq: Beest
 # Type: otel
