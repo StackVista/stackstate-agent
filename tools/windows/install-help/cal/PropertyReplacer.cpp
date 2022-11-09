@@ -159,13 +159,14 @@ std::wstring replace_yaml_properties(
          {L"PROCESS_DISCOVERY_ENABLED",         L"^[ #]*process_config:.*",                                 simple_replace(L"process_config:")},
          {L"PROCESS_DISCOVERY_ENABLED",         L"^[ #]*process_discovery:.*",                              simple_replace(L"  process_discovery:")},
          {L"APM_ENABLED",                       L"^[ #]*apm_config:.*",                                     simple_replace(L"apm_config:")},
-         {L"TRACE_DD_URL",                      L"^[ #]*apm_config:.*",                                     simple_replace(L"apm_config:")},
+         {L"TRACE_DD_URL",                      L"^[ #]*apm_config:.*",                                     format_simple_value(L"apm_config:\n  apm_sts_url: ")},
          {L"CMD_PORT",                          L"^[ #]*cmd_port:.*",                                       format_simple_value(L"cmd_port: ")},
          {L"DD_URL",                            L"^[ #]*sts_url:.*",                                        format_simple_value(L"sts_url: ")},
          {L"PYVER",                             L"^[ #]*python_version:.*",                                 format_simple_value(L"python_version: ")},
          {L"PROXY_HOST",                        L"^[ #]*proxy:.*",                                          format_proxy},
          {L"HOSTNAME_FQDN_ENABLED",             L"^[ #]*hostname_fqdn:.*",                                  format_simple_value(L"hostname_fqdn: ")},
          {L"TAGS",                              L"^[ #]*tags:(?:(?:.|\n)*?)^[ #]*- <TAG_KEY>:<TAG_VALUE>",  format_tags},
+         {L"SKIP_SSL_VALIDATION",               L"^[ #]*skip_ssl_validation:.*",                            format_simple_value(L"skip_ssl_validation: ")},
     })
     {
         auto propKey = std::get<WxsKey>(prop);
