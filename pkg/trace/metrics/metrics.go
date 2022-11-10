@@ -44,7 +44,7 @@ func Configure(conf *config.AgentConfig, tags []string) error {
 	if err != nil {
 		return err
 	}
-	client, err := statsd.New(addr, statsd.WithTags(tags))
+	client, err := statsd.New(addr, statsd.WithTags(tags), statsd.WithoutTelemetry())
 	if err != nil {
 		return err
 	}

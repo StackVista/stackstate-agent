@@ -11,5 +11,5 @@
   <?define IncludePython2= "false" ?>
   <?define IncludePython3= "true" ?>
   <?define Platform= "x64" ?>
-  <?define IncludeSysprobe="true" ?>
+  <?define IncludeSysprobe="false" ?>
 </Include>

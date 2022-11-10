@@ -175,10 +175,11 @@ package :msi do
     signing_identity_file "#{ENV['SIGN_PFX']}", password: "#{ENV['SIGN_PFX_PW']}", algorithm: "SHA256"
   end
   include_sysprobe = "false"
-  if not windows_arch_i386? and ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?
-    include_sysprobe = "true"
-    additional_sign_files_list << "#{Omnibus::Config.source_dir()}\\datadog-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\system-probe.exe"
-  end
+#   [sts] don't ever include the sysprobe
+#   if not windows_arch_i386? and ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?
+#     include_sysprobe = "true"
+#     additional_sign_files_list << "#{Omnibus::Config.source_dir()}\\datadog-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\system-probe.exe"
+#   end
   additional_sign_files additional_sign_files_list
   parameters({
     'InstallDir' => install_dir,
