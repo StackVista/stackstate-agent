@@ -3,8 +3,9 @@
 ## Next release (???)
 
 **Improvements**
-- Upgraded process-agent version from 4.0.7 to 4.0.8 which includes:
+- Upgraded process-agent version from 4.0.7 to 4.0.9 which includes:
   - Reduce unimportant warning logs [STAC-17982](https://stackstate.atlassian.net/browse/STAC-17982)
+  - Fix cgroup metrics collection for containers [STAC-18119](https://stackstate.atlassian.net/browse/STAC-18119)
 
 ## 2.18.0 (2022-10-07)
 **Features**
