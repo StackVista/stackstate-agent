@@ -41,7 +41,7 @@ fi
 source $CONDA_BASE/etc/profile.d/conda.sh
 conda env list | grep 'molecule' &> /dev/null
 if [ $? != 0 ]; then
-   conda create -n molecule python=3.6.12 -y || true
+   conda create -n molecule python=3.9.7 -y || true
 fi
 
 set -e

@@ -10,6 +10,7 @@
       when: hostvars['localhost']['block_ec2_creation'] is not defined
 
     # Default tasks from this script
+    - include_tasks: ../../../_shared/install-and-update/increase-entropy.yml
     - include_tasks: ./prepare.tasks.prepare.receiver.yml
     - include_tasks: ../../../_shared/copy/copy-docker-log-backup-script.yml
 

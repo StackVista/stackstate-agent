@@ -80,6 +80,9 @@ def apply_branding(ctx):
     do_go_rename(ctx,
                  '"\\"unable to load Datadog config file: %s\\" -> \\"unable to load StackState config file: %s\\""',
                  "./cmd/agent/common")
+    do_go_rename(ctx,
+                 '"\\"unable to load Datadog config file: %w\\" -> \\"unable to load StackState config file: %w\\""',
+                 "./cmd/agent/common")
 
     # Hardcoded checks and metrics
     do_sed_rename(ctx, sts_lower_replace, "./pkg/aggregator/aggregator.go")

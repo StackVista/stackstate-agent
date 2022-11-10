@@ -6,7 +6,6 @@ testinfra_hosts = AnsibleRunner(os.environ['MOLECULE_INVENTORY_FILE']).get_hosts
 
 def test_stackstate_agent_is_installed(host, ansible_var):
     agent = host.package("stackstate-agent")
-    print(agent)
     assert agent.is_installed
     expected_major_version = ansible_var("major_version")
     assert agent.version.startswith(expected_major_version + ".")
@@ -14,14 +13,12 @@ def test_stackstate_agent_is_installed(host, ansible_var):
 
 def test_stackstate_agent_status_output_no_datadog(host):
     status_cmd = host.run("sudo -u stackstate-agent -- stackstate-agent status")
-    print(status_cmd)
     # assert that the status command ran successfully and that datadog is not contained in the output
     assert status_cmd.rc == 0
     assert "datadog" not in status_cmd.stdout
     assert "Datadog" not in status_cmd.stdout
 
     help_cmd = host.run("sudo -u stackstate-agent -- stackstate-agent --help")
-    print(help_cmd)
     # assert that the help command ran successfully and that datadog is not contained in the output
     assert help_cmd.rc == 0
     assert "datadog" not in help_cmd.stdout

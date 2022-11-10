@@ -137,6 +137,12 @@ def apply_branding(ctx):
     do_sed_rename(ctx, 's/"\\\\\\\\\\\\\\\\StackState\\\\\\\\\\\\\\\\StackVista"/"\\\\\\\\\\\\\\\\StackState\\\\\\\\\\\\\\\\StackState Agent"/g',
                   "./tools/windows/install-help/cal/stringtable.rc")
 
+    # DD 7.33 Upstream Merge changes
+    do_sed_rename(ctx, 's/"datadog.yaml"/"stackstate.yaml"/g',
+                       "./cmd/agent/common/import.go")
+    do_sed_rename(ctx, 's/"datadog.conf"/"stackstate.conf"/g',
+                       "./cmd/agent/common/import.go")
+
     # systray.go
     do_sed_rename(ctx, 's/"programdata\\\\\\\\\\\\\\\\datadog"/"programdata\\\\\\\\\\\\\\\\stackstate"/g',
                   "./cmd/systray/systray.go")
@@ -352,8 +358,6 @@ def apply_branding(ctx):
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/writer/stats_test.go")
     do_sed_rename(ctx, datadog_metrics_replace, "./pkg/trace/info/stats.go")
     # do_sed_rename(ctx, datadog_metrics_replace, "./pkg/process/statsd/statsd.go")
-    do_sed_rename(ctx, datadog_metrics_replace, "./vendor/github.com/DataDog/datadog-go/statsd/statsd.go")
-    do_sed_rename(ctx, datadog_metrics_replace, "./vendor/github.com/DataDog/datadog-go/statsd/telemetry.go")
     do_sed_rename(ctx, 's/"Datadog Trace Agent\/%s\/%s"/"Stackstate Trace Agent-%s-%s"/g',
                   "./pkg/trace/writer/sender.go")
 
@@ -362,10 +366,12 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"/var/log/datadog/agent.log\\" -> \\"/var/log/stackstate-agent/agent.log\\""', "./cmd/agent/common")
     do_go_rename(ctx, '"\\"/var/log/datadog/cluster-agent.log\\" -> \\"/var/log/stackstate-agent/cluster-agent.log\\""', "./cmd/agent/common")
     do_go_rename(ctx, '"\\"datadog.yaml\\" -> \\"stackstate.yaml\\""', "./cmd/agent")
+    do_go_rename(ctx, '"\\"Datadog.yaml\\" -> \\"stackstate.yaml\\""', "./cmd/agent")
     do_go_rename(ctx, '"\\"datadog.yaml\\" -> \\"stackstate.yaml\\""', "./pkg/config")
     do_go_rename(ctx, '"\\"datadog.conf\\" -> \\"stackstate.conf\\""', "./cmd/agent")
     do_go_rename(ctx, '"\\"path to directory containing datadog.yaml\\" -> \\"path to directory containing stackstate.yaml\\""', "./cmd")
     do_go_rename(ctx, '"\\"unable to load Datadog config file: %s\\" -> \\"unable to load StackState config file: %s\\""', "./cmd/agent/common")
+    do_go_rename(ctx, '"\\"unable to load Datadog config file: %w\\" -> \\"unable to load StackState config file: %w\\""', "./cmd/agent/common")
     do_go_rename(ctx, '"\\"Starting Datadog Agent v%v\\" -> \\"Starting StackState Agent v%v\\""', "./cmd/agent/app")
 
     # Dist config templates
