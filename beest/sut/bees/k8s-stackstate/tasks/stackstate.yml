@@ -53,8 +53,11 @@
           stackstate_version: "{{ stackstate_helm_search_yaml[0].version }}"
           stackstate_helm_chart_repo: stackstate/stackstate
 
-
     - name: Deploy stackstate chart '{{ stackstate_version }}' from '{{ stackstate_helm_chart_repo }}'
+      # We ignore errors as some pods in the StackState deployment might fail but does necessarily prevent us
+      # from still testing what we want to achieve and see. If there is truly something we need then the actual
+      # acceptance test will fail or when we wait for the StackState API after this step will fail and stop the process.
+      ignore_errors: yes
       kubernetes.core.helm:
         context: "{{ kubecontext }}"
         chart_ref: "{{ stackstate_helm_chart_repo }}"
