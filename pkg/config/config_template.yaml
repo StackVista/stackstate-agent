@@ -924,6 +924,7 @@ apm_config:
   ## Set to true to enable the APM Agent.
   # [STS]
   enabled: true
+  apm_sts_url:
   ## @param env - string - optional - default: none
   ## @env DD_APM_CONFIG_ENV - string - optional - default: none
   ## The environment tag that Traces should be tagged with.
@@ -1135,6 +1136,7 @@ process_config:
   #
   # [STS] default
   enabled: "true"
+  process_sts_url:
   # /[STS] default
 
   ## @param expvar_port - string - optional - default: 6062
