@@ -684,14 +684,18 @@ pre_release_cluster_agent_image:
   - *md_only_rule
   - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
     when: always
+    allow_failure: false
   - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
     when: always
+    allow_failure: false
   - if: $CI_MERGE_REQUEST_IID
     when: manual
+    allow_failure: true
   - if: $CI_OPEN_MERGE_REQUESTS
     when: never
   - if: $CI_COMMIT_BRANCH
     when: manual
+    allow_failure: true
 
 # Core Molecule Structure for all the molecule steps
 .molecule: &molecule
@@ -1401,6 +1405,7 @@ beest_agent_upgrade_create:
   <<: *beest
   <<: *beest_create_with_stackstate
   <<: *beest_agent_upgrade_variables
+  allow_failure: true
   rules:
     - *beest_agent_upgrade_ignore_rule
     - *v2_merge_train_always
