@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	coreV1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/version"
 	"testing"
 )
 
@@ -24,7 +25,9 @@ var hostPath coreV1.HostPathVolumeSource
 func NewTestCommonClusterCorrelator(client apiserver.APICollectorClient) ClusterTopologyCorrelator {
 	instance := topology.Instance{Type: "kubernetes", URL: "test-cluster-name"}
 
-	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, true)
+	k8sVersion := version.Info{Major: "1", Minor: "21"}
+
+	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, true, &k8sVersion)
 	return NewClusterTopologyCorrelator(clusterTopologyCommon)
 }
 

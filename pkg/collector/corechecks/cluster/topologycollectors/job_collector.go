@@ -16,7 +16,7 @@ type JobCollector struct {
 	ClusterTopologyCollector
 }
 
-// NewJobCollector
+// NewJobCollector creates a new Job collector
 func NewJobCollector(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &JobCollector{
 		ComponentChan:            componentChannel,

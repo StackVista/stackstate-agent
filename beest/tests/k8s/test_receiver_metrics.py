@@ -119,7 +119,7 @@ def test_agent_kubernetes_state_metrics(cliv1):
 
 def test_agent_kubelet_metrics(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics")
+        json_data = cliv1.topic_api("sts_multi_metrics", limit=3000)
 
         def contains_key():
             for message in json_data["messages"]:
