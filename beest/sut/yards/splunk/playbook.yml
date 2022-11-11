@@ -48,3 +48,4 @@
   roles:
     - role: "{{ bees_path }}/ec2-agent/v2"
       when: ("ec2-agent" in only) or only | length == 0
+
