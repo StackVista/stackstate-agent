@@ -1,0 +1,4 @@
+---
+- name: Install aws-ebs-csi-driver addon
+  command: aws eks create-addon --cluster-name "{{ cluster_name }}-cluster" --addon-name aws-ebs-csi-driver
+  register: sts_event_rule

@@ -16,6 +16,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/version"
 	"strconv"
 	"sync"
 	"testing"
@@ -178,7 +179,8 @@ func testRunClusterCollectors(t *testing.T, sourceProperties bool) {
 	errChannel := make(chan error)
 	waitGroupChannel := make(chan bool)
 
-	clusterTopologyCommon := collectors.NewClusterTopologyCommon(instance, nil, sourceProperties)
+	clusterTopologyCommon := collectors.NewClusterTopologyCommon(instance, nil, sourceProperties,
+		&version.Info{Major: "1", Minor: "21"})
 	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
 
 	clusterCollectors := []collectors.ClusterTopologyCollector{
