@@ -103,26 +103,9 @@ before_script:
   - *configure_debian_env_script
   - *retrieve_linux_go_deps_script
 
-# This ensures that triggers can achieve success status if manual jobs are not executed.
-acceptance_create_infra_opt_skip:
-  stage: acceptance_create_infra
-  needs:
-    - beest_keeper_build_latest
-    - runner_centos7
-    - runner_debian
-  before_script: []
-  script:
-    - echo "I will succeed"
-  rules:
-    - when: on_success
-  retry:
-    max: 2
-
 deps_deb:
   stage: build_dependencies
   interruptible: true
-  needs:
-    - acceptance_create_infra_opt_skip
   cache:
     key: "deps-deb-V3-$CI_COMMIT_REF_SLUG"
     paths:
@@ -154,8 +137,6 @@ deps_rpm:
   stage: build_dependencies
   interruptible: true
   image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220505
-  needs:
-    - acceptance_create_infra_opt_skip
   cache:
     key: "deps-rpm-V3-$CI_COMMIT_REF_SLUG"
     paths:
@@ -189,8 +170,6 @@ deps_win:
   interruptible: true
   before_script:
     - *configure_windows_ps1_env_script
-  needs:
-    - acceptance_create_infra_opt_skip
   cache:
     key: "deps-win-V3-$CI_COMMIT_REF_SLUG"
     paths:
