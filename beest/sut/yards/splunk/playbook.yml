@@ -4,6 +4,7 @@
   gather_facts: false
   roles:
     - role: "{{ bees_path }}/k8s-stackstate"
+      when: ("stackstate" in only) or only | length == 0
       vars:
         sts_ingress: KOPS
 
@@ -46,4 +47,4 @@
   tags: ec2-agent-v2
   roles:
     - role: "{{ bees_path }}/ec2-agent/v2"
-      when: ("ec2-agent-v2" in only) or only | length == 0
+      when: ("ec2-agent" in only) or only | length == 0

@@ -817,6 +817,7 @@ pre_release_cluster_agent_image:
   # Prevent another job from destroying the resources this branch is busy with, Terraform lock will prevent this but for incase
   resource_group: "V3-3-3-$CI_COMMIT_REF_NAME-$BEEST_SCENARIO"
   script:
+    - beest cleanup $BEEST_SCENARIO --only stackstate
     - beest destroy $BEEST_SCENARIO -y
   retry:
     max: 2
