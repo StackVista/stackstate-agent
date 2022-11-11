@@ -785,6 +785,7 @@ pre_release_cluster_agent_image:
   stage: acceptance_create_infra
   script:
     - beest create $BEEST_SCENARIO -y
+    - beest cleanup $BEEST_SCENARIO --only stackstate
     - beest prepare $BEEST_SCENARIO --only stackstate
   # Prevent terraform from breaking when this job is cancelled mid way
   interruptible: false

@@ -2,6 +2,7 @@
 - name: Kubernetes Stackstate
   hosts: local
   gather_facts: false
+  tags: stackstate
   roles:
     - role: "{{ bees_path }}/k8s-stackstate"
       when: ("stackstate" in only) or only | length == 0
@@ -12,6 +13,7 @@
 - name: VM Agent V2 on Ubuntu
   hosts: agent_ubuntu
   gather_facts: true
+  tags: ec2-agent
   roles:
     - role: "{{ bees_path }}/ec2-agent/v2"
       when: ("ec2-agent" in only) or only | length == 0
@@ -20,6 +22,7 @@
 - name: VM Agent V2 on Redhat
   hosts: agent_redhat
   gather_facts: true
+  tags: ec2-agent
   roles:
     - role: "{{ bees_path }}/ec2-agent/v2"
       when: ("ec2-agent" in only) or only | length == 0
