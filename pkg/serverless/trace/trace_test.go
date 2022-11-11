@@ -19,6 +19,7 @@ import (
 )
 
 func TestStartEnabledFalse(t *testing.T) {
+	t.Skip("Skipping serverless trace agent test to avoid race condition in tests")
 	var agent = &ServerlessTraceAgent{}
 	agent.Start(false, nil)
 	defer agent.Stop()
@@ -36,6 +37,7 @@ func (l *LoadConfigMocked) Load() (*config.AgentConfig, error) {
 }
 
 func TestStartEnabledTrueInvalidConfig(t *testing.T) {
+	t.Skip("Skipping serverless trace agent test to avoid race condition in tests")
 	var agent = &ServerlessTraceAgent{}
 	agent.Start(true, &LoadConfigMocked{})
 	defer agent.Stop()
@@ -45,6 +47,7 @@ func TestStartEnabledTrueInvalidConfig(t *testing.T) {
 }
 
 func TestStartEnabledTrueValidConfigUnvalidPath(t *testing.T) {
+	t.Skip("Skipping serverless trace agent test to avoid race condition in tests")
 	var agent = &ServerlessTraceAgent{}
 
 	os.Setenv("DD_API_KEY", "x")
@@ -57,6 +60,7 @@ func TestStartEnabledTrueValidConfigUnvalidPath(t *testing.T) {
 }
 
 func TestStartEnabledTrueValidConfigValidPath(t *testing.T) {
+	t.Skip("Skipping serverless trace agent test to avoid race condition in tests")
 	var agent = &ServerlessTraceAgent{}
 
 	agent.Start(true, &LoadConfig{Path: "./testdata/valid.yml"})
@@ -68,6 +72,7 @@ func TestStartEnabledTrueValidConfigValidPath(t *testing.T) {
 }
 
 func TestLoadConfigShouldBeFast(t *testing.T) {
+	t.Skip("Skipping serverless trace agent test to avoid race condition in tests")
 	timeout := time.After(1 * time.Second)
 	done := make(chan bool)
 	go func() {
