@@ -277,20 +277,21 @@ func executeCorrelation(
 	containerCorrChannel := make(chan *ContainerCorrelation)
 	volumeCorrChannel := make(chan *VolumeCorrelation)
 	correlator := NewService2PodCorrelator(
-		componentChannel, relationChannel,
+		relationChannel,
 		podCorrChannel,
 		serviceCorrChannel,
-		NewTestCommonClusterCorrelator(clusterAPIClient),
+		NewTestCommonClusterCorrelator(clusterAPIClient, componentChannel, componentIdChannel),
 	)
+	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, componentIdChannel, false)
 	podCollector := NewPodCollector(
 		relationChannel,
 		containerCorrChannel, volumeCorrChannel,
 		podCorrChannel,
-		NewTestCommonClusterCollector(clusterAPIClient, componentChannel, componentIdChannel, false),
+		commonClusterCollector,
 	)
 	svcCollector := NewServiceCollector(
-		componentChannel, relationChannel, serviceCorrChannel,
-		NewTestCommonClusterCollector(clusterAPIClient, componentChannel, componentIdChannel, false),
+		relationChannel, serviceCorrChannel,
+		commonClusterCollector,
 		endpointsEnabled)
 
 	collectorsFinishChan := make(chan bool)

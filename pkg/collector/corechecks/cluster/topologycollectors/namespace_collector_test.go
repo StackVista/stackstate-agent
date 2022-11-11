@@ -32,7 +32,7 @@ func TestNamespaceCollector(t *testing.T) {
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
 
-		nsc := NewNamespaceCollector(componentChannel, NewTestCommonClusterCollector(MockNamespaceAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
+		nsc := NewNamespaceCollector(NewTestCommonClusterCollector(MockNamespaceAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "Namespace Collector"
 		RunCollectorTest(t, nsc, expectedCollectorName)
 

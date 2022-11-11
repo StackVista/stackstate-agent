@@ -10,7 +10,6 @@ import (
 
 // Service2PodCorrelator
 type Service2PodCorrelator struct {
-	ComponentChan       chan<- *topology.Component
 	RelationChan        chan<- *topology.Relation
 	PodCorrChan         <-chan *PodEndpointCorrelation
 	EndpointCorrChannel <-chan *ServiceEndpointCorrelation
@@ -33,14 +32,12 @@ type ServiceEndpointCorrelation struct {
 // NewService2PodCorrelator creates correlator creates relation from service to pod
 // in case where service points to kubernetes host and pod is exposed within the host's network
 func NewService2PodCorrelator(
-	componentChannel chan<- *topology.Component,
 	relationChannel chan<- *topology.Relation,
 	podCorrChannel chan *PodEndpointCorrelation,
 	serviceCorrChannel chan *ServiceEndpointCorrelation,
 	clusterTopologyCorrelator ClusterTopologyCorrelator,
 ) ClusterTopologyCorrelator {
 	return &Service2PodCorrelator{
-		ComponentChan:             componentChannel,
 		RelationChan:              relationChannel,
 		PodCorrChan:               podCorrChannel,
 		EndpointCorrChannel:       serviceCorrChannel,

@@ -11,16 +11,14 @@ import (
 
 // IngressCollector implements the ClusterTopologyCollector interface.
 type IngressCollector struct {
-	ComponentChan chan<- *topology.Component
-	RelationChan  chan<- *topology.Relation
+	RelationChan chan<- *topology.Relation
 	ClusterTopologyCollector
 }
 
 // NewIngressCollector
-func NewIngressCollector(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation,
+func NewIngressCollector(relationChannel chan<- *topology.Relation,
 	clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &IngressCollector{
-		ComponentChan:            componentChannel,
 		RelationChan:             relationChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
@@ -40,7 +38,7 @@ func (ic *IngressCollector) CollectorFunction() error {
 
 	for _, in := range ingresses {
 		component := ic.ingressToStackStateComponent(in)
-		ic.ComponentChan <- component
+		ic.SubmitComponent(component)
 		// submit relation to service name for correlation
 		if in.Spec.Backend != nil && in.Spec.Backend.ServiceName != "" {
 			serviceExternalID := ic.buildServiceExternalID(in.Namespace, in.Spec.Backend.ServiceName)
@@ -66,14 +64,14 @@ func (ic *IngressCollector) CollectorFunction() error {
 			if ingressPoints.Hostname != "" {
 				endpoint := ic.endpointStackStateComponentFromIngress(in, ingressPoints.Hostname)
 
-				ic.ComponentChan <- endpoint
+				ic.SubmitComponent(endpoint)
 				ic.RelationChan <- ic.endpointToIngressStackStateRelation(endpoint.ExternalID, component.ExternalID)
 			}
 
 			if ingressPoints.IP != "" {
 				endpoint := ic.endpointStackStateComponentFromIngress(in, ingressPoints.IP)
 
-				ic.ComponentChan <- endpoint
+				ic.SubmitComponent(endpoint)
 				ic.RelationChan <- ic.endpointToIngressStackStateRelation(endpoint.ExternalID, component.ExternalID)
 			}
 		}

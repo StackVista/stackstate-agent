@@ -22,10 +22,8 @@ func NewTestCommonClusterCollector(
 	sourcePropertiesEnabled bool) ClusterTopologyCollector {
 	instance := topology.Instance{Type: "kubernetes", URL: "test-cluster-name"}
 
-	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, sourcePropertiesEnabled)
+	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, sourcePropertiesEnabled, componentChan, componentIdChan)
 	return NewClusterTopologyCollector(
-		componentChan,
-		componentIdChan,
 		clusterTopologyCommon,
 	)
 }

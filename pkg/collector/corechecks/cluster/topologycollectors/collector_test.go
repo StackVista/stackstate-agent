@@ -29,8 +29,8 @@ func testCollectorInterface(t *testing.T, sourcePropertiesEnabled bool) {
 	defer close(componentChannel)
 	defer close(componentIdChannel)
 	instance := topology.Instance{Type: "kubernetes", URL: "Test-Cluster-Name"}
-	clusterTopologyCommon := NewClusterTopologyCommon(instance, nil, sourcePropertiesEnabled)
-	testCollector := NewTestCollector(NewClusterTopologyCollector(componentChannel, componentIdChannel, clusterTopologyCommon))
+	clusterTopologyCommon := NewClusterTopologyCommon(instance, nil, sourcePropertiesEnabled, componentChannel, componentIdChannel)
+	testCollector := NewTestCollector(NewClusterTopologyCollector(clusterTopologyCommon))
 
 	actualClusterExternalID := testCollector.buildClusterExternalID()
 	assert.Equal(t, "urn:cluster:/kubernetes:Test-Cluster-Name", actualClusterExternalID)

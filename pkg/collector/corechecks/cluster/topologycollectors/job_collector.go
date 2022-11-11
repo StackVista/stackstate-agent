@@ -11,15 +11,13 @@ import (
 
 // JobCollector implements the ClusterTopologyCollector interface.
 type JobCollector struct {
-	ComponentChan chan<- *topology.Component
-	RelationChan  chan<- *topology.Relation
+	RelationChan chan<- *topology.Relation
 	ClusterTopologyCollector
 }
 
 // NewJobCollector
-func NewJobCollector(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
+func NewJobCollector(relationChannel chan<- *topology.Relation, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &JobCollector{
-		ComponentChan:            componentChannel,
 		RelationChan:             relationChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
@@ -39,7 +37,7 @@ func (jc *JobCollector) CollectorFunction() error {
 
 	for _, job := range jobs {
 		component := jc.jobToStackStateComponent(job)
-		jc.ComponentChan <- component
+		jc.SubmitComponent(component)
 
 		ownedByCron := false
 		// Create relation to the cron job

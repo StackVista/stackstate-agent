@@ -34,7 +34,7 @@ func TestReplicaSetCollector(t *testing.T) {
 	replicas = 1
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		ic := NewReplicaSetCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockReplicaSetAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
+		ic := NewReplicaSetCollector(relationChannel, NewTestCommonClusterCollector(MockReplicaSetAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "ReplicaSet Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 

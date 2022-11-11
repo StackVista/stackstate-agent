@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -13,17 +14,15 @@ import (
 
 // ConfigMapCollector implements the ClusterTopologyCollector interface.
 type ConfigMapCollector struct {
-	ComponentChan chan<- *topology.Component
 	ClusterTopologyCollector
 	maxDataSize int
 }
 
 // NewConfigMapCollector
-func NewConfigMapCollector(componentChannel chan<- *topology.Component, clusterTopologyCollector ClusterTopologyCollector, maxDataSize int) ClusterTopologyCollector {
+func NewConfigMapCollector(clusterTopologyCollector ClusterTopologyCollector, maxDataSize int) ClusterTopologyCollector {
 	log.Infof("Initialized ConfigMap collector with %d size limit for configmap data", maxDataSize)
 
 	return &ConfigMapCollector{
-		ComponentChan:            componentChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 		maxDataSize:              maxDataSize,
 	}
@@ -42,7 +41,7 @@ func (cmc *ConfigMapCollector) CollectorFunction() error {
 	}
 
 	for _, cm := range configMaps {
-		cmc.ComponentChan <- cmc.configMapToStackStateComponent(cm)
+		cmc.SubmitComponent(cmc.configMapToStackStateComponent(cm))
 	}
 
 	return nil

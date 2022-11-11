@@ -37,7 +37,6 @@ type VolumeCorrelation struct {
 
 // VolumeCorrelator is the correlation function which relates Pods and their Containers with the Volumes in use.
 type VolumeCorrelator struct {
-	ComponentChan  chan<- *topology.Component
 	RelationChan   chan<- *topology.Relation
 	VolumeCorrChan <-chan *VolumeCorrelation
 	ClusterTopologyCorrelator
@@ -46,14 +45,12 @@ type VolumeCorrelator struct {
 
 // NewVolumeCorrelator instantiates the VolumeCorrelator
 func NewVolumeCorrelator(
-	componentChannel chan<- *topology.Component,
 	relationChannel chan<- *topology.Relation,
 	volumeCorrChannel chan *VolumeCorrelation,
 	clusterTopologyCorrelator ClusterTopologyCorrelator,
 	claimsEnabled bool,
 ) ClusterTopologyCorrelator {
 	return &VolumeCorrelator{
-		ComponentChan:             componentChannel,
 		RelationChan:              relationChannel,
 		VolumeCorrChan:            volumeCorrChannel,
 		ClusterTopologyCorrelator: clusterTopologyCorrelator,
@@ -181,7 +178,7 @@ func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, 
 		}
 
 		for _, c := range toCreate.Components {
-			vc.ComponentChan <- c
+			vc.SubmitComponent(c)
 		}
 
 		for _, r := range toCreate.Relations {

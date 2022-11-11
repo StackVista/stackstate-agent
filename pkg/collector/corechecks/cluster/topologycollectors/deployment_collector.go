@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -10,15 +11,13 @@ import (
 
 // DeploymentCollector implements the ClusterTopologyCollector interface.
 type DeploymentCollector struct {
-	ComponentChan chan<- *topology.Component
-	RelationChan  chan<- *topology.Relation
+	RelationChan chan<- *topology.Relation
 	ClusterTopologyCollector
 }
 
 // NewDeploymentCollector
-func NewDeploymentCollector(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
+func NewDeploymentCollector(relationChannel chan<- *topology.Relation, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &DeploymentCollector{
-		ComponentChan:            componentChannel,
 		RelationChan:             relationChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
@@ -38,7 +37,7 @@ func (dmc *DeploymentCollector) CollectorFunction() error {
 
 	for _, dep := range deployments {
 		component := dmc.deploymentToStackStateComponent(dep)
-		dmc.ComponentChan <- component
+		dmc.SubmitComponent(component)
 
 		dmc.RelationChan <- dmc.namespaceToDeploymentStackStateRelation(dmc.buildNamespaceExternalID(dep.Namespace), component.ExternalID)
 	}

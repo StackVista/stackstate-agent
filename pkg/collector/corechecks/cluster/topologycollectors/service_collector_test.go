@@ -9,7 +9,6 @@ package topologycollectors
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"testing"
 	"time"
 
@@ -38,7 +37,7 @@ func TestServiceCollector(t *testing.T) {
 					collectorChannel := make(chan bool)
 
 					serviceCollector := NewServiceCollector(
-						componentChannel, relationChannel, svcCorrelationChannel,
+						relationChannel, svcCorrelationChannel,
 						NewTestCommonClusterCollector(MockServiceAPICollectorClient{testCaseNumber: testCaseNo + 1}, componentChannel, componentIdChannel, sourcePropertiesEnabled),
 						endpointsEnabled,
 					)
@@ -63,13 +62,8 @@ func TestServiceCollector(t *testing.T) {
 							actualComponents = append(actualComponents, component)
 						case relation := <-relationChannel:
 							actualRelations = append(actualRelations, relation)
-						case <-componentIdChannel:
-							//ignore
-							log.Info("id")
-						case <-svcCorrelationChannel:
-							//ignore
-							log.Info("svc")
-
+						case <-componentIdChannel: // ignore
+						case <-svcCorrelationChannel: // ignore
 						case <-collectorChannel:
 							break L
 						}

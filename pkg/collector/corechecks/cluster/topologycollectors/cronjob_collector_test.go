@@ -35,7 +35,7 @@ func TestCronJobCollector(t *testing.T) {
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		cjc := NewCronJobCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockCronJobAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
+		cjc := NewCronJobCollector(relationChannel, NewTestCommonClusterCollector(MockCronJobAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "CronJob Collector"
 		RunCollectorTest(t, cjc, expectedCollectorName)
 

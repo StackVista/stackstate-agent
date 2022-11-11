@@ -21,12 +21,14 @@ func TestContainerCollector(t *testing.T) {
 	defer close(componentChannel)
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
+	componentIdChannel := make(chan string)
+	defer close(componentIdChannel)
 
 	nodeIdentifierCorrelationChannel := make(chan *NodeIdentifierCorrelation)
 	containerCorrelationChannel := make(chan *ContainerCorrelation)
 
-	cc := NewContainerCorrelator(componentChannel, relationChannel, nodeIdentifierCorrelationChannel,
-		containerCorrelationChannel, NewTestCommonClusterCorrelator(MockContainerAPICollectorClient{}))
+	cc := NewContainerCorrelator(relationChannel, nodeIdentifierCorrelationChannel,
+		containerCorrelationChannel, NewTestCommonClusterCorrelator(MockContainerAPICollectorClient{}, componentChannel, componentIdChannel))
 	expectedCollectorName := "Container Correlator"
 
 	populateData(nodeIdentifierCorrelationChannel, containerCorrelationChannel)

@@ -34,7 +34,7 @@ func TestIngressCollector(t *testing.T) {
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		ic := NewIngressCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockIngressAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
+		ic := NewIngressCollector(relationChannel, NewTestCommonClusterCollector(MockIngressAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "Ingress Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 

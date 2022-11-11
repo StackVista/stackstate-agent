@@ -32,7 +32,7 @@ func TestSecretCollector(t *testing.T) {
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		cmc := NewSecretCollector(componentChannel, NewTestCommonClusterCollector(MockSecretAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
+		cmc := NewSecretCollector(NewTestCommonClusterCollector(MockSecretAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "Secret Collector"
 		RunCollectorTest(t, cmc, expectedCollectorName)
 

@@ -279,10 +279,9 @@ func executeVolumeCorrelation(
 	containerCorrChannel := make(chan *ContainerCorrelation)
 	volumeCorrChannel := make(chan *VolumeCorrelation)
 	volumeCorrelator := NewVolumeCorrelator(
-		componentChannel,
 		relationChannel,
 		volumeCorrChannel,
-		NewTestCommonClusterCorrelator(clusterAPIClient),
+		NewTestCommonClusterCorrelator(clusterAPIClient, componentChannel, componentIdChannel),
 		claimsEnabled,
 	)
 	podCollector := NewPodCollector(

@@ -11,20 +11,21 @@ import (
 
 // PersistentVolumeCollector implements the ClusterTopologyCollector interface.
 type PersistentVolumeCollector struct {
-	pvsMappers    []PersistentVolumeSourceMapper
-	ComponentChan chan<- *topology.Component
-	RelationChan  chan<- *topology.Relation
+	pvsMappers   []PersistentVolumeSourceMapper
+	RelationChan chan<- *topology.Relation
 	ClusterTopologyCollector
 }
 
 // NewPersistentVolumeCollector
-func NewPersistentVolumeCollector(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation, clusterTopologyCollector ClusterTopologyCollector, csiPVMapperEnabled bool) ClusterTopologyCollector {
+func NewPersistentVolumeCollector(
+	relationChannel chan<- *topology.Relation,
+	clusterTopologyCollector ClusterTopologyCollector,
+	csiPVMapperEnabled bool) ClusterTopologyCollector {
 	pvMappers := allPersistentVolumeSourceMappers
 	if csiPVMapperEnabled {
 		pvMappers = append(pvMappers, mapCSIPersistentVolume)
 	}
 	pvc := &PersistentVolumeCollector{
-		ComponentChan:            componentChannel,
 		RelationChan:             relationChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 		pvsMappers:               pvMappers,
@@ -46,7 +47,7 @@ func (pvc *PersistentVolumeCollector) CollectorFunction() error {
 
 	for _, pv := range persistentVolumes {
 		component := pvc.persistentVolumeToStackStateComponent(pv)
-		pvc.ComponentChan <- component
+		pvc.SubmitComponent(component)
 
 		volumeSource, err := pvc.persistentVolumeSourceToStackStateComponent(pv)
 		if err != nil {
@@ -54,7 +55,7 @@ func (pvc *PersistentVolumeCollector) CollectorFunction() error {
 		}
 
 		if volumeSource != nil {
-			pvc.ComponentChan <- volumeSource
+			pvc.SubmitComponent(volumeSource)
 
 			pvc.RelationChan <- pvc.persistentVolumeToSourceStackStateRelation(component.ExternalID, volumeSource.ExternalID)
 		}

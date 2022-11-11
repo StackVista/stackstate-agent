@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -44,6 +45,7 @@ type ClusterTopologyCommon interface {
 	buildVolumeExternalID(namespace, volumeName string) string
 	buildPersistentVolumeExternalID(persistentVolumeName string) string
 	buildEndpointExternalID(endpointID string) string
+	SubmitComponent(component *topology.Component)
 }
 
 type clusterTopologyCommon struct {
@@ -51,16 +53,31 @@ type clusterTopologyCommon struct {
 	APICollectorClient      apiserver.APICollectorClient
 	urn                     urn.Builder
 	sourcePropertiesEnabled bool
+	ComponentChan           chan<- *topology.Component
+	ComponentIdChan         chan<- string
 }
 
 // NewClusterTopologyCommon creates a clusterTopologyCommon
-func NewClusterTopologyCommon(instance topology.Instance, ac apiserver.APICollectorClient, spEnabled bool) ClusterTopologyCommon {
+func NewClusterTopologyCommon(
+	instance topology.Instance,
+	ac apiserver.APICollectorClient,
+	spEnabled bool,
+	componentChan chan<- *topology.Component,
+	componentIdChan chan<- string,
+) ClusterTopologyCommon {
 	return &clusterTopologyCommon{
 		Instance:                instance,
 		APICollectorClient:      ac,
 		urn:                     urn.NewURNBuilder(urn.ClusterTypeFromString(instance.Type), instance.URL),
 		sourcePropertiesEnabled: spEnabled,
+		ComponentChan:           componentChan,
+		ComponentIdChan:         componentIdChan,
 	}
+}
+
+func (c *clusterTopologyCommon) SubmitComponent(component *topology.Component) {
+	c.ComponentChan <- component
+	c.ComponentIdChan <- component.ExternalID
 }
 
 // GetName

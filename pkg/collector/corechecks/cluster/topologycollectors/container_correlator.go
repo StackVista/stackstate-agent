@@ -39,7 +39,6 @@ type ContainerCorrelation struct {
 
 // ContainerCorrelator implements the ClusterTopologyCollector interface.
 type ContainerCorrelator struct {
-	ComponentChan          chan<- *topology.Component
 	RelationChan           chan<- *topology.Relation
 	NodeIdentifierCorrChan <-chan *NodeIdentifierCorrelation
 	ContainerCorrChan      <-chan *ContainerCorrelation
@@ -47,11 +46,10 @@ type ContainerCorrelator struct {
 }
 
 // NewContainerCorrelator
-func NewContainerCorrelator(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation,
+func NewContainerCorrelator(relationChannel chan<- *topology.Relation,
 	nodeIdentifierCorrChan <-chan *NodeIdentifierCorrelation, containerCorrChannel <-chan *ContainerCorrelation,
 	clusterTopologyCorrelator ClusterTopologyCorrelator) ClusterTopologyCorrelator {
 	return &ContainerCorrelator{
-		ComponentChan:             componentChannel,
 		RelationChan:              relationChannel,
 		NodeIdentifierCorrChan:    nodeIdentifierCorrChan,
 		ContainerCorrChan:         containerCorrChannel,
@@ -96,7 +94,7 @@ func (cc *ContainerCorrelator) CorrelateFunction() error {
 			if nodeCorrelation, ok := nodeMap[pod.NodeName]; ok {
 				// submit the StackState component for publishing to StackState
 				containerComponent := cc.containerToStackStateComponent(nodeCorrelation.NodeIdentifier, pod, container, containerPort)
-				cc.ComponentChan <- containerComponent
+				cc.SubmitComponent(containerComponent)
 				// create the relation between the container and pod
 				cc.RelationChan <- cc.podToContainerStackStateRelation(pod.ExternalID, containerComponent.ExternalID)
 				// create the relation between the container and node

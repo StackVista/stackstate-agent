@@ -38,7 +38,7 @@ func TestJobCollector(t *testing.T) {
 	backoffLimit = int32(5)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		jc := NewJobCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockJobAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
+		jc := NewJobCollector(relationChannel, NewTestCommonClusterCollector(MockJobAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "Job Collector"
 		RunCollectorTest(t, jc, expectedCollectorName)
 

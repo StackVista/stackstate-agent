@@ -38,7 +38,6 @@ func TestConfigMapCollector(t *testing.T) {
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
 		cmc := NewConfigMapCollector(
-			componentChannel,
 			NewTestCommonClusterCollector(MockConfigMapAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled),
 			TestMaxDataSize,
 		)

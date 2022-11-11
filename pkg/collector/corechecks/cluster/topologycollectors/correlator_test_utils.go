@@ -21,10 +21,10 @@ var gcePersistentDisk coreV1.GCEPersistentDiskVolumeSource
 var awsElasticBlockStore coreV1.AWSElasticBlockStoreVolumeSource
 var hostPath coreV1.HostPathVolumeSource
 
-func NewTestCommonClusterCorrelator(client apiserver.APICollectorClient) ClusterTopologyCorrelator {
+func NewTestCommonClusterCorrelator(client apiserver.APICollectorClient, componentChannel chan *topology.Component, componentIdChannel chan string) ClusterTopologyCorrelator {
 	instance := topology.Instance{Type: "kubernetes", URL: "test-cluster-name"}
 
-	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, true)
+	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, true, componentChannel, componentIdChannel)
 	return NewClusterTopologyCorrelator(clusterTopologyCommon)
 }
 

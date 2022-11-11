@@ -147,8 +147,8 @@ func (t *TopologyCheck) Run() error {
 	errChannel := make(chan error)
 	waitGroupChannel := make(chan bool)
 
-	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, t.ac, t.instance.SourcePropertiesEnabled)
-	commonClusterCollector := collectors.NewClusterTopologyCollector(componentChannel, componentIdChannel, clusterTopologyCommon)
+	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, t.ac, t.instance.SourcePropertiesEnabled, componentChannel, componentIdChannel)
+	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
 	clusterCollectors := []collectors.ClusterTopologyCollector{
 		// Register Cluster Component Collector
 		collectors.NewClusterCollector(
@@ -170,8 +170,7 @@ func (t *TopologyCheck) Run() error {
 		),
 		// Register Service Component Collector
 		collectors.NewServiceCollector(
-			componentChannel,
-			relationChannel,
+			relationCorrelationChannel,
 			endpointCorrelationChannel,
 			commonClusterCollector,
 			t.instance.Resources.Endpoints,
@@ -181,8 +180,7 @@ func (t *TopologyCheck) Run() error {
 	if t.instance.Resources.Persistentvolumes {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewPersistentVolumeCollector(
-				componentChannel,
-				relationChannel,
+				relationCorrelationChannel,
 				commonClusterCollector,
 				t.instance.CSIPVMapperEnabled,
 			))
@@ -191,7 +189,6 @@ func (t *TopologyCheck) Run() error {
 	if t.instance.Resources.Namespaces {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewNamespaceCollector(
-				componentChannel,
 				commonClusterCollector,
 			))
 	}
@@ -199,7 +196,6 @@ func (t *TopologyCheck) Run() error {
 	if t.instance.Resources.ConfigMaps {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewConfigMapCollector(
-				componentChannel,
 				commonClusterCollector,
 				t.instance.ConfigMapMaxDataSize,
 			))
@@ -208,7 +204,6 @@ func (t *TopologyCheck) Run() error {
 	if t.instance.Resources.Secrets {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewSecretCollector(
-				componentChannel,
 				commonClusterCollector,
 			))
 	}
@@ -216,56 +211,49 @@ func (t *TopologyCheck) Run() error {
 	if t.instance.Resources.Daemonsets {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewDaemonSetCollector(
-				componentChannel,
-				relationChannel,
+				relationCorrelationChannel,
 				commonClusterCollector,
 			))
 	}
 	if t.instance.Resources.Deployments {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewDeploymentCollector(
-				componentChannel,
-				relationChannel,
+				relationCorrelationChannel,
 				commonClusterCollector,
 			))
 	}
 	if t.instance.Resources.Replicasets {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewReplicaSetCollector(
-				componentChannel,
-				relationChannel,
+				relationCorrelationChannel,
 				commonClusterCollector,
 			))
 	}
 	if t.instance.Resources.Statefulsets {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewStatefulSetCollector(
-				componentChannel,
-				relationChannel,
+				relationCorrelationChannel,
 				commonClusterCollector,
 			))
 	}
 	if t.instance.Resources.Ingresses {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewIngressCollector(
-				componentChannel,
-				relationChannel,
+				relationCorrelationChannel,
 				commonClusterCollector,
 			))
 	}
 	if t.instance.Resources.Jobs {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewJobCollector(
-				componentChannel,
-				relationChannel,
+				relationCorrelationChannel,
 				commonClusterCollector,
 			))
 	}
 	if t.instance.Resources.CronJobs {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewCronJobCollector(
-				componentChannel,
-				relationChannel,
+				relationCorrelationChannel,
 				commonClusterCollector,
 			))
 	}
@@ -274,27 +262,29 @@ func (t *TopologyCheck) Run() error {
 	clusterCorrelators := []collectors.ClusterTopologyCorrelator{
 		// Register Container -> Node Identifier Correlator
 		collectors.NewContainerCorrelator(
-			componentChannel,
-			relationChannel,
+			relationCorrelationChannel,
 			nodeIdentifierCorrelationChannel,
 			containerCorrelationChannel,
 			commonClusterCorrelator,
 		),
 		collectors.NewVolumeCorrelator(
-			componentChannel,
-			relationChannel,
+			relationCorrelationChannel,
 			volumeCorrelationChannel,
 			commonClusterCorrelator,
 			t.instance.Resources.Persistentvolumeclaims,
 		),
 		collectors.NewService2PodCorrelator(
-			componentChannel,
-			relationChannel,
+			relationCorrelationChannel,
 			podCorrelationChannel,
 			endpointCorrelationChannel,
 			commonClusterCorrelator,
 		),
-		collectors.NewRelationCorrelator(componentIdChannel, relationCorrelationChannel, relationChannel, commonClusterCorrelator),
+		collectors.NewRelationCorrelator(
+			componentIdChannel,
+			relationCorrelationChannel,
+			relationChannel,
+			commonClusterCorrelator,
+		),
 	}
 
 	// starts all the cluster collectors and correlators

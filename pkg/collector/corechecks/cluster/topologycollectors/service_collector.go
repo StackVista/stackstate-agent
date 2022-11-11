@@ -13,7 +13,6 @@ import (
 
 // ServiceCollector implements the ClusterTopologyCollector interface.
 type ServiceCollector struct {
-	ComponentChan    chan<- *topology.Component
 	RelationChan     chan<- *topology.Relation
 	EndpointCorrChan chan<- *ServiceEndpointCorrelation
 	ClusterTopologyCollector
@@ -29,14 +28,12 @@ type EndpointID struct {
 
 // NewServiceCollector
 func NewServiceCollector(
-	componentChannel chan<- *topology.Component,
 	relationChannel chan<- *topology.Relation,
 	endpointCorrChannel chan *ServiceEndpointCorrelation,
 	clusterTopologyCollector ClusterTopologyCollector,
 	endpointsEnabled bool,
 ) ClusterTopologyCollector {
 	return &ServiceCollector{
-		ComponentChan:            componentChannel,
 		RelationChan:             relationChannel,
 		EndpointCorrChan:         endpointCorrChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
@@ -109,13 +106,13 @@ func (sc *ServiceCollector) CollectorFunction() error {
 		serviceID := buildServiceID(service.Namespace, service.Name)
 		component := sc.serviceToStackStateComponent(service)
 
-		sc.ComponentChan <- component
+		sc.SubmitComponent(component)
 
 		// Check whether we have an ExternalName service, which will result in an extra component+relation
 		if service.Spec.Type == v1.ServiceTypeExternalName {
 			externalService := sc.serviceToExternalServiceComponent(service)
 
-			sc.ComponentChan <- externalService
+			sc.SubmitComponent(externalService)
 			sc.RelationChan <- sc.serviceToExternalServiceStackStateRelation(component.ExternalID, externalService.ExternalID)
 		}
 
