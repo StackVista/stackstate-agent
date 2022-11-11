@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -23,10 +24,13 @@ func TestCollectorInterface(t *testing.T) {
 }
 
 func testCollectorInterface(t *testing.T, sourcePropertiesEnabled bool) {
-
+	componentChannel := make(chan *topology.Component)
+	componentIdChannel := make(chan string)
+	defer close(componentChannel)
+	defer close(componentIdChannel)
 	instance := topology.Instance{Type: "kubernetes", URL: "Test-Cluster-Name"}
 	clusterTopologyCommon := NewClusterTopologyCommon(instance, nil, sourcePropertiesEnabled)
-	testCollector := NewTestCollector(NewClusterTopologyCollector(clusterTopologyCommon))
+	testCollector := NewTestCollector(NewClusterTopologyCollector(componentChannel, componentIdChannel, clusterTopologyCommon))
 
 	actualClusterExternalID := testCollector.buildClusterExternalID()
 	assert.Equal(t, "urn:cluster:/kubernetes:Test-Cluster-Name", actualClusterExternalID)

@@ -28,12 +28,14 @@ func TestCronJobCollector(t *testing.T) {
 	defer close(componentChannel)
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
+	componentIdChannel := make(chan string)
+	defer close(componentIdChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		cjc := NewCronJobCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockCronJobAPICollectorClient{}, sourcePropertiesEnabled))
+		cjc := NewCronJobCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockCronJobAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "CronJob Collector"
 		RunCollectorTest(t, cjc, expectedCollectorName)
 

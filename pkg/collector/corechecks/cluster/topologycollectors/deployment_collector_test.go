@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -25,12 +26,14 @@ func TestDeploymentCollector(t *testing.T) {
 	defer close(componentChannel)
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
+	componentIdChannel := make(chan string)
+	defer close(componentIdChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	replicas = int32(1)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		cmc := NewDeploymentCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockDeploymentAPICollectorClient{}, sourcePropertiesEnabled))
+		cmc := NewDeploymentCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockDeploymentAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "Deployment Collector"
 		RunCollectorTest(t, cmc, expectedCollectorName)
 

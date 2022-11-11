@@ -13,7 +13,6 @@ import (
 
 // PodCollector implements the ClusterTopologyCollector interface.
 type PodCollector struct {
-	ComponentChan     chan<- *topology.Component
 	RelationChan      chan<- *topology.Relation
 	ContainerCorrChan chan<- *ContainerCorrelation
 	VolumeCorrChan    chan<- *VolumeCorrelation
@@ -29,7 +28,6 @@ type ContainerPort struct {
 
 // NewPodCollector
 func NewPodCollector(
-	componentChannel chan<- *topology.Component,
 	relationChannel chan<- *topology.Relation,
 	containerCorrChannel chan<- *ContainerCorrelation,
 	volumeCorrChannel chan<- *VolumeCorrelation,
@@ -38,7 +36,6 @@ func NewPodCollector(
 ) ClusterTopologyCollector {
 
 	return &PodCollector{
-		ComponentChan:            componentChannel,
 		RelationChan:             relationChannel,
 		ContainerCorrChan:        containerCorrChannel,
 		VolumeCorrChan:           volumeCorrChannel,
@@ -71,7 +68,7 @@ func (pc *PodCollector) CollectorFunction() error {
 	for _, pod := range pods {
 		// creates and publishes StackState pod component with relations
 		component = pc.podToStackStateComponent(pod)
-		pc.ComponentChan <- component
+		pc.SubmitComponent(component)
 
 		// pod could not be scheduled for some reason
 		if pod.Spec.NodeName != "" {

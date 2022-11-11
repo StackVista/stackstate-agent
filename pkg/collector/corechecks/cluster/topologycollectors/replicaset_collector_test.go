@@ -26,13 +26,15 @@ func TestReplicaSetCollector(t *testing.T) {
 	defer close(componentChannel)
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
+	componentIdChannel := make(chan string)
+	defer close(componentIdChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 	replicas = 1
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		ic := NewReplicaSetCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockReplicaSetAPICollectorClient{}, sourcePropertiesEnabled))
+		ic := NewReplicaSetCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockReplicaSetAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "ReplicaSet Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 

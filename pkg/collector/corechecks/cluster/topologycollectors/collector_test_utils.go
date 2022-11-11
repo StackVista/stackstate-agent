@@ -15,11 +15,19 @@ import (
 	"testing"
 )
 
-func NewTestCommonClusterCollector(client apiserver.APICollectorClient, sourcePropertiesEnabled bool) ClusterTopologyCollector {
+func NewTestCommonClusterCollector(
+	client apiserver.APICollectorClient,
+	componentChan chan<- *topology.Component,
+	componentIdChan chan<- string,
+	sourcePropertiesEnabled bool) ClusterTopologyCollector {
 	instance := topology.Instance{Type: "kubernetes", URL: "test-cluster-name"}
 
 	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, sourcePropertiesEnabled)
-	return NewClusterTopologyCollector(clusterTopologyCommon)
+	return NewClusterTopologyCollector(
+		componentChan,
+		componentIdChan,
+		clusterTopologyCommon,
+	)
 }
 
 func RunCollectorTest(t *testing.T, collector ClusterTopologyCollector, expectedCollectorName string) {

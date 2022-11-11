@@ -24,13 +24,15 @@ func TestNamespaceCollector(t *testing.T) {
 
 	componentChannel := make(chan *topology.Component)
 	defer close(componentChannel)
+	componentIdChannel := make(chan string)
+	defer close(componentIdChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
 
-		nsc := NewNamespaceCollector(componentChannel, NewTestCommonClusterCollector(MockNamespaceAPICollectorClient{}, sourcePropertiesEnabled))
+		nsc := NewNamespaceCollector(componentChannel, NewTestCommonClusterCollector(MockNamespaceAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "Namespace Collector"
 		RunCollectorTest(t, nsc, expectedCollectorName)
 

@@ -27,12 +27,14 @@ func TestIngressCollector(t *testing.T) {
 	defer close(componentChannel)
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
+	componentIdChannel := make(chan string)
+	defer close(componentIdChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		ic := NewIngressCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockIngressAPICollectorClient{}, sourcePropertiesEnabled))
+		ic := NewIngressCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockIngressAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "Ingress Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 

@@ -268,6 +268,8 @@ func executeVolumeCorrelation(
 	defer close(componentChannel)
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
+	componentIdChannel := make(chan string)
+	defer close(componentIdChannel)
 
 	clusterAPIClient := MockVolumeCorrelatorAPIClient{
 		pods: pods, pvcs: pvcs,
@@ -284,10 +286,10 @@ func executeVolumeCorrelation(
 		claimsEnabled,
 	)
 	podCollector := NewPodCollector(
-		componentChannel, relationChannel,
+		relationChannel,
 		containerCorrChannel, volumeCorrChannel,
 		podCorrChannel,
-		NewTestCommonClusterCollector(clusterAPIClient, false),
+		NewTestCommonClusterCollector(clusterAPIClient, componentChannel, componentIdChannel, false),
 	)
 
 	collectorsFinishChan := make(chan bool)

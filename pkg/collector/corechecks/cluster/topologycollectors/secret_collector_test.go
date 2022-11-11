@@ -25,12 +25,14 @@ func TestSecretCollector(t *testing.T) {
 
 	componentChannel := make(chan *topology.Component)
 	defer close(componentChannel)
+	componentIdChannel := make(chan string)
+	defer close(componentIdChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		cmc := NewSecretCollector(componentChannel, NewTestCommonClusterCollector(MockSecretAPICollectorClient{}, sourcePropertiesEnabled))
+		cmc := NewSecretCollector(componentChannel, NewTestCommonClusterCollector(MockSecretAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "Secret Collector"
 		RunCollectorTest(t, cmc, expectedCollectorName)
 

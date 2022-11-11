@@ -29,6 +29,8 @@ func TestConfigMapCollector(t *testing.T) {
 
 	componentChannel := make(chan *topology.Component)
 	defer close(componentChannel)
+	componentIdChannel := make(chan string)
+	defer close(componentIdChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
@@ -37,7 +39,7 @@ func TestConfigMapCollector(t *testing.T) {
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
 		cmc := NewConfigMapCollector(
 			componentChannel,
-			NewTestCommonClusterCollector(MockConfigMapAPICollectorClient{}, sourcePropertiesEnabled),
+			NewTestCommonClusterCollector(MockConfigMapAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled),
 			TestMaxDataSize,
 		)
 		RunCollectorTest(t, cmc, expectedCollectorName)

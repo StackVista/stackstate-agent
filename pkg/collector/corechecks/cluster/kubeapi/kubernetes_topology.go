@@ -138,32 +138,31 @@ func (t *TopologyCheck) Run() error {
 	volumeCorrelationChannel := make(chan *collectors.VolumeCorrelation)
 	podCorrelationChannel := make(chan *collectors.PodEndpointCorrelation)
 	endpointCorrelationChannel := make(chan *collectors.ServiceEndpointCorrelation)
+	relationCorrelationChannel := make(chan *topology.Relation)
 
 	// make a channel that is responsible for publishing components and relations
+	componentIdChannel := make(chan string)
 	componentChannel := make(chan *topology.Component)
 	relationChannel := make(chan *topology.Relation)
 	errChannel := make(chan error)
 	waitGroupChannel := make(chan bool)
 
 	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, t.ac, t.instance.SourcePropertiesEnabled)
-	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
+	commonClusterCollector := collectors.NewClusterTopologyCollector(componentChannel, componentIdChannel, clusterTopologyCommon)
 	clusterCollectors := []collectors.ClusterTopologyCollector{
 		// Register Cluster Component Collector
 		collectors.NewClusterCollector(
-			componentChannel,
 			commonClusterCollector,
 		),
 		// Register Node Component Collector
 		collectors.NewNodeCollector(
-			componentChannel,
-			relationChannel,
+			relationCorrelationChannel,
 			nodeIdentifierCorrelationChannel,
 			commonClusterCollector,
 		),
 		// Register Pod Component Collector
 		collectors.NewPodCollector(
-			componentChannel,
-			relationChannel,
+			relationCorrelationChannel,
 			containerCorrelationChannel,
 			volumeCorrelationChannel,
 			podCorrelationChannel,
@@ -295,6 +294,7 @@ func (t *TopologyCheck) Run() error {
 			endpointCorrelationChannel,
 			commonClusterCorrelator,
 		),
+		collectors.NewRelationCorrelator(componentIdChannel, relationCorrelationChannel, relationChannel, commonClusterCorrelator),
 	}
 
 	// starts all the cluster collectors and correlators

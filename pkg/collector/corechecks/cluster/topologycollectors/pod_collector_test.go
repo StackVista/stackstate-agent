@@ -49,12 +49,13 @@ func TestPodCollector(t *testing.T) {
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
 		componentChannel := make(chan *topology.Component)
+		componentIdChannel := make(chan string)
 		relationChannel := make(chan *topology.Relation)
 		containerCorrelationChannel := make(chan *ContainerCorrelation)
 		volumeCorrelationChannel := make(chan *VolumeCorrelation)
 		podCorrelationChannel := make(chan *PodEndpointCorrelation)
 
-		ic := NewPodCollector(componentChannel, relationChannel, containerCorrelationChannel, volumeCorrelationChannel, podCorrelationChannel, NewTestCommonClusterCollector(MockPodAPICollectorClient{}, sourcePropertiesEnabled))
+		ic := NewPodCollector(relationChannel, containerCorrelationChannel, volumeCorrelationChannel, podCorrelationChannel, NewTestCommonClusterCollector(MockPodAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "Pod Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 
@@ -67,6 +68,7 @@ func TestPodCollector(t *testing.T) {
 				assertions: []func(){
 					func() {
 						component := <-componentChannel
+						<-componentIdChannel
 						expectedComponent := chooseBySourcePropertiesFeature(
 							sourcePropertiesEnabled,
 							&topology.Component{
@@ -125,6 +127,7 @@ func TestPodCollector(t *testing.T) {
 				assertions: []func(){
 					func() {
 						component := <-componentChannel
+						<-componentIdChannel
 						expectedComponent := chooseBySourcePropertiesFeature(
 							sourcePropertiesEnabled,
 							&topology.Component{
@@ -196,6 +199,7 @@ func TestPodCollector(t *testing.T) {
 				assertions: []func(){
 					func() {
 						component := <-componentChannel
+						<-componentIdChannel
 						expectedComponent := chooseBySourcePropertiesFeature(
 							sourcePropertiesEnabled,
 							&topology.Component{
@@ -320,6 +324,7 @@ func TestPodCollector(t *testing.T) {
 				assertions: []func(){
 					func() {
 						component := <-componentChannel
+						<-componentIdChannel
 						expectedComponent := chooseBySourcePropertiesFeature(
 							sourcePropertiesEnabled,
 							&topology.Component{
@@ -413,6 +418,7 @@ func TestPodCollector(t *testing.T) {
 				assertions: []func(){
 					func() {
 						component := <-componentChannel
+						<-componentIdChannel
 						expectedComponent := chooseBySourcePropertiesFeature(
 							sourcePropertiesEnabled,
 							&topology.Component{
@@ -512,6 +518,7 @@ func TestPodCollector(t *testing.T) {
 				assertions: []func(){
 					func() {
 						component := <-componentChannel
+						<-componentIdChannel
 						expectedComponent := chooseBySourcePropertiesFeature(
 							sourcePropertiesEnabled,
 							&topology.Component{
@@ -611,6 +618,7 @@ func TestPodCollector(t *testing.T) {
 				assertions: []func(){
 					func() {
 						component := <-componentChannel
+						<-componentIdChannel
 						expectedComponent := chooseBySourcePropertiesFeature(
 							sourcePropertiesEnabled,
 							&topology.Component{
@@ -694,6 +702,7 @@ func TestPodCollector(t *testing.T) {
 				assertions: []func(){
 					func() {
 						component := <-componentChannel
+						<-componentIdChannel
 						expectedComponent := chooseBySourcePropertiesFeature(
 							sourcePropertiesEnabled,
 							&topology.Component{

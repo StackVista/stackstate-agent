@@ -9,6 +9,7 @@ package topologycollectors
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"testing"
 	"time"
 
@@ -31,11 +32,14 @@ func TestServiceCollector(t *testing.T) {
 			for testCaseNo, tc := range serviceCollectorTestCases(sourcePropertiesEnabled, creationTimeFormatted, endpointsEnabled) {
 				t.Run(serviceCollectorTestCaseName(tc.testCase, sourcePropertiesEnabled, endpointsEnabled), func(t *testing.T) {
 					svcCorrelationChannel := make(chan *ServiceEndpointCorrelation)
-					componentChannel := make(chan *topology.Component, 100)
-					relationChannel := make(chan *topology.Relation, 100)
+					componentChannel := make(chan *topology.Component)
+					componentIdChannel := make(chan string)
+					relationChannel := make(chan *topology.Relation)
+					collectorChannel := make(chan bool)
+
 					serviceCollector := NewServiceCollector(
 						componentChannel, relationChannel, svcCorrelationChannel,
-						NewTestCommonClusterCollector(MockServiceAPICollectorClient{testCaseNumber: testCaseNo + 1}, sourcePropertiesEnabled),
+						NewTestCommonClusterCollector(MockServiceAPICollectorClient{testCaseNumber: testCaseNo + 1}, componentChannel, componentIdChannel, sourcePropertiesEnabled),
 						endpointsEnabled,
 					)
 					// Mock out DNS resolution function for test
@@ -44,18 +48,31 @@ func TestServiceCollector(t *testing.T) {
 					}
 
 					assert.Equal(t, "Service Collector", serviceCollector.GetName())
-					assert.NoError(t, serviceCollector.CollectorFunction())
 
-					close(componentChannel)
+					go func() {
+						assert.NoError(t, serviceCollector.CollectorFunction())
+						collectorChannel <- true
+					}()
+
 					var actualComponents []*topology.Component
-					for component := range componentChannel {
-						actualComponents = append(actualComponents, component)
-					}
-
-					close(relationChannel)
 					var actualRelations []*topology.Relation
-					for relation := range relationChannel {
-						actualRelations = append(actualRelations, relation)
+				L:
+					for {
+						select {
+						case component := <-componentChannel:
+							actualComponents = append(actualComponents, component)
+						case relation := <-relationChannel:
+							actualRelations = append(actualRelations, relation)
+						case <-componentIdChannel:
+							//ignore
+							log.Info("id")
+						case <-svcCorrelationChannel:
+							//ignore
+							log.Info("svc")
+
+						case <-collectorChannel:
+							break L
+						}
 					}
 
 					assert.EqualValues(t, tc.expectedComponents, actualComponents)
