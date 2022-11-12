@@ -10,7 +10,7 @@
 
 **Improvements**
 - Upstream upgrade to 7.22.1 tag [STAC-16755](https://stackstate.atlassian.net/browse/STAC-16755)
-- Upgraded process-agent version from 4.0.7 to 4.0.9 which includes:
+- Upgraded process-agent version from 4.0.7 to 4.0.10 which includes:
   - Reduce unimportant warning logs [STAC-17982](https://stackstate.atlassian.net/browse/STAC-17982)
   - Fix cgroup metrics collection for containers [STAC-18119](https://stackstate.atlassian.net/browse/STAC-18119)
 
