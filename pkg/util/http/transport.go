@@ -19,6 +19,9 @@ import (
 
 // CreateHTTPTransport creates an *http.Transport for use in the agent
 func CreateHTTPTransport() *http.Transport {
+	skipSSL := config.Datadog.GetBool("skip_ssl_validation")
+	log.Infof("Skip SSL in HTTP Transport create: %b", skipSSL)
+
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: config.Datadog.GetBool("skip_ssl_validation"),
 	}
