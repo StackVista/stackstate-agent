@@ -13,7 +13,7 @@ resource "aws_key_pair" "agent_key_pair" {
 }
 
 data "http" "local_ip" {
-  url = "http://ipv4.icanhazip.com"
+  url = "https://ipv4.icanhazip.com"
 }
 
 resource "aws_security_group" "agent_group" {
