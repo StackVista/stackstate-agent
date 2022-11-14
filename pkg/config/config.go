@@ -1142,6 +1142,13 @@ func loadProxyFromEnv(config Config) {
 
 // LoadStackstate reads configs files and initializes the config module
 func LoadStackstate(config Config) (*Warnings, error) {
+	// [sts] set up main agent config as well. This is used in the process-agent. When loading config for the process-agent
+	// we also need to set up the main agent Datadog config for all packages used by the process agent, e.g. Forwarder
+	warnings, err := load(Datadog, "stackstate.yaml", true)
+	if err != nil {
+		return warnings, err
+	}
+
 	return load(config, "stackstate.yaml", true)
 }
 
