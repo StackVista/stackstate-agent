@@ -5,9 +5,10 @@ package topologycollectors
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
-// ContainerCorrelator implements the ClusterTopologyCollector interface.
+// RelationCorrelator ContainerCorrelator implements the ClusterTopologyCollector interface.
 type RelationCorrelator struct {
 	ComponentIdChan        chan string
 	RelationCorrChan       chan *topology.Relation
@@ -16,7 +17,7 @@ type RelationCorrelator struct {
 	ClusterTopologyCorrelator
 }
 
-// NewContainerCorrelator creates a RelationCorrelator
+// NewRelationCorrelator creates a RelationCorrelator
 func NewRelationCorrelator(componentIdChannel chan string, relationCorrChannel chan *topology.Relation,
 	relationChannel chan<- *topology.Relation,
 	collectorsFinishedChan chan bool,
@@ -55,7 +56,15 @@ loop:
 		_, sourceExists := componentIds[relation.SourceID]
 		_, targetExists := componentIds[relation.TargetID]
 		if sourceExists && targetExists {
+			// TODO remove debug
+			log.Debugf("Created relation '%s'", relation.ExternalID)
 			rc.RelationChan <- relation
+		} else {
+			if !sourceExists {
+				log.Debugf("Ignoring relation '%s' because source does not exist", relation.ExternalID)
+			} else {
+				log.Debugf("Ignoring relation '%s' because target does not exist", relation.ExternalID)
+			}
 		}
 	}
 
