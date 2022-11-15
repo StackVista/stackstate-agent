@@ -213,6 +213,7 @@ func TestJobCollector(t *testing.T) {
 		} {
 			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
 				component := <-componentChannel
+				<-componentIdChannel
 				if sourcePropertiesEnabled {
 					assert.EqualValues(t, tc.expectedComponentSP, component)
 				} else {

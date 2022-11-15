@@ -44,6 +44,7 @@ func TestContainerCollector(t *testing.T) {
 			assertions: []func(){
 				func() {
 					component := <-componentChannel
+					<-componentIdChannel
 					expectedComponent := &topology.Component{
 						ExternalID: "urn:kubernetes:/test-cluster-name:namespace-1:pod/Pod-Name-1:container/container-1",
 						Type:       topology.Type{Name: "container"},
@@ -89,6 +90,7 @@ func TestContainerCollector(t *testing.T) {
 			assertions: []func(){
 				func() {
 					component := <-componentChannel
+					<-componentIdChannel
 					expectedComponent := &topology.Component{
 						ExternalID: "urn:kubernetes:/test-cluster-name:namespace-2:pod/Pod-Name-2:container/container-2",
 						Type:       topology.Type{Name: "container"},

@@ -107,6 +107,7 @@ func TestNamespaceCollector(t *testing.T) {
 		} {
 			t.Run(tc.testCase, func(t *testing.T) {
 				component := <-componentChannel
+				<-componentIdChannel
 				if sourcePropertiesEnabled {
 					assert.EqualValues(t, tc.expectedSP, component)
 				} else {

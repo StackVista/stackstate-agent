@@ -316,6 +316,8 @@ L:
 		select {
 		case c := <-componentChannel:
 			components = append(components, c)
+		case <-componentIdChannel:
+			// ignore
 		case r := <-relationChannel:
 			relations = append(relations, r)
 		case <-collectorsFinishChan:

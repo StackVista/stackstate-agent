@@ -162,6 +162,7 @@ func TestCronJobCollector(t *testing.T) {
 		} {
 			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
 				cronJob := <-componentChannel
+				<-componentIdChannel
 				if sourcePropertiesEnabled {
 					assert.EqualValues(t, tc.expectedSP, cronJob)
 				} else {

@@ -16,7 +16,7 @@ type PersistentVolumeCollector struct {
 	ClusterTopologyCollector
 }
 
-// NewPersistentVolumeCollector
+// NewPersistentVolumeCollector creates a new PersistentVolumeCollector
 func NewPersistentVolumeCollector(
 	relationChannel chan<- *topology.Relation,
 	clusterTopologyCollector ClusterTopologyCollector,

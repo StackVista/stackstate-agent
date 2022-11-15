@@ -156,6 +156,8 @@ func TestConfigMapCollector(t *testing.T) {
 		} {
 			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
 				component := <-componentChannel
+				componentId := <-componentIdChannel
+				assert.EqualValues(t, tc.expectedSP.ExternalID, componentId)
 				if sourcePropertiesEnabled {
 					assert.EqualValues(t, tc.expectedSP, component)
 				} else {

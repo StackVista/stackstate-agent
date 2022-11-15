@@ -194,6 +194,7 @@ func TestReplicaSetCollector(t *testing.T) {
 		} {
 			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
 				service := <-componentChannel
+				<-componentIdChannel
 				if sourcePropertiesEnabled {
 					assert.EqualValues(t, tc.expectedComponentSP, service)
 				} else {

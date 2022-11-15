@@ -40,11 +40,11 @@ func TestIngressCollector(t *testing.T) {
 
 		for _, tc := range []struct {
 			testCase   string
-			assertions []func(*testing.T, chan *topology.Component, chan *topology.Relation)
+			assertions []func(*testing.T, chan *topology.Component, chan string, chan *topology.Relation)
 		}{
 			{
 				testCase: "Test Service 1 - Minimal",
-				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
+				assertions: []func(*testing.T, chan *topology.Component, chan string, chan *topology.Relation){
 					expectComponent(chooseBySourcePropertiesFeature(
 						sourcePropertiesEnabled,
 						&topology.Component{
@@ -116,7 +116,7 @@ func TestIngressCollector(t *testing.T) {
 			},
 			{
 				testCase: "Test Service 2 - Default Backend",
-				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
+				assertions: []func(*testing.T, chan *topology.Component, chan string, chan *topology.Relation){
 					expectComponent(chooseBySourcePropertiesFeature(
 						sourcePropertiesEnabled,
 						&topology.Component{
@@ -201,7 +201,7 @@ func TestIngressCollector(t *testing.T) {
 			},
 			{
 				testCase: "Test Service 3 - Ingress Rules",
-				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
+				assertions: []func(*testing.T, chan *topology.Component, chan string, chan *topology.Relation){
 					expectComponent(chooseBySourcePropertiesFeature(
 						sourcePropertiesEnabled,
 						&topology.Component{
@@ -327,7 +327,7 @@ func TestIngressCollector(t *testing.T) {
 		} {
 			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
 				for _, a := range tc.assertions {
-					a(t, componentChannel, relationChannel)
+					a(t, componentChannel, componentIdChannel, relationChannel)
 				}
 			})
 		}
@@ -413,15 +413,16 @@ func (m MockIngressAPICollectorClient) GetIngresses() ([]v1beta1.Ingress, error)
 	return ingresses, nil
 }
 
-func expectComponent(expected *topology.Component) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
-	return func(t *testing.T, componentChan chan *topology.Component, _ chan *topology.Relation) {
+func expectComponent(expected *topology.Component) func(*testing.T, chan *topology.Component, chan string, chan *topology.Relation) {
+	return func(t *testing.T, componentChan chan *topology.Component, componentIdChan chan string, _ chan *topology.Relation) {
 		c := <-componentChan
+		<-componentIdChan
 		assert.EqualValues(t, expected, c)
 	}
 }
 
-func expectRelation(expected *topology.Relation) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
-	return func(t *testing.T, _ chan *topology.Component, relationChan chan *topology.Relation) {
+func expectRelation(expected *topology.Relation) func(*testing.T, chan *topology.Component, chan string, chan *topology.Relation) {
+	return func(t *testing.T, _ chan *topology.Component, _ chan string, relationChan chan *topology.Relation) {
 		r := <-relationChan
 		assert.EqualValues(t, expected, r)
 	}
