@@ -8,7 +8,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
-// RelationCorrelator ContainerCorrelator implements the ClusterTopologyCollector interface.
+// RelationCorrelator implements the ClusterTopologyCollector interface.
 type RelationCorrelator struct {
 	ComponentIDChannel     chan string
 	RelationCorrChan       chan *topology.Relation

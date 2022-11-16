@@ -36,8 +36,7 @@ func TestRelationCorrelator(t *testing.T) {
 	components, relations := executeRelationCorrelation(t,
 		[]coreV1.Pod{pod1, pod2},
 		[]coreV1.ConfigMap{configMap1, configMap2},
-		[]coreV1.Secret{secret1, secret2},
-		true)
+		[]coreV1.Secret{secret1, secret2})
 
 	expectedPod1Id := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod1Name)
 	expectedPod2Id := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod2Name)
@@ -59,6 +58,9 @@ func TestRelationCorrelator(t *testing.T) {
 		simpleRelation(expectedPod1Id, expectedConfigMap1Id, "uses_value"),
 		simpleRelation(expectedPod2Id, expectedSecret2Id, "uses"),
 		simpleRelation(expectedPod2Id, expectedSecret1Id, "uses_value"),
+		// it should not create relations:
+		// - pod1 -> non-existing-configMap
+		// - pod2 -> non-existing-secret
 	}
 
 	assert.EqualValues(t, expectedComponents, components)
@@ -78,6 +80,7 @@ func TestRelationCorrelator(t *testing.T) {
 }
 
 func podWithConfigMapEnv(namespace string, name string, configMapName string, configMapEnvSourceName string, timestamp metav1.Time) coreV1.Pod {
+	trueV := true
 	return coreV1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              name,
@@ -105,6 +108,7 @@ func podWithConfigMapEnv(namespace string, name string, configMapName string, co
 							ValueFrom: &coreV1.EnvVarSource{
 								ConfigMapKeyRef: &coreV1.ConfigMapKeySelector{
 									LocalObjectReference: coreV1.LocalObjectReference{Name: "non-existing-configMap"},
+									Optional:             &trueV,
 								},
 							},
 						},
@@ -123,6 +127,7 @@ func podWithConfigMapEnv(namespace string, name string, configMapName string, co
 }
 
 func podWithSecretEnv(namespace string, name string, secretEnvName string, secretEnvSourceName string, timestamp metav1.Time) coreV1.Pod {
+	trueV := true
 	return coreV1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              name,
@@ -155,6 +160,7 @@ func podWithSecretEnv(namespace string, name string, secretEnvName string, secre
 						{
 							SecretRef: &coreV1.SecretEnvSource{
 								LocalObjectReference: coreV1.LocalObjectReference{Name: "non-existing-secret"},
+								Optional:             &trueV,
 							},
 						},
 					},
@@ -262,7 +268,6 @@ func executeRelationCorrelation(
 	pods []coreV1.Pod,
 	configMaps []coreV1.ConfigMap,
 	secrets []coreV1.Secret,
-	claimsEnabled bool,
 ) ([]*topology.Component, []*topology.Relation) {
 
 	componentChannel := make(chan *topology.Component)
@@ -270,9 +275,7 @@ func executeRelationCorrelation(
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
 	relationCorrChannel := make(chan *topology.Relation)
-	//defer close(relationCorrChannel)
 	componentIDChannel := make(chan string)
-	//defer close(componentIDChannel)
 
 	clusterAPIClient := MockRelationCorrelatorAPIClient{
 		pods: pods, configMaps: configMaps, secrets: secrets,
@@ -281,8 +284,8 @@ func executeRelationCorrelation(
 	podCorrChannel := make(chan *PodEndpointCorrelation)
 	containerCorrChannel := make(chan *ContainerCorrelation)
 	volumeCorrChannel := make(chan *VolumeCorrelation)
-	collectorsFinishChan := make(chan bool)
-	correlatorFinishChan := make(chan bool)
+	collectorsDoneChan := make(chan bool)
+	relationCorrelatorDoneChannel := make(chan bool)
 
 	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, componentIDChannel, false)
 	podCollector := NewPodCollector(
@@ -295,11 +298,9 @@ func executeRelationCorrelation(
 	secretCollector := NewSecretCollector(commonClusterCollector)
 
 	relationCorrelator := NewRelationCorrelator(componentIDChannel, relationCorrChannel, relationChannel,
-		collectorsFinishChan,
-		NewTestCommonClusterCorrelator(clusterAPIClient, componentChannel, componentIDChannel))
+		collectorsDoneChan, NewTestCommonClusterCorrelator(clusterAPIClient, componentChannel, componentIDChannel))
 
 	collectorsFinished := false
-	//correlatorFinished := false
 
 	go func() {
 		var err error
@@ -310,44 +311,31 @@ func executeRelationCorrelation(
 		err = secretCollector.CollectorFunction()
 		assert.NoError(t, err)
 
-		//close(componentIDChannel)
-		//close(relationCorrChannel)
 		collectorsFinished = true
-		collectorsFinishChan <- true
+		collectorsDoneChan <- true
 	}()
 
 	go func() {
 		var err error
 		err = relationCorrelator.CorrelateFunction()
 		assert.NoError(t, err)
-		correlatorFinishChan <- true
+		relationCorrelatorDoneChannel <- true
 	}()
 
 	components := make([]*topology.Component, 0)
 	relations := make([]*topology.Relation, 0)
-	//componentIDs := make([]string, 0)
 
 L:
 	for {
 		select {
 		case c := <-componentChannel:
 			components = append(components, c)
-		//case c := <-componentIDChannel:
-		//	fmt.Println("componentIDChannel got ", c)
-		//case r := <-relationCorrChannel:
-		//	fmt.Println("relationCorrChannel got ", r)
 		case r := <-relationChannel:
 			relations = append(relations, r)
-		//case <-collectorsFinishChan:
-		//	if correlatorFinished {
-		//		break L
-		//	}
-		//	collectorsFinished = true
-		case <-correlatorFinishChan:
+		case <-relationCorrelatorDoneChannel:
 			if collectorsFinished {
 				break L
 			}
-			//correlatorFinished = true
 		}
 	}
 
