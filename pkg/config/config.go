@@ -892,11 +892,6 @@ func loadProxyFromEnv(config Config) {
 	}
 }
 
-// LoadStackstate reads configs files and initializes the config module
-func LoadStackstate(config Config) (*Warnings, error) {
-	return load(config, "stackstate.yaml", true)
-}
-
 // Load reads configs files and initializes the config module
 func Load() (*Warnings, error) {
 	return load(Datadog, "datadog.yaml", true)
