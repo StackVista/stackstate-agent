@@ -10,7 +10,7 @@ import (
 
 // RelationCorrelator ContainerCorrelator implements the ClusterTopologyCollector interface.
 type RelationCorrelator struct {
-	ComponentIdChan        chan string
+	ComponentIDChannel     chan string
 	RelationCorrChan       chan *topology.Relation
 	RelationChan           chan<- *topology.Relation
 	CollectorsFinishedChan <-chan bool
@@ -18,12 +18,12 @@ type RelationCorrelator struct {
 }
 
 // NewRelationCorrelator creates a RelationCorrelator
-func NewRelationCorrelator(componentIdChannel chan string, relationCorrChannel chan *topology.Relation,
+func NewRelationCorrelator(componentIDChannel chan string, relationCorrChannel chan *topology.Relation,
 	relationChannel chan<- *topology.Relation,
 	collectorsFinishedChan chan bool,
 	clusterTopologyCorrelator ClusterTopologyCorrelator) ClusterTopologyCorrelator {
 	return &RelationCorrelator{
-		ComponentIdChan:           componentIdChannel,
+		ComponentIDChannel:        componentIDChannel,
 		RelationCorrChan:          relationCorrChannel,
 		RelationChan:              relationChannel,
 		CollectorsFinishedChan:    collectorsFinishedChan,
@@ -38,13 +38,13 @@ func (*RelationCorrelator) GetName() string {
 
 // CorrelateFunction Collects and publishes relations where both source and target exist
 func (rc *RelationCorrelator) CorrelateFunction() error {
-	componentIds := make(map[string]struct{})
+	componentIDs := make(map[string]struct{})
 	var possibleRelations []*topology.Relation
 loop:
 	for {
 		select {
-		case id := <-rc.ComponentIdChan:
-			componentIds[id] = struct{}{}
+		case id := <-rc.ComponentIDChannel:
+			componentIDs[id] = struct{}{}
 		case relation := <-rc.RelationCorrChan:
 			possibleRelations = append(possibleRelations, relation)
 		case <-rc.CollectorsFinishedChan:
@@ -53,8 +53,8 @@ loop:
 	}
 
 	for _, relation := range possibleRelations {
-		_, sourceExists := componentIds[relation.SourceID]
-		_, targetExists := componentIds[relation.TargetID]
+		_, sourceExists := componentIDs[relation.SourceID]
+		_, targetExists := componentIDs[relation.TargetID]
 		if sourceExists && targetExists {
 			// TODO remove debug
 			log.Debugf("Created relation '%s'", relation.ExternalID)

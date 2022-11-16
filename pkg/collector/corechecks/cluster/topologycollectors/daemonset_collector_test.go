@@ -26,14 +26,14 @@ func TestDaemonSetCollector(t *testing.T) {
 	defer close(componentChannel)
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
-	componentIdChannel := make(chan string)
-	defer close(componentIdChannel)
+	componentIDChannel := make(chan string)
+	defer close(componentIDChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		cmc := NewDaemonSetCollector(relationChannel, NewTestCommonClusterCollector(MockDaemonSetAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
+		cmc := NewDaemonSetCollector(relationChannel, NewTestCommonClusterCollector(MockDaemonSetAPICollectorClient{}, componentChannel, componentIDChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "DaemonSet Collector"
 		RunCollectorTest(t, cmc, expectedCollectorName)
 
@@ -174,7 +174,7 @@ func TestDaemonSetCollector(t *testing.T) {
 		} {
 			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
 				component := <-componentChannel
-				<-componentIdChannel
+				<-componentIDChannel
 				if sourcePropertiesEnabled {
 					assert.EqualValues(t, tc.expectedSP, component)
 				} else {

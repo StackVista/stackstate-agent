@@ -27,14 +27,14 @@ func TestIngressCollector(t *testing.T) {
 	defer close(componentChannel)
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
-	componentIdChannel := make(chan string)
-	defer close(componentIdChannel)
+	componentIDChannel := make(chan string)
+	defer close(componentIDChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		ic := NewIngressCollector(relationChannel, NewTestCommonClusterCollector(MockIngressAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
+		ic := NewIngressCollector(relationChannel, NewTestCommonClusterCollector(MockIngressAPICollectorClient{}, componentChannel, componentIDChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "Ingress Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 
@@ -327,7 +327,7 @@ func TestIngressCollector(t *testing.T) {
 		} {
 			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
 				for _, a := range tc.assertions {
-					a(t, componentChannel, componentIdChannel, relationChannel)
+					a(t, componentChannel, componentIDChannel, relationChannel)
 				}
 			})
 		}
@@ -414,9 +414,9 @@ func (m MockIngressAPICollectorClient) GetIngresses() ([]v1beta1.Ingress, error)
 }
 
 func expectComponent(expected *topology.Component) func(*testing.T, chan *topology.Component, chan string, chan *topology.Relation) {
-	return func(t *testing.T, componentChan chan *topology.Component, componentIdChan chan string, _ chan *topology.Relation) {
+	return func(t *testing.T, componentChan chan *topology.Component, componentIDChannel chan string, _ chan *topology.Relation) {
 		c := <-componentChan
-		<-componentIdChan
+		<-componentIDChannel
 		assert.EqualValues(t, expected, c)
 	}
 }

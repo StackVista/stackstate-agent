@@ -18,11 +18,11 @@ import (
 func NewTestCommonClusterCollector(
 	client apiserver.APICollectorClient,
 	componentChan chan<- *topology.Component,
-	componentIdChan chan<- string,
+	componentIDChannel chan<- string,
 	sourcePropertiesEnabled bool) ClusterTopologyCollector {
 	instance := topology.Instance{Type: "kubernetes", URL: "test-cluster-name"}
 
-	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, sourcePropertiesEnabled, componentChan, componentIdChan)
+	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, sourcePropertiesEnabled, componentChan, componentIDChannel)
 	return NewClusterTopologyCollector(
 		clusterTopologyCommon,
 	)

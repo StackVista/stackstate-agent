@@ -8,7 +8,6 @@
 package kubeapi
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -142,14 +141,14 @@ func (t *TopologyCheck) Run() error {
 	relationCorrelationChannel := make(chan *topology.Relation)
 
 	// make a channel that is responsible for publishing components and relations
-	componentIdChannel := make(chan string)
+	componentIDChannel := make(chan string)
 	componentChannel := make(chan *topology.Component)
 	relationChannel := make(chan *topology.Relation)
 	errChannel := make(chan error)
 	waitGroupChannel := make(chan bool)
 	collectorsDoneChannel := make(chan bool)
 
-	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, t.ac, t.instance.SourcePropertiesEnabled, componentChannel, componentIdChannel)
+	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, t.ac, t.instance.SourcePropertiesEnabled, componentChannel, componentIDChannel)
 	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
 	clusterCollectors := []collectors.ClusterTopologyCollector{
 		// Register Cluster Component Collector
@@ -262,7 +261,7 @@ func (t *TopologyCheck) Run() error {
 
 	commonClusterCorrelator := collectors.NewClusterTopologyCorrelator(clusterTopologyCommon)
 	relationCorrelator := collectors.NewRelationCorrelator(
-		componentIdChannel,
+		componentIDChannel,
 		relationCorrelationChannel,
 		relationChannel,
 		collectorsDoneChannel,
@@ -300,10 +299,9 @@ func (t *TopologyCheck) Run() error {
 	t.submitter.SubmitComplete()
 
 	log.Infof("Topology Check for cluster: %s completed successfully", t.instance.ClusterName)
-	fmt.Println("## Topology Check for cluster completed successfully", t.instance.ClusterName)
 	// close all the created channels
 	close(componentChannel)
-	close(componentIdChannel)
+	close(componentIDChannel)
 	close(relationChannel)
 	close(relationCorrelationChannel)
 	close(errChannel)

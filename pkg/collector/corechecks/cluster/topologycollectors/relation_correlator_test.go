@@ -271,8 +271,8 @@ func executeRelationCorrelation(
 	defer close(relationChannel)
 	relationCorrChannel := make(chan *topology.Relation)
 	//defer close(relationCorrChannel)
-	componentIdChannel := make(chan string)
-	//defer close(componentIdChannel)
+	componentIDChannel := make(chan string)
+	//defer close(componentIDChannel)
 
 	clusterAPIClient := MockRelationCorrelatorAPIClient{
 		pods: pods, configMaps: configMaps, secrets: secrets,
@@ -284,7 +284,7 @@ func executeRelationCorrelation(
 	collectorsFinishChan := make(chan bool)
 	correlatorFinishChan := make(chan bool)
 
-	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, componentIdChannel, false)
+	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, componentIDChannel, false)
 	podCollector := NewPodCollector(
 		relationCorrChannel,
 		containerCorrChannel, volumeCorrChannel,
@@ -294,9 +294,9 @@ func executeRelationCorrelation(
 	configMapCollector := NewConfigMapCollector(commonClusterCollector, TestMaxDataSize)
 	secretCollector := NewSecretCollector(commonClusterCollector)
 
-	relationCorrelator := NewRelationCorrelator(componentIdChannel, relationCorrChannel, relationChannel,
+	relationCorrelator := NewRelationCorrelator(componentIDChannel, relationCorrChannel, relationChannel,
 		collectorsFinishChan,
-		NewTestCommonClusterCorrelator(clusterAPIClient, componentChannel, componentIdChannel))
+		NewTestCommonClusterCorrelator(clusterAPIClient, componentChannel, componentIDChannel))
 
 	collectorsFinished := false
 	//correlatorFinished := false
@@ -310,7 +310,7 @@ func executeRelationCorrelation(
 		err = secretCollector.CollectorFunction()
 		assert.NoError(t, err)
 
-		//close(componentIdChannel)
+		//close(componentIDChannel)
 		//close(relationCorrChannel)
 		collectorsFinished = true
 		collectorsFinishChan <- true
@@ -325,15 +325,15 @@ func executeRelationCorrelation(
 
 	components := make([]*topology.Component, 0)
 	relations := make([]*topology.Relation, 0)
-	//componentIds := make([]string, 0)
+	//componentIDs := make([]string, 0)
 
 L:
 	for {
 		select {
 		case c := <-componentChannel:
 			components = append(components, c)
-		//case c := <-componentIdChannel:
-		//	fmt.Println("componentIdChannel got ", c)
+		//case c := <-componentIDChannel:
+		//	fmt.Println("componentIDChannel got ", c)
 		//case r := <-relationCorrChannel:
 		//	fmt.Println("relationCorrChannel got ", r)
 		case r := <-relationChannel:

@@ -32,13 +32,13 @@ func TestServiceCollector(t *testing.T) {
 				t.Run(serviceCollectorTestCaseName(tc.testCase, sourcePropertiesEnabled, endpointsEnabled), func(t *testing.T) {
 					svcCorrelationChannel := make(chan *ServiceEndpointCorrelation)
 					componentChannel := make(chan *topology.Component)
-					componentIdChannel := make(chan string)
+					componentIDChannel := make(chan string)
 					relationChannel := make(chan *topology.Relation)
 					collectorChannel := make(chan bool)
 
 					serviceCollector := NewServiceCollector(
 						relationChannel, svcCorrelationChannel,
-						NewTestCommonClusterCollector(MockServiceAPICollectorClient{testCaseNumber: testCaseNo + 1}, componentChannel, componentIdChannel, sourcePropertiesEnabled),
+						NewTestCommonClusterCollector(MockServiceAPICollectorClient{testCaseNumber: testCaseNo + 1}, componentChannel, componentIDChannel, sourcePropertiesEnabled),
 						endpointsEnabled,
 					)
 					// Mock out DNS resolution function for test
@@ -62,7 +62,7 @@ func TestServiceCollector(t *testing.T) {
 							actualComponents = append(actualComponents, component)
 						case relation := <-relationChannel:
 							actualRelations = append(actualRelations, relation)
-						case <-componentIdChannel: // ignore
+						case <-componentIDChannel: // ignore
 						case <-svcCorrelationChannel: // ignore
 						case <-collectorChannel:
 							break L

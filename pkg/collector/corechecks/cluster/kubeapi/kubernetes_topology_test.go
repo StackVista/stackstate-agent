@@ -174,16 +174,16 @@ func testRunClusterCollectors(t *testing.T, sourceProperties bool) {
 
 	var waitGroup sync.WaitGroup
 	componentChannel := make(chan *topology.Component)
-	componentIdChannel := make(chan string)
+	componentIDChannel := make(chan string)
 	relationChannel := make(chan *topology.Relation)
 	relationCorrChannel := make(chan *topology.Relation)
 	errChannel := make(chan error)
 	waitGroupChannel := make(chan bool)
 	collectorsFinishedChannel := make(chan bool)
 
-	clusterTopologyCommon := collectors.NewClusterTopologyCommon(instance, nil, sourceProperties, componentChannel, componentIdChannel)
+	clusterTopologyCommon := collectors.NewClusterTopologyCommon(instance, nil, sourceProperties, componentChannel, componentIDChannel)
 	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
-	relationCorrelator := collectors.NewRelationCorrelator(componentIdChannel, relationCorrChannel, relationChannel,
+	relationCorrelator := collectors.NewRelationCorrelator(componentIDChannel, relationCorrChannel, relationChannel,
 		collectorsFinishedChannel, collectors.NewClusterTopologyCorrelator(commonClusterCollector))
 
 	clusterCollectors := []collectors.ClusterTopologyCollector{

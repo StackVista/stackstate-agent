@@ -35,11 +35,11 @@ func TestNodeCollector(t *testing.T) {
 			defer close(componentChannel)
 			relationChannel := make(chan *topology.Relation)
 			defer close(relationChannel)
-			componentIdChannel := make(chan string)
-			defer close(componentIdChannel)
+			componentIDChannel := make(chan string)
+			defer close(componentIDChannel)
 			nodeIdentifierCorrelationChannel := make(chan *NodeIdentifierCorrelation)
 
-			ic := NewNodeCollector(relationChannel, nodeIdentifierCorrelationChannel, NewTestCommonClusterCollector(MockNodeAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled))
+			ic := NewNodeCollector(relationChannel, nodeIdentifierCorrelationChannel, NewTestCommonClusterCollector(MockNodeAPICollectorClient{}, componentChannel, componentIDChannel, sourcePropertiesEnabled))
 			expectedCollectorName := "Node Collector"
 			RunCollectorTest(t, ic, expectedCollectorName)
 
@@ -52,7 +52,7 @@ func TestNodeCollector(t *testing.T) {
 					assertions: []func(){
 						func() {
 							component := <-componentChannel
-							<-componentIdChannel
+							<-componentIDChannel
 							expectedComponent := chooseBySourcePropertiesFeature(
 								sourcePropertiesEnabled,
 								&topology.Component{
@@ -148,7 +148,7 @@ func TestNodeCollector(t *testing.T) {
 					assertions: []func(){
 						func() {
 							component := <-componentChannel
-							<-componentIdChannel
+							<-componentIDChannel
 							expectedComponent :=
 								chooseBySourcePropertiesFeature(
 									sourcePropertiesEnabled,
@@ -250,7 +250,7 @@ func TestNodeCollector(t *testing.T) {
 					assertions: []func(){
 						func() {
 							component := <-componentChannel
-							<-componentIdChannel
+							<-componentIDChannel
 							expectedComponent :=
 								chooseBySourcePropertiesFeature(
 									sourcePropertiesEnabled,

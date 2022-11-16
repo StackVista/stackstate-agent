@@ -265,8 +265,8 @@ func executeCorrelation(
 	defer close(componentChannel)
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
-	componentIdChannel := make(chan string)
-	defer close(componentIdChannel)
+	componentIDChannel := make(chan string)
+	defer close(componentIDChannel)
 
 	clusterAPIClient := MockS2PCorrelatorAPIClient{
 		services: services, pods: pods, endpoints: endpoints,
@@ -280,9 +280,9 @@ func executeCorrelation(
 		relationChannel,
 		podCorrChannel,
 		serviceCorrChannel,
-		NewTestCommonClusterCorrelator(clusterAPIClient, componentChannel, componentIdChannel),
+		NewTestCommonClusterCorrelator(clusterAPIClient, componentChannel, componentIDChannel),
 	)
-	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, componentIdChannel, false)
+	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, componentIDChannel, false)
 	podCollector := NewPodCollector(
 		relationChannel,
 		containerCorrChannel, volumeCorrChannel,
@@ -321,7 +321,7 @@ L:
 		select {
 		case c := <-componentChannel:
 			components = append(components, c)
-		case <-componentIdChannel:
+		case <-componentIDChannel:
 			// ignore
 		case r := <-relationChannel:
 			relations = append(relations, r)

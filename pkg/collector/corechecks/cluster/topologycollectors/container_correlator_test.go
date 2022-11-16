@@ -21,14 +21,14 @@ func TestContainerCollector(t *testing.T) {
 	defer close(componentChannel)
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
-	componentIdChannel := make(chan string)
-	defer close(componentIdChannel)
+	componentIDChannel := make(chan string)
+	defer close(componentIDChannel)
 
 	nodeIdentifierCorrelationChannel := make(chan *NodeIdentifierCorrelation)
 	containerCorrelationChannel := make(chan *ContainerCorrelation)
 
 	cc := NewContainerCorrelator(relationChannel, nodeIdentifierCorrelationChannel,
-		containerCorrelationChannel, NewTestCommonClusterCorrelator(MockContainerAPICollectorClient{}, componentChannel, componentIdChannel))
+		containerCorrelationChannel, NewTestCommonClusterCorrelator(MockContainerAPICollectorClient{}, componentChannel, componentIDChannel))
 	expectedCollectorName := "Container Correlator"
 
 	populateData(nodeIdentifierCorrelationChannel, containerCorrelationChannel)
@@ -44,7 +44,7 @@ func TestContainerCollector(t *testing.T) {
 			assertions: []func(){
 				func() {
 					component := <-componentChannel
-					<-componentIdChannel
+					<-componentIDChannel
 					expectedComponent := &topology.Component{
 						ExternalID: "urn:kubernetes:/test-cluster-name:namespace-1:pod/Pod-Name-1:container/container-1",
 						Type:       topology.Type{Name: "container"},
@@ -90,7 +90,7 @@ func TestContainerCollector(t *testing.T) {
 			assertions: []func(){
 				func() {
 					component := <-componentChannel
-					<-componentIdChannel
+					<-componentIDChannel
 					expectedComponent := &topology.Component{
 						ExternalID: "urn:kubernetes:/test-cluster-name:namespace-2:pod/Pod-Name-2:container/container-2",
 						Type:       topology.Type{Name: "container"},

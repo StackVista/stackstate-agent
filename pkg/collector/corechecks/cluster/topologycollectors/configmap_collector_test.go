@@ -29,8 +29,8 @@ func TestConfigMapCollector(t *testing.T) {
 
 	componentChannel := make(chan *topology.Component)
 	defer close(componentChannel)
-	componentIdChannel := make(chan string)
-	defer close(componentIdChannel)
+	componentIDChannel := make(chan string)
+	defer close(componentIDChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
@@ -38,7 +38,7 @@ func TestConfigMapCollector(t *testing.T) {
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
 		cmc := NewConfigMapCollector(
-			NewTestCommonClusterCollector(MockConfigMapAPICollectorClient{}, componentChannel, componentIdChannel, sourcePropertiesEnabled),
+			NewTestCommonClusterCollector(MockConfigMapAPICollectorClient{}, componentChannel, componentIDChannel, sourcePropertiesEnabled),
 			TestMaxDataSize,
 		)
 		RunCollectorTest(t, cmc, expectedCollectorName)
@@ -156,8 +156,8 @@ func TestConfigMapCollector(t *testing.T) {
 		} {
 			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
 				component := <-componentChannel
-				componentId := <-componentIdChannel
-				assert.EqualValues(t, tc.expectedSP.ExternalID, componentId)
+				componentID := <-componentIDChannel
+				assert.EqualValues(t, tc.expectedSP.ExternalID, componentID)
 				if sourcePropertiesEnabled {
 					assert.EqualValues(t, tc.expectedSP, component)
 				} else {

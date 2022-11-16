@@ -25,11 +25,11 @@ func TestCollectorInterface(t *testing.T) {
 
 func testCollectorInterface(t *testing.T, sourcePropertiesEnabled bool) {
 	componentChannel := make(chan *topology.Component)
-	componentIdChannel := make(chan string)
+	componentIDChannel := make(chan string)
 	defer close(componentChannel)
-	defer close(componentIdChannel)
+	defer close(componentIDChannel)
 	instance := topology.Instance{Type: "kubernetes", URL: "Test-Cluster-Name"}
-	clusterTopologyCommon := NewClusterTopologyCommon(instance, nil, sourcePropertiesEnabled, componentChannel, componentIdChannel)
+	clusterTopologyCommon := NewClusterTopologyCommon(instance, nil, sourcePropertiesEnabled, componentChannel, componentIDChannel)
 	testCollector := NewTestCollector(NewClusterTopologyCollector(clusterTopologyCommon))
 
 	actualClusterExternalID := testCollector.buildClusterExternalID()

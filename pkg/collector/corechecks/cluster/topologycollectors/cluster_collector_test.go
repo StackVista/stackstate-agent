@@ -17,10 +17,10 @@ import (
 func TestClusterCollector(t *testing.T) {
 	componentChannel := make(chan *topology.Component)
 	defer close(componentChannel)
-	componentIdChannel := make(chan string)
-	defer close(componentIdChannel)
+	componentIDChannel := make(chan string)
+	defer close(componentIDChannel)
 
-	cc := NewClusterCollector(NewTestCommonClusterCollector(MockClusterAPICollectorClient{}, componentChannel, componentIdChannel, true))
+	cc := NewClusterCollector(NewTestCommonClusterCollector(MockClusterAPICollectorClient{}, componentChannel, componentIDChannel, true))
 	expectedCollectorName := "Cluster Collector"
 	RunCollectorTest(t, cc, expectedCollectorName)
 
@@ -42,8 +42,8 @@ func TestClusterCollector(t *testing.T) {
 		t.Run(tc.testCase, func(t *testing.T) {
 			clusterComponent := <-componentChannel
 			assert.EqualValues(t, tc.expected, clusterComponent)
-			clusterComponentId := <-componentIdChannel
-			assert.EqualValues(t, tc.expected.ExternalID, clusterComponentId)
+			clusterComponentID := <-componentIDChannel
+			assert.EqualValues(t, tc.expected.ExternalID, clusterComponentID)
 		})
 	}
 }

@@ -54,7 +54,7 @@ type clusterTopologyCommon struct {
 	urn                     urn.Builder
 	sourcePropertiesEnabled bool
 	ComponentChan           chan<- *topology.Component
-	ComponentIdChan         chan<- string
+	ComponentIDChannel      chan<- string
 }
 
 // NewClusterTopologyCommon creates a clusterTopologyCommon
@@ -63,7 +63,7 @@ func NewClusterTopologyCommon(
 	ac apiserver.APICollectorClient,
 	spEnabled bool,
 	componentChan chan<- *topology.Component,
-	componentIdChan chan<- string,
+	componentIDChannel chan<- string,
 ) ClusterTopologyCommon {
 	return &clusterTopologyCommon{
 		Instance:                instance,
@@ -71,13 +71,13 @@ func NewClusterTopologyCommon(
 		urn:                     urn.NewURNBuilder(urn.ClusterTypeFromString(instance.Type), instance.URL),
 		sourcePropertiesEnabled: spEnabled,
 		ComponentChan:           componentChan,
-		ComponentIdChan:         componentIdChan,
+		ComponentIDChannel:      componentIDChannel,
 	}
 }
 
 func (c *clusterTopologyCommon) SubmitComponent(component *topology.Component) {
 	c.ComponentChan <- component
-	c.ComponentIdChan <- component.ExternalID
+	c.ComponentIDChannel <- component.ExternalID
 }
 
 // GetName
