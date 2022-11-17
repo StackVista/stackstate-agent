@@ -1,3 +1,4 @@
+import util
 from ststest import TopologyMatcher
 
 testinfra_hosts = ["local"]
@@ -61,6 +62,9 @@ def test_container_runtime(ansible_var, cliv1):
     if runtime == "dockerd":
         runtime = "docker"
 
-    topo = cliv1.topology("type = 'container'", "container-runtime")
-    for c in topo.components:
-        assert f"runtime:{runtime}" in c.tags
+    def wait_for_topology():
+        topo = cliv1.topology("type = 'container'", "container-runtime")
+        for c in topo.components:
+            assert f"runtime:{runtime}" in c.tags
+
+    util.wait_until(wait_for_topology(), 60, 3)
