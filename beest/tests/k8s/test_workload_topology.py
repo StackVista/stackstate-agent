@@ -67,4 +67,4 @@ def test_container_runtime(ansible_var, cliv1):
         for c in topo.components:
             assert f"runtime:{runtime}" in c.tags
 
-    util.wait_until(wait_for_topology(), 60, 3)
+    util.wait_until(wait_for_topology, 90, 3)
