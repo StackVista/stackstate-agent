@@ -1,8 +1,9 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
+//go:build process && (darwin || freebsd)
 // +build process
 // +build darwin freebsd
 
@@ -23,7 +24,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
 	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
 	"github.com/StackVista/stackstate-agent/pkg/util/executable"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
@@ -165,7 +166,7 @@ func (c *ProcessAgentCheck) Configure(data integration.Data, initConfig integrat
 	}
 
 	c.source = source
-	c.telemetry = telemetry.IsCheckEnabled("process_agent")
+	c.telemetry = telemetry_utils.IsCheckEnabled("process_agent")
 	return nil
 }
 
@@ -199,9 +200,12 @@ func (c *ProcessAgentCheck) Stop() {
 	<-c.stopDone
 }
 
-// GetMetricStats returns the stats from the last run of the check, but there aren't any yet
-func (c *ProcessAgentCheck) GetMetricStats() (map[string]int64, error) {
-	return make(map[string]int64), nil
+// Cancel does nothing
+func (c *ProcessAgentCheck) Cancel() {}
+
+// GetSenderStats returns the stats from the last run of the check, but there aren't any yet
+func (c *ProcessAgentCheck) GetSenderStats() (check.SenderStats, error) {
+	return check.NewSenderStats(), nil
 }
 
 func init() {

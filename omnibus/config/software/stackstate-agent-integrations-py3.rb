@@ -1,7 +1,7 @@
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
 # This product includes software developed at Datadog (https:#www.datadoghq.com/).
-# Copyright 2016-2020 Datadog, Inc.
+# Copyright 2016-present Datadog, Inc.
 
 require './lib/ostools.rb'
 require 'json'
@@ -128,7 +128,7 @@ build do
     # install the core integrations.
     #
     command "#{pip} install wheel==0.34.1"
-    command "#{pip} install pip-tools==5.4.0"
+    command "#{pip} install pip-tools==6.4.0"
 
     uninstall_buildtime_deps = ['rtloader', 'click', 'first', 'pip-tools']
     nix_build_env = {

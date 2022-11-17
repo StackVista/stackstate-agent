@@ -1,14 +1,17 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
+//go:build jmx
 // +build jmx
 
 package jmx
 
 import (
 	"errors"
+
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
@@ -25,6 +28,11 @@ func NewJMXCheckLoader() (*JMXCheckLoader, error) {
 	return &JMXCheckLoader{}, nil
 }
 
+// Name returns JMX loader name
+func (jl *JMXCheckLoader) Name() string {
+	return "jmx"
+}
+
 // Load returns a JMX check
 func (jl *JMXCheckLoader) Load(config integration.Config, instance integration.Data) (check.Check, error) {
 	var c check.Check
@@ -38,8 +46,16 @@ func (jl *JMXCheckLoader) Load(config integration.Config, instance integration.D
 		return c, err
 	}
 
+	// Validate common instance structure
+	commonOptions := integration.CommonInstanceConfig{}
+	err := yaml.Unmarshal(instance, &commonOptions)
+	if err != nil {
+		log.Debugf("jmx.loader: invalid instance for check %s: %s", config.Name, err)
+	}
+
 	cf := integration.Config{
 		ADIdentifiers: config.ADIdentifiers,
+		Entity:        config.Entity,
 		InitConfig:    config.InitConfig,
 		Instances:     []integration.Data{instance},
 		LogsConfig:    config.LogsConfig,
@@ -49,7 +65,7 @@ func (jl *JMXCheckLoader) Load(config integration.Config, instance integration.D
 	}
 	c = newJMXCheck(cf, config.Source)
 
-	return c, nil
+	return c, err
 }
 
 func (jl *JMXCheckLoader) String() string {

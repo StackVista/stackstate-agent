@@ -1,12 +1,12 @@
 #FROM debian:wheezy-backports
-FROM golang:1.13.11-stretch
+FROM golang:1.16.7-stretch
 
 RUN sed -i 's/^#\s*\(deb.*universe\)$/\1/g' /etc/apt/sources.list \
     && sed -i 's/^#\s*\(deb.*multiverse\)$/\1/g' /etc/apt/sources.list \
     && sed -i 's/main/main contrib non-free/' /etc/apt/sources.list
 
 # Build Args
-ARG GIMME_GO_VERSION=1.13.11
+ARG GIMME_GO_VERSION=1.16.7
 ARG DD_CONDA_VERSION=4.7.10
 ARG DD_PIP_VERSION=19.1
 ARG DD_SETUPTOOLS_VERSION=41.0.1
@@ -106,7 +106,7 @@ RUN conda create -n ddpy3 python python=3.8
 RUN /bin/bash -c "source /root/.bashrc && conda activate ddpy2 \
     && pip install -i https://pypi.python.org/simple pip==${DD_PIP_VERSION} \
     && pip install --ignore-installed setuptools==${DD_SETUPTOOLS_VERSION} \
-    && pip install invoke==1.7.0 distro==1.4.0 awscli==1.16.240 lexicon==2.0.1"
+    && pip install invoke==1.7.0 distro==1.4.0 awscli==1.16.240 lexicon==2.0.1 pathlib==1.0.1"
 
 # Update pip, setuptools and misc deps for ddpy3
 RUN /bin/bash -c  "source /root/.bashrc && conda activate ddpy3 \
@@ -145,7 +145,7 @@ RUN curl -Sl -O https://dd-agent-omnibus.s3.amazonaws.com/kernel-4.9-headers-deb
     rm kernel-4.9-headers-deb-x64.tgz
 
 # Download and install golangci-lint
-RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $GOPATH/bin v1.21.0
+RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $GOPATH/bin v1.42.1
 
 # Entrypoint
 COPY ./entrypoint.sh /

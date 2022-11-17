@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 /*
 Package api implements the agent IPC api. Using HTTP
@@ -20,39 +20,28 @@ import (
 	"strings"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/cmd/agent/api/agent"
-	"github.com/StackVista/stackstate-agent/cmd/agent/api/check"
-	pb "github.com/StackVista/stackstate-agent/cmd/agent/api/pb"
-	"github.com/StackVista/stackstate-agent/pkg/api/util"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	hostutil "github.com/StackVista/stackstate-agent/pkg/util"
-	gorilla "github.com/gorilla/mux"
+	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+
+	"github.com/StackVista/stackstate-agent/cmd/agent/api/agent"
+	"github.com/StackVista/stackstate-agent/cmd/agent/api/check"
+	"github.com/StackVista/stackstate-agent/pkg/api/util"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	remoteconfig "github.com/StackVista/stackstate-agent/pkg/config/remote/service"
+	pb "github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
+	gorilla "github.com/gorilla/mux"
 )
 
 var (
 	listener net.Listener
 )
 
-type server struct {
-	pb.UnimplementedAgentServer
-}
-
-func (s *server) GetHostname(ctx context.Context, in *pb.HostnameRequest) (*pb.HostnameReply, error) {
-	h, err := hostutil.GetHostname()
-	if err != nil {
-		return &pb.HostnameReply{}, err
-	}
-	return &pb.HostnameReply{Hostname: h}, nil
-}
-
 // grpcHandlerFunc returns an http.Handler that delegates to grpcServer on incoming gRPC
 // connections or otherHandler otherwise. Copied from cockroachdb.
 func grpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		// This is a partial recreation of gRPC's internal checks https://github.com/grpc/grpc-go/pull/514/files#diff-95e9a25b738459a2d3030e1e6fa2a718R61
 		if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
 			grpcServer.ServeHTTP(w, r)
@@ -62,9 +51,21 @@ func grpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Ha
 	})
 }
 
-// StartServer creates the router and starts the HTTP server
-func StartServer() error {
+// timeoutHandler limits requests to the enclosed handler to the value
+// configured in `server_timeout`.
+func timeoutHandlerFunc(otherHandler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		deadline := time.Now().Add(time.Duration(config.Datadog.GetInt64("server_timeout")) * time.Second)
 
+		conn := agent.GetConnection(r)
+		_ = conn.SetWriteDeadline(deadline)
+
+		otherHandler.ServeHTTP(w, r)
+	})
+}
+
+// StartServer creates the router and starts the HTTP server
+func StartServer(configService *remoteconfig.Service) error {
 	initializeTLS()
 
 	// get the transport we're going to use under HTTP
@@ -84,10 +85,14 @@ func StartServer() error {
 	// gRPC server
 	mux := http.NewServeMux()
 	opts := []grpc.ServerOption{
-		grpc.Creds(credentials.NewClientTLSFromCert(tlsCertPool, tlsAddr))}
+		grpc.Creds(credentials.NewClientTLSFromCert(tlsCertPool, tlsAddr)),
+		grpc.StreamInterceptor(grpc_auth.StreamServerInterceptor(grpcAuth)),
+		grpc.UnaryInterceptor(grpc_auth.UnaryServerInterceptor(grpcAuth)),
+	}
 
 	s := grpc.NewServer(opts...)
 	pb.RegisterAgentServer(s, &server{})
+	pb.RegisterAgentSecureServer(s, &serverSecure{configService: configService})
 
 	dcreds := credentials.NewTLS(&tls.Config{
 		ServerName: tlsAddr,
@@ -99,6 +104,12 @@ func StartServer() error {
 	ctx := context.Background()
 	gwmux := runtime.NewServeMux()
 	err = pb.RegisterAgentHandlerFromEndpoint(
+		ctx, gwmux, tlsAddr, dopts)
+	if err != nil {
+		panic(err)
+	}
+
+	err = pb.RegisterAgentSecureHandlerFromEndpoint(
 		ctx, gwmux, tlsAddr, dopts)
 	if err != nil {
 		panic(err)
@@ -116,18 +127,25 @@ func StartServer() error {
 	mux.Handle("/check/", http.StripPrefix("/check", check.SetupHandlers(checkMux)))
 	mux.Handle("/", gwmux)
 
+	// apply server_timeout to all handlers in the mux (with a few exceptions
+	// such as streaming logs, which reset the deadlines back to zero)
+	handler := timeoutHandlerFunc(mux)
+
 	srv := &http.Server{
-		Addr:    tlsAddr,
-		Handler: grpcHandlerFunc(s, mux),
-		// Handler: grpcHandlerFunc(s, r),
+		Addr: tlsAddr,
+		// handle grpc calls directly, falling back to `handler` for non-grpc reqs
+		Handler: grpcHandlerFunc(s, handler),
 		TLSConfig: &tls.Config{
 			Certificates: []tls.Certificate{*tlsKeyPair},
 			NextProtos:   []string{"h2"},
 		},
 		ErrorLog: stdLog.New(&config.ErrorLogWriter{
-			AdditionalDepth: 4, // Use a stack depth of 4 on top of the default one to get a relevant filename in the stdlib
+			AdditionalDepth: 5, // Use a stack depth of 5 on top of the default one to get a relevant filename in the stdlib
 		}, "Error from the agent http API server: ", 0), // log errors to seelog,
-		WriteTimeout: config.Datadog.GetDuration("server_timeout") * time.Second,
+		ConnContext: func(ctx context.Context, c net.Conn) context.Context {
+			// Store the connection in the context so requests can reference it if needed
+			return context.WithValue(ctx, agent.ConnContextKey, c)
+		},
 	}
 
 	tlsListener := tls.NewListener(listener, srv.TLSConfig)
@@ -147,13 +165,4 @@ func StopServer() {
 // ServerAddress retruns the server address.
 func ServerAddress() *net.TCPAddr {
 	return listener.Addr().(*net.TCPAddr)
-}
-
-func validateToken(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := util.Validate(w, r); err != nil {
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
 }

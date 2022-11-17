@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package app
 
@@ -12,7 +12,7 @@ import (
 	"github.com/StackVista/stackstate-agent/cmd/agent/common"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/flare"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/scrubber"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -41,7 +41,7 @@ var configCheckCommand = &cobra.Command{
 			return fmt.Errorf("unable to set up global agent configuration: %v", err)
 		}
 
-		err = config.SetupLogger(loggerName, config.GetEnv("DD_LOG_LEVEL", "off"), "", "", false, true, false)
+		err = config.SetupLogger(loggerName, config.GetEnvDefault("DD_LOG_LEVEL", "off"), "", "", false, true, false)
 		if err != nil {
 			fmt.Printf("Cannot setup logger, exiting: %v\n", err)
 			return err
@@ -53,7 +53,7 @@ var configCheckCommand = &cobra.Command{
 			return fmt.Errorf("unable to get config: %v", err)
 		}
 
-		scrubbed, err := log.CredentialsCleanerBytes(b.Bytes())
+		scrubbed, err := scrubber.ScrubBytes(b.Bytes())
 		if err != nil {
 			return fmt.Errorf("unable to scrub sensitive data configcheck output: %v", err)
 		}

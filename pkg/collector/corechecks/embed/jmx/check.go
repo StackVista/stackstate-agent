@@ -1,8 +1,9 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
+//go:build jmx
 // +build jmx
 
 package jmx
@@ -13,7 +14,7 @@ import (
 
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
@@ -33,7 +34,7 @@ func newJMXCheck(config integration.Config, source string) *JMXCheck {
 		name:      config.Name,
 		id:        check.ID(fmt.Sprintf("%v_%v", config.Name, config.Digest())),
 		source:    source,
-		telemetry: telemetry.IsCheckEnabled("jmx"),
+		telemetry: telemetry_utils.IsCheckEnabled("jmx"),
 	}
 	check.Configure(config.InitConfig, config.MetricConfig, source) //nolint:errcheck
 
@@ -60,6 +61,8 @@ func (c *JMXCheck) Stop() {
 	close(c.stop)
 	state.unscheduleCheck(c)
 }
+
+func (c *JMXCheck) Cancel() {}
 
 func (c *JMXCheck) String() string {
 	return c.name
@@ -93,6 +96,6 @@ func (c *JMXCheck) GetWarnings() []error {
 	return []error{}
 }
 
-func (c *JMXCheck) GetMetricStats() (map[string]int64, error) {
-	return make(map[string]int64), nil
+func (c *JMXCheck) GetSenderStats() (check.SenderStats, error) {
+	return check.NewSenderStats(), nil
 }

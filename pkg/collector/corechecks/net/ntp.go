@@ -1,11 +1,12 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package net
 
 import (
+	"context"
 	"expvar"
 	"fmt"
 	"math"
@@ -13,7 +14,7 @@ import (
 	"time"
 
 	"github.com/beevik/ntp"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
@@ -21,11 +22,14 @@ import (
 	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
-const ntpCheckName = "ntp"
-const defaultMinCollectionInterval = 900 // 15 minutes, to follow pool.ntp.org's guidelines on the query rate
+const (
+	ntpCheckName                 = "ntp"
+	defaultMinCollectionInterval = 900 // 15 minutes, to follow pool.ntp.org's guidelines on the query rate
+)
 
 var (
 	ntpExpVar = expvar.NewFloat("ntpOffset")
@@ -73,7 +77,13 @@ func (c *ntpConfig) parse(data []byte, initData []byte, getLocalServers func() (
 	defaultPort := 123
 	defaultOffsetThreshold := 60
 
-	defaultHosts := []string{"0.datadog.pool.ntp.org", "1.datadog.pool.ntp.org", "2.datadog.pool.ntp.org", "3.datadog.pool.ntp.org"}
+	defaultHosts := cloudproviders.GetCloudProviderNTPHosts(context.TODO())
+
+	// Default to our domains on pool.ntp.org if no cloud provider detected
+	if defaultHosts == nil {
+		log.Debug("No cloud provider detected, using default ntp pool.")
+		defaultHosts = []string{"0.datadog.pool.ntp.org", "1.datadog.pool.ntp.org", "2.datadog.pool.ntp.org", "3.datadog.pool.ntp.org"}
+	}
 
 	if err := yaml.Unmarshal(data, &instance); err != nil {
 		return err

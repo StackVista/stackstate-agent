@@ -10,6 +10,8 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/gogo/protobuf/jsonpb"
 	"github.com/gogo/protobuf/proto"
+	"k8s.io/apimachinery/pkg/version"
+	"strconv"
 
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/urn"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -45,6 +47,8 @@ type ClusterTopologyCommon interface {
 	buildVolumeExternalID(namespace, volumeName string) string
 	buildPersistentVolumeExternalID(persistentVolumeName string) string
 	buildEndpointExternalID(endpointID string) string
+	maximumMinorVersion(version int) bool
+	minimumMinorVersion(version int) bool
 	SubmitComponent(component *topology.Component)
 }
 
@@ -55,6 +59,7 @@ type clusterTopologyCommon struct {
 	sourcePropertiesEnabled bool
 	ComponentChan           chan<- *topology.Component
 	ComponentIDChannel      chan<- string
+	k8sVersion              *version.Info
 }
 
 // NewClusterTopologyCommon creates a clusterTopologyCommon
@@ -64,6 +69,7 @@ func NewClusterTopologyCommon(
 	spEnabled bool,
 	componentChan chan<- *topology.Component,
 	componentIDChannel chan<- string,
+	k8sVersion *version.Info,
 ) ClusterTopologyCommon {
 	return &clusterTopologyCommon{
 		Instance:                instance,
@@ -72,6 +78,7 @@ func NewClusterTopologyCommon(
 		sourcePropertiesEnabled: spEnabled,
 		ComponentChan:           componentChan,
 		ComponentIDChannel:      componentIDChannel,
+		k8sVersion:              k8sVersion,
 	}
 }
 
@@ -322,4 +329,33 @@ func makeSourcePropertiesKS(object MarshalableKubernetesObject) map[string]inter
 	}
 	removeRedundantFields(sourceProperties, true)
 	return sourceProperties
+}
+
+func (c *clusterTopologyCommon) minimumMinorVersion(minimumVersion int) bool {
+	return c.checkVersion(func(version int) bool {
+		return version >= minimumVersion
+	})
+}
+
+func (c *clusterTopologyCommon) maximumMinorVersion(maximumVersion int) bool {
+	return c.checkVersion(func(version int) bool {
+		return version <= maximumVersion
+	})
+}
+
+func (c *clusterTopologyCommon) checkVersion(compare func(version int) bool) bool {
+	if c.k8sVersion != nil && c.k8sVersion.Major != "" {
+		if c.k8sVersion.Major == "1" {
+			minor, err := strconv.Atoi(c.k8sVersion.Minor[:2])
+			if err != nil {
+				log.Warnf("cannot parse server minor version %q: %w", c.k8sVersion.Minor[:2], err)
+				return true
+			}
+			return compare(minor)
+		}
+		log.Warnf("Kubernetes versions check failed (Major version is not '1')")
+		return false
+	}
+	log.Warnf("Kubernetes version is undefined")
+	return true
 }

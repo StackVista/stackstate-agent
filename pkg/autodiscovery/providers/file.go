@@ -1,24 +1,26 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package providers
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/configresolver"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/providers/names"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	"gopkg.in/yaml.v2"
-
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 type configFormat struct {
@@ -65,7 +67,7 @@ func NewFileConfigProvider(paths []string) *FileConfigProvider {
 // Collect scans provided paths searching for configuration files. When found,
 // it parses the files and try to unmarshall Yaml contents into a CheckConfig
 // instance
-func (c *FileConfigProvider) Collect() ([]integration.Config, error) {
+func (c *FileConfigProvider) Collect(ctx context.Context) ([]integration.Config, error) {
 	configs := []integration.Config{}
 	configNames := make(map[string]struct{}) // use this map as a python set
 	defaultConfigs := []integration.Config{}
@@ -132,13 +134,18 @@ func (c *FileConfigProvider) Collect() ([]integration.Config, error) {
 }
 
 // IsUpToDate is not implemented for the file Providers as the files are not meant to change very often.
-func (c *FileConfigProvider) IsUpToDate() (bool, error) {
+func (c *FileConfigProvider) IsUpToDate(ctx context.Context) (bool, error) {
 	return false, nil
 }
 
 // String returns a string representation of the FileConfigProvider
 func (c *FileConfigProvider) String() string {
 	return names.File
+}
+
+// GetConfigErrors is not implemented for the FileConfigProvider
+func (c *FileConfigProvider) GetConfigErrors() map[string]ErrorMsgSet {
+	return make(map[string]ErrorMsgSet)
 }
 
 // collectEntry collects a file entry and return it's configuration if valid
@@ -149,6 +156,13 @@ func (c *FileConfigProvider) collectEntry(file os.FileInfo, path string, integra
 	ext := filepath.Ext(fileName)
 	entry := configEntry{}
 	absPath := filepath.Join(path, fileName)
+
+	// skip auto conf files based on the agent configuration
+	if fileName == "auto_conf.yaml" && containsString(config.Datadog.GetStringSlice("ignore_autoconf"), integrationName) {
+		log.Infof("Skipping 'auto_conf.yaml' for integration '%s'", integrationName)
+		entry.err = fmt.Errorf("'auto_conf.yaml' for integration '%s' is skipped", integrationName)
+		return entry
+	}
 
 	// skip config files that are not of type:
 	//  * integration.yaml, integration.yml
@@ -318,4 +332,13 @@ func GetIntegrationConfigFromFile(name, fpath string) (integration.Config, error
 	config.Source = "file:" + fpath
 
 	return config, err
+}
+
+func containsString(slice []string, str string) bool {
+	for _, s := range slice {
+		if s == str {
+			return true
+		}
+	}
+	return false
 }

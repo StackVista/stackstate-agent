@@ -1,35 +1,46 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package common
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/DataDog/viper"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 )
 
 // SetupConfig fires up the configuration system
 func SetupConfig(confFilePath string) error {
-	_, err := SetupConfigWithWarnings(confFilePath)
+	_, err := SetupConfigWithWarnings(confFilePath, "")
 	return err
 }
 
 // SetupConfigWithWarnings fires up the configuration system and returns warnings if any.
-func SetupConfigWithWarnings(confFilePath string) (*config.Warnings, error) {
-	return setupConfig(confFilePath, "", false)
+func SetupConfigWithWarnings(confFilePath, configName string) (*config.Warnings, error) {
+	return setupConfig(confFilePath, configName, false, true)
 }
 
 // SetupConfigWithoutSecrets fires up the configuration system without secrets support
 func SetupConfigWithoutSecrets(confFilePath string, configName string) error {
-	_, err := setupConfig(confFilePath, configName, true)
+	_, err := setupConfig(confFilePath, configName, true, true)
 	return err
 }
 
-func setupConfig(confFilePath string, configName string, withoutSecrets bool) (*config.Warnings, error) {
+// SetupConfigIfExist fires up the configuration system but
+// doesn't raise an error if the configuration file is the default one
+// and it doesn't exist.
+func SetupConfigIfExist(confFilePath string) error {
+	_, err := setupConfig(confFilePath, "", false, false)
+	return err
+}
+
+func setupConfig(confFilePath string, configName string, withoutSecrets bool, failOnMissingFile bool) (*config.Warnings, error) {
 	if configName != "" {
 		config.Datadog.SetConfigName(configName)
 	}
@@ -53,8 +64,26 @@ func setupConfig(confFilePath string, configName string, withoutSecrets bool) (*
 	} else {
 		warnings, err = config.Load()
 	}
-	if err != nil {
-		return warnings, fmt.Errorf("unable to load Datadog config file: %s", err)
+	// If `!failOnMissingFile`, do not issue an error if we cannot find the default config file.
+	var e viper.ConfigFileNotFoundError
+	if err != nil && (failOnMissingFile || !errors.As(err, &e) || confFilePath != "") {
+		return warnings, fmt.Errorf("unable to load Datadog config file: %w", err)
 	}
 	return warnings, nil
+}
+
+// SelectedCheckMatcherBuilder returns a function that returns true if the number of configs found for the
+// check name is more or equal to min instances
+func SelectedCheckMatcherBuilder(checkNames []string, minInstances uint) func(configs []integration.Config) bool {
+	return func(configs []integration.Config) bool {
+		var matchedConfigsCount uint
+		for _, cfg := range configs {
+			for _, name := range checkNames {
+				if cfg.Name == name {
+					matchedConfigsCount++
+				}
+			}
+		}
+		return matchedConfigsCount >= minInstances
+	}
 }

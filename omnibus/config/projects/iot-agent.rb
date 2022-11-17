@@ -1,12 +1,14 @@
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
 # This product includes software developed at Datadog (https:#www.datadoghq.com/).
-# Copyright 2016-2020 Datadog, Inc.
+# Copyright 2016-present Datadog, Inc.
 
 require "./lib/ostools.rb"
 
 name 'iot-agent'
 package_name 'datadog-iot-agent'
+license "Apache-2.0"
+license_file "../LICENSE"
 
 homepage 'http://www.datadoghq.com'
 
@@ -23,6 +25,10 @@ else
     maintainer 'Datadog, Inc <package@datadoghq.com>'
   else
     maintainer 'Datadog Packages <package@datadoghq.com>'
+  end
+
+  if debian?
+    runtime_recommended_dependency 'datadog-signing-keys'
   end
 end
 
@@ -53,6 +59,12 @@ package :deb do
   license 'Apache License Version 2.0'
   section 'utils'
   priority 'extra'
+  if ENV.has_key?('DEB_SIGNING_PASSPHRASE') and not ENV['DEB_SIGNING_PASSPHRASE'].empty?
+    signing_passphrase "#{ENV['DEB_SIGNING_PASSPHRASE']}"
+    if ENV.has_key?('DEB_GPG_KEY_NAME') and not ENV['DEB_GPG_KEY_NAME'].empty?
+      gpg_key_name "#{ENV['DEB_GPG_KEY_NAME']}"
+    end
+  end
 end
 
 # .rpm specific flags
@@ -116,11 +128,13 @@ package :msi do
   extra_package_dir "#{Omnibus::Config.source_dir()}\\etc\\stackstate-agent\\extra_package_files"
 
   additional_sign_files [
-      "#{Omnibus::Config.source_dir()}\\datadog-iot-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\security-agent.exe",
       "#{Omnibus::Config.source_dir()}\\datadog-iot-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\process-agent.exe",
       "#{Omnibus::Config.source_dir()}\\datadog-iot-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\trace-agent.exe",
       "#{Omnibus::Config.source_dir()}\\datadog-iot-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\agent.exe"
     ]
+  if $enable_security_agent
+    additional_sign_files << "#{Omnibus::Config.source_dir()}\\datadog-iot-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\security-agent.exe"
+  end
   #if ENV['SIGN_WINDOWS']
   #  signing_identity "ECCDAE36FDCB654D2CBAB3E8975AA55469F96E4C", machine_store: true, algorithm: "SHA256"
   #end

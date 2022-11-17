@@ -9,6 +9,7 @@ package topologycollectors
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"k8s.io/apimachinery/pkg/version"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,7 +30,7 @@ func testCollectorInterface(t *testing.T, sourcePropertiesEnabled bool) {
 	defer close(componentChannel)
 	defer close(componentIDChannel)
 	instance := topology.Instance{Type: "kubernetes", URL: "Test-Cluster-Name"}
-	clusterTopologyCommon := NewClusterTopologyCommon(instance, nil, sourcePropertiesEnabled, componentChannel, componentIDChannel)
+	clusterTopologyCommon := NewClusterTopologyCommon(instance, nil, sourcePropertiesEnabled, componentChannel, componentIDChannel, &version.Info{Major: "1", Minor: "21"})
 	testCollector := NewTestCollector(NewClusterTopologyCollector(clusterTopologyCommon))
 
 	actualClusterExternalID := testCollector.buildClusterExternalID()

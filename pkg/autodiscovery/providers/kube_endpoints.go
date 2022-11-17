@@ -1,14 +1,15 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
-// +build clusterchecks
-// +build kubeapiserver
+//go:build clusterchecks && kubeapiserver
+// +build clusterchecks,kubeapiserver
 
 package providers
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -18,6 +19,7 @@ import (
 	listersv1 "k8s.io/client-go/listers/core/v1"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/common/utils"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/providers/names"
 	"github.com/StackVista/stackstate-agent/pkg/config"
@@ -25,10 +27,14 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
+type endpointResolveMode string
+
 const (
 	kubeEndpointAnnotationPrefix = "ad.datadoghq.com/endpoints."
-	kubePodKind                  = "Pod"
-	KubePodPrefix                = "kubernetes_pod://"
+	kubeEndpointResolvePath      = "resolve"
+
+	kubeEndpointResolveAuto endpointResolveMode = "auto"
+	kubeEndpointResolveIP   endpointResolveMode = "ip"
 )
 
 // kubeEndpointsConfigProvider implements the ConfigProvider interface for the apiserver.
@@ -42,14 +48,16 @@ type kubeEndpointsConfigProvider struct {
 
 // configInfo contains an endpoint check config template with its name and namespace
 type configInfo struct {
-	tpl       integration.Config
-	namespace string
-	name      string
+	tpl         integration.Config
+	namespace   string
+	name        string
+	resolveMode endpointResolveMode
 }
 
 // NewKubeEndpointsConfigProvider returns a new ConfigProvider connected to apiserver.
 // Connectivity is not checked at this stage to allow for retries, Collect will do it.
 func NewKubeEndpointsConfigProvider(config config.ConfigurationProviders) (ConfigProvider, error) {
+	// Using GetAPIClient (no wait) as Client should already be initialized by Cluster Agent main entrypoint before
 	ac, err := apiserver.GetAPIClient()
 	if err != nil {
 		return nil, fmt.Errorf("cannot connect to apiserver: %s", err)
@@ -91,7 +99,7 @@ func (k *kubeEndpointsConfigProvider) String() string {
 }
 
 // Collect retrieves services from the apiserver, builds Config objects and returns them
-func (k *kubeEndpointsConfigProvider) Collect() ([]integration.Config, error) {
+func (k *kubeEndpointsConfigProvider) Collect(ctx context.Context) ([]integration.Config, error) {
 	services, err := k.serviceLister.List(labels.Everything())
 	if err != nil {
 		return nil, err
@@ -106,7 +114,7 @@ func (k *kubeEndpointsConfigProvider) Collect() ([]integration.Config, error) {
 			log.Errorf("Cannot get Kubernetes endpoints: %s", err)
 			continue
 		}
-		generatedConfigs = append(generatedConfigs, generateConfigs(config.tpl, kep)...)
+		generatedConfigs = append(generatedConfigs, generateConfigs(config.tpl, config.resolveMode, kep)...)
 		endpointsID := apiserver.EntityForEndpoints(config.namespace, config.name, "")
 		k.Lock()
 		k.monitoredEndpoints[endpointsID] = true
@@ -116,7 +124,7 @@ func (k *kubeEndpointsConfigProvider) Collect() ([]integration.Config, error) {
 }
 
 // IsUpToDate allows to cache configs as long as no changes are detected in the apiserver
-func (k *kubeEndpointsConfigProvider) IsUpToDate() (bool, error) {
+func (k *kubeEndpointsConfigProvider) IsUpToDate(ctx context.Context) (bool, error) {
 	return k.upToDate, nil
 }
 
@@ -209,12 +217,19 @@ func parseServiceAnnotationsForEndpoints(services []*v1.Service) []configInfo {
 		for _, err := range errors {
 			log.Errorf("Cannot parse endpoint template for service %s/%s: %s", svc.Namespace, svc.Name, err)
 		}
+		ignoreADTags := ignoreADTagsFromAnnotations(svc.GetAnnotations(), kubeEndpointAnnotationPrefix)
+		var resolveMode endpointResolveMode
+		if value, found := svc.Annotations[kubeEndpointAnnotationPrefix+kubeEndpointResolvePath]; found {
+			resolveMode = endpointResolveMode(value)
+		}
 		for i := range endptConf {
 			endptConf[i].Source = "kube_endpoints:" + endpointsID
+			endptConf[i].IgnoreAutodiscoveryTags = ignoreADTags
 			configsInfo = append(configsInfo, configInfo{
-				tpl:       endptConf[i],
-				namespace: svc.Namespace,
-				name:      svc.Name,
+				tpl:         endptConf[i],
+				namespace:   svc.Namespace,
+				name:        svc.Name,
+				resolveMode: resolveMode,
 			})
 		}
 	}
@@ -222,7 +237,7 @@ func parseServiceAnnotationsForEndpoints(services []*v1.Service) []configInfo {
 }
 
 // generateConfigs creates a config template for each Endpoints IP
-func generateConfigs(tpl integration.Config, kep *v1.Endpoints) []integration.Config {
+func generateConfigs(tpl integration.Config, resolveMode endpointResolveMode, kep *v1.Endpoints) []integration.Config {
 	if kep == nil {
 		log.Warn("Nil Kubernetes Endpoints object, cannot generate config templates")
 		return []integration.Config{tpl}
@@ -230,46 +245,56 @@ func generateConfigs(tpl integration.Config, kep *v1.Endpoints) []integration.Co
 	generatedConfigs := []integration.Config{}
 	namespace := kep.Namespace
 	name := kep.Name
+
+	// Check resolve annotation to know how we should process this endpoint
+	var resolveFunc func(*integration.Config, v1.EndpointAddress)
+	switch resolveMode {
+	// IP: we explicitly ignore what's behind this address (nothing to do)
+	case kubeEndpointResolveIP:
+	// In case of unknown value, fallback to auto
+	default:
+		log.Warnf("Unknown resolve value: %s for endpoint: %s/%s - fallback to auto mode", resolveMode, namespace, name)
+		fallthrough
+	// Auto or empty (default to auto): we try to resolve the POD behind this address
+	case "":
+		fallthrough
+	case kubeEndpointResolveAuto:
+		resolveFunc = utils.ResolveEndpointConfigAuto
+	}
+
 	for i := range kep.Subsets {
 		for j := range kep.Subsets[i].Addresses {
 			// Set a new entity containing the endpoint's IP
 			entity := apiserver.EntityForEndpoints(namespace, name, kep.Subsets[i].Addresses[j].IP)
 			newConfig := integration.Config{
-				Entity:        entity,
-				Name:          tpl.Name,
-				Instances:     tpl.Instances,
-				InitConfig:    tpl.InitConfig,
-				MetricConfig:  tpl.MetricConfig,
-				LogsConfig:    tpl.LogsConfig,
-				ADIdentifiers: []string{entity},
-				ClusterCheck:  true,
-				Provider:      tpl.Provider,
-				Source:        tpl.Source,
+				Entity:                  entity,
+				Name:                    tpl.Name,
+				Instances:               tpl.Instances,
+				InitConfig:              tpl.InitConfig,
+				MetricConfig:            tpl.MetricConfig,
+				LogsConfig:              tpl.LogsConfig,
+				ADIdentifiers:           []string{entity},
+				ClusterCheck:            true,
+				Provider:                tpl.Provider,
+				Source:                  tpl.Source,
+				IgnoreAutodiscoveryTags: tpl.IgnoreAutodiscoveryTags,
 			}
-			if targetRef := kep.Subsets[i].Addresses[j].TargetRef; targetRef != nil {
-				if targetRef.Kind == kubePodKind {
-					// The endpoint is backed by a pod.
-					// We add the pod uid as AD identifiers so the check can get the pod tags.
-					podUID := string(targetRef.UID)
-					newConfig.ADIdentifiers = append(newConfig.ADIdentifiers, getPodEntity(podUID))
-					if nodeName := kep.Subsets[i].Addresses[j].NodeName; nodeName != nil {
-						// Set the node name to schedule the endpoint check on the correct node.
-						// This field needs to be set only when the endpoint is backed by a pod.
-						newConfig.NodeName = *nodeName
-					}
-				}
+
+			if resolveFunc != nil {
+				resolveFunc(&newConfig, kep.Subsets[i].Addresses[j])
 			}
+
 			generatedConfigs = append(generatedConfigs, newConfig)
 		}
 	}
 	return generatedConfigs
 }
 
-// getPodEntity returns pod entity
-func getPodEntity(podUID string) string {
-	return KubePodPrefix + podUID
-}
-
 func init() {
 	RegisterProvider(KubeEndpointsProviderName, NewKubeEndpointsConfigProvider)
+}
+
+// GetConfigErrors is not implemented for the kubeEndpointsConfigProvider
+func (k *kubeEndpointsConfigProvider) GetConfigErrors() map[string]ErrorMsgSet {
+	return make(map[string]ErrorMsgSet)
 }

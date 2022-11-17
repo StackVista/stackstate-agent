@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/gopsutil/process"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/StackVista/stackstate-agent/pkg/process/procutil"
 )
 
 func setupDataScrubber(t *testing.T) *DataScrubber {
@@ -52,13 +53,21 @@ type testCase struct {
 }
 
 type testProcess struct {
-	process.FilledProcess
+	procutil.Process
 	parsedCmdline []string
 }
 
 func setupSensitiveCmdlines() []testCase {
 	return []testCase{
+		{[]string{"agent", "password", "-token", "1234"}, []string{"agent", "password", "********", "1234"}},
 		{[]string{"agent", "-password", "1234"}, []string{"agent", "-password", "********"}},
+		{[]string{"agent --password > /password/secret; agent --password echo >> /etc"}, []string{"agent", "--password", "********", "/password/secret;", "agent", "--password", "********", ">>", "/etc"}},
+		{[]string{"agent --password > /password/secret; ls"}, []string{"agent", "--password", "********", "/password/secret;", "ls"}},
+		{[]string{"agent", "-password=========123"}, []string{"agent", "-password=********"}},
+		{[]string{"agent", "-password:123"}, []string{"agent", "-password:********"}},
+		{[]string{"agent", "password/test:123"}, []string{"agent", "password/test:********"}},
+		{[]string{"agent", "-password////:123"}, []string{"agent", "-password////:********"}},
+		{[]string{"agent", "-password", "-password"}, []string{"agent", "-password", "********"}},
 		{[]string{"agent", "--password", "1234"}, []string{"agent", "--password", "********"}},
 		{[]string{"agent", "-password=1234"}, []string{"agent", "-password=********"}},
 		{[]string{"agent", "--password=1234"}, []string{"agent", "--password=********"}},
@@ -96,6 +105,11 @@ func setupSensitiveCmdlines() []testCase {
 
 func setupInsensitiveCmdlines() []testCase {
 	return []testCase{
+		{[]string{"agent", "-password/123"}, []string{"agent", "-password/123"}},
+		{[]string{"/usr/local/bin/bash -c cat /etc/vaultd/secrets/haproxy-crt.pem > /etc/vaultd/secrets/haproxy.pem; echo >> /etc/vaultd/secrets/haproxy.pem; cat /etc/vaultd/secrets/haproxy-key.pem >> /etc/vaultd/secrets/haproxy.pem"},
+			[]string{"/usr/local/bin/bash -c cat /etc/vaultd/secrets/haproxy-crt.pem > /etc/vaultd/secrets/haproxy.pem; echo >> /etc/vaultd/secrets/haproxy.pem; cat /etc/vaultd/secrets/haproxy-key.pem >> /etc/vaultd/secrets/haproxy.pem"}},
+		{[]string{":usr:local:bin:bash -c cat :etc:vaultd:secrets:haproxy-crt.pem > :etc:vaultd:secrets:haproxy.pem; echo >> :etc:vaultd:secrets:haproxy.pem; cat :etc:vaultd:secrets:haproxy-key.pem >> :etc:vaultd:secrets:haproxy.pem"},
+			[]string{":usr:local:bin:bash -c cat :etc:vaultd:secrets:haproxy-crt.pem > :etc:vaultd:secrets:haproxy.pem; echo >> :etc:vaultd:secrets:haproxy.pem; cat :etc:vaultd:secrets:haproxy-key.pem >> :etc:vaultd:secrets:haproxy.pem"}},
 		{[]string{"spidly", "--debug_port=2043"}, []string{"spidly", "--debug_port=2043"}},
 		{[]string{"agent", "start", "-p", "config.cfg"}, []string{"agent", "start", "-p", "config.cfg"}},
 		{[]string{"p1", "-user=admin"}, []string{"p1", "-user=admin"}},
@@ -178,10 +192,12 @@ func setupTestProcesses() (fps []testProcess, sensible int) {
 	fps = make([]testProcess, 0, len(cases))
 	for i, c := range cases {
 		fps = append(fps, testProcess{
-			process.FilledProcess{
-				Pid:        int32(i),
-				CreateTime: time.Now().Unix(),
-				Cmdline:    c.cmdline,
+			procutil.Process{
+				Pid: int32(i),
+				Stats: &procutil.Stats{
+					CreateTime: time.Now().Unix(),
+				},
+				Cmdline: c.cmdline,
 			},
 			c.parsedCmdline,
 		})
@@ -198,10 +214,12 @@ func setupTestProcessesForBench() []testProcess {
 	fps := make([]testProcess, 0, len(cases))
 	for i := 0; i < nbProcesses; i++ {
 		fps = append(fps, testProcess{
-			process.FilledProcess{
-				Pid:        int32(i),
-				CreateTime: time.Now().Unix(),
-				Cmdline:    cases[i%len(cases)].cmdline,
+			procutil.Process{
+				Pid: int32(i),
+				Stats: &procutil.Stats{
+					CreateTime: time.Now().Unix(),
+				},
+				Cmdline: cases[i%len(cases)].cmdline,
 			},
 			cases[i%len(cases)].parsedCmdline,
 		})
@@ -310,7 +328,7 @@ func TestBlacklistedArgsWhenDisabled(t *testing.T) {
 	scrubber.Enabled = false
 
 	for i := range cases {
-		fp := &process.FilledProcess{Cmdline: cases[i].cmdline}
+		fp := &procutil.Process{Cmdline: cases[i].cmdline}
 		cases[i].cmdline = scrubber.ScrubProcessCommand(fp)
 		assert.Equal(t, cases[i].parsedCmdline, cases[i].cmdline)
 	}
@@ -345,7 +363,7 @@ func TestScrubberStrippingAllArgument(t *testing.T) {
 	scrubber.StripAllArguments = true
 
 	for i := range cases {
-		fp := &process.FilledProcess{Cmdline: cases[i].cmdline}
+		fp := &procutil.Process{Cmdline: cases[i].cmdline}
 		cases[i].cmdline = scrubber.ScrubProcessCommand(fp)
 		assert.Equal(t, cases[i].parsedCmdline, cases[i].cmdline)
 	}
@@ -378,7 +396,7 @@ func TestScrubWithCache(t *testing.T) {
 	// During the cache lifespan, all the processes scrubbed cmdline must live in the cache
 	for i := 0; i < int(scrubber.cacheMaxCycles); i++ {
 		for _, p := range testProcs {
-			scrubbed := scrubber.ScrubProcessCommand(&p.FilledProcess)
+			scrubbed := scrubber.ScrubProcessCommand(&p.Process)
 			assert.Equal(t, p.parsedCmdline, scrubbed)
 		}
 		assert.Equal(t, len(testProcs), len(scrubber.seenProcess))
@@ -392,7 +410,7 @@ func TestScrubWithCache(t *testing.T) {
 
 	// Scrubbing the same processes should put them again on cache
 	for _, p := range testProcs {
-		scrubbed := scrubber.ScrubProcessCommand(&p.FilledProcess)
+		scrubbed := scrubber.ScrubProcessCommand(&p.Process)
 		assert.Equal(t, p.parsedCmdline, scrubbed)
 	}
 	assert.Equal(t, len(testProcs), len(scrubber.seenProcess))
@@ -408,7 +426,7 @@ var avoidOptimization []string
 
 func benchmarkRegexMatching(nbProcesses int, b *testing.B) {
 	runningProcesses := make([][]string, nbProcesses)
-	foolCmdline := []string{"python ~/test/run.py --password=1234 -password 1234 -password=admin -secret 2345 -credentials=1234 -api_key 2808 &"}
+	foolCmdline := []string{"python ~/test/run.py --dd_password=1234 -password 1234 -password=admin -secret 2345 -credentials=1234 -api_key 2808 &"}
 
 	customSensitiveWords := []string{
 		"*consul_token",
@@ -419,7 +437,7 @@ func benchmarkRegexMatching(nbProcesses int, b *testing.B) {
 	scrubber.AddCustomSensitiveWords(customSensitiveWords)
 
 	for i := 0; i < nbProcesses; i++ {
-		runningProcesses = append(runningProcesses, foolCmdline)
+		runningProcesses[i] = foolCmdline
 	}
 
 	var r []string
@@ -457,7 +475,7 @@ func benchmarkWithCache(b *testing.B) {
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
 		for i := 0; i < len(fps); i++ {
-			r = scrubber.ScrubProcessCommand(&fps[i].FilledProcess)
+			r = scrubber.ScrubProcessCommand(&fps[i].Process)
 		}
 	}
 	avoidOptimization = r

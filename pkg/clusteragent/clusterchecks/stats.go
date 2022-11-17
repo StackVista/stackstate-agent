@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 // +build clusterchecks
 
@@ -56,12 +56,16 @@ func (h *Handler) getStats() *types.Stats {
 func (d *dispatcher) getStats() *types.Stats {
 	d.store.RLock()
 	defer d.store.RUnlock()
-
+	var checkNames map[string]struct{}
+	for _, m := range d.store.digestToConfig {
+		checkNames[m.Name] = struct{}{}
+	}
 	return &types.Stats{
 		Active:          d.store.active,
 		NodeCount:       len(d.store.nodes),
 		ActiveConfigs:   len(d.store.digestToNode),
 		DanglingConfigs: len(d.store.danglingConfigs),
 		TotalConfigs:    len(d.store.digestToConfig),
+		CheckNames:      checkNames,
 	}
 }

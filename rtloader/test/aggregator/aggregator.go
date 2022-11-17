@@ -17,36 +17,41 @@ import (
 #include "rtloader_mem.h"
 #include "datadog_agent_rtloader.h"
 
-extern void submitMetric(char *, metric_type_t, char *, float, char **, char *);
+extern void submitMetric(char *, metric_type_t, char *, double, char **, char *, bool);
 extern void submitServiceCheck(char *, char *, int, char **, char *, char *);
 extern void submitEvent(char*, event_t*);
-extern void submitHistogramBucket(char *, char *, long long, float, float, int, char *, char **);
+extern void submitHistogramBucket(char *, char *, long long, float, float, int, char *, char **, bool);
+extern void submitEventPlatformEvent(char *, char *, char *);
 
 static void initAggregatorTests(rtloader_t *rtloader) {
    set_submit_metric_cb(rtloader, submitMetric);
    set_submit_service_check_cb(rtloader, submitServiceCheck);
    set_submit_event_cb(rtloader, submitEvent);
    set_submit_histogram_bucket_cb(rtloader, submitHistogramBucket);
+   set_submit_event_platform_event_cb(rtloader, submitEventPlatformEvent);
 }
 */
 import "C"
 
 var (
-	rtloader   *C.rtloader_t
-	checkID    string
-	metricType int
-	name       string
-	value      float64
-	tags       []string
-	hostname   string
-	scLevel    int
-	scName     string
-	scMessage  string
-	_event     *event
-	intValue   int
-	lowerBound float64
-	upperBound float64
-	monotonic  bool
+	rtloader        *C.rtloader_t
+	checkID         string
+	metricType      int
+	name            string
+	value           float64
+	tags            []string
+	hostname        string
+	flushFirstValue bool
+	scLevel         int
+	scName          string
+	scMessage       string
+	rawEvent        string
+	eventType       string
+	_event          *event
+	intValue        int
+	lowerBound      float64
+	upperBound      float64
+	monotonic       bool
 )
 
 type event struct {
@@ -151,7 +156,7 @@ func charArrayToSlice(array **C.char) (res []string) {
 }
 
 //export submitMetric
-func submitMetric(id *C.char, mt C.metric_type_t, mname *C.char, val C.float, t **C.char, hname *C.char) {
+func submitMetric(id *C.char, mt C.metric_type_t, mname *C.char, val C.double, t **C.char, hname *C.char, fFirstValue C.bool) {
 	checkID = C.GoString(id)
 	metricType = int(mt)
 	name = C.GoString(mname)
@@ -160,6 +165,7 @@ func submitMetric(id *C.char, mt C.metric_type_t, mname *C.char, val C.float, t 
 	if t != nil {
 		tags = append(tags, charArrayToSlice(t)...)
 	}
+	flushFirstValue = bool(fFirstValue)
 }
 
 //export submitServiceCheck
@@ -211,7 +217,7 @@ func submitEvent(id *C.char, ev *C.event_t) {
 }
 
 //export submitHistogramBucket
-func submitHistogramBucket(id *C.char, cMetricName *C.char, cVal C.longlong, cLowerBound C.float, cUpperBound C.float, cMonotonic C.int, cHostname *C.char, t **C.char) {
+func submitHistogramBucket(id *C.char, cMetricName *C.char, cVal C.longlong, cLowerBound C.float, cUpperBound C.float, cMonotonic C.int, cHostname *C.char, t **C.char, fFirstValue C.bool) {
 	checkID = C.GoString(id)
 	name = C.GoString(cMetricName)
 	intValue = int(cVal)
@@ -222,4 +228,12 @@ func submitHistogramBucket(id *C.char, cMetricName *C.char, cVal C.longlong, cLo
 	if t != nil {
 		tags = append(tags, charArrayToSlice(t)...)
 	}
+	flushFirstValue = bool(fFirstValue)
+}
+
+//export submitEventPlatformEvent
+func submitEventPlatformEvent(id *C.char, _rawEvent *C.char, _eventType *C.char) {
+	checkID = C.GoString(id)
+	rawEvent = C.GoString(_rawEvent)
+	eventType = C.GoString(_eventType)
 }

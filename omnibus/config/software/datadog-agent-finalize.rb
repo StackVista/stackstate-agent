@@ -1,7 +1,7 @@
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
 # This product includes software developed at Datadog (https:#www.datadoghq.com/).
-# Copyright 2016-2020 Datadog, Inc.
+# Copyright 2016-present Datadog, Inc.
 
 # This software definition doesn"t build anything, it"s the place where we create
 # files outside the omnibus installation directory, so that we can add them to
@@ -22,14 +22,21 @@ build do
             conf_dir = "#{conf_dir_root}/extra_package_files/EXAMPLECONFSLOCATION"
             mkdir conf_dir
             move "#{install_dir}/etc/stackstate-agent/stackstate.yaml.example", conf_dir_root, :force=>true
+            if ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty? and not windows_arch_i386?
+              move "#{install_dir}/etc/stackstate-agent/system-probe.yaml.example", conf_dir_root, :force=>true
+            end
             move "#{install_dir}/etc/stackstate-agent/conf.d/*", conf_dir, :force=>true
             delete "#{install_dir}/bin/agent/agent.exe"
             # TODO why does this get generated at all
             delete "#{install_dir}/bin/agent/agent.exe~"
 
             #remove unneccessary copies caused by blanked copy of bin to #{install_dir} in datadog-agent recipe
-            delete "#{install_dir}/bin/agent/libdatadog-agent-three.dll"
-            delete "#{install_dir}/bin/agent/libdatadog-agent-two.dll"
+            if with_python_runtime? "2"
+                delete "#{install_dir}/bin/agent/libdatadog-agent-two.dll"
+            end
+            if with_python_runtime? "3"
+                delete "#{install_dir}/bin/agent/libdatadog-agent-three.dll"
+            end
             delete "#{install_dir}/bin/agent/customaction.dll"
 
             # not sure where it's coming from, but we're being left with an `embedded` dir.
@@ -42,11 +49,11 @@ build do
             delete "#{conf_dir}/process_agent.yaml.default"
             # load isn't supported by windows
             delete "#{conf_dir}/load.d"
-            # disk isn't supported by windows
+            # sts disk isn't supported by windows
             delete "#{conf_dir}/disk.d"
-            # docker isn't supported by windows
+            # sts docker isn't supported by windows
             delete "#{conf_dir}/docker.d"
-            # docker swarm isn't supported by windows
+            # sts docker swarm isn't supported by windows
             delete "#{conf_dir}/docker_swarm.d"
 
             # cleanup clutter
@@ -55,17 +62,43 @@ build do
             delete "#{install_dir}/bin/agent/dist/*.conf*"
             delete "#{install_dir}/bin/agent/dist/*.yaml"
             command "del /q /s #{windows_safe_path(install_dir)}\\*.pyc"
-        elsif linux?
+        end
+
+        if linux? || osx?
+            # Setup script aliases, e.g. `/opt/datadog-agent/embedded/bin/pip` will
+            # default to `pip2` if the default Python runtime is Python 2.
+            if with_python_runtime? "2"
+                delete "#{install_dir}/embedded/bin/pip"
+                link "#{install_dir}/embedded/bin/pip2", "#{install_dir}/embedded/bin/pip"
+
+                delete "#{install_dir}/embedded/bin/2to3"
+                link "#{install_dir}/embedded/bin/2to3-2.7", "#{install_dir}/embedded/bin/2to3"
+            # Setup script aliases, e.g. `/opt/datadog-agent/embedded/bin/pip` will
+            # default to `pip3` if the default Python runtime is Python 3 (Agent 7.x).
+            # Caution: we don't want to do this for Agent 6.x
+            elsif with_python_runtime? "3"
+                delete "#{install_dir}/embedded/bin/pip"
+                link "#{install_dir}/embedded/bin/pip3", "#{install_dir}/embedded/bin/pip"
+
+                delete "#{install_dir}/embedded/bin/python"
+                link "#{install_dir}/embedded/bin/python3", "#{install_dir}/embedded/bin/python"
+
+                delete "#{install_dir}/embedded/bin/2to3"
+                link "#{install_dir}/embedded/bin/2to3-3.8", "#{install_dir}/embedded/bin/2to3"
+            end
+        end
+
+        if linux?
             # Fix pip after building on extended toolchain in CentOS builder
             if redhat?
-                unless arm?
-                    #[VS] path is /opt/centos/devtoolset-1.1/root for centos6 based runner
-                    rhel_toolchain_root = "/opt/rh/devtoolset-7/root"
-                    # lets be cautious - we first search for the expected toolchain path, if its not there, bail out
-                    command "find #{install_dir} -type f -iname '*_sysconfigdata*.py' -exec grep -inH '#{rhel_toolchain_root}' {} \\; |  egrep '.*'"
-                    # replace paths with expected target toolchain location
-                    command "find #{install_dir} -type f -iname '*_sysconfigdata*.py' -exec sed -i 's##{rhel_toolchain_root}##g' {} \\;"
-                end
+              unless arm?
+                # sts path is /opt/centos/devtoolset-1.1/root for centos6 based runner
+                rhel_toolchain_root = "/opt/rh/devtoolset-7/root"
+                # lets be cautious - we first search for the expected toolchain path, if its not there, bail out
+                command "find #{install_dir} -type f -iname '*_sysconfigdata*.py' -exec grep -inH '#{rhel_toolchain_root}' {} \\; |  egrep '.*'"
+                # replace paths with expected target toolchain location
+                command "find #{install_dir} -type f -iname '*_sysconfigdata*.py' -exec sed -i 's##{rhel_toolchain_root}##g' {} \\;"
+              end
             end
 
             # Move system service files
@@ -74,6 +107,7 @@ build do
             move "#{install_dir}/scripts/stackstate-agent-trace.conf", "/etc/init"
             move "#{install_dir}/scripts/stackstate-agent-process.conf", "/etc/init"
             move "#{install_dir}/scripts/stackstate-agent-sysprobe.conf", "/etc/init"
+            # sts
             if $enable_security_agent
                 move "#{install_dir}/scripts/stackstate-agent-security.conf", "/etc/init"
             end
@@ -87,6 +121,7 @@ build do
                 move "#{install_dir}/scripts/stackstate-agent", "/etc/init.d"
                 move "#{install_dir}/scripts/stackstate-agent-trace", "/etc/init.d"
                 move "#{install_dir}/scripts/stackstate-agent-process", "/etc/init.d"
+                # sts
                 if $enable_security_agent
                     move "#{install_dir}/scripts/stackstate-agent-security", "/etc/init.d"
                 end
@@ -96,6 +131,7 @@ build do
                 move "#{install_dir}/scripts/stackstate-agent", "/etc/init.d"
                 move "#{install_dir}/scripts/stackstate-agent-trace", "/etc/init.d"
                 move "#{install_dir}/scripts/stackstate-agent-process", "/etc/init.d"
+                # sts
                 if $enable_security_agent
                     move "#{install_dir}/scripts/stackstate-agent-security", "/etc/init.d"
                 end
@@ -105,6 +141,7 @@ build do
             move "#{install_dir}/scripts/stackstate-agent-trace.service", systemd_directory
             move "#{install_dir}/scripts/stackstate-agent-process.service", systemd_directory
             move "#{install_dir}/scripts/stackstate-agent-sysprobe.service", systemd_directory
+            # sts
             if $enable_security_agent
                 move "#{install_dir}/scripts/stackstate-agent-security.service", systemd_directory
             end
@@ -115,10 +152,16 @@ build do
             move "#{install_dir}/etc/stackstate-agent/stackstate.yaml.example", "/etc/stackstate-agent"
             move "#{install_dir}/etc/stackstate-agent/system-probe.yaml.example", "/etc/stackstate-agent"
             move "#{install_dir}/etc/stackstate-agent/conf.d", "/etc/stackstate-agent", :force=>true
+            # sts
+            if $enable_security_agent
+                move "#{install_dir}/etc/stackstate-agent/runtime-security.d", "/etc/stackstate-agent", :force=>true
+                move "#{install_dir}/etc/stackstate-agent/security-agent.yaml.example", "/etc/stackstate-agent", :force=>true
+                move "#{install_dir}/etc/stackstate-agent/compliance.d", "/etc/stackstate-agent"
+            end
 
             # Move SELinux policy
             if debian? || redhat?
-                move "#{install_dir}/etc/datadog-agent/selinux", "/etc/datadog-agent/selinux"
+              move "#{install_dir}/etc/stackstate-agent/selinux", "/etc/stackstate-agent/selinux"
             end
 
             # Create empty directories so that they're owned by the package
@@ -158,28 +201,6 @@ build do
             delete "#{install_dir}/embedded/share/aclocal"
             delete "#{install_dir}/embedded/share/examples"
 
-            # Setup script aliases, e.g. `/opt/datadog-agent/embedded/bin/pip` will
-            # default to `pip2` if the default Python runtime is Python 2.
-            if with_python_runtime? "2"
-                delete "#{install_dir}/embedded/bin/pip"
-                link "#{install_dir}/embedded/bin/pip2", "#{install_dir}/embedded/bin/pip"
-
-                delete "#{install_dir}/embedded/bin/2to3"
-                link "#{install_dir}/embedded/bin/2to3-2.7", "#{install_dir}/embedded/bin/2to3"
-                # Setup script aliases, e.g. `/opt/datadog-agent/embedded/bin/pip` will
-                # default to `pip3` if the default Python runtime is Python 3 (Agent 7.x).
-                # Caution: we don't want to do this for Agent 6.x
-            elsif with_python_runtime? "3"
-                delete "#{install_dir}/embedded/bin/pip"
-                link "#{install_dir}/embedded/bin/pip3", "#{install_dir}/embedded/bin/pip"
-
-                delete "#{install_dir}/embedded/bin/python"
-                link "#{install_dir}/embedded/bin/python3", "#{install_dir}/embedded/bin/python"
-
-                delete "#{install_dir}/embedded/bin/2to3"
-                link "#{install_dir}/embedded/bin/2to3-3.7", "#{install_dir}/embedded/bin/2to3"
-            end
-
             # removing the man pages from the embedded folder to reduce package size by ~4MB
             delete "#{install_dir}/embedded/man"
             delete "#{install_dir}/embedded/share/man"
@@ -194,12 +215,27 @@ build do
             strip_exclude("*psycopg2*")
             strip_exclude("*cffi_backend*")
 
-        elsif osx?
+            # We get the following error when the aerospike lib is stripped:
+            # The `aerospike` client is not installed: /opt/datadog-agent/embedded/lib/python2.7/site-packages/aerospike.so: ELF load command address/offset not properly aligned
+            strip_exclude("*aerospike*")
+
+            # Do not strip eBPF programs
+            strip_exclude("*tracer*")
+            strip_exclude("*offset-guess*")
+            strip_exclude("*http*")
+            strip_exclude("*runtime-security*")
+            strip_exclude("*dns*")
+        end
+
+        if osx?
             # Remove linux specific configs
             delete "#{install_dir}/etc/conf.d/file_handle.d"
 
             # remove windows specific configs
             delete "#{install_dir}/etc/conf.d/winproc.d"
+
+            # remove docker configuration
+            delete "#{install_dir}/etc/conf.d/docker.d"
 
             if ENV['HARDENED_RUNTIME_MAC'] == 'true'
                 hardened_runtime = "-o runtime --entitlements #{entitlements_file} "
@@ -209,9 +245,9 @@ build do
 
             if code_signing_identity
                 # Codesign everything
-                command "find #{install_dir} -type f | grep -E '(\\.so|\\.dylib)' | xargs codesign #{hardened_runtime}--force --timestamp --deep -s '#{code_signing_identity}'"
-                command "find #{install_dir}/embedded/bin -perm +111 -type f | xargs codesign #{hardened_runtime}--force --timestamp  --deep -s '#{code_signing_identity}'"
-                command "find #{install_dir}/bin -perm +111 -type f | xargs codesign #{hardened_runtime}--force --timestamp  --deep -s '#{code_signing_identity}'"
+                command "find #{install_dir} -type f | grep -E '(\\.so|\\.dylib)' | xargs -I{} codesign #{hardened_runtime}--force --timestamp --deep -s '#{code_signing_identity}' '{}'"
+                command "find #{install_dir}/embedded/bin -perm +111 -type f | xargs -I{} codesign #{hardened_runtime}--force --timestamp --deep -s '#{code_signing_identity}' '{}'"
+                command "find #{install_dir}/bin -perm +111 -type f | xargs -I{} codesign #{hardened_runtime}--force --timestamp --deep -s '#{code_signing_identity}' '{}'"
                 command "codesign #{hardened_runtime}--force --timestamp --deep -s '#{code_signing_identity}' '#{install_dir}/Datadog Agent.app'"
             end
         end

@@ -1,7 +1,9 @@
 package urn
 
 import (
+	"context"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	v1 "k8s.io/api/core/v1"
 	"strings"
@@ -246,7 +248,9 @@ func (b *urnBuilder) BuildNodeURNs(node v1.Node) []string {
 	if instanceID := GetInstanceID(node); instanceID != "" {
 		identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", instanceID))
 
-		clusterName := clustername.GetClusterName()
+		ctx := context.TODO()
+		hostname, _ := util.GetHostname(ctx)
+		clusterName := clustername.GetClusterName(ctx, hostname)
 		if clusterName != "" {
 			identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s-%s", instanceID, clusterName))
 		}

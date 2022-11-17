@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package agent
 
@@ -14,9 +14,13 @@ import (
 	"runtime/pprof"
 	"time"
 
+	"github.com/StackVista/stackstate-agent/cmd/manager"
 	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/pidfile"
 	"github.com/StackVista/stackstate-agent/pkg/tagger"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/local"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/remote"
 	"github.com/StackVista/stackstate-agent/pkg/trace/config"
 	"github.com/StackVista/stackstate-agent/pkg/trace/flags"
 	"github.com/StackVista/stackstate-agent/pkg/trace/info"
@@ -24,7 +28,13 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/metrics/timing"
 	"github.com/StackVista/stackstate-agent/pkg/trace/osutil"
 	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/profiling"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta"
+
+	// register all workloadmeta collectors
+	_ "github.com/StackVista/stackstate-agent/pkg/workloadmeta/collectors"
 )
 
 const messageAgentDisabled = `trace-agent not enabled. Set the environment variable
@@ -113,6 +123,16 @@ func Run(ctx context.Context) {
 		defer os.Remove(flags.PIDFilePath)
 	}
 
+	if err := util.SetupCoreDump(); err != nil {
+		log.Warnf("Can't setup core dumps: %v, core dumps might not be available after a crash", err)
+	}
+
+	err = manager.ConfigureAutoExit(ctx)
+	if err != nil {
+		osutil.Exitf("Unable to configure auto-exit, err: %v", err)
+		return
+	}
+
 	err = metrics.Configure(cfg, []string{"version:" + info.Version})
 	if err != nil {
 		osutil.Exitf("cannot configure dogstatsd: %v", err)
@@ -124,11 +144,50 @@ func Run(ctx context.Context) {
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	tagger.Init()
-	defer tagger.Stop()
+	remoteTagger := coreconfig.Datadog.GetBool("apm_config.remote_tagger")
+	if remoteTagger {
+		tagger.SetDefaultTagger(remote.NewTagger())
+		if err := tagger.Init(); err != nil {
+			log.Infof("starting remote tagger failed. falling back to local tagger: %s", err)
+			remoteTagger = false
+		}
+	}
+
+	// starts the local tagger if apm_config says so, or if starting the
+	// remote tagger has failed.
+	if !remoteTagger {
+		// Start workload metadata store before tagger
+		workloadmeta.GetGlobalStore().Start(context.Background())
+
+		tagger.SetDefaultTagger(local.NewTagger(collectors.DefaultCatalog))
+		if err := tagger.Init(); err != nil {
+			log.Errorf("failed to start the tagger: %s", err)
+		}
+	}
+
+	defer func() {
+		err := tagger.Stop()
+		if err != nil {
+			log.Error(err)
+		}
+	}()
 
 	agnt := NewAgent(ctx, cfg)
 	log.Infof("Trace agent running on host %s", cfg.Hostname)
+
+	// sts debug
+	var endpointsString string
+	for _, e := range cfg.Endpoints {
+		endpointsString += fmt.Sprintf("(host: %s, apiKey: %s),", e.Host, e.APIKey)
+	}
+	log.Infof("[sts] Trace agent sending data to %+v", endpointsString)
+
+	if cfg.ProfilingSettings != nil {
+		cfg.ProfilingSettings.Tags = []string{fmt.Sprintf("version:%s", info.Version)}
+		profiling.Start(*cfg.ProfilingSettings)
+		log.Infof("Internal profiling enabled: %s.", cfg.ProfilingSettings)
+		defer profiling.Stop()
+	}
 	agnt.Run()
 
 	// collect memory profile

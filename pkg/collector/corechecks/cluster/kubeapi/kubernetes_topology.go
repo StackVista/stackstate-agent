@@ -8,6 +8,7 @@
 package kubeapi
 
 import (
+	"k8s.io/apimachinery/pkg/version"
 	"sync"
 	"time"
 
@@ -71,6 +72,15 @@ func (t *TopologyCheck) Configure(config, initConfig integration.Data, source st
 
 	log.Debugf("Running config %s", config)
 	return nil
+}
+
+func (t *TopologyCheck) getKubernetesVersion() *version.Info {
+	info, err := t.ac.GetVersion()
+	if err != nil {
+		_ = log.Warnf("Could not set Kubernetes version for topology collector: ", err)
+	}
+	log.Debugf("Kubernetes version: %+v", info)
+	return info
 }
 
 // SetSubmitter sets the topology submitter for the Topology Check
@@ -148,7 +158,7 @@ func (t *TopologyCheck) Run() error {
 	waitGroupChannel := make(chan bool)
 	collectorsDoneChannel := make(chan bool)
 
-	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, t.ac, t.instance.SourcePropertiesEnabled, componentChannel, componentIDChannel)
+	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, t.ac, t.instance.SourcePropertiesEnabled, componentChannel, componentIDChannel, t.getKubernetesVersion())
 	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
 	clusterCollectors := []collectors.ClusterTopologyCollector{
 		// Register Cluster Component Collector
@@ -310,7 +320,7 @@ func (t *TopologyCheck) Run() error {
 	return nil
 }
 
-// sets up the receiver that handles the component and relation channel and publishes it to StackState, returns when all the collectors have finished or the timeout was reached.
+// WaitForTopology sets up the receiver that handles the component and relation channel and publishes it to StackState, returns when all the collectors have finished or the timeout was reached.
 func (t *TopologyCheck) WaitForTopology(componentChannel <-chan *topology.Component, relationChannel <-chan *topology.Relation,
 	errorChannel <-chan error, waitGroup *sync.WaitGroup, waitGroupChannel chan bool, collectorsDoneChannel chan bool) {
 	log.Debugf("Waiting for Cluster Collectors to Finish")
@@ -360,7 +370,7 @@ func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
 	}
 }
 
-// runs all of the cluster collectors, notify the wait groups and submit errors to the error channel
+// RunClusterCollectors runs all the cluster collectors, notify the wait groups and submit errors to the error channel
 func (t *TopologyCheck) RunClusterCollectors(
 	clusterCollectors []collectors.ClusterTopologyCollector,
 	clusterCorrelators []collectors.ClusterTopologyCorrelator,
@@ -370,7 +380,7 @@ func (t *TopologyCheck) RunClusterCollectors(
 	collectorsDoneChannel chan bool) {
 	var relationWaitGroup sync.WaitGroup
 	relationWaitGroup.Add(1 + len(clusterCorrelators)) // all collectors + all correlators (without RelationCorrelator)
-	waitGroup.Add(1)                                   // RelationCorrelator
+	waitGroup.Add(1)
 	go func() {
 		for _, collector := range clusterCollectors {
 			// add this collector to the wait group

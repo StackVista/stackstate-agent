@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 //go:build python
 // +build python
@@ -84,12 +84,14 @@ void GetVersion(char **);
 void GetPid(char **);
 void GetCreateTime(char **);
 void Headers(char **);
-void ReadPersistentCache(char *);
+char * ReadPersistentCache(char *);
 void SetCheckMetadata(char *, char *, char *);
 void SetExternalTags(char *, char *, char **);
 void WritePersistentCache(char *, char *);
 bool TracemallocEnabled();
-char* ObfuscateSQL(char *, char **);
+char* ObfuscateSQL(char *, char *, char **);
+char* ObfuscateSQLExecPlan(char *, bool, char **);
+double getProcessStartTime();
 
 void initDatadogAgentModule(rtloader_t *rtloader) {
 	set_get_clustername_cb(rtloader, GetClusterName);
@@ -105,29 +107,33 @@ void initDatadogAgentModule(rtloader_t *rtloader) {
 	set_read_persistent_cache_cb(rtloader, ReadPersistentCache);
 	set_tracemalloc_enabled_cb(rtloader, TracemallocEnabled);
 	set_obfuscate_sql_cb(rtloader, ObfuscateSQL);
+	set_obfuscate_sql_exec_plan_cb(rtloader, ObfuscateSQLExecPlan);
+	set_get_process_start_time_cb(rtloader, getProcessStartTime);
 }
 
 //
 // aggregator module
 //
 
-void SubmitMetric(char *, metric_type_t, char *, float, char **, int, char *);
-void SubmitServiceCheck(char *, char *, int, char **, int, char *, char *);
-void SubmitEvent(char *, event_t *, int);
-void SubmitHistogramBucket(char *, char *, long long, float, float, int, char *, char **);
+void SubmitMetric(char *, metric_type_t, char *, double, char **, char *, bool);
+void SubmitServiceCheck(char *, char *, int, char **, char *, char *);
+void SubmitEvent(char *, event_t *);
+void SubmitHistogramBucket(char *, char *, long long, float, float, int, char *, char **, bool);
+void SubmitEventPlatformEvent(char *, char *, char *);
 
 void initAggregatorModule(rtloader_t *rtloader) {
 	set_submit_metric_cb(rtloader, SubmitMetric);
 	set_submit_service_check_cb(rtloader, SubmitServiceCheck);
 	set_submit_event_cb(rtloader, SubmitEvent);
 	set_submit_histogram_bucket_cb(rtloader, SubmitHistogramBucket);
+	set_submit_event_platform_event_cb(rtloader, SubmitEventPlatformEvent);
 }
 
 //
 // _util module
 //
 
-void GetSubprocessOutput(char **, int, char **, char **, int*, char **);
+void GetSubprocessOutput(char **, char **, char **, char **, int*, char **);
 
 void initUtilModule(rtloader_t *rtloader) {
 	set_get_subprocess_output_cb(rtloader, GetSubprocessOutput);
@@ -137,7 +143,7 @@ void initUtilModule(rtloader_t *rtloader) {
 // tagger module
 //
 
-char **Tags(char **, int);
+char **Tags(char *, int);
 
 void initTaggerModule(rtloader_t *rtloader) {
 	set_tags_cb(rtloader, Tags);
@@ -147,7 +153,7 @@ void initTaggerModule(rtloader_t *rtloader) {
 // containers module
 //
 
-int IsContainerExcluded(char *, char *);
+int IsContainerExcluded(char *, char *, char *);
 
 void initContainersModule(rtloader_t *rtloader) {
 	set_is_excluded_cb(rtloader, IsContainerExcluded);
@@ -157,7 +163,7 @@ void initContainersModule(rtloader_t *rtloader) {
 // kubeutil module
 //
 
-void GetKubeletConnectionInfo(char *);
+void GetKubeletConnectionInfo(char **);
 
 void initkubeutilModule(rtloader_t *rtloader) {
 	set_get_connection_info_cb(rtloader, GetKubeletConnectionInfo);
@@ -239,6 +245,25 @@ void initStateModule(rtloader_t *rtloader) {
 */
 import "C"
 
+// InterpreterResolutionError is our custom error for when our interpreter
+// path resolution fails
+type InterpreterResolutionError struct {
+	IsFatal bool
+	Err     error
+}
+
+func (ire InterpreterResolutionError) Error() string {
+	if ire.IsFatal {
+		return fmt.Sprintf("Error trying to resolve interpreter path: '%v'."+
+			" You can set 'allow_python_path_heuristics_failure' to ignore this error.", ire.Err)
+	}
+
+	return fmt.Sprintf("Error trying to resolve interpreter path: '%v'."+
+		" Python's 'multiprocessing' library may fail to work.", ire.Err)
+}
+
+const PythonWinExeBasename = "python.exe"
+
 var (
 	// PythonVersion contains the interpreter version string provided by
 	// `sys.version`. It's empty if the interpreter was not initialized.
@@ -260,9 +285,10 @@ var (
 
 	rtloader *C.rtloader_t = nil
 
-	expvarPyInit *expvar.Map
-	pyInitLock   sync.RWMutex
-	pyInitErrors []string
+	expvarPyInit  *expvar.Map
+	pyInitLock    sync.RWMutex
+	pyDestroyLock sync.RWMutex
+	pyInitErrors  []string
 )
 
 func init() {
@@ -311,7 +337,27 @@ func sendTelemetry(pythonVersion string) {
 	})
 }
 
-func detectPythonLocation(pythonVersion string) {
+func pathToBinary(name string, ignoreErrors bool) (string, error) {
+	absPath, err := executable.ResolvePath(name)
+	if err != nil {
+		resolutionError := InterpreterResolutionError{
+			IsFatal: !ignoreErrors,
+			Err:     err,
+		}
+		log.Error(resolutionError)
+
+		if ignoreErrors {
+			return name, nil
+		}
+
+		return "", resolutionError
+
+	}
+
+	return absPath, nil
+}
+
+func resolvePythonExecPath(pythonVersion string, ignoreErrors bool) (string, error) {
 	// Since the install location can be set by the user on Windows we use relative import
 	if runtime.GOOS == "windows" {
 		_here, err := executable.Folder()
@@ -325,24 +371,22 @@ func detectPythonLocation(pythonVersion string) {
 		}
 		log.Debugf("Executable folder is %v", _here)
 
-		agentpythonHome2 := filepath.Join(_here, "..", "embedded2")
-		agentpythonHome3 := filepath.Join(_here, "..", "embedded3")
+		embeddedPythonHome2 := filepath.Join(_here, "..", "embedded2")
+		embeddedPythonHome3 := filepath.Join(_here, "..", "embedded3")
 
-		/*
-		 * want to use the path relative embedded2/3 directories above by default;
-		 * they'll be correct for normal installation (on windows).
-		 * However, if they're not present (for cases like running unit tests) fall
-		 * back to the compile time values
-		 */
-		if _, err := os.Stat(agentpythonHome2); os.IsNotExist(err) {
-			log.Warnf("relative embedded directory not found for python2; using default %s", pythonHome2)
+		// We want to use the path-relative embedded2/3 directories above by default.
+		// They will be correct for normal installation on Windows. However, if they
+		// are not present for cases like running unit tests, fall back to the compile
+		// time values.
+		if _, err := os.Stat(embeddedPythonHome2); os.IsNotExist(err) {
+			log.Warnf("Relative embedded directory not found for Python 2. Using default: %s", pythonHome2)
 		} else {
-			pythonHome2 = agentpythonHome2
+			pythonHome2 = embeddedPythonHome2
 		}
-		if _, err := os.Stat(agentpythonHome3); os.IsNotExist(err) {
-			log.Warnf("relative embedded directory not found for python3; using default %s", pythonHome3)
+		if _, err := os.Stat(embeddedPythonHome3); os.IsNotExist(err) {
+			log.Warnf("Relative embedded directory not found for Python 3. Using default: %s", pythonHome3)
 		} else {
-			pythonHome3 = agentpythonHome3
+			pythonHome3 = embeddedPythonHome3
 		}
 	}
 
@@ -352,42 +396,83 @@ func detectPythonLocation(pythonVersion string) {
 		PythonHome = pythonHome3
 	}
 
+	log.Infof("Using '%s' as Python home", PythonHome)
+
+	// For Windows, the binary should be in our path already and have a
+	// consistent name
 	if runtime.GOOS == "windows" {
-		pythonBinPath = filepath.Join(PythonHome, "python.exe")
-	} else {
-		// On Unix both python are installed on the same embedded
-		// directory. We don't want to use the default version (aka
-		// "python") but either "python2" or "python3" based on the
-		// configuration.
-		pythonBinPath = filepath.Join(PythonHome, "bin", "python"+pythonVersion)
+		// If we are in a development environment, PythonHome will not be set so we
+		// use the absolute path to the python.exe in our path.
+		if PythonHome == "" {
+			log.Warnf("Python home is empty. Inferring interpreter path from binary in path.")
+			return pathToBinary(PythonWinExeBasename, ignoreErrors)
+		}
+
+		return filepath.Join(PythonHome, PythonWinExeBasename), nil
 	}
+
+	// On *nix both Python versions are installed in the same embedded directory. We
+	// don't want to use the default version (aka "python") but rather "python2" or
+	// "python3" based on the configuration. Also on some Python3 platforms there
+	// are no "python" aliases either.
+	interpreterBasename := "python" + pythonVersion
+
+	// If we are in a development env or just the ldflags haven't been set, the PythonHome
+	// variable won't be set so what we do here is to just find out where our current
+	// default in-path "python2"/"python3" command is located and get its absolute path.
+	if PythonHome == "" {
+		log.Warnf("Python home is empty. Inferring interpreter path from binary in path.")
+		return pathToBinary(interpreterBasename, ignoreErrors)
+	}
+
+	// If we're here, the ldflags have been used so we key off of those to get the
+	// absolute path of the interpreter executable
+	return filepath.Join(PythonHome, "bin", interpreterBasename), nil
 }
 
 func Initialize(paths ...string) error {
 	pythonVersion := config.Datadog.GetString("python_version")
+	allowPathHeuristicsFailure := config.Datadog.GetBool("allow_python_path_heuristics_failure")
 
-	// memory related RTLoader-global initialization
+	// Memory related RTLoader-global initialization
 	if config.Datadog.GetBool("memtrack_enabled") {
 		C.initMemoryTracker()
 	}
 
-	detectPythonLocation(pythonVersion)
+	// Any platform-specific initialization
+	// should be done before rtloader initialization
+	if initializePlatform() != nil {
+		log.Warnf("Unable to complete platform-specific initialization - should be non-fatal")
+	}
+
+	// Note: pythonBinPath is a module-level var
+	pythonBinPath, err := resolvePythonExecPath(pythonVersion, allowPathHeuristicsFailure)
+	if err != nil {
+		return err
+	}
+	log.Debugf("Using '%s' as Python interpreter path", pythonBinPath)
 
 	var pyErr *C.char = nil
+
 	csPythonHome := TrackedCString(PythonHome)
 	defer C._free(unsafe.Pointer(csPythonHome))
+	csPythonExecPath := TrackedCString(pythonBinPath)
+	defer C._free(unsafe.Pointer(csPythonExecPath))
+
 	if pythonVersion == "2" {
-		rtloader = C.make2(csPythonHome, &pyErr)
-		log.Infof("Initializing rtloader with python2 %s", PythonHome)
+		log.Infof("Initializing rtloader with Python 2 %s", PythonHome)
+		rtloader = C.make2(csPythonHome, csPythonExecPath, &pyErr)
 	} else if pythonVersion == "3" {
-		rtloader = C.make3(csPythonHome, &pyErr)
-		log.Infof("Initializing rtloader with python3 %s", PythonHome)
+		log.Infof("Initializing rtloader with Python 3 %s", PythonHome)
+		rtloader = C.make3(csPythonHome, csPythonExecPath, &pyErr)
 	} else {
 		return addExpvarPythonInitErrors(fmt.Sprintf("unsuported version of python: %s", pythonVersion))
 	}
 
 	if rtloader == nil {
-		err := addExpvarPythonInitErrors(fmt.Sprintf("could not load runtime python for version %s: %s", pythonVersion, C.GoString(pyErr)))
+		err := addExpvarPythonInitErrors(
+			fmt.Sprintf("could not load runtime python for version %s: %s", pythonVersion, C.GoString(pyErr)),
+		)
 		if pyErr != nil {
 			// pyErr tracked when created in rtloader
 			C._free(unsafe.Pointer(pyErr))
@@ -399,11 +484,6 @@ func Initialize(paths ...string) error {
 	for _, p := range paths {
 		// bounded but never released allocations with CString
 		C.add_python_path(rtloader, TrackedCString(p))
-	}
-
-	// Any platform-specific initialization
-	if initializePlatform() != nil {
-		log.Warnf("unable to complete platform-specific initialization - should be non-fatal")
 	}
 
 	// Setup custom builtin before RtLoader initialization
@@ -432,7 +512,11 @@ func Initialize(paths ...string) error {
 	}
 
 	// Lock the GIL
-	glock := newStickyLock()
+	glock, err := newStickyLock()
+	if err != nil {
+		return err
+	}
+
 	pyInfo := C.get_py_info(rtloader)
 	glock.unlock()
 
@@ -456,9 +540,21 @@ func Initialize(paths ...string) error {
 
 // Destroy destroys the loaded Python interpreter initialized by 'Initialize'
 func Destroy() {
-	if rtloader != nil {
-		C.destroy(rtloader)
+	pyDestroyLock.Lock()
+	defer pyDestroyLock.Unlock()
+
+	// Sanity check - this should ideally never happen
+	if rtloader == nil {
+		log.Warn("Python runtime already destroyed. Ignoring action.")
+		return
 	}
+
+	// Clear the C-side and Go-side rtloader pointers
+	log.Info("Destroying Python runtime")
+	C.destroy(rtloader)
+	rtloader = nil
+
+	log.Info("Python runtime destroyed")
 }
 
 // GetRtLoader returns the underlying rtloader_t struct. This is meant for testing and

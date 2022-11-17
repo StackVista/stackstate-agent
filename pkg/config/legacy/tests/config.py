@@ -1,25 +1,24 @@
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
-# Copyright 2016-2020 Datadog, Inc.
+# Copyright 2016-present Datadog, Inc.
 
-# stdlib
-import ConfigParser
-from cStringIO import StringIO
+# 3p
+import json
 import logging
 import logging.config
 import logging.handlers
 import os
 import re
-from socket import gaierror, gethostbyname
 import string
 import sys
-from urlparse import urlparse
+from socket import gaierror, gethostbyname
 from urllib.request import getproxies
 
-# 3p
-import json
-
+# stdlib
+import ConfigParser
+from cStringIO import StringIO
+from urlparse import urlparse
 
 # CONSTANTS
 TRACE_CONFIG = 'trace_config'  # used for tracing config load by service discovery
@@ -98,7 +97,7 @@ def _windows_commondata_path():
     how-do-i-find-the-windows-common-application-data-folder-using-python
     """
     import ctypes
-    from ctypes import wintypes, windll
+    from ctypes import windll, wintypes
 
     CSIDL_COMMON_APPDATA = 35
 
@@ -167,7 +166,7 @@ def _is_affirmative(s):
     return s.lower() in ('yes', 'true', '1')
 
 
-def get_config_path(cfg_path="", os_name=None):
+def get_config_path(cfg_path=""):
     return os.path.join(cfg_path, "datadog.conf")
 
 
@@ -239,7 +238,7 @@ def remove_empty(string_array):
     return filter(lambda x: x, string_array)
 
 
-def get_config(cfg_path=None, options=None, can_query_registry=True):
+def get_config(options=None):
     # General config
     agentConfig = {
         'check_freq': DEFAULT_CHECK_FREQUENCY,

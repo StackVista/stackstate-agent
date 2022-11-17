@@ -1,7 +1,7 @@
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
 # This product includes software developed at Datadog (https:#www.datadoghq.com/).
-# Copyright 2016-2020 Datadog, Inc.
+# Copyright 2016-present Datadog, Inc.
 
 name "jmxfetch"
 
@@ -13,8 +13,8 @@ if jmxfetch_version.nil? || jmxfetch_version.empty? || jmxfetch_hash.nil? || jmx
 end
 
 default_version jmxfetch_version
-source sha256: jmxfetch_hash
 
+source sha256: jmxfetch_hash
 source url: "https://oss.sonatype.org/service/local/repositories/releases/content/com/datadoghq/jmxfetch/#{version}/jmxfetch-#{version}-jar-with-dependencies.jar",
        target_filename: "jmxfetch.jar"
 
@@ -24,7 +24,9 @@ jar_dir = "#{install_dir}/bin/agent/dist/jmx"
 relative_path "jmxfetch"
 
 build do
-  ship_license "https://raw.githubusercontent.com/DataDog/jmxfetch/master/LICENSE"
+  license "BSD-3-Clause"
+  license_file "https://raw.githubusercontent.com/DataDog/jmxfetch/#{version}/LICENSE"
+
   mkdir jar_dir
 
   if osx? && code_signing_identity
@@ -38,7 +40,7 @@ build do
       hardened_runtime = ""
     end
 
-    command "find . -type f | grep -E '(\\.so|\\.dylib|\\.jnilib)' | xargs codesign #{hardened_runtime}--force --timestamp --deep -s '#{code_signing_identity}'"
+    command "find . -type f | grep -E '(\\.so|\\.dylib|\\.jnilib)' | xargs -I{} codesign #{hardened_runtime}--force --timestamp --deep -s '#{code_signing_identity}' '{}'"
     command "zip jmxfetch.jar -r ."
   end
 

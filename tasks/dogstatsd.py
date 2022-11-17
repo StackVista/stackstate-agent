@@ -1,33 +1,33 @@
 """
 Dogstatsd tasks
 """
-from __future__ import print_function, absolute_import
+
 
 import os
-import sys
 import shutil
+import sys
 from distutils.dir_util import copy_tree
 
 from invoke import task
 from invoke.exceptions import Exit
 
-from .build_tags import get_build_tags, get_default_build_tags, LINUX_ONLY_TAGS
-from .utils import get_build_flags, get_version_numeric_only, bin_name, get_root, load_release_versions, get_version
-from .utils import REPO_PATH
-
+from .build_tags import filter_incompatible_tags, get_build_tags, get_default_build_tags
 from .go import deps
+from .utils import (
+    REPO_PATH,
+    bin_name,
+    get_build_flags,
+    get_root,
+    get_version,
+    get_version_numeric_only,
+    load_release_versions,
+)
 
 # constants
 DOGSTATSD_BIN_PATH = os.path.join(".", "bin", "dogstatsd")
 STATIC_BIN_PATH = os.path.join(".", "bin", "static")
-MAX_BINARY_SIZE = 20 * 1024
+MAX_BINARY_SIZE = 30 * 1024
 DOGSTATSD_TAG = "datadog/dogstatsd:master"
-DEFAULT_BUILD_TAGS = [
-    "zlib",
-    "docker",
-    "kubelet",
-    "secrets",
-]
 
 
 @task
@@ -40,12 +40,16 @@ def build(
     build_exclude=None,
     major_version='',
     arch="x64",
-    go_mod="vendor",
+    go_mod="mod",
 ):
     """
     Build Dogstatsd
     """
-    build_include = DEFAULT_BUILD_TAGS if build_include is None else build_include.split(",")
+    build_include = (
+        get_default_build_tags(build="dogstatsd", arch=arch)
+        if build_include is None
+        else filter_incompatible_tags(build_include.split(","), arch=arch)
+    )
     build_exclude = [] if build_exclude is None else build_exclude.split(",")
     build_tags = get_build_tags(build_include, build_exclude)
     ldflags, gcflags, env = get_build_flags(ctx, static=static, major_version=major_version)
@@ -58,7 +62,7 @@ def build(
             env["GOARCH"] = "386"
             windres_target = "pe-i386"
 
-        ver = get_version_numeric_only(ctx, env, major_version=major_version)
+        ver = get_version_numeric_only(ctx, major_version=major_version)
         maj_ver, min_ver, patch_ver = ver.split(".")
 
         ctx.run(
@@ -71,12 +75,6 @@ def build(
                 maj_ver=maj_ver, min_ver=min_ver, patch_ver=patch_ver, target_arch=windres_target
             )
         )
-
-    if not sys.platform.startswith('linux'):
-        for ex in LINUX_ONLY_TAGS:
-            if ex not in build_exclude:
-                build_exclude.append(ex)
-    build_tags = get_build_tags(build_include, build_exclude)
 
     if static:
         bin_path = STATIC_BIN_PATH
@@ -121,7 +119,7 @@ def build(
 
 
 @task
-def refresh_assets(ctx):
+def refresh_assets(_):
     """
     Clean up and refresh Collector's assets and config files
     """
@@ -150,7 +148,7 @@ def run(ctx, rebuild=False, race=False, build_include=None, build_exclude=None, 
 
 
 @task
-def system_tests(ctx, skip_build=False, go_mod="vendor"):
+def system_tests(ctx, skip_build=False, go_mod="mod", arch="x64"):
     """
     Run the system testsuite.
     """
@@ -164,7 +162,7 @@ def system_tests(ctx, skip_build=False, go_mod="vendor"):
     cmd = "go test -mod={go_mod} -tags '{build_tags}' -v {REPO_PATH}/test/system/dogstatsd/"
     args = {
         "go_mod": go_mod,
-        "build_tags": " ".join(get_default_build_tags()),
+        "build_tags": " ".join(get_default_build_tags(build="test", arch=arch)),
         "REPO_PATH": REPO_PATH,
     }
     ctx.run(cmd.format(**args), env=env)
@@ -201,6 +199,7 @@ def omnibus_build(
     release_version="nightly",
     major_version='7',
     omnibus_s3_cache=False,
+    go_mod_cache=None,
 ):
     """
     Build the Dogstatsd packages with Omnibus Installer.
@@ -221,25 +220,47 @@ def omnibus_build(
         overrides_cmd = "--override=" + " ".join(overrides)
 
     with ctx.cd("omnibus"):
-        env = load_release_versions(ctx)
+        env = load_release_versions(ctx, release_version)
+
         cmd = "bundle install"
         if gem_path:
             cmd += " --path {}".format(gem_path)
         ctx.run(cmd, env=env)
+
         omnibus = "bundle exec omnibus.bat" if sys.platform == 'win32' else "bundle exec omnibus"
         cmd = "{omnibus} build dogstatsd --log-level={log_level} {populate_s3_cache} {overrides}"
         args = {"omnibus": omnibus, "log_level": log_level, "overrides": overrides_cmd, "populate_s3_cache": ""}
+
         if omnibus_s3_cache:
             args['populate_s3_cache'] = " --populate-s3-cache "
+
         env['PACKAGE_VERSION'] = get_version(
-            ctx, include_git=True, url_safe=True, git_sha_length=7, major_version=major_version
+            ctx,
+            include_git=True,
+            url_safe=True,
+            git_sha_length=7,
+            major_version=major_version,
+            include_pipeline_id=True,
         )
         env['MAJOR_VERSION'] = major_version
+
+        integrations_core_version = os.environ.get('INTEGRATIONS_CORE_VERSION')
+        # Only overrides the env var if the value is a non-empty string.
+        if integrations_core_version:
+            env['INTEGRATIONS_CORE_VERSION'] = integrations_core_version
+
+        # If the host has a GOMODCACHE set, try to reuse it
+        if not go_mod_cache and os.environ.get('GOMODCACHE'):
+            go_mod_cache = os.environ.get('GOMODCACHE')
+
+        if go_mod_cache:
+            env['OMNIBUS_GOMODCACHE'] = go_mod_cache
+
         ctx.run(cmd.format(**args), env=env)
 
 
 @task
-def integration_tests(ctx, install_deps=False, race=False, remote_docker=False, go_mod="vendor"):
+def integration_tests(ctx, install_deps=False, race=False, remote_docker=False, go_mod="mod", arch="x64"):
     """
     Run integration tests for dogstatsd
     """
@@ -248,7 +269,7 @@ def integration_tests(ctx, install_deps=False, race=False, remote_docker=False, 
 
     test_args = {
         "go_mod": go_mod,
-        "go_build_tags": " ".join(get_default_build_tags()),
+        "go_build_tags": " ".join(get_default_build_tags(build="test", arch=arch)),
         "race_opt": "-race" if race else "",
         "exec_opts": "",
     }

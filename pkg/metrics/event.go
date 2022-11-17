@@ -1,12 +1,13 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package metrics
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"expvar"
@@ -15,7 +16,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	jsoniter "github.com/json-iterator/go"
 
-	agentpayload "github.com/DataDog/agent-payload/gogen"
+	agentpayload "github.com/DataDog/agent-payload/v5/gogen"
 	"github.com/StackVista/stackstate-agent/pkg/serializer/marshaler"
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 	"github.com/StackVista/stackstate-agent/pkg/util"
@@ -92,6 +93,9 @@ type Event struct {
 	AggregationKey string         `json:"aggregation_key,omitempty"`
 	SourceTypeName string         `json:"source_type_name,omitempty"`
 	EventType      string         `json:"event_type,omitempty"`
+	OriginID       string         `json:"-"`
+	K8sOriginID    string         `json:"-"`
+	Cardinality    string         `json:"-"`
 	EventContext   *EventContext  `json:"context,omitempty"`
 }
 
@@ -198,7 +202,7 @@ func (events Events) getEventsBySourceType() map[string][]*Event {
 func (events Events) MarshalJSON() ([]byte, error) {
 	// Regroup events by their source type name
 	eventsBySourceType := events.getEventsBySourceType()
-	hostname, _ := util.GetHostname()
+	hostname, _ := util.GetHostname(context.TODO())
 	// Build intake payload containing events and serialize
 	data := map[string]interface{}{
 		apiKeyJSONField:           "", // legacy field, it isn't actually used by the backend
@@ -211,7 +215,7 @@ func (events Events) MarshalJSON() ([]byte, error) {
 }
 
 // SplitPayload breaks the payload into times number of pieces
-func (events Events) SplitPayload(times int) ([]marshaler.Marshaler, error) {
+func (events Events) SplitPayload(times int) ([]marshaler.AbstractMarshaler, error) {
 	eventExpvar.Add("TimesSplit", 1)
 	tlmEvent.Inc("times_split")
 	// An individual event cannot be split,
@@ -223,7 +227,7 @@ func (events Events) SplitPayload(times int) ([]marshaler.Marshaler, error) {
 		tlmEvent.Inc("shorter")
 		times = len(events)
 	}
-	splitPayloads := make([]marshaler.Marshaler, times)
+	splitPayloads := make([]marshaler.AbstractMarshaler, times)
 
 	batchSize := len(events) / times
 	n := 0
@@ -240,6 +244,11 @@ func (events Events) SplitPayload(times int) ([]marshaler.Marshaler, error) {
 		n += batchSize
 	}
 	return splitPayloads, nil
+}
+
+// MarshalSplitCompress not implemented
+func (events Events) MarshalSplitCompress(bufferContext *marshaler.BufferContext) ([]*[]byte, error) {
+	return nil, fmt.Errorf("Events MarshalSplitCompress is not implemented")
 }
 
 // Implements StreamJSONMarshaler.
@@ -277,7 +286,7 @@ func writeEventsFooter(stream *jsoniter.Stream) error {
 	stream.WriteObjectEnd()
 	stream.WriteMore()
 
-	hostname, _ := util.GetHostname()
+	hostname, _ := util.GetHostname(context.TODO())
 	stream.WriteObjectField(internalHostnameJSONField)
 	stream.WriteString(hostname)
 

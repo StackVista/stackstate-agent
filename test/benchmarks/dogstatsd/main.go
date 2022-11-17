@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package main
 
@@ -27,7 +27,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/dogstatsd"
 	"github.com/StackVista/stackstate-agent/pkg/forwarder"
 	"github.com/StackVista/stackstate-agent/pkg/serializer"
-	"github.com/StackVista/stackstate-agent/test/util"
 )
 
 const (
@@ -80,7 +79,7 @@ func (f *forwarderBenchStub) SubmitV1Series(payloads forwarder.Payloads, extraHe
 	f.computeStats(payloads)
 	return nil
 }
-func (f *forwarderBenchStub) SubmitV1Intake(payloads forwarder.Payloads, extraHeaders http.Header) error {
+func (f *forwarderBenchStub) SubmitV1Intake(payloads forwarder.Payloads, extraHeaders http.Header, priority forwarder.TransactionPriority) error {
 	f.computeStats(payloads)
 	return nil
 }
@@ -108,7 +107,7 @@ func (f *forwarderBenchStub) SubmitHostMetadata(payloads forwarder.Payloads, ext
 	f.computeStats(payloads)
 	return nil
 }
-func (f *forwarderBenchStub) SubmitMetadata(payloads forwarder.Payloads, extraHeaders http.Header) error {
+func (f *forwarderBenchStub) SubmitMetadata(payloads forwarder.Payloads, extraHeaders http.Header, priority forwarder.TransactionPriority) error {
 	f.computeStats(payloads)
 	return nil
 }
@@ -210,7 +209,7 @@ func createMetric(value float64, tags []string, name string, t int64) datadog.Me
 func main() {
 	mockConfig := config.Mock()
 
-	if err := util.InitLogging("info"); err != nil {
+	if err := InitLogging("info"); err != nil {
 		log.Infof("Unable to replace logger, default logging will apply (highly verbose): %s", err)
 	}
 	defer log.Flush()
@@ -226,9 +225,9 @@ func main() {
 
 	mockConfig.Set("dogstatsd_stats_enable", true)
 	mockConfig.Set("dogstatsd_stats_buffer", 100)
-	s := serializer.NewSerializer(f)
-	aggr := aggregator.InitAggregator(s, "localhost")
-	statsd, err := dogstatsd.NewServer(aggr.GetBufferedChannels())
+	s := serializer.NewSerializer(f, nil)
+	aggr := aggregator.InitAggregator(s, nil, "localhost")
+	statsd, err := dogstatsd.NewServer(aggr.GetBufferedChannels(), nil)
 	if err != nil {
 		log.Errorf("Problem allocating dogstatsd server: %s", err)
 		return
@@ -270,7 +269,7 @@ func main() {
 				if !(*rnd) {
 					packets = make([]string, *ser)
 					for i := range packets {
-						packets[i] = buildPayload("foo.bar", rand.Int63n(1000), []byte("|g"), []string{util.RandomString(*pad)}, 1)
+						packets[i] = buildPayload("foo.bar", rand.Int63n(1000), []byte("|g"), []string{RandomString(*pad)}, 1)
 					}
 				}
 
@@ -285,9 +284,9 @@ func main() {
 						if *rnd {
 							buf.Reset()
 							buf.WriteString("foo.")
-							buf.WriteString(util.RandomString(*ser))
+							buf.WriteString(RandomString(*ser))
 
-							err = submitPacket([]byte(buildPayload(buf.String(), rand.Int63n(1000), []byte("|g"), []string{util.RandomString(*pad)}, 2)), generator)
+							err = submitPacket([]byte(buildPayload(buf.String(), rand.Int63n(1000), []byte("|g"), []string{RandomString(*pad)}, 2)), generator)
 						} else {
 							err = submitPacket([]byte(packets[rand.Int63n(int64(*ser))]), generator)
 						}

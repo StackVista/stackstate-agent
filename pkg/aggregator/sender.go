@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package aggregator
 
@@ -11,10 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/serializer"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 var senderInstance *checkSender
@@ -28,25 +28,20 @@ type Sender interface {
 	Rate(metric string, value float64, hostname string, tags []string)
 	Count(metric string, value float64, hostname string, tags []string)
 	MonotonicCount(metric string, value float64, hostname string, tags []string)
+	MonotonicCountWithFlushFirstValue(metric string, value float64, hostname string, tags []string, flushFirstValue bool)
 	Counter(metric string, value float64, hostname string, tags []string)
 	Histogram(metric string, value float64, hostname string, tags []string)
 	Historate(metric string, value float64, hostname string, tags []string)
 	ServiceCheck(checkName string, status metrics.ServiceCheckStatus, hostname string, tags []string, message string)
-	HistogramBucket(metric string, value int64, lowerBound, upperBound float64, monotonic bool, hostname string, tags []string)
+	HistogramBucket(metric string, value int64, lowerBound, upperBound float64, monotonic bool, hostname string, tags []string, flushFirstValue bool)
 	Event(e metrics.Event)
-	GetMetricStats() map[string]int64
+	EventPlatformEvent(rawEvent string, eventType string)
+	GetSenderStats() check.SenderStats
 	DisableDefaultHostname(disable bool)
 	SetCheckCustomTags(tags []string)
 	SetCheckService(service string)
 	FinalizeCheckServiceTag()
-}
-
-type metricStats struct {
-	MetricSamples    int64
-	Events           int64
-	ServiceChecks    int64
-	HistogramBuckets int64
-	Lock             sync.RWMutex
+	OrchestratorMetadata(msgs []serializer.ProcessMessageBody, clusterID string, nodeType int)
 }
 
 // RawSender interface to submit samples to aggregator directly
@@ -61,12 +56,15 @@ type checkSender struct {
 	id                      check.ID
 	defaultHostname         string
 	defaultHostnameDisabled bool
-	metricStats             metricStats
-	priormetricStats        metricStats
+	metricStats             check.SenderStats
+	priormetricStats        check.SenderStats
+	statsLock               sync.RWMutex
 	smsOut                  chan<- senderMetricSample
 	serviceCheckOut         chan<- metrics.ServiceCheck
 	eventOut                chan<- metrics.Event
 	histogramBucketOut      chan<- senderHistogramBucket
+	orchestratorOut         chan<- senderOrchestratorMetadata
+	eventPlatformOut        chan<- senderEventPlatformEvent
 	checkTags               []string
 	service                 string
 }
@@ -82,6 +80,18 @@ type senderHistogramBucket struct {
 	bucket *metrics.HistogramBucket
 }
 
+type senderEventPlatformEvent struct {
+	id        check.ID
+	rawEvent  string
+	eventType string
+}
+
+type senderOrchestratorMetadata struct {
+	msgs        []serializer.ProcessMessageBody
+	clusterID   string
+	payloadType int
+}
+
 type checkSenderPool struct {
 	senders map[check.ID]Sender
 	m       sync.Mutex
@@ -93,16 +103,18 @@ func init() {
 	}
 }
 
-func newCheckSender(id check.ID, defaultHostname string, smsOut chan<- senderMetricSample, serviceCheckOut chan<- metrics.ServiceCheck, eventOut chan<- metrics.Event, bucketOut chan<- senderHistogramBucket) *checkSender {
+func newCheckSender(id check.ID, defaultHostname string, smsOut chan<- senderMetricSample, serviceCheckOut chan<- metrics.ServiceCheck, eventOut chan<- metrics.Event, bucketOut chan<- senderHistogramBucket, orchestratorOut chan<- senderOrchestratorMetadata, eventPlatformOut chan<- senderEventPlatformEvent) *checkSender {
 	return &checkSender{
 		id:                 id,
 		defaultHostname:    defaultHostname,
 		smsOut:             smsOut,
 		serviceCheckOut:    serviceCheckOut,
 		eventOut:           eventOut,
-		metricStats:        metricStats{},
-		priormetricStats:   metricStats{},
+		metricStats:        check.NewSenderStats(),
+		priormetricStats:   check.NewSenderStats(),
 		histogramBucketOut: bucketOut,
+		orchestratorOut:    orchestratorOut,
+		eventPlatformOut:   eventPlatformOut,
 	}
 }
 
@@ -145,7 +157,7 @@ func GetDefaultSender() (Sender, error) {
 	senderInit.Do(func() {
 		var defaultCheckID check.ID                       // the default value is the zero value
 		aggregatorInstance.registerSender(defaultCheckID) //nolint:errcheck
-		senderInstance = newCheckSender(defaultCheckID, aggregatorInstance.hostname, aggregatorInstance.checkMetricIn, aggregatorInstance.serviceCheckIn, aggregatorInstance.eventIn, aggregatorInstance.checkHistogramBucketIn)
+		senderInstance = newCheckSender(defaultCheckID, aggregatorInstance.hostname, aggregatorInstance.checkMetricIn, aggregatorInstance.serviceCheckIn, aggregatorInstance.eventIn, aggregatorInstance.checkHistogramBucketIn, aggregatorInstance.orchestratorMetadataIn, aggregatorInstance.eventPlatformIn)
 	})
 
 	return senderInstance, nil
@@ -193,32 +205,17 @@ func (s *checkSender) Commit() {
 	s.cyclemetricStats()
 }
 
-func (s *checkSender) GetMetricStats() map[string]int64 {
-	s.priormetricStats.Lock.RLock()
-	defer s.priormetricStats.Lock.RUnlock()
-
-	metricStats := make(map[string]int64)
-	metricStats["MetricSamples"] = s.priormetricStats.MetricSamples
-	metricStats["Events"] = s.priormetricStats.Events
-	metricStats["ServiceChecks"] = s.priormetricStats.ServiceChecks
-	metricStats["HistogramBuckets"] = s.priormetricStats.HistogramBuckets
-
-	return metricStats
+func (s *checkSender) GetSenderStats() (metricStats check.SenderStats) {
+	s.statsLock.RLock()
+	defer s.statsLock.RUnlock()
+	return s.priormetricStats.Copy()
 }
 
 func (s *checkSender) cyclemetricStats() {
-	s.metricStats.Lock.Lock()
-	s.priormetricStats.Lock.Lock()
-	s.priormetricStats.MetricSamples = s.metricStats.MetricSamples
-	s.priormetricStats.Events = s.metricStats.Events
-	s.priormetricStats.ServiceChecks = s.metricStats.ServiceChecks
-	s.priormetricStats.HistogramBuckets = s.metricStats.HistogramBuckets
-	s.metricStats.MetricSamples = 0
-	s.metricStats.Events = 0
-	s.metricStats.ServiceChecks = 0
-	s.metricStats.HistogramBuckets = 0
-	s.metricStats.Lock.Unlock()
-	s.priormetricStats.Lock.Unlock()
+	s.statsLock.Lock()
+	defer s.statsLock.Unlock()
+	s.priormetricStats = s.metricStats.Copy()
+	s.metricStats = check.NewSenderStats()
 }
 
 // SendRawMetricSample sends the raw sample
@@ -227,19 +224,20 @@ func (s *checkSender) SendRawMetricSample(sample *metrics.MetricSample) {
 	s.smsOut <- senderMetricSample{s.id, sample, false}
 }
 
-func (s *checkSender) sendMetricSample(metric string, value float64, hostname string, tags []string, mType metrics.MetricType) {
+func (s *checkSender) sendMetricSample(metric string, value float64, hostname string, tags []string, mType metrics.MetricType, flushFirstValue bool) {
 	tags = append(tags, s.checkTags...)
 
 	log.Trace(mType.String(), " sample: ", metric, ": ", value, " for hostname: ", hostname, " tags: ", tags)
 
 	metricSample := &metrics.MetricSample{
-		Name:       metric,
-		Value:      value,
-		Mtype:      mType,
-		Tags:       tags,
-		Host:       hostname,
-		SampleRate: 1,
-		Timestamp:  timeNowNano(),
+		Name:            metric,
+		Value:           value,
+		Mtype:           mType,
+		Tags:            tags,
+		Host:            hostname,
+		SampleRate:      1,
+		Timestamp:       timeNowNano(),
+		FlushFirstValue: flushFirstValue,
 	}
 
 	if hostname == "" && !s.defaultHostnameDisabled {
@@ -248,46 +246,52 @@ func (s *checkSender) sendMetricSample(metric string, value float64, hostname st
 
 	s.smsOut <- senderMetricSample{s.id, metricSample, false}
 
-	s.metricStats.Lock.Lock()
+	s.statsLock.Lock()
 	s.metricStats.MetricSamples++
-	s.metricStats.Lock.Unlock()
+	s.statsLock.Unlock()
 }
 
 // Gauge should be used to send a simple gauge value to the aggregator. Only the last value sampled is kept at commit time.
 func (s *checkSender) Gauge(metric string, value float64, hostname string, tags []string) {
-	s.sendMetricSample(metric, value, hostname, tags, metrics.GaugeType)
+	s.sendMetricSample(metric, value, hostname, tags, metrics.GaugeType, false)
 }
 
 // Rate should be used to track the rate of a metric over each check run
 func (s *checkSender) Rate(metric string, value float64, hostname string, tags []string) {
-	s.sendMetricSample(metric, value, hostname, tags, metrics.RateType)
+	s.sendMetricSample(metric, value, hostname, tags, metrics.RateType, false)
 }
 
 // Count should be used to count a number of events that occurred during the check run
 func (s *checkSender) Count(metric string, value float64, hostname string, tags []string) {
-	s.sendMetricSample(metric, value, hostname, tags, metrics.CountType)
+	s.sendMetricSample(metric, value, hostname, tags, metrics.CountType, false)
 }
 
 // MonotonicCount should be used to track the increase of a monotonic raw counter
 func (s *checkSender) MonotonicCount(metric string, value float64, hostname string, tags []string) {
-	s.sendMetricSample(metric, value, hostname, tags, metrics.MonotonicCountType)
+	s.sendMetricSample(metric, value, hostname, tags, metrics.MonotonicCountType, false)
+}
+
+// MonotonicCountWithFlushFirstValue should be used to track the increase of a monotonic raw counter,
+// and allows specifying whether the aggregator should flush the first sampled value as-is.
+func (s *checkSender) MonotonicCountWithFlushFirstValue(metric string, value float64, hostname string, tags []string, flushFirstValue bool) {
+	s.sendMetricSample(metric, value, hostname, tags, metrics.MonotonicCountType, flushFirstValue)
 }
 
 // Counter is DEPRECATED and only implemented to preserve backward compatibility with python checks. Prefer using either:
 // * `Gauge` if you're counting states
 // * `Count` if you're counting events
 func (s *checkSender) Counter(metric string, value float64, hostname string, tags []string) {
-	s.sendMetricSample(metric, value, hostname, tags, metrics.CounterType)
+	s.sendMetricSample(metric, value, hostname, tags, metrics.CounterType, false)
 }
 
 // Histogram should be used to track the statistical distribution of a set of values during a check run
 // Should be called multiple times on the same (metric, hostname, tags) so that a distribution can be computed
 func (s *checkSender) Histogram(metric string, value float64, hostname string, tags []string) {
-	s.sendMetricSample(metric, value, hostname, tags, metrics.HistogramType)
+	s.sendMetricSample(metric, value, hostname, tags, metrics.HistogramType, false)
 }
 
 // HistogramBucket should be called to directly send raw buckets to be submitted as distribution metrics
-func (s *checkSender) HistogramBucket(metric string, value int64, lowerBound, upperBound float64, monotonic bool, hostname string, tags []string) {
+func (s *checkSender) HistogramBucket(metric string, value int64, lowerBound, upperBound float64, monotonic bool, hostname string, tags []string, flushFirstValue bool) {
 	tags = append(tags, s.checkTags...)
 
 	log.Tracef(
@@ -302,14 +306,15 @@ func (s *checkSender) HistogramBucket(metric string, value int64, lowerBound, up
 	)
 
 	histogramBucket := &metrics.HistogramBucket{
-		Name:       metric,
-		Value:      value,
-		LowerBound: lowerBound,
-		UpperBound: upperBound,
-		Monotonic:  monotonic,
-		Host:       hostname,
-		Tags:       tags,
-		Timestamp:  timeNowNano(),
+		Name:            metric,
+		Value:           value,
+		LowerBound:      lowerBound,
+		UpperBound:      upperBound,
+		Monotonic:       monotonic,
+		Host:            hostname,
+		Tags:            tags,
+		Timestamp:       timeNowNano(),
+		FlushFirstValue: flushFirstValue,
 	}
 
 	if hostname == "" && !s.defaultHostnameDisabled {
@@ -318,15 +323,15 @@ func (s *checkSender) HistogramBucket(metric string, value int64, lowerBound, up
 
 	s.histogramBucketOut <- senderHistogramBucket{s.id, histogramBucket}
 
-	s.metricStats.Lock.Lock()
+	s.statsLock.Lock()
 	s.metricStats.HistogramBuckets++
-	s.metricStats.Lock.Unlock()
+	s.statsLock.Unlock()
 }
 
 // Historate should be used to create a histogram metric for "rate" like metrics.
 // Warning this doesn't use the harmonic mean, beware of what it means when using it.
 func (s *checkSender) Historate(metric string, value float64, hostname string, tags []string) {
-	s.sendMetricSample(metric, value, hostname, tags, metrics.HistorateType)
+	s.sendMetricSample(metric, value, hostname, tags, metrics.HistorateType, false)
 }
 
 // SendRawServiceCheck sends the raw service check
@@ -357,9 +362,9 @@ func (s *checkSender) ServiceCheck(checkName string, status metrics.ServiceCheck
 
 	s.eventOut <- serviceCheck
 
-	s.metricStats.Lock.Lock()
+	s.statsLock.Lock()
 	s.metricStats.ServiceChecks++
-	s.metricStats.Lock.Unlock()
+	s.statsLock.Unlock()
 }
 
 // Event submits an event
@@ -374,9 +379,31 @@ func (s *checkSender) Event(e metrics.Event) {
 
 	s.eventOut <- e
 
-	s.metricStats.Lock.Lock()
+	s.statsLock.Lock()
 	s.metricStats.Events++
-	s.metricStats.Lock.Unlock()
+	s.statsLock.Unlock()
+}
+
+// Event submits an event
+func (s *checkSender) EventPlatformEvent(rawEvent string, eventType string) {
+	s.eventPlatformOut <- senderEventPlatformEvent{
+		id:        s.id,
+		rawEvent:  rawEvent,
+		eventType: eventType,
+	}
+	s.statsLock.Lock()
+	defer s.statsLock.Unlock()
+	s.metricStats.EventPlatformEvents[eventType] = s.metricStats.EventPlatformEvents[eventType] + 1
+}
+
+// OrchestratorMetadata submit orchestrator metadata messages
+func (s *checkSender) OrchestratorMetadata(msgs []serializer.ProcessMessageBody, clusterID string, nodeType int) {
+	om := senderOrchestratorMetadata{
+		msgs:        msgs,
+		clusterID:   clusterID,
+		payloadType: nodeType,
+	}
+	s.orchestratorOut <- om
 }
 
 // changeAllSendersDefaultHostname u
@@ -407,7 +434,7 @@ func (sp *checkSenderPool) mkSender(id check.ID) (Sender, error) {
 	defer sp.m.Unlock()
 
 	err := aggregatorInstance.registerSender(id)
-	sender := newCheckSender(id, aggregatorInstance.hostname, aggregatorInstance.checkMetricIn, aggregatorInstance.serviceCheckIn, aggregatorInstance.eventIn, aggregatorInstance.checkHistogramBucketIn)
+	sender := newCheckSender(id, aggregatorInstance.hostname, aggregatorInstance.checkMetricIn, aggregatorInstance.serviceCheckIn, aggregatorInstance.eventIn, aggregatorInstance.checkHistogramBucketIn, aggregatorInstance.orchestratorMetadataIn, aggregatorInstance.eventPlatformIn)
 	sp.senders[id] = sender
 	return sender, err
 }

@@ -5,7 +5,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter/model"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
-	"github.com/pkg/errors"
 	"strconv"
 	"time"
 )
@@ -81,5 +80,5 @@ func (c *spanInterpreterEngineContext) extractSpanMetadata(span *pb.Span) (*mode
 }
 
 func createSpanMetadataError(configField string) error {
-	return errors.New(fmt.Sprintf("Field [%s] not found in Span", configField))
+	return fmt.Errorf("field [%s] not found in Span", configField)
 }

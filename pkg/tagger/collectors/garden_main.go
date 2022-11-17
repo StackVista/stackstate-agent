@@ -6,10 +6,10 @@
 package collectors
 
 import (
-	"fmt"
+	"context"
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/cloudfoundry"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders/cloudfoundry"
 	"github.com/StackVista/stackstate-agent/pkg/util/clusteragent"
 	"github.com/StackVista/stackstate-agent/pkg/util/containers"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -29,7 +29,10 @@ type GardenCollector struct {
 }
 
 // Detect tries to connect to the Garden API and the cluster agent
-func (c *GardenCollector) Detect(out chan<- []*TagInfo) (CollectionMode, error) {
+func (c *GardenCollector) Detect(ctx context.Context, out chan<- []*TagInfo) (CollectionMode, error) {
+	if !config.IsFeaturePresent(config.CloudFoundry) {
+		return NoCollection, nil
+	}
 
 	// Detect if we're on a compute VM by trying to connect to the local garden API
 	var err error
@@ -62,7 +65,7 @@ func (c *GardenCollector) Detect(out chan<- []*TagInfo) (CollectionMode, error) 
 }
 
 // Pull gets the list of containers
-func (c *GardenCollector) Pull() error {
+func (c *GardenCollector) Pull(ctx context.Context) error {
 	var tagsByInstanceGUID map[string][]string
 	var tagInfo []*TagInfo
 	tagsByInstanceGUID, err := c.extractTags(config.Datadog.GetString("bosh_id"))
@@ -79,20 +82,6 @@ func (c *GardenCollector) Pull() error {
 	}
 	c.infoOut <- tagInfo
 	return nil
-}
-
-// Fetch gets the tags for a specific entity
-func (c *GardenCollector) Fetch(entity string) ([]string, []string, []string, error) {
-	_, cid := containers.SplitEntityName(entity)
-	tagsByInstanceGUID, err := c.extractTags(config.Datadog.GetString("bosh_id"))
-	if err != nil {
-		return []string{}, []string{}, []string{}, err
-	}
-	tags, ok := tagsByInstanceGUID[cid]
-	if !ok {
-		return []string{}, []string{}, []string{}, fmt.Errorf("could not find tags for app %s", cid)
-	}
-	return []string{}, []string{}, tags, nil
 }
 
 func gardenFactory() Collector {

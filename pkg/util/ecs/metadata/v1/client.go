@@ -1,32 +1,32 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2020 Datadog, Inc.
+// Copyright 2020-present Datadog, Inc.
 
+//go:build docker
 // +build docker
 
 package v1
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 	"path"
 	"reflect"
-	"time"
+
+	"github.com/StackVista/stackstate-agent/pkg/util/ecs/common"
 )
 
 const (
-	// Default introspection endpoint port.
+	// DefaultAgentPort is the default introspection endpoint port.
 	DefaultAgentPort = 51678
 
 	// Metadata v1 API paths
 	instancePath     = "/metadata"
 	taskMetadataPath = "/tasks"
-
-	// Default client configuration
-	endpointTimeout = 500 * time.Millisecond
 )
 
 // Client represents a client for a metadata v1 API endpoint.
@@ -42,18 +42,18 @@ func NewClient(agentURL string) *Client {
 }
 
 // GetInstance returns metadata for the current container instance.
-func (c *Client) GetInstance() (*Instance, error) {
+func (c *Client) GetInstance(ctx context.Context) (*Instance, error) {
 	var i Instance
-	if err := c.get(instancePath, &i); err != nil {
+	if err := c.get(ctx, instancePath, &i); err != nil {
 		return nil, err
 	}
 	return &i, nil
 }
 
 // GetTasks returns the list of task on the current container instance.
-func (c *Client) GetTasks() ([]Task, error) {
+func (c *Client) GetTasks(ctx context.Context) ([]Task, error) {
 	var t Tasks
-	if err := c.get(taskMetadataPath, &t); err != nil {
+	if err := c.get(ctx, taskMetadataPath, &t); err != nil {
 		return nil, err
 	}
 	return t.Tasks, nil
@@ -68,14 +68,19 @@ func (c *Client) makeURL(requestPath string) (string, error) {
 	return u.String(), nil
 }
 
-func (c *Client) get(path string, v interface{}) error {
-	client := http.Client{Timeout: endpointTimeout}
+func (c *Client) get(ctx context.Context, path string, v interface{}) error {
+	client := http.Client{Timeout: common.MetadataTimeout()}
 	url, err := c.makeURL(path)
 	if err != nil {
-		return fmt.Errorf("Error constructing metadata request URL: %s", err)
+		return fmt.Errorf("Error constructing metadata request URL: %w", err)
 	}
 
-	resp, err := client.Get(url)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return fmt.Errorf("Failed to create new request: %w", err)
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}

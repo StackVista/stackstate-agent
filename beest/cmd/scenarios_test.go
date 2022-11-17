@@ -7,14 +7,14 @@ import (
 )
 
 func TestLoadScenarios(t *testing.T) {
-	scenarioName := "dockerd-eks"
+	scenarioName := "dockerd-eks-1-21"
 	scenario := findScenario(scenarioName)
 
 	assert.True(t, scenario.Name == scenarioName)
 }
 
 func TestCreateWorkspace(t *testing.T) {
-	scenarioName := "dockerd-eks"
+	scenarioName := "dockerd-eks-1-21"
 	runId := "randomId"
 	create := findScenario(scenarioName).generateCreateStep(runId)
 
@@ -23,7 +23,7 @@ func TestCreateWorkspace(t *testing.T) {
 }
 
 func TestRunIdWithNonAlphanumerics(t *testing.T) {
-	scenarioName := "dockerd-eks"
+	scenarioName := "dockerd-eks-1-21"
 	runId := "r.and:omI-d"
 	create := findScenario(scenarioName).generateCreateStep(runId)
 

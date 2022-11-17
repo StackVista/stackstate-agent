@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package providers
 
@@ -358,6 +358,54 @@ func TestExtractTemplatesFromMap(t *testing.T) {
 				errors.New("could not extract logs config: invalid format, expected an array, got: "),
 			},
 			output: nil,
+		},
+		{
+			// Two ways, same config (1)
+			source: map[string]string{
+				"prefix.check_names":  `["apache","apache"]`,
+				"prefix.init_configs": `[{},{}]`,
+				"prefix.instances":    `[{"apache_status_url":"http://%%host%%/server-status?auto1"},{"apache_status_url":"http://%%host%%/server-status?auto2"}]`,
+			},
+			adIdentifier: "id",
+			prefix:       "prefix.",
+			output: []integration.Config{
+				{
+					Name:          "apache",
+					Instances:     []integration.Data{integration.Data(`{"apache_status_url":"http://%%host%%/server-status?auto1"}`)},
+					InitConfig:    integration.Data("{}"),
+					ADIdentifiers: []string{"id"},
+				},
+				{
+					Name:          "apache",
+					Instances:     []integration.Data{integration.Data(`{"apache_status_url":"http://%%host%%/server-status?auto2"}`)},
+					InitConfig:    integration.Data("{}"),
+					ADIdentifiers: []string{"id"},
+				},
+			},
+		},
+		{
+			// Two ways, same config (2)
+			source: map[string]string{
+				"prefix.check_names":  `["apache"]`,
+				"prefix.init_configs": `[{}]`,
+				"prefix.instances":    `[[{"apache_status_url":"http://%%host%%/server-status?auto1"},{"apache_status_url":"http://%%host%%/server-status?auto2"}]]`,
+			},
+			adIdentifier: "id",
+			prefix:       "prefix.",
+			output: []integration.Config{
+				{
+					Name:          "apache",
+					Instances:     []integration.Data{integration.Data(`{"apache_status_url":"http://%%host%%/server-status?auto1"}`)},
+					InitConfig:    integration.Data("{}"),
+					ADIdentifiers: []string{"id"},
+				},
+				{
+					Name:          "apache",
+					Instances:     []integration.Data{integration.Data(`{"apache_status_url":"http://%%host%%/server-status?auto2"}`)},
+					InitConfig:    integration.Data("{}"),
+					ADIdentifiers: []string{"id"},
+				},
+			},
 		},
 	} {
 		t.Run(fmt.Sprintf("case %d: %s", nb, tc.source), func(t *testing.T) {

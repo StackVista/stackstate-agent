@@ -8,6 +8,7 @@
 package kubeapi
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"testing"
@@ -126,7 +127,7 @@ func TestProcessBundledEvents(t *testing.T) {
 			Source:   "kubernetes",
 			Category: "Alerts",
 			ElementIdentifiers: []string{
-				fmt.Sprintf("urn:kubernetes:/%s:node/localhost", clustername.GetClusterName()),
+				fmt.Sprintf("urn:kubernetes:/%s:node/localhost", clustername.GetClusterName(context.TODO(), "")),
 			},
 			Data: map[string]interface{}{},
 		},
@@ -147,6 +148,7 @@ func TestProcessBundledEvents(t *testing.T) {
 	// defer a reset of the state so that future hostname fetches are not impacted
 	defer mockConfig.Set("cluster_name", nil)
 	defer clustername.ResetClusterName()
+	kubeAPIEventsCheck.clusterName = clustername.GetClusterName(context.TODO(), "")
 
 	modifiedNewDatadogEventsWithClusterName := metrics.Event{
 		Title:    "Events from the machine-blue Node",
@@ -162,7 +164,7 @@ func TestProcessBundledEvents(t *testing.T) {
 			Source:   "kubernetes",
 			Category: "Alerts",
 			ElementIdentifiers: []string{
-				fmt.Sprintf("urn:kubernetes:/%s:node/localhost", clustername.GetClusterName()),
+				fmt.Sprintf("urn:kubernetes:/%s:node/localhost", clustername.GetClusterName(context.TODO(), "")),
 			},
 			Data: map[string]interface{}{},
 		},
@@ -173,6 +175,7 @@ func TestProcessBundledEvents(t *testing.T) {
 
 	_ = kubeAPIEventsCheck.processEvents(mocked, modifiedKubeEventsBundle)
 
+	// failing
 	mocked.AssertEvent(t, modifiedNewDatadogEventsWithClusterName, 0)
 	mocked.AssertExpectations(t)
 }
@@ -219,7 +222,7 @@ func TestProcessEvent(t *testing.T) {
 			Source:   "kubernetes",
 			Category: "Activities",
 			ElementIdentifiers: []string{
-				fmt.Sprintf("urn:kubernetes:/%s:default:replicaset/dca-789976f5d7-2ljx6", clustername.GetClusterName()),
+				fmt.Sprintf("urn:kubernetes:/%s:default:replicaset/dca-789976f5d7-2ljx6", clustername.GetClusterName(context.TODO(), "")),
 			},
 			Data: map[string]interface{}{},
 		},

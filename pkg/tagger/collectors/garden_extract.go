@@ -3,7 +3,7 @@ package collectors
 import (
 	"fmt"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/cloudfoundry"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders/cloudfoundry"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
