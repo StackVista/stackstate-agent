@@ -1,22 +1,46 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
+//go:build windows
 // +build windows
 
 package flare
 
 import (
 	"bytes"
+	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 	"unsafe"
 
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/StackVista/stackstate-agent/pkg/util/winutil"
 	"golang.org/x/sys/windows"
+)
+
+var (
+	modWinEvtAPI     = windows.NewLazySystemDLL("wevtapi.dll")
+	procEvtExportLog = modWinEvtAPI.NewProc("EvtExportLog")
+
+	eventLogChannelsToExport = map[string]string{
+		"System":      "Event/System/Provider[@Name=\"Service Control Manager\"]",
+		"Application": "Event/System/Provider[@Name=\"datadog-trace-agent\" or @Name=\"DatadogAgent\"]",
+		"Microsoft-Windows-WMI-Activity/Operational": "*",
+	}
+	execTimeout = 30 * time.Second
+)
+
+const (
+	evtExportLogChannelPath         uint32 = 0x1
+	evtExportLogFilePath            uint32 = 0x2
+	evtExportLogTolerateQueryErrors uint32 = 0x1000
+	evtExportLogOverwrite           uint32 = 0x2000
 )
 
 func zipCounterStrings(tempDir, hostname string) error {
@@ -39,6 +63,10 @@ func zipCounterStrings(tempDir, hostname string) error {
 			bufferSize += bufferIncrement
 			continue
 		}
+		// must set the length of the slice to the actual amount of data
+		// sz is in bytes, but it's a slice of uint16s, so divide the returned
+		// buffer size by two.
+		counterlist = counterlist[:(sz / 2)]
 		break
 	}
 	clist := winutil.ConvertWindowsStringList(counterlist)
@@ -62,7 +90,11 @@ func zipCounterStrings(tempDir, hostname string) error {
 }
 
 func zipTypeperfData(tempDir, hostname string) error {
-	cmd := exec.Command("typeperf", "-qx")
+	cancelctx, cancelfunc := context.WithTimeout(context.Background(), execTimeout)
+	defer cancelfunc()
+
+	cmd := exec.CommandContext(cancelctx, "typeperf", "-qx")
+
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err := cmd.Run()
@@ -81,8 +113,149 @@ func zipTypeperfData(tempDir, hostname string) error {
 	}
 	return nil
 }
+func zipLodctrOutput(tempDir, hostname string) error {
+	cancelctx, cancelfunc := context.WithTimeout(context.Background(), execTimeout)
+	defer cancelfunc()
+
+	cmd := exec.CommandContext(cancelctx, "lodctr.exe", "/q")
+
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		log.Warnf("Error running lodctr command %v", err)
+		// for some reason the lodctr command returns error 259 even when
+		// it succeeds.  Log the error in case it's some other error,
+		// but continue on.
+	}
+	f := filepath.Join(tempDir, hostname, "lodctr.txt")
+	err = ensureParentDirsExist(f)
+	if err != nil {
+		log.Warnf("Error in ensureParentDirsExist %v", err)
+		return err
+	}
+
+	err = ioutil.WriteFile(f, out.Bytes(), os.ModePerm)
+	if err != nil {
+		log.Warnf("Error writing file %v", err)
+		return err
+	}
+	return nil
+}
+
+// zipWindowsEventLogs exports Windows event logs.
+func zipWindowsEventLogs(tempDir, hostname string) error {
+	var err error
+
+	for eventLogChannel := range eventLogChannelsToExport {
+		eventLogFileName := eventLogChannel + ".evtx"
+		eventLogQuery := eventLogChannelsToExport[eventLogChannel]
+
+		// Export one event log file to the temporary location.
+		errExport := exportWindowsEventLog(
+			eventLogChannel,
+			eventLogQuery,
+			eventLogFileName,
+			tempDir,
+			hostname)
+
+		if errExport != nil {
+			log.Warnf("could not export event log %v, error: %v", eventLogChannel, errExport)
+			err = errExport
+		}
+	}
+
+	return err
+}
+
+// exportWindowsEventLog exports one event log file to the temporary location.
+// destFileName might contain a path.
+func exportWindowsEventLog(eventLogChannel, eventLogQuery, destFileName, tempDir, hostname string) error {
+	// Put all event logs under "eventlog" folder
+	destFullFileName := filepath.Join(tempDir, hostname, "eventlog", destFileName)
+
+	err := ensureParentDirsExist(destFullFileName)
+	if err != nil {
+		log.Warnf("cannot create folder for %s: %v", destFullFileName, err)
+		return err
+	}
+
+	eventLogChannelUtf16, _ := windows.UTF16PtrFromString(eventLogChannel)
+	eventLogQueryUtf16, _ := windows.UTF16PtrFromString(eventLogQuery)
+	destFullFileNameUtf16, _ := windows.UTF16PtrFromString(destFullFileName)
+
+	ret, _, evtExportLogError := procEvtExportLog.Call(
+		uintptr(unsafe.Pointer(nil)),                   // Machine name, NULL for local machine
+		uintptr(unsafe.Pointer(eventLogChannelUtf16)),  // Channel name
+		uintptr(unsafe.Pointer(eventLogQueryUtf16)),    // Query
+		uintptr(unsafe.Pointer(destFullFileNameUtf16)), // Destination file name
+		uintptr(evtExportLogChannelPath))               // DWORD. Specify that the second parameter is a channel name
+
+	// ret is a DWORD, TRUE for success, FALSE for failure.
+	if ret == 0 {
+		log.Warnf(
+			"could not export event log from channel %s to file %s, LastError: %v",
+			eventLogChannel,
+			destFullFileName,
+			evtExportLogError)
+
+		err = evtExportLogError
+	} else {
+		log.Infof("successfully exported event channel %v to %v", eventLogChannel, destFullFileName)
+	}
+
+	return err
+}
 
 func (p permissionsInfos) add(filePath string) {}
 func (p permissionsInfos) commit(tempDir, hostname string, mode os.FileMode) error {
+	return nil
+}
+
+func zipServiceStatus(tempDir, hostname string) error {
+	f := filepath.Join(tempDir, hostname, "servicestatus.txt")
+	err := ensureParentDirsExist(f)
+	if err != nil {
+		return fmt.Errorf("Error in ensureParentDirsExist %v", err)
+	}
+
+	fh, err := os.Create(f)
+	if err != nil {
+		return fmt.Errorf("Error creating temp file %s %v", f, err)
+	}
+	defer fh.Close()
+	cancelctx, cancelfunc := context.WithTimeout(context.Background(), execTimeout)
+	defer cancelfunc()
+
+	cmd := exec.CommandContext(cancelctx, "powershell", "-c", "get-service", "data*,ddnpm", "|", "fl")
+
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err = cmd.Run()
+	if err != nil {
+		log.Warnf("Error running powershell command %v", err)
+		// for some reason the lodctr command returns error 259 even when
+		// it succeeds.  Log the error in case it's some other error,
+		// but continue on.
+	}
+
+	_, err = fh.Write(out.Bytes())
+	if err != nil {
+		log.Warnf("Error writing file %v", err)
+		return err
+	}
+	// compute the location of the driver
+	ddroot, err := winutil.GetProgramFilesDirForProduct("DataDog Agent")
+	if err == nil {
+		pathtodriver := filepath.Join(ddroot, "bin", "agent", "driver", "ddnpm.sys")
+		fi, err := os.Stat(pathtodriver)
+		if err != nil {
+			fh.WriteString(fmt.Sprintf("Failed to stat file %v %v\n", pathtodriver, err))
+		} else {
+			fh.WriteString(fmt.Sprintf("Driver last modification time : %v\n", fi.ModTime().Format(time.UnixDate)))
+		}
+	} else {
+		return fmt.Errorf("Error getting path to datadog agent binaries %v", err)
+	}
 	return nil
 }

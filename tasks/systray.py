@@ -1,15 +1,14 @@
 """
 systray tasks
 """
-from __future__ import print_function
+
+
 import os
 import sys
 
 from invoke import task
 
-from .utils import bin_name, get_version_numeric_only
-from .utils import REPO_PATH
-from .utils import get_version_ldflags
+from .utils import REPO_PATH, bin_name, get_version_ldflags, get_version_numeric_only
 
 # constants
 BIN_PATH = os.path.join(".", "bin", "agent")
@@ -17,20 +16,7 @@ AGENT_TAG = "datadog/agent:master"
 
 
 @task
-def build(
-    ctx,
-    rebuild=False,
-    race=False,
-    build_include=None,
-    build_exclude=None,
-    iot=False,
-    development=True,
-    precompile_only=False,
-    skip_assets=False,
-    major_version='7',
-    arch="x64",
-    go_mod="vendor",
-):
+def build(ctx, rebuild=False, race=False, major_version='7', arch="x64", go_mod="mod"):
     """
     Build the agent. If the bits to include in the build are not specified,
     the values from `invoke.yaml` will be used.
@@ -46,7 +32,7 @@ def build(
     # This generates the manifest resource. The manifest resource is necessary for
     # being able to load the ancient C-runtime that comes along with Python 2.7
     # command = "rsrc -arch amd64 -manifest cmd/agent/agent.exe.manifest -o cmd/agent/rsrc.syso"
-    ver = get_version_numeric_only(ctx, env=os.environ, major_version=major_version)
+    ver = get_version_numeric_only(ctx, major_version=major_version)
     build_maj, build_min, build_patch = ver.split(".")
     env = {}
     windres_target = "pe-x86-64"
@@ -74,7 +60,7 @@ def build(
 
 
 @task
-def run(ctx, rebuild=False, race=False, build_include=None, build_exclude=None, iot=False, skip_build=False):
+def run(ctx, rebuild=False, race=False, skip_build=False):
     """
     Execute the systray binary.
 
@@ -82,7 +68,7 @@ def run(ctx, rebuild=False, race=False, build_include=None, build_exclude=None, 
     passed. It accepts the same set of options as agent.build.
     """
     if not skip_build:
-        build(ctx, rebuild, race, build_include, build_exclude, iot)
+        build(ctx, rebuild, race)
 
     ctx.run(os.path.join(BIN_PATH, bin_name("ddtray.exe")))
 

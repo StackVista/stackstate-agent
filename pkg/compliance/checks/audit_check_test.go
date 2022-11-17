@@ -1,53 +1,49 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package checks
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/StackVista/stackstate-agent/pkg/compliance"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
 	"github.com/StackVista/stackstate-agent/pkg/compliance/mocks"
 	"github.com/elastic/go-libaudit/rule"
-	"github.com/stretchr/testify/assert"
+
 	"github.com/stretchr/testify/mock"
+	assert "github.com/stretchr/testify/require"
 )
 
+type setupEnvFunc func(t *testing.T, env *mocks.Env)
+
 func TestAuditCheck(t *testing.T) {
-	type validateFunc func(t *testing.T, kv compliance.KVMap)
 
 	tests := []struct {
-		name     string
-		rules    []*rule.FileWatchRule
-		audit    *compliance.Audit
-		validate validateFunc
+		name         string
+		rules        []*rule.FileWatchRule
+		resource     compliance.Resource
+		hostPath     string
+		setup        setupEnvFunc
+		expectReport *compliance.Report
 	}{
 		{
 			name:  "no file rules",
-			rules: nil,
-			audit: &compliance.Audit{
-				Path: "/etc/docker/daemon.json",
-				Report: []compliance.ReportedField{
-					{
-						Property: "enabled",
-						Kind:     compliance.PropertyKindAttribute,
-					},
-					{
-						Property: "path",
-						Kind:     compliance.PropertyKindAttribute,
+			rules: []*rule.FileWatchRule{},
+			resource: compliance.Resource{
+				ResourceCommon: compliance.ResourceCommon{
+					Audit: &compliance.Audit{
+						Path: "/etc/docker/daemon.json",
 					},
 				},
+				Condition: "audit.enabled",
 			},
-			validate: func(t *testing.T, kv compliance.KVMap) {
-				assert.Equal(t,
-					compliance.KVMap{
-						"enabled": "false",
-						"path":    "/etc/docker/daemon.json",
-					},
-					kv,
-				)
+			hostPath: "./testdata/file/daemon.json",
+			expectReport: &compliance.Report{
+				Passed: false,
 			},
 		},
 		{
@@ -63,32 +59,72 @@ func TestAuditCheck(t *testing.T) {
 					},
 				},
 			},
-			audit: &compliance.Audit{
-				Path: "/etc/docker/daemon.json",
-				Report: []compliance.ReportedField{
-					{
-						Property: "enabled",
-						Kind:     compliance.PropertyKindAttribute,
+			resource: compliance.Resource{
+				ResourceCommon: compliance.ResourceCommon{
+					Audit: &compliance.Audit{
+						Path: "/etc/docker/daemon.json",
 					},
-					{
-						Property: "path",
-						Kind:     compliance.PropertyKindAttribute,
+				},
+				Condition: `audit.enabled && audit.permissions =~ "w"`,
+			},
+			hostPath: "./testdata/file/daemon.json",
+			expectReport: &compliance.Report{
+				Passed: true,
+				Data: event.Data{
+					"audit.enabled":     true,
+					"audit.path":        "/etc/docker/daemon.json",
+					"audit.permissions": "rwa",
+				},
+			},
+		},
+		{
+			name: "file missing on the host",
+			resource: compliance.Resource{
+				ResourceCommon: compliance.ResourceCommon{
+					Audit: &compliance.Audit{
+						Path: "/etc/docker/daemon.json",
 					},
-					{
-						Property: "permissions",
-						Kind:     compliance.PropertyKindAttribute,
+				},
+				Condition: `audit.enabled && audit.permissions =~ "w"`,
+			},
+			hostPath: "./missing-file.json",
+			expectReport: &compliance.Report{
+				Passed: false,
+				Error:  errors.New("rule-id: audit resource path does not exist"),
+			},
+		},
+
+		{
+			name: "file rule present (resolve path)",
+			rules: []*rule.FileWatchRule{
+				{
+					Type: rule.FileWatchRuleType,
+					Path: "/etc/docker/daemon.json",
+					Permissions: []rule.AccessType{
+						rule.ReadAccessType,
+						rule.WriteAccessType,
 					},
 				},
 			},
-			validate: func(t *testing.T, kv compliance.KVMap) {
-				assert.Equal(t,
-					compliance.KVMap{
-						"enabled":     "true",
-						"path":        "/etc/docker/daemon.json",
-						"permissions": "rwa",
+			resource: compliance.Resource{
+				ResourceCommon: compliance.ResourceCommon{
+					Audit: &compliance.Audit{
+						Path: `process.flag("docker", "--config-file")`,
 					},
-					kv,
-				)
+				},
+				Condition: `audit.enabled && audit.permissions =~ "r"`,
+			},
+			setup: func(t *testing.T, env *mocks.Env) {
+				env.On("EvaluateFromCache", mock.Anything).Return("/etc/docker/daemon.json", nil)
+			},
+			hostPath: "./testdata/file/daemon.json",
+			expectReport: &compliance.Report{
+				Passed: true,
+				Data: event.Data{
+					"audit.enabled":     true,
+					"audit.path":        "/etc/docker/daemon.json",
+					"audit.permissions": "rw",
+				},
 			},
 		},
 	}
@@ -97,28 +133,35 @@ func TestAuditCheck(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			reporter := &mocks.Reporter{}
-			defer reporter.AssertExpectations(t)
-
 			client := &mocks.AuditClient{}
 			defer client.AssertExpectations(t)
 
-			client.On("GetFileWatchRules").Return(test.rules, nil)
+			if test.rules != nil {
+				client.On("GetFileWatchRules").Return(test.rules, nil)
+			}
 
-			base := newTestBaseCheck(reporter, checkKindAudit)
-			check, err := newAuditCheck(base, client, test.audit)
+			env := &mocks.Env{}
+			defer env.AssertExpectations(t)
+
+			env.On("MaxEventsPerRun").Return(30).Maybe()
+			env.On("AuditClient").Return(client)
+
+			env.On("NormalizeToHostRoot", mock.AnythingOfType("string")).Return(test.hostPath)
+
+			if test.setup != nil {
+				test.setup(t, env)
+			}
+
+			auditCheck, err := newResourceCheck(env, "rule-id", test.resource)
 			assert.NoError(err)
 
-			reporter.On(
-				"Report",
-				mock.AnythingOfType("*compliance.RuleEvent"),
-			).Run(func(args mock.Arguments) {
-				event := args.Get(0).(*compliance.RuleEvent)
-				test.validate(t, event.Data)
-			})
+			result := auditCheck.check(env)
 
-			err = check.Run()
-			assert.NoError(err)
+			assert.Equal(test.expectReport.Passed, result[0].Passed)
+			assert.Equal(test.expectReport.Data, result[0].Data)
+			if test.expectReport.Error != nil {
+				assert.EqualError(test.expectReport.Error, result[0].Error.Error())
+			}
 		})
 	}
 }

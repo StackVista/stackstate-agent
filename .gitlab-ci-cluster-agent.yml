@@ -56,7 +56,7 @@ deps_deb:
       - venv
   script:
     - conda activate $CONDA_ENV
-    - inv -e deps --verbose --dep-vendor-only
+    - inv -e deps --verbose
     - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
     - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz .
     - cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz .
@@ -87,7 +87,7 @@ unit_tests_cluster_agent:
     - conda activate $CONDA_ENV
     # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
     - inv deps
-    - inv -e agent.build --race --precompile-only --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
+    - inv -e agent.build --race --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
     # TODO: check why formatting rules differ from previous step
     - gofmt -l -w -s ./pkg ./cmd
     # TODO: --python-runtimes "$PYTHON_RUNTIMES"
@@ -114,6 +114,7 @@ build_cluster_agent:
       - $CI_PROJECT_DIR/bin/stackstate-cluster-agent
       - $CI_PROJECT_DIR/Dockerfiles/cluster-agent/stackstate-cluster.yaml
       - $CI_PROJECT_DIR/version.txt
+    expire_in: 1 week
   retry:
     max: 2
     when:

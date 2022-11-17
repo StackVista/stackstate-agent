@@ -6,7 +6,7 @@
 package collectors
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/util/cloudfoundry"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders/cloudfoundry"
 	"github.com/StackVista/stackstate-agent/pkg/util/containers"
 )
 

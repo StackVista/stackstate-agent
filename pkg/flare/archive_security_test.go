@@ -1,8 +1,9 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
+//go:build !windows
 // +build !windows
 
 package flare
@@ -52,12 +53,10 @@ func TestCreateSecurityAgentArchive(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			zipFilePath := getArchivePath()
-			filePath, err := createSecurityAgentArchive(zipFilePath, test.local, logFilePath)
+			zipFilePath, err := CreateSecurityAgentArchive(test.local, logFilePath, nil)
 			defer os.Remove(zipFilePath)
 
 			assert.NoError(err)
-			assert.Equal(zipFilePath, filePath)
 
 			// asserts that it as indeed created a permissions.log file
 			z, err := zip.OpenReader(zipFilePath)

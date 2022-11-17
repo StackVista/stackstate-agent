@@ -1,16 +1,16 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
-// +build apm
-// +build !windows
-// +build !linux
+//go:build apm && !windows && !linux
+// +build apm,!windows,!linux
 
 package embed
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -21,7 +21,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
 	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
 	"github.com/StackVista/stackstate-agent/pkg/util"
 
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -78,10 +78,10 @@ func (c *APMCheck) run() error {
 
 	cmd := exec.Command(c.binPath, c.commandOpts...)
 
-	hostname, _ := util.GetHostname()
+	hostname, _ := util.GetHostname(context.TODO())
 
 	env := os.Environ()
-	env = append(env, fmt.Sprintf("DD_API_KEY=%s", config.Datadog.GetString("api_key")))
+	env = append(env, fmt.Sprintf("DD_API_KEY=%s", config.SanitizeAPIKey(config.Datadog.GetString("api_key"))))
 	env = append(env, fmt.Sprintf("DD_HOSTNAME=%s", hostname))
 	env = append(env, fmt.Sprintf("DD_DOGSTATSD_PORT=%s", config.Datadog.GetString("dogstatsd_port")))
 	env = append(env, fmt.Sprintf("DD_LOG_LEVEL=%s", config.Datadog.GetString("log_level")))
@@ -171,7 +171,7 @@ func (c *APMCheck) Configure(data integration.Data, initConfig integration.Data,
 	}
 
 	c.source = source
-	c.telemetry = telemetry.IsCheckEnabled("apm")
+	c.telemetry = telemetry_utils.IsCheckEnabled("apm")
 	return nil
 }
 
@@ -202,14 +202,17 @@ func (c *APMCheck) Stop() {
 	<-c.stopDone
 }
 
+// Cancel does nothing
+func (c *APMCheck) Cancel() {}
+
 // GetWarnings does not return anything in APM
 func (c *APMCheck) GetWarnings() []error {
 	return []error{}
 }
 
-// GetMetricStats returns the stats from the last run of the check, but there aren't any
-func (c *APMCheck) GetMetricStats() (map[string]int64, error) {
-	return make(map[string]int64), nil
+// GetSenderStats returns the stats from the last run of the check, but there aren't any
+func (c *APMCheck) GetSenderStats() (check.SenderStats, error) {
+	return check.NewSenderStats(), nil
 }
 
 func init() {

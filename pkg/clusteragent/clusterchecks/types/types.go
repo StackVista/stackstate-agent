@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package types
 
@@ -17,6 +17,18 @@ type NodeStatus struct {
 // StatusResponse holds the DCA response for a status report
 type StatusResponse struct {
 	IsUpToDate bool `json:"isuptodate"`
+}
+
+// RebalanceResponse holds the DCA response for a rebalancing request
+type RebalanceResponse struct {
+	CheckID     string `json:"check_id"`
+	CheckWeight int    `json:"check_weight"`
+
+	SourceNodeName string `json:"source_node_name"`
+	SourceDiff     int    `json:"source_diff"`
+
+	DestNodeName string `json:"dest_node_name"`
+	DestDiff     int    `json:"dest_diff"`
 }
 
 // ConfigResponse holds the DCA response for a config query
@@ -52,6 +64,7 @@ type Stats struct {
 	ActiveConfigs   int
 	DanglingConfigs int
 	TotalConfigs    int
+	CheckNames      map[string]struct{}
 }
 
 // LeaderIPCallback describes the leader-election method we

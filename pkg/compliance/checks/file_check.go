@@ -1,153 +1,147 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package checks
 
 import (
-	"encoding/json"
-	"errors"
+	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/StackVista/stackstate-agent/pkg/compliance"
-	"github.com/StackVista/stackstate-agent/pkg/util/jsonquery"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-
-	"gopkg.in/yaml.v2"
 )
 
-var (
-	// ErrPropertyKindNotSupported is returned for property kinds not supported by the check
-	ErrPropertyKindNotSupported = errors.New("property kind not supported")
-
-	// ErrPropertyNotSupported is returned for properties not supported by the check
-	ErrPropertyNotSupported = errors.New("property not supported")
-)
-
-type pathMapper func(string) string
-
-type fileCheck struct {
-	baseCheck
-	pathMapper pathMapper
-	file       *compliance.File
+var fileReportedFields = []string{
+	compliance.FileFieldGlob,
+	compliance.FileFieldPath,
+	compliance.FileFieldPermissions,
+	compliance.FileFieldUser,
+	compliance.FileFieldGroup,
 }
 
-func newFileCheck(baseCheck baseCheck, pathMapper pathMapper, file *compliance.File) (*fileCheck, error) {
-	// TODO: validate config for the file here
-	return &fileCheck{
-		baseCheck:  baseCheck,
-		pathMapper: pathMapper,
-		file:       file,
-	}, nil
-}
-
-func (c *fileCheck) Run() error {
-	// TODO: here we will introduce various cached results lookups
-
-	log.Debugf("%s: file check: %s", c.ruleID, c.file.Path)
-	if c.file.Path != "" {
-		return c.reportFile(c.normalizePath(c.file.Path))
+func resolveFile(_ context.Context, e env.Env, ruleID string, res compliance.ResourceCommon, rego bool) (resolved, error) {
+	if res.File == nil {
+		return nil, fmt.Errorf("expecting file resource in file check")
 	}
 
-	return log.Error("no path for file check")
-}
+	file := res.File
 
-func (c *fileCheck) normalizePath(path string) string {
-	if c.pathMapper == nil {
-		return path
-	}
-	return c.pathMapper(path)
-}
+	log.Debugf("%s: running file check for %q", ruleID, file.Path)
 
-func (c *fileCheck) reportFile(filePath string) error {
-	kv := compliance.KVMap{}
-	var v string
-
-	fi, err := os.Stat(filePath)
+	fileContentParser, err := validateParserKind(file.Parser)
 	if err != nil {
-		return log.Errorf("%s: failed to stat %s", c.ruleID, filePath)
+		return nil, err
 	}
 
-	for _, field := range c.file.Report {
-		if c.setStaticKV(field, kv) {
+	path, err := resolvePath(e, file.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	initialGlob := path
+	paths, err := filepath.Glob(e.NormalizeToHostRoot(path))
+	if err != nil {
+		return nil, err
+	}
+
+	var instances []resolvedInstance
+
+	for _, path := range paths {
+		// Re-computing relative after glob filtering
+		relPath := e.RelativeToHostRoot(path)
+		fi, err := os.Stat(path)
+		if err != nil {
+			// This is not a failure unless we don't have any paths to act on
+			log.Debugf("%s: file check failed to stat %s [%s]", ruleID, path, relPath)
 			continue
 		}
 
-		switch field.Kind {
-		case compliance.PropertyKindAttribute:
-			v, err = c.getAttribute(filePath, fi, field.Property)
-		case compliance.PropertyKindJSONQuery:
-			v, err = c.getPathValue(filePath, field.Property, jsonGetter)
-		case compliance.PropertyKindYAMLQuery:
-			v, err = c.getPathValue(filePath, field.Property, yamlGetter)
-		default:
-			return ErrPropertyKindNotSupported
-		}
-		if err != nil {
-			return err
+		filePermissions := uint64(fi.Mode() & os.ModePerm)
+		vars := eval.VarMap{
+			compliance.FileFieldGlob:        initialGlob,
+			compliance.FileFieldPath:        relPath,
+			compliance.FileFieldPermissions: filePermissions,
 		}
 
-		key := field.As
-		if key == "" {
-			key = field.Property
+		regoInput := eval.RegoInputMap{
+			"glob":        initialGlob,
+			"path":        relPath,
+			"permissions": filePermissions,
 		}
 
-		if v != "" {
-			kv[key] = v
+		content, err := readContent(path, fileContentParser)
+		if err == nil {
+			vars[compliance.FileFieldContent] = content
+			regoInput["content"] = content
+		} else {
+			log.Errorf("error reading file: %v", err)
 		}
+
+		user, err := getFileUser(fi)
+		if err == nil {
+			vars[compliance.FileFieldUser] = user
+			regoInput["user"] = user
+		}
+
+		group, err := getFileGroup(fi)
+		if err == nil {
+			vars[compliance.FileFieldGroup] = group
+			regoInput["group"] = group
+		}
+
+		functions := eval.FunctionMap{
+			compliance.FileFuncJQ:     fileJQ(path),
+			compliance.FileFuncYAML:   fileYAML(path),
+			compliance.FileFuncRegexp: fileRegexp(path),
+		}
+
+		instance := eval.NewInstance(vars, functions, regoInput)
+
+		instances = append(instances, newResolvedInstance(instance, path, "file"))
 	}
 
-	c.report(nil, kv)
-	return nil
+	if len(instances) == 0 {
+		if rego {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("no files found for file check %q", file.Path)
+	}
+
+	// NOTE(safchain) workaround to allow fallback on all this resource if there is only one file
+	if len(instances) == 1 {
+		return instances[0].(*_resolvedInstance), nil
+	}
+
+	return newResolvedInstances(instances), nil
 }
 
-func (c *fileCheck) getAttribute(filePath string, fi os.FileInfo, property string) (string, error) {
-	switch property {
-	case "path":
-		return filePath, nil
-	case "permissions":
-		return fmt.Sprintf("%3o", fi.Mode()&os.ModePerm), nil
-	case "owner":
-		return getFileOwner(fi)
+func fileQuery(path string, get getter) eval.Function {
+	return func(_ eval.Instance, args ...interface{}) (interface{}, error) {
+		if len(args) != 1 {
+			return nil, fmt.Errorf(`invalid number of arguments, expecting 1 got %d`, len(args))
+		}
+		query, ok := args[0].(string)
+		if !ok {
+			return nil, fmt.Errorf(`expecting string value for query argument`)
+		}
+		return queryValueFromFile(path, query, get)
 	}
-	return "", ErrPropertyNotSupported
 }
 
-// getter applies jq query to get string value from json or yaml raw data
-type getter func([]byte, string) (string, error)
-
-func jsonGetter(data []byte, query string) (string, error) {
-	var jsonContent interface{}
-	if err := json.Unmarshal(data, &jsonContent); err != nil {
-		return "", err
-	}
-	value, _, err := jsonquery.RunSingleOutput(query, jsonContent)
-	return value, err
+func fileJQ(path string) eval.Function {
+	return fileQuery(path, jsonGetter)
 }
 
-func yamlGetter(data []byte, query string) (string, error) {
-	var yamlContent map[string]interface{}
-	if err := yaml.Unmarshal(data, &yamlContent); err != nil {
-		return "", err
-	}
-	value, _, err := jsonquery.RunSingleOutput(query, yamlContent)
-	return value, err
+func fileYAML(path string) eval.Function {
+	return fileQuery(path, yamlGetter)
 }
 
-func (c *fileCheck) getPathValue(filePath string, query string, get getter) (string, error) {
-	f, err := os.Open(filePath)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	data, err := ioutil.ReadAll(f)
-	if err != nil {
-		return "", err
-	}
-
-	return get(data, query)
+func fileRegexp(path string) eval.Function {
+	return fileQuery(path, regexpGetter)
 }

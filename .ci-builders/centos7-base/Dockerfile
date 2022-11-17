@@ -1,7 +1,7 @@
 FROM centos:7
 
 # Build Args
-ARG GIMME_GO_VERSION=1.13.11
+ARG GIMME_GO_VERSION=1.16.7
 ARG DD_CONDA_VERSION=4.7.10
 ARG DD_PIP_VERSION=19.1
 ARG DD_SETUPTOOLS_VERSION=41.0.1
@@ -104,7 +104,7 @@ RUN conda init bash
 RUN source /root/.bashrc && conda activate ddpy2 \
     && pip install -i https://pypi.python.org/simple pip==${DD_PIP_VERSION} \
     && pip install --ignore-installed setuptools==${DD_SETUPTOOLS_VERSION} \
-    && pip install invoke==1.7.0 distro==1.4.0 awscli==1.16.240 lexicon==2.0.1
+    && pip install invoke==1.7.0 distro==1.4.0 awscli==1.16.240 lexicon==2.0.1 pathlib==1.0.1
 
 # Update pip, setuptools and misc deps
 RUN source /root/.bashrc && conda activate ddpy3 \
@@ -145,7 +145,7 @@ ENV CPP=/opt/rh/devtoolset-7/root/usr/bin/cpp
 ENV CXX=/opt/rh/devtoolset-7/root/usr/bin/c++
 
 # Download and install golangci-lint
-RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $GOPATH/bin v1.21.0
+RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $GOPATH/bin v1.42.1
 
 # Entrypoint
 COPY ./entrypoint.sh /

@@ -9,14 +9,15 @@
 package hostname
 
 import (
+	"context"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 )
 
 func init() {
 	if config.IsDockerSwarm() == true {
-		RegisterHostnameProvider("dockerswarm", func() (string, error) {
-			return clustername.GetClusterName(), nil
+		RegisterHostnameProvider("dockerswarm", func(ctx context.Context, options map[string]interface{}) (string, error) {
+			return clustername.GetClusterName(ctx, ""), nil
 		})
 	}
 }

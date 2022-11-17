@@ -1,43 +1,89 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 // Package compliance defines common interfaces and types for Compliance Agent
 package compliance
 
-// Rule defines a rule in a compliance config
-type Rule struct {
-	ID           string        `yaml:"id"`
-	Scope        Scope         `yaml:"scope"`
-	HostSelector *HostSelector `yaml:"hostSelector,omitempty"`
-	Resources    []Resource    `yaml:"resources,omitempty"`
+import "fmt"
+
+// Rule defines an interface for rego and condition-fallback rules
+type Rule interface {
+	ResourceCount() int
+	Common() *RuleCommon
 }
+
+// RuleCommon defines the base fields of a rule in a compliance config
+type RuleCommon struct {
+	ID           string        `yaml:"id"`
+	Description  string        `yaml:"description,omitempty"`
+	Scope        RuleScopeList `yaml:"scope,omitempty"`
+	HostSelector string        `yaml:"hostSelector,omitempty"`
+}
+
+// ConditionFallbackRule defines a rule in a compliance config
+type ConditionFallbackRule struct {
+	RuleCommon   `yaml:",inline"`
+	ResourceType string     `yaml:"resourceType,omitempty"`
+	Resources    []Resource `yaml:"resources,omitempty"`
+}
+
+// ResourceCount returns the count of resources
+func (r *ConditionFallbackRule) ResourceCount() int {
+	return len(r.Resources)
+}
+
+// Common returns the common field between all rules
+func (r *ConditionFallbackRule) Common() *RuleCommon {
+	return &r.RuleCommon
+}
+
+// RegoRule defines a rule in a compliance config
+type RegoRule struct {
+	RuleCommon `yaml:",inline"`
+	Inputs     []RegoInput `yaml:"input,omitempty"`
+	Module     string      `yaml:"module,omitempty"`
+	Imports    []string    `yaml:"imports,omitempty"`
+	Findings   string      `yaml:"findings,omitempty"`
+}
+
+// ResourceCount returns the count of resources
+func (r *RegoRule) ResourceCount() int {
+	return len(r.Inputs)
+}
+
+// Common returns the common field between all rules
+func (r *RegoRule) Common() *RuleCommon {
+	return &r.RuleCommon
+}
+
+// RuleScope defines scope for applicability of a rule
+type RuleScope string
 
 const (
 	// DockerScope const
-	DockerScope string = "docker"
+	DockerScope RuleScope = "docker"
 	// KubernetesNodeScope const
-	KubernetesNodeScope string = "kubernetesNode"
+	KubernetesNodeScope RuleScope = "kubernetesNode"
 	// KubernetesClusterScope const
-	KubernetesClusterScope string = "kubernetesCluster"
+	KubernetesClusterScope RuleScope = "kubernetesCluster"
 )
 
-// Scope defines when a rule can be run based on observed properties of the environment
-type Scope struct {
-	Docker            bool `yaml:"docker"`
-	KubernetesNode    bool `yaml:"kubernetesNode"`
-	KubernetesCluster bool `yaml:"kubernetesCluster"`
+// RuleScopeList is a set of RuleScopes
+type RuleScopeList []RuleScope
+
+// Includes returns true if RuleScopeList includes the specified RuleScope value
+func (l RuleScopeList) Includes(ruleScope RuleScope) bool {
+	for _, s := range l {
+		if s == ruleScope {
+			return true
+		}
+	}
+	return false
 }
 
-// HostSelector allows to activate/deactivate dynamically based on host properties
-type HostSelector struct {
-	KubernetesNodeLabels []KubeNodeSelector `yaml:"kubernetesRole,omitempty"`
-	KubernetesNodeRole   string             `yaml:"kubernetesNodeRole,omitempty"`
-}
-
-// KubeNodeSelector defines selector for a Kubernetes node
-type KubeNodeSelector struct {
-	Label string `yaml:"label,omitempty"`
-	Value string `yaml:"value,omitempty"`
+// CheckName returns a canonical name of a check for a rule ID and description
+func CheckName(ruleID string, description string) string {
+	return fmt.Sprintf("%s: %s", ruleID, description)
 }

@@ -6,15 +6,13 @@ import os
 import shutil
 from distutils.dir_util import copy_tree
 
-from .build_tags import get_build_tags
-from .utils import get_build_flags, bin_name, get_version
-from .utils import REPO_PATH
+from .build_tags import filter_incompatible_tags, get_build_tags
 from .go import generate
+from .utils import REPO_PATH, bin_name, get_build_flags, get_version
 
 
 def build_common(
     ctx,
-    command,
     bin_path,
     build_tags,
     bin_suffix,
@@ -24,13 +22,16 @@ def build_common(
     race,
     development,
     skip_assets,
-    go_mod="vendor",
+    go_mod="mod",
+    arch="x64",
 ):
     """
     Build Cluster Agent
     """
 
-    build_include = build_tags if build_include is None else build_include.split(",")
+    build_include = (
+        build_tags if build_include is None else filter_incompatible_tags(build_include.split(","), arch=arch)
+    )
     build_exclude = [] if build_exclude is None else build_exclude.split(",")
     build_tags = get_build_tags(build_include, build_exclude)
 
@@ -47,7 +48,9 @@ def build_common(
         "race_opt": "-race" if race else "",
         "build_type": "-a" if rebuild else "",
         "build_tags": " ".join(build_tags),
-        "bin_name": os.path.join(bin_path, bin_name("stackstate-cluster-agent{suffix}".format(suffix=bin_suffix))),
+        "bin_name": os.path.join(
+            bin_path,
+            bin_name("stackstate-cluster-agent{suffix}".format(suffix=bin_suffix))),  # sts
         "gcflags": gcflags,
         "ldflags": ldflags,
         "REPO_PATH": REPO_PATH,
@@ -59,9 +62,7 @@ def build_common(
     #
     # We need to remove cross compiling bits if any because go generate must
     # build and execute in the native platform
-    env.update(
-        {"GOOS": "", "GOARCH": "",}
-    )
+    env.update({"GOOS": "", "GOARCH": ""})
 
     cmd = "go generate -mod={go_mod} -tags '{build_tags}' {repo_path}/cmd/cluster-agent{suffix}"
     ctx.run(cmd.format(go_mod=go_mod, build_tags=" ".join(build_tags), repo_path=REPO_PATH, suffix=bin_suffix), env=env)
@@ -72,7 +73,7 @@ def build_common(
         )
 
 
-def refresh_assets_common(ctx, bin_path, additional_dist_folders, development):
+def refresh_assets_common(_, bin_path, additional_dist_folders, development):
     """
     Clean up and refresh cluster agent's assets and config files
     """

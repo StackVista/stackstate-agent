@@ -1,12 +1,14 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package mocksender
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/serializer"
 )
 
 //Rate adds a rate type to the mock calls.
@@ -22,6 +24,11 @@ func (m *MockSender) Count(metric string, value float64, hostname string, tags [
 //MonotonicCount adds a monotonic count type to the mock calls.
 func (m *MockSender) MonotonicCount(metric string, value float64, hostname string, tags []string) {
 	m.Called(metric, value, hostname, tags)
+}
+
+//MonotonicCountWithFlushFirstValue adds a monotonic count type to the mock calls with flushFirstValue parameter
+func (m *MockSender) MonotonicCountWithFlushFirstValue(metric string, value float64, hostname string, tags []string, flushFirstValue bool) {
+	m.Called(metric, value, hostname, tags, flushFirstValue)
 }
 
 //Counter adds a counter type to the mock calls.
@@ -60,9 +67,14 @@ func (m *MockSender) Event(e metrics.Event) {
 	m.Called(e)
 }
 
+//EventPlatformEvent enables the event platform event mock call.
+func (m *MockSender) EventPlatformEvent(rawEvent string, eventType string) {
+	m.Called(rawEvent, eventType)
+}
+
 //HistogramBucket enables the histogram bucket mock call.
-func (m *MockSender) HistogramBucket(metric string, value int64, lowerBound, upperBound float64, monotonic bool, hostname string, tags []string) {
-	m.Called(metric, value, lowerBound, upperBound, monotonic, hostname, tags)
+func (m *MockSender) HistogramBucket(metric string, value int64, lowerBound, upperBound float64, monotonic bool, hostname string, tags []string, flushFirstValue bool) {
+	m.Called(metric, value, lowerBound, upperBound, monotonic, hostname, tags, flushFirstValue)
 }
 
 //Commit enables the commit mock call.
@@ -85,8 +97,13 @@ func (m *MockSender) FinalizeCheckServiceTag() {
 	m.Called()
 }
 
-//GetMetricStats enables the get metric stats mock call.
-func (m *MockSender) GetMetricStats() map[string]int64 {
+//GetSenderStats enables the get metric stats mock call.
+func (m *MockSender) GetSenderStats() check.SenderStats {
 	m.Called()
-	return make(map[string]int64)
+	return check.NewSenderStats()
+}
+
+// OrchestratorMetadata submit orchestrator metadata messages
+func (m *MockSender) OrchestratorMetadata(msgs []serializer.ProcessMessageBody, clusterID string, nodeType int) {
+	m.Called(msgs, clusterID, nodeType)
 }

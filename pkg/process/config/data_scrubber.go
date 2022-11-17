@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/DataDog/gopsutil/process"
+	"github.com/StackVista/stackstate-agent/pkg/process/procutil"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
@@ -40,7 +40,7 @@ type DataScrubber struct {
 func NewDefaultDataScrubber() *DataScrubber {
 	newDataScrubber := &DataScrubber{
 		Enabled:           true,
-		SensitivePatterns: compileStringsToRegex(defaultSensitiveWords),
+		SensitivePatterns: CompileStringsToRegex(defaultSensitiveWords),
 		seenProcess:       make(map[string]struct{}),
 		scrubbedCmdlines:  make(map[string][]string),
 		cacheCycles:       0,
@@ -50,10 +50,10 @@ func NewDefaultDataScrubber() *DataScrubber {
 	return newDataScrubber
 }
 
-// compileStringsToRegex compile each word in the slice into a regex pattern to match
+// CompileStringsToRegex compile each word in the slice into a regex pattern to match
 // against the cmdline arguments
 // The word must contain only word characters ([a-zA-z0-9_]) or wildcards *
-func compileStringsToRegex(words []string) []*regexp.Regexp {
+func CompileStringsToRegex(words []string) []*regexp.Regexp {
 	compiledRegexps := make([]*regexp.Regexp, 0, len(words))
 	forbiddenSymbols := regexp.MustCompile("[^a-zA-Z0-9_*]")
 
@@ -106,19 +106,19 @@ func compileStringsToRegex(words []string) []*regexp.Regexp {
 }
 
 // createProcessKey returns an unique identifier for a given process
-func createProcessKey(p *process.FilledProcess) string {
+func createProcessKey(p *procutil.Process) string {
 	var b bytes.Buffer
 	b.WriteString("p:")
 	b.WriteString(strconv.Itoa(int(p.Pid)))
 	b.WriteString("|c:")
-	b.WriteString(strconv.Itoa(int(p.CreateTime)))
+	b.WriteString(strconv.Itoa(int(p.Stats.CreateTime)))
 
 	return b.String()
 }
 
 // ScrubProcessCommand uses a cache memory to avoid scrubbing already known
 // process' cmdlines
-func (ds *DataScrubber) ScrubProcessCommand(p *process.FilledProcess) []string {
+func (ds *DataScrubber) ScrubProcessCommand(p *procutil.Process) []string {
 	if ds.StripAllArguments {
 		return ds.stripArguments(p.Cmdline)
 	}
@@ -183,6 +183,6 @@ func (ds *DataScrubber) stripArguments(cmdline []string) []string {
 
 // AddCustomSensitiveWords adds custom sensitive words on the DataScrubber object
 func (ds *DataScrubber) AddCustomSensitiveWords(words []string) {
-	newPatterns := compileStringsToRegex(words)
+	newPatterns := CompileStringsToRegex(words)
 	ds.SensitivePatterns = append(ds.SensitivePatterns, newPatterns...)
 }

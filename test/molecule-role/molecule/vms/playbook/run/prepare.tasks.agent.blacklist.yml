@@ -3,6 +3,6 @@
   pause:
     seconds: 10
 - name: Start the stress process that consumes a large amount of memory
-  shell: "/usr/bin/stress --vm 1 --vm-bytes 248M --timeout {{ max_test_time }} --verbose"
+  shell: "/usr/bin/stress --vm 1 --vm-bytes 248M --verbose"
   async: "{{ max_test_time }}"
   poll: 0

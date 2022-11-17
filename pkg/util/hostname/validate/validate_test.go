@@ -1,12 +1,10 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 package validate
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"os"
 	"strings"
 	"testing"
 
@@ -31,27 +29,7 @@ func TestValidHostname(t *testing.T) {
 	assert.NotNil(t, err)
 	err = ValidHostname("data🐕hq.com")
 	assert.NotNil(t, err)
-
-	// switch of hostname validation
-	os.Setenv("DD_SKIP_HOSTNAME_VALIDATION", "true")
-	err = ValidHostname("")
-	assert.Nil(t, err)
-	err = ValidHostname("localhost")
-	assert.Nil(t, err)
-	err = ValidHostname(strings.Repeat("a", 256))
-	assert.Nil(t, err)
-	err = ValidHostname("data🐕hq.com")
-	assert.Nil(t, err)
-
-	// switch of hostname validation
-	os.Setenv("DD_SKIP_HOSTNAME_VALIDATION", "false")
-	config.Datadog.Set("skip_hostname_validation", "true")
-	err = ValidHostname("")
-	assert.Nil(t, err)
-	err = ValidHostname("localhost")
-	assert.Nil(t, err)
-	err = ValidHostname(strings.Repeat("a", 256))
-	assert.Nil(t, err)
-	err = ValidHostname("data🐕hq.com")
+	// sts - should accept AKS hostname
+	err = ValidHostname("aks-agentpool-42726193-vmss_0")
 	assert.Nil(t, err)
 }

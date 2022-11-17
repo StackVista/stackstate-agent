@@ -1,14 +1,13 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 // Package validate provides hostname validation helpers
 package validate
 
 import (
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/config"
 	"regexp"
 	"strings"
 
@@ -18,7 +17,9 @@ import (
 const maxLength = 255
 
 var (
-	validHostnameRfc1123 = regexp.MustCompile(`^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$`)
+	// sts - Disable Rfc1123 validation
+	//validHostnameRfc1123 = regexp.MustCompile(`^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$`)
+	validHostnameSts     = regexp.MustCompile(`^[\w_]([\w_.-]*[\w_])?$`) // sts - same as cluster name
 	localhostIdentifiers = []string{
 		"localhost",
 		"localhost.localdomain",
@@ -30,13 +31,6 @@ var (
 // ValidHostname determines whether the passed string is a valid hostname.
 // In case it's not, the returned error contains the details of the failure.
 func ValidHostname(hostname string) error {
-	// [sts] If hostname validation is disabled just return nil
-	skipHostnameValidation := config.Datadog.GetBool("skip_hostname_validation")
-	if skipHostnameValidation {
-		log.Debugf("Hostname validation is disabled, accepting %s as a valid hostname", hostname)
-		return nil
-	}
-
 	if hostname == "" {
 		return fmt.Errorf("hostname is empty")
 	} else if isLocal(hostname) {
@@ -44,7 +38,7 @@ func ValidHostname(hostname string) error {
 	} else if len(hostname) > maxLength {
 		log.Errorf("ValidHostname: name exceeded the maximum length of %d characters", maxLength)
 		return fmt.Errorf("name exceeded the maximum length of %d characters", maxLength)
-	} else if !validHostnameRfc1123.MatchString(hostname) {
+	} else if !validHostnameSts.MatchString(hostname) {
 		log.Errorf("ValidHostname: %s is not RFC1123 compliant", hostname)
 		return fmt.Errorf("%s is not RFC1123 compliant", hostname)
 	}

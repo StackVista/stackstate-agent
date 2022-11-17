@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2017-2020 Datadog, Inc.
+// Copyright 2017-present Datadog, Inc.
 
 package corechecks
 
@@ -15,7 +15,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/defaults"
-	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
@@ -26,7 +26,7 @@ import (
 // NewCheckBase() in your factory, plus:
 // - long-running checks must override Stop() and Interval()
 // - checks supporting multiple instances must call BuildID() from
-// their Config() method
+// their Configure() method
 // - after optionally building a unique ID, CommonConfigure() must
 // be called from the Config() method to handle the common instance
 // fields
@@ -57,7 +57,7 @@ func NewCheckBaseWithInterval(name string, defaultInterval time.Duration) CheckB
 		checkName:     name,
 		checkID:       check.ID(name),
 		checkInterval: defaultInterval,
-		telemetry:     telemetry.IsCheckEnabled(name),
+		telemetry:     telemetry_utils.IsCheckEnabled(name),
 	}
 }
 
@@ -173,6 +173,20 @@ func (c *CheckBase) Warnf(format string, params ...interface{}) error {
 // long-running checks (persisting after Run() exits)
 func (c *CheckBase) Stop() {}
 
+// Cancel calls CommonCancel by default. Override it if
+// your check has background resources that need to be cleaned up
+// when the check is unscheduled. Make sure to call CommonCancel from
+// your override.
+func (c *CheckBase) Cancel() {
+	c.CommonCancel()
+}
+
+// CommonCancel cleans up common resources. Must be called from Cancel
+// when checks implement it.
+func (c *CheckBase) CommonCancel() {
+	aggregator.DestroySender(c.checkID)
+}
+
 // Interval returns the scheduling time for the check.
 // Long-running checks should override to return 0.
 func (c *CheckBase) Interval() time.Duration {
@@ -220,11 +234,11 @@ func (c *CheckBase) GetWarnings() []error {
 	return w
 }
 
-// GetMetricStats returns the stats from the last run of the check.
-func (c *CheckBase) GetMetricStats() (map[string]int64, error) {
+// GetSenderStats returns the stats from the last run of the check.
+func (c *CheckBase) GetSenderStats() (check.SenderStats, error) {
 	sender, err := aggregator.GetSender(c.ID())
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve a sender: %v", err)
+		return check.SenderStats{}, fmt.Errorf("failed to retrieve a sender: %v", err)
 	}
-	return sender.GetMetricStats(), nil
+	return sender.GetSenderStats(), nil
 }

@@ -312,11 +312,11 @@ func (m *RateLimitingSampler) GetQps() int64 {
 }
 
 func init() {
-	proto.RegisterEnum("opentelemetry.proto.trace.v1.ConstantSampler_ConstantDecision", ConstantSampler_ConstantDecision_name, ConstantSampler_ConstantDecision_value)
-	proto.RegisterType((*TraceConfig)(nil), "opentelemetry.proto.trace.v1.TraceConfig")
-	proto.RegisterType((*ConstantSampler)(nil), "opentelemetry.proto.trace.v1.ConstantSampler")
-	proto.RegisterType((*TraceIdRatioBased)(nil), "opentelemetry.proto.trace.v1.TraceIdRatioBased")
-	proto.RegisterType((*RateLimitingSampler)(nil), "opentelemetry.proto.trace.v1.RateLimitingSampler")
+	proto.RegisterEnum("sts.opentelemetry.proto.trace.v1.ConstantSampler_ConstantDecision", ConstantSampler_ConstantDecision_name, ConstantSampler_ConstantDecision_value)
+	proto.RegisterType((*TraceConfig)(nil), "sts.opentelemetry.proto.trace.v1.TraceConfig")
+	proto.RegisterType((*ConstantSampler)(nil), "sts.opentelemetry.proto.trace.v1.ConstantSampler")
+	proto.RegisterType((*TraceIdRatioBased)(nil), "sts.opentelemetry.proto.trace.v1.TraceIdRatioBased")
+	proto.RegisterType((*RateLimitingSampler)(nil), "sts.opentelemetry.proto.trace.v1.RateLimitingSampler")
 }
 
 func init() {

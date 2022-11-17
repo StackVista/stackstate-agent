@@ -1,3 +1,5 @@
+// +build linux
+
 package network
 
 import (
@@ -17,8 +19,8 @@ const (
 	tcpClose int64 = 7
 )
 
-// readProcNet reads a /proc/net/ file and returns a list of all source ports for connections in the tcpListen state
-func readProcNet(path string) ([]uint16, error) {
+// readProcNetListeners reads a /proc/net/ file and returns a list of all source ports for connections in the tcpListen state
+func readProcNetListeners(path string) ([]uint16, error) {
 	return readProcNetWithStatus(path, tcpListen)
 }
 
@@ -71,14 +73,13 @@ func readProcNetWithStatus(path string, status int64) ([]uint16, error) {
 				continue
 			}
 
-			port, err := strconv.ParseInt(string(rawLocal[idx+1:]), 16, 0)
+			port, err := strconv.ParseUint(string(rawLocal[idx+1:]), 16, 16)
 			if err != nil {
 				log.Errorf("error parsing port [%s] as hex: %s", rawLocal[idx+1:], err)
 				continue
 			}
 
 			ports = append(ports, uint16(port))
-
 		}
 	}
 

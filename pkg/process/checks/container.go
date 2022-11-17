@@ -1,21 +1,22 @@
 package checks
 
 import (
-	"runtime"
+	"context"
 	"sync"
 	"time"
 
-	model "github.com/DataDog/agent-payload/process"
+	model "github.com/DataDog/agent-payload/v5/process"
 	"github.com/StackVista/stackstate-agent/pkg/process/config"
 	"github.com/StackVista/stackstate-agent/pkg/process/statsd"
 	"github.com/StackVista/stackstate-agent/pkg/process/util"
 	"github.com/StackVista/stackstate-agent/pkg/tagger"
 	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
-	agentutil "github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders"
 	"github.com/StackVista/stackstate-agent/pkg/util/containers"
 	containercollectors "github.com/StackVista/stackstate-agent/pkg/util/containers/collectors"
 	"github.com/StackVista/stackstate-agent/pkg/util/containers/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/system"
 )
 
 // Container is a singleton ContainerCheck.
@@ -38,7 +39,7 @@ type ContainerCheck struct {
 func (c *ContainerCheck) Init(cfg *config.AgentConfig, info *model.SystemInfo) {
 	c.sysInfo = info
 
-	networkID, err := agentutil.GetNetworkID()
+	networkID, err := cloudproviders.GetNetworkID(context.TODO())
 	if err != nil {
 		log.Infof("no network ID detected: %s", err)
 	}
@@ -48,7 +49,7 @@ func (c *ContainerCheck) Init(cfg *config.AgentConfig, info *model.SystemInfo) {
 }
 
 // Name returns the name of the ProcessCheck.
-func (c *ContainerCheck) Name() string { return "container" }
+func (c *ContainerCheck) Name() string { return config.ContainerCheckName }
 
 // RealTime indicates if this check only runs in real-time mode.
 func (c *ContainerCheck) RealTime() bool { return false }
@@ -118,23 +119,10 @@ func (c *ContainerCheck) Run(cfg *config.AgentConfig, groupID int32) ([]model.Me
 	return messages, nil
 }
 
-// filterCtrIDsByPIDs uses lastCtrIDForPID and filter down only the pid -> cid that we need
-func (c *ContainerCheck) filterCtrIDsByPIDs(pids []int32) map[int32]string {
-	c.Lock()
-	defer c.Unlock()
-
-	ctrByPid := make(map[int32]string)
-	for _, pid := range pids {
-		if cid, ok := c.lastCtrIDForPID[pid]; ok {
-			ctrByPid[pid] = cid
-		}
-	}
-	return ctrByPid
-}
-
 // fmtContainers loops through container list and converts them to a list of container objects
 func fmtContainers(ctrList []*containers.Container, lastRates map[string]util.ContainerRateMetrics, lastRun time.Time) []*model.Container {
-	containers := make([]*model.Container, 0, len(ctrList))
+	currentTime := time.Now()
+	containersList := make([]*model.Container, 0, len(ctrList))
 	for _, ctr := range ctrList {
 		lastCtr, ok := lastRates[ctr.ID]
 		if !ok {
@@ -142,13 +130,10 @@ func fmtContainers(ctrList []*containers.Container, lastRates map[string]util.Co
 			lastCtr = util.NullContainerRates
 		}
 
-		// Just in case the container is found, but refs are nil
+		// Just in case the container is found, but refs are nil.
+		// Note some CPU values are set to -1, to be skipped on the backend, because they are reported cumulatively
 		ctr = fillNilContainer(ctr)
 		lastCtr = fillNilRates(lastCtr)
-
-		ifStats := ctr.Network.SumInterfaces()
-		cpus := runtime.NumCPU()
-		sys2, sys1 := ctr.CPU.SystemUsage, lastCtr.CPU.SystemUsage
 
 		// Retrieves metadata tags
 		tags, err := tagger.Tag(ctr.EntityID, collectors.HighCardinality)
@@ -157,13 +142,33 @@ func fmtContainers(ctrList []*containers.Container, lastRates map[string]util.Co
 			tags = []string{}
 		}
 
-		containers = append(containers, &model.Container{
+		if ctr.Type == containers.RuntimeNameGarden && len(tags) == 0 {
+			// If there is an error retrieving tags, don't send the container for garden. It means it hasn't yet been
+			// discovered by the cluster agent, so avoid sending something with no tags, i.e. no container name, ...
+			log.Debugf("No tags found for app %s, it has probably not been discovered by the DCA, skipping.", ctr.ID)
+			continue
+		}
+
+		ifStats := ctr.Network.SumInterfaces()
+		cpus := system.HostCPUCount()
+		sys2, sys1 := ctr.CPU.SystemUsage, lastCtr.CPU.SystemUsage
+
+		userPct := calculateCtrPct(ctr.CPU.User, lastCtr.CPU.User, sys2, sys1, cpus, currentTime, lastRun)
+		systemPct := calculateCtrPct(ctr.CPU.System, lastCtr.CPU.System, sys2, sys1, cpus, currentTime, lastRun)
+		var totalPct float32
+		if userPct == -1 || systemPct == -1 {
+			totalPct = -1
+		} else {
+			totalPct = calculateCtrPct(ctr.CPU.User+ctr.CPU.System, lastCtr.CPU.User+lastCtr.CPU.System, sys2, sys1, cpus, currentTime, lastRun)
+		}
+
+		containersList = append(containersList, &model.Container{
 			Id:          ctr.ID,
 			Type:        ctr.Type,
 			CpuLimit:    float32(ctr.Limits.CPULimit),
-			UserPct:     calculateCtrPct(ctr.CPU.User, lastCtr.CPU.User, sys2, sys1, cpus, lastRun),
-			SystemPct:   calculateCtrPct(ctr.CPU.System, lastCtr.CPU.System, sys2, sys1, cpus, lastRun),
-			TotalPct:    calculateCtrPct(ctr.CPU.User+ctr.CPU.System, lastCtr.CPU.User+lastCtr.CPU.System, sys2, sys1, cpus, lastRun),
+			UserPct:     userPct,
+			SystemPct:   systemPct,
+			TotalPct:    totalPct,
 			MemoryLimit: ctr.Limits.MemLimit,
 			MemRss:      ctr.Memory.RSS,
 			MemCache:    ctr.Memory.Cache,
@@ -183,7 +188,7 @@ func fmtContainers(ctrList []*containers.Container, lastRates map[string]util.Co
 			Tags:        tags,
 		})
 	}
-	return containers
+	return containersList
 }
 
 // chunkContainers formats and chunks the ctrList into a slice of chunks using a specific number of chunks.
@@ -211,7 +216,7 @@ func convertAddressList(ctr *containers.Container) []*model.ContainerAddr {
 	addrs := make([]*model.ContainerAddr, 0, len(ctr.AddressList))
 	for _, a := range ctr.AddressList {
 		protocol := model.ConnectionType_tcp
-		if a.Protocol == "UDP" {
+		if a.Protocol == "udp" {
 			protocol = model.ConnectionType_udp
 		}
 		addrs = append(addrs, &model.ContainerAddr{

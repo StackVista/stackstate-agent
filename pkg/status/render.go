@@ -1,9 +1,9 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
-//go:generate go-bindata -pkg status -prefix templates -o ./templates.go templates/...
+//go:generate go run github.com/shuLhan/go-bindata/cmd/go-bindata -pkg status -prefix templates -o ./templates.go templates/...
 //go:generate go fmt ./templates.go
 
 package status
@@ -15,7 +15,10 @@ import (
 	"io"
 	"text/template"
 
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/snmp/traps"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 var fmap = Textfmap()
@@ -27,18 +30,30 @@ func FormatStatus(data []byte) (string, error) {
 	stats := make(map[string]interface{})
 	json.Unmarshal(data, &stats) //nolint:errcheck
 	forwarderStats := stats["forwarderStats"]
+	if forwarderStatsMap, ok := forwarderStats.(map[string]interface{}); ok {
+		forwarderStatsMap["config"] = stats["config"]
+	} else {
+		log.Warn("The Forwarder status format is invalid. Some parts of the `Forwarder` section may be missing.")
+	}
 	runnerStats := stats["runnerStats"]
 	pyLoaderStats := stats["pyLoaderStats"]
 	pythonInit := stats["pythonInit"]
 	autoConfigStats := stats["autoConfigStats"]
 	checkSchedulerStats := stats["checkSchedulerStats"]
 	aggregatorStats := stats["aggregatorStats"]
+	s, err := check.TranslateEventPlatformEventTypes(aggregatorStats)
+	if err != nil {
+		log.Debugf("failed to translate event platform event types in aggregatorStats: %s", err.Error())
+	} else {
+		aggregatorStats = s
+	}
 	dogstatsdStats := stats["dogstatsdStats"]
 	logsStats := stats["logsStats"]
 	dcaStats := stats["clusterAgentStatus"]
 	endpointsInfos := stats["endpointsInfos"]
 	inventoriesStats := stats["inventories"]
 	systemProbeStats := stats["systemProbeStats"]
+	snmpTrapsStats := stats["snmpTrapsStats"]
 	title := fmt.Sprintf("Agent (v%s)", stats["version"])
 	stats["title"] = title
 	renderStatusTemplate(b, "/header.tmpl", stats)
@@ -56,6 +71,12 @@ func FormatStatus(data []byte) (string, error) {
 	if config.Datadog.GetBool("cluster_agent.enabled") || config.Datadog.GetBool("cluster_checks.enabled") {
 		renderStatusTemplate(b, "/clusteragent.tmpl", dcaStats)
 	}
+	if traps.IsEnabled() {
+		renderStatusTemplate(b, "/snmp-traps.tmpl", snmpTrapsStats)
+	}
+	if config.IsContainerized() {
+		renderAutodiscoveryStats(b, stats["adEnabledFeatures"], stats["adConfigErrors"], stats["filterErrors"])
+	}
 
 	return b.String(), nil
 }
@@ -71,12 +92,20 @@ func FormatDCAStatus(data []byte) (string, error) {
 	autoConfigStats := stats["autoConfigStats"]
 	checkSchedulerStats := stats["checkSchedulerStats"]
 	endpointsInfos := stats["endpointsInfos"]
+	logsStats := stats["logsStats"]
+	orchestratorStats := stats["orchestrator"]
 	title := fmt.Sprintf("Datadog Cluster Agent (v%s)", stats["version"])
 	stats["title"] = title
 	renderStatusTemplate(b, "/header.tmpl", stats)
 	renderChecksStats(b, runnerStats, nil, nil, autoConfigStats, checkSchedulerStats, nil, "")
 	renderStatusTemplate(b, "/forwarder.tmpl", forwarderStats)
 	renderStatusTemplate(b, "/endpoints.tmpl", endpointsInfos)
+	if config.Datadog.GetBool("compliance_config.enabled") {
+		renderStatusTemplate(b, "/logsagent.tmpl", logsStats)
+	}
+	if config.Datadog.GetBool("orchestrator_explorer.enabled") {
+		renderStatusTemplate(b, "/orchestrator.tmpl", orchestratorStats)
+	}
 
 	return b.String(), nil
 }
@@ -97,10 +126,13 @@ func FormatSecurityAgentStatus(data []byte) (string, error) {
 	stats := make(map[string]interface{})
 	json.Unmarshal(data, &stats) //nolint:errcheck
 	runnerStats := stats["runnerStats"]
+	complianceChecks := stats["complianceChecks"]
 	title := fmt.Sprintf("Datadog Security Agent (v%s)", stats["version"])
 	stats["title"] = title
 	renderStatusTemplate(b, "/header.tmpl", stats)
-	renderComplianceChecksStats(b, runnerStats)
+
+	renderRuntimeSecurityStats(b, stats["runtimeSecurityStatus"])
+	renderComplianceChecksStats(b, runnerStats, complianceChecks)
 
 	return b.String(), nil
 }
@@ -146,10 +178,25 @@ func renderCheckStats(data []byte, checkName string) (string, error) {
 	return b.String(), nil
 }
 
-func renderComplianceChecksStats(w io.Writer, runnerStats /*, checkSchedulerStats*/ interface{} /*, onlyCheck string*/) {
+func renderComplianceChecksStats(w io.Writer, runnerStats interface{}, complianceChecks interface{}) {
 	checkStats := make(map[string]interface{})
 	checkStats["RunnerStats"] = runnerStats
+	checkStats["ComplianceChecks"] = complianceChecks
 	renderStatusTemplate(w, "/compliance.tmpl", checkStats)
+}
+
+func renderRuntimeSecurityStats(w io.Writer, runtimeSecurityStatus interface{}) {
+	status := make(map[string]interface{})
+	status["RuntimeSecurityStatus"] = runtimeSecurityStatus
+	renderStatusTemplate(w, "/runtimesecurity.tmpl", status)
+}
+
+func renderAutodiscoveryStats(w io.Writer, adEnabledFeatures interface{}, adConfigErrors interface{}, filterErrors interface{}) {
+	autodiscoveryStats := make(map[string]interface{})
+	autodiscoveryStats["adEnabledFeatures"] = adEnabledFeatures
+	autodiscoveryStats["adConfigErrors"] = adConfigErrors
+	autodiscoveryStats["filterErrors"] = filterErrors
+	renderStatusTemplate(w, "/autodiscovery.tmpl", autodiscoveryStats)
 }
 
 func renderStatusTemplate(w io.Writer, templateName string, stats interface{}) {

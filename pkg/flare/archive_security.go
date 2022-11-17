@@ -1,16 +1,17 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package flare
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
-	"github.com/mholt/archiver"
+	"github.com/mholt/archiver/v3"
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/status"
@@ -19,12 +20,9 @@ import (
 )
 
 // CreateSecurityAgentArchive packages up the files
-func CreateSecurityAgentArchive(local bool, logFilePath string) (string, error) {
+func CreateSecurityAgentArchive(local bool, logFilePath string, runtimeStatus map[string]interface{}) (string, error) {
 	zipFilePath := getArchivePath()
-	return createSecurityAgentArchive(zipFilePath, local, logFilePath)
-}
 
-func createSecurityAgentArchive(zipFilePath string, local bool, logFilePath string) (string, error) {
 	tempDir, err := createTempDir()
 	if err != nil {
 		return "", err
@@ -33,7 +31,7 @@ func createSecurityAgentArchive(zipFilePath string, local bool, logFilePath stri
 
 	// Get hostname, if there's an error in getting the hostname,
 	// set the hostname to unknown
-	hostname, err := util.GetHostname()
+	hostname, err := util.GetHostname(context.TODO())
 	if err != nil {
 		hostname = "unknown"
 	}
@@ -47,7 +45,7 @@ func createSecurityAgentArchive(zipFilePath string, local bool, logFilePath stri
 	} else {
 		// The Status will be unavailable unless the agent is running.
 		// Only zip it up if the agent is running
-		err = zipSecurityAgentStatusFile(tempDir, hostname)
+		err = zipSecurityAgentStatusFile(tempDir, hostname, runtimeStatus)
 		if err != nil {
 			log.Infof("Error getting the status of the Security Agent, %q", err)
 			return "", err
@@ -71,6 +69,11 @@ func createSecurityAgentArchive(zipFilePath string, local bool, logFilePath stri
 		return "", err
 	}
 
+	err = zipRuntimeFiles(tempDir, hostname, permsInfos)
+	if err != nil {
+		return "", err
+	}
+
 	err = zipExpVar(tempDir, hostname)
 	if err != nil {
 		return "", err
@@ -81,12 +84,38 @@ func createSecurityAgentArchive(zipFilePath string, local bool, logFilePath stri
 		return "", err
 	}
 
+	err = zipLinuxKernelSymbols(tempDir, hostname)
+	if err != nil {
+		return "", err
+	}
+
+	err = zipLinuxPid1MountInfo(tempDir, hostname)
+	if err != nil {
+		return "", err
+	}
+
+	err = zipLinuxKrobeEvents(tempDir, hostname)
+	if err != nil {
+		log.Infof("Error while getting kprobe_events: %s", err)
+	}
+
+	err = zipLinuxTracingAvailableEvents(tempDir, hostname)
+	if err != nil {
+		log.Infof("Error while getting kprobe_events: %s", err)
+	}
+
+	err = zipLinuxTracingAvailableFilterFunctions(tempDir, hostname)
+	if err != nil {
+		log.Infof("Error while getting kprobe_events: %s", err)
+	}
+
 	err = permsInfos.commit(tempDir, hostname, os.ModePerm)
 	if err != nil {
 		log.Infof("Error while creating permissions.log infos file: %s", err)
 	}
 
-	err = archiver.Zip.Make(zipFilePath, []string{filepath.Join(tempDir, hostname)})
+	// File format is determined based on `zipFilePath` extension
+	err = archiver.Archive([]string{filepath.Join(tempDir, hostname)}, zipFilePath)
 	if err != nil {
 		return "", err
 	}
@@ -94,17 +123,17 @@ func createSecurityAgentArchive(zipFilePath string, local bool, logFilePath stri
 	return zipFilePath, nil
 }
 
-func zipSecurityAgentStatusFile(tempDir, hostname string) error {
+func zipSecurityAgentStatusFile(tempDir, hostname string, runtimeStatus map[string]interface{}) error {
 	// Grab the status
 	log.Infof("Zipping the status at %s for %s", tempDir, hostname)
-	s, err := status.GetAndFormatSecurityAgentStatus()
+	s, err := status.GetAndFormatSecurityAgentStatus(runtimeStatus)
 	if err != nil {
 		log.Infof("Error zipping the status: %q", err)
 		return err
 	}
 
 	// Clean it up
-	cleaned, err := log.CredentialsCleanerBytes(s)
+	cleaned, err := flareScrubber.ScrubBytes(s)
 	if err != nil {
 		log.Infof("Error redacting the log files: %q", err)
 		return err
@@ -132,11 +161,38 @@ func zipComplianceFiles(tempDir, hostname string, permsInfos permissionsInfos) e
 		if f == nil {
 			return nil
 		}
-		if f.IsDir() {
+		if f.IsDir() || f.Mode()&os.ModeSymlink != 0 {
 			return nil
 		}
 
 		dst := filepath.Join(tempDir, hostname, "compliance.d", f.Name())
+
+		if permsInfos != nil {
+			permsInfos.add(src)
+		}
+
+		return util.CopyFileAll(src, dst)
+	})
+
+	return err
+}
+
+func zipRuntimeFiles(tempDir, hostname string, permsInfos permissionsInfos) error {
+	runtimeDir := config.Datadog.GetString("runtime_security_config.policies.dir")
+
+	if permsInfos != nil {
+		addParentPerms(runtimeDir, permsInfos)
+	}
+
+	err := filepath.Walk(runtimeDir, func(src string, f os.FileInfo, err error) error {
+		if f == nil {
+			return nil
+		}
+		if f.IsDir() || f.Mode()&os.ModeSymlink != 0 {
+			return nil
+		}
+
+		dst := filepath.Join(tempDir, hostname, "runtime-security.d", f.Name())
 
 		if permsInfos != nil {
 			permsInfos.add(src)

@@ -16,6 +16,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/version"
 	"strconv"
 	"sync"
 	"testing"
@@ -43,18 +44,18 @@ var optionalRules = []string{
 func TestDisablingAnyResourceWithoutDisablingCollectorCauseAnError(t *testing.T) {
 	for _, rule := range optionalRules {
 		mBatcher := batcher.NewMockBatcher()
-		kCheck := KubernetesAPITopologyFactory().(*TopologyCheck)
-		kCheck.ac = MockAPIClient([]Rule{parseRule(rule)})
+		check := KubernetesAPITopologyFactory().(*TopologyCheck)
+		check.ac = MockAPIClient([]Rule{parseRule(rule)})
 
 		nothingIsDisabledConfig := `
 cluster_name: mycluster
 collect_topology: true
 csi_pv_mapper_enabled: true
 `
-		err := kCheck.Configure([]byte(nothingIsDisabledConfig), nil, "")
+		err := check.Configure([]byte(nothingIsDisabledConfig), nil, "")
 		assert.NoError(t, err)
 
-		err = kCheck.Run()
+		err = check.Run()
 		assert.NoError(t, err, "check itself should succeed despite failures of a particular collector")
 
 		assert.NotEmpty(t, mBatcher.Errors, "Disabling %v should cause an error", rule)
@@ -63,8 +64,8 @@ csi_pv_mapper_enabled: true
 
 func TestDisablingAllPossibleCollectorsKeepErrorsOff(t *testing.T) {
 	mBatcher := batcher.NewMockBatcher()
-	kCheck := KubernetesAPITopologyFactory().(*TopologyCheck)
-	kCheck.ac = MockAPIClient(parseRules(optionalRules))
+	check := KubernetesAPITopologyFactory().(*TopologyCheck)
+	check.ac = MockAPIClient(parseRules(optionalRules))
 	allResourcesAreDisabledConfig := `
 cluster_name: mycluster
 collect_topology: true
@@ -84,10 +85,10 @@ resources:
   cronjobs: false
   secrets: false
 `
-	err := kCheck.Configure([]byte(allResourcesAreDisabledConfig), nil, "")
+	err := check.Configure([]byte(allResourcesAreDisabledConfig), nil, "")
 	assert.NoError(t, err)
 
-	err = kCheck.Run()
+	err = check.Run()
 	assert.NoError(t, err, "check should succeed")
 
 	assert.Empty(t, mBatcher.Errors, "No errors are expected because all resources are disabled in config")
@@ -103,10 +104,10 @@ func TestRunClusterCollectors(t *testing.T) {
 }
 
 func testConfigParsed(t *testing.T, input string, expected TopologyConfig) {
-	kCheck := KubernetesAPITopologyFactory().(*TopologyCheck)
-	err := kCheck.Configure([]byte(input), []byte(""), "whatever")
+	check := KubernetesAPITopologyFactory().(*TopologyCheck)
+	err := check.Configure([]byte(input), []byte(""), "whatever")
 	assert.NoError(t, err)
-	assert.EqualValues(t, &expected, kCheck.instance)
+	assert.EqualValues(t, &expected, check.instance)
 }
 
 func TestConfigurationParsing(t *testing.T) {
@@ -178,7 +179,8 @@ func testRunClusterCollectors(t *testing.T, sourceProperties bool) {
 	errChannel := make(chan error)
 	waitGroupChannel := make(chan bool)
 
-	clusterTopologyCommon := collectors.NewClusterTopologyCommon(instance, nil, sourceProperties)
+	clusterTopologyCommon := collectors.NewClusterTopologyCommon(instance, nil, sourceProperties,
+		&version.Info{Major: "1", Minor: "21"})
 	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
 
 	clusterCollectors := []collectors.ClusterTopologyCollector{

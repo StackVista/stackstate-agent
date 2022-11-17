@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 // +build kubeapiserver
 
@@ -12,8 +12,8 @@ import (
 	"fmt"
 	"time"
 
-	datadoghq "github.com/DataDog/datadog-operator/pkg/apis/datadoghq/v1alpha1"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	datadoghq "github.com/DataDog/datadog-operator/api/v1alpha1"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -21,34 +21,40 @@ import (
 	"k8s.io/metrics/pkg/apis/external_metrics"
 )
 
+// exported for testing purposes
 const (
 	DatadogMetricErrorConditionReason string = "Unable to fetch data from Datadog"
 )
 
 // DatadogMetricInternal is a flatten, easier to use, representation of `DatadogMetric` CRD
 type DatadogMetricInternal struct {
-	ID                 string
-	Query              string
-	Valid              bool
-	Active             bool
-	Deleted            bool
-	Autogen            bool
-	ExternalMetricName string
-	Value              float64
-	UpdateTime         time.Time
-	Error              error
+	ID                   string
+	query                string
+	resolvedQuery        *string
+	Valid                bool
+	Active               bool
+	Deleted              bool
+	Autogen              bool
+	ExternalMetricName   string
+	Value                float64
+	AutoscalerReferences string
+	UpdateTime           time.Time
+	Error                error
+	MaxAge               time.Duration
 }
 
 // NewDatadogMetricInternal returns a `DatadogMetricInternal` object from a `DatadogMetric` CRD Object
 // `id` is expected to be unique and should correspond to `namespace/name`
 func NewDatadogMetricInternal(id string, datadogMetric datadoghq.DatadogMetric) DatadogMetricInternal {
 	internal := DatadogMetricInternal{
-		ID:      id,
-		Query:   datadogMetric.Spec.Query,
-		Valid:   false,
-		Active:  false,
-		Deleted: false,
-		Autogen: false,
+		ID:                   id,
+		query:                datadogMetric.Spec.Query,
+		Valid:                false,
+		Active:               false,
+		Deleted:              false,
+		Autogen:              false,
+		AutoscalerReferences: datadogMetric.Status.AutoscalerReferences,
+		MaxAge:               datadogMetric.Spec.MaxAge.Duration,
 	}
 
 	if len(datadogMetric.Spec.ExternalMetricName) > 0 {
@@ -68,6 +74,8 @@ func NewDatadogMetricInternal(id string, datadogMetric datadoghq.DatadogMetric) 
 			internal.Error = errors.New(condition.Message)
 		}
 	}
+
+	internal.resolveQuery(internal.query)
 
 	// If UpdateTime is not set, it means it's a newly created DatadogMetric
 	// We'll need a proper update time to generate status, so setting to current time
@@ -90,22 +98,45 @@ func NewDatadogMetricInternal(id string, datadogMetric datadoghq.DatadogMetric) 
 
 // NewDatadogMetricInternalFromExternalMetric returns a `DatadogMetricInternal` object
 // that is auto-generated from a standard ExternalMetric query (non-DatadogMetric reference)
-func NewDatadogMetricInternalFromExternalMetric(id, query, metricName string) DatadogMetricInternal {
+func NewDatadogMetricInternalFromExternalMetric(id, query, metricName, autoscalerReference string) DatadogMetricInternal {
 	return DatadogMetricInternal{
-		ID:                 id,
-		Query:              query,
-		Valid:              false,
-		Active:             true,
-		Deleted:            false,
-		Autogen:            true,
-		ExternalMetricName: metricName,
-		UpdateTime:         time.Now().UTC(),
+		ID:                   id,
+		query:                query,
+		Valid:                false,
+		Active:               true,
+		Deleted:              false,
+		Autogen:              true,
+		ExternalMetricName:   metricName,
+		AutoscalerReferences: autoscalerReference,
+		UpdateTime:           time.Now().UTC(),
 	}
 }
 
-// UpdateFrom updates the `DatadogMetricInternal` from `DatadogMetric` Spec, returns modified instance
+// Query returns the query that should be used to fetch metrics
+func (d *DatadogMetricInternal) Query() string {
+	if d.resolvedQuery != nil {
+		return *d.resolvedQuery
+	}
+	return d.query
+}
+
+// RawQuery returns the query that should be used to create DDM objects
+func (d *DatadogMetricInternal) RawQuery() string {
+	return d.query
+}
+
+// UpdateFrom updates the `DatadogMetricInternal` from `DatadogMetric` Spec
 func (d *DatadogMetricInternal) UpdateFrom(currentSpec datadoghq.DatadogMetricSpec) {
-	d.Query = currentSpec.Query
+	if d.shouldResolveQuery(currentSpec) {
+		d.resolveQuery(currentSpec.Query)
+	}
+	d.query = currentSpec.Query
+	d.MaxAge = currentSpec.MaxAge.Duration
+}
+
+// shouldResolveQuery returns whether we should try to resolve a new query
+func (d *DatadogMetricInternal) shouldResolveQuery(spec datadoghq.DatadogMetricSpec) bool {
+	return d.resolvedQuery == nil || d.query != spec.Query
 }
 
 // IsNewerThan returns true if the current `DatadogMetricInternal` has been updated more recently than `DatadogMetric` Status
@@ -122,7 +153,7 @@ func (d *DatadogMetricInternal) IsNewerThan(currentStatus datadoghq.DatadogMetri
 	return true
 }
 
-// HasBeenUpdated returns true if the current `DatadogMetricInternal` has been update between Now() and Now() - duration
+// HasBeenUpdatedFor returns true if the current `DatadogMetricInternal` has been update between Now() and Now() - duration
 func (d *DatadogMetricInternal) HasBeenUpdatedFor(duration time.Duration) bool {
 	return d.UpdateTime.After(time.Now().UTC().Add(-duration))
 }
@@ -156,8 +187,9 @@ func (d *DatadogMetricInternal) BuildStatus(currentStatus *datadoghq.DatadogMetr
 	}
 
 	newStatus := datadoghq.DatadogMetricStatus{
-		Value:      formatDatadogMetricValue(d.Value),
-		Conditions: []datadoghq.DatadogMetricCondition{activeCondition, validCondition, updatedCondition, errorCondition},
+		Value:                formatDatadogMetricValue(d.Value),
+		Conditions:           []datadoghq.DatadogMetricCondition{activeCondition, validCondition, updatedCondition, errorCondition},
+		AutoscalerReferences: d.AutoscalerReferences,
 	}
 
 	return &newStatus
@@ -200,4 +232,34 @@ func (d *DatadogMetricInternal) newCondition(status bool, updateTime metav1.Time
 	}
 
 	return condition
+}
+
+// resolveQuery tries to resolve the query and set the DatadogMetricInternal fields accordingly
+func (d *DatadogMetricInternal) resolveQuery(query string) {
+	resolvedQuery, err := resolveQuery(query)
+	if err != nil {
+		log.Errorf("Unable to resolve DatadogMetric query %q: %w", d.query, err)
+		d.Valid = false
+		d.Error = fmt.Errorf("Cannot resolve query: %v", err)
+		d.UpdateTime = time.Now().UTC()
+		d.resolvedQuery = nil
+		return
+	}
+	if resolvedQuery != "" {
+		log.Infof("DatadogMetric query %q was resolved successfully, new query: %q", query, resolvedQuery)
+		d.resolvedQuery = &resolvedQuery
+		return
+	}
+	d.resolvedQuery = &d.query
+}
+
+// SetQueries is only used for testing in other packages
+func (d *DatadogMetricInternal) SetQueries(q string) {
+	d.query = q
+	d.resolvedQuery = &q
+}
+
+// SetQuery is only used for testing in other packages
+func (d *DatadogMetricInternal) SetQuery(q string) {
+	d.query = q
 }

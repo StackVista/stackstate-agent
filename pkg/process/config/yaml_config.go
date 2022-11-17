@@ -13,147 +13,20 @@ import (
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/process/util"
-	"github.com/StackVista/stackstate-agent/pkg/process/util/api"
+	apicfg "github.com/StackVista/stackstate-agent/pkg/process/util/api/config"
 	httputils "github.com/StackVista/stackstate-agent/pkg/util/http"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/profiling"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 )
 
 const (
-	ns   = "process_config"
-	spNS = "system_probe_config"
+	ns                   = "process_config"
+	discoveryMinInterval = 10 * time.Minute
 )
 
 func key(pieces ...string) string {
 	return strings.Join(pieces, ".")
-}
-
-// SystemProbe specific configuration
-func (a *AgentConfig) loadSysProbeYamlConfig(path string) error {
-	loadEnvVariables()
-
-	// Resolve any secrets
-	if err := config.ResolveSecrets(config.Datadog, filepath.Base(path)); err != nil {
-		return err
-	}
-
-	// Whether agent should disable collection for TCP, UDP, or IPv6 connection type respectively
-	a.DisableTCPTracing = config.Datadog.GetBool(key(spNS, "disable_tcp"))
-	a.DisableUDPTracing = config.Datadog.GetBool(key(spNS, "disable_udp"))
-	a.DisableIPv6Tracing = config.Datadog.GetBool(key(spNS, "disable_ipv6"))
-	if config.Datadog.IsSet(key(spNS, "disable_dns_inspection")) {
-		a.DisableDNSInspection = config.Datadog.GetBool(key(spNS, "disable_dns_inspection"))
-	}
-
-	a.CollectLocalDNS = config.Datadog.GetBool(key(spNS, "collect_local_dns"))
-	a.CollectDNSStats = config.Datadog.GetBool(key(spNS, "collect_dns_stats"))
-	if config.Datadog.IsSet(key(spNS, "dns_timeout_in_s")) {
-		a.DNSTimeout = config.Datadog.GetDuration(key(spNS, "dns_timeout_in_s")) * time.Second
-	}
-
-	if config.Datadog.GetBool(key(spNS, "enabled")) {
-		a.EnabledChecks = append(a.EnabledChecks, "connections")
-		if !a.Enabled {
-			log.Info("enabling process-agent for connections check as the system-probe is enabled")
-			a.Enabled = true
-		}
-		a.EnableSystemProbe = true
-	}
-
-	a.SysProbeBPFDebug = config.Datadog.GetBool(key(spNS, "bpf_debug"))
-	if config.Datadog.IsSet(key(spNS, "excluded_linux_versions")) {
-		a.ExcludedBPFLinuxVersions = config.Datadog.GetStringSlice(key(spNS, "excluded_linux_versions"))
-	}
-
-	// The full path to the location of the unix socket where connections will be accessed
-	if socketPath := config.Datadog.GetString(key(spNS, "sysprobe_socket")); socketPath != "" {
-		a.SystemProbeAddress = socketPath
-	}
-
-	if config.Datadog.IsSet(key(spNS, "enable_conntrack")) {
-		a.EnableConntrack = config.Datadog.GetBool(key(spNS, "enable_conntrack"))
-	}
-	if s := config.Datadog.GetInt(key(spNS, "conntrack_max_state_size")); s > 0 {
-		a.ConntrackMaxStateSize = s
-	}
-	if config.Datadog.IsSet(key(spNS, "conntrack_rate_limit")) {
-		a.ConntrackRateLimit = config.Datadog.GetInt(key(spNS, "conntrack_rate_limit"))
-	}
-
-	// When reading kernel structs at different offsets, don't go over the threshold
-	// This defaults to 400 and has a max of 3000. These are arbitrary choices to avoid infinite loops.
-	if th := config.Datadog.GetInt(key(spNS, "offset_guess_threshold")); th > 0 {
-		if th < maxOffsetThreshold {
-			a.OffsetGuessThreshold = uint64(th)
-		} else {
-			log.Warn("offset_guess_threshold exceeds maximum of 3000. Setting it to the default of 400")
-		}
-	}
-
-	if logFile := config.Datadog.GetString(key(spNS, "log_file")); logFile != "" {
-		a.LogFile = logFile
-	}
-
-	// The maximum number of connections per message. Note: Only change if the defaults are causing issues.
-	if mcpm := config.Datadog.GetInt(key(spNS, "max_conns_per_message")); mcpm > 0 {
-		if mcpm <= maxConnsMessageBatch {
-			a.MaxConnsPerMessage = mcpm
-		} else {
-			log.Warn("Overriding the configured connections count per message limit because it exceeds maximum")
-		}
-	}
-
-	// The maximum number of connections the tracer can track
-	if mtc := config.Datadog.GetInt64(key(spNS, "max_tracked_connections")); mtc > 0 {
-		a.MaxTrackedConnections = uint(mtc)
-	}
-
-	// MaxClosedConnectionsBuffered represents the maximum number of closed connections we'll buffer in memory. These closed connections
-	// get flushed on every client request (default 30s check interval)
-	if k := "max_closed_connections_buffered"; config.Datadog.IsSet(k) {
-		if mcb := config.Datadog.GetInt(key(spNS, k)); mcb > 0 {
-			a.MaxClosedConnectionsBuffered = mcb
-		}
-	}
-
-	// MaxConnectionsStateBuffered represents the maximum number of state objects that we'll store in memory. These state objects store
-	// the stats for a connection so we can accurately determine traffic change between client requests.
-	if k := "max_connection_state_buffered"; config.Datadog.IsSet(k) {
-		if mcsb := config.Datadog.GetInt(key(spNS, k)); mcsb > 0 {
-			a.MaxConnectionsStateBuffered = mcsb
-		}
-	}
-
-	if ccs := config.Datadog.GetInt(key(spNS, "closed_channel_size")); ccs > 0 {
-		a.ClosedChannelSize = ccs
-	}
-
-	// Pull additional parameters from the global config file.
-	a.LogLevel = config.Datadog.GetString("log_level")
-	a.StatsdPort = config.Datadog.GetInt("dogstatsd_port")
-
-	// The tcp port that agent should expose expvar and pprof endpoint to
-	if debugPort := config.Datadog.GetInt(key(spNS, "debug_port")); debugPort > 0 {
-		a.SystemProbeDebugPort = debugPort
-	}
-
-	if sourceExclude := key(spNS, "source_excludes"); config.Datadog.IsSet(sourceExclude) {
-		a.ExcludedSourceConnections = config.Datadog.GetStringMapStringSlice(sourceExclude)
-	}
-
-	if destinationExclude := key(spNS, "dest_excludes"); config.Datadog.IsSet(destinationExclude) {
-		a.ExcludedDestinationConnections = config.Datadog.GetStringMapStringSlice(destinationExclude)
-	}
-
-	if config.Datadog.GetBool(key(spNS, "enable_tcp_queue_length")) {
-		a.EnabledChecks = append(a.EnabledChecks, "TCP queue length")
-	}
-
-	if config.Datadog.GetBool(key(spNS, "enable_oom_kill")) {
-		a.EnabledChecks = append(a.EnabledChecks, "OOM Kill")
-	}
-
-	return nil
 }
 
 // LoadProcessYamlConfig load Process-specific configuration
@@ -170,15 +43,9 @@ func (a *AgentConfig) LoadProcessYamlConfig(path string) error {
 		return fmt.Errorf("error parsing process_dd_url: %s", err)
 	}
 	a.APIEndpoints[0].Endpoint = URL
-	URL, err = url.Parse(config.GetMainEndpoint("https://orchestrator.", key(ns, "orchestrator_dd_url")))
-	if err != nil {
-		return fmt.Errorf("error parsing orchestrator_dd_url: %s", err)
-	}
-	a.OrchestratorEndpoints[0].Endpoint = URL
 
 	if key := "api_key"; config.Datadog.IsSet(key) {
-		a.APIEndpoints[0].APIKey = config.Datadog.GetString(key)
-		a.OrchestratorEndpoints[0].APIKey = config.Datadog.GetString(key)
+		a.APIEndpoints[0].APIKey = config.SanitizeAPIKey(config.Datadog.GetString(key))
 	}
 
 	if config.Datadog.IsSet("hostname") {
@@ -224,11 +91,29 @@ func (a *AgentConfig) LoadProcessYamlConfig(path string) error {
 	// The interval, in seconds, at which we will run each check. If you want consistent
 	// behavior between real-time you may set the Container/ProcessRT intervals to 10.
 	// Defaults to 10s for normal checks and 2s for others.
-	a.setCheckInterval(ns, "container", "container")
-	a.setCheckInterval(ns, "container_realtime", "rtcontainer")
-	a.setCheckInterval(ns, "process", "process")
-	a.setCheckInterval(ns, "process_realtime", "rtprocess")
-	a.setCheckInterval(ns, "connections", "connections")
+	a.setCheckInterval(ns, "container", ContainerCheckName)
+	a.setCheckInterval(ns, "container_realtime", RTContainerCheckName)
+	a.setCheckInterval(ns, "process", ProcessCheckName)
+	a.setCheckInterval(ns, "process_realtime", RTProcessCheckName)
+	a.setCheckInterval(ns, "connections", ConnectionsCheckName)
+
+	// We need another method to read in process discovery check configs because it is in its own object,
+	// and uses a different unit of time
+	a.initProcessDiscoveryCheck()
+
+	if a.CheckIntervals[ProcessCheckName] < a.CheckIntervals[RTProcessCheckName] || a.CheckIntervals[ProcessCheckName]%a.CheckIntervals[RTProcessCheckName] != 0 {
+		// Process check interval must be greater or equal to RTProcess check interval and the intervals must be divisible
+		// in order to be run on the same goroutine
+		log.Warnf(
+			"Invalid process check interval overrides [%s,%s], resetting to defaults [%s,%s]",
+			a.CheckIntervals[ProcessCheckName],
+			a.CheckIntervals[RTProcessCheckName],
+			ProcessCheckDefaultInterval,
+			RTProcessCheckDefaultInterval,
+		)
+		a.CheckIntervals[ProcessCheckName] = ProcessCheckDefaultInterval
+		a.CheckIntervals[RTProcessCheckName] = RTProcessCheckDefaultInterval
+	}
 
 	// A list of regex patterns that will exclude a process if matched.
 	if k := key(ns, "blacklist_patterns"); config.Datadog.IsSet(k) {
@@ -278,9 +163,10 @@ func (a *AgentConfig) LoadProcessYamlConfig(path string) error {
 		}
 	}
 
-	if k := key(ns, "pod_queue_bytes"); config.Datadog.IsSet(k) {
-		if queueBytes := config.Datadog.GetInt(k); queueBytes > 0 {
-			a.PodQueueBytes = queueBytes
+	// How many check results to buffer in memory when POST fails. The default is usually fine.
+	if k := key(ns, "rt_queue_size"); config.Datadog.IsSet(k) {
+		if rtqueueSize := config.Datadog.GetInt(k); rtqueueSize > 0 {
+			a.RTQueueSize = rtqueueSize
 		}
 	}
 
@@ -295,12 +181,28 @@ func (a *AgentConfig) LoadProcessYamlConfig(path string) error {
 		}
 	}
 
+	// The maximum number of processes belonging to a container per message. Note: Only change if the defaults are causing issues.
+	if k := key(ns, "max_ctr_procs_per_message"); config.Datadog.IsSet(k) {
+		if maxCtrProcessesPerMessage := config.Datadog.GetInt(k); maxCtrProcessesPerMessage <= 0 {
+			log.Warnf("Invalid max container processes count per message (<= 0), using default value of %d", defaultMaxCtrProcsMessageBatch)
+		} else if maxCtrProcessesPerMessage <= maxCtrProcsMessageBatch {
+			a.MaxCtrProcessesPerMessage = maxCtrProcessesPerMessage
+		} else {
+			log.Warnf("Overriding the configured max container processes count per message limit because it exceeds maximum limit of %d", maxCtrProcsMessageBatch)
+		}
+	}
+
 	// Overrides the path to the Agent bin used for getting the hostname. The default is usually fine.
 	a.DDAgentBin = defaultDDAgentBin
 	if k := key(ns, "dd_agent_bin"); config.Datadog.IsSet(k) {
 		if agentBin := config.Datadog.GetString(k); agentBin != "" {
 			a.DDAgentBin = agentBin
 		}
+	}
+
+	// Overrides the grpc connection timeout setting to the main agent.
+	if k := key(ns, "grpc_connection_timeout_secs"); config.Datadog.IsSet(k) {
+		a.grpcConnectionTimeout = config.Datadog.GetDuration(k) * time.Second
 	}
 
 	// Windows: Sets windows process table refresh rate (in number of check runs)
@@ -313,6 +215,11 @@ func (a *AgentConfig) LoadProcessYamlConfig(path string) error {
 		a.Windows.AddNewArgs = config.Datadog.GetBool(addArgsKey)
 	}
 
+	// Windows: Controls using the new check based on performance counters PDH APIs
+	if usePerfCountersKey := key(ns, "windows", "use_perf_counters"); config.Datadog.IsSet(usePerfCountersKey) {
+		a.Windows.UsePerfCounters = config.Datadog.GetBool(usePerfCountersKey)
+	}
+
 	// Optional additional pairs of endpoint_url => []apiKeys to submit to other locations.
 	if k := key(ns, "additional_endpoints"); config.Datadog.IsSet(k) {
 		for endpointURL, apiKeys := range config.Datadog.GetStringMapStringSlice(k) {
@@ -321,34 +228,54 @@ func (a *AgentConfig) LoadProcessYamlConfig(path string) error {
 				return fmt.Errorf("invalid additional endpoint url '%s': %s", endpointURL, err)
 			}
 			for _, k := range apiKeys {
-				a.APIEndpoints = append(a.APIEndpoints, api.Endpoint{
-					APIKey:   k,
+				a.APIEndpoints = append(a.APIEndpoints, apicfg.Endpoint{
+					APIKey:   config.SanitizeAPIKey(k),
 					Endpoint: u,
 				})
 			}
 		}
 	}
+	if !config.Datadog.IsSet(key(ns, "cmd_port")) {
+		config.Datadog.Set(key(ns, "cmd_port"), 6162)
+	}
 
-	if k := key(ns, "orchestrator_additional_endpoints"); config.Datadog.IsSet(k) {
-		for endpointURL, apiKeys := range config.Datadog.GetStringMapStringSlice(k) {
-			u, err := URL.Parse(endpointURL)
-			if err != nil {
-				return fmt.Errorf("invalid additional endpoint url '%s': %s", endpointURL, err)
+	// use `internal_profiling.enabled` field in `process_config` section to enable/disable profiling for process-agent,
+	// but use the configuration from main agent to fill the settings
+	if config.Datadog.IsSet(key(ns, "internal_profiling.enabled")) {
+		// allow full url override for development use
+		site := config.Datadog.GetString("internal_profiling.profile_dd_url")
+		if site == "" {
+			s := config.Datadog.GetString("site")
+			if s == "" {
+				s = config.DefaultSite
 			}
-			for _, k := range apiKeys {
-				a.OrchestratorEndpoints = append(a.OrchestratorEndpoints, api.Endpoint{
-					APIKey:   k,
-					Endpoint: u,
-				})
-			}
+			site = fmt.Sprintf(profiling.ProfileURLTemplate, s)
+		}
+
+		v, _ := version.Agent()
+		a.ProfilingSettings = &profiling.Settings{
+			Site:                 site,
+			Env:                  config.Datadog.GetString("env"),
+			Service:              "process-agent",
+			Period:               config.Datadog.GetDuration("internal_profiling.period"),
+			CPUDuration:          config.Datadog.GetDuration("internal_profiling.cpu_duration"),
+			MutexProfileFraction: config.Datadog.GetInt("internal_profiling.mutex_profile_fraction"),
+			BlockProfileRate:     config.Datadog.GetInt("internal_profiling.block_profile_rate"),
+			WithGoroutineProfile: config.Datadog.GetBool("internal_profiling.enable_goroutine_stacktraces"),
+			Tags:                 []string{fmt.Sprintf("version:%v", v)},
 		}
 	}
 
 	// Used to override container source auto-detection
 	// and to enable multiple collector sources if needed.
 	// "docker", "ecs_fargate", "kubelet", "kubelet docker", etc.
-	if sources := config.Datadog.GetStringSlice(key(ns, "container_source")); len(sources) > 0 {
-		util.SetContainerSources(sources)
+	containerSourceKey := key(ns, "container_source")
+	if config.Datadog.Get(containerSourceKey) != nil {
+		// container_source can be nil since we're not forcing default values in the main config file
+		// make sure we don't pass nil value to GetStringSlice to avoid spammy warnings
+		if sources := config.Datadog.GetStringSlice(containerSourceKey); len(sources) > 0 {
+			util.SetContainerSources(sources)
+		}
 	}
 
 	// Pull additional parameters from the global config file.
@@ -360,21 +287,12 @@ func (a *AgentConfig) LoadProcessYamlConfig(path string) error {
 		a.StatsdPort = config.Datadog.GetInt(k)
 	}
 
-	if bindHost := config.Datadog.GetString("bind_host"); bindHost != "" {
+	if bindHost := config.GetBindHost(); bindHost != "" {
 		a.StatsdHost = bindHost
 	}
 
 	// Build transport (w/ proxy if needed)
 	a.Transport = httputils.CreateHTTPTransport()
-
-	// Orchestrator Explorer
-	if config.Datadog.GetBool("orchestrator_explorer.enabled") {
-		a.OrchestrationCollectionEnabled = true
-		// Set clustername
-		if clusterName := clustername.GetClusterName(); clusterName != "" {
-			a.KubeClusterName = clusterName
-		}
-	}
 
 	return nil
 }
@@ -387,7 +305,32 @@ func (a *AgentConfig) setCheckInterval(ns, check, checkKey string) {
 	}
 
 	if interval := config.Datadog.GetInt(k); interval != 0 {
-		log.Infof("Overriding container check interval to %ds", interval)
+		log.Infof("Overriding %s check interval to %ds", checkKey, interval)
 		a.CheckIntervals[checkKey] = time.Duration(interval) * time.Second
+	}
+}
+
+// Separate handler for initializing the process discovery check.
+// Since it has its own unique object, we need to handle loading in the check config differently separately
+// from the other checks.
+func (a *AgentConfig) initProcessDiscoveryCheck() {
+	root := key(ns, "process_discovery")
+
+	// Discovery check can only be enabled when regular process collection is not enabled.
+	// (process_config.process_discovery.enabled = true and process_config.enabled is not set to "true")
+	processAgentEnabled := strings.ToLower(config.Datadog.GetString(key(ns, "enabled")))
+	checkEnabled := config.Datadog.GetBool(key(root, "enabled"))
+	if checkEnabled && processAgentEnabled != "true" {
+		a.EnabledChecks = append(a.EnabledChecks, DiscoveryCheckName)
+		a.Enabled = true
+
+		// We don't need to check if the key exists since we already bound it to a default in InitConfig.
+		// We use a minimum of 10 minutes for this value.
+		discoveryInterval := config.Datadog.GetDuration(key(root, "interval"))
+		if discoveryInterval < discoveryMinInterval {
+			discoveryInterval = discoveryMinInterval
+			_ = log.Warnf("Invalid interval for process discovery (<= %s) using default value of %[1]s", discoveryMinInterval.String())
+		}
+		a.CheckIntervals[DiscoveryCheckName] = discoveryInterval
 	}
 }

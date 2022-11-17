@@ -1,17 +1,29 @@
 package host
 
 import (
+	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/cache"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders/gce"
 	"github.com/StackVista/stackstate-agent/pkg/util/docker"
 	"github.com/StackVista/stackstate-agent/pkg/util/ec2"
-	"github.com/StackVista/stackstate-agent/pkg/util/gce"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	k8s "github.com/StackVista/stackstate-agent/pkg/util/kubernetes/hostinfo"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
+
+var retrySleepTime = time.Second
+
+type providerDef struct {
+	retries   int
+	getTags   func(context.Context) ([]string, error)
+	retrieved bool
+}
 
 // this is a "low-tech" version of tagger/utils/taglist.go
 // but host tags are handled separately here for now
@@ -43,13 +55,22 @@ func appendAndSplitTags(target []string, tags []string, splits map[string]string
 	return target
 }
 
-func getHostTags() *tags {
+// GetHostTags get the host tags, optionally looking in the cache
+func GetHostTags(ctx context.Context, cached bool) *Tags {
+	key := buildKey("hostTags")
+	if cached {
+		if x, found := cache.Cache.Get(key); found {
+			tags := x.(*Tags)
+			return tags
+		}
+	}
+
 	splits := config.Datadog.GetStringMapString("tag_value_split_separator")
 	appendToHostTags := func(old, new []string) []string {
 		return appendAndSplitTags(old, new, splits)
 	}
 
-	rawHostTags := config.Datadog.GetStringSlice("tags")
+	rawHostTags := config.GetConfiguredTags(false)
 	hostTags := make([]string, 0, len(rawHostTags))
 	hostTags = appendToHostTags(hostTags, rawHostTags)
 
@@ -58,16 +79,8 @@ func getHostTags() *tags {
 		hostTags = appendToHostTags(hostTags, []string{"env:" + env})
 	}
 
-	if config.Datadog.GetBool("collect_ec2_tags") {
-		ec2Tags, err := ec2.GetTags()
-		if err != nil {
-			log.Debugf("No EC2 host tags %v", err)
-		} else {
-			hostTags = appendToHostTags(hostTags, ec2Tags)
-		}
-	}
-
-	clusterName := clustername.GetClusterName()
+	hostname, _ := util.GetHostname(ctx)
+	clusterName := clustername.GetClusterName(ctx, hostname)
 	if len(clusterName) != 0 {
 		clusterNameTags := []string{"kube_cluster_name:" + clusterName}
 		if !config.Datadog.GetBool("disable_cluster_name_tag_key") {
@@ -77,32 +90,63 @@ func getHostTags() *tags {
 		hostTags = appendToHostTags(hostTags, clusterNameTags)
 	}
 
-	k8sTags, err := k8s.GetTags()
-	if err != nil {
-		log.Debugf("No Kubernetes host tags %v", err)
-	} else {
-		hostTags = appendToHostTags(hostTags, k8sTags)
-	}
-
-	dockerTags, err := docker.GetTags()
-	if err != nil {
-		log.Debugf("No Docker host tags %v", err)
-	} else {
-		hostTags = appendToHostTags(hostTags, dockerTags)
-	}
-
 	gceTags := []string{}
-	if config.Datadog.GetBool("collect_gce_tags") {
-		rawGceTags, err := gce.GetTags()
+	getGCE := func(ctx context.Context) ([]string, error) {
+		rawGceTags, err := gce.GetTags(ctx)
 		if err != nil {
-			log.Debugf("No GCE host tags %v", err)
-		} else {
-			gceTags = appendToHostTags(gceTags, rawGceTags)
+			return nil, err
 		}
+		gceTags = appendToHostTags(gceTags, rawGceTags)
+		return nil, nil
 	}
 
-	return &tags{
-		System:              hostTags,
+	providers := make(map[string]*providerDef)
+
+	if config.Datadog.GetBool("collect_ec2_tags") {
+		providers["ec2"] = &providerDef{1, ec2.GetTags, false}
+	}
+
+	if config.Datadog.GetBool("collect_gce_tags") {
+		providers["gce"] = &providerDef{1, getGCE, false}
+	}
+
+	if config.IsFeaturePresent(config.Kubernetes) {
+		providers["kubernetes"] = &providerDef{10, k8s.GetTags, false}
+	}
+
+	if config.IsFeaturePresent(config.Docker) {
+		providers["docker"] = &providerDef{1, docker.GetTags, false}
+	}
+
+	for {
+		for name, provider := range providers {
+			provider.retries--
+			tags, err := provider.getTags(ctx)
+			if err != nil {
+				log.Debugf("No %s host tags, remaining attempts: %d, err: %v", name, provider.retries, err)
+			} else {
+				provider.retrieved = true
+				hostTags = appendToHostTags(hostTags, tags)
+				log.Debugf("Host tags from %s retrieved successfully", name)
+			}
+
+			if provider.retrieved || provider.retries <= 0 {
+				delete(providers, name)
+			}
+		}
+
+		if len(providers) == 0 {
+			break
+		}
+
+		time.Sleep(retrySleepTime)
+	}
+
+	t := &Tags{
+		System:              util.SortUniqInPlace(hostTags),
 		GoogleCloudPlatform: gceTags,
 	}
+
+	cache.Cache.Set(key, t, cache.NoExpiration)
+	return t
 }

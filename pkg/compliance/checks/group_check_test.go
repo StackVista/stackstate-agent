@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package checks
 
@@ -9,44 +9,69 @@ import (
 	"testing"
 
 	"github.com/StackVista/stackstate-agent/pkg/compliance"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
 	"github.com/StackVista/stackstate-agent/pkg/compliance/mocks"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+
+	assert "github.com/stretchr/testify/require"
 )
 
 func TestGroupCheck(t *testing.T) {
-	type validateFunc func(t *testing.T, kv compliance.KVMap)
-
 	tests := []struct {
 		name         string
 		etcGroupFile string
-		group        *compliance.Group
-		validate     validateFunc
+		resource     compliance.Resource
+
+		expectReport *compliance.Report
+		expectError  error
 	}{
 		{
-			name:         "docker group",
+			name:         "docker group user found",
 			etcGroupFile: "./testdata/group/etc-group",
-			group: &compliance.Group{
-				Name: "docker",
-				Report: []compliance.ReportedField{
-					{
-						Property: "users",
-						Kind:     compliance.PropertyKindAttribute,
-					},
-					{
-						Property: "gid",
-						Kind:     compliance.PropertyKindAttribute,
+			resource: compliance.Resource{
+				ResourceCommon: compliance.ResourceCommon{
+					Group: &compliance.Group{
+						Name: "docker",
 					},
 				},
+				Condition: `"carlos" in group.users`,
 			},
-			validate: func(t *testing.T, kv compliance.KVMap) {
-				assert.Equal(t,
-					compliance.KVMap{
-						"gid":   "412",
-						"users": "alice,bob,carlos,dan,eve",
+
+			expectReport: &compliance.Report{
+				Passed: true,
+				Data: event.Data{
+					"group.name":  "docker",
+					"group.id":    412,
+					"group.users": []string{"alice", "bob", "carlos", "dan", "eve"},
+				},
+				Resource: compliance.ReportResource{
+					ID:   "docker",
+					Type: "group",
+				},
+			},
+		},
+		{
+			name:         "docker group user not found",
+			etcGroupFile: "./testdata/group/etc-group",
+			resource: compliance.Resource{
+				ResourceCommon: compliance.ResourceCommon{
+					Group: &compliance.Group{
+						Name: "docker",
 					},
-					kv,
-				)
+				},
+				Condition: `"carol" in group.users`,
+			},
+
+			expectReport: &compliance.Report{
+				Passed: false,
+				Data: event.Data{
+					"group.name":  "docker",
+					"group.id":    412,
+					"group.users": []string{"alice", "bob", "carlos", "dan", "eve"},
+				},
+				Resource: compliance.ReportResource{
+					ID:   "docker",
+					Type: "group",
+				},
 			},
 		},
 	}
@@ -55,23 +80,15 @@ func TestGroupCheck(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			reporter := &mocks.Reporter{}
-			defer reporter.AssertExpectations(t)
+			env := &mocks.Env{}
+			env.On("EtcGroupPath").Return(test.etcGroupFile)
 
-			base := newTestBaseCheck(reporter, checkKindAudit)
-			check, err := newGroupCheck(base, test.etcGroupFile, test.group)
+			groupCheck, err := newResourceCheck(env, "rule-id", test.resource)
 			assert.NoError(err)
 
-			reporter.On(
-				"Report",
-				mock.AnythingOfType("*compliance.RuleEvent"),
-			).Run(func(args mock.Arguments) {
-				event := args.Get(0).(*compliance.RuleEvent)
-				test.validate(t, event.Data)
-			})
-
-			err = check.Run()
-			assert.NoError(err)
+			reports := groupCheck.check(env)
+			assert.Equal(test.expectReport, reports[0])
+			assert.Equal(test.expectError, reports[0].Error)
 		})
 	}
 }

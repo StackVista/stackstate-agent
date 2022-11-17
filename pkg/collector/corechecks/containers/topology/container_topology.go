@@ -3,6 +3,7 @@
 package topology
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
@@ -27,7 +28,7 @@ type ContainerTopologyCollector struct {
 
 // MakeContainerTopologyCollector returns a new instance of DockerTopologyCollector
 func MakeContainerTopologyCollector(runtime string) *ContainerTopologyCollector {
-	hostname, err := util.GetHostname()
+	hostname, err := util.GetHostname(context.TODO())
 	if err != nil {
 		log.Warnf("Can't get hostname from container collector, containers ExternalIDs will not have it: %s", err)
 	}
@@ -112,7 +113,7 @@ func (ctc *ContainerTopologyCollector) MapContainersToComponents(containers []*s
 
 // collectContainers collects containers and produces topology.Component
 func (ctc *ContainerTopologyCollector) collectContainers(containerUtil spec.ContainerUtil) ([]*topology.Component, error) {
-	cList, err := containerUtil.GetContainers()
+	cList, err := containerUtil.GetContainers(context.TODO())
 	if err != nil {
 		return nil, err
 	}

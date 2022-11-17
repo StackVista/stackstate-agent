@@ -2,21 +2,43 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/DataDog/agent-payload/v5/process"
+	cmdconfig "github.com/StackVista/stackstate-agent/cmd/agent/common/commands/config"
+	"github.com/StackVista/stackstate-agent/cmd/manager"
+	"github.com/StackVista/stackstate-agent/cmd/process-agent/api"
+	apiutil "github.com/StackVista/stackstate-agent/pkg/api/util"
 	ddconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config/settings"
+	settingshttp "github.com/StackVista/stackstate-agent/pkg/config/settings/http"
+	"github.com/StackVista/stackstate-agent/pkg/metadata/host"
 	"github.com/StackVista/stackstate-agent/pkg/pidfile"
 	"github.com/StackVista/stackstate-agent/pkg/process/checks"
 	"github.com/StackVista/stackstate-agent/pkg/process/config"
 	"github.com/StackVista/stackstate-agent/pkg/process/statsd"
 	"github.com/StackVista/stackstate-agent/pkg/process/util"
 	"github.com/StackVista/stackstate-agent/pkg/tagger"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/local"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/remote"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	ddutil "github.com/StackVista/stackstate-agent/pkg/util"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/profiling"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta"
+
+	// register all workloadmeta collectors
+	_ "github.com/StackVista/stackstate-agent/pkg/workloadmeta/collectors"
+
+	"github.com/spf13/cobra"
 )
 
 const loggerName ddconfig.LoggerName = "PROCESS"
@@ -39,6 +61,64 @@ var (
 	BuildDate string
 	GoVersion string
 )
+
+var (
+	rootCmd = &cobra.Command{
+		Run:          rootCmdRun,
+		SilenceUsage: true,
+	}
+
+	configCommand = cmdconfig.Config(getSettingsClient)
+)
+
+func getSettingsClient(_ *cobra.Command, _ []string) (settings.Client, error) {
+	// Set up the config so we can get the port later
+	// We set this up differently from the main process-agent because this way is quieter
+	cfg := config.NewDefaultAgentConfig(false)
+	if opts.configPath != "" {
+		if err := config.LoadConfigIfExists(opts.configPath); err != nil {
+			return nil, err
+		}
+	}
+	err := cfg.LoadProcessYamlConfig(opts.configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	httpClient := apiutil.GetClient(false)
+	ipcAddress, err := ddconfig.GetIPCAddress()
+	ipcAddressWithPort := fmt.Sprintf("http://%s:%d/config", ipcAddress, ddconfig.Datadog.GetInt("process_config.cmd_port"))
+	if err != nil {
+		return nil, err
+	}
+	settingsClient := settingshttp.NewClient(httpClient, ipcAddressWithPort, "process-agent")
+	return settingsClient, nil
+}
+
+func init() {
+	rootCmd.AddCommand(configCommand)
+}
+
+// fixDeprecatedFlags modifies os.Args so that non-posix flags are converted to posix flags
+// it also displays a warning when a non-posix flag is found
+func fixDeprecatedFlags() {
+	deprecatedFlags := []string{
+		// Global flags
+		"-config", "-ddconfig", "-sysprobe-config", "-pid", "-info", "-version", "-check",
+		// Windows flags
+		"-install-service", "-uninstall-service", "-start-service", "-stop-service", "-foreground",
+	}
+
+	for i, arg := range os.Args {
+		for _, f := range deprecatedFlags {
+			if !strings.HasPrefix(arg, f) {
+				continue
+			}
+			fmt.Printf("WARNING: `%s` argument is deprecated and will be removed in a future version. Please use `-%[1]s` instead.\n", f)
+			os.Args[i] = "-" + os.Args[i]
+		}
+	}
+}
 
 // versionString returns the version information filled in at build time
 func versionString(sep string) string {
@@ -78,6 +158,10 @@ func runAgent(exit chan struct{}) {
 		cleanupAndExit(0)
 	}
 
+	if err := ddutil.SetupCoreDump(); err != nil {
+		log.Warnf("Can't setup core dumps: %v, core dumps might not be available after a crash", err)
+	}
+
 	if opts.check == "" && !opts.info && opts.pidfilePath != "" {
 		err := pidfile.WritePID(opts.pidfilePath)
 		if err != nil {
@@ -98,18 +182,34 @@ func runAgent(exit chan struct{}) {
 		cleanupAndExit(1)
 	}
 
-	// Now that the logger is configured log host info
-	platform, err := util.GetPlatform()
+	mainCtx, mainCancel := context.WithCancel(context.Background())
+	defer mainCancel()
+	err = manager.ConfigureAutoExit(mainCtx)
 	if err != nil {
-		log.Debugf("error retrieving platform: %s", err)
-	} else {
-		log.Infof("running on platform: %s", platform)
+		log.Criticalf("Unable to configure auto-exit, err: %w", err)
+		cleanupAndExit(1)
 	}
 
+	// Now that the logger is configured log host info
+	hostInfo := host.GetStatusInformation()
+	log.Infof("running on platform: %s", hostInfo.Platform)
 	log.Infof("running version: %s", versionString(", "))
 
 	// Tagger must be initialized after agent config has been setup
-	tagger.Init()
+	var t tagger.Tagger
+	if ddconfig.Datadog.GetBool("process_config.remote_tagger") {
+		t = remote.NewTagger()
+	} else {
+		// Start workload metadata store before tagger
+		workloadmeta.GetGlobalStore().Start(context.Background())
+
+		t = local.NewTagger(collectors.DefaultCatalog)
+	}
+	tagger.SetDefaultTagger(t)
+	err = tagger.Init()
+	if err != nil {
+		log.Errorf("failed to start the tagger: %s", err)
+	}
 	defer tagger.Stop() //nolint:errcheck
 
 	err = initInfo(cfg)
@@ -117,7 +217,7 @@ func runAgent(exit chan struct{}) {
 		log.Criticalf("Error initializing info: %s", err)
 		cleanupAndExit(1)
 	}
-	if err := statsd.Configure(cfg); err != nil {
+	if err := statsd.Configure(cfg.StatsdHost, cfg.StatsdPort); err != nil {
 		log.Criticalf("Error configuring statsd: %s", err)
 		cleanupAndExit(1)
 	}
@@ -142,6 +242,15 @@ func runAgent(exit chan struct{}) {
 	// we just pass down empty string
 	updateDockerSocket(dockerSock)
 
+	if cfg.ProfilingSettings != nil {
+		if err := profiling.Start(*cfg.ProfilingSettings); err != nil {
+			log.Warnf("failed to enable profiling: %s", err)
+		} else {
+			log.Info("start profiling process-agent")
+		}
+		defer profiling.Stop()
+	}
+
 	log.Debug("Running process-agent with DEBUG logging enabled")
 	if opts.check != "" {
 		err := debugCheckResults(cfg, opts.check)
@@ -163,10 +272,22 @@ func runAgent(exit chan struct{}) {
 		return
 	}
 
-	// Run a profile server.
+	// Run a profile & telemetry server.
 	go func() {
-		http.ListenAndServe(fmt.Sprintf("localhost:%d", cfg.ProcessExpVarPort), nil) //nolint:errcheck
+		if ddconfig.Datadog.GetBool("telemetry.enabled") {
+			http.Handle("/telemetry", telemetry.Handler())
+		}
+		err := http.ListenAndServe(fmt.Sprintf("localhost:%d", cfg.ProcessExpVarPort), nil)
+		if err != nil && err != http.ErrServerClosed {
+			log.Errorf("Error creating expvar server on port %v: %v", cfg.ProcessExpVarPort, err)
+		}
 	}()
+
+	// Run API server
+	err = api.StartServer()
+	if err != nil {
+		_ = log.Error(err)
+	}
 
 	cl, err := NewCollector(cfg)
 	if err != nil {
@@ -179,8 +300,8 @@ func runAgent(exit chan struct{}) {
 		os.Exit(1)
 		return
 	}
-	for range exit {
 
+	for range exit {
 	}
 }
 
@@ -190,24 +311,31 @@ func debugCheckResults(cfg *config.AgentConfig, check string) error {
 		return err
 	}
 
+	// Connections check requires process-check to have occurred first (for process creation ts),
 	if check == checks.Connections.Name() {
-		// Connections check requires process-check to have occurred first (for process creation ts)
 		checks.Process.Init(cfg, sysInfo)
 		checks.Process.Run(cfg, 0) //nolint:errcheck
 	}
 
 	names := make([]string, 0, len(checks.All))
 	for _, ch := range checks.All {
+		names = append(names, ch.Name())
+
 		if ch.Name() == check {
 			ch.Init(cfg, sysInfo)
-			return printResults(cfg, ch)
+			return runCheck(cfg, ch)
 		}
-		names = append(names, ch.Name())
+
+		withRealTime, ok := ch.(checks.CheckWithRealTime)
+		if ok && withRealTime.RealTimeName() == check {
+			withRealTime.Init(cfg, sysInfo)
+			return runCheckAsRealTime(cfg, withRealTime)
+		}
 	}
 	return fmt.Errorf("invalid check '%s', choose from: %v", check, names)
 }
 
-func printResults(cfg *config.AgentConfig, ch checks.Check) error {
+func runCheck(cfg *config.AgentConfig, ch checks.Check) error {
 	// Run the check once to prime the cache.
 	if _, err := ch.Run(cfg, 0); err != nil {
 		return fmt.Errorf("collection error: %s", err)
@@ -215,15 +343,53 @@ func printResults(cfg *config.AgentConfig, ch checks.Check) error {
 
 	time.Sleep(1 * time.Second)
 
-	fmt.Printf("-----------------------------\n\n")
-	fmt.Printf("\nResults for check %s\n", ch.Name())
-	fmt.Printf("-----------------------------\n\n")
+	printResultsBanner(ch.Name())
 
 	msgs, err := ch.Run(cfg, 1)
 	if err != nil {
 		return fmt.Errorf("collection error: %s", err)
 	}
+	return printResults(msgs)
+}
 
+func runCheckAsRealTime(cfg *config.AgentConfig, ch checks.CheckWithRealTime) error {
+	options := checks.RunOptions{
+		RunStandard: true,
+		RunRealTime: true,
+	}
+	var (
+		groupID     int32
+		nextGroupID = func() int32 {
+			groupID++
+			return groupID
+		}
+	)
+
+	// We need to run the check twice in order to initialize the stats
+	// Rate calculations rely on having two datapoints
+	if _, err := ch.RunWithOptions(cfg, nextGroupID, options); err != nil {
+		return fmt.Errorf("collection error: %s", err)
+	}
+
+	time.Sleep(1 * time.Second)
+
+	printResultsBanner(ch.RealTimeName())
+
+	run, err := ch.RunWithOptions(cfg, nextGroupID, options)
+	if err != nil {
+		return fmt.Errorf("collection error: %s", err)
+	}
+
+	return printResults(run.RealTime)
+}
+
+func printResultsBanner(name string) {
+	fmt.Printf("-----------------------------\n\n")
+	fmt.Printf("\nResults for check %s\n", name)
+	fmt.Printf("-----------------------------\n\n")
+}
+
+func printResults(msgs []process.MessageBody) error {
 	for _, m := range msgs {
 		b, err := json.MarshalIndent(m, "", "  ")
 		if err != nil {

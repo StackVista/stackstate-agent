@@ -1,7 +1,7 @@
 package encoding
 
 import (
-	model "github.com/DataDog/agent-payload/process"
+	model "github.com/DataDog/agent-payload/v5/process"
 	"github.com/StackVista/stackstate-agent/pkg/network"
 	"github.com/gogo/protobuf/proto"
 )
@@ -12,19 +12,10 @@ const ContentTypeProtobuf = "application/protobuf"
 type protoSerializer struct{}
 
 func (protoSerializer) Marshal(conns *network.Connections) ([]byte, error) {
-	agentConns := make([]*model.Connection, len(conns.Conns))
-
-	for i, conn := range conns.Conns {
-		agentConns[i] = FormatConnection(conn)
-	}
-
-	payload := &model.Connections{
-		Conns:     agentConns,
-		Dns:       FormatDNS(conns.DNS),
-		Telemetry: FormatTelemetry(conns.Telemetry),
-	}
-
-	return proto.Marshal(payload)
+	payload := modelConnections(conns)
+	buf, err := proto.Marshal(payload)
+	returnToPool(payload)
+	return buf, err
 }
 
 func (protoSerializer) Unmarshal(blob []byte) (*model.Connections, error) {

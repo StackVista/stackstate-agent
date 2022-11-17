@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 /*
 Package api implements the agent IPC api. Using HTTP
@@ -20,25 +20,30 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/cmd/agent/api/agent"
+	"github.com/StackVista/stackstate-agent/cmd/security-agent/api/agent"
 	"github.com/StackVista/stackstate-agent/pkg/api/security"
 	"github.com/StackVista/stackstate-agent/pkg/api/util"
 	"github.com/StackVista/stackstate-agent/pkg/config"
+	secagent "github.com/StackVista/stackstate-agent/pkg/security/agent"
 	"github.com/gorilla/mux"
 )
 
 // Server implements security agent API server
 type Server struct {
 	listener net.Listener
+	agent    *agent.Agent
 }
 
 // NewServer creates a new Server instance
-func NewServer() (*Server, error) {
+func NewServer(runtimeAgent *secagent.RuntimeSecurityAgent) (*Server, error) {
 	listener, err := newListener()
 	if err != nil {
 		return nil, err
 	}
-	return &Server{listener: listener}, nil
+	return &Server{
+		listener: listener,
+		agent:    agent.NewAgent(runtimeAgent),
+	}, nil
 }
 
 // Start creates the router and starts the HTTP server
@@ -47,7 +52,7 @@ func (s *Server) Start() error {
 	r := mux.NewRouter()
 
 	// IPC REST API server
-	agent.SetupHandlers(r.PathPrefix("/agent").Subrouter())
+	s.agent.SetupHandlers(r.PathPrefix("/agent").Subrouter())
 
 	// Validate token for every request
 	r.Use(validateToken)

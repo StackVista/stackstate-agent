@@ -1,16 +1,13 @@
 package main
 
 import (
-	"net/url"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	model "github.com/DataDog/agent-payload/process"
+	model "github.com/DataDog/agent-payload/v5/process"
 	"github.com/StackVista/stackstate-agent/pkg/process/config"
-	"github.com/StackVista/stackstate-agent/pkg/process/util/api"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateRTStatus(t *testing.T) {
@@ -27,7 +24,7 @@ func TestUpdateRTStatus(t *testing.T) {
 		{ActiveClients: 3, Interval: 2},
 		{ActiveClients: 0, Interval: 2},
 	}
-	c.updateStatus(statuses)
+	c.updateRTStatus(statuses)
 	assert.Equal(int32(1), atomic.LoadInt32(&c.realTimeEnabled))
 
 	// Validate that we stay that way
@@ -36,7 +33,7 @@ func TestUpdateRTStatus(t *testing.T) {
 		{ActiveClients: 3, Interval: 2},
 		{ActiveClients: 0, Interval: 2},
 	}
-	c.updateStatus(statuses)
+	c.updateRTStatus(statuses)
 	assert.Equal(int32(1), atomic.LoadInt32(&c.realTimeEnabled))
 
 	// And that it can turn back off
@@ -45,7 +42,7 @@ func TestUpdateRTStatus(t *testing.T) {
 		{ActiveClients: 0, Interval: 2},
 		{ActiveClients: 0, Interval: 2},
 	}
-	c.updateStatus(statuses)
+	c.updateRTStatus(statuses)
 	assert.Equal(int32(0), atomic.LoadInt32(&c.realTimeEnabled))
 }
 
@@ -63,7 +60,7 @@ func TestUpdateRTInterval(t *testing.T) {
 		{ActiveClients: 3, Interval: 2},
 		{ActiveClients: 0, Interval: 10},
 	}
-	c.updateStatus(statuses)
+	c.updateRTStatus(statuses)
 	assert.Equal(int32(1), atomic.LoadInt32(&c.realTimeEnabled))
 	assert.Equal(10*time.Second, c.realTimeInterval)
 }
@@ -95,80 +92,4 @@ func TestHasContainers(t *testing.T) {
 	assert.Equal(1, getContainerCount(&collectorContainer))
 	assert.Equal(2, getContainerCount(&collectorRealTime))
 	assert.Equal(1, getContainerCount(&collectorContainerRealTime))
-}
-
-func TestRemovePathIfPresent(t *testing.T) {
-	for _, tt := range []struct {
-		input    string
-		expected string
-	}{
-		{input: "http://foo.com", expected: "http://foo.com"},
-		{input: "http://foo.com/", expected: "http://foo.com"},
-		{input: "http://foo.com/api/v1", expected: "http://foo.com"},
-		{input: "http://foo.com?foo", expected: "http://foo.com"},
-		{input: "http://foo.com/api/v1/?foo", expected: "http://foo.com"},
-		{input: "http://foo.com/api/v1?foo", expected: "http://foo.com"},
-		{input: "http://foo.com:8080", expected: "http://foo.com:8080"},
-		{input: "http://foo.com:8080/", expected: "http://foo.com:8080"},
-		{input: "http://foo.com:8080/api/v1", expected: "http://foo.com:8080"},
-	} {
-		u, err := url.Parse(tt.input)
-		require.NoError(t, err)
-
-		assert.Equal(t, tt.expected, removePathIfPresent(u))
-	}
-}
-
-func TestKeysPerDomain(t *testing.T) {
-	for _, tt := range []struct {
-		input    []api.Endpoint
-		expected map[string][]string
-	}{
-		{
-			input: []api.Endpoint{
-				{APIKey: "key1", Endpoint: getEndpoint(t, "http://foo.com")},
-			},
-			expected: map[string][]string{
-				"http://foo.com": {"key1"},
-			},
-		},
-		{
-			input: []api.Endpoint{
-				{APIKey: "key1", Endpoint: getEndpoint(t, "http://foo.com")},
-				{APIKey: "key2", Endpoint: getEndpoint(t, "http://foo.com")},
-			},
-			expected: map[string][]string{
-				"http://foo.com": {"key1", "key2"},
-			},
-		},
-		{
-			input: []api.Endpoint{
-				{APIKey: "key1", Endpoint: getEndpoint(t, "http://foo.com")},
-				{APIKey: "key2", Endpoint: getEndpoint(t, "http://bar.com")},
-			},
-			expected: map[string][]string{
-				"http://foo.com": {"key1"},
-				"http://bar.com": {"key2"},
-			},
-		},
-		{
-			input: []api.Endpoint{
-				{APIKey: "key1", Endpoint: getEndpoint(t, "http://foo.com")},
-				{APIKey: "key2", Endpoint: getEndpoint(t, "http://bar.com")},
-				{APIKey: "key3", Endpoint: getEndpoint(t, "http://foo.com")},
-			},
-			expected: map[string][]string{
-				"http://foo.com": {"key1", "key3"},
-				"http://bar.com": {"key2"},
-			},
-		},
-	} {
-		assert.Equal(t, tt.expected, keysPerDomains(tt.input))
-	}
-}
-
-func getEndpoint(t *testing.T, u string) *url.URL {
-	e, err := url.Parse(u)
-	assert.NoError(t, err)
-	return e
 }

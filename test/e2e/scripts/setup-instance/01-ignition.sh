@@ -1,94 +1,90 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 printf '=%.0s' {0..79} ; echo
-set -ex
+set -x
 
-cd "$(dirname $0)"
+cd "$(dirname "$0")"
 ssh-keygen -b 4096 -t rsa -C "datadog" -N "" -f "id_rsa"
 SSH_RSA=$(cat id_rsa.pub)
 
-tee ignition.json << EOF
-{
-  "passwd": {
-    "users": [
-      {
-        "sshAuthorizedKeys": [
-          "${SSH_RSA}"
-        ],
-        "name": "core"
-      }
-    ]
-  },
-  "systemd": {
-    "units": [
-      {
-        "mask": true,
-        "name": "user-configdrive.service"
-      },
-      {
-        "mask": true,
-        "name": "user-configvirtfs.service"
-      },
-      {
-        "mask": true,
-        "name": "locksmithd.service"
-      },
-      {
-        "enabled": true,
-        "name": "oem-cloudinit.service",
-        "contents": "[Unit]\nDescription=Cloudinit from platform metadata\n\n[Service]\nType=oneshot\nExecStart=/usr/bin/coreos-cloudinit --oem=ec2-compat\n\n[Install]\nWantedBy=multi-user.target\n"
-      },
-      {
-        "enabled": true,
-        "name": "setup-pupernetes.service",
-        "contents": "[Unit]\nDescription=Setup pupernetes\nWants=network-online.target\nAfter=network-online.target\n\n[Service]\nType=oneshot\nExecStart=/opt/bin/setup-pupernetes\nRemainAfterExit=yes\n\n[Install]\nWantedBy=multi-user.target\n"
-      },
-      {
-        "enabled": true,
-        "name": "pupernetes.service",
-        "contents": "[Unit]\nDescription=Run pupernetes\nRequires=setup-pupernetes.service docker.service\nAfter=setup-pupernetes.service docker.service\n\n[Service]\nEnvironment=SUDO_USER=core\nExecStart=/opt/bin/pupernetes daemon run /opt/sandbox --kubectl-link /opt/bin/kubectl -v 5 --hyperkube-version 1.10.1 --run-timeout 48h\nRestart=on-failure\nRestartSec=5\nType=notify\n\n[Install]\nWantedBy=multi-user.target\n"
-      },
-      {
-        "name": "terminate.service",
-        "contents": "[Unit]\nDescription=Trigger a poweroff\n\n[Service]\nExecStart=/bin/systemctl poweroff\nRestart=no\n"
-      },
-      {
-        "enabled": true,
-        "name": "terminate.timer",
-        "contents": "[Timer]\nOnBootSec=7200\n\n[Install]\nWantedBy=multi-user.target\n"
-      }
-    ]
-  },
-  "storage": {
-    "files": [
-      {
-        "path": "/etc/coreos/update.conf",
-        "mode": 420,
-        "contents": {
-          "source": "data:,GROUP%3Dalpha%0AREBOOT_STRATEGY%3Doff%0A"
-        },
-        "filesystem": "root"
-      },
-      {
-        "path": "/opt/bin/setup-pupernetes",
-        "mode": 320,
-        "contents": {
-          "source": "data:,%23%21%2Fbin%2Fbash%20-ex%0Acurl%20-Lf%20https%3A%2F%2Fgithub.com%2FDataDog%2Fpupernetes%2Freleases%2Fdownload%2Fv0.11.0%2Fpupernetes%20-o%20%2Fopt%2Fbin%2Fpupernetes%0Asha512sum%20-c%20%2Fopt%2Fbin%2Fpupernetes.sha512sum%0Achmod%20%2Bx%20%2Fopt%2Fbin%2Fpupernetes%0A"
-        },
-        "filesystem": "root"
-      },
-      {
-        "path": "/opt/bin/pupernetes.sha512sum",
-        "mode": 256,
-        "contents": {
-          "source": "data:,fcbf42316b9fbfbf6966b2f010f1bbc5006f7c882fc856d36b5e9f67a323d6b02361a45b88a4b4f7c64ac733078d9fd7d0cf72ef1229697f191b740c9fc95e61%20%20.%2F/opt/bin/pupernetes%0A"
-        },
-        "filesystem": "root"
-      }
-    ]
-  },
-  "ignition": {
-    "version": "2.1.0"
-  }
-}
+case "$(uname)" in
+    Linux)  fcct="fcct-$(uname -m)-unknown-linux-gnu";;
+    Darwin) fcct="fcct-$(uname -m)-apple-darwin";;
+esac
+curl -LOC - "https://github.com/coreos/butane/releases/download/v0.6.0/${fcct}"
+curl -LO    "https://github.com/coreos/butane/releases/download/v0.6.0/${fcct}.asc"
+
+gpg --import <<EOF
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mQINBF1RVqsBEADWMBqYv/G1r4PwyiPQCfg5fXFGXV1FCZ32qMi9gLUTv1CX7rYy
+H4Inj93oic+lt1kQ0kQCkINOwQczOkm6XDkEekmMrHknJpFLwrTK4AS28bYF2RjL
+M+QJ/dGXDMPYsP0tkLvoxaHr9WTRq89A+AmONcUAQIMJg3JxXAAafBi2UszUUEPI
+U35MyufFt2ePd1k/6hVAO8S2VT72TxXSY7Ha4X2J0pGzbqQ6Dq3AVzogsnoIi09A
+7fYutYZPVVAEGRUqavl0th8LyuZShASZ38CdAHBMvWV4bVZghd/wDV5ev3LXUE0o
+itLAqNSeiDJ3grKWN6v0qdU0l3Ya60sugABd3xaE+ROe8kDCy3WmAaO51Q880ZA2
+iXOTJFObqkBTP9j9+ZeQ+KNE8SBoiH1EybKtBU8HmygZvu8ZC1TKUyL5gwGUJt8v
+ergy5Bw3Q7av520sNGD3cIWr4fBAVYwdBoZT8RcsnU1PP67NmOGFcwSFJ/LpiOMC
+pZ1IBvjOC7KyKEZY2/63kjW73mB7OHOd18BHtGVkA3QAdVlcSule/z68VOAy6bih
+E6mdxP28D4INsts8w6yr4G+3aEIN8u0qRQq66Ri5mOXTyle+ONudtfGg3U9lgicg
+z6oVk17RT0jV9uL6K41sGZ1sH/6yTXQKagdAYr3w1ix2L46JgzC+/+6SSwARAQAB
+tDFGZWRvcmEgKDMyKSA8ZmVkb3JhLTMyLXByaW1hcnlAZmVkb3JhcHJvamVjdC5v
+cmc+iQI4BBMBAgAiBQJdUVarAhsPBgsJCAcDAgYVCAIJCgsEFgIDAQIeAQIXgAAK
+CRBsEwJtEslE0LdAD/wKdAMtfzr7O2y06/sOPnrb3D39Y2DXbB8y0iEmRdBL29Bq
+5btxwmAka7JZRJVFxPsOVqZ6KARjS0/oCBmJc0jCRANFCtM4UjVHTSsxrJfuPkel
+vrlNE9tcR6OCRpuj/PZgUa39iifF/FTUfDgh4Q91xiQoLqfBxOJzravQHoK9VzrM
+NTOu6J6l4zeGzY/ocj6DpT+5fdUO/3HgGFNiNYPC6GVzeiA3AAVR0sCyGENuqqdg
+wUxV3BIht05M5Wcdvxg1U9x5I3yjkLQw+idvX4pevTiCh9/0u+4g80cT/21Cxsdx
+7+DVHaewXbF87QQIcOAing0S5QE67r2uPVxmWy/56TKUqDoyP8SNsV62lT2jutsj
+LevNxUky011g5w3bc61UeaeKrrurFdRs+RwBVkXmtqm/i6g0ZTWZyWGO6gJd+HWA
+qY1NYiq4+cMvNLatmA2sOoCsRNmE9q6jM/ESVgaH8hSp8GcLuzt9/r4PZZGl5CvU
+eldOiD221u8rzuHmLs4dsgwJJ9pgLT0cUAsOpbMPI0JpGIPQ2SG6yK7LmO6HFOxb
+Akz7IGUt0gy1MzPTyBvnB+WgD1I+IQXXsJbhP5+d+d3mOnqsd6oDM/grKBzrhoUe
+oNadc9uzjqKlOrmrdIR3Bz38SSiWlde5fu6xPqJdmGZRNjXtcyJlbSPVDIloxw==
+=QWRO
+-----END PGP PUBLIC KEY BLOCK-----
+EOF
+
+gpg --verify "${fcct}.asc" "$fcct"
+chmod +x "$fcct"
+
+"./$fcct" --pretty --strict <<EOF | tee ignition.json
+variant: fcos
+version: 1.1.0
+passwd:
+  users:
+    - name: core
+      ssh_authorized_keys:
+        - "${SSH_RSA}"
+systemd:
+  units:
+    - name: zincati.service
+      mask: true
+    - name: terminate.service
+      contents: |
+        [Unit]
+        Description=Trigger a poweroff
+
+        [Service]
+        ExecStart=/bin/systemctl poweroff
+        Restart=no
+    - name: terminate.timer
+      enabled: true
+      contents: |
+        [Timer]
+        OnBootSec=7200
+
+        [Install]
+        WantedBy=multi-user.target
+storage:
+  links:
+    - path: /etc/crypto-policies/back-ends/opensshserver.config
+      target: /usr/share/crypto-policies/LEGACY/opensshserver.txt
+      overwrite: true
+  files:
+    - path: /etc/ssh/sshd_config.d/99-datadog.conf
+      mode: 0400
+      contents:
+        source: "data:,AcceptEnv%20DOCKER%5FREGISTRY%5F%2A%20DATADOG%5F%2AAGENT%5FIMAGE%0A"
 EOF

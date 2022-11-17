@@ -1,4 +1,4 @@
-image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220505
+image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826
 
 stages:
   - prepare
@@ -21,7 +21,7 @@ stages:
   echo "~~~~~> /Trying..."
 
 .configure_centos_env_script: &configure_centos_env_script |
-  . /root/.gimme/envs/go1.13.11.env
+  . /root/.gimme/envs/go1.16.7.env
   . /root/miniconda3/etc/profile.d/conda.sh
   conda activate $CONDA_ENV
   mkdir -p /go/src/github.com/StackVista
@@ -78,7 +78,7 @@ deps_deb:
       - venv
   script:
     - conda activate $CONDA_ENV
-    - inv -e deps --verbose --dep-vendor-only
+    - inv -e deps --verbose
     - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
     - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz .
     - cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz .
@@ -100,7 +100,7 @@ deps_deb:
 deps_rpm:
   stage: prepare
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220505
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220826
   cache:
     key: "deps-rpm-$STS_VER-$CI_COMMIT_REF_SLUG"
     paths:
@@ -109,7 +109,7 @@ deps_rpm:
     - *configure_centos_env_script
   script:
     - conda activate $CONDA_ENV
-    - inv -e deps --verbose --dep-vendor-only
+    - inv -e deps --verbose
     - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
     - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz .
     - cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz .
@@ -139,6 +139,7 @@ deps_win:
       - vendor
   script:
     - conda activate $CONDA_ENV
+    - pip install pathlib==1.0.1
     - inv deps
     - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
     - cd $Env:GOPATH/pkg ; tar --force-local -czf $CI_PROJECT_DIR/go-pkg.tar.gz .
@@ -152,7 +153,7 @@ deps_win:
       - $CI_PROJECT_DIR/go-bin.tar.gz
       - $CI_PROJECT_DIR/vendor.tar.gz
   tags:
-    - windows_agent7_ps1
+    - windows_agent7_louis
   retry:
     max: 2
     when:
@@ -171,10 +172,11 @@ unit_tests:
     - conda activate $CONDA_ENV
     # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
     - inv deps
-    - inv -e agent.build --race --precompile-only --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
+    - inv -e agent.build --race --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
     # TODO: check why formatting rules differ from previous step
     - gofmt -l -w -s ./pkg ./cmd
     - inv -e rtloader.test
+    - invoke install-tools
     - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
   tags:
     - sts-aws
@@ -281,7 +283,7 @@ build_deb:
     - cat version.txt || true
     - source ./.gitlab-scripts/setup_artifactory.sh
 
-    - inv -e agent.omnibus-build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --skip-deps --skip-sign --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
+    - inv -e agent.omnibus-build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --go-mod-cache $CI_PROJECT_DIR/vendor --skip-deps --skip-sign --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
 
     # Prepare outputs
     - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles && mkdir -p $CI_PROJECT_DIR/outcomes/binary
@@ -320,7 +322,7 @@ build_deb:
 build_rpm:
   stage: build
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220505
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220826
   needs:
     - deps_rpm
   tags:
@@ -391,7 +393,7 @@ build_win:
       - .gems
   before_script:
     - *configure_windows_ps1_env_script
-    - Import-VisualStudioVars 2017 -Architecture amd64
+    - Import-VisualStudioVars 2019 -Architecture amd64
     - ridk enable
     - del C:\omnibus-ruby\pkg\*
   script:
@@ -400,13 +402,14 @@ build_win:
     - inv -e agent.omnibus-build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR_WIN --skip-sign --log-level debug --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
   after_script:
     - cmd.exe /c "copy %GOPATH%\src\github.com\StackVista\stackstate-agent\omnibus\pkg\*.msi"
+    - attrib.exe * /D /S -h -r -s
   artifacts:
     <<: *artifacts_expire_in
     paths:
       - ./*.msi
       - "version.txt"
   tags:
-    - windows_agent7_ps1
+    - windows_agent7_louis
   retry:
     max: 2
     when:
@@ -434,7 +437,7 @@ test_deb_renaming:
 test_rpm_renaming:
   stage: test
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220505
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220826
   needs:
     - build_rpm
   before_script: []
@@ -480,7 +483,7 @@ pre_release_win:
     - build_win
   before_script:
     - *configure_windows_ps1_env_script
-    - Import-VisualStudioVars 2017 -Architecture amd64
+    - Import-VisualStudioVars 2019 -Architecture amd64
     - ridk enable
   script:
     - $env:VERSION = Get-Content version.txt -First 1
@@ -494,7 +497,7 @@ pre_release_win:
     - aws.exe s3 ls s3://$Env:STS_AWS_TEST_BUCKET_WIN/windows/$Env:CI_COMMIT_REF_NAME/
     - aws.exe s3 ls s3://$Env:STS_AWS_TEST_BUCKET_WIN/
   tags:
-    - windows_agent7_ps1
+    - windows_agent7_louis
   retry:
     max: 2
     when:
@@ -546,6 +549,17 @@ pre_release_main_agent_image: &pre_release_image
       - always
   rules:
     - when: on_success
+
+pre_release_swarm_agent_image:
+  <<: *pre_release_image
+  needs:
+    - pre_release_main_agent_image
+  script:
+    - cd $CI_PROJECT_DIR
+    #                     script                           $IMAGE_TAG              $IMAGE_REPO              $EXTRA_TAG            $BASE_REPO           $BASE_TAG
+    - ./omnibus/package-scripts/publish_swarm_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_SWARM $CI_COMMIT_SHORT_SHA $STS_DOCKER_TEST_REPO $CI_COMMIT_SHORT_SHA
+  rules:
+    - *cluster_agent
 
 pre_release_trace_agent_image:
   <<: *pre_release_image
@@ -944,115 +958,170 @@ molecule_integrations_success_cleanup:
     if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[beest\-/ && $CI_COMMIT_MESSAGE !~ /\[beest\-kubernetes]/
     when: never
 
-.beest_k8s_dockerd_variables: &beest_k8s_dockerd_variables
+.beest_k8s_1_21_dockerd_variables: &beest_k8s_1_21_dockerd_variables
   variables:
-    BEEST_SCENARIO: dockerd-eks
+    BEEST_SCENARIO: dockerd-eks-1-21
     BEEST_TEST_GROUP: k8s
 
-.beest_k8s_containerd_variables: &beest_k8s_containerd_variables
+.beest_k8s_1_21_containerd_variables: &beest_k8s_1_21_containerd_variables
   variables:
-    BEEST_SCENARIO: containerd-eks
+    BEEST_SCENARIO: contd-eks-1-21
     BEEST_TEST_GROUP: k8s
 
-beest_k8s_dockerd_create:
+.beest_k8s_1_23_containerd_variables: &beest_k8s_1_23_containerd_variables
+  variables:
+    BEEST_SCENARIO: contd-eks-1-23
+    BEEST_TEST_GROUP: k8s
+
+beest_k8s_1_21_dockerd_create:
   <<: *beest
   <<: *beest_create
-  <<: *beest_k8s_dockerd_variables
+  <<: *beest_k8s_1_21_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_always
 
-beest_k8s_containerd_create:
+beest_k8s_1_21_containerd_create:
   <<: *beest
   <<: *beest_create
-  <<: *beest_k8s_containerd_variables
+  <<: *beest_k8s_1_21_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_always
 
-beest_k8s_dockerd_test:
+beest_k8s_1_23_containerd_create:
+  <<: *beest
+  <<: *beest_create
+  <<: *beest_k8s_1_23_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_always
+
+beest_k8s_1_21_dockerd_test:
   <<: *beest
   <<: *beest_test
-  <<: *beest_k8s_dockerd_variables
+  <<: *beest_k8s_1_21_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_k8s_dockerd_create
+    - beest_k8s_1_21_dockerd_create
   needs:
-    - beest_k8s_dockerd_create
+    - beest_k8s_1_21_dockerd_create
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
-beest_k8s_containerd_test:
+beest_k8s_1_21_containerd_test:
   <<: *beest
   <<: *beest_test
-  <<: *beest_k8s_containerd_variables
+  <<: *beest_k8s_1_21_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_k8s_containerd_create
+    - beest_k8s_1_21_containerd_create
   needs:
-    - beest_k8s_containerd_create
+    - beest_k8s_1_21_containerd_create
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
-beest_k8s_dockerd_failure_cleanup:
+beest_k8s_1_23_containerd_test:
+  <<: *beest
+  <<: *beest_test
+  <<: *beest_k8s_1_23_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_k8s_1_23_containerd_create
+  needs:
+    - beest_k8s_1_23_containerd_create
+    - pre_release_cluster_agent_image
+    - pre_release_main_agent_image
+
+beest_k8s_1_21_dockerd_failure_cleanup:
   <<: *beest
   <<: *beest_destroy
-  <<: *beest_k8s_dockerd_variables
+  <<: *beest_k8s_1_21_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_failure
     - when: never
   needs:
-    - beest_k8s_dockerd_test
-    - beest_k8s_dockerd_create
+    - beest_k8s_1_21_dockerd_test
+    - beest_k8s_1_21_dockerd_create
 
-beest_k8s_containerd_failure_cleanup:
+beest_k8s_1_21_containerd_failure_cleanup:
   <<: *beest
   <<: *beest_destroy
-  <<: *beest_k8s_containerd_variables
+  <<: *beest_k8s_1_21_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_failure
     - when: never
   needs:
-    - beest_k8s_containerd_test
-    - beest_k8s_containerd_create
+    - beest_k8s_1_21_containerd_test
+    - beest_k8s_1_21_containerd_create
 
-beest_k8s_dockerd_success_cleanup:
+beest_k8s_1_21_dockerd_success_cleanup:
   <<: *beest
   <<: *beest_destroy
-  <<: *beest_k8s_dockerd_variables
+  <<: *beest_k8s_1_21_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_k8s_dockerd_test
-    - beest_k8s_dockerd_create
+    - beest_k8s_1_21_dockerd_test
+    - beest_k8s_1_21_dockerd_create
   needs:
-    - beest_k8s_dockerd_test
-    - beest_k8s_dockerd_create
+    - beest_k8s_1_21_dockerd_test
+    - beest_k8s_1_21_dockerd_create
 
-beest_k8s_containerd_success_cleanup:
+beest_k8s_1_21_containerd_success_cleanup:
   <<: *beest
   <<: *beest_destroy
-  <<: *beest_k8s_containerd_variables
+  <<: *beest_k8s_1_21_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_k8s_containerd_test
-    - beest_k8s_containerd_create
+    - beest_k8s_1_21_containerd_test
+    - beest_k8s_1_21_containerd_create
   needs:
-    - beest_k8s_containerd_test
-    - beest_k8s_containerd_create
+    - beest_k8s_1_21_containerd_test
+    - beest_k8s_1_21_containerd_create
+
+beest_k8s_1_23_containerd_failure_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_k8s_1_23_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_failure
+    - when: never
+  needs:
+    - beest_k8s_1_23_containerd_test
+    - beest_k8s_1_23_containerd_create
+
+beest_k8s_1_23_containerd_success_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_k8s_1_23_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_k8s_1_23_containerd_test
+    - beest_k8s_1_23_containerd_create
+  needs:
+    - beest_k8s_1_23_containerd_test
+    - beest_k8s_1_23_containerd_create
 
 # Job Seq: Molecule
 # Type: localinstall
@@ -1243,8 +1312,7 @@ molecule_swarm_test:
   variables:
     MOLECULE_SCENARIO: swarm
   needs:
-    - pre_release_cluster_agent_image
-    - pre_release_main_agent_image
+    - pre_release_swarm_agent_image
     - molecule_swarm_create
 
 molecule_swarm_failure_cleanup:
@@ -1527,7 +1595,7 @@ release_win:
     - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
       when: manual
   tags:
-    - windows_agent7_ps1
+    - windows_agent7_louis
   retry:
     max: 2
     when:
@@ -1588,3 +1656,17 @@ release_cluster_agent_image:
     - ./omnibus/package-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent latest
   rules:
     - *cluster_agent_release
+
+release_swarm_agent_image:
+  <<: *base_release_image
+  interruptible: true
+  needs:
+    - build_deb
+    - release_main_agent_image
+  script:
+    - cd $CI_PROJECT_DIR
+    #                                                 $IMAGE_TAG          $IMAGE_REPO        $EXTRA_TAG      $BASE_REPO       $BASE_TAG
+    - ./omnibus/package-scripts/publish_swarm_image.sh $VERSION $STS_DOCKER_RELEASE_REPO_SWARM latest $STS_DOCKER_RELEASE_REPO $VERSION
+  rules:
+    - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
+      when: manual

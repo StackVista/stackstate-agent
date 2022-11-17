@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2017-2020 Datadog, Inc.
+// Copyright 2017-present Datadog, Inc.
 
 package containers
 
@@ -19,6 +19,7 @@ const (
 	RuntimeNameDocker     string = "docker"
 	RuntimeNameContainerd string = "containerd"
 	RuntimeNameCRIO       string = "cri-o"
+	RuntimeNameGarden     string = "garden"
 )
 
 // Supported container states
@@ -114,6 +115,7 @@ type ContainerImplementation interface {
 	ContainerIDForPID(pid int) (string, error)
 	GetDefaultGateway() (net.IP, error)
 	GetDefaultHostIPs() ([]string, error)
+	GetNumFileDescriptors(pid int) (int, error)
 
 	metrics.ContainerMetricsProvider
 }

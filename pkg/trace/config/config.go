@@ -1,38 +1,37 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package config
 
 import (
+	"bytes"
+	"context"
 	"crypto/tls"
 	"errors"
-	interpreterconfig "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config" //sts
+	"fmt"
+	interpreterconfig "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	"github.com/StackVista/stackstate-agent/pkg/util"
-
-	// /[sts]
 	"net"
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
+	"os/exec"
 	"strings"
 	"time"
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config/features"
+	"github.com/StackVista/stackstate-agent/pkg/util/fargate"
 	httputils "github.com/StackVista/stackstate-agent/pkg/util/http"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/profiling"
 )
 
-var (
-	// ErrMissingAPIKey is returned when the config could not be validated due to missing API key.
-	ErrMissingAPIKey = errors.New("you must specify an API Key, either via a configuration file or the DD_API_KEY env var")
-
-	// ErrMissingHostname is returned when the config could not be validated due to missing hostname.
-	ErrMissingHostname = errors.New("failed to automatically set the hostname, you must specify it via configuration for or the DD_HOSTNAME env var")
-)
+// ErrMissingAPIKey is returned when the config could not be validated due to missing API key.
+var ErrMissingAPIKey = errors.New("you must specify an API Key, either via a configuration file or the DD_API_KEY env var")
 
 // Endpoint specifies an endpoint that the trace agent will write data (traces, stats & services) to.
 type Endpoint struct {
@@ -50,7 +49,8 @@ type Endpoint struct {
 // It is exposed with expvar, so make sure to exclude any sensible field
 // from JSON encoding. Use New() to create an instance.
 type AgentConfig struct {
-	Enabled bool
+	Enabled             bool
+	FargateOrchestrator fargate.OrchestratorName
 
 	// Global
 	Hostname   string
@@ -68,9 +68,11 @@ type AgentConfig struct {
 	ExtraAggregators []string
 
 	// Sampler configuration
-	ExtraSampleRate float64
-	MaxTPS          float64
-	MaxEPS          float64
+	ExtraSampleRate    float64
+	TargetTPS          float64
+	ErrorTPS           float64
+	DisableRareSampler bool
+	MaxEPS             float64
 
 	// Receiver
 	ReceiverHost    string
@@ -81,6 +83,7 @@ type AgentConfig struct {
 	MaxRequestBytes int64 // specifies the maximum allowed request size for incoming trace payloads
 
 	// Writers
+	SynchronousFlushing     bool // Mode where traces are only submitted when FlushAsync is called, used for Serverless Extension
 	StatsWriter             *WriterConfig
 	TraceWriter             *WriterConfig
 	ConnectionResetInterval time.Duration // frequency at which outgoing connections are reset. 0 means no reset is performed
@@ -110,6 +113,9 @@ type AgentConfig struct {
 	// It maps tag keys to a set of replacements. Only supported in A6.
 	ReplaceTags []*ReplaceRule
 
+	// GlobalTags list metadata that will be added to all spans
+	GlobalTags map[string]string
+
 	// transaction analytics
 	AnalyzedRateByServiceLegacy map[string]float64
 	AnalyzedSpansByService      map[string]map[string]float64
@@ -120,22 +126,46 @@ type AgentConfig struct {
 	// Obfuscation holds sensitive data obufscator's configuration.
 	Obfuscation *ObfuscationConfig
 
+	// RequireTags specifies a list of tags which must be present on the root span in order for a trace to be accepted.
+	RequireTags []*Tag
+
+	// RejectTags specifies a list of tags which must be absent on the root span in order for a trace to be accepted.
+	RejectTags []*Tag
+
+	// OTLPReceiver holds the configuration for OpenTelemetry receiver.
+	OTLPReceiver *OTLP
+
+	// Profiling settings, or nil if profiling is disabled
+	ProfilingSettings *profiling.Settings
+
 	// InterpreterConfig contains span interpreter config. [sts]
 	InterpreterConfig *interpreterconfig.Config
 }
 
+// Tag represents a key/value pair.
+type Tag struct {
+	K, V string
+}
+
 // New returns a configuration with the default values.
 func New() *AgentConfig {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	orch := fargate.GetOrchestrator(ctx)
+	cancel()
+	if err := ctx.Err(); err != nil && err != context.Canceled {
+		log.Errorf("Failed to get Fargate orchestrator. This may cause issues if you are in a Fargate instance: %v", err)
+	}
 	return &AgentConfig{
-		Enabled:    true,
-		DefaultEnv: "none",
-		Endpoints:  []*Endpoint{{Host: "https://trace.agent.datadoghq.com"}},
+		Enabled:             true,
+		FargateOrchestrator: orch,
+		DefaultEnv:          "none",
+		Endpoints:           []*Endpoint{{Host: "https://trace.agent.datadoghq.com"}},
 
-		BucketInterval:   time.Duration(10) * time.Second,
-		ExtraAggregators: []string{"http.status_code", "version"},
+		BucketInterval: time.Duration(10) * time.Second,
 
 		ExtraSampleRate: 1.0,
-		MaxTPS:          10,
+		TargetTPS:       10,
+		ErrorTPS:        10,
 		MaxEPS:          200,
 
 		ReceiverHost:    "localhost",
@@ -161,6 +191,11 @@ func New() *AgentConfig {
 		AnalyzedRateByServiceLegacy: make(map[string]float64),
 		AnalyzedSpansByService:      make(map[string]map[string]float64),
 
+		GlobalTags: make(map[string]string),
+
+		DDAgentBin:   defaultDDAgentBin,
+		OTLPReceiver: &OTLP{},
+
 		// [sts] interpreter config
 		InterpreterConfig: interpreterconfig.DefaultInterpreterConfig(),
 	}
@@ -183,8 +218,12 @@ func (c *AgentConfig) validate() error {
 		return errors.New("agent binary path not set")
 	}
 	if c.Hostname == "" {
+		// no user-set hostname, try to acquire
 		if err := c.acquireHostname(); err != nil {
-			return err
+			log.Debugf("Could not get hostname via gRPC: %v. Falling back to other methods.", err)
+			if err := c.acquireHostnameFallback(); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -194,22 +233,78 @@ func (c *AgentConfig) validate() error {
 // when it can not be obtained by any other means. It is replaced in tests.
 var fallbackHostnameFunc = os.Hostname
 
-// acquireHostname attempts to acquire a hostname for this configuration. It
-// tries to shell out to the infrastructure agent for this, if DD_AGENT_BIN is
-// set, otherwise falling back to os.Hostname.
+// acquireHostname attempts to acquire a hostname for the trace-agent by connecting to the core agent's
+// gRPC endpoints. If it fails, it will return an error.
 func (c *AgentConfig) acquireHostname() error {
+	/* sts - Get hostname from util.GetHostname instead
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	client, err := grpc.GetDDAgentClient(ctx)
+	if err != nil {
+		return err
+	}
+	reply, err := client.GetHostname(ctx, &pbgo.HostnameRequest{})
+	if err != nil {
+		return err
+	}
+	if features.Has("disable_empty_hostname") && reply.Hostname == "" {
+		log.Debugf("Acquired empty hostname from gRPC but it's disallowed.")
+		return errors.New("empty hostname disallowed")
+	}
+	c.Hostname = reply.Hostname
+	log.Debugf("Acquired hostname from gRPC: %s", c.Hostname)
+	*/
 	// sts - use util.GetHostname instead of using the agent bin path and running a shell command.
-	hostname, err := util.GetHostname()
+	hostname, err := util.GetHostname(context.TODO())
 	if err == nil {
 		c.Hostname = hostname
 	}
-
-	return err
+	return nil
 }
 
-// HTTPClient returns a new http.Client to be used for outgoing connections to the
+// acquireHostnameFallback attempts to acquire a hostname for this configuration. It
+// tries to shell out to the infrastructure agent for this, if DD_AGENT_BIN is
+// set, otherwise falling back to os.Hostname.
+func (c *AgentConfig) acquireHostnameFallback() error {
+	var out bytes.Buffer
+	cmd := exec.Command(c.DDAgentBin, "hostname")
+	cmd.Env = append(os.Environ(), cmd.Env...) // needed for Windows
+	cmd.Stdout = &out
+	err := cmd.Run()
+	c.Hostname = strings.TrimSpace(out.String())
+	if emptyDisallowed := features.Has("disable_empty_hostname") && c.Hostname == ""; err != nil || emptyDisallowed {
+		if emptyDisallowed {
+			log.Debugf("Core agent returned empty hostname but is disallowed by disable_empty_hostname feature flag. Falling back to os.Hostname.")
+		}
+		// There was either an error retrieving the hostname from the core agent, or
+		// it was empty and its disallowed by the disable_empty_hostname feature flag.
+		host, err2 := fallbackHostnameFunc()
+		if err2 != nil {
+			return fmt.Errorf("couldn't get hostname from agent (%q), nor from OS (%q). Try specifying it by means of config or the DD_HOSTNAME env var", err, err2)
+		}
+		if emptyDisallowed && host == "" {
+			return errors.New("empty hostname disallowed")
+		}
+		c.Hostname = host
+		log.Debugf("Acquired hostname from OS: %q. Core agent was unreachable at %q: %v.", c.Hostname, c.DDAgentBin, err)
+		return nil
+	}
+	log.Debugf("Acquired hostname from core agent (%s): %q.", c.DDAgentBin, c.Hostname)
+	return nil
+}
+
+// NewHTTPClient returns a new http.Client to be used for outgoing connections to the
 // Datadog API.
-func (c *AgentConfig) HTTPClient() *http.Client {
+func (c *AgentConfig) NewHTTPClient() *http.Client {
+	return &http.Client{
+		Timeout:   10 * time.Second,
+		Transport: c.NewHTTPTransport(),
+	}
+}
+
+// NewHTTPTransport returns a new http.Transport to be used for outgoing connections to
+// the Datadog API.
+func (c *AgentConfig) NewHTTPTransport() *http.Transport {
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: c.SkipSSLValidation},
 		// below field values are from http.DefaultTransport (go1.12)
@@ -227,10 +322,7 @@ func (c *AgentConfig) HTTPClient() *http.Client {
 	if p := coreconfig.GetProxies(); p != nil {
 		transport.Proxy = httputils.GetProxyTransportFunc(p)
 	}
-	return &http.Client{
-		Timeout:   10 * time.Second,
-		Transport: transport,
-	}
+	return transport
 }
 
 // Load returns a new configuration based on the given path. The path must not necessarily exist
@@ -245,11 +337,6 @@ func Load(path string) (*AgentConfig, error) {
 	} else {
 		log.Infof("Loaded configuration: %s", cfg.ConfigPath)
 	}
-	loadEnv()
-	if err := config.ResolveSecrets(config.Datadog, filepath.Base(path)); err != nil {
-		// resolve secrets now that we've finished loading from all sources (file, flags & env)
-		return cfg, err
-	}
 	cfg.applyDatadogConfig()
 	return cfg, cfg.validate()
 }
@@ -257,10 +344,7 @@ func Load(path string) (*AgentConfig, error) {
 func prepareConfig(path string) (*AgentConfig, error) {
 	cfg := New()
 	config.Datadog.SetConfigFile(path)
-	// we'll resolve secrets later, after loading environment variable values too,
-	// in order to make sure that any potential secret references present in environment
-	// variables get counted.
-	if _, err := config.LoadWithoutSecret(); err != nil {
+	if _, err := config.Load(); err != nil {
 		return cfg, err
 	}
 	cfg.ConfigPath = path
@@ -269,10 +353,4 @@ func prepareConfig(path string) (*AgentConfig, error) {
 		cfg.DDAgentBin = defaultDDAgentBin
 	}
 	return cfg, nil
-}
-
-// HasFeature returns true if the feature f is present. Features are values
-// of the DD_APM_FEATURES environment variable.
-func HasFeature(f string) bool {
-	return strings.Contains(os.Getenv("DD_APM_FEATURES"), f)
 }

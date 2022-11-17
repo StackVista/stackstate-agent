@@ -1,8 +1,8 @@
+import atexit
 import base64
 import json
 import os
 import tempfile
-
 
 ssm_command = "aws.exe ssm get-parameter --name {} --with-decryption --region us-east-1"
 ssm_param_password = "keygen.dd_win_agent_codesign.password"
@@ -56,6 +56,12 @@ def get_signing_cert(ctx):
     f, fn = tempfile.mkstemp()  # default mode is binary, which we want
     os.write(f, pfx_b64_decoded)
     os.close(f)
+
+    def delete_pfxfile():
+        os.remove(fn)
+
+    atexit.register(delete_pfxfile)
+
     return fn
 
 

@@ -3,20 +3,11 @@ import sys
 
 from invoke import task
 
-from .utils import bin_name, get_build_flags, get_version_numeric_only
-from .utils import REPO_PATH
-from .build_tags import get_build_tags, get_default_build_tags, LINUX_ONLY_TAGS
+from .build_tags import filter_incompatible_tags, get_build_tags, get_default_build_tags
 from .go import deps
+from .utils import REPO_PATH, bin_name, get_build_flags, get_version_numeric_only
 
 BIN_PATH = os.path.join(".", "bin", "trace-agent")
-
-DEFAULT_BUILD_TAGS = [
-    "netcgo",
-    "secrets",
-    "docker",
-    "kubeapiserver",
-    "kubelet",
-]
 
 
 @task
@@ -24,7 +15,6 @@ def build(
     ctx,
     rebuild=False,
     race=False,
-    precompile_only=False,
     build_include=None,
     build_exclude=None,
     major_version='7',
@@ -36,10 +26,7 @@ def build(
     Build the trace agent.
     """
 
-    # get env prior to windows sources so we only have to set the target architecture once
-    ldflags, gcflags, env = get_build_flags(
-        ctx, arch=arch, major_version=major_version, python_runtimes=python_runtimes
-    )
+    ldflags, gcflags, env = get_build_flags(ctx, major_version=major_version, python_runtimes=python_runtimes)
 
     # generate windows resources
     if sys.platform == 'win32':
@@ -48,7 +35,7 @@ def build(
             env["GOARCH"] = "386"
             windres_target = "pe-i386"
 
-        ver = get_version_numeric_only(ctx, env, major_version=major_version)
+        ver = get_version_numeric_only(ctx, major_version=major_version)
         maj_ver, min_ver, patch_ver = ver.split(".")
 
         ctx.run(
@@ -62,13 +49,14 @@ def build(
             )
         )
 
-    build_include = DEFAULT_BUILD_TAGS if build_include is None else build_include.split(",")
+    build_include = (
+        get_default_build_tags(
+            build="trace-agent"
+        )  # TODO/FIXME: Arch not passed to preserve build tags. Should this be fixed?
+        if build_include is None
+        else filter_incompatible_tags(build_include.split(","), arch=arch)
+    )
     build_exclude = [] if build_exclude is None else build_exclude.split(",")
-
-    if not sys.platform.startswith('linux'):
-        for ex in LINUX_ONLY_TAGS:
-            if ex not in build_exclude:
-                build_exclude.append(ex)
 
     build_tags = get_build_tags(build_include, build_exclude)
 
@@ -91,7 +79,7 @@ def build(
 
 
 @task
-def integration_tests(ctx, install_deps=False, race=False, remote_docker=False, go_mod="vendor"):
+def integration_tests(ctx, install_deps=False, race=False, remote_docker=False, go_mod="mod"):
     """
     Run integration tests for trace agent
     """
@@ -100,7 +88,7 @@ def integration_tests(ctx, install_deps=False, race=False, remote_docker=False, 
 
     test_args = {
         "go_mod": go_mod,
-        "go_build_tags": " ".join(get_default_build_tags()),
+        "go_build_tags": " ".join(get_default_build_tags(build="test")),
         "race_opt": "-race" if race else "",
         "exec_opts": "",
     }
@@ -140,7 +128,7 @@ def cross_compile(ctx, tag=""):
 
     ctx.run("git checkout $V", env=env)
     ctx.run("mkdir -p ./bin/trace-agent/$V", env=env)
-    ctx.run("go generate -mod=vendor ./pkg/trace/info", env=env)
+    ctx.run("go generate -mod=mod ./pkg/trace/info", env=env)
     ctx.run("go get -u github.com/karalabe/xgo")
     ctx.run(
         "xgo -dest=bin/trace-agent/$V -go=1.11 -out=trace-agent-$V -targets=windows-6.1/amd64,linux/amd64,darwin-10.11/amd64 ./cmd/trace-agent",

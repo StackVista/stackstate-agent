@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package kubelet
 
@@ -20,8 +20,11 @@ var (
 	// User classes should handle that case as gracefully as possible.
 	ErrNotCompiled = errors.New("kubelet support not compiled in")
 
+	// KubePodEntityName is the entity name for Kubernetes pods.
+	KubePodEntityName = "kubernetes_pod"
+
 	// KubePodPrefix is the entity prefix for Kubernetes pods
-	KubePodPrefix = "kubernetes_pod://"
+	KubePodPrefix = KubePodEntityName + containers.EntitySeparator
 
 	// KubePodTaggerEntityName is the tagger entity name for Kubernetes pods
 	KubePodTaggerEntityName = "kubernetes_pod_uid"
@@ -87,4 +90,16 @@ func KubePodUIDToTaggerEntityID(podUID string) (string, error) {
 		return KubePodTaggerEntityName + podUID[sep:], nil
 	}
 	return "", fmt.Errorf("can't extract an entity ID from pod UID %s", podUID)
+}
+
+// KubeIDToTaggerEntityID builds a tagger entity ID from an entity ID belonging to
+// a container or pod.
+func KubeIDToTaggerEntityID(entityName string) (string, error) {
+	prefix, _ := containers.SplitEntityName(entityName)
+
+	if prefix == KubePodEntityName {
+		return KubePodUIDToTaggerEntityID(entityName)
+	}
+
+	return KubeContainerIDToTaggerEntityID(entityName)
 }

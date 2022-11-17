@@ -1,0 +1,40 @@
+package api
+
+import (
+	"net/http"
+
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/api/module"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/config"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/modules"
+	"github.com/gorilla/mux"
+)
+
+func restartModuleHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	moduleName := config.ModuleName(vars["module-name"])
+
+	if moduleName == config.SecurityRuntimeModule {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	var target module.Factory
+	for _, f := range modules.All {
+		if f.Name == moduleName {
+			target = f
+		}
+	}
+
+	if target.Name != moduleName {
+		http.Error(w, "invalid module", http.StatusBadRequest)
+		return
+	}
+
+	err := module.RestartModule(target)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}

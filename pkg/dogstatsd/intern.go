@@ -2,6 +2,7 @@ package dogstatsd
 
 import (
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
@@ -28,7 +29,7 @@ func newStringInterner(maxSize int) *stringInterner {
 	return &stringInterner{
 		strings:    make(map[string]string),
 		maxSize:    maxSize,
-		tlmEnabled: telemetry.IsEnabled(),
+		tlmEnabled: telemetry_utils.IsEnabled(),
 	}
 }
 

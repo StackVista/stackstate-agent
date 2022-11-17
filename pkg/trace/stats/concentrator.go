@@ -1,16 +1,16 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package stats
 
 import (
-	"runtime"
-	"sort"
 	"sync"
 	"time"
 
+	"github.com/StackVista/stackstate-agent/pkg/trace/config"
+	"github.com/StackVista/stackstate-agent/pkg/trace/info"
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -25,8 +25,9 @@ const defaultBufferLen = 2
 // Gets an imperial shitton of traces, and outputs pre-computed data structures
 // allowing to find the gold (stats) amongst the traces.
 type Concentrator struct {
-	// list of attributes to use for extra aggregation
-	aggregators []string
+	In  chan Input
+	Out chan pb.StatsPayload
+
 	// bucket duration in nanoseconds
 	bsize int64
 	// Timestamp of the oldest time bucket for which we allow data.
@@ -36,37 +37,32 @@ type Concentrator struct {
 	// It means that we can compute stats only for the last `bufferLen * bsize` and that we
 	// wait such time before flushing the stats.
 	// This only applies to past buckets. Stats buckets in the future are allowed with no restriction.
-	bufferLen int
-
-	In  chan *Input
-	Out chan []Bucket
-
-	exit   chan struct{}
-	exitWG *sync.WaitGroup
-
-	buckets map[int64]*RawBucket // buckets used to aggregate stats per timestamp
-	mu      sync.Mutex
+	bufferLen     int
+	exit          chan struct{}
+	exitWG        sync.WaitGroup
+	buckets       map[int64]*RawBucket // buckets used to aggregate stats per timestamp
+	mu            sync.Mutex
+	agentEnv      string
+	agentHostname string
 }
 
 // NewConcentrator initializes a new concentrator ready to be started
-func NewConcentrator(aggregators []string, bsize int64, out chan []Bucket) *Concentrator {
+func NewConcentrator(conf *config.AgentConfig, out chan pb.StatsPayload, now time.Time) *Concentrator {
+	bsize := conf.BucketInterval.Nanoseconds()
 	c := Concentrator{
-		aggregators: aggregators,
-		bsize:       bsize,
-		buckets:     make(map[int64]*RawBucket),
+		bsize:   bsize,
+		buckets: make(map[int64]*RawBucket),
 		// At start, only allow stats for the current time bucket. Ensure we don't
 		// override buckets which could have been sent before an Agent restart.
-		oldestTs: alignTs(time.Now().UnixNano(), bsize),
+		oldestTs: alignTs(now.UnixNano(), bsize),
 		// TODO: Move to configuration.
-		bufferLen: defaultBufferLen,
-
-		In:  make(chan *Input, 1000),
-		Out: out,
-
-		exit:   make(chan struct{}),
-		exitWG: &sync.WaitGroup{},
+		bufferLen:     defaultBufferLen,
+		In:            make(chan Input, 100),
+		Out:           out,
+		exit:          make(chan struct{}),
+		agentEnv:      conf.DefaultEnv,
+		agentHostname: conf.Hostname,
 	}
-	sort.Strings(c.aggregators)
 	return &c
 }
 
@@ -90,16 +86,14 @@ func (c *Concentrator) Run() {
 
 	log.Debug("Starting concentrator")
 
-	for i := 0; i < runtime.NumCPU(); i++ {
-		go func() {
-			for {
-				select {
-				case i := <-c.In:
-					c.addNow(i, time.Now().UnixNano())
-				}
+	go func() {
+		for {
+			select {
+			case inputs := <-c.In:
+				c.Add(inputs)
 			}
-		}()
-	}
+		}
+	}()
 	for {
 		select {
 		case <-flushTicker.C:
@@ -118,20 +112,35 @@ func (c *Concentrator) Stop() {
 	c.exitWG.Wait()
 }
 
-// SublayerMap maps spans to their sublayer values.
-type SublayerMap map[*pb.Span][]SublayerValue
-
-// Input contains input for the concentractor.
-type Input struct {
-	Trace     WeightedTrace
-	Sublayers SublayerMap
-	Env       string
+// EnvTrace contains input for the concentractor.
+type EnvTrace struct {
+	Trace WeightedTrace
+	Env   string
 }
 
-func (c *Concentrator) addNow(i *Input, now int64) {
-	c.mu.Lock()
+// Input specifies a set of traces originating from a certain payload.
+type Input struct {
+	Traces      []EnvTrace
+	ContainerID string
+}
 
-	for _, s := range i.Trace {
+// Add applies the given input to the concentrator.
+func (c *Concentrator) Add(t Input) {
+	c.mu.Lock()
+	for _, trace := range t.Traces {
+		c.addNow(&trace, t.ContainerID)
+	}
+	c.mu.Unlock()
+}
+
+// addNow adds the given input into the concentrator.
+// Callers must guard!
+func (c *Concentrator) addNow(i *EnvTrace, containerID string) {
+	env := i.Env
+	if env == "" {
+		env = c.agentEnv
+	}
+	for _, s := range i.Trace.Spans {
 		if !(s.TopLevel || s.Measured) {
 			continue
 		}
@@ -145,24 +154,24 @@ func (c *Concentrator) addNow(i *Input, now int64) {
 
 		b, ok := c.buckets[btime]
 		if !ok {
-			b = NewRawBucket(btime, c.bsize)
+			b = NewRawBucket(uint64(btime), uint64(c.bsize))
 			c.buckets[btime] = b
 		}
-
-		subs, _ := i.Sublayers[s.Span]
-		b.HandleSpan(s, i.Env, c.aggregators, subs)
+		hostname := i.Trace.TracerHostname
+		if hostname == "" {
+			hostname = c.agentHostname
+		}
+		b.HandleSpan(s, i.Trace.Origin, env, hostname, containerID)
 	}
-
-	c.mu.Unlock()
 }
 
 // Flush deletes and returns complete statistic buckets
-func (c *Concentrator) Flush() []Bucket {
+func (c *Concentrator) Flush() pb.StatsPayload {
 	return c.flushNow(time.Now().UnixNano())
 }
 
-func (c *Concentrator) flushNow(now int64) []Bucket {
-	var sb []Bucket
+func (c *Concentrator) flushNow(now int64) pb.StatsPayload {
+	m := make(map[PayloadAggregationKey][]pb.ClientStatsBucket)
 
 	c.mu.Lock()
 	for ts, srb := range c.buckets {
@@ -173,10 +182,11 @@ func (c *Concentrator) flushNow(now int64) []Bucket {
 			continue
 		}
 		log.Debugf("flushing bucket %d", ts)
-		sb = append(sb, srb.Export())
+		for k, b := range srb.Export() {
+			m[k] = append(m[k], b)
+		}
 		delete(c.buckets, ts)
 	}
-
 	// After flushing, update the oldest timestamp allowed to prevent having stats for
 	// an already-flushed bucket.
 	newOldestTs := alignTs(now, c.bsize) - int64(c.bufferLen-1)*c.bsize
@@ -184,10 +194,19 @@ func (c *Concentrator) flushNow(now int64) []Bucket {
 		log.Debugf("update oldestTs to %d", newOldestTs)
 		c.oldestTs = newOldestTs
 	}
-
 	c.mu.Unlock()
-
-	return sb
+	sb := make([]pb.ClientStatsPayload, 0, len(m))
+	for k, s := range m {
+		p := pb.ClientStatsPayload{
+			Env:         k.Env,
+			Hostname:    k.Hostname,
+			ContainerID: k.ContainerID,
+			Version:     k.Version,
+			Stats:       s,
+		}
+		sb = append(sb, p)
+	}
+	return pb.StatsPayload{Stats: sb, AgentHostname: c.agentHostname, AgentEnv: c.agentEnv, AgentVersion: info.Version}
 }
 
 // alignTs returns the provided timestamp truncated to the bucket size.

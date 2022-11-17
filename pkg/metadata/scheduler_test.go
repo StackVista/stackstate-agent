@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package metadata
 
@@ -19,7 +19,7 @@ type MockCollector struct {
 	SendCalledC chan bool
 }
 
-func (c MockCollector) Send(s *serializer.Serializer) error {
+func (c MockCollector) Send(ctx context.Context, s *serializer.Serializer) error {
 	c.SendCalledC <- true
 	return nil
 }
@@ -28,7 +28,7 @@ type MockCollectorWithInit struct {
 	InitCalledC chan bool
 }
 
-func (c MockCollectorWithInit) Send(s *serializer.Serializer) error {
+func (c MockCollectorWithInit) Send(ctx context.Context, s *serializer.Serializer) error {
 	return nil
 }
 
@@ -53,9 +53,9 @@ func TestNewScheduler(t *testing.T) {
 	enableFirstRunCollection = false
 	defer func() { enableFirstRunCollection = true }()
 
-	fwd := forwarder.NewDefaultForwarder(forwarder.NewOptions(nil))
+	fwd := forwarder.NewDefaultForwarder(forwarder.NewOptionsWithResolvers(nil))
 	fwd.Start()
-	s := serializer.NewSerializer(fwd)
+	s := serializer.NewSerializer(fwd, nil)
 	c := NewScheduler(s)
 
 	assert.Equal(t, fwd, c.srl.Forwarder)
@@ -65,9 +65,9 @@ func TestStopScheduler(t *testing.T) {
 	enableFirstRunCollection = false
 	defer func() { enableFirstRunCollection = true }()
 
-	fwd := forwarder.NewDefaultForwarder(forwarder.NewOptions(nil))
+	fwd := forwarder.NewDefaultForwarder(forwarder.NewOptionsWithResolvers(nil))
 	fwd.Start()
-	s := serializer.NewSerializer(fwd)
+	s := serializer.NewSerializer(fwd, nil)
 	c := NewScheduler(s)
 
 	mockCollector := MockCollector{}
@@ -92,9 +92,9 @@ func TestAddCollector(t *testing.T) {
 		SendCalledC: make(chan bool),
 	}
 
-	fwd := forwarder.NewDefaultForwarder(forwarder.NewOptions(nil))
+	fwd := forwarder.NewDefaultForwarder(forwarder.NewOptionsWithResolvers(nil))
 	fwd.Start()
-	s := serializer.NewSerializer(fwd)
+	s := serializer.NewSerializer(fwd, nil)
 	c := NewScheduler(s)
 	RegisterCollector("testCollector", mockCollector)
 
@@ -127,9 +127,9 @@ func TestAddCollectorWithInit(t *testing.T) {
 		InitCalledC: make(chan bool, 1),
 	}
 
-	fwd := forwarder.NewDefaultForwarder(forwarder.NewOptions(nil))
+	fwd := forwarder.NewDefaultForwarder(forwarder.NewOptionsWithResolvers(nil))
 	fwd.Start()
-	s := serializer.NewSerializer(fwd)
+	s := serializer.NewSerializer(fwd, nil)
 	c := NewScheduler(s)
 	RegisterCollector("testCollectorWithInit", mockCollectorWithInit)
 
@@ -165,9 +165,9 @@ func TestTriggerAndResetCollectorTimer(t *testing.T) {
 		SendCalledC: make(chan bool),
 	}
 
-	fwd := forwarder.NewDefaultForwarder(forwarder.NewOptions(nil))
+	fwd := forwarder.NewDefaultForwarder(forwarder.NewOptionsWithResolvers(nil))
 	fwd.Start()
-	s := serializer.NewSerializer(fwd)
+	s := serializer.NewSerializer(fwd, nil)
 	c := NewScheduler(s)
 	RegisterCollector("testCollector", mockCollector)
 
