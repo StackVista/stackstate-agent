@@ -15,10 +15,12 @@ const (
 	RunIdFlag          = "run-id"
 	AssumeYesFlag      = "assume-yes"
 	AssumeYesShortFlag = "y"
+	RunnersIP          = "runners-ip"
 )
 
 var (
 	runId     string
+	runnersIp string
 	assumeYes bool
 )
 
@@ -41,6 +43,7 @@ func Execute() {
 func init() {
 	defaultRunId := time.Now().Format("20060102150405")
 	rootCmd.PersistentFlags().StringVar(&runId, RunIdFlag, defaultRunId, "identifier of this specific execution")
+	rootCmd.PersistentFlags().StringVar(&runnersIp, RunnersIP, "", "IP of Gitlab runner to be used when creating EC2 instances")
 }
 
 func initializeConfig(cmd *cobra.Command) error {

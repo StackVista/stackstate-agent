@@ -10,3 +10,7 @@ variable "subnet_id" {
 variable "integration_profile" {
   type = string
 }
+variable "runners_ip" {
+  type = string
+}
+

@@ -43,6 +43,7 @@ func (s *Scenario) generateCreateStep(runId string) *step.CreationStep {
 	normalizedRunId := strings.ToLower(removeNonAlphanumeric(runId))
 	workspace := fmt.Sprintf("%s:%s", normalizedRunId, s.Name)
 	runVariables["yard_id"] = fmt.Sprintf("beest-%s-%s", normalizedRunId, s.Name)
+	runVariables["runners_ip"] = fmt.Sprintf(runnersIp)
 
 	return step.Create(workspace, s.Yard.path(), s.Test.path(), runVariables)
 }
