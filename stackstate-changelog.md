@@ -1,6 +1,6 @@
 # StackState Agent v2 releases
 
-## 2.19.0 (???)
+## 2.19.0 (2022-11-21)
 
 **Features**
 - Add support to Kubernetes 1.22 (Ingress (networking.k8s.io/v1) and CronJob (batch/v1)) [STAC-15344](https://stackstate.atlassian.net/browse/STAC-15344)

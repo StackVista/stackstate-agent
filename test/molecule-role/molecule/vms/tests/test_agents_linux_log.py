@@ -68,7 +68,7 @@ def test_stackstate_process_agent_no_log_errors(host, hostname):
     util.wait_until(wait_for_check_successes, 30, 3)
 
     ignored_errors_regex = [
-        "failed to create network tracer: failed to init module: error guessing offsets: error initializing tcptracer_status map: unable to update element: bad file descriptor. Retrying...",
+        "failed to create network tracer: failed to init module: error guessing offsets: error initializing tcptracer_status map: unable to update element: .*. Retrying...",
         "- Caught signal 'terminated'; terminating.",
         "- Caught signal continued; continuing/ignoring",
         "\(FileName\(\) error: error during runtime.Caller:-1\)"
