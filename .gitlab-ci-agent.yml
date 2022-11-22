@@ -1668,6 +1668,7 @@ release_swarm_agent_image:
     - release_main_agent_image
   script:
     - cd $CI_PROJECT_DIR
+    - export VERSION=`cat version.txt`
     #                                                 $IMAGE_TAG          $IMAGE_REPO        $EXTRA_TAG      $BASE_REPO       $BASE_TAG
     - ./omnibus/package-scripts/publish_swarm_image.sh $VERSION $STS_DOCKER_RELEASE_REPO_SWARM latest $STS_DOCKER_RELEASE_REPO $VERSION
   rules:
