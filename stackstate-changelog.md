@@ -1,5 +1,11 @@
 # StackState Agent v2 releases
 
+## 2.19.1 (2022-11-23)
+
+**Improvements**
+- Increase Docker metrics coverage
+- Release of Swarm Agent
+
 ## 2.19.0 (2022-11-21)
 
 **Features**
