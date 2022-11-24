@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
 import argparse
+import os
 import shutil
 import tempfile
 import unittest
-import os
 
-from readsecret import list_secret_names, read_file, is_valid_folder
+from readsecret import is_valid_folder, list_secret_names, read_file
 
 
 class TestListSecretNames(unittest.TestCase):
@@ -49,7 +49,8 @@ class TestReadFile(unittest.TestCase):
         with open(os.path.join(sensitive_path, "target"), "w") as f:
             f.write("sensitive")
         os.symlink(
-            os.path.join(sensitive_path, "target"), os.path.join(allowed_path, "target"),
+            os.path.join(sensitive_path, "target"),
+            os.path.join(allowed_path, "target"),
         )
 
         with self.assertRaisesRegex(ValueError, "outside of the specified folder"):

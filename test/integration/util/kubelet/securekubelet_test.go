@@ -1,20 +1,21 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
+//go:build kubelet
 // +build kubelet
 
 package kubernetes
 
 import (
+	"context"
 	"fmt"
-	"os"
-	"testing"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"os"
+	"testing"
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
@@ -36,30 +37,31 @@ func (suite *SecureTestSuite) SetupTest() {
 // - tls_verify
 // - cacert
 func (suite *SecureTestSuite) TestWithTLSCA() {
+	ctx := context.Background()
 	mockConfig := config.Mock()
 
 	mockConfig.Set("kubernetes_https_kubelet_port", 10250)
 	mockConfig.Set("kubernetes_http_kubelet_port", 10255)
 	mockConfig.Set("kubelet_auth_token_path", "")
 	mockConfig.Set("kubelet_tls_verify", true)
-	mockConfig.Set("kubelet_fallback_to_unverified_tls", false)
+	mockConfig.Set("kubelet_fallback_to_unverified_tls", false) // sts
 	mockConfig.Set("kubelet_client_ca", suite.certsConfig.CertFilePath)
 	mockConfig.Set("kubernetes_kubelet_host", "127.0.0.1")
 
 	ku, err := kubelet.GetKubeUtil()
 	require.NoError(suite.T(), err)
 	assert.Equal(suite.T(), "https://127.0.0.1:10250", ku.GetKubeletAPIEndpoint())
-	b, code, err := ku.QueryKubelet("/healthz")
+	b, code, err := ku.QueryKubelet(ctx, "/healthz")
 	require.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 200, code)
 	assert.Equal(suite.T(), "ok", string(b))
 
-	b, code, err = ku.QueryKubelet("/pods")
+	b, code, err = ku.QueryKubelet(ctx, "/pods")
 	require.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 200, code)
 	assert.Equal(suite.T(), emptyPodList, string(b))
 
-	podList, err := ku.GetLocalPodList()
+	podList, err := ku.GetLocalPodList(ctx)
 	// we don't consider null podlist as valid
 	require.Error(suite.T(), err)
 	assert.Nil(suite.T(), podList)
@@ -85,45 +87,47 @@ func (suite *SecureTestSuite) TestTLSWithoutCA() {
 	mockConfig.Set("kubelet_client_crt", "")
 	mockConfig.Set("kubelet_client_key", "")
 	mockConfig.Set("kubelet_tls_verify", true)
-	mockConfig.Set("kubelet_fallback_to_unverified_tls", false)
+	mockConfig.Set("kubelet_fallback_to_unverified_tls", false) // sts
 	mockConfig.Set("kubelet_client_ca", "")
 	mockConfig.Set("kubernetes_kubelet_host", "127.0.0.1")
 
 	_, err := kubelet.GetKubeUtil()
 	require.NotNil(suite.T(), err)
-	assert.Contains(suite.T(), err.Error(), "Get https://127.0.0.1:10250/pods: x509: ")
-	assert.Regexp(suite.T(), "10255: \\w+: connection refused", err.Error())
+	assert.Contains(suite.T(), err.Error(), "impossible to reach Kubelet with host: 127.0.0.1. Please check if your setup requires kubelet_tls_verify = false")
 }
 
-// TestSecureUnknownAuthHTTPSKubelet with:
-// - https
-// - kubelet_fallback_to_unverified_tls
-// - WITHOUT cacert (expecting success)
+/* sts
+TestSecureUnknownAuthHTTPSKubelet with:
+- https
+- kubelet_fallback_to_unverified_tls
+- WITHOUT cacert (expecting success)
+*/
 func (suite *SecureTestSuite) TestTLSWithoutCAFallbackToUnverified() {
 	mockConfig := config.Mock()
 
+	ctx := context.TODO()
 	mockConfig.Set("kubernetes_https_kubelet_port", 10250)
 	mockConfig.Set("kubernetes_http_kubelet_port", 10255)
 	mockConfig.Set("kubelet_auth_token_path", "")
 	mockConfig.Set("kubelet_tls_verify", true)
-	mockConfig.Set("kubelet_fallback_to_unverified_tls", true)
+	mockConfig.Set("kubelet_fallback_to_unverified_tls", true) // sts
 	mockConfig.Set("kubelet_client_ca", "")
 	mockConfig.Set("kubernetes_kubelet_host", "127.0.0.1")
 
 	ku, err := kubelet.GetKubeUtil()
 	require.NoError(suite.T(), err)
-	assert.Equal(suite.T(), "https://127.0.0.1:10250", ku.GetKubeletApiEndpoint())
-	b, code, err := ku.QueryKubelet("/healthz")
+	assert.Equal(suite.T(), "https://127.0.0.1:10250", ku.GetKubeletAPIEndpoint())
+	b, code, err := ku.QueryKubelet(ctx, "/healthz")
 	require.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 200, code)
 	assert.Equal(suite.T(), "ok", string(b))
 
-	b, code, err = ku.QueryKubelet("/pods")
+	b, code, err = ku.QueryKubelet(ctx, "/pods")
 	require.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 200, code)
 	assert.Equal(suite.T(), emptyPodList, string(b))
 
-	podList, err := ku.GetLocalPodList()
+	podList, err := ku.GetLocalPodList(ctx)
 	require.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 0, len(podList))
 
@@ -141,6 +145,7 @@ func (suite *SecureTestSuite) TestTLSWithoutCAFallbackToUnverified() {
 // - cacert
 // - certificate
 func (suite *SecureTestSuite) TestTLSWithCACertificate() {
+	ctx := context.Background()
 	mockConfig := config.Mock()
 
 	mockConfig.Set("kubernetes_https_kubelet_port", 10250)
@@ -156,17 +161,17 @@ func (suite *SecureTestSuite) TestTLSWithCACertificate() {
 	ku, err := kubelet.GetKubeUtil()
 	require.NoError(suite.T(), err)
 	assert.Equal(suite.T(), "https://127.0.0.1:10250", ku.GetKubeletAPIEndpoint())
-	b, code, err := ku.QueryKubelet("/healthz")
+	b, code, err := ku.QueryKubelet(ctx, "/healthz")
 	require.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 200, code)
 	assert.Equal(suite.T(), "ok", string(b))
 
-	b, code, err = ku.QueryKubelet("/pods")
+	b, code, err = ku.QueryKubelet(ctx, "/pods")
 	require.NoError(suite.T(), err)
 	assert.Equal(suite.T(), 200, code)
 	assert.Equal(suite.T(), emptyPodList, string(b))
 
-	podList, err := ku.GetLocalPodList()
+	podList, err := ku.GetLocalPodList(ctx)
 	// we don't consider null podlist as valid
 	require.Error(suite.T(), err)
 	assert.Nil(suite.T(), podList)

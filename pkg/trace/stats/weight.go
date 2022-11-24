@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package stats
 
@@ -20,20 +20,28 @@ type WeightedSpan struct {
 }
 
 // WeightedTrace is a slice of WeightedSpan pointers.
-type WeightedTrace []*WeightedSpan
+type WeightedTrace struct {
+	TracerHostname string
+	Origin         string
+	Spans          []*WeightedSpan
+}
 
 // NewWeightedTrace returns a weighted trace, with coefficient required by the concentrator.
-func NewWeightedTrace(trace pb.Trace, root *pb.Span) WeightedTrace {
-	wt := make(WeightedTrace, len(trace))
+func NewWeightedTrace(trace *pb.TraceChunk, root *pb.Span, tracerHostname string) WeightedTrace {
+	wt := WeightedTrace{
+		TracerHostname: tracerHostname,
+		Origin:         trace.Origin,
+		Spans:          make([]*WeightedSpan, len(trace.Spans)),
+	}
 
 	weight := Weight(root)
 
-	for i := range trace {
-		wt[i] = &WeightedSpan{
-			Span:     trace[i],
+	for i := range trace.Spans {
+		wt.Spans[i] = &WeightedSpan{
+			Span:     trace.Spans[i],
 			Weight:   weight,
-			TopLevel: traceutil.HasTopLevel(trace[i]),
-			Measured: traceutil.IsMeasured(trace[i]),
+			TopLevel: traceutil.HasTopLevel(trace.Spans[i]),
+			Measured: traceutil.IsMeasured(trace.Spans[i]),
 		}
 	}
 	return wt
@@ -46,12 +54,11 @@ const keySamplingRateGlobal = "_sample_rate"
 // inverse of the sampling rate.
 func Weight(s *pb.Span) float64 {
 	if s == nil {
-		return 1.0
+		return 1
 	}
 	sampleRate, ok := s.Metrics[keySamplingRateGlobal]
 	if !ok || sampleRate <= 0.0 || sampleRate > 1.0 {
-		return 1.0
+		return 1
 	}
-
 	return 1.0 / sampleRate
 }

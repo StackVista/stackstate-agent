@@ -1,8 +1,9 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
+//go:build clusterchecks
 // +build clusterchecks
 
 package app
@@ -12,25 +13,29 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"regexp"
 	"syscall"
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
 	"github.com/StackVista/stackstate-agent/cmd/agent/common"
 	"github.com/StackVista/stackstate-agent/cmd/cluster-agent/api"
+	dcav1 "github.com/StackVista/stackstate-agent/cmd/cluster-agent/api/v1"
 	"github.com/StackVista/stackstate-agent/cmd/cluster-agent/commands"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/api/healthprobe"
 	"github.com/StackVista/stackstate-agent/pkg/clusteragent"
 	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks"
 	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config/resolver"
 	"github.com/StackVista/stackstate-agent/pkg/forwarder"
 	"github.com/StackVista/stackstate-agent/pkg/serializer"
 	"github.com/StackVista/stackstate-agent/pkg/status/health"
 	"github.com/StackVista/stackstate-agent/pkg/util"
-	"github.com/StackVista/stackstate-agent/pkg/util/cloudfoundry"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders/cloudfoundry"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/StackVista/stackstate-agent/pkg/version"
 )
@@ -38,7 +43,7 @@ import (
 // loggerName is the name of the cluster agent logger
 const loggerName config.LoggerName = "CLUSTER"
 
-// FIXME: move SetupAutoConfig and StartAutoConfig in their own package so we don't import cmd/agent
+// FIXME: move LoadComponents and StartAutoConfig in their own package so we don't import cmd/agent
 var (
 	ClusterAgentCmd = &cobra.Command{
 		Use:   "datadog-cluster-agent-cloudfoundry [command]",
@@ -150,7 +155,7 @@ func run(cmd *cobra.Command, args []string) error {
 	}
 
 	// get hostname
-	hostname, err := util.GetHostname()
+	hostname, err := util.GetHostname(context.TODO())
 	if err != nil {
 		return log.Errorf("Error while getting hostname, exiting: %v", err)
 	}
@@ -161,11 +166,11 @@ func run(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		log.Error("Misconfiguration of agent endpoints: ", err)
 	}
-	f := forwarder.NewDefaultForwarder(forwarder.NewOptions(keysPerDomain))
+	f := forwarder.NewDefaultForwarder(forwarder.NewOptionsWithResolvers(resolver.NewSingleDomainResolvers(keysPerDomain)))
 	f.Start() //nolint:errcheck
-	s := serializer.NewSerializer(f)
+	s := serializer.NewSerializer(f, nil)
 
-	aggregatorInstance := aggregator.InitAggregator(s, hostname)
+	aggregatorInstance := aggregator.InitAggregator(s, nil, hostname)
 	aggregatorInstance.AddAgentStartupTelemetry(fmt.Sprintf("%s - Datadog Cluster Agent", version.AgentVersion))
 
 	log.Infof("Datadog Cluster Agent is now running.")
@@ -175,30 +180,32 @@ func run(cmd *cobra.Command, args []string) error {
 	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
 
 	// initialize BBS Cache before starting provider/listener
-	err = initializeBBSCache(mainCtx)
-	if err != nil {
+	if err = initializeBBSCache(mainCtx); err != nil {
 		return err
 	}
 
+	// initialize CC Cache
+	if err = initializeCCCache(mainCtx); err != nil {
+		_ = log.Errorf("Error initializing Cloud Foundry CCAPI cache, some advanced tagging features may be missing: %v", err)
+	}
+
 	// create and setup the Autoconfig instance
-	common.SetupAutoConfig(config.Datadog.GetString("confd_path"))
+	common.LoadComponents(config.Datadog.GetString("confd_path"))
 	// start the autoconfig, this will immediately run any configured check
 	common.StartAutoConfig()
 
-	var clusterCheckHandler *clusterchecks.Handler
-	clusterCheckHandler, err = setupClusterCheck(mainCtx)
-	if err != nil {
-		log.Errorf("Error while setting up cluster check Autodiscovery %v", err)
+	if err = api.StartServer(); err != nil {
+		return log.Errorf("Error while starting agent API, exiting: %v", err)
 	}
 
-	// Start the cmd HTTPS server
-	// We always need to start it, even with nil clusterCheckHandler
-	// as it's also used to perform the agent commands (e.g. agent status)
-	sc := clusteragent.ServerContext{
-		ClusterCheckHandler: clusterCheckHandler,
-	}
-	if err = api.StartServer(sc); err != nil {
-		return log.Errorf("Error while starting agent API, exiting: %v", err)
+	var clusterCheckHandler *clusterchecks.Handler
+	clusterCheckHandler, err = setupClusterCheck(mainCtx)
+	if err == nil {
+		api.ModifyAPIRouter(func(r *mux.Router) {
+			dcav1.InstallChecksEndpoints(r, clusteragent.ServerContext{ClusterCheckHandler: clusterCheckHandler})
+		})
+	} else {
+		log.Errorf("Error while setting up cluster check Autodiscovery %v", err)
 	}
 
 	// Block here until we receive the interrupt signal
@@ -221,9 +228,50 @@ func run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func initializeCCCache(ctx context.Context) error {
+	pollInterval := time.Second * time.Duration(config.Datadog.GetInt("cloud_foundry_cc.poll_interval"))
+	_, err := cloudfoundry.ConfigureGlobalCCCache(
+		ctx,
+		config.Datadog.GetString("cloud_foundry_cc.url"),
+		config.Datadog.GetString("cloud_foundry_cc.client_id"),
+		config.Datadog.GetString("cloud_foundry_cc.client_secret"),
+		config.Datadog.GetBool("cloud_foundry_cc.skip_ssl_validation"),
+		pollInterval,
+		config.Datadog.GetInt("cloud_foundry_cc.apps_batch_size"),
+		nil,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to initialize CC Cache: %v", err)
+	}
+	return nil
+}
+
 func initializeBBSCache(ctx context.Context) error {
 	pollInterval := time.Second * time.Duration(config.Datadog.GetInt("cloud_foundry_bbs.poll_interval"))
 	// NOTE: we can't use GetPollInterval in ConfigureGlobalBBSCache, as that causes import cycle
+
+	includeListString := config.Datadog.GetStringSlice("cloud_foundry_bbs.env_include")
+	excludeListString := config.Datadog.GetStringSlice("cloud_foundry_bbs.env_exclude")
+
+	includeList := make([]*regexp.Regexp, len(includeListString))
+	excludeList := make([]*regexp.Regexp, len(excludeListString))
+
+	for i, pattern := range includeListString {
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			return fmt.Errorf("failed to compile cloud_foundry_bbs.env_include regex pattern %s: %s", pattern, err.Error())
+		}
+		includeList[i] = re
+	}
+
+	for i, pattern := range excludeListString {
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			return fmt.Errorf("failed to compile cloud_foundry_bbs.env_exclude regex pattern %s: %s", pattern, err.Error())
+		}
+		excludeList[i] = re
+	}
+
 	bc, err := cloudfoundry.ConfigureGlobalBBSCache(
 		ctx,
 		config.Datadog.GetString("cloud_foundry_bbs.url"),
@@ -231,6 +279,8 @@ func initializeBBSCache(ctx context.Context) error {
 		config.Datadog.GetString("cloud_foundry_bbs.cert_file"),
 		config.Datadog.GetString("cloud_foundry_bbs.key_file"),
 		pollInterval,
+		includeList,
+		excludeList,
 		nil,
 	)
 	if err != nil {

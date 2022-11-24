@@ -1,8 +1,9 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package store
@@ -15,7 +16,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/kube-state-metrics/pkg/metric"
+	"k8s.io/kube-state-metrics/v2/pkg/metric"
 )
 
 // MetricsStore implements the k8s.io/client-go/tools/cache.Store
@@ -72,9 +73,9 @@ func (d *DDMetricsFam) extract(f metric.Family) {
 	}
 }
 
-// Implementing k8s.io/client-go/tools/cache.Store interface
 // Add inserts adds to the MetricsStore by calling the metrics generator functions and
 // adding the generated metrics to the metrics map that underlies the MetricStore.
+// Implementing k8s.io/client-go/tools/cache.Store interface
 func (s *MetricsStore) Add(obj interface{}) error {
 	o, err := meta.Accessor(obj)
 	if err != nil {
@@ -169,24 +170,41 @@ func (s *MetricsStore) Resync() error {
 	return nil
 }
 
-// TODO store label_to_get values from the label join here to warm the cache.
+// FamilyAllow is a metric-family-based filtering function provided by the store clients
+type FamilyAllow func(DDMetricsFam) bool
+
+// GetAllFamilies is family metric filter that allows all metric families
+var GetAllFamilies FamilyAllow = func(DDMetricsFam) bool { return true }
+
+// MetricAllow is a metric-based filtering function provided by the store clients
+type MetricAllow func(DDMetric) bool
+
+// GetAllMetrics is a metric filter that allows all metrics
+var GetAllMetrics MetricAllow = func(DDMetric) bool { return true }
+
 // Push is used to take all the metrics from the store and push them to the check for
 // further processing.
-func (s *MetricsStore) Push() map[string][]DDMetricsFam {
+// FamilyAllow and MetricAllow filtering functions can be used
+// to get a subset of metrics from the store.
+func (s *MetricsStore) Push(familyFilter FamilyAllow, metricFilter MetricAllow) map[string][]DDMetricsFam {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
 	mRes := make(map[string][]DDMetricsFam)
 
-	for u, metricFamList := range s.metrics {
+	for _, metricFamList := range s.metrics {
 		for _, metricFam := range metricFamList {
+			if !familyFilter(metricFam) {
+				continue
+			}
 			resMetric := []DDMetric{}
 			for _, metric := range metricFam.ListMetrics {
-				tags := metric.Labels
-				tags["uid"] = string(u)
+				if !metricFilter(metric) {
+					continue
+				}
 				resMetric = append(resMetric, DDMetric{
 					Val:    metric.Val,
-					Labels: tags,
+					Labels: metric.Labels,
 				})
 			}
 			mRes[metricFam.Name] = append(mRes[metricFam.Name], DDMetricsFam{
@@ -197,5 +215,4 @@ func (s *MetricsStore) Push() map[string][]DDMetricsFam {
 		}
 	}
 	return mRes
-
 }

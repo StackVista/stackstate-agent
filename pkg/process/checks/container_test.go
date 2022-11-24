@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package checks
@@ -9,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	model "github.com/DataDog/agent-payload/process"
+	model "github.com/DataDog/agent-payload/v5/process"
 	"github.com/StackVista/stackstate-agent/pkg/process/util"
 	"github.com/StackVista/stackstate-agent/pkg/util/containers"
 	"github.com/StackVista/stackstate-agent/pkg/util/containers/metrics"
@@ -82,6 +83,14 @@ func TestContainerAddresses(t *testing.T) {
 	assert.Equal(t, results[0].Addresses, addrs)
 }
 
+func TestNoGardenContainerWithEmptyTags(t *testing.T) {
+	ctr := makeContainer("haha")
+	ctr.Type = containers.RuntimeNameGarden
+	// Tags should be empty after call to tagger, so container shouldn't be added
+	results := fmtContainers([]*containers.Container{ctr}, map[string]util.ContainerRateMetrics{}, time.Now())
+	assert.Equal(t, 0, len(results))
+}
+
 func TestContainerNils(t *testing.T) {
 	// Make sure formatting doesn't crash with nils
 	cur := []*containers.Container{{}}
@@ -107,30 +116,37 @@ func TestContainerNils(t *testing.T) {
 }
 
 func TestCalculateCtrPct(t *testing.T) {
-	epsilon := 0.0000001 // Difference less than some epsilon
+	epsilon := 0.1 // Difference less than some epsilon
 
-	before := time.Now().Add(-1 * time.Second)
+	currentTime := time.Now()
+	before := currentTime.Add(-1 * time.Second)
 
 	var emptyTime time.Time
 
 	// Underflow on cur-prev
-	assert.Equal(t, float32(0), calculateCtrPct(0, 1, 0, 0, 1, before))
+	assert.Equal(t, float32(0), calculateCtrPct(0, 1, 0, 0, 1, currentTime, before))
 
 	// Underflow on sys2-sys1
-	assert.Equal(t, float32(0), calculateCtrPct(3, 1, 4, 5, 1, before))
+	assert.Equal(t, float32(0), calculateCtrPct(3, 1, 4, 5, 1, currentTime, before))
 
 	// Time is empty
-	assert.Equal(t, float32(0), calculateCtrPct(3, 1, 0, 0, 1, emptyTime))
-
-	// Elapsed time is less than 1s
-	assert.Equal(t, float32(0), calculateCtrPct(3, 1, 0, 0, 1, time.Now()))
+	assert.Equal(t, float32(0), calculateCtrPct(3, 1, 0, 0, 1, currentTime, emptyTime))
 
 	// Div by zero on sys2/sys1, fallback to normal cpu calculation
-	assert.InEpsilon(t, 2, calculateCtrPct(3, 1, 1, 1, 1, before), epsilon)
+	assert.InEpsilon(t, 2, calculateCtrPct(3, 1, 1, 1, 1, currentTime, before), epsilon)
+
+	// use cur=2, prev=0, sys1=0, sys2=2 simulating first check on new container
+	assert.InEpsilon(t, float32(200), calculateCtrPct(2, 0, 1, 0, 1, currentTime, before), epsilon)
 
 	// Calculate based off cur & prev
-	assert.InEpsilon(t, 2, calculateCtrPct(3, 1, 0, 0, 1, before), epsilon)
+	assert.InEpsilon(t, 2, calculateCtrPct(3, 1, 0, 0, 1, currentTime, before), epsilon)
 
 	// Calculate based off all values
-	assert.InEpsilon(t, 66.66667, calculateCtrPct(3, 1, 4, 1, 1, before), epsilon)
+	assert.InEpsilon(t, 66.66667, calculateCtrPct(3, 1, 4, 1, 1, currentTime, before), epsilon)
+
+	// cur=-1 because of missing cgroup file
+	assert.Equal(t, float32(-1), calculateCtrPct(-1, 1, 0, 0, 1, currentTime, emptyTime))
+
+	// prev=-1 because of missing cgroup file in last run
+	assert.Equal(t, float32(-1), calculateCtrPct(3, -1, 0, 0, 1, currentTime, emptyTime))
 }

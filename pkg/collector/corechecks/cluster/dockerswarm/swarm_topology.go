@@ -9,6 +9,7 @@
 package dockerswarm
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
@@ -86,7 +87,7 @@ func (dt *SwarmTopologyCollector) collectSwarmServices(hostname string, sender a
 		return nil, nil, err
 	}
 
-	clusterName := clustername.GetClusterName()
+	clusterName := clustername.GetClusterName(context.TODO(), "")
 	taskContainerComponents := make([]*topology.Component, 0)
 	swarmServiceComponents := make([]*topology.Component, 0)
 	swarmServiceRelations := make([]*topology.Relation, 0)

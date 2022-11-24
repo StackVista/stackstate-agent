@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 // +build ignore
 
@@ -12,17 +12,19 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
 // context contains the context used to render the config file template
 type context struct {
+	OS                string
 	Common            bool
 	Agent             bool
 	Python            bool // Sub-option of Agent
 	BothPythonPresent bool // Sub-option of Agent - Python
 	Metadata          bool
-	Profiling         bool
+	InternalProfiling bool
 	Dogstatsd         bool
 	LogsAgent         bool
 	JMX               bool
@@ -40,19 +42,27 @@ type context struct {
 	SystemProbe       bool
 	KubeApiServer     bool
 	TraceAgent        bool
+	ClusterAgent      bool
 	ClusterChecks     bool
 	CloudFoundryBBS   bool
+	CloudFoundryCC    bool
+	Compliance        bool
+	SNMP              bool
+	SecurityModule    bool
+	SecurityAgent     bool
+	NetworkModule     bool // Sub-module of System Probe
 }
 
 func mkContext(buildType string) context {
 	buildType = strings.ToLower(buildType)
 
 	agentContext := context{
+		OS:                runtime.GOOS,
 		Common:            true,
 		Agent:             true,
 		Python:            true,
 		Metadata:          true,
-		Profiling:         false, // NOTE: hidden for now
+		InternalProfiling: false, // NOTE: hidden for now
 		Dogstatsd:         true,
 		LogsAgent:         true,
 		JMX:               true,
@@ -69,6 +79,8 @@ func mkContext(buildType string) context {
 		TraceAgent:        true,
 		Kubelet:           true,
 		KubeApiServer:     true, // TODO: remove when phasing out from node-agent
+		Compliance:        true,
+		SNMP:              true,
 	}
 
 	switch buildType {
@@ -88,7 +100,9 @@ func mkContext(buildType string) context {
 		}
 	case "system-probe":
 		return context{
-			SystemProbe: true,
+			SystemProbe:    true,
+			NetworkModule:  true,
+			SecurityModule: true,
 		}
 	case "dogstatsd":
 		return context{
@@ -103,6 +117,7 @@ func mkContext(buildType string) context {
 		}
 	case "dca":
 		return context{
+			ClusterAgent:  true,
 			Common:        true,
 			Logging:       true,
 			KubeApiServer: true,
@@ -110,10 +125,16 @@ func mkContext(buildType string) context {
 		}
 	case "dcacf":
 		return context{
+			ClusterAgent:    true,
 			Common:          true,
 			Logging:         true,
 			ClusterChecks:   true,
 			CloudFoundryBBS: true,
+			CloudFoundryCC:  true,
+		}
+	case "security-agent":
+		return context{
+			SecurityAgent: true,
 		}
 	}
 

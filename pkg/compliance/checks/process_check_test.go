@@ -1,98 +1,143 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 package checks
 
 import (
 	"testing"
 
 	"github.com/StackVista/stackstate-agent/pkg/compliance"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
 	"github.com/StackVista/stackstate-agent/pkg/compliance/mocks"
 	"github.com/StackVista/stackstate-agent/pkg/util/cache"
 
-	"github.com/DataDog/gopsutil/process"
-
-	"github.com/stretchr/testify/assert"
+	assert "github.com/stretchr/testify/require"
 )
 
 type processFixture struct {
-	name      string
-	check     processCheck
-	processes map[int32]*process.FilledProcess
-	expKV     compliance.KVMap
-	expError  error
+	name     string
+	resource compliance.Resource
+
+	processes    processes
+	useCache     bool
+	expectReport *compliance.Report
+	expectError  error
 }
 
 func (f *processFixture) run(t *testing.T) {
 	t.Helper()
+	assert := assert.New(t)
 
-	reporter := f.check.reporter.(*mocks.Reporter)
-	cache.Cache.Delete(processCacheKey)
-	processFetcherFunc = func() (map[int32]*process.FilledProcess, error) {
+	if !f.useCache {
+		cache.Cache.Delete(processCacheKey)
+	}
+	processFetcher = func() (processes, error) {
+		for pid, p := range f.processes {
+			p.Pid = pid
+		}
 		return f.processes, nil
 	}
 
-	expectedCalls := 0
-	if f.expKV != nil {
-		reporter.On(
-			"Report",
-			newTestRuleEvent(
-				[]string{"check_kind:process"},
-				f.expKV,
-			),
-		).Once()
-		expectedCalls = 1
-	}
+	env := &mocks.Env{}
+	env.On("MaxEventsPerRun").Return(30).Maybe()
 
-	err := f.check.Run()
-	reporter.AssertNumberOfCalls(t, "Report", expectedCalls)
-	assert.Equal(t, f.expError, err)
+	defer env.AssertExpectations(t)
+
+	processCheck, err := newResourceCheck(env, "rule-id", f.resource)
+	assert.NoError(err)
+
+	reports := processCheck.check(env)
+	assert.Equal(f.expectReport, reports[0])
+	assert.Equal(f.expectError, reports[0].Error)
 }
 
 func TestProcessCheck(t *testing.T) {
 	tests := []processFixture{
 		{
-			name: "Simple case",
-			check: processCheck{
-				baseCheck: newTestBaseCheck(&mocks.Reporter{}, checkKindProcess),
-				process: &compliance.Process{
-					Name: "proc1",
-					Report: compliance.Report{
-						{
-							Kind:     "flag",
-							Property: "--path",
-							As:       "path",
-						},
+			name: "simple case",
+			resource: compliance.Resource{
+				ResourceCommon: compliance.ResourceCommon{
+					Process: &compliance.Process{
+						Name: "proc1",
 					},
 				},
+				Condition: `process.flag("--path") == "foo"`,
 			},
-			processes: map[int32]*process.FilledProcess{
+			processes: processes{
 				42: {
 					Name:    "proc1",
 					Cmdline: []string{"arg1", "--path=foo"},
 				},
 			},
-			expKV: compliance.KVMap{
-				"path": "foo",
+			expectReport: &compliance.Report{
+				Passed: true,
+				Data: event.Data{
+					"process.name":    "proc1",
+					"process.exe":     "",
+					"process.cmdLine": []string{"arg1", "--path=foo"},
+				},
+				Resource: compliance.ReportResource{
+					ID:   "42",
+					Type: "process",
+				},
 			},
 		},
 		{
-			name: "Process not found",
-			check: processCheck{
-				baseCheck: newTestBaseCheck(&mocks.Reporter{}, checkKindProcess),
-				process: &compliance.Process{
-					Name: "proc1",
-					Report: compliance.Report{
-						{
-							Kind:     "flag",
-							Property: "--path",
-							As:       "path",
+			name: "fallback case",
+			resource: compliance.Resource{
+				ResourceCommon: compliance.ResourceCommon{
+					Process: &compliance.Process{
+						Name: "proc1",
+					},
+				},
+				Condition: `process.flag("--tlsverify") != ""`,
+				Fallback: &compliance.Fallback{
+					Condition: `!process.hasFlag("--tlsverify")`,
+					Resource: compliance.Resource{
+						ResourceCommon: compliance.ResourceCommon{
+							Process: &compliance.Process{
+								Name: "proc2",
+							},
 						},
+						Condition: `process.hasFlag("--tlsverify")`,
 					},
 				},
 			},
-			processes: map[int32]*process.FilledProcess{
+			processes: processes{
+				42: {
+					Name:    "proc1",
+					Cmdline: []string{"arg1"},
+				},
+				38: {
+					Name:    "proc2",
+					Cmdline: []string{"arg1", "--tlsverify"},
+				},
+			},
+			expectReport: &compliance.Report{
+				Passed: true,
+				Data: event.Data{
+					"process.name":    "proc2",
+					"process.exe":     "",
+					"process.cmdLine": []string{"arg1", "--tlsverify"},
+				},
+				Resource: compliance.ReportResource{
+					ID:   "38",
+					Type: "process",
+				},
+			},
+		},
+		{
+			name: "process not found",
+			resource: compliance.Resource{
+				ResourceCommon: compliance.ResourceCommon{
+					Process: &compliance.Process{
+						Name: "proc1",
+					},
+				},
+				Condition: `process.flag("--path") == "foo"`,
+			},
+			processes: processes{
 				42: {
 					Name:    "proc2",
 					Cmdline: []string{"arg1", "--path=foo"},
@@ -102,55 +147,37 @@ func TestProcessCheck(t *testing.T) {
 					Cmdline: []string{"arg1", "--path=foo"},
 				},
 			},
-			expKV: nil,
+			expectReport: &compliance.Report{
+				Passed: false,
+			},
 		},
 		{
-			name: "Argument not found",
-			check: processCheck{
-				baseCheck: newTestBaseCheck(&mocks.Reporter{}, checkKindProcess),
-				process: &compliance.Process{
-					Name: "proc1",
-					Report: compliance.Report{
-						{
-							Kind:     "flag",
-							Property: "--path",
-							As:       "path",
-						},
+			name: "argument not found",
+			resource: compliance.Resource{
+				ResourceCommon: compliance.ResourceCommon{
+					Process: &compliance.Process{
+						Name: "proc1",
 					},
 				},
+				Condition: `process.flag("--path") == "foo"`,
 			},
-			processes: map[int32]*process.FilledProcess{
+			processes: processes{
 				42: {
 					Name:    "proc1",
 					Cmdline: []string{"arg1", "--paths=foo"},
 				},
 			},
-			expKV: nil,
-		},
-		{
-			name: "Override returned value",
-			check: processCheck{
-				baseCheck: newTestBaseCheck(&mocks.Reporter{}, checkKindProcess),
-				process: &compliance.Process{
-					Name: "proc1",
-					Report: compliance.Report{
-						{
-							Kind:     "flag",
-							Property: "--verbose",
-							As:       "verbose",
-							Value:    "true",
-						},
-					},
+			expectReport: &compliance.Report{
+				Passed: false,
+				Data: event.Data{
+					"process.name":    "proc1",
+					"process.exe":     "",
+					"process.cmdLine": []string{"arg1", "--paths=foo"},
 				},
-			},
-			processes: map[int32]*process.FilledProcess{
-				42: {
-					Name:    "proc1",
-					Cmdline: []string{"arg1", "--verbose"},
+				Resource: compliance.ReportResource{
+					ID:   "42",
+					Type: "process",
 				},
-			},
-			expKV: compliance.KVMap{
-				"verbose": "true",
 			},
 		},
 	}
@@ -159,4 +186,65 @@ func TestProcessCheck(t *testing.T) {
 			tt.run(t)
 		})
 	}
+}
+
+func TestProcessCheckCache(t *testing.T) {
+	// Run first fixture, populating cache
+	firstContent := processFixture{
+		name: "simple case",
+		resource: compliance.Resource{
+			ResourceCommon: compliance.ResourceCommon{
+				Process: &compliance.Process{
+					Name: "proc1",
+				},
+			},
+			Condition: `process.flag("--path") == "foo"`,
+		},
+		processes: processes{
+			42: {
+				Name:    "proc1",
+				Cmdline: []string{"arg1", "--path=foo"},
+			},
+		},
+		expectReport: &compliance.Report{
+			Passed: true,
+			Data: event.Data{
+				"process.name":    "proc1",
+				"process.exe":     "",
+				"process.cmdLine": []string{"arg1", "--path=foo"},
+			},
+			Resource: compliance.ReportResource{
+				ID:   "42",
+				Type: "process",
+			},
+		},
+	}
+	firstContent.run(t)
+
+	// Run second fixture, using cache
+	secondFixture := processFixture{
+		name: "simple case",
+		resource: compliance.Resource{
+			ResourceCommon: compliance.ResourceCommon{
+				Process: &compliance.Process{
+					Name: "proc1",
+				},
+			},
+			Condition: `process.flag("--path") == "foo"`,
+		},
+		useCache: true,
+		expectReport: &compliance.Report{
+			Passed: true,
+			Data: event.Data{
+				"process.name":    "proc1",
+				"process.exe":     "",
+				"process.cmdLine": []string{"arg1", "--path=foo"},
+			},
+			Resource: compliance.ReportResource{
+				ID:   "42",
+				Type: "process",
+			},
+		},
+	}
+	secondFixture.run(t)
 }

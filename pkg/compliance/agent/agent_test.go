@@ -1,23 +1,27 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
+//go:build !windows
 // +build !windows
 
 package agent
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
-	"github.com/StackVista/stackstate-agent/pkg/compliance"
 	"github.com/StackVista/stackstate-agent/pkg/compliance/checks"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
 	"github.com/StackVista/stackstate-agent/pkg/compliance/mocks"
 	"github.com/StackVista/stackstate-agent/pkg/util"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -48,43 +52,87 @@ func enterTempEnv(t *testing.T) *tempEnv {
 
 	prev, _ := os.Getwd()
 	_ = os.Chdir(tempDir)
+
+	os.Setenv("KUBERNETES", "yes")
 	return &tempEnv{
 		dir:  tempDir,
 		prev: prev,
 	}
 }
 
+type eventMatch struct {
+	ruleID       string
+	frameworkID  string
+	resourceID   string
+	resourceType string
+	result       string
+	path         string
+	permissions  uint64
+}
+
+func eventMatcher(m eventMatch) interface{} {
+	return func(e *event.Event) bool {
+		if e.AgentRuleID != m.ruleID ||
+			e.Result != m.result ||
+			e.ResourceID != m.resourceID ||
+			e.ResourceType != m.resourceType ||
+			e.AgentFrameworkID != m.frameworkID {
+			return false
+		}
+
+		if e.Data == nil {
+			return false
+		}
+
+		eventData := e.Data.(event.Data)
+		return eventData["file.path"] == m.path && eventData["file.permissions"] == m.permissions
+	}
+}
+
 func TestRun(t *testing.T) {
 	assert := assert.New(t)
+
+	aggregator.InitAggregator(nil, nil, "foo")
 
 	e := enterTempEnv(t)
 	defer e.leave()
 
 	reporter := &mocks.Reporter{}
 
-	reporter.On("Report", &compliance.RuleEvent{
-		RuleID:       "cis-docker-1",
-		Framework:    "cis-docker",
-		Version:      "1.2.0",
-		ResourceID:   "the-host",
-		ResourceType: "docker",
-		Tags:         []string{"check_kind:file"},
-		Data: compliance.KVMap{
-			"permissions": "644",
-		},
-	})
+	reporter.On(
+		"Report",
+		mock.MatchedBy(
+			eventMatcher(
+				eventMatch{
+					ruleID:       "cis-docker-1",
+					frameworkID:  "cis-docker",
+					resourceID:   "the-host_daemon",
+					resourceType: "docker_daemon",
+					result:       "passed",
+					path:         "/files/daemon.json",
+					permissions:  0644,
+				},
+			),
+		),
+	).Once()
 
-	reporter.On("Report", &compliance.RuleEvent{
-		RuleID:       "cis-kubernetes-1",
-		Framework:    "cis-kubernetes",
-		Version:      "1.5.0",
-		ResourceID:   "the-host",
-		ResourceType: "kubernetesCluster",
-		Tags:         []string{"check_kind:file"},
-		Data: compliance.KVMap{
-			"permissions": "644",
-		},
-	})
+	reporter.On(
+		"Report",
+		mock.MatchedBy(
+			eventMatcher(
+				eventMatch{
+					ruleID:       "cis-kubernetes-1",
+					frameworkID:  "cis-kubernetes",
+					resourceID:   "kube_system_uuid_kubernetes_node",
+					resourceType: "kubernetes_node",
+					result:       "failed",
+					path:         "/files/kube-apiserver.yaml",
+					permissions:  0644,
+				},
+			),
+		),
+	).Once()
+
 	defer reporter.AssertExpectations(t)
 
 	scheduler := &mocks.Scheduler{}
@@ -98,35 +146,80 @@ func TestRun(t *testing.T) {
 		check.Run()
 	})
 
-	agent, err := New(reporter, scheduler, e.dir, checks.WithHostname("the-host"))
+	dockerClient := &mocks.DockerClient{}
+	dockerClient.On("Close").Return(nil).Once()
+	defer dockerClient.AssertExpectations(t)
+
+	kubeClient := &mocks.KubeClient{}
+	kubeClient.On("Resource", mock.Anything).Return(nil)
+
+	nodeLabels := map[string]string{
+		"node-role.kubernetes.io/worker": "",
+	}
+
+	agent, err := New(
+		reporter,
+		scheduler,
+		e.dir,
+		checks.WithHostname("the-host"),
+		checks.WithHostRootMount(e.dir),
+		checks.WithDockerClient(dockerClient),
+		checks.WithNodeLabels(nodeLabels),
+		checks.WithKubernetesClient(kubeClient, "kube_system_uuid"),
+	)
 	assert.NoError(err)
 
 	err = agent.Run()
 	assert.NoError(err)
 	agent.Stop()
+
+	st := agent.builder.GetCheckStatus()
+	assert.Len(st, 2)
+	assert.Equal("cis-docker-1", st[0].RuleID)
+	assert.Equal("passed", st[0].LastEvent.Result)
+
+	assert.Equal("cis-kubernetes-1", st[1].RuleID)
+	assert.Equal("failed", st[1].LastEvent.Result)
+
+	v, err := json.Marshal(st)
+	assert.NoError(err)
+
+	// Check the expvar value
+	assert.JSONEq(string(v), status.Get("Checks").String())
 }
 
 func TestRunChecks(t *testing.T) {
 	assert := assert.New(t)
+
+	aggregator.InitAggregator(nil, nil, "foo")
 
 	e := enterTempEnv(t)
 	defer e.leave()
 
 	reporter := &mocks.Reporter{}
 
-	reporter.On("Report", &compliance.RuleEvent{
-		RuleID:       "cis-docker-1",
-		Framework:    "cis-docker",
-		Version:      "1.2.0",
-		ResourceID:   "the-host",
-		ResourceType: "docker",
-		Tags:         []string{"check_kind:file"},
-		Data: compliance.KVMap{
-			"permissions": "644",
-		},
-	})
+	reporter.On(
+		"Report",
+		mock.MatchedBy(
+			eventMatcher(
+				eventMatch{
+					ruleID:       "cis-docker-1",
+					frameworkID:  "cis-docker",
+					resourceID:   "the-host_daemon",
+					resourceType: "docker_daemon",
+					result:       "passed",
+					path:         "/files/daemon.json",
+					permissions:  0644,
+				},
+			),
+		),
+	).Once()
 
 	defer reporter.AssertExpectations(t)
+
+	dockerClient := &mocks.DockerClient{}
+	dockerClient.On("Close").Return(nil).Once()
+	defer dockerClient.AssertExpectations(t)
 
 	err := RunChecks(
 		reporter,
@@ -134,6 +227,8 @@ func TestRunChecks(t *testing.T) {
 		checks.WithMatchSuite(checks.IsFramework("cis-docker")),
 		checks.WithMatchRule(checks.IsRuleID("cis-docker-1")),
 		checks.WithHostname("the-host"),
+		checks.WithHostRootMount(e.dir),
+		checks.WithDockerClient(dockerClient),
 	)
 	assert.NoError(err)
 }
@@ -145,24 +240,43 @@ func TestRunChecksFromFile(t *testing.T) {
 
 	reporter := &mocks.Reporter{}
 
-	reporter.On("Report", &compliance.RuleEvent{
-		RuleID:       "cis-kubernetes-1",
-		Framework:    "cis-kubernetes",
-		Version:      "1.5.0",
-		ResourceID:   "the-host",
-		ResourceType: "kubernetesCluster",
-		Tags:         []string{"check_kind:file"},
-		Data: compliance.KVMap{
-			"permissions": "644",
-		},
-	})
+	reporter.On(
+		"Report",
+		mock.MatchedBy(
+			eventMatcher(
+				eventMatch{
+					ruleID:       "cis-kubernetes-1",
+					frameworkID:  "cis-kubernetes",
+					resourceID:   "kube_system_uuid_kubernetes_node",
+					resourceType: "kubernetes_node",
+					result:       "failed",
+					path:         "/files/kube-apiserver.yaml",
+					permissions:  0644,
+				},
+			),
+		),
+	).Once()
 
 	defer reporter.AssertExpectations(t)
+
+	dockerClient := &mocks.DockerClient{}
+	dockerClient.On("Close").Return(nil).Once()
+	defer dockerClient.AssertExpectations(t)
+
+	kubeClient := &mocks.KubeClient{}
+
+	nodeLabels := map[string]string{
+		"node-role.kubernetes.io/worker": "",
+	}
 
 	err := RunChecksFromFile(
 		reporter,
 		filepath.Join(e.dir, "cis-kubernetes.yaml"),
 		checks.WithHostname("the-host"),
+		checks.WithHostRootMount(e.dir),
+		checks.WithDockerClient(dockerClient),
+		checks.WithNodeLabels(nodeLabels),
+		checks.WithKubernetesClient(kubeClient, "kube_system_uuid"),
 	)
 	assert.NoError(err)
 }

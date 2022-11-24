@@ -1,21 +1,49 @@
+//go:build windows
 // +build windows
 
 package main
 
 import (
-	"flag"
-	"github.com/StackVista/stackstate-agent/pkg/process/config"
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/app"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/windows/service"
+	"github.com/StackVista/stackstate-agent/pkg/util/winutil"
+	"golang.org/x/sys/windows/svc"
 )
 
-func main() {
-	flag.StringVar(&opts.configPath, "config", "c:\\programdata\\datadog\\system-probe.yaml", "Path to system-probe config formatted as YAML")
-	flag.StringVar(&opts.pidFilePath, "pid", "", "Path to set pidfile for process")
-	flag.BoolVar(&opts.version, "version", false, "Print the version and exit")
-	flag.Parse()
+var (
+	defaultSysProbeConfigPath = "c:\\programdata\\datadog\\system-probe.yaml"
+)
 
-	runAgent()
+func init() {
+	pd, err := winutil.GetProgramDataDir()
+	if err == nil {
+		defaultSysProbeConfigPath = filepath.Join(pd, "system-probe.yaml")
+	}
 }
 
-func runCheck(cfg *config.AgentConfig) {
-	return
+func main() {
+	// if command line arguments are supplied, even in a non interactive session,
+	// then just execute that.  Used when the service is executing the executable,
+	// for instance to trigger a restart.
+	if len(os.Args) == 1 {
+		isIntSess, err := svc.IsAnInteractiveSession()
+		if err != nil {
+			fmt.Printf("Failed to determine if we are running in an interactive session: %v\n", err)
+		}
+		if !isIntSess {
+			service.RunService(false)
+			return
+		}
+	}
+
+	setDefaultCommandIfNonePresent()
+	checkForDeprecatedFlags()
+	if err := app.SysprobeCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }

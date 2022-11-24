@@ -3,11 +3,13 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
 
+//go:build docker
 // +build docker
 
 package dockerswarm
 
 import (
+	"context"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	yaml "gopkg.in/yaml.v2"
 
@@ -51,7 +53,7 @@ func (s *SwarmCheck) Run() error {
 		}
 
 		// try to get the agent hostname to use in the host component
-		hostname, err := util.GetHostname()
+		hostname, err := util.GetHostname(context.TODO())
 		if err != nil {
 			log.Warnf("Can't get hostname for host running the docker-swarm integration: %s", err)
 		}

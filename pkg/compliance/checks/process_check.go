@@ -1,16 +1,20 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package checks
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
-	"github.com/DataDog/gopsutil/process"
 	"github.com/StackVista/stackstate-agent/pkg/compliance"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
@@ -18,64 +22,93 @@ const (
 	cacheValidity time.Duration = 10 * time.Minute
 )
 
-type processCheck struct {
-	baseCheck
-	process *compliance.Process
+var processReportedFields = []string{
+	compliance.ProcessFieldName,
+	compliance.ProcessFieldExe,
+	compliance.ProcessFieldCmdLine,
 }
 
-func newProcessCheck(baseCheck baseCheck, process *compliance.Process) (*processCheck, error) {
-	if len(process.Name) == 0 {
-		return nil, fmt.Errorf("unable to create processCheck without a process name")
+func resolveProcess(_ context.Context, e env.Env, id string, res compliance.ResourceCommon, rego bool) (resolved, error) {
+	if res.Process == nil {
+		return nil, fmt.Errorf("%s: expecting process resource in process check", id)
 	}
 
-	return &processCheck{
-		baseCheck: baseCheck,
-		process:   process,
-	}, nil
-}
+	process := res.Process
 
-func (c *processCheck) Run() error {
-	log.Debugf("%s: process check: %s", c.ruleID, c.process.Name)
+	log.Debugf("%s: running process check: %s", id, process.Name)
+
 	processes, err := getProcesses(cacheValidity)
+
 	if err != nil {
-		return log.Errorf("Unable to fetch processes: %v", err)
+		return nil, log.Errorf("%s: Unable to fetch processes: %v", id, err)
 	}
 
-	matchedProcesses := processes.findProcessesByName(c.process.Name)
+	matchedProcesses := processes.findProcessesByName(process.Name)
+
+	var instances []resolvedInstance
 	for _, mp := range matchedProcesses {
-		err = c.reportProcess(mp)
-		if err != nil {
-			return err
-		}
+		flagValues := parseProcessCmdLine(mp.Cmdline)
+		instance := eval.NewInstance(
+			eval.VarMap{
+				compliance.ProcessFieldName:    mp.Name,
+				compliance.ProcessFieldExe:     mp.Exe,
+				compliance.ProcessFieldCmdLine: mp.Cmdline,
+				compliance.ProcessFieldFlags:   flagValues,
+			},
+			eval.FunctionMap{
+				compliance.ProcessFuncFlag:    processFlag(flagValues),
+				compliance.ProcessFuncHasFlag: processHasFlag(flagValues),
+			},
+			eval.RegoInputMap{
+				"name":    mp.Name,
+				"exe":     mp.Exe,
+				"cmdLine": mp.Cmdline,
+				"flags":   flagValues,
+			},
+		)
+		instances = append(instances, newResolvedInstance(instance, strconv.Itoa(int(mp.Pid)), "process"))
 	}
 
-	return nil
+	if len(instances) == 0 && rego {
+		return nil, nil
+	}
+
+	// NOTE(safchain) workaround to allow fallback on all this resource if there is only one file
+	if len(instances) == 1 {
+		return instances[0].(*_resolvedInstance), nil
+	}
+
+	return newResolvedInstances(instances), nil
 }
 
-func (c *processCheck) reportProcess(p *process.FilledProcess) error {
-	log.Debugf("%s: process check - match %s", c.ruleID, p.Cmdline)
-	kv := compliance.KVMap{}
-	flagValues := parseProcessCmdLine(p.Cmdline)
-
-	for _, field := range c.process.Report {
-		switch field.Kind {
-		case "flag":
-			if flagValue, found := flagValues[field.Property]; found {
-				flagReportName := field.Property
-				if len(field.As) > 0 {
-					flagReportName = field.As
-				}
-				if len(field.Value) > 0 {
-					flagValue = field.Value
-				}
-
-				kv[flagReportName] = flagValue
-			}
-		default:
-			return log.Errorf("unsupported kind value: '%s' for process: '%s'", field.Kind, p.Name)
+func processFlag(flagValues map[string]string) eval.Function {
+	return func(_ eval.Instance, args ...interface{}) (interface{}, error) {
+		flag, err := validateProcessFlagArg(args...)
+		if err != nil {
+			return nil, err
 		}
+		value := flagValues[flag]
+		return value, nil
 	}
+}
+func processHasFlag(flagValues map[string]string) eval.Function {
+	return func(_ eval.Instance, args ...interface{}) (interface{}, error) {
+		flag, err := validateProcessFlagArg(args...)
+		if err != nil {
+			return nil, err
+		}
+		_, has := flagValues[flag]
+		return has, nil
+	}
+}
 
-	c.report(nil, kv)
-	return nil
+func validateProcessFlagArg(args ...interface{}) (string, error) {
+	if len(args) != 1 {
+		return "", fmt.Errorf(`invalid number of arguments, expecting 1 got %d`, len(args))
+	}
+	flag, ok := args[0].(string)
+	if !ok {
+		return "", errors.New(`expecting string value for flag argument`)
+	}
+	return flag, nil
 }

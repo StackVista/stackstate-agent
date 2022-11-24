@@ -58,6 +58,7 @@ before_script:
   artifacts:
     reports:
       dotenv: build.env
+    expire_in: 1 week
   rules:
     - if: $CI_COMMIT_MESSAGE =~ /\[build_runners]/
       when: always

@@ -1,7 +1,7 @@
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
 # This product includes software developed at Datadog (https:#www.datadoghq.com/).
-# Copyright 2016-2020 Datadog, Inc.
+# Copyright 2016-present Datadog, Inc.
 
 # This software definition doesn"t build anything, it"s the place where we create
 # files outside the omnibus installation directory, so that we can add them to
@@ -32,7 +32,9 @@ build do
             copy "#{dsd_source_root}/agent/dogstatsd.exe", "#{cf_bin_root_bin}/agent"
             copy "#{cf_source_root}/agent/process-agent.exe", "#{cf_bin_root_bin}/agent"
             copy "#{cf_source_root}/agent/trace-agent.exe", "#{cf_bin_root_bin}/agent"
-            copy "#{cf_source_root}/agent/security-agent.exe", "#{cf_bin_root_bin}/agent"
+            if $enable_security_agent
+              copy "#{cf_source_root}/agent/security-agent.exe", "#{cf_bin_root_bin}/agent"
+            end
 
             delete "#{install_dir}/bin/agent/agent.exe"
         end

@@ -5,13 +5,14 @@ import os.path
 import stat
 import unittest
 from hashlib import sha256
+
 from six import iteritems
 
 EXPECTED_PRESENT = [
     "/etc/datadog-agent/datadog-docker.yaml",
     "/etc/datadog-agent/datadog-kubernetes.yaml",
-    "/etc/datadog-agent/datadog-k8s-docker.yaml",
     "/etc/datadog-agent/datadog-ecs.yaml",
+    "/etc/datadog-agent/datadog-ci.yaml",
     "/etc/datadog-agent/install_info",
 ]
 

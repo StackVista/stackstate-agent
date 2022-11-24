@@ -1,5 +1,5 @@
 scenarios:
-  - name: dockerd-eks
+  - name: dockerd-eks-1-21
     description: |
       Provisions an EKS cluster with Dockerd as container runtime.
       Deploys StackState in the sandbox cluster and the agents with sample workloads on EKS.
@@ -10,7 +10,7 @@ scenarios:
     variables:
       agent_eks_runtime: dockerd
       agent_eks_version: "1.21"
-  - name: containerd-eks
+  - name: contd-eks-1-21
     description: |
       Same as dockerd-eks scenario, but the EKS cluster is configured to use Containerd as container runtime.
     yard:
@@ -20,6 +20,16 @@ scenarios:
     variables:
       agent_eks_runtime: containerd
       agent_eks_version: "1.21"
+  - name: contd-eks-1-23
+    description: |
+      Same as dockerd-eks scenario, but the EKS cluster is configured to use Containerd as container runtime.
+    yard:
+      name: k8s
+    test:
+      group: k8s
+    variables:
+      agent_eks_runtime: containerd
+      agent_eks_version: "1.23"
   - name: otel
     description: |
       Provisions Lambda exposing it trough an API gateway, an EC2 machine, AWS integration Cloudformation stack.
@@ -51,3 +61,4 @@ scenarios:
       name: integrations
     test:
       group: integrations
+

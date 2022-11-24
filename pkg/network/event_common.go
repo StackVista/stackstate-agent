@@ -1,12 +1,13 @@
 package network
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/StackVista/stackstate-agent/pkg/network/dns"
+	"github.com/StackVista/stackstate-agent/pkg/network/http"
 	"github.com/StackVista/stackstate-agent/pkg/process/util"
 	"github.com/dustin/go-humanize"
 )
@@ -40,6 +41,13 @@ const (
 // ConnectionFamily will be either v4 or v6
 type ConnectionFamily uint8
 
+func (c ConnectionFamily) String() string {
+	if c == AFINET {
+		return "v4"
+	}
+	return "v6"
+}
+
 // ConnectionDirection indicates if the connection is incoming to the host or outbound
 type ConnectionDirection uint8
 
@@ -70,14 +78,48 @@ func (d ConnectionDirection) String() string {
 	}
 }
 
-// Connections wraps a collection of ConnectionStats
-type Connections struct {
-	DNS       map[util.Address][]string
-	Conns     []ConnectionStats
-	Telemetry *ConnectionsTelemetry
+// EphemeralPortType will be either EphemeralUnknown, EphemeralTrue, EphemeralFalse
+type EphemeralPortType uint8
+
+const (
+	// EphemeralUnknown indicates inability to determine whether the port is in the ephemeral range or not
+	EphemeralUnknown EphemeralPortType = 0
+
+	// EphemeralTrue means the port has been detected to be in the configured ephemeral range
+	EphemeralTrue EphemeralPortType = 1
+
+	// EphemeralFalse means the port has been detected to not be in the configured ephemeral range
+	EphemeralFalse EphemeralPortType = 2
+)
+
+func (e EphemeralPortType) String() string {
+	switch e {
+	case EphemeralTrue:
+		return "ephemeral"
+	case EphemeralFalse:
+		return "not ephemeral"
+	default:
+		return "unspecified"
+	}
 }
 
-// ConnectionsTelemetry stores telemetry from the system probe
+// BufferedData encapsulates data whose underlying memory can be recycled
+type BufferedData struct {
+	Conns  []ConnectionStats
+	buffer *clientBuffer
+}
+
+// Connections wraps a collection of ConnectionStats
+type Connections struct {
+	BufferedData
+	DNS                         map[util.Address][]string
+	ConnTelemetry               *ConnectionsTelemetry
+	CompilationTelemetryByAsset map[string]RuntimeCompilationTelemetry
+	HTTP                        map[http.Key]http.RequestStats
+	DNSStats                    dns.StatsByKeyByNameByType
+}
+
+// ConnectionsTelemetry stores telemetry from the system probe related to connections collection
 type ConnectionsTelemetry struct {
 	MonotonicKprobesTriggered          int64
 	MonotonicKprobesMissed             int64
@@ -86,6 +128,18 @@ type ConnectionsTelemetry struct {
 	MonotonicDNSPacketsProcessed       int64
 	MonotonicConnsClosed               int64
 	ConnsBpfMapSize                    int64
+	MonotonicUDPSendsProcessed         int64
+	MonotonicUDPSendsMissed            int64
+	ConntrackSamplingPercent           int64
+	DNSStatsDropped                    int64
+}
+
+// RuntimeCompilationTelemetry stores telemetry related to the runtime compilation of various assets
+type RuntimeCompilationTelemetry struct {
+	RuntimeCompilationEnabled  bool
+	RuntimeCompilationResult   int32
+	KernelHeaderFetchResult    int32
+	RuntimeCompilationDuration int64
 }
 
 // ConnectionStats stores statistics for a single connection.  Field order in the struct should be 8-byte aligned
@@ -99,6 +153,12 @@ type ConnectionStats struct {
 	MonotonicRecvBytes uint64
 	LastRecvBytes      uint64
 
+	MonotonicSentPackets uint64
+	LastSentPackets      uint64
+
+	MonotonicRecvPackets uint64
+	LastRecvPackets      uint64
+
 	// Last time the stats for this connection were updated
 	LastUpdateEpoch uint64
 
@@ -108,21 +168,42 @@ type ConnectionStats struct {
 	RTT    uint32 // Stored in µs
 	RTTVar uint32
 
+	// MonotonicTCPEstablished indicates whether or not the TCP connection was established
+	// after system-probe initialization.
+	// * A value of 0 means that this connection was established before system-probe was initialized;
+	// * Value 1 represents a connection that was established after system-probe started;
+	// * Values greater than 1 should be rare, but can occur when multiple connections
+	//   are established with the same tuple betweeen two agent checks;
+	MonotonicTCPEstablished uint32
+	LastTCPEstablished      uint32
+
+	MonotonicTCPClosed uint32
+	LastTCPClosed      uint32
+
 	Pid   uint32
 	NetNS uint32
 
-	SPort                  uint16
-	DPort                  uint16
-	Type                   ConnectionType
-	Family                 ConnectionFamily
-	Direction              ConnectionDirection
-	IPTranslation          *IPTranslation
-	IntraHost              bool
-	DNSSuccessfulResponses uint32
-	DNSFailedResponses     uint32
-	DNSTimeouts            uint32
-	DNSSuccessLatencySum   uint64
-	DNSFailureLatencySum   uint64
+	SPort            uint16
+	DPort            uint16
+	Type             ConnectionType
+	Family           ConnectionFamily
+	Direction        ConnectionDirection
+	SPortIsEphemeral EphemeralPortType
+	IPTranslation    *IPTranslation
+	IntraHost        bool
+	Via              *Via
+
+	IsAssured bool
+}
+
+// Via has info about the routing decision for a flow
+type Via struct {
+	Subnet Subnet
+}
+
+// Subnet stores info about a subnet
+type Subnet struct {
+	Alias string
 }
 
 // IPTranslation can be associated with a connection to show the connection is NAT'd
@@ -134,42 +215,41 @@ type IPTranslation struct {
 }
 
 func (c ConnectionStats) String() string {
-	return ConnectionSummary(c, nil)
+	return ConnectionSummary(&c, nil)
+}
+
+// IsExpired returns whether the connection is expired according to the provided time and timeout.
+func (c ConnectionStats) IsExpired(now uint64, timeout uint64) bool {
+	return c.LastUpdateEpoch+timeout <= now
 }
 
 // ByteKey returns a unique key for this connection represented as a byte array
 // It's as following:
 //
+//     4B      2B      2B     .5B     .5B      4/16B        4/16B   = 17/41B
 //    32b     16b     16b      4b      4b     32/128b      32/128b
 // |  PID  | SPORT | DPORT | Family | Type |  SrcAddr  |  DestAddr
-func (c ConnectionStats) ByteKey(buffer *bytes.Buffer) ([]byte, error) {
-	buffer.Reset()
+func (c ConnectionStats) ByteKey(buf []byte) ([]byte, error) {
+	n := 0
 	// Byte-packing to improve creation speed
 	// PID (32 bits) + SPort (16 bits) + DPort (16 bits) = 64 bits
 	p0 := uint64(c.Pid)<<32 | uint64(c.SPort)<<16 | uint64(c.DPort)
-
-	var buf [8]byte
-	binary.LittleEndian.PutUint64(buf[:], p0)
-
-	if _, err := buffer.Write(buf[:]); err != nil {
-		return nil, err
-	}
+	binary.LittleEndian.PutUint64(buf[0:], p0)
+	n += 8
 
 	// Family (4 bits) + Type (4 bits) = 8 bits
-	p1 := uint8(c.Family)<<4 | uint8(c.Type)
-	if err := buffer.WriteByte(p1); err != nil {
-		return nil, err
-	}
+	buf[n] = uint8(c.Family)<<4 | uint8(c.Type)
+	n++
 
-	if _, err := buffer.Write(c.Source.Bytes()); err != nil {
-		return nil, err
-	}
+	n += c.Source.WriteTo(buf[n:]) // 4 or 16 bytes
+	n += c.Dest.WriteTo(buf[n:])   // 4 or 16 bytes
+	return buf[:n], nil
+}
 
-	if _, err := buffer.Write(c.Dest.Bytes()); err != nil {
-		return nil, err
-	}
-
-	return buffer.Bytes(), nil
+// IsShortLived returns true when a connection went through its whole lifecycle
+// between two connection checks
+func (c ConnectionStats) IsShortLived() bool {
+	return c.LastTCPEstablished >= 1 && c.LastTCPClosed >= 1
 }
 
 const keyFmt = "p:%d|src:%s:%d|dst:%s:%d|f:%d|t:%d"
@@ -210,15 +290,28 @@ func BeautifyKey(key string) string {
 }
 
 // ConnectionSummary returns a string summarizing a connection
-func ConnectionSummary(c ConnectionStats, names map[util.Address][]string) string {
+func ConnectionSummary(c *ConnectionStats, names map[util.Address][]string) string {
 	str := fmt.Sprintf(
-		"[%s] [PID: %d] [%v:%d ⇄ %v:%d] (%s) %s sent (+%s), %s received (+%s)",
+		"[%s%s] [PID: %d] [%v:%d ⇄ %v:%d] ",
 		c.Type,
+		c.Family,
 		c.Pid,
 		printAddress(c.Source, names[c.Source]),
 		c.SPort,
 		printAddress(c.Dest, names[c.Dest]),
 		c.DPort,
+	)
+	if c.IPTranslation != nil {
+		str += fmt.Sprintf(
+			"xlated [%v:%d ⇄ %v:%d] ",
+			c.IPTranslation.ReplSrcIP,
+			c.IPTranslation.ReplSrcPort,
+			c.IPTranslation.ReplDstIP,
+			c.IPTranslation.ReplDstPort,
+		)
+	}
+
+	str += fmt.Sprintf("(%s) %s sent (+%s), %s received (+%s)",
 		c.Direction,
 		humanize.Bytes(c.MonotonicSentBytes), humanize.Bytes(c.LastSentBytes),
 		humanize.Bytes(c.MonotonicRecvBytes), humanize.Bytes(c.LastRecvBytes),

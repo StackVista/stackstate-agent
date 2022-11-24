@@ -10,6 +10,7 @@ package kubeapi
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -20,7 +21,6 @@ import (
 
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/kubernetes/pkg/kubelet/events"
 )
 
 type EventCategory string
@@ -39,33 +39,33 @@ var ValidCategories = []EventCategory{Alerts, Changes, Activities, Others}
 // If an event is 'event.Type = warning' then we map it automatically to an 'Alert'
 var DefaultEventCategoriesMap = map[string]EventCategory{
 	// Container events
-	events.CreatedContainer:      Changes,
-	events.StartedContainer:      Activities,
-	events.KillingContainer:      Activities,
-	events.PreemptContainer:      Activities,
-	events.BackOffStartContainer: Activities,
-	events.ExceededGracePeriod:   Activities,
+	"Created":             Changes,
+	"Started":             Activities,
+	"Killing":             Activities,
+	"Preempting":          Activities,
+	"BackOff":             Activities,
+	"ExceededGracePeriod": Activities,
 
 	// Image events
-	events.PullingImage: Activities,
-	events.PulledImage:  Activities,
+	"Pulling": Activities,
+	"Pulled":  Activities,
 
 	// Kubelet events
-	events.NodeReady:               Changes,
-	events.NodeNotReady:            Activities,
-	events.NodeSchedulable:         Activities,
-	events.StartingKubelet:         Activities,
-	events.VolumeResizeSuccess:     Activities,
-	events.FileSystemResizeSuccess: Activities,
+	"NodeReady":                  Changes,
+	"NodeNotReady":               Activities,
+	"NodeSchedulable":            Activities,
+	"Starting":                   Activities,
+	"VolumeResizeSuccessful":     Activities,
+	"FileSystemResizeSuccessful": Activities,
 	//events.SuccessfulDetachVolume:               Activities, //TODO agent3
-	events.SuccessfulAttachVolume: Activities,
-	events.SuccessfulMountVolume:  Activities,
+	"SuccessfulAttachVolume": Activities,
+	"SuccessfulMountVolume":  Activities,
 	//events.SuccessfulUnMountVolume:              Activities, //TODO agent3
-	events.NodeRebooted:                         Activities,
-	events.ContainerGCFailed:                    Activities,
-	events.ImageGCFailed:                        Activities,
-	events.SuccessfulNodeAllocatableEnforcement: Activities,
-	events.SandboxChanged:                       Changes,
+	"Rebooted":                Activities,
+	"ContainerGCFailed":       Activities,
+	"ImageGCFailed":           Activities,
+	"NodeAllocatableEnforced": Activities,
+	"SandboxChanged":          Changes,
 
 	// Seen in the wild, not keys of our current lib
 	"Completed":         Activities,
@@ -139,7 +139,7 @@ func newKubernetesEventMapper(detector apiserver.OpenShiftDetector, clusterName 
 
 var _ KubernetesEventMapperFactory = newKubernetesEventMapper // Compile-time check
 
-func (k *kubernetesEventMapper) mapKubernetesEvent(event *v1.Event, modified bool) (metrics.Event, error) {
+func (k *kubernetesEventMapper) mapKubernetesEvent(event *v1.Event) (metrics.Event, error) {
 	if err := checkEvent(event); err != nil {
 		return metrics.Event{}, err
 	}
@@ -154,17 +154,15 @@ func (k *kubernetesEventMapper) mapKubernetesEvent(event *v1.Event, modified boo
 		Priority:       metrics.EventPriorityNormal,
 		AlertType:      getAlertType(event),
 		EventType:      event.Reason,
-		Ts:             getTimeStamp(event, modified),
+		Ts:             getTimeStamp(event),
 		Tags:           k.getTags(event),
 		EventContext: &metrics.EventContext{
-			Source:           k.sourceType,
-			Category:         string(k.getCategory(event)),
-			SourceIdentifier: string(event.GetUID()),
-			ElementIdentifiers: []string{
-				k.externalIdentifierForInvolvedObject(event),
-			},
-			SourceLinks: []metrics.SourceLink{},
-			Data:        map[string]interface{}{},
+			Source:             k.sourceType,
+			Category:           string(k.getCategory(event)),
+			SourceIdentifier:   string(event.GetUID()),
+			ElementIdentifiers: k.externalIdentifierForInvolvedObject(event),
+			SourceLinks:        []metrics.SourceLink{},
+			Data:               map[string]interface{}{},
 		},
 		Text: event.Message,
 	}
@@ -231,12 +229,8 @@ func getAlertType(event *v1.Event) metrics.EventAlertType {
 	}
 }
 
-func getTimeStamp(event *v1.Event, modified bool) int64 {
-	if modified {
-		return event.LastTimestamp.Unix()
-	}
-
-	return event.FirstTimestamp.Unix()
+func getTimeStamp(event *v1.Event) int64 {
+	return event.LastTimestamp.Unix()
 }
 
 func (k *kubernetesEventMapper) getTags(event *v1.Event) []string {
@@ -244,6 +238,10 @@ func (k *kubernetesEventMapper) getTags(event *v1.Event) []string {
 
 	if event.InvolvedObject.Namespace != "" {
 		tags = append(tags, fmt.Sprintf("kube_namespace:%s", event.InvolvedObject.Namespace))
+	}
+
+	if event.InvolvedObject.FieldPath != "" && getContainerNameFromEvent(event) != "" {
+		tags = append(tags, fmt.Sprintf("kube_container_name:%s", getContainerNameFromEvent(event)))
 	}
 
 	tags = append(tags, fmt.Sprintf("source_component:%s", event.Source.Component))
@@ -256,17 +254,42 @@ func (k *kubernetesEventMapper) getTags(event *v1.Event) []string {
 	return tags
 }
 
-func (k *kubernetesEventMapper) externalIdentifierForInvolvedObject(event *v1.Event) string {
+func (k *kubernetesEventMapper) externalIdentifierForInvolvedObject(event *v1.Event) []string {
+	identifiers := []string{}
 	namespace := event.InvolvedObject.Namespace
 	obj := event.InvolvedObject
 
-	urn, err := k.urn.BuildExternalID(obj.Kind, namespace, obj.Name)
-	if err != nil {
-		log.Warnf("Unknown InvolvedObject type '%s' for obj '%s/%s' in event '%s'", obj.Kind, namespace, obj.Name, event.Name)
-		return ""
+	if event.InvolvedObject.FieldPath != "" && getContainerNameFromEvent(event) != "" {
+		identifiers = append(identifiers, k.urn.BuildContainerExternalID(namespace, obj.Name, getContainerNameFromEvent(event)))
 	}
 
-	return urn
+	urn, err := k.urn.BuildExternalID(obj.Kind, namespace, obj.Name)
+	identifiers = append(identifiers, urn)
+	if err != nil {
+		log.Warnf("Unknown InvolvedObject type '%s' for obj '%s/%s' in event '%s'", obj.Kind, namespace, obj.Name, event.Name)
+		identifiers = append(identifiers, "")
+	}
+
+	return identifiers
+}
+
+func getContainerNameFromEvent(event *v1.Event) string {
+
+	containerName := ""
+
+	if event.InvolvedObject.FieldPath != "" {
+		r := regexp.MustCompile("spec.containers{(.*?)}")
+
+		containerNameSubmatch := r.FindStringSubmatch(event.InvolvedObject.FieldPath)
+
+		if len(containerNameSubmatch) == 2 {
+			containerName = containerNameSubmatch[1]
+		}
+
+		log.Debugf("Container name '%s' extracted from event '%s'", containerName, event.InvolvedObject)
+	}
+
+	return containerName
 }
 
 func kubernetesFlavour(detector apiserver.OpenShiftDetector) urn.ClusterType {

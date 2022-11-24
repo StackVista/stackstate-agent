@@ -1,12 +1,14 @@
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
 # This product includes software developed at Datadog (https:#www.datadoghq.com/).
-# Copyright 2016-2020 Datadog, Inc.
+# Copyright 2016-present Datadog, Inc.
 
 require "./lib/ostools.rb"
 
 name 'agent-binaries'
 package_name 'agent-binaries'
+license "Apache-2.0"
+license_file "../LICENSE"
 
 homepage 'http://www.stackstate.com'
 
@@ -54,12 +56,14 @@ package :zip do
 
 
   additional_sign_files [
-    "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\security-agent.exe",
     "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\process-agent.exe",
     "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\trace-agent.exe",
     "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\dogstatsd.exe",
     "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent.exe",
   ]
+  if $enable_security_agent
+    additional_sign_files << "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\security-agent.exe"
+  end
   if ENV['SIGN_PFX']
     signing_identity_file "#{ENV['SIGN_PFX']}", password: "#{ENV['SIGN_PFX_PW']}", algorithm: "SHA256"
   end

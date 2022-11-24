@@ -1,9 +1,9 @@
 #!/bin/sh
 
 ### BEGIN INIT INFO
-# Provides: datadog-agent-trace
-# Short-Description: Start and stop datadog trace agent
-# Description: Datadog Trace Agent (APM)
+# Provides: datadog-agent-security
+# Short-Description: Start and stop datadog security agent
+# Description: Datadog Security Agent
 # Required-Start: $remote_fs
 # Required-Stop: $remote_fs
 # Default-Start: 2 3 4 5
@@ -14,8 +14,8 @@ ETC_DIR="<%= etc_dir %>"
 INSTALL_DIR="<%= install_dir %>"
 AGENTPATH="$INSTALL_DIR/embedded/bin/security-agent"
 PIDFILE="$INSTALL_DIR/run/security-agent.pid"
-AGENT_ARGS="start -c=$ETC_DIR/datadog.yaml -p=$PIDFILE"
-AGENT_USER="dd-agent"
+AGENT_ARGS="start -c=$ETC_DIR/datadog.yaml -c=$ETC_DIR/security-agent.yaml -p=$PIDFILE"
+SECURITY_AGENT_CONFIG_FILE="$ETC_DIR/security-agent.yaml"
 NAME="datadog-agent-security"
 DESC="Datadog Security Agent"
 
@@ -56,8 +56,13 @@ DESC="Datadog Security Agent"
 rc_reset
 
 if [ ! -x $AGENTPATH ]; then
-  echo "$AGENTPATH not found. Exiting."
+  echo "$AGENTPATH not found. Exiting $NAME"
   exit 1
+fi
+
+if [ ! -x $SECURITY_AGENT_CONFIG_FILE ]; then
+	echo "$SECURITY_AGENT_CONFIG_FILE not found. Exiting $NAME"
+	exit 1
 fi
 
 if [ -r "/etc/default/${NAME}" ]; then

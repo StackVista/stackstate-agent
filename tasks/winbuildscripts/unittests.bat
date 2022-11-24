@@ -4,10 +4,10 @@ if not exist c:\mnt\ goto nomntdir
 
 @echo PARAMS %*
 @echo PY_RUNTIMES %PY_RUNTIMES%
-@echo NEW_BUILDER %NEW_BUILDER%
 
 if NOT DEFINED PY_RUNTIMES set PY_RUNTIMES=%~1
-if NOT DEFINED NEW_BUILDER set NEW_BUILDER=%~2
+
+call %~p0extract-modcache.bat
 
 mkdir \dev\go\src\github.com\DataDog\datadog-agent
 cd \dev\go\src\github.com\DataDog\datadog-agent

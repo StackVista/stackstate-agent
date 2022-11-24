@@ -1,6 +1,7 @@
 package spec
 
 import (
+	"context"
 	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -16,5 +17,5 @@ type Container struct {
 
 // ContainerUtil is an interface for util classes capable of getting a list of Container
 type ContainerUtil interface {
-	GetContainers() ([]*Container, error)
+	GetContainers(ctx context.Context) ([]*Container, error)
 }

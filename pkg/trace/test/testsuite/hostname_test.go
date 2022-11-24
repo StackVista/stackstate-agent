@@ -1,32 +1,31 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package testsuite
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
-	"github.com/StackVista/stackstate-agent/pkg/trace/sampler"
 	"github.com/StackVista/stackstate-agent/pkg/trace/test"
 	"github.com/StackVista/stackstate-agent/pkg/trace/test/testutil"
 )
 
 func TestMain(m *testing.M) {
 	if _, ok := os.LookupEnv("INTEGRATION"); !ok {
-		fmt.Println("--- SKIP: to run tests in this package, set the INTEGRATION environment variable")
-		return
+		log.Println("--- SKIP: to run tests in this package, set the INTEGRATION environment variable")
+		os.Exit(0)
 	}
 	os.Exit(m.Run())
 }
 
 func TestHostname(t *testing.T) {
-	r := test.Runner{Verbose: true}
+	r := test.Runner{}
 	if err := r.Start(); err != nil {
 		t.Fatal(err)
 	}
@@ -46,12 +45,15 @@ func TestHostname(t *testing.T) {
 			defer r.KillAgent()
 
 			payload := pb.Traces{pb.Trace{testutil.RandomSpan()}}
-			payload[0][0].Metrics[sampler.KeySamplingPriority] = 2
+			payload[0][0].Metrics["_sampling_priority_v1"] = 2
 			if err := r.Post(payload); err != nil {
 				t.Fatal(err)
 			}
-			waitForTrace(t, &r, func(v pb.TracePayload) {
-				if n := len(v.Traces); n != 1 {
+			waitForTrace(t, &r, func(v pb.AgentPayload) {
+				if n := len(v.TracerPayloads); n != 1 {
+					t.Fatalf("expected %d tracer payloads, got %d", 1, n)
+				}
+				if n := len(v.TracerPayloads[0].Chunks); n != 1 {
 					t.Fatalf("expected %d traces, got %d", len(payload), n)
 				}
 				if v.HostName != expectedHostname {
@@ -76,12 +78,15 @@ func TestHostname(t *testing.T) {
 		defer r.KillAgent()
 
 		payload := pb.Traces{pb.Trace{testutil.RandomSpan()}}
-		payload[0][0].Metrics[sampler.KeySamplingPriority] = 2
+		payload[0][0].Metrics["_sampling_priority_v1"] = 2
 		if err := r.Post(payload); err != nil {
 			t.Fatal(err)
 		}
-		waitForTrace(t, &r, func(v pb.TracePayload) {
-			if n := len(v.Traces); n != 1 {
+		waitForTrace(t, &r, func(v pb.AgentPayload) {
+			if n := len(v.TracerPayloads); n != 1 {
+				t.Fatalf("expected %d tracer payloads, got %d", 1, n)
+			}
+			if n := len(v.TracerPayloads[0].Chunks); n != 1 {
 				t.Fatalf("expected %d traces, got %d", len(payload), n)
 			}
 			if v.HostName == "" {
@@ -91,20 +96,20 @@ func TestHostname(t *testing.T) {
 	})
 }
 
-// waitForTrace waits on the out channel until it times out or receives an pb.TracePayload.
+// waitForTrace waits on the out channel until it times out or receives an pb.AgentPayload.
 // If the latter happens it will call fn.
-func waitForTrace(t *testing.T, runner *test.Runner, fn func(pb.TracePayload)) {
+func waitForTrace(t *testing.T, runner *test.Runner, fn func(pb.AgentPayload)) {
 	waitForTraceTimeout(t, runner, 3*time.Second, fn)
 }
 
 // waitForTraceTimeout behaves like waitForTrace but allows a customizable wait time.
-func waitForTraceTimeout(t *testing.T, runner *test.Runner, wait time.Duration, fn func(pb.TracePayload)) {
+func waitForTraceTimeout(t *testing.T, runner *test.Runner, wait time.Duration, fn func(pb.AgentPayload)) {
 	timeout := time.After(wait)
 	out := runner.Out()
 	for {
 		select {
 		case p := <-out:
-			if v, ok := p.(pb.TracePayload); ok {
+			if v, ok := p.(pb.AgentPayload); ok {
 				fn(v)
 				return
 			}

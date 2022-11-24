@@ -20,6 +20,9 @@ variable "agent_eks_node_type" {
 variable "agent_eks_size" {
   default = 2
 }
+variable "runners_ip" {
+  type = string
+}
 
 locals {
   az1                = "${var.aws_default_region}a"

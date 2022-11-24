@@ -3,12 +3,15 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package kubeapi
 
 import (
+	"context"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 	"strings"
 	"time"
 
@@ -64,6 +67,7 @@ type EventsCheck struct {
 	ignoredEvents   string
 	providerIDCache *cache.Cache
 	mapperFactory   KubernetesEventMapperFactory
+	clusterName     string
 }
 
 func (c *EventsConfig) parse(data []byte) error {
@@ -126,9 +130,24 @@ goOverCategories:
 	}
 	k.ignoredEvents = convertFilter(k.instance.FilteredEventTypes)
 
+	// sts - Retrieve cluster name
+	k.getClusterName()
+
 	log.Debugf("Running config %s", config)
 	return nil
 }
+
+// sts begin
+
+// getClusterName retrieves the name of the cluster, if found
+func (k *EventsCheck) getClusterName() {
+	hostname, _ := util.GetHostname(context.TODO())
+	if clusterName := clustername.GetClusterName(context.TODO(), hostname); clusterName != "" {
+		k.clusterName = clusterName
+	}
+}
+
+// sts end
 
 func convertFilter(conf []string) string {
 	var formatedFilters []string
@@ -255,10 +274,9 @@ func (k *EventsCheck) eventCollectionCheck() (newEvents []*v1.Event, err error) 
 // - extracts some attributes and builds a structure ready to be submitted as a StackState event
 // - convert each K8s event to a metrics event to be processed by the intake
 func (k *EventsCheck) processEvents(sender aggregator.Sender, events []*v1.Event) error {
-	clusterName := clustername.GetClusterName()
-	mapper := k.mapperFactory(k.ac, clusterName, k.instance.EventCategories)
+	mapper := k.mapperFactory(k.ac, k.clusterName, k.instance.EventCategories)
 	for _, event := range events {
-		mappedEvent, err := mapper.mapKubernetesEvent(event, false)
+		mappedEvent, err := mapper.mapKubernetesEvent(event)
 		if err != nil {
 			_ = k.Warnf("Error while mapping event, %s.", err.Error())
 			continue

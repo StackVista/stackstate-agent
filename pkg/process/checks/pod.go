@@ -1,21 +1,24 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
+//go:build kubelet && orchestrator
 // +build kubelet,orchestrator
 
 package checks
 
 import (
+	"context"
 	"time"
 
-	model "github.com/DataDog/agent-payload/process"
+	model "github.com/DataDog/agent-payload/v5/process"
+	"github.com/StackVista/stackstate-agent/pkg/orchestrator/redact"
 	"github.com/StackVista/stackstate-agent/pkg/process/config"
 	"github.com/StackVista/stackstate-agent/pkg/process/util"
-	"github.com/StackVista/stackstate-agent/pkg/process/util/orchestrator"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
+	orchutil "github.com/StackVista/stackstate-agent/pkg/util/orchestrator"
 )
 
 // Pod is a singleton PodCheck.
@@ -25,16 +28,18 @@ var Pod = &PodCheck{}
 type PodCheck struct {
 	sysInfo                 *model.SystemInfo
 	containerFailedLogLimit *util.LogLimit
+	scrubber                *redact.DataScrubber
 }
 
 // Init initializes a PodCheck instance.
 func (c *PodCheck) Init(cfg *config.AgentConfig, info *model.SystemInfo) {
 	c.sysInfo = info
 	c.containerFailedLogLimit = util.NewLogLimit(10, time.Minute*10)
+	c.scrubber = redact.NewDefaultDataScrubber()
 }
 
 // Name returns the name of the ProcessCheck.
-func (c *PodCheck) Name() string { return "pod" }
+func (c *PodCheck) Name() string { return config.PodCheckName }
 
 // RealTime indicates if this check only runs in real-time mode.
 func (c *PodCheck) RealTime() bool { return false }
@@ -51,10 +56,10 @@ func (c *PodCheck) Run(cfg *config.AgentConfig, groupID int32) ([]model.MessageB
 		return nil, err
 	}
 
-	podList, err := kubeUtil.GetRawLocalPodList()
+	podList, err := kubeUtil.GetRawLocalPodList(context.TODO())
 	if err != nil {
 		return nil, err
 	}
 
-	return orchestrator.ProcessPodlist(podList, groupID, cfg, cfg.HostName, cfg.KubeClusterName, clusterID)
+	return orchutil.ProcessPodList(podList, groupID, cfg.HostName, clusterID, cfg.Orchestrator)
 }

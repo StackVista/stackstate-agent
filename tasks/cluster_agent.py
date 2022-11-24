@@ -2,34 +2,29 @@
 Cluster Agent tasks
 """
 
-import os
 import glob
+import os
 import shutil
 
 from invoke import task
 from invoke.exceptions import Exit
 
-from .build_tags import get_build_tags
+from .build_tags import get_build_tags, get_default_build_tags
 from .cluster_agent_helpers import build_common, clean_common, refresh_assets_common, version_common
 from .go import deps
-from .utils import do_go_rename, do_sed_rename
+from .utils import (
+    load_release_versions,
+    do_go_rename,  # sts
+    do_sed_rename,  # sts
+)
 
 # constants
 BIN_PATH = os.path.join(".", "bin", "stackstate-cluster-agent")
 AGENT_TAG = "stackstate/cluster_agent:master"
-DEFAULT_BUILD_TAGS = [
-    "kubeapiserver",
-    "clusterchecks",
-    "secrets",
-    "orchestrator",
-    "zlib",
-    "docker",
-    "cri",
-    "containers",
-    "containerd"
-]
+POLICIES_REPO = "https://github.com/DataDog/security-agent-policies.git"
 
 
+# sts begin
 @task
 def apply_branding(ctx):
     """
@@ -52,13 +47,15 @@ def apply_branding(ctx):
     do_go_rename(ctx, '"\\"/opt/datadog-agent/run\\" -> \\"/opt/stackstate-agent/run\\""', "./pkg/config")
 
     # [sts] turn of the metadata collection, the receiver does not recognize these payloads
-    do_sed_rename(ctx, 's/"enable_metadata_collection"\\, true/"enable_metadata_collection"\\, false/g', "./pkg/config/config.go")
+    do_sed_rename(ctx, 's/"enable_metadata_collection"\\, true/"enable_metadata_collection"\\, false/g',
+                  "./pkg/config/config.go")
     do_sed_rename(ctx, 's/"enable_gohai"\\, true/"enable_gohai"\\, false/g', "./pkg/config/config.go")
     do_sed_rename(ctx, 's/"inventories_enabled"\\, true/"inventories_enabled"\\, false/g', "./pkg/config/config.go")
 
     # Trace Agent Metrics
     # do_sed_rename(ctx, datadog_metrics_replace, "./pkg/process/statsd/statsd.go")
     do_sed_rename(ctx, datadog_metrics_replace, "./vendor/github.com/DataDog/datadog-go/statsd/statsd.go")
+    do_sed_rename(ctx, datadog_metrics_replace, "./vendor/github.com/DataDog/datadog-go/statsd/telemetry.go")
 
     # Cluster Agent
     cluster_agent_replace = '/www/! s/datadog/stackstate/g'
@@ -83,12 +80,28 @@ def apply_branding(ctx):
     do_go_rename(ctx,
                  '"\\"unable to load Datadog config file: %s\\" -> \\"unable to load StackState config file: %s\\""',
                  "./cmd/agent/common")
+    do_go_rename(ctx,
+                 '"\\"unable to load Datadog config file: %w\\" -> \\"unable to load StackState config file: %w\\""',
+                 "./cmd/agent/common")
 
     # Hardcoded checks and metrics
     do_sed_rename(ctx, sts_lower_replace, "./pkg/aggregator/aggregator.go")
 
+
+# sts end
+
 @task
-def build(ctx, rebuild=False, build_include=None, build_exclude=None, race=False, development=True, skip_assets=False):
+def build(
+    ctx,
+    rebuild=False,
+    build_include=None,
+    build_exclude=None,
+    race=False,
+    development=True,
+    skip_assets=False,
+    policies_version=None,
+    release_version="nightly-a7",
+):
     """
     Build Cluster Agent
 
@@ -98,9 +111,8 @@ def build(ctx, rebuild=False, build_include=None, build_exclude=None, race=False
     apply_branding(ctx)
     build_common(
         ctx,
-        "cluster-agent.build",
         BIN_PATH,
-        DEFAULT_BUILD_TAGS,
+        get_default_build_tags(build="cluster-agent"),
         "",
         rebuild,
         build_include,
@@ -109,6 +121,22 @@ def build(ctx, rebuild=False, build_include=None, build_exclude=None, race=False
         development,
         skip_assets,
     )
+
+    # sts - ignore security policies (we don't use the security agent)
+
+    # if policies_version is None:
+    #     print("Loading release versions for {}".format(release_version))
+    #     env = load_release_versions(ctx, release_version)
+    #     if "SECURITY_AGENT_POLICIES_VERSION" in env:
+    #         policies_version = env["SECURITY_AGENT_POLICIES_VERSION"]
+    #         print("Security Agent polices for {}: {}".format(release_version, policies_version))
+    #
+    # build_context = "Dockerfiles/cluster-agent"
+    # policies_path = "{}/security-agent-policies".format(build_context)
+    # ctx.run("rm -rf {}".format(policies_path))
+    # ctx.run("git clone {} {}".format(POLICIES_REPO, policies_path))
+    # if policies_version != "master":
+    #     ctx.run("cd {} && git checkout {}".format(policies_path, policies_version))
 
 
 @task
@@ -124,11 +152,11 @@ def clean(ctx):
     """
     Remove temporary objects and binary artifacts
     """
-    clean_common(ctx, "stackstate-cluster-agent")
+    clean_common(ctx, "stackstate-cluster-agent")  # sts
 
 
 @task
-def integration_tests(ctx, install_deps=False, race=False, remote_docker=False, go_mod="vendor"):
+def integration_tests(ctx, install_deps=False, race=False, remote_docker=False, go_mod="mod"):
     """
     Run integration tests for cluster-agent
     """
@@ -136,7 +164,7 @@ def integration_tests(ctx, install_deps=False, race=False, remote_docker=False, 
         deps(ctx)
 
     # We need docker for the kubeapiserver integration tests
-    tags = DEFAULT_BUILD_TAGS + ["docker"]
+    tags = get_default_build_tags(build="cluster-agent") + ["docker"]
 
     test_args = {
         "go_mod": go_mod,
@@ -169,7 +197,7 @@ def image_build(ctx, arch='amd64', tag=AGENT_TAG, push=False):
     Build the docker image
     """
 
-    dca_binary = glob.glob(os.path.join(BIN_PATH, "stackstate-cluster-agent"))
+    dca_binary = glob.glob(os.path.join(BIN_PATH, "stackstate-cluster-agent"))  # sts
     # get the last debian package built
     if not dca_binary:
         print("No bin found in {}".format(BIN_PATH))
@@ -179,7 +207,7 @@ def image_build(ctx, arch='amd64', tag=AGENT_TAG, push=False):
     ctx.run("chmod +x {}".format(latest_file))
 
     build_context = "Dockerfiles/cluster-agent"
-    exec_path = "{}/stackstate-cluster-agent.{}".format(build_context, arch)
+    exec_path = "{}/stackstate-cluster-agent.{}".format(build_context, arch)  # sts
     dockerfile_path = "{}/{}/Dockerfile".format(build_context, arch)
 
     shutil.copy2(latest_file, exec_path)
@@ -200,3 +228,21 @@ def version(ctx, url_safe=False, git_sha_length=7):
                     (the windows builder and the default ubuntu version have such an incompatibility)
     """
     version_common(ctx, url_safe, git_sha_length)
+
+
+@task
+def update_generated_code(ctx):
+    """
+    Re-generate 'pkg/clusteragent/custommetrics/api/generated/openapi/zz_generated.openapi.go'.
+    """
+    ctx.run("go install -mod=readonly k8s.io/kube-openapi/cmd/openapi-gen")
+    ctx.run(
+        "$GOPATH/bin/openapi-gen \
+--logtostderr \
+-i k8s.io/metrics/pkg/apis/custom_metrics,k8s.io/metrics/pkg/apis/custom_metrics/v1beta1,k8s.io/metrics/pkg/apis/custom_metrics/v1beta2,k8s.io/metrics/pkg/apis/external_metrics,k8s.io/metrics/pkg/apis/external_metrics/v1beta1,k8s.io/metrics/pkg/apis/metrics,k8s.io/metrics/pkg/apis/metrics/v1beta1,k8s.io/apimachinery/pkg/apis/meta/v1,k8s.io/apimachinery/pkg/api/resource,k8s.io/apimachinery/pkg/version,k8s.io/api/core/v1 \
+-h ./tools/boilerplate.go.txt \
+-p ./pkg/clusteragent/custommetrics/api/generated/openapi \
+-O zz_generated.openapi \
+-o ./ \
+-r /dev/null"
+    )

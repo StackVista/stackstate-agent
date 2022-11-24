@@ -152,7 +152,7 @@ def test_created_connection_after_start_with_metrics(host, ansible_var):
         print(outgoing_conn)
         assert outgoing_conn["direction"] == "OUTGOING"
         assert outgoing_conn["connectionType"] == "TCP"
-        assert outgoing_conn["bytesSentPerSecond"] == 0.0 # We don't collect metrics on Windows
+        assert outgoing_conn["bytesSentPerSecond"] == 0.0  # We don't collect metrics on Windows
         assert outgoing_conn["bytesReceivedPerSecond"] == 0.0
 
         print("trying to find connection (windows -> ubuntu INCOMING) {} -> {}:{}".format(windows_private_ip,
@@ -161,7 +161,7 @@ def test_created_connection_after_start_with_metrics(host, ansible_var):
         print(incoming_conn)
         assert incoming_conn["direction"] == "INCOMING"
         assert incoming_conn["connectionType"] == "TCP"
-        assert incoming_conn["bytesSentPerSecond"] == 0.0 # We don't collect metrics on Windows
+        assert incoming_conn["bytesSentPerSecond"] == 0.0  # We don't collect metrics on Windows
         assert incoming_conn["bytesReceivedPerSecond"] > 10.0
 
     util.wait_until(wait_for_connection, 120, 3)
@@ -210,7 +210,7 @@ def test_created_connection_before_start(host, ansible_var):
 
 
 def test_host_metrics(host):
-    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=2000"
+    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=5000"
 
     def wait_for_metrics():
         data = host.check_output("curl \"%s\"" % url)
@@ -276,8 +276,8 @@ def test_host_metrics(host):
         # Agent metrics
         assert_metric("stackstate.agent.running", lambda v: v == 1.0, lambda v: v == 1.0, lambda v: v == 1.0)
         assert_metric("stackstate.process_agent.running", lambda v: v == 1.0, lambda v: v == 1.0, lambda v: v == 1.0)
-        assert_metric("stackstate.process_agent.processes.host_count", lambda v: v > 1.0, lambda v: v > 1.0, lambda v: v > 1.0)
-        assert_metric("stackstate.process_agent.containers.host_count", lambda v: v == 0.0, lambda v: v == 0.0, lambda v: v == 0.0)
+        assert_metric("stackstate.process_agent.processes.total_count", lambda v: v > 1.0, lambda v: v > 1.0, lambda v: v > 1.0)
+        assert_metric("stackstate.process_agent.containers.total_count", lambda v: v == 0.0, lambda v: v == 0.0, lambda v: v == 0.0)
 
         # Assert that we don't see any Datadog metrics
         datadog_metrics = [(key, value) for key, value in metrics.items() if key.startswith("datadog")]
@@ -319,7 +319,7 @@ def test_process_metrics(host):
 
 
 def test_docker_metrics(host):
-    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=1000"
+    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=3000"
 
     def wait_for_metrics():
         data = host.check_output("curl \"%s\"" % url)
@@ -327,23 +327,48 @@ def test_docker_metrics(host):
         with open("./topic-multi-metrics-docker-containers.json", 'w') as f:
             json.dump(json_data, f, indent=4)
 
-        def get_keys(m_host):
-            return next(set(message["message"]["MultiMetric"]["values"].keys())
-                        for message in json_data["messages"]
-                        if message["message"]["MultiMetric"]["name"] == "convertedMetric" and
-                        message["message"]["MultiMetric"]["host"] == m_host and
-                        "docker_image" in message["message"]["MultiMetric"]["tags"] and
-                        len(message["message"]["MultiMetric"]["values"]) > 2
-                        )
+        m_host = "agent-connection-namespaces"
 
         expected = {"docker.mem.failed_count", "docker.container.open_fds", "docker.kmem.usage", "docker.mem.cache",
                     "docker.cpu.throttled.time", "docker.cpu.usage", "docker.mem.rss", "docker.cpu.shares",
                     "docker.thread.count", "docker.cpu.system", "docker.cpu.limit", "docker.cpu.throttled",
                     "docker.cpu.user"}
+        for message in json_data["messages"]:
+            if message["message"]["MultiMetric"]["name"] == "convertedMetric" and \
+                message["message"]["MultiMetric"]["host"] == m_host and \
+                "docker_image" in message["message"]["MultiMetric"]["tags"] and \
+                    expected.issubset(message["message"]["MultiMetric"]["values"].keys()):
+                assert True
+                return
 
-        assert expected.issubset(get_keys("agent-connection-namespaces"))
-    
-    util.wait_until(wait_for_metrics, 30, 3)
+        assert False, "Could not find docker metrics"
+
+    util.wait_until(wait_for_metrics, 90, 3)
+
+
+def test_docker_io_metrics(host):
+    url = "http://localhost:7070/api/topic/sts_multi_metrics?limit=3000"
+
+    def wait_for_metrics():
+        data = host.check_output("curl \"%s\"" % url)
+        json_data = json.loads(data)
+        with open("./topic-multi-metrics-docker-containers.json", 'w') as f:
+            json.dump(json_data, f, indent=4)
+
+        m_host = "agent-connection-namespaces"
+
+        expected = {"docker.io.write_operations", "docker.io.read_operations", "docker.io.read_bytes", "docker.io.write_bytes"}
+        for message in json_data["messages"]:
+            if message["message"]["MultiMetric"]["name"] == "convertedMetric" and \
+                message["message"]["MultiMetric"]["host"] == m_host and \
+                "docker_image" in message["message"]["MultiMetric"]["tags"] and \
+                    expected.issubset(message["message"]["MultiMetric"]["values"].keys()):
+                assert True
+                return
+
+        assert False, "Could not find docker io metrics"
+
+    util.wait_until(wait_for_metrics, 90, 3)
 
 
 def test_connection_network_namespaces_relations(host):

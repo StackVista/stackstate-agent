@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package mocksender
 
@@ -30,10 +30,16 @@ func (m *MockSender) AssertMetric(t *testing.T, method string, metric string, va
 	return m.Mock.AssertCalled(t, method, metric, value, hostname, MatchTagsContains(tags))
 }
 
+// AssertMonotonicCount allows to assert a monotonic count was emitted with given parameters.
+// Additional tags over the ones specified don't make it fail
+func (m *MockSender) AssertMonotonicCount(t *testing.T, method string, metric string, value float64, hostname string, tags []string, flushFirstValue bool) bool {
+	return m.Mock.AssertCalled(t, method, metric, value, hostname, MatchTagsContains(tags), flushFirstValue)
+}
+
 // AssertHistogramBucket allows to assert a histogram bucket was emitted with given parameters.
 // Additional tags over the ones specified don't make it fail
-func (m *MockSender) AssertHistogramBucket(t *testing.T, method string, metric string, value int64, lowerBound float64, upperBound float64, monotonic bool, hostname string, tags []string) bool {
-	return m.Mock.AssertCalled(t, method, metric, value, lowerBound, upperBound, monotonic, hostname, tags)
+func (m *MockSender) AssertHistogramBucket(t *testing.T, method string, metric string, value int64, lowerBound float64, upperBound float64, monotonic bool, hostname string, tags []string, flushFirstValue bool) bool {
+	return m.Mock.AssertCalled(t, method, metric, value, lowerBound, upperBound, monotonic, hostname, tags, flushFirstValue)
 }
 
 // AssertMetricInRange allows to assert a metric was emitted with given parameters, with a value in a given range.
@@ -57,6 +63,11 @@ func (m *MockSender) AssertMetricNotTaggedWith(t *testing.T, method string, metr
 // AggregationKey, Priority, SourceTypeName, EventType, Host and a Ts range weighted with the parameter allowedDelta
 func (m *MockSender) AssertEvent(t *testing.T, expectedEvent metrics.Event, allowedDelta time.Duration) bool {
 	return m.Mock.AssertCalled(t, "Event", MatchEventLike(expectedEvent, allowedDelta))
+}
+
+// AssertEventPlatformEvent assert the expected event was emitted with the following values
+func (m *MockSender) AssertEventPlatformEvent(t *testing.T, expectedRawEvent string, expectedEventType string) bool {
+	return m.Mock.AssertCalled(t, "EventPlatformEvent", expectedRawEvent, expectedEventType)
 }
 
 // AssertEventMissing assert the expectedEvent was never emitted with the following values:

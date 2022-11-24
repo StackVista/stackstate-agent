@@ -1,9 +1,9 @@
 """
 RtLoader namespaced tasks
 """
+import errno
 import os
 import shutil
-import errno
 
 from invoke import task
 from invoke.exceptions import Exit
@@ -99,7 +99,7 @@ def make(ctx, install_prefix=None, python_runtimes='3', cmake_options='', arch="
 
 
 @task
-def clean(ctx):
+def clean(_):
     """
     Clean up CMake's cache.
     Necessary when the paths to some libraries found by CMake (for example Python) have changed on the system.

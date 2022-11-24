@@ -11,7 +11,7 @@ LOG_DIR=/var/log/stackstate-agent
 CONFIG_DIR=/etc/stackstate-agent
 SERVICE_NAME=stackstate-agent
 
-KNOWN_DISTRIBUTION="(Debian|Ubuntu|RedHat|CentOS|openSUSE|Amazon|Arista|SUSE)"
+KNOWN_DISTRIBUTION="(Debian|Ubuntu|RedHat|CentOS|openSUSE|Amazon|Arista|SUSE|Rocky|AlmaLinux)"
 DISTRIBUTION=$(lsb_release -d 2>/dev/null | grep -Eo $KNOWN_DISTRIBUTION  || grep -Eo $KNOWN_DISTRIBUTION /etc/issue 2>/dev/null || grep -Eo $KNOWN_DISTRIBUTION /etc/Eos-release 2>/dev/null || grep -m1 -Eo $KNOWN_DISTRIBUTION /etc/os-release 2>/dev/null || uname -s)
 
 # If we are inside the Docker container, do nothing
@@ -68,6 +68,36 @@ if [ "$DISTRIBUTION" != "Darwin" ]; then
       chmod 0440 ${CONFIG_DIR}/system-probe.yaml || true
     fi
 
+    # Make security-agent config read-only
+    # [sts]
+    if [ -f "$CONFIG_DIR/security-agent.yaml.example" ]; then
+      chmod 0440 ${CONFIG_DIR}/security-agent.yaml.example || true
+    fi
+    if [ -f "$CONFIG_DIR/security-agent.yaml" ]; then
+      chmod 0440 ${CONFIG_DIR}/security-agent.yaml || true
+    fi
+
+    if [ -d "$CONFIG_DIR/compliance.d" ]; then
+      chown -R root:root ${CONFIG_DIR}/compliance.d || true
+    fi
+
+    if [ -d "$CONFIG_DIR/runtime-security.d" ]; then
+      chown -R root:root ${CONFIG_DIR}/runtime-security.d || true
+    fi
+
+    # Make the system-probe and security-agent binaries and eBPF programs owned by root
+    # sts system-probe is disabled by default
+    if [ -f "${INSTALL_DIR}/embedded/bin/system-probe" ]; then
+      chown root:root ${INSTALL_DIR}/embedded/bin/system-probe
+    fi
+    if [ -f "${INSTALL_DIR}/embedded/share/system-probe/ebpf" ]; then
+      chown -R root:root ${INSTALL_DIR}/embedded/share/system-probe/ebpf
+    fi
+    # [sts]
+    if [ -f "${INSTALL_DIR}/embedded/bin/security-agent" ]; then
+      chown root:root ${INSTALL_DIR}/embedded/bin/security-agent
+    fi
+    chown -R root:root ${INSTALL_DIR}/embedded/share/system-probe/ebpf
 
     # Enable and restart the agent service here on Debian platforms
     # On RHEL, this is done in the posttrans script
@@ -79,6 +109,7 @@ if [ "$DISTRIBUTION" != "Darwin" ]; then
             SYSTEMCTL_SKIP_SYSV=true systemctl enable $SERVICE_NAME || echo "[ WARNING ]\tCannot enable $SERVICE_NAME with systemctl"
             SYSTEMCTL_SKIP_SYSV=true systemctl enable $SERVICE_NAME-process || echo "[ WARNING ]\tCannot enable $SERVICE_NAME-process with systemctl"
             SYSTEMCTL_SKIP_SYSV=true systemctl enable $SERVICE_NAME-trace || echo "[ WARNING ]\tCannot enable $SERVICE_NAME-trace with systemctl"
+            SYSTEMCTL_SKIP_SYSV=true systemctl enable $SERVICE_NAME-security || echo "[ WARNING ]\tCannot enable $SERVICE_NAME-security with systemctl"
         elif command -v initctl >/dev/null 2>&1; then
             # Nothing to do, this is defined directly in the upstart job file
             :
@@ -86,6 +117,7 @@ if [ "$DISTRIBUTION" != "Darwin" ]; then
             update-rc.d $SERVICE_NAME defaults || echo "[ WARNING ]\tCannot enable $SERVICE_NAME with update-rc.d"
             update-rc.d $SERVICE_NAME-process defaults || echo "[ WARNING ]\tCannot enable $SERVICE_NAME-process with update-rc.d"
             update-rc.d $SERVICE_NAME-trace defaults || echo "[ WARNING ]\tCannot enable $SERVICE_NAME-trace with update-rc.d"
+            update-rc.d $SERVICE_NAME-security defaults || echo "[ WARNING ]\tCannot enable $SERVICE_NAME-security with update-rc.d"
         else
             echo "[ WARNING ]\tCannot detect a supported init system. The stackstate-agent package only provides service files for systemd, upstart and sysvinit."
         fi
@@ -119,9 +151,13 @@ else
     CONF_DIR=$INSTALL_DIR/etc
     RUN_DIR=$INSTALL_DIR/run
 
+    # On Mac, the real log folder is located under /opt/stackstate-agent/logs, because some MacOS versions deletes
+    # /var/log on upgrade. The old log folder now becomes a symbolic link to the new folder.
+    REAL_LOG_DIR=/opt/stackstate-agent/logs
+
     # Let's log the standard outputs of this script
-    LOG_FILE="$LOG_DIR/postinstall.log"
-    mkdir -vp $LOG_DIR
+    LOG_FILE="$REAL_LOG_DIR/postinstall.log"
+    mkdir -vp $REAL_LOG_DIR
     exec > $LOG_FILE 2>&1
 
     # Let's talk to our user installing the Agent a bit
@@ -147,8 +183,8 @@ else
     echo "INSTALL_USER: $INSTALL_USER"
 
     echo "# Preparing log dir"
-    chown -vR "${INSTALL_USER}:admin" "$LOG_DIR"
-    chmod -v 755 $LOG_DIR
+    chown -vR "${INSTALL_USER}:admin" "$REAL_LOG_DIR"
+    chmod -v 755 $REAL_LOG_DIR
 
     echo "# Installing the app"
     mv -v "$OPT_APP_DIR" /Applications || echo "App already installed"

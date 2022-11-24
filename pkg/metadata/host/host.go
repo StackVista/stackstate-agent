@@ -1,33 +1,33 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package host
 
 import (
+	"context"
+	"errors"
 	"os"
 	"path"
 	"sync"
 	"time"
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/status"
 	"github.com/StackVista/stackstate-agent/pkg/metadata/common"
+	"github.com/StackVista/stackstate-agent/pkg/metadata/inventories"
 	"github.com/StackVista/stackstate-agent/pkg/util"
-	"github.com/StackVista/stackstate-agent/pkg/util/alibaba"
 	"github.com/StackVista/stackstate-agent/pkg/util/cache"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders"
 	"github.com/StackVista/stackstate-agent/pkg/util/flavor"
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname/kubelet"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/StackVista/stackstate-agent/pkg/util/tencent"
 
 	"github.com/StackVista/stackstate-agent/pkg/metadata/host/container"
-	"github.com/StackVista/stackstate-agent/pkg/util/azure"
-	"github.com/StackVista/stackstate-agent/pkg/util/cloudfoundry"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders/gce"
 	"github.com/StackVista/stackstate-agent/pkg/util/ec2"
-	"github.com/StackVista/stackstate-agent/pkg/util/gce"
-	kubelet "github.com/StackVista/stackstate-agent/pkg/util/hostname/kubelet"
-
-	"github.com/StackVista/stackstate-agent/pkg/logs"
+	httputils "github.com/StackVista/stackstate-agent/pkg/util/http"
 
 	"io/ioutil"
 
@@ -46,8 +46,8 @@ type installInfo struct {
 
 // GetPayload builds a metadata payload every time is called.
 // Some data is collected only once, some is cached, some is collected at every call.
-func GetPayload(hostnameData util.HostnameData) *Payload {
-	meta := getMeta(hostnameData)
+func GetPayload(ctx context.Context, hostnameData util.HostnameData) *Payload {
+	meta := getMeta(ctx, hostnameData)
 	meta.Hostname = hostnameData.Hostname
 
 	p := &Payload{
@@ -56,11 +56,12 @@ func GetPayload(hostnameData util.HostnameData) *Payload {
 		PythonVersion: GetPythonVersion(),
 		SystemStats:   getSystemStats(),
 		Meta:          meta,
-		HostTags:      getHostTags(),
+		HostTags:      GetHostTags(ctx, false),
 		ContainerMeta: getContainerMeta(1 * time.Second),
-		NetworkMeta:   getNetworkMeta(),
+		NetworkMeta:   getNetworkMeta(ctx),
 		LogsMeta:      getLogsMeta(),
 		InstallMethod: getInstallMethod(getInstallInfoPath()),
+		ProxyMeta:     getProxyMeta(),
 	}
 
 	// Cache the metadata for use in other payloads
@@ -72,22 +73,22 @@ func GetPayload(hostnameData util.HostnameData) *Payload {
 
 // GetPayloadFromCache returns the payload from the cache if it exists, otherwise it creates it.
 // The metadata reporting should always grab it fresh. Any other uses, e.g. status, should use this
-func GetPayloadFromCache(hostnameData util.HostnameData) *Payload {
+func GetPayloadFromCache(ctx context.Context, hostnameData util.HostnameData) *Payload {
 	key := buildKey("payload")
 	if x, found := cache.Cache.Get(key); found {
 		return x.(*Payload)
 	}
-	return GetPayload(hostnameData)
+	return GetPayload(ctx, hostnameData)
 }
 
 // GetMeta grabs the metadata from the cache and returns it,
 // if the cache is empty, then it queries the information directly
-func GetMeta(hostnameData util.HostnameData) *Meta {
+func GetMeta(ctx context.Context, hostnameData util.HostnameData) *Meta {
 	key := buildKey("meta")
 	if x, found := cache.Cache.Get(key); found {
 		return x.(*Meta)
 	}
-	return getMeta(hostnameData)
+	return getMeta(ctx, hostnameData)
 }
 
 // GetPythonVersion returns the version string as provided by the embedded Python
@@ -101,62 +102,29 @@ func GetPythonVersion() string {
 	return "n/a"
 }
 
-// getHostAliases returns the hostname aliases from different provider
-// This should include GCE, Azure, Cloud foundry, kubernetes
-func getHostAliases() []string {
-	aliases := []string{}
-
-	alibabaAlias, err := alibaba.GetHostAlias()
-	if err != nil {
-		log.Debugf("no Alibaba Host Alias: %s", err)
-	} else if alibabaAlias != "" {
-		aliases = append(aliases, alibabaAlias)
+func getPublicIPv4(ctx context.Context) (string, error) {
+	publicIPFetcher := map[string]func(context.Context) (string, error){
+		"EC2": ec2.GetPublicIPv4,
+		"GCE": gce.GetPublicIPv4,
 	}
-
-	azureAlias, err := azure.GetHostAlias()
-	if err != nil {
-		log.Debugf("no Azure Host Alias: %s", err)
-	} else if azureAlias != "" {
-		aliases = append(aliases, azureAlias)
+	for name, fetcher := range publicIPFetcher {
+		publicIPv4, err := fetcher(ctx)
+		if err == nil {
+			log.Debugf("%s public IP = %s", name, publicIPv4)
+			return publicIPv4, nil
+		}
+		log.Debugf("could not fetch %s public IPv4: %s", name, err)
 	}
-
-	gceAlias, err := gce.GetHostAlias()
-	if err != nil {
-		log.Debugf("no GCE Host Alias: %s", err)
-	} else {
-		aliases = append(aliases, gceAlias)
-	}
-
-	cfAliases, err := cloudfoundry.GetHostAliases()
-	if err != nil {
-		log.Debugf("no Cloud Foundry Host Alias: %s", err)
-	} else if cfAliases != nil {
-		aliases = append(aliases, cfAliases...)
-	}
-
-	k8sAlias, err := kubelet.GetHostAlias()
-	if err != nil {
-		log.Debugf("no Kubernetes Host Alias (through kubelet API): %s", err)
-	} else if k8sAlias != "" {
-		aliases = append(aliases, k8sAlias)
-	}
-
-	tencentAlias, err := tencent.GetHostAlias()
-	if err != nil {
-		log.Debugf("no Tencent Host Alias: %s", err)
-	} else if tencentAlias != "" {
-		aliases = append(aliases, tencentAlias)
-	}
-
-	return aliases
+	log.Infof("No public IPv4 address found")
+	return "", errors.New("No public IPv4 address found")
 }
 
 // getMeta grabs the information and refreshes the cache
-func getMeta(hostnameData util.HostnameData) *Meta {
+func getMeta(ctx context.Context, hostnameData util.HostnameData) *Meta {
 	hostname, _ := os.Hostname()
 	tzname, _ := time.Now().Zone()
-	ec2Hostname, _ := ec2.GetHostname()
-	instanceID, _ := ec2.GetInstanceID()
+	ec2Hostname, _ := ec2.GetHostname(ctx)
+	instanceID, _ := ec2.GetInstanceID(ctx)
 
 	var agentHostname string
 
@@ -170,9 +138,13 @@ func getMeta(hostnameData util.HostnameData) *Meta {
 		Timezones:      []string{tzname},
 		SocketFqdn:     util.Fqdn(hostname),
 		EC2Hostname:    ec2Hostname,
-		HostAliases:    getHostAliases(),
+		HostAliases:    cloudproviders.GetHostAliases(ctx),
 		InstanceID:     instanceID,
 		AgentHostname:  agentHostname,
+	}
+
+	if finalClusterName := kubelet.GetMetaClusterNameText(ctx, hostname); finalClusterName != "" {
+		m.ClusterName = finalClusterName
 	}
 
 	// Cache the metadata for use in other payload
@@ -182,13 +154,22 @@ func getMeta(hostnameData util.HostnameData) *Meta {
 	return m
 }
 
-func getNetworkMeta() *NetworkMeta {
-	nid, err := util.GetNetworkID()
+func getNetworkMeta(ctx context.Context) *NetworkMeta {
+	nid, err := cloudproviders.GetNetworkID(ctx)
 	if err != nil {
 		log.Infof("could not get network metadata: %s", err)
 		return nil
 	}
-	return &NetworkMeta{ID: nid}
+
+	networkMeta := &NetworkMeta{ID: nid}
+
+	publicIPv4, err := getPublicIPv4(ctx)
+	if err == nil {
+		log.Infof("Adding public IPv4 %s to network metadata", publicIPv4)
+		networkMeta.PublicIPv4 = publicIPv4
+	}
+
+	return networkMeta
 }
 
 func getContainerMeta(timeout time.Duration) map[string]string {
@@ -235,7 +216,21 @@ func getContainerMeta(timeout time.Duration) map[string]string {
 }
 
 func getLogsMeta() *LogsMeta {
-	return &LogsMeta{Transport: string(logs.CurrentTransport)}
+	return &LogsMeta{Transport: string(status.CurrentTransport)}
+}
+
+// Expose the value of no_proxy_nonexact_match as well as any warnings of proxy behavior change in the metadata payload.
+// The NoProxy maps contain any errors or warnings due to the behavior changing when no_proxy_nonexact_match is enabled.
+// ProxyBehaviorChanged is true in the metadata if there would be any errors or warnings indicating that there would a
+// behavior change if 'no_proxy_nonexact_match' was enabled.
+func getProxyMeta() *ProxyMeta {
+	httputils.NoProxyMapMutex.Lock()
+	defer httputils.NoProxyMapMutex.Unlock()
+
+	return &ProxyMeta{
+		NoProxyNonexactMatch: config.Datadog.GetBool("no_proxy_nonexact_match"),
+		ProxyBehaviorChanged: len(httputils.NoProxyIgnoredWarningMap)+len(httputils.NoProxyUsedInFuture)+len(httputils.NoProxyChanged) > 0,
+	}
 }
 
 func buildKey(key string) string {
@@ -268,6 +263,9 @@ func getInstallMethod(infoPath string) *InstallMethod {
 
 	// if we could not get install info
 	if err != nil {
+		inventories.SetAgentMetadata(inventories.AgentInstallMethodTool, "undefined")
+		inventories.SetAgentMetadata(inventories.AgentInstallMethodToolVersion, "")
+		inventories.SetAgentMetadata(inventories.AgentInstallMethodInstallerVersion, "")
 		// consider install info is kept "undefined"
 		return &InstallMethod{
 			ToolVersion:      "undefined",
@@ -276,6 +274,9 @@ func getInstallMethod(infoPath string) *InstallMethod {
 		}
 	}
 
+	inventories.SetAgentMetadata(inventories.AgentInstallMethodTool, install.Method.Tool)
+	inventories.SetAgentMetadata(inventories.AgentInstallMethodToolVersion, install.Method.ToolVersion)
+	inventories.SetAgentMetadata(inventories.AgentInstallMethodInstallerVersion, install.Method.InstallerVersion)
 	return &InstallMethod{
 		ToolVersion:      install.Method.ToolVersion,
 		Tool:             &install.Method.Tool,

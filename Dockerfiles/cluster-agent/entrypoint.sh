@@ -4,7 +4,7 @@
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
-# Copyright 2016-2020 Datadog, Inc.
+# Copyright 2016-present Datadog, Inc.
 
 
 ##### Core config #####
@@ -14,8 +14,8 @@ if [[ -z "$STS_API_KEY" ]]; then
     exit 1
 fi
 
-##### Copy the custom confs #####
-find /conf.d -name '*.yaml' -exec cp --parents -fv {} /etc/stackstate-agent/ \;
+##### Copy the custom confs removing any ".." folder in the paths #####
+find /conf.d -name '*.yaml' -o -name '*.yaml.default' | sed -E "s#/\.\.[^/]+##" | xargs -I{} cp --parents -fv {} /etc/stackstate-agent/
 
 ##### Starting up #####
 export PATH="/opt/stackstate-agent/bin/stackstate-cluster-agent/:/opt/stackstate-agent/embedded/bin/":$PATH

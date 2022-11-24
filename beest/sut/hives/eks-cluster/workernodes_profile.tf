@@ -45,6 +45,12 @@ resource "aws_iam_role_policy_attachment" "eks_ecr_readonly" {
   role       = aws_iam_role.eks_node_role.name
 }
 
+resource "aws_iam_role_policy_attachment" "eks_ebs_csi_driver_policy" {
+  count = tonumber(var.k8s_version) >= 1.23 ? 1 : 0
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+  role       = aws_iam_role.eks_node_role.name
+}
+
 resource "aws_iam_role_policy_attachment" "eks_cw_policy" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
   role       = aws_iam_role.eks_node_role.name
@@ -114,14 +120,4 @@ resource "aws_security_group_rule" "nodes_internode_communications" {
   description       = "allow nodes to communicate with each other"
   security_group_id = aws_security_group.eks_nodes_sg.id
   self              = true
-}
-
-resource "aws_security_group_rule" "nodes_ssh" {
-  type              = "ingress"
-  from_port         = 22
-  to_port           = 22
-  protocol          = "tcp"
-  description       = "allow SSH into nodes"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.eks_nodes_sg.id
 }

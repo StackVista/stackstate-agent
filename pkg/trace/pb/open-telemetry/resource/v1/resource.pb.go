@@ -72,7 +72,7 @@ func (m *Resource) GetDroppedAttributesCount() uint32 {
 }
 
 func init() {
-	proto.RegisterType((*Resource)(nil), "opentelemetry.proto.resource.v1.Resource")
+	proto.RegisterType((*Resource)(nil), "sts.opentelemetry.proto.resource.v1.Resource")
 }
 
 func init() {

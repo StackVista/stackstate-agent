@@ -1,8 +1,9 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
+//go:build clusterchecks
 // +build clusterchecks
 
 package clusterchecks
@@ -50,9 +51,9 @@ func (h *Handler) GetState() (types.StateResponse, error) {
 	}
 }
 
-// GetConfigs returns configurations dispatched to a given node
-func (h *Handler) GetConfigs(nodeName string) (types.ConfigResponse, error) {
-	configs, lastChange, err := h.dispatcher.getNodeConfigs(nodeName)
+// GetConfigs returns configurations dispatched to a given agent
+func (h *Handler) GetConfigs(identifier string) (types.ConfigResponse, error) {
+	configs, lastChange, err := h.dispatcher.getClusterCheckConfigs(identifier)
 	response := types.ConfigResponse{
 		Configs:    configs,
 		LastChange: lastChange,
@@ -61,8 +62,8 @@ func (h *Handler) GetConfigs(nodeName string) (types.ConfigResponse, error) {
 }
 
 // PostStatus handles status reports from the node agents
-func (h *Handler) PostStatus(nodeName, clientIP string, status types.NodeStatus) (types.StatusResponse, error) {
-	upToDate, err := h.dispatcher.processNodeStatus(nodeName, clientIP, status)
+func (h *Handler) PostStatus(identifier, clientIP string, status types.NodeStatus) (types.StatusResponse, error) {
+	upToDate, err := h.dispatcher.processNodeStatus(identifier, clientIP, status)
 	response := types.StatusResponse{
 		IsUpToDate: upToDate,
 	}
@@ -87,4 +88,26 @@ func (h *Handler) GetAllEndpointsCheckConfigs() (types.ConfigResponse, error) {
 		LastChange: 0,
 	}
 	return response, err
+}
+
+func (h *Handler) RebalanceClusterChecks() ([]types.RebalanceResponse, error) {
+	if !h.dispatcher.advancedDispatching {
+		return nil, fmt.Errorf("no checks to rebalance: advanced dispatching is not enabled")
+	}
+
+	rebalancingDecisions := h.dispatcher.rebalance()
+	response := []types.RebalanceResponse{}
+
+	for _, decision := range rebalancingDecisions {
+		response = append(response, types.RebalanceResponse{
+			CheckID:        decision.CheckID,
+			CheckWeight:    decision.CheckWeight,
+			SourceNodeName: decision.SourceNodeName,
+			SourceDiff:     decision.SourceDiff,
+			DestNodeName:   decision.DestNodeName,
+			DestDiff:       decision.DestDiff,
+		})
+	}
+
+	return response, nil
 }

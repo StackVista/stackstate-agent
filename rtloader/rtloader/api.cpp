@@ -2,11 +2,25 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog
 // (https://www.datadoghq.com/).
-// Copyright 2019-2020 Datadog, Inc.
+// Copyright 2019-present Datadog, Inc.
 #ifdef _WIN32
 #    include <Windows.h>
 #else
 #    include <dlfcn.h>
+#endif
+
+#ifndef _WIN32
+// clang-format off
+// handler stuff
+#include <execinfo.h>
+#include <csignal>
+#include <cstring>
+#include <sys/types.h>
+#include <unistd.h>
+
+// logging to cerr
+#include <errno.h>
+// clang-format on
 #endif
 
 #include <iostream>
@@ -22,6 +36,9 @@
 #elif __APPLE__
 #    define DATADOG_AGENT_TWO "libdatadog-agent-two.dylib"
 #    define DATADOG_AGENT_THREE "libdatadog-agent-three.dylib"
+#elif __FreeBSD__
+#    define DATADOG_AGENT_TWO "libdatadog-agent-two.so"
+#    define DATADOG_AGENT_THREE "libdatadog-agent-three.so"
 #elif _WIN32
 #    define DATADOG_AGENT_TWO "libdatadog-agent-two.dll"
 #    define DATADOG_AGENT_THREE "libdatadog-agent-three.dll"
@@ -83,7 +100,7 @@ create_t *loadAndCreate(const char *dll, const char *python_home, char **error)
     return create;
 }
 
-rtloader_t *make2(const char *python_home, char **error)
+rtloader_t *make2(const char *python_home, const char *python_exe, char **error)
 {
 
     if (rtloader_backend != NULL) {
@@ -95,10 +112,10 @@ rtloader_t *make2(const char *python_home, char **error)
     if (!create) {
         return NULL;
     }
-    return AS_TYPE(rtloader_t, create(python_home, _get_memory_tracker_cb()));
+    return AS_TYPE(rtloader_t, create(python_home, python_exe, _get_memory_tracker_cb()));
 }
 
-rtloader_t *make3(const char *python_home, char **error)
+rtloader_t *make3(const char *python_home, const char *python_exe, char **error)
 {
     if (rtloader_backend != NULL) {
         *error = strdupe("RtLoader already initialized!");
@@ -109,7 +126,7 @@ rtloader_t *make3(const char *python_home, char **error)
     if (!create_three) {
         return NULL;
     }
-    return AS_TYPE(rtloader_t, create_three(python_home, _get_memory_tracker_cb()));
+    return AS_TYPE(rtloader_t, create_three(python_home, python_exe, _get_memory_tracker_cb()));
 }
 
 /*! \fn void destroy(rtloader_t *rtloader)
@@ -133,7 +150,7 @@ void destroy(rtloader_t *rtloader)
 }
 
 #else
-rtloader_t *make2(const char *python_home, char **error)
+rtloader_t *make2(const char *python_home, const char *python_exe, char **error)
 {
     if (rtloader_backend != NULL) {
         std::string err_msg = "RtLoader already initialized!";
@@ -162,10 +179,10 @@ rtloader_t *make2(const char *python_home, char **error)
         return NULL;
     }
 
-    return AS_TYPE(rtloader_t, create(python_home, _get_memory_tracker_cb()));
+    return AS_TYPE(rtloader_t, create(python_home, python_exe, _get_memory_tracker_cb()));
 }
 
-rtloader_t *make3(const char *python_home, char **error)
+rtloader_t *make3(const char *python_home, const char *python_exe, char **error)
 {
     if (rtloader_backend != NULL) {
         std::string err_msg = "RtLoader already initialized!";
@@ -195,7 +212,7 @@ rtloader_t *make3(const char *python_home, char **error)
         return NULL;
     }
 
-    return AS_TYPE(rtloader_t, create_three(python_home, _get_memory_tracker_cb()));
+    return AS_TYPE(rtloader_t, create_three(python_home, python_exe, _get_memory_tracker_cb()));
 }
 
 void destroy(rtloader_t *rtloader)
@@ -298,6 +315,11 @@ char *run_check(rtloader_t *rtloader, rtloader_pyobject_t *check)
     return AS_TYPE(RtLoader, rtloader)->runCheck(AS_TYPE(RtLoaderPyObject, check));
 }
 
+void cancel_check(rtloader_t *rtloader, rtloader_pyobject_t *check)
+{
+    AS_TYPE(RtLoader, rtloader)->cancelCheck(AS_TYPE(RtLoaderPyObject, check));
+}
+
 char **get_checks_warnings(rtloader_t *rtloader, rtloader_pyobject_t *check)
 {
     return AS_TYPE(RtLoader, rtloader)->getCheckWarnings(AS_TYPE(RtLoaderPyObject, check));
@@ -323,14 +345,82 @@ void clear_error(rtloader_t *rtloader)
 }
 
 #ifndef WIN32
+core_trigger_t core_dump = NULL;
+
+static inline void core(int sig)
+{
+    signal(sig, SIG_DFL);
+    kill(getpid(), sig);
+}
+
+//! signalHandler
+/*!
+  \brief Crash handler for UNIX OSes
+  \param sig Integer representing the signal number that triggered the crash.
+  \param Unused siginfo_t parameter.
+  \param Unused void * pointer parameter.
+
+  This crash handler intercepts crashes triggered in C-land, printing the stacktrace
+  at the time of the crash to stderr - logging cannot be assumed to be working at this
+  poinrt and hence the use of stderr. If the core dump has been enabled, we will also
+  dump a core - of course the correct ulimits need to be set for the dump to be created.
+  The idea of handling the crashes here is to allow us to collect the stacktrace, with
+  all its C-context, before it unwinds as would be the case if we allowed the go runtime
+  to handle it.
+*/
+#    define STACKTRACE_SIZE 500
+void signalHandler(int sig, siginfo_t *, void *)
+{
+    void *buffer[STACKTRACE_SIZE];
+    char **symbols;
+
+    size_t nptrs = backtrace(buffer, STACKTRACE_SIZE);
+    std::cerr << "HANDLER CAUGHT signal Error: signal " << sig << std::endl;
+    symbols = backtrace_symbols(buffer, nptrs);
+    if (symbols == NULL) {
+        std::cerr << "Error getting backtrace symbols" << std::endl;
+    } else {
+        std::cerr << "C-LAND STACKTRACE: " << std::endl;
+        for (int i = 0; i < nptrs; i++) {
+            std::cerr << symbols[i] << std::endl;
+        }
+
+        _free(symbols);
+    }
+
+    // dump core if so configured
+    __sync_synchronize();
+    if (core_dump) {
+        core_dump(sig);
+    } else {
+        kill(getpid(), SIGABRT);
+    }
+}
+
 /*
  * C-land crash handling
  */
-
-DATADOG_AGENT_RTLOADER_API int handle_crashes(const rtloader_t *rtloader, const int enable)
+DATADOG_AGENT_RTLOADER_API int handle_crashes(const int enable, char **error)
 {
-    // enable implicit cast to bool
-    return AS_CTYPE(RtLoader, rtloader)->handleCrashes(enable) ? 1 : 0;
+
+    struct sigaction sa;
+    sa.sa_flags = SA_SIGINFO;
+    sa.sa_sigaction = signalHandler;
+
+    // on segfault - what else?
+    int err = sigaction(SIGSEGV, &sa, NULL);
+
+    if (enable && err == 0) {
+        __sync_synchronize();
+        core_dump = core;
+    }
+    if (err) {
+        std::ostringstream err_msg;
+        err_msg << "unable to set crash handler: " << strerror(errno);
+        *error = strdupe(err_msg.str().c_str());
+    }
+
+    return err == 0 ? 1 : 0;
 }
 #endif
 
@@ -380,6 +470,11 @@ void set_submit_event_cb(rtloader_t *rtloader, cb_submit_event_t cb)
 void set_submit_histogram_bucket_cb(rtloader_t *rtloader, cb_submit_histogram_bucket_t cb)
 {
     AS_TYPE(RtLoader, rtloader)->setSubmitHistogramBucketCb(cb);
+}
+
+void set_submit_event_platform_event_cb(rtloader_t *rtloader, cb_submit_event_platform_event_t cb)
+{
+    AS_TYPE(RtLoader, rtloader)->setSubmitEventPlatformEventCb(cb);
 }
 
 /*
@@ -464,6 +559,16 @@ void set_read_persistent_cache_cb(rtloader_t *rtloader, cb_read_persistent_cache
 void set_obfuscate_sql_cb(rtloader_t *rtloader, cb_obfuscate_sql_t cb)
 {
     AS_TYPE(RtLoader, rtloader)->setObfuscateSqlCb(cb);
+}
+
+void set_obfuscate_sql_exec_plan_cb(rtloader_t *rtloader, cb_obfuscate_sql_exec_plan_t cb)
+{
+    AS_TYPE(RtLoader, rtloader)->setObfuscateSqlExecPlanCb(cb);
+}
+
+void set_get_process_start_time_cb(rtloader_t *rtloader, cb_get_process_start_time_t cb)
+{
+    AS_TYPE(RtLoader, rtloader)->setGetProcessStartTimeCb(cb);
 }
 
 /*

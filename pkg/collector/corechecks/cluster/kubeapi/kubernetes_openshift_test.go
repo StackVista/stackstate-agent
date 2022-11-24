@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2017 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package kubeapi
@@ -20,7 +21,7 @@ import (
 )
 
 func TestReportClusterQuotas(t *testing.T) {
-	raw, err := ioutil.ReadFile("../testdata/oshift_crq_list.json")
+	raw, err := ioutil.ReadFile("./testdata/oshift_crq_list.json")
 	require.NoError(t, err)
 	list := osq.ClusterResourceQuotaList{}
 	_ = json.Unmarshal(raw, &list)

@@ -1,7 +1,7 @@
 FROM centos:6
 
 # Build Args
-ARG GIMME_GO_VERSION=1.13.11
+ARG GIMME_GO_VERSION=1.16.7
 ARG DD_CONDA_VERSION=4.7.10
 ARG DD_PIP_VERSION=19.1
 ARG DD_SETUPTOOLS_VERSION=41.0.1
@@ -130,7 +130,7 @@ ENV CPP=/opt/centos/devtoolset-1.1/root/usr/bin/cpp
 ENV CXX=/opt/centos/devtoolset-1.1/root/usr/bin/c++
 
 # Download and install golangci-lint
-RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $GOPATH/bin v1.21.0
+RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $GOPATH/bin v1.42.1
 
 # Entrypoint
 COPY ./entrypoint.sh /

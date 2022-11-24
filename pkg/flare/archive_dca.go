@@ -1,20 +1,21 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package flare
 
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
-	"github.com/mholt/archiver"
+	"github.com/mholt/archiver/v3"
 
 	apiv1 "github.com/StackVista/stackstate-agent/pkg/clusteragent/api/v1"
 	"github.com/StackVista/stackstate-agent/pkg/clusteragent/custommetrics"
@@ -44,7 +45,7 @@ func createDCAArchive(zipFilePath string, local bool, confSearchPaths SearchPath
 
 	// Get hostname, if there's an error in getting the hostname,
 	// set the hostname to unknown
-	hostname, err := util.GetHostname()
+	hostname, err := util.GetHostname(context.TODO())
 	if err != nil {
 		hostname = "unknown"
 	}
@@ -124,7 +125,8 @@ func createDCAArchive(zipFilePath string, local bool, confSearchPaths SearchPath
 		log.Infof("Error while creating permissions.log infos file: %s", err)
 	}
 
-	err = archiver.Zip.Make(zipFilePath, []string{filepath.Join(tempDir, hostname)})
+	// File format is determined based on `zipFilePath` extension
+	err = archiver.Archive([]string{filepath.Join(tempDir, hostname)}, zipFilePath)
 	if err != nil {
 		return "", err
 	}
@@ -151,7 +153,7 @@ func zipDCAStatusFile(tempDir, hostname string) error {
 	}
 
 	// Clean it up
-	cleaned, err := log.CredentialsCleanerBytes(s)
+	cleaned, err := flareScrubber.ScrubBytes(s)
 	if err != nil {
 		log.Infof("Error redacting the log files: %q", err)
 		return err
@@ -208,7 +210,7 @@ func zipClusterAgentClusterChecks(tempDir, hostname string) error {
 	var b bytes.Buffer
 
 	writer := bufio.NewWriter(&b)
-	GetClusterChecks(writer) //nolint:errcheck
+	GetClusterChecks(writer, "") //nolint:errcheck
 	writer.Flush()
 
 	f := filepath.Join(tempDir, hostname, "clusterchecks.log")
@@ -217,7 +219,7 @@ func zipClusterAgentClusterChecks(tempDir, hostname string) error {
 		return err
 	}
 
-	w, err := newRedactingWriter(f, os.ModePerm, true)
+	w, err := newScrubberWriter(f, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -285,7 +287,7 @@ func zipClusterAgentDiagnose(tempDir, hostname string) error {
 		return err
 	}
 
-	w, err := newRedactingWriter(f, os.ModePerm, true)
+	w, err := newScrubberWriter(f, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -307,7 +309,7 @@ func zipClusterAgentTelemetry(tempDir, hostname string) error {
 		return err
 	}
 
-	w, err := newRedactingWriter(f, os.ModePerm, true)
+	w, err := newScrubberWriter(f, os.ModePerm)
 	if err != nil {
 		return err
 	}

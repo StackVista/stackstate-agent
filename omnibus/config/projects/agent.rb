@@ -1,11 +1,13 @@
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
 # This product includes software developed at Datadog (https:#www.datadoghq.com/).
-# Copyright 2016-2020 Datadog, Inc.
+# Copyright 2016-present Datadog, Inc.
 require "./lib/ostools.rb"
 
 name 'agent'
 package_name 'stackstate-agent'
+license "Apache-2.0"
+license_file "../LICENSE"
 
 homepage 'http://www.stackstate.com'
 
@@ -22,6 +24,10 @@ else
     maintainer 'StackState <info@stackstate.com>'
   else
     maintainer 'StackState <info@stackstate.com>'
+  end
+
+  if debian?
+    runtime_recommended_dependency 'datadog-signing-keys'
   end
 
   if osx?
@@ -59,9 +65,17 @@ description 'StackState Monitoring Agent
 # .deb specific flags
 package :deb do
   vendor 'StackState <info@stackstate.com>'
+  # sts - disabling epoch otherwise we get a `1:` as a prefix to the debian package version
+  # epoch 1
   license 'Apache License Version 2.0'
   section 'utils'
   priority 'extra'
+  if ENV.has_key?('DEB_SIGNING_PASSPHRASE') and not ENV['DEB_SIGNING_PASSPHRASE'].empty?
+    signing_passphrase "#{ENV['DEB_SIGNING_PASSPHRASE']}"
+    if ENV.has_key?('DEB_GPG_KEY_NAME') and not ENV['DEB_GPG_KEY_NAME'].empty?
+      gpg_key_name "#{ENV['DEB_GPG_KEY_NAME']}"
+    end
+  end
 end
 
 # .rpm specific flags
@@ -90,7 +104,7 @@ compress :dmg do
   pkg_position '10, 10'
 end
 
-# Windows .msi specific flags
+# Windows .zip specific flags
 package :zip do
   if windows_arch_i386?
     skip_packager true
@@ -100,15 +114,25 @@ package :zip do
       "#{Omnibus::Config.source_dir()}\\cf-root",
     ]
 
+    # Always sign everything for binaries zip
     additional_sign_files [
-        "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\security-agent.exe",
         "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\process-agent.exe",
         "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\trace-agent.exe",
         "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent.exe",
-        "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\libdatadog-agent-three.dll",
         "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\install-cmd.exe",
         "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\uninstall-cmd.exe"
       ]
+    if $enable_security_agent
+         additional_sign_files << "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\security-agent.exe"
+    end
+    if with_python_runtime? "3"
+         additional_sign_files << "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\libdatadog-agent-three.dll"
+    end
+    if with_python_runtime? "2"
+      additional_sign_files << "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\libdatadog-agent-two.dll"
+    end
+
+
     if ENV['SIGN_PFX']
       signing_identity_file "#{ENV['SIGN_PFX']}", password: "#{ENV['SIGN_PFX_PW']}", algorithm: "SHA256"
     end
@@ -129,18 +153,34 @@ package :msi do
   wix_light_extension 'WixUtilExtension'
   extra_package_dir "#{Omnibus::Config.source_dir()}\\etc\\stackstate-agent\\extra_package_files"
 
-  additional_sign_files [
-      "#{Omnibus::Config.source_dir()}\\datadog-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\security-agent.exe",
+  additional_sign_files_list = [
       "#{Omnibus::Config.source_dir()}\\datadog-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\process-agent.exe",
       "#{Omnibus::Config.source_dir()}\\datadog-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\trace-agent.exe",
-      "#{Omnibus::Config.source_dir()}\\datadog-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\agent.exe"
+      "#{Omnibus::Config.source_dir()}\\datadog-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\agent.exe",
+      "#{install_dir}\\bin\\agent\\ddtray.exe"
     ]
+    if $enable_security_agent
+      additional_sign_files_list << "#{Omnibus::Config.source_dir()}\\datadog-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\security-agent.exe"
+    end
+    if with_python_runtime? "2"
+      additional_sign_files_list << "#{Omnibus::Config.source_dir()}\\datadog-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\libdatadog-agent-two.dll"
+    end
+    if with_python_runtime? "3"
+          additional_sign_files_list << "#{Omnibus::Config.source_dir()}\\datadog-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\libdatadog-agent-three.dll"
+    end
   #if ENV['SIGN_WINDOWS']
   #  signing_identity "ECCDAE36FDCB654D2CBAB3E8975AA55469F96E4C", machine_store: true, algorithm: "SHA256"
   #end
   if ENV['SIGN_PFX']
     signing_identity_file "#{ENV['SIGN_PFX']}", password: "#{ENV['SIGN_PFX_PW']}", algorithm: "SHA256"
   end
+  include_sysprobe = "false"
+#   [sts] don't ever include the sysprobe
+#   if not windows_arch_i386? and ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?
+#     include_sysprobe = "true"
+#     additional_sign_files_list << "#{Omnibus::Config.source_dir()}\\datadog-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\system-probe.exe"
+#   end
+  additional_sign_files additional_sign_files_list
   parameters({
     'InstallDir' => install_dir,
     'InstallFiles' => "#{Omnibus::Config.source_dir()}/stackstate-agent/stackstate-agent/packaging/stackstate-agent/win32/install_files",
@@ -149,6 +189,7 @@ package :msi do
     'IncludePython2' => "#{with_python_runtime? '2'}",
     'IncludePython3' => "#{with_python_runtime? '3'}",
     'Platform' => "#{arch}",
+    'IncludeSysprobe' => "#{include_sysprobe}",
   })
 end
 
@@ -156,22 +197,16 @@ end
 # Dependencies
 # ------------------------------------
 
-# Linux-specific dependencies
-if linux?
-  dependency 'procps-ng'
-  dependency 'sysstat'
-  dependency 'curl'
-end
-
 # creates required build directories
 dependency 'datadog-agent-prepare'
 
-# [VS] missing in upstream
-# # Windows-specific dependencies
-# if windows?
-#   dependency 'pywin32'
-# end
+# Linux-specific dependencies
+if linux?
+  dependency 'procps-ng'
+  dependency 'curl'
+end
 
+# Datadog agent
 dependency 'datadog-agent'
 
 # System-probe
@@ -181,11 +216,12 @@ end
 
 # Additional software
 if windows?
-  dependency 'cacerts_py2_local' if with_python_runtime? "2"
-  dependency 'cacerts_py3_local' if with_python_runtime? "3"
-else
-  dependency 'cacerts'
+  if ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?
+    dependency 'datadog-windows-filter-driver'
+  end
 end
+# Bundled cacerts file (is this a good idea?)
+dependency 'cacerts'
 
 if osx?
   dependency 'datadog-agent-mac-app'
@@ -205,6 +241,9 @@ if with_python_runtime? "3"
   dependency 'stackstate-agent-integrations-py3'
 end
 
+if linux?
+  dependency 'datadog-security-agent-policies'
+end
 
 # External agents
 dependency 'jmxfetch'
@@ -239,16 +278,18 @@ if linux?
     extra_package_file "/etc/init.d/stackstate-agent"
     extra_package_file "/etc/init.d/stackstate-agent-process"
     extra_package_file "/etc/init.d/stackstate-agent-trace"
+    # sts
     if $enable_security_agent
-        extra_package_file "/etc/init.d/stackstate-agent-security"
+      extra_package_file "/etc/init.d/stackstate-agent-security"
     end
   end
   if suse?
     extra_package_file "/etc/init.d/stackstate-agent"
     extra_package_file "/etc/init.d/stackstate-agent-process"
     extra_package_file "/etc/init.d/stackstate-agent-trace"
+    # sts
     if $enable_security_agent
-        extra_package_file "/etc/init.d/stackstate-agent-security"
+      extra_package_file "/etc/init.d/stackstate-agent-security"
     end
   end
   extra_package_file "#{systemd_directory}/stackstate-agent.service"
@@ -266,7 +307,23 @@ end
 exclude '\.git*'
 exclude 'bundler\/git'
 
-if linux?
+if windows?
+  #
+  # For Windows build, files need to be stripped must be specified here.
+  #
+  if $enable_security_agent
+    windows_symbol_stripping_file "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\security-agent.exe"
+    windows_symbol_stripping_file "#{Omnibus::Config.source_dir()}\\datadog-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\security-agent.exe"
+  end
+  windows_symbol_stripping_file "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\process-agent.exe"
+  windows_symbol_stripping_file "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent\\trace-agent.exe"
+  windows_symbol_stripping_file "#{Omnibus::Config.source_dir()}\\cf-root\\bin\\agent.exe"
+  windows_symbol_stripping_file "#{Omnibus::Config.source_dir()}\\datadog-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\process-agent.exe"
+  windows_symbol_stripping_file "#{Omnibus::Config.source_dir()}\\datadog-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\trace-agent.exe"
+  windows_symbol_stripping_file "#{Omnibus::Config.source_dir()}\\datadog-agent\\src\\github.com\\DataDog\\datadog-agent\\bin\\agent\\agent.exe"
+end
+
+if linux? or windows?
   # the stripper will drop the symbols in a `.debug` folder in the installdir
   # we want to make sure that directory is not in the main build, while present
   # in the debug package.

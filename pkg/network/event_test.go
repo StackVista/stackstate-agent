@@ -1,9 +1,9 @@
 package network
 
 import (
-	"bytes"
 	"fmt"
 	"net"
+	"runtime"
 	"testing"
 
 	"github.com/StackVista/stackstate-agent/pkg/process/util"
@@ -27,7 +27,7 @@ var (
 )
 
 func TestBeautifyKey(t *testing.T) {
-	buf := &bytes.Buffer{}
+	buf := make([]byte, ConnectionByteKeyMaxLen)
 	for _, c := range []ConnectionStats{
 		testConn,
 		{
@@ -58,7 +58,7 @@ func TestBeautifyKey(t *testing.T) {
 }
 
 func TestConnStatsByteKey(t *testing.T) {
-	buf := new(bytes.Buffer)
+	buf := make([]byte, ConnectionByteKeyMaxLen)
 	addrA := util.AddressFromString("127.0.0.1")
 	addrB := util.AddressFromString("127.0.0.2")
 
@@ -116,4 +116,46 @@ func TestConnStatsByteKey(t *testing.T) {
 		}
 		assert.NotEqual(t, keyA, keyB)
 	}
+}
+
+func TestIsExpired(t *testing.T) {
+	// 10mn
+	var timeout uint64 = 600000000000
+	for _, tc := range []struct {
+		stats      ConnectionStats
+		latestTime uint64
+		expected   bool
+	}{
+		{
+			ConnectionStats{LastUpdateEpoch: 101},
+			100,
+			false,
+		},
+		{
+			ConnectionStats{LastUpdateEpoch: 100},
+			101,
+			false,
+		},
+		{
+			ConnectionStats{LastUpdateEpoch: 100},
+			101 + timeout,
+			true,
+		},
+	} {
+		assert.Equal(t, tc.expected, tc.stats.IsExpired(tc.latestTime, timeout))
+	}
+}
+
+func BenchmarkByteKey(b *testing.B) {
+	buf := make([]byte, ConnectionByteKeyMaxLen)
+	addrA := util.AddressFromString("127.0.0.1")
+	addrB := util.AddressFromString("127.0.0.2")
+	c := ConnectionStats{Pid: 1, Dest: addrB, Family: 0, Type: 1, Source: addrA}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = c.ByteKey(buf)
+	}
+	runtime.KeepAlive(buf)
 }

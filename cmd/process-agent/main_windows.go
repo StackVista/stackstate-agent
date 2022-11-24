@@ -1,18 +1,20 @@
+//go:build windows
 // +build windows
 
 package main
 
 import (
-	"flag"
 	"fmt"
 	_ "net/http/pprof"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/StackVista/stackstate-agent/cmd/process-agent/flags"
 	_ "github.com/StackVista/stackstate-agent/pkg/util/containers/providers/windows"
 	"github.com/StackVista/stackstate-agent/pkg/util/winutil"
 
+	"github.com/spf13/cobra"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
@@ -25,10 +27,10 @@ var elog debug.Log
 const ServiceName = "datadog-process-agent"
 
 // opts are the command-line options
-var defaultConfigPath = "c:\\programdata\\datadog\\datadog.yaml"
-var defaultSysProbeConfigPath = "c:\\programdata\\datadog\\system-probe.yaml"
-var defaultConfdPath = "c:\\programdata\\datadog\\conf.d"
-var defaultLogFilePath = "c:\\programdata\\datadog\\logs\\process-agent.log"
+var defaultConfigPath = flags.DefaultConfPath
+var defaultSysProbeConfigPath = flags.DefaultSysProbeConfPath
+var defaultConfdPath = flags.DefaultConfdPath
+var defaultLogFilePath = flags.DefaultLogFilePath
 
 var winopts struct {
 	installService   bool
@@ -42,6 +44,7 @@ func init() {
 	pd, err := winutil.GetProgramDataDir()
 	if err == nil {
 		defaultConfigPath = filepath.Join(pd, "datadog.yaml")
+		defaultSysProbeConfigPath = filepath.Join(pd, "system-probe.yaml")
 		defaultConfdPath = filepath.Join(pd, "conf.d")
 		defaultLogFilePath = filepath.Join(pd, "logs", "process-agent.log")
 	}
@@ -66,7 +69,7 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 					// Testing deadlock from https://code.google.com/p/winsvc/issues/detail?id=4
 					time.Sleep(100 * time.Millisecond)
 					changes <- c.CurrentStatus
-				case svc.Stop, svc.Shutdown:
+				case svc.Stop, svc.PreShutdown, svc.Shutdown:
 					elog.Info(0x40000006, ServiceName)
 					changes <- svc.Status{State: svc.StopPending}
 					///// FIXME:  Need a way to indicate to rest of service to shut
@@ -74,7 +77,7 @@ func (m *myservice) Execute(args []string, r <-chan svc.ChangeRequest, changes c
 					close(exit)
 					break
 				default:
-					elog.Warning(0xc000000A, string(c.Cmd))
+					elog.Warning(0xc000000A, fmt.Sprint(c.Cmd))
 				}
 			}
 		}
@@ -114,22 +117,28 @@ func runService(isDebug bool) {
 // main is the main application entry point
 func main() {
 	ignore := ""
-	flag.StringVar(&opts.configPath, "config", defaultConfigPath, "Path to datadog.yaml config")
-	flag.StringVar(&opts.sysProbeConfigPath, "sysprobe-config", defaultSysProbeConfigPath, "Path to system-probe.yaml config")
-	flag.StringVar(&ignore, "ddconfig", "", "[deprecated] Path to dd-agent config")
-	flag.BoolVar(&opts.info, "info", false, "Show info about running process agent and exit")
-	flag.BoolVar(&opts.version, "version", false, "Print the version and exit")
-	flag.StringVar(&opts.check, "check", "", "Run a specific check and print the results. Choose from: process, connections, realtime")
+	rootCmd.PersistentFlags().StringVar(&opts.configPath, "config", defaultConfigPath, "Path to datadog.yaml config")
+	rootCmd.PersistentFlags().StringVar(&opts.sysProbeConfigPath, "sysprobe-config", defaultSysProbeConfigPath, "Path to system-probe.yaml config")
+	rootCmd.PersistentFlags().StringVar(&ignore, "ddconfig", "", "[deprecated] Path to dd-agent config")
+	rootCmd.PersistentFlags().BoolVarP(&opts.info, "info", "i", false, "Show info about running process agent and exit")
+	rootCmd.PersistentFlags().BoolVarP(&opts.version, "version", "v", false, "Print the version and exit")
+	rootCmd.PersistentFlags().StringVar(&opts.check, "check", "", "Run a specific check and print the results. Choose from: process, connections, realtime, process_discovery")
 
 	// windows-specific options for installing the service, uninstalling the service, etc.
-	flag.BoolVar(&winopts.installService, "install-service", false, "Install the process agent to the Service Control Manager")
-	flag.BoolVar(&winopts.uninstallService, "uninstall-service", false, "Remove the process agent from the Service Control Manager")
-	flag.BoolVar(&winopts.startService, "start-service", false, "Starts the process agent service")
-	flag.BoolVar(&winopts.stopService, "stop-service", false, "Stops the process agent service")
-	flag.BoolVar(&winopts.foreground, "foreground", false, "Always run foreground instead whether session is interactive or not")
+	rootCmd.PersistentFlags().BoolVar(&winopts.installService, "install-service", false, "Install the process agent to the Service Control Manager")
+	rootCmd.PersistentFlags().BoolVar(&winopts.uninstallService, "uninstall-service", false, "Remove the process agent from the Service Control Manager")
+	rootCmd.PersistentFlags().BoolVar(&winopts.startService, "start-service", false, "Starts the process agent service")
+	rootCmd.PersistentFlags().BoolVar(&winopts.stopService, "stop-service", false, "Stops the process agent service")
+	rootCmd.PersistentFlags().BoolVar(&winopts.foreground, "foreground", false, "Always run foreground instead whether session is interactive or not")
 
-	flag.Parse()
+	// Invoke the Agent
+	fixDeprecatedFlags()
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(-1)
+	}
+}
 
+func rootCmdRun(cmd *cobra.Command, args []string) {
 	if !winopts.foreground {
 		isIntSess, err := svc.IsAnInteractiveSession()
 		if err != nil {
@@ -188,8 +197,8 @@ func main() {
 		}
 	}
 
-	// Invoke the Agent
 	exit := make(chan struct{})
+	// Invoke the Agent
 	runAgent(exit)
 }
 

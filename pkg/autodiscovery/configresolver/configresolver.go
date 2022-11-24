@@ -1,81 +1,61 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package configresolver
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"strconv"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/containers"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/listeners"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/providers/names"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/tmplvar"
 )
 
-type variableGetter func(key []byte, svc listeners.Service) ([]byte, error)
+type variableGetter func(ctx context.Context, key []byte, svc listeners.Service) ([]byte, error)
 
 var templateVariables = map[string]variableGetter{
 	"host":     getHost,
 	"pid":      getPid,
 	"port":     getPort,
 	"hostname": getHostname,
-	"extra":    getExtra,
+	"extra":    getAdditionalTplVariables,
+	"kube":     getAdditionalTplVariables,
 }
 
-// SubstituteTemplateVariables replaces %%VARIABLES%% using the variableGetters passed in
-func SubstituteTemplateVariables(config *integration.Config, getters map[string]variableGetter, svc listeners.Service) error {
-	for i := 0; i < len(config.Instances); i++ {
-		vars := config.GetTemplateVariablesForInstance(i)
-		for _, v := range vars {
-			if f, found := getters[string(v.Name)]; found {
-				resolvedVar, err := f(v.Key, svc)
-				if err != nil {
-					return err
-				}
-				// init config vars are replaced by the first found
-				config.InitConfig = bytes.Replace(config.InitConfig, v.Raw, resolvedVar, -1)
-				config.Instances[i] = bytes.Replace(config.Instances[i], v.Raw, resolvedVar, -1)
-			}
-		}
-	}
-	return nil
-}
-
-// SubstituteTemplateEnvVars replaces %%ENV_VARIABLE%% from environment variables
+// SubstituteTemplateEnvVars replaces %%ENV_VARIABLE%% from environment
+// variables in the config init, instances, and logs config.
+// When there is an error, it continues replacing. When there are multiple
+// errors, the one returned is the one that happened first.
 func SubstituteTemplateEnvVars(config *integration.Config) error {
 	var retErr error
-	for i := 0; i < len(config.Instances); i++ {
-		vars := config.GetTemplateVariablesForInstance(i)
-		for _, v := range vars {
-			if "env" == string(v.Name) {
-				resolvedVar, err := getEnvvar(v.Key)
-				if err != nil {
-					log.Warnf("variable not replaced: %s", err)
-					if retErr == nil {
-						retErr = err
-					}
-					continue
-				}
-				// init config vars are replaced by the first found
-				config.InitConfig = bytes.Replace(config.InitConfig, v.Raw, resolvedVar, -1)
-				config.Instances[i] = bytes.Replace(config.Instances[i], v.Raw, resolvedVar, -1)
-			}
+
+	for _, toResolve := range dataToResolve(config) {
+		var err error
+		*toResolve, err = resolveDataWithEnvs(*toResolve)
+		if err != nil && retErr == nil {
+			retErr = err
 		}
 	}
+
 	return retErr
 }
 
 // Resolve takes a template and a service and generates a config with
 // valid connection info and relevant tags.
-func Resolve(tpl integration.Config, svc listeners.Service) (integration.Config, error) {
+// Resolve also returns the hash of the tags to the config.
+// The tags and hashes are computed once and in this function, then propagated to the main AD to avoid having inconsistent tags and hashes in the AD store.
+func Resolve(tpl integration.Config, svc listeners.Service) (integration.Config, string, error) {
+	ctx := context.TODO()
 	// Copy original template
 	resolvedConfig := integration.Config{
 		Name:            tpl.Name,
@@ -98,62 +78,131 @@ func Resolve(tpl integration.Config, svc listeners.Service) (integration.Config,
 
 	// Ignore the config from file if it's overridden by an empty config
 	// or by a different config for the same check
-	if tpl.Provider == names.File && svc.GetCheckNames() != nil {
-		checkNames := svc.GetCheckNames()
+	if tpl.Provider == names.File && svc.GetCheckNames(ctx) != nil {
+		checkNames := svc.GetCheckNames(ctx)
 		lenCheckNames := len(checkNames)
 		if lenCheckNames == 0 || (lenCheckNames == 1 && checkNames[0] == "") {
-			// Empty check names on k8s annotations or docker labels override the check config from file
+			// Empty check names on k8s annotations or container labels override the check config from file
 			// Used to deactivate unneeded OOTB autodiscovery checks defined in files
 			// The checkNames slice is considered empty also if it contains one single empty string
-			return resolvedConfig, fmt.Errorf("ignoring config from %s: another empty config is defined with the same AD identifier: %v", tpl.Source, tpl.ADIdentifiers)
+			return resolvedConfig, "", fmt.Errorf("ignoring config from %s: another empty config is defined with the same AD identifier: %v", tpl.Source, tpl.ADIdentifiers)
 		}
 		for _, checkName := range checkNames {
 			if tpl.Name == checkName {
-				// Ignore config from file when the same check is activated on the same service via other config providers (k8s annotations or docker labels)
-				return resolvedConfig, fmt.Errorf("ignoring config from %s: another config is defined for the check %s", tpl.Source, tpl.Name)
+				// Ignore config from file when the same check is activated on the same service via other config providers (k8s annotations or container labels)
+				return resolvedConfig, "", fmt.Errorf("ignoring config from %s: another config is defined for the check %s", tpl.Source, tpl.Name)
 			}
 		}
 
 	}
 
-	if resolvedConfig.IsCheckConfig() && !svc.IsReady() {
-		return resolvedConfig, errors.New("unable to resolve, service not ready")
+	if resolvedConfig.IsCheckConfig() && !svc.IsReady(ctx) {
+		return resolvedConfig, "", errors.New("unable to resolve, service not ready")
 	}
 
-	if err := SubstituteTemplateVariables(&resolvedConfig, templateVariables, svc); err != nil {
-		return resolvedConfig, err
+	if err := substituteTemplateVariables(ctx, &resolvedConfig, svc); err != nil {
+		return resolvedConfig, "", err
 	}
 
 	if err := SubstituteTemplateEnvVars(&resolvedConfig); err != nil {
 		// We add the service name to the error here, since SubstituteTemplateEnvVars doesn't know about that
-		return resolvedConfig, fmt.Errorf("%s, skipping service %s", err, svc.GetEntity())
+		return resolvedConfig, "", fmt.Errorf("%w, skipping service %s", err, svc.GetEntity())
+	}
+
+	tags, tagsHash, err := svc.GetTags()
+	if err != nil {
+		return resolvedConfig, "", fmt.Errorf("couldn't get tags for service '%s', err: %w", svc.GetEntity(), err)
 	}
 
 	if !tpl.IgnoreAutodiscoveryTags {
-		if err := addServiceTags(&resolvedConfig, svc); err != nil {
-			return resolvedConfig, fmt.Errorf("unable to add tags for service '%s', err: %s", svc.GetEntity(), err)
+		if err := addServiceTags(&resolvedConfig, tags); err != nil {
+			return resolvedConfig, "", fmt.Errorf("unable to add tags for service '%s', err: %w", svc.GetEntity(), err)
 		}
 	}
 
-	return resolvedConfig, nil
+	return resolvedConfig, tagsHash, nil
 }
 
-func addServiceTags(resolvedConfig *integration.Config, svc listeners.Service) error {
-	tags, err := svc.GetTags()
-	if err != nil {
-		return err
-	}
-	for i := 0; i < len(resolvedConfig.Instances); i++ {
-		err = resolvedConfig.Instances[i].MergeAdditionalTags(tags)
+// substituteTemplateVariables replaces %%VARIABLES%% in the config init,
+// instances, and logs config.
+// When there is an error, it stops processing.
+func substituteTemplateVariables(ctx context.Context, config *integration.Config, svc listeners.Service) error {
+	var err error
+
+	for _, toResolve := range dataToResolve(config) {
+		*toResolve, err = resolveDataWithTemplateVars(ctx, *toResolve, svc)
 		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func dataToResolve(config *integration.Config) []*integration.Data {
+	res := []*integration.Data{&config.InitConfig}
+
+	for i := 0; i < len(config.Instances); i++ {
+		res = append(res, &config.Instances[i])
+	}
+
+	if config.IsLogConfig() {
+		res = append(res, &config.LogsConfig)
+	}
+
+	return res
+}
+
+func resolveDataWithTemplateVars(ctx context.Context, data integration.Data, svc listeners.Service) ([]byte, error) {
+	res := append([]byte(nil), data...)
+
+	templateVars := tmplvar.Parse(data)
+	for _, tVar := range templateVars {
+		if f, found := templateVariables[string(tVar.Name)]; found {
+			resolvedVar, err := f(ctx, tVar.Key, svc)
+			if err != nil {
+				return res, err
+			}
+			res = bytes.Replace(res, tVar.Raw, resolvedVar, -1)
+		}
+	}
+
+	return res, nil
+}
+
+func resolveDataWithEnvs(data integration.Data) ([]byte, error) {
+	var retErr error
+	res := append([]byte(nil), data...)
+
+	templateVars := tmplvar.Parse(data)
+	for _, tVar := range templateVars {
+		if "env" == string(tVar.Name) {
+			resolvedVar, err := getEnvvar(tVar.Key)
+			if err != nil {
+				log.Warnf("variable not replaced: %s", err)
+				if retErr == nil {
+					retErr = err
+				}
+				continue
+			}
+			res = bytes.Replace(res, tVar.Raw, resolvedVar, -1)
+		}
+	}
+
+	return res, retErr
+}
+
+func addServiceTags(resolvedConfig *integration.Config, tags []string) error {
+	for i := 0; i < len(resolvedConfig.Instances); i++ {
+		if err := resolvedConfig.Instances[i].MergeAdditionalTags(tags); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func getHost(tplVar []byte, svc listeners.Service) ([]byte, error) {
-	hosts, err := svc.GetHosts()
+func getHost(ctx context.Context, tplVar []byte, svc listeners.Service) ([]byte, error) {
+	hosts, err := svc.GetHosts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract IP address for container %s, ignoring it. Source error: %s", svc.GetEntity(), err)
 	}
@@ -188,17 +237,18 @@ func getFallbackHost(hosts map[string]string) (string, error) {
 			return host, nil
 		}
 	}
-	for k, v := range hosts {
-		if k == "bridge" {
-			return v, nil
-		}
+
+	bridgeIP, bridgeIsPresent := hosts["bridge"]
+	if bridgeIsPresent {
+		return bridgeIP, nil
 	}
+
 	return "", errors.New("not able to determine which network is reachable")
 }
 
 // getPort returns ports of the service
-func getPort(tplVar []byte, svc listeners.Service) ([]byte, error) {
-	ports, err := svc.GetPorts()
+func getPort(ctx context.Context, tplVar []byte, svc listeners.Service) ([]byte, error) {
+	ports, err := svc.GetPorts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract port list for container %s, ignoring it. Source error: %s", svc.GetEntity(), err)
 	} else if len(ports) == 0 {
@@ -226,8 +276,8 @@ func getPort(tplVar []byte, svc listeners.Service) ([]byte, error) {
 }
 
 // getPid returns the process identifier of the service
-func getPid(_ []byte, svc listeners.Service) ([]byte, error) {
-	pid, err := svc.GetPid()
+func getPid(ctx context.Context, _ []byte, svc listeners.Service) ([]byte, error) {
+	pid, err := svc.GetPid(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get pid for service %s, skipping config - %s", svc.GetEntity(), err)
 	}
@@ -236,16 +286,20 @@ func getPid(_ []byte, svc listeners.Service) ([]byte, error) {
 
 // getHostname returns the hostname of the service, to be used
 // when the IP is unavailable or erroneous
-func getHostname(tplVar []byte, svc listeners.Service) ([]byte, error) {
-	name, err := svc.GetHostname()
+func getHostname(ctx context.Context, tplVar []byte, svc listeners.Service) ([]byte, error) {
+	name, err := svc.GetHostname(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get hostname for service %s, skipping config - %s", svc.GetEntity(), err)
 	}
 	return []byte(name), nil
 }
 
-// getExtra returns specific data
-func getExtra(tplVar []byte, svc listeners.Service) ([]byte, error) {
+// getAdditionalTplVariables returns listener-specific template variables.
+// It resolves template variables prefixed with kube_ or extra_
+// Even though it gets the data from the same listener method GetExtraConfig, the kube_ and extra_
+// prefixes are customer facing, we support both of them for a better user experience depending on
+// the AD listener and what the template variable represents.
+func getAdditionalTplVariables(_ context.Context, tplVar []byte, svc listeners.Service) ([]byte, error) {
 	value, err := svc.GetExtraConfig(tplVar)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get extra info for service %s, skipping config - %s", svc.GetEntity(), err)

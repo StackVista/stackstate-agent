@@ -1,7 +1,7 @@
 // Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-2020 Datadog, Inc.
+// Copyright 2016-present Datadog, Inc.
 
 package config
 
@@ -12,16 +12,38 @@ import (
 	interpreterconfig "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/otlp"
 	"github.com/StackVista/stackstate-agent/pkg/trace/osutil"
+	"github.com/StackVista/stackstate-agent/pkg/trace/traceutil"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/profiling"
 )
 
 // apiEndpointPrefix is the URL prefix prepended to the default site value from YamlAgentConfig.
 const apiEndpointPrefix = "https://trace.agent."
+
+// OTLP holds the configuration for the OpenTelemetry receiver.
+type OTLP struct {
+	// BindHost specifies the host to bind the receiver to.
+	BindHost string `mapstructure:"-"`
+
+	// HTTPPort specifies the port to use for the plain HTTP receiver.
+	// If unset (or 0), the receiver will be off.
+	HTTPPort int `mapstructure:"http_port"`
+
+	// GRPCPort specifies the port to use for the plain HTTP receiver.
+	// If unset (or 0), the receiver will be off.
+	GRPCPort int `mapstructure:"grpc_port"`
+
+	// MaxRequestBytes specifies the maximum number of bytes that will be read
+	// from an incoming HTTP request.
+	MaxRequestBytes int64 `mapstructure:"-"`
+}
 
 // ObfuscationConfig holds the configuration for obfuscating sensitive data
 // for various span types.
@@ -31,6 +53,13 @@ type ObfuscationConfig struct {
 
 	// Mongo holds the obfuscation configuration for MongoDB queries.
 	Mongo JSONObfuscationConfig `mapstructure:"mongodb"`
+
+	// SQLExecPlan holds the obfuscation configuration for SQL Exec Plans. This is strictly for safety related obfuscation,
+	// not normalization. Normalization of exec plans is configured in SQLExecPlanNormalize.
+	SQLExecPlan JSONObfuscationConfig `mapstructure:"sql_exec_plan"`
+
+	// SQLExecPlanNormalize holds the normalization configuration for SQL Exec Plans.
+	SQLExecPlanNormalize JSONObfuscationConfig `mapstructure:"sql_exec_plan_normalize"`
 
 	// HTTP holds the obfuscation settings for HTTP URLs.
 	HTTP HTTPObfuscationConfig `mapstructure:"http"`
@@ -46,15 +75,30 @@ type ObfuscationConfig struct {
 	// Memcached holds the configuration for obfuscating the "memcached.command" tag
 	// for spans of type "memcached".
 	Memcached Enablable `mapstructure:"memcached"`
+
+	// CreditCards holds the configuration for obfuscating credit cards.
+	CreditCards CreditCardsConfig `mapstructure:"credit_cards"`
+}
+
+// CreditCardsConfig holds the configuration for credit card obfuscation in
+// (Meta) tags.
+type CreditCardsConfig struct {
+	// Enabled specifies whether this feature should be enabled.
+	Enabled bool `mapstructure:"enabled"`
+
+	// Luhn specifies whether Luhn checksum validation should be enabled.
+	// https://dev.to/shiraazm/goluhn-a-simple-library-for-generating-calculating-and-verifying-luhn-numbers-588j
+	// It reduces false positives, but increases the CPU time X3.
+	Luhn bool `mapstructure:"luhn"`
 }
 
 // HTTPObfuscationConfig holds the configuration settings for HTTP obfuscation.
 type HTTPObfuscationConfig struct {
 	// RemoveQueryStrings determines query strings to be removed from HTTP URLs.
-	RemoveQueryString bool `mapstructure:"remove_query_string"`
+	RemoveQueryString bool `mapstructure:"remove_query_string" json:"remove_query_string"`
 
 	// RemovePathDigits determines digits in path segments to be obfuscated.
-	RemovePathDigits bool `mapstructure:"remove_paths_with_digits"`
+	RemovePathDigits bool `mapstructure:"remove_paths_with_digits" json:"remove_path_digits"`
 }
 
 // Enablable can represent any option that has an "enabled" boolean sub-field.
@@ -71,6 +115,10 @@ type JSONObfuscationConfig struct {
 	// KeepValues will specify a set of keys for which their values will
 	// not be obfuscated.
 	KeepValues []string `mapstructure:"keep_values"`
+
+	// ObfuscateSQLValues will specify a set of keys for which their values
+	// will be passed through SQL obfuscation
+	ObfuscateSQLValues []string `mapstructure:"obfuscate_sql_values"`
 }
 
 // ReplaceRule specifies a replace rule.
@@ -111,7 +159,7 @@ func (c *AgentConfig) applyDatadogConfig() error {
 		c.Endpoints = []*Endpoint{{}}
 	}
 	if config.Datadog.IsSet("api_key") {
-		c.Endpoints[0].APIKey = config.Datadog.GetString("api_key")
+		c.Endpoints[0].APIKey = config.SanitizeAPIKey(config.Datadog.GetString("api_key"))
 	}
 	if config.Datadog.IsSet("hostname") {
 		c.Hostname = config.Datadog.GetString("hostname")
@@ -129,6 +177,7 @@ func (c *AgentConfig) applyDatadogConfig() error {
 	}
 	if host := config.Datadog.GetString("apm_config.apm_dd_url"); host != "" {
 		c.Endpoints[0].Host = host
+		log.Infof("[sts] set endpoint to host '%s'", host)
 		if site != "" {
 			log.Infof("'site' and 'apm_dd_url' are both set, using endpoint: %q", host)
 		}
@@ -181,14 +230,19 @@ func (c *AgentConfig) applyDatadogConfig() error {
 	} else if config.Datadog.IsSet("env") {
 		c.DefaultEnv = config.Datadog.GetString("env")
 		log.Debugf("Setting DefaultEnv to %q (from 'env' config option)", c.DefaultEnv)
-	} else if config.Datadog.IsSet("tags") {
-		for _, tag := range config.Datadog.GetStringSlice("tags") {
+	} else {
+		for _, tag := range config.GetConfiguredTags(false) {
 			if strings.HasPrefix(tag, "env:") {
 				c.DefaultEnv = strings.TrimPrefix(tag, "env:")
 				log.Debugf("Setting DefaultEnv to %q (from `env:` entry under the 'tags' config option: %q)", c.DefaultEnv, tag)
 				break
 			}
 		}
+	}
+	prevEnv := c.DefaultEnv
+	c.DefaultEnv = traceutil.NormalizeTag(c.DefaultEnv)
+	if c.DefaultEnv != prevEnv {
+		log.Debugf("Normalized DefaultEnv from %q to %q", prevEnv, c.DefaultEnv)
 	}
 	if config.Datadog.IsSet("apm_config.receiver_port") {
 		c.ReceiverPort = config.Datadog.GetInt("apm_config.receiver_port")
@@ -206,19 +260,26 @@ func (c *AgentConfig) applyDatadogConfig() error {
 		c.MaxEPS = config.Datadog.GetFloat64("apm_config.max_events_per_second")
 	}
 	if config.Datadog.IsSet("apm_config.max_traces_per_second") {
-		c.MaxTPS = config.Datadog.GetFloat64("apm_config.max_traces_per_second")
+		c.TargetTPS = config.Datadog.GetFloat64("apm_config.max_traces_per_second")
 	}
-	if config.Datadog.IsSet("apm_config.ignore_resources") {
-		c.Ignore["resource"] = config.Datadog.GetStringSlice("apm_config.ignore_resources")
+	if config.Datadog.IsSet("apm_config.errors_per_second") {
+		c.ErrorTPS = config.Datadog.GetFloat64("apm_config.errors_per_second")
+	}
+	if config.Datadog.IsSet("apm_config.disable_rare_sampler") {
+		c.DisableRareSampler = config.Datadog.GetBool("apm_config.disable_rare_sampler")
+	}
+
+	if k := "apm_config.ignore_resources"; config.Datadog.IsSet(k) {
+		c.Ignore["resource"] = config.Datadog.GetStringSlice(k)
 	}
 	if k := "apm_config.max_payload_size"; config.Datadog.IsSet(k) {
 		c.MaxRequestBytes = config.Datadog.GetInt64(k)
 	}
-
-	if config.Datadog.IsSet("apm_config.replace_tags") {
+	if k := "apm_config.replace_tags"; config.Datadog.IsSet(k) {
 		rt := make([]*ReplaceRule, 0)
-		err := config.Datadog.UnmarshalKey("apm_config.replace_tags", &rt)
-		if err == nil {
+		if err := config.Datadog.UnmarshalKey(k, &rt); err != nil {
+			log.Errorf("Bad format for %q it should be of the form '[{\"name\": \"tag_name\",\"pattern\":\"pattern\",\"repl\":\"replace_str\"}]', error: %v", "apm_config.replace_tags", err)
+		} else {
 			err := compileReplaceRules(rt)
 			if err != nil {
 				osutil.Exitf("replace_tags: %s", err)
@@ -227,17 +288,33 @@ func (c *AgentConfig) applyDatadogConfig() error {
 		}
 	}
 
-	if config.Datadog.IsSet("bind_host") {
-		host := config.Datadog.GetString("bind_host")
-		c.StatsdHost = host
-		c.ReceiverHost = host
-	}
-	if config.Datadog.IsSet("apm_config.apm_non_local_traffic") {
-		if config.Datadog.GetBool("apm_config.apm_non_local_traffic") {
+	if config.Datadog.IsSet("bind_host") || config.Datadog.IsSet("apm_config.apm_non_local_traffic") {
+		if config.Datadog.IsSet("bind_host") {
+			host := config.Datadog.GetString("bind_host")
+			c.StatsdHost = host
+			c.ReceiverHost = host
+		}
+
+		if config.Datadog.IsSet("apm_config.apm_non_local_traffic") && config.Datadog.GetBool("apm_config.apm_non_local_traffic") {
 			c.ReceiverHost = "0.0.0.0"
 		}
+	} else if config.IsContainerized() {
+		// Automatically activate non local traffic in containerized environment if no explicit config set
+		log.Info("Activating non-local traffic automatically in containerized environment, trace-agent will listen on 0.0.0.0")
+		c.ReceiverHost = "0.0.0.0"
 	}
 
+	var grpcPort int
+	if otlp.IsEnabled(config.Datadog) {
+		grpcPort = config.Datadog.GetInt(config.ExperimentalOTLPTracePort)
+	}
+	c.OTLPReceiver = &OTLP{
+		BindHost:        c.ReceiverHost,
+		GRPCPort:        grpcPort,
+		MaxRequestBytes: c.MaxRequestBytes,
+	}
+
+	c.Obfuscation = new(ObfuscationConfig)
 	if config.Datadog.IsSet("apm_config.obfuscation") {
 		var o ObfuscationConfig
 		err := config.Datadog.UnmarshalKey("apm_config.obfuscation", &o)
@@ -248,7 +325,32 @@ func (c *AgentConfig) applyDatadogConfig() error {
 			}
 		}
 	}
+	{
+		// TODO(x): There is an issue with config.Datadog.IsSet("apm_config.obfuscation"), probably coming from Viper,
+		// where it returns false even is "apm_config.obfuscation.credit_cards.enabled" is set via an environment
+		// variable, so we need a temporary workaround by specifically setting env. var. accessible fields.
+		if config.Datadog.IsSet("apm_config.obfuscation.credit_cards.enabled") {
+			c.Obfuscation.CreditCards.Enabled = config.Datadog.GetBool("apm_config.obfuscation.credit_cards.enabled")
+		}
+		if config.Datadog.IsSet("apm_config.obfuscation.credit_cards.luhn") {
+			c.Obfuscation.CreditCards.Luhn = config.Datadog.GetBool("apm_config.obfuscation.credit_cards.luhn")
+		}
+	}
 
+	if config.Datadog.IsSet("apm_config.filter_tags.require") {
+		tags := config.Datadog.GetStringSlice("apm_config.filter_tags.require")
+		for _, tag := range tags {
+			c.RequireTags = append(c.RequireTags, splitTag(tag))
+		}
+	}
+	if config.Datadog.IsSet("apm_config.filter_tags.reject") {
+		tags := config.Datadog.GetStringSlice("apm_config.filter_tags.reject")
+		for _, tag := range tags {
+			c.RejectTags = append(c.RejectTags, splitTag(tag))
+		}
+	}
+
+	// [sts]
 	c.InterpreterConfig = readInterpreterConfigYaml()
 
 	// undocumented
@@ -271,6 +373,9 @@ func (c *AgentConfig) applyDatadogConfig() error {
 	if config.Datadog.IsSet("apm_config.connection_reset_interval") {
 		c.ConnectionResetInterval = getDuration(config.Datadog.GetInt("apm_config.connection_reset_interval"))
 	}
+	if config.Datadog.IsSet("apm_config.sync_flushing") {
+		c.SynchronousFlushing = config.Datadog.GetBool("apm_config.sync_flushing")
+	}
 
 	// undocumented deprecated
 	if config.Datadog.IsSet("apm_config.analyzed_rate_by_service") {
@@ -284,22 +389,21 @@ func (c *AgentConfig) applyDatadogConfig() error {
 		}
 	}
 	// undocumeted
-	if config.Datadog.IsSet("apm_config.analyzed_spans") {
-		rateBySpan := make(map[string]float64)
-		if err := config.Datadog.UnmarshalKey("apm_config.analyzed_spans", &rateBySpan); err != nil {
-			return err
-		}
-		for key, rate := range rateBySpan {
+	if k := "apm_config.analyzed_spans"; config.Datadog.IsSet(k) {
+		for key, rate := range config.Datadog.GetStringMap("apm_config.analyzed_spans") {
 			serviceName, operationName, err := parseServiceAndOp(key)
 			if err != nil {
 				log.Errorf("Error parsing names: %v", err)
 				continue
 			}
-
-			if _, ok := c.AnalyzedSpansByService[serviceName]; !ok {
-				c.AnalyzedSpansByService[serviceName] = make(map[string]float64)
+			if floatrate, err := toFloat64(rate); err != nil {
+				log.Errorf("Invalid value for apm_config.analyzed_spans: %v", err)
+			} else {
+				if _, ok := c.AnalyzedSpansByService[serviceName]; !ok {
+					c.AnalyzedSpansByService[serviceName] = make(map[string]float64)
+				}
+				c.AnalyzedSpansByService[serviceName][operationName] = floatrate
 			}
-			c.AnalyzedSpansByService[serviceName][operationName] = rate
 		}
 	}
 
@@ -318,6 +422,28 @@ func (c *AgentConfig) applyDatadogConfig() error {
 		c.LogThrottling = false
 	}
 
+	if config.Datadog.GetBool("apm_config.internal_profiling.enabled") {
+		profilingSite := config.Datadog.GetString("internal_profiling.profile_dd_url")
+		if profilingSite == "" {
+			profilingSite = site
+		}
+
+		c.ProfilingSettings = &profiling.Settings{
+			Site: profilingSite,
+
+			// remaining configuration parameters use the top-level `internal_profiling` config
+			Period:               config.Datadog.GetDuration("internal_profiling.period"),
+			CPUDuration:          config.Datadog.GetDuration("internal_profiling.cpu_duration"),
+			MutexProfileFraction: config.Datadog.GetInt("internal_profiling.mutex_profile_fraction"),
+			BlockProfileRate:     config.Datadog.GetInt("internal_profiling.block_profile_rate"),
+			WithGoroutineProfile: config.Datadog.GetBool("internal_profiling.enable_goroutine_stacktraces"),
+
+			// NOTE: Tags cannot be set here, because it is based on
+			// info.Version and leads to a package reference loop. It is set
+			// from Run, instead.
+		}
+	}
+
 	return nil
 }
 
@@ -327,17 +453,10 @@ func (c *AgentConfig) applyDatadogConfig() error {
 func (c *AgentConfig) loadDeprecatedValues() error {
 	cfg := config.Datadog
 	if cfg.IsSet("apm_config.api_key") {
-		c.Endpoints[0].APIKey = config.Datadog.GetString("apm_config.api_key")
+		c.Endpoints[0].APIKey = config.SanitizeAPIKey(config.Datadog.GetString("apm_config.api_key"))
 	}
 	if cfg.IsSet("apm_config.log_level") {
 		c.LogLevel = config.Datadog.GetString("apm_config.log_level")
-	}
-	if v := cfg.GetString("apm_config.extra_aggregators"); len(v) > 0 {
-		aggs, err := splitString(v, ',')
-		if err != nil {
-			return err
-		}
-		c.ExtraAggregators = append(c.ExtraAggregators, aggs...)
 	}
 	if cfg.IsSet("apm_config.log_throttling") {
 		c.LogThrottling = cfg.GetBool("apm_config.log_throttling")
@@ -424,4 +543,47 @@ func splitString(s string, sep rune) ([]string, error) {
 	r.Comma = sep
 
 	return r.Read()
+}
+
+func toFloat64(val interface{}) (float64, error) {
+	switch v := val.(type) {
+	case float64:
+		return v, nil
+	case float32:
+		return float64(v), nil
+	case int:
+		return float64(v), nil
+	case int32:
+		return float64(v), nil
+	case int64:
+		return float64(v), nil
+	case uint:
+		return float64(v), nil
+	case uint32:
+		return float64(v), nil
+	case uint64:
+		return float64(v), nil
+	case string:
+		f, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			return 0, err
+		}
+		return f, nil
+	default:
+		return 0, fmt.Errorf("%v can not be converted to float64", val)
+	}
+}
+
+// splitTag splits a "k:v" formatted string and returns a Tag.
+func splitTag(tag string) *Tag {
+	parts := strings.SplitN(tag, ":", 2)
+	kv := &Tag{
+		K: strings.TrimSpace(parts[0]),
+	}
+	if len(parts) > 1 {
+		if v := strings.TrimSpace(parts[1]); v != "" {
+			kv.V = v
+		}
+	}
+	return kv
 }
