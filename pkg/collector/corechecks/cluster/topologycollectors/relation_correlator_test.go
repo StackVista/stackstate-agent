@@ -274,8 +274,6 @@ func executeRelationCorrelation(
 	defer close(componentChannel)
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
-	relationCorrChannel := make(chan *topology.Relation)
-	componentIDChannel := make(chan string)
 
 	clusterAPIClient := MockRelationCorrelatorAPIClient{
 		pods: pods, configMaps: configMaps, secrets: secrets,
@@ -285,11 +283,10 @@ func executeRelationCorrelation(
 	containerCorrChannel := make(chan *ContainerCorrelation)
 	volumeCorrChannel := make(chan *VolumeCorrelation)
 	collectorsDoneChan := make(chan bool)
-	relationCorrelatorDoneChannel := make(chan bool)
+	collectorsDoneChannel := make(chan bool)
 
-	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, componentIDChannel, false)
+	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, relationChannel, false)
 	podCollector := NewPodCollector(
-		relationCorrChannel,
 		containerCorrChannel, volumeCorrChannel,
 		podCorrChannel,
 		commonClusterCollector,
@@ -297,8 +294,8 @@ func executeRelationCorrelation(
 	configMapCollector := NewConfigMapCollector(commonClusterCollector, TestMaxDataSize)
 	secretCollector := NewSecretCollector(commonClusterCollector)
 
-	relationCorrelator := NewRelationCorrelator(componentIDChannel, relationCorrChannel, relationChannel,
-		collectorsDoneChan, NewTestCommonClusterCorrelator(clusterAPIClient, componentChannel, componentIDChannel))
+	relationCorrelator := NewRelationCorrelator(relationChannel,
+		collectorsDoneChan, NewTestCommonClusterCorrelator(clusterAPIClient, componentChannel, relationChannel))
 
 	collectorsFinished := false
 
@@ -319,7 +316,7 @@ func executeRelationCorrelation(
 		var err error
 		err = relationCorrelator.CorrelateFunction()
 		assert.NoError(t, err)
-		relationCorrelatorDoneChannel <- true
+		collectorsDoneChannel <- true
 	}()
 
 	components := make([]*topology.Component, 0)
@@ -332,7 +329,7 @@ L:
 			components = append(components, c)
 		case r := <-relationChannel:
 			relations = append(relations, r)
-		case <-relationCorrelatorDoneChannel:
+		case <-collectorsDoneChannel:
 			if collectorsFinished {
 				break L
 			}

@@ -4,13 +4,11 @@
 package topologycollectors
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // Service2PodCorrelator
 type Service2PodCorrelator struct {
-	RelationChan        chan<- *topology.Relation
 	PodCorrChan         <-chan *PodEndpointCorrelation
 	EndpointCorrChannel <-chan *ServiceEndpointCorrelation
 	ClusterTopologyCorrelator
@@ -32,13 +30,11 @@ type ServiceEndpointCorrelation struct {
 // NewService2PodCorrelator creates correlator creates relation from service to pod
 // in case where service points to kubernetes host and pod is exposed within the host's network
 func NewService2PodCorrelator(
-	relationChannel chan<- *topology.Relation,
 	podCorrChannel chan *PodEndpointCorrelation,
 	serviceCorrChannel chan *ServiceEndpointCorrelation,
 	clusterTopologyCorrelator ClusterTopologyCorrelator,
 ) ClusterTopologyCorrelator {
 	return &Service2PodCorrelator{
-		RelationChan:              relationChannel,
 		PodCorrChan:               podCorrChannel,
 		EndpointCorrChannel:       serviceCorrChannel,
 		ClusterTopologyCorrelator: clusterTopologyCorrelator,
@@ -78,7 +74,7 @@ func (crl *Service2PodCorrelator) CorrelateFunction() error {
 			podID := crl.buildPodExternalID(pod.Namespace, pod.Name)
 			relation := crl.CreateRelation(serviceID, podID, "exposes")
 			log.Tracef("Correlated StackState service -> pod relation %s->%s", relation.SourceID, relation.TargetID)
-			crl.RelationChan <- relation
+			crl.SubmitRelation(relation)
 		}
 	}
 

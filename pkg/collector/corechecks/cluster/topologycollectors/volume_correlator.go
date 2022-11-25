@@ -37,7 +37,6 @@ type VolumeCorrelation struct {
 
 // VolumeCorrelator is the correlation function which relates Pods and their Containers with the Volumes in use.
 type VolumeCorrelator struct {
-	RelationChan   chan<- *topology.Relation
 	VolumeCorrChan <-chan *VolumeCorrelation
 	ClusterTopologyCorrelator
 	discoverClaims bool
@@ -45,13 +44,11 @@ type VolumeCorrelator struct {
 
 // NewVolumeCorrelator instantiates the VolumeCorrelator
 func NewVolumeCorrelator(
-	relationChannel chan<- *topology.Relation,
 	volumeCorrChannel chan *VolumeCorrelation,
 	clusterTopologyCorrelator ClusterTopologyCorrelator,
 	claimsEnabled bool,
 ) ClusterTopologyCorrelator {
 	return &VolumeCorrelator{
-		RelationChan:              relationChannel,
 		VolumeCorrChan:            volumeCorrChannel,
 		ClusterTopologyCorrelator: clusterTopologyCorrelator,
 		discoverClaims:            claimsEnabled,
@@ -103,7 +100,7 @@ func (vc *VolumeCorrelator) CorrelateFunction() error {
 
 				containerExternalID := vc.buildContainerExternalID(pod.Namespace, pod.Name, container.Name)
 
-				vc.RelationChan <- vc.containerToVolumeStackStateRelation(containerExternalID, volumeExternalID, mount)
+				vc.SubmitRelation(vc.containerToVolumeStackStateRelation(containerExternalID, volumeExternalID, mount))
 			}
 		}
 	}
@@ -182,13 +179,13 @@ func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, 
 		}
 
 		for _, r := range toCreate.Relations {
-			vc.RelationChan <- r
+			vc.SubmitRelation(r)
 		}
 
 		volumeExternalID = toCreate.VolumeExternalID
 	}
 
-	vc.RelationChan <- vc.podToVolumeStackStateRelation(pod.ExternalID, volumeExternalID)
+	vc.SubmitRelation(vc.podToVolumeStackStateRelation(pod.ExternalID, volumeExternalID))
 	return volumeExternalID, nil
 }
 

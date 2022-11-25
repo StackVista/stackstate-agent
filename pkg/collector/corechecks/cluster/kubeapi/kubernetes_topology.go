@@ -148,17 +148,15 @@ func (t *TopologyCheck) Run() error {
 	volumeCorrelationChannel := make(chan *collectors.VolumeCorrelation)
 	podCorrelationChannel := make(chan *collectors.PodEndpointCorrelation)
 	endpointCorrelationChannel := make(chan *collectors.ServiceEndpointCorrelation)
-	relationCorrelationChannel := make(chan *topology.Relation)
 
 	// make a channel that is responsible for publishing components and relations
-	componentIDChannel := make(chan string)
 	componentChannel := make(chan *topology.Component)
 	relationChannel := make(chan *topology.Relation)
 	errChannel := make(chan error)
 	waitGroupChannel := make(chan bool)
 	collectorsDoneChannel := make(chan bool)
 
-	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, t.ac, t.instance.SourcePropertiesEnabled, componentChannel, componentIDChannel, t.getKubernetesVersion())
+	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, t.ac, t.instance.SourcePropertiesEnabled, componentChannel, relationChannel, t.getKubernetesVersion())
 	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
 	clusterCollectors := []collectors.ClusterTopologyCollector{
 		// Register Cluster Component Collector
@@ -167,13 +165,11 @@ func (t *TopologyCheck) Run() error {
 		),
 		// Register Node Component Collector
 		collectors.NewNodeCollector(
-			relationCorrelationChannel,
 			nodeIdentifierCorrelationChannel,
 			commonClusterCollector,
 		),
 		// Register Pod Component Collector
 		collectors.NewPodCollector(
-			relationCorrelationChannel,
 			containerCorrelationChannel,
 			volumeCorrelationChannel,
 			podCorrelationChannel,
@@ -181,7 +177,6 @@ func (t *TopologyCheck) Run() error {
 		),
 		// Register Service Component Collector
 		collectors.NewServiceCollector(
-			relationCorrelationChannel,
 			endpointCorrelationChannel,
 			commonClusterCollector,
 			t.instance.Resources.Endpoints,
@@ -191,7 +186,6 @@ func (t *TopologyCheck) Run() error {
 	if t.instance.Resources.Persistentvolumes {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewPersistentVolumeCollector(
-				relationCorrelationChannel,
 				commonClusterCollector,
 				t.instance.CSIPVMapperEnabled,
 			))
@@ -222,57 +216,48 @@ func (t *TopologyCheck) Run() error {
 	if t.instance.Resources.Daemonsets {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewDaemonSetCollector(
-				relationCorrelationChannel,
 				commonClusterCollector,
 			))
 	}
 	if t.instance.Resources.Deployments {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewDeploymentCollector(
-				relationCorrelationChannel,
 				commonClusterCollector,
 			))
 	}
 	if t.instance.Resources.Replicasets {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewReplicaSetCollector(
-				relationCorrelationChannel,
 				commonClusterCollector,
 			))
 	}
 	if t.instance.Resources.Statefulsets {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewStatefulSetCollector(
-				relationCorrelationChannel,
 				commonClusterCollector,
 			))
 	}
 	if t.instance.Resources.Ingresses {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewIngressCollector(
-				relationCorrelationChannel,
 				commonClusterCollector,
 			))
 	}
 	if t.instance.Resources.Jobs {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewJobCollector(
-				relationCorrelationChannel,
 				commonClusterCollector,
 			))
 	}
 	if t.instance.Resources.CronJobs {
 		clusterCollectors = append(clusterCollectors,
 			collectors.NewCronJobCollector(
-				relationCorrelationChannel,
 				commonClusterCollector,
 			))
 	}
 
 	commonClusterCorrelator := collectors.NewClusterTopologyCorrelator(clusterTopologyCommon)
 	relationCorrelator := collectors.NewRelationCorrelator(
-		componentIDChannel,
-		relationCorrelationChannel,
 		relationChannel,
 		collectorsDoneChannel,
 		commonClusterCorrelator,
@@ -280,19 +265,16 @@ func (t *TopologyCheck) Run() error {
 	clusterCorrelators := []collectors.ClusterTopologyCorrelator{
 		// Register Container -> Node Identifier Correlator
 		collectors.NewContainerCorrelator(
-			relationCorrelationChannel,
 			nodeIdentifierCorrelationChannel,
 			containerCorrelationChannel,
 			commonClusterCorrelator,
 		),
 		collectors.NewVolumeCorrelator(
-			relationCorrelationChannel,
 			volumeCorrelationChannel,
 			commonClusterCorrelator,
 			t.instance.Resources.Persistentvolumeclaims,
 		),
 		collectors.NewService2PodCorrelator(
-			relationCorrelationChannel,
 			podCorrelationChannel,
 			endpointCorrelationChannel,
 			commonClusterCorrelator,
@@ -303,7 +285,7 @@ func (t *TopologyCheck) Run() error {
 	t.RunClusterCollectors(clusterCollectors, clusterCorrelators, &waitGroup, errChannel, relationCorrelator, collectorsDoneChannel)
 
 	// receive all the components, will return once the wait group notifies
-	t.WaitForTopology(componentChannel, relationChannel, errChannel, &waitGroup, waitGroupChannel, collectorsDoneChannel)
+	t.WaitForTopology(componentChannel, relationChannel, errChannel, &waitGroup, waitGroupChannel)
 
 	t.submitter.SubmitStopSnapshot()
 	t.submitter.SubmitComplete()
@@ -311,18 +293,17 @@ func (t *TopologyCheck) Run() error {
 	log.Infof("Topology Check for cluster: %s completed successfully", t.instance.ClusterName)
 	// close all the created channels
 	close(componentChannel)
-	close(componentIDChannel)
 	close(relationChannel)
-	close(relationCorrelationChannel)
 	close(errChannel)
 	close(waitGroupChannel)
+	close(collectorsDoneChannel)
 
 	return nil
 }
 
 // WaitForTopology sets up the receiver that handles the component and relation channel and publishes it to StackState, returns when all the collectors have finished or the timeout was reached.
 func (t *TopologyCheck) WaitForTopology(componentChannel <-chan *topology.Component, relationChannel <-chan *topology.Relation,
-	errorChannel <-chan error, waitGroup *sync.WaitGroup, waitGroupChannel chan bool, collectorsDoneChannel chan bool) {
+	errorChannel <-chan error, waitGroup *sync.WaitGroup, waitGroupChannel chan bool) {
 	log.Debugf("Waiting for Cluster Collectors to Finish")
 	go func() {
 	loop:
@@ -334,8 +315,6 @@ func (t *TopologyCheck) WaitForTopology(componentChannel <-chan *topology.Compon
 				t.submitter.SubmitRelation(relation)
 			case err := <-errorChannel:
 				t.submitter.HandleError(err)
-			case <-collectorsDoneChannel:
-				// ignore
 			case timedOut := <-waitGroupChannel:
 				if timedOut {
 					_ = log.Warn("WaitGroup for Cluster Collectors did not finish in time, stopping topology publish loop")
@@ -378,24 +357,24 @@ func (t *TopologyCheck) RunClusterCollectors(
 	errorChannel chan<- error,
 	relationCorrelator collectors.ClusterTopologyCorrelator,
 	collectorsDoneChannel chan bool) {
-	var relationWaitGroup sync.WaitGroup
-	relationWaitGroup.Add(1 + len(clusterCorrelators)) // all collectors + all correlators (without RelationCorrelator)
-	waitGroup.Add(1)
+	var collectorsWaitGroup sync.WaitGroup
+	collectorsWaitGroup.Add(1 + len(clusterCorrelators)) // all collectors + all correlators (without RelationCorrelator)
 	go func() {
 		for _, collector := range clusterCollectors {
 			// add this collector to the wait group
 			runCollector(collector, errorChannel)
 		}
-		relationWaitGroup.Done()
+		collectorsWaitGroup.Done()
 	}()
 	// Run all correlators in parallel to avoid blocking channels
 	for _, correlator := range clusterCorrelators {
-		go runCorrelator(correlator, errorChannel, &relationWaitGroup)
+		go runCorrelator(correlator, errorChannel, &collectorsWaitGroup)
 	}
 	go func() {
-		relationWaitGroup.Wait()
+		collectorsWaitGroup.Wait()
 		collectorsDoneChannel <- true
 	}()
+	waitGroup.Add(1)
 	go runCorrelator(relationCorrelator, errorChannel, waitGroup)
 }
 

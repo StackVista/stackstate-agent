@@ -175,17 +175,15 @@ func testRunClusterCollectors(t *testing.T, sourceProperties bool) {
 
 	var waitGroup sync.WaitGroup
 	componentChannel := make(chan *topology.Component)
-	componentIDChannel := make(chan string)
 	relationChannel := make(chan *topology.Relation)
-	relationCorrChannel := make(chan *topology.Relation)
 	errChannel := make(chan error)
 	waitGroupChannel := make(chan bool)
-	collectorsFinishedChannel := make(chan bool)
+	collectorsDoneChannel := make(chan bool)
 
-	clusterTopologyCommon := collectors.NewClusterTopologyCommon(instance, nil, sourceProperties, componentChannel, componentIDChannel, &version.Info{Major: "1", Minor: "21"})
+	clusterTopologyCommon := collectors.NewClusterTopologyCommon(instance, nil, sourceProperties, componentChannel, relationChannel, &version.Info{Major: "1", Minor: "21"})
 	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
-	relationCorrelator := collectors.NewRelationCorrelator(componentIDChannel, relationCorrChannel, relationChannel,
-		collectorsFinishedChannel, collectors.NewClusterTopologyCorrelator(commonClusterCollector))
+	relationCorrelator := collectors.NewRelationCorrelator(relationChannel,
+		collectorsDoneChannel, collectors.NewClusterTopologyCorrelator(commonClusterCollector))
 
 	clusterCollectors := []collectors.ClusterTopologyCollector{
 		NewTestCollector(componentChannel, relationChannel, commonClusterCollector),
@@ -194,15 +192,16 @@ func testRunClusterCollectors(t *testing.T, sourceProperties bool) {
 	clusterCorrelators := make([]collectors.ClusterTopologyCorrelator, 0)
 
 	// starts all the cluster collectors
-	kubernetesTopologyCheck.RunClusterCollectors(clusterCollectors, clusterCorrelators, &waitGroup, errChannel, relationCorrelator, collectorsFinishedChannel)
+	kubernetesTopologyCheck.RunClusterCollectors(clusterCollectors, clusterCorrelators, &waitGroup, errChannel, relationCorrelator, collectorsDoneChannel)
 
 	// receive all the components, will return once the wait group notifies
-	kubernetesTopologyCheck.WaitForTopology(componentChannel, relationChannel, errChannel, &waitGroup, waitGroupChannel, collectorsFinishedChannel)
+	kubernetesTopologyCheck.WaitForTopology(componentChannel, relationChannel, errChannel, &waitGroup, waitGroupChannel)
 
 	close(componentChannel)
 	close(relationChannel)
 	close(errChannel)
 	close(waitGroupChannel)
+	close(collectorsDoneChannel)
 }
 
 // NewTestTopologySubmitter creates a new instance of TestTopologySubmitter

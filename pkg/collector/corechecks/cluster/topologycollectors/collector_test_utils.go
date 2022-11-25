@@ -19,7 +19,7 @@ import (
 func NewTestCommonClusterCollector(
 	client apiserver.APICollectorClient,
 	componentChan chan<- *topology.Component,
-	componentIDChannel chan<- string,
+	relationChan chan<- *topology.Relation,
 	sourcePropertiesEnabled bool) ClusterTopologyCollector {
 	instance := topology.Instance{Type: "kubernetes", URL: "test-cluster-name"}
 
@@ -28,17 +28,17 @@ func NewTestCommonClusterCollector(
 		Minor: "21",
 	}
 
-	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, sourcePropertiesEnabled, componentChan, componentIDChannel, &k8sVersion)
+	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, sourcePropertiesEnabled, componentChan, relationChan, &k8sVersion)
 	return NewClusterTopologyCollector(clusterTopologyCommon)
 }
 
 func NewTestCommonClusterCollectorWithVersion(client apiserver.APICollectorClient, sourcePropertiesEnabled bool,
 	componentChan chan<- *topology.Component,
-	componentIDChannel chan<- string,
+	relationChan chan<- *topology.Relation,
 	k8sVersion *version.Info) ClusterTopologyCollector {
 	instance := topology.Instance{Type: "kubernetes", URL: "test-cluster-name"}
 
-	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, sourcePropertiesEnabled, componentChan, componentIDChannel, k8sVersion)
+	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, sourcePropertiesEnabled, componentChan, relationChan, k8sVersion)
 	return NewClusterTopologyCollector(clusterTopologyCommon)
 }
 

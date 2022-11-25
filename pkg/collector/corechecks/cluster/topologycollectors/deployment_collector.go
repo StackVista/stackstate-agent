@@ -11,14 +11,12 @@ import (
 
 // DeploymentCollector implements the ClusterTopologyCollector interface.
 type DeploymentCollector struct {
-	RelationChan chan<- *topology.Relation
 	ClusterTopologyCollector
 }
 
 // NewDeploymentCollector
-func NewDeploymentCollector(relationChannel chan<- *topology.Relation, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
+func NewDeploymentCollector(clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &DeploymentCollector{
-		RelationChan:             relationChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
 }
@@ -39,7 +37,7 @@ func (dmc *DeploymentCollector) CollectorFunction() error {
 		component := dmc.deploymentToStackStateComponent(dep)
 		dmc.SubmitComponent(component)
 
-		dmc.RelationChan <- dmc.namespaceToDeploymentStackStateRelation(dmc.buildNamespaceExternalID(dep.Namespace), component.ExternalID)
+		dmc.SubmitRelation(dmc.namespaceToDeploymentStackStateRelation(dmc.buildNamespaceExternalID(dep.Namespace), component.ExternalID))
 	}
 
 	return nil

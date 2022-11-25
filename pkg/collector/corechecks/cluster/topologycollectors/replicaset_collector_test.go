@@ -26,15 +26,13 @@ func TestReplicaSetCollector(t *testing.T) {
 	defer close(componentChannel)
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
-	componentIDChannel := make(chan string)
-	defer close(componentIDChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 	replicas = 1
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		ic := NewReplicaSetCollector(relationChannel, NewTestCommonClusterCollector(MockReplicaSetAPICollectorClient{}, componentChannel, componentIDChannel, sourcePropertiesEnabled))
+		ic := NewReplicaSetCollector(NewTestCommonClusterCollector(MockReplicaSetAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "ReplicaSet Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 
@@ -194,7 +192,6 @@ func TestReplicaSetCollector(t *testing.T) {
 		} {
 			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
 				service := <-componentChannel
-				<-componentIDChannel
 				if sourcePropertiesEnabled {
 					assert.EqualValues(t, tc.expectedComponentSP, service)
 				} else {

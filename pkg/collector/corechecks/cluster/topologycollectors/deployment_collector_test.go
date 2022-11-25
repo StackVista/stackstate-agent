@@ -26,14 +26,12 @@ func TestDeploymentCollector(t *testing.T) {
 	defer close(componentChannel)
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
-	componentIDChannel := make(chan string)
-	defer close(componentIDChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	replicas = int32(1)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		cmc := NewDeploymentCollector(relationChannel, NewTestCommonClusterCollector(MockDeploymentAPICollectorClient{}, componentChannel, componentIDChannel, sourcePropertiesEnabled))
+		cmc := NewDeploymentCollector(NewTestCommonClusterCollector(MockDeploymentAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "Deployment Collector"
 		RunCollectorTest(t, cmc, expectedCollectorName)
 
@@ -189,8 +187,6 @@ func TestDeploymentCollector(t *testing.T) {
 		} {
 			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
 				component := <-componentChannel
-				<-componentIDChannel
-
 				if sourcePropertiesEnabled {
 					assert.EqualValues(t, tc.expectedSP, component)
 				} else {

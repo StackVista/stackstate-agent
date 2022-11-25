@@ -11,14 +11,12 @@ import (
 
 // JobCollector implements the ClusterTopologyCollector interface.
 type JobCollector struct {
-	RelationChan chan<- *topology.Relation
 	ClusterTopologyCollector
 }
 
 // NewJobCollector creates a new Job collector
-func NewJobCollector(relationChannel chan<- *topology.Relation, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
+func NewJobCollector(clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &JobCollector{
-		RelationChan:             relationChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
 }
@@ -45,14 +43,14 @@ func (jc *JobCollector) CollectorFunction() error {
 			switch kind := ref.Kind; kind {
 			case CronJob:
 				cronJobExternalID := jc.buildCronJobExternalID(job.Namespace, ref.Name)
-				jc.RelationChan <- jc.cronJobToJobStackStateRelation(cronJobExternalID, component.ExternalID)
+				jc.SubmitRelation(jc.cronJobToJobStackStateRelation(cronJobExternalID, component.ExternalID))
 				ownedByCron = true
 			}
 		}
 
 		// If not owned by Cron Job, make a direct relation from the Namespace
 		if !ownedByCron {
-			jc.RelationChan <- jc.namespaceToJobStackStateRelation(jc.buildNamespaceExternalID(job.Namespace), component.ExternalID)
+			jc.SubmitRelation(jc.namespaceToJobStackStateRelation(jc.buildNamespaceExternalID(job.Namespace), component.ExternalID))
 		}
 	}
 

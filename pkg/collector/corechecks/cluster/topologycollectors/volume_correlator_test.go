@@ -268,8 +268,6 @@ func executeVolumeCorrelation(
 	defer close(componentChannel)
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
-	componentIDChannel := make(chan string)
-	defer close(componentIDChannel)
 
 	clusterAPIClient := MockVolumeCorrelatorAPIClient{
 		pods: pods, pvcs: pvcs,
@@ -279,16 +277,14 @@ func executeVolumeCorrelation(
 	containerCorrChannel := make(chan *ContainerCorrelation)
 	volumeCorrChannel := make(chan *VolumeCorrelation)
 	volumeCorrelator := NewVolumeCorrelator(
-		relationChannel,
 		volumeCorrChannel,
-		NewTestCommonClusterCorrelator(clusterAPIClient, componentChannel, componentIDChannel),
+		NewTestCommonClusterCorrelator(clusterAPIClient, componentChannel, relationChannel),
 		claimsEnabled,
 	)
 	podCollector := NewPodCollector(
-		relationChannel,
 		containerCorrChannel, volumeCorrChannel,
 		podCorrChannel,
-		NewTestCommonClusterCollector(clusterAPIClient, componentChannel, componentIDChannel, false),
+		NewTestCommonClusterCollector(clusterAPIClient, componentChannel, relationChannel, false),
 	)
 
 	collectorsFinishChan := make(chan bool)
@@ -316,8 +312,6 @@ L:
 		select {
 		case c := <-componentChannel:
 			components = append(components, c)
-		case <-componentIDChannel:
-			// ignore
 		case r := <-relationChannel:
 			relations = append(relations, r)
 		case <-collectorsFinishChan:

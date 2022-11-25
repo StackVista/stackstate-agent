@@ -10,23 +10,19 @@ import (
 
 // RelationCorrelator implements the ClusterTopologyCollector interface.
 type RelationCorrelator struct {
-	ComponentIDChannel     chan string
-	RelationCorrChan       chan *topology.Relation
-	RelationChan           chan<- *topology.Relation
-	CollectorsFinishedChan <-chan bool
+	RelationChan       chan<- *topology.Relation
+	CollectorsDoneChan <-chan bool
 	ClusterTopologyCorrelator
 }
 
 // NewRelationCorrelator creates a RelationCorrelator
-func NewRelationCorrelator(componentIDChannel chan string, relationCorrChannel chan *topology.Relation,
+func NewRelationCorrelator(
 	relationChannel chan<- *topology.Relation,
-	collectorsFinishedChan chan bool,
+	collectorsDoneChan chan bool,
 	clusterTopologyCorrelator ClusterTopologyCorrelator) ClusterTopologyCorrelator {
 	return &RelationCorrelator{
-		ComponentIDChannel:        componentIDChannel,
-		RelationCorrChan:          relationCorrChannel,
 		RelationChan:              relationChannel,
-		CollectorsFinishedChan:    collectorsFinishedChan,
+		CollectorsDoneChan:        collectorsDoneChan,
 		ClusterTopologyCorrelator: clusterTopologyCorrelator,
 	}
 }
@@ -38,26 +34,14 @@ func (*RelationCorrelator) GetName() string {
 
 // CorrelateFunction Collects and publishes relations where both source and target exist
 func (rc *RelationCorrelator) CorrelateFunction() error {
-	componentIDs := make(map[string]struct{})
-	var possibleRelations []*topology.Relation
-loop:
-	for {
-		select {
-		case id := <-rc.ComponentIDChannel:
-			componentIDs[id] = struct{}{}
-		case relation := <-rc.RelationCorrChan:
-			possibleRelations = append(possibleRelations, relation)
-		case <-rc.CollectorsFinishedChan:
-			break loop
-		}
-	}
+	// wait until all collectors are done
+	<-rc.CollectorsDoneChan
 
-	for _, relation := range possibleRelations {
-		_, sourceExists := componentIDs[relation.SourceID]
-		_, targetExists := componentIDs[relation.TargetID]
+	componentCache := rc.GetComponentIDCache()
+	for _, relation := range rc.GetPossibleRelations() {
+		_, sourceExists := componentCache[relation.SourceID]
+		_, targetExists := componentCache[relation.TargetID]
 		if sourceExists && targetExists {
-			// TODO remove debug
-			log.Debugf("Created relation '%s'", relation.ExternalID)
 			rc.RelationChan <- relation
 		} else {
 			if !sourceExists {

@@ -91,19 +91,16 @@ func testCronJobsWithK8SVersion(t *testing.T, k8sVersion version.Info, component
 	defer close(componentChannel)
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
-	componentIDChannel := make(chan string)
-	defer close(componentIDChannel)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		cjc := NewCronJobCollector(relationChannel,
-			NewTestCommonClusterCollectorWithVersion(MockCronJobAPICollectorClient{}, sourcePropertiesEnabled, componentChannel, componentIDChannel, &k8sVersion))
+		cjc := NewCronJobCollector(
+			NewTestCommonClusterCollectorWithVersion(MockCronJobAPICollectorClient{}, sourcePropertiesEnabled, componentChannel, relationChannel, &k8sVersion))
 		expectedCollectorName := "CronJob Collector"
 		RunCollectorTest(t, cjc, expectedCollectorName)
 
 		for _, tc := range componentsExpected {
 			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
 				cronJob := <-componentChannel
-				<-componentIDChannel
 				if sourcePropertiesEnabled {
 					assert.EqualValues(t, tc.expectedSP, cronJob)
 				} else {

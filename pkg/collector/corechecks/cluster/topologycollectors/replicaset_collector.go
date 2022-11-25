@@ -11,7 +11,6 @@ import (
 
 // ReplicaSetCollector implements the ClusterTopologyCollector interface.
 type ReplicaSetCollector struct {
-	RelationChan chan<- *topology.Relation
 	ClusterTopologyCollector
 }
 
@@ -21,9 +20,8 @@ func (*ReplicaSetCollector) GetName() string {
 }
 
 // NewReplicaSetCollector
-func NewReplicaSetCollector(relationChannel chan<- *topology.Relation, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
+func NewReplicaSetCollector(clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &ReplicaSetCollector{
-		RelationChan:             relationChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
 }
@@ -45,13 +43,13 @@ func (rsc *ReplicaSetCollector) CollectorFunction() error {
 			switch kind := ref.Kind; kind {
 			case Deployment:
 				dmExternalID := rsc.buildDeploymentExternalID(rs.Namespace, ref.Name)
-				rsc.RelationChan <- rsc.deploymentToReplicaSetStackStateRelation(dmExternalID, component.ExternalID)
+				rsc.SubmitRelation(rsc.deploymentToReplicaSetStackStateRelation(dmExternalID, component.ExternalID))
 				controlled = true
 			}
 		}
 
 		if !controlled {
-			rsc.RelationChan <- rsc.namespaceToReplicaSetStackStateRelation(rsc.buildNamespaceExternalID(rs.Namespace), component.ExternalID)
+			rsc.SubmitRelation(rsc.namespaceToReplicaSetStackStateRelation(rsc.buildNamespaceExternalID(rs.Namespace), component.ExternalID))
 		}
 
 	}

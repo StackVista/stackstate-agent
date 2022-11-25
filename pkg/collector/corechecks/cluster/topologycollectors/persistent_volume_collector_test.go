@@ -23,8 +23,6 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 
 	componentChannel := make(chan *topology.Component)
 	defer close(componentChannel)
-	componentIDChannel := make(chan string)
-	defer close(componentIDChannel)
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
 
@@ -74,7 +72,6 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 				assertions: []func(*testing.T){
 					func(t *testing.T) {
 						component := <-componentChannel
-						<-componentIDChannel
 						expected :=
 							chooseBySourcePropertiesFeature(
 								sourcePropertiesEnabled,
@@ -124,7 +121,6 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 					},
 					func(t *testing.T) {
 						component := <-componentChannel
-						<-componentIDChannel
 						expected := &topology.Component{
 							ExternalID: "urn:kubernetes:external-volume:aws-ebs/id-of-the-aws-block-store/0",
 							Type:       topology.Type{Name: "volume-source"},
@@ -165,7 +161,6 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 				assertions: []func(*testing.T){
 					func(t *testing.T) {
 						component := <-componentChannel
-						<-componentIDChannel
 						expected := chooseBySourcePropertiesFeature(
 							sourcePropertiesEnabled,
 							&topology.Component{
@@ -212,7 +207,6 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 					},
 					func(t *testing.T) {
 						component := <-componentChannel
-						<-componentIDChannel
 						expected := &topology.Component{
 							ExternalID: "urn:kubernetes:external-volume:gce-pd/name-of-the-gce-persistent-disk",
 							Type:       topology.Type{Name: "volume-source"},
@@ -255,7 +249,6 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 				assertions: []func(*testing.T){
 					func(t *testing.T) {
 						component := <-componentChannel
-						<-componentIDChannel
 						expected := chooseBySourcePropertiesFeature(
 							sourcePropertiesEnabled,
 							&topology.Component{
@@ -322,7 +315,6 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 				assertions: []func(*testing.T){
 					func(t *testing.T) {
 						component := <-componentChannel
-						<-componentIDChannel
 						expected :=
 							chooseBySourcePropertiesFeature(
 								sourcePropertiesEnabled,
@@ -384,7 +376,6 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 					},
 					func(t *testing.T) {
 						component := <-componentChannel
-						<-componentIDChannel
 						expected := &topology.Component{
 							ExternalID: "urn:kubernetes:external-volume:csi/csi.trident.netapp.io/pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
 							Type:       topology.Type{Name: "volume-source"},
@@ -424,7 +415,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 			},
 		} {
 			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
-				cmc := NewPersistentVolumeCollector(relationChannel, NewTestCommonClusterCollector(tc.apiCollectorClientFactory(), componentChannel, componentIDChannel, sourcePropertiesEnabled), true)
+				cmc := NewPersistentVolumeCollector(NewTestCommonClusterCollector(tc.apiCollectorClientFactory(), componentChannel, relationChannel, sourcePropertiesEnabled), true)
 				expectedCollectorName := "Persistent Volume Collector"
 				RunCollectorTest(t, cmc, expectedCollectorName)
 
@@ -440,8 +431,6 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 
 	componentChannel := make(chan *topology.Component)
 	defer close(componentChannel)
-	componentIDChannel := make(chan string)
-	defer close(componentIDChannel)
 
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
@@ -481,7 +470,6 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 				assertions: []func(*testing.T){
 					func(t *testing.T) {
 						component := <-componentChannel
-						<-componentIDChannel
 						expected :=
 							chooseBySourcePropertiesFeature(
 								sourcePropertiesEnabled,
@@ -549,7 +537,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 			},
 		} {
 			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
-				cmc := NewPersistentVolumeCollector(relationChannel, NewTestCommonClusterCollector(tc.apiCollectorClientFactory(), componentChannel, componentIDChannel, sourcePropertiesEnabled), false)
+				cmc := NewPersistentVolumeCollector(NewTestCommonClusterCollector(tc.apiCollectorClientFactory(), componentChannel, relationChannel, sourcePropertiesEnabled), false)
 				expectedCollectorName := "Persistent Volume Collector"
 				RunCollectorTest(t, cmc, expectedCollectorName)
 

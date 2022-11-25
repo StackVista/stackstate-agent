@@ -26,8 +26,6 @@ func TestStatefulSetCollector(t *testing.T) {
 	defer close(componentChannel)
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
-	componentIDChannel := make(chan string)
-	defer close(componentIDChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
@@ -35,7 +33,7 @@ func TestStatefulSetCollector(t *testing.T) {
 	replicas = int32(1)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		cmc := NewStatefulSetCollector(relationChannel, NewTestCommonClusterCollector(MockStatefulSetAPICollectorClient{}, componentChannel, componentIDChannel, sourcePropertiesEnabled))
+		cmc := NewStatefulSetCollector(NewTestCommonClusterCollector(MockStatefulSetAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "StatefulSet Collector"
 		RunCollectorTest(t, cmc, expectedCollectorName)
 
@@ -191,7 +189,6 @@ func TestStatefulSetCollector(t *testing.T) {
 		} {
 			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
 				component := <-componentChannel
-				<-componentIDChannel
 				if sourcePropertiesEnabled {
 					assert.EqualValues(t, tc.expectedSP, component)
 				} else {

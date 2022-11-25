@@ -50,6 +50,9 @@ type ClusterTopologyCommon interface {
 	maximumMinorVersion(version int) bool
 	minimumMinorVersion(version int) bool
 	SubmitComponent(component *topology.Component)
+	SubmitRelation(relation *topology.Relation)
+	GetPossibleRelations() []*topology.Relation
+	GetComponentIDCache() map[string]struct{}
 }
 
 type clusterTopologyCommon struct {
@@ -58,7 +61,9 @@ type clusterTopologyCommon struct {
 	urn                     urn.Builder
 	sourcePropertiesEnabled bool
 	ComponentChan           chan<- *topology.Component
-	ComponentIDChannel      chan<- string
+	ComponentIDCache        map[string]struct{}
+	RelationChan            chan<- *topology.Relation
+	PossibleRelations       []*topology.Relation
 	k8sVersion              *version.Info
 }
 
@@ -68,7 +73,7 @@ func NewClusterTopologyCommon(
 	ac apiserver.APICollectorClient,
 	spEnabled bool,
 	componentChan chan<- *topology.Component,
-	componentIDChannel chan<- string,
+	relationChan chan<- *topology.Relation,
 	k8sVersion *version.Info,
 ) ClusterTopologyCommon {
 	return &clusterTopologyCommon{
@@ -77,14 +82,36 @@ func NewClusterTopologyCommon(
 		urn:                     urn.NewURNBuilder(urn.ClusterTypeFromString(instance.Type), instance.URL),
 		sourcePropertiesEnabled: spEnabled,
 		ComponentChan:           componentChan,
-		ComponentIDChannel:      componentIDChannel,
+		ComponentIDCache:        make(map[string]struct{}),
+		RelationChan:            relationChan,
 		k8sVersion:              k8sVersion,
 	}
 }
 
 func (c *clusterTopologyCommon) SubmitComponent(component *topology.Component) {
+	fmt.Println("SubmitComponent ", component.ExternalID)
 	c.ComponentChan <- component
-	c.ComponentIDChannel <- component.ExternalID
+	c.ComponentIDCache[component.ExternalID] = struct{}{}
+}
+
+func (c *clusterTopologyCommon) SubmitRelation(relation *topology.Relation) {
+	_, sourceExists := c.ComponentIDCache[relation.SourceID]
+	_, targetExists := c.ComponentIDCache[relation.TargetID]
+	if sourceExists && targetExists {
+		fmt.Println("SubmitRelation good ", relation.ExternalID)
+		c.RelationChan <- relation
+	} else {
+		fmt.Println("SubmitRelation PossibleRelations ", relation.ExternalID)
+		c.PossibleRelations = append(c.PossibleRelations, relation)
+	}
+}
+
+func (c *clusterTopologyCommon) GetPossibleRelations() []*topology.Relation {
+	return c.PossibleRelations
+}
+
+func (c *clusterTopologyCommon) GetComponentIDCache() map[string]struct{} {
+	return c.ComponentIDCache
 }
 
 // GetName

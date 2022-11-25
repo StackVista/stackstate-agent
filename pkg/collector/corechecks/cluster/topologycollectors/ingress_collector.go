@@ -10,15 +10,12 @@ import (
 
 // IngressCollector implements the ClusterTopologyCollector interface.
 type IngressCollector struct {
-	RelationChan chan<- *topology.Relation
 	ClusterTopologyCollector
 }
 
 // NewIngressCollector creates a new Ingress collector
-func NewIngressCollector(relationChannel chan<- *topology.Relation,
-	clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
+func NewIngressCollector(clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &IngressCollector{
-		RelationChan:             relationChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
 }
@@ -50,7 +47,7 @@ func (ic *IngressCollector) CollectorFunction() error {
 
 			// publish the ingress -> service relation
 			relation := ic.ingressToServiceStackStateRelation(component.ExternalID, serviceExternalID)
-			ic.RelationChan <- relation
+			ic.SubmitRelation(relation)
 		}
 
 		// submit relation to service name in the ingress rules for correlation
@@ -59,7 +56,7 @@ func (ic *IngressCollector) CollectorFunction() error {
 
 			// publish the ingress -> service relation
 			relation := ic.ingressToServiceStackStateRelation(component.ExternalID, serviceExternalID)
-			ic.RelationChan <- relation
+			ic.SubmitRelation(relation)
 		}
 
 		// submit relation to loadbalancer
@@ -68,7 +65,7 @@ func (ic *IngressCollector) CollectorFunction() error {
 			endpoint := ic.endpointStackStateComponentFromIngress(in, ingressPoint)
 
 			ic.SubmitComponent(endpoint)
-			ic.RelationChan <- ic.endpointToIngressStackStateRelation(endpoint.ExternalID, component.ExternalID)
+			ic.SubmitRelation(ic.endpointToIngressStackStateRelation(endpoint.ExternalID, component.ExternalID))
 		}
 	}
 

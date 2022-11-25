@@ -11,14 +11,12 @@ import (
 
 // DaemonSetCollector implements the ClusterTopologyCollector interface.
 type DaemonSetCollector struct {
-	RelationChan chan<- *topology.Relation
 	ClusterTopologyCollector
 }
 
 // NewDaemonSetCollector
-func NewDaemonSetCollector(relationChannel chan<- *topology.Relation, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
+func NewDaemonSetCollector(clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &DaemonSetCollector{
-		RelationChan:             relationChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
 }
@@ -38,7 +36,7 @@ func (dsc *DaemonSetCollector) CollectorFunction() error {
 	for _, ds := range daemonSets {
 		component := dsc.daemonSetToStackStateComponent(ds)
 		dsc.SubmitComponent(component)
-		dsc.RelationChan <- dsc.namespaceToDaemonSetStackStateRelation(dsc.buildNamespaceExternalID(ds.Namespace), component.ExternalID)
+		dsc.SubmitRelation(dsc.namespaceToDaemonSetStackStateRelation(dsc.buildNamespaceExternalID(ds.Namespace), component.ExternalID))
 	}
 
 	return nil

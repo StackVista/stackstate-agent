@@ -29,8 +29,6 @@ func TestJobCollector(t *testing.T) {
 	defer close(componentChannel)
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
-	componentIDChannel := make(chan string)
-	defer close(componentIDChannel)
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
@@ -38,7 +36,7 @@ func TestJobCollector(t *testing.T) {
 	backoffLimit = int32(5)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		jc := NewJobCollector(relationChannel, NewTestCommonClusterCollector(MockJobAPICollectorClient{}, componentChannel, componentIDChannel, sourcePropertiesEnabled))
+		jc := NewJobCollector(NewTestCommonClusterCollector(MockJobAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled))
 		expectedCollectorName := "Job Collector"
 		RunCollectorTest(t, jc, expectedCollectorName)
 
@@ -213,7 +211,6 @@ func TestJobCollector(t *testing.T) {
 		} {
 			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
 				component := <-componentChannel
-				<-componentIDChannel
 				if sourcePropertiesEnabled {
 					assert.EqualValues(t, tc.expectedComponentSP, component)
 				} else {

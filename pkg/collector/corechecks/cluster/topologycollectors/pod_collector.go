@@ -13,7 +13,6 @@ import (
 
 // PodCollector implements the ClusterTopologyCollector interface.
 type PodCollector struct {
-	RelationChan      chan<- *topology.Relation
 	ContainerCorrChan chan<- *ContainerCorrelation
 	VolumeCorrChan    chan<- *VolumeCorrelation
 	PodCorrChan       chan *PodEndpointCorrelation
@@ -28,7 +27,6 @@ type ContainerPort struct {
 
 // NewPodCollector
 func NewPodCollector(
-	relationChannel chan<- *topology.Relation,
 	containerCorrChannel chan<- *ContainerCorrelation,
 	volumeCorrChannel chan<- *VolumeCorrelation,
 	podCorrChannel chan *PodEndpointCorrelation,
@@ -36,7 +34,6 @@ func NewPodCollector(
 ) ClusterTopologyCollector {
 
 	return &PodCollector{
-		RelationChan:             relationChannel,
 		ContainerCorrChan:        containerCorrChannel,
 		VolumeCorrChan:           volumeCorrChannel,
 		PodCorrChan:              podCorrChannel,
@@ -72,7 +69,7 @@ func (pc *PodCollector) CollectorFunction() error {
 
 		// pod could not be scheduled for some reason
 		if pod.Spec.NodeName != "" {
-			pc.RelationChan <- pc.podToNodeStackStateRelation(pod)
+			pc.SubmitRelation(pc.podToNodeStackStateRelation(pod))
 		}
 
 		managed := false
@@ -81,19 +78,19 @@ func (pc *PodCollector) CollectorFunction() error {
 			switch kind := ref.Kind; kind {
 			case DaemonSet:
 				controllerExternalID = pc.buildDaemonSetExternalID(pod.Namespace, ref.Name)
-				pc.RelationChan <- pc.controllerWorkloadToPodStackStateRelation(controllerExternalID, component.ExternalID)
+				pc.SubmitRelation(pc.controllerWorkloadToPodStackStateRelation(controllerExternalID, component.ExternalID))
 				managed = true
 			case Deployment:
 				controllerExternalID = pc.buildDeploymentExternalID(pod.Namespace, ref.Name)
-				pc.RelationChan <- pc.controllerWorkloadToPodStackStateRelation(controllerExternalID, component.ExternalID)
+				pc.SubmitRelation(pc.controllerWorkloadToPodStackStateRelation(controllerExternalID, component.ExternalID))
 				managed = true
 			case ReplicaSet:
 				controllerExternalID = pc.buildReplicaSetExternalID(pod.Namespace, ref.Name)
-				pc.RelationChan <- pc.controllerWorkloadToPodStackStateRelation(controllerExternalID, component.ExternalID)
+				pc.SubmitRelation(pc.controllerWorkloadToPodStackStateRelation(controllerExternalID, component.ExternalID))
 				managed = true
 			case StatefulSet:
 				controllerExternalID = pc.buildStatefulSetExternalID(pod.Namespace, ref.Name)
-				pc.RelationChan <- pc.controllerWorkloadToPodStackStateRelation(controllerExternalID, component.ExternalID)
+				pc.SubmitRelation(pc.controllerWorkloadToPodStackStateRelation(controllerExternalID, component.ExternalID))
 				managed = true
 			case Job:
 				if pod.Status.Phase == "Succeeded" || pod.Status.Phase == "Failed" {
@@ -102,13 +99,13 @@ func (pc *PodCollector) CollectorFunction() error {
 					continue
 				}
 				controllerExternalID = pc.buildJobExternalID(pod.Namespace, ref.Name)
-				pc.RelationChan <- pc.controllerWorkloadToPodStackStateRelation(controllerExternalID, component.ExternalID)
+				pc.SubmitRelation(pc.controllerWorkloadToPodStackStateRelation(controllerExternalID, component.ExternalID))
 				managed = true
 			}
 		}
 
 		if !managed {
-			pc.RelationChan <- pc.namespaceToPodStackStateRelation(pc.buildNamespaceExternalID(pod.Namespace), component.ExternalID)
+			pc.SubmitRelation(pc.namespaceToPodStackStateRelation(pc.buildNamespaceExternalID(pod.Namespace), component.ExternalID))
 		}
 
 		isServingInHostNetwork :=
@@ -119,18 +116,18 @@ func (pc *PodCollector) CollectorFunction() error {
 			// map relations to config map
 			for _, env := range c.EnvFrom {
 				if env.ConfigMapRef != nil {
-					pc.RelationChan <- pc.podToConfigMapStackStateRelation(component.ExternalID, pc.buildConfigMapExternalID(pod.Namespace, env.ConfigMapRef.LocalObjectReference.Name))
+					pc.SubmitRelation(pc.podToConfigMapStackStateRelation(component.ExternalID, pc.buildConfigMapExternalID(pod.Namespace, env.ConfigMapRef.LocalObjectReference.Name)))
 				} else if env.SecretRef != nil {
-					pc.RelationChan <- pc.podToSecretStackStateRelation(component.ExternalID, pc.buildSecretExternalID(pod.Namespace, env.SecretRef.LocalObjectReference.Name))
+					pc.SubmitRelation(pc.podToSecretStackStateRelation(component.ExternalID, pc.buildSecretExternalID(pod.Namespace, env.SecretRef.LocalObjectReference.Name)))
 				}
 			}
 
 			// map relations to config map for this variable
 			for _, env := range c.Env {
 				if env.ValueFrom != nil && env.ValueFrom.ConfigMapKeyRef != nil {
-					pc.RelationChan <- pc.podToConfigMapVarStackStateRelation(component.ExternalID, pc.buildConfigMapExternalID(pod.Namespace, env.ValueFrom.ConfigMapKeyRef.LocalObjectReference.Name))
+					pc.SubmitRelation(pc.podToConfigMapVarStackStateRelation(component.ExternalID, pc.buildConfigMapExternalID(pod.Namespace, env.ValueFrom.ConfigMapKeyRef.LocalObjectReference.Name)))
 				} else if env.ValueFrom != nil && env.ValueFrom.SecretKeyRef != nil {
-					pc.RelationChan <- pc.podToSecretVarStackStateRelation(component.ExternalID, pc.buildSecretExternalID(pod.Namespace, env.ValueFrom.SecretKeyRef.LocalObjectReference.Name))
+					pc.SubmitRelation(pc.podToSecretVarStackStateRelation(component.ExternalID, pc.buildSecretExternalID(pod.Namespace, env.ValueFrom.SecretKeyRef.LocalObjectReference.Name)))
 				}
 			}
 
