@@ -57,6 +57,10 @@ stages:
   - &cluster_agent_release
     if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_JOB_TRIGGERED == "true")
     when: manual
+  - &cluster_agent_manual
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
+    when: manual
+    allow_failure: true
 
 # Merge train rules for agent v2
 .v2_merge_train_always: &v2_merge_train_always
@@ -710,7 +714,8 @@ pre_release_swarm_agent_image:
     #                     script                           $IMAGE_TAG              $IMAGE_REPO              $EXTRA_TAG            $BASE_REPO           $BASE_TAG
     - ./omnibus/package-scripts/publish_swarm_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_SWARM $CI_COMMIT_SHORT_SHA $STS_DOCKER_TEST_REPO $CI_COMMIT_SHORT_SHA
   rules:
-    - *cluster_agent
+    - *cluster_agent_manual
+    - *v2_merge_train_always_manual
 
 pre_release_trace_agent_image:
   <<: *pre_release_image
@@ -721,7 +726,8 @@ pre_release_trace_agent_image:
     - cp ./outcomes/binary/trace-agent Dockerfiles/trace-agent
     - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_TRACE $CI_PROJECT_DIR/Dockerfiles/trace-agent $CI_COMMIT_SHORT_SHA
   rules:
-    - *cluster_agent
+    - *cluster_agent_manual
+    - *v2_merge_train_always_manual
 
 pre_release_cluster_agent_image:
   <<: *pre_release_image
