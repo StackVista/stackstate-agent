@@ -202,7 +202,7 @@ agent3:
     - <<: *scheduled_master_pipeline
     - *other_files_rule
     - *md_only_rule
-    - when: always
+    - when: manual
 
 cluster_agent:
   stage: triggers
