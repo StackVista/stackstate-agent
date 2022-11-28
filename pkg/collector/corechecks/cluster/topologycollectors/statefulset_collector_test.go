@@ -33,7 +33,9 @@ func TestStatefulSetCollector(t *testing.T) {
 	replicas = int32(1)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		cmc := NewStatefulSetCollector(NewTestCommonClusterCollector(MockStatefulSetAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled))
+		commonClusterCollector := NewTestCommonClusterCollector(MockStatefulSetAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled)
+		commonClusterCollector.SetUseRelationCache(false)
+		cmc := NewStatefulSetCollector(commonClusterCollector)
 		expectedCollectorName := "StatefulSet Collector"
 		RunCollectorTest(t, cmc, expectedCollectorName)
 

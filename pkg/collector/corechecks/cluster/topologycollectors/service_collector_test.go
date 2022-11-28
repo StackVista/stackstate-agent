@@ -35,9 +35,11 @@ func TestServiceCollector(t *testing.T) {
 					relationChannel := make(chan *topology.Relation)
 					collectorChannel := make(chan bool)
 
+					commonCollector := NewTestCommonClusterCollector(MockServiceAPICollectorClient{testCaseNumber: testCaseNo + 1}, componentChannel, relationChannel, sourcePropertiesEnabled)
+					commonCollector.SetUseRelationCache(false)
 					serviceCollector := NewServiceCollector(
 						svcCorrelationChannel,
-						NewTestCommonClusterCollector(MockServiceAPICollectorClient{testCaseNumber: testCaseNo + 1}, componentChannel, relationChannel, sourcePropertiesEnabled),
+						commonCollector,
 						endpointsEnabled,
 					)
 					// Mock out DNS resolution function for test

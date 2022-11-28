@@ -93,8 +93,10 @@ func testCronJobsWithK8SVersion(t *testing.T, k8sVersion version.Info, component
 	defer close(relationChannel)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
+		commonClusterCollector := NewTestCommonClusterCollectorWithVersion(MockCronJobAPICollectorClient{}, sourcePropertiesEnabled, componentChannel, relationChannel, &k8sVersion)
+		commonClusterCollector.SetUseRelationCache(false)
 		cjc := NewCronJobCollector(
-			NewTestCommonClusterCollectorWithVersion(MockCronJobAPICollectorClient{}, sourcePropertiesEnabled, componentChannel, relationChannel, &k8sVersion))
+			commonClusterCollector)
 		expectedCollectorName := "CronJob Collector"
 		RunCollectorTest(t, cjc, expectedCollectorName)
 

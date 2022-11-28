@@ -32,7 +32,9 @@ func TestReplicaSetCollector(t *testing.T) {
 	replicas = 1
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		ic := NewReplicaSetCollector(NewTestCommonClusterCollector(MockReplicaSetAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled))
+		commonClusterCollector := NewTestCommonClusterCollector(MockReplicaSetAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled)
+		commonClusterCollector.SetUseRelationCache(false)
+		ic := NewReplicaSetCollector(commonClusterCollector)
 		expectedCollectorName := "ReplicaSet Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 

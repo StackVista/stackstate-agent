@@ -37,7 +37,9 @@ func TestNodeCollector(t *testing.T) {
 			defer close(relationChannel)
 			nodeIdentifierCorrelationChannel := make(chan *NodeIdentifierCorrelation)
 
-			ic := NewNodeCollector(nodeIdentifierCorrelationChannel, NewTestCommonClusterCollector(MockNodeAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled))
+			commonClusterCollector := NewTestCommonClusterCollector(MockNodeAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled)
+			commonClusterCollector.SetUseRelationCache(false)
+			ic := NewNodeCollector(nodeIdentifierCorrelationChannel, commonClusterCollector)
 			expectedCollectorName := "Node Collector"
 			RunCollectorTest(t, ic, expectedCollectorName)
 

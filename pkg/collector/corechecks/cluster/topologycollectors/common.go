@@ -53,6 +53,7 @@ type ClusterTopologyCommon interface {
 	SubmitRelation(relation *topology.Relation)
 	GetPossibleRelations() []*topology.Relation
 	GetComponentIDCache() map[string]struct{}
+	SetUseRelationCache(value bool)
 }
 
 type clusterTopologyCommon struct {
@@ -65,6 +66,7 @@ type clusterTopologyCommon struct {
 	RelationChan            chan<- *topology.Relation
 	PossibleRelations       []*topology.Relation
 	k8sVersion              *version.Info
+	useRelationCache        bool
 }
 
 // NewClusterTopologyCommon creates a clusterTopologyCommon
@@ -85,51 +87,65 @@ func NewClusterTopologyCommon(
 		ComponentIDCache:        make(map[string]struct{}),
 		RelationChan:            relationChan,
 		k8sVersion:              k8sVersion,
+		useRelationCache:        true,
 	}
 }
 
+// SubmitComponent sends a component to the Component channel and adds its External ID to the cache if the relation cache is being used
 func (c *clusterTopologyCommon) SubmitComponent(component *topology.Component) {
 	fmt.Println("SubmitComponent ", component.ExternalID)
 	c.ComponentChan <- component
-	c.ComponentIDCache[component.ExternalID] = struct{}{}
-}
-
-func (c *clusterTopologyCommon) SubmitRelation(relation *topology.Relation) {
-	_, sourceExists := c.ComponentIDCache[relation.SourceID]
-	_, targetExists := c.ComponentIDCache[relation.TargetID]
-	if sourceExists && targetExists {
-		fmt.Println("SubmitRelation good ", relation.ExternalID)
-		c.RelationChan <- relation
-	} else {
-		fmt.Println("SubmitRelation PossibleRelations ", relation.ExternalID)
-		c.PossibleRelations = append(c.PossibleRelations, relation)
+	if c.useRelationCache {
+		c.ComponentIDCache[component.ExternalID] = struct{}{}
 	}
 }
 
+// SubmitRelation sends a relation to the Relation channel or adds it to the PossibleRelations cache if it's being used
+func (c *clusterTopologyCommon) SubmitRelation(relation *topology.Relation) {
+	if c.useRelationCache {
+		_, sourceExists := c.ComponentIDCache[relation.SourceID]
+		_, targetExists := c.ComponentIDCache[relation.TargetID]
+		if sourceExists && targetExists {
+			c.RelationChan <- relation
+		} else {
+			c.PossibleRelations = append(c.PossibleRelations, relation)
+		}
+	} else {
+		c.RelationChan <- relation
+	}
+}
+
+// GetPossibleRelations returns the relations that could be sent to the channel at the time they were submitted
 func (c *clusterTopologyCommon) GetPossibleRelations() []*topology.Relation {
 	return c.PossibleRelations
 }
 
+// GetComponentIDCache returns the cache of component IDs
 func (c *clusterTopologyCommon) GetComponentIDCache() map[string]struct{} {
 	return c.ComponentIDCache
 }
 
-// GetName
+// SetUseRelationCache sets if the relation cache should be used or not
+func (c *clusterTopologyCommon) SetUseRelationCache(value bool) {
+	c.useRelationCache = value
+}
+
+// GetName returns the collector name
 func (*clusterTopologyCommon) GetName() string {
 	return "Unknown Collector"
 }
 
-// GetInstance
+// GetInstance returns the topology.Instance
 func (c *clusterTopologyCommon) GetInstance() topology.Instance {
 	return c.Instance
 }
 
-// GetAPIClient
+// GetAPIClient returns the Kubernetes API client
 func (c *clusterTopologyCommon) GetAPIClient() apiserver.APICollectorClient {
 	return c.APICollectorClient
 }
 
-// GetURNBuilder
+// GetURNBuilder returns the URN builder
 func (c *clusterTopologyCommon) GetURNBuilder() urn.Builder {
 	return c.urn
 }

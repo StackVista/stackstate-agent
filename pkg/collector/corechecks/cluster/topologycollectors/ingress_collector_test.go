@@ -39,7 +39,9 @@ func TestIngressCollector_1_18(t *testing.T) {
 	}
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		ic := NewIngressCollector(NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClient{}, sourcePropertiesEnabled, componentChannel, relationChannel, &k8sVersion))
+		commonClusterCollector := NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClient{}, sourcePropertiesEnabled, componentChannel, relationChannel, &k8sVersion)
+		commonClusterCollector.SetUseRelationCache(false)
+		ic := NewIngressCollector(commonClusterCollector)
 		expectedCollectorName := "Ingress Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 
@@ -107,7 +109,9 @@ func TestIngressCollector_1_22(t *testing.T) {
 	}
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		ic := NewIngressCollector(NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClient{}, sourcePropertiesEnabled, componentChannel, relationChannel, &k8sVersion))
+		commonClusterCollector := NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClient{}, sourcePropertiesEnabled, componentChannel, relationChannel, &k8sVersion)
+		commonClusterCollector.SetUseRelationCache(false)
+		ic := NewIngressCollector(commonClusterCollector)
 		expectedCollectorName := "Ingress Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 
@@ -1029,7 +1033,9 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 	}
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		ic := NewIngressCollector(NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClientNoHTTPRule{}, sourcePropertiesEnabled, componentChannel, relationChannel, &versionInfo))
+		commonClusterCollector := NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClientNoHTTPRule{}, sourcePropertiesEnabled, componentChannel, relationChannel, &versionInfo)
+		commonClusterCollector.SetUseRelationCache(false)
+		ic := NewIngressCollector(commonClusterCollector)
 		expectedCollectorName := "Ingress Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 

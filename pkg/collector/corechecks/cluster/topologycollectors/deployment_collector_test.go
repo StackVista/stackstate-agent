@@ -31,7 +31,9 @@ func TestDeploymentCollector(t *testing.T) {
 	replicas = int32(1)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		cmc := NewDeploymentCollector(NewTestCommonClusterCollector(MockDeploymentAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled))
+		commonClusterCollector := NewTestCommonClusterCollector(MockDeploymentAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled)
+		commonClusterCollector.SetUseRelationCache(false)
+		cmc := NewDeploymentCollector(commonClusterCollector)
 		expectedCollectorName := "Deployment Collector"
 		RunCollectorTest(t, cmc, expectedCollectorName)
 

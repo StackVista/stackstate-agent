@@ -283,7 +283,7 @@ func executeRelationCorrelation(
 	containerCorrChannel := make(chan *ContainerCorrelation)
 	volumeCorrChannel := make(chan *VolumeCorrelation)
 	collectorsDoneChan := make(chan bool)
-	collectorsDoneChannel := make(chan bool)
+	correlatorsDoneChannel := make(chan bool)
 
 	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, relationChannel, false)
 	podCollector := NewPodCollector(
@@ -295,7 +295,7 @@ func executeRelationCorrelation(
 	secretCollector := NewSecretCollector(commonClusterCollector)
 
 	relationCorrelator := NewRelationCorrelator(relationChannel,
-		collectorsDoneChan, NewTestCommonClusterCorrelator(clusterAPIClient, componentChannel, relationChannel))
+		collectorsDoneChan, NewClusterTopologyCorrelator(commonClusterCollector))
 
 	collectorsFinished := false
 
@@ -316,7 +316,7 @@ func executeRelationCorrelation(
 		var err error
 		err = relationCorrelator.CorrelateFunction()
 		assert.NoError(t, err)
-		collectorsDoneChannel <- true
+		correlatorsDoneChannel <- true
 	}()
 
 	components := make([]*topology.Component, 0)
@@ -329,7 +329,7 @@ L:
 			components = append(components, c)
 		case r := <-relationChannel:
 			relations = append(relations, r)
-		case <-collectorsDoneChannel:
+		case <-correlatorsDoneChannel:
 			if collectorsFinished {
 				break L
 			}
