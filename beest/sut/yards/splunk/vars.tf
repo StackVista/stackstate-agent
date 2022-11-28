@@ -4,6 +4,9 @@ variable "aws_default_region" {
 variable "yard_id" {
   type = string
 }
+variable "runners_ip" {
+  type = string
+}
 
 locals {
   az1          = "${var.aws_default_region}a"

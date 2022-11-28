@@ -12,18 +12,28 @@ resource "aws_key_pair" "splunk_key_pair" {
   }
 }
 
+data "http" "local_ip" {
+  url = "https://ipv4.icanhazip.com"
+}
+
 resource "aws_security_group" "splunk_group" {
   name   = "${var.environment}-splunk-sg"
   vpc_id = var.vpc_id
 
   ingress {
-    description      = "SSH"
-    from_port        = 22
-    to_port          = 22
-    protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["${var.runners_ip}/32"]
   }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["${chomp(data.http.local_ip.body)}/32"]
+  }
+
   ingress {
     description      = "Splunk User Interface"
     from_port        = 8000
