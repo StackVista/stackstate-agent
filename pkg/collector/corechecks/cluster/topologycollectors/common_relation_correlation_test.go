@@ -294,9 +294,6 @@ func executeRelationCorrelation(
 	configMapCollector := NewConfigMapCollector(commonClusterCollector, TestMaxDataSize)
 	secretCollector := NewSecretCollector(commonClusterCollector)
 
-	relationCorrelator := NewRelationCorrelator(relationChannel,
-		collectorsDoneChan, NewClusterTopologyCorrelator(commonClusterCollector))
-
 	collectorsFinished := false
 
 	go func() {
@@ -313,9 +310,8 @@ func executeRelationCorrelation(
 	}()
 
 	go func() {
-		var err error
-		err = relationCorrelator.CorrelateFunction()
-		assert.NoError(t, err)
+		<-collectorsDoneChan
+		commonClusterCollector.CorrelateRelations()
 		correlatorsDoneChannel <- true
 	}()
 

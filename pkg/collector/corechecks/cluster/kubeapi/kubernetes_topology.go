@@ -257,11 +257,6 @@ func (t *TopologyCheck) Run() error {
 	}
 
 	commonClusterCorrelator := collectors.NewClusterTopologyCorrelator(clusterTopologyCommon)
-	relationCorrelator := collectors.NewRelationCorrelator(
-		relationChannel,
-		collectorsDoneChannel,
-		commonClusterCorrelator,
-	)
 	clusterCorrelators := []collectors.ClusterTopologyCorrelator{
 		// Register Container -> Node Identifier Correlator
 		collectors.NewContainerCorrelator(
@@ -282,7 +277,7 @@ func (t *TopologyCheck) Run() error {
 	}
 
 	// starts all the cluster collectors and correlators
-	t.RunClusterCollectors(clusterCollectors, clusterCorrelators, &waitGroup, errChannel, relationCorrelator, collectorsDoneChannel)
+	t.RunClusterCollectors(clusterCollectors, clusterCorrelators, &waitGroup, errChannel, commonClusterCollector, collectorsDoneChannel)
 
 	// receive all the components, will return once the wait group notifies
 	t.WaitForTopology(componentChannel, relationChannel, errChannel, &waitGroup, waitGroupChannel)
@@ -355,7 +350,7 @@ func (t *TopologyCheck) RunClusterCollectors(
 	clusterCorrelators []collectors.ClusterTopologyCorrelator,
 	waitGroup *sync.WaitGroup,
 	errorChannel chan<- error,
-	relationCorrelator collectors.ClusterTopologyCorrelator,
+	commonCollector collectors.ClusterTopologyCommon,
 	collectorsDoneChannel chan bool) {
 	var collectorsWaitGroup sync.WaitGroup
 	collectorsWaitGroup.Add(1 + len(clusterCorrelators)) // all collectors + all correlators (without RelationCorrelator)
@@ -375,7 +370,11 @@ func (t *TopologyCheck) RunClusterCollectors(
 		collectorsDoneChannel <- true
 	}()
 	waitGroup.Add(1)
-	go runCorrelator(relationCorrelator, errorChannel, waitGroup)
+	go func() {
+		<-collectorsDoneChannel
+		commonCollector.CorrelateRelations()
+		waitGroup.Done()
+	}()
 }
 
 // runCollector

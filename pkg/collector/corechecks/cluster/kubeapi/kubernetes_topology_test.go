@@ -182,8 +182,6 @@ func testRunClusterCollectors(t *testing.T, sourceProperties bool) {
 
 	clusterTopologyCommon := collectors.NewClusterTopologyCommon(instance, nil, sourceProperties, componentChannel, relationChannel, &version.Info{Major: "1", Minor: "21"})
 	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
-	relationCorrelator := collectors.NewRelationCorrelator(relationChannel,
-		collectorsDoneChannel, collectors.NewClusterTopologyCorrelator(commonClusterCollector))
 
 	clusterCollectors := []collectors.ClusterTopologyCollector{
 		NewTestCollector(componentChannel, relationChannel, commonClusterCollector),
@@ -192,7 +190,7 @@ func testRunClusterCollectors(t *testing.T, sourceProperties bool) {
 	clusterCorrelators := make([]collectors.ClusterTopologyCorrelator, 0)
 
 	// starts all the cluster collectors
-	kubernetesTopologyCheck.RunClusterCollectors(clusterCollectors, clusterCorrelators, &waitGroup, errChannel, relationCorrelator, collectorsDoneChannel)
+	kubernetesTopologyCheck.RunClusterCollectors(clusterCollectors, clusterCorrelators, &waitGroup, errChannel, commonClusterCollector, collectorsDoneChannel)
 
 	// receive all the components, will return once the wait group notifies
 	kubernetesTopologyCheck.WaitForTopology(componentChannel, relationChannel, errChannel, &waitGroup, waitGroupChannel)
