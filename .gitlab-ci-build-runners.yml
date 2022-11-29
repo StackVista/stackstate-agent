@@ -24,9 +24,9 @@ before_script:
 
 .docker_build_base: &docker_build_base
   # use docker as the image builder
-  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
+  image: artifactory.tooling.stackstate.io/docker-virtual/docker:20
   services:
-    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:20-dind
       alias: docker
   retry:
     max: 2
@@ -44,15 +44,15 @@ before_script:
     # build the base image
     - BASE_RUNNER_TAG="${RUNNER_DIR}-$(date +%Y%m%d)"
     - BUILD_TAG="stackstate-agent-runner-gitlab:${BASE_RUNNER_TAG}"
-    - docker build -t "${BUILD_TAG}" .
     # tag the image, push to docker
     - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
-    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
-    - docker push "${DOCKER_TAG}"
+    - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+    - docker buildx create --name builder --driver docker-container --use
+    - docker buildx inspect --bootstrap
     # tag the image, push to quay
     - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
-    - docker tag "${BUILD_TAG}" "${QUAY_TAG}"
-    - docker push "${QUAY_TAG}"
+    - docker buildx build --label "published-by=${CI_JOB_URL}" --platform linux/amd64,linux/arm64 --tag "${DOCKER_TAG}" --tag "${QUAY_TAG}" --push .
+#    - docker buildx build --label "published-by=${CI_JOB_URL}" --platform linux/amd64,linux/arm64 --tag "${QUAY_TAG}" --push .
     - echo "BASE_RUNNER_TAG=$BASE_RUNNER_TAG"
     - echo "BASE_RUNNER_TAG=$BASE_RUNNER_TAG" >> $CI_PROJECT_DIR/build.env
   artifacts:
@@ -70,6 +70,9 @@ before_script:
 build-debian-base:
   <<: *build_runner_base
   stage: build_runner_base
+  timeout: 180 minutes
+  tags:
+    - sts-k8s-xl-runner
   variables:
     RUNNER_DIR: $RUNNER_DEBIAN_BASE
 

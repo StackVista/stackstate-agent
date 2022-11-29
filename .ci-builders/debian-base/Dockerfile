@@ -1,5 +1,6 @@
 #FROM debian:wheezy-backports
-FROM golang:1.16.7-stretch
+
+FROM golang:1.16.7-bullseye
 
 RUN sed -i 's/^#\s*\(deb.*universe\)$/\1/g' /etc/apt/sources.list \
     && sed -i 's/^#\s*\(deb.*multiverse\)$/\1/g' /etc/apt/sources.list \
@@ -7,11 +8,12 @@ RUN sed -i 's/^#\s*\(deb.*universe\)$/\1/g' /etc/apt/sources.list \
 
 # Build Args
 ARG GIMME_GO_VERSION=1.16.7
-ARG DD_CONDA_VERSION=4.7.10
+ARG DD_CONDA_VERSION=4.9.2
 ARG DD_PIP_VERSION=19.1
 ARG DD_SETUPTOOLS_VERSION=41.0.1
-ARG IBM_MQ_VERSION=9.2.4.0
-ARG CMAKE_VERSION=3.14.4
+#ARG IBM_MQ_VERSION=9.2.4.0
+ARG IBM_MQ_VERSION=9.2.5.0
+ARG CMAKE_VERSION=3.19.3
 ARG CLANG_VERSION=8.0.0
 
 # Environment
@@ -50,7 +52,7 @@ RUN echo 'Acquire::Check-Valid-Until "false";' >> /etc/apt/apt.conf.d/20stacksta
 RUN apt-get update && apt-get install -y fakeroot curl git procps bzip2 \
   build-essential pkg-config\
   rpm tar gettext libtool autopoint autoconf pkg-config flex \
-  selinux-basics
+  selinux-basics xz-utils
 
 
 #RUN apt-get install -y libsystemd-journal-dev/wheezy-backports
@@ -61,14 +63,15 @@ RUN apt-get install -y libsystemd-dev
 #COPY ./mqlicense.sh /mqlicense.sh
 
 # IBM MQ
-# IBM MQ is required in the builder.
+# IBM MQ is required in the builder.TODO: This might cause problems, as no know ARM64 version of IBM MQ exists.
 RUN mkdir -p /opt/mqm \
     && curl "https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist/${IBM_MQ_VERSION}-IBM-MQC-Redist-LinuxX64.tar.gz" -o /tmp/mq_client.tar.gz \
     && tar -C /opt/mqm -xf /tmp/mq_client.tar.gz \
     && rm -rf /tmp/mq_client.tar.gz
 
 # Conda
-RUN curl -sL -o ~/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-${DD_CONDA_VERSION}-Linux-x86_64.sh
+RUN arch=$(arch) && echo https://repo.anaconda.com/miniconda/Miniconda3-py38_${DD_CONDA_VERSION}-Linux-${arch}.sh && \
+    curl -sL -o ~/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-py38_${DD_CONDA_VERSION}-Linux-${arch}.sh
 RUN bash ~/miniconda.sh -b
 COPY ./conda.sh /etc/profile.d/
 
@@ -99,14 +102,14 @@ ENV PATH "${CONDA_PATH}/bin:${PATH}"
 RUN conda init bash
 
 # Setup pythons
-RUN conda create -n ddpy2 python python=2
+# RUN conda create -n ddpy2 python python=2
 RUN conda create -n ddpy3 python python=3.8
 
 # Update pip, setuptools and misc deps for ddpy2
-RUN /bin/bash -c "source /root/.bashrc && conda activate ddpy2 \
-    && pip install -i https://pypi.python.org/simple pip==${DD_PIP_VERSION} \
-    && pip install --ignore-installed setuptools==${DD_SETUPTOOLS_VERSION} \
-    && pip install invoke==1.7.0 distro==1.4.0 awscli==1.16.240 lexicon==2.0.1 pathlib==1.0.1"
+#RUN /bin/bash -c "source /root/.bashrc && conda activate ddpy2 \
+#    && pip install -i https://pypi.python.org/simple pip==${DD_PIP_VERSION} \
+#    && pip install --ignore-installed setuptools==${DD_SETUPTOOLS_VERSION} \
+#    && pip install invoke==1.7.0 distro==1.4.0 awscli==1.16.240 lexicon==2.0.1"
 
 # Update pip, setuptools and misc deps for ddpy3
 RUN /bin/bash -c  "source /root/.bashrc && conda activate ddpy3 \
@@ -127,7 +130,9 @@ COPY ./gobin.sh /etc/profile.d/
 
 # CMake
 RUN set -ex \
-    && curl -sL -o cmake.sh https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-Linux-x86_64.sh \
+    && arch=$(arch) \
+    && echo https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-Linux-${arch}.sh \
+    && curl -sL -o cmake.sh https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-Linux-${arch}.sh \
     && mkdir -p /opt/cmake/ \
     && sh cmake.sh --skip-license --prefix=/opt/cmake \
     && ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake \
@@ -135,14 +140,21 @@ RUN set -ex \
 
 # Install clang and llvm version 8
 # Using build for sles11 because the versions built for other distros target glibcs that are too new to be used from this image
-RUN curl -LO https://releases.llvm.org/${CLANG_VERSION}/clang+llvm-${CLANG_VERSION}-x86_64-linux-sles11.3.tar.xz && \
-    tar -xf clang+llvm-${CLANG_VERSION}-x86_64-linux-sles11.3.tar.xz --no-same-owner --strip 1 -kC /usr/ && \
-    rm clang+llvm-${CLANG_VERSION}-x86_64-linux-sles11.3.tar.xz
+RUN arch=$(arch) \
+    && echo "https://releases.llvm.org/${CLANG_VERSION}/clang+llvm-${CLANG_VERSION}-${arch}-linux-sles11.3.tar.xz" \
+    && curl -LO "https://releases.llvm.org/${CLANG_VERSION}/clang+llvm-${CLANG_VERSION}-${arch}-linux-sles11.3.tar.xz" \
+    && tar -xf "clang+llvm-${CLANG_VERSION}-${arch}-linux-sles11.3.tar.xz" --no-same-owner --strip 1 -kC /usr/ \
+    && rm "clang+llvm-${CLANG_VERSION}-${arch}-linux-sles11.3.tar.xz" \
+    || (arch=$(arch) \
+    && echo "https://releases.llvm.org/${CLANG_VERSION}/clang+llvm-${CLANG_VERSION}-${arch}-linux-gnu.tar.xz" \
+    && curl -LO "https://releases.llvm.org/${CLANG_VERSION}/clang+llvm-${CLANG_VERSION}-${arch}-linux-gnu.tar.xz" \
+    && tar -xf "clang+llvm-${CLANG_VERSION}-${arch}-linux-gnu.tar.xz" --no-same-owner --strip 1 -kC /usr/ \
+    && rm "clang+llvm-${CLANG_VERSION}-${arch}-linux-gnu.tar.xz")
 
 # To build the EBPF code we need kernel headers for Linux 4.9
-RUN curl -Sl -O https://dd-agent-omnibus.s3.amazonaws.com/kernel-4.9-headers-deb-x64.tgz && \
-    tar xf kernel-4.9-headers-deb-x64.tgz --no-same-owner --strip 1 -C /usr && \
-    rm kernel-4.9-headers-deb-x64.tgz
+RUN arch=$(arch | sed 's/aarch64/arm64/g' | sed 's/x86_64/x64/g') && curl -Sl -O https://dd-agent-omnibus.s3.amazonaws.com/kernel-4.9-headers-deb-${arch}.tgz && \
+    tar xf kernel-4.9-headers-deb-${arch}.tgz --no-same-owner --strip 1 -C /usr && \
+    rm kernel-4.9-headers-deb-${arch}.tgz
 
 # Download and install golangci-lint
 RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $GOPATH/bin v1.42.1
@@ -177,3 +189,4 @@ ADD rpmmacros /root/.rpmmacros
 RUN go version
 
 ENTRYPOINT ["/entrypoint.sh"]
+

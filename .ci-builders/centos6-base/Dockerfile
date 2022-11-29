@@ -53,7 +53,8 @@ RUN gimme $GIMME_GO_VERSION
 COPY ./gobin.sh /etc/profile.d/
 
 # Conda
-RUN curl -sL -o ~/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-${DD_CONDA_VERSION}-Linux-x86_64.sh
+RUN arch=$(arch | sed s/aarch64/arm64/ | sed s/x86_64/amd64/) && \
+    curl -sL -o ~/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-${DD_CONDA_VERSION}-Linux-${arch}.sh
 RUN bash ~/miniconda.sh -b
 COPY ./conda.sh /etc/profile.d/
 ENV PATH "${CONDA_PATH}/bin:${PATH}"

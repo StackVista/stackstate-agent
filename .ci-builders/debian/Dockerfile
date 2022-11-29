@@ -1,14 +1,15 @@
 ARG BASE_IMAGE=deb7_latest
 FROM docker.io/stackstate/stackstate-agent-runner-gitlab:${BASE_IMAGE}
+ENV DEBIAN_FRONTEND=noninteractive
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y nano libtool-bin libelf-dev gnupg2 locales
+RUN apt-get install -y nano libtool-bin libelf-dev gnupg2 locales
 RUN echo 'export PATH=$HOME/bin:$PATH' >> /root/.bashrc
 
 RUN echo 'source /usr/local/rvm/scripts/rvm' >> /root/.bashrc
 RUN echo 'source /usr/local/rvm/scripts/rvm' >> /root/.bash_profile
 RUN echo 'gem: --no-document' >> /root/.gemrc
 
-RUN bash -c "source /usr/local/rvm/scripts/rvm && gem install deb-s3"
+RUN bash -c "source /usr/local/rvm/scripts/rvm && gem install deb-s3 -v 0.10.0"
 
 ADD rpmmacros /root/.rpmmacros
 # yum-utils #https://pkgs.org/download/yum-utils
