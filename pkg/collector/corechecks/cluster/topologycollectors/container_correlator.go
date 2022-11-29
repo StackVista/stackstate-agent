@@ -39,20 +39,16 @@ type ContainerCorrelation struct {
 
 // ContainerCorrelator implements the ClusterTopologyCollector interface.
 type ContainerCorrelator struct {
-	ComponentChan          chan<- *topology.Component
-	RelationChan           chan<- *topology.Relation
 	NodeIdentifierCorrChan <-chan *NodeIdentifierCorrelation
 	ContainerCorrChan      <-chan *ContainerCorrelation
 	ClusterTopologyCorrelator
 }
 
 // NewContainerCorrelator
-func NewContainerCorrelator(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation,
+func NewContainerCorrelator(
 	nodeIdentifierCorrChan <-chan *NodeIdentifierCorrelation, containerCorrChannel <-chan *ContainerCorrelation,
 	clusterTopologyCorrelator ClusterTopologyCorrelator) ClusterTopologyCorrelator {
 	return &ContainerCorrelator{
-		ComponentChan:             componentChannel,
-		RelationChan:              relationChannel,
 		NodeIdentifierCorrChan:    nodeIdentifierCorrChan,
 		ContainerCorrChan:         containerCorrChannel,
 		ClusterTopologyCorrelator: clusterTopologyCorrelator,
@@ -96,11 +92,11 @@ func (cc *ContainerCorrelator) CorrelateFunction() error {
 			if nodeCorrelation, ok := nodeMap[pod.NodeName]; ok {
 				// submit the StackState component for publishing to StackState
 				containerComponent := cc.containerToStackStateComponent(nodeCorrelation.NodeIdentifier, pod, container, containerPort)
-				cc.ComponentChan <- containerComponent
+				cc.SubmitComponent(containerComponent)
 				// create the relation between the container and pod
-				cc.RelationChan <- cc.podToContainerStackStateRelation(pod.ExternalID, containerComponent.ExternalID)
+				cc.SubmitRelation(cc.podToContainerStackStateRelation(pod.ExternalID, containerComponent.ExternalID))
 				// create the relation between the container and node
-				cc.RelationChan <- cc.containerToNodeStackStateRelation(containerComponent.ExternalID, nodeCorrelation.NodeExternalID)
+				cc.SubmitRelation(cc.containerToNodeStackStateRelation(containerComponent.ExternalID, nodeCorrelation.NodeExternalID))
 			}
 		}
 	}

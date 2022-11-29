@@ -12,8 +12,6 @@ import (
 
 // NodeCollector implements the ClusterTopologyCollector interface.
 type NodeCollector struct {
-	ComponentChan          chan<- *topology.Component
-	RelationChan           chan<- *topology.Relation
 	NodeIdentifierCorrChan chan<- *NodeIdentifierCorrelation
 	ClusterTopologyCollector
 }
@@ -26,11 +24,9 @@ type NodeStatus struct {
 }
 
 // NewNodeCollector
-func NewNodeCollector(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation,
+func NewNodeCollector(
 	nodeIdentifierCorrChan chan<- *NodeIdentifierCorrelation, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &NodeCollector{
-		ComponentChan:            componentChannel,
-		RelationChan:             relationChannel,
 		NodeIdentifierCorrChan:   nodeIdentifierCorrChan,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
@@ -55,8 +51,8 @@ func (nc *NodeCollector) CollectorFunction() error {
 		// creates a StackState relation for the cluster node -> cluster
 		relation := nc.nodeToClusterStackStateRelation(node)
 
-		nc.ComponentChan <- component
-		nc.RelationChan <- relation
+		nc.SubmitComponent(component)
+		nc.SubmitRelation(relation)
 
 		// send the node identifier to be correlated
 		nc.NodeIdentifierCorrChan <- &NodeIdentifierCorrelation{node.Name, nodeIdentifier, component.ExternalID}

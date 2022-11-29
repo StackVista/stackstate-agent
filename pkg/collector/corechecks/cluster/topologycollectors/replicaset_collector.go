@@ -11,8 +11,6 @@ import (
 
 // ReplicaSetCollector implements the ClusterTopologyCollector interface.
 type ReplicaSetCollector struct {
-	ComponentChan chan<- *topology.Component
-	RelationChan  chan<- *topology.Relation
 	ClusterTopologyCollector
 }
 
@@ -22,10 +20,8 @@ func (*ReplicaSetCollector) GetName() string {
 }
 
 // NewReplicaSetCollector
-func NewReplicaSetCollector(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
+func NewReplicaSetCollector(clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &ReplicaSetCollector{
-		ComponentChan:            componentChannel,
-		RelationChan:             relationChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
 }
@@ -39,7 +35,7 @@ func (rsc *ReplicaSetCollector) CollectorFunction() error {
 
 	for _, rs := range replicaSets {
 		component := rsc.replicaSetToStackStateComponent(rs)
-		rsc.ComponentChan <- component
+		rsc.SubmitComponent(component)
 
 		controlled := false
 		// check to see if this pod is "controlled" by a deployment
@@ -47,13 +43,13 @@ func (rsc *ReplicaSetCollector) CollectorFunction() error {
 			switch kind := ref.Kind; kind {
 			case Deployment:
 				dmExternalID := rsc.buildDeploymentExternalID(rs.Namespace, ref.Name)
-				rsc.RelationChan <- rsc.deploymentToReplicaSetStackStateRelation(dmExternalID, component.ExternalID)
+				rsc.SubmitRelation(rsc.deploymentToReplicaSetStackStateRelation(dmExternalID, component.ExternalID))
 				controlled = true
 			}
 		}
 
 		if !controlled {
-			rsc.RelationChan <- rsc.namespaceToReplicaSetStackStateRelation(rsc.buildNamespaceExternalID(rs.Namespace), component.ExternalID)
+			rsc.SubmitRelation(rsc.namespaceToReplicaSetStackStateRelation(rsc.buildNamespaceExternalID(rs.Namespace), component.ExternalID))
 		}
 
 	}

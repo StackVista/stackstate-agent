@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -16,8 +17,10 @@ import (
 func TestClusterCollector(t *testing.T) {
 	componentChannel := make(chan *topology.Component)
 	defer close(componentChannel)
+	relationChannel := make(chan *topology.Relation)
+	defer close(relationChannel)
 
-	cc := NewClusterCollector(componentChannel, NewTestCommonClusterCollector(MockClusterAPICollectorClient{}, true))
+	cc := NewClusterCollector(NewTestCommonClusterCollector(MockClusterAPICollectorClient{}, componentChannel, relationChannel, true))
 	expectedCollectorName := "Cluster Collector"
 	RunCollectorTest(t, cc, expectedCollectorName)
 

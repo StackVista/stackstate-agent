@@ -31,7 +31,9 @@ func TestDaemonSetCollector(t *testing.T) {
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		cmc := NewDaemonSetCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(MockDaemonSetAPICollectorClient{}, sourcePropertiesEnabled))
+		commonClusterCollector := NewTestCommonClusterCollector(MockDaemonSetAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled)
+		commonClusterCollector.SetUseRelationCache(false)
+		cmc := NewDaemonSetCollector(commonClusterCollector)
 		expectedCollectorName := "DaemonSet Collector"
 		RunCollectorTest(t, cmc, expectedCollectorName)
 

@@ -23,7 +23,6 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 
 	componentChannel := make(chan *topology.Component)
 	defer close(componentChannel)
-
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
 
@@ -416,7 +415,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 			},
 		} {
 			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
-				cmc := NewPersistentVolumeCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(tc.apiCollectorClientFactory(), sourcePropertiesEnabled), true)
+				cmc := NewPersistentVolumeCollector(NewTestCommonClusterCollector(tc.apiCollectorClientFactory(), componentChannel, relationChannel, sourcePropertiesEnabled), true)
 				expectedCollectorName := "Persistent Volume Collector"
 				RunCollectorTest(t, cmc, expectedCollectorName)
 
@@ -538,7 +537,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 			},
 		} {
 			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
-				cmc := NewPersistentVolumeCollector(componentChannel, relationChannel, NewTestCommonClusterCollector(tc.apiCollectorClientFactory(), sourcePropertiesEnabled), false)
+				cmc := NewPersistentVolumeCollector(NewTestCommonClusterCollector(tc.apiCollectorClientFactory(), componentChannel, relationChannel, sourcePropertiesEnabled), false)
 				expectedCollectorName := "Persistent Volume Collector"
 				RunCollectorTest(t, cmc, expectedCollectorName)
 

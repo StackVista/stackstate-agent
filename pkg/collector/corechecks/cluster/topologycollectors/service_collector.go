@@ -13,8 +13,6 @@ import (
 
 // ServiceCollector implements the ClusterTopologyCollector interface.
 type ServiceCollector struct {
-	ComponentChan    chan<- *topology.Component
-	RelationChan     chan<- *topology.Relation
 	EndpointCorrChan chan<- *ServiceEndpointCorrelation
 	ClusterTopologyCollector
 	DNS             dns.Resolver
@@ -29,15 +27,11 @@ type EndpointID struct {
 
 // NewServiceCollector
 func NewServiceCollector(
-	componentChannel chan<- *topology.Component,
-	relationChannel chan<- *topology.Relation,
 	endpointCorrChannel chan *ServiceEndpointCorrelation,
 	clusterTopologyCollector ClusterTopologyCollector,
 	endpointsEnabled bool,
 ) ClusterTopologyCollector {
 	return &ServiceCollector{
-		ComponentChan:            componentChannel,
-		RelationChan:             relationChannel,
 		EndpointCorrChan:         endpointCorrChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 		DNS:                      dns.StandardResolver,
@@ -109,18 +103,18 @@ func (sc *ServiceCollector) CollectorFunction() error {
 		serviceID := buildServiceID(service.Namespace, service.Name)
 		component := sc.serviceToStackStateComponent(service)
 
-		sc.ComponentChan <- component
+		sc.SubmitComponent(component)
 
 		// Check whether we have an ExternalName service, which will result in an extra component+relation
 		if service.Spec.Type == v1.ServiceTypeExternalName {
 			externalService := sc.serviceToExternalServiceComponent(service)
 
-			sc.ComponentChan <- externalService
-			sc.RelationChan <- sc.serviceToExternalServiceStackStateRelation(component.ExternalID, externalService.ExternalID)
+			sc.SubmitComponent(externalService)
+			sc.SubmitRelation(sc.serviceToExternalServiceStackStateRelation(component.ExternalID, externalService.ExternalID))
 		}
 
 		// First ensure we publish all components, else the test becomes complex
-		sc.RelationChan <- sc.namespaceToServiceStackStateRelation(sc.buildNamespaceExternalID(service.Namespace), component.ExternalID)
+		sc.SubmitRelation(sc.namespaceToServiceStackStateRelation(sc.buildNamespaceExternalID(service.Namespace), component.ExternalID))
 
 		publishedPodRelations := make(map[string]string, 0)
 		for _, endpoint := range serviceEndpointIdentifiers[serviceID] {
@@ -132,7 +126,7 @@ func (sc *ServiceCollector) CollectorFunction() error {
 				if !ok {
 					relation := sc.serviceToPodStackStateRelation(component.ExternalID, podExternalID)
 
-					sc.RelationChan <- relation
+					sc.SubmitRelation(relation)
 
 					publishedPodRelations[relationExternalID] = relationExternalID
 				}

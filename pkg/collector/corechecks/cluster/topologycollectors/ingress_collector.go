@@ -10,17 +10,12 @@ import (
 
 // IngressCollector implements the ClusterTopologyCollector interface.
 type IngressCollector struct {
-	ComponentChan chan<- *topology.Component
-	RelationChan  chan<- *topology.Relation
 	ClusterTopologyCollector
 }
 
 // NewIngressCollector creates a new Ingress collector
-func NewIngressCollector(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation,
-	clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
+func NewIngressCollector(clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &IngressCollector{
-		ComponentChan:            componentChannel,
-		RelationChan:             relationChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
 }
@@ -45,14 +40,14 @@ func (ic *IngressCollector) CollectorFunction() error {
 
 	for _, in := range ingresses {
 		component := ic.ingressToStackStateComponent(in)
-		ic.ComponentChan <- component
+		ic.SubmitComponent(component)
 		// submit relation to service name for correlation
 		if in.GetServiceName() != "" {
 			serviceExternalID := ic.buildServiceExternalID(in.GetNamespace(), in.GetServiceName())
 
 			// publish the ingress -> service relation
 			relation := ic.ingressToServiceStackStateRelation(component.ExternalID, serviceExternalID)
-			ic.RelationChan <- relation
+			ic.SubmitRelation(relation)
 		}
 
 		// submit relation to service name in the ingress rules for correlation
@@ -61,7 +56,7 @@ func (ic *IngressCollector) CollectorFunction() error {
 
 			// publish the ingress -> service relation
 			relation := ic.ingressToServiceStackStateRelation(component.ExternalID, serviceExternalID)
-			ic.RelationChan <- relation
+			ic.SubmitRelation(relation)
 		}
 
 		// submit relation to loadbalancer
@@ -69,8 +64,8 @@ func (ic *IngressCollector) CollectorFunction() error {
 		for _, ingressPoint := range in.GetIngressPoints() {
 			endpoint := ic.endpointStackStateComponentFromIngress(in, ingressPoint)
 
-			ic.ComponentChan <- endpoint
-			ic.RelationChan <- ic.endpointToIngressStackStateRelation(endpoint.ExternalID, component.ExternalID)
+			ic.SubmitComponent(endpoint)
+			ic.SubmitRelation(ic.endpointToIngressStackStateRelation(endpoint.ExternalID, component.ExternalID))
 		}
 	}
 
