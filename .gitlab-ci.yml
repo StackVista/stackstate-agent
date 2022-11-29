@@ -185,24 +185,24 @@ agent2:
     - *md_only_rule
     - when: always
 
-agent3:
-  stage: triggers
-  variables:
-    <<: *commonvariables
-    <<: *agent3_variables
-  trigger:
-    include: .gitlab-ci-agent.yml
-    strategy: depend
-  rules:
-    - <<: *exclude_on_cluster_agent
-    # exclude this pipeline if we're running a v2 tag pipeline
-    - <<: *exclude_on_tag_v2
-    - if: $CI_COMMIT_MESSAGE =~ /\[py2]/
-      when: never
-    - <<: *scheduled_master_pipeline
-    - *other_files_rule
-    - *md_only_rule
-    - when: always
+#agent3:
+#  stage: triggers
+#  variables:
+#    <<: *commonvariables
+#    <<: *agent3_variables
+#  trigger:
+#    include: .gitlab-ci-agent.yml
+#    strategy: depend
+#  rules:
+#    - <<: *exclude_on_cluster_agent
+#    # exclude this pipeline if we're running a v2 tag pipeline
+#    - <<: *exclude_on_tag_v2
+#    - if: $CI_COMMIT_MESSAGE =~ /\[py2]/
+#      when: never
+#    - <<: *scheduled_master_pipeline
+#    - *other_files_rule
+#    - *md_only_rule
+#    - when: always
 
 cluster_agent:
   stage: triggers
