@@ -10,17 +10,13 @@ import (
 
 // CronJobCollector implements the ClusterTopologyCollector interface.
 type CronJobCollector struct {
-	ComponentChan chan<- *topology.Component
-	RelationChan  chan<- *topology.Relation
 	ClusterTopologyCollector
 }
 
 // NewCronJobCollector creates a new CronJob collector
-func NewCronJobCollector(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation,
+func NewCronJobCollector(
 	clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &CronJobCollector{
-		ComponentChan:            componentChannel,
-		RelationChan:             relationChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
 }
@@ -45,8 +41,8 @@ func (cjc *CronJobCollector) CollectorFunction() error {
 
 	for _, cj := range cronJobs {
 		component := cjc.cronJobToStackStateComponent(cj)
-		cjc.ComponentChan <- component
-		cjc.RelationChan <- cjc.namespaceToCronJobStackStateRelation(cjc.buildNamespaceExternalID(cj.GetNamespace()), component.ExternalID)
+		cjc.SubmitComponent(component)
+		cjc.SubmitRelation(cjc.namespaceToCronJobStackStateRelation(cjc.buildNamespaceExternalID(cj.GetNamespace()), component.ExternalID))
 	}
 
 	return nil

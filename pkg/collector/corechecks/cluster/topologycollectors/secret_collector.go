@@ -14,14 +14,12 @@ import (
 
 // SecretCollector implements the ClusterTopologyCollector interface.
 type SecretCollector struct {
-	ComponentChan chan<- *topology.Component
 	ClusterTopologyCollector
 }
 
 // NewSecretCollector creates a new instance of the secret collector
-func NewSecretCollector(componentChannel chan<- *topology.Component, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
+func NewSecretCollector(clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &SecretCollector{
-		ComponentChan:            componentChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
 }
@@ -44,7 +42,7 @@ func (cmc *SecretCollector) CollectorFunction() error {
 			return err
 		}
 
-		cmc.ComponentChan <- comp
+		cmc.SubmitComponent(comp)
 	}
 
 	return nil

@@ -11,16 +11,12 @@ import (
 
 // JobCollector implements the ClusterTopologyCollector interface.
 type JobCollector struct {
-	ComponentChan chan<- *topology.Component
-	RelationChan  chan<- *topology.Relation
 	ClusterTopologyCollector
 }
 
 // NewJobCollector creates a new Job collector
-func NewJobCollector(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
+func NewJobCollector(clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &JobCollector{
-		ComponentChan:            componentChannel,
-		RelationChan:             relationChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
 }
@@ -39,7 +35,7 @@ func (jc *JobCollector) CollectorFunction() error {
 
 	for _, job := range jobs {
 		component := jc.jobToStackStateComponent(job)
-		jc.ComponentChan <- component
+		jc.SubmitComponent(component)
 
 		ownedByCron := false
 		// Create relation to the cron job
@@ -47,14 +43,14 @@ func (jc *JobCollector) CollectorFunction() error {
 			switch kind := ref.Kind; kind {
 			case CronJob:
 				cronJobExternalID := jc.buildCronJobExternalID(job.Namespace, ref.Name)
-				jc.RelationChan <- jc.cronJobToJobStackStateRelation(cronJobExternalID, component.ExternalID)
+				jc.SubmitRelation(jc.cronJobToJobStackStateRelation(cronJobExternalID, component.ExternalID))
 				ownedByCron = true
 			}
 		}
 
 		// If not owned by Cron Job, make a direct relation from the Namespace
 		if !ownedByCron {
-			jc.RelationChan <- jc.namespaceToJobStackStateRelation(jc.buildNamespaceExternalID(job.Namespace), component.ExternalID)
+			jc.SubmitRelation(jc.namespaceToJobStackStateRelation(jc.buildNamespaceExternalID(job.Namespace), component.ExternalID))
 		}
 	}
 

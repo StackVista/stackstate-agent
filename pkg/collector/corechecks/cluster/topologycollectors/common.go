@@ -49,6 +49,10 @@ type ClusterTopologyCommon interface {
 	buildEndpointExternalID(endpointID string) string
 	maximumMinorVersion(version int) bool
 	minimumMinorVersion(version int) bool
+	SubmitComponent(component *topology.Component)
+	SubmitRelation(relation *topology.Relation)
+	SetUseRelationCache(value bool)
+	CorrelateRelations()
 }
 
 type clusterTopologyCommon struct {
@@ -56,37 +60,97 @@ type clusterTopologyCommon struct {
 	APICollectorClient      apiserver.APICollectorClient
 	urn                     urn.Builder
 	sourcePropertiesEnabled bool
+	componentChan           chan<- *topology.Component
+	componentIDCache        map[string]struct{}
+	relationChan            chan<- *topology.Relation
+	possibleRelations       []*topology.Relation
 	k8sVersion              *version.Info
+	useRelationCache        bool
 }
 
 // NewClusterTopologyCommon creates a clusterTopologyCommon
-func NewClusterTopologyCommon(instance topology.Instance, ac apiserver.APICollectorClient, spEnabled bool,
-	k8sVersion *version.Info) ClusterTopologyCommon {
+func NewClusterTopologyCommon(
+	instance topology.Instance,
+	ac apiserver.APICollectorClient,
+	spEnabled bool,
+	componentChan chan<- *topology.Component,
+	relationChan chan<- *topology.Relation,
+	k8sVersion *version.Info,
+) ClusterTopologyCommon {
 	return &clusterTopologyCommon{
 		Instance:                instance,
 		APICollectorClient:      ac,
 		urn:                     urn.NewURNBuilder(urn.ClusterTypeFromString(instance.Type), instance.URL),
 		sourcePropertiesEnabled: spEnabled,
+		componentChan:           componentChan,
+		componentIDCache:        make(map[string]struct{}),
+		relationChan:            relationChan,
 		k8sVersion:              k8sVersion,
+		useRelationCache:        true,
 	}
 }
 
-// GetName
+// SubmitComponent sends a component to the Component channel and adds its External ID to the cache if the relation cache is being used
+func (c *clusterTopologyCommon) SubmitComponent(component *topology.Component) {
+	fmt.Println("SubmitComponent ", component.ExternalID)
+	c.componentChan <- component
+	if c.useRelationCache {
+		c.componentIDCache[component.ExternalID] = struct{}{}
+	}
+}
+
+// SubmitRelation sends a relation to the Relation channel or adds it to the possibleRelations cache if it's being used
+func (c *clusterTopologyCommon) SubmitRelation(relation *topology.Relation) {
+	if c.useRelationCache {
+		_, sourceExists := c.componentIDCache[relation.SourceID]
+		_, targetExists := c.componentIDCache[relation.TargetID]
+		if sourceExists && targetExists {
+			c.relationChan <- relation
+		} else {
+			c.possibleRelations = append(c.possibleRelations, relation)
+		}
+	} else {
+		c.relationChan <- relation
+	}
+}
+
+func (c *clusterTopologyCommon) CorrelateRelations() {
+	for _, relation := range c.possibleRelations {
+		_, sourceExists := c.componentIDCache[relation.SourceID]
+		_, targetExists := c.componentIDCache[relation.TargetID]
+		if sourceExists && targetExists {
+			c.relationChan <- relation
+		} else {
+			if !sourceExists {
+				log.Debugf("Ignoring relation '%s' because source does not exist", relation.ExternalID)
+			} else {
+				log.Debugf("Ignoring relation '%s' because target does not exist", relation.ExternalID)
+			}
+		}
+	}
+}
+
+// SetUseRelationCache sets if the relation cache should be used or not
+func (c *clusterTopologyCommon) SetUseRelationCache(value bool) {
+	c.useRelationCache = value
+}
+
+// GetName returns the collector name
 func (*clusterTopologyCommon) GetName() string {
 	return "Unknown Collector"
 }
 
-// GetInstance
+// GetInstance returns the topology.Instance
 func (c *clusterTopologyCommon) GetInstance() topology.Instance {
 	return c.Instance
 }
 
-// GetAPIClient
+// GetAPIClient returns the Kubernetes API client
 func (c *clusterTopologyCommon) GetAPIClient() apiserver.APICollectorClient {
 	return c.APICollectorClient
 }
 
-// GetURNBuilder
+// GetURNBuilder returns the URN builder
 func (c *clusterTopologyCommon) GetURNBuilder() urn.Builder {
 	return c.urn
 }

@@ -11,16 +11,12 @@ import (
 
 // StatefulSetCollector implements the ClusterTopologyCollector interface.
 type StatefulSetCollector struct {
-	ComponentChan chan<- *topology.Component
-	RelationChan  chan<- *topology.Relation
 	ClusterTopologyCollector
 }
 
 // NewStatefulSetCollector
-func NewStatefulSetCollector(componentChannel chan<- *topology.Component, relationChannel chan<- *topology.Relation, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
+func NewStatefulSetCollector(clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &StatefulSetCollector{
-		ComponentChan:            componentChannel,
-		RelationChan:             relationChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
 }
@@ -39,8 +35,8 @@ func (ssc *StatefulSetCollector) CollectorFunction() error {
 
 	for _, ss := range statefulSets {
 		component := ssc.statefulSetToStackStateComponent(ss)
-		ssc.ComponentChan <- component
-		ssc.RelationChan <- ssc.namespaceToStatefulSetStackStateRelation(ssc.buildNamespaceExternalID(ss.Namespace), component.ExternalID)
+		ssc.SubmitComponent(component)
+		ssc.SubmitRelation(ssc.namespaceToStatefulSetStackStateRelation(ssc.buildNamespaceExternalID(ss.Namespace), component.ExternalID))
 	}
 
 	return nil

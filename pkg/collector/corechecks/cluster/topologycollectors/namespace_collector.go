@@ -11,14 +11,12 @@ import (
 
 // NamespaceCollector implements the ClusterTopologyCollector interface.
 type NamespaceCollector struct {
-	ComponentChan chan<- *topology.Component
 	ClusterTopologyCollector
 }
 
 // NewNamespaceCollector
-func NewNamespaceCollector(componentChannel chan<- *topology.Component, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
+func NewNamespaceCollector(clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &NamespaceCollector{
-		ComponentChan:            componentChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
 }
@@ -36,7 +34,7 @@ func (nsc *NamespaceCollector) CollectorFunction() error {
 	}
 
 	for _, ns := range namespaces {
-		nsc.ComponentChan <- nsc.namespaceToStackStateComponent(ns)
+		nsc.SubmitComponent(nsc.namespaceToStackStateComponent(ns))
 	}
 
 	return nil

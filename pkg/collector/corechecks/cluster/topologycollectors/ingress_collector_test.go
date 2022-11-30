@@ -39,7 +39,9 @@ func TestIngressCollector_1_18(t *testing.T) {
 	}
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		ic := NewIngressCollector(componentChannel, relationChannel, NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClient{}, sourcePropertiesEnabled, &k8sVersion))
+		commonClusterCollector := NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClient{}, sourcePropertiesEnabled, componentChannel, relationChannel, &k8sVersion)
+		commonClusterCollector.SetUseRelationCache(false)
+		ic := NewIngressCollector(commonClusterCollector)
 		expectedCollectorName := "Ingress Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 
@@ -48,7 +50,7 @@ func TestIngressCollector_1_18(t *testing.T) {
 			assertions []func(*testing.T, chan *topology.Component, chan *topology.Relation)
 		}{
 			{
-				testCase: "Test Service 1.21 1 - Minimal",
+				testCase: "Test Service 1 - Minimal",
 				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
 					expectIngress211(sourcePropertiesEnabled, creationTimeFormatted),
 					expectEndpoint211(),
@@ -58,7 +60,7 @@ func TestIngressCollector_1_18(t *testing.T) {
 				},
 			},
 			{
-				testCase: "Test Service 1.21 2 - Default Backend",
+				testCase: "Test Service 2 - Default Backend",
 				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
 					expectIngress212(sourcePropertiesEnabled, creationTimeFormatted),
 					expectRelationIngress212Service(),
@@ -69,7 +71,7 @@ func TestIngressCollector_1_18(t *testing.T) {
 				},
 			},
 			{
-				testCase: "Test Service 1.21 3 - Ingress Rules",
+				testCase: "Test Service 3 - Ingress Rules",
 				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
 					expectIngress213(sourcePropertiesEnabled, creationTimeFormatted),
 					expectRelationIngress213Service1(),
@@ -107,7 +109,9 @@ func TestIngressCollector_1_22(t *testing.T) {
 	}
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		ic := NewIngressCollector(componentChannel, relationChannel, NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClient{}, sourcePropertiesEnabled, &k8sVersion))
+		commonClusterCollector := NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClient{}, sourcePropertiesEnabled, componentChannel, relationChannel, &k8sVersion)
+		commonClusterCollector.SetUseRelationCache(false)
+		ic := NewIngressCollector(commonClusterCollector)
 		expectedCollectorName := "Ingress Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 
@@ -116,7 +120,7 @@ func TestIngressCollector_1_22(t *testing.T) {
 			assertions []func(*testing.T, chan *topology.Component, chan *topology.Relation)
 		}{
 			{
-				testCase: "Test Service 1.22 1 - Minimal",
+				testCase: "Test Service 1 - Minimal",
 				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
 					expectIngress221(sourcePropertiesEnabled, creationTimeFormatted),
 					expectEndpointIP221(),
@@ -126,7 +130,7 @@ func TestIngressCollector_1_22(t *testing.T) {
 				},
 			},
 			{
-				testCase: "Test Service 1.22 2 - Default Backend",
+				testCase: "Test Service 2 - Default Backend",
 				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
 					expectIngress222(sourcePropertiesEnabled, creationTimeFormatted),
 					expectRelationIngressService222(),
@@ -137,7 +141,7 @@ func TestIngressCollector_1_22(t *testing.T) {
 				},
 			},
 			{
-				testCase: "Test Service 1.22 3 - Ingress Rules",
+				testCase: "Test Service 3 - Ingress Rules",
 				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
 					expectIngress223(sourcePropertiesEnabled, creationTimeFormatted),
 					expectRelationIngress223Service1(),
@@ -1015,7 +1019,6 @@ func (m MockIngressAPICollectorClientNoHTTPRule) GetIngressesExtV1B1() ([]v1beta
 
 // Test for bug STAC-17811
 func TestIngressCollector_NoHttpRule(t *testing.T) {
-
 	componentChannel := make(chan *topology.Component)
 	defer close(componentChannel)
 	relationChannel := make(chan *topology.Relation)
@@ -1030,7 +1033,9 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 	}
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		ic := NewIngressCollector(componentChannel, relationChannel, NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClientNoHTTPRule{}, sourcePropertiesEnabled, &versionInfo))
+		commonClusterCollector := NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClientNoHTTPRule{}, sourcePropertiesEnabled, componentChannel, relationChannel, &versionInfo)
+		commonClusterCollector.SetUseRelationCache(false)
+		ic := NewIngressCollector(commonClusterCollector)
 		expectedCollectorName := "Ingress Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 
@@ -1129,6 +1134,7 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 
 func expectComponent(expected *topology.Component) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return func(t *testing.T, componentChan chan *topology.Component, _ chan *topology.Relation) {
+		fmt.Println("expectComponent ", expected.ExternalID)
 		c := <-componentChan
 		assert.EqualValues(t, expected, c)
 	}
@@ -1136,6 +1142,7 @@ func expectComponent(expected *topology.Component) func(*testing.T, chan *topolo
 
 func expectRelation(expected *topology.Relation) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return func(t *testing.T, _ chan *topology.Component, relationChan chan *topology.Relation) {
+		fmt.Println("expectRelation ", expected.ExternalID)
 		r := <-relationChan
 		assert.EqualValues(t, expected, r)
 	}

@@ -1,5 +1,10 @@
 # StackState Agent v2 releases
 
+## Next
+
+**Bugfix**
+- Fixed NPE when handling certain containers from containerd
+
 ## 2.19.1 (2022-11-23)
 
 **Improvements**

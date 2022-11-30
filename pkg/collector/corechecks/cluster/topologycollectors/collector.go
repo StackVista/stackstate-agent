@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -26,8 +27,12 @@ type clusterTopologyCollector struct {
 }
 
 // NewClusterTopologyCollector
-func NewClusterTopologyCollector(clusterTopologyCommon ClusterTopologyCommon) ClusterTopologyCollector {
-	return &clusterTopologyCollector{clusterTopologyCommon}
+func NewClusterTopologyCollector(
+	clusterTopologyCommon ClusterTopologyCommon,
+) ClusterTopologyCollector {
+	return &clusterTopologyCollector{
+		clusterTopologyCommon,
+	}
 }
 
 // CollectorFunction

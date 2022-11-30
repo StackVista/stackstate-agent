@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package topologycollectors
@@ -11,14 +12,12 @@ import (
 
 // ClusterCollector implements the ClusterTopologyCollector interface.
 type ClusterCollector struct {
-	ComponentChan chan<- *topology.Component
 	ClusterTopologyCollector
 }
 
 // NewClusterTopologyCollector
-func NewClusterCollector(componentChannel chan<- *topology.Component, clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
+func NewClusterCollector(clusterTopologyCollector ClusterTopologyCollector) ClusterTopologyCollector {
 	return &ClusterCollector{
-		ComponentChan:            componentChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 	}
 }
@@ -35,7 +34,7 @@ func (cc *ClusterCollector) CollectorFunction() error {
 			"therefore we are unable to create the cluster component")
 	}
 
-	cc.ComponentChan <- cc.clusterToStackStateComponent()
+	cc.SubmitComponent(cc.clusterToStackStateComponent())
 	return nil
 }
 

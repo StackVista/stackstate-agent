@@ -276,18 +276,17 @@ func executeVolumeCorrelation(
 	podCorrChannel := make(chan *PodEndpointCorrelation)
 	containerCorrChannel := make(chan *ContainerCorrelation)
 	volumeCorrChannel := make(chan *VolumeCorrelation)
+	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, relationChannel, false)
+	commonClusterCollector.SetUseRelationCache(false)
 	volumeCorrelator := NewVolumeCorrelator(
-		componentChannel,
-		relationChannel,
 		volumeCorrChannel,
-		NewTestCommonClusterCorrelator(clusterAPIClient),
+		NewClusterTopologyCorrelator(commonClusterCollector),
 		claimsEnabled,
 	)
 	podCollector := NewPodCollector(
-		componentChannel, relationChannel,
 		containerCorrChannel, volumeCorrChannel,
 		podCorrChannel,
-		NewTestCommonClusterCollector(clusterAPIClient, false),
+		commonClusterCollector,
 	)
 
 	collectorsFinishChan := make(chan bool)

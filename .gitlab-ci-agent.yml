@@ -57,6 +57,161 @@ stages:
   - &cluster_agent_release
     if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_JOB_TRIGGERED == "true")
     when: manual
+  - &cluster_agent_manual
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
+    when: manual
+    allow_failure: true
+
+# Merge train rules for agent v2
+.v2_merge_train_always: &v2_merge_train_always
+  # If the major version is 2, and it is the master branch or a tag, always execute this step
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: always
+    allow_failure: false
+  # Else, if the major version is 2, and it is a merge train job, always execute this step
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: always
+    allow_failure: false
+  # Else, if the major version is 2, and there is a valid MR internal ID, manually execute this step
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
+    when: manual
+    allow_failure: true
+  # Else, if the major version is 2, and there is an open merge request (but no MR IID), never execute this step
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
+    when: never
+  # Else, if the major version is 2, and code was committed to a branch, manually execute this step
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
+    when: manual
+    allow_failure: true
+
+.v2_merge_train_always_manual: &v2_merge_train_always_manual
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: manual
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: manual
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
+    when: manual
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
+    when: manual
+    allow_failure: true
+
+.v2_merge_train_on_success: &v2_merge_train_on_success
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: on_success
+    allow_failure: false
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_success
+    allow_failure: false
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
+    when: on_success
+    allow_failure: false
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
+    when: on_success
+    allow_failure: false
+
+.v2_merge_train_on_success_allow_failure: &v2_merge_train_on_success_allow_failure
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: on_success
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_success
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
+    when: on_success
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
+    when: on_success
+    allow_failure: true
+
+.v2_merge_train_on_failure: &v2_merge_train_on_failure
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: on_failure
+    allow_failure: false
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_failure
+    allow_failure: false
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
+    when: on_failure
+    allow_failure: false
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
+    when: on_failure
+    allow_failure: false
+
+# Merge train rules for all agents
+.merge_train_always: &merge_train_always
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: always
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: always
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_IID
+    when: manual
+    allow_failure: true
+  - if: $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $CI_COMMIT_BRANCH
+    when: manual
+    allow_failure: true
+
+.merge_train_always_manual: &merge_train_always_manual
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: manual
+    allow_failure: true
+  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: manual
+    allow_failure: true
+  - if: $CI_MERGE_REQUEST_IID
+    when: manual
+    allow_failure: true
+  - if: $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $CI_COMMIT_BRANCH
+    when: manual
+    allow_failure: true
+
+.merge_train_on_success: &merge_train_on_success
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: on_success
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_success
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_IID
+    when: on_success
+    allow_failure: false
+  - if: $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $CI_COMMIT_BRANCH
+    when: on_success
+    allow_failure: false
+
+.merge_train_on_failure: &merge_train_on_failure
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: on_failure
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_failure
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_IID
+    when: on_failure
+    allow_failure: false
+  - if: $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $CI_COMMIT_BRANCH
+    when: on_failure
+    allow_failure: false
 
 ######################### /pipeline bricks
 
@@ -95,7 +250,7 @@ deps_deb:
     when:
       - always
   rules:
-    - when: on_success
+    - when: always
 
 deps_rpm:
   stage: prepare
@@ -126,7 +281,7 @@ deps_rpm:
     when:
       - always
   rules:
-    - when: on_success
+    - *merge_train_always_manual
 
 deps_win:
   stage: prepare
@@ -159,7 +314,7 @@ deps_win:
     when:
       - always
   rules:
-    - when: on_success
+    - *merge_train_always_manual
 
 ## build stage
 
@@ -186,6 +341,7 @@ unit_tests:
       - always
   rules:
     - when: on_success
+  timeout: 35 minutes
 
 filename_linting:
   stage: test
@@ -559,7 +715,8 @@ pre_release_swarm_agent_image:
     #                     script                           $IMAGE_TAG              $IMAGE_REPO              $EXTRA_TAG            $BASE_REPO           $BASE_TAG
     - ./omnibus/package-scripts/publish_swarm_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_SWARM $CI_COMMIT_SHORT_SHA $STS_DOCKER_TEST_REPO $CI_COMMIT_SHORT_SHA
   rules:
-    - *cluster_agent
+    - *cluster_agent_manual
+    - *v2_merge_train_always_manual
 
 pre_release_trace_agent_image:
   <<: *pre_release_image
@@ -570,7 +727,8 @@ pre_release_trace_agent_image:
     - cp ./outcomes/binary/trace-agent Dockerfiles/trace-agent
     - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_TRACE $CI_PROJECT_DIR/Dockerfiles/trace-agent $CI_COMMIT_SHORT_SHA
   rules:
-    - *cluster_agent
+    - *cluster_agent_manual
+    - *v2_merge_train_always_manual
 
 pre_release_cluster_agent_image:
   <<: *pre_release_image
@@ -583,125 +741,6 @@ pre_release_cluster_agent_image:
     - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent $CI_COMMIT_SHORT_SHA
   rules:
     - *cluster_agent
-
-# Merge train rules for agent v2
-.v2_merge_train_always: &v2_merge_train_always
-  # If the major version is 2, and it is the master branch or a tag, always execute this step
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-    when: always
-    allow_failure: false
-  # Else, if the major version is 2, and it is a merge train job, always execute this step
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
-    when: always
-    allow_failure: false
-  # Else, if the major version is 2, and there is a valid MR internal ID, manually execute this step
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
-    when: manual
-    allow_failure: true
-  # Else, if the major version is 2, and there is an open merge request (but no MR IID), never execute this step
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
-    when: never
-  # Else, if the major version is 2, and code was committed to a branch, manually execute this step
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
-    when: manual
-    allow_failure: true
-
-.v2_merge_train_on_success: &v2_merge_train_on_success
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-    when: on_success
-    allow_failure: false
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
-    when: on_success
-    allow_failure: false
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
-    when: on_success
-    allow_failure: false
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
-    when: never
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
-    when: on_success
-    allow_failure: false
-
-.v2_merge_train_on_success_allow_failure: &v2_merge_train_on_success_allow_failure
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-    when: on_success
-    allow_failure: true
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
-    when: on_success
-    allow_failure: true
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
-    when: on_success
-    allow_failure: true
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
-    when: never
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
-    when: on_success
-    allow_failure: true
-
-.v2_merge_train_on_failure: &v2_merge_train_on_failure
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-    when: on_failure
-    allow_failure: false
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
-    when: on_failure
-    allow_failure: false
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
-    when: on_failure
-    allow_failure: false
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
-    when: never
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
-    when: on_failure
-    allow_failure: false
-
-# Merge train rules for all agents
-.merge_train_always: &merge_train_always
-  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-    when: always
-    allow_failure: false
-  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
-    when: always
-    allow_failure: false
-  - if: $CI_MERGE_REQUEST_IID
-    when: manual
-    allow_failure: true
-  - if: $CI_OPEN_MERGE_REQUESTS
-    when: never
-  - if: $CI_COMMIT_BRANCH
-    when: manual
-    allow_failure: true
-
-.merge_train_on_success: &merge_train_on_success
-  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-    when: on_success
-    allow_failure: false
-  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
-    when: on_success
-    allow_failure: false
-  - if: $CI_MERGE_REQUEST_IID
-    when: on_success
-    allow_failure: false
-  - if: $CI_OPEN_MERGE_REQUESTS
-    when: never
-  - if: $CI_COMMIT_BRANCH
-    when: on_success
-    allow_failure: false
-
-.merge_train_on_failure: &merge_train_on_failure
-  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-    when: on_failure
-    allow_failure: false
-  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
-    when: on_failure
-    allow_failure: false
-  - if: $CI_MERGE_REQUEST_IID
-    when: on_failure
-    allow_failure: false
-  - if: $CI_OPEN_MERGE_REQUESTS
-    when: never
-  - if: $CI_COMMIT_BRANCH
-    when: on_failure
-    allow_failure: false
 
 # Core Molecule Structure for all the molecule steps
 .molecule: &molecule
@@ -849,7 +888,7 @@ molecule_compose_create:
   <<: *molecule_create
   rules:
     - *compose_ignore_rule
-    - *v2_merge_train_always
+    - *v2_merge_train_always_manual
   variables:
     MOLECULE_SCENARIO: compose
 
@@ -906,7 +945,7 @@ molecule_integrations_create:
   <<: *molecule_create
   rules:
     - *integrations_ignore_rule
-    - *merge_train_always
+    - *merge_train_always_manual
   variables:
     MOLECULE_SCENARIO: integrations
 
@@ -1206,7 +1245,7 @@ molecule_localinstall_create:
   rules:
     - *localinstall_ignore_rule
     - *localinstall_acceptance_rule
-    - *merge_train_always
+    - *merge_train_always_manual
     - when: never
   variables:
     MOLECULE_SCENARIO: localinstall
@@ -1286,7 +1325,7 @@ molecule_secrets_create:
   rules:
     - *secrets_ignore_rule
     - *secrets_acceptance_rule
-    - *merge_train_always
+    - *merge_train_always_manual
     - when: never
   variables:
     MOLECULE_SCENARIO: secrets
@@ -1354,7 +1393,7 @@ molecule_swarm_create:
   <<: *molecule_create
   rules:
     - *swarm_ignore_rule
-    - *v2_merge_train_always
+    - *v2_merge_train_always_manual
   variables:
     MOLECULE_SCENARIO: swarm
 
@@ -1412,7 +1451,7 @@ molecule_vms_create:
   <<: *molecule_create
   rules:
     - *vms_ignore_rule
-    - *v2_merge_train_always
+    - *v2_merge_train_always_manual
   variables:
     MOLECULE_SCENARIO: vms
 
@@ -1480,7 +1519,7 @@ beest_otel_create:
   <<: *beest_otel_variables
   rules:
     - *beest_otel_ignore_rule
-    - *v2_merge_train_always
+    - *v2_merge_train_always_manual
 
 beest_otel_test:
   <<: *beest
@@ -1544,7 +1583,7 @@ beest_splunk_create:
   <<: *beest_splunk_variables
   rules:
     - *beest_splunk_ignore_rule
-    - *v2_merge_train_always
+    - *v2_merge_train_always_manual
 
 beest_splunk_test:
   <<: *beest

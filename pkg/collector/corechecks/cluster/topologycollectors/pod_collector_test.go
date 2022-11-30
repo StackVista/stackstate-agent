@@ -20,8 +20,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-var configMap coreV1.ConfigMapVolumeSource
-var secret coreV1.SecretVolumeSource
+var configMapVolumeSource coreV1.ConfigMapVolumeSource
+var secretVolumeSource coreV1.SecretVolumeSource
 
 func TestPodCollector(t *testing.T) {
 
@@ -34,12 +34,12 @@ func TestPodCollector(t *testing.T) {
 	awsElasticBlockStore = coreV1.AWSElasticBlockStoreVolumeSource{
 		VolumeID: "id-of-the-aws-block-store",
 	}
-	configMap = coreV1.ConfigMapVolumeSource{
+	configMapVolumeSource = coreV1.ConfigMapVolumeSource{
 		LocalObjectReference: coreV1.LocalObjectReference{
 			Name: "name-of-the-config-map",
 		},
 	}
-	secret = coreV1.SecretVolumeSource{
+	secretVolumeSource = coreV1.SecretVolumeSource{
 		SecretName: "name-of-the-secret",
 	}
 	hostPath = coreV1.HostPathVolumeSource{
@@ -54,7 +54,9 @@ func TestPodCollector(t *testing.T) {
 		volumeCorrelationChannel := make(chan *VolumeCorrelation)
 		podCorrelationChannel := make(chan *PodEndpointCorrelation)
 
-		ic := NewPodCollector(componentChannel, relationChannel, containerCorrelationChannel, volumeCorrelationChannel, podCorrelationChannel, NewTestCommonClusterCollector(MockPodAPICollectorClient{}, sourcePropertiesEnabled))
+		commonClusterCollector := NewTestCommonClusterCollector(MockPodAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled)
+		commonClusterCollector.SetUseRelationCache(false)
+		ic := NewPodCollector(containerCorrelationChannel, volumeCorrelationChannel, podCorrelationChannel, commonClusterCollector)
 		expectedCollectorName := "Pod Collector"
 		RunCollectorTest(t, ic, expectedCollectorName)
 
@@ -820,9 +822,9 @@ func (m MockPodAPICollectorClient) GetPods() ([]coreV1.Pod, error) {
 			pod.Spec.Volumes = []coreV1.Volume{
 				{Name: "test-volume-1", VolumeSource: coreV1.VolumeSource{AWSElasticBlockStore: &awsElasticBlockStore}},
 				{Name: "test-volume-2", VolumeSource: coreV1.VolumeSource{GCEPersistentDisk: &gcePersistentDisk}},
-				{Name: "test-volume-3", VolumeSource: coreV1.VolumeSource{ConfigMap: &configMap}},
+				{Name: "test-volume-3", VolumeSource: coreV1.VolumeSource{ConfigMap: &configMapVolumeSource}},
 				{Name: "test-volume-4", VolumeSource: coreV1.VolumeSource{HostPath: &hostPath}},
-				{Name: "test-volume-5", VolumeSource: coreV1.VolumeSource{Secret: &secret}},
+				{Name: "test-volume-5", VolumeSource: coreV1.VolumeSource{Secret: &secretVolumeSource}},
 			}
 		}
 
