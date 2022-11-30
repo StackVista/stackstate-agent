@@ -84,6 +84,11 @@ stages:
     when: manual
     allow_failure: true
 
+.v2_merge_train_always_on_tag: &v2_merge_train_always_on_tag
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_TAG
+    when: always
+    allow_failure: false
+
 .v2_merge_train_always_manual: &v2_merge_train_always_manual
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
     when: manual
@@ -1021,7 +1026,8 @@ beest_k8s_1_21_dockerd_create:
   <<: *beest_k8s_1_21_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_always
+    - *v2_merge_train_always_on_tag
+    - *v2_merge_train_always_manual
 
 beest_k8s_1_21_containerd_create:
   <<: *beest
@@ -1029,7 +1035,8 @@ beest_k8s_1_21_containerd_create:
   <<: *beest_k8s_1_21_containerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_always
+    - *v2_merge_train_always_on_tag
+    - *v2_merge_train_always_manual
 
 beest_k8s_1_24_containerd_create:
   <<: *beest
