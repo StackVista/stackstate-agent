@@ -1057,7 +1057,7 @@ beest_integrations_create:
   <<: *beest_integrations_variables
   rules:
     - *integrations_ignore_rule
-    - *v2_merge_train_always
+    - *v2_merge_train_always_manual
 
 beest_k8s_1_21_dockerd_test:
   <<: *beest
