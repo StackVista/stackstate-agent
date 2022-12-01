@@ -1134,7 +1134,6 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 
 func expectComponent(expected *topology.Component) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return func(t *testing.T, componentChan chan *topology.Component, _ chan *topology.Relation) {
-		fmt.Println("expectComponent ", expected.ExternalID)
 		c := <-componentChan
 		assert.EqualValues(t, expected, c)
 	}
@@ -1142,7 +1141,6 @@ func expectComponent(expected *topology.Component) func(*testing.T, chan *topolo
 
 func expectRelation(expected *topology.Relation) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return func(t *testing.T, _ chan *topology.Component, relationChan chan *topology.Relation) {
-		fmt.Println("expectRelation ", expected.ExternalID)
 		r := <-relationChan
 		assert.EqualValues(t, expected, r)
 	}

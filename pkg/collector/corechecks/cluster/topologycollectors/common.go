@@ -92,7 +92,6 @@ func NewClusterTopologyCommon(
 
 // SubmitComponent sends a component to the Component channel and adds its External ID to the cache if the relation cache is being used
 func (c *clusterTopologyCommon) SubmitComponent(component *topology.Component) {
-	fmt.Println("SubmitComponent ", component.ExternalID)
 	c.componentChan <- component
 	if c.useRelationCache {
 		c.componentIDCache[component.ExternalID] = struct{}{}
