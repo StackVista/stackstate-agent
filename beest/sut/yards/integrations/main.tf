@@ -14,4 +14,5 @@ module "ec2_agent" {
   vpc_id              = module.vpc.vpc_id
   subnet_id           = module.vpc.private_subnet_1_id
   integration_profile = ""
+  runners_ip          = var.runners_ip
 }
