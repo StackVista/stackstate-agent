@@ -15,7 +15,12 @@ def test_agents_do_not_restart(host, ansible_var):
     kubecontext = ansible_var("agent_kubecontext")
     for pod in _get_pod_restarts(kubecontext, host):
         if "=," in pod:
+
             pod_split = pod.split("=,")
             pod_name, restarts = pod_split[0], pod_split[1].split(",")
+            print("pod_name = {}, restarts = {}".format(pod_name, restarts))  # TODO remove debug log
             for restart in restarts:
-                assert int(restart) < 0, "pod {} has a container with {} restarts".format(pod_name, restart)
+                if restart.isnumeric():
+                    assert int(restart) < 0, "pod {} has a container with {} restarts".format(pod_name, restart)
+                else:
+                    print("restart not a number = '{}'".format(restart))  # TODO remove debug log
