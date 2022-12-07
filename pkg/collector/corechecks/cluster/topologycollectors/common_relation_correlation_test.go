@@ -45,7 +45,8 @@ func TestRelationCorrelation(t *testing.T) {
 		[]coreV1.Pod{pod1, pod2},
 		[]coreV1.ConfigMap{configMap1, configMap2},
 		[]coreV1.Secret{secret1, secret2},
-		[]coreV1.Node{node1})
+		[]coreV1.Node{node1},
+	)
 
 	expectedPod1Id := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod1Name)
 	expectedPod2Id := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod2Name)
