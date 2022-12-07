@@ -119,6 +119,7 @@ func (c *clusterTopologyCommon) SubmitRelation(relation *topology.Relation) {
 }
 
 func (c *clusterTopologyCommon) CorrelateRelations() {
+	c.relationCacheWG.Add(1)
 	for _, relation := range c.possibleRelations {
 		_, sourceExists := c.componentIDCache.Load(relation.SourceID)
 		_, targetExists := c.componentIDCache.Load(relation.TargetID)
@@ -132,6 +133,7 @@ func (c *clusterTopologyCommon) CorrelateRelations() {
 			}
 		}
 	}
+	c.relationCacheWG.Done()
 }
 
 // SetUseRelationCache sets if the relation cache should be used or not

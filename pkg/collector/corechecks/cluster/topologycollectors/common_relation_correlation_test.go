@@ -5,6 +5,7 @@ package topologycollectors
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 	"github.com/stretchr/testify/assert"
@@ -16,6 +17,7 @@ import (
 )
 
 func TestRelationCorrelation(t *testing.T) {
+	testClusterName := "test-cluster-name"
 	clusterName := "test-cluster-name"
 	namespace := "default"
 	pod1Name := "pod-1"
@@ -27,6 +29,9 @@ func TestRelationCorrelation(t *testing.T) {
 	node1Name := "node-1"
 	node1Provider := "node1Provider"
 	someTimestamp := metav1.NewTime(time.Now())
+
+	mockConfig := config.Mock()
+	mockConfig.Set("cluster_name", testClusterName)
 
 	pod1 := podWithConfigMapEnv(namespace, pod1Name, configMap1Name, configMap2Name, someTimestamp)
 	pod2 := podWithSecretEnv(namespace, pod2Name, secret1Name, secret2Name, someTimestamp)
@@ -56,7 +61,7 @@ func TestRelationCorrelation(t *testing.T) {
 		configMapComponent(namespace, configMap2Name, someTimestamp),
 		secretComponent(namespace, secret1Name, someTimestamp),
 		secretComponent(namespace, secret2Name, someTimestamp),
-		nodeComponent(node1Name, node1Provider, someTimestamp),
+		nodeComponent(node1Name, node1Provider, clusterName, someTimestamp),
 	}
 	expectedRelations := []*topology.Relation{
 		simpleRelation(expectedPod1Id, expectedConfigMap2Id, "uses"),
@@ -275,7 +280,7 @@ func node(name string, providerID string, timestamp metav1.Time) coreV1.Node {
 		},
 	}
 }
-func nodeComponent(name string, providerID string, timestamp metav1.Time) *topology.Component {
+func nodeComponent(name, providerID, clusterName string, timestamp metav1.Time) *topology.Component {
 	return &topology.Component{
 		ExternalID: fmt.Sprintf("urn:kubernetes:/test-cluster-name:node/%s", name),
 		Type: topology.Type{
@@ -288,7 +293,10 @@ func nodeComponent(name string, providerID string, timestamp metav1.Time) *topol
 			"tags": map[string]string{
 				"cluster-name": "test-cluster-name",
 			},
-			"identifiers":       []string{fmt.Sprintf("urn:host:/%s", providerID)},
+			"identifiers": []string{
+				fmt.Sprintf("urn:host:/%s", providerID),
+				fmt.Sprintf("urn:host:/%s-%s", providerID, clusterName),
+			},
 			"creationTimestamp": timestamp,
 			"uid":               types.UID(name),
 			"status": NodeStatus{
