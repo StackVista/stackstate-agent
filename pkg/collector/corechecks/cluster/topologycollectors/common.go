@@ -12,6 +12,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"k8s.io/apimachinery/pkg/version"
 	"strconv"
+	"sync"
 
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/urn"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -61,11 +62,12 @@ type clusterTopologyCommon struct {
 	urn                     urn.Builder
 	sourcePropertiesEnabled bool
 	componentChan           chan<- *topology.Component
-	componentIDCache        map[string]struct{}
+	componentIDCache        sync.Map
 	relationChan            chan<- *topology.Relation
 	possibleRelations       []*topology.Relation
 	k8sVersion              *version.Info
 	useRelationCache        bool
+	relationCacheWG         sync.WaitGroup
 }
 
 // NewClusterTopologyCommon creates a clusterTopologyCommon
@@ -83,10 +85,11 @@ func NewClusterTopologyCommon(
 		urn:                     urn.NewURNBuilder(urn.ClusterTypeFromString(instance.Type), instance.URL),
 		sourcePropertiesEnabled: spEnabled,
 		componentChan:           componentChan,
-		componentIDCache:        make(map[string]struct{}),
+		componentIDCache:        sync.Map{},
 		relationChan:            relationChan,
 		k8sVersion:              k8sVersion,
 		useRelationCache:        true,
+		relationCacheWG:         sync.WaitGroup{},
 	}
 }
 
@@ -94,19 +97,21 @@ func NewClusterTopologyCommon(
 func (c *clusterTopologyCommon) SubmitComponent(component *topology.Component) {
 	c.componentChan <- component
 	if c.useRelationCache {
-		c.componentIDCache[component.ExternalID] = struct{}{}
+		c.componentIDCache.Store(component.ExternalID, true)
 	}
 }
 
 // SubmitRelation sends a relation to the Relation channel or adds it to the possibleRelations cache if it's being used
 func (c *clusterTopologyCommon) SubmitRelation(relation *topology.Relation) {
 	if c.useRelationCache {
-		_, sourceExists := c.componentIDCache[relation.SourceID]
-		_, targetExists := c.componentIDCache[relation.TargetID]
+		_, sourceExists := c.componentIDCache.Load(relation.SourceID)
+		_, targetExists := c.componentIDCache.Load(relation.TargetID)
 		if sourceExists && targetExists {
 			c.relationChan <- relation
 		} else {
+			c.relationCacheWG.Add(1)
 			c.possibleRelations = append(c.possibleRelations, relation)
+			c.relationCacheWG.Done()
 		}
 	} else {
 		c.relationChan <- relation
@@ -114,9 +119,10 @@ func (c *clusterTopologyCommon) SubmitRelation(relation *topology.Relation) {
 }
 
 func (c *clusterTopologyCommon) CorrelateRelations() {
+	c.relationCacheWG.Add(1)
 	for _, relation := range c.possibleRelations {
-		_, sourceExists := c.componentIDCache[relation.SourceID]
-		_, targetExists := c.componentIDCache[relation.TargetID]
+		_, sourceExists := c.componentIDCache.Load(relation.SourceID)
+		_, targetExists := c.componentIDCache.Load(relation.TargetID)
 		if sourceExists && targetExists {
 			c.relationChan <- relation
 		} else {
@@ -127,6 +133,7 @@ func (c *clusterTopologyCommon) CorrelateRelations() {
 			}
 		}
 	}
+	c.relationCacheWG.Done()
 }
 
 // SetUseRelationCache sets if the relation cache should be used or not

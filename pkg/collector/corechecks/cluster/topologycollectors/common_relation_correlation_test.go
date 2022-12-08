@@ -5,6 +5,7 @@ package topologycollectors
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,8 @@ import (
 	"time"
 )
 
-func TestRelationCorrelator(t *testing.T) {
+func TestRelationCorrelation(t *testing.T) {
+	testClusterName := "test-cluster-name"
 	clusterName := "test-cluster-name"
 	namespace := "default"
 	pod1Name := "pod-1"
@@ -24,7 +26,12 @@ func TestRelationCorrelator(t *testing.T) {
 	configMap2Name := "config-map-2"
 	secret1Name := "secret-1"
 	secret2Name := "secret-2"
+	node1Name := "node-1"
+	node1Provider := "node1Provider"
 	someTimestamp := metav1.NewTime(time.Now())
+
+	mockConfig := config.Mock()
+	mockConfig.Set("cluster_name", testClusterName)
 
 	pod1 := podWithConfigMapEnv(namespace, pod1Name, configMap1Name, configMap2Name, someTimestamp)
 	pod2 := podWithSecretEnv(namespace, pod2Name, secret1Name, secret2Name, someTimestamp)
@@ -32,11 +39,14 @@ func TestRelationCorrelator(t *testing.T) {
 	configMap2 := configMap(namespace, configMap2Name, someTimestamp)
 	secret1 := secret(namespace, secret1Name, someTimestamp)
 	secret2 := secret(namespace, secret2Name, someTimestamp)
+	node1 := node(node1Name, node1Provider, someTimestamp)
 
 	components, relations := executeRelationCorrelation(t,
 		[]coreV1.Pod{pod1, pod2},
 		[]coreV1.ConfigMap{configMap1, configMap2},
-		[]coreV1.Secret{secret1, secret2})
+		[]coreV1.Secret{secret1, secret2},
+		[]coreV1.Node{node1},
+	)
 
 	expectedPod1Id := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod1Name)
 	expectedPod2Id := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod2Name)
@@ -52,6 +62,7 @@ func TestRelationCorrelator(t *testing.T) {
 		configMapComponent(namespace, configMap2Name, someTimestamp),
 		secretComponent(namespace, secret1Name, someTimestamp),
 		secretComponent(namespace, secret2Name, someTimestamp),
+		nodeComponent(node1Name, node1Provider, clusterName, someTimestamp),
 	}
 	expectedRelations := []*topology.Relation{
 		simpleRelation(expectedPod1Id, expectedConfigMap2Id, "uses"),
@@ -241,6 +252,76 @@ func secret(namespace string, name string, timestamp metav1.Time) coreV1.Secret 
 	}
 }
 
+func node(name string, providerID string, timestamp metav1.Time) coreV1.Node {
+	return coreV1.Node{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Node",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              name,
+			CreationTimestamp: timestamp,
+			UID:               types.UID(name),
+			GenerateName:      "",
+			ResourceVersion:   "123",
+		},
+		Status: coreV1.NodeStatus{
+			Phase: coreV1.NodeRunning,
+			NodeInfo: coreV1.NodeSystemInfo{
+				MachineID:     "machineID",
+				KernelVersion: "5.10.23",
+			},
+			DaemonEndpoints: coreV1.NodeDaemonEndpoints{
+				KubeletEndpoint: coreV1.DaemonEndpoint{
+					Port: 33,
+				},
+			},
+		},
+		Spec: coreV1.NodeSpec{
+			ProviderID: providerID,
+		},
+	}
+}
+func nodeComponent(name, providerID, clusterName string, timestamp metav1.Time) *topology.Component {
+	return &topology.Component{
+		ExternalID: fmt.Sprintf("urn:kubernetes:/test-cluster-name:node/%s", name),
+		Type: topology.Type{
+			Name: "node",
+		},
+		Data: topology.Data{
+			"name":       name,
+			"kind":       "Node",
+			"instanceId": providerID,
+			"tags": map[string]string{
+				"cluster-name": "test-cluster-name",
+			},
+			"identifiers": []string{
+				fmt.Sprintf("urn:host:/%s", providerID),
+				fmt.Sprintf("urn:host:/%s-%s", providerID, clusterName),
+			},
+			"creationTimestamp": timestamp,
+			"uid":               types.UID(name),
+			"status": NodeStatus{
+				Phase: coreV1.NodeRunning,
+				NodeInfo: coreV1.NodeSystemInfo{
+					MachineID:               "machineID",
+					SystemUUID:              "",
+					BootID:                  "",
+					KernelVersion:           "5.10.23",
+					OSImage:                 "",
+					ContainerRuntimeVersion: "",
+					KubeletVersion:          "",
+					KubeProxyVersion:        "",
+					OperatingSystem:         "",
+					Architecture:            "",
+				},
+				KubeletEndpoint: coreV1.DaemonEndpoint{
+					Port: 33,
+				},
+			},
+		},
+	}
+}
+
 func secretComponent(namespace string, name string, timestamp metav1.Time) *topology.Component {
 	return &topology.Component{
 		ExternalID: fmt.Sprintf("urn:kubernetes:/test-cluster-name:%s:secret/%s", namespace, name),
@@ -268,6 +349,7 @@ func executeRelationCorrelation(
 	pods []coreV1.Pod,
 	configMaps []coreV1.ConfigMap,
 	secrets []coreV1.Secret,
+	nodes []coreV1.Node,
 ) ([]*topology.Component, []*topology.Relation) {
 
 	componentChannel := make(chan *topology.Component)
@@ -276,14 +358,16 @@ func executeRelationCorrelation(
 	defer close(relationChannel)
 
 	clusterAPIClient := MockRelationCorrelatorAPIClient{
-		pods: pods, configMaps: configMaps, secrets: secrets,
+		pods: pods, configMaps: configMaps, secrets: secrets, nodes: nodes,
 	}
 
 	podCorrChannel := make(chan *PodEndpointCorrelation)
 	containerCorrChannel := make(chan *ContainerCorrelation)
+	nodeIdentifierCorrChan := make(chan *NodeIdentifierCorrelation)
 	volumeCorrChannel := make(chan *VolumeCorrelation)
 	collectorsDoneChan := make(chan bool)
-	correlatorsDoneChannel := make(chan bool)
+	correlatorsDoneChan := make(chan bool)
+	relationCorrelationDoneChan := make(chan bool)
 
 	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, relationChannel, false)
 	podCollector := NewPodCollector(
@@ -293,8 +377,16 @@ func executeRelationCorrelation(
 	)
 	configMapCollector := NewConfigMapCollector(commonClusterCollector, TestMaxDataSize)
 	secretCollector := NewSecretCollector(commonClusterCollector)
+	nodeCollector := NewNodeCollector(nodeIdentifierCorrChan, commonClusterCollector)
+
+	containerCorrelator := NewContainerCorrelator(nodeIdentifierCorrChan, containerCorrChannel, NewClusterTopologyCorrelator(commonClusterCollector))
 
 	collectorsFinished := false
+
+	go func() {
+		containerCorrelator.CorrelateFunction()
+		correlatorsDoneChan <- true
+	}()
 
 	go func() {
 		var err error
@@ -304,6 +396,8 @@ func executeRelationCorrelation(
 		assert.NoError(t, err)
 		err = secretCollector.CollectorFunction()
 		assert.NoError(t, err)
+		err = nodeCollector.CollectorFunction()
+		assert.NoError(t, err)
 
 		collectorsFinished = true
 		collectorsDoneChan <- true
@@ -311,8 +405,9 @@ func executeRelationCorrelation(
 
 	go func() {
 		<-collectorsDoneChan
+		<-correlatorsDoneChan
 		commonClusterCollector.CorrelateRelations()
-		correlatorsDoneChannel <- true
+		relationCorrelationDoneChan <- true
 	}()
 
 	components := make([]*topology.Component, 0)
@@ -325,7 +420,7 @@ L:
 			components = append(components, c)
 		case r := <-relationChannel:
 			relations = append(relations, r)
-		case <-correlatorsDoneChannel:
+		case <-relationCorrelationDoneChan:
 			if collectorsFinished {
 				break L
 			}
@@ -339,6 +434,7 @@ type MockRelationCorrelatorAPIClient struct {
 	pods       []coreV1.Pod
 	configMaps []coreV1.ConfigMap
 	secrets    []coreV1.Secret
+	nodes      []coreV1.Node
 	apiserver.APICollectorClient
 }
 
@@ -352,4 +448,8 @@ func (m MockRelationCorrelatorAPIClient) GetConfigMaps() ([]coreV1.ConfigMap, er
 
 func (m MockRelationCorrelatorAPIClient) GetSecrets() ([]coreV1.Secret, error) {
 	return m.secrets, nil
+}
+
+func (m MockRelationCorrelatorAPIClient) GetNodes() ([]coreV1.Node, error) {
+	return m.nodes, nil
 }
