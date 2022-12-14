@@ -5,6 +5,10 @@
 **Bugfix**
 - Fixed NPE when handling certain containers from containerd
 
+**Improvements**
+- Kubernetes topology check doesn't send relations with non-existent component [STAC-13859](https://stackstate.atlassian.net/browse/STAC-13859)
+- Change BackOff event from Activities to Alert [STAC-18603](https://stackstate.atlassian.net/browse/STAC-18603)
+
 ## 2.19.1 (2022-11-23)
 
 **Improvements**
