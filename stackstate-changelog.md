@@ -2,6 +2,9 @@
 
 ## Next
 
+**Improvements**
+- Automatically use [IMDSv2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html) to read EC2 instance metadata
+
 **Bugfix**
 - Fixed NPE when handling certain containers from containerd
 
