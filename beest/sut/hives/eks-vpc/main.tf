@@ -87,30 +87,6 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
-// create nat once internet gateway created
-resource "aws_nat_gateway" "nat_gateway" {
-  # TODO to make it public it needs an EIP which are limited
-  connectivity_type = "private"
-  subnet_id         = aws_subnet.eks_public.id
-  depends_on        = [aws_internet_gateway.igw]
-
-  tags = {
-    Environment = var.environment
-    Name        = "${var.environment}-nat-gw-1"
-  }
-}
-
-resource "aws_nat_gateway" "nat_gateway_2" {
-  # TODO to make it public it needs an EIP which are limited
-  connectivity_type = "private"
-  subnet_id         = aws_subnet.eks_public_2.id
-  depends_on        = [aws_internet_gateway.igw]
-
-  tags = {
-    Environment = var.environment
-    Name        = "${var.environment}-nat-gw-2"
-  }
-}
 
 //Create private route table and the route to the internet
 //This will allow all traffics from the private subnets to the internet through the NAT Gateway (Network Address Translation)
@@ -120,8 +96,6 @@ resource "aws_route_table" "private_route_table" {
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw.id
-    # TODO private nodes should use NAT gateway, but to make NAT gateway speak to the internet you need EIP which are limited
-    #nat_gateway_id = aws_nat_gateway.nat_gateway.id
   }
 
   tags = {
@@ -136,8 +110,6 @@ resource "aws_route_table" "private_route_table_2" {
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw.id
-    # TODO private nodes should use NAT gateway, but to make NAT gateway speak to the internet you need EIP which are limited
-    #nat_gateway_id = aws_nat_gateway.nat_gateway.id
   }
 
   tags = {
