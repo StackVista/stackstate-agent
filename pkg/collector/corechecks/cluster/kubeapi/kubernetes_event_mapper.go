@@ -39,12 +39,12 @@ var ValidCategories = []EventCategory{Alerts, Changes, Activities, Others}
 // If an event is 'event.Type = warning' then we map it automatically to an 'Alert'
 var DefaultEventCategoriesMap = map[string]EventCategory{
 	// Container events
+	"BackOff":             Alerts,
 	"Created":             Changes,
-	"Started":             Activities,
+	"ExceededGracePeriod": Activities,
 	"Killing":             Activities,
 	"Preempting":          Activities,
-	"BackOff":             Activities,
-	"ExceededGracePeriod": Activities,
+	"Started":             Activities,
 
 	// Image events
 	"Pulling": Activities,
