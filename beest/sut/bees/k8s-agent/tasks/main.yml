@@ -2,6 +2,14 @@
 - name: StackState Agent prepare tasks
   tags: prepare
   block:
+    - name: Setup downscaler time limit
+      shell: "date +%Y-%m-%dT%H:%M:%S%:z -d \"+3 hours\""
+      register: downscaler_time_limit
+
+    - name: Downscaler time limit is set to
+      debug:
+        msg: "{{ downscaler_time_limit.stdout }}"
+
     - name: Create namespaces
       kubernetes.core.k8s:
         context: "{{ kubecontext }}"
@@ -11,7 +19,7 @@
           metadata:
             name: "{{ item }}"
             annotations:
-              "downscaler/exclude": "true"
+              "downscaler/exclude-until": "{{ downscaler_time_limit.stdout }}"
         state: present
       with_items:
         - "{{ monitoring_namespace }}"
