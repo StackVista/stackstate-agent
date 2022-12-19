@@ -3,7 +3,7 @@
   tags: prepare
   block:
     - name: List installed StackPacks
-      command: sts-cli stackpack list -i
+      command: sts stackpack list -i
       register: stackpack_list_raw
 
     - name: set fact
@@ -11,23 +11,23 @@
         stackpacklist: "{{ stackpack_list_raw.stdout }}"
 
     - name: Install stackstate-agent-v2 StackPack
-      command: sts-cli stackpack install stackstate-agent-v2
+      command: sts stackpack install stackstate-agent-v2
       when: stackpacklist.find('stackstate-agent-v2') == -1
 
     - name: Install kubernetes StackPack
-      command: sts-cli stackpack install kubernetes -p kubernetes_cluster_name "{{ k8s_integration.cluster_name }}"
+      command: sts stackpack install kubernetes -p kubernetes_cluster_name "{{ k8s_integration.cluster_name }}"
       when:
         - k8s_integration is defined
         - stackpacklist.find('kubernetes') == -1
 
     - name: Install Splunk StackPack
-      command: sts-cli stackpack install splunk-topology -p splunk_instance_name "{{ yard_id }}" -p sts_instance_url "{{ splunk_integration.url }}"
+      command: sts stackpack install splunk-topology -p splunk_instance_name "{{ yard_id }}" -p sts_instance_url "{{ splunk_integration.url }}"
       when:
         - splunk_integration is defined
         - stackpacklist.find('splunk-topology') == -1
 
     - name: Install AWS-V2 StackPack
-      command: sts-cli stackpack install aws-v2 -p aws_external_id "{{ yard_id }}" -p aws_role_arn "{{ aws_integration.integration_iam_role }}" -p aws_access_key_id "{{ aws_integration.integration_access_key }}" -p aws_secret_access_key "{{ aws_integration.integration_secret_key }}"
+      command: sts stackpack install aws-v2 -p aws_external_id "{{ yard_id }}" -p aws_role_arn "{{ aws_integration.integration_iam_role }}" -p aws_access_key_id "{{ aws_integration.integration_access_key }}" -p aws_secret_access_key "{{ aws_integration.integration_secret_key }}"
       when:
         - aws_integration is defined
         - stackpacklist.find('aws-v2') == -1

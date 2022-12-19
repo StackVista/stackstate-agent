@@ -140,7 +140,7 @@ Topology.query('__QUERY__')
         log.info(f"Querying StackState Topic API: {topic}")
 
         def query():
-            executed = self.host.run(f"sts-cli topic show {topic} -l {limit}")
+            executed = self.host.run(f"sts topic show {topic} -l {limit}")
             log.info(f"Queried {topic}: {executed.exit_status}")
             return executed.stdout
 
