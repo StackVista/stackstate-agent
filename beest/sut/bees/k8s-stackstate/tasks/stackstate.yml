@@ -53,19 +53,27 @@
           stackstate_version: "{{ stackstate_helm_search_yaml[0].version }}"
           stackstate_helm_chart_repo: stackstate/stackstate
 
+    - name: Setup downscaler time limit
+      shell: "date +%Y-%m-%dT%H:%M:%S%:z -d \"+3 hours\""
+      register: downscaler_time_limit
+
+    - name: Downscaler time limit is set to
+      debug:
+        msg: "{{ downscaler_time_limit }}"
+
     - name: Create namespace
-        kubernetes.core.k8s:
-          context: "{{ kubecontext }}"
-          definition:
-            apiVersion: v1
-            kind: Namespace
-            metadata:
-              name: "{{ item }}"
-              annotations:
-                "downscaler/exclude": "true"
-          state: present
-        with_items:
-          - "{{ namespace }}"
+      kubernetes.core.k8s:
+        context: "{{ kubecontext }}"
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ item }}"
+            annotations:
+              "downscaler/exclude-until": "{{ downscaler_time_limit }}"
+        state: present
+      with_items:
+        - "{{ namespace }}"
 
     - name: Deploy stackstate chart '{{ stackstate_version }}' from '{{ stackstate_helm_chart_repo }}'
       kubernetes.core.helm:
