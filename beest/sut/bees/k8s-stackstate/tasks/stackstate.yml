@@ -53,6 +53,19 @@
           stackstate_version: "{{ stackstate_helm_search_yaml[0].version }}"
           stackstate_helm_chart_repo: stackstate/stackstate
 
+    - name: Create namespace
+        kubernetes.core.k8s:
+          context: "{{ kubecontext }}"
+          definition:
+            apiVersion: v1
+            kind: Namespace
+            metadata:
+              name: "{{ item }}"
+              annotations:
+                "downscaler/exclude": "true"
+          state: present
+        with_items:
+          - "{{ namespace }}"
 
     - name: Deploy stackstate chart '{{ stackstate_version }}' from '{{ stackstate_helm_chart_repo }}'
       kubernetes.core.helm:
@@ -61,7 +74,7 @@
         chart_version: "{{ stackstate_version }}"
         release_name: stackstate
         release_namespace: "{{ namespace }}"
-        create_namespace: true
+        create_namespace: false
         update_repo_cache: true
         wait: yes
         wait_timeout: 20m

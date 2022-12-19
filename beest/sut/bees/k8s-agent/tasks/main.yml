@@ -5,9 +5,13 @@
     - name: Create namespaces
       kubernetes.core.k8s:
         context: "{{ kubecontext }}"
-        api_version: v1
-        kind: Namespace
-        name: "{{ item }}"
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ item }}"
+            annotations:
+              "downscaler/exclude": "true"
         state: present
       with_items:
         - "{{ monitoring_namespace }}"
@@ -102,7 +106,7 @@
         chart_version: "{{ agent_version }}"
         release_name: "{{ agent_release_name }}"
         release_namespace: "{{ monitoring_namespace }}"
-        create_namespace: true
+        create_namespace: false
         update_repo_cache: true
         wait: yes
         wait_timeout: 15m
