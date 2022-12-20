@@ -3,7 +3,7 @@
   tags: prepare
   block:
     - name: Setup downscaler time limit
-      shell: "date +%Y-%m-%dT%H:%M:%S%:z -d \"+3 hours\""
+      shell: 'date +"%Y-%m-%dT%H:%M:%SZ" -d "+3 hours"'
       register: downscaler_time_limit
 
     - name: Downscaler time limit is set to
