@@ -105,7 +105,7 @@ resource "aws_security_group" "splunk_group" {
 }
 
 resource "aws_instance" "splunk" {
-  ami                         = "ami-09153889bcbb64887" //Our Packer image based on Ubuntu 18.04 (EBS-Backed x86_64)
+  ami                         = "ami-0e24b531109ae5895" //Our Packer image based on Ubuntu 18.04 (EBS-Backed x86_64)
   instance_type               = "t3.large"
   subnet_id                   = var.subnet_id
   associate_public_ip_address = true
