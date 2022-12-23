@@ -48,7 +48,7 @@ resource "aws_subnet" "eks_public_2" {
   )
 }
 
-// private subnet
+# The "private" subnets below aren't actually private.
 resource "aws_subnet" "eks_private" {
   vpc_id = aws_vpc.cluster.id
 
@@ -59,6 +59,7 @@ resource "aws_subnet" "eks_private" {
     var.common_tags,
     {
       "Name" = "${var.environment}-eks-private"
+      "Description" = "This is not a private subnet"
     },
   )
 }
@@ -73,6 +74,7 @@ resource "aws_subnet" "eks_private_2" {
     var.common_tags,
     {
       "Name" = "${var.environment}-eks-private-2"
+      "Description" = "This is not a private subnet"
     },
   )
 }
@@ -87,46 +89,20 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
-// create nat once internet gateway created
-resource "aws_nat_gateway" "nat_gateway" {
-  # TODO to make it public it needs an EIP which are limited
-  connectivity_type = "private"
-  subnet_id         = aws_subnet.eks_public.id
-  depends_on        = [aws_internet_gateway.igw]
 
-  tags = {
-    Environment = var.environment
-    Name        = "${var.environment}-nat-gw-1"
-  }
-}
-
-resource "aws_nat_gateway" "nat_gateway_2" {
-  # TODO to make it public it needs an EIP which are limited
-  connectivity_type = "private"
-  subnet_id         = aws_subnet.eks_public_2.id
-  depends_on        = [aws_internet_gateway.igw]
-
-  tags = {
-    Environment = var.environment
-    Name        = "${var.environment}-nat-gw-2"
-  }
-}
-
-//Create private route table and the route to the internet
-//This will allow all traffics from the private subnets to the internet through the NAT Gateway (Network Address Translation)
+# The "private" subnets below aren't actually private. 
 resource "aws_route_table" "private_route_table" {
   vpc_id = aws_vpc.cluster.id
 
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw.id
-    # TODO private nodes should use NAT gateway, but to make NAT gateway speak to the internet you need EIP which are limited
-    #nat_gateway_id = aws_nat_gateway.nat_gateway.id
   }
 
   tags = {
     Environment = var.environment
     Name        = "${var.environment}-private-route-table"
+    Description = "This is not a private route table. The traffic goes via Internet Gateway"
   }
 }
 
@@ -136,13 +112,12 @@ resource "aws_route_table" "private_route_table_2" {
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw.id
-    # TODO private nodes should use NAT gateway, but to make NAT gateway speak to the internet you need EIP which are limited
-    #nat_gateway_id = aws_nat_gateway.nat_gateway.id
   }
 
   tags = {
     Environment = var.environment
     Name        = "${var.environment}-private-route-table-2"
+    Description = "This is not a private route table. The traffic goes via Internet Gateway"
   }
 }
 
