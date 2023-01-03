@@ -41,6 +41,7 @@ type Builder interface {
 	BuildVolumeExternalID(namespace, volumeName string) string
 	BuildExternalVolumeExternalID(volumeType string, volumeComponents ...string) string
 	BuildPersistentVolumeExternalID(persistentVolumeName string) string
+	BuildPersistentVolumeClaimExternalID(persistentVolumeName string) string
 	BuildComponentExternalID(component, namespace, name string) string
 	BuildEndpointExternalID(endpointID string) string
 	BuildNodeURNs(node v1.Node) []string
@@ -101,6 +102,8 @@ func (b *urnBuilder) BuildExternalID(kind, namespace, objName string) (string, e
 		urn = b.BuildVolumeExternalID(namespace, objName)
 	case "PersistentVolume":
 		urn = b.BuildPersistentVolumeExternalID(objName)
+	case "PersistentVolumeClaim":
+		urn = b.BuildPersistentVolumeClaimExternalID(objName)
 	case "Endpoint":
 		urn = b.BuildEndpointExternalID(objName)
 	}
@@ -199,6 +202,11 @@ func (b *urnBuilder) BuildVolumeExternalID(namespace, volumeName string) string 
 // BuildPersistentVolumeExternalID creates the urn external identifier for a cluster persistent volume
 func (b *urnBuilder) BuildPersistentVolumeExternalID(persistentVolumeName string) string {
 	return b.BuildComponentExternalID("persistent-volume", "", persistentVolumeName)
+}
+
+// BuildPersistentVolumeClaimExternalID creates the urn external identifier for a cluster persistent volume
+func (b *urnBuilder) BuildPersistentVolumeClaimExternalID(persistentVolumeClaimName string) string {
+	return b.BuildComponentExternalID("persistent-volume-claim", "", persistentVolumeClaimName)
 }
 
 // BuildComponentExternalID creates the urn external identifier for a specific component type

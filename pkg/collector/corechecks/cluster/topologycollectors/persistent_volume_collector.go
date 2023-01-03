@@ -35,7 +35,7 @@ func (*PersistentVolumeCollector) GetName() string {
 	return "Persistent Volume Collector"
 }
 
-// Collects and Published the Persistent Volume Components
+// CollectorFunction Collects and Published the Persistent Volume Components
 func (pvc *PersistentVolumeCollector) CollectorFunction() error {
 	persistentVolumes, err := pvc.GetAPIClient().GetPersistentVolumes()
 	if err != nil {
@@ -56,6 +56,19 @@ func (pvc *PersistentVolumeCollector) CollectorFunction() error {
 
 			pvc.SubmitRelation(pvc.persistentVolumeToSourceStackStateRelation(component.ExternalID, volumeSource.ExternalID))
 		}
+	}
+
+	persistentVolumesClaims, err := pvc.GetAPIClient().GetPersistentVolumeClaims()
+	if err != nil {
+		return err
+	}
+
+	for _, pvClaim := range persistentVolumesClaims {
+		persistentVolumeClaimComponent := pvc.persistentVolumeClaimToStackStateComponent(pvClaim)
+		pvc.SubmitComponent(persistentVolumeClaimComponent)
+
+		persistentVolumeComponentExternalID := pvc.buildPersistentVolumeExternalID(pvClaim.Spec.VolumeName)
+		pvc.SubmitRelation(pvc.persistentVolumeClaimToPersistentVolumeStackStateRelation(persistentVolumeClaimComponent.ExternalID, persistentVolumeComponentExternalID))
 	}
 
 	return nil
@@ -115,6 +128,42 @@ func (pvc *PersistentVolumeCollector) persistentVolumeToStackStateComponent(pers
 	return component
 }
 
+// Creates a Persistent Volume Claim StackState component from a Kubernetes / OpenShift Cluster
+func (pvc *PersistentVolumeCollector) persistentVolumeClaimToStackStateComponent(persistentVolumeClaim v1.PersistentVolumeClaim) *topology.Component {
+	log.Tracef("Mapping PersistentClaimVolume to StackState component: %s", persistentVolumeClaim.String())
+
+	identifiers := make([]string, 0)
+
+	persistentVolumeClaimExternalID := pvc.buildPersistentVolumeClaimExternalID(persistentVolumeClaim.Name)
+
+	tags := pvc.initTags(persistentVolumeClaim.ObjectMeta)
+
+	component := &topology.Component{
+		ExternalID: persistentVolumeClaimExternalID,
+		Type:       topology.Type{Name: "persistent-volume-claim"},
+		Data: map[string]interface{}{
+			"name":        persistentVolumeClaim.Name,
+			"tags":        tags,
+			"identifiers": identifiers,
+		},
+	}
+
+	if pvc.IsSourcePropertiesFeatureEnabled() {
+		component.SourceProperties = makeSourceProperties(&persistentVolumeClaim)
+	} else {
+		component.Data.PutNonEmpty("kind", persistentVolumeClaim.Kind)
+		component.Data.PutNonEmpty("uid", persistentVolumeClaim.UID)
+		component.Data.PutNonEmpty("creationTimestamp", persistentVolumeClaim.CreationTimestamp)
+		component.Data.PutNonEmpty("generateName", persistentVolumeClaim.GenerateName)
+		component.Data.PutNonEmpty("storageClassName", persistentVolumeClaim.Spec.StorageClassName)
+		component.Data.PutNonEmpty("status", persistentVolumeClaim.Status.Phase)
+	}
+
+	log.Tracef("Created StackState persistent volume claim component %s: %v", persistentVolumeClaimExternalID, component.JSONString())
+
+	return component
+}
+
 func (pvc *PersistentVolumeCollector) createStackStateVolumeSourceComponent(pv v1.PersistentVolume, name, externalID string, identifiers []string, addTags map[string]string) (*topology.Component, error) {
 
 	tags := pvc.initTags(pv.ObjectMeta)
@@ -148,6 +197,16 @@ func (pvc *PersistentVolumeCollector) persistentVolumeToSourceStackStateRelation
 	relation := pvc.CreateRelation(persistentVolumeExternalID, persistentVolumeSourceExternalID, "exposes")
 
 	log.Tracef("Created StackState persistent volume -> persistent volume source relation %s->%s", relation.SourceID, relation.TargetID)
+
+	return relation
+}
+
+func (pvc *PersistentVolumeCollector) persistentVolumeClaimToPersistentVolumeStackStateRelation(persistentVolumeClaimExternalID, persistentVolumeExternalID string) *topology.Relation {
+	log.Tracef("Mapping kubernetes persistent volume claim to persistent volume: %s -> %s", persistentVolumeClaimExternalID, persistentVolumeExternalID)
+
+	relation := pvc.CreateRelation(persistentVolumeClaimExternalID, persistentVolumeExternalID, "exposes")
+
+	log.Tracef("Created StackState persistent volume claim -> persistent volume relation %s->%s", relation.SourceID, relation.TargetID)
 
 	return relation
 }
