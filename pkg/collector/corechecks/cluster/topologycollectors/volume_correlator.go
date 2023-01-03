@@ -62,6 +62,7 @@ func (VolumeCorrelator) GetName() string {
 
 // CorrelateFunction executes the Pod/Container to Volume correlation
 func (vc *VolumeCorrelator) CorrelateFunction() error {
+	// pvcLookup is map[pvc][pv]
 	var pvcLookup map[string]string
 	var err error
 
@@ -77,19 +78,21 @@ func (vc *VolumeCorrelator) CorrelateFunction() error {
 		volumeLookup := map[string]string{}
 
 		for _, volume := range volumeCorrelation.Volumes {
-			volumeExternalID, err := vc.mapVolumeAndRelationToStackState(pod, volume, pvcLookup)
+			// If downwardAPI -> pod.ExternalID is returned
+			podOrVolumeClaimExternalID, err := vc.mapVolumeAndRelationToStackState(pod, volume, pvcLookup)
 			if err != nil {
 				return err
 			}
 
-			if volumeExternalID != "" {
-				volumeLookup[volume.Name] = volumeExternalID
+			if podOrVolumeClaimExternalID != "" {
+				// If downwardAPI, volumeLookup[volumeName][pod.ExternalID]
+				volumeLookup[volume.Name] = podOrVolumeClaimExternalID
 			}
 		}
 
 		for _, container := range volumeCorrelation.Containers {
 			for _, mount := range container.VolumeMounts {
-				volumeExternalID, ok := volumeLookup[mount.Name]
+				podOrVolumeClaimExternalID, ok := volumeLookup[mount.Name]
 				if !ok {
 					if vc.discoverClaims {
 						log.Warnf("Container '%s' of Pod '%s' mounts an unknown volume '%s'", container.Name, pod.ExternalID, mount.Name)
@@ -100,7 +103,7 @@ func (vc *VolumeCorrelator) CorrelateFunction() error {
 
 				containerExternalID := vc.buildContainerExternalID(pod.Namespace, pod.Name, container.Name)
 
-				vc.SubmitRelation(vc.containerToVolumeStackStateRelation(containerExternalID, volumeExternalID, mount))
+				vc.SubmitRelation(vc.containerToVolumeClaimStackStateRelation(containerExternalID, podOrVolumeClaimExternalID, mount))
 			}
 		}
 	}
@@ -125,12 +128,13 @@ func (vc *VolumeCorrelator) buildPersistentVolumeClaimLookup() (map[string]strin
 
 // mapVolumeAndRelationToStackState sends (potential) Volume component to StackState and relates it to the Pod, returning the ExternalID of the Volume component
 func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, volume v1.Volume, pvcMapping map[string]string) (string, error) {
-	var volumeExternalID string
+	var volumeClaimExternalID string
 
 	if volume.DownwardAPI != nil {
 		return pod.ExternalID, nil // The downward API mounts the pod
 	} else if volume.PersistentVolumeClaim != nil {
-		claimedPVExtID, ok := pvcMapping[volume.PersistentVolumeClaim.ClaimName]
+		// claimedPVExtID is actually VOLUME NAME, not CLAIM EXT ID
+		_, ok := pvcMapping[volume.PersistentVolumeClaim.ClaimName]
 
 		if !ok {
 			if vc.discoverClaims {
@@ -142,7 +146,7 @@ func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, 
 			return "", nil
 		}
 
-		volumeExternalID = claimedPVExtID
+		volumeClaimExternalID = volume.PersistentVolumeClaim.ClaimName
 	} else {
 		var toCreate *VolumeComponentsToCreate
 		var err error
@@ -162,13 +166,13 @@ func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, 
 		// If not specified, the Volume is implied to be an EmptyDir.
 		// This implied behavior is deprecated and will be removed in a future version.
 		if toCreate == nil {
-			volumeExternalID = vc.GetURNBuilder().BuildVolumeExternalID("empty-dir", fmt.Sprintf("%s/%s/%s", pod.Namespace, pod.Name, volume.Name))
+			volumeClaimExternalID = vc.GetURNBuilder().BuildVolumeExternalID("empty-dir", fmt.Sprintf("%s/%s/%s", pod.Namespace, pod.Name, volume.Name))
 
 			tags := map[string]string{
 				"kind": "empty-dir",
 			}
 
-			toCreate, err = vc.CreateStackStateVolumeSourceComponent(pod, volume, volumeExternalID, nil, tags)
+			toCreate, err = vc.CreateStackStateVolumeSourceComponent(pod, volume, volumeClaimExternalID, nil, tags)
 			if err != nil {
 				return "", err
 			}
@@ -182,11 +186,11 @@ func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, 
 			vc.SubmitRelation(r)
 		}
 
-		volumeExternalID = toCreate.VolumeExternalID
+		volumeClaimExternalID = volume.PersistentVolumeClaim.ClaimName
 	}
 
-	vc.SubmitRelation(vc.podToVolumeStackStateRelation(pod.ExternalID, volumeExternalID))
-	return volumeExternalID, nil
+	vc.SubmitRelation(vc.podToVolumeStackStateRelation(pod.ExternalID, volumeClaimExternalID))
+	return volumeClaimExternalID, nil
 }
 
 // Create a StackState relation from a Kubernetes / OpenShift Pod to a Volume
@@ -215,6 +219,25 @@ func (vc *VolumeCorrelator) containerToVolumeStackStateRelation(containerExterna
 	relation := vc.CreateRelationData(containerExternalID, volumeExternalID, "mounts", data)
 
 	log.Tracef("Created StackState container -> volume relation %s->%s", relation.SourceID, relation.TargetID)
+
+	return relation
+}
+
+// Create a StackState relation from a Kubernetes / OpenShift Container to a Volume
+func (vc *VolumeCorrelator) containerToVolumeClaimStackStateRelation(containerExternalID, volumeClaimExternalID string, mount v1.VolumeMount) *topology.Relation {
+	log.Tracef("Mapping kubernetes container to volume claim relation: %s -> %s", containerExternalID, volumeClaimExternalID)
+
+	data := map[string]interface{}{
+		"name":             mount.Name,
+		"readOnly":         mount.ReadOnly,
+		"mountPath":        mount.MountPath,
+		"subPath":          mount.SubPath,
+		"mountPropagation": mount.MountPropagation,
+	}
+
+	relation := vc.CreateRelationData(containerExternalID, volumeClaimExternalID, "mounts", data)
+
+	log.Tracef("Created StackState container -> volume claim relation %s->%s", relation.SourceID, relation.TargetID)
 
 	return relation
 }
