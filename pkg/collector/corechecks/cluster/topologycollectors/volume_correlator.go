@@ -128,11 +128,7 @@ func (vc *VolumeCorrelator) buildPersistentVolumeClaimLookup() (map[string]strin
 
 // mapVolumeAndRelationToStackState sends (potential) Volume component to StackState and relates it to the Pod, returning the ExternalID of the Volume component
 func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, volume v1.Volume, pvcMapping map[string]string) (string, error) {
-	fmt.Println("========== mapVolumeAndRelationToStackState =========")
-
 	var volumeClaimExternalID string
-
-	fmt.Println(pod.ExternalID)
 
 	if volume.DownwardAPI != nil {
 		return pod.ExternalID, nil // The downward API mounts the pod
@@ -145,11 +141,9 @@ func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, 
 			} else {
 				log.Warnf("Can't resolve PersistentVolumeClaim '%s' reference in Pod '%s' to a PersistentVolume, probably due to disabled collection of PersistentVolumeClaims", volume.PersistentVolumeClaim.ClaimName, pod.ExternalID)
 			}
-			// return "", nil
-		}
 
-		fmt.Println(volume.Name)
-		fmt.Println(volume.PersistentVolumeClaim.ClaimName)
+			return "", nil
+		}
 
 		volumeClaimExternalID = vc.GetURNBuilder().BuildPersistentVolumeClaimExternalID(volume.PersistentVolumeClaim.ClaimName)
 	} else {
@@ -195,7 +189,6 @@ func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, 
 	}
 
 	vc.SubmitRelation(vc.podToVolumeStackStateRelation(pod.ExternalID, volumeClaimExternalID))
-
 	return volumeClaimExternalID, nil
 }
 
