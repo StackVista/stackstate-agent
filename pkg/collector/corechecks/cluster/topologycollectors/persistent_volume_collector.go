@@ -53,7 +53,6 @@ func (pvc *PersistentVolumeCollector) CollectorFunction() error {
 
 		if volumeSource != nil {
 			pvc.SubmitComponent(volumeSource)
-
 			pvc.SubmitRelation(pvc.persistentVolumeToSourceStackStateRelation(component.ExternalID, volumeSource.ExternalID))
 		}
 	}
@@ -134,7 +133,7 @@ func (pvc *PersistentVolumeCollector) persistentVolumeClaimToStackStateComponent
 
 	identifiers := make([]string, 0)
 
-	persistentVolumeClaimExternalID := pvc.buildPersistentVolumeClaimExternalID(persistentVolumeClaim.Name)
+	persistentVolumeClaimExternalID := pvc.buildPersistentVolumeClaimExternalID(persistentVolumeClaim.Spec.VolumeName)
 
 	tags := pvc.initTags(persistentVolumeClaim.ObjectMeta)
 
