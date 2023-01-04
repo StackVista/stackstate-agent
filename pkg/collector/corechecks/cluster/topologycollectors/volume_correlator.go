@@ -128,14 +128,17 @@ func (vc *VolumeCorrelator) buildPersistentVolumeClaimLookup() (map[string]strin
 
 // mapVolumeAndRelationToStackState sends (potential) Volume component to StackState and relates it to the Pod, returning the ExternalID of the Volume component
 func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, volume v1.Volume, pvcMapping map[string]string) (string, error) {
+	fmt.Println("Volume Passed To Relation")
+	fmt.Println(volume)
+
 	fmt.Println("Entry mapVolumeAndRelationToStackState")
 	var volumeClaimExternalID string
 
 	if volume.DownwardAPI != nil {
-		fmt.Println("volume.DownwardAPI Found")
+		fmt.Println("**** volume.DownwardAPI Found ****")
 		return pod.ExternalID, nil // The downward API mounts the pod
 	} else if volume.PersistentVolumeClaim != nil {
-		fmt.Println("volume.PersistentVolumeClaim Found")
+		fmt.Println("**** volume.PersistentVolumeClaim Found ****")
 		_, ok := pvcMapping[volume.PersistentVolumeClaim.ClaimName]
 
 		if !ok {
@@ -150,14 +153,18 @@ func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, 
 			return "", nil
 		}
 
-		fmt.Println("pvcMapping ok")
+		fmt.Println("=======> Volume =======>")
 		fmt.Println(volume)
+
+		fmt.Println("=======> Volume PersistentVolumeClaim =======>")
 		fmt.Println(volume.PersistentVolumeClaim)
+
+		fmt.Println("=======> Volume PersistentVolumeClaim ClaimName =======>")
 		fmt.Println(volume.PersistentVolumeClaim.ClaimName)
 
 		volumeClaimExternalID = volume.PersistentVolumeClaim.ClaimName
 	} else {
-		fmt.Println("Else")
+		fmt.Println("**** Else ****")
 		var toCreate *VolumeComponentsToCreate
 		var err error
 		for _, mapper := range allVolumeSourceMappers {
@@ -197,12 +204,7 @@ func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, 
 			vc.SubmitRelation(r)
 		}
 
-		fmt.Println("Setting new volumeClaimExternalID")
-		fmt.Println(volume)
-		fmt.Println(volume.PersistentVolumeClaim)
-		fmt.Println(volume.PersistentVolumeClaim.ClaimName)
-
-		volumeClaimExternalID = volume.PersistentVolumeClaim.ClaimName
+		volumeClaimExternalID = toCreate.VolumeExternalID
 	}
 
 	vc.SubmitRelation(vc.podToVolumeStackStateRelation(pod.ExternalID, volumeClaimExternalID))
