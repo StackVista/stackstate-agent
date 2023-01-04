@@ -151,7 +151,7 @@ func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, 
 		fmt.Println(volume.Name)
 		fmt.Println(volume.PersistentVolumeClaim.ClaimName)
 
-		volumeClaimExternalID = volume.PersistentVolumeClaim.ClaimName
+		volumeClaimExternalID = vc.GetURNBuilder().BuildPersistentVolumeClaimExternalID(volume.PersistentVolumeClaim.ClaimName)
 	} else {
 		var toCreate *VolumeComponentsToCreate
 		var err error
