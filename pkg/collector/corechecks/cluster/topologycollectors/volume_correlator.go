@@ -128,43 +128,31 @@ func (vc *VolumeCorrelator) buildPersistentVolumeClaimLookup() (map[string]strin
 
 // mapVolumeAndRelationToStackState sends (potential) Volume component to StackState and relates it to the Pod, returning the ExternalID of the Volume component
 func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, volume v1.Volume, pvcMapping map[string]string) (string, error) {
-	fmt.Println("Volume Passed To Relation")
-	fmt.Println(volume)
+	fmt.Println("========== mapVolumeAndRelationToStackState =========")
 
-	fmt.Println("Entry mapVolumeAndRelationToStackState")
 	var volumeClaimExternalID string
 
+	fmt.Println(pod.ExternalID)
+
 	if volume.DownwardAPI != nil {
-		fmt.Println("**** volume.DownwardAPI Found ****")
 		return pod.ExternalID, nil // The downward API mounts the pod
 	} else if volume.PersistentVolumeClaim != nil {
-		fmt.Println("**** volume.PersistentVolumeClaim Found ****")
 		_, ok := pvcMapping[volume.PersistentVolumeClaim.ClaimName]
 
 		if !ok {
-			fmt.Println("pvcMapping not ok")
-
 			if vc.discoverClaims {
 				log.Errorf("Unknown PersistentVolumeClaim '%s' referenced from Pod '%s'", volume.PersistentVolumeClaim.ClaimName, pod.ExternalID)
 			} else {
 				log.Warnf("Can't resolve PersistentVolumeClaim '%s' reference in Pod '%s' to a PersistentVolume, probably due to disabled collection of PersistentVolumeClaims", volume.PersistentVolumeClaim.ClaimName, pod.ExternalID)
 			}
-
-			return "", nil
+			// return "", nil
 		}
 
-		fmt.Println("=======> Volume =======>")
-		fmt.Println(volume)
-
-		fmt.Println("=======> Volume PersistentVolumeClaim =======>")
-		fmt.Println(volume.PersistentVolumeClaim)
-
-		fmt.Println("=======> Volume PersistentVolumeClaim ClaimName =======>")
+		fmt.Println(volume.Name)
 		fmt.Println(volume.PersistentVolumeClaim.ClaimName)
 
 		volumeClaimExternalID = volume.PersistentVolumeClaim.ClaimName
 	} else {
-		fmt.Println("**** Else ****")
 		var toCreate *VolumeComponentsToCreate
 		var err error
 		for _, mapper := range allVolumeSourceMappers {
@@ -178,7 +166,6 @@ func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, 
 			}
 		}
 
-		fmt.Println("Testing toCreate")
 		// From v1.Volume:
 		// VolumeSource represents the location and type of the mounted volume.
 		// If not specified, the Volume is implied to be an EmptyDir.
@@ -209,7 +196,6 @@ func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, 
 
 	vc.SubmitRelation(vc.podToVolumeStackStateRelation(pod.ExternalID, volumeClaimExternalID))
 
-	fmt.Println("Exit mapVolumeAndRelationToStackState")
 	return volumeClaimExternalID, nil
 }
 

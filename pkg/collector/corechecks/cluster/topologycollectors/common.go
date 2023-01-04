@@ -183,6 +183,9 @@ func (c *clusterTopologyCommon) CreateRelationData(sourceExternalID, targetExter
 
 // CreateRelation creates a StackState relation called typeName for the given sourceExternalID and targetExternalID
 func (c *clusterTopologyCommon) CreateRelation(sourceExternalID, targetExternalID, typeName string) *topology.Relation {
+	fmt.Println("==== CreateRelation ====")
+	fmt.Println(fmt.Sprintf("%s->%s", sourceExternalID, targetExternalID))
+
 	return &topology.Relation{
 		ExternalID: fmt.Sprintf("%s->%s", sourceExternalID, targetExternalID),
 		SourceID:   sourceExternalID,
