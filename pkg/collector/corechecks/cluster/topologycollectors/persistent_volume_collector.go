@@ -133,7 +133,7 @@ func (pvc *PersistentVolumeCollector) persistentVolumeClaimToStackStateComponent
 
 	identifiers := make([]string, 0)
 
-	persistentVolumeClaimExternalID := pvc.buildPersistentVolumeClaimExternalID(persistentVolumeClaim.Spec.VolumeName)
+	persistentVolumeClaimExternalID := pvc.buildPersistentVolumeClaimExternalID(persistentVolumeClaim.Name)
 
 	tags := pvc.initTags(persistentVolumeClaim.ObjectMeta)
 

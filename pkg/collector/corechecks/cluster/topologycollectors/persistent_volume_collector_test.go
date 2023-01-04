@@ -158,7 +158,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 						expected := chooseBySourcePropertiesFeature(
 							sourcePropertiesEnabled,
 							&topology.Component{
-								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/aws-elastic-block-store-volume",
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/aws-elastic-block-store-volume-claim",
 								Type: topology.Type{
 									Name: "persistent-volume-claim",
 								},
@@ -177,7 +177,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								},
 							},
 							&topology.Component{
-								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/aws-elastic-block-store-volume",
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/aws-elastic-block-store-volume-claim",
 								Type: topology.Type{
 									Name: "persistent-volume-claim",
 								},
@@ -215,10 +215,10 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 					func(t *testing.T) {
 						relation := <-relationChannel
 						expectedRelation := &topology.Relation{
-							ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/aws-elastic-block-store-volume->" +
+							ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/aws-elastic-block-store-volume-claim->" +
 								"urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume",
 							Type:     topology.Type{Name: "exposes"},
-							SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/aws-elastic-block-store-volume",
+							SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/aws-elastic-block-store-volume-claim",
 							TargetID: "urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume",
 							Data:     map[string]interface{}{},
 						}
@@ -323,7 +323,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 						expected := chooseBySourcePropertiesFeature(
 							sourcePropertiesEnabled,
 							&topology.Component{
-								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/gce-persistent-disk-volume",
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/gce-persistent-disk-volume-claim",
 								Type: topology.Type{
 									Name: "persistent-volume-claim",
 								},
@@ -342,7 +342,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								},
 							},
 							&topology.Component{
-								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/gce-persistent-disk-volume",
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/gce-persistent-disk-volume-claim",
 								Type: topology.Type{
 									Name: "persistent-volume-claim",
 								},
@@ -380,10 +380,10 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 					func(t *testing.T) {
 						relation := <-relationChannel
 						expectedRelation := &topology.Relation{
-							ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/gce-persistent-disk-volume->" +
+							ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/gce-persistent-disk-volume-claim->" +
 								"urn:kubernetes:/test-cluster-name:persistent-volume/gce-persistent-disk-volume",
 							Type:     topology.Type{Name: "exposes"},
-							SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/gce-persistent-disk-volume",
+							SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/gce-persistent-disk-volume-claim",
 							TargetID: "urn:kubernetes:/test-cluster-name:persistent-volume/gce-persistent-disk-volume",
 							Data:     map[string]interface{}{},
 						}
@@ -468,7 +468,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 						expected := chooseBySourcePropertiesFeature(
 							sourcePropertiesEnabled,
 							&topology.Component{
-								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/host-path-volume",
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/host-path-volume-claim",
 								Type: topology.Type{
 									Name: "persistent-volume-claim",
 								},
@@ -487,7 +487,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								},
 							},
 							&topology.Component{
-								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/host-path-volume",
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/host-path-volume-claim",
 								Type: topology.Type{
 									Name: "persistent-volume-claim",
 								},
@@ -525,10 +525,10 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 					func(t *testing.T) {
 						relation := <-relationChannel
 						expectedRelation := &topology.Relation{
-							ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/host-path-volume->" +
+							ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/host-path-volume-claim->" +
 								"urn:kubernetes:/test-cluster-name:persistent-volume/host-path-volume",
 							Type:     topology.Type{Name: "exposes"},
-							SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/host-path-volume",
+							SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/host-path-volume-claim",
 							TargetID: "urn:kubernetes:/test-cluster-name:persistent-volume/host-path-volume",
 							Data:     map[string]interface{}{},
 						}
@@ -657,7 +657,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 						expected := chooseBySourcePropertiesFeature(
 							sourcePropertiesEnabled,
 							&topology.Component{
-								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/trident-csi-storage-volume",
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/trident-csi-storage-volume-claim",
 								Type: topology.Type{
 									Name: "persistent-volume-claim",
 								},
@@ -676,7 +676,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								},
 							},
 							&topology.Component{
-								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/trident-csi-storage-volume",
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/trident-csi-storage-volume-claim",
 								Type: topology.Type{
 									Name: "persistent-volume-claim",
 								},
@@ -714,10 +714,10 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 					func(t *testing.T) {
 						relation := <-relationChannel
 						expectedRelation := &topology.Relation{
-							ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/trident-csi-storage-volume->" +
+							ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/trident-csi-storage-volume-claim->" +
 								"urn:kubernetes:/test-cluster-name:persistent-volume/trident-csi-storage-volume",
 							Type:     topology.Type{Name: "exposes"},
-							SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/trident-csi-storage-volume",
+							SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/trident-csi-storage-volume-claim",
 							TargetID: "urn:kubernetes:/test-cluster-name:persistent-volume/trident-csi-storage-volume",
 							Data:     map[string]interface{}{},
 						}
@@ -853,7 +853,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 						expected := chooseBySourcePropertiesFeature(
 							sourcePropertiesEnabled,
 							&topology.Component{
-								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/trident-csi-storage-volume",
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/trident-csi-storage-volume-claim",
 								Type: topology.Type{
 									Name: "persistent-volume-claim",
 								},
@@ -872,7 +872,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 								},
 							},
 							&topology.Component{
-								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/trident-csi-storage-volume",
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/trident-csi-storage-volume-claim",
 								Type: topology.Type{
 									Name: "persistent-volume-claim",
 								},
@@ -910,10 +910,10 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 					func(t *testing.T) {
 						relation := <-relationChannel
 						expectedRelation := &topology.Relation{
-							ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/trident-csi-storage-volume->" +
+							ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/trident-csi-storage-volume-claim->" +
 								"urn:kubernetes:/test-cluster-name:persistent-volume/trident-csi-storage-volume",
 							Type:     topology.Type{Name: "exposes"},
-							SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/trident-csi-storage-volume",
+							SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/trident-csi-storage-volume-claim",
 							TargetID: "urn:kubernetes:/test-cluster-name:persistent-volume/trident-csi-storage-volume",
 							Data:     map[string]interface{}{},
 						}
