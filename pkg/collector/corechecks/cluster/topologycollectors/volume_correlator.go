@@ -205,25 +205,6 @@ func (vc *VolumeCorrelator) podToVolumeStackStateRelation(podExternalID, volumeE
 }
 
 // Create a StackState relation from a Kubernetes / OpenShift Container to a Volume
-func (vc *VolumeCorrelator) containerToVolumeStackStateRelation(containerExternalID, volumeExternalID string, mount v1.VolumeMount) *topology.Relation {
-	log.Tracef("Mapping kubernetes container to volume relation: %s -> %s", containerExternalID, volumeExternalID)
-
-	data := map[string]interface{}{
-		"name":             mount.Name,
-		"readOnly":         mount.ReadOnly,
-		"mountPath":        mount.MountPath,
-		"subPath":          mount.SubPath,
-		"mountPropagation": mount.MountPropagation,
-	}
-
-	relation := vc.CreateRelationData(containerExternalID, volumeExternalID, "mounts", data)
-
-	log.Tracef("Created StackState container -> volume relation %s->%s", relation.SourceID, relation.TargetID)
-
-	return relation
-}
-
-// Create a StackState relation from a Kubernetes / OpenShift Container to a Volume
 func (vc *VolumeCorrelator) containerToVolumeClaimStackStateRelation(containerExternalID, volumeClaimExternalID string, mount v1.VolumeMount) *topology.Relation {
 	log.Tracef("Mapping kubernetes container to volume claim relation: %s -> %s", containerExternalID, volumeClaimExternalID)
 
