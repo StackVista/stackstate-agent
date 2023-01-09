@@ -59,11 +59,13 @@ func (dsc *DaemonSetCollector) daemonSetToStackStateComponent(daemonSet v1.Daemo
 	}
 
 	if dsc.IsSourcePropertiesFeatureEnabled() || dsc.IsExposeKubernetesStatusEnabled() {
-		component.SourceProperties = if dsc.IsExposeKubernetesStatusEnabled() {
-			makeSourcePropertiesFullDetails(&daemonSet)
+		var sourceProperties map[string]interface{}
+		if dsc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(&daemonSet)
 		} else {
-			makeSourceProperties(&daemonSet)
+			sourceProperties = makeSourceProperties(&daemonSet)
 		}
+		component.SourceProperties = sourceProperties
 	} else {
 		component.Data.PutNonEmpty("kind", daemonSet.Kind)
 		component.Data.PutNonEmpty("uid", daemonSet.UID)

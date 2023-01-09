@@ -20,7 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-var lastAppliedConfiguration = `{"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{"argocd.io/tracking-id":"tenant"},"labels":{"name":"test"},"name":"test"},"spec":{"finalizers":["kubernetes"]}}`
+var lastAppliedConfiguration_namespace = `{"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{"argocd.io/tracking-id":"tenant"},"labels":{"name":"test"},"name":"test"},"spec":{"finalizers":["kubernetes"]}}`
 
 func TestNamespaceCollector(t *testing.T) {
 
@@ -91,7 +91,7 @@ func TestNamespaceCollector(t *testing.T) {
 								"name":              "test-namespace-1",
 								"uid":               "test-namespace-1",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_namespace},
 							},
 							"spec": map[string]interface{}{},
 							"status": map[string]interface{}{
@@ -138,7 +138,7 @@ func TestNamespaceCollector(t *testing.T) {
 							"tags":            map[string]string{"cluster-name": "test-cluster-name"},
 							"identifiers":     []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
 							"resourceVersion": "123",
-							"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+							"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_namespace},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -188,7 +188,7 @@ func (m MockNamespaceAPICollectorClient) GetNamespaces() ([]coreV1.Namespace, er
 				GenerateName:      "",
 				ResourceVersion:   "123",
 				Annotations: map[string]string{
-					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration,
+					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_namespace,
 				},
 				ManagedFields: []v1.ManagedFieldsEntry{
 					{
@@ -200,7 +200,7 @@ func (m MockNamespaceAPICollectorClient) GetNamespaces() ([]coreV1.Namespace, er
 					},
 				},
 			},
-			Status: v1.JobStatus{
+			Status: coreV1.NamespaceStatus{
 				Phase: "Active",
 			},
 		}

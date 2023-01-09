@@ -96,10 +96,10 @@ resources:
 
 func TestRunClusterCollectors(t *testing.T) {
 	t.Run("with sourceProperties enabled", func(t *testing.T) {
-		testRunClusterCollectors(t, true)
+		testRunClusterCollectors(t, true, true) // TODO : Does this need true false ?
 	})
 	t.Run("with sourceProperties disabled", func(t *testing.T) {
-		testRunClusterCollectors(t, false)
+		testRunClusterCollectors(t, false, false) // TODO : Does this need false true ?
 	})
 }
 
@@ -159,11 +159,12 @@ resources:
 	expectedSimple := defaultConfig
 	expectedSimple.ClusterName = "mycluster"
 	expectedSimple.SourcePropertiesEnabled = false
+	expectedSimple.ExposeKubernetesStatusEnabled = false
 	expectedSimple.Resources = ResourcesConfig{}
 	testConfigParsed(t, allResourcesAreDisabledConfig, expectedSimple)
 }
 
-func testRunClusterCollectors(t *testing.T, sourceProperties bool) {
+func testRunClusterCollectors(t *testing.T, sourceProperties bool, exposeKubernetesStatus bool) {
 	// set the initial id values
 	componentID = 1
 	relationID = 1
@@ -181,7 +182,7 @@ func testRunClusterCollectors(t *testing.T, sourceProperties bool) {
 	waitGroupChannel := make(chan bool)
 	collectorsDoneChannel := make(chan bool)
 
-	clusterTopologyCommon := collectors.NewClusterTopologyCommon(instance, nil, sourceProperties, componentChannel, relationChannel, &version.Info{Major: "1", Minor: "21"})
+	clusterTopologyCommon := collectors.NewClusterTopologyCommon(instance, nil, sourceProperties, componentChannel, relationChannel, &version.Info{Major: "1", Minor: "21"}, exposeKubernetesStatus)
 	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
 
 	clusterCollectors := []collectors.ClusterTopologyCollector{

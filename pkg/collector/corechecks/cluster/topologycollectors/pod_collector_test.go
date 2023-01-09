@@ -137,7 +137,7 @@ func TestPodCollector(t *testing.T) {
 											"namespace":         "test-namespace",
 											"uid":               "test-pod-1",
 											"resourceVersion":   "123",
-										}
+										},
 										"spec": map[string]interface{}{
 											"nodeName":      "test-node",
 											"restartPolicy": "Always"},
@@ -1052,7 +1052,7 @@ func TestPodCollector(t *testing.T) {
 											"namespace":         "test-namespace",
 											"ownerReferences":   []interface{}{map[string]interface{}{"kind": "Job", "name": "test-job-8"}},
 											"uid":               "test-pod-8",
-											"resourceVersion":   "123",										
+											"resourceVersion":   "123",
 										},
 										"spec": map[string]interface{}{
 											"nodeName":      "test-node",
@@ -1072,7 +1072,7 @@ func TestPodCollector(t *testing.T) {
 						expectNamespaceRelation(t, relationChannel, "test-pod-8"),
 						func() {
 							// there should be no relations created for skipped pod
-							assert.Empty(t, relationChannel) 
+							assert.Empty(t, relationChannel)
 						},
 					},
 				},
@@ -1105,9 +1105,9 @@ func (m MockPodAPICollectorClient) GetPods() ([]coreV1.Pod, error) {
 				Labels: map[string]string{
 					"test": "label",
 				},
-				UID:          types.UID(fmt.Sprintf("test-pod-%d", i)),
-				GenerateName: "",
-				ResourceVersion:   "123",
+				UID:             types.UID(fmt.Sprintf("test-pod-%d", i)),
+				GenerateName:    "",
+				ResourceVersion: "123",
 				ManagedFields: []v1.ManagedFieldsEntry{
 					{
 						Manager:    "ignored",

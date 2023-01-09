@@ -75,12 +75,14 @@ func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topo
 		},
 	}
 
-	if cmc.IsSourcePropertiesFeatureEnabled() || cmc.IsExposeKubernetesStatusEnabled(){
-		component.SourceProperties = if cmc.IsExposeKubernetesStatusEnabled() {
-			makeSourcePropertiesFullDetails(&prunedSecret)
+	if cmc.IsSourcePropertiesFeatureEnabled() || cmc.IsExposeKubernetesStatusEnabled() {
+		var sourceProperties map[string]interface{}
+		if cmc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(&prunedSecret)
 		} else {
-			makeSourceProperties(&prunedSecret)
+			sourceProperties = makeSourceProperties(&prunedSecret)
 		}
+		component.SourceProperties = sourceProperties
 	} else {
 		component.Data.PutNonEmpty("creationTimestamp", secret.CreationTimestamp)
 		component.Data.PutNonEmpty("uid", secret.UID)

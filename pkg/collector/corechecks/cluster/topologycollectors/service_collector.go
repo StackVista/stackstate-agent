@@ -171,11 +171,13 @@ func (sc *ServiceCollector) serviceToStackStateComponent(service v1.Service) *to
 	}
 
 	if sc.IsSourcePropertiesFeatureEnabled() || sc.IsExposeKubernetesStatusEnabled() {
-		component.SourceProperties = if sc.IsExposeKubernetesStatusEnabled() {
-			makeSourcePropertiesFullDetails(&service)
+		var sourceProperties map[string]interface{}
+		if sc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(&service)
 		} else {
-			makeSourceProperties(&service)
+			sourceProperties = makeSourceProperties(&service)
 		}
+		component.SourceProperties = sourceProperties
 	} else {
 		component.Data.PutNonEmpty("creationTimestamp", service.CreationTimestamp)
 		component.Data.PutNonEmpty("uid", service.UID)

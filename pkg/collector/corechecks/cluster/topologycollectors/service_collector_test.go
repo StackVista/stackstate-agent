@@ -21,7 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-var lastAppliedConfiguration = `{"apiVersion":"v1","kind":"Service","metadata":{"annotations":{"argocd.io/tracking-id":"tenant"},"labels":{"app.kubernetes.io/component":"api","app.kubernetes.io/instance":"test","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"app","app.kubernetes.io/version":"1.0.0","helm.sh/chart":"1.0.0"},"name":"api","namespace":"tenant"},"spec":{"clusterIP":"None","ports":[{"name":"specs","port":8080,"protocol":"TCP","targetPort":"specs"}],"selector":{"app.kubernetes.io/component":"api","app.kubernetes.io/instance":"test"},"type":"ClusterIP"}}`
+var lastAppliedConfiguration_service = `{"apiVersion":"v1","kind":"Service","metadata":{"annotations":{"argocd.io/tracking-id":"tenant"},"labels":{"app.kubernetes.io/component":"api","app.kubernetes.io/instance":"test","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"app","app.kubernetes.io/version":"1.0.0","helm.sh/chart":"1.0.0"},"name":"api","namespace":"tenant"},"spec":{"clusterIP":"None","ports":[{"name":"specs","port":8080,"protocol":"TCP","targetPort":"specs"}],"selector":{"app.kubernetes.io/component":"api","app.kubernetes.io/instance":"test"},"type":"ClusterIP"}}`
 
 func TestServiceCollector(t *testing.T) {
 
@@ -159,7 +159,7 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 							"namespace":         "test-namespace",
 							"uid":               "test-service-1",
 							"resourceVersion":   "123",
-							"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+							"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_service},
 						},
 						"spec": map[string]interface{}{
 							"type": "ClusterIP",
@@ -171,7 +171,7 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 							},
 						},
 						"status": map[string]interface{}{
-							"loadBalancer": {},
+							"loadBalancer": map[string]interface{}{},
 						},
 					},
 				},
@@ -278,7 +278,7 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 							"namespace":         "test-namespace",
 							"uid":               "test-service-6",
 							"resourceVersion":   "123",
-							"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+							"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_service},
 						},
 						"spec": map[string]interface{}{
 							"type":           "LoadBalancer",
@@ -295,7 +295,7 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 									"targetPort": float64(8086)},
 							}},
 						"status": map[string]interface{}{
-							"loadBalancer": {},
+							"loadBalancer": map[string]interface{}{},
 						},
 					},
 				},
@@ -397,7 +397,7 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 								"namespace":         "test-namespace",
 								"uid":               "test-service-2",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_service},
 							},
 							"spec": map[string]interface{}{
 								"type":      "NodePort",
@@ -410,7 +410,7 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 										"targetPort": float64(8082)},
 								}},
 							"status": map[string]interface{}{
-								"loadBalancer": {},
+								"loadBalancer": map[string]interface{}{},
 							},
 						},
 					},
@@ -432,6 +432,7 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 			expectedComponents: []*topology.Component{
 				chooseBySourcePropertiesFeature(
 					sourcePropertiesEnabled,
+					kubernetesStatusEnabled,
 					&topology.Component{
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-3",
 						Type:       topology.Type{Name: "service"},
@@ -498,7 +499,7 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 								"namespace":         "test-namespace",
 								"uid":               "test-service-3",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_service},
 							},
 							"spec": map[string]interface{}{
 								"type":        "ClusterIP",
@@ -513,7 +514,7 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 								},
 							},
 							"status": map[string]interface{}{
-								"loadBalancer": {},
+								"loadBalancer": map[string]interface{}{},
 							},
 						},
 					},
@@ -598,7 +599,7 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 								"namespace":         "test-namespace",
 								"uid":               "test-service-4",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_service},
 							},
 							"spec": map[string]interface{}{
 								"type":      "ClusterIP",
@@ -611,7 +612,7 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 								},
 							},
 							"status": map[string]interface{}{
-								"loadBalancer": {},
+								"loadBalancer": map[string]interface{}{},
 							},
 						},
 					},
@@ -693,7 +694,7 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 								"namespace":         "test-namespace",
 								"uid":               "test-service-5",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_service},
 							},
 							"spec": map[string]interface{}{
 								"type":      "ClusterIP",
@@ -706,7 +707,7 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 								},
 							},
 							"status": map[string]interface{}{
-								"loadBalancer": {},
+								"loadBalancer": map[string]interface{}{},
 							},
 						},
 					},
@@ -789,7 +790,7 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 								"namespace":         "test-namespace",
 								"uid":               "test-service-7",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_service},
 							},
 							"spec": map[string]interface{}{
 								"type":         "ExternalName",
@@ -801,7 +802,7 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 										"targetPort": float64(8087)},
 								}},
 							"status": map[string]interface{}{
-								"loadBalancer": {},
+								"loadBalancer": map[string]interface{}{},
 							},
 						},
 					},
@@ -879,7 +880,7 @@ func (m MockServiceAPICollectorClient) GetServices() ([]coreV1.Service, error) {
 			GenerateName:    "",
 			ResourceVersion: "123",
 			Annotations: map[string]string{
-				"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration,
+				"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_service,
 			},
 			ManagedFields: []v1.ManagedFieldsEntry{
 				{

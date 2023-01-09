@@ -23,7 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-var lastAppliedConfiguration = `{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"kubernetes.io/ingress.class":"ingress-nginx-external","nginx.ingress.kubernetes.io/ingress.class":"ingress-nginx-external"},"labels":{"app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/version":"1.0.0","helm.sh/chart":"1.0.0"},"name":"app","namespace":"tenant"},"spec":{"rules":[{"host":"test.com","http":{"paths":[]}}],"tls":[]}}`
+var lastAppliedConfiguration_ingress = `{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"kubernetes.io/ingress.class":"ingress-nginx-external","nginx.ingress.kubernetes.io/ingress.class":"ingress-nginx-external"},"labels":{"app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/version":"1.0.0","helm.sh/chart":"1.0.0"},"name":"app","namespace":"tenant"},"spec":{"rules":[{"host":"test.com","http":{"paths":[]}}],"tls":[]}}`
 
 func TestIngressCollector_1_18(t *testing.T) {
 
@@ -55,7 +55,7 @@ func TestIngressCollector_1_18(t *testing.T) {
 				{
 					testCase: "Test Service 1 - Minimal",
 					assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-						expectIngress211(sourcePropertiesEnabled, creationTimeFormatted),
+						expectIngress211(sourcePropertiesEnabled, kubernetesStatusEnabled, creationTimeFormatted),
 						expectEndpoint211(),
 						expectRelationEndpointIPIngress211(),
 						expectEndpointAmazon21(),
@@ -65,7 +65,7 @@ func TestIngressCollector_1_18(t *testing.T) {
 				{
 					testCase: "Test Service 2 - Default Backend",
 					assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-						expectIngress212(sourcePropertiesEnabled, creationTimeFormatted),
+						expectIngress212(sourcePropertiesEnabled, kubernetesStatusEnabled, creationTimeFormatted),
 						expectRelationIngress212Service(),
 						expectEndpointIP212(),
 						expectRelationEndpointIP21Ingress212(),
@@ -76,7 +76,7 @@ func TestIngressCollector_1_18(t *testing.T) {
 				{
 					testCase: "Test Service 3 - Ingress Rules",
 					assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-						expectIngress213(sourcePropertiesEnabled, creationTimeFormatted),
+						expectIngress213(sourcePropertiesEnabled, kubernetesStatusEnabled, creationTimeFormatted),
 						expectRelationIngress213Service1(),
 						expectRelationIngress213Service2(),
 						expectRalationIngress213Service3(),
@@ -87,7 +87,7 @@ func TestIngressCollector_1_18(t *testing.T) {
 					},
 				},
 			} {
-				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
+				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled, kubernetesStatusEnabled), func(t *testing.T) {
 					for _, a := range tc.assertions {
 						a(t, componentChannel, relationChannel)
 					}
@@ -113,56 +113,58 @@ func TestIngressCollector_1_22(t *testing.T) {
 	}
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		commonClusterCollector := NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClient{}, sourcePropertiesEnabled, componentChannel, relationChannel, &k8sVersion)
-		commonClusterCollector.SetUseRelationCache(false)
-		ic := NewIngressCollector(commonClusterCollector)
-		expectedCollectorName := "Ingress Collector"
-		RunCollectorTest(t, ic, expectedCollectorName)
+		for _, kubernetesStatusEnabled := range []bool{false, true} {
+			commonClusterCollector := NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClient{}, sourcePropertiesEnabled, componentChannel, relationChannel, &k8sVersion, kubernetesStatusEnabled)
+			commonClusterCollector.SetUseRelationCache(false)
+			ic := NewIngressCollector(commonClusterCollector)
+			expectedCollectorName := "Ingress Collector"
+			RunCollectorTest(t, ic, expectedCollectorName)
 
-		for _, tc := range []struct {
-			testCase   string
-			assertions []func(*testing.T, chan *topology.Component, chan *topology.Relation)
-		}{
-			{
-				testCase: "Test Service 1 - Minimal",
-				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-					expectIngress221(sourcePropertiesEnabled, creationTimeFormatted),
-					expectEndpointIP221(),
-					expectRelationEndpointIngress221(),
-					expectEndpointAmazon22(),
-					expectRelationEndpointAmazonIngress221(),
+			for _, tc := range []struct {
+				testCase   string
+				assertions []func(*testing.T, chan *topology.Component, chan *topology.Relation)
+			}{
+				{
+					testCase: "Test Service 1 - Minimal",
+					assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
+						expectIngress221(sourcePropertiesEnabled, kubernetesStatusEnabled, creationTimeFormatted),
+						expectEndpointIP221(),
+						expectRelationEndpointIngress221(),
+						expectEndpointAmazon22(),
+						expectRelationEndpointAmazonIngress221(),
+					},
 				},
-			},
-			{
-				testCase: "Test Service 2 - Default Backend",
-				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-					expectIngress222(sourcePropertiesEnabled, creationTimeFormatted),
-					expectRelationIngressService222(),
-					expectEndpointIP222(),
-					expectRelationEndpointIPIngress222(),
-					expectEndpointAmazon22(),
-					expectRelationEndpointAmazonIngress222(),
+				{
+					testCase: "Test Service 2 - Default Backend",
+					assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
+						expectIngress222(sourcePropertiesEnabled, kubernetesStatusEnabled, creationTimeFormatted),
+						expectRelationIngressService222(),
+						expectEndpointIP222(),
+						expectRelationEndpointIPIngress222(),
+						expectEndpointAmazon22(),
+						expectRelationEndpointAmazonIngress222(),
+					},
 				},
-			},
-			{
-				testCase: "Test Service 3 - Ingress Rules",
-				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-					expectIngress223(sourcePropertiesEnabled, creationTimeFormatted),
-					expectRelationIngress223Service1(),
-					expectRelationIngress223Service2(),
-					expectRelationIngress223Service3(),
-					expectEndpointIP223(),
-					expectRelationEndpointIP22Ingress223(),
-					expectEndpointAmazon22(),
-					expectRelationEndpointAmazonIngress223(),
+				{
+					testCase: "Test Service 3 - Ingress Rules",
+					assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
+						expectIngress223(sourcePropertiesEnabled, kubernetesStatusEnabled, creationTimeFormatted),
+						expectRelationIngress223Service1(),
+						expectRelationIngress223Service2(),
+						expectRelationIngress223Service3(),
+						expectEndpointIP223(),
+						expectRelationEndpointIP22Ingress223(),
+						expectEndpointAmazon22(),
+						expectRelationEndpointAmazonIngress223(),
+					},
 				},
-			},
-		} {
-			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
-				for _, a := range tc.assertions {
-					a(t, componentChannel, relationChannel)
-				}
-			})
+			} {
+				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled, kubernetesStatusEnabled), func(t *testing.T) {
+					for _, a := range tc.assertions {
+						a(t, componentChannel, relationChannel)
+					}
+				})
+			}
 		}
 	}
 }
@@ -326,7 +328,7 @@ func expectIngress213(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 					"uid":               "test-ingress-3",
 					"generateName":      "some-specified-generation",
 					"resourceVersion":   "123",
-					"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+					"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress},
 				},
 				"spec": map[string]interface{}{
 					"rules": []interface{}{
@@ -357,11 +359,7 @@ func expectIngress213(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 											"path": "host-2-path-1"}}}}}}},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
-						"ingress": []LoadBalancerIngress{
-							{
-								"Hostname": "lb.test.com",
-							},
-						},
+						"ingress": []coreV1.LoadBalancerIngress{},
 					},
 				},
 			},
@@ -481,7 +479,7 @@ func expectIngress212(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 					"namespace":         "test-namespace",
 					"uid":               "test-ingress-2",
 					"resourceVersion":   "123",
-					"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+					"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress},
 				},
 				"spec": map[string]interface{}{
 					"backend": map[string]interface{}{
@@ -491,11 +489,7 @@ func expectIngress212(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
-						"ingress": []LoadBalancerIngress{
-							{
-								"Hostname": "lb.test.com",
-							},
-						},
+						"ingress": []coreV1.LoadBalancerIngress{},
 					},
 				},
 			},
@@ -591,7 +585,7 @@ func expectIngress211(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"tags":            map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 				"identifiers":     []string{},
 				"resourceVersion": "123",
-				"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+				"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress},
 			},
 			SourceProperties: map[string]interface{}{
 				"metadata": map[string]interface{}{
@@ -604,11 +598,7 @@ func expectIngress211(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"spec": map[string]interface{}{},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
-						"ingress": []LoadBalancerIngress{
-							{
-								"Hostname": "lb.test.com",
-							},
-						},
+						"ingress": []coreV1.LoadBalancerIngress{},
 					},
 				},
 			},
@@ -784,7 +774,7 @@ func expectIngress223(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 					"uid":               "test-ingress22-3",
 					"generateName":      "some-specified-generation",
 					"resourceVersion":   "123",
-					"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+					"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress},
 				},
 				"spec": map[string]interface{}{
 					"rules": []interface{}{
@@ -824,11 +814,7 @@ func expectIngress223(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 													}}}}}}}}}},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
-						"ingress": []LoadBalancerIngress{
-							{
-								"Hostname": "lb.test.com",
-							},
-						},
+						"ingress": []coreV1.LoadBalancerIngress{},
 					},
 				},
 			},
@@ -929,7 +915,7 @@ func expectIngress222(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"tags":            map[string]string{"test": "label22", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 				"identifiers":     []string{},
 				"resourceVersion": "123",
-				"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+				"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress},
 			},
 			SourceProperties: map[string]interface{}{
 				"metadata": map[string]interface{}{
@@ -949,11 +935,7 @@ func expectIngress222(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
-						"ingress": []LoadBalancerIngress{
-							{
-								"Hostname": "lb.test.com",
-							},
-						},
+						"ingress": []coreV1.LoadBalancerIngress{},
 					},
 				},
 			},
@@ -1036,7 +1018,7 @@ func expectIngress221(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"tags":            map[string]string{"test": "label22", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 				"identifiers":     []string{},
 				"resourceVersion": "123",
-				"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+				"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress},
 			},
 			SourceProperties: map[string]interface{}{
 				"metadata": map[string]interface{}{
@@ -1049,11 +1031,7 @@ func expectIngress221(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"spec": map[string]interface{}{},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
-						"ingress": []LoadBalancerIngress{
-							{
-								"Hostname": "lb.test.com",
-							},
-						},
+						"ingress": []coreV1.LoadBalancerIngress{},
 					},
 				},
 			},
@@ -1083,7 +1061,7 @@ func (m MockIngressAPICollectorClient) GetIngressesNetV1() ([]netV1.Ingress, err
 				GenerateName:    "",
 				ResourceVersion: "123",
 				Annotations: map[string]string{
-					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration,
+					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress,
 				},
 				ManagedFields: []v1.ManagedFieldsEntry{
 					{
@@ -1172,7 +1150,7 @@ func (m MockIngressAPICollectorClient) GetIngressesExtV1B1() ([]v1beta1.Ingress,
 				GenerateName:    "",
 				ResourceVersion: "123",
 				Annotations: map[string]string{
-					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration,
+					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress,
 				},
 				ManagedFields: []v1.ManagedFieldsEntry{
 					{
@@ -1258,7 +1236,7 @@ func (m MockIngressAPICollectorClientNoHTTPRule) GetIngressesExtV1B1() ([]v1beta
 			GenerateName:    "",
 			ResourceVersion: "123",
 			Annotations: map[string]string{
-				"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration,
+				"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress,
 			},
 			ManagedFields: []v1.ManagedFieldsEntry{
 				{
@@ -1377,7 +1355,7 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 										"namespace":         "test-namespace",
 										"uid":               "test-ingress",
 										"resourceVersion":   "123",
-										"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+										"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress},
 									},
 									"spec": map[string]interface{}{
 										"rules": []interface{}{

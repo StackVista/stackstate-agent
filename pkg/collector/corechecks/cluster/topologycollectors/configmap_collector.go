@@ -70,12 +70,13 @@ func (cmc *ConfigMapCollector) configMapToStackStateComponent(configMap v1.Confi
 		for k, data := range configMapCopy.BinaryData {
 			configMapCopy.BinaryData[k] = []byte(cutReplacement(data))
 		}
-		sourceProperties := if cmc.IsExposeKubernetesStatusEnabled() {
-			makeSourcePropertiesFullDetails(&configMapCopy)
+		var sourceProperties map[string]interface{}
+		if cmc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(&configMapCopy)
 		} else {
-			makeSourceProperties(&configMapCopy)
+			sourceProperties = makeSourceProperties(&configMapCopy)
 		}
-		
+
 		component.SourceProperties = sourceProperties
 	} else {
 		component.Data.PutNonEmpty("kind", configMap.Kind)

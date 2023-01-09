@@ -99,11 +99,13 @@ func (pvc *PersistentVolumeCollector) persistentVolumeToStackStateComponent(pers
 	}
 
 	if pvc.IsSourcePropertiesFeatureEnabled() || pvc.IsExposeKubernetesStatusEnabled() {
-		component.SourceProperties = if pvc.IsExposeKubernetesStatusEnabled() {
-			makeSourcePropertiesFullDetails(&persistentVolume)
+		var sourceProperties map[string]interface{}
+		if pvc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(&persistentVolume)
 		} else {
-			makeSourceProperties(&persistentVolume)
+			sourceProperties = makeSourceProperties(&persistentVolume)
 		}
+		component.SourceProperties = sourceProperties
 	} else {
 		component.Data.PutNonEmpty("kind", persistentVolume.Kind)
 		component.Data.PutNonEmpty("uid", persistentVolume.UID)

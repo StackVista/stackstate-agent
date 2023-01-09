@@ -20,6 +20,12 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+var lastAppliedConfiguration_deployment = `{"apiVersion":"apps/v1","kind":"Deployment",
+	"metadata":{"annotations":{},"name":"nginx-deployment","namespace":"default"},
+	"spec":{"minReadySeconds":5,"selector":{"matchLabels":{"app":nginx}},"template":{"metadata":{"labels":{"app":"nginx"}},
+	"spec":{"containers":[{"image":"nginx:1.14.2","name":"nginx",
+	"ports":[{"containerPort":80}]}]}}}}`
+
 func TestDeploymentCollector(t *testing.T) {
 
 	componentChannel := make(chan *topology.Component)
@@ -29,12 +35,6 @@ func TestDeploymentCollector(t *testing.T) {
 
 	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 	replicas = int32(1)
-
-	lastAppliedConfiguration := `{"apiVersion":"apps/v1","kind":"Deployment",
-	"metadata":{"annotations":{},"name":"nginx-deployment","namespace":"default"},
-	"spec":{"minReadySeconds":5,"selector":{"matchLabels":{"app":nginx}},"template":{"metadata":{"labels":{"app":"nginx"}},
-	"spec":{"containers":[{"image":"nginx:1.14.2","name":"nginx",
-	"ports":[{"containerPort":80}]}]}}}}`
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
 		for _, kubernetesStatusEnabled := range []bool{false, true} {
@@ -113,7 +113,7 @@ func TestDeploymentCollector(t *testing.T) {
 								"uid":             "test-deployment-1",
 								"resourceVersion": "123",
 								"annotations": map[string]interface{}{
-									"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration,
+									"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_deployment,
 								},
 							},
 							"spec": map[string]interface{}{
@@ -209,7 +209,7 @@ func TestDeploymentCollector(t *testing.T) {
 								"namespace":       "test-namespace",
 								"uid":             "test-deployment-2",
 								"resourceVersion": "123",
-								"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+								"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_deployment},
 							},
 							"spec": map[string]interface{}{
 								"replicas": float64(1),
@@ -307,14 +307,14 @@ func TestDeploymentCollector(t *testing.T) {
 									"test": "label",
 								},
 								"annotations": map[string]interface{}{
-									"another-annotation-1": "should-be-kept",
+									"another-annotation-1":                             "should-be-kept",
+									"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_deployment,
 								},
 								"name":            "test-deployment-3",
 								"generateName":    "some-specified-generation",
 								"namespace":       "test-namespace",
 								"uid":             "test-deployment-3",
 								"resourceVersion": "123",
-								"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
 							},
 							"spec": map[string]interface{}{
 								"replicas": float64(1),
@@ -396,7 +396,7 @@ func (m MockDeploymentAPICollectorClient) GetDeployments() ([]appsV1.Deployment,
 				GenerateName:    "",
 				ResourceVersion: "123",
 				Annotations: map[string]string{
-					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration,
+					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_deployment,
 				},
 				ManagedFields: []v1.ManagedFieldsEntry{
 					{
@@ -416,17 +416,17 @@ func (m MockDeploymentAPICollectorClient) GetDeployments() ([]appsV1.Deployment,
 			},
 			Status: appsV1.DeploymentStatus{
 				ObservedGeneration:  int64(321),
-				Replicas:            &replicas,
-				UpdatedReplicas:     &replicas,
-				ReadyReplicas:       &replicas,
-				AvailableReplicas:   &replicas,
+				Replicas:            int32(1),
+				UpdatedReplicas:     int32(1),
+				ReadyReplicas:       int32(1),
+				AvailableReplicas:   int32(1),
 				UnavailableReplicas: int32(0),
 				Conditions: []appsV1.DeploymentCondition{
 					{
-						Type:               appsV1.DeploymentCondition.DeploymentAvailable,
+						Type:               "Available",
 						Status:             "True",
-						LastUpdateTime:     &v1.Time{Time: time.Now()},
-						LastTransitionTime: &v1.Time{Time: time.Now()},
+						LastUpdateTime:     creationTime,
+						LastTransitionTime: creationTime,
 						Reason:             "NewReplicaSetAvailable",
 						Message:            "Deployment has minimum availability.",
 					},
@@ -439,7 +439,7 @@ func (m MockDeploymentAPICollectorClient) GetDeployments() ([]appsV1.Deployment,
 			deployment.ObjectMeta.GenerateName = "some-specified-generation"
 			deployment.Annotations = map[string]string{
 				"another-annotation-1":                             "should-be-kept",
-				"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration,
+				"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_deployment,
 			}
 		}
 

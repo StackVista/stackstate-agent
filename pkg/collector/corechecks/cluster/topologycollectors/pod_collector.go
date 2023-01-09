@@ -211,12 +211,14 @@ func (pc *PodCollector) podToStackStateComponent(pod v1.Pod) *topology.Component
 		},
 	}
 
-	if pc.IsSourcePropertiesFeatureEnabled() | pc.IsExposeKubernetesStatusEnabled(){
-		component.SourceProperties = if pc.IsExposeKubernetesStatusEnabled() {
-			makeSourcePropertiesFullDetails(&pod)
+	if pc.IsSourcePropertiesFeatureEnabled() || pc.IsExposeKubernetesStatusEnabled() {
+		var sourceProperties map[string]interface{}
+		if pc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(&pod)
 		} else {
-			makeSourcePropertiesKS(&pod)
+			sourceProperties = makeSourcePropertiesKS(&pod)
 		}
+		component.SourceProperties = sourceProperties
 		// for backward compatibility with K8s/OpenShift stackpack
 		// we specify status.phase in data even if it's also in the sourceProperties
 		component.Data.PutNonEmpty("status", map[string]interface{}{

@@ -73,12 +73,14 @@ func (rsc *ReplicaSetCollector) replicaSetToStackStateComponent(replicaSet v1.Re
 		},
 	}
 
-	if rsc.IsSourcePropertiesFeatureEnabled() || rsc.IsExposeKubernetesStatusEnabled(){
-		component.SourceProperties = if rsc.IsExposeKubernetesStatusEnabled() {
-			makeSourcePropertiesFullDetails(&replicaSet)
+	if rsc.IsSourcePropertiesFeatureEnabled() || rsc.IsExposeKubernetesStatusEnabled() {
+		var sourceProperties map[string]interface{}
+		if rsc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(&replicaSet)
 		} else {
-			makeSourceProperties(&replicaSet)
+			sourceProperties = makeSourceProperties(&replicaSet)
 		}
+		component.SourceProperties = sourceProperties
 	} else {
 		component.Data.PutNonEmpty("kind", replicaSet.Kind)
 		component.Data.PutNonEmpty("creationTimestamp", replicaSet.CreationTimestamp)

@@ -21,7 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-var lastAppliedConfiguration = `{"apiVersion":"v1","data":{"EXTRA":"123"},"kind":"Secret","metadata":{"annotations":{"argocd.io/tracking-id":"api"},"labels":{"app.kubernetes.io/instance":"test","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"app","app.kubernetes.io/version":"1.0.0","helm.sh/chart":"1.0.0"},"name":"api","namespace":"tenant"},"stringData":{"app.conf":"text"},"type":"Opaque"}`
+var lastAppliedConfiguration_secret = `{"apiVersion":"v1","data":{"EXTRA":"123"},"kind":"Secret","metadata":{"annotations":{"argocd.io/tracking-id":"api"},"labels":{"app.kubernetes.io/instance":"test","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"app","app.kubernetes.io/version":"1.0.0","helm.sh/chart":"1.0.0"},"name":"api","namespace":"tenant"},"stringData":{"app.conf":"text"},"type":"Opaque"}`
 
 func TestSecretCollector(t *testing.T) {
 
@@ -95,7 +95,7 @@ func TestSecretCollector(t *testing.T) {
 								"namespace":         "test-namespace",
 								"uid":               "test-secret-1",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_secret},
 							},
 							"data": map[string]interface{}{
 								"<data hash>": "YzIwY2E0OWRjYjc2ZmVhYWExYzE0YTI3MjUyNjNiZjIyOTBkMGU1ZjNkYzk4ZDIwOGIyNDlmMDgwZmE2NGI0NQ==",
@@ -153,7 +153,7 @@ func TestSecretCollector(t *testing.T) {
 								"namespace":         "test-namespace",
 								"uid":               "test-secret-2",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_secret},
 							},
 							"data": map[string]interface{}{
 								"<data hash>": "ZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NQ==",
@@ -209,7 +209,7 @@ func TestSecretCollector(t *testing.T) {
 								"namespace":         "test-namespace",
 								"uid":               "test-secret-3",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_secret},
 							},
 							"data": map[string]interface{}{
 								"<data hash>": "ZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NQ==",
@@ -218,7 +218,7 @@ func TestSecretCollector(t *testing.T) {
 					},
 				},
 			} {
-				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
+				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled, kubernetesStatusEnabled), func(t *testing.T) {
 					component := <-componentChannel
 					if kubernetesStatusEnabled {
 						assert.EqualValues(t, tc.expectedSPPlusStatus, component)
@@ -253,7 +253,7 @@ func (m MockSecretAPICollectorClient) GetSecrets() ([]coreV1.Secret, error) {
 				GenerateName:      "",
 				ResourceVersion:   "123",
 				Annotations: map[string]string{
-					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration,
+					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_secret,
 				},
 				ManagedFields: []v1.ManagedFieldsEntry{
 					{

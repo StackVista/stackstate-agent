@@ -20,7 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-var lastAppliedConfiguration = `{"apiVersion":"apps/v1","kind":"StatefulSet","metadata":{"annotations":{"argocd.io/tracking-id":"tenant"},"labels":{"app.kubernetes.io/component":"api","app.kubernetes.io/instance":"app","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"1.0.0"},"name":"test-api","namespace":"tenant"},"spec":{"podManagementPolicy":"Parallel","replicas":1,"selector":{"matchLabels":{"app.kubernetes.io/component":"test","app.kubernetes.io/instance":"app","app.kubernetes.io/name":"test"}},"serviceName":"api-headless","template":{"spec":{"containers":[{"command":["bash","-ec"]}]}}}}`
+var lastAppliedConfiguration_statefulset = `{"apiVersion":"apps/v1","kind":"StatefulSet","metadata":{"annotations":{"argocd.io/tracking-id":"tenant"},"labels":{"app.kubernetes.io/component":"api","app.kubernetes.io/instance":"app","app.kubernetes.io/managed-by":"Helm","helm.sh/chart":"1.0.0"},"name":"test-api","namespace":"tenant"},"spec":{"podManagementPolicy":"Parallel","replicas":1,"selector":{"matchLabels":{"app.kubernetes.io/component":"test","app.kubernetes.io/instance":"app","app.kubernetes.io/name":"test"}},"serviceName":"api-headless","template":{"spec":{"containers":[{"command":["bash","-ec"]}]}}}}`
 
 func TestStatefulSetCollector(t *testing.T) {
 
@@ -109,7 +109,7 @@ func TestStatefulSetCollector(t *testing.T) {
 								"namespace":         "test-namespace",
 								"uid":               "test-statefulset-1",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_statefulset},
 							},
 							"spec": map[string]interface{}{
 								"podManagementPolicy": "OrderedReady",
@@ -200,7 +200,7 @@ func TestStatefulSetCollector(t *testing.T) {
 								"namespace":         "test-namespace",
 								"uid":               "test-statefulset-2",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_statefulset},
 							},
 							"spec": map[string]interface{}{
 								"podManagementPolicy": "OrderedReady",
@@ -295,7 +295,7 @@ func TestStatefulSetCollector(t *testing.T) {
 								"generateName":      "some-specified-generation",
 								"uid":               "test-statefulset-3",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_statefulset},
 							},
 							"spec": map[string]interface{}{
 								"podManagementPolicy": "OrderedReady",
@@ -373,7 +373,7 @@ func (m MockStatefulSetAPICollectorClient) GetStatefulSets() ([]appsV1.StatefulS
 				GenerateName:    "",
 				ResourceVersion: "123",
 				Annotations: map[string]string{
-					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration,
+					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_statefulset,
 				},
 				ManagedFields: []v1.ManagedFieldsEntry{
 					{
@@ -401,8 +401,6 @@ func (m MockStatefulSetAPICollectorClient) GetStatefulSets() ([]appsV1.StatefulS
 				UpdatedReplicas:    int32(1),
 				CurrentRevision:    "abc-112233d",
 				UpdateRevision:     "abc-112233d",
-				CollisionCount:     int32(0),
-				AvailableReplicas:  int32(1),
 			},
 		}
 

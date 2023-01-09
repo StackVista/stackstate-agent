@@ -202,7 +202,7 @@ func (c *clusterTopologyCommon) IsSourcePropertiesFeatureEnabled() bool {
 
 // IsExposeKubernetesStatusEnabled return value of Expose Kubernetes Status feature flag
 func (c *clusterTopologyCommon) IsExposeKubernetesStatusEnabled() bool {
-	return c.IsExposeKubernetesStatusEnabled
+	return c.exposeKubernetesStatusEnabled
 }
 
 // buildClusterExternalID

@@ -64,11 +64,13 @@ func (dmc *DeploymentCollector) deploymentToStackStateComponent(deployment v1.De
 	}
 
 	if dmc.IsSourcePropertiesFeatureEnabled() || dmc.IsExposeKubernetesStatusEnabled() {
-		component.SourceProperties = if dmc.IsExposeKubernetesStatusEnabled() {
-			makeSourcePropertiesFullDetails(&deployment)
+		var sourceProperties map[string]interface{}
+		if dmc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(&deployment)
 		} else {
-			makeSourceProperties(&deployment)
+			sourceProperties = makeSourceProperties(&deployment)
 		}
+		component.SourceProperties = sourceProperties
 	} else {
 		component.Data.PutNonEmpty("kind", deployment.Kind)
 		component.Data.PutNonEmpty("uid", deployment.UID)

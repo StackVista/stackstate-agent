@@ -90,11 +90,13 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 	}
 
 	if nc.IsSourcePropertiesFeatureEnabled() || nc.IsExposeKubernetesStatusEnabled() {
-		component.SourceProperties = if nc.IsExposeKubernetesStatusEnabled() {
-			makeSourcePropertiesFullDetails(&node)
+		var sourceProperties map[string]interface{}
+		if nc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(&node)
 		} else {
-			makeSourceProperties(&node)
+			sourceProperties = makeSourceProperties(&node)
 		}
+		component.SourceProperties = sourceProperties
 	} else {
 		component.Data.PutNonEmpty("creationTimestamp", node.CreationTimestamp)
 		component.Data.PutNonEmpty("uid", node.UID)

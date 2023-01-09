@@ -285,7 +285,7 @@ func TestReplicaSetCollector(t *testing.T) {
 					},
 				},
 			} {
-				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
+				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled, kubernetesStatusEnabled), func(t *testing.T) {
 					service := <-componentChannel
 					if kubernetesStatusEnabled {
 						assert.EqualValues(t, tc.expectedComponentSPPlusStatus, service)
@@ -339,8 +339,10 @@ func (m MockReplicaSetAPICollectorClient) GetReplicaSets() ([]appsV1.ReplicaSet,
 				Replicas: &replicas,
 			},
 			Status: appsV1.ReplicaSetStatus{
-				observedGeneration: int32(1),
-				replicas:           int32(0),
+				Replicas:           int32(1),
+				AvailableReplicas:  int32(1),
+				ReadyReplicas:      int32(1),
+				ObservedGeneration: int64(123),
 			},
 		}
 
