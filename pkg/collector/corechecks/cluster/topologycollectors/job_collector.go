@@ -73,8 +73,12 @@ func (jc *JobCollector) jobToStackStateComponent(job v1.Job) *topology.Component
 		},
 	}
 
-	if jc.IsSourcePropertiesFeatureEnabled() {
-		component.SourceProperties = makeSourceProperties(&job)
+	if jc.IsSourcePropertiesFeatureEnabled() || jc.IsExposeKubernetesStatusEnabled() {
+		component.SourceProperties = if jc.IsExposeKubernetesStatusEnabled() {
+			makeSourcePropertiesFullDetails(&job)
+		} else {
+			makeSourceProperties(&job)
+		}
 	} else {
 		component.Data.PutNonEmpty("kind", job.Kind)
 		component.Data.PutNonEmpty("creationTimestamp", job.CreationTimestamp)

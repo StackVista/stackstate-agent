@@ -25,7 +25,7 @@ func TestContainerCollector(t *testing.T) {
 	nodeIdentifierCorrelationChannel := make(chan *NodeIdentifierCorrelation)
 	containerCorrelationChannel := make(chan *ContainerCorrelation)
 
-	commonClusterCorrelator := NewClusterTopologyCorrelator(NewTestCommonClusterCollector(MockContainerAPICollectorClient{}, componentChannel, relationChannel, false))
+	commonClusterCorrelator := NewClusterTopologyCorrelator(NewTestCommonClusterCollector(MockContainerAPICollectorClient{}, componentChannel, relationChannel, false, false))
 	commonClusterCorrelator.SetUseRelationCache(false)
 	cc := NewContainerCorrelator(nodeIdentifierCorrelationChannel,
 		containerCorrelationChannel, commonClusterCorrelator)

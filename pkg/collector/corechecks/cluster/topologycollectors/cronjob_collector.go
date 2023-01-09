@@ -93,8 +93,12 @@ func (cjc *CronJobCollector) cronJobToStackStateComponent(cronJob CronJobInterfa
 		},
 	}
 
-	if cjc.IsSourcePropertiesFeatureEnabled() {
-		component.SourceProperties = makeSourceProperties(cronJob.GetKubernetesObject())
+	if cjc.IsSourcePropertiesFeatureEnabled() || cjc.IsExposeKubernetesStatusEnabled() {
+		component.SourceProperties = if cjc.IsExposeKubernetesStatusEnabled() {
+			makeSourcePropertiesFullDetails(cronJob.GetKubernetesObject())
+		} else {
+			makeSourceProperties(cronJob.GetKubernetesObject())
+		}
 	} else {
 		component.Data.PutNonEmpty("uid", cronJob.GetUID())
 		component.Data.PutNonEmpty("kind", cronJob.GetKind())

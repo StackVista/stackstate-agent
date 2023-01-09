@@ -58,8 +58,12 @@ func (ssc *StatefulSetCollector) statefulSetToStackStateComponent(statefulSet v1
 		},
 	}
 
-	if ssc.IsSourcePropertiesFeatureEnabled() {
-		component.SourceProperties = makeSourceProperties(&statefulSet)
+	if ssc.IsSourcePropertiesFeatureEnabled() || ssc.IsExposeKubernetesStatusEnabled() {
+		component.SourceProperties = if ssc.IsExposeKubernetesStatusEnabled() {
+			makeSourcePropertiesFullDetails(&statefulSet)
+		} else {
+			makeSourceProperties(&statefulSet)
+		}
 	} else {
 		component.Data.PutNonEmpty("kind", statefulSet.Kind)
 		component.Data.PutNonEmpty("uid", statefulSet.UID)

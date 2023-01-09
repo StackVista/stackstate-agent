@@ -23,6 +23,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+var lastAppliedConfiguration = `{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"kubernetes.io/ingress.class":"ingress-nginx-external","nginx.ingress.kubernetes.io/ingress.class":"ingress-nginx-external"},"labels":{"app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/version":"1.0.0","helm.sh/chart":"1.0.0"},"name":"app","namespace":"tenant"},"spec":{"rules":[{"host":"test.com","http":{"paths":[]}}],"tls":[]}}`
+
 func TestIngressCollector_1_18(t *testing.T) {
 
 	componentChannel := make(chan *topology.Component)
@@ -39,56 +41,58 @@ func TestIngressCollector_1_18(t *testing.T) {
 	}
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		commonClusterCollector := NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClient{}, sourcePropertiesEnabled, componentChannel, relationChannel, &k8sVersion)
-		commonClusterCollector.SetUseRelationCache(false)
-		ic := NewIngressCollector(commonClusterCollector)
-		expectedCollectorName := "Ingress Collector"
-		RunCollectorTest(t, ic, expectedCollectorName)
+		for _, kubernetesStatusEnabled := range []bool{false, true} {
+			commonClusterCollector := NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClient{}, sourcePropertiesEnabled, componentChannel, relationChannel, &k8sVersion, kubernetesStatusEnabled)
+			commonClusterCollector.SetUseRelationCache(false)
+			ic := NewIngressCollector(commonClusterCollector)
+			expectedCollectorName := "Ingress Collector"
+			RunCollectorTest(t, ic, expectedCollectorName)
 
-		for _, tc := range []struct {
-			testCase   string
-			assertions []func(*testing.T, chan *topology.Component, chan *topology.Relation)
-		}{
-			{
-				testCase: "Test Service 1 - Minimal",
-				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-					expectIngress211(sourcePropertiesEnabled, creationTimeFormatted),
-					expectEndpoint211(),
-					expectRelationEndpointIPIngress211(),
-					expectEndpointAmazon21(),
-					expectRelationEndpointAmazonIngress211(),
+			for _, tc := range []struct {
+				testCase   string
+				assertions []func(*testing.T, chan *topology.Component, chan *topology.Relation)
+			}{
+				{
+					testCase: "Test Service 1 - Minimal",
+					assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
+						expectIngress211(sourcePropertiesEnabled, creationTimeFormatted),
+						expectEndpoint211(),
+						expectRelationEndpointIPIngress211(),
+						expectEndpointAmazon21(),
+						expectRelationEndpointAmazonIngress211(),
+					},
 				},
-			},
-			{
-				testCase: "Test Service 2 - Default Backend",
-				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-					expectIngress212(sourcePropertiesEnabled, creationTimeFormatted),
-					expectRelationIngress212Service(),
-					expectEndpointIP212(),
-					expectRelationEndpointIP21Ingress212(),
-					expectEndpointAmazon212(),
-					expectRelationEndpointAmazonIngress212(),
+				{
+					testCase: "Test Service 2 - Default Backend",
+					assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
+						expectIngress212(sourcePropertiesEnabled, creationTimeFormatted),
+						expectRelationIngress212Service(),
+						expectEndpointIP212(),
+						expectRelationEndpointIP21Ingress212(),
+						expectEndpointAmazon212(),
+						expectRelationEndpointAmazonIngress212(),
+					},
 				},
-			},
-			{
-				testCase: "Test Service 3 - Ingress Rules",
-				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-					expectIngress213(sourcePropertiesEnabled, creationTimeFormatted),
-					expectRelationIngress213Service1(),
-					expectRelationIngress213Service2(),
-					expectRalationIngress213Service3(),
-					expectEndpointIP213(),
-					expectRelationEndpointIPIngress213(),
-					expectEndpointAmazon213(),
-					expectRelationEndpointAmazonIngress213(),
+				{
+					testCase: "Test Service 3 - Ingress Rules",
+					assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
+						expectIngress213(sourcePropertiesEnabled, creationTimeFormatted),
+						expectRelationIngress213Service1(),
+						expectRelationIngress213Service2(),
+						expectRalationIngress213Service3(),
+						expectEndpointIP213(),
+						expectRelationEndpointIPIngress213(),
+						expectEndpointAmazon213(),
+						expectRelationEndpointAmazonIngress213(),
+					},
 				},
-			},
-		} {
-			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
-				for _, a := range tc.assertions {
-					a(t, componentChannel, relationChannel)
-				}
-			})
+			} {
+				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
+					for _, a := range tc.assertions {
+						a(t, componentChannel, relationChannel)
+					}
+				})
+			}
 		}
 	}
 }
@@ -242,9 +246,10 @@ func expectRelationIngress213Service1() func(*testing.T, chan *topology.Componen
 	})
 }
 
-func expectIngress213(sourcePropertiesEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectIngress213(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectComponent(chooseBySourcePropertiesFeature(
 		sourcePropertiesEnabled,
+		kubernetesStatusEnabled,
 		&topology.Component{
 			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
 			Type:       topology.Type{Name: "ingress"},
@@ -302,6 +307,63 @@ func expectIngress213(sourcePropertiesEnabled bool, creationTimeFormatted string
 												"serviceName": "test-service-3",
 												"servicePort": float64(0)},
 											"path": "host-2-path-1"}}}}}}},
+			},
+		},
+		&topology.Component{
+			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3",
+			Type:       topology.Type{Name: "ingress"},
+			Data: topology.Data{
+				"name":        "test-ingress-3",
+				"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+				"identifiers": []string{},
+			},
+			SourceProperties: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"creationTimestamp": creationTimeFormatted,
+					"labels":            map[string]interface{}{"test": "label"},
+					"name":              "test-ingress-3",
+					"namespace":         "test-namespace",
+					"uid":               "test-ingress-3",
+					"generateName":      "some-specified-generation",
+					"resourceVersion":   "123",
+					"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+				},
+				"spec": map[string]interface{}{
+					"rules": []interface{}{
+						map[string]interface{}{
+							"host": "host-1",
+							"ingressRuleValue": map[string]interface{}{
+								"http": map[string]interface{}{
+									"paths": []interface{}{
+										map[string]interface{}{
+											"backend": map[string]interface{}{
+												"serviceName": "test-service-1",
+												"servicePort": float64(0)},
+											"path": "host-1-path-1"},
+										map[string]interface{}{
+											"backend": map[string]interface{}{
+												"serviceName": "test-service-2",
+												"servicePort": float64(0)},
+											"path": "host-1-path-2"}}}}},
+						map[string]interface{}{
+							"host": "host-2",
+							"ingressRuleValue": map[string]interface{}{
+								"http": map[string]interface{}{
+									"paths": []interface{}{
+										map[string]interface{}{
+											"backend": map[string]interface{}{
+												"serviceName": "test-service-3",
+												"servicePort": float64(0)},
+											"path": "host-2-path-1"}}}}}}},
+				"status": map[string]interface{}{
+					"loadBalancer": map[string]interface{}{
+						"ingress": []LoadBalancerIngress{
+							{
+								"Hostname": "lb.test.com",
+							},
+						},
+					},
+				},
 			},
 		},
 	))
@@ -364,9 +426,10 @@ func expectRelationIngress212Service() func(*testing.T, chan *topology.Component
 	})
 }
 
-func expectIngress212(sourcePropertiesEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectIngress212(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectComponent(chooseBySourcePropertiesFeature(
 		sourcePropertiesEnabled,
+		kubernetesStatusEnabled,
 		&topology.Component{
 			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2",
 			Type:       topology.Type{Name: "ingress"},
@@ -398,6 +461,41 @@ func expectIngress212(sourcePropertiesEnabled bool, creationTimeFormatted string
 					"backend": map[string]interface{}{
 						"serviceName": "test-service",
 						"servicePort": float64(0),
+					},
+				},
+			},
+		},
+		&topology.Component{
+			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-2",
+			Type:       topology.Type{Name: "ingress"},
+			Data: topology.Data{
+				"name":        "test-ingress-2",
+				"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+				"identifiers": []string{},
+			},
+			SourceProperties: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"creationTimestamp": creationTimeFormatted,
+					"labels":            map[string]interface{}{"test": "label"},
+					"name":              "test-ingress-2",
+					"namespace":         "test-namespace",
+					"uid":               "test-ingress-2",
+					"resourceVersion":   "123",
+					"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+				},
+				"spec": map[string]interface{}{
+					"backend": map[string]interface{}{
+						"serviceName": "test-service",
+						"servicePort": float64(0),
+					},
+				},
+				"status": map[string]interface{}{
+					"loadBalancer": map[string]interface{}{
+						"ingress": []LoadBalancerIngress{
+							{
+								"Hostname": "lb.test.com",
+							},
+						},
 					},
 				},
 			},
@@ -451,9 +549,10 @@ func expectEndpoint211() func(*testing.T, chan *topology.Component, chan *topolo
 	})
 }
 
-func expectIngress211(sourcePropertiesEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectIngress211(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectComponent(chooseBySourcePropertiesFeature(
 		sourcePropertiesEnabled,
+		kubernetesStatusEnabled,
 		&topology.Component{
 			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
 			Type:       topology.Type{Name: "ingress"},
@@ -482,6 +581,36 @@ func expectIngress211(sourcePropertiesEnabled bool, creationTimeFormatted string
 					"uid":               "test-ingress-1",
 				},
 				"spec": map[string]interface{}{},
+			},
+		},
+		&topology.Component{
+			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
+			Type:       topology.Type{Name: "ingress"},
+			Data: topology.Data{
+				"name":            "test-ingress-1",
+				"tags":            map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+				"identifiers":     []string{},
+				"resourceVersion": "123",
+				"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+			},
+			SourceProperties: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"creationTimestamp": creationTimeFormatted,
+					"labels":            map[string]interface{}{"test": "label"},
+					"name":              "test-ingress-1",
+					"namespace":         "test-namespace",
+					"uid":               "test-ingress-1",
+				},
+				"spec": map[string]interface{}{},
+				"status": map[string]interface{}{
+					"loadBalancer": map[string]interface{}{
+						"ingress": []LoadBalancerIngress{
+							{
+								"Hostname": "lb.test.com",
+							},
+						},
+					},
+				},
 			},
 		},
 	))
@@ -566,9 +695,10 @@ func expectRelationIngress223Service1() func(*testing.T, chan *topology.Componen
 	})
 }
 
-func expectIngress223(sourcePropertiesEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectIngress223(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectComponent(chooseBySourcePropertiesFeature(
 		sourcePropertiesEnabled,
+		kubernetesStatusEnabled,
 		&topology.Component{
 			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-3",
 			Type:       topology.Type{Name: "ingress"},
@@ -637,6 +767,72 @@ func expectIngress223(sourcePropertiesEnabled bool, creationTimeFormatted string
 													}}}}}}}}}},
 			},
 		},
+		&topology.Component{
+			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-3",
+			Type:       topology.Type{Name: "ingress"},
+			Data: topology.Data{
+				"name":        "test-ingress22-3",
+				"tags":        map[string]string{"test": "label22", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+				"identifiers": []string{},
+			},
+			SourceProperties: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"creationTimestamp": creationTimeFormatted,
+					"labels":            map[string]interface{}{"test": "label22"},
+					"name":              "test-ingress22-3",
+					"namespace":         "test-namespace",
+					"uid":               "test-ingress22-3",
+					"generateName":      "some-specified-generation",
+					"resourceVersion":   "123",
+					"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+				},
+				"spec": map[string]interface{}{
+					"rules": []interface{}{
+						map[string]interface{}{
+							"host": "host22-1",
+							"ingressRuleValue": map[string]interface{}{
+								"http": map[string]interface{}{
+									"paths": []interface{}{
+										map[string]interface{}{
+											"path": "host-1-path-1",
+											"backend": map[string]interface{}{
+												"service": map[string]interface{}{
+													"name": "test-service22-1",
+													"port": map[string]interface{}{},
+												},
+											}},
+										map[string]interface{}{
+											"backend": map[string]interface{}{
+												"service": map[string]interface{}{
+													"name": "test-service22-2",
+													"port": map[string]interface{}{},
+												},
+											},
+											"path": "host-1-path-2"}}}}},
+						map[string]interface{}{
+							"host": "host22-2",
+							"ingressRuleValue": map[string]interface{}{
+								"http": map[string]interface{}{
+									"paths": []interface{}{
+										map[string]interface{}{
+											"path": "host-2-path-1",
+											"backend": map[string]interface{}{
+												"service": map[string]interface{}{
+													"name": "test-service22-3",
+													"port": map[string]interface{}{
+														"number": float64(22),
+													}}}}}}}}}},
+				"status": map[string]interface{}{
+					"loadBalancer": map[string]interface{}{
+						"ingress": []LoadBalancerIngress{
+							{
+								"Hostname": "lb.test.com",
+							},
+						},
+					},
+				},
+			},
+		},
 	))
 }
 
@@ -684,9 +880,10 @@ func expectRelationIngressService222() func(*testing.T, chan *topology.Component
 	})
 }
 
-func expectIngress222(sourcePropertiesEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectIngress222(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectComponent(chooseBySourcePropertiesFeature(
 		sourcePropertiesEnabled,
+		kubernetesStatusEnabled,
 		&topology.Component{
 			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-2",
 			Type:       topology.Type{Name: "ingress"},
@@ -719,6 +916,43 @@ func expectIngress222(sourcePropertiesEnabled bool, creationTimeFormatted string
 						"service": map[string]interface{}{
 							"name": "test-service22",
 							"port": map[string]interface{}{},
+						},
+					},
+				},
+			},
+		},
+		&topology.Component{
+			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-2",
+			Type:       topology.Type{Name: "ingress"},
+			Data: topology.Data{
+				"name":            "test-ingress22-2",
+				"tags":            map[string]string{"test": "label22", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+				"identifiers":     []string{},
+				"resourceVersion": "123",
+				"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+			},
+			SourceProperties: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"creationTimestamp": creationTimeFormatted,
+					"labels":            map[string]interface{}{"test": "label22"},
+					"name":              "test-ingress22-2",
+					"namespace":         "test-namespace",
+					"uid":               "test-ingress22-2",
+				},
+				"spec": map[string]interface{}{
+					"defaultBackend": map[string]interface{}{
+						"service": map[string]interface{}{
+							"name": "test-service22",
+							"port": map[string]interface{}{},
+						},
+					},
+				},
+				"status": map[string]interface{}{
+					"loadBalancer": map[string]interface{}{
+						"ingress": []LoadBalancerIngress{
+							{
+								"Hostname": "lb.test.com",
+							},
 						},
 					},
 				},
@@ -760,9 +994,10 @@ func expectEndpointIP221() func(*testing.T, chan *topology.Component, chan *topo
 	})
 }
 
-func expectIngress221(sourcePropertiesEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectIngress221(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool, creationTimeFormatted string) func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectComponent(chooseBySourcePropertiesFeature(
 		sourcePropertiesEnabled,
+		kubernetesStatusEnabled,
 		&topology.Component{
 			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-1",
 			Type:       topology.Type{Name: "ingress"},
@@ -793,6 +1028,36 @@ func expectIngress221(sourcePropertiesEnabled bool, creationTimeFormatted string
 				"spec": map[string]interface{}{},
 			},
 		},
+		&topology.Component{
+			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-1",
+			Type:       topology.Type{Name: "ingress"},
+			Data: topology.Data{
+				"name":            "test-ingress22-1",
+				"tags":            map[string]string{"test": "label22", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+				"identifiers":     []string{},
+				"resourceVersion": "123",
+				"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+			},
+			SourceProperties: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"creationTimestamp": creationTimeFormatted,
+					"labels":            map[string]interface{}{"test": "label22"},
+					"name":              "test-ingress22-1",
+					"namespace":         "test-namespace",
+					"uid":               "test-ingress22-1",
+				},
+				"spec": map[string]interface{}{},
+				"status": map[string]interface{}{
+					"loadBalancer": map[string]interface{}{
+						"ingress": []LoadBalancerIngress{
+							{
+								"Hostname": "lb.test.com",
+							},
+						},
+					},
+				},
+			},
+		},
 	))
 }
 
@@ -817,6 +1082,9 @@ func (m MockIngressAPICollectorClient) GetIngressesNetV1() ([]netV1.Ingress, err
 				UID:             types.UID(fmt.Sprintf("test-ingress22-%d", i)),
 				GenerateName:    "",
 				ResourceVersion: "123",
+				Annotations: map[string]string{
+					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration,
+				},
 				ManagedFields: []v1.ManagedFieldsEntry{
 					{
 						Manager:    "ignored",
@@ -903,6 +1171,9 @@ func (m MockIngressAPICollectorClient) GetIngressesExtV1B1() ([]v1beta1.Ingress,
 				UID:             types.UID(fmt.Sprintf("test-ingress-%d", i)),
 				GenerateName:    "",
 				ResourceVersion: "123",
+				Annotations: map[string]string{
+					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration,
+				},
 				ManagedFields: []v1.ManagedFieldsEntry{
 					{
 						Manager:    "ignored",
@@ -986,6 +1257,9 @@ func (m MockIngressAPICollectorClientNoHTTPRule) GetIngressesExtV1B1() ([]v1beta
 			UID:             types.UID("test-ingress"),
 			GenerateName:    "",
 			ResourceVersion: "123",
+			Annotations: map[string]string{
+				"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration,
+			},
 			ManagedFields: []v1.ManagedFieldsEntry{
 				{
 					Manager:    "ignored",
@@ -1033,101 +1307,133 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 	}
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		commonClusterCollector := NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClientNoHTTPRule{}, sourcePropertiesEnabled, componentChannel, relationChannel, &versionInfo)
-		commonClusterCollector.SetUseRelationCache(false)
-		ic := NewIngressCollector(commonClusterCollector)
-		expectedCollectorName := "Ingress Collector"
-		RunCollectorTest(t, ic, expectedCollectorName)
+		for _, kubernetesStatusEnabled := range []bool{false, true} {
+			commonClusterCollector := NewTestCommonClusterCollectorWithVersion(MockIngressAPICollectorClientNoHTTPRule{}, sourcePropertiesEnabled, componentChannel, relationChannel, &versionInfo, kubernetesStatusEnabled)
+			commonClusterCollector.SetUseRelationCache(false)
+			ic := NewIngressCollector(commonClusterCollector)
+			expectedCollectorName := "Ingress Collector"
+			RunCollectorTest(t, ic, expectedCollectorName)
 
-		for _, tc := range []struct {
-			testCase   string
-			assertions []func(*testing.T, chan *topology.Component, chan *topology.Relation)
-		}{
-			{
-				testCase: "Test Service 1.21 1 - Minimal",
-				assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
-					expectComponent(chooseBySourcePropertiesFeature(
-						sourcePropertiesEnabled,
-						&topology.Component{
-							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
-							Type:       topology.Type{Name: "ingress"},
-							Data: topology.Data{
-								"name":              "test-ingress",
-								"creationTimestamp": creationTime,
-								"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-								"uid":               types.UID("test-ingress"),
-								"identifiers":       []string{},
-							},
-						},
-						&topology.Component{
-							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
-							Type:       topology.Type{Name: "ingress"},
-							Data: topology.Data{
-								"name":        "test-ingress",
-								"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-								"identifiers": []string{},
-							},
-							SourceProperties: map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"creationTimestamp": creationTimeFormatted,
-									"labels":            map[string]interface{}{"test": "label"},
+			for _, tc := range []struct {
+				testCase   string
+				assertions []func(*testing.T, chan *topology.Component, chan *topology.Relation)
+			}{
+				{
+					testCase: "Test Service 1.21 1 - Minimal",
+					assertions: []func(*testing.T, chan *topology.Component, chan *topology.Relation){
+						expectComponent(chooseBySourcePropertiesFeature(
+							sourcePropertiesEnabled,
+							kubernetesStatusEnabled,
+							&topology.Component{
+								ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
+								Type:       topology.Type{Name: "ingress"},
+								Data: topology.Data{
 									"name":              "test-ingress",
-									"namespace":         "test-namespace",
-									"uid":               "test-ingress",
+									"creationTimestamp": creationTime,
+									"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+									"uid":               types.UID("test-ingress"),
+									"identifiers":       []string{},
 								},
-								"spec": map[string]interface{}{
-									"rules": []interface{}{
-										map[string]interface{}{
-											"host":             "host-1",
-											"ingressRuleValue": map[string]interface{}{},
+							},
+							&topology.Component{
+								ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
+								Type:       topology.Type{Name: "ingress"},
+								Data: topology.Data{
+									"name":        "test-ingress",
+									"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+									"identifiers": []string{},
+								},
+								SourceProperties: map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"creationTimestamp": creationTimeFormatted,
+										"labels":            map[string]interface{}{"test": "label"},
+										"name":              "test-ingress",
+										"namespace":         "test-namespace",
+										"uid":               "test-ingress",
+									},
+									"spec": map[string]interface{}{
+										"rules": []interface{}{
+											map[string]interface{}{
+												"host":             "host-1",
+												"ingressRuleValue": map[string]interface{}{},
+											},
 										},
 									},
 								},
 							},
-						},
-					)),
-					expectComponent(&topology.Component{
-						ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15",
-						Type:       topology.Type{Name: "endpoint"},
-						Data: topology.Data{
-							"name":              "34.100.200.15",
-							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"identifiers":       []string{},
-						},
-					}),
-					expectRelation(&topology.Relation{
-						ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
-						SourceID:   "urn:endpoint:/test-cluster-name:34.100.200.15",
-						TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
-						Type:       topology.Type{Name: "routes"},
-						Data:       map[string]interface{}{},
-					}),
-					expectComponent(&topology.Component{
-						ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
-						Type:       topology.Type{Name: "endpoint"},
-						Data: topology.Data{
-							"name":              "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
-							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"identifiers":       []string{},
-						},
-					}),
-					expectRelation(&topology.Relation{
-						ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
-						SourceID:   "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
-						TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
-						Type:       topology.Type{Name: "routes"},
-						Data:       map[string]interface{}{},
-					}),
+							&topology.Component{
+								ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
+								Type:       topology.Type{Name: "ingress"},
+								Data: topology.Data{
+									"name":        "test-ingress",
+									"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+									"identifiers": []string{},
+								},
+								SourceProperties: map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"creationTimestamp": creationTimeFormatted,
+										"labels":            map[string]interface{}{"test": "label"},
+										"name":              "test-ingress",
+										"namespace":         "test-namespace",
+										"uid":               "test-ingress",
+										"resourceVersion":   "123",
+										"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+									},
+									"spec": map[string]interface{}{
+										"rules": []interface{}{
+											map[string]interface{}{
+												"host":             "host-1",
+												"ingressRuleValue": map[string]interface{}{},
+											},
+										},
+									},
+									"status": map[string]interface{}{},
+								},
+							},
+						)),
+						expectComponent(&topology.Component{
+							ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15",
+							Type:       topology.Type{Name: "endpoint"},
+							Data: topology.Data{
+								"name":              "34.100.200.15",
+								"creationTimestamp": creationTime,
+								"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+								"identifiers":       []string{},
+							},
+						}),
+						expectRelation(&topology.Relation{
+							ExternalID: "urn:endpoint:/test-cluster-name:34.100.200.15->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
+							SourceID:   "urn:endpoint:/test-cluster-name:34.100.200.15",
+							TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
+							Type:       topology.Type{Name: "routes"},
+							Data:       map[string]interface{}{},
+						}),
+						expectComponent(&topology.Component{
+							ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+							Type:       topology.Type{Name: "endpoint"},
+							Data: topology.Data{
+								"name":              "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+								"creationTimestamp": creationTime,
+								"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+								"identifiers":       []string{},
+							},
+						}),
+						expectRelation(&topology.Relation{
+							ExternalID: "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com->urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
+							SourceID:   "urn:endpoint:/test-cluster-name:64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+							TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress",
+							Type:       topology.Type{Name: "routes"},
+							Data:       map[string]interface{}{},
+						}),
+					},
 				},
-			},
-		} {
-			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
-				for _, a := range tc.assertions {
-					a(t, componentChannel, relationChannel)
-				}
-			})
+			} {
+				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled, kubernetesStatusEnabled), func(t *testing.T) {
+					for _, a := range tc.assertions {
+						a(t, componentChannel, relationChannel)
+					}
+				})
+			}
 		}
 	}
 }

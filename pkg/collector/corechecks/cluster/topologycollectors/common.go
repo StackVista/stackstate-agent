@@ -29,6 +29,7 @@ type ClusterTopologyCommon interface {
 	CreateRelation(sourceExternalID, targetExternalID, typeName string) *topology.Relation
 	CreateRelationData(sourceExternalID, targetExternalID, typeName string, data map[string]interface{}) *topology.Relation
 	IsSourcePropertiesFeatureEnabled() bool
+	IsExposeKubernetesStatusEnabled() bool
 	initTags(meta metav1.ObjectMeta) map[string]string
 	buildClusterExternalID() string
 	buildConfigMapExternalID(namespace, configMapName string) string
@@ -57,17 +58,18 @@ type ClusterTopologyCommon interface {
 }
 
 type clusterTopologyCommon struct {
-	Instance                topology.Instance
-	APICollectorClient      apiserver.APICollectorClient
-	urn                     urn.Builder
-	sourcePropertiesEnabled bool
-	componentChan           chan<- *topology.Component
-	componentIDCache        sync.Map
-	relationChan            chan<- *topology.Relation
-	possibleRelations       []*topology.Relation
-	k8sVersion              *version.Info
-	useRelationCache        bool
-	relationCacheWG         sync.WaitGroup
+	Instance                      topology.Instance
+	APICollectorClient            apiserver.APICollectorClient
+	urn                           urn.Builder
+	sourcePropertiesEnabled       bool
+	componentChan                 chan<- *topology.Component
+	componentIDCache              sync.Map
+	relationChan                  chan<- *topology.Relation
+	possibleRelations             []*topology.Relation
+	k8sVersion                    *version.Info
+	useRelationCache              bool
+	relationCacheWG               sync.WaitGroup
+	exposeKubernetesStatusEnabled bool
 }
 
 // NewClusterTopologyCommon creates a clusterTopologyCommon
@@ -78,18 +80,20 @@ func NewClusterTopologyCommon(
 	componentChan chan<- *topology.Component,
 	relationChan chan<- *topology.Relation,
 	k8sVersion *version.Info,
+	kubernetesStatusEnabled bool,
 ) ClusterTopologyCommon {
 	return &clusterTopologyCommon{
-		Instance:                instance,
-		APICollectorClient:      ac,
-		urn:                     urn.NewURNBuilder(urn.ClusterTypeFromString(instance.Type), instance.URL),
-		sourcePropertiesEnabled: spEnabled,
-		componentChan:           componentChan,
-		componentIDCache:        sync.Map{},
-		relationChan:            relationChan,
-		k8sVersion:              k8sVersion,
-		useRelationCache:        true,
-		relationCacheWG:         sync.WaitGroup{},
+		Instance:                      instance,
+		APICollectorClient:            ac,
+		urn:                           urn.NewURNBuilder(urn.ClusterTypeFromString(instance.Type), instance.URL),
+		sourcePropertiesEnabled:       spEnabled,
+		componentChan:                 componentChan,
+		componentIDCache:              sync.Map{},
+		relationChan:                  relationChan,
+		k8sVersion:                    k8sVersion,
+		useRelationCache:              true,
+		relationCacheWG:               sync.WaitGroup{},
+		exposeKubernetesStatusEnabled: kubernetesStatusEnabled,
 	}
 }
 
@@ -194,6 +198,11 @@ func (c *clusterTopologyCommon) CreateRelation(sourceExternalID, targetExternalI
 // IsSourcePropertiesFeatureEnabled return value of Source Properties feature flag
 func (c *clusterTopologyCommon) IsSourcePropertiesFeatureEnabled() bool {
 	return c.sourcePropertiesEnabled
+}
+
+// IsExposeKubernetesStatusEnabled return value of Expose Kubernetes Status feature flag
+func (c *clusterTopologyCommon) IsExposeKubernetesStatusEnabled() bool {
+	return c.IsExposeKubernetesStatusEnabled
 }
 
 // buildClusterExternalID
@@ -343,6 +352,15 @@ func removeRedundantFields(result map[string]interface{}, keepStatus bool) {
 	})
 }
 
+func removeManagedFields(result map[string]interface{}) {
+	visitNestedMap(result, "metadata", false, func(metadata map[string]interface{}) {
+		// managedFields contains information about who is able to modify certain parts of an object
+		// this information is irrelevant to runtime, hence is being dropped here to have smaller status
+		// https://kubernetes.io/docs/reference/using-api/server-side-apply/#field-management
+		delete(metadata, "managedFields")
+	})
+}
+
 func visitNestedMap(parentMap map[string]interface{}, key string, removeEmpty bool, callback func(map[string]interface{})) {
 	if nested, ok := parentMap[key]; ok {
 		switch nestedMap := nested.(type) {
@@ -382,6 +400,18 @@ func makeSourcePropertiesKS(object MarshalableKubernetesObject) map[string]inter
 		}
 	}
 	removeRedundantFields(sourceProperties, true)
+	return sourceProperties
+}
+
+func makeSourcePropertiesFullDetails(object MarshalableKubernetesObject) map[string]interface{} {
+	sourceProperties, err := marshallK8sObjectToData(object)
+	if err != nil {
+		_ = log.Warnf("Can't serialize sourceProperties for %s: %v", object.GetSelfLink(), err)
+		sourceProperties = map[string]interface{}{
+			"serialization_error": fmt.Sprintf("error occurred during serialization of this object: %v", err),
+		}
+	}
+	removeManagedFields(sourceProperties)
 	return sourceProperties
 }
 

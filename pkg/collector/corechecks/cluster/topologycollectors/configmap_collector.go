@@ -64,13 +64,18 @@ func (cmc *ConfigMapCollector) configMapToStackStateComponent(configMap v1.Confi
 		},
 	}
 
-	if cmc.IsSourcePropertiesFeatureEnabled() {
+	if cmc.IsSourcePropertiesFeatureEnabled() || cmc.IsExposeKubernetesStatusEnabled() {
 		configMapCopy := configMap
 		configMapCopy.Data = cutData(configMap.Data, cmc.maxDataSize)
 		for k, data := range configMapCopy.BinaryData {
 			configMapCopy.BinaryData[k] = []byte(cutReplacement(data))
 		}
-		sourceProperties := makeSourceProperties(&configMapCopy)
+		sourceProperties := if cmc.IsExposeKubernetesStatusEnabled() {
+			makeSourcePropertiesFullDetails(&configMapCopy)
+		} else {
+			makeSourceProperties(&configMapCopy)
+		}
+		
 		component.SourceProperties = sourceProperties
 	} else {
 		component.Data.PutNonEmpty("kind", configMap.Kind)

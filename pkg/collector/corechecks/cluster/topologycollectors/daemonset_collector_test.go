@@ -31,166 +31,286 @@ func TestDaemonSetCollector(t *testing.T) {
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		commonClusterCollector := NewTestCommonClusterCollector(MockDaemonSetAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled)
-		commonClusterCollector.SetUseRelationCache(false)
-		cmc := NewDaemonSetCollector(commonClusterCollector)
-		expectedCollectorName := "DaemonSet Collector"
-		RunCollectorTest(t, cmc, expectedCollectorName)
+		for _, kubernetesStatusEnabled := range []bool{false, true} {
+			commonClusterCollector := NewTestCommonClusterCollector(MockDaemonSetAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled, kubernetesStatusEnabled)
+			commonClusterCollector.SetUseRelationCache(false)
+			cmc := NewDaemonSetCollector(commonClusterCollector)
+			expectedCollectorName := "DaemonSet Collector"
+			RunCollectorTest(t, cmc, expectedCollectorName)
 
-		for _, tc := range []struct {
-			testCase     string
-			expectedNoSP *topology.Component
-			expectedSP   *topology.Component
-		}{
-			{
-				testCase: "Test DaemonSet 1",
-				expectedNoSP: &topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:daemonset/test-daemonset-1",
-					Type:       topology.Type{Name: "daemonset"},
-					Data: topology.Data{
-						"name":              "test-daemonset-1",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-						"uid":               types.UID("test-daemonset-1"),
-						"updateStrategy":    appsV1.RollingUpdateDaemonSetStrategyType,
-					},
-				},
-				expectedSP: &topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:daemonset/test-daemonset-1",
-					Type:       topology.Type{Name: "daemonset"},
-					Data: topology.Data{
-						"name": "test-daemonset-1",
-						"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-					},
-					SourceProperties: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"creationTimestamp": creationTimeFormatted,
-							"labels":            map[string]interface{}{"test": "label"},
+			for _, tc := range []struct {
+				testCase           string
+				expectedNoSP       *topology.Component
+				expectedSP         *topology.Component
+				expectedKubeStatus *topology.Component
+			}{
+				{
+					testCase: "Test DaemonSet 1",
+					expectedNoSP: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:daemonset/test-daemonset-1",
+						Type:       topology.Type{Name: "daemonset"},
+						Data: topology.Data{
 							"name":              "test-daemonset-1",
-							"namespace":         "test-namespace",
-							"uid":               "test-daemonset-1",
+							"creationTimestamp": creationTime,
+							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"uid":               types.UID("test-daemonset-1"),
+							"updateStrategy":    appsV1.RollingUpdateDaemonSetStrategyType,
 						},
-						"spec": map[string]interface{}{
-							"template": map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"creationTimestamp": interface{}(nil),
+					},
+					expectedSP: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:daemonset/test-daemonset-1",
+						Type:       topology.Type{Name: "daemonset"},
+						Data: topology.Data{
+							"name": "test-daemonset-1",
+							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-daemonset-1",
+								"namespace":         "test-namespace",
+								"uid":               "test-daemonset-1",
+							},
+							"spec": map[string]interface{}{
+								"template": map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"creationTimestamp": interface{}(nil),
+									},
+									"spec": map[string]interface{}{},
 								},
-								"spec": map[string]interface{}{},
+								"updateStrategy": map[string]interface{}{
+									"type": "RollingUpdate",
+								},
 							},
-							"updateStrategy": map[string]interface{}{
-								"type": "RollingUpdate",
+						},
+					},
+					expectedKubeStatus: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:daemonset/test-daemonset-1",
+						Type:       topology.Type{Name: "daemonset"},
+						Data: topology.Data{
+							"name": "test-daemonset-1",
+							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-daemonset-1",
+								"namespace":         "test-namespace",
+								"uid":               "test-daemonset-1",
+								"resourceVersion":   "123",
+							},
+							"spec": map[string]interface{}{
+								"template": map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"creationTimestamp": interface{}(nil),
+									},
+									"spec": map[string]interface{}{},
+								},
+								"updateStrategy": map[string]interface{}{
+									"type": "RollingUpdate",
+								},
+							},
+							"status": map[string]interface{}{
+								"currentNumberScheduled": "1",
+								"desiredNumberScheduled": "1",
+								"numberAvailable":        "1",
+								"numberMisscheduled":     "0",
+								"numberReady":            "1",
+								"observedGeneration":     "0",
+								"updatedNumberScheduled": "1",
 							},
 						},
 					},
 				},
-			},
-			{
-				testCase: "Test DaemonSet 2",
-				expectedNoSP: &topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:daemonset/test-daemonset-2",
-					Type:       topology.Type{Name: "daemonset"},
-					Data: topology.Data{
-						"name":              "test-daemonset-2",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-						"uid":               types.UID("test-daemonset-2"),
-						"updateStrategy":    appsV1.RollingUpdateDaemonSetStrategyType,
-					},
-				},
-				expectedSP: &topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:daemonset/test-daemonset-2",
-					Type:       topology.Type{Name: "daemonset"},
-					Data: topology.Data{
-						"name": "test-daemonset-2",
-						"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-					},
-					SourceProperties: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"creationTimestamp": creationTimeFormatted,
-							"labels":            map[string]interface{}{"test": "label"},
+				{
+					testCase: "Test DaemonSet 2",
+					expectedNoSP: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:daemonset/test-daemonset-2",
+						Type:       topology.Type{Name: "daemonset"},
+						Data: topology.Data{
 							"name":              "test-daemonset-2",
-							"namespace":         "test-namespace",
-							"uid":               "test-daemonset-2",
+							"creationTimestamp": creationTime,
+							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"uid":               types.UID("test-daemonset-2"),
+							"updateStrategy":    appsV1.RollingUpdateDaemonSetStrategyType,
 						},
-						"spec": map[string]interface{}{
-							"template": map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"creationTimestamp": interface{}(nil),
+					},
+					expectedSP: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:daemonset/test-daemonset-2",
+						Type:       topology.Type{Name: "daemonset"},
+						Data: topology.Data{
+							"name": "test-daemonset-2",
+							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-daemonset-2",
+								"namespace":         "test-namespace",
+								"uid":               "test-daemonset-2",
+							},
+							"spec": map[string]interface{}{
+								"template": map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"creationTimestamp": interface{}(nil),
+									},
+									"spec": map[string]interface{}{},
 								},
-								"spec": map[string]interface{}{},
+								"updateStrategy": map[string]interface{}{
+									"type": "RollingUpdate",
+								},
 							},
-							"updateStrategy": map[string]interface{}{
-								"type": "RollingUpdate",
+						},
+					},
+					expectedKubeStatus: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:daemonset/test-daemonset-2",
+						Type:       topology.Type{Name: "daemonset"},
+						Data: topology.Data{
+							"name": "test-daemonset-2",
+							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-daemonset-2",
+								"namespace":         "test-namespace",
+								"uid":               "test-daemonset-2",
+								"resourceVersion":   "123",
+							},
+							"spec": map[string]interface{}{
+								"template": map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"creationTimestamp": interface{}(nil),
+									},
+									"spec": map[string]interface{}{},
+								},
+								"updateStrategy": map[string]interface{}{
+									"type": "RollingUpdate",
+								},
+							},
+							"status": map[string]interface{}{
+								"currentNumberScheduled": "1",
+								"desiredNumberScheduled": "1",
+								"numberAvailable":        "1",
+								"numberMisscheduled":     "0",
+								"numberReady":            "1",
+								"observedGeneration":     "0",
+								"updatedNumberScheduled": "1",
 							},
 						},
 					},
 				},
-			},
-			{
-				testCase: "Test DaemonSet 3 - Kind + Generate Name",
-				expectedNoSP: &topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:daemonset/test-daemonset-3",
-					Type:       topology.Type{Name: "daemonset"},
-					Data: topology.Data{
-						"name":              "test-daemonset-3",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-						"uid":               types.UID("test-daemonset-3"),
-						"updateStrategy":    appsV1.RollingUpdateDaemonSetStrategyType,
-						"kind":              "some-specified-kind",
-						"generateName":      "some-specified-generation",
-					},
-				},
-				expectedSP: &topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:daemonset/test-daemonset-3",
-					Type:       topology.Type{Name: "daemonset"},
-					Data: topology.Data{
-						"name": "test-daemonset-3",
-						"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-					},
-					SourceProperties: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"creationTimestamp": creationTimeFormatted,
-							"labels":            map[string]interface{}{"test": "label"},
-							"generateName":      "some-specified-generation",
+				{
+					testCase: "Test DaemonSet 3 - Kind + Generate Name",
+					expectedNoSP: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:daemonset/test-daemonset-3",
+						Type:       topology.Type{Name: "daemonset"},
+						Data: topology.Data{
 							"name":              "test-daemonset-3",
-							"namespace":         "test-namespace",
-							"uid":               "test-daemonset-3",
+							"creationTimestamp": creationTime,
+							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"uid":               types.UID("test-daemonset-3"),
+							"updateStrategy":    appsV1.RollingUpdateDaemonSetStrategyType,
+							"kind":              "some-specified-kind",
+							"generateName":      "some-specified-generation",
 						},
-						"spec": map[string]interface{}{
-							"template": map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"creationTimestamp": interface{}(nil),
-								},
-								"spec": map[string]interface{}{},
+					},
+					expectedSP: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:daemonset/test-daemonset-3",
+						Type:       topology.Type{Name: "daemonset"},
+						Data: topology.Data{
+							"name": "test-daemonset-3",
+							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"generateName":      "some-specified-generation",
+								"name":              "test-daemonset-3",
+								"namespace":         "test-namespace",
+								"uid":               "test-daemonset-3",
 							},
-							"updateStrategy": map[string]interface{}{
-								"type": "RollingUpdate",
+							"spec": map[string]interface{}{
+								"template": map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"creationTimestamp": interface{}(nil),
+									},
+									"spec": map[string]interface{}{},
+								},
+								"updateStrategy": map[string]interface{}{
+									"type": "RollingUpdate",
+								},
+							},
+						},
+					},
+					expectedKubeStatus: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:daemonset/test-daemonset-3",
+						Type:       topology.Type{Name: "daemonset"},
+						Data: topology.Data{
+							"name": "test-daemonset-3",
+							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"generateName":      "some-specified-generation",
+								"name":              "test-daemonset-3",
+								"namespace":         "test-namespace",
+								"uid":               "test-daemonset-3",
+								"resourceVersion":   "123",
+							},
+							"spec": map[string]interface{}{
+								"template": map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"creationTimestamp": interface{}(nil),
+									},
+									"spec": map[string]interface{}{},
+								},
+								"updateStrategy": map[string]interface{}{
+									"type": "RollingUpdate",
+								},
+							},
+							"status": map[string]interface{}{
+								"currentNumberScheduled": "1",
+								"desiredNumberScheduled": "1",
+								"numberAvailable":        "1",
+								"numberMisscheduled":     "0",
+								"numberReady":            "1",
+								"observedGeneration":     "0",
+								"updatedNumberScheduled": "1",
 							},
 						},
 					},
 				},
-			},
-		} {
-			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
-				component := <-componentChannel
-				if sourcePropertiesEnabled {
-					assert.EqualValues(t, tc.expectedSP, component)
-				} else {
-					assert.EqualValues(t, tc.expectedNoSP, component)
-				}
+			} {
+				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled, kubernetesStatusEnabled), func(t *testing.T) {
+					component := <-componentChannel
+					if kubernetesStatusEnabled {
+						assert.EqualValues(t, tc.expectedKubeStatus, component)
+					} else if sourcePropertiesEnabled {
+						assert.EqualValues(t, tc.expectedSP, component)
+					} else {
+						assert.EqualValues(t, tc.expectedNoSP, component)
+					}
 
-				actualRelation := <-relationChannel
-				expectedRelation := &topology.Relation{
-					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" + component.ExternalID,
-					Type:       topology.Type{Name: "encloses"},
-					SourceID:   "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
-					TargetID:   component.ExternalID,
-					Data:       map[string]interface{}{},
-				}
-				assert.EqualValues(t, expectedRelation, actualRelation)
+					actualRelation := <-relationChannel
+					expectedRelation := &topology.Relation{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" + component.ExternalID,
+						Type:       topology.Type{Name: "encloses"},
+						SourceID:   "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
+						TargetID:   component.ExternalID,
+						Data:       map[string]interface{}{},
+					}
+					assert.EqualValues(t, expectedRelation, actualRelation)
 
-			})
+				})
+			}
 		}
 	}
 }
@@ -230,6 +350,13 @@ func (m MockDaemonSetAPICollectorClient) GetDaemonSets() ([]appsV1.DaemonSet, er
 				UpdateStrategy: appsV1.DaemonSetUpdateStrategy{
 					Type: appsV1.RollingUpdateDaemonSetStrategyType,
 				},
+			},
+			Status: appsV1.DaemonSetStatus{
+				CurrentNumberScheduled: int32(1),
+				NumberMisscheduled:     int32(0),
+				DesiredNumberScheduled: int32(1),
+				NumberReady:            int32(1),
+				NumberAvailable:        int32(1),
 			},
 		}
 

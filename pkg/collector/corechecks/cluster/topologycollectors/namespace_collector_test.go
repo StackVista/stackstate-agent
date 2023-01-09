@@ -20,6 +20,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+var lastAppliedConfiguration = `{"apiVersion":"v1","kind":"Namespace","metadata":{"annotations":{"argocd.io/tracking-id":"tenant"},"labels":{"name":"test"},"name":"test"},"spec":{"finalizers":["kubernetes"]}}`
+
 func TestNamespaceCollector(t *testing.T) {
 
 	componentChannel := make(chan *topology.Component)
@@ -31,88 +33,138 @@ func TestNamespaceCollector(t *testing.T) {
 	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
+		for _, kubernetesStatusEnabled := range []bool{false, true} {
 
-		nsc := NewNamespaceCollector(NewTestCommonClusterCollector(MockNamespaceAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled))
-		expectedCollectorName := "Namespace Collector"
-		RunCollectorTest(t, nsc, expectedCollectorName)
+			nsc := NewNamespaceCollector(NewTestCommonClusterCollector(MockNamespaceAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled, kubernetesStatusEnabled))
+			expectedCollectorName := "Namespace Collector"
+			RunCollectorTest(t, nsc, expectedCollectorName)
 
-		for _, tc := range []struct {
-			testCase     string
-			expectedSP   *topology.Component
-			expectedNoSP *topology.Component
-		}{
-			{
-				testCase: "Test Namespace 1 - Complete",
-				expectedNoSP: &topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-1",
-					Type:       topology.Type{Name: "namespace"},
-					Data: topology.Data{
-						"name":              "test-namespace-1",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name"},
-						"uid":               types.UID("test-namespace-1"),
-						"identifiers":       []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-1"},
-					},
-				},
-				expectedSP: &topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-1",
-					Type:       topology.Type{Name: "namespace"},
-					Data: topology.Data{
-						"name":        "test-namespace-1",
-						"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name"},
-						"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-1"},
-					},
-					SourceProperties: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"creationTimestamp": creationTimeFormatted,
-							"labels":            map[string]interface{}{"test": "label"},
+			for _, tc := range []struct {
+				testCase             string
+				expectedSP           *topology.Component
+				expectedNoSP         *topology.Component
+				expectedSPPlusStatus *topology.Component
+			}{
+				{
+					testCase: "Test Namespace 1 - Complete",
+					expectedNoSP: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-1",
+						Type:       topology.Type{Name: "namespace"},
+						Data: topology.Data{
 							"name":              "test-namespace-1",
-							"uid":               "test-namespace-1",
+							"creationTimestamp": creationTime,
+							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name"},
+							"uid":               types.UID("test-namespace-1"),
+							"identifiers":       []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-1"},
 						},
-						"spec": map[string]interface{}{},
+					},
+					expectedSP: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-1",
+						Type:       topology.Type{Name: "namespace"},
+						Data: topology.Data{
+							"name":        "test-namespace-1",
+							"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name"},
+							"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-1"},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-namespace-1",
+								"uid":               "test-namespace-1",
+							},
+							"spec": map[string]interface{}{},
+						},
+					},
+					expectedSPPlusStatus: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-1",
+						Type:       topology.Type{Name: "namespace"},
+						Data: topology.Data{
+							"name":        "test-namespace-1",
+							"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name"},
+							"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-1"},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-namespace-1",
+								"uid":               "test-namespace-1",
+								"resourceVersion":   "123",
+								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+							},
+							"spec": map[string]interface{}{},
+							"status": map[string]interface{}{
+								"phase": "Active",
+							},
+						},
 					},
 				},
-			},
-			{
-				testCase: "Test Namespace 2 - Minimal",
-				expectedNoSP: &topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-2",
-					Type:       topology.Type{Name: "namespace"},
-					Data: topology.Data{
-						"name":              "test-namespace-2",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"cluster-name": "test-cluster-name"},
-						"uid":               types.UID("test-namespace-2"),
-						"identifiers":       []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
-					},
-				},
-				expectedSP: &topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-2",
-					Type:       topology.Type{Name: "namespace"},
-					Data: topology.Data{
-						"name":        "test-namespace-2",
-						"tags":        map[string]string{"cluster-name": "test-cluster-name"},
-						"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
-					},
-					SourceProperties: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"creationTimestamp": creationTimeFormatted,
+				{
+					testCase: "Test Namespace 2 - Minimal",
+					expectedNoSP: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-2",
+						Type:       topology.Type{Name: "namespace"},
+						Data: topology.Data{
 							"name":              "test-namespace-2",
-							"uid":               "test-namespace-2",
+							"creationTimestamp": creationTime,
+							"tags":              map[string]string{"cluster-name": "test-cluster-name"},
+							"uid":               types.UID("test-namespace-2"),
+							"identifiers":       []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
 						},
-						"spec": map[string]interface{}{},
+					},
+					expectedSP: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-2",
+						Type:       topology.Type{Name: "namespace"},
+						Data: topology.Data{
+							"name":        "test-namespace-2",
+							"tags":        map[string]string{"cluster-name": "test-cluster-name"},
+							"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"name":              "test-namespace-2",
+								"uid":               "test-namespace-2",
+							},
+							"spec": map[string]interface{}{},
+						},
+					},
+					expectedSPPlusStatus: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-2",
+						Type:       topology.Type{Name: "namespace"},
+						Data: topology.Data{
+							"name":            "test-namespace-2",
+							"tags":            map[string]string{"cluster-name": "test-cluster-name"},
+							"identifiers":     []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
+							"resourceVersion": "123",
+							"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"name":              "test-namespace-2",
+								"uid":               "test-namespace-2",
+							},
+							"spec": map[string]interface{}{},
+							"status": map[string]interface{}{
+								"phase": "Active",
+							},
+						},
 					},
 				},
-			},
-		} {
-			t.Run(tc.testCase, func(t *testing.T) {
-				component := <-componentChannel
-				if sourcePropertiesEnabled {
-					assert.EqualValues(t, tc.expectedSP, component)
-				} else {
-					assert.EqualValues(t, tc.expectedNoSP, component)
-				}
-			})
+			} {
+				t.Run(tc.testCase, func(t *testing.T) {
+					component := <-componentChannel
+					if kubernetesStatusEnabled {
+						assert.EqualValues(t, tc.expectedSPPlusStatus, component)
+					} else if sourcePropertiesEnabled {
+						assert.EqualValues(t, tc.expectedSP, component)
+					} else {
+						assert.EqualValues(t, tc.expectedNoSP, component)
+					}
+				})
+			}
 		}
 	}
 }
@@ -135,6 +187,9 @@ func (m MockNamespaceAPICollectorClient) GetNamespaces() ([]coreV1.Namespace, er
 				UID:               types.UID(fmt.Sprintf("test-namespace-%d", i)),
 				GenerateName:      "",
 				ResourceVersion:   "123",
+				Annotations: map[string]string{
+					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration,
+				},
 				ManagedFields: []v1.ManagedFieldsEntry{
 					{
 						Manager:    "ignored",
@@ -144,6 +199,9 @@ func (m MockNamespaceAPICollectorClient) GetNamespaces() ([]coreV1.Namespace, er
 						FieldsType: "whatever",
 					},
 				},
+			},
+			Status: v1.JobStatus{
+				Phase: "Active",
 			},
 		}
 

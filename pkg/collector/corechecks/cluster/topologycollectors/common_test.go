@@ -2,8 +2,10 @@ package topologycollectors
 
 import "github.com/StackVista/stackstate-agent/pkg/topology"
 
-func testCaseName(baseName string, sourcePropertiesEnabled bool) string {
-	if sourcePropertiesEnabled {
+func testCaseName(baseName string, sourcePropertiesEnabled bool, kubernetesStatusEnabled bool) string {
+	if kubernetesStatusEnabled {
+		baseName = baseName + " w/ sourceProps plus status"
+	} else if sourcePropertiesEnabled {
 		baseName = baseName + " w/ sourceProps"
 	} else {
 		baseName = baseName + " w/o sourceProps"
@@ -13,10 +15,14 @@ func testCaseName(baseName string, sourcePropertiesEnabled bool) string {
 
 func chooseBySourcePropertiesFeature(
 	sourcePropertiesEnabled bool,
+	kubernetesStatusEnabled bool,
 	componentNoSP *topology.Component,
 	componentSP *topology.Component,
+	componentSPPlustStatus *topology.Component,
 ) *topology.Component {
-	if sourcePropertiesEnabled {
+	if kubernetesStatusEnabled {
+		return componentSPPlustStatus
+	} else if sourcePropertiesEnabled {
 		return componentSP
 	}
 	return componentNoSP
