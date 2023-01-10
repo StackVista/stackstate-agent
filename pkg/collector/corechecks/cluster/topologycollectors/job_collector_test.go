@@ -404,15 +404,15 @@ func (m MockJobAPICollectorClient) GetJobs() ([]batchV1.Job, error) {
 				BackoffLimit: &backoffLimit,
 			},
 			Status: batchV1.JobStatus{
-				CompletionTime: &v1.Time{Time: time.Now()},
-				StartTime:      &v1.Time{Time: time.Now()},
+				CompletionTime: &creationTimeJob,
+				StartTime:      &creationTimeJob,
 				Succeeded:      int32(1),
 				Conditions: []batchV1.JobCondition{
 					{
-						Type:               "Complete",
+						LastProbeTime:      creationTimeJob,
+						LastTransitionTime: creationTimeJob,
 						Status:             "True",
-						LastProbeTime:      v1.Time{Time: time.Now()},
-						LastTransitionTime: v1.Time{Time: time.Now()},
+						Type:               "Complete",
 					},
 				},
 			},

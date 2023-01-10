@@ -221,6 +221,7 @@ func cronJobV1B1SPPlusStatus2() *topology.Component {
 				"schedule": "0 0 * * *",
 			},
 			"status": map[string]interface{}{
+				"active":             []interface{}{map[string]interface{}{"kind": "Job", "name": "cronjob-job-1"}},
 				"lastScheduleTime":   lastExecFormatted,
 				"lastSuccessfulTime": lastExecFormatted,
 			},
@@ -332,6 +333,7 @@ func cronJobV1B1SPPlusStatus1() *topology.Component {
 				"schedule": "0 0 * * *",
 			},
 			"status": map[string]interface{}{
+				"active":             []interface{}{map[string]interface{}{"kind": "Job", "name": "cronjob-job-1"}},
 				"lastScheduleTime":   lastExecFormatted,
 				"lastSuccessfulTime": lastExecFormatted,
 			},
@@ -445,6 +447,7 @@ func cronJobV1SPPlusStatus() *topology.Component {
 				"schedule": "0 1 * * *",
 			},
 			"status": map[string]interface{}{
+				"active":             []interface{}{map[string]interface{}{"kind": "Job", "name": "cronjob-job-1"}},
 				"lastScheduleTime":   lastExecFormatted,
 				"lastSuccessfulTime": lastExecFormatted,
 			},
@@ -593,7 +596,8 @@ func (m MockCronJobAPICollectorClient) GetCronJobsV1() ([]batchV1.CronJob, error
 			Active: []apiv1.ObjectReference{
 				{Kind: "Job", Name: "cronjob-job-v1"},
 			},
-			LastScheduleTime: &cronJobTime,
+			LastScheduleTime:   &cronJobTime,
+			LastSuccessfulTime: &cronJobTime,
 		},
 	}
 

@@ -141,6 +141,7 @@ func TestConfigurationParsing(t *testing.T) {
 	allResourcesAreDisabledConfig := `
 cluster_name: mycluster
 source_properties_enabled: false
+expose_kubernetes_status_enabled: false
 resources:
   persistentvolumes: false
   persistentvolumeclaims: false

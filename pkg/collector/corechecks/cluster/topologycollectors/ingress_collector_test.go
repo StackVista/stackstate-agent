@@ -1164,10 +1164,7 @@ func (m MockIngressAPICollectorClient) GetIngressesExtV1B1() ([]v1beta1.Ingress,
 			},
 			Status: v1beta1.IngressStatus{
 				LoadBalancer: coreV1.LoadBalancerStatus{
-					Ingress: []coreV1.LoadBalancerIngress{
-						{IP: "34.100.200.15"},
-						{Hostname: "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com"},
-					},
+					Ingress: []coreV1.LoadBalancerIngress{},
 				},
 			},
 		}
@@ -1365,7 +1362,11 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 											},
 										},
 									},
-									"status": map[string]interface{}{},
+									"status": map[string]interface{}{
+										"loadBalancer": map[string]interface{}{
+											"ingress": []coreV1.LoadBalancerIngress{},
+										},
+									},
 								},
 							},
 						)),
