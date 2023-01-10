@@ -9,10 +9,11 @@ package topologycollectors
 
 import (
 	"fmt"
-	netV1 "k8s.io/api/networking/v1"
-	"k8s.io/apimachinery/pkg/version"
 	"testing"
 	"time"
+
+	netV1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/version"
 
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
@@ -359,7 +360,7 @@ func expectIngress213(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 											"path": "host-2-path-1"}}}}}}},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
-						"ingress": []coreV1.LoadBalancerIngress{},
+						"ingress": []interface{}{},
 					},
 				},
 			},
@@ -489,7 +490,7 @@ func expectIngress212(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
-						"ingress": []coreV1.LoadBalancerIngress{},
+						"ingress": []interface{}{},
 					},
 				},
 			},
@@ -581,11 +582,9 @@ func expectIngress211(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-1",
 			Type:       topology.Type{Name: "ingress"},
 			Data: topology.Data{
-				"name":            "test-ingress-1",
-				"tags":            map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-				"identifiers":     []string{},
-				"resourceVersion": "123",
-				"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationIngress},
+				"name":        "test-ingress-1",
+				"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
 				"metadata": map[string]interface{}{
@@ -594,11 +593,13 @@ func expectIngress211(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 					"name":              "test-ingress-1",
 					"namespace":         "test-namespace",
 					"uid":               "test-ingress-1",
+					"resourceVersion":   "123",
+					"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationIngress},
 				},
 				"spec": map[string]interface{}{},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
-						"ingress": []coreV1.LoadBalancerIngress{},
+						"ingress": []interface{}{},
 					},
 				},
 			},
@@ -814,7 +815,14 @@ func expectIngress223(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 													}}}}}}}}}},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
-						"ingress": []coreV1.LoadBalancerIngress{},
+						"ingress": []interface{}{
+							map[string]interface{}{
+								"ip": "34.100.200.22",
+							},
+							map[string]interface{}{
+								"hostname": "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+							},
+						},
 					},
 				},
 			},
@@ -911,11 +919,9 @@ func expectIngress222(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-2",
 			Type:       topology.Type{Name: "ingress"},
 			Data: topology.Data{
-				"name":            "test-ingress22-2",
-				"tags":            map[string]string{"test": "label22", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-				"identifiers":     []string{},
-				"resourceVersion": "123",
-				"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationIngress},
+				"name":        "test-ingress22-2",
+				"tags":        map[string]string{"test": "label22", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
 				"metadata": map[string]interface{}{
@@ -924,6 +930,8 @@ func expectIngress222(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 					"name":              "test-ingress22-2",
 					"namespace":         "test-namespace",
 					"uid":               "test-ingress22-2",
+					"resourceVersion":   "123",
+					"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationIngress},
 				},
 				"spec": map[string]interface{}{
 					"defaultBackend": map[string]interface{}{
@@ -935,7 +943,14 @@ func expectIngress222(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
-						"ingress": []coreV1.LoadBalancerIngress{},
+						"ingress": []interface{}{
+							map[string]interface{}{
+								"ip": "34.100.200.22",
+							},
+							map[string]interface{}{
+								"hostname": "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+							},
+						},
 					},
 				},
 			},
@@ -1014,11 +1029,9 @@ func expectIngress221(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress22-1",
 			Type:       topology.Type{Name: "ingress"},
 			Data: topology.Data{
-				"name":            "test-ingress22-1",
-				"tags":            map[string]string{"test": "label22", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-				"identifiers":     []string{},
-				"resourceVersion": "123",
-				"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationIngress},
+				"name":        "test-ingress22-1",
+				"tags":        map[string]string{"test": "label22", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
 				"metadata": map[string]interface{}{
@@ -1027,11 +1040,20 @@ func expectIngress221(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 					"name":              "test-ingress22-1",
 					"namespace":         "test-namespace",
 					"uid":               "test-ingress22-1",
+					"resourceVersion":   "123",
+					"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationIngress},
 				},
 				"spec": map[string]interface{}{},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
-						"ingress": []coreV1.LoadBalancerIngress{},
+						"ingress": []interface{}{
+							map[string]interface{}{
+								"ip": "34.100.200.22",
+							},
+							map[string]interface{}{
+								"hostname": "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+							},
+						},
 					},
 				},
 			},
@@ -1364,7 +1386,14 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 									},
 									"status": map[string]interface{}{
 										"loadBalancer": map[string]interface{}{
-											"ingress": []coreV1.LoadBalancerIngress{},
+											"ingress": []interface{}{
+												map[string]interface{}{
+													"ip": "34.100.200.15",
+												},
+												map[string]interface{}{
+													"hostname": "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+												},
+											},
 										},
 									},
 								},

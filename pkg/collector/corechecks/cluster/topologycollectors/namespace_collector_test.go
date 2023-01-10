@@ -134,17 +134,17 @@ func TestNamespaceCollector(t *testing.T) {
 						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-2",
 						Type:       topology.Type{Name: "namespace"},
 						Data: topology.Data{
-							"name":            "test-namespace-2",
-							"tags":            map[string]string{"cluster-name": "test-cluster-name"},
-							"identifiers":     []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
-							"resourceVersion": "123",
-							"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationNamespace},
+							"name":        "test-namespace-2",
+							"tags":        map[string]string{"cluster-name": "test-cluster-name"},
+							"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"name":              "test-namespace-2",
 								"uid":               "test-namespace-2",
+								"resourceVersion":   "123",
+								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationNamespace},
 							},
 							"spec": map[string]interface{}{},
 							"status": map[string]interface{}{
