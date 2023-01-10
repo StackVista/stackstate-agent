@@ -20,7 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-var lastAppliedConfiguration_deployment = `{"apiVersion":"apps/v1","kind":"Deployment",
+var lastAppliedConfigurationDeployment = `{"apiVersion":"apps/v1","kind":"Deployment",
 	"metadata":{"annotations":{},"name":"nginx-deployment","namespace":"default"},
 	"spec":{"minReadySeconds":5,"selector":{"matchLabels":{"app":nginx}},"template":{"metadata":{"labels":{"app":"nginx"}},
 	"spec":{"containers":[{"image":"nginx:1.14.2","name":"nginx",
@@ -113,7 +113,7 @@ func TestDeploymentCollector(t *testing.T) {
 								"uid":             "test-deployment-1",
 								"resourceVersion": "123",
 								"annotations": map[string]interface{}{
-									"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_deployment,
+									"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationDeployment,
 								},
 							},
 							"spec": map[string]interface{}{
@@ -209,7 +209,7 @@ func TestDeploymentCollector(t *testing.T) {
 								"namespace":       "test-namespace",
 								"uid":             "test-deployment-2",
 								"resourceVersion": "123",
-								"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_deployment},
+								"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationDeployment},
 							},
 							"spec": map[string]interface{}{
 								"replicas": float64(1),
@@ -308,7 +308,7 @@ func TestDeploymentCollector(t *testing.T) {
 								},
 								"annotations": map[string]interface{}{
 									"another-annotation-1":                             "should-be-kept",
-									"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_deployment,
+									"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationDeployment,
 								},
 								"name":            "test-deployment-3",
 								"generateName":    "some-specified-generation",
@@ -396,7 +396,7 @@ func (m MockDeploymentAPICollectorClient) GetDeployments() ([]appsV1.Deployment,
 				GenerateName:    "",
 				ResourceVersion: "123",
 				Annotations: map[string]string{
-					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_deployment,
+					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationDeployment,
 				},
 				ManagedFields: []v1.ManagedFieldsEntry{
 					{
@@ -439,7 +439,7 @@ func (m MockDeploymentAPICollectorClient) GetDeployments() ([]appsV1.Deployment,
 			deployment.ObjectMeta.GenerateName = "some-specified-generation"
 			deployment.Annotations = map[string]string{
 				"another-annotation-1":                             "should-be-kept",
-				"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_deployment,
+				"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationDeployment,
 			}
 		}
 

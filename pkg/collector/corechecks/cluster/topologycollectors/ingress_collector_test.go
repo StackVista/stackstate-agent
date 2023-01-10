@@ -23,7 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-var lastAppliedConfiguration_ingress = `{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"kubernetes.io/ingress.class":"ingress-nginx-external","nginx.ingress.kubernetes.io/ingress.class":"ingress-nginx-external"},"labels":{"app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/version":"1.0.0","helm.sh/chart":"1.0.0"},"name":"app","namespace":"tenant"},"spec":{"rules":[{"host":"test.com","http":{"paths":[]}}],"tls":[]}}`
+var lastAppliedConfigurationIngress = `{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"kubernetes.io/ingress.class":"ingress-nginx-external","nginx.ingress.kubernetes.io/ingress.class":"ingress-nginx-external"},"labels":{"app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/version":"1.0.0","helm.sh/chart":"1.0.0"},"name":"app","namespace":"tenant"},"spec":{"rules":[{"host":"test.com","http":{"paths":[]}}],"tls":[]}}`
 
 func TestIngressCollector_1_18(t *testing.T) {
 
@@ -328,7 +328,7 @@ func expectIngress213(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 					"uid":               "test-ingress-3",
 					"generateName":      "some-specified-generation",
 					"resourceVersion":   "123",
-					"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress},
+					"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationIngress},
 				},
 				"spec": map[string]interface{}{
 					"rules": []interface{}{
@@ -479,7 +479,7 @@ func expectIngress212(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 					"namespace":         "test-namespace",
 					"uid":               "test-ingress-2",
 					"resourceVersion":   "123",
-					"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress},
+					"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationIngress},
 				},
 				"spec": map[string]interface{}{
 					"backend": map[string]interface{}{
@@ -585,7 +585,7 @@ func expectIngress211(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"tags":            map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 				"identifiers":     []string{},
 				"resourceVersion": "123",
-				"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress},
+				"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationIngress},
 			},
 			SourceProperties: map[string]interface{}{
 				"metadata": map[string]interface{}{
@@ -774,7 +774,7 @@ func expectIngress223(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 					"uid":               "test-ingress22-3",
 					"generateName":      "some-specified-generation",
 					"resourceVersion":   "123",
-					"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress},
+					"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationIngress},
 				},
 				"spec": map[string]interface{}{
 					"rules": []interface{}{
@@ -915,7 +915,7 @@ func expectIngress222(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"tags":            map[string]string{"test": "label22", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 				"identifiers":     []string{},
 				"resourceVersion": "123",
-				"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress},
+				"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationIngress},
 			},
 			SourceProperties: map[string]interface{}{
 				"metadata": map[string]interface{}{
@@ -1018,7 +1018,7 @@ func expectIngress221(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"tags":            map[string]string{"test": "label22", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 				"identifiers":     []string{},
 				"resourceVersion": "123",
-				"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress},
+				"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationIngress},
 			},
 			SourceProperties: map[string]interface{}{
 				"metadata": map[string]interface{}{
@@ -1061,7 +1061,7 @@ func (m MockIngressAPICollectorClient) GetIngressesNetV1() ([]netV1.Ingress, err
 				GenerateName:    "",
 				ResourceVersion: "123",
 				Annotations: map[string]string{
-					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress,
+					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationIngress,
 				},
 				ManagedFields: []v1.ManagedFieldsEntry{
 					{
@@ -1150,7 +1150,7 @@ func (m MockIngressAPICollectorClient) GetIngressesExtV1B1() ([]v1beta1.Ingress,
 				GenerateName:    "",
 				ResourceVersion: "123",
 				Annotations: map[string]string{
-					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress,
+					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationIngress,
 				},
 				ManagedFields: []v1.ManagedFieldsEntry{
 					{
@@ -1236,7 +1236,7 @@ func (m MockIngressAPICollectorClientNoHTTPRule) GetIngressesExtV1B1() ([]v1beta
 			GenerateName:    "",
 			ResourceVersion: "123",
 			Annotations: map[string]string{
-				"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress,
+				"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationIngress,
 			},
 			ManagedFields: []v1.ManagedFieldsEntry{
 				{
@@ -1355,7 +1355,7 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 										"namespace":         "test-namespace",
 										"uid":               "test-ingress",
 										"resourceVersion":   "123",
-										"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_ingress},
+										"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationIngress},
 									},
 									"spec": map[string]interface{}{
 										"rules": []interface{}{

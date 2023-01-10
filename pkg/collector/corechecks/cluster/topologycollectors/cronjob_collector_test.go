@@ -34,7 +34,7 @@ var cronJobTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 var cronJobTimeFormatted = cronJobTime.UTC().Format(time.RFC3339)
 var lastExec = v1.Time{Time: time.Now().Add(-1 * time.Minute)}
 var lastExecFormatted = lastExec.UTC().Format(time.RFC3339)
-var lastAppliedConfiguration_cron = `{"apiVersion":"batch/v1","kind":"CronJob","metadata":{"labels":{"app.kubernetes.io/component":"backup"}},"spec":{"concurrencyPolicy":"Forbid","failedJobsHistoryLimit":1,"jobTemplate":{"metadata":{"labels":{"app.kubernetes.io/component":"backup"}},"spec":{"backoffLimit":1,"template":{"metadata":{"labels":{"app.kubernetes.io/component":"backup"}},"spec":{}}}},"schedule":"0 4 * * *","successfulJobsHistoryLimit":1}}`
+var lastAppliedConfigurationCron = `{"apiVersion":"batch/v1","kind":"CronJob","metadata":{"labels":{"app.kubernetes.io/component":"backup"}},"spec":{"concurrencyPolicy":"Forbid","failedJobsHistoryLimit":1,"jobTemplate":{"metadata":{"labels":{"app.kubernetes.io/component":"backup"}},"spec":{"backoffLimit":1,"template":{"metadata":{"labels":{"app.kubernetes.io/component":"backup"}},"spec":{}}}},"schedule":"0 4 * * *","successfulJobsHistoryLimit":1}}`
 
 func TestCronJobCollector_20(t *testing.T) {
 	// Version 1.20 only supports batch/v1beta1
@@ -194,7 +194,7 @@ func cronJobV1B1SPPlusStatus2() *topology.Component {
 				"namespace":         "test-namespace",
 				"uid":               "test-cronjob-2",
 				"resourceVersion":   "123",
-				"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_cron},
+				"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationCron},
 			},
 			"spec": map[string]interface{}{
 				"concurrencyPolicy": "Allow",
@@ -305,7 +305,7 @@ func cronJobV1B1SPPlusStatus1() *topology.Component {
 				"uid":               "test-cronjob-1",
 				"generateName":      "some-specified-generation",
 				"resourceVersion":   "123",
-				"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_cron},
+				"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationCron},
 			},
 			"spec": map[string]interface{}{
 				"concurrencyPolicy": "Allow",
@@ -418,7 +418,7 @@ func cronJobV1SPPlusStatus() *topology.Component {
 				"uid":               "test-cronjob-v1",
 				"generateName":      "some-specified-generation-v1",
 				"resourceVersion":   "123",
-				"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_cron},
+				"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationCron},
 			},
 			"spec": map[string]interface{}{
 				"concurrencyPolicy": "Allow",
@@ -491,7 +491,7 @@ func (m MockCronJobAPICollectorClient) GetCronJobsV1B1() ([]v1beta1.CronJob, err
 				GenerateName:    "",
 				ResourceVersion: "123",
 				Annotations: map[string]string{
-					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_cron,
+					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationCron,
 				},
 				ManagedFields: []v1.ManagedFieldsEntry{
 					{
@@ -558,7 +558,7 @@ func (m MockCronJobAPICollectorClient) GetCronJobsV1() ([]batchV1.CronJob, error
 			GenerateName:    "some-specified-generation-v1",
 			ResourceVersion: "123",
 			Annotations: map[string]string{
-				"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_cron,
+				"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationCron,
 			},
 			ManagedFields: []v1.ManagedFieldsEntry{
 				{

@@ -20,7 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-var lastAppliedConfiguration_job_collector = `{"apiVersion":"batch/v1","kind":"Job","metadata":{"annotations":{"argocd.io/hook":"Sync"},"generateName":"job-job","labels":{"app.kubernetes.io/component":"job-job","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/version":"1.0.0","helm.sh/chart":"1.0.0"},"name":"job-job-111111","namespace":"tenant"},"spec":{"backoffLimit":20,"template":{"metadata":{"annotations":{"checksum/str":"111qqq111"},"labels":{"app.kubernetes.io/component":"topic-create","app.kubernetes.io/instance":"test","app.kubernetes.io/name":"test"}},"spec":{"containers":[{"command":["bash","-c"],"env":[{"name":"VAR","value":"STR"}]}]}},"ttlSecondsAfterFinished":86400}}`
+var lastAppliedConfigurationJob = `{"apiVersion":"batch/v1","kind":"Job","metadata":{"annotations":{"argocd.io/hook":"Sync"},"generateName":"job-job","labels":{"app.kubernetes.io/component":"job-job","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/version":"1.0.0","helm.sh/chart":"1.0.0"},"name":"job-job-111111","namespace":"tenant"},"spec":{"backoffLimit":20,"template":{"metadata":{"annotations":{"checksum/str":"111qqq111"},"labels":{"app.kubernetes.io/component":"topic-create","app.kubernetes.io/instance":"test","app.kubernetes.io/name":"test"}},"spec":{"containers":[{"command":["bash","-c"],"env":[{"name":"VAR","value":"STR"}]}]}},"ttlSecondsAfterFinished":86400}}`
 var creationTimeJob = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 var creationTimeFormattedJob = creationTimeJob.UTC().Format(time.RFC3339)
 var parallelism int32
@@ -113,7 +113,7 @@ func TestJobCollector(t *testing.T) {
 								},
 								"uid":             "test-job-1",
 								"resourceVersion": "123",
-								"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_job_collector},
+								"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationJob},
 							},
 							"spec": map[string]interface{}{
 								"backoffLimit": float64(5),
@@ -207,7 +207,7 @@ func TestJobCollector(t *testing.T) {
 								"namespace":         "test-namespace",
 								"uid":               "test-job-2",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_job_collector},
+								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationJob},
 							},
 							"spec": map[string]interface{}{
 								"backoffLimit": float64(5),
@@ -305,7 +305,7 @@ func TestJobCollector(t *testing.T) {
 								"uid":               "test-job-3",
 								"generateName":      "some-specified-generation",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_job_collector},
+								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationJob},
 							},
 							"spec": map[string]interface{}{
 								"backoffLimit": float64(5),
@@ -387,7 +387,7 @@ func (m MockJobAPICollectorClient) GetJobs() ([]batchV1.Job, error) {
 				GenerateName:    "",
 				ResourceVersion: "123",
 				Annotations: map[string]string{
-					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfiguration_job_collector,
+					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationJob,
 				},
 				ManagedFields: []v1.ManagedFieldsEntry{
 					{
