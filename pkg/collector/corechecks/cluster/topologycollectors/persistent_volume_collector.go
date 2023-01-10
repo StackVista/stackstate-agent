@@ -48,7 +48,7 @@ func (pvc *PersistentVolumeCollector) CollectorFunction() error {
 
 		volumeSource, err := pvc.persistentVolumeSourceToStackStateComponent(pv)
 		if err != nil {
-			return err
+			continue
 		}
 
 		if volumeSource != nil {

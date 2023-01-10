@@ -81,7 +81,7 @@ func (vc *VolumeCorrelator) CorrelateFunction() error {
 			// If downwardAPI -> pod.ExternalID is returned
 			podOrVolumeClaimExternalID, err := vc.mapVolumeAndRelationToStackState(pod, volume, pvcLookup)
 			if err != nil {
-				return err
+				continue
 			}
 
 			if podOrVolumeClaimExternalID != "" {
@@ -152,6 +152,7 @@ func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, 
 		for _, mapper := range allVolumeSourceMappers {
 			toCreate, err = mapper(vc, pod, volume)
 			if err != nil {
+				log.Warnf("Pod '%s' could not be mapped to Volume '%s'", pod.ExternalID, volume.Name)
 				return "", err
 			}
 
@@ -173,6 +174,7 @@ func (vc *VolumeCorrelator) mapVolumeAndRelationToStackState(pod PodIdentifier, 
 
 			toCreate, err = vc.CreateStackStateVolumeSourceComponent(pod, volume, volumeClaimExternalID, nil, tags)
 			if err != nil {
+				log.Warnf("Failed to create StackState volume source component %s: %v ", volumeClaimExternalID, volume.Name)
 				return "", err
 			}
 		}
