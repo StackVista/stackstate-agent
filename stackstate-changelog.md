@@ -9,6 +9,10 @@
 - Automatically use [IMDSv2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html) to read EC2 instance metadata
 - Prevent Kubernetes topology check to send relations with non-existent components [STAC-13859](https://stackstate.atlassian.net/browse/STAC-13859)
 - Change BackOff Kubernetes event from Activities to Alert [STAC-18603](https://stackstate.atlassian.net/browse/STAC-18603)
+- Added a PVC component with a relation from PVC to PV [STAC-18803](https://stackstate.atlassian.net/browse/STAC-18803)
+- Updated the relations from Pod to PV to be Pod to PVC [STAC-18803](https://stackstate.atlassian.net/browse/STAC-18803)
+- Updated the relations from Container to PV to be Container to PVC [STAC-18803](https://stackstate.atlassian.net/browse/STAC-18803)
+
 
 ## 2.19.1 (2022-11-23)
 
