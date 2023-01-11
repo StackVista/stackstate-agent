@@ -4,11 +4,9 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"reflect"
-	"time"
 
 	"github.com/StackVista/stackstate-agent/pkg/httpclient"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/StackVista/stackstate-agent/pkg/util/retry"
 )
 
 // FeatureID type ensures well-defined list of features in this file
@@ -44,49 +42,34 @@ func (f *AllFeatures) FeatureEnabled(_ FeatureID) bool {
 	return true
 }
 
-// TODO use some existing HTTP client or generic client to interact with stackstate api
 func InitFeatures() *FetchFeatures {
 	features := &FetchFeatures{
 		features:  make(map[FeatureID]bool),
 		stsClient: httpclient.NewStackStateClient(),
 	}
 
-	if features.init() != nil {
-		log.Warnf("Failed to fetch StackState features. Continuing with empty set for StackState feature.")
-	}
+	features.init()
 
 	return features
 }
 
-func (af *FetchFeatures) init() error {
-	initRetry := retry.Retrier{}
-	initRetry.SetupRetrier(&retry.Config{ //nolint:errcheck
-		Name: "FechFeaturesFromStackState",
-		AttemptMethod: func() error {
-			features, err := af.getFeatures()
-			af.features = features
-			return err
-		},
-		Strategy:   retry.RetryCount,
-		RetryDelay: 1 * time.Second,
-		RetryCount: 5,
-	})
-
-	var err error
-	for {
-		err = initRetry.TriggerRetry()
-		if err == nil {
-			return nil
-		}
-		if isRetryError, retryError := retry.IsRetryError(err); isRetryError {
-			if retryError.RetryStatus == retry.PermaFail {
-				return retryError.Unwrap()
-			}
-		} else {
-			return err
-		}
-		time.Sleep(500 * time.Microsecond)
+func InitTestFeatures(stsClient httpclient.RetryableHTTPClient) *FetchFeatures {
+	features := &FetchFeatures{
+		features:  make(map[FeatureID]bool),
+		stsClient: stsClient,
 	}
+
+	features.init()
+
+	return features
+}
+
+func (af *FetchFeatures) init() {
+	features, err := af.getFeatures()
+	if err != nil {
+		log.Warnf("Failed to fetch StackState features. Continuing with empty set for StackState feature.")
+	}
+	af.features = features
 }
 
 func (f *FetchFeatures) FeatureEnabled(feature FeatureID) bool {
