@@ -74,6 +74,9 @@ func TestNamespaceCollector(t *testing.T) {
 								"uid":               "test-namespace-1",
 							},
 							"spec": map[string]interface{}{},
+							"status": map[string]interface{}{
+								"phase": "Active",
+							},
 						},
 					},
 					expectedSPPlusStatus: &topology.Component{
@@ -128,6 +131,9 @@ func TestNamespaceCollector(t *testing.T) {
 								"uid":               "test-namespace-2",
 							},
 							"spec": map[string]interface{}{},
+							"status": map[string]interface{}{
+								"phase": "Active",
+							},
 						},
 					},
 					expectedSPPlusStatus: &topology.Component{
@@ -200,6 +206,7 @@ func (m MockNamespaceAPICollectorClient) GetNamespaces() ([]coreV1.Namespace, er
 					},
 				},
 			},
+			Spec: coreV1.NamespaceSpec{},
 			Status: coreV1.NamespaceStatus{
 				Phase: "Active",
 			},

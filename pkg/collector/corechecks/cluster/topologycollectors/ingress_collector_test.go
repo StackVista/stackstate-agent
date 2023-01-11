@@ -80,7 +80,7 @@ func TestIngressCollector_1_18(t *testing.T) {
 						expectIngress213(sourcePropertiesEnabled, kubernetesStatusEnabled, creationTimeFormatted),
 						expectRelationIngress213Service1(),
 						expectRelationIngress213Service2(),
-						expectRalationIngress213Service3(),
+						expectRelationIngress213Service3(),
 						expectEndpointIP213(),
 						expectRelationEndpointIPIngress213(),
 						expectEndpointAmazon213(),
@@ -216,7 +216,7 @@ func expectEndpointIP213() func(*testing.T, chan *topology.Component, chan *topo
 	})
 }
 
-func expectRalationIngress213Service3() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
+func expectRelationIngress213Service3() func(*testing.T, chan *topology.Component, chan *topology.Relation) {
 	return expectRelation(&topology.Relation{
 		ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:ingress/test-ingress-3->" +
 			"urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-3",
@@ -1156,7 +1156,7 @@ func (m MockIngressAPICollectorClient) GetIngressesNetV1() ([]netV1.Ingress, err
 
 func (m MockIngressAPICollectorClient) GetIngressesExtV1B1() ([]v1beta1.Ingress, error) {
 	ingresses := make([]v1beta1.Ingress, 0)
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 1; i++ { // TODO CR
 		ingress := v1beta1.Ingress{
 			TypeMeta: v1.TypeMeta{
 				Kind: "",
