@@ -26,16 +26,15 @@ const (
 
 // TopologyConfig is the config of the API server.
 type TopologyConfig struct {
-	ClusterName                   string          `yaml:"cluster_name"`
-	CollectTopology               bool            `yaml:"collect_topology"`
-	CollectTimeout                int             `yaml:"collect_timeout"`
-	SourcePropertiesEnabled       bool            `yaml:"source_properties_enabled"`
-	ExposeKubernetesStatusEnabled bool            `yaml:"expose_kubernetes_status_enabled"`
-	ConfigMapMaxDataSize          int             `yaml:"configmap_max_datasize"`
-	CSIPVMapperEnabled            bool            `yaml:"csi_pv_mapper_enabled"`
-	Resources                     ResourcesConfig `yaml:"resources"`
-	CheckID                       check.ID
-	Instance                      topology.Instance
+	ClusterName             string          `yaml:"cluster_name"`
+	CollectTopology         bool            `yaml:"collect_topology"`
+	CollectTimeout          int             `yaml:"collect_timeout"`
+	SourcePropertiesEnabled bool            `yaml:"source_properties_enabled"`
+	ConfigMapMaxDataSize    int             `yaml:"configmap_max_datasize"`
+	CSIPVMapperEnabled      bool            `yaml:"csi_pv_mapper_enabled"`
+	Resources               ResourcesConfig `yaml:"resources"`
+	CheckID                 check.ID
+	Instance                topology.Instance
 }
 
 type ResourcesConfig struct {
@@ -77,7 +76,6 @@ func (c *TopologyConfig) parse(data []byte) error {
 	c.CollectTopology = config.Datadog.GetBool("collect_kubernetes_topology")
 	c.CollectTimeout = config.Datadog.GetInt("collect_kubernetes_timeout")
 	c.SourcePropertiesEnabled = config.Datadog.GetBool("kubernetes_source_properties_enabled")
-	c.ExposeKubernetesStatusEnabled = config.Datadog.GetBool("kubernetes_expose_kubernetes_status_enabled")
 	c.ConfigMapMaxDataSize = config.Datadog.GetInt("configmap_max_datasize")
 	c.CSIPVMapperEnabled = config.Datadog.GetBool("kubernetes_csi_pv_mapper_enabled")
 	if c.ConfigMapMaxDataSize == 0 {
