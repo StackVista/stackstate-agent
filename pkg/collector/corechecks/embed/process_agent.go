@@ -26,6 +26,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
 	"github.com/StackVista/stackstate-agent/pkg/util/executable"
+	"github.com/StackVista/stackstate-agent/pkg/util/features"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
