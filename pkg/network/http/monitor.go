@@ -38,12 +38,6 @@ type Monitor struct {
 	stopped       bool
 }
 
-// MonitorReport contains requests stats along with the performance of the HTTP monitor (e.g. number of lost batches)
-type MonitorReport struct {
-	Requests  map[Key]RequestStats
-	Telemetry *TelemetryStats
-}
-
 // NewMonitor returns a new Monitor instance
 func NewMonitor(c *config.Config, offsets []manager.ConstantEditor, sockFD *ebpf.Map) (*Monitor, error) {
 	mgr, err := newEBPFProgram(c, offsets, sockFD)

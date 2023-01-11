@@ -21,13 +21,6 @@ type telemetry struct {
 	aggregations int64
 }
 
-// TelemetryStats contains counters of the http monitor performance
-type TelemetryStats struct {
-	Misses   int64 // this happens when we can't cope with the rate of events
-	Dropped  int64 // this happens when httpStatKeeper reaches capacity
-	Rejected int64 // this happens when a user-defined reject-filter matches a request
-}
-
 func newTelemetry() *telemetry {
 	return &telemetry{
 		then: time.Now().Unix(),
