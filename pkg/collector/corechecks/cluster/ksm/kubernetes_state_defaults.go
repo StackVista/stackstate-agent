@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package ksm
@@ -17,30 +18,31 @@ import (
 const ksmMetricPrefix = "kubernetes_state."
 
 var (
+	// [STS] produce multiple tags for each label
 	// defaultLabelsMapper contains the default label to tag names mapping
-	defaultLabelsMapper = map[string]string{
-		"namespace":                           "kube_namespace",
-		"job_name":                            "kube_job",
-		"cronjob":                             "kube_cronjob",
-		"pod":                                 "pod_name",
-		"priority_class":                      "kube_priority_class",
-		"daemonset":                           "kube_daemon_set",
-		"replicationcontroller":               "kube_replication_controller",
-		"replicaset":                          "kube_replica_set",
-		"statefulset":                         "kube_stateful_set",
-		"deployment":                          "kube_deployment",
-		"service":                             "kube_service",
-		"endpoint":                            "kube_endpoint",
-		"container":                           "kube_container_name",
-		"container_id":                        "container_id",
-		"image":                               "image_name",
-		"label_tags_datadoghq_com_env":        "env",
-		"label_tags_datadoghq_com_service":    "service",
-		"label_tags_datadoghq_com_version":    "version",
-		"label_topology_kubernetes_io_region": "kube_region",
-		"label_topology_kubernetes_io_zone":   "kube_zone",
-		"label_failure_domain_beta_kubernetes_io_region": "kube_region",
-		"label_failure_domain_beta_kubernetes_io_zone":   "kube_zone",
+	defaultLabelsMapper = map[string][]string{
+		"namespace":                           {"kube_namespace", "namespace"},
+		"job_name":                            {"kube_job", "job_name"},
+		"cronjob":                             {"kube_cronjob", "cronjob"},
+		"pod":                                 {"pod_name", "pod"},
+		"priority_class":                      {"kube_priority_class"},
+		"daemonset":                           {"kube_daemon_set", "daemonset"},
+		"replicationcontroller":               {"kube_replication_controller"},
+		"replicaset":                          {"kube_replica_set", "replicaset"},
+		"statefulset":                         {"kube_stateful_set", "statefulset"},
+		"deployment":                          {"kube_deployment", "deployment"},
+		"service":                             {"kube_service", "service"},
+		"endpoint":                            {"kube_endpoint", "endpoint"},
+		"container":                           {"kube_container_name", "container"},
+		"container_id":                        {"container_id", "container_id"},
+		"image":                               {"image_name", "image"},
+		"label_tags_datadoghq_com_env":        {"env"},
+		"label_tags_datadoghq_com_service":    {"service"},
+		"label_tags_datadoghq_com_version":    {"version"},
+		"label_topology_kubernetes_io_region": {"kube_region"},
+		"label_topology_kubernetes_io_zone":   {"kube_zone"},
+		"label_failure_domain_beta_kubernetes_io_region": {"kube_region"},
+		"label_failure_domain_beta_kubernetes_io_zone":   {"kube_zone"},
 	}
 
 	// metricNamesMapper translates KSM metric names to Datadog metric names
