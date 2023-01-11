@@ -92,12 +92,16 @@ func (af *FetchFeatures) getFeaturesAsync(featuresCh chan featureSet) {
 func (af *FetchFeatures) getFeatures() (featureSet, error) {
 	response := af.stsClient.Get("/features")
 
+	if response.Err != nil {
+		return nil, log.Errorf("Failed to fetch StackState features, %s", response.Err)
+	}
 	if response.Response.StatusCode == 404 {
 		log.Info("Found StackState version which does not support feature detection yet")
 		return make(map[FeatureID]bool), nil
 	}
-	if response.Err != nil {
-		return nil, log.Errorf("Failed to fetch StackState features, %s", response.Err)
+
+	if response.Response.StatusCode < 200 || response.Response.StatusCode >= 300 {
+		return make(map[FeatureID]bool), log.Errorf("Failed to fetch StackState features, got status code %d", response.Response.StatusCode)
 	}
 
 	defer response.Response.Body.Close()
