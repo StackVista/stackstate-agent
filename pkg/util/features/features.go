@@ -97,14 +97,17 @@ func (af *FetchFeatures) init() error {
 	var err error
 	for {
 		err = initRetry.TriggerRetry()
-		isRetryError, retryError := retry.IsRetryError(err)
-		if !isRetryError {
+		if err == nil {
+			return nil
+		}
+		if isRetryError, retryError := retry.IsRetryError(err); isRetryError {
+			if retryError.RetryStatus == retry.PermaFail {
+				return retryError.Unwrap()
+			}
+		} else {
 			return err
 		}
-		if retryError.RetryStatus == retry.PermaFail {
-			return retryError.Unwrap()
-		}
-		time.Sleep(time.Nanosecond)
+		time.Sleep(500 * time.Microsecond)
 	}
 }
 
@@ -203,7 +206,7 @@ func (af *FetchFeatures) getFeatures() (featureSet, error) {
 }
 
 func (af *FetchFeatures) accessAPIwithEncoding(method string, checkPath string, body []byte, contentEncoding string) (*http.Response, error) {
-	url := fmt.Sprintf("%s?APIKey=%s", af.endpoint, af.apiKey) + checkPath // Add the checkPath in full Process Agent URL
+	url := fmt.Sprintf("%s?api_key=%s", af.endpoint, af.apiKey) + checkPath // Add the checkPath in full Process Agent URL
 	req, err := http.NewRequest(method, url, bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("could not create %s request to %s: %s", method, url, err)
