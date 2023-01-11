@@ -99,7 +99,7 @@ func (af *FetchFeatures) getFeaturesAsync(featuresCh chan featureSet) {
 }
 
 func (af *FetchFeatures) getFeatures() (featureSet, error) {
-	response := af.stsClient.Get("/features")
+	response := af.stsClient.Get("features")
 
 	if response.Err != nil {
 		return nil, log.Errorf("Failed to fetch StackState features, %s", response.Err)
