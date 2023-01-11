@@ -360,7 +360,14 @@ func expectIngress213(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 											"path": "host-2-path-1"}}}}}}},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
-						"ingress": []interface{}{},
+						"ingress": []interface{}{
+							map[string]interface{}{
+								"ip": "34.100.200.15",
+							},
+							map[string]interface{}{
+								"hostname": "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+							},
+						},
 					},
 				},
 			},
@@ -490,7 +497,14 @@ func expectIngress212(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
-						"ingress": []interface{}{},
+						"ingress": []interface{}{
+							map[string]interface{}{
+								"ip": "34.100.200.15",
+							},
+							map[string]interface{}{
+								"hostname": "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+							},
+						},
 					},
 				},
 			},
@@ -599,7 +613,14 @@ func expectIngress211(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"spec": map[string]interface{}{},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
-						"ingress": []interface{}{},
+						"ingress": []interface{}{
+							map[string]interface{}{
+								"ip": "34.100.200.15",
+							},
+							map[string]interface{}{
+								"hostname": "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+							},
+						},
 					},
 				},
 			},
@@ -1156,7 +1177,7 @@ func (m MockIngressAPICollectorClient) GetIngressesNetV1() ([]netV1.Ingress, err
 
 func (m MockIngressAPICollectorClient) GetIngressesExtV1B1() ([]v1beta1.Ingress, error) {
 	ingresses := make([]v1beta1.Ingress, 0)
-	for i := 1; i <= 1; i++ { // TODO CR
+	for i := 1; i <= 3; i++ { // TODO CR
 		ingress := v1beta1.Ingress{
 			TypeMeta: v1.TypeMeta{
 				Kind: "",
@@ -1186,7 +1207,10 @@ func (m MockIngressAPICollectorClient) GetIngressesExtV1B1() ([]v1beta1.Ingress,
 			},
 			Status: v1beta1.IngressStatus{
 				LoadBalancer: coreV1.LoadBalancerStatus{
-					Ingress: []coreV1.LoadBalancerIngress{},
+					Ingress: []coreV1.LoadBalancerIngress{
+						{IP: "34.100.200.15"},
+						{Hostname: "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com"},
+					},
 				},
 			},
 		}
