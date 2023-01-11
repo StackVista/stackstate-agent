@@ -102,10 +102,12 @@ func (c *JMXCheck) GetSenderStats() (check.SenderStats, error) {
 	return check.NewSenderStats(), nil
 }
 
+// GetFeatures returns the features supported by StackState
 func (c *JMXCheck) GetFeatures() features.Features {
 	return c.features
 }
 
+// SetFeatures sets the features supported by StackState
 func (c *JMXCheck) SetFeatures(features features.Features) {
 	c.features = features
 }

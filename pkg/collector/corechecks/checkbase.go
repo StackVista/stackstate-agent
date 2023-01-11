@@ -245,10 +245,12 @@ func (c *CheckBase) GetSenderStats() (check.SenderStats, error) {
 	return sender.GetSenderStats(), nil
 }
 
+// GetFeatures returns the features supported by StackState
 func (c *CheckBase) GetFeatures() features.Features {
 	return c.features
 }
 
+// SetFeatures sets the features supported by StackState
 func (c *CheckBase) SetFeatures(features features.Features) {
 	c.features = features
 }

@@ -20,12 +20,15 @@ const (
 	ExposeKubernetesStatus FeatureID = "expose-kubernetes-status"
 )
 
+// Features is used to determine whether StackState supports a certain feature or not
 type Features interface {
+	// FeatureEnabled is used to check whether a feature is enabled
 	FeatureEnabled(feature FeatureID) bool
 }
 
 type featureSet = map[FeatureID]bool
 
+// FetchFeatures uses the StackState api to retrieve the supported feature set
 type FetchFeatures struct {
 	features  featureSet
 	stsClient httpclient.RetryableHTTPClient
@@ -33,6 +36,7 @@ type FetchFeatures struct {
 
 type AllFeatures struct{}
 
+// All returns a Features instance with all features enabled. For tests only
 func All() *AllFeatures {
 	return &AllFeatures{}
 }
@@ -43,7 +47,7 @@ func (f *AllFeatures) FeatureEnabled(_ FeatureID) bool {
 }
 
 /*
-Initialization will call out to StackState and will intentionally wait for a response.
+InitFeatures will call out to StackState and will intentionally wait for a response.
 This ensures that before any checks are run the supported feature set has been determined.
 The feature set will not be updated but remains fixed for the runtime of the agent.
 This together allows checks to not worry about changes in supported features while running and
@@ -62,6 +66,7 @@ func InitFeatures() *FetchFeatures {
 	return features
 }
 
+// InitTestFeatures is for tests only and allows injecting a stub for the httpclient
 func InitTestFeatures(stsClient httpclient.RetryableHTTPClient) *FetchFeatures {
 	features := &FetchFeatures{
 		features:  make(map[FeatureID]bool),
@@ -73,23 +78,24 @@ func InitTestFeatures(stsClient httpclient.RetryableHTTPClient) *FetchFeatures {
 	return features
 }
 
-func (af *FetchFeatures) init() {
-	features, err := af.getFeatures()
+func (ff *FetchFeatures) init() {
+	features, err := ff.getFeatures()
 	if err != nil {
 		log.Warnf("Failed to fetch StackState features. Continuing with empty set for StackState feature.")
 	}
-	af.features = features
+	ff.features = features
 }
 
-func (f *FetchFeatures) FeatureEnabled(feature FeatureID) bool {
-	if supported, ok := f.features[feature]; ok {
+// FeatureEnabled check
+func (ff *FetchFeatures) FeatureEnabled(feature FeatureID) bool {
+	if supported, ok := ff.features[feature]; ok {
 		return supported
 	}
 	return false
 }
 
-func (af *FetchFeatures) getFeaturesAsync(featuresCh chan featureSet) {
-	features, err := af.getFeatures()
+func (ff *FetchFeatures) getFeaturesAsync(featuresCh chan featureSet) {
+	features, err := ff.getFeatures()
 
 	if err != nil {
 		// Ignoring errors, they are already logged
@@ -98,8 +104,8 @@ func (af *FetchFeatures) getFeaturesAsync(featuresCh chan featureSet) {
 	featuresCh <- features
 }
 
-func (af *FetchFeatures) getFeatures() (featureSet, error) {
-	response := af.stsClient.Get("features")
+func (ff *FetchFeatures) getFeatures() (featureSet, error) {
+	response := ff.stsClient.Get("features")
 
 	if response.Err != nil {
 		return nil, log.Errorf("Failed to fetch StackState features, %s", response.Err)

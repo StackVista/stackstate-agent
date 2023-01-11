@@ -24,6 +24,7 @@ import (
 	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
 	"github.com/StackVista/stackstate-agent/pkg/util"
 
+	"github.com/StackVista/stackstate-agent/pkg/util/features"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -41,6 +42,7 @@ type APMCheck struct {
 	stopDone    chan struct{}
 	source      string
 	telemetry   bool
+	features    features.Features
 }
 
 func (c *APMCheck) String() string {
@@ -213,6 +215,16 @@ func (c *APMCheck) GetWarnings() []error {
 // GetSenderStats returns the stats from the last run of the check, but there aren't any
 func (c *APMCheck) GetSenderStats() (check.SenderStats, error) {
 	return check.NewSenderStats(), nil
+}
+
+// GetFeatures returns the features supported by StackState
+func (c *APMCheck) GetFeatures() features.Features {
+	return c.features
+}
+
+// SetFeatures sets the features supported by StackState
+func (c *APMCheck) SetFeatures(features features.Features) {
+	c.features = features
 }
 
 func init() {

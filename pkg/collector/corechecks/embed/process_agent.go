@@ -208,6 +208,15 @@ func (c *ProcessAgentCheck) GetSenderStats() (check.SenderStats, error) {
 	return check.NewSenderStats(), nil
 }
 
+// GetFeatures is not implemented, the process agent has its own mechanism for checking StackState features
+func (c *ProcessAgentCheck) GetFeatures() features.Features {
+	return nil
+}
+
+// SetFeatures is not implemented, the process agent has its own mechanism for checking StackState features
+func (c *ProcessAgentCheck) SetFeatures(features features.Features) {
+}
+
 func init() {
 	factory := func() check.Check {
 		return &ProcessAgentCheck{

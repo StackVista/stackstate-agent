@@ -15,7 +15,7 @@ const validResponse = `{"interpreted-spans":true,"ingest-telemetry-data":true,"m
 const invalidResponse = `"interpreted-spans":true,"ingest-telemetry-data":true,"max-relation-creates-per-hour-per-agent":5000,"max-component-creates-per-hour-per-agent":2000,"max-connections-per-agent":150000,"upgrade-to-multi-metrics":true,"incremental-topology":true,"expose-kubernetes-status":true,"max-components-per-agent":5000}`
 
 func TestFeaturesAreFetched(t *testing.T) {
-	feats := InitTestFeatures(NewRetryableHttpClientStub(createHttpResponse(validResponse, 200, nil)))
+	feats := InitTestFeatures(newRetryableHttpClientStub(createHTTPResponse(validResponse, 200, nil)))
 	assert.True(t, feats.FeatureEnabled(ExposeKubernetesStatus))
 	assert.True(t, feats.FeatureEnabled(UpgradeToMultiMetrics))
 	assert.True(t, feats.FeatureEnabled(IncrementalTopology))
@@ -23,7 +23,7 @@ func TestFeaturesAreFetched(t *testing.T) {
 }
 
 func TestInvalidResponseContinuousWithNoFeaturesEnabled(t *testing.T) {
-	feats := InitTestFeatures(NewRetryableHttpClientStub(createHttpResponse(invalidResponse, 200, nil)))
+	feats := InitTestFeatures(newRetryableHttpClientStub(createHTTPResponse(invalidResponse, 200, nil)))
 	assert.False(t, feats.FeatureEnabled(ExposeKubernetesStatus))
 	assert.False(t, feats.FeatureEnabled(UpgradeToMultiMetrics))
 	assert.False(t, feats.FeatureEnabled(IncrementalTopology))
@@ -31,7 +31,7 @@ func TestInvalidResponseContinuousWithNoFeaturesEnabled(t *testing.T) {
 }
 
 func Test404ResponseContinousWithNoFeaturesEnabled(t *testing.T) {
-	feats := InitTestFeatures(NewRetryableHttpClientStub(createHttpResponse("", 404, nil)))
+	feats := InitTestFeatures(newRetryableHttpClientStub(createHTTPResponse("", 404, nil)))
 	assert.False(t, feats.FeatureEnabled(ExposeKubernetesStatus))
 	assert.False(t, feats.FeatureEnabled(UpgradeToMultiMetrics))
 	assert.False(t, feats.FeatureEnabled(IncrementalTopology))
@@ -39,7 +39,7 @@ func Test404ResponseContinousWithNoFeaturesEnabled(t *testing.T) {
 }
 
 func TestErrorContinousWithNoFeaturesEnabled(t *testing.T) {
-	feats := InitTestFeatures(NewRetryableHttpClientStub(createHttpResponse("", 0, errors.New("Failed http call"))))
+	feats := InitTestFeatures(newRetryableHttpClientStub(createHTTPResponse("", 0, errors.New("Failed http call"))))
 	assert.False(t, feats.FeatureEnabled(ExposeKubernetesStatus))
 	assert.False(t, feats.FeatureEnabled(UpgradeToMultiMetrics))
 	assert.False(t, feats.FeatureEnabled(IncrementalTopology))
@@ -47,7 +47,7 @@ func TestErrorContinousWithNoFeaturesEnabled(t *testing.T) {
 }
 
 func TestHttpErrorContinousWithNoFeaturesEnabled(t *testing.T) {
-	feats := InitTestFeatures(NewRetryableHttpClientStub(createHttpResponse("", 400, nil)))
+	feats := InitTestFeatures(newRetryableHttpClientStub(createHTTPResponse("", 400, nil)))
 	assert.False(t, feats.FeatureEnabled(ExposeKubernetesStatus))
 	assert.False(t, feats.FeatureEnabled(UpgradeToMultiMetrics))
 	assert.False(t, feats.FeatureEnabled(IncrementalTopology))
@@ -58,7 +58,7 @@ type RetryableHTTPClientStub struct {
 	response *httpclient.HTTPResponse
 }
 
-func NewRetryableHttpClientStub(response *httpclient.HTTPResponse) RetryableHTTPClientStub {
+func newRetryableHttpClientStub(response *httpclient.HTTPResponse) RetryableHTTPClientStub {
 	return RetryableHTTPClientStub{
 		response: response,
 	}
@@ -74,7 +74,7 @@ func (h RetryableHTTPClientStub) Post(path string, body []byte) *httpclient.HTTP
 	return h.response
 }
 
-func createHttpResponse(body string, statusCode int, err error) *httpclient.HTTPResponse {
+func createHTTPResponse(body string, statusCode int, err error) *httpclient.HTTPResponse {
 	return &httpclient.HTTPResponse{
 		Response: &http.Response{
 			StatusCode: statusCode,

@@ -364,10 +364,12 @@ func pythonCheckFinalizer(c *PythonCheck) {
 	}(c)
 }
 
+// GetFeatures returns the features supported by StackState
 func (c *PythonCheck) GetFeatures() features.Features {
 	return c.features
 }
 
+// SetFeatures sets the features supported by StackState
 func (c *PythonCheck) SetFeatures(features features.Features) {
 	c.features = features
 }
