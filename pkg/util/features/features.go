@@ -1,18 +1,12 @@
 package features
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
-	"fmt"
-	"io"
 	"io/ioutil"
-	"net/http"
 	"reflect"
-	"strings"
 	"time"
 
-	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/httpclient"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/StackVista/stackstate-agent/pkg/util/retry"
 )
@@ -35,10 +29,8 @@ type Features interface {
 type featureSet = map[FeatureID]bool
 
 type FetchFeatures struct {
-	features   featureSet
-	httpClient http.Client
-	endpoint   string
-	apiKey     string
+	features  featureSet
+	stsClient httpclient.RetryableHTTPClient
 }
 
 type AllFeatures struct{}
@@ -54,27 +46,13 @@ func (f *AllFeatures) FeatureEnabled(_ FeatureID) bool {
 
 // TODO use some existing HTTP client or generic client to interact with stackstate api
 func InitFeatures() *FetchFeatures {
-	mainEndpoint := coreconfig.GetMainInfraEndpoint()
-	apiKeyPerEndpoint, err := coreconfig.GetMultipleEndpoints()
-
-	mainAPIKey := ""
-	if err != nil {
-		log.Warnf("Failed to fetch StackState features, no API key configured. Continuing with empty set for StackState.")
-	} else {
-		mainAPIKey = apiKeyPerEndpoint[mainEndpoint][0]
-	}
-
 	features := &FetchFeatures{
-		features:   make(map[FeatureID]bool),
-		endpoint:   mainEndpoint,
-		apiKey:     mainAPIKey,
-		httpClient: http.Client{Timeout: 30 * time.Second}, //, Transport: cfg.Transport},
+		features:  make(map[FeatureID]bool),
+		stsClient: httpclient.NewStackStateClient(),
 	}
 
-	if err == nil {
-		if features.init() != nil {
-			log.Warnf("Failed to fetch StackState features. Continuing with empty set for StackState feature.")
-		}
+	if features.init() != nil {
+		log.Warnf("Failed to fetch StackState features. Continuing with empty set for StackState feature.")
 	}
 
 	return features
@@ -118,35 +96,6 @@ func (f *FetchFeatures) FeatureEnabled(feature FeatureID) bool {
 	return false
 }
 
-// func (af *FetchFeatures) Stop() {
-// 	af.stop <- true
-// }
-
-// Will try to fetch features from endpoint until it succeeds once
-// TODO: Shouldn't it keep fetching features to detect changes (in case StackState is upgraded for example)?
-// func (af *FetchFeatures) run() {
-// 	featuresTicker := time.NewTicker(5 * time.Second)
-// 	// Channel to announce new features detected
-// 	featuresCh := make(chan featureSet, 1)
-
-// 	af.getFeaturesAsync(featuresCh)
-
-// 	go func() {
-// 		for {
-// 			select {
-// 			case <-featuresTicker.C:
-// 				go af.getFeaturesAsync(featuresCh)
-// 			case featuresValue := <-featuresCh:
-// 				af.features = featuresValue
-// 				// Stop polling
-// 				featuresTicker.Stop()
-// 				// case <-af.stop:
-// 				// 	return
-// 			}
-// 		}
-// 	}()
-// }
-
 func (af *FetchFeatures) getFeaturesAsync(featuresCh chan featureSet) {
 	features, err := af.getFeatures()
 
@@ -158,23 +107,20 @@ func (af *FetchFeatures) getFeaturesAsync(featuresCh chan featureSet) {
 }
 
 func (af *FetchFeatures) getFeatures() (featureSet, error) {
-	resp, accessErr := af.accessAPIwithEncoding("GET", "/features", make([]byte, 0), "identity")
+	response := af.stsClient.Get("/features")
 
-	// Handle error response
-	if accessErr != nil {
-		// So we got a 404, meaning we were able to contact stackstate, but it had no features path. We can publish a result
-		if resp != nil {
-			log.Info("Found StackState version which does not support feature detection yet")
-			return make(map[FeatureID]bool), nil
-		}
-		// Log
-		return nil, log.Errorf("Failed to fetch StackState features, %s", accessErr)
+	if response.Response.StatusCode == 404 {
+		log.Info("Found StackState version which does not support feature detection yet")
+		return make(map[FeatureID]bool), nil
+	}
+	if response.Err != nil {
+		return nil, log.Errorf("Failed to fetch StackState features, %s", response.Err)
 	}
 
-	defer resp.Body.Close()
+	defer response.Response.Body.Close()
 
 	// Get byte array
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(response.Response.Body)
 	if err != nil {
 		return nil, log.Errorf("Failed to fetch features, error while decoding response: %s", err)
 	}
@@ -203,55 +149,4 @@ func (af *FetchFeatures) getFeatures() (featureSet, error) {
 
 	log.Infof("Fetching features, server supports features: %s", featuresParsed)
 	return featuresParsed, nil
-}
-
-func (af *FetchFeatures) accessAPIwithEncoding(method string, checkPath string, body []byte, contentEncoding string) (*http.Response, error) {
-	url := fmt.Sprintf("%s?api_key=%s", af.endpoint, af.apiKey) + checkPath // Add the checkPath in full Process Agent URL
-	req, err := http.NewRequest(method, url, bytes.NewReader(body))
-	if err != nil {
-		return nil, fmt.Errorf("could not create %s request to %s: %s", method, url, err)
-	}
-
-	req.Header.Add("content-encoding", contentEncoding)
-	req.Header.Add("sts-api-key", af.apiKey)
-
-	ctx, cancel := context.WithTimeout(context.Background(), ReqCtxTimeout)
-	defer cancel()
-	req.WithContext(ctx)
-
-	resp, err := af.httpClient.Do(req)
-	if err != nil {
-		if isHTTPTimeout(err) {
-			return nil, fmt.Errorf("Timeout detected on %s, %s", url, err)
-		}
-		return nil, fmt.Errorf("Error submitting payload to %s: %s", url, err)
-	}
-
-	if resp.StatusCode < 200 || resp.StatusCode > 300 {
-		defer resp.Body.Close()
-		io.Copy(ioutil.Discard, resp.Body)
-		return resp, fmt.Errorf("unexpected response from %s. Status: %s, Body: %v", url, resp.Status, resp.Body)
-	}
-
-	return resp, nil
-
-}
-
-const (
-	// HTTPTimeout is the timeout in seconds for process-agent to send process payloads to DataDog
-	HTTPTimeout = 20 * time.Second
-	// ReqCtxTimeout is the timeout in seconds for process-agent to cancel POST request using context timeout
-	ReqCtxTimeout = 30 * time.Second
-)
-
-// IsTimeout returns true if the error is due to reaching the timeout limit on the http.client
-func isHTTPTimeout(err error) bool {
-	if netErr, ok := err.(interface {
-		Timeout() bool
-	}); ok && netErr.Timeout() {
-		return true
-	} else if strings.Contains(err.Error(), "use of closed network connection") { //To deprecate when using GO > 1.5
-		return true
-	}
-	return false
 }
