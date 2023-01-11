@@ -12,7 +12,7 @@ import (
 // FeatureID type ensures well-defined list of features in this file
 type FeatureID string
 
-// List of features managed by StackState receiver
+// List of features managed by StackState
 const (
 	UpgradeToMultiMetrics  FeatureID = "upgrade-to-multi-metrics"
 	IncrementalTopology    FeatureID = "incremental-topology"
@@ -42,6 +42,15 @@ func (f *AllFeatures) FeatureEnabled(_ FeatureID) bool {
 	return true
 }
 
+/*
+Initialization will call out to StackState and will intentionally wait for a response.
+This ensures that before any checks are run the supported feature set has been determined.
+The feature set will not be updated but remains fixed for the runtime of the agent.
+This together allows checks to not worry about changes in supported features while running and
+avoids potential bugs in stateful checks.
+
+The trade-off is that an upgrade to StackState will only be recognized after an agent restart
+*/
 func InitFeatures() *FetchFeatures {
 	features := &FetchFeatures{
 		features:  make(map[FeatureID]bool),
@@ -90,14 +99,18 @@ func (af *FetchFeatures) getFeaturesAsync(featuresCh chan featureSet) {
 }
 
 func (af *FetchFeatures) getFeatures() (featureSet, error) {
-	response := af.stsClient.Get("/features")
+	response := af.stsClient.Get("features")
 
+	if response.Err != nil {
+		return nil, log.Errorf("Failed to fetch StackState features, %s", response.Err)
+	}
 	if response.Response.StatusCode == 404 {
 		log.Info("Found StackState version which does not support feature detection yet")
 		return make(map[FeatureID]bool), nil
 	}
-	if response.Err != nil {
-		return nil, log.Errorf("Failed to fetch StackState features, %s", response.Err)
+
+	if response.Response.StatusCode < 200 || response.Response.StatusCode >= 300 {
+		return make(map[FeatureID]bool), log.Errorf("Failed to fetch StackState features, got status code %d", response.Response.StatusCode)
 	}
 
 	defer response.Response.Body.Close()
