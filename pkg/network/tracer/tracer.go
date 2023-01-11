@@ -329,6 +329,7 @@ func (t *Tracer) GetActiveConnections(clientID string) (*network.Connections, er
 		DNS:                         names,
 		DNSStats:                    delta.DNSStats,
 		HTTP:                        delta.HTTP,
+		HTTPTelemetry:               delta.HTTPTelemetryStats,
 		ConnTelemetry:               ctm,
 		CompilationTelemetryByAsset: rctm,
 	}, nil
