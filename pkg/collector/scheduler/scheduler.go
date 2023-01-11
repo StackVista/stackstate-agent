@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/util/features"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
@@ -57,10 +58,13 @@ type Scheduler struct {
 
 	cancelOneTime chan bool      // Used to internally communicate a cancel signal to one-time schedule goroutines
 	wgOneTime     sync.WaitGroup // WaitGroup to track the exit of one-time schedule goroutines
+
+	features features.Features // Features supported by StackState
 }
 
 // NewScheduler create a Scheduler and returns a pointer to it.
 func NewScheduler(checksPipe chan<- check.Check) *Scheduler {
+	feat, _ := features.NewFeatures()
 	return &Scheduler{
 		checksPipe:       checksPipe,
 		done:             make(chan bool),
@@ -72,6 +76,7 @@ func NewScheduler(checksPipe chan<- check.Check) *Scheduler {
 		running:          0,
 		cancelOneTime:    make(chan bool),
 		wgOneTime:        sync.WaitGroup{},
+		features:         feat,
 	}
 }
 
@@ -157,6 +162,7 @@ func (s *Scheduler) Run() {
 		log.Debug("Scheduler is already running")
 		return
 	}
+	s.features.Init()
 
 	go func() {
 		log.Debug("Starting scheduler loop...")
