@@ -8,15 +8,17 @@
 package kubeapi
 
 import (
-	"k8s.io/apimachinery/pkg/version"
 	"sync"
 	"time"
+
+	"k8s.io/apimachinery/pkg/version"
 
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
 	collectors "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/topologycollectors"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/StackVista/stackstate-agent/pkg/util/features"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
@@ -156,7 +158,7 @@ func (t *TopologyCheck) Run() error {
 	waitGroupChannel := make(chan bool)
 	collectorsDoneChannel := make(chan bool)
 
-	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, t.ac, t.instance.SourcePropertiesEnabled, componentChannel, relationChannel, t.getKubernetesVersion(), t.instance.ExposeKubernetesStatusEnabled)
+	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, t.ac, t.instance.SourcePropertiesEnabled, componentChannel, relationChannel, t.getKubernetesVersion(), t.GetFeatures().FeatureEnabled(features.ExposeKubernetesSatus))
 	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
 	clusterCollectors := []collectors.ClusterTopologyCollector{
 		// Register Cluster Component Collector
