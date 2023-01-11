@@ -360,7 +360,14 @@ func expectIngress213(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 											"path": "host-2-path-1"}}}}}}},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
-						"ingress": []interface{}{},
+						"ingress": []interface{}{
+							map[string]interface{}{
+								"ip": "34.100.200.15",
+							},
+							map[string]interface{}{
+								"hostname": "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+							},
+						},
 					},
 				},
 			},
@@ -490,7 +497,14 @@ func expectIngress212(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
-						"ingress": []interface{}{},
+						"ingress": []interface{}{
+							map[string]interface{}{
+								"ip": "34.100.200.15",
+							},
+							map[string]interface{}{
+								"hostname": "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+							},
+						},
 					},
 				},
 			},
@@ -599,7 +613,14 @@ func expectIngress211(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"spec": map[string]interface{}{},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
-						"ingress": []interface{}{},
+						"ingress": []interface{}{
+							map[string]interface{}{
+								"ip": "34.100.200.15",
+							},
+							map[string]interface{}{
+								"hostname": "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+							},
+						},
 					},
 				},
 			},
