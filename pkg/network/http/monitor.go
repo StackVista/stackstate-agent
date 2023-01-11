@@ -28,7 +28,7 @@ type Monitor struct {
 	batchManager           *batchManager
 	batchCompletionHandler *ddebpf.PerfHandler
 	telemetry              *telemetry
-	pollRequests           chan chan map[Key]RequestStats
+	pollRequests           chan chan *MonitorReport
 	statkeeper             *httpStatKeeper
 
 	// termination
@@ -36,6 +36,12 @@ type Monitor struct {
 	eventLoopWG   sync.WaitGroup
 	closeFilterFn func()
 	stopped       bool
+}
+
+// MonitorReport contains requests stats along with the performance of the HTTP monitor (e.g. number of lost batches)
+type MonitorReport struct {
+	Requests  map[Key]RequestStats
+	Telemetry *TelemetryStats
 }
 
 // NewMonitor returns a new Monitor instance
@@ -87,7 +93,7 @@ func NewMonitor(c *config.Config, offsets []manager.ConstantEditor, sockFD *ebpf
 		batchManager:           newBatchManager(batchMap, batchStateMap, numCPUs),
 		batchCompletionHandler: mgr.batchCompletionHandler,
 		telemetry:              telemetry,
-		pollRequests:           make(chan chan map[Key]RequestStats),
+		pollRequests:           make(chan chan *MonitorReport),
 		closeFilterFn:          closeFilterFn,
 		statkeeper:             statkeeper,
 	}, nil
@@ -134,9 +140,12 @@ func (m *Monitor) Start() error {
 				m.process(transactions, nil)
 
 				delta := m.telemetry.reset()
-				delta.report()
+				telemetryStats := delta.report()
 
-				reply <- m.statkeeper.GetAndResetAllStats()
+				reply <- &MonitorReport{
+					Requests:  m.statkeeper.GetAndResetAllStats(),
+					Telemetry: telemetryStats,
+				}
 			case <-report.C:
 				transactions := m.batchManager.GetPendingTransactions()
 				m.process(transactions, nil)
@@ -149,7 +158,7 @@ func (m *Monitor) Start() error {
 
 // GetHTTPStats returns a map of HTTP stats stored in the following format:
 // [source, dest tuple, request path] -> RequestStats object
-func (m *Monitor) GetHTTPStats() map[Key]RequestStats {
+func (m *Monitor) GetHTTPStats() *MonitorReport {
 	if m == nil {
 		return nil
 	}
@@ -160,7 +169,7 @@ func (m *Monitor) GetHTTPStats() map[Key]RequestStats {
 		return nil
 	}
 
-	reply := make(chan map[Key]RequestStats, 1)
+	reply := make(chan *MonitorReport, 1)
 	defer close(reply)
 	m.pollRequests <- reply
 	return <-reply

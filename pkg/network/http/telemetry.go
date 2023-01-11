@@ -17,8 +17,15 @@ type telemetry struct {
 	hits         [5]int64
 	misses       int64 // this happens when we can't cope with the rate of events
 	dropped      int64 // this happens when httpStatKeeper reaches capacity
-	rejected     int64 // this happens when an user-defined reject-filter matches a request
+	rejected     int64 // this happens when a user-defined reject-filter matches a request
 	aggregations int64
+}
+
+// TelemetryStats contains counters of the http monitor performance
+type TelemetryStats struct {
+	Misses   int64 // this happens when we can't cope with the rate of events
+	Dropped  int64 // this happens when httpStatKeeper reaches capacity
+	Rejected int64 // this happens when a user-defined reject-filter matches a request
 }
 
 func newTelemetry() *telemetry {
@@ -58,7 +65,7 @@ func (t *telemetry) reset() telemetry {
 	return delta
 }
 
-func (t *telemetry) report() {
+func (t *telemetry) report() *TelemetryStats {
 	var totalRequests int64
 	for _, n := range t.hits {
 		totalRequests += n
@@ -76,4 +83,10 @@ func (t *telemetry) report() {
 		float64(t.dropped)/float64(t.elapsed),
 		t.aggregations,
 	)
+
+	return &TelemetryStats{
+		Misses:   t.misses,
+		Dropped:  t.dropped,
+		Rejected: t.rejected,
+	}
 }
