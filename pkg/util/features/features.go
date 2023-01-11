@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/retry"
 )
 
 // FeatureID type ensures well-defined list of features in this file
@@ -30,7 +30,6 @@ const (
 
 type Features interface {
 	FeatureEnabled(feature FeatureID) bool
-	Init()
 }
 
 type featureSet = map[FeatureID]bool
@@ -53,31 +52,60 @@ func (f *AllFeatures) FeatureEnabled(_ FeatureID) bool {
 	return true
 }
 
-func (af *AllFeatures) Init() {}
-
 // TODO use some existing HTTP client or generic client to interact with stackstate api
-func NewFeatures() (*FetchFeatures, error) {
+func InitFeatures() *FetchFeatures {
 	mainEndpoint := coreconfig.GetMainInfraEndpoint()
 	apiKeyPerEndpoint, err := coreconfig.GetMultipleEndpoints()
 
+	mainAPIKey := ""
 	if err != nil {
-		return nil, err
+		log.Warnf("Failed to fetch StackState features, no API key configured. Continuing with empty set for StackState.")
+	} else {
+		mainAPIKey = apiKeyPerEndpoint[mainEndpoint][0]
 	}
-	mainAPIKey := apiKeyPerEndpoint[mainEndpoint][0]
-	return &FetchFeatures{
+
+	features := &FetchFeatures{
 		features:   make(map[FeatureID]bool),
 		endpoint:   mainEndpoint,
 		apiKey:     mainAPIKey,
 		httpClient: http.Client{Timeout: 30 * time.Second}, //, Transport: cfg.Transport},
-	}, nil
+	}
+
+	if err == nil {
+		if features.init() != nil {
+			log.Warnf("Failed to fetch StackState features. Continuing with empty set for StackState feature.")
+		}
+	}
+
+	return features
 }
 
-func (af *FetchFeatures) Init() {
-	check.Retry(1*time.Minute, 5, func() error {
-		features, err := af.getFeatures()
-		af.features = features
-		return err
-	}, "Fetch features from StackState")
+func (af *FetchFeatures) init() error {
+	initRetry := retry.Retrier{}
+	initRetry.SetupRetrier(&retry.Config{ //nolint:errcheck
+		Name: "FechFeaturesFromStackState",
+		AttemptMethod: func() error {
+			features, err := af.getFeatures()
+			af.features = features
+			return err
+		},
+		Strategy:   retry.RetryCount,
+		RetryDelay: 1 * time.Second,
+		RetryCount: 5,
+	})
+
+	var err error
+	for {
+		err = initRetry.TriggerRetry()
+		isRetryError, retryError := retry.IsRetryError(err)
+		if !isRetryError {
+			return err
+		}
+		if retryError.RetryStatus == retry.PermaFail {
+			return retryError.Unwrap()
+		}
+		time.Sleep(time.Nanosecond)
+	}
 }
 
 func (f *FetchFeatures) FeatureEnabled(feature FeatureID) bool {

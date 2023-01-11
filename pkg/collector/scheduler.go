@@ -15,6 +15,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/loaders"
 	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/features"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	yaml "gopkg.in/yaml.v2"
@@ -50,14 +51,18 @@ type CheckScheduler struct {
 	loaders        []check.Loader
 	collector      *Collector
 	m              sync.RWMutex
+	features       features.Features // Features supported by StackState
 }
 
 // InitCheckScheduler creates and returns a check scheduler
 func InitCheckScheduler(collector *Collector) *CheckScheduler {
+	features := features.InitFeatures()
+
 	checkScheduler = &CheckScheduler{
 		collector:      collector,
 		configToChecks: make(map[string][]check.ID),
 		loaders:        make([]check.Loader, 0, len(loaders.LoaderCatalog())),
+		features:       features,
 	}
 	// add the check loaders
 	for _, loader := range loaders.LoaderCatalog() {
@@ -178,6 +183,7 @@ func (s *CheckScheduler) getChecks(config integration.Config) ([]check.Check, er
 				continue
 			}
 			c, err := loader.Load(config, instance)
+			c.SetFeatures(s.features)
 			if err == nil {
 				log.Debugf("%v: successfully loaded check '%s'", loader, config.Name)
 				errorStats.removeLoaderErrors(config.Name)

@@ -13,6 +13,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/compliance"
 	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
 	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
+	"github.com/StackVista/stackstate-agent/pkg/util/features"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/StackVista/stackstate-agent/pkg/version"
 )
@@ -91,6 +92,13 @@ func (c *complianceCheck) reportToResource(report *compliance.Report) compliance
 		Type: string(c.scope),
 		ID:   c.Hostname(),
 	}
+}
+
+func (c *complianceCheck) GetFeatures() features.Features {
+	return nil
+}
+
+func (c *complianceCheck) SetFeatures(features features.Features) {
 }
 
 type resourceQuadID struct {

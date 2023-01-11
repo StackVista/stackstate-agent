@@ -16,6 +16,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/defaults"
 	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
+	"github.com/StackVista/stackstate-agent/pkg/util/features"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
@@ -44,6 +45,7 @@ type CheckBase struct {
 	checkInterval  time.Duration
 	source         string
 	telemetry      bool
+	features       features.Features
 }
 
 // NewCheckBase returns a check base struct with a given check name
@@ -241,4 +243,12 @@ func (c *CheckBase) GetSenderStats() (check.SenderStats, error) {
 		return check.SenderStats{}, fmt.Errorf("failed to retrieve a sender: %v", err)
 	}
 	return sender.GetSenderStats(), nil
+}
+
+func (c *CheckBase) GetFeatures() features.Features {
+	return c.features
+}
+
+func (c *CheckBase) SetFeatures(features features.Features) {
+	c.features = features
 }
