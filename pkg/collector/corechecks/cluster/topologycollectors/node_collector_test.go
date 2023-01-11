@@ -9,6 +9,9 @@ package topologycollectors
 
 import (
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
@@ -16,8 +19,6 @@ import (
 	coreV1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"testing"
-	"time"
 )
 
 func TestNodeCollector(t *testing.T) {
@@ -143,6 +144,12 @@ func TestNodeCollector(t *testing.T) {
 											},
 											"spec": map[string]interface{}{},
 											"status": map[string]interface{}{
+												"addresses": []interface{}{
+													map[string]interface{}{
+														"address": "10.20.01.01",
+														"type":    "InternalIP",
+													},
+												},
 												"phase": "Running",
 												"nodeInfo": map[string]interface{}{
 													"machineID":     "test-machine-id-1",
@@ -286,6 +293,16 @@ func TestNodeCollector(t *testing.T) {
 												},
 												"spec": map[string]interface{}{},
 												"status": map[string]interface{}{
+													"addresses": []interface{}{
+														map[string]interface{}{
+															"address": "10.20.01.01",
+															"type":    "InternalIP",
+														},
+														map[string]interface{}{
+															"address": "10.20.01.02",
+															"type":    "ExternalIP",
+														},
+													},
 													"phase": "Running",
 													"nodeInfo": map[string]interface{}{
 														"machineID":     "test-machine-id-2",
@@ -439,6 +456,24 @@ func TestNodeCollector(t *testing.T) {
 													"providerID": "aws:///us-east-1b/i-024b28584ed2e6321",
 												},
 												"status": map[string]interface{}{
+													"addresses": []interface{}{
+														map[string]interface{}{
+															"address": "10.20.01.01",
+															"type":    "InternalIP",
+														},
+														map[string]interface{}{
+															"address": "10.20.01.02",
+															"type":    "ExternalIP",
+														},
+														map[string]interface{}{
+															"address": "cluster.internal.dns.test-node-3",
+															"type":    "InternalDNS",
+														},
+														map[string]interface{}{
+															"address": "my-organization.test-node-3",
+															"type":    "ExternalDNS",
+														},
+													},
 													"phase": "Running",
 													"nodeInfo": map[string]interface{}{
 														"machineID":     "test-machine-id-3",

@@ -58,7 +58,7 @@ func TestJobCollector(t *testing.T) {
 						Type:       topology.Type{Name: "job"},
 						Data: topology.Data{
 							"name":              "test-job-1",
-							"creationTimestamp": creationTime,
+							"creationTimestamp": creationTimeJob,
 							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 							"uid":               types.UID("test-job-1"),
 							"backoffLimit":      &backoffLimit,
@@ -128,14 +128,13 @@ func TestJobCollector(t *testing.T) {
 							"status": map[string]interface{}{
 								"completionTime": creationTimeFormattedJob,
 								"startTime":      creationTimeFormattedJob,
-								"succeeded":      int32(1),
-								"conditions": []map[string]interface{}{
-									{
-										"lastProbeTime":      creationTimeFormattedJob,
-										"lastTransitionTime": creationTimeFormattedJob,
-										"status":             "True",
-										"type":               "Complete",
-									},
+								"succeeded":      float64(1),
+								"conditions": []interface{}{map[string]interface{}{
+									"lastProbeTime":      creationTimeFormattedJob,
+									"lastTransitionTime": creationTimeFormattedJob,
+									"status":             "True",
+									"type":               "Complete",
+								},
 								},
 							},
 						},
@@ -158,7 +157,7 @@ func TestJobCollector(t *testing.T) {
 						Type:       topology.Type{Name: "job"},
 						Data: topology.Data{
 							"name":              "test-job-2",
-							"creationTimestamp": creationTime,
+							"creationTimestamp": creationTimeJob,
 							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 							"uid":               types.UID("test-job-2"),
 							"backoffLimit":      &backoffLimit,
@@ -222,14 +221,13 @@ func TestJobCollector(t *testing.T) {
 							"status": map[string]interface{}{
 								"completionTime": creationTimeFormattedJob,
 								"startTime":      creationTimeFormattedJob,
-								"succeeded":      int32(1),
-								"conditions": []map[string]interface{}{
-									{
-										"lastProbeTime":      creationTimeFormattedJob,
-										"lastTransitionTime": creationTimeFormattedJob,
-										"status":             "True",
-										"type":               "Complete",
-									},
+								"succeeded":      float64(1),
+								"conditions": []interface{}{map[string]interface{}{
+									"lastProbeTime":      creationTimeFormattedJob,
+									"lastTransitionTime": creationTimeFormattedJob,
+									"status":             "True",
+									"type":               "Complete",
+								},
 								},
 							},
 						},
@@ -252,7 +250,7 @@ func TestJobCollector(t *testing.T) {
 						Type:       topology.Type{Name: "job"},
 						Data: topology.Data{
 							"name":              "test-job-3",
-							"creationTimestamp": creationTime,
+							"creationTimestamp": creationTimeJob,
 							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
 							"uid":               types.UID("test-job-3"),
 							"kind":              "some-specified-kind",
@@ -320,14 +318,13 @@ func TestJobCollector(t *testing.T) {
 							"status": map[string]interface{}{
 								"completionTime": creationTimeFormattedJob,
 								"startTime":      creationTimeFormattedJob,
-								"succeeded":      int32(1),
-								"conditions": []map[string]interface{}{
-									{
-										"lastProbeTime":      creationTimeFormattedJob,
-										"lastTransitionTime": creationTimeFormattedJob,
-										"status":             "True",
-										"type":               "Complete",
-									},
+								"succeeded":      float64(1),
+								"conditions": []interface{}{map[string]interface{}{
+									"lastProbeTime":      creationTimeFormattedJob,
+									"lastTransitionTime": creationTimeFormattedJob,
+									"status":             "True",
+									"type":               "Complete",
+								},
 								},
 							},
 						},
@@ -378,7 +375,7 @@ func (m MockJobAPICollectorClient) GetJobs() ([]batchV1.Job, error) {
 			},
 			ObjectMeta: v1.ObjectMeta{
 				Name:              fmt.Sprintf("test-job-%d", i),
-				CreationTimestamp: creationTime,
+				CreationTimestamp: creationTimeJob,
 				Namespace:         "test-namespace",
 				Labels: map[string]string{
 					"test": "label",

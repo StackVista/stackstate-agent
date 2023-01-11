@@ -74,6 +74,9 @@ func TestNamespaceCollector(t *testing.T) {
 								"uid":               "test-namespace-1",
 							},
 							"spec": map[string]interface{}{},
+							"status": map[string]interface{}{
+								"phase": "Active",
+							},
 						},
 					},
 					expectedSPPlusStatus: &topology.Component{
@@ -128,23 +131,26 @@ func TestNamespaceCollector(t *testing.T) {
 								"uid":               "test-namespace-2",
 							},
 							"spec": map[string]interface{}{},
+							"status": map[string]interface{}{
+								"phase": "Active",
+							},
 						},
 					},
 					expectedSPPlusStatus: &topology.Component{
 						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-2",
 						Type:       topology.Type{Name: "namespace"},
 						Data: topology.Data{
-							"name":            "test-namespace-2",
-							"tags":            map[string]string{"cluster-name": "test-cluster-name"},
-							"identifiers":     []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
-							"resourceVersion": "123",
-							"annotations":     map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationNamespace},
+							"name":        "test-namespace-2",
+							"tags":        map[string]string{"cluster-name": "test-cluster-name"},
+							"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"name":              "test-namespace-2",
 								"uid":               "test-namespace-2",
+								"resourceVersion":   "123",
+								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationNamespace},
 							},
 							"spec": map[string]interface{}{},
 							"status": map[string]interface{}{
@@ -200,6 +206,7 @@ func (m MockNamespaceAPICollectorClient) GetNamespaces() ([]coreV1.Namespace, er
 					},
 				},
 			},
+			Spec: coreV1.NamespaceSpec{},
 			Status: coreV1.NamespaceStatus{
 				Phase: "Active",
 			},

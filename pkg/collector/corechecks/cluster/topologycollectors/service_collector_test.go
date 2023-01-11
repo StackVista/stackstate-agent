@@ -295,7 +295,16 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 									"targetPort": float64(8086)},
 							}},
 						"status": map[string]interface{}{
-							"loadBalancer": map[string]interface{}{},
+							"loadBalancer": map[string]interface{}{
+								"ingress": []interface{}{
+									map[string]interface{}{
+										"ip": "34.100.200.15",
+									},
+									map[string]interface{}{
+										"hostname": "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+									},
+								},
+							},
 						},
 					},
 				},
