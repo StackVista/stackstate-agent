@@ -14,10 +14,10 @@ type FeatureID string
 
 // List of features managed by StackState receiver
 const (
-	UpgradeToMultiMetrics FeatureID = "upgrade-to-multi-metrics"
-	IncrementalTopology   FeatureID = "incremental-topology"
-	HealthStates          FeatureID = "health-states"
-	ExposeKubernetesSatus FeatureID = "expose-kubernetes-status"
+	UpgradeToMultiMetrics  FeatureID = "upgrade-to-multi-metrics"
+	IncrementalTopology    FeatureID = "incremental-topology"
+	HealthStates           FeatureID = "health-states"
+	ExposeKubernetesStatus FeatureID = "expose-kubernetes-status"
 )
 
 type Features interface {

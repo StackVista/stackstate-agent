@@ -9,6 +9,10 @@ package kubeapi
 
 import (
 	"fmt"
+	"strconv"
+	"sync"
+	"testing"
+
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	collectors "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/topologycollectors"
@@ -17,9 +21,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/version"
-	"strconv"
-	"sync"
-	"testing"
 )
 
 var componentID int
@@ -113,13 +114,12 @@ func testConfigParsed(t *testing.T, input string, expected TopologyConfig) {
 func TestConfigurationParsing(t *testing.T) {
 	defaultConfig := TopologyConfig{
 		// for empty config something is coming from global configuration
-		ClusterName:                   agentConfig.Datadog.GetString("cluster_name"),
-		CollectTopology:               agentConfig.Datadog.GetBool("collect_kubernetes_topology"),
-		CollectTimeout:                agentConfig.Datadog.GetInt("collect_kubernetes_timeout"),
-		SourcePropertiesEnabled:       agentConfig.Datadog.GetBool("kubernetes_source_properties_enabled"),
-		ExposeKubernetesStatusEnabled: agentConfig.Datadog.GetBool("kubernetes_expose_kubernetes_status_enabled"),
-		ConfigMapMaxDataSize:          DefaultConfigMapDataSizeLimit,
-		CSIPVMapperEnabled:            agentConfig.Datadog.GetBool("kubernetes_csi_pv_mapper_enabled"),
+		ClusterName:             agentConfig.Datadog.GetString("cluster_name"),
+		CollectTopology:         agentConfig.Datadog.GetBool("collect_kubernetes_topology"),
+		CollectTimeout:          agentConfig.Datadog.GetInt("collect_kubernetes_timeout"),
+		SourcePropertiesEnabled: agentConfig.Datadog.GetBool("kubernetes_source_properties_enabled"),
+		ConfigMapMaxDataSize:    DefaultConfigMapDataSizeLimit,
+		CSIPVMapperEnabled:      agentConfig.Datadog.GetBool("kubernetes_csi_pv_mapper_enabled"),
 		Resources: ResourcesConfig{
 			Persistentvolumes:      true,
 			Persistentvolumeclaims: true,
@@ -141,7 +141,6 @@ func TestConfigurationParsing(t *testing.T) {
 	allResourcesAreDisabledConfig := `
 cluster_name: mycluster
 source_properties_enabled: false
-expose_kubernetes_status_enabled: false
 resources:
   persistentvolumes: false
   persistentvolumeclaims: false
@@ -160,7 +159,6 @@ resources:
 	expectedSimple := defaultConfig
 	expectedSimple.ClusterName = "mycluster"
 	expectedSimple.SourcePropertiesEnabled = false
-	expectedSimple.ExposeKubernetesStatusEnabled = false
 	expectedSimple.Resources = ResourcesConfig{}
 	testConfigParsed(t, allResourcesAreDisabledConfig, expectedSimple)
 }
