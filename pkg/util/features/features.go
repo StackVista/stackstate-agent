@@ -95,16 +95,6 @@ func (ff *FetchFeatures) FeatureEnabled(feature FeatureID) bool {
 	return false
 }
 
-func (ff *FetchFeatures) getFeaturesAsync(featuresCh chan featureSet) {
-	features, err := ff.getFeatures()
-
-	if err != nil {
-		// Ignoring errors, they are already logged
-		return
-	}
-	featuresCh <- features
-}
-
 func (ff *FetchFeatures) getFeatures() (featureSet, error) {
 	response := ff.stsClient.Get("features")
 
