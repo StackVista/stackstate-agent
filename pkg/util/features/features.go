@@ -34,6 +34,7 @@ type FetchFeatures struct {
 	stsClient httpclient.RetryableHTTPClient
 }
 
+// AllFeatures is intended for tests and returns enabled = true for every Feature
 type AllFeatures struct{}
 
 // All returns a Features instance with all features enabled. For tests only
