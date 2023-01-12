@@ -214,13 +214,13 @@ func (ns *networkState) GetDelta(
 	if len(dnsStats) > 0 {
 		ns.storeDNSStats(dnsStats)
 	}
-	if len(httpStats.Requests) > 0 {
-		ns.storeHTTPStats(httpStats.Requests)
-	}
 
 	var httpTelemetryStats *http.TelemetryStats
 	if httpStats != nil {
 		httpTelemetryStats = httpStats.Telemetry
+		if len(httpStats.Requests) > 0 {
+			ns.storeHTTPStats(httpStats.Requests)
+		}
 	}
 
 	return Delta{
