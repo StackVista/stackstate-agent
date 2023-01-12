@@ -47,6 +47,7 @@ type ClusterTopologyCommon interface {
 	buildIngressExternalID(namespace, ingressName string) string
 	buildVolumeExternalID(namespace, volumeName string) string
 	buildPersistentVolumeExternalID(persistentVolumeName string) string
+	buildPersistentVolumeClaimExternalID(persistentVolumeName string) string
 	buildEndpointExternalID(endpointID string) string
 	maximumMinorVersion(version int) bool
 	minimumMinorVersion(version int) bool
@@ -279,6 +280,11 @@ func (c *clusterTopologyCommon) buildVolumeExternalID(namespace, volumeName stri
 // buildPersistentVolumeExternalID creates the urn external identifier for a cluster persistent volume
 func (c *clusterTopologyCommon) buildPersistentVolumeExternalID(persistentVolumeName string) string {
 	return c.urn.BuildPersistentVolumeExternalID(persistentVolumeName)
+}
+
+// buildPersistentVolumeClaimExternalID creates the urn external identifier for a cluster persistent volume
+func (c *clusterTopologyCommon) buildPersistentVolumeClaimExternalID(persistentVolumeClaimName string) string {
+	return c.urn.BuildPersistentVolumeClaimExternalID(persistentVolumeClaimName)
 }
 
 // buildEndpointExternalID
