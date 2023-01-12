@@ -5,14 +5,15 @@ import (
 	"compress/gzip"
 	"crypto/tls"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/StackVista/stackstate-agent/pkg/version"
-	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"net"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/version"
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
 )
 
 // GET is used for HTTP GET calls
@@ -129,6 +130,8 @@ func newClient(host *ClientHost) *retryablehttp.Client {
 	}
 
 	retryableClient := retryablehttp.NewClient()
+	// Make retryableClient logging use log level settings by replace the default logger with wrapped leveledLogger
+	retryableClient.Logger = &leveledLogger{}
 	retryableClient.HTTPClient = &http.Client{Timeout: 30 * time.Second, Transport: transport}
 	if config.Datadog.IsSet("transactional_forwarder_retry_min") {
 		retryableClient.RetryWaitMin = config.Datadog.GetDuration("transactional_forwarder_retry_min")
@@ -199,4 +202,21 @@ func (rc *retryableHTTPClient) makeRequest(method, path string, body []byte) (*r
 	req.Header.Add("content-type", "application/json")
 
 	return req, nil
+}
+
+// Wrapper for the agent logger to be recognized as a retryablehttp.LeveledLogger
+type leveledLogger struct {
+}
+
+func (l *leveledLogger) Error(msg string, keysAndValues ...interface{}) {
+	log.Errorf(msg, keysAndValues...)
+}
+func (l *leveledLogger) Info(msg string, keysAndValues ...interface{}) {
+	log.Infof(msg, keysAndValues...)
+}
+func (l *leveledLogger) Debug(msg string, keysAndValues ...interface{}) {
+	log.Debugf(msg, keysAndValues)
+}
+func (l *leveledLogger) Warn(msg string, keysAndValues ...interface{}) {
+	log.Warn(msg, keysAndValues)
 }
