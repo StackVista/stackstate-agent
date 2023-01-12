@@ -63,6 +63,7 @@ func (pc *PodCollector) CollectorFunction() error {
 	var component *topology.Component
 	var controllerExternalID string
 	for _, pod := range pods {
+		log.Warnf("Pod: %v", &pod)
 		// creates and publishes StackState pod component with relations
 		component = pc.podToStackStateComponent(pod)
 		pc.SubmitComponent(component)
@@ -220,6 +221,11 @@ func (pc *PodCollector) podToStackStateComponent(pod v1.Pod) *topology.Component
 			"phase": string(pod.Status.Phase),
 		})
 	} else {
+		pod.Status.Conditions = nil
+		pod.Status.InitContainerStatuses = nil
+		pod.Status.ContainerStatuses = nil
+		pod.Status.EphemeralContainerStatuses = nil
+
 		component.Data.PutNonEmpty("kind", pod.Kind)
 		component.Data.PutNonEmpty("creationTimestamp", pod.CreationTimestamp)
 		component.Data.PutNonEmpty("uid", pod.UID)
