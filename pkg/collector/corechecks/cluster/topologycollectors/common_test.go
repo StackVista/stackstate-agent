@@ -22,13 +22,15 @@ func chooseBySourcePropertiesFeature(
 	componentSP *topology.Component,
 	componentSPPlustStatus *topology.Component,
 ) *topology.Component {
+	var result *topology.Component
 	if sourcePropertiesEnabled {
 		if kubernetesStatusEnabled {
-			return componentSPPlustStatus
+			result = componentSPPlustStatus
 		} else {
-			return componentSP
+			result = componentSP
 		}
 	} else {
-		return componentNoSP
+		result = componentNoSP
 	}
+	return result
 }
