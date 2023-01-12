@@ -7,12 +7,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"sync"
+
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/gogo/protobuf/jsonpb"
 	"github.com/gogo/protobuf/proto"
 	"k8s.io/apimachinery/pkg/version"
-	"strconv"
-	"sync"
 
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/urn"
 	"github.com/StackVista/stackstate-agent/pkg/topology"

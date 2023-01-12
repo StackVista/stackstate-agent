@@ -212,8 +212,10 @@ func (pc *PodCollector) podToStackStateComponent(pod v1.Pod) *topology.Component
 	}
 
 	if pc.IsSourcePropertiesFeatureEnabled() || pc.IsExposeKubernetesStatusEnabled() {
+		log.Warnf("Pod: Source properties enabled")
 		var sourceProperties map[string]interface{}
 		if pc.IsExposeKubernetesStatusEnabled() {
+			log.Warnf("Pod: Expose Kubernetes status enabled")
 			sourceProperties = makeSourcePropertiesFullDetails(&pod)
 		} else {
 			sourceProperties = makeSourcePropertiesKS(&pod)

@@ -56,13 +56,15 @@ type CheckScheduler struct {
 
 // InitCheckScheduler creates and returns a check scheduler
 func InitCheckScheduler(collector *Collector) *CheckScheduler {
-	features := features.InitFeatures()
+	feats := features.InitFeatures()
+
+	log.Warnf("Check Scheduler has initialized features, expose kubernetes status: %b", feats.FeatureEnabled(features.ExposeKubernetesStatus))
 
 	checkScheduler = &CheckScheduler{
 		collector:      collector,
 		configToChecks: make(map[string][]check.ID),
 		loaders:        make([]check.Loader, 0, len(loaders.LoaderCatalog())),
-		features:       features,
+		features:       feats,
 	}
 	// add the check loaders
 	for _, loader := range loaders.LoaderCatalog() {
@@ -184,6 +186,7 @@ func (s *CheckScheduler) getChecks(config integration.Config) ([]check.Check, er
 			}
 			c, err := loader.Load(config, instance)
 			c.SetFeatures(s.features)
+			log.Warnf("Check %s loaded, injected features with expose kubernetes status %b", c.String(), c.GetFeatures().FeatureEnabled(features.ExposeKubernetesStatus))
 			if err == nil {
 				log.Debugf("%v: successfully loaded check '%s'", loader, config.Name)
 				errorStats.removeLoaderErrors(config.Name)
