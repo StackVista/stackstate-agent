@@ -154,7 +154,13 @@ func (pvc *PersistentVolumeCollector) persistentVolumeClaimToStackStateComponent
 	}
 
 	if pvc.IsSourcePropertiesFeatureEnabled() {
-		component.SourceProperties = makeSourceProperties(&persistentVolumeClaim)
+		var sourceProperties map[string]interface{}
+		if pvc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(&persistentVolumeClaim)
+		} else {
+			sourceProperties = makeSourceProperties(&persistentVolumeClaim)
+		}
+		component.SourceProperties = sourceProperties
 	} else {
 		component.Data.PutNonEmpty("kind", persistentVolumeClaim.Kind)
 		component.Data.PutNonEmpty("uid", persistentVolumeClaim.UID)
