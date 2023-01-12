@@ -196,11 +196,6 @@ func (pc *PodCollector) podToStackStateComponent(pod v1.Pod) *topology.Component
 
 	tags := pc.podTags(pod)
 
-	// clear out the unnecessary status array values
-	pod.Status.Conditions = nil
-	pod.Status.InitContainerStatuses = nil
-	pod.Status.ContainerStatuses = nil
-
 	component := &topology.Component{
 		ExternalID: podExternalID,
 		Type:       topology.Type{Name: "pod"},
@@ -211,11 +206,9 @@ func (pc *PodCollector) podToStackStateComponent(pod v1.Pod) *topology.Component
 		},
 	}
 
-	if pc.IsSourcePropertiesFeatureEnabled() || pc.IsExposeKubernetesStatusEnabled() {
-		log.Warnf("Pod: Source properties enabled")
+	if pc.IsSourcePropertiesFeatureEnabled() {
 		var sourceProperties map[string]interface{}
 		if pc.IsExposeKubernetesStatusEnabled() {
-			log.Warnf("Pod: Expose Kubernetes status enabled")
 			sourceProperties = makeSourcePropertiesFullDetails(&pod)
 		} else {
 			sourceProperties = makeSourcePropertiesKS(&pod)
