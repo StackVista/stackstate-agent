@@ -98,7 +98,7 @@ func (pvc *PersistentVolumeCollector) persistentVolumeToStackStateComponent(pers
 		},
 	}
 
-	if pvc.IsSourcePropertiesFeatureEnabled() || pvc.IsExposeKubernetesStatusEnabled() {
+	if pvc.IsSourcePropertiesFeatureEnabled() {
 		var sourceProperties map[string]interface{}
 		if pvc.IsExposeKubernetesStatusEnabled() {
 			sourceProperties = makeSourcePropertiesFullDetails(&persistentVolume)

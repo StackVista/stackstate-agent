@@ -73,7 +73,7 @@ func (jc *JobCollector) jobToStackStateComponent(job v1.Job) *topology.Component
 		},
 	}
 
-	if jc.IsSourcePropertiesFeatureEnabled() || jc.IsExposeKubernetesStatusEnabled() {
+	if jc.IsSourcePropertiesFeatureEnabled() {
 		var sourceProperties map[string]interface{}
 		if jc.IsExposeKubernetesStatusEnabled() {
 			sourceProperties = makeSourcePropertiesFullDetails(&job)

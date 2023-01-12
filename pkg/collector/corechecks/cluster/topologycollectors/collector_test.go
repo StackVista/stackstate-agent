@@ -8,23 +8,28 @@
 package topologycollectors
 
 import (
+	"testing"
+
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"k8s.io/apimachinery/pkg/version"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCollectorInterface(t *testing.T) {
-	t.Run("with sourceProperties enabled", func(t *testing.T) {
+	t.Run("with sourceProperties enabled and status disabled", func(t *testing.T) {
 		testCollectorInterface(t, true, false)
 	})
-	t.Run("with sourceProperties disabled", func(t *testing.T) {
+	t.Run("with sourceProperties enabled and status enabled", func(t *testing.T) {
+		testCollectorInterface(t, true, true)
+	})
+	t.Run("with sourceProperties disabled and status disabled", func(t *testing.T) {
 		testCollectorInterface(t, false, false)
 	})
-	t.Run("with KubernetesStatus enabled", func(t *testing.T) {
+	t.Run("with sourceProperties disabled and status enabled", func(t *testing.T) {
 		testCollectorInterface(t, false, true)
 	})
+
 }
 
 func testCollectorInterface(t *testing.T, sourcePropertiesEnabled bool, exposeKubernetesStatusEnabled bool) {

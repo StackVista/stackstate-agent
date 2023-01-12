@@ -285,10 +285,12 @@ func TestDaemonSetCollector(t *testing.T) {
 			} {
 				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled, kubernetesStatusEnabled), func(t *testing.T) {
 					component := <-componentChannel
-					if kubernetesStatusEnabled {
-						assert.EqualValues(t, tc.expectedKubeStatus, component)
-					} else if sourcePropertiesEnabled {
-						assert.EqualValues(t, tc.expectedSP, component)
+					if sourcePropertiesEnabled {
+						if kubernetesStatusEnabled {
+							assert.EqualValues(t, tc.expectedKubeStatus, component)
+						} else {
+							assert.EqualValues(t, tc.expectedSP, component)
+						}
 					} else {
 						assert.EqualValues(t, tc.expectedNoSP, component)
 					}

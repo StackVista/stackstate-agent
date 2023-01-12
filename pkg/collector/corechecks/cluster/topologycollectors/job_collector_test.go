@@ -343,10 +343,12 @@ func TestJobCollector(t *testing.T) {
 			} {
 				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled, kubernetesStatusEnabled), func(t *testing.T) {
 					component := <-componentChannel
-					if kubernetesStatusEnabled {
-						assert.EqualValues(t, tc.expectedComponentSPPlusStatus, component)
-					} else if sourcePropertiesEnabled {
-						assert.EqualValues(t, tc.expectedComponentSP, component)
+					if sourcePropertiesEnabled {
+						if kubernetesStatusEnabled {
+							assert.EqualValues(t, tc.expectedComponentSPPlusStatus, component)
+						} else {
+							assert.EqualValues(t, tc.expectedComponentSP, component)
+						}
 					} else {
 						assert.EqualValues(t, tc.expectedComponentNoSP, component)
 					}

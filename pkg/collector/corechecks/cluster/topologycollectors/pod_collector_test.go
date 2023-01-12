@@ -916,6 +916,20 @@ func TestPodCollector(t *testing.T) {
 											"nodeName":      "test-node",
 											"restartPolicy": "Always"},
 										"status": map[string]interface{}{
+											"containerStatuses": []interface{}{
+												map[string]interface{}{
+													"image":     "docker/image/repo/container-1:latest",
+													"lastState": map[string]interface{}{},
+													"name":      "container-1",
+													"state":     map[string]interface{}{},
+												},
+												map[string]interface{}{
+													"image":     "docker/image/repo/container-2:latest",
+													"lastState": map[string]interface{}{},
+													"name":      "container-2",
+													"state":     map[string]interface{}{},
+												},
+											},
 											"phase":     "Running",
 											"startTime": creationTimeFormatted,
 											"podIP":     "10.0.0.1",
@@ -944,6 +958,20 @@ func TestPodCollector(t *testing.T) {
 											"nodeName":      "test-node",
 											"restartPolicy": "Always"},
 										"status": map[string]interface{}{
+											"containerStatuses": []interface{}{
+												map[string]interface{}{
+													"image":     "docker/image/repo/container-1:latest",
+													"lastState": map[string]interface{}{},
+													"name":      "container-1",
+													"state":     map[string]interface{}{},
+												},
+												map[string]interface{}{
+													"image":     "docker/image/repo/container-2:latest",
+													"lastState": map[string]interface{}{},
+													"name":      "container-2",
+													"state":     map[string]interface{}{},
+												},
+											},
 											"phase":     "Running",
 											"startTime": creationTimeFormatted,
 											"podIP":     "10.0.0.1",

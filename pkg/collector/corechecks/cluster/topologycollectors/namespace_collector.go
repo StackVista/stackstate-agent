@@ -57,7 +57,7 @@ func (nsc *NamespaceCollector) namespaceToStackStateComponent(namespace v1.Names
 		},
 	}
 
-	if nsc.IsSourcePropertiesFeatureEnabled() || nsc.IsExposeKubernetesStatusEnabled() {
+	if nsc.IsSourcePropertiesFeatureEnabled() {
 		var sourceProperties map[string]interface{}
 		if nsc.IsExposeKubernetesStatusEnabled() {
 			sourceProperties = makeSourcePropertiesFullDetails(&namespace)

@@ -293,10 +293,12 @@ func TestReplicaSetCollector(t *testing.T) {
 			} {
 				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled, kubernetesStatusEnabled), func(t *testing.T) {
 					service := <-componentChannel
-					if kubernetesStatusEnabled {
-						assert.EqualValues(t, tc.expectedComponentSPPlusStatus, service)
-					} else if sourcePropertiesEnabled {
-						assert.EqualValues(t, tc.expectedComponentSP, service)
+					if sourcePropertiesEnabled {
+						if kubernetesStatusEnabled {
+							assert.EqualValues(t, tc.expectedComponentSPPlusStatus, service)
+						} else {
+							assert.EqualValues(t, tc.expectedComponentSP, service)
+						}
 					} else {
 						assert.EqualValues(t, tc.expectedComponentNoSP, service)
 					}

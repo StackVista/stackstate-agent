@@ -110,10 +110,12 @@ func testCronJobsWithK8SVersion(t *testing.T, k8sVersion version.Info, component
 			for _, tc := range componentsExpected {
 				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled, kubernetesStatusEnabled), func(t *testing.T) {
 					cronJob := <-componentChannel
-					if kubernetesStatusEnabled {
-						assert.EqualValues(t, tc.expectedSPPlusStatus, cronJob)
-					} else if sourcePropertiesEnabled {
-						assert.EqualValues(t, tc.expectedSP, cronJob)
+					if sourcePropertiesEnabled {
+						if kubernetesStatusEnabled {
+							assert.EqualValues(t, tc.expectedSPPlusStatus, cronJob)
+						} else {
+							assert.EqualValues(t, tc.expectedSP, cronJob)
+						}
 					} else {
 						assert.EqualValues(t, tc.expectedNoSP, cronJob)
 					}

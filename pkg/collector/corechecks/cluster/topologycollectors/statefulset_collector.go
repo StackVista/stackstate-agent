@@ -6,7 +6,7 @@ package topologycollectors
 import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"k8s.io/api/apps/v1"
+	v1 "k8s.io/api/apps/v1"
 )
 
 // StatefulSetCollector implements the ClusterTopologyCollector interface.
@@ -58,7 +58,7 @@ func (ssc *StatefulSetCollector) statefulSetToStackStateComponent(statefulSet v1
 		},
 	}
 
-	if ssc.IsSourcePropertiesFeatureEnabled() || ssc.IsExposeKubernetesStatusEnabled() {
+	if ssc.IsSourcePropertiesFeatureEnabled() {
 		var sourceProperties map[string]interface{}
 		if ssc.IsExposeKubernetesStatusEnabled() {
 			sourceProperties = makeSourcePropertiesFullDetails(&statefulSet)

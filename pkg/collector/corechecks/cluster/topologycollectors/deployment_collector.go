@@ -6,7 +6,7 @@ package topologycollectors
 import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"k8s.io/api/apps/v1"
+	v1 "k8s.io/api/apps/v1"
 )
 
 // DeploymentCollector implements the ClusterTopologyCollector interface.
@@ -63,7 +63,7 @@ func (dmc *DeploymentCollector) deploymentToStackStateComponent(deployment v1.De
 		},
 	}
 
-	if dmc.IsSourcePropertiesFeatureEnabled() || dmc.IsExposeKubernetesStatusEnabled() {
+	if dmc.IsSourcePropertiesFeatureEnabled() {
 		var sourceProperties map[string]interface{}
 		if dmc.IsExposeKubernetesStatusEnabled() {
 			sourceProperties = makeSourcePropertiesFullDetails(&deployment)

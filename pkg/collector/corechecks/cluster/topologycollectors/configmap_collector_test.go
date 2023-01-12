@@ -9,15 +9,16 @@ package topologycollectors
 
 import (
 	"fmt"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 	"github.com/stretchr/testify/assert"
 	coreV1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"strings"
-	"testing"
-	"time"
 )
 
 const (
@@ -223,10 +224,12 @@ func TestConfigMapCollector(t *testing.T) {
 			} {
 				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled, kubernetesStatusEnabled), func(t *testing.T) {
 					component := <-componentChannel
-					if kubernetesStatusEnabled {
-						assert.EqualValues(t, tc.expectedKubeStatus, component)
-					} else if sourcePropertiesEnabled {
-						assert.EqualValues(t, tc.expectedSP, component)
+					if sourcePropertiesEnabled {
+						if kubernetesStatusEnabled {
+							assert.EqualValues(t, tc.expectedKubeStatus, component)
+						} else {
+							assert.EqualValues(t, tc.expectedSP, component)
+						}
 					} else {
 						assert.EqualValues(t, tc.expectedNoSP, component)
 					}

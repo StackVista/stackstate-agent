@@ -7,7 +7,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/urn"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 // NodeCollector implements the ClusterTopologyCollector interface.
@@ -89,7 +89,7 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 		},
 	}
 
-	if nc.IsSourcePropertiesFeatureEnabled() || nc.IsExposeKubernetesStatusEnabled() {
+	if nc.IsSourcePropertiesFeatureEnabled() {
 		var sourceProperties map[string]interface{}
 		if nc.IsExposeKubernetesStatusEnabled() {
 			sourceProperties = makeSourcePropertiesFullDetails(&node)

@@ -120,7 +120,7 @@ func (ic *IngressCollector) ingressToStackStateComponent(ingress IngressInterfac
 		},
 	}
 
-	if ic.IsSourcePropertiesFeatureEnabled() || ic.IsExposeKubernetesStatusEnabled() {
+	if ic.IsSourcePropertiesFeatureEnabled() {
 		object := ingress.GetKubernetesObject()
 		var sourceProperties map[string]interface{}
 		if ic.IsExposeKubernetesStatusEnabled() {

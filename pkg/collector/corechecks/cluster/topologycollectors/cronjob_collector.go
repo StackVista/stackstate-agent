@@ -93,7 +93,7 @@ func (cjc *CronJobCollector) cronJobToStackStateComponent(cronJob CronJobInterfa
 		},
 	}
 
-	if cjc.IsSourcePropertiesFeatureEnabled() || cjc.IsExposeKubernetesStatusEnabled() {
+	if cjc.IsSourcePropertiesFeatureEnabled() {
 		var sourceProperties map[string]interface{}
 		if cjc.IsExposeKubernetesStatusEnabled() {
 			sourceProperties = makeSourcePropertiesFullDetails(cronJob.GetKubernetesObject())

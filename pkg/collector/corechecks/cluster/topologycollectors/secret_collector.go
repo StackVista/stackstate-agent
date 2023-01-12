@@ -6,10 +6,11 @@ package topologycollectors
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"sort"
+
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
-	"sort"
 )
 
 // SecretCollector implements the ClusterTopologyCollector interface.
@@ -75,7 +76,7 @@ func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topo
 		},
 	}
 
-	if cmc.IsSourcePropertiesFeatureEnabled() || cmc.IsExposeKubernetesStatusEnabled() {
+	if cmc.IsSourcePropertiesFeatureEnabled() {
 		var sourceProperties map[string]interface{}
 		if cmc.IsExposeKubernetesStatusEnabled() {
 			sourceProperties = makeSourcePropertiesFullDetails(&prunedSecret)
