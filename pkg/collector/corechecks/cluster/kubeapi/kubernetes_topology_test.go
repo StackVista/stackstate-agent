@@ -100,10 +100,16 @@ resources:
 
 func TestRunClusterCollectors(t *testing.T) {
 	t.Run("with sourceProperties enabled", func(t *testing.T) {
-		testRunClusterCollectors(t, true, true) // TODO : Does this need true false ?
+		testRunClusterCollectors(t, true, true)
+	})
+	t.Run("with sourceProperties enabled", func(t *testing.T) {
+		testRunClusterCollectors(t, true, false)
 	})
 	t.Run("with sourceProperties disabled", func(t *testing.T) {
-		testRunClusterCollectors(t, false, false) // TODO : Does this need false true ?
+		testRunClusterCollectors(t, false, false)
+	})
+	t.Run("with sourceProperties disabled", func(t *testing.T) {
+		testRunClusterCollectors(t, false, true)
 	})
 }
 

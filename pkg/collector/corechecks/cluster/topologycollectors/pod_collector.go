@@ -63,7 +63,6 @@ func (pc *PodCollector) CollectorFunction() error {
 	var component *topology.Component
 	var controllerExternalID string
 	for _, pod := range pods {
-		log.Warnf("Pod: %v", &pod)
 		// creates and publishes StackState pod component with relations
 		component = pc.podToStackStateComponent(pod)
 		pc.SubmitComponent(component)
