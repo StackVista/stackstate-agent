@@ -37,12 +37,14 @@ def test_workload_topology(ansible_var, cliv1):
             lambda matcher: matcher
             .component("mehdb-pod", type="pod", name=r"mehdb-.*")
             .component("mehdb-container", type="container", name="shard")
-            .component("mehdb-pvc", type="persistent-volume", name=r"pvc-.*")
+            .component("mehdb-pv", type="persistent-volume", name=r"pvc-.*")
+            .component("mehdb-pvc", type="persistent-volume-claim", name=r"data-mehdb.*")
             .one_way_direction("mehdb-ss", "mehdb-pod", type="controls")
             .one_way_direction("mehdb-svc", "mehdb-pod", type="exposes")
             .one_way_direction("mehdb-pod", "mehdb-pvc", type="claims")
             .one_way_direction("mehdb-pod", "mehdb-container", type="encloses")
             .one_way_direction("mehdb-container", "mehdb-pvc", type="mounts")
+            .one_way_direction("mehdb-pvc", "mehdb-pv", type="exposes")
         ) \
         .component("example-ingress", type="ingress", name="example-ingress") \
         .component("apple-svc", type="service", name="apple-service") \
@@ -52,7 +54,8 @@ def test_workload_topology(ansible_var, cliv1):
 
     current_agent_topology = cliv1.topology(
         f"(label IN ('cluster-name:{cluster_name}') AND label IN ('namespace:{namespace}'))"
-        f" OR type IN ('namespace', 'persistent-volume')", "workload")
+        f" OR type IN ('namespace', 'persistent-volume', 'persistent-volume-claim')",
+        alias="workload")
     possible_matches = expected_agent_topology.find(current_agent_topology)
     possible_matches.assert_exact_match()
 
