@@ -52,7 +52,8 @@ def test_workload_topology(ansible_var, cliv1):
 
     current_agent_topology = cliv1.topology(
         f"(label IN ('cluster-name:{cluster_name}') AND label IN ('namespace:{namespace}'))"
-        f" OR type IN ('namespace', 'persistent-volume')", "workload")
+        f" OR type IN ('namespace', 'persistent-volume', 'persistent-volume-claim')",
+        alias="workload")
     possible_matches = expected_agent_topology.find(current_agent_topology)
     possible_matches.assert_exact_match()
 
