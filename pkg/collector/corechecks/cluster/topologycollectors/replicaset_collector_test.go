@@ -32,179 +32,282 @@ func TestReplicaSetCollector(t *testing.T) {
 	replicas = 1
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		commonClusterCollector := NewTestCommonClusterCollector(MockReplicaSetAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled)
-		commonClusterCollector.SetUseRelationCache(false)
-		ic := NewReplicaSetCollector(commonClusterCollector)
-		expectedCollectorName := "ReplicaSet Collector"
-		RunCollectorTest(t, ic, expectedCollectorName)
+		for _, kubernetesStatusEnabled := range []bool{false, true} {
+			commonClusterCollector := NewTestCommonClusterCollector(MockReplicaSetAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled, kubernetesStatusEnabled)
+			commonClusterCollector.SetUseRelationCache(false)
+			ic := NewReplicaSetCollector(commonClusterCollector)
+			expectedCollectorName := "ReplicaSet Collector"
+			RunCollectorTest(t, ic, expectedCollectorName)
 
-		for _, tc := range []struct {
-			testCase              string
-			expectedComponentSP   *topology.Component
-			expectedComponentNoSP *topology.Component
-			expectedRelations     []*topology.Relation
-		}{
-			{
-				testCase: "Test ReplicaSet 1 - Minimal",
-				expectedComponentNoSP: &topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-1",
-					Type:       topology.Type{Name: "replicaset"},
-					Data: topology.Data{
-						"name":              "test-replicaset-1",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-						"uid":               types.UID("test-replicaset-1"),
-						"desiredReplicas":   &replicas,
-					},
-				},
-				expectedComponentSP: &topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-1",
-					Type:       topology.Type{Name: "replicaset"},
-					Data: topology.Data{
-						"name": "test-replicaset-1",
-						"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-					},
-					SourceProperties: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"creationTimestamp": creationTimeFormatted,
-							"labels":            map[string]interface{}{"test": "label"},
+			for _, tc := range []struct {
+				testCase                      string
+				expectedComponentSP           *topology.Component
+				expectedComponentNoSP         *topology.Component
+				expectedComponentSPPlusStatus *topology.Component
+				expectedRelations             []*topology.Relation
+			}{
+				{
+					testCase: "Test ReplicaSet 1 - Minimal",
+					expectedComponentNoSP: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-1",
+						Type:       topology.Type{Name: "replicaset"},
+						Data: topology.Data{
 							"name":              "test-replicaset-1",
-							"namespace":         "test-namespace",
-							"uid":               "test-replicaset-1"},
-						"spec": map[string]interface{}{
-							"replicas": float64(1),
-							"template": map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"creationTimestamp": nil},
-								"spec": map[string]interface{}{},
-							}},
+							"creationTimestamp": creationTime,
+							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"uid":               types.UID("test-replicaset-1"),
+							"desiredReplicas":   &replicas,
+						},
+					},
+					expectedComponentSP: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-1",
+						Type:       topology.Type{Name: "replicaset"},
+						Data: topology.Data{
+							"name": "test-replicaset-1",
+							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-replicaset-1",
+								"namespace":         "test-namespace",
+								"uid":               "test-replicaset-1"},
+							"spec": map[string]interface{}{
+								"replicas": float64(1),
+								"template": map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"creationTimestamp": nil},
+									"spec": map[string]interface{}{},
+								}},
+						},
+					},
+					expectedComponentSPPlusStatus: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-1",
+						Type:       topology.Type{Name: "replicaset"},
+						Data: topology.Data{
+							"name": "test-replicaset-1",
+							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-replicaset-1",
+								"namespace":         "test-namespace",
+								"uid":               "test-replicaset-1",
+								"resourceVersion":   "123",
+							},
+							"spec": map[string]interface{}{
+								"replicas": float64(1),
+								"template": map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"creationTimestamp": nil},
+									"spec": map[string]interface{}{},
+								},
+							},
+							"status": map[string]interface{}{
+								"replicas":           float64(1),
+								"availableReplicas":  float64(1),
+								"readyReplicas":      float64(1),
+								"observedGeneration": "123",
+							},
+						},
+					},
+					expectedRelations: []*topology.Relation{
+						{
+							ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-1",
+							Type:       topology.Type{Name: "encloses"},
+							SourceID:   "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
+							TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-1",
+							Data:       map[string]interface{}{},
+						},
 					},
 				},
-				expectedRelations: []*topology.Relation{
-					{
-						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-1",
-						Type:       topology.Type{Name: "encloses"},
-						SourceID:   "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
-						TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-1",
-						Data:       map[string]interface{}{},
-					},
-				},
-			},
-			{
-				testCase: "Test ReplicaSet 2 - Kind + Generate Name",
-				expectedComponentNoSP: &topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-2",
-					Type:       topology.Type{Name: "replicaset"},
-					Data: topology.Data{
-						"name":              "test-replicaset-2",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-						"uid":               types.UID("test-replicaset-2"),
-						"desiredReplicas":   &replicas,
-						"kind":              "some-specified-kind",
-						"generateName":      "some-specified-generation",
-					},
-				},
-				expectedComponentSP: &topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-2",
-					Type:       topology.Type{Name: "replicaset"},
-					Data: topology.Data{
-						"name": "test-replicaset-2",
-						"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-					},
-					SourceProperties: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"creationTimestamp": creationTimeFormatted,
-							"labels":            map[string]interface{}{"test": "label"},
+				{
+					testCase: "Test ReplicaSet 2 - Kind + Generate Name",
+					expectedComponentNoSP: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-2",
+						Type:       topology.Type{Name: "replicaset"},
+						Data: topology.Data{
 							"name":              "test-replicaset-2",
-							"namespace":         "test-namespace",
+							"creationTimestamp": creationTime,
+							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"uid":               types.UID("test-replicaset-2"),
+							"desiredReplicas":   &replicas,
+							"kind":              "some-specified-kind",
 							"generateName":      "some-specified-generation",
-							"uid":               "test-replicaset-2"},
-						"spec": map[string]interface{}{
-							"replicas": float64(1),
-							"template": map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"creationTimestamp": nil},
-								"spec": map[string]interface{}{},
-							}},
+						},
+					},
+					expectedComponentSP: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-2",
+						Type:       topology.Type{Name: "replicaset"},
+						Data: topology.Data{
+							"name": "test-replicaset-2",
+							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-replicaset-2",
+								"namespace":         "test-namespace",
+								"generateName":      "some-specified-generation",
+								"uid":               "test-replicaset-2"},
+							"spec": map[string]interface{}{
+								"replicas": float64(1),
+								"template": map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"creationTimestamp": nil},
+									"spec": map[string]interface{}{},
+								}},
+						},
+					},
+					expectedComponentSPPlusStatus: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-2",
+						Type:       topology.Type{Name: "replicaset"},
+						Data: topology.Data{
+							"name": "test-replicaset-2",
+							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-replicaset-2",
+								"namespace":         "test-namespace",
+								"generateName":      "some-specified-generation",
+								"uid":               "test-replicaset-2",
+								"resourceVersion":   "123",
+							},
+							"spec": map[string]interface{}{
+								"replicas": float64(1),
+								"template": map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"creationTimestamp": nil},
+									"spec": map[string]interface{}{},
+								},
+							},
+							"status": map[string]interface{}{
+								"replicas":           float64(1),
+								"availableReplicas":  float64(1),
+								"readyReplicas":      float64(1),
+								"observedGeneration": "123",
+							},
+						},
+					},
+					expectedRelations: []*topology.Relation{
+						{
+							ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-2",
+							Type:       topology.Type{Name: "encloses"},
+							SourceID:   "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
+							TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-2",
+							Data:       map[string]interface{}{},
+						},
 					},
 				},
-				expectedRelations: []*topology.Relation{
-					{
-						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-2",
-						Type:       topology.Type{Name: "encloses"},
-						SourceID:   "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
-						TargetID:   "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-2",
-						Data:       map[string]interface{}{},
-					},
-				},
-			},
-			{
-				testCase: "Test ReplicaSet 3 - Complete",
-				expectedComponentNoSP: &topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-3",
-					Type:       topology.Type{Name: "replicaset"},
-					Data: topology.Data{
-						"name":              "test-replicaset-3",
-						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-						"uid":               types.UID("test-replicaset-3"),
-						"desiredReplicas":   &replicas,
-						"kind":              "some-specified-kind",
-						"generateName":      "some-specified-generation",
-					},
-				},
-				expectedComponentSP: &topology.Component{
-					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-3",
-					Type:       topology.Type{Name: "replicaset"},
-					Data: topology.Data{
-						"name": "test-replicaset-3",
-						"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-					},
-					SourceProperties: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"creationTimestamp": creationTimeFormatted,
-							"labels":            map[string]interface{}{"test": "label"},
+				{
+					testCase: "Test ReplicaSet 3 - Complete",
+					expectedComponentNoSP: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-3",
+						Type:       topology.Type{Name: "replicaset"},
+						Data: topology.Data{
 							"name":              "test-replicaset-3",
-							"namespace":         "test-namespace",
+							"creationTimestamp": creationTime,
+							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"uid":               types.UID("test-replicaset-3"),
+							"desiredReplicas":   &replicas,
+							"kind":              "some-specified-kind",
 							"generateName":      "some-specified-generation",
-
-							"ownerReferences": []interface{}{map[string]interface{}{"kind": "Deployment", "name": "test-deployment-3"}},
-							"uid":             "test-replicaset-3"},
-						"spec": map[string]interface{}{
-							"replicas": float64(1),
-							"template": map[string]interface{}{
-								"metadata": map[string]interface{}{
-									"creationTimestamp": nil},
-								"spec": map[string]interface{}{},
-							}},
+						},
+					},
+					expectedComponentSP: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-3",
+						Type:       topology.Type{Name: "replicaset"},
+						Data: topology.Data{
+							"name": "test-replicaset-3",
+							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-replicaset-3",
+								"namespace":         "test-namespace",
+								"generateName":      "some-specified-generation",
+								"ownerReferences":   []interface{}{map[string]interface{}{"kind": "Deployment", "name": "test-deployment-3"}},
+								"uid":               "test-replicaset-3"},
+							"spec": map[string]interface{}{
+								"replicas": float64(1),
+								"template": map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"creationTimestamp": nil},
+									"spec": map[string]interface{}{},
+								}},
+						},
+					},
+					expectedComponentSPPlusStatus: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-3",
+						Type:       topology.Type{Name: "replicaset"},
+						Data: topology.Data{
+							"name": "test-replicaset-3",
+							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+						},
+						SourceProperties: map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": creationTimeFormatted,
+								"labels":            map[string]interface{}{"test": "label"},
+								"name":              "test-replicaset-3",
+								"namespace":         "test-namespace",
+								"generateName":      "some-specified-generation",
+								"ownerReferences":   []interface{}{map[string]interface{}{"kind": "Deployment", "name": "test-deployment-3"}},
+								"uid":               "test-replicaset-3",
+								"resourceVersion":   "123",
+							},
+							"spec": map[string]interface{}{
+								"replicas": float64(1),
+								"template": map[string]interface{}{
+									"metadata": map[string]interface{}{
+										"creationTimestamp": nil},
+									"spec": map[string]interface{}{},
+								}},
+							"status": map[string]interface{}{
+								"replicas":           float64(1),
+								"availableReplicas":  float64(1),
+								"readyReplicas":      float64(1),
+								"observedGeneration": "123",
+							},
+						},
+					},
+					expectedRelations: []*topology.Relation{
+						{
+							ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:deployment/test-deployment-3->" +
+								"urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-3",
+							Type:     topology.Type{Name: "controls"},
+							SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:deployment/test-deployment-3",
+							TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-3",
+							Data:     map[string]interface{}{},
+						},
 					},
 				},
-				expectedRelations: []*topology.Relation{
-					{
-						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:deployment/test-deployment-3->" +
-							"urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-3",
-						Type:     topology.Type{Name: "controls"},
-						SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:deployment/test-deployment-3",
-						TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:replicaset/test-replicaset-3",
-						Data:     map[string]interface{}{},
-					},
-				},
-			},
-		} {
-			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
-				service := <-componentChannel
-				if sourcePropertiesEnabled {
-					assert.EqualValues(t, tc.expectedComponentSP, service)
-				} else {
-					assert.EqualValues(t, tc.expectedComponentNoSP, service)
-				}
-
-				for _, expectedRelation := range tc.expectedRelations {
-					serviceRelation := <-relationChannel
-					assert.EqualValues(t, expectedRelation, serviceRelation)
-				}
-			})
+			} {
+				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled, kubernetesStatusEnabled), func(t *testing.T) {
+					service := <-componentChannel
+					if sourcePropertiesEnabled {
+						if kubernetesStatusEnabled {
+							assert.EqualValues(t, tc.expectedComponentSPPlusStatus, service)
+						} else {
+							assert.EqualValues(t, tc.expectedComponentSP, service)
+						}
+					} else {
+						assert.EqualValues(t, tc.expectedComponentNoSP, service)
+					}
+					for _, expectedRelation := range tc.expectedRelations {
+						serviceRelation := <-relationChannel
+						assert.EqualValues(t, expectedRelation, serviceRelation)
+					}
+				})
+			}
 		}
 	}
 }
@@ -242,6 +345,12 @@ func (m MockReplicaSetAPICollectorClient) GetReplicaSets() ([]appsV1.ReplicaSet,
 			},
 			Spec: appsV1.ReplicaSetSpec{
 				Replicas: &replicas,
+			},
+			Status: appsV1.ReplicaSetStatus{
+				Replicas:           int32(1),
+				AvailableReplicas:  int32(1),
+				ReadyReplicas:      int32(1),
+				ObservedGeneration: int64(123),
 			},
 		}
 

@@ -5,6 +5,7 @@ package topologycollectors
 
 import (
 	"fmt"
+
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/dns"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -171,7 +172,13 @@ func (sc *ServiceCollector) serviceToStackStateComponent(service v1.Service) *to
 	}
 
 	if sc.IsSourcePropertiesFeatureEnabled() {
-		component.SourceProperties = makeSourceProperties(&service)
+		var sourceProperties map[string]interface{}
+		if sc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(&service)
+		} else {
+			sourceProperties = makeSourceProperties(&service)
+		}
+		component.SourceProperties = sourceProperties
 	} else {
 		component.Data.PutNonEmpty("creationTimestamp", service.CreationTimestamp)
 		component.Data.PutNonEmpty("uid", service.UID)

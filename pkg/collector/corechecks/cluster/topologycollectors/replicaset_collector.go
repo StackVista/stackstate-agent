@@ -6,7 +6,7 @@ package topologycollectors
 import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"k8s.io/api/apps/v1"
+	v1 "k8s.io/api/apps/v1"
 )
 
 // ReplicaSetCollector implements the ClusterTopologyCollector interface.
@@ -74,7 +74,13 @@ func (rsc *ReplicaSetCollector) replicaSetToStackStateComponent(replicaSet v1.Re
 	}
 
 	if rsc.IsSourcePropertiesFeatureEnabled() {
-		component.SourceProperties = makeSourceProperties(&replicaSet)
+		var sourceProperties map[string]interface{}
+		if rsc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(&replicaSet)
+		} else {
+			sourceProperties = makeSourceProperties(&replicaSet)
+		}
+		component.SourceProperties = sourceProperties
 	} else {
 		component.Data.PutNonEmpty("kind", replicaSet.Kind)
 		component.Data.PutNonEmpty("creationTimestamp", replicaSet.CreationTimestamp)

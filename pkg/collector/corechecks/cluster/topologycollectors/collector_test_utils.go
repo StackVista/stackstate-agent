@@ -20,7 +20,8 @@ func NewTestCommonClusterCollector(
 	client apiserver.APICollectorClient,
 	componentChan chan<- *topology.Component,
 	relationChan chan<- *topology.Relation,
-	sourcePropertiesEnabled bool) ClusterTopologyCollector {
+	sourcePropertiesEnabled bool,
+	kubernetesStatusEnabled bool) ClusterTopologyCollector {
 	instance := topology.Instance{Type: "kubernetes", URL: "test-cluster-name"}
 
 	k8sVersion := version.Info{
@@ -28,17 +29,18 @@ func NewTestCommonClusterCollector(
 		Minor: "21",
 	}
 
-	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, sourcePropertiesEnabled, componentChan, relationChan, &k8sVersion)
+	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, sourcePropertiesEnabled, componentChan, relationChan, &k8sVersion, kubernetesStatusEnabled)
 	return NewClusterTopologyCollector(clusterTopologyCommon)
 }
 
 func NewTestCommonClusterCollectorWithVersion(client apiserver.APICollectorClient, sourcePropertiesEnabled bool,
 	componentChan chan<- *topology.Component,
 	relationChan chan<- *topology.Relation,
-	k8sVersion *version.Info) ClusterTopologyCollector {
+	k8sVersion *version.Info,
+	kubernetesStatusEnabled bool) ClusterTopologyCollector {
 	instance := topology.Instance{Type: "kubernetes", URL: "test-cluster-name"}
 
-	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, sourcePropertiesEnabled, componentChan, relationChan, k8sVersion)
+	clusterTopologyCommon := NewClusterTopologyCommon(instance, client, sourcePropertiesEnabled, componentChan, relationChan, k8sVersion, kubernetesStatusEnabled)
 	return NewClusterTopologyCollector(clusterTopologyCommon)
 }
 

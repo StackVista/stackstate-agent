@@ -24,6 +24,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler" // sts
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
+	"github.com/StackVista/stackstate-agent/pkg/util/features"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
@@ -48,6 +49,7 @@ type PythonCheck struct {
 	lastWarnings []error
 	source       string
 	telemetry    bool // whether or not the telemetry is enabled for this check
+	features     features.Features
 }
 
 // NewPythonCheck conveniently creates a PythonCheck instance
@@ -360,4 +362,14 @@ func pythonCheckFinalizer(c *PythonCheck) {
 			C.rtloader_decref(rtloader, c.instance)
 		}
 	}(c)
+}
+
+// GetFeatures returns the features supported by StackState
+func (c *PythonCheck) GetFeatures() features.Features {
+	return c.features
+}
+
+// SetFeatures sets the features supported by StackState
+func (c *PythonCheck) SetFeatures(features features.Features) {
+	c.features = features
 }

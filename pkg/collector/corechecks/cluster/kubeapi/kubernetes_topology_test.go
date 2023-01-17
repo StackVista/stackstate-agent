@@ -9,17 +9,19 @@ package kubeapi
 
 import (
 	"fmt"
+	"strconv"
+	"sync"
+	"testing"
+
 	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	collectors "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/topologycollectors"
 	agentConfig "github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/StackVista/stackstate-agent/pkg/util/features"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/version"
-	"strconv"
-	"sync"
-	"testing"
 )
 
 var componentID int
@@ -53,6 +55,7 @@ collect_topology: true
 csi_pv_mapper_enabled: true
 `
 		err := check.Configure([]byte(nothingIsDisabledConfig), nil, "")
+		check.SetFeatures(features.All())
 		assert.NoError(t, err)
 
 		err = check.Run()
@@ -86,6 +89,7 @@ resources:
   secrets: false
 `
 	err := check.Configure([]byte(allResourcesAreDisabledConfig), nil, "")
+	check.SetFeatures(features.All())
 	assert.NoError(t, err)
 
 	err = check.Run()
@@ -96,10 +100,16 @@ resources:
 
 func TestRunClusterCollectors(t *testing.T) {
 	t.Run("with sourceProperties enabled", func(t *testing.T) {
-		testRunClusterCollectors(t, true)
+		testRunClusterCollectors(t, true, true)
+	})
+	t.Run("with sourceProperties enabled", func(t *testing.T) {
+		testRunClusterCollectors(t, true, false)
 	})
 	t.Run("with sourceProperties disabled", func(t *testing.T) {
-		testRunClusterCollectors(t, false)
+		testRunClusterCollectors(t, false, false)
+	})
+	t.Run("with sourceProperties disabled", func(t *testing.T) {
+		testRunClusterCollectors(t, false, true)
 	})
 }
 
@@ -162,7 +172,7 @@ resources:
 	testConfigParsed(t, allResourcesAreDisabledConfig, expectedSimple)
 }
 
-func testRunClusterCollectors(t *testing.T, sourceProperties bool) {
+func testRunClusterCollectors(t *testing.T, sourceProperties bool, exposeKubernetesStatus bool) {
 	// set the initial id values
 	componentID = 1
 	relationID = 1
@@ -180,7 +190,7 @@ func testRunClusterCollectors(t *testing.T, sourceProperties bool) {
 	waitGroupChannel := make(chan bool)
 	collectorsDoneChannel := make(chan bool)
 
-	clusterTopologyCommon := collectors.NewClusterTopologyCommon(instance, nil, sourceProperties, componentChannel, relationChannel, &version.Info{Major: "1", Minor: "21"})
+	clusterTopologyCommon := collectors.NewClusterTopologyCommon(instance, nil, sourceProperties, componentChannel, relationChannel, &version.Info{Major: "1", Minor: "21"}, exposeKubernetesStatus)
 	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
 
 	clusterCollectors := []collectors.ClusterTopologyCollector{

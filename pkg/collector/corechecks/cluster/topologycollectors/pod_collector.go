@@ -196,11 +196,6 @@ func (pc *PodCollector) podToStackStateComponent(pod v1.Pod) *topology.Component
 
 	tags := pc.podTags(pod)
 
-	// clear out the unnecessary status array values
-	pod.Status.Conditions = nil
-	pod.Status.InitContainerStatuses = nil
-	pod.Status.ContainerStatuses = nil
-
 	component := &topology.Component{
 		ExternalID: podExternalID,
 		Type:       topology.Type{Name: "pod"},
@@ -212,13 +207,24 @@ func (pc *PodCollector) podToStackStateComponent(pod v1.Pod) *topology.Component
 	}
 
 	if pc.IsSourcePropertiesFeatureEnabled() {
-		component.SourceProperties = makeSourcePropertiesKS(&pod)
+		var sourceProperties map[string]interface{}
+		if pc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(&pod)
+		} else {
+			sourceProperties = makeSourcePropertiesKS(&pod)
+		}
+		component.SourceProperties = sourceProperties
 		// for backward compatibility with K8s/OpenShift stackpack
 		// we specify status.phase in data even if it's also in the sourceProperties
 		component.Data.PutNonEmpty("status", map[string]interface{}{
 			"phase": string(pod.Status.Phase),
 		})
 	} else {
+		pod.Status.Conditions = nil
+		pod.Status.InitContainerStatuses = nil
+		pod.Status.ContainerStatuses = nil
+		pod.Status.EphemeralContainerStatuses = nil
+
 		component.Data.PutNonEmpty("kind", pod.Kind)
 		component.Data.PutNonEmpty("creationTimestamp", pod.CreationTimestamp)
 		component.Data.PutNonEmpty("uid", pod.UID)

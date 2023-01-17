@@ -26,6 +26,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
 	"github.com/StackVista/stackstate-agent/pkg/util/executable"
+	"github.com/StackVista/stackstate-agent/pkg/util/features"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
@@ -206,6 +207,15 @@ func (c *ProcessAgentCheck) Cancel() {}
 // GetSenderStats returns the stats from the last run of the check, but there aren't any yet
 func (c *ProcessAgentCheck) GetSenderStats() (check.SenderStats, error) {
 	return check.NewSenderStats(), nil
+}
+
+// GetFeatures is not implemented, the process agent has its own mechanism for checking StackState features
+func (c *ProcessAgentCheck) GetFeatures() features.Features {
+	return nil
+}
+
+// SetFeatures is not implemented, the process agent has its own mechanism for checking StackState features
+func (c *ProcessAgentCheck) SetFeatures(features features.Features) {
 }
 
 func init() {

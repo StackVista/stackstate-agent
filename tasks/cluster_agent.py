@@ -61,9 +61,12 @@ def apply_branding(ctx):
     cluster_agent_replace = '/www/! s/datadog/stackstate/g'
     do_sed_rename(ctx, cluster_agent_replace, "./cmd/cluster-agent/main.go")
     do_sed_rename(ctx, cluster_agent_replace, "./cmd/cluster-agent/app/*")
+    do_sed_rename(ctx, cluster_agent_replace, "./cmd/cluster-agent/commands/*")
+    do_sed_rename(ctx, cluster_agent_replace, "./cmd/agent/common/commands/*.go")
     do_sed_rename(ctx, 's/Datadog Cluster/StackState Cluster/g', "./cmd/cluster-agent/app/*")
     do_sed_rename(ctx, 's/Datadog Agent/StackState Agent/g', "./cmd/cluster-agent/app/*")
     do_sed_rename(ctx, 's/to Datadog/to StackState/g', "./cmd/cluster-agent/app/*")
+    do_sed_rename(ctx, 's/"datadog-cluster"/"stackstate-cluster"/g', "./cmd/cluster-agent/app/*")
 
     # Cluster Agent - Kubernetes API client
     do_go_rename(ctx, '"\\"datadogtoken\\" -> \\"stackstatetoken\\""', "./pkg/util/kubernetes/apiserver")

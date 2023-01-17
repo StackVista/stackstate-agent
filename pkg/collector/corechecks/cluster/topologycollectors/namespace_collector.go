@@ -58,7 +58,13 @@ func (nsc *NamespaceCollector) namespaceToStackStateComponent(namespace v1.Names
 	}
 
 	if nsc.IsSourcePropertiesFeatureEnabled() {
-		component.SourceProperties = makeSourceProperties(&namespace)
+		var sourceProperties map[string]interface{}
+		if nsc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(&namespace)
+		} else {
+			sourceProperties = makeSourceProperties(&namespace)
+		}
+		component.SourceProperties = sourceProperties
 	} else {
 		component.Data.PutNonEmpty("creationTimestamp", namespace.CreationTimestamp)
 		component.Data.PutNonEmpty("uid", namespace.UID)

@@ -122,7 +122,13 @@ func (ic *IngressCollector) ingressToStackStateComponent(ingress IngressInterfac
 
 	if ic.IsSourcePropertiesFeatureEnabled() {
 		object := ingress.GetKubernetesObject()
-		component.SourceProperties = makeSourceProperties(object)
+		var sourceProperties map[string]interface{}
+		if ic.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(object)
+		} else {
+			sourceProperties = makeSourceProperties(object)
+		}
+		component.SourceProperties = sourceProperties
 	} else {
 		component.Data.PutNonEmpty("creationTimestamp", ingress.GetCreationTimestamp())
 		component.Data.PutNonEmpty("uid", ingress.GetUID())

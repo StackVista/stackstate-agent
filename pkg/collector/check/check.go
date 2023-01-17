@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/util/features"
 )
 
 // Check is an interface for types capable to run checks
@@ -39,4 +40,8 @@ type Check interface {
 	ConfigSource() string
 	// IsTelemetryEnabled returns if telemetry is enabled for this check
 	IsTelemetryEnabled() bool
+	// Set the StackState features
+	SetFeatures(features features.Features)
+	// Get the StackState features
+	GetFeatures() features.Features
 }

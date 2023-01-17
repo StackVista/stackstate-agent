@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
@@ -70,7 +71,13 @@ func (cmc *ConfigMapCollector) configMapToStackStateComponent(configMap v1.Confi
 		for k, data := range configMapCopy.BinaryData {
 			configMapCopy.BinaryData[k] = []byte(cutReplacement(data))
 		}
-		sourceProperties := makeSourceProperties(&configMapCopy)
+		var sourceProperties map[string]interface{}
+		if cmc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(&configMapCopy)
+		} else {
+			sourceProperties = makeSourceProperties(&configMapCopy)
+		}
+
 		component.SourceProperties = sourceProperties
 	} else {
 		component.Data.PutNonEmpty("kind", configMap.Kind)

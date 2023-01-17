@@ -9,11 +9,12 @@ package topologycollectors
 
 import (
 	"fmt"
+	"testing"
+	"time"
+
 	batchV1 "k8s.io/api/batch/v1"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/version"
-	"testing"
-	"time"
 
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
@@ -24,13 +25,15 @@ import (
 )
 
 type ComponentExpected struct {
-	testCase     string
-	expectedNoSP *topology.Component
-	expectedSP   *topology.Component
+	testCase             string
+	expectedNoSP         *topology.Component
+	expectedSP           *topology.Component
+	expectedSPPlusStatus *topology.Component
 }
 
 var cronJobTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
 var cronJobTimeFormatted = cronJobTime.UTC().Format(time.RFC3339)
+var lastAppliedConfigurationCron = `{"apiVersion":"batch/v1","kind":"CronJob","metadata":{"labels":{"app.kubernetes.io/component":"backup"}},"spec":{"concurrencyPolicy":"Forbid","failedJobsHistoryLimit":1,"jobTemplate":{"metadata":{"labels":{"app.kubernetes.io/component":"backup"}},"spec":{"backoffLimit":1,"template":{"metadata":{"labels":{"app.kubernetes.io/component":"backup"}},"spec":{}}}},"schedule":"0 4 * * *","successfulJobsHistoryLimit":1}}`
 
 func TestCronJobCollector_20(t *testing.T) {
 	// Version 1.20 only supports batch/v1beta1
@@ -40,14 +43,16 @@ func TestCronJobCollector_20(t *testing.T) {
 	}
 	expectedComponents := []ComponentExpected{
 		{
-			testCase:     "Test Cron Job 1 - Kind + Generate Name",
-			expectedNoSP: cronJobV1B1NoSP1(),
-			expectedSP:   cronJobV1B1SP1(),
+			testCase:             "Test Cron Job 1 - Kind + Generate Name",
+			expectedNoSP:         cronJobV1B1NoSP1(),
+			expectedSP:           cronJobV1B1SP1(),
+			expectedSPPlusStatus: cronJobV1B1SPPlusStatus1(),
 		},
 		{
-			testCase:     "Test Cron Job 2 - Minimal",
-			expectedNoSP: cronJobV1B1NoSP2(),
-			expectedSP:   cronJobV1B1SP2(),
+			testCase:             "Test Cron Job 2 - Minimal",
+			expectedNoSP:         cronJobV1B1NoSP2(),
+			expectedSP:           cronJobV1B1SP2(),
+			expectedSPPlusStatus: cronJobV1B1SPPlusStatus2(),
 		},
 	}
 	testCronJobsWithK8SVersion(t, k8sVersion, expectedComponents)
@@ -61,9 +66,10 @@ func TestCronJobCollector_21(t *testing.T) {
 	}
 	expectedComponents := []ComponentExpected{
 		{
-			testCase:     "Test Cron Job v1 - Minimal",
-			expectedNoSP: cronJobV1NoSP(),
-			expectedSP:   cronJobV1SP(),
+			testCase:             "Test Cron Job v1 - Minimal",
+			expectedNoSP:         cronJobV1NoSP(),
+			expectedSP:           cronJobV1SP(),
+			expectedSPPlusStatus: cronJobV1SPPlusStatus(),
 		},
 	}
 	testCronJobsWithK8SVersion(t, k8sVersion, expectedComponents)
@@ -77,9 +83,10 @@ func TestCronJobCollector_25(t *testing.T) {
 	}
 	expectedComponents := []ComponentExpected{
 		{
-			testCase:     "Test Cron Job v1 1 - Kind + Generate Name",
-			expectedNoSP: cronJobV1NoSP(),
-			expectedSP:   cronJobV1SP(),
+			testCase:             "Test Cron Job v1 1 - Kind + Generate Name",
+			expectedNoSP:         cronJobV1NoSP(),
+			expectedSP:           cronJobV1SP(),
+			expectedSPPlusStatus: cronJobV1SPPlusStatus(),
 		},
 	}
 	testCronJobsWithK8SVersion(t, k8sVersion, expectedComponents)
@@ -93,32 +100,37 @@ func testCronJobsWithK8SVersion(t *testing.T, k8sVersion version.Info, component
 	defer close(relationChannel)
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
-		commonClusterCollector := NewTestCommonClusterCollectorWithVersion(MockCronJobAPICollectorClient{}, sourcePropertiesEnabled, componentChannel, relationChannel, &k8sVersion)
-		commonClusterCollector.SetUseRelationCache(false)
-		cjc := NewCronJobCollector(
-			commonClusterCollector)
-		expectedCollectorName := "CronJob Collector"
-		RunCollectorTest(t, cjc, expectedCollectorName)
+		for _, kubernetesStatusEnabled := range []bool{false, true} {
+			commonClusterCollector := NewTestCommonClusterCollectorWithVersion(MockCronJobAPICollectorClient{}, sourcePropertiesEnabled, componentChannel, relationChannel, &k8sVersion, kubernetesStatusEnabled)
+			commonClusterCollector.SetUseRelationCache(false)
+			cjc := NewCronJobCollector(commonClusterCollector)
+			expectedCollectorName := "CronJob Collector"
+			RunCollectorTest(t, cjc, expectedCollectorName)
 
-		for _, tc := range componentsExpected {
-			t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled), func(t *testing.T) {
-				cronJob := <-componentChannel
-				if sourcePropertiesEnabled {
-					assert.EqualValues(t, tc.expectedSP, cronJob)
-				} else {
-					assert.EqualValues(t, tc.expectedNoSP, cronJob)
-				}
+			for _, tc := range componentsExpected {
+				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled, kubernetesStatusEnabled), func(t *testing.T) {
+					cronJob := <-componentChannel
+					if sourcePropertiesEnabled {
+						if kubernetesStatusEnabled {
+							assert.EqualValues(t, tc.expectedSPPlusStatus, cronJob)
+						} else {
+							assert.EqualValues(t, tc.expectedSP, cronJob)
+						}
+					} else {
+						assert.EqualValues(t, tc.expectedNoSP, cronJob)
+					}
 
-				actualRelation := <-relationChannel
-				expectedRelation := &topology.Relation{
-					ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" + cronJob.ExternalID,
-					Type:       topology.Type{Name: "encloses"},
-					SourceID:   "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
-					TargetID:   cronJob.ExternalID,
-					Data:       map[string]interface{}{},
-				}
-				assert.EqualValues(t, expectedRelation, actualRelation)
-			})
+					actualRelation := <-relationChannel
+					expectedRelation := &topology.Relation{
+						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace->" + cronJob.ExternalID,
+						Type:       topology.Type{Name: "encloses"},
+						SourceID:   "urn:kubernetes:/test-cluster-name:namespace/test-namespace",
+						TargetID:   cronJob.ExternalID,
+						Data:       map[string]interface{}{},
+					}
+					assert.EqualValues(t, expectedRelation, actualRelation)
+				})
+			}
 		}
 	}
 }
@@ -162,6 +174,57 @@ func cronJobV1B1SP2() *topology.Component {
 					},
 				},
 				"schedule": "0 0 * * *",
+			},
+		},
+	}
+}
+
+func cronJobV1B1SPPlusStatus2() *topology.Component {
+	return &topology.Component{
+		ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:cronjob/test-cronjob-2",
+		Type:       topology.Type{Name: "cronjob"},
+		Data: topology.Data{
+			"name": "test-cronjob-2",
+			"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+		},
+		SourceProperties: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"creationTimestamp": cronJobTimeFormatted,
+				"labels":            map[string]interface{}{"test": "label"},
+				"name":              "test-cronjob-2",
+				"namespace":         "test-namespace",
+				"uid":               "test-cronjob-2",
+				"resourceVersion":   "123",
+				"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationCron},
+			},
+			"spec": map[string]interface{}{
+				"concurrencyPolicy": "Allow",
+				"jobTemplate": map[string]interface{}{
+					"metadata": map[string]interface{}{"creationTimestamp": interface{}(nil)},
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": interface{}(nil),
+							},
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"image":     "busybox",
+										"name":      "job",
+										"resources": map[string]interface{}{},
+									},
+								},
+								"restartPolicy": "OnFailure",
+							},
+						},
+					},
+				},
+				"schedule": "0 0 * * *",
+			},
+			"status": map[string]interface{}{
+				"active":             []interface{}{map[string]interface{}{"kind": "Job", "name": "cronjob-job-1"}},
+				"lastScheduleTime":   cronJobTimeFormatted,
+				"lastSuccessfulTime": cronJobTimeFormatted,
 			},
 		},
 	}
@@ -222,6 +285,58 @@ func cronJobV1B1SP1() *topology.Component {
 					},
 				},
 				"schedule": "0 0 * * *",
+			},
+		},
+	}
+}
+
+func cronJobV1B1SPPlusStatus1() *topology.Component {
+	return &topology.Component{
+		ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:cronjob/test-cronjob-1",
+		Type:       topology.Type{Name: "cronjob"},
+		Data: topology.Data{
+			"name": "test-cronjob-1",
+			"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+		},
+		SourceProperties: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"creationTimestamp": cronJobTimeFormatted,
+				"labels":            map[string]interface{}{"test": "label"},
+				"name":              "test-cronjob-1",
+				"namespace":         "test-namespace",
+				"uid":               "test-cronjob-1",
+				"generateName":      "some-specified-generation",
+				"resourceVersion":   "123",
+				"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationCron},
+			},
+			"spec": map[string]interface{}{
+				"concurrencyPolicy": "Allow",
+				"jobTemplate": map[string]interface{}{
+					"metadata": map[string]interface{}{"creationTimestamp": interface{}(nil)},
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": interface{}(nil),
+							},
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"image":     "busybox",
+										"name":      "job",
+										"resources": map[string]interface{}{},
+									},
+								},
+								"restartPolicy": "OnFailure",
+							},
+						},
+					},
+				},
+				"schedule": "0 0 * * *",
+			},
+			"status": map[string]interface{}{
+				"active":             []interface{}{map[string]interface{}{"kind": "Job", "name": "cronjob-job-1"}},
+				"lastScheduleTime":   cronJobTimeFormatted,
+				"lastSuccessfulTime": cronJobTimeFormatted,
 			},
 		},
 	}
@@ -289,6 +404,58 @@ func cronJobV1SP() *topology.Component {
 	}
 }
 
+func cronJobV1SPPlusStatus() *topology.Component {
+	return &topology.Component{
+		ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:cronjob/test-cronjob-v1",
+		Type:       topology.Type{Name: "cronjob"},
+		Data: topology.Data{
+			"name": "test-cronjob-v1",
+			"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+		},
+		SourceProperties: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"creationTimestamp": cronJobTimeFormatted,
+				"labels":            map[string]interface{}{"test": "label"},
+				"name":              "test-cronjob-v1",
+				"namespace":         "test-namespace",
+				"uid":               "test-cronjob-v1",
+				"generateName":      "some-specified-generation-v1",
+				"resourceVersion":   "123",
+				"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationCron},
+			},
+			"spec": map[string]interface{}{
+				"concurrencyPolicy": "Allow",
+				"jobTemplate": map[string]interface{}{
+					"metadata": map[string]interface{}{"creationTimestamp": interface{}(nil)},
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"creationTimestamp": interface{}(nil),
+							},
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"image":     "busybox",
+										"name":      "job",
+										"resources": map[string]interface{}{},
+									},
+								},
+								"restartPolicy": "OnFailure",
+							},
+						},
+					},
+				},
+				"schedule": "0 1 * * *",
+			},
+			"status": map[string]interface{}{
+				"active":             []interface{}{map[string]interface{}{"kind": "Job", "name": "cronjob-job-v1"}},
+				"lastScheduleTime":   cronJobTimeFormatted,
+				"lastSuccessfulTime": cronJobTimeFormatted,
+			},
+		},
+	}
+}
+
 func cronJobV1NoSP() *topology.Component {
 	return &topology.Component{
 		ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:cronjob/test-cronjob-v1",
@@ -327,6 +494,9 @@ func (m MockCronJobAPICollectorClient) GetCronJobsV1B1() ([]v1beta1.CronJob, err
 				UID:             types.UID(fmt.Sprintf("test-cronjob-%d", i)),
 				GenerateName:    "",
 				ResourceVersion: "123",
+				Annotations: map[string]string{
+					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationCron,
+				},
 				ManagedFields: []v1.ManagedFieldsEntry{
 					{
 						Manager:    "ignored",
@@ -360,7 +530,8 @@ func (m MockCronJobAPICollectorClient) GetCronJobsV1B1() ([]v1beta1.CronJob, err
 				Active: []apiv1.ObjectReference{
 					{Kind: "Job", Name: "cronjob-job-1"},
 				},
-				LastScheduleTime: &cronJobTime,
+				LastScheduleTime:   &cronJobTime,
+				LastSuccessfulTime: &cronJobTime,
 			},
 		}
 
@@ -391,6 +562,9 @@ func (m MockCronJobAPICollectorClient) GetCronJobsV1() ([]batchV1.CronJob, error
 			UID:             types.UID("test-cronjob-v1"),
 			GenerateName:    "some-specified-generation-v1",
 			ResourceVersion: "123",
+			Annotations: map[string]string{
+				"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationCron,
+			},
 			ManagedFields: []v1.ManagedFieldsEntry{
 				{
 					Manager:    "ignored",
@@ -424,7 +598,8 @@ func (m MockCronJobAPICollectorClient) GetCronJobsV1() ([]batchV1.CronJob, error
 			Active: []apiv1.ObjectReference{
 				{Kind: "Job", Name: "cronjob-job-v1"},
 			},
-			LastScheduleTime: &cronJobTime,
+			LastScheduleTime:   &cronJobTime,
+			LastSuccessfulTime: &cronJobTime,
 		},
 	}
 

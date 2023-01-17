@@ -369,7 +369,7 @@ func executeRelationCorrelation(
 	correlatorsDoneChan := make(chan bool)
 	relationCorrelationDoneChan := make(chan bool)
 
-	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, relationChannel, false)
+	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, relationChannel, false, false)
 	podCollector := NewPodCollector(
 		containerCorrChannel, volumeCorrChannel,
 		podCorrChannel,

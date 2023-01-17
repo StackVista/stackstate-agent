@@ -6,7 +6,7 @@ package topologycollectors
 import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"k8s.io/api/apps/v1"
+	v1 "k8s.io/api/apps/v1"
 )
 
 // DaemonSetCollector implements the ClusterTopologyCollector interface.
@@ -59,7 +59,13 @@ func (dsc *DaemonSetCollector) daemonSetToStackStateComponent(daemonSet v1.Daemo
 	}
 
 	if dsc.IsSourcePropertiesFeatureEnabled() {
-		component.SourceProperties = makeSourceProperties(&daemonSet)
+		var sourceProperties map[string]interface{}
+		if dsc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(&daemonSet)
+		} else {
+			sourceProperties = makeSourceProperties(&daemonSet)
+		}
+		component.SourceProperties = sourceProperties
 	} else {
 		component.Data.PutNonEmpty("kind", daemonSet.Kind)
 		component.Data.PutNonEmpty("uid", daemonSet.UID)
