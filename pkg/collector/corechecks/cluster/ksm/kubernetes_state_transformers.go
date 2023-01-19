@@ -198,6 +198,9 @@ var allowedOutOfMemoryReasons = map[string]struct{}{
 
 // containerInfoTransformer Mapping container info to reason transformers, If there is no mapping for a reason return a zero state
 func containerInfoTransformer(s aggregator.Sender, _ string, metric ksmstore.DDMetric, hostname string, tags []string) {
+	log.Debugf("**** Transformer ****")
+	log.Debugf("Running Container Info Transformer.")
+
 	if reason, found := metric.Labels["reason"]; found {
 		lcReason := strings.ToLower(reason)
 		gaugePrefix := ksmMetricPrefix + "container.status_report.count."
