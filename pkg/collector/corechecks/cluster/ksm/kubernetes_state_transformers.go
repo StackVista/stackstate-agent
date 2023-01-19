@@ -32,8 +32,9 @@ var (
 		"kube_pod_created":                            podCreationTransformer,
 		"kube_pod_start_time":                         podStartTimeTransformer,
 		"kube_pod_status_phase":                       podPhaseTransformer,
-		"kube_pod_container_status_waiting_reason":    containerWaitingReasonTransformer,
-		"kube_pod_container_status_terminated_reason": containerTerminatedReasonTransformer,
+		"kube_pod_container_info":                     debugInformation("kube_pod_container_info", nil),
+		"kube_pod_container_status_waiting_reason":    debugInformation("kube_pod_container_status_waiting_reason", containerWaitingReasonTransformer),
+		"kube_pod_container_status_terminated_reason": debugInformation("kube_pod_container_status_terminated_reason", containerTerminatedReasonTransformer),
 		"kube_pod_container_resource_requests":        containerResourceRequestsTransformer,
 		"kube_pod_container_resource_limits":          containerResourceLimitsTransformer,
 		"kube_cronjob_next_schedule_time":             cronJobNextScheduleTransformer,
@@ -177,21 +178,27 @@ func podPhaseTransformer(s aggregator.Sender, _ string, metric ksmstore.DDMetric
 	submitActiveMetric(s, ksmMetricPrefix+"pod.status_phase", metric, hostname, tags)
 }
 
+func debugInformation(transformName string, processingFunction func(s aggregator.Sender, name string, metric ksmstore.DDMetric, hostname string, tags []string)) func(s aggregator.Sender, name string, metric ksmstore.DDMetric, hostname string, tags []string) {
+	return func(s aggregator.Sender, name string, metric ksmstore.DDMetric, hostname string, tags []string) {
+		_ = log.Warnf("---------------------------------------")
+		_ = log.Warnf("**** Transformer Debugger %s ****", transformName)
+		_ = log.Warnf(fmt.Sprintf("%q", metric.Labels))
+		_ = log.Warnf(fmt.Sprintf("%v", metric.Val))
+		_ = log.Warnf(fmt.Sprintf("%q", tags))
+		_ = log.Warnf(hostname)
+		_ = log.Warnf("---------------------------------------")
+
+		if processingFunction != nil {
+			processingFunction(s, name, metric, hostname, tags)
+		}
+	}
+}
+
 var allowedWaitingReasons = map[string]struct{}{
 	"errimagepull":      {},
 	"imagepullbackoff":  {},
 	"crashloopbackoff":  {},
 	"containercreating": {},
-}
-
-// containerWaitingReasonTransformer validates the container waiting reasons for metric kube_pod_container_status_waiting_reason
-func containerWaitingReasonTransformer(s aggregator.Sender, _ string, metric ksmstore.DDMetric, hostname string, tags []string) {
-	if reason, found := metric.Labels["reason"]; found {
-		// Filtering according to the reason here is paramount to limit cardinality
-		if _, allowed := allowedWaitingReasons[strings.ToLower(reason)]; allowed {
-			s.Gauge(ksmMetricPrefix+"container.status_report.count.waiting", metric.Val, hostname, tags)
-		}
-	}
 }
 
 var allowedTerminatedReasons = map[string]struct{}{
@@ -200,28 +207,22 @@ var allowedTerminatedReasons = map[string]struct{}{
 	"error":              {},
 }
 
-var allowedOutOfMemoryReasons = map[string]struct{}{
-	"oomkilled": {},
+// containerWaitingReasonTransformer validates the container waiting reasons for metric kube_pod_container_status_waiting_reason
+func containerWaitingReasonTransformer(s aggregator.Sender, name string, metric ksmstore.DDMetric, hostname string, tags []string) {
+	if reason, found := metric.Labels["reason"]; found {
+		// Filtering according to the reason here is paramount to limit cardinality
+		if _, allowed := allowedWaitingReasons[strings.ToLower(reason)]; allowed {
+			s.Gauge(ksmMetricPrefix+"container.status_report.count.waiting", metric.Val, hostname, tags)
+		}
+	}
 }
 
-// containerTerminatedReasonTransformer validates the container waiting reasons for metric kube_pod_container_status_terminated_reason
-func containerTerminatedReasonTransformer(s aggregator.Sender, _ string, metric ksmstore.DDMetric, hostname string, tags []string) {
+//  // containerTerminatedReasonTransformer validates the container waiting reasons for metric kube_pod_container_status_terminated_reason
+func containerTerminatedReasonTransformer(s aggregator.Sender, name string, metric ksmstore.DDMetric, hostname string, tags []string) {
 	if reason, found := metric.Labels["reason"]; found {
-		lcReason := strings.ToLower(reason)
-		gaugePrefix := ksmMetricPrefix + "container.status_report.count."
-
-		// Terminated Evaluation - Filtering according to the reason here is paramount to limit cardinality
-		if _, allowed := allowedTerminatedReasons[lcReason]; allowed {
-			s.Gauge(gaugePrefix+"terminated", metric.Val, hostname, tags)
-		} else {
-			s.Gauge(gaugePrefix+"terminated", 0, hostname, tags)
-		}
-
-		// Out of Memory Evaluation - Filtering according to the reason here is paramount to limit cardinality
-		if _, allowed := allowedOutOfMemoryReasons[lcReason]; allowed {
-			s.Gauge(gaugePrefix+"oom", metric.Val, hostname, tags)
-		} else {
-			s.Gauge(gaugePrefix+"oom", 0, hostname, tags)
+		// Filtering according to the reason here is paramount to limit cardinality
+		if _, allowed := allowedTerminatedReasons[strings.ToLower(reason)]; allowed {
+			s.Gauge(ksmMetricPrefix+"container.status_report.count.terminated", metric.Val, hostname, tags)
 		}
 	}
 }
