@@ -29,30 +29,28 @@ var (
 	// These metrics require more than a name translation to generate Datadog metrics, as opposed to the metrics in metricNamesMapper
 	// For reference see METRIC_TRANSFORMERS in KSM check V1
 	metricTransformers = map[string]metricTransformerFunc{
-		"kube_pod_created":        podCreationTransformer,
-		"kube_pod_start_time":     podStartTimeTransformer,
-		"kube_pod_status_phase":   podPhaseTransformer,
-		"kube_pod_container_info": containerInfoTransformer,
-		// TODO: Remove
-		// "kube_pod_container_status_waiting_reason":    containerWaitingReasonTransformer,
-		// "kube_pod_container_status_terminated_reason": containerTerminatedReasonTransformer,
-		"kube_pod_container_resource_requests":   containerResourceRequestsTransformer,
-		"kube_pod_container_resource_limits":     containerResourceLimitsTransformer,
-		"kube_cronjob_next_schedule_time":        cronJobNextScheduleTransformer,
-		"kube_cronjob_status_last_schedule_time": cronJobLastScheduleTransformer,
-		"kube_job_complete":                      jobCompleteTransformer,
-		"kube_job_failed":                        jobFailedTransformer,
-		"kube_job_status_failed":                 jobStatusFailedTransformer,
-		"kube_job_status_succeeded":              jobStatusSucceededTransformer,
-		"kube_node_status_condition":             nodeConditionTransformer,
-		"kube_node_spec_unschedulable":           nodeUnschedulableTransformer,
-		"kube_node_status_allocatable":           nodeAllocatableTransformer,
-		"kube_node_status_capacity":              nodeCapacityTransformer,
-		"kube_node_created":                      nodeCreationTransformer,
-		"kube_resourcequota":                     resourcequotaTransformer,
-		"kube_limitrange":                        limitrangeTransformer,
-		"kube_persistentvolume_status_phase":     pvPhaseTransformer,
-		"kube_service_spec_type":                 serviceTypeTransformer,
+		"kube_pod_created":                            podCreationTransformer,
+		"kube_pod_start_time":                         podStartTimeTransformer,
+		"kube_pod_status_phase":                       podPhaseTransformer,
+		"kube_pod_container_status_waiting_reason":    containerWaitingReasonTransformer,
+		"kube_pod_container_status_terminated_reason": containerTerminatedReasonTransformer,
+		"kube_pod_container_resource_requests":        containerResourceRequestsTransformer,
+		"kube_pod_container_resource_limits":          containerResourceLimitsTransformer,
+		"kube_cronjob_next_schedule_time":             cronJobNextScheduleTransformer,
+		"kube_cronjob_status_last_schedule_time":      cronJobLastScheduleTransformer,
+		"kube_job_complete":                           jobCompleteTransformer,
+		"kube_job_failed":                             jobFailedTransformer,
+		"kube_job_status_failed":                      jobStatusFailedTransformer,
+		"kube_job_status_succeeded":                   jobStatusSucceededTransformer,
+		"kube_node_status_condition":                  nodeConditionTransformer,
+		"kube_node_spec_unschedulable":                nodeUnschedulableTransformer,
+		"kube_node_status_allocatable":                nodeAllocatableTransformer,
+		"kube_node_status_capacity":                   nodeCapacityTransformer,
+		"kube_node_created":                           nodeCreationTransformer,
+		"kube_resourcequota":                          resourcequotaTransformer,
+		"kube_limitrange":                             limitrangeTransformer,
+		"kube_persistentvolume_status_phase":          pvPhaseTransformer,
+		"kube_service_spec_type":                      serviceTypeTransformer,
 	}
 )
 
@@ -186,6 +184,16 @@ var allowedWaitingReasons = map[string]struct{}{
 	"containercreating": {},
 }
 
+// containerWaitingReasonTransformer validates the container waiting reasons for metric kube_pod_container_status_waiting_reason
+func containerWaitingReasonTransformer(s aggregator.Sender, _ string, metric ksmstore.DDMetric, hostname string, tags []string) {
+	if reason, found := metric.Labels["reason"]; found {
+		// Filtering according to the reason here is paramount to limit cardinality
+		if _, allowed := allowedWaitingReasons[strings.ToLower(reason)]; allowed {
+			s.Gauge(ksmMetricPrefix+"container.status_report.count.waiting", metric.Val, hostname, tags)
+		}
+	}
+}
+
 var allowedTerminatedReasons = map[string]struct{}{
 	"oomkilled":          {},
 	"containercannotrun": {},
@@ -196,25 +204,11 @@ var allowedOutOfMemoryReasons = map[string]struct{}{
 	"oomkilled": {},
 }
 
-// containerInfoTransformer Mapping container info to reason transformers, If there is no mapping for a reason return a zero state
-func containerInfoTransformer(s aggregator.Sender, _ string, metric ksmstore.DDMetric, hostname string, tags []string) {
-	_ = log.Warnf("---------------------------------------")
-	_ = log.Warnf("**** Container Info Transformer ****")
-	_ = log.Warnf(fmt.Sprintf("%q", metric.Labels))
-	_ = log.Warnf(fmt.Sprintf("%v", metric.Val))
-	_ = log.Warnf(hostname)
-	_ = log.Warnf(fmt.Sprintf("%q", tags))
-
+// containerTerminatedReasonTransformer validates the container waiting reasons for metric kube_pod_container_status_terminated_reason
+func containerTerminatedReasonTransformer(s aggregator.Sender, _ string, metric ksmstore.DDMetric, hostname string, tags []string) {
 	if reason, found := metric.Labels["reason"]; found {
 		lcReason := strings.ToLower(reason)
 		gaugePrefix := ksmMetricPrefix + "container.status_report.count."
-
-		// Waiting Evaluation - Filtering according to the reason here is paramount to limit cardinality
-		if _, allowed := allowedWaitingReasons[lcReason]; allowed {
-			s.Gauge(gaugePrefix+"waiting", metric.Val, hostname, tags)
-		} else {
-			s.Gauge(gaugePrefix+"waiting", 0, hostname, tags)
-		}
 
 		// Terminated Evaluation - Filtering according to the reason here is paramount to limit cardinality
 		if _, allowed := allowedTerminatedReasons[lcReason]; allowed {
@@ -231,28 +225,6 @@ func containerInfoTransformer(s aggregator.Sender, _ string, metric ksmstore.DDM
 		}
 	}
 }
-
-// TODO: Remove
-// containerWaitingReasonTransformer validates the container waiting reasons for metric kube_pod_container_status_waiting_reason
-//  func containerWaitingReasonTransformer(s aggregator.Sender, name string, metric ksmstore.DDMetric, hostname string, tags []string) {
-//  	if reason, found := metric.Labels["reason"]; found {
-//  		// Filtering according to the reason here is paramount to limit cardinality
-//  		if _, allowed := allowedWaitingReasons[strings.ToLower(reason)]; allowed {
-//  			s.Gauge(ksmMetricPrefix+"container.status_report.count.waiting", metric.Val, hostname, tags)
-//  		}
-//  	}
-//  }
-
-// TODO: Remove
-//  // containerTerminatedReasonTransformer validates the container waiting reasons for metric kube_pod_container_status_terminated_reason
-//  func containerTerminatedReasonTransformer(s aggregator.Sender, name string, metric ksmstore.DDMetric, hostname string, tags []string) {
-//  	if reason, found := metric.Labels["reason"]; found {
-//  		// Filtering according to the reason here is paramount to limit cardinality
-//  		if _, allowed := allowedTerminatedReasons[strings.ToLower(reason)]; allowed {
-//  			s.Gauge(ksmMetricPrefix+"container.status_report.count.terminated", metric.Val, hostname, tags)
-//  		}
-//  	}
-//  }
 
 // containerResourceRequestsTransformer transforms the generic ksm resource request metrics into resource-specific metrics
 func containerResourceRequestsTransformer(s aggregator.Sender, name string, metric ksmstore.DDMetric, hostname string, tags []string) {
