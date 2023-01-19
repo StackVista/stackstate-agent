@@ -10,6 +10,7 @@ package ksm
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -342,7 +343,10 @@ func (k *KSMCheck) Cancel() {
 func (k *KSMCheck) processMetrics(sender aggregator.Sender, metrics map[string][]ksmstore.DDMetricsFam, labelJoiner *labelJoiner) {
 	_ = log.Warnf("---------------------------------------")
 	_ = log.Warnf("Metric Families")
-	_ = log.Warnf(fmt.Sprintf("%v", metrics))
+	jsonStr, err := json.Marshal(metrics)
+	if err == nil {
+		_ = log.Warnf(string(jsonStr))
+	}
 	_ = log.Warnf("---------------------------------------")
 
 	for _, metricsList := range metrics {
