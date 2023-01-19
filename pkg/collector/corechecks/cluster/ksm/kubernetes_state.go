@@ -340,8 +340,15 @@ func (k *KSMCheck) Cancel() {
 
 // processMetrics attaches tags and forwards metrics to the aggregator
 func (k *KSMCheck) processMetrics(sender aggregator.Sender, metrics map[string][]ksmstore.DDMetricsFam, labelJoiner *labelJoiner) {
+	_ = log.Warnf("---------------------------------------")
+	_ = log.Warnf("Metric Families")
+	_ = log.Warnf(fmt.Sprintf("%v", metrics))
+	_ = log.Warnf("---------------------------------------")
+
 	for _, metricsList := range metrics {
-		for _, metricFamily := range metricsList {
+		aggregatedMetricList := aggregatedStatusReasonMetrics(metricsList)
+
+		for _, metricFamily := range aggregatedMetricList {
 			// First check for aggregator, because the check use _labels metrics to aggregate values.
 			if aggregator, found := metricAggregators[metricFamily.Name]; found {
 				for _, m := range metricFamily.ListMetrics {

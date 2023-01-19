@@ -60,6 +60,76 @@ func newSumValuesAggregator(ddMetricName, ksmMetricName string, allowedLabels []
 	}
 }
 
+// aggregatedStatusMetrics Generate additional metrics based on aggregating existing metrics
+func aggregatedStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []ksmstore.DDMetricsFam {
+	mapMetricFamilies := func(metricFamily ksmstore.DDMetricsFam, accumulator map[string]ksmstore.DDMetric, overwriteValue bool) {
+		for _, metric := range metricFamily.ListMetrics {
+			// Find the pod id for each metric to match them to the status reason pod
+			uid, ok := metric.Labels["uid"]
+			if !ok {
+				continue
+			}
+
+			// If the pod exists then we attempt to combine the labels we found if not then we assign a new map entry
+			if pod, ok := accumulator[uid]; !ok {
+				// Combine the original labels and the new labels
+				combinedLabels := make(map[string]string)
+				for key, value := range pod.Labels {
+					combinedLabels[key] = value
+				}
+
+				if overwriteValue {
+					// Use the new value provided by the pod metric
+					accumulator[uid] = ksmstore.DDMetric{
+						Labels: combinedLabels,
+						Val:    metric.Val,
+					}
+				} else {
+					// Use the original value set by the previous dict entry
+					accumulator[uid] = ksmstore.DDMetric{
+						Labels: combinedLabels,
+						Val:    pod.Val,
+					}
+				}
+			} else {
+				// Found non-existing pods, Adding it to the dictionary
+				// We want all the monitor states to start on a zero value and overwrite that with a state
+				accumulator[uid] = ksmstore.DDMetric{
+					Labels: metric.Labels,
+					Val:    metric.Val,
+				}
+			}
+		}
+	}
+
+	// List of pods based on an uid
+	podList := make(map[string]ksmstore.DDMetric)
+
+	// Find kube_pod_container_info metrics based on the container_ids
+	for _, metricFamily := range metricFamilyList {
+		switch metricFamily.Name {
+		case "kube_pod_container_status_terminated_reason":
+			mapMetricFamilies(metricFamily, podList, true)
+
+		case "kube_pod_container_status_waiting_reason":
+			mapMetricFamilies(metricFamily, podList, true)
+
+		case "kube_pod_container_info":
+			mapMetricFamilies(metricFamily, podList, false)
+		}
+	}
+
+	var listMetrics []ksmstore.DDMetric
+	for _, value := range podList {
+		listMetrics = append(listMetrics, value)
+	}
+
+	return append(metricFamilyList, ksmstore.DDMetricsFam{
+		Name:        "kube_pod_container_status",
+		ListMetrics: listMetrics,
+	})
+}
+
 func newCountObjectsAggregator(ddMetricName, ksmMetricName string, allowedLabels []string) metricAggregator {
 	if len(allowedLabels) > maxNumberOfAllowedLabels {
 		// `maxNumberOfAllowedLabels` is hardcoded to the maximum number of labels passed to this function from the metricsAggregators definition below.

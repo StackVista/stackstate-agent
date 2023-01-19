@@ -34,6 +34,7 @@ var (
 		"kube_pod_status_phase":                       podPhaseTransformer,
 		"kube_pod_container_status_waiting_reason":    containerWaitingReasonTransformer,
 		"kube_pod_container_info":                     debugInformation("kube_pod_container_info", nil),
+		"kube_pod_container_status":                   debugInformation("kube_pod_container_status", nil),
 		"kube_pod_container_status_terminated":        debugInformation("kube_pod_container_status_terminated", nil),
 		"kube_pod_container_status_terminated_reason": debugInformation("kube_pod_container_status_terminated_reason", containerTerminatedReasonTransformer),
 		"kube_pod_container_resource_requests":        containerResourceRequestsTransformer,
