@@ -61,7 +61,7 @@ func (rsc *ReplicaSetCollector) CollectorFunction() error {
 func (rsc *ReplicaSetCollector) replicaSetToStackStateComponent(replicaSet v1.ReplicaSet) *topology.Component {
 	log.Tracef("Mapping ReplicaSet to StackState component: %s", replicaSet.String())
 
-	tags := rsc.initTags(replicaSet.ObjectMeta)
+	tags := rsc.initTags(replicaSet.ObjectMeta, replicaSet.TypeMeta)
 
 	replicaSetExternalID := rsc.buildReplicaSetExternalID(replicaSet.Namespace, replicaSet.Name)
 	component := &topology.Component{

@@ -6,6 +6,7 @@ package topologycollectors
 import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // IngressCollector implements the ClusterTopologyCollector interface.
@@ -104,7 +105,7 @@ func (ic *IngressCollector) getNetV1Ingresses(ingresses []IngressInterface) ([]I
 func (ic *IngressCollector) ingressToStackStateComponent(ingress IngressInterface) *topology.Component {
 	log.Tracef("Mapping Ingress to StackState component: %s", ingress.GetString())
 
-	tags := ic.initTags(ingress.GetObjectMeta())
+	tags := ic.initTags(ingress.GetObjectMeta(), metaV1.TypeMeta{Kind: ingress.GetKind()})
 
 	identifiers := make([]string, 0)
 
@@ -145,7 +146,7 @@ func (ic *IngressCollector) ingressToStackStateComponent(ingress IngressInterfac
 func (ic *IngressCollector) endpointStackStateComponentFromIngress(ingress IngressInterface, ingressPoint string) *topology.Component {
 	log.Tracef("Mapping Ingress to StackState endpoint component: %s", ingressPoint)
 
-	tags := ic.initTags(ingress.GetObjectMeta())
+	tags := ic.initTags(ingress.GetObjectMeta(), metaV1.TypeMeta{Kind: "Endpoint"})
 	identifiers := make([]string, 0)
 	endpointExternalID := ic.buildEndpointExternalID(ingressPoint)
 
@@ -154,6 +155,7 @@ func (ic *IngressCollector) endpointStackStateComponentFromIngress(ingress Ingre
 		Type:       topology.Type{Name: "endpoint"},
 		Data: map[string]interface{}{
 			"name":              ingressPoint,
+			"kind":              "Endpoint",
 			"creationTimestamp": ingress.GetCreationTimestamp(),
 			"tags":              tags,
 			"identifiers":       identifiers,

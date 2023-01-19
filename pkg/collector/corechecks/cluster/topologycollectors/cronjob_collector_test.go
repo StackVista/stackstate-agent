@@ -141,7 +141,13 @@ func cronJobV1B1SP2() *topology.Component {
 		Type:       topology.Type{Name: "cronjob"},
 		Data: topology.Data{
 			"name": "test-cronjob-2",
-			"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+			"tags": map[string]string{
+				"test":           "label",
+				"cluster-name":   "test-cluster-name",
+				"cluster-type":   "kubernetes",
+				"component-type": "kubernetes-cronjob",
+				"namespace":      "test-namespace",
+			},
 		},
 		SourceProperties: map[string]interface{}{
 			"metadata": map[string]interface{}{
@@ -185,7 +191,13 @@ func cronJobV1B1SPPlusStatus2() *topology.Component {
 		Type:       topology.Type{Name: "cronjob"},
 		Data: topology.Data{
 			"name": "test-cronjob-2",
-			"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+			"tags": map[string]string{
+				"test":           "label",
+				"cluster-name":   "test-cluster-name",
+				"cluster-type":   "kubernetes",
+				"component-type": "kubernetes-cronjob",
+				"namespace":      "test-namespace",
+			},
 		},
 		SourceProperties: map[string]interface{}{
 			"metadata": map[string]interface{}{
@@ -237,8 +249,15 @@ func cronJobV1B1NoSP2() *topology.Component {
 		Data: topology.Data{
 			"schedule":          "0 0 * * *",
 			"name":              "test-cronjob-2",
+			"kind":              "CronJob",
 			"creationTimestamp": cronJobTime,
-			"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+			"tags": map[string]string{
+				"test":           "label",
+				"cluster-name":   "test-cluster-name",
+				"cluster-type":   "kubernetes",
+				"component-type": "kubernetes-cronjob",
+				"namespace":      "test-namespace",
+			},
 			"uid":               types.UID("test-cronjob-2"),
 			"concurrencyPolicy": "Allow",
 		},
@@ -251,7 +270,13 @@ func cronJobV1B1SP1() *topology.Component {
 		Type:       topology.Type{Name: "cronjob"},
 		Data: topology.Data{
 			"name": "test-cronjob-1",
-			"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+			"tags": map[string]string{
+				"test":           "label",
+				"cluster-name":   "test-cluster-name",
+				"cluster-type":   "kubernetes",
+				"component-type": "kubernetes-cronjob",
+				"namespace":      "test-namespace",
+			},
 		},
 		SourceProperties: map[string]interface{}{
 			"metadata": map[string]interface{}{
@@ -296,7 +321,13 @@ func cronJobV1B1SPPlusStatus1() *topology.Component {
 		Type:       topology.Type{Name: "cronjob"},
 		Data: topology.Data{
 			"name": "test-cronjob-1",
-			"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+			"tags": map[string]string{
+				"test":           "label",
+				"cluster-name":   "test-cluster-name",
+				"cluster-type":   "kubernetes",
+				"component-type": "kubernetes-cronjob",
+				"namespace":      "test-namespace",
+			},
 		},
 		SourceProperties: map[string]interface{}{
 			"metadata": map[string]interface{}{
@@ -350,10 +381,16 @@ func cronJobV1B1NoSP1() *topology.Component {
 			"schedule":          "0 0 * * *",
 			"name":              "test-cronjob-1",
 			"creationTimestamp": cronJobTime,
-			"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+			"tags": map[string]string{
+				"test":           "label",
+				"cluster-name":   "test-cluster-name",
+				"cluster-type":   "kubernetes",
+				"component-type": "kubernetes-cronjob",
+				"namespace":      "test-namespace",
+			},
 			"uid":               types.UID("test-cronjob-1"),
 			"concurrencyPolicy": "Allow",
-			"kind":              "some-specified-kind",
+			"kind":              "CronJob",
 			"generateName":      "some-specified-generation",
 		},
 	}
@@ -365,7 +402,13 @@ func cronJobV1SP() *topology.Component {
 		Type:       topology.Type{Name: "cronjob"},
 		Data: topology.Data{
 			"name": "test-cronjob-v1",
-			"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+			"tags": map[string]string{
+				"test":           "label",
+				"cluster-name":   "test-cluster-name",
+				"cluster-type":   "kubernetes",
+				"component-type": "kubernetes-cronjob",
+				"namespace":      "test-namespace",
+			},
 		},
 		SourceProperties: map[string]interface{}{
 			"metadata": map[string]interface{}{
@@ -410,7 +453,13 @@ func cronJobV1SPPlusStatus() *topology.Component {
 		Type:       topology.Type{Name: "cronjob"},
 		Data: topology.Data{
 			"name": "test-cronjob-v1",
-			"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+			"tags": map[string]string{
+				"test":           "label",
+				"cluster-name":   "test-cluster-name",
+				"cluster-type":   "kubernetes",
+				"component-type": "kubernetes-cronjob",
+				"namespace":      "test-namespace",
+			},
 		},
 		SourceProperties: map[string]interface{}{
 			"metadata": map[string]interface{}{
@@ -464,10 +513,16 @@ func cronJobV1NoSP() *topology.Component {
 			"schedule":          "0 1 * * *",
 			"name":              "test-cronjob-v1",
 			"creationTimestamp": cronJobTime,
-			"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+			"tags": map[string]string{
+				"test":           "label",
+				"cluster-name":   "test-cluster-name",
+				"cluster-type":   "kubernetes",
+				"component-type": "kubernetes-cronjob",
+				"namespace":      "test-namespace",
+			},
 			"uid":               types.UID("test-cronjob-v1"),
 			"concurrencyPolicy": "Allow",
-			"kind":              "some-specified-kind-v1",
+			"kind":              "CronJob",
 			"generateName":      "some-specified-generation-v1",
 		},
 	}
@@ -482,7 +537,7 @@ func (m MockCronJobAPICollectorClient) GetCronJobsV1B1() ([]v1beta1.CronJob, err
 	for i := 1; i <= 2; i++ {
 		job := v1beta1.CronJob{
 			TypeMeta: v1.TypeMeta{
-				Kind: "",
+				Kind: "CronJob",
 			},
 			ObjectMeta: v1.ObjectMeta{
 				Name:              fmt.Sprintf("test-cronjob-%d", i),
@@ -536,7 +591,7 @@ func (m MockCronJobAPICollectorClient) GetCronJobsV1B1() ([]v1beta1.CronJob, err
 		}
 
 		if i == 1 {
-			job.TypeMeta.Kind = "some-specified-kind"
+			job.TypeMeta.Kind = "CronJob"
 			job.ObjectMeta.GenerateName = "some-specified-generation"
 		}
 
@@ -550,7 +605,7 @@ func (m MockCronJobAPICollectorClient) GetCronJobsV1() ([]batchV1.CronJob, error
 	cronJobs := make([]batchV1.CronJob, 0)
 	job := batchV1.CronJob{
 		TypeMeta: v1.TypeMeta{
-			Kind: "some-specified-kind-v1",
+			Kind: "CronJob",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:              "test-cronjob-v1",

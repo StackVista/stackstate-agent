@@ -87,21 +87,34 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 									Type:       topology.Type{Name: "persistent-volume"},
 									Data: topology.Data{
 										"name":              "aws-elastic-block-store-volume",
+										"kind":              "PersistentVolume",
 										"creationTimestamp": creationTime,
-										"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"uid":               types.UID("aws-elastic-block-store-volume"),
-										"identifiers":       []string{},
-										"status":            coreV1.VolumeAvailable,
-										"statusMessage":     "Volume is available for use",
-										"storageClassName":  "Storage-Class-Name",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolume",
+											"namespace":      "test-namespace",
+										},
+										"uid":              types.UID("aws-elastic-block-store-volume"),
+										"identifiers":      []string{},
+										"status":           coreV1.VolumeAvailable,
+										"statusMessage":    "Volume is available for use",
+										"storageClassName": "Storage-Class-Name",
 									},
 								},
 								&topology.Component{
 									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume",
 									Type:       topology.Type{Name: "persistent-volume"},
 									Data: topology.Data{
-										"name":        "aws-elastic-block-store-volume",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+										"name": "aws-elastic-block-store-volume",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolume",
+											"namespace":      "test-namespace",
+										},
 										"identifiers": []string{},
 									},
 									SourceProperties: map[string]interface{}{
@@ -130,8 +143,14 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume",
 									Type:       topology.Type{Name: "persistent-volume"},
 									Data: topology.Data{
-										"name":        "aws-elastic-block-store-volume",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+										"name": "aws-elastic-block-store-volume",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolume",
+											"namespace":      "test-namespace",
+										},
 										"identifiers": []string{},
 									},
 									SourceProperties: map[string]interface{}{
@@ -167,7 +186,16 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								Type:       topology.Type{Name: "volume-source"},
 								Data: topology.Data{
 									"name": "id-of-the-aws-block-store",
-									"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "partition": "0", "volume-id": "id-of-the-aws-block-store", "kind": "aws-ebs"},
+									"tags": map[string]string{
+										"test":           "label",
+										"cluster-name":   "test-cluster-name",
+										"cluster-type":   "kubernetes",
+										"component-type": "kubernetes-volumesource",
+										"namespace":      "test-namespace",
+										"partition":      "0",
+										"volume-id":      "id-of-the-aws-block-store",
+										"kind":           "aws-ebs",
+									},
 									"source": coreV1.PersistentVolumeSource{
 										AWSElasticBlockStore: &awsElasticBlockStore,
 									},
@@ -198,11 +226,14 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 									},
 									Data: topology.Data{
 										"name":              "aws-elastic-block-store-volume-claim",
+										"kind":              "PersistentVolumeClaim",
 										"creationTimestamp": creationTime,
 										"tags": map[string]string{
-											"cluster-name": "test-cluster-name",
-											"namespace":    "test-namespace",
-											"test":         "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolumeclaim",
+											"namespace":      "test-namespace",
+											"test":           "label",
 										},
 										"uid":              types.UID("aws-elastic-block-store-volume"),
 										"identifiers":      []string{},
@@ -219,9 +250,11 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										"identifiers": []string{},
 										"name":        "aws-elastic-block-store-volume-claim",
 										"tags": map[string]string{
-											"cluster-name": "test-cluster-name",
-											"namespace":    "test-namespace",
-											"test":         "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolumeclaim",
+											"namespace":      "test-namespace",
+											"test":           "label",
 										},
 									},
 									SourceProperties: topology.Data{
@@ -252,9 +285,11 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										"identifiers": []string{},
 										"name":        "aws-elastic-block-store-volume-claim",
 										"tags": map[string]string{
-											"cluster-name": "test-cluster-name",
-											"namespace":    "test-namespace",
-											"test":         "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolumeclaim",
+											"namespace":      "test-namespace",
+											"test":           "label",
 										},
 									},
 									SourceProperties: topology.Data{
@@ -322,20 +357,33 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 									Type:       topology.Type{Name: "persistent-volume"},
 									Data: topology.Data{
 										"name":              "gce-persistent-disk-volume",
+										"kind":              "PersistentVolume",
 										"creationTimestamp": creationTime,
-										"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"uid":               types.UID("gce-persistent-disk-volume"),
-										"identifiers":       []string{},
-										"status":            coreV1.VolumeAvailable,
-										"statusMessage":     "Volume is available for use",
-										"storageClassName":  "Storage-Class-Name",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolume",
+											"namespace":      "test-namespace",
+										},
+										"uid":              types.UID("gce-persistent-disk-volume"),
+										"identifiers":      []string{},
+										"status":           coreV1.VolumeAvailable,
+										"statusMessage":    "Volume is available for use",
+										"storageClassName": "Storage-Class-Name",
 									}},
 								&topology.Component{
 									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/gce-persistent-disk-volume",
 									Type:       topology.Type{Name: "persistent-volume"},
 									Data: topology.Data{
-										"name":        "gce-persistent-disk-volume",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+										"name": "gce-persistent-disk-volume",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolume",
+											"namespace":      "test-namespace",
+										},
 										"identifiers": []string{},
 									},
 									SourceProperties: map[string]interface{}{
@@ -363,8 +411,14 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/gce-persistent-disk-volume",
 									Type:       topology.Type{Name: "persistent-volume"},
 									Data: topology.Data{
-										"name":        "gce-persistent-disk-volume",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+										"name": "gce-persistent-disk-volume",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolume",
+											"namespace":      "test-namespace",
+										},
 										"identifiers": []string{},
 									},
 									SourceProperties: map[string]interface{}{
@@ -399,7 +453,15 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								Type:       topology.Type{Name: "volume-source"},
 								Data: topology.Data{
 									"name": "name-of-the-gce-persistent-disk",
-									"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "kind": "gce-pd", "pd-name": "name-of-the-gce-persistent-disk"},
+									"tags": map[string]string{
+										"test":           "label",
+										"cluster-name":   "test-cluster-name",
+										"cluster-type":   "kubernetes",
+										"component-type": "kubernetes-volumesource",
+										"namespace":      "test-namespace",
+										"kind":           "gce-pd",
+										"pd-name":        "name-of-the-gce-persistent-disk",
+									},
 									"source": coreV1.PersistentVolumeSource{
 										GCEPersistentDisk: &gcePersistentDisk,
 									},
@@ -430,11 +492,14 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 									},
 									Data: topology.Data{
 										"name":              "gce-persistent-disk-volume-claim",
+										"kind":              "PersistentVolumeClaim",
 										"creationTimestamp": creationTime,
 										"tags": map[string]string{
-											"cluster-name": "test-cluster-name",
-											"namespace":    "test-namespace",
-											"test":         "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolumeclaim",
+											"namespace":      "test-namespace",
+											"test":           "label",
 										},
 										"uid":              types.UID("gce-persistent-disk-volume"),
 										"identifiers":      []string{},
@@ -451,9 +516,11 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										"identifiers": []string{},
 										"name":        "gce-persistent-disk-volume-claim",
 										"tags": map[string]string{
-											"cluster-name": "test-cluster-name",
-											"namespace":    "test-namespace",
-											"test":         "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolumeclaim",
+											"namespace":      "test-namespace",
+											"test":           "label",
 										},
 									},
 									SourceProperties: topology.Data{
@@ -484,9 +551,11 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										"identifiers": []string{},
 										"name":        "gce-persistent-disk-volume-claim",
 										"tags": map[string]string{
-											"cluster-name": "test-cluster-name",
-											"namespace":    "test-namespace",
-											"test":         "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolumeclaim",
+											"namespace":      "test-namespace",
+											"test":           "label",
 										},
 									},
 									SourceProperties: topology.Data{
@@ -535,7 +604,6 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								persistentVolume.Spec.PersistentVolumeSource = coreV1.PersistentVolumeSource{
 									HostPath: &hostPath,
 								}
-								persistentVolume.TypeMeta.Kind = "some-specified-kind"
 								persistentVolume.ObjectMeta.GenerateName = "some-specified-generation"
 								return []coreV1.PersistentVolume{persistentVolume}, nil
 							},
@@ -557,22 +625,34 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 									Data: topology.Data{
 										"name":              "host-path-volume",
 										"creationTimestamp": creationTime,
-										"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"uid":               types.UID("host-path-volume"),
-										"identifiers":       []string{},
-										"kind":              "some-specified-kind",
-										"generateName":      "some-specified-generation",
-										"status":            coreV1.VolumeAvailable,
-										"statusMessage":     "Volume is available for use",
-										"storageClassName":  "Storage-Class-Name",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolume",
+											"namespace":      "test-namespace",
+										},
+										"uid":              types.UID("host-path-volume"),
+										"identifiers":      []string{},
+										"kind":             "PersistentVolume",
+										"generateName":     "some-specified-generation",
+										"status":           coreV1.VolumeAvailable,
+										"statusMessage":    "Volume is available for use",
+										"storageClassName": "Storage-Class-Name",
 									},
 								},
 								&topology.Component{
 									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/host-path-volume",
 									Type:       topology.Type{Name: "persistent-volume"},
 									Data: topology.Data{
-										"name":        "host-path-volume",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+										"name": "host-path-volume",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolume",
+											"namespace":      "test-namespace",
+										},
 										"identifiers": []string{},
 									},
 									SourceProperties: map[string]interface{}{
@@ -600,8 +680,14 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/host-path-volume",
 									Type:       topology.Type{Name: "persistent-volume"},
 									Data: topology.Data{
-										"name":        "host-path-volume",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+										"name": "host-path-volume",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolume",
+											"namespace":      "test-namespace",
+										},
 										"identifiers": []string{},
 									},
 									SourceProperties: map[string]interface{}{
@@ -641,11 +727,14 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 									},
 									Data: topology.Data{
 										"name":              "host-path-volume-claim",
+										"kind":              "PersistentVolumeClaim",
 										"creationTimestamp": creationTime,
 										"tags": map[string]string{
-											"cluster-name": "test-cluster-name",
-											"namespace":    "test-namespace",
-											"test":         "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolumeclaim",
+											"namespace":      "test-namespace",
+											"test":           "label",
 										},
 										"uid":              types.UID("host-path-volume"),
 										"identifiers":      []string{},
@@ -662,9 +751,11 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										"identifiers": []string{},
 										"name":        "host-path-volume-claim",
 										"tags": map[string]string{
-											"cluster-name": "test-cluster-name",
-											"namespace":    "test-namespace",
-											"test":         "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolumeclaim",
+											"namespace":      "test-namespace",
+											"test":           "label",
 										},
 									},
 									SourceProperties: topology.Data{
@@ -695,9 +786,11 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										"identifiers": []string{},
 										"name":        "host-path-volume-claim",
 										"tags": map[string]string{
-											"cluster-name": "test-cluster-name",
-											"namespace":    "test-namespace",
-											"test":         "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolumeclaim",
+											"namespace":      "test-namespace",
+											"test":           "label",
 										},
 									},
 									SourceProperties: topology.Data{
@@ -766,21 +859,34 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										Type:       topology.Type{Name: "persistent-volume"},
 										Data: topology.Data{
 											"name":              "trident-csi-storage-volume",
+											"kind":              "PersistentVolume",
 											"creationTimestamp": creationTime,
-											"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-											"uid":               types.UID("trident-csi-storage-volume"),
-											"identifiers":       []string{},
-											"status":            coreV1.VolumeAvailable,
-											"statusMessage":     "Volume is available for use",
-											"storageClassName":  "Storage-Class-Name",
+											"tags": map[string]string{
+												"test":           "label",
+												"cluster-name":   "test-cluster-name",
+												"cluster-type":   "kubernetes",
+												"component-type": "kubernetes-persistentvolume",
+												"namespace":      "test-namespace",
+											},
+											"uid":              types.UID("trident-csi-storage-volume"),
+											"identifiers":      []string{},
+											"status":           coreV1.VolumeAvailable,
+											"statusMessage":    "Volume is available for use",
+											"storageClassName": "Storage-Class-Name",
 										},
 									},
 									&topology.Component{
 										ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/trident-csi-storage-volume",
 										Type:       topology.Type{Name: "persistent-volume"},
 										Data: topology.Data{
-											"name":        "trident-csi-storage-volume",
-											"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+											"name": "trident-csi-storage-volume",
+											"tags": map[string]string{
+												"test":           "label",
+												"cluster-name":   "test-cluster-name",
+												"cluster-type":   "kubernetes",
+												"component-type": "kubernetes-persistentvolume",
+												"namespace":      "test-namespace",
+											},
 											"identifiers": []string{},
 										},
 										SourceProperties: map[string]interface{}{
@@ -818,8 +924,14 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/trident-csi-storage-volume",
 										Type:       topology.Type{Name: "persistent-volume"},
 										Data: topology.Data{
-											"name":        "trident-csi-storage-volume",
-											"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+											"name": "trident-csi-storage-volume",
+											"tags": map[string]string{
+												"test":           "label",
+												"cluster-name":   "test-cluster-name",
+												"cluster-type":   "kubernetes",
+												"component-type": "kubernetes-persistentvolume",
+												"namespace":      "test-namespace",
+											},
 											"identifiers": []string{},
 										},
 										SourceProperties: map[string]interface{}{
@@ -865,15 +977,17 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								Data: topology.Data{
 									"name": "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
 									"tags": map[string]string{
-										"test":         "label",
-										"cluster-name": "test-cluster-name",
-										"namespace":    "test-namespace",
-										"kind":         "csi",
-										"driver":       "csi.trident.netapp.io",
-										"backendUUID":  "127ebcb8-15gs-4fq1-acbn-021245ghgd05",
-										"internalName": "NPO_TEST_pvc_0c8f1r14_a12a_1234_x1v2_b8b12341c1ab",
-										"name":         "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
-										"protocol":     "file",
+										"test":           "label",
+										"cluster-name":   "test-cluster-name",
+										"cluster-type":   "kubernetes",
+										"component-type": "kubernetes-volumesource",
+										"namespace":      "test-namespace",
+										"kind":           "csi",
+										"driver":         "csi.trident.netapp.io",
+										"backendUUID":    "127ebcb8-15gs-4fq1-acbn-021245ghgd05",
+										"internalName":   "NPO_TEST_pvc_0c8f1r14_a12a_1234_x1v2_b8b12341c1ab",
+										"name":           "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+										"protocol":       "file",
 										"storage.kubernetes.io/csiProvisionerIdentity": "1245742285214-1234-csi.trident.netapp.io",
 									},
 									"source": coreV1.PersistentVolumeSource{
@@ -906,11 +1020,14 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 									},
 									Data: topology.Data{
 										"name":              "trident-csi-storage-volume-claim",
+										"kind":              "PersistentVolumeClaim",
 										"creationTimestamp": creationTime,
 										"tags": map[string]string{
-											"cluster-name": "test-cluster-name",
-											"namespace":    "test-namespace",
-											"test":         "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolumeclaim",
+											"namespace":      "test-namespace",
+											"test":           "label",
 										},
 										"uid":              types.UID("trident-csi-storage-volume"),
 										"identifiers":      []string{},
@@ -927,9 +1044,11 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										"identifiers": []string{},
 										"name":        "trident-csi-storage-volume-claim",
 										"tags": map[string]string{
-											"cluster-name": "test-cluster-name",
-											"namespace":    "test-namespace",
-											"test":         "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolumeclaim",
+											"namespace":      "test-namespace",
+											"test":           "label",
 										},
 									},
 									SourceProperties: topology.Data{
@@ -960,9 +1079,11 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										"identifiers": []string{},
 										"name":        "trident-csi-storage-volume-claim",
 										"tags": map[string]string{
-											"cluster-name": "test-cluster-name",
-											"namespace":    "test-namespace",
-											"test":         "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolumeclaim",
+											"namespace":      "test-namespace",
+											"test":           "label",
 										},
 									},
 									SourceProperties: topology.Data{
@@ -1076,21 +1197,34 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 										Type:       topology.Type{Name: "persistent-volume"},
 										Data: topology.Data{
 											"name":              "trident-csi-storage-volume",
+											"kind":              "PersistentVolume",
 											"creationTimestamp": creationTime,
-											"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-											"uid":               types.UID("trident-csi-storage-volume"),
-											"identifiers":       []string{},
-											"status":            coreV1.VolumeAvailable,
-											"statusMessage":     "Volume is available for use",
-											"storageClassName":  "Storage-Class-Name",
+											"tags": map[string]string{
+												"test":           "label",
+												"cluster-name":   "test-cluster-name",
+												"cluster-type":   "kubernetes",
+												"component-type": "kubernetes-persistentvolume",
+												"namespace":      "test-namespace",
+											},
+											"uid":              types.UID("trident-csi-storage-volume"),
+											"identifiers":      []string{},
+											"status":           coreV1.VolumeAvailable,
+											"statusMessage":    "Volume is available for use",
+											"storageClassName": "Storage-Class-Name",
 										},
 									},
 									&topology.Component{
 										ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/trident-csi-storage-volume",
 										Type:       topology.Type{Name: "persistent-volume"},
 										Data: topology.Data{
-											"name":        "trident-csi-storage-volume",
-											"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+											"name": "trident-csi-storage-volume",
+											"tags": map[string]string{
+												"test":           "label",
+												"cluster-name":   "test-cluster-name",
+												"cluster-type":   "kubernetes",
+												"component-type": "kubernetes-persistentvolume",
+												"namespace":      "test-namespace",
+											},
 											"identifiers": []string{},
 										},
 										SourceProperties: map[string]interface{}{
@@ -1129,8 +1263,14 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 										ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/trident-csi-storage-volume",
 										Type:       topology.Type{Name: "persistent-volume"},
 										Data: topology.Data{
-											"name":        "trident-csi-storage-volume",
-											"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+											"name": "trident-csi-storage-volume",
+											"tags": map[string]string{
+												"test":           "label",
+												"cluster-name":   "test-cluster-name",
+												"cluster-type":   "kubernetes",
+												"component-type": "kubernetes-persistentvolume",
+												"namespace":      "test-namespace",
+											},
 											"identifiers": []string{},
 										},
 										SourceProperties: map[string]interface{}{
@@ -1181,11 +1321,14 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 									},
 									Data: topology.Data{
 										"name":              "trident-csi-storage-volume-claim",
+										"kind":              "PersistentVolumeClaim",
 										"creationTimestamp": creationTime,
 										"tags": map[string]string{
-											"cluster-name": "test-cluster-name",
-											"namespace":    "test-namespace",
-											"test":         "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolumeclaim",
+											"namespace":      "test-namespace",
+											"test":           "label",
 										},
 										"uid":              types.UID("trident-csi-storage-volume"),
 										"identifiers":      []string{},
@@ -1202,9 +1345,11 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 										"identifiers": []string{},
 										"name":        "trident-csi-storage-volume-claim",
 										"tags": map[string]string{
-											"cluster-name": "test-cluster-name",
-											"namespace":    "test-namespace",
-											"test":         "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolumeclaim",
+											"namespace":      "test-namespace",
+											"test":           "label",
 										},
 									},
 									SourceProperties: topology.Data{
@@ -1235,9 +1380,11 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 										"identifiers": []string{},
 										"name":        "trident-csi-storage-volume-claim",
 										"tags": map[string]string{
-											"cluster-name": "test-cluster-name",
-											"namespace":    "test-namespace",
-											"test":         "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolumeclaim",
+											"namespace":      "test-namespace",
+											"test":           "label",
 										},
 									},
 									SourceProperties: topology.Data{
@@ -1295,7 +1442,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 func NewTestPV(volumeName string) coreV1.PersistentVolume {
 	return coreV1.PersistentVolume{
 		TypeMeta: v1.TypeMeta{
-			Kind: "",
+			Kind: "PersistentVolume",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:              volumeName,
@@ -1330,7 +1477,7 @@ func NewTestPV(volumeName string) coreV1.PersistentVolume {
 func NewTestPVC(volumeClaimName string, volumeName string) coreV1.PersistentVolumeClaim {
 	return coreV1.PersistentVolumeClaim{
 		TypeMeta: v1.TypeMeta{
-			Kind: "",
+			Kind: "PersistentVolumeClaim",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:              volumeClaimName,

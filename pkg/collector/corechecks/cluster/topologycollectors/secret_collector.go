@@ -53,7 +53,7 @@ func (cmc *SecretCollector) CollectorFunction() error {
 func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topology.Component, error) {
 	log.Tracef("Mapping Secret to StackState component: %s", secret.String())
 
-	tags := cmc.initTags(secret.ObjectMeta)
+	tags := cmc.initTags(secret.ObjectMeta, secret.TypeMeta)
 	secretExternalID := cmc.buildSecretExternalID(secret.Namespace, secret.Name)
 
 	secretDataHash, err := secure(secret.Data)

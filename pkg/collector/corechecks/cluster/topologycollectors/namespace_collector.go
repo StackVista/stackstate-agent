@@ -44,7 +44,7 @@ func (nsc *NamespaceCollector) CollectorFunction() error {
 func (nsc *NamespaceCollector) namespaceToStackStateComponent(namespace v1.Namespace) *topology.Component {
 	log.Tracef("Mapping Namespace to StackState component: %s", namespace.String())
 
-	tags := nsc.initTags(namespace.ObjectMeta)
+	tags := nsc.initTags(namespace.ObjectMeta, namespace.TypeMeta)
 	namespaceExternalID := nsc.buildNamespaceExternalID(namespace.Name)
 
 	component := &topology.Component{

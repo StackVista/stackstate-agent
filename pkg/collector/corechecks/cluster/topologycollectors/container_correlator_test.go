@@ -55,7 +55,12 @@ func TestContainerCollector(t *testing.T) {
 							"podIP":        "10.0.1.1",
 							"podPhase":     "Running",
 							"restartCount": int32(1),
-							"tags":         map[string]string{"cluster-name": "test-cluster-name", "namespace": "namespace-1"},
+							"tags": map[string]string{
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-container",
+								"namespace":      "namespace-1",
+							},
 						},
 					}
 					assert.EqualValues(t, expectedComponent, component)
@@ -103,7 +108,12 @@ func TestContainerCollector(t *testing.T) {
 							"podPhase":      "Running",
 							"restartCount":  int32(2),
 							"startTime":     startedAtTime,
-							"tags":          map[string]string{"cluster-name": "test-cluster-name", "namespace": "namespace-2"},
+							"tags": map[string]string{
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-container",
+								"namespace":      "namespace-2",
+							},
 						},
 					}
 					assert.EqualValues(t, expectedComponent, component)

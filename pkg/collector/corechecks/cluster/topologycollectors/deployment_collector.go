@@ -51,7 +51,7 @@ func (dmc *DeploymentCollector) DeploymentToStackStateComponent(deployment v1.De
 func (dmc *DeploymentCollector) deploymentToStackStateComponent(deployment v1.Deployment) *topology.Component {
 	log.Tracef("Mapping Deployment to StackState component: %s", deployment.String())
 
-	tags := dmc.initTags(deployment.ObjectMeta)
+	tags := dmc.initTags(deployment.ObjectMeta, deployment.TypeMeta)
 
 	deploymentExternalID := dmc.buildDeploymentExternalID(deployment.Namespace, deployment.Name)
 	component := &topology.Component{

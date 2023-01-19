@@ -61,7 +61,7 @@ func (jc *JobCollector) CollectorFunction() error {
 func (jc *JobCollector) jobToStackStateComponent(job v1.Job) *topology.Component {
 	log.Tracef("Mapping Job to StackState component: %s", job.String())
 
-	tags := jc.initTags(job.ObjectMeta)
+	tags := jc.initTags(job.ObjectMeta, job.TypeMeta)
 
 	jobExternalID := jc.buildJobExternalID(job.Namespace, job.Name)
 	component := &topology.Component{

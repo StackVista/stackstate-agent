@@ -126,12 +126,12 @@ func (t *TopologyCheck) Run() error {
 	// set the check "instance id" for snapshots
 	t.instance.CheckID = kubernetesAPITopologyCheckName
 
-	var instanceClusterType ClusterType
+	var instanceClusterType collectors.ClusterType
 	switch openshiftPresence := t.ac.DetectOpenShiftAPILevel(); openshiftPresence {
 	case apiserver.OpenShiftAPIGroup, apiserver.OpenShiftOAPI:
-		instanceClusterType = OpenShift
+		instanceClusterType = collectors.OpenShift
 	case apiserver.NotOpenShift:
-		instanceClusterType = Kubernetes
+		instanceClusterType = collectors.Kubernetes
 	}
 	t.instance.Instance = topology.Instance{Type: string(instanceClusterType), URL: t.instance.ClusterName}
 
@@ -158,7 +158,7 @@ func (t *TopologyCheck) Run() error {
 	waitGroupChannel := make(chan bool)
 	collectorsDoneChannel := make(chan bool)
 
-	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, t.ac, t.instance.SourcePropertiesEnabled, componentChannel, relationChannel, t.getKubernetesVersion(), t.GetFeatures().FeatureEnabled(features.ExposeKubernetesStatus))
+	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, instanceClusterType, t.ac, t.instance.SourcePropertiesEnabled, componentChannel, relationChannel, t.getKubernetesVersion(), t.GetFeatures().FeatureEnabled(features.ExposeKubernetesStatus))
 	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
 	clusterCollectors := []collectors.ClusterTopologyCollector{
 		// Register Cluster Component Collector

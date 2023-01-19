@@ -73,7 +73,7 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 
 	nodeExternalID := nc.buildNodeExternalID(node.Name)
 
-	tags := nc.initTags(node.ObjectMeta)
+	tags := nc.initTags(node.ObjectMeta, node.TypeMeta)
 
 	instanceID := urn.GetInstanceID(node)
 	component := &topology.Component{

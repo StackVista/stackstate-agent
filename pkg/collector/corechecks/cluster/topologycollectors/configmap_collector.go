@@ -52,7 +52,7 @@ func (cmc *ConfigMapCollector) CollectorFunction() error {
 func (cmc *ConfigMapCollector) configMapToStackStateComponent(configMap v1.ConfigMap) *topology.Component {
 	log.Tracef("Mapping ConfigMap to StackState component: %s", configMap.String())
 
-	tags := cmc.initTags(configMap.ObjectMeta)
+	tags := cmc.initTags(configMap.ObjectMeta, configMap.TypeMeta)
 	configMapExternalID := cmc.buildConfigMapExternalID(configMap.Namespace, configMap.Name)
 
 	component := &topology.Component{

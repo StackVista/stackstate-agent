@@ -240,7 +240,7 @@ func (pc *PodCollector) podToStackStateComponent(pod v1.Pod) *topology.Component
 
 // podTags creates the tags for a pod
 func (pc *PodCollector) podTags(pod v1.Pod) map[string]string {
-	tags := pc.initTags(pod.ObjectMeta)
+	tags := pc.initTags(pod.ObjectMeta, pod.TypeMeta)
 	// add service account as a label to filter on
 	if pod.Spec.ServiceAccountName != "" {
 		tags["service-account"] = pod.Spec.ServiceAccountName
