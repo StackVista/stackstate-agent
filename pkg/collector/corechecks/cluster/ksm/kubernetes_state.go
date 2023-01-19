@@ -340,8 +340,6 @@ func (k *KSMCheck) Cancel() {
 
 // processMetrics attaches tags and forwards metrics to the aggregator
 func (k *KSMCheck) processMetrics(sender aggregator.Sender, metrics map[string][]ksmstore.DDMetricsFam, labelJoiner *labelJoiner) {
-	_ = log.Warnf("**** Process Metrics ****")
-
 	for _, metricsList := range metrics {
 		for _, metricFamily := range metricsList {
 			// First check for aggregator, because the check use _labels metrics to aggregate values.
@@ -651,8 +649,6 @@ func resourceNameFromMetric(name string) string {
 //  - has a metric transformer
 //  - has a metric aggregator
 func isKnownMetric(name string) bool {
-	_ = log.Warnf("**** Checking Is Known Metrics For: %s ****", name)
-
 	if _, found := metricNamesMapper[name]; found {
 		return true
 	}
