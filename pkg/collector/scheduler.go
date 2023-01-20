@@ -183,10 +183,10 @@ func (s *CheckScheduler) getChecks(config integration.Config) ([]check.Check, er
 				continue
 			}
 			c, err := loader.Load(config, instance)
-			c.SetFeatures(s.features)
 			if err == nil {
 				log.Debugf("%v: successfully loaded check '%s'", loader, config.Name)
 				errorStats.removeLoaderErrors(config.Name)
+				c.SetFeatures(s.features)
 				checks = append(checks, c)
 				break
 			} else if c != nil && check.IsJMXInstance(config.Name, instance, config.InitConfig) {
