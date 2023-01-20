@@ -141,10 +141,13 @@ func serviceComponentWithSinglePort(clusterName string, namespace string, extern
 		Type:       topology.Type{Name: "service"},
 		Data: topology.Data{
 			"name": name,
+			"kind": "Service",
 			"tags": map[string]string{
-				"cluster-name": clusterName,
-				"namespace":    namespace,
-				"service-type": "",
+				"cluster-name":   clusterName,
+				"cluster-type":   "kubernetes",
+				"component-type": "kubernetes-service",
+				"namespace":      namespace,
+				"service-type":   "",
 			},
 			"identifiers": []string{
 				fmt.Sprintf("urn:service:/%s:%s:%s", clusterName, namespace, name),
@@ -161,9 +164,12 @@ func podComponentWithHostPortExposed(clusterName string, namespace string, name 
 		Type:       topology.Type{Name: "pod"},
 		Data: topology.Data{
 			"name": name,
+			"kind": "Pod",
 			"tags": map[string]string{
-				"cluster-name": clusterName,
-				"namespace":    namespace,
+				"cluster-name":   clusterName,
+				"cluster-type":   "kubernetes",
+				"component-type": "kubernetes-pod",
+				"namespace":      namespace,
 			},
 			"identifiers": []string{
 				fmt.Sprintf("urn:ip:/%s:%s:%s:%s", clusterName, namespace, name, hostIP),
@@ -190,6 +196,7 @@ func endpointsForASinglePort(namespace string, name string, timestamp metav1.Tim
 			CreationTimestamp: timestamp,
 			DeletionTimestamp: &timestamp,
 		},
+		TypeMeta: metav1.TypeMeta{Kind: "Endpoint"},
 		Subsets: []coreV1.EndpointSubset{
 			{
 				Addresses: addresses,
@@ -212,6 +219,7 @@ func serviceWithSinglePort(namespace string, name string, timestamp metav1.Time,
 			CreationTimestamp: timestamp,
 			DeletionTimestamp: &timestamp,
 		},
+		TypeMeta: metav1.TypeMeta{Kind: "Service"},
 		Spec: coreV1.ServiceSpec{
 			Ports: []coreV1.ServicePort{
 				{
@@ -231,6 +239,7 @@ func podWithHostPortExposed(namespace string, name string, timestamp metav1.Time
 			CreationTimestamp: timestamp,
 			DeletionTimestamp: &timestamp,
 		},
+		TypeMeta: metav1.TypeMeta{Kind: "Pod"},
 		Spec: coreV1.PodSpec{
 			HostNetwork: true,
 			Containers: []coreV1.Container{

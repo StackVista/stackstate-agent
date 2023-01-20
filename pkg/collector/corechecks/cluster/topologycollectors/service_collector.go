@@ -302,13 +302,14 @@ func (sc *ServiceCollector) serviceToExternalServiceComponent(service v1.Service
 
 	externalID := sc.GetURNBuilder().BuildComponentExternalID("external-service", service.Namespace, service.Name)
 
-	tags := sc.initTags(service.ObjectMeta, metav1.TypeMeta{Kind: "external-service"})
+	tags := sc.initTags(service.ObjectMeta, metav1.TypeMeta{Kind: "ExternalService"})
 
 	component := &topology.Component{
 		ExternalID: externalID,
 		Type:       topology.Type{Name: "external-service"},
 		Data: map[string]interface{}{
 			"name":              service.Name,
+			"kind":              "ExternalService",
 			"creationTimestamp": service.CreationTimestamp,
 			"tags":              tags,
 			"identifiers":       identifiers,

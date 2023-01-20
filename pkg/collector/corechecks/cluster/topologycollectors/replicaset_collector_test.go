@@ -53,10 +53,17 @@ func TestReplicaSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "replicaset"},
 						Data: topology.Data{
 							"name":              "test-replicaset-1",
+							"kind":              "ReplicaSet",
 							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-replicaset-1"),
-							"desiredReplicas":   &replicas,
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-replicaset",
+								"namespace":      "test-namespace",
+							},
+							"uid":             types.UID("test-replicaset-1"),
+							"desiredReplicas": &replicas,
 						},
 					},
 					expectedComponentSP: &topology.Component{
@@ -64,7 +71,13 @@ func TestReplicaSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "replicaset"},
 						Data: topology.Data{
 							"name": "test-replicaset-1",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-replicaset",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -87,7 +100,13 @@ func TestReplicaSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "replicaset"},
 						Data: topology.Data{
 							"name": "test-replicaset-1",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-replicaset",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -131,12 +150,18 @@ func TestReplicaSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "replicaset"},
 						Data: topology.Data{
 							"name":              "test-replicaset-2",
+							"kind":              "ReplicaSet",
 							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-replicaset-2"),
-							"desiredReplicas":   &replicas,
-							"kind":              "some-specified-kind",
-							"generateName":      "some-specified-generation",
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-replicaset",
+								"namespace":      "test-namespace",
+							},
+							"uid":             types.UID("test-replicaset-2"),
+							"desiredReplicas": &replicas,
+							"generateName":    "some-specified-generation",
 						},
 					},
 					expectedComponentSP: &topology.Component{
@@ -144,7 +169,13 @@ func TestReplicaSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "replicaset"},
 						Data: topology.Data{
 							"name": "test-replicaset-2",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-replicaset",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -168,7 +199,13 @@ func TestReplicaSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "replicaset"},
 						Data: topology.Data{
 							"name": "test-replicaset-2",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-replicaset",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -213,12 +250,18 @@ func TestReplicaSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "replicaset"},
 						Data: topology.Data{
 							"name":              "test-replicaset-3",
+							"kind":              "ReplicaSet",
 							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-replicaset-3"),
-							"desiredReplicas":   &replicas,
-							"kind":              "some-specified-kind",
-							"generateName":      "some-specified-generation",
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-replicaset",
+								"namespace":      "test-namespace",
+							},
+							"uid":             types.UID("test-replicaset-3"),
+							"desiredReplicas": &replicas,
+							"generateName":    "some-specified-generation",
 						},
 					},
 					expectedComponentSP: &topology.Component{
@@ -226,7 +269,13 @@ func TestReplicaSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "replicaset"},
 						Data: topology.Data{
 							"name": "test-replicaset-3",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-replicaset",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -251,7 +300,13 @@ func TestReplicaSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "replicaset"},
 						Data: topology.Data{
 							"name": "test-replicaset-3",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-replicaset",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -321,7 +376,7 @@ func (m MockReplicaSetAPICollectorClient) GetReplicaSets() ([]appsV1.ReplicaSet,
 	for i := 1; i <= 3; i++ {
 		replicaSet := appsV1.ReplicaSet{
 			TypeMeta: v1.TypeMeta{
-				Kind: "",
+				Kind: "ReplicaSet",
 			},
 			ObjectMeta: v1.ObjectMeta{
 				Name:              fmt.Sprintf("test-replicaset-%d", i),
@@ -355,7 +410,6 @@ func (m MockReplicaSetAPICollectorClient) GetReplicaSets() ([]appsV1.ReplicaSet,
 		}
 
 		if i > 1 {
-			replicaSet.TypeMeta.Kind = "some-specified-kind"
 			replicaSet.ObjectMeta.GenerateName = "some-specified-generation"
 		}
 

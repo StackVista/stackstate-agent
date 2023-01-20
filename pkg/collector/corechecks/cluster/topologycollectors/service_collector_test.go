@@ -112,18 +112,33 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 					Type:       topology.Type{Name: "service"},
 					Data: topology.Data{
 						"name":              "test-service-1",
+						"kind":              "Service",
 						"creationTimestamp": creationTime,
-						"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
-						"uid":               types.UID("test-service-1"),
-						"identifiers":       []string{"urn:service:/test-cluster-name:test-namespace:test-service-1"},
+						"tags": map[string]string{
+							"test":           "label",
+							"cluster-name":   "test-cluster-name",
+							"cluster-type":   "kubernetes",
+							"component-type": "kubernetes-service",
+							"namespace":      "test-namespace",
+							"service-type":   "ClusterIP",
+						},
+						"uid":         types.UID("test-service-1"),
+						"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-1"},
 					},
 				},
 				&topology.Component{
 					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1",
 					Type:       topology.Type{Name: "service"},
 					Data: topology.Data{
-						"name":        "test-service-1",
-						"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
+						"name": "test-service-1",
+						"tags": map[string]string{
+							"test":           "label",
+							"cluster-name":   "test-cluster-name",
+							"cluster-type":   "kubernetes",
+							"component-type": "kubernetes-service",
+							"namespace":      "test-namespace",
+							"service-type":   "ClusterIP",
+						},
 						"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-1"},
 					},
 					SourceProperties: map[string]interface{}{
@@ -147,8 +162,15 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 					ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1",
 					Type:       topology.Type{Name: "service"},
 					Data: topology.Data{
-						"name":        "test-service-1",
-						"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
+						"name": "test-service-1",
+						"tags": map[string]string{
+							"test":           "label",
+							"cluster-name":   "test-cluster-name",
+							"cluster-type":   "kubernetes",
+							"component-type": "kubernetes-service",
+							"namespace":      "test-namespace",
+							"service-type":   "ClusterIP",
+						},
 						"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-1"},
 					},
 					SourceProperties: map[string]interface{}{
@@ -210,9 +232,15 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 					Type:       topology.Type{Name: "service"},
 					Data: topology.Data{
 						"name":              "test-service-6",
+						"kind":              "Service",
 						"creationTimestamp": creationTime,
 						"tags": map[string]string{
-							"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "LoadBalancer",
+							"test":           "label",
+							"cluster-name":   "test-cluster-name",
+							"cluster-type":   "kubernetes",
+							"component-type": "kubernetes-service",
+							"namespace":      "test-namespace",
+							"service-type":   "LoadBalancer",
 						},
 						"uid": types.UID("test-service-6"),
 						"identifiers": []string{
@@ -227,7 +255,12 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 					Data: topology.Data{
 						"name": "test-service-6",
 						"tags": map[string]string{
-							"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "LoadBalancer",
+							"test":           "label",
+							"cluster-name":   "test-cluster-name",
+							"cluster-type":   "kubernetes",
+							"component-type": "kubernetes-service",
+							"namespace":      "test-namespace",
+							"service-type":   "LoadBalancer",
 						},
 						"identifiers": []string{
 							"urn:endpoint:/test-cluster-name:10.100.200.23", "urn:ingress-point:/34.100.200.15",
@@ -263,7 +296,12 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 					Data: topology.Data{
 						"name": "test-service-6",
 						"tags": map[string]string{
-							"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "LoadBalancer",
+							"test":           "label",
+							"cluster-name":   "test-cluster-name",
+							"cluster-type":   "kubernetes",
+							"component-type": "kubernetes-service",
+							"namespace":      "test-namespace",
+							"service-type":   "LoadBalancer",
 						},
 						"identifiers": []string{
 							"urn:endpoint:/test-cluster-name:10.100.200.23", "urn:ingress-point:/34.100.200.15",
@@ -345,9 +383,17 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 						Type:       topology.Type{Name: "service"},
 						Data: topology.Data{
 							"name":              "test-service-2",
+							"kind":              "Service",
 							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "NodePort"},
-							"uid":               types.UID("test-service-2"),
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-service",
+								"namespace":      "test-namespace",
+								"service-type":   "NodePort",
+							},
+							"uid": types.UID("test-service-2"),
 							"identifiers": []string{
 								"urn:endpoint:/test-cluster-name:10.100.200.20",
 								"urn:endpoint:/test-cluster-name:10.100.200.20:10202",
@@ -360,7 +406,14 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 						Type:       topology.Type{Name: "service"},
 						Data: topology.Data{
 							"name": "test-service-2",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "NodePort"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-service",
+								"namespace":      "test-namespace",
+								"service-type":   "NodePort",
+							},
 							"identifiers": []string{
 								"urn:endpoint:/test-cluster-name:10.100.200.20",
 								"urn:endpoint:/test-cluster-name:10.100.200.20:10202",
@@ -391,7 +444,14 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 						Type:       topology.Type{Name: "service"},
 						Data: topology.Data{
 							"name": "test-service-2",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "NodePort"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-service",
+								"namespace":      "test-namespace",
+								"service-type":   "NodePort",
+							},
 							"identifiers": []string{
 								"urn:endpoint:/test-cluster-name:10.100.200.20",
 								"urn:endpoint:/test-cluster-name:10.100.200.20:10202",
@@ -447,9 +507,17 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 						Type:       topology.Type{Name: "service"},
 						Data: topology.Data{
 							"name":              "test-service-3",
+							"kind":              "Service",
 							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
-							"uid":               types.UID("test-service-3"),
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-service",
+								"namespace":      "test-namespace",
+								"service-type":   "ClusterIP",
+							},
+							"uid": types.UID("test-service-3"),
 							"identifiers": []string{
 								"urn:endpoint:/34.100.200.12:83", "urn:endpoint:/34.100.200.13:83",
 								"urn:endpoint:/test-cluster-name:10.100.200.21",
@@ -462,7 +530,14 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 						Type:       topology.Type{Name: "service"},
 						Data: topology.Data{
 							"name": "test-service-3",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-service",
+								"namespace":      "test-namespace",
+								"service-type":   "ClusterIP",
+							},
 							"identifiers": []string{
 								"urn:endpoint:/34.100.200.12:83", "urn:endpoint:/34.100.200.13:83",
 								"urn:endpoint:/test-cluster-name:10.100.200.21",
@@ -493,7 +568,14 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 						Type:       topology.Type{Name: "service"},
 						Data: topology.Data{
 							"name": "test-service-3",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-service",
+								"namespace":      "test-namespace",
+								"service-type":   "ClusterIP",
+							},
 							"identifiers": []string{
 								"urn:endpoint:/34.100.200.12:83", "urn:endpoint:/34.100.200.13:83",
 								"urn:endpoint:/test-cluster-name:10.100.200.21",
@@ -551,9 +633,17 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 						Type:       topology.Type{Name: "service"},
 						Data: topology.Data{
 							"name":              "test-service-4",
+							"kind":              "Service",
 							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
-							"uid":               types.UID("test-service-4"),
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-service",
+								"namespace":      "test-namespace",
+								"service-type":   "ClusterIP",
+							},
+							"uid": types.UID("test-service-4"),
 							"identifiers": []string{
 								"urn:endpoint:/test-cluster-name:10.100.200.22",
 								"urn:service:/test-cluster-name:test-namespace:test-service-4",
@@ -565,7 +655,14 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 						Type:       topology.Type{Name: "service"},
 						Data: topology.Data{
 							"name": "test-service-4",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-service",
+								"namespace":      "test-namespace",
+								"service-type":   "ClusterIP",
+							},
 							"identifiers": []string{
 								"urn:endpoint:/test-cluster-name:10.100.200.22",
 								"urn:service:/test-cluster-name:test-namespace:test-service-4",
@@ -594,7 +691,14 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 						Type:       topology.Type{Name: "service"},
 						Data: topology.Data{
 							"name": "test-service-4",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ClusterIP"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-service",
+								"namespace":      "test-namespace",
+								"service-type":   "ClusterIP",
+							},
 							"identifiers": []string{
 								"urn:endpoint:/test-cluster-name:10.100.200.22",
 								"urn:service:/test-cluster-name:test-namespace:test-service-4",
@@ -649,9 +753,16 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 						Type:       topology.Type{Name: "service"},
 						Data: topology.Data{
 							"name":              "test-service-5",
+							"kind":              "Service",
 							"creationTimestamp": creationTime,
 							"tags": map[string]string{
-								"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service": "headless", "service-type": "ClusterIP",
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-service",
+								"namespace":      "test-namespace",
+								"service":        "headless",
+								"service-type":   "ClusterIP",
 							},
 							"uid":         types.UID("test-service-5"),
 							"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-5"},
@@ -663,7 +774,13 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 						Data: topology.Data{
 							"name": "test-service-5",
 							"tags": map[string]string{
-								"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service": "headless", "service-type": "ClusterIP",
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-service",
+								"namespace":      "test-namespace",
+								"service":        "headless",
+								"service-type":   "ClusterIP",
 							},
 							"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-5"},
 						},
@@ -691,7 +808,13 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 						Data: topology.Data{
 							"name": "test-service-5",
 							"tags": map[string]string{
-								"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service": "headless", "service-type": "ClusterIP",
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-service",
+								"namespace":      "test-namespace",
+								"service":        "headless",
+								"service-type":   "ClusterIP",
 							},
 							"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-5"},
 						},
@@ -745,9 +868,15 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 						Type:       topology.Type{Name: "service"},
 						Data: topology.Data{
 							"name":              "test-service-7",
+							"kind":              "Service",
 							"creationTimestamp": creationTime,
 							"tags": map[string]string{
-								"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ExternalName",
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-service",
+								"namespace":      "test-namespace",
+								"service-type":   "ExternalName",
 							},
 							"uid":         types.UID("test-service-7"),
 							"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-7"},
@@ -759,7 +888,12 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 						Data: topology.Data{
 							"name": "test-service-7",
 							"tags": map[string]string{
-								"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ExternalName",
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-service",
+								"namespace":      "test-namespace",
+								"service-type":   "ExternalName",
 							},
 							"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-7"},
 						},
@@ -787,7 +921,12 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 						Data: topology.Data{
 							"name": "test-service-7",
 							"tags": map[string]string{
-								"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-type": "ExternalName",
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-service",
+								"namespace":      "test-namespace",
+								"service-type":   "ExternalName",
 							},
 							"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-7"},
 						},
@@ -821,9 +960,14 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 					Type:       topology.Type{Name: "external-service"},
 					Data: topology.Data{
 						"name":              "test-service-7",
+						"kind":              "ExternalService",
 						"creationTimestamp": creationTime,
 						"tags": map[string]string{
-							"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace",
+							"test":           "label",
+							"cluster-name":   "test-cluster-name",
+							"cluster-type":   "kubernetes",
+							"component-type": "kubernetes-externalservice",
+							"namespace":      "test-namespace",
 						},
 						"uid": types.UID("test-service-7"),
 						"identifiers": []string{
@@ -876,7 +1020,7 @@ func (m MockServiceAPICollectorClient) GetServices() ([]coreV1.Service, error) {
 	i := m.testCaseNumber
 	service := coreV1.Service{
 		TypeMeta: v1.TypeMeta{
-			Kind: "",
+			Kind: "Service",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:              fmt.Sprintf("test-service-%d", i),
