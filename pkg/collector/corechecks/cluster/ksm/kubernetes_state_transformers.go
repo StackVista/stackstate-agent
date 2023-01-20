@@ -201,16 +201,19 @@ var allowedWaitingReasons = map[string]struct{}{
 	"imagepullbackoff":  {},
 	"crashloopbackoff":  {},
 	"containercreating": {},
+	"unknown":           {},
 }
 
 var allowedTerminatedReasons = map[string]struct{}{
 	"oomkilled":          {},
 	"containercannotrun": {},
 	"error":              {},
+	"unknown":            {},
 }
 
 var allowedOutOfMemoryReasons = map[string]struct{}{
 	"oomkilled": {},
+	"unknown":   {},
 }
 
 // containerWaitingReasonTransformer validates the container waiting reasons for metric kube_pod_container_status_waiting_reason
@@ -233,10 +236,6 @@ func containerReasonTransformer(s aggregator.Sender, _ string, metric ksmstore.D
 		// Filtering according to the reason here is paramount to limit cardinality
 		if _, allowed := allowedOutOfMemoryReasons[lcReason]; allowed {
 			fmt.Printf("Adding Gauge for a OOM Killed Reason")
-			fmt.Printf(metricPrefix + "oom")
-			fmt.Printf(fmt.Sprintf("%q\n", metric.Labels))
-			fmt.Printf(fmt.Sprintf("%v\n", metric.Val))
-			fmt.Printf(fmt.Sprintf("%q\n", tags))
 			s.Gauge(metricPrefix+"oom", metric.Val, hostname, tags)
 		}
 	}

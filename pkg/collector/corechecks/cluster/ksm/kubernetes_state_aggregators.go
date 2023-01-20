@@ -63,7 +63,7 @@ func newSumValuesAggregator(ddMetricName, ksmMetricName string, allowedLabels []
 // aggregatedStatusMetrics Generate additional metrics based on aggregating existing metrics to generate a new metric
 func aggregatedStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []ksmstore.DDMetricsFam {
 	// Attempt to merge a metric family to a exsting dictionary
-	metricFamilyMerge := func(metricFamily ksmstore.DDMetricsFam, accumulator map[string]ksmstore.DDMetric, overwrite bool) {
+	metricFamilyMerge := func(metricFamily ksmstore.DDMetricsFam, accumulator map[string]ksmstore.DDMetric, forceZeroValue bool) {
 		for _, metric := range metricFamily.ListMetrics {
 			// Verify that UID exists as this will be used when merging status results
 			// Also verify that there is Labels available otherwise there is no reason to merge
@@ -80,18 +80,17 @@ func aggregatedStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []k
 					labels[key] = value
 				}
 
-				// Overwrite the original value with the new values
-				// Previous value may have come from a non status metric and can be overwritten
-				if overwrite {
+				// Force a zero value to allow a continuous metric under unknown with a 0 count
+				if forceZeroValue {
+					accumulator[uid] = ksmstore.DDMetric{
+						Labels: labels,
+						Val:    0,
+					}
+				} else {
 					// Use the new value provided by the pod metric
 					accumulator[uid] = ksmstore.DDMetric{
 						Labels: labels,
 						Val:    metric.Val,
-					}
-				} else {
-					accumulator[uid] = ksmstore.DDMetric{
-						Labels: labels,
-						Val:    pod.Val,
 					}
 				}
 			} else {
@@ -128,13 +127,13 @@ func aggregatedStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []k
 		switch metricFamily.Name {
 		// This is the core metric used to create a zero state - By default the reason will be Unknown
 		case "kube_pod_container_info":
-			metricFamilyMerge(metricFamily, podList, false)
+			metricFamilyMerge(metricFamily, podList, true)
 		// This metric will overwrite a zero state if there is a reason
 		case "kube_pod_container_status_terminated_reason":
-			metricFamilyMerge(metricFamily, podList, true)
+			metricFamilyMerge(metricFamily, podList, false)
 		// This metric will overwrite a zero state if there is a reason
 		case "kube_pod_container_status_waiting_reason":
-			metricFamilyMerge(metricFamily, podList, true)
+			metricFamilyMerge(metricFamily, podList, false)
 		}
 	}
 
