@@ -742,9 +742,16 @@ func expectEndpointAmazon22() func(*testing.T, chan *topology.Component, chan *t
 		Type:       topology.Type{Name: "endpoint"},
 		Data: topology.Data{
 			"name":              "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+			"kind":              "Endpoint",
 			"creationTimestamp": creationTime,
-			"tags":              map[string]string{"test": "label22", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-			"identifiers":       []string{},
+			"tags": map[string]string{
+				"test":           "label22",
+				"cluster-name":   "test-cluster-name",
+				"cluster-type":   "kubernetes",
+				"component-type": "kubernetes-endpoint",
+				"namespace":      "test-namespace",
+			},
+			"identifiers": []string{},
 		},
 	})
 }
@@ -1160,7 +1167,7 @@ func expectEndpointIP221() func(*testing.T, chan *topology.Component, chan *topo
 				"test":           "label22",
 				"cluster-name":   "test-cluster-name",
 				"cluster-type":   "kubernetes",
-				"component-type": "kubernetes-ingress",
+				"component-type": "kubernetes-endpoint",
 				"namespace":      "test-namespace",
 			},
 			"identifiers": []string{},
@@ -1622,6 +1629,7 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 							Type:       topology.Type{Name: "endpoint"},
 							Data: topology.Data{
 								"name":              "34.100.200.15",
+								"kind":              "Endpoint",
 								"creationTimestamp": creationTime,
 								"tags": map[string]string{
 									"test":           "label",
@@ -1645,9 +1653,16 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 							Type:       topology.Type{Name: "endpoint"},
 							Data: topology.Data{
 								"name":              "64047e8f24bb48e9a406ac8286ee8b7d.eu-west-1.elb.amazonaws.com",
+								"kind":              "Endpoint",
 								"creationTimestamp": creationTime,
-								"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-								"identifiers":       []string{},
+								"tags": map[string]string{
+									"test":           "label",
+									"cluster-name":   "test-cluster-name",
+									"cluster-type":   "kubernetes",
+									"component-type": "kubernetes-endpoint",
+									"namespace":      "test-namespace",
+								},
+								"identifiers": []string{},
 							},
 						}),
 						expectRelation(&topology.Relation{
