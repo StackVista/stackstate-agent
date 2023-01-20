@@ -63,7 +63,7 @@ func newSumValuesAggregator(ddMetricName, ksmMetricName string, allowedLabels []
 // aggregatedStatusMetrics Generate additional metrics based on aggregating existing metrics to generate a new metric
 func aggregatedStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []ksmstore.DDMetricsFam {
 	// Attempt to merge a metric family to a exsting dictionary
-	metricFamilyMerge := func(metricFamily ksmstore.DDMetricsFam, accumulator map[string]ksmstore.DDMetric, forceZeroValue bool) {
+	metricFamilyMerge := func(metricFamily ksmstore.DDMetricsFam, accumulator map[string]ksmstore.DDMetric, isZeroValue bool) {
 		for _, metric := range metricFamily.ListMetrics {
 			// Verify that UID exists as this will be used when merging status results
 			// Also verify that there is Labels available otherwise there is no reason to merge
@@ -80,14 +80,13 @@ func aggregatedStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []k
 					labels[key] = value
 				}
 
-				// Force a zero value to allow a continuous metric under unknown with a 0 count
-				if forceZeroValue {
+				// Use the original value if is zero value
+				if isZeroValue {
 					accumulator[uid] = ksmstore.DDMetric{
 						Labels: labels,
-						Val:    0,
+						Val:    pod.Val,
 					}
 				} else {
-					// Use the new value provided by the pod metric
 					accumulator[uid] = ksmstore.DDMetric{
 						Labels: labels,
 						Val:    metric.Val,
@@ -95,7 +94,7 @@ func aggregatedStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []k
 				}
 			} else {
 				// Adding a default reason if there is no reason, This allows us to have a zero state
-				// There should be no assumption on what the default state is and we should keep it unknown
+				// There should be no assumption on what the default state is, and we should keep it unknown
 				labels := map[string]string{
 					"reason": "Unknown",
 				}
@@ -106,9 +105,16 @@ func aggregatedStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []k
 				}
 
 				// Found non-existing pods, Adding it to the dictionary
-				accumulator[uid] = ksmstore.DDMetric{
-					Labels: labels,
-					Val:    metric.Val,
+				if isZeroValue {
+					accumulator[uid] = ksmstore.DDMetric{
+						Labels: labels,
+						Val:    0,
+					}
+				} else {
+					accumulator[uid] = ksmstore.DDMetric{
+						Labels: labels,
+						Val:    metric.Val,
+					}
 				}
 			}
 		}
