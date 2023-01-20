@@ -9,6 +9,10 @@
 package ksm
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 
@@ -27,6 +31,36 @@ type metricsExpected struct {
 	name     string
 	tags     []string
 	hostname string
+}
+
+func TestProcessMetricExampleData(t *testing.T) {
+	metrics, metricFileError := os.Open("kubernetes_state_metrics.json")
+	defer func(metrics *os.File) {
+		_ = metrics.Close()
+	}(metrics)
+
+	if metricFileError != nil {
+		assert.Fail(t, fmt.Sprintf("%v", metricFileError))
+		return
+	}
+
+	var metric map[string][]ksmstore.DDMetricsFam
+	metricsBytes, _ := ioutil.ReadAll(metrics)
+	unmarshalError := json.Unmarshal(metricsBytes, &metric)
+	if unmarshalError != nil {
+		assert.Fail(t, fmt.Sprintf("%v", unmarshalError))
+		return
+	}
+
+	kubeStateMetricsSCheck := newKSMCheck(core.NewCheckBase(kubeStateMetricsCheckName), &KSMConfig{LabelsMapper: defaultLabelsMapper})
+	mocked := mocksender.NewMockSender(kubeStateMetricsSCheck.ID())
+	mocked.SetupAcceptAll()
+
+	labelJoiner := newLabelJoiner(defaultLabelJoins)
+	for _, metricFam := range []ksmstore.DDMetricsFam{} {
+		labelJoiner.insertFamily(metricFam)
+	}
+	kubeStateMetricsSCheck.processMetrics(mocked, metric, labelJoiner)
 }
 
 func TestProcessMetrics(t *testing.T) {

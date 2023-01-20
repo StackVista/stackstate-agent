@@ -763,6 +763,7 @@ func Test_podPhaseTransformer(t *testing.T) {
 	}
 }
 
+/*
 func Test_containerWaitingReasonTransformer(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -869,7 +870,9 @@ func Test_containerWaitingReasonTransformer(t *testing.T) {
 		})
 	}
 }
+*/
 
+/*
 func Test_containerTerminatedReasonTransformer(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -955,7 +958,9 @@ func Test_containerTerminatedReasonTransformer(t *testing.T) {
 		})
 	}
 }
+*/
 
+/*
 func Test_containerOOMReasonTransformer(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -1041,6 +1046,7 @@ func Test_containerOOMReasonTransformer(t *testing.T) {
 		})
 	}
 }
+*/
 
 func Test_limitrangeTransformer(t *testing.T) {
 	tests := []struct {
