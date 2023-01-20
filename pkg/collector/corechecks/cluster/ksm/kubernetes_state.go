@@ -10,7 +10,6 @@ package ksm
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -341,14 +340,6 @@ func (k *KSMCheck) Cancel() {
 
 // processMetrics attaches tags and forwards metrics to the aggregator
 func (k *KSMCheck) processMetrics(sender aggregator.Sender, metrics map[string][]ksmstore.DDMetricsFam, labelJoiner *labelJoiner) {
-	_ = log.Warnf("---------------------------------------")
-	_ = log.Warnf("Metric Families")
-	jsonStr, err := json.Marshal(metrics)
-	if err == nil {
-		_ = log.Warnf(string(jsonStr))
-	}
-	_ = log.Warnf("---------------------------------------")
-
 	for _, metricsList := range metrics {
 		aggregatedMetricList := aggregatedStatusReasonMetrics(metricsList)
 
@@ -361,6 +352,7 @@ func (k *KSMCheck) processMetrics(sender aggregator.Sender, metrics map[string][
 				// Some metrics can be aggregated and consumed as-is or by a transformer.
 				// So, let’s continue the processing.
 			}
+
 			if transform, found := metricTransformers[metricFamily.Name]; found {
 				lMapperOverride := labelsMapperOverride(metricFamily.Name)
 				for _, m := range metricFamily.ListMetrics {
@@ -369,6 +361,7 @@ func (k *KSMCheck) processMetrics(sender aggregator.Sender, metrics map[string][
 				}
 				continue
 			}
+
 			if ddname, found := metricNamesMapper[metricFamily.Name]; found {
 				lMapperOverride := labelsMapperOverride(metricFamily.Name)
 				for _, m := range metricFamily.ListMetrics {

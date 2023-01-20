@@ -60,42 +60,55 @@ func newSumValuesAggregator(ddMetricName, ksmMetricName string, allowedLabels []
 	}
 }
 
-// aggregatedStatusMetrics Generate additional metrics based on aggregating existing metrics
+// aggregatedStatusMetrics Generate additional metrics based on aggregating existing metrics to generate a new metric
 func aggregatedStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []ksmstore.DDMetricsFam {
-	mapMetricFamilies := func(metricFamily ksmstore.DDMetricsFam, accumulator map[string]ksmstore.DDMetric, overwriteValue bool) {
+	// Attempt to merge a metric family to a exsting dictionary
+	metricFamilyMerge := func(metricFamily ksmstore.DDMetricsFam, accumulator map[string]ksmstore.DDMetric, overwrite bool) {
 		for _, metric := range metricFamily.ListMetrics {
-			// Find the pod id for each metric to match them to the status reason pod
+			// Verify that UID exists as this will be used when merging status results
+			// Also verify that there is Labels available otherwise there is no reason to merge
 			uid, ok := metric.Labels["uid"]
-			if !ok {
+			if !ok || len(metric.Labels) <= 0 {
 				continue
 			}
 
-			// If the pod exists then we attempt to combine the labels we found if not then we assign a new map entry
-			if pod, ok := accumulator[uid]; !ok {
+			// If the dictionary already contains the entry then we want to merge the existing data
+			if pod, ok := accumulator[uid]; !ok && len(pod.Labels) > 0 {
 				// Combine the original labels and the new labels
-				combinedLabels := make(map[string]string)
+				labels := make(map[string]string)
 				for key, value := range pod.Labels {
-					combinedLabels[key] = value
+					labels[key] = value
 				}
 
-				if overwriteValue {
+				// Overwrite the original value with the new values
+				// Previous value may have come from a non status metric and can be overwritten
+				if overwrite {
 					// Use the new value provided by the pod metric
 					accumulator[uid] = ksmstore.DDMetric{
-						Labels: combinedLabels,
+						Labels: labels,
 						Val:    metric.Val,
 					}
 				} else {
-					// Use the original value set by the previous dict entry
 					accumulator[uid] = ksmstore.DDMetric{
-						Labels: combinedLabels,
+						Labels: labels,
 						Val:    pod.Val,
 					}
 				}
 			} else {
+				// Adding a default reason if there is no reason, This allows us to have a zero state
+				// There should be no assumption on what the default state is and we should keep it unknown
+				labels := map[string]string{
+					"reason": "Unknown",
+				}
+
+				// Combine the original labels with the default
+				for key, value := range metric.Labels {
+					labels[key] = value
+				}
+
 				// Found non-existing pods, Adding it to the dictionary
-				// We want all the monitor states to start on a zero value and overwrite that with a state
 				accumulator[uid] = ksmstore.DDMetric{
-					Labels: metric.Labels,
+					Labels: labels,
 					Val:    metric.Val,
 				}
 			}
@@ -105,25 +118,38 @@ func aggregatedStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []k
 	// List of pods based on an uid
 	podList := make(map[string]ksmstore.DDMetric)
 
-	// Find kube_pod_container_info metrics based on the container_ids
 	for _, metricFamily := range metricFamilyList {
+		// Only attempt a mapping if there is actual metrics in the metric family
+		if len(metricFamily.ListMetrics) == 0 {
+			continue
+		}
+
+		// Attempt to merge the metric with a pre-existing dictionary of metrics
 		switch metricFamily.Name {
-		case "kube_pod_container_status_terminated_reason":
-			mapMetricFamilies(metricFamily, podList, true)
-
-		case "kube_pod_container_status_waiting_reason":
-			mapMetricFamilies(metricFamily, podList, true)
-
+		// This is the core metric used to create a zero state - By default the reason will be Unknown
 		case "kube_pod_container_info":
-			mapMetricFamilies(metricFamily, podList, false)
+			metricFamilyMerge(metricFamily, podList, false)
+		// This metric will overwrite a zero state if there is a reason
+		case "kube_pod_container_status_terminated_reason":
+			metricFamilyMerge(metricFamily, podList, true)
+		// This metric will overwrite a zero state if there is a reason
+		case "kube_pod_container_status_waiting_reason":
+			metricFamilyMerge(metricFamily, podList, true)
 		}
 	}
 
+	// If there is no results to create the new metric with then return the original metric family
+	if len(podList) == 0 {
+		return metricFamilyList
+	}
+
+	// Convert dictionary to a list to create a family metric
 	var listMetrics []ksmstore.DDMetric
 	for _, value := range podList {
 		listMetrics = append(listMetrics, value)
 	}
 
+	// Combine the original metric families and the new metric list
 	return append(metricFamilyList, ksmstore.DDMetricsFam{
 		Name:        "kube_pod_container_status",
 		ListMetrics: listMetrics,
