@@ -60,9 +60,9 @@ func newSumValuesAggregator(ddMetricName, ksmMetricName string, allowedLabels []
 	}
 }
 
-// aggregatedStatusMetrics Generate additional metrics based on aggregating existing metrics to generate a new metric
-func aggregatedStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []ksmstore.DDMetricsFam {
-	// Attempt to merge a metric family to a exsting dictionary
+// aggregateStatusReasonMetrics Generate additional metrics based on aggregating existing metrics to generate a new metric
+func aggregateStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []ksmstore.DDMetricsFam {
+	// metricFamilyMerge Attempt to merge a metric family to an existing dictionary
 	metricFamilyMerge := func(metricFamily ksmstore.DDMetricsFam, accumulator map[string]ksmstore.DDMetric, isZeroValue bool) {
 		for _, metric := range metricFamily.ListMetrics {
 			// Verify that UID exists as this will be used when merging status results
@@ -80,13 +80,15 @@ func aggregatedStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []k
 					labels[key] = value
 				}
 
-				// Use the original value if is zero value
+				// Use the original value if we defined zero values
+				// Meaning if another reason gave a higher value we will not overwrite it with the zero value
 				if isZeroValue {
 					accumulator[uid] = ksmstore.DDMetric{
 						Labels: labels,
 						Val:    pod.Val,
 					}
 				} else {
+					// Else we pass in the new value of the current metric
 					accumulator[uid] = ksmstore.DDMetric{
 						Labels: labels,
 						Val:    metric.Val,
@@ -105,6 +107,8 @@ func aggregatedStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []k
 				}
 
 				// Found non-existing pods, Adding it to the dictionary
+				// If this metric is expected to be a zero value (neutral state) then we force a 0 metric
+				// It is also fine to force a zero metric here as the entry does not exist in the dictionary yet
 				if isZeroValue {
 					accumulator[uid] = ksmstore.DDMetric{
 						Labels: labels,
