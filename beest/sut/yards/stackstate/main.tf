@@ -13,6 +13,10 @@ variable "yard_id" {
   type = string
 }
 
+variable "runners_ip" {
+  type = string
+}
+
 resource "local_file" "ansible_inventory" {
   filename = "${path.module}/ansible_inventory"
   content = yamlencode({

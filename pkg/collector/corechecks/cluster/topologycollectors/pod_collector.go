@@ -5,6 +5,7 @@ package topologycollectors
 
 import (
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -240,7 +241,8 @@ func (pc *PodCollector) podToStackStateComponent(pod v1.Pod) *topology.Component
 
 // podTags creates the tags for a pod
 func (pc *PodCollector) podTags(pod v1.Pod) map[string]string {
-	tags := pc.initTags(pod.ObjectMeta, pod.TypeMeta)
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := pc.initTags(pod.ObjectMeta, metav1.TypeMeta{Kind: "Pod"})
 	// add service account as a label to filter on
 	if pod.Spec.ServiceAccountName != "" {
 		tags["service-account"] = pod.Spec.ServiceAccountName

@@ -7,6 +7,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ReplicaSetCollector implements the ClusterTopologyCollector interface.
@@ -61,7 +62,8 @@ func (rsc *ReplicaSetCollector) CollectorFunction() error {
 func (rsc *ReplicaSetCollector) replicaSetToStackStateComponent(replicaSet v1.ReplicaSet) *topology.Component {
 	log.Tracef("Mapping ReplicaSet to StackState component: %s", replicaSet.String())
 
-	tags := rsc.initTags(replicaSet.ObjectMeta, replicaSet.TypeMeta)
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := rsc.initTags(replicaSet.ObjectMeta, metav1.TypeMeta{Kind: "ReplicaSet"})
 
 	replicaSetExternalID := rsc.buildReplicaSetExternalID(replicaSet.Namespace, replicaSet.Name)
 	component := &topology.Component{

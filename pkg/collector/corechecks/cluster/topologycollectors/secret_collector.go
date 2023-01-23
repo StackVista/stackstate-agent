@@ -6,6 +6,7 @@ package topologycollectors
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sort"
 
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -53,7 +54,8 @@ func (cmc *SecretCollector) CollectorFunction() error {
 func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topology.Component, error) {
 	log.Tracef("Mapping Secret to StackState component: %s", secret.String())
 
-	tags := cmc.initTags(secret.ObjectMeta, secret.TypeMeta)
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := cmc.initTags(secret.ObjectMeta, metav1.TypeMeta{Kind: "Secret"})
 	secretExternalID := cmc.buildSecretExternalID(secret.Namespace, secret.Name)
 
 	secretDataHash, err := secure(secret.Data)

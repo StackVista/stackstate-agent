@@ -99,7 +99,8 @@ func (pvc *PersistentVolumeCollector) persistentVolumeToStackStateComponent(pers
 
 	persistentVolumeExternalID := pvc.buildPersistentVolumeExternalID(persistentVolume.Name)
 
-	tags := pvc.initTags(persistentVolume.ObjectMeta, persistentVolume.TypeMeta)
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := pvc.initTags(persistentVolume.ObjectMeta, metav1.TypeMeta{Kind: "PersistentVolume"})
 
 	component := &topology.Component{
 		ExternalID: persistentVolumeExternalID,
@@ -142,7 +143,8 @@ func (pvc *PersistentVolumeCollector) persistentVolumeClaimToStackStateComponent
 
 	persistentVolumeClaimExternalID := pvc.buildPersistentVolumeClaimExternalID(persistentVolumeClaim.Name)
 
-	tags := pvc.initTags(persistentVolumeClaim.ObjectMeta, persistentVolumeClaim.TypeMeta)
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := pvc.initTags(persistentVolumeClaim.ObjectMeta, metav1.TypeMeta{Kind: "PersistentVolumeClaim"})
 
 	component := &topology.Component{
 		ExternalID: persistentVolumeClaimExternalID,

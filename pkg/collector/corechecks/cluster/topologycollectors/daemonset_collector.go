@@ -7,6 +7,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // DaemonSetCollector implements the ClusterTopologyCollector interface.
@@ -46,7 +47,8 @@ func (dsc *DaemonSetCollector) CollectorFunction() error {
 func (dsc *DaemonSetCollector) daemonSetToStackStateComponent(daemonSet v1.DaemonSet) *topology.Component {
 	log.Tracef("Mapping DaemonSet to StackState component: %s", daemonSet.String())
 
-	tags := dsc.initTags(daemonSet.ObjectMeta, daemonSet.TypeMeta)
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := dsc.initTags(daemonSet.ObjectMeta, metav1.TypeMeta{Kind: "DaemonSet"})
 
 	daemonSetExternalID := dsc.buildDaemonSetExternalID(daemonSet.Namespace, daemonSet.Name)
 	component := &topology.Component{

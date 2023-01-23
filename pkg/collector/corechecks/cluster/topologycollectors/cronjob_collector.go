@@ -81,7 +81,8 @@ func (cjc *CronJobCollector) getCronJobsV1(cronJobs []CronJobInterface) ([]CronJ
 func (cjc *CronJobCollector) cronJobToStackStateComponent(cronJob CronJobInterface) *topology.Component {
 	log.Tracef("Mapping CronJob to StackState component: %s", cronJob.GetString())
 
-	tags := cjc.initTags(cronJob.GetObjectMeta(), metaV1.TypeMeta{Kind: cronJob.GetKind()})
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := cjc.initTags(cronJob.GetObjectMeta(), metaV1.TypeMeta{Kind: "CronJob"})
 
 	cronJobExternalID := cjc.buildCronJobExternalID(cronJob.GetNamespace(), cronJob.GetName())
 

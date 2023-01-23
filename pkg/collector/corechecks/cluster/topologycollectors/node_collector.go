@@ -8,6 +8,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // NodeCollector implements the ClusterTopologyCollector interface.
@@ -73,7 +74,8 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 
 	nodeExternalID := nc.buildNodeExternalID(node.Name)
 
-	tags := nc.initTags(node.ObjectMeta, node.TypeMeta)
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := nc.initTags(node.ObjectMeta, metav1.TypeMeta{Kind: "Node"})
 
 	instanceID := urn.GetInstanceID(node)
 	component := &topology.Component{

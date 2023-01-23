@@ -155,7 +155,8 @@ func (sc *ServiceCollector) serviceToStackStateComponent(service v1.Service) *to
 
 	serviceExternalID := sc.buildServiceExternalID(service.Namespace, service.Name)
 
-	tags := sc.initTags(service.ObjectMeta, service.TypeMeta)
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := sc.initTags(service.ObjectMeta, metav1.TypeMeta{Kind: "Service"})
 	tags["service-type"] = string(service.Spec.Type)
 
 	if service.Spec.ClusterIP == "None" {

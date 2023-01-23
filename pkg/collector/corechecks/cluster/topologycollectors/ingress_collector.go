@@ -105,7 +105,8 @@ func (ic *IngressCollector) getNetV1Ingresses(ingresses []IngressInterface) ([]I
 func (ic *IngressCollector) ingressToStackStateComponent(ingress IngressInterface) *topology.Component {
 	log.Tracef("Mapping Ingress to StackState component: %s", ingress.GetString())
 
-	tags := ic.initTags(ingress.GetObjectMeta(), metaV1.TypeMeta{Kind: ingress.GetKind()})
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := ic.initTags(ingress.GetObjectMeta(), metaV1.TypeMeta{Kind: "Ingress"})
 
 	identifiers := make([]string, 0)
 

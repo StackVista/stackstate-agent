@@ -7,6 +7,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/batch/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // JobCollector implements the ClusterTopologyCollector interface.
@@ -61,7 +62,8 @@ func (jc *JobCollector) CollectorFunction() error {
 func (jc *JobCollector) jobToStackStateComponent(job v1.Job) *topology.Component {
 	log.Tracef("Mapping Job to StackState component: %s", job.String())
 
-	tags := jc.initTags(job.ObjectMeta, job.TypeMeta)
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := jc.initTags(job.ObjectMeta, metav1.TypeMeta{Kind: "Job"})
 
 	jobExternalID := jc.buildJobExternalID(job.Namespace, job.Name)
 	component := &topology.Component{
