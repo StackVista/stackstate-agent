@@ -8,7 +8,7 @@
         kubecontext: "{{ stackstate_kubecontext }}"
         cluster_name: "{{ stackstate_cluster_name }}"
         namespace: "{{ test_namespace }}"
-        k8s_integration:
+        kubernetes_integration:
           cluster_name: "{{ agent_cluster_name }}"
     - role: "{{ bees_path }}/k8s-agent"
       vars:

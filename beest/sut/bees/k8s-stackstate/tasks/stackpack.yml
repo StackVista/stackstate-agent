@@ -12,12 +12,14 @@
 
     - name: Install stackstate-agent-v2 StackPack
       command: sts-cli stackpack install stackstate-agent-v2
-      when: stackpacklist.find('stackstate-agent-v2') == -1
+      when:
+        - stackstate_agent_v2 is defined
+        - stackpacklist.find('stackstate-agent-v2') == -1
 
     - name: Install kubernetes StackPack
-      command: sts-cli stackpack install kubernetes -p kubernetes_cluster_name "{{ k8s_integration.cluster_name }}"
+      command: sts-cli stackpack install kubernetes -p kubernetes_cluster_name "{{ kubernetes_integration.cluster_name }}"
       when:
-        - k8s_integration is defined
+        - kubernetes_integration is defined
         - stackpacklist.find('kubernetes') == -1
 
     - name: Install Splunk StackPack

@@ -8,6 +8,7 @@
 package kubeapi
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 	"sync"
 	"time"
 
@@ -19,7 +20,6 @@ import (
 	collectors "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/topologycollectors"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/features"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
@@ -125,15 +125,7 @@ func (t *TopologyCheck) Run() error {
 
 	// set the check "instance id" for snapshots
 	t.instance.CheckID = kubernetesAPITopologyCheckName
-
-	var instanceClusterType collectors.ClusterType
-	switch openshiftPresence := t.ac.DetectOpenShiftAPILevel(); openshiftPresence {
-	case apiserver.OpenShiftAPIGroup, apiserver.OpenShiftOAPI:
-		instanceClusterType = collectors.OpenShift
-	case apiserver.NotOpenShift:
-		instanceClusterType = collectors.Kubernetes
-	}
-	t.instance.Instance = topology.Instance{Type: string(instanceClusterType), URL: t.instance.ClusterName}
+	t.instance.Instance = topology.Instance{Type: string(collectors.Kubernetes), URL: t.instance.ClusterName}
 
 	// set up the batcher for this instance
 	t.submitter = NewBatchTopologySubmitter(t.instance.CheckID, t.instance.Instance)
@@ -158,6 +150,13 @@ func (t *TopologyCheck) Run() error {
 	waitGroupChannel := make(chan bool)
 	collectorsDoneChannel := make(chan bool)
 
+	var instanceClusterType collectors.ClusterType
+	switch openshiftPresence := t.ac.DetectOpenShiftAPILevel(); openshiftPresence {
+	case apiserver.OpenShiftAPIGroup, apiserver.OpenShiftOAPI:
+		instanceClusterType = collectors.OpenShift
+	case apiserver.NotOpenShift:
+		instanceClusterType = collectors.Kubernetes
+	}
 	clusterTopologyCommon := collectors.NewClusterTopologyCommon(t.instance.Instance, instanceClusterType, t.ac, t.instance.SourcePropertiesEnabled, componentChannel, relationChannel, t.getKubernetesVersion(), t.GetFeatures().FeatureEnabled(features.ExposeKubernetesStatus))
 	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
 	clusterCollectors := []collectors.ClusterTopologyCollector{
