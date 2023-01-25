@@ -42,7 +42,7 @@ func (cc *ClusterCollector) CollectorFunction() error {
 func (cc *ClusterCollector) clusterToStackStateComponent() *topology.Component {
 	clusterExternalID := cc.buildClusterExternalID()
 
-	tags := cc.initTags(metav1.ObjectMeta{})
+	tags := cc.initTags(metav1.ObjectMeta{}, metav1.TypeMeta{Kind: "Cluster"})
 
 	component := &topology.Component{
 		ExternalID: clusterExternalID,

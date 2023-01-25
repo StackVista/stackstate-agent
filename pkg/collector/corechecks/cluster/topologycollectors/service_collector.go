@@ -5,6 +5,7 @@ package topologycollectors
 
 import (
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/dns"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -154,7 +155,8 @@ func (sc *ServiceCollector) serviceToStackStateComponent(service v1.Service) *to
 
 	serviceExternalID := sc.buildServiceExternalID(service.Namespace, service.Name)
 
-	tags := sc.initTags(service.ObjectMeta)
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := sc.initTags(service.ObjectMeta, metav1.TypeMeta{Kind: "Service"})
 	tags["service-type"] = string(service.Spec.Type)
 
 	if service.Spec.ClusterIP == "None" {
@@ -301,13 +303,14 @@ func (sc *ServiceCollector) serviceToExternalServiceComponent(service v1.Service
 
 	externalID := sc.GetURNBuilder().BuildComponentExternalID("external-service", service.Namespace, service.Name)
 
-	tags := sc.initTags(service.ObjectMeta)
+	tags := sc.initTags(service.ObjectMeta, metav1.TypeMeta{Kind: "ExternalService"})
 
 	component := &topology.Component{
 		ExternalID: externalID,
 		Type:       topology.Type{Name: "external-service"},
 		Data: map[string]interface{}{
 			"name":              service.Name,
+			"kind":              "ExternalService",
 			"creationTimestamp": service.CreationTimestamp,
 			"tags":              tags,
 			"identifiers":       identifiers,

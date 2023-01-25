@@ -7,6 +7,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // PersistentVolumeCollector implements the ClusterTopologyCollector interface.
@@ -98,7 +99,8 @@ func (pvc *PersistentVolumeCollector) persistentVolumeToStackStateComponent(pers
 
 	persistentVolumeExternalID := pvc.buildPersistentVolumeExternalID(persistentVolume.Name)
 
-	tags := pvc.initTags(persistentVolume.ObjectMeta)
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := pvc.initTags(persistentVolume.ObjectMeta, metav1.TypeMeta{Kind: "PersistentVolume"})
 
 	component := &topology.Component{
 		ExternalID: persistentVolumeExternalID,
@@ -141,7 +143,8 @@ func (pvc *PersistentVolumeCollector) persistentVolumeClaimToStackStateComponent
 
 	persistentVolumeClaimExternalID := pvc.buildPersistentVolumeClaimExternalID(persistentVolumeClaim.Name)
 
-	tags := pvc.initTags(persistentVolumeClaim.ObjectMeta)
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := pvc.initTags(persistentVolumeClaim.ObjectMeta, metav1.TypeMeta{Kind: "PersistentVolumeClaim"})
 
 	component := &topology.Component{
 		ExternalID: persistentVolumeClaimExternalID,
@@ -177,7 +180,7 @@ func (pvc *PersistentVolumeCollector) persistentVolumeClaimToStackStateComponent
 
 func (pvc *PersistentVolumeCollector) createStackStateVolumeSourceComponent(pv v1.PersistentVolume, name, externalID string, identifiers []string, addTags map[string]string) (*topology.Component, error) {
 
-	tags := pvc.initTags(pv.ObjectMeta)
+	tags := pvc.initTags(pv.ObjectMeta, metav1.TypeMeta{Kind: "VolumeSource"})
 	for k, v := range addTags {
 		tags[k] = v
 	}

@@ -219,3 +219,6 @@ Dockerfiles/cluster-agent/dist/
 
 # Temp State Files
 pkg/collector/check/state/temp-write-to-disk-test/*
+
+# Beest
+beest/sut/yards/*/terraform.tfstate.d/

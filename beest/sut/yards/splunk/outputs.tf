@@ -17,6 +17,9 @@ resource "local_file" "ansible_inventory" {
       }
       vars : {
         yard_id : var.yard_id
+        agent_integration: {
+          enabled: true
+        }
         splunk_integration : {
           host : module.ec2_splunk.splunk_ip
           url : "https://${module.ec2_splunk.splunk_ip}:8089"

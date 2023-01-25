@@ -12,15 +12,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// ClusterType represents the type of the cluster being monitored - Kubernetes / OpenShift
-type ClusterType string
-
 const (
-	// Kubernetes cluster type
-	Kubernetes ClusterType = "kubernetes"
-	// OpenShift cluster type
-	OpenShift = "openshift"
-
 	DefaultConfigMapDataSizeLimit = 100 * 1024
 )
 

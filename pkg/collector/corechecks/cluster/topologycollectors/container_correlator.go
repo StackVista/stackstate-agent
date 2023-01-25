@@ -129,7 +129,7 @@ func (cc *ContainerCorrelator) containerToStackStateComponent(nodeIdentifier str
 
 	containerExternalID := cc.buildContainerExternalID(pod.Namespace, pod.Name, container.Name)
 
-	tags := cc.initTags(metav1.ObjectMeta{Namespace: pod.Namespace})
+	tags := cc.initTags(metav1.ObjectMeta{Namespace: pod.Namespace}, metav1.TypeMeta{Kind: "container"})
 
 	data := map[string]interface{}{
 		"name": container.Name,

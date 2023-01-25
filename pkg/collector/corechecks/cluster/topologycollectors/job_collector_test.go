@@ -58,11 +58,18 @@ func TestJobCollector(t *testing.T) {
 						Type:       topology.Type{Name: "job"},
 						Data: topology.Data{
 							"name":              "test-job-1",
+							"kind":              "Job",
 							"creationTimestamp": creationTimeJob,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-job-1"),
-							"backoffLimit":      &backoffLimit,
-							"parallelism":       &parallelism,
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-job",
+								"namespace":      "test-namespace",
+							},
+							"uid":          types.UID("test-job-1"),
+							"backoffLimit": &backoffLimit,
+							"parallelism":  &parallelism,
 						},
 					},
 					expectedComponentSP: &topology.Component{
@@ -70,7 +77,13 @@ func TestJobCollector(t *testing.T) {
 						Type:       topology.Type{Name: "job"},
 						Data: topology.Data{
 							"name": "test-job-1",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-job",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -100,7 +113,13 @@ func TestJobCollector(t *testing.T) {
 						Type:       topology.Type{Name: "job"},
 						Data: topology.Data{
 							"name": "test-job-1",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-job",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -157,11 +176,18 @@ func TestJobCollector(t *testing.T) {
 						Type:       topology.Type{Name: "job"},
 						Data: topology.Data{
 							"name":              "test-job-2",
+							"kind":              "Job",
 							"creationTimestamp": creationTimeJob,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-job-2"),
-							"backoffLimit":      &backoffLimit,
-							"parallelism":       &parallelism,
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-job",
+								"namespace":      "test-namespace",
+							},
+							"uid":          types.UID("test-job-2"),
+							"backoffLimit": &backoffLimit,
+							"parallelism":  &parallelism,
 						},
 					},
 					expectedComponentSP: &topology.Component{
@@ -169,7 +195,13 @@ func TestJobCollector(t *testing.T) {
 						Type:       topology.Type{Name: "job"},
 						Data: topology.Data{
 							"name": "test-job-2",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-job",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -196,7 +228,13 @@ func TestJobCollector(t *testing.T) {
 						Type:       topology.Type{Name: "job"},
 						Data: topology.Data{
 							"name": "test-job-2",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-job",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -250,13 +288,19 @@ func TestJobCollector(t *testing.T) {
 						Type:       topology.Type{Name: "job"},
 						Data: topology.Data{
 							"name":              "test-job-3",
+							"kind":              "Job",
 							"creationTimestamp": creationTimeJob,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-job-3"),
-							"kind":              "some-specified-kind",
-							"generateName":      "some-specified-generation",
-							"backoffLimit":      &backoffLimit,
-							"parallelism":       &parallelism,
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-job",
+								"namespace":      "test-namespace",
+							},
+							"uid":          types.UID("test-job-3"),
+							"generateName": "some-specified-generation",
+							"backoffLimit": &backoffLimit,
+							"parallelism":  &parallelism,
 						},
 					},
 					expectedComponentSP: &topology.Component{
@@ -264,7 +308,13 @@ func TestJobCollector(t *testing.T) {
 						Type:       topology.Type{Name: "job"},
 						Data: topology.Data{
 							"name": "test-job-3",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-job",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -292,7 +342,13 @@ func TestJobCollector(t *testing.T) {
 						Type:       topology.Type{Name: "job"},
 						Data: topology.Data{
 							"name": "test-job-3",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-job",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -373,7 +429,7 @@ func (m MockJobAPICollectorClient) GetJobs() ([]batchV1.Job, error) {
 	for i := 1; i <= 3; i++ {
 		job := batchV1.Job{
 			TypeMeta: v1.TypeMeta{
-				Kind: "",
+				Kind: "Job",
 			},
 			ObjectMeta: v1.ObjectMeta{
 				Name:              fmt.Sprintf("test-job-%d", i),
@@ -424,7 +480,7 @@ func (m MockJobAPICollectorClient) GetJobs() ([]batchV1.Job, error) {
 		}
 
 		if i == 3 {
-			job.TypeMeta.Kind = "some-specified-kind"
+			job.TypeMeta.Kind = "Job"
 			job.ObjectMeta.GenerateName = "some-specified-generation"
 		}
 

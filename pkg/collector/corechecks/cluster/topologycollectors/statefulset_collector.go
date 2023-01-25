@@ -7,6 +7,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // StatefulSetCollector implements the ClusterTopologyCollector interface.
@@ -46,7 +47,8 @@ func (ssc *StatefulSetCollector) CollectorFunction() error {
 func (ssc *StatefulSetCollector) statefulSetToStackStateComponent(statefulSet v1.StatefulSet) *topology.Component {
 	log.Tracef("Mapping StatefulSet to StackState component: %s", statefulSet.String())
 
-	tags := ssc.initTags(statefulSet.ObjectMeta)
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := ssc.initTags(statefulSet.ObjectMeta, metav1.TypeMeta{Kind: "StatefulSet"})
 
 	statefulSetExternalID := ssc.buildStatefulSetExternalID(statefulSet.Namespace, statefulSet.Name)
 	component := &topology.Component{

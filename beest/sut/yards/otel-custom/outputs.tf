@@ -25,6 +25,9 @@ resource "local_file" "ansible_inventory" {
         code_zip : module.lambda_otel.codepath
         lambda_role_arn : module.lambda_otel.lambda_role_arn
         lambda_function_name : module.lambda_otel.lambda_function_name
+        agent_integration: {
+          enabled: true
+        }
         aws_integration : {
           region : var.aws_default_region
           cf_stack_name : module.aws_stackpack_role.stack_name

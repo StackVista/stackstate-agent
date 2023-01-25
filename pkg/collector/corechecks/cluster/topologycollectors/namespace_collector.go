@@ -7,6 +7,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // NamespaceCollector implements the ClusterTopologyCollector interface.
@@ -44,7 +45,8 @@ func (nsc *NamespaceCollector) CollectorFunction() error {
 func (nsc *NamespaceCollector) namespaceToStackStateComponent(namespace v1.Namespace) *topology.Component {
 	log.Tracef("Mapping Namespace to StackState component: %s", namespace.String())
 
-	tags := nsc.initTags(namespace.ObjectMeta)
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := nsc.initTags(namespace.ObjectMeta, metav1.TypeMeta{Kind: "Namespace"})
 	namespaceExternalID := nsc.buildNamespaceExternalID(namespace.Name)
 
 	component := &topology.Component{

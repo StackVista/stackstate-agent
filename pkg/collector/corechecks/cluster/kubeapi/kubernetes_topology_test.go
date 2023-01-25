@@ -179,6 +179,7 @@ func testRunClusterCollectors(t *testing.T, sourceProperties bool, exposeKuberne
 
 	kubernetesTopologyCheck := KubernetesAPITopologyFactory().(*TopologyCheck)
 	instance := topology.Instance{Type: "kubernetes", URL: "test-cluster-name"}
+	clusterType := collectors.Kubernetes
 	// set up the batcher for this instance
 	kubernetesTopologyCheck.instance.CollectTimeout = 5
 	kubernetesTopologyCheck.submitter = NewTestTopologySubmitter(t, "kubernetes_api_topology", instance)
@@ -190,7 +191,7 @@ func testRunClusterCollectors(t *testing.T, sourceProperties bool, exposeKuberne
 	waitGroupChannel := make(chan bool)
 	collectorsDoneChannel := make(chan bool)
 
-	clusterTopologyCommon := collectors.NewClusterTopologyCommon(instance, nil, sourceProperties, componentChannel, relationChannel, &version.Info{Major: "1", Minor: "21"}, exposeKubernetesStatus)
+	clusterTopologyCommon := collectors.NewClusterTopologyCommon(instance, clusterType, nil, sourceProperties, componentChannel, relationChannel, &version.Info{Major: "1", Minor: "21"}, exposeKubernetesStatus)
 	commonClusterCollector := collectors.NewClusterTopologyCollector(clusterTopologyCommon)
 
 	clusterCollectors := []collectors.ClusterTopologyCollector{

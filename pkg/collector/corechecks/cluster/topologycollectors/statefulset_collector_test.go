@@ -54,9 +54,16 @@ func TestStatefulSetCollector(t *testing.T) {
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:statefulset/test-statefulset-1",
 						Type:       topology.Type{Name: "statefulset"},
 						Data: topology.Data{
-							"name":                "test-statefulset-1",
-							"creationTimestamp":   creationTime,
-							"tags":                map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"name":              "test-statefulset-1",
+							"kind":              "StatefulSet",
+							"creationTimestamp": creationTime,
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-statefulset",
+								"namespace":      "test-namespace",
+							},
 							"uid":                 types.UID("test-statefulset-1"),
 							"updateStrategy":      appsV1.RollingUpdateStatefulSetStrategyType,
 							"desiredReplicas":     &replicas,
@@ -69,7 +76,13 @@ func TestStatefulSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "statefulset"},
 						Data: topology.Data{
 							"name": "test-statefulset-1",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-statefulset",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -99,7 +112,13 @@ func TestStatefulSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "statefulset"},
 						Data: topology.Data{
 							"name": "test-statefulset-1",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-statefulset",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -143,9 +162,16 @@ func TestStatefulSetCollector(t *testing.T) {
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:statefulset/test-statefulset-2",
 						Type:       topology.Type{Name: "statefulset"},
 						Data: topology.Data{
-							"name":                "test-statefulset-2",
-							"creationTimestamp":   creationTime,
-							"tags":                map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"name":              "test-statefulset-2",
+							"kind":              "StatefulSet",
+							"creationTimestamp": creationTime,
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-statefulset",
+								"namespace":      "test-namespace",
+							},
 							"uid":                 types.UID("test-statefulset-2"),
 							"updateStrategy":      appsV1.RollingUpdateStatefulSetStrategyType,
 							"desiredReplicas":     &replicas,
@@ -158,7 +184,13 @@ func TestStatefulSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "statefulset"},
 						Data: topology.Data{
 							"name": "test-statefulset-2",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-statefulset",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -188,7 +220,13 @@ func TestStatefulSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "statefulset"},
 						Data: topology.Data{
 							"name": "test-statefulset-2",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-statefulset",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -232,11 +270,17 @@ func TestStatefulSetCollector(t *testing.T) {
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:statefulset/test-statefulset-3",
 						Type:       topology.Type{Name: "statefulset"},
 						Data: topology.Data{
-							"name":                "test-statefulset-3",
-							"creationTimestamp":   creationTime,
-							"tags":                map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"name":              "test-statefulset-3",
+							"kind":              "StatefulSet",
+							"creationTimestamp": creationTime,
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-statefulset",
+								"namespace":      "test-namespace",
+							},
 							"uid":                 types.UID("test-statefulset-3"),
-							"kind":                "some-specified-kind",
 							"generateName":        "some-specified-generation",
 							"updateStrategy":      appsV1.RollingUpdateStatefulSetStrategyType,
 							"desiredReplicas":     &replicas,
@@ -249,7 +293,13 @@ func TestStatefulSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "statefulset"},
 						Data: topology.Data{
 							"name": "test-statefulset-3",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-statefulset",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -280,7 +330,13 @@ func TestStatefulSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "statefulset"},
 						Data: topology.Data{
 							"name": "test-statefulset-3",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-statefulset",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -356,7 +412,7 @@ func (m MockStatefulSetAPICollectorClient) GetStatefulSets() ([]appsV1.StatefulS
 	for i := 1; i <= 3; i++ {
 		statefulSet := appsV1.StatefulSet{
 			TypeMeta: v1.TypeMeta{
-				Kind: "",
+				Kind: "StatefulSet",
 			},
 			ObjectMeta: v1.ObjectMeta{
 				Name:              fmt.Sprintf("test-statefulset-%d", i),
@@ -401,7 +457,6 @@ func (m MockStatefulSetAPICollectorClient) GetStatefulSets() ([]appsV1.StatefulS
 		}
 
 		if i == 3 {
-			statefulSet.TypeMeta.Kind = "some-specified-kind"
 			statefulSet.ObjectMeta.GenerateName = "some-specified-generation"
 		}
 

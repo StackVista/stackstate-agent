@@ -56,9 +56,16 @@ func TestDeploymentCollector(t *testing.T) {
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:deployment/test-deployment-1",
 						Type:       topology.Type{Name: "deployment"},
 						Data: topology.Data{
-							"name":               "test-deployment-1",
-							"creationTimestamp":  creationTime,
-							"tags":               map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"name":              "test-deployment-1",
+							"kind":              "Deployment",
+							"creationTimestamp": creationTime,
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-deployment",
+								"namespace":      "test-namespace",
+							},
 							"uid":                types.UID("test-deployment-1"),
 							"deploymentStrategy": appsV1.RollingUpdateDeploymentStrategyType,
 							"desiredReplicas":    &replicas,
@@ -69,7 +76,13 @@ func TestDeploymentCollector(t *testing.T) {
 						Type:       topology.Type{Name: "deployment"},
 						Data: topology.Data{
 							"name": "test-deployment-1",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-deployment",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: topology.Data{
 							"metadata": map[string]interface{}{
@@ -100,7 +113,13 @@ func TestDeploymentCollector(t *testing.T) {
 						Type:       topology.Type{Name: "deployment"},
 						Data: topology.Data{
 							"name": "test-deployment-1",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-deployment",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: topology.Data{
 							"metadata": map[string]interface{}{
@@ -154,9 +173,16 @@ func TestDeploymentCollector(t *testing.T) {
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:deployment/test-deployment-2",
 						Type:       topology.Type{Name: "deployment"},
 						Data: topology.Data{
-							"name":               "test-deployment-2",
-							"creationTimestamp":  creationTime,
-							"tags":               map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"name":              "test-deployment-2",
+							"kind":              "Deployment",
+							"creationTimestamp": creationTime,
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-deployment",
+								"namespace":      "test-namespace",
+							},
 							"uid":                types.UID("test-deployment-2"),
 							"deploymentStrategy": appsV1.RollingUpdateDeploymentStrategyType,
 							"desiredReplicas":    &replicas,
@@ -167,7 +193,13 @@ func TestDeploymentCollector(t *testing.T) {
 						Type:       topology.Type{Name: "deployment"},
 						Data: topology.Data{
 							"name": "test-deployment-2",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-deployment",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: topology.Data{
 							"metadata": map[string]interface{}{
@@ -198,7 +230,13 @@ func TestDeploymentCollector(t *testing.T) {
 						Type:       topology.Type{Name: "deployment"},
 						Data: topology.Data{
 							"name": "test-deployment-2",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-deployment",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: topology.Data{
 							"metadata": map[string]interface{}{
@@ -250,11 +288,17 @@ func TestDeploymentCollector(t *testing.T) {
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:deployment/test-deployment-3",
 						Type:       topology.Type{Name: "deployment"},
 						Data: topology.Data{
-							"name":               "test-deployment-3",
-							"creationTimestamp":  creationTime,
-							"tags":               map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"name":              "test-deployment-3",
+							"kind":              "Deployment",
+							"creationTimestamp": creationTime,
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-deployment",
+								"namespace":      "test-namespace",
+							},
 							"uid":                types.UID("test-deployment-3"),
-							"kind":               "some-specified-kind",
 							"generateName":       "some-specified-generation",
 							"deploymentStrategy": appsV1.RollingUpdateDeploymentStrategyType,
 							"desiredReplicas":    &replicas,
@@ -265,7 +309,13 @@ func TestDeploymentCollector(t *testing.T) {
 						Type:       topology.Type{Name: "deployment"},
 						Data: topology.Data{
 							"name": "test-deployment-3",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-deployment",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: topology.Data{
 							"metadata": map[string]interface{}{
@@ -300,7 +350,13 @@ func TestDeploymentCollector(t *testing.T) {
 						Type:       topology.Type{Name: "deployment"},
 						Data: topology.Data{
 							"name": "test-deployment-3",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-deployment",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: topology.Data{
 							"metadata": map[string]interface{}{
@@ -388,7 +444,7 @@ func (m MockDeploymentAPICollectorClient) GetDeployments() ([]appsV1.Deployment,
 	for i := 1; i <= 3; i++ {
 		deployment := appsV1.Deployment{
 			TypeMeta: v1.TypeMeta{
-				Kind: "",
+				Kind: "Deployment",
 			},
 			ObjectMeta: v1.ObjectMeta{
 				Name:              fmt.Sprintf("test-deployment-%d", i),
@@ -440,7 +496,7 @@ func (m MockDeploymentAPICollectorClient) GetDeployments() ([]appsV1.Deployment,
 		}
 
 		if i == 3 {
-			deployment.TypeMeta.Kind = "some-specified-kind"
+			deployment.TypeMeta.Kind = "Deployment"
 			deployment.ObjectMeta.GenerateName = "some-specified-generation"
 			deployment.Annotations = map[string]string{
 				"another-annotation-1":                             "should-be-kept",
