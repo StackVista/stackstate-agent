@@ -32,7 +32,7 @@ var (
 		"kube_pod_created":                            podCreationTransformer,
 		"kube_pod_start_time":                         podStartTimeTransformer,
 		"kube_pod_status_phase":                       podPhaseTransformer,
-		"kube_pod_container_status":                   debugInformation(true, "kube_pod_container_status", containerReasonTransformer),
+		"kube_pod_container_status":                   containerReasonTransformer,
 		"kube_pod_container_status_waiting_reason":    containerReasonTransformer,
 		"kube_pod_container_status_terminated_reason": containerReasonTransformer,
 		"kube_pod_container_resource_requests":        containerResourceRequestsTransformer,
@@ -178,24 +178,6 @@ func podPhaseTransformer(s aggregator.Sender, _ string, metric ksmstore.DDMetric
 	submitActiveMetric(s, ksmMetricPrefix+"pod.status_phase", metric, hostname, tags)
 }
 
-func debugInformation(enable bool, transformName string, processingFunction func(s aggregator.Sender, name string, metric ksmstore.DDMetric, hostname string, tags []string)) func(s aggregator.Sender, name string, metric ksmstore.DDMetric, hostname string, tags []string) {
-	return func(s aggregator.Sender, name string, metric ksmstore.DDMetric, hostname string, tags []string) {
-		if enable {
-			fmt.Printf("\n---------------------------------------\n")
-			fmt.Printf("**** Transformer Debugger %s ****\n", transformName)
-			fmt.Printf(fmt.Sprintf("%q\n", metric.Labels))
-			fmt.Printf(fmt.Sprintf("%v\n", metric.Val))
-			fmt.Printf(fmt.Sprintf("%q\n", tags))
-			fmt.Printf(hostname)
-			fmt.Printf("\n---------------------------------------\n")
-		}
-
-		if processingFunction != nil {
-			processingFunction(s, name, metric, hostname, tags)
-		}
-	}
-}
-
 var allowedWaitingReasons = map[string]struct{}{
 	"errimagepull":      {},
 	"imagepullbackoff":  {},
@@ -240,26 +222,6 @@ func containerReasonTransformer(s aggregator.Sender, _ string, metric ksmstore.D
 		}
 	}
 }
-
-// containerWaitingReasonTransformer validates the container waiting reasons for metric kube_pod_container_status_waiting_reason
-//  func containerWaitingReasonTransformer(s aggregator.Sender, name string, metric ksmstore.DDMetric, hostname string, tags []string) {
-//  	if reason, found := metric.Labels["reason"]; found {
-//  		// Filtering according to the reason here is paramount to limit cardinality
-//  		if _, allowed := allowedWaitingReasons[strings.ToLower(reason)]; allowed {
-//  			s.Gauge(ksmMetricPrefix+"container.status_report.count.waiting", metric.Val, hostname, tags)
-//  		}
-//  	}
-//  }
-
-//  // containerTerminatedReasonTransformer validates the container waiting reasons for metric kube_pod_container_status_terminated_reason
-//  func containerTerminatedReasonTransformer(s aggregator.Sender, name string, metric ksmstore.DDMetric, hostname string, tags []string) {
-//  	if reason, found := metric.Labels["reason"]; found {
-//  		// Filtering according to the reason here is paramount to limit cardinality
-//  		if _, allowed := allowedTerminatedReasons[strings.ToLower(reason)]; allowed {
-//  			s.Gauge(ksmMetricPrefix+"container.status_report.count.terminated", metric.Val, hostname, tags)
-//  		}
-//  	}
-//  }
 
 // containerResourceRequestsTransformer transforms the generic ksm resource request metrics into resource-specific metrics
 func containerResourceRequestsTransformer(s aggregator.Sender, name string, metric ksmstore.DDMetric, hostname string, tags []string) {
