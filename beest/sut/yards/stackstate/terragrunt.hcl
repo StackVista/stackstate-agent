@@ -1,7 +1,6 @@
 terraform {
   after_hook "setup_kubeconfig" {
-    // TODO figure out how to run this only during create
     commands = ["apply"]
-    execute  = ["/bin/bash", "-c", "sts-toolbox cluster connect sandbox-main.sandbox.stackstate.io"]
+    execute  = ["/bin/bash", "-c", "./get_kubeconfig.sh || true"]
   }
 }

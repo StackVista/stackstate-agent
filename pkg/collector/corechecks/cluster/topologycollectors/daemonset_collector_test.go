@@ -51,10 +51,17 @@ func TestDaemonSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "daemonset"},
 						Data: topology.Data{
 							"name":              "test-daemonset-1",
+							"kind":              "DaemonSet",
 							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-daemonset-1"),
-							"updateStrategy":    appsV1.RollingUpdateDaemonSetStrategyType,
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-daemonset",
+								"namespace":      "test-namespace",
+							},
+							"uid":            types.UID("test-daemonset-1"),
+							"updateStrategy": appsV1.RollingUpdateDaemonSetStrategyType,
 						},
 					},
 					expectedSP: &topology.Component{
@@ -62,7 +69,13 @@ func TestDaemonSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "daemonset"},
 						Data: topology.Data{
 							"name": "test-daemonset-1",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-daemonset",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -90,7 +103,13 @@ func TestDaemonSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "daemonset"},
 						Data: topology.Data{
 							"name": "test-daemonset-1",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-daemonset",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -129,10 +148,17 @@ func TestDaemonSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "daemonset"},
 						Data: topology.Data{
 							"name":              "test-daemonset-2",
+							"kind":              "DaemonSet",
 							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-daemonset-2"),
-							"updateStrategy":    appsV1.RollingUpdateDaemonSetStrategyType,
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-daemonset",
+								"namespace":      "test-namespace",
+							},
+							"uid":            types.UID("test-daemonset-2"),
+							"updateStrategy": appsV1.RollingUpdateDaemonSetStrategyType,
 						},
 					},
 					expectedSP: &topology.Component{
@@ -140,7 +166,13 @@ func TestDaemonSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "daemonset"},
 						Data: topology.Data{
 							"name": "test-daemonset-2",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-daemonset",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -168,7 +200,13 @@ func TestDaemonSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "daemonset"},
 						Data: topology.Data{
 							"name": "test-daemonset-2",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-daemonset",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -208,11 +246,17 @@ func TestDaemonSetCollector(t *testing.T) {
 						Data: topology.Data{
 							"name":              "test-daemonset-3",
 							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-daemonset-3"),
-							"updateStrategy":    appsV1.RollingUpdateDaemonSetStrategyType,
-							"kind":              "some-specified-kind",
-							"generateName":      "some-specified-generation",
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-daemonset",
+								"namespace":      "test-namespace",
+							},
+							"uid":            types.UID("test-daemonset-3"),
+							"updateStrategy": appsV1.RollingUpdateDaemonSetStrategyType,
+							"kind":           "DaemonSet",
+							"generateName":   "some-specified-generation",
 						},
 					},
 					expectedSP: &topology.Component{
@@ -220,7 +264,13 @@ func TestDaemonSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "daemonset"},
 						Data: topology.Data{
 							"name": "test-daemonset-3",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-daemonset",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -249,7 +299,13 @@ func TestDaemonSetCollector(t *testing.T) {
 						Type:       topology.Type{Name: "daemonset"},
 						Data: topology.Data{
 							"name": "test-daemonset-3",
-							"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-daemonset",
+								"namespace":      "test-namespace",
+							},
 						},
 						SourceProperties: map[string]interface{}{
 							"metadata": map[string]interface{}{
@@ -320,7 +376,7 @@ func (m MockDaemonSetAPICollectorClient) GetDaemonSets() ([]appsV1.DaemonSet, er
 	for i := 1; i <= 3; i++ {
 		daemonSet := appsV1.DaemonSet{
 			TypeMeta: v1.TypeMeta{
-				Kind: "",
+				Kind: "DaemonSet",
 			},
 			ObjectMeta: v1.ObjectMeta{
 				Name:              fmt.Sprintf("test-daemonset-%d", i),
@@ -357,7 +413,7 @@ func (m MockDaemonSetAPICollectorClient) GetDaemonSets() ([]appsV1.DaemonSet, er
 		}
 
 		if i == 3 {
-			daemonSet.TypeMeta.Kind = "some-specified-kind"
+			daemonSet.TypeMeta.Kind = "DaemonSet"
 			daemonSet.ObjectMeta.GenerateName = "some-specified-generation"
 		}
 

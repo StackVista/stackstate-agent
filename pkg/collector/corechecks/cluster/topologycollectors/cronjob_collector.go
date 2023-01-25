@@ -6,6 +6,7 @@ package topologycollectors
 import (
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // CronJobCollector implements the ClusterTopologyCollector interface.
@@ -80,7 +81,8 @@ func (cjc *CronJobCollector) getCronJobsV1(cronJobs []CronJobInterface) ([]CronJ
 func (cjc *CronJobCollector) cronJobToStackStateComponent(cronJob CronJobInterface) *topology.Component {
 	log.Tracef("Mapping CronJob to StackState component: %s", cronJob.GetString())
 
-	tags := cjc.initTags(cronJob.GetObjectMeta())
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := cjc.initTags(cronJob.GetObjectMeta(), metaV1.TypeMeta{Kind: "CronJob"})
 
 	cronJobExternalID := cjc.buildCronJobExternalID(cronJob.GetNamespace(), cronJob.GetName())
 
