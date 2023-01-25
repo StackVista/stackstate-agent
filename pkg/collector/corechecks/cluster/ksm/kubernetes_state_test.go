@@ -27,10 +27,11 @@ import (
 )
 
 type metricsExpected struct {
-	val      float64
-	name     string
-	tags     []string
-	hostname string
+	val           float64
+	name          string
+	tags          []string
+	hostname      string
+	numberOfCalls int
 }
 
 func TestProcessMetricExampleData(t *testing.T) {
@@ -113,11 +114,13 @@ func TestProcessMetrics(t *testing.T) {
 						"pod_name:kube-state-metrics-b7fbc487d-4phhj",
 						"pod:kube-state-metrics-b7fbc487d-4phhj",
 						"uid:bec19172-8abf-11ea-8546-42010a80022c"},
+					numberOfCalls: 1,
 				},
 				{
-					name: "kubernetes_state.container.running",
-					val:  0,
-					tags: []string{"kube_container_name:hello", "kube_namespace:default", "pod_name:hello-1509998340-k4f8q", "uid:05e99c5f-8a64-11ea-8546-42010a80022c"},
+					name:          "kubernetes_state.container.running",
+					val:           0,
+					tags:          []string{"kube_container_name:hello", "kube_namespace:default", "pod_name:hello-1509998340-k4f8q", "uid:05e99c5f-8a64-11ea-8546-42010a80022c"},
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -157,7 +160,8 @@ func TestProcessMetrics(t *testing.T) {
 						"pod_name:kube-state-metrics-b7fbc487d-4phhj",
 						"pod:kube-state-metrics-b7fbc487d-4phhj",
 						"node:minikube"},
-					hostname: "minikube",
+					hostname:      "minikube",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -218,7 +222,8 @@ func TestProcessMetrics(t *testing.T) {
 						"env:dev",
 						"service:redis",
 						"version:v1"},
-					hostname: "",
+					hostname:      "",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -258,7 +263,8 @@ func TestProcessMetrics(t *testing.T) {
 						"env:dev",
 						"service:redis",
 						"version:v1"},
-					hostname: "",
+					hostname:      "",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -296,7 +302,8 @@ func TestProcessMetrics(t *testing.T) {
 						"kube_deployment:redis",
 						"deployment:redis",
 						"env:dev"},
-					hostname: "",
+					hostname:      "",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -325,10 +332,11 @@ func TestProcessMetrics(t *testing.T) {
 			},
 			expected: []metricsExpected{
 				{
-					name:     "kube_pod_status_phase_transformed",
-					val:      1,
-					tags:     []string{"transformed:tag"},
-					hostname: "",
+					name:          "kube_pod_status_phase_transformed",
+					val:           1,
+					tags:          []string{"transformed:tag"},
+					hostname:      "",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -389,10 +397,11 @@ func TestProcessMetrics(t *testing.T) {
 			metricTransformers: metricTransformers,
 			expected: []metricsExpected{
 				{
-					name:     "kubernetes_state.node.cpu_capacity",
-					val:      4,
-					tags:     []string{"node:nodename", "resource:cpu", "unit:core", "kube_region:europe-west1", "kube_zone:europe-west1-b"},
-					hostname: "nodename",
+					name:          "kubernetes_state.node.cpu_capacity",
+					val:           4,
+					tags:          []string{"node:nodename", "resource:cpu", "unit:core", "kube_region:europe-west1", "kube_zone:europe-west1-b"},
+					hostname:      "nodename",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -422,10 +431,11 @@ func TestProcessMetrics(t *testing.T) {
 			metricTransformers: metricTransformers,
 			expected: []metricsExpected{
 				{
-					name:     "kubernetes_state.node.cpu_capacity",
-					val:      4,
-					tags:     []string{"node:nodename", "resource:cpu", "unit:core", "container_runtime_version:docker://19.3.15", "kernel_version:5.4.109+", "kubelet_version:v1.18.20-gke.901", "os_image:Container-Optimized OS from Google"},
-					hostname: "nodename",
+					name:          "kubernetes_state.node.cpu_capacity",
+					val:           4,
+					tags:          []string{"node:nodename", "resource:cpu", "unit:core", "container_runtime_version:docker://19.3.15", "kernel_version:5.4.109+", "kubelet_version:v1.18.20-gke.901", "os_image:Container-Optimized OS from Google"},
+					hostname:      "nodename",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -458,7 +468,8 @@ func TestProcessMetrics(t *testing.T) {
 						"pod_name:redis",
 						"pod:redis",
 						"pod_phase:Running"},
-					hostname: "",
+					hostname:      "",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -490,7 +501,8 @@ func TestProcessMetrics(t *testing.T) {
 						"namespace:default",
 						"persistentvolumeclaim:pvc",
 						"phase:Bound"},
-					hostname: "",
+					hostname:      "",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -515,10 +527,11 @@ func TestProcessMetrics(t *testing.T) {
 			metricTransformers: metricTransformers,
 			expected: []metricsExpected{
 				{
-					name:     "kubernetes_state.namespace.count",
-					val:      1,
-					tags:     []string{"phase:Active"},
-					hostname: "",
+					name:          "kubernetes_state.namespace.count",
+					val:           1,
+					tags:          []string{"phase:Active"},
+					hostname:      "",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -752,28 +765,32 @@ func TestSendTelemetry(t *testing.T) {
 			},
 			expected: []metricsExpected{
 				{
-					name:     "kubernetes_state.telemetry.metrics.count.total",
-					val:      5,
-					tags:     []string{"kube_cluster_name:foo"},
-					hostname: "",
+					name:          "kubernetes_state.telemetry.metrics.count.total",
+					val:           5,
+					tags:          []string{"kube_cluster_name:foo"},
+					hostname:      "",
+					numberOfCalls: 1,
 				},
 				{
-					name:     "kubernetes_state.telemetry.metrics.count",
-					val:      2,
-					tags:     []string{"kube_cluster_name:foo", "resource_name:baz"},
-					hostname: "",
+					name:          "kubernetes_state.telemetry.metrics.count",
+					val:           2,
+					tags:          []string{"kube_cluster_name:foo", "resource_name:baz"},
+					hostname:      "",
+					numberOfCalls: 1,
 				},
 				{
-					name:     "kubernetes_state.telemetry.metrics.count",
-					val:      3,
-					tags:     []string{"kube_cluster_name:foo", "resource_name:bar"},
-					hostname: "",
+					name:          "kubernetes_state.telemetry.metrics.count",
+					val:           3,
+					tags:          []string{"kube_cluster_name:foo", "resource_name:bar"},
+					hostname:      "",
+					numberOfCalls: 1,
 				},
 				{
-					name:     "kubernetes_state.telemetry.unknown_metrics.count",
-					val:      1,
-					tags:     []string{"kube_cluster_name:foo"},
-					hostname: "",
+					name:          "kubernetes_state.telemetry.unknown_metrics.count",
+					val:           1,
+					tags:          []string{"kube_cluster_name:foo"},
+					hostname:      "",
+					numberOfCalls: 1,
 				},
 			},
 		},
