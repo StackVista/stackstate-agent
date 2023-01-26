@@ -86,10 +86,7 @@ func aggregateStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []ks
 			}
 			zeroStateMetrics = append(zeroStateMetrics, metricWithZeroValue...)
 
-		case "kube_pod_container_status_terminated_reason":
-			originalMetrics = append(originalMetrics, metricFamily.ListMetrics...)
-
-		case "kube_pod_container_status_waiting_reason":
+		case "kube_pod_container_status_terminated_reason", "kube_pod_container_status_waiting_reason":
 			originalMetrics = append(originalMetrics, metricFamily.ListMetrics...)
 		}
 	}
