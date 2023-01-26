@@ -32,7 +32,7 @@ var (
 		"kube_pod_created":                       podCreationTransformer,
 		"kube_pod_start_time":                    podStartTimeTransformer,
 		"kube_pod_status_phase":                  podPhaseTransformer,
-		"kube_pod_container_status":              containerReasonTransformer,
+		"kube_pod_container_status_reasons":      containerReasonTransformer,
 		"kube_pod_container_resource_requests":   containerResourceRequestsTransformer,
 		"kube_pod_container_resource_limits":     containerResourceLimitsTransformer,
 		"kube_cronjob_next_schedule_time":        cronJobNextScheduleTransformer,

@@ -961,6 +961,103 @@ func Test_containerTerminatedReasonTransformer(t *testing.T) {
 	}
 }
 
+func Test_containerReasonTransformer(t *testing.T) {
+	tests := []struct {
+		name         string
+		metricFamily ksmstore.DDMetricsFam
+		tags         []string
+		hostname     string
+	}{
+		{
+			name: "OOMKilled",
+			metricFamily: ksmstore.DDMetricsFam{
+				Name: "kube_pod_container_status_reasons",
+				ListMetrics: []ksmstore.DDMetric{
+					{
+						Labels: map[string]string{
+							"container":    "restarts-increment-always-critical",
+							"container_id": "docker://abfe1487e744da362ae503e20bf363544db13f1fa2dc491601a92cb3ce1ac3c3",
+							"image":        "registry.k8s.io/busybox:latest",
+							"image_id":     "docker-pullable://registry.k8s.io/busybox@sha256:d8d3bc2c183ed2f9f10e7258f84971202325ee6011ba137112e01e30f206de67",
+							"namespace":    "kubernetes-monitors",
+							"pod":          "restarts-increment-always-critical",
+							"reason":       "Unknown",
+							"uid":          "c69e618f-dcca-4fe6-89de-c908ecbf662f",
+						},
+						Val: 0,
+					},
+					{
+						Labels: map[string]string{
+							"container":    "this-should-not-exist-in-reasons-and-get-a-zero-state",
+							"container_id": "docker://abfe1487e744da362ae503e20bf363544db13f1fa2dc491601a92cb3ce1ac3c3",
+							"image":        "registry.k8s.io/busybox:latest",
+							"image_id":     "docker-pullable://registry.k8s.io/busybox@sha256:d8d3bc2c183ed2f9f10e7258f84971202325ee6011ba137112e01e30f206de67",
+							"namespace":    "kubernetes-monitors",
+							"pod":          "restarts-increment-always-critical",
+							"reason":       "Unknown",
+							"uid":          "000000-000000-00000-000000-00000",
+						},
+						Val: 0,
+					},
+					{
+						Labels: map[string]string{
+							"container":    "restarts-increment-always-critical",
+							"container_id": "docker://abfe1487e744da362ae503e20bf363544db13f1fa2dc491601a92cb3ce1ac3c3",
+							"image":        "registry.k8s.io/busybox:latest",
+							"image_id":     "docker-pullable://registry.k8s.io/busybox@sha256:d8d3bc2c183ed2f9f10e7258f84971202325ee6011ba137112e01e30f206de67",
+							"namespace":    "kubernetes-monitors",
+							"pod":          "restarts-increment-always-critical",
+							"reason":       "Unknown",
+							"uid":          "c69e618f-dcca-4fe6-89de-c908ecbf662f",
+						},
+						Val: 0,
+					},
+					{
+						Labels: map[string]string{
+							"container": "restarts-increment-always-critical",
+							"namespace": "kubernetes-monitors",
+							"pod":       "restarts-increment-always-critical",
+							"reason":    "Pending",
+							"uid":       "c69e618f-dcca-4fe6-89de-c908ecbf662f",
+						},
+						Val: 1,
+					},
+					{
+						Labels: map[string]string{
+							"container": "restarts-increment-always-critical",
+							"namespace": "kubernetes-monitors",
+							"pod":       "restarts-increment-always-critical",
+							"reason":    "CrashLoopBackOff",
+							"uid":       "c69e618f-dcca-4fe6-89de-c908ecbf662f",
+						},
+						Val: 1,
+					},
+					{
+						Labels: map[string]string{
+							"container": "restarts-increment-always-critical",
+							"namespace": "kubernetes-monitors",
+							"pod":       "restarts-increment-always-critical",
+							"reason":    "Idle",
+							"uid":       "c69e618f-dcca-4fe6-89de-c908ecbf662f",
+						},
+						Val: 1,
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		s := mocksender.NewMockSender("ksm")
+		s.SetupAcceptAll()
+		t.Run(tt.name, func(t *testing.T) {
+			for _, metric := range tt.metricFamily.ListMetrics {
+				containerReasonTransformer(s, tt.name, metric, tt.hostname, tt.tags)
+			}
+			s.AssertNumberOfCalls(t, "Gauge", 10)
+		})
+	}
+}
+
 func Test_limitrangeTransformer(t *testing.T) {
 	tests := []struct {
 		name     string
