@@ -205,18 +205,18 @@ func containerReasonTransformer(s aggregator.Sender, _ string, metric ksmstore.D
 
 		// Filtering according to the reason here is paramount to limit cardinality
 		if _, allowed := allowedWaitingReasons[lcReason]; allowed {
-			s.Count(metricPrefix+"waiting", metric.Val, hostname, tags)
+			s.Gauge(metricPrefix+"waiting", metric.Val, hostname, tags)
 		}
 
 		// Filtering according to the reason here is paramount to limit cardinality
 		if _, allowed := allowedTerminatedReasons[lcReason]; allowed {
-			s.Count(metricPrefix+"terminated", metric.Val, hostname, tags)
+			s.Gauge(metricPrefix+"terminated", metric.Val, hostname, tags)
 		}
 
 		// Filtering according to the reason here is paramount to limit cardinality
 		if _, allowed := allowedOutOfMemoryReasons[lcReason]; allowed {
 			fmt.Println(fmt.Sprintf("Running OOM Count '%v.oom' with value '%v'", metricPrefix, metric.Val))
-			s.Count(metricPrefix+"oom", metric.Val, hostname, tags)
+			s.Gauge(metricPrefix+"oom", metric.Val, hostname, tags)
 		}
 	}
 }

@@ -70,16 +70,19 @@ func aggregateStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []ks
 			continue
 		}
 
+		// Remap all the reason metrics to have a default count of 1
+		for _, metric := range metricFamily.ListMetrics {
+			metric.Val = 1
+		}
+
 		switch metricFamily.Name {
 		case "kube_pod_container_info":
 			var metricWithZeroValue []ksmstore.DDMetric
 			for _, metric := range metricFamily.ListMetrics {
 				metric.Labels["reason"] = "Unknown"
-				test := ksmstore.DDMetric{
-					Labels: metric.Labels,
-					Val:    0,
-				}
-				metricWithZeroValue = append(metricWithZeroValue, test)
+				// Overwrite the default metric count of 1 with 0 for a zero state
+				metric.Val = 0
+				metricWithZeroValue = append(metricWithZeroValue, metric)
 			}
 			zeroStateMetrics = append(zeroStateMetrics, metricWithZeroValue...)
 
@@ -93,7 +96,7 @@ func aggregateStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []ks
 
 	return append(metricFamilyList, ksmstore.DDMetricsFam{
 		Name:        "kube_pod_container_status_reasons",
-		ListMetrics: append(originalMetrics, zeroStateMetrics...),
+		ListMetrics: append(zeroStateMetrics, originalMetrics...),
 	})
 }
 
