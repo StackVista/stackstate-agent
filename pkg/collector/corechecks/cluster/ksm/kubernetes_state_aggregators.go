@@ -93,7 +93,7 @@ func aggregateStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []ks
 
 	return append(metricFamilyList, ksmstore.DDMetricsFam{
 		Name:        "kube_pod_container_status_reasons",
-		ListMetrics: append(zeroStateMetrics, originalMetrics...),
+		ListMetrics: append(originalMetrics, zeroStateMetrics...),
 	})
 }
 
