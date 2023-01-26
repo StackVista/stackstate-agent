@@ -75,8 +75,8 @@ func aggregateStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []ks
 			// If the dictionary already contains the entry then we want to merge the existing data
 			if pod, ok := accumulator[uid]; !ok && len(pod.Labels) > 0 {
 				// Combine the original labels and the new labels
-				labels := make(map[string]string)
-				for key, value := range pod.Labels {
+				labels := pod.Labels
+				for key, value := range metric.Labels {
 					labels[key] = value
 				}
 
