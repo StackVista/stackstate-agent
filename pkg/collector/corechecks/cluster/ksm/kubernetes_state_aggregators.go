@@ -62,15 +62,17 @@ func newSumValuesAggregator(ddMetricName, ksmMetricName string, allowedLabels []
 
 // aggregateStatusReasonMetrics Generate additional metrics based on aggregating existing metrics to generate a new metric
 func aggregateStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []ksmstore.DDMetricsFam {
+	// Split this from the original metrics to merge it back in at the start
 	var zeroStateMetrics []ksmstore.DDMetric
 	var originalMetrics []ksmstore.DDMetric
 
 	for _, metricFamily := range metricFamilyList {
+		// Do not continue of there is no metrics to merge
 		if len(metricFamily.ListMetrics) == 0 {
 			continue
 		}
 
-		// Remap all the reason metrics to have a default count of 1
+		// Remap all the reason metrics to have a default count of 1, this always guarantees a state if it is not a zero state
 		for _, metric := range metricFamily.ListMetrics {
 			metric.Val = 1
 		}

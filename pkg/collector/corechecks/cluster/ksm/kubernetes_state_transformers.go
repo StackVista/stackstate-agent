@@ -215,7 +215,6 @@ func containerReasonTransformer(s aggregator.Sender, _ string, metric ksmstore.D
 
 		// Filtering according to the reason here is paramount to limit cardinality
 		if _, allowed := allowedOutOfMemoryReasons[lcReason]; allowed {
-			fmt.Println(fmt.Sprintf("Running OOM Count '%v.oom' with value '%v'", metricPrefix, metric.Val))
 			s.Gauge(metricPrefix+"oom", metric.Val, hostname, tags)
 		}
 	}
