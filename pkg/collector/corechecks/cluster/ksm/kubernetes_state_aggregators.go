@@ -72,11 +72,6 @@ func aggregateStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []ks
 			continue
 		}
 
-		// Remap all the reason metrics to have a default count of 1, this always guarantees a state if it is not a zero state
-		for _, metric := range metricFamily.ListMetrics {
-			metric.Val = 1
-		}
-
 		switch metricFamily.Name {
 		case "kube_pod_container_info":
 			var metricWithZeroValue []ksmstore.DDMetric
@@ -89,10 +84,20 @@ func aggregateStatusReasonMetrics(metricFamilyList []ksmstore.DDMetricsFam) []ks
 			zeroStateMetrics = append(zeroStateMetrics, metricWithZeroValue...)
 
 		case "kube_pod_container_status_terminated_reason", "kube_pod_container_status_waiting_reason":
+			// Remap all the reason metrics to have a default count of 1
+			// This always guarantees a state if it is not a zero state
+			for _, metric := range metricFamily.ListMetrics {
+				metric.Val = 1
+			}
+
 			originalMetrics = append(originalMetrics, metricFamily.ListMetrics...)
 		}
 	}
 
+	// We are sending both zero state metrics and the original metrics to StackState
+	// What this means is that we will be sending a zero and non-zero state for the same metric but expect the agent to de-duplicate
+	// the metrics or at least on StackState's aggregation side. If this does become a problem then we need to map and look for every single
+	// possible reason type and build up separate metric groupings containing the zero state or the non-zero state, but this will add more weight on this aggregator
 	return append(metricFamilyList, ksmstore.DDMetricsFam{
 		Name:        "kube_pod_container_status_reasons",
 		ListMetrics: append(zeroStateMetrics, originalMetrics...),
