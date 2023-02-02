@@ -4,7 +4,6 @@
 package topologycollectors
 
 import (
-	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -172,15 +171,6 @@ func (pc *PodCollector) podToStackStateComponent(pod v1.Pod) *topology.Component
 	log.Tracef("Mapping kubernetes pod to StackState Component: %s", pod.String())
 
 	identifiers := make([]string, 0)
-
-	if pod.Status.PodIP != "" {
-		// We map the pod ip including clustername, namespace and podName because
-		// the pod ip is not necessarily unique:
-		// * Pods can use Host networking which gives them the ip of the host
-		// * Pods for jobs can remain present after completion or failure (their status will not be running but Completed or Failed)
-		//   with their IP (that is now free again for reuse) still attached in the pod.Status
-		identifiers = append(identifiers, fmt.Sprintf("urn:ip:/%s:%s:%s:%s", pc.GetInstance().URL, pod.Namespace, pod.Name, pod.Status.PodIP))
-	}
 
 	log.Tracef("Created identifiers for %s: %v", pod.Name, identifiers)
 
