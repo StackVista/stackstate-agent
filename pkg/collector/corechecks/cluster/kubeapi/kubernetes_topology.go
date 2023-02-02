@@ -180,7 +180,6 @@ func (t *TopologyCheck) Run() error {
 		collectors.NewServiceCollector(
 			endpointCorrelationChannel,
 			commonClusterCollector,
-			t.instance.Resources.Endpoints,
 		),
 	}
 

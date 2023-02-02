@@ -109,9 +109,15 @@ func (pc *PodCollector) CollectorFunction() error {
 			pc.SubmitRelation(pc.namespaceToPodStackStateRelation(pc.buildNamespaceExternalID(pod.Namespace), component.ExternalID))
 		}
 
-		isServingInHostNetwork :=
-			pod.Spec.HostNetwork && pod.Status.Phase == v1.PodRunning &&
-				pod.Status.PodIP == pod.Status.HostIP
+		{
+			podEndpointCorrelation := &PodEndpointCorrelation{
+				Labels:       pod.Labels,
+				PodNamespace: pod.Namespace,
+				PodName:      pod.Name,
+			}
+			log.Debugf("publishing endpoint correlation for Pod: %v", podEndpointCorrelation)
+			pc.PodCorrChan <- podEndpointCorrelation
+		}
 
 		for _, c := range pod.Spec.Containers {
 			// map relations to config map
@@ -129,21 +135,6 @@ func (pc *PodCollector) CollectorFunction() error {
 					pc.SubmitRelation(pc.podToConfigMapVarStackStateRelation(component.ExternalID, pc.buildConfigMapExternalID(pod.Namespace, env.ValueFrom.ConfigMapKeyRef.LocalObjectReference.Name)))
 				} else if env.ValueFrom != nil && env.ValueFrom.SecretKeyRef != nil {
 					pc.SubmitRelation(pc.podToSecretVarStackStateRelation(component.ExternalID, pc.buildSecretExternalID(pod.Namespace, env.ValueFrom.SecretKeyRef.LocalObjectReference.Name)))
-				}
-			}
-
-			if isServingInHostNetwork {
-				for _, port := range c.Ports {
-					if port.HostPort == 0 {
-						continue
-					}
-					podEndpointCorrelation := &PodEndpointCorrelation{
-						Endpoint:     fmt.Sprintf("%s:%d", pod.Status.HostIP, port.HostPort),
-						PodNamespace: pod.Namespace,
-						PodName:      pod.Name,
-					}
-					log.Debugf("publishing endpoint correlation for Pod: %v", podEndpointCorrelation)
-					pc.PodCorrChan <- podEndpointCorrelation
 				}
 			}
 		}

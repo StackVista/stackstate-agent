@@ -30,63 +30,55 @@ func TestServiceCollector(t *testing.T) {
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
 		for _, kubernetesStatusEnabled := range []bool{false, true} {
-			for _, endpointsEnabled := range []bool{false, true} {
-				for testCaseNo, tc := range serviceCollectorTestCases(sourcePropertiesEnabled, kubernetesStatusEnabled, creationTimeFormatted, endpointsEnabled) {
-					t.Run(serviceCollectorTestCaseName(tc.testCase, sourcePropertiesEnabled, kubernetesStatusEnabled, endpointsEnabled), func(t *testing.T) {
-						svcCorrelationChannel := make(chan *ServiceEndpointCorrelation)
-						componentChannel := make(chan *topology.Component)
-						relationChannel := make(chan *topology.Relation)
-						collectorChannel := make(chan bool)
+			for testCaseNo, tc := range serviceCollectorTestCases(sourcePropertiesEnabled, kubernetesStatusEnabled, creationTimeFormatted) {
+				t.Run(serviceCollectorTestCaseName(tc.testCase, sourcePropertiesEnabled, kubernetesStatusEnabled), func(t *testing.T) {
+					svcCorrelationChannel := make(chan *ServiceEndpointCorrelation)
+					componentChannel := make(chan *topology.Component)
+					relationChannel := make(chan *topology.Relation)
+					collectorChannel := make(chan bool)
 
-						commonCollector := NewTestCommonClusterCollector(MockServiceAPICollectorClient{testCaseNumber: testCaseNo + 1}, componentChannel, relationChannel, sourcePropertiesEnabled, kubernetesStatusEnabled)
-						commonCollector.SetUseRelationCache(false)
-						serviceCollector := NewServiceCollector(
-							svcCorrelationChannel,
-							commonCollector,
-							endpointsEnabled,
-						)
-						// Mock out DNS resolution function for test
-						serviceCollector.(*ServiceCollector).DNS = func(name string) ([]string, error) {
-							return []string{"10.10.42.42", "10.10.42.43"}, nil
+					commonCollector := NewTestCommonClusterCollector(MockServiceAPICollectorClient{testCaseNumber: testCaseNo + 1}, componentChannel, relationChannel, sourcePropertiesEnabled, kubernetesStatusEnabled)
+					commonCollector.SetUseRelationCache(false)
+					serviceCollector := NewServiceCollector(
+						svcCorrelationChannel,
+						commonCollector,
+					)
+					// Mock out DNS resolution function for test
+					serviceCollector.(*ServiceCollector).DNS = func(name string) ([]string, error) {
+						return []string{"10.10.42.42", "10.10.42.43"}, nil
+					}
+
+					assert.Equal(t, "Service Collector", serviceCollector.GetName())
+
+					go func() {
+						assert.NoError(t, serviceCollector.CollectorFunction())
+						collectorChannel <- true
+					}()
+
+					var actualComponents []*topology.Component
+					var actualRelations []*topology.Relation
+				L:
+					for {
+						select {
+						case component := <-componentChannel:
+							actualComponents = append(actualComponents, component)
+						case relation := <-relationChannel:
+							actualRelations = append(actualRelations, relation)
+						case <-svcCorrelationChannel: // ignore
+						case <-collectorChannel:
+							break L
 						}
+					}
 
-						assert.Equal(t, "Service Collector", serviceCollector.GetName())
-
-						go func() {
-							assert.NoError(t, serviceCollector.CollectorFunction())
-							collectorChannel <- true
-						}()
-
-						var actualComponents []*topology.Component
-						var actualRelations []*topology.Relation
-					L:
-						for {
-							select {
-							case component := <-componentChannel:
-								actualComponents = append(actualComponents, component)
-							case relation := <-relationChannel:
-								actualRelations = append(actualRelations, relation)
-							case <-svcCorrelationChannel: // ignore
-							case <-collectorChannel:
-								break L
-							}
-						}
-
-						assert.EqualValues(t, tc.expectedComponents, actualComponents)
-						assert.EqualValues(t, tc.expectedRelations, actualRelations)
-					})
-				}
+					assert.EqualValues(t, tc.expectedComponents, actualComponents)
+					assert.EqualValues(t, tc.expectedRelations, actualRelations)
+				})
 			}
 		}
 	}
 }
 
-func serviceCollectorTestCaseName(baseName string, sourcePropertiesEnabled bool, kubernetesStatusEnabled bool, endpointsEnabled bool) string {
-	if endpointsEnabled {
-		baseName = baseName + " w/ endpoints"
-	} else {
-		baseName = baseName + " w/o endpoints"
-	}
+func serviceCollectorTestCaseName(baseName string, sourcePropertiesEnabled bool, kubernetesStatusEnabled bool) string {
 	if sourcePropertiesEnabled {
 		baseName = baseName + " w/ sourceProps"
 	} else {
@@ -100,7 +92,7 @@ func serviceCollectorTestCaseName(baseName string, sourcePropertiesEnabled bool,
 	return baseName
 }
 
-func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool, creationTimeFormatted string, endpointsEnabled bool) []serviceCollectorTestCase {
+func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool, creationTimeFormatted string) []serviceCollectorTestCase {
 	testCase1 := serviceCollectorTestCase{
 		testCase: "Test Service 1 - Service + Pod Relation",
 		expectedComponents: []*topology.Component{
@@ -209,16 +201,6 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 				Data:     map[string]interface{}{},
 			},
 		},
-	}
-	if endpointsEnabled {
-		testCase1.expectedRelations = append(testCase1.expectedRelations, &topology.Relation{
-			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1->" +
-				"urn:kubernetes:/test-cluster-name:pod-namespace:pod/some-pod-name",
-			Type:     topology.Type{Name: "exposes"},
-			SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-1",
-			TargetID: "urn:kubernetes:/test-cluster-name:pod-namespace:pod/some-pod-name",
-			Data:     map[string]interface{}{},
-		})
 	}
 
 	testCase6 := serviceCollectorTestCase{
@@ -359,17 +341,7 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 			},
 		},
 	}
-	if endpointsEnabled {
-		testCase6.expectedRelations = append(testCase6.expectedRelations, &topology.Relation{
-			ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-6->" +
-				"urn:kubernetes:/test-cluster-name:pod-namespace:pod/some-pod-name",
-			Type:     topology.Type{Name: "exposes"},
-			SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:service/test-service-6",
-			TargetID: "urn:kubernetes:/test-cluster-name:pod-namespace:pod/some-pod-name",
-			Data:     map[string]interface{}{},
-		})
-	}
-
+	
 	return []serviceCollectorTestCase{
 		testCase1,
 		{

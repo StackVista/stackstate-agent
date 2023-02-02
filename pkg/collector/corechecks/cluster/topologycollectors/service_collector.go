@@ -31,13 +31,11 @@ type EndpointID struct {
 func NewServiceCollector(
 	endpointCorrChannel chan *ServiceEndpointCorrelation,
 	clusterTopologyCollector ClusterTopologyCollector,
-	endpointsEnabled bool,
 ) ClusterTopologyCollector {
 	return &ServiceCollector{
 		EndpointCorrChan:         endpointCorrChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 		DNS:                      dns.StandardResolver,
-		enpointsEnabled:          endpointsEnabled,
 	}
 }
 
@@ -55,47 +53,6 @@ func (sc *ServiceCollector) CollectorFunction() error {
 	services, err := sc.GetAPIClient().GetServices()
 	if err != nil {
 		return err
-	}
-
-	endpoints := []v1.Endpoints{}
-	if sc.enpointsEnabled {
-		endpoints, err = sc.GetAPIClient().GetEndpoints()
-		if err != nil {
-			return err
-		}
-	}
-
-	serviceEndpointIdentifiers := make(map[string][]EndpointID, 0)
-
-	// Get all the endpoints for the Service
-	for _, endpoint := range endpoints {
-		serviceID := buildServiceID(endpoint.Namespace, endpoint.Name)
-		for _, subset := range endpoint.Subsets {
-			for _, address := range subset.Addresses {
-				for _, port := range subset.Ports {
-					endpointID := EndpointID{
-						URL: fmt.Sprintf("%s:%d", address.IP, port.Port),
-					}
-
-					// check if the target reference is populated, so we can create relations
-					if address.TargetRef != nil {
-						switch kind := address.TargetRef.Kind; kind {
-						// add endpoint url as identifier, will be used for service -> pod relation
-						case "Pod":
-							if address.TargetRef.Namespace != "" {
-								endpointID.RefExternalID = sc.buildPodExternalID(address.TargetRef.Namespace, address.TargetRef.Name)
-							} else {
-								endpointID.RefExternalID = sc.buildPodExternalID(endpoint.Namespace, address.TargetRef.Name)
-							}
-						// ignore different Kind's for now, create no relation
-						default:
-						}
-					}
-
-					serviceEndpointIdentifiers[serviceID] = append(serviceEndpointIdentifiers[serviceID], endpointID)
-				}
-			}
-		}
 	}
 
 	serviceMap := make(map[string][]string)
@@ -118,26 +75,10 @@ func (sc *ServiceCollector) CollectorFunction() error {
 		// First ensure we publish all components, else the test becomes complex
 		sc.SubmitRelation(sc.namespaceToServiceStackStateRelation(sc.buildNamespaceExternalID(service.Namespace), component.ExternalID))
 
-		publishedPodRelations := make(map[string]string, 0)
-		for _, endpoint := range serviceEndpointIdentifiers[serviceID] {
-			// create the relation between the service and the pod
-			podExternalID := endpoint.RefExternalID
-			if podExternalID != "" {
-				relationExternalID := fmt.Sprintf("%s->%s", component.ExternalID, podExternalID)
-				_, ok := publishedPodRelations[relationExternalID]
-				if !ok {
-					relation := sc.serviceToPodStackStateRelation(component.ExternalID, podExternalID)
-
-					sc.SubmitRelation(relation)
-
-					publishedPodRelations[relationExternalID] = relationExternalID
-				}
-			} else {
-				sc.EndpointCorrChan <- &ServiceEndpointCorrelation{
-					ServiceExternalID: component.ExternalID,
-					Endpoint:          endpoint,
-				}
-			}
+		sc.EndpointCorrChan <- &ServiceEndpointCorrelation{
+			ServiceExternalID: component.ExternalID,
+			Namespace:         service.Namespace,
+			LabelSelector:     service.Spec.Selector,
 		}
 
 		serviceMap[serviceID] = append(serviceMap[serviceID], component.ExternalID)
