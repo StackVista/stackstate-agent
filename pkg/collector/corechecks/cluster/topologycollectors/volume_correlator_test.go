@@ -285,7 +285,7 @@ func executeVolumeCorrelation(
 		for range podCorrChannel {
 		}
 	}()
-	
+
 	containerCorrChannel := make(chan *ContainerCorrelation)
 	volumeCorrChannel := make(chan *VolumeCorrelation)
 	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, relationChannel, false, false)
