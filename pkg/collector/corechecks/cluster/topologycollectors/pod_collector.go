@@ -15,7 +15,7 @@ import (
 type PodCollector struct {
 	ContainerCorrChan chan<- *ContainerCorrelation
 	VolumeCorrChan    chan<- *VolumeCorrelation
-	PodCorrChan       chan *PodEndpointCorrelation
+	PodCorrChan       chan *PodLabelCorrelation
 	ClusterTopologyCollector
 }
 
@@ -29,7 +29,7 @@ type ContainerPort struct {
 func NewPodCollector(
 	containerCorrChannel chan<- *ContainerCorrelation,
 	volumeCorrChannel chan<- *VolumeCorrelation,
-	podCorrChannel chan *PodEndpointCorrelation,
+	podCorrChannel chan *PodLabelCorrelation,
 	clusterTopologyCollector ClusterTopologyCollector,
 ) ClusterTopologyCollector {
 
@@ -108,15 +108,13 @@ func (pc *PodCollector) CollectorFunction() error {
 			pc.SubmitRelation(pc.namespaceToPodStackStateRelation(pc.buildNamespaceExternalID(pod.Namespace), component.ExternalID))
 		}
 
-		{
-			podEndpointCorrelation := &PodEndpointCorrelation{
-				Labels:       pod.Labels,
-				PodNamespace: pod.Namespace,
-				PodName:      pod.Name,
-			}
-			log.Debugf("publishing endpoint correlation for Pod: %v", podEndpointCorrelation)
-			pc.PodCorrChan <- podEndpointCorrelation
+		podLabelCorrelation := &PodLabelCorrelation{
+			Labels:       pod.Labels,
+			PodNamespace: pod.Namespace,
+			PodName:      pod.Name,
 		}
+		log.Debugf("publishing label correlation for Pod: %v", podLabelCorrelation)
+		pc.PodCorrChan <- podLabelCorrelation
 
 		for _, c := range pod.Spec.Containers {
 			// map relations to config map

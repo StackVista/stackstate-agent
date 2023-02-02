@@ -53,7 +53,13 @@ func TestPodCollector(t *testing.T) {
 			relationChannel := make(chan *topology.Relation)
 			containerCorrelationChannel := make(chan *ContainerCorrelation)
 			volumeCorrelationChannel := make(chan *VolumeCorrelation)
-			podCorrelationChannel := make(chan *PodEndpointCorrelation)
+			podCorrelationChannel := make(chan *PodLabelCorrelation)
+
+			// Pod correlation is just a no-op sink to assure progress
+			go func() {
+				for range podCorrelationChannel {
+				}
+			}()
 
 			commonClusterCollector := NewTestCommonClusterCollector(MockPodAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled, kubernetesStatusEnabled)
 			commonClusterCollector.SetUseRelationCache(false)

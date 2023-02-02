@@ -15,7 +15,7 @@ import (
 
 // ServiceCollector implements the ClusterTopologyCollector interface.
 type ServiceCollector struct {
-	EndpointCorrChan chan<- *ServiceEndpointCorrelation
+	SelectorCorrChan chan<- *ServiceSelectorCorrelation
 	ClusterTopologyCollector
 	DNS             dns.Resolver
 	enpointsEnabled bool
@@ -29,11 +29,11 @@ type EndpointID struct {
 
 // NewServiceCollector
 func NewServiceCollector(
-	endpointCorrChannel chan *ServiceEndpointCorrelation,
+	serviceCorrChannel chan *ServiceSelectorCorrelation,
 	clusterTopologyCollector ClusterTopologyCollector,
 ) ClusterTopologyCollector {
 	return &ServiceCollector{
-		EndpointCorrChan:         endpointCorrChannel,
+		SelectorCorrChan:         serviceCorrChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 		DNS:                      dns.StandardResolver,
 	}
@@ -46,9 +46,9 @@ func (*ServiceCollector) GetName() string {
 
 // Collects and Published the Service Components
 func (sc *ServiceCollector) CollectorFunction() error {
-	// close endpoint correlation channel
+	// close seelector correlation channel
 	// it will signal service2pod correlator to proceed
-	defer close(sc.EndpointCorrChan)
+	defer close(sc.SelectorCorrChan)
 
 	services, err := sc.GetAPIClient().GetServices()
 	if err != nil {
@@ -75,7 +75,7 @@ func (sc *ServiceCollector) CollectorFunction() error {
 		// First ensure we publish all components, else the test becomes complex
 		sc.SubmitRelation(sc.namespaceToServiceStackStateRelation(sc.buildNamespaceExternalID(service.Namespace), component.ExternalID))
 
-		sc.EndpointCorrChan <- &ServiceEndpointCorrelation{
+		sc.SelectorCorrChan <- &ServiceSelectorCorrelation{
 			ServiceExternalID: component.ExternalID,
 			Namespace:         service.Namespace,
 			LabelSelector:     service.Spec.Selector,

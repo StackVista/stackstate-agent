@@ -72,8 +72,8 @@ func TestService2PodCorrelator(t *testing.T) {
 		// these are the most important in our test case
 		simpleRelation(expectedSvcID, expectedPod1ID, "exposes"),
 		simpleRelation(expectedSvcID, expectedPod2ID, "exposes"),
-		// no relation to pod3 - it's not mentioned in the endpoints and has different port
-		// no relation to pod4 - it's mentioned in the endpoints, but has different port
+		// no relation to pod3 - the labels do not match
+		// no relation to pod4 - the labels do not match
 	}
 
 	assert.EqualValues(t, expectedComponents, components)
@@ -184,8 +184,8 @@ func executeCorrelation(
 		services: services, pods: pods,
 	}
 
-	podCorrChannel := make(chan *PodEndpointCorrelation)
-	serviceCorrChannel := make(chan *ServiceEndpointCorrelation)
+	podCorrChannel := make(chan *PodLabelCorrelation)
+	serviceCorrChannel := make(chan *ServiceSelectorCorrelation)
 	containerCorrChannel := make(chan *ContainerCorrelation)
 	volumeCorrChannel := make(chan *VolumeCorrelation)
 	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, relationChannel, false, false)

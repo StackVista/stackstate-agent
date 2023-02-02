@@ -9,20 +9,20 @@ import (
 
 // Service2PodCorrelator
 type Service2PodCorrelator struct {
-	PodCorrChan         <-chan *PodEndpointCorrelation
-	EndpointCorrChannel <-chan *ServiceEndpointCorrelation
+	PodCorrChan         <-chan *PodLabelCorrelation
+	SelectorCorrChannel <-chan *ServiceSelectorCorrelation
 	ClusterTopologyCorrelator
 }
 
-// PodEndpointCorrelation an endpoint served by a pod
-type PodEndpointCorrelation struct {
+// PodLabelCorrelation labels for a pod
+type PodLabelCorrelation struct {
 	Labels       map[string]string
 	PodNamespace string
 	PodName      string
 }
 
-// ServiceEndpointCorrelation an underlying endpoint for a service
-type ServiceEndpointCorrelation struct {
+// ServiceSelectorCorrelation the selector for a service
+type ServiceSelectorCorrelation struct {
 	ServiceExternalID string
 	Namespace         string
 	// Only labelMatchers, no labelExpressions for service selection
@@ -32,13 +32,13 @@ type ServiceEndpointCorrelation struct {
 // NewService2PodCorrelator creates correlator creates relation from service to pod
 // in case where service points to kubernetes host and pod is exposed within the host's network
 func NewService2PodCorrelator(
-	podCorrChannel chan *PodEndpointCorrelation,
-	serviceCorrChannel chan *ServiceEndpointCorrelation,
+	podCorrChannel chan *PodLabelCorrelation,
+	serviceCorrChannel chan *ServiceSelectorCorrelation,
 	clusterTopologyCorrelator ClusterTopologyCorrelator,
 ) ClusterTopologyCorrelator {
 	return &Service2PodCorrelator{
 		PodCorrChan:               podCorrChannel,
-		EndpointCorrChannel:       serviceCorrChannel,
+		SelectorCorrChannel:       serviceCorrChannel,
 		ClusterTopologyCorrelator: clusterTopologyCorrelator,
 	}
 }
@@ -64,27 +64,26 @@ func podSelectorMatchesPodLabels(podSelector map[string]string, podLabels map[st
 	return true
 }
 
-// CollectorFunction collects all endpoints exposed by pods within host network
-// then it collects all unmatched endpoints,
-// and then it creates corresponding relations
+// CollectorFunction collects all pods with namespace and labels,
+// then it goes through all services, selecting which service connects to which pod.
 func (crl *Service2PodCorrelator) CorrelateFunction() error {
 
 	// Services * Pods complexity, per namespace. We can optimize later, but performance should be ok for real world scenarios.
 	// Label selectors for services do not cross namespace boundaries
-	pods := map[string]([]*PodEndpointCorrelation){}
+	pods := map[string]([]*PodLabelCorrelation){}
 	for podCorr := range crl.PodCorrChan {
 		if podList, found := pods[podCorr.PodNamespace]; found {
 			podList = append(podList, podCorr)
 			pods[podCorr.PodNamespace] = podList
 		} else {
-			podList := make([]*PodEndpointCorrelation, 0)
+			podList := make([]*PodLabelCorrelation, 0)
 			podList = append(podList, podCorr)
 			pods[podCorr.PodNamespace] = podList
 		}
 	}
 
-	// now for every endpoint we are trying to find a pod serving it
-	for svcCorr := range crl.EndpointCorrChannel {
+	// now for every service we are trying to find a pods serving it
+	for svcCorr := range crl.SelectorCorrChannel {
 		serviceID := svcCorr.ServiceExternalID
 
 		if namespacePods, found := pods[svcCorr.Namespace]; found {

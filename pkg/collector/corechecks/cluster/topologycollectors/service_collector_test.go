@@ -32,7 +32,7 @@ func TestServiceCollector(t *testing.T) {
 		for _, kubernetesStatusEnabled := range []bool{false, true} {
 			for testCaseNo, tc := range serviceCollectorTestCases(sourcePropertiesEnabled, kubernetesStatusEnabled, creationTimeFormatted) {
 				t.Run(serviceCollectorTestCaseName(tc.testCase, sourcePropertiesEnabled, kubernetesStatusEnabled), func(t *testing.T) {
-					svcCorrelationChannel := make(chan *ServiceEndpointCorrelation)
+					svcCorrelationChannel := make(chan *ServiceSelectorCorrelation)
 					componentChannel := make(chan *topology.Component)
 					relationChannel := make(chan *topology.Relation)
 					collectorChannel := make(chan bool)
@@ -341,7 +341,7 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 			},
 		},
 	}
-	
+
 	return []serviceCollectorTestCase{
 		testCase1,
 		{
@@ -1100,60 +1100,6 @@ func (m MockServiceAPICollectorClient) GetServices() ([]coreV1.Service, error) {
 
 func (m MockServiceAPICollectorClient) GetEndpoints() ([]coreV1.Endpoints, error) {
 	endpoints := make([]coreV1.Endpoints, 0)
-	// endpoints for test case 1
-	endpoints = append(endpoints, coreV1.Endpoints{
-		TypeMeta: v1.TypeMeta{
-			Kind: "",
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:              "test-service-1",
-			CreationTimestamp: creationTime,
-			Namespace:         "test-namespace",
-			Labels: map[string]string{
-				"test": "label",
-			},
-			UID:          types.UID("test-service-1"),
-			GenerateName: "",
-		},
-		Subsets: []coreV1.EndpointSubset{
-			{
-				Addresses: []coreV1.EndpointAddress{
-					{IP: "10.100.200.1", TargetRef: &coreV1.ObjectReference{Kind: "Pod", Name: "some-pod-name", Namespace: "pod-namespace"}},
-				},
-				Ports: []coreV1.EndpointPort{
-					{Name: "", Port: int32(81)},
-				},
-			},
-		},
-	})
-
-	// endpoints for test case 6
-	endpoints = append(endpoints, coreV1.Endpoints{
-		TypeMeta: v1.TypeMeta{
-			Kind: "",
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:              "test-service-6",
-			CreationTimestamp: creationTime,
-			Namespace:         "test-namespace",
-			Labels: map[string]string{
-				"test": "label",
-			},
-			UID:          "test-service-6",
-			GenerateName: "",
-		},
-		Subsets: []coreV1.EndpointSubset{
-			{
-				Addresses: []coreV1.EndpointAddress{
-					{IP: "10.100.200.2", TargetRef: &coreV1.ObjectReference{Kind: "Pod", Name: "some-pod-name", Namespace: "pod-namespace"}},
-				},
-				Ports: []coreV1.EndpointPort{
-					{Name: "Endpoint Port", Port: int32(85)},
-					{Name: "Endpoint NodePort", Port: int32(10205)},
-				},
-			},
-		},
-	})
 
 	return endpoints, nil
 }

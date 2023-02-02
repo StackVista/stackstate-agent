@@ -140,8 +140,8 @@ func (t *TopologyCheck) Run() error {
 	nodeIdentifierCorrelationChannel := make(chan *collectors.NodeIdentifierCorrelation)
 	containerCorrelationChannel := make(chan *collectors.ContainerCorrelation)
 	volumeCorrelationChannel := make(chan *collectors.VolumeCorrelation)
-	podCorrelationChannel := make(chan *collectors.PodEndpointCorrelation)
-	endpointCorrelationChannel := make(chan *collectors.ServiceEndpointCorrelation)
+	podCorrelationChannel := make(chan *collectors.PodLabelCorrelation)
+	endpointCorrelationChannel := make(chan *collectors.ServiceSelectorCorrelation)
 
 	// make a channel that is responsible for publishing components and relations
 	componentChannel := make(chan *topology.Component)
