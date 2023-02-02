@@ -30,7 +30,6 @@ var relationID int
 var optionalRules = []string{
 	"namespaces+get,list,watch",
 	"configmaps+list,watch", // get is a required permission
-	"endpoints+get,list,watch",
 	"persistentvolumeclaims+get,list,watch",
 	"persistentvolumes+get,list,watch",
 	"secrets+get,list,watch",
