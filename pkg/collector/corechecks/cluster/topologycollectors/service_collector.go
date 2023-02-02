@@ -17,8 +17,7 @@ import (
 type ServiceCollector struct {
 	SelectorCorrChan chan<- *ServiceSelectorCorrelation
 	ClusterTopologyCollector
-	DNS             dns.Resolver
-	enpointsEnabled bool
+	DNS dns.Resolver
 }
 
 // EndpointID contains the definition of a cluster ip
@@ -262,17 +261,6 @@ func (sc *ServiceCollector) serviceToExternalServiceComponent(service v1.Service
 	log.Tracef("Created StackState external-service component %s: %v", externalID, component.JSONString())
 
 	return component
-}
-
-// Creates a StackState relation from a Kubernetes / OpenShift Service to Pod
-func (sc *ServiceCollector) serviceToPodStackStateRelation(serviceExternalID, podExternalID string) *topology.Relation {
-	log.Tracef("Mapping kubernetes pod to service relation: %s -> %s", podExternalID, serviceExternalID)
-
-	relation := sc.CreateRelation(serviceExternalID, podExternalID, "exposes")
-
-	log.Tracef("Created StackState service -> pod relation %s->%s", relation.SourceID, relation.TargetID)
-
-	return relation
 }
 
 // Creates a StackState relation from a Kubernetes / OpenShift Service to Namespace relation
