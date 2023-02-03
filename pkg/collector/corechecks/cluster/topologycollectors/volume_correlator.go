@@ -224,17 +224,39 @@ func (vc *VolumeCorrelator) containerToVolumeClaimStackStateRelation(containerEx
 	return relation
 }
 
+// K8sVolume is a wrapper around v1.Volume to be used when building up source properties for the component
+type K8sVolume struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	v1.Volume         `json:"volume,omitempty" protobuf:"bytes,2,opt,name=volume"`
+}
+
+// String defers to the Volume.String function
+func (k *K8sVolume) String() string {
+	return k.Volume.String()
+}
+
+// Reset defers to the Volume.Reset function
+func (k *K8sVolume) Reset() {
+	k.Volume.Reset()
+}
+
+// ProtoMessage defers to the Volume.ProtoMessage function
+func (k *K8sVolume) ProtoMessage() {
+	k.Volume.ProtoMessage()
+}
+
 func (vc *VolumeCorrelator) CreateStackStateVolumeSourceComponent(pod PodIdentifier, volume v1.Volume, externalID string, identifiers []string, addTags map[string]string) (*VolumeComponentsToCreate, error) {
 
-	tags := vc.initTags(metav1.ObjectMeta{Namespace: pod.Namespace}, metav1.TypeMeta{Kind: "volume"})
+	tags := vc.initTags(metav1.ObjectMeta{Namespace: pod.Namespace}, metav1.TypeMeta{Kind: "Volume"})
 	for k, v := range addTags {
 		tags[k] = v
 	}
 
 	data := map[string]interface{}{
-		"name":   volume.Name,
-		"source": volume.VolumeSource,
-		"tags":   tags,
+		"name": volume.Name,
+		"tags": tags,
 	}
 
 	if identifiers != nil {
@@ -245,6 +267,25 @@ func (vc *VolumeCorrelator) CreateStackStateVolumeSourceComponent(pod PodIdentif
 		ExternalID: externalID,
 		Type:       topology.Type{Name: "volume"},
 		Data:       data,
+	}
+
+	if vc.IsSourcePropertiesFeatureEnabled() {
+		var sourceProperties map[string]interface{}
+
+		k8sVolume := &K8sVolume{
+			TypeMeta:   metav1.TypeMeta{Kind: "Volume"},
+			ObjectMeta: metav1.ObjectMeta{Namespace: pod.Namespace},
+			Volume:     volume,
+		}
+
+		if vc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(k8sVolume)
+		} else {
+			sourceProperties = makeSourceProperties(k8sVolume)
+		}
+		component.SourceProperties = sourceProperties
+	} else {
+		component.Data.PutNonEmpty("source", volume.VolumeSource)
 	}
 
 	log.Tracef("Created StackState volume component %s: %v", externalID, component.JSONString())
