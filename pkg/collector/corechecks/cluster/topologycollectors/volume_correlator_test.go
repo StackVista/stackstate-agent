@@ -636,7 +636,7 @@ func TestVolumeCorrelator(t *testing.T) {
 						},
 					},
 				),
-				volumeComponent(namespace, pod4Name, volumeName, "empty-dir", nil,
+				volumeComponent(namespace, pod4Name, volumeName, "empty-dir", someTimestampFormatted, nil,
 					map[string]string{"kind": "empty-dir"},
 					volumeSource,
 					sourcePropertiesEnabled, kubernetesStatusEnabled),
@@ -893,7 +893,7 @@ func pvc(name string) coreV1.PersistentVolumeClaim {
 	}
 }
 
-func volumeComponent(namespace, podName, volumeName, volumeType string, identifiers []string, extraTags map[string]string,
+func volumeComponent(namespace, podName, volumeName, volumeType, someTimestampFormatted string, identifiers []string, extraTags map[string]string,
 	volumeSource coreV1.VolumeSource, sourcePropertiesEnabled, kubernetesStatusEnabled bool) *topology.Component {
 	tags := map[string]string{
 		"cluster-name":   "test-cluster-name",
@@ -915,7 +915,27 @@ func volumeComponent(namespace, podName, volumeName, volumeType string, identifi
 
 	if sourcePropertiesEnabled {
 		if kubernetesStatusEnabled {
-			return &topology.Component{}
+			return &topology.Component{
+				ExternalID: fmt.Sprintf("urn:kubernetes:/test-cluster-name:%s:volume/%s/%s/%s", volumeType, namespace, podName, volumeName),
+				Type:       topology.Type{Name: "volume"},
+				Data:       data,
+				SourceProperties: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"name":              "volume",
+						"creationTimestamp": someTimestampFormatted,
+						"namespace":         "default",
+					},
+					"volume": map[string]interface{}{
+						"name": "volume",
+						"volumeSource": map[string]interface{}{
+							"emptyDir": map[string]interface{}{
+								"medium":    "Memory",
+								"sizeLimit": "10",
+							},
+						},
+					},
+				},
+			}
 		}
 		return &topology.Component{
 			ExternalID: fmt.Sprintf("urn:kubernetes:/test-cluster-name:%s:volume/%s/%s/%s", volumeType, namespace, podName, volumeName),
@@ -923,7 +943,8 @@ func volumeComponent(namespace, podName, volumeName, volumeType string, identifi
 			Data:       data,
 			SourceProperties: map[string]interface{}{
 				"metadata": map[string]interface{}{
-					"creationTimestamp": nil,
+					"name":              "volume",
+					"creationTimestamp": someTimestampFormatted,
 					"namespace":         "default",
 				},
 				"volume": map[string]interface{}{

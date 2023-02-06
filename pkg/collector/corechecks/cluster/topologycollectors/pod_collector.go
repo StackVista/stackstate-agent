@@ -151,7 +151,13 @@ func (pc *PodCollector) CollectorFunction() error {
 		// Send the volume correlation
 		if len(pod.Spec.Volumes) > 0 {
 			volumeCorrelation := &VolumeCorrelation{
-				Pod:        PodIdentifier{ExternalID: component.ExternalID, Namespace: pod.Namespace, Name: pod.Name, NodeName: pod.Spec.NodeName},
+				Pod: PodIdentifier{
+					ExternalID:   component.ExternalID,
+					Namespace:    pod.Namespace,
+					Name:         pod.Name,
+					NodeName:     pod.Spec.NodeName,
+					CreationTime: pod.CreationTimestamp,
+				},
 				Volumes:    pod.Spec.Volumes,
 				Containers: pod.Spec.Containers,
 			}

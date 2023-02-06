@@ -22,10 +22,11 @@ type VolumeCreator interface {
 
 // PodIdentifier resembles the identifying information of the Pod which needs to be correlated
 type PodIdentifier struct {
-	ExternalID string
-	Namespace  string
-	Name       string
-	NodeName   string
+	ExternalID   string
+	Namespace    string
+	Name         string
+	NodeName     string
+	CreationTime metav1.Time
 }
 
 // VolumeCorrelation is the transfer object which is used to correlate a Pod and its Containers with the Volumes they use
@@ -224,29 +225,6 @@ func (vc *VolumeCorrelator) containerToVolumeClaimStackStateRelation(containerEx
 	return relation
 }
 
-// K8sVolume is a wrapper around v1.Volume to be used when building up source properties for the component
-type K8sVolume struct {
-	metav1.TypeMeta `json:",inline"`
-	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
-	v1.Volume         `json:"volume,omitempty" protobuf:"bytes,2,opt,name=volume"`
-}
-
-// String defers to the Volume.String function
-func (k *K8sVolume) String() string {
-	return k.Volume.String()
-}
-
-// Reset defers to the Volume.Reset function
-func (k *K8sVolume) Reset() {
-	k.Volume.Reset()
-}
-
-// ProtoMessage defers to the Volume.ProtoMessage function
-func (k *K8sVolume) ProtoMessage() {
-	k.Volume.ProtoMessage()
-}
-
 func (vc *VolumeCorrelator) CreateStackStateVolumeSourceComponent(pod PodIdentifier, volume v1.Volume, externalID string, identifiers []string, addTags map[string]string) (*VolumeComponentsToCreate, error) {
 
 	tags := vc.initTags(metav1.ObjectMeta{Namespace: pod.Namespace}, metav1.TypeMeta{Kind: "Volume"})
@@ -273,9 +251,13 @@ func (vc *VolumeCorrelator) CreateStackStateVolumeSourceComponent(pod PodIdentif
 		var sourceProperties map[string]interface{}
 
 		k8sVolume := &K8sVolume{
-			TypeMeta:   metav1.TypeMeta{Kind: "Volume"},
-			ObjectMeta: metav1.ObjectMeta{Namespace: pod.Namespace},
-			Volume:     volume,
+			TypeMeta: metav1.TypeMeta{Kind: "Volume"},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              volume.Name,
+				Namespace:         pod.Namespace,
+				CreationTimestamp: pod.CreationTime,
+			},
+			Volume: volume,
 		}
 
 		if vc.IsExposeKubernetesStatusEnabled() {
