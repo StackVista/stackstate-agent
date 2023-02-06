@@ -341,7 +341,10 @@ func (k *KSMCheck) Cancel() {
 // processMetrics attaches tags and forwards metrics to the aggregator
 func (k *KSMCheck) processMetrics(sender aggregator.Sender, metrics map[string][]ksmstore.DDMetricsFam, labelJoiner *labelJoiner) {
 	for _, metricsList := range metrics {
-		for _, metricFamily := range metricsList {
+		// Create a new aggregated metric from all the reason metrics
+		aggregatedMetricList := aggregateStatusReasonMetrics(metricsList)
+
+		for _, metricFamily := range aggregatedMetricList {
 			// First check for aggregator, because the check use _labels metrics to aggregate values.
 			if aggregator, found := metricAggregators[metricFamily.Name]; found {
 				for _, m := range metricFamily.ListMetrics {
@@ -350,6 +353,7 @@ func (k *KSMCheck) processMetrics(sender aggregator.Sender, metrics map[string][
 				// Some metrics can be aggregated and consumed as-is or by a transformer.
 				// So, let’s continue the processing.
 			}
+
 			if transform, found := metricTransformers[metricFamily.Name]; found {
 				lMapperOverride := labelsMapperOverride(metricFamily.Name)
 				for _, m := range metricFamily.ListMetrics {
@@ -358,6 +362,7 @@ func (k *KSMCheck) processMetrics(sender aggregator.Sender, metrics map[string][
 				}
 				continue
 			}
+
 			if ddname, found := metricNamesMapper[metricFamily.Name]; found {
 				lMapperOverride := labelsMapperOverride(metricFamily.Name)
 				for _, m := range metricFamily.ListMetrics {

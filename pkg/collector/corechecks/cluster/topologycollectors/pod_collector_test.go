@@ -53,7 +53,13 @@ func TestPodCollector(t *testing.T) {
 			relationChannel := make(chan *topology.Relation)
 			containerCorrelationChannel := make(chan *ContainerCorrelation)
 			volumeCorrelationChannel := make(chan *VolumeCorrelation)
-			podCorrelationChannel := make(chan *PodEndpointCorrelation)
+			podCorrelationChannel := make(chan *PodLabelCorrelation)
+
+			// Pod correlation is just a no-op sink to assure progress
+			go func() {
+				for range podCorrelationChannel {
+				}
+			}()
 
 			commonClusterCollector := NewTestCommonClusterCollector(MockPodAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled, kubernetesStatusEnabled)
 			commonClusterCollector.SetUseRelationCache(false)
@@ -88,7 +94,7 @@ func TestPodCollector(t *testing.T) {
 											"namespace":      "test-namespace",
 										},
 										"uid":           types.UID("test-pod-1"),
-										"identifiers":   []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-1:10.0.0.1"},
+										"identifiers":   []string{},
 										"restartPolicy": coreV1.RestartPolicyAlways,
 										"status": coreV1.PodStatus{
 											Phase:     coreV1.PodRunning,
@@ -109,7 +115,7 @@ func TestPodCollector(t *testing.T) {
 											"component-type": "kubernetes-pod",
 											"namespace":      "test-namespace",
 										},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-1:10.0.0.1"},
+										"identifiers": []string{},
 										"status": map[string]interface{}{
 											"phase": "Running",
 										},
@@ -142,7 +148,7 @@ func TestPodCollector(t *testing.T) {
 											"cluster-type":   "kubernetes",
 											"component-type": "kubernetes-pod",
 											"namespace":      "test-namespace"},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-1:10.0.0.1"},
+										"identifiers": []string{},
 										"status": map[string]interface{}{
 											"phase": "Running",
 										},
@@ -197,7 +203,7 @@ func TestPodCollector(t *testing.T) {
 											"service-account": "some-service-account-name",
 										},
 										"uid":           types.UID("test-pod-2"),
-										"identifiers":   []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-2:10.0.0.2"},
+										"identifiers":   []string{},
 										"restartPolicy": coreV1.RestartPolicyAlways,
 										"generateName":  "some-specified-generation",
 										"status": coreV1.PodStatus{
@@ -223,7 +229,7 @@ func TestPodCollector(t *testing.T) {
 											"namespace":       "test-namespace",
 											"service-account": "some-service-account-name",
 										},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-2:10.0.0.2"},
+										"identifiers": []string{},
 										"status": map[string]interface{}{
 											"phase": "Running",
 										},
@@ -265,7 +271,7 @@ func TestPodCollector(t *testing.T) {
 											"namespace":       "test-namespace",
 											"service-account": "some-service-account-name",
 										},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-2:10.0.0.2"},
+										"identifiers": []string{},
 										"status": map[string]interface{}{
 											"phase": "Running",
 										},
@@ -327,7 +333,7 @@ func TestPodCollector(t *testing.T) {
 											"namespace":      "test-namespace",
 										},
 										"uid":           types.UID("test-pod-3"),
-										"identifiers":   []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-3:10.0.0.1"},
+										"identifiers":   []string{},
 										"restartPolicy": coreV1.RestartPolicyAlways,
 										"status": coreV1.PodStatus{
 											Phase:     coreV1.PodRunning,
@@ -347,7 +353,7 @@ func TestPodCollector(t *testing.T) {
 											"component-type": "kubernetes-pod",
 											"namespace":      "test-namespace",
 										},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-3:10.0.0.1"},
+										"identifiers": []string{},
 										"status": map[string]interface{}{
 											"phase": "Running",
 										},
@@ -388,7 +394,7 @@ func TestPodCollector(t *testing.T) {
 											"component-type": "kubernetes-pod",
 											"namespace":      "test-namespace",
 										},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-3:10.0.0.1"},
+										"identifiers": []string{},
 										"status": map[string]interface{}{
 											"phase": "Running",
 										},
@@ -507,7 +513,7 @@ func TestPodCollector(t *testing.T) {
 											"namespace":      "test-namespace",
 										},
 										"uid":           types.UID("test-pod-4"),
-										"identifiers":   []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-4:10.0.0.1"},
+										"identifiers":   []string{},
 										"restartPolicy": coreV1.RestartPolicyAlways,
 										"status": coreV1.PodStatus{
 											Phase:     coreV1.PodRunning,
@@ -528,7 +534,7 @@ func TestPodCollector(t *testing.T) {
 											"component-type": "kubernetes-pod",
 											"namespace":      "test-namespace",
 										},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-4:10.0.0.1"},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -589,7 +595,7 @@ func TestPodCollector(t *testing.T) {
 											"component-type": "kubernetes-pod",
 											"namespace":      "test-namespace",
 										},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-4:10.0.0.1"},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -677,7 +683,7 @@ func TestPodCollector(t *testing.T) {
 											"namespace":      "test-namespace",
 										},
 										"uid":           types.UID("test-pod-5"),
-										"identifiers":   []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-5:10.0.0.1"},
+										"identifiers":   []string{},
 										"restartPolicy": coreV1.RestartPolicyAlways,
 										"status": coreV1.PodStatus{
 											Phase:     coreV1.PodRunning,
@@ -698,7 +704,7 @@ func TestPodCollector(t *testing.T) {
 											"component-type": "kubernetes-pod",
 											"namespace":      "test-namespace",
 										},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-5:10.0.0.1"},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -748,7 +754,7 @@ func TestPodCollector(t *testing.T) {
 											"component-type": "kubernetes-pod",
 											"namespace":      "test-namespace",
 										},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-5:10.0.0.1"},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -842,7 +848,7 @@ func TestPodCollector(t *testing.T) {
 											"namespace":      "test-namespace",
 										},
 										"uid":           types.UID("test-pod-6"),
-										"identifiers":   []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-6:10.0.0.1"},
+										"identifiers":   []string{},
 										"restartPolicy": coreV1.RestartPolicyAlways,
 										"status": coreV1.PodStatus{
 											Phase:     coreV1.PodRunning,
@@ -863,7 +869,7 @@ func TestPodCollector(t *testing.T) {
 											"component-type": "kubernetes-pod",
 											"namespace":      "test-namespace",
 										},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-6:10.0.0.1"},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -914,7 +920,7 @@ func TestPodCollector(t *testing.T) {
 											"component-type": "kubernetes-pod",
 											"namespace":      "test-namespace",
 										},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-6:10.0.0.1"},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -1008,7 +1014,7 @@ func TestPodCollector(t *testing.T) {
 											"namespace":      "test-namespace",
 										},
 										"uid":           types.UID("test-pod-7"),
-										"identifiers":   []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-7:10.0.0.1"},
+										"identifiers":   []string{},
 										"restartPolicy": coreV1.RestartPolicyAlways,
 										"status": coreV1.PodStatus{
 											Phase:     coreV1.PodRunning,
@@ -1029,7 +1035,7 @@ func TestPodCollector(t *testing.T) {
 											"component-type": "kubernetes-pod",
 											"namespace":      "test-namespace",
 										},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-7:10.0.0.1"},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -1076,7 +1082,7 @@ func TestPodCollector(t *testing.T) {
 											"component-type": "kubernetes-pod",
 											"namespace":      "test-namespace",
 										},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-7:10.0.0.1"},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -1173,7 +1179,7 @@ func TestPodCollector(t *testing.T) {
 											"namespace":      "test-namespace",
 										},
 										"uid":           types.UID("test-pod-8"),
-										"identifiers":   []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-8:10.0.0.1"},
+										"identifiers":   []string{},
 										"restartPolicy": coreV1.RestartPolicyAlways,
 										"status": coreV1.PodStatus{
 											Phase:     coreV1.PodSucceeded,
@@ -1194,7 +1200,7 @@ func TestPodCollector(t *testing.T) {
 											"component-type": "kubernetes-pod",
 											"namespace":      "test-namespace",
 										},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-8:10.0.0.1"},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Succeeded"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -1228,7 +1234,7 @@ func TestPodCollector(t *testing.T) {
 											"component-type": "kubernetes-pod",
 											"namespace":      "test-namespace",
 										},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-8:10.0.0.1"},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Succeeded"},
 									},
 									SourceProperties: map[string]interface{}{

@@ -984,7 +984,13 @@ func executeVolumeCorrelation(
 		pods: pods, pvcs: pvcs,
 	}
 
-	podCorrChannel := make(chan *PodEndpointCorrelation)
+	podCorrChannel := make(chan *PodLabelCorrelation)
+	// Pod correlation is just a no-op sink to assure progress
+	go func() {
+		for range podCorrChannel {
+		}
+	}()
+
 	containerCorrChannel := make(chan *ContainerCorrelation)
 	volumeCorrChannel := make(chan *VolumeCorrelation)
 	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, relationChannel, sourcePropertiesEnabled, kubernetesStatusEnabled)

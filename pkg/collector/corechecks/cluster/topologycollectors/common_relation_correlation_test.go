@@ -409,13 +409,19 @@ func executeRelationCorrelation(
 		pods: pods, configMaps: configMaps, secrets: secrets, nodes: nodes,
 	}
 
-	podCorrChannel := make(chan *PodEndpointCorrelation)
+	podCorrChannel := make(chan *PodLabelCorrelation)
 	containerCorrChannel := make(chan *ContainerCorrelation)
 	nodeIdentifierCorrChan := make(chan *NodeIdentifierCorrelation)
 	volumeCorrChannel := make(chan *VolumeCorrelation)
 	collectorsDoneChan := make(chan bool)
 	correlatorsDoneChan := make(chan bool)
 	relationCorrelationDoneChan := make(chan bool)
+
+	// Pod correlation is just a no-op sink to assure progress
+	go func() {
+		for range podCorrChannel {
+		}
+	}()
 
 	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, relationChannel, false, false)
 	podCollector := NewPodCollector(
