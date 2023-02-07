@@ -61,10 +61,17 @@ func TestNodeCollector(t *testing.T) {
 										Type:       topology.Type{Name: "node"},
 										Data: topology.Data{
 											"name":              "test-node-1",
+											"kind":              "Node",
 											"creationTimestamp": creationTime,
-											"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-											"uid":               types.UID("test-node-1"),
-											"instanceId":        "test-node-1",
+											"tags": map[string]string{
+												"test":           "label",
+												"cluster-name":   "test-cluster-name",
+												"cluster-type":   "kubernetes",
+												"component-type": "kubernetes-node",
+												"namespace":      "test-namespace",
+											},
+											"uid":        types.UID("test-node-1"),
+											"instanceId": "test-node-1",
 											"status": NodeStatus{
 												Phase: coreV1.NodeRunning,
 												NodeInfo: coreV1.NodeSystemInfo{
@@ -85,8 +92,14 @@ func TestNodeCollector(t *testing.T) {
 										ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-1",
 										Type:       topology.Type{Name: "node"},
 										Data: topology.Data{
-											"name":       "test-node-1",
-											"tags":       map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+											"name": "test-node-1",
+											"tags": map[string]string{
+												"test":           "label",
+												"cluster-name":   "test-cluster-name",
+												"cluster-type":   "kubernetes",
+												"component-type": "kubernetes-node",
+												"namespace":      "test-namespace",
+											},
 											"instanceId": "test-node-1",
 											"identifiers": []string{
 												"urn:ip:/test-cluster-name:test-node-1:10.20.01.01",
@@ -123,8 +136,14 @@ func TestNodeCollector(t *testing.T) {
 										ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-1",
 										Type:       topology.Type{Name: "node"},
 										Data: topology.Data{
-											"name":       "test-node-1",
-											"tags":       map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+											"name": "test-node-1",
+											"tags": map[string]string{
+												"test":           "label",
+												"cluster-name":   "test-cluster-name",
+												"cluster-type":   "kubernetes",
+												"component-type": "kubernetes-node",
+												"namespace":      "test-namespace",
+											},
 											"instanceId": "test-node-1",
 											"identifiers": []string{
 												"urn:ip:/test-cluster-name:test-node-1:10.20.01.01",
@@ -203,10 +222,17 @@ func TestNodeCollector(t *testing.T) {
 											Type:       topology.Type{Name: "node"},
 											Data: topology.Data{
 												"name":              "test-node-2",
+												"kind":              "Node",
 												"creationTimestamp": creationTime,
-												"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-												"uid":               types.UID("test-node-2"),
-												"instanceId":        "test-node-2",
+												"tags": map[string]string{
+													"test":           "label",
+													"cluster-name":   "test-cluster-name",
+													"cluster-type":   "kubernetes",
+													"component-type": "kubernetes-node",
+													"namespace":      "test-namespace",
+												},
+												"uid":        types.UID("test-node-2"),
+												"instanceId": "test-node-2",
 												"status": NodeStatus{
 													Phase: coreV1.NodeRunning,
 													NodeInfo: coreV1.NodeSystemInfo{
@@ -222,7 +248,6 @@ func TestNodeCollector(t *testing.T) {
 													"urn:host:/test-node-2",
 													"urn:host:/test-node-2-test-cluster-name",
 												},
-												"kind":         "some-specified-kind",
 												"generateName": "some-specified-generation",
 											},
 										},
@@ -230,8 +255,14 @@ func TestNodeCollector(t *testing.T) {
 											ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-2",
 											Type:       topology.Type{Name: "node"},
 											Data: topology.Data{
-												"name":       "test-node-2",
-												"tags":       map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+												"name": "test-node-2",
+												"tags": map[string]string{
+													"test":           "label",
+													"cluster-name":   "test-cluster-name",
+													"cluster-type":   "kubernetes",
+													"component-type": "kubernetes-node",
+													"namespace":      "test-namespace",
+												},
 												"instanceId": "test-node-2",
 												"identifiers": []string{
 													"urn:ip:/test-cluster-name:test-node-2:10.20.01.01",
@@ -270,8 +301,14 @@ func TestNodeCollector(t *testing.T) {
 											ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-2",
 											Type:       topology.Type{Name: "node"},
 											Data: topology.Data{
-												"name":       "test-node-2",
-												"tags":       map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+												"name": "test-node-2",
+												"tags": map[string]string{
+													"test":           "label",
+													"cluster-name":   "test-cluster-name",
+													"cluster-type":   "kubernetes",
+													"component-type": "kubernetes-node",
+													"namespace":      "test-namespace",
+												},
 												"instanceId": "test-node-2",
 												"identifiers": []string{
 													"urn:ip:/test-cluster-name:test-node-2:10.20.01.01",
@@ -356,9 +393,16 @@ func TestNodeCollector(t *testing.T) {
 											Type:       topology.Type{Name: "node"},
 											Data: topology.Data{
 												"name":              "test-node-3",
+												"kind":              "Node",
 												"creationTimestamp": creationTime,
-												"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-												"uid":               types.UID("test-node-3"),
+												"tags": map[string]string{
+													"test":           "label",
+													"cluster-name":   "test-cluster-name",
+													"cluster-type":   "kubernetes",
+													"component-type": "kubernetes-node",
+													"namespace":      "test-namespace",
+												},
+												"uid": types.UID("test-node-3"),
 												"status": NodeStatus{
 													Phase: coreV1.NodeRunning,
 													NodeInfo: coreV1.NodeSystemInfo{
@@ -376,7 +420,6 @@ func TestNodeCollector(t *testing.T) {
 													"urn:host:/i-024b28584ed2e6321",
 													"urn:host:/i-024b28584ed2e6321-test-cluster-name",
 												},
-												"kind":         "some-specified-kind",
 												"generateName": "some-specified-generation",
 												"instanceId":   "i-024b28584ed2e6321",
 											},
@@ -386,7 +429,13 @@ func TestNodeCollector(t *testing.T) {
 											Type:       topology.Type{Name: "node"},
 											Data: topology.Data{
 												"name": "test-node-3",
-												"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+												"tags": map[string]string{
+													"test":           "label",
+													"cluster-name":   "test-cluster-name",
+													"cluster-type":   "kubernetes",
+													"component-type": "kubernetes-node",
+													"namespace":      "test-namespace",
+												},
 												"identifiers": []string{
 													"urn:ip:/test-cluster-name:test-node-3:10.20.01.01",
 													"urn:ip:/test-cluster-name:10.20.01.02",
@@ -430,7 +479,13 @@ func TestNodeCollector(t *testing.T) {
 											Type:       topology.Type{Name: "node"},
 											Data: topology.Data{
 												"name": "test-node-3",
-												"tags": map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+												"tags": map[string]string{
+													"test":           "label",
+													"cluster-name":   "test-cluster-name",
+													"cluster-type":   "kubernetes",
+													"component-type": "kubernetes-node",
+													"namespace":      "test-namespace",
+												},
 												"identifiers": []string{
 													"urn:ip:/test-cluster-name:test-node-3:10.20.01.01",
 													"urn:ip:/test-cluster-name:10.20.01.02",
@@ -528,7 +583,7 @@ func TestNodeCollector(t *testing.T) {
 func CreateBaseNode(id int) coreV1.Node {
 	return coreV1.Node{
 		TypeMeta: v1.TypeMeta{
-			Kind: "",
+			Kind: "Node",
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:              fmt.Sprintf("test-node-%d", id),
@@ -577,7 +632,6 @@ func (m MockNodeAPICollectorClient) GetNodes() ([]coreV1.Node, error) {
 	nodes = append(nodes, node1)
 
 	node2 := CreateBaseNode(2)
-	node2.TypeMeta.Kind = "some-specified-kind"
 	node2.ObjectMeta.GenerateName = "some-specified-generation"
 	node2.Status.Addresses = []coreV1.NodeAddress{
 		{Type: coreV1.NodeInternalIP, Address: "10.20.01.01"},
@@ -586,7 +640,6 @@ func (m MockNodeAPICollectorClient) GetNodes() ([]coreV1.Node, error) {
 	nodes = append(nodes, node2)
 
 	node3 := CreateBaseNode(3)
-	node3.TypeMeta.Kind = "some-specified-kind"
 	node3.ObjectMeta.GenerateName = "some-specified-generation"
 	node3.Spec.ProviderID = "aws:///us-east-1b/i-024b28584ed2e6321"
 	node3.Status.Addresses = []coreV1.NodeAddress{

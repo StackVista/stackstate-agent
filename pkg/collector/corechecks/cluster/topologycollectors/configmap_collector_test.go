@@ -59,9 +59,16 @@ func TestConfigMapCollector(t *testing.T) {
 						Type:       topology.Type{Name: "configmap"},
 						Data: topology.Data{
 							"name":              "test-configmap-1",
+							"kind":              "ConfigMap",
 							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-configmap-1"),
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-configmap",
+								"namespace":      "test-namespace",
+							},
+							"uid": types.UID("test-configmap-1"),
 							"data": map[string]string{
 								"key1": "value1",
 								"key2": "longersecretvalue2",
@@ -74,8 +81,14 @@ func TestConfigMapCollector(t *testing.T) {
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-1",
 						Type:       topology.Type{Name: "configmap"},
 						Data: topology.Data{
-							"name":        "test-configmap-1",
-							"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"name": "test-configmap-1",
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-configmap",
+								"namespace":      "test-namespace",
+							},
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-1"},
 						},
 						SourceProperties: map[string]interface{}{
@@ -97,8 +110,14 @@ func TestConfigMapCollector(t *testing.T) {
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-1",
 						Type:       topology.Type{Name: "configmap"},
 						Data: topology.Data{
-							"name":        "test-configmap-1",
-							"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"name": "test-configmap-1",
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-configmap",
+								"namespace":      "test-namespace",
+							},
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-1"},
 						},
 						SourceProperties: map[string]interface{}{
@@ -126,18 +145,31 @@ func TestConfigMapCollector(t *testing.T) {
 						Type:       topology.Type{Name: "configmap"},
 						Data: topology.Data{
 							"name":              "test-configmap-2",
+							"kind":              "ConfigMap",
 							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-configmap-2"),
-							"identifiers":       []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-2"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-configmap",
+								"namespace":      "test-namespace",
+							},
+							"uid":         types.UID("test-configmap-2"),
+							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-2"},
 						},
 					},
 					expectedSP: &topology.Component{
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-2",
 						Type:       topology.Type{Name: "configmap"},
 						Data: topology.Data{
-							"name":        "test-configmap-2",
-							"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"name": "test-configmap-2",
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-configmap",
+								"namespace":      "test-namespace",
+							},
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-2"},
 						},
 						SourceProperties: map[string]interface{}{
@@ -154,8 +186,13 @@ func TestConfigMapCollector(t *testing.T) {
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-2",
 						Type:       topology.Type{Name: "configmap"},
 						Data: topology.Data{
-							"name":        "test-configmap-2",
-							"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"name": "test-configmap-2",
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-configmap",
+								"namespace":      "test-namespace"},
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-2"},
 						},
 						SourceProperties: map[string]interface{}{
@@ -178,18 +215,29 @@ func TestConfigMapCollector(t *testing.T) {
 						Type:       topology.Type{Name: "configmap"},
 						Data: topology.Data{
 							"name":              "test-configmap-3",
+							"kind":              "ConfigMap",
 							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-configmap-3"),
-							"identifiers":       []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-3"},
+							"tags": map[string]string{
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-configmap",
+								"namespace":      "test-namespace",
+							},
+							"uid":         types.UID("test-configmap-3"),
+							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-3"},
 						},
 					},
 					expectedSP: &topology.Component{
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-3",
 						Type:       topology.Type{Name: "configmap"},
 						Data: topology.Data{
-							"name":        "test-configmap-3",
-							"tags":        map[string]string{"cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"name": "test-configmap-3",
+							"tags": map[string]string{
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-configmap",
+								"namespace":      "test-namespace",
+							},
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-3"},
 						},
 						SourceProperties: map[string]interface{}{
@@ -205,8 +253,13 @@ func TestConfigMapCollector(t *testing.T) {
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-3",
 						Type:       topology.Type{Name: "configmap"},
 						Data: topology.Data{
-							"name":        "test-configmap-3",
-							"tags":        map[string]string{"cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"name": "test-configmap-3",
+							"tags": map[string]string{
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-configmap",
+								"namespace":      "test-namespace",
+							},
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-3"},
 						},
 						SourceProperties: map[string]interface{}{
@@ -249,7 +302,7 @@ func (m MockConfigMapAPICollectorClient) GetConfigMaps() ([]coreV1.ConfigMap, er
 
 		configMap := coreV1.ConfigMap{
 			TypeMeta: v1.TypeMeta{
-				Kind: "",
+				Kind: "ConfigMap",
 			},
 			ObjectMeta: v1.ObjectMeta{
 				Name:              fmt.Sprintf("test-configmap-%d", i),

@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -52,7 +53,8 @@ func (cmc *ConfigMapCollector) CollectorFunction() error {
 func (cmc *ConfigMapCollector) configMapToStackStateComponent(configMap v1.ConfigMap) *topology.Component {
 	log.Tracef("Mapping ConfigMap to StackState component: %s", configMap.String())
 
-	tags := cmc.initTags(configMap.ObjectMeta)
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := cmc.initTags(configMap.ObjectMeta, metav1.TypeMeta{Kind: "ConfigMap"})
 	configMapExternalID := cmc.buildConfigMapExternalID(configMap.Namespace, configMap.Name)
 
 	component := &topology.Component{

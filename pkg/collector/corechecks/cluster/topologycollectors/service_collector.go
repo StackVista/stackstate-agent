@@ -5,6 +5,7 @@ package topologycollectors
 
 import (
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/dns"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -14,10 +15,9 @@ import (
 
 // ServiceCollector implements the ClusterTopologyCollector interface.
 type ServiceCollector struct {
-	EndpointCorrChan chan<- *ServiceEndpointCorrelation
+	SelectorCorrChan chan<- *ServiceSelectorCorrelation
 	ClusterTopologyCollector
-	DNS             dns.Resolver
-	enpointsEnabled bool
+	DNS dns.Resolver
 }
 
 // EndpointID contains the definition of a cluster ip
@@ -28,15 +28,13 @@ type EndpointID struct {
 
 // NewServiceCollector
 func NewServiceCollector(
-	endpointCorrChannel chan *ServiceEndpointCorrelation,
+	serviceCorrChannel chan *ServiceSelectorCorrelation,
 	clusterTopologyCollector ClusterTopologyCollector,
-	endpointsEnabled bool,
 ) ClusterTopologyCollector {
 	return &ServiceCollector{
-		EndpointCorrChan:         endpointCorrChannel,
+		SelectorCorrChan:         serviceCorrChannel,
 		ClusterTopologyCollector: clusterTopologyCollector,
 		DNS:                      dns.StandardResolver,
-		enpointsEnabled:          endpointsEnabled,
 	}
 }
 
@@ -47,54 +45,13 @@ func (*ServiceCollector) GetName() string {
 
 // Collects and Published the Service Components
 func (sc *ServiceCollector) CollectorFunction() error {
-	// close endpoint correlation channel
+	// close seelector correlation channel
 	// it will signal service2pod correlator to proceed
-	defer close(sc.EndpointCorrChan)
+	defer close(sc.SelectorCorrChan)
 
 	services, err := sc.GetAPIClient().GetServices()
 	if err != nil {
 		return err
-	}
-
-	endpoints := []v1.Endpoints{}
-	if sc.enpointsEnabled {
-		endpoints, err = sc.GetAPIClient().GetEndpoints()
-		if err != nil {
-			return err
-		}
-	}
-
-	serviceEndpointIdentifiers := make(map[string][]EndpointID, 0)
-
-	// Get all the endpoints for the Service
-	for _, endpoint := range endpoints {
-		serviceID := buildServiceID(endpoint.Namespace, endpoint.Name)
-		for _, subset := range endpoint.Subsets {
-			for _, address := range subset.Addresses {
-				for _, port := range subset.Ports {
-					endpointID := EndpointID{
-						URL: fmt.Sprintf("%s:%d", address.IP, port.Port),
-					}
-
-					// check if the target reference is populated, so we can create relations
-					if address.TargetRef != nil {
-						switch kind := address.TargetRef.Kind; kind {
-						// add endpoint url as identifier, will be used for service -> pod relation
-						case "Pod":
-							if address.TargetRef.Namespace != "" {
-								endpointID.RefExternalID = sc.buildPodExternalID(address.TargetRef.Namespace, address.TargetRef.Name)
-							} else {
-								endpointID.RefExternalID = sc.buildPodExternalID(endpoint.Namespace, address.TargetRef.Name)
-							}
-						// ignore different Kind's for now, create no relation
-						default:
-						}
-					}
-
-					serviceEndpointIdentifiers[serviceID] = append(serviceEndpointIdentifiers[serviceID], endpointID)
-				}
-			}
-		}
 	}
 
 	serviceMap := make(map[string][]string)
@@ -117,26 +74,10 @@ func (sc *ServiceCollector) CollectorFunction() error {
 		// First ensure we publish all components, else the test becomes complex
 		sc.SubmitRelation(sc.namespaceToServiceStackStateRelation(sc.buildNamespaceExternalID(service.Namespace), component.ExternalID))
 
-		publishedPodRelations := make(map[string]string, 0)
-		for _, endpoint := range serviceEndpointIdentifiers[serviceID] {
-			// create the relation between the service and the pod
-			podExternalID := endpoint.RefExternalID
-			if podExternalID != "" {
-				relationExternalID := fmt.Sprintf("%s->%s", component.ExternalID, podExternalID)
-				_, ok := publishedPodRelations[relationExternalID]
-				if !ok {
-					relation := sc.serviceToPodStackStateRelation(component.ExternalID, podExternalID)
-
-					sc.SubmitRelation(relation)
-
-					publishedPodRelations[relationExternalID] = relationExternalID
-				}
-			} else {
-				sc.EndpointCorrChan <- &ServiceEndpointCorrelation{
-					ServiceExternalID: component.ExternalID,
-					Endpoint:          endpoint,
-				}
-			}
+		sc.SelectorCorrChan <- &ServiceSelectorCorrelation{
+			ServiceExternalID: component.ExternalID,
+			Namespace:         service.Namespace,
+			LabelSelector:     service.Spec.Selector,
 		}
 
 		serviceMap[serviceID] = append(serviceMap[serviceID], component.ExternalID)
@@ -154,7 +95,8 @@ func (sc *ServiceCollector) serviceToStackStateComponent(service v1.Service) *to
 
 	serviceExternalID := sc.buildServiceExternalID(service.Namespace, service.Name)
 
-	tags := sc.initTags(service.ObjectMeta)
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := sc.initTags(service.ObjectMeta, metav1.TypeMeta{Kind: "Service"})
 	tags["service-type"] = string(service.Spec.Type)
 
 	if service.Spec.ClusterIP == "None" {
@@ -301,13 +243,14 @@ func (sc *ServiceCollector) serviceToExternalServiceComponent(service v1.Service
 
 	externalID := sc.GetURNBuilder().BuildComponentExternalID("external-service", service.Namespace, service.Name)
 
-	tags := sc.initTags(service.ObjectMeta)
+	tags := sc.initTags(service.ObjectMeta, metav1.TypeMeta{Kind: "ExternalService"})
 
 	component := &topology.Component{
 		ExternalID: externalID,
 		Type:       topology.Type{Name: "external-service"},
 		Data: map[string]interface{}{
 			"name":              service.Name,
+			"kind":              "ExternalService",
 			"creationTimestamp": service.CreationTimestamp,
 			"tags":              tags,
 			"identifiers":       identifiers,
@@ -318,17 +261,6 @@ func (sc *ServiceCollector) serviceToExternalServiceComponent(service v1.Service
 	log.Tracef("Created StackState external-service component %s: %v", externalID, component.JSONString())
 
 	return component
-}
-
-// Creates a StackState relation from a Kubernetes / OpenShift Service to Pod
-func (sc *ServiceCollector) serviceToPodStackStateRelation(serviceExternalID, podExternalID string) *topology.Relation {
-	log.Tracef("Mapping kubernetes pod to service relation: %s -> %s", podExternalID, serviceExternalID)
-
-	relation := sc.CreateRelation(serviceExternalID, podExternalID, "exposes")
-
-	log.Tracef("Created StackState service -> pod relation %s->%s", relation.SourceID, relation.TargetID)
-
-	return relation
 }
 
 // Creates a StackState relation from a Kubernetes / OpenShift Service to Namespace relation

@@ -86,9 +86,12 @@ func podComponent(namespace string, name string, timestamp metav1.Time) *topolog
 		},
 		Data: topology.Data{
 			"name": name,
+			"kind": "Pod",
 			"tags": map[string]string{
-				"cluster-name": "test-cluster-name",
-				"namespace":    namespace,
+				"cluster-name":   "test-cluster-name",
+				"cluster-type":   "kubernetes",
+				"component-type": "kubernetes-pod",
+				"namespace":      namespace,
 			},
 			"identifiers":       []string{},
 			"creationTimestamp": timestamp,
@@ -121,6 +124,7 @@ func podWithPersistentVolume(namespace string, name string, pvcName string, time
 			CreationTimestamp: timestamp,
 			DeletionTimestamp: &timestamp,
 		},
+		TypeMeta: metav1.TypeMeta{Kind: "Pod"},
 		Spec: coreV1.PodSpec{
 			HostNetwork: true,
 			Containers: []coreV1.Container{
@@ -160,6 +164,7 @@ func podWithDownwardAPIVolume(namespace string, name string, containerName strin
 			CreationTimestamp: timestamp,
 			DeletionTimestamp: &timestamp,
 		},
+		TypeMeta: metav1.TypeMeta{Kind: "Pod"},
 		Spec: coreV1.PodSpec{
 			HostNetwork: true,
 			Containers: []coreV1.Container{
@@ -209,6 +214,7 @@ func podWithConfigMapVolume(namespace string, name string, configMapName string,
 			CreationTimestamp: timestamp,
 			DeletionTimestamp: &timestamp,
 		},
+		TypeMeta: metav1.TypeMeta{Kind: "Pod"},
 		Spec: coreV1.PodSpec{
 			HostNetwork: true,
 			Containers: []coreV1.Container{
@@ -273,7 +279,13 @@ func executeVolumeCorrelation(
 		pods: pods, pvcs: pvcs,
 	}
 
-	podCorrChannel := make(chan *PodEndpointCorrelation)
+	podCorrChannel := make(chan *PodLabelCorrelation)
+	// Pod correlation is just a no-op sink to assure progress
+	go func() {
+		for range podCorrChannel {
+		}
+	}()
+
 	containerCorrChannel := make(chan *ContainerCorrelation)
 	volumeCorrChannel := make(chan *VolumeCorrelation)
 	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, relationChannel, false, false)

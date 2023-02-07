@@ -4,7 +4,7 @@
 package topologycollectors
 
 import (
-	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -15,7 +15,7 @@ import (
 type PodCollector struct {
 	ContainerCorrChan chan<- *ContainerCorrelation
 	VolumeCorrChan    chan<- *VolumeCorrelation
-	PodCorrChan       chan *PodEndpointCorrelation
+	PodCorrChan       chan *PodLabelCorrelation
 	ClusterTopologyCollector
 }
 
@@ -29,7 +29,7 @@ type ContainerPort struct {
 func NewPodCollector(
 	containerCorrChannel chan<- *ContainerCorrelation,
 	volumeCorrChannel chan<- *VolumeCorrelation,
-	podCorrChannel chan *PodEndpointCorrelation,
+	podCorrChannel chan *PodLabelCorrelation,
 	clusterTopologyCollector ClusterTopologyCollector,
 ) ClusterTopologyCollector {
 
@@ -108,9 +108,13 @@ func (pc *PodCollector) CollectorFunction() error {
 			pc.SubmitRelation(pc.namespaceToPodStackStateRelation(pc.buildNamespaceExternalID(pod.Namespace), component.ExternalID))
 		}
 
-		isServingInHostNetwork :=
-			pod.Spec.HostNetwork && pod.Status.Phase == v1.PodRunning &&
-				pod.Status.PodIP == pod.Status.HostIP
+		podLabelCorrelation := &PodLabelCorrelation{
+			Labels:       pod.Labels,
+			PodNamespace: pod.Namespace,
+			PodName:      pod.Name,
+		}
+		log.Debugf("publishing label correlation for Pod: %v", podLabelCorrelation)
+		pc.PodCorrChan <- podLabelCorrelation
 
 		for _, c := range pod.Spec.Containers {
 			// map relations to config map
@@ -128,21 +132,6 @@ func (pc *PodCollector) CollectorFunction() error {
 					pc.SubmitRelation(pc.podToConfigMapVarStackStateRelation(component.ExternalID, pc.buildConfigMapExternalID(pod.Namespace, env.ValueFrom.ConfigMapKeyRef.LocalObjectReference.Name)))
 				} else if env.ValueFrom != nil && env.ValueFrom.SecretKeyRef != nil {
 					pc.SubmitRelation(pc.podToSecretVarStackStateRelation(component.ExternalID, pc.buildSecretExternalID(pod.Namespace, env.ValueFrom.SecretKeyRef.LocalObjectReference.Name)))
-				}
-			}
-
-			if isServingInHostNetwork {
-				for _, port := range c.Ports {
-					if port.HostPort == 0 {
-						continue
-					}
-					podEndpointCorrelation := &PodEndpointCorrelation{
-						Endpoint:     fmt.Sprintf("%s:%d", pod.Status.HostIP, port.HostPort),
-						PodNamespace: pod.Namespace,
-						PodName:      pod.Name,
-					}
-					log.Debugf("publishing endpoint correlation for Pod: %v", podEndpointCorrelation)
-					pc.PodCorrChan <- podEndpointCorrelation
 				}
 			}
 		}
@@ -180,15 +169,6 @@ func (pc *PodCollector) podToStackStateComponent(pod v1.Pod) *topology.Component
 	log.Tracef("Mapping kubernetes pod to StackState Component: %s", pod.String())
 
 	identifiers := make([]string, 0)
-
-	if pod.Status.PodIP != "" {
-		// We map the pod ip including clustername, namespace and podName because
-		// the pod ip is not necessarily unique:
-		// * Pods can use Host networking which gives them the ip of the host
-		// * Pods for jobs can remain present after completion or failure (their status will not be running but Completed or Failed)
-		//   with their IP (that is now free again for reuse) still attached in the pod.Status
-		identifiers = append(identifiers, fmt.Sprintf("urn:ip:/%s:%s:%s:%s", pc.GetInstance().URL, pod.Namespace, pod.Name, pod.Status.PodIP))
-	}
 
 	log.Tracef("Created identifiers for %s: %v", pod.Name, identifiers)
 
@@ -240,7 +220,8 @@ func (pc *PodCollector) podToStackStateComponent(pod v1.Pod) *topology.Component
 
 // podTags creates the tags for a pod
 func (pc *PodCollector) podTags(pod v1.Pod) map[string]string {
-	tags := pc.initTags(pod.ObjectMeta)
+	// k8s object TypeMeta seem to be archived, it's always empty.
+	tags := pc.initTags(pod.ObjectMeta, metav1.TypeMeta{Kind: "Pod"})
 	// add service account as a label to filter on
 	if pod.Spec.ServiceAccountName != "" {
 		tags["service-account"] = pod.Spec.ServiceAccountName

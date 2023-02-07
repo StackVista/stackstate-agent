@@ -35,7 +35,11 @@ func TestClusterCollector(t *testing.T) {
 				Type:       topology.Type{Name: "cluster"},
 				Data: topology.Data{
 					"name": "test-cluster-name",
-					"tags": map[string]string{"cluster-name": "test-cluster-name"}},
+					"tags": map[string]string{
+						"cluster-name":   "test-cluster-name",
+						"cluster-type":   "kubernetes",
+						"component-type": "kubernetes-cluster",
+					}},
 			},
 		},
 	} {

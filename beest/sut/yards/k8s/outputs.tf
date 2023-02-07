@@ -36,6 +36,9 @@ resource "local_file" "ansible_inventory" {
       }
       vars : {
         yard_id : var.yard_id
+        agent_integration: {
+          enabled: true
+        }
         agent_k8s_runtime : var.agent_eks_runtime
         agent_k8s_version : var.agent_eks_version
         agent_k8s_size : var.agent_eks_size

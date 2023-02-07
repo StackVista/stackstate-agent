@@ -53,7 +53,13 @@ func TestPodCollector(t *testing.T) {
 			relationChannel := make(chan *topology.Relation)
 			containerCorrelationChannel := make(chan *ContainerCorrelation)
 			volumeCorrelationChannel := make(chan *VolumeCorrelation)
-			podCorrelationChannel := make(chan *PodEndpointCorrelation)
+			podCorrelationChannel := make(chan *PodLabelCorrelation)
+
+			// Pod correlation is just a no-op sink to assure progress
+			go func() {
+				for range podCorrelationChannel {
+				}
+			}()
 
 			commonClusterCollector := NewTestCommonClusterCollector(MockPodAPICollectorClient{}, componentChannel, relationChannel, sourcePropertiesEnabled, kubernetesStatusEnabled)
 			commonClusterCollector.SetUseRelationCache(false)
@@ -78,11 +84,18 @@ func TestPodCollector(t *testing.T) {
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
 										"name":              "test-pod-1",
+										"kind":              "Pod",
 										"creationTimestamp": creationTime,
-										"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"uid":               types.UID("test-pod-1"),
-										"identifiers":       []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-1:10.0.0.1"},
-										"restartPolicy":     coreV1.RestartPolicyAlways,
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"uid":           types.UID("test-pod-1"),
+										"identifiers":   []string{},
+										"restartPolicy": coreV1.RestartPolicyAlways,
 										"status": coreV1.PodStatus{
 											Phase:     coreV1.PodRunning,
 											StartTime: &creationTime,
@@ -94,9 +107,15 @@ func TestPodCollector(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-1",
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
-										"name":        "test-pod-1",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-1:10.0.0.1"},
+										"name": "test-pod-1",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"identifiers": []string{},
 										"status": map[string]interface{}{
 											"phase": "Running",
 										},
@@ -122,9 +141,14 @@ func TestPodCollector(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-1",
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
-										"name":        "test-pod-1",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-1:10.0.0.1"},
+										"name": "test-pod-1",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace"},
+										"identifiers": []string{},
 										"status": map[string]interface{}{
 											"phase": "Running",
 										},
@@ -168,13 +192,20 @@ func TestPodCollector(t *testing.T) {
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
 										"name":              "test-pod-2",
+										"kind":              "Pod",
 										"creationTimestamp": creationTime,
-										"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-account": "some-service-account-name"},
-										"uid":               types.UID("test-pod-2"),
-										"identifiers":       []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-2:10.0.0.2"},
-										"restartPolicy":     coreV1.RestartPolicyAlways,
-										"kind":              "some-specified-kind",
-										"generateName":      "some-specified-generation",
+										"tags": map[string]string{
+											"test":            "label",
+											"cluster-name":    "test-cluster-name",
+											"cluster-type":    "kubernetes",
+											"component-type":  "kubernetes-pod",
+											"namespace":       "test-namespace",
+											"service-account": "some-service-account-name",
+										},
+										"uid":           types.UID("test-pod-2"),
+										"identifiers":   []string{},
+										"restartPolicy": coreV1.RestartPolicyAlways,
+										"generateName":  "some-specified-generation",
 										"status": coreV1.PodStatus{
 											Phase:             coreV1.PodRunning,
 											StartTime:         &creationTime,
@@ -189,9 +220,16 @@ func TestPodCollector(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-2",
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
-										"name":        "test-pod-2",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-account": "some-service-account-name"},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-2:10.0.0.2"},
+										"name": "test-pod-2",
+										"tags": map[string]string{
+											"test":            "label",
+											"cluster-name":    "test-cluster-name",
+											"cluster-type":    "kubernetes",
+											"component-type":  "kubernetes-pod",
+											"namespace":       "test-namespace",
+											"service-account": "some-service-account-name",
+										},
+										"identifiers": []string{},
 										"status": map[string]interface{}{
 											"phase": "Running",
 										},
@@ -224,9 +262,16 @@ func TestPodCollector(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-2",
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
-										"name":        "test-pod-2",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace", "service-account": "some-service-account-name"},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-2:10.0.0.2"},
+										"name": "test-pod-2",
+										"tags": map[string]string{
+											"test":            "label",
+											"cluster-name":    "test-cluster-name",
+											"cluster-type":    "kubernetes",
+											"component-type":  "kubernetes-pod",
+											"namespace":       "test-namespace",
+											"service-account": "some-service-account-name",
+										},
+										"identifiers": []string{},
 										"status": map[string]interface{}{
 											"phase": "Running",
 										},
@@ -278,11 +323,18 @@ func TestPodCollector(t *testing.T) {
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
 										"name":              "test-pod-3",
+										"kind":              "Pod",
 										"creationTimestamp": creationTime,
-										"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"uid":               types.UID("test-pod-3"),
-										"identifiers":       []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-3:10.0.0.1"},
-										"restartPolicy":     coreV1.RestartPolicyAlways,
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"uid":           types.UID("test-pod-3"),
+										"identifiers":   []string{},
+										"restartPolicy": coreV1.RestartPolicyAlways,
 										"status": coreV1.PodStatus{
 											Phase:     coreV1.PodRunning,
 											StartTime: &creationTime,
@@ -293,9 +345,15 @@ func TestPodCollector(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-3",
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
-										"name":        "test-pod-3",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-3:10.0.0.1"},
+										"name": "test-pod-3",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"identifiers": []string{},
 										"status": map[string]interface{}{
 											"phase": "Running",
 										},
@@ -328,9 +386,15 @@ func TestPodCollector(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-3",
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
-										"name":        "test-pod-3",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-3:10.0.0.1"},
+										"name": "test-pod-3",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"identifiers": []string{},
 										"status": map[string]interface{}{
 											"phase": "Running",
 										},
@@ -439,11 +503,18 @@ func TestPodCollector(t *testing.T) {
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
 										"name":              "test-pod-4",
+										"kind":              "Pod",
 										"creationTimestamp": creationTime,
-										"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"uid":               types.UID("test-pod-4"),
-										"identifiers":       []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-4:10.0.0.1"},
-										"restartPolicy":     coreV1.RestartPolicyAlways,
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"uid":           types.UID("test-pod-4"),
+										"identifiers":   []string{},
+										"restartPolicy": coreV1.RestartPolicyAlways,
 										"status": coreV1.PodStatus{
 											Phase:     coreV1.PodRunning,
 											StartTime: &creationTime,
@@ -455,9 +526,15 @@ func TestPodCollector(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-4",
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
-										"name":        "test-pod-4",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-4:10.0.0.1"},
+										"name": "test-pod-4",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -510,9 +587,15 @@ func TestPodCollector(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-4",
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
-										"name":        "test-pod-4",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-4:10.0.0.1"},
+										"name": "test-pod-4",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -590,11 +673,18 @@ func TestPodCollector(t *testing.T) {
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
 										"name":              "test-pod-5",
+										"kind":              "Pod",
 										"creationTimestamp": creationTime,
-										"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"uid":               types.UID("test-pod-5"),
-										"identifiers":       []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-5:10.0.0.1"},
-										"restartPolicy":     coreV1.RestartPolicyAlways,
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"uid":           types.UID("test-pod-5"),
+										"identifiers":   []string{},
+										"restartPolicy": coreV1.RestartPolicyAlways,
 										"status": coreV1.PodStatus{
 											Phase:     coreV1.PodRunning,
 											StartTime: &creationTime,
@@ -606,9 +696,15 @@ func TestPodCollector(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-5",
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
-										"name":        "test-pod-5",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-5:10.0.0.1"},
+										"name": "test-pod-5",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -650,9 +746,15 @@ func TestPodCollector(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-5",
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
-										"name":        "test-pod-5",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-5:10.0.0.1"},
+										"name": "test-pod-5",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -736,11 +838,18 @@ func TestPodCollector(t *testing.T) {
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
 										"name":              "test-pod-6",
+										"kind":              "Pod",
 										"creationTimestamp": creationTime,
-										"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"uid":               types.UID("test-pod-6"),
-										"identifiers":       []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-6:10.0.0.1"},
-										"restartPolicy":     coreV1.RestartPolicyAlways,
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"uid":           types.UID("test-pod-6"),
+										"identifiers":   []string{},
+										"restartPolicy": coreV1.RestartPolicyAlways,
 										"status": coreV1.PodStatus{
 											Phase:     coreV1.PodRunning,
 											StartTime: &creationTime,
@@ -752,9 +861,15 @@ func TestPodCollector(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-6",
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
-										"name":        "test-pod-6",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-6:10.0.0.1"},
+										"name": "test-pod-6",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -797,9 +912,15 @@ func TestPodCollector(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-6",
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
-										"name":        "test-pod-6",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-6:10.0.0.1"},
+										"name": "test-pod-6",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -883,11 +1004,18 @@ func TestPodCollector(t *testing.T) {
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
 										"name":              "test-pod-7",
+										"kind":              "Pod",
 										"creationTimestamp": creationTime,
-										"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"uid":               types.UID("test-pod-7"),
-										"identifiers":       []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-7:10.0.0.1"},
-										"restartPolicy":     coreV1.RestartPolicyAlways,
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"uid":           types.UID("test-pod-7"),
+										"identifiers":   []string{},
+										"restartPolicy": coreV1.RestartPolicyAlways,
 										"status": coreV1.PodStatus{
 											Phase:     coreV1.PodRunning,
 											StartTime: &creationTime,
@@ -899,9 +1027,15 @@ func TestPodCollector(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-7",
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
-										"name":        "test-pod-7",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-7:10.0.0.1"},
+										"name": "test-pod-7",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -940,9 +1074,15 @@ func TestPodCollector(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-7",
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
-										"name":        "test-pod-7",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-7:10.0.0.1"},
+										"name": "test-pod-7",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -989,11 +1129,17 @@ func TestPodCollector(t *testing.T) {
 								Pod: ContainerPod{
 									ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-7",
 									Name:       "test-pod-7",
-									Labels:     map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-									PodIP:      "10.0.0.1",
-									Namespace:  "test-namespace",
-									NodeName:   "test-node",
-									Phase:      "Running",
+									Labels: map[string]string{
+										"test":           "label",
+										"cluster-name":   "test-cluster-name",
+										"cluster-type":   "kubernetes",
+										"component-type": "kubernetes-pod",
+										"namespace":      "test-namespace",
+									},
+									PodIP:     "10.0.0.1",
+									Namespace: "test-namespace",
+									NodeName:  "test-node",
+									Phase:     "Running",
 								},
 								ContainerStatuses: []coreV1.ContainerStatus{
 									{
@@ -1023,11 +1169,18 @@ func TestPodCollector(t *testing.T) {
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
 										"name":              "test-pod-8",
+										"kind":              "Pod",
 										"creationTimestamp": creationTime,
-										"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"uid":               types.UID("test-pod-8"),
-										"identifiers":       []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-8:10.0.0.1"},
-										"restartPolicy":     coreV1.RestartPolicyAlways,
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"uid":           types.UID("test-pod-8"),
+										"identifiers":   []string{},
+										"restartPolicy": coreV1.RestartPolicyAlways,
 										"status": coreV1.PodStatus{
 											Phase:     coreV1.PodSucceeded,
 											StartTime: &creationTime,
@@ -1039,9 +1192,15 @@ func TestPodCollector(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-8",
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
-										"name":        "test-pod-8",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-8:10.0.0.1"},
+										"name": "test-pod-8",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Succeeded"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -1067,9 +1226,15 @@ func TestPodCollector(t *testing.T) {
 									ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-8",
 									Type:       topology.Type{Name: "pod"},
 									Data: topology.Data{
-										"name":        "test-pod-8",
-										"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-										"identifiers": []string{"urn:ip:/test-cluster-name:test-namespace:test-pod-8:10.0.0.1"},
+										"name": "test-pod-8",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-pod",
+											"namespace":      "test-namespace",
+										},
+										"identifiers": []string{},
 										"status":      map[string]interface{}{"phase": "Succeeded"},
 									},
 									SourceProperties: map[string]interface{}{
@@ -1124,7 +1289,7 @@ func (m MockPodAPICollectorClient) GetPods() ([]coreV1.Pod, error) {
 	for i := 1; i <= 8; i++ {
 		pod := coreV1.Pod{
 			TypeMeta: v1.TypeMeta{
-				Kind: "",
+				Kind: "Pod",
 			},
 			ObjectMeta: v1.ObjectMeta{
 				Name:              fmt.Sprintf("test-pod-%d", i),
@@ -1165,7 +1330,6 @@ func (m MockPodAPICollectorClient) GetPods() ([]coreV1.Pod, error) {
 			pod.Status.Reason = "some-short-reason"
 			pod.Status.NominatedNodeName = "some-nominated-node-name"
 			pod.Status.QOSClass = "some-qos-class"
-			pod.TypeMeta.Kind = "some-specified-kind"
 			pod.ObjectMeta.GenerateName = "some-specified-generation"
 		}
 

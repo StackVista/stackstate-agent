@@ -226,7 +226,7 @@ func (vc *VolumeCorrelator) containerToVolumeClaimStackStateRelation(containerEx
 
 func (vc *VolumeCorrelator) CreateStackStateVolumeSourceComponent(pod PodIdentifier, volume v1.Volume, externalID string, identifiers []string, addTags map[string]string) (*VolumeComponentsToCreate, error) {
 
-	tags := vc.initTags(metav1.ObjectMeta{Namespace: pod.Namespace})
+	tags := vc.initTags(metav1.ObjectMeta{Namespace: pod.Namespace}, metav1.TypeMeta{Kind: "volume"})
 	for k, v := range addTags {
 		tags[k] = v
 	}

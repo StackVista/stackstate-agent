@@ -52,19 +52,32 @@ func TestSecretCollector(t *testing.T) {
 						Type:       topology.Type{Name: "secret"},
 						Data: topology.Data{
 							"name":              "test-secret-1",
+							"kind":              "Secret",
 							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-secret-1"),
-							"data":              "c20ca49dcb76feaaa1c14a2725263bf2290d0e5f3dc98d208b249f080fa64b45",
-							"identifiers":       []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-1"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-secret",
+								"namespace":      "test-namespace",
+							},
+							"uid":         types.UID("test-secret-1"),
+							"data":        "c20ca49dcb76feaaa1c14a2725263bf2290d0e5f3dc98d208b249f080fa64b45",
+							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-1"},
 						},
 					},
 					expectedSP: &topology.Component{
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-1",
 						Type:       topology.Type{Name: "secret"},
 						Data: topology.Data{
-							"name":        "test-secret-1",
-							"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"name": "test-secret-1",
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-secret",
+								"namespace":      "test-namespace",
+							},
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-1"},
 						},
 						SourceProperties: map[string]interface{}{
@@ -83,8 +96,14 @@ func TestSecretCollector(t *testing.T) {
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-1",
 						Type:       topology.Type{Name: "secret"},
 						Data: topology.Data{
-							"name":        "test-secret-1",
-							"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"name": "test-secret-1",
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-secret",
+								"namespace":      "test-namespace",
+							},
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-1"},
 						},
 						SourceProperties: map[string]interface{}{
@@ -110,19 +129,32 @@ func TestSecretCollector(t *testing.T) {
 						Type:       topology.Type{Name: "secret"},
 						Data: topology.Data{
 							"name":              "test-secret-2",
+							"kind":              "Secret",
 							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-secret-2"),
-							"data":              "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", // Empty data is represented as a hash to obscure it
-							"identifiers":       []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-2"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-secret",
+								"namespace":      "test-namespace",
+							},
+							"uid":         types.UID("test-secret-2"),
+							"data":        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", // Empty data is represented as a hash to obscure it
+							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-2"},
 						},
 					},
 					expectedSP: &topology.Component{
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-2",
 						Type:       topology.Type{Name: "secret"},
 						Data: topology.Data{
-							"name":        "test-secret-2",
-							"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"name": "test-secret-2",
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-secret",
+								"namespace":      "test-namespace",
+							},
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-2"},
 						},
 						SourceProperties: map[string]interface{}{
@@ -141,8 +173,14 @@ func TestSecretCollector(t *testing.T) {
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-2",
 						Type:       topology.Type{Name: "secret"},
 						Data: topology.Data{
-							"name":        "test-secret-2",
-							"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"name": "test-secret-2",
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-secret",
+								"namespace":      "test-namespace",
+							},
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-2"},
 						},
 						SourceProperties: map[string]interface{}{
@@ -168,19 +206,30 @@ func TestSecretCollector(t *testing.T) {
 						Type:       topology.Type{Name: "secret"},
 						Data: topology.Data{
 							"name":              "test-secret-3",
+							"kind":              "Secret",
 							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"cluster-name": "test-cluster-name", "namespace": "test-namespace"},
-							"uid":               types.UID("test-secret-3"),
-							"data":              "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", // Empty data is represented as a hash to obscure it
-							"identifiers":       []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-3"},
+							"tags": map[string]string{
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-secret",
+								"namespace":      "test-namespace",
+							},
+							"uid":         types.UID("test-secret-3"),
+							"data":        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", // Empty data is represented as a hash to obscure it
+							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-3"},
 						},
 					},
 					expectedSP: &topology.Component{
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-3",
 						Type:       topology.Type{Name: "secret"},
 						Data: topology.Data{
-							"name":        "test-secret-3",
-							"tags":        map[string]string{"cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"name": "test-secret-3",
+							"tags": map[string]string{
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-secret",
+								"namespace":      "test-namespace",
+							},
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-3"},
 						},
 						SourceProperties: map[string]interface{}{
@@ -198,8 +247,13 @@ func TestSecretCollector(t *testing.T) {
 						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-3",
 						Type:       topology.Type{Name: "secret"},
 						Data: topology.Data{
-							"name":        "test-secret-3",
-							"tags":        map[string]string{"cluster-name": "test-cluster-name", "namespace": "test-namespace"},
+							"name": "test-secret-3",
+							"tags": map[string]string{
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-secret",
+								"namespace":      "test-namespace",
+							},
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-3"},
 						},
 						SourceProperties: map[string]interface{}{
@@ -245,7 +299,7 @@ func (m MockSecretAPICollectorClient) GetSecrets() ([]coreV1.Secret, error) {
 
 		secret := coreV1.Secret{
 			TypeMeta: v1.TypeMeta{
-				Kind: "",
+				Kind: "Secret",
 			},
 			ObjectMeta: v1.ObjectMeta{
 				Name:              fmt.Sprintf("test-secret-%d", i),

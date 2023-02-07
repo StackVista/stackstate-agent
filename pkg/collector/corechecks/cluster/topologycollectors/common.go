@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -21,6 +22,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// ClusterType represents the type of the cluster being monitored - Kubernetes / OpenShift
+type ClusterType string
+
+const (
+	// Kubernetes cluster type
+	Kubernetes ClusterType = "kubernetes"
+	// OpenShift cluster type
+	OpenShift ClusterType = "openshift"
+)
+
 // ClusterTopologyCommon should be mixed in this interface for basic functionality on any real collector
 type ClusterTopologyCommon interface {
 	GetAPIClient() apiserver.APICollectorClient
@@ -31,7 +42,7 @@ type ClusterTopologyCommon interface {
 	CreateRelationData(sourceExternalID, targetExternalID, typeName string, data map[string]interface{}) *topology.Relation
 	IsSourcePropertiesFeatureEnabled() bool
 	IsExposeKubernetesStatusEnabled() bool
-	initTags(meta metav1.ObjectMeta) map[string]string
+	initTags(meta metav1.ObjectMeta, tpe metav1.TypeMeta) map[string]string
 	buildClusterExternalID() string
 	buildConfigMapExternalID(namespace, configMapName string) string
 	buildSecretExternalID(namespace, secretName string) string
@@ -61,6 +72,7 @@ type ClusterTopologyCommon interface {
 
 type clusterTopologyCommon struct {
 	Instance                      topology.Instance
+	ClusterType                   ClusterType
 	APICollectorClient            apiserver.APICollectorClient
 	urn                           urn.Builder
 	sourcePropertiesEnabled       bool
@@ -77,6 +89,7 @@ type clusterTopologyCommon struct {
 // NewClusterTopologyCommon creates a clusterTopologyCommon
 func NewClusterTopologyCommon(
 	instance topology.Instance,
+	clusterType ClusterType,
 	ac apiserver.APICollectorClient,
 	spEnabled bool,
 	componentChan chan<- *topology.Component,
@@ -86,6 +99,7 @@ func NewClusterTopologyCommon(
 ) ClusterTopologyCommon {
 	return &clusterTopologyCommon{
 		Instance:                      instance,
+		ClusterType:                   clusterType,
 		APICollectorClient:            ac,
 		urn:                           urn.NewURNBuilder(urn.ClusterTypeFromString(instance.Type), instance.URL),
 		sourcePropertiesEnabled:       spEnabled,
@@ -303,7 +317,12 @@ func (c *clusterTopologyCommon) buildEndpointExternalID(endpointID string) strin
 	return c.urn.BuildEndpointExternalID(endpointID)
 }
 
-func (c *clusterTopologyCommon) initTags(meta metav1.ObjectMeta) map[string]string {
+type ClusterObjectBase struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+}
+
+func (c *clusterTopologyCommon) initTags(meta metav1.ObjectMeta, tpe metav1.TypeMeta) map[string]string {
 	tags := make(map[string]string, 0)
 	if meta.Labels != nil {
 		for k, v := range meta.Labels {
@@ -316,6 +335,10 @@ func (c *clusterTopologyCommon) initTags(meta metav1.ObjectMeta) map[string]stri
 	if meta.Namespace != "" {
 		tags["namespace"] = meta.Namespace
 	}
+
+	tags["cluster-type"] = string(c.ClusterType)
+
+	tags["component-type"] = fmt.Sprintf("%s-%s", string(c.ClusterType), strings.ToLower(tpe.Kind))
 
 	return tags
 }

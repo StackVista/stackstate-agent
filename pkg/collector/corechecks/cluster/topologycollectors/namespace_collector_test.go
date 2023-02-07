@@ -52,18 +52,29 @@ func TestNamespaceCollector(t *testing.T) {
 						Type:       topology.Type{Name: "namespace"},
 						Data: topology.Data{
 							"name":              "test-namespace-1",
+							"kind":              "Namespace",
 							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"test": "label", "cluster-name": "test-cluster-name"},
-							"uid":               types.UID("test-namespace-1"),
-							"identifiers":       []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-1"},
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-namespace",
+							},
+							"uid":         types.UID("test-namespace-1"),
+							"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-1"},
 						},
 					},
 					expectedSP: &topology.Component{
 						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-1",
 						Type:       topology.Type{Name: "namespace"},
 						Data: topology.Data{
-							"name":        "test-namespace-1",
-							"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name"},
+							"name": "test-namespace-1",
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-namespace",
+							},
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-1"},
 						},
 						SourceProperties: map[string]interface{}{
@@ -83,8 +94,13 @@ func TestNamespaceCollector(t *testing.T) {
 						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-1",
 						Type:       topology.Type{Name: "namespace"},
 						Data: topology.Data{
-							"name":        "test-namespace-1",
-							"tags":        map[string]string{"test": "label", "cluster-name": "test-cluster-name"},
+							"name": "test-namespace-1",
+							"tags": map[string]string{
+								"test":           "label",
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-namespace",
+							},
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-1"},
 						},
 						SourceProperties: map[string]interface{}{
@@ -110,18 +126,27 @@ func TestNamespaceCollector(t *testing.T) {
 						Type:       topology.Type{Name: "namespace"},
 						Data: topology.Data{
 							"name":              "test-namespace-2",
+							"kind":              "Namespace",
 							"creationTimestamp": creationTime,
-							"tags":              map[string]string{"cluster-name": "test-cluster-name"},
-							"uid":               types.UID("test-namespace-2"),
-							"identifiers":       []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
+							"tags": map[string]string{
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-namespace",
+							},
+							"uid":         types.UID("test-namespace-2"),
+							"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
 						},
 					},
 					expectedSP: &topology.Component{
 						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-2",
 						Type:       topology.Type{Name: "namespace"},
 						Data: topology.Data{
-							"name":        "test-namespace-2",
-							"tags":        map[string]string{"cluster-name": "test-cluster-name"},
+							"name": "test-namespace-2",
+							"tags": map[string]string{
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-namespace",
+							},
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
 						},
 						SourceProperties: map[string]interface{}{
@@ -140,8 +165,12 @@ func TestNamespaceCollector(t *testing.T) {
 						ExternalID: "urn:kubernetes:/test-cluster-name:namespace/test-namespace-2",
 						Type:       topology.Type{Name: "namespace"},
 						Data: topology.Data{
-							"name":        "test-namespace-2",
-							"tags":        map[string]string{"cluster-name": "test-cluster-name"},
+							"name": "test-namespace-2",
+							"tags": map[string]string{
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-namespace",
+							},
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
 						},
 						SourceProperties: map[string]interface{}{
@@ -187,7 +216,7 @@ func (m MockNamespaceAPICollectorClient) GetNamespaces() ([]coreV1.Namespace, er
 
 		namespace := coreV1.Namespace{
 			TypeMeta: v1.TypeMeta{
-				Kind: "",
+				Kind: "Namespace",
 			},
 			ObjectMeta: v1.ObjectMeta{
 				Name:              fmt.Sprintf("test-namespace-%d", i),

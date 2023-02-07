@@ -38,7 +38,8 @@ func testCollectorInterface(t *testing.T, sourcePropertiesEnabled bool, exposeKu
 	relationChannel := make(chan *topology.Relation)
 	defer close(relationChannel)
 	instance := topology.Instance{Type: "kubernetes", URL: "Test-Cluster-Name"}
-	clusterTopologyCommon := NewClusterTopologyCommon(instance, nil, sourcePropertiesEnabled, componentChannel, relationChannel, &version.Info{Major: "1", Minor: "21"}, exposeKubernetesStatusEnabled)
+	clusterType := Kubernetes
+	clusterTopologyCommon := NewClusterTopologyCommon(instance, clusterType, nil, sourcePropertiesEnabled, componentChannel, relationChannel, &version.Info{Major: "1", Minor: "21"}, exposeKubernetesStatusEnabled)
 	testCollector := NewTestCollector(NewClusterTopologyCollector(clusterTopologyCommon))
 
 	actualClusterExternalID := testCollector.buildClusterExternalID()

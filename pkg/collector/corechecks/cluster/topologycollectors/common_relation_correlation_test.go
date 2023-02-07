@@ -99,6 +99,7 @@ func podWithConfigMapEnv(namespace string, name string, configMapName string, co
 			CreationTimestamp: timestamp,
 			DeletionTimestamp: &timestamp,
 		},
+		TypeMeta: metav1.TypeMeta{Kind: "Pod"},
 		Spec: coreV1.PodSpec{
 			HostNetwork: true,
 			Containers: []coreV1.Container{
@@ -146,6 +147,7 @@ func podWithSecretEnv(namespace string, name string, secretEnvName string, secre
 			CreationTimestamp: timestamp,
 			DeletionTimestamp: &timestamp,
 		},
+		TypeMeta: metav1.TypeMeta{Kind: "Pod"},
 		Spec: coreV1.PodSpec{
 			HostNetwork: true,
 			Containers: []coreV1.Container{
@@ -184,7 +186,7 @@ func podWithSecretEnv(namespace string, name string, secretEnvName string, secre
 func configMap(namespace string, name string, timestamp metav1.Time) coreV1.ConfigMap {
 	return coreV1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
-			Kind: "",
+			Kind: "ConfigMap",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              name,
@@ -214,9 +216,12 @@ func configMapComponent(namespace string, name string, timestamp metav1.Time) *t
 		},
 		Data: topology.Data{
 			"name": name,
+			"kind": "ConfigMap",
 			"tags": map[string]string{
-				"cluster-name": "test-cluster-name",
-				"namespace":    namespace,
+				"cluster-name":   "test-cluster-name",
+				"cluster-type":   "kubernetes",
+				"component-type": "kubernetes-configmap",
+				"namespace":      namespace,
 			},
 			"identifiers": []string{
 				fmt.Sprintf("urn:kubernetes:/test-cluster-name:%s:configmap/%s", namespace, name),
@@ -230,7 +235,7 @@ func configMapComponent(namespace string, name string, timestamp metav1.Time) *t
 func secret(namespace string, name string, timestamp metav1.Time) coreV1.Secret {
 	return coreV1.Secret{
 		TypeMeta: metav1.TypeMeta{
-			Kind: "",
+			Kind: "Secret",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              name,
@@ -292,7 +297,9 @@ func nodeComponent(name, providerID, clusterName string, timestamp metav1.Time) 
 			"kind":       "Node",
 			"instanceId": providerID,
 			"tags": map[string]string{
-				"cluster-name": "test-cluster-name",
+				"cluster-name":   "test-cluster-name",
+				"cluster-type":   "kubernetes",
+				"component-type": "kubernetes-node",
 			},
 			"identifiers": []string{
 				fmt.Sprintf("urn:host:/%s", providerID),
@@ -330,9 +337,12 @@ func secretComponent(namespace string, name string, timestamp metav1.Time) *topo
 		},
 		Data: topology.Data{
 			"name": name,
+			"kind": "Secret",
 			"tags": map[string]string{
-				"cluster-name": "test-cluster-name",
-				"namespace":    namespace,
+				"cluster-name":   "test-cluster-name",
+				"cluster-type":   "kubernetes",
+				"component-type": "kubernetes-secret",
+				"namespace":      namespace,
 			},
 			"creationTimestamp": timestamp,
 			"data":              "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -361,13 +371,19 @@ func executeRelationCorrelation(
 		pods: pods, configMaps: configMaps, secrets: secrets, nodes: nodes,
 	}
 
-	podCorrChannel := make(chan *PodEndpointCorrelation)
+	podCorrChannel := make(chan *PodLabelCorrelation)
 	containerCorrChannel := make(chan *ContainerCorrelation)
 	nodeIdentifierCorrChan := make(chan *NodeIdentifierCorrelation)
 	volumeCorrChannel := make(chan *VolumeCorrelation)
 	collectorsDoneChan := make(chan bool)
 	correlatorsDoneChan := make(chan bool)
 	relationCorrelationDoneChan := make(chan bool)
+
+	// Pod correlation is just a no-op sink to assure progress
+	go func() {
+		for range podCorrChannel {
+		}
+	}()
 
 	commonClusterCollector := NewTestCommonClusterCollector(clusterAPIClient, componentChannel, relationChannel, false, false)
 	podCollector := NewPodCollector(
