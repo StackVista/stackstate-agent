@@ -191,6 +191,11 @@ var allowedTerminatedReasons = map[string]struct{}{
 	"unknown":            {},
 }
 
+var allowedCrashLoopBackoffReasons = map[string]struct{}{
+	"crashloopbackoff": {},
+	"unknown":          {},
+}
+
 var allowedOutOfMemoryReasons = map[string]struct{}{
 	"oomkilled": {},
 	"unknown":   {},
@@ -216,6 +221,11 @@ func containerReasonTransformer(s aggregator.Sender, _ string, metric ksmstore.D
 		// Filtering according to the reason here is paramount to limit cardinality
 		if _, allowed := allowedOutOfMemoryReasons[lcReason]; allowed {
 			s.Gauge(metricPrefix+"oom", metric.Val, hostname, tags)
+		}
+
+		// Filtering according to the reason here is paramount to limit cardinality
+		if _, allowed := allowedCrashLoopBackoffReasons[lcReason]; allowed {
+			s.Gauge(metricPrefix+"crashloopbackoff", metric.Val, hostname, tags)
 		}
 	}
 }
