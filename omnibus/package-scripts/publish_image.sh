@@ -24,7 +24,7 @@ docker login -u "${quay_user}" -p "${quay_password}" "${REGISTRY_QUAY}"
 
 docker build -t "${BUILD_TAG}" "${DOCKERFILE_PATH}"
 
-for REGISTRY in "${REGISTRY_DOCKERHUB}" "${REGISTRY_QUAY}"; do
+for REGISTRY in "${REGISTRY_QUAY}" "${REGISTRY_DOCKERHUB}"; do
     DOCKER_TAG="${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${IMAGE_TAG}"
 
     docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
