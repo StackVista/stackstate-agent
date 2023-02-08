@@ -22,10 +22,11 @@ type VolumeCreator interface {
 
 // PodIdentifier resembles the identifying information of the Pod which needs to be correlated
 type PodIdentifier struct {
-	ExternalID string
-	Namespace  string
-	Name       string
-	NodeName   string
+	ExternalID   string
+	Namespace    string
+	Name         string
+	NodeName     string
+	CreationTime metav1.Time
 }
 
 // VolumeCorrelation is the transfer object which is used to correlate a Pod and its Containers with the Volumes they use
@@ -226,15 +227,14 @@ func (vc *VolumeCorrelator) containerToVolumeClaimStackStateRelation(containerEx
 
 func (vc *VolumeCorrelator) CreateStackStateVolumeSourceComponent(pod PodIdentifier, volume v1.Volume, externalID string, identifiers []string, addTags map[string]string) (*VolumeComponentsToCreate, error) {
 
-	tags := vc.initTags(metav1.ObjectMeta{Namespace: pod.Namespace}, metav1.TypeMeta{Kind: "volume"})
+	tags := vc.initTags(metav1.ObjectMeta{Namespace: pod.Namespace}, metav1.TypeMeta{Kind: "Volume"})
 	for k, v := range addTags {
 		tags[k] = v
 	}
 
 	data := map[string]interface{}{
-		"name":   volume.Name,
-		"source": volume.VolumeSource,
-		"tags":   tags,
+		"name": volume.Name,
+		"tags": tags,
 	}
 
 	if identifiers != nil {
@@ -245,6 +245,29 @@ func (vc *VolumeCorrelator) CreateStackStateVolumeSourceComponent(pod PodIdentif
 		ExternalID: externalID,
 		Type:       topology.Type{Name: "volume"},
 		Data:       data,
+	}
+
+	if vc.IsSourcePropertiesFeatureEnabled() {
+		var sourceProperties map[string]interface{}
+
+		k8sVolume := &K8sVolume{
+			TypeMeta: metav1.TypeMeta{Kind: "Volume"},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              volume.Name,
+				Namespace:         pod.Namespace,
+				CreationTimestamp: pod.CreationTime,
+			},
+			Volume: volume,
+		}
+
+		if vc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(k8sVolume)
+		} else {
+			sourceProperties = makeSourceProperties(k8sVolume)
+		}
+		component.SourceProperties = sourceProperties
+	} else {
+		component.Data.PutNonEmpty("source", volume.VolumeSource)
 	}
 
 	log.Tracef("Created StackState volume component %s: %v", externalID, component.JSONString())
