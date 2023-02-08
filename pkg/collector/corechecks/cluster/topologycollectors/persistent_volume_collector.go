@@ -186,9 +186,8 @@ func (pvc *PersistentVolumeCollector) createStackStateVolumeSourceComponent(pv v
 	}
 
 	data := map[string]interface{}{
-		"name":   name,
-		"source": pv.Spec.PersistentVolumeSource,
-		"tags":   tags,
+		"name": name,
+		"tags": tags,
 	}
 
 	if identifiers != nil {
@@ -199,6 +198,29 @@ func (pvc *PersistentVolumeCollector) createStackStateVolumeSourceComponent(pv v
 		ExternalID: externalID,
 		Type:       topology.Type{Name: "volume-source"},
 		Data:       data,
+	}
+
+	if pvc.IsSourcePropertiesFeatureEnabled() {
+		var sourceProperties map[string]interface{}
+
+		k8sVolumeSource := K8sVolumeSource{
+			TypeMeta: metav1.TypeMeta{Kind: "VolumeSource"},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              name,
+				Namespace:         pv.Namespace,
+				CreationTimestamp: pv.CreationTimestamp,
+			},
+			PersistentVolumeSource: pv.Spec.PersistentVolumeSource,
+		}
+
+		if pvc.IsExposeKubernetesStatusEnabled() {
+			sourceProperties = makeSourcePropertiesFullDetails(&k8sVolumeSource)
+		} else {
+			sourceProperties = makeSourceProperties(&k8sVolumeSource)
+		}
+		component.SourceProperties = sourceProperties
+	} else {
+		component.Data.PutNonEmpty("source", pv.Spec.PersistentVolumeSource)
 	}
 
 	log.Tracef("Created StackState volume component %s: %v", externalID, component.JSONString())

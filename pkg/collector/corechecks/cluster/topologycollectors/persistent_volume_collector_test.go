@@ -181,25 +181,87 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 						},
 						func(t *testing.T) {
 							component := <-componentChannel
-							expected := &topology.Component{
-								ExternalID: "urn:kubernetes:external-volume:aws-ebs/id-of-the-aws-block-store/0",
-								Type:       topology.Type{Name: "volume-source"},
-								Data: topology.Data{
-									"name": "id-of-the-aws-block-store",
-									"tags": map[string]string{
-										"test":           "label",
-										"cluster-name":   "test-cluster-name",
-										"cluster-type":   "kubernetes",
-										"component-type": "kubernetes-volumesource",
-										"namespace":      "test-namespace",
-										"partition":      "0",
-										"volume-id":      "id-of-the-aws-block-store",
-										"kind":           "aws-ebs",
+							expected := chooseBySourcePropertiesFeature(
+								sourcePropertiesEnabled,
+								kubernetesStatusEnabled,
+								&topology.Component{
+									ExternalID: "urn:kubernetes:external-volume:aws-ebs/id-of-the-aws-block-store/0",
+									Type:       topology.Type{Name: "volume-source"},
+									Data: topology.Data{
+										"name": "id-of-the-aws-block-store",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-volumesource",
+											"namespace":      "test-namespace",
+											"partition":      "0",
+											"volume-id":      "id-of-the-aws-block-store",
+											"kind":           "aws-ebs",
+										},
+										"source": coreV1.PersistentVolumeSource{
+											AWSElasticBlockStore: &awsElasticBlockStore,
+										},
+									}},
+								&topology.Component{
+									ExternalID: "urn:kubernetes:external-volume:aws-ebs/id-of-the-aws-block-store/0",
+									Type:       topology.Type{Name: "volume-source"},
+									Data: topology.Data{
+										"name": "id-of-the-aws-block-store",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-volumesource",
+											"namespace":      "test-namespace",
+											"partition":      "0",
+											"volume-id":      "id-of-the-aws-block-store",
+											"kind":           "aws-ebs",
+										},
 									},
-									"source": coreV1.PersistentVolumeSource{
-										AWSElasticBlockStore: &awsElasticBlockStore,
+									SourceProperties: map[string]interface{}{
+										"metadata": map[string]interface{}{
+											"name":              "id-of-the-aws-block-store",
+											"namespace":         "test-namespace",
+											"creationTimestamp": creationTimeFormatted,
+										},
+										"source": map[string]interface{}{
+											"awsElasticBlockStore": map[string]interface{}{
+												"volumeID": "id-of-the-aws-block-store",
+											},
+										},
 									},
-								}}
+								},
+								&topology.Component{
+									ExternalID: "urn:kubernetes:external-volume:aws-ebs/id-of-the-aws-block-store/0",
+									Type:       topology.Type{Name: "volume-source"},
+									Data: topology.Data{
+										"name": "id-of-the-aws-block-store",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-volumesource",
+											"namespace":      "test-namespace",
+											"partition":      "0",
+											"volume-id":      "id-of-the-aws-block-store",
+											"kind":           "aws-ebs",
+										},
+									},
+									SourceProperties: map[string]interface{}{
+										"metadata": map[string]interface{}{
+											"name":              "id-of-the-aws-block-store",
+											"namespace":         "test-namespace",
+											"creationTimestamp": creationTimeFormatted,
+										},
+										"source": map[string]interface{}{
+											"awsElasticBlockStore": map[string]interface{}{
+												"volumeID": "id-of-the-aws-block-store",
+											},
+										},
+									},
+								},
+							)
 							assert.EqualValues(t, expected, component)
 						},
 						func(t *testing.T) {
@@ -448,24 +510,84 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 						},
 						func(t *testing.T) {
 							component := <-componentChannel
-							expected := &topology.Component{
-								ExternalID: "urn:kubernetes:external-volume:gce-pd/name-of-the-gce-persistent-disk",
-								Type:       topology.Type{Name: "volume-source"},
-								Data: topology.Data{
-									"name": "name-of-the-gce-persistent-disk",
-									"tags": map[string]string{
-										"test":           "label",
-										"cluster-name":   "test-cluster-name",
-										"cluster-type":   "kubernetes",
-										"component-type": "kubernetes-volumesource",
-										"namespace":      "test-namespace",
-										"kind":           "gce-pd",
-										"pd-name":        "name-of-the-gce-persistent-disk",
+							expected := chooseBySourcePropertiesFeature(
+								sourcePropertiesEnabled,
+								kubernetesStatusEnabled,
+								&topology.Component{
+									ExternalID: "urn:kubernetes:external-volume:gce-pd/name-of-the-gce-persistent-disk",
+									Type:       topology.Type{Name: "volume-source"},
+									Data: topology.Data{
+										"name": "name-of-the-gce-persistent-disk",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-volumesource",
+											"namespace":      "test-namespace",
+											"kind":           "gce-pd",
+											"pd-name":        "name-of-the-gce-persistent-disk",
+										},
+										"source": coreV1.PersistentVolumeSource{
+											GCEPersistentDisk: &gcePersistentDisk,
+										},
+									}},
+								&topology.Component{
+									ExternalID: "urn:kubernetes:external-volume:gce-pd/name-of-the-gce-persistent-disk",
+									Type:       topology.Type{Name: "volume-source"},
+									Data: topology.Data{
+										"name": "name-of-the-gce-persistent-disk",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-volumesource",
+											"namespace":      "test-namespace",
+											"kind":           "gce-pd",
+											"pd-name":        "name-of-the-gce-persistent-disk",
+										},
 									},
-									"source": coreV1.PersistentVolumeSource{
-										GCEPersistentDisk: &gcePersistentDisk,
+									SourceProperties: map[string]interface{}{
+										"metadata": map[string]interface{}{
+											"name":              "name-of-the-gce-persistent-disk",
+											"namespace":         "test-namespace",
+											"creationTimestamp": creationTimeFormatted,
+										},
+										"source": map[string]interface{}{
+											"gcePersistentDisk": map[string]interface{}{
+												"pdName": "name-of-the-gce-persistent-disk",
+											},
+										},
 									},
-								}}
+								},
+								&topology.Component{
+									ExternalID: "urn:kubernetes:external-volume:gce-pd/name-of-the-gce-persistent-disk",
+									Type:       topology.Type{Name: "volume-source"},
+									Data: topology.Data{
+										"name": "name-of-the-gce-persistent-disk",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-volumesource",
+											"namespace":      "test-namespace",
+											"kind":           "gce-pd",
+											"pd-name":        "name-of-the-gce-persistent-disk",
+										},
+									},
+									SourceProperties: map[string]interface{}{
+										"metadata": map[string]interface{}{
+											"name":              "name-of-the-gce-persistent-disk",
+											"namespace":         "test-namespace",
+											"creationTimestamp": creationTimeFormatted,
+										},
+										"source": map[string]interface{}{
+											"gcePersistentDisk": map[string]interface{}{
+												"pdName": "name-of-the-gce-persistent-disk",
+											},
+										},
+									},
+								},
+							)
 							assert.EqualValues(t, expected, component)
 						},
 						func(t *testing.T) {
@@ -971,29 +1093,120 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 						},
 						func(t *testing.T) {
 							component := <-componentChannel
-							expected := &topology.Component{
-								ExternalID: "urn:kubernetes:external-volume:csi/csi.trident.netapp.io/pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
-								Type:       topology.Type{Name: "volume-source"},
-								Data: topology.Data{
-									"name": "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
-									"tags": map[string]string{
-										"test":           "label",
-										"cluster-name":   "test-cluster-name",
-										"cluster-type":   "kubernetes",
-										"component-type": "kubernetes-volumesource",
-										"namespace":      "test-namespace",
-										"kind":           "csi",
-										"driver":         "csi.trident.netapp.io",
-										"backendUUID":    "127ebcb8-15gs-4fq1-acbn-021245ghgd05",
-										"internalName":   "NPO_TEST_pvc_0c8f1r14_a12a_1234_x1v2_b8b12341c1ab",
-										"name":           "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
-										"protocol":       "file",
-										"storage.kubernetes.io/csiProvisionerIdentity": "1245742285214-1234-csi.trident.netapp.io",
+
+							expected := chooseBySourcePropertiesFeature(
+								sourcePropertiesEnabled,
+								kubernetesStatusEnabled,
+								&topology.Component{
+									ExternalID: "urn:kubernetes:external-volume:csi/csi.trident.netapp.io/pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+									Type:       topology.Type{Name: "volume-source"},
+									Data: topology.Data{
+										"name": "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-volumesource",
+											"namespace":      "test-namespace",
+											"kind":           "csi",
+											"driver":         "csi.trident.netapp.io",
+											"backendUUID":    "127ebcb8-15gs-4fq1-acbn-021245ghgd05",
+											"internalName":   "NPO_TEST_pvc_0c8f1r14_a12a_1234_x1v2_b8b12341c1ab",
+											"name":           "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+											"protocol":       "file",
+											"storage.kubernetes.io/csiProvisionerIdentity": "1245742285214-1234-csi.trident.netapp.io",
+										},
+										"source": coreV1.PersistentVolumeSource{
+											CSI: &csiPersistentVolume,
+										},
+									}},
+								&topology.Component{
+									ExternalID: "urn:kubernetes:external-volume:csi/csi.trident.netapp.io/pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+									Type:       topology.Type{Name: "volume-source"},
+									Data: topology.Data{
+										"name": "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-volumesource",
+											"namespace":      "test-namespace",
+											"kind":           "csi",
+											"driver":         "csi.trident.netapp.io",
+											"backendUUID":    "127ebcb8-15gs-4fq1-acbn-021245ghgd05",
+											"internalName":   "NPO_TEST_pvc_0c8f1r14_a12a_1234_x1v2_b8b12341c1ab",
+											"name":           "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+											"protocol":       "file",
+											"storage.kubernetes.io/csiProvisionerIdentity": "1245742285214-1234-csi.trident.netapp.io",
+										},
 									},
-									"source": coreV1.PersistentVolumeSource{
-										CSI: &csiPersistentVolume,
+									SourceProperties: map[string]interface{}{
+										"metadata": map[string]interface{}{
+											"name":              "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+											"namespace":         "test-namespace",
+											"creationTimestamp": creationTimeFormatted,
+										},
+										"source": map[string]interface{}{
+											"csi": map[string]interface{}{
+												"driver": "csi.trident.netapp.io",
+												"volumeAttributes": map[string]interface{}{
+													"backendUUID":  "127ebcb8-15gs-4fq1-acbn-021245ghgd05",
+													"driver":       "csi.trident.netapp.io",
+													"internalName": "NPO_TEST_pvc_0c8f1r14_a12a_1234_x1v2_b8b12341c1ab",
+													"kind":         "csi",
+													"name":         "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+													"protocol":     "file",
+													"storage.kubernetes.io/csiProvisionerIdentity": "1245742285214-1234-csi.trident.netapp.io",
+												},
+												"volumeHandle": "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+											},
+										},
 									},
-								}}
+								},
+								&topology.Component{
+									ExternalID: "urn:kubernetes:external-volume:csi/csi.trident.netapp.io/pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+									Type:       topology.Type{Name: "volume-source"},
+									Data: topology.Data{
+										"name": "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-volumesource",
+											"namespace":      "test-namespace",
+											"kind":           "csi",
+											"driver":         "csi.trident.netapp.io",
+											"backendUUID":    "127ebcb8-15gs-4fq1-acbn-021245ghgd05",
+											"internalName":   "NPO_TEST_pvc_0c8f1r14_a12a_1234_x1v2_b8b12341c1ab",
+											"name":           "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+											"protocol":       "file",
+											"storage.kubernetes.io/csiProvisionerIdentity": "1245742285214-1234-csi.trident.netapp.io",
+										},
+									},
+									SourceProperties: map[string]interface{}{
+										"metadata": map[string]interface{}{
+											"name":              "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+											"namespace":         "test-namespace",
+											"creationTimestamp": creationTimeFormatted,
+										},
+										"source": map[string]interface{}{
+											"csi": map[string]interface{}{
+												"driver": "csi.trident.netapp.io",
+												"volumeAttributes": map[string]interface{}{
+													"backendUUID":  "127ebcb8-15gs-4fq1-acbn-021245ghgd05",
+													"driver":       "csi.trident.netapp.io",
+													"internalName": "NPO_TEST_pvc_0c8f1r14_a12a_1234_x1v2_b8b12341c1ab",
+													"kind":         "csi",
+													"name":         "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+													"protocol":     "file",
+													"storage.kubernetes.io/csiProvisionerIdentity": "1245742285214-1234-csi.trident.netapp.io",
+												},
+												"volumeHandle": "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
+											},
+										},
+									},
+								},
+							)
 							assert.EqualValues(t, expected, component)
 						},
 						func(t *testing.T) {

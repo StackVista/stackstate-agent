@@ -183,6 +183,44 @@ func podWithSecretEnv(namespace string, name string, secretEnvName string, secre
 	}
 }
 
+func podComponent(namespace string, name string, timestamp metav1.Time) *topology.Component {
+	return &topology.Component{
+		ExternalID: fmt.Sprintf("urn:kubernetes:/test-cluster-name:%s:pod/%s", namespace, name),
+		Type: topology.Type{
+			Name: "pod",
+		},
+		Data: topology.Data{
+			"name": name,
+			"kind": "Pod",
+			"tags": map[string]string{
+				"cluster-name":   "test-cluster-name",
+				"cluster-type":   "kubernetes",
+				"component-type": "kubernetes-pod",
+				"namespace":      namespace,
+			},
+			"identifiers":       []string{},
+			"creationTimestamp": timestamp,
+			"uid":               types.UID(""),
+			"restartPolicy":     coreV1.RestartPolicy(""),
+			"status": coreV1.PodStatus{
+				Phase:                      "",
+				Conditions:                 nil,
+				Message:                    "",
+				Reason:                     "",
+				NominatedNodeName:          "",
+				HostIP:                     "",
+				PodIP:                      "",
+				PodIPs:                     nil,
+				StartTime:                  nil,
+				InitContainerStatuses:      nil,
+				ContainerStatuses:          nil,
+				QOSClass:                   "",
+				EphemeralContainerStatuses: nil,
+			},
+		},
+	}
+}
+
 func configMap(namespace string, name string, timestamp metav1.Time) coreV1.ConfigMap {
 	return coreV1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
