@@ -328,7 +328,11 @@ unit_tests:
   interruptible: true
   needs:
     - deps_deb
+  variables:
+    AWS_ROLE_ARN: ""
+    AWS_WEB_IDENTITY_TOKEN_FILE: ""
   script:
+    - unset AWS_ROLE_ARN AWS_WEB_IDENTITY_TOKEN_FILE
     - conda activate $CONDA_ENV
     # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
     - inv deps
