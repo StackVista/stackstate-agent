@@ -53,7 +53,8 @@ func GetUnmarshaler(ctype string) Unmarshaler {
 	return jSerializer
 }
 
-func modelConnections(conns *network.Connections) *model.Connections {
+// ModelConnections prepares connections report
+func ModelConnections(conns *network.Connections) *model.Connections {
 	cfgOnce.Do(func() {
 		agentCfg = &model.AgentConfiguration{
 			NpmEnabled: config.Datadog.GetBool("network_config.enabled"),

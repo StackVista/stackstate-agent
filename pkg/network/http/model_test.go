@@ -25,8 +25,9 @@ func TestLatency(t *testing.T) {
 		response_last_seen: 2e6,
 		request_started:    1e6,
 	}
+	// [sts] seconds instead of nanoseconds
 	// quantization brings it down
-	assert.Equal(t, 999424.0, tx.RequestLatency())
+	assert.Equal(t, 0.000999424, tx.RequestLatency())
 }
 
 func BenchmarkPath(b *testing.B) {

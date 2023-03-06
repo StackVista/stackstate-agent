@@ -41,6 +41,8 @@ connect_to_stackstate_sandbox() {
 
 build_beest() {
     echo "Build Beest ..."
+    go mod tidy
+    go mod vendor
     go build .
 }
 

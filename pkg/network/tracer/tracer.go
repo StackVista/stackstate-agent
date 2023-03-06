@@ -59,7 +59,7 @@ type Tracer struct {
 	// If we want to have a way to track the # of active TCP connections in the future we could use the procfs like here: https://github.com/StackVista/stackstate-agent/pull/3728
 	m           *manager.Manager
 	perfMap     *manager.PerfMap
-	perfHandler *bytecode.PerfHandler
+	perfHandler *ddebpf.PerfHandler
 	// to determine whether a connection is truly closed or not
 	expiredTCPConns  int64
 	closedConns      int64
@@ -329,6 +329,7 @@ func (t *Tracer) GetActiveConnections(clientID string) (*network.Connections, er
 		DNS:                         names,
 		DNSStats:                    delta.DNSStats,
 		HTTP:                        delta.HTTP,
+		HTTPTelemetry:               delta.HTTPTelemetryStats,
 		ConnTelemetry:               ctm,
 		CompilationTelemetryByAsset: rctm,
 	}, nil

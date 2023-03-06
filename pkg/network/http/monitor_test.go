@@ -78,7 +78,7 @@ func TestUnknownMethodRegression(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 	stats := monitor.GetHTTPStats()
 
-	for key := range stats {
+	for key := range stats.Requests {
 		if key.Method == MethodUnknown {
 			t.Error("detected HTTP request with method unknown")
 		}
@@ -111,7 +111,7 @@ func testHTTPMonitor(t *testing.T, targetAddr, serverAddr string, numReqs int) {
 
 	// Assert all requests made were correctly captured by the monitor
 	for _, req := range requests {
-		includesRequest(t, stats, req)
+		includesRequest(t, stats.Requests, req)
 	}
 }
 

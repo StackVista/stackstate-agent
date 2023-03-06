@@ -116,6 +116,7 @@ type Connections struct {
 	ConnTelemetry               *ConnectionsTelemetry
 	CompilationTelemetryByAsset map[string]RuntimeCompilationTelemetry
 	HTTP                        map[http.Key]http.RequestStats
+	HTTPTelemetry               *http.TelemetryStats
 	DNSStats                    dns.StatsByKeyByNameByType
 }
 
