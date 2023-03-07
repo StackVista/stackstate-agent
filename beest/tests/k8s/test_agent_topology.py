@@ -12,7 +12,7 @@ def test_cluster_agent_topology(ansible_var, cliv1):
     branch_name = ansible_var("agent_current_branch")
 
     cluster_agent = release_name + "-cluster-agent"
-    
+
     if release_name == "stackstate-agent":
         secret_name = release_name
     else:
@@ -113,7 +113,7 @@ def test_checks_agent_topology(ansible_var, cliv1):
     branch_name = ansible_var("agent_current_branch")
 
     checks_agent = release_name + "-checks-agent"
-    
+
     if release_name == "stackstate-agent":
         secret_name = release_name
     else:
@@ -143,6 +143,6 @@ def test_checks_agent_topology(ansible_var, cliv1):
 def query_and_assert(cliv1, cluster_name: str, namespace: str, expected_topology: TopologyMatcher):
     current_agent_topology = cliv1.topology(
         f"(label IN ('cluster-name:{cluster_name}') AND label IN ('namespace:{namespace}'))"
-        f" OR (type IN ('node', 'namespace'))", "agent")
+        f" OR (type IN ('node', 'namespace', 'stackstate-agent'))", "agent")
     possible_matches = expected_topology.find(current_agent_topology)
     return possible_matches.assert_exact_match()
