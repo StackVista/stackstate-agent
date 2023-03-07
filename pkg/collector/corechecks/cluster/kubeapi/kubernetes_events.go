@@ -275,6 +275,9 @@ func (k *EventsCheck) eventCollectionCheck() (newEvents []*v1.Event, err error) 
 // - convert each K8s event to a metrics event to be processed by the intake
 func (k *EventsCheck) processEvents(sender aggregator.Sender, events []*v1.Event) error {
 	mapper := k.mapperFactory(k.ac, k.clusterName, k.instance.EventCategories)
+
+	fmt.Printf("Processing Kubernetes Events: %v", events)
+
 	for _, event := range events {
 		mappedEvent, err := mapper.mapKubernetesEvent(event)
 		if err != nil {
