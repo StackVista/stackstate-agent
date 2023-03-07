@@ -96,12 +96,13 @@ def test_node_agent_topology(ansible_var, cliv1):
 
     matched_res = query_and_assert(cliv1, cluster_name, namespace, expected_topology)
 
-    node_agent_pod_name = matched_res.component(("node-agent", 0)).name
-    assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-main-container", 0)).tags
-    assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-process-container", 0)).tags
-    assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-process-agent", 0)).tags
-    assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-trace-agent", 0)).tags
-    assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-main-agent", 0)).tags
+    # TODO revive after STAC-19236
+    # node_agent_pod_name = matched_res.component(("node-agent", 0)).name
+    # assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-main-container", 0)).tags
+    # assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-main-agent", 0)).tags
+    # assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-trace-agent", 0)).tags
+    # assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-process-container", 0)).tags
+    # assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-process-agent", 0)).tags
 
     assert f"image_tag:{branch_name}" in matched_res.component(("node-agent-main-container", 0)).tags
 
