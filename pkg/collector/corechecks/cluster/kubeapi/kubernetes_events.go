@@ -252,6 +252,8 @@ func (k *EventsCheck) eventCollectionCheck() (newEvents []*v1.Event, err error) 
 		resVer = k.eventCollection.LastResVer
 	}
 
+	fmt.Printf("Ignored Events: %v", k.ignoredEvents)
+
 	timeout := int64(k.instance.EventCollectionTimeoutMs / 1000)
 	limit := int64(k.instance.MaxEventCollection)
 	resync := int64(k.instance.ResyncPeriodEvents)
