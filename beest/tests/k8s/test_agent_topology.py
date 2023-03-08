@@ -138,7 +138,8 @@ def test_checks_agent_topology(ansible_var, cliv1):
         .one_way_direction("checks-agent-container", "checks-agent-main-agent", type="runs")
 
     matched_res = query_and_assert(cliv1, cluster_name, namespace, expected_topology)
-    assert f"image_tag:{branch_name}" in matched_res.component("checks-agent-container").tags
+    # TODO revive after STAC-19236
+    # assert f"image_tag:{branch_name}" in matched_res.component("checks-agent-container").tags
 
 
 def query_and_assert(cliv1, cluster_name: str, namespace: str, expected_topology: TopologyMatcher):
