@@ -34,42 +34,27 @@ import (
 
 // Covers the Control Plane service check and the in memory pod metadata.
 const (
-	KubeControlPaneCheck         = "kube_apiserver_controlplane.up"
-	kubernetesAPIServerCheckName = "kubernetes_apiserver"
-	defaultCacheExpire           = 2 * time.Minute
-	defaultCachePurge            = 10 * time.Minute
+	KubeControlPaneCheck          = "kube_apiserver_controlplane.up"
+	kubernetesAPIServerCheckName  = "kubernetes_apiserver"
+	eventTokenKey                 = "event"
+	maxEventCardinality           = 300
+	defaultResyncPeriodInSecond   = 300
+	defaultTimeoutEventCollection = 2000
 
-	// Event collection
-	eventTokenKey                    = "event"
-	maxEventCardinality              = 300
-	defaultTimeoutEventCollection    = 2000
-	defaultEventResyncPeriodInSecond = 300
-
-	// Pod collection
-	podTokenKey                 = "pod"
-	maxPodCardinality           = 300
-	defaultTimeoutPodCollection = 2000
+	defaultCacheExpire = 2 * time.Minute
+	defaultCachePurge  = 10 * time.Minute
 )
 
 // KubeASConfig is the config of the API server.
 type KubeASConfig struct {
-	CollectOShiftQuotas bool `yaml:"collect_openshift_clusterquotas"`
-	LeaderSkip          bool `yaml:"skip_leader_election"`
-	UseComponentStatus  bool `yaml:"use_component_status"`
-
-	// Events
-	MaxEventCollection       int      `yaml:"max_events_per_run"`
+	CollectEvent             bool     `yaml:"collect_events"`
+	CollectOShiftQuotas      bool     `yaml:"collect_openshift_clusterquotas"`
 	FilteredEventTypes       []string `yaml:"filtered_event_types"`
 	EventCollectionTimeoutMs int      `yaml:"kubernetes_event_read_timeout_ms"`
+	MaxEventCollection       int      `yaml:"max_events_per_run"`
+	LeaderSkip               bool     `yaml:"skip_leader_election"`
 	ResyncPeriodEvents       int      `yaml:"kubernetes_event_resync_period_s"`
-	CollectEvent             bool     `yaml:"collect_events"`
-
-	// Pods
-	MaxPodCollection       int      `yaml:"max_pods_per_run"`
-	FilteredPodTypes       []string `yaml:"filtered_pod_types"`
-	PodCollectionTimeoutMs int      `yaml:"kubernetes_pod_read_timeout_ms"`
-	ResyncPeriodPods       int      `yaml:"kubernetes_pod_resync_period_s"`
-	CollectPods            bool     `yaml:"collect_pods"`
+	UseComponentStatus       bool     `yaml:"use_component_status"`
 }
 
 // EventC holds the information pertaining to which event we collected last and when we last re-synced.
@@ -83,9 +68,7 @@ type KubeASCheck struct {
 	core.CheckBase
 	instance        *KubeASConfig
 	eventCollection EventC
-	podCollection   EventC
 	ignoredEvents   string
-	ignoredPods     string
 	ac              *apiserver.APIClient
 	oshiftAPILevel  apiserver.OpenShiftAPILevel
 	providerIDCache *cache.Cache
@@ -94,9 +77,8 @@ type KubeASCheck struct {
 func (c *KubeASConfig) parse(data []byte) error {
 	// default values
 	c.CollectEvent = config.Datadog.GetBool("collect_kubernetes_events")
-	c.CollectPods = config.Datadog.GetBool("collect_kubernetes_pods")
 	c.CollectOShiftQuotas = true
-	c.ResyncPeriodEvents = defaultEventResyncPeriodInSecond
+	c.ResyncPeriodEvents = defaultResyncPeriodInSecond
 	c.UseComponentStatus = true
 
 	return yaml.Unmarshal(data, c)
@@ -125,13 +107,9 @@ func (k *KubeASCheck) Configure(config, initConfig integration.Data, source stri
 	// Check connectivity to the APIServer
 	err = k.instance.parse(config)
 	if err != nil {
-		_ = log.Error("could not parse the config for the API server")
+		log.Error("could not parse the config for the API server")
 		return err
 	}
-
-	// Configure events collection
-	k.ignoredEvents = convertFilter(k.instance.FilteredEventTypes)
-
 	if k.instance.EventCollectionTimeoutMs == 0 {
 		k.instance.EventCollectionTimeoutMs = defaultTimeoutEventCollection
 	}
@@ -139,17 +117,7 @@ func (k *KubeASCheck) Configure(config, initConfig integration.Data, source stri
 	if k.instance.MaxEventCollection == 0 {
 		k.instance.MaxEventCollection = maxEventCardinality
 	}
-
-	// Configure pods collection
-	k.ignoredPods = convertFilter(k.instance.FilteredPodTypes)
-
-	if k.instance.PodCollectionTimeoutMs == 0 {
-		k.instance.PodCollectionTimeoutMs = defaultTimeoutPodCollection
-	}
-
-	if k.instance.MaxPodCollection == 0 {
-		k.instance.MaxPodCollection = maxPodCardinality
-	}
+	k.ignoredEvents = convertFilter(k.instance.FilteredEventTypes)
 
 	return nil
 }
@@ -169,8 +137,6 @@ func convertFilter(conf []string) string {
 
 // Run executes the check.
 func (k *KubeASCheck) Run() error {
-	log.Infof("Running the cluster agent check - kubernetes_apiserver.")
-
 	sender, err := aggregator.GetSender(k.ID())
 	if err != nil {
 		return err
@@ -241,40 +207,21 @@ func (k *KubeASCheck) Run() error {
 	}
 
 	// Running the event collection.
-	if k.instance.CollectEvent {
-		// Get the events from the API server
-		events, err := k.eventCollectionCheck()
-		if err != nil {
-			return err
-		}
-
-		// Process the events to have a Datadog format.
-		err = k.processEvents(sender, events)
-		if err != nil {
-			k.Warnf("Could not submit new event %s", err.Error()) //nolint:errcheck
-		}
-	} else {
-		// TODO: Change from warn to debug
-		_ = log.Warnf("Not collecting Kubernetes Events")
+	if !k.instance.CollectEvent {
+		return nil
 	}
 
-	// Running the pod collection.
-	if k.instance.CollectPods {
-		// Get the pods from the API server
-		pods, err := k.podCollectionCheck()
-		if err != nil {
-			return err
-		}
-
-		// TODO: Remove logging
-		fmt.Printf("collected total pods: %v", len(pods))
-		fmt.Printf("collected pods: %v", pods)
-
-	} else {
-		// TODO: Change from warn to debug
-		_ = log.Warnf("Not collecting Kubernetes Pods")
+	// Get the events from the API server
+	events, err := k.eventCollectionCheck()
+	if err != nil {
+		return err
 	}
 
+	// Process the events to have a Datadog format.
+	err = k.processEvents(sender, events)
+	if err != nil {
+		k.Warnf("Could not submit new event %s", err.Error()) //nolint:errcheck
+	}
 	return nil
 }
 
@@ -305,39 +252,6 @@ func (k *KubeASCheck) eventCollectionCheck() (newEvents []*v1.Event, err error) 
 		k.Warnf("Could not store the LastEventToken in the ConfigMap: %s", configMapErr.Error()) //nolint:errcheck
 	}
 	return newEvents, nil
-}
-
-func (k *KubeASCheck) podCollectionCheck() (newPods []*v1.Pod, err error) {
-	resourceVersion, lastTime, err := k.ac.GetTokenFromConfigmap(podTokenKey)
-	if err != nil {
-		_ = log.Error("Unable to get the pod token from the ConfigMap")
-		return nil, err
-	}
-
-	// Avoid getting in a situation where we list all the pods for multiple runs in a row.
-	if resourceVersion == "" && k.podCollection.LastResVer != "" {
-		_ = log.Errorf("Resource Version stored in the ConfigMap is incorrect. Will resume collecting from %s", k.podCollection.LastResVer)
-		resourceVersion = k.podCollection.LastResVer
-	}
-
-	timeout := int64(k.instance.PodCollectionTimeoutMs / 1000)
-	// TODO: Verify if pod collection limit is needed (Unlike events)
-	limit := int64(k.instance.MaxPodCollection)
-	resync := int64(k.instance.ResyncPeriodPods)
-
-	// Start collecting the pods
-	newPods, k.podCollection.LastResVer, k.podCollection.LastTime, err = k.ac.RunPodCollection(resourceVersion, lastTime, timeout, limit, resync, k.ignoredPods)
-
-	if err != nil {
-		_ = k.Warnf("Could not collect pods from the api server: %s", err.Error()) //nolint:errcheck
-		return nil, err
-	}
-
-	configMapErr := k.ac.UpdateTokenInConfigmap(podTokenKey, k.podCollection.LastResVer, k.podCollection.LastTime)
-	if configMapErr != nil {
-		_ = k.Warnf("Could not store the LastPodToken in the ConfigMap: %s", configMapErr.Error()) //nolint:errcheck
-	}
-	return newPods, nil
 }
 
 func (k *KubeASCheck) parseComponentStatus(sender aggregator.Sender, componentsStatus *v1.ComponentStatusList) error {
