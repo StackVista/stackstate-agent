@@ -164,6 +164,8 @@ func convertFilter(conf []string) string {
 
 // Run executes the check.
 func (k *EventsCheck) Run() error {
+	log.Infof("Running the cluster agent check - kubernetes_events.")
+
 	// Running the event collection.
 	if !k.instance.CollectEvent {
 		return nil
