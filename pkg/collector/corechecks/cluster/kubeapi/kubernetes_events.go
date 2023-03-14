@@ -250,7 +250,7 @@ func (k *EventsCheck) Run() error {
 
 	customPodEventsJson, err := json.Marshal(customPodEvents)
 	if err == nil {
-		log.Infof("customPodEvents Found: %v", customPodEventsJson)
+		log.Infof("customPodEvents Found: %v", string(customPodEventsJson))
 	} else {
 		log.Info("Unable to parse customPodEvents ...")
 	}
