@@ -32,25 +32,42 @@ import (
 
 // Covers the Control Plane service check and the in memory pod metadata.
 const (
-	kubernetesAPIEventsCheckName  = "kubernetes_api_events"
-	eventTokenKey                 = "event"
-	maxEventCardinality           = 300
-	defaultResyncPeriodInSecond   = 300
-	defaultTimeoutEventCollection = 2000
+	kubernetesAPIEventsCheckName = "kubernetes_api_events"
 
+	// Events
+	eventTokenKey                    = "event"
+	maxEventCardinality              = 300
+	defaultEventResyncPeriodInSecond = 300
+	defaultTimeoutEventCollection    = 2000
+
+	// Custom Pod Events
+	customPodEventTokenKey                    = "pod-event"
+	maxCustomPodEventCardinality              = 300
+	defaultCustomPodEventResyncPeriodInSecond = 300
+	defaultTimeoutCustomPodEventCollection    = 2000
+
+	// Cache
 	defaultCacheExpire = 2 * time.Minute
 	defaultCachePurge  = 10 * time.Minute
 )
 
 // EventsConfig is the config of the API server.
 type EventsConfig struct {
+	LeaderSkip bool `yaml:"skip_leader_election"`
+
+	// Events
 	CollectEvent             bool                     `yaml:"collect_events"`
-	FilteredEventTypes       []string                 `yaml:"filtered_event_types"`
+	ResyncPeriodEvents       int                      `yaml:"kubernetes_event_resync_period_s"`
 	EventCollectionTimeoutMs int                      `yaml:"kubernetes_event_read_timeout_ms"`
 	MaxEventCollection       int                      `yaml:"max_events_per_run"`
-	LeaderSkip               bool                     `yaml:"skip_leader_election"`
-	ResyncPeriodEvents       int                      `yaml:"kubernetes_event_resync_period_s"`
+	FilteredEventTypes       []string                 `yaml:"filtered_event_types"`
 	EventCategories          map[string]EventCategory `yaml:"event_categories"`
+
+	// Custom Pod Events
+	CollectCustomPodEvents            bool `yaml:"collect_custom_pod_events"`
+	ResyncPeriodCustomPodEvents       int  `yaml:"kubernetes_custom_pod_event_resync_period_s"`
+	CustomPodEventCollectionTimeoutMs int  `yaml:"kubernetes_custom_pod_event_read_timeout_ms"`
+	MaxCustomPodEventCollection       int  `yaml:"max_custom_pod_events_per_run"`
 }
 
 // EventC holds the information pertaining to which event we collected last and when we last re-synced.
@@ -62,19 +79,25 @@ type EventC struct {
 // EventsCheck grabs events from the API server.
 type EventsCheck struct {
 	CommonCheck
-	instance        *EventsConfig
-	eventCollection EventC
-	ignoredEvents   string
-	providerIDCache *cache.Cache
-	mapperFactory   KubernetesEventMapperFactory
-	clusterName     string
+	instance                 *EventsConfig
+	eventCollection          EventC
+	customPodEventCollection EventC
+	ignoredEvents            string
+	providerIDCache          *cache.Cache
+	mapperFactory            KubernetesEventMapperFactory
+	clusterName              string
 }
 
 func (c *EventsConfig) parse(data []byte) error {
-	// default values
-	c.CollectEvent = config.Datadog.GetBool("collect_kubernetes_events")
-	c.ResyncPeriodEvents = defaultResyncPeriodInSecond
 	c.LeaderSkip = true
+
+	// Events
+	c.CollectEvent = config.Datadog.GetBool("collect_kubernetes_events")
+	c.ResyncPeriodEvents = defaultEventResyncPeriodInSecond
+
+	// Custom Pod Events
+	c.CollectCustomPodEvents = config.Datadog.GetBool("collect_kubernetes_custom_pod_events")
+	c.ResyncPeriodCustomPodEvents = defaultCustomPodEventResyncPeriodInSecond
 
 	return yaml.Unmarshal(data, c)
 }
@@ -121,6 +144,7 @@ goOverCategories:
 		delete(k.instance.EventCategories, evType)
 	}
 
+	// Events
 	if k.instance.EventCollectionTimeoutMs == 0 {
 		k.instance.EventCollectionTimeoutMs = defaultTimeoutEventCollection
 	}
@@ -128,7 +152,19 @@ goOverCategories:
 	if k.instance.MaxEventCollection == 0 {
 		k.instance.MaxEventCollection = maxEventCardinality
 	}
+
 	k.ignoredEvents = convertFilter(k.instance.FilteredEventTypes)
+
+	// Custom pod events
+	if k.instance.CustomPodEventCollectionTimeoutMs == 0 {
+		k.instance.CustomPodEventCollectionTimeoutMs = defaultTimeoutCustomPodEventCollection
+	}
+
+	if k.instance.MaxCustomPodEventCollection == 0 {
+		k.instance.MaxCustomPodEventCollection = maxCustomPodEventCardinality
+	}
+
+	// TODO: ? No ignored events as it is custom events, is this correct?
 
 	// sts - Retrieve cluster name
 	k.getClusterName()
@@ -164,10 +200,10 @@ func convertFilter(conf []string) string {
 
 // Run executes the check.
 func (k *EventsCheck) Run() error {
-	log.Infof("Running the cluster agent check - kubernetes_events.")
+	log.Info("Running kubernetes events check")
 
 	// Running the event collection.
-	if !k.instance.CollectEvent {
+	if !k.instance.CollectEvent && !k.instance.CollectCustomPodEvents {
 		return nil
 	}
 
@@ -202,21 +238,33 @@ func (k *EventsCheck) Run() error {
 	}
 
 	// Running the event collection.
-	if !k.instance.CollectEvent {
-		return nil
+	if k.instance.CollectEvent {
+		log.Info("Running kubernetes CollectEvent")
+		// Get the events from the API server
+		events, err := k.eventCollectionCheck()
+		if err != nil {
+			return err
+		}
+
+		// Process the events to have a Datadog format.
+		err = k.processEvents(sender, events)
+		if err != nil {
+			_ = k.Warnf("Could not submit new event %s", err.Error()) //nolint:errcheck
+		}
 	}
 
-	// Get the events from the API server
-	events, err := k.eventCollectionCheck()
-	if err != nil {
-		return err
+	// Running the custom pod events collection.
+	if k.instance.CollectCustomPodEvents {
+		log.Info("Running kubernetes CollectCustomPodEvents")
+		// Get the events from the API server
+		customPodEvents, err := k.customPodEventCollectionCheck()
+		if err != nil {
+			return err
+		}
+
+		log.Infof("customPodEvents Found: %v", customPodEvents)
 	}
 
-	// Process the events to have a Datadog format.
-	err = k.processEvents(sender, events)
-	if err != nil {
-		k.Warnf("Could not submit new event %s", err.Error()) //nolint:errcheck
-	}
 	return nil
 }
 
@@ -224,13 +272,13 @@ func (k *EventsCheck) runLeaderElection() error {
 
 	leaderEngine, err := leaderelection.GetLeaderEngine()
 	if err != nil {
-		k.Warn("Failed to instantiate the Leader Elector. Not running the Kubernetes API Server check or collecting Kubernetes Events.") //nolint:errcheck
+		_ = k.Warn("Failed to instantiate the Leader Elector. Not running the Kubernetes API Server check or collecting Kubernetes Events.") //nolint:errcheck
 		return err
 	}
 
 	err = leaderEngine.EnsureLeaderElectionRuns()
 	if err != nil {
-		k.Warn("Leader Election process failed to start") //nolint:errcheck
+		_ = k.Warn("Leader Election process failed to start") //nolint:errcheck
 		return err
 	}
 
@@ -242,6 +290,37 @@ func (k *EventsCheck) runLeaderElection() error {
 	return nil
 }
 
+func (k *EventsCheck) customPodEventCollectionCheck() (newPods []*v1.Pod, err error) {
+	resourceVersion, lastTime, err := k.ac.GetTokenFromConfigmap(customPodEventTokenKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// This is to avoid getting in a situation where we list all the events for multiple runs in a row.
+	if resourceVersion == "" && k.customPodEventCollection.LastResVer != "" {
+		_ = log.Errorf("Resource Version stored in the ConfigMap is incorrect. Will resume collecting from %s", k.customPodEventCollection.LastResVer)
+		resourceVersion = k.customPodEventCollection.LastResVer
+	}
+
+	timeout := int64(k.instance.CustomPodEventCollectionTimeoutMs / 1000)
+	limit := int64(k.instance.MaxCustomPodEventCollection)
+	resync := int64(k.instance.ResyncPeriodCustomPodEvents)
+
+	// TODO: Ignored events
+	newPods, k.customPodEventCollection.LastResVer, k.customPodEventCollection.LastTime, err = k.ac.RunPodCollection(resourceVersion, lastTime, timeout, limit, resync, "")
+
+	if err != nil {
+		_ = k.Warnf("Could not collect custom pod events from the api server: %s", err.Error()) //nolint:errcheck
+		return nil, err
+	}
+
+	configMapErr := k.ac.UpdateTokenInConfigmap(customPodEventTokenKey, k.customPodEventCollection.LastResVer, k.customPodEventCollection.LastTime)
+	if configMapErr != nil {
+		_ = k.Warnf("Could not store the LastCustomPodEventToken in the ConfigMap: %s", configMapErr.Error()) //nolint:errcheck
+	}
+	return newPods, nil
+}
+
 func (k *EventsCheck) eventCollectionCheck() (newEvents []*v1.Event, err error) {
 	resVer, lastTime, err := k.ac.GetTokenFromConfigmap(eventTokenKey)
 	if err != nil {
@@ -250,7 +329,7 @@ func (k *EventsCheck) eventCollectionCheck() (newEvents []*v1.Event, err error) 
 
 	// This is to avoid getting in a situation where we list all the events for multiple runs in a row.
 	if resVer == "" && k.eventCollection.LastResVer != "" {
-		log.Errorf("Resource Version stored in the ConfigMap is incorrect. Will resume collecting from %s", k.eventCollection.LastResVer)
+		_ = log.Errorf("Resource Version stored in the ConfigMap is incorrect. Will resume collecting from %s", k.eventCollection.LastResVer)
 		resVer = k.eventCollection.LastResVer
 	}
 
@@ -260,13 +339,13 @@ func (k *EventsCheck) eventCollectionCheck() (newEvents []*v1.Event, err error) 
 	newEvents, k.eventCollection.LastResVer, k.eventCollection.LastTime, err = k.ac.RunEventCollection(resVer, lastTime, timeout, limit, resync, k.ignoredEvents)
 
 	if err != nil {
-		k.Warnf("Could not collect events from the api server: %s", err.Error()) //nolint:errcheck
+		_ = k.Warnf("Could not collect events from the api server: %s", err.Error()) //nolint:errcheck
 		return nil, err
 	}
 
 	configMapErr := k.ac.UpdateTokenInConfigmap(eventTokenKey, k.eventCollection.LastResVer, k.eventCollection.LastTime)
 	if configMapErr != nil {
-		k.Warnf("Could not store the LastEventToken in the ConfigMap: %s", configMapErr.Error()) //nolint:errcheck
+		_ = k.Warnf("Could not store the LastEventToken in the ConfigMap: %s", configMapErr.Error()) //nolint:errcheck
 	}
 	return newEvents, nil
 }
