@@ -64,10 +64,9 @@ type EventsConfig struct {
 	EventCategories          map[string]EventCategory `yaml:"event_categories"`
 
 	// Custom Pod Events
-	CollectCustomPodEvents            bool `yaml:"collect_custom_pod_events"`
-	ResyncPeriodCustomPodEvents       int  `yaml:"kubernetes_custom_pod_event_resync_period_s"`
-	CustomPodEventCollectionTimeoutMs int  `yaml:"kubernetes_custom_pod_event_read_timeout_ms"`
-	MaxCustomPodEventCollection       int  `yaml:"max_custom_pod_events_per_run"`
+	ResyncPeriodCustomPodEvents       int `yaml:"kubernetes_custom_pod_event_resync_period_s"`
+	CustomPodEventCollectionTimeoutMs int `yaml:"kubernetes_custom_pod_event_read_timeout_ms"`
+	MaxCustomPodEventCollection       int `yaml:"max_custom_pod_events_per_run"`
 }
 
 // EventC holds the information pertaining to which event we collected last and when we last re-synced.
@@ -96,7 +95,6 @@ func (c *EventsConfig) parse(data []byte) error {
 	c.ResyncPeriodEvents = defaultEventResyncPeriodInSecond
 
 	// Custom Pod Events
-	c.CollectCustomPodEvents = config.Datadog.GetBool("collect_kubernetes_custom_pod_events")
 	c.ResyncPeriodCustomPodEvents = defaultCustomPodEventResyncPeriodInSecond
 
 	return yaml.Unmarshal(data, c)
@@ -203,7 +201,7 @@ func (k *EventsCheck) Run() error {
 	log.Info("Running kubernetes events check")
 
 	// Running the event collection.
-	if !k.instance.CollectEvent && !k.instance.CollectCustomPodEvents {
+	if !k.instance.CollectEvent {
 		return nil
 	}
 
@@ -238,31 +236,29 @@ func (k *EventsCheck) Run() error {
 	}
 
 	// Running the event collection.
-	if k.instance.CollectEvent {
-		log.Info("Running kubernetes CollectEvent")
-		// Get the events from the API server
-		events, err := k.eventCollectionCheck()
-		if err != nil {
-			return err
-		}
-
-		// Process the events to have a Datadog format.
-		err = k.processEvents(sender, events)
-		if err != nil {
-			_ = k.Warnf("Could not submit new event %s", err.Error()) //nolint:errcheck
-		}
+	if !k.instance.CollectEvent {
+		return nil
 	}
 
-	// Running the custom pod events collection.
-	if k.instance.CollectCustomPodEvents {
-		log.Info("Running kubernetes CollectCustomPodEvents")
-		// Get the events from the API server
-		customPodEvents, err := k.customPodEventCollectionCheck()
-		if err != nil {
-			return err
-		}
+	log.Info("Running kubernetes custom pod event collector ...")
+	// Get the events from the API server
+	customPodEvents, err := k.customPodEventCollectionCheck()
+	if err != nil {
+		return err
+	}
+	log.Infof("customPodEvents Found: %v", customPodEvents)
 
-		log.Infof("customPodEvents Found: %v", customPodEvents)
+	log.Info("Running kubernetes event collector ...")
+	// Get the events from the API server
+	events, err := k.eventCollectionCheck()
+	if err != nil {
+		return err
+	}
+
+	// Process the events to have a Datadog format.
+	err = k.processEvents(sender, events)
+	if err != nil {
+		_ = k.Warnf("Could not submit new event %s", err.Error()) //nolint:errcheck
 	}
 
 	return nil
