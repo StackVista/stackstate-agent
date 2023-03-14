@@ -10,6 +10,7 @@ package kubeapi
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/util"
 	"strings"
@@ -246,7 +247,13 @@ func (k *EventsCheck) Run() error {
 	if err != nil {
 		return err
 	}
-	log.Infof("customPodEvents Found: %v", customPodEvents)
+
+	customPodEventsJson, err := json.Marshal(customPodEvents)
+	if err == nil {
+		log.Infof("customPodEvents Found: %v", customPodEventsJson)
+	} else {
+		log.Info("Unable to parse customPodEvents ...")
+	}
 
 	log.Info("Running kubernetes event collector ...")
 	// Get the events from the API server
