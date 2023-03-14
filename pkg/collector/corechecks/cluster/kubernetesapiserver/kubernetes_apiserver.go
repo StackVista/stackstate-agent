@@ -169,6 +169,8 @@ func convertFilter(conf []string) string {
 
 // Run executes the check.
 func (k *KubeASCheck) Run() error {
+	log.Infof("Running the cluster agent check.")
+
 	sender, err := aggregator.GetSender(k.ID())
 	if err != nil {
 		return err
