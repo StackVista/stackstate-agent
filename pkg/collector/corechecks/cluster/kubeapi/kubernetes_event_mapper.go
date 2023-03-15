@@ -8,6 +8,7 @@
 package kubeapi
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -139,6 +140,10 @@ func newKubernetesEventMapper(detector apiserver.OpenShiftDetector, clusterName 
 
 var _ KubernetesEventMapperFactory = newKubernetesEventMapper // Compile-time check
 
+func (k *kubernetesEventMapper) mapKubernetesCustomPodEvent(pod *v1.Pod) (metrics.Event, error) {
+	return metrics.Event{}, nil
+}
+
 func (k *kubernetesEventMapper) mapKubernetesEvent(event *v1.Event) (metrics.Event, error) {
 	if err := checkEvent(event); err != nil {
 		return metrics.Event{}, err
@@ -165,6 +170,13 @@ func (k *kubernetesEventMapper) mapKubernetesEvent(event *v1.Event) (metrics.Eve
 			Data:               map[string]interface{}{},
 		},
 		Text: event.Message,
+	}
+
+	mEventJson, err := json.Marshal(mEvent)
+	if err == nil {
+		log.Infof("mEvent: %v", string(mEventJson))
+	} else {
+		log.Info("Unable to parse mEvent ...")
 	}
 
 	return mEvent, nil

@@ -32,7 +32,7 @@ services:
       service: topic-api
 
   stackstate-agent:
-    image: docker.io/stackstate/${STS_DOCKER_TEST_REPO:-stackstate-agent-test}:${AGENT_VERSION-master}
+    image: quay.io/stackstate/${STS_DOCKER_TEST_REPO:-stackstate-agent-test}:${AGENT_VERSION-master}
     network_mode: "host"
     pid: "host"
     privileged: true
