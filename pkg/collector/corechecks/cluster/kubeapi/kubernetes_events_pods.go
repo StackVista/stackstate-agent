@@ -10,40 +10,44 @@ package kubeapi
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
+	obj "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"time"
 )
 
-// Covers the Control Plane service check and the in memory pod metadata.
 const (
-	customPodEventTokenKey                    = "pod-event"
-	maxCustomPodEventCardinality              = 300
-	defaultCustomPodEventResyncPeriodInSecond = 300
-	defaultTimeoutCustomPodEventCollection    = 2000
+	podEventTokenKey                     = "pod-event"
+	maxPodEventsCardinality              = 300
+	defaultPodEventsResyncPeriodInSecond = 300
+	defaultTimeoutPodEventsCollection    = 2000
 )
 
-// TODO: Leader election, should include?
-func (c *EventsConfig) parsePods() {
-	c.ResyncPeriodCustomPodEvents = defaultCustomPodEventResyncPeriodInSecond
+func (c *EventsConfig) parsePodEvents() {
+	// TODO: Leader election, should include?
+	c.ResyncPeriodPodEvent = defaultPodEventsResyncPeriodInSecond
 }
 
-// TODO: No ignored events as it is custom events, is this correct ?
-// TODO: k.ignoredEvents = convertFilter(k.instance.FilteredEventTypes)
-func (k *EventsCheck) setDefaultsForPods() {
-	if k.instance.CustomPodEventCollectionTimeoutMs == 0 {
-		k.instance.CustomPodEventCollectionTimeoutMs = defaultTimeoutCustomPodEventCollection
+func (k *EventsCheck) setDefaultsPodEvents() {
+	// TODO: No ignored events as it is custom events, is this correct ?
+	// TODO: k.ignoredEvents = convertFilter(k.instance.FilteredEventTypes)
+
+	if k.instance.PodEventCollectionTimeoutMs == 0 {
+		k.instance.PodEventCollectionTimeoutMs = defaultTimeoutPodEventsCollection
 	}
 
-	if k.instance.MaxCustomPodEventCollection == 0 {
-		k.instance.MaxCustomPodEventCollection = maxCustomPodEventCardinality
+	if k.instance.MaxPodEventsCollection == 0 {
+		k.instance.MaxPodEventsCollection = maxPodEventsCardinality
 	}
 }
 
-func (k *EventsCheck) podCollectionCheck() (newPods []*v1.Pod, err error) {
+func (k *EventsCheck) podEventsCollectionCheck() (newPods []*v1.Pod, err error) {
 	// Retrieve the last resource version that was used within the customPodEvent collection cycle.
 	// This allows us to continue from a certain point in time and not re-fetch all the pods over and over
-	resourceVersion, lastTime, err := k.ac.GetTokenFromConfigmap(customPodEventTokenKey)
+	resourceVersion, lastTime, err := k.ac.GetTokenFromConfigmap(podEventTokenKey)
 	if err != nil {
 		return nil, err
 	}
@@ -54,9 +58,9 @@ func (k *EventsCheck) podCollectionCheck() (newPods []*v1.Pod, err error) {
 		resourceVersion = k.customPodEventCollection.LastResVer
 	}
 
-	timeout := int64(k.instance.CustomPodEventCollectionTimeoutMs / 1000)
-	limit := int64(k.instance.MaxCustomPodEventCollection)
-	resync := int64(k.instance.ResyncPeriodCustomPodEvents)
+	timeout := int64(k.instance.PodEventCollectionTimeoutMs / 1000)
+	limit := int64(k.instance.MaxPodEventsCollection)
+	resync := int64(k.instance.ResyncPeriodPodEvent)
 
 	// TODO: Ignored events / Filter - Currently still passing in a blank string
 	newPods, k.customPodEventCollection.LastResVer, k.customPodEventCollection.LastTime, err = k.ac.RunPodCollection(resourceVersion, lastTime, timeout, limit, resync, "")
@@ -66,43 +70,107 @@ func (k *EventsCheck) podCollectionCheck() (newPods []*v1.Pod, err error) {
 	}
 
 	// Update the configMap to contain the new latest resources version so that we can continue from this version.
-	configMapErr := k.ac.UpdateTokenInConfigmap(customPodEventTokenKey, k.customPodEventCollection.LastResVer, k.customPodEventCollection.LastTime)
+	configMapErr := k.ac.UpdateTokenInConfigmap(podEventTokenKey, k.customPodEventCollection.LastResVer, k.customPodEventCollection.LastTime)
 	if configMapErr != nil {
 		_ = k.Warnf("Could not store the LastCustomPodEventToken in the ConfigMap: %s", configMapErr.Error()) //nolint:errcheck
 	}
 	return newPods, nil
 }
 
-// processCustomPodEvents Lorem Ipsum
-func (k *EventsCheck) processCustomPodEvents(sender aggregator.Sender, pods []*v1.Pod) error {
+func (k *EventsCheck) processPodEvents(sender aggregator.Sender, pods []*v1.Pod) error {
 	log.Infof("---------- start processCustomPodEvents -----------")
 
-	podsJSON, err := json.Marshal(pods)
-	if err == nil {
-		log.Infof("Found Custom Pod Events: %v", string(podsJSON))
-	} else {
-		log.Info("Unable to parse customPodEvents ...")
+	mapper := k.mapperFactory(k.ac, k.clusterName, k.instance.EventCategories)
+	for _, pod := range pods {
+		k.podEventMapper(pod, mapper, sender)
 	}
 
-	log.Infof("k.instance.EventCategories: %v", k.instance.EventCategories)
-
-	mapper := k.mapperFactory(k.ac, k.clusterName, k.instance.EventCategories)
-
-	log.Infof("mapper.clusterName: %v", mapper.clusterName)
-	log.Infof("mapper.urn: %v", mapper.urn)
-	log.Infof("mapper.sourceType: %v", mapper.sourceType)
 	log.Infof("---------- end processCustomPodEvents -----------")
 
-	//  mapper := k.mapperFactory(k.ac, k.clusterName, k.instance.EventCategories)
-	//  for _, event := range events {
-	//  	mappedEvent, err := mapper.mapKubernetesEvent(event)
-	//  	if err != nil {
-	//  		_ = k.Warnf("Error while mapping event, %s.", err.Error())
-	//  		continue
-	//  	}
-	//  	log.Debugf("Sending event: %s", mappedEvent.String())
-	//  	sender.Event(mappedEvent)
-	//  }
-
 	return nil
+}
+
+func (k *EventsCheck) podEventMapper(pod *v1.Pod, mapper *kubernetesEventMapper, sender aggregator.Sender) {
+	log.Infof("---------- start podEventMapper -----------")
+
+	for _, containerStatus := range pod.Status.ContainerStatuses {
+		// TODO: Change containerStatus.LastTerminationState to containerStatus.State
+		if containerStatus.LastTerminationState.Terminated.Reason == "OOMKilled" {
+			k.mapEventForOutOfMemoryPod(pod, containerStatus, mapper, sender)
+		}
+	}
+
+	log.Infof("---------- end podEventMapper -----------")
+}
+
+func (k *EventsCheck) mapEventForOutOfMemoryPod(pod *v1.Pod, containerStatus v1.ContainerStatus, mapper *kubernetesEventMapper, sender aggregator.Sender) {
+	a, err := json.Marshal(pod)
+	if err == nil {
+		log.Infof("Test Print A: %v", string(a))
+	} else {
+		log.Info("Unable to parse Test Print A ...")
+	}
+
+	eventKind := "Pod"
+	eventType := "warning"
+	eventMessage := "Random Testing Message"
+	eventCount := int32(1)
+	eventReason := containerStatus.LastTerminationState.Terminated.Reason
+	podUID := pod.UID
+	podName := pod.Name
+	podNameSpace := pod.Namespace
+	containerName := pod.Status.ContainerStatuses[0].Name
+	startedAtTime := containerStatus.LastTerminationState.Terminated.StartedAt.Unix()
+	endedAtTime := containerStatus.LastTerminationState.Terminated.FinishedAt.Unix()
+	objKind := eventKind
+	objName := podName
+	component := "kubelet"
+	hostname := pod.Spec.NodeName
+
+	event := &v1.Event{
+		InvolvedObject: v1.ObjectReference{
+			Name:      podName,
+			Kind:      eventKind,
+			UID:       types.UID(podUID),
+			Namespace: podNameSpace,
+			FieldPath: fmt.Sprintf("{%s %s %s %s %s}", objKind, podNameSpace, objName, podUID, containerName),
+		},
+		Count: eventCount,
+		Type:  eventType,
+		Source: v1.EventSource{
+			Component: component,
+			Host:      hostname,
+		},
+		Reason: eventReason,
+		FirstTimestamp: obj.Time{
+			Time: time.Unix(startedAtTime, 0),
+		},
+		LastTimestamp: obj.Time{
+			Time: time.Unix(endedAtTime, 0),
+		},
+		Message: eventMessage,
+	}
+
+	b, err := json.Marshal(event)
+	if err == nil {
+		log.Infof("Test Print B: %v", string(b))
+	} else {
+		log.Info("Unable to parse Test Print B ...")
+	}
+
+	mEvent, err := mapper.mapKubernetesEvent(event)
+	if err != nil {
+		_ = k.Warnf("Error while mapping the pod event to a STS event, %s.", err.Error())
+	}
+
+	c, err := json.Marshal(mEvent)
+	if err == nil {
+		log.Infof("Test Print C: %v", string(c))
+	} else {
+		log.Info("Unable to parse Test Print C ...")
+	}
+
+	log.Debugf("Sending event: %s", mEvent.String())
+
+	sender.Event(mEvent)
 }
