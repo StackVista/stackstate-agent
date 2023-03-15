@@ -68,6 +68,7 @@ type EventsConfig struct {
 	ResyncPeriodCustomPodEvents       int `yaml:"kubernetes_custom_pod_event_resync_period_s"`
 	CustomPodEventCollectionTimeoutMs int `yaml:"kubernetes_custom_pod_event_read_timeout_ms"`
 	MaxCustomPodEventCollection       int `yaml:"max_custom_pod_events_per_run"`
+	// TODO: Still possible require filters
 }
 
 // EventC holds the information pertaining to which event we collected last and when we last re-synced.
@@ -163,7 +164,8 @@ goOverCategories:
 		k.instance.MaxCustomPodEventCollection = maxCustomPodEventCardinality
 	}
 
-	// TODO: ? No ignored events as it is custom events, is this correct?
+	// TODO: No ignored events as it is custom events, is this correct ?
+	// TODO: k.ignoredEvents = convertFilter(k.instance.FilteredEventTypes)
 
 	// sts - Retrieve cluster name
 	k.getClusterName()
@@ -242,17 +244,16 @@ func (k *EventsCheck) Run() error {
 	}
 
 	log.Info("Running kubernetes custom pod event collector ...")
-	// Get the events from the API server
+	// Get pods from the API server to produce custom events
 	customPodEvents, err := k.customPodEventCollectionCheck()
 	if err != nil {
 		return err
 	}
 
-	customPodEventsJson, err := json.Marshal(customPodEvents)
-	if err == nil {
-		log.Infof("customPodEvents Found: %v", string(customPodEventsJson))
-	} else {
-		log.Info("Unable to parse customPodEvents ...")
+	// Process the custom pod events to have a Datadog format.
+	err = k.processCustomPodEvents(sender, customPodEvents)
+	if err != nil {
+		_ = k.Warnf("Could not submit new custom pod event %s", err.Error()) //nolint:errcheck
 	}
 
 	log.Info("Running kubernetes event collector ...")
@@ -293,7 +294,11 @@ func (k *EventsCheck) runLeaderElection() error {
 	return nil
 }
 
+// customPodEventCollectionCheck Create custom pod events from the API server.
+// This event will not be found underneath the normal pod events (When you describe a pod), but rather custom events we build up from the pod information
 func (k *EventsCheck) customPodEventCollectionCheck() (newPods []*v1.Pod, err error) {
+	// Retrieve the last resource version that was used within the customPodEvent collection cycle.
+	// This allows us to continue from a certain point in time and not re-fetch all the pods over and over
 	resourceVersion, lastTime, err := k.ac.GetTokenFromConfigmap(customPodEventTokenKey)
 	if err != nil {
 		return nil, err
@@ -309,14 +314,14 @@ func (k *EventsCheck) customPodEventCollectionCheck() (newPods []*v1.Pod, err er
 	limit := int64(k.instance.MaxCustomPodEventCollection)
 	resync := int64(k.instance.ResyncPeriodCustomPodEvents)
 
-	// TODO: Ignored events
+	// TODO: Ignored events / Filter - Currently still passing in a blank string
 	newPods, k.customPodEventCollection.LastResVer, k.customPodEventCollection.LastTime, err = k.ac.RunPodCollection(resourceVersion, lastTime, timeout, limit, resync, "")
-
 	if err != nil {
-		_ = k.Warnf("Could not collect custom pod events from the api server: %s", err.Error()) //nolint:errcheck
+		_ = k.Warnf("Could not collect pods from the api server: %s", err.Error()) //nolint:errcheck
 		return nil, err
 	}
 
+	// Update the configMap to contain the new latest resources version so that we can continue from this version.
 	configMapErr := k.ac.UpdateTokenInConfigmap(customPodEventTokenKey, k.customPodEventCollection.LastResVer, k.customPodEventCollection.LastTime)
 	if configMapErr != nil {
 		_ = k.Warnf("Could not store the LastCustomPodEventToken in the ConfigMap: %s", configMapErr.Error()) //nolint:errcheck
@@ -353,11 +358,46 @@ func (k *EventsCheck) eventCollectionCheck() (newEvents []*v1.Event, err error) 
 	return newEvents, nil
 }
 
+// processCustomPodEvents Lorem Ipsum
+func (k *EventsCheck) processCustomPodEvents(sender aggregator.Sender, pods []*v1.Pod) error {
+	log.Infof("---------- start processCustomPodEvents -----------")
+
+	podsJSON, err := json.Marshal(pods)
+	if err == nil {
+		log.Infof("Found Custom Pod Events: %v", string(podsJSON))
+	} else {
+		log.Info("Unable to parse customPodEvents ...")
+	}
+
+	log.Infof("k.instance.EventCategories: %v", k.instance.EventCategories)
+	mapper := k.mapperFactory(k.ac, k.clusterName, k.instance.EventCategories)
+	log.Infof("mapper.clusterName: %v", mapper.clusterName)
+	log.Infof("mapper.urn: %v", mapper.urn)
+	log.Infof("mapper.sourceType: %v", mapper.sourceType)
+
+	log.Infof("---------- end processCustomPodEvents -----------")
+
+	//  mapper := k.mapperFactory(k.ac, k.clusterName, k.instance.EventCategories)
+	//  for _, event := range events {
+	//  	mappedEvent, err := mapper.mapKubernetesEvent(event)
+	//  	if err != nil {
+	//  		_ = k.Warnf("Error while mapping event, %s.", err.Error())
+	//  		continue
+	//  	}
+	//  	log.Debugf("Sending event: %s", mappedEvent.String())
+	//  	sender.Event(mappedEvent)
+	//  }
+
+	return nil
+}
+
 // processEvents:
 // - iterates over the Kubernetes Events
 // - extracts some attributes and builds a structure ready to be submitted as a StackState event
 // - convert each K8s event to a metrics event to be processed by the intake
 func (k *EventsCheck) processEvents(sender aggregator.Sender, events []*v1.Event) error {
+	log.Infof("---------- start processEvents -----------")
+
 	mapper := k.mapperFactory(k.ac, k.clusterName, k.instance.EventCategories)
 	for _, event := range events {
 		mappedEvent, err := mapper.mapKubernetesEvent(event)
@@ -370,6 +410,7 @@ func (k *EventsCheck) processEvents(sender aggregator.Sender, events []*v1.Event
 		sender.Event(mappedEvent)
 	}
 
+	log.Infof("---------- end processEvents -----------")
 	return nil
 }
 
