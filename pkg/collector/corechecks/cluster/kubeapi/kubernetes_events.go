@@ -57,11 +57,10 @@ type EventsConfig struct {
 	FilteredEventTypes       []string                 `yaml:"filtered_event_types"`
 	EventCategories          map[string]EventCategory `yaml:"event_categories"`
 
-	// Events based on Pod Data
-	ResyncPeriodCustomPodEvents       int `yaml:"kubernetes_custom_pod_event_resync_period_s"`
-	CustomPodEventCollectionTimeoutMs int `yaml:"kubernetes_custom_pod_event_read_timeout_ms"`
-	MaxCustomPodEventCollection       int `yaml:"max_custom_pod_events_per_run"`
-	// TODO: Still possible require filters
+	// Pod Events
+	ResyncPeriodPodEvent        int `yaml:"kubernetes_pod_event_resync_period_s"`
+	PodEventCollectionTimeoutMs int `yaml:"kubernetes_pod_event_read_timeout_ms"`
+	MaxPodEventsCollection      int `yaml:"max_custom_pod_events_per_run"`
 }
 
 // EventC holds the information pertaining to which event we collected last and when we last re-synced.
@@ -86,7 +85,7 @@ func (c *EventsConfig) parse(data []byte) error {
 	c.LeaderSkip = true
 	c.CollectEvent = config.Datadog.GetBool("collect_kubernetes_events")
 	c.ResyncPeriodEvents = defaultEventResyncPeriodInSecond
-	c.parsePods()
+	c.parsePodEvents()
 
 	return yaml.Unmarshal(data, c)
 }
@@ -106,18 +105,6 @@ func NewKubernetesAPIEventsCheck(base core.CheckBase, instance *EventsConfig) *E
 // KubernetesAPIEventsFactory is exported for integration testing.
 func KubernetesAPIEventsFactory() check.Check {
 	return NewKubernetesAPIEventsCheck(core.NewCheckBase(kubernetesAPIEventsCheckName), &EventsConfig{})
-}
-
-func (k *EventsCheck) setDefaults() {
-	if k.instance.EventCollectionTimeoutMs == 0 {
-		k.instance.EventCollectionTimeoutMs = defaultTimeoutEventCollection
-	}
-
-	if k.instance.MaxEventCollection == 0 {
-		k.instance.MaxEventCollection = maxEventCardinality
-	}
-
-	k.ignoredEvents = convertFilter(k.instance.FilteredEventTypes)
 }
 
 // Configure parses the check configuration and init the check.
@@ -146,13 +133,25 @@ goOverCategories:
 	}
 
 	k.setDefaults()
-	k.setDefaultsForPods()
+	k.setDefaultsPodEvents()
 
 	// sts - Retrieve cluster name
 	k.getClusterName()
 
 	log.Debugf("Running config %s", config)
 	return nil
+}
+
+func (k *EventsCheck) setDefaults() {
+	if k.instance.EventCollectionTimeoutMs == 0 {
+		k.instance.EventCollectionTimeoutMs = defaultTimeoutEventCollection
+	}
+
+	if k.instance.MaxEventCollection == 0 {
+		k.instance.MaxEventCollection = maxEventCardinality
+	}
+
+	k.ignoredEvents = convertFilter(k.instance.FilteredEventTypes)
 }
 
 // sts begin
@@ -226,15 +225,15 @@ func (k *EventsCheck) Run() error {
 
 	log.Info("Running kubernetes custom pod event collector ...")
 	// Get pods from the API server to produce custom events
-	pods, err := k.podCollectionCheck()
+	pods, err := k.podEventsCollectionCheck()
 	if err != nil {
 		return err
 	}
 
 	// Process the custom pod events to have a Datadog format.
-	err = k.processCustomPodEvents(sender, pods)
+	err = k.processPodEvents(sender, pods)
 	if err != nil {
-		_ = k.Warnf("Could not submit new custom pod event %s", err.Error()) //nolint:errcheck
+		_ = k.Warnf("Could not submit pod events %s", err.Error()) //nolint:errcheck
 	}
 
 	log.Info("Running kubernetes event collector ...")
