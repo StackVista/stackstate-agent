@@ -151,6 +151,12 @@ func (k *kubernetesEventMapper) mapKubernetesEvent(event *v1.Event) (metrics.Eve
 
 	// Map Category to event type
 	//
+	originalEventJson, err := json.Marshal(event)
+	if err == nil {
+		log.Infof("originalEvent: %v", string(originalEventJson))
+	} else {
+		log.Info("Unable to parse originalEvent ...")
+	}
 
 	mEvent := metrics.Event{
 		Title:          fmt.Sprintf("%s - %s %s (%dx)", event.Reason, event.InvolvedObject.Name, event.InvolvedObject.Kind, event.Count),
