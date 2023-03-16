@@ -9,7 +9,6 @@
 package kubeapi
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -91,8 +90,8 @@ func (k *EventsCheck) podEventMapper(pod *v1.Pod, mapper *kubernetesEventMapper,
 	log.Infof("---------- start podEventMapper -----------")
 
 	for _, containerStatus := range pod.Status.ContainerStatuses {
-		if containerStatus.LastTerminationState.Terminated != nil &&
-			containerStatus.LastTerminationState.Terminated.Reason == "OOMKilled" {
+		if containerStatus.State.Terminated != nil &&
+			containerStatus.State.Terminated.Reason == "OOMKilled" {
 			k.mapEventForOutOfMemoryPod(pod, containerStatus, mapper, sender)
 		}
 	}
@@ -101,24 +100,17 @@ func (k *EventsCheck) podEventMapper(pod *v1.Pod, mapper *kubernetesEventMapper,
 }
 
 func (k *EventsCheck) mapEventForOutOfMemoryPod(pod *v1.Pod, containerStatus v1.ContainerStatus, mapper *kubernetesEventMapper, sender aggregator.Sender) {
-	a, err := json.Marshal(pod)
-	if err == nil {
-		log.Infof("Test Print A: %v", string(a))
-	} else {
-		log.Info("Unable to parse Test Print A ...")
-	}
-
 	eventKind := "Pod"
 	eventType := "warning"
 	eventMessage := "Random Testing Message"
 	eventCount := int32(1)
-	eventReason := containerStatus.LastTerminationState.Terminated.Reason
+	eventReason := containerStatus.State.Terminated.Reason
 	podUID := pod.UID
 	podName := pod.Name
 	podNameSpace := pod.Namespace
 	containerName := containerStatus.Name
-	startedAtTime := containerStatus.LastTerminationState.Terminated.StartedAt.Unix()
-	endedAtTime := containerStatus.LastTerminationState.Terminated.FinishedAt.Unix()
+	startedAtTime := containerStatus.State.Terminated.StartedAt.Unix()
+	endedAtTime := containerStatus.State.Terminated.FinishedAt.Unix()
 	objKind := eventKind
 	objName := podName
 	// TODO: ???
@@ -151,26 +143,12 @@ func (k *EventsCheck) mapEventForOutOfMemoryPod(pod *v1.Pod, containerStatus v1.
 		Message: eventMessage,
 	}
 
-	b, err := json.Marshal(event)
-	if err == nil {
-		log.Infof("Test Print B: %v", string(b))
-	} else {
-		log.Info("Unable to parse Test Print B ...")
-	}
-
 	mEvent, err := mapper.mapKubernetesEvent(event)
 	if err != nil {
 		_ = k.Warnf("Error while mapping the pod event to a STS event, %s.", err.Error())
 	}
 
-	c, err := json.Marshal(mEvent)
-	if err == nil {
-		log.Infof("Test Print C: %v", string(c))
-	} else {
-		log.Info("Unable to parse Test Print C ...")
-	}
-
-	log.Debugf("Sending event: %s", mEvent.String())
+	fmt.Printf("Sending event: %s", mEvent.String())
 
 	sender.Event(mEvent)
 }
