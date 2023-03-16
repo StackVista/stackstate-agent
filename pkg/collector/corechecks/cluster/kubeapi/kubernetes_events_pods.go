@@ -15,7 +15,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
 	obj "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"time"
 )
 
@@ -77,7 +76,7 @@ func (k *EventsCheck) podEventsCollectionCheck() (newPods []*v1.Pod, err error) 
 	return newPods, nil
 }
 
-func (k *EventsCheck) processPodEvents(sender aggregator.Sender, pods []*v1.Pod) error {
+func (k *EventsCheck) processPodEvents(sender aggregator.Sender, pods []*v1.Pod) {
 	log.Infof("---------- start processCustomPodEvents -----------")
 
 	mapper := k.mapperFactory(k.ac, k.clusterName, k.instance.EventCategories)
@@ -86,15 +85,14 @@ func (k *EventsCheck) processPodEvents(sender aggregator.Sender, pods []*v1.Pod)
 	}
 
 	log.Infof("---------- end processCustomPodEvents -----------")
-
-	return nil
 }
 
 func (k *EventsCheck) podEventMapper(pod *v1.Pod, mapper *kubernetesEventMapper, sender aggregator.Sender) {
 	log.Infof("---------- start podEventMapper -----------")
 
 	for _, containerStatus := range pod.Status.ContainerStatuses {
-		// TODO: Change containerStatus.LastTerminationState to containerStatus.State
+		log.Infof("Container Status: %v", containerStatus)
+
 		if containerStatus.LastTerminationState.Terminated.Reason == "OOMKilled" {
 			k.mapEventForOutOfMemoryPod(pod, containerStatus, mapper, sender)
 		}
@@ -119,20 +117,23 @@ func (k *EventsCheck) mapEventForOutOfMemoryPod(pod *v1.Pod, containerStatus v1.
 	podUID := pod.UID
 	podName := pod.Name
 	podNameSpace := pod.Namespace
-	containerName := pod.Status.ContainerStatuses[0].Name
+	containerName := containerStatus.Name
 	startedAtTime := containerStatus.LastTerminationState.Terminated.StartedAt.Unix()
 	endedAtTime := containerStatus.LastTerminationState.Terminated.FinishedAt.Unix()
 	objKind := eventKind
 	objName := podName
+	// TODO: ???
 	component := "kubelet"
 	hostname := pod.Spec.NodeName
 
 	event := &v1.Event{
 		InvolvedObject: v1.ObjectReference{
-			Name:      podName,
-			Kind:      eventKind,
-			UID:       types.UID(podUID),
+			Name: podName,
+			Kind: eventKind,
+			// TODO: Remove types.UID
+			UID:       podUID,
 			Namespace: podNameSpace,
+			// TODO: ????
 			FieldPath: fmt.Sprintf("{%s %s %s %s %s}", objKind, podNameSpace, objName, podUID, containerName),
 		},
 		Count: eventCount,
