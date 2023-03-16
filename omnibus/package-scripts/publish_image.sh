@@ -9,6 +9,7 @@ EXTRA_TAG="${4}"
 K8S_REPO="${5}"
 REGISTRY="quay.io"
 ORGANIZATION="stackstate"
+ARTIFACTORY_URL="artifactory.tooling.stackstate.io/artifactory/api/pypi/pypi-local/simple"
 
 echo "IMAGE_TAG=${IMAGE_TAG}"
 echo "IMAGE_REPO=${IMAGE_REPO}"
@@ -18,6 +19,7 @@ BUILD_TAG="${IMAGE_REPO}:${IMAGE_TAG}"
 
 # shellcheck disable=SC2154
 docker login -u "${quay_user}" -p "${quay_password}" "${REGISTRY}"
+docker login -u "${artifactory_user}" -p "${artifactory_password}" "${ARTIFACTORY_URL}"
 
 docker build -t "${BUILD_TAG}" "${DOCKERFILE_PATH}"
 
