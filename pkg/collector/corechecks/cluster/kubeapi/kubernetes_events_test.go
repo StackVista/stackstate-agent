@@ -99,7 +99,7 @@ func TestProcessBundledEvents(t *testing.T) {
 	mocked := mocksender.NewMockSender(kubeAPIEventsCheck.ID())
 	mocked.On("Event", mock.AnythingOfType("metrics.Event"))
 
-	_ = kubeAPIEventsCheck.processEvents(mocked, newKubeEventsBundle)
+	kubeAPIEventsCheck.processEvents(mocked, newKubeEventsBundle)
 
 	// We are only expecting one bundle event.
 	// We need to check that the countByAction concatenated string contains the source events.
@@ -137,7 +137,7 @@ func TestProcessBundledEvents(t *testing.T) {
 	mocked = mocksender.NewMockSender(kubeAPIEventsCheck.ID())
 	mocked.On("Event", mock.AnythingOfType("metrics.Event"))
 
-	_ = kubeAPIEventsCheck.processEvents(mocked, modifiedKubeEventsBundle)
+	kubeAPIEventsCheck.processEvents(mocked, modifiedKubeEventsBundle)
 
 	mocked.AssertEvent(t, modifiedNewDatadogEvents, 0)
 	mocked.AssertExpectations(t)
@@ -175,7 +175,7 @@ func TestProcessBundledEvents(t *testing.T) {
 	mocked = mocksender.NewMockSender(kubeAPIEventsCheck.ID())
 	mocked.On("Event", mock.AnythingOfType("metrics.Event"))
 
-	_ = kubeAPIEventsCheck.processEvents(mocked, modifiedKubeEventsBundle)
+	kubeAPIEventsCheck.processEvents(mocked, modifiedKubeEventsBundle)
 
 	// failing
 	mocked.AssertEvent(t, modifiedNewDatadogEventsWithClusterName, 0)
@@ -230,14 +230,14 @@ func TestProcessEvent(t *testing.T) {
 		},
 	}
 	mocked.On("Event", mock.AnythingOfType("metrics.Event"))
-	_ = kubeAPIEventsCheck.processEvents(mocked, newKubeEventBundle)
+	kubeAPIEventsCheck.processEvents(mocked, newKubeEventBundle)
 	mocked.AssertEvent(t, newDatadogEvent, 0)
 	mocked.AssertExpectations(t)
 
 	// No events
 	empty := []*v1.Event{}
 	mocked = mocksender.NewMockSender(kubeAPIEventsCheck.ID())
-	_ = kubeAPIEventsCheck.processEvents(mocked, empty)
+	kubeAPIEventsCheck.processEvents(mocked, empty)
 	mocked.AssertNotCalled(t, "Event")
 	mocked.AssertExpectations(t)
 
@@ -247,7 +247,7 @@ func TestProcessEvent(t *testing.T) {
 		ev5,
 	}
 	mocked = mocksender.NewMockSender(kubeAPIEventsCheck.ID())
-	_ = kubeAPIEventsCheck.processEvents(mocked, filteredKubeEventsBundle)
+	kubeAPIEventsCheck.processEvents(mocked, filteredKubeEventsBundle)
 	mocked.AssertNotCalled(t, "Event")
 	mocked.AssertExpectations(t)
 }
@@ -303,7 +303,7 @@ func TestProcessEventsType(t *testing.T) {
 	mocked := mocksender.NewMockSender(kubeAPIEventsCheck.ID())
 	mocked.On("Event", mock.AnythingOfType("metrics.Event"))
 
-	_ = kubeAPIEventsCheck.processEvents(mocked, newKubeEventsBundle)
+	kubeAPIEventsCheck.processEvents(mocked, newKubeEventsBundle)
 	// We are only expecting two bundle events from the 3 kubernetes events because the event types differ.
 	// We need to check that the countByAction concatenated string contains the source events.
 	// As the order is not guaranteed we want to use contains.
@@ -346,7 +346,7 @@ event_categories:
 		return createEvent(1, "default", "pearl-789976f5d7-2ljx6", "Pod", "e6417a7f-f566-11e7-9749-0e4863e1cbf4", "component1", "pearl.host", reason, message, 709662600, 709662600, alertType, "")
 	}
 
-	err = evCheck.processEvents(mockSender, []*v1.Event{
+	evCheck.processEvents(mockSender, []*v1.Event{
 		createEventShort("MysteryActivity", "normal", "one"),
 		createEventShort("MysteryActivity", "warning", "two"),
 		createEventShort("MysteryChange", "normal", "three"),
@@ -378,6 +378,7 @@ event_categories:
 
 func TestProcessPodEvents(t *testing.T) {
 	rawPodEvents, _ := ioutil.ReadFile("./testdata/process_pod_events_data.json")
+
 	var podEvents []*v1.Pod
 	err := json.Unmarshal(rawPodEvents, &podEvents)
 	if err != nil {
@@ -390,5 +391,6 @@ func TestProcessPodEvents(t *testing.T) {
 	mockSender := mocksender.NewMockSender(evCheck.ID())
 	mockSender.On("Event", mock.AnythingOfType("metrics.Event"))
 
-	evCheck.processPodEvents(mockSender, podEvents)
+	evCheck.processPods(mockSender, podEvents)
+	mockSender.AssertNumberOfCalls(t, "Event", 1)
 }

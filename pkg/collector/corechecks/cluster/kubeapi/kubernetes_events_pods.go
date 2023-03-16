@@ -11,6 +11,7 @@ package kubeapi
 import (
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
 	obj "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,14 +26,10 @@ const (
 )
 
 func (c *EventsConfig) parsePodEvents() {
-	// TODO: Leader election, should include?
 	c.ResyncPeriodPodEvent = defaultPodEventsResyncPeriodInSecond
 }
 
 func (k *EventsCheck) setDefaultsPodEvents() {
-	// TODO: No ignored events as it is custom events, is this correct ?
-	// TODO: k.ignoredEvents = convertFilter(k.instance.FilteredEventTypes)
-
 	if k.instance.PodEventCollectionTimeoutMs == 0 {
 		k.instance.PodEventCollectionTimeoutMs = defaultTimeoutPodEventsCollection
 	}
@@ -42,7 +39,8 @@ func (k *EventsCheck) setDefaultsPodEvents() {
 	}
 }
 
-func (k *EventsCheck) podEventsCollectionCheck() (newPods []*v1.Pod, err error) {
+// podEventsCollectionCheck The collection check triggered as part of the kubernetes_event this will create custom events based on specific pod conditions
+func (k *EventsCheck) podEventsCollectionCheck() (pods []*v1.Pod, err error) {
 	// Retrieve the last resource version that was used within the customPodEvent collection cycle.
 	// This allows us to continue from a certain point in time and not re-fetch all the pods over and over
 	resourceVersion, lastTime, err := k.ac.GetTokenFromConfigmap(podEventTokenKey)
@@ -60,8 +58,7 @@ func (k *EventsCheck) podEventsCollectionCheck() (newPods []*v1.Pod, err error) 
 	limit := int64(k.instance.MaxPodEventsCollection)
 	resync := int64(k.instance.ResyncPeriodPodEvent)
 
-	// TODO: Ignored events / Filter - Currently still passing in a blank string
-	newPods, k.customPodEventCollection.LastResVer, k.customPodEventCollection.LastTime, err = k.ac.RunPodCollection(resourceVersion, lastTime, timeout, limit, resync, "")
+	pods, k.customPodEventCollection.LastResVer, k.customPodEventCollection.LastTime, err = k.ac.RunPodCollection(resourceVersion, lastTime, timeout, limit, resync)
 	if err != nil {
 		_ = k.Warnf("Could not collect pods from the api server: %s", err.Error()) //nolint:errcheck
 		return nil, err
@@ -72,83 +69,73 @@ func (k *EventsCheck) podEventsCollectionCheck() (newPods []*v1.Pod, err error) 
 	if configMapErr != nil {
 		_ = k.Warnf("Could not store the LastCustomPodEventToken in the ConfigMap: %s", configMapErr.Error()) //nolint:errcheck
 	}
-	return newPods, nil
+
+	return pods, nil
 }
 
-func (k *EventsCheck) processPodEvents(sender aggregator.Sender, pods []*v1.Pod) {
-	log.Infof("---------- start processCustomPodEvents -----------")
-
+func (k *EventsCheck) processPods(sender aggregator.Sender, pods []*v1.Pod) {
 	mapper := k.mapperFactory(k.ac, k.clusterName, k.instance.EventCategories)
 	for _, pod := range pods {
-		k.podEventMapper(pod, mapper, sender)
+		k.podToMetricEventMapper(pod, mapper, sender)
 	}
-
-	log.Infof("---------- end processCustomPodEvents -----------")
 }
 
-func (k *EventsCheck) podEventMapper(pod *v1.Pod, mapper *kubernetesEventMapper, sender aggregator.Sender) {
-	log.Infof("---------- start podEventMapper -----------")
+func (k *EventsCheck) podToMetricEventMapper(pod *v1.Pod, mapper *kubernetesEventMapper, sender aggregator.Sender) {
+	var events []metrics.Event
 
+	// Test on active Status. This will be the current state the pod is in not the previous state
 	for _, containerStatus := range pod.Status.ContainerStatuses {
-		if containerStatus.State.Terminated != nil &&
-			containerStatus.State.Terminated.Reason == "OOMKilled" {
-			k.mapEventForOutOfMemoryPod(pod, containerStatus, mapper, sender)
+		terminated := containerStatus.State.Terminated
+
+		// Terminated is an optional as the state can be anything, for example waiting will make terminated nil
+		if terminated != nil {
+			switch terminated.Reason {
+			case "OOMKilled":
+				event, err := k.mapPodToMetricEventForOutOfMemory(pod, containerStatus.Name, containerStatus.State.Terminated, mapper)
+				if err != nil {
+					_ = log.Errorf("Could not map pod to metric event: %s", err.Error())
+					break
+				}
+				events = append(events, event)
+			}
 		}
 	}
 
-	log.Infof("---------- end podEventMapper -----------")
+	for _, event := range events {
+		log.Debug("Sending metric event: %s", event.String())
+		sender.Event(event)
+	}
 }
 
-func (k *EventsCheck) mapEventForOutOfMemoryPod(pod *v1.Pod, containerStatus v1.ContainerStatus, mapper *kubernetesEventMapper, sender aggregator.Sender) {
-	eventKind := "Pod"
-	eventType := "warning"
-	eventMessage := "Random Testing Message"
-	eventCount := int32(1)
-	eventReason := containerStatus.State.Terminated.Reason
-	podUID := pod.UID
-	podName := pod.Name
-	podNameSpace := pod.Namespace
-	containerName := containerStatus.Name
-	startedAtTime := containerStatus.State.Terminated.StartedAt.Unix()
-	endedAtTime := containerStatus.State.Terminated.FinishedAt.Unix()
-	objKind := eventKind
-	objName := podName
-	// TODO: ???
-	component := "kubelet"
-	hostname := pod.Spec.NodeName
-
+// mapPodToMetricEventForOutOfMemory Attempt to map a pod to a metric event which can be forwarded to the aggregator
+func (k *EventsCheck) mapPodToMetricEventForOutOfMemory(pod *v1.Pod, containerName string, terminatedState *v1.ContainerStateTerminated, mapper *kubernetesEventMapper) (metrics.Event, error) {
 	event := &v1.Event{
 		InvolvedObject: v1.ObjectReference{
-			Name: podName,
-			Kind: eventKind,
-			// TODO: Remove types.UID
-			UID:       podUID,
-			Namespace: podNameSpace,
-			// TODO: ????
-			FieldPath: fmt.Sprintf("{%s %s %s %s %s}", objKind, podNameSpace, objName, podUID, containerName),
+			Name:      pod.Name,
+			Kind:      "Pod",
+			UID:       pod.UID,
+			Namespace: pod.Namespace,
+			FieldPath: fmt.Sprintf("{%s %s %s %s %s}", "Pod", pod.Namespace, pod.Name, pod.UID, containerName),
 		},
-		Count: eventCount,
-		Type:  eventType,
+		Count: int32(1),
+		Type:  "warning",
 		Source: v1.EventSource{
-			Component: component,
-			Host:      hostname,
+			Host: pod.Spec.NodeName,
 		},
-		Reason: eventReason,
+		Reason: terminatedState.Reason,
 		FirstTimestamp: obj.Time{
-			Time: time.Unix(startedAtTime, 0),
+			Time: time.Unix(terminatedState.StartedAt.Unix(), 0),
 		},
 		LastTimestamp: obj.Time{
-			Time: time.Unix(endedAtTime, 0),
+			Time: time.Unix(terminatedState.FinishedAt.Unix(), 0),
 		},
-		Message: eventMessage,
+		Message: fmt.Sprintf("Container '%s' was killed due to an out of memory (OOM) condition", containerName),
 	}
 
-	mEvent, err := mapper.mapKubernetesEvent(event)
+	metricEvent, err := mapper.mapKubernetesEvent(event)
 	if err != nil {
-		_ = k.Warnf("Error while mapping the pod event to a STS event, %s.", err.Error())
+		_ = k.Warnf("Error while mapping a kubernetes event to a metric event, %s.", err.Error())
 	}
 
-	fmt.Printf("Sending event: %s", mEvent.String())
-
-	sender.Event(mEvent)
+	return metricEvent, nil
 }
