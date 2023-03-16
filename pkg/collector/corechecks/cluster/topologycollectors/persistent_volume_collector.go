@@ -71,6 +71,17 @@ func (pvc *PersistentVolumeCollector) CollectorFunction() error {
 		pvc.SubmitRelation(pvc.persistentVolumeClaimToPersistentVolumeStackStateRelation(persistentVolumeClaimComponent.ExternalID, persistentVolumeComponentExternalID))
 	}
 
+	volumeAttachments, err := pvc.GetAPIClient().GetVolumeAttachments()
+	if err != nil {
+		return err
+	}
+
+	for _, va := range volumeAttachments {
+		persistentVolumeExternalID := pvc.buildPersistentVolumeExternalID(*va.Spec.Source.PersistentVolumeName)
+		nodeExternalId := pvc.buildNodeExternalID(va.Spec.NodeName)
+		pvc.SubmitRelation(pvc.nodeToPersistentVolumeStackStateRelation(nodeExternalId, persistentVolumeExternalID))
+	}
+
 	return nil
 }
 
@@ -243,6 +254,16 @@ func (pvc *PersistentVolumeCollector) persistentVolumeClaimToPersistentVolumeSta
 	relation := pvc.CreateRelation(persistentVolumeClaimExternalID, persistentVolumeExternalID, "exposes")
 
 	log.Tracef("Created StackState persistent volume claim -> persistent volume relation %s->%s", relation.SourceID, relation.TargetID)
+
+	return relation
+}
+
+func (pvc *PersistentVolumeCollector) nodeToPersistentVolumeStackStateRelation(nodeExternalId, persistentVolumeExternalID string) *topology.Relation {
+	log.Tracef("Mapping kubernetes node to persistent volume: %s -> %s", nodeExternalId, persistentVolumeExternalID)
+
+	relation := pvc.CreateRelation(nodeExternalId, persistentVolumeExternalID, "exposes")
+
+	log.Tracef("Created StackState node -> persistent volume relation %s->%s", relation.SourceID, relation.TargetID)
 
 	return relation
 }

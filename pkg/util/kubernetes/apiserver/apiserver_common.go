@@ -15,6 +15,7 @@ import (
 	coreV1 "k8s.io/api/core/v1"
 	extensionsV1B "k8s.io/api/extensions/v1beta1"
 	netV1 "k8s.io/api/networking/v1"
+	storageV1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/version"
 )
 
@@ -37,5 +38,6 @@ type APICollectorClient interface {
 	GetNamespaces() ([]coreV1.Namespace, error)
 	GetPersistentVolumes() ([]coreV1.PersistentVolume, error)
 	GetPersistentVolumeClaims() ([]coreV1.PersistentVolumeClaim, error)
+	GetVolumeAttachments() ([]storageV1.VolumeAttachment, error)
 	GetVersion() (*version.Info, error)
 }

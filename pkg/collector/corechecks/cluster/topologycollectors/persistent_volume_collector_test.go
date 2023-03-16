@@ -15,6 +15,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 	"github.com/stretchr/testify/assert"
 	coreV1 "k8s.io/api/core/v1"
+	storageV1 "k8s.io/api/storage/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -73,6 +74,10 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 							getPersistentVolumeClaims: func() ([]coreV1.PersistentVolumeClaim, error) {
 								persistentVolumeClaim := NewTestPVC("aws-elastic-block-store-volume-claim", "aws-elastic-block-store-volume")
 								return []coreV1.PersistentVolumeClaim{persistentVolumeClaim}, nil
+							},
+							getVolumeAttachments: func() ([]storageV1.VolumeAttachment, error) {
+								volumeAttachment := NewTestVolumeAttachment("aws-elastic-block-store-volume")
+								return []storageV1.VolumeAttachment{volumeAttachment}, nil
 							},
 						}
 					},
@@ -406,6 +411,10 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								persistentVolumeClaim := NewTestPVC("gce-persistent-disk-volume-claim", "gce-persistent-disk-volume")
 								return []coreV1.PersistentVolumeClaim{persistentVolumeClaim}, nil
 							},
+							getVolumeAttachments: func() ([]storageV1.VolumeAttachment, error) {
+								volumeAttachment := NewTestVolumeAttachment("aws-elastic-block-store-volume")
+								return []storageV1.VolumeAttachment{volumeAttachment}, nil
+							},
 						}
 					},
 					assertions: []func(*testing.T){
@@ -733,6 +742,10 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								persistentVolumeClaim := NewTestPVC("host-path-volume-claim", "host-path-volume")
 								return []coreV1.PersistentVolumeClaim{persistentVolumeClaim}, nil
 							},
+							getVolumeAttachments: func() ([]storageV1.VolumeAttachment, error) {
+								volumeAttachment := NewTestVolumeAttachment("aws-elastic-block-store-volume")
+								return []storageV1.VolumeAttachment{volumeAttachment}, nil
+							},
 						}
 					},
 					assertions: []func(*testing.T){
@@ -966,6 +979,10 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 							getPersistentVolumeClaims: func() ([]coreV1.PersistentVolumeClaim, error) {
 								persistentVolumeClaim := NewTestPVC("trident-csi-storage-volume-claim", "trident-csi-storage-volume")
 								return []coreV1.PersistentVolumeClaim{persistentVolumeClaim}, nil
+							},
+							getVolumeAttachments: func() ([]storageV1.VolumeAttachment, error) {
+								volumeAttachment := NewTestVolumeAttachment("aws-elastic-block-store-volume")
+								return []storageV1.VolumeAttachment{volumeAttachment}, nil
 							},
 						}
 					},
@@ -1396,6 +1413,10 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 								persistentVolumeClaim := NewTestPVC("trident-csi-storage-volume-claim", "trident-csi-storage-volume")
 								return []coreV1.PersistentVolumeClaim{persistentVolumeClaim}, nil
 							},
+							getVolumeAttachments: func() ([]storageV1.VolumeAttachment, error) {
+								volumeAttachment := NewTestVolumeAttachment("aws-elastic-block-store-volume")
+								return []storageV1.VolumeAttachment{volumeAttachment}, nil
+							},
 						}
 					},
 					assertions: []func(*testing.T){
@@ -1652,6 +1673,399 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 	}
 }
 
+func TestPersistentVolumeCollectorVolumeAttachmentToNodeRelation(t *testing.T) {
+
+	componentChannel := make(chan *topology.Component)
+	defer close(componentChannel)
+	relationChannel := make(chan *topology.Relation)
+	defer close(relationChannel)
+
+	creationTime = v1.Time{Time: time.Now().Add(-1 * time.Hour)}
+	creationTimeFormatted := creationTime.UTC().Format(time.RFC3339)
+	pathType = coreV1.HostPathFileOrCreate
+	gcePersistentDisk = coreV1.GCEPersistentDiskVolumeSource{
+		PDName: "name-of-the-gce-persistent-disk",
+	}
+	awsElasticBlockStore = coreV1.AWSElasticBlockStoreVolumeSource{
+		VolumeID: "id-of-the-aws-block-store",
+	}
+	hostPath = coreV1.HostPathVolumeSource{
+		Path: "some/path/to/the/volume",
+		Type: &pathType,
+	}
+
+	for _, sourcePropertiesEnabled := range []bool{false, true} {
+		for _, kubernetesStatusEnabled := range []bool{false, true} {
+			for _, tc := range []struct {
+				testCase                  string
+				apiCollectorClientFactory func() apiserver.APICollectorClient
+				assertions                []func(t *testing.T)
+			}{
+				{
+					testCase: "Test Persistent Volume 1 - AWS Elastic Block Store",
+					apiCollectorClientFactory: func() apiserver.APICollectorClient {
+						return &MockPersistentVolumeAPICollectorClient{
+							getPersistentVolumes: func() ([]coreV1.PersistentVolume, error) {
+								persistentVolume := NewTestPV("aws-elastic-block-store-volume")
+								persistentVolume.Spec.PersistentVolumeSource = coreV1.PersistentVolumeSource{
+									AWSElasticBlockStore: &awsElasticBlockStore,
+								}
+								return []coreV1.PersistentVolume{persistentVolume}, nil
+							},
+							getPersistentVolumeClaims: func() ([]coreV1.PersistentVolumeClaim, error) {
+								persistentVolumeClaim := NewTestPVC("aws-elastic-block-store-volume-claim", "aws-elastic-block-store-volume")
+								return []coreV1.PersistentVolumeClaim{persistentVolumeClaim}, nil
+							},
+							getVolumeAttachments: func() ([]storageV1.VolumeAttachment, error) {
+								volumeAttachment := NewTestVolumeAttachment("aws-elastic-block-store-volume")
+								return []storageV1.VolumeAttachment{volumeAttachment}, nil
+							},
+						}
+					},
+					assertions: []func(*testing.T){
+						func(t *testing.T) {
+							component := <-componentChannel
+							expected := chooseBySourcePropertiesFeature(
+								sourcePropertiesEnabled,
+								kubernetesStatusEnabled,
+								&topology.Component{
+									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume",
+									Type:       topology.Type{Name: "persistent-volume"},
+									Data: topology.Data{
+										"name":              "aws-elastic-block-store-volume",
+										"kind":              "PersistentVolume",
+										"creationTimestamp": creationTime,
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolume",
+											"namespace":      "test-namespace",
+										},
+										"uid":              types.UID("aws-elastic-block-store-volume"),
+										"identifiers":      []string{},
+										"status":           coreV1.VolumeAvailable,
+										"statusMessage":    "Volume is available for use",
+										"storageClassName": "Storage-Class-Name",
+									},
+								},
+								&topology.Component{
+									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume",
+									Type:       topology.Type{Name: "persistent-volume"},
+									Data: topology.Data{
+										"name": "aws-elastic-block-store-volume",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolume",
+											"namespace":      "test-namespace",
+										},
+										"identifiers": []string{},
+									},
+									SourceProperties: map[string]interface{}{
+										"metadata": map[string]interface{}{
+											"creationTimestamp": creationTimeFormatted,
+											"labels":            map[string]interface{}{"test": "label"},
+											"name":              "aws-elastic-block-store-volume",
+											"namespace":         "test-namespace",
+											"uid":               "aws-elastic-block-store-volume",
+										},
+										"spec": map[string]interface{}{
+											"persistentVolumeSource": map[string]interface{}{
+												"awsElasticBlockStore": map[string]interface{}{
+													"volumeID": "id-of-the-aws-block-store",
+												},
+											},
+											"storageClassName": "Storage-Class-Name",
+										},
+										"status": map[string]interface{}{
+											"phase":   "Available",
+											"message": "Volume is available for use",
+										},
+									},
+								},
+								&topology.Component{
+									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume",
+									Type:       topology.Type{Name: "persistent-volume"},
+									Data: topology.Data{
+										"name": "aws-elastic-block-store-volume",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolume",
+											"namespace":      "test-namespace",
+										},
+										"identifiers": []string{},
+									},
+									SourceProperties: map[string]interface{}{
+										"metadata": map[string]interface{}{
+											"creationTimestamp": creationTimeFormatted,
+											"labels":            map[string]interface{}{"test": "label"},
+											"name":              "aws-elastic-block-store-volume",
+											"namespace":         "test-namespace",
+											"uid":               "aws-elastic-block-store-volume",
+											"resourceVersion":   "123",
+										},
+										"spec": map[string]interface{}{
+											"persistentVolumeSource": map[string]interface{}{
+												"awsElasticBlockStore": map[string]interface{}{
+													"volumeID": "id-of-the-aws-block-store",
+												},
+											},
+											"storageClassName": "Storage-Class-Name",
+										},
+										"status": map[string]interface{}{
+											"phase":   "Available",
+											"message": "Volume is available for use",
+										},
+									},
+								},
+							)
+							assert.EqualValues(t, expected, component)
+						},
+						func(t *testing.T) {
+							component := <-componentChannel
+							expected := chooseBySourcePropertiesFeature(
+								sourcePropertiesEnabled,
+								kubernetesStatusEnabled,
+								&topology.Component{
+									ExternalID: "urn:kubernetes:external-volume:aws-ebs/id-of-the-aws-block-store/0",
+									Type:       topology.Type{Name: "volume-source"},
+									Data: topology.Data{
+										"name": "id-of-the-aws-block-store",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-volumesource",
+											"namespace":      "test-namespace",
+											"partition":      "0",
+											"volume-id":      "id-of-the-aws-block-store",
+											"kind":           "aws-ebs",
+										},
+										"source": coreV1.PersistentVolumeSource{
+											AWSElasticBlockStore: &awsElasticBlockStore,
+										},
+									}},
+								&topology.Component{
+									ExternalID: "urn:kubernetes:external-volume:aws-ebs/id-of-the-aws-block-store/0",
+									Type:       topology.Type{Name: "volume-source"},
+									Data: topology.Data{
+										"name": "id-of-the-aws-block-store",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-volumesource",
+											"namespace":      "test-namespace",
+											"partition":      "0",
+											"volume-id":      "id-of-the-aws-block-store",
+											"kind":           "aws-ebs",
+										},
+									},
+									SourceProperties: map[string]interface{}{
+										"metadata": map[string]interface{}{
+											"name":              "id-of-the-aws-block-store",
+											"namespace":         "test-namespace",
+											"creationTimestamp": creationTimeFormatted,
+										},
+										"source": map[string]interface{}{
+											"awsElasticBlockStore": map[string]interface{}{
+												"volumeID": "id-of-the-aws-block-store",
+											},
+										},
+									},
+								},
+								&topology.Component{
+									ExternalID: "urn:kubernetes:external-volume:aws-ebs/id-of-the-aws-block-store/0",
+									Type:       topology.Type{Name: "volume-source"},
+									Data: topology.Data{
+										"name": "id-of-the-aws-block-store",
+										"tags": map[string]string{
+											"test":           "label",
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-volumesource",
+											"namespace":      "test-namespace",
+											"partition":      "0",
+											"volume-id":      "id-of-the-aws-block-store",
+											"kind":           "aws-ebs",
+										},
+									},
+									SourceProperties: map[string]interface{}{
+										"metadata": map[string]interface{}{
+											"name":              "id-of-the-aws-block-store",
+											"namespace":         "test-namespace",
+											"creationTimestamp": creationTimeFormatted,
+										},
+										"source": map[string]interface{}{
+											"awsElasticBlockStore": map[string]interface{}{
+												"volumeID": "id-of-the-aws-block-store",
+											},
+										},
+									},
+								},
+							)
+							assert.EqualValues(t, expected, component)
+						},
+						func(t *testing.T) {
+							relation := <-relationChannel
+							expectedRelation := &topology.Relation{
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume->" +
+									"urn:kubernetes:external-volume:aws-ebs/id-of-the-aws-block-store/0",
+								Type:     topology.Type{Name: "exposes"},
+								SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume",
+								TargetID: "urn:kubernetes:external-volume:aws-ebs/id-of-the-aws-block-store/0",
+								Data:     map[string]interface{}{},
+							}
+							assert.EqualValues(t, expectedRelation, relation)
+						},
+						func(t *testing.T) {
+							component := <-componentChannel
+							expected := chooseBySourcePropertiesFeature(
+								sourcePropertiesEnabled,
+								kubernetesStatusEnabled,
+								&topology.Component{
+									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/aws-elastic-block-store-volume-claim",
+									Type: topology.Type{
+										Name: "persistent-volume-claim",
+									},
+									Data: topology.Data{
+										"name":              "aws-elastic-block-store-volume-claim",
+										"kind":              "PersistentVolumeClaim",
+										"creationTimestamp": creationTime,
+										"tags": map[string]string{
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolumeclaim",
+											"namespace":      "test-namespace",
+											"test":           "label",
+										},
+										"uid":              types.UID("aws-elastic-block-store-volume"),
+										"identifiers":      []string{},
+										"status":           coreV1.ClaimBound,
+										"storageClassName": (*string)(nil),
+									},
+								},
+								&topology.Component{
+									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/aws-elastic-block-store-volume-claim",
+									Type: topology.Type{
+										Name: "persistent-volume-claim",
+									},
+									Data: topology.Data{
+										"identifiers": []string{},
+										"name":        "aws-elastic-block-store-volume-claim",
+										"tags": map[string]string{
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolumeclaim",
+											"namespace":      "test-namespace",
+											"test":           "label",
+										},
+									},
+									SourceProperties: topology.Data{
+										"metadata": map[string]interface{}{
+											"creationTimestamp": creationTimeFormatted,
+											"labels": map[string]interface{}{
+												"test": "label",
+											},
+											"name":      "aws-elastic-block-store-volume-claim",
+											"namespace": "test-namespace",
+											"uid":       "aws-elastic-block-store-volume",
+										},
+										"spec": map[string]interface{}{
+											"resources":  map[string]interface{}{},
+											"volumeName": "aws-elastic-block-store-volume",
+										},
+										"status": map[string]interface{}{
+											"phase": "Bound",
+										},
+									},
+								},
+								&topology.Component{
+									ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/aws-elastic-block-store-volume-claim",
+									Type: topology.Type{
+										Name: "persistent-volume-claim",
+									},
+									Data: topology.Data{
+										"identifiers": []string{},
+										"name":        "aws-elastic-block-store-volume-claim",
+										"tags": map[string]string{
+											"cluster-name":   "test-cluster-name",
+											"cluster-type":   "kubernetes",
+											"component-type": "kubernetes-persistentvolumeclaim",
+											"namespace":      "test-namespace",
+											"test":           "label",
+										},
+									},
+									SourceProperties: topology.Data{
+										"metadata": map[string]interface{}{
+											"creationTimestamp": creationTimeFormatted,
+											"labels": map[string]interface{}{
+												"test": "label",
+											},
+											"name":            "aws-elastic-block-store-volume-claim",
+											"namespace":       "test-namespace",
+											"uid":             "aws-elastic-block-store-volume",
+											"resourceVersion": "123",
+										},
+										"spec": map[string]interface{}{
+											"resources":  map[string]interface{}{},
+											"volumeName": "aws-elastic-block-store-volume",
+										},
+										"status": map[string]interface{}{
+											"phase": "Bound",
+										},
+									},
+								},
+							)
+							assert.EqualValues(t, expected, component)
+						},
+						func(t *testing.T) {
+							relation := <-relationChannel
+							expectedRelation := &topology.Relation{
+								ExternalID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/aws-elastic-block-store-volume-claim->" +
+									"urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume",
+								Type:     topology.Type{Name: "exposes"},
+								SourceID: "urn:kubernetes:/test-cluster-name:persistent-volume-claim/aws-elastic-block-store-volume-claim",
+								TargetID: "urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume",
+								Data:     map[string]interface{}{},
+							}
+							assert.EqualValues(t, expectedRelation, relation)
+						},
+						func(t *testing.T) {
+							relation := <-relationChannel
+							expectedRelation := &topology.Relation{
+								ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-1->urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume",
+								Type:     topology.Type{Name: "exposes"},
+								SourceID: "urn:kubernetes:/test-cluster-name:node/test-node-1",
+								TargetID: "urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume",
+								Data:     map[string]interface{}{},
+							}
+							assert.EqualValues(t, expectedRelation, relation)
+						},
+					},
+				},
+			} {
+				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled, kubernetesStatusEnabled), func(t *testing.T) {
+					commonClusterCollector := NewTestCommonClusterCollector(tc.apiCollectorClientFactory(), componentChannel, relationChannel, sourcePropertiesEnabled, kubernetesStatusEnabled)
+					commonClusterCollector.SetUseRelationCache(false)
+
+					cmc := NewPersistentVolumeCollector(commonClusterCollector, true)
+					expectedCollectorName := "Persistent Volume Collector"
+					RunCollectorTest(t, cmc, expectedCollectorName)
+
+					for _, a := range tc.assertions {
+						a(t)
+					}
+				})
+			}
+		}
+	}
+}
+
 func NewTestPV(volumeName string) coreV1.PersistentVolume {
 	return coreV1.PersistentVolume{
 		TypeMeta: v1.TypeMeta{
@@ -1721,10 +2135,46 @@ func NewTestPVC(volumeClaimName string, volumeName string) coreV1.PersistentVolu
 	}
 }
 
+func NewTestVolumeAttachment(volumeName string) storageV1.VolumeAttachment {
+	return storageV1.VolumeAttachment{
+		TypeMeta: v1.TypeMeta{
+			Kind: "VolumeAttachment",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:              volumeName,
+			CreationTimestamp: creationTime,
+			Namespace:         "test-namespace",
+			Labels: map[string]string{
+				"test": "label",
+			},
+			UID:             types.UID(volumeName),
+			GenerateName:    "",
+			ResourceVersion: "123",
+			ManagedFields: []v1.ManagedFieldsEntry{
+				{
+					Manager:    "ignored",
+					Operation:  "Updated",
+					APIVersion: "whatever",
+					Time:       &v1.Time{Time: time.Now()},
+					FieldsType: "whatever",
+				},
+			},
+		},
+		Spec: storageV1.VolumeAttachmentSpec{
+			Attacher: "attacher",
+			Source: storageV1.VolumeAttachmentSource{
+				PersistentVolumeName: &volumeName,
+			},
+			NodeName: "test-node-1",
+		},
+	}
+}
+
 type MockPersistentVolumeAPICollectorClient struct {
 	apiserver.APICollectorClient
 	getPersistentVolumes      func() ([]coreV1.PersistentVolume, error)
 	getPersistentVolumeClaims func() ([]coreV1.PersistentVolumeClaim, error)
+	getVolumeAttachments      func() ([]storageV1.VolumeAttachment, error)
 }
 
 func (m MockPersistentVolumeAPICollectorClient) GetPersistentVolumes() ([]coreV1.PersistentVolume, error) {
@@ -1733,4 +2183,8 @@ func (m MockPersistentVolumeAPICollectorClient) GetPersistentVolumes() ([]coreV1
 
 func (m MockPersistentVolumeAPICollectorClient) GetPersistentVolumeClaims() ([]coreV1.PersistentVolumeClaim, error) {
 	return m.getPersistentVolumeClaims()
+}
+
+func (m MockPersistentVolumeAPICollectorClient) GetVolumeAttachments() ([]storageV1.VolumeAttachment, error) {
+	return m.getVolumeAttachments()
 }
