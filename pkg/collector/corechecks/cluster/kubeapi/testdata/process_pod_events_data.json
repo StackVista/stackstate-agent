@@ -742,9 +742,12 @@
         {
           "name":"out-of-memory-always-critical",
           "state":{
-            "waiting":{
-              "reason":"CrashLoopBackOff",
-              "message":"back-off 5m0s restarting failed container=out-of-memory-always-critical pod=out-of-memory-always-critical_kubernetes-monitors(b24b96c5-3be9-4edd-92de-09e28bd68ac0)"
+            "terminated":{
+              "exitCode":0,
+              "reason":"OOMKilled",
+              "startedAt":"2023-03-16T01:02:54Z",
+              "finishedAt":"2023-03-16T01:03:55Z",
+              "containerID":"docker://a6fc1d785a30ca67b755b7d8ac787aec5976cfddacf5d5501eff76989a86bc7a"
             }
           },
           "lastState":{

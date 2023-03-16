@@ -32,9 +32,8 @@ func (c *APIClient) GetPods() ([]v1.Pod, error) {
 }
 
 // RunPodCollection Retrieve a list of pods based on a resource version and a timeout
-func (c *APIClient) RunPodCollection(resourceVersion string, lastSyncTime time.Time, podReadTimeout int64, podCardinalityLimit int64, resync int64, filter string) ([]*v1.Pod, string, time.Time, error) {
-	// TODO: Change to debug
-	log.Infof("Starting pod collection")
+func (c *APIClient) RunPodCollection(resourceVersion string, lastSyncTime time.Time, podReadTimeout int64, podCardinalityLimit int64, resync int64) ([]*v1.Pod, string, time.Time, error) {
+	log.Debug("Starting pod collection")
 
 	var pods []*v1.Pod
 
@@ -43,11 +42,10 @@ func (c *APIClient) RunPodCollection(resourceVersion string, lastSyncTime time.T
 	syncTimeout := time.Duration(resync) * time.Second
 	syncDiffTime := time.Now().Sub(lastSyncTime)
 	if resourceVersion == "" || syncDiffTime > syncTimeout {
-		// TODO: Change to debug
-		log.Infof("Return listForPodsResync syncDiffTime: %d/%d", syncDiffTime, syncTimeout)
+		log.Debugf("Return listForPodsResync syncDiffTime: %d/%d", syncDiffTime, syncTimeout)
 
 		// Get a new list of pods seeing that the sync time has expired or resourceVersion is empty
-		podList, lastResourceVersion, lastTime, err := c.getListOfPods(podReadTimeout, podCardinalityLimit, filter)
+		podList, lastResourceVersion, lastTime, err := c.getListOfPods(podReadTimeout, podCardinalityLimit)
 		if err != nil {
 			return nil, "", time.Now(), err
 		}
@@ -68,7 +66,6 @@ func (c *APIClient) RunPodCollection(resourceVersion string, lastSyncTime time.T
 		Watch:           true,
 		ResourceVersion: resourceVersion,
 		Limit:           podCardinalityLimit,
-		FieldSelector:   filter,
 	})
 
 	defer podsWatcher.Stop()
@@ -78,16 +75,13 @@ func (c *APIClient) RunPodCollection(resourceVersion string, lastSyncTime time.T
 		return pods, resourceVersion, lastSyncTime, err
 	}
 
-	// TODO: Change to debug
-	log.Infof("Starting to watch pods from %s", resourceVersion)
+	log.Debugf("Starting to watch pods from %s", resourceVersion)
 
 	timeoutParse := time.NewTimer(time.Duration(podReadTimeout) * time.Second)
 
 	for {
 		select {
 		case podEvent, ok := <-podsWatcher.ResultChan():
-			log.Infof("Received pod watch event: %v", podEvent.Type)
-
 			// If the channel is closed then return the pods that was already captured within the last cycle
 			if !ok {
 				return pods, resourceVersion, lastSyncTime, fmt.Errorf("unexpected channel close while watching pods")
@@ -104,9 +98,8 @@ func (c *APIClient) RunPodCollection(resourceVersion string, lastSyncTime time.T
 
 				switch status.Reason {
 				case "Expired":
-					// TODO: Change to debug
-					log.Infof("Resource Version is too old, listing all events and collecting only the new ones")
-					podList, resourceVersion, lastListTime, err := c.getListOfPods(podReadTimeout, podCardinalityLimit, filter)
+					log.Debug("Resource Version is too old, listing all events and collecting only the new ones")
+					podList, resourceVersion, lastListTime, err := c.getListOfPods(podReadTimeout, podCardinalityLimit)
 					if err != nil {
 						return pods, resourceVersion, lastListTime, err
 					}
@@ -157,8 +150,7 @@ func (c *APIClient) RunPodCollection(resourceVersion string, lastSyncTime time.T
 			}
 
 		case <-timeoutParse.C:
-			// TODO: Change to debug
-			log.Infof("Collected %d pods, will resume watching from resource version %s", len(pods), resourceVersion)
+			log.Debugf("Collected %d pods, will resume watching from resource version %s", len(pods), resourceVersion)
 			// No more events to read or the watch lasted more than `podReadTimeout`.
 			// so return what was processed.
 			return pods, resourceVersion, lastSyncTime, nil
@@ -185,17 +177,15 @@ func findPodsAfterResourceVersion(resourceVersionInt int, currentPodList []*v1.P
 		}
 	}
 
-	// TODO: Change to debug
-	log.Infof("Returning %d pods that we have not collected", len(pods))
+	log.Debugf("Returning %d pods that we have not collected", len(pods))
 	return pods
 }
 
 // getListOfPods Get the current list of pods
-func (c *APIClient) getListOfPods(timeout int64, limit int64, fieldSelector string) (pods []*v1.Pod, resourceVersion string, lastListTime time.Time, err error) {
+func (c *APIClient) getListOfPods(timeout int64, limit int64) (pods []*v1.Pod, resourceVersion string, lastListTime time.Time, err error) {
 	podList, err := c.Cl.CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{
 		TimeoutSeconds: &timeout,
 		Limit:          limit,
-		FieldSelector:  fieldSelector,
 	})
 
 	if err != nil {

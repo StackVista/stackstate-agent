@@ -10,7 +10,6 @@ package kubeapi
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/util"
 	"strings"
@@ -226,32 +225,27 @@ func (k *EventsCheck) Run() error {
 
 	log.Info("Running kubernetes custom pod event collector ...")
 	// Get pods from the API server to produce custom events
-	pods, err := k.podEventsCollectionCheck()
-	if err != nil {
-		return err
+	pods, podCollectionErr := k.podEventsCollectionCheck()
+	// Do not immediately return on the error but rather continue to allow the event collector to also attempt to collect events
+	if podCollectionErr == nil {
+		// Process the custom pod events to have a Datadog format.
+		k.processPods(sender, pods)
 	}
-
-	podsJson, err := json.Marshal(pods)
-	if err == nil {
-		log.Infof("Pods: %v", string(podsJson))
-	} else {
-		log.Info("Unable to parse Pods ...")
-	}
-
-	// Process the custom pod events to have a Datadog format.
-	k.processPodEvents(sender, pods)
 
 	log.Info("Running kubernetes event collector ...")
 	// Get the events from the API server
-	events, err := k.eventCollectionCheck()
-	if err != nil {
-		return err
+	events, eventCollectionErr := k.eventCollectionCheck()
+	if eventCollectionErr == nil {
+		// Process the events to have a Datadog format.
+		k.processEvents(sender, events)
 	}
 
-	// Process the events to have a Datadog format.
-	err = k.processEvents(sender, events)
-	if err != nil {
-		_ = k.Warnf("Could not submit new event %s", err.Error()) //nolint:errcheck
+	// Determine if either one of the custom pod events or event collector failed
+	if podCollectionErr != nil {
+		return podCollectionErr
+	}
+	if eventCollectionErr != nil {
+		return eventCollectionErr
 	}
 
 	return nil
@@ -312,9 +306,7 @@ func (k *EventsCheck) eventCollectionCheck() (newEvents []*v1.Event, err error) 
 // - iterates over the Kubernetes Events
 // - extracts some attributes and builds a structure ready to be submitted as a StackState event
 // - convert each K8s event to a metrics event to be processed by the intake
-func (k *EventsCheck) processEvents(sender aggregator.Sender, events []*v1.Event) error {
-	log.Infof("---------- start processEvents -----------")
-
+func (k *EventsCheck) processEvents(sender aggregator.Sender, events []*v1.Event) {
 	mapper := k.mapperFactory(k.ac, k.clusterName, k.instance.EventCategories)
 	for _, event := range events {
 		mappedEvent, err := mapper.mapKubernetesEvent(event)
@@ -326,9 +318,6 @@ func (k *EventsCheck) processEvents(sender aggregator.Sender, events []*v1.Event
 		log.Debugf("Sending event: %s", mappedEvent.String())
 		sender.Event(mappedEvent)
 	}
-
-	log.Infof("---------- end processEvents -----------")
-	return nil
 }
 
 func init() {
