@@ -91,9 +91,8 @@ func (k *EventsCheck) podEventMapper(pod *v1.Pod, mapper *kubernetesEventMapper,
 	log.Infof("---------- start podEventMapper -----------")
 
 	for _, containerStatus := range pod.Status.ContainerStatuses {
-		log.Infof("Container Status: %v", containerStatus)
-
-		if containerStatus.LastTerminationState.Terminated.Reason == "OOMKilled" {
+		if containerStatus.LastTerminationState.Terminated != nil &&
+			containerStatus.LastTerminationState.Terminated.Reason == "OOMKilled" {
 			k.mapEventForOutOfMemoryPod(pod, containerStatus, mapper, sender)
 		}
 	}
