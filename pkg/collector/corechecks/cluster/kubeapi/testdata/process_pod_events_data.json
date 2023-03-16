@@ -1,0 +1,2311 @@
+[
+  {
+    "metadata":{
+      "name":"stackstate-agent-checks-agent-6b4ff87d89-9kp7b",
+      "generateName":"stackstate-agent-checks-agent-6b4ff87d89-",
+      "namespace":"kubernetes-monitors",
+      "uid":"a10123b6-adef-4fc4-961e-899a2d26fd8c",
+      "resourceVersion":"23239040",
+      "creationTimestamp":"2023-03-16T00:43:23Z",
+      "labels":{
+        "app.kubernetes.io/component":"checks-agent",
+        "app.kubernetes.io/instance":"stackstate-agent",
+        "app.kubernetes.io/name":"stackstate-agent",
+        "pod-template-hash":"6b4ff87d89"
+      },
+      "annotations":{
+        "checksum/secret":"ac244a4d1b92b92afb9e2507293a45d747e0f49478faab773524535221eb89f1",
+        "kubernetes.io/psp":"eks.privileged"
+      },
+      "ownerReferences":[
+        {
+          "apiVersion":"apps/v1",
+          "kind":"ReplicaSet",
+          "name":"stackstate-agent-checks-agent-6b4ff87d89",
+          "uid":"faa9f612-9694-4215-aa12-69186130eb4c",
+          "controller":true,
+          "blockOwnerDeletion":true
+        }
+      ],
+      "managedFields":[
+        {
+          "manager":"kube-controller-manager",
+          "operation":"Update",
+          "apiVersion":"v1",
+          "time":"2023-03-16T00:43:23Z",
+          "fieldsType":"FieldsV1",
+          "fieldsV1":{
+            "f:metadata":{
+              "f:annotations":{
+                ".":{
+
+                },
+                "f:checksum/secret":{
+
+                }
+              },
+              "f:generateName":{
+
+              },
+              "f:labels":{
+                ".":{
+
+                },
+                "f:app.kubernetes.io/component":{
+
+                },
+                "f:app.kubernetes.io/instance":{
+
+                },
+                "f:app.kubernetes.io/name":{
+
+                },
+                "f:pod-template-hash":{
+
+                }
+              },
+              "f:ownerReferences":{
+                ".":{
+
+                },
+                "k:{\"uid\":\"faa9f612-9694-4215-aa12-69186130eb4c\"}":{
+                  ".":{
+
+                  },
+                  "f:apiVersion":{
+
+                  },
+                  "f:blockOwnerDeletion":{
+
+                  },
+                  "f:controller":{
+
+                  },
+                  "f:kind":{
+
+                  },
+                  "f:name":{
+
+                  },
+                  "f:uid":{
+
+                  }
+                }
+              }
+            },
+            "f:spec":{
+              "f:containers":{
+                "k:{\"name\":\"stackstate-agent\"}":{
+                  ".":{
+
+                  },
+                  "f:env":{
+                    ".":{
+
+                    },
+                    "k:{\"name\":\"AGENT_VERSION\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"LOG_LEVEL\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_API_KEY\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:valueFrom":{
+                        ".":{
+
+                        },
+                        "f:secretKeyRef":{
+                          ".":{
+
+                          },
+                          "f:key":{
+
+                          },
+                          "f:name":{
+
+                          }
+                        }
+                      }
+                    },
+                    "k:{\"name\":\"STS_APM_ENABLED\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_CHECKS_TAG_CARDINALITY\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_CLUSTER_AGENT_AUTH_TOKEN\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:valueFrom":{
+                        ".":{
+
+                        },
+                        "f:secretKeyRef":{
+                          ".":{
+
+                          },
+                          "f:key":{
+
+                          },
+                          "f:name":{
+
+                          }
+                        }
+                      }
+                    },
+                    "k:{\"name\":\"STS_CLUSTER_AGENT_ENABLED\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_CLUSTER_AGENT_KUBERNETES_SERVICE_NAME\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_CLUSTER_NAME\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_EXTRA_CONFIG_PROVIDERS\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_HEALTH_PORT\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_LEADER_ELECTION\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_LOG_LEVEL\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_LOG_PAYLOADS\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_NETWORK_TRACING_ENABLED\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_PROCESS_AGENT_ENABLED\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_SKIP_SSL_VALIDATION\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_SKIP_VALIDATE_CLUSTERNAME\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_STS_URL\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    }
+                  },
+                  "f:image":{
+
+                  },
+                  "f:imagePullPolicy":{
+
+                  },
+                  "f:livenessProbe":{
+                    ".":{
+
+                    },
+                    "f:failureThreshold":{
+
+                    },
+                    "f:httpGet":{
+                      ".":{
+
+                      },
+                      "f:path":{
+
+                      },
+                      "f:port":{
+
+                      },
+                      "f:scheme":{
+
+                      }
+                    },
+                    "f:initialDelaySeconds":{
+
+                    },
+                    "f:periodSeconds":{
+
+                    },
+                    "f:successThreshold":{
+
+                    },
+                    "f:timeoutSeconds":{
+
+                    }
+                  },
+                  "f:name":{
+
+                  },
+                  "f:ports":{
+                    ".":{
+
+                    },
+                    "k:{\"containerPort\":5555,\"protocol\":\"TCP\"}":{
+                      ".":{
+
+                      },
+                      "f:containerPort":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:protocol":{
+
+                      }
+                    }
+                  },
+                  "f:readinessProbe":{
+                    ".":{
+
+                    },
+                    "f:failureThreshold":{
+
+                    },
+                    "f:httpGet":{
+                      ".":{
+
+                      },
+                      "f:path":{
+
+                      },
+                      "f:port":{
+
+                      },
+                      "f:scheme":{
+
+                      }
+                    },
+                    "f:initialDelaySeconds":{
+
+                    },
+                    "f:periodSeconds":{
+
+                    },
+                    "f:successThreshold":{
+
+                    },
+                    "f:timeoutSeconds":{
+
+                    }
+                  },
+                  "f:resources":{
+                    ".":{
+
+                    },
+                    "f:limits":{
+                      ".":{
+
+                      },
+                      "f:cpu":{
+
+                      },
+                      "f:memory":{
+
+                      }
+                    },
+                    "f:requests":{
+                      ".":{
+
+                      },
+                      "f:cpu":{
+
+                      },
+                      "f:memory":{
+
+                      }
+                    }
+                  },
+                  "f:terminationMessagePath":{
+
+                  },
+                  "f:terminationMessagePolicy":{
+
+                  },
+                  "f:volumeMounts":{
+                    ".":{
+
+                    },
+                    "k:{\"mountPath\":\"/etc/stackstate-agent/conf.d\"}":{
+                      ".":{
+
+                      },
+                      "f:mountPath":{
+
+                      },
+                      "f:name":{
+
+                      }
+                    }
+                  }
+                }
+              },
+              "f:dnsPolicy":{
+
+              },
+              "f:enableServiceLinks":{
+
+              },
+              "f:nodeSelector":{
+                ".":{
+
+                },
+                "f:kubernetes.io/os":{
+
+                }
+              },
+              "f:restartPolicy":{
+
+              },
+              "f:schedulerName":{
+
+              },
+              "f:securityContext":{
+
+              },
+              "f:serviceAccount":{
+
+              },
+              "f:serviceAccountName":{
+
+              },
+              "f:terminationGracePeriodSeconds":{
+
+              },
+              "f:volumes":{
+                ".":{
+
+                },
+                "k:{\"name\":\"confd-empty-volume\"}":{
+                  ".":{
+
+                  },
+                  "f:emptyDir":{
+
+                  },
+                  "f:name":{
+
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "manager":"kubelet",
+          "operation":"Update",
+          "apiVersion":"v1",
+          "time":"2023-03-16T00:43:27Z",
+          "fieldsType":"FieldsV1",
+          "fieldsV1":{
+            "f:status":{
+              "f:conditions":{
+                "k:{\"type\":\"ContainersReady\"}":{
+                  ".":{
+
+                  },
+                  "f:lastProbeTime":{
+
+                  },
+                  "f:lastTransitionTime":{
+
+                  },
+                  "f:message":{
+
+                  },
+                  "f:reason":{
+
+                  },
+                  "f:status":{
+
+                  },
+                  "f:type":{
+
+                  }
+                },
+                "k:{\"type\":\"Initialized\"}":{
+                  ".":{
+
+                  },
+                  "f:lastProbeTime":{
+
+                  },
+                  "f:lastTransitionTime":{
+
+                  },
+                  "f:status":{
+
+                  },
+                  "f:type":{
+
+                  }
+                },
+                "k:{\"type\":\"Ready\"}":{
+                  ".":{
+
+                  },
+                  "f:lastProbeTime":{
+
+                  },
+                  "f:lastTransitionTime":{
+
+                  },
+                  "f:message":{
+
+                  },
+                  "f:reason":{
+
+                  },
+                  "f:status":{
+
+                  },
+                  "f:type":{
+
+                  }
+                }
+              },
+              "f:containerStatuses":{
+
+              },
+              "f:hostIP":{
+
+              },
+              "f:podIP":{
+
+              },
+              "f:podIPs":{
+                ".":{
+
+                },
+                "k:{\"ip\":\"192.168.2.94\"}":{
+                  ".":{
+
+                  },
+                  "f:ip":{
+
+                  }
+                }
+              },
+              "f:startTime":{
+
+              }
+            }
+          }
+        }
+      ]
+    },
+    "spec":{
+      "volumes":[
+        {
+          "name":"confd-empty-volume",
+          "emptyDir":{
+
+          }
+        },
+        {
+          "name":"kube-api-access-vhvgm",
+          "projected":{
+            "sources":[
+              {
+                "serviceAccountToken":{
+                  "expirationSeconds":3607,
+                  "path":"token"
+                }
+              },
+              {
+                "configMap":{
+                  "name":"kube-root-ca.crt",
+                  "items":[
+                    {
+                      "key":"ca.crt",
+                      "path":"ca.crt"
+                    }
+                  ]
+                }
+              },
+              {
+                "downwardAPI":{
+                  "items":[
+                    {
+                      "path":"namespace",
+                      "fieldRef":{
+                        "apiVersion":"v1",
+                        "fieldPath":"metadata.namespace"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "defaultMode":420
+          }
+        }
+      ],
+      "containers":[
+        {
+          "name":"stackstate-agent",
+          "image":"quay.io/stackstate/stackstate-agent-2-test:8b199c73",
+          "ports":[
+            {
+              "name":"healthport",
+              "containerPort":5555,
+              "protocol":"TCP"
+            }
+          ],
+          "env":[
+            {
+              "name":"STS_API_KEY",
+              "valueFrom":{
+                "secretKeyRef":{
+                  "name":"stackstate-agent",
+                  "key":"sts-api-key"
+                }
+              }
+            },
+            {
+              "name":"AGENT_VERSION",
+              "value":"8b199c73"
+            },
+            {
+              "name":"LOG_LEVEL",
+              "value":"INFO"
+            },
+            {
+              "name":"STS_APM_ENABLED",
+              "value":"false"
+            },
+            {
+              "name":"STS_CLUSTER_AGENT_ENABLED",
+              "value":"true"
+            },
+            {
+              "name":"STS_CLUSTER_AGENT_KUBERNETES_SERVICE_NAME",
+              "value":"stackstate-agent-cluster-agent"
+            },
+            {
+              "name":"STS_CLUSTER_AGENT_AUTH_TOKEN",
+              "valueFrom":{
+                "secretKeyRef":{
+                  "name":"stackstate-agent",
+                  "key":"sts-cluster-auth-token"
+                }
+              }
+            },
+            {
+              "name":"STS_CLUSTER_NAME",
+              "value":"kubernetes-monitors"
+            },
+            {
+              "name":"STS_SKIP_VALIDATE_CLUSTERNAME",
+              "value":"true"
+            },
+            {
+              "name":"STS_CHECKS_TAG_CARDINALITY",
+              "value":"orchestrator"
+            },
+            {
+              "name":"STS_EXTRA_CONFIG_PROVIDERS",
+              "value":"clusterchecks"
+            },
+            {
+              "name":"STS_HEALTH_PORT",
+              "value":"5555"
+            },
+            {
+              "name":"STS_LEADER_ELECTION",
+              "value":"false"
+            },
+            {
+              "name":"STS_LOG_LEVEL",
+              "value":"INFO"
+            },
+            {
+              "name":"STS_NETWORK_TRACING_ENABLED",
+              "value":"false"
+            },
+            {
+              "name":"STS_PROCESS_AGENT_ENABLED",
+              "value":"false"
+            },
+            {
+              "name":"STS_SKIP_SSL_VALIDATION",
+              "value":"false"
+            },
+            {
+              "name":"STS_STS_URL",
+              "value":"https://demo-monitors.sandbox-main.sandbox.stackstate.io/receiver/stsAgent"
+            },
+            {
+              "name":"STS_LOG_PAYLOADS",
+              "value":"false"
+            }
+          ],
+          "resources":{
+            "limits":{
+              "cpu":"400m",
+              "memory":"1Gi"
+            },
+            "requests":{
+              "cpu":"100m",
+              "memory":"256Mi"
+            }
+          },
+          "volumeMounts":[
+            {
+              "name":"confd-empty-volume",
+              "mountPath":"/etc/stackstate-agent/conf.d"
+            },
+            {
+              "name":"kube-api-access-vhvgm",
+              "readOnly":true,
+              "mountPath":"/var/run/secrets/kubernetes.io/serviceaccount"
+            }
+          ],
+          "livenessProbe":{
+            "httpGet":{
+              "path":"/health",
+              "port":"healthport",
+              "scheme":"HTTP"
+            },
+            "initialDelaySeconds":15,
+            "timeoutSeconds":5,
+            "periodSeconds":15,
+            "successThreshold":1,
+            "failureThreshold":3
+          },
+          "readinessProbe":{
+            "httpGet":{
+              "path":"/health",
+              "port":"healthport",
+              "scheme":"HTTP"
+            },
+            "initialDelaySeconds":15,
+            "timeoutSeconds":5,
+            "periodSeconds":15,
+            "successThreshold":1,
+            "failureThreshold":3
+          },
+          "terminationMessagePath":"/dev/termination-log",
+          "terminationMessagePolicy":"File",
+          "imagePullPolicy":"Always"
+        }
+      ],
+      "restartPolicy":"Always",
+      "terminationGracePeriodSeconds":30,
+      "dnsPolicy":"ClusterFirst",
+      "nodeSelector":{
+        "kubernetes.io/os":"linux"
+      },
+      "serviceAccountName":"stackstate-agent-checks-agent",
+      "serviceAccount":"stackstate-agent-checks-agent",
+      "nodeName":"ip-192-168-3-100.eu-west-1.compute.internal",
+      "securityContext":{
+
+      },
+      "schedulerName":"default-scheduler",
+      "tolerations":[
+        {
+          "key":"node.kubernetes.io/not-ready",
+          "operator":"Exists",
+          "effect":"NoExecute",
+          "tolerationSeconds":300
+        },
+        {
+          "key":"node.kubernetes.io/unreachable",
+          "operator":"Exists",
+          "effect":"NoExecute",
+          "tolerationSeconds":300
+        }
+      ],
+      "priority":0,
+      "enableServiceLinks":true,
+      "preemptionPolicy":"PreemptLowerPriority"
+    },
+    "status":{
+      "phase":"Pending",
+      "conditions":[
+        {
+          "type":"Initialized",
+          "status":"True",
+          "lastProbeTime":null,
+          "lastTransitionTime":"2023-03-16T00:43:23Z"
+        },
+        {
+          "type":"Ready",
+          "status":"False",
+          "lastProbeTime":null,
+          "lastTransitionTime":"2023-03-16T00:43:23Z",
+          "reason":"ContainersNotReady",
+          "message":"containers with unready status: [stackstate-agent]"
+        },
+        {
+          "type":"ContainersReady",
+          "status":"False",
+          "lastProbeTime":null,
+          "lastTransitionTime":"2023-03-16T00:43:23Z",
+          "reason":"ContainersNotReady",
+          "message":"containers with unready status: [stackstate-agent]"
+        },
+        {
+          "type":"PodScheduled",
+          "status":"True",
+          "lastProbeTime":null,
+          "lastTransitionTime":"2023-03-16T00:43:23Z"
+        }
+      ],
+      "hostIP":"192.168.3.100",
+      "podIP":"192.168.2.94",
+      "podIPs":[
+        {
+          "ip":"192.168.2.94"
+        }
+      ],
+      "startTime":"2023-03-16T00:43:23Z",
+      "containerStatuses":[
+        {
+          "name":"stackstate-agent",
+          "state":{
+            "waiting":{
+              "reason":"ImagePullBackOff",
+              "message":"Back-off pulling image \"quay.io/stackstate/stackstate-agent-2-test:8b199c73\""
+            }
+          },
+          "lastState":{
+
+          },
+          "ready":false,
+          "restartCount":0,
+          "image":"quay.io/stackstate/stackstate-agent-2-test:8b199c73",
+          "imageID":"",
+          "started":false
+        }
+      ],
+      "qosClass":"Burstable"
+    }
+  },
+  {
+    "metadata":{
+      "name":"stackstate-agent-cluster-agent-5b879456c5-rspmw",
+      "generateName":"stackstate-agent-cluster-agent-5b879456c5-",
+      "namespace":"kubernetes-monitors",
+      "uid":"3b9ef622-bd02-4ce4-9073-d13b824b4ff5",
+      "resourceVersion":"23239042",
+      "creationTimestamp":"2023-03-16T00:43:23Z",
+      "labels":{
+        "app.kubernetes.io/component":"cluster-agent",
+        "app.kubernetes.io/instance":"stackstate-agent",
+        "app.kubernetes.io/name":"stackstate-agent",
+        "pod-template-hash":"5b879456c5"
+      },
+      "annotations":{
+        "ad.stackstate.com/stackstate-cluster-agent.check_names":"[\"openmetrics\"]",
+        "ad.stackstate.com/stackstate-cluster-agent.init_configs":"[{}]",
+        "ad.stackstate.com/stackstate-cluster-agent.instances":"[{\"prometheus_url\": \"http://%%host%%:5000/metrics\",\"namespace\": \"stackstate.stackstate_agent\",\"metrics\": [\"go_goroutines\",\"go_memstats_*\",\"process_*\",\"api_requests\",\"stackstate_requests\",\"external_metrics\", \"cluster_checks_*\"]}]",
+        "checksum/secret":"0416c126925c9259df5a15524c33dc84ec33f0d4c77ac5301ed355c7b62d71eb",
+        "kubernetes.io/psp":"eks.privileged"
+      },
+      "ownerReferences":[
+        {
+          "apiVersion":"apps/v1",
+          "kind":"ReplicaSet",
+          "name":"stackstate-agent-cluster-agent-5b879456c5",
+          "uid":"8229c473-75b5-400a-9df5-b13c7f2fd458",
+          "controller":true,
+          "blockOwnerDeletion":true
+        }
+      ],
+      "managedFields":[
+        {
+          "manager":"kube-controller-manager",
+          "operation":"Update",
+          "apiVersion":"v1",
+          "time":"2023-03-16T00:43:23Z",
+          "fieldsType":"FieldsV1",
+          "fieldsV1":{
+            "f:metadata":{
+              "f:annotations":{
+                ".":{
+
+                },
+                "f:ad.stackstate.com/stackstate-cluster-agent.check_names":{
+
+                },
+                "f:ad.stackstate.com/stackstate-cluster-agent.init_configs":{
+
+                },
+                "f:ad.stackstate.com/stackstate-cluster-agent.instances":{
+
+                },
+                "f:checksum/secret":{
+
+                }
+              },
+              "f:generateName":{
+
+              },
+              "f:labels":{
+                ".":{
+
+                },
+                "f:app.kubernetes.io/component":{
+
+                },
+                "f:app.kubernetes.io/instance":{
+
+                },
+                "f:app.kubernetes.io/name":{
+
+                },
+                "f:pod-template-hash":{
+
+                }
+              },
+              "f:ownerReferences":{
+                ".":{
+
+                },
+                "k:{\"uid\":\"8229c473-75b5-400a-9df5-b13c7f2fd458\"}":{
+                  ".":{
+
+                  },
+                  "f:apiVersion":{
+
+                  },
+                  "f:blockOwnerDeletion":{
+
+                  },
+                  "f:controller":{
+
+                  },
+                  "f:kind":{
+
+                  },
+                  "f:name":{
+
+                  },
+                  "f:uid":{
+
+                  }
+                }
+              }
+            },
+            "f:spec":{
+              "f:containers":{
+                "k:{\"name\":\"cluster-agent\"}":{
+                  ".":{
+
+                  },
+                  "f:env":{
+                    ".":{
+
+                    },
+                    "k:{\"name\":\"LOG_LEVEL\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_API_KEY\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:valueFrom":{
+                        ".":{
+
+                        },
+                        "f:secretKeyRef":{
+                          ".":{
+
+                          },
+                          "f:key":{
+
+                          },
+                          "f:name":{
+
+                          }
+                        }
+                      }
+                    },
+                    "k:{\"name\":\"STS_CLUSTER_AGENT_AUTH_TOKEN\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:valueFrom":{
+                        ".":{
+
+                        },
+                        "f:secretKeyRef":{
+                          ".":{
+
+                          },
+                          "f:key":{
+
+                          },
+                          "f:name":{
+
+                          }
+                        }
+                      }
+                    },
+                    "k:{\"name\":\"STS_CLUSTER_AGENT_CMD_PORT\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_CLUSTER_CHECKS_ENABLED\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_CLUSTER_NAME\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_COLLECT_KUBERNETES_METRICS\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_COLLECT_KUBERNETES_TIMEOUT\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_COLLECT_KUBERNETES_TOPOLOGY\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_EXTRA_CONFIG_PROVIDERS\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_EXTRA_LISTENERS\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_LEADER_ELECTION\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_LOG_LEVEL\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_LOG_PAYLOADS\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_SKIP_VALIDATE_CLUSTERNAME\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    },
+                    "k:{\"name\":\"STS_STS_URL\"}":{
+                      ".":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:value":{
+
+                      }
+                    }
+                  },
+                  "f:image":{
+
+                  },
+                  "f:imagePullPolicy":{
+
+                  },
+                  "f:name":{
+
+                  },
+                  "f:resources":{
+                    ".":{
+
+                    },
+                    "f:limits":{
+                      ".":{
+
+                      },
+                      "f:cpu":{
+
+                      },
+                      "f:memory":{
+
+                      }
+                    },
+                    "f:requests":{
+                      ".":{
+
+                      },
+                      "f:cpu":{
+
+                      },
+                      "f:memory":{
+
+                      }
+                    }
+                  },
+                  "f:terminationMessagePath":{
+
+                  },
+                  "f:terminationMessagePolicy":{
+
+                  },
+                  "f:volumeMounts":{
+                    ".":{
+
+                    },
+                    "k:{\"mountPath\":\"/etc/stackstate-agent/conf.d/kubernetes_api_events.d/conf.yaml\"}":{
+                      ".":{
+
+                      },
+                      "f:mountPath":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:subPath":{
+
+                      }
+                    },
+                    "k:{\"mountPath\":\"/etc/stackstate-agent/conf.d/kubernetes_api_topology.d/conf.yaml\"}":{
+                      ".":{
+
+                      },
+                      "f:mountPath":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:subPath":{
+
+                      }
+                    },
+                    "k:{\"mountPath\":\"/etc/stackstate-agent/conf.d/kubernetes_state_core.d/conf.yaml\"}":{
+                      ".":{
+
+                      },
+                      "f:mountPath":{
+
+                      },
+                      "f:name":{
+
+                      },
+                      "f:subPath":{
+
+                      }
+                    },
+                    "k:{\"mountPath\":\"/var/log/stackstate-agent\"}":{
+                      ".":{
+
+                      },
+                      "f:mountPath":{
+
+                      },
+                      "f:name":{
+
+                      }
+                    }
+                  }
+                }
+              },
+              "f:dnsPolicy":{
+
+              },
+              "f:enableServiceLinks":{
+
+              },
+              "f:nodeSelector":{
+                ".":{
+
+                },
+                "f:kubernetes.io/os":{
+
+                }
+              },
+              "f:restartPolicy":{
+
+              },
+              "f:schedulerName":{
+
+              },
+              "f:securityContext":{
+
+              },
+              "f:serviceAccount":{
+
+              },
+              "f:serviceAccountName":{
+
+              },
+              "f:terminationGracePeriodSeconds":{
+
+              },
+              "f:volumes":{
+                ".":{
+
+                },
+                "k:{\"name\":\"config-override-volume\"}":{
+                  ".":{
+
+                  },
+                  "f:configMap":{
+                    ".":{
+
+                    },
+                    "f:defaultMode":{
+
+                    },
+                    "f:name":{
+
+                    }
+                  },
+                  "f:name":{
+
+                  }
+                },
+                "k:{\"name\":\"logs\"}":{
+                  ".":{
+
+                  },
+                  "f:emptyDir":{
+
+                  },
+                  "f:name":{
+
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "manager":"kubelet",
+          "operation":"Update",
+          "apiVersion":"v1",
+          "time":"2023-03-16T00:43:38Z",
+          "fieldsType":"FieldsV1",
+          "fieldsV1":{
+            "f:status":{
+              "f:conditions":{
+                "k:{\"type\":\"ContainersReady\"}":{
+                  ".":{
+
+                  },
+                  "f:lastProbeTime":{
+
+                  },
+                  "f:lastTransitionTime":{
+
+                  },
+                  "f:message":{
+
+                  },
+                  "f:reason":{
+
+                  },
+                  "f:status":{
+
+                  },
+                  "f:type":{
+
+                  }
+                },
+                "k:{\"type\":\"Initialized\"}":{
+                  ".":{
+
+                  },
+                  "f:lastProbeTime":{
+
+                  },
+                  "f:lastTransitionTime":{
+
+                  },
+                  "f:status":{
+
+                  },
+                  "f:type":{
+
+                  }
+                },
+                "k:{\"type\":\"Ready\"}":{
+                  ".":{
+
+                  },
+                  "f:lastProbeTime":{
+
+                  },
+                  "f:lastTransitionTime":{
+
+                  },
+                  "f:message":{
+
+                  },
+                  "f:reason":{
+
+                  },
+                  "f:status":{
+
+                  },
+                  "f:type":{
+
+                  }
+                }
+              },
+              "f:containerStatuses":{
+
+              },
+              "f:hostIP":{
+
+              },
+              "f:phase":{
+
+              },
+              "f:podIP":{
+
+              },
+              "f:podIPs":{
+                ".":{
+
+                },
+                "k:{\"ip\":\"192.168.31.30\"}":{
+                  ".":{
+
+                  },
+                  "f:ip":{
+
+                  }
+                }
+              },
+              "f:startTime":{
+
+              }
+            }
+          }
+        }
+      ]
+    },
+    "spec":{
+      "volumes":[
+        {
+          "name":"logs",
+          "emptyDir":{
+
+          }
+        },
+        {
+          "name":"config-override-volume",
+          "configMap":{
+            "name":"stackstate-agent-cluster-agent",
+            "defaultMode":420
+          }
+        },
+        {
+          "name":"kube-api-access-254ct",
+          "projected":{
+            "sources":[
+              {
+                "serviceAccountToken":{
+                  "expirationSeconds":3607,
+                  "path":"token"
+                }
+              },
+              {
+                "configMap":{
+                  "name":"kube-root-ca.crt",
+                  "items":[
+                    {
+                      "key":"ca.crt",
+                      "path":"ca.crt"
+                    }
+                  ]
+                }
+              },
+              {
+                "downwardAPI":{
+                  "items":[
+                    {
+                      "path":"namespace",
+                      "fieldRef":{
+                        "apiVersion":"v1",
+                        "fieldPath":"metadata.namespace"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "defaultMode":420
+          }
+        }
+      ],
+      "containers":[
+        {
+          "name":"cluster-agent",
+          "image":"quay.io/stackstate/stackstate-cluster-agent-test:8b199c73",
+          "env":[
+            {
+              "name":"STS_API_KEY",
+              "valueFrom":{
+                "secretKeyRef":{
+                  "name":"stackstate-agent",
+                  "key":"sts-api-key"
+                }
+              }
+            },
+            {
+              "name":"STS_CLUSTER_AGENT_AUTH_TOKEN",
+              "valueFrom":{
+                "secretKeyRef":{
+                  "name":"stackstate-agent",
+                  "key":"sts-cluster-auth-token"
+                }
+              }
+            },
+            {
+              "name":"LOG_LEVEL",
+              "value":"INFO"
+            },
+            {
+              "name":"STS_CLUSTER_CHECKS_ENABLED",
+              "value":"true"
+            },
+            {
+              "name":"STS_EXTRA_CONFIG_PROVIDERS",
+              "value":"kube_endpoints kube_services"
+            },
+            {
+              "name":"STS_EXTRA_LISTENERS",
+              "value":"kube_endpoints kube_services"
+            },
+            {
+              "name":"STS_CLUSTER_NAME",
+              "value":"kubernetes-monitors"
+            },
+            {
+              "name":"STS_SKIP_VALIDATE_CLUSTERNAME",
+              "value":"true"
+            },
+            {
+              "name":"STS_COLLECT_KUBERNETES_METRICS",
+              "value":"true"
+            },
+            {
+              "name":"STS_COLLECT_KUBERNETES_TIMEOUT",
+              "value":"10"
+            },
+            {
+              "name":"STS_COLLECT_KUBERNETES_TOPOLOGY",
+              "value":"true"
+            },
+            {
+              "name":"STS_LEADER_ELECTION",
+              "value":"true"
+            },
+            {
+              "name":"STS_LOG_LEVEL",
+              "value":"INFO"
+            },
+            {
+              "name":"STS_CLUSTER_AGENT_CMD_PORT",
+              "value":"5005"
+            },
+            {
+              "name":"STS_STS_URL",
+              "value":"https://demo-monitors.sandbox-main.sandbox.stackstate.io/receiver/stsAgent"
+            },
+            {
+              "name":"STS_LOG_PAYLOADS",
+              "value":"false"
+            }
+          ],
+          "resources":{
+            "limits":{
+              "cpu":"400m",
+              "memory":"1Gi"
+            },
+            "requests":{
+              "cpu":"100m",
+              "memory":"256Mi"
+            }
+          },
+          "volumeMounts":[
+            {
+              "name":"logs",
+              "mountPath":"/var/log/stackstate-agent"
+            },
+            {
+              "name":"config-override-volume",
+              "mountPath":"/etc/stackstate-agent/conf.d/kubernetes_api_events.d/conf.yaml",
+              "subPath":"kubernetes_api_events_conf"
+            },
+            {
+              "name":"config-override-volume",
+              "mountPath":"/etc/stackstate-agent/conf.d/kubernetes_api_topology.d/conf.yaml",
+              "subPath":"kubernetes_api_topology_conf"
+            },
+            {
+              "name":"config-override-volume",
+              "mountPath":"/etc/stackstate-agent/conf.d/kubernetes_state_core.d/conf.yaml",
+              "subPath":"kube_state_metrics_core_conf"
+            },
+            {
+              "name":"kube-api-access-254ct",
+              "readOnly":true,
+              "mountPath":"/var/run/secrets/kubernetes.io/serviceaccount"
+            }
+          ],
+          "terminationMessagePath":"/dev/termination-log",
+          "terminationMessagePolicy":"File",
+          "imagePullPolicy":"Always"
+        }
+      ],
+      "restartPolicy":"Always",
+      "terminationGracePeriodSeconds":30,
+      "dnsPolicy":"ClusterFirst",
+      "nodeSelector":{
+        "kubernetes.io/os":"linux"
+      },
+      "serviceAccountName":"stackstate-agent",
+      "serviceAccount":"stackstate-agent",
+      "nodeName":"ip-192-168-3-100.eu-west-1.compute.internal",
+      "securityContext":{
+
+      },
+      "schedulerName":"default-scheduler",
+      "tolerations":[
+        {
+          "key":"node.kubernetes.io/not-ready",
+          "operator":"Exists",
+          "effect":"NoExecute",
+          "tolerationSeconds":300
+        },
+        {
+          "key":"node.kubernetes.io/unreachable",
+          "operator":"Exists",
+          "effect":"NoExecute",
+          "tolerationSeconds":300
+        }
+      ],
+      "priority":0,
+      "enableServiceLinks":true,
+      "preemptionPolicy":"PreemptLowerPriority"
+    },
+    "status":{
+      "phase":"Running",
+      "conditions":[
+        {
+          "type":"Initialized",
+          "status":"True",
+          "lastProbeTime":null,
+          "lastTransitionTime":"2023-03-16T00:43:23Z"
+        },
+        {
+          "type":"Ready",
+          "status":"False",
+          "lastProbeTime":null,
+          "lastTransitionTime":"2023-03-16T00:43:38Z",
+          "reason":"ContainersNotReady",
+          "message":"containers with unready status: [cluster-agent]"
+        },
+        {
+          "type":"ContainersReady",
+          "status":"False",
+          "lastProbeTime":null,
+          "lastTransitionTime":"2023-03-16T00:43:38Z",
+          "reason":"ContainersNotReady",
+          "message":"containers with unready status: [cluster-agent]"
+        },
+        {
+          "type":"********@sha256:126b6de3e9188d7342d3307b4cf34a2f98cec7db392f07c52942bec410639413",
+          "containerID":"docker://b8f98dacacce506763f8afb9166f0a946993c904398c0672a82b03792e14ac9d",
+          "started":false
+        }
+      ],
+      "qosClass":"Burstable"
+    }
+  },
+  {
+    "metadata": {
+      "name": "stackstate-agent-cluster-agent-5b879456c5-rspmw",
+      "generateName": "stackstate-agent-cluster-agent-5b879456c5-",
+      "namespace": "kubernetes-monitors",
+      "uid": "3b9ef622-bd02-4ce4-9073-d13b824b4ff5",
+      "resourceVersion": "23239065",
+      "creationTimestamp": "2023-03-16T00:43:23Z",
+      "labels": {
+        "app.kubernetes.io/component": "cluster-agent",
+        "app.kubernetes.io/instance": "stackstate-agent",
+        "app.kubernetes.io/name": "stackstate-agent",
+        "pod-template-hash": "5b879456c5"
+      },
+      "annotations": {
+        "ad.stackstate.com/stackstate-cluster-agent.check_names": "[\"openmetrics\"]",
+        "ad.stackstate.com/stackstate-cluster-agent.init_configs": "[{}]",
+        "ad.stackstate.com/stackstate-cluster-agent.instances": "[{\"prometheus_url\": \"http://%%host%%:5000/metrics\",\"namespace\": \"stackstate.stackstate_agent\",\"metrics\": [\"go_goroutines\",\"go_memstats_*\",\"process_*\",\"api_requests\",\"stackstate_requests\",\"external_metrics\", \"cluster_checks_*\"]}]",
+        "checksum/secret": "0416c126925c9259df5a15524c33dc84ec33f0d4c77ac5301ed355c7b62d71eb",
+        "kubernetes.io/psp": "eks.privileged"
+      },
+      "ownerReferences": [
+        {
+          "apiVersion": "apps/v1",
+          "kind": "ReplicaSet",
+          "name": "stackstate-agent-cluster-agent-5b879456c5",
+          "uid": "8229c473-75b5-400a-9df5-b13c7f2fd458",
+          "controller": true,
+          "blockOwnerDeletion": true
+        }
+      ],
+      "managedFields": [
+        {
+          "manager": "kube-controller-manager",
+          "operation": "Update",
+          "apiVersion": "v1",
+          "time": "2023-03-16T00:43:23Z",
+          "fieldsType": "FieldsV1",
+          "fieldsV1": {
+            "f:metadata": {
+              "f:annotations": {
+                ".": {
+                },
+                "f:ad.stackstate.com/stackstate-cluster-agent.check_names": {
+                },
+                "f:ad.stackstate.com/stackstate-cluster-agent.init_configs": {
+                },
+                "f:ad.stackstate.com/stackstate-cluster-agent.instances": {
+                },
+                "f:checksum/secret": {
+                }
+              },
+              "f:generateName": {
+              },
+              "f:labels": {
+                ".": {
+                },
+                "f:app.kubernetes.io/component": {
+                },
+                "f:app.kubernetes.io/instance": {
+                },
+                "f:app.kubernetes.io/name": {
+                },
+                "f:pod-template-hash": {
+                }
+              },
+              "f:ownerReferences": {
+                ".": {
+                },
+                "k:{\"uid\":\"8229c473-75b5-400a-9df5-b13c7f2fd458\"}": {
+                  ".": {
+                  },
+                  "f:apiVersion": {
+                  },
+                  "f:blockOwnerDeletion": {
+                  },
+                  "f:controller": {
+                  },
+                  "f:kind": {
+                  },
+                  "f:name": {
+                  },
+                  "f:uid": {
+                  }
+                }
+              }
+            },
+            "f:spec": {
+              "f:containers": {
+                "k:{\"name\":\"cluster-agent\"}": {
+                  ".": {
+                  },
+                  "f:env": {
+                    ".": {
+                    },
+                    "k:{\"name\":\"LOG_LEVEL\"}": {
+                      ".": {
+                      },
+                      "f:name": {
+                      },
+                      "f:value": {
+                      }
+                    },
+                    "k:{\"name\":\"STS_API_KEY\"}": {
+                      ".": {
+                      },
+                      "f:name": {
+                      },
+                      "f:valueFrom": {
+                        ".": {
+                        },
+                        "f:secretKeyRef": {
+                          ".": {
+                          },
+                          "f:key": {
+                          },
+                          "f:name": {
+                          }
+                        }
+                      }
+                    },
+                    "k:{\"name\":\"STS_CLUSTER_AGENT_AUTH_TOKEN\"}": {
+                      ".": {
+                      },
+                      "f:name": {
+                      },
+                      "f:valueFrom": {
+                        ".": {
+                        },
+                        "f:secretKeyRef": {
+                          ".": {
+                          },
+                          "f:key": {
+                          },
+                          "f:name": {
+                          }
+                        }
+                      }
+                    },
+                    "k:{\"name\":\"STS_CLUSTER_AGENT_CMD_PORT\"}": {
+                      ".": {
+                      },
+                      "f:name": {
+                      },
+                      "f:value": {
+                      }
+                    },
+                    "k:{\"name\":\"STS_CLUSTER_CHECKS_ENABLED\"}": {
+                      ".": {
+                      },
+                      "f:name": {
+                      },
+                      "f:value": {
+                      }
+                    },
+                    "k:{\"name\":\"STS_CLUSTER_NAME\"}": {
+                      ".": {
+                      },
+                      "f:name": {
+                      },
+                      "f:value": {
+                      }
+                    },
+                    "k:{\"name\":\"STS_COLLECT_KUBERNETES_METRICS\"}": {
+                      ".": {
+                      },
+                      "f:name": {
+                      },
+                      "f:value": {
+                      }
+                    },
+                    "k:{\"name\":\"STS_COLLECT_KUBERNETES_TIMEOUT\"}": {
+                      ".": {
+                      },
+                      "f:name": {
+                      },
+                      "f:value": {
+                      }
+                    },
+                    "k:{\"name\":\"STS_COLLECT_KUBERNETES_TOPOLOGY\"}": {
+                      ".": {
+                      },
+                      "f:name": {
+                      },
+                      "f:value": {
+                      }
+                    },
+                    "k:{\"name\":\"STS_EXTRA_CONFIG_PROVIDERS\"}": {
+                      ".": {
+                      },
+                      "f:name": {
+                      },
+                      "f:value": {
+                      }
+                    },
+                    "k:{\"name\":\"STS_EXTRA_LISTENERS\"}": {
+                      ".": {
+                      },
+                      "f:name": {
+                      },
+                      "f:value": {
+                      }
+                    },
+                    "k:{\"name\":\"STS_LEADER_ELECTION\"}": {
+                      ".": {
+                      },
+                      "f:name": {
+                      },
+                      "f:value": {
+                      }
+                    },
+                    "k:{\"name\":\"STS_LOG_LEVEL\"}": {
+                      ".": {
+                      },
+                      "f:name": {
+                      },
+                      "f:value": {
+                      }
+                    },
+                    "k:{\"name\":\"STS_LOG_PAYLOADS\"}": {
+                      ".": {
+                      },
+                      "f:name": {
+                      },
+                      "f:value": {
+                      }
+                    },
+                    "k:{\"name\":\"STS_SKIP_VALIDATE_CLUSTERNAME\"}": {
+                      ".": {
+                      },
+                      "f:name": {
+                      },
+                      "f:value": {
+                      }
+                    },
+                    "k:{\"name\":\"STS_STS_URL\"}": {
+                      ".": {
+                      },
+                      "f:name": {
+                      },
+                      "f:value": {
+                      }
+                    }
+                  },
+                  "f:image": {
+                  },
+                  "f:imagePullPolicy": {
+                  },
+                  "f:name": {
+                  },
+                  "f:resources": {
+                    ".": {
+                    },
+                    "f:limits": {
+                      ".": {
+                      },
+                      "f:cpu": {
+                      },
+                      "f:memory": {
+                      }
+                    },
+                    "f:requests": {
+                      ".": {
+                      },
+                      "f:cpu": {
+                      },
+                      "f:memory": {
+                      }
+                    }
+                  },
+                  "f:terminationMessagePath": {
+                  },
+                  "f:terminationMessagePolicy": {
+                  },
+                  "f:volumeMounts": {
+                    ".": {
+                    },
+                    "k:{\"mountPath\":\"/etc/stackstate-agent/conf.d/kubernetes_api_events.d/conf.yaml\"}": {
+                      ".": {
+                      },
+                      "f:mountPath": {
+                      },
+                      "f:name": {
+                      },
+                      "f:subPath": {
+                      }
+                    },
+                    "k:{\"mountPath\":\"/etc/stackstate-agent/conf.d/kubernetes_api_topology.d/conf.yaml\"}": {
+                      ".": {
+                      },
+                      "f:mountPath": {
+                      },
+                      "f:name": {
+                      },
+                      "f:subPath": {
+                      }
+                    },
+                    "k:{\"mountPath\":\"/etc/stackstate-agent/conf.d/kubernetes_state_core.d/conf.yaml\"}": {
+                      ".": {
+                      },
+                      "f:mountPath": {
+                      },
+                      "f:name": {
+                      },
+                      "f:subPath": {
+                      }
+                    },
+                    "k:{\"mountPath\":\"/var/log/stackstate-agent\"}": {
+                      ".": {
+                      },
+                      "f:mountPath": {
+                      },
+                      "f:name": {
+                      }
+                    }
+                  }
+                }
+              },
+              "f:dnsPolicy": {
+              },
+              "f:enableServiceLinks": {
+              },
+              "f:nodeSelector": {
+                ".": {
+                },
+                "f:kubernetes.io/os": {
+                }
+              },
+              "f:restartPolicy": {
+              },
+              "f:schedulerName": {
+              },
+              "f:securityContext": {
+              },
+              "f:serviceAccount": {
+              },
+              "f:serviceAccountName": {
+              },
+              "f:terminationGracePeriodSeconds": {
+              },
+              "f:volumes": {
+                ".": {
+                },
+                "k:{\"name\":\"config-override-volume\"}": {
+                  ".": {
+                  },
+                  "f:configMap": {
+                    ".": {
+                    },
+                    "f:defaultMode": {
+                    },
+                    "f:name": {
+                    }
+                  },
+                  "f:name": {
+                  }
+                },
+                "k:{\"name\":\"logs\"}": {
+                  ".": {
+                  },
+                  "f:emptyDir": {
+                  },
+                  "f:name": {
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "manager": "kubelet",
+          "operation": "Update",
+          "apiVersion": "v1",
+          "time": "2023-03-16T00:43:40Z",
+          "fieldsType": "FieldsV1",
+          "fieldsV1": {
+            "f:status": {
+              "f:conditions": {
+                "k:{\"type\":\"ContainersReady\"}": {
+                  ".": {
+                  },
+                  "f:lastProbeTime": {
+                  },
+                  "f:lastTransitionTime": {
+                  },
+                  "f:status": {
+                  },
+                  "f:type": {
+                  }
+                },
+                "k:{\"type\":\"Initialized\"}": {
+                  ".": {
+                  },
+                  "f:lastProbeTime": {
+                  },
+                  "f:lastTransitionTime": {
+                  },
+                  "f:status": {
+                  },
+                  "f:type": {
+                  }
+                },
+                "k:{\"type\":\"Ready\"}": {
+                  ".": {
+                  },
+                  "f:lastProbeTime": {
+                  },
+                  "f:lastTransitionTime": {
+                  },
+                  "f:status": {
+                  },
+                  "f:type": {
+                  }
+                }
+              },
+              "f:containerStatuses": {
+              },
+              "f:hostIP": {
+              },
+              "f:phase": {
+              },
+              "f:podIP": {
+              },
+              "f:podIPs": {
+                ".": {
+                },
+                "k:{\"ip\":\"192.168.31.30\"}": {
+                  ".": {
+                  },
+                  "f:ip": {
+                  }
+                }
+              },
+              "f:startTime": {
+              }
+            }
+          }
+        }
+      ]
+    },
+    "spec": {
+      "volumes": [
+        {
+          "name": "logs",
+          "emptyDir": {
+          }
+        },
+        {
+          "name": "config-override-volume",
+          "configMap": {
+            "name": "stackstate-agent-cluster-agent",
+            "defaultMode": 420
+          }
+        },
+        {
+          "name": "kube-api-access-254ct",
+          "projected": {
+            "sources": [
+              {
+                "serviceAccountToken": {
+                  "expirationSeconds": 3607,
+                  "path": "token"
+                }
+              },
+              {
+                "configMap": {
+                  "name": "kube-root-ca.crt",
+                  "items": [
+                    {
+                      "key": "ca.crt",
+                      "path": "ca.crt"
+                    }
+                  ]
+                }
+              },
+              {
+                "downwardAPI": {
+                  "items": [
+                    {
+                      "path": "namespace",
+                      "fieldRef": {
+                        "apiVersion": "v1",
+                        "fieldPath": "metadata.namespace"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "defaultMode": 420
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "cluster-agent",
+          "image": "quay.io/stackstate/stackstate-cluster-agent-test:8b199c73",
+          "env": [
+            {
+              "name": "STS_API_KEY",
+              "valueFrom": {
+                "secretKeyRef": {
+                  "name": "stackstate-agent",
+                  "key": "sts-api-key"
+                }
+              }
+            },
+            {
+              "name": "STS_CLUSTER_AGENT_AUTH_TOKEN",
+              "valueFrom": {
+                "secretKeyRef": {
+                  "name": "stackstate-agent",
+                  "key": "sts-cluster-auth-token"
+                }
+              }
+            },
+            {
+              "name": "LOG_LEVEL",
+              "value": "INFO"
+            },
+            {
+              "name": "STS_CLUSTER_CHECKS_ENABLED",
+              "value": "true"
+            },
+            {
+              "name": "STS_EXTRA_CONFIG_PROVIDERS",
+              "value": "kube_endpoints kube_services"
+            },
+            {
+              "name": "STS_EXTRA_LISTENERS",
+              "value": "kube_endpoints kube_services"
+            },
+            {
+              "name": "********@sha256:126b6de3e9188d7342d3307b4cf34a2f98cec7db392f07c52942bec410639413",
+              "containerID": "docker://06e963b2fcde4c1a03ba8b538c2d7bbd7150124bfbbd645338c4396ed0af8c49",
+              "started": true
+            }
+          ],
+          "qosClass": "Burstable"
+        }
+      ]
+    }
+  }]

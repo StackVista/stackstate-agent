@@ -235,7 +235,7 @@ func (k *EventsCheck) Run() error {
 	if err == nil {
 		log.Infof("Pods: %v", string(podsJson))
 	} else {
-		log.Info("Unables to parse Pods ...")
+		log.Info("Unable to parse Pods ...")
 	}
 
 	// Process the custom pod events to have a Datadog format.
