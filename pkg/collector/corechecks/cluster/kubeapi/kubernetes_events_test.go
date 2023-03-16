@@ -373,3 +373,7 @@ event_categories:
 	mockSender.AssertNumberOfCalls(t, "Event", 6)
 	mockSender.AssertExpectations(t)
 }
+
+func TestProcessEvents() {
+
+}
