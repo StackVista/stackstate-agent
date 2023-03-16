@@ -231,6 +231,13 @@ func (k *EventsCheck) Run() error {
 		return err
 	}
 
+	podsJson, err := json.Marshal(pods)
+	if err == nil {
+		log.Infof("Pods: %v", string(podsJson))
+	} else {
+		log.Info("Unables to parse Pods ...")
+	}
+
 	// Process the custom pod events to have a Datadog format.
 	k.processPodEvents(sender, pods)
 
@@ -239,13 +246,6 @@ func (k *EventsCheck) Run() error {
 	events, err := k.eventCollectionCheck()
 	if err != nil {
 		return err
-	}
-
-	eventsJson, err := json.Marshal(events)
-	if err == nil {
-		log.Infof("Events: %v", string(eventsJson))
-	} else {
-		log.Info("Unable to parse Events ...")
 	}
 
 	// Process the events to have a Datadog format.
