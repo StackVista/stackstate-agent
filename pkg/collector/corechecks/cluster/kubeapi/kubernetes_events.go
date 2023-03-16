@@ -10,6 +10,7 @@ package kubeapi
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/util"
 	"strings"
@@ -231,16 +232,20 @@ func (k *EventsCheck) Run() error {
 	}
 
 	// Process the custom pod events to have a Datadog format.
-	err = k.processPodEvents(sender, pods)
-	if err != nil {
-		_ = k.Warnf("Could not submit pod events %s", err.Error()) //nolint:errcheck
-	}
+	k.processPodEvents(sender, pods)
 
 	log.Info("Running kubernetes event collector ...")
 	// Get the events from the API server
 	events, err := k.eventCollectionCheck()
 	if err != nil {
 		return err
+	}
+
+	eventsJson, err := json.Marshal(events)
+	if err == nil {
+		log.Infof("Events: %v", string(eventsJson))
+	} else {
+		log.Info("Unable to parse Events ...")
 	}
 
 	// Process the events to have a Datadog format.
