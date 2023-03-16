@@ -31,6 +31,7 @@ func (c *APIClient) GetPods() ([]v1.Pod, error) {
 	return podList.Items, nil
 }
 
+// TODO: Change comments to not contain events
 // RunPodCollection Retrieve a list of pods based on a resource version and a timeout
 func (c *APIClient) RunPodCollection(resourceVersion string, lastSyncTime time.Time, podReadTimeout int64, podCardinalityLimit int64, resync int64) ([]*v1.Pod, string, time.Time, error) {
 	log.Debug("Starting pod collection")

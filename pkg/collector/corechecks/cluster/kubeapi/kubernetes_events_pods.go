@@ -76,20 +76,18 @@ func (k *EventsCheck) podEventsCollectionCheck() (pods []*v1.Pod, err error) {
 func (k *EventsCheck) processPods(sender aggregator.Sender, pods []*v1.Pod) {
 	mapper := k.mapperFactory(k.ac, k.clusterName, k.instance.EventCategories)
 	for _, pod := range pods {
-		k.podToMetricEventMapper(pod, mapper, sender)
+		k.podToEventMapper(pod, mapper, sender)
 	}
 }
 
-func (k *EventsCheck) podToMetricEventMapper(pod *v1.Pod, mapper *kubernetesEventMapper, sender aggregator.Sender) {
+func (k *EventsCheck) podToEventMapper(pod *v1.Pod, mapper *kubernetesEventMapper, sender aggregator.Sender) {
 	var events []metrics.Event
 
 	// Test on active Status. This will be the current state the pod is in not the previous state
 	for _, containerStatus := range pod.Status.ContainerStatuses {
-		terminated := containerStatus.State.Terminated
-
 		// Terminated is an optional as the state can be anything, for example waiting will make terminated nil
-		if terminated != nil {
-			switch terminated.Reason {
+		if containerStatus.State.Terminated != nil {
+			switch containerStatus.State.Terminated.Reason {
 			case "OOMKilled":
 				event, err := k.mapPodToMetricEventForOutOfMemory(pod, containerStatus.Name, containerStatus.State.Terminated, mapper)
 				if err != nil {
