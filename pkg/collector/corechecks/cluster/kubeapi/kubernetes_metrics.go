@@ -9,9 +9,12 @@
 package kubeapi
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -55,6 +58,7 @@ type MetricsCheck struct {
 	podMetricCollection MetricC
 	instance            *MetricsConfig
 	oshiftAPILevel      apiserver.OpenShiftAPILevel
+	clusterName         string
 }
 
 func (c *MetricsConfig) parse(data []byte) error {
@@ -81,6 +85,14 @@ func KubernetesAPIMetricsFactory() check.Check {
 	return NewKubernetesAPIMetricsCheck(core.NewCheckBase(kubernetesAPIMetricsCheckName), &MetricsConfig{})
 }
 
+// getClusterName retrieves the name of the cluster, if found
+func (k *MetricsCheck) getClusterName() {
+	hostname, _ := util.GetHostname(context.TODO())
+	if clusterName := clustername.GetClusterName(context.TODO(), hostname); clusterName != "" {
+		k.clusterName = clusterName
+	}
+}
+
 // Configure parses the check configuration and init the check.
 func (k *MetricsCheck) Configure(config, initConfig integration.Data, source string) error {
 	err := k.CommonConfigure(config, source)
@@ -96,6 +108,7 @@ func (k *MetricsCheck) Configure(config, initConfig integration.Data, source str
 	}
 
 	k.setDefaultsPodEvents()
+	k.getClusterName()
 
 	log.Debugf("Running config %s", config)
 	return nil
