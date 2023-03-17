@@ -46,7 +46,7 @@ func (c *APIClient) RunPodCollection(resourceVersion string, lastSyncTime time.T
 		log.Debugf("Return listForPodsResync syncDiffTime: %d/%d", syncDiffTime, syncTimeout)
 
 		// Get a new list of pods seeing that the sync time has expired or resourceVersion is empty
-		podList, lastResourceVersion, lastTime, err := c.getListOfPods(podReadTimeout, podCardinalityLimit)
+		podList, lastResourceVersion, lastTime, err := c.GetListOfPods(podReadTimeout, podCardinalityLimit)
 		if err != nil {
 			return nil, "", time.Now(), err
 		}
@@ -100,7 +100,7 @@ func (c *APIClient) RunPodCollection(resourceVersion string, lastSyncTime time.T
 				switch status.Reason {
 				case "Expired":
 					log.Debug("Resource Version is too old, listing all events and collecting only the new ones")
-					podList, resourceVersion, lastListTime, err := c.getListOfPods(podReadTimeout, podCardinalityLimit)
+					podList, resourceVersion, lastListTime, err := c.GetListOfPods(podReadTimeout, podCardinalityLimit)
 					if err != nil {
 						return pods, resourceVersion, lastListTime, err
 					}
@@ -182,8 +182,8 @@ func findPodsAfterResourceVersion(resourceVersionInt int, currentPodList []*v1.P
 	return pods
 }
 
-// getListOfPods Get the current list of pods
-func (c *APIClient) getListOfPods(timeout int64, limit int64) (pods []*v1.Pod, resourceVersion string, lastListTime time.Time, err error) {
+// GetListOfPods Get the current list of pods
+func (c *APIClient) GetListOfPods(timeout int64, limit int64) (pods []*v1.Pod, resourceVersion string, lastListTime time.Time, err error) {
 	podList, err := c.Cl.CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{
 		TimeoutSeconds: &timeout,
 		Limit:          limit,
