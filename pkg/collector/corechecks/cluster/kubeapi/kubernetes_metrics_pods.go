@@ -95,17 +95,6 @@ func (k *MetricsCheck) podToMetricMappingForOutOfMemory(pod *v1.Pod, sender aggr
 			fmt.Sprintf("container_name:%v", containerStatus.Name),
 		}
 
-		if pod.Name == "out-of-memory-always-critical" {
-			fmt.Printf("----------------------------------------")
-			fmt.Printf("pod.Status.Phase: %v", pod.Status.Phase)
-			fmt.Printf("containerStatus.State.Running: %v", containerStatus.State.Running)
-			fmt.Printf("containerStatus.State.Waiting: %v", containerStatus.State.Waiting)
-			if containerStatus.LastTerminationState.Terminated != nil {
-				fmt.Printf("containerStatus.LastTerminationState.Terminated.Reason: %v", containerStatus.LastTerminationState.Terminated.Reason)
-			}
-			fmt.Printf("----------------------------------------")
-		}
-
 		// Determine that there should be a terminate state and that is OOMKilled
 		// The container state mapped should be the same as the container we are looking for
 		if containerStatus.State.Running == nil &&
@@ -115,7 +104,6 @@ func (k *MetricsCheck) podToMetricMappingForOutOfMemory(pod *v1.Pod, sender aggr
 			value = 1
 		}
 
-		log.Info(fmt.Sprintf("Sending metric kubernetes.state.container.status.report.count.oom.new (%v) (%v) ...", pod.Name, value))
-		sender.Gauge("kubernetes.state.container.status.report.count.oom.new", value, "", tags)
+		sender.Gauge("kubernetes.state.container.status.report.count.oom", value, "", tags)
 	}
 }
