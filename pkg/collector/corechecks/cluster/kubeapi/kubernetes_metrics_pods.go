@@ -96,7 +96,6 @@ func (k *MetricsCheck) podToMetricMappingForOutOfMemory(pod *v1.Pod, sender aggr
 			containerStatus.LastTerminationState.Terminated.Reason == "OOMKilled" {
 			// Set the value to 1 as we found a OOM event and break out of the loop as we do not need multiple OOM events
 			value = 1
-			break
 		}
 
 		log.Info(fmt.Sprintf("Sending metric kubernetes.state.container.status.report.count.oom.new (%v) (%v) ...", pod.Name, value))
