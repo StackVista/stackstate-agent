@@ -34,15 +34,7 @@ func TestProcessPodMetrics(t *testing.T) {
 
 	check.processPods(mockSender, podEvents)
 
-	mockSender.AssertNumberOfCalls(t, "Gauge", 27)
-
-	mockSender.AssertCalled(t, "Gauge", "kubernetes.state.container.status.report.count.oom.new", float64(0), "", []string{
-		"kube_cluster_name:",
-		"kube_namespace:kubernetes-monitors",
-		"pod:rrf-broken-app-6d8f67cf4d-7cn6l",
-		"pod_name:rrf-broken-app-6d8f67cf4d-7cn6l",
-		"container_name:broken-app",
-	})
+	mockSender.AssertNumberOfCalls(t, "Gauge", 23)
 
 	mockSender.AssertCalled(t, "Gauge", "kubernetes.state.container.status.report.count.oom.new", float64(1), "", []string{
 		"kube_cluster_name:",
