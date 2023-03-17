@@ -108,7 +108,7 @@ func (k *MetricsCheck) podToMetricMappingForOutOfMemory(pod *v1.Pod, sender aggr
 			}
 		}
 
-		log.Info("Sending metric kubernetes.state.container.status.report.count.oom ...")
+		log.Info(fmt.Sprintf("Sending metric kubernetes.state.container.status.report.count.oom (%v) ...", value))
 		sender.Gauge("kubernetes.state.container.status.report.count.oom", value, "", tags)
 	}
 }
