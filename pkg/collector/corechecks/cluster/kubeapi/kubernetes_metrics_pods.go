@@ -98,6 +98,8 @@ func (k *MetricsCheck) podToMetricMappingForOutOfMemory(pod *v1.Pod, sender aggr
 		if pod.Name == "out-of-memory-always-critical" {
 			fmt.Printf("----------------------------------------")
 			fmt.Printf("pod.Status.Phase: %v", pod.Status.Phase)
+			fmt.Printf("containerStatus.State.Running: %v", containerStatus.State.Running)
+			fmt.Printf("containerStatus.State.Waiting: %v", containerStatus.State.Waiting)
 			if containerStatus.LastTerminationState.Terminated != nil {
 				fmt.Printf("containerStatus.LastTerminationState.Terminated.Reason: %v", containerStatus.LastTerminationState.Terminated.Reason)
 			}
@@ -106,8 +108,7 @@ func (k *MetricsCheck) podToMetricMappingForOutOfMemory(pod *v1.Pod, sender aggr
 
 		// Determine that there should be a terminate state and that is OOMKilled
 		// The container state mapped should be the same as the container we are looking for
-		if pod.Status.Phase != v1.PodSucceeded &&
-			pod.Status.Phase != v1.PodRunning &&
+		if containerStatus.State.Running == nil &&
 			containerStatus.LastTerminationState.Terminated != nil &&
 			containerStatus.LastTerminationState.Terminated.Reason == "OOMKilled" {
 			// Set the value to 1 as we found a OOM event and break out of the loop as we do not need multiple OOM events
