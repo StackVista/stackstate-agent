@@ -40,32 +40,33 @@ func (k *MetricsCheck) setDefaultsPodEvents() {
 func (k *MetricsCheck) podMetricsCollectionCheck() (pods []*v1.Pod, err error) {
 	// Retrieve the last resource version that was used within the pod metric collection cycle.
 	// This allows us to continue from a certain point in time and not re-fetch all the pods over and over
-	resourceVersion, lastTime, err := k.ac.GetTokenFromConfigmap(podMetricTokenKey)
-	if err != nil {
-		return nil, err
-	}
+	// resourceVersion, lastTime, err := k.ac.GetTokenFromConfigmap(podMetricTokenKey)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	// This is to avoid getting in a situation where we list all the events for multiple runs in a row.
-	if resourceVersion == "" && k.podMetricCollection.LastResVer != "" {
-		_ = log.Errorf("Resource Version stored in the ConfigMap is incorrect. Will resume collecting from %s", k.podMetricCollection.LastResVer)
-		resourceVersion = k.podMetricCollection.LastResVer
-	}
+	// if resourceVersion == "" && k.podMetricCollection.LastResVer != "" {
+	// 	_ = log.Errorf("Resource Version stored in the ConfigMap is incorrect. Will resume collecting from %s", k.podMetricCollection.LastResVer)
+	// 	resourceVersion = k.podMetricCollection.LastResVer
+	// }
 
 	timeout := int64(k.instance.PodMetricCollectionTimeoutMs / 1000)
 	limit := int64(k.instance.MaxPodMetricsCollection)
-	resync := int64(k.instance.ResyncPeriodPodMetric)
+	// resync := int64(k.instance.ResyncPeriodPodMetric)
+	// pods, k.podMetricCollection.LastResVer, k.podMetricCollection.LastTime, err = k.ac.RunPodCollection(resourceVersion, lastTime, timeout, limit, resync)
 
-	pods, k.podMetricCollection.LastResVer, k.podMetricCollection.LastTime, err = k.ac.RunPodCollection(resourceVersion, lastTime, timeout, limit, resync)
+	pods, k.podMetricCollection.LastResVer, k.podMetricCollection.LastTime, err = k.ac.GetListOfPods(timeout, limit)
 	if err != nil {
 		_ = k.Warnf("Could not collect pods from the api server: %s", err.Error()) //nolint:errcheck
 		return nil, err
 	}
 
 	// Update the configMap to contain the new latest resources version so that we can continue from this version.
-	configMapErr := k.ac.UpdateTokenInConfigmap(podMetricTokenKey, k.podMetricCollection.LastResVer, k.podMetricCollection.LastTime)
-	if configMapErr != nil {
-		_ = k.Warnf("Could not store the pod metric token in the ConfigMap: %s", configMapErr.Error()) //nolint:errcheck
-	}
+	//  configMapErr := k.ac.UpdateTokenInConfigmap(podMetricTokenKey, k.podMetricCollection.LastResVer, k.podMetricCollection.LastTime)
+	//  if configMapErr != nil {
+	//  	_ = k.Warnf("Could not store the pod metric token in the ConfigMap: %s", configMapErr.Error()) //nolint:errcheck
+	//  }
 
 	return pods, nil
 }
