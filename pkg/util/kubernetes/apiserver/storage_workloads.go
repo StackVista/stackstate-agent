@@ -11,6 +11,7 @@ package apiserver
 import (
 	"context"
 	coreV1 "k8s.io/api/core/v1"
+	storageV1 "k8s.io/api/storage/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -62,4 +63,14 @@ func (c *APIClient) GetPersistentVolumeClaims() ([]coreV1.PersistentVolumeClaim,
 	}
 
 	return pvList.Items, nil
+}
+
+// GetVolumeAttachments() retrieves all the VolumeAttachments in the Kubernetes / OpenShift cluster across all namespaces.
+func (c *APIClient) GetVolumeAttachments() ([]storageV1.VolumeAttachment, error) {
+	vaList, err := c.Cl.StorageV1().VolumeAttachments().List(context.TODO(), metaV1.ListOptions{})
+	if err != nil {
+		return []storageV1.VolumeAttachment{}, err
+	}
+
+	return vaList.Items, nil
 }
