@@ -31,34 +31,35 @@ func (c *APIClient) GetPods() ([]v1.Pod, error) {
 	return podList.Items, nil
 }
 
-// TODO: Change comments to not contain events
-// RunPodCollection Retrieve a list of pods based on a resource version and a timeout
-func (c *APIClient) RunPodCollection(resourceVersion string, lastSyncTime time.Time, podReadTimeout int64, podCardinalityLimit int64, resync int64) ([]*v1.Pod, string, time.Time, error) {
+func (c *APIClient) RunPodCollection(lastSyncTime time.Time, podReadTimeout int64, podCardinalityLimit int64, resync int64, resourceVersion string, forceWatch bool) ([]*v1.Pod, string, time.Time, error) {
 	log.Debug("Starting pod collection")
 
 	var pods []*v1.Pod
 
-	// Determine if the resource value is empty or the sync time has expired
-	// If it is then we attempt to reset the resource version
-	syncTimeout := time.Duration(resync) * time.Second
-	syncDiffTime := time.Now().Sub(lastSyncTime)
-	if resourceVersion == "" || syncDiffTime > syncTimeout {
-		log.Debugf("Return listForPodsResync syncDiffTime: %d/%d", syncDiffTime, syncTimeout)
+	// IF we are forcing a retrieval on watch then we skip the initial fetch period and allow it to happen within the watch
+	if !forceWatch {
+		// Determine if the resource value is empty or the sync time has expired
+		// If it is then we attempt to reset the resource version
+		syncTimeout := time.Duration(resync) * time.Second
+		syncDiffTime := time.Now().Sub(lastSyncTime)
+		if resourceVersion == "" || syncDiffTime > syncTimeout {
+			log.Debugf("Return listForPodsResync syncDiffTime: %d/%d", syncDiffTime, syncTimeout)
 
-		// Get a new list of pods seeing that the sync time has expired or resourceVersion is empty
-		podList, lastResourceVersion, lastTime, err := c.GetListOfPods(podReadTimeout, podCardinalityLimit)
-		if err != nil {
-			return nil, "", time.Now(), err
+			// Get a new list of pods seeing that the sync time has expired or resourceVersion is empty
+			podList, lastResourceVersion, lastTime, err := c.GetListOfPods(podReadTimeout, podCardinalityLimit)
+			if err != nil {
+				return nil, "", time.Now(), err
+			}
+
+			// Convert the resource version to an integer, if it fails then we need to force an integer
+			// to allow further integer operations to determine if the resourceVersion increased
+			resourceVersionInt, ok := strconv.Atoi(resourceVersion)
+			if ok != nil {
+				resourceVersionInt = 0
+			}
+
+			return findPodsAfterResourceVersion(resourceVersionInt, podList), lastResourceVersion, lastTime, nil
 		}
-
-		// Convert the resource version to an integer, if it fails then we need to force an integer
-		// to allow further integer operations to determine if the resourceVersion increased
-		resourceVersionInt, ok := strconv.Atoi(resourceVersion)
-		if ok != nil {
-			resourceVersionInt = 0
-		}
-
-		return findPodsAfterResourceVersion(resourceVersionInt, podList), lastResourceVersion, lastTime, nil
 	}
 
 	// Watch pods and trigger a channel event for any pod changes
