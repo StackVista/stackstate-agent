@@ -212,11 +212,6 @@ func containerReasonTransformer(s aggregator.Sender, _ string, metric ksmstore.D
 		if _, allowed := allowedTerminatedReasons[lcReason]; allowed {
 			s.Gauge(metricPrefix+"terminated", metric.Val, hostname, tags)
 		}
-
-		// Filtering according to the reason here is paramount to limit cardinality
-		if _, allowed := allowedOutOfMemoryReasons[lcReason]; allowed {
-			s.Gauge(metricPrefix+"oom", metric.Val, hostname, tags)
-		}
 	}
 }
 
