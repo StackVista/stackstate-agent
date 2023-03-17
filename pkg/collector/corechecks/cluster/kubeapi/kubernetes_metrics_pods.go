@@ -13,6 +13,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
+	"time"
 )
 
 const (
@@ -53,20 +54,23 @@ func (k *MetricsCheck) podMetricsCollectionCheck() (pods []*v1.Pod, err error) {
 
 	timeout := int64(k.instance.PodMetricCollectionTimeoutMs / 1000)
 	limit := int64(k.instance.MaxPodMetricsCollection)
-	// resync := int64(k.instance.ResyncPeriodPodMetric)
-	// pods, k.podMetricCollection.LastResVer, k.podMetricCollection.LastTime, err = k.ac.RunPodCollection(resourceVersion, lastTime, timeout, limit, resync)
+	resync := int64(k.instance.ResyncPeriodPodMetric)
 
-	pods, k.podMetricCollection.LastResVer, k.podMetricCollection.LastTime, err = k.ac.GetListOfPods(timeout, limit)
+	// pods, k.podMetricCollection.LastResVer, k.podMetricCollection.LastTime, err = k.ac.RunPodCollection(lastTime, timeout, limit, resync, resourceVersion, false)
+
+	// We always start with a fresh resourceVersion, this allows the pod collection to collect all pods on the first run and only report changes within the check run cycle
+	// This allows us to always report a zero state, but also capture and changes that happens while the agent is running
+	pods, k.podMetricCollection.LastResVer, k.podMetricCollection.LastTime, err = k.ac.RunPodCollection(time.Now(), timeout, limit, resync, "0", true)
 	if err != nil {
 		_ = k.Warnf("Could not collect pods from the api server: %s", err.Error()) //nolint:errcheck
 		return nil, err
 	}
 
 	// Update the configMap to contain the new latest resources version so that we can continue from this version.
-	//  configMapErr := k.ac.UpdateTokenInConfigmap(podMetricTokenKey, k.podMetricCollection.LastResVer, k.podMetricCollection.LastTime)
-	//  if configMapErr != nil {
-	//  	_ = k.Warnf("Could not store the pod metric token in the ConfigMap: %s", configMapErr.Error()) //nolint:errcheck
-	//  }
+	// configMapErr := k.ac.UpdateTokenInConfigmap(podMetricTokenKey, k.podMetricCollection.LastResVer, k.podMetricCollection.LastTime)
+	// if configMapErr != nil {
+	// 	_ = k.Warnf("Could not store the pod metric token in the ConfigMap: %s", configMapErr.Error()) //nolint:errcheck
+	// }
 
 	return pods, nil
 }
@@ -102,8 +106,8 @@ func (k *MetricsCheck) podToMetricMappingForOutOfMemory(pod *v1.Pod, sender aggr
 
 		// Determine that there should be a terminate state and that is OOMKilled
 		// The container state mapped should be the same as the container we are looking for
-		if pod.Status.Phase != v1.PodRunning &&
-			pod.Status.Phase != v1.PodSucceeded &&
+		if pod.Status.Phase != v1.PodSucceeded &&
+			pod.Status.Phase != v1.PodRunning &&
 			containerStatus.LastTerminationState.Terminated != nil &&
 			containerStatus.LastTerminationState.Terminated.Reason == "OOMKilled" {
 			// Set the value to 1 as we found a OOM event and break out of the loop as we do not need multiple OOM events
