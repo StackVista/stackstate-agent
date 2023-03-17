@@ -76,8 +76,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								return []coreV1.PersistentVolumeClaim{persistentVolumeClaim}, nil
 							},
 							getVolumeAttachments: func() ([]storageV1.VolumeAttachment, error) {
-								volumeAttachment := NewTestVolumeAttachment("aws-elastic-block-store-volume")
-								return []storageV1.VolumeAttachment{volumeAttachment}, nil
+								return []storageV1.VolumeAttachment{}, nil
 							},
 						}
 					},
@@ -412,8 +411,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								return []coreV1.PersistentVolumeClaim{persistentVolumeClaim}, nil
 							},
 							getVolumeAttachments: func() ([]storageV1.VolumeAttachment, error) {
-								volumeAttachment := NewTestVolumeAttachment("aws-elastic-block-store-volume")
-								return []storageV1.VolumeAttachment{volumeAttachment}, nil
+								return []storageV1.VolumeAttachment{}, nil
 							},
 						}
 					},
@@ -743,8 +741,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								return []coreV1.PersistentVolumeClaim{persistentVolumeClaim}, nil
 							},
 							getVolumeAttachments: func() ([]storageV1.VolumeAttachment, error) {
-								volumeAttachment := NewTestVolumeAttachment("aws-elastic-block-store-volume")
-								return []storageV1.VolumeAttachment{volumeAttachment}, nil
+								return []storageV1.VolumeAttachment{}, nil
 							},
 						}
 					},
@@ -981,8 +978,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 								return []coreV1.PersistentVolumeClaim{persistentVolumeClaim}, nil
 							},
 							getVolumeAttachments: func() ([]storageV1.VolumeAttachment, error) {
-								volumeAttachment := NewTestVolumeAttachment("aws-elastic-block-store-volume")
-								return []storageV1.VolumeAttachment{volumeAttachment}, nil
+								return []storageV1.VolumeAttachment{}, nil
 							},
 						}
 					},
@@ -1414,8 +1410,7 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 								return []coreV1.PersistentVolumeClaim{persistentVolumeClaim}, nil
 							},
 							getVolumeAttachments: func() ([]storageV1.VolumeAttachment, error) {
-								volumeAttachment := NewTestVolumeAttachment("aws-elastic-block-store-volume")
-								return []storageV1.VolumeAttachment{volumeAttachment}, nil
+								return []storageV1.VolumeAttachment{}, nil
 							},
 						}
 					},
@@ -2039,10 +2034,10 @@ func TestPersistentVolumeCollectorVolumeAttachmentToNodeRelation(t *testing.T) {
 							relation := <-relationChannel
 							expectedRelation := &topology.Relation{
 								ExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-1->urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume",
-								Type:     topology.Type{Name: "exposes"},
-								SourceID: "urn:kubernetes:/test-cluster-name:node/test-node-1",
-								TargetID: "urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume",
-								Data:     map[string]interface{}{},
+								Type:       topology.Type{Name: "exposes"},
+								SourceID:   "urn:kubernetes:/test-cluster-name:node/test-node-1",
+								TargetID:   "urn:kubernetes:/test-cluster-name:persistent-volume/aws-elastic-block-store-volume",
+								Data:       map[string]interface{}{},
 							}
 							assert.EqualValues(t, expectedRelation, relation)
 						},
