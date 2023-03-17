@@ -58,7 +58,7 @@ func (k *EventsCheck) podEventsCollectionCheck() (pods []*v1.Pod, err error) {
 	limit := int64(k.instance.MaxPodEventsCollection)
 	resync := int64(k.instance.ResyncPeriodPodEvent)
 
-	pods, k.customPodEventCollection.LastResVer, k.customPodEventCollection.LastTime, err = k.ac.RunPodCollection(resourceVersion, lastTime, timeout, limit, resync)
+	pods, k.customPodEventCollection.LastResVer, k.customPodEventCollection.LastTime, err = k.ac.RunPodCollection(lastTime, timeout, limit, resync, resourceVersion, false)
 	if err != nil {
 		_ = k.Warnf("Could not collect pods from the api server: %s", err.Error()) //nolint:errcheck
 		return nil, err
