@@ -36,7 +36,7 @@ func (c *APIClient) RunPodCollection(lastSyncTime time.Time, podReadTimeout int6
 
 	var pods []*v1.Pod
 
-	// IF we are forcing a retrieval on watch then we skip the initial fetch period and allow it to happen within the watch
+	// If we are forcing a retrieval on watch then we skip the initial fetch period and allow it to happen within the watch
 	if !forceWatch {
 		// Determine if the resource value is empty or the sync time has expired
 		// If it is then we attempt to reset the resource version
