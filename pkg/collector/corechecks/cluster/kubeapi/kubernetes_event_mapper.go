@@ -144,6 +144,9 @@ func (k *kubernetesEventMapper) mapKubernetesEvent(event *v1.Event) (metrics.Eve
 		return metrics.Event{}, err
 	}
 
+	// Map Category to event type
+	//
+
 	mEvent := metrics.Event{
 		Title:          fmt.Sprintf("%s - %s %s (%dx)", event.Reason, event.InvolvedObject.Name, event.InvolvedObject.Kind, event.Count),
 		Host:           getHostName(event, k.clusterName),
