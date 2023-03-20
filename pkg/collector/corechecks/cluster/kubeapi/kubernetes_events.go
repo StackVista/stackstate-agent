@@ -32,15 +32,12 @@ import (
 
 // Covers the Control Plane service check and the in memory pod metadata.
 const (
-	kubernetesAPIEventsCheckName = "kubernetes_api_events"
+	kubernetesAPIEventsCheckName  = "kubernetes_api_events"
+	eventTokenKey                 = "event"
+	maxEventCardinality           = 300
+	defaultResyncPeriodInSecond   = 300
+	defaultTimeoutEventCollection = 2000
 
-	// Events
-	eventTokenKey                    = "event"
-	maxEventCardinality              = 300
-	defaultEventResyncPeriodInSecond = 300
-	defaultTimeoutEventCollection    = 2000
-
-	// Cache
 	defaultCacheExpire = 2 * time.Minute
 	defaultCachePurge  = 10 * time.Minute
 )
@@ -84,7 +81,7 @@ type EventsCheck struct {
 func (c *EventsConfig) parse(data []byte) error {
 	c.LeaderSkip = true
 	c.CollectEvent = config.Datadog.GetBool("collect_kubernetes_events")
-	c.ResyncPeriodEvents = defaultEventResyncPeriodInSecond
+	c.ResyncPeriodEvents = defaultResyncPeriodInSecond
 	c.parsePodEvents()
 
 	return yaml.Unmarshal(data, c)
