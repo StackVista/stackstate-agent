@@ -191,11 +191,6 @@ var allowedTerminatedReasons = map[string]struct{}{
 	"unknown":            {},
 }
 
-var allowedOutOfMemoryReasons = map[string]struct{}{
-	"oomkilled": {},
-	"unknown":   {},
-}
-
 // containerWaitingReasonTransformer validates the container waiting reasons for metric kube_pod_container_status_waiting_reason
 func containerReasonTransformer(s aggregator.Sender, _ string, metric ksmstore.DDMetric, hostname string, tags []string) {
 	metricPrefix := ksmMetricPrefix + "container.status_report.count."
