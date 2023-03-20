@@ -76,11 +76,16 @@ func (k *EventsCheck) podEventsCollectionCheck() (pods []*v1.Pod, err error) {
 func (k *EventsCheck) processPods(sender aggregator.Sender, pods []*v1.Pod) {
 	mapper := k.mapperFactory(k.ac, k.clusterName, k.instance.EventCategories)
 	for _, pod := range pods {
-		k.podToEventMapper(pod, mapper, sender)
+		events := k.podToEventMapper(pod, mapper, sender)
+
+		for _, event := range events {
+			log.Debug("Sending metric pod event: %s", event.String())
+			sender.Event(event)
+		}
 	}
 }
 
-func (k *EventsCheck) podToEventMapper(pod *v1.Pod, mapper *kubernetesEventMapper, sender aggregator.Sender) {
+func (k *EventsCheck) podToEventMapper(pod *v1.Pod, mapper *kubernetesEventMapper, sender aggregator.Sender) []metrics.Event {
 	var events []metrics.Event
 
 	// Test on active Status. This will be the current state the pod is in not the previous state
@@ -99,10 +104,7 @@ func (k *EventsCheck) podToEventMapper(pod *v1.Pod, mapper *kubernetesEventMappe
 		}
 	}
 
-	for _, event := range events {
-		log.Debug("Sending metric event: %s", event.String())
-		sender.Event(event)
-	}
+	return events
 }
 
 // mapPodToMetricEventForOutOfMemory Attempt to map a pod to a metric event which can be forwarded to the aggregator
