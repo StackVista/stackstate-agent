@@ -109,6 +109,7 @@ func (p *Processor) processContainer(sender aggregator.Sender, tags []string, co
 		p.sendMetric(sender.Rate, "container.cpu.usage", containerStats.CPU.Total, tags)
 		p.sendMetric(sender.Rate, "container.cpu.user", containerStats.CPU.User, tags)
 		p.sendMetric(sender.Rate, "container.cpu.system", containerStats.CPU.System, tags)
+		p.sendMetric(sender.Rate, "container.cpu.elapsed.periods", containerStats.CPU.ElapsedPeriods, tags)
 		p.sendMetric(sender.Rate, "container.cpu.throttled", containerStats.CPU.ThrottledTime, tags)
 		p.sendMetric(sender.Rate, "container.cpu.throttled.periods", containerStats.CPU.ThrottledPeriods, tags)
 		// Convert CPU Limit to nanoseconds to allow easy percentage computation in the App.
