@@ -31,10 +31,9 @@ func (c *APIClient) GetPods() ([]v1.Pod, error) {
 	return podList.Items, nil
 }
 
-func (c *APIClient) RunPodCollection(lastSyncTime time.Time, podReadTimeout int64, podCardinalityLimit int64, resync int64, resourceVersion string, forceWatch bool) ([]*v1.Pod, string, time.Time, error) {
+// RunPodCollection Fined tuned version of GetPods to allow fetching pods based on a resourceVersion and catching up to the latest pod state
+func (c *APIClient) RunPodCollection(lastSyncTime time.Time, watchPodsCatchupTimeout int64, podCardinalityLimit int64, resync int64, resourceVersion string, forceWatch bool) ([]*v1.Pod, string, time.Time, error) {
 	log.Debug("Starting pod collection")
-
-	var pods []*v1.Pod
 
 	// If we are forcing a retrieval on watch then we skip the initial fetch period and allow it to happen within the watch
 	if !forceWatch {
@@ -43,22 +42,8 @@ func (c *APIClient) RunPodCollection(lastSyncTime time.Time, podReadTimeout int6
 		syncTimeout := time.Duration(resync) * time.Second
 		syncDiffTime := time.Now().Sub(lastSyncTime)
 		if resourceVersion == "" || syncDiffTime > syncTimeout {
-			log.Debugf("Return listForPodsResync syncDiffTime: %d/%d", syncDiffTime, syncTimeout)
-
-			// Get a new list of pods seeing that the sync time has expired or resourceVersion is empty
-			podList, lastResourceVersion, lastTime, err := c.GetListOfPods(podReadTimeout, podCardinalityLimit)
-			if err != nil {
-				return nil, "", time.Now(), err
-			}
-
-			// Convert the resource version to an integer, if it fails then we need to force an integer
-			// to allow further integer operations to determine if the resourceVersion increased
-			resourceVersionInt, ok := strconv.Atoi(resourceVersion)
-			if ok != nil {
-				resourceVersionInt = 0
-			}
-
-			return findPodsAfterResourceVersion(resourceVersionInt, podList), lastResourceVersion, lastTime, nil
+			log.Debugf("Return list of pods - syncDiffTime: %d/%d", syncDiffTime, syncTimeout)
+			return c.FetchListOfPods(watchPodsCatchupTimeout, podCardinalityLimit, resourceVersion)
 		}
 	}
 
@@ -74,12 +59,22 @@ func (c *APIClient) RunPodCollection(lastSyncTime time.Time, podReadTimeout int6
 
 	// If there is an error in the watch event then return all the pods that was already captured within the last cycle
 	if err != nil {
-		return pods, resourceVersion, lastSyncTime, err
+		return []*v1.Pod{}, resourceVersion, lastSyncTime, err
 	}
+
+	return c.CatchupToLatestPods(lastSyncTime, watchPodsCatchupTimeout, podCardinalityLimit, resourceVersion, podsWatcher)
+}
+
+func (c *APIClient) CatchupToLatestPods(lastSyncTime time.Time, watchPodsCatchupTimeout int64, podCardinalityLimit int64, resourceVersion string, podsWatcher watch.Interface) ([]*v1.Pod, string, time.Time, error) {
+	var pods []*v1.Pod
 
 	log.Debugf("Starting to watch pods from %s", resourceVersion)
 
-	timeoutParse := time.NewTimer(time.Duration(podReadTimeout) * time.Second)
+	// The catchup timeout trigger is responsible to stop the pod watch channel events
+	// The following line "c.Cl.CoreV1().Pods(metav1.NamespaceAll).Watch" will create a channel that pushes in any and all
+	// changes received to pods from the kube api. This is a channel that will never close thus we need to forcefully close
+	// it within x time, this is where the catchupTimeoutTrigger comes into play.
+	catchupTimeoutTrigger := time.NewTimer(time.Duration(watchPodsCatchupTimeout) * time.Second)
 
 	for {
 		select {
@@ -101,18 +96,7 @@ func (c *APIClient) RunPodCollection(lastSyncTime time.Time, podReadTimeout int6
 				switch status.Reason {
 				case "Expired":
 					log.Debug("Resource Version is too old, listing all events and collecting only the new ones")
-					podList, resourceVersion, lastListTime, err := c.GetListOfPods(podReadTimeout, podCardinalityLimit)
-					if err != nil {
-						return pods, resourceVersion, lastListTime, err
-					}
-
-					resourceVersionInt, err := strconv.Atoi(resourceVersion)
-					if err != nil {
-						_ = log.Errorf("Error converting the stored Resource Version: %s", err.Error())
-						continue
-					}
-
-					return findPodsAfterResourceVersion(resourceVersionInt, podList), resourceVersion, lastListTime, nil
+					return c.FetchListOfPods(watchPodsCatchupTimeout, podCardinalityLimit, resourceVersion)
 
 				default:
 					return pods, resourceVersion, lastSyncTime, fmt.Errorf("received an unexpected status while collecting the events: %s", status.Reason)
@@ -151,14 +135,31 @@ func (c *APIClient) RunPodCollection(lastSyncTime time.Time, podReadTimeout int6
 				}
 			}
 
-		case <-timeoutParse.C:
+		case <-catchupTimeoutTrigger.C:
 			log.Debugf("Collected %d pods, will resume watching from resource version %s", len(pods), resourceVersion)
-			// No more events to read or the watch lasted more than `podReadTimeout`.
+			// No more events to read or the watch lasted more than `watchPodsCatchupTimeout`.
 			// so return what was processed.
 			return pods, resourceVersion, lastSyncTime, nil
 
 		}
 	}
+}
+
+func (c *APIClient) FetchListOfPods(watchPodsCatchupTimeout int64, podCardinalityLimit int64, resourceVersion string) ([]*v1.Pod, string, time.Time, error) {
+	// Get a new list of pods seeing that the sync time has expired or resourceVersion is empty
+	podList, lastResourceVersion, lastTime, err := c.GetListOfPods(watchPodsCatchupTimeout, podCardinalityLimit)
+	if err != nil {
+		return nil, "", time.Now(), err
+	}
+
+	// Convert the resource version to an integer, if it fails then we need to force an integer
+	// to allow further integer operations to determine if the resourceVersion increased
+	resourceVersionInt, ok := strconv.Atoi(resourceVersion)
+	if ok != nil {
+		resourceVersionInt = 0
+	}
+
+	return findPodsAfterResourceVersion(resourceVersionInt, podList), lastResourceVersion, lastTime, nil
 }
 
 // findPodsAfterResourceVersion Find all pods that is newer than a specific resource version
