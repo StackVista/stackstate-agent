@@ -101,7 +101,7 @@ require (
 	github.com/cloudfoundry-community/go-cfclient v0.0.0-20210621174645-7773f7e22665
 	github.com/cobaugh/osrelease v0.0.0-20181218015638-a93a0a55a249
 	github.com/containerd/cgroups v1.0.2
-	github.com/containerd/containerd v1.5.9
+	github.com/containerd/containerd v1.5.10
 	github.com/containerd/typeurl v1.0.2
 	github.com/coreos/go-semver v0.3.0
 	github.com/coreos/go-systemd v0.0.0-20190620071333-e64a0ec8b42a
@@ -174,7 +174,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pierrec/lz4/v4 v4.1.3 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/client_golang v1.11.1
 	github.com/richardartoul/molecule v0.0.0-20210914193524-25d8911bb85b
 	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da
 	github.com/shirou/gopsutil v3.21.9+incompatible
@@ -208,19 +208,19 @@ require (
 	go.uber.org/zap v1.19.1
 	go4.org/intern v0.0.0-20210108033219-3eb7198706b2
 	golang.org/x/mobile v0.0.0-20201217150744-e6ae53a27f4f
-	golang.org/x/net v0.0.0-20211209124913-491a49abca63
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210923061019-b8560ed6a9b7
-	golang.org/x/text v0.3.7
+	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
+	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
+	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
+	golang.org/x/text v0.3.8
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
-	golang.org/x/tools v0.1.7
+	golang.org/x/tools v0.1.12
 	gomodules.xyz/jsonpatch/v3 v3.0.1
 	google.golang.org/genproto v0.0.0-20210604141403-392c879c8b08
 	google.golang.org/grpc v1.42.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.33.0
 	gopkg.in/Knetic/govaluate.v3 v3.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	gopkg.in/yaml.v3 v3.0.0-20220521103104-8f96da9f5d5e
 	gopkg.in/zorkian/go-datadog-api.v2 v2.30.0
 	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.21.14
