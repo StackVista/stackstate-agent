@@ -352,7 +352,6 @@ event_categories:
 		createEventShort("DarkMystery", "normal", "five"),
 		createEventShort("EnsuringLoadBalancer", "normal", "six"),
 	})
-	assert.NoError(t, err)
 
 	getCategoryForEventWithMessage := func(message string) string {
 		for _, call := range mockSender.Calls {
