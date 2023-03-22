@@ -3,14 +3,19 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2019 Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package kubeapi
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
+	"time"
 
 	"gopkg.in/yaml.v2"
 	"k8s.io/api/core/v1"
@@ -30,23 +35,37 @@ const (
 	kubernetesAPIMetricsCheckName = "kubernetes_api_metrics"
 )
 
-// MetricsConfig.
+// MetricsConfig
 type MetricsConfig struct {
 	CollectMetrics      bool `yaml:"collect_metrics"`
 	CollectOShiftQuotas bool `yaml:"collect_openshift_clusterquotas"`
+
+	// Pod Metrics
+	ResyncPeriodPodMetric        int `yaml:"kubernetes_pod_metric_resync_period_s"`
+	PodMetricCollectionTimeoutMs int `yaml:"kubernetes_pod_metric_read_timeout_ms"`
+	MaxPodMetricsCollection      int `yaml:"max_custom_pod_metrics_per_run"`
+}
+
+// MetricC holds the information pertaining to which metric we collected last and when we last re-synced.
+type MetricC struct {
+	LastResVer string
+	LastTime   time.Time
 }
 
 // MetricsCheck grabs metrics from the API server.
 type MetricsCheck struct {
 	CommonCheck
-	instance       *MetricsConfig
-	oshiftAPILevel apiserver.OpenShiftAPILevel
+	podMetricCollection MetricC
+	instance            *MetricsConfig
+	oshiftAPILevel      apiserver.OpenShiftAPILevel
+	clusterName         string
 }
 
 func (c *MetricsConfig) parse(data []byte) error {
 	// default values
 	c.CollectMetrics = config.Datadog.GetBool("collect_kubernetes_metrics")
 	c.CollectOShiftQuotas = true
+	c.parsePodMetrics()
 
 	return yaml.Unmarshal(data, c)
 }
@@ -66,6 +85,14 @@ func KubernetesAPIMetricsFactory() check.Check {
 	return NewKubernetesAPIMetricsCheck(core.NewCheckBase(kubernetesAPIMetricsCheckName), &MetricsConfig{})
 }
 
+// getClusterName retrieves the name of the cluster, if found
+func (k *MetricsCheck) getClusterName() {
+	hostname, _ := util.GetHostname(context.TODO())
+	if clusterName := clustername.GetClusterName(context.TODO(), hostname); clusterName != "" {
+		k.clusterName = clusterName
+	}
+}
+
 // Configure parses the check configuration and init the check.
 func (k *MetricsCheck) Configure(config, initConfig integration.Data, source string) error {
 	err := k.CommonConfigure(config, source)
@@ -79,6 +106,9 @@ func (k *MetricsCheck) Configure(config, initConfig integration.Data, source str
 		_ = log.Error("could not parse the config for the API metrics check")
 		return err
 	}
+
+	k.setDefaultsPodEvents()
+	k.getClusterName()
 
 	log.Debugf("Running config %s", config)
 	return nil
@@ -115,6 +145,13 @@ func (k *MetricsCheck) Run() error {
 		if err != nil {
 			_ = k.Warnf("Could not collect API Server component status: %s", err.Error())
 		}
+	}
+
+	log.Info("Running kubernetes pod metric collector ...")
+	// Get pods from the API server to produce custom metrics
+	pods, podMetricErr := k.podMetricsCollectionCheck()
+	if podMetricErr == nil {
+		k.processPods(sender, pods)
 	}
 
 	// Running OpenShift ClusterResourceQuota collection if available
