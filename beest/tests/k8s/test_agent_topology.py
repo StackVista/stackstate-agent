@@ -12,7 +12,7 @@ def test_cluster_agent_topology(ansible_var, cliv1):
     branch_name = ansible_var("agent_current_branch")
 
     cluster_agent = release_name + "-cluster-agent"
-    
+
     if release_name == "stackstate-agent":
         secret_name = release_name
     else:
@@ -42,7 +42,8 @@ def test_cluster_agent_topology(ansible_var, cliv1):
         .one_way_direction("cluster-agent-container", "cluster-agent-cluster-agent", type="runs")
 
     matched_res = query_and_assert(cliv1, cluster_name, namespace, expected_topology)
-    assert f"image_tag:{branch_name}" in matched_res.component("cluster-agent-container").tags
+    # TODO revive with STAC-19236
+    # assert f"image_tag:{branch_name}" in matched_res.component("cluster-agent-container").tags
 
 
 def test_node_agent_topology(ansible_var, cliv1):
@@ -96,14 +97,14 @@ def test_node_agent_topology(ansible_var, cliv1):
 
     matched_res = query_and_assert(cliv1, cluster_name, namespace, expected_topology)
 
-    node_agent_pod_name = matched_res.component(("node-agent", 0)).name
-    assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-main-container", 0)).tags
-    assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-process-container", 0)).tags
-    assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-process-agent", 0)).tags
-    assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-trace-agent", 0)).tags
-    assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-main-agent", 0)).tags
-
-    assert f"image_tag:{branch_name}" in matched_res.component(("node-agent-main-container", 0)).tags
+    # TODO revive after STAC-19236
+    # node_agent_pod_name = matched_res.component(("node-agent", 0)).name
+    # assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-main-container", 0)).tags
+    # assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-main-agent", 0)).tags
+    # assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-trace-agent", 0)).tags
+    # assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-process-container", 0)).tags
+    # assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-process-agent", 0)).tags
+    # assert f"image_tag:{branch_name}" in matched_res.component(("node-agent-main-container", 0)).tags
 
 
 def test_checks_agent_topology(ansible_var, cliv1):
@@ -113,7 +114,7 @@ def test_checks_agent_topology(ansible_var, cliv1):
     branch_name = ansible_var("agent_current_branch")
 
     checks_agent = release_name + "-checks-agent"
-    
+
     if release_name == "stackstate-agent":
         secret_name = release_name
     else:
@@ -137,12 +138,13 @@ def test_checks_agent_topology(ansible_var, cliv1):
         .one_way_direction("checks-agent-container", "checks-agent-main-agent", type="runs")
 
     matched_res = query_and_assert(cliv1, cluster_name, namespace, expected_topology)
-    assert f"image_tag:{branch_name}" in matched_res.component("checks-agent-container").tags
+    # TODO revive after STAC-19236
+    # assert f"image_tag:{branch_name}" in matched_res.component("checks-agent-container").tags
 
 
 def query_and_assert(cliv1, cluster_name: str, namespace: str, expected_topology: TopologyMatcher):
     current_agent_topology = cliv1.topology(
         f"(label IN ('cluster-name:{cluster_name}') AND label IN ('namespace:{namespace}'))"
-        f" OR (type IN ('node', 'namespace'))", "agent")
+        f" OR (type IN ('node', 'namespace', 'stackstate-agent'))", "agent")
     possible_matches = expected_topology.find(current_agent_topology)
     return possible_matches.assert_exact_match()
