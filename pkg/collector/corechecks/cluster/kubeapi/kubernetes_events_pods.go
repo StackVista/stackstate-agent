@@ -64,6 +64,8 @@ func (k *EventsCheck) podEventsCollectionCheck() (pods []*v1.Pod, err error) {
 		return nil, err
 	}
 
+	log.Infof("Ended with resource version %s", k.customPodEventCollection.LastResVer)
+
 	// Update the configMap to contain the new latest resources version so that we can continue from this version.
 	configMapErr := k.ac.UpdateTokenInConfigmap(podEventTokenKey, k.customPodEventCollection.LastResVer, k.customPodEventCollection.LastTime)
 	if configMapErr != nil {

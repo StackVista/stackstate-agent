@@ -68,7 +68,7 @@ func (c *APIClient) RunPodCollection(lastSyncTime time.Time, watchPodsCatchupTim
 func (c *APIClient) CatchupToLatestPods(lastSyncTime time.Time, watchPodsCatchupTimeout int64, podCardinalityLimit int64, resourceVersion string, podsWatcher watch.Interface) ([]*v1.Pod, string, time.Time, error) {
 	var pods []*v1.Pod
 
-	log.Debugf("Starting to watch pods from %s", resourceVersion)
+	log.Infof("Starting to watch pods from resource version %s", resourceVersion)
 
 	// The catchup timeout trigger is responsible to stop the pod watch channel events
 	// The following line "c.Cl.CoreV1().Pods(metav1.NamespaceAll).Watch" will create a channel that pushes in any and all
@@ -79,6 +79,8 @@ func (c *APIClient) CatchupToLatestPods(lastSyncTime time.Time, watchPodsCatchup
 	for {
 		select {
 		case podEvent, ok := <-podsWatcher.ResultChan():
+			log.Infof("Running watch pod cycle")
+
 			// If the channel is closed then return the pods that was already captured within the last cycle
 			if !ok {
 				return pods, resourceVersion, lastSyncTime, fmt.Errorf("unexpected channel close while watching pods")
@@ -132,6 +134,8 @@ func (c *APIClient) CatchupToLatestPods(lastSyncTime time.Time, watchPodsCatchup
 				if podResourceVersionInt > resourceVersionInt {
 					// Events from the watch are not ordered necessarily, let's keep track of the newest RV.
 					resourceVersion = pod.ResourceVersion
+
+					log.Infof("Setting new resource version %s", resourceVersion)
 				}
 			}
 
