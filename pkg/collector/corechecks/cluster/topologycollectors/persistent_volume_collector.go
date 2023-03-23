@@ -43,8 +43,19 @@ func (pvc *PersistentVolumeCollector) CollectorFunction() error {
 		return err
 	}
 
+	// Read the volume attachments upfront as we will set a tag on the persistent volume containing the name of the node
+	volumeAttachments, err := pvc.GetAPIClient().GetVolumeAttachments()
+	if err != nil {
+		return err
+	}
+	// Produce a map t
+	nodeByPersistentVolume := make(map[string]string)
+	for _, va := range volumeAttachments {
+		nodeByPersistentVolume[*va.Spec.Source.PersistentVolumeName] = va.Spec.NodeName
+	}
+
 	for _, pv := range persistentVolumes {
-		component := pvc.persistentVolumeToStackStateComponent(pv)
+		component := pvc.persistentVolumeToStackStateComponent(pv, nodeByPersistentVolume)
 		pvc.SubmitComponent(component)
 
 		volumeSource, err := pvc.persistentVolumeSourceToStackStateComponent(pv)
@@ -69,11 +80,6 @@ func (pvc *PersistentVolumeCollector) CollectorFunction() error {
 
 		persistentVolumeComponentExternalID := pvc.buildPersistentVolumeExternalID(pvClaim.Spec.VolumeName)
 		pvc.SubmitRelation(pvc.persistentVolumeClaimToPersistentVolumeStackStateRelation(persistentVolumeClaimComponent.ExternalID, persistentVolumeComponentExternalID))
-	}
-
-	volumeAttachments, err := pvc.GetAPIClient().GetVolumeAttachments()
-	if err != nil {
-		return err
 	}
 
 	for _, va := range volumeAttachments {
@@ -103,7 +109,7 @@ func (pvc *PersistentVolumeCollector) persistentVolumeSourceToStackStateComponen
 }
 
 // Creates a Persistent Volume StackState component from a Kubernetes / OpenShift Cluster
-func (pvc *PersistentVolumeCollector) persistentVolumeToStackStateComponent(persistentVolume v1.PersistentVolume) *topology.Component {
+func (pvc *PersistentVolumeCollector) persistentVolumeToStackStateComponent(persistentVolume v1.PersistentVolume, nodeByPersistentVolume map[string]string) *topology.Component {
 	log.Tracef("Mapping PersistentVolume to StackState component: %s", persistentVolume.String())
 
 	identifiers := make([]string, 0)
@@ -112,6 +118,9 @@ func (pvc *PersistentVolumeCollector) persistentVolumeToStackStateComponent(pers
 
 	// k8s object TypeMeta seem to be archived, it's always empty.
 	tags := pvc.initTags(persistentVolume.ObjectMeta, metav1.TypeMeta{Kind: "PersistentVolume"})
+	if nodeName, found := nodeByPersistentVolume[persistentVolume.Name]; found {
+		tags["persistent-volume-node"] = nodeName
+	}
 
 	component := &topology.Component{
 		ExternalID: persistentVolumeExternalID,
