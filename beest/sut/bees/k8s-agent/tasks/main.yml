@@ -183,24 +183,6 @@
             var: cluster_check_agent_logs
           failed_when: true
 
-    - name: Attempt to verify kube state metrics ready
-      block:
-        - name: Wait for the kube state metrics to be ready
-          command: kubectl --context={{ kubecontext }} -n={{ monitoring_namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/name=kube-state-metrics pod
-      rescue:
-        - name: Describe kube state metrics pod
-          command: kubectl describe pods -l app.kubernetes.io/name=kube-state-metrics -n={{ monitoring_namespace }} --context={{ kubecontext }}
-          register: kube_state_metrics_describe
-        - debug:
-            var: kube_state_metrics_describe
-
-        - name: Log kube state metrics pod
-          command: kubectl logs -l app.kubernetes.io/name=kube-state-metrics -n={{ monitoring_namespace }} --context={{ kubecontext }} --all-containers
-          register: kube_state_metrics_logs
-        - debug:
-            var: kube_state_metrics_logs
-          failed_when: true
-
     - include_tasks: pod-connections.yml
 
     - name: Give the Test Workloads 5 minutes to start performing their actions and some http requests
