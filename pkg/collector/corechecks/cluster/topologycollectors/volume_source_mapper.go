@@ -462,12 +462,11 @@ func createSecretVolume(vc VolumeCreator, pod PodIdentifier, volume v1.Volume) (
 
 	extID := vc.GetURNBuilder().BuildSecretExternalID(pod.Namespace, volume.Secret.SecretName)
 
-	tags := map[string]string{
-		"kind":       "secret",
-		"secretName": volume.Secret.SecretName,
-	}
-
-	return vc.CreateStackStateVolumeSourceComponent(pod, volume, extID, nil, tags)
+	return &VolumeComponentsToCreate{
+		Components:       []*topology.Component{},
+		Relations:        []*topology.Relation{},
+		VolumeExternalID: extID,
+	}, nil
 }
 
 // createScaleIoVolume DEPRECATED
