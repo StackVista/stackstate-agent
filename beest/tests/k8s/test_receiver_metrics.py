@@ -43,7 +43,7 @@ def test_container_metrics(cliv1):
                 values = [message["message"]["MultiMetric"]["values"][m_name]]
                 metrics[m_name] += values
 
-        expected = {"cpuNrThrottled", "cpuThreadCount", "netRcvdPs", "memCache", "cpuThrottledTime", "totalPct", "wbps",
+        expected = {"container_cpu_throttled_periods_total", "cpuThreadCount", "netRcvdPs", "memCache", "container_cpu_throttled_time_total", "totalPct", "wbps",
                     "systemPct", "rbps", "memRss", "netSentBps", "netSentPs", "netRcvdBps", "userPct"}
         for e in expected:
             assert e in metrics, "%s metric was not found".format(e)
