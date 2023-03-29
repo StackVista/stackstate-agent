@@ -70,7 +70,7 @@ def test_agent_http_metrics(cliv1):
                         for message in json_data["messages"]
                         if message["message"]["MultiMetric"]["name"] == "connection metric" and
                         "code" in message["message"]["MultiMetric"]["tags"] and
-                        message["message"]["MultiMetric"]["tags"]["code"] == "any"
+                        message["message"]["MultiMetric"]["tags"]["code"] == "2xx"
                         )
 
         expected = {"http_requests_per_second", "http_response_time_seconds"}
