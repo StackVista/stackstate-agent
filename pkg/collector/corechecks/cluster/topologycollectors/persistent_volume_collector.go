@@ -46,8 +46,9 @@ func (pvc *PersistentVolumeCollector) CollectorFunction() error {
 	// Read the volume attachments upfront as we will set a tag on the persistent volume containing the name of the node
 	volumeAttachments, err := pvc.GetAPIClient().GetVolumeAttachments()
 	if err != nil {
-		return err
+		log.Warnc(err.Error())
 	}
+
 	// Produce a map t
 	nodeByPersistentVolume := make(map[string]string)
 	for _, va := range volumeAttachments {
