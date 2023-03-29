@@ -55,6 +55,7 @@ func TestContainerCollector(t *testing.T) {
 							"podIP":        "10.0.1.1",
 							"podPhase":     "Running",
 							"restartCount": int32(1),
+							"exitCode":     int32(123),
 							"tags": map[string]string{
 								"cluster-name":   "test-cluster-name",
 								"cluster-type":   "kubernetes",
@@ -169,9 +170,14 @@ func populateData(nodeIdentifierCorrelationChannel chan *NodeIdentifierCorrelati
 
 func CreateContainerCorrelation(id int, isRunning bool, hasPort bool) *ContainerCorrelation {
 	var running *v1.ContainerStateRunning
+	var terminated *v1.ContainerStateTerminated
 	if isRunning {
 		running = &v1.ContainerStateRunning{
 			StartedAt: startedAtTime,
+		}
+	} else {
+		terminated = &v1.ContainerStateTerminated{
+			ExitCode: 123,
 		}
 	}
 
@@ -215,7 +221,7 @@ func CreateContainerCorrelation(id int, isRunning bool, hasPort bool) *Container
 				State: v1.ContainerState{
 					Waiting:    nil,
 					Running:    running,
-					Terminated: nil,
+					Terminated: terminated,
 				},
 			},
 		},

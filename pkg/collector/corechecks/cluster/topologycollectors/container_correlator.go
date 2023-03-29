@@ -148,6 +148,12 @@ func (cc *ContainerCorrelator) containerToStackStateComponent(nodeIdentifier str
 		data["startTime"] = container.State.Running.StartedAt
 	}
 
+	if container.State.Terminated != nil {
+		data["exitCode"] = container.State.Terminated.ExitCode
+	} else if container.LastTerminationState.Terminated != nil {
+		data["exitCode"] = container.LastTerminationState.Terminated.ExitCode
+	}
+
 	if containerPort.ContainerPort != 0 {
 		data["containerPort"] = containerPort.ContainerPort
 	}
