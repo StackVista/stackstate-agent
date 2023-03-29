@@ -35,13 +35,14 @@ func TestVolumeCorrelator(t *testing.T) {
 	pvcName := "data"
 	containerName := "client-container"
 	configMapName := "config-map"
+	secretName := "secret"
 	volumeName := "volume"
 	someTimestamp := metav1.NewTime(time.Now())
 	someTimestampFormatted := someTimestamp.UTC().Format(time.RFC3339)
 
 	pod1 := podWithDownwardAPIVolume(namespace, pod1Name, containerName, someTimestamp)
 	pod2 := podWithPersistentVolume(namespace, pod2Name, pvcName, someTimestamp)
-	pod3 := podWithConfigMapVolume(namespace, pod3Name, configMapName, someTimestamp)
+	pod3 := podWithConfigMapAndSecretVolume(namespace, pod3Name, configMapName, secretName, someTimestamp)
 	pod4 := podWithEmptyDirVolume(namespace, pod4Name, volumeName, someTimestamp)
 	pvc1 := pvc(pvcName)
 
@@ -49,11 +50,13 @@ func TestVolumeCorrelator(t *testing.T) {
 	expectedPod1ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod1Name)
 	expectedPod2ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod2Name)
 	expectedPod3ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod3Name)
-	expectedPod4ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod3Name)
-	expectedPVID := fmt.Sprintf("urn:kubernetes:/%s:persistent-volume/%s", clusterName, pvc1.Spec.VolumeName)
-	expectedCMID := fmt.Sprintf("urn:kubernetes:/%s:%s:configmap/%s", clusterName, namespace, "config-map")
+	expectedPod4ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod4Name)
+	expectedPVCID := fmt.Sprintf("urn:kubernetes:/%s:persistent-volume-claim/%s", clusterName, pvcName)
+	expectedConfigMapID := fmt.Sprintf("urn:kubernetes:/%s:%s:configmap/%s", clusterName, namespace, "config-map")
 	expectedVID := fmt.Sprintf("urn:kubernetes:/%s:empty-dir:volume/%s/%s/%s", clusterName, namespace, pod4Name, "volume")
 	expectedContainerID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s:container/%s", clusterName, namespace, pod1Name, containerName)
+	expectedSecretID := fmt.Sprintf("urn:kubernetes:/%s:%s:secret/%s", clusterName, namespace, secretName)
+
 	var expectedPropagation *coreV1.MountPropagationMode
 
 	for _, sourcePropertiesEnabled := range []bool{false, true} {
@@ -434,6 +437,17 @@ func TestVolumeCorrelator(t *testing.T) {
 											},
 										},
 									},
+									map[string]interface{}{
+										"name": "secret",
+										"volumeSource": map[string]interface{}{
+											"secret": map[string]interface{}{
+												"items": []interface{}{
+													map[string]interface{}{"key": "key", "path": "/path"},
+												},
+												"secretName": "secret",
+											},
+										},
+									},
 								},
 							},
 							"status": map[string]interface{}{
@@ -488,6 +502,17 @@ func TestVolumeCorrelator(t *testing.T) {
 												"localObjectReference": map[string]interface{}{
 													"name": "config-map",
 												},
+											},
+										},
+									},
+									map[string]interface{}{
+										"name": "secret",
+										"volumeSource": map[string]interface{}{
+											"secret": map[string]interface{}{
+												"items": []interface{}{
+													map[string]interface{}{"key": "key", "path": "/path"},
+												},
+												"secretName": "secret",
 											},
 										},
 									},
@@ -654,10 +679,12 @@ func TestVolumeCorrelator(t *testing.T) {
 						"subPath":          "",
 					}),
 				simpleRelation(expectedNamespaceID, expectedPod2ID, "encloses"),
-				simpleRelation(expectedPod2ID, expectedPVID, "claims"),
+				simpleRelation(expectedPod2ID, expectedPVCID, "claims"),
 				simpleRelation(expectedNamespaceID, expectedPod3ID, "encloses"),
-				simpleRelation(expectedPod3ID, expectedCMID, "claims"),
+				simpleRelation(expectedPod3ID, expectedConfigMapID, "claims"),
+				simpleRelation(expectedPod3ID, expectedSecretID, "claims"),
 				simpleRelation(expectedPod4ID, expectedVID, "claims"),
+				simpleRelation(expectedNamespaceID, expectedPod4ID, "encloses"),
 			}
 
 			t.Run(testCaseName("Test volume correlator", sourcePropertiesEnabled, kubernetesStatusEnabled), func(t *testing.T) {
@@ -667,21 +694,8 @@ func TestVolumeCorrelator(t *testing.T) {
 					[]coreV1.PersistentVolumeClaim{pvc1},
 					true, sourcePropertiesEnabled, kubernetesStatusEnabled)
 
-				for _, expected := range expectedComponents {
-					for _, actual := range components {
-						if expected.ExternalID == actual.ExternalID {
-							assert.EqualValues(t, expected, actual)
-						}
-					}
-				}
-
-				for _, expected := range expectedRelations {
-					for _, actual := range relations {
-						if expected.ExternalID == actual.ExternalID {
-							assert.EqualValues(t, expected, actual)
-						}
-					}
-				}
+				assert.ElementsMatch(t, expectedComponents, components)
+				assert.ElementsMatch(t, expectedRelations, relations)
 			})
 		}
 	}
@@ -791,7 +805,7 @@ func podWithDownwardAPIVolume(namespace, name, containerName string, timestamp m
 	}
 }
 
-func podWithConfigMapVolume(namespace, name, configMapName string, timestamp metav1.Time) coreV1.Pod {
+func podWithConfigMapAndSecretVolume(namespace, name, configMapName string, secretName string, timestamp metav1.Time) coreV1.Pod {
 	return coreV1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              name,
@@ -828,6 +842,21 @@ func podWithConfigMapVolume(namespace, name, configMapName string, timestamp met
 							LocalObjectReference: coreV1.LocalObjectReference{
 								Name: configMapName,
 							},
+							Items: []coreV1.KeyToPath{
+								{
+									Key:  "key",
+									Path: "/path",
+								},
+							},
+							Optional: nil,
+						},
+					},
+				},
+				{
+					Name: secretName,
+					VolumeSource: coreV1.VolumeSource{
+						Secret: &coreV1.SecretVolumeSource{
+							SecretName: secretName,
 							Items: []coreV1.KeyToPath{
 								{
 									Key:  "key",
