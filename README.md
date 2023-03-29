@@ -39,6 +39,7 @@ To start working on the Agent, you can build the `master` branch:
    Make sure that `$GOPATH/bin` is in your `$PATH` otherwise this step might fail.
 5. Create a development `datadog.yaml` configuration file in `dev/dist/datadog.yaml`, containing a valid API key: `api_key: <API_KEY>`
 6. Build the agent with `invoke agent.build --build-exclude=systemd`.
+7. When editing code in VS Code or in Intellij configure it to use the same tags as are used by the previous invoke command (they are visisble in the output, current set is `consul ec2 process python gce cri zk containerd zlib jmx secrets kubelet kubeapiserver jetson docker etcd apm netcgo orchestrator`). In VS Code this is configurable for the workspace on the Go plugin settings.
 
     By default, the Agent will be built to use Python 3 but you can select which Python version you want to use:
 

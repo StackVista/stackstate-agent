@@ -114,7 +114,7 @@ func TestSecretCollector(t *testing.T) {
 								"namespace":         "test-namespace",
 								"uid":               "test-secret-1",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationSecret},
+								"annotations":       map[string]interface{}{},
 							},
 							"data": map[string]interface{}{
 								"<data hash>": "YzIwY2E0OWRjYjc2ZmVhYWExYzE0YTI3MjUyNjNiZjIyOTBkMGU1ZjNkYzk4ZDIwOGIyNDlmMDgwZmE2NGI0NQ==",
@@ -191,7 +191,7 @@ func TestSecretCollector(t *testing.T) {
 								"namespace":         "test-namespace",
 								"uid":               "test-secret-2",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationSecret},
+								"annotations":       map[string]interface{}{},
 							},
 							"data": map[string]interface{}{
 								"<data hash>": "ZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NQ==",
@@ -263,7 +263,7 @@ func TestSecretCollector(t *testing.T) {
 								"namespace":         "test-namespace",
 								"uid":               "test-secret-3",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationSecret},
+								"annotations":       map[string]interface{}{},
 							},
 							"data": map[string]interface{}{
 								"<data hash>": "ZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NQ==",

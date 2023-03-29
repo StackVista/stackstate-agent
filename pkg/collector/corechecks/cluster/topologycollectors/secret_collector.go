@@ -6,8 +6,9 @@ package topologycollectors
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sort"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -57,6 +58,9 @@ func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topo
 	// k8s object TypeMeta seem to be archived, it's always empty.
 	tags := cmc.initTags(secret.ObjectMeta, metav1.TypeMeta{Kind: "Secret"})
 	secretExternalID := cmc.buildSecretExternalID(secret.Namespace, secret.Name)
+
+	// Wipe last-applied-configuration to avoid leaking secrets
+	delete(secret.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
 
 	secretDataHash, err := secure(secret.Data)
 	if err != nil {
