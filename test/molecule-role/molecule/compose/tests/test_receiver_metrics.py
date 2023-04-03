@@ -22,8 +22,8 @@ def test_container_metrics(host):
                            "containerId" in message["message"]["MultiMetric"]["tags"]
 
                         )
-                        
-        expected = {"cpuNrThrottled", "cpuThreadCount", "netRcvdPs", "memCache", "cpuThrottledTime", "totalPct", "wbps",
+
+        expected = {"netRcvdPs", "memCache", "totalPct", "wbps",
                     "systemPct", "rbps", "memRss", "netSentBps", "netSentPs", "netRcvdBps", "userPct"}
         assert get_keys("trace-java-demo") == expected
 

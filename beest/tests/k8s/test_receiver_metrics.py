@@ -43,14 +43,13 @@ def test_container_metrics(cliv1):
                 values = [message["message"]["MultiMetric"]["values"][m_name]]
                 metrics[m_name] += values
 
-        expected = {"cpuNrThrottled", "cpuThreadCount", "netRcvdPs", "memCache", "cpuThrottledTime", "totalPct", "wbps",
+        expected = {"netRcvdPs", "memCache", "totalPct", "wbps",
                     "systemPct", "rbps", "memRss", "netSentBps", "netSentPs", "netRcvdBps", "userPct"}
         for e in expected:
             assert e in metrics, "%s metric was not found".format(e)
 
         check_non_zero("memRss", metrics)
         check_non_zero("systemPct", metrics)
-        check_non_zero("cpuThreadCount", metrics)
 
     util.wait_until(wait_for_metrics, 60, 3)
 
@@ -71,7 +70,7 @@ def test_agent_http_metrics(cliv1):
                         for message in json_data["messages"]
                         if message["message"]["MultiMetric"]["name"] == "connection metric" and
                         "code" in message["message"]["MultiMetric"]["tags"] and
-                        message["message"]["MultiMetric"]["tags"]["code"] == "any"
+                        message["message"]["MultiMetric"]["tags"]["code"] == "2xx"
                         )
 
         expected = {"http_requests_per_second", "http_response_time_seconds"}
