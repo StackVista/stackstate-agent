@@ -48,7 +48,7 @@ func TestContainerCollector(t *testing.T) {
 						ExternalID: "urn:kubernetes:/test-cluster-name:namespace-1:pod/Pod-Name-1:container/container-1",
 						Type:       topology.Type{Name: "container"},
 						Data: topology.Data{
-							"docker":       map[string]interface{}{"containerId": "containerID-1", "image": "image-1"},
+							"docker":       map[string]interface{}{"containerId": "containerID-1", "image": "image-1", "imageId": "imageID-1"},
 							"identifiers":  []string{"urn:container:/nodeID-1:containerID-1"},
 							"name":         "container-1",
 							"pod":          "Pod-Name-1",
@@ -100,7 +100,7 @@ func TestContainerCollector(t *testing.T) {
 						Type:       topology.Type{Name: "container"},
 						Data: topology.Data{
 							"containerPort": int32(1234),
-							"docker":        map[string]interface{}{"containerId": "containerID-2", "image": "image-2"},
+							"docker":        map[string]interface{}{"containerId": "containerID-2", "image": "image-2", "imageId": "imageID-2"},
 							"hostPort":      int32(8080),
 							"identifiers":   []string{"urn:container:/nodeID-2:containerID-2"},
 							"name":          "container-2",
@@ -217,6 +217,7 @@ func CreateContainerCorrelation(id int, isRunning bool, hasPort bool) *Container
 				Name:         fmt.Sprintf("container-%d", id),
 				ContainerID:  fmt.Sprintf("containerID-%d", id),
 				Image:        fmt.Sprintf("image-%d", id),
+				ImageID:      fmt.Sprintf("imageID-%d", id),
 				RestartCount: int32(id),
 				State: v1.ContainerState{
 					Waiting:    nil,

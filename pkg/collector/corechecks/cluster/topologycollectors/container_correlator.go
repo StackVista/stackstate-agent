@@ -135,6 +135,7 @@ func (cc *ContainerCorrelator) containerToStackStateComponent(nodeIdentifier str
 		"name": container.Name,
 		"docker": map[string]interface{}{
 			"image":       container.Image,
+			"imageId":     container.ImageID,
 			"containerId": strippedContainerID,
 		},
 		"pod":          pod.Name,
