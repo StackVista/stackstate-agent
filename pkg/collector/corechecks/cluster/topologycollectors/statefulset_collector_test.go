@@ -85,6 +85,8 @@ func TestStatefulSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion":			"",
+							"kind":					"StatefulSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -121,6 +123,8 @@ func TestStatefulSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion":			"",
+							"kind":					"StatefulSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -193,6 +197,8 @@ func TestStatefulSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion":			"",
+							"kind":					"StatefulSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -229,6 +235,8 @@ func TestStatefulSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion":			"",
+							"kind":					"StatefulSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -302,6 +310,8 @@ func TestStatefulSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion":			"",
+							"kind":					"StatefulSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -339,6 +349,8 @@ func TestStatefulSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion":			"",
+							"kind":					"StatefulSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},

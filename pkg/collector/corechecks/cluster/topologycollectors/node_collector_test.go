@@ -108,6 +108,8 @@ func TestNodeCollector(t *testing.T) {
 											},
 										},
 										SourceProperties: map[string]interface{}{
+											"apiVersion": "",
+											"kind": "Node",
 											"metadata": map[string]interface{}{
 												"clusterName":       "mycluster",
 												"creationTimestamp": creationTimeFormatted,
@@ -152,6 +154,8 @@ func TestNodeCollector(t *testing.T) {
 											},
 										},
 										SourceProperties: map[string]interface{}{
+											"apiVersion": "",
+											"kind": "Node",
 											"metadata": map[string]interface{}{
 												"clusterName":       "mycluster",
 												"creationTimestamp": creationTimeFormatted,
@@ -272,6 +276,8 @@ func TestNodeCollector(t *testing.T) {
 												},
 											},
 											SourceProperties: map[string]interface{}{
+												"apiVersion": "",
+												"kind": "Node",
 												"metadata": map[string]interface{}{
 													"clusterName":       "mycluster",
 													"creationTimestamp": creationTimeFormatted,
@@ -318,6 +324,8 @@ func TestNodeCollector(t *testing.T) {
 												},
 											},
 											SourceProperties: map[string]interface{}{
+												"apiVersion": "",
+												"kind": "Node",
 												"metadata": map[string]interface{}{
 													"clusterName":       "mycluster",
 													"creationTimestamp": creationTimeFormatted,
@@ -447,6 +455,8 @@ func TestNodeCollector(t *testing.T) {
 												"instanceId": "i-024b28584ed2e6321",
 											},
 											SourceProperties: map[string]interface{}{
+												"apiVersion": "",
+												"kind": "Node",
 												"metadata": map[string]interface{}{
 													"clusterName":       "mycluster",
 													"creationTimestamp": creationTimeFormatted,
@@ -497,6 +507,8 @@ func TestNodeCollector(t *testing.T) {
 												"instanceId": "i-024b28584ed2e6321",
 											},
 											SourceProperties: map[string]interface{}{
+												"apiVersion": "",
+												"kind": "Node",
 												"metadata": map[string]interface{}{
 													"clusterName":       "mycluster",
 													"creationTimestamp": creationTimeFormatted,

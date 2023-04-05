@@ -85,6 +85,8 @@ func TestDeploymentCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: topology.Data{
+							"apiVersion":		"",
+							"kind":				"Deployment",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
 								"labels": map[string]interface{}{
@@ -122,6 +124,8 @@ func TestDeploymentCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: topology.Data{
+							"apiVersion":		"",
+							"kind":				"Deployment",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
 								"labels": map[string]interface{}{
@@ -202,6 +206,8 @@ func TestDeploymentCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: topology.Data{
+							"apiVersion":		"",
+							"kind":				"Deployment",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
 								"labels": map[string]interface{}{
@@ -239,6 +245,8 @@ func TestDeploymentCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: topology.Data{
+							"apiVersion":		"",
+							"kind":				"Deployment",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
 								"labels": map[string]interface{}{
@@ -318,6 +326,8 @@ func TestDeploymentCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: topology.Data{
+							"apiVersion":		"",
+							"kind":				"Deployment",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
 								"labels": map[string]interface{}{
@@ -359,6 +369,8 @@ func TestDeploymentCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: topology.Data{
+							"apiVersion":		  "",
+							"kind":				  "Deployment",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
 								"labels": map[string]interface{}{

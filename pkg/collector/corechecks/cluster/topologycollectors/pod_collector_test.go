@@ -121,6 +121,8 @@ func TestPodCollector(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -154,6 +156,8 @@ func TestPodCollector(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -235,6 +239,8 @@ func TestPodCollector(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -277,6 +283,8 @@ func TestPodCollector(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -359,6 +367,8 @@ func TestPodCollector(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -400,6 +410,8 @@ func TestPodCollector(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -538,6 +550,8 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -599,6 +613,8 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -708,6 +724,8 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -758,6 +776,8 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -873,6 +893,8 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -924,6 +946,8 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -1039,6 +1063,8 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -1086,6 +1112,8 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -1204,6 +1232,8 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Succeeded"},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -1238,6 +1268,8 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Succeeded"},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},

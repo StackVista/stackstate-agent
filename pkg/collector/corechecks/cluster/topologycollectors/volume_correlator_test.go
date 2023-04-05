@@ -108,6 +108,8 @@ func TestVolumeCorrelator(t *testing.T) {
 							"status":      map[string]interface{}{"phase": "Running"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "",
+							"kind": "Pod",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": someTimestampFormatted,
 								"deletionTimestamp": someTimestampFormatted,
@@ -176,6 +178,8 @@ func TestVolumeCorrelator(t *testing.T) {
 							"status":      map[string]interface{}{"phase": "Running"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "",
+							"kind": "Pod",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": someTimestampFormatted,
 								"deletionTimestamp": someTimestampFormatted,
@@ -273,6 +277,8 @@ func TestVolumeCorrelator(t *testing.T) {
 							"status":      map[string]interface{}{"phase": "Running"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "",
+							"kind": "Pod",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": someTimestampFormatted,
 								"deletionTimestamp": someTimestampFormatted,
@@ -325,6 +331,8 @@ func TestVolumeCorrelator(t *testing.T) {
 							"status":      map[string]interface{}{"phase": "Running"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "",
+							"kind": "Pod",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": someTimestampFormatted,
 								"deletionTimestamp": someTimestampFormatted,
@@ -406,6 +414,8 @@ func TestVolumeCorrelator(t *testing.T) {
 							"status":      map[string]interface{}{"phase": "Running"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "",
+							"kind": "Pod",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": someTimestampFormatted,
 								"deletionTimestamp": someTimestampFormatted,
@@ -474,6 +484,8 @@ func TestVolumeCorrelator(t *testing.T) {
 							"status":      map[string]interface{}{"phase": "Running"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "",
+							"kind": "Pod",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": someTimestampFormatted,
 								"deletionTimestamp": someTimestampFormatted,
@@ -571,6 +583,8 @@ func TestVolumeCorrelator(t *testing.T) {
 							"status":      map[string]interface{}{"phase": "Running"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "",
+							"kind": "Pod",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": someTimestampFormatted,
 								"deletionTimestamp": someTimestampFormatted,
@@ -624,6 +638,8 @@ func TestVolumeCorrelator(t *testing.T) {
 							"status":      map[string]interface{}{"phase": "Running"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "",
+							"kind": "Pod",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": someTimestampFormatted,
 								"deletionTimestamp": someTimestampFormatted,
@@ -949,6 +965,8 @@ func volumeComponent(namespace, podName, volumeName, volumeType, someTimestampFo
 				Type:       topology.Type{Name: "volume"},
 				Data:       data,
 				SourceProperties: map[string]interface{}{
+					"apiVersion": "",
+					"kind": "Volume",
 					"metadata": map[string]interface{}{
 						"name":              "volume",
 						"creationTimestamp": someTimestampFormatted,
@@ -971,6 +989,8 @@ func volumeComponent(namespace, podName, volumeName, volumeType, someTimestampFo
 			Type:       topology.Type{Name: "volume"},
 			Data:       data,
 			SourceProperties: map[string]interface{}{
+				"apiVersion": "",
+				"kind": "Volume",
 				"metadata": map[string]interface{}{
 					"name":              "volume",
 					"creationTimestamp": someTimestampFormatted,

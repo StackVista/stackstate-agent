@@ -92,6 +92,8 @@ func TestConfigMapCollector(t *testing.T) {
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-1"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion":			"",
+							"kind":					"ConfigMap",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -121,6 +123,8 @@ func TestConfigMapCollector(t *testing.T) {
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-1"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion":			"",
+							"kind":					"ConfigMap",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -173,6 +177,8 @@ func TestConfigMapCollector(t *testing.T) {
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-2"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion":			"",
+							"kind":					"ConfigMap",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -196,6 +202,8 @@ func TestConfigMapCollector(t *testing.T) {
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-2"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion":			"",
+							"kind":					"ConfigMap",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -241,6 +249,8 @@ func TestConfigMapCollector(t *testing.T) {
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-3"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion":			"",
+							"kind":					"ConfigMap",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"name":              "test-configmap-3",
@@ -263,6 +273,8 @@ func TestConfigMapCollector(t *testing.T) {
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:configmap/test-configmap-3"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion":			"",
+							"kind":					"ConfigMap",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"name":              "test-configmap-3",

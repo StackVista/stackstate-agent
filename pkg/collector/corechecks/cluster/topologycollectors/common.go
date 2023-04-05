@@ -14,6 +14,7 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/gogo/protobuf/jsonpb"
 	"github.com/gogo/protobuf/proto"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/version"
 
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/urn"
@@ -405,6 +406,7 @@ func visitNestedMap(parentMap map[string]interface{}, key string, removeEmpty bo
 }
 
 type MarshalableKubernetesObject interface {
+	schema.ObjectKind
 	metav1.Object
 	proto.Message
 }
@@ -418,6 +420,8 @@ func makeSourceProperties(object MarshalableKubernetesObject) map[string]interfa
 		}
 	}
 	removeRedundantFields(sourceProperties, false)
+	sourceProperties["apiVersion"] = object.GroupVersionKind().Version
+	sourceProperties["kind"] = object.GroupVersionKind().Kind
 	return sourceProperties
 }
 
@@ -430,6 +434,8 @@ func makeSourcePropertiesKS(object MarshalableKubernetesObject) map[string]inter
 		}
 	}
 	removeRedundantFields(sourceProperties, true)
+	sourceProperties["apiVersion"] = object.GroupVersionKind().Version
+	sourceProperties["kind"] = object.GroupVersionKind().Kind
 	return sourceProperties
 }
 
@@ -442,6 +448,8 @@ func makeSourcePropertiesFullDetails(object MarshalableKubernetesObject) map[str
 		}
 	}
 	removeManagedFields(sourceProperties)
+	sourceProperties["apiVersion"] = object.GroupVersionKind().Version
+	sourceProperties["kind"] = object.GroupVersionKind().Kind
 	return sourceProperties
 }
 

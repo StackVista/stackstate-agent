@@ -86,6 +86,8 @@ func TestJobCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion":			"",
+							"kind":					"Job",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormattedJob,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -122,6 +124,8 @@ func TestJobCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion":			"",
+							"kind":					"Job",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormattedJob,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -204,6 +208,8 @@ func TestJobCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion":			"",
+							"kind":					"Job",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormattedJob,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -237,6 +243,8 @@ func TestJobCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion":			"",
+							"kind":					"Job",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormattedJob,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -317,6 +325,8 @@ func TestJobCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion":			"",
+							"kind":					"Job",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormattedJob,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -351,6 +361,8 @@ func TestJobCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion":			"",
+							"kind":					"Job",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormattedJob,
 								"labels":            map[string]interface{}{"test": "label"},

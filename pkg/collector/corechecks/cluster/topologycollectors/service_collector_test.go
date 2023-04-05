@@ -134,6 +134,8 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 						"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-1"},
 					},
 					SourceProperties: map[string]interface{}{
+						"apiVersion": "v1",
+						"kind": "Service",
 						"metadata": map[string]interface{}{
 							"creationTimestamp": creationTimeFormatted,
 							"labels":            map[string]interface{}{"test": "label"},
@@ -166,6 +168,8 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 						"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-1"},
 					},
 					SourceProperties: map[string]interface{}{
+						"apiVersion": "v1",
+						"kind": "Service",
 						"metadata": map[string]interface{}{
 							"creationTimestamp": creationTimeFormatted,
 							"labels":            map[string]interface{}{"test": "label"},
@@ -250,6 +254,8 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 							"urn:service:/test-cluster-name:test-namespace:test-service-6"},
 					},
 					SourceProperties: map[string]interface{}{
+						"apiVersion": "v1",
+						"kind": "Service",
 						"metadata": map[string]interface{}{
 							"creationTimestamp": creationTimeFormatted,
 							"labels":            map[string]interface{}{"test": "label"},
@@ -291,6 +297,8 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 							"urn:service:/test-cluster-name:test-namespace:test-service-6"},
 					},
 					SourceProperties: map[string]interface{}{
+						"apiVersion": "v1",
+						"kind": "Service",
 						"metadata": map[string]interface{}{
 							"creationTimestamp": creationTimeFormatted,
 							"labels":            map[string]interface{}{"test": "label"},
@@ -393,6 +401,8 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind": "Service",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -431,6 +441,8 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind": "Service",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -517,6 +529,8 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind": "Service",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -555,6 +569,8 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind": "Service",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -641,6 +657,8 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind": "Service",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -677,6 +695,8 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind": "Service",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -757,6 +777,8 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 							"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-5"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind": "Service",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -791,6 +813,8 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 							"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-5"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind": "Service",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -870,6 +894,8 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 							"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-7"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind": "Service",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -903,6 +929,8 @@ func serviceCollectorTestCases(sourcePropertiesEnabled bool, kubernetesStatusEna
 							"identifiers": []string{"urn:service:/test-cluster-name:test-namespace:test-service-7"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind": "Service",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -992,6 +1020,7 @@ func (m MockServiceAPICollectorClient) GetServices() ([]coreV1.Service, error) {
 	i := m.testCaseNumber
 	service := coreV1.Service{
 		TypeMeta: v1.TypeMeta{
+			APIVersion: "v1",
 			Kind: "Service",
 		},
 		ObjectMeta: v1.ObjectMeta{

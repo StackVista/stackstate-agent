@@ -122,6 +122,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										"identifiers": []string{},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "PersistentVolume",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -158,6 +160,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										"identifiers": []string{},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "PersistentVolume",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -224,6 +228,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "VolumeSource",
 										"metadata": map[string]interface{}{
 											"name":              "id-of-the-aws-block-store",
 											"namespace":         "test-namespace",
@@ -253,6 +259,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "VolumeSource",
 										"metadata": map[string]interface{}{
 											"name":              "id-of-the-aws-block-store",
 											"namespace":         "test-namespace",
@@ -324,6 +332,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										},
 									},
 									SourceProperties: topology.Data{
+										"apiVersion": "",
+										"kind": "PersistentVolumeClaim",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels": map[string]interface{}{
@@ -359,6 +369,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										},
 									},
 									SourceProperties: topology.Data{
+										"apiVersion": "",
+										"kind": "PersistentVolumeClaim",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels": map[string]interface{}{
@@ -456,6 +468,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										"identifiers": []string{},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "PersistentVolume",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -491,6 +505,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										"identifiers": []string{},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "PersistentVolume",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -554,6 +570,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "VolumeSource",
 										"metadata": map[string]interface{}{
 											"name":              "name-of-the-gce-persistent-disk",
 											"namespace":         "test-namespace",
@@ -582,6 +600,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "VolumeSource",
 										"metadata": map[string]interface{}{
 											"name":              "name-of-the-gce-persistent-disk",
 											"namespace":         "test-namespace",
@@ -653,6 +673,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										},
 									},
 									SourceProperties: topology.Data{
+										"apiVersion": "",
+										"kind": "PersistentVolumeClaim",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels": map[string]interface{}{
@@ -688,6 +710,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										},
 									},
 									SourceProperties: topology.Data{
+										"apiVersion": "",
+										"kind": "PersistentVolumeClaim",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels": map[string]interface{}{
@@ -788,6 +812,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										"identifiers": []string{},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "PersistentVolume",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -823,6 +849,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										"identifiers": []string{},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "PersistentVolume",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -891,6 +919,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										},
 									},
 									SourceProperties: topology.Data{
+										"apiVersion": "",
+										"kind": "PersistentVolumeClaim",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels": map[string]interface{}{
@@ -926,6 +956,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										},
 									},
 									SourceProperties: topology.Data{
+										"apiVersion": "",
+										"kind": "PersistentVolumeClaim",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels": map[string]interface{}{
@@ -1025,6 +1057,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 											"identifiers": []string{},
 										},
 										SourceProperties: map[string]interface{}{
+											"apiVersion": "",
+											"kind": "PersistentVolume",
 											"metadata": map[string]interface{}{
 												"creationTimestamp": creationTimeFormatted,
 												"labels":            map[string]interface{}{"test": "label"},
@@ -1070,6 +1104,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 											"identifiers": []string{},
 										},
 										SourceProperties: map[string]interface{}{
+											"apiVersion": "",
+											"kind": "PersistentVolume",
 											"metadata": map[string]interface{}{
 												"creationTimestamp": creationTimeFormatted,
 												"labels":            map[string]interface{}{"test": "label"},
@@ -1154,6 +1190,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "VolumeSource",
 										"metadata": map[string]interface{}{
 											"name":              "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
 											"namespace":         "test-namespace",
@@ -1197,6 +1235,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "VolumeSource",
 										"metadata": map[string]interface{}{
 											"name":              "pvc-03dr24ca-1sf4-acaw-1252-b8b232211244",
 											"namespace":         "test-namespace",
@@ -1278,6 +1318,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										},
 									},
 									SourceProperties: topology.Data{
+										"apiVersion": "",
+										"kind": "PersistentVolumeClaim",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels": map[string]interface{}{
@@ -1313,6 +1355,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperEnabled(t *testing.T) {
 										},
 									},
 									SourceProperties: topology.Data{
+										"apiVersion": "",
+										"kind": "PersistentVolumeClaim",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels": map[string]interface{}{
@@ -1457,6 +1501,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 											"identifiers": []string{},
 										},
 										SourceProperties: map[string]interface{}{
+											"apiVersion": "",
+											"kind": "PersistentVolume",
 											"metadata": map[string]interface{}{
 												"creationTimestamp": creationTimeFormatted,
 												"labels":            map[string]interface{}{"test": "label"},
@@ -1503,6 +1549,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 											"identifiers": []string{},
 										},
 										SourceProperties: map[string]interface{}{
+											"apiVersion": "",
+											"kind": "PersistentVolume",
 											"metadata": map[string]interface{}{
 												"creationTimestamp": creationTimeFormatted,
 												"labels":            map[string]interface{}{"test": "label"},
@@ -1582,6 +1630,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 										},
 									},
 									SourceProperties: topology.Data{
+										"apiVersion": "",
+										"kind": "PersistentVolumeClaim",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels": map[string]interface{}{
@@ -1617,6 +1667,8 @@ func TestPersistentVolumeCollectorCSIVolumeMapperDisabled(t *testing.T) {
 										},
 									},
 									SourceProperties: topology.Data{
+										"apiVersion": "",
+										"kind": "PersistentVolumeClaim",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels": map[string]interface{}{
@@ -1761,6 +1813,8 @@ func TestPersistentVolumeCollectorVolumeAttachmentToNodeRelation(t *testing.T) {
 										"identifiers": []string{},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "PersistentVolume",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -1798,6 +1852,8 @@ func TestPersistentVolumeCollectorVolumeAttachmentToNodeRelation(t *testing.T) {
 										"identifiers": []string{},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "PersistentVolume",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -1864,6 +1920,8 @@ func TestPersistentVolumeCollectorVolumeAttachmentToNodeRelation(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "VolumeSource",
 										"metadata": map[string]interface{}{
 											"name":              "id-of-the-aws-block-store",
 											"namespace":         "test-namespace",
@@ -1893,6 +1951,8 @@ func TestPersistentVolumeCollectorVolumeAttachmentToNodeRelation(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
+										"apiVersion": "",
+										"kind": "VolumeSource",
 										"metadata": map[string]interface{}{
 											"name":              "id-of-the-aws-block-store",
 											"namespace":         "test-namespace",
@@ -1964,6 +2024,8 @@ func TestPersistentVolumeCollectorVolumeAttachmentToNodeRelation(t *testing.T) {
 										},
 									},
 									SourceProperties: topology.Data{
+										"apiVersion": "",
+										"kind": "PersistentVolumeClaim",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels": map[string]interface{}{
@@ -1999,6 +2061,8 @@ func TestPersistentVolumeCollectorVolumeAttachmentToNodeRelation(t *testing.T) {
 										},
 									},
 									SourceProperties: topology.Data{
+										"apiVersion": "",
+										"kind": "PersistentVolumeClaim",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels": map[string]interface{}{

@@ -301,6 +301,8 @@ func expectIngress213(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
+				"apiVersion": "",
+				"kind": "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label"},
@@ -353,6 +355,8 @@ func expectIngress213(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
+				"apiVersion": "",
+				"kind": "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label"},
@@ -515,6 +519,8 @@ func expectIngress212(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
+				"apiVersion": "",
+				"kind": "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label"},
@@ -545,6 +551,8 @@ func expectIngress212(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
+				"apiVersion": "",
+				"kind": "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label"},
@@ -674,6 +682,8 @@ func expectIngress211(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
+				"apiVersion": "",
+				"kind": "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label"},
@@ -699,6 +709,8 @@ func expectIngress211(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
+				"apiVersion": "",
+				"kind": "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label"},
@@ -857,6 +869,8 @@ func expectIngress223(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
+				"apiVersion": "",
+				"kind": "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label22"},
@@ -918,6 +932,8 @@ func expectIngress223(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
+				"apiVersion": "",
+				"kind": "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label22"},
@@ -1069,6 +1085,8 @@ func expectIngress222(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
+				"apiVersion": "",
+				"kind": "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label22"},
@@ -1101,6 +1119,8 @@ func expectIngress222(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
+				"apiVersion": "",
+				"kind": "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label22"},
@@ -1212,6 +1232,8 @@ func expectIngress221(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
+				"apiVersion": "",
+				"kind": "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label22"},
@@ -1560,6 +1582,8 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 									"identifiers": []string{},
 								},
 								SourceProperties: map[string]interface{}{
+									"apiVersion": "",
+									"kind": "Ingress",
 									"metadata": map[string]interface{}{
 										"creationTimestamp": creationTimeFormatted,
 										"labels":            map[string]interface{}{"test": "label"},
@@ -1592,6 +1616,8 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 									"identifiers": []string{},
 								},
 								SourceProperties: map[string]interface{}{
+									"apiVersion": "",
+									"kind": "Ingress",
 									"metadata": map[string]interface{}{
 										"creationTimestamp": creationTimeFormatted,
 										"labels":            map[string]interface{}{"test": "label"},
