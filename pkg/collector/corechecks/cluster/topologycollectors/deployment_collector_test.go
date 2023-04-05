@@ -85,8 +85,8 @@ func TestDeploymentCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: topology.Data{
-							"apiVersion":		"",
-							"kind":				"Deployment",
+							"apiVersion": "apps/v1",
+							"kind":       "Deployment",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
 								"labels": map[string]interface{}{
@@ -98,6 +98,7 @@ func TestDeploymentCollector(t *testing.T) {
 							},
 							"spec": map[string]interface{}{
 								"replicas": float64(1),
+								"selector": nil,
 								"strategy": map[string]interface{}{
 									"type": "RollingUpdate",
 								},
@@ -105,7 +106,9 @@ func TestDeploymentCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": nil,
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 							},
 						},
@@ -124,8 +127,8 @@ func TestDeploymentCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: topology.Data{
-							"apiVersion":		"",
-							"kind":				"Deployment",
+							"apiVersion": "apps/v1",
+							"kind":       "Deployment",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
 								"labels": map[string]interface{}{
@@ -141,6 +144,7 @@ func TestDeploymentCollector(t *testing.T) {
 							},
 							"spec": map[string]interface{}{
 								"replicas": float64(1),
+								"selector": nil,
 								"strategy": map[string]interface{}{
 									"type": "RollingUpdate",
 								},
@@ -148,11 +152,13 @@ func TestDeploymentCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": nil,
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 							},
 							"status": map[string]interface{}{
-								"observedGeneration":  "321",
+								"observedGeneration":  float64(321),
 								"replicas":            float64(1),
 								"updatedReplicas":     float64(1),
 								"readyReplicas":       float64(1),
@@ -206,8 +212,8 @@ func TestDeploymentCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: topology.Data{
-							"apiVersion":		"",
-							"kind":				"Deployment",
+							"apiVersion": "apps/v1",
+							"kind":       "Deployment",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
 								"labels": map[string]interface{}{
@@ -219,6 +225,7 @@ func TestDeploymentCollector(t *testing.T) {
 							},
 							"spec": map[string]interface{}{
 								"replicas": float64(1),
+								"selector": nil,
 								"strategy": map[string]interface{}{
 									"type": "RollingUpdate",
 								},
@@ -226,7 +233,9 @@ func TestDeploymentCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": nil,
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 							},
 						},
@@ -245,8 +254,8 @@ func TestDeploymentCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: topology.Data{
-							"apiVersion":		"",
-							"kind":				"Deployment",
+							"apiVersion": "apps/v1",
+							"kind":       "Deployment",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
 								"labels": map[string]interface{}{
@@ -260,6 +269,7 @@ func TestDeploymentCollector(t *testing.T) {
 							},
 							"spec": map[string]interface{}{
 								"replicas": float64(1),
+								"selector": nil,
 								"strategy": map[string]interface{}{
 									"type": "RollingUpdate",
 								},
@@ -267,11 +277,13 @@ func TestDeploymentCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": nil,
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 							},
 							"status": map[string]interface{}{
-								"observedGeneration":  "321",
+								"observedGeneration":  float64(321),
 								"replicas":            float64(1),
 								"updatedReplicas":     float64(1),
 								"readyReplicas":       float64(1),
@@ -326,8 +338,8 @@ func TestDeploymentCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: topology.Data{
-							"apiVersion":		"",
-							"kind":				"Deployment",
+							"apiVersion": "apps/v1",
+							"kind":       "Deployment",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
 								"labels": map[string]interface{}{
@@ -343,6 +355,7 @@ func TestDeploymentCollector(t *testing.T) {
 							},
 							"spec": map[string]interface{}{
 								"replicas": float64(1),
+								"selector": nil,
 								"strategy": map[string]interface{}{
 									"type": "RollingUpdate",
 								},
@@ -350,7 +363,9 @@ func TestDeploymentCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": nil,
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 							},
 						},
@@ -369,8 +384,8 @@ func TestDeploymentCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: topology.Data{
-							"apiVersion":		  "",
-							"kind":				  "Deployment",
+							"apiVersion": "apps/v1",
+							"kind":       "Deployment",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTime.UTC().Format(time.RFC3339),
 								"labels": map[string]interface{}{
@@ -388,6 +403,7 @@ func TestDeploymentCollector(t *testing.T) {
 							},
 							"spec": map[string]interface{}{
 								"replicas": float64(1),
+								"selector": nil,
 								"strategy": map[string]interface{}{
 									"type": "RollingUpdate",
 								},
@@ -395,11 +411,13 @@ func TestDeploymentCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": nil,
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 							},
 							"status": map[string]interface{}{
-								"observedGeneration":  "321",
+								"observedGeneration":  float64(321),
 								"replicas":            float64(1),
 								"updatedReplicas":     float64(1),
 								"readyReplicas":       float64(1),

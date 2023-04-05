@@ -108,8 +108,8 @@ func TestNodeCollector(t *testing.T) {
 											},
 										},
 										SourceProperties: map[string]interface{}{
-											"apiVersion": "",
-											"kind": "Node",
+											"apiVersion": "v1",
+											"kind":       "Node",
 											"metadata": map[string]interface{}{
 												"clusterName":       "mycluster",
 												"creationTimestamp": creationTimeFormatted,
@@ -122,9 +122,16 @@ func TestNodeCollector(t *testing.T) {
 											"status": map[string]interface{}{
 												"phase": "Running",
 												"nodeInfo": map[string]interface{}{
-													"machineID":     "test-machine-id-1",
-													"kernelVersion": "4.19.0",
-													"architecture":  "x86_64",
+													"machineID":               "test-machine-id-1",
+													"bootID":                  "",
+													"containerRuntimeVersion": "",
+													"kernelVersion":           "4.19.0",
+													"architecture":            "x86_64",
+													"kubeProxyVersion":        "",
+													"kubeletVersion":          "",
+													"operatingSystem":         "",
+													"osImage":                 "",
+													"systemUUID":              "",
 												},
 												"daemonEndpoints": map[string]interface{}{
 													"kubeletEndpoint": map[string]interface{}{
@@ -154,8 +161,8 @@ func TestNodeCollector(t *testing.T) {
 											},
 										},
 										SourceProperties: map[string]interface{}{
-											"apiVersion": "",
-											"kind": "Node",
+											"apiVersion": "v1",
+											"kind":       "Node",
 											"metadata": map[string]interface{}{
 												"clusterName":       "mycluster",
 												"creationTimestamp": creationTimeFormatted,
@@ -175,9 +182,16 @@ func TestNodeCollector(t *testing.T) {
 												},
 												"phase": "Running",
 												"nodeInfo": map[string]interface{}{
-													"machineID":     "test-machine-id-1",
-													"kernelVersion": "4.19.0",
-													"architecture":  "x86_64",
+													"machineID":               "test-machine-id-1",
+													"bootID":                  "",
+													"containerRuntimeVersion": "",
+													"kernelVersion":           "4.19.0",
+													"architecture":            "x86_64",
+													"kubeProxyVersion":        "",
+													"kubeletVersion":          "",
+													"operatingSystem":         "",
+													"osImage":                 "",
+													"systemUUID":              "",
 												},
 												"daemonEndpoints": map[string]interface{}{
 													"kubeletEndpoint": map[string]interface{}{
@@ -276,8 +290,8 @@ func TestNodeCollector(t *testing.T) {
 												},
 											},
 											SourceProperties: map[string]interface{}{
-												"apiVersion": "",
-												"kind": "Node",
+												"apiVersion": "v1",
+												"kind":       "Node",
 												"metadata": map[string]interface{}{
 													"clusterName":       "mycluster",
 													"creationTimestamp": creationTimeFormatted,
@@ -291,9 +305,16 @@ func TestNodeCollector(t *testing.T) {
 												"status": map[string]interface{}{
 													"phase": "Running",
 													"nodeInfo": map[string]interface{}{
-														"machineID":     "test-machine-id-2",
-														"kernelVersion": "4.19.0",
-														"architecture":  "x86_64",
+														"machineID":               "test-machine-id-2",
+														"bootID":                  "",
+														"containerRuntimeVersion": "",
+														"kernelVersion":           "4.19.0",
+														"architecture":            "x86_64",
+														"kubeProxyVersion":        "",
+														"kubeletVersion":          "",
+														"operatingSystem":         "",
+														"osImage":                 "",
+														"systemUUID":              "",
 													},
 													"daemonEndpoints": map[string]interface{}{
 														"kubeletEndpoint": map[string]interface{}{
@@ -324,8 +345,8 @@ func TestNodeCollector(t *testing.T) {
 												},
 											},
 											SourceProperties: map[string]interface{}{
-												"apiVersion": "",
-												"kind": "Node",
+												"apiVersion": "v1",
+												"kind":       "Node",
 												"metadata": map[string]interface{}{
 													"clusterName":       "mycluster",
 													"creationTimestamp": creationTimeFormatted,
@@ -350,9 +371,16 @@ func TestNodeCollector(t *testing.T) {
 													},
 													"phase": "Running",
 													"nodeInfo": map[string]interface{}{
-														"machineID":     "test-machine-id-2",
-														"kernelVersion": "4.19.0",
-														"architecture":  "x86_64",
+														"machineID":               "test-machine-id-2",
+														"bootID":                  "",
+														"containerRuntimeVersion": "",
+														"kernelVersion":           "4.19.0",
+														"architecture":            "x86_64",
+														"kubeProxyVersion":        "",
+														"kubeletVersion":          "",
+														"operatingSystem":         "",
+														"osImage":                 "",
+														"systemUUID":              "",
 													},
 													"daemonEndpoints": map[string]interface{}{
 														"kubeletEndpoint": map[string]interface{}{
@@ -455,8 +483,8 @@ func TestNodeCollector(t *testing.T) {
 												"instanceId": "i-024b28584ed2e6321",
 											},
 											SourceProperties: map[string]interface{}{
-												"apiVersion": "",
-												"kind": "Node",
+												"apiVersion": "v1",
+												"kind":       "Node",
 												"metadata": map[string]interface{}{
 													"clusterName":       "mycluster",
 													"creationTimestamp": creationTimeFormatted,
@@ -472,9 +500,16 @@ func TestNodeCollector(t *testing.T) {
 												"status": map[string]interface{}{
 													"phase": "Running",
 													"nodeInfo": map[string]interface{}{
-														"machineID":     "test-machine-id-3",
-														"kernelVersion": "4.19.0",
-														"architecture":  "x86_64",
+														"machineID":               "test-machine-id-3",
+														"bootID":                  "",
+														"containerRuntimeVersion": "",
+														"kernelVersion":           "4.19.0",
+														"architecture":            "x86_64",
+														"kubeProxyVersion":        "",
+														"kubeletVersion":          "",
+														"operatingSystem":         "",
+														"osImage":                 "",
+														"systemUUID":              "",
 													},
 													"daemonEndpoints": map[string]interface{}{
 														"kubeletEndpoint": map[string]interface{}{
@@ -507,8 +542,8 @@ func TestNodeCollector(t *testing.T) {
 												"instanceId": "i-024b28584ed2e6321",
 											},
 											SourceProperties: map[string]interface{}{
-												"apiVersion": "",
-												"kind": "Node",
+												"apiVersion": "v1",
+												"kind":       "Node",
 												"metadata": map[string]interface{}{
 													"clusterName":       "mycluster",
 													"creationTimestamp": creationTimeFormatted,
@@ -543,9 +578,16 @@ func TestNodeCollector(t *testing.T) {
 													},
 													"phase": "Running",
 													"nodeInfo": map[string]interface{}{
-														"machineID":     "test-machine-id-3",
-														"kernelVersion": "4.19.0",
-														"architecture":  "x86_64",
+														"machineID":               "test-machine-id-3",
+														"bootID":                  "",
+														"containerRuntimeVersion": "",
+														"kernelVersion":           "4.19.0",
+														"architecture":            "x86_64",
+														"kubeProxyVersion":        "",
+														"kubeletVersion":          "",
+														"operatingSystem":         "",
+														"osImage":                 "",
+														"systemUUID":              "",
 													},
 													"daemonEndpoints": map[string]interface{}{
 														"kubeletEndpoint": map[string]interface{}{

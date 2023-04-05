@@ -301,8 +301,8 @@ func expectIngress213(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
-				"apiVersion": "",
-				"kind": "Ingress",
+				"apiVersion": "extensions/v1beta1",
+				"kind":       "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label"},
@@ -315,29 +315,27 @@ func expectIngress213(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 					"rules": []interface{}{
 						map[string]interface{}{
 							"host": "host-1",
-							"ingressRuleValue": map[string]interface{}{
-								"http": map[string]interface{}{
-									"paths": []interface{}{
-										map[string]interface{}{
-											"backend": map[string]interface{}{
-												"serviceName": "test-service-1",
-												"servicePort": float64(0)},
-											"path": "host-1-path-1"},
-										map[string]interface{}{
-											"backend": map[string]interface{}{
-												"serviceName": "test-service-2",
-												"servicePort": float64(0)},
-											"path": "host-1-path-2"}}}}},
+							"http": map[string]interface{}{
+								"paths": []interface{}{
+									map[string]interface{}{
+										"backend": map[string]interface{}{
+											"serviceName": "test-service-1",
+											"servicePort": float64(0)},
+										"path": "host-1-path-1"},
+									map[string]interface{}{
+										"backend": map[string]interface{}{
+											"serviceName": "test-service-2",
+											"servicePort": float64(0)},
+										"path": "host-1-path-2"}}}},
 						map[string]interface{}{
 							"host": "host-2",
-							"ingressRuleValue": map[string]interface{}{
-								"http": map[string]interface{}{
-									"paths": []interface{}{
-										map[string]interface{}{
-											"backend": map[string]interface{}{
-												"serviceName": "test-service-3",
-												"servicePort": float64(0)},
-											"path": "host-2-path-1"}}}}}}},
+							"http": map[string]interface{}{
+								"paths": []interface{}{
+									map[string]interface{}{
+										"backend": map[string]interface{}{
+											"serviceName": "test-service-3",
+											"servicePort": float64(0)},
+										"path": "host-2-path-1"}}}}}},
 			},
 		},
 		&topology.Component{
@@ -355,8 +353,8 @@ func expectIngress213(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
-				"apiVersion": "",
-				"kind": "Ingress",
+				"apiVersion": "extensions/v1beta1",
+				"kind":       "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label"},
@@ -371,29 +369,27 @@ func expectIngress213(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 					"rules": []interface{}{
 						map[string]interface{}{
 							"host": "host-1",
-							"ingressRuleValue": map[string]interface{}{
-								"http": map[string]interface{}{
-									"paths": []interface{}{
-										map[string]interface{}{
-											"backend": map[string]interface{}{
-												"serviceName": "test-service-1",
-												"servicePort": float64(0)},
-											"path": "host-1-path-1"},
-										map[string]interface{}{
-											"backend": map[string]interface{}{
-												"serviceName": "test-service-2",
-												"servicePort": float64(0)},
-											"path": "host-1-path-2"}}}}},
+							"http": map[string]interface{}{
+								"paths": []interface{}{
+									map[string]interface{}{
+										"backend": map[string]interface{}{
+											"serviceName": "test-service-1",
+											"servicePort": float64(0)},
+										"path": "host-1-path-1"},
+									map[string]interface{}{
+										"backend": map[string]interface{}{
+											"serviceName": "test-service-2",
+											"servicePort": float64(0)},
+										"path": "host-1-path-2"}}}},
 						map[string]interface{}{
 							"host": "host-2",
-							"ingressRuleValue": map[string]interface{}{
-								"http": map[string]interface{}{
-									"paths": []interface{}{
-										map[string]interface{}{
-											"backend": map[string]interface{}{
-												"serviceName": "test-service-3",
-												"servicePort": float64(0)},
-											"path": "host-2-path-1"}}}}}}},
+							"http": map[string]interface{}{
+								"paths": []interface{}{
+									map[string]interface{}{
+										"backend": map[string]interface{}{
+											"serviceName": "test-service-3",
+											"servicePort": float64(0)},
+										"path": "host-2-path-1"}}}}}},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
 						"ingress": []interface{}{
@@ -519,8 +515,8 @@ func expectIngress212(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
-				"apiVersion": "",
-				"kind": "Ingress",
+				"apiVersion": "extensions/v1beta1",
+				"kind":       "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label"},
@@ -551,8 +547,8 @@ func expectIngress212(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
-				"apiVersion": "",
-				"kind": "Ingress",
+				"apiVersion": "extensions/v1beta1",
+				"kind":       "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label"},
@@ -682,8 +678,8 @@ func expectIngress211(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
-				"apiVersion": "",
-				"kind": "Ingress",
+				"apiVersion": "extensions/v1beta1",
+				"kind":       "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label"},
@@ -709,8 +705,8 @@ func expectIngress211(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
-				"apiVersion": "",
-				"kind": "Ingress",
+				"apiVersion": "extensions/v1beta1",
+				"kind":       "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label"},
@@ -869,8 +865,8 @@ func expectIngress223(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
-				"apiVersion": "",
-				"kind": "Ingress",
+				"apiVersion": "networking.k8s.io/v1",
+				"kind":       "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label22"},
@@ -883,38 +879,36 @@ func expectIngress223(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 					"rules": []interface{}{
 						map[string]interface{}{
 							"host": "host22-1",
-							"ingressRuleValue": map[string]interface{}{
-								"http": map[string]interface{}{
-									"paths": []interface{}{
-										map[string]interface{}{
-											"path": "host-1-path-1",
-											"backend": map[string]interface{}{
-												"service": map[string]interface{}{
-													"name": "test-service22-1",
-													"port": map[string]interface{}{},
-												},
-											}},
-										map[string]interface{}{
-											"backend": map[string]interface{}{
-												"service": map[string]interface{}{
-													"name": "test-service22-2",
-													"port": map[string]interface{}{},
-												},
+							"http": map[string]interface{}{
+								"paths": []interface{}{
+									map[string]interface{}{
+										"path": "host-1-path-1",
+										"backend": map[string]interface{}{
+											"service": map[string]interface{}{
+												"name": "test-service22-1",
+												"port": map[string]interface{}{},
 											},
-											"path": "host-1-path-2"}}}}},
+										}},
+									map[string]interface{}{
+										"backend": map[string]interface{}{
+											"service": map[string]interface{}{
+												"name": "test-service22-2",
+												"port": map[string]interface{}{},
+											},
+										},
+										"path": "host-1-path-2"}}}},
 						map[string]interface{}{
 							"host": "host22-2",
-							"ingressRuleValue": map[string]interface{}{
-								"http": map[string]interface{}{
-									"paths": []interface{}{
-										map[string]interface{}{
-											"path": "host-2-path-1",
-											"backend": map[string]interface{}{
-												"service": map[string]interface{}{
-													"name": "test-service22-3",
-													"port": map[string]interface{}{
-														"number": float64(22),
-													}}}}}}}}}},
+							"http": map[string]interface{}{
+								"paths": []interface{}{
+									map[string]interface{}{
+										"path": "host-2-path-1",
+										"backend": map[string]interface{}{
+											"service": map[string]interface{}{
+												"name": "test-service22-3",
+												"port": map[string]interface{}{
+													"number": float64(22),
+												}}}}}}}}},
 			},
 		},
 		&topology.Component{
@@ -932,8 +926,8 @@ func expectIngress223(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
-				"apiVersion": "",
-				"kind": "Ingress",
+				"apiVersion": "networking.k8s.io/v1",
+				"kind":       "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label22"},
@@ -948,38 +942,36 @@ func expectIngress223(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 					"rules": []interface{}{
 						map[string]interface{}{
 							"host": "host22-1",
-							"ingressRuleValue": map[string]interface{}{
-								"http": map[string]interface{}{
-									"paths": []interface{}{
-										map[string]interface{}{
-											"path": "host-1-path-1",
-											"backend": map[string]interface{}{
-												"service": map[string]interface{}{
-													"name": "test-service22-1",
-													"port": map[string]interface{}{},
-												},
-											}},
-										map[string]interface{}{
-											"backend": map[string]interface{}{
-												"service": map[string]interface{}{
-													"name": "test-service22-2",
-													"port": map[string]interface{}{},
-												},
+							"http": map[string]interface{}{
+								"paths": []interface{}{
+									map[string]interface{}{
+										"path": "host-1-path-1",
+										"backend": map[string]interface{}{
+											"service": map[string]interface{}{
+												"name": "test-service22-1",
+												"port": map[string]interface{}{},
 											},
-											"path": "host-1-path-2"}}}}},
+										}},
+									map[string]interface{}{
+										"backend": map[string]interface{}{
+											"service": map[string]interface{}{
+												"name": "test-service22-2",
+												"port": map[string]interface{}{},
+											},
+										},
+										"path": "host-1-path-2"}}}},
 						map[string]interface{}{
 							"host": "host22-2",
-							"ingressRuleValue": map[string]interface{}{
-								"http": map[string]interface{}{
-									"paths": []interface{}{
-										map[string]interface{}{
-											"path": "host-2-path-1",
-											"backend": map[string]interface{}{
-												"service": map[string]interface{}{
-													"name": "test-service22-3",
-													"port": map[string]interface{}{
-														"number": float64(22),
-													}}}}}}}}}},
+							"http": map[string]interface{}{
+								"paths": []interface{}{
+									map[string]interface{}{
+										"path": "host-2-path-1",
+										"backend": map[string]interface{}{
+											"service": map[string]interface{}{
+												"name": "test-service22-3",
+												"port": map[string]interface{}{
+													"number": float64(22),
+												}}}}}}}}},
 				"status": map[string]interface{}{
 					"loadBalancer": map[string]interface{}{
 						"ingress": []interface{}{
@@ -1085,8 +1077,8 @@ func expectIngress222(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
-				"apiVersion": "",
-				"kind": "Ingress",
+				"apiVersion": "networking.k8s.io/v1",
+				"kind":       "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label22"},
@@ -1119,8 +1111,8 @@ func expectIngress222(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
-				"apiVersion": "",
-				"kind": "Ingress",
+				"apiVersion": "networking.k8s.io/v1",
+				"kind":       "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label22"},
@@ -1232,8 +1224,8 @@ func expectIngress221(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
-				"apiVersion": "",
-				"kind": "Ingress",
+				"apiVersion": "networking.k8s.io/v1",
+				"kind":       "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label22"},
@@ -1259,6 +1251,8 @@ func expectIngress221(sourcePropertiesEnabled bool, kubernetesStatusEnabled bool
 				"identifiers": []string{},
 			},
 			SourceProperties: map[string]interface{}{
+				"apiVersion": "networking.k8s.io/v1",
+				"kind":       "Ingress",
 				"metadata": map[string]interface{}{
 					"creationTimestamp": creationTimeFormatted,
 					"labels":            map[string]interface{}{"test": "label22"},
@@ -1582,8 +1576,8 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 									"identifiers": []string{},
 								},
 								SourceProperties: map[string]interface{}{
-									"apiVersion": "",
-									"kind": "Ingress",
+									"apiVersion": "extensions/v1beta1",
+									"kind":       "Ingress",
 									"metadata": map[string]interface{}{
 										"creationTimestamp": creationTimeFormatted,
 										"labels":            map[string]interface{}{"test": "label"},
@@ -1594,8 +1588,7 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 									"spec": map[string]interface{}{
 										"rules": []interface{}{
 											map[string]interface{}{
-												"host":             "host-1",
-												"ingressRuleValue": map[string]interface{}{},
+												"host": "host-1",
 											},
 										},
 									},
@@ -1616,8 +1609,8 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 									"identifiers": []string{},
 								},
 								SourceProperties: map[string]interface{}{
-									"apiVersion": "",
-									"kind": "Ingress",
+									"apiVersion": "extensions/v1beta1",
+									"kind":       "Ingress",
 									"metadata": map[string]interface{}{
 										"creationTimestamp": creationTimeFormatted,
 										"labels":            map[string]interface{}{"test": "label"},
@@ -1630,8 +1623,7 @@ func TestIngressCollector_NoHttpRule(t *testing.T) {
 									"spec": map[string]interface{}{
 										"rules": []interface{}{
 											map[string]interface{}{
-												"host":             "host-1",
-												"ingressRuleValue": map[string]interface{}{},
+												"host": "host-1",
 											},
 										},
 									},

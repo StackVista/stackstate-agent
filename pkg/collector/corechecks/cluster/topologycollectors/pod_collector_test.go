@@ -121,8 +121,8 @@ func TestPodCollector(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
-										"apiVersion": "",
-										"kind": "Pod",
+										"apiVersion": "v1",
+										"kind":       "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -130,6 +130,7 @@ func TestPodCollector(t *testing.T) {
 											"namespace":         "test-namespace",
 											"uid":               "test-pod-1"},
 										"spec": map[string]interface{}{
+											"containers":    nil,
 											"nodeName":      "test-node",
 											"restartPolicy": "Always"},
 										"status": map[string]interface{}{
@@ -156,8 +157,8 @@ func TestPodCollector(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
-										"apiVersion": "",
-										"kind": "Pod",
+										"apiVersion": "v1",
+										"kind":       "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -167,6 +168,7 @@ func TestPodCollector(t *testing.T) {
 											"resourceVersion":   "123",
 										},
 										"spec": map[string]interface{}{
+											"containers":    nil,
 											"nodeName":      "test-node",
 											"restartPolicy": "Always"},
 										"status": map[string]interface{}{
@@ -239,8 +241,8 @@ func TestPodCollector(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
-										"apiVersion": "",
-										"kind": "Pod",
+										"apiVersion": "v1",
+										"kind":       "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -249,6 +251,7 @@ func TestPodCollector(t *testing.T) {
 											"generateName":      "some-specified-generation",
 											"uid":               "test-pod-2"},
 										"spec": map[string]interface{}{
+											"containers":         nil,
 											"hostNetwork":        true,
 											"nodeName":           "test-node",
 											"serviceAccountName": "some-service-account-name",
@@ -283,8 +286,8 @@ func TestPodCollector(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
-										"apiVersion": "",
-										"kind": "Pod",
+										"apiVersion": "v1",
+										"kind":       "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -295,6 +298,7 @@ func TestPodCollector(t *testing.T) {
 											"resourceVersion":   "123",
 										},
 										"spec": map[string]interface{}{
+											"containers":         nil,
 											"hostNetwork":        true,
 											"nodeName":           "test-node",
 											"serviceAccountName": "some-service-account-name",
@@ -367,8 +371,8 @@ func TestPodCollector(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
-										"apiVersion": "",
-										"kind": "Pod",
+										"apiVersion": "v1",
+										"kind":       "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -376,13 +380,14 @@ func TestPodCollector(t *testing.T) {
 											"namespace":         "test-namespace",
 											"uid":               "test-pod-3",
 											"ownerReferences": []interface{}{
-												map[string]interface{}{"kind": "DaemonSet", "name": "daemonset-v"},
-												map[string]interface{}{"kind": "Deployment", "name": "deployment-w"},
-												map[string]interface{}{"kind": "Job", "name": "job-x"},
-												map[string]interface{}{"kind": "ReplicaSet", "name": "replicaset-y"},
-												map[string]interface{}{"kind": "StatefulSet", "name": "statefulset-z"},
+												map[string]interface{}{"apiVersion": "", "kind": "DaemonSet", "name": "daemonset-v", "uid": ""},
+												map[string]interface{}{"apiVersion": "", "kind": "Deployment", "name": "deployment-w", "uid": ""},
+												map[string]interface{}{"apiVersion": "", "kind": "Job", "name": "job-x", "uid": ""},
+												map[string]interface{}{"apiVersion": "", "kind": "ReplicaSet", "name": "replicaset-y", "uid": ""},
+												map[string]interface{}{"apiVersion": "", "kind": "StatefulSet", "name": "statefulset-z", "uid": ""},
 											}},
 										"spec": map[string]interface{}{
+											"containers":    nil,
 											"nodeName":      "test-node",
 											"restartPolicy": "Always"},
 										"status": map[string]interface{}{
@@ -410,8 +415,8 @@ func TestPodCollector(t *testing.T) {
 										},
 									},
 									SourceProperties: map[string]interface{}{
-										"apiVersion": "",
-										"kind": "Pod",
+										"apiVersion": "v1",
+										"kind":       "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -420,13 +425,14 @@ func TestPodCollector(t *testing.T) {
 											"uid":               "test-pod-3",
 											"resourceVersion":   "123",
 											"ownerReferences": []interface{}{
-												map[string]interface{}{"kind": "DaemonSet", "name": "daemonset-v"},
-												map[string]interface{}{"kind": "Deployment", "name": "deployment-w"},
-												map[string]interface{}{"kind": "Job", "name": "job-x"},
-												map[string]interface{}{"kind": "ReplicaSet", "name": "replicaset-y"},
-												map[string]interface{}{"kind": "StatefulSet", "name": "statefulset-z"},
+												map[string]interface{}{"apiVersion": "", "kind": "DaemonSet", "name": "daemonset-v", "uid": ""},
+												map[string]interface{}{"apiVersion": "", "kind": "Deployment", "name": "deployment-w", "uid": ""},
+												map[string]interface{}{"apiVersion": "", "kind": "Job", "name": "job-x", "uid": ""},
+												map[string]interface{}{"apiVersion": "", "kind": "ReplicaSet", "name": "replicaset-y", "uid": ""},
+												map[string]interface{}{"apiVersion": "", "kind": "StatefulSet", "name": "statefulset-z", "uid": ""},
 											}},
 										"spec": map[string]interface{}{
+											"containers":    nil,
 											"nodeName":      "test-node",
 											"restartPolicy": "Always"},
 										"status": map[string]interface{}{
@@ -550,8 +556,8 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
-										"apiVersion": "",
-										"kind": "Pod",
+										"apiVersion": "v1",
+										"kind":       "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -559,36 +565,31 @@ func TestPodCollector(t *testing.T) {
 											"namespace":         "test-namespace",
 											"uid":               "test-pod-4"},
 										"spec": map[string]interface{}{
+											"containers":    nil,
 											"nodeName":      "test-node",
 											"restartPolicy": "Always",
 											"volumes": []interface{}{
 												map[string]interface{}{
 													"name": "test-volume-1",
-													"volumeSource": map[string]interface{}{
-														"awsElasticBlockStore": map[string]interface{}{
-															"volumeID": "id-of-the-aws-block-store"}}},
+													"awsElasticBlockStore": map[string]interface{}{
+														"volumeID": "id-of-the-aws-block-store"}},
 												map[string]interface{}{
 													"name": "test-volume-2",
-													"volumeSource": map[string]interface{}{
-														"gcePersistentDisk": map[string]interface{}{
-															"pdName": "name-of-the-gce-persistent-disk"}}},
+													"gcePersistentDisk": map[string]interface{}{
+														"pdName": "name-of-the-gce-persistent-disk"}},
 												map[string]interface{}{
 													"name": "test-volume-3",
-													"volumeSource": map[string]interface{}{
-														"configMap": map[string]interface{}{
-															"localObjectReference": map[string]interface{}{
-																"name": "name-of-the-config-map"}}}},
+													"configMap": map[string]interface{}{
+														"name": "name-of-the-config-map"}},
 												map[string]interface{}{
 													"name": "test-volume-4",
-													"volumeSource": map[string]interface{}{
-														"hostPath": map[string]interface{}{
-															"path": "some/path/to/the/volume",
-															"type": "FileOrCreate"}}},
+													"hostPath": map[string]interface{}{
+														"path": "some/path/to/the/volume",
+														"type": "FileOrCreate"}},
 												map[string]interface{}{
 													"name": "test-volume-5",
-													"volumeSource": map[string]interface{}{
-														"secret": map[string]interface{}{
-															"secretName": "name-of-the-secret"}}},
+													"secret": map[string]interface{}{
+														"secretName": "name-of-the-secret"}},
 											}},
 										"status": map[string]interface{}{
 											"phase":     "Running",
@@ -613,8 +614,8 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
-										"apiVersion": "",
-										"kind": "Pod",
+										"apiVersion": "v1",
+										"kind":       "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -624,36 +625,31 @@ func TestPodCollector(t *testing.T) {
 											"resourceVersion":   "123",
 										},
 										"spec": map[string]interface{}{
+											"containers":    nil,
 											"nodeName":      "test-node",
 											"restartPolicy": "Always",
 											"volumes": []interface{}{
 												map[string]interface{}{
 													"name": "test-volume-1",
-													"volumeSource": map[string]interface{}{
-														"awsElasticBlockStore": map[string]interface{}{
-															"volumeID": "id-of-the-aws-block-store"}}},
+													"awsElasticBlockStore": map[string]interface{}{
+														"volumeID": "id-of-the-aws-block-store"}},
 												map[string]interface{}{
 													"name": "test-volume-2",
-													"volumeSource": map[string]interface{}{
-														"gcePersistentDisk": map[string]interface{}{
-															"pdName": "name-of-the-gce-persistent-disk"}}},
+													"gcePersistentDisk": map[string]interface{}{
+														"pdName": "name-of-the-gce-persistent-disk"}},
 												map[string]interface{}{
 													"name": "test-volume-3",
-													"volumeSource": map[string]interface{}{
-														"configMap": map[string]interface{}{
-															"localObjectReference": map[string]interface{}{
-																"name": "name-of-the-config-map"}}}},
+													"configMap": map[string]interface{}{
+														"name": "name-of-the-config-map"}},
 												map[string]interface{}{
 													"name": "test-volume-4",
-													"volumeSource": map[string]interface{}{
-														"hostPath": map[string]interface{}{
-															"path": "some/path/to/the/volume",
-															"type": "FileOrCreate"}}},
+													"hostPath": map[string]interface{}{
+														"path": "some/path/to/the/volume",
+														"type": "FileOrCreate"}},
 												map[string]interface{}{
 													"name": "test-volume-5",
-													"volumeSource": map[string]interface{}{
-														"secret": map[string]interface{}{
-															"secretName": "name-of-the-secret"}}},
+													"secret": map[string]interface{}{
+														"secretName": "name-of-the-secret"}},
 											}},
 										"status": map[string]interface{}{
 											"phase":     "Running",
@@ -724,8 +720,8 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
-										"apiVersion": "",
-										"kind": "Pod",
+										"apiVersion": "v1",
+										"kind":       "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -742,13 +738,11 @@ func TestPodCollector(t *testing.T) {
 															"name": "env-var",
 															"valueFrom": map[string]interface{}{
 																"configMapKeyRef": map[string]interface{}{
-																	"localObjectReference": map[string]interface{}{
-																		"name": "name-of-the-env-config-map"}}}}},
+																	"key": "", "name": "name-of-the-env-config-map"}}}},
 													"envFrom": []interface{}{
 														map[string]interface{}{
 															"configMapRef": map[string]interface{}{
-																"localObjectReference": map[string]interface{}{
-																	"name": "name-of-the-config-map"}}}},
+																"name": "name-of-the-config-map"}}},
 													"image":     "docker/image/repo/container:latest",
 													"name":      "container-1",
 													"resources": map[string]interface{}{}}},
@@ -776,8 +770,8 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
-										"apiVersion": "",
-										"kind": "Pod",
+										"apiVersion": "v1",
+										"kind":       "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -796,13 +790,11 @@ func TestPodCollector(t *testing.T) {
 															"name": "env-var",
 															"valueFrom": map[string]interface{}{
 																"configMapKeyRef": map[string]interface{}{
-																	"localObjectReference": map[string]interface{}{
-																		"name": "name-of-the-env-config-map"}}}}},
+																	"key": "", "name": "name-of-the-env-config-map"}}}},
 													"envFrom": []interface{}{
 														map[string]interface{}{
 															"configMapRef": map[string]interface{}{
-																"localObjectReference": map[string]interface{}{
-																	"name": "name-of-the-config-map"}}}},
+																"name": "name-of-the-config-map"}}},
 													"image":     "docker/image/repo/container:latest",
 													"name":      "container-1",
 													"resources": map[string]interface{}{}}},
@@ -893,8 +885,8 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
-										"apiVersion": "",
-										"kind": "Pod",
+										"apiVersion": "v1",
+										"kind":       "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -912,13 +904,11 @@ func TestPodCollector(t *testing.T) {
 															"name": "env-var",
 															"valueFrom": map[string]interface{}{
 																"secretKeyRef": map[string]interface{}{
-																	"localObjectReference": map[string]interface{}{
-																		"name": "name-of-the-env-secret"}}}}},
+																	"key": "", "name": "name-of-the-env-secret"}}}},
 													"envFrom": []interface{}{
 														map[string]interface{}{
 															"secretRef": map[string]interface{}{
-																"localObjectReference": map[string]interface{}{
-																	"name": "name-of-the-secret"}}}},
+																"name": "name-of-the-secret"}}},
 													"image":     "docker/image/repo/container:latest",
 													"name":      "container-1",
 													"resources": map[string]interface{}{}}},
@@ -946,8 +936,8 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
-										"apiVersion": "",
-										"kind": "Pod",
+										"apiVersion": "v1",
+										"kind":       "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -966,13 +956,11 @@ func TestPodCollector(t *testing.T) {
 															"name": "env-var",
 															"valueFrom": map[string]interface{}{
 																"secretKeyRef": map[string]interface{}{
-																	"localObjectReference": map[string]interface{}{
-																		"name": "name-of-the-env-secret"}}}}},
+																	"key": "", "name": "name-of-the-env-secret"}}}},
 													"envFrom": []interface{}{
 														map[string]interface{}{
 															"secretRef": map[string]interface{}{
-																"localObjectReference": map[string]interface{}{
-																	"name": "name-of-the-secret"}}}},
+																"name": "name-of-the-secret"}}},
 													"image":     "docker/image/repo/container:latest",
 													"name":      "container-1",
 													"resources": map[string]interface{}{}}},
@@ -1063,8 +1051,8 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
-										"apiVersion": "",
-										"kind": "Pod",
+										"apiVersion": "v1",
+										"kind":       "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -1073,21 +1061,28 @@ func TestPodCollector(t *testing.T) {
 											"uid":               "test-pod-7",
 										},
 										"spec": map[string]interface{}{
+											"containers":    nil,
 											"nodeName":      "test-node",
 											"restartPolicy": "Always"},
 										"status": map[string]interface{}{
 											"containerStatuses": []interface{}{
 												map[string]interface{}{
-													"image":     "docker/image/repo/container-1:latest",
-													"lastState": map[string]interface{}{},
-													"name":      "container-1",
-													"state":     map[string]interface{}{},
+													"image":        "docker/image/repo/container-1:latest",
+													"imageID":      "",
+													"lastState":    map[string]interface{}{},
+													"name":         "container-1",
+													"ready":        false,
+													"restartCount": float64(0),
+													"state":        map[string]interface{}{},
 												},
 												map[string]interface{}{
-													"image":     "docker/image/repo/container-2:latest",
-													"lastState": map[string]interface{}{},
-													"name":      "container-2",
-													"state":     map[string]interface{}{},
+													"image":        "docker/image/repo/container-2:latest",
+													"imageID":      "",
+													"lastState":    map[string]interface{}{},
+													"name":         "container-2",
+													"ready":        false,
+													"restartCount": float64(0),
+													"state":        map[string]interface{}{},
 												},
 											},
 											"phase":     "Running",
@@ -1112,8 +1107,8 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Running"},
 									},
 									SourceProperties: map[string]interface{}{
-										"apiVersion": "",
-										"kind": "Pod",
+										"apiVersion": "v1",
+										"kind":       "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
@@ -1123,21 +1118,28 @@ func TestPodCollector(t *testing.T) {
 											"resourceVersion":   "123",
 										},
 										"spec": map[string]interface{}{
+											"containers":    nil,
 											"nodeName":      "test-node",
 											"restartPolicy": "Always"},
 										"status": map[string]interface{}{
 											"containerStatuses": []interface{}{
 												map[string]interface{}{
-													"image":     "docker/image/repo/container-1:latest",
-													"lastState": map[string]interface{}{},
-													"name":      "container-1",
-													"state":     map[string]interface{}{},
+													"image":        "docker/image/repo/container-1:latest",
+													"imageID":      "",
+													"lastState":    map[string]interface{}{},
+													"name":         "container-1",
+													"ready":        false,
+													"restartCount": float64(0),
+													"state":        map[string]interface{}{},
 												},
 												map[string]interface{}{
-													"image":     "docker/image/repo/container-2:latest",
-													"lastState": map[string]interface{}{},
-													"name":      "container-2",
-													"state":     map[string]interface{}{},
+													"image":        "docker/image/repo/container-2:latest",
+													"imageID":      "",
+													"lastState":    map[string]interface{}{},
+													"name":         "container-2",
+													"ready":        false,
+													"restartCount": float64(0),
+													"state":        map[string]interface{}{},
 												},
 											},
 											"phase":     "Running",
@@ -1232,16 +1234,17 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Succeeded"},
 									},
 									SourceProperties: map[string]interface{}{
-										"apiVersion": "",
-										"kind": "Pod",
+										"apiVersion": "v1",
+										"kind":       "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
 											"name":              "test-pod-8",
 											"namespace":         "test-namespace",
-											"ownerReferences":   []interface{}{map[string]interface{}{"kind": "Job", "name": "test-job-8"}},
+											"ownerReferences":   []interface{}{map[string]interface{}{"apiVersion": "", "kind": "Job", "name": "test-job-8", "uid": ""}},
 											"uid":               "test-pod-8"},
 										"spec": map[string]interface{}{
+											"containers":    nil,
 											"nodeName":      "test-node",
 											"restartPolicy": "Always",
 										},
@@ -1268,18 +1271,19 @@ func TestPodCollector(t *testing.T) {
 										"status":      map[string]interface{}{"phase": "Succeeded"},
 									},
 									SourceProperties: map[string]interface{}{
-										"apiVersion": "",
-										"kind": "Pod",
+										"apiVersion": "v1",
+										"kind":       "Pod",
 										"metadata": map[string]interface{}{
 											"creationTimestamp": creationTimeFormatted,
 											"labels":            map[string]interface{}{"test": "label"},
 											"name":              "test-pod-8",
 											"namespace":         "test-namespace",
-											"ownerReferences":   []interface{}{map[string]interface{}{"kind": "Job", "name": "test-job-8"}},
+											"ownerReferences":   []interface{}{map[string]interface{}{"apiVersion": "", "kind": "Job", "name": "test-job-8", "uid": ""}},
 											"uid":               "test-pod-8",
 											"resourceVersion":   "123",
 										},
 										"spec": map[string]interface{}{
+											"containers":    nil,
 											"nodeName":      "test-node",
 											"restartPolicy": "Always",
 										},

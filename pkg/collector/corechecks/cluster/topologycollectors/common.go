@@ -4,23 +4,22 @@
 package topologycollectors
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
+	"k8s.io/apimachinery/pkg/runtime"
 	"strconv"
 	"strings"
 	"sync"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/gogo/protobuf/jsonpb"
-	"github.com/gogo/protobuf/proto"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/version"
-
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/urn"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	jsonserializer "k8s.io/apimachinery/pkg/runtime/serializer/json"
+	"k8s.io/apimachinery/pkg/version"
+	"k8s.io/client-go/kubernetes/scheme"
 )
 
 // ClusterType represents the type of the cluster being monitored - Kubernetes / OpenShift
@@ -344,20 +343,60 @@ func (c *clusterTopologyCommon) initTags(meta metav1.ObjectMeta, tpe metav1.Type
 	return tags
 }
 
-var protoJSONMarshaler = jsonpb.Marshaler{
-	EnumsAsInts:  false,
-	EmitDefaults: false,
+var sc = scheme.Scheme
+
+func init() {
+	schemeBuilder := runtime.NewSchemeBuilder(addKnownTypes)
+	err := schemeBuilder.AddToScheme(sc)
+	if err != nil {
+		log.Error("Could not register our own Sts types for serialization")
+	}
 }
 
-func marshallK8sObjectToData(msg proto.Message) (map[string]interface{}, error) {
-	var buf bytes.Buffer
-	if err := protoJSONMarshaler.Marshal(&buf, msg); err != nil {
+func addKnownTypes(scheme *runtime.Scheme) error {
+	scheme.AddKnownTypeWithName(schema.GroupVersion{Group: "", Version: "v1"}.WithKind("VolumeSource"),
+		&K8sVolumeSource{},
+	)
+	scheme.AddKnownTypeWithName(schema.GroupVersion{Group: "", Version: "v1"}.WithKind("Volume"),
+		&K8sVolume{},
+	)
+	return nil
+}
+
+var serializer = jsonserializer.NewSerializerWithOptions(
+	jsonserializer.DefaultMetaFactory, // jsonserializer.MetaFactory
+	sc,                                // runtime.Scheme implements runtime.ObjectCreater
+	sc,                                // runtime.Scheme implements runtime.ObjectTyper
+	jsonserializer.SerializerOptions{
+		Yaml:   false,
+		Pretty: false,
+		Strict: false,
+	},
+)
+
+func marshallK8sObjectToData(msg runtime.Object) (map[string]interface{}, error) {
+	bytes, err := runtime.Encode(serializer, msg)
+	if err != nil {
 		return nil, err
 	}
 	var result map[string]interface{}
-	if err := json.Unmarshal(buf.Bytes(), &result); err != nil {
+	if err := json.Unmarshal(bytes, &result); err != nil {
 		return nil, err
 	}
+
+	oks, _, err := sc.ObjectKinds(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	if strings.TrimSpace(oks[0].Group) != "" {
+		result["apiVersion"] = fmt.Sprintf("%s/%s", oks[0].Group, oks[0].Version)
+	} else {
+		result["apiVersion"] = oks[0].Version
+	}
+
+	result["kind"] = oks[0].Kind
+
 	return result, nil
 }
 
@@ -406,9 +445,8 @@ func visitNestedMap(parentMap map[string]interface{}, key string, removeEmpty bo
 }
 
 type MarshalableKubernetesObject interface {
-	schema.ObjectKind
+	runtime.Object
 	metav1.Object
-	proto.Message
 }
 
 func makeSourceProperties(object MarshalableKubernetesObject) map[string]interface{} {
@@ -420,8 +458,6 @@ func makeSourceProperties(object MarshalableKubernetesObject) map[string]interfa
 		}
 	}
 	removeRedundantFields(sourceProperties, false)
-	sourceProperties["apiVersion"] = object.GroupVersionKind().Version
-	sourceProperties["kind"] = object.GroupVersionKind().Kind
 	return sourceProperties
 }
 
@@ -434,8 +470,6 @@ func makeSourcePropertiesKS(object MarshalableKubernetesObject) map[string]inter
 		}
 	}
 	removeRedundantFields(sourceProperties, true)
-	sourceProperties["apiVersion"] = object.GroupVersionKind().Version
-	sourceProperties["kind"] = object.GroupVersionKind().Kind
 	return sourceProperties
 }
 
@@ -448,8 +482,6 @@ func makeSourcePropertiesFullDetails(object MarshalableKubernetesObject) map[str
 		}
 	}
 	removeManagedFields(sourceProperties)
-	sourceProperties["apiVersion"] = object.GroupVersionKind().Version
-	sourceProperties["kind"] = object.GroupVersionKind().Kind
 	return sourceProperties
 }
 

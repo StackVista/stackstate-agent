@@ -86,15 +86,15 @@ func TestJobCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
-							"apiVersion":			"",
-							"kind":					"Job",
+							"apiVersion": "batch/v1",
+							"kind":       "Job",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormattedJob,
 								"labels":            map[string]interface{}{"test": "label"},
 								"name":              "test-job-1",
 								"namespace":         "test-namespace",
 								"ownerReferences": []interface{}{
-									map[string]interface{}{"kind": "CronJob", "name": "test-cronjob-1"},
+									map[string]interface{}{"apiVersion": "", "kind": "CronJob", "name": "test-cronjob-1", "uid": ""},
 								},
 								"uid": "test-job-1",
 							},
@@ -105,7 +105,9 @@ func TestJobCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": interface{}(nil),
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 							},
 						},
@@ -124,15 +126,15 @@ func TestJobCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
-							"apiVersion":			"",
-							"kind":					"Job",
+							"apiVersion": "batch/v1",
+							"kind":       "Job",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormattedJob,
 								"labels":            map[string]interface{}{"test": "label"},
 								"name":              "test-job-1",
 								"namespace":         "test-namespace",
 								"ownerReferences": []interface{}{
-									map[string]interface{}{"kind": "CronJob", "name": "test-cronjob-1"},
+									map[string]interface{}{"apiVersion": "", "kind": "CronJob", "name": "test-cronjob-1", "uid": ""},
 								},
 								"uid":             "test-job-1",
 								"resourceVersion": "123",
@@ -145,7 +147,9 @@ func TestJobCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": interface{}(nil),
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 							},
 							"status": map[string]interface{}{
@@ -208,8 +212,8 @@ func TestJobCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
-							"apiVersion":			"",
-							"kind":					"Job",
+							"apiVersion": "batch/v1",
+							"kind":       "Job",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormattedJob,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -224,7 +228,9 @@ func TestJobCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": interface{}(nil),
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 							},
 						},
@@ -243,8 +249,8 @@ func TestJobCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
-							"apiVersion":			"",
-							"kind":					"Job",
+							"apiVersion": "batch/v1",
+							"kind":       "Job",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormattedJob,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -261,7 +267,9 @@ func TestJobCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": interface{}(nil),
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 							},
 							"status": map[string]interface{}{
@@ -325,8 +333,8 @@ func TestJobCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
-							"apiVersion":			"",
-							"kind":					"Job",
+							"apiVersion": "batch/v1",
+							"kind":       "Job",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormattedJob,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -342,7 +350,9 @@ func TestJobCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": interface{}(nil),
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 							},
 						},
@@ -361,8 +371,8 @@ func TestJobCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
-							"apiVersion":			"",
-							"kind":					"Job",
+							"apiVersion": "batch/v1",
+							"kind":       "Job",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormattedJob,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -380,7 +390,9 @@ func TestJobCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": interface{}(nil),
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 							},
 							"status": map[string]interface{}{

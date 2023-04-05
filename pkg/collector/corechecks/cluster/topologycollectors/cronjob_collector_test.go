@@ -150,8 +150,8 @@ func cronJobV1B1SP2() *topology.Component {
 			},
 		},
 		SourceProperties: map[string]interface{}{
-			"apiVersion":			"",
-			"kind":					"CronJob",
+			"apiVersion": "batch/v1beta1",
+			"kind":       "CronJob",
 			"metadata": map[string]interface{}{
 				"creationTimestamp": cronJobTimeFormatted,
 				"labels":            map[string]interface{}{"test": "label"},
@@ -202,8 +202,8 @@ func cronJobV1B1SPPlusStatus2() *topology.Component {
 			},
 		},
 		SourceProperties: map[string]interface{}{
-			"apiVersion":			"",
-			"kind":					"CronJob",
+			"apiVersion": "batch/v1beta1",
+			"kind":       "CronJob",
 			"metadata": map[string]interface{}{
 				"creationTimestamp": cronJobTimeFormatted,
 				"labels":            map[string]interface{}{"test": "label"},
@@ -283,8 +283,8 @@ func cronJobV1B1SP1() *topology.Component {
 			},
 		},
 		SourceProperties: map[string]interface{}{
-			"apiVersion":			"",
-			"kind":					"CronJob",
+			"apiVersion": "batch/v1beta1",
+			"kind":       "CronJob",
 			"metadata": map[string]interface{}{
 				"creationTimestamp": cronJobTimeFormatted,
 				"labels":            map[string]interface{}{"test": "label"},
@@ -336,8 +336,8 @@ func cronJobV1B1SPPlusStatus1() *topology.Component {
 			},
 		},
 		SourceProperties: map[string]interface{}{
-			"apiVersion":			"",
-			"kind":					"CronJob",
+			"apiVersion": "batch/v1beta1",
+			"kind":       "CronJob",
 			"metadata": map[string]interface{}{
 				"creationTimestamp": cronJobTimeFormatted,
 				"labels":            map[string]interface{}{"test": "label"},
@@ -419,8 +419,8 @@ func cronJobV1SP() *topology.Component {
 			},
 		},
 		SourceProperties: map[string]interface{}{
-			"apiVersion":			"",
-			"kind":					"CronJob",
+			"apiVersion": "batch/v1",
+			"kind":       "CronJob",
 			"metadata": map[string]interface{}{
 				"creationTimestamp": cronJobTimeFormatted,
 				"labels":            map[string]interface{}{"test": "label"},
@@ -472,8 +472,8 @@ func cronJobV1SPPlusStatus() *topology.Component {
 			},
 		},
 		SourceProperties: map[string]interface{}{
-			"apiVersion":			"",
-			"kind":					"CronJob",
+			"apiVersion": "batch/v1",
+			"kind":       "CronJob",
 			"metadata": map[string]interface{}{
 				"creationTimestamp": cronJobTimeFormatted,
 				"labels":            map[string]interface{}{"test": "label"},

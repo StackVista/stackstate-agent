@@ -80,8 +80,8 @@ func TestReplicaSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
-							"apiVersion":			"",
-							"kind":					"ReplicaSet",
+							"apiVersion": "apps/v1",
+							"kind":       "ReplicaSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -90,10 +90,13 @@ func TestReplicaSetCollector(t *testing.T) {
 								"uid":               "test-replicaset-1"},
 							"spec": map[string]interface{}{
 								"replicas": float64(1),
+								"selector": nil,
 								"template": map[string]interface{}{
 									"metadata": map[string]interface{}{
 										"creationTimestamp": nil},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								}},
 						},
 					},
@@ -111,8 +114,8 @@ func TestReplicaSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
-							"apiVersion":			"",
-							"kind":					"ReplicaSet",
+							"apiVersion": "apps/v1",
+							"kind":       "ReplicaSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -123,17 +126,20 @@ func TestReplicaSetCollector(t *testing.T) {
 							},
 							"spec": map[string]interface{}{
 								"replicas": float64(1),
+								"selector": nil,
 								"template": map[string]interface{}{
 									"metadata": map[string]interface{}{
 										"creationTimestamp": nil},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 							},
 							"status": map[string]interface{}{
 								"replicas":           float64(1),
 								"availableReplicas":  float64(1),
 								"readyReplicas":      float64(1),
-								"observedGeneration": "123",
+								"observedGeneration": float64(123),
 							},
 						},
 					},
@@ -182,8 +188,8 @@ func TestReplicaSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
-							"apiVersion":			"",
-							"kind":					"ReplicaSet",
+							"apiVersion": "apps/v1",
+							"kind":       "ReplicaSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -193,10 +199,13 @@ func TestReplicaSetCollector(t *testing.T) {
 								"uid":               "test-replicaset-2"},
 							"spec": map[string]interface{}{
 								"replicas": float64(1),
+								"selector": nil,
 								"template": map[string]interface{}{
 									"metadata": map[string]interface{}{
 										"creationTimestamp": nil},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								}},
 						},
 					},
@@ -214,8 +223,8 @@ func TestReplicaSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
-							"apiVersion":			"",
-							"kind":					"ReplicaSet",
+							"apiVersion": "apps/v1",
+							"kind":       "ReplicaSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -227,17 +236,20 @@ func TestReplicaSetCollector(t *testing.T) {
 							},
 							"spec": map[string]interface{}{
 								"replicas": float64(1),
+								"selector": nil,
 								"template": map[string]interface{}{
 									"metadata": map[string]interface{}{
 										"creationTimestamp": nil},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 							},
 							"status": map[string]interface{}{
 								"replicas":           float64(1),
 								"availableReplicas":  float64(1),
 								"readyReplicas":      float64(1),
-								"observedGeneration": "123",
+								"observedGeneration": float64(123),
 							},
 						},
 					},
@@ -286,22 +298,25 @@ func TestReplicaSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
-							"apiVersion":			"",
-							"kind":					"ReplicaSet",
+							"apiVersion": "apps/v1",
+							"kind":       "ReplicaSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
 								"name":              "test-replicaset-3",
 								"namespace":         "test-namespace",
 								"generateName":      "some-specified-generation",
-								"ownerReferences":   []interface{}{map[string]interface{}{"kind": "Deployment", "name": "test-deployment-3"}},
+								"ownerReferences":   []interface{}{map[string]interface{}{"apiVersion": "", "kind": "Deployment", "name": "test-deployment-3", "uid": ""}},
 								"uid":               "test-replicaset-3"},
 							"spec": map[string]interface{}{
 								"replicas": float64(1),
+								"selector": nil,
 								"template": map[string]interface{}{
 									"metadata": map[string]interface{}{
 										"creationTimestamp": nil},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								}},
 						},
 					},
@@ -319,30 +334,33 @@ func TestReplicaSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
-							"apiVersion":			"",
-							"kind":					"ReplicaSet",
+							"apiVersion": "apps/v1",
+							"kind":       "ReplicaSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
 								"name":              "test-replicaset-3",
 								"namespace":         "test-namespace",
 								"generateName":      "some-specified-generation",
-								"ownerReferences":   []interface{}{map[string]interface{}{"kind": "Deployment", "name": "test-deployment-3"}},
+								"ownerReferences":   []interface{}{map[string]interface{}{"apiVersion": "", "kind": "Deployment", "name": "test-deployment-3", "uid": ""}},
 								"uid":               "test-replicaset-3",
 								"resourceVersion":   "123",
 							},
 							"spec": map[string]interface{}{
 								"replicas": float64(1),
+								"selector": nil,
 								"template": map[string]interface{}{
 									"metadata": map[string]interface{}{
 										"creationTimestamp": nil},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								}},
 							"status": map[string]interface{}{
 								"replicas":           float64(1),
 								"availableReplicas":  float64(1),
 								"readyReplicas":      float64(1),
-								"observedGeneration": "123",
+								"observedGeneration": float64(123),
 							},
 						},
 					},

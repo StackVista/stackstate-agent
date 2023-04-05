@@ -78,8 +78,8 @@ func TestNamespaceCollector(t *testing.T) {
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-1"},
 						},
 						SourceProperties: map[string]interface{}{
-							"apiVersion":			"",
-							"kind":					"Namespace",
+							"apiVersion": "v1",
+							"kind":       "Namespace",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -106,8 +106,8 @@ func TestNamespaceCollector(t *testing.T) {
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-1"},
 						},
 						SourceProperties: map[string]interface{}{
-							"apiVersion":			"",
-							"kind":					"Namespace",
+							"apiVersion": "v1",
+							"kind":       "Namespace",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -154,8 +154,8 @@ func TestNamespaceCollector(t *testing.T) {
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
 						},
 						SourceProperties: map[string]interface{}{
-							"apiVersion":			"",
-							"kind":					"Namespace",
+							"apiVersion": "v1",
+							"kind":       "Namespace",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"name":              "test-namespace-2",
@@ -180,8 +180,8 @@ func TestNamespaceCollector(t *testing.T) {
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:namespace/test-namespace-2"},
 						},
 						SourceProperties: map[string]interface{}{
-							"apiVersion":			"",
-							"kind":					"Namespace",
+							"apiVersion": "v1",
+							"kind":       "Namespace",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"name":              "test-namespace-2",
