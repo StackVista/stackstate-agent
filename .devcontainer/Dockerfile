@@ -96,40 +96,37 @@ RUN apt-get update -y \
     && apt-get -y install --no-install-recommends apt-utils 2>&1 \
     # Verify git, process tools, lsb-release (common in install instructions for CLIs) installed.
     && apt-get -y install git iproute2 procps lsb-release \
-    # Install Python2.7
-    && apt-get install -y python2.7 python-pip unzip \
+    # Install Python3.7
+    && apt-get install -y python3 python3-pip unzip \
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
 ENV GOPATH=/go
 ENV PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
-ARG GOPLS_VERSION=v0.6.6
-ARG DELVE_VERSION=v1.5.0
-ARG GOMODIFYTAGS_VERSION=v1.13.0
+ARG GOPLS_VERSION=v0.9.5
+ARG DELVE_VERSION=v1.20.1
+ARG GOMODIFYTAGS_VERSION=v1.16.0
 ARG GOPLAY_VERSION=v1.0.0
-ARG GOTESTS_VERSION=v1.5.3
-ARG MOCK_VERSION=v1.5.0
-ARG MOCKERY_VERSION=v2.3.0
+ARG GOTESTS_VERSION=v1.6.0
+ARG MOCK_VERSION=v1.6.0
+ARG MOCKERY_VERSION=v2.23.2
 COPY --from=golangci-lint /usr/bin/golangci-lint ${GOPATH}/bin
-RUN go get -v golang.org/x/tools/gopls@${GOPLS_VERSION} 2>&1
-RUN go get -v \
-    # Base Go tools needed for VS code Go extension
-    golang.org/x/tools/cmd/guru \
-    golang.org/x/tools/cmd/gorename \
-    github.com/go-delve/delve/cmd/dlv@${DELVE_VERSION} \
-    github.com/uudashr/gopkgs/v2/cmd/gopkgs@latest \
-    github.com/ramya-rao-a/go-outline \
-    # Extra tools integrating with VS code
-    github.com/fatih/gomodifytags@${GOMODIFYTAGS_VERSION} \
-    github.com/haya14busa/goplay/cmd/goplay@${GOPLAY_VERSION} \
-    github.com/cweill/gotests/...@${GOTESTS_VERSION} \
-    github.com/davidrjenni/reftools/cmd/fillstruct \
-    # Terminal tools
-    github.com/golang/mock/gomock@${MOCK_VERSION} \
-    github.com/golang/mock/mockgen@${MOCK_VERSION} \
-    github.com/vektra/mockery/v2/...@${MOCKERY_VERSION} \
-    2>&1
+RUN go install golang.org/x/tools/gopls@${GOPLS_VERSION} 2>&1
+RUN go install golang.org/x/tools/cmd/guru@latest
+# Base Go tools needed for VS code Go extension \
+RUN go install golang.org/x/tools/cmd/gorename@latest
+RUN go install github.com/go-delve/delve/cmd/dlv@${DELVE_VERSION}
+RUN go install github.com/uudashr/gopkgs/v2/cmd/gopkgs@latest
+RUN go install github.com/ramya-rao-a/go-outline@latest
+# Extra tools integrating with VS code
+RUN go install github.com/fatih/gomodifytags@${GOMODIFYTAGS_VERSION}
+RUN go install github.com/haya14busa/goplay/cmd/goplay@${GOPLAY_VERSION}
+RUN go install github.com/cweill/gotests/...@${GOTESTS_VERSION}
+RUN go install github.com/davidrjenni/reftools/cmd/fillstruct@latest
+# Terminal tools
+RUN go install github.com/golang/mock/mockgen@${MOCK_VERSION}
+RUN go install github.com/vektra/mockery/v2/...@${MOCKERY_VERSION}
 
 # EXTRA TOOLS
 # Kubectl
@@ -138,16 +135,17 @@ RUN wget -qO /usr/local/bin/kubectl "https://storage.googleapis.com/kubernetes-r
     chmod 755 /usr/local/bin/kubectl
 
 # Stern
-ARG STERN_VERSION=1.11.0
-RUN wget -qO /usr/local/bin/stern https://github.com/wercker/stern/releases/download/${STERN_VERSION}/stern_$(uname -s)_amd64 && \
+ARG STERN_VERSION=1.24.0
+RUN wget -qO- https://github.com/stern/stern/releases/download/v${STERN_VERSION}/stern_${STERN_VERSION}_linux_amd64.tar.gz | \
+    tar -xzC /usr/local/bin stern && \
     chown ${USER_UID}:${USER_GID} /usr/local/bin/stern && \
     chmod 755 /usr/local/bin/stern
 
 # Kubectx and Kubens
-ARG KUBECTX_VERSION=v0.9.3
-RUN wget -qO- "https://github.com/ahmetb/kubectx/releases/download/${KUBECTX_VERSION}/kubectx_${KUBECTX_VERSION}_$(uname -s)_$(uname -m).tar.gz" | \
+ARG KUBECTX_VERSION=v0.9.4
+RUN wget -qO- "https://github.com/ahmetb/kubectx/releases/download/${KUBECTX_VERSION}/kubectx_${KUBECTX_VERSION}_linux_x86_64.tar.gz" | \
     tar -xzC /usr/local/bin kubectx && \
-    wget -qO- "https://github.com/ahmetb/kubectx/releases/download/${KUBECTX_VERSION}/kubens_${KUBECTX_VERSION}_$(uname -s)_$(uname -m).tar.gz" | \
+    wget -qO- "https://github.com/ahmetb/kubectx/releases/download/${KUBECTX_VERSION}/kubens_${KUBECTX_VERSION}_linux_x86_64.tar.gz" | \
     tar -xzC /usr/local/bin kubens && \
     chmod 755 /usr/local/bin/kube*
 
@@ -162,6 +160,8 @@ RUN wget -qO awscli2.zip "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.z
     unzip awscli2.zip && \
     ./aws/install && \
     rm awscli2.zip
+
+RUN chmod -R ugo+wx /go
 
 # Revert configurations that was set at top layer (for avoiding build warnings and errors).
 ENV DEBIAN_FRONTEND=dialog
