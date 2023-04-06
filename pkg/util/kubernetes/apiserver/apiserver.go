@@ -16,6 +16,12 @@ import (
 	"sync"
 	"time"
 
+	apiv1 "github.com/StackVista/stackstate-agent/pkg/clusteragent/api/v1"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/cache"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/common"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/retry"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -27,15 +33,9 @@ import (
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
+	kscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-
-	apiv1 "github.com/StackVista/stackstate-agent/pkg/clusteragent/api/v1"
-	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/cache"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/common"
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	"github.com/StackVista/stackstate-agent/pkg/util/retry"
 )
 
 var (
@@ -204,7 +204,24 @@ func GetKubeClient(timeout time.Duration) (kubernetes.Interface, error) {
 		return nil, err
 	}
 
-	return kubernetes.NewForConfig(clientConfig)
+	//if err := setConfigDefaults(&config); err != nil {
+	//	return nil, err
+	//}
+	gv := v1.SchemeGroupVersion
+	clientConfig.GroupVersion = &gv
+	clientConfig.APIPath = "/apis"
+	clientConfig.NegotiatedSerializer = kscheme.Codecs
+
+	if clientConfig.UserAgent == "" {
+		clientConfig.UserAgent = rest.DefaultKubernetesUserAgent()
+	}
+
+	client, err := rest.RESTClientFor(clientConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return kubernetes.New(client), nil
 }
 
 func getKubeDynamicClient(timeout time.Duration) (dynamic.Interface, error) {
