@@ -81,6 +81,8 @@ func TestSecretCollector(t *testing.T) {
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-1"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Secret",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -107,6 +109,8 @@ func TestSecretCollector(t *testing.T) {
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-1"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Secret",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -114,7 +118,6 @@ func TestSecretCollector(t *testing.T) {
 								"namespace":         "test-namespace",
 								"uid":               "test-secret-1",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{},
 							},
 							"data": map[string]interface{}{
 								"<data hash>": "YzIwY2E0OWRjYjc2ZmVhYWExYzE0YTI3MjUyNjNiZjIyOTBkMGU1ZjNkYzk4ZDIwOGIyNDlmMDgwZmE2NGI0NQ==",
@@ -158,6 +161,8 @@ func TestSecretCollector(t *testing.T) {
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-2"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Secret",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -184,6 +189,8 @@ func TestSecretCollector(t *testing.T) {
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-2"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Secret",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -191,7 +198,6 @@ func TestSecretCollector(t *testing.T) {
 								"namespace":         "test-namespace",
 								"uid":               "test-secret-2",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{},
 							},
 							"data": map[string]interface{}{
 								"<data hash>": "ZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NQ==",
@@ -233,6 +239,8 @@ func TestSecretCollector(t *testing.T) {
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-3"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Secret",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"name":              "test-secret-3",
@@ -257,13 +265,14 @@ func TestSecretCollector(t *testing.T) {
 							"identifiers": []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-3"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Secret",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"name":              "test-secret-3",
 								"namespace":         "test-namespace",
 								"uid":               "test-secret-3",
 								"resourceVersion":   "123",
-								"annotations":       map[string]interface{}{},
 							},
 							"data": map[string]interface{}{
 								"<data hash>": "ZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NQ==",
