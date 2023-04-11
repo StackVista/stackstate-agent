@@ -135,6 +135,7 @@ func (cc *ContainerCorrelator) containerToStackStateComponent(nodeIdentifier str
 		"name": container.Name,
 		"docker": map[string]interface{}{
 			"image":       container.Image,
+			"imageId":     container.ImageID,
 			"containerId": strippedContainerID,
 		},
 		"pod":          pod.Name,
@@ -146,6 +147,12 @@ func (cc *ContainerCorrelator) containerToStackStateComponent(nodeIdentifier str
 
 	if container.State.Running != nil {
 		data["startTime"] = container.State.Running.StartedAt
+	}
+
+	if container.State.Terminated != nil {
+		data["exitCode"] = container.State.Terminated.ExitCode
+	} else if container.LastTerminationState.Terminated != nil {
+		data["exitCode"] = container.LastTerminationState.Terminated.ExitCode
 	}
 
 	if containerPort.ContainerPort != 0 {
