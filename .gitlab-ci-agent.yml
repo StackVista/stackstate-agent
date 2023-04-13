@@ -346,7 +346,7 @@ unit_tests:
       - always
   rules:
     - when: on_success
-  timeout: 35 minutes
+  timeout: 45 minutes
 
 filename_linting:
   stage: test

@@ -162,7 +162,7 @@ func (pvc *PersistentVolumeCollector) persistentVolumeClaimToStackStateComponent
 
 	identifiers := make([]string, 0)
 
-	persistentVolumeClaimExternalID := pvc.buildPersistentVolumeClaimExternalID(persistentVolumeClaim.Name)
+	persistentVolumeClaimExternalID := pvc.buildPersistentVolumeClaimExternalID(persistentVolumeClaim.Namespace, persistentVolumeClaim.Name)
 
 	// k8s object TypeMeta seem to be archived, it's always empty.
 	tags := pvc.initTags(persistentVolumeClaim.ObjectMeta, metav1.TypeMeta{Kind: "PersistentVolumeClaim"})
