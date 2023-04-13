@@ -51,7 +51,7 @@ func TestVolumeCorrelator(t *testing.T) {
 	expectedPod2ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod2Name)
 	expectedPod3ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod3Name)
 	expectedPod4ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod4Name)
-	expectedPVCID := fmt.Sprintf("urn:kubernetes:/%s:persistent-volume-claim/%s", clusterName, pvcName)
+	expectedPVCID := fmt.Sprintf("urn:kubernetes:/%s:%s:persistent-volume-claim/%s", clusterName, namespace, pvcName)
 	expectedConfigMapID := fmt.Sprintf("urn:kubernetes:/%s:%s:configmap/%s", clusterName, namespace, "config-map")
 	expectedVID := fmt.Sprintf("urn:kubernetes:/%s:empty-dir:volume/%s/%s/%s", clusterName, namespace, pod4Name, "volume")
 	expectedContainerID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s:container/%s", clusterName, namespace, pod1Name, containerName)
