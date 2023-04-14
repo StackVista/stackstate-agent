@@ -45,7 +45,7 @@ func SubmitMetric(checkID *C.char, metricType C.metric_type_t, metricName *C.cha
 	_flushFirstValue := bool(flushFirstValue)
 
 	// Add cluster name tag to _tags only if it's not already present in _tags
-	clusterName := clustername.GetClusterName(context.TODO(), "")
+	clusterName := clustername.GetClusterName(context.TODO(), hostname)
 	if clusterName != "" {
 		_tags = appendIfMissing(_tags, fmt.Sprintf("cluster_name:%s", clusterName))
 		_tags = appendIfMissing(_tags, fmt.Sprintf("kube_cluster_name:%s", clusterName))
