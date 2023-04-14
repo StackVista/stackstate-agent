@@ -9,10 +9,13 @@
 package python
 
 import (
+	"context"
+	"fmt"
 	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 	chk "github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
@@ -41,6 +44,13 @@ func SubmitMetric(checkID *C.char, metricType C.metric_type_t, metricName *C.cha
 	_tags := cStringArrayToSlice(tags)
 	_flushFirstValue := bool(flushFirstValue)
 
+	// Add cluster name tag to _tags only if it's not already present in _tags
+	clusterName := clustername.GetClusterName(context.TODO(), _hostname)
+	if clusterName != "" {
+		_tags = appendIfMissing(_tags, fmt.Sprintf("cluster_name:%s", clusterName))
+		_tags = appendIfMissing(_tags, fmt.Sprintf("kube_cluster_name:%s", clusterName))
+	}
+
 	switch metricType {
 	case C.DATADOG_AGENT_RTLOADER_GAUGE:
 		sender.Gauge(_name, _value, _hostname, _tags)
@@ -57,6 +67,15 @@ func SubmitMetric(checkID *C.char, metricType C.metric_type_t, metricName *C.cha
 	case C.DATADOG_AGENT_RTLOADER_HISTORATE:
 		sender.Historate(_name, _value, _hostname, _tags)
 	}
+}
+
+func appendIfMissing(tags []string, tagToAppend string) []string {
+	for _, existingTag := range tags {
+		if existingTag == tagToAppend {
+			return tags
+		}
+	}
+	return append(tags, tagToAppend)
 }
 
 // SubmitServiceCheck is the method exposed to Python scripts to submit service checks
