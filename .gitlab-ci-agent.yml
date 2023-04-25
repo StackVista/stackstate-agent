@@ -1093,7 +1093,7 @@ beest_k8s_1_24_containerd_test:
     - curl https://platform.slim.dev/.service/releases/slim/0.0.14-release | sh
     - ~/.slim/bin/slim config gen --save --org ${SLIM_ORG_ID} --token ${SLIM_TOKEN}
     - curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >regctl && chmod 755 regctl
-    - export H_ID=$(./regctl image inspect --format '{{ index .Config.Labels "slim.nx"}}' quay.io/stackstate/stackstate-agent-2-test:${CI_COMMIT_SHA}-slim-instrumented)
+    - export H_ID=$(./regctl image inspect --format '{{ index .Config.Labels "slim.nx"}}' quay.io/stackstate/stackstate-agent-2-test:${CI_COMMIT_SHORT_SHA}-slim-instrumented)
     - ~/.slim/bin/slim harden --id ${H_ID}
 
 beest_k8s_1_22_dockerd_failure_cleanup:
