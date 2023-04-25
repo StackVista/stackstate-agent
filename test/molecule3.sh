@@ -59,7 +59,7 @@ if [[ -z $CI_COMMIT_REF_NAME ]]; then
 else
   export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
 fi
-
+export AGENT_CURRENT_BRANCH_REF=`git rev-parse --short=8 HEAD`
 conda activate molecule
 
 pip3 install -r molecule-role/requirements-molecule3.txt
@@ -80,6 +80,7 @@ yamllint -c .yamllint .
 
 echo "MOLECULE_RUN_ID=${CI_JOB_ID:-unknown}"
 echo "AGENT_CURRENT_BRANCH=${AGENT_CURRENT_BRANCH}"
+echo "AGENT_CURRENT_BRANCH_REF=${AGENT_CURRENT_BRANCH_REF}"
 
 # TODO: Remove if kubernetes works
 if [[ $1 == "--bypass" ]]; then

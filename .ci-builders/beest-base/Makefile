@@ -15,12 +15,14 @@ DOCKER_BUILD_ARG              = --build-arg ARTIFACTORY_PYPI_URL=${ARTIFACTORY_P
                                 --build-arg ARTIFACTORY_PASSWORD=${ARTIFACTORY_PASSWORD}
 
 GIT_BRANCH                    = $(shell git rev-parse --abbrev-ref HEAD)
+GIT_SHA                       = $(shell git rev-parse --short=8 HEAD)
 MAJOR_VERSION                ?= 2
 STS_AWS_TEST_BUCKET          ?= stackstate-agent-3-test
 STS_DOCKER_TEST_REPO         ?= stackstate-agent-test
 PROCESS_AGENT_TEST_REPO      ?= stackstate-process-agent-test
 STS_DOCKER_TEST_REPO_CLUSTER ?= stackstate-cluster-agent-test
 DOCKER_ENV		              = --env AGENT_CURRENT_BRANCH=${GIT_BRANCH} \
+								--env AGENT_CURRENT_BRANCH_REF=${GIT_SHA} \
 			    	            --env MAJOR_VERSION=${MAJOR_VERSION} \
 			    	            --env STS_AWS_TEST_BUCKET=${STS_AWS_TEST_BUCKET} \
 			    	            --env STS_DOCKER_TEST_REPO=${STS_DOCKER_TEST_REPO} \

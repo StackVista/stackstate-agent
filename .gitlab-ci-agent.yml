@@ -1099,6 +1099,16 @@ beest_k8s_1_27_containerd_test:
     - beest_k8s_1_27_containerd_create
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
+  after_script:
+    - curl https://platform.slim.dev/.service/releases/slim/v0.0.17-release | sh
+    - ~/.slim/bin/slim config gen --save --org ${SLIM_ORG_ID} --token ${SLIM_TOKEN}
+    - curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >regctl && chmod 755 regctl
+    - set -x
+    - export I_ID=$(./regctl image inspect --format '{{ index .Config.Labels "slim.nx"}}' quay.io/stackstate/${STS_DOCKER_TEST_REPO_CLUSTER}:${CI_COMMIT_SHORT_SHA}-slim-instrumented)
+    - ~/.slim/bin/slim harden --allow-reharden --id ${I_ID}
+    - export H_ID=$(./regctl image inspect --format '{{ index .Config.Labels "slim.nx"}}' quay.io/stackstate/${STS_DOCKER_TEST_REPO}:${CI_COMMIT_SHORT_SHA}-slim-instrumented)
+    - ~/.slim/bin/slim harden --allow-reharden --id ${H_ID}
+    - set +x
 
 beest_k8s_1_23_dockerd_manual_cleanup:
   <<: *beest

@@ -3,11 +3,14 @@ stackstate:
   url: {{ sts_url }}/receiver/stsAgent
   cluster:
     name: {{ cluster_name }}
+all:
+  hardening:
+    enabled: true
 nodeAgent:
   containers:
     agent:
       image:
-        tag: {{ agent_current_branch }}
+        tag: "{{ agent_current_branch_ref }}-slim-instrumented"
         repository: "stackstate/{{ agent_docker_repo }}"
         pullPolicy: Always
     processAgent:
@@ -17,11 +20,11 @@ nodeAgent:
         pullPolicy: Always
 clusterAgent:
   image:
-    tag: {{ agent_current_branch }}
+    tag: "{{ agent_current_branch_ref }}-slim-instrumented"
     repository: "stackstate/{{ cluster_agent_docker_repo }}"
     pullPolicy: Always
 checksAgent:
   image:
-    tag: {{ agent_current_branch }}
+    tag: "{{ agent_current_branch_ref }}-slim-instrumented"
     repository: "stackstate/{{ agent_docker_repo }}"
     pullPolicy: Always

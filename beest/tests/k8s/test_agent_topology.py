@@ -13,6 +13,7 @@ def test_cluster_agent_topology(ansible_var, cliv1):
     namespace = ansible_var("monitoring_namespace")
     release_name = ansible_var("agent_release_name")
     branch_name = ansible_var("agent_current_branch")
+    commit_sha = ansible_var("agent_current_branch_ref")
 
     cluster_agent = release_name + "-cluster-agent"
 
@@ -45,6 +46,7 @@ def test_cluster_agent_topology(ansible_var, cliv1):
     matched_res = query_and_assert(cliv1, cluster_name, namespace, expected_topology)
     # TODO revive with STAC-19236
     # assert f"image_tag:{branch_name}" in matched_res.component("cluster-agent-container").tags
+    # also commit_sha
 
 
 def test_node_agent_topology(ansible_var, cliv1):
@@ -53,6 +55,7 @@ def test_node_agent_topology(ansible_var, cliv1):
     namespace = ansible_var("monitoring_namespace")
     release_name = ansible_var("agent_release_name")
     branch_name = ansible_var("agent_current_branch")
+    commit_sha = ansible_var("agent_current_branch_ref")
 
     node_agent = release_name + "-node-agent"
 
@@ -104,6 +107,7 @@ def test_node_agent_topology(ansible_var, cliv1):
     # assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-process-container", 0)).tags
     # assert f"pod-name:{node_agent_pod_name}" in matched_res.component(("node-agent-process-agent", 0)).tags
     # assert f"image_tag:{branch_name}" in matched_res.component(("node-agent-main-container", 0)).tags
+    # also commit_sha
 
 
 def test_checks_agent_topology(ansible_var, cliv1):
@@ -111,6 +115,7 @@ def test_checks_agent_topology(ansible_var, cliv1):
     namespace = ansible_var("monitoring_namespace")
     release_name = ansible_var("agent_release_name")
     branch_name = ansible_var("agent_current_branch")
+    commit_sha = ansible_var("agent_current_branch_ref")
 
     checks_agent = release_name + "-checks-agent"
 
@@ -138,6 +143,7 @@ def test_checks_agent_topology(ansible_var, cliv1):
     matched_res = query_and_assert(cliv1, cluster_name, namespace, expected_topology)
     # TODO revive after STAC-19236
     # assert f"image_tag:{branch_name}" in matched_res.component("checks-agent-container").tags
+    # also commit_sha
 
 
 def query_and_assert(cliv1, cluster_name: str, namespace: str, expected_topology: TopologyMatcher):

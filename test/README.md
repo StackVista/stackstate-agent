@@ -139,6 +139,7 @@ Under `./molecule-role/win-image-refresh` there is a terraform script that can b
 
 export MOLECULE_RUN_ID=${USER}_manual
 export AGENT_CURRENT_BRANCH=`git rev-parse --abbrev-ref HEAD`
+export AGENT_CURRENT_BRANCH_REF=`git rev-parse --short=8 HEAD`
 export quay_password=SPECIFY_ENCRYPTED_CHECK_UI
 export quay_user=SPECIFY
 export STACKSTATE_BRANCH=master

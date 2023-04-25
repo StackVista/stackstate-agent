@@ -8,6 +8,7 @@ artifactory_user: "{{ lookup('env', 'artifactory_user') or ARTIFACTORY_USER }}"
 artifactory_password: "{{ lookup('env', 'artifactory_password') or ARTIFACTORY_PASSWORD }}"
 
 agent_current_branch: "{{ lookup('env', 'AGENT_CURRENT_BRANCH') or AGENT_CURRENT_BRANCH }}"
+agent_current_branch_ref: "{{ lookup('env', 'AGENT_CURRENT_BRANCH_REF') or AGENT_CURRENT_BRANCH_REF }}"
 agent_docker_repo: "{{ lookup('env', 'STS_DOCKER_TEST_REPO') or STS_DOCKER_TEST_REPO }}"
 process_agent_branch: "{{ lookup('env', 'PROCESS_AGENT_BRANCH') or 'master' }}"
 process_agent_repo: "{{ lookup('env', 'PROCESS_AGENT_TEST_REPO') or PROCESS_AGENT_TEST_REPO }}"
