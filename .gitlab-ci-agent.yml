@@ -1079,8 +1079,6 @@ beest_k8s_1_24_containerd_test:
   <<: *beest
   <<: *beest_test
   <<: *beest_k8s_1_24_containerd_variables
-  variables:
-    SLIM_INSTALLED: "true"
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
