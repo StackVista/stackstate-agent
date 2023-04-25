@@ -34,7 +34,7 @@ if [ "${SLIM_INSTALLED}" = "true" ]; then
     # quay.io/stackstate/stackstate-agent-2-test:abcdefgh-slim-instrumented
     # regctl
     apk add curl
-    ~/.slim/bin/slim inst ${DOCKER_TAG} --include-last-image-layers 4
+    ~/.slim/bin/slim inst --include-last-image-layers 4 ${DOCKER_TAG}
 fi
 
 if [ -n "$EXTRA_TAG" ]; then
