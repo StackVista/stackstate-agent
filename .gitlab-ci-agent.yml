@@ -692,11 +692,11 @@ pre_release_main_agent_image: &pre_release_image
   services:
     - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
       alias: docker
-  before_script: []
-  script:
+  before_script:
     - apk add curl
     - curl https://platform.slim.dev/.service/releases/slim/0.0.14-release | sh
     - ~/.slim/bin/slim config gen --save --org ${SLIM_ORG_ID} --token ${SLIM_TOKEN}
+  script:
     - cd $CI_PROJECT_DIR
     - export VERSION=`cat version.txt`
     - cp ./outcomes/pkg/stackstate-agent_*_amd64.deb ./Dockerfiles/agent
