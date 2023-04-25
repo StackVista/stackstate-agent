@@ -688,11 +688,15 @@ pre_release_main_agent_image: &pre_release_image
     DOCKER_DRIVER: overlay
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
+    SLIM_INSTALLED: "true"
   services:
     - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
       alias: docker
   before_script: []
   script:
+    - apk add curl
+    - curl https://platform.slim.dev/.service/releases/slim/0.0.14-release | sh
+    - ~/.slim/bin/slim config gen --save --org ${SLIM_ORG_ID} --token ${SLIM_TOKEN}
     - cd $CI_PROJECT_DIR
     - export VERSION=`cat version.txt`
     - cp ./outcomes/pkg/stackstate-agent_*_amd64.deb ./Dockerfiles/agent
@@ -1075,6 +1079,8 @@ beest_k8s_1_24_containerd_test:
   <<: *beest
   <<: *beest_test
   <<: *beest_k8s_1_24_containerd_variables
+  variables:
+    SLIM_INSTALLED: "true"
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
@@ -1085,6 +1091,12 @@ beest_k8s_1_24_containerd_test:
     - beest_k8s_1_24_containerd_create
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
+  after_script:
+    - curl https://platform.slim.dev/.service/releases/slim/0.0.14-release | sh
+    - ~/.slim/bin/slim config gen --save --org ${SLIM_ORG_ID} --token ${SLIM_TOKEN}
+    - curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >regctl && chmod 755 regctl
+    - export H_ID=$(./regctl image inspect --format '{{ index .Config.Labels "slim.nx"}}' quay.io/stackstate/stackstate-agent-2-test:${CI_COMMIT_SHA}-slim-instrumented)
+    - ~/.slim/bin/slim harden --id ${H_ID}
 
 beest_k8s_1_22_dockerd_failure_cleanup:
   <<: *beest
