@@ -29,11 +29,11 @@ DOCKER_TAG="${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${IMAGE_TAG}"
 docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
 docker push "${DOCKER_TAG}"
 
-if [ -n "${SLIM_INSTALLED}" ]; then
-    apk add curl
+if [ "${SLIM_INSTALLED}" = "true" ]; then
     # image:tag-slim-instrumented
     # quay.io/stackstate/stackstate-agent-2-test:abcdefgh-slim-instrumented
     # regctl
+    apk add curl
     ~/.slim/bin/slim inst ${DOCKER_TAG} --include-last-image-layers 4
 fi
 
