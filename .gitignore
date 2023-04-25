@@ -222,3 +222,7 @@ pkg/collector/check/state/temp-write-to-disk-test/*
 
 # Beest
 beest/sut/yards/*/terraform.tfstate.d/
+beest/sut/yards/*/*.key
+beest/sut/yards/*/*.crt
+# Beest generated manifests
+beest/sut/bees/k8s-agent/files/test_ingress/*.yaml

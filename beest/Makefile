@@ -27,7 +27,7 @@ STS_DOCKER_TEST_REPO         ?= stackstate-agent-2-test
 STS_DOCKER_TEST_REPO_CLUSTER ?= stackstate-cluster-agent-test
 PROCESS_AGENT_TEST_REPO      ?= stackstate-process-agent-test
 
-BASE_KEEPER_IMAGE  = artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20220926
+BASE_KEEPER_IMAGE  = artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20230407
 KEEPER_IMAGE       = beest:${BRANCH}
 KEEPER_CONTAINER   = beest
 VOLUME_GO_PKG_NAME = beest-go-volume
@@ -39,7 +39,10 @@ DOCKER_ENV		   = --env AGENT_CURRENT_BRANCH=${GIT_BRANCH} \
 					 --env PROCESS_AGENT_TEST_REPO=${PROCESS_AGENT_TEST_REPO}
 
 # Core commands
-build:
+login:
+	docker login artifactory.tooling.stackstate.io -u ${artifactory_user} -p ${artifactory_password}
+
+build: login
 	docker build -t ${KEEPER_IMAGE} \
 		--build-arg BASE_IMAGE=${BASE_KEEPER_IMAGE} \
 		--build-arg UID=${UID} \

@@ -1,7 +1,7 @@
 FROM golang:1.17.8-bullseye
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends less direnv unzip python3-pip bash-completion vim jq && \
+    apt-get install -y --no-install-recommends less direnv unzip python3-pip bash-completion vim jq pass && \
     rm -rf /var/lib/apt/lists/*
 
 # configure python artifactory to pull stackstate-cli v1
@@ -88,3 +88,14 @@ RUN curl --insecure -O "https://cli-dl.stackstate.com.s3.amazonaws.com/stackstat
     tar xvzf stackstate-cli-${STSCLI_V2}.linux-x86_64.tar.gz && \
     rm -r stackstate-cli-${STSCLI_V2}.linux-x86_64.tar.gz && \
     mv ./sts /usr/local/bin/
+
+RUN git clone https://github.com/Homebrew/brew /opt/homebrew && \
+    eval "$(/opt/homebrew/bin/brew shellenv)" && \
+    /opt/homebrew/bin/brew update --force --quiet && \
+    chmod -R go-w "$(/opt/homebrew/bin/brew --prefix)/share/zsh" && \
+    ln -s /opt/homebrew/bin/brew /usr/local/bin/brew
+
+RUN brew install aws-vault
+
+RUN touch ~/.profile && \
+    echo "export AWS_SDK_LOAD_CONFIG=1" >> ~/.profile

@@ -40,44 +40,8 @@
         name: stackstate-test
         repo_url: "https://helm-test.stackstate.io"
 
-    - name: Apply manifests for test workloads
-      kubernetes.core.k8s:
-        context: "{{ kubecontext }}"
-        namespace: "{{ test_namespace }}"
-        definition: "{{ lookup('file', '{{ item }}') }}"
-      with_fileglob: "test_workloads/*.yaml"
-
-    - name: Apply manifests for ingress >= 1.22 (networking.k8s.io/v1)
-      when: agent_k8s_version|float >= 1.22
-      kubernetes.core.k8s:
-        context: "{{ kubecontext }}"
-        namespace: "{{ test_namespace }}"
-        definition: "{{ lookup('file', '{{ item }}') }}"
-      with_fileglob: "test_ingress/example-ingress-1-22.yaml"
-
-    - name: Apply manifests for ingress <= 1.21 (extensions/v1beta1)
-      when: agent_k8s_version|float <= 1.21
-      kubernetes.core.k8s:
-        context: "{{ kubecontext }}"
-        namespace: "{{ test_namespace }}"
-        definition: "{{ lookup('file', '{{ item }}') }}"
-      with_fileglob: "test_ingress/example-ingress-1-21.yaml"
-
-    - name: Apply manifests for cronjob >= 1.22 (v1)
-      when: agent_k8s_version|float >= 1.22
-      kubernetes.core.k8s:
-        context: "{{ kubecontext }}"
-        namespace: "{{ test_namespace }}"
-        definition: "{{ lookup('file', '{{ item }}') }}"
-      with_fileglob: "test_cronjob/cronjob-v1.yaml"
-
-    - name: Apply manifests for cronjob <= 1.21 (v1beta1)
-      when: agent_k8s_version|float <= 1.21
-      kubernetes.core.k8s:
-        context: "{{ kubecontext }}"
-        namespace: "{{ test_namespace }}"
-        definition: "{{ lookup('file', '{{ item }}') }}"
-      with_fileglob: "test_cronjob/cronjob-v1beta1.yaml"
+    - include_tasks: test-workloads.yml
+    - include_tasks: test-ingress.yml
 
     - name: Generate agent values
       ansible.builtin.template:
