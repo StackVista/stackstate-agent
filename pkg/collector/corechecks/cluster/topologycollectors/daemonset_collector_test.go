@@ -78,6 +78,8 @@ func TestDaemonSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "apps/v1",
+							"kind":       "DaemonSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -90,11 +92,14 @@ func TestDaemonSetCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": interface{}(nil),
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 								"updateStrategy": map[string]interface{}{
 									"type": "RollingUpdate",
 								},
+								"selector": nil,
 							},
 						},
 					},
@@ -112,6 +117,8 @@ func TestDaemonSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "apps/v1",
+							"kind":       "DaemonSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -125,11 +132,14 @@ func TestDaemonSetCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": interface{}(nil),
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 								"updateStrategy": map[string]interface{}{
 									"type": "RollingUpdate",
 								},
+								"selector": nil,
 							},
 							"status": map[string]interface{}{
 								"currentNumberScheduled": float64(1),
@@ -175,6 +185,8 @@ func TestDaemonSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "apps/v1",
+							"kind":       "DaemonSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -187,11 +199,14 @@ func TestDaemonSetCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": interface{}(nil),
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 								"updateStrategy": map[string]interface{}{
 									"type": "RollingUpdate",
 								},
+								"selector": nil,
 							},
 						},
 					},
@@ -209,6 +224,8 @@ func TestDaemonSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "apps/v1",
+							"kind":       "DaemonSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -222,11 +239,14 @@ func TestDaemonSetCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": interface{}(nil),
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 								"updateStrategy": map[string]interface{}{
 									"type": "RollingUpdate",
 								},
+								"selector": nil,
 							},
 							"status": map[string]interface{}{
 								"currentNumberScheduled": float64(1),
@@ -273,6 +293,8 @@ func TestDaemonSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "apps/v1",
+							"kind":       "DaemonSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -286,11 +308,14 @@ func TestDaemonSetCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": interface{}(nil),
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 								"updateStrategy": map[string]interface{}{
 									"type": "RollingUpdate",
 								},
+								"selector": nil,
 							},
 						},
 					},
@@ -308,6 +333,8 @@ func TestDaemonSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "apps/v1",
+							"kind":       "DaemonSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -322,11 +349,14 @@ func TestDaemonSetCollector(t *testing.T) {
 									"metadata": map[string]interface{}{
 										"creationTimestamp": interface{}(nil),
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 								"updateStrategy": map[string]interface{}{
 									"type": "RollingUpdate",
 								},
+								"selector": nil,
 							},
 							"status": map[string]interface{}{
 								"currentNumberScheduled": float64(1),

@@ -85,6 +85,8 @@ func TestStatefulSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "apps/v1",
+							"kind":       "StatefulSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -94,12 +96,15 @@ func TestStatefulSetCollector(t *testing.T) {
 							"spec": map[string]interface{}{
 								"podManagementPolicy": "OrderedReady",
 								"replicas":            float64(1),
+								"selector":            nil,
 								"serviceName":         "statefulset-service-name",
 								"template": map[string]interface{}{
 									"metadata": map[string]interface{}{
 										"creationTimestamp": nil,
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 								"updateStrategy": map[string]interface{}{
 									"type": "RollingUpdate",
@@ -121,6 +126,8 @@ func TestStatefulSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "apps/v1",
+							"kind":       "StatefulSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -133,19 +140,22 @@ func TestStatefulSetCollector(t *testing.T) {
 							"spec": map[string]interface{}{
 								"podManagementPolicy": "OrderedReady",
 								"replicas":            float64(1),
+								"selector":            nil,
 								"serviceName":         "statefulset-service-name",
 								"template": map[string]interface{}{
 									"metadata": map[string]interface{}{
 										"creationTimestamp": nil,
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 								"updateStrategy": map[string]interface{}{
 									"type": "RollingUpdate",
 								},
 							},
 							"status": map[string]interface{}{
-								"observedGeneration": "123",
+								"observedGeneration": float64(123),
 								"replicas":           float64(1),
 								"readyReplicas":      float64(1),
 								"currentReplicas":    float64(1),
@@ -193,6 +203,8 @@ func TestStatefulSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "apps/v1",
+							"kind":       "StatefulSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -202,12 +214,15 @@ func TestStatefulSetCollector(t *testing.T) {
 							"spec": map[string]interface{}{
 								"podManagementPolicy": "OrderedReady",
 								"replicas":            float64(1),
+								"selector":            nil,
 								"serviceName":         "statefulset-service-name",
 								"template": map[string]interface{}{
 									"metadata": map[string]interface{}{
 										"creationTimestamp": nil,
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 								"updateStrategy": map[string]interface{}{
 									"type": "RollingUpdate",
@@ -229,6 +244,8 @@ func TestStatefulSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "apps/v1",
+							"kind":       "StatefulSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -241,19 +258,22 @@ func TestStatefulSetCollector(t *testing.T) {
 							"spec": map[string]interface{}{
 								"podManagementPolicy": "OrderedReady",
 								"replicas":            float64(1),
+								"selector":            nil,
 								"serviceName":         "statefulset-service-name",
 								"template": map[string]interface{}{
 									"metadata": map[string]interface{}{
 										"creationTimestamp": nil,
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 								"updateStrategy": map[string]interface{}{
 									"type": "RollingUpdate",
 								},
 							},
 							"status": map[string]interface{}{
-								"observedGeneration": "123",
+								"observedGeneration": float64(123),
 								"replicas":           float64(1),
 								"readyReplicas":      float64(1),
 								"currentReplicas":    float64(1),
@@ -302,6 +322,8 @@ func TestStatefulSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "apps/v1",
+							"kind":       "StatefulSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -312,12 +334,15 @@ func TestStatefulSetCollector(t *testing.T) {
 							"spec": map[string]interface{}{
 								"podManagementPolicy": "OrderedReady",
 								"replicas":            float64(1),
+								"selector":            nil,
 								"serviceName":         "statefulset-service-name",
 								"template": map[string]interface{}{
 									"metadata": map[string]interface{}{
 										"creationTimestamp": nil,
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 								"updateStrategy": map[string]interface{}{
 									"type": "RollingUpdate",
@@ -339,6 +364,8 @@ func TestStatefulSetCollector(t *testing.T) {
 							},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "apps/v1",
+							"kind":       "StatefulSet",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
@@ -352,19 +379,22 @@ func TestStatefulSetCollector(t *testing.T) {
 							"spec": map[string]interface{}{
 								"podManagementPolicy": "OrderedReady",
 								"replicas":            float64(1),
+								"selector":            nil,
 								"serviceName":         "statefulset-service-name",
 								"template": map[string]interface{}{
 									"metadata": map[string]interface{}{
 										"creationTimestamp": nil,
 									},
-									"spec": map[string]interface{}{},
+									"spec": map[string]interface{}{
+										"containers": nil,
+									},
 								},
 								"updateStrategy": map[string]interface{}{
 									"type": "RollingUpdate",
 								},
 							},
 							"status": map[string]interface{}{
-								"observedGeneration": "123",
+								"observedGeneration": float64(123),
 								"replicas":           float64(1),
 								"readyReplicas":      float64(1),
 								"currentReplicas":    float64(1),

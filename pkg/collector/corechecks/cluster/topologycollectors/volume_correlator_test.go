@@ -51,7 +51,7 @@ func TestVolumeCorrelator(t *testing.T) {
 	expectedPod2ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod2Name)
 	expectedPod3ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod3Name)
 	expectedPod4ID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s", clusterName, namespace, pod4Name)
-	expectedPVCID := fmt.Sprintf("urn:kubernetes:/%s:persistent-volume-claim/%s", clusterName, pvcName)
+	expectedPVCID := fmt.Sprintf("urn:kubernetes:/%s:%s:persistent-volume-claim/%s", clusterName, namespace, pvcName)
 	expectedConfigMapID := fmt.Sprintf("urn:kubernetes:/%s:%s:configmap/%s", clusterName, namespace, "config-map")
 	expectedVID := fmt.Sprintf("urn:kubernetes:/%s:empty-dir:volume/%s/%s/%s", clusterName, namespace, pod4Name, "volume")
 	expectedContainerID := fmt.Sprintf("urn:kubernetes:/%s:%s:pod/%s:container/%s", clusterName, namespace, pod1Name, containerName)
@@ -108,6 +108,8 @@ func TestVolumeCorrelator(t *testing.T) {
 							"status":      map[string]interface{}{"phase": "Running"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Pod",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": someTimestampFormatted,
 								"deletionTimestamp": someTimestampFormatted,
@@ -129,23 +131,21 @@ func TestVolumeCorrelator(t *testing.T) {
 								"volumes": []interface{}{
 									map[string]interface{}{
 										"name": "podinfo",
-										"volumeSource": map[string]interface{}{
-											"downwardAPI": map[string]interface{}{
-												"items": []interface{}{
-													map[string]interface{}{
-														"fieldRef": map[string]interface{}{
-															"apiVersion": "v1",
-															"fieldPath":  "metadata.labels",
-														},
-														"path": "labels",
+										"downwardAPI": map[string]interface{}{
+											"items": []interface{}{
+												map[string]interface{}{
+													"fieldRef": map[string]interface{}{
+														"apiVersion": "v1",
+														"fieldPath":  "metadata.labels",
 													},
-													map[string]interface{}{
-														"fieldRef": map[string]interface{}{
-															"apiVersion": "v1",
-															"fieldPath":  "metadata.annotations",
-														},
-														"path": "annotations",
+													"path": "labels",
+												},
+												map[string]interface{}{
+													"fieldRef": map[string]interface{}{
+														"apiVersion": "v1",
+														"fieldPath":  "metadata.annotations",
 													},
+													"path": "annotations",
 												},
 											},
 										},
@@ -176,6 +176,8 @@ func TestVolumeCorrelator(t *testing.T) {
 							"status":      map[string]interface{}{"phase": "Running"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Pod",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": someTimestampFormatted,
 								"deletionTimestamp": someTimestampFormatted,
@@ -197,23 +199,21 @@ func TestVolumeCorrelator(t *testing.T) {
 								"volumes": []interface{}{
 									map[string]interface{}{
 										"name": "podinfo",
-										"volumeSource": map[string]interface{}{
-											"downwardAPI": map[string]interface{}{
-												"items": []interface{}{
-													map[string]interface{}{
-														"fieldRef": map[string]interface{}{
-															"apiVersion": "v1",
-															"fieldPath":  "metadata.labels",
-														},
-														"path": "labels",
+										"downwardAPI": map[string]interface{}{
+											"items": []interface{}{
+												map[string]interface{}{
+													"fieldRef": map[string]interface{}{
+														"apiVersion": "v1",
+														"fieldPath":  "metadata.labels",
 													},
-													map[string]interface{}{
-														"fieldRef": map[string]interface{}{
-															"apiVersion": "v1",
-															"fieldPath":  "metadata.annotations",
-														},
-														"path": "annotations",
+													"path": "labels",
+												},
+												map[string]interface{}{
+													"fieldRef": map[string]interface{}{
+														"apiVersion": "v1",
+														"fieldPath":  "metadata.annotations",
 													},
+													"path": "annotations",
 												},
 											},
 										},
@@ -273,6 +273,8 @@ func TestVolumeCorrelator(t *testing.T) {
 							"status":      map[string]interface{}{"phase": "Running"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Pod",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": someTimestampFormatted,
 								"deletionTimestamp": someTimestampFormatted,
@@ -284,6 +286,7 @@ func TestVolumeCorrelator(t *testing.T) {
 								"restartPolicy": "Always",
 								"containers": []interface{}{
 									map[string]interface{}{
+										"name":      "",
 										"resources": map[string]interface{}{},
 										"volumeMounts": []interface{}{
 											map[string]interface{}{"mountPath": "/data", "name": "data-1"},
@@ -293,10 +296,8 @@ func TestVolumeCorrelator(t *testing.T) {
 								"volumes": []interface{}{
 									map[string]interface{}{
 										"name": "volume1",
-										"volumeSource": map[string]interface{}{
-											"persistentVolumeClaim": map[string]interface{}{
-												"claimName": "data",
-											},
+										"persistentVolumeClaim": map[string]interface{}{
+											"claimName": "data",
 										},
 									},
 								},
@@ -325,6 +326,8 @@ func TestVolumeCorrelator(t *testing.T) {
 							"status":      map[string]interface{}{"phase": "Running"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Pod",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": someTimestampFormatted,
 								"deletionTimestamp": someTimestampFormatted,
@@ -336,6 +339,7 @@ func TestVolumeCorrelator(t *testing.T) {
 								"restartPolicy": "Always",
 								"containers": []interface{}{
 									map[string]interface{}{
+										"name":      "",
 										"resources": map[string]interface{}{},
 										"volumeMounts": []interface{}{
 											map[string]interface{}{"mountPath": "/data", "name": "data-1"},
@@ -345,10 +349,8 @@ func TestVolumeCorrelator(t *testing.T) {
 								"volumes": []interface{}{
 									map[string]interface{}{
 										"name": "volume1",
-										"volumeSource": map[string]interface{}{
-											"persistentVolumeClaim": map[string]interface{}{
-												"claimName": "data",
-											},
+										"persistentVolumeClaim": map[string]interface{}{
+											"claimName": "data",
 										},
 									},
 								},
@@ -406,6 +408,8 @@ func TestVolumeCorrelator(t *testing.T) {
 							"status":      map[string]interface{}{"phase": "Running"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Pod",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": someTimestampFormatted,
 								"deletionTimestamp": someTimestampFormatted,
@@ -417,6 +421,7 @@ func TestVolumeCorrelator(t *testing.T) {
 								"restartPolicy": "Always",
 								"containers": []interface{}{
 									map[string]interface{}{
+										"name":      "",
 										"resources": map[string]interface{}{},
 										"volumeMounts": []interface{}{
 											map[string]interface{}{"mountPath": "/etc/podinfo", "name": "podinfo", "readOnly": true},
@@ -426,26 +431,20 @@ func TestVolumeCorrelator(t *testing.T) {
 								"volumes": []interface{}{
 									map[string]interface{}{
 										"name": "config-map",
-										"volumeSource": map[string]interface{}{
-											"configMap": map[string]interface{}{
-												"items": []interface{}{
-													map[string]interface{}{"key": "key", "path": "/path"},
-												},
-												"localObjectReference": map[string]interface{}{
-													"name": "config-map",
-												},
+										"configMap": map[string]interface{}{
+											"items": []interface{}{
+												map[string]interface{}{"key": "key", "path": "/path"},
 											},
+											"name": "config-map",
 										},
 									},
 									map[string]interface{}{
 										"name": "secret",
-										"volumeSource": map[string]interface{}{
-											"secret": map[string]interface{}{
-												"items": []interface{}{
-													map[string]interface{}{"key": "key", "path": "/path"},
-												},
-												"secretName": "secret",
+										"secret": map[string]interface{}{
+											"items": []interface{}{
+												map[string]interface{}{"key": "key", "path": "/path"},
 											},
+											"secretName": "secret",
 										},
 									},
 								},
@@ -474,6 +473,8 @@ func TestVolumeCorrelator(t *testing.T) {
 							"status":      map[string]interface{}{"phase": "Running"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Pod",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": someTimestampFormatted,
 								"deletionTimestamp": someTimestampFormatted,
@@ -485,6 +486,7 @@ func TestVolumeCorrelator(t *testing.T) {
 								"restartPolicy": "Always",
 								"containers": []interface{}{
 									map[string]interface{}{
+										"name":      "",
 										"resources": map[string]interface{}{},
 										"volumeMounts": []interface{}{
 											map[string]interface{}{"mountPath": "/etc/podinfo", "name": "podinfo", "readOnly": true},
@@ -494,26 +496,20 @@ func TestVolumeCorrelator(t *testing.T) {
 								"volumes": []interface{}{
 									map[string]interface{}{
 										"name": "config-map",
-										"volumeSource": map[string]interface{}{
-											"configMap": map[string]interface{}{
-												"items": []interface{}{
-													map[string]interface{}{"key": "key", "path": "/path"},
-												},
-												"localObjectReference": map[string]interface{}{
-													"name": "config-map",
-												},
+										"configMap": map[string]interface{}{
+											"items": []interface{}{
+												map[string]interface{}{"key": "key", "path": "/path"},
 											},
+											"name": "config-map",
 										},
 									},
 									map[string]interface{}{
 										"name": "secret",
-										"volumeSource": map[string]interface{}{
-											"secret": map[string]interface{}{
-												"items": []interface{}{
-													map[string]interface{}{"key": "key", "path": "/path"},
-												},
-												"secretName": "secret",
+										"secret": map[string]interface{}{
+											"items": []interface{}{
+												map[string]interface{}{"key": "key", "path": "/path"},
 											},
+											"secretName": "secret",
 										},
 									},
 								},
@@ -571,6 +567,8 @@ func TestVolumeCorrelator(t *testing.T) {
 							"status":      map[string]interface{}{"phase": "Running"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Pod",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": someTimestampFormatted,
 								"deletionTimestamp": someTimestampFormatted,
@@ -582,6 +580,7 @@ func TestVolumeCorrelator(t *testing.T) {
 								"restartPolicy": "Always",
 								"containers": []interface{}{
 									map[string]interface{}{
+										"name":      "",
 										"resources": map[string]interface{}{},
 										"volumeMounts": []interface{}{
 											map[string]interface{}{"mountPath": "/etc/podinfo", "name": "podinfo", "readOnly": true},
@@ -591,11 +590,9 @@ func TestVolumeCorrelator(t *testing.T) {
 								"volumes": []interface{}{
 									map[string]interface{}{
 										"name": "volume",
-										"volumeSource": map[string]interface{}{
-											"emptyDir": map[string]interface{}{
-												"medium":    "Memory",
-												"sizeLimit": "10",
-											},
+										"emptyDir": map[string]interface{}{
+											"medium":    "Memory",
+											"sizeLimit": "10",
 										},
 									},
 								},
@@ -624,6 +621,8 @@ func TestVolumeCorrelator(t *testing.T) {
 							"status":      map[string]interface{}{"phase": "Running"},
 						},
 						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Pod",
 							"metadata": map[string]interface{}{
 								"creationTimestamp": someTimestampFormatted,
 								"deletionTimestamp": someTimestampFormatted,
@@ -635,6 +634,7 @@ func TestVolumeCorrelator(t *testing.T) {
 								"restartPolicy": "Always",
 								"containers": []interface{}{
 									map[string]interface{}{
+										"name":      "",
 										"resources": map[string]interface{}{},
 										"volumeMounts": []interface{}{
 											map[string]interface{}{"mountPath": "/etc/podinfo", "name": "podinfo", "readOnly": true},
@@ -644,11 +644,9 @@ func TestVolumeCorrelator(t *testing.T) {
 								"volumes": []interface{}{
 									map[string]interface{}{
 										"name": "volume",
-										"volumeSource": map[string]interface{}{
-											"emptyDir": map[string]interface{}{
-												"medium":    "Memory",
-												"sizeLimit": "10",
-											},
+										"emptyDir": map[string]interface{}{
+											"medium":    "Memory",
+											"sizeLimit": "10",
 										},
 									},
 								},
@@ -949,6 +947,8 @@ func volumeComponent(namespace, podName, volumeName, volumeType, someTimestampFo
 				Type:       topology.Type{Name: "volume"},
 				Data:       data,
 				SourceProperties: map[string]interface{}{
+					"apiVersion": "v1",
+					"kind":       "Volume",
 					"metadata": map[string]interface{}{
 						"name":              "volume",
 						"creationTimestamp": someTimestampFormatted,
@@ -956,11 +956,9 @@ func volumeComponent(namespace, podName, volumeName, volumeType, someTimestampFo
 					},
 					"volume": map[string]interface{}{
 						"name": "volume",
-						"volumeSource": map[string]interface{}{
-							"emptyDir": map[string]interface{}{
-								"medium":    "Memory",
-								"sizeLimit": "10",
-							},
+						"emptyDir": map[string]interface{}{
+							"medium":    "Memory",
+							"sizeLimit": "10",
 						},
 					},
 				},
@@ -971,6 +969,8 @@ func volumeComponent(namespace, podName, volumeName, volumeType, someTimestampFo
 			Type:       topology.Type{Name: "volume"},
 			Data:       data,
 			SourceProperties: map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "Volume",
 				"metadata": map[string]interface{}{
 					"name":              "volume",
 					"creationTimestamp": someTimestampFormatted,
@@ -978,11 +978,9 @@ func volumeComponent(namespace, podName, volumeName, volumeType, someTimestampFo
 				},
 				"volume": map[string]interface{}{
 					"name": "volume",
-					"volumeSource": map[string]interface{}{
-						"emptyDir": map[string]interface{}{
-							"medium":    "Memory",
-							"sizeLimit": "10",
-						},
+					"emptyDir": map[string]interface{}{
+						"medium":    "Memory",
+						"sizeLimit": "10",
 					},
 				},
 			},

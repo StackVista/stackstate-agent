@@ -3,6 +3,7 @@ package topologycollectors
 import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // K8sVolume is a wrapper around v1.Volume to be used when building up source properties for the component
@@ -28,6 +29,11 @@ func (k *K8sVolume) ProtoMessage() {
 	k.Volume.ProtoMessage()
 }
 
+// DeepCopyObject is needed in order to fulfill the runtime.Object interface
+func (k *K8sVolume) DeepCopyObject() runtime.Object {
+	return nil
+}
+
 // K8sVolumeSource is a wrapper around v1.PersistentVolumeSource to be used when building up source properties for the component
 type K8sVolumeSource struct {
 	metav1.TypeMeta `json:",inline"`
@@ -49,4 +55,9 @@ func (k *K8sVolumeSource) Reset() {
 // ProtoMessage defers to the PersistentVolumeSource.ProtoMessage function
 func (k *K8sVolumeSource) ProtoMessage() {
 	k.PersistentVolumeSource.ProtoMessage()
+}
+
+// DeepCopyObject is needed in order to fulfill the runtime.Object interface
+func (k *K8sVolumeSource) DeepCopyObject() runtime.Object {
+	return nil
 }
