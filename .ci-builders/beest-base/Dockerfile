@@ -89,13 +89,10 @@ RUN curl --insecure -O "https://cli-dl.stackstate.com.s3.amazonaws.com/stackstat
     rm -r stackstate-cli-${STSCLI_V2}.linux-x86_64.tar.gz && \
     mv ./sts /usr/local/bin/
 
-RUN git clone https://github.com/Homebrew/brew /opt/homebrew && \
-    eval "$(/opt/homebrew/bin/brew shellenv)" && \
-    /opt/homebrew/bin/brew update --force --quiet && \
-    chmod -R go-w "$(/opt/homebrew/bin/brew --prefix)/share/zsh" && \
-    ln -s /opt/homebrew/bin/brew /usr/local/bin/brew
-
-RUN brew install aws-vault
+ARG AWS_VAULT_V=v7.2.0
+RUN curl -L "https://github.com/99designs/aws-vault/releases/download/${AWS_VAULT_V}/aws-vault-linux-amd64" -o aws-vault && \
+    chmod +x ./aws-vault && \
+    mv ./aws-vault /usr/local/bin/
 
 RUN touch ~/.profile && \
     echo "export AWS_SDK_LOAD_CONFIG=1" >> ~/.profile
