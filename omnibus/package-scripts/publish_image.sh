@@ -29,19 +29,27 @@ DOCKER_TAG="${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${IMAGE_TAG}"
 docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
 docker push "${DOCKER_TAG}"
 
+if [ "${SLIM_INSTALLED}" = "true" ]; then
+    # image:tag-slim-instrumented
+    # quay.io/stackstate/stackstate-agent-2-test:abcdefgh-slim-instrumented
+    # regctl
+    apk add curl
+    ~/.slim/bin/slim inst --include-last-image-layers 4 --target-image-connector "${SLIM_CONNECTOR_ID}" --instrumented-image-connector "${SLIM_CONNECTOR_ID}" --hardened-image-connector "${SLIM_CONNECTOR_ID}" "${DOCKER_TAG}"
+fi
+
 if [ -n "$EXTRA_TAG" ]; then
     DOCKER_EXTRA_TAG="${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${EXTRA_TAG}"
     docker tag "${DOCKER_TAG}" "${DOCKER_EXTRA_TAG}"
     echo "Pushing release to ${EXTRA_TAG}"
     docker push "${DOCKER_EXTRA_TAG}"
 
-    if [ "${SLIM_INSTALLED}" = "true" ]; then
-        # image:tag-slim-instrumented
-        # quay.io/stackstate/stackstate-agent-2-test:abcdefgh-slim-instrumented
-        # regctl
-        apk add curl
-        ~/.slim/bin/slim inst --include-last-image-layers 4 --target-image-connector "${SLIM_CONNECTOR_ID}" --instrumented-image-connector "${SLIM_CONNECTOR_ID}" --hardened-image-connector "${SLIM_CONNECTOR_ID}" "${DOCKER_EXTRA_TAG}"
-    fi
+#    if [ "${SLIM_INSTALLED}" = "true" ]; then
+#        # image:tag-slim-instrumented
+#        # quay.io/stackstate/stackstate-agent-2-test:abcdefgh-slim-instrumented
+#        # regctl
+#        apk add curl
+#        ~/.slim/bin/slim inst --include-last-image-layers 4 --target-image-connector "${SLIM_CONNECTOR_ID}" --instrumented-image-connector "${SLIM_CONNECTOR_ID}" --hardened-image-connector "${SLIM_CONNECTOR_ID}" "${DOCKER_EXTRA_TAG}"
+#    fi
 
     # If K8S_REPO is not equal to "NOP" and is set then push the image to the k8s repo
     if [ -n "${K8S_REPO}" ] && [ "${K8S_REPO}" != "NOP" ]; then
