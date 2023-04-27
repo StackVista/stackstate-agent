@@ -7,8 +7,8 @@ nodeAgent:
   containers:
     agent:
       image:
-        tag: {{ agent_current_branch }}
-        repository: "stackstate/{{ agent_docker_repo }}-slim-instrumented"
+        tag: "{{ agent_current_branch }}-slim-instrumented"
+        repository: "stackstate/{{ agent_docker_repo }}"
         pullPolicy: Always
     processAgent:
       image:
@@ -17,11 +17,11 @@ nodeAgent:
         pullPolicy: Always
 clusterAgent:
   image:
-    tag: {{ agent_current_branch }}
+    tag: "{{ agent_current_branch }}-slim-instrumented"
     repository: "stackstate/{{ cluster_agent_docker_repo }}"
     pullPolicy: Always
 checksAgent:
   image:
-    tag: {{ agent_current_branch }}
+    tag: "{{ agent_current_branch }}-slim-instrumented"
     repository: "stackstate/{{ agent_docker_repo }}"
     pullPolicy: Always
