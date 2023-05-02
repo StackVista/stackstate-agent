@@ -6,7 +6,8 @@ export AWS_PROFILE=stackstate-sandbox
 # those are the credentials of a stackstate-infosec user
 export BEEST_AWS_ACCESS_KEY_ID=TBD
 export BEEST_AWS_SECRET_ACCESS_KEY=TBD
-configure_aws_beest_credentials
+export BEEST_AWS_VAULT_BACKEND_PASSWORD=TBD
+export BEEST_AWS_MFA_KEY=TBD
 
 export artifactory_user=TBD
 export artifactory_password=TBD
@@ -20,3 +21,5 @@ export STACKSTATE_LICENSE=TBD
 
 # The IP of the NAT Gateway of the tooling account (Where runners live)
 export RUNNERS_IP=TBD
+
+configure_aws_beest_credentials

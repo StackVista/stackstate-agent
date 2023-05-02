@@ -31,7 +31,47 @@ generate_aws_config() {
 
 configure_aws_beest_credentials() {
     echo "Configure AWS Beest credentials ..."
-    echo -e "[default]\naws_access_key_id=$BEEST_AWS_ACCESS_KEY_ID\naws_secret_access_key=$BEEST_AWS_SECRET_ACCESS_KEY" > ~/.aws/credentials
+
+    if [ ! -z "$BEEST_AWS_MFA_KEY" ]; then
+        echo "Configure AWS Beest credentials with aws-vault and MFA ..."
+
+        gpgKeyName=${artifactory_user:-beest@stackstate.com}
+        echo "Generating GPG key for aws-vault backend store for ${gpgKeyName}"
+        gpg --quick-gen-key --batch --passphrase "${BEEST_AWS_VAULT_BACKEND_PASSWORD}" "${gpgKeyName}"
+        gpgKey=$(gpg --list-signatures --with-colons | grep 'sig' | grep "${gpgKeyName}" | head -n 1 | cut -d':' -f5)
+
+        echo "Init pass with gpg key to be used as aws-vault backend store"
+        pass init $gpgKey
+
+        export AWS_ACCESS_KEY_ID=$BEEST_AWS_ACCESS_KEY_ID
+        export AWS_SECRET_ACCESS_KEY=$BEEST_AWS_SECRET_ACCESS_KEY
+        export AWS_VAULT_BACKEND="pass"
+
+        echo -e "#!/bin/bash\n\npass default >/dev/null 2>&1\naws-vault exec -j --region eu-west-1 default" > ~/.aws/credential_process.sh
+        chmod +x ~/.aws/credential_process.sh
+        echo -e "[default]\noutput=json\nregion=eu-west-1\nmfa_serial=${BEEST_AWS_MFA_KEY}\ncredential_process=/home/keeper/.aws/credential_process.sh" > ~/.aws/config
+
+        echo "Generate AWS config StackState profiles ..."
+        sts-toolbox aws generate -p developer
+
+        aws-vault add default --env
+        pass default
+
+        # unset aws keys and set aws profile
+        unset AWS_ACCESS_KEY_ID
+        unset AWS_SECRET_ACCESS_KEY
+        export AWS_PROFILE=stackstate-sandbox
+
+        echo -e "#!/bin/bash\n\npass default >/dev/null 2>&1\naws-vault exec --duration=4h default echo" > ~/.aws/refresh_credentials.sh
+        chmod +x ~/.aws/refresh_credentials.sh
+
+        aws-vault exec --duration=4h default echo
+    else
+        echo "Configure AWS Beest credentials using key and secret ..."
+
+        echo -e "[default]\naws_access_key_id=$BEEST_AWS_ACCESS_KEY_ID\naws_secret_access_key=$BEEST_AWS_SECRET_ACCESS_KEY" > ~/.aws/credentials
+    fi
+
 }
 
 connect_to_stackstate_sandbox() {
