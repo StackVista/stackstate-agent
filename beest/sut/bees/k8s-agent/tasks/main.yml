@@ -99,7 +99,7 @@
     - when: agent_helm_chart_version | trim | length == 0
       block:
         - name: Search last official cluster agent version
-          command: helm search repo --regexp '\vstackstate-internal/stackstate-k8s-agent\v' -o yaml
+          command: helm search repo --regexp '\vstackstate-internal/stackstate-k8s-agent\v' --devel -o yaml
           register: agent_helm_search
 
         - name: Helm search result to yaml
