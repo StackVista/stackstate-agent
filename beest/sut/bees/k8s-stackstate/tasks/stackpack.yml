@@ -22,6 +22,12 @@
         - kubernetes_integration is defined
         - stackpacklist.find('kubernetes') == -1
 
+    - name: Install kubernetes v2 StackPack
+      command: sts-cli stackpack install kubernetes-v2 -p kubernetes_cluster_name "{{ kubernetes_v2_integration.cluster_name }}"
+      when:
+        - kubernetes_v2_integration is defined
+        - stackpacklist.find('kubernetes-v2') == -1
+
     - name: Install Splunk StackPack
       command: sts-cli stackpack install splunk-topology -p splunk_instance_name "{{ yard_id }}" -p sts_instance_url "{{ splunk_integration.url }}"
       when:

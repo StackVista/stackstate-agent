@@ -7,12 +7,13 @@ metadata:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
+  ingressClassName: nginx
   tls:
     - hosts:
-        - anthonycornell.com
+        - "{{ nginx_controller_external_ip }}"
       secretName: tls-secret
   rules:
-    - host: anthonycornell.com
+    - host: "{{ nginx_controller_external_ip }}"
       http:
         paths:
           - pathType: Prefix

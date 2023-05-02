@@ -1,7 +1,7 @@
 FROM golang:1.17.8-bullseye
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends less direnv unzip python3-pip bash-completion vim jq && \
+    apt-get install -y --no-install-recommends less direnv unzip python3-pip bash-completion vim jq pass && \
     rm -rf /var/lib/apt/lists/*
 
 # configure python artifactory to pull stackstate-cli v1
@@ -88,3 +88,11 @@ RUN curl --insecure -O "https://cli-dl.stackstate.com.s3.amazonaws.com/stackstat
     tar xvzf stackstate-cli-${STSCLI_V2}.linux-x86_64.tar.gz && \
     rm -r stackstate-cli-${STSCLI_V2}.linux-x86_64.tar.gz && \
     mv ./sts /usr/local/bin/
+
+ARG AWS_VAULT_V=v7.2.0
+RUN curl -L "https://github.com/99designs/aws-vault/releases/download/${AWS_VAULT_V}/aws-vault-linux-amd64" -o aws-vault && \
+    chmod +x ./aws-vault && \
+    mv ./aws-vault /usr/local/bin/
+
+RUN touch ~/.profile && \
+    echo "export AWS_SDK_LOAD_CONFIG=1" >> ~/.profile
