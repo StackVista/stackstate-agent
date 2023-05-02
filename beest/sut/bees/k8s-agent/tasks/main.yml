@@ -35,6 +35,11 @@
         name: stackstate
         repo_url: "https://helm.stackstate.io"
 
+    - name: Add stackstate-internal chart repo
+      kubernetes.core.helm_repository:
+        name: stackstate-internal
+        repo_url: "https://helm-internal.stackstate.io"
+
     - name: Add stackstate-test chart repo
       kubernetes.core.helm_repository:
         name: stackstate-test
@@ -88,13 +93,13 @@
     - name: Use helm agent test repo
       when: agent_helm_chart_version | trim | length > 0
       set_fact:
-        agent_helm_chart_repo: stackstate-test/stackstate-agent
+        agent_helm_chart_repo: stackstate-test/stackstate-k8s-agent
         agent_version: "{{ agent_helm_chart_version }}"
 
     - when: agent_helm_chart_version | trim | length == 0
       block:
         - name: Search last official cluster agent version
-          command: helm search repo --regexp '\vstackstate/stackstate-agent\v' -o yaml
+          command: helm search repo --regexp '\vstackstate-internal/stackstate-k8s-agent\v' -o yaml
           register: agent_helm_search
 
         - name: Helm search result to yaml
@@ -104,7 +109,7 @@
         - name: Set agent helm version and repo
           set_fact:
             agent_version: "{{ agent_helm_search_yaml[0].version }}"
-            agent_helm_chart_repo: stackstate/stackstate-agent
+            agent_helm_chart_repo: stackstate-internal/stackstate-k8s-agent
 
 
     - name: Deploy cluster agent chart '{{ agent_version }}' from '{{ agent_helm_chart_repo }}'
