@@ -28,24 +28,22 @@ Make a copy of envrc.example and replace the `TBD` values with your secrets:
 Beest comes with `aws-vault` pre-installed. In the `.envrc` folder set the following:
 
 ```shell
-export BEEST_AWS_VAULT_BACKEND_PASSWORD=TBD
 export BEEST_AWS_MFA_KEY=TBD
 ```
 
-to have Beest automatically set up `aws-vault` for you. Remember the `BEEST_AWS_VAULT_BACKEND_PASSWORD` you've set, it
-will be used as the gpg key for `pass` which is the configured credential store for `aws-vault`. When running `make`,
-you will receive 2 prompts, the first being a password entry for the gpg key of pass which is set to the value of `BEEST_AWS_VAULT_BACKEND_PASSWORD`,
-the second will be a prompt for an MFA code. If both of these are supplied Beest will create an MFA session for 4 hours using:
+to have Beest automatically set up `aws-vault` for you. When running `make`, you will receive a prompt for an MFA code.
 
+Beest will create an MFA session for 4 hours using:
 ```shell
 aws-vault exec --duration=4h default echo
 ```
 
-If you any Beest command hanging and never initializing terraform, it might be that:
-1. The GPG key of pass needs to be unlocked.
-2. Your MFA session has expired.
+If you any Beest command hanging and never initializing terraform, it might be that your MFA session has expired.
 
-In this instance run: `~/.aws/refresh_credentials.sh` to refresh your credentials and unlock the pass gpg key.
+In this instance create another session for 4 hours using:
+```shell
+aws-vault exec --duration=4h default echo
+```
 
 ## Run
 
