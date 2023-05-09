@@ -32,18 +32,13 @@
 
     - name: Add stackstate chart repo
       kubernetes.core.helm_repository:
-        name: stackstate
-        repo_url: "https://helm.stackstate.io"
+        name: stackstate-test
+        repo_url: "https://helm-test.stackstate.io"
 
     - name: Add stackstate-internal chart repo
       kubernetes.core.helm_repository:
         name: stackstate-internal
         repo_url: "https://helm-internal.stackstate.io"
-
-    - name: Add stackstate-test chart repo
-      kubernetes.core.helm_repository:
-        name: stackstate-test
-        repo_url: "https://helm-test.stackstate.io"
 
     - include_tasks: test-workloads.yml
     - include_tasks: test-ingress.yml
@@ -53,7 +48,7 @@
         src: agent-extra-values.j2.yml
         dest: "{{ playbook_dir }}/agent-extra-values.yml"
 
-    # if agent chart version is passed, install from stackstate-test repo, otherwise use latest stable from stackstate repo
+    # if agent chart version is passed, install from stackstate-test repo, otherwise use latest develop branch from stackstate-internal repo
     - name: Use helm agent test repo
       when: agent_helm_chart_version | trim | length > 0
       set_fact:
@@ -158,6 +153,11 @@
       pause:
         minutes: 5
 
+    - name: Copy kube config for local tests
+      copy:
+        src: "~/.kube/config"
+        dest: "{{ playbook_dir }}/config"
+        mode: '0777'
 
 ## Cleanup
 
@@ -172,6 +172,16 @@
         release_namespace: "{{ monitoring_namespace }}"
         state: absent
         wait: true
+
+    - name: Undeploy Ingress Nginx Helm chart
+      kubernetes.core.helm:
+        context: "{{ kubecontext }}"
+        chart_ref: "ingress-nginx/ingress-nginx"
+        release_name: "ingress-nginx"
+        release_namespace: "{{ test_namespace }}"
+        state: absent
+        wait: yes
+        wait_timeout: 15m
 
     - name: Delete namespaces
       kubernetes.core.k8s:
