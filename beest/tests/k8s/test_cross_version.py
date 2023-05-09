@@ -2,7 +2,7 @@ from packaging import version
 import pytest
 from ststest import TopologyMatcher
 
-testinfra_hosts = ["local"]
+testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
 
 
 def test_projected_volume_topology(ansible_var, cliv1):
@@ -23,7 +23,7 @@ def test_projected_volume_topology(ansible_var, cliv1):
             .one_way_direction("cluster-agent-container", "kube-api-access", type="mounts") \
             .one_way_direction("kube-api-access", "kube-root-ca", type="projects")
 
-        current_topology = cliv1.topology(f"label IN ('namespace:{namespace}')", "projected-volume")
+        current_topology = cliv1.topology(f"label IN ('namespace:{namespace}')", "projected-volume", config_location=f'../../sut/yards/k8s/config.yaml')
         possible_matches = expected_topology.find(current_topology)
         matched_res = possible_matches.assert_exact_match()
 

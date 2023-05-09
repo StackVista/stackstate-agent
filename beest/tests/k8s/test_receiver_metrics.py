@@ -1,12 +1,12 @@
 import json
 import util
 
-testinfra_hosts = ["local"]
+testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
 
 
 def test_agents_running(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics")
+        json_data = cliv1.topic_api("sts_multi_metrics", config_location=f'../../sut/yards/k8s/config.yaml')
 
         metrics = {}
         for message in json_data["messages"]:
@@ -32,7 +32,7 @@ def test_agents_running(cliv1):
 
 def test_container_metrics(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics", limit=4000)
+        json_data = cliv1.topic_api("sts_multi_metrics", limit=4000, config_location=f'../../sut/yards/k8s/config.yaml')
 
         metrics = {}
         for message in json_data["messages"]:
@@ -63,7 +63,7 @@ def check_non_zero(metric, metrics):
 
 def test_agent_http_metrics(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics")
+        json_data = cliv1.topic_api("sts_multi_metrics", config_location=f'../../sut/yards/k8s/config.yaml')
 
         def get_keys():
             return next(set(message["message"]["MultiMetric"]["values"].keys())
@@ -82,7 +82,7 @@ def test_agent_http_metrics(cliv1):
 
 def test_agent_kubernetes_metrics(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics")
+        json_data = cliv1.topic_api("sts_multi_metrics", config_location=f'../../sut/yards/k8s/config.yaml')
 
         def contains_key():
             for message in json_data["messages"]:
@@ -100,7 +100,7 @@ def test_agent_kubernetes_metrics(cliv1):
 
 def test_agent_kubernetes_state_metrics(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics")
+        json_data = cliv1.topic_api("sts_multi_metrics", config_location=f'../../sut/yards/k8s/config.yaml')
 
         def contains_key():
             for message in json_data["messages"]:
@@ -118,7 +118,7 @@ def test_agent_kubernetes_state_metrics(cliv1):
 
 def test_agent_kubelet_metrics(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics", limit=3000)
+        json_data = cliv1.topic_api("sts_multi_metrics", limit=3000, config_location=f'../../sut/yards/k8s/config.yaml')
 
         def contains_key():
             for message in json_data["messages"]:

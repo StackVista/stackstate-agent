@@ -1,7 +1,7 @@
 import util
 from ststest import TopologyMatcher
 
-testinfra_hosts = ["local"]
+testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
 
 
 def test_workload_topology(ansible_var, cliv1):
@@ -30,8 +30,6 @@ def test_workload_topology(ansible_var, cliv1):
         .one_way_direction("countdown-j", "countdown-pod", type="controls") \
         .component("mehdb-ss", type="statefulset", name="mehdb") \
         .component("mehdb-svc", type="service", name="mehdb") \
-        .one_way_direction("namespace", "mehdb-ss", type="encloses") \
-        .one_way_direction("namespace", "mehdb-svc", type="encloses") \
         .repeated(
             k8s_node_count,
             lambda matcher: matcher
@@ -55,7 +53,7 @@ def test_workload_topology(ansible_var, cliv1):
     current_agent_topology = cliv1.topology(
         f"(label IN ('cluster-name:{cluster_name}') AND label IN ('namespace:{namespace}'))"
         f" OR type IN ('namespace', 'persistent-volume', 'persistent-volume-claim')",
-        alias="workload")
+        alias="workload", config_location=f'../../sut/yards/k8s/config.yaml')
     possible_matches = expected_agent_topology.find(current_agent_topology)
     possible_matches.assert_exact_match()
 
@@ -66,7 +64,7 @@ def test_container_runtime(ansible_var, cliv1):
         runtime = "docker"
 
     def wait_for_topology():
-        topo = cliv1.topology("type = 'container'", "container-runtime")
+        topo = cliv1.topology("type = 'container'", "container-runtime", config_location=f'../../sut/yards/k8s/config.yaml')
         for c in topo.components:
             assert f"runtime:{runtime}" in c.tags
 

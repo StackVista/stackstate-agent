@@ -85,6 +85,17 @@
         src: sts-cli-v1-config.j2.yml
         dest: "{{ playbook_dir }}/conf.yaml"
 
+    - name: Get the CLI V2 API Token
+      shell: "curl -k -s -u admin:admin {{ sts_url }}/api/user/profile/tokens  | jq -r '.[]|.token'"
+      register: stackstate_api_token_result
+      until: stackstate_api_token_result is not failed
+      retries: 5
+      delay: 60
+
+    - name: set stackstate_api_token
+      set_fact:
+        stackstate_api_token: "{{ stackstate_api_token_result.stdout }}"
+
     - name: Create CLI v2 config directory
       file:
         path: "~/.config/stackstate-cli"
@@ -95,6 +106,11 @@
       ansible.builtin.template:
         src: sts-cli-v2-config.j2.yml
         dest: "~/.config/stackstate-cli/config.yaml"
+
+    - name: Generate CLI v2 config for local tests
+      ansible.builtin.template:
+        src: sts-cli-v2-config.j2.yml
+        dest: "{{ playbook_dir }}/config.yaml"
 
     # We can only execute simple commands from pytest, pipes cannot be used directly
     - name: Copy stackstate query script

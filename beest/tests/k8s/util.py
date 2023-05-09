@@ -17,7 +17,7 @@ def wait_until(someaction, timeout, period=0.25, *args, **kwargs):
 
 def assert_topology_events(cliv1, test_name, topic, expected_topology_events):
     def wait_for_topology_events():
-        json_data = cliv1.topic_api(topic)
+        json_data = cliv1.topic_api(topic, config_location=f'../../sut/yards/k8s/config.yaml')
 
         def _topology_event_data(event):
             for message in json_data["messages"]:
@@ -37,7 +37,7 @@ def assert_topology_events(cliv1, test_name, topic, expected_topology_events):
 
 def assert_topology(cliv1, topic, expected_components):
     def assert_topology():
-        json_data = cliv1.topic_api(topic, limit=1500)
+        json_data = cliv1.topic_api(topic, limit=1500, config_location=f'../../sut/yards/k8s/config.yaml')
 
         for c in expected_components:
             print("Running assertion for: " + c["assertion"])
@@ -53,7 +53,7 @@ def assert_topology(cliv1, topic, expected_components):
 
 def assert_metrics(cliv1, hostname, expected_metrics):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics")
+        json_data = cliv1.topic_api("sts_multi_metrics", config_location=f'../../sut/yards/k8s/config.yaml')
 
         def get_keys(m_host):
             return set(

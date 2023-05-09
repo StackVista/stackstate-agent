@@ -32,12 +32,25 @@ generate_aws_config() {
 configure_aws_beest_credentials() {
     echo "Configure AWS Beest credentials ..."
 
-    if [ ! -z "$BEEST_AWS_MFA_KEY" ]; then
+    if aws-vault exec default -- aws sts get-caller-identity >/dev/null 2>&1 ; then
+      echo "AWS Beest credentials is already setup and working, skipping ..."
+
+    elif [ ! -z "$BEEST_AWS_MFA_KEY" ]; then
         echo "Configure AWS Beest credentials with aws-vault and MFA ..."
 
         gpgKeyName=${artifactory_user:-beest@stackstate.com}
         echo "Generating GPG key for aws-vault backend store for ${gpgKeyName}"
-        gpg --quick-gen-key --batch --passphrase "${BEEST_AWS_VAULT_BACKEND_PASSWORD}" "${gpgKeyName}"
+
+        echo "Key-Type: RSA
+        Key-Length: 4096
+        Subkey-Type: RSA
+        Subkey-Length: 4096
+        Name-Real: ${gpgKeyName}
+        Name-Email: ${gpgKeyName}
+        Expire-Date: 0
+        %no-protection
+        " | gpg --batch --generate-key
+
         gpgKey=$(gpg --list-signatures --with-colons | grep 'sig' | grep "${gpgKeyName}" | head -n 1 | cut -d':' -f5)
 
         echo "Init pass with gpg key to be used as aws-vault backend store"

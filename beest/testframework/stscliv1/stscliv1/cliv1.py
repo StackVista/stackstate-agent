@@ -18,22 +18,22 @@ class CLIv1:
         self.host = host
         self.cache_enabled = cache_enabled
 
-    def telemetry(self, component_ids, alias: str = None):
+    def telemetry(self, component_ids, alias: str = None, config_location=None):
         if len(component_ids) == 0:
             return []
         fullquery = self._telemetry_script(component_ids)
         if alias is None:
             alias = self._query_digest(fullquery)
 
-        result = self.script(fullquery, alias)
+        result = self.script(fullquery, alias, config_location)
         series = {}
 
-    def topology(self, query: str, alias: str = None) -> TopologyResult:
+    def topology(self, query: str, alias: str = None, config_location=None) -> TopologyResult:
         fullquery = self._topology_script(query)
         if alias is None:
             alias = self._query_digest(fullquery)
 
-        result = self.script(fullquery, alias)
+        result = self.script(fullquery, alias, config_location)
 
         component_type_map = {}
         for comp_type in result['component_types']:
@@ -55,7 +55,7 @@ class CLIv1:
     @staticmethod
     def _query_digest(q: str) -> str: return hashlib.sha1(q.encode('utf-8')).hexdigest()
 
-    def script(self, fullquery: str, alias) -> dict:
+    def script(self, fullquery: str, alias, config_location=None) -> dict:
         log = self.log
         log.info(f"Querying StackState Script API with CLIv1: {fullquery}, cache: {self.cache_enabled}")
 
@@ -84,11 +84,15 @@ class CLIv1:
             logging.info(f"Found the sts-query.sh at the following location: '{file}'")
 
             # Execute the query
-            executed = self.host.run(file)
+            if config_location is None:
+                executed = self.host.run(f'{file}')
+            else:
+                executed = self.host.run(f'{file} {config_location}')
+
             log.info(f"STSL script exit status: {executed.exit_status}")
             return executed.stdout
 
-        return self._cached_json(query, alias)["result"]
+        return self._cached_json(query, alias)["result"]["value"]
 
     @staticmethod
     def _telemetry_script(ids: list, start="-10m"):
@@ -135,12 +139,15 @@ Topology.query('__QUERY__')
   }
 """.replace('__QUERY__', escaped_query)
 
-    def topic_api(self, topic, limit=1000) -> dict:
+    def topic_api(self, topic, limit=1000, config_location=None) -> dict:
         log = self.log
         log.info(f"Querying StackState Topic API: {topic}")
 
         def query():
-            executed = self.host.run(f"sts-cli topic show {topic} -l {limit}")
+            if config_location is None:
+                executed = self.host.run(f"sts topic describe --name {topic} --nr {limit} --output json")
+            else:
+                executed = self.host.run(f"sts --config {config_location} topic describe --name {topic} --nr {limit} --output json")
             log.info(f"Queried {topic}: {executed.exit_status}")
             return executed.stdout
 

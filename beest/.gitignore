@@ -12,6 +12,8 @@ tf.deploy
 *-values.yml
 sts-toolbox.yml
 sut/yards/*/conf.yaml
+sut/yards/*/config.yaml
+sut/yards/*/config
 
 # pytest related files
 topic-*.json
