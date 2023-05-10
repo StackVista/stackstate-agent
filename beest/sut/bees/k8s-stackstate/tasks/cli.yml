@@ -135,3 +135,13 @@
       file:
         path: "~/.config/stackstate-cli"
         state: absent
+
+    - name: Remove CLI v2 config from local tests
+      file:
+        path: "{{ playbook_dir }}/config.yaml"
+        state: absent
+
+    - name: Remove CLI v1 config from local tests
+      file:
+        path: "{{ playbook_dir }}/conf.yaml"
+        state: absent

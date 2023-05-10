@@ -8,7 +8,7 @@ testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansib
 
 def _get_pods(ansible_var, kubecontext, host, controller_name):
     jsonpath = "'{.items[?(@.spec.containers[*].name==\"%s\")].metadata.name}'" % controller_name
-    cmd = host.run("kubectl --kubeconfig ./../../sut//yards/k8s/config --context={0} get pod -o jsonpath={1}".format(kubecontext, jsonpath))
+    cmd = host.run("kubectl --kubeconfig ./../../sut/yards/k8s/config --context={0} get pod -o jsonpath={1}".format(kubecontext, jsonpath))
     assert cmd.rc == 0
     pods = cmd.stdout.split()
     print(pods)

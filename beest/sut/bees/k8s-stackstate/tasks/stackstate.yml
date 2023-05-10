@@ -125,3 +125,13 @@
         name: "{{ namespace }}"
         state: absent
         wait: true
+
+    - name: Remove stackstate-values.yml file
+      file:
+        path: "{{ playbook_dir }}/stackstate-values.yml"
+        state: absent
+
+    - name: Remove sts-toolbox.yml file
+      file:
+        path: "{{ playbook_dir }}/sts-toolbox.yml"
+        state: absent
