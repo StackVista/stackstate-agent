@@ -70,7 +70,6 @@
             agent_version: "{{ agent_helm_search_yaml[0].version }}"
             agent_helm_chart_repo: stackstate-internal/stackstate-k8s-agent
 
-
     - name: Deploy cluster agent chart '{{ agent_version }}' from '{{ agent_helm_chart_repo }}'
       kubernetes.core.helm:
         context: "{{ kubecontext }}"
@@ -128,7 +127,6 @@
             msg: Node agents not ready yet
           failed_when: true
 
-
     - name: Attempt to verify cluster check agent ready
       block:
         - name: Wait for the stackstate cluster check agent to start
@@ -147,17 +145,17 @@
             var: cluster_check_agent_logs
           failed_when: true
 
-    - include_tasks: pod-connections.yml
-
-    - name: Give the Test Workloads 5 minutes to start performing their actions and some http requests
-      pause:
-        minutes: 5
-
     - name: Copy kube config for local tests
       copy:
         src: "~/.kube/config"
         dest: "{{ playbook_dir }}/config"
         mode: '0777'
+
+    - include_tasks: pod-connections.yml
+
+    - name: Give the Test Workloads 5 minutes to start performing their actions and some http requests
+      pause:
+        minutes: 5
 
 ## Cleanup
 
@@ -194,3 +192,8 @@
       with_items:
         - "{{ monitoring_namespace }}"
         - "{{ test_namespace }}"
+
+    - name: Remove agent-extra-values.yml file
+      file:
+        path: "{{ playbook_dir }}/agent-extra-values.yml"
+        state: absent

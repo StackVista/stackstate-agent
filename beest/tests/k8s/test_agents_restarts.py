@@ -6,7 +6,7 @@ testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansib
 
 def _get_pod_restarts(kubecontext, host):
     jsonpath = "{range .items[*]}|{.metadata.name}={range .status.containerStatuses[*]},{.restartCount}"
-    cmd = host.run("kubectl --kubeconfig ./../../sut//yards/k8s/config --context={0} get pod -o jsonpath='{1}'".format(kubecontext, jsonpath))
+    cmd = host.run("kubectl --kubeconfig ./../../sut/yards/k8s/config --context={0} get pod -o jsonpath='{1}'".format(kubecontext, jsonpath))
 
     assert cmd.rc == 0
     restarts = cmd.stdout.split("|")

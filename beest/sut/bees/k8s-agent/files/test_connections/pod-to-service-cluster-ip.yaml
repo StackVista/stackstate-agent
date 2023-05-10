@@ -45,4 +45,4 @@ spec:
       name: client
       command: ["/bin/bash", "-c", "while echo y; do sleep 0.1; done | nc -vv pod-service 321"]
   nodeSelector:
-    failure-domain.beta.kubernetes.io/zone: eu-west-1b
+    failure-domain.beta.kubernetes.io/zone: eu-west-1a

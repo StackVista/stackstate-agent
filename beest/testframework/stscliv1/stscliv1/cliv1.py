@@ -29,6 +29,8 @@ class CLIv1:
         series = {}
 
     def topology(self, query: str, alias: str = None, config_location=None) -> TopologyResult:
+        logging.info(f"Executing the following query: '{query}'")
+
         fullquery = self._topology_script(query)
         if alias is None:
             alias = self._query_digest(fullquery)

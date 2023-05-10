@@ -3,6 +3,7 @@
 # terraform related
 .terraform
 tf.deploy
+.terraform.lock.hcl
 
 # SUT related temp files
 *inventory
@@ -78,6 +79,8 @@ coverage.xml
 .pytest_cache/
 cover/
 *.gv
+*.gv.png
+*.gv.jpg
 tests/*/test_*-*.json
 tests/*/test_*-*.xml
 tests/conf.d

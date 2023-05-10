@@ -11,7 +11,7 @@
     release_namespace: "{{ test_namespace }}"
     update_repo_cache: true
     wait: yes
-    wait_timeout: 15m
+    wait_timeout: 30m
 - name: Wait for the nginx-controller to become ready
   command: kubectl --context={{ kubecontext }} -n={{ test_namespace }} wait --all --for=condition=Ready --timeout=360s -l app.kubernetes.io/component=controller pod
 - name: Grab and store the nginx-controller LoadBalancer external IP
