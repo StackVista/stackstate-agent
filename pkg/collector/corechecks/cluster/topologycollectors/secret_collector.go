@@ -62,6 +62,9 @@ func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topo
 	// Wipe last-applied-configuration to avoid leaking secrets
 	delete(secret.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
 
+	// Wipe openshit leaking secrets https://stackstate.atlassian.net/browse/STAC-19576
+	delete(secret.Annotations, "openshift.io/token-secret.value")
+
 	secretDataHash, err := secure(secret.Data)
 	if err != nil {
 		return nil, err
