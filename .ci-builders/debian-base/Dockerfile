@@ -3,7 +3,11 @@ FROM golang:1.16.7-stretch
 
 RUN sed -i 's/^#\s*\(deb.*universe\)$/\1/g' /etc/apt/sources.list \
     && sed -i 's/^#\s*\(deb.*multiverse\)$/\1/g' /etc/apt/sources.list \
-    && sed -i 's/main/main contrib non-free/' /etc/apt/sources.list
+    && sed -i 's/main/main contrib non-free/' /etc/apt/sources.list \
+    && sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list \
+    && sed -i 's|security.debian.org|archive.debian.org/|g' /etc/apt/sources.list \
+    && sed -i '/stretch-updates/d' /etc/apt/sources.list
+
 
 # Build Args
 ARG GIMME_GO_VERSION=1.16.7
