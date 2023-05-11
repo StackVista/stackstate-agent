@@ -112,8 +112,8 @@ build-centos7-base:
   script:
     - cd $BUILDERS_FOLDER/$RUNNER_DIR
     # get the current date as the base image version
-    - BUILD_TAG="stackstate-agent-runner-gitlab:${RUNNER_DIR}-patch-$RUNNER_PATCH_TAG-$(date +%Y%m%d)"
-    - docker build -f Dockerfile.patch --build-arg BASE_IMAGE=$RUNNER_PATCH_TAG -t "${BUILD_TAG}" .
+    - BUILD_TAG="stackstate-agent-runner-gitlab:${RUNNER_DIR}-${RUNNER_PATCH_TAG}-patched-$(date +%Y%m%d)"
+    - docker build -f Dockerfile.patch --build-arg BASE_IMAGE=${RUNNER_DIR}-${RUNNER_PATCH_TAG} -t "${BUILD_TAG}" .
     # tag the image, push to quay
     - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
     - docker tag "${BUILD_TAG}" "${QUAY_TAG}"
@@ -139,7 +139,7 @@ build-patched-debian-runner:
   <<: *patch_runner
   variables:
     RUNNER_DIR: $RUNNER_DEBIAN
-    RUNNER_PATCH_TAG: "debian-20220826"
+    RUNNER_PATCH_TAG: "20220826"
 
 # produces the runner deb/rpm publisher image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_{yyyymmdd}
 build-debian-rpmpublisher-runner:
