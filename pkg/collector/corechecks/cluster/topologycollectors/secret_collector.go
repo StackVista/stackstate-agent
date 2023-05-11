@@ -15,6 +15,9 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+const redactedMessage string = "<redacted>"
+var annotationsToOfuscate = [...]string{"kubectl.kubernetes.io/last-applied-configuration", "openshift.io/token-secret.value"}
+
 // SecretCollector implements the ClusterTopologyCollector interface.
 type SecretCollector struct {
 	ClusterTopologyCollector
@@ -59,14 +62,12 @@ func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topo
 	tags := cmc.initTags(secret.ObjectMeta, metav1.TypeMeta{Kind: "Secret"})
 	secretExternalID := cmc.buildSecretExternalID(secret.Namespace, secret.Name)
 
-	// Wipe last-applied-configuration to avoid leaking secrets
-	delete(secret.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
-
-	// Update openshit leaking secrets https://stackstate.atlassian.net/browse/STAC-19576
-	if _, ok := secret.Annotations["openshift.io/token-secret.value"]; ok {
-		secret.Annotations["openshift.io/token-secret.value"] = "<redacted>"
+	// update all annotations that could lead to secrets leak	
+	for _, annotationName := range annotationsToOfuscate {
+		if _, ok := secret.Annotations[annotationName]; ok {
+			secret.Annotations[annotationName] = redactedMessage
+		}
 	}
-
 	secretDataHash, err := secure(secret.Data)
 	if err != nil {
 		return nil, err
