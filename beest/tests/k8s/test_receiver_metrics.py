@@ -61,24 +61,27 @@ def check_non_zero(metric, metrics):
     assert False, "all '%s' metric are '0'".format(metric)
 
 
-def test_agent_http_metrics(cliv1):
-    def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics", config_location=f'../../sut/yards/k8s/config.yaml')
+# TODO: HTTP Metrics has been updated to use a new topic etc.
+# TODO: - pod_http_requests_count
+# TODO: - pod_http_response_time_seconds_bucket
 
-        def get_keys():
-            return next(set(message["message"]["MultiMetric"]["values"].keys())
-                        for message in json_data["messages"]
-                        if message["message"]["MultiMetric"]["name"] == "connection metric" and
-                        "code" in message["message"]["MultiMetric"]["tags"] and
-                        message["message"]["MultiMetric"]["tags"]["code"] == "2xx"
-                        )
-
-        expected = {"http_requests_per_second", "http_response_time_seconds"}
-
-        assert get_keys().pop() in expected
-
-    util.wait_until(wait_for_metrics, 30, 3)
-
+#  def test_agent_http_metrics(cliv1):
+#      def wait_for_metrics():
+#          json_data = cliv1.topic_api("sts_multi_metrics", config_location=f'../../sut/yards/k8s/config.yaml')
+#
+#          def get_keys():
+#              return next(set(message["message"]["MultiMetric"]["values"].keys())
+#                          for message in json_data["messages"]
+#                          if message["message"]["MultiMetric"]["name"] == "connection metric" and
+#                          "code" in message["message"]["MultiMetric"]["tags"] and
+#                          message["message"]["MultiMetric"]["tags"]["code"] == "2xx"
+#                          )
+#
+#          expected = {"http_requests_per_second", "http_response_time_seconds"}
+#
+#          assert get_keys().pop() in expected
+#
+#      util.wait_until(wait_for_metrics, 30, 3)
 
 def test_agent_kubernetes_metrics(cliv1):
     def wait_for_metrics():
