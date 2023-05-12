@@ -3,7 +3,6 @@
 # terraform related
 .terraform
 tf.deploy
-.terraform.lock.hcl
 
 # SUT related temp files
 *inventory
