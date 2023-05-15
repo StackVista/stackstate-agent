@@ -1,6 +1,6 @@
 import util
 import integration_sample
-from beest.tests.k8s.conftest import STS_CONTEXT_FILE
+from conftest import STS_CONTEXT_FILE
 
 testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
 
