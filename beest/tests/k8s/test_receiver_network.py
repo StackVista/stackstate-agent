@@ -1,6 +1,7 @@
 import json
 import re
 import util
+from beest.tests.k8s.conftest import STS_CONTEXT_FILE
 
 testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
 
@@ -58,10 +59,10 @@ def test_dnat(host, ansible_var, cliv1):
     kubecontext = ansible_var("agent_kubecontext")
 
     def wait_for_components():
-        json_data = cliv1.topic_api("sts_topo_process_agents", config_location=f'../../sut/yards/k8s/config.yaml')
+        json_data = cliv1.topic_api("sts_topo_process_agents", config_location=STS_CONTEXT_FILE)
 
         # This is here for debugging
-        cliv1.topic_api("sts_correlate_endpoints", limit=100, config_location=f'../../sut/yards/k8s/config.yaml')
+        cliv1.topic_api("sts_correlate_endpoints", limit=100, config_location=STS_CONTEXT_FILE)
 
         pod_service_ip = _get_service_ip(kubecontext, host, namespace, "./../../sut/yards/k8s/config")
         pod_client = _get_pod_ip(kubecontext, host, namespace, "pod-client", "./../../sut/yards/k8s/config")
@@ -88,7 +89,7 @@ def test_pod_container_to_container(ansible_var, cliv1):
     cluster_name = ansible_var("agent_cluster_name")
 
     def wait_for_components():
-        json_data = cliv1.topic_api("sts_topo_process_agents", limit=3000, config_location=f'../../sut/yards/k8s/config.yaml')
+        json_data = cliv1.topic_api("sts_topo_process_agents", limit=3000, config_location=STS_CONTEXT_FILE)
 
         server_process_match = re.compile("nc -l -p {}".format(server_port))
         server_process = _find_process_by_command_args(
@@ -133,7 +134,7 @@ def test_headless_pod_to_pod(ansible_var, cliv1):
     cluster_name = ansible_var("agent_cluster_name")
 
     def wait_for_components():
-        json_data = cliv1.topic_api("sts_topo_process_agents", config_location=f'../../sut/yards/k8s/config.yaml')
+        json_data = cliv1.topic_api("sts_topo_process_agents", config_location=STS_CONTEXT_FILE)
 
         server_process_match = re.compile("ncat -vv --broker --listen -p {}".format(server_port))
         server_process = _find_process_by_command_args(

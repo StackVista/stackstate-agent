@@ -1,5 +1,6 @@
 import util
 import integration_sample
+from beest.tests.k8s.conftest import STS_CONTEXT_FILE
 
 testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
 
@@ -26,7 +27,7 @@ def test_agent_integration_sample_topology(cliv1):
 
 def test_agent_integration_sample_events(cliv1):
     def wait_for_events():
-        json_data = cliv1.topic_api("sts_generic_events", config_location=f'../../sut/yards/k8s/config.yaml')
+        json_data = cliv1.topic_api("sts_generic_events", config_location=STS_CONTEXT_FILE)
 
         service_event = {
             "name": "service-check.service-check",

@@ -1,4 +1,7 @@
 import util
+import pytest
+
+from beest.tests.k8s.conftest import STS_CONTEXT_FILE
 from ststest import TopologyMatcher
 
 testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
@@ -53,7 +56,7 @@ def test_workload_topology(ansible_var, cliv1):
     current_agent_topology = cliv1.topology(
         f"(label IN ('cluster-name:{cluster_name}') AND label IN ('namespace:{namespace}'))"
         f" OR type IN ('namespace', 'persistent-volume', 'persistent-volume-claim')",
-        alias="workload", config_location=f'../../sut/yards/k8s/config.yaml')
+        alias="workload", config_location=STS_CONTEXT_FILE)
     possible_matches = expected_agent_topology.find(current_agent_topology)
     possible_matches.assert_exact_match()
 
@@ -64,8 +67,12 @@ def test_container_runtime(ansible_var, cliv1):
         runtime = "docker"
 
     def wait_for_topology():
-        topo = cliv1.topology("type = 'container'", "container-runtime", config_location=f'../../sut/yards/k8s/config.yaml')
+        topo = cliv1.topology("type = 'container'",
+                              "container-runtime",
+                              config_location=STS_CONTEXT_FILE)
         for c in topo.components:
             assert f"runtime:{runtime}" in c.tags
+
+        # pytest.fail(f"There is no username in get_data")
 
     util.wait_until(wait_for_topology, 90, 3)
