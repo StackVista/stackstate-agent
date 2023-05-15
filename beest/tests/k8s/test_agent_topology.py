@@ -1,6 +1,8 @@
 import logging
 from platform import release
 import secrets
+
+from beest.tests.k8s.conftest import STS_CONTEXT_FILE
 from ststest import TopologyMatcher
 
 testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
@@ -131,7 +133,7 @@ def test_checks_agent_topology(ansible_var, cliv1):
 def query_and_assert(cliv1, cluster_name: str, namespace: str, expected_topology: TopologyMatcher):
     current_agent_topology = cliv1.topology(
         f"(label IN ('cluster-name:{cluster_name}') AND label IN ('namespace:{namespace}'))"
-        f" OR (type IN ('node', 'namespace', 'stackstate-agent', 'stackstate-k8s-agent'))", "agent", config_location=f'../../sut/yards/k8s/config.yaml')
+        f" OR (type IN ('node', 'namespace', 'stackstate-agent', 'stackstate-k8s-agent'))", "agent", config_location=STS_CONTEXT_FILE)
 
     possible_matches = expected_topology.find(current_agent_topology)
     return possible_matches.assert_exact_match()

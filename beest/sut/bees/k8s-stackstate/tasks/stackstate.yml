@@ -89,6 +89,18 @@
         values_files:
           - "{{ playbook_dir }}/stackstate-values.yml"
         values:
+          stackstate:
+            components:
+              all:
+                extraEnv:
+                  open:
+                    # Automatically use the preprod stackpacks
+                    CONFIG_FORCE_stackstate_featureSwitches_monitorEnableExperimentalAPIs: "true"
+                    CONFIG_FORCE_stackstate_stackPacks_latestVersionsStackPackStoreUri: "s3://sts-stackpacks-preprod"
+                    CONFIG_FORCE_stackstate_stackPacks_updateStackPacksInterval: "30 seconds"
+                    CONFIG_FORCE_stackstate_aws_s3_accesskey: ""
+                    CONFIG_FORCE_stackstate_aws_s3_secretkey: ""
+                    CONFIG_FORCE_stackstate_aws_s3_region: "eu-west-1"
           global:
             receiverApiKey: "{{ sts_api_key }}"
 
