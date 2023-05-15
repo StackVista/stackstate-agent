@@ -1,7 +1,7 @@
 import time
 import json
 
-from beest.tests.k8s.conftest import STS_CONTEXT_FILE
+from conftest import STS_CONTEXT_FILE
 
 
 def wait_until(someaction, timeout, period=0.25, *args, **kwargs):

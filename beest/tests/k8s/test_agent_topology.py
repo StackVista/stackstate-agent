@@ -2,7 +2,7 @@ import logging
 from platform import release
 import secrets
 
-from beest.tests.k8s.conftest import STS_CONTEXT_FILE
+from conftest import STS_CONTEXT_FILE
 from ststest import TopologyMatcher
 
 testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
