@@ -91,9 +91,9 @@ def test_agent_kubernetes_metrics(cliv1):
         def contains_key():
             for message in json_data["messages"]:
                 if (message["message"]["MultiMetric"]["name"] == "convertedMetric" and
-                    "cluster_name" in message["message"]["MultiMetric"]["tags"] and
-                    ("kubernetes_state.container.running" in message["message"]["MultiMetric"]["values"].keys() or
-                     "kubernetes_state.pod.scheduled" in message["message"]["MultiMetric"]["values"].keys())):
+                    "kube_cluster_name" in message["message"]["MultiMetric"]["tags"] and
+                    ("docker.containers.running" in message["message"]["MultiMetric"]["values"].keys() or
+                     "docker.containers.scheduled" in message["message"]["MultiMetric"]["values"].keys())):
                     return True
             return False
 
@@ -109,9 +109,9 @@ def test_agent_kubernetes_state_metrics(cliv1):
         def contains_key():
             for message in json_data["messages"]:
                 if (message["message"]["MultiMetric"]["name"] == "convertedMetric" and
-                    "cluster_name" in message["message"]["MultiMetric"]["tags"] and
-                    ("kubernetes_state.container.running" in message["message"]["MultiMetric"]["values"] or
-                     "kubernetes_state.pod.scheduled" in message["message"]["MultiMetric"]["values"])):
+                   "kube_cluster_name" in message["message"]["MultiMetric"]["tags"] and
+                    ("docker.containers.running" in message["message"]["MultiMetric"]["values"] or
+                     "docker.containers.scheduled" in message["message"]["MultiMetric"]["values"])):
                     return True
             return False
 
