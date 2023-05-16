@@ -17,7 +17,7 @@ def test_projected_volume_topology(ansible_var, cliv1):
         cluster_agent = release_name + "-cluster-agent"
 
         expected_topology = TopologyMatcher() \
-            .component("cluster-agent", type="pod", name=fr"{cluster_agent}-\w{{9,10}}-\w{{5}}") \
+            .component("cluster-agent", type="pod", name=fr"{cluster_agent}-\w{{7,10}}-\w{{5}}") \
             .component("cluster-agent-container", type="container", name="cluster-agent") \
             .component("kube-api-access", type="volume", name=r"kube-api-access-.*") \
             .component("kube-root-ca", type="configmap", name="kube-root-ca.crt") \

@@ -5,6 +5,7 @@
     - role: "{{ bees_path }}/k8s-stackstate"
       vars:
         sts_ingress: KOPS
+        stackpack_store_uri: s3://sts-stackpacks-preprod
         kubecontext: "{{ stackstate_kubecontext }}"
         cluster_name: "{{ stackstate_cluster_name }}"
         namespace: "{{ test_namespace }}"
