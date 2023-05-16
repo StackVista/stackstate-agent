@@ -92,8 +92,15 @@ def test_agent_kubernetes_metrics(cliv1):
             for message in json_data["messages"]:
                 if (message["message"]["MultiMetric"]["name"] == "convertedMetric" and
                     "kube_cluster_name" in message["message"]["MultiMetric"]["tags"] and
-                    ("docker.containers.running" in message["message"]["MultiMetric"]["values"].keys() or
-                     "docker.containers.scheduled" in message["message"]["MultiMetric"]["values"].keys())):
+                    (
+                        (
+                            "docker.containers.running" in message["message"]["MultiMetric"]["values"].keys() or
+                            "docker.containers.scheduled" in message["message"]["MultiMetric"]["values"].keys()
+                        ) or
+                        (
+                            "kubernetes_state.pod.ready" in message["message"]["MultiMetric"]["values"].keys() or
+                            "kubernetes_state.pod.scheduled" in message["message"]["MultiMetric"]["values"].keys()
+                        ))):
                     return True
             return False
 
@@ -110,8 +117,15 @@ def test_agent_kubernetes_state_metrics(cliv1):
             for message in json_data["messages"]:
                 if (message["message"]["MultiMetric"]["name"] == "convertedMetric" and
                    "kube_cluster_name" in message["message"]["MultiMetric"]["tags"] and
-                    ("docker.containers.running" in message["message"]["MultiMetric"]["values"] or
-                     "docker.containers.scheduled" in message["message"]["MultiMetric"]["values"])):
+                    (
+                        (
+                            "docker.containers.running" in message["message"]["MultiMetric"]["values"] or
+                            "docker.containers.scheduled" in message["message"]["MultiMetric"]["values"]
+                        ) or
+                        (
+                            "kubernetes_state.pod.ready" in message["message"]["MultiMetric"]["values"] or
+                            "kubernetes_state.pod.scheduled" in message["message"]["MultiMetric"]["values"]
+                        ))):
                     return True
             return False
 
