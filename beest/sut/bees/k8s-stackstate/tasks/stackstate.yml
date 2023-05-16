@@ -75,7 +75,26 @@
       with_items:
         - "{{ namespace }}"
 
-    - name: Deploy stackstate chart '{{ stackstate_version }}' from '{{ stackstate_helm_chart_repo }}'
+    - name: Deploy stackstate chart '{{ stackstate_version }}' from '{{ stackstate_helm_chart_repo }}', ignoring stackpack store uri
+      when: stackpack_store_uri is not defined
+      kubernetes.core.helm:
+        context: "{{ kubecontext }}"
+        chart_ref: "{{ stackstate_helm_chart_repo }}"
+        chart_version: "{{ stackstate_version }}"
+        release_name: stackstate
+        release_namespace: "{{ namespace }}"
+        create_namespace: false
+        update_repo_cache: true
+        wait: yes
+        wait_timeout: 20m
+        values_files:
+          - "{{ playbook_dir }}/stackstate-values.yml"
+        values:
+          global:
+            receiverApiKey: "{{ sts_api_key }}"
+
+    - name: Deploy stackstate chart '{{ stackstate_version }}' from '{{ stackstate_helm_chart_repo }}' with stackpacks store uri '{{ stackpack_store_uri }}'
+      when: stackpack_store_uri is defined
       kubernetes.core.helm:
         context: "{{ kubecontext }}"
         chart_ref: "{{ stackstate_helm_chart_repo }}"
@@ -96,7 +115,7 @@
                   open:
                     # Automatically use the preprod stackpacks
                     CONFIG_FORCE_stackstate_featureSwitches_monitorEnableExperimentalAPIs: "true"
-                    CONFIG_FORCE_stackstate_stackPacks_latestVersionsStackPackStoreUri: "s3://sts-stackpacks-preprod"
+                    CONFIG_FORCE_stackstate_stackPacks_latestVersionsStackPackStoreUri: "{{ stackpack_store_uri }}"
                     CONFIG_FORCE_stackstate_stackPacks_updateStackPacksInterval: "30 seconds"
                     CONFIG_FORCE_stackstate_aws_s3_accesskey: ""
                     CONFIG_FORCE_stackstate_aws_s3_secretkey: ""

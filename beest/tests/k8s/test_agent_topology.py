@@ -25,8 +25,8 @@ def test_cluster_agent_topology(ansible_var, cliv1):
         .component("namespace", type="namespace", name=namespace) \
         .component("node", type="node", name=r"ip-.*") \
         .component("cluster-agent-deployment", type="deployment", name=cluster_agent) \
-        .component("cluster-agent-rs", type="replicaset", name=fr"{cluster_agent}-\w{{8,10}}") \
-        .component("cluster-agent", type="pod", name=fr"{cluster_agent}-\w{{8,10}}-\w{{5}}") \
+        .component("cluster-agent-rs", type="replicaset", name=fr"{cluster_agent}-\w{{7,10}}") \
+        .component("cluster-agent", type="pod", name=fr"{cluster_agent}-\w{{7,10}}-\w{{5}}") \
         .component("cluster-agent-container", type="container", name="cluster-agent") \
         .component("cluster-agent-cm", type="configmap", name=cluster_agent) \
         .component("cluster-agent-secret", type="secret", name=secret_name) \
@@ -75,6 +75,7 @@ def test_node_agent_topology(ansible_var, cliv1):
             .component("cgroups-vol", type="volume", name="cgroups")
             .component("node-agent-process-agent", type="stackstate-agent", name="process-agent")
             .component("node-agent-trace-agent", type="stackstate-agent", name="trace-agent")
+            .component("node-agent-main-agent", type="stackstate-agent", name="agent run")
             .one_way_direction("node-agent", "node", type="scheduled_on")
             .one_way_direction("node-agent", "node-agent-main-container", type="encloses")
             .one_way_direction("node-agent", "node-agent-process-container", type="encloses")
@@ -86,6 +87,7 @@ def test_node_agent_topology(ansible_var, cliv1):
             .one_way_direction("node-agent", "node-agent-secret", type="uses_value")
             .one_way_direction("node-agent-process-container", "node-agent-process-agent", type="runs")
             .one_way_direction("node-agent-main-container", "node-agent-trace-agent", type="runs")
+            .one_way_direction("node-agent-main-container", "node-agent-main-agent", type="runs")
         )
 
     matched_res = query_and_assert(cliv1, cluster_name, namespace, expected_topology)
@@ -120,10 +122,14 @@ def test_checks_agent_topology(ansible_var, cliv1):
         .component("checks-agent-rs", type="replicaset", name=fr"{checks_agent}-.*") \
         .component("checks-agent", type="pod", name=fr"{checks_agent}-.*-.*") \
         .component("checks-agent-secret", type="secret", name=secret_name) \
+        .component("checks-agent-main-agent", type="stackstate-agent", name="agent run") \
+        .component("checks-agent-container", type="container", name="stackstate-k8s-agent") \
         .one_way_direction("checks-agent-deployment", "checks-agent-rs", type="controls") \
         .one_way_direction("checks-agent-rs", "checks-agent", type="controls") \
         .one_way_direction("checks-agent", "node", type="scheduled_on") \
-        .one_way_direction("checks-agent", "checks-agent-secret", type="uses_value")
+        .one_way_direction("checks-agent", "checks-agent-container", type="encloses") \
+        .one_way_direction("checks-agent", "checks-agent-secret", type="uses_value") \
+        .one_way_direction("checks-agent-container", "checks-agent-main-agent", type="runs")
 
     matched_res = query_and_assert(cliv1, cluster_name, namespace, expected_topology)
     # TODO revive after STAC-19236
