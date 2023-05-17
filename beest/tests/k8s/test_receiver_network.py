@@ -76,10 +76,10 @@ def test_dnat(host, ansible_var, cliv1):
         endpoint_component_id = endpoint["externalId"]
         proc_to_service_id_match = re.compile("TCP:/urn:process:/.*:.*->{}:{}".format(endpoint_component_id, dnat_service_port))
 
-        # assert _relation_data(
-        #     json_data=json_data,
-        #     type_name="directional_connection",
-        #     external_id_assert_fn=lambda v: proc_to_service_id_match.findall(v))["outgoing"]["ip"] == pod_client
+        assert _relation_data(
+            json_data=json_data,
+            type_name="directional_connection",
+            external_id_assert_fn=lambda v: proc_to_service_id_match.findall(v))["outgoing"]["ip"] == pod_client
 
     util.wait_until(wait_for_components, 120, 3)
 

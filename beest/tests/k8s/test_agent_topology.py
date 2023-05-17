@@ -30,8 +30,10 @@ def test_cluster_agent_topology(ansible_var, cliv1):
         .component("cluster-agent-container", type="container", name="cluster-agent") \
         .component("cluster-agent-cm", type="configmap", name=cluster_agent) \
         .component("cluster-agent-secret", type="secret", name=secret_name) \
+        .component("cluster-agent-svc", type="service", name=cluster_agent) \
         .component("cluster-agent-cluster-agent", type="stackstate-agent", name="stackstate-cluster-agent start") \
         .one_way_direction("cluster-agent-deployment", "cluster-agent-rs", type="controls") \
+        .one_way_direction("cluster-agent-svc", "cluster-agent", type="exposes") \
         .one_way_direction("cluster-agent-rs", "cluster-agent", type="controls") \
         .one_way_direction("cluster-agent", "cluster-agent-container", type="encloses") \
         .one_way_direction("cluster-agent", "cluster-agent-cm", type="claims") \
@@ -77,6 +79,8 @@ def test_node_agent_topology(ansible_var, cliv1):
             .component("node-agent-trace-agent", type="stackstate-agent", name="trace-agent")
             .component("node-agent-main-agent", type="stackstate-agent", name="agent run")
             .one_way_direction("node-agent", "node", type="scheduled_on")
+            .one_way_direction("node-agent-ds", "node-agent", type="controls")
+            .one_way_direction("node-agent-svc", "node-agent", type="exposes")
             .one_way_direction("node-agent", "node-agent-main-container", type="encloses")
             .one_way_direction("node-agent", "node-agent-process-container", type="encloses")
             .one_way_direction("node-agent", "node-agent-cm", type="claims")
