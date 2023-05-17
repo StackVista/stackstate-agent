@@ -13,8 +13,6 @@ spec:
       command: ["/bin/bash", "-c", "ncat -vv --broker --listen -p 123 > /dev/null"]
       ports:
         - containerPort: 123
-  nodeSelector:
-    failure-domain.beta.kubernetes.io/zone: eu-west-1a
 ---
 apiVersion: v1
 kind: Service
@@ -44,5 +42,3 @@ spec:
       imagePullPolicy: IfNotPresent
       name: client
       command: ["/bin/bash", "-c", "while echo y; do sleep 0.1; done | nc -vv pod-service 321"]
-  nodeSelector:
-    failure-domain.beta.kubernetes.io/zone: eu-west-1b

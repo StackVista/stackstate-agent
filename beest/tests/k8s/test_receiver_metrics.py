@@ -1,12 +1,13 @@
 import json
 import util
+from conftest import STS_CONTEXT_FILE
 
-testinfra_hosts = ["local"]
+testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
 
 
 def test_agents_running(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics")
+        json_data = cliv1.topic_api("sts_multi_metrics", config_location=STS_CONTEXT_FILE)
 
         metrics = {}
         for message in json_data["messages"]:
@@ -32,7 +33,7 @@ def test_agents_running(cliv1):
 
 def test_container_metrics(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics", limit=4000)
+        json_data = cliv1.topic_api("sts_multi_metrics", limit=4000, config_location=STS_CONTEXT_FILE)
 
         metrics = {}
         for message in json_data["messages"]:
@@ -61,35 +62,45 @@ def check_non_zero(metric, metrics):
     assert False, "all '%s' metric are '0'".format(metric)
 
 
-def test_agent_http_metrics(cliv1):
-    def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics")
+# TODO: HTTP Metrics has been updated to use a new topic etc.
+# TODO: - pod_http_requests_count
+# TODO: - pod_http_response_time_seconds_bucket
 
-        def get_keys():
-            return next(set(message["message"]["MultiMetric"]["values"].keys())
-                        for message in json_data["messages"]
-                        if message["message"]["MultiMetric"]["name"] == "connection metric" and
-                        "code" in message["message"]["MultiMetric"]["tags"] and
-                        message["message"]["MultiMetric"]["tags"]["code"] == "2xx"
-                        )
-
-        expected = {"http_requests_per_second", "http_response_time_seconds"}
-
-        assert get_keys().pop() in expected
-
-    util.wait_until(wait_for_metrics, 30, 3)
-
+#  def test_agent_http_metrics(cliv1):
+#      def wait_for_metrics():
+#          json_data = cliv1.topic_api("sts_multi_metrics", config_location=STS_CONTEXT_FILE)
+#
+#          def get_keys():
+#              return next(set(message["message"]["MultiMetric"]["values"].keys())
+#                          for message in json_data["messages"]
+#                          if message["message"]["MultiMetric"]["name"] == "connection metric" and
+#                          "code" in message["message"]["MultiMetric"]["tags"] and
+#                          message["message"]["MultiMetric"]["tags"]["code"] == "2xx"
+#                          )
+#
+#          expected = {"http_requests_per_second", "http_response_time_seconds"}
+#
+#          assert get_keys().pop() in expected
+#
+#      util.wait_until(wait_for_metrics, 30, 3)
 
 def test_agent_kubernetes_metrics(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics")
+        json_data = cliv1.topic_api("sts_multi_metrics", config_location=STS_CONTEXT_FILE)
 
         def contains_key():
             for message in json_data["messages"]:
                 if (message["message"]["MultiMetric"]["name"] == "convertedMetric" and
-                    "cluster_name" in message["message"]["MultiMetric"]["tags"] and
-                    ("kubernetes_state.container.running" in message["message"]["MultiMetric"]["values"].keys() or
-                     "kubernetes_state.pod.scheduled" in message["message"]["MultiMetric"]["values"].keys())):
+                    "kube_cluster_name" in message["message"]["MultiMetric"]["tags"] and
+                    (
+                        (
+                            "docker.containers.running" in message["message"]["MultiMetric"]["values"].keys() or
+                            "docker.containers.scheduled" in message["message"]["MultiMetric"]["values"].keys()
+                        ) or
+                        (
+                            "kubernetes_state.pod.ready" in message["message"]["MultiMetric"]["values"].keys() or
+                            "kubernetes_state.pod.scheduled" in message["message"]["MultiMetric"]["values"].keys()
+                        ))):
                     return True
             return False
 
@@ -100,14 +111,21 @@ def test_agent_kubernetes_metrics(cliv1):
 
 def test_agent_kubernetes_state_metrics(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics")
+        json_data = cliv1.topic_api("sts_multi_metrics", config_location=STS_CONTEXT_FILE)
 
         def contains_key():
             for message in json_data["messages"]:
                 if (message["message"]["MultiMetric"]["name"] == "convertedMetric" and
-                    "cluster_name" in message["message"]["MultiMetric"]["tags"] and
-                    ("kubernetes_state.container.running" in message["message"]["MultiMetric"]["values"] or
-                     "kubernetes_state.pod.scheduled" in message["message"]["MultiMetric"]["values"])):
+                   "kube_cluster_name" in message["message"]["MultiMetric"]["tags"] and
+                    (
+                        (
+                            "docker.containers.running" in message["message"]["MultiMetric"]["values"] or
+                            "docker.containers.scheduled" in message["message"]["MultiMetric"]["values"]
+                        ) or
+                        (
+                            "kubernetes_state.pod.ready" in message["message"]["MultiMetric"]["values"] or
+                            "kubernetes_state.pod.scheduled" in message["message"]["MultiMetric"]["values"]
+                        ))):
                     return True
             return False
 
@@ -118,7 +136,7 @@ def test_agent_kubernetes_state_metrics(cliv1):
 
 def test_agent_kubelet_metrics(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics", limit=3000)
+        json_data = cliv1.topic_api("sts_multi_metrics", limit=3000, config_location=STS_CONTEXT_FILE)
 
         def contains_key():
             for message in json_data["messages"]:

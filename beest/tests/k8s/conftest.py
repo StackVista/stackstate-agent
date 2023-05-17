@@ -2,8 +2,8 @@ import logging
 import pytest
 from stscliv1 import CLIv1
 
-
 USE_CACHE = False
+STS_CONTEXT_FILE = "../../sut/yards/k8s/config.yaml"
 
 
 @pytest.fixture
@@ -15,6 +15,7 @@ def hostname(host):
 def vars_from(host):
     def _load_vars(yaml_path):
         return host.ansible("include_vars", yaml_path)["ansible_facts"]
+
     return _load_vars
 
 
@@ -29,6 +30,7 @@ def ansible_var(host):
             # This allows variable interpolation
             # https://stackoverflow.com/questions/57820998/accessing-ansible-variables-in-molecule-test-testinfra
             return host.ansible("debug", "msg={{ " + name + " }}")["msg"]
+
     return _retrieve_var
 
 

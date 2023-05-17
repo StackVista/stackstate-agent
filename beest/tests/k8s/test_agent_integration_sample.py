@@ -1,7 +1,8 @@
 import util
 import integration_sample
+from conftest import STS_CONTEXT_FILE
 
-testinfra_hosts = ["local"]
+testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
 
 
 def kubernetes_event_data(event, json_data):
@@ -26,7 +27,7 @@ def test_agent_integration_sample_topology(cliv1):
 
 def test_agent_integration_sample_events(cliv1):
     def wait_for_events():
-        json_data = cliv1.topic_api("sts_generic_events")
+        json_data = cliv1.topic_api("sts_generic_events", config_location=STS_CONTEXT_FILE)
 
         service_event = {
             "name": "service-check.service-check",

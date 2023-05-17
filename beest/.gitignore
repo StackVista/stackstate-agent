@@ -12,6 +12,8 @@ tf.deploy
 *-values.yml
 sts-toolbox.yml
 sut/yards/*/conf.yaml
+sut/yards/*/config.yaml
+sut/yards/*/config
 
 # pytest related files
 topic-*.json
@@ -76,6 +78,8 @@ coverage.xml
 .pytest_cache/
 cover/
 *.gv
+*.gv.png
+*.gv.jpg
 tests/*/test_*-*.json
 tests/*/test_*-*.xml
 tests/conf.d
