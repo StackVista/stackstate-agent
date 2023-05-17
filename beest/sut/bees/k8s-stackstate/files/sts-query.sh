@@ -1,3 +1,8 @@
 #!/bin/bash
 
-cat ~/sts-query.stsl | sts-cli script execute
+if [ -z "$1" ]
+  then
+    sts script run --file ~/sts-query.stsl --output json
+else
+    sts --config "$1" script run --file ~/sts-query.stsl --output json
+fi

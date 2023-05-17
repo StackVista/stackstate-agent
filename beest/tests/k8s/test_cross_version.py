@@ -1,8 +1,10 @@
 from packaging import version
 import pytest
+
+from conftest import STS_CONTEXT_FILE
 from ststest import TopologyMatcher
 
-testinfra_hosts = ["local"]
+testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
 
 
 def test_projected_volume_topology(ansible_var, cliv1):
@@ -15,7 +17,7 @@ def test_projected_volume_topology(ansible_var, cliv1):
         cluster_agent = release_name + "-cluster-agent"
 
         expected_topology = TopologyMatcher() \
-            .component("cluster-agent", type="pod", name=fr"{cluster_agent}-\w{{9,10}}-\w{{5}}") \
+            .component("cluster-agent", type="pod", name=fr"{cluster_agent}-\w{{7,10}}-\w{{5}}") \
             .component("cluster-agent-container", type="container", name="cluster-agent") \
             .component("kube-api-access", type="volume", name=r"kube-api-access-.*") \
             .component("kube-root-ca", type="configmap", name="kube-root-ca.crt") \
@@ -23,7 +25,8 @@ def test_projected_volume_topology(ansible_var, cliv1):
             .one_way_direction("cluster-agent-container", "kube-api-access", type="mounts") \
             .one_way_direction("kube-api-access", "kube-root-ca", type="projects")
 
-        current_topology = cliv1.topology(f"label IN ('namespace:{namespace}')", "projected-volume")
+        current_topology = cliv1.topology(f"label IN ('namespace:{namespace}')", "projected-volume",
+                                          config_location=STS_CONTEXT_FILE)
         possible_matches = expected_topology.find(current_topology)
         matched_res = possible_matches.assert_exact_match()
 

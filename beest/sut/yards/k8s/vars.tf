@@ -15,10 +15,10 @@ variable "agent_eks_runtime" {
   }
 }
 variable "agent_eks_node_type" {
-  default = "t2.medium"
+  default = "t3.xlarge"
 }
 variable "agent_eks_size" {
-  default = 2
+  default = 1
 }
 variable "runners_ip" {
   type = string
