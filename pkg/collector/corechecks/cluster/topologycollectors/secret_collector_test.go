@@ -84,6 +84,7 @@ func TestSecretCollector(t *testing.T) {
 							"apiVersion": "v1",
 							"kind":       "Secret",
 							"metadata": map[string]interface{}{
+								"annotations":       map[string]interface{}{"openshift.io/token-secret.value": "<redacted>"},
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
 								"name":              "test-secret-1",
@@ -112,6 +113,10 @@ func TestSecretCollector(t *testing.T) {
 							"apiVersion": "v1",
 							"kind":       "Secret",
 							"metadata": map[string]interface{}{
+								"annotations": map[string]interface{}{
+									"kubectl.kubernetes.io/last-applied-configuration": "<redacted>",
+									"openshift.io/token-secret.value":                  "<redacted>",
+								},
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
 								"name":              "test-secret-1",
@@ -164,6 +169,7 @@ func TestSecretCollector(t *testing.T) {
 							"apiVersion": "v1",
 							"kind":       "Secret",
 							"metadata": map[string]interface{}{
+								"annotations":       map[string]interface{}{"openshift.io/token-secret.value": "<redacted>"},
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
 								"name":              "test-secret-2",
@@ -192,6 +198,10 @@ func TestSecretCollector(t *testing.T) {
 							"apiVersion": "v1",
 							"kind":       "Secret",
 							"metadata": map[string]interface{}{
+								"annotations": map[string]interface{}{
+									"kubectl.kubernetes.io/last-applied-configuration": "<redacted>",
+									"openshift.io/token-secret.value":                  "<redacted>",
+								},
 								"creationTimestamp": creationTimeFormatted,
 								"labels":            map[string]interface{}{"test": "label"},
 								"name":              "test-secret-2",
@@ -242,6 +252,7 @@ func TestSecretCollector(t *testing.T) {
 							"apiVersion": "v1",
 							"kind":       "Secret",
 							"metadata": map[string]interface{}{
+								"annotations":       map[string]interface{}{"openshift.io/token-secret.value": "<redacted>"},
 								"creationTimestamp": creationTimeFormatted,
 								"name":              "test-secret-3",
 								"namespace":         "test-namespace",
@@ -268,6 +279,10 @@ func TestSecretCollector(t *testing.T) {
 							"apiVersion": "v1",
 							"kind":       "Secret",
 							"metadata": map[string]interface{}{
+								"annotations": map[string]interface{}{
+									"kubectl.kubernetes.io/last-applied-configuration": "<redacted>",
+									"openshift.io/token-secret.value":                  "<redacted>",
+								},
 								"creationTimestamp": creationTimeFormatted,
 								"name":              "test-secret-3",
 								"namespace":         "test-namespace",
@@ -319,6 +334,7 @@ func (m MockSecretAPICollectorClient) GetSecrets() ([]coreV1.Secret, error) {
 				ResourceVersion:   "123",
 				Annotations: map[string]string{
 					"kubectl.kubernetes.io/last-applied-configuration": lastAppliedConfigurationSecret,
+					"openshift.io/token-secret.value":                  `{"secret":"data"`,
 				},
 				ManagedFields: []v1.ManagedFieldsEntry{
 					{

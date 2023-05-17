@@ -1,4 +1,4 @@
-FROM artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826
+FROM artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
 
 ARG UID
 ARG GID
