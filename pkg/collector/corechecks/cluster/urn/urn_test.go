@@ -2,29 +2,13 @@ package urn
 
 import (
 	"context"
+	"testing"
+
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	"github.com/stretchr/testify/assert"
 	coreV1 "k8s.io/api/core/v1"
-	"testing"
 )
-
-func TestInstanceIdExtractor_NonEmptyProviderId(t *testing.T) {
-	nodeSpecProviderID := "aws:///us-east-1b/i-024b28584ed2e6321"
-
-	node := coreV1.Node{Spec: coreV1.NodeSpec{ProviderID: nodeSpecProviderID}}
-	node.Name = "notused"
-	instanceID := GetInstanceID(node)
-	assert.Equal(t, "i-024b28584ed2e6321", instanceID)
-}
-
-func TestInstanceIdExtractor_EmptyProviderId(t *testing.T) {
-
-	node := coreV1.Node{Spec: coreV1.NodeSpec{}}
-	node.Name = "mynode"
-	instanceID := GetInstanceID(node)
-	assert.Equal(t, "mynode", instanceID)
-}
 
 func TestUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
 	mockConfig := config.Mock()

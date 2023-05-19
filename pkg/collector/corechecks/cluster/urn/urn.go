@@ -3,10 +3,11 @@ package urn
 import (
 	"context"
 	"fmt"
-	"github.com/StackVista/stackstate-agent/pkg/util"
+	"strings"
+
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/hostname"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	v1 "k8s.io/api/core/v1"
-	"strings"
 )
 
 // ClusterType represents the type of K8s Cluster
@@ -253,14 +254,13 @@ func (b *urnBuilder) BuildNodeURNs(node v1.Node) []string {
 	}
 
 	// this allow merging with host reported by main agent
-	if instanceID := GetInstanceID(node); instanceID != "" {
-		identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", instanceID))
+	if hostname, err := hostname.GetHostname(node.Spec.ProviderID); err == nil && hostname != "" {
+		identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", hostname))
 
 		ctx := context.TODO()
-		hostname, _ := util.GetHostname(ctx)
 		clusterName := clustername.GetClusterName(ctx, hostname)
 		if clusterName != "" {
-			identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s-%s", instanceID, clusterName))
+			identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s-%s", hostname, clusterName))
 		}
 	}
 
@@ -274,18 +274,4 @@ func ClusterTypeFromString(s string) ClusterType {
 	}
 
 	return Kubernetes
-}
-
-func extractLastFragment(value string) string {
-	lastSlash := strings.LastIndex(value, "/")
-	return value[lastSlash+1:]
-}
-
-// GetInstanceID extracts node name from cloud-specific ProviderID, if present
-func GetInstanceID(node v1.Node) string {
-	if node.Spec.ProviderID == "" {
-		return node.Name
-	}
-	//parse node id from cloud provider (for AWS is the ec2 instance id)
-	return extractLastFragment(node.Spec.ProviderID)
 }

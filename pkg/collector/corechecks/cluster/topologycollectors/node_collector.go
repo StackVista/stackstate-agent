@@ -4,7 +4,7 @@
 package topologycollectors
 
 import (
-	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/urn"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/hostname"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
@@ -77,7 +77,10 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 	// k8s object TypeMeta seem to be archived, it's always empty.
 	tags := nc.initTags(node.ObjectMeta, metav1.TypeMeta{Kind: "Node"})
 
-	instanceID := urn.GetInstanceID(node)
+	hostname, err := hostname.GetHostname(node.Spec.ProviderID)
+	if err != nil {
+		hostname = node.Name
+	}
 	component := &topology.Component{
 		ExternalID: nodeExternalID,
 		Type:       topology.Type{Name: "node"},
@@ -87,7 +90,7 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 			"identifiers": identifiers,
 			// for backward compatibility with K8s/OpenShift stackpack
 			// we specify instanceId in data even if it's also in the sourceProperties
-			"instanceId": instanceID,
+			"instanceId": hostname,
 		},
 	}
 
@@ -113,7 +116,7 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 
 	log.Tracef("Created StackState node component %s: %v", nodeExternalID, component.JSONString())
 
-	return component, instanceID
+	return component, hostname
 }
 
 // Creates a StackState relation from a Kubernetes Pod to Node relation

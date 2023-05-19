@@ -65,8 +65,8 @@ func (*ContainerCorrelator) GetName() string {
 func (cc *ContainerCorrelator) CorrelateFunction() error {
 	nodeMap := make(map[string]NodeIdentifierCorrelation)
 	// map containers that require the Node instanceId
-	for containerToNodeCorrelation := range cc.NodeIdentifierCorrChan {
-		nodeMap[containerToNodeCorrelation.NodeName] = *containerToNodeCorrelation
+	for nodeNameToNodeIdentifierCorrelation := range cc.NodeIdentifierCorrChan {
+		nodeMap[nodeNameToNodeIdentifierCorrelation.NodeName] = *nodeNameToNodeIdentifierCorrelation
 	}
 
 	for containerCorrelation := range cc.ContainerCorrChan {
