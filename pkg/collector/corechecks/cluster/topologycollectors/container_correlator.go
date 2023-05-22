@@ -5,9 +5,9 @@ package topologycollectors
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -111,7 +111,7 @@ func (cc *ContainerCorrelator) containerToStackStateComponent(nodeIdentifier str
 	// create identifier list to merge with StackState components
 
 	var identifiers []string
-	strippedContainerID := extractLastFragment(container.ContainerID)
+	strippedContainerID := util.ExtractLastFragment(container.ContainerID)
 	// in the case where the container could not be started due to some error
 	if len(strippedContainerID) > 0 {
 		identifier := ""
@@ -198,9 +198,4 @@ func (cc *ContainerCorrelator) containerToNodeStackStateRelation(containerExtern
 	log.Tracef("Created StackState container -> node relation %s -> %s", relation.SourceID, relation.TargetID)
 
 	return relation
-}
-
-func extractLastFragment(value string) string {
-	lastSlash := strings.LastIndex(value, "/")
-	return value[lastSlash+1:]
 }

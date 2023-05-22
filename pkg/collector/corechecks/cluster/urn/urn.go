@@ -253,8 +253,13 @@ func (b *urnBuilder) BuildNodeURNs(node v1.Node) []string {
 		)
 	}
 
+	hostname, err := hostname.GetHostname(node.Spec.ProviderID)
+	if err != nil {
+		hostname = node.Name
+	}
+
 	// this allow merging with host reported by main agent
-	if hostname, err := hostname.GetHostname(node.Spec.ProviderID); err == nil && hostname != "" {
+	if hostname != "" {
 		identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", hostname))
 
 		ctx := context.TODO()

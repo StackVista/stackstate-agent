@@ -39,7 +39,7 @@ func GetProvider(providerName string) Provider {
 // GetHostname returns the hostname for a providerID for a specific Provider if it was register
 func GetHostname(providerID string) (string, error) {
 	if providerID == "" {
-		return "", nil
+		return "", fmt.Errorf("providerID is empty")
 	}
 	providerName := strings.Split(providerID, "://")[0]
 
