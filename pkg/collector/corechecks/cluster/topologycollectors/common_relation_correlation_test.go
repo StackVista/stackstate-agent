@@ -28,8 +28,8 @@ func TestRelationCorrelation(t *testing.T) {
 	secret1Name := "secret-1"
 	secret2Name := "secret-2"
 	node1Name := "node-1"
-	instanceId := "instance-id"
-	node1Provider := "aws://eu-west-1/" + instanceId
+	instanceID := "instance-id"
+	node1Provider := "aws://eu-west-1/" + instanceID
 	someTimestamp := metav1.NewTime(time.Now())
 
 	mockConfig := config.Mock()
@@ -64,7 +64,7 @@ func TestRelationCorrelation(t *testing.T) {
 		configMapComponent(namespace, configMap2Name, someTimestamp),
 		secretComponent(namespace, secret1Name, someTimestamp),
 		secretComponent(namespace, secret2Name, someTimestamp),
-		nodeComponent(node1Name, instanceId, clusterName, someTimestamp),
+		nodeComponent(node1Name, instanceID, clusterName, someTimestamp),
 	}
 	expectedRelations := []*topology.Relation{
 		simpleRelation(expectedPod1Id, expectedConfigMap2Id, "uses"),
@@ -326,7 +326,7 @@ func node(name string, providerID string, timestamp metav1.Time) coreV1.Node {
 		},
 	}
 }
-func nodeComponent(name, instanceId, clusterName string, timestamp metav1.Time) *topology.Component {
+func nodeComponent(name, instanceID, clusterName string, timestamp metav1.Time) *topology.Component {
 	return &topology.Component{
 		ExternalID: fmt.Sprintf("urn:kubernetes:/test-cluster-name:node/%s", name),
 		Type: topology.Type{
@@ -335,15 +335,15 @@ func nodeComponent(name, instanceId, clusterName string, timestamp metav1.Time) 
 		Data: topology.Data{
 			"name":       name,
 			"kind":       "Node",
-			"instanceId": instanceId,
+			"instanceId": instanceID,
 			"tags": map[string]string{
 				"cluster-name":   "test-cluster-name",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-node",
 			},
 			"identifiers": []string{
-				fmt.Sprintf("urn:host:/%s", instanceId),
-				fmt.Sprintf("urn:host:/%s-%s", instanceId, clusterName),
+				fmt.Sprintf("urn:host:/%s", instanceID),
+				fmt.Sprintf("urn:host:/%s-%s", instanceID, clusterName),
 			},
 			"creationTimestamp": timestamp,
 			"uid":               types.UID(name),
