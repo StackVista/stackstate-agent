@@ -2,31 +2,43 @@ package urn
 
 import (
 	"context"
+	"testing"
+
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	"github.com/stretchr/testify/assert"
 	coreV1 "k8s.io/api/core/v1"
-	"testing"
 )
 
-func TestInstanceIdExtractor_NonEmptyProviderId(t *testing.T) {
-	nodeSpecProviderID := "aws:///us-east-1b/i-024b28584ed2e6321"
+func TestAwsUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
+	mockConfig := config.Mock()
+	var testClusterName = "mycluster"
+	mockConfig.Set("cluster_name", testClusterName)
 
-	node := coreV1.Node{Spec: coreV1.NodeSpec{ProviderID: nodeSpecProviderID}}
-	node.Name = "notused"
-	instanceID := GetInstanceID(node)
-	assert.Equal(t, "i-024b28584ed2e6321", instanceID)
+	clustername.GetClusterName(context.TODO(), "")
+
+	builder := NewURNBuilder(Kubernetes, "uurrll")
+
+	awsProviderID := "aws:///us-east-1b/i-024b28584ed2e6321"
+	awsNode := coreV1.Node{Spec: coreV1.NodeSpec{ProviderID: awsProviderID}}
+	awsNode.Status.Addresses = []coreV1.NodeAddress{
+		{Type: coreV1.NodeInternalIP, Address: "10.20.01.01"},
+		{Type: coreV1.NodeExternalIP, Address: "10.20.01.02"},
+		{Type: coreV1.NodeInternalDNS, Address: "cluster.internal.amazon.net"},
+		{Type: coreV1.NodeExternalDNS, Address: "amazon.com"},
+	}
+	awsIdentifiers := builder.BuildNodeURNs(awsNode)
+	assert.Equal(t, []string{
+		"urn:ip:/uurrll::10.20.01.01",
+		"urn:ip:/uurrll:10.20.01.02",
+		"urn:host:/uurrll:cluster.internal.amazon.net",
+		"urn:host:/amazon.com",
+		"urn:host:/i-024b28584ed2e6321",
+		"urn:host:/i-024b28584ed2e6321-mycluster",
+	}, awsIdentifiers)
 }
 
-func TestInstanceIdExtractor_EmptyProviderId(t *testing.T) {
-
-	node := coreV1.Node{Spec: coreV1.NodeSpec{}}
-	node.Name = "mynode"
-	instanceID := GetInstanceID(node)
-	assert.Equal(t, "mynode", instanceID)
-}
-
-func TestUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
+func TestAzureUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
 	mockConfig := config.Mock()
 	var testClusterName = "mycluster"
 	mockConfig.Set("cluster_name", testClusterName)
@@ -54,22 +66,32 @@ func TestUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
 		"urn:host:/stac14538openshift-5bljc-worker-westeurope3-6lq9w",
 		"urn:host:/stac14538openshift-5bljc-worker-westeurope3-6lq9w-mycluster",
 	}, azureIdentifiers)
+}
 
-	awsProviderID := "aws:///us-east-1b/i-024b28584ed2e6321"
-	awsNode := coreV1.Node{Spec: coreV1.NodeSpec{ProviderID: awsProviderID}}
-	awsNode.Status.Addresses = []coreV1.NodeAddress{
+func TestGceUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
+	mockConfig := config.Mock()
+	var testClusterName = "mycluster"
+	mockConfig.Set("cluster_name", testClusterName)
+
+	clustername.GetClusterName(context.TODO(), "")
+
+	builder := NewURNBuilder(Kubernetes, "uurrll")
+
+	gceProviderID := "gce://test-stackstate/europe-west4-a/gke-test-default-pool-9f8f65a4-2kld"
+	gceNode := coreV1.Node{Spec: coreV1.NodeSpec{ProviderID: gceProviderID}}
+	gceNode.Status.Addresses = []coreV1.NodeAddress{
 		{Type: coreV1.NodeInternalIP, Address: "10.20.01.01"},
 		{Type: coreV1.NodeExternalIP, Address: "10.20.01.02"},
-		{Type: coreV1.NodeInternalDNS, Address: "cluster.internal.amazon.net"},
-		{Type: coreV1.NodeExternalDNS, Address: "amazon.com"},
+		{Type: coreV1.NodeInternalDNS, Address: "cluster.internal.dns.gce.net"},
+		{Type: coreV1.NodeExternalDNS, Address: "host.gce.com"},
 	}
-	awsIdentifiers := builder.BuildNodeURNs(awsNode)
+	gceIdentifiers := builder.BuildNodeURNs(gceNode)
 	assert.Equal(t, []string{
 		"urn:ip:/uurrll::10.20.01.01",
 		"urn:ip:/uurrll:10.20.01.02",
-		"urn:host:/uurrll:cluster.internal.amazon.net",
-		"urn:host:/amazon.com",
-		"urn:host:/i-024b28584ed2e6321",
-		"urn:host:/i-024b28584ed2e6321-mycluster",
-	}, awsIdentifiers)
+		"urn:host:/uurrll:cluster.internal.dns.gce.net",
+		"urn:host:/host.gce.com",
+		"urn:host:/gke-test-default-pool-9f8f65a4-2kld.europe-west4-a.c.test-stackstate.internal",
+		"urn:host:/gke-test-default-pool-9f8f65a4-2kld.europe-west4-a.c.test-stackstate.internal-mycluster",
+	}, gceIdentifiers)
 }
