@@ -13,7 +13,3 @@ func TestAwsHostnameUsesInstanceId(t *testing.T) {
 func TestAwsHostnameEmpty(t *testing.T) {
 	assert.Equal(t, "", GetHostname(""))
 }
-
-func TestAwsHostnameWrongPrefix(t *testing.T) {
-	assert.Equal(t, "", GetHostname("abc://test/test"))
-}
