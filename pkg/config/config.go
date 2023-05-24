@@ -722,7 +722,10 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("cloud_foundry_garden.listen_address", "/var/vcap/data/garden/garden.sock")
 
 	// Azure
-	config.BindEnvAndSetDefault("azure_hostname_style", "os")
+	// When using `os` as the Azure hostname resolution the `containerd` check on Azure will produce a container with
+	// a hostname that includes the cluster name which breaks compatibility (and merging behavior) with
+	// the Kubernetes and process agent hostnames.
+	config.BindEnvAndSetDefault("azure_hostname_style", "name")
 
 	// JMXFetch
 	config.BindEnvAndSetDefault("jmx_custom_jars", []string{})

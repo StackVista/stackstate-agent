@@ -14,6 +14,10 @@ const vmID = "877e90e3-041e-4784-8a55-096f71d0ff6c"
 
 var testNode = testutil.TestNode(testProviderID, osHostname, vmID)
 
+func TestAzureHostnameDefault(t *testing.T) {
+	assert.Equal(t, "aks-nodepool1-11692903-vmss_0", GetHostname(testNode))
+}
+
 func TestAzureHostnameUsesOsHost(t *testing.T) {
 	config := config.Mock()
 	config.Set(hostnameStyleSetting, "os")

@@ -54,10 +54,10 @@ func GetHostnameWithConfig(node v1.Node, config config.Config) string {
 			case "name":
 				return fmt.Sprintf("%s_%s", scaleSet, instance)
 			case "name_and_resource_group":
-				log.Warnf("Using the `name_and_resource_group` hostname style can result in mismatches in reported hostnames for the same VM because AKS lower cases the resource group name in the Kubernetes providerID. It is recommended to use the default `os` style instead.")
+				log.Warnf("Using the `name_and_resource_group` hostname style can result in mismatches in reported hostnames for the same VM because AKS lower cases the resource group name in the Kubernetes providerID. It is recommended to use the default `name` style instead.")
 				return fmt.Sprintf("%s_%s.%s", scaleSet, instance, resourceGroup)
 			case "full":
-				log.Warnf("Using the `full` hostname style can result in mismatches in reported hostnames for the same VM because AKS lower cases the resource group name in the Kubernetes providerID. It is recommended to use the default `os` style instead.")
+				log.Warnf("Using the `full` hostname style can result in mismatches in reported hostnames for the same VM because AKS lower cases the resource group name in the Kubernetes providerID. It is recommended to use the default `name` style instead.")
 				return fmt.Sprintf("%s_%s.%s.%s", scaleSet, instance, resourceGroup, subscription)
 			default:
 				return ""
