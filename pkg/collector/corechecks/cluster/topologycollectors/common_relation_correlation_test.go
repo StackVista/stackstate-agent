@@ -342,8 +342,7 @@ func nodeComponent(name, instanceID, clusterName string, timestamp metav1.Time) 
 				"component-type": "kubernetes-node",
 			},
 			"identifiers": []string{
-				fmt.Sprintf("urn:host:/%s", instanceID),
-				fmt.Sprintf("urn:host:/%s-%s", instanceID, clusterName),
+				fmt.Sprintf("urn:host:/%s-%s", name, clusterName),
 			},
 			"creationTimestamp": timestamp,
 			"uid":               types.UID(name),

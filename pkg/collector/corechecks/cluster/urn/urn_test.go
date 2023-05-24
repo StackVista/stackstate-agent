@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
-	"github.com/StackVista/stackstate-agent/pkg/util/hostname"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	"github.com/stretchr/testify/assert"
 	coreV1 "k8s.io/api/core/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestAwsUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
@@ -21,7 +21,11 @@ func TestAwsUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
 	builder := NewURNBuilder(Kubernetes, "uurrll")
 
 	awsProviderID := "aws:///us-east-1b/i-024b28584ed2e6321"
-	awsNode := coreV1.Node{Spec: coreV1.NodeSpec{ProviderID: awsProviderID}}
+	awsNode := coreV1.Node{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name: "ip-10-0-01-01.eu-west-1.compute.internal",
+		}, Spec: coreV1.NodeSpec{ProviderID: awsProviderID},
+	}
 	awsNode.Status.Addresses = []coreV1.NodeAddress{
 		{Type: coreV1.NodeInternalIP, Address: "10.20.01.01"},
 		{Type: coreV1.NodeExternalIP, Address: "10.20.01.02"},
@@ -30,12 +34,11 @@ func TestAwsUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
 	}
 	awsIdentifiers := builder.BuildNodeURNs(awsNode)
 	assert.Equal(t, []string{
-		"urn:ip:/uurrll::10.20.01.01",
+		"urn:ip:/uurrll:ip-10-0-01-01.eu-west-1.compute.internal:10.20.01.01",
 		"urn:ip:/uurrll:10.20.01.02",
 		"urn:host:/uurrll:cluster.internal.amazon.net",
 		"urn:host:/amazon.com",
-		"urn:host:/i-024b28584ed2e6321",
-		"urn:host:/i-024b28584ed2e6321-mycluster",
+		"urn:host:/ip-10-0-01-01.eu-west-1.compute.internal-mycluster",
 	}, awsIdentifiers)
 }
 
@@ -48,8 +51,13 @@ func TestAzureUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
 
 	builder := NewURNBuilder(Kubernetes, "uurrll")
 
-	azureProviderID := "azure:///subscriptions/02ee9821-1b92-4cc8-84d2-bc87f369c88f/resourceGroups/aro-qjomvtki/providers/Microsoft.Compute/virtualMachines/stac14538openshift-5bljc-worker-westeurope3-6lq9w"
-	azureNode := coreV1.Node{Spec: coreV1.NodeSpec{ProviderID: azureProviderID}}
+	azureProviderID := "azure:///subscriptions/d7e2ab8d-5edd-4db4-bc04-b1a193778fa3/resourceGroups/mc_test-stackstate_dev-cluster_westeurope/providers/Microsoft.Compute/virtualMachineScaleSets/aks-nodepool1-11692903-vmss/virtualMachines/0"
+	azureNode := coreV1.Node{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name: "aks-nodepool1-11692903-vmss000000",
+		},
+		Spec: coreV1.NodeSpec{ProviderID: azureProviderID},
+	}
 	azureNode.Status.Addresses = []coreV1.NodeAddress{
 		{Type: coreV1.NodeInternalIP, Address: "10.20.01.01"},
 		{Type: coreV1.NodeExternalIP, Address: "10.20.01.02"},
@@ -58,52 +66,42 @@ func TestAzureUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
 	}
 	azureIdentifiers := builder.BuildNodeURNs(azureNode)
 	assert.Equal(t, []string{
-		"urn:ip:/uurrll::10.20.01.01",
+		"urn:ip:/uurrll:aks-nodepool1-11692903-vmss000000:10.20.01.01",
 		"urn:ip:/uurrll:10.20.01.02",
 		"urn:host:/uurrll:cluster.internal.dns.azure.net",
 		"urn:host:/host.azure.com",
-		"urn:azure:/subscriptions/02ee9821-1b92-4cc8-84d2-bc87f369c88f/resourceGroups/aro-qjomvtki/providers/Microsoft.Compute/virtualMachines/stac14538openshift-5bljc-worker-westeurope3-6lq9w",
-		"urn:azure:/SUBSCRIPTIONS/02EE9821-1B92-4CC8-84D2-BC87F369C88F/RESOURCEGROUPS/ARO-QJOMVTKI/PROVIDERS/MICROSOFT.COMPUTE/VIRTUALMACHINES/STAC14538OPENSHIFT-5BLJC-WORKER-WESTEUROPE3-6LQ9W",
-		"urn:host:/stac14538openshift-5bljc-worker-westeurope3-6lq9w",
-		"urn:host:/stac14538openshift-5bljc-worker-westeurope3-6lq9w-mycluster",
+		"urn:azure:/subscriptions/d7e2ab8d-5edd-4db4-bc04-b1a193778fa3/resourceGroups/mc_test-stackstate_dev-cluster_westeurope/providers/Microsoft.Compute/virtualMachineScaleSets/aks-nodepool1-11692903-vmss/virtualMachines/0",
+		"urn:azure:/SUBSCRIPTIONS/D7E2AB8D-5EDD-4DB4-BC04-B1A193778FA3/RESOURCEGROUPS/MC_TEST-STACKSTATE_DEV-CLUSTER_WESTEUROPE/PROVIDERS/MICROSOFT.COMPUTE/VIRTUALMACHINESCALESETS/AKS-NODEPOOL1-11692903-VMSS/VIRTUALMACHINES/0",
+		"urn:host:/aks-nodepool1-11692903-vmss000000-mycluster",
 	}, azureIdentifiers)
 }
 
 func TestGceUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
-	withStaticHostnameProvider("gce", "gke-test-default-pool-9f8f65a4-2kld.europe-west4-a.c.test-stackstate.internal", func() {
-		mockConfig := config.Mock()
-		var testClusterName = "mycluster"
-		mockConfig.Set("cluster_name", testClusterName)
+	mockConfig := config.Mock()
+	var testClusterName = "mycluster"
+	mockConfig.Set("cluster_name", testClusterName)
 
-		clustername.GetClusterName(context.TODO(), "")
+	clustername.GetClusterName(context.TODO(), "")
 
-		builder := NewURNBuilder(Kubernetes, "uurrll")
+	builder := NewURNBuilder(Kubernetes, "uurrll")
 
-		gceProviderID := "gce://test-stackstate/europe-west4-a/gke-test-default-pool-9f8f65a4-2kld"
-		gceNode := coreV1.Node{Spec: coreV1.NodeSpec{ProviderID: gceProviderID}}
-		gceNode.Status.Addresses = []coreV1.NodeAddress{
-			{Type: coreV1.NodeInternalIP, Address: "10.20.01.01"},
-			{Type: coreV1.NodeExternalIP, Address: "10.20.01.02"},
-			{Type: coreV1.NodeInternalDNS, Address: "cluster.internal.dns.gce.net"},
-			{Type: coreV1.NodeExternalDNS, Address: "host.gce.com"},
-		}
-		gceIdentifiers := builder.BuildNodeURNs(gceNode)
-		assert.Equal(t, []string{
-			"urn:ip:/uurrll::10.20.01.01",
-			"urn:ip:/uurrll:10.20.01.02",
-			"urn:host:/uurrll:cluster.internal.dns.gce.net",
-			"urn:host:/host.gce.com",
-			"urn:host:/gke-test-default-pool-9f8f65a4-2kld.europe-west4-a.c.test-stackstate.internal",
-			"urn:host:/gke-test-default-pool-9f8f65a4-2kld.europe-west4-a.c.test-stackstate.internal-mycluster",
-		}, gceIdentifiers)
-	})
-}
-
-func withStaticHostnameProvider(providerID, staticHost string, f func()) {
-	originalHostnameProvider := hostname.GetProvider(providerID)
-	hostname.RegisterHostnameProvider(providerID, func(ctx context.Context, options map[string]interface{}) (string, error) {
-		return staticHost, nil
-	})
-	defer func() { hostname.RegisterHostnameProvider(providerID, originalHostnameProvider) }()
-	f()
+	gceProviderID := "gce://test-stackstate/europe-west4-a/gke-test-default-pool-9f8f65a4-2kld"
+	gceNode := coreV1.Node{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name: "gke-test-default-pool-bbd2dc11-9wxt",
+		}, Spec: coreV1.NodeSpec{ProviderID: gceProviderID}}
+	gceNode.Status.Addresses = []coreV1.NodeAddress{
+		{Type: coreV1.NodeInternalIP, Address: "10.20.01.01"},
+		{Type: coreV1.NodeExternalIP, Address: "10.20.01.02"},
+		{Type: coreV1.NodeInternalDNS, Address: "cluster.internal.dns.gce.net"},
+		{Type: coreV1.NodeExternalDNS, Address: "host.gce.com"},
+	}
+	gceIdentifiers := builder.BuildNodeURNs(gceNode)
+	assert.Equal(t, []string{
+		"urn:ip:/uurrll:gke-test-default-pool-bbd2dc11-9wxt:10.20.01.01",
+		"urn:ip:/uurrll:10.20.01.02",
+		"urn:host:/uurrll:cluster.internal.dns.gce.net",
+		"urn:host:/host.gce.com",
+		"urn:host:/gke-test-default-pool-bbd2dc11-9wxt-mycluster",
+	}, gceIdentifiers)
 }

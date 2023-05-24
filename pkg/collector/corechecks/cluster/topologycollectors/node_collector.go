@@ -4,6 +4,8 @@
 package topologycollectors
 
 import (
+	"strings"
+
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/hostname"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -77,10 +79,13 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 	// k8s object TypeMeta seem to be archived, it's always empty.
 	tags := nc.initTags(node.ObjectMeta, metav1.TypeMeta{Kind: "Node"})
 
-	hostname, err := hostname.GetHostname(node.Spec.ProviderID)
+	hostname, err := hostname.GetHostname(node)
 	if err != nil {
 		hostname = node.Name
 	}
+
+	instanceID := GetAwsInstanceID(node)
+
 	component := &topology.Component{
 		ExternalID: nodeExternalID,
 		Type:       topology.Type{Name: "node"},
@@ -90,7 +95,7 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 			"identifiers": identifiers,
 			// for backward compatibility with K8s/OpenShift stackpack
 			// we specify instanceId in data even if it's also in the sourceProperties
-			"instanceId": hostname,
+			"instanceId": instanceID,
 		},
 	}
 
@@ -131,4 +136,18 @@ func (nc *NodeCollector) nodeToClusterStackStateRelation(node v1.Node) *topology
 	log.Tracef("Created StackState node -> cluster relation %s->%s", relation.SourceID, relation.TargetID)
 
 	return relation
+}
+
+func extractLastFragment(value string) string {
+	lastSlash := strings.LastIndex(value, "/")
+	return value[lastSlash+1:]
+}
+
+// GetAwsInstanceID extracts node name from cloud-specific ProviderID, if present
+func GetAwsInstanceID(node v1.Node) string {
+	if node.Spec.ProviderID == "" {
+		return node.Name
+	}
+	//parse node id from cloud provider (for AWS is the ec2 instance id)
+	return extractLastFragment(node.Spec.ProviderID)
 }

@@ -1,12 +1,10 @@
 package urn
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/hostname"
-	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -253,7 +251,7 @@ func (b *urnBuilder) BuildNodeURNs(node v1.Node) []string {
 		)
 	}
 
-	hostname, err := hostname.GetHostname(node.Spec.ProviderID)
+	hostname, err := hostname.GetHostname(node)
 	if err != nil {
 		hostname = node.Name
 	}
@@ -261,12 +259,6 @@ func (b *urnBuilder) BuildNodeURNs(node v1.Node) []string {
 	// this allow merging with host reported by main agent
 	if hostname != "" {
 		identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s", hostname))
-
-		ctx := context.TODO()
-		clusterName := clustername.GetClusterName(ctx, hostname)
-		if clusterName != "" {
-			identifiers = append(identifiers, fmt.Sprintf("urn:host:/%s-%s", hostname, clusterName))
-		}
 	}
 
 	return identifiers

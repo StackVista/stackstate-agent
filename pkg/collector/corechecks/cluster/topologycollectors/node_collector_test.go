@@ -83,7 +83,6 @@ func TestNodeCollector(t *testing.T) {
 											},
 											"identifiers": []string{
 												"urn:ip:/test-cluster-name:test-node-1:10.20.01.01",
-												"urn:host:/test-node-1",
 												"urn:host:/test-node-1-test-cluster-name",
 											},
 										},
@@ -103,7 +102,6 @@ func TestNodeCollector(t *testing.T) {
 											"instanceId": "test-node-1",
 											"identifiers": []string{
 												"urn:ip:/test-cluster-name:test-node-1:10.20.01.01",
-												"urn:host:/test-node-1",
 												"urn:host:/test-node-1-test-cluster-name",
 											},
 										},
@@ -156,7 +154,6 @@ func TestNodeCollector(t *testing.T) {
 											"instanceId": "test-node-1",
 											"identifiers": []string{
 												"urn:ip:/test-cluster-name:test-node-1:10.20.01.01",
-												"urn:host:/test-node-1",
 												"urn:host:/test-node-1-test-cluster-name",
 											},
 										},
@@ -219,7 +216,7 @@ func TestNodeCollector(t *testing.T) {
 								nodeIdentifier := <-nodeIdentifierCorrelationChannel
 								expectedNodeIdentifier := &NodeIdentifierCorrelation{
 									NodeName:       "test-node-1",
-									NodeIdentifier: "test-node-1",
+									NodeIdentifier: "test-node-1-test-cluster-name",
 									NodeExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-1",
 								}
 								assert.EqualValues(t, expectedNodeIdentifier, nodeIdentifier)
@@ -263,7 +260,6 @@ func TestNodeCollector(t *testing.T) {
 												"identifiers": []string{
 													"urn:ip:/test-cluster-name:test-node-2:10.20.01.01",
 													"urn:ip:/test-cluster-name:10.20.01.02",
-													"urn:host:/test-node-2",
 													"urn:host:/test-node-2-test-cluster-name",
 												},
 												"generateName": "some-specified-generation",
@@ -285,7 +281,6 @@ func TestNodeCollector(t *testing.T) {
 												"identifiers": []string{
 													"urn:ip:/test-cluster-name:test-node-2:10.20.01.01",
 													"urn:ip:/test-cluster-name:10.20.01.02",
-													"urn:host:/test-node-2",
 													"urn:host:/test-node-2-test-cluster-name",
 												},
 											},
@@ -340,7 +335,6 @@ func TestNodeCollector(t *testing.T) {
 												"identifiers": []string{
 													"urn:ip:/test-cluster-name:test-node-2:10.20.01.01",
 													"urn:ip:/test-cluster-name:10.20.01.02",
-													"urn:host:/test-node-2",
 													"urn:host:/test-node-2-test-cluster-name",
 												},
 											},
@@ -408,7 +402,7 @@ func TestNodeCollector(t *testing.T) {
 								nodeIdentifier := <-nodeIdentifierCorrelationChannel
 								expectedNodeIdentifier := &NodeIdentifierCorrelation{
 									NodeName:       "test-node-2",
-									NodeIdentifier: "test-node-2",
+									NodeIdentifier: "test-node-2-test-cluster-name",
 									NodeExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-2",
 								}
 								assert.EqualValues(t, expectedNodeIdentifier, nodeIdentifier)
@@ -453,8 +447,7 @@ func TestNodeCollector(t *testing.T) {
 													"urn:ip:/test-cluster-name:10.20.01.02",
 													"urn:host:/test-cluster-name:cluster.internal.dns.test-node-3",
 													"urn:host:/my-organization.test-node-3",
-													"urn:host:/i-024b28584ed2e6321",
-													"urn:host:/i-024b28584ed2e6321-test-cluster-name",
+													"urn:host:/test-node-3-test-cluster-name",
 												},
 												"generateName": "some-specified-generation",
 												"instanceId":   "i-024b28584ed2e6321",
@@ -477,8 +470,7 @@ func TestNodeCollector(t *testing.T) {
 													"urn:ip:/test-cluster-name:10.20.01.02",
 													"urn:host:/test-cluster-name:cluster.internal.dns.test-node-3",
 													"urn:host:/my-organization.test-node-3",
-													"urn:host:/i-024b28584ed2e6321",
-													"urn:host:/i-024b28584ed2e6321-test-cluster-name",
+													"urn:host:/test-node-3-test-cluster-name",
 												},
 												"instanceId": "i-024b28584ed2e6321",
 											},
@@ -536,8 +528,7 @@ func TestNodeCollector(t *testing.T) {
 													"urn:ip:/test-cluster-name:10.20.01.02",
 													"urn:host:/test-cluster-name:cluster.internal.dns.test-node-3",
 													"urn:host:/my-organization.test-node-3",
-													"urn:host:/i-024b28584ed2e6321",
-													"urn:host:/i-024b28584ed2e6321-test-cluster-name",
+													"urn:host:/test-node-3-test-cluster-name",
 												},
 												"instanceId": "i-024b28584ed2e6321",
 											},
@@ -615,7 +606,7 @@ func TestNodeCollector(t *testing.T) {
 								nodeIdentifier := <-nodeIdentifierCorrelationChannel
 								expectedNodeIdentifier := &NodeIdentifierCorrelation{
 									NodeName:       "test-node-3",
-									NodeIdentifier: "i-024b28584ed2e6321",
+									NodeIdentifier: "test-node-3-test-cluster-name",
 									NodeExternalID: "urn:kubernetes:/test-cluster-name:node/test-node-3",
 								}
 								assert.EqualValues(t, expectedNodeIdentifier, nodeIdentifier)
