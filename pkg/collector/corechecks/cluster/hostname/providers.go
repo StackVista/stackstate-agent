@@ -15,10 +15,11 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/config"
 
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	v1 "k8s.io/api/core/v1"
 )
 
 // Provider is a generic function to grab the hostname and return it
-type Provider func(providerID string) string
+type Provider func(node v1.Node) string
 
 // providerCatalog holds all the various kinds of hostname providers
 var providerCatalog = make(map[string]Provider)
@@ -36,8 +37,9 @@ func GetProvider(providerName string) Provider {
 	return nil
 }
 
-// GetHostname returns the hostname for a providerID for a specific Provider if it was register
-func GetHostname(providerID string) (string, error) {
+// GetHostname returns the hostname for a Node for a specific Provider if it was register
+func GetHostname(node v1.Node) (string, error) {
+	providerID := node.Spec.ProviderID
 	if providerID == "" {
 		return "", fmt.Errorf("providerID is empty")
 	}
@@ -45,7 +47,7 @@ func GetHostname(providerID string) (string, error) {
 
 	if provider, found := providerCatalog[providerName]; found {
 		log.Debugf("GetHostname trying provider '%s' ...", providerName)
-		name := provider(providerID)
+		name := provider(node)
 		if config.ValidHostname(name) != nil {
 			return "", fmt.Errorf("Invalid hostname '%s' from %s provider", name, providerName)
 		}

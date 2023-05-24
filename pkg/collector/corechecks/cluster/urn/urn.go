@@ -253,7 +253,7 @@ func (b *urnBuilder) BuildNodeURNs(node v1.Node) []string {
 		)
 	}
 
-	hostname, err := hostname.GetHostname(node.Spec.ProviderID)
+	hostname, err := hostname.GetHostname(node)
 	if err != nil {
 		hostname = node.Name
 	}

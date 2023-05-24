@@ -3,13 +3,14 @@ package aws
 import (
 	"testing"
 
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/hostname/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAwsHostnameUsesInstanceId(t *testing.T) {
-	assert.Equal(t, "i-09e7ef36c4efd7cbe", GetHostname("aws:///eu-west-1b/i-09e7ef36c4efd7cbe"))
+	assert.Equal(t, "i-09e7ef36c4efd7cbe", GetHostname(testutil.TestNodeForProviderID("aws:///eu-west-1b/i-09e7ef36c4efd7cbe")))
 }
 
 func TestAwsHostnameEmpty(t *testing.T) {
-	assert.Equal(t, "", GetHostname(""))
+	assert.Equal(t, "", GetHostname(testutil.TestNodeForProviderID("")))
 }
