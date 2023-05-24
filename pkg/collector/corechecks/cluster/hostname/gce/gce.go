@@ -29,9 +29,9 @@ func GetHostname(providerID string) string {
 
 	if isZoned {
 		return fmt.Sprintf("%s.%s.c.%s.internal", vmName, zone, projectID)
-	} else {
-		return fmt.Sprintf("%s.c.%s.internal", vmName, projectID)
 	}
+
+	return fmt.Sprintf("%s.c.%s.internal", vmName, projectID)
 }
 
 // IsZonedHostname returns true if the hostname of the agent is a zoned hostname
