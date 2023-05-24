@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname"
 	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	"github.com/stretchr/testify/assert"
 	coreV1 "k8s.io/api/core/v1"
@@ -69,29 +70,40 @@ func TestAzureUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
 }
 
 func TestGceUrnBuilder_BuildNodeInstanceIdentifier(t *testing.T) {
-	mockConfig := config.Mock()
-	var testClusterName = "mycluster"
-	mockConfig.Set("cluster_name", testClusterName)
+	withStaticHostnameProvider("gce", "gke-test-default-pool-9f8f65a4-2kld.europe-west4-a.c.test-stackstate.internal", func() {
+		mockConfig := config.Mock()
+		var testClusterName = "mycluster"
+		mockConfig.Set("cluster_name", testClusterName)
 
-	clustername.GetClusterName(context.TODO(), "")
+		clustername.GetClusterName(context.TODO(), "")
 
-	builder := NewURNBuilder(Kubernetes, "uurrll")
+		builder := NewURNBuilder(Kubernetes, "uurrll")
 
-	gceProviderID := "gce://test-stackstate/europe-west4-a/gke-test-default-pool-9f8f65a4-2kld"
-	gceNode := coreV1.Node{Spec: coreV1.NodeSpec{ProviderID: gceProviderID}}
-	gceNode.Status.Addresses = []coreV1.NodeAddress{
-		{Type: coreV1.NodeInternalIP, Address: "10.20.01.01"},
-		{Type: coreV1.NodeExternalIP, Address: "10.20.01.02"},
-		{Type: coreV1.NodeInternalDNS, Address: "cluster.internal.dns.gce.net"},
-		{Type: coreV1.NodeExternalDNS, Address: "host.gce.com"},
-	}
-	gceIdentifiers := builder.BuildNodeURNs(gceNode)
-	assert.Equal(t, []string{
-		"urn:ip:/uurrll::10.20.01.01",
-		"urn:ip:/uurrll:10.20.01.02",
-		"urn:host:/uurrll:cluster.internal.dns.gce.net",
-		"urn:host:/host.gce.com",
-		"urn:host:/gke-test-default-pool-9f8f65a4-2kld.europe-west4-a.c.test-stackstate.internal",
-		"urn:host:/gke-test-default-pool-9f8f65a4-2kld.europe-west4-a.c.test-stackstate.internal-mycluster",
-	}, gceIdentifiers)
+		gceProviderID := "gce://test-stackstate/europe-west4-a/gke-test-default-pool-9f8f65a4-2kld"
+		gceNode := coreV1.Node{Spec: coreV1.NodeSpec{ProviderID: gceProviderID}}
+		gceNode.Status.Addresses = []coreV1.NodeAddress{
+			{Type: coreV1.NodeInternalIP, Address: "10.20.01.01"},
+			{Type: coreV1.NodeExternalIP, Address: "10.20.01.02"},
+			{Type: coreV1.NodeInternalDNS, Address: "cluster.internal.dns.gce.net"},
+			{Type: coreV1.NodeExternalDNS, Address: "host.gce.com"},
+		}
+		gceIdentifiers := builder.BuildNodeURNs(gceNode)
+		assert.Equal(t, []string{
+			"urn:ip:/uurrll::10.20.01.01",
+			"urn:ip:/uurrll:10.20.01.02",
+			"urn:host:/uurrll:cluster.internal.dns.gce.net",
+			"urn:host:/host.gce.com",
+			"urn:host:/gke-test-default-pool-9f8f65a4-2kld.europe-west4-a.c.test-stackstate.internal",
+			"urn:host:/gke-test-default-pool-9f8f65a4-2kld.europe-west4-a.c.test-stackstate.internal-mycluster",
+		}, gceIdentifiers)
+	})
+}
+
+func withStaticHostnameProvider(providerID, staticHost string, f func()) {
+	originalHostnameProvider := hostname.GetProvider(providerID)
+	hostname.RegisterHostnameProvider(providerID, func(ctx context.Context, options map[string]interface{}) (string, error) {
+		return staticHost, nil
+	})
+	defer func() { hostname.RegisterHostnameProvider(providerID, originalHostnameProvider) }()
+	f()
 }
