@@ -82,6 +82,8 @@ fi
     fi
     # --- End fetch policies ---
 
-
+    # Going into the scan script, policies are at ${PWD}/policies
+    echo "PWD is ${PWD}"
+    ls -la
     omnibus/package-scripts/anchore_scan.sh -i "${DOCKER_TAG}" -n 0
 #fi

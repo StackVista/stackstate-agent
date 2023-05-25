@@ -60,6 +60,9 @@ EXEC_DIR="${PWD}/${APP_DIR}"
 mkdir -p "${EXEC_DIR}"/anchore_output
 mv ${FILE} "${EXEC_DIR}"/anchore_output
 
+echo "PWD is ${PWD}"
+ls -la
+
 docker run --rm \
    -e ANCHORE_WEBHOOK="${ANCHORE_WEBHOOK}" \
    -e INPUT_DIR="anchore_output" \
