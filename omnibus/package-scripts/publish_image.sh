@@ -47,9 +47,29 @@ fi
 
 
 # Comment out the if and fi lines to test anchore scanning on any branch.
-if [ -n "${CI_COMMIT_TAG}" ] || [ "${CI_COMMIT_BRANCH}" = "master" ]; then
+#if [ -n "${CI_COMMIT_TAG}" ] || [ "${CI_COMMIT_BRANCH}" = "master" ]; then
     # for Anchore use publicly accessible image tag
     DOCKER_TAG="${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${EXTRA_TAG}"
     echo "Scanning image ${DOCKER_TAG} for vulnerabilities"
+    # --- Begin fetch policies ---
+    if [ -z "${BRANCH}" ]; then
+      BRANCH="master"
+    fi
+    git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/".insteadOf "ssh://git@gitlab.com/"
+    git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/stackvista/devops/anchore-engine-configuration.git"
+
+    cd "anchore-engine-configuration" || exit
+
+    git checkout ${BRANCH}
+
+    cd ..
+    ln -s "${PWD}/anchore-engine-configuration/policies" "policies"
+
+    if [ -d "/usr/src/app" ]; then
+      WD=${PWD}
+      cd "/usr/src/app" || exit
+      ln -s "${WD}/anchore-engine-configuration/policies" "policies"
+    fi
+    # --- End fetch policies ---
     omnibus/package-scripts/anchore_scan.sh -i "${DOCKER_TAG}" -n 0
-fi
+#fi

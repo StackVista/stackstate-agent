@@ -63,20 +63,14 @@ mv ${FILE} "${EXEC_DIR}"/anchore_output
 docker run --rm \
    -e ANCHORE_WEBHOOK="${ANCHORE_WEBHOOK}" \
    -e INPUT_DIR="anchore_output" \
-   -e IMAGE_WHITELIST_FILE="anchore-whitelists/image-whitelist.json" \
-   -e MIXED_WHITELIST_FILE="anchore-whitelists/image-cve-mixed.json" \
-   -e WHITELIST_IMAGES_HAVE_TAGS="false" \
-   -v "${EXEC_DIR}"/anchore-whitelists:/usr/src/app/anchore-whitelists \
+   -e ANCHORE_WHITELIST_FOLDER="policies" \
    -v "${EXEC_DIR}"/anchore_output:/usr/src/app/anchore_output \
    ${ANCHORE_PARSE} python reports/json_parsed/os_level_cves/cve_reports/json_os_high_crit_report.py
 
 docker run --rm \
    -e ANCHORE_WEBHOOK="${ANCHORE_WEBHOOK}" \
    -e INPUT_DIR="anchore_output" \
-   -e IMAGE_WHITELIST_FILE="anchore-whitelists/image-whitelist.json" \
-   -e MIXED_WHITELIST_FILE="anchore-whitelists/image-cve-mixed.json" \
-   -e WHITELIST_IMAGES_HAVE_TAGS="false" \
-   -v "${EXEC_DIR}"/anchore-whitelists:/usr/src/app/anchore-whitelists \
+   -e ANCHORE_WHITELIST_FOLDER="policies" \
    -v "${EXEC_DIR}"/anchore_output:/usr/src/app/anchore_output \
    ${ANCHORE_PARSE} python reports/json_parsed/non_os_level_cves/cve_reports/json_nos_high_crit_report.py
 
