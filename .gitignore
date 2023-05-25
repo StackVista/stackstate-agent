@@ -226,3 +226,8 @@ beest/sut/yards/*/*.key
 beest/sut/yards/*/*.crt
 # Beest generated manifests
 beest/sut/bees/k8s-agent/files/test_ingress/*.yaml
+
+anchore-engine-configuration/
+policies
+ss*x-reports
+ss*x-reports/**/*

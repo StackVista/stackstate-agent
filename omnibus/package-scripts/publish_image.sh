@@ -80,10 +80,13 @@ fi
       cd "/usr/src/app" || exit
       ln -s "${WD}/anchore-engine-configuration/policies" "policies"
     fi
+    export ANCHORE_WHITELIST_FOLDER="policies"
     # --- End fetch policies ---
 
     # Going into the scan script, policies are at ${PWD}/policies
     echo "PWD is ${PWD}"
     ls -la
+    set -x
     omnibus/package-scripts/anchore_scan.sh -i "${DOCKER_TAG}" -n 0
+    set +x
 #fi
