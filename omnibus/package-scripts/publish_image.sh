@@ -10,6 +10,9 @@ K8S_REPO="${5}"
 REGISTRY="quay.io"
 ORGANIZATION="stackstate"
 ARTIFACTORY_URL="artifactory.tooling.stackstate.io/artifactory/api/pypi/pypi-local/simple"
+GIT="docker:git"
+GIT_DOCKER_INVOKE="docker run --rm -i -v gitconfig:/root -v ${PWD}:${PWD} --workdir ${PWD} ${GIT} git"
+
 
 echo "IMAGE_TAG=${IMAGE_TAG}"
 echo "IMAGE_REPO=${IMAGE_REPO}"
@@ -51,16 +54,23 @@ fi
     # for Anchore use publicly accessible image tag
     DOCKER_TAG="${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${EXTRA_TAG}"
     echo "Scanning image ${DOCKER_TAG} for vulnerabilities"
+
     # --- Begin fetch policies ---
-    if [ -z "${BRANCH}" ]; then
-      BRANCH="master"
+
+    if [ ! -d gitconfig ]; then
+            mkdir gitconfig
+            touch gitconfig/.gitconfig
     fi
-    git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/".insteadOf "ssh://git@gitlab.com/"
-    git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/stackvista/devops/anchore-engine-configuration.git"
+
+
+    ${GIT_DOCKER_INVOKE} config --global --add safe.directory "${PWD}"
+    ${GIT_DOCKER_INVOKE} config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/".insteadOf "ssh://git@gitlab.com/"
+    ${GIT_DOCKER_INVOKE} clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/stackvista/devops/anchore-engine-configuration.git"
 
     cd "anchore-engine-configuration" || exit
 
-    git checkout ${BRANCH}
+    ${GIT_DOCKER_INVOKE} config --global --add safe.directory "${PWD}"
+    ${GIT_DOCKER_INVOKE} checkout master
 
     cd ..
     ln -s "${PWD}/anchore-engine-configuration/policies" "policies"
@@ -71,5 +81,7 @@ fi
       ln -s "${WD}/anchore-engine-configuration/policies" "policies"
     fi
     # --- End fetch policies ---
+
+
     omnibus/package-scripts/anchore_scan.sh -i "${DOCKER_TAG}" -n 0
 #fi
