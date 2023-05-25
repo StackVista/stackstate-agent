@@ -1,8 +1,11 @@
 package gce
 
 import (
+	"context"
 	"fmt"
 	"strings"
+
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname"
 )
 
 // GetHostname returns the GCE cloud specific hostname from the k8s providerId. This must be compatible with
@@ -14,8 +17,31 @@ func GetHostname(providerID string) string {
 	if len(parts) != 3 {
 		return ""
 	}
+
 	projectID := parts[0]
 	zone := parts[1]
 	vmName := parts[2]
-	return fmt.Sprintf("%s.%s.c.%s.internal", vmName, zone, projectID)
+
+	isZoned, err := IsZonedHostname()
+	if err != nil {
+		return ""
+	}
+
+	if isZoned {
+		return fmt.Sprintf("%s.%s.c.%s.internal", vmName, zone, projectID)
+	}
+
+	return fmt.Sprintf("%s.c.%s.internal", vmName, projectID)
+}
+
+// IsZonedHostname returns true if the hostname of the agent is a zoned hostname
+func IsZonedHostname() (bool, error) {
+	agentHostname, err := hostname.GetHostname(context.Background(), "gce", map[string]interface{}{})
+	if err != nil {
+		return false, err
+	}
+
+	hostnameParts := strings.Split(agentHostname, ".")
+
+	return len(hostnameParts) == 5, nil
 }
