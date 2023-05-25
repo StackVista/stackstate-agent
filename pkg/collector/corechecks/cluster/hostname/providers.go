@@ -7,14 +7,12 @@ package hostname
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/hostname/aws"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/hostname/azure"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/hostname/gce"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 
-	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -39,21 +37,35 @@ func GetProvider(providerName string) Provider {
 
 // GetHostname returns the hostname for a Node for a specific Provider if it was register
 func GetHostname(node v1.Node) (string, error) {
-	providerID := node.Spec.ProviderID
-	if providerID == "" {
-		return "", fmt.Errorf("providerID is empty")
-	}
-	providerName := strings.Split(providerID, "://")[0]
-
-	if provider, found := providerCatalog[providerName]; found {
-		log.Debugf("GetHostname trying provider '%s' ...", providerName)
-		name := provider(node)
-		if config.ValidHostname(name) != nil {
-			return "", fmt.Errorf("Invalid hostname '%s' from %s provider", name, providerName)
+	clusterName := config.Datadog.GetString("cluster_name")
+	internalIP := ""
+	for _, addr := range node.Status.Addresses {
+		if addr.Type == v1.NodeInternalIP {
+			internalIP = addr.Address
+			break
 		}
-		return name, nil
 	}
-	return "", fmt.Errorf("hostname provider %s not found", providerName)
+	if internalIP == "" {
+		return "", fmt.Errorf("No internalIP found for node %s.", node.Name)
+	}
+
+	return fmt.Sprintf("%s-%s", internalIP, clusterName), nil
+
+	// providerID := node.Spec.ProviderID
+	// if providerID == "" {
+	// 	return "", fmt.Errorf("providerID is empty")
+	// }
+	// providerName := strings.Split(providerID, "://")[0]
+
+	// if provider, found := providerCatalog[providerName]; found {
+	// 	log.Debugf("GetHostname trying provider '%s' ...", providerName)
+	// 	name := provider(node)
+	// 	if config.ValidHostname(name) != nil {
+	// 		return "", fmt.Errorf("Invalid hostname '%s' from %s provider", name, providerName)
+	// 	}
+	// 	return name, nil
+	// }
+	// return "", fmt.Errorf("hostname provider %s not found", providerName)
 }
 
 func init() {
