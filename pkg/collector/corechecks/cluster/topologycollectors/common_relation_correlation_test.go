@@ -327,6 +327,8 @@ func node(name string, providerID string, timestamp metav1.Time) coreV1.Node {
 	}
 }
 func nodeComponent(name, instanceID, clusterName string, timestamp metav1.Time) *topology.Component {
+	hostname := fmt.Sprintf("%s-%s", name, clusterName)
+
 	return &topology.Component{
 		ExternalID: fmt.Sprintf("urn:kubernetes:/test-cluster-name:node/%s", name),
 		Type: topology.Type{
@@ -335,14 +337,15 @@ func nodeComponent(name, instanceID, clusterName string, timestamp metav1.Time) 
 		Data: topology.Data{
 			"name":       name,
 			"kind":       "Node",
-			"instanceId": instanceID,
+			"instanceId": hostname,
+			"sts_host":   hostname,
 			"tags": map[string]string{
 				"cluster-name":   "test-cluster-name",
 				"cluster-type":   "kubernetes",
 				"component-type": "kubernetes-node",
 			},
 			"identifiers": []string{
-				fmt.Sprintf("urn:host:/%s-%s", name, clusterName),
+				fmt.Sprintf("urn:host:/%s", hostname),
 			},
 			"creationTimestamp": timestamp,
 			"uid":               types.UID(name),
