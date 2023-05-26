@@ -71,7 +71,8 @@ func TestNodeCollector(t *testing.T) {
 												"namespace":      "test-namespace",
 											},
 											"uid":        types.UID("test-node-1"),
-											"instanceId": "test-node-1",
+											"instanceId": "test-node-1-test-cluster-name",
+											"sts_host":   "test-node-1-test-cluster-name",
 											"status": NodeStatus{
 												Phase: coreV1.NodeRunning,
 												NodeInfo: coreV1.NodeSystemInfo{
@@ -99,7 +100,8 @@ func TestNodeCollector(t *testing.T) {
 												"component-type": "kubernetes-node",
 												"namespace":      "test-namespace",
 											},
-											"instanceId": "test-node-1",
+											"instanceId": "test-node-1-test-cluster-name",
+											"sts_host":   "test-node-1-test-cluster-name",
 											"identifiers": []string{
 												"urn:ip:/test-cluster-name:test-node-1:10.20.01.01",
 												"urn:host:/test-node-1-test-cluster-name",
@@ -151,7 +153,8 @@ func TestNodeCollector(t *testing.T) {
 												"component-type": "kubernetes-node",
 												"namespace":      "test-namespace",
 											},
-											"instanceId": "test-node-1",
+											"instanceId": "test-node-1-test-cluster-name",
+											"sts_host":   "test-node-1-test-cluster-name",
 											"identifiers": []string{
 												"urn:ip:/test-cluster-name:test-node-1:10.20.01.01",
 												"urn:host:/test-node-1-test-cluster-name",
@@ -247,7 +250,8 @@ func TestNodeCollector(t *testing.T) {
 													"namespace":      "test-namespace",
 												},
 												"uid":        types.UID("test-node-2"),
-												"instanceId": "test-node-2",
+												"instanceId": "test-node-2-test-cluster-name",
+												"sts_host":   "test-node-2-test-cluster-name",
 												"status": NodeStatus{
 													Phase: coreV1.NodeRunning,
 													NodeInfo: coreV1.NodeSystemInfo{
@@ -277,7 +281,8 @@ func TestNodeCollector(t *testing.T) {
 													"component-type": "kubernetes-node",
 													"namespace":      "test-namespace",
 												},
-												"instanceId": "test-node-2",
+												"instanceId": "test-node-2-test-cluster-name",
+												"sts_host":   "test-node-2-test-cluster-name",
 												"identifiers": []string{
 													"urn:ip:/test-cluster-name:test-node-2:10.20.01.01",
 													"urn:ip:/test-cluster-name:10.20.01.02",
@@ -331,7 +336,8 @@ func TestNodeCollector(t *testing.T) {
 													"component-type": "kubernetes-node",
 													"namespace":      "test-namespace",
 												},
-												"instanceId": "test-node-2",
+												"instanceId": "test-node-2-test-cluster-name",
+												"sts_host":   "test-node-2-test-cluster-name",
 												"identifiers": []string{
 													"urn:ip:/test-cluster-name:test-node-2:10.20.01.01",
 													"urn:ip:/test-cluster-name:10.20.01.02",
@@ -450,7 +456,8 @@ func TestNodeCollector(t *testing.T) {
 													"urn:host:/test-node-3-test-cluster-name",
 												},
 												"generateName": "some-specified-generation",
-												"instanceId":   "i-024b28584ed2e6321",
+												"instanceId":   "test-node-3-test-cluster-name",
+												"sts_host":     "test-node-3-test-cluster-name",
 											},
 										},
 										&topology.Component{
@@ -472,7 +479,8 @@ func TestNodeCollector(t *testing.T) {
 													"urn:host:/my-organization.test-node-3",
 													"urn:host:/test-node-3-test-cluster-name",
 												},
-												"instanceId": "i-024b28584ed2e6321",
+												"instanceId": "test-node-3-test-cluster-name",
+												"sts_host":   "test-node-3-test-cluster-name",
 											},
 											SourceProperties: map[string]interface{}{
 												"apiVersion": "v1",
@@ -530,7 +538,8 @@ func TestNodeCollector(t *testing.T) {
 													"urn:host:/my-organization.test-node-3",
 													"urn:host:/test-node-3-test-cluster-name",
 												},
-												"instanceId": "i-024b28584ed2e6321",
+												"instanceId": "test-node-3-test-cluster-name",
+												"sts_host":   "test-node-3-test-cluster-name",
 											},
 											SourceProperties: map[string]interface{}{
 												"apiVersion": "v1",

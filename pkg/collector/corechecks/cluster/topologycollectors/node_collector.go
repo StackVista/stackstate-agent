@@ -4,8 +4,6 @@
 package topologycollectors
 
 import (
-	"strings"
-
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/hostname"
 	"github.com/StackVista/stackstate-agent/pkg/topology"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
@@ -84,8 +82,6 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 		hostname = node.Name
 	}
 
-	instanceID := GetAwsInstanceID(node)
-
 	component := &topology.Component{
 		ExternalID: nodeExternalID,
 		Type:       topology.Type{Name: "node"},
@@ -93,9 +89,13 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 			"name":        node.Name,
 			"tags":        tags,
 			"identifiers": identifiers,
-			// for backward compatibility with K8s/OpenShift stackpack
-			// we specify instanceId in data even if it's also in the sourceProperties
-			"instanceId": instanceID,
+			// instanceId is deprecated because it is an AWS specific term
+			// For backward compatibility with K8s/OpenShift stackpack
+			// it is still included in the data
+			// this should be replaced in the stackpack with `sts_host` which is the name that is used
+			// in the metric labels for example
+			"instanceId": hostname,
+			"sts_host":   hostname,
 		},
 	}
 
@@ -136,18 +136,4 @@ func (nc *NodeCollector) nodeToClusterStackStateRelation(node v1.Node) *topology
 	log.Tracef("Created StackState node -> cluster relation %s->%s", relation.SourceID, relation.TargetID)
 
 	return relation
-}
-
-func extractLastFragment(value string) string {
-	lastSlash := strings.LastIndex(value, "/")
-	return value[lastSlash+1:]
-}
-
-// GetAwsInstanceID extracts node name from cloud-specific ProviderID, if present
-func GetAwsInstanceID(node v1.Node) string {
-	if node.Spec.ProviderID == "" {
-		return node.Name
-	}
-	//parse node id from cloud provider (for AWS is the ec2 instance id)
-	return extractLastFragment(node.Spec.ProviderID)
 }
