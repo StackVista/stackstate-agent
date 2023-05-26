@@ -77,10 +77,11 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 	// k8s object TypeMeta seem to be archived, it's always empty.
 	tags := nc.initTags(node.ObjectMeta, metav1.TypeMeta{Kind: "Node"})
 
-	hostname, err := hostname.GetHostname(node.Spec.ProviderID)
+	hostname, err := hostname.GetHostname(node)
 	if err != nil {
 		hostname = node.Name
 	}
+
 	component := &topology.Component{
 		ExternalID: nodeExternalID,
 		Type:       topology.Type{Name: "node"},
@@ -88,9 +89,13 @@ func (nc *NodeCollector) nodeToStackStateComponent(node v1.Node) (*topology.Comp
 			"name":        node.Name,
 			"tags":        tags,
 			"identifiers": identifiers,
-			// for backward compatibility with K8s/OpenShift stackpack
-			// we specify instanceId in data even if it's also in the sourceProperties
+			// instanceId is deprecated because it is an AWS specific term
+			// For backward compatibility with K8s/OpenShift stackpack
+			// it is still included in the data
+			// this should be replaced in the stackpack with `sts_host` which is the name that is used
+			// in the metric labels for example
 			"instanceId": hostname,
+			"sts_host":   hostname,
 		},
 	}
 

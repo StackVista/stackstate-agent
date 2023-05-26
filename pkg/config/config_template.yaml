@@ -356,8 +356,8 @@ sts_url:
 #
 # gce_metadata_timeout: 1000
 
-## @param azure_hostname_style - string - optional - default: "os"
-## @env DD_AZURE_HOSTNAME_STYLE - string - optional - default: "os"
+## @param azure_hostname_style - string - optional - default: "name"
+## @env DD_AZURE_HOSTNAME_STYLE - string - optional - default: "name"
 ## Changes how agent hostname is set on Azure virtual machines.
 ##
 ## Possible values:
