@@ -3,6 +3,9 @@ stackstate:
   url: {{ sts_url }}/receiver/stsAgent
   cluster:
     name: {{ cluster_name }}
+all:
+  hardening:
+    enabled: true
 nodeAgent:
   containers:
     agent:
