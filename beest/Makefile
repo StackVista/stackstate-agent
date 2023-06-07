@@ -19,6 +19,7 @@ ifeq ($(OS),Darwin)
 endif
 
 GIT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+GIT_SHA    = $(shell git rev-parse --short=8 HEAD)
 BRANCH = $(shell echo ${GIT_BRANCH} | tr [:upper:] [:lower:])
 
 MAJOR_VERSION                ?= 2
@@ -32,6 +33,7 @@ KEEPER_IMAGE       = beest:${BRANCH}
 KEEPER_CONTAINER   = beest
 VOLUME_GO_PKG_NAME = beest-go-volume
 DOCKER_ENV		   = --env AGENT_CURRENT_BRANCH=${GIT_BRANCH} \
+					 --env AGENT_CURRENT_BRANCH_REF=${GIT_SHA} \
 					 --env MAJOR_VERSION=${MAJOR_VERSION} \
 					 --env STS_AWS_TEST_BUCKET=${STS_AWS_TEST_BUCKET} \
 					 --env STS_DOCKER_TEST_REPO=${STS_DOCKER_TEST_REPO} \
