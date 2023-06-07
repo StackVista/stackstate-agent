@@ -1,5 +1,6 @@
 ---
 agent_current_branch: "{{ lookup('env', 'AGENT_CURRENT_BRANCH') or AGENT_CURRENT_BRANCH }}"
+agent_current_branch_ref: "{{ lookup('env', 'AGENT_CURRENT_BRANCH_REF') or AGENT_CURRENT_BRANCH_REF }}"
 agent_repo_url: "https://{{ lookup('env', 'STS_AWS_TEST_BUCKET') or STS_AWS_TEST_BUCKET }}.s3.amazonaws.com"
 
 artifactory_user: "{{ lookup('env', 'artifactory_user') or ARTIFACTORY_USER }}"
