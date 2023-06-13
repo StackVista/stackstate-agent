@@ -1098,6 +1098,7 @@ beest_k8s_1_24_containerd_test:
     - ~/.slim/bin/slim harden --id ${H_ID}
     - export I_ID=$(./regctl image inspect --format '{{ index .Config.Labels "slim.nx"}}' quay.io/stackstate/stackstate-cluster-agent-test:${CI_COMMIT_SHORT_SHA}-slim-instrumented)
     - ~/.slim/bin/slim harden --id ${I_ID}
+    - echo "needed an excuse to push a commit"
 
 beest_k8s_1_22_dockerd_failure_cleanup:
   <<: *beest
