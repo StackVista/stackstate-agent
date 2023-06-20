@@ -79,7 +79,7 @@ func (c *Check) collectPartitionMetrics(sender aggregator.Sender) ([]disk.Partit
 		// Get disk metrics here to be able to exclude on total usage
 		usage, err := diskUsage(partition.Mountpoint)
 		if err != nil {
-			log.Warnf("Unable to get disk metrics of %s mount point: %s", partition.Mountpoint, err)
+			log.Debugf("Unable to get disk metrics of %s mount point: %s", partition.Mountpoint, err)
 			continue
 		}
 
