@@ -229,7 +229,7 @@ func (c *ContainerdUtil) GetContainers(ctx context.Context) ([]*cspec.Container,
 }
 
 func logExtractionError(what string, container containerd.Container, err error) {
-	_ = log.Warnf("Could not extract containerd %s from container '%s'. Error: %v", what, container.ID(), err)
+	log.Debugf("Could not extract containerd %s from container '%s'. Error: %v", what, container.ID(), err)
 }
 
 // Containers interfaces with the containerd api to get the list of Containers.
