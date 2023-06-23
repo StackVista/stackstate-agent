@@ -57,6 +57,8 @@ variables: &commonvariables
   AGENT_HELM_CHART_VERSION: "3.3.0"
   STACKSTATE_HELM_CHART_VERSION: ""
   RUNNERS_IP: $RUNNERS_IP # IP of NAT Gateway from tooling account (where kubernetes runners live)
+  STS_DOCKER_K8S_REPO: stackstate-k8s-agent
+  STS_DOCKER_K8S_REPO_CLUSTER: stackstate-k8s-cluster-agent
 
 .agent2_variables: &agent2_variables
   CONDA_ENV: ddpy2

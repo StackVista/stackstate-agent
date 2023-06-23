@@ -22,8 +22,8 @@ GIT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
 BRANCH = $(shell echo ${GIT_BRANCH} | tr [:upper:] [:lower:])
 
 MAJOR_VERSION                ?= 2
-STS_AWS_TEST_BUCKET          ?= stackstate-agent-2-test
-STS_DOCKER_TEST_REPO         ?= stackstate-agent-2-test
+STS_AWS_TEST_BUCKET          ?= stackstate-agent-3-test
+STS_DOCKER_TEST_REPO         ?= stackstate-agent-test
 STS_DOCKER_TEST_REPO_CLUSTER ?= stackstate-cluster-agent-test
 PROCESS_AGENT_TEST_REPO      ?= stackstate-process-agent-test
 
