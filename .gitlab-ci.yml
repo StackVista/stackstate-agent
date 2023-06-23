@@ -52,11 +52,13 @@ variables: &commonvariables
   # This variable represents which one of the gitlab pipelines will contain most of the jobs that's not required for both pipelines to run.
   # IE VMS is a massive jobs and only has to run on either v2 or the v3 pipeline. With this variable you can control on which of the pipelines
   # do jobs like these run on
-  PRIMARY_MAJOR_VERSION: '2'
+  PRIMARY_MAJOR_VERSION: '3'
   PROCESS_AGENT_TEST_REPO: stackstate-process-agent-test
   AGENT_HELM_CHART_VERSION: ""
   STACKSTATE_HELM_CHART_VERSION: ""
   RUNNERS_IP: $RUNNERS_IP # IP of NAT Gateway from tooling account (where kubernetes runners live)
+  STS_DOCKER_K8S_REPO: stackstate-k8s-agent
+  STS_DOCKER_K8S_REPO_CLUSTER: stackstate-k8s-cluster-agent
 
 .agent2_variables: &agent2_variables
   CONDA_ENV: ddpy2
@@ -71,12 +73,10 @@ variables: &commonvariables
   STS_AWS_TEST_BUCKET_WIN: stackstate-agent-2-test
   STS_DOCKER_RELEASE_REPO: stackstate-agent-2
   STS_DOCKER_TEST_REPO: stackstate-agent-2-test
-  STS_DOCKER_K8S_REPO: stackstate-k8s-agent
   STS_DOCKER_RELEASE_REPO_TRACE: stackstate-trace-agent
   STS_DOCKER_TEST_REPO_TRACE: stackstate-trace-agent-test
   STS_DOCKER_RELEASE_REPO_CLUSTER: stackstate-cluster-agent
   STS_DOCKER_TEST_REPO_CLUSTER: stackstate-cluster-agent-test
-  STS_DOCKER_K8S_REPO_CLUSTER: stackstate-k8s-cluster-agent
   STS_DOCKER_RELEASE_REPO_SWARM: stackstate-swarm-agent
   STS_DOCKER_TEST_REPO_SWARM: stackstate-swarm-agent-test
 
@@ -168,43 +168,43 @@ variables: &commonvariables
     # Allow failure must be true, else manual pipelines can never be successful without running the manual jobs.
     allow_failure: true
 
-agent2:
-  stage: triggers
-  variables:
-    <<: *commonvariables
-    <<: *agent2_variables
-  trigger:
-    include: .gitlab-ci-agent.yml
-    strategy: depend
-  rules:
-    - <<: *exclude_on_cluster_agent
-    # exclude this pipeline if we're running a v3 tag pipeline
-    - <<: *exclude_on_tag_v3
-    - if: $CI_COMMIT_MESSAGE =~ /\[py3]/
-      when: never
-    - <<: *scheduled_master_pipeline
-    - *other_files_rule
-    - *md_only_rule
-    - when: always
-
-#agent3:
+#agent2:
 #  stage: triggers
 #  variables:
 #    <<: *commonvariables
-#    <<: *agent3_variables
+#    <<: *agent2_variables
 #  trigger:
 #    include: .gitlab-ci-agent.yml
 #    strategy: depend
 #  rules:
 #    - <<: *exclude_on_cluster_agent
-#    # exclude this pipeline if we're running a v2 tag pipeline
-#    - <<: *exclude_on_tag_v2
-#    - if: $CI_COMMIT_MESSAGE =~ /\[py2]/
+#    # exclude this pipeline if we're running a v3 tag pipeline
+#    - <<: *exclude_on_tag_v3
+#    - if: $CI_COMMIT_MESSAGE =~ /\[py3]/
 #      when: never
 #    - <<: *scheduled_master_pipeline
 #    - *other_files_rule
 #    - *md_only_rule
 #    - when: always
+
+agent3:
+  stage: triggers
+  variables:
+    <<: *commonvariables
+    <<: *agent3_variables
+  trigger:
+    include: .gitlab-ci-agent.yml
+    strategy: depend
+  rules:
+    - <<: *exclude_on_cluster_agent
+    # exclude this pipeline if we're running a v2 tag pipeline
+    - <<: *exclude_on_tag_v2
+    - if: $CI_COMMIT_MESSAGE =~ /\[py2]/
+      when: never
+    - <<: *scheduled_master_pipeline
+    - *other_files_rule
+    - *md_only_rule
+    - when: always
 
 cluster_agent:
   stage: triggers
