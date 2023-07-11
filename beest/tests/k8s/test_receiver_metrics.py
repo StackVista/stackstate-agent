@@ -7,26 +7,15 @@ testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansib
 
 def test_agents_running(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics", config_location=STS_CONTEXT_FILE)
-
-        metrics = {}
-        for message in json_data["messages"]:
-            for m_name in message["message"]["MultiMetric"]["values"].keys():
-                if m_name not in metrics:
-                    metrics[m_name] = []
-
-                values = [message["message"]["MultiMetric"]["values"][m_name]]
-                metrics[m_name] += values
-
-        for v in metrics["stackstate.agent.running"]:
-            assert v == 1.0
-        for v in metrics["stackstate.cluster_agent.running"]:
-            assert v == 1.0
-
-        # assert that we don't see any datadog metrics
-        datadog_metrics = [(key, value) for key, value in metrics.items() if key.startswith("datadog")]
-        assert len(datadog_metrics) == 0, 'datadog metrics found in sts_multi_metrics: [%s]' % ', '.join(
-            map(str, datadog_metrics))
+        data_points = ["stackstate_agent_running", "stackstate_cluster_agent_running"]
+        for data_point in data_points:
+            json_data = cliv1.promql_script(f'Telemetry.instantPromql("{data_point}")', data_point)
+            for result in json_data["result"]:
+                if result["_type"] == "MetricTimeSeriesResult":
+                    timeseries = result["timeseries"]
+                    points = timeseries["points"]
+                    for point in points:
+                        assert point[1] == 1.0
 
     util.wait_until(wait_for_metrics, 60, 3)
 

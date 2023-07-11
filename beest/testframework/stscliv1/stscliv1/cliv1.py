@@ -155,6 +155,17 @@ Topology.query('__QUERY__')
 
         return self._cached_json(query, topic)
 
+    def promql_script(self, script: str, data_point_name: str = None) -> dict:
+        log = self.log
+        log.info(f"Querying StackState Script API: {script}")
+
+        def query():
+            executed = self.host.run(f"sts-cli script execute {script}")
+            log.info(f"Executed {script}: {executed.exit_status}")
+            return executed.stdout
+
+        return self._cached_json(query, data_point_name)
+
     def _cached_json(self, api_call: Callable, alias: str):
         log = self.log
         test_file, test_fn_name = self._find_test_fn_name()
