@@ -12,7 +12,7 @@ def test_agents_running(cliv1):
             json_data = cliv1.promql_script(f'Telemetry.instantPromql("{data_point}")', data_point)
             for result in json_data["result"]:
                 if result["_type"] == "MetricTimeSeriesResult":
-                    timeseries = result["timeseries"]
+                    timeseries = result["timeSeries"]
                     points = timeseries["points"]
                     for point in points:
                         assert point[1] == 1.0
