@@ -67,30 +67,30 @@ def test_container_metrics(cliv1):
 #
 #      util.wait_until(wait_for_metrics, 30, 3)
 
-def _check_tag_exists(json_data, tag):
-    if "result" in json_data:
-        results = json_data[tag]
-        if len(results) >= 1:
+def _check_metric_exists(json_data, root_tag):
+    if root_tag in json_data:
+        data = json_data[root_tag]
+        if len(data) >= 1:
             return True
     return False
 
 
-def _check_contains_kcn(json_data, tag):
-    if _check_tag_exists(json_data, tag):
-        results = json_data["result"]
-        for result in results:
+def _check_contains_tag(json_data, root_tag, searched_tag):
+    if _check_metric_exists(json_data, root_tag):
+        data = json_data[root_tag]
+        for result in data:
             timeseries = result["timeSeries"]
             _id = timeseries["id"]
             groups = _id["groups"]
-            if "kube_cluster_name" in groups:
+            if searched_tag in groups:
                 return True
     return False
 
 
 def test_agent_kubernetes_metrics(cliv1):
     def wait_for_metrics():
-        docker_tag_exists = False
-        k8s_tag_exists = False
+        docker_metric_exists = False
+        k8s_metric_exists = False
         docker_contains_kcn = False
         k8s_contains_kcn = False
         docker_expected_metrics = ["docker_containers_running", "docker_containers_scheduled"]
@@ -99,20 +99,20 @@ def test_agent_kubernetes_metrics(cliv1):
         for docker_expected_metric in docker_expected_metrics:
             json_data_docker = cliv1.promql_script(f'Telemetry.instantPromql\(\\\"{docker_expected_metric}\\\"\)',
                                                    docker_expected_metric)
-            docker_tag_exists = _check_tag_exists(json_data_docker, "result")
-            docker_contains_kcn = _check_contains_kcn(json_data_docker, "result")
-            if docker_tag_exists or docker_contains_kcn:
+            docker_metric_exists = _check_metric_exists(json_data_docker, "result")
+            docker_contains_kcn = _check_contains_tag(json_data_docker, "result", "kube_cluster_name")
+            if docker_metric_exists or docker_contains_kcn:
                 break
 
         for kubernetes_expected_metric in kubernetes_expected_metrics:
             json_data_kubernetes = cliv1.promql_script(
                 f'Telemetry.instantPromql\(\\\"{kubernetes_expected_metric}\\\"\)', kubernetes_expected_metric)
-            k8s_tag_exists = _check_tag_exists(json_data_kubernetes, "result")
-            k8s_contains_kcn = _check_contains_kcn(json_data_kubernetes, "result")
-            if k8s_tag_exists or k8s_contains_kcn:
+            k8s_metric_exists = _check_metric_exists(json_data_kubernetes, "result")
+            k8s_contains_kcn = _check_contains_tag(json_data_kubernetes, "result", "kube_cluster_name")
+            if k8s_metric_exists or k8s_contains_kcn:
                 break
 
-        final_decision = (docker_contains_kcn or k8s_contains_kcn) and (docker_tag_exists or k8s_tag_exists)
+        final_decision = (docker_contains_kcn or k8s_contains_kcn) and (docker_metric_exists or k8s_metric_exists)
 
         assert final_decision, 'No kubernetes metrics found'
 
