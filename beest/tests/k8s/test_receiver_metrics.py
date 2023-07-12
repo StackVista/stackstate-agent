@@ -7,9 +7,9 @@ testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansib
 
 def test_agents_running(cliv1):
     def wait_for_metrics():
-        data_points = ["stackstate_agent_running", "stackstate_cluster_agent_running"]
-        for data_point in data_points:
-            json_data = cliv1.promql_script(f'Telemetry.instantPromql\(\\\"{data_point}\\\"\)', data_point)
+        expected_metrics = ["stackstate_agent_running", "stackstate_cluster_agent_running"]
+        for expected_metric in expected_metrics:
+            json_data = cliv1.promql_script(f'Telemetry.instantPromql\(\\\"{expected_metric}\\\"\)', expected_metric)
             for result in json_data["result"]:
                 if result["_type"] == "MetricTimeSeriesResult":
                     timeseries = result["timeSeries"]
@@ -22,24 +22,25 @@ def test_agents_running(cliv1):
 
 def test_container_metrics(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics", limit=4000, config_location=STS_CONTEXT_FILE)
+        expected_metrics = ["netRcvdPs", "memCache", "totalPct", "wbps", "systemPct", "rbps", "memRss", "netSentBps",
+                            "netSentPs", "netRcvdBps", "userPct"]
+        non_zeros = ["memRss", "systemPct"]
+        non_zeros_result = [False, False]
 
-        metrics = {}
-        for message in json_data["messages"]:
-            for m_name in message["message"]["MultiMetric"]["values"].keys():
-                if m_name not in metrics:
-                    metrics[m_name] = []
+        for expected_metric in expected_metrics:
+            json_data = cliv1.promql_script(f'Telemetry.instantPromql\(\\\"{expected_metric}\\\"\)', expected_metric)
+            for result in json_data["result"]:
+                if result["_type"] == "MetricTimeSeriesResult":
+                    query = result["query"]
+                    assert query["query"] == expected_metric
+                    if expected_metric in non_zeros:
+                        timeseries = result["timeSeries"]
+                        points = timeseries["points"]
+                        for point in points:
+                            if point[1] > 0:
+                                non_zeros_result[non_zeros.index(expected_metric)] = True
 
-                values = [message["message"]["MultiMetric"]["values"][m_name]]
-                metrics[m_name] += values
-
-        expected = {"netRcvdPs", "memCache", "totalPct", "wbps",
-                    "systemPct", "rbps", "memRss", "netSentBps", "netSentPs", "netRcvdBps", "userPct"}
-        for e in expected:
-            assert e in metrics, "%s metric was not found".format(e)
-
-        check_non_zero("memRss", metrics)
-        check_non_zero("systemPct", metrics)
+        assert all(non_zeros_result)
 
     util.wait_until(wait_for_metrics, 60, 3)
 
