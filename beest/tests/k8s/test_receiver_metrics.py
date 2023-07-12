@@ -45,13 +45,6 @@ def test_container_metrics(cliv1):
     util.wait_until(wait_for_metrics, 60, 3)
 
 
-def check_non_zero(metric, metrics):
-    for v in metrics[metric]:
-        if v > 0:
-            return
-    assert False, "all '%s' metric are '0'".format(metric)
-
-
 # TODO: HTTP Metrics has been updated to use a new topic etc.
 # TODO: - pod_http_requests_count
 # TODO: - pod_http_response_time_seconds_bucket
@@ -74,54 +67,82 @@ def check_non_zero(metric, metrics):
 #
 #      util.wait_until(wait_for_metrics, 30, 3)
 
+def _check_tag_exists(json_data, tag):
+    if "result" in json_data:
+        results = json_data[tag]
+        if len(results) >= 1:
+            return True
+    return False
+
+
+def _check_contains_kcn(json_data, tag):
+    if _check_tag_exists(json_data, tag):
+        results = json_data["result"]
+        for result in results:
+            timeseries = result["timeSeries"]
+            _id = timeseries["id"]
+            groups = _id["groups"]
+            if "kube_cluster_name" in groups:
+                return True
+    return False
+
+
 def test_agent_kubernetes_metrics(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics", config_location=STS_CONTEXT_FILE)
+        docker_tag_exists = False
+        k8s_tag_exists = False
+        docker_contains_kcn = False
+        k8s_contains_kcn = False
+        docker_expected_metrics = ["docker_containers_running", "docker_containers_scheduled"]
+        kubernetes_expected_metrics = ["kubernetes_state_pod_ready", "kubernetes_state_pod_scheduled"]
 
-        def contains_key():
-            for message in json_data["messages"]:
-                if (message["message"]["MultiMetric"]["name"] == "convertedMetric" and
-                    "kube_cluster_name" in message["message"]["MultiMetric"]["tags"] and
-                    (
-                        (
-                            "docker.containers.running" in message["message"]["MultiMetric"]["values"].keys() or
-                            "docker.containers.scheduled" in message["message"]["MultiMetric"]["values"].keys()
-                        ) or
-                        (
-                            "kubernetes_state.pod.ready" in message["message"]["MultiMetric"]["values"].keys() or
-                            "kubernetes_state.pod.scheduled" in message["message"]["MultiMetric"]["values"].keys()
-                        ))):
-                    return True
-            return False
+        for docker_expected_metric in docker_expected_metrics:
+            json_data_docker = cliv1.promql_script(f'Telemetry.instantPromql\(\\\"{docker_expected_metric}\\\"\)',
+                                                   docker_expected_metric)
+            docker_tag_exists = _check_tag_exists(json_data_docker, "result")
+            docker_contains_kcn = _check_contains_kcn(json_data_docker, "result")
+            if docker_tag_exists or docker_contains_kcn:
+                break
 
-        assert contains_key(), 'No kubernetes metrics found'
+        for kubernetes_expected_metric in kubernetes_expected_metrics:
+            json_data_kubernetes = cliv1.promql_script(
+                f'Telemetry.instantPromql\(\\\"{kubernetes_expected_metric}\\\"\)', kubernetes_expected_metric)
+            k8s_tag_exists = _check_tag_exists(json_data_kubernetes, "result")
+            k8s_contains_kcn = _check_contains_kcn(json_data_kubernetes, "result")
+            if k8s_tag_exists or k8s_contains_kcn:
+                break
 
-    util.wait_until(wait_for_metrics, 60, 3)
+        final_decision = (docker_contains_kcn or k8s_contains_kcn) and (docker_tag_exists or k8s_tag_exists)
 
-
-def test_agent_kubernetes_state_metrics(cliv1):
-    def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics", config_location=STS_CONTEXT_FILE)
-
-        def contains_key():
-            for message in json_data["messages"]:
-                if (message["message"]["MultiMetric"]["name"] == "convertedMetric" and
-                   "kube_cluster_name" in message["message"]["MultiMetric"]["tags"] and
-                    (
-                        (
-                            "docker.containers.running" in message["message"]["MultiMetric"]["values"] or
-                            "docker.containers.scheduled" in message["message"]["MultiMetric"]["values"]
-                        ) or
-                        (
-                            "kubernetes_state.pod.ready" in message["message"]["MultiMetric"]["values"] or
-                            "kubernetes_state.pod.scheduled" in message["message"]["MultiMetric"]["values"]
-                        ))):
-                    return True
-            return False
-
-        assert contains_key(), 'No kubernetes_state metrics found'
+        assert final_decision, 'No kubernetes metrics found'
 
     util.wait_until(wait_for_metrics, 60, 3)
+
+
+# I don't see the point of this test, it's the same as the one above
+# def test_agent_kubernetes_state_metrics(cliv1):
+#     def wait_for_metrics():
+#         json_data = cliv1.topic_api("sts_multi_metrics", config_location=STS_CONTEXT_FILE)
+#
+#         def contains_key():
+#             for message in json_data["messages"]:
+#                 if (message["message"]["MultiMetric"]["name"] == "convertedMetric" and
+#                    "kube_cluster_name" in message["message"]["MultiMetric"]["tags"] and
+#                     (
+#                         (
+#                             "docker.containers.running" in message["message"]["MultiMetric"]["values"] or
+#                             "docker.containers.scheduled" in message["message"]["MultiMetric"]["values"]
+#                         ) or
+#                         (
+#                             "kubernetes_state.pod.ready" in message["message"]["MultiMetric"]["values"] or
+#                             "kubernetes_state.pod.scheduled" in message["message"]["MultiMetric"]["values"]
+#                         ))):
+#                     return True
+#             return False
+#
+#         assert contains_key(), 'No kubernetes_state metrics found'
+#
+#     util.wait_until(wait_for_metrics, 60, 3)
 
 
 def test_agent_kubelet_metrics(cliv1):
