@@ -160,7 +160,7 @@ Topology.query('__QUERY__')
         log.info(f"Querying StackState Script API: {script}")
 
         def query():
-            executed = self.host.run(f"sts-cli script execute {script}")
+            executed = self.host.run(f'echo {script} | sts-cli script execute')
             log.info(f"Executed {script}: {executed.exit_status}")
             return executed.stdout
 

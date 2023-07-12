@@ -9,7 +9,7 @@ def test_agents_running(cliv1):
     def wait_for_metrics():
         data_points = ["stackstate_agent_running", "stackstate_cluster_agent_running"]
         for data_point in data_points:
-            json_data = cliv1.promql_script(f'Telemetry.instantPromql("{data_point}")', data_point)
+            json_data = cliv1.promql_script(f'Telemetry.instantPromql\(\\\"{data_point}\\\"\)', data_point)
             for result in json_data["result"]:
                 if result["_type"] == "MetricTimeSeriesResult":
                     timeseries = result["timeSeries"]
