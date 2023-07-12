@@ -147,17 +147,18 @@ def test_agent_kubernetes_metrics(cliv1):
 
 def test_agent_kubelet_metrics(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics", limit=3000, config_location=STS_CONTEXT_FILE)
+        expected_metrics = ["kubernetes_kubelet_volume_stats_available_bytes",
+                            "kubernetes_kubelet_volume_stats_used_bytes"]
+        metric_exists = False
+        contains_namespace = False
 
-        def contains_key():
-            for message in json_data["messages"]:
-                if (message["message"]["MultiMetric"]["name"] == "convertedMetric" and
-                    "namespace" in message["message"]["MultiMetric"]["tags"] and
-                    ("kubernetes.kubelet.volume.stats.available_bytes" in message["message"]["MultiMetric"]["values"] or
-                     "kubernetes.kubelet.volume.stats.used_bytes" in message["message"]["MultiMetric"]["values"])):
-                    return True
-            return False
+        for expected_metric in expected_metrics:
+            json_data = cliv1.promql_script(f'Telemetry.instantPromql\(\\\"{expected_metric}\\\"\)',
+                                            expected_metric)
+            metric_exists = _check_metric_exists(json_data, "result") or metric_exists
+            contains_namespace = _check_contains_tag(json_data, "result", "namespace") or contains_namespace
 
-        assert contains_key(), 'No kubelet metrics found'
+        final_decision = metric_exists and contains_namespace
+        assert final_decision, 'No kubelet metrics found'
 
     util.wait_until(wait_for_metrics, 60, 3)
