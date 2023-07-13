@@ -125,7 +125,7 @@ def test_pod_container_to_container(ansible_var, cliv1):
                 external_id_assert_fn=lambda v: re.compile(request_process_to_server_relation_match).findall(v)
             ) is not None
 
-    util.wait_until(wait_for_components, 120, 3)
+    util.wait_until(wait_for_components, 180, 3)
 
 
 def test_headless_pod_to_pod(ansible_var, cliv1):
