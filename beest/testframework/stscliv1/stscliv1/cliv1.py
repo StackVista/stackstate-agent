@@ -141,16 +141,18 @@ Topology.query('__QUERY__')
   }
 """.replace('__QUERY__', escaped_query)
 
-    def topic_api(self, topic, limit=1000, config_location=None) -> dict:
+    def topic_api(self, topic, limit=1000, config_location=None, offset=0) -> dict:
         log = self.log
         log.info(f"Querying StackState Topic API: {topic}")
 
         def query():
             if config_location is None:
-                executed = self.host.run(f"sts topic describe --name {topic} --nr {limit} --output json")
+                executed = self.host.run(f"sts topic describe --name {topic} --offset {offset} --nr {limit} "
+                                         f"--output json")
             else:
-                executed = self.host.run(f"sts --config {config_location} topic describe --name {topic} --nr {limit} --output json")
-            log.info(f"Queried {topic}: {executed.exit_status}")
+                executed = self.host.run(f"sts --config {config_location} topic describe --name {topic} --offset "
+                                         f"{offset} --nr {limit} --output json")
+            log.info(f"Queried: {topic} exit status: {executed.exit_status} offset: {offset} limit: {limit}")
             return executed.stdout
 
         return self._cached_json(query, topic)

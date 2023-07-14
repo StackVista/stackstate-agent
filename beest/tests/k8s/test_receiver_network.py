@@ -84,12 +84,23 @@ def test_dnat(host, ansible_var, cliv1):
     util.wait_until(wait_for_components, 120, 3)
 
 
+offset = 0
+limit = 3000
+
+
 def test_pod_container_to_container(ansible_var, cliv1):
     server_port = int(ansible_var("container_to_container_server_port"))
     cluster_name = ansible_var("agent_cluster_name")
 
     def wait_for_components():
-        json_data = cliv1.topic_api("sts_topo_process_agents", limit=3000, config_location=STS_CONTEXT_FILE)
+        global offset
+        global limit
+
+        json_data = cliv1.topic_api("sts_topo_process_agents", limit=3000, config_location=STS_CONTEXT_FILE,
+                                    offset=offset)
+        message_count = len(json_data["messages"])
+        if message_count > 0:
+            offset += message_count
 
         server_process_match = re.compile("nc -l -p {}".format(server_port))
         server_process = _find_process_by_command_args(
