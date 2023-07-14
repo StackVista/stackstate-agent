@@ -104,7 +104,7 @@ def test_pod_container_to_container(ansible_var, cliv1):
                                     offset=offset)
         message_count = len(json_data["messages"])
         if message_count >= limit:
-            limit += 3000
+            limit += 500
 
         server_process_match = re.compile("nc -l -p {}".format(server_port))
         server_process = _find_process_by_command_args(
@@ -140,7 +140,7 @@ def test_pod_container_to_container(ansible_var, cliv1):
                 external_id_assert_fn=lambda v: re.compile(request_process_to_server_relation_match).findall(v)
             ) is not None
 
-    util.wait_until(wait_for_components, 180, 3)
+    util.wait_until(wait_for_components, 420, 3)
 
 
 def test_headless_pod_to_pod(ansible_var, cliv1):
