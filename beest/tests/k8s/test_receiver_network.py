@@ -4,6 +4,8 @@ import util
 from conftest import STS_CONTEXT_FILE
 
 testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
+offset = 0
+limit = 3000
 
 
 def _get_pod_ip(kubecontext, host, namespace, pod_name, kubeconfig):
@@ -57,9 +59,19 @@ def test_dnat(host, ansible_var, cliv1):
     dnat_service_port = int(ansible_var("dnat_service_port"))
     namespace = ansible_var("test_namespace")
     kubecontext = ansible_var("agent_kubecontext")
+    global offset
+    global limit
+    offset = 0
+    limit = 3000
 
     def wait_for_components():
-        json_data = cliv1.topic_api("sts_topo_process_agents", config_location=STS_CONTEXT_FILE)
+        global offset
+        global limit
+        json_data = cliv1.topic_api("sts_topo_process_agents", limit=limit, config_location=STS_CONTEXT_FILE,
+                                    offset=offset)
+        message_count = len(json_data["messages"])
+        if message_count >= limit:
+            limit += 500
 
         # This is here for debugging
         cliv1.topic_api("sts_correlate_endpoints", limit=100, config_location=STS_CONTEXT_FILE)
@@ -81,11 +93,8 @@ def test_dnat(host, ansible_var, cliv1):
             type_name="directional_connection",
             external_id_assert_fn=lambda v: proc_to_service_id_match.findall(v))["outgoing"]["ip"] == pod_client
 
-    util.wait_until(wait_for_components, 120, 3)
+    util.wait_until(wait_for_components, 180, 3)
 
-
-offset = 0
-limit = 3000
 
 
 def test_pod_container_to_container(ansible_var, cliv1):
