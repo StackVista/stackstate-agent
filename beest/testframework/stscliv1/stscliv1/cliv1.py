@@ -141,19 +141,36 @@ Topology.query('__QUERY__')
   }
 """.replace('__QUERY__', escaped_query)
 
-    def topic_api(self, topic, limit=1000, config_location=None) -> dict:
+    def topic_api(self, topic, limit=1000, config_location=None, offset=None) -> dict:
         log = self.log
         log.info(f"Querying StackState Topic API: {topic}")
+        offset_component = ""
+
+        if offset is not None:
+            offset_component = f"--offset {offset}"
 
         def query():
             if config_location is None:
-                executed = self.host.run(f"sts topic describe --name {topic} --nr {limit} --output json")
+                executed = self.host.run(f"sts topic describe --name {topic} {offset_component} --nr {limit} "
+                                         f"--output json")
             else:
-                executed = self.host.run(f"sts --config {config_location} topic describe --name {topic} --nr {limit} --output json")
-            log.info(f"Queried {topic}: {executed.exit_status}")
+                executed = self.host.run(f"sts --config {config_location} topic describe --name {topic} "
+                                         f"{offset_component} --nr {limit} --output json")
+            log.info(f"Queried: {topic} exit status: {executed.exit_status} offset: {offset} limit: {limit}")
             return executed.stdout
 
         return self._cached_json(query, topic)
+
+    def promql_script(self, script: str, data_point_name: str = None) -> dict:
+        log = self.log
+        log.info(f"Querying StackState Script API: {script}")
+
+        def query():
+            executed = self.host.run(f'echo {script} | sts-cli script execute')
+            log.info(f"Executed {script}: {executed.exit_status}")
+            return executed.stdout
+
+        return self._cached_json(query, data_point_name)
 
     def _cached_json(self, api_call: Callable, alias: str):
         log = self.log
