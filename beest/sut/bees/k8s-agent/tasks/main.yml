@@ -145,6 +145,10 @@
             var: cluster_check_agent_logs
           failed_when: true
 
+    - name: Give the agent 5 minutes to start up properly and get the process agent ready before starting the test workloads
+      pause:
+        minutes: 5
+
     - name: Copy kube config for local tests
       copy:
         src: "~/.kube/config"

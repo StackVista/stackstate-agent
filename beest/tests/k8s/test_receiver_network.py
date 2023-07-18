@@ -53,13 +53,28 @@ def _find_process_by_command_args(json_data, type_name, cmd_assert_fn):
     return None
 
 
+offset = 0
+limit = 3000
+
+
 def test_dnat(host, ansible_var, cliv1):
     dnat_service_port = int(ansible_var("dnat_service_port"))
     namespace = ansible_var("test_namespace")
     kubecontext = ansible_var("agent_kubecontext")
+    global offset
+    global limit
+    offset = 0
+    limit = 3000
 
     def wait_for_components():
-        json_data = cliv1.topic_api("sts_topo_process_agents", config_location=STS_CONTEXT_FILE)
+        global offset
+        global limit
+        json_data = cliv1.topic_api("sts_topo_process_agents", limit=limit, config_location=STS_CONTEXT_FILE,
+                                    offset=offset)
+        message_count = len(json_data["messages"])
+        if message_count >= limit:
+            limit += 500
+            offset += 250
 
         # This is here for debugging
         cliv1.topic_api("sts_correlate_endpoints", limit=100, config_location=STS_CONTEXT_FILE)
@@ -81,11 +96,7 @@ def test_dnat(host, ansible_var, cliv1):
             type_name="directional_connection",
             external_id_assert_fn=lambda v: proc_to_service_id_match.findall(v))["outgoing"]["ip"] == pod_client
 
-    util.wait_until(wait_for_components, 900, 3)
-
-
-offset = 0
-limit = 3000
+    util.wait_until(wait_for_components, 120, 3)
 
 
 def test_pod_container_to_container(ansible_var, cliv1):
@@ -105,6 +116,7 @@ def test_pod_container_to_container(ansible_var, cliv1):
         message_count = len(json_data["messages"])
         if message_count >= limit:
             limit += 500
+            offset += 250
 
         server_process_match = re.compile("nc -l -p {}".format(server_port))
         server_process = _find_process_by_command_args(
@@ -140,7 +152,7 @@ def test_pod_container_to_container(ansible_var, cliv1):
                 external_id_assert_fn=lambda v: re.compile(request_process_to_server_relation_match).findall(v)
             ) is not None
 
-    util.wait_until(wait_for_components, 900, 3)
+    util.wait_until(wait_for_components, 420, 3)
 
 
 def test_headless_pod_to_pod(ansible_var, cliv1):
