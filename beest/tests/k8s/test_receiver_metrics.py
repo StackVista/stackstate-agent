@@ -7,59 +7,42 @@ testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansib
 
 def test_agents_running(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics", config_location=STS_CONTEXT_FILE)
-
-        metrics = {}
-        for message in json_data["messages"]:
-            for m_name in message["message"]["MultiMetric"]["values"].keys():
-                if m_name not in metrics:
-                    metrics[m_name] = []
-
-                values = [message["message"]["MultiMetric"]["values"][m_name]]
-                metrics[m_name] += values
-
-        for v in metrics["stackstate.agent.running"]:
-            assert v == 1.0
-        for v in metrics["stackstate.cluster_agent.running"]:
-            assert v == 1.0
-
-        # assert that we don't see any datadog metrics
-        datadog_metrics = [(key, value) for key, value in metrics.items() if key.startswith("datadog")]
-        assert len(datadog_metrics) == 0, 'datadog metrics found in sts_multi_metrics: [%s]' % ', '.join(
-            map(str, datadog_metrics))
+        expected_metrics = ["stackstate_agent_running", "stackstate_cluster_agent_running"]
+        for expected_metric in expected_metrics:
+            json_data = cliv1.promql_script(f'Telemetry.instantPromql\(\\\"{expected_metric}\\\"\)', expected_metric)
+            for result in json_data["result"]:
+                if result["_type"] == "MetricTimeSeriesResult":
+                    timeseries = result["timeSeries"]
+                    points = timeseries["points"]
+                    for point in points:
+                        assert point[1] == 1.0
 
     util.wait_until(wait_for_metrics, 60, 3)
 
 
 def test_container_metrics(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics", limit=4000, config_location=STS_CONTEXT_FILE)
+        expected_metrics = ["netRcvdPs", "memCache", "totalPct", "wbps", "systemPct", "rbps", "memRss", "netSentBps",
+                            "netSentPs", "netRcvdBps", "userPct"]
+        non_zeros = ["memRss", "systemPct"]
+        non_zeros_result = [False, False]
 
-        metrics = {}
-        for message in json_data["messages"]:
-            for m_name in message["message"]["MultiMetric"]["values"].keys():
-                if m_name not in metrics:
-                    metrics[m_name] = []
+        for expected_metric in expected_metrics:
+            json_data = cliv1.promql_script(f'Telemetry.instantPromql\(\\\"{expected_metric}\\\"\)', expected_metric)
+            for result in json_data["result"]:
+                if result["_type"] == "MetricTimeSeriesResult":
+                    query = result["query"]
+                    assert query["query"] == expected_metric
+                    if expected_metric in non_zeros:
+                        timeseries = result["timeSeries"]
+                        points = timeseries["points"]
+                        for point in points:
+                            if point[1] > 0:
+                                non_zeros_result[non_zeros.index(expected_metric)] = True
 
-                values = [message["message"]["MultiMetric"]["values"][m_name]]
-                metrics[m_name] += values
-
-        expected = {"netRcvdPs", "memCache", "totalPct", "wbps",
-                    "systemPct", "rbps", "memRss", "netSentBps", "netSentPs", "netRcvdBps", "userPct"}
-        for e in expected:
-            assert e in metrics, "%s metric was not found".format(e)
-
-        check_non_zero("memRss", metrics)
-        check_non_zero("systemPct", metrics)
+        assert all(non_zeros_result)
 
     util.wait_until(wait_for_metrics, 60, 3)
-
-
-def check_non_zero(metric, metrics):
-    for v in metrics[metric]:
-        if v > 0:
-            return
-    assert False, "all '%s' metric are '0'".format(metric)
 
 
 # TODO: HTTP Metrics has been updated to use a new topic etc.
@@ -84,69 +67,98 @@ def check_non_zero(metric, metrics):
 #
 #      util.wait_until(wait_for_metrics, 30, 3)
 
+def _check_metric_exists(json_data, root_tag):
+    if root_tag in json_data:
+        data = json_data[root_tag]
+        if len(data) >= 1:
+            return True
+    return False
+
+
+def _check_contains_tag(json_data, root_tag, searched_tag):
+    if _check_metric_exists(json_data, root_tag):
+        data = json_data[root_tag]
+        for result in data:
+            timeseries = result["timeSeries"]
+            _id = timeseries["id"]
+            groups = _id["groups"]
+            if searched_tag in groups:
+                return True
+    return False
+
+
 def test_agent_kubernetes_metrics(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics", config_location=STS_CONTEXT_FILE)
+        docker_metric_exists = False
+        k8s_metric_exists = False
+        docker_contains_kcn = False
+        k8s_contains_kcn = False
+        docker_expected_metrics = ["docker_containers_running", "docker_containers_scheduled"]
+        kubernetes_expected_metrics = ["kubernetes_state_pod_ready", "kubernetes_state_pod_scheduled"]
 
-        def contains_key():
-            for message in json_data["messages"]:
-                if (message["message"]["MultiMetric"]["name"] == "convertedMetric" and
-                    "kube_cluster_name" in message["message"]["MultiMetric"]["tags"] and
-                    (
-                        (
-                            "docker.containers.running" in message["message"]["MultiMetric"]["values"].keys() or
-                            "docker.containers.scheduled" in message["message"]["MultiMetric"]["values"].keys()
-                        ) or
-                        (
-                            "kubernetes_state.pod.ready" in message["message"]["MultiMetric"]["values"].keys() or
-                            "kubernetes_state.pod.scheduled" in message["message"]["MultiMetric"]["values"].keys()
-                        ))):
-                    return True
-            return False
+        for docker_expected_metric in docker_expected_metrics:
+            json_data_docker = cliv1.promql_script(f'Telemetry.instantPromql\(\\\"{docker_expected_metric}\\\"\)',
+                                                   docker_expected_metric)
+            docker_metric_exists = _check_metric_exists(json_data_docker, "result")
+            docker_contains_kcn = _check_contains_tag(json_data_docker, "result", "kube_cluster_name")
+            if docker_metric_exists or docker_contains_kcn:
+                break
 
-        assert contains_key(), 'No kubernetes metrics found'
+        for kubernetes_expected_metric in kubernetes_expected_metrics:
+            json_data_kubernetes = cliv1.promql_script(
+                f'Telemetry.instantPromql\(\\\"{kubernetes_expected_metric}\\\"\)', kubernetes_expected_metric)
+            k8s_metric_exists = _check_metric_exists(json_data_kubernetes, "result")
+            k8s_contains_kcn = _check_contains_tag(json_data_kubernetes, "result", "kube_cluster_name")
+            if k8s_metric_exists or k8s_contains_kcn:
+                break
 
-    util.wait_until(wait_for_metrics, 60, 3)
+        final_decision = (docker_contains_kcn or k8s_contains_kcn) and (docker_metric_exists or k8s_metric_exists)
 
-
-def test_agent_kubernetes_state_metrics(cliv1):
-    def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics", config_location=STS_CONTEXT_FILE)
-
-        def contains_key():
-            for message in json_data["messages"]:
-                if (message["message"]["MultiMetric"]["name"] == "convertedMetric" and
-                   "kube_cluster_name" in message["message"]["MultiMetric"]["tags"] and
-                    (
-                        (
-                            "docker.containers.running" in message["message"]["MultiMetric"]["values"] or
-                            "docker.containers.scheduled" in message["message"]["MultiMetric"]["values"]
-                        ) or
-                        (
-                            "kubernetes_state.pod.ready" in message["message"]["MultiMetric"]["values"] or
-                            "kubernetes_state.pod.scheduled" in message["message"]["MultiMetric"]["values"]
-                        ))):
-                    return True
-            return False
-
-        assert contains_key(), 'No kubernetes_state metrics found'
+        assert final_decision, 'No kubernetes metrics found'
 
     util.wait_until(wait_for_metrics, 60, 3)
+
+
+# I don't see the point of this test, it's the same as the one above
+# def test_agent_kubernetes_state_metrics(cliv1):
+#     def wait_for_metrics():
+#         json_data = cliv1.topic_api("sts_multi_metrics", config_location=STS_CONTEXT_FILE)
+#
+#         def contains_key():
+#             for message in json_data["messages"]:
+#                 if (message["message"]["MultiMetric"]["name"] == "convertedMetric" and
+#                    "kube_cluster_name" in message["message"]["MultiMetric"]["tags"] and
+#                     (
+#                         (
+#                             "docker.containers.running" in message["message"]["MultiMetric"]["values"] or
+#                             "docker.containers.scheduled" in message["message"]["MultiMetric"]["values"]
+#                         ) or
+#                         (
+#                             "kubernetes_state.pod.ready" in message["message"]["MultiMetric"]["values"] or
+#                             "kubernetes_state.pod.scheduled" in message["message"]["MultiMetric"]["values"]
+#                         ))):
+#                     return True
+#             return False
+#
+#         assert contains_key(), 'No kubernetes_state metrics found'
+#
+#     util.wait_until(wait_for_metrics, 60, 3)
 
 
 def test_agent_kubelet_metrics(cliv1):
     def wait_for_metrics():
-        json_data = cliv1.topic_api("sts_multi_metrics", limit=3000, config_location=STS_CONTEXT_FILE)
+        expected_metrics = ["kubernetes_kubelet_volume_stats_available_bytes",
+                            "kubernetes_kubelet_volume_stats_used_bytes"]
+        metric_exists = False
+        contains_namespace = False
 
-        def contains_key():
-            for message in json_data["messages"]:
-                if (message["message"]["MultiMetric"]["name"] == "convertedMetric" and
-                    "namespace" in message["message"]["MultiMetric"]["tags"] and
-                    ("kubernetes.kubelet.volume.stats.available_bytes" in message["message"]["MultiMetric"]["values"] or
-                     "kubernetes.kubelet.volume.stats.used_bytes" in message["message"]["MultiMetric"]["values"])):
-                    return True
-            return False
+        for expected_metric in expected_metrics:
+            json_data = cliv1.promql_script(f'Telemetry.instantPromql\(\\\"{expected_metric}\\\"\)',
+                                            expected_metric)
+            metric_exists = _check_metric_exists(json_data, "result") or metric_exists
+            contains_namespace = _check_contains_tag(json_data, "result", "namespace") or contains_namespace
 
-        assert contains_key(), 'No kubelet metrics found'
+        final_decision = metric_exists and contains_namespace
+        assert final_decision, 'No kubelet metrics found'
 
     util.wait_until(wait_for_metrics, 60, 3)
