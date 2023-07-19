@@ -70,7 +70,6 @@ def test_dnat(host, ansible_var, cliv1):
     limit = 3000
 
     def wait_for_components():
-        global offset
         global limit
         json_data = cliv1.topic_api("sts_topo_process_agents", limit=limit, config_location=STS_CONTEXT_FILE)
         message_count = len(json_data["messages"])
