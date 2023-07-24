@@ -11,6 +11,8 @@
         namespace: "{{ test_namespace }}"
         kubernetes_v2_integration:
           cluster_name: "{{ agent_cluster_name }}"
+        stackstate_k8s_agent_v2:
+          cluster_name: "{{ agent_cluster_name }}"
     - role: "{{ bees_path }}/k8s-agent"
       vars:
         kubecontext: "{{ agent_kubecontext }}"
