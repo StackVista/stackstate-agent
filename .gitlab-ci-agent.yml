@@ -150,7 +150,7 @@ stages:
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
     when: never
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
-    when: on_failure
+    when: manual
     allow_failure: false
 
 # Merge train rules for all agents
@@ -1163,9 +1163,9 @@ beest_k8s_1_24_containerd_failure_cleanup:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_failure
     - when: manual
-  needs:
-    - beest_k8s_1_24_containerd_test
-    - beest_k8s_1_24_containerd_create
+#  needs:
+#    - beest_k8s_1_24_containerd_test
+#    - beest_k8s_1_24_containerd_create
 
 beest_k8s_1_24_containerd_success_cleanup:
   <<: *beest
@@ -1175,12 +1175,12 @@ beest_k8s_1_24_containerd_success_cleanup:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
     - when: manual
-  dependencies:
-    - beest_k8s_1_24_containerd_test
-    - beest_k8s_1_24_containerd_create
-  needs:
-    - beest_k8s_1_24_containerd_test
-    - beest_k8s_1_24_containerd_create
+#  dependencies:
+#    - beest_k8s_1_24_containerd_test
+#    - beest_k8s_1_24_containerd_create
+#  needs:
+#    - beest_k8s_1_24_containerd_test
+#    - beest_k8s_1_24_containerd_create
 
 # Job Seq: Molecule
 # Type: localinstall
