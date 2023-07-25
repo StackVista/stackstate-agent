@@ -10,6 +10,10 @@
       set_fact:
         stackpacklist: "{{ stackpack_list_raw.stdout }}"
 
+    - name: Print stackpack list
+      debug:
+        var: stackpacklist
+
     - name: Install stackstate-k8s-agent-v2 StackPack
       command: sts stackpack install --name stackstate-k8s-agent-v2
       when:
