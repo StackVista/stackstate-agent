@@ -1162,7 +1162,7 @@ beest_k8s_1_24_containerd_failure_cleanup:
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_failure
-    - when: manual
+    - when: never
   needs:
     - beest_k8s_1_24_containerd_test
     - beest_k8s_1_24_containerd_create
@@ -1174,7 +1174,7 @@ beest_k8s_1_24_containerd_success_cleanup:
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
-    - when: manual
+    - when: never
   dependencies:
     - beest_k8s_1_24_containerd_test
     - beest_k8s_1_24_containerd_create
