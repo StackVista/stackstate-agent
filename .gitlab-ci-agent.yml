@@ -1,6 +1,7 @@
 image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
 
 stages:
+  - manual
   - prepare
   - build
   - test
@@ -874,6 +875,19 @@ pre_release_cluster_agent_image:
     when:
       - always
 
+.beest_destroy_manual: &beest_destroy_manual
+  <<: *beest_artifacts
+  stage: manual
+  # Prevent terraform from breaking when this job is cancelled mid way
+  interruptible: false
+  # Prevent another job from destroying the resources this branch is busy with, Terraform lock will prevent this but for incase
+  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_REF_NAME-$BEEST_SCENARIO"
+  script:
+    - beest destroy $BEEST_SCENARIO -y
+  retry:
+    max: 2
+    when:
+      - always
 
 
 # Job Seq: Molecule
@@ -1086,6 +1100,15 @@ beest_k8s_1_27_containerd_test:
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
+beest_k8s_1_23_dockerd_manual_cleanup:
+  <<: *beest
+  <<: *beest_destroy_manual
+  <<: *beest_k8s_1_23_dockerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_always_manual
+    - when: never
+
 beest_k8s_1_23_dockerd_failure_cleanup:
   <<: *beest
   <<: *beest_destroy
@@ -1097,6 +1120,15 @@ beest_k8s_1_23_dockerd_failure_cleanup:
   needs:
     - beest_k8s_1_23_dockerd_test
     - beest_k8s_1_23_dockerd_create
+
+beest_k8s_1_23_containerd_manual_cleanup:
+  <<: *beest
+  <<: *beest_destroy_manual
+  <<: *beest_k8s_1_23_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_always_manual
+    - when: never
 
 beest_k8s_1_23_containerd_failure_cleanup:
   <<: *beest
@@ -1139,6 +1171,15 @@ beest_k8s_1_23_containerd_success_cleanup:
   needs:
     - beest_k8s_1_23_containerd_test
     - beest_k8s_1_23_containerd_create
+
+beest_k8s_1_27_containerd_manual_cleanup:
+  <<: *beest
+  <<: *beest_destroy_manual
+  <<: *beest_k8s_1_27_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_always_manual
+    - when: never
 
 beest_k8s_1_27_containerd_failure_cleanup:
   <<: *beest
