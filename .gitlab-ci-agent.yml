@@ -1090,6 +1090,16 @@ beest_k8s_1_24_containerd_test:
     - beest_k8s_1_24_containerd_create
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
+  after_script:
+    - set -x
+    - curl https://platform.slim.dev/.service/releases/slim/0.0.14-release | sh
+    - ~/.slim/bin/slim config gen --save --org ${SLIM_ORG_ID} --token ${SLIM_TOKEN}
+    - curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >regctl && chmod 755 regctl
+    - export H_ID=$(./regctl image inspect --format '{{ index .Config.Labels "slim.nx"}}' quay.io/stackstate/${STS_DOCKER_TEST_REPO}:${CI_COMMIT_SHORT_SHA}-slim-instrumented)
+    - ~/.slim/bin/slim harden --allow-reharden --id ${H_ID}
+    - export I_ID=$(./regctl image inspect --format '{{ index .Config.Labels "slim.nx"}}' quay.io/stackstate/${STS_DOCKER_TEST_REPO_CLUSTER}:${CI_COMMIT_SHORT_SHA}-slim-instrumented)
+    - ~/.slim/bin/slim harden --allow-reharden --id ${I_ID}
+    - set +x
 
 beest_k8s_1_22_dockerd_failure_cleanup:
   <<: *beest
@@ -1149,14 +1159,6 @@ beest_k8s_1_24_containerd_failure_cleanup:
   <<: *beest
   <<: *beest_destroy
   <<: *beest_k8s_1_24_containerd_variables
-  before_script:
-    - curl https://platform.slim.dev/.service/releases/slim/0.0.14-release | sh
-    - ~/.slim/bin/slim config gen --save --org ${SLIM_ORG_ID} --token ${SLIM_TOKEN}
-    - curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >regctl && chmod 755 regctl
-    - export H_ID=$(./regctl image inspect --format '{{ index .Config.Labels "slim.nx"}}' quay.io/stackstate/stackstate-agent-2-test:${CI_COMMIT_SHORT_SHA}-slim-instrumented)
-    - ~/.slim/bin/slim harden --id ${H_ID}
-    - export I_ID=$(./regctl image inspect --format '{{ index .Config.Labels "slim.nx"}}' quay.io/stackstate/stackstate-cluster-agent-test:${CI_COMMIT_SHORT_SHA}-slim-instrumented)
-    - ~/.slim/bin/slim harden --id ${I_ID}
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_failure
@@ -1169,14 +1171,6 @@ beest_k8s_1_24_containerd_success_cleanup:
   <<: *beest
   <<: *beest_destroy
   <<: *beest_k8s_1_24_containerd_variables
-  before_script:
-    - curl https://platform.slim.dev/.service/releases/slim/0.0.14-release | sh
-    - ~/.slim/bin/slim config gen --save --org ${SLIM_ORG_ID} --token ${SLIM_TOKEN}
-    - curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >regctl && chmod 755 regctl
-    - export H_ID=$(./regctl image inspect --format '{{ index .Config.Labels "slim.nx"}}' quay.io/stackstate/${STS_DOCKER_TEST_REPO}:${CI_COMMIT_SHORT_SHA}-slim-instrumented)
-    - ~/.slim/bin/slim harden --id ${H_ID}
-    - export I_ID=$(./regctl image inspect --format '{{ index .Config.Labels "slim.nx"}}' quay.io/stackstate/${STS_DOCKER_TEST_REPO_CLUSTER}:${CI_COMMIT_SHORT_SHA}-slim-instrumented)
-    - ~/.slim/bin/slim harden --id ${I_ID}
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
