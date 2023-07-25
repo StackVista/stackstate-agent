@@ -694,7 +694,7 @@ pre_release_main_agent_image: &pre_release_image
       alias: docker
   before_script:
     - apk add curl
-    - curl https://platform.slim.dev/.service/releases/slim/0.0.14-release | sh
+    - curl https://platform.slim.dev/.service/releases/slim/0.0.17-release | sh
     - ~/.slim/bin/slim config gen --save --org ${SLIM_ORG_ID} --token ${SLIM_TOKEN}
   script:
     - cd $CI_PROJECT_DIR
@@ -1092,7 +1092,7 @@ beest_k8s_1_24_containerd_test:
     - pre_release_main_agent_image
   after_script:
     - set -x
-    - curl https://platform.slim.dev/.service/releases/slim/0.0.14-release | sh
+    - curl https://platform.slim.dev/.service/releases/slim/0.0.17-release | sh
     - ~/.slim/bin/slim config gen --save --org ${SLIM_ORG_ID} --token ${SLIM_TOKEN}
     - curl -L https://github.com/regclient/regclient/releases/latest/download/regctl-linux-amd64 >regctl && chmod 755 regctl
     - export H_ID=$(./regctl image inspect --format '{{ index .Config.Labels "slim.nx"}}' quay.io/stackstate/${STS_DOCKER_TEST_REPO}:${CI_COMMIT_SHORT_SHA}-slim-instrumented)
