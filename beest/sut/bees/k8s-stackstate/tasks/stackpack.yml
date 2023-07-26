@@ -10,17 +10,21 @@
       set_fact:
         stackpacklist: "{{ stackpack_list_raw.stdout }}"
 
-    - name: Install stackstate-agent-v2 StackPack
-      command: sts stackpack install --name stackstate-agent-v2
-      when:
-        - stackstate_agent_v2 is defined
-        - stackpacklist.find('stackstate-agent-v2') == -1
+    - name: Print stackpack list
+      debug:
+        var: stackpacklist
 
-    - name: Install kubernetes StackPack
-      command: sts stackpack install --name kubernetes --parameter kubernetes_cluster_name="{{ kubernetes_integration.cluster_name }}"
+    - name: Install stackstate-k8s-agent-v2 StackPack
+      command: sts stackpack install --name stackstate-k8s-agent-v2
       when:
-        - kubernetes_integration is defined
-        - stackpacklist.find('kubernetes') == -1
+        - stackstate_k8s_agent_v2 is defined
+        - stackpacklist.find('stackstate-k8s-agent-v2') == -1
+
+#    - name: Install kubernetes StackPack
+#      command: sts stackpack install --name kubernetes --parameter kubernetes_cluster_name="{{ kubernetes_integration.cluster_name }}"
+#      when:
+#        - kubernetes_integration is defined
+#        - stackpacklist.find('kubernetes') == -1
 
     - name: Install kubernetes v2 StackPack
       command: sts stackpack install --name kubernetes-v2 --parameter kubernetes_cluster_name="{{ kubernetes_v2_integration.cluster_name }}"
@@ -34,11 +38,11 @@
         - splunk_integration is defined
         - stackpacklist.find('splunk-topology') == -1
 
-    - name: Install AWS-V2 StackPack
-      command: sts stackpack install --name aws-v2 --parameter aws_external_id="{{ yard_id }}" --parameter aws_role_arn="{{ aws_integration.integration_iam_role }}" --parameter aws_access_key_id="{{ aws_integration.integration_access_key }}" --parameter aws_secret_access_key="{{ aws_integration.integration_secret_key }}"
-      when:
-        - aws_integration is defined
-        - stackpacklist.find('aws-v2') == -1
+#    - name: Install AWS-V2 StackPack
+#      command: sts stackpack install --name aws-v2 --parameter aws_external_id="{{ yard_id }}" --parameter aws_role_arn="{{ aws_integration.integration_iam_role }}" --parameter aws_access_key_id="{{ aws_integration.integration_access_key }}" --parameter aws_secret_access_key="{{ aws_integration.integration_secret_key }}"
+#      when:
+#        - aws_integration is defined
+#        - stackpacklist.find('aws-v2') == -1
 
 
 ## Cleanup
