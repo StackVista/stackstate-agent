@@ -120,6 +120,8 @@
                     CONFIG_FORCE_stackstate_aws_s3_accesskey: ""
                     CONFIG_FORCE_stackstate_aws_s3_secretkey: ""
                     CONFIG_FORCE_stackstate_aws_s3_region: "eu-west-1"
+                image:
+                  tag: "master"
           global:
             receiverApiKey: "{{ sts_api_key }}"
 
