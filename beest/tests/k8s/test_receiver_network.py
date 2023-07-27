@@ -50,7 +50,6 @@ limit = 3000
 def test_dnat(host, ansible_var, cliv1):
     server_port = int(ansible_var("dnat_server_port"))
     service_port = int(ansible_var("dnat_service_port"))
-    cluster_name = ansible_var("agent_cluster_name")
     global limit
     limit = 3000
 
@@ -84,10 +83,10 @@ def test_dnat(host, ansible_var, cliv1):
         request_host = request_process["host"]
 
         request_process_to_server_relation_match = re.compile(
-            "TCP:/urn:process:/{}:{}:{}->urn:process:/{}:{}:{}:{}:.*:{}"
+            "TCP:/urn:process:/{}:{}:{}->urn:process:/{}:{}:{}:{}"
             .format(request_host, request_process_pid, request_process_create_time,
                     server_host, server_process_pid, server_process_create_time,
-                    cluster_name, server_port)
+                    server_port)
         )
 
         assert _relation_data(
@@ -101,7 +100,6 @@ def test_dnat(host, ansible_var, cliv1):
 
 def test_pod_container_to_container(ansible_var, cliv1):
     server_port = int(ansible_var("container_to_container_server_port"))
-    cluster_name = ansible_var("agent_cluster_name")
     global limit
     limit = 3000
 
@@ -135,10 +133,10 @@ def test_pod_container_to_container(ansible_var, cliv1):
         request_process_pid = request_process["pid"]
         request_host = request_process["host"]
 
-        request_process_to_server_relation_match = "TCP:/urn:process:/{}:{}:{}->urn:process:/{}:{}:{}:{}:{}:{}:.*:127.0.0.1:{}".format(
+        request_process_to_server_relation_match = "TCP:/urn:process:/{}:{}:{}->urn:process:/{}:{}:{}:{}".format(
             request_host, request_process_pid, request_process_create_time,
             server_host, server_process_pid, server_process_create_time,
-            server_host, cluster_name, server_host, server_port
+            server_port
         )
 
         assert _relation_data(
@@ -153,7 +151,6 @@ def test_pod_container_to_container(ansible_var, cliv1):
 def test_headless_pod_to_pod(ansible_var, cliv1):
     # Server and service port are equal
     server_port = int(ansible_var("headless_service_port"))
-    cluster_name = ansible_var("agent_cluster_name")
     global limit
     limit = 3000
 
@@ -187,10 +184,10 @@ def test_headless_pod_to_pod(ansible_var, cliv1):
         request_host = request_process["host"]
 
         request_process_to_server_relation_match = re.compile(
-            "TCP:/urn:process:/{}:{}:{}->urn:process:/{}:{}:{}:{}:.*:{}"
+            "TCP:/urn:process:/{}:{}:{}->urn:process:/{}:{}:{}:{}"
             .format(request_host, request_process_pid, request_process_create_time,
                     server_host, server_process_pid, server_process_create_time,
-                    cluster_name, server_port)
+                    server_port)
         )
 
         assert _relation_data(
