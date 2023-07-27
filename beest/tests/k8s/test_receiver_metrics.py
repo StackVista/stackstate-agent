@@ -119,32 +119,6 @@ def test_agent_kubernetes_metrics(cliv1):
     util.wait_until(wait_for_metrics, 60, 3)
 
 
-# I don't see the point of this test, it's the same as the one above
-# def test_agent_kubernetes_state_metrics(cliv1):
-#     def wait_for_metrics():
-#         json_data = cliv1.topic_api("sts_multi_metrics", config_location=STS_CONTEXT_FILE)
-#
-#         def contains_key():
-#             for message in json_data["messages"]:
-#                 if (message["message"]["MultiMetric"]["name"] == "convertedMetric" and
-#                    "kube_cluster_name" in message["message"]["MultiMetric"]["tags"] and
-#                     (
-#                         (
-#                             "docker.containers.running" in message["message"]["MultiMetric"]["values"] or
-#                             "docker.containers.scheduled" in message["message"]["MultiMetric"]["values"]
-#                         ) or
-#                         (
-#                             "kubernetes_state.pod.ready" in message["message"]["MultiMetric"]["values"] or
-#                             "kubernetes_state.pod.scheduled" in message["message"]["MultiMetric"]["values"]
-#                         ))):
-#                     return True
-#             return False
-#
-#         assert contains_key(), 'No kubernetes_state metrics found'
-#
-#     util.wait_until(wait_for_metrics, 60, 3)
-
-
 def test_agent_kubelet_metrics(cliv1):
     def wait_for_metrics():
         expected_metrics = ["kubernetes_kubelet_volume_stats_available_bytes",
