@@ -48,7 +48,7 @@ COPY stackstate*.yaml etc/stackstate-agent/
 ####################################
 
 FROM artifactory.tooling.stackstate.io/docker-virtual/ubuntu:20.04
-LABEL maintainer "StackState <info@stackstate.com>"
+LABEL maintainer="StackState <info@stackstate.com>"
 ARG WITH_JMX
 ENV DOCKER_STS_AGENT=true \
     PATH=/opt/stackstate-agent/bin/agent/:/opt/stackstate-agent/embedded/bin/:$PATH \
