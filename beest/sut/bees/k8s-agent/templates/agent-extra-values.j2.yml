@@ -13,6 +13,11 @@ nodeAgent:
         tag: "{{ agent_current_branch_ref }}-slim-instrumented"
         repository: "stackstate/{{ agent_docker_repo }}"
         pullPolicy: Always
+      lifecycle:
+        preStop:
+          exec:
+            command: [ "/bin/sh", "-c", "echo 'Giving slim.ai monitor time to submit data...'; sleep 120" ]
+        terminationGracePeriodSeconds: 240
     processAgent:
       image:
         tag: {{ process_agent_branch }}
@@ -23,8 +28,18 @@ clusterAgent:
     tag: "{{ agent_current_branch_ref }}-slim-instrumented"
     repository: "stackstate/{{ cluster_agent_docker_repo }}"
     pullPolicy: Always
+  lifecycle:
+    preStop:
+      exec:
+        command: [ "/bin/sh", "-c", "echo 'Giving slim.ai monitor time to submit data...'; sleep 120" ]
+    terminationGracePeriodSeconds: 240
 checksAgent:
   image:
     tag: "{{ agent_current_branch_ref }}-slim-instrumented"
     repository: "stackstate/{{ agent_docker_repo }}"
     pullPolicy: Always
+  lifecycle:
+    preStop:
+      exec:
+        command: [ "/bin/sh", "-c", "echo 'Giving slim.ai monitor time to submit data...'; sleep 120" ]
+    terminationGracePeriodSeconds: 240
