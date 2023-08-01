@@ -819,7 +819,6 @@ pre_release_cluster_agent_image:
     - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
     - export AGENT_HELM_CHART_VERSION=$AGENT_HELM_CHART_VERSION
     - export STACKSTATE_HELM_CHART_VERSION=$STACKSTATE_HELM_CHART_VERSION
-    - export STACKSTATE_PLATFORM_VERSION=4607469
     - export RUNNERS_IP="$RUNNERS_IP"
     - echo "$RUNNERS_IP"
     - curl https://ipv4.icanhazip.com
