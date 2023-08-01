@@ -60,7 +60,11 @@ ENV DOCKER_STS_AGENT=true \
     # Exit container if entrypoint fails
     S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
     # Allow readonlyrootfs
-    S6_READ_ONLY_ROOT=1
+    S6_READ_ONLY_ROOT=1 \
+    # ----- trying to allow for container hardening -----
+    S6_KILL_FINISH_MAXTIME=120000 \
+    S6_KILL_GRACETIME=120000
+    # ---------------------------------------------------1
 
 # Install openjdk-8-jre-headless on jmx flavor
 RUN if [ -n "$WITH_JMX" ]; then apt-get update \
