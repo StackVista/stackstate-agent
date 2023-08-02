@@ -54,12 +54,12 @@
           stackstate_helm_chart_repo: stackstate-internal/stackstate-k8s
 
     - name: Use master stackstate image tag
-      when: stackstate_platform_version | trim | length > 0
+      when: stackstate_platform_version | trim | length == 0
       set_fact:
         stackstate_image_tag: master
 
     - name: Use specified image tag
-      when: stackstate_helm_chart_version | trim | length == 0
+      when: stackstate_platform_version | trim | length > 0
       set_fact:
         stackstate_image_tag: "{{ stackstate_platform_version }}"
 
