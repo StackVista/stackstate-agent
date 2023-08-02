@@ -3,6 +3,7 @@ artifactory_user: "{{ lookup('env', 'artifactory_user') or ARTIFACTORY_USER }}"
 artifactory_password: "{{ lookup('env', 'artifactory_password') or ARTIFACTORY_PASSWORD }}"
 
 stackstate_helm_chart_version: "{{ lookup('env', 'STACKSTATE_HELM_CHART_VERSION') }}"
+stackstate_platform_version: "{{ lookup('env', 'STACKSTATE_PLATFORM_VERSION') }}"
 stackstate_license: "{{ lookup('env', 'STACKSTATE_LICENSE') or STACKSTATE_LICENSE }}"
 
 namespace: "{{ yard_id.replace('.','-').replace('_','-') | lower }}"

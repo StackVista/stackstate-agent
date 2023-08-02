@@ -15,6 +15,7 @@ cluster_agent_docker_repo: "{{ lookup('env', 'STS_DOCKER_TEST_REPO_CLUSTER') or 
 agent_helm_chart_version: "{{ lookup('env', 'AGENT_HELM_CHART_VERSION') }}"
 
 stackstate_helm_chart_version: "{{ lookup('env', 'STACKSTATE_HELM_CHART_VERSION') }}"
+stackstate_platform_version: "{{ lookup('env', 'STACKSTATE_PLATFORM_VERSION') }}"
 stackstate_license: "{{ lookup('env', 'STACKSTATE_LICENSE') or STACKSTATE_LICENSE }}"
 
 monitoring_namespace: "monitoring"

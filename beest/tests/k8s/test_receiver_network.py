@@ -6,21 +6,6 @@ from conftest import STS_CONTEXT_FILE
 testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansible_inventory"]
 
 
-def _get_pod_ip(kubecontext, host, namespace, pod_name, kubeconfig):
-    pod_server_c = "kubectl --kubeconfig {0} --context={1} get pods/{2} -o json --namespace={3}"\
-        .format(kubeconfig, kubecontext, pod_name, namespace)
-    pod_server_exec = host.check_output(pod_server_c)
-    pod_server_data = json.loads(pod_server_exec)
-    return pod_server_data["status"]["podIP"]
-
-
-def _get_service_ip(kubecontext, host, namespace, kubeconfig):
-    service_c = "kubectl --kubeconfig {0} --context={1} get service/pod-service -o json --namespace={2}"\
-        .format(kubeconfig, kubecontext, namespace)
-    pod_service_exec = host.check_output(service_c)
-    pod_service_data = json.loads(pod_service_exec)
-    return pod_service_data["spec"]["clusterIP"]
-
 def _find_component(json_data, type_name, external_id_assert_fn):
     messages = json_data["messages"]
     messages.reverse()
@@ -63,9 +48,8 @@ limit = 3000
 
 
 def test_dnat(host, ansible_var, cliv1):
-    dnat_service_port = int(ansible_var("dnat_service_port"))
-    namespace = ansible_var("test_namespace")
-    kubecontext = ansible_var("agent_kubecontext")
+    server_port = int(ansible_var("dnat_server_port"))
+    service_port = int(ansible_var("dnat_service_port"))
     global limit
     limit = 3000
 
@@ -76,32 +60,46 @@ def test_dnat(host, ansible_var, cliv1):
         if message_count >= limit:
             limit += 500
 
-        # This is here for debugging
-        cliv1.topic_api("sts_correlate_endpoints", limit=100, config_location=STS_CONTEXT_FILE)
-
-        pod_service_ip = _get_service_ip(kubecontext, host, namespace, "./../../sut/yards/k8s/config")
-        pod_client = _get_pod_ip(kubecontext, host, namespace, "pod-client", "./../../sut/yards/k8s/config")
-
-        endpoint_match = re.compile("urn:endpoint:/.*:{}".format(pod_service_ip))
-        endpoint = _find_component(
+        server_process_match = re.compile("ncat -vv --broker --listen -p {}".format(server_port))
+        server_process = _find_process_by_command_args(
             json_data=json_data,
-            type_name="endpoint",
-            external_id_assert_fn=lambda v: endpoint_match.findall(v))
-        assert json.loads(endpoint["data"])["ip"] == pod_service_ip
-        endpoint_component_id = endpoint["externalId"]
-        proc_to_service_id_match = re.compile("TCP:/urn:process:/.*:.*->{}:{}".format(endpoint_component_id, dnat_service_port))
+            type_name="process",
+            cmd_assert_fn=lambda v: server_process_match.findall(v)
+        )
+        assert server_process is not None
+        server_process_create_time = server_process["createTime"]
+        server_process_pid = server_process["pid"]
+        server_host = server_process["host"]
+
+        request_process_match = re.compile("nc -vv pod-service {}".format(service_port))
+        request_process = _find_process_by_command_args(
+            json_data=json_data,
+            type_name="process",
+            cmd_assert_fn=lambda v: request_process_match.findall(v)
+        )
+        assert request_process is not None
+        request_process_create_time = request_process["createTime"]
+        request_process_pid = request_process["pid"]
+        request_host = request_process["host"]
+
+        request_process_to_server_relation_match = re.compile(
+            "connection:/urn:process:/{}:{}:{}->urn:process:/{}:{}:{}:{}"
+            .format(request_host, request_process_pid, request_process_create_time,
+                    server_host, server_process_pid, server_process_create_time,
+                    server_port)
+        )
 
         assert _relation_data(
             json_data=json_data,
             type_name="directional_connection",
-            external_id_assert_fn=lambda v: proc_to_service_id_match.findall(v))["outgoing"]["ip"] == pod_client
+            external_id_assert_fn=lambda v: request_process_to_server_relation_match.findall(v)
+        ) is not None
 
     util.wait_until(wait_for_components, 120, 3)
 
 
 def test_pod_container_to_container(ansible_var, cliv1):
     server_port = int(ansible_var("container_to_container_server_port"))
-    cluster_name = ansible_var("agent_cluster_name")
     global limit
     limit = 3000
 
@@ -135,10 +133,10 @@ def test_pod_container_to_container(ansible_var, cliv1):
         request_process_pid = request_process["pid"]
         request_host = request_process["host"]
 
-        request_process_to_server_relation_match = "TCP:/urn:process:/{}:{}:{}->urn:process:/{}:{}:{}:{}:{}:{}:.*:127.0.0.1:{}".format(
+        request_process_to_server_relation_match = "connection:/urn:process:/{}:{}:{}->urn:process:/{}:{}:{}:{}".format(
             request_host, request_process_pid, request_process_create_time,
             server_host, server_process_pid, server_process_create_time,
-            server_host, cluster_name, server_host, server_port
+            server_port
         )
 
         assert _relation_data(
@@ -153,7 +151,6 @@ def test_pod_container_to_container(ansible_var, cliv1):
 def test_headless_pod_to_pod(ansible_var, cliv1):
     # Server and service port are equal
     server_port = int(ansible_var("headless_service_port"))
-    cluster_name = ansible_var("agent_cluster_name")
     global limit
     limit = 3000
 
@@ -187,10 +184,10 @@ def test_headless_pod_to_pod(ansible_var, cliv1):
         request_host = request_process["host"]
 
         request_process_to_server_relation_match = re.compile(
-            "TCP:/urn:process:/{}:{}:{}->urn:process:/{}:{}:{}:{}:.*:{}"
+            "connection:/urn:process:/{}:{}:{}->urn:process:/{}:{}:{}:{}"
             .format(request_host, request_process_pid, request_process_create_time,
                     server_host, server_process_pid, server_process_create_time,
-                    cluster_name, server_port)
+                    server_port)
         )
 
         assert _relation_data(
