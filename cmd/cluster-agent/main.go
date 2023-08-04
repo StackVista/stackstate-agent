@@ -19,7 +19,8 @@ import (
 	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/ksm"
 	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/kubeapi" // sts
 	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/kubernetesapiserver"
-	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/orchestrator"
+	// [STS] avoid running the orchestrator. Re-enable once upstream merging has been done (if needed)
+	//_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/orchestrator"
 	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/net"
 	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/system/cpu"
 	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/system/disk"
