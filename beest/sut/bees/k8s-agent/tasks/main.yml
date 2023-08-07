@@ -176,6 +176,10 @@
         wait: true
         wait_timeout: 120s
 
+    - name: Give k8s grace periods time to shut containers down gracefully before deleting namespaces
+      pause:
+        minutes: 5
+
     - name: Undeploy Ingress Nginx Helm chart
       kubernetes.core.helm:
         context: "{{ kubecontext }}"
