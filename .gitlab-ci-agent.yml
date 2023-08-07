@@ -689,10 +689,14 @@ pre_release_main_agent_image: &pre_release_image
     DOCKER_DRIVER: overlay
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
+    SLIM_INSTALLED: "true"
   services:
     - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
       alias: docker
-  before_script: []
+  before_script:
+    - apk add curl
+    - curl https://platform.slim.dev/.service/releases/slim/v0.0.17-release | sh
+    - ~/.slim/bin/slim config gen --save --org ${SLIM_ORG_ID} --token ${SLIM_TOKEN}
   script:
     - cd $CI_PROJECT_DIR
     - export VERSION=`cat version.txt`
@@ -818,6 +822,7 @@ pre_release_cluster_agent_image:
     - export PATH=/go/src/app:${PATH}
     - export RUN_ID=$CI_COMMIT_REF_NAME
     - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
+    - export AGENT_CURRENT_BRANCH_REF=$CI_COMMIT_SHORT_SHA
     - export AGENT_HELM_CHART_VERSION=$AGENT_HELM_CHART_VERSION
     - export STACKSTATE_HELM_CHART_VERSION=$STACKSTATE_HELM_CHART_VERSION
     - export RUNNERS_IP="$RUNNERS_IP"
