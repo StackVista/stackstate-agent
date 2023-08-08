@@ -6,6 +6,42 @@ cd /
 # Merge environments from our custom stage into current context
 s6-envdir -I /var/run/s6/env-stage3
 
+# cont-finish.d: one-time finish scripts
+
+foreground
+{
+  backtick -D 120000 -n S6_KILL_FINISH_MAXTIME { printcontenv S6_KILL_FINISH_MAXTIME }
+  importas -u S6_KILL_FINISH_MAXTIME S6_KILL_FINISH_MAXTIME
+  if
+  {
+    if -t { s6-test -d /var/run/s6/etc/cont-finish.d }
+    if { s6-echo "[cont-finish.d] executing container finish scripts..." }
+    if
+    {
+      pipeline { s6-ls -0 -- /var/run/s6/etc/cont-finish.d }
+      pipeline { s6-sort -0 -- }
+      forstdin -o 0 -0 -- i
+      importas -u i i
+      if { s6-echo -- "[cont-finish.d] ${i}: executing... " }
+      foreground
+      {
+        s6-maximumtime -k ${S6_KILL_FINISH_MAXTIME}
+        /var/run/s6/etc/cont-finish.d/${i}
+      }
+      importas -u ? ?
+      s6-echo -- "[cont-finish.d] ${i}: exited ${?}."
+    }
+    s6-echo -- "[cont-finish.d] done."
+  }
+}
+
+foreground
+{
+  backtick -D 120000 -n S6_KILL_GRACETIME { printcontenv S6_KILL_GRACETIME }
+  importas -u S6_KILL_GRACETIME S6_KILL_GRACETIME
+  s6-sleep -m -- ${S6_KILL_GRACETIME}
+}
+
 # Reap all the zombies, and we're done.
 wait { }
 
