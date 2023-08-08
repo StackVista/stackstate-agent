@@ -1,22 +1,7 @@
 #!/usr/bin/execlineb -S1
 
-foreground
-{
-  backtick -D 120000 -n S6_KILL_FINISH_MAXTIME { printcontenv S6_KILL_FINISH_MAXTIME }
-  importas -u S6_KILL_FINISH_MAXTIME S6_KILL_FINISH_MAXTIME
-}
-
-
-
 # Kill the container if the main agent were to exit
 foreground { /initlog.sh "AGENT EXITED WITH CODE ${1}, SIGNAL ${2}, KILLING CONTAINER" }
-
-foreground
-{
-  backtick -D 120000 -n S6_KILL_GRACETIME { printcontenv S6_KILL_GRACETIME }
-  importas -u S6_KILL_GRACETIME S6_KILL_GRACETIME
-  s6-sleep -m -- ${S6_KILL_GRACETIME}
-}
-
+foreground { s6-sleep 115 }
 # If the container is stopped via docker, s6 is already closing, silencing the error
 redirfd -w 2 /dev/null s6-svscanctl -t /var/run/s6/services

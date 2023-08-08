@@ -10,7 +10,7 @@ WORKDIR /output
 # Get s6-overlay and check gpg signature
 # Hack: PGP key store locally as it's currently not available from https://keybase.io/justcontainers/key.asc
 COPY hack/s6-pgp-key /tmp/s6-pgp-key
-ENV S6_VERSION v1.21.2.2
+ENV S6_VERSION v1.21.8.0
 ADD https://github.com/just-containers/s6-overlay/releases/download/${S6_VERSION}/s6-overlay-amd64.tar.gz /output/s6.tgz
 ADD https://github.com/just-containers/s6-overlay/releases/download/${S6_VERSION}/s6-overlay-amd64.tar.gz.sig /tmp/s6.tgz.sig
 RUN apt-get update \
@@ -74,12 +74,10 @@ RUN if [ -n "$WITH_JMX" ]; then apt-get update \
  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*; fi
 
 # make sure we have recent dependencies
-RUN apt-get update \
+RUN apt-get update && apt-get upgrade -y \
   # CVE-fixing time!
   && apt-get install -y util-linux ncurses-bin ncurses-base libncursesw5:amd64 \
-  # https://security-tracker.debian.org/tracker/CVE-2018-15686
-  && apt-get install -y libudev1 libsystemd0 \
-    libgcrypt20=1.8.5-5ubuntu1.1 \
+      libudev1 libsystemd0 bash sed \
   # https://security-tracker.debian.org/tracker/CVE-2016-2779
   && rm -f /usr/sbin/runuser \
   # https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2018-6954
@@ -107,12 +105,14 @@ COPY probe.sh initlog.sh secrets-helper/readsecret.py /
 #   see https://github.com/debuerreotype/debuerreotype/pull/50
 # - Ubuntu 20.10 uses the symlink /bin -> /usr/bin
 RUN tar xzf s6.tgz -C / --exclude="./bin" \
-&& tar xzf s6.tgz -C /usr ./bin \
-&& rm s6.tgz \
+ && tar xzf s6.tgz -C /usr ./bin \
+ && rm s6.tgz \
 # Prepare for running without root
 # - Create a stackstate-agent:root user and give it permissions on relevant folders
 # - Remove the /var/run -> /run symlink and create a legit /var/run folder
-# as some docker versions re-create /run from zero at container start
+# as some docker versions re-create /run from zero at container start \
+ && sed -i -e 's/backtick -D 5000 -n S6_KILL_FINISH_MAXTIME/backtick -D 120000 -n S6_KILL_FINISH_MAXTIME/g' /etc/s6/init/init-stage3 \
+ && sed -i -e 's/backtick -D 3000 -n S6_KILL_GRACETIME/backtick -D 120000 -n S6_KILL_GRACETIME/g' /etc/s6/init/init-stage3 \
  && adduser --system --no-create-home --disabled-password --ingroup root stackstate-agent \
  && rm /var/run && mkdir -p /var/run/s6 \
  && chown -R stackstate-agent:root /etc/stackstate-agent/ /etc/s6/ /var/run/s6/ /var/log/stackstate-agent/ \
