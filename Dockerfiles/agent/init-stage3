@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+echo "Running init-stage3 on PID $$" 2>&1
+
 if [[ $$ == 1 ]]; then
     exec /etc/s6/init/init-stage3-original
 else

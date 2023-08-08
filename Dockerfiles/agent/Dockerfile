@@ -111,8 +111,6 @@ RUN tar xzf s6.tgz -C / --exclude="./bin" \
 # - Create a stackstate-agent:root user and give it permissions on relevant folders
 # - Remove the /var/run -> /run symlink and create a legit /var/run folder
 # as some docker versions re-create /run from zero at container start \
- && sed -i -e 's/backtick -D 5000 -n S6_KILL_FINISH_MAXTIME/backtick -D 120000 -n S6_KILL_FINISH_MAXTIME/g' /etc/s6/init/init-stage3 \
- && sed -i -e 's/backtick -D 3000 -n S6_KILL_GRACETIME/backtick -D 120000 -n S6_KILL_GRACETIME/g' /etc/s6/init/init-stage3 \
  && adduser --system --no-create-home --disabled-password --ingroup root stackstate-agent \
  && rm /var/run && mkdir -p /var/run/s6 \
  && chown -R stackstate-agent:root /etc/stackstate-agent/ /etc/s6/ /var/run/s6/ /var/log/stackstate-agent/ \
@@ -122,7 +120,11 @@ RUN tar xzf s6.tgz -C / --exclude="./bin" \
  && chmod 500 /readsecret.py
 
 # Override the exit script by ours to fix --pid=host operations
+RUN  mv /etc/s6/init/init-stage3 /etc/s6/init/init-stage3-original \
+     && sed -i -e 's/backtick -D 5000 -n S6_KILL_FINISH_MAXTIME/backtick -D 120000 -n S6_KILL_FINISH_MAXTIME/g' /etc/s6/init/init-stage3-original \
+     && sed -i -e 's/backtick -D 3000 -n S6_KILL_GRACETIME/backtick -D 120000 -n S6_KILL_GRACETIME/g' /etc/s6/init/init-stage3-original
 COPY init-stage3 /etc/s6/init/init-stage3
+COPY init-stage3-host-pid /etc/s6/init/init-stage3-host-pid
 
 # Expose DogStatsD and trace-agent ports
 EXPOSE 8125/udp 8126/tcp
