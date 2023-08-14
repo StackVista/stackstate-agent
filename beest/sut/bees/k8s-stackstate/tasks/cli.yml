@@ -23,6 +23,19 @@
             name: stackstate-admin
             namespace: "{{ namespace }}"
 
+    - name: Create ServiceAccount Token/Secret
+      kubernetes.core.k8s:
+        context: "{{ kubecontext }}"
+        definition:
+          apiVersion: v1
+          kind: Secret
+          type: kubernetes.io/service-account-token
+          metadata:
+            name: stackstate-admin-secret
+            namespace: "{{ namespace }}"
+          annotations:
+            kubernetes.io/service-account.name: "stackstate-admin"
+
     - name: Create CLI RoleBinding
       kubernetes.core.k8s:
         context: "{{ kubecontext }}"
@@ -48,7 +61,11 @@
         name: stackstate-admin
       register: service_account_obj
 
-    - name: service_account_obj
+    - name: service_account_obj.resources[0]
+      debug:
+        var: service_account_obj.resources[0]
+
+    - name: service_account_obj.resources[0].secrets[0].name
       debug:
         var: service_account_obj.resources[0].secrets[0].name
 
