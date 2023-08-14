@@ -52,13 +52,13 @@
       debug:
         var: service_account_obj.resources[0].secrets[0].name
 
-#    - name: Get Secret object
-#      kubernetes.core.k8s_info:
-#        context: "{{ kubecontext }}"
-#        namespace: "{{ namespace }}"
-#        kind: Secret
-#        name: "{{ service_account_obj.resources[0].secrets[0].name }}"
-#      register: secret_obj
+    - name: Get Secret object
+      kubernetes.core.k8s_info:
+        context: "{{ kubecontext }}"
+        namespace: "{{ namespace }}"
+        kind: Secret
+        name: "{{ service_account_obj.resources[0].secrets[0].name }}"
+      register: secret_obj
 
     - name: Set a stackstate-admin-token
       ansible.builtin.set_fact:
