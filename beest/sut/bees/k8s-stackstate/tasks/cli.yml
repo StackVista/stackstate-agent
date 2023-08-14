@@ -33,8 +33,8 @@
           metadata:
             name: stackstate-admin-secret
             namespace: "{{ namespace }}"
-          annotations:
-            kubernetes.io/service-account.name: "stackstate-admin"
+            annotations:
+              kubernetes.io/service-account.name: "stackstate-admin"
 
     - name: Create CLI RoleBinding
       kubernetes.core.k8s:
