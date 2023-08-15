@@ -65,11 +65,11 @@
       kubernetes.core.k8s_info:
         context: "{{ kubecontext }}"
         namespace: "{{ namespace }}"
-        kind: ServiceAccount
-        name: stackstate-admin
+        kind: Secret
+        name: stackstate-admin-secret
       register: service_account_secret_obj
 
-    - name: service_account_obj.resources[0]
+    - name: service_account_secret_obj
       debug:
         var: service_account_secret_obj
 
