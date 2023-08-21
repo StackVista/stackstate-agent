@@ -101,6 +101,10 @@ def test_agent_kubernetes_metrics(cliv1):
                                                    docker_expected_metric)
             docker_metric_exists = _check_metric_exists(json_data_docker, "result")
             docker_contains_kcn = _check_contains_tag(json_data_docker, "result", "kube_cluster_name")
+            docker_contains_cn = _check_contains_tag(json_data_docker, "result", "cluster_name")
+
+            docker_kcn = docker_contains_kcn or docker_contains_cn
+
             if docker_metric_exists or docker_contains_kcn:
                 break
 
@@ -109,10 +113,14 @@ def test_agent_kubernetes_metrics(cliv1):
                 f'Telemetry.instantPromql\(\\\"{kubernetes_expected_metric}\\\"\)', kubernetes_expected_metric)
             k8s_metric_exists = _check_metric_exists(json_data_kubernetes, "result")
             k8s_contains_kcn = _check_contains_tag(json_data_kubernetes, "result", "kube_cluster_name")
+            k8s_contains_cn = _check_contains_tag(json_data_kubernetes, "result", "cluster_name")
+
+            k8s_kcn = k8s_contains_kcn or k8s_contains_cn
+
             if k8s_metric_exists or k8s_contains_kcn:
                 break
 
-        final_decision = (docker_contains_kcn or k8s_contains_kcn) and (docker_metric_exists or k8s_metric_exists)
+        final_decision = (docker_kcn or k8s_kcn) and (docker_metric_exists or k8s_metric_exists)
 
         assert final_decision, 'No kubernetes metrics found'
 
