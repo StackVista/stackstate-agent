@@ -1112,7 +1112,7 @@ beest_k8s_1_27_containerd_test:
     - export I_ID=$(./regctl image inspect --format '{{ index .Config.Labels "slim.nx"}}' quay.io/stackstate/${STS_DOCKER_TEST_REPO_CLUSTER}:${CI_COMMIT_SHORT_SHA}-slim-instrumented)
     - ~/.slim/bin/slim harden --allow-reharden --id ${I_ID}
     - export H_ID=$(./regctl image inspect --format '{{ index .Config.Labels "slim.nx"}}' quay.io/stackstate/${STS_DOCKER_TEST_REPO}:${CI_COMMIT_SHORT_SHA}-slim-instrumented)
-    - ~/.slim/bin/slim harden --allow-reharden --id ${H_ID}
+    - ~/.slim/bin/slim harden --allow-reharden --id ${H_ID} --include-path '/etc/s6/init/env-stage2'
     - set +x
 
 beest_k8s_1_23_dockerd_manual_cleanup:
