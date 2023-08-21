@@ -10,7 +10,7 @@ WORKDIR /output
 # Get s6-overlay and check gpg signature
 # Hack: PGP key store locally as it's currently not available from https://keybase.io/justcontainers/key.asc
 COPY hack/s6-pgp-key /tmp/s6-pgp-key
-ENV S6_VERSION v1.21.8.0
+ENV S6_VERSION v2.2.0.3
 ADD https://github.com/just-containers/s6-overlay/releases/download/${S6_VERSION}/s6-overlay-amd64.tar.gz /output/s6.tgz
 ADD https://github.com/just-containers/s6-overlay/releases/download/${S6_VERSION}/s6-overlay-amd64.tar.gz.sig /tmp/s6.tgz.sig
 RUN apt-get update \
