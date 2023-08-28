@@ -1036,7 +1036,7 @@ molecule_integrations_success_cleanup:
 
 .beest_k8s_1_27_containerd_hardened_variables: &beest_k8s_1_27_containerd_hardened_variables
   variables:
-    BEEST_SCENARIO: contd-eks-1-27-hardened
+    BEEST_SCENARIO: contd-eks-1-27-h
     BEEST_TEST_GROUP: k8s
     AGENT_TAG_EXTENSION: "-slim-hardened"
 
