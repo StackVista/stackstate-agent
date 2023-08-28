@@ -2,6 +2,7 @@
 agent_current_branch: "{{ lookup('env', 'AGENT_CURRENT_BRANCH') or AGENT_CURRENT_BRANCH }}"
 agent_current_branch_ref: "{{ lookup('env', 'AGENT_CURRENT_BRANCH_REF') or AGENT_CURRENT_BRANCH_REF }}"
 agent_repo_url: "https://{{ lookup('env', 'STS_AWS_TEST_BUCKET') or STS_AWS_TEST_BUCKET }}.s3.amazonaws.com"
+agent_tag_extension: "{{ lookup('env', 'AGENT_TAG_EXTENSION') }}"
 
 artifactory_user: "{{ lookup('env', 'artifactory_user') or ARTIFACTORY_USER }}"
 artifactory_password: "{{ lookup('env', 'artifactory_password') or ARTIFACTORY_PASSWORD }}"

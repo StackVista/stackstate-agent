@@ -9,6 +9,7 @@ keypair_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/ssh_key"
 agent_current_branch: "{{ lookup('env', 'AGENT_CURRENT_BRANCH') or AGENT_CURRENT_BRANCH }}"
 agent_current_branch_ref: "{{ lookup('env', 'AGENT_CURRENT_BRANCH_REF') or AGENT_CURRENT_BRANCH_REF }}"
 agent_docker_repo: "{{ lookup('env', 'STS_DOCKER_TEST_REPO') or STS_DOCKER_TEST_REPO }}"
+agent_tag_extension: "{{ lookup('env', 'AGENT_TAG_EXTENSION') }}"
 
 quay_password: "{{ lookup('env', 'quay_password') or QUAY_PASSWORD }}"
 quay_user: "{{ lookup('env', 'quay_user') or QUAY_USER }}"

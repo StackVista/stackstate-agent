@@ -11,6 +11,7 @@ major_version: "{{ lookup('env', 'MAJOR_VERSION') or MAJOR_VERSION }}"
 agent_repo_url: "https://{{ lookup('env', 'STS_AWS_TEST_BUCKET') or STS_AWS_TEST_BUCKET }}.s3.amazonaws.com"
 agent_current_branch: "{{ lookup('env', 'AGENT_CURRENT_BRANCH') or AGENT_CURRENT_BRANCH }}"
 agent_current_branch_ref: "{{ lookup('env', 'AGENT_CURRENT_BRANCH_REF') or AGENT_CURRENT_BRANCH_REF }}"
+agent_tag_extension: "{{ lookup('env', 'AGENT_TAG_EXTENSION') }}"
 
 quay_password: "{{ lookup('env', 'quay_password') or QUAY_PASSWORD }}"
 quay_user: "{{ lookup('env', 'quay_user') or QUAY_USER }}"

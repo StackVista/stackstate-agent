@@ -93,6 +93,7 @@ variables: &commonvariables
   STS_AWS_TEST_BUCKET_WIN: stackstate-agent-3-test
   STS_DOCKER_RELEASE_REPO: stackstate-agent
   STS_DOCKER_TEST_REPO: stackstate-agent-test
+  AGENT_TAG_EXTENSION: slim-instrumented
   STS_DOCKER_RELEASE_REPO_TRACE: stackstate-trace-agent
   STS_DOCKER_TEST_REPO_TRACE: stackstate-trace-agent-test
   STS_DOCKER_RELEASE_REPO_CLUSTER: stackstate-cluster-agent

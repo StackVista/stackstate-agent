@@ -30,6 +30,16 @@ scenarios:
     variables:
       agent_eks_runtime: containerd
       agent_eks_version: "1.27"
+  - name: contd-eks-1-27-hardened
+    description: |
+      Same as containerd-eks scenario, but the test runs using the hardened agent.
+    yard:
+      name: k8s
+    test:
+      group: k8s
+    variables:
+      agent_eks_runtime: containerd
+      agent_eks_version: "1.27"
   - name: otel
     description: |
       Provisions Lambda exposing it trough an API gateway, an EC2 machine, AWS integration Cloudformation stack.

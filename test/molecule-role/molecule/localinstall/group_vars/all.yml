@@ -8,6 +8,7 @@ keypair_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/ssh_key"
 
 agent_current_branch: "{{ lookup('env', 'AGENT_CURRENT_BRANCH') or AGENT_CURRENT_BRANCH }}"
 agent_current_branch_ref: "{{ lookup('env', 'AGENT_CURRENT_BRANCH_REF') or AGENT_CURRENT_BRANCH_REF }}"
+agent_tag_extension: "{{ lookup('env', 'AGENT_TAG_EXTENSION') }}"
 
 dev_mode: "{{ lookup('env', 'DEV_MODE') }}"
 

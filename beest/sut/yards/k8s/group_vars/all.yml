@@ -14,6 +14,7 @@ process_agent_branch: "{{ lookup('env', 'PROCESS_AGENT_BRANCH') or 'master' }}"
 process_agent_repo: "{{ lookup('env', 'PROCESS_AGENT_TEST_REPO') or PROCESS_AGENT_TEST_REPO }}"
 cluster_agent_docker_repo: "{{ lookup('env', 'STS_DOCKER_TEST_REPO_CLUSTER') or STS_DOCKER_TEST_REPO_CLUSTER }}"
 agent_helm_chart_version: "{{ lookup('env', 'AGENT_HELM_CHART_VERSION') }}"
+agent_tag_extension: "{{ lookup('env', 'AGENT_TAG_EXTENSION') }}"
 
 stackstate_helm_chart_version: "{{ lookup('env', 'STACKSTATE_HELM_CHART_VERSION') }}"
 stackstate_platform_version: "{{ lookup('env', 'STACKSTATE_PLATFORM_VERSION') }}"
