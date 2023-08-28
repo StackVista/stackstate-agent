@@ -48,7 +48,7 @@ if [ -n "$EXTRA_TAG" ]; then
         # quay.io/stackstate/stackstate-agent-2-test:abcdefgh-slim-instrumented
         # regctl
         apk add curl
-        ~/.slim/bin/slim inst --stop-grace-period=120s --include-last-image-layers 4 --target-image-connector "${SLIM_CONNECTOR_ID}" --instrumented-image-connector "${SLIM_CONNECTOR_ID}" --hardened-image-connector "${SLIM_CONNECTOR_ID}" "${DOCKER_EXTRA_TAG}"
+        ~/.slim/bin/slim inst --tls-verify-off --stop-grace-period=120s --include-last-image-layers 4 --target-image-connector "${SLIM_CONNECTOR_ID}" --instrumented-image-connector "${SLIM_CONNECTOR_ID}" --hardened-image-connector "${SLIM_CONNECTOR_ID}" "${DOCKER_EXTRA_TAG}"
     fi
 
     # If K8S_REPO is not equal to "NOP" and is set then push the image to the k8s repo
