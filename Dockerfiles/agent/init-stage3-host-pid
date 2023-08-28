@@ -10,7 +10,7 @@ s6-envdir -I /var/run/s6/env-stage3
 
 foreground
 {
-  backtick -D 120000 -n S6_KILL_FINISH_MAXTIME { printcontenv S6_KILL_FINISH_MAXTIME }
+  backtick -D 5000 -n S6_KILL_FINISH_MAXTIME { printcontenv S6_KILL_FINISH_MAXTIME }
   importas -u S6_KILL_FINISH_MAXTIME S6_KILL_FINISH_MAXTIME
   if
   {
@@ -37,7 +37,7 @@ foreground
 
 foreground
 {
-  backtick -D 120000 -n S6_KILL_GRACETIME { printcontenv S6_KILL_GRACETIME }
+  backtick -D 3000 -n S6_KILL_GRACETIME { printcontenv S6_KILL_GRACETIME }
   importas -u S6_KILL_GRACETIME S6_KILL_GRACETIME
   s6-sleep -m -- ${S6_KILL_GRACETIME}
 }

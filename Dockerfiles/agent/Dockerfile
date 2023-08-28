@@ -62,8 +62,8 @@ ENV DOCKER_STS_AGENT=true \
     # Allow readonlyrootfs
     S6_READ_ONLY_ROOT=1 \
     # ----- trying to allow for container hardening -----
-    S6_KILL_FINISH_MAXTIME=120000 \
-    S6_KILL_GRACETIME=120000
+    S6_KILL_FINISH_MAXTIME=5000 \
+    S6_KILL_GRACETIME=3000
     # ---------------------------------------------------1
 
 # Install openjdk-8-jre-headless on jmx flavor
@@ -120,9 +120,9 @@ RUN tar xzf s6.tgz -C / --exclude="./bin" \
  && chmod 500 /readsecret.py
 
 # Override the exit script by ours to fix --pid=host operations
-RUN  mv /etc/s6/init/init-stage3 /etc/s6/init/init-stage3-original \
-     && sed -i -e 's/backtick -D 5000 -n S6_KILL_FINISH_MAXTIME/backtick -D 120000 -n S6_KILL_FINISH_MAXTIME/g' /etc/s6/init/init-stage3-original \
-     && sed -i -e 's/backtick -D 3000 -n S6_KILL_GRACETIME/backtick -D 120000 -n S6_KILL_GRACETIME/g' /etc/s6/init/init-stage3-original
+RUN  mv /etc/s6/init/init-stage3 /etc/s6/init/init-stage3-original
+#     && sed -i -e 's/backtick -D 5000 -n S6_KILL_FINISH_MAXTIME/backtick -D 120000 -n S6_KILL_FINISH_MAXTIME/g' /etc/s6/init/init-stage3-original \
+#     && sed -i -e 's/backtick -D 3000 -n S6_KILL_GRACETIME/backtick -D 120000 -n S6_KILL_GRACETIME/g' /etc/s6/init/init-stage3-original
 COPY init-stage3 /etc/s6/init/init-stage3
 COPY init-stage3-host-pid /etc/s6/init/init-stage3-host-pid
 
