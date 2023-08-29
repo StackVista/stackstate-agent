@@ -826,6 +826,7 @@ pre_release_cluster_agent_image:
     - export AGENT_HELM_CHART_VERSION=$AGENT_HELM_CHART_VERSION
     - export STACKSTATE_HELM_CHART_VERSION=$STACKSTATE_HELM_CHART_VERSION
     - export RUNNERS_IP="$RUNNERS_IP"
+    - export AGENT_TAG_EXTENSION="$STS_AGENT_TAG_EXTENSION"
     - echo "$RUNNERS_IP"
     - curl https://ipv4.icanhazip.com
   after_script: # artifacts do not work with absolute path, so we move them inside the build dir
@@ -1033,12 +1034,13 @@ molecule_integrations_success_cleanup:
   variables:
     BEEST_SCENARIO: contd-eks-1-27
     BEEST_TEST_GROUP: k8s
+    STS_AGENT_TAG_EXTENSION: "-slim-instrumented"
 
 .beest_k8s_1_27_containerd_hardened_variables: &beest_k8s_1_27_containerd_hardened_variables
   variables:
     BEEST_SCENARIO: contd-eks-1-27-h
     BEEST_TEST_GROUP: k8s
-    AGENT_TAG_EXTENSION: "-slim-hardened"
+    STS_AGENT_TAG_EXTENSION: "-slim-hardened"
 
 beest_k8s_1_23_dockerd_create:
   <<: *beest
@@ -1059,17 +1061,17 @@ beest_k8s_1_23_containerd_create:
     - *v2_merge_train_always_manual
 
 beest_k8s_1_27_containerd_create:
+  <<: *beest_k8s_1_27_containerd_variables
   <<: *beest
   <<: *beest_create
-  <<: *beest_k8s_1_27_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_always
 
 beest_k8s_1_27_containerd_hardened_create:
+  <<: *beest_k8s_1_27_containerd_hardened_variables
   <<: *beest
   <<: *beest_create
-  <<: *beest_k8s_1_27_containerd_hardened_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_always
