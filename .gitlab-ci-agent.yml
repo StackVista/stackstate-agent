@@ -340,7 +340,8 @@ unit_tests:
     - invoke install-tools
     - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
   tags:
-    - sts-aws
+    - sts-k8s-m-runner
+#    - sts-aws
   retry:
     max: 2
     when:
