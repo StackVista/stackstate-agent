@@ -131,7 +131,7 @@ func TestGenerateTemplatesV1(t *testing.T) {
 			Name: name,
 			ClientConfig: admiv1.WebhookClientConfig{
 				Service: &admiv1.ServiceReference{
-					Namespace: "default",
+					Namespace: "gitlab-runner",
 					Name:      "datadog-admission-controller",
 					Port:      &port,
 					Path:      &path,
@@ -341,7 +341,7 @@ func TestGetWebhookSkeletonV1(t *testing.T) {
 			Name: "datadog.webhook.foo",
 			ClientConfig: admiv1.WebhookClientConfig{
 				Service: &admiv1.ServiceReference{
-					Namespace: "default",
+					Namespace: "gitlab-runner",
 					Name:      "datadog-admission-controller",
 					Port:      &port,
 					Path:      &path,
