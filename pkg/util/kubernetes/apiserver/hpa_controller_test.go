@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package apiserver
@@ -232,7 +233,7 @@ func TestUpdate(t *testing.T) {
 		Ref: custommetrics.ObjectReference{
 			Type:      "horizontal",
 			Name:      "foo",
-			Namespace: "default",
+			Namespace: "gitlab-runner",
 		},
 	}
 	require.Len(t, hctrl.toStore.data, 1)
@@ -241,7 +242,7 @@ func TestUpdate(t *testing.T) {
 	hctrl.updateExternalMetrics()
 	metrics, err = store.ListAllExternalMetricValues()
 	require.NoError(t, err)
-	require.Len(t, metrics.External, 2)
+	require.Len(t, metrics.External, 1)
 
 	// DCA becomes leader
 	// Check that if there is conflicting info from the local store and the Global Store that we merge correctly
@@ -253,7 +254,7 @@ func TestUpdate(t *testing.T) {
 		Ref: custommetrics.ObjectReference{
 			Type:      "horizontal",
 			Name:      "foo",
-			Namespace: "default",
+			Namespace: "gitlab-runner",
 		},
 	}
 	require.Len(t, hctrl.toStore.data, 1)
@@ -276,7 +277,7 @@ func TestUpdate(t *testing.T) {
 func TestAutoscalerController(t *testing.T) {
 	penTime := (int(time.Now().Unix()) - int(maxAge.Seconds()/2)) * 1000
 	name := custommetrics.GetConfigmapName()
-	store, client := newFakeConfigMapStore(t, "default", name, nil)
+	store, client := newFakeConfigMapStore(t, "gitlab-runner", name, nil)
 	metricName := "foo"
 	ddSeries := []datadog.Series{
 		{
@@ -312,14 +313,14 @@ func TestAutoscalerController(t *testing.T) {
 
 	mockedHPA := newFakeHorizontalPodAutoscaler(
 		"hpa_1",
-		"default",
+		"gitlab-runner",
 		"1",
 		"foo",
 		map[string]string{"foo": "bar"},
 	)
 	mockedHPA.Annotations = makeAnnotations("foo", map[string]string{"foo": "bar"})
 
-	_, err := c.HorizontalPodAutoscalers("default").Create(context.TODO(), mockedHPA, metav1.CreateOptions{})
+	_, err := c.HorizontalPodAutoscalers("gitlab-runner").Create(context.TODO(), mockedHPA, metav1.CreateOptions{})
 	require.NoError(t, err)
 	timeout := time.NewTimer(5 * time.Second)
 	ticker := time.NewTicker(500 * time.Millisecond)
@@ -431,14 +432,14 @@ func TestAutoscalerController(t *testing.T) {
 
 	newMockedHPA := newFakeHorizontalPodAutoscaler(
 		"hpa_2",
-		"default",
+		"gitlab-runner",
 		"1",
 		"foo",
 		map[string]string{"foo": "bar"},
 	)
 	mockedHPA.Annotations = makeAnnotations("foo", map[string]string{"foo": "bar"})
 
-	_, err = c.HorizontalPodAutoscalers("default").Create(context.TODO(), newMockedHPA, metav1.CreateOptions{})
+	_, err = c.HorizontalPodAutoscalers("gitlab-runner").Create(context.TODO(), newMockedHPA, metav1.CreateOptions{})
 	require.NoError(t, err)
 	select {
 	case key := <-hctrl.autoscalers:
@@ -448,7 +449,7 @@ func TestAutoscalerController(t *testing.T) {
 	}
 
 	// Verify that a Delete removes the Data from the Global Store and decreases metricsProcessdCount
-	err = c.HorizontalPodAutoscalers("default").Delete(context.TODO(), newMockedHPA.Name, metav1.DeleteOptions{})
+	err = c.HorizontalPodAutoscalers("gitlab-runner").Delete(context.TODO(), newMockedHPA.Name, metav1.DeleteOptions{})
 	require.NoError(t, err)
 	select {
 	case <-ticker.C:
@@ -457,7 +458,7 @@ func TestAutoscalerController(t *testing.T) {
 		require.FailNow(t, "Timeout waiting for HPAs to update")
 	}
 	// Verify that a Delete removes the Data from the Global Store
-	err = c.HorizontalPodAutoscalers("default").Delete(context.TODO(), mockedHPA.Name, metav1.DeleteOptions{})
+	err = c.HorizontalPodAutoscalers("gitlab-runner").Delete(context.TODO(), mockedHPA.Name, metav1.DeleteOptions{})
 	require.NoError(t, err)
 	select {
 	case <-ticker.C:
@@ -479,7 +480,7 @@ func TestAutoscalerSync(t *testing.T) {
 	hctrl, inf := newFakeAutoscalerController(t, client, alwaysLeader, d)
 	obj := newFakeHorizontalPodAutoscaler(
 		"hpa_1",
-		"default",
+		"gitlab-runner",
 		"1",
 		"foo",
 		map[string]string{"foo": "bar"},
@@ -510,7 +511,7 @@ func TestAutoscalerControllerGC(t *testing.T) {
 				"external_metric-horizontal-default-foo-requests_per_s": {
 					MetricName: "requests_per_s",
 					Labels:     map[string]string{"bar": "baz"},
-					Ref:        custommetrics.ObjectReference{Type: "horizontal", Name: "foo", Namespace: "default", UID: "1111"},
+					Ref:        custommetrics.ObjectReference{Type: "horizontal", Name: "foo", Namespace: "gitlab-runner", UID: "1111"},
 					Timestamp:  12,
 					Value:      1,
 					Valid:      false,
@@ -519,7 +520,7 @@ func TestAutoscalerControllerGC(t *testing.T) {
 			hpa: &autoscalingv2.HorizontalPodAutoscaler{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "foo",
-					Namespace: "default",
+					Namespace: "gitlab-runner",
 					UID:       "1111",
 				},
 				Spec: autoscalingv2.HorizontalPodAutoscalerSpec{
@@ -540,7 +541,7 @@ func TestAutoscalerControllerGC(t *testing.T) {
 				{
 					MetricName: "requests_per_s",
 					Labels:     map[string]string{"bar": "baz"},
-					Ref:        custommetrics.ObjectReference{Type: "horizontal", Name: "foo", Namespace: "default", UID: "1111"},
+					Ref:        custommetrics.ObjectReference{Type: "horizontal", Name: "foo", Namespace: "gitlab-runner", UID: "1111"},
 					Timestamp:  12,
 					Value:      1,
 					Valid:      false,
@@ -553,7 +554,7 @@ func TestAutoscalerControllerGC(t *testing.T) {
 				"external_metric-horizontal-default-foo-requests_per_s_b": {
 					MetricName: "requests_per_s_b",
 					Labels:     map[string]string{"bar": "baz"},
-					Ref:        custommetrics.ObjectReference{Type: "horizontal", Name: "foo", Namespace: "default", UID: "1111"},
+					Ref:        custommetrics.ObjectReference{Type: "horizontal", Name: "foo", Namespace: "gitlab-runner", UID: "1111"},
 					Timestamp:  12,
 					Value:      1,
 					Valid:      false,
@@ -565,7 +566,7 @@ func TestAutoscalerControllerGC(t *testing.T) {
 
 	for i, testCase := range testCases {
 		t.Run(fmt.Sprintf("#%d %s", i, testCase.caseName), func(t *testing.T) {
-			store, client := newFakeConfigMapStore(t, "default", fmt.Sprintf("test-%d", i), testCase.metrics)
+			store, client := newFakeConfigMapStore(t, "gitlab-runner", fmt.Sprintf("test-%d", i), testCase.metrics)
 			d := &fakeDatadogClient{}
 			hctrl, inf := newFakeAutoscalerController(t, client, alwaysLeader, d)
 
