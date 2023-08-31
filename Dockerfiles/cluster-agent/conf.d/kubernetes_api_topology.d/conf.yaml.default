@@ -15,3 +15,4 @@ instances:
       jobs: true
       cronjobs: true
       secrets: true
+      resourcequotas: true
