@@ -40,7 +40,7 @@ var ValidCategories = []EventCategory{Alerts, Changes, Activities, Others}
 var DefaultEventCategoriesMap = map[string]EventCategory{
 	// Container events
 	"BackOff":             Alerts,
-	"Created":             Changes,
+	"Created":             Activities,
 	"ExceededGracePeriod": Activities,
 	"Killing":             Activities,
 	"Preempting":          Activities,
@@ -51,7 +51,7 @@ var DefaultEventCategoriesMap = map[string]EventCategory{
 	"Pulled":  Activities,
 
 	// Kubelet events
-	"NodeReady":                  Changes,
+	"NodeReady":                  Activities,
 	"NodeNotReady":               Activities,
 	"NodeSchedulable":            Activities,
 	"Starting":                   Activities,
@@ -74,8 +74,8 @@ var DefaultEventCategoriesMap = map[string]EventCategory{
 	"SawCompletedJob":   Activities,
 	"ScalingReplicaSet": Activities,
 	"Scheduled":         Activities,
-	"SuccessfulCreate":  Changes,
-	"SuccessfulDelete":  Changes,
+	"SuccessfulCreate":  Activities,
+	"SuccessfulDelete":  Activities,
 
 	// HPA events
 	// https://github.com/kubernetes/kubernetes/blob/master/pkg/controller/podautoscaler/horizontal.go
@@ -116,6 +116,30 @@ var DefaultEventCategoriesMap = map[string]EventCategory{
 	"InstallSucceeded":            Activities,
 	"InstallWaiting":              Others,
 	"CreatedSCCRanges":            Changes,
+
+	// Service events
+	"UpdatedLoadBalancer": Changes,
+
+	// Pod events
+	"TriggeredScaleUp": Activities,
+	"RELOAD":           Changes,
+	"EvictedByVPA":     Activities,
+
+	// Statefulset events
+	"ScaleUp": Activities,
+
+	// Configmap events
+	"ScaledUpGroup":  Activities,
+	"ScaleDownEmpty": Activities,
+	"CREATE":         Activities,
+
+	// PVC events
+	"Provisioning":         Activities,
+	"ExternalProvisioning": Activities,
+	"Resizing":             Activities,
+
+	// Node events
+	"NodeHasInsufficientMemory": Alerts,
 }
 
 type KubernetesEventMapperFactory func(detector apiserver.OpenShiftDetector, clusterName string, eventCategoriesOverride map[string]EventCategory) *kubernetesEventMapper
