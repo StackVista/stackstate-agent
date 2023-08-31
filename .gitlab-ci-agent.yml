@@ -701,7 +701,7 @@ pre_release_main_agent_image: &pre_release_image
     - cd $CI_PROJECT_DIR
     - export VERSION=`cat version.txt`
     - cp ./outcomes/pkg/stackstate-agent_*_amd64.deb ./Dockerfiles/agent
-    - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO $CI_PROJECT_DIR/Dockerfiles/agent $CI_COMMIT_SHORT_SHA $STS_DOCKER_K8S_REPO
+    - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO $CI_PROJECT_DIR/Dockerfiles/agent $CI_COMMIT_SHORT_SHA $STS_DOCKER_K8S_REPO "8"
   tags:
     - sts-k8s-m-runner
   retry:
@@ -730,7 +730,7 @@ pre_release_trace_agent_image:
     - cd $CI_PROJECT_DIR
     - export VERSION=`cat version.txt`
     - cp ./outcomes/binary/trace-agent Dockerfiles/trace-agent
-    - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_TRACE $CI_PROJECT_DIR/Dockerfiles/trace-agent $CI_COMMIT_SHORT_SHA "NOP"
+    - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_TRACE $CI_PROJECT_DIR/Dockerfiles/trace-agent $CI_COMMIT_SHORT_SHA "NOP" "0"
   rules:
     - *cluster_agent_manual
     - *v2_merge_train_always_manual
@@ -743,7 +743,7 @@ pre_release_cluster_agent_image:
   script:
     - cd $CI_PROJECT_DIR
     - cp -r ./bin/stackstate-cluster-agent* ./Dockerfiles/cluster-agent
-    - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent $CI_COMMIT_SHORT_SHA $STS_DOCKER_K8S_REPO_CLUSTER
+    - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent $CI_COMMIT_SHORT_SHA $STS_DOCKER_K8S_REPO_CLUSTER "2"
   rules:
     - *cluster_agent
 

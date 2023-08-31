@@ -8,6 +8,7 @@ DOCKERFILE_PATH="${3}"
 EXTRA_TAG="${4}"
 K8S_REPO="${5}"
 REGISTRY="quay.io"
+INCLUDE_LAST_IMAGE_LAYERS=${6}
 ORGANIZATION="stackstate"
 ARTIFACTORY_URL="artifactory.tooling.stackstate.io/artifactory/api/pypi/pypi-local/simple"
 
@@ -34,7 +35,7 @@ docker push "${DOCKER_TAG}"
 #    # quay.io/stackstate/stackstate-agent-2-test:abcdefgh-slim-instrumented
 #    # regctl
 #    apk add curl
-#    ~/.slim/bin/slim inst --stop-grace-period=120s --include-last-image-layers 4 --target-image-connector "${SLIM_CONNECTOR_ID}" --instrumented-image-connector "${SLIM_CONNECTOR_ID}" --hardened-image-connector "${SLIM_CONNECTOR_ID}" "${DOCKER_TAG}"
+#    ~/.slim/bin/slim inst --stop-grace-period=120s --include-last-image-layers "${INCLUDE_LAST_IMAGE_LAYERS}" --target-image-connector "${SLIM_CONNECTOR_ID}" --instrumented-image-connector "${SLIM_CONNECTOR_ID}" --hardened-image-connector "${SLIM_CONNECTOR_ID}" "${DOCKER_TAG}"
 #fi
 
 if [ -n "$EXTRA_TAG" ]; then
@@ -48,7 +49,7 @@ if [ -n "$EXTRA_TAG" ]; then
         # quay.io/stackstate/stackstate-agent-2-test:abcdefgh-slim-instrumented
         # regctl
         apk add curl
-        ~/.slim/bin/slim inst --tls-verify-off --stop-grace-period=120s --include-last-image-layers 4 --target-image-connector "${SLIM_CONNECTOR_ID}" --instrumented-image-connector "${SLIM_CONNECTOR_ID}" --hardened-image-connector "${SLIM_CONNECTOR_ID}" "${DOCKER_EXTRA_TAG}"
+        ~/.slim/bin/slim inst --tls-verify-off --stop-grace-period=120s --include-last-image-layers "${INCLUDE_LAST_IMAGE_LAYERS}" --target-image-connector "${SLIM_CONNECTOR_ID}" --instrumented-image-connector "${SLIM_CONNECTOR_ID}" --hardened-image-connector "${SLIM_CONNECTOR_ID}" "${DOCKER_EXTRA_TAG}"
     fi
 
     # If K8S_REPO is not equal to "NOP" and is set then push the image to the k8s repo
