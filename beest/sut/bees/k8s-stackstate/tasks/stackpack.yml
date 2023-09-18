@@ -15,7 +15,7 @@
         var: stackpacklist
 
     - name: Install stackstate-k8s-agent-v2 StackPack
-      command: sts stackpack install --name stackstate-k8s-agent-v2
+      command: sts stackpack install --unlocked-strategy fail --name stackstate-k8s-agent-v2
       when:
         - stackstate_k8s_agent_v2 is defined
         - stackpacklist.find('stackstate-k8s-agent-v2') == -1
@@ -27,13 +27,13 @@
 #        - stackpacklist.find('kubernetes') == -1
 
     - name: Install kubernetes v2 StackPack
-      command: sts stackpack install --name kubernetes-v2 --parameter kubernetes_cluster_name="{{ kubernetes_v2_integration.cluster_name }}"
+      command: sts stackpack install --unlocked-strategy fail --name kubernetes-v2 --parameter kubernetes_cluster_name="{{ kubernetes_v2_integration.cluster_name }}"
       when:
         - kubernetes_v2_integration is defined
         - stackpacklist.find('kubernetes-v2') == -1
 
     - name: Install Splunk StackPack
-      command: sts stackpack install --name splunk-topology --parameter splunk_instance_name="{{ yard_id }}" --parameter sts_instance_url="{{ splunk_integration.url }}"
+      command: sts stackpack install --unlocked-strategy fail --name splunk-topology --parameter splunk_instance_name="{{ yard_id }}" --parameter sts_instance_url="{{ splunk_integration.url }}"
       when:
         - splunk_integration is defined
         - stackpacklist.find('splunk-topology') == -1
