@@ -801,7 +801,7 @@ pre_release_cluster_agent_image:
 
 # Core Structure for all the beest steps
 .beest: &beest
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20230515
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20230918
   dependencies: []
   before_script:
     - cd $CI_PROJECT_DIR
