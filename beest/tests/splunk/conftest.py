@@ -44,17 +44,11 @@ def simulator_dump(request, ansible_var, splunk):
 
             # Trim data to be smaller when used in a debugger
             if len(response_data) > max_results:
-                # Reverse the order so that the newer results is first in the array before trimming
-                response_data.reverse()
-
                 logging.warning(f"Received a total of {len(response_data)} results from the Simulator")
                 logging.warning(f"This is more than max of {max_results} results, Trimming the array to {max_results} "
                                 f"results")
                 logging.warning(f"You can find the complete results in the data dump file: {data_dump_filename}")
                 response_data = response_data[:max_results]
-
-                # Flip it back to the original state after the trim to not create confusion
-                response_data.reverse()
 
             return response_data
 

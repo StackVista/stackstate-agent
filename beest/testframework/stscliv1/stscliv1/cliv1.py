@@ -151,11 +151,11 @@ Topology.query('__QUERY__')
 
         def query():
             if config_location is None:
-                executed = self.host.run(f"sts topic describe --name {topic} {offset_component} --nr {limit} "
+                executed = self.host.run(f"sts topic describe --name {topic} {offset_component} --limit {limit} "
                                          f"--output json")
             else:
                 executed = self.host.run(f"sts --config {config_location} topic describe --name {topic} "
-                                         f"{offset_component} --nr {limit} --output json")
+                                         f"{offset_component} --limit {limit} --output json")
             log.info(f"Queried: {topic} exit status: {executed.exit_status} offset: {offset} limit: {limit}")
             return executed.stdout
 
