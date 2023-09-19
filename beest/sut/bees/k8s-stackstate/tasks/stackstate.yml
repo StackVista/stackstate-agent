@@ -56,11 +56,13 @@
     - name: Use master stackstate image tag
       when: stackstate_platform_version | trim | length == 0
       set_fact:
+        stackstate_pull_policy: Always
         stackstate_image_tag: master
 
     - name: Use specified image tag
       when: stackstate_platform_version | trim | length > 0
       set_fact:
+        stackstate_pull_policy: NotIfPresent
         stackstate_image_tag: "{{ stackstate_platform_version }}"
 
     - name: Setup downscaler time limit
@@ -132,6 +134,8 @@
                     CONFIG_FORCE_stackstate_aws_s3_region: "eu-west-1"
                 image:
                   tag: "{{ stackstate_image_tag }}"
+                  # Using pullPolicy always because we use the 'master' tag, which is a moving target.
+                  pullPolicy: "{{ stackstate_pull_policy }}"
           global:
             receiverApiKey: "{{ sts_api_key }}"
 
