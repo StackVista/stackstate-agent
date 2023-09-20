@@ -8,7 +8,6 @@ testinfra_hosts = [f"ansible://local?ansible_inventory=../../sut/yards/k8s/ansib
 
 def _find_component(json_data, type_name, external_id_assert_fn):
     messages = json_data["messages"]
-    messages.reverse()
     for message in messages:
         p = message["message"]["TopologyElement"]["payload"]
         if "TopologyComponent" in p and \
@@ -20,7 +19,6 @@ def _find_component(json_data, type_name, external_id_assert_fn):
 
 def _relation_data(json_data, type_name, external_id_assert_fn):
     messages = json_data["messages"]
-    messages.reverse()
     for message in messages:
         p = message["message"]["TopologyElement"]["payload"]
         if "TopologyRelation" in p and \
@@ -32,7 +30,6 @@ def _relation_data(json_data, type_name, external_id_assert_fn):
 
 def _find_process_by_command_args(json_data, type_name, cmd_assert_fn):
     messages = json_data["messages"]
-    messages.reverse()
     for message in messages:
         p = message["message"]["TopologyElement"]["payload"]
         if "TopologyComponent" in p and \
@@ -50,15 +47,11 @@ limit = 3000
 def test_dnat(host, ansible_var, cliv1):
     server_port = int(ansible_var("dnat_server_port"))
     service_port = int(ansible_var("dnat_service_port"))
-    global limit
-    limit = 3000
+    limit = 9000
 
     def wait_for_components():
         global limit
         json_data = cliv1.topic_api("sts_topo_process_agents", limit=limit, config_location=STS_CONTEXT_FILE)
-        message_count = len(json_data["messages"])
-        if message_count >= limit:
-            limit += 500
 
         server_process_match = re.compile("ncat -vv --broker --listen -p {}".format(server_port))
         server_process = _find_process_by_command_args(
@@ -100,16 +93,10 @@ def test_dnat(host, ansible_var, cliv1):
 
 def test_pod_container_to_container(ansible_var, cliv1):
     server_port = int(ansible_var("container_to_container_server_port"))
-    global limit
-    limit = 3000
+    limit = 9000
 
     def wait_for_components():
-        global limit
-
         json_data = cliv1.topic_api("sts_topo_process_agents", limit=limit, config_location=STS_CONTEXT_FILE)
-        message_count = len(json_data["messages"])
-        if message_count >= limit:
-            limit += 500
 
         server_process_match = re.compile("nc -l -p {}".format(server_port))
         server_process = _find_process_by_command_args(
@@ -151,15 +138,10 @@ def test_pod_container_to_container(ansible_var, cliv1):
 def test_headless_pod_to_pod(ansible_var, cliv1):
     # Server and service port are equal
     server_port = int(ansible_var("headless_service_port"))
-    global limit
-    limit = 3000
+    limit = 9000
 
     def wait_for_components():
-        global limit
         json_data = cliv1.topic_api("sts_topo_process_agents", limit=limit, config_location=STS_CONTEXT_FILE)
-        message_count = len(json_data["messages"])
-        if message_count >= limit:
-            limit += 500
 
         server_process_match = re.compile("ncat -vv --broker --listen -p {}".format(server_port))
         server_process = _find_process_by_command_args(
