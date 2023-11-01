@@ -1,7 +1,7 @@
 FROM golang:1.17.8-bullseye
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends less direnv unzip python3-pip bash-completion vim jq && \
+    apt-get install -y --no-install-recommends less direnv unzip python3-pip bash-completion vim jq pass && \
     rm -rf /var/lib/apt/lists/*
 
 # configure python artifactory to pull stackstate-cli v1
@@ -83,8 +83,16 @@ RUN curl -O "https://stseuw1-tooling-main-homebrew.s3.amazonaws.com/sts-toolbox/
     rm -r sts-toolbox-${STSTOOLBOX_V}.linux-amd64.tar.gz && \
     mv ./sts-toolbox /usr/local/bin/
 
-ARG STSCLI_V2=2.1.0
+ARG STSCLI_V2=2.3.0
 RUN curl --insecure -O "https://cli-dl.stackstate.com.s3.amazonaws.com/stackstate-cli/v${STSCLI_V2}/stackstate-cli-${STSCLI_V2}.linux-x86_64.tar.gz" && \
     tar xvzf stackstate-cli-${STSCLI_V2}.linux-x86_64.tar.gz && \
     rm -r stackstate-cli-${STSCLI_V2}.linux-x86_64.tar.gz && \
     mv ./sts /usr/local/bin/
+
+ARG AWS_VAULT_V=v7.2.0
+RUN curl -L "https://github.com/99designs/aws-vault/releases/download/${AWS_VAULT_V}/aws-vault-linux-amd64" -o aws-vault && \
+    chmod +x ./aws-vault && \
+    mv ./aws-vault /usr/local/bin/
+
+RUN touch ~/.profile && \
+    echo "export AWS_SDK_LOAD_CONFIG=1" >> ~/.profile
