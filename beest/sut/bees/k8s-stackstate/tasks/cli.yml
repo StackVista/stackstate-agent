@@ -23,6 +23,19 @@
             name: stackstate-admin
             namespace: "{{ namespace }}"
 
+    - name: Create ServiceAccount Token/Secret
+      kubernetes.core.k8s:
+        context: "{{ kubecontext }}"
+        definition:
+          apiVersion: v1
+          kind: Secret
+          type: kubernetes.io/service-account-token
+          metadata:
+            name: stackstate-admin-secret
+            namespace: "{{ namespace }}"
+            annotations:
+              kubernetes.io/service-account.name: "stackstate-admin"
+
     - name: Create CLI RoleBinding
       kubernetes.core.k8s:
         context: "{{ kubecontext }}"
@@ -48,21 +61,17 @@
         name: stackstate-admin
       register: service_account_obj
 
-    - name: service_account_obj
-      debug:
-        var: service_account_obj.resources[0].secrets[0].name
-
-    - name: Get Secret object
+    - name: Get ServiceAccount Secret object
       kubernetes.core.k8s_info:
         context: "{{ kubecontext }}"
         namespace: "{{ namespace }}"
         kind: Secret
-        name: "{{ service_account_obj.resources[0].secrets[0].name }}"
-      register: secret_obj
+        name: stackstate-admin-secret
+      register: service_account_secret_obj
 
     - name: Set a stackstate-admin-token
       ansible.builtin.set_fact:
-        stackstate_admin_token: "{{ secret_obj.resources[0].data.token | b64decode }}"
+        stackstate_admin_token: "{{ service_account_secret_obj.resources[0].data.token | b64decode }}"
 
     # Equivalent to: kubectl -n <namespace> get secret stackstate-admin-token-<xyz> -o jsonpath={.data.token} | base64 -d
     - name: stackstate-admin token
