@@ -17,6 +17,7 @@ COPY probe.sh entrypoint/init-trace.sh /
 
 # make sure we have recent dependencies
 RUN apt-get update \
+  && apt full-upgrade -y \
   # CVE-fixing time!
   && apt-get install -y util-linux ncurses-bin ncurses-base libncursesw5:amd64 \
   # https://security-tracker.debian.org/tracker/CVE-2018-15686
