@@ -834,6 +834,8 @@ pre_release_cluster_agent_image:
     - mv /go/src/app/tests/$BEEST_TEST_GROUP/*.gv $CI_PROJECT_DIR/beest/ || true
   retry:
     max: 2
+  tags:
+    - sts-k8s-m-runner
 
 # Base artifacts for create and test steps
 .beest_artifacts: &beest_artifacts
