@@ -1,4 +1,8 @@
 ---
+dependencies:
+  kubeStateMetrics:
+    # dependencies.kubeStateMetrics.enabled -- Whether or not to install the `kube-state-metrics` Deployment along with the StackState cluster agent. Set to `false` if you have `kube-state-metrics` already installed on the cluster.
+    enabled: true
 nodeAgent:
   config:
     override:
