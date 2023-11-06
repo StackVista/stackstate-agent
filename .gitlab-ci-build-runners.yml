@@ -11,7 +11,6 @@ variables:
   RUNNER_CENTOS6_BASE: centos6-base
   RUNNER_CENTOS7_BASE: centos7-base
   RUNNER_CENTOS7: centos7
-  DOCKER_REGISTRY: docker.io
   QUAY_REGISTRY: quay.io
   DOCKER_DRIVER: overlay
   DOCKER_HOST: tcp://docker:2375
@@ -19,8 +18,8 @@ variables:
 
 before_script:
   # login to both docker registries
-  - docker login -u "${docker_user}" -p "${docker_password}" "${DOCKER_REGISTRY}"
   - docker login -u "${quay_user}" -p "${quay_password}" "${QUAY_REGISTRY}"
+  - docker login -u "${ARTIFACTORY_USER}" -p "${ARTIFACTORY_PASSWORD}" "${ARTIFACTORY_URL}"
 
 .docker_build_base: &docker_build_base
   # use docker as the image builder
@@ -45,10 +44,6 @@ before_script:
     - BASE_RUNNER_TAG="${RUNNER_DIR}-$(date +%Y%m%d)"
     - BUILD_TAG="stackstate-agent-runner-gitlab:${BASE_RUNNER_TAG}"
     - docker build -t "${BUILD_TAG}" .
-    # tag the image, push to docker
-    - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
-    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
-    - docker push "${DOCKER_TAG}"
     # tag the image, push to quay
     - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
     - docker tag "${BUILD_TAG}" "${QUAY_TAG}"
@@ -100,10 +95,6 @@ build-centos7-base:
     # get the current date as the base image version
     - BUILD_TAG="stackstate-agent-runner-gitlab:${RUNNER_DIR}-$(date +%Y%m%d)"
     - docker build --build-arg BASE_IMAGE=$BASE_RUNNER_TAG -t "${BUILD_TAG}" .
-    # tag the image, push to docker
-    - DOCKER_TAG="${DOCKER_REGISTRY}/stackstate/${BUILD_TAG}"
-    - docker tag "${BUILD_TAG}" "${DOCKER_TAG}"
-    - docker push "${DOCKER_TAG}"
     # tag the image, push to quay
     - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
     - docker tag "${BUILD_TAG}" "${QUAY_TAG}"
@@ -115,8 +106,26 @@ build-centos7-base:
       when: manual
       allow_failure: true
 
+.patch_runner: &patch_runner
+  <<: *docker_build_base
+  stage: build_runners
+  script:
+    - cd $BUILDERS_FOLDER/$RUNNER_DIR
+    # get the current date as the base image version
+    - BUILD_TAG="stackstate-agent-runner-gitlab:${RUNNER_DIR}-${RUNNER_PATCH_TAG}-patched-$(date +%Y%m%d)"
+    - docker build -f Dockerfile.patch --build-arg BASE_IMAGE=${RUNNER_DIR}-${RUNNER_PATCH_TAG} -t "${BUILD_TAG}" .
+    # tag the image, push to quay
+    - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
+    - docker tag "${BUILD_TAG}" "${QUAY_TAG}"
+    - docker push "${QUAY_TAG}"
+  rules:
+    - if: $CI_COMMIT_MESSAGE =~ /\[patch_runner]/
+      when: on_success
+    - if: $CI_COMMIT_MESSAGE
+      when: manual
+      allow_failure: true
 
-# produces the runner deb image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
+# produces the runner deb image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-{yyyymmdd}
 build-debian-runner:
   <<: *build_runner
   needs:
@@ -124,6 +133,13 @@ build-debian-runner:
   variables:
     RUNNER_DIR: $RUNNER_DEBIAN
     RUNNER_IMAGE_VERSION: "deb7"
+
+# produces the runner deb image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-{yyyymmdd}
+build-patched-debian-runner:
+  <<: *patch_runner
+  variables:
+    RUNNER_DIR: $RUNNER_DEBIAN
+    RUNNER_PATCH_TAG: "20220826"
 
 # produces the runner deb/rpm publisher image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_{yyyymmdd}
 build-debian-rpmpublisher-runner:

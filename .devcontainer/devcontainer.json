@@ -14,7 +14,7 @@
         "ms-python.vscode-pylance",
     ],
     "containerEnv": {
-        "GO111MODULE": "off",
+        "GO111MODULE": "on",
         "GOMOD": "",
     },
     "remoteEnv": {

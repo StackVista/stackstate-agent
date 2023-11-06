@@ -63,6 +63,8 @@ Dockerfiles/cluster-agent/security-agent-policies
 
 # jetbrains IDE directory
 /.idea/
+.idea
+.idea/
 
 # Ignore debs from the root of the project.
 stackstate-agent*_amd64.deb
@@ -219,3 +221,10 @@ Dockerfiles/cluster-agent/dist/
 
 # Temp State Files
 pkg/collector/check/state/temp-write-to-disk-test/*
+
+# Beest
+beest/sut/yards/*/terraform.tfstate.d/
+beest/sut/yards/*/*.key
+beest/sut/yards/*/*.crt
+# Beest generated manifests
+beest/sut/bees/k8s-agent/files/test_ingress/*.yaml

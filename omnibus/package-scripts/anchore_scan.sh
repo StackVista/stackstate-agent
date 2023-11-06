@@ -39,14 +39,14 @@ REPO_PATH=${REPO_PATH//\//__}
 IMAGE_TAG=${IMAGE#*:}
 
 FILE="${REPO_PATH}_${IMAGE_TAG}.json"
-ANCHORE="anchore/engine-cli:v0.9.2"
+ANCHORE="anchore/engine-cli:v0.9.4"
 ANCHORE_DOCKER_INVOKE="docker run --rm -a stdout -e ANCHORE_CLI_USER=${ANCHORE_CLI_USER} -e ANCHORE_CLI_PASS=${ANCHORE_CLI_PASS} -e ANCHORE_CLI_URL=${ANCHORE_CLI_URL} ${ANCHORE}"
-ANCHORE_PARSE="quay.io/stackstate/anchore-parser:4d710056"
+ANCHORE_PARSE="quay.io/stackstate/anchore-parser:5f4d46b9"
 
 ${ANCHORE_DOCKER_INVOKE} anchore-cli image add "$IMAGE"
 ${ANCHORE_DOCKER_INVOKE} anchore-cli image wait "$IMAGE"
 ${ANCHORE_DOCKER_INVOKE} anchore-cli --json image vuln --vendor-only false "$IMAGE" all > "${FILE}"
-${ANCHORE_DOCKER_INVOKE} anchore-cli evaluate check "$IMAGE" --policy "cluster-agent-04x" --detail
+${ANCHORE_DOCKER_INVOKE} anchore-cli evaluate check "$IMAGE" --policy "stackstate-agent-34x" --detail
 
 
 if [ ! -f ${FILE} ]; then

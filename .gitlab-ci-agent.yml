@@ -620,11 +620,6 @@ pre_release_deb:
     - deps_deb
     - build_deb
   script:
-    # //TODO: move to image
-    - apt-get install -y apt-utils libtool debsigs
-    - ls -la /usr/local/rvm/gems/ruby-2.4.2/bin/
-    - source /usr/local/rvm/scripts/rvm && gem install deb-s3 -v 0.10.0
-    # //
     - source /usr/local/rvm/scripts/rvm
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_TEST_BUCKET
@@ -1632,7 +1627,6 @@ release_deb:
   dependencies:
     - build_deb
   script:
-    - apt-get install -y apt-utils libtool debsigs
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_RELEASE_BUCKET stable
     - cd $CI_PROJECT_DIR && inv release.generate-install

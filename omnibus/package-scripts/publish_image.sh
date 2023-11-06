@@ -8,6 +8,7 @@ DOCKERFILE_PATH="${3}"
 EXTRA_TAG="${4}"
 REGISTRY="quay.io"
 ORGANIZATION="stackstate"
+ARTIFACTORY_URL="artifactory.tooling.stackstate.io/artifactory/api/pypi/pypi-local/simple"
 
 echo "IMAGE_TAG=${IMAGE_TAG}"
 echo "IMAGE_REPO=${IMAGE_REPO}"
@@ -21,6 +22,7 @@ docker login -u "${quay_user}" -p "${quay_password}" "${REGISTRY}"
 docker login -u "${artifactory_user}" -p "${artifactory_password}" "${ARTIFACTORY_URL}"
 
 docker build -t "${BUILD_TAG}" "${DOCKERFILE_PATH}"
+
 
 DOCKER_TAG="${REGISTRY}/${ORGANIZATION}/${IMAGE_REPO}:${IMAGE_TAG}"
 
