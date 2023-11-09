@@ -2,7 +2,7 @@
 # Preparation stage: extract and cleanup #
 ##########################################
 
-FROM ubuntu:20.04 as extract
+FROM artifactory.tooling.stackstate.io/docker-virtual/ubuntu:20.04 as extract
 ARG WITH_JMX
 COPY stackstate-agent*_amd64.deb /
 WORKDIR /output
@@ -47,7 +47,7 @@ COPY stackstate*.yaml etc/stackstate-agent/
 # Actual docker image construction #
 ####################################
 
-FROM ubuntu:20.04
+FROM artifactory.tooling.stackstate.io/docker-virtual/ubuntu:20.04
 LABEL maintainer "StackState <info@stackstate.com>"
 ARG WITH_JMX
 ENV DOCKER_STS_AGENT=true \
@@ -72,10 +72,10 @@ RUN if [ -n "$WITH_JMX" ]; then apt-get update \
 # make sure we have recent dependencies
 RUN apt-get update \
   # CVE-fixing time!
+  && apt full-upgrade -y \
   && apt-get install -y util-linux ncurses-bin ncurses-base libncursesw5:amd64 \
   # https://security-tracker.debian.org/tracker/CVE-2018-15686
-  && apt-get install -y libudev1 libsystemd0 \
-    libgcrypt20=1.8.5-5ubuntu1.1 \
+  && apt-get install -y libudev1 libsystemd0 libgcrypt20 \
   # https://security-tracker.debian.org/tracker/CVE-2016-2779
   && rm -f /usr/sbin/runuser \
   # https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2018-6954

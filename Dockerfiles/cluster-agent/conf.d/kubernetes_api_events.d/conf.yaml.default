@@ -10,7 +10,7 @@ instances:
     # kubernetes_event_read_timeout_ms: 100
     #
     # Override category for events based on event's reason
-    # Valid categories are Changes, Alerts, Activities, Others
+    # Valid categories are Changes, Deployments, Anomalies Activities, Alerts, Others
     #
     # event_categories:
     #   CustomReasonFromCRD: Alerts

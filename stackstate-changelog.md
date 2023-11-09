@@ -1,5 +1,19 @@
 # StackState Agent v2 releases
 
+## Next
+
+**Bugfix**
+- Fixed NPE when handling certain containers from containerd
+
+**Improvements**
+- Automatically use [IMDSv2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html) to read EC2 instance metadata
+- Prevent Kubernetes topology check to send relations with non-existent components [STAC-13859](https://stackstate.atlassian.net/browse/STAC-13859)
+- Change BackOff Kubernetes event from Activities to Alert [STAC-18603](https://stackstate.atlassian.net/browse/STAC-18603)
+- Added a PVC component with a relation from PVC to PV [STAC-18803](https://stackstate.atlassian.net/browse/STAC-18803)
+- Updated the relations from Pod to PV to be Pod to PVC [STAC-18803](https://stackstate.atlassian.net/browse/STAC-18803)
+- Updated the relations from Container to PV to be Container to PVC [STAC-18803](https://stackstate.atlassian.net/browse/STAC-18803)
+
+
 ## 2.19.1 (2022-11-23)
 
 **Improvements**
@@ -13,9 +27,10 @@
 
 **Bugfix**
 - Fixed issue when an Ingress does not have any HTTP rule [STAC-17811](https://stackstate.atlassian.net/browse/STAC-17811)
+- Fixed bug with DownwardAPI volumes on Kubernetes Topology collector [STAC-14851](https://stackstate.atlassian.net/browse/STAC-14851)
 
 **Improvements**
-- Upstream upgrade to 7.22.1 tag [STAC-16755](https://stackstate.atlassian.net/browse/STAC-16755)
+- Upstream upgrade to 7.33.1 tag [STAC-16866](https://stackstate.atlassian.net/browse/STAC-16866)
 - Upgraded process-agent version from 4.0.7 to 4.0.10 which includes:
   - Reduce unimportant warning logs [STAC-17982](https://stackstate.atlassian.net/browse/STAC-17982)
   - Fix cgroup metrics collection for containers [STAC-18119](https://stackstate.atlassian.net/browse/STAC-18119)

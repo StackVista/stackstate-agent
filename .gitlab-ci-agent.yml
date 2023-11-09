@@ -1,6 +1,7 @@
-image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826
+image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
 
 stages:
+  - manual
   - prepare
   - build
   - test
@@ -83,6 +84,11 @@ stages:
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
     when: manual
     allow_failure: true
+
+.v2_merge_train_always_on_tag: &v2_merge_train_always_on_tag
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_TAG
+    when: always
+    allow_failure: false
 
 .v2_merge_train_always_manual: &v2_merge_train_always_manual
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
@@ -308,7 +314,7 @@ deps_win:
       - $CI_PROJECT_DIR/go-bin.tar.gz
       - $CI_PROJECT_DIR/vendor.tar.gz
   tags:
-    - windows_agent7_louis
+    - windows_agent7_ps1
   retry:
     max: 2
     when:
@@ -341,6 +347,7 @@ unit_tests:
       - always
   rules:
     - when: on_success
+  timeout: 45 minutes
 
 filename_linting:
   stage: test
@@ -564,7 +571,7 @@ build_win:
       - ./*.msi
       - "version.txt"
   tags:
-    - windows_agent7_louis
+    - windows_agent7_ps1
   retry:
     max: 2
     when:
@@ -613,11 +620,6 @@ pre_release_deb:
     - deps_deb
     - build_deb
   script:
-    # //TODO: move to image
-    - apt-get install -y apt-utils libtool debsigs
-    - ls -la /usr/local/rvm/gems/ruby-2.4.2/bin/
-    - source /usr/local/rvm/scripts/rvm && gem install deb-s3 -v 0.10.0
-    # //
     - source /usr/local/rvm/scripts/rvm
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
     - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_TEST_BUCKET
@@ -652,7 +654,7 @@ pre_release_win:
     - aws.exe s3 ls s3://$Env:STS_AWS_TEST_BUCKET_WIN/windows/$Env:CI_COMMIT_REF_NAME/
     - aws.exe s3 ls s3://$Env:STS_AWS_TEST_BUCKET_WIN/
   tags:
-    - windows_agent7_louis
+    - windows_agent7_ps1
   retry:
     max: 2
     when:
@@ -799,7 +801,7 @@ pre_release_cluster_agent_image:
 
 # Core Structure for all the beest steps
 .beest: &beest
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20220926
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20230918
   dependencies: []
   before_script:
     - cd $CI_PROJECT_DIR
@@ -827,6 +829,8 @@ pre_release_cluster_agent_image:
     - mv /go/src/app/tests/$BEEST_TEST_GROUP/*.gv $CI_PROJECT_DIR/beest/ || true
   retry:
     max: 2
+  tags:
+    - sts-k8s-m-runner
 
 # Base artifacts for create and test steps
 .beest_artifacts: &beest_artifacts
@@ -873,6 +877,19 @@ pre_release_cluster_agent_image:
     when:
       - always
 
+.beest_destroy_manual: &beest_destroy_manual
+  <<: *beest_artifacts
+  stage: manual
+  # Prevent terraform from breaking when this job is cancelled mid way
+  interruptible: false
+  # Prevent another job from destroying the resources this branch is busy with, Terraform lock will prevent this but for incase
+  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_REF_NAME-$BEEST_SCENARIO"
+  script:
+    - beest destroy $BEEST_SCENARIO -y
+  retry:
+    max: 2
+    when:
+      - always
 
 
 # Job Seq: Molecule
@@ -999,170 +1016,199 @@ molecule_integrations_success_cleanup:
     if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[beest\-/ && $CI_COMMIT_MESSAGE !~ /\[beest\-kubernetes]/
     when: never
 
-.beest_k8s_1_22_dockerd_variables: &beest_k8s_1_22_dockerd_variables
+.beest_k8s_1_23_dockerd_variables: &beest_k8s_1_23_dockerd_variables
   variables:
-    BEEST_SCENARIO: dockerd-eks-1-22
+    BEEST_SCENARIO: dockerd-eks-1-23
     BEEST_TEST_GROUP: k8s
 
-.beest_k8s_1_22_containerd_variables: &beest_k8s_1_22_containerd_variables
+.beest_k8s_1_23_containerd_variables: &beest_k8s_1_23_containerd_variables
   variables:
-    BEEST_SCENARIO: contd-eks-1-22
+    BEEST_SCENARIO: contd-eks-1-23
     BEEST_TEST_GROUP: k8s
 
-.beest_k8s_1_24_containerd_variables: &beest_k8s_1_24_containerd_variables
+.beest_k8s_1_27_containerd_variables: &beest_k8s_1_27_containerd_variables
   variables:
-    BEEST_SCENARIO: contd-eks-1-24
+    BEEST_SCENARIO: contd-eks-1-27
     BEEST_TEST_GROUP: k8s
 
-beest_k8s_1_22_dockerd_create:
+beest_k8s_1_23_dockerd_create:
   <<: *beest
   <<: *beest_create
-  <<: *beest_k8s_1_22_dockerd_variables
+  <<: *beest_k8s_1_23_dockerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_always_on_tag
+    - *v2_merge_train_always_manual
+
+beest_k8s_1_23_containerd_create:
+  <<: *beest
+  <<: *beest_create
+  <<: *beest_k8s_1_23_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_always_on_tag
+    - *v2_merge_train_always_manual
+
+beest_k8s_1_27_containerd_create:
+  <<: *beest
+  <<: *beest_create
+  <<: *beest_k8s_1_27_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_always
 
-beest_k8s_1_22_containerd_create:
-  <<: *beest
-  <<: *beest_create
-  <<: *beest_k8s_1_22_containerd_variables
-  rules:
-    - *kubernetes_ignore_rule
-    - *v2_merge_train_always
-
-beest_k8s_1_24_containerd_create:
-  <<: *beest
-  <<: *beest_create
-  <<: *beest_k8s_1_24_containerd_variables
-  rules:
-    - *kubernetes_ignore_rule
-    - *v2_merge_train_always
-
-beest_k8s_1_22_dockerd_test:
+beest_k8s_1_23_dockerd_test:
   <<: *beest
   <<: *beest_test
-  <<: *beest_k8s_1_22_dockerd_variables
+  <<: *beest_k8s_1_23_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_k8s_1_22_dockerd_create
+    - beest_k8s_1_23_dockerd_create
   needs:
-    - beest_k8s_1_22_dockerd_create
+    - beest_k8s_1_23_dockerd_create
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
-beest_k8s_1_22_containerd_test:
+beest_k8s_1_23_containerd_test:
   <<: *beest
   <<: *beest_test
-  <<: *beest_k8s_1_22_containerd_variables
+  <<: *beest_k8s_1_23_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_k8s_1_22_containerd_create
+    - beest_k8s_1_23_containerd_create
   needs:
-    - beest_k8s_1_22_containerd_create
+    - beest_k8s_1_23_containerd_create
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
-beest_k8s_1_24_containerd_test:
+beest_k8s_1_27_containerd_test:
   <<: *beest
   <<: *beest_test
-  <<: *beest_k8s_1_24_containerd_variables
+  <<: *beest_k8s_1_27_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_k8s_1_24_containerd_create
+    - beest_k8s_1_27_containerd_create
   needs:
-    - beest_k8s_1_24_containerd_create
+    - beest_k8s_1_27_containerd_create
     - pre_release_cluster_agent_image
     - pre_release_main_agent_image
 
-beest_k8s_1_22_dockerd_failure_cleanup:
+beest_k8s_1_23_dockerd_manual_cleanup:
+  <<: *beest
+  <<: *beest_destroy_manual
+  <<: *beest_k8s_1_23_dockerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_always_manual
+    - when: never
+
+beest_k8s_1_23_dockerd_failure_cleanup:
   <<: *beest
   <<: *beest_destroy
-  <<: *beest_k8s_1_22_dockerd_variables
+  <<: *beest_k8s_1_23_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_failure
     - when: never
   needs:
-    - beest_k8s_1_22_dockerd_test
-    - beest_k8s_1_22_dockerd_create
+    - beest_k8s_1_23_dockerd_test
+    - beest_k8s_1_23_dockerd_create
 
-beest_k8s_1_22_containerd_failure_cleanup:
+beest_k8s_1_23_containerd_manual_cleanup:
+  <<: *beest
+  <<: *beest_destroy_manual
+  <<: *beest_k8s_1_23_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_always_manual
+    - when: never
+
+beest_k8s_1_23_containerd_failure_cleanup:
   <<: *beest
   <<: *beest_destroy
-  <<: *beest_k8s_1_22_containerd_variables
+  <<: *beest_k8s_1_23_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_failure
     - when: never
   needs:
-    - beest_k8s_1_22_containerd_test
-    - beest_k8s_1_22_containerd_create
+    - beest_k8s_1_23_containerd_test
+    - beest_k8s_1_23_containerd_create
 
-beest_k8s_1_22_dockerd_success_cleanup:
+beest_k8s_1_23_dockerd_success_cleanup:
   <<: *beest
   <<: *beest_destroy
-  <<: *beest_k8s_1_22_dockerd_variables
+  <<: *beest_k8s_1_23_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_k8s_1_22_dockerd_test
-    - beest_k8s_1_22_dockerd_create
+    - beest_k8s_1_23_dockerd_test
+    - beest_k8s_1_23_dockerd_create
   needs:
-    - beest_k8s_1_22_dockerd_test
-    - beest_k8s_1_22_dockerd_create
+    - beest_k8s_1_23_dockerd_test
+    - beest_k8s_1_23_dockerd_create
 
-beest_k8s_1_22_containerd_success_cleanup:
+beest_k8s_1_23_containerd_success_cleanup:
   <<: *beest
   <<: *beest_destroy
-  <<: *beest_k8s_1_22_containerd_variables
+  <<: *beest_k8s_1_23_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_k8s_1_22_containerd_test
-    - beest_k8s_1_22_containerd_create
+    - beest_k8s_1_23_containerd_test
+    - beest_k8s_1_23_containerd_create
   needs:
-    - beest_k8s_1_22_containerd_test
-    - beest_k8s_1_22_containerd_create
+    - beest_k8s_1_23_containerd_test
+    - beest_k8s_1_23_containerd_create
 
-beest_k8s_1_24_containerd_failure_cleanup:
+beest_k8s_1_27_containerd_manual_cleanup:
+  <<: *beest
+  <<: *beest_destroy_manual
+  <<: *beest_k8s_1_27_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_always_manual
+    - when: never
+
+beest_k8s_1_27_containerd_failure_cleanup:
   <<: *beest
   <<: *beest_destroy
-  <<: *beest_k8s_1_24_containerd_variables
+  <<: *beest_k8s_1_27_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_failure
     - when: never
   needs:
-    - beest_k8s_1_24_containerd_test
-    - beest_k8s_1_24_containerd_create
+    - beest_k8s_1_27_containerd_test
+    - beest_k8s_1_27_containerd_create
 
-beest_k8s_1_24_containerd_success_cleanup:
+beest_k8s_1_27_containerd_success_cleanup:
   <<: *beest
   <<: *beest_destroy
-  <<: *beest_k8s_1_24_containerd_variables
+  <<: *beest_k8s_1_27_containerd_variables
   rules:
     - *kubernetes_ignore_rule
     - *v2_merge_train_on_success
     - when: never
   dependencies:
-    - beest_k8s_1_24_containerd_test
-    - beest_k8s_1_24_containerd_create
+    - beest_k8s_1_27_containerd_test
+    - beest_k8s_1_27_containerd_create
   needs:
-    - beest_k8s_1_24_containerd_test
-    - beest_k8s_1_24_containerd_create
+    - beest_k8s_1_27_containerd_test
+    - beest_k8s_1_27_containerd_create
 
 # Job Seq: Molecule
 # Type: localinstall
@@ -1636,7 +1682,7 @@ release_win:
     - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
       when: manual
   tags:
-    - windows_agent7_louis
+    - windows_agent7_ps1
   retry:
     max: 2
     when:

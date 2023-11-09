@@ -2,7 +2,7 @@
 # Preparation stage: layout and chmods #
 ########################################
 
-FROM ubuntu:20.04 as builder
+FROM artifactory.tooling.stackstate.io/docker-virtual/ubuntu:20.04 as builder
 
 WORKDIR /output
 
@@ -22,15 +22,15 @@ RUN chmod 755 entrypoint.sh \
 # Actual docker image construction #
 ####################################
 
-FROM ubuntu:20.04
+FROM artifactory.tooling.stackstate.io/docker-virtual/ubuntu:20.04
 
 LABEL maintainer "StackState <info@stackstate.com>"
 
 ENV PATH="/opt/stackstate-agent/bin/:$PATH"
 
 RUN apt-get update \
- && apt-get install --no-install-recommends -y ca-certificates curl \
-    libgcrypt20=1.8.5-5ubuntu1.1 \
+ && apt full-upgrade -y \
+ && apt-get install --no-install-recommends -y ca-certificates curl libgcrypt20 \
  # https://security-tracker.debian.org/tracker/CVE-2018-15686
  && apt-get install -y libudev1 libsystemd0 \
  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

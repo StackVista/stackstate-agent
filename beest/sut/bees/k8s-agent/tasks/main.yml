@@ -122,6 +122,10 @@
           - "{{ role_path }}/files/agent-values.yml"
           - "{{ playbook_dir }}/agent-extra-values.yml"
 
+    - name: Wait a bit for all pods to become ready
+      pause:
+        seconds: 30
+
     - name: Attempt to verify cluster agent ready
       block:
         - name: Wait for the stackstate cluster agent to start doing it's thing

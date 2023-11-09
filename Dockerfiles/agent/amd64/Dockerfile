@@ -1,4 +1,4 @@
-FROM ubuntu:21.10 AS baseimage
+FROM artifactory.tooling.stackstate.io/docker-virtual/ubuntu:21.10 AS baseimage
 ARG CIBUILD
 RUN if [ "$CIBUILD" = "true" ]; then \
   sed -i 's#http://archive.ubuntu.com#http://us-east-1.ec2.archive.ubuntu.com#g' /etc/apt/sources.list; \

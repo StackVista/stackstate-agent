@@ -3,16 +3,21 @@ FROM golang:1.16.7-stretch
 
 RUN sed -i 's/^#\s*\(deb.*universe\)$/\1/g' /etc/apt/sources.list \
     && sed -i 's/^#\s*\(deb.*multiverse\)$/\1/g' /etc/apt/sources.list \
-    && sed -i 's/main/main contrib non-free/' /etc/apt/sources.list
+    && sed -i 's/main/main contrib non-free/' /etc/apt/sources.list \
+    && sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list \
+    && sed -i 's|security.debian.org|archive.debian.org/|g' /etc/apt/sources.list \
+    && sed -i '/stretch-updates/d' /etc/apt/sources.list
+
 
 # Build Args
 ARG GIMME_GO_VERSION=1.16.7
 ARG DD_CONDA_VERSION=4.7.10
 ARG DD_PIP_VERSION=19.1
 ARG DD_SETUPTOOLS_VERSION=41.0.1
-ARG IBM_MQ_VERSION=9.2.4.0
+ARG IBM_MQ_VERSION=9.2.5.0
 ARG CMAKE_VERSION=3.14.4
 ARG CLANG_VERSION=8.0.0
+ARG RUBY_BUNDLER_VERSION=2.3.26
 
 # Environment
 ENV GOPATH /go
@@ -24,6 +29,7 @@ ENV CMAKE_VERSION $CMAKE_VERSION
 ENV CLANG_VERSION $CLANG_VERSION
 ENV CONDA_PATH /root/miniconda3
 ENV DD_CONDA_VERSION $DD_CONDA_VERSION
+ENV RUBY_BUNDLER_VERSION $RUBY_BUNDLER_VERSION
 
 # Mitigation for CVE-2019-3462
 #[VS] RUN echo 'Acquire::http::AllowRedirect"false";' >> /etc/apt/apt.conf.d/20datadog
@@ -50,8 +56,7 @@ RUN echo 'Acquire::Check-Valid-Until "false";' >> /etc/apt/apt.conf.d/20stacksta
 RUN apt-get update && apt-get install -y fakeroot curl git procps bzip2 \
   build-essential pkg-config\
   rpm tar gettext libtool autopoint autoconf pkg-config flex \
-  selinux-basics
-
+  selinux-basics apt-utils libtool debsigs
 
 #RUN apt-get install -y libsystemd-journal-dev/wheezy-backports
 RUN apt-get install -y libsystemd-dev
@@ -91,7 +96,8 @@ RUN mkdir -p /usr/local/etc \
 
 RUN /bin/bash -l -c "rvm requirements"
 RUN /bin/bash -l -c "rvm install 2.4.2 && rvm cleanup all"
-RUN /bin/bash -l -c "gem install bundler --no-document"
+RUN /bin/bash -l -c "gem install bundler -v ${RUBY_BUNDLER_VERSION} --no-document"
+RUN /bin/bash -l -c "source /usr/local/rvm/scripts/rvm && gem install deb-s3 -v 0.10.0"
 
 # CONDA prep
 ENV PKG_CONFIG_LIBDIR "${PKG_CONFIG_LIBDIR}:${CONDA_PATH}/lib/pkgconfig"

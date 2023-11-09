@@ -48,7 +48,7 @@ resource "aws_subnet" "eks_public_2" {
   )
 }
 
-// private subnet
+# The "private" subnets below aren't actually private.
 resource "aws_subnet" "eks_private" {
   vpc_id = aws_vpc.cluster.id
 
@@ -59,6 +59,7 @@ resource "aws_subnet" "eks_private" {
     var.common_tags,
     {
       "Name" = "${var.environment}-eks-private"
+      "Description" = "This is not a private subnet"
     },
   )
 }
@@ -73,6 +74,7 @@ resource "aws_subnet" "eks_private_2" {
     var.common_tags,
     {
       "Name" = "${var.environment}-eks-private-2"
+      "Description" = "This is not a private subnet"
     },
   )
 }
