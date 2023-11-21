@@ -1187,7 +1187,7 @@ func TestPodCollector(t *testing.T) {
 					},
 				},
 				{
-					testCase: "Test Pod 8 - Pod Phase Succeeded - no Job relation created",
+					testCase: "Test Pod 8 - Pod Phase Succeeded - Job relation created",
 					assertions: []func(){
 						func() {
 							component := <-componentChannel
@@ -1298,10 +1298,17 @@ func TestPodCollector(t *testing.T) {
 							assert.EqualValues(t, expectedComponent, component)
 						},
 						expectPodNodeRelation(t, relationChannel, "test-pod-8"),
-						expectNamespaceRelation(t, relationChannel, "test-pod-8"),
 						func() {
-							// there should be no relations created for skipped pod
-							assert.Empty(t, relationChannel)
+							relation := <-relationChannel
+							expectedRelation := &topology.Relation{
+								ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-8->" +
+									"urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-8",
+								Type:     topology.Type{Name: "controls"},
+								SourceID: "urn:kubernetes:/test-cluster-name:test-namespace:job/test-job-8",
+								TargetID: "urn:kubernetes:/test-cluster-name:test-namespace:pod/test-pod-8",
+								Data:     map[string]interface{}{},
+							}
+							assert.EqualValues(t, expectedRelation, relation)
 						},
 					},
 				},
@@ -1494,5 +1501,4 @@ func expectPodNodeRelation(t *testing.T, ch chan *topology.Relation, podName str
 		}
 		assert.EqualValues(t, expectedRelation, relation)
 	}
-
 }
