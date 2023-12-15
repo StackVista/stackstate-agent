@@ -158,7 +158,8 @@ func (k *MetricsCheck) Run() error {
 	if k.instance.CollectOShiftQuotas && k.oshiftAPILevel != apiserver.NotOpenShift {
 		quotas, err := k.retrieveOShiftClusterQuotas()
 		if err != nil {
-			_ = k.Warnf("Could not collect OpenShift cluster quotas: %s", err.Error())
+			// [STS] log this as a debug message instead. TODO: make k.instance.CollectOShiftQuotas con
+			log.Debugf("Could not collect OpenShift cluster quotas: %s", err.Error())
 		} else {
 			k.reportClusterQuotas(quotas, sender)
 		}
