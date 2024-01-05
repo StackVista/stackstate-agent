@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubelet
 // +build kubelet
 
 package kubelet
@@ -13,6 +14,8 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util/filesystem"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -606,12 +609,16 @@ func (suite *KubeletTestSuite) TestKubeletInitTokenHttps() {
 	assert.Equal(suite.T(), "bearer fakeBearerToken", r.Header.Get(authorizationHeaderKey))
 	assert.Equal(suite.T(), 0, len(ku.kubeletClient.client.Transport.(*http.Transport).TLSClientConfig.Certificates))
 
+	// STS: Drop ca_cert which gets picked up from the environment in k8s pods
+	connInfo := ku.GetRawConnectionInfo()
+	delete(connInfo, "ca_cert")
+
 	require.EqualValues(suite.T(),
 		map[string]string{
 			"url":        fmt.Sprintf("https://127.0.0.1:%d", kubeletPort),
 			"verify_tls": "false",
 			"token":      "fakeBearerToken",
-		}, ku.GetRawConnectionInfo())
+		}, connInfo)
 }
 
 func (suite *KubeletTestSuite) TestKubeletInitHttpsCerts() {
@@ -649,10 +656,16 @@ func (suite *KubeletTestSuite) TestKubeletInitHttpsCerts() {
 	assert.Equal(suite.T(), "ok", string(b))
 	assert.Equal(suite.T(), 200, code)
 	r := <-k.Requests
-	assert.Equal(suite.T(), "", r.Header.Get(authorizationHeaderKey))
+	if !filesystem.FileExists(kubernetes.DefaultServiceAccountTokenPath) {
+		assert.Equal(suite.T(), "", r.Header.Get(authorizationHeaderKey))
+	}
 	clientCerts := ku.kubeletClient.client.Transport.(*http.Transport).TLSClientConfig.Certificates
 	require.Equal(suite.T(), 1, len(clientCerts))
 	assert.Equal(suite.T(), clientCerts, s.TLS.Certificates)
+
+	// STS: Drop token which gets picked up from the environment in k8s pods
+	connInfo := ku.GetRawConnectionInfo()
+	delete(connInfo, "token")
 
 	require.EqualValues(suite.T(),
 		map[string]string{
@@ -661,7 +674,7 @@ func (suite *KubeletTestSuite) TestKubeletInitHttpsCerts() {
 			"client_crt": k.testingCertificate,
 			"client_key": k.testingPrivateKey,
 			"ca_cert":    k.testingCertificate,
-		}, ku.GetRawConnectionInfo())
+		}, connInfo)
 }
 
 func (suite *KubeletTestSuite) TestKubeletInitTokenHttp() {
