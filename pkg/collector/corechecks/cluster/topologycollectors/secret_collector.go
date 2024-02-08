@@ -5,9 +5,14 @@ package topologycollectors
 
 import (
 	"crypto/sha256"
+	"crypto/x509"
+	"encoding/base64"
 	"encoding/hex"
+	"encoding/pem"
+	"fmt"
 	"sort"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/StackVista/stackstate-agent/pkg/topology"
@@ -16,6 +21,7 @@ import (
 )
 
 const redactedMessage string = "<redacted>"
+
 var annotationsToOfuscate = [...]string{"kubectl.kubernetes.io/last-applied-configuration", "openshift.io/token-secret.value"}
 
 // SecretCollector implements the ClusterTopologyCollector interface.
@@ -62,7 +68,7 @@ func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topo
 	tags := cmc.initTags(secret.ObjectMeta, metav1.TypeMeta{Kind: "Secret"})
 	secretExternalID := cmc.buildSecretExternalID(secret.Namespace, secret.Name)
 
-	// update all annotations that could lead to secrets leak	
+	// update all annotations that could lead to secrets leak
 	for _, annotationName := range annotationsToOfuscate {
 		if _, ok := secret.Annotations[annotationName]; ok {
 			secret.Annotations[annotationName] = redactedMessage
@@ -104,9 +110,61 @@ func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topo
 		component.Data.PutNonEmpty("data", secretDataHash)
 	}
 
+	if secret.Type == corev1.SecretTypeTLS {
+		certDataB64 := secret.Data[corev1.TLSCertKey]
+		certExpiration := certificateExpiration(certDataB64)
+		component.Data.PutNonEmpty("certificateExpiration", certExpiration)
+	}
+
 	log.Tracef("Created StackState Secret component %s: %v", secretExternalID, component.JSONString())
 
 	return component, nil
+}
+
+func certificateExpiration(certDataBase64 []byte) string {
+	certData, err := base64.StdEncoding.DecodeString(string(certDataBase64))
+	if err != nil {
+		log.Errorf("Failed to decode TLS certificate data: %s", err)
+		return ""
+	}
+
+	certs, err := DecodeX509CertificateChainBytes(certData)
+	if err != nil {
+		log.Errorf("Failed to parse TLS certificate: %s", err)
+		return ""
+	}
+
+	cert := certs[0]
+
+	return cert.NotAfter.String()
+}
+
+// DecodeX509CertificateChainBytes will decode a PEM encoded x509 Certificate chain.
+func DecodeX509CertificateChainBytes(certBytes []byte) ([]*x509.Certificate, error) {
+	certs := []*x509.Certificate{}
+
+	var block *pem.Block
+
+	for {
+		// decode the tls certificate pem
+		block, certBytes = pem.Decode(certBytes)
+		if block == nil {
+			break
+		}
+
+		// parse the tls certificate
+		cert, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing certificate: %s", err)
+		}
+		certs = append(certs, cert)
+	}
+
+	if len(certs) == 0 {
+		return nil, fmt.Errorf("no certificates found in the chain")
+	}
+
+	return certs, nil
 }
 
 func secure(data map[string][]byte) (string, error) {

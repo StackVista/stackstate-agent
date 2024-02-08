@@ -295,6 +295,91 @@ func TestSecretCollector(t *testing.T) {
 						},
 					},
 				},
+				{
+					testCase: "Test Secret 4 - Certificate",
+					expectedNoSP: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-4",
+						Type:       topology.Type{Name: "secret"},
+						Data: topology.Data{
+							"name":              "test-secret-4",
+							"kind":              "Secret",
+							"creationTimestamp": creationTime,
+							"tags": map[string]string{
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-secret",
+								"namespace":      "test-namespace",
+							},
+							"uid":                   types.UID("test-secret-4"),
+							"data":                  "7e12bcf12eb365f7083f04e6e6f710a2a5e379003860b482048d6eefc27d6b3c",
+							"identifiers":           []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-4"},
+							"certificateExpiration": "2034-01-01 09:31:22 +0000 UTC",
+						},
+					},
+					expectedSP: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-4",
+						Type:       topology.Type{Name: "secret"},
+						Data: topology.Data{
+							"name": "test-secret-4",
+							"tags": map[string]string{
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-secret",
+								"namespace":      "test-namespace",
+							},
+							"identifiers":           []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-4"},
+							"certificateExpiration": "2034-01-01 09:31:22 +0000 UTC",
+						},
+						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Secret",
+							"metadata": map[string]interface{}{
+								"annotations":       map[string]interface{}{"openshift.io/token-secret.value": "<redacted>"},
+								"creationTimestamp": creationTimeFormatted,
+								"name":              "test-secret-4",
+								"namespace":         "test-namespace",
+								"uid":               "test-secret-4"},
+							"type": "kubernetes.io/tls",
+							"data": map[string]interface{}{
+								"<data hash>": "N2UxMmJjZjEyZWIzNjVmNzA4M2YwNGU2ZTZmNzEwYTJhNWUzNzkwMDM4NjBiNDgyMDQ4ZDZlZWZjMjdkNmIzYw==",
+							},
+						},
+					},
+					expectedSPPlusStatus: &topology.Component{
+						ExternalID: "urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-4",
+						Type:       topology.Type{Name: "secret"},
+						Data: topology.Data{
+							"name": "test-secret-4",
+							"tags": map[string]string{
+								"cluster-name":   "test-cluster-name",
+								"cluster-type":   "kubernetes",
+								"component-type": "kubernetes-secret",
+								"namespace":      "test-namespace",
+							},
+							"identifiers":           []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-4"},
+							"certificateExpiration": "2034-01-01 09:31:22 +0000 UTC",
+						},
+						SourceProperties: map[string]interface{}{
+							"apiVersion": "v1",
+							"kind":       "Secret",
+							"metadata": map[string]interface{}{
+								"annotations": map[string]interface{}{
+									"kubectl.kubernetes.io/last-applied-configuration": "<redacted>",
+									"openshift.io/token-secret.value":                  "<redacted>",
+								},
+								"creationTimestamp": creationTimeFormatted,
+								"name":              "test-secret-4",
+								"namespace":         "test-namespace",
+								"uid":               "test-secret-4",
+								"resourceVersion":   "123",
+							},
+							"type": "kubernetes.io/tls",
+							"data": map[string]interface{}{
+								"<data hash>": "N2UxMmJjZjEyZWIzNjVmNzA4M2YwNGU2ZTZmNzEwYTJhNWUzNzkwMDM4NjBiNDgyMDQ4ZDZlZWZjMjdkNmIzYw==",
+							},
+						},
+					},
+				},
 			} {
 				t.Run(testCaseName(tc.testCase, sourcePropertiesEnabled, kubernetesStatusEnabled), func(t *testing.T) {
 					component := <-componentChannel
@@ -319,7 +404,7 @@ type MockSecretAPICollectorClient struct {
 
 func (m MockSecretAPICollectorClient) GetSecrets() ([]coreV1.Secret, error) {
 	secrets := make([]coreV1.Secret, 0)
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 4; i++ {
 
 		secret := coreV1.Secret{
 			TypeMeta: v1.TypeMeta{
@@ -355,9 +440,17 @@ func (m MockSecretAPICollectorClient) GetSecrets() ([]coreV1.Secret, error) {
 			}
 		}
 
-		if i != 3 {
+		if i == 1 || i == 2 {
 			secret.Labels = map[string]string{
 				"test": "label",
+			}
+		}
+
+		if i == 4 {
+			secret.Type = coreV1.SecretTypeTLS
+			secret.Data = map[string][]byte{
+				coreV1.TLSCertKey:       []byte("LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJ2RENDQVdPZ0F3SUJBZ0lCQURBS0JnZ3Foa2pPUFFRREFqQkdNUnd3R2dZRFZRUUtFeE5rZVc1aGJXbGoKYkdsemRHVnVaWEl0YjNKbk1TWXdKQVlEVlFRRERCMWtlVzVoYldsamJHbHpkR1Z1WlhJdFkyRkFNVGN3TkRNMgpNRFk0TWpBZUZ3MHlOREF4TURRd09UTXhNakphRncwek5EQXhNREV3T1RNeE1qSmFNRVl4SERBYUJnTlZCQW9UCkUyUjVibUZ0YVdOc2FYTjBaVzVsY2kxdmNtY3hKakFrQmdOVkJBTU1IV1I1Ym1GdGFXTnNhWE4wWlc1bGNpMWoKWVVBeE56QTBNell3TmpneU1Ga3dFd1lIS29aSXpqMENBUVlJS29aSXpqMERBUWNEUWdBRXpPVmZjSEY2aHluUApZVklDakVjamNmS3RFbDJKVC9GWk5EVEovaDY2ams0ZEVXajZMMUVBMU55R1Y0UHgzRXBIbFRpaDZzVFpPSVBpCmJ0ODcrazBKMWFOQ01FQXdEZ1lEVlIwUEFRSC9CQVFEQWdLa01BOEdBMVVkRXdFQi93UUZNQU1CQWY4d0hRWUQKVlIwT0JCWUVGTk9PL2l4RlFMdzN5eEVtYnE2cTBYTG1YNCt1TUFvR0NDcUdTTTQ5QkFNQ0EwY0FNRVFDSUJraAo4NE15NUpwYVN3SzRrL2s2ejhHazNCNVNoNWpmck90RmFJNXlaemJRQWlCVW11ZkRkamZQaTVZaVNDeTF2dUxaClhpMkpjTWNVUElkWVk3NGFxdkVENFE9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg=="),
+				coreV1.TLSPrivateKeyKey: asBase64("privatekey"),
 			}
 		}
 
