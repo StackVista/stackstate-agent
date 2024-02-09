@@ -11,6 +11,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"sort"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -113,7 +114,9 @@ func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topo
 	if secret.Type == corev1.SecretTypeTLS {
 		certDataB64 := secret.Data[corev1.TLSCertKey]
 		certExpiration := certificateExpiration(certDataB64)
-		component.Data.PutNonEmpty("certificateExpiration", certExpiration)
+		if !certExpiration.IsZero() {
+			component.Data.PutNonEmpty("certificateExpiration", toUnixMilli(certExpiration))
+		}
 	}
 
 	log.Tracef("Created StackState Secret component %s: %v", secretExternalID, component.JSONString())
@@ -121,22 +124,22 @@ func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topo
 	return component, nil
 }
 
-func certificateExpiration(certDataBase64 []byte) string {
+func certificateExpiration(certDataBase64 []byte) time.Time {
 	certData, err := base64.StdEncoding.DecodeString(string(certDataBase64))
 	if err != nil {
 		log.Errorf("Failed to decode TLS certificate data: %s", err)
-		return ""
+		return time.Time{}
 	}
 
 	certs, err := DecodeX509CertificateChainBytes(certData)
 	if err != nil {
 		log.Errorf("Failed to parse TLS certificate: %s", err)
-		return ""
+		return time.Time{}
 	}
 
 	cert := certs[0]
 
-	return cert.NotAfter.String()
+	return cert.NotAfter
 }
 
 // DecodeX509CertificateChainBytes will decode a PEM encoded x509 Certificate chain.
@@ -200,4 +203,9 @@ func keys(data map[string][]byte) []string {
 	}
 
 	return keys
+}
+
+// toUnixMilli converts a time.Time to milliseconds since epoch, as time.UnixMilli() is not available in go 1.16
+func toUnixMilli(t time.Time) int64 {
+	return t.Unix() * 1000
 }

@@ -313,7 +313,7 @@ func TestSecretCollector(t *testing.T) {
 							"uid":                   types.UID("test-secret-4"),
 							"data":                  "7e12bcf12eb365f7083f04e6e6f710a2a5e379003860b482048d6eefc27d6b3c",
 							"identifiers":           []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-4"},
-							"certificateExpiration": "2034-01-01 09:31:22 +0000 UTC",
+							"certificateExpiration": int64(2019720682000),
 						},
 					},
 					expectedSP: &topology.Component{
@@ -328,7 +328,7 @@ func TestSecretCollector(t *testing.T) {
 								"namespace":      "test-namespace",
 							},
 							"identifiers":           []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-4"},
-							"certificateExpiration": "2034-01-01 09:31:22 +0000 UTC",
+							"certificateExpiration": int64(2019720682000),
 						},
 						SourceProperties: map[string]interface{}{
 							"apiVersion": "v1",
@@ -357,7 +357,7 @@ func TestSecretCollector(t *testing.T) {
 								"namespace":      "test-namespace",
 							},
 							"identifiers":           []string{"urn:kubernetes:/test-cluster-name:test-namespace:secret/test-secret-4"},
-							"certificateExpiration": "2034-01-01 09:31:22 +0000 UTC",
+							"certificateExpiration": int64(2019720682000),
 						},
 						SourceProperties: map[string]interface{}{
 							"apiVersion": "v1",
