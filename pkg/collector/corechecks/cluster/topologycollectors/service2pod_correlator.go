@@ -51,6 +51,13 @@ func (Service2PodCorrelator) GetName() string {
 // podSelectorMatchesPodLabels asserts whether a podSelector matches the podLabels. A podSelector is matched
 // if all selector clauses are contained in the provided podLabels
 func podSelectorMatchesPodLabels(podSelector map[string]string, podLabels map[string]string) bool {
+	// For services without podSelector, we for now do no matches (see https://stackoverflow.com/a/61866213)
+	// We could model this based on endpoints, but that will breaks metric aggregation over services (which
+	// is done based on selectors for time travelling reasons). For now this is just something we do not support.
+	if len(podSelector) == 0 {
+		return false
+	}
+
 	for selectKey, selectValue := range podSelector {
 		if labelValue, found := podLabels[selectKey]; found {
 			if selectValue != labelValue {
