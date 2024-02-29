@@ -11,6 +11,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -80,6 +81,15 @@ func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topo
 		return nil, err
 	}
 
+	certExpiration := time.Time{}
+	if secret.Type == corev1.SecretTypeTLS {
+		if v, ok := secret.Data[corev1.TLSCertKey]; ok {
+			certExpiration = certificateExpiration(v)
+		} else {
+			log.Debugf("TLS Secret %s does not contain a TLS certificate", secretExternalID)
+		}
+	}
+
 	prunedSecret := secret
 	prunedSecret.Data = map[string][]byte{
 		"<data hash>": []byte(secretDataHash),
@@ -93,6 +103,10 @@ func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topo
 			"tags":        tags,
 			"identifiers": []string{secretExternalID},
 		},
+	}
+
+	if !certExpiration.IsZero() {
+		component.Data.PutNonEmpty("certificateExpiration", toUnixMilli(certExpiration))
 	}
 
 	if cmc.IsSourcePropertiesFeatureEnabled() {
@@ -111,24 +125,22 @@ func (cmc *SecretCollector) secretToStackStateComponent(secret v1.Secret) (*topo
 		component.Data.PutNonEmpty("data", secretDataHash)
 	}
 
-	if secret.Type == corev1.SecretTypeTLS {
-		certDataB64 := secret.Data[corev1.TLSCertKey]
-		certExpiration := certificateExpiration(certDataB64)
-		if !certExpiration.IsZero() {
-			component.Data.PutNonEmpty("certificateExpiration", toUnixMilli(certExpiration))
-		}
-	}
-
 	log.Tracef("Created StackState Secret component %s: %v", secretExternalID, component.JSONString())
 
 	return component, nil
 }
 
-func certificateExpiration(certDataBase64 []byte) time.Time {
-	certData, err := base64.StdEncoding.DecodeString(string(certDataBase64))
-	if err != nil {
-		log.Errorf("Failed to decode TLS certificate data: %s", err)
-		return time.Time{}
+func certificateExpiration(certData []byte) time.Time {
+	certString := string(certData)
+
+	// It seems that the certificate is not (always) base64 encoded, so we need to check if it is
+	if !strings.HasPrefix(certString, "-----BEGIN CERTIFICATE-----") {
+		cd, err := base64.StdEncoding.DecodeString(certString)
+		if err != nil {
+			log.Errorf("Failed to decode TLS certificate data: %s", err)
+			return time.Time{}
+		}
+		certData = cd
 	}
 
 	certs, err := DecodeX509CertificateChainBytes(certData)
