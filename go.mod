@@ -174,16 +174,16 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pierrec/lz4/v4 v4.1.3 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.11.1
+	github.com/prometheus/client_golang v1.12.1
 	github.com/richardartoul/molecule v0.0.0-20210914193524-25d8911bb85b
 	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da
 	github.com/shirou/gopsutil v3.21.9+incompatible
 	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4
 	github.com/shuLhan/go-bindata v4.0.0+incompatible
 	github.com/spf13/afero v1.6.0
-	github.com/spf13/cobra v1.2.1
+	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.0
 	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635
 	github.com/tedsuo/ifrit v0.0.0-20191009134036-9a97d0632f00 // indirect
 	github.com/tent/canonical-json-go v0.0.0-20130607151641-96e4ba3a7613
@@ -208,33 +208,33 @@ require (
 	go.uber.org/zap v1.19.1
 	go4.org/intern v0.0.0-20210108033219-3eb7198706b2
 	golang.org/x/mobile v0.0.0-20201217150744-e6ae53a27f4f
-	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
-	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f
-	golang.org/x/text v0.3.8
-	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
-	golang.org/x/tools v0.1.12
+	golang.org/x/net v0.8.0
+	golang.org/x/sync v0.1.0
+	golang.org/x/sys v0.6.0
+	golang.org/x/text v0.8.0
+	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8
+	golang.org/x/tools v0.6.0
 	gomodules.xyz/jsonpatch/v3 v3.0.1
-	google.golang.org/genproto v0.0.0-20210604141403-392c879c8b08
+	google.golang.org/genproto v0.0.0-20220107163113-42d7afdf6368
 	google.golang.org/grpc v1.42.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.33.0
 	gopkg.in/Knetic/govaluate.v3 v3.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 v3.0.0-20220521103104-8f96da9f5d5e
+	gopkg.in/yaml.v3 v3.0.1
 	gopkg.in/zorkian/go-datadog-api.v2 v2.30.0
 	gotest.tools v2.2.0+incompatible
-	k8s.io/api v0.21.14
-	k8s.io/apimachinery v0.21.14
-	k8s.io/apiserver v0.21.14
+	k8s.io/api v0.24.17
+	k8s.io/apimachinery v0.24.17
+	k8s.io/apiserver v0.24.17
 	k8s.io/autoscaler/vertical-pod-autoscaler v0.9.2
-	k8s.io/client-go v0.21.14
-	k8s.io/cri-api v0.21.14
+	k8s.io/client-go v0.24.17
+	k8s.io/cri-api v0.24.17
 	k8s.io/klog v1.0.1-0.20200310124935-4ad0115ba9e4 // Min version that includes fix for Windows Nano
-	k8s.io/klog/v2 v2.9.0
-	k8s.io/kube-openapi v0.0.0-20211110012726-3cc51fd1e909
+	k8s.io/klog/v2 v2.60.1
+	k8s.io/kube-openapi v0.0.0-20220328201542-3ee0da9b0b42
 	k8s.io/kube-state-metrics/v2 v2.1.1
-	k8s.io/metrics v0.21.14
-	k8s.io/utils v0.0.0-20211116205334-6203023598ed
+	k8s.io/metrics v0.24.17
+	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
 )
 
 // Fixing a CVE on a transitive dep of k8s/etcd, should be cleaned-up once k8s.io/apiserver dep is removed (but double-check with `go mod why` that no other dep pulls it)
