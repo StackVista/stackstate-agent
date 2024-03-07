@@ -8,7 +8,7 @@ RUN echo 'source /usr/local/rvm/scripts/rvm' >> /root/.bashrc
 RUN echo 'source /usr/local/rvm/scripts/rvm' >> /root/.bash_profile
 RUN echo 'gem: --no-document' >> /root/.gemrc
 
-RUN bash -c "source /usr/local/rvm/scripts/rvm && gem install deb-s3"
+RUN bash -c "source /usr/local/rvm/scripts/rvm && gem install aws-eventstream -v 1.2.0 && gem install aws-sigv4 -v 1.6.1 && gem install deb-s3 -v 0.10.0"
 
 ADD rpmmacros /root/.rpmmacros
 # yum-utils #https://pkgs.org/download/yum-utils
