@@ -1,5 +1,5 @@
 ARG BASE_IMAGE=deb7_latest
-FROM docker.io/stackstate/stackstate-agent-runner-gitlab:${BASE_IMAGE}
+FROM artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:${BASE_IMAGE}
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y nano libtool-bin libelf-dev gnupg2 locales
 RUN echo 'export PATH=$HOME/bin:$PATH' >> /root/.bashrc

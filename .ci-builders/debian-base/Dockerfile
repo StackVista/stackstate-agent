@@ -1,5 +1,5 @@
 #FROM debian:wheezy-backports
-FROM golang:1.17.13-buster
+FROM artifactory.tooling.stackstate.io/docker-virtual/golang:1.17.13-buster
 
 #RUN sed -i 's/^#\s*\(deb.*universe\)$/\1/g' /etc/apt/sources.list \
 #    && sed -i 's/^#\s*\(deb.*multiverse\)$/\1/g' /etc/apt/sources.list \
