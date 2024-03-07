@@ -60,6 +60,8 @@ before_script:
     - if: $CI_COMMIT_MESSAGE
       when: manual
       allow_failure: true
+  tags:
+    - sts-k8s-xl-runner
 
 # produces the base deb image: quay.io/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
 build-debian-base:
