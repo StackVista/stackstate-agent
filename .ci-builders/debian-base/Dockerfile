@@ -100,7 +100,7 @@ RUN mkdir -p /usr/local/etc \
 RUN /bin/bash -l -c "rvm requirements"
 RUN /bin/bash -l -c "rvm install 2.4.2 && rvm cleanup all"
 RUN /bin/bash -l -c "gem install bundler -v ${RUBY_BUNDLER_VERSION} --no-document"
-RUN /bin/bash -l -c "source /usr/local/rvm/scripts/rvm && gem install deb-s3 -v 0.10.0"
+RUN /bin/bash -l -c "source /usr/local/rvm/scripts/rvm && gem install aws-eventstream -v 1.2.0 && gem install deb-s3 -v 0.10.0"
 
 # CONDA prep
 ENV PKG_CONFIG_LIBDIR "${PKG_CONFIG_LIBDIR}:${CONDA_PATH}/lib/pkgconfig"
