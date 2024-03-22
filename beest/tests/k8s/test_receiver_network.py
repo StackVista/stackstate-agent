@@ -120,7 +120,7 @@ def test_pod_container_to_container(ansible_var, cliv1):
         request_process_pid = request_process["pid"]
         request_host = request_process["host"]
 
-        request_process_to_server_relation_match = "connection:/urn:process:/{}:{}:{}->urn:process:/{}:{}:{}:{}".format(
+        request_process_to_server_relation_match = "connection:/urn:process:/{}:{}:{}->urn:process:/{}:{}:{}:port/{}".format(
             request_host, request_process_pid, request_process_create_time,
             server_host, server_process_pid, server_process_create_time,
             server_port
