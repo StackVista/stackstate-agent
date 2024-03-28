@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 )
 
 // ContainerCgroup is a structure that stores paths and mounts for a cgroup.

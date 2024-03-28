@@ -1,4 +1,5 @@
-//+build windows linux_bpf
+//go:build windows || linux_bpf
+// +build windows linux_bpf
 
 package dns
 
@@ -7,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"go4.org/intern"
 )
 

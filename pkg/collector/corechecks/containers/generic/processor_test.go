@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/v2/metrics"
-	"github.com/DataDog/datadog-agent/pkg/workloadmeta"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/v2/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -148,7 +148,7 @@ func TestProcessorRunFullStatsLinux(t *testing.T) {
 	assert.ErrorIs(t, err, nil)
 
 	expectedTags := []string{"runtime:docker"}
-	mockSender.AssertNumberOfCalls(t, "Rate", 13)
+	mockSender.AssertNumberOfCalls(t, "Rate", 14)
 	mockSender.AssertNumberOfCalls(t, "Gauge", 12)
 
 	mockSender.AssertMetricInRange(t, "Gauge", "container.uptime", 0, 600, "", expectedTags)
@@ -157,6 +157,7 @@ func TestProcessorRunFullStatsLinux(t *testing.T) {
 	mockSender.AssertMetric(t, "Rate", "container.cpu.system", 200, "", expectedTags)
 	mockSender.AssertMetric(t, "Rate", "container.cpu.throttled", 100, "", expectedTags)
 	mockSender.AssertMetric(t, "Rate", "container.cpu.throttled.periods", 0, "", expectedTags)
+	mockSender.AssertMetric(t, "Rate", "container.cpu.elapsed.periods", 500, "", expectedTags)
 	mockSender.AssertMetric(t, "Gauge", "container.cpu.limit", 500000000, "", expectedTags)
 
 	mockSender.AssertMetric(t, "Gauge", "container.memory.usage", 100, "", expectedTags)

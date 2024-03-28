@@ -15,7 +15,7 @@ license "Apache-2.0"
 license_file "../LICENSE"
 
 source path: '..'
-relative_path 'src/github.com/DataDog/datadog-agent'
+relative_path 'src/github.com/StackVista/stackstate-agent'
 
 build do
   # set GOPATH on the omnibus source dir for this software
@@ -61,7 +61,11 @@ build do
       do_windows_sysprobe = "--windows-sysprobe"
     end
     command "inv -e rtloader.make --python-runtimes #{py_runtimes_arg} --install-prefix \"#{windows_safe_path(python_2_embedded)}\" --cmake-options \"-G \\\"Unix Makefiles\\\"\" --arch #{platform}", :env => env
+    command "echo %cd%"
+    # //TODO: sts mkdir workaround
+    mkdir "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent/"
     command "mv rtloader/bin/*.dll  #{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent/"
+    command "echo %PATH%" # TODO:sts
     command "inv -e agent.build --exclude-rtloader --python-runtimes #{py_runtimes_arg} --major-version #{major_version_arg} --rebuild --no-development --embedded-path=#{install_dir}/embedded --arch #{platform} #{do_windows_sysprobe}", env: env
     command "inv -e systray.build --major-version #{major_version_arg} --rebuild --arch #{platform}", env: env
   else
@@ -73,7 +77,7 @@ build do
   if osx?
     conf_dir = "#{install_dir}/etc"
   else
-    conf_dir = "#{install_dir}/etc/datadog-agent"
+    conf_dir = "#{install_dir}/etc/stackstate-agent"
   end
   mkdir conf_dir
   mkdir "#{install_dir}/bin"
@@ -97,7 +101,7 @@ build do
   end
 
   # move around bin and config files
-  move 'bin/agent/dist/datadog.yaml', "#{conf_dir}/datadog.yaml.example"
+  move 'bin/agent/dist/stackstate.yaml', "#{conf_dir}/stackstate.yaml.example"
   if linux? or (windows? and not windows_arch_i386? and ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?)
       move 'bin/agent/dist/system-probe.yaml', "#{conf_dir}/system-probe.yaml.example"
   end
@@ -120,30 +124,31 @@ build do
     command "invoke trace-agent.build --python-runtimes #{py_runtimes_arg} --major-version #{major_version_arg} --arch #{platform}", :env => env
 
     if windows?
-      copy 'bin/trace-agent/trace-agent.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
+      copy 'bin/trace-agent/trace-agent.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/StackVista/stackstate-agent/bin/agent"
     else
       copy 'bin/trace-agent/trace-agent', "#{install_dir}/embedded/bin"
     end
   end
 
-  if windows?
-    platform = windows_arch_i386? ? "x86" : "x64"
-    # Build the process-agent with the correct go version for windows
-    command "invoke -e process-agent.build --python-runtimes #{py_runtimes_arg} --major-version #{major_version_arg} --arch #{platform}", :env => env
-
-    copy 'bin/process-agent/process-agent.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
-
-    unless windows_arch_i386?
-      if ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?
-        ## don't bother with system probe build on x86.
-        command "invoke -e system-probe.build --windows"
-        copy 'bin/system-probe/system-probe.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
-      end
-    end
-  else
-    command "invoke -e process-agent.build --python-runtimes #{py_runtimes_arg} --major-version #{major_version_arg}", :env => env
-    copy 'bin/process-agent/process-agent', "#{install_dir}/embedded/bin"
-  end
+# [STS] Do not want to build the DD Process Agent
+#   if windows?
+#     platform = windows_arch_i386? ? "x86" : "x64"
+#     # Build the process-agent with the correct go version for windows
+#     command "invoke -e process-agent.build --python-runtimes #{py_runtimes_arg} --major-version #{major_version_arg} --arch #{platform}", :env => env
+#
+#     copy 'bin/process-agent/process-agent.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
+#
+#     unless windows_arch_i386?
+#       if ENV['WINDOWS_DDNPM_DRIVER'] and not ENV['WINDOWS_DDNPM_DRIVER'].empty?
+#         ## don't bother with system probe build on x86.
+#         command "invoke -e system-probe.build --windows"
+#         copy 'bin/system-probe/system-probe.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
+#       end
+#     end
+#   else
+#     command "invoke -e process-agent.build --python-runtimes #{py_runtimes_arg} --major-version #{major_version_arg}", :env => env
+#     copy 'bin/process-agent/process-agent', "#{install_dir}/embedded/bin"
+#   end
 
   # Add SELinux policy for system-probe
   if debian? || redhat?
@@ -152,118 +157,128 @@ build do
   end
 
   # Security agent
-  if windows?
-    platform = windows_arch_i386? ? "x86" : "x64"
-    command "invoke -e security-agent.build --major-version #{major_version_arg} --arch #{platform}", :env => env
+  if $enable_security_agent
+    if windows?
+      platform = windows_arch_i386? ? "x86" : "x64"
+      command "invoke -e security-agent.build --major-version #{major_version_arg} --arch #{platform}", :env => env
 
-    copy 'bin/security-agent/security-agent.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
-  else
-    command "invoke -e security-agent.build --major-version #{major_version_arg}", :env => env
-    copy 'bin/security-agent/security-agent', "#{install_dir}/embedded/bin"
-    move 'bin/agent/dist/security-agent.yaml', "#{conf_dir}/security-agent.yaml.example"
+      copy 'bin/security-agent/security-agent.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
+    else
+      command "invoke -e security-agent.build --major-version #{major_version_arg}", :env => env
+      copy 'bin/security-agent/security-agent', "#{install_dir}/embedded/bin"
+      move 'bin/agent/dist/security-agent.yaml', "#{conf_dir}/security-agent.yaml.example"
+    end
   end
 
   if linux?
     if debian?
       erb source: "upstart_debian.conf.erb",
-          dest: "#{install_dir}/scripts/datadog-agent.conf",
+          dest: "#{install_dir}/scripts/stackstate-agent.conf",
           mode: 0644,
           vars: { install_dir: install_dir, etc_dir: etc_dir }
       erb source: "upstart_debian.process.conf.erb",
-          dest: "#{install_dir}/scripts/datadog-agent-process.conf",
+          dest: "#{install_dir}/scripts/stackstate-agent-process.conf",
           mode: 0644,
           vars: { install_dir: install_dir, etc_dir: etc_dir }
       erb source: "upstart_debian.sysprobe.conf.erb",
-          dest: "#{install_dir}/scripts/datadog-agent-sysprobe.conf",
+          dest: "#{install_dir}/scripts/stackstate-agent-sysprobe.conf",
           mode: 0644,
           vars: { install_dir: install_dir, etc_dir: etc_dir }
       erb source: "upstart_debian.trace.conf.erb",
-          dest: "#{install_dir}/scripts/datadog-agent-trace.conf",
-          mode: 0644,
-          vars: { install_dir: install_dir, etc_dir: etc_dir }
-      erb source: "upstart_debian.security.conf.erb",
-          dest: "#{install_dir}/scripts/datadog-agent-security.conf",
+          dest: "#{install_dir}/scripts/stackstate-agent-trace.conf",
           mode: 0644,
           vars: { install_dir: install_dir, etc_dir: etc_dir }
       erb source: "sysvinit_debian.erb",
-          dest: "#{install_dir}/scripts/datadog-agent",
+          dest: "#{install_dir}/scripts/stackstate-agent",
           mode: 0755,
           vars: { install_dir: install_dir, etc_dir: etc_dir }
       erb source: "sysvinit_debian.process.erb",
-          dest: "#{install_dir}/scripts/datadog-agent-process",
+          dest: "#{install_dir}/scripts/stackstate-agent-process",
           mode: 0755,
           vars: { install_dir: install_dir, etc_dir: etc_dir }
       erb source: "sysvinit_debian.trace.erb",
-          dest: "#{install_dir}/scripts/datadog-agent-trace",
+          dest: "#{install_dir}/scripts/stackstate-agent-trace",
           mode: 0755,
           vars: { install_dir: install_dir, etc_dir: etc_dir }
-      erb source: "sysvinit_debian.security.erb",
-          dest: "#{install_dir}/scripts/datadog-agent-security",
-          mode: 0755,
-          vars: { install_dir: install_dir, etc_dir: etc_dir }
+      # sts
+      if $enable_security_agent
+          erb source: "sysvinit_debian.security.erb",
+              dest: "#{install_dir}/scripts/stackstate-agent-security",
+              mode: 0755,
+              vars: { install_dir: install_dir, etc_dir: etc_dir }
+      end
     elsif redhat? || suse?
       # Ship a different upstart job definition on RHEL to accommodate the old
       # version of upstart (0.6.5) that RHEL 6 provides.
       erb source: "upstart_redhat.conf.erb",
-          dest: "#{install_dir}/scripts/datadog-agent.conf",
+          dest: "#{install_dir}/scripts/stackstate-agent.conf",
           mode: 0644,
           vars: { install_dir: install_dir, etc_dir: etc_dir }
       erb source: "upstart_redhat.process.conf.erb",
-          dest: "#{install_dir}/scripts/datadog-agent-process.conf",
+          dest: "#{install_dir}/scripts/stackstate-agent-process.conf",
           mode: 0644,
           vars: { install_dir: install_dir, etc_dir: etc_dir }
       erb source: "upstart_redhat.sysprobe.conf.erb",
-          dest: "#{install_dir}/scripts/datadog-agent-sysprobe.conf",
+          dest: "#{install_dir}/scripts/stackstate-agent-sysprobe.conf",
           mode: 0644,
           vars: { install_dir: install_dir, etc_dir: etc_dir }
       erb source: "upstart_redhat.trace.conf.erb",
-          dest: "#{install_dir}/scripts/datadog-agent-trace.conf",
+          dest: "#{install_dir}/scripts/stackstate-agent-trace.conf",
           mode: 0644,
           vars: { install_dir: install_dir, etc_dir: etc_dir }
-      erb source: "upstart_redhat.security.conf.erb",
-          dest: "#{install_dir}/scripts/datadog-agent-security.conf",
-          mode: 0644,
-          vars: { install_dir: install_dir, etc_dir: etc_dir }
+      # sts
+      if $enable_security_agent
+          erb source: "upstart_redhat.security.conf.erb",
+              dest: "#{install_dir}/scripts/stackstate-agent-security.conf",
+              mode: 0644,
+              vars: { install_dir: install_dir, etc_dir: etc_dir }
+      end
     end
     if suse?
       erb source: "sysvinit_suse.erb",
-          dest: "#{install_dir}/scripts/datadog-agent",
+          dest: "#{install_dir}/scripts/stackstate-agent",
           mode: 0755,
           vars: { install_dir: install_dir, etc_dir: etc_dir }
       erb source: "sysvinit_suse.process.erb",
-          dest: "#{install_dir}/scripts/datadog-agent-process",
+          dest: "#{install_dir}/scripts/stackstate-agent-process",
           mode: 0755,
           vars: { install_dir: install_dir, etc_dir: etc_dir }
       erb source: "sysvinit_suse.trace.erb",
-          dest: "#{install_dir}/scripts/datadog-agent-trace",
+          dest: "#{install_dir}/scripts/stackstate-agent-trace",
           mode: 0755,
           vars: { install_dir: install_dir, etc_dir: etc_dir }
-      erb source: "sysvinit_suse.security.erb",
-          dest: "#{install_dir}/scripts/datadog-agent-security",
-          mode: 0755,
-          vars: { install_dir: install_dir, etc_dir: etc_dir }
+      # sts
+      if $enable_security_agent
+          erb source: "sysvinit_suse.security.erb",
+              dest: "#{install_dir}/scripts/stackstate-agent-security",
+              mode: 0755,
+              vars: { install_dir: install_dir, etc_dir: etc_dir }
+      end
     end
 
     erb source: "systemd.service.erb",
-        dest: "#{install_dir}/scripts/datadog-agent.service",
+        dest: "#{install_dir}/scripts/stackstate-agent.service",
         mode: 0644,
         vars: { install_dir: install_dir, etc_dir: etc_dir }
     erb source: "systemd.process.service.erb",
-        dest: "#{install_dir}/scripts/datadog-agent-process.service",
+        dest: "#{install_dir}/scripts/stackstate-agent-process.service",
         mode: 0644,
         vars: { install_dir: install_dir, etc_dir: etc_dir }
     erb source: "systemd.sysprobe.service.erb",
-        dest: "#{install_dir}/scripts/datadog-agent-sysprobe.service",
+        dest: "#{install_dir}/scripts/stackstate-agent-sysprobe.service",
         mode: 0644,
         vars: { install_dir: install_dir, etc_dir: etc_dir }
     erb source: "systemd.trace.service.erb",
-        dest: "#{install_dir}/scripts/datadog-agent-trace.service",
+        dest: "#{install_dir}/scripts/stackstate-agent-trace.service",
         mode: 0644,
         vars: { install_dir: install_dir, etc_dir: etc_dir }
-    erb source: "systemd.security.service.erb",
-        dest: "#{install_dir}/scripts/datadog-agent-security.service",
-        mode: 0644,
-        vars: { install_dir: install_dir, etc_dir: etc_dir }
+    # sts
+    if $enable_security_agent
+        erb source: "systemd.security.service.erb",
+            dest: "#{install_dir}/scripts/stackstate-agent-security.service",
+            mode: 0644,
+            vars: { install_dir: install_dir, etc_dir: etc_dir }
+    end
   end
 
   if osx?

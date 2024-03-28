@@ -9,8 +9,8 @@ import (
 	"expvar"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/logs/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/metrics"
 )
 
 // Transport is the transport used by logs-agent, i.e TCP or HTTP

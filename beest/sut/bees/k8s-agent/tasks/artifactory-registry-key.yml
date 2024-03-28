@@ -1,0 +1,21 @@
+---
+- name: Set artifactory.tooling.stackstate.io registry key fact
+  set_fact:
+    artifactory_registry_key:
+      auths:
+        artifactory.tooling.stackstate.io:
+          auth: "{{ ':'.join((artifactory_user, artifactory_password)) | b64encode }}"
+
+- name: Create docker secret to allow pulling from artifactory.tooling.stackstate.io registry
+  kubernetes.core.k8s:
+    context: "{{ kubecontext }}"
+    state: present
+    resource_definition:
+      apiVersion: v1
+      kind: Secret
+      data:
+        .dockerconfigjson: "{{ artifactory_registry_key | to_json | b64encode }}"
+      metadata:
+        name: "docker-registry-key"
+        namespace: "{{ monitoring_namespace }}"
+      type: "kubernetes.io/dockerconfigjson"

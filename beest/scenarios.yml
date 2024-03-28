@@ -1,0 +1,57 @@
+scenarios:
+  - name: dockerd-eks-1-24
+    description: |
+      Provisions an EKS cluster with Dockerd as container runtime.
+      Deploys StackState in the sandbox cluster and the agents with sample workloads on EKS.
+    yard:
+      name: k8s
+    test:
+      group: k8s
+    variables:
+      agent_eks_runtime: dockerd
+      agent_eks_version: "1.24"
+  - name: contd-eks-1-24
+    description: |
+      Same as dockerd-eks scenario, but the EKS cluster is configured to use Containerd as container runtime.
+    yard:
+      name: k8s
+    test:
+      group: k8s
+    variables:
+      agent_eks_runtime: containerd
+      agent_eks_version: "1.24"
+  - name: contd-eks-1-28
+    description: |
+      Same as dockerd-eks scenario, but the EKS cluster is configured to use Containerd as container runtime.
+    yard:
+      name: k8s
+    test:
+      group: k8s
+    variables:
+      agent_eks_runtime: containerd
+      agent_eks_version: "1.28"
+  - name: otel
+    description: |
+      Provisions Lambda exposing it trough an API gateway, an EC2 machine, AWS integration Cloudformation stack.
+      Deploys StackState on sandbox k8s cluster, Agent on EC2 and install the StackPacks.
+    yard:
+      name: otel-custom
+    test:
+      group: otel
+  - name: splunk
+    description: |
+      Provisions a VM.
+      Deploys Splunk Enterprise Cloud and both Agent v1 and V2 on that VM, configuring all Splunk checks.
+      Deploys StackState on sandbox k8s cluster and installs the Splunk StackPack.
+    yard:
+      name: splunk
+    test:
+      group: splunk
+  - name: stackstate
+    description: |
+      Deploys StackState on sandbox k8s cluster.
+    yard:
+      name: stackstate
+    test:
+      group: NA
+

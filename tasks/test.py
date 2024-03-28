@@ -309,6 +309,7 @@ def test(
         # Exit if any of the modules failed
         raise Exit(code=1, message="Unit tests failed in the following modules: {}".format(', '.join(failed_modules)))
 
+    # TODO: [sts] Master disables it, check if we need to disable
     if coverage:
         print("\n--- Test coverage:")
         ctx.run("go tool cover -func {}".format(PROFILE_COV))

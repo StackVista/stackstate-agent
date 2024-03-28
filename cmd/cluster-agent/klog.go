@@ -3,8 +3,8 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
-// +build !windows
-// +build kubeapiserver
+//go:build !windows && kubeapiserver
+// +build !windows,kubeapiserver
 
 package main
 
@@ -16,7 +16,7 @@ import (
 
 	"k8s.io/klog"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // redirectLogger is used to redirect klog logs to datadog logs. klog is

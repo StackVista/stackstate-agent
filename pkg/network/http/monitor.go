@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package http
@@ -8,11 +9,11 @@ import (
 	"sync"
 	"time"
 
-	ddebpf "github.com/DataDog/datadog-agent/pkg/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/network/config"
-	filterpkg "github.com/DataDog/datadog-agent/pkg/network/filter"
 	"github.com/DataDog/ebpf"
 	"github.com/DataDog/ebpf/manager"
+	ddebpf "github.com/StackVista/stackstate-agent/pkg/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
+	filterpkg "github.com/StackVista/stackstate-agent/pkg/network/filter"
 )
 
 // Monitor is responsible for:
@@ -27,7 +28,7 @@ type Monitor struct {
 	batchManager           *batchManager
 	batchCompletionHandler *ddebpf.PerfHandler
 	telemetry              *telemetry
-	pollRequests           chan chan map[Key]RequestStats
+	pollRequests           chan chan *MonitorReport
 	statkeeper             *httpStatKeeper
 
 	// termination
@@ -86,7 +87,7 @@ func NewMonitor(c *config.Config, offsets []manager.ConstantEditor, sockFD *ebpf
 		batchManager:           newBatchManager(batchMap, batchStateMap, numCPUs),
 		batchCompletionHandler: mgr.batchCompletionHandler,
 		telemetry:              telemetry,
-		pollRequests:           make(chan chan map[Key]RequestStats),
+		pollRequests:           make(chan chan *MonitorReport),
 		closeFilterFn:          closeFilterFn,
 		statkeeper:             statkeeper,
 	}, nil
@@ -133,9 +134,12 @@ func (m *Monitor) Start() error {
 				m.process(transactions, nil)
 
 				delta := m.telemetry.reset()
-				delta.report()
+				telemetryStats := delta.report()
 
-				reply <- m.statkeeper.GetAndResetAllStats()
+				reply <- &MonitorReport{
+					Requests:  m.statkeeper.GetAndResetAllStats(),
+					Telemetry: telemetryStats,
+				}
 			case <-report.C:
 				transactions := m.batchManager.GetPendingTransactions()
 				m.process(transactions, nil)
@@ -148,7 +152,7 @@ func (m *Monitor) Start() error {
 
 // GetHTTPStats returns a map of HTTP stats stored in the following format:
 // [source, dest tuple, request path] -> RequestStats object
-func (m *Monitor) GetHTTPStats() map[Key]RequestStats {
+func (m *Monitor) GetHTTPStats() *MonitorReport {
 	if m == nil {
 		return nil
 	}
@@ -159,7 +163,7 @@ func (m *Monitor) GetHTTPStats() map[Key]RequestStats {
 		return nil
 	}
 
-	reply := make(chan map[Key]RequestStats, 1)
+	reply := make(chan *MonitorReport, 1)
 	defer close(reply)
 	m.pollRequests <- reply
 	return <-reply

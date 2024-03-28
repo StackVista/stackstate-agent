@@ -6,7 +6,7 @@ import (
 	"io"
 	"regexp"
 
-	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode"
 )
 
 var (

@@ -8,7 +8,7 @@
 package hostname
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/util/hostname/kubelet"
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname/kubelet"
 )
 
 func init() {

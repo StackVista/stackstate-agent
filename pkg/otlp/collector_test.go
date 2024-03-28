@@ -17,8 +17,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/service"
 
-	"github.com/DataDog/datadog-agent/pkg/otlp/internal/testutil"
-	"github.com/DataDog/datadog-agent/pkg/serializer"
+	"github.com/StackVista/stackstate-agent/pkg/otlp/internal/testutil"
+	"github.com/StackVista/stackstate-agent/pkg/serializer"
 )
 
 func TestGetComponents(t *testing.T) {

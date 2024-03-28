@@ -13,10 +13,10 @@ import (
 	"net/http"
 	"sync/atomic"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/api/apiutil"
-	"github.com/DataDog/datadog-agent/pkg/trace/metrics"
-	"github.com/DataDog/datadog-agent/pkg/trace/sampler"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/trace/api/apiutil"
+	"github.com/StackVista/stackstate-agent/pkg/trace/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/trace/sampler"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (
@@ -34,6 +34,16 @@ type traceResponse struct {
 func httpFormatError(w http.ResponseWriter, v Version, err error) {
 	log.Errorf("Rejecting client request: %v", err)
 	tags := []string{"error:format-error", "version:" + string(v)}
+	metrics.Count(receiverErrorKey, 1, tags, 1)
+	http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
+}
+
+// [sts]
+// httpFormatError is used for payload format errors
+// Versioning is ignored
+func httpFormatErrorNoVersion(w http.ResponseWriter, err error) {
+	log.Errorf("Rejecting client request: %v", err)
+	tags := []string{"error:format-error"}
 	metrics.Count(receiverErrorKey, 1, tags, 1)
 	http.Error(w, err.Error(), http.StatusUnsupportedMediaType)
 }

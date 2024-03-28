@@ -3,8 +3,8 @@ package metrics
 import (
 	"sync"
 
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	telemetry_utils "github.com/DataDog/datadog-agent/pkg/telemetry/utils"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
 )
 
 var (

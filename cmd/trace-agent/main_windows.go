@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build windows
 // +build windows
 
 package main
@@ -15,11 +16,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/runtime"
-	"github.com/DataDog/datadog-agent/pkg/trace/agent"
-	"github.com/DataDog/datadog-agent/pkg/trace/flags"
-	"github.com/DataDog/datadog-agent/pkg/trace/watchdog"
-	_ "github.com/DataDog/datadog-agent/pkg/util/containers/providers/windows"
+	"github.com/StackVista/stackstate-agent/pkg/runtime"
+	"github.com/StackVista/stackstate-agent/pkg/trace/agent"
+	"github.com/StackVista/stackstate-agent/pkg/trace/flags"
+	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
+	_ "github.com/StackVista/stackstate-agent/pkg/util/containers/providers/windows"
 
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"

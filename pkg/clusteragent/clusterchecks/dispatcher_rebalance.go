@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build clusterchecks
 // +build clusterchecks
 
 package clusterchecks
@@ -12,9 +13,9 @@ import (
 	"sort"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/clusteragent/clusterchecks/types"
-	le "github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/leaderelection/metrics"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks/types"
+	le "github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/leaderelection/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // tolerationMargin is used to lean towards stability when rebalancing cluster level checks

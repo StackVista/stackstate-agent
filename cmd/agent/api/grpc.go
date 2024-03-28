@@ -20,17 +20,17 @@ import (
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/status"
 
-	"github.com/DataDog/datadog-agent/cmd/agent/common"
-	remoteconfig "github.com/DataDog/datadog-agent/pkg/config/remote/service"
-	dsdReplay "github.com/DataDog/datadog-agent/pkg/dogstatsd/replay"
-	pb "github.com/DataDog/datadog-agent/pkg/proto/pbgo"
-	pbutils "github.com/DataDog/datadog-agent/pkg/proto/utils"
-	"github.com/DataDog/datadog-agent/pkg/tagger"
-	"github.com/DataDog/datadog-agent/pkg/tagger/replay"
-	"github.com/DataDog/datadog-agent/pkg/tagger/telemetry"
-	hostutil "github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/grpc"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common"
+	remoteconfig "github.com/StackVista/stackstate-agent/pkg/config/remote/service"
+	dsdReplay "github.com/StackVista/stackstate-agent/pkg/dogstatsd/replay"
+	pb "github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
+	pbutils "github.com/StackVista/stackstate-agent/pkg/proto/utils"
+	"github.com/StackVista/stackstate-agent/pkg/tagger"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/replay"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/telemetry"
+	hostutil "github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/grpc"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (

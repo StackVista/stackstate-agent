@@ -21,6 +21,9 @@
 extern "C" {
 #endif
 
+char **py_tag_to_c(PyObject *py_tags);
+void free_tags(char **tags);
+
 #ifdef DATADOG_AGENT_THREE
 
 /*! \fn void PyInit_util()

@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/profiling"
-	"github.com/DataDog/datadog-agent/pkg/version"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/profiling"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 )
 
 // ProfilingRuntimeSetting wraps operations to change log level at runtime

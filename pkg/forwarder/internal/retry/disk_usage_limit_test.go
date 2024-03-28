@@ -8,7 +8,7 @@ package retry
 import (
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/util/filesystem"
+	"github.com/StackVista/stackstate-agent/pkg/util/filesystem"
 	"github.com/stretchr/testify/require"
 )
 

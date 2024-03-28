@@ -1,3 +1,4 @@
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package v1
@@ -10,9 +11,9 @@ import (
 
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
-	as "github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
-	apicommon "github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/common"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	as "github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
+	apicommon "github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/common"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/gorilla/mux"
 )
 

@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package ebpf
@@ -5,7 +6,7 @@ package ebpf
 import (
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode"
 )
 
 // ReadBPFModule from the asset file

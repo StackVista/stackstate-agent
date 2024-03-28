@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package orchestrator
@@ -13,14 +14,14 @@ import (
 	"expvar"
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/clusteragent/clusterchecks"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/orchestrator"
-	orchcfg "github.com/DataDog/datadog-agent/pkg/orchestrator/config"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/common"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/leaderelection"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/orchestrator"
+	orchcfg "github.com/StackVista/stackstate-agent/pkg/orchestrator/config"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/common"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/leaderelection"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 
 	"k8s.io/client-go/kubernetes"
 )

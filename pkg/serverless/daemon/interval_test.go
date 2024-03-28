@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/serverless/flush"
+	"github.com/StackVista/stackstate-agent/pkg/serverless/flush"
 	"github.com/stretchr/testify/assert"
 )
 

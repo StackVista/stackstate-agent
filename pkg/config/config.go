@@ -15,18 +15,19 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/common/types"
-	"github.com/DataDog/datadog-agent/pkg/collector/check/defaults"
-	"github.com/DataDog/datadog-agent/pkg/util/hostname/validate"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/common/types"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/defaults"
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname/validate"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
-	"github.com/DataDog/datadog-agent/pkg/secrets"
-	"github.com/DataDog/datadog-agent/pkg/version"
+	"github.com/StackVista/stackstate-agent/pkg/secrets"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 )
 
 const (
@@ -81,6 +82,26 @@ const (
 
 	// DefaultLogsSenderBackoffRecoveryInterval is the default logs sender backoff recovery interval
 	DefaultLogsSenderBackoffRecoveryInterval = 2
+
+	// DefaultBatcherBufferSize sets the default buffer size of the batcher to 10000
+	// [sts]
+	DefaultBatcherBufferSize = 10000
+
+	// DefaultTxManagerChannelBufferSize is the concurrent transactions before the tx manager begins backpressure
+	// [sts] transaction manager
+	DefaultTxManagerChannelBufferSize = 100
+	// DefaultTxManagerTimeoutDurationSeconds is the amount of time before a transaction is marked as stale, 5 minutes by default
+	DefaultTxManagerTimeoutDurationSeconds = 60 * 5
+	// DefaultTxManagerEvictionDurationSeconds is the amount of time before a transaction is evicted and rolled back, 10 minutes by default
+	DefaultTxManagerEvictionDurationSeconds = 60 * 10
+	// DefaultTxManagerTickerIntervalSeconds is the ticker interval to mark transactions as stale / timeout.
+	DefaultTxManagerTickerIntervalSeconds = 30
+
+	// DefaultCheckStateExpirationDuration is the amount of time before an element is expired from the Check State cache, 10 minutes by default
+	// [sts]
+	DefaultCheckStateExpirationDuration = 10 * time.Minute
+	// DefaultCheckStatePurgeDuration is the amount of time before an element is removed from the Check State cache, 10 minutes by default
+	DefaultCheckStatePurgeDuration = 10 * time.Minute
 )
 
 // Datadog is the global configuration object
@@ -186,9 +207,19 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("app_key", "")
 	config.BindEnvAndSetDefault("cloud_provider_metadata", []string{"aws", "gcp", "azure", "alibaba"})
 	config.SetDefault("proxy", nil)
-	config.BindEnvAndSetDefault("skip_ssl_validation", false)
+
+	// sts begin
+	stsSkipSSLValidationEnv := os.Getenv("STS_SKIP_SSL_VALIDATION")
+	stsSkipSSLValidation, err := strconv.ParseBool(stsSkipSSLValidationEnv)
+	if err != nil && len(stsSkipSSLValidationEnv) > 0 {
+		_ = log.Warnf("Could not parse `STS_SKIP_SSL_VALIDATION` environment variable to boolean: %v", err)
+	}
+	config.BindEnvAndSetDefault("skip_ssl_validation", stsSkipSSLValidation)
+	// sts end
+
 	config.BindEnvAndSetDefault("hostname", "")
 	config.BindEnvAndSetDefault("hostname_file", "")
+	config.BindEnvAndSetDefault("skip_hostname_validation", false) // sts
 	config.BindEnvAndSetDefault("tags", []string{})
 	config.BindEnvAndSetDefault("extra_tags", []string{})
 	config.BindEnv("env")
@@ -254,6 +285,14 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("check_sampler_expire_metrics", true)
 	config.BindEnvAndSetDefault("host_aliases", []string{})
 
+	// [sts] skip datadog functionality
+	config.BindEnvAndSetDefault("skip_leader_election", true)
+	// [sts] bind env for skip_validate_clustername, default is set in the config_template.yaml to avoid test failures.
+	config.BindEnv("skip_validate_clustername") //nolint:errcheck
+
+	// [sts] batcher environment variables
+	config.BindEnvAndSetDefault("batcher_capacity", DefaultBatcherBufferSize)
+
 	// overridden in IoT Agent main
 	config.BindEnvAndSetDefault("iot_host", false)
 	// overridden in Heroku buildpack
@@ -271,6 +310,24 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("tracemalloc_blacklist", "") // deprecated
 	config.BindEnvAndSetDefault("run_path", defaultRunPath)
 	config.BindEnvAndSetDefault("no_proxy_nonexact_match", false)
+
+	// [sts] transactional environment variables
+	config.BindEnvAndSetDefault("transaction_manager_channel_buffer_size", DefaultTxManagerChannelBufferSize)
+	config.BindEnvAndSetDefault("transaction_timeout_duration_seconds", DefaultTxManagerTimeoutDurationSeconds)
+	config.BindEnvAndSetDefault("transaction_eviction_duration_seconds", DefaultTxManagerEvictionDurationSeconds)
+	config.BindEnvAndSetDefault("transaction_ticket_interval_seconds", DefaultTxManagerTickerIntervalSeconds)
+
+	// [sts] check state manager environment variable
+	config.BindEnvAndSetDefault("check_state_root_path", Datadog.GetString("run_path"))
+	config.BindEnvAndSetDefault("check_state_expiration_duration", DefaultCheckStateExpirationDuration)
+	config.BindEnvAndSetDefault("check_state_purge_duration", DefaultCheckStatePurgeDuration)
+
+	// [sts] check manager environment variables
+	config.BindEnvAndSetDefault("check_transactionality_enabled", true)
+
+	// [sts] retryable http client environment variables
+	config.BindEnvAndSetDefault("transactional_forwarder_retry_min", 1*time.Second)
+	config.BindEnvAndSetDefault("transactional_forwarder_retry_max", 10*time.Second)
 
 	// Python 3 linter timeout, in seconds
 	// NOTE: linter is notoriously slow, in the absence of a better solution we
@@ -370,8 +427,8 @@ func InitConfig(config Config) {
 	// Serializer
 	config.BindEnvAndSetDefault("enable_stream_payload_serialization", true)
 	config.BindEnvAndSetDefault("enable_service_checks_stream_payload_serialization", true)
-	config.BindEnvAndSetDefault("enable_events_stream_payload_serialization", true)
-	config.BindEnvAndSetDefault("enable_sketch_stream_payload_serialization", true)
+	config.BindEnvAndSetDefault("enable_events_stream_payload_serialization", false) // sts - set to false
+	config.BindEnvAndSetDefault("enable_sketch_stream_payload_serialization", false) // sts - set to false
 	config.BindEnvAndSetDefault("enable_json_stream_shared_compressor_buffers", true)
 
 	// Warning: do not change the two following values. Your payloads will get dropped by Datadog's intake.
@@ -384,8 +441,9 @@ func InitConfig(config Config) {
 	// Serializer: allow user to blacklist any kind of payload to be sent
 	config.BindEnvAndSetDefault("enable_payloads.events", true)
 	config.BindEnvAndSetDefault("enable_payloads.series", true)
-	config.BindEnvAndSetDefault("enable_payloads.service_checks", true)
-	config.BindEnvAndSetDefault("enable_payloads.sketches", true)
+	config.BindEnvAndSetDefault("enable_payloads.service_checks", false) // sts - set to false
+	config.BindEnvAndSetDefault("enable_payloads.check_runs", false)     // sts - set to false
+	config.BindEnvAndSetDefault("enable_payloads.sketches", false)       // sts - set to false
 	config.BindEnvAndSetDefault("enable_payloads.json_to_v1_intake", true)
 
 	// Forwarder
@@ -522,15 +580,26 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("container_env_as_tags", map[string]string{})
 	config.BindEnvAndSetDefault("container_labels_as_tags", map[string]string{})
 
+	// [sts] Docker Swarm
+	config.BindEnvAndSetDefault("collect_swarm_topology", false)
+
 	// Kubernetes
-	config.BindEnvAndSetDefault("kubernetes_kubelet_host", "")
+	config.BindEnvAndSetDefault("kubernetes_kubelet_host", os.Getenv("STS_KUBERNETES_KUBELET_HOST")) // sts
 	config.BindEnvAndSetDefault("kubernetes_kubelet_nodename", "")
 	config.BindEnvAndSetDefault("eks_fargate", false)
 	config.BindEnvAndSetDefault("kubernetes_http_kubelet_port", 10255)
 	config.BindEnvAndSetDefault("kubernetes_https_kubelet_port", 10250)
 
 	config.BindEnvAndSetDefault("kubelet_tls_verify", true)
+	config.BindEnvAndSetDefault("kubelet_fallback_to_unverified_tls", true) // sts
+	config.BindEnvAndSetDefault("kubelet_fallback_to_insecure", true)       // sts
 	config.BindEnvAndSetDefault("collect_kubernetes_events", false)
+	config.BindEnvAndSetDefault("collect_kubernetes_metrics", false)          // sts
+	config.BindEnvAndSetDefault("collect_kubernetes_topology", false)         // sts
+	config.BindEnvAndSetDefault("collect_kubernetes_timeout", 10)             // sts
+	config.BindEnvAndSetDefault("configmap_max_datasize", 0)                  // sts
+	config.BindEnvAndSetDefault("kubernetes_source_properties_enabled", true) // sts
+	config.BindEnvAndSetDefault("kubernetes_csi_pv_mapper_enabled", false)    // sts
 	config.BindEnvAndSetDefault("kubelet_client_ca", "")
 
 	config.BindEnvAndSetDefault("kubelet_auth_token_path", "")
@@ -653,7 +722,10 @@ func InitConfig(config Config) {
 	config.BindEnvAndSetDefault("cloud_foundry_garden.listen_address", "/var/vcap/data/garden/garden.sock")
 
 	// Azure
-	config.BindEnvAndSetDefault("azure_hostname_style", "os")
+	// When using `os` as the Azure hostname resolution the `containerd` check on Azure will produce a container with
+	// a hostname that includes the cluster name which breaks compatibility (and merging behavior) with
+	// the Kubernetes and process agent hostnames.
+	config.BindEnvAndSetDefault("azure_hostname_style", "name")
 
 	// JMXFetch
 	config.BindEnvAndSetDefault("jmx_custom_jars", []string{})
@@ -1180,7 +1252,7 @@ func load(config Config, origin string, loadSecret bool) (*Warnings, error) {
 
 // ResolveSecrets merges all the secret values from origin into config. Secret values
 // are identified by a value of the form "ENC[key]" where key is the secret key.
-// See: https://github.com/DataDog/datadog-agent/blob/main/docs/agent/secrets.md
+// See: https://github.com/StackVista/stackstate-agent/blob/master/docs/agent/secrets.md
 func ResolveSecrets(config Config, origin string) error {
 	// We have to init the secrets package before we can use it to decrypt
 	// anything.
@@ -1237,6 +1309,29 @@ func GetMainEndpoint(prefix string, ddURLKey string) string {
 // GetMultipleEndpoints returns the api keys per domain specified in the main agent config
 func GetMultipleEndpoints() (map[string][]string, error) {
 	return getMultipleEndpointsWithConfig(Datadog)
+}
+
+// GetMaxCapacity returns the maximum amount of elements per batch for the transactionbatcher
+// [sts]
+func GetMaxCapacity() int {
+	if Datadog.IsSet("batcher_capacity") {
+		return Datadog.GetInt("batcher_capacity")
+	}
+
+	return DefaultBatcherBufferSize
+}
+
+// GetTxManagerConfig returns the transaction manager configuration. The buffer size, the time duration and the eviction duration
+// [sts]
+func GetTxManagerConfig() (int, time.Duration, time.Duration, time.Duration) {
+	txBufferSize := Datadog.GetInt("transaction_manager_channel_buffer_size")
+	// get the checkmanager duration and convert it to duration in seconds. Both transaction_timeout_duration_seconds and
+	// transaction_eviction_duration_seconds have default values.
+	txTimeoutDuration := time.Second * time.Duration(Datadog.GetInt("transaction_timeout_duration_seconds"))
+	txEvictionDuration := time.Second * time.Duration(Datadog.GetInt("transaction_eviction_duration_seconds"))
+	txTickerInterval := time.Second * time.Duration(Datadog.GetInt("transaction_ticket_interval_seconds"))
+
+	return txBufferSize, txTimeoutDuration, txEvictionDuration, txTickerInterval
 }
 
 func bindEnvAndSetLogsConfigKeys(config Config, prefix string) {
@@ -1434,6 +1529,15 @@ func GetIPCAddress() (string, error) {
 	return "", fmt.Errorf("ipc_address was set to a non-loopback IP address: %s", address)
 }
 
+// IsDockerSwarm returns whether the Agent is running on a Swarm cluster
+// [sts]
+func IsDockerSwarm() bool {
+	if os.Getenv("DOCKER_SWARM") != "" {
+		return true
+	}
+	return false
+}
+
 // pathExists returns true if the given path exists
 func pathExists(path string) bool {
 	_, err := os.Stat(path)
@@ -1537,7 +1641,7 @@ func GetValidHostAliases() []string {
 func getValidHostAliasesWithConfig(config Config) []string {
 	aliases := []string{}
 	for _, alias := range config.GetStringSlice("host_aliases") {
-		if err := validate.ValidHostname(alias); err == nil {
+		if err := ValidHostname(alias); err == nil {
 			aliases = append(aliases, alias)
 		} else {
 			log.Warnf("skipping invalid host alias '%s': %s", alias, err)
@@ -1545,6 +1649,18 @@ func getValidHostAliasesWithConfig(config Config) []string {
 	}
 
 	return aliases
+}
+
+// ValidHostname determines whether the passed string is a valid hostname.
+// sts
+func ValidHostname(hostname string) error {
+	// [sts] If hostname validation is disabled just return nil
+	skipHostnameValidation := Datadog.GetBool("skip_hostname_validation")
+	if skipHostnameValidation {
+		log.Debugf("Hostname validation is disabled, accepting %s as a valid hostname", hostname)
+		return nil
+	}
+	return validate.ValidHostname(hostname)
 }
 
 // GetConfiguredTags returns complete list of user configured tags

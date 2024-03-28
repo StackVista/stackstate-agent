@@ -9,8 +9,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/ecs"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/ecs"
 )
 
 // IsFargateInstance returns whether the Agent is running in Fargate.

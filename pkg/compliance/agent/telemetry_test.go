@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/collectors"
 
 	"github.com/stretchr/testify/assert"
 )

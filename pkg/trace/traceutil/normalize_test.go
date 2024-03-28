@@ -45,7 +45,7 @@ func TestNormalizeTag(t *testing.T) {
 		{in: "AlsO:œ#@ö))œk", out: "also:œ_ö_œk"},
 		{in: "test\x99\x8faaa", out: "test_aaa"},
 		{in: "test\x99\x8f", out: "test"},
-		{in: strings.Repeat("a", 888), out: strings.Repeat("a", 200)},
+		{in: strings.Repeat("a", 888), out: strings.Repeat("a", 500)},
 		{
 			in: func() string {
 				b := bytes.NewBufferString("a")
@@ -104,9 +104,14 @@ func TestNormalizeName(t *testing.T) {
 		},
 		{
 			name:       "Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.Too-Long-.",
-			normalized: "Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.",
-			err:        ErrTooLong,
+			normalized: "Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.Too_Long.", // sts
+			err:        nil,                                                                                                   // sts
 		},
+		{ // sts begin
+			name:       strings.Repeat("Too-Long-.", 51),
+			normalized: strings.Repeat("Too_Long.", 50),
+			err:        ErrTooLong,
+		}, // sts end
 		{
 			name:       "bad-name",
 			normalized: "bad_name",
@@ -138,9 +143,14 @@ func TestNormalizeService(t *testing.T) {
 		},
 		{
 			service:    "Too$Long$.Too$Long$.Too$Long$.Too$Long$.Too$Long$.Too$Long$.Too$Long$.Too$Long$.Too$Long$.Too$Long$.Too$Long$.",
-			normalized: "too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.",
-			err:        ErrTooLong,
+			normalized: "too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.too_long_.", // sts
+			err:        nil,                                                                                                              // sts
 		},
+		{ // sts begin
+			service:    strings.Repeat("Too$Long$.", 51),
+			normalized: strings.Repeat("too_long_.", 50),
+			err:        ErrTooLong,
+		}, // sts end
 		{
 			service:    "bad$service",
 			normalized: "bad_service",

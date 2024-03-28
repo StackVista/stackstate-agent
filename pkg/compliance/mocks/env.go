@@ -3,10 +3,10 @@
 package mocks
 
 import (
-	env "github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
-	eval "github.com/DataDog/datadog-agent/pkg/compliance/eval"
+	env "github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
+	eval "github.com/StackVista/stackstate-agent/pkg/compliance/eval"
 
-	event "github.com/DataDog/datadog-agent/pkg/compliance/event"
+	event "github.com/StackVista/stackstate-agent/pkg/compliance/event"
 
 	mock "github.com/stretchr/testify/mock"
 )

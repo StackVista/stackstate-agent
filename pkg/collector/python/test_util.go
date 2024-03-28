@@ -3,17 +3,33 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build python && test
 // +build python,test
 
 package python
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 import "C"
+
+func SetupTransactionalComponents() {
+	// Set storage root for tests
+	config.Datadog.Set("check_state_root_path", "/tmp/fake-datadog-run")
+
+	handler.InitCheckManager()
+	state.InitCheckStateManager()
+	transactionbatcher.NewMockTransactionalBatcher()
+	transactionmanager.NewMockTransactionManager()
+}
 
 func testGetSubprocessOutputEmptyArgs(t *testing.T) {
 	var argv **C.char

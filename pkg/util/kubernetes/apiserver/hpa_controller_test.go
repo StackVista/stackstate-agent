@@ -27,9 +27,9 @@ import (
 	kscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
 
-	"github.com/DataDog/datadog-agent/pkg/clusteragent/custommetrics"
-	"github.com/DataDog/datadog-agent/pkg/errors"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/autoscalers"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/custommetrics"
+	"github.com/StackVista/stackstate-agent/pkg/errors"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/autoscalers"
 )
 
 func newFakeConfigMapStore(t *testing.T, ns, name string, metrics map[string]custommetrics.ExternalMetricValue) (custommetrics.Store, kubernetes.Interface) {

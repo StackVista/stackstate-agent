@@ -18,67 +18,74 @@ import (
 
 	_ "net/http/pprof" // Blank import used because this isn't directly used in this file
 
-	"github.com/DataDog/datadog-agent/cmd/agent/api"
-	"github.com/DataDog/datadog-agent/cmd/agent/clcrunnerapi"
-	"github.com/DataDog/datadog-agent/cmd/agent/common"
-	"github.com/DataDog/datadog-agent/cmd/agent/common/misconfig"
-	"github.com/DataDog/datadog-agent/cmd/agent/common/signals"
-	"github.com/DataDog/datadog-agent/cmd/agent/gui"
-	"github.com/DataDog/datadog-agent/cmd/manager"
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/api/healthprobe"
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery"
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/embed/jmx"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	remoteconfig "github.com/DataDog/datadog-agent/pkg/config/remote/service"
-	"github.com/DataDog/datadog-agent/pkg/config/settings"
-	"github.com/DataDog/datadog-agent/pkg/dogstatsd"
-	"github.com/DataDog/datadog-agent/pkg/epforwarder"
-	"github.com/DataDog/datadog-agent/pkg/forwarder"
-	"github.com/DataDog/datadog-agent/pkg/logs"
-	"github.com/DataDog/datadog-agent/pkg/metadata"
-	"github.com/DataDog/datadog-agent/pkg/metadata/host"
-	orchcfg "github.com/DataDog/datadog-agent/pkg/orchestrator/config"
-	"github.com/DataDog/datadog-agent/pkg/otlp"
-	"github.com/DataDog/datadog-agent/pkg/pidfile"
-	"github.com/DataDog/datadog-agent/pkg/serializer"
-	"github.com/DataDog/datadog-agent/pkg/snmp/traps"
-	"github.com/DataDog/datadog-agent/pkg/status/health"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/cloudproviders"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/version"
+	"github.com/StackVista/stackstate-agent/cmd/agent/api"
+	"github.com/StackVista/stackstate-agent/cmd/agent/clcrunnerapi"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common/misconfig"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common/signals"
+	"github.com/StackVista/stackstate-agent/cmd/agent/gui"
+	"github.com/StackVista/stackstate-agent/cmd/manager"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/api/healthprobe"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"                 // sts
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler" // sts
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"   // sts
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/embed/jmx"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"   // sts
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionforwarder" // sts
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"   // sts
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	remoteconfig "github.com/StackVista/stackstate-agent/pkg/config/remote/service"
+	"github.com/StackVista/stackstate-agent/pkg/config/settings"
+	"github.com/StackVista/stackstate-agent/pkg/dogstatsd"
+	"github.com/StackVista/stackstate-agent/pkg/epforwarder"
+	"github.com/StackVista/stackstate-agent/pkg/forwarder"
+	"github.com/StackVista/stackstate-agent/pkg/logs"
+	"github.com/StackVista/stackstate-agent/pkg/metadata"
+	"github.com/StackVista/stackstate-agent/pkg/metadata/host"
+	orchcfg "github.com/StackVista/stackstate-agent/pkg/orchestrator/config"
+	"github.com/StackVista/stackstate-agent/pkg/otlp"
+	"github.com/StackVista/stackstate-agent/pkg/pidfile"
+	"github.com/StackVista/stackstate-agent/pkg/serializer"
+	"github.com/StackVista/stackstate-agent/pkg/snmp/traps"
+	"github.com/StackVista/stackstate-agent/pkg/status/health"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 	"github.com/spf13/cobra"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 
 	// runtime init routines
-	ddruntime "github.com/DataDog/datadog-agent/pkg/runtime"
+	ddruntime "github.com/StackVista/stackstate-agent/pkg/runtime"
 
 	// register core checks
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/ksm"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/kubernetesapiserver"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/cluster/orchestrator"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/containers/containerd"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/containers/cri"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/containers/docker"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/containers/generic"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/ebpf"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/embed"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/net"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/nvidia/jetson"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/snmp"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/system/cpu"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/system/disk"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/system/filehandles"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/system/memory"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/system/uptime"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/system/winproc"
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/systemd"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/ksm"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/kubernetesapiserver"
+	// [STS] avoid running the orchestrator. Re-enable once upstream merging has been done (if needed)
+	//_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/cluster/orchestrator"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/containerd"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/cri"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/docker"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/generic"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/ebpf"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/embed"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/net"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/nvidia/jetson"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/snmp"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/system/cpu"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/system/disk"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/system/filehandles"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/system/memory"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/system/uptime"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/system/winproc"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/systemd"
 
 	// register metadata providers
-	_ "github.com/DataDog/datadog-agent/pkg/collector/metadata"
-	_ "github.com/DataDog/datadog-agent/pkg/metadata"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/metadata"
+	_ "github.com/StackVista/stackstate-agent/pkg/metadata"
 )
 
 var (
@@ -390,6 +397,9 @@ func StartAgent() error {
 	agg := aggregator.InitAggregator(s, eventPlatformForwarder, hostname)
 	agg.AddAgentStartupTelemetry(version.AgentVersion)
 
+	// [sts] init the batcher for topology production
+	batcher.InitBatcher(s, hostname, "agent", config.GetMaxCapacity())
+
 	// start dogstatsd
 	if config.Datadog.GetBool("use_dogstatsd") {
 		var err error
@@ -449,6 +459,20 @@ func StartAgent() error {
 
 	// create and setup the Autoconfig instance
 	common.LoadComponents(config.Datadog.GetString("confd_path"))
+
+	// [STS] create the global transactional components
+	if config.Datadog.GetBool("check_transactionality_enabled") {
+		state.InitCheckStateManager()
+		transactionforwarder.InitTransactionalForwarder()
+		transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity())
+		handler.InitCheckManager()
+		txChannelBufferSize, txTimeoutDuration, txEvictionDuration, txTickerInterval := config.GetTxManagerConfig()
+		transactionmanager.InitTransactionManager(txChannelBufferSize, txTickerInterval, txTimeoutDuration, txEvictionDuration)
+	} else {
+		state.InitCheckStateManager()
+		handler.InitCheckManager()
+	}
+
 	// start the autoconfig, this will immediately run any configured check
 	common.StartAutoConfig()
 
@@ -465,6 +489,8 @@ func StartAgent() error {
 		if err := metadata.SetupInventories(common.MetadataScheduler, common.AC, common.Coll); err != nil {
 			return err
 		}
+	} else {
+		log.Info("Metadata inventory collection disabled") // sts
 	}
 
 	// start dependent services
@@ -499,6 +525,19 @@ func StopAgent() {
 	if common.MetadataScheduler != nil {
 		common.MetadataScheduler.Stop()
 	}
+
+	// [sts] stop the transactional components
+	if config.Datadog.GetBool("check_transactionality_enabled") {
+		state.GetCheckStateManager().Clear()
+		handler.GetCheckManager().Stop()
+		transactionbatcher.GetTransactionalBatcher().Stop()
+		transactionforwarder.GetTransactionalForwarder().Stop()
+		transactionmanager.GetTransactionManager().Stop()
+	} else {
+		state.GetCheckStateManager().Clear()
+		handler.GetCheckManager().Stop()
+	}
+
 	traps.StopServer()
 	api.StopServer()
 	clcrunnerapi.StopCLCRunnerServer()

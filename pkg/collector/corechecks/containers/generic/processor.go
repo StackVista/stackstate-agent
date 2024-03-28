@@ -9,14 +9,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/security/log"
-	"github.com/DataDog/datadog-agent/pkg/tagger"
-	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/v2/metrics"
-	"github.com/DataDog/datadog-agent/pkg/workloadmeta"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/security/log"
+	"github.com/StackVista/stackstate-agent/pkg/tagger"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/v2/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta"
 )
 
 // Processor contains the core logic of the generic check, allowing reusability
@@ -109,6 +109,7 @@ func (p *Processor) processContainer(sender aggregator.Sender, tags []string, co
 		p.sendMetric(sender.Rate, "container.cpu.usage", containerStats.CPU.Total, tags)
 		p.sendMetric(sender.Rate, "container.cpu.user", containerStats.CPU.User, tags)
 		p.sendMetric(sender.Rate, "container.cpu.system", containerStats.CPU.System, tags)
+		p.sendMetric(sender.Rate, "container.cpu.elapsed.periods", containerStats.CPU.ElapsedPeriods, tags)
 		p.sendMetric(sender.Rate, "container.cpu.throttled", containerStats.CPU.ThrottledTime, tags)
 		p.sendMetric(sender.Rate, "container.cpu.throttled.periods", containerStats.CPU.ThrottledPeriods, tags)
 		// Convert CPU Limit to nanoseconds to allow easy percentage computation in the App.

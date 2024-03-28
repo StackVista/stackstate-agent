@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build containerd
 // +build containerd
 
 package containerd
@@ -14,10 +15,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	dderrors "github.com/DataDog/datadog-agent/pkg/errors"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/util/retry"
+	"github.com/opencontainers/runtime-spec/specs-go"
+
+	cspec "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec" // sts
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	dderrors "github.com/StackVista/stackstate-agent/pkg/errors"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/retry"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/types"
@@ -71,7 +75,7 @@ type ContainerdUtil struct {
 
 // GetContainerdUtil creates the Containerd util containing the Containerd client and implementing the ContainerdItf
 // Errors are handled in the retrier.
-func GetContainerdUtil() (ContainerdItf, error) {
+func GetContainerdUtil() (*ContainerdUtil, error) {
 	once.Do(func() {
 		globalContainerdUtil = &ContainerdUtil{
 			queryTimeout:      config.Datadog.GetDuration("cri_query_timeout") * time.Second,
@@ -93,7 +97,7 @@ func GetContainerdUtil() (ContainerdItf, error) {
 		})
 	})
 	if err := globalContainerdUtil.initRetry.TriggerRetry(); err != nil {
-		log.Errorf("Containerd init error: %s", err.Error())
+		log.Debugf("Containerd init error: %s", err.Error()) // sts - changed log to DEBUG level
 		return nil, err
 	}
 	return globalContainerdUtil, nil
@@ -125,7 +129,7 @@ func (c *ContainerdUtil) connect() error {
 	if c.cl != nil {
 		err = c.cl.Reconnect()
 		if err != nil {
-			log.Errorf("Could not reconnect to the containerd daemon: %v", err)
+			_ = log.Errorf("Could not reconnect to the containerd daemon: %v", err)
 			return c.cl.Close() // Attempt to close connections to avoid overloading the GRPC
 		}
 		return nil
@@ -164,6 +168,68 @@ func (c *ContainerdUtil) ContainerWithContext(ctx context.Context, id string) (c
 	}
 
 	return ctn, err
+}
+
+// GetContainers interfaces with the containerd api to get the list of containers.
+func (c *ContainerdUtil) GetContainers(ctx context.Context) ([]*cspec.Container, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.queryTimeout)
+	defer cancel()
+
+	dContainers, err := c.Containers()
+	if err != nil {
+		return nil, err
+	}
+
+	uContainers := make([]*cspec.Container, 0, len(dContainers))
+	for _, dContainer := range dContainers {
+		ctxNamespace := namespaces.WithNamespace(ctx, c.namespace)
+
+		info, err := dContainer.Info(ctxNamespace)
+		if err != nil {
+			_ = log.Errorf("Could not extract containerd %s from container '%s'. Error: %v", "Info", dContainer.ID(), err)
+			continue
+		}
+		name := info.ID
+		if nameLabel, ok := info.Labels["io.kubernetes.container.name"]; ok {
+			name = nameLabel
+		}
+
+		var mounts []specs.Mount
+		spec, err := dContainer.Spec(ctxNamespace)
+		if err != nil {
+			logExtractionError("mounts (Spec)", dContainer, err)
+		} else {
+			mounts = spec.Mounts
+		}
+
+		state := ""
+		task, err := dContainer.Task(ctxNamespace, nil)
+		if err != nil {
+			logExtractionError("Task", dContainer, err)
+		} else {
+			status, err := task.Status(ctxNamespace)
+			if err != nil {
+				logExtractionError("Task Status", dContainer, err)
+			} else {
+				state = string(status.Status)
+			}
+		}
+
+		container := &cspec.Container{
+			Name:    name,
+			Runtime: "containerd",
+			ID:      dContainer.ID(),
+			Image:   info.Image,
+			Mounts:  mounts,
+			State:   state,
+		}
+		uContainers = append(uContainers, container)
+	}
+	return uContainers, nil
+}
+
+func logExtractionError(what string, container containerd.Container, err error) {
+	log.Debugf("Could not extract containerd %s from container '%s'. Error: %v", what, container.ID(), err)
 }
 
 // Containers interfaces with the containerd api to get the list of Containers.

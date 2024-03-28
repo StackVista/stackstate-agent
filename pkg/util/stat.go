@@ -9,7 +9,7 @@ import (
 	"expvar"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // Stat type includes a statted value and its timestamp.

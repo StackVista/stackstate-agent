@@ -1,0 +1,1757 @@
+image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
+
+stages:
+  - manual
+  - prepare
+  - build
+  - test
+  - pre_release
+  - acceptance
+  - cleanup
+  - release
+
+######################### pipeline bricks
+
+.retrieve_linux_go_deps_script: &retrieve_linux_go_deps_script |
+  echo "~~~~~> Trying to retrieve_linux_go_deps"
+  ls *.tar.gz || true
+  [ -e "go-bin.tar.gz" ] && mkdir -p $GOPATH/bin && tar xzf go-bin.tar.gz -C $GOPATH/bin
+  [ -e "go-pkg.tar.gz" ] && mkdir -p $GOPATH/pkg && tar xzf go-pkg.tar.gz -C $GOPATH/pkg
+  [ -e "vendor.tar.gz" ] && mkdir vendor && tar xzf vendor.tar.gz -C vendor
+  rm -f go-bin.tar.gz go-pkg.tar.gz vendor.tar.gz || true
+  echo "~~~~~> /Trying..."
+
+.configure_centos_env_script: &configure_centos_env_script |
+  . /root/.gimme/envs/go1.16.7.env
+  . /root/miniconda3/etc/profile.d/conda.sh
+  conda activate $CONDA_ENV
+  mkdir -p /go/src/github.com/StackVista
+  rm -rf /go/src/github.com/StackVista/stackstate-agent || true
+  ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
+  . /usr/local/rvm/scripts/rvm
+  export PATH=/go/bin:/usr/local/go/bin:$PATH
+  eval $(gimme)
+
+.configure_debian_env_script: &configure_debian_env_script |
+  . /root/miniconda3/etc/profile.d/conda.sh # TODO: check possibility to use bash from the start
+  conda activate $CONDA_ENV
+  mkdir -p /go/src/github.com/StackVista
+  rm -rf /go/src/github.com/StackVista/stackstate-agent || true
+  . /usr/local/rvm/scripts/rvm
+  ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
+
+.configure_windows_ps1_env_script: &configure_windows_ps1_env_script |
+  Import-Module C:\tools\miniconda3\shell\condabin\conda-hook.ps1
+  ./.gitlab-scripts/conda_env.ps1 $CONDA_ENV $PYTHON_RUNTIMES
+  conda activate $CONDA_ENV
+  $current_dir=Get-Location
+  New-Item -ItemType Directory -Force -Path "$Env:GOPATH\\src\\github.com\\StackVista"
+  cmd /c if exist %GOPATH%\src\github.com\StackVista\stackstate-agent rd /s/q %GOPATH%\src\github.com\StackVista\stackstate-agent
+  New-Item -ItemType SymbolicLink -Path "$Env:GOPATH\\src\\github.com\\StackVista\\stackstate-agent" -Target $current_dir -Force
+
+.rules:
+  # rules specific to the cluster agent, kubernetes, docker swarm. Currently we default to only running them on Python2
+  # build so that we can release the cluster agent as part of a V2 release.
+  # TODO: Change this when V3 releases are finalized and the default.
+  - &cluster_agent
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
+  - &cluster_agent_release
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_JOB_TRIGGERED == "true")
+    when: manual
+  - &cluster_agent_manual
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION
+    when: manual
+    allow_failure: true
+
+# Merge train rules for agent v2
+.v2_merge_train_always: &v2_merge_train_always
+  # If the major version is 2, and it is the master branch or a tag, always execute this step
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: always
+    allow_failure: false
+  # Else, if the major version is 2, and it is a merge train job, always execute this step
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: always
+    allow_failure: false
+  # Else, if the major version is 2, and there is a valid MR internal ID, manually execute this step
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
+    when: manual
+    allow_failure: true
+  # Else, if the major version is 2, and there is an open merge request (but no MR IID), never execute this step
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
+    when: never
+  # Else, if the major version is 2, and code was committed to a branch, manually execute this step
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
+    when: manual
+    allow_failure: true
+
+.v2_merge_train_always_on_tag: &v2_merge_train_always_on_tag
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_TAG
+    when: always
+    allow_failure: false
+
+.v2_merge_train_always_manual: &v2_merge_train_always_manual
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: manual
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: manual
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
+    when: manual
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
+    when: manual
+    allow_failure: true
+
+.v2_merge_train_on_success: &v2_merge_train_on_success
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: on_success
+    allow_failure: false
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_success
+    allow_failure: false
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
+    when: on_success
+    allow_failure: false
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
+    when: on_success
+    allow_failure: false
+
+.v2_merge_train_on_success_allow_failure: &v2_merge_train_on_success_allow_failure
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: on_success
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_success
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
+    when: on_success
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
+    when: on_success
+    allow_failure: true
+
+.v2_merge_train_on_failure: &v2_merge_train_on_failure
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: on_failure
+    allow_failure: false
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_failure
+    allow_failure: false
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
+    when: on_failure
+    allow_failure: false
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
+    when: on_failure
+    allow_failure: false
+
+# Merge train rules for all agents
+.merge_train_always: &merge_train_always
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: always
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: always
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_IID
+    when: manual
+    allow_failure: true
+  - if: $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $CI_COMMIT_BRANCH
+    when: manual
+    allow_failure: true
+
+.merge_train_always_manual: &merge_train_always_manual
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: manual
+    allow_failure: true
+  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: manual
+    allow_failure: true
+  - if: $CI_MERGE_REQUEST_IID
+    when: manual
+    allow_failure: true
+  - if: $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $CI_COMMIT_BRANCH
+    when: manual
+    allow_failure: true
+
+.merge_train_on_success: &merge_train_on_success
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: on_success
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_success
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_IID
+    when: on_success
+    allow_failure: false
+  - if: $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $CI_COMMIT_BRANCH
+    when: on_success
+    allow_failure: false
+
+.merge_train_on_failure: &merge_train_on_failure
+  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: on_failure
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_failure
+    allow_failure: false
+  - if: $CI_MERGE_REQUEST_IID
+    when: on_failure
+    allow_failure: false
+  - if: $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $CI_COMMIT_BRANCH
+    when: on_failure
+    allow_failure: false
+
+######################### /pipeline bricks
+
+# Core Molecule Structure for all the molecule steps
+.artifacts_expire_in: &artifacts_expire_in
+  expire_in: 1 week
+
+before_script:
+  - *configure_debian_env_script
+  - *retrieve_linux_go_deps_script
+
+deps_deb:
+  stage: prepare
+  interruptible: true
+  cache:
+    key: "deps-deb-$STS_VER-$CI_COMMIT_REF_SLUG"
+    paths:
+      - vendor
+      - venv
+  script:
+    - conda activate $CONDA_ENV
+    - inv -e deps --verbose
+    - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
+    - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz .
+    - cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz .
+    - cd $CI_PROJECT_DIR/vendor && tar czf $CI_PROJECT_DIR/vendor.tar.gz .
+  artifacts:
+    <<: *artifacts_expire_in
+    paths:
+      - $CI_PROJECT_DIR/version.txt
+      - $CI_PROJECT_DIR/go-pkg.tar.gz
+      - $CI_PROJECT_DIR/go-bin.tar.gz
+      - $CI_PROJECT_DIR/vendor.tar.gz
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: always
+
+deps_rpm:
+  stage: prepare
+  interruptible: true
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220826
+  cache:
+    key: "deps-rpm-$STS_VER-$CI_COMMIT_REF_SLUG"
+    paths:
+      - vendor
+  before_script:
+    - *configure_centos_env_script
+  script:
+    - conda activate $CONDA_ENV
+    - inv -e deps --verbose
+    - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
+    - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz .
+    - cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz .
+    - cd $CI_PROJECT_DIR/vendor && tar czf $CI_PROJECT_DIR/vendor.tar.gz .
+  artifacts:
+    <<: *artifacts_expire_in
+    paths:
+      - $CI_PROJECT_DIR/version.txt
+      - $CI_PROJECT_DIR/go-pkg.tar.gz
+      - $CI_PROJECT_DIR/go-bin.tar.gz
+      - $CI_PROJECT_DIR/vendor.tar.gz
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - *merge_train_always_manual
+
+deps_win:
+  stage: prepare
+  interruptible: true
+  before_script:
+    - *configure_windows_ps1_env_script
+  cache:
+    key: "deps-win-$STS_VER-$CI_COMMIT_REF_SLUG"
+    paths:
+      - vendor
+  script:
+    - conda activate $CONDA_ENV
+    - pip install pathlib==1.0.1
+    - inv deps
+    - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
+    - cd $Env:GOPATH/pkg ; tar --force-local -czf $CI_PROJECT_DIR/go-pkg.tar.gz .
+    - cd $Env:GOPATH/bin ; tar --force-local -czf $CI_PROJECT_DIR/go-bin.tar.gz .
+    - cd $Env:CI_PROJECT_DIR/vendor ; tar --force-local -czf $CI_PROJECT_DIR/vendor.tar.gz .
+  artifacts:
+    <<: *artifacts_expire_in
+    paths:
+      - $CI_PROJECT_DIR/version.txt
+      - $CI_PROJECT_DIR/go-pkg.tar.gz
+      - $CI_PROJECT_DIR/go-bin.tar.gz
+      - $CI_PROJECT_DIR/vendor.tar.gz
+  tags:
+    - windows_agent7_ps1
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - *merge_train_always_manual
+
+## build stage
+
+unit_tests:
+  stage: test
+  interruptible: true
+  needs:
+    - deps_deb
+  script:
+    - conda activate $CONDA_ENV
+    # We run inv deps again because /go/bin is not cached and we need binaries like golint, misspell
+    - inv deps
+    - inv -e agent.build --race --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
+    # TODO: check why formatting rules differ from previous step
+    - gofmt -l -w -s ./pkg ./cmd
+    - inv -e rtloader.test
+    - invoke install-tools
+    - inv -e test --coverage --race --profile --fail-on-fmt --cpus 4 --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
+  tags:
+    - sts-k8s-xl-runner
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+  timeout: 45 minutes
+
+filename_linting:
+  stage: test
+  interruptible: true
+  needs:
+    - deps_deb
+  script:
+    - conda activate $CONDA_ENV
+    - inv -e lint-filenames
+  rules:
+    - when: on_success
+  retry:
+    max: 2
+    when:
+      - always
+
+# TODO:  Not observed in v7 in a direct form ?
+#docker_integration_tests:
+#  stage: test
+#  needs:
+#    - deps_deb
+#  variables:
+#      DOCKER_DRIVER: overlay
+#      DOCKER_HOST: tcp://docker:2375
+#      DOCKER_TLS_CERTDIR: ""
+#  services:
+#    - docker:18.09-dind
+#  script:
+#    - inv -e docker.integration-tests
+#  tags:
+#    - sts-aws
+
+build_binaries:
+  stage: build
+  interruptible: true
+  needs:
+    - deps_deb
+  script:
+    - conda activate $CONDA_ENV
+    - inv -e dogstatsd.build --static --major-version $MAJOR_VERSION
+    - inv -e rtloader.make
+    - inv -e rtloader.install
+    - cd $SRC_PATH
+    - inv -e agent.build --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
+  tags:
+    - sts-k8s-m-runner
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+
+build_cluster_agent:
+  stage: build
+  interruptible: true
+  needs:
+    - deps_deb
+  script:
+    - conda activate $CONDA_ENV
+    - inv -e cluster-agent.build
+    - ls -la $CI_PROJECT_DIR/bin/
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/bin/stackstate-cluster-agent
+      - $CI_PROJECT_DIR/Dockerfiles/cluster-agent/stackstate-cluster.yaml
+      - $CI_PROJECT_DIR/version.txt
+    <<: *artifacts_expire_in
+  rules:
+    - *cluster_agent
+  retry:
+    max: 2
+    when:
+      - always
+
+build_deb:
+  stage: build
+  interruptible: true
+  needs:
+    - deps_deb
+  tags:
+    - sts-k8s-xl-no-docker-runner
+  cache:
+    key: "build-deb-$STS_VER-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .omnibus
+      - .gems
+  script:
+    # We move .omnibus out of the CI root because this seems to cause issues with git
+    # cloning in omnibus and operations on datadog-agent
+    - mv $CI_PROJECT_DIR/.omnibus /omnibus || mkdir -p /omnibus
+
+    - conda activate $CONDA_ENV
+    - inv agent.version --major-version $MAJOR_VERSION
+    - cat version.txt || true
+    - source ./.gitlab-scripts/setup_artifactory.sh
+
+    - inv -e agent.omnibus-build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --go-mod-cache $CI_PROJECT_DIR/vendor --skip-deps --skip-sign --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
+
+    # Prepare outputs
+    - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles && mkdir -p $CI_PROJECT_DIR/outcomes/binary
+    - cp -r $OMNIBUS_BASE_DIR/pkg $CI_PROJECT_DIR/outcomes
+    - cp -r $CI_PROJECT_DIR/Dockerfiles $CI_PROJECT_DIR/outcomes
+    - cp -r /opt/stackstate-agent/embedded/bin/trace-agent  $CI_PROJECT_DIR/outcomes/binary/
+
+    - ls -la $CI_PROJECT_DIR/outcomes/Dockerfiles
+
+    # Prepare cache
+    # Drop packages for cache
+    - rm -rf /omnibus/pkg
+    # Drop agent for cache (will be resynced anyway)
+    - rm -rf /omnibus/src/datadog-agent
+    # Drop symlink because it will fail the build when coming from a cache
+    - rm /omnibus/src/datadog-agent/src/github.com/StackVista/stackstate-agent/vendor/github.com/coreos/etcd/cmd/etcd || echo "Not found"
+    - mv /omnibus $CI_PROJECT_DIR/.omnibus
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/outcomes/pkg/*.deb
+      - $CI_PROJECT_DIR/outcomes/pkg/*.json
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/agent
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/cluster-agent
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/dogstatsd
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/manifests
+      - $CI_PROJECT_DIR/version.txt
+      - $CI_PROJECT_DIR/outcomes/binary/trace-agent
+    <<: *artifacts_expire_in
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+
+build_rpm:
+  stage: build
+  interruptible: true
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220826
+  needs:
+    - deps_rpm
+  tags:
+    - sts-k8s-xl-no-docker-runner
+  cache:
+    key: "build-rpm-$STS_VER-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .omnibus
+      - .gems
+  before_script:
+    - *configure_centos_env_script
+    - *retrieve_linux_go_deps_script
+  script:
+    # We move .omnibus out of the CI root because this seems to cause issues with git
+    # cloning in omnibus and operations on datadog-agent
+    - mv $CI_PROJECT_DIR/.omnibus /omnibus || mkdir -p /omnibus
+
+    - conda activate $CONDA_ENV
+    - inv agent.version --major-version $MAJOR_VERSION
+    - cat version.txt || true
+    - source ./.gitlab-scripts/setup_artifactory.sh
+
+    # TODO:  --python-runtimes "$PYTHON_RUNTIMES" --system-probe-bin=/tmp/system-probe --libbcc-tarball=/tmp/libbcc.tar.xz
+    - inv -e agent.omnibus-build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR --skip-deps --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
+      #  - find $OMNIBUS_BASE_DIR/pkg -type f -name '*.rpm' ! -name '*dbg*.rpm' -print0 | xargs -0 -I '{}' rpm -i '{}'
+    #  - find $OMNIBUS_BASE_DIR/pkg -type f -name '*dbg*.rpm' -print0 | xargs -0 -I '{}' rpm -i '{}'
+
+    # Prepare outputs
+    - mkdir -p $CI_PROJECT_DIR/outcomes/pkg && mkdir -p $CI_PROJECT_DIR/outcomes/dockerfiles
+    - cp -r $OMNIBUS_BASE_DIR/pkg $CI_PROJECT_DIR/outcomes
+    - cp -r $CI_PROJECT_DIR/Dockerfiles $CI_PROJECT_DIR/outcomes
+
+    - ls -la $CI_PROJECT_DIR/outcomes/Dockerfiles
+
+    #    # Prepare cache
+    #    # Drop packages for cache
+    - rm -rf /omnibus/pkg
+    #    # Drop agent for cache (will be resynced anyway)
+    - rm -rf /omnibus/src/datadog-agent
+    #    # Drop symlink because it will fail the build when coming from a cache
+    - rm /omnibus/src/datadog-agent/src/github.com/StackVista/stackstate-agent/vendor/github.com/coreos/etcd/cmd/etcd || echo "Not found"
+    - mv /omnibus $CI_PROJECT_DIR/.omnibus
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/outcomes/pkg/*.rpm
+      - $CI_PROJECT_DIR/outcomes/pkg/*.json
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/agent
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/cluster-agent
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/dogstatsd
+      - $CI_PROJECT_DIR/outcomes/Dockerfiles/manifests
+      - $CI_PROJECT_DIR/version.txt
+    <<: *artifacts_expire_in
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+
+build_win:
+  stage: build
+  interruptible: true
+  needs:
+    - deps_win
+  cache:
+    key: "build-win-$STS_VER-$CI_COMMIT_REF_SLUG"
+    paths:
+      - .gems
+  before_script:
+    - *configure_windows_ps1_env_script
+    - Import-VisualStudioVars 2019 -Architecture amd64
+    - ridk enable
+    - del C:\omnibus-ruby\pkg\*
+  script:
+    - cmd.exe /c "%GOPATH%\src\github.com\StackVista\stackstate-agent\.gitlab-scripts\setup_artifactory.cmd"
+    - conda activate $CONDA_ENV
+    - inv -e agent.omnibus-build --gem-path $CI_PROJECT_DIR/.gems --base-dir $OMNIBUS_BASE_DIR_WIN --skip-sign --log-level debug --major-version $MAJOR_VERSION --python-runtimes $PYTHON_RUNTIMES
+  after_script:
+    - cmd.exe /c "copy %GOPATH%\src\github.com\StackVista\stackstate-agent\omnibus\pkg\*.msi"
+    - attrib.exe * /D /S -h -r -s
+  artifacts:
+    <<: *artifacts_expire_in
+    paths:
+      - ./*.msi
+      - "version.txt"
+  tags:
+    - windows_agent7_ps1
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+
+## pre_release stage
+
+test_deb_renaming:
+  stage: test
+  interruptible: true
+  needs:
+    - build_deb
+  before_script: []
+  script:
+    - ./test/renaming/test_deb.sh $CI_PROJECT_DIR/outcomes/pkg/stackstate-agent_$MAJOR_VERSION*.deb
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+
+test_rpm_renaming:
+  stage: test
+  interruptible: true
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220826
+  needs:
+    - build_rpm
+  before_script: []
+  script:
+    - ./test/renaming/test_rpm.sh $CI_PROJECT_DIR/outcomes/pkg/stackstate-agent-$MAJOR_VERSION*.rpm
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+
+
+pre_release_deb:
+  stage: pre_release
+  interruptible: true
+  needs:
+    - deps_deb
+    - build_deb
+  script:
+    - source /usr/local/rvm/scripts/rvm
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_TEST_BUCKET
+    - cd $CI_PROJECT_DIR && inv release.generate-install -t
+    - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_TEST_BUCKET']).object('install.sh').upload_file('./install.sh', acl:'public-read')"
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+
+pre_release_win:
+  stage: pre_release
+  interruptible: true
+  needs:
+    - deps_win
+    - build_win
+  before_script:
+    - *configure_windows_ps1_env_script
+    - Import-VisualStudioVars 2019 -Architecture amd64
+    - ridk enable
+  script:
+    - $env:VERSION = Get-Content version.txt -First 1
+    - $filename = "stackstate-agent-" + $Env:VERSION + "-1-x86_64.msi"
+    - $filename
+    - Copy-Item $filename -Destination stackstate-agent-latest-1-x86_64.msi
+    - ls
+    - aws.exe s3 cp . s3://$Env:STS_AWS_TEST_BUCKET_WIN/windows/$Env:CI_COMMIT_REF_NAME --recursive --exclude "*" --include "*.msi" --acl public-read
+    - inv release.generate-install -t
+    - aws.exe s3 cp ./cmd/agent/install.ps1 s3://$Env:STS_AWS_TEST_BUCKET_WIN/install.ps1 --acl public-read
+    - aws.exe s3 ls s3://$Env:STS_AWS_TEST_BUCKET_WIN/windows/$Env:CI_COMMIT_REF_NAME/
+    - aws.exe s3 ls s3://$Env:STS_AWS_TEST_BUCKET_WIN/
+  tags:
+    - windows_agent7_ps1
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+
+pre_release_rpm:
+  stage: pre_release
+  interruptible: true
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
+  needs:
+    - build_rpm
+  before_script: []
+  script:
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_rpm_package.sh
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package_rpm.sh $STS_AWS_TEST_BUCKET_YUM
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+
+pre_release_main_agent_image: &pre_release_image
+  stage: pre_release
+  interruptible: true
+  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
+  needs:
+    - build_deb
+  variables:
+    DOCKER_DRIVER: overlay
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  services:
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
+      alias: docker
+  before_script: []
+  script:
+    - cd $CI_PROJECT_DIR
+    - export VERSION=`cat version.txt`
+    - cp ./outcomes/pkg/stackstate-agent_*_amd64.deb ./Dockerfiles/agent
+    - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO $CI_PROJECT_DIR/Dockerfiles/agent $CI_COMMIT_SHORT_SHA $STS_DOCKER_K8S_REPO
+  tags:
+    - sts-k8s-m-runner
+  retry:
+    max: 2
+    when:
+      - always
+  rules:
+    - when: on_success
+
+pre_release_swarm_agent_image:
+  <<: *pre_release_image
+  needs:
+    - pre_release_main_agent_image
+  script:
+    - cd $CI_PROJECT_DIR
+    #                     script                           $IMAGE_TAG              $IMAGE_REPO              $EXTRA_TAG            $BASE_REPO           $BASE_TAG
+    - ./omnibus/package-scripts/publish_swarm_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_SWARM $CI_COMMIT_SHORT_SHA $STS_DOCKER_TEST_REPO $CI_COMMIT_SHORT_SHA
+  rules:
+    - *cluster_agent_manual
+    - *v2_merge_train_always_manual
+
+pre_release_trace_agent_image:
+  <<: *pre_release_image
+  interruptible: true
+  script:
+    - cd $CI_PROJECT_DIR
+    - export VERSION=`cat version.txt`
+    - cp ./outcomes/binary/trace-agent Dockerfiles/trace-agent
+    - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_TRACE $CI_PROJECT_DIR/Dockerfiles/trace-agent $CI_COMMIT_SHORT_SHA "NOP"
+  rules:
+    - *cluster_agent_manual
+    - *v2_merge_train_always_manual
+
+pre_release_cluster_agent_image:
+  <<: *pre_release_image
+  interruptible: true
+  needs:
+    - build_cluster_agent
+  script:
+    - cd $CI_PROJECT_DIR
+    - cp -r ./bin/stackstate-cluster-agent* ./Dockerfiles/cluster-agent
+    - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent $CI_COMMIT_SHORT_SHA $STS_DOCKER_K8S_REPO_CLUSTER
+  rules:
+    - *cluster_agent
+
+# Core Molecule Structure for all the molecule steps
+.molecule: &molecule
+  interruptible: true
+  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_REF_NAME-$MOLECULE_SCENARIO"
+  dependencies: []
+  before_script:
+    - export AWS_ACCESS_KEY_ID=${MOLECULE_AWS_ACCESS_KEY_ID}
+    - export AWS_SECRET_ACCESS_KEY=${MOLECULE_AWS_SECRET_ACCESS_KEY}
+    - export MOLECULE_RUN_ID=${CI_JOB_ID}
+    - export LC_CTYPE=en_US.UTF-8
+    - export LANG=en_US.UTF-8
+  retry:
+    max: 2
+
+# Base artifacts for create and test steps
+.molecule_artifacts: &molecule_artifacts
+  artifacts:
+    <<: *artifacts_expire_in
+    when: always
+    paths:
+      - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/topic-*
+      - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/*.log
+      - $CI_PROJECT_DIR/.cache
+      - $CI_PROJECT_DIR/test/molecule-role/molecule/$MOLECULE_SCENARIO/**/*.tar.gz
+      - $MOLECULE_EPHEMERAL_DIRECTORY
+  retry:
+    max: 2
+
+# Primary create steps for all the molecule builds
+.molecule_create: &molecule_create
+  <<: *molecule_artifacts
+  stage: prepare
+  script:
+    - cd $CI_PROJECT_DIR/test
+    - ./molecule3.sh $MOLECULE_SCENARIO create
+
+# Primary test steps for all the molecule builds
+.molecule_test: &molecule_test
+  <<: *molecule_artifacts
+  stage: acceptance
+  timeout: 80 minutes
+  script:
+    - cd $CI_PROJECT_DIR/test
+    - ./molecule3.sh $MOLECULE_SCENARIO test
+
+# Primary destroy steps for all the molecule builds
+.molecule_destroy: &molecule_destroy
+  stage: cleanup
+  interruptible: true
+  script:
+    - cd $CI_PROJECT_DIR/test
+    - ./molecule3.sh $MOLECULE_SCENARIO destroy
+  retry:
+    max: 2
+  allow_failure: true
+
+# Core Structure for all the beest steps
+.beest: &beest
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/beest:20231212
+  dependencies: []
+  before_script:
+    - cd $CI_PROJECT_DIR
+    - export PROCESS_AGENT_BRANCH=`cat stackstate-deps.json | jq -r '.PROCESS_AGENT_BRANCH'`
+    - mkdir /go/src/app
+    - cp -R $CI_PROJECT_DIR/beest/* /go/src/app
+    - cd /go/src/app
+    - . bootstrap_functions.sh
+    - build_beest
+    - generate_aws_config
+    - configure_aws_beest_credentials
+    - unset AWS_ACCESS_KEY_ID && unset AWS_SECRET_ACCESS_KEY && unset AWS_ROLE_ARN && unset AWS_WEB_IDENTITY_TOKEN_FILE  # Unset gitlab runner AWS credentials which conflicts with Beest ~/.aws/credentials
+    - export AWS_PROFILE=stackstate-sandbox
+    - export PATH=/go/src/app:${PATH}
+    - export RUN_ID=$CI_COMMIT_REF_NAME
+    - export AGENT_CURRENT_BRANCH=$CI_COMMIT_REF_NAME
+    - export AGENT_HELM_CHART_VERSION=$AGENT_HELM_CHART_VERSION
+    - export STACKSTATE_HELM_CHART_VERSION=$STACKSTATE_HELM_CHART_VERSION
+    - export RUNNERS_IP="$RUNNERS_IP"
+    - echo "$RUNNERS_IP"
+    - curl https://ipv4.icanhazip.com
+  after_script: # artifacts do not work with absolute path, so we move them inside the build dir
+    - mv /go/src/app/terraform.log $CI_PROJECT_DIR/beest/ || true
+    - mv /go/src/app/tests/$BEEST_TEST_GROUP/debug $CI_PROJECT_DIR/beest/ || true
+    - mv /go/src/app/tests/$BEEST_TEST_GROUP/*.gv $CI_PROJECT_DIR/beest/ || true
+  retry:
+    max: 2
+
+# Base artifacts for create and test steps
+.beest_artifacts: &beest_artifacts
+  artifacts:
+    when: always
+    paths:
+      - beest/debug
+      - beest/*.gv
+    <<: *artifacts_expire_in
+
+# Primary create steps for all the beest builds
+.beest_create: &beest_create
+  <<: *beest_artifacts
+  stage: prepare
+  # Prevent terraform from breaking when this job is cancelled mid way
+  interruptible: false
+  # Prevent another job from destroying the resources this branch is busy with, Terraform lock will prevent this but for incase
+  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_REF_NAME-$BEEST_SCENARIO"
+  script:
+    - beest create $BEEST_SCENARIO -y
+
+# Primary test steps for all the beest builds
+.beest_test: &beest_test
+  <<: *beest_artifacts
+  # We allow test jobs to be cancelled by other pipeline as they do not affect deployed resources
+  interruptible: true
+  stage: acceptance
+  timeout: 80 minutes
+  script:
+    - beest test $BEEST_SCENARIO --no-destroy
+
+# Primary destroy steps for all the beest builds
+.beest_destroy: &beest_destroy
+  <<: *beest_artifacts
+  stage: cleanup
+  # Prevent terraform from breaking when this job is cancelled mid way
+  interruptible: false
+  # Prevent another job from destroying the resources this branch is busy with, Terraform lock will prevent this but for incase
+  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_REF_NAME-$BEEST_SCENARIO"
+  script:
+    - beest destroy $BEEST_SCENARIO -y
+  retry:
+    max: 2
+    when:
+      - always
+
+.beest_destroy_manual: &beest_destroy_manual
+  <<: *beest_artifacts
+  stage: manual
+  # Prevent terraform from breaking when this job is cancelled mid way
+  interruptible: false
+  # Prevent another job from destroying the resources this branch is busy with, Terraform lock will prevent this but for incase
+  resource_group: "$STS_VER-$MAJOR_VERSION-$PYTHON_RUNTIMES-$CI_COMMIT_REF_NAME-$BEEST_SCENARIO"
+  script:
+    - beest destroy $BEEST_SCENARIO -y
+  retry:
+    max: 2
+    when:
+      - always
+
+
+# Job Seq: Molecule
+# Type: Compose
+.molecule_compose_rule:
+  - &compose_ignore_rule
+    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-compose]/
+    when: never
+
+molecule_compose_create:
+  <<: *molecule
+  <<: *molecule_create
+  rules:
+    - *compose_ignore_rule
+    - *v2_merge_train_always_manual
+  variables:
+    MOLECULE_SCENARIO: compose
+
+molecule_compose_test:
+  <<: *molecule
+  <<: *molecule_test
+  rules:
+    - *compose_ignore_rule
+    - *v2_merge_train_on_success
+  variables:
+    MOLECULE_SCENARIO: compose
+  dependencies:
+    - molecule_compose_create
+  needs:
+    - pre_release_main_agent_image
+    - molecule_compose_create
+
+molecule_compose_failure_cleanup:
+  <<: *molecule_destroy
+  rules:
+    - *compose_ignore_rule
+    - *v2_merge_train_on_failure
+  variables:
+    MOLECULE_SCENARIO: compose
+  needs:
+    - molecule_compose_test
+    - molecule_compose_create
+
+molecule_compose_success_cleanup:
+  <<: *molecule_destroy
+  rules:
+    - *compose_ignore_rule
+    - *v2_merge_train_on_success
+  variables:
+    MOLECULE_SCENARIO: compose
+  dependencies:
+    - molecule_compose_test
+    - molecule_compose_create
+  needs:
+    - molecule_compose_test
+    - molecule_compose_create
+
+
+# Job Seq: Molecule
+# Type: Integrations
+
+.molecule_integrations_rule:
+  - &integrations_ignore_rule
+    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-integrations]/
+    when: never
+
+molecule_integrations_create:
+  <<: *molecule
+  <<: *molecule_create
+  rules:
+    - *integrations_ignore_rule
+    - *merge_train_always_manual
+  variables:
+    MOLECULE_SCENARIO: integrations
+
+molecule_integrations_test:
+  <<: *molecule
+  <<: *molecule_test
+  rules:
+    - *integrations_ignore_rule
+    - *merge_train_on_success
+  variables:
+    MOLECULE_SCENARIO: integrations
+  dependencies:
+    - molecule_integrations_create
+  needs:
+    - pre_release_main_agent_image
+    - molecule_integrations_create
+
+molecule_integrations_failure_cleanup:
+  <<: *molecule
+  <<: *molecule_destroy
+  rules:
+    - *integrations_ignore_rule
+    - *merge_train_on_failure
+  variables:
+    MOLECULE_SCENARIO: integrations
+  needs:
+    - molecule_integrations_test
+    - molecule_integrations_create
+
+molecule_integrations_success_cleanup:
+  <<: *molecule
+  <<: *molecule_destroy
+  rules:
+    - *integrations_ignore_rule
+    - *merge_train_on_success
+  variables:
+    MOLECULE_SCENARIO: integrations
+  dependencies:
+    - molecule_integrations_test
+    - molecule_integrations_create
+  needs:
+    - molecule_integrations_test
+    - molecule_integrations_create
+
+# Job Seq: Beest
+# Type: kubernetes
+
+.beest_kubernetes_rule:
+  # Currently we default to only running on Python2 build.
+  # TODO: Change this when V3 releases are finalized and the default.
+  - &kubernetes_ignore_rule
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[beest\-/ && $CI_COMMIT_MESSAGE !~ /\[beest\-kubernetes]/
+    when: never
+
+.beest_k8s_1_24_dockerd_variables: &beest_k8s_1_24_dockerd_variables
+  variables:
+    BEEST_SCENARIO: dockerd-eks-1-24
+    BEEST_TEST_GROUP: k8s
+
+.beest_k8s_1_24_containerd_variables: &beest_k8s_1_24_containerd_variables
+  variables:
+    BEEST_SCENARIO: contd-eks-1-24
+    BEEST_TEST_GROUP: k8s
+
+.beest_k8s_1_28_containerd_variables: &beest_k8s_1_28_containerd_variables
+  variables:
+    BEEST_SCENARIO: contd-eks-1-28
+    BEEST_TEST_GROUP: k8s
+
+beest_k8s_1_24_dockerd_create:
+  <<: *beest
+  <<: *beest_create
+  <<: *beest_k8s_1_24_dockerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_always_on_tag
+    - *v2_merge_train_always_manual
+
+beest_k8s_1_24_containerd_create:
+  <<: *beest
+  <<: *beest_create
+  <<: *beest_k8s_1_24_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_always_on_tag
+    - *v2_merge_train_always_manual
+
+beest_k8s_1_28_containerd_create:
+  <<: *beest
+  <<: *beest_create
+  <<: *beest_k8s_1_28_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_always
+
+beest_k8s_1_24_dockerd_test:
+  <<: *beest
+  <<: *beest_test
+  <<: *beest_k8s_1_24_dockerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_k8s_1_24_dockerd_create
+  needs:
+    - beest_k8s_1_24_dockerd_create
+    - pre_release_cluster_agent_image
+    - pre_release_main_agent_image
+
+beest_k8s_1_24_containerd_test:
+  <<: *beest
+  <<: *beest_test
+  <<: *beest_k8s_1_24_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_k8s_1_24_containerd_create
+  needs:
+    - beest_k8s_1_24_containerd_create
+    - pre_release_cluster_agent_image
+    - pre_release_main_agent_image
+
+beest_k8s_1_28_containerd_test:
+  <<: *beest
+  <<: *beest_test
+  <<: *beest_k8s_1_28_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_k8s_1_28_containerd_create
+  needs:
+    - beest_k8s_1_28_containerd_create
+    - pre_release_cluster_agent_image
+    - pre_release_main_agent_image
+
+beest_k8s_1_24_dockerd_manual_cleanup:
+  <<: *beest
+  <<: *beest_destroy_manual
+  <<: *beest_k8s_1_24_dockerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_always_manual
+    - when: never
+
+beest_k8s_1_24_dockerd_failure_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_k8s_1_24_dockerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_failure
+    - when: never
+  needs:
+    - beest_k8s_1_24_dockerd_test
+    - beest_k8s_1_24_dockerd_create
+
+beest_k8s_1_24_containerd_manual_cleanup:
+  <<: *beest
+  <<: *beest_destroy_manual
+  <<: *beest_k8s_1_24_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_always_manual
+    - when: never
+
+beest_k8s_1_24_containerd_failure_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_k8s_1_24_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_failure
+    - when: never
+  needs:
+    - beest_k8s_1_24_containerd_test
+    - beest_k8s_1_24_containerd_create
+
+beest_k8s_1_24_dockerd_success_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_k8s_1_24_dockerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_k8s_1_24_dockerd_test
+    - beest_k8s_1_24_dockerd_create
+  needs:
+    - beest_k8s_1_24_dockerd_test
+    - beest_k8s_1_24_dockerd_create
+
+beest_k8s_1_24_containerd_success_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_k8s_1_24_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_k8s_1_24_containerd_test
+    - beest_k8s_1_24_containerd_create
+  needs:
+    - beest_k8s_1_24_containerd_test
+    - beest_k8s_1_24_containerd_create
+
+beest_k8s_1_28_containerd_manual_cleanup:
+  <<: *beest
+  <<: *beest_destroy_manual
+  <<: *beest_k8s_1_28_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_always_manual
+    - when: never
+
+beest_k8s_1_28_containerd_failure_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_k8s_1_28_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_failure
+    - when: never
+  needs:
+    - beest_k8s_1_28_containerd_test
+    - beest_k8s_1_28_containerd_create
+
+beest_k8s_1_28_containerd_success_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_k8s_1_28_containerd_variables
+  rules:
+    - *kubernetes_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_k8s_1_28_containerd_test
+    - beest_k8s_1_28_containerd_create
+  needs:
+    - beest_k8s_1_28_containerd_test
+    - beest_k8s_1_28_containerd_create
+
+# Job Seq: Molecule
+# Type: localinstall
+
+.molecule_localinstall_rule:
+  - &localinstall_ignore_rule
+    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-localinstall]/
+    when: never
+  - &localinstall_master_only_rule
+    if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_PROTECTED)
+    when: always
+  - &localinstall_acceptance_rule
+    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-localinstall]/
+    when: always
+  - &localinstall_acceptance_on_success_rule
+    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-localinstall]/
+    when: on_success
+  - &localinstall_acceptance_on_failure_rule
+    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-localinstall]/
+    when: on_failure
+
+molecule_localinstall_create:
+  <<: *molecule
+  <<: *molecule_create
+  rules:
+    - *localinstall_ignore_rule
+    - *localinstall_acceptance_rule
+    - *merge_train_always_manual
+    - when: never
+  variables:
+    MOLECULE_SCENARIO: localinstall
+
+molecule_localinstall_test:
+  <<: *molecule
+  <<: *molecule_test
+  rules:
+    - *localinstall_ignore_rule
+    - *localinstall_acceptance_rule
+    - *merge_train_on_success
+    - when: never
+  variables:
+    MOLECULE_SCENARIO: localinstall
+  dependencies:
+    - molecule_localinstall_create
+  needs:
+    - pre_release_deb
+    - pre_release_rpm
+    - molecule_localinstall_create
+
+molecule_localinstall_failure_cleanup:
+  variables:
+    MOLECULE_SCENARIO: localinstall
+  <<: *molecule
+  <<: *molecule_destroy
+  rules:
+    - *localinstall_ignore_rule
+    - *localinstall_acceptance_on_failure_rule
+    - *merge_train_on_failure
+    - when: never
+  needs:
+    - molecule_localinstall_test
+    - molecule_localinstall_create
+
+molecule_localinstall_success_cleanup:
+  variables:
+    MOLECULE_SCENARIO: localinstall
+  <<: *molecule
+  <<: *molecule_destroy
+  rules:
+    - *localinstall_ignore_rule
+    - *localinstall_acceptance_on_success_rule
+    - *merge_train_on_success
+    - when: never
+  dependencies:
+    - molecule_localinstall_test
+    - molecule_localinstall_create
+  needs:
+    - molecule_localinstall_test
+    - molecule_localinstall_create
+
+
+# Job Seq: Molecule
+# Type: secrets
+
+.molecule_secrets_rule:
+  - &secrets_ignore_rule
+    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-compose]/
+    when: never
+  - &secrets_master_only_rule
+    if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_PROTECTED)
+    when: always
+  - &secrets_acceptance_rule
+    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-compose]/
+    when: always
+  - &secrets_acceptance_on_success_rule
+    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-compose]/
+    when: on_success
+  - &secrets_acceptance_on_failure_rule
+    if: $CI_COMMIT_MESSAGE =~ /\[molecule\-compose]/
+    when: on_failure
+
+molecule_secrets_create:
+  <<: *molecule
+  <<: *molecule_create
+  rules:
+    - *secrets_ignore_rule
+    - *secrets_acceptance_rule
+    - *merge_train_always_manual
+    - when: never
+  variables:
+    MOLECULE_SCENARIO: secrets
+
+molecule_secrets_test:
+  <<: *molecule
+  <<: *molecule_test
+  rules:
+    - *secrets_ignore_rule
+    - *secrets_acceptance_rule
+    - *merge_train_on_success
+    - when: never
+  variables:
+    MOLECULE_SCENARIO: secrets
+  dependencies:
+    - molecule_secrets_create
+  needs:
+    - pre_release_deb
+    - molecule_secrets_create
+
+molecule_secrets_failure_cleanup:
+  variables:
+    MOLECULE_SCENARIO: secrets
+  <<: *molecule
+  <<: *molecule_destroy
+  rules:
+    - *secrets_ignore_rule
+    - *secrets_acceptance_on_failure_rule
+    - *merge_train_on_failure
+    - when: never
+  needs:
+    - molecule_secrets_test
+    - molecule_secrets_create
+
+molecule_secrets_success_cleanup:
+  variables:
+    MOLECULE_SCENARIO: secrets
+  <<: *molecule
+  <<: *molecule_destroy
+  rules:
+    - *secrets_ignore_rule
+    - *secrets_acceptance_on_success_rule
+    - *merge_train_on_success
+    - when: never
+  dependencies:
+    - molecule_secrets_test
+    - molecule_secrets_create
+  needs:
+    - molecule_secrets_test
+    - molecule_secrets_create
+
+
+# Job Seq: Molecule
+# Type: swarm
+
+.molecule_swarm_rule:
+  # Currently we default to only running on Python2 build.
+  # TODO: Change this when V3 releases are finalized and the default.
+  - &swarm_ignore_rule
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-swarm]/
+    when: never
+
+molecule_swarm_create:
+  <<: *molecule
+  <<: *molecule_create
+  rules:
+    - *swarm_ignore_rule
+    - *v2_merge_train_always_manual
+  variables:
+    MOLECULE_SCENARIO: swarm
+
+molecule_swarm_test:
+  <<: *molecule
+  <<: *molecule_test
+  rules:
+    - *swarm_ignore_rule
+    - *v2_merge_train_on_success_allow_failure
+  dependencies:
+    - molecule_swarm_create
+  variables:
+    MOLECULE_SCENARIO: swarm
+  needs:
+    - pre_release_swarm_agent_image
+    - molecule_swarm_create
+
+molecule_swarm_failure_cleanup:
+  variables:
+    MOLECULE_SCENARIO: swarm
+  <<: *molecule
+  <<: *molecule_destroy
+  rules:
+    - *swarm_ignore_rule
+    - *v2_merge_train_on_failure
+  needs:
+    - molecule_swarm_create
+    - molecule_swarm_test
+
+molecule_swarm_success_cleanup:
+  variables:
+    MOLECULE_SCENARIO: swarm
+  <<: *molecule
+  <<: *molecule_destroy
+  rules:
+    - *swarm_ignore_rule
+    - *v2_merge_train_on_success
+  dependencies:
+    - molecule_swarm_create
+    - molecule_swarm_test
+  needs:
+    - molecule_swarm_create
+    - molecule_swarm_test
+
+# Job Seq: Molecule
+# Type: vms
+
+.molecule_vms_rule:
+  - &vms_ignore_rule
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[molecule\-/ && $CI_COMMIT_MESSAGE !~ /\[molecule\-vms]/
+    when: never
+
+molecule_vms_create:
+  <<: *molecule
+  <<: *molecule_create
+  rules:
+    - *vms_ignore_rule
+    - *v2_merge_train_always_manual
+  variables:
+    MOLECULE_SCENARIO: vms
+
+molecule_vms_test:
+  <<: *molecule
+  <<: *molecule_test
+  rules:
+    - *vms_ignore_rule
+    - *v2_merge_train_on_success
+  variables:
+    MOLECULE_SCENARIO: vms
+  dependencies:
+    - molecule_vms_create
+  needs:
+    - pre_release_deb
+    - pre_release_rpm
+    - pre_release_win
+    - molecule_vms_create
+
+molecule_vms_failure_cleanup:
+  variables:
+    MOLECULE_SCENARIO: vms
+  <<: *molecule
+  <<: *molecule_destroy
+  rules:
+    - *vms_ignore_rule
+    - *v2_merge_train_on_failure
+  needs:
+    - molecule_vms_create
+    - molecule_vms_test
+
+molecule_vms_success_cleanup:
+  variables:
+    MOLECULE_SCENARIO: vms
+  <<: *molecule
+  <<: *molecule_destroy
+  rules:
+    - *vms_ignore_rule
+    - *v2_merge_train_on_success
+  dependencies:
+    - molecule_vms_create
+    - molecule_vms_test
+  needs:
+    - molecule_vms_create
+    - molecule_vms_test
+
+# Job Seq: Beest
+# Type: otel
+
+.beest_otel_rule:
+  # Currently we default to only running on Python2 build.
+  # TODO: Change this when V3 releases are finalized and the default.
+  - &beest_otel_ignore_rule
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[beest\-/ && $CI_COMMIT_MESSAGE !~ /\[beest\-otel]/
+    when: never
+
+.beest_otel_variables: &beest_otel_variables
+  variables:
+    BEEST_SCENARIO: otel
+    BEEST_TEST_GROUP: otel
+
+beest_otel_create:
+  <<: *beest
+  <<: *beest_create
+  <<: *beest_otel_variables
+  rules:
+    - *beest_otel_ignore_rule
+    - *v2_merge_train_always_manual
+
+beest_otel_test:
+  <<: *beest
+  <<: *beest_test
+  <<: *beest_otel_variables
+  rules:
+    - *beest_otel_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_otel_create
+  needs:
+    - beest_otel_create
+    - pre_release_deb
+
+beest_otel_failure_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_otel_variables
+  rules:
+    - *beest_otel_ignore_rule
+    - *v2_merge_train_on_failure
+    - when: never
+  needs:
+    - beest_otel_test
+    - beest_otel_create
+
+beest_otel_success_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_otel_variables
+  rules:
+    - *beest_otel_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_otel_test
+    - beest_otel_create
+  needs:
+    - beest_otel_test
+    - beest_otel_create
+
+# Job Seq: Beest
+# Type: splunk
+
+.beest_splunk_rule:
+  # Currently we default to only running on Python2 build.
+  # TODO: Change this when V3 releases are finalized and the default.
+  - &beest_splunk_ignore_rule
+    if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_MESSAGE =~ /\[beest\-/ && $CI_COMMIT_MESSAGE !~ /\[beest\-splunk]/
+    when: never
+
+.beest_splunk_variables: &beest_splunk_variables
+  variables:
+    BEEST_SCENARIO: splunk
+    BEEST_TEST_GROUP: splunk
+
+beest_splunk_create:
+  <<: *beest
+  <<: *beest_create
+  <<: *beest_splunk_variables
+  rules:
+    - *beest_splunk_ignore_rule
+    - *v2_merge_train_always_manual
+
+beest_splunk_test:
+  <<: *beest
+  <<: *beest_test
+  <<: *beest_splunk_variables
+  # Increase timeout as failure may cause it to run over and block debugging
+  timeout: 105 minutes
+  rules:
+    - *beest_splunk_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_splunk_create
+  needs:
+    - beest_splunk_create
+    - pre_release_deb
+
+beest_splunk_failure_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_splunk_variables
+  rules:
+    - *beest_splunk_ignore_rule
+    - *v2_merge_train_on_failure
+    - when: never
+  needs:
+    - beest_splunk_test
+    - beest_splunk_create
+
+beest_splunk_success_cleanup:
+  <<: *beest
+  <<: *beest_destroy
+  <<: *beest_splunk_variables
+  rules:
+    - *beest_splunk_ignore_rule
+    - *v2_merge_train_on_success
+    - when: never
+  dependencies:
+    - beest_splunk_test
+    - beest_splunk_create
+  needs:
+    - beest_splunk_test
+    - beest_splunk_create
+
+## release stage
+
+release_deb:
+  interruptible: true
+  stage: release
+  dependencies:
+    - build_deb
+  script:
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_debian_package.sh
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package.sh $STS_AWS_RELEASE_BUCKET stable
+    - cd $CI_PROJECT_DIR && inv release.generate-install
+    - cd $CI_PROJECT_DIR/cmd/agent && aws.rb -e "Aws::S3::Resource.new.bucket(ENV['STS_AWS_RELEASE_BUCKET']).object('install.sh').upload_file('./install.sh', acl:'public-read')"
+  rules:
+    - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
+      when: manual
+  retry:
+    max: 2
+    when:
+      - always
+
+release_rpm:
+  interruptible: true
+  stage: release
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher
+  dependencies:
+    - build_rpm
+  before_script:
+    - mkdir -p /go/src/github.com/StackVista
+    - ln -s $CI_PROJECT_DIR /go/src/github.com/StackVista/stackstate-agent
+  script:
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./sign_rpm_package.sh
+    - cd $CI_PROJECT_DIR/omnibus/package-scripts && ./publish_package_rpm.sh $STS_AWS_RELEASE_BUCKET_YUM stable
+  rules:
+    - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
+      when: manual
+  retry:
+    max: 2
+    when:
+      - always
+
+release_win:
+  interruptible: true
+  stage: release
+  dependencies:
+    - build_win
+  before_script:
+    - *configure_windows_ps1_env_script
+  script:
+    - $env:VERSION = Get-Content version.txt -First 1
+    - $filename = "stackstate-agent-" + $Env:VERSION + "-1-x86_64.msi"
+    - $filename
+    - Copy-Item $filename -Destination stackstate-agent-latest-1-x86_64.msi
+    - ls
+    - inv release.generate-install -t
+    - aws.exe s3 cp ./cmd/agent/install.ps1 s3://$Env:STS_AWS_RELEASE_BUCKET_WIN/install.ps1 --acl public-read
+    - aws.exe s3 cp . s3://$Env:STS_AWS_RELEASE_BUCKET_WIN/windows/stable --recursive --exclude "*" --include "*.msi" --acl public-read
+    - aws.exe s3 ls s3://$Env:STS_AWS_RELEASE_BUCKET_WIN/windows/stable/
+    - aws.exe s3 ls s3://$Env:STS_AWS_RELEASE_BUCKET_WIN/
+  rules:
+    - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
+      when: manual
+  tags:
+    - windows_agent7_ps1
+  retry:
+    max: 2
+    when:
+      - always
+
+.base_release_image: &base_release_image
+  stage: release
+  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
+  dependencies:
+    - build_deb
+  variables:
+    DOCKER_DRIVER: overlay
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  services:
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
+      alias: docker
+  before_script: []
+  tags:
+    - sts-k8s-m-runner
+  retry:
+    max: 2
+    when:
+      - always
+
+release_main_agent_image:
+  <<: *base_release_image
+  interruptible: true
+  script:
+    - cd $CI_PROJECT_DIR
+    - export VERSION=`cat version.txt`
+    - cp ./outcomes/pkg/stackstate-agent_*_amd64.deb Dockerfiles/agent
+    - ./omnibus/package-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO $CI_PROJECT_DIR/Dockerfiles/agent latest
+  rules:
+    - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
+      when: manual
+
+release_trace_agent_image:
+  <<: *base_release_image
+  interruptible: true
+  script:
+    - cd $CI_PROJECT_DIR
+    - export VERSION=`cat version.txt`
+    - cp ./outcomes/binary/trace-agent Dockerfiles/trace-agent
+    - ./omnibus/package-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO_TRACE $CI_PROJECT_DIR/Dockerfiles/trace-agent latest
+  rules:
+    - *cluster_agent_release
+
+release_cluster_agent_image:
+  <<: *base_release_image
+  interruptible: true
+  dependencies:
+    - build_cluster_agent
+  script:
+    - cd $CI_PROJECT_DIR
+    - export VERSION=`cat version.txt`
+    - cp -r ./bin/stackstate-cluster-agent/* ./Dockerfiles/cluster-agent
+    - ./omnibus/package-scripts/publish_image.sh $VERSION $STS_DOCKER_RELEASE_REPO_CLUSTER $CI_PROJECT_DIR/Dockerfiles/cluster-agent latest
+  rules:
+    - *cluster_agent_release
+
+release_swarm_agent_image:
+  <<: *base_release_image
+  interruptible: true
+  needs:
+    - build_deb
+    - release_main_agent_image
+  script:
+    - cd $CI_PROJECT_DIR
+    - export VERSION=`cat version.txt`
+    #                                                 $IMAGE_TAG          $IMAGE_REPO        $EXTRA_TAG      $BASE_REPO       $BASE_TAG
+    - ./omnibus/package-scripts/publish_swarm_image.sh $VERSION $STS_DOCKER_RELEASE_REPO_SWARM latest $STS_DOCKER_RELEASE_REPO $VERSION
+  rules:
+    - if: $CI_COMMIT_TAG || $CI_PIPELINE_TRIGGERED == 'true'
+      when: manual

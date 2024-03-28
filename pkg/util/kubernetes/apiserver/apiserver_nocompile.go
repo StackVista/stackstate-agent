@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build !kubeapiserver
 // +build !kubeapiserver
 
 package apiserver
@@ -12,8 +13,8 @@ import (
 	"errors"
 	"time"
 
-	apiv1 "github.com/DataDog/datadog-agent/pkg/clusteragent/api/v1"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	apiv1 "github.com/StackVista/stackstate-agent/pkg/clusteragent/api/v1"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"k8s.io/client-go/kubernetes"
 )
 

@@ -4,10 +4,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/network/dns"
-	"github.com/DataDog/datadog-agent/pkg/network/http"
-	"github.com/DataDog/datadog-agent/pkg/process/util"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/network/dns"
+	"github.com/StackVista/stackstate-agent/pkg/network/http"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"go4.org/intern"
 )
 
@@ -38,7 +38,7 @@ type State interface {
 		latestTime uint64,
 		active []ConnectionStats,
 		dns dns.StatsByKeyByNameByType,
-		http map[http.Key]http.RequestStats,
+		http *http.MonitorReport,
 	) Delta
 
 	// RemoveClient stops tracking stateful data for a given client
@@ -63,8 +63,9 @@ type State interface {
 // Delta represents a delta of network data compared to the last call to State.
 type Delta struct {
 	BufferedData
-	HTTP     map[http.Key]http.RequestStats
-	DNSStats dns.StatsByKeyByNameByType
+	HTTP               map[http.Key]http.RequestStats
+	HTTPTelemetryStats *http.TelemetryStats
+	DNSStats           dns.StatsByKeyByNameByType
 }
 
 type telemetry struct {
@@ -175,7 +176,7 @@ func (ns *networkState) GetDelta(
 	latestTime uint64,
 	active []ConnectionStats,
 	dnsStats dns.StatsByKeyByNameByType,
-	httpStats map[http.Key]http.RequestStats,
+	httpStats *http.MonitorReport,
 ) Delta {
 	ns.Lock()
 	defer ns.Unlock()
@@ -213,8 +214,13 @@ func (ns *networkState) GetDelta(
 	if len(dnsStats) > 0 {
 		ns.storeDNSStats(dnsStats)
 	}
-	if len(httpStats) > 0 {
-		ns.storeHTTPStats(httpStats)
+
+	var httpTelemetryStats *http.TelemetryStats
+	if httpStats != nil {
+		httpTelemetryStats = httpStats.Telemetry
+		if len(httpStats.Requests) > 0 {
+			ns.storeHTTPStats(httpStats.Requests)
+		}
 	}
 
 	return Delta{
@@ -222,8 +228,9 @@ func (ns *networkState) GetDelta(
 			Conns:  conns,
 			buffer: clientBuffer,
 		},
-		HTTP:     client.httpStatsDelta,
-		DNSStats: client.dnsStats,
+		HTTP:               client.httpStatsDelta,
+		HTTPTelemetryStats: httpTelemetryStats,
+		DNSStats:           client.dnsStats,
 	}
 }
 

@@ -11,7 +11,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/kubelet"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
 )
 
 // configPath refers to the configuration that can be passed over a docker label or a pod annotation,

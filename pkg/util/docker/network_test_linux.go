@@ -18,8 +18,8 @@ import (
 	dockernetwork "github.com/docker/docker/api/types/network"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/testutil"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/testutil"
 )
 
 func TestFindDockerNetworks(t *testing.T) {

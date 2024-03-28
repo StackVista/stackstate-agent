@@ -1,9 +1,9 @@
 package http
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/process/util"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/sketches-go/ddsketch"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // Method is the type used to represent HTTP request methods
@@ -53,6 +53,19 @@ func (m Method) String() string {
 	default:
 		return "UNKNOWN"
 	}
+}
+
+// TelemetryStats contains counters of the http monitor performance
+type TelemetryStats struct {
+	Misses   int64 // this happens when we can't cope with the rate of events
+	Dropped  int64 // this happens when httpStatKeeper reaches capacity
+	Rejected int64 // this happens when a user-defined reject-filter matches a request
+}
+
+// MonitorReport contains requests stats along with the performance of the HTTP monitor (e.g. number of lost batches)
+type MonitorReport struct {
+	Requests  map[Key]RequestStats
+	Telemetry *TelemetryStats
 }
 
 // Key is an identifier for a group of HTTP transactions

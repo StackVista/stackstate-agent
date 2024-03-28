@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build clusterchecks
 // +build clusterchecks
 
 package v1
@@ -15,12 +16,12 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/DataDog/datadog-agent/pkg/clusteragent"
-	"github.com/DataDog/datadog-agent/pkg/clusteragent/clusterchecks"
-	cctypes "github.com/DataDog/datadog-agent/pkg/clusteragent/clusterchecks/types"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	dcautil "github.com/DataDog/datadog-agent/pkg/util/clusteragent"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks"
+	cctypes "github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks/types"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	dcautil "github.com/StackVista/stackstate-agent/pkg/util/clusteragent"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // Install registers v1 API endpoints

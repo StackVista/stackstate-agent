@@ -5,9 +5,9 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/DataDog/datadog-agent/pkg/config/remote/service"
-	"github.com/DataDog/datadog-agent/pkg/proto/pbgo"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/config/remote/service"
+	"github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // Subscriber subscribes for configuration updates from agent-core.

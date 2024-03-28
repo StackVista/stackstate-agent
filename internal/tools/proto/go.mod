@@ -1,4 +1,4 @@
-module github.com/DataDog/datadog-agent/internal/tools/proto
+module github.com/StackVista/stackstate-agent/internal/tools/proto
 
 go 1.16
 

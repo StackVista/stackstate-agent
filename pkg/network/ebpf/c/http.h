@@ -173,7 +173,7 @@ static __always_inline int http_process(char *buffer, skb_info_t *skb_info, u16 
     http_parse_data(buffer, &packet_type, &method);
     http_transaction_t *http = NULL;
 
-    http_transaction_t new_entry = { 0 };
+    http_transaction_t new_entry = { {0} };
     new_entry.owned_by_src_port = src_port;
 
     switch(packet_type) {

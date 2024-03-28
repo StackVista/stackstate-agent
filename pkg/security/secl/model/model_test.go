@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build linux
 // +build linux
 
 package model
@@ -10,7 +11,7 @@ package model
 import (
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/eval"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/eval"
 )
 
 func TestPathValidation(t *testing.T) {

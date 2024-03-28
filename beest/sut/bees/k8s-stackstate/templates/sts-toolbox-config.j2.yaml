@@ -1,0 +1,14 @@
+generate-values:
+  license: {{ stackstate_license }}
+  pull-user: {{ artifactory_user }}
+  pull-password: {{ artifactory_password }}
+  pull-policy: IfNotPresent
+  pull-registry: artifactory.tooling.stackstate.io/docker-virtual
+  profile: development-split
+  install-agent: false
+  cluster-name: {{ cluster_name }}
+  ingress: {{ sts_ingress }}
+  base-url: {{ sts_url }}
+  default-password: admin
+  api-password: api-admin
+  extra-api-key: xxx #  <api-key for champagne-intake, see 1password> # in case you want to receive the same traffic as nightly champagne

@@ -6,18 +6,20 @@
 package collectors
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/tagger/utils"
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/kubelet"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/workloadmeta"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/utils"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta"
 )
 
 const (
@@ -106,6 +108,11 @@ func (c *WorkloadMetaCollector) processEvents(evBundle workloadmeta.EventBundle)
 
 	for _, ev := range evBundle.Events {
 		entity := ev.Entity
+		// plaster to figure out what is causing: https://stackstate.atlassian.net/browse/STAC-19780
+		if entity == nil {
+			_ = log.Warnf("Event with type: %s with sources %v, has no entity.", ev.Type, ev.Sources)
+			continue
+		}
 		entityID := entity.GetID()
 
 		switch ev.Type {
@@ -243,6 +250,13 @@ func (c *WorkloadMetaCollector) handleKubePod(ev workloadmeta.Event) []*TagInfo 
 	tags.AddLow(kubernetes.NamespaceTagName, pod.Namespace)
 	tags.AddLow("pod_phase", strings.ToLower(pod.Phase))
 	tags.AddLow("kube_priority_class", pod.PriorityClass)
+
+	// sts begin
+	clusterName := clustername.GetClusterName(context.TODO(), "")
+	if clusterName != "" {
+		tags.AddLow("kube_cluster_name", clusterName)
+	}
+	// sts end
 
 	c.extractTagsFromPodLabels(pod, tags)
 

@@ -11,7 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	"gomodules.xyz/jsonpatch/v3"
 	corev1 "k8s.io/api/core/v1"

@@ -8,7 +8,7 @@ package checks
 import (
 	"errors"
 
-	"github.com/DataDog/datadog-agent/pkg/compliance/eval"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
 )
 
 // ErrInvalidIteration is returned when an invalid (out of bounds) iteration is performed

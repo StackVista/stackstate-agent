@@ -1,7 +1,7 @@
 package network
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
 )
 
 // GetNATLocalAddress returns the translated (local ip, local port) pair

@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubelet
 // +build kubelet
 
 package hostinfo
@@ -10,9 +11,9 @@ package hostinfo
 import (
 	"context"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/clusteragent"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/kubelet"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/clusteragent"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
 )
 
 // GetNodeLabels returns node labels for this host

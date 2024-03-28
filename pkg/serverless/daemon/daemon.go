@@ -14,14 +14,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/logs"
-	logConfig "github.com/DataDog/datadog-agent/pkg/logs/config"
-	"github.com/DataDog/datadog-agent/pkg/serverless/flush"
-	serverlessLog "github.com/DataDog/datadog-agent/pkg/serverless/logs"
-	"github.com/DataDog/datadog-agent/pkg/serverless/metrics"
-	"github.com/DataDog/datadog-agent/pkg/serverless/tags"
-	"github.com/DataDog/datadog-agent/pkg/serverless/trace"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/logs"
+	logConfig "github.com/StackVista/stackstate-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/serverless/flush"
+	serverlessLog "github.com/StackVista/stackstate-agent/pkg/serverless/logs"
+	"github.com/StackVista/stackstate-agent/pkg/serverless/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/serverless/tags"
+	"github.com/StackVista/stackstate-agent/pkg/serverless/trace"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const persistedStateFilePath = "/tmp/dd-lambda-extension-cache.json"

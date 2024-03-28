@@ -16,11 +16,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/cachedfetch"
-	"github.com/DataDog/datadog-agent/pkg/util/common"
-	httputils "github.com/DataDog/datadog-agent/pkg/util/http"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/cachedfetch"
+	"github.com/StackVista/stackstate-agent/pkg/util/common"
+	httputils "github.com/StackVista/stackstate-agent/pkg/util/http"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 type ec2Token struct {
@@ -240,17 +240,27 @@ func extractClusterName(tags []string) (string, error) {
 }
 
 func doHTTPRequest(ctx context.Context, url string) (string, error) {
+	useIMDSv2 := config.Datadog.GetBool("ec2_prefer_imdsv2")
+	metadataTimeout := time.Duration(config.Datadog.GetInt("ec2_metadata_timeout")) * time.Millisecond
+
 	headers := map[string]string{}
-	if config.Datadog.GetBool("ec2_prefer_imdsv2") {
-		token, err := getToken(ctx)
-		if err != nil {
-			log.Warnf("ec2_prefer_imdsv2 is set to true in the configuration but the agent was unable to proceed: %s", err)
-		} else {
-			headers["X-aws-ec2-metadata-token"] = token
+
+	if !useIMDSv2 {
+		res, err := httputils.Get(ctx, url, headers, metadataTimeout)
+		if err == nil || !strings.Contains(err.Error(), "401") {
+			return res, err
 		}
+		log.Warnf("ec2_prefer_imdsv2 is set to false, but IMDSv1 has failed with 401 error, proceeding with IMDSv2")
 	}
 
-	return httputils.Get(ctx, url, headers, time.Duration(config.Datadog.GetInt("ec2_metadata_timeout"))*time.Millisecond)
+	token, err := getToken(ctx)
+	if err != nil {
+		log.Warnf("ec2_prefer_imdsv2 is set to true in the configuration but the agent was unable to proceed: %s", err)
+		return "", err
+	}
+
+	headers["X-aws-ec2-metadata-token"] = token
+	return httputils.Get(ctx, url, headers, metadataTimeout)
 }
 
 func getToken(ctx context.Context) (string, error) {

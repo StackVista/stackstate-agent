@@ -12,9 +12,9 @@ import (
 	"strconv"
 	"time"
 
-	coreConfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/snmp/traps"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	coreConfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/snmp/traps"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // ContainerCollectAll is the name of the docker integration that collect logs from all containers

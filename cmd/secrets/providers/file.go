@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build secrets
 // +build secrets
 
 package providers
@@ -13,7 +14,7 @@ import (
 	"os"
 	"path/filepath"
 
-	s "github.com/DataDog/datadog-agent/pkg/secrets"
+	s "github.com/StackVista/stackstate-agent/pkg/secrets"
 )
 
 const (

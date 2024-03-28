@@ -8,7 +8,7 @@ package eval
 import (
 	"github.com/pkg/errors"
 
-	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/ast"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/ast"
 )
 
 //MacroID - ID of a Macro

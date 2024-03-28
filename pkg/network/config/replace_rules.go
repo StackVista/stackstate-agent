@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	ddconfig "github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	ddconfig "github.com/StackVista/stackstate-agent/pkg/config"
 )
 
 // ReplaceRule specifies a replace rule.

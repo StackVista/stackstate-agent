@@ -15,10 +15,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator/ckey"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
-	"github.com/DataDog/datadog-agent/pkg/quantile"
-	"github.com/DataDog/datadog-agent/pkg/tagset"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/ckey"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/quantile"
+	"github.com/StackVista/stackstate-agent/pkg/tagset"
 )
 
 func generateSerieContextKey(serie *metrics.Serie) ckey.ContextKey {

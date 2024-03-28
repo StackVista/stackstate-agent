@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build containerd
 // +build containerd
 
 package containerd
@@ -20,20 +21,21 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"gopkg.in/yaml.v2"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks"
-	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
-	"github.com/DataDog/datadog-agent/pkg/tagger"
-	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
-	cutil "github.com/DataDog/datadog-agent/pkg/util/containerd"
-	ddContainers "github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/providers"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/util/system"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
+	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/topology"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/tagger"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	cutil "github.com/StackVista/stackstate-agent/pkg/util/containerd"
+	ddContainers "github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/providers"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/system"
 )
 
 const (
@@ -43,15 +45,17 @@ const (
 // ContainerdCheck grabs containerd metrics and events
 type ContainerdCheck struct {
 	core.CheckBase
-	instance *ContainerdConfig
-	sub      *subscriber
-	filters  *ddContainers.Filter
+	instance          *ContainerdConfig
+	sub               *subscriber
+	filters           *ddContainers.Filter
+	topologyCollector *topology.ContainerTopologyCollector
 }
 
 // ContainerdConfig contains the custom options and configurations set by the user.
 type ContainerdConfig struct {
-	ContainerdFilters []string `yaml:"filters"`
-	CollectEvents     bool     `yaml:"collect_events"`
+	ContainerdFilters        []string `yaml:"filters"`
+	CollectEvents            bool     `yaml:"collect_events"`
+	CollectContainerTopology bool     `yaml:"collect_container_topology"` // sts
 }
 
 func init() {
@@ -61,14 +65,17 @@ func init() {
 // ContainerdFactory is used to create register the check and initialize it.
 func ContainerdFactory() check.Check {
 	return &ContainerdCheck{
-		CheckBase: corechecks.NewCheckBase(containerdCheckName),
-		instance:  &ContainerdConfig{},
-		sub:       &subscriber{},
+		CheckBase:         corechecks.NewCheckBase(containerdCheckName),
+		instance:          &ContainerdConfig{},
+		sub:               &subscriber{},
+		topologyCollector: topology.MakeContainerTopologyCollector(containerdCheckName),
 	}
 }
 
 // Parse is used to get the configuration set by the user
 func (co *ContainerdConfig) Parse(data []byte) error {
+	co.CollectContainerTopology = true // sts
+
 	return yaml.Unmarshal(data, co)
 }
 
@@ -126,6 +133,19 @@ func (c *ContainerdCheck) Run() error {
 	}
 
 	computeMetrics(sender, cu, c.filters)
+
+	// sts begin
+	// Collect container topology
+	if c.instance.CollectContainerTopology {
+		err := c.topologyCollector.BuildContainerTopology(cu)
+		if err != nil {
+			sender.ServiceCheck("containerd.health", metrics.ServiceCheckCritical, "", nil, err.Error())
+			log.Errorf("Could not collect container topology: %s", err)
+			return err
+		}
+	}
+	// sts end
+
 	return nil
 }
 

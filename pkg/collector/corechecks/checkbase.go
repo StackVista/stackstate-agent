@@ -11,12 +11,13 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/collector/check/defaults"
-	telemetry_utils "github.com/DataDog/datadog-agent/pkg/telemetry/utils"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/defaults"
+	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
+	"github.com/StackVista/stackstate-agent/pkg/util/features"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // CheckBase provides default implementations for most of the check.Check
@@ -44,6 +45,7 @@ type CheckBase struct {
 	checkInterval  time.Duration
 	source         string
 	telemetry      bool
+	features       features.Features
 }
 
 // NewCheckBase returns a check base struct with a given check name
@@ -114,8 +116,9 @@ func (c *CheckBase) CommonConfigure(instance integration.Data, source string) er
 	}
 
 	// See if a collection interval was specified
-	if commonOptions.MinCollectionInterval > 0 {
-		c.checkInterval = time.Duration(commonOptions.MinCollectionInterval) * time.Second
+	// [sts] use new compatibility function
+	if commonOptions.GetCollectionInterval() > 0 {
+		c.checkInterval = time.Duration(commonOptions.GetCollectionInterval()) * time.Second
 	}
 
 	// Disable default hostname if specified
@@ -240,4 +243,14 @@ func (c *CheckBase) GetSenderStats() (check.SenderStats, error) {
 		return check.SenderStats{}, fmt.Errorf("failed to retrieve a sender: %v", err)
 	}
 	return sender.GetSenderStats(), nil
+}
+
+// GetFeatures returns the features supported by StackState
+func (c *CheckBase) GetFeatures() features.Features {
+	return c.features
+}
+
+// SetFeatures sets the features supported by StackState
+func (c *CheckBase) SetFeatures(features features.Features) {
+	c.features = features
 }

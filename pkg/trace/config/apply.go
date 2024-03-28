@@ -9,18 +9,19 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
+	interpreterconfig "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/otlp"
-	"github.com/DataDog/datadog-agent/pkg/trace/osutil"
-	"github.com/DataDog/datadog-agent/pkg/trace/traceutil"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/util/profiling"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/otlp"
+	"github.com/StackVista/stackstate-agent/pkg/trace/osutil"
+	"github.com/StackVista/stackstate-agent/pkg/trace/traceutil"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/profiling"
 )
 
 // apiEndpointPrefix is the URL prefix prepended to the default site value from YamlAgentConfig.
@@ -176,6 +177,7 @@ func (c *AgentConfig) applyDatadogConfig() error {
 	}
 	if host := config.Datadog.GetString("apm_config.apm_dd_url"); host != "" {
 		c.Endpoints[0].Host = host
+		log.Infof("[sts] set endpoint to host '%s'", host)
 		if site != "" {
 			log.Infof("'site' and 'apm_dd_url' are both set, using endpoint: %q", host)
 		}
@@ -348,6 +350,9 @@ func (c *AgentConfig) applyDatadogConfig() error {
 		}
 	}
 
+	// [sts]
+	c.InterpreterConfig = readInterpreterConfigYaml()
+
 	// undocumented
 	if config.Datadog.IsSet("apm_config.max_cpu_percent") {
 		c.MaxCPU = config.Datadog.GetFloat64("apm_config.max_cpu_percent") / 100
@@ -483,6 +488,20 @@ func (c *AgentConfig) addReplaceRule(tag, pattern, repl string) {
 		Re:      re,
 		Repl:    repl,
 	})
+}
+
+func readInterpreterConfigYaml() *interpreterconfig.Config {
+	ini := interpreterconfig.Config{}
+	conf := interpreterconfig.DefaultInterpreterConfig()
+
+	err := config.Datadog.UnmarshalKey("apm_config.span_interpreter", &ini)
+	if err == nil {
+		if ini.ServiceIdentifiers != nil {
+			conf.ServiceIdentifiers = ini.ServiceIdentifiers
+		}
+	}
+
+	return conf
 }
 
 // compileReplaceRules compiles the regular expressions found in the replace rules.

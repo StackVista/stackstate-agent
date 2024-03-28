@@ -1,0 +1,7 @@
+---
+- name: Fetch docker logs backup archive
+  fetch:
+    src: /home/ubuntu/docker_logs.tar.gz
+    dest: ./logs
+  ignore_errors: true
+  become: true

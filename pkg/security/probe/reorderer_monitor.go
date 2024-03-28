@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-2020 Datadog, Inc.
 
+//go:build linux
 // +build linux
 
 package probe
@@ -11,8 +12,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/DataDog/datadog-agent/pkg/security/metrics"
 	"github.com/DataDog/datadog-go/statsd"
+	"github.com/StackVista/stackstate-agent/pkg/security/metrics"
 )
 
 // ReordererMonitor represents a reorderer monitor

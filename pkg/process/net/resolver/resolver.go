@@ -5,9 +5,9 @@ import (
 	"time"
 
 	model "github.com/DataDog/agent-payload/v5/process"
-	procutil "github.com/DataDog/datadog-agent/pkg/process/util"
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	procutil "github.com/StackVista/stackstate-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const defaultTTL = 10 * time.Second

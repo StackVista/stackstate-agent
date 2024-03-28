@@ -3,15 +3,20 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build python
 // +build python
 
 package python
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	chk "github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"context"
+	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	chk "github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 /*
@@ -39,6 +44,13 @@ func SubmitMetric(checkID *C.char, metricType C.metric_type_t, metricName *C.cha
 	_tags := cStringArrayToSlice(tags)
 	_flushFirstValue := bool(flushFirstValue)
 
+	// Add cluster name tag to _tags only if it's not already present in _tags
+	clusterName := clustername.GetClusterName(context.TODO(), _hostname)
+	if clusterName != "" {
+		_tags = appendIfMissing(_tags, fmt.Sprintf("cluster_name:%s", clusterName))
+		_tags = appendIfMissing(_tags, fmt.Sprintf("kube_cluster_name:%s", clusterName))
+	}
+
 	switch metricType {
 	case C.DATADOG_AGENT_RTLOADER_GAUGE:
 		sender.Gauge(_name, _value, _hostname, _tags)
@@ -55,6 +67,15 @@ func SubmitMetric(checkID *C.char, metricType C.metric_type_t, metricName *C.cha
 	case C.DATADOG_AGENT_RTLOADER_HISTORATE:
 		sender.Historate(_name, _value, _hostname, _tags)
 	}
+}
+
+func appendIfMissing(tags []string, tagToAppend string) []string {
+	for _, existingTag := range tags {
+		if existingTag == tagToAppend {
+			return tags
+		}
+	}
+	return append(tags, tagToAppend)
 }
 
 // SubmitServiceCheck is the method exposed to Python scripts to submit service checks
@@ -90,12 +111,6 @@ func eventParseString(value *C.char, fieldName string) string {
 func SubmitEvent(checkID *C.char, event *C.event_t) {
 	goCheckID := C.GoString(checkID)
 
-	sender, err := aggregator.GetSender(chk.ID(goCheckID))
-	if err != nil || sender == nil {
-		log.Errorf("Error submitting metric to the Sender: %v", err)
-		return
-	}
-
 	_event := metrics.Event{
 		Title:          eventParseString(event.title, "msg_title"),
 		Text:           eventParseString(event.text, "msg_text"),
@@ -108,7 +123,9 @@ func SubmitEvent(checkID *C.char, event *C.event_t) {
 		Ts:             int64(event.ts),
 	}
 
-	sender.Event(_event)
+	// [sts] send events via die check handler
+	handler.GetCheckManager().GetCheckHandler(chk.ID(goCheckID)).SubmitEvent(_event)
+
 	return
 }
 

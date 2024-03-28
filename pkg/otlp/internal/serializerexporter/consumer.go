@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/metrics"
-	"github.com/DataDog/datadog-agent/pkg/otlp/model/translator"
-	"github.com/DataDog/datadog-agent/pkg/quantile"
-	"github.com/DataDog/datadog-agent/pkg/serializer"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/otlp/model/translator"
+	"github.com/StackVista/stackstate-agent/pkg/quantile"
+	"github.com/StackVista/stackstate-agent/pkg/serializer"
 )
 
 var _ translator.Consumer = (*serializerConsumer)(nil)

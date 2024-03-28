@@ -12,19 +12,19 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery"
-	coreConfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/client/http"
-	"github.com/DataDog/datadog-agent/pkg/logs/metrics"
-	"github.com/DataDog/datadog-agent/pkg/metadata/inventories"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery"
+	coreConfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/client/http"
+	"github.com/StackVista/stackstate-agent/pkg/logs/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/metadata/inventories"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
-	"github.com/DataDog/datadog-agent/pkg/logs/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/diagnostic"
-	"github.com/DataDog/datadog-agent/pkg/logs/scheduler"
-	"github.com/DataDog/datadog-agent/pkg/logs/service"
-	"github.com/DataDog/datadog-agent/pkg/logs/status"
+	"github.com/StackVista/stackstate-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/diagnostic"
+	"github.com/StackVista/stackstate-agent/pkg/logs/scheduler"
+	"github.com/StackVista/stackstate-agent/pkg/logs/service"
+	"github.com/StackVista/stackstate-agent/pkg/logs/status"
 )
 
 const (

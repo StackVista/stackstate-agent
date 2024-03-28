@@ -11,21 +11,22 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/api"
-	"github.com/DataDog/datadog-agent/pkg/trace/config"
-	"github.com/DataDog/datadog-agent/pkg/trace/config/features"
-	"github.com/DataDog/datadog-agent/pkg/trace/event"
-	"github.com/DataDog/datadog-agent/pkg/trace/filters"
-	"github.com/DataDog/datadog-agent/pkg/trace/info"
-	"github.com/DataDog/datadog-agent/pkg/trace/metrics/timing"
-	"github.com/DataDog/datadog-agent/pkg/trace/obfuscate"
-	"github.com/DataDog/datadog-agent/pkg/trace/pb"
-	"github.com/DataDog/datadog-agent/pkg/trace/sampler"
-	"github.com/DataDog/datadog-agent/pkg/trace/stats"
-	"github.com/DataDog/datadog-agent/pkg/trace/traceutil"
-	"github.com/DataDog/datadog-agent/pkg/trace/writer"
-	"github.com/DataDog/datadog-agent/pkg/util/fargate"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/trace/api"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config/features"
+	"github.com/StackVista/stackstate-agent/pkg/trace/event"
+	"github.com/StackVista/stackstate-agent/pkg/trace/filters"
+	"github.com/StackVista/stackstate-agent/pkg/trace/info"
+	"github.com/StackVista/stackstate-agent/pkg/trace/interpreter" //sts
+	"github.com/StackVista/stackstate-agent/pkg/trace/metrics/timing"
+	"github.com/StackVista/stackstate-agent/pkg/trace/obfuscate"
+	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/trace/sampler"
+	"github.com/StackVista/stackstate-agent/pkg/trace/stats"
+	"github.com/StackVista/stackstate-agent/pkg/trace/traceutil"
+	"github.com/StackVista/stackstate-agent/pkg/trace/writer"
+	"github.com/StackVista/stackstate-agent/pkg/util/fargate"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (
@@ -49,6 +50,7 @@ type Agent struct {
 	EventProcessor        *event.Processor
 	TraceWriter           *writer.TraceWriter
 	StatsWriter           *writer.StatsWriter
+	SpanInterpreterEngine *interpreter.SpanInterpreterEngine //sts
 
 	// obfuscator is used to obfuscate sensitive data from various span
 	// tags based on their type.
@@ -84,6 +86,7 @@ func NewAgent(ctx context.Context, conf *config.AgentConfig) *Agent {
 		TraceWriter:           writer.NewTraceWriter(conf),
 		StatsWriter:           writer.NewStatsWriter(conf, statsChan),
 		obfuscator:            obfuscate.NewObfuscator(conf.Obfuscation),
+		SpanInterpreterEngine: interpreter.NewSpanInterpreterEngine(conf), // sts
 		In:                    in,
 		conf:                  conf,
 		ctx:                   ctx,
@@ -249,6 +252,9 @@ func (a *Agent) Process(p *api.Payload) {
 		}
 		a.Replacer.Replace(chunk.Spans)
 
+		// sts - interpret spans
+		chunk.Spans = a.SpanInterpreterEngine.Interpret(chunk.Spans) // sts
+
 		{
 			// this section sets up any necessary tags on the root:
 			clientSampleRate := sampler.GetGlobalRate(root)
@@ -290,6 +296,7 @@ func (a *Agent) Process(p *api.Payload) {
 		numEvents, keep := a.sample(ts, pt)
 		if !keep && numEvents == 0 {
 			// the trace was dropped and no analyzed span were kept
+			log.Infof("[sts] the trace was dropped and no analyzed span were kept (keep = %v, numEvents = %d)", keep, numEvents)
 			p.RemoveChunk(i)
 			continue
 		}
@@ -311,6 +318,7 @@ func (a *Agent) Process(p *api.Payload) {
 	}
 	ss.TracerPayload = p.TracerPayload
 	if ss.Size > 0 {
+		log.Infof("[sts] Sending ss: %+v", ss)
 		a.TraceWriter.In <- ss
 	}
 	if len(envtraces) > 0 {
@@ -320,6 +328,7 @@ func (a *Agent) Process(p *api.Payload) {
 			// and it's not prohibited by the disable_cid_stats feature flag.
 			in.ContainerID = p.TracerPayload.ContainerID
 		}
+		log.Infof("[sts] Sending in: %+v", in)
 		a.Concentrator.In <- in
 	}
 }

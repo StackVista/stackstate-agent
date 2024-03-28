@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package filter
@@ -9,8 +10,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/ebpf/manager"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/afpacket"
 	"github.com/google/gopacket/layers"

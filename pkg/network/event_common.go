@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/network/dns"
-	"github.com/DataDog/datadog-agent/pkg/network/http"
-	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/network/dns"
+	"github.com/StackVista/stackstate-agent/pkg/network/http"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
 	"github.com/dustin/go-humanize"
 )
 
@@ -116,6 +116,7 @@ type Connections struct {
 	ConnTelemetry               *ConnectionsTelemetry
 	CompilationTelemetryByAsset map[string]RuntimeCompilationTelemetry
 	HTTP                        map[http.Key]http.RequestStats
+	HTTPTelemetry               *http.TelemetryStats
 	DNSStats                    dns.StatsByKeyByNameByType
 }
 

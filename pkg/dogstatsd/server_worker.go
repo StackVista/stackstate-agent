@@ -1,7 +1,7 @@
 package dogstatsd
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 )
 
 var (

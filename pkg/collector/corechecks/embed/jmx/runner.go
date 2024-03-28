@@ -10,10 +10,10 @@ package jmx
 import (
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/jmxfetch"
-	"github.com/DataDog/datadog-agent/pkg/status"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/jmxfetch"
+	"github.com/StackVista/stackstate-agent/pkg/status"
 )
 
 type runner struct {

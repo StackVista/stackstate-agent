@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package http
@@ -6,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 type telemetry struct {
@@ -16,7 +17,7 @@ type telemetry struct {
 	hits         [5]int64
 	misses       int64 // this happens when we can't cope with the rate of events
 	dropped      int64 // this happens when httpStatKeeper reaches capacity
-	rejected     int64 // this happens when an user-defined reject-filter matches a request
+	rejected     int64 // this happens when a user-defined reject-filter matches a request
 	aggregations int64
 }
 
@@ -57,7 +58,7 @@ func (t *telemetry) reset() telemetry {
 	return delta
 }
 
-func (t *telemetry) report() {
+func (t *telemetry) report() *TelemetryStats {
 	var totalRequests int64
 	for _, n := range t.hits {
 		totalRequests += n
@@ -75,4 +76,10 @@ func (t *telemetry) report() {
 		float64(t.dropped)/float64(t.elapsed),
 		t.aggregations,
 	)
+
+	return &TelemetryStats{
+		Misses:   t.misses,
+		Dropped:  t.dropped,
+		Rejected: t.rejected,
+	}
 }

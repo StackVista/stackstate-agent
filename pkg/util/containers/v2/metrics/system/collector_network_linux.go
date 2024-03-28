@@ -18,11 +18,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/util/cgroups"
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/v2/metrics/provider"
-	"github.com/DataDog/datadog-agent/pkg/util/filesystem"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/cgroups"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/v2/metrics/provider"
+	"github.com/StackVista/stackstate-agent/pkg/util/filesystem"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 func buildNetworkStats(procPath string, networks map[string]string, cgs *cgroups.PIDStats) (*provider.ContainerNetworkStats, error) {

@@ -17,10 +17,10 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	agentpayload "github.com/DataDog/agent-payload/v5/gogen"
-	"github.com/DataDog/datadog-agent/pkg/serializer/marshaler"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	utiljson "github.com/DataDog/datadog-agent/pkg/util/json"
+	"github.com/StackVista/stackstate-agent/pkg/serializer/marshaler"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	utiljson "github.com/StackVista/stackstate-agent/pkg/util/json"
 )
 
 // EventPriority represents the priority of an event
@@ -96,19 +96,67 @@ type Event struct {
 	OriginID       string         `json:"-"`
 	K8sOriginID    string         `json:"-"`
 	Cardinality    string         `json:"-"`
+	EventContext   *EventContext  `json:"context,omitempty"`
 }
 
-// Return a JSON string or "" in case of error during the Marshaling
+// EventContext enriches the event with some more context and allows correlation to topology in StackState
+type EventContext struct {
+	SourceIdentifier   string                 `json:"source_identifier,omitempty" msg:"source_identifier,omitempty"`
+	ElementIdentifiers []string               `json:"element_identifiers" msg:"element_identifiers"`
+	Source             string                 `json:"source" msg:"source"`
+	Category           string                 `json:"category" msg:"category"`
+	Data               map[string]interface{} `json:"data,omitempty" msg:"data,omitempty"`
+	SourceLinks        []SourceLink           `json:"source_links" msg:"source_links"`
+} // [sts]
+
+// SourceLink points to links that may contain more information about this event
+type SourceLink struct {
+	Title string `json:"title" msg:"title"`
+	URL   string `json:"url" msg:"url"`
+} // [sts]
+
+// Return a JSON string
 func (e *Event) String() string {
 	s, err := json.Marshal(e)
 	if err != nil {
-		return ""
+		fmt.Println(err)
+		return fmt.Sprintf("{\"error\": \"%s\"}", err.Error())
 	}
 	return string(s)
-}
+} // [sts]
 
 // Events represents a list of events ready to be serialize
 type Events []*Event
+
+// IntakeEvents are used in the transactional batcher to keep state of events in a payload [sts]
+type IntakeEvents struct {
+	Events []Event
+}
+
+// IntakeFormat returns a map of events grouped by source type name
+func (ie IntakeEvents) IntakeFormat() map[string][]Event {
+	eventsBySourceType := make(map[string][]Event)
+	for _, e := range ie.Events {
+		sourceTypeName := e.SourceTypeName
+		if sourceTypeName == "" {
+			sourceTypeName = "api"
+		}
+
+		// ensure that event context lists are not empty. ie serialized to null
+		if e.EventContext != nil {
+			if e.EventContext.SourceLinks == nil {
+				e.EventContext.SourceLinks = make([]SourceLink, 0)
+			}
+
+			if e.EventContext.ElementIdentifiers == nil {
+				e.EventContext.ElementIdentifiers = make([]string, 0)
+			}
+		}
+
+		eventsBySourceType[sourceTypeName] = append(eventsBySourceType[sourceTypeName], e)
+	}
+	return eventsBySourceType
+}
 
 // Marshal serialize events using agent-payload definition
 func (events Events) Marshal() ([]byte, error) {

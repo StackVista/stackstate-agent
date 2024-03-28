@@ -1,4 +1,4 @@
-module github.com/DataDog/datadog-agent/pkg/quantile
+module github.com/StackVista/stackstate-agent/pkg/quantile
 
 go 1.16
 

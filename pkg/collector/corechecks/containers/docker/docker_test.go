@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build docker && !darwin
 // +build docker,!darwin
 
 package docker
@@ -11,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
-	cmetrics "github.com/DataDog/datadog-agent/pkg/util/containers/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
+	cmetrics "github.com/StackVista/stackstate-agent/pkg/util/containers/metrics"
 )
 
 func TestReportIOMetrics(t *testing.T) {

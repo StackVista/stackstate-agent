@@ -18,10 +18,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/forwarder"
-	"github.com/DataDog/datadog-agent/pkg/serializer/marshaler"
-	"github.com/DataDog/datadog-agent/pkg/util/compression"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/forwarder"
+	"github.com/StackVista/stackstate-agent/pkg/serializer/marshaler"
+	"github.com/StackVista/stackstate-agent/pkg/util/compression"
 )
 
 var initialContentEncoding = compression.ContentEncoding
@@ -284,6 +284,11 @@ func TestSendV1ServiceChecks(t *testing.T) {
 	defer config.Datadog.Set("enable_service_checks_stream_payload_serialization", nil)
 
 	s := NewSerializer(f, nil)
+
+	// [sts] service checks are disabled by default for StackState
+	s.enableCheckRuns = true
+	s.enableServiceChecks = true
+
 	payload := &testPayload{}
 	err := s.SendServiceChecks(payload)
 	require.Nil(t, err)
@@ -332,10 +337,13 @@ func TestSendSeries(t *testing.T) {
 
 func TestSendSketch(t *testing.T) {
 	f := &forwarder.MockedForwarder{}
-	payloads, _ := mkPayloads(protobufString, true)
-	f.On("SubmitSketchSeries", payloads, protobufExtraHeadersWithCompression).Return(nil).Times(1)
+	payloads, _ := mkPayloads(protobufString, false)                                // sts
+	f.On("SubmitSketchSeries", payloads, protobufExtraHeaders).Return(nil).Times(1) // sts
 
 	s := NewSerializer(f, nil)
+
+	// [sts] check runs are disabled by default for StackState
+	s.enableSketches = true
 
 	payload := &testPayload{}
 	err := s.SendSketch(payload)

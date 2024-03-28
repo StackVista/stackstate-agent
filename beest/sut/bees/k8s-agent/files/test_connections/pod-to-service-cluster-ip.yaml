@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-server
+  labels:
+    type: server
+    test: pod-to-service-cluster-ip
+spec:
+  containers:
+    - image: itsthenetwork/alpine-ncat
+      imagePullPolicy: IfNotPresent
+      name: server
+      command: ["/bin/bash", "-c", "ncat -vv --broker --listen -p 123 > /dev/null"]
+      ports:
+        - containerPort: 123
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pod-service
+  labels:
+    type: service
+    test: pod-to-service-cluster-ip
+spec:
+  type: ClusterIP
+  ports:
+    - port: 321
+      protocol: TCP
+      targetPort: 123
+  selector:
+    type: server
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-client
+  labels:
+    test: pod-to-service-cluster-ip
+spec:
+  containers:
+    - image: jgkamat/netcat
+      imagePullPolicy: IfNotPresent
+      name: client
+      command: ["/bin/bash", "-c", "while echo y; do sleep 0.1; done | nc -vv pod-service 321"]

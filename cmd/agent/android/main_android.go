@@ -12,10 +12,10 @@ import (
 	"log"
 	"strings"
 
-	ddapp "github.com/DataDog/datadog-agent/cmd/agent/app"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/status"
-	"github.com/DataDog/datadog-agent/pkg/util/androidasset"
+	ddapp "github.com/StackVista/stackstate-agent/cmd/agent/app"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/status"
+	"github.com/StackVista/stackstate-agent/pkg/util/androidasset"
 )
 
 func AndroidMain(apikey string, hostname string, tags string) {

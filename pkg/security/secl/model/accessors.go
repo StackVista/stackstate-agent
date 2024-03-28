@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 // Code generated - DO NOT EDIT.
@@ -8,7 +9,7 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/eval"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/eval"
 )
 
 // suppress unused package warning

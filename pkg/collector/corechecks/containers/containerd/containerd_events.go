@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build containerd
 // +build containerd
 
 package containerd
@@ -13,8 +14,8 @@ import (
 	"sync"
 	"time"
 
-	ctrUtil "github.com/DataDog/datadog-agent/pkg/util/containerd"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	ctrUtil "github.com/StackVista/stackstate-agent/pkg/util/containerd"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/events"
 	containerdevents "github.com/containerd/containerd/events"

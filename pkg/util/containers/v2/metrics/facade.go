@@ -6,13 +6,13 @@
 package metrics
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/util/containers/v2/metrics/provider"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/v2/metrics/provider"
 
 	// Register all the collectors
-	_ "github.com/DataDog/datadog-agent/pkg/util/containers/v2/metrics/containerd"
-	_ "github.com/DataDog/datadog-agent/pkg/util/containers/v2/metrics/docker"
-	_ "github.com/DataDog/datadog-agent/pkg/util/containers/v2/metrics/ecsfargate"
-	_ "github.com/DataDog/datadog-agent/pkg/util/containers/v2/metrics/system"
+	_ "github.com/StackVista/stackstate-agent/pkg/util/containers/v2/metrics/containerd"
+	_ "github.com/StackVista/stackstate-agent/pkg/util/containers/v2/metrics/docker"
+	_ "github.com/StackVista/stackstate-agent/pkg/util/containers/v2/metrics/ecsfargate"
+	_ "github.com/StackVista/stackstate-agent/pkg/util/containers/v2/metrics/system"
 )
 
 // Collector defines an interface allowing to get stats from a containerID.

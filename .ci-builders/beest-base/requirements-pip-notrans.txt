@@ -1,0 +1,10 @@
+ansible-core==2.13.4
+boto3==1.24.71
+docker==5.0.3
+kubernetes==23.3.0
+openshift==0.13.1
+pydot==1.4.2
+pytest-order==1.0.1
+pytest-testinfra==6.8.0
+pytest-watch==4.2.0
+stackstate-cli==5.0.0

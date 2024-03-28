@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 )
 
 // Helper methods

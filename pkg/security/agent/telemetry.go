@@ -11,10 +11,10 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/security/metrics"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/collectors"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/security/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // telemetry reports environment information (e.g containers running) when the runtime security component is running

@@ -9,8 +9,8 @@ import (
 	"expvar"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/forwarder/transaction"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/forwarder/transaction"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 )
 
 type counterExpvar struct {

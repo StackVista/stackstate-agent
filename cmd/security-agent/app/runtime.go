@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 // Unless explicitly stated otherwise all files in this repository are licensed
@@ -14,24 +15,24 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/DataDog/datadog-agent/pkg/compliance/event"
-	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/auditor"
-	"github.com/DataDog/datadog-agent/pkg/logs/client"
-	"github.com/DataDog/datadog-agent/pkg/logs/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/diagnostic"
-	"github.com/DataDog/datadog-agent/pkg/logs/pipeline"
-	"github.com/DataDog/datadog-agent/pkg/logs/restart"
-	secagent "github.com/DataDog/datadog-agent/pkg/security/agent"
-	secconfig "github.com/DataDog/datadog-agent/pkg/security/config"
-	securityLogger "github.com/DataDog/datadog-agent/pkg/security/log"
-	sprobe "github.com/DataDog/datadog-agent/pkg/security/probe"
-	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/eval"
-	"github.com/DataDog/datadog-agent/pkg/security/secl/model"
-	"github.com/DataDog/datadog-agent/pkg/security/secl/rules"
-	"github.com/DataDog/datadog-agent/pkg/status/health"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
 	ddgostatsd "github.com/DataDog/datadog-go/statsd"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
+	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/auditor"
+	"github.com/StackVista/stackstate-agent/pkg/logs/client"
+	"github.com/StackVista/stackstate-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/diagnostic"
+	"github.com/StackVista/stackstate-agent/pkg/logs/pipeline"
+	"github.com/StackVista/stackstate-agent/pkg/logs/restart"
+	secagent "github.com/StackVista/stackstate-agent/pkg/security/agent"
+	secconfig "github.com/StackVista/stackstate-agent/pkg/security/config"
+	securityLogger "github.com/StackVista/stackstate-agent/pkg/security/log"
+	sprobe "github.com/StackVista/stackstate-agent/pkg/security/probe"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/eval"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/model"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/rules"
+	"github.com/StackVista/stackstate-agent/pkg/status/health"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (

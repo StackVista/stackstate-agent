@@ -8,9 +8,9 @@ package hostname
 import (
 	"context"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 
-	"github.com/DataDog/datadog-agent/pkg/util/hostname/validate"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // Provider is a generic function to grab the hostname and return it
@@ -40,7 +40,7 @@ func GetHostname(ctx context.Context, providerName string, options map[string]in
 		if err != nil {
 			return "", err
 		}
-		if validate.ValidHostname(name) != nil {
+		if config.ValidHostname(name) != nil {
 			return "", fmt.Errorf("Invalid hostname '%s' from %s provider", name, providerName)
 		}
 		return name, nil

@@ -1,0 +1,13 @@
+# Agent v1 Settings
+v1_sts_splunk_cache_folder: run/v1
+
+# Agent v2 Settings
+v2_sts_splunk_cache_folder: run/v2
+
+# Splunk Settings
+splunk_instance_url: https://localhost:8089
+
+events_search_name: events-v1
+metrics_search_name: metrics-v1
+relations_search_name: relations-v1
+components_search_name: components-v1

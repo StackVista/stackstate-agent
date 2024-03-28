@@ -22,7 +22,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/DataDog/datadog-agent/pkg/util/scrubber"
+	"github.com/StackVista/stackstate-agent/pkg/util/scrubber"
 	"github.com/cihub/seelog"
 )
 

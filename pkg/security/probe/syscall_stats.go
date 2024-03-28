@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build linux
 // +build linux
 
 package probe
@@ -18,11 +19,11 @@ import (
 	lib "github.com/cilium/ebpf"
 	"github.com/pkg/errors"
 
-	"github.com/DataDog/datadog-agent/pkg/security/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/security/secl/model"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/security/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/model"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
-import "github.com/DataDog/datadog-agent/pkg/security/metrics"
+import "github.com/StackVista/stackstate-agent/pkg/security/metrics"
 
 // ProcessSyscall represents a syscall made by a process
 type ProcessSyscall struct {

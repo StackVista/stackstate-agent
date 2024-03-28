@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/errors"
+	"github.com/StackVista/stackstate-agent/pkg/errors"
 	"gotest.tools/assert"
 )
 

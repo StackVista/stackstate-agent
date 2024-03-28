@@ -16,10 +16,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/util/cache"
-	"github.com/DataDog/datadog-agent/pkg/util/cgroups"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/v2/metrics/provider"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/cache"
+	"github.com/StackVista/stackstate-agent/pkg/util/cgroups"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/v2/metrics/provider"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (

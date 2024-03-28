@@ -8,7 +8,7 @@ package tracker
 import (
 	"sync"
 
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 )
 
 // withCheckFunc is a closure you can run on a mutex-locked check

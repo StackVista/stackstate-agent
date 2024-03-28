@@ -21,7 +21,7 @@ package sampler
 import (
 	"math"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 )
 
 const (

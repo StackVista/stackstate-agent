@@ -1,3 +1,4 @@
+# coding: utf-8
 """
 Utility functions for manipulating licenses
 """
@@ -75,9 +76,9 @@ CONTRIBUTORS_WITH_UNCOMMENTED_HEADER = [
     'gopkg.in/Knetic/govaluate.v3',
 ]
 
+
 # FIXME: This doesn't include licenses for non-go dependencies, like the javascript libs we use for the web gui
 def get_licenses_list(ctx):
-
     # we need the full vendor tree in order to perform this analysis
     from .go import deps_vendored
 
@@ -98,10 +99,11 @@ def licenses_csv(licenses):
         copyright = ' | '.join(sorted(lic['copyright']))
         # quote for inclusion in CSV, if necessary
         if ',' in copyright:
-            copyright = f'"{copyright}"'
+            copyright = '"{}"'.format(copyright)  # [sts] refactored to be compatible with py2
         return copyright
 
-    return [f"{l['component']},{l['package']},{l['license']},{fmt_copyright(l)}" for l in licenses]
+    return ["{},{},{},{}".format(l['component'], l['package'], l['license'], fmt_copyright(l)) for l in
+            licenses]  # [sts] refactored to be compatible with py2
 
 
 def wwhrd_licenses(ctx):
@@ -149,11 +151,11 @@ def wwhrd_licenses(ctx):
                 continue
             license = ""
             package = ""
-            for val in line[index + len('msg="Found License"') :].split(" "):
+            for val in line[index + len('msg="Found License"'):].split(" "):
                 if val.startswith('license='):
-                    license = val[len('license=') :]
+                    license = val[len('license='):]
                 elif val.startswith('package='):
-                    package = val[len('package=') :]
+                    package = val[len('package='):]
                     if is_excluded(package):
                         print("Skipping {} ({}) excluded in .wwhrd.yml".format(package, license))
                     else:

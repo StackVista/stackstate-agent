@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build containerd
 // +build containerd
 
 package containerd
@@ -17,8 +18,8 @@ import (
 	"github.com/containerd/containerd/oci"
 	"github.com/stretchr/testify/assert"
 
-	containerdutil "github.com/DataDog/datadog-agent/pkg/util/containerd"
-	"github.com/DataDog/datadog-agent/pkg/workloadmeta"
+	containerdutil "github.com/StackVista/stackstate-agent/pkg/util/containerd"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta"
 )
 
 type mockedContainer struct {

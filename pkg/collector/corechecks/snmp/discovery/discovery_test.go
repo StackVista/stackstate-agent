@@ -2,8 +2,8 @@ package discovery
 
 import (
 	"fmt"
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/snmp/checkconfig"
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/snmp/session"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/snmp/checkconfig"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/snmp/session"
 	"github.com/gosnmp/gosnmp"
 	"github.com/stretchr/testify/assert"
 	"net"

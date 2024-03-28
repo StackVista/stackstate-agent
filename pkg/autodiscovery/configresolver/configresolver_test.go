@@ -14,12 +14,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/listeners"
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/listeners"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
 
 	// we need some valid check in the catalog to run tests
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/system"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/system"
 )
 
 type dummyService struct {

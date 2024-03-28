@@ -10,13 +10,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/collector/runner/expvars"
-	"github.com/DataDog/datadog-agent/pkg/collector/runner/tracker"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/runner/expvars"
+	"github.com/StackVista/stackstate-agent/pkg/collector/runner/tracker"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (
@@ -129,7 +129,8 @@ func (w *Worker) Run() {
 
 		// Add check to tracker if it's not already running
 		if !w.checksTracker.AddCheck(check) {
-			checkLogger.Debug("Check is already running, skipping execution...")
+			// [sts] Changed this to warning because we are more serious about the collection_interval being met
+			_ = log.Warnf("Check %s did not finish execution with the defined collection_interval time '%s', skipping execution...", check, check.Interval().String())
 			continue
 		}
 

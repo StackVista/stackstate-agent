@@ -48,7 +48,9 @@ def build_common(
         "race_opt": "-race" if race else "",
         "build_type": "-a" if rebuild else "",
         "build_tags": " ".join(build_tags),
-        "bin_name": os.path.join(bin_path, bin_name("datadog-cluster-agent{suffix}".format(suffix=bin_suffix))),
+        "bin_name": os.path.join(
+            bin_path,
+            bin_name("stackstate-cluster-agent{suffix}".format(suffix=bin_suffix))),  # sts
         "gcflags": gcflags,
         "ldflags": ldflags,
         "REPO_PATH": REPO_PATH,

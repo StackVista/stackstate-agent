@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build cri
 // +build cri
 
 package cri
@@ -13,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	fakeremote "github.com/DataDog/datadog-agent/third_party/kubernetes/pkg/kubelet/cri/remote/fake"
+	fakeremote "github.com/StackVista/stackstate-agent/third_party/kubernetes/pkg/kubelet/cri/remote/fake"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

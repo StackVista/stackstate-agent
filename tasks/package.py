@@ -10,9 +10,12 @@ from .libs.common.color import color_message
 def get_package_path(glob_pattern):
     package_paths = glob.glob(glob_pattern)
     if len(package_paths) > 1:
-        raise Exit(code=1, message=color_message(f"Too many files matching {glob_pattern}: {package_paths}", "red"))
+        raise Exit(code=1,
+                   message=color_message("Too many files matching {}: {}", "red".format(glob_pattern,
+                                                                                        package_paths)))  # [sts] refactored to be compatible with py2
     elif len(package_paths) == 0:
-        raise Exit(code=1, message=color_message(f"Couldn't find any file matching {glob_pattern}", "red"))
+        raise Exit(code=1, message=color_message("Couldn't find any file matching {}".format(glob_pattern),
+                                                 "red"))  # [sts] refactored to be compatible with py2
 
     return package_paths[0]
 
@@ -37,18 +40,22 @@ def compare_size(_, new_package, stable_package, package_type, last_stable, thre
     if diff > threshold:
         print(
             color_message(
-                f"""{package_type} size increase is too large:
-  New package size is {new_package_size_mb:.2f}MB
-  Stable package ({last_stable}) size is {stable_package_size_mb:.2f}MB
-  Diff is {diff_mb:.2f}MB > {threshold_mb:.2f}MB (max allowed diff)""",
+                # [sts] refactored to be compatible with py2
+                """{} size increase is too large:
+  New package size is {:.2f}}MB
+  Stable package ({}) size is {:.2f}MB
+  Diff is {:.2f}MB > {:.2f}MB (max allowed diff)""".format(package_type, new_package_size_mb, last_stable,
+                                                           stable_package_size_mb, diff_mb, threshold_mb),
                 "red",
             )
         )
         raise Exit(code=1)
 
     print(
-        f"""{package_type} size increase is OK:
-  New package size is {new_package_size_mb:.2f}MB
-  Stable package ({last_stable}) size is {stable_package_size_mb:.2f}MB
-  Diff is {diff_mb:.2f}MB (max allowed diff: {threshold_mb:.2f}MB)"""
+        # [sts] refactored to be compatible with py2
+        """{} size increase is OK:
+  New package size is {:.2f}MB
+  Stable package ({}) size is {:.2f}MB
+  Diff is {:.2f}MB (max allowed diff: {:.2f}MB)""".format(package_type, new_package_size_mb, last_stable,
+                                                          stable_package_size_mb, diff_mb, threshold_mb)
     )

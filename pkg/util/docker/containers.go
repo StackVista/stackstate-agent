@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build docker
 // +build docker
 
 package docker
@@ -11,6 +12,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/spec"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"io"
 	"net"
 	"regexp"
@@ -20,11 +23,11 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/go-connections/nat"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/metrics"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/providers"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/providers"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 var healthRe = regexp.MustCompile(`\(health: (\w+)\)`)
@@ -34,6 +37,46 @@ type ContainerListConfig struct {
 	IncludeExited bool
 	FlagExcluded  bool
 }
+
+// sts begin
+func (d *DockerUtil) GetContainers(ctx context.Context) ([]*spec.Container, error) {
+	dockerContainers, err := d.ListContainers(ctx, &ContainerListConfig{IncludeExited: true, FlagExcluded: true})
+	if err != nil {
+		return nil, err
+	}
+	uContainers := make([]*spec.Container, 0, len(dockerContainers))
+	for _, dContainer := range dockerContainers {
+		container := &spec.Container{
+			Name:    dContainer.Name,
+			Runtime: "docker",
+			ID:      dContainer.ID,
+			Image:   dContainer.Image,
+			Mounts:  d.mapMountPointToMount(dContainer.Mounts),
+			State:   dContainer.State,
+		}
+		uContainers = append(uContainers, container)
+	}
+	return uContainers, nil
+}
+
+func (d *DockerUtil) mapMountPointToMount(mounts []types.MountPoint) []specs.Mount {
+	output := make([]specs.Mount, 0, len(mounts))
+
+	for _, v := range mounts {
+
+		mount := specs.Mount{
+			Destination: v.Destination,
+			Type:        string(v.Type),
+			Source:      v.Source,
+			Options:     []string{},
+		}
+		output = append(output, mount)
+	}
+
+	return output
+}
+
+// sts end
 
 // ListContainers gets a list of all containers on the current node using a mix of
 // the Docker APIs and cgroups stats. We attempt to limit syscalls where possible.
@@ -245,6 +288,7 @@ func (d *DockerUtil) dockerContainers(ctx context.Context, cfg *ContainerListCon
 			State:       c.State,
 			Excluded:    excluded,
 			Health:      parseContainerHealth(c.Status),
+			Mounts:      c.Mounts,
 			AddressList: d.parseContainerNetworkAddresses(c.ID, c.Ports, c.NetworkSettings, c.Names[0]),
 		}
 

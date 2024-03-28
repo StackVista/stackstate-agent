@@ -9,8 +9,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/util/retry"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/retry"
 )
 
 // ErrNothingYet is returned when no collector is currently detected.

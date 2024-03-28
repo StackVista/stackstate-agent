@@ -12,7 +12,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/proto/pbgo"
+	"github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
 	"github.com/stretchr/testify/assert"
 )
 

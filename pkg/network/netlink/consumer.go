@@ -1,5 +1,5 @@
-// +build linux
-// +build !android
+//go:build linux && !android
+// +build linux,!android
 
 package netlink
 
@@ -11,9 +11,9 @@ import (
 	"sync/atomic"
 	"syscall"
 
-	"github.com/DataDog/datadog-agent/pkg/process/util"
-	"github.com/DataDog/datadog-agent/pkg/util/kernel"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/kernel"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/mdlayher/netlink"
 	"github.com/pkg/errors"
 	"github.com/vishvananda/netns"

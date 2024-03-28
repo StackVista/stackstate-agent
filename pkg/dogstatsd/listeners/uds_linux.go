@@ -14,11 +14,11 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/DataDog/datadog-agent/pkg/dogstatsd/packets"
-	"github.com/DataDog/datadog-agent/pkg/dogstatsd/replay"
-	"github.com/DataDog/datadog-agent/pkg/util/cache"
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/providers"
+	"github.com/StackVista/stackstate-agent/pkg/dogstatsd/packets"
+	"github.com/StackVista/stackstate-agent/pkg/dogstatsd/replay"
+	"github.com/StackVista/stackstate-agent/pkg/util/cache"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/providers"
 )
 
 const (

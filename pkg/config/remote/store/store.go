@@ -16,8 +16,8 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"go.etcd.io/bbolt"
 
-	"github.com/DataDog/datadog-agent/pkg/proto/pbgo"
-	"github.com/DataDog/datadog-agent/pkg/security/log"
+	"github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
+	"github.com/StackVista/stackstate-agent/pkg/security/log"
 )
 
 // Store allows storing configuration in a boltdb database

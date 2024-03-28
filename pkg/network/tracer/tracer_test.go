@@ -1,3 +1,4 @@
+//go:build linux_bpf || (windows && npm)
 // +build linux_bpf windows,npm
 
 package tracer
@@ -23,13 +24,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/network"
-	"github.com/DataDog/datadog-agent/pkg/network/config"
-	"github.com/DataDog/datadog-agent/pkg/network/http"
-	"github.com/DataDog/datadog-agent/pkg/network/http/testutil"
-	"github.com/DataDog/datadog-agent/pkg/process/util"
-	"github.com/DataDog/datadog-agent/pkg/util/kernel"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/network"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
+	"github.com/StackVista/stackstate-agent/pkg/network/http"
+	"github.com/StackVista/stackstate-agent/pkg/network/http/testutil"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/kernel"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/cihub/seelog"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"

@@ -1,0 +1,25 @@
+PATH_add $PWD
+
+export AWS_DEFAULT_REGION=eu-west-1
+export AWS_PROFILE=stackstate-sandbox
+
+# those are the credentials of a stackstate-infosec user
+export BEEST_AWS_ACCESS_KEY_ID=TBD
+export BEEST_AWS_SECRET_ACCESS_KEY=TBD
+export BEEST_AWS_VAULT_BACKEND_PASSWORD=TBD
+export BEEST_AWS_MFA_KEY=TBD
+
+export artifactory_user=TBD
+export artifactory_password=TBD
+
+export RUN_ID=$AGENT_CURRENT_BRANCH
+
+# Keep the Agent Helm and StackState Helm charts empty to get the latest official version
+export AGENT_HELM_CHART_VERSION="2.1.2"
+export STACKSTATE_HELM_CHART_VERSION="5.0.2"  # use >0.0.0-0 development versions
+export STACKSTATE_LICENSE=TBD
+
+# The IP of the NAT Gateway of the tooling account (Where runners live)
+export RUNNERS_IP=TBD
+
+configure_aws_beest_credentials

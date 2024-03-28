@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package main
@@ -7,9 +8,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/DataDog/datadog-agent/cmd/system-probe/app"
-	"github.com/DataDog/datadog-agent/cmd/system-probe/windows/service"
-	"github.com/DataDog/datadog-agent/pkg/util/winutil"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/app"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/windows/service"
+	"github.com/StackVista/stackstate-agent/pkg/util/winutil"
 	"golang.org/x/sys/windows/svc"
 )
 

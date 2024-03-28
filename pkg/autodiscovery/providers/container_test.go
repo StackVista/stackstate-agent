@@ -13,7 +13,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/DataDog/datadog-agent/pkg/workloadmeta"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta"
 )
 
 // Only testing generateConfigs, lifecycle should be tested in end-to-end test

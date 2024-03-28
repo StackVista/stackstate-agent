@@ -12,8 +12,8 @@ import (
 
 	"github.com/benbjohnson/clock"
 
-	"github.com/DataDog/datadog-agent/pkg/collector/runner/expvars"
-	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/collector/runner/expvars"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 )
 
 // utilizationTracker is the object that polls and evaluates utilization

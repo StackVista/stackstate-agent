@@ -9,10 +9,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/compliance"
-	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
-	"github.com/DataDog/datadog-agent/pkg/compliance/eval"
-	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/StackVista/stackstate-agent/pkg/compliance"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )

@@ -17,7 +17,7 @@ package translator
 import (
 	"context"
 
-	"github.com/DataDog/datadog-agent/pkg/quantile"
+	"github.com/StackVista/stackstate-agent/pkg/quantile"
 )
 
 // MetricDataType is a timeseries-style metric type.

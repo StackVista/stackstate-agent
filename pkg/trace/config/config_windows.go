@@ -8,8 +8,8 @@ package config
 import (
 	"path/filepath"
 
-	"github.com/DataDog/datadog-agent/pkg/util/executable"
-	"github.com/DataDog/datadog-agent/pkg/util/winutil"
+	"github.com/StackVista/stackstate-agent/pkg/util/executable"
+	"github.com/StackVista/stackstate-agent/pkg/util/winutil"
 )
 
 // DefaultLogFilePath is where the agent will write logs if not overridden in the conf

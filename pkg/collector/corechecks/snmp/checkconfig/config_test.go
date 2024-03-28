@@ -13,8 +13,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
 )
 
 func TestConfigurations(t *testing.T) {
@@ -1165,7 +1165,7 @@ community_string: "abc"
 `),
 			// language=yaml
 			rawInitConfig:    []byte(``),
-			expectedInterval: 15 * time.Second,
+			expectedInterval: 40 * time.Second, // sts - we use 40 by default, see pkg/collector/check/defaults/defaults.go
 		},
 		{
 			name: "init min_collection_interval",

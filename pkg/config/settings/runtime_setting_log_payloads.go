@@ -8,7 +8,7 @@ package settings
 import (
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 )
 
 // LogPayloadsRuntimeSetting wraps operations to start logging aggregator payload at runtime.

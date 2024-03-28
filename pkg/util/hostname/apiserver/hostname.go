@@ -3,17 +3,17 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
-// +build kubeapiserver
-// +build !kubelet
+//go:build kubeapiserver && !kubelet
+// +build kubeapiserver,!kubelet
 
 package apiserver
 
 import (
 	"context"
 
-	a "github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	a "github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 func HostnameProvider(ctx context.Context, options map[string]interface{}) (string, error) {
@@ -26,7 +26,7 @@ func HostnameProvider(ctx context.Context, options map[string]interface{}) (stri
 	if clusterName == "" {
 		log.Debugf("Now using plain kubernetes nodename as an alias: no cluster name was set and none could be autodiscovered")
 		return nodeName, nil
-	} else {
-		return (nodeName + "-" + clusterName), nil
 	}
+
+	return nodeName + "-" + clusterName, nil
 }

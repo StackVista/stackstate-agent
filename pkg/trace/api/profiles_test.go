@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	traceconfig "github.com/DataDog/datadog-agent/pkg/trace/config"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	traceconfig "github.com/StackVista/stackstate-agent/pkg/trace/config"
 	"github.com/stretchr/testify/assert"
 )
 

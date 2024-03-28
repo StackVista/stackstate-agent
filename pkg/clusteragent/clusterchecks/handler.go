@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build clusterchecks
 // +build clusterchecks
 
 package clusterchecks
@@ -13,12 +14,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/scheduler"
-	"github.com/DataDog/datadog-agent/pkg/clusteragent/clusterchecks/types"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/status/health"
-	"github.com/DataDog/datadog-agent/pkg/util/cache"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/scheduler"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks/types"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/status/health"
+	"github.com/StackVista/stackstate-agent/pkg/util/cache"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (
@@ -164,7 +165,8 @@ func (h *Handler) runDispatch(ctx context.Context) {
 func (h *Handler) leaderWatch(ctx context.Context) {
 	err := h.updateLeaderIP()
 	if err != nil {
-		log.Warnf("Could not refresh leadership status: %s", err)
+		// [STS] log this as a debug message instead.
+		log.Debugf("Could not refresh leadership status: %s", err)
 	}
 
 	healthProbe := health.RegisterLiveness("clusterchecks-leadership")
@@ -180,7 +182,8 @@ func (h *Handler) leaderWatch(ctx context.Context) {
 		case <-watchTicker.C:
 			err := h.updateLeaderIP()
 			if err != nil {
-				log.Warnf("Could not refresh leadership status: %s", err)
+				// [STS] log this as a debug message instead.
+				log.Debugf("Could not refresh leadership status: %s", err)
 			}
 		case <-ctx.Done():
 			return

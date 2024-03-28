@@ -14,10 +14,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/dogstatsd/packets"
-	"github.com/DataDog/datadog-agent/pkg/dogstatsd/replay"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/dogstatsd/packets"
+	"github.com/StackVista/stackstate-agent/pkg/dogstatsd/replay"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 var (

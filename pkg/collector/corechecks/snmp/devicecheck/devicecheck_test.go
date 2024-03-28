@@ -8,13 +8,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
 
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/snmp/checkconfig"
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/snmp/common"
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/snmp/gosnmplib"
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/snmp/report"
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/snmp/session"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/snmp/checkconfig"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/snmp/common"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/snmp/gosnmplib"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/snmp/report"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/snmp/session"
 )
 
 func TestProfileWithSysObjectIdDetection(t *testing.T) {

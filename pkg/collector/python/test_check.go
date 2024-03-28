@@ -3,19 +3,22 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build python && test
 // +build python,test
 
 package python
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"runtime"
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	colCheck "github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -195,6 +198,10 @@ func testRunCheck(t *testing.T) {
 	if !assert.Nil(t, err) {
 		return
 	}
+
+	// sts
+	SetupTransactionalComponents()
+	batcher.NewMockBatcher()
 
 	check.instance = newMockPyObjectPtr()
 
@@ -436,6 +443,11 @@ func testRunErrorNil(t *testing.T) {
 
 	check.instance = newMockPyObjectPtr()
 
+	// sts
+	SetupTransactionalComponents()
+	testCheck := &colCheck.STSTestCheck{Name: "check-id-test-run-error-nil"}
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+
 	C.reset_check_mock()
 	C.run_check_return = nil
 	C.has_error_return = 1
@@ -464,6 +476,11 @@ func testRunErrorReturn(t *testing.T) {
 
 	check.instance = newMockPyObjectPtr()
 
+	// sts
+	SetupTransactionalComponents()
+	testCheck := &colCheck.STSTestCheck{Name: "check-id-test-run-error"}
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+
 	C.reset_check_mock()
 	C.run_check_return = C.CString("not OK")
 
@@ -480,8 +497,10 @@ func testRunErrorReturn(t *testing.T) {
 }
 
 func testRun(t *testing.T) {
-	sender := mocksender.NewMockSender(check.ID("testID"))
+	testCheck := &colCheck.STSTestCheck{Name: "check-id-test-run-python"} // sts
+	sender := mocksender.NewMockSender(testCheck.ID())
 	sender.SetupAcceptAll()
+	_ = batcher.NewMockBatcher()
 
 	rtloader = newMockRtLoaderPtr()
 	defer func() { rtloader = nil }()
@@ -491,8 +510,12 @@ func testRun(t *testing.T) {
 		return
 	}
 
+	// sts
+	SetupTransactionalComponents()
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+
 	c.instance = newMockPyObjectPtr()
-	c.id = check.ID("testID")
+	c.id = testCheck.ID() // sts
 
 	C.reset_check_mock()
 	C.run_check_return = C.CString("")
@@ -513,7 +536,9 @@ func testRun(t *testing.T) {
 }
 
 func testRunSimple(t *testing.T) {
-	sender := mocksender.NewMockSender(check.ID("testID"))
+	testCheck := &colCheck.STSTestCheck{Name: "check-id-test-run-simple-python"} // sts
+
+	sender := mocksender.NewMockSender(testCheck.ID())
 	sender.SetupAcceptAll()
 
 	rtloader = newMockRtLoaderPtr()
@@ -524,8 +549,11 @@ func testRunSimple(t *testing.T) {
 		return
 	}
 
+	// sts
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
+
 	c.instance = newMockPyObjectPtr()
-	c.id = check.ID("testID")
+	c.id = testCheck.ID()
 
 	C.reset_check_mock()
 	C.run_check_return = C.CString("")
@@ -560,12 +588,13 @@ func testConfigure(t *testing.T) {
 
 	C.get_check_return = 1
 	C.get_check_check = newMockPyObjectPtr()
-	err = c.Configure(integration.Data("{\"val\": 21}"), integration.Data("{\"val\": 21}"), "test")
+	err = c.Configure(integration.Data("\"val\": 21"), integration.Data("\"val\": 21"), "test")
 	assert.Nil(t, err)
 
+	assert.Equal(t, 40*time.Second, c.interval)
 	assert.Equal(t, c.class, C.get_check_py_class)
-	assert.Equal(t, "{\"val\": 21}", C.GoString(C.get_check_init_config))
-	assert.Equal(t, "{\"val\": 21}", C.GoString(C.get_check_instance))
+	assert.Equal(t, "\"val\": 21", C.GoString(C.get_check_init_config))
+	assert.Equal(t, "collection_interval: 40\nval: 21\n", C.GoString(C.get_check_instance))
 	assert.Equal(t, string(c.id), C.GoString(C.get_check_check_id))
 	assert.Equal(t, "fake_check", C.GoString(C.get_check_check_name))
 	assert.Equal(t, C.get_check_check, c.instance)
@@ -595,25 +624,54 @@ func testConfigureDeprecated(t *testing.T) {
 	C.get_check_return = 0
 	C.get_check_deprecated_check = newMockPyObjectPtr()
 	C.get_check_deprecated_return = 1
-	err = c.Configure(integration.Data("{\"val\": 21}"), integration.Data("{\"val\": 21}"), "test")
+	err = c.Configure(integration.Data("min_collection_interval: 30\ncollection_interval: 25\nval: 21"), integration.Data("\"val\": 21"), "test")
 	assert.Nil(t, err)
 
+	assert.Equal(t, 25*time.Second, c.interval)
 	assert.Equal(t, c.class, C.get_check_py_class)
-	assert.Equal(t, "{\"val\": 21}", C.GoString(C.get_check_init_config))
-	assert.Equal(t, "{\"val\": 21}", C.GoString(C.get_check_instance))
+	assert.Equal(t, "\"val\": 21", C.GoString(C.get_check_init_config))
+	assert.Equal(t, "collection_interval: 25\nmin_collection_interval: 30\nval: 21\n", C.GoString(C.get_check_instance))
 	assert.Equal(t, string(c.id), C.GoString(C.get_check_check_id))
 	assert.Equal(t, "fake_check", C.GoString(C.get_check_check_name))
 	assert.Nil(t, C.get_check_check)
 
 	assert.Equal(t, c.class, C.get_check_deprecated_py_class)
-	assert.Equal(t, "{\"val\": 21}", C.GoString(C.get_check_deprecated_init_config))
-	assert.Equal(t, "{\"val\": 21}", C.GoString(C.get_check_deprecated_instance))
+	assert.Equal(t, "\"val\": 21", C.GoString(C.get_check_deprecated_init_config))
+	assert.Equal(t, "collection_interval: 25\nmin_collection_interval: 30\nval: 21\n", C.GoString(C.get_check_deprecated_instance))
 	assert.Equal(t, string(c.id), C.GoString(C.get_check_deprecated_check_id))
 	assert.Equal(t, "fake_check", C.GoString(C.get_check_deprecated_check_name))
 	require.NotNil(t, C.get_check_deprecated_agent_config)
 	assert.NotEqual(t, "", C.GoString(C.get_check_deprecated_agent_config))
 	assert.Equal(t, c.instance, C.get_check_deprecated_check)
 }
+
+// sts begin
+func testSetCollectionIntervalToInstanceData(t *testing.T) {
+	rtloader = newMockRtLoaderPtr()
+	defer func() { rtloader = nil }()
+	c, err := NewPythonFakeCheck()
+	if !assert.Nil(t, err) {
+		return
+	}
+	data, _ := c.setCollectionIntervalToInstanceData(integration.Data("{\"key\": \"value\"}"))
+
+	assert.Equal(t, "collection_interval: 40\nkey: value\n", string(data))
+}
+
+func testSetCollectionIntervalToInvalidDataWithInvalidData(t *testing.T) {
+	rtloader = newMockRtLoaderPtr()
+	defer func() { rtloader = nil }()
+	c, err := NewPythonFakeCheck()
+	if !assert.Nil(t, err) {
+		return
+	}
+	data, err := c.setCollectionIntervalToInstanceData(integration.Data("invalid:data"))
+
+	assert.Nil(t, data)
+	assert.NotNil(t, err)
+}
+
+// sts end
 
 func NewPythonFakeCheck() (*PythonCheck, error) {
 	c, err := NewPythonCheck("fake_check", nil)

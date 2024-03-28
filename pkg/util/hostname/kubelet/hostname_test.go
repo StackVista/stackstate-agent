@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubelet
 // +build kubelet
 
 package kubelet
@@ -13,9 +14,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
-	k "github.com/DataDog/datadog-agent/pkg/util/kubernetes/kubelet"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
+	k "github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -69,6 +70,9 @@ func TestHostnameProviderInvalid(t *testing.T) {
 
 	ctx := context.Background()
 	mockConfig := config.Mock()
+
+	// [sts] validtion is skipped by default, so we set it to "dont skip" explicitly
+	mockConfig.Set("skip_validate_clustername", false)
 
 	ku := &kubeUtilMock{}
 

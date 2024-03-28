@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package app
@@ -25,31 +26,32 @@ import (
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/record"
 
-	"github.com/DataDog/datadog-agent/cmd/agent/common"
-	admissioncmd "github.com/DataDog/datadog-agent/cmd/cluster-agent/admission"
-	"github.com/DataDog/datadog-agent/cmd/cluster-agent/api"
-	dcav1 "github.com/DataDog/datadog-agent/cmd/cluster-agent/api/v1"
-	"github.com/DataDog/datadog-agent/cmd/cluster-agent/custommetrics"
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/api/healthprobe"
-	"github.com/DataDog/datadog-agent/pkg/clusteragent"
-	admissionpkg "github.com/DataDog/datadog-agent/pkg/clusteragent/admission"
-	"github.com/DataDog/datadog-agent/pkg/clusteragent/admission/mutate"
-	"github.com/DataDog/datadog-agent/pkg/clusteragent/clusterchecks"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/config/resolver"
-	"github.com/DataDog/datadog-agent/pkg/forwarder"
-	orchcfg "github.com/DataDog/datadog-agent/pkg/orchestrator/config"
-	"github.com/DataDog/datadog-agent/pkg/serializer"
-	"github.com/DataDog/datadog-agent/pkg/status/health"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
-	apicommon "github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/common"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/leaderelection"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/version"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common"
+	admissioncmd "github.com/StackVista/stackstate-agent/cmd/cluster-agent/admission"
+	"github.com/StackVista/stackstate-agent/cmd/cluster-agent/api"
+	dcav1 "github.com/StackVista/stackstate-agent/cmd/cluster-agent/api/v1"
+	"github.com/StackVista/stackstate-agent/cmd/cluster-agent/custommetrics"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/api/healthprobe"
+	"github.com/StackVista/stackstate-agent/pkg/batcher" // sts
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent"
+	admissionpkg "github.com/StackVista/stackstate-agent/pkg/clusteragent/admission"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/admission/mutate"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config/resolver"
+	"github.com/StackVista/stackstate-agent/pkg/forwarder"
+	orchcfg "github.com/StackVista/stackstate-agent/pkg/orchestrator/config"
+	"github.com/StackVista/stackstate-agent/pkg/serializer"
+	"github.com/StackVista/stackstate-agent/pkg/status/health"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
+	apicommon "github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/common"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/leaderelection"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 )
 
 // loggerName is the name of the cluster agent logger
@@ -230,69 +232,83 @@ func start(cmd *cobra.Command, args []string) error {
 	aggregatorInstance := aggregator.InitAggregator(s, nil, hostname)
 	aggregatorInstance.AddAgentStartupTelemetry(fmt.Sprintf("%s - Datadog Cluster Agent", version.AgentVersion))
 
-	le, err := leaderelection.GetLeaderEngine()
-	if err != nil {
-		return err
+	// [sts] init the batcher for topology production
+	batcher.InitBatcher(s, hostname, "agent", config.GetMaxCapacity())
+
+	isLeader := func() bool {
+		return false
 	}
 
-	// Create event recorder
-	eventBroadcaster := record.NewBroadcaster()
-	eventBroadcaster.StartLogging(log.Infof)
-	eventBroadcaster.StartRecordingToSink(&corev1.EventSinkImpl{Interface: apiCl.Cl.CoreV1().Events("")})
-	eventRecorder := eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: "datadog-cluster-agent"})
+	// [sts] - skipping leader election because we don't need it.
+	skipLeaderElection := config.Datadog.GetBool("skip_leader_election")
+	if !skipLeaderElection {
 
-	ctx := apiserver.ControllerContext{
-		InformerFactory:    apiCl.InformerFactory,
-		WPAClient:          apiCl.WPAClient,
-		WPAInformerFactory: apiCl.WPAInformerFactory,
-		DDClient:           apiCl.DDClient,
-		DDInformerFactory:  apiCl.DDInformerFactory,
-		Client:             apiCl.Cl,
-		IsLeaderFunc:       le.IsLeader,
-		EventRecorder:      eventRecorder,
-		StopCh:             stopCh,
-	}
-
-	if aggErr := apiserver.StartControllers(ctx); aggErr != nil {
-		for _, err := range aggErr.Errors() {
-			log.Warnf("Error while starting controller: %v", err)
-		}
-	}
-
-	if config.Datadog.GetBool("orchestrator_explorer.enabled") {
-		// Generate and persist a cluster ID
-		// this must be a UUID, and ideally be stable for the lifetime of a cluster
-		// so we store it in a configmap that we try and read before generating a new one.
-		coreClient := apiCl.Cl.CoreV1().(*corev1.CoreV1Client)
-		_, err = apicommon.GetOrCreateClusterID(coreClient)
+		le, err := leaderelection.GetLeaderEngine()
 		if err != nil {
-			log.Errorf("Failed to generate or retrieve the cluster ID")
+			return err
 		}
 
-		clusterName := clustername.GetClusterName(context.TODO(), hostname)
-		if clusterName == "" {
-			log.Warn("Failed to auto-detect a Kubernetes cluster name. We recommend you set it manually via the cluster_name config option")
-		}
-	} else {
-		log.Info("Orchestrator explorer is disabled")
-	}
+		isLeader = le.IsLeader
 
-	if config.Datadog.GetBool("admission_controller.enabled") {
-		admissionCtx := admissionpkg.ControllerContext{
-			IsLeaderFunc:        le.IsLeader,
-			LeaderSubscribeFunc: le.Subscribe,
-			SecretInformers:     apiCl.CertificateSecretInformerFactory,
-			WebhookInformers:    apiCl.WebhookConfigInformerFactory,
-			Client:              apiCl.Cl,
-			DiscoveryClient:     apiCl.DiscoveryCl,
-			StopCh:              stopCh,
+		// Create event recorder
+		eventBroadcaster := record.NewBroadcaster()
+		eventBroadcaster.StartLogging(log.Infof)
+		eventBroadcaster.StartRecordingToSink(&corev1.EventSinkImpl{Interface: apiCl.Cl.CoreV1().Events("")})
+		eventRecorder := eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: "datadog-cluster-agent"})
+
+		ctx := apiserver.ControllerContext{
+			InformerFactory:    apiCl.InformerFactory,
+			WPAClient:          apiCl.WPAClient,
+			WPAInformerFactory: apiCl.WPAInformerFactory,
+			DDClient:           apiCl.DDClient,
+			DDInformerFactory:  apiCl.DDInformerFactory,
+			Client:             apiCl.Cl,
+			IsLeaderFunc:       le.IsLeader,
+			EventRecorder:      eventRecorder,
+			StopCh:             stopCh,
 		}
-		err = admissionpkg.StartControllers(admissionCtx)
-		if err != nil {
-			log.Errorf("Could not start admission controller: %v", err)
+
+		if aggErr := apiserver.StartControllers(ctx); aggErr != nil {
+			for _, err := range aggErr.Errors() {
+				log.Warnf("Error while starting controller: %v", err)
+			}
 		}
-	} else {
-		log.Info("Admission controller is disabled")
+
+		if config.Datadog.GetBool("orchestrator_explorer.enabled") {
+			// Generate and persist a cluster ID
+			// this must be a UUID, and ideally be stable for the lifetime of a cluster
+			// so we store it in a configmap that we try and read before generating a new one.
+			coreClient := apiCl.Cl.CoreV1().(*corev1.CoreV1Client)
+			_, err = apicommon.GetOrCreateClusterID(coreClient)
+			if err != nil {
+				log.Errorf("Failed to generate or retrieve the cluster ID")
+			}
+
+			clusterName := clustername.GetClusterName(context.TODO(), hostname)
+			if clusterName == "" {
+				log.Warn("Failed to auto-detect a Kubernetes cluster name. We recommend you set it manually via the cluster_name config option")
+			}
+		} else {
+			log.Info("Orchestrator explorer is disabled")
+		}
+
+		if config.Datadog.GetBool("admission_controller.enabled") {
+			admissionCtx := admissionpkg.ControllerContext{
+				IsLeaderFunc:        le.IsLeader,
+				LeaderSubscribeFunc: le.Subscribe,
+				SecretInformers:     apiCl.CertificateSecretInformerFactory,
+				WebhookInformers:    apiCl.WebhookConfigInformerFactory,
+				Client:              apiCl.Cl,
+				DiscoveryClient:     apiCl.DiscoveryCl,
+				StopCh:              stopCh,
+			}
+			err = admissionpkg.StartControllers(admissionCtx)
+			if err != nil {
+				log.Errorf("Could not start admission controller: %v", err)
+			}
+		} else {
+			log.Info("Admission controller is disabled")
+		}
 	}
 
 	// Setup a channel to catch OS signals
@@ -357,7 +373,7 @@ func start(cmd *cobra.Command, args []string) error {
 		go func() {
 			defer wg.Done()
 
-			if err := runCompliance(mainCtx, apiCl, le.IsLeader); err != nil {
+			if err := runCompliance(mainCtx, apiCl, isLeader); err != nil { // sts
 				log.Errorf("Error while running compliance agent: %v", err)
 			}
 		}()

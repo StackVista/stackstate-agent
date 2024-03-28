@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2020-present Datadog, Inc.
 
+//go:build docker
 // +build docker
 
 package v2
@@ -17,7 +18,7 @@ import (
 	"path"
 	"reflect"
 
-	"github.com/DataDog/datadog-agent/pkg/util/ecs/common"
+	"github.com/StackVista/stackstate-agent/pkg/util/ecs/common"
 )
 
 const (

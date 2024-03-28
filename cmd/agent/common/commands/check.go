@@ -24,22 +24,28 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
-	"github.com/DataDog/datadog-agent/cmd/agent/app/standalone"
-	"github.com/DataDog/datadog-agent/cmd/agent/common"
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery"
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/epforwarder"
-	"github.com/DataDog/datadog-agent/pkg/logs/message"
-	"github.com/DataDog/datadog-agent/pkg/metadata"
-	"github.com/DataDog/datadog-agent/pkg/serializer"
-	"github.com/DataDog/datadog-agent/pkg/status"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/flavor"
-	"github.com/DataDog/datadog-agent/pkg/util/scrubber"
+	"github.com/StackVista/stackstate-agent/cmd/agent/app/standalone"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/batcher" // sts
+	"github.com/StackVista/stackstate-agent/pkg/collector"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"                      // sts
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/state"                        // sts
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"   // sts
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionforwarder" // sts
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionmanager"   // sts
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/epforwarder"
+	"github.com/StackVista/stackstate-agent/pkg/logs/message"
+	"github.com/StackVista/stackstate-agent/pkg/metadata"
+	"github.com/StackVista/stackstate-agent/pkg/serializer"
+	"github.com/StackVista/stackstate-agent/pkg/status"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/flavor"
+	"github.com/StackVista/stackstate-agent/pkg/util/scrubber"
 )
 
 var (
@@ -145,6 +151,16 @@ func Check(loggerName config.LoggerName, confFilePath *string, flagNoColor *bool
 			// Initializing the aggregator with a flush interval of 0 (which disable the flush goroutine)
 			agg := aggregator.InitAggregatorWithFlushInterval(s, eventPlatformForwarder, hostname, 0)
 			common.LoadComponents(config.Datadog.GetString("confd_path"))
+
+			// [sts] init the batcher without the real serializer
+			batcher.InitBatcher(&printingAgentV1Serializer{}, hostname, "agent", config.GetMaxCapacity())
+			// [sts] create the global transactional components
+			state.InitCheckStateManager()
+			handler.InitCheckManager()
+			transactionforwarder.NewPrintingTransactionalForwarder() // use the printing transactional forwarder for the agent check command
+			transactionbatcher.InitTransactionalBatcher(hostname, "agent", config.GetMaxCapacity())
+			txChannelBufferSize, txTimeoutDuration, txEvictionDuration, txTickerInterval := config.GetTxManagerConfig()
+			transactionmanager.InitTransactionManager(txChannelBufferSize, txTickerInterval, txTimeoutDuration, txEvictionDuration)
 
 			if config.Datadog.GetBool("inventories_enabled") {
 				metadata.SetupInventoriesExpvar(common.AC, common.Coll)
@@ -468,6 +484,18 @@ func runCheck(c check.Check, agg *aggregator.BufferedAggregator) *check.Stats {
 	return s
 }
 
+// sts begin
+type printingAgentV1Serializer struct{}
+
+func (printingAgentV1Serializer) SendJSONToV1Intake(data interface{}) error {
+	fmt.Fprintln(color.Output, fmt.Sprintf("=== %s ===", color.BlueString("Topology")))
+	j, _ := json.MarshalIndent(data, "", "  ")
+	fmt.Println(string(j))
+	return nil
+}
+
+// sts end
+
 func printMetrics(agg *aggregator.BufferedAggregator, checkFileOutput *bytes.Buffer) {
 	series, sketches := agg.GetSeriesAndSketches(time.Now())
 	if len(series) != 0 {
@@ -617,7 +645,7 @@ func getMetricsData(agg *aggregator.BufferedAggregator) map[string]interface{} {
 	series, sketches := agg.GetSeriesAndSketches(time.Now())
 	if len(series) != 0 {
 		// Workaround to get the raw sequence of metrics, see:
-		// https://github.com/DataDog/datadog-agent/blob/b2d9527ec0ec0eba1a7ae64585df443c5b761610/pkg/metrics/series.go#L109-L122
+		// https://github.com/StackVista/stackstate-agent/blob/b2d9527ec0ec0eba1a7ae64585df443c5b761610/pkg/metrics/series.go#L109-L122
 		var data map[string]interface{}
 		sj, _ := json.Marshal(series)
 		json.Unmarshal(sj, &data) //nolint:errcheck

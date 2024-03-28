@@ -11,10 +11,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	dd_conf "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/parser"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	dd_conf "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/parser"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // defaultContentLenLimit represents the max size for a line,

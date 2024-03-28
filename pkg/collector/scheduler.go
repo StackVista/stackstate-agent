@@ -11,11 +11,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/collector/loaders"
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/loaders"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/features"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -50,14 +51,18 @@ type CheckScheduler struct {
 	loaders        []check.Loader
 	collector      *Collector
 	m              sync.RWMutex
+	features       features.Features // Features supported by StackState
 }
 
 // InitCheckScheduler creates and returns a check scheduler
 func InitCheckScheduler(collector *Collector) *CheckScheduler {
+	feats := features.InitFeatures()
+
 	checkScheduler = &CheckScheduler{
 		collector:      collector,
 		configToChecks: make(map[string][]check.ID),
 		loaders:        make([]check.Loader, 0, len(loaders.LoaderCatalog())),
+		features:       feats,
 	}
 	// add the check loaders
 	for _, loader := range loaders.LoaderCatalog() {
@@ -181,6 +186,7 @@ func (s *CheckScheduler) getChecks(config integration.Config) ([]check.Check, er
 			if err == nil {
 				log.Debugf("%v: successfully loaded check '%s'", loader, config.Name)
 				errorStats.removeLoaderErrors(config.Name)
+				c.SetFeatures(s.features)
 				checks = append(checks, c)
 				break
 			} else if c != nil && check.IsJMXInstance(config.Name, instance, config.InitConfig) {

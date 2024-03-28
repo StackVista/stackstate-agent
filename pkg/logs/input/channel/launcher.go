@@ -6,8 +6,8 @@
 package channel
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/logs/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/pipeline"
+	"github.com/StackVista/stackstate-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/pipeline"
 )
 
 // Launcher starts a channel reader on the given channel of string.

@@ -20,8 +20,8 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/config"
-	"github.com/DataDog/datadog-agent/pkg/trace/watchdog"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config"
+	"github.com/StackVista/stackstate-agent/pkg/trace/watchdog"
 )
 
 var (

@@ -7,10 +7,11 @@ package corechecks
 
 import (
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 )
 
 // FIXTURE
@@ -51,6 +52,7 @@ func TestLoad(t *testing.T) {
 		integration.Data("foo: bar"),
 	}
 	cc := integration.Config{Name: "foo", Instances: i}
+	handler.InitCheckManager()
 	l, _ := NewGoCheckLoader()
 
 	_, err := l.Load(cc, i[0])

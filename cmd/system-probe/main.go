@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package main
@@ -5,7 +6,7 @@ package main
 import (
 	"os"
 
-	"github.com/DataDog/datadog-agent/cmd/system-probe/app"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/app"
 )
 
 func main() {

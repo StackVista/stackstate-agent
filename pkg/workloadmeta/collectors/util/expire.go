@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/workloadmeta"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta"
 )
 
 // Expire implements a simple last-seen-time-based expiry logic for watching

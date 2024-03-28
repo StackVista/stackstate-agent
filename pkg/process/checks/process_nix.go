@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package checks
@@ -7,9 +8,9 @@ import (
 	"strconv"
 
 	model "github.com/DataDog/agent-payload/v5/process"
-	"github.com/DataDog/datadog-agent/pkg/process/procutil"
-	"github.com/DataDog/datadog-agent/pkg/util/system"
 	"github.com/DataDog/gopsutil/cpu"
+	"github.com/StackVista/stackstate-agent/pkg/process/procutil"
+	"github.com/StackVista/stackstate-agent/pkg/util/system"
 )
 
 func formatUser(fp *procutil.Process) *model.ProcessUser {

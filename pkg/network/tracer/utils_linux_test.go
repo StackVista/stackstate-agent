@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package tracer
@@ -5,7 +6,7 @@ package tracer
 import (
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/util/kernel"
+	"github.com/StackVista/stackstate-agent/pkg/util/kernel"
 	"github.com/stretchr/testify/assert"
 )
 

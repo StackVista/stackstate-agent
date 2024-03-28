@@ -13,15 +13,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/errors"
-	"github.com/DataDog/datadog-agent/pkg/security/log"
-	ecsutil "github.com/DataDog/datadog-agent/pkg/util/ecs"
-	ecsmeta "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata"
-	v1 "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata/v1"
-	v3 "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata/v3"
-	"github.com/DataDog/datadog-agent/pkg/workloadmeta"
-	"github.com/DataDog/datadog-agent/pkg/workloadmeta/collectors/util"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/errors"
+	"github.com/StackVista/stackstate-agent/pkg/security/log"
+	ecsutil "github.com/StackVista/stackstate-agent/pkg/util/ecs"
+	ecsmeta "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata"
+	v1 "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata/v1"
+	v3 "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata/v3"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta/collectors/util"
 )
 
 const (

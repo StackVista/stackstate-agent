@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package ebpf
@@ -7,8 +8,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/ebpf/manager"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 var indirectSyscallPrefixes = map[string]string{

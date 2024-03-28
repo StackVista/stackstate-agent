@@ -6,7 +6,7 @@
 package compliance
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
 )
 
 // Report contains the result of a compliance check

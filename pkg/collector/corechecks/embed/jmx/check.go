@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build jmx
 // +build jmx
 
 package jmx
@@ -11,10 +12,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	telemetry_utils "github.com/DataDog/datadog-agent/pkg/telemetry/utils"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
+	"github.com/StackVista/stackstate-agent/pkg/util/features"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 type JMXCheck struct {
@@ -24,6 +26,7 @@ type JMXCheck struct {
 	stop      chan struct{}
 	source    string
 	telemetry bool
+	features  features.Features
 }
 
 func newJMXCheck(config integration.Config, source string) *JMXCheck {
@@ -97,4 +100,14 @@ func (c *JMXCheck) GetWarnings() []error {
 
 func (c *JMXCheck) GetSenderStats() (check.SenderStats, error) {
 	return check.NewSenderStats(), nil
+}
+
+// GetFeatures returns the features supported by StackState
+func (c *JMXCheck) GetFeatures() features.Features {
+	return c.features
+}
+
+// SetFeatures sets the features supported by StackState
+func (c *JMXCheck) SetFeatures(features features.Features) {
+	c.features = features
 }

@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/common/types"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/common/types"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1026,3 +1026,57 @@ network_devices:
 	config = setupConfFromYAML(datadogYaml)
 	assert.Equal(t, "dev", config.GetString("network_devices.namespace"))
 }
+
+// sts begin
+func TestKubernetesKubeletHostFromSTSPrefix(t *testing.T) {
+	kubeletHost := "/host/kubelet"
+	os.Setenv("STS_KUBERNETES_KUBELET_HOST", kubeletHost)
+	config := setupConf()
+	assert.Equal(t, kubeletHost, config.GetString("kubernetes_kubelet_host"))
+}
+
+func TestSkipSSLValidationFromSTSPrefix(t *testing.T) {
+	config := setupConf()
+	assert.Equal(t, false, config.GetBool("skip_ssl_validation"))
+
+	os.Setenv("STS_SKIP_SSL_VALIDATION", "true")
+	config2 := setupConf()
+	assert.Equal(t, true, config2.GetBool("skip_ssl_validation"))
+}
+
+func TestValidHostname(t *testing.T) {
+	var err error
+	err = ValidHostname("")
+	assert.NotNil(t, err)
+	err = ValidHostname("localhost")
+	assert.NotNil(t, err)
+	err = ValidHostname(strings.Repeat("a", 256))
+	assert.NotNil(t, err)
+	err = ValidHostname("data🐕hq.com")
+	assert.NotNil(t, err)
+
+	// switch of hostname validation
+	os.Setenv("DD_SKIP_HOSTNAME_VALIDATION", "true")
+	err = ValidHostname("")
+	assert.Nil(t, err)
+	err = ValidHostname("localhost")
+	assert.Nil(t, err)
+	err = ValidHostname(strings.Repeat("a", 256))
+	assert.Nil(t, err)
+	err = ValidHostname("data🐕hq.com")
+	assert.Nil(t, err)
+
+	// switch of hostname validation
+	os.Setenv("DD_SKIP_HOSTNAME_VALIDATION", "false")
+	Datadog.Set("skip_hostname_validation", "true")
+	err = ValidHostname("")
+	assert.Nil(t, err)
+	err = ValidHostname("localhost")
+	assert.Nil(t, err)
+	err = ValidHostname(strings.Repeat("a", 256))
+	assert.Nil(t, err)
+	err = ValidHostname("data🐕hq.com")
+	assert.Nil(t, err)
+}
+
+// sts end

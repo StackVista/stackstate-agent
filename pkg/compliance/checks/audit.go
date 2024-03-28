@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build linux
 // +build linux
 
 package checks
@@ -15,8 +16,8 @@ import (
 	"github.com/elastic/go-libaudit/rule"
 	"github.com/elastic/go-libaudit/rule/flags"
 
-	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 func newAuditClient() (env.AuditClient, error) {

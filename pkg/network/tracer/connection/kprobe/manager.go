@@ -1,13 +1,14 @@
-//+build linux_bpf
+//go:build linux_bpf
+// +build linux_bpf
 
 package kprobe
 
 import (
 	"os"
 
-	"github.com/DataDog/datadog-agent/pkg/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/network/ebpf/probes"
 	"github.com/DataDog/ebpf/manager"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/network/ebpf/probes"
 )
 
 const (

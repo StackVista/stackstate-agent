@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubelet
 // +build kubelet
 
 package kubernetes
@@ -16,8 +17,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/kubelet"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
 )
 
 type InsecureTestSuite struct {
@@ -40,6 +41,7 @@ func (suite *InsecureTestSuite) TestHTTP() {
 	mockConfig.Set("kubernetes_https_kubelet_port", 10255)
 	mockConfig.Set("kubelet_auth_token_path", "")
 	mockConfig.Set("kubelet_tls_verify", false)
+	mockConfig.Set("kubelet_fallback_to_insecure", true) // sts
 	mockConfig.Set("kubernetes_kubelet_host", "127.0.0.1")
 
 	ku, err := kubelet.GetKubeUtil()
@@ -62,8 +64,27 @@ func (suite *InsecureTestSuite) TestHTTP() {
 
 	require.EqualValues(suite.T(),
 		map[string]string{
-			"url": "http://127.0.0.1:10255",
+			"url":        "http://127.0.0.1:10255",
+			"verify_tls": "false", // sts
 		}, ku.GetRawConnectionInfo())
+}
+
+// sts
+func (suite *InsecureTestSuite) TestHTTPNotAllowed() {
+	mockConfig := config.Mock()
+
+	mockConfig.Set("kubernetes_http_kubelet_port", 10255)
+
+	// Giving 10255 http port to https setting will force an intended https discovery failure
+	// Then it forces the http usage
+	mockConfig.Set("kubernetes_https_kubelet_port", 10255)
+	mockConfig.Set("kubelet_auth_token_path", "")
+	mockConfig.Set("kubelet_tls_verify", false)
+	mockConfig.Set("kubelet_fallback_to_insecure", false)
+	mockConfig.Set("kubernetes_kubelet_host", "127.0.0.1")
+
+	_, err := kubelet.GetKubeUtil()
+	require.NotNil(suite.T(), err)
 }
 
 func (suite *InsecureTestSuite) TestInsecureHTTPS() {
@@ -74,6 +95,7 @@ func (suite *InsecureTestSuite) TestInsecureHTTPS() {
 	mockConfig.Set("kubernetes_https_kubelet_port", 10250)
 	mockConfig.Set("kubelet_auth_token_path", "")
 	mockConfig.Set("kubelet_tls_verify", false)
+	mockConfig.Set("kubelet_fallback_to_insecure", true) // sts
 	mockConfig.Set("kubernetes_kubelet_host", "127.0.0.1")
 
 	ku, err := kubelet.GetKubeUtil()

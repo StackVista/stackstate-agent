@@ -4,7 +4,7 @@ import (
 	"bytes"
 
 	model "github.com/DataDog/agent-payload/v5/process"
-	"github.com/DataDog/datadog-agent/pkg/network"
+	"github.com/StackVista/stackstate-agent/pkg/network"
 	"github.com/gogo/protobuf/jsonpb"
 )
 
@@ -16,7 +16,7 @@ type jsonSerializer struct {
 }
 
 func (j jsonSerializer) Marshal(conns *network.Connections) ([]byte, error) {
-	payload := modelConnections(conns)
+	payload := ModelConnections(conns)
 	writer := new(bytes.Buffer)
 	err := j.marshaller.Marshal(writer, payload)
 	returnToPool(payload)

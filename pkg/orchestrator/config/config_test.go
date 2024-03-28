@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	coreConfig "github.com/DataDog/datadog-agent/pkg/config"
-	apicfg "github.com/DataDog/datadog-agent/pkg/process/util/api/config"
+	coreConfig "github.com/StackVista/stackstate-agent/pkg/config"
+	apicfg "github.com/StackVista/stackstate-agent/pkg/process/util/api/config"
 	"github.com/stretchr/testify/suite"
 )
 

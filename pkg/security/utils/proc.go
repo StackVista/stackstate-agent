@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build linux
 // +build linux
 
 package utils
@@ -19,7 +20,7 @@ import (
 
 	"github.com/DataDog/gopsutil/process"
 
-	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
 )
 
 // Getpid returns the current process ID in the host namespace

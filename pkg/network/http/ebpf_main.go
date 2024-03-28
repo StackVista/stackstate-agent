@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package http
@@ -7,14 +8,14 @@ import (
 	"math"
 	"os"
 
-	ddebpf "github.com/DataDog/datadog-agent/pkg/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode"
-	"github.com/DataDog/datadog-agent/pkg/network/config"
-	netebpf "github.com/DataDog/datadog-agent/pkg/network/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/network/ebpf/probes"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/ebpf"
 	"github.com/DataDog/ebpf/manager"
+	ddebpf "github.com/StackVista/stackstate-agent/pkg/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
+	netebpf "github.com/StackVista/stackstate-agent/pkg/network/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/network/ebpf/probes"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"golang.org/x/sys/unix"
 )
 

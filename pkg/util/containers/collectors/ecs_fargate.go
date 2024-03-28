@@ -11,8 +11,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	ecsutil "github.com/DataDog/datadog-agent/pkg/util/ecs"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	ecsutil "github.com/StackVista/stackstate-agent/pkg/util/ecs"
 )
 
 const (

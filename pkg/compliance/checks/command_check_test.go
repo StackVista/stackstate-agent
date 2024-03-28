@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build !windows
 // +build !windows
 
 package checks
@@ -12,9 +13,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/compliance"
-	"github.com/DataDog/datadog-agent/pkg/compliance/event"
-	"github.com/DataDog/datadog-agent/pkg/compliance/mocks"
+	"github.com/StackVista/stackstate-agent/pkg/compliance"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/mocks"
 
 	assert "github.com/stretchr/testify/require"
 )

@@ -14,9 +14,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/workloadmeta"
-	workloadmetatesting "github.com/DataDog/datadog-agent/pkg/workloadmeta/testing"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta"
+	workloadmetatesting "github.com/StackVista/stackstate-agent/pkg/workloadmeta/testing"
 )
 
 func TestParseKubeletPodlist(t *testing.T) {

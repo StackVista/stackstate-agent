@@ -1,3 +1,4 @@
+//go:build windows && npm
 // +build windows,npm
 
 package network
@@ -10,9 +11,9 @@ import (
 	"sync/atomic"
 	"unsafe"
 
-	"github.com/DataDog/datadog-agent/pkg/network/config"
-	"github.com/DataDog/datadog-agent/pkg/network/driver"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
+	"github.com/StackVista/stackstate-agent/pkg/network/driver"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"golang.org/x/sys/windows"
 )
 

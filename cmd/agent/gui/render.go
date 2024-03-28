@@ -8,10 +8,10 @@ import (
 	"io"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery"
-	"github.com/DataDog/datadog-agent/pkg/collector"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/status"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery"
+	"github.com/StackVista/stackstate-agent/pkg/collector"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/status"
 )
 
 var fmap = status.Fmap()

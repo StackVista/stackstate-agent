@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build !docker
 // +build !docker
 
 package checks
@@ -10,7 +11,7 @@ package checks
 import (
 	"errors"
 
-	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
 )
 
 func newDockerClient() (env.DockerClient, error) {

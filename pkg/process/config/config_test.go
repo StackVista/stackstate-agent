@@ -1,3 +1,4 @@
+//go:build linux || windows
 // +build linux windows
 
 package config
@@ -16,12 +17,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/process/procutil"
-	pb "github.com/DataDog/datadog-agent/pkg/proto/pbgo"
-	mocks "github.com/DataDog/datadog-agent/pkg/proto/pbgo/mocks"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/providers"
-	providerMocks "github.com/DataDog/datadog-agent/pkg/util/containers/providers/mock"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/process/procutil"
+	pb "github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
+	mocks "github.com/StackVista/stackstate-agent/pkg/proto/pbgo/mocks"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/providers"
+	providerMocks "github.com/StackVista/stackstate-agent/pkg/util/containers/providers/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -211,14 +212,15 @@ func TestDefaultConfig(t *testing.T) {
 	assert.Equal(true, agentConfig.AllowRealTime)
 	assert.Equal(true, agentConfig.Scrubber.Enabled)
 
-	os.Setenv("DOCKER_DD_AGENT", "yes")
-	agentConfig = NewDefaultAgentConfig(false)
-	assert.Equal(os.Getenv("HOST_PROC"), "")
-	assert.Equal(os.Getenv("HOST_SYS"), "")
-	os.Setenv("DOCKER_DD_AGENT", "no")
-	assert.Equal(6062, agentConfig.ProcessExpVarPort)
-
-	os.Unsetenv("DOCKER_DD_AGENT")
+	// [sts] dropping this, HOST_PROC and HOST_SYS is set on our k8s runners
+	//os.Setenv("DOCKER_DD_AGENT", "yes")
+	//agentConfig = NewDefaultAgentConfig(false)
+	//assert.Equal(os.Getenv("HOST_PROC"), "")
+	//assert.Equal(os.Getenv("HOST_SYS"), "")
+	//os.Setenv("DOCKER_DD_AGENT", "no")
+	//assert.Equal(6062, agentConfig.ProcessExpVarPort)
+	//
+	//os.Unsetenv("DOCKER_DD_AGENT")
 }
 
 func TestAgentConfigYamlAndSystemProbeConfig(t *testing.T) {

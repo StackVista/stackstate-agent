@@ -14,17 +14,17 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 )
 
 var (
 	// AgentCmd is the root command
 	AgentCmd = &cobra.Command{
 		Use:   fmt.Sprintf("%s [command]", os.Args[0]),
-		Short: "Datadog Agent at your service.",
+		Short: "StackState Agent at your service.",
 		Long: `
-The Datadog Agent faithfully collects events and metrics and brings them
-to Datadog on your behalf so that you can do something useful with your
+The StackState Agent faithfully collects events and metrics and brings them
+to StackState on your behalf so that you can do something useful with your
 monitoring and performance data.`,
 		SilenceUsage: true,
 	}

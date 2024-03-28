@@ -15,21 +15,21 @@ import (
 
 	"time"
 
-	"github.com/DataDog/datadog-agent/cmd/security-agent/app"
+	"github.com/StackVista/stackstate-agent/cmd/security-agent/app"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/util/flavor"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/util/flavor"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
-	_ "github.com/DataDog/datadog-agent/pkg/util/containers/providers/windows"
-	"github.com/DataDog/datadog-agent/pkg/util/winutil"
+	_ "github.com/StackVista/stackstate-agent/pkg/util/containers/providers/windows"
+	"github.com/StackVista/stackstate-agent/pkg/util/winutil"
 
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
 
-	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
+	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
 )
 
 var (
