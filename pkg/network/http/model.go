@@ -62,9 +62,9 @@ func (tx *httpTX) StatusClass() int {
 	return (int(tx.response_status_code) / 100) * 100
 }
 
-// RequestLatency returns the latency of the request in nanoseconds
+// RequestLatency returns the latency of the request in seconds
 func (tx *httpTX) RequestLatency() float64 {
-	return nsTimestampToFloat(uint64(tx.response_last_seen - tx.request_started))
+	return nsTimestampToFloatSeconds(uint64(tx.response_last_seen - tx.request_started))
 }
 
 // Incomplete returns true if the transaction contains only the request or response information
@@ -90,12 +90,14 @@ func (batch *httpBatch) Transactions() []httpTX {
 // 10 bits precision (any value will be +/- 1/1024)
 const roundMask uint64 = 1 << 10
 
-// nsTimestampToFloat converts a nanosec timestamp into a float nanosecond timestamp truncated to a fixed precision
-func nsTimestampToFloat(ns uint64) float64 {
+// [sts] seconds instead of nanoseconds
+// nsTimestampToFloatSeconds converts a nanosec timestamp into a float second timestamp truncated to a fixed precision
+func nsTimestampToFloatSeconds(ns uint64) float64 {
 	var shift uint
 	for ns > roundMask {
 		ns = ns >> 1
 		shift++
 	}
-	return float64(ns << shift)
+	ns = ns << shift
+	return float64(ns) / 1e9
 }

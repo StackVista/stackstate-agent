@@ -62,6 +62,9 @@ from .test import (
     test,
 )
 
+# [sts] Security agent
+enable_security_agent = False
+
 # the root namespace
 ns = Collection()
 
@@ -116,7 +119,10 @@ ns.add_collection(rtloader)
 ns.add_collection(system_probe)
 ns.add_collection(process_agent)
 ns.add_collection(uninstallcmd)
-ns.add_collection(security_agent)
+
+# [sts] Security agent
+if enable_security_agent:
+    ns.add_collection(security_agent)
 
 ns.configure(
     {

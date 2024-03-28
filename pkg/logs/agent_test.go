@@ -15,15 +15,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	coreConfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/client/mock"
-	"github.com/DataDog/datadog-agent/pkg/logs/client/tcp"
+	coreConfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/client/mock"
+	"github.com/StackVista/stackstate-agent/pkg/logs/client/tcp"
 
-	"github.com/DataDog/datadog-agent/pkg/logs/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/metrics"
-	"github.com/DataDog/datadog-agent/pkg/logs/service"
+	"github.com/StackVista/stackstate-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/logs/service"
 
-	"github.com/DataDog/datadog-agent/pkg/util/testutil"
+	"github.com/StackVista/stackstate-agent/pkg/util/testutil"
 )
 
 type AgentTestSuite struct {

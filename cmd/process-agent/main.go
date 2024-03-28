@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package main
@@ -7,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/DataDog/datadog-agent/cmd/process-agent/flags"
+	"github.com/StackVista/stackstate-agent/cmd/process-agent/flags"
 )
 
 func rootCmdRun(cmd *cobra.Command, args []string) {

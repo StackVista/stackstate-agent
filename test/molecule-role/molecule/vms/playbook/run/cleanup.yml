@@ -1,0 +1,6 @@
+---
+- name: Cleanup Receiver VM
+  hosts: receiver_vm
+  gather_facts: true
+  tasks:
+    - include_tasks: ./cleanup.tasks.yml

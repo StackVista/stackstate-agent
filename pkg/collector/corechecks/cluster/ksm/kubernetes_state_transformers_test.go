@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package ksm
@@ -11,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
-	ksmstore "github.com/DataDog/datadog-agent/pkg/kubestatemetrics/store"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
+	ksmstore "github.com/StackVista/stackstate-agent/pkg/kubestatemetrics/store"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -784,9 +785,10 @@ func Test_containerWaitingReasonTransformer(t *testing.T) {
 				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:CrashLoopBackOff"},
 			},
 			expected: &metricsExpected{
-				name: "kubernetes_state.container.status_report.count.waiting",
-				val:  1,
-				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:CrashLoopBackOff"},
+				name:          "kubernetes_state.container.status_report.count.waiting",
+				val:           1,
+				tags:          []string{"container:foo", "pod:bar", "namespace:default", "reason:CrashLoopBackOff"},
+				numberOfCalls: 1,
 			},
 		},
 		{
@@ -805,9 +807,10 @@ func Test_containerWaitingReasonTransformer(t *testing.T) {
 				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:ErrImagePull"},
 			},
 			expected: &metricsExpected{
-				name: "kubernetes_state.container.status_report.count.waiting",
-				val:  1,
-				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:ErrImagePull"},
+				name:          "kubernetes_state.container.status_report.count.waiting",
+				val:           1,
+				tags:          []string{"container:foo", "pod:bar", "namespace:default", "reason:ErrImagePull"},
+				numberOfCalls: 1,
 			},
 		},
 		{
@@ -826,9 +829,10 @@ func Test_containerWaitingReasonTransformer(t *testing.T) {
 				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:ImagePullBackoff"},
 			},
 			expected: &metricsExpected{
-				name: "kubernetes_state.container.status_report.count.waiting",
-				val:  1,
-				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:ImagePullBackoff"},
+				name:          "kubernetes_state.container.status_report.count.waiting",
+				val:           1,
+				tags:          []string{"container:foo", "pod:bar", "namespace:default", "reason:ImagePullBackoff"},
+				numberOfCalls: 1,
 			},
 		},
 		{
@@ -847,9 +851,10 @@ func Test_containerWaitingReasonTransformer(t *testing.T) {
 				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:ContainerCreating"},
 			},
 			expected: &metricsExpected{
-				name: "kubernetes_state.container.status_report.count.waiting",
-				val:  1,
-				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:ContainerCreating"},
+				name:          "kubernetes_state.container.status_report.count.waiting",
+				val:           1,
+				tags:          []string{"container:foo", "pod:bar", "namespace:default", "reason:ContainerCreating"},
+				numberOfCalls: 1,
 			},
 		},
 	}
@@ -857,10 +862,10 @@ func Test_containerWaitingReasonTransformer(t *testing.T) {
 		s := mocksender.NewMockSender("ksm")
 		s.SetupAcceptAll()
 		t.Run(tt.name, func(t *testing.T) {
-			containerWaitingReasonTransformer(s, tt.args.name, tt.args.metric, tt.args.hostname, tt.args.tags)
+			containerReasonTransformer(s, tt.args.name, tt.args.metric, tt.args.hostname, tt.args.tags)
 			if tt.expected != nil {
 				s.AssertMetric(t, "Gauge", tt.expected.name, tt.expected.val, tt.args.hostname, tt.args.tags)
-				s.AssertNumberOfCalls(t, "Gauge", 1)
+				s.AssertNumberOfCalls(t, "Gauge", tt.expected.numberOfCalls)
 			} else {
 				s.AssertNotCalled(t, "Gauge")
 			}
@@ -874,27 +879,6 @@ func Test_containerTerminatedReasonTransformer(t *testing.T) {
 		args     args
 		expected *metricsExpected
 	}{
-		{
-			name: "OOMKilled",
-			args: args{
-				name: "kube_pod_container_status_terminated_reason",
-				metric: ksmstore.DDMetric{
-					Val: 1,
-					Labels: map[string]string{
-						"container": "foo",
-						"pod":       "bar",
-						"namespace": "default",
-						"reason":    "OOMKilled",
-					},
-				},
-				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:OOMKilled"},
-			},
-			expected: &metricsExpected{
-				name: "kubernetes_state.container.status_report.count.terminated",
-				val:  1,
-				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:OOMKilled"},
-			},
-		},
 		{
 			name: "ContainerCannotRun",
 			args: args{
@@ -911,9 +895,10 @@ func Test_containerTerminatedReasonTransformer(t *testing.T) {
 				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:ContainerCannotRun"},
 			},
 			expected: &metricsExpected{
-				name: "kubernetes_state.container.status_report.count.terminated",
-				val:  1,
-				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:ContainerCannotRun"},
+				name:          "kubernetes_state.container.status_report.count.terminated",
+				val:           1,
+				tags:          []string{"container:foo", "pod:bar", "namespace:default", "reason:ContainerCannotRun"},
+				numberOfCalls: 1,
 			},
 		},
 		{
@@ -932,9 +917,10 @@ func Test_containerTerminatedReasonTransformer(t *testing.T) {
 				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:Error"},
 			},
 			expected: &metricsExpected{
-				name: "kubernetes_state.container.status_report.count.terminated",
-				val:  1,
-				tags: []string{"container:foo", "pod:bar", "namespace:default", "reason:Error"},
+				name:          "kubernetes_state.container.status_report.count.terminated",
+				val:           1,
+				tags:          []string{"container:foo", "pod:bar", "namespace:default", "reason:Error"},
+				numberOfCalls: 1,
 			},
 		},
 	}
@@ -942,10 +928,10 @@ func Test_containerTerminatedReasonTransformer(t *testing.T) {
 		s := mocksender.NewMockSender("ksm")
 		s.SetupAcceptAll()
 		t.Run(tt.name, func(t *testing.T) {
-			containerTerminatedReasonTransformer(s, tt.args.name, tt.args.metric, tt.args.hostname, tt.args.tags)
+			containerReasonTransformer(s, tt.args.name, tt.args.metric, tt.args.hostname, tt.args.tags)
 			if tt.expected != nil {
 				s.AssertMetric(t, "Gauge", tt.expected.name, tt.expected.val, tt.args.hostname, tt.args.tags)
-				s.AssertNumberOfCalls(t, "Gauge", 1)
+				s.AssertNumberOfCalls(t, "Gauge", tt.expected.numberOfCalls)
 			} else {
 				s.AssertNotCalled(t, "Gauge")
 			}

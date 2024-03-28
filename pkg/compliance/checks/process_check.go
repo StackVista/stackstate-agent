@@ -12,10 +12,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/compliance"
-	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
-	"github.com/DataDog/datadog-agent/pkg/compliance/eval"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/compliance"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (

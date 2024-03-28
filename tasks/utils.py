@@ -12,9 +12,9 @@ from subprocess import check_output
 from invoke import task
 
 # constants
-ORG_PATH = "github.com/DataDog"
-DEFAULT_BRANCH = "main"
-REPO_PATH = "{}/datadog-agent".format(ORG_PATH)
+ORG_PATH = "github.com/StackVista"  # sts
+DEFAULT_BRANCH = "master"  # sts
+REPO_PATH = "{}/stackstate-agent".format(ORG_PATH)  # sts
 ALLOWED_REPO_NON_NIGHTLY_BRANCHES = {"stable", "beta", "none"}
 ALLOWED_REPO_NIGHTLY_BRANCHES = {"nightly", "oldnightly"}
 ALLOWED_REPO_ALL_BRANCHES = ALLOWED_REPO_NON_NIGHTLY_BRANCHES.union(ALLOWED_REPO_NIGHTLY_BRANCHES)
@@ -126,7 +126,7 @@ def get_build_flags(
     rtloader_root=None,
     python_home_2=None,
     python_home_3=None,
-    major_version='7',
+    major_version='2',
     python_runtimes='3',
     nikos_embedded_path=None,
 ):
@@ -148,9 +148,12 @@ def get_build_flags(
 
     if embedded_path is None:
         # fall back to local dev path
-        embedded_path = "{}/src/github.com/DataDog/datadog-agent/dev".format(get_gopath(ctx))
+        embedded_path = "{}/src/github.com/StackVista/stackstate-agent/dev".format(get_gopath(ctx))
 
+    print("========= embedded_path:", embedded_path)
+    print("========= rtloader_root:", rtloader_root)
     rtloader_lib, rtloader_headers, rtloader_common_headers = get_multi_python_location(embedded_path, rtloader_root)
+    print("========= rtloader_lib:", rtloader_lib)
 
     # setting python homes in the code
     if python_home_2:
@@ -177,6 +180,9 @@ def get_build_flags(
     if nikos_embedded_path:
         env['PKG_CONFIG_PATH'] = env.get('PKG_CONFIG_PATH', '') + ':' + nikos_embedded_path + '/lib/pkgconfig'
         env["CGO_LDFLAGS"] = env.get('CGO_LDFLAGS', '') + get_nikos_linker_flags(nikos_embedded_path + '/lib')
+
+    # sts
+    print(env)
 
     # if `static` was passed ignore setting rpath, even if `embedded_path` was passed as well
     if static:
@@ -335,7 +341,7 @@ def query_version(ctx, git_sha_length=7, prefix=None, major_version_hint=None):
 
 
 def get_version(
-    ctx, include_git=False, url_safe=False, git_sha_length=7, prefix=None, major_version='7', include_pipeline_id=False
+    ctx, include_git=False, url_safe=False, git_sha_length=7, prefix=None, major_version='2', include_pipeline_id=False
 ):
     # we only need the git info for the non omnibus builds, omnibus includes all this information by default
 
@@ -367,20 +373,26 @@ def get_version(
     return str(version)
 
 
-def get_version_numeric_only(ctx, major_version='7'):
+def get_version_numeric_only(ctx, major_version='2'):
     # we only need the git info for the non omnibus builds, omnibus includes all this information by default
 
-    version, *_ = query_version(ctx, major_version_hint=major_version)
+    version = query_version(ctx, major_version_hint=major_version)[0]  # sts - py2 doesn't support *_
     return version
 
 
 def load_release_versions(_, target_version):
-    with open("release.json", "r") as f:
+    print("[load_release_versions] Loading deps for version ", target_version)
+    with open("stackstate-deps.json", "r") as f:
         versions = json.load(f)
-        if target_version in versions:
-            # windows runners don't accepts anything else than strings in the
-            # environment when running a subprocess.
-            return {str(k): str(v) for k, v in versions[target_version].items()}
+        print("Using the following build environment:")
+        for k, v in versions.items():
+            print("[dep_version]", str(k), str(v))
+        return {str(k):str(v) for k, v in versions.items()}
+        # versions = json.load(f)
+        # if target_version in versions:
+        #     # windows runners don't accepts anything else than strings in the
+        #     # environment when running a subprocess.
+        #     return {str(k): str(v) for k, v in versions[target_version].items()}
     raise Exception("Could not find '{}' version in release.json".format(target_version))
 
 
@@ -430,3 +442,14 @@ def nightly_entry_for(agent_major_version):
 
 def release_entry_for(agent_major_version):
     return "release-a{}".format(agent_major_version)
+
+def do_go_rename(ctx, rename, at):
+    ctx.run("gofmt -l -w -r {} {}".format(rename, at))
+
+
+def do_sed_rename(ctx, rename, at):
+    ctx.run("sed -i '{}' {}".format(rename, at))
+
+
+def do_sed_rename_quoted(ctx, rename, at):
+    ctx.run("sed -i \"{}\" {}".format(rename, at))

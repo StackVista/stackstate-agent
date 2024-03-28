@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package http
@@ -5,7 +6,7 @@ package http
 import (
 	"sync/atomic"
 
-	"github.com/DataDog/datadog-agent/pkg/network/config"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
 )
 
 type httpStatKeeper struct {

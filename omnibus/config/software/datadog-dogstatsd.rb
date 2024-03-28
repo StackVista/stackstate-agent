@@ -11,7 +11,7 @@ license_file "LICENSE"
 skip_transitive_dependency_licensing true
 
 source path: '..'
-relative_path 'src/github.com/DataDog/datadog-agent'
+relative_path 'src/github.com/StackVista/stackstate-agent'
 
 build do
   # set GOPATH on the omnibus source dir for this software
@@ -43,29 +43,29 @@ build do
 
   # move around bin and config files
   if windows?
-    mkdir "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
-    copy 'bin/dogstatsd/dogstatsd.exe', "#{Omnibus::Config.source_dir()}/datadog-agent/src/github.com/DataDog/datadog-agent/bin/agent"
+    mkdir "#{Omnibus::Config.source_dir()}/stackstate-agent/src/github.com/StackVista/stackstate-agent/bin/agent"
+    copy 'bin/dogstatsd/dogstatsd.exe', "#{Omnibus::Config.source_dir()}/stackstate-agent/src/github.com/StackVista/stackstate-agent/bin/agent"
   else
     copy 'bin/dogstatsd/dogstatsd', "#{install_dir}/bin"
   end
-  move 'bin/dogstatsd/dist/dogstatsd.yaml', "#{install_dir}/etc/datadog-dogstatsd/dogstatsd.yaml.example"
+  move 'bin/dogstatsd/dist/dogstatsd.yaml', "#{install_dir}/etc/stackstate-dogstatsd/dogstatsd.yaml.example"
 
   if linux?
     if debian?
       erb source: "upstart_debian.conf.erb",
-          dest: "#{install_dir}/scripts/datadog-dogstatsd.conf",
+          dest: "#{install_dir}/scripts/stackstate-dogstatsd.conf",
           mode: 0644,
           vars: { install_dir: install_dir }
     # Ship a different upstart job definition on RHEL to accommodate the old
     # version of upstart (0.6.5) that RHEL 6 provides.
     elsif redhat? || suse?
       erb source: "upstart_redhat.conf.erb",
-          dest: "#{install_dir}/scripts/datadog-dogstatsd.conf",
+          dest: "#{install_dir}/scripts/stackstate-dogstatsd.conf",
           mode: 0644,
           vars: { install_dir: install_dir }
     end
     erb source: "systemd.service.erb",
-        dest: "#{install_dir}/scripts/datadog-dogstatsd.service",
+        dest: "#{install_dir}/scripts/stackstate-dogstatsd.service",
         mode: 0644,
         vars: { install_dir: install_dir }
   end

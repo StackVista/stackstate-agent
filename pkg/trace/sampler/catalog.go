@@ -9,8 +9,8 @@ import (
 	"container/list"
 	"sync"
 
-	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // defaultServiceRateKey specifies the key for the default rate to be used by any service that

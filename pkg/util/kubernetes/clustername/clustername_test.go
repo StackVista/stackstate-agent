@@ -12,12 +12,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 )
 
 func TestGetClusterName(t *testing.T) {
 	ctx := context.Background()
 	mockConfig := config.Mock()
+	// [sts] validtion is skipped by default, so we set it to "dont skip" explicitly
+	mockConfig.Set("skip_validate_clustername", false)
 	data := newClusterNameData()
 
 	var testClusterName = "laika"

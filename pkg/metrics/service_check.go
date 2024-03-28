@@ -17,9 +17,9 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/DataDog/datadog-agent/pkg/serializer/marshaler"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	utiljson "github.com/DataDog/datadog-agent/pkg/util/json"
+	"github.com/StackVista/stackstate-agent/pkg/serializer/marshaler"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	utiljson "github.com/StackVista/stackstate-agent/pkg/util/json"
 )
 
 // ServiceCheckStatus represents the status associated with a service check

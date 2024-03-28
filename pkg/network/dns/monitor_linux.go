@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package dns
@@ -5,11 +6,11 @@ package dns
 import (
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/network/config"
-	"github.com/DataDog/datadog-agent/pkg/network/ebpf/probes"
-	filterpkg "github.com/DataDog/datadog-agent/pkg/network/filter"
-	"github.com/DataDog/datadog-agent/pkg/process/util"
 	"github.com/DataDog/ebpf/manager"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
+	"github.com/StackVista/stackstate-agent/pkg/network/ebpf/probes"
+	filterpkg "github.com/StackVista/stackstate-agent/pkg/network/filter"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
 )
 
 type dnsMonitor struct {

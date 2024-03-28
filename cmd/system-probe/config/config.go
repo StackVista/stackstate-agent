@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	aconfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/util/profiling"
-	"github.com/DataDog/datadog-agent/pkg/version"
 	"github.com/DataDog/viper"
+	aconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/profiling"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 )
 
 // ModuleName is a typed alias for string, used only for module names

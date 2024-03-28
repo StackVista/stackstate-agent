@@ -7,7 +7,7 @@
 
 package app
 
-import "github.com/DataDog/datadog-agent/cmd/cluster-agent/commands"
+import "github.com/StackVista/stackstate-agent/cmd/cluster-agent/commands"
 
 func init() {
 	ClusterAgentCmd.AddCommand(commands.GetConfigCheckCobraCmd(&flagNoColor, &confPath, loggerName))

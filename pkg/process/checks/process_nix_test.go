@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package checks
@@ -12,11 +13,11 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	model "github.com/DataDog/agent-payload/v5/process"
-	"github.com/DataDog/datadog-agent/pkg/process/config"
-	"github.com/DataDog/datadog-agent/pkg/process/procutil"
-	"github.com/DataDog/datadog-agent/pkg/process/util"
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
 	"github.com/DataDog/gopsutil/cpu"
+	"github.com/StackVista/stackstate-agent/pkg/process/config"
+	"github.com/StackVista/stackstate-agent/pkg/process/procutil"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
 )
 
 // TestBasicProcessMessages tests basic cases for creating payloads by hard-coded scenarios

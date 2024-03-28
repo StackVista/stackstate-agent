@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build containerd
 // +build containerd
 
 package containerd
@@ -13,8 +14,8 @@ import (
 
 	containerdevents "github.com/containerd/containerd/events"
 
-	cutil "github.com/DataDog/datadog-agent/pkg/util/containerd"
-	"github.com/DataDog/datadog-agent/pkg/workloadmeta"
+	cutil "github.com/StackVista/stackstate-agent/pkg/util/containerd"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta"
 )
 
 // buildCollectorEvent generates a CollectorEvent from a containerdevents.Envelope

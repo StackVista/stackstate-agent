@@ -11,12 +11,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/DataDog/datadog-agent/cmd/system-probe/api/module"
-	"github.com/DataDog/datadog-agent/cmd/system-probe/config"
-	"github.com/DataDog/datadog-agent/pkg/process/encoding"
-	reqEncoding "github.com/DataDog/datadog-agent/pkg/process/encoding/request"
-	"github.com/DataDog/datadog-agent/pkg/process/procutil"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/api/module"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/config"
+	"github.com/StackVista/stackstate-agent/pkg/process/encoding"
+	reqEncoding "github.com/StackVista/stackstate-agent/pkg/process/encoding/request"
+	"github.com/StackVista/stackstate-agent/pkg/process/procutil"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // ErrProcessUnsupported is an error type indicating that the process module is not support in the running environment

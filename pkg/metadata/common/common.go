@@ -6,8 +6,8 @@
 package common
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/version"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 )
 
 // CachePrefix is the common root to use to prefix all the cache

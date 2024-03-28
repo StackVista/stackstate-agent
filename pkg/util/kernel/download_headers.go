@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package kernel
@@ -8,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
 	"github.com/DataDog/nikos/apt"
 	"github.com/DataDog/nikos/cos"

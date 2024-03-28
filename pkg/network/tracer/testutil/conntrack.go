@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package testutil
@@ -5,8 +6,8 @@ package testutil
 import (
 	"sync"
 
-	"github.com/DataDog/datadog-agent/pkg/network"
-	"github.com/DataDog/datadog-agent/pkg/network/netlink"
+	"github.com/StackVista/stackstate-agent/pkg/network"
+	"github.com/StackVista/stackstate-agent/pkg/network/netlink"
 )
 
 type delayedConntracker struct {

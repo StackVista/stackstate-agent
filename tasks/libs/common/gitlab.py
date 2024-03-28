@@ -2,7 +2,10 @@ import json
 import os
 import platform
 import subprocess
-from urllib.parse import quote
+try:
+    from urllib.parse import quote
+except ImportError:
+    from urllib import quote
 
 from invoke.exceptions import Exit
 
@@ -73,9 +76,11 @@ class Gitlab(RemoteAPI):
         # Go through all pages
         results = self.pipelines_for_ref(ref, sha=sha, page=page)
         while results:
-            yield from results
-            page += 1
-            results = self.pipelines_for_ref(ref, sha=sha, page=page)
+            # [sts] refactored to be compatible with py2
+            for r in results:
+                yield r
+                page += 1
+                results = self.pipelines_for_ref(ref, sha=sha, page=page)
 
     def pipelines_for_ref(self, ref, sha=None, page=1, per_page=100):
         """
@@ -149,9 +154,11 @@ class Gitlab(RemoteAPI):
         # Go through all pages
         results = self.jobs(pipeline_id, page)
         while results:
-            yield from results
-            page += 1
-            results = self.jobs(pipeline_id, page)
+            # [sts] refactored to be compatible with py2
+            for r in results:
+                yield r
+                page += 1
+                results = self.jobs(pipeline_id, page)
 
     def jobs(self, pipeline_id, page=1, per_page=100):
         """
@@ -172,9 +179,11 @@ class Gitlab(RemoteAPI):
         # Go through all pages
         results = self.pipeline_schedules(page)
         while results:
-            yield from results
-            page += 1
-            results = self.pipeline_schedules(page)
+            # [sts] refactored to be compatible with py2
+            for r in results:
+                yield r
+                page += 1
+                results = self.pipeline_schedules(page)
 
     def pipeline_schedules(self, page=1, per_page=100):
         """

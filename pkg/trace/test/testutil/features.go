@@ -3,7 +3,7 @@ package testutil
 import (
 	"os"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/config/features"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config/features"
 )
 
 // WithFeatures sets the given list of comma-separated features as active and

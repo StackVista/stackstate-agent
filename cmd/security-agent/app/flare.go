@@ -12,11 +12,11 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
-	secagentcommon "github.com/DataDog/datadog-agent/cmd/security-agent/common"
-	"github.com/DataDog/datadog-agent/pkg/api/util"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/flare"
-	"github.com/DataDog/datadog-agent/pkg/util/input"
+	secagentcommon "github.com/StackVista/stackstate-agent/cmd/security-agent/common"
+	"github.com/StackVista/stackstate-agent/pkg/api/util"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/flare"
+	"github.com/StackVista/stackstate-agent/pkg/util/input"
 )
 
 var (

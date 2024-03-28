@@ -13,7 +13,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/forwarder/transaction"
+	"github.com/StackVista/stackstate-agent/pkg/forwarder/transaction"
 	"github.com/stretchr/testify/mock"
 )
 

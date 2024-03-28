@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubelet
 // +build kubelet
 
 package kubelet
@@ -10,14 +11,13 @@ package kubelet
 import (
 	"context"
 	"fmt"
-
-	"github.com/DataDog/datadog-agent/pkg/util/hostname/validate"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 )
 
 // GetHostAlias uses the "kubelet" hostname provider to fetch the kubernetes alias
 func GetHostAlias(ctx context.Context) (string, error) {
 	name, err := HostnameProvider(ctx, nil)
-	if err == nil && validate.ValidHostname(name) == nil {
+	if err == nil && config.ValidHostname(name) == nil {
 		return name, nil
 	}
 	return "", fmt.Errorf("couldn't extract a host alias from the kubelet: %s", err)

@@ -8,13 +8,14 @@ package checks
 import (
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/compliance"
-	"github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
-	"github.com/DataDog/datadog-agent/pkg/compliance/event"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/version"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/compliance"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
+	"github.com/StackVista/stackstate-agent/pkg/util/features"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 )
 
 // eventNotify is a callback invoked when a compliance check reported an event
@@ -91,6 +92,13 @@ func (c *complianceCheck) reportToResource(report *compliance.Report) compliance
 		Type: string(c.scope),
 		ID:   c.Hostname(),
 	}
+}
+
+func (c *complianceCheck) GetFeatures() features.Features {
+	return nil
+}
+
+func (c *complianceCheck) SetFeatures(features features.Features) {
 }
 
 type resourceQuadID struct {

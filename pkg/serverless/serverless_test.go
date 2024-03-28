@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/serverless/daemon"
-	"github.com/DataDog/datadog-agent/pkg/serverless/tags"
+	"github.com/StackVista/stackstate-agent/pkg/serverless/daemon"
+	"github.com/StackVista/stackstate-agent/pkg/serverless/tags"
 	"github.com/stretchr/testify/assert"
 )
 

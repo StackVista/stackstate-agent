@@ -113,8 +113,13 @@ def clean(_):
         try:
             shutil.rmtree(p)
             print("Successfully cleaned '{}'".format(p))
-        except FileNotFoundError:
+        except Exception:  # [sts] fixed when using py2
             print("Nothing to clean up '{}'".format(p))
+
+    # [sts] recursively delete Only ignored files
+    rtloader_path = get_rtloader_path()
+    ctx.run("cd {} && git clean -Xfd".format(rtloader_path))
+    print("Removed ignored files under '{}'".format(rtloader_path))
 
 
 @task

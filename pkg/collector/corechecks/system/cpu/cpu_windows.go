@@ -7,6 +7,7 @@
 // https://github.com/shirou/gopsutil .  This code is licensed under the New BSD License
 // copyright WAKAYAMA Shirou, and the gopsutil contributors
 
+//go:build windows
 // +build windows
 
 package cpu
@@ -15,15 +16,15 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/util/winutil/pdhutil"
 	"github.com/DataDog/gohai/cpu"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/winutil/pdhutil"
 	"golang.org/x/sys/windows"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
 )
 
 var (

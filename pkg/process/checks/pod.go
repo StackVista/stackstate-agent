@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubelet && orchestrator
 // +build kubelet,orchestrator
 
 package checks
@@ -12,12 +13,12 @@ import (
 	"time"
 
 	model "github.com/DataDog/agent-payload/v5/process"
-	"github.com/DataDog/datadog-agent/pkg/orchestrator/redact"
-	"github.com/DataDog/datadog-agent/pkg/process/config"
-	"github.com/DataDog/datadog-agent/pkg/process/util"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/kubelet"
-	orchutil "github.com/DataDog/datadog-agent/pkg/util/orchestrator"
+	"github.com/StackVista/stackstate-agent/pkg/orchestrator/redact"
+	"github.com/StackVista/stackstate-agent/pkg/process/config"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
+	orchutil "github.com/StackVista/stackstate-agent/pkg/util/orchestrator"
 )
 
 // Pod is a singleton PodCheck.

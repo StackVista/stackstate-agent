@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/compliance"
+	"github.com/StackVista/stackstate-agent/pkg/compliance"
 )
 
 type commandRunnerFunc func(context.Context, string, []string, bool) (int, []byte, error)

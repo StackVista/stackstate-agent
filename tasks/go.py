@@ -196,7 +196,7 @@ def golangci_lint(ctx, targets, rtloader_root=None, build_tags=None, arch="x64")
     for target in targets:
         print("running golangci on {}".format(target))
         ctx.run(
-            "golangci-lint run --timeout 10m0s --build-tags '{}' {}".format(" ".join(tags), "{}/...".format(target)),
+            "golangci-lint run -v --timeout 10m0s --build-tags '{}' {}".format(" ".join(tags), "{}/...".format(target)),
             env=env,
         )
 
@@ -293,8 +293,11 @@ def deps(ctx, verbose=False):
 
     print("downloading dependencies")
     start = datetime.datetime.now()
-    verbosity = ' -x' if verbose else ''
-    ctx.run("go mod download{}".format(verbosity))
+    # TODO [sts]: check if `go mod download` can be used
+    # verbosity = ' -x' if verbose else ''
+    # ctx.run("go mod download{}".format(verbosity))
+    verbosity = ' -v' if verbose else ''
+    ctx.run("go mod vendor{}".format(verbosity))
     dep_done = datetime.datetime.now()
     print("go mod download, elapsed: {}".format(dep_done - start))
 

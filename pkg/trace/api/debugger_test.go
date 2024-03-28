@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	traceconfig "github.com/DataDog/datadog-agent/pkg/trace/config"
+	traceconfig "github.com/StackVista/stackstate-agent/pkg/trace/config"
 )
 
 func TestDebuggerProxy(t *testing.T) {

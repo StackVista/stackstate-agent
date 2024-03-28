@@ -10,9 +10,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/metadata/resources"
-	"github.com/DataDog/datadog-agent/pkg/serializer"
-	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/metadata/resources"
+	"github.com/StackVista/stackstate-agent/pkg/serializer"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 )
 
 // ResourcesCollector sends the old metadata payload used in the
@@ -23,6 +23,7 @@ type ResourcesCollector struct{}
 func (rp *ResourcesCollector) Send(ctx context.Context, s *serializer.Serializer) error {
 	hostname, _ := util.GetHostname(ctx)
 
+	// GetPayload builds a payload of processes metadata collected from gohai.
 	res := resources.GetPayload(hostname)
 	if res == nil {
 		return errors.New("empty processes metadata")
@@ -36,6 +37,7 @@ func (rp *ResourcesCollector) Send(ctx context.Context, s *serializer.Serializer
 	return nil
 }
 
-func init() {
-	RegisterCollector("resources", new(ResourcesCollector))
-}
+// sts - ResourcesCollector disabled by default, we will not support the resource collector on it's own.
+//func init() {
+//	RegisterCollector("resources", new(ResourcesCollector))
+//}

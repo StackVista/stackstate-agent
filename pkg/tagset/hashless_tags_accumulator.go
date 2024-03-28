@@ -5,7 +5,7 @@
 
 package tagset
 
-import "github.com/DataDog/datadog-agent/pkg/util"
+import "github.com/StackVista/stackstate-agent/pkg/util"
 
 // HashlessTagsAccumulator allows to build a slice of tags, in a context where the hashes for
 // those tags are not useful.

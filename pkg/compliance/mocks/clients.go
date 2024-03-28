@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	env "github.com/DataDog/datadog-agent/pkg/compliance/checks/env"
+	env "github.com/StackVista/stackstate-agent/pkg/compliance/checks/env"
 	mock "github.com/stretchr/testify/mock"
 )
 

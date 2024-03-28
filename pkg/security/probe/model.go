@@ -13,9 +13,9 @@ import (
 	"syscall"
 	"time"
 
-	pconfig "github.com/DataDog/datadog-agent/pkg/process/config"
-	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/eval"
-	"github.com/DataDog/datadog-agent/pkg/security/secl/model"
+	pconfig "github.com/StackVista/stackstate-agent/pkg/process/config"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/eval"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/model"
 	"github.com/mailru/easyjson/jwriter"
 )
 

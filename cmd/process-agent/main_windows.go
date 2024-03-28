@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package main
@@ -9,9 +10,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/DataDog/datadog-agent/cmd/process-agent/flags"
-	_ "github.com/DataDog/datadog-agent/pkg/util/containers/providers/windows"
-	"github.com/DataDog/datadog-agent/pkg/util/winutil"
+	"github.com/StackVista/stackstate-agent/cmd/process-agent/flags"
+	_ "github.com/StackVista/stackstate-agent/pkg/util/containers/providers/windows"
+	"github.com/StackVista/stackstate-agent/pkg/util/winutil"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/windows/svc"

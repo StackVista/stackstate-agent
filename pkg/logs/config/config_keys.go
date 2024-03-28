@@ -9,8 +9,8 @@ import (
 	"encoding/json"
 	"time"
 
-	coreConfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	coreConfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // LogsConfigKeys stores logs configuration keys stored in YAML configuration files

@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package ksm
@@ -12,7 +13,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	ksmstore "github.com/DataDog/datadog-agent/pkg/kubestatemetrics/store"
+	ksmstore "github.com/StackVista/stackstate-agent/pkg/kubestatemetrics/store"
 )
 
 func Test_labelJoiner(t *testing.T) {

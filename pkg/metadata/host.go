@@ -11,9 +11,9 @@ import (
 	"context"
 	"fmt"
 
-	v5 "github.com/DataDog/datadog-agent/pkg/metadata/v5"
-	"github.com/DataDog/datadog-agent/pkg/serializer"
-	"github.com/DataDog/datadog-agent/pkg/util"
+	v5 "github.com/StackVista/stackstate-agent/pkg/metadata/v5"
+	"github.com/StackVista/stackstate-agent/pkg/serializer"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 )
 
 // HostCollector fills and sends the old metadata payload used in the

@@ -9,6 +9,9 @@ package standalone
 
 import "fmt"
 
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+)
+
 // ExecJMXCommandConsole is not supported when the 'jmx' build tag isn't included
 func ExecJMXCommandConsole(command string, selectedChecks []string, logLevel string) error {
 	return fmt.Errorf("not supported: the Agent is compiled without the 'jmx' build tag")

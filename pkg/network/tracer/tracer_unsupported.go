@@ -1,11 +1,12 @@
+//go:build (linux && !linux_bpf) || (windows && !npm) || (!linux && !windows)
 // +build linux,!linux_bpf windows,!npm !linux,!windows
 
 package tracer
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/network"
-	"github.com/DataDog/datadog-agent/pkg/network/config"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/network"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
 )
 
 // Tracer is not implemented

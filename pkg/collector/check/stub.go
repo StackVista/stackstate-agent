@@ -8,7 +8,8 @@ package check
 import (
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/util/features"
 )
 
 // StubCheck stubs a check, should only be used in tests
@@ -49,3 +50,9 @@ func (c *StubCheck) GetSenderStats() (SenderStats, error) { return NewSenderStat
 
 // IsTelemetryEnabled returns false
 func (c *StubCheck) IsTelemetryEnabled() bool { return false }
+
+// SetFeatures is a noop
+func (c *StubCheck) SetFeatures(features features.Features) {}
+
+// GetFeatures is a noop
+func (c *StubCheck) GetFeatures() features.Features { return nil }

@@ -3,7 +3,7 @@ package module
 import (
 	"errors"
 
-	"github.com/DataDog/datadog-agent/cmd/system-probe/config"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/config"
 )
 
 // ErrNotEnabled is a special error type that should be returned by a Factory

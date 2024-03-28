@@ -3,8 +3,8 @@ package dogstatsd
 import (
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 )
 
 // batcher batches multiple metrics before submission

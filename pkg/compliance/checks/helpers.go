@@ -14,12 +14,13 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/DataDog/datadog-agent/pkg/compliance"
-	"github.com/DataDog/datadog-agent/pkg/compliance/eval"
-	"github.com/DataDog/datadog-agent/pkg/compliance/event"
-	"github.com/DataDog/datadog-agent/pkg/util/jsonquery"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/Masterminds/sprig"
+	"github.com/StackVista/stackstate-agent/pkg/compliance"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
+	"github.com/StackVista/stackstate-agent/pkg/util/jsonquery"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	yamlv2 "gopkg.in/yaml.v2"
 	"gopkg.in/yaml.v3"
 )
 

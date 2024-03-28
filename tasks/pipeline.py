@@ -116,7 +116,7 @@ def clean_running_pipelines(ctx, git_ref=DEFAULT_BRANCH, here=False, use_latest_
     print(
         "Found {} running pipeline(s) matching the request.".format(len(pipelines)),
         "They are ordered from the newest one to the oldest one.\n",
-        sep='\n',
+        # sep='\n',  # sts - not supported in py2
     )
     cancel_pipelines_with_confirmation(gitlab, pipelines)
 
@@ -257,7 +257,7 @@ def run(
             "For each of them, you'll be asked whether you want to cancel them or not.",
             "If you don't need these pipelines, please cancel them to save CI resources.",
             "They are ordered from the newest one to the oldest one.\n",
-            sep='\n',
+            # sep='\n', # [sts] not supported in py2
         )
         cancel_pipelines_with_confirmation(gitlab, pipelines)
 
@@ -455,10 +455,11 @@ def notify_failure(_, notification_type="merge", print_to_stdout=False):
         messages_to_send = generate_failure_messages(base)
     except Exception as e:
         buffer = io.StringIO()
-        print(base, file=buffer)
-        print("Found exception when generating notification:", file=buffer)
+        # [sts] refactored to be compatible with py2
+        # print(base, file=buffer)
+        # print("Found exception when generating notification:", file=buffer)
         traceback.print_exc(limit=-1, file=buffer)
-        print("See the job log for the full exception traceback.", file=buffer)
+        # print("See the job log for the full exception traceback.", file=buffer)
         messages_to_send = {
             "@DataDog/agent-all": SlackMessage(buffer.getvalue()),
         }

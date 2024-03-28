@@ -12,10 +12,10 @@ import (
 	"time"
 
 	"github.com/DataDog/agent-payload/v5/process"
-	"github.com/DataDog/datadog-agent/pkg/process/checks"
-	"github.com/DataDog/datadog-agent/pkg/process/config"
-	apicfg "github.com/DataDog/datadog-agent/pkg/process/util/api/config"
-	"github.com/DataDog/datadog-agent/pkg/process/util/api/headers"
+	"github.com/StackVista/stackstate-agent/pkg/process/checks"
+	"github.com/StackVista/stackstate-agent/pkg/process/config"
+	apicfg "github.com/StackVista/stackstate-agent/pkg/process/util/api/config"
+	"github.com/StackVista/stackstate-agent/pkg/process/util/api/headers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

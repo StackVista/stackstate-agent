@@ -3,13 +3,14 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build linux
 // +build linux
 
 package probes
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/security/secl/model"
 	manager "github.com/DataDog/ebpf-manager"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/model"
 )
 
 func getSysExitTailCallRoutes() []manager.TailCallRoute {

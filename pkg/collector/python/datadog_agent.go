@@ -3,28 +3,32 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build python
 // +build python
 
 package python
 
 import (
 	"context"
+	collectorutils "github.com/StackVista/stackstate-agent/pkg/collector/util"
+	"os"
+	"strconv"
 	"sync"
 	"unsafe"
 
 	"github.com/mailru/easyjson/jlexer"
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/metadata/externalhost"
-	"github.com/DataDog/datadog-agent/pkg/metadata/inventories"
-	"github.com/DataDog/datadog-agent/pkg/persistentcache"
-	traceconfig "github.com/DataDog/datadog-agent/pkg/trace/config"
-	"github.com/DataDog/datadog-agent/pkg/trace/obfuscate"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/version"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/metadata/externalhost"
+	"github.com/StackVista/stackstate-agent/pkg/metadata/inventories"
+	"github.com/StackVista/stackstate-agent/pkg/persistentcache"
+	traceconfig "github.com/StackVista/stackstate-agent/pkg/trace/config"
+	"github.com/StackVista/stackstate-agent/pkg/trace/obfuscate"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 )
 
 /*
@@ -65,6 +69,28 @@ func GetClusterName(clusterName **C.char) {
 	goClusterName := clustername.GetClusterName(context.TODO(), goHostname)
 	// clusterName will be free by rtloader when it's done with it
 	*clusterName = TrackedCString(goClusterName)
+}
+
+// GetPid exposes the current pid of the agent to Python checks.
+//export GetPid
+func GetPid(pid **C.char) {
+	goPid := os.Getpid()
+	// pid will be free by rtloader when it's done with it
+	*pid = TrackedCString(strconv.Itoa(goPid))
+}
+
+// GetCreateTime exposes the current pid create time of the agent to Python checks.
+//export GetCreateTime
+func GetCreateTime(createTime **C.char) {
+	pid := os.Getpid()
+	var goCreateTime int64
+	if ct, err := collectorutils.GetProcessCreateTime(int32(pid)); err != nil {
+		log.Errorf("datadog_agent: could not get create time for process %d: %s", pid, err)
+	} else {
+		goCreateTime = ct
+	}
+	// createTime will be free by rtloader when it's done with it
+	*createTime = TrackedCString(strconv.FormatInt(goCreateTime, 10))
 }
 
 // TracemallocEnabled exposes the tracemalloc configuration of the agent to Python checks.

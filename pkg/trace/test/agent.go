@@ -18,8 +18,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/test/testutil"
 	"github.com/DataDog/viper"
+	"github.com/StackVista/stackstate-agent/pkg/trace/test/testutil"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -48,7 +48,7 @@ func newAgentRunner(ddAddr string, verbose bool) (*agentRunner, error) {
 	}
 	// TODO(gbbr): find a way to re-use the same binary within a whole run
 	// instead of creating new ones on each test creating a new runner.
-	err = exec.Command("go", "build", "-o", binpath, "github.com/DataDog/datadog-agent/cmd/trace-agent").Run()
+	err = exec.Command("go", "build", "-o", binpath, "github.com/StackVista/stackstate-agent/cmd/trace-agent").Run()
 	if err != nil {
 		if verbose {
 			log.Printf("error installing trace-agent: %v", err)

@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/DataDog/datadog-agent/pkg/process/procutil"
+	"github.com/StackVista/stackstate-agent/pkg/process/procutil"
 )
 
 func setupDataScrubber(t *testing.T) *DataScrubber {

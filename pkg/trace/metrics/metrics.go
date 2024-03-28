@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build !benchmarking
 // +build !benchmarking
 
 // Package metrics exposes utilities for setting up and using a sub-set of Datadog's dogstatsd
@@ -13,9 +14,9 @@ import (
 	"errors"
 	"fmt"
 
-	mainconfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/trace/config"
 	"github.com/DataDog/datadog-go/statsd"
+	mainconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config"
 )
 
 // findAddr finds the correct address to connect to the Dogstatsd server.
@@ -43,7 +44,7 @@ func Configure(conf *config.AgentConfig, tags []string) error {
 	if err != nil {
 		return err
 	}
-	client, err := statsd.New(addr, statsd.WithTags(tags))
+	client, err := statsd.New(addr, statsd.WithTags(tags), statsd.WithoutTelemetry())
 	if err != nil {
 		return err
 	}

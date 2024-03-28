@@ -1,10 +1,11 @@
+//go:build !linux && !windows
 // +build !linux,!windows
 
 package net
 
 import (
 	model "github.com/DataDog/agent-payload/v5/process"
-	"github.com/DataDog/datadog-agent/pkg/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf"
 )
 
 // RemoteSysProbeUtil is not supported

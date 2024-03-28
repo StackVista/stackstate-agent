@@ -115,6 +115,10 @@ typedef void (*cb_headers_t)(char **);
 typedef void (*cb_get_hostname_t)(char **);
 // (clustername)
 typedef void (*cb_get_clustername_t)(char **);
+// (pid)
+typedef void (*cb_get_pid_t)(char **);
+// (create_time)
+typedef void (*cb_get_create_time_t)(char **);
 // (tracemalloc_enabled)
 typedef bool (*cb_tracemalloc_enabled_t)(void);
 // (message, level)
@@ -159,6 +163,60 @@ typedef void (*cb_get_connection_info_t)(char **);
 //
 // (container_name, image_name, namespace, bool_result)
 typedef int (*cb_is_excluded_t)(char *, char *, char *);
+
+// [sts] topology
+//
+typedef struct instance_key_s {
+    char *type_;  //type is a reserved keyword in Go
+    char *url;
+} instance_key_t;
+
+// (check_id, instance_key, component_id, component_type, data)
+typedef void (*cb_submit_component_t)(char *, instance_key_t *, char *, char *, char *);
+// (check_id, instance_key, source_id, target_id, relation_type, data)
+typedef void (*cb_submit_relation_t)(char *, instance_key_t *, char *, char *, char *, char *);
+// (check_id, instance_key)
+typedef void (*cb_submit_start_snapshot_t)(char *, instance_key_t *);
+// (check_id, instance_key)
+typedef void (*cb_submit_stop_snapshot_t)(char *, instance_key_t *);
+// (check_id, instance_key, topology_element_id)
+typedef void (*cb_submit_delete_t)(char *, instance_key_t *, char *);
+
+// [sts] telemetry
+//
+// (check_id, topology_event)
+typedef void (*cb_submit_topology_event_t)(char *, char *);
+
+// [sts] health
+//
+typedef struct health_stream_s {
+    char *urn;
+    char *sub_stream;
+} health_stream_t;
+
+// (check_id, stream, data)
+typedef void (*cb_submit_health_check_data_t)(char *, health_stream_t *, char *);
+// (check_id, stream, expiry_seconds, repeat_seconds)
+typedef void (*cb_submit_health_start_snapshot_t)(char *, health_stream_t *, int, int);
+// (check_id, stream)
+typedef void (*cb_submit_health_stop_snapshot_t)(char *, health_stream_t *);
+
+// (check_id, name, value, tags, hostname, timestamp)
+typedef void (*cb_submit_raw_metrics_data_t)(char *, char *, float, char **, char *, long long);
+
+// (check_id)
+typedef void (*cb_start_transaction_t)(char *);
+// (check_id)
+typedef void (*cb_stop_transaction_t)(char *);
+// (check_id, reason)
+typedef void (*cb_discard_transaction_t)(char *, char *);
+// (check_id, key, state)
+typedef void (*cb_set_transaction_state_t)(char *, char *, char *);
+
+// (check_id, key, state)
+typedef void (*cb_set_state_t)(char *, char *, char *);
+// (check_id, key)
+typedef char *(*cb_get_state_t)(char *, char *);
 
 #ifdef __cplusplus
 }

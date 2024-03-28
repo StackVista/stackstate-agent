@@ -3,8 +3,8 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2017-present Datadog, Inc.
 
-// +build docker
-// +build kubeapiserver
+//go:build docker && kubeapiserver
+// +build docker,kubeapiserver
 
 package kubernetes
 
@@ -23,10 +23,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	hostname_apiserver "github.com/DataDog/datadog-agent/pkg/util/hostname/apiserver"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/clustername"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	hostname_apiserver "github.com/StackVista/stackstate-agent/pkg/util/hostname/apiserver"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 )
 
 const (

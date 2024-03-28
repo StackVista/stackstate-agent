@@ -7,13 +7,10 @@ package clusteragent
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"net/http"
 
-	"github.com/DataDog/datadog-agent/pkg/clusteragent/clusterchecks/types"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks/types"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (
@@ -51,16 +48,7 @@ func (c *DCAClient) doGetEndpointsCheckConfigs(ctx context.Context, nodeName str
 	if err != nil {
 		return configs, err
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return configs, fmt.Errorf("unexpected response: %d - %s", resp.StatusCode, resp.Status)
-	}
-
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return configs, err
-	}
-	err = json.Unmarshal(b, &configs)
+	err = parseJSONResponse(resp, &configs)
 	return configs, err
 }

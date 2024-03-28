@@ -13,12 +13,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/config/features"
-	"github.com/DataDog/datadog-agent/pkg/trace/info"
-	"github.com/DataDog/datadog-agent/pkg/trace/pb"
-	"github.com/DataDog/datadog-agent/pkg/trace/sampler"
-	"github.com/DataDog/datadog-agent/pkg/trace/traceutil"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config/features"
+	"github.com/StackVista/stackstate-agent/pkg/trace/info"
+	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/trace/sampler"
+	"github.com/StackVista/stackstate-agent/pkg/trace/traceutil"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (
@@ -179,7 +179,7 @@ func normalizeTrace(ts *info.TagStats, t pb.Trace) error {
 	for _, span := range t {
 		if span.TraceID != firstSpan.TraceID {
 			atomic.AddInt64(&ts.TracesDropped.ForeignSpan, 1)
-			return fmt.Errorf("trace has foreign span (reason:foreign_span): %s", span)
+			return fmt.Errorf("trace has foreign span (reason:foreign_span, The subsequent traces do not contain the same traceId as the first span): %s", span)
 		}
 		if err := normalize(ts, span); err != nil {
 			return err

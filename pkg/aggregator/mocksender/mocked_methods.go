@@ -6,9 +6,9 @@
 package mocksender
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
-	"github.com/DataDog/datadog-agent/pkg/serializer"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/serializer"
 )
 
 //Rate adds a rate type to the mock calls.
@@ -63,6 +63,7 @@ func (m *MockSender) DisableDefaultHostname(d bool) {
 
 //Event enables the event mock call.
 func (m *MockSender) Event(e metrics.Event) {
+	m.SentEvents = append(m.SentEvents, &e)
 	m.Called(e)
 }
 

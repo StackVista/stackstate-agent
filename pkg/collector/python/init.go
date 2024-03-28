@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build python
 // +build python
 
 package python
@@ -17,13 +18,13 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
-	"github.com/DataDog/datadog-agent/pkg/util/cache"
-	"github.com/DataDog/datadog-agent/pkg/util/executable"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/version"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/util/cache"
+	"github.com/StackVista/stackstate-agent/pkg/util/executable"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 )
 
 /*
@@ -80,6 +81,8 @@ void GetClusterName(char **);
 void GetConfig(char*, char **);
 void GetHostname(char **);
 void GetVersion(char **);
+void GetPid(char **);
+void GetCreateTime(char **);
 void Headers(char **);
 char * ReadPersistentCache(char *);
 void SetCheckMetadata(char *, char *, char *);
@@ -95,6 +98,8 @@ void initDatadogAgentModule(rtloader_t *rtloader) {
 	set_get_config_cb(rtloader, GetConfig);
 	set_get_hostname_cb(rtloader, GetHostname);
 	set_get_version_cb(rtloader, GetVersion);
+	set_get_pid_cb(rtloader, GetPid);
+	set_get_create_time_cb(rtloader, GetCreateTime);
 	set_headers_cb(rtloader, Headers);
 	set_set_check_metadata_cb(rtloader, SetCheckMetadata);
 	set_set_external_tags_cb(rtloader, SetExternalTags);
@@ -163,6 +168,80 @@ void GetKubeletConnectionInfo(char **);
 void initkubeutilModule(rtloader_t *rtloader) {
 	set_get_connection_info_cb(rtloader, GetKubeletConnectionInfo);
 }
+
+//
+// [sts] topology module
+//
+
+void SubmitComponent(char *, instance_key_t *, char *, char *, char *);
+void SubmitRelation(char *, instance_key_t *, char *, char *, char *, char *);
+void SubmitDelete(char *, instance_key_t *, char *);
+void SubmitStartSnapshot(char *, instance_key_t *);
+void SubmitStopSnapshot(char *, instance_key_t *);
+
+void initTopologyModule(rtloader_t *rtloader) {
+	set_submit_component_cb(rtloader, SubmitComponent);
+	set_submit_relation_cb(rtloader, SubmitRelation);
+	set_submit_delete_cb(rtloader, SubmitDelete);
+	set_submit_start_snapshot_cb(rtloader, SubmitStartSnapshot);
+	set_submit_stop_snapshot_cb(rtloader, SubmitStopSnapshot);
+}
+
+//
+// [sts] telemetry module
+//
+
+void SubmitTopologyEvent(char *, char *);
+void SubmitRawMetricsData(char *, char *, float, char **, char *, long long);
+
+void initTelemetryModule(rtloader_t *rtloader) {
+	set_submit_topology_event_cb(rtloader, SubmitTopologyEvent);
+	set_submit_raw_metrics_data_cb(rtloader, SubmitRawMetricsData);
+}
+
+//
+// [sts] health module
+//
+
+void SubmitHealthCheckData(char *, health_stream_t *, char *);
+void SubmitHealthStartSnapshot(char *, health_stream_t *, int, int);
+void SubmitHealthStopSnapshot(char *, health_stream_t *);
+
+void initHealthModule(rtloader_t *rtloader) {
+	set_submit_health_check_data_cb(rtloader, SubmitHealthCheckData);
+	set_submit_health_start_snapshot_cb(rtloader, SubmitHealthStartSnapshot);
+	set_submit_health_stop_snapshot_cb(rtloader, SubmitHealthStopSnapshot);
+}
+
+//
+// [sts] transactional module
+//
+
+void StartTransaction(char *);
+void StopTransaction(char *);
+void DiscardTransaction(char *, char *);
+void SetTransactionState(char *, char *, char *);
+
+void initTransactionalStateModule(rtloader_t *rtloader) {
+	set_start_transaction_cb(rtloader, StartTransaction);
+	set_stop_transaction_cb(rtloader, StopTransaction);
+	set_discard_transaction_cb(rtloader, DiscardTransaction);
+	set_transaction_state_cb(rtloader, SetTransactionState);
+}
+
+
+//
+// [sts] state module
+//
+
+void SetState(char *, char *, char *);
+char* GetState(char *, char *);
+
+void initStateModule(rtloader_t *rtloader) {
+	set_state_cb(rtloader, SetState);
+	set_get_state_cb(rtloader, GetState);
+}
+
 */
 import "C"
 
@@ -417,6 +496,14 @@ func Initialize(paths ...string) error {
 	initContainerFilter() // special init for the container go code
 	C.initContainersModule(rtloader)
 	C.initkubeutilModule(rtloader)
+
+	// [sts]
+	C.initTopologyModule(rtloader)
+	C.initTelemetryModule(rtloader)
+	C.initTransactionalStateModule(rtloader)
+	C.initStateModule(rtloader)
+	C.initHealthModule(rtloader)
+	// [sts]
 
 	// Init RtLoader machinery
 	if C.init(rtloader) == 0 {

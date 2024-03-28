@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build python
 // +build python
 
 package python
@@ -16,13 +17,15 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/collector/check/defaults"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	telemetry_utils "github.com/DataDog/datadog-agent/pkg/telemetry/utils"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/defaults"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler" // sts
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
+	"github.com/StackVista/stackstate-agent/pkg/util/features"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 /*
@@ -46,6 +49,7 @@ type PythonCheck struct {
 	lastWarnings []error
 	source       string
 	telemetry    bool // whether or not the telemetry is enabled for this check
+	features     features.Features
 }
 
 // NewPythonCheck conveniently creates a PythonCheck instance
@@ -88,6 +92,8 @@ func (c *PythonCheck) runCheck(commitMetrics bool) error {
 		return fmt.Errorf("An error occurred while running python check %s", c.ModuleName)
 	}
 	defer C.rtloader_free(rtloader, unsafe.Pointer(cResult))
+
+	handler.GetCheckManager().GetCheckHandler(c.ID()).SubmitComplete() // [sts]
 
 	if commitMetrics {
 		s, err := aggregator.GetSender(c.ID())
@@ -194,6 +200,21 @@ func (c *PythonCheck) getPythonWarnings(gstate *stickyLock) []error {
 	return warnings
 }
 
+// [sts] Make sure collection_interval is always set
+func (c *PythonCheck) setCollectionIntervalToInstanceData(data integration.Data) (integration.Data, error) {
+	// make sure collection_interval is set within the instance data
+	rawInstance := make(integration.RawMap)
+
+	err := yaml.Unmarshal(data, &rawInstance)
+	if err != nil {
+		return nil, err
+	}
+
+	rawInstance[string("collection_interval")] = int(c.interval.Seconds())
+
+	return yaml.Marshal(rawInstance)
+}
+
 // Configure the Python check from YAML data
 func (c *PythonCheck) Configure(data integration.Data, initConfig integration.Data, source string) error {
 	// Generate check ID
@@ -222,8 +243,8 @@ func (c *PythonCheck) Configure(data integration.Data, initConfig integration.Da
 	}
 
 	// See if a collection interval was specified
-	if commonOptions.MinCollectionInterval > 0 {
-		c.interval = time.Duration(commonOptions.MinCollectionInterval) * time.Second
+	if commonOptions.GetCollectionInterval() > 0 {
+		c.interval = time.Duration(commonOptions.GetCollectionInterval()) * time.Second
 	}
 
 	// Disable default hostname if specified
@@ -246,8 +267,14 @@ func (c *PythonCheck) Configure(data integration.Data, initConfig integration.Da
 		}
 	}
 
+	// [sts] Make sure collection_interval is always set
+	updatedInstanceData, err := c.setCollectionIntervalToInstanceData(data)
+	if err != nil {
+		return err
+	}
+
 	cInitConfig := TrackedCString(string(initConfig))
-	cInstance := TrackedCString(string(data))
+	cInstance := TrackedCString(string(updatedInstanceData))
 	cCheckID := TrackedCString(string(c.id))
 	cCheckName := TrackedCString(c.ModuleName)
 	defer C._free(unsafe.Pointer(cInitConfig))
@@ -335,4 +362,14 @@ func pythonCheckFinalizer(c *PythonCheck) {
 			C.rtloader_decref(rtloader, c.instance)
 		}
 	}(c)
+}
+
+// GetFeatures returns the features supported by StackState
+func (c *PythonCheck) GetFeatures() features.Features {
+	return c.features
+}
+
+// SetFeatures sets the features supported by StackState
+func (c *PythonCheck) SetFeatures(features features.Features) {
+	c.features = features
 }

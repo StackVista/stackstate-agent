@@ -8,7 +8,7 @@ package uptime
 import (
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
 )
 
 func uptimeSampler() (uint64, error) {

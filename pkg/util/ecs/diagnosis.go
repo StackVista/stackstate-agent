@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build docker
 // +build docker
 
 package ecs
@@ -11,10 +12,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/diagnose/diagnosis"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
-	ecsmeta "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata"
+	ecsmeta "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata"
 )
 
 func init() {

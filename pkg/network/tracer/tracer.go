@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package tracer
@@ -11,25 +12,25 @@ import (
 	"syscall"
 	"time"
 
-	ddebpf "github.com/DataDog/datadog-agent/pkg/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode"
-	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode/runtime"
-	"github.com/DataDog/datadog-agent/pkg/network"
-	"github.com/DataDog/datadog-agent/pkg/network/config"
-	"github.com/DataDog/datadog-agent/pkg/network/config/sysctl"
-	"github.com/DataDog/datadog-agent/pkg/network/dns"
-	netebpf "github.com/DataDog/datadog-agent/pkg/network/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/network/ebpf/probes"
-	"github.com/DataDog/datadog-agent/pkg/network/http"
-	"github.com/DataDog/datadog-agent/pkg/network/netlink"
-	"github.com/DataDog/datadog-agent/pkg/network/tracer/connection"
-	"github.com/DataDog/datadog-agent/pkg/network/tracer/connection/kprobe"
-	"github.com/DataDog/datadog-agent/pkg/process/procutil"
-	"github.com/DataDog/datadog-agent/pkg/process/util"
-	"github.com/DataDog/datadog-agent/pkg/util/kernel"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/ebpf"
 	"github.com/DataDog/ebpf/manager"
+	ddebpf "github.com/StackVista/stackstate-agent/pkg/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode/runtime"
+	"github.com/StackVista/stackstate-agent/pkg/network"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
+	"github.com/StackVista/stackstate-agent/pkg/network/config/sysctl"
+	"github.com/StackVista/stackstate-agent/pkg/network/dns"
+	netebpf "github.com/StackVista/stackstate-agent/pkg/network/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/network/ebpf/probes"
+	"github.com/StackVista/stackstate-agent/pkg/network/http"
+	"github.com/StackVista/stackstate-agent/pkg/network/netlink"
+	"github.com/StackVista/stackstate-agent/pkg/network/tracer/connection"
+	"github.com/StackVista/stackstate-agent/pkg/network/tracer/connection/kprobe"
+	"github.com/StackVista/stackstate-agent/pkg/process/procutil"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/kernel"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"golang.org/x/sys/unix"
 )
 
@@ -55,7 +56,10 @@ type Tracer struct {
 	// - - Using the timestamp does not seem to be reliable (we are already seeing unordered connections)
 	// - - Having IDs for those events would need to have an internal monotonic counter and this is tricky to manage (race conditions, cleaning)
 	//
-	// If we want to have a way to track the # of active TCP connections in the future we could use the procfs like here: https://github.com/DataDog/datadog-agent/pull/3728
+	// If we want to have a way to track the # of active TCP connections in the future we could use the procfs like here: https://github.com/StackVista/stackstate-agent/pull/3728
+	m           *manager.Manager
+	perfMap     *manager.PerfMap
+	perfHandler *ddebpf.PerfHandler
 	// to determine whether a connection is truly closed or not
 	expiredTCPConns  int64
 	closedConns      int64
@@ -325,6 +329,7 @@ func (t *Tracer) GetActiveConnections(clientID string) (*network.Connections, er
 		DNS:                         names,
 		DNSStats:                    delta.DNSStats,
 		HTTP:                        delta.HTTP,
+		HTTPTelemetry:               delta.HTTPTelemetryStats,
 		ConnTelemetry:               ctm,
 		CompilationTelemetryByAsset: rctm,
 	}, nil

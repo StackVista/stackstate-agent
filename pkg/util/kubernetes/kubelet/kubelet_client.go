@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubelet
 // +build kubelet
 
 package kubelet
@@ -20,10 +21,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/filesystem"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/filesystem"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 var (
@@ -215,6 +216,25 @@ func getKubeletClient(ctx context.Context) (*kubeletClient, error) {
 		} else {
 			return newForConfig(clientConfig, kubeletTimeout)
 		}
+
+		// sts begin
+		if clientConfig.tlsVerify && config.Datadog.GetBool("kubelet_fallback_to_unverified_tls") {
+			unverifiedTLSClientConfig := clientConfig
+			unverifiedTLSClientConfig.tlsVerify = false
+			httpsErr = checkKubeletConnection(ctx, "https", kubeletHTTPSPort, kubeletPathPrefix, potentialHosts, &unverifiedTLSClientConfig)
+			if httpsErr != nil {
+				log.Debug("Impossible to reach Kubelet through HTTPS without TLS certificate verification")
+				if kubeletHTTPPort <= 0 {
+					return nil, httpsErr
+				}
+			} else {
+				log.Warn("Successfully connected to the kubelet over HTTPS without TLS certificate verification")
+				log.Warn("This can be disabled via configuration setting 'kubelet_fallback_to_unverified_tls'")
+				log.Warn("To fix certificate verification make sure the Kubelet uses a certificate signed by a well-known CA or by the configured CA, which usually is the CA of the Kubernetes API server")
+				return newForConfig(unverifiedTLSClientConfig, kubeletTimeout)
+			}
+		}
+		// sts end
 	}
 
 	// Check HTTP now if port available

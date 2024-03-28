@@ -6,12 +6,13 @@
 package mocksender
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"time"
 
 	"github.com/stretchr/testify/mock"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 )
 
 // NewMockSender initiates the aggregator and returns a
@@ -33,6 +34,7 @@ func SetSender(sender *MockSender, id check.ID) {
 //MockSender allows mocking of the checks sender for unit testing
 type MockSender struct {
 	mock.Mock
+	SentEvents metrics.Events
 }
 
 // SetupAcceptAll sets mock expectations to accept any call in the Sender interface

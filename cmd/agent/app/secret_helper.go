@@ -3,12 +3,13 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build secrets
 // +build secrets
 
 package app
 
 import (
-	"github.com/DataDog/datadog-agent/cmd/secrets"
+	"github.com/StackVista/stackstate-agent/cmd/secrets"
 )
 
 func init() {

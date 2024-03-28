@@ -3,13 +3,23 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build python && test
 // +build python,test
 
 package python
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"os"
 	"testing"
 )
+
+func TestMain(m *testing.M) {
+	// sts - start mock batcher
+	_ = batcher.NewMockBatcher()
+	code := m.Run()
+	os.Exit(code)
+}
 
 func TestRunCheck(t *testing.T) {
 	testRunCheck(t)
@@ -61,4 +71,12 @@ func TestConfigure(t *testing.T) {
 
 func TestConfigureDeprecated(t *testing.T) {
 	testConfigureDeprecated(t)
+}
+
+func TestSetCollectionIntervalToInstanceData(t *testing.T) {
+	testSetCollectionIntervalToInstanceData(t)
+}
+
+func TestSetCollectionIntervalToInvalidInstanceData(t *testing.T) {
+	testSetCollectionIntervalToInvalidDataWithInvalidData(t)
 }

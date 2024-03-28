@@ -11,8 +11,8 @@ import (
 
 	"google.golang.org/grpc"
 
-	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/security/api"
+	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/security/api"
 )
 
 // RuntimeSecurityClient is used to send request to security module

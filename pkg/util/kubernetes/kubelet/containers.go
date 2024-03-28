@@ -13,10 +13,10 @@ import (
 	"net"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/metrics"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/providers"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/providers"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // ListContainers lists all non-excluded running containers, and retrieves their performance metrics

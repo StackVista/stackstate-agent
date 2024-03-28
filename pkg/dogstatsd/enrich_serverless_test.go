@@ -1,3 +1,4 @@
+//go:build serverless
 // +build serverless
 
 package dogstatsd
@@ -6,8 +7,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/metrics"
-	"github.com/DataDog/datadog-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	model "github.com/DataDog/agent-payload/v5/process"
-	"github.com/DataDog/datadog-agent/pkg/process/procutil"
+	"github.com/StackVista/stackstate-agent/pkg/process/procutil"
 )
 
 func TestSerialization(t *testing.T) {

@@ -13,6 +13,7 @@ ALL_TAGS = set(
         "apm",
         "clusterchecks",
         "consul",
+        "containers",
         "containerd",
         "cri",
         "docker",
@@ -69,7 +70,8 @@ AGENT_TAGS = set(
 ANDROID_TAGS = set(["android", "zlib"])
 
 # CLUSTER_AGENT_TAGS lists the tags needed when building the cluster-agent
-CLUSTER_AGENT_TAGS = set(["clusterchecks", "kubeapiserver", "orchestrator", "secrets", "zlib", "ec2", "gce"])
+CLUSTER_AGENT_TAGS = set(["clusterchecks", "kubeapiserver", "orchestrator", "secrets", "zlib", "ec2", "gce",
+                          "docker", "cri", "containers", "containerd"])  # sts
 
 # CLUSTER_AGENT_CLOUDFOUNDRY_TAGS lists the tags needed when building the cloudfoundry cluster-agent
 CLUSTER_AGENT_CLOUDFOUNDRY_TAGS = set(["clusterchecks", "secrets"])

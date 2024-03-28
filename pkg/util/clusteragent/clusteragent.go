@@ -17,15 +17,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
-	"github.com/DataDog/datadog-agent/pkg/api/security"
-	"github.com/DataDog/datadog-agent/pkg/api/util"
-	apiv1 "github.com/DataDog/datadog-agent/pkg/clusteragent/api/v1"
-	"github.com/DataDog/datadog-agent/pkg/clusteragent/clusterchecks/types"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/retry"
-	"github.com/DataDog/datadog-agent/pkg/version"
+	"github.com/StackVista/stackstate-agent/pkg/api/security"
+	"github.com/StackVista/stackstate-agent/pkg/api/util"
+	apiv1 "github.com/StackVista/stackstate-agent/pkg/clusteragent/api/v1"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks/types"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/retry"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 )
 
 /*
@@ -480,4 +480,19 @@ func (c *DCAClient) GetKubernetesClusterID() (string, error) {
 	}
 	err = json.Unmarshal(b, &clusterID)
 	return clusterID, err
+}
+
+func parseJSONResponse(resp *http.Response, result interface{}) error {
+	defer resp.Body.Close()
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("can't read body from %d %s response: %v", resp.StatusCode, resp.Status, err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected response: %d %s: %s", resp.StatusCode, resp.Status, string(b))
+	}
+
+	err = json.Unmarshal(b, result)
+	return err
 }

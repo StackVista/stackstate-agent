@@ -1,0 +1,3 @@
+stscliv1
+pydot==1.4.2
+pyshorteners==1.0.1

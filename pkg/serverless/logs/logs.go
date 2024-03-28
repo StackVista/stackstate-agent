@@ -14,12 +14,12 @@ import (
 	"strings"
 	"time"
 
-	logConfig "github.com/DataDog/datadog-agent/pkg/logs/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/scheduler"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
-	serverlessMetrics "github.com/DataDog/datadog-agent/pkg/serverless/metrics"
-	"github.com/DataDog/datadog-agent/pkg/serverless/tags"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	logConfig "github.com/StackVista/stackstate-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/scheduler"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	serverlessMetrics "github.com/StackVista/stackstate-agent/pkg/serverless/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/serverless/tags"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // Tags contains the actual array of Tags (useful for passing it via reference)

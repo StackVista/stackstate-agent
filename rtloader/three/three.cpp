@@ -17,6 +17,11 @@
 #include "stringutils.h"
 #include "tagger.h"
 #include "util.h"
+#include "topology.h"
+#include "telemetry.h"
+#include "health.h"
+#include "transaction.h"
+#include "state.h"
 
 #include <algorithm>
 #include <sstream>
@@ -106,6 +111,11 @@ bool Three::init()
     PyImport_AppendInittab(TAGGER_MODULE_NAME, PyInit_tagger);
     PyImport_AppendInittab(KUBEUTIL_MODULE_NAME, PyInit_kubeutil);
     PyImport_AppendInittab(CONTAINERS_MODULE_NAME, PyInit_containers);
+    PyImport_AppendInittab(TOPOLOGY_MODULE_NAME, PyInit_topology);
+    PyImport_AppendInittab(TELEMETRY_MODULE_NAME, PyInit_telemetry);
+    PyImport_AppendInittab(HEALTH_MODULE_NAME, PyInit_health);
+    PyImport_AppendInittab(TRANSACTION_MODULE_NAME, PyInit_transaction);
+    PyImport_AppendInittab(STATE_MODULE_NAME, PyInit_state);
 
     Py_Initialize();
 
@@ -880,6 +890,16 @@ void Three::setGetClusternameCb(cb_get_clustername_t cb)
     _set_get_clustername_cb(cb);
 }
 
+void Three::setGetPidCb(cb_get_pid_t cb)
+{
+    _set_get_pid_cb(cb);
+}
+
+void Three::setGetCreateTimeCb(cb_get_create_time_t cb)
+{
+    _set_get_create_time_cb(cb);
+}
+
 void Three::setGetTracemallocEnabledCb(cb_tracemalloc_enabled_t cb)
 {
     _set_tracemalloc_enabled_cb(cb);
@@ -948,6 +968,89 @@ void Three::setObfuscateSqlExecPlanCb(cb_obfuscate_sql_exec_plan_t cb)
 void Three::setGetProcessStartTimeCb(cb_get_process_start_time_t cb)
 {
     _set_get_process_start_time_cb(cb);
+}
+
+
+// [sts] topology
+void Three::setSubmitComponentCb(cb_submit_component_t cb)
+{
+    _set_submit_component_cb(cb);
+}
+
+void Three::setSubmitRelationCb(cb_submit_relation_t cb)
+{
+    _set_submit_relation_cb(cb);
+}
+
+void Three::setSubmitStartSnapshotCb(cb_submit_start_snapshot_t cb)
+{
+    _set_submit_start_snapshot_cb(cb);
+}
+
+void Three::setSubmitStopSnapshotCb(cb_submit_stop_snapshot_t cb)
+{
+    _set_submit_stop_snapshot_cb(cb);
+}
+
+void Three::setSubmitDeleteCb(cb_submit_delete_t cb)
+{
+    _set_submit_delete_cb(cb);
+}
+
+// [sts] telemetry
+void Three::setSubmitTopologyEventCb(cb_submit_topology_event_t cb)
+{
+    _set_submit_topology_event_cb(cb);
+}
+
+// [sts] health
+void Three::setSubmitHealthCheckDataCb(cb_submit_health_check_data_t cb)
+{
+    _set_submit_health_check_data_cb(cb);
+}
+
+void Three::setSubmitHealthStartSnapshotCb(cb_submit_health_start_snapshot_t cb)
+{
+    _set_submit_health_start_snapshot_cb(cb);
+}
+
+void Three::setSubmitHealthStopSnapshotCb(cb_submit_health_stop_snapshot_t cb)
+{
+    _set_submit_health_stop_snapshot_cb(cb);
+}
+
+// [sts] raw metrics
+void Three::setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t cb)
+{
+    _set_submit_raw_metrics_data_cb(cb);
+}
+
+// [sts] transaction state
+void Three::setStartTransactionCb(cb_start_transaction_t cb)
+{
+    _set_start_transaction_cb(cb);
+}
+void Three::setStopTransactionCb(cb_stop_transaction_t cb)
+{
+    _set_stop_transaction_cb(cb);
+}
+void Three::setDiscardTransactionCb(cb_discard_transaction_t cb)
+{
+    _set_discard_transaction_cb(cb);
+}
+void Three::setTransactionStateCb(cb_set_transaction_state_t cb)
+{
+    _set_transaction_state_cb(cb);
+}
+
+// [sts] state
+void Three::setStateCb(cb_set_state_t cb)
+{
+    _set_state_cb(cb);
+}
+char *Three::setGetStateCb(cb_get_state_t cb)
+{
+    _set_get_state_cb(cb);
 }
 
 // Python Helpers

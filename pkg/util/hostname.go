@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build !serverless
 // +build !serverless
 
 package util
@@ -15,17 +16,17 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/DataDog/datadog-agent/pkg/metadata/inventories"
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/metadata/inventories"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders/azure"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/cache"
-	"github.com/DataDog/datadog-agent/pkg/util/ec2"
-	"github.com/DataDog/datadog-agent/pkg/util/ecs"
-	"github.com/DataDog/datadog-agent/pkg/util/fargate"
-	"github.com/DataDog/datadog-agent/pkg/util/hostname"
-	"github.com/DataDog/datadog-agent/pkg/util/hostname/validate"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/cache"
+	"github.com/StackVista/stackstate-agent/pkg/util/ec2"
+	"github.com/StackVista/stackstate-agent/pkg/util/ecs"
+	"github.com/StackVista/stackstate-agent/pkg/util/fargate"
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname"
 )
 
 var (
@@ -110,14 +111,16 @@ const HostnameProviderConfiguration = "configuration"
 
 // HostnameData contains hostname and the hostname provider
 type HostnameData struct {
-	Hostname string
-	Provider string
+	Hostname    string
+	Provider    string
+	Identifiers []string
 }
 
 // saveHostnameData creates a HostnameData struct, saves it in the cache under cacheHostnameKey
 // and calls setHostnameProvider with the provider if it is not empty.
-func saveHostnameData(cacheHostnameKey string, hostname string, provider string) HostnameData {
-	hostnameData := HostnameData{Hostname: hostname, Provider: provider}
+func saveHostnameData(cacheHostnameKey string, hostname string, provider string, identifiers []string) HostnameData {
+	log.Debugf("Saving hostname '%s' from %s", hostname, provider)
+	hostnameData := HostnameData{Hostname: hostname, Provider: provider, Identifiers: identifiers}
 	cache.Cache.Set(cacheHostnameKey, hostnameData, cache.NoExpiration)
 	if provider != "" {
 		setHostnameProvider(provider)
@@ -125,8 +128,8 @@ func saveHostnameData(cacheHostnameKey string, hostname string, provider string)
 	return hostnameData
 }
 
-func saveAndValidateHostnameData(ctx context.Context, cacheHostnameKey string, hostname string, provider string) HostnameData {
-	hostnameData := saveHostnameData(cacheHostnameKey, hostname, HostnameProviderConfiguration)
+func saveAndValidateHostnameData(ctx context.Context, cacheHostnameKey string, hostname string, provider string, identifiers []string) HostnameData {
+	hostnameData := saveHostnameData(cacheHostnameKey, hostname, HostnameProviderConfiguration, identifiers)
 	if !isHostnameCanonicalForIntake(ctx, hostname) && !config.Datadog.GetBool("hostname_force_config_as_canonical") {
 		log.Warnf(
 			"Hostname '%s' defined in configuration will not be used as the in-app hostname. "+
@@ -156,16 +159,18 @@ func GetHostnameData(ctx context.Context) (HostnameData, error) {
 	var hostName string
 	var err error
 	var provider string
+	identifiers := []string{}
 
 	// Try the name provided in the configuration file
 	configName := config.Datadog.GetString("hostname")
-	err = validate.ValidHostname(configName)
+	err = config.ValidHostname(configName)
 	if err == nil {
 		return saveAndValidateHostnameData(
 			ctx,
 			cacheHostnameKey,
 			configName,
 			HostnameProviderConfiguration,
+			identifiers,
 		), nil
 	}
 
@@ -186,7 +191,7 @@ func GetHostnameData(ctx context.Context) (HostnameData, error) {
 					"filename": configHostnameFilepath,
 				},
 			); err == nil {
-				return saveAndValidateHostnameData(ctx, cacheHostnameKey, hostname, "file"), nil
+				return saveAndValidateHostnameData(ctx, cacheHostnameKey, hostname, "file", identifiers), nil
 			}
 
 			expErr := new(expvar.String)
@@ -200,7 +205,7 @@ func GetHostnameData(ctx context.Context) (HostnameData, error) {
 
 	// If fargate we strip the hostname
 	if fargate.IsFargateInstance(ctx) {
-		hostnameData := saveHostnameData(cacheHostnameKey, "", "")
+		hostnameData := saveHostnameData(cacheHostnameKey, "", "", identifiers)
 		return hostnameData, nil
 	}
 
@@ -209,7 +214,7 @@ func GetHostnameData(ctx context.Context) (HostnameData, error) {
 	if getGCEHostname := hostname.GetProvider("gce"); getGCEHostname != nil {
 		gceName, err := getGCEHostname(ctx, nil)
 		if err == nil {
-			hostnameData := saveHostnameData(cacheHostnameKey, gceName, "gce")
+			hostnameData := saveHostnameData(cacheHostnameKey, gceName, "gce", identifiers)
 			return hostnameData, err
 		}
 		expErr := new(expvar.String)
@@ -314,6 +319,14 @@ func GetHostnameData(ctx context.Context) (HostnameData, error) {
 		if err == nil {
 			hostName = azureHostname
 			provider = "azure"
+			// sts begin
+			azureIdentifiers, idsErr := azure.HostnameIdentifiers(ctx)
+			if idsErr != nil {
+				log.Warnf("Failed to get Azure host identifiers: %v", idsErr)
+			} else {
+				identifiers = azureIdentifiers
+			}
+			// sts end
 		} else {
 			expErr := new(expvar.String)
 			expErr.Set(err.Error())
@@ -343,7 +356,7 @@ func GetHostnameData(ctx context.Context) (HostnameData, error) {
 		err = nil
 	}
 
-	hostnameData := saveHostnameData(cacheHostnameKey, hostName, provider)
+	hostnameData := saveHostnameData(cacheHostnameKey, hostName, provider, identifiers)
 	if err != nil {
 		expErr := new(expvar.String)
 		expErr.Set(fmt.Sprintf(err.Error()))
@@ -367,7 +380,7 @@ func isHostnameCanonicalForIntake(ctx context.Context, hostname string) bool {
 func getValidEC2Hostname(ctx context.Context, ec2Provider hostname.Provider) (string, error) {
 	instanceID, err := ec2Provider(ctx, nil)
 	if err == nil {
-		err = validate.ValidHostname(instanceID)
+		err = config.ValidHostname(instanceID)
 		if err == nil {
 			return instanceID, nil
 		}

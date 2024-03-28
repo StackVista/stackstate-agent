@@ -20,11 +20,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/config"
-	"github.com/DataDog/datadog-agent/pkg/trace/info"
-	"github.com/DataDog/datadog-agent/pkg/trace/osutil"
-	httputils "github.com/DataDog/datadog-agent/pkg/util/http"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config"
+	"github.com/StackVista/stackstate-agent/pkg/trace/info"
+	"github.com/StackVista/stackstate-agent/pkg/trace/osutil"
+	httputils "github.com/StackVista/stackstate-agent/pkg/util/http"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // newSenders returns a list of senders based on the given agent configuration, using climit
@@ -230,6 +230,7 @@ func (s *sender) Push(p *payload) {
 
 // sendPayload sends the payload p to the destination URL.
 func (s *sender) sendPayload(p *payload) {
+	log.Infof("[sts] sending payload to %+v, Payload: %+v", s.cfg.url, &p.body)
 	req, err := p.httpRequest(s.cfg.url)
 	if err != nil {
 		log.Errorf("http.Request: %s", err)

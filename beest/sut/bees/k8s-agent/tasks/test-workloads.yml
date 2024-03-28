@@ -1,0 +1,14 @@
+---
+- name: Apply manifests for test workloads
+  kubernetes.core.k8s:
+    context: "{{ kubecontext }}"
+    namespace: "{{ test_namespace }}"
+    definition: "{{ lookup('file', '{{ item }}') }}"
+  with_fileglob: "test_workloads/*.yaml"
+
+- name: Apply manifests for cronjob (v1)
+  kubernetes.core.k8s:
+    context: "{{ kubecontext }}"
+    namespace: "{{ test_namespace }}"
+    definition: "{{ lookup('file', '{{ item }}') }}"
+  with_fileglob: "test_cronjob/cronjob.yaml"

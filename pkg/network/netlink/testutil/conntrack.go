@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package testutil
@@ -6,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	nettestutil "github.com/DataDog/datadog-agent/pkg/network/testutil"
+	nettestutil "github.com/StackVista/stackstate-agent/pkg/network/testutil"
 )
 
 // SetupDNAT sets up a NAT translation from:

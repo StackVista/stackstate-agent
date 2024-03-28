@@ -3,26 +3,29 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build cri
 // +build cri
 
 package cri
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/topology"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
 	pb "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/tagger"
-	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/cri"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/tagger"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/cri"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (
@@ -32,6 +35,8 @@ const (
 // CRIConfig holds the config of the check
 type CRIConfig struct {
 	CollectDisk bool `yaml:"collect_disk"`
+	// sts
+	CollectContainerTopology bool `yaml:"collect_container_topology"`
 }
 
 // CRICheck grabs CRI metrics
@@ -39,6 +44,8 @@ type CRICheck struct {
 	core.CheckBase
 	instance *CRIConfig
 	filter   *containers.Filter
+	// sts
+	topologyCollector *topology.ContainerTopologyCollector
 }
 
 func init() {
@@ -50,6 +57,8 @@ func CRIFactory() check.Check {
 	return &CRICheck{
 		CheckBase: core.NewCheckBase(criCheckName),
 		instance:  &CRIConfig{},
+		// sts
+		topologyCollector: topology.MakeContainerTopologyCollector(criCheckName),
 	}
 }
 
@@ -57,6 +66,8 @@ func CRIFactory() check.Check {
 func (c *CRIConfig) Parse(data []byte) error {
 	// default values
 	c.CollectDisk = false
+	// sts
+	c.CollectContainerTopology = true
 
 	return yaml.Unmarshal(data, c)
 }
@@ -96,6 +107,18 @@ func (c *CRICheck) Run() error {
 		return err
 	}
 	c.generateMetrics(sender, containerStats, util)
+
+	// sts begin
+	// Collect container topology
+	if c.instance.CollectContainerTopology && !config.IsFeaturePresent(config.Containerd) {
+		err := c.topologyCollector.BuildContainerTopology(util)
+		if err != nil {
+			sender.ServiceCheck("cri.health", metrics.ServiceCheckCritical, "", nil, err.Error())
+			log.Errorf("Could not collect container topology: %s", err)
+			return err
+		}
+	}
+	//sts end
 
 	sender.Commit()
 	return nil

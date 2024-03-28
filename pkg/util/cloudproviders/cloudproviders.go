@@ -8,21 +8,21 @@ package cloudproviders
 import (
 	"context"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/metadata/inventories"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	ecscommon "github.com/DataDog/datadog-agent/pkg/util/ecs/common"
-	"github.com/DataDog/datadog-agent/pkg/util/hostname/kubelet"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/metadata/inventories"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	ecscommon "github.com/StackVista/stackstate-agent/pkg/util/ecs/common"
+	"github.com/StackVista/stackstate-agent/pkg/util/hostname/kubelet"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
-	"github.com/DataDog/datadog-agent/pkg/util/ec2"
-	"github.com/DataDog/datadog-agent/pkg/util/ecs"
+	"github.com/StackVista/stackstate-agent/pkg/util/ec2"
+	"github.com/StackVista/stackstate-agent/pkg/util/ecs"
 
-	"github.com/DataDog/datadog-agent/pkg/util/cloudproviders/alibaba"
-	"github.com/DataDog/datadog-agent/pkg/util/cloudproviders/azure"
-	"github.com/DataDog/datadog-agent/pkg/util/cloudproviders/cloudfoundry"
-	"github.com/DataDog/datadog-agent/pkg/util/cloudproviders/gce"
-	"github.com/DataDog/datadog-agent/pkg/util/cloudproviders/tencent"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders/alibaba"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders/azure"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders/cloudfoundry"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders/gce"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders/tencent"
 )
 
 type cloudProviderDetector struct {

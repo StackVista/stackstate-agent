@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package dns
@@ -5,11 +6,11 @@ package dns
 import (
 	"math"
 
-	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode"
-	"github.com/DataDog/datadog-agent/pkg/network/config"
-	netebpf "github.com/DataDog/datadog-agent/pkg/network/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/network/ebpf/probes"
 	"github.com/DataDog/ebpf/manager"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
+	netebpf "github.com/StackVista/stackstate-agent/pkg/network/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/network/ebpf/probes"
 	"golang.org/x/sys/unix"
 )
 

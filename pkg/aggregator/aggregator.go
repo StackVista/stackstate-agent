@@ -12,23 +12,23 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/epforwarder"
-	"github.com/DataDog/datadog-agent/pkg/logs/message"
-	"github.com/DataDog/datadog-agent/pkg/serializer/split"
-	"github.com/DataDog/datadog-agent/pkg/tagger"
-	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
-	"github.com/DataDog/datadog-agent/pkg/tagset"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/flavor"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/version"
+	"github.com/StackVista/stackstate-agent/pkg/epforwarder"
+	"github.com/StackVista/stackstate-agent/pkg/logs/message"
+	"github.com/StackVista/stackstate-agent/pkg/serializer/split"
+	"github.com/StackVista/stackstate-agent/pkg/tagger"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/tagset"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/flavor"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/version"
 
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
-	"github.com/DataDog/datadog-agent/pkg/serializer"
-	"github.com/DataDog/datadog-agent/pkg/status/health"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/serializer"
+	"github.com/StackVista/stackstate-agent/pkg/status/health"
 )
 
 // DefaultFlushInterval aggregator default flush interval
@@ -248,6 +248,11 @@ type BufferedAggregator struct {
 
 	tlmContainerTagsEnabled bool                                              // Whether we should call the tagger to tag agent telemetry metrics
 	agentTags               func(collectors.TagCardinality) ([]string, error) // This function gets the agent tags from the tagger (defined as a struct field to ease testing)
+
+	// [sts]
+	MetricPrefix string // The prefix used for metrics generated in the aggregator.
+	// We use this prefix to override datadog metrics we can't brand when using the agent as a dependency in the process-agent
+	// [sts]
 }
 
 // NewBufferedAggregator instantiates a BufferedAggregator
@@ -299,6 +304,9 @@ func NewBufferedAggregator(s serializer.MetricSerializer, eventPlatformForwarder
 		agentTags:               tagger.AgentTags,
 		ServerlessFlush:         make(chan bool),
 		ServerlessFlushDone:     make(chan struct{}),
+
+		// [sts]
+		MetricPrefix: "datadog",
 	}
 
 	return aggregator
@@ -346,7 +354,7 @@ func (agg *BufferedAggregator) SetHostname(hostname string) {
 func (agg *BufferedAggregator) AddAgentStartupTelemetry(agentVersion string) {
 
 	metric := &metrics.MetricSample{
-		Name:       fmt.Sprintf("datadog.%s.started", agg.agentName),
+		Name:       fmt.Sprintf("%s.%s.started", agg.MetricPrefix, agg.agentName),
 		Value:      1,
 		Tags:       agg.tags(true),
 		Host:       agg.hostname,
@@ -542,7 +550,7 @@ func (agg *BufferedAggregator) sendSeries(start time.Time, series metrics.Series
 	// Send along a metric that showcases that this Agent is running (internally, in backend,
 	// a `datadog.`-prefixed metric allows identifying this host as an Agent host, used for dogbone icon)
 	series = append(series, &metrics.Serie{
-		Name:           fmt.Sprintf("datadog.%s.running", agg.agentName),
+		Name:           fmt.Sprintf("%s.%s.running", agg.MetricPrefix, agg.agentName),
 		Points:         []metrics.Point{{Value: 1, Ts: float64(start.Unix())}},
 		Tags:           agg.tags(true),
 		Host:           agg.hostname,
@@ -552,7 +560,7 @@ func (agg *BufferedAggregator) sendSeries(start time.Time, series metrics.Series
 
 	// Send along a metric that counts the number of times we dropped some payloads because we couldn't split them.
 	series = append(series, &metrics.Serie{
-		Name:           fmt.Sprintf("n_o_i_n_d_e_x.datadog.%s.payload.dropped", agg.agentName),
+		Name:           fmt.Sprintf("n_o_i_n_d_e_x.%s.%s.payload.dropped", agg.MetricPrefix, agg.agentName),
 		Points:         []metrics.Point{{Value: float64(split.GetPayloadDrops()), Ts: float64(start.Unix())}},
 		Tags:           agg.tags(false),
 		Host:           agg.hostname,
@@ -622,7 +630,7 @@ func (agg *BufferedAggregator) sendServiceChecks(start time.Time, serviceChecks 
 func (agg *BufferedAggregator) flushServiceChecks(start time.Time, waitForSerializer bool) {
 	// Add a simple service check for the Agent status
 	agg.addServiceCheck(metrics.ServiceCheck{
-		CheckName: fmt.Sprintf("datadog.%s.up", agg.agentName),
+		CheckName: fmt.Sprintf("%s.%s.up", agg.MetricPrefix, agg.agentName),
 		Status:    metrics.ServiceCheckOK,
 		Tags:      agg.tags(false),
 		Host:      agg.hostname,

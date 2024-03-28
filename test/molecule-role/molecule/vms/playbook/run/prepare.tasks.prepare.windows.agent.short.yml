@@ -1,0 +1,36 @@
+---
+- name: "StackState Agent Service status"
+  win_command: |
+    "C:\\Program Files\\StackState\\StackState Agent\\embedded\\agent.exe" status
+  register: agent_status
+- debug: var="agent_status"
+- name: Wait a bit for the stackstate-agent to start
+  pause:
+    seconds: 60
+- name: "Stop StackState Agent Service (1)"
+  win_command: |
+    "C:\\Program Files\\StackState\\StackState Agent\\embedded\\agent.exe" stopservice
+  register: stop_try1
+  ignore_errors: true
+  until: stop_try1 is not failed
+- name: "Stop StackState Agent Service (2)"
+  win_command: |
+    "C:\\Program Files\\StackState\\StackState Agent\\embedded\\agent.exe" stopservice
+  when: stop_try1 is failed
+- name: "Set process_config.filters.short_lived_processes and process_config.filters.short_lived_network_relations to get deterministic behaviour in the short-lived filtering tests"
+  win_lineinfile:
+    path: C:\ProgramData\StackState\stackstate.yaml
+    insertafter: "process_config:"
+    line: |2
+        filters:
+          short_lived_processes:
+            enabled: true
+            qualifier_secs: {{ process_filter_short_lived_qualifier_secs }}
+          short_lived_network_relations:
+            enabled: true
+            qualifier_secs: {{ network_relation_filter_short_lived_qualifier_secs }}
+- name: "Start StackState Agent Service"
+  win_command: |
+    "C:\\Program Files\\StackState\\StackState Agent\\embedded\\agent.exe" start-service
+  register: restart_result
+- debug: var="restart_result"

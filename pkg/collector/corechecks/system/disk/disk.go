@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
+//go:build !windows
 // +build !windows
 
 package disk
@@ -12,9 +13,9 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
 )
 
 const (
@@ -92,16 +93,23 @@ func (c *Check) instanceConfigure(data integration.Data) error {
 	}
 
 	excludedFilesystems, found := conf["excluded_filesystems"]
-	if excludedFilesystems, ok := excludedFilesystems.([]string); found && ok {
-		c.cfg.excludedFilesystems = excludedFilesystems
+	if excludedFilesystems, ok := excludedFilesystems.([]interface{}); found && ok {
+		excludedList := make([]string, len(excludedFilesystems))
+		for i, ex := range excludedFilesystems {
+			excludedList[i] = ex.(string)
+		}
+		c.cfg.excludedFilesystems = excludedList
 	}
 
-	// Force exclusion of CDROM (iso9660) from disk check
 	c.cfg.excludedFilesystems = append(c.cfg.excludedFilesystems, "iso9660")
 
 	excludedDisks, found := conf["excluded_disks"]
-	if excludedDisks, ok := excludedDisks.([]string); found && ok {
-		c.cfg.excludedDisks = excludedDisks
+	if excludedDisks, ok := excludedDisks.([]interface{}); found && ok {
+		excludedList := make([]string, len(excludedDisks))
+		for i, ex := range excludedDisks {
+			excludedList[i] = ex.(string)
+		}
+		c.cfg.excludedDisks = excludedList
 	}
 
 	excludedDiskRe, found := conf["excluded_disk_re"]
@@ -175,7 +183,8 @@ func (c *Check) applyDeviceTags(device, mountpoint string, tags []string) []stri
 
 func diskFactory() check.Check {
 	return &Check{
-		CheckBase: core.NewCheckBase(checkName),
+		CheckBase:         core.NewCheckBase(checkName),
+		topologyCollector: MakeTopologyCollector(),
 	}
 }
 

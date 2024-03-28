@@ -12,19 +12,19 @@ import (
 
 	"github.com/spf13/cobra"
 
-	secagentcommon "github.com/DataDog/datadog-agent/cmd/security-agent/common"
-	"github.com/DataDog/datadog-agent/pkg/collector/runner"
-	"github.com/DataDog/datadog-agent/pkg/collector/scheduler"
-	"github.com/DataDog/datadog-agent/pkg/compliance/agent"
-	"github.com/DataDog/datadog-agent/pkg/compliance/checks"
-	"github.com/DataDog/datadog-agent/pkg/compliance/event"
-	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/logs"
-	"github.com/DataDog/datadog-agent/pkg/logs/client"
-	"github.com/DataDog/datadog-agent/pkg/logs/config"
-	"github.com/DataDog/datadog-agent/pkg/logs/restart"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
 	ddgostatsd "github.com/DataDog/datadog-go/statsd"
+	secagentcommon "github.com/StackVista/stackstate-agent/cmd/security-agent/common"
+	"github.com/StackVista/stackstate-agent/pkg/collector/runner"
+	"github.com/StackVista/stackstate-agent/pkg/collector/scheduler"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/agent"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/checks"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
+	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs"
+	"github.com/StackVista/stackstate-agent/pkg/logs/client"
+	"github.com/StackVista/stackstate-agent/pkg/logs/config"
+	"github.com/StackVista/stackstate-agent/pkg/logs/restart"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 var (

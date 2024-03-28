@@ -8,7 +8,7 @@ package obfuscate
 import (
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/pb"
+	"github.com/StackVista/stackstate-agent/pkg/trace/pb"
 )
 
 // redisTruncationMark is used as suffix by tracing libraries to indicate that a

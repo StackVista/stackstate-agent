@@ -1,0 +1,42 @@
+---
+# We stop the simulator in every case because the more it runs the more it becomes slow and the captured data keeps accumulating
+- name: StackState Simulator stop tasks
+  tags: [prepare, cleanup]
+  when: enable_sts_simulator is defined and enable_sts_simulator == true
+  block:
+    - name: Stop the Simulator Docker instance
+      shell: "docker kill simulator"
+
+    - name: Removing the StackState Simulator docker container (Pre-Startup Cleanup).
+      ignore_errors: true
+      shell: "docker rm -f simulator"
+
+    - name: Cleaning up any pre-existing simulator images (Pre-Startup Cleanup).
+      ignore_errors: true
+      shell: "docker rmi stackstate/simulator --force"
+
+
+- name: StackState Simulator prepare tasks
+  tags: prepare
+  when: enable_sts_simulator is defined and enable_sts_simulator == true
+  block:
+    - name: "Start the StackState Receiver Simulator (Forward Data To {{ sts_url }}/receiver/stsAgent)"
+      shell: "docker run -dit --restart unless-stopped --name simulator -p 7078:7078 stackstate/simulator:latest -v record -p 7078 -t tpl.json --upstream '{{ sts_url }}/receiver'"
+      when: sts_url is defined
+
+    - name: Start the StackState Receiver Simulator (No Forwarder)
+      shell: "docker run -dit --restart unless-stopped --name simulator -p 7078:7078 stackstate/simulator:latest -v record -p 7078 -t tpl.json"
+      when: sts_url is not defined
+
+    - name: Give the StackState Receiver Simulator time to start up (10 sec)
+      pause:
+        seconds: 10
+
+    - name: Test The StackState Receiver Simulator
+      shell: "curl -o splunk.json http://localhost:7078/download"
+      register: simulator_test_result
+
+    - name: StackState Receiver Simulator Test Results
+      debug:
+        msg: "{{ simulator_test_result }}"
+      when: simulator_test_result is defined

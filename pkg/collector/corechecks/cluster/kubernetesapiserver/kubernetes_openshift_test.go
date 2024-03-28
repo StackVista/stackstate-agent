@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2017-present Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package kubernetesapiserver
@@ -16,7 +17,7 @@ import (
 	osq "github.com/openshift/api/quota/v1"
 	"github.com/stretchr/testify/require"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
 )
 
 func TestReportClusterQuotas(t *testing.T) {

@@ -1,4 +1,5 @@
-//+build windows linux_bpf
+//go:build windows || linux_bpf
+// +build windows linux_bpf
 
 package dns
 
@@ -9,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
 	"github.com/stretchr/testify/assert"
 )
 

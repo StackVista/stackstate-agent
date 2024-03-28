@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package http
@@ -9,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/network/config"
-	"github.com/DataDog/datadog-agent/pkg/network/http/testutil"
-	netlink "github.com/DataDog/datadog-agent/pkg/network/netlink/testutil"
-	"github.com/DataDog/datadog-agent/pkg/util/kernel"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
+	"github.com/StackVista/stackstate-agent/pkg/network/http/testutil"
+	netlink "github.com/StackVista/stackstate-agent/pkg/network/netlink/testutil"
+	"github.com/StackVista/stackstate-agent/pkg/util/kernel"
 	"github.com/stretchr/testify/require"
 )
 
@@ -77,7 +78,7 @@ func TestUnknownMethodRegression(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 	stats := monitor.GetHTTPStats()
 
-	for key := range stats {
+	for key := range stats.Requests {
 		if key.Method == MethodUnknown {
 			t.Error("detected HTTP request with method unknown")
 		}
@@ -110,7 +111,7 @@ func testHTTPMonitor(t *testing.T, targetAddr, serverAddr string, numReqs int) {
 
 	// Assert all requests made were correctly captured by the monitor
 	for _, req := range requests {
-		includesRequest(t, stats, req)
+		includesRequest(t, stats.Requests, req)
 	}
 }
 

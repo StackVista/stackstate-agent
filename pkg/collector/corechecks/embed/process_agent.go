@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build process && (darwin || freebsd)
 // +build process
 // +build darwin freebsd
 
@@ -19,13 +20,14 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	telemetry_utils "github.com/DataDog/datadog-agent/pkg/telemetry/utils"
-	"github.com/DataDog/datadog-agent/pkg/util/executable"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	telemetry_utils "github.com/StackVista/stackstate-agent/pkg/telemetry/utils"
+	"github.com/StackVista/stackstate-agent/pkg/util/executable"
+	"github.com/StackVista/stackstate-agent/pkg/util/features"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 type processAgentCheckConf struct {
@@ -205,6 +207,15 @@ func (c *ProcessAgentCheck) Cancel() {}
 // GetSenderStats returns the stats from the last run of the check, but there aren't any yet
 func (c *ProcessAgentCheck) GetSenderStats() (check.SenderStats, error) {
 	return check.NewSenderStats(), nil
+}
+
+// GetFeatures is not implemented, the process agent has its own mechanism for checking StackState features
+func (c *ProcessAgentCheck) GetFeatures() features.Features {
+	return nil
+}
+
+// SetFeatures is not implemented, the process agent has its own mechanism for checking StackState features
+func (c *ProcessAgentCheck) SetFeatures(features features.Features) {
 }
 
 func init() {

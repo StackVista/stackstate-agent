@@ -15,7 +15,7 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/mohae/deepcopy"
 
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
 )
 
 // Store is a central storage of metadata about workloads. A workload is any

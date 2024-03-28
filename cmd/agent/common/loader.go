@@ -9,18 +9,18 @@ import (
 	"context"
 	"path/filepath"
 
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/scheduler"
-	"github.com/DataDog/datadog-agent/pkg/collector"
-	lsched "github.com/DataDog/datadog-agent/pkg/logs/scheduler"
-	lstatus "github.com/DataDog/datadog-agent/pkg/logs/status"
-	"github.com/DataDog/datadog-agent/pkg/tagger"
-	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
-	"github.com/DataDog/datadog-agent/pkg/tagger/local"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/workloadmeta"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/scheduler"
+	"github.com/StackVista/stackstate-agent/pkg/collector"
+	lsched "github.com/StackVista/stackstate-agent/pkg/logs/scheduler"
+	lstatus "github.com/StackVista/stackstate-agent/pkg/logs/status"
+	"github.com/StackVista/stackstate-agent/pkg/tagger"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/local"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/workloadmeta"
 
 	// register all workloadmeta collectors
-	_ "github.com/DataDog/datadog-agent/pkg/workloadmeta/collectors"
+	_ "github.com/StackVista/stackstate-agent/pkg/workloadmeta/collectors"
 )
 
 // LoadComponents configures several common Agent components:

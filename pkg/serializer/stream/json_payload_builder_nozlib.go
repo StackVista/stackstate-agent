@@ -3,15 +3,16 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2019-present Datadog, Inc.
 
-//+build !zlib
+//go:build !zlib
+// +build !zlib
 
 package stream
 
 import (
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/forwarder"
-	"github.com/DataDog/datadog-agent/pkg/serializer/marshaler"
+	"github.com/StackVista/stackstate-agent/pkg/forwarder"
+	"github.com/StackVista/stackstate-agent/pkg/serializer/marshaler"
 )
 
 // OnErrItemTooBigPolicy defines the behavior when OnErrItemTooBig occurs.

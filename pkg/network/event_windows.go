@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package network
@@ -6,8 +7,8 @@ import (
 	"net"
 	"syscall"
 
-	"github.com/DataDog/datadog-agent/pkg/network/driver"
-	"github.com/DataDog/datadog-agent/pkg/process/util"
+	"github.com/StackVista/stackstate-agent/pkg/network/driver"
+	"github.com/StackVista/stackstate-agent/pkg/process/util"
 )
 
 func connFamily(addressFamily uint16) ConnectionFamily {

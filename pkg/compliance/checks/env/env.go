@@ -6,8 +6,8 @@
 package env
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/compliance/eval"
-	"github.com/DataDog/datadog-agent/pkg/compliance/event"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/eval"
+	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
 )
 
 // Env provides environment methods for compliance checks execution

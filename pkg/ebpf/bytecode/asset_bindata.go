@@ -1,3 +1,4 @@
+//go:build ebpf_bindata
 // +build ebpf_bindata
 
 package bytecode
@@ -6,7 +7,7 @@ import (
 	"bytes"
 	"io"
 
-	bindata "github.com/DataDog/datadog-agent/pkg/ebpf/bytecode/bindata"
+	bindata "github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode/bindata"
 )
 
 // GetReader returns a new AssetReader for the specified bundled asset

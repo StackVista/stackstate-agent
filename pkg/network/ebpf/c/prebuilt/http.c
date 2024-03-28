@@ -102,7 +102,7 @@ static __always_inline conn_tuple_t* tup_from_ssl_ctx(void *ssl_ctx, u64 pid_tgi
 }
 
 static __always_inline void init_ssl_sock(void *ssl_ctx, u32 socket_fd) {
-    ssl_sock_t ssl_sock = { 0 };
+    ssl_sock_t ssl_sock = { {0} };
     ssl_sock.fd = socket_fd;
     bpf_map_update_elem(&ssl_sock_by_ctx, &ssl_ctx, &ssl_sock, BPF_ANY);
 }
@@ -187,7 +187,7 @@ int uretprobe__SSL_read(struct pt_regs* ctx) {
         bpf_probe_read(buffer, sizeof(buffer), args->buf);
     }
 
-    skb_info_t skb_info = {0};
+    skb_info_t skb_info = {{0}};
     __builtin_memcpy(&skb_info.tup, t, sizeof(conn_tuple_t));
     http_process(buffer, &skb_info, skb_info.tup.sport);
  cleanup:
@@ -212,7 +212,7 @@ int uprobe__SSL_write(struct pt_regs* ctx) {
         bpf_probe_read(buffer, sizeof(buffer), ssl_buffer);
     }
 
-    skb_info_t skb_info = {0};
+    skb_info_t skb_info = {{0}};
     __builtin_memcpy(&skb_info.tup, t, sizeof(conn_tuple_t));
     http_process(buffer, &skb_info, skb_info.tup.sport);
     return 0;
@@ -230,7 +230,7 @@ int uprobe__SSL_shutdown(struct pt_regs* ctx) {
     char buffer[HTTP_BUFFER_SIZE];
     __builtin_memset(buffer, 0, sizeof(buffer));
 
-    skb_info_t skb_info = {0};
+    skb_info_t skb_info = {{0}};
     __builtin_memcpy(&skb_info.tup, t, sizeof(conn_tuple_t));
 
     // TODO: this is just a hack. Let's get rid of this skb_info argument altogether

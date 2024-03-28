@@ -5,16 +5,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/snmp/checkconfig"
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/snmp/devicecheck"
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/snmp/discovery"
-	"github.com/DataDog/datadog-agent/pkg/collector/corechecks/snmp/report"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/snmp/checkconfig"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/snmp/devicecheck"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/snmp/discovery"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/snmp/report"
 )
 
 const (

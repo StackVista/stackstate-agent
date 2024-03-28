@@ -1,0 +1,36 @@
+---
+- name: "Splunk Metrics Saved Search Setup"
+  tags: [prepare, cleanup]
+  set_fact:
+    source_type: "sts_test_data"
+    saved_search_name: "metrics"
+    saved_search_format: "table _bkt _cd _time metric value qa"
+
+- name: Splunk Metrics Prepare Tasks
+  tags: prepare
+  block:
+    - name: "V1 - Create Splunk Metrics Saved Search"
+      command: |
+        curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches \
+        -d name="{{ saved_search_name }}-v1" \
+        --data-urlencode search="version=\"v1\" AND sourcetype=\"{{ source_type }}\" AND topo_type=\"{{ saved_search_name }}\" AND value!=\"\" AND metric!=\"\" | {{ saved_search_format }}"
+
+    - name: "V2 - Create Splunk Metrics Saved Search"
+      command: |
+        curl -k -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches \
+        -d name="{{ saved_search_name }}-v2" \
+        --data-urlencode search="version=\"v2\" AND sourcetype=\"{{ source_type }}\" AND topo_type=\"{{ saved_search_name }}\" AND value!=\"\" AND metric!=\"\" | {{ saved_search_format }}"
+
+
+## Cleanup
+- name: Splunk Events cleanup tasks
+  tags: cleanup
+  ignore_errors: yes
+  block:
+    - name: "V1 - Delete Splunk Metrics Saved Search"
+      command: |
+        curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches/{{ saved_search_name }}-v1
+
+    - name: "V2 - Delete Splunk Metrics Saved Search"
+      command: |
+        curl -k -X DELETE -u "{{ splunk_user }}:{{ splunk_pass }}" {{ splunk_integration.url }}/services/saved/searches/{{ saved_search_name }}-v2

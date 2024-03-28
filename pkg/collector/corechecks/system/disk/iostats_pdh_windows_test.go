@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
+//go:build windows
 // +build windows
 
 package disk
@@ -11,8 +12,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
-	pdhtest "github.com/DataDog/datadog-agent/pkg/util/winutil/pdhutil"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/mocksender"
+	pdhtest "github.com/StackVista/stackstate-agent/pkg/util/winutil/pdhutil"
 )
 
 func testGetDriveType(drive string) uintptr {

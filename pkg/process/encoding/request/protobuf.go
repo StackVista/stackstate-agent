@@ -3,7 +3,7 @@ package request
 import (
 	"github.com/gogo/protobuf/proto"
 
-	"github.com/DataDog/datadog-agent/pkg/proto/pbgo"
+	"github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
 )
 
 // ContentTypeProtobuf holds the HTML content-type of a Protobuf payload

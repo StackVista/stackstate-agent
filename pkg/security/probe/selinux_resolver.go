@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build linux
 // +build linux
 
 package probe
@@ -11,7 +12,7 @@ import (
 	"os/exec"
 	"strings"
 
-	sebpf "github.com/DataDog/datadog-agent/pkg/security/ebpf"
+	sebpf "github.com/StackVista/stackstate-agent/pkg/security/ebpf"
 	"github.com/cilium/ebpf"
 )
 

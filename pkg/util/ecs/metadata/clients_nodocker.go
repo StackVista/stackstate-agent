@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2020-present Datadog, Inc.
 
+//go:build !docker
 // +build !docker
 
 package metadata
@@ -10,13 +11,13 @@ package metadata
 import (
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/docker"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/docker"
 
-	"github.com/DataDog/datadog-agent/pkg/util/ecs/common"
-	v1 "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata/v1"
-	v2 "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata/v2"
-	v3 "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata/v3"
+	"github.com/StackVista/stackstate-agent/pkg/util/ecs/common"
+	v1 "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata/v1"
+	v2 "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata/v2"
+	v3 "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata/v3"
 )
 
 // V1 returns a client for the ECS metadata API v1, also called introspection

@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubeapiserver && orchestrator
 // +build kubeapiserver,orchestrator
 
 package orchestrator
@@ -12,8 +13,8 @@ import (
 	"strings"
 
 	model "github.com/DataDog/agent-payload/v5/process"
-	"github.com/DataDog/datadog-agent/pkg/util/orchestrator"
-	orchutil "github.com/DataDog/datadog-agent/pkg/util/orchestrator"
+	"github.com/StackVista/stackstate-agent/pkg/util/orchestrator"
+	orchutil "github.com/StackVista/stackstate-agent/pkg/util/orchestrator"
 
 	v1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"

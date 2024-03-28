@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build kubeapiserver
 // +build kubeapiserver
 
 package externalmetrics
@@ -21,8 +22,8 @@ import (
 	kube_informer "k8s.io/client-go/informers"
 	kube_fake "k8s.io/client-go/kubernetes/fake"
 
-	"github.com/DataDog/datadog-agent/pkg/clusteragent/externalmetrics/model"
 	"github.com/DataDog/watermarkpodautoscaler/api/v1alpha1"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/externalmetrics/model"
 )
 
 func init() {

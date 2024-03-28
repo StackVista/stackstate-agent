@@ -1,0 +1,83 @@
+---
+- name: Splunk Prepare Tasks
+  tags: prepare
+  become: yes
+  block:
+    - name: Wait for the reboot and reconnect (Cleans Lock Files)
+      reboot:
+        msg: "Reboot initiated by Ansible"
+        connect_timeout: 5
+        reboot_timeout: 600
+        pre_reboot_delay: 0
+        post_reboot_delay: 30
+        test_command: whoami
+
+    - name: Create variable pointing to the Splunk Executable
+      set_fact:
+        splunk: "{{ splunk_home }}/bin/splunk"
+
+    - name: Download Copy of Splunk Enterprise
+      get_url:
+        url: "https://download.splunk.com/products/splunk/releases/{{ splunk_deb_download_version }}/linux/splunk-{{ splunk_deb_download_version }}-{{ splunk_deb_download_hash }}-linux-2.6-amd64.deb"
+        dest: /home/ubuntu/splunk.deb
+        mode: '0755'
+        timeout: 20
+      register: downloaded
+
+    - name: Install Splunk Binary
+      apt: deb=/home/ubuntu/splunk.deb
+
+    - name: Create symlink to splunk in /usr/local/bin
+      file:
+        src: "{{ splunk }}"
+        path: /usr/local/bin/splunk
+        state: link
+        owner: splunk
+        group: splunk
+
+    - name: Create file for default admin credentials
+      template:
+        src: user-seed.conf.j2
+        dest: "{{ splunk_home }}/etc/system/local/user-seed.conf"
+
+    - name: "-.ui_login- Touch {{ splunk_home }}/etc/.ui_login"
+      file:
+        path: "{{ splunk_home }}/etc/.ui_login"
+        state: touch
+        mode: '0644'
+        owner: splunk
+        group: splunk
+
+    - name: Create file for default user/UI preferences
+      template:
+        src: user-prefs.conf.j2
+        dest: "{{ splunk_home }}/etc/system/local/user-prefs.conf"
+
+    - name: Create file to disable default search tour
+      template:
+        src: ui-tour.conf.j2
+        dest: "{{ splunk_home }}/etc/system/local/ui-tour.conf"
+
+    - name: Start and Accept Licence
+      shell: "{{ splunk }} start --answer-yes --auto-ports --no-prompt --accept-license"
+
+
+## Cleanup
+- name: Splunk Cleanup tasks
+  tags: cleanup
+  ignore_errors: yes
+  block:
+    - name: Uninstall splunk
+      become: yes
+      apt:
+        pkg: splunk
+        state: absent
+
+    - name: Remove configurations and packages
+      become: yes
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - "{{ splunk_home }}"
+        - /home/ubuntu/splunk.deb

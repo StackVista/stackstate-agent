@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build linux
 // +build linux
 
 package probe
@@ -17,10 +18,10 @@ import (
 	"github.com/hashicorp/golang-lru/simplelru"
 	"github.com/pkg/errors"
 
-	seclog "github.com/DataDog/datadog-agent/pkg/security/log"
-	"github.com/DataDog/datadog-agent/pkg/security/metrics"
-	"github.com/DataDog/datadog-agent/pkg/security/secl/model"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	seclog "github.com/StackVista/stackstate-agent/pkg/security/log"
+	"github.com/StackVista/stackstate-agent/pkg/security/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/model"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 type eventCounterLRUKey struct {

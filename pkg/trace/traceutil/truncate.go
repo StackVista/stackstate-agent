@@ -6,7 +6,7 @@
 package traceutil
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/trace/config/features"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config/features"
 )
 
 // MaxResourceLen the maximum length the resource can have

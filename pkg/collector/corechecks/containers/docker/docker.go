@@ -11,23 +11,24 @@ package docker
 import (
 	"context"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/containers/topology"
 	"math"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator"
-	"github.com/DataDog/datadog-agent/pkg/autodiscovery/integration"
-	"github.com/DataDog/datadog-agent/pkg/collector/check"
-	core "github.com/DataDog/datadog-agent/pkg/collector/corechecks"
-	"github.com/DataDog/datadog-agent/pkg/metrics"
-	"github.com/DataDog/datadog-agent/pkg/tagger"
-	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
-	"github.com/DataDog/datadog-agent/pkg/util"
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	cmetrics "github.com/DataDog/datadog-agent/pkg/util/containers/metrics"
-	"github.com/DataDog/datadog-agent/pkg/util/docker"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator"
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	core "github.com/StackVista/stackstate-agent/pkg/collector/corechecks"
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/tagger"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/util"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	cmetrics "github.com/StackVista/stackstate-agent/pkg/util/containers/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/util/docker"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const dockerCheckName = "docker"
@@ -48,6 +49,7 @@ type DockerCheck struct {
 	collectContainerSizeCounter uint64
 	containerFilter             *containers.Filter
 	okExitCodes                 map[int]struct{}
+	topologyCollector           *topology.ContainerTopologyCollector // sts
 }
 
 func updateContainerRunningCount(images map[string]*containerPerImage, c *containers.Container) {
@@ -334,6 +336,17 @@ func (d *DockerCheck) Run() error {
 		}
 	}
 
+	//sts
+	// Collect container topology
+	if d.instance.CollectContainerTopology {
+		err := d.topologyCollector.BuildContainerTopology(du)
+		if err != nil {
+			sender.ServiceCheck(DockerServiceUp, metrics.ServiceCheckCritical, "", nil, err.Error())
+			log.Errorf("Could not collect container topology: %s", err)
+			return err
+		}
+	}
+
 	sender.Commit()
 	return nil
 }
@@ -459,8 +472,9 @@ func (d *DockerCheck) setOkExitCodes() {
 // DockerFactory is exported for integration testing
 func DockerFactory() check.Check {
 	return &DockerCheck{
-		CheckBase: core.NewCheckBase(dockerCheckName),
-		instance:  &DockerConfig{},
+		CheckBase:         core.NewCheckBase(dockerCheckName),
+		instance:          &DockerConfig{},
+		topologyCollector: topology.MakeContainerTopologyCollector(dockerCheckName),
 	}
 }
 

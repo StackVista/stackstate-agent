@@ -27,7 +27,10 @@ if ENV["S3_OMNIBUS_CACHE_BUCKET"]
     s3_role_session_name 'datadog-agent-builder'
     s3_sts_creds_instance_profile true
   else
-    s3_instance_profile true
+    s3_instance_profile false #TODO: revert true
+    s3_access_key ENV["AWS_ACCESS_KEY_ID"]
+    s3_secret_key ENV["AWS_SECRET_ACCESS_KEY"]
+
   end
 end
 use_git_caching false

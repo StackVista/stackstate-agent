@@ -11,6 +11,8 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	interpreterconfig "github.com/StackVista/stackstate-agent/pkg/trace/interpreter/config"
+	"github.com/StackVista/stackstate-agent/pkg/util"
 	"net"
 	"net/http"
 	"net/url"
@@ -19,15 +21,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	coreconfig "github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/proto/pbgo"
-	"github.com/DataDog/datadog-agent/pkg/trace/config/features"
-	"github.com/DataDog/datadog-agent/pkg/util/fargate"
-	"github.com/DataDog/datadog-agent/pkg/util/grpc"
-	httputils "github.com/DataDog/datadog-agent/pkg/util/http"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/util/profiling"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	coreconfig "github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config/features"
+	"github.com/StackVista/stackstate-agent/pkg/util/fargate"
+	httputils "github.com/StackVista/stackstate-agent/pkg/util/http"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/profiling"
 )
 
 // ErrMissingAPIKey is returned when the config could not be validated due to missing API key.
@@ -137,6 +137,9 @@ type AgentConfig struct {
 
 	// Profiling settings, or nil if profiling is disabled
 	ProfilingSettings *profiling.Settings
+
+	// InterpreterConfig contains span interpreter config. [sts]
+	InterpreterConfig *interpreterconfig.Config
 }
 
 // Tag represents a key/value pair.
@@ -192,6 +195,9 @@ func New() *AgentConfig {
 
 		DDAgentBin:   defaultDDAgentBin,
 		OTLPReceiver: &OTLP{},
+
+		// [sts] interpreter config
+		InterpreterConfig: interpreterconfig.DefaultInterpreterConfig(),
 	}
 }
 
@@ -230,6 +236,7 @@ var fallbackHostnameFunc = os.Hostname
 // acquireHostname attempts to acquire a hostname for the trace-agent by connecting to the core agent's
 // gRPC endpoints. If it fails, it will return an error.
 func (c *AgentConfig) acquireHostname() error {
+	/* sts - Get hostname from util.GetHostname instead
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	client, err := grpc.GetDDAgentClient(ctx)
@@ -246,6 +253,12 @@ func (c *AgentConfig) acquireHostname() error {
 	}
 	c.Hostname = reply.Hostname
 	log.Debugf("Acquired hostname from gRPC: %s", c.Hostname)
+	*/
+	// sts - use util.GetHostname instead of using the agent bin path and running a shell command.
+	hostname, err := util.GetHostname(context.TODO())
+	if err == nil {
+		c.Hostname = hostname
+	}
 	return nil
 }
 
@@ -335,5 +348,9 @@ func prepareConfig(path string) (*AgentConfig, error) {
 		return cfg, err
 	}
 	cfg.ConfigPath = path
+	// if the agent binary path is empty, use the default path
+	if cfg.DDAgentBin == "" {
+		cfg.DDAgentBin = defaultDDAgentBin
+	}
 	return cfg, nil
 }

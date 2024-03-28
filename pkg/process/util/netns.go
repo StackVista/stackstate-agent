@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 package util
@@ -10,7 +11,7 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/vishvananda/netns"
 	"golang.org/x/sys/unix"
 )

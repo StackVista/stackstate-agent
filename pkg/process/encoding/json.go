@@ -6,7 +6,7 @@ import (
 	"github.com/gogo/protobuf/jsonpb"
 
 	model "github.com/DataDog/agent-payload/v5/process"
-	"github.com/DataDog/datadog-agent/pkg/process/procutil"
+	"github.com/StackVista/stackstate-agent/pkg/process/procutil"
 )
 
 // ContentTypeJSON holds the HTML content-type of a JSON payload

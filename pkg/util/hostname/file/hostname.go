@@ -8,10 +8,9 @@ package file
 import (
 	"context"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 	"io/ioutil"
 	"strings"
-
-	"github.com/DataDog/datadog-agent/pkg/util/hostname/validate"
 )
 
 // HostnameProvider parses a file from the 'filename' option and returns the content
@@ -34,7 +33,7 @@ func HostnameProvider(ctx context.Context, options map[string]interface{}) (stri
 
 	hostname := strings.TrimSpace(string(fileContent))
 
-	err = validate.ValidHostname(hostname)
+	err = config.ValidHostname(hostname)
 	if err != nil {
 		return "", err
 	}

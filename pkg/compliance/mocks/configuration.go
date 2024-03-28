@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	eval "github.com/DataDog/datadog-agent/pkg/compliance/eval"
+	eval "github.com/StackVista/stackstate-agent/pkg/compliance/eval"
 	mock "github.com/stretchr/testify/mock"
 )
 

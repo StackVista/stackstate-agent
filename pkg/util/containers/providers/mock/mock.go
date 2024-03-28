@@ -8,8 +8,8 @@ package providers
 import (
 	"net"
 
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/metrics"
 )
 
 // FakeContainerImpl is a fake implementation of a container provider

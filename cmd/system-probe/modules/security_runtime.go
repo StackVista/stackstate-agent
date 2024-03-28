@@ -7,12 +7,12 @@
 package modules
 
 import (
-	"github.com/DataDog/datadog-agent/cmd/system-probe/api/module"
-	"github.com/DataDog/datadog-agent/cmd/system-probe/config"
-	"github.com/DataDog/datadog-agent/pkg/ebpf"
-	sconfig "github.com/DataDog/datadog-agent/pkg/security/config"
-	secmodule "github.com/DataDog/datadog-agent/pkg/security/module"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/api/module"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/config"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf"
+	sconfig "github.com/StackVista/stackstate-agent/pkg/security/config"
+	secmodule "github.com/StackVista/stackstate-agent/pkg/security/module"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/pkg/errors"
 )
 

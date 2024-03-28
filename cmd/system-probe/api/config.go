@@ -1,8 +1,8 @@
 package api
 
 import (
-	"github.com/DataDog/datadog-agent/cmd/system-probe/config"
-	settingshttp "github.com/DataDog/datadog-agent/pkg/config/settings/http"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/config"
+	settingshttp "github.com/StackVista/stackstate-agent/pkg/config/settings/http"
 	"github.com/gorilla/mux"
 )
 

@@ -325,6 +325,24 @@ public:
     */
     virtual void setGetClusternameCb(cb_get_clustername_t) = 0;
 
+    //! setGetPidCb member.
+    /*!
+      \param A cb_get_pid_t function pointer to the CGO callback.
+
+      This allows us to set the CGO callback that will provide the agent process id from
+      the agent.
+    */
+    virtual void setGetPidCb(cb_get_pid_t) = 0;
+
+    //! setGetCreateTimeCb member.
+    /*!
+      \param A cb_get_create_time_t function pointer to the CGO callback.
+
+      This allows us to set the CGO callback that will provide the process create time from
+      the agent.
+    */
+    virtual void setGetCreateTimeCb(cb_get_create_time_t) = 0;
+
     //! setLogCb member.
     /*!
       \param A cb_log_t function pointer to the CGO callback.
@@ -449,6 +467,134 @@ public:
       specific check instances.
     */
     virtual void setGetProcessStartTimeCb(cb_get_process_start_time_t) = 0;
+
+	//! setSubmitComponentCb member.
+    /*!
+      \param A cb_submit_component_t function pointer to the CGO callback.
+
+      Actual topology components are submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setSubmitComponentCb(cb_submit_component_t) = 0;
+
+    //! setSubmitRelationCb member.
+    /*!
+      \param A cb_submit_relation_t function pointer to the CGO callback.
+
+      Actual topology relations are submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setSubmitRelationCb(cb_submit_relation_t) = 0;
+
+    //! setSubmitStartSnapshotCb member.
+    /*!
+      \param A cb_submit_start_snapshot_t function pointer to the CGO callback.
+
+      Actual start topology snapshot is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setSubmitStartSnapshotCb(cb_submit_start_snapshot_t) = 0;
+
+    //! setSubmitStopSnapshotCb member.
+    /*!
+      \param A cb_submit_stop_snapshot_t function pointer to the CGO callback.
+
+      Actual stop topology snapshot is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setSubmitStopSnapshotCb(cb_submit_stop_snapshot_t) = 0;
+
+    //! setSubmitDeleteCb member.
+    /*!
+      \param A cb_submit_delete_t function pointer to the CGO callback.
+
+      Actual deleting of a topology element identifier is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setSubmitDeleteCb(cb_submit_delete_t) = 0;
+
+    //! setSubmitTopologyEventCb member.
+    /*!
+      \param A cb_submit_topology_event_t function pointer to the CGO callback.
+
+      Actual topology events are submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setSubmitTopologyEventCb(cb_submit_topology_event_t) = 0;
+
+    //! setSubmitHealthCheckDataCb member.
+    /*!
+      \param A cb_submit_health_check_data_t function pointer to the CGO callback.
+
+      Actual check data is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setSubmitHealthCheckDataCb(cb_submit_health_check_data_t) = 0;
+
+    //! setSubmitHealthStartSnapshotCb member.
+    /*!
+      \param A cb_submit_health_start_snapshot_t function pointer to the CGO callback.
+
+      Actual start health snapshot is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setSubmitHealthStartSnapshotCb(cb_submit_health_start_snapshot_t) = 0;
+
+    //! setSubmitHealthStopSnapshotCb member.
+    /*!
+      \param A cb_submit_health_stop_snapshot_t function pointer to the CGO callback.
+
+      Actual stop health snapshot is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setSubmitHealthStopSnapshotCb(cb_submit_health_stop_snapshot_t) = 0;
+
+    //! setSubmitRawMetricsDataCb member.
+    /*!
+      \param A cb_submit_raw_metrics_data_t function pointer to the CGO callback.
+
+      Actual check data is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setSubmitRawMetricsDataCb(cb_submit_raw_metrics_data_t) = 0;
+
+    //! setStartTransactionCb member.
+    /*!
+      \param A cb_start_transaction_t function pointer to the CGO callback.
+
+      Actual check data is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setStartTransactionCb(cb_start_transaction_t) = 0;
+
+    //! setStopTransactionCb member.
+    /*!
+      \param A cb_stop_transaction_t function pointer to the CGO callback.
+
+      Actual check data is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setStopTransactionCb(cb_stop_transaction_t) = 0;
+
+    //! setDiscardTransactionCb member.
+    /*!
+      \param A cb_discard_transaction_t function pointer to the CGO callback.
+
+      Actual check data is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setDiscardTransactionCb(cb_discard_transaction_t) = 0;
+
+    //! setTransactionStateCb member.
+    /*!
+      \param A cb_set_transaction_state_t function pointer to the CGO callback.
+
+      Actual check data is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setTransactionStateCb(cb_set_transaction_state_t) = 0;
+
+    //! setStateCb member.
+    /*!
+      \param A cb_set_state_t function pointer to the CGO callback.
+
+      Actual check data is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual void setStateCb(cb_set_state_t) = 0;
+
+    //! setGetStateCb member.
+    /*!
+      \param A cb_get_state_t function pointer to the CGO callback.
+
+      Actual check data is submitted from go-land, this allows us to set the CGO callback.
+    */
+    virtual char *setGetStateCb(cb_get_state_t) = 0;
 
 private:
     mutable std::string _error; /*!< string containing a RtLoader error */

@@ -9,12 +9,12 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
-	"github.com/DataDog/datadog-agent/pkg/util/winutil"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/winutil"
 
 	// Init packages
-	_ "github.com/DataDog/datadog-agent/pkg/util/containers/providers/windows"
+	_ "github.com/StackVista/stackstate-agent/pkg/util/containers/providers/windows"
 
 	"github.com/cihub/seelog"
 	"golang.org/x/sys/windows/registry"

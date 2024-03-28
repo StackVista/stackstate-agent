@@ -426,7 +426,7 @@ determine the cause.
 If the cause is unclear, please contact Datadog support.
 *****
 "
-    
+
     if [ -n "$agent_minor_version" ]; then
         # Example: datadog-agent=1:7.20.2-1
         pkg_pattern="([[:digit:]]:)?$agent_major_version\.${agent_minor_version%.}(\.[[:digit:]]+){0,1}(-[[:digit:]])?"
@@ -506,7 +506,7 @@ elif [ "$OS" = "SUSE" ]; then
 
   echo -e "\033[34m\n* Refreshing repositories\n\033[0m"
   $sudo_cmd zypper --non-interactive --no-gpg-checks refresh datadog
-  
+
   echo -e "\033[34m\n* Installing Datadog Agent\n\033[0m"
 
   # remove the patch version if the minor version includes it (eg: 33.1 -> 33)

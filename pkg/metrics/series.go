@@ -18,10 +18,10 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/richardartoul/molecule"
 
-	"github.com/DataDog/datadog-agent/pkg/aggregator/ckey"
-	"github.com/DataDog/datadog-agent/pkg/serializer/marshaler"
-	"github.com/DataDog/datadog-agent/pkg/serializer/stream"
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/aggregator/ckey"
+	"github.com/StackVista/stackstate-agent/pkg/serializer/marshaler"
+	"github.com/StackVista/stackstate-agent/pkg/serializer/stream"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 )
 
 var (

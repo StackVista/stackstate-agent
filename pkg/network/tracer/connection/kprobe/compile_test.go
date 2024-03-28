@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package kprobe
@@ -5,8 +6,8 @@ package kprobe
 import (
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode/runtime"
-	"github.com/DataDog/datadog-agent/pkg/network/config"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode/runtime"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
 	"github.com/stretchr/testify/require"
 )
 

@@ -8,7 +8,7 @@ package metrics
 import (
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/dogstatsd"
+	"github.com/StackVista/stackstate-agent/pkg/dogstatsd"
 )
 
 var (

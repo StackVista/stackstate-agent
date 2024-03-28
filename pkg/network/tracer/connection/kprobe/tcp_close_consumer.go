@@ -1,3 +1,4 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package kprobe
@@ -6,11 +7,11 @@ import (
 	"sync"
 	"sync/atomic"
 
-	ddebpf "github.com/DataDog/datadog-agent/pkg/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/network"
-	netebpf "github.com/DataDog/datadog-agent/pkg/network/ebpf"
-	"github.com/DataDog/datadog-agent/pkg/network/ebpf/probes"
 	"github.com/DataDog/ebpf/manager"
+	ddebpf "github.com/StackVista/stackstate-agent/pkg/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/network"
+	netebpf "github.com/StackVista/stackstate-agent/pkg/network/ebpf"
+	"github.com/StackVista/stackstate-agent/pkg/network/ebpf/probes"
 )
 
 const (

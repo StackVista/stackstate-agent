@@ -8,7 +8,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/config/features"
+	"github.com/StackVista/stackstate-agent/pkg/trace/config/features"
 )
 
 // endpoint specifies an API endpoint definition.

@@ -3,9 +3,10 @@ package subscriber
 import (
 	"sync"
 
-	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
-	"github.com/DataDog/datadog-agent/pkg/tagger/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/tagger/types"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/types"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // Subscriber allows processes to subscribe to entity events generated from a

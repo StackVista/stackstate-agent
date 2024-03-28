@@ -19,11 +19,11 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/providers"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/providers"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
-	v3 "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata/v3"
+	v3 "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata/v3"
 )
 
 type dockerNetwork struct {

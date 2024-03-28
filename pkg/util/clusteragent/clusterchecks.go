@@ -9,12 +9,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"net/http"
 
-	"github.com/DataDog/datadog-agent/pkg/clusteragent/clusterchecks/types"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks/types"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (
@@ -57,17 +55,9 @@ func (c *DCAClient) doPostClusterCheckStatus(ctx context.Context, identifier str
 	if err != nil {
 		return response, err
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return response, fmt.Errorf("unexpected response: %d - %s", resp.StatusCode, resp.Status)
-	}
-
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return response, err
-	}
-	err = json.Unmarshal(b, &response)
+	// sts
+	err = parseJSONResponse(resp, &response)
 	return response, err
 }
 
@@ -101,16 +91,8 @@ func (c *DCAClient) doGetClusterCheckConfigs(ctx context.Context, identifier str
 	if err != nil {
 		return configs, err
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return configs, fmt.Errorf("unexpected response: %d - %s", resp.StatusCode, resp.Status)
-	}
-
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return configs, err
-	}
-	err = json.Unmarshal(b, &configs)
+	// sts
+	err = parseJSONResponse(resp, &configs)
 	return configs, err
 }

@@ -13,12 +13,12 @@ import (
 	"net"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
-	"github.com/DataDog/datadog-agent/pkg/util/containers/metrics"
-	"github.com/DataDog/datadog-agent/pkg/util/ecs/metadata"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers/metrics"
+	"github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 
-	v2 "github.com/DataDog/datadog-agent/pkg/util/ecs/metadata/v2"
+	v2 "github.com/StackVista/stackstate-agent/pkg/util/ecs/metadata/v2"
 )
 
 const (

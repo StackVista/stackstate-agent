@@ -150,6 +150,7 @@ void getOsStrings()
         {
             programdataroot += L"\\";
         }
+        programdataroot += L"..\\"; // sts
     }
     if (!ddroot.getStringValue(L"InstallPath", installdir))
     {

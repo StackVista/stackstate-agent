@@ -1,0 +1,10 @@
+---
+- name: Add user to docker group
+  become: true
+  user:
+    name: stackstate-agent
+    groups: docker
+    append: True
+- name: "Restart StackState Agent Service"
+  become: true
+  shell: "systemctl restart stackstate-agent.service"

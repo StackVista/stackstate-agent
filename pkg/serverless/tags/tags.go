@@ -12,8 +12,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/serverless/proc"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/serverless/proc"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (

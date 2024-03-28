@@ -8,11 +8,11 @@ package remote
 import (
 	"sync"
 
-	"github.com/DataDog/datadog-agent/pkg/tagger/collectors"
-	"github.com/DataDog/datadog-agent/pkg/tagger/subscriber"
-	"github.com/DataDog/datadog-agent/pkg/tagger/telemetry"
-	"github.com/DataDog/datadog-agent/pkg/tagger/types"
-	"github.com/DataDog/datadog-agent/pkg/util/containers"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/collectors"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/subscriber"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/types"
+	"github.com/StackVista/stackstate-agent/pkg/util/containers"
 )
 
 const remoteSource = "remote"

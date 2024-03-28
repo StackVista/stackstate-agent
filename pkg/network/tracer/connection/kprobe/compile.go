@@ -1,10 +1,11 @@
+//go:build linux_bpf
 // +build linux_bpf
 
 package kprobe
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode/runtime"
-	"github.com/DataDog/datadog-agent/pkg/network/config"
+	"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode/runtime"
+	"github.com/StackVista/stackstate-agent/pkg/network/config"
 )
 
 //go:generate go run ../../../../../pkg/ebpf/include_headers.go ../../../../../pkg/network/ebpf/c/runtime/tracer.c ../../../../../pkg/ebpf/bytecode/build/runtime/tracer.c ../../../../../pkg/ebpf/c ../../../../../pkg/network/ebpf/c/runtime ../../../../../pkg/network/ebpf/c

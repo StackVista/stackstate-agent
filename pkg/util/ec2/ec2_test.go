@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -110,6 +110,54 @@ func TestGetInstanceID(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, expected, val)
 	assert.Equal(t, lastRequest.URL.Path, "/instance-id")
+}
+
+func TestGetInstanceIDwithIMDSv2WhenItsNotEnabled(t *testing.T) {
+	ctx := context.Background()
+	config.Datadog.SetDefault("ec2_prefer_imdsv2", false)
+	instanceID := "i-2h87akdh27h"
+	tok := "oeanwfia2un3np293ufhawkjfwleija29pfeu2h"
+	unauthorizedRequestPerformed := false
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		switch r.Method {
+		case http.MethodPut:
+			switch r.RequestURI {
+			case "/latest/api/token":
+				h := r.Header.Get("X-aws-ec2-metadata-token-ttl-seconds")
+				if h == "" {
+					w.WriteHeader(http.StatusUnauthorized)
+				}
+				io.WriteString(w, tok)
+			}
+		case http.MethodGet:
+			// Should be a metadata request
+			reqTok := r.Header.Get("X-aws-ec2-metadata-token")
+			if reqTok != tok {
+				unauthorizedRequestPerformed = true
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			switch r.RequestURI {
+			case "/latest/meta-data/instance-id":
+				io.WriteString(w, instanceID)
+			default:
+				w.WriteHeader(http.StatusNotFound)
+			}
+		default:
+			fmt.Println("q")
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer ts.Close()
+	metadataURL = ts.URL + "/latest/meta-data"
+	tokenURL = ts.URL + "/latest/api/token"
+	defer resetPackageVars()
+
+	val, err := GetInstanceID(ctx)
+	assert.Nil(t, err)
+	assert.Equal(t, instanceID, val)
+	assert.True(t, unauthorizedRequestPerformed, "unauthorized request expected to be performed")
 }
 
 func TestGetHostname(t *testing.T) {

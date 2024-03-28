@@ -3,7 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
-module github.com/DataDog/datadog-agent/tools/retry_file_dump
+module github.com/StackVista/stackstate-agent/tools/retry_file_dump
 
 go 1.16
 

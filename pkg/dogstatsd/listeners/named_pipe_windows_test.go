@@ -2,6 +2,7 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
+//go:build windows
 // +build windows
 
 package listeners
@@ -16,7 +17,7 @@ import (
 	"github.com/Microsoft/go-winio"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/DataDog/datadog-agent/pkg/dogstatsd/packets"
+	"github.com/StackVista/stackstate-agent/pkg/dogstatsd/packets"
 )
 
 const pipeName = "TestPipeName"

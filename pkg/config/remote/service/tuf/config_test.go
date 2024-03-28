@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/DataDog/datadog-agent/pkg/proto/pbgo"
+	"github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
 	"github.com/stretchr/testify/assert"
 	"github.com/theupdateframework/go-tuf/client"
 )

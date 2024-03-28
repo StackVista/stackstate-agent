@@ -12,9 +12,9 @@ import (
 	"github.com/mailru/easyjson/jlexer"
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/DataDog/datadog-agent/pkg/trace/obfuscate"
-	common "github.com/DataDog/datadog-agent/rtloader/test/common"
-	"github.com/DataDog/datadog-agent/rtloader/test/helpers"
+	"github.com/StackVista/stackstate-agent/pkg/trace/obfuscate"
+	common "github.com/StackVista/stackstate-agent/rtloader/test/common"
+	"github.com/StackVista/stackstate-agent/rtloader/test/helpers"
 )
 
 /*
@@ -25,6 +25,8 @@ extern void doLog(char*, int);
 extern void getClustername(char **);
 extern void getConfig(char *, char **);
 extern void getHostname(char **);
+extern void getPid(char **);
+extern void getCreateTime(char **);
 extern bool getTracemallocEnabled();
 extern void getVersion(char **);
 extern void headers(char **);
@@ -40,6 +42,8 @@ extern double getProcessStartTime();
 static void initDatadogAgentTests(rtloader_t *rtloader) {
    set_cgo_free_cb(rtloader, _free);
    set_get_clustername_cb(rtloader, getClustername);
+   set_get_pid_cb(rtloader, getPid);
+   set_get_create_time_cb(rtloader, getCreateTime);
    set_get_config_cb(rtloader, getConfig);
    set_get_hostname_cb(rtloader, getHostname);
    set_tracemalloc_enabled_cb(rtloader, getTracemallocEnabled);
@@ -171,6 +175,16 @@ func getHostname(in **C.char) {
 //export getClustername
 func getClustername(in **C.char) {
 	*in = (*C.char)(helpers.TrackedCString("the-cluster"))
+}
+
+//export getPid
+func getPid(in **C.char) {
+	*in = (*C.char)(helpers.TrackedCString("1"))
+}
+
+//export getCreateTime
+func getCreateTime(in **C.char) {
+	*in = (*C.char)(helpers.TrackedCString("123456789"))
 }
 
 //export getTracemallocEnabled

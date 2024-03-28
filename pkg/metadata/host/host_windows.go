@@ -17,11 +17,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/metadata/common"
-	"github.com/DataDog/datadog-agent/pkg/util/cache"
-	"github.com/DataDog/datadog-agent/pkg/util/winutil"
 	"github.com/DataDog/gohai/cpu"
 	"github.com/DataDog/gohai/platform"
+	"github.com/StackVista/stackstate-agent/pkg/metadata/common"
+	"github.com/StackVista/stackstate-agent/pkg/util/cache"
+	"github.com/StackVista/stackstate-agent/pkg/util/winutil"
 	"github.com/shirou/w32"
 	"golang.org/x/sys/windows"
 )
