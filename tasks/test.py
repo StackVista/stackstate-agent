@@ -98,7 +98,7 @@ def test(
     python_home_2=None,
     python_home_3=None,
     cpus=0,
-    major_version='7',
+    major_version='3',
     python_runtimes='3',
     timeout=180,
     arch="x64",

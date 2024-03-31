@@ -594,7 +594,7 @@ def build(
     rtloader_root=None,
     python_home_2=None,
     python_home_3=None,
-    major_version='2',
+    major_version='3',
     python_runtimes='3',
     arch='x64',
     exclude_rtloader=False,
@@ -858,7 +858,7 @@ def get_omnibus_env(
     ctx,
     skip_sign=False,
     release_version="nightly",
-    major_version='2',
+    major_version='3',
     python_runtimes='3',
     hardened_runtime=False,
     system_probe_bin=None,
@@ -1164,7 +1164,7 @@ def clean(ctx):
 
 
 @task
-def version(ctx, url_safe=False, omnibus_format=False, git_sha_length=7, major_version='2'):
+def version(ctx, url_safe=False, omnibus_format=False, git_sha_length=7, major_version='3'):
     """
     Get the agent version.
     url_safe: get the version that is able to be addressed as a url

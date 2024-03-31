@@ -30,7 +30,7 @@ def build(
     race=False,
     go_version=None,
     incremental_build=False,
-    major_version='2',
+    major_version='3',
     python_runtimes='3',
     arch="x64",
     go_mod="mod",

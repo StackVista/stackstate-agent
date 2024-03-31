@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/DataDog/viper"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 )
 

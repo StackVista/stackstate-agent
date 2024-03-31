@@ -126,7 +126,7 @@ def get_build_flags(
     rtloader_root=None,
     python_home_2=None,
     python_home_3=None,
-    major_version='2',
+    major_version='3',
     python_runtimes='3',
     nikos_embedded_path=None,
 ):
@@ -283,8 +283,23 @@ def get_git_branch_name():
     """
     return check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).decode('utf-8').strip()
 
+def query_version(ctx, git_sha_length=7, prefix=None, major_version_hint='3'):
+    # The old way of doing it relied on a tag existing for the version, which is no longer the case.
+    # So, instead of doing that, something like this is needed:
+    branch = get_git_branch_name()
+    get_commit_count_cmd="git rev-list --count {}".format(branch)
+    commit_count = ctx.run(get_commit_count_cmd, hide=True).stdout.strip()
+    get_commit_short_sha_cmd=f"git rev-parse --short={git_sha_length} {branch}"
+    commit_short_sha = ctx.run(get_commit_short_sha_cmd, hide=True).stdout.strip()
+    # version=f"{major_version}.0.0-k8s.git.{commit_count}.{commit_short_sha}"
+    version = "3.0.0"
+    pre = "k8s"
+    pipeline_id = os.getenv("CI_PIPELINE_IID", None)
 
-def query_version(ctx, git_sha_length=7, prefix=None, major_version_hint=None):
+    return version, pre, commit_count, commit_short_sha, pipeline_id
+
+
+def _query_version(ctx, git_sha_length=7, prefix=None, major_version_hint=None):
     # The string that's passed in will look something like this: 6.0.0-beta.0-1-g4f19118
     # if the tag is 6.0.0-beta.0, it has been one commit since the tag and that commit hash is g4f19118
     cmd = "git describe --tags --candidates=50"
@@ -341,7 +356,7 @@ def query_version(ctx, git_sha_length=7, prefix=None, major_version_hint=None):
 
 
 def get_version(
-    ctx, include_git=False, url_safe=False, git_sha_length=7, prefix=None, major_version='2', include_pipeline_id=False
+    ctx, include_git=False, url_safe=False, git_sha_length=7, prefix=None, major_version='3', include_pipeline_id=False
 ):
     # we only need the git info for the non omnibus builds, omnibus includes all this information by default
 
@@ -373,7 +388,7 @@ def get_version(
     return str(version)
 
 
-def get_version_numeric_only(ctx, major_version='2'):
+def get_version_numeric_only(ctx, major_version='3'):
     # we only need the git info for the non omnibus builds, omnibus includes all this information by default
 
     version = query_version(ctx, major_version_hint=major_version)[0]  # sts - py2 doesn't support *_

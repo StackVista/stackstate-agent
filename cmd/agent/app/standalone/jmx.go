@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build jmx
 // +build jmx
 
 package standalone
@@ -12,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/StackVista/stackstate-agent/cmd/agent/api"
+	"github.com/StackVista/stackstate-agent/cmd/agent/common"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/collector/check"
 	"github.com/StackVista/stackstate-agent/pkg/collector/corechecks/embed/jmx"

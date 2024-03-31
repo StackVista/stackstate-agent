@@ -20,7 +20,6 @@ import (
 	"github.com/StackVista/stackstate-agent/pkg/compliance/event"
 	"github.com/StackVista/stackstate-agent/pkg/util/jsonquery"
 	"github.com/StackVista/stackstate-agent/pkg/util/log"
-	yamlv2 "gopkg.in/yaml.v2"
 	"gopkg.in/yaml.v3"
 )
 

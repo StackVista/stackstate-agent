@@ -40,7 +40,7 @@ def build(
     ctx,
     race=False,
     incremental_build=False,
-    major_version='2',
+    major_version='3',
     python_runtimes='3',
     go_mod="mod",
     windows=is_windows,

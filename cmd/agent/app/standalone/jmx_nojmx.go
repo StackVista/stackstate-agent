@@ -3,13 +3,13 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
+//go:build !jmx
 // +build !jmx
 
 package standalone
 
-import "fmt"
-
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+import (
+	"fmt"
 )
 
 // ExecJMXCommandConsole is not supported when the 'jmx' build tag isn't included

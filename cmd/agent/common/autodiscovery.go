@@ -6,13 +6,8 @@
 package common
 
 import (
-	"context"
-	"time"
-
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/providers"
-	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/providers/names"
 	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/scheduler"
 	"github.com/StackVista/stackstate-agent/pkg/config"
 	confad "github.com/StackVista/stackstate-agent/pkg/config/autodiscovery"
