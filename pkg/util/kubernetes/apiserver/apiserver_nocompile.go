@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build !kubeapiserver
+// +build !kubeapiserver
 
 //nolint:revive // TODO(CINT) Fix revive linter
 package apiserver

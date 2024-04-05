@@ -6,9 +6,11 @@
 package collectors
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/clustername"
 	"strings"
 
 	"github.com/DataDog/datadog-agent/comp/core/workloadmeta"
@@ -111,6 +113,11 @@ func (c *WorkloadMetaCollector) processEvents(evBundle workloadmeta.EventBundle)
 
 	for _, ev := range evBundle.Events {
 		entity := ev.Entity
+		// plaster to figure out what is causing: https://stackstate.atlassian.net/browse/STAC-19780
+		if entity == nil {
+			_ = log.Warnf("Event with type: %s with sources %v, has no entity.", ev.Type, ev.Sources)
+			continue
+		}
 		entityID := entity.GetID()
 
 		switch ev.Type {
@@ -314,6 +321,13 @@ func (c *WorkloadMetaCollector) handleKubePod(ev workloadmeta.Event) []*TagInfo 
 	tags.AddLow("pod_phase", strings.ToLower(pod.Phase))
 	tags.AddLow("kube_priority_class", pod.PriorityClass)
 	tags.AddLow("kube_qos", pod.QOSClass)
+
+	// sts begin
+	clusterName := clustername.GetClusterName(context.TODO(), "")
+	if clusterName != "" {
+		tags.AddLow("kube_cluster_name", clusterName)
+	}
+	// sts end
 
 	c.extractTagsFromPodLabels(pod, tags)
 

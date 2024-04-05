@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/ast"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/ast"
 )
 
 func newOptsWithParams(constants map[string]interface{}, legacyFields map[Field]Field) *Opts {

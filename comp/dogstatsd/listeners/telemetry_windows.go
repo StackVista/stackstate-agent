@@ -3,6 +3,7 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 //go:build windows
+// +build windows
 
 package listeners
 
@@ -10,7 +11,7 @@ import (
 	"expvar"
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 )
 
 type listenerTelemetry struct {

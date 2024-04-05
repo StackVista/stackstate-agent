@@ -4,11 +4,12 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build docker && kubelet
+// +build docker,kubelet
 
 package kubelet
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
+	"github.com/StackVista/stackstate-agent/pkg/diagnose/diagnosis"
 )
 
 func init() {

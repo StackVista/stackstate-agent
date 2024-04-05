@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build kubeapiserver && kubelet
+// +build kubeapiserver,kubelet
 
 // Package kubemetadata implements the kube_metadata Workloadmeta collector.
 package kubemetadata

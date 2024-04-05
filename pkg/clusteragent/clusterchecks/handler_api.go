@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build clusterchecks
+// +build clusterchecks
 
 package clusterchecks
 
@@ -12,7 +13,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/DataDog/datadog-agent/pkg/clusteragent/clusterchecks/types"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/clusterchecks/types"
 )
 
 var errNotReady = errors.New("Startup in progress")

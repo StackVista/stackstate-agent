@@ -249,6 +249,11 @@ type BufferedAggregator struct {
 	globalTags              func(collectors.TagCardinality) ([]string, error) // This function gets global tags from the tagger when host tags are not available
 
 	flushAndSerializeInParallel FlushAndSerializeInParallel
+
+	// [sts]
+	MetricPrefix string // The prefix used for metrics generated in the aggregator.
+	// We use this prefix to override datadog metrics we can't brand when using the agent as a dependency in the process-agent
+	// [sts]
 }
 
 // FlushAndSerializeInParallel contains options for flushing metrics and serializing in parallel.
@@ -296,6 +301,26 @@ func NewBufferedAggregator(s serializer.MetricSerializer, eventPlatformForwarder
 		orchestratorManifestIn: make(chan senderOrchestratorManifest, bufferSize),
 		eventPlatformIn:        make(chan senderEventPlatformEvent, bufferSize),
 
+		MetricSamplePool: metrics.NewMetricSamplePool(MetricSamplePoolBatchSize),
+
+		statsdSampler:           *NewTimeSampler(bucketSize),
+		checkSamplers:           make(map[check.ID]*CheckSampler),
+		flushInterval:           flushInterval,
+		serializer:              s,
+		eventPlatformForwarder:  eventPlatformForwarder,
+		hostname:                hostname,
+		hostnameUpdate:          make(chan string),
+		hostnameUpdateDone:      make(chan struct{}),
+		stopChan:                make(chan struct{}),
+		health:                  health.RegisterLiveness("aggregator"),
+		agentName:               agentName,
+		tlmContainerTagsEnabled: config.Datadog.GetBool("basic_telemetry_add_container_tags"),
+		agentTags:               tagger.AgentTags,
+		ServerlessFlush:         make(chan bool),
+		ServerlessFlushDone:     make(chan struct{}),
+
+		// [sts]
+		MetricPrefix: "datadog",
 		tagsStore:                   tagsStore,
 		checkSamplers:               make(map[checkid.ID]*CheckSampler),
 		flushInterval:               flushInterval,
@@ -384,6 +409,34 @@ func (agg *BufferedAggregator) GetBufferedChannels() (chan []*event.Event, chan 
 func (agg *BufferedAggregator) GetEventPlatformForwarder() (epforwarder.EventPlatformForwarder, error) {
 	if agg.eventPlatformForwarder == nil {
 		return nil, errors.New("event platform forwarder not initialized")
+// GetBufferedChannels returns a channel which can be subsequently used to send MetricSamples, Event or ServiceCheck
+func (agg *BufferedAggregator) GetBufferedChannels() (chan []metrics.MetricSample, chan []*metrics.Event, chan []*metrics.ServiceCheck) {
+	return agg.bufferedMetricIn, agg.bufferedEventIn, agg.bufferedServiceCheckIn
+}
+
+// GetBufferedMetricsWithTsChannel returns the channel to send MetricSamples containing their timestamp.
+func (agg *BufferedAggregator) GetBufferedMetricsWithTsChannel() chan []metrics.MetricSample {
+	return agg.bufferedMetricInWithTs
+}
+
+// SetHostname sets the hostname that the aggregator uses by default on all the data it sends
+// Blocks until the main aggregator goroutine has finished handling the update
+func (agg *BufferedAggregator) SetHostname(hostname string) {
+	agg.hostnameUpdate <- hostname
+	<-agg.hostnameUpdateDone
+}
+
+// AddAgentStartupTelemetry adds a startup event and count to be sent on the next flush
+func (agg *BufferedAggregator) AddAgentStartupTelemetry(agentVersion string) {
+
+	metric := &metrics.MetricSample{
+		Name:       fmt.Sprintf("%s.%s.started", agg.MetricPrefix, agg.agentName),
+		Value:      1,
+		Tags:       agg.tags(true),
+		Host:       agg.hostname,
+		Mtype:      metrics.CountType,
+		SampleRate: 1,
+		Timestamp:  0,
 	}
 	return agg.eventPlatformForwarder, nil
 }
@@ -571,7 +624,7 @@ func (agg *BufferedAggregator) appendDefaultSeries(start time.Time, series metri
 	// Send along a metric that showcases that this Agent is running (internally, in backend,
 	// a `datadog.`-prefixed metric allows identifying this host as an Agent host, used for dogbone icon)
 	series.Append(&metrics.Serie{
-		Name:           fmt.Sprintf("datadog.%s.running", agg.agentName),
+		Name:           fmt.Sprintf("%s.%s.running", agg.MetricPrefix, agg.agentName),
 		Points:         []metrics.Point{{Value: 1, Ts: float64(start.Unix())}},
 		Tags:           tagset.CompositeTagsFromSlice(agg.tags(true)),
 		Host:           agg.hostname,
@@ -581,7 +634,7 @@ func (agg *BufferedAggregator) appendDefaultSeries(start time.Time, series metri
 
 	// Send along a metric that counts the number of times we dropped some payloads because we couldn't split them.
 	series.Append(&metrics.Serie{
-		Name:           fmt.Sprintf("n_o_i_n_d_e_x.datadog.%s.payload.dropped", agg.agentName),
+		Name:           fmt.Sprintf("n_o_i_n_d_e_x.%s.%s.payload.dropped", agg.MetricPrefix, agg.agentName),
 		Points:         []metrics.Point{{Value: float64(split.GetPayloadDrops()), Ts: float64(start.Unix())}},
 		Tags:           tagset.CompositeTagsFromSlice(agg.tags(false)),
 		Host:           agg.hostname,
@@ -622,8 +675,9 @@ func (agg *BufferedAggregator) sendServiceChecks(start time.Time, serviceChecks 
 func (agg *BufferedAggregator) flushServiceChecks(start time.Time, waitForSerializer bool) {
 	// Add a simple service check for the Agent status
 	agg.addServiceCheck(servicecheck.ServiceCheck{
-		CheckName: fmt.Sprintf("datadog.%s.up", agg.agentName),
 		Status:    servicecheck.ServiceCheckOK,
+	agg.addServiceCheck(metrics.ServiceCheck{
+		Status:    metrics.ServiceCheckOK,
 		Tags:      agg.tags(false),
 		Host:      agg.hostname,
 	})

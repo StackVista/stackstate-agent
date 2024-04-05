@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build kubeapiserver
+// +build kubeapiserver
 
 // Package tags provides helpers to extract tags from Kubernetes objects.
 package tags

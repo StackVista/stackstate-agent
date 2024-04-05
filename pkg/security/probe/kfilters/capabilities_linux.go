@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build linux
+// +build linux
 
 package kfilters
 
@@ -11,8 +12,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/eval"
-	"github.com/DataDog/datadog-agent/pkg/security/secl/rules"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/eval"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/rules"
 )
 
 func validateBasenameFilter(value rules.FilterValue) bool {

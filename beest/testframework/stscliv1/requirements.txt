@@ -1,0 +1,1 @@
+pytest-testinfra==6.6.0

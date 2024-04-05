@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build kubeapiserver
+// +build kubeapiserver
 
 package ksm
 
@@ -25,10 +26,11 @@ import (
 )
 
 type metricsExpected struct {
-	val      float64
-	name     string
-	tags     []string
-	hostname string
+	val           float64
+	name          string
+	tags          []string
+	hostname      string
+	numberOfCalls int
 }
 
 func TestProcessMetrics(t *testing.T) {
@@ -73,12 +75,21 @@ func TestProcessMetrics(t *testing.T) {
 				{
 					name: "kubernetes_state.container.running",
 					val:  1,
-					tags: []string{"kube_container_name:kube-state-metrics", "kube_namespace:default", "pod_name:kube-state-metrics-b7fbc487d-4phhj", "uid:bec19172-8abf-11ea-8546-42010a80022c"},
+					tags: []string{
+						"kube_container_name:kube-state-metrics",
+						"container:kube-state-metrics",
+						"kube_namespace:default",
+						"namespace:default",
+						"pod_name:kube-state-metrics-b7fbc487d-4phhj",
+						"pod:kube-state-metrics-b7fbc487d-4phhj",
+						"uid:bec19172-8abf-11ea-8546-42010a80022c"},
+					numberOfCalls: 1,
 				},
 				{
-					name: "kubernetes_state.container.running",
-					val:  0,
-					tags: []string{"kube_container_name:hello", "kube_namespace:default", "pod_name:hello-1509998340-k4f8q", "uid:05e99c5f-8a64-11ea-8546-42010a80022c"},
+					name:          "kubernetes_state.container.running",
+					val:           0,
+					tags:          []string{"kube_container_name:hello", "kube_namespace:default", "pod_name:hello-1509998340-k4f8q", "uid:05e99c5f-8a64-11ea-8546-42010a80022c"},
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -108,10 +119,18 @@ func TestProcessMetrics(t *testing.T) {
 			metricTransformers: defaultMetricTransformers(),
 			expected: []metricsExpected{
 				{
-					name:     "kubernetes_state.container.running",
-					val:      1,
-					tags:     []string{"kube_container_name:kube-state-metrics", "kube_namespace:default", "pod_name:kube-state-metrics-b7fbc487d-4phhj", "node:minikube"},
-					hostname: "minikube",
+					name: "kubernetes_state.container.running",
+					val:  1,
+					tags: []string{
+						"kube_container_name:kube-state-metrics",
+						"container:kube-state-metrics",
+						"kube_namespace:default",
+						"namespace:default",
+						"pod_name:kube-state-metrics-b7fbc487d-4phhj",
+						"pod:kube-state-metrics-b7fbc487d-4phhj",
+						"node:minikube"},
+					hostname:      "minikube",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -162,10 +181,18 @@ func TestProcessMetrics(t *testing.T) {
 			metricTransformers: defaultMetricTransformers(),
 			expected: []metricsExpected{
 				{
-					name:     "kubernetes_state.deployment.replicas",
-					val:      1,
-					tags:     []string{"kube_namespace:default", "kube_deployment:redis", "env:dev", "service:redis", "version:v1"},
-					hostname: "",
+					name: "kubernetes_state.deployment.replicas",
+					val:  1,
+					tags: []string{
+						"kube_namespace:default",
+						"namespace:default",
+						"kube_deployment:redis",
+						"deployment:redis",
+						"env:dev",
+						"service:redis",
+						"version:v1"},
+					hostname:      "",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -252,10 +279,18 @@ func TestProcessMetrics(t *testing.T) {
 			metricTransformers: defaultMetricTransformers(),
 			expected: []metricsExpected{
 				{
-					name:     "kubernetes_state.statefulset.replicas_desired",
-					val:      1,
-					tags:     []string{"kube_namespace:default", "kube_stateful_set:redis", "env:dev", "service:redis", "version:v1"},
-					hostname: "",
+					name: "kubernetes_state.statefulset.replicas_desired",
+					val:  1,
+					tags: []string{
+						"kube_namespace:default",
+						"namespace:default",
+						"kube_stateful_set:redis",
+						"statefulset:redis",
+						"env:dev",
+						"service:redis",
+						"version:v1"},
+					hostname:      "",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -285,10 +320,16 @@ func TestProcessMetrics(t *testing.T) {
 			metricTransformers: defaultMetricTransformers(),
 			expected: []metricsExpected{
 				{
-					name:     "kubernetes_state.deployment.replicas",
-					val:      1,
-					tags:     []string{"kube_namespace:default", "kube_deployment:redis", "env:dev"},
-					hostname: "",
+					name: "kubernetes_state.deployment.replicas",
+					val:  1,
+					tags: []string{
+						"kube_namespace:default",
+						"namespace:default",
+						"kube_deployment:redis",
+						"deployment:redis",
+						"env:dev"},
+					hostname:      "",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -317,10 +358,11 @@ func TestProcessMetrics(t *testing.T) {
 			},
 			expected: []metricsExpected{
 				{
-					name:     "kube_pod_status_phase_transformed",
-					val:      1,
-					tags:     []string{"transformed:tag"},
-					hostname: "",
+					name:          "kube_pod_status_phase_transformed",
+					val:           1,
+					tags:          []string{"transformed:tag"},
+					hostname:      "",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -381,10 +423,11 @@ func TestProcessMetrics(t *testing.T) {
 			metricTransformers: defaultMetricTransformers(),
 			expected: []metricsExpected{
 				{
-					name:     "kubernetes_state.node.cpu_capacity",
-					val:      4,
-					tags:     []string{"node:nodename", "resource:cpu", "unit:core", "kube_region:europe-west1", "kube_zone:europe-west1-b"},
-					hostname: "nodename",
+					name:          "kubernetes_state.node.cpu_capacity",
+					val:           4,
+					tags:          []string{"node:nodename", "resource:cpu", "unit:core", "kube_region:europe-west1", "kube_zone:europe-west1-b"},
+					hostname:      "nodename",
+					numberOfCalls: 1,
 				},
 				{
 					name: "kubernetes_state.node.cpu_capacity.total",
@@ -419,10 +462,11 @@ func TestProcessMetrics(t *testing.T) {
 			metricTransformers: defaultMetricTransformers(),
 			expected: []metricsExpected{
 				{
-					name:     "kubernetes_state.node.cpu_capacity",
-					val:      4,
-					tags:     []string{"node:nodename", "resource:cpu", "unit:core", "container_runtime_version:docker://19.3.15", "kernel_version:5.4.109+", "kubelet_version:v1.18.20-gke.901", "os_image:Container-Optimized OS from Google"},
-					hostname: "nodename",
+					name:          "kubernetes_state.node.cpu_capacity",
+					val:           4,
+					tags:          []string{"node:nodename", "resource:cpu", "unit:core", "container_runtime_version:docker://19.3.15", "kernel_version:5.4.109+", "kubelet_version:v1.18.20-gke.901", "os_image:Container-Optimized OS from Google"},
+					hostname:      "nodename",
+					numberOfCalls: 1,
 				},
 				{
 					name: "kubernetes_state.node.cpu_capacity.total",
@@ -452,10 +496,16 @@ func TestProcessMetrics(t *testing.T) {
 			metricTransformers: defaultMetricTransformers(),
 			expected: []metricsExpected{
 				{
-					name:     "kubernetes_state.pod.status_phase",
-					val:      1,
-					tags:     []string{"kube_namespace:default", "pod_name:redis", "pod_phase:Running"},
-					hostname: "",
+					name: "kubernetes_state.pod.status_phase",
+					val:  1,
+					tags: []string{
+						"kube_namespace:default",
+						"namespace:default",
+						"pod_name:redis",
+						"pod:redis",
+						"pod_phase:Running"},
+					hostname:      "",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -480,10 +530,15 @@ func TestProcessMetrics(t *testing.T) {
 			metricTransformers: defaultMetricTransformers(),
 			expected: []metricsExpected{
 				{
-					name:     "kubernetes_state.persistentvolumeclaim.status",
-					val:      1,
-					tags:     []string{"kube_namespace:default", "persistentvolumeclaim:pvc", "phase:Bound"},
-					hostname: "",
+					name: "kubernetes_state.persistentvolumeclaim.status",
+					val:  1,
+					tags: []string{
+						"kube_namespace:default",
+						"namespace:default",
+						"persistentvolumeclaim:pvc",
+						"phase:Bound"},
+					hostname:      "",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -508,10 +563,11 @@ func TestProcessMetrics(t *testing.T) {
 			metricTransformers: defaultMetricTransformers(),
 			expected: []metricsExpected{
 				{
-					name:     "kubernetes_state.namespace.count",
-					val:      1,
-					tags:     []string{"phase:Active"},
-					hostname: "",
+					name:          "kubernetes_state.namespace.count",
+					val:           1,
+					tags:          []string{"phase:Active"},
+					hostname:      "",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -929,23 +985,27 @@ func TestSendTelemetry(t *testing.T) {
 					name:     "kubernetes_state.telemetry.metrics.count.total",
 					val:      5,
 					hostname: "",
+					numberOfCalls: 1,
 				},
 				{
 					name:     "kubernetes_state.telemetry.metrics.count",
 					val:      2,
 					tags:     []string{"resource_name:baz"},
 					hostname: "",
+					numberOfCalls: 1,
 				},
 				{
 					name:     "kubernetes_state.telemetry.metrics.count",
 					val:      3,
 					tags:     []string{"resource_name:bar"},
 					hostname: "",
+					numberOfCalls: 1,
 				},
 				{
 					name:     "kubernetes_state.telemetry.unknown_metrics.count",
 					val:      1,
 					hostname: "",
+					numberOfCalls: 1,
 				},
 			},
 		},
@@ -1281,13 +1341,13 @@ func TestKSMCheck_processLabelsAsTags(t *testing.T) {
 		name           string
 		config         *KSMConfig
 		expectedJoins  map[string]*joinsConfig
-		expectedMapper map[string]string
+		expectedMapper map[string][]string
 	}{
 		{
 			name: "Initially empty",
 			config: &KSMConfig{
 				labelJoins:   map[string]*joinsConfig{},
-				LabelsMapper: map[string]string{},
+				LabelsMapper: map[string][]string{},
 				LabelsAsTags: map[string]map[string]string{
 					"pod": {"my_pod_label": "my_pod_tag"},
 				},
@@ -1297,6 +1357,9 @@ func TestKSMCheck_processLabelsAsTags(t *testing.T) {
 					labelsToMatch: []string{"pod", "namespace"},
 					labelsToGet:   map[string]string{"label_my_pod_label": "my_pod_tag"},
 				},
+			},
+			expectedMapper: map[string][]string{
+				"label_my_pod_label": {"my_pod_tag"},
 			},
 		},
 		{
@@ -1308,6 +1371,7 @@ func TestKSMCheck_processLabelsAsTags(t *testing.T) {
 						labelsToGet:   map[string]string{"standard_pod_label": "standard_pod_tag"},
 					},
 				},
+				LabelsMapper: map[string][]string{},
 				LabelsAsTags: map[string]map[string]string{
 					"pod":  {"my_pod_label": "my_pod_tag"},
 					"node": {"my_node_label": "my_node_tag"},
@@ -1323,6 +1387,9 @@ func TestKSMCheck_processLabelsAsTags(t *testing.T) {
 					labelsToGet:   map[string]string{"label_my_node_label": "my_node_tag"},
 				},
 			},
+			expectedMapper: map[string][]string{
+				"label_my_pod_label":  {"my_pod_tag"},
+				"label_my_node_label": {"my_node_tag"},
 		},
 		{
 			name: "With labels in CamelCase",
@@ -1390,32 +1457,32 @@ func TestKSMCheck_mergeLabelsMapper(t *testing.T) {
 	tests := []struct {
 		name     string
 		config   *KSMConfig
-		extra    map[string]string
-		expected map[string]string
+		extra    map[string][]string
+		expected map[string][]string
 	}{
 		{
 			name:     "collision",
-			config:   &KSMConfig{LabelsMapper: map[string]string{"foo": "bar", "baz": "baf"}},
-			extra:    map[string]string{"foo": "tar", "tar": "foo"},
-			expected: map[string]string{"foo": "bar", "baz": "baf", "tar": "foo"},
+			config:   &KSMConfig{LabelsMapper: map[string][]string{"foo": {"bar"}, "baz": {"baf"}}},
+			extra:    map[string][]string{"foo": {"tar"}, "tar": {"foo"}},
+			expected: map[string][]string{"foo": {"bar"}, "baz": {"baf"}, "tar": {"foo"}},
 		},
 		{
 			name:     "no collision",
-			config:   &KSMConfig{LabelsMapper: map[string]string{"foo": "bar", "baz": "baf"}},
-			extra:    map[string]string{"tar": "foo"},
-			expected: map[string]string{"foo": "bar", "baz": "baf", "tar": "foo"},
+			config:   &KSMConfig{LabelsMapper: map[string][]string{"foo": {"bar"}, "baz": {"baf"}}},
+			extra:    map[string][]string{"tar": {"foo"}},
+			expected: map[string][]string{"foo": {"bar"}, "baz": {"baf"}, "tar": {"foo"}},
 		},
 		{
 			name:     "empty LabelsMapper",
-			config:   &KSMConfig{LabelsMapper: map[string]string{}},
-			extra:    map[string]string{"tar": "foo"},
-			expected: map[string]string{"tar": "foo"},
+			config:   &KSMConfig{LabelsMapper: map[string][]string{}},
+			extra:    map[string][]string{"tar": {"foo"}},
+			expected: map[string][]string{"tar": {"foo"}},
 		},
 		{
 			name:     "empty extra",
-			config:   &KSMConfig{LabelsMapper: map[string]string{"tar": "foo"}},
-			extra:    map[string]string{},
-			expected: map[string]string{"tar": "foo"},
+			config:   &KSMConfig{LabelsMapper: map[string][]string{"tar": {"foo"}}},
+			extra:    map[string][]string{},
+			expected: map[string][]string{"tar": {"foo"}},
 		},
 	}
 	for _, tt := range tests {
@@ -1614,7 +1681,7 @@ func TestKSMCheckInitTags(t *testing.T) {
 				instance:    &KSMConfig{},
 				clusterName: "clustername",
 			},
-			expected: []string{"kube_cluster_name:clustername"},
+			expected: []string{"cluster_name:clustername", "kube_cluster_name:clustername"},
 		},
 		{
 			name:         "with global tags",
@@ -1629,7 +1696,8 @@ func TestKSMCheckInitTags(t *testing.T) {
 				instance:    &KSMConfig{Tags: []string{"check:tag1", "check:tag2"}},
 				clusterName: "clustername",
 			},
-			expected: []string{"check:tag1", "check:tag2", "kube_cluster_name:clustername", "global:tag1", "global:tag2"},
+			expected: []string{"check:tag1", "check:tag2", "cluster_name:clustername", "kube_cluster_name:clustername",
+				"global:tag1", "global:tag2"},
 		},
 		{
 			name:         "with disable_global_tags",
@@ -1638,7 +1706,7 @@ func TestKSMCheckInitTags(t *testing.T) {
 				instance:    &KSMConfig{Tags: []string{"check:tag1", "check:tag2"}, DisableGlobalTags: true},
 				clusterName: "clustername",
 			},
-			expected: []string{"check:tag1", "check:tag2", "kube_cluster_name:clustername"},
+			expected: []string{"check:tag1", "check:tag2", "cluster_name:clustername", "kube_cluster_name:clustername"},
 		},
 	}
 

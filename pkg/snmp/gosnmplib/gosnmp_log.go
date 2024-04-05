@@ -8,7 +8,7 @@ package gosnmplib
 import (
 	"regexp"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // Replacer structure to store regex matching logs parts to replace

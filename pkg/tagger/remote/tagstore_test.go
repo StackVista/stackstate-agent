@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/DataDog/datadog-agent/pkg/tagger/types"
+	"github.com/StackVista/stackstate-agent/pkg/tagger/types"
 )
 
 const (

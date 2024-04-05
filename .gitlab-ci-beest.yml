@@ -1,0 +1,53 @@
+stages:
+  - build
+  - fallback-manual
+
+variables:
+  RUNNER_BEEST_BASE: $CI_PROJECT_DIR/.ci-builders/beest-base
+  DOCKER_REGISTRY: docker.io
+  QUAY_REGISTRY: quay.io
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+
+before_script:
+  - apk add make
+  - echo "${docker_password}" | docker login --username=${docker_user} --password-stdin ${DOCKER_REGISTRY}
+  - echo "${quay_password}" | docker login --username=${quay_user} --password-stdin ${QUAY_REGISTRY}
+#  - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"${docker_user}\",\"password\":\"${docker_password}\"}}}" > /kaniko/.docker/config.json
+
+.docker_build_base: &docker_build_base
+  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
+  services:
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
+      alias: docker
+#  image:
+#    name: gcr.io/kaniko-project/executor:v1.8.1-debug
+#    entrypoint: [""]
+
+beest-keeper:
+  <<: *docker_build_base
+  stage: build
+  script:
+    - cd $RUNNER_BEEST_BASE
+    - mkdir -p /kaniko/.docker
+    - make
+  rules:
+    - if: $CI_COMMIT_MESSAGE =~ /\[build_runner_beest]/
+      when: always
+    - if: $CI_COMMIT_MESSAGE
+      when: manual
+      allow_failure: true
+
+# This ensures that triggers can achieve success status if manual jobs are not executed.
+ensure-success-manual:
+  stage: fallback-manual
+  before_script: []
+  dependencies:
+    - beest-keeper
+  script:
+    - echo "I will succeed"
+  rules:
+    - when: on_success
+  retry:
+    max: 2

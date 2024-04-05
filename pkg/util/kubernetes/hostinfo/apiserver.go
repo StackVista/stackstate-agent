@@ -4,13 +4,14 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build kubeapiserver
+// +build kubeapiserver
 
 package hostinfo
 
 import (
 	"context"
 
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
 )
 
 func apiserverNodeLabels(ctx context.Context, nodeName string) (map[string]string, error) {

@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build ec2
+// +build ec2
 
 package ec2
 

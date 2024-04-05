@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build kubeapiserver && !kubelet
+// +build kubeapiserver,!kubelet
 
 package kubernetes
 
@@ -26,7 +27,7 @@ func GetKubeAPIServerHostname(ctx context.Context) (string, error) {
 	if clusterName == "" {
 		log.Debugf("Now using plain kubernetes nodename as an alias: no cluster name was set and none could be autodiscovered")
 		return nodeName, nil
-	} else {
-		return (nodeName + "-" + clusterName), nil
 	}
+
+	return nodeName + "-" + clusterName, nil
 }

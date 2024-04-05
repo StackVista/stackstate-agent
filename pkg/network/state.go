@@ -83,6 +83,7 @@ type State interface {
 		latestTime uint64,
 		active []ConnectionStats,
 		dns dns.StatsByKeyByNameByType,
+		http *http.MonitorReport,
 		usmStats map[protocols.ProtocolType]interface{},
 	) Delta
 
@@ -122,6 +123,8 @@ type Delta struct {
 	HTTP2    map[http.Key]*http.RequestStats
 	Kafka    map[kafka.Key]*kafka.RequestStat
 	DNSStats dns.StatsByKeyByNameByType
+	BufferedData
+	HTTPTelemetryStats *http.TelemetryStats
 }
 
 type lastStateTelemetry struct {
@@ -340,6 +343,7 @@ func (ns *networkState) GetDelta(
 	active []ConnectionStats,
 	dnsStats dns.StatsByKeyByNameByType,
 	usmStats map[protocols.ProtocolType]interface{},
+	httpStats *http.MonitorReport,
 ) Delta {
 	ns.Lock()
 	defer ns.Unlock()
@@ -370,6 +374,13 @@ func (ns *networkState) GetDelta(
 		ns.storeDNSStats(dnsStats)
 	}
 
+	var httpTelemetryStats *http.TelemetryStats
+	if httpStats != nil {
+		httpTelemetryStats = httpStats.Telemetry
+		if len(httpStats.Requests) > 0 {
+			ns.storeHTTPStats(httpStats.Requests)
+		}
+
 	for protocolType, protocolStats := range usmStats {
 		switch protocolType {
 		case protocols.HTTP:
@@ -390,6 +401,11 @@ func (ns *networkState) GetDelta(
 		HTTP2:    client.http2StatsDelta,
 		DNSStats: client.dnsStats,
 		Kafka:    client.kafkaStatsDelta,
+		BufferedData: BufferedData{
+			Conns:  conns,
+			buffer: clientBuffer,
+		},
+		HTTPTelemetryStats: httpTelemetryStats,
 	}
 }
 

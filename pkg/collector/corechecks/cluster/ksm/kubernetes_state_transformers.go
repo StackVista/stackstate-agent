@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build kubeapiserver
+// +build kubeapiserver
 
 package ksm
 
@@ -25,6 +26,32 @@ import (
 // For name translation only please use metricNamesMapper instead
 type metricTransformerFunc = func(sender.Sender, string, ksmstore.DDMetric, string, []string, time.Time)
 
+var (
+	// metricTransformers contains KSM metric names and their corresponding transformer functions
+	// These metrics require more than a name translation to generate Datadog metrics, as opposed to the metrics in metricNamesMapper
+	// For reference see METRIC_TRANSFORMERS in KSM check V1
+	metricTransformers = map[string]metricTransformerFunc{
+		"kube_pod_created":                       podCreationTransformer,
+		"kube_pod_start_time":                    podStartTimeTransformer,
+		"kube_pod_status_phase":                  podPhaseTransformer,
+		"kube_pod_container_status_reasons":      containerReasonTransformer,
+		"kube_pod_container_resource_requests":   containerResourceRequestsTransformer,
+		"kube_pod_container_resource_limits":     containerResourceLimitsTransformer,
+		"kube_cronjob_next_schedule_time":        cronJobNextScheduleTransformer,
+		"kube_cronjob_status_last_schedule_time": cronJobLastScheduleTransformer,
+		"kube_job_complete":                      jobCompleteTransformer,
+		"kube_job_failed":                        jobFailedTransformer,
+		"kube_job_status_failed":                 jobStatusFailedTransformer,
+		"kube_job_status_succeeded":              jobStatusSucceededTransformer,
+		"kube_node_status_condition":             nodeConditionTransformer,
+		"kube_node_spec_unschedulable":           nodeUnschedulableTransformer,
+		"kube_node_status_allocatable":           nodeAllocatableTransformer,
+		"kube_node_status_capacity":              nodeCapacityTransformer,
+		"kube_node_created":                      nodeCreationTransformer,
+		"kube_resourcequota":                     resourcequotaTransformer,
+		"kube_limitrange":                        limitrangeTransformer,
+		"kube_persistentvolume_status_phase":     pvPhaseTransformer,
+		"kube_service_spec_type":                 serviceTypeTransformer,
 var renamedResource = map[string]string{
 	"nvidia_com_gpu":     "gpu",
 	"amd_com_gpu":        "gpu",
@@ -276,6 +303,7 @@ var allowedTerminatedReasons = map[string]struct{}{
 	"oomkilled":          {},
 	"containercannotrun": {},
 	"error":              {},
+	"unknown":            {},
 }
 
 // containerTerminatedReasonTransformer validates the container waiting reasons for metric kube_pod_container_status_terminated_reason
@@ -283,9 +311,16 @@ var allowedTerminatedReasons = map[string]struct{}{
 //nolint:revive // TODO(CINT) Fix revive linter
 func containerTerminatedReasonTransformer(s sender.Sender, name string, metric ksmstore.DDMetric, hostname string, tags []string, _ time.Time) {
 	if reason, found := metric.Labels["reason"]; found {
+		lcReason := strings.ToLower(reason)
+
 		// Filtering according to the reason here is paramount to limit cardinality
-		if _, allowed := allowedTerminatedReasons[strings.ToLower(reason)]; allowed {
-			s.Gauge(ksmMetricPrefix+"container.status_report.count.terminated", metric.Val, hostname, tags)
+		if _, allowed := allowedWaitingReasons[lcReason]; allowed {
+			s.Gauge(metricPrefix+"waiting", metric.Val, hostname, tags)
+		}
+
+		// Filtering according to the reason here is paramount to limit cardinality
+		if _, allowed := allowedTerminatedReasons[lcReason]; allowed {
+			s.Gauge(metricPrefix+"terminated", metric.Val, hostname, tags)
 		}
 	}
 }

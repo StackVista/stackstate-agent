@@ -24,6 +24,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gogo/protobuf/proto" // sts
 	"github.com/tinylib/msgp/msgp"
 	"go.uber.org/atomic"
 
@@ -161,6 +162,9 @@ func (r *HTTPReceiver) Start() {
 		log.Debug("HTTP Server is off: all listeners are disabled.")
 		return
 	}
+
+	// [sts]
+	mux.HandleFunc("/open-telemetry", r.handleProtobuf(r.handleOpenTelemetry))
 
 	timeout := 5 * time.Second
 	if r.conf.ReceiverTimeout > 0 {
@@ -313,6 +317,21 @@ func (r *HTTPReceiver) handleWithVersion(v Version, f func(Version, http.Respons
 	}
 }
 
+// [sts]
+// Only accepts protobuf content types
+func (r *HTTPReceiver) handleProtobuf(f func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		if mediaType := getMediaType(req); mediaType != "application/x-protobuf" {
+			httpFormatErrorNoVersion(w, fmt.Errorf("unsupported media type: %q, OpenTelemetry only supports application/x-protobuf. If you are sending data from a custom instrumentation make sure your exporter is protobuf and not json", mediaType))
+			return
+		}
+
+		req.Body = apiutil.NewLimitedReader(req.Body, r.conf.MaxRequestBytes)
+
+		f(w, req)
+	}
+}
+
 var errInvalidHeaderTraceCountValue = fmt.Errorf("%q header value is not a number", header.TraceCount)
 
 func traceCount(req *http.Request) (int64, error) {
@@ -407,7 +426,22 @@ func decodeTracerPayload(v Version, req *http.Request, ts *info.TagStats, cIDPro
 	}
 }
 
-// replyOK replies to the given http.ResponseWriter w based on the endpoint version, with either status 200/OK
+// [sts]
+func (r *HTTPReceiver) decodeOpenTelemetry(req *http.Request) (*openTelemetryTrace.ExportTraceServiceRequest, error) {
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	openTelemetryTraceData := &openTelemetryTrace.ExportTraceServiceRequest{}
+	if err := proto.Unmarshal(body, openTelemetryTraceData); err != nil {
+		return nil, err
+	}
+
+	return openTelemetryTraceData, nil
+}
+
+// replyOK replies to the given http.ReponseWriter w based on the endpoint version, with either status 200/OK
 // or with a list of rates by service. It returns the number of bytes written along with reporting if the operation
 // was successful.
 func (r *HTTPReceiver) replyOK(req *http.Request, v Version, w http.ResponseWriter) (n uint64, ok bool) {
@@ -573,6 +607,74 @@ func droppedTracesFromHeader(h http.Header, ts *info.TagStats) int64 {
 		}
 	}
 	return dropped
+}
+
+// [sts]
+// Open telemetry support - Uses protobuf
+func (r *HTTPReceiver) handleOpenTelemetry(w http.ResponseWriter, req *http.Request) {
+	ts := r.tagStats(v05, req.Header)
+
+	openTelemetryTraces, err := r.decodeOpenTelemetry(req)
+	if err != nil {
+		if err == apiutil.ErrLimitedReaderLimitReached {
+			atomic.AddInt64(&ts.TracesDropped.PayloadTooLarge, 1)
+		} else {
+			atomic.AddInt64(&ts.TracesDropped.DecodingError, 1)
+		}
+		log.Errorf("Cannot decode traces payload: %v", err)
+		return
+	}
+
+	// Open telemetry does not immediately fit into the pb.Traces structure and thus needs to be mapped into it
+	traces := mapOpenTelemetryTraces(*openTelemetryTraces)
+	traceCount := int64(len(traces))
+
+	// Determine rate limit based on length of traces we decoded
+	if !r.RateLimiter.Permits(traceCount) {
+		// this payload can not be accepted
+		io.Copy(ioutil.Discard, req.Body)
+		w.WriteHeader(r.rateLimiterResponse)
+		httpOK(w)
+		atomic.AddInt64(&ts.PayloadRefused, 1)
+		return
+	}
+
+	httpOK(w)
+
+	atomic.AddInt64(&ts.TracesReceived, int64(len(traces)))
+	atomic.AddInt64(&ts.TracesBytes, req.Body.(*apiutil.LimitedReader).Count)
+	atomic.AddInt64(&ts.PayloadAccepted, 1)
+
+	tracerPayload := pb.TracerPayload{
+		LanguageName:    ts.Lang,
+		LanguageVersion: ts.LangVersion,
+		ContainerID:     req.Header.Get(headerContainerID),
+		Chunks:          traceChunksFromTraces(traces),
+		TracerVersion:   ts.TracerVersion,
+	}
+
+	payload := &Payload{
+		Source:                 ts,
+		TracerPayload:          &tracerPayload,
+		ClientComputedTopLevel: req.Header.Get(headerComputedTopLevel) != "",
+		ClientComputedStats:    req.Header.Get(headerComputedStats) != "",
+		ClientDroppedP0s:       droppedTracesFromHeader(req.Header, ts),
+	}
+	select {
+	case r.out <- payload:
+		// ok
+	default:
+		// channel blocked, add a goroutine to ensure we never drop
+		r.wg.Add(1)
+		go func() {
+			metrics.Count("datadog.trace_agent.receiver.queued_send", 1, nil, 1)
+			defer func() {
+				r.wg.Done()
+				watchdog.LogOnPanic()
+			}()
+			r.out <- payload
+		}()
+	}
 }
 
 // handleServices handle a request with a list of several services

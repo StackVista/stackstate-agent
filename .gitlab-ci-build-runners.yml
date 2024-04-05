@@ -1,0 +1,176 @@
+stages:
+  - build_runner_base
+  - build_runners
+  - fallback-manual
+
+variables:
+  BUILDERS_FOLDER: $CI_PROJECT_DIR/.ci-builders
+  RUNNER_DEBIAN_BASE: debian-base
+  RUNNER_DEBIAN: debian
+  RUNNER_DEBIAN_RPM_PUBLISHER: debian-rpmpublisher
+  RUNNER_CENTOS6_BASE: centos6-base
+  RUNNER_CENTOS7_BASE: centos7-base
+  RUNNER_CENTOS7: centos7
+  QUAY_REGISTRY: quay.io
+  DOCKER_DRIVER: overlay
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+
+before_script:
+  # login to both docker registries
+  - docker login -u "${quay_user}" -p "${quay_password}" "${QUAY_REGISTRY}"
+  - docker login -u "${ARTIFACTORY_USER}" -p "${ARTIFACTORY_PASSWORD}" "${ARTIFACTORY_URL}"
+
+.docker_build_base: &docker_build_base
+  # use docker as the image builder
+  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
+  services:
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
+      alias: docker
+  retry:
+    max: 2
+    when:
+      - always
+
+##################################################################################
+# BUILD IMAGES BASE FOR DEB + RPM
+#################################################################################
+.build_runner_base: &build_runner_base
+  <<: *docker_build_base
+  stage: build_runner_base
+  script:
+    - cd $BUILDERS_FOLDER/$RUNNER_DIR
+    # build the base image
+    - BASE_RUNNER_TAG="${RUNNER_DIR}-$(date +%Y%m%d)"
+    - BUILD_TAG="stackstate-agent-runner-gitlab:${BASE_RUNNER_TAG}"
+    - docker build -t "${BUILD_TAG}" .
+    # tag the image, push to quay
+    - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
+    - docker tag "${BUILD_TAG}" "${QUAY_TAG}"
+    - docker push "${QUAY_TAG}"
+    - echo "BASE_RUNNER_TAG=$BASE_RUNNER_TAG"
+    - echo "BASE_RUNNER_TAG=$BASE_RUNNER_TAG" >> $CI_PROJECT_DIR/build.env
+  artifacts:
+    reports:
+      dotenv: build.env
+    expire_in: 1 week
+  rules:
+    - if: $CI_COMMIT_MESSAGE =~ /\[build_runners]/
+      when: always
+    - if: $CI_COMMIT_MESSAGE
+      when: manual
+      allow_failure: true
+
+# produces the base deb image: quay.io/stackstate/stackstate-agent-runner-gitlab:deb7_{yyyymmdd}
+build-debian-base:
+  <<: *build_runner_base
+  stage: build_runner_base
+  variables:
+    RUNNER_DIR: $RUNNER_DEBIAN_BASE
+
+# TODO: centos6 is EOL. This might potentially work: https://arstech.net/centos-6-error-yumrepo-error-all-mirror-urls-are-not-using-ftp-http/
+# TODO: skipping it for now
+# produces the base rpm image: quay.io/stackstate/stackstate-agent-runner-gitlab:centos6_{yyyymmdd}
+#build-centos6-base:
+#  <<: *docker_build_runner_base
+#  variables:
+#    RUNNER_DIR: $RUNNER_CENTOS6_BASE
+#    BASE_IMAGE: "centos6"
+
+# produces the base rpm image: quay.io/stackstate/stackstate-agent-runner-gitlab:centos7_{yyyymmdd}
+build-centos7-base:
+  <<: *build_runner_base
+  variables:
+    RUNNER_DIR: $RUNNER_CENTOS7_BASE
+
+##################################################################################
+# BUILD RUNNER IMAGES FROM BASE IMAGE
+#################################################################################
+
+.build_runner: &build_runner
+  <<: *docker_build_base
+  stage: build_runners
+  script:
+    - cd $BUILDERS_FOLDER/$RUNNER_DIR
+    # get the current date as the base image version
+    - BUILD_TAG="stackstate-agent-runner-gitlab:${RUNNER_DIR}-$(date +%Y%m%d)"
+    - docker build --build-arg BASE_IMAGE=$BASE_RUNNER_TAG -t "${BUILD_TAG}" .
+    # tag the image, push to quay
+    - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
+    - docker tag "${BUILD_TAG}" "${QUAY_TAG}"
+    - docker push "${QUAY_TAG}"
+  rules:
+    - if: $CI_COMMIT_MESSAGE =~ /\[build_runners]/
+      when: on_success
+    - if: $CI_COMMIT_MESSAGE
+      when: manual
+      allow_failure: true
+
+.patch_runner: &patch_runner
+  <<: *docker_build_base
+  stage: build_runners
+  script:
+    - cd $BUILDERS_FOLDER/$RUNNER_DIR
+    # get the current date as the base image version
+    - BUILD_TAG="stackstate-agent-runner-gitlab:${RUNNER_DIR}-${RUNNER_PATCH_TAG}-patched-$(date +%Y%m%d)"
+    - docker build -f Dockerfile.patch --build-arg BASE_IMAGE=${RUNNER_DIR}-${RUNNER_PATCH_TAG} -t "${BUILD_TAG}" .
+    # tag the image, push to quay
+    - QUAY_TAG="${QUAY_REGISTRY}/stackstate/${BUILD_TAG}"
+    - docker tag "${BUILD_TAG}" "${QUAY_TAG}"
+    - docker push "${QUAY_TAG}"
+  rules:
+    - if: $CI_COMMIT_MESSAGE =~ /\[patch_runner]/
+      when: on_success
+    - if: $CI_COMMIT_MESSAGE
+      when: manual
+      allow_failure: true
+
+# produces the runner deb image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-{yyyymmdd}
+build-debian-runner:
+  <<: *build_runner
+  needs:
+    - build-debian-base
+  variables:
+    RUNNER_DIR: $RUNNER_DEBIAN
+    RUNNER_IMAGE_VERSION: "deb7"
+
+# produces the runner deb image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-{yyyymmdd}
+build-patched-debian-runner:
+  <<: *patch_runner
+  variables:
+    RUNNER_DIR: $RUNNER_DEBIAN
+    RUNNER_PATCH_TAG: "20220826"
+
+# produces the runner deb/rpm publisher image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:deb-rpmpublisher_{yyyymmdd}
+build-debian-rpmpublisher-runner:
+  <<: *build_runner_base
+  variables:
+    RUNNER_DIR: $RUNNER_DEBIAN_RPM_PUBLISHER
+    RUNNER_IMAGE_VERSION: "deb-rpmpublisher"
+
+# produces the runner centos 7 image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7_20211004_v7_0
+build-centos7-runner:
+  <<: *build_runner
+  needs:
+    - build-centos7-base
+  variables:
+    RUNNER_DIR: $RUNNER_CENTOS7
+    RUNNER_IMAGE_VERSION: "centos7"
+
+# TODO: centos6 is EOL. This might potentially work: https://arstech.net/centos-6-error-yumrepo-error-all-mirror-urls-are-not-using-ftp-http/
+# TODO: skipping it for now
+# produces the runner centos 6 image: artifactory.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos6_20190429
+
+# This ensures that triggers can achieve success status if manual jobs are not executed.
+ensure-success-manual:
+  stage: fallback-manual
+  before_script: []
+  dependencies:
+    - build-centos7-runner
+    - build-debian-runner
+  script:
+    - echo "I will succeed"
+  rules:
+    - when: on_success
+  retry:
+    max: 2

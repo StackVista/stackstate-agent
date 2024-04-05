@@ -1,3 +1,4 @@
+# coding: utf-8
 """
 Release helper tasks
 """
@@ -516,7 +517,8 @@ def _fetch_dependency_repo_version(
         new_agent_version.prefix,
         compatible_version_re,
         allowed_major_versions,
-        max_version=max_agent_version,
+        max_version=max_allowed_version,
+        vendor="StackVista",
     )
 
     if check_for_rc and version.is_rc():
@@ -551,6 +553,15 @@ def _get_windows_ddnpm_release_json_info(release_json, agent_major_version, is_f
     win_ddnpm_driver = release_json_version_data['WINDOWS_DDNPM_DRIVER']
     win_ddnpm_version = release_json_version_data['WINDOWS_DDNPM_VERSION']
     win_ddnpm_shasum = release_json_version_data['WINDOWS_DDNPM_SHASUM']
+    previous_version = _get_release_version_from_release_json(
+        release_json,
+        agent_major_version,
+        VERSION_RE,
+        release_json_key=release_json_key,
+    )
+    # NOTE: This assumes that the repository doesn't change the way it prefixes versions.
+    version = _get_highest_repo_version(github_token, repo_name, previous_version.prefix, VERSION_RE,
+                                        vendor="StackVista")  # sts
 
     if win_ddnpm_driver not in ['release-signed', 'attestation-signed']:
         print(f"WARN: WINDOWS_DDNPM_DRIVER value '{win_ddnpm_driver}' is not valid")
@@ -739,9 +750,9 @@ def update_release_json(new_version: Version, max_version: Version):
 
 def check_version(agent_version):
     """Check Agent version to see if it is valid."""
-    version_re = re.compile(r'7[.](\d+)[.](\d+)(-rc\.(\d+))?')
+    version_re = re.compile(r'2[.](\d+)[.](\d+)(-rc\.(\d+))?')
     if not version_re.match(agent_version):
-        raise Exit(message="Version should be of the form 7.Y.Z or 7.Y.Z-rc.t")
+        raise Exit(message="Version should be of the form 2.Y.Z or 2.Y.Z-rc.t")
 
 
 @task
@@ -858,7 +869,7 @@ def tag_devel(ctx, agent_version, commit="HEAD", verify=True, push=True, force=F
     tag_modules(ctx, agent_version, commit, verify, push, force, devel=True)
 
 
-def current_version(ctx, major_version) -> Version:
+def current_version(ctx, major_version): # -> Version:  [sts] not supported in py2
     return _create_version_from_match(VERSION_RE.search(get_version(ctx, major_version=major_version)))
 
 
@@ -882,7 +893,7 @@ def next_final_version(ctx, major_version, patch_version) -> Version:
         return previous_version.next_version(bump_minor=True, rc=False)
 
 
-def next_rc_version(ctx, major_version, patch_version=False) -> Version:
+def next_rc_version(ctx, major_version, patch_version=False): # -> Version:  [sts] not supported in py2
     # Fetch previous version from the most recent tag on the branch
     previous_version = current_version(ctx, major_version)
 
@@ -1265,7 +1276,7 @@ def _get_release_json_value(key):
 
     for element in path:
         if element not in release_json:
-            raise Exit(code=1, message=f"Couldn't find '{key}' in release.json")
+            raise Exit(code=1, message="Couldn't find '{}' in release.json".format(key))  # [sts] - py2 compatible format
 
         release_json = release_json.get(element)
 
@@ -1501,3 +1512,23 @@ def _create_build_links_patterns(current_version, new_version):
     patterns[current_minor_version.replace("-rc", "~rc")] = new_minor_version.replace("-rc", "~rc")
 
     return patterns
+
+@task
+def generate_install(ctx, test_repo=False):
+    """
+    Task to generate Agent install.sh script that will use either the official or test debian repository
+    """
+    deb_official_repo = os.environ.get("STS_AWS_RELEASE_BUCKET")
+    deb_test_repo = os.environ.get("STS_AWS_TEST_BUCKET")
+    deb_repo = deb_test_repo if test_repo else deb_official_repo
+    yum_official_repo = os.environ.get("STS_AWS_RELEASE_BUCKET_YUM")
+    yum_test_repo = os.environ.get("STS_AWS_TEST_BUCKET_YUM")
+    yum_repo = yum_test_repo if test_repo else yum_official_repo
+    win_official_repo = os.environ.get("STS_AWS_RELEASE_BUCKET_WIN")
+    win_test_repo = os.environ.get("STS_AWS_TEST_BUCKET_WIN")
+    win_repo = win_test_repo if test_repo else win_official_repo
+    print("Generating install.sh and install.ps1 ...")
+    ctx.run("sed -e 's/$DEBIAN_REPO/https:\/\/{0}.s3.amazonaws.com/g' ./cmd/agent/sts_install_script.sh > ./cmd/agent/install_1.sh".format(deb_repo))
+    ctx.run("sed -e 's/$YUM_REPO/https:\/\/{0}.s3.amazonaws.com/g' ./cmd/agent/install_1.sh > ./cmd/agent/install.sh".format(yum_repo))
+    ctx.run("rm ./cmd/agent/install_1.sh")
+    ctx.run("sed -e 's/$env:WIN_REPO/https:\/\/{0}.s3.amazonaws.com\/windows/g' ./cmd/agent/install_script.ps1 > ./cmd/agent/install.ps1".format(win_repo))

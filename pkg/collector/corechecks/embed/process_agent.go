@@ -4,6 +4,8 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build process && (darwin || freebsd)
+// +build process
+// +build darwin freebsd
 
 package embed
 
@@ -232,6 +234,15 @@ func (c *ProcessAgentCheck) GetSenderStats() (stats.SenderStats, error) {
 // GetDiagnoses returns the diagnoses of the check
 func (c *ProcessAgentCheck) GetDiagnoses() ([]diagnosis.Diagnosis, error) {
 	return nil, nil
+}
+
+// GetFeatures is not implemented, the process agent has its own mechanism for checking StackState features
+func (c *ProcessAgentCheck) GetFeatures() features.Features {
+	return nil
+}
+
+// SetFeatures is not implemented, the process agent has its own mechanism for checking StackState features
+func (c *ProcessAgentCheck) SetFeatures(features features.Features) {
 }
 
 func init() {

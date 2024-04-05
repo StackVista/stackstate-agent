@@ -4,12 +4,13 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build linux
+// +build linux
 
 // Package container holds container related files
 package container
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/security/utils"
+	"github.com/StackVista/stackstate-agent/pkg/security/utils"
 )
 
 // Resolver is used to resolve the container context of the events

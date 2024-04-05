@@ -1,7 +1,4 @@
-// Unless explicitly stated otherwise all files in this repository are licensed
 // under the Apache License Version 2.0.
-// This product includes software developed at Datadog (https://www.datadoghq.com/).
-// Copyright 2016-present Datadog, Inc.
 
 //go:build ignore
 
@@ -113,7 +110,7 @@ func genIntegrity(root, inputFile, outputFile, pkg string) error {
 
 	if resolvedOutputDir != resolvedRuntimeDir {
 		packagePrefix = "runtime."
-		imports = "import \"github.com/DataDog/datadog-agent/pkg/ebpf/bytecode/runtime\"\n"
+		imports = "import \"github.com/StackVista/stackstate-agent/pkg/ebpf/bytecode/runtime\"\n"
 	}
 
 	if err := assetTemplate.Execute(f, struct {

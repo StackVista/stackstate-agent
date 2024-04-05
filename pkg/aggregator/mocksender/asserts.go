@@ -136,7 +136,19 @@ func eventLike(expectedEvent, actualEvent event.Event) bool {
 		assert.ObjectsAreEqualValues(expectedEvent.SourceTypeName, actualEvent.SourceTypeName) &&
 		assert.ObjectsAreEqualValues(expectedEvent.EventType, actualEvent.EventType) &&
 		assert.ObjectsAreEqualValues(expectedEvent.Host, actualEvent.Host) &&
+		contextLike(expectedEvent.EventContext, actualEvent.EventContext) &&
 		expectedInActual(expectedEvent.Tags, actualEvent.Tags))
+}
+
+func contextLike(expectedContext, actualContext *metrics.EventContext) bool {
+	if expectedContext == nil {
+		return actualContext == nil
+	}
+
+	return assert.ObjectsAreEqualValues(expectedContext.Category, actualContext.Category) &&
+		assert.ObjectsAreEqualValues(expectedContext.Source, actualContext.Source) &&
+		assert.ObjectsAreEqualValues(expectedContext.Data, actualContext.Data) &&
+		expectedInActual(expectedContext.ElementIdentifiers, actualContext.ElementIdentifiers)
 }
 
 // Return a bool value if all the elements of expected are inside the actual array

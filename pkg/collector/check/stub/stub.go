@@ -67,3 +67,9 @@ func (c *StubCheck) InstanceConfig() string { return "" }
 
 // GetDiagnoses returns the diagnoses of the check
 func (c *StubCheck) GetDiagnoses() ([]diagnosis.Diagnosis, error) { return nil, nil }
+
+// SetFeatures is a noop
+func (c *StubCheck) SetFeatures(features features.Features) {}
+
+// GetFeatures is a noop
+func (c *StubCheck) GetFeatures() features.Features { return nil }

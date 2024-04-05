@@ -56,15 +56,18 @@ type CheckScheduler struct {
 	collector      Collector
 	senderManager  sender.SenderManager
 	m              sync.RWMutex
+	features       features.Features // Features supported by StackState
 }
 
 // InitCheckScheduler creates and returns a check scheduler
 func InitCheckScheduler(collector Collector, senderManager sender.SenderManager) *CheckScheduler {
+	feats := features.InitFeatures()
 	checkScheduler = &CheckScheduler{
 		collector:      collector,
 		senderManager:  senderManager,
 		configToChecks: make(map[string][]checkid.ID),
 		loaders:        make([]check.Loader, 0, len(loaders.LoaderCatalog(senderManager))),
+		features:       feats,
 	}
 	// add the check loaders
 	for _, loader := range loaders.LoaderCatalog(senderManager) {
@@ -188,6 +191,7 @@ func (s *CheckScheduler) getChecks(config integration.Config) ([]check.Check, er
 			if err == nil {
 				log.Debugf("%v: successfully loaded check '%s'", loader, config.Name)
 				errorStats.removeLoaderErrors(config.Name)
+				c.SetFeatures(s.features)
 				checks = append(checks, c)
 				break
 			} else if c != nil && check.IsJMXInstance(config.Name, instance, config.InitConfig) {

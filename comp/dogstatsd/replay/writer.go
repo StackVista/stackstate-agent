@@ -18,6 +18,12 @@ import (
 
 	// Refactor relevant bits
 	"github.com/DataDog/zstd"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/dogstatsd/packets"
+	pb "github.com/StackVista/stackstate-agent/pkg/proto/pbgo"
+	"github.com/StackVista/stackstate-agent/pkg/proto/utils"
+	"github.com/StackVista/stackstate-agent/pkg/tagger"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 	"github.com/spf13/afero"
 
 	"github.com/DataDog/datadog-agent/comp/dogstatsd/packets"

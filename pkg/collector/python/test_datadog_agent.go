@@ -4,11 +4,15 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build python && test
+// +build python,test
 
 package python
 
 import (
 	"context"
+	collectorutils "github.com/StackVista/stackstate-agent/pkg/collector/util"
+	"os"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -48,6 +52,30 @@ func testGetClusterName(t *testing.T) {
 	require.NotNil(t, ch)
 
 	assert.Equal(t, clustername.GetClusterName(context.Background(), ""), C.GoString(ch))
+}
+
+func testGetPid(t *testing.T) {
+	var ch *C.char
+	GetPid(&ch)
+	require.NotNil(t, ch)
+
+	assert.Equal(t, strconv.Itoa(os.Getpid()), C.GoString(ch))
+}
+
+func testGetCreateTime(t *testing.T) {
+	var ch *C.char
+	GetCreateTime(&ch)
+	require.NotNil(t, ch)
+
+	pid := os.Getpid()
+	var goCreateTime int64
+	if ct, err := collectorutils.GetProcessCreateTime(int32(pid)); err != nil {
+		t.Fatalf("datadog_agent: could not get create time for process %d: %s", pid, err)
+	} else {
+		goCreateTime = ct
+	}
+
+	assert.Equal(t, strconv.FormatInt(goCreateTime, 10), C.GoString(ch))
 }
 
 func testHeaders(t *testing.T) {

@@ -4,14 +4,14 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build kubelet
+// +build kubelet
 
 package kubelet
 
 import (
 	"context"
 	"fmt"
-
-	"github.com/DataDog/datadog-agent/pkg/util/hostname/validate"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 )
 
 // GetHostAliases uses the "kubelet" hostname provider to fetch the kubernetes alias

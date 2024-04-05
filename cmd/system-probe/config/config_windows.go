@@ -4,6 +4,9 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build windows
+// +build windows
+
+
 
 package config
 
@@ -11,7 +14,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/DataDog/datadog-agent/pkg/util/winutil"
+	"github.com/StackVista/stackstate-agent/pkg/util/winutil"
 )
 
 const (

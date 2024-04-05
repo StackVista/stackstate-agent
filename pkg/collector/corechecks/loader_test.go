@@ -8,6 +8,7 @@ package corechecks
 import (
 	"errors"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"testing"
 
 	"github.com/DataDog/datadog-agent/pkg/aggregator"
@@ -59,6 +60,7 @@ func TestLoad(t *testing.T) {
 		integration.Data("foo: bar"),
 	}
 	cc := integration.Config{Name: "foo", Instances: i}
+	handler.InitCheckManager()
 	l, _ := NewGoCheckLoader()
 
 	_, err := l.Load(aggregator.NewNoOpSenderManager(), cc, i[0])

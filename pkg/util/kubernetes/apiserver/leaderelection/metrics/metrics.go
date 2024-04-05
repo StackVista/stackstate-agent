@@ -8,7 +8,7 @@
 package metrics
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/telemetry"
+	"github.com/StackVista/stackstate-agent/pkg/telemetry"
 )
 
 const (

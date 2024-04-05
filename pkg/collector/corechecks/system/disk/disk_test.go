@@ -3,10 +3,18 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 //go:build !windows
+// +build !windows
 
 package disk
 
 import (
+	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/StackVista/stackstate-agent/pkg/topology"
+	"github.com/stretchr/testify/assert"
 	"regexp"
 	"testing"
 
@@ -97,6 +105,11 @@ func TestDiskCheck(t *testing.T) {
 	diskCheck := new(Check)
 	mock := mocksender.NewMockSender(diskCheck.ID())
 	diskCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, nil, nil, "test")
+	// set up the mock batcher
+	mockBatcher := batcher.NewMockBatcher()
+	// set mock hostname
+	testHostname := "test-hostname"
+	config.Datadog.Set("hostname", testHostname)
 
 	expectedMonoCounts := 2
 	expectedRates := 2
@@ -134,6 +147,35 @@ func TestDiskCheck(t *testing.T) {
 	mock.AssertNumberOfCalls(t, "Gauge", expectedGauges)
 	mock.AssertNumberOfCalls(t, "Rate", expectedRates)
 	mock.AssertNumberOfCalls(t, "Commit", 1)
+
+	producedTopology := mockBatcher.CollectedTopology.Flush()
+	expectedTopology := batcher.CheckInstanceBatchStates(map[check.ID]batcher.CheckInstanceBatchState{
+		"disk_topology": {
+			Health: make(map[string]health.Health),
+			Topology: &topology.Topology{
+				StartSnapshot: false,
+				StopSnapshot:  false,
+				Instance:      topology.Instance{Type: "disk", URL: "agents"},
+				Components: []topology.Component{
+					{
+						ExternalID: fmt.Sprintf("urn:host:/%s", testHostname),
+						Type: topology.Type{
+							Name: "host",
+						},
+						Data: topology.Data{
+							"host":        testHostname,
+							"devices":     []string{"/dev/sda2", "/dev/sda1"},
+							"identifiers": []string{},
+						},
+					},
+				},
+				Relations: []topology.Relation{},
+				DeleteIDs: []string{},
+			},
+		},
+	})
+
+	assert.Equal(t, expectedTopology, producedTopology)
 }
 
 func TestDiskCheckExcludedDiskFilsystem(t *testing.T) {
@@ -146,6 +188,7 @@ func TestDiskCheckExcludedDiskFilsystem(t *testing.T) {
 	diskCheck.cfg.excludedFilesystems = []string{"vfat"}
 	diskCheck.cfg.excludedDisks = []string{"/dev/sda2"}
 
+	_ = batcher.NewMockBatcher()
 	expectedMonoCounts := 2
 	expectedGauges := 0
 	expectedRates := 2
@@ -177,6 +220,7 @@ func TestDiskCheckExcludedRe(t *testing.T) {
 	diskCheck.cfg.excludedMountpointRe = regexp.MustCompile("/boot/efi")
 	diskCheck.cfg.excludedDiskRe = regexp.MustCompile("/dev/sda2")
 
+	_ = batcher.NewMockBatcher()
 	expectedMonoCounts := 2
 	expectedGauges := 0
 	expectedRates := 2
@@ -201,12 +245,13 @@ func TestDiskCheckTags(t *testing.T) {
 	diskPartitions = diskSampler
 	diskUsage = diskUsageSampler
 	ioCounters = diskIoSampler
-	diskCheck := new(Check)
+	diskCheck := diskFactory().(*Check)
 
 	config := integration.Data([]byte("use_mount: true\ntag_by_filesystem: true\nall_partitions: true\ndevice_tag_re:\n  /boot/efi: role:esp\n  /dev/sda2: device_type:sata,disk_size:large"))
 
 	mock := mocksender.NewMockSender(diskCheck.ID())
 	diskCheck.Configure(mock.GetSenderManager(), integration.FakeConfigHash, config, nil, "test")
+	_ = batcher.NewMockBatcher()
 
 	expectedMonoCounts := 2
 	expectedGauges := 16
@@ -244,4 +289,40 @@ func TestDiskCheckTags(t *testing.T) {
 	mock.AssertNumberOfCalls(t, "Gauge", expectedGauges)
 	mock.AssertNumberOfCalls(t, "Rate", expectedRates)
 	mock.AssertNumberOfCalls(t, "Commit", 1)
+}
+
+func TestExcludedDiskFSFromConfig(t *testing.T) {
+	for _, tc := range []struct {
+		test                string
+		config              integration.Data
+		excludedDisks       []string
+		excludedFileSystems []string
+	}{
+		{
+			test:                "No file system and disk exclusions",
+			config:              integration.Data("use_mount: true"),
+			excludedFileSystems: []string{"iso9660"},
+		},
+		{
+			test:                "Exclude file systems",
+			config:              integration.Data("use_mount: true\nexcluded_filesystems: \n  - tmpfs\n  - squashfs"),
+			excludedFileSystems: []string{"iso9660", "tmpfs", "squashfs"},
+		},
+		{
+			test:                "Exclude disks",
+			config:              integration.Data("use_mount: true\nexcluded_disks: \n  - /dev/nvme0n1p1\n  - /dev/sda1\n  - /dev/sda2"),
+			excludedDisks:       []string{"/dev/nvme0n1p1", "/dev/sda1", "/dev/sda2"},
+			excludedFileSystems: []string{"iso9660"},
+		},
+	} {
+		t.Run(tc.test, func(t *testing.T) {
+			diskPartitions = diskSampler
+			diskCheck := diskFactory().(*Check)
+			err := diskCheck.Configure(tc.config, nil, "test")
+
+			assert.NoError(t, err)
+			assert.ElementsMatch(t, diskCheck.cfg.excludedDisks, tc.excludedDisks)
+			assert.ElementsMatch(t, diskCheck.cfg.excludedFilesystems, tc.excludedFileSystems)
+		})
+	}
 }

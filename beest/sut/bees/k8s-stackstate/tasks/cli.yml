@@ -1,0 +1,156 @@
+---
+- name: StackState CLI prepare tasks
+  tags: prepare
+  block:
+    - name: Create stackstate-admin Role
+      kubernetes.core.k8s:
+        context: "{{ kubecontext }}"
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: Role
+          metadata:
+            name: stackstate-admin
+            namespace: "{{ namespace }}"
+
+    - name: Create CLI ServiceAccount
+      kubernetes.core.k8s:
+        context: "{{ kubecontext }}"
+        definition:
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            # NOTE: do not change the name, needs to be called this way for now, see https://stackstate.atlassian.net/browse/STAC-15814
+            name: stackstate-admin
+            namespace: "{{ namespace }}"
+
+    - name: Create ServiceAccount Token/Secret
+      kubernetes.core.k8s:
+        context: "{{ kubecontext }}"
+        definition:
+          apiVersion: v1
+          kind: Secret
+          type: kubernetes.io/service-account-token
+          metadata:
+            name: stackstate-admin-secret
+            namespace: "{{ namespace }}"
+            annotations:
+              kubernetes.io/service-account.name: "stackstate-admin"
+
+    - name: Create CLI RoleBinding
+      kubernetes.core.k8s:
+        context: "{{ kubecontext }}"
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: RoleBinding
+          metadata:
+            name: stackstate-admin
+            namespace: "{{ namespace }}"
+          roleRef:
+            name: stackstate-admin
+            apiGroup: rbac.authorization.k8s.io
+            kind: Role
+          subjects:
+            - kind: ServiceAccount
+              name: stackstate-admin
+
+    - name: Get ServiceAccount object
+      kubernetes.core.k8s_info:
+        context: "{{ kubecontext }}"
+        namespace: "{{ namespace }}"
+        kind: ServiceAccount
+        name: stackstate-admin
+      register: service_account_obj
+
+    - name: Get ServiceAccount Secret object
+      kubernetes.core.k8s_info:
+        context: "{{ kubecontext }}"
+        namespace: "{{ namespace }}"
+        kind: Secret
+        name: stackstate-admin-secret
+      register: service_account_secret_obj
+
+    - name: Set a stackstate-admin-token
+      ansible.builtin.set_fact:
+        stackstate_admin_token: "{{ service_account_secret_obj.resources[0].data.token | b64decode }}"
+
+    # Equivalent to: kubectl -n <namespace> get secret stackstate-admin-token-<xyz> -o jsonpath={.data.token} | base64 -d
+    - name: stackstate-admin token
+      debug:
+        var: stackstate_admin_token
+
+    - name: Create CLI v1 config directory
+      file:
+        path: "~/.stackstate/cli"
+        state: directory
+        recurse: yes
+
+    - name: Generate CLI v1 config
+      ansible.builtin.template:
+        src: sts-cli-v1-config.j2.yml
+        dest: "~/.stackstate/cli/conf.yaml"
+
+    - name: Generate CLI v1 config for local tests
+      ansible.builtin.template:
+        src: sts-cli-v1-config.j2.yml
+        dest: "{{ playbook_dir }}/conf.yaml"
+
+    - name: Get the CLI V2 API Token
+      shell: "curl -k -s -u admin:admin {{ sts_url }}/api/user/profile/tokens  | jq -r '.[]|.token'"
+      register: stackstate_api_token_result
+      until: stackstate_api_token_result is not failed
+      retries: 5
+      delay: 60
+
+    - name: set stackstate_api_token
+      set_fact:
+        stackstate_api_token: "{{ stackstate_api_token_result.stdout }}"
+
+    - name: Create CLI v2 config directory
+      file:
+        path: "~/.config/stackstate-cli"
+        state: directory
+        recurse: yes
+
+    - name: Generate CLI v2 config
+      ansible.builtin.template:
+        src: sts-cli-v2-config.j2.yml
+        dest: "~/.config/stackstate-cli/config.yaml"
+
+    - name: Generate CLI v2 config for local tests
+      ansible.builtin.template:
+        src: sts-cli-v2-config.j2.yml
+        dest: "{{ playbook_dir }}/config.yaml"
+
+    # We can only execute simple commands from pytest, pipes cannot be used directly
+    - name: Copy stackstate query script
+      ansible.builtin.copy:
+        src: "sts-query.sh"
+        dest: "~/sts-query.sh"
+        mode: preserve
+
+
+## Cleanup
+
+- name: StackState CLI cleanup tasks
+  tags: cleanup
+  ignore_errors: yes
+  block:
+    - name: Remove CLI v1 config
+      file:
+        path: "~/.stackstate/cli"
+        state: absent
+
+    - name: Remove CLI v2 config
+      file:
+        path: "~/.config/stackstate-cli"
+        state: absent
+
+    - name: Remove CLI v2 config from local tests
+      file:
+        path: "{{ playbook_dir }}/config.yaml"
+        state: absent
+
+    - name: Remove CLI v1 config from local tests
+      file:
+        path: "{{ playbook_dir }}/conf.yaml"
+        state: absent

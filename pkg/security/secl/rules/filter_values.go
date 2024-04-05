@@ -6,7 +6,7 @@
 // Package rules holds rules related files
 package rules
 
-import "github.com/DataDog/datadog-agent/pkg/security/secl/compiler/eval"
+import "github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/eval"
 
 // FilterValues is a list of FilterValue
 type FilterValues []FilterValue

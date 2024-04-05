@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build jmx
+// +build jmx
 
 //nolint:revive // TODO(AML) Fix revive linter
 package jmx
@@ -32,6 +33,7 @@ type JMXCheck struct {
 	telemetry      bool
 	initConfig     string
 	instanceConfig string
+	features  features.Features
 }
 
 func newJMXCheck(senderManager sender.SenderManager, config integration.Config, source string) *JMXCheck {
@@ -136,4 +138,14 @@ func (c *JMXCheck) GetSenderStats() (stats.SenderStats, error) {
 // GetDiagnoses returns the diagnoses cached in last run or diagnose explicitly
 func (c *JMXCheck) GetDiagnoses() ([]diagnosis.Diagnosis, error) {
 	return nil, nil
+}
+
+// GetFeatures returns the features supported by StackState
+func (c *JMXCheck) GetFeatures() features.Features {
+	return c.features
+}
+
+// SetFeatures sets the features supported by StackState
+func (c *JMXCheck) SetFeatures(features features.Features) {
+	c.features = features
 }

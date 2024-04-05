@@ -68,6 +68,7 @@ type Agent struct {
 	RemoteConfigHandler   *remoteconfighandler.RemoteConfigHandler
 	TelemetryCollector    telemetry.TelemetryCollector
 	DebugServer           *api.DebugServer
+	SpanInterpreterEngine *interpreter.SpanInterpreterEngine //sts
 
 	// obfuscator is used to obfuscate sensitive data from various span
 	// tags based on their type.
@@ -117,6 +118,8 @@ func NewAgent(ctx context.Context, conf *config.AgentConfig, telemetryCollector 
 		StatsWriter:           writer.NewStatsWriter(conf, statsChan, telemetryCollector),
 		obfuscator:            obfuscate.NewObfuscator(oconf),
 		cardObfuscator:        newCreditCardsObfuscator(conf.Obfuscation.CreditCards),
+		TraceWriter:           writer.NewTraceWriter(conf),
+		SpanInterpreterEngine: interpreter.NewSpanInterpreterEngine(conf), // sts
 		In:                    in,
 		conf:                  conf,
 		ctx:                   ctx,
@@ -321,6 +324,19 @@ func (a *Agent) Process(p *api.Payload) {
 		}
 		a.Replacer.Replace(chunk.Spans)
 
+		// sts - interpret spans
+		chunk.Spans = a.SpanInterpreterEngine.Interpret(chunk.Spans) // sts
+
+		{
+			// this section sets up any necessary tags on the root:
+			clientSampleRate := sampler.GetGlobalRate(root)
+			sampler.SetClientRate(root, clientSampleRate)
+
+			if ratelimiter := a.Receiver.RateLimiter; ratelimiter.Active() {
+				rate := ratelimiter.RealRate()
+				sampler.SetPreSampleRate(root, rate)
+			}
+		}
 		a.setRootSpanTags(root)
 		if !p.ClientComputedTopLevel {
 			// Figure out the top-level spans now as it involves modifying the Metrics map
@@ -337,7 +353,8 @@ func (a *Agent) Process(p *api.Payload) {
 
 		keep, numEvents := a.sample(now, ts, pt)
 		if !keep && len(pt.TraceChunk.Spans) == 0 {
-			// The entire trace was dropped and no spans were kept.
+			// the trace was dropped and no analyzed span were kept
+			log.Infof("[sts] the trace was dropped and no analyzed span were kept (keep = %v, numEvents = %d)", keep, numEvents)
 			p.RemoveChunk(i)
 			continue
 		}

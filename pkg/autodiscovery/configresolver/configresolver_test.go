@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	// we need some valid check in the catalog to run tests
-	_ "github.com/DataDog/datadog-agent/pkg/collector/corechecks/system"
+	_ "github.com/StackVista/stackstate-agent/pkg/collector/corechecks/system"
 )
 
 type dummyService struct {

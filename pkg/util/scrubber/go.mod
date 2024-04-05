@@ -1,4 +1,4 @@
-module github.com/DataDog/datadog-agent/pkg/util/scrubber
+module github.com/StackVista/stackstate-agent/pkg/util/scrubber
 
 go 1.20
 

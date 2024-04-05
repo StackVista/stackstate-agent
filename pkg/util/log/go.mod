@@ -1,8 +1,8 @@
-module github.com/DataDog/datadog-agent/pkg/util/log
+module github.com/StackVista/stackstate-agent/pkg/util/log
 
 go 1.20
 
-replace github.com/DataDog/datadog-agent/pkg/util/scrubber => ../scrubber
+replace github.com/StackVista/stackstate-agent/pkg/util/scrubber => ../scrubber
 
 require (
 	github.com/DataDog/datadog-agent/pkg/util/scrubber v0.51.1

@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build !windows && kubeapiserver
+// +build !windows,kubeapiserver
 
 //nolint:revive // TODO(CINT) Fix revive linter
 package main
@@ -16,7 +17,7 @@ import (
 	klogv1 "k8s.io/klog"
 	klogv2 "k8s.io/klog/v2"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 func init() {

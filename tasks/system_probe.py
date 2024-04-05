@@ -483,8 +483,8 @@ def ninja_generate(
 def build(
     ctx,
     race=False,
-    incremental_build=True,
-    major_version='7',
+    incremental_build=False,
+    major_version='3',
     python_runtimes='3',
     go_mod="mod",
     windows=is_windows,
@@ -1136,6 +1136,26 @@ def get_ebpf_build_flags(unit_test=False):
     flags.extend(["-Ipkg/ebpf/c"])
     return flags
 
+    flags = [
+        '-D__KERNEL__',
+        '-DCONFIG_64BIT',
+        '-D__BPF_TRACING__',
+        '-DKBUILD_MODNAME=\\"ddsysprobe\\"',
+        '-Wno-unused-value',
+        '-Wno-pointer-sign',
+        '-Wno-compare-distinct-pointer-types',
+        '-Wunused',
+        "-include {}".format(os.path.join(c_dir, "asm_goto_workaround.h")),
+        '-O2',
+        '-emit-llvm',
+        # Some linux distributions enable stack protector by default which is not available on eBPF
+        '-fno-stack-protector',
+        '-fno-color-diagnostics',
+        '-fno-unwind-tables',
+        '-fno-asynchronous-unwind-tables',
+        '-fno-jump-tables',
+        "-I{}".format(c_dir),
+    ]
 
 def get_co_re_build_flags():
     flags = get_ebpf_build_flags()

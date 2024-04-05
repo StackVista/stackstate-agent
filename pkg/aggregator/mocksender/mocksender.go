@@ -8,6 +8,7 @@
 package mocksender
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/metrics"
 	"time"
 
 	"github.com/stretchr/testify/mock"
@@ -61,6 +62,7 @@ func SetSender(sender *MockSender, id checkid.ID) {
 type MockSender struct {
 	mock.Mock
 	senderManager sender.SenderManager
+	SentEvents metrics.Events
 }
 
 // GetSenderManager returns the instance of sender.SenderManager

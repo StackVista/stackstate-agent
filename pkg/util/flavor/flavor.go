@@ -6,7 +6,7 @@
 // Package flavor defines the various flavors of the agent
 package flavor
 
-import "github.com/DataDog/datadog-agent/pkg/config"
+import "github.com/StackVista/stackstate-agent/pkg/config"
 
 const (
 	// DefaultAgent is the default Agent flavor

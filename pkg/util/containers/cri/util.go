@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build cri
+// +build cri
 
 // Package cri implements a Container Runtime Interface (CRI) client.
 package cri
@@ -27,6 +28,14 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/util/log"
 	"github.com/DataDog/datadog-agent/pkg/util/retry"
 )
+
+// sts begin
+const (
+	// Default CRI socket path
+	criDefaultSocketPath = "/var/run/crio/crio.sock"
+)
+
+// sts end
 
 var (
 	globalCRIUtil *CRIUtil
@@ -116,6 +125,12 @@ func GetUtil() (*CRIUtil, error) {
 			connectionTimeout: config.Datadog.GetDuration("cri_connection_timeout") * time.Second,
 			socketPath:        config.Datadog.GetString("cri_socket_path"),
 		}
+		// sts begin
+		if globalCRIUtil.socketPath == "" {
+			log.Info("No socket path was specified, defaulting to /var/run/crio/crio.sock")
+			globalCRIUtil.socketPath = criDefaultSocketPath
+		}
+		// sts end
 		globalCRIUtil.initRetry.SetupRetrier(&retry.Config{ //nolint:errcheck
 			Name:              "criutil",
 			AttemptMethod:     globalCRIUtil.init,
@@ -131,6 +146,63 @@ func GetUtil() (*CRIUtil, error) {
 	}
 	return globalCRIUtil, nil
 }
+
+// sts begin
+
+// ContainerStateMap is used to map cri specific state to own internal state
+var ContainerStateMap = map[pb.ContainerState]string{
+	pb.ContainerState_CONTAINER_CREATED: containers.ContainerCreatedState,
+	pb.ContainerState_CONTAINER_RUNNING: containers.ContainerRunningState,
+	pb.ContainerState_CONTAINER_EXITED:  containers.ContainerExitedState,
+	pb.ContainerState_CONTAINER_UNKNOWN: containers.ContainerUnknownState,
+}
+
+func (c *CRIUtil) GetContainers(ctx context.Context) ([]*spec.Container, error) {
+	containerStats, err := c.ListContainerStats()
+	if err != nil {
+		return nil, err
+	}
+	uContainers := make([]*spec.Container, 0, len(containerStats))
+	for cid := range containerStats {
+		cstatus, err := c.GetContainerStatus(cid)
+		if err != nil {
+			_ = log.Warnf("Could not get Status from CRI container '%s'. Error: %v", cid, err)
+			continue
+		}
+		if cstatus.Metadata == nil {
+			_ = log.Warnf("Could not get Metadata from CRI container '%s'", cid)
+			continue
+		}
+		if cstatus.Image == nil {
+			_ = log.Warnf("Could not get Image from CRI container '%s'", cid)
+			continue
+		}
+		mounts := make([]specs.Mount, 0, len(cstatus.Mounts))
+		for _, cmount := range cstatus.Mounts {
+			mountPoint := specs.Mount{
+				Source:      cmount.HostPath,
+				Destination: cmount.ContainerPath,
+			}
+			mounts = append(mounts, mountPoint)
+		}
+		container := &spec.Container{
+			Runtime: "cri",
+			Name:    cstatus.Metadata.Name,
+			ID:      cid,
+			Image:   cstatus.Image.Image,
+			Mounts:  mounts,
+		}
+		if state, ok := ContainerStateMap[cstatus.State]; ok {
+			container.State = state
+		} else {
+			_ = log.Warnf("Could not map state of container '%s'. State: %s", cid, cstatus.State.String())
+		}
+		uContainers = append(uContainers, container)
+	}
+	return uContainers, nil
+}
+
+// sts end
 
 // GetContainerStats returns the stats for the container with the given ID
 func (c *CRIUtil) GetContainerStats(containerID string) (*criv1.ContainerStats, error) {

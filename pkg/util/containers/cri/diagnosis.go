@@ -4,11 +4,12 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build cri
+// +build cri
 
 package cri
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/diagnose/diagnosis"
+	"github.com/StackVista/stackstate-agent/pkg/diagnose/diagnosis"
 )
 
 func init() {

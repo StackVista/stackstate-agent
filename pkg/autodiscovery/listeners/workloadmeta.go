@@ -4,6 +4,7 @@
 // Copyright 2017-present Datadog, Inc.
 
 //go:build !serverless
+// +build !serverless
 
 package listeners
 

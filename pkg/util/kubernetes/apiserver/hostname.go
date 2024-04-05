@@ -11,7 +11,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/common"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/common"
 )
 
 // HostNodeName retrieves the hostname from the apiserver, pod name will be retrieved from DD_POD_NAME.

@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build docker
+// +build docker
 
 package docker
 
@@ -13,6 +14,7 @@ import "gopkg.in/yaml.v2"
 const (
 	DockerServiceUp = "docker.service_up"
 	DockerExit      = "docker.exit"
+	DockerRestart   = "docker.restart"
 )
 
 // DockerConfig holds the docker check configuration
@@ -40,6 +42,7 @@ type DockerConfig struct {
 	// CollectedEventTypes is a slice of docker event types to collect.
 	// Only effective when UnbundleEvents = true
 	CollectedEventTypes []string `yaml:"collected_event_types"`
+	CollectContainerTopology bool               `yaml:"collect_container_topology"` // sts
 }
 
 // Parse reads the docker check configuration
@@ -47,6 +50,9 @@ func (c *DockerConfig) Parse(data []byte) error {
 	// default values
 	c.CollectEvent = true
 	c.CollectContainerSizeFreq = 5
+
+	// sts
+	c.CollectContainerTopology = true
 
 	return yaml.Unmarshal(data, c)
 }

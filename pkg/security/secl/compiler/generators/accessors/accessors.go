@@ -31,12 +31,12 @@ import (
 	"golang.org/x/text/language"
 	"golang.org/x/tools/go/packages"
 
-	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/generators/accessors/common"
-	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/generators/accessors/doc"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/generators/accessors/common"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/generators/accessors/doc"
 )
 
 const (
-	pkgPrefix = "github.com/DataDog/datadog-agent/pkg/security/secl"
+	pkgPrefix = "github.com/StackVista/stackstate-agent/pkg/security/secl"
 )
 
 var (

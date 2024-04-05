@@ -15,9 +15,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/DataDog/datadog-agent/pkg/status/health"
+	"github.com/StackVista/stackstate-agent/pkg/status/health"
 
-	"github.com/DataDog/datadog-agent/pkg/logs/auditor"
+	"github.com/StackVista/stackstate-agent/pkg/logs/auditor"
 )
 
 type ProviderTestSuite struct {

@@ -4,6 +4,7 @@
 // Copyright 2017-present Datadog, Inc.
 
 //go:build kubeapiserver
+// +build kubeapiserver
 
 // Package custommetrics runs the Kubernetes custom metrics API server.
 package custommetrics
@@ -21,13 +22,13 @@ import (
 	basecmd "sigs.k8s.io/custom-metrics-apiserver/pkg/cmd"
 	"sigs.k8s.io/custom-metrics-apiserver/pkg/provider"
 
-	"github.com/DataDog/datadog-agent/pkg/clusteragent/custommetrics"
-	generatedopenapi "github.com/DataDog/datadog-agent/pkg/clusteragent/custommetrics/api/generated/openapi"
-	"github.com/DataDog/datadog-agent/pkg/clusteragent/externalmetrics"
-	"github.com/DataDog/datadog-agent/pkg/config"
-	as "github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/apiserver/common"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/custommetrics"
+	generatedopenapi "github.com/StackVista/stackstate-agent/pkg/clusteragent/custommetrics/api/generated/openapi"
+	"github.com/StackVista/stackstate-agent/pkg/clusteragent/externalmetrics"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	as "github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/apiserver/common"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 var cmd *DatadogMetricsAdapter

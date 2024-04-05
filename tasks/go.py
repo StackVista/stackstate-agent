@@ -59,13 +59,9 @@ def run_golangci_lint(
     # we split targets to avoid going over the memory limit from circleCI
     results = []
     for target in targets:
-        if not headless_mode:
-            print(f"running golangci on {target}")
-        concurrency_arg = "" if concurrency is None else f"--concurrency {concurrency}"
-        tags_arg = " ".join(sorted(set(tags)))
-        timeout_arg_value = "25m0s" if not timeout else f"{timeout}m0s"
-        result = ctx.run(
-            f'golangci-lint run {verbosity} --timeout {timeout_arg_value} {concurrency_arg} --build-tags "{tags_arg}" --path-prefix "{module_path}" {golangci_lint_kwargs} {target}/...',
+        print("running golangci on {}".format(target))
+        ctx.run(
+            "golangci-lint run -v --timeout 10m0s --build-tags '{}' {}".format(" ".join(tags), "{}/...".format(target)),
             env=env,
             warn=True,
         )

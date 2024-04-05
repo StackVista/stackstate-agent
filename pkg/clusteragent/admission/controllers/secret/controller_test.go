@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build kubeapiserver
+// +build kubeapiserver
 
 package secret
 
@@ -14,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/certificate"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/certificate"
 
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"

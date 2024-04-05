@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build apm && !windows && !linux
+// +build apm,!windows,!linux
 
 //nolint:revive // TODO(APM) Fix revive linter
 package embed

@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build kubeapiserver
+// +build kubeapiserver
 
 // Package kubernetesapiserver implements the Kubernetes API Server cluster
 // check.
@@ -234,7 +235,8 @@ func (k *KubeASCheck) Run() error {
 	if k.instance.CollectOShiftQuotas && k.oshiftAPILevel != apiserver.NotOpenShift {
 		quotas, err := k.retrieveOShiftClusterQuotas()
 		if err != nil {
-			k.Warnf("Could not collect OpenShift cluster quotas: %s", err.Error()) //nolint:errcheck
+			// [STS] log this as a debug message instead. TODO: make k.instance.CollectOShiftQuotas configurable in Helm.
+			log.Debugf("Could not collect OpenShift cluster quotas: %s", err.Error()) //nolint:errcheck
 		} else {
 			k.reportClusterQuotas(quotas, sender)
 		}

@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build test
+// +build test
 
 package serializer
 
@@ -77,3 +78,12 @@ func (s *MockSerializer) SendOrchestratorMetadata(msgs []types.ProcessMessageBod
 func (s *MockSerializer) SendOrchestratorManifests(msgs []types.ProcessMessageBody, hostName, clusterID string) error {
 	return s.Called(msgs, hostName, clusterID).Error(0)
 }
+
+// sts begin
+
+// SendJSONToV1Intake serializes a legacy process metadata payload and sends it to the forwarder.
+func (s *MockSerializer) SendJSONToV1Intake(data interface{}) error {
+	return s.Called(data).Error(0)
+}
+
+// sts end

@@ -477,3 +477,18 @@ func (c *DCAClient) PostLanguageMetadata(ctx context.Context, data *pbgo.ParentL
 	_, err = c.doQuery(ctx, languageDetectionPath, "POST", bytes.NewBuffer(queryBody), false, false)
 	return err
 }
+
+func parseJSONResponse(resp *http.Response, result interface{}) error {
+	defer resp.Body.Close()
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("can't read body from %d %s response: %v", resp.StatusCode, resp.Status, err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected response: %d %s: %s", resp.StatusCode, resp.Status, string(b))
+	}
+
+	err = json.Unmarshal(b, result)
+	return err
+}

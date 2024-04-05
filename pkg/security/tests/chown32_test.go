@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build functionaltests && amd64
+// +build functionaltests,amd64
 
 // Package tests holds tests related files
 package tests

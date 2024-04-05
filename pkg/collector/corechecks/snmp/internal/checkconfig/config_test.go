@@ -1769,7 +1769,7 @@ community_string: "abc"
 `),
 			// language=yaml
 			rawInitConfig:    []byte(``),
-			expectedInterval: 15 * time.Second,
+			expectedInterval: 40 * time.Second, // sts - we use 40 by default, see pkg/collector/check/defaults/defaults.go
 		},
 		{
 			name: "init min_collection_interval",

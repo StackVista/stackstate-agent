@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build python
+// +build python
 
 package python
 
@@ -61,6 +62,7 @@ type PythonCheck struct {
 	telemetry      bool // whether or not the telemetry is enabled for this check
 	initConfig     string
 	instanceConfig string
+	features     features.Features
 }
 
 // NewPythonCheck conveniently creates a PythonCheck instance
@@ -104,6 +106,8 @@ func (c *PythonCheck) runCheck(commitMetrics bool) error {
 		return fmt.Errorf("An error occurred while running python check %s", c.ModuleName)
 	}
 	defer C.rtloader_free(rtloader, unsafe.Pointer(cResult))
+
+	handler.GetCheckManager().GetCheckHandler(c.ID()).SubmitComplete() // [sts]
 
 	if commitMetrics {
 		s, err := c.senderManager.GetSender(c.ID())
@@ -221,6 +225,21 @@ func (c *PythonCheck) getPythonWarnings(gstate *stickyLock) []error {
 	return warnings
 }
 
+// [sts] Make sure collection_interval is always set
+func (c *PythonCheck) setCollectionIntervalToInstanceData(data integration.Data) (integration.Data, error) {
+	// make sure collection_interval is set within the instance data
+	rawInstance := make(integration.RawMap)
+
+	err := yaml.Unmarshal(data, &rawInstance)
+	if err != nil {
+		return nil, err
+	}
+
+	rawInstance[string("collection_interval")] = int(c.interval.Seconds())
+
+	return yaml.Marshal(rawInstance)
+}
+
 // Configure the Python check from YAML data
 //
 //nolint:revive // TODO(AML) Fix revive linter
@@ -251,8 +270,8 @@ func (c *PythonCheck) Configure(senderManager sender.SenderManager, integrationC
 	}
 
 	// See if a collection interval was specified
-	if commonOptions.MinCollectionInterval > 0 {
-		c.interval = time.Duration(commonOptions.MinCollectionInterval) * time.Second
+	if commonOptions.GetCollectionInterval() > 0 {
+		c.interval = time.Duration(commonOptions.GetCollectionInterval()) * time.Second
 	}
 
 	// Disable default hostname if specified
@@ -275,8 +294,14 @@ func (c *PythonCheck) Configure(senderManager sender.SenderManager, integrationC
 		}
 	}
 
+	// [sts] Make sure collection_interval is always set
+	updatedInstanceData, err := c.setCollectionIntervalToInstanceData(data)
+	if err != nil {
+		return err
+	}
+
 	cInitConfig := TrackedCString(string(initConfig))
-	cInstance := TrackedCString(string(data))
+	cInstance := TrackedCString(string(updatedInstanceData))
 	cCheckID := TrackedCString(string(c.id))
 	cCheckName := TrackedCString(c.ModuleName)
 	defer C._free(unsafe.Pointer(cInitConfig))
@@ -408,4 +433,14 @@ func pythonCheckFinalizer(c *PythonCheck) {
 			C.rtloader_decref(rtloader, c.instance)
 		}
 	}(c)
+}
+
+// GetFeatures returns the features supported by StackState
+func (c *PythonCheck) GetFeatures() features.Features {
+	return c.features
+}
+
+// SetFeatures sets the features supported by StackState
+func (c *PythonCheck) SetFeatures(features features.Features) {
+	c.features = features
 }

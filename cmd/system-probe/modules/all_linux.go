@@ -2,8 +2,10 @@
 // under the Apache License Version 2.0.
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
-
 //go:build linux
+// +build linux
+
+
 
 // Package modules is all the module definitions for system-probe
 package modules
@@ -11,7 +13,7 @@ package modules
 import (
 	"time"
 
-	"github.com/DataDog/datadog-agent/cmd/system-probe/api/module"
+	"github.com/StackVista/stackstate-agent/cmd/system-probe/api/module"
 )
 
 // All System Probe modules should register their factories here

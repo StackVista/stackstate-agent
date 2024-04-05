@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build docker && linux
+// +build docker,linux
 
 // As we compare some paths, running the tests on Linux only
 
@@ -17,7 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/config"
 )
 
 const (
@@ -41,6 +42,7 @@ instances:
     collect_image_size: true
     collect_disk_stats: true
     collect_exit_codes: true
+    collect_container_topology: true
     exclude: ["name:test", "container_name:some_image.*", "badly_formated", "image_name:some_image_2", "image:some_image_3"]
     include: ["unknown_key:test", "image:some_image_3"]
     tags: ["tag:value", "value"]
@@ -95,6 +97,7 @@ func TestConvertDocker(t *testing.T) {
 	newConf, err := os.ReadFile(filepath.Join(dir, "docker.yaml"))
 	require.Nil(t, err)
 
+	// failing
 	assert.Equal(t, dockerNewConf, string(newConf))
 
 	assert.Equal(t, true, config.Datadog.GetBool("exclude_pause_container"))

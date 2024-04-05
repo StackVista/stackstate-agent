@@ -1,0 +1,78 @@
+---
+version: '2.4'
+
+services:
+  zookeeper:
+    extends:
+      file: docker-compose.base.yml
+      service: zookeeper
+
+  kafka:
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    extends:
+      file: docker-compose.base.yml
+      service: kafka
+
+  receiver:
+    depends_on:
+      kafka:
+        condition: service_healthy
+    extends:
+      file: docker-compose.base.yml
+      service: receiver
+
+  correlate:
+    depends_on:
+      kafka:
+        condition: service_healthy
+    extends:
+      file: docker-compose.base.yml
+      service: correlate
+
+  topic-api:
+    depends_on:
+      kafka:
+        condition: service_healthy
+    extends:
+      file: docker-compose.base.yml
+      service: topic-api
+
+  db:
+    extends:
+      file: docker-compose.base.yml
+      service: db
+
+  stackstate-books-app:
+    depends_on:
+      db:
+        condition: service_healthy
+      stackstate-agent:
+        condition: service_started
+    extends:
+      file: docker-compose.base.yml
+      service: stackstate-books-app
+
+  stackstate-authors-app:
+    depends_on:
+      db:
+        condition: service_healthy
+      stackstate-agent:
+        condition: service_started
+    extends:
+      file: docker-compose.base.yml
+      service: stackstate-authors-app
+
+  traefik:
+    depends_on:
+      - stackstate-books-app
+      - stackstate-authors-app
+    extends:
+      file: docker-compose.base.yml
+      service: traefik
+
+  stackstate-agent:
+    extends:
+      file: docker-compose.base.yml
+      service: stackstate-agent

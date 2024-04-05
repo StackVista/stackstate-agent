@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build windows
+// +build windows
 
 // Package service implements the Windows Service for the core agent
 package service

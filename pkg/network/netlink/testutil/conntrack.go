@@ -18,7 +18,7 @@ import (
 	"strings"
 	"testing"
 
-	nettestutil "github.com/DataDog/datadog-agent/pkg/network/testutil"
+	nettestutil "github.com/StackVista/stackstate-agent/pkg/network/testutil"
 )
 
 var curDir string

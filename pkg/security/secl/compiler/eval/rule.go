@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/DataDog/datadog-agent/pkg/security/secl/compiler/ast"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/compiler/ast"
 )
 
 // RuleID - ID of a Rule

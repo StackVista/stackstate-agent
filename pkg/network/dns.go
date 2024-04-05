@@ -8,7 +8,7 @@ package network
 import (
 	"syscall"
 
-	"github.com/DataDog/datadog-agent/pkg/network/dns"
+	"github.com/StackVista/stackstate-agent/pkg/network/dns"
 )
 
 // DNSKey generates a key suitable for looking up DNS stats based on a ConnectionStats object

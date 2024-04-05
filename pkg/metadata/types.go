@@ -9,7 +9,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/serializer"
+	"github.com/StackVista/stackstate-agent/pkg/serializer"
 )
 
 // Collector is anything capable to collect and send metadata payloads

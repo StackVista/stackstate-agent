@@ -1,4 +1,4 @@
-module github.com/DataDog/datadog-agent/pkg/security/secl
+module github.com/StackVista/stackstate-agent/pkg/security/secl
 
 go 1.21
 

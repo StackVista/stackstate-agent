@@ -3,7 +3,8 @@
 // This product includes software developed at Datadog (https://www.datadoghq.com/).
 // Copyright 2016-present Datadog, Inc.
 
-//go:build cri && !windows
+//go:build cri
+// +build cri
 
 // Note: CRI is supported on Windows. However, these test don't work on Windows
 // because the `kubernetes/pkg/kubelet/cri/remote/fake` Windows build only works

@@ -233,6 +233,44 @@ func (w *TraceWriter) resetBuffer() {
 
 const headerLanguages = "X-Datadog-Reported-Languages"
 
+// stsTracePayload converts Datadog TracerPayloads to sts TracePayloads
+func (w *TraceWriter) stsTracePayload() stspb.TracePayload {
+	var traces []*stspb.APITrace
+	for _, tp := range w.tracerPayloads {
+		var spans []*stspb.Span
+		for _, chunk := range tp.Chunks {
+			for _, span := range chunk.Spans {
+				spans = append(spans, &stspb.Span{
+					Service:  span.Service,
+					Name:     span.Name,
+					Resource: span.Resource,
+					TraceID:  span.TraceID,
+					SpanID:   span.SpanID,
+					ParentID: span.ParentID,
+					Start:    span.Start,
+					Duration: span.Duration,
+					Error:    span.Error,
+					Meta:     span.Meta,
+					Metrics:  span.Metrics,
+					Type:     span.Type,
+				})
+			}
+			traces = append(traces, &stspb.APITrace{
+				TraceID:   chunk.Spans[0].TraceID,
+				Spans:     spans,
+				StartTime: 0,
+				EndTime:   0,
+			})
+		}
+	}
+	return stspb.TracePayload{
+		HostName:     w.hostname,
+		Env:          w.env,
+		Traces:       traces,
+		Transactions: []*stspb.Span{}, // [sts]
+	}
+}
+
 func (w *TraceWriter) flush() {
 	if len(w.tracerPayloads) == 0 {
 		// nothing to do
@@ -243,6 +281,7 @@ func (w *TraceWriter) flush() {
 	defer w.resetBuffer()
 
 	log.Debugf("Serializing %d tracer payloads.", len(w.tracerPayloads))
+	/* sts
 	p := pb.AgentPayload{
 		AgentVersion:       w.agentVersion,
 		HostName:           w.hostname,

@@ -23,7 +23,7 @@ def build(
     build_exclude=None,
     flavor=AgentFlavor.base.name,
     incremental_build=False,
-    major_version='7',
+    major_version='3',
     python_runtimes='3',
     arch="x64",
     go_mod="mod",

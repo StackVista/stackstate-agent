@@ -14,14 +14,14 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/cache"
-	"github.com/DataDog/datadog-agent/pkg/util/cloudproviders/azure"
-	"github.com/DataDog/datadog-agent/pkg/util/cloudproviders/gce"
-	"github.com/DataDog/datadog-agent/pkg/util/clusteragent"
-	"github.com/DataDog/datadog-agent/pkg/util/ec2"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/hostinfo"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/cache"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders/azure"
+	"github.com/StackVista/stackstate-agent/pkg/util/cloudproviders/gce"
+	"github.com/StackVista/stackstate-agent/pkg/util/clusteragent"
+	"github.com/StackVista/stackstate-agent/pkg/util/ec2"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/hostinfo"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 const (
@@ -76,15 +76,20 @@ func getClusterName(ctx context.Context, data *clusterNameData, hostname string)
 		data.clusterName = config.Datadog.GetString("cluster_name")
 		if data.clusterName != "" {
 			log.Infof("Got cluster name %s from config", data.clusterName)
-			// the host alias "hostname-clustername" must not exceed 255 chars
-			hostAlias := hostname + "-" + data.clusterName
-			if !validClusterName.MatchString(data.clusterName) || len(hostAlias) > 255 {
-				log.Errorf("\"%s\" isn’t a valid cluster name. It must be dot-separated tokens where tokens "+
-					"start with a lowercase letter followed by lowercase letters, numbers, or "+
-					"hyphens, and cannot end with a hyphen nor have a dot adjacent to a hyphen and \"%s\" must not "+
-					"exceed 255 chars", data.clusterName, hostAlias)
-				log.Errorf("As a consequence, the cluster name provided by the config will be ignored")
-				data.clusterName = ""
+			// [sts] skip cluster name validation by default
+			skipFlagIsDefined := config.Datadog.IsSet("skip_validate_clustername")
+			skipValidateClusterName := !skipFlagIsDefined || config.Datadog.GetBool("skip_validate_clustername")
+			if !skipValidateClusterName {
+				// the host alias "hostname-clustername" must not exceed 255 chars
+				hostAlias := hostname + "-" + data.clusterName
+				if !validClusterName.MatchString(data.clusterName) || len(hostAlias) > 255 {
+					log.Errorf("\"%s\" isn’t a valid cluster name. It must be dot-separated tokens where tokens "+
+						"start with a lowercase letter followed by lowercase letters, numbers, or "+
+						"hyphens, and cannot end with a hyphen nor have a dot adjacent to a hyphen and \"%s\" must not "+
+						"exceed 255 chars", data.clusterName, hostAlias)
+					log.Errorf("As a consequence, the cluster name provided by the config will be ignored")
+					data.clusterName = ""
+				}
 			}
 		}
 

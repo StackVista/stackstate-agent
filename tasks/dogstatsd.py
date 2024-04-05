@@ -31,7 +31,7 @@ def build(
     static=False,
     build_include=None,
     build_exclude=None,
-    major_version='7',
+    major_version='',
     arch="x64",
     go_mod="mod",
 ):

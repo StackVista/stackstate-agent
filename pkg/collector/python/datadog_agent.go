@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build python
+// +build python
 
 package python
 
@@ -68,6 +69,28 @@ func GetClusterName(clusterName **C.char) {
 	goClusterName := clustername.GetRFC1123CompliantClusterName(context.TODO(), goHostname)
 	// clusterName will be free by rtloader when it's done with it
 	*clusterName = TrackedCString(goClusterName)
+}
+
+// GetPid exposes the current pid of the agent to Python checks.
+//export GetPid
+func GetPid(pid **C.char) {
+	goPid := os.Getpid()
+	// pid will be free by rtloader when it's done with it
+	*pid = TrackedCString(strconv.Itoa(goPid))
+}
+
+// GetCreateTime exposes the current pid create time of the agent to Python checks.
+//export GetCreateTime
+func GetCreateTime(createTime **C.char) {
+	pid := os.Getpid()
+	var goCreateTime int64
+	if ct, err := collectorutils.GetProcessCreateTime(int32(pid)); err != nil {
+		log.Errorf("datadog_agent: could not get create time for process %d: %s", pid, err)
+	} else {
+		goCreateTime = ct
+	}
+	// createTime will be free by rtloader when it's done with it
+	*createTime = TrackedCString(strconv.FormatInt(goCreateTime, 10))
 }
 
 // TracemallocEnabled exposes the tracemalloc configuration of the agent to Python checks.

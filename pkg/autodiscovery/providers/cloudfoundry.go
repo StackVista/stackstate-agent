@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 //
 //go:build clusterchecks
+// +build clusterchecks
 
 //nolint:revive // TODO(PLINT) Fix revive linter
 package providers

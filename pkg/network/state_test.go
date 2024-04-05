@@ -1655,7 +1655,7 @@ func testHTTPStats(t *testing.T, aggregateByStatusCode bool) {
 
 	// Register client & pass in HTTP stats
 	state := newDefaultState()
-	delta := state.GetDelta("client", latestEpochTime(), []ConnectionStats{c}, nil, usmStats)
+	delta := state.GetDelta("client", latestEpochTime(), []ConnectionStats{c}, nil, &http.MonitorReport{Requests: httpStats})
 
 	// Verify connection has HTTP data embedded in it
 	assert.Len(t, delta.HTTP, 1)
@@ -1751,7 +1751,7 @@ func testHTTPStatsWithMultipleClients(t *testing.T, aggregateByStatusCode bool) 
 	c.LastUpdateEpoch = latestEpochTime()
 	state.StoreClosedConnections([]ConnectionStats{c})
 
-	delta := state.GetDelta(client1, latestEpochTime(), nil, nil, getStats("/testpath"))
+	delta := state.GetDelta(client1, latestEpochTime(), nil, nil, &http.MonitorReport{Requests: getStats("/testpath")})
 	assert.Len(t, delta.HTTP, 1)
 
 	// Verify that the HTTP stats were also stored in the second client
@@ -1766,11 +1766,11 @@ func testHTTPStatsWithMultipleClients(t *testing.T, aggregateByStatusCode bool) 
 	state.StoreClosedConnections([]ConnectionStats{c})
 
 	// Pass in new HTTP stats to the first client
-	delta = state.GetDelta(client1, latestEpochTime(), nil, nil, getStats("/testpath2"))
+	delta = state.GetDelta(client1, latestEpochTime(), nil, nil, &http.MonitorReport{Requests: getStats("/testpath2")})
 	assert.Len(t, delta.HTTP, 1)
 
 	// And the second client
-	delta = state.GetDelta(client2, latestEpochTime(), nil, nil, getStats("/testpath3"))
+	delta = state.GetDelta(client2, latestEpochTime(), nil, nil, &http.MonitorReport{Requests: getStats("/testpath3")})
 	assert.Len(t, delta.HTTP, 2)
 
 	// Verify that the third client also accumulated both new HTTP stats

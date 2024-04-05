@@ -8,7 +8,7 @@
 package tracer
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/network"
+	"github.com/StackVista/stackstate-agent/pkg/network"
 )
 
 // shouldSkipConnection returns whether or not the tracer should ignore a given connection:

@@ -13,8 +13,8 @@ import (
 	"html"
 	"net/http"
 
-	"github.com/DataDog/datadog-agent/pkg/api/util"
-	"github.com/DataDog/datadog-agent/pkg/config/settings"
+	"github.com/StackVista/stackstate-agent/pkg/api/util"
+	"github.com/StackVista/stackstate-agent/pkg/config/settings"
 )
 
 type runtimeSettingsHTTPClient struct {

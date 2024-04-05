@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build !windows
+// +build !windows
 
 package disk
 
@@ -29,6 +30,9 @@ var (
 type Check struct {
 	core.CheckBase
 	cfg *diskConfig
+	// sts
+	// topologyCollector collects all disk topology and produces it using the Batcher
+	topologyCollector *TopologyCollector
 }
 
 // Run executes the check
@@ -38,7 +42,7 @@ func (c *Check) Run() error {
 		return err
 	}
 
-	err = c.collectPartitionMetrics(sender)
+	partitions, err := c.collectPartitionMetrics(sender)
 	if err != nil {
 		return err
 	}
@@ -48,15 +52,25 @@ func (c *Check) Run() error {
 	}
 	sender.Commit()
 
+	//sts
+	// produce disk topology
+	err = c.topologyCollector.BuildTopology(partitions)
+	if err != nil {
+		return err
+	}
+	//sts
+
 	return nil
 }
 
 func (c *Check) collectPartitionMetrics(sender sender.Sender) error {
 	partitions, err := diskPartitions(true)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	// sts - collect disk partitions to create host topology
+	parts := make([]disk.PartitionStat, 0)
 	for _, partition := range partitions {
 		if c.excludeDisk(partition.Mountpoint, partition.Device, partition.Fstype) {
 			continue
@@ -65,7 +79,7 @@ func (c *Check) collectPartitionMetrics(sender sender.Sender) error {
 		// Get disk metrics here to be able to exclude on total usage
 		usage, err := diskUsage(partition.Mountpoint)
 		if err != nil {
-			log.Warnf("Unable to get disk metrics of %s mount point: %s", partition.Mountpoint, err)
+			log.Debugf("Unable to get disk metrics of %s mount point: %s", partition.Mountpoint, err)
 			continue
 		}
 
@@ -90,10 +104,13 @@ func (c *Check) collectPartitionMetrics(sender sender.Sender) error {
 
 		tags = c.applyDeviceTags(partition.Device, partition.Mountpoint, tags)
 
+		// sts - keep the partitions
+		parts = append(parts, partition)
+
 		c.sendPartitionMetrics(sender, usage, tags)
 	}
 
-	return nil
+	return parts, nil
 }
 
 func (c *Check) collectDiskMetrics(sender sender.Sender) error {

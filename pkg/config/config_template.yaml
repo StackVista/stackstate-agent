@@ -8,6 +8,10 @@
 ## The Datadog API key used by your Agent to submit metrics and events to Datadog.
 ## Create a new API key here: https://app.datadoghq.com/organization-settings/api-keys .
 ## Read more about API keys here: https://docs.datadoghq.com/account_management/api-app-keys/#api-keys .
+## @env STS_API_KEY - string - required
+## The Datadog API key to associate your Agent's data with your organization.
+## Create a new API key here: https://app.datadoghq.com/account/settings
+#
 api_key:
 
 ## @param app_key - string - optional
@@ -25,8 +29,11 @@ api_key:
 ## Set to 'us5.datadoghq.com' to send data to the US5 site.
 ## Set to 'ap1.datadoghq.com' to send data to the AP1 site.
 ## Set to 'ddog-gov.com' to send data to the US1-FED site.
+## @param sts_url - string - required
+## @env STS_URL - string - required
+## The host of the StackState intake server to send data to
 #
-# site: datadoghq.com
+sts_url:
 
 ## @param dd_url - string - optional - default: https://app.datadoghq.com
 ## @env DD_DD_URL - string - optional - default: https://app.datadoghq.com
@@ -44,8 +51,11 @@ api_key:
 ## @env DD_PROXY_HTTPS - string - optional
 ## @env DD_PROXY_NO_PROXY - space separated list of strings - optional
 ## If you need a proxy to connect to the Internet, provide it here (default:
-## disabled). Refer to https://docs.datadoghq.com/agent/proxy/ to understand how to use these settings.
-## For Logs proxy information, refer to https://docs.datadoghq.com/agent/proxy/#proxy-for-logs
+## disabled). You can use the 'no_proxy' list to specify hosts that should
+## bypass the proxy. These settings might impact your checks requests, please
+## refer to the specific check documentation for more details. Environment
+## variables STS_PROXY_HTTP, STS_PROXY_HTTPS and STS_PROXY_NO_PROXY (space-separated string)
+## will override the values set here. Refer to https://docs.stackstate.com/setup/agent/advanced-agent-configuration/
 #
 # proxy:
 #   https: http://<USERNAME>:<PASSWORD>@<PROXY_SERVER_FOR_HTTPS>:<PORT>
@@ -57,7 +67,6 @@ api_key:
 ## @param skip_ssl_validation - boolean - optional - default: false
 ## @env DD_SKIP_SSL_VALIDATION - boolean - optional - default: false
 ## Setting this option to "true" tells the Agent to skip validation of SSL/TLS certificates.
-#
 # skip_ssl_validation: false
 
 ## @param sslkeylogfile - string - optional - default: ""
@@ -100,7 +109,6 @@ api_key:
 ## @env DD_HOSTNAME_FQDN - boolean - optional - default: false
 ## When the Agent relies on the OS to determine the hostname, make it use the
 ## FQDN instead of the short hostname. Recommended value: true
-## More information at https://dtdg.co/flag-hostname-fqdn
 #
 # hostname_fqdn: false
 
@@ -465,8 +473,8 @@ api_key:
 #
 # gce_metadata_timeout: 1000
 
-## @param azure_hostname_style - string - optional - default: "os"
-## @env DD_AZURE_HOSTNAME_STYLE - string - optional - default: "os"
+## @param azure_hostname_style - string - optional - default: "name"
+## @env DD_AZURE_HOSTNAME_STYLE - string - optional - default: "name"
 ## Changes how agent hostname is set on Azure virtual machines.
 ##
 ## Possible values:
@@ -724,14 +732,17 @@ api_key:
 ## Metadata collection should always be enabled, except if you are running several
 ## agents/dsd instances per host. In that case, only one Agent should have it on.
 ## WARNING: disabling it on every Agent leads to display and billing issues.
-#
-# enable_metadata_collection: true
+# [sts] disable metadata collection
+enable_metadata_collection: false
+
+# [sts] disable inventories, our backend doesn't support this payload
+inventories_enabled: false
 
 ## @param enable_gohai - boolean - optional - default: true
 ## @env DD_ENABLE_GOHAI - boolean - optional - default: true
 ## Enable the gohai collection of systems data.
-#
-# enable_gohai: true
+# [sts] disable gohai collection
+enable_gohai: false
 
 ## @param server_timeout - integer - optional - default: 30
 ## @env DD_SERVER_TIMEOUT - integer - optional - default: 30
@@ -1231,14 +1242,15 @@ api_key:
 ## Uncomment this parameter and the one below to enable them.
 ## See https://docs.datadoghq.com/agent/apm/
 #
-# apm_config:
+# [STS]
+apm_config:
 
   ## @param enabled - boolean - optional - default: true
   ## @env DD_APM_ENABLED - boolean - optional - default: true
   ## Set to true to enable the APM Agent.
-  #
-  # enabled: true
-
+  # [STS]
+  enabled: true
+  apm_sts_url:
   ## @param env - string - optional - default: none
   ## @env DD_APM_ENV - string - optional - default: none
   ## The environment tag that Traces should be tagged with.
@@ -1254,6 +1266,8 @@ api_key:
   ## Set to 0 to disable the HTTP receiver.
   #
   # receiver_port: 8126
+  # [STS] default
+  receiver_port: 8126
 
   ## @param receiver_socket - string - optional
   ## @env DD_APM_RECEIVER_SOCKET - string - optional
@@ -1266,8 +1280,8 @@ api_key:
   ## @env DD_APM_NON_LOCAL_TRAFFIC - boolean - optional - default: false
   ## Set to true so the Trace Agent listens for non local traffic,
   ## i.e if Traces are being sent to this Agent from another host/container
-  #
-  # apm_non_local_traffic: false
+  # [STS] default
+  apm_non_local_traffic: true
 
   ## @param apm_dd_url - string - optional
   ## @env DD_APM_DD_URL - string - optional
@@ -1632,7 +1646,7 @@ api_key:
 ## Uncomment this parameter and the one below to enable them.
 ## See https://docs.datadoghq.com/graphing/infrastructure/process/
 #
-# process_config:
+process_config:
 
   ## @param process_collection - custom object - optional
   ## Specifies settings for collecting processes.
@@ -1656,7 +1670,10 @@ api_key:
   ##    * "true"     : The Agent collects containers and processes information.
   ##    * "disabled" : The Agent process collection is disabled.
   #
-  # enabled: "true"
+  # [STS] default
+  enabled: "true"
+  process_sts_url:
+  # /[STS] default
 
   ## @param expvar_port - string - optional - default: 6062
   ## @env DD_PROCESS_CONFIG_EXPVAR_PORT - string - optional - default: 6062
@@ -1675,22 +1692,59 @@ api_key:
   #
   # log_file: <PROCESS_LOG_FILE_PATH>
 
-  ## @param intervals - custom object - optional - default: 10s for normal checks and 2s for others.
-  ## @env DD_PROCESS_CONFIG_INTERVALS_CONTAINER - integer - optional - default: 10
-  ## @env DD_PROCESS_CONFIG_INTERVALS_CONTAINER_REALTIME - integer - optional - default: 2
-  ## @env DD_PROCESS_CONFIG_INTERVALS_PROCESS - integer - optional - default: 10
-  ## @env DD_PROCESS_CONFIG_INTERVALS_PROCESS_REALTIME - integer - optional - default: 2
-  ## The interval, in seconds, at which the Agent runs each check. If you want consistent
-  ## behavior between real-time, set the `container_realtime` and `process_realtime` intervals to 10.
+  ## @param intervals - custom object - optional - default: 30s
+  ## @env DD_PROCESS_CONFIG_INTERVALS_CONTAINER - integer - optional - default: 30
+  ## @env DD_PROCESS_CONFIG_INTERVALS_PROCESS - integer - optional - default: 30
+  ## @env DD_PROCESS_CONFIG_INTERVALS_CONNECTIONS - integer - optional - default: 30
+  ## The interval, in seconds, at which the Agent runs each check.
+  # Uncomment the lines below to configure check interval overrides for the process agent when installing from deb/rpm/msi
   #
   # intervals:
-  #   container: 10
-  #   container_realtime: 2
-  #   process: 10
-  #   process_realtime: 2
+  #   container: 30
+  #   process: 30
+  #   connections: 30
+
+  ## @param relation_cache_duration_min - integer - optional - default: 5
+  ## [sts] Relation Cache is used to keep state of the known network relations for this agent, with items expiring after relation_cache_duration minutes. The default is 5 minutes.
+  #
+  # relation_cache_duration_min: 5
+
+  ## @param filters - custom object - optional
+  ## [sts] Filters are used to filter out processes or network connections based on some condition
+  #
+  #  filters:
+  ##   The Short-Lived Processes filter is used to filter out process that are observed for less than x seconds, with the default being 60 seconds.
+  #    short_lived_processes:
+  #      enabled: true
+  #      qualifier_secs: 60
+  ##   The Short-Lived Relations filter is used to filter out network relations that are observed for less than x seconds, with the default being 60 seconds.
+  ##   Short-Lived network relations are defined as network connections that do not occur frequently between processes / services. Multiple short-lived connections
+  ##   between the same processes / services are considered a Long-Lived network relation, while a once-off network connection is filtered out and not reported to StackState.
+  #    short_lived_network_relations:
+  #      enabled: true
+  #      qualifier_secs: 60
+
+  ## [STS] DEFAULTS for agent 2.6.0
+  ##  Process blacklisting is used to filter out unwanted processes and not report them to StackState.
+  process_blacklist:
+    #    patterns:
+    #      - "regex-pattern"
+    ##    Inclusions override the blacklist patterns, these are used to include process that consume a lot of resources.
+    ##    Each inclusion type: top_cpu, top_io_read, top_io_write and top_mem have an amount of processes that get's considered
+    ##    as the top x resource using processes. For top_cpu and top_mem there is a threshold that needs to be met first, meaning
+    ##    the process needs to consume more resource % than the threshold.
+    inclusions:
+      amount_top_cpu_pct_usage: 3
+      cpu_pct_usage_threshold: 20
+      amount_top_io_read_usage: 3
+      amount_top_io_write_usage: 3
+      amount_top_mem_usage: 3
+      mem_usage_threshold: 35
+      # /[STS] DEFAULTS
 
   ## @param process_discovery - custom object - optional
   ## Specifies custom settings for the `process_discovery` object.
+  #
   # process_discovery:
       ## @param enabled - boolean - optional - default: true
       ## Toggles the `process_discovery` check. If enabled, this check gathers information about running integrations.
@@ -1713,6 +1767,7 @@ api_key:
   ## The number of check results to buffer in memory when a POST fails.
   #
   # queue_size: 256
+  queue_size: 10
 
   ## @param process_queue_bytes - integer - optional - default: 60000000
   ## @env DD_PROCESS_CONFIG_PROCESS_QUEUE_BYTES - integer - optional - default: 60000000
@@ -1769,6 +1824,37 @@ api_key:
   ## Disable realtime process and container checks
   #
   # disable_realtime_checks: false
+
+# [STS] defaults
+network_tracer_config:
+  network_tracing_enabled: "true"
+  initial_connections_from_proc: "true"
+# /[STS] defaults
+
+{{- if .NetworkTracer }}
+# Network tracer specific settings
+#
+# network_tracer_config:
+#   # A boolean indicating the enabled state of the network tracer.
+#   network_tracing_enabled: "true"
+#   # The full path to the file where network-tracer logs will be written.
+#   log_file: /var/log/stackstate-agent/process_agent.log
+#   # An integer indicating the amount of seconds for the retry interval for initializing the network tracer.
+#   network_tracer_retry_init_duration_sec: 5
+#   # An integer indicating the amount of retries to use for initializing the network tracer.
+#   network_tracer_retry_init_amount: 3
+#   # Whenever debugging statements of eBPF code of network tracer should be redirected to the agent log
+#   ebpf_debuglog_enabled: "false"
+#   # A boolean indicating the enabled state of the protocol inspection.
+#   protocol_inspection_enabled: "true"
+#   http_metrics:
+#     # Specifies which algorithm to use to collapse measurements: collapsing_lowest_dense, collapsing_highest_dense, unbounded
+#     sketch_type: collapsing_lowest_dense
+#     # A maximum number of bins of the ddSketch we use to store percentiles
+#     max_num_bins: 1024
+#     # Desired accuracy for computed percentiles. 0.01 means, for example, we can say that p99 is 100ms +- 1ms
+#     accuracy: 0.01
+{{ end -}}
 
 {{- if .InternalProfiling -}}
   ## @param profiling - custom object - optional
@@ -3572,6 +3658,14 @@ api_key:
 # kubernetes_ad_tags_disabled:
 #   - kube_service
 
+## @param skip_validate_clustername - boolean - optional - default: true
+## Disables the kubernetes cluster name validation in the StackState cluster agent.
+skip_validate_clustername: true
+
+# Docker Swarm
+# To collect Docker Swarm topology, collect_swarm_topology set to true.
+# collect_swarm_topology: true
+
 {{ end -}}
 {{- if .PrometheusScrape }}
 ## @param prometheus_scrape - custom object - optional
@@ -4187,3 +4281,8 @@ api_key:
   ## https://docs.datadoghq.com/tracing/trace_collection/library_injection_local
 
 {{end}}
+
+## features retrieves the features supported by the StackState backend so that we can toggle agent functionality
+#features:
+#  retry_interval_millis: 5000
+#  max_retries: 10

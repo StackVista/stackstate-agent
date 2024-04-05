@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build test
+// +build test
 
 package aggregator
 
@@ -570,8 +571,8 @@ func TestCheckSenderInterface(t *testing.T) {
 	assert.Equal(t, "my_service.can_connect", serviceCheck.CheckName)
 	assert.Equal(t, servicecheck.ServiceCheckOK, serviceCheck.Status)
 	assert.Equal(t, "my-hostname", serviceCheck.Host)
-	assert.Equal(t, []string{"foo", "bar"}, serviceCheck.Tags)
-	assert.Equal(t, "message", serviceCheck.Message)
+	assert.Equal(t, []string{"foo", "bar", fmt.Sprintf("status:%s", metrics.ServiceCheckOK.String())}, serviceCheck.Tags)
+	assert.Equal(t, "message", serviceCheck.Text)
 
 	event := <-s.eventChan
 	assert.Equal(t, submittedEvent, event)
@@ -644,8 +645,8 @@ func TestCheckSenderHostname(t *testing.T) {
 			assert.Equal(t, "my_service.can_connect", serviceCheck.CheckName)
 			assert.Equal(t, servicecheck.ServiceCheckOK, serviceCheck.Status)
 			assert.Equal(t, tc.expectedHostname, serviceCheck.Host)
-			assert.Equal(t, []string{"foo", "bar"}, serviceCheck.Tags)
-			assert.Equal(t, "message", serviceCheck.Message)
+			assert.Equal(t, []string{"foo", "bar", fmt.Sprintf("status:%s", metrics.ServiceCheckOK.String())}, serviceCheck.Tags)
+			assert.Equal(t, "message", serviceCheck.Text)
 
 			event := <-s.eventChan
 			assert.Equal(t, "Something happened", event.Title)

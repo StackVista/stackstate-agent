@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build zlib && optional_benchmarks
+// +build zlib,optional_benchmarks
 
 package serializer
 

@@ -1,4 +1,4 @@
-module github.com/DataDog/datadog-agent/pkg/util/winutil
+module github.com/StackVista/stackstate-agent/pkg/util/winutil
 
 go 1.21
 

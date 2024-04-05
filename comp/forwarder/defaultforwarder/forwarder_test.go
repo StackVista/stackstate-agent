@@ -140,7 +140,7 @@ func TestSubmitIfStopped(t *testing.T) {
 	assert.NotNil(t, forwarder.SubmitV1Series(nil, make(http.Header)))
 	assert.NotNil(t, forwarder.SubmitSeries(nil, make(http.Header)))
 	assert.NotNil(t, forwarder.SubmitV1Intake(nil, make(http.Header)))
-	assert.NotNil(t, forwarder.SubmitV1CheckRuns(nil, make(http.Header)))
+	assert.NotNil(t, forwarder.SubmitV1CheckRuns(nil, make(http.Header))) // sts - deleted
 }
 
 func TestCreateHTTPTransactions(t *testing.T) {

@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build kubelet
+// +build kubelet
 
 package kubelet
 
@@ -68,6 +69,9 @@ func TestHostnameProviderInvalid(t *testing.T) {
 
 	ctx := context.Background()
 	mockConfig := config.Mock(t)
+
+	// [sts] validtion is skipped by default, so we set it to "dont skip" explicitly
+	mockConfig.Set("skip_validate_clustername", false)
 
 	ku := &kubeUtilMock{}
 

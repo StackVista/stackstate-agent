@@ -18,7 +18,9 @@ from invoke.exceptions import Exit
 from .libs.common.color import color_message
 
 # constants
-DEFAULT_BRANCH = "main"
+ORG_PATH = "github.com/StackVista"  # sts
+DEFAULT_BRANCH = "master"  # sts
+REPO_PATH = "{}/stackstate-agent".format(ORG_PATH)  # sts
 GITHUB_ORG = "DataDog"
 REPO_NAME = "datadog-agent"
 GITHUB_REPO_NAME = f"{GITHUB_ORG}/{REPO_NAME}"
@@ -119,7 +121,7 @@ def get_build_flags(
     rtloader_root=None,
     python_home_2=None,
     python_home_3=None,
-    major_version='7',
+    major_version='3',
     python_runtimes='3',
     headless_mode=False,
 ):
@@ -188,6 +190,9 @@ def get_build_flags(
     if rtloader_common_headers:
         extra_cgo_flags += f" -I{rtloader_common_headers}"
     env['CGO_CFLAGS'] = os.environ.get('CGO_CFLAGS', '') + extra_cgo_flags
+
+    # sts
+    print(env)
 
     # if `static` was passed ignore setting rpath, even if `embedded_path` was passed as well
     if static:
@@ -298,8 +303,23 @@ def get_git_branch_name():
     """
     return check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]).decode('utf-8').strip()
 
+def query_version(ctx, git_sha_length=7, prefix=None, major_version_hint='3'):
+    # The old way of doing it relied on a tag existing for the version, which is no longer the case.
+    # So, instead of doing that, something like this is needed:
+    branch = get_git_branch_name()
+    get_commit_count_cmd="git rev-list --count {}".format(branch)
+    commit_count = ctx.run(get_commit_count_cmd, hide=True).stdout.strip()
+    get_commit_short_sha_cmd=f"git rev-parse --short={git_sha_length} {branch}"
+    commit_short_sha = ctx.run(get_commit_short_sha_cmd, hide=True).stdout.strip()
+    # version=f"{major_version}.0.0-k8s.git.{commit_count}.{commit_short_sha}"
+    version = "3.0.0"
+    pre = "k8s"
+    pipeline_id = os.getenv("CI_PIPELINE_IID", None)
 
-def query_version(ctx, git_sha_length=7, prefix=None, major_version_hint=None):
+    return version, pre, commit_count, commit_short_sha, pipeline_id
+
+
+def _query_version(ctx, git_sha_length=7, prefix=None, major_version_hint=None):
     # The string that's passed in will look something like this: 6.0.0-beta.0-1-g4f19118
     # if the tag is 6.0.0-beta.0, it has been one commit since the tag and that commit hash is g4f19118
     cmd = "git describe --tags --candidates=50"
@@ -446,7 +466,7 @@ def get_version(
     return str(version)
 
 
-def get_version_numeric_only(ctx, major_version='7'):
+def get_version_numeric_only(ctx, major_version='3'):
     # we only need the git info for the non omnibus builds, omnibus includes all this information by default
     version = ""
     pipeline_id = os.getenv("CI_PIPELINE_ID")
@@ -473,7 +493,8 @@ def get_version_numeric_only(ctx, major_version='7'):
 
 
 def load_release_versions(_, target_version):
-    with open("release.json", "r") as f:
+    print("[load_release_versions] Loading deps for version ", target_version)
+    with open("stackstate-deps.json", "r") as f:
         versions = json.load(f)
         if target_version in versions:
             # windows runners don't accepts anything else than strings in the
@@ -576,3 +597,14 @@ def timed(name="", quiet=False):
         res.duration = time.time() - start
         if not quiet:
             print(f"{name} completed in {res.duration:.2f}s")
+
+def do_go_rename(ctx, rename, at):
+    ctx.run("gofmt -l -w -r {} {}".format(rename, at))
+
+
+def do_sed_rename(ctx, rename, at):
+    ctx.run("sed -i '{}' {}".format(rename, at))
+
+
+def do_sed_rename_quoted(ctx, rename, at):
+    ctx.run("sed -i \"{}\" {}".format(rename, at))

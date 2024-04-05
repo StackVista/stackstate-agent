@@ -13,7 +13,7 @@ class Test:
         self.owners = self.__get_owners(owners)
 
     def __removeprefix(self, package):
-        return package[len(self.PACKAGE_PREFIX) :]
+        return package[len(self.PACKAGE_PREFIX):]
 
     def __find_file(self):
         # Find the *_test.go file in the package folder that has the test
@@ -120,7 +120,7 @@ class SlackMessage:
             )
 
     def __render_tests_section(self, buffer):
-        print(self.TEST_SECTION_HEADER, file=buffer)
+        print(self.TEST_SECTION_HEADER)  # , file=buffer)  #  [sts] - not used
         for (test_name, test_package), jobs in self.failed_tests.items():
             job_list = ", ".join(f"<{job['url']}|{job['name']}>" for job in jobs[: self.MAX_JOBS_PER_TEST])
             if len(jobs) > self.MAX_JOBS_PER_TEST:
@@ -154,7 +154,7 @@ class SlackMessage:
         if self.failed_tests:
             self.__render_tests_section(buffer)
         if self.coda:
-            print(self.coda, file=buffer)
+            print(self.coda)  # , file=buffer)  #  sts - not used
         return buffer.getvalue()
 
 

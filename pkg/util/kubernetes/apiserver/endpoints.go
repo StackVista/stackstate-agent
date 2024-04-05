@@ -4,16 +4,19 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build kubeapiserver
+// +build kubeapiserver
 
 package apiserver
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1 "k8s.io/api/core/v1"
 
-	dderrors "github.com/DataDog/datadog-agent/pkg/errors"
+	dderrors "github.com/StackVista/stackstate-agent/pkg/errors"
 )
 
 const kubeEndpointIDPrefix = "kube_endpoint_uid://"
@@ -40,4 +43,14 @@ func SearchTargetPerName(endpoints *v1.Endpoints, targetName string) (v1.Endpoin
 // EntityForEndpoints builds entity strings for Endpoints
 func EntityForEndpoints(namespace, name, ip string) string {
 	return fmt.Sprintf("%s%s/%s/%s", kubeEndpointIDPrefix, namespace, name, ip)
+}
+
+// GetEndpoints retrieves all the endpoints in the Kubernetes cluster across all namespaces.
+func (c *APIClient) GetEndpoints() ([]v1.Endpoints, error) {
+	endpointList, err := c.Cl.CoreV1().Endpoints(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return []v1.Endpoints{}, err
+	}
+
+	return endpointList.Items, nil
 }

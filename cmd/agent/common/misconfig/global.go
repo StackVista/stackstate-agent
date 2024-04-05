@@ -6,7 +6,7 @@
 // Package misconfig implements misconfiguration related types and functions
 package misconfig
 
-import "github.com/DataDog/datadog-agent/pkg/util/log"
+import "github.com/StackVista/stackstate-agent/pkg/util/log"
 
 // ToLog outputs warnings about common misconfigurations in the logs
 func ToLog(agent AgentType) {

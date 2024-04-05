@@ -1,0 +1,113 @@
+---
+version: '3'
+
+services:
+  zookeeper:
+    image: quay.io/stackstate/zookeeper:3.6.3-focal-20220316-r302.20220411.1232
+    ports:
+      - 2181:2181
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+    healthcheck:
+      test: [ "CMD-SHELL", "echo ruok | nc -w 2 127.0.0.1 2181" ]
+      interval: 5s
+      timeout: 30s
+      retries: 3
+    deploy:
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints: [ node.role == manager ]
+      resources:
+        limits:
+          memory: 1G
+
+  kafka:
+    image: quay.io/stackstate/kafka:2.8.0-focal-20220316-r108.20220405.1511
+    ports:
+      - 9092:9092
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: "kafka"
+      KAFKA_ADVERTISED_PORT: "9092"
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_CREATE_TOPICS: "sts_connection_beat_events:1:1,sts_correlate_endpoints:1:1,sts_generic_events:1:1,sts_intake_health:1:1,sts_multi_metrics:1:1,sts_state_events:1:1,sts_topo_agent_integrations:1:1,sts_topology_events:1:1,sts_topo_process_agents:1:1,sts_trace_events:1:1,sts_correlated_connections:1:1,sts_topo_docker-swarm_agents:1:1"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      DOCKER_API_VERSION: 1.22
+      KAFKA_HOME: "/opt/bitnami/kafka"
+    volumes:
+      - "./verify-or-create-topics.sh:/usr/local/bin/verify-or-create-topics.sh"
+    healthcheck:
+      test: [ "CMD-SHELL", "/usr/local/bin/verify-or-create-topics.sh" ]
+      interval: 10s
+      timeout: 65s
+      retries: 20
+    deploy:
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints: [ node.role == manager ]
+      resources:
+        limits:
+          memory: 1G
+
+  receiver:
+    image: "quay.io/stackstate/stackstate-receiver:${STACKSTATE_BRANCH}"
+    ports:
+      - 7077:7077
+      - 1618:1618
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_BROKERS: kafka:9092
+      STACKSTATE_RECEIVER_HTTP_LOG_LEVEL: DEBUG
+    deploy:
+      restart_policy:
+        condition: any
+      placement:
+        constraints: [ node.role == manager ]
+      resources:
+        limits:
+          memory: 1G
+
+  topic-api:
+    image: "quay.io/stackstate/stackstate-topic-api:${STACKSTATE_BRANCH}"
+    ports:
+      - 7070:7070
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_BROKERS: kafka:9092
+      ZOOKEEPER_QUORUM: kafka
+    deploy:
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints: [ node.role == manager ]
+      resources:
+        limits:
+          memory: 1G
+
+  stackstate-agent:
+    image: quay.io/stackstate/${SWARM_AGENT_DOCKER_REPO}:${AGENT_VERSION}
+    deploy:
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints: [ node.role == manager ]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/passwd:/etc/passwd:ro
+      - /sys/kernel/debug:/sys/kernel/debug
+    environment:
+      STS_API_KEY: "API_KEY"
+      STS_STS_URL: "http://receiver:7077/stsAgent"
+      STS_COLLECT_SWARM_TOPOLOGY: "true"
+      STS_PROCESS_AGENT_URL: "http://receiver:7077/stsAgent"
+      STS_PROCESS_AGENT_ENABLED: "false"
+      STS_APM_URL: "http://receiver:7077/stsAgent"
+      STS_APM_ENABLED: "false"
+      STS_LOG_LEVEL: "debug"
+      STS_LOG_TO_CONSOLE: "true"
+      DOCKER_SWARM: "true"

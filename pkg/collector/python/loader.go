@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build python
+// +build python
 
 package python
 
@@ -11,6 +12,7 @@ import (
 	"errors"
 	"expvar"
 	"fmt"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"strings"
 	"sync"
 	"unsafe"
@@ -27,7 +29,7 @@ import (
 	"github.com/DataDog/datadog-agent/pkg/tagset"
 	"github.com/DataDog/datadog-agent/pkg/version"
 
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 /*
@@ -224,6 +226,10 @@ func (cl *PythonCheckLoader) Load(senderManager sender.SenderManager, config int
 	C.rtloader_decref(rtloader, checkModule)
 
 	log.Debugf("python loader: done loading check %s (version %s)", moduleName, wheelVersion)
+
+	// [sts] register check handler
+	handler.GetCheckManager().RegisterCheckHandler(c, config.InitConfig, instance)
+
 	return c, nil
 }
 

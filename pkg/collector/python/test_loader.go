@@ -4,10 +4,12 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build python && test
+// +build python,test
 
 package python
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
 	"runtime"
 	"testing"
 

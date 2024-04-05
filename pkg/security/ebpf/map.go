@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build linux
+// +build linux
 
 // Package ebpf holds ebpf related files
 package ebpf
@@ -12,7 +13,7 @@ import (
 	"bytes"
 	"encoding/binary"
 
-	"github.com/DataDog/datadog-agent/pkg/security/secl/model"
+	"github.com/StackVista/stackstate-agent/pkg/security/secl/model"
 )
 
 // BytesMapItem describes a raw table key or value

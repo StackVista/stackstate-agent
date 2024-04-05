@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build kubelet
+// +build kubelet
 
 package kubelet
 
@@ -12,8 +13,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/DataDog/datadog-agent/pkg/util/docker"
-	"github.com/DataDog/datadog-agent/pkg/util/log"
+	"github.com/StackVista/stackstate-agent/pkg/util/docker"
+	"github.com/StackVista/stackstate-agent/pkg/util/log"
 )
 
 // connectionInfo contains potential kubelet's ips and hostnames

@@ -4,6 +4,7 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build orchestrator
+// +build orchestrator
 
 //nolint:revive // TODO(AML) Fix revive linter
 package types

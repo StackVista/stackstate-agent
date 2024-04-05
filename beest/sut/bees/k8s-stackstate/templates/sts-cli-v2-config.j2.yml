@@ -1,0 +1,7 @@
+contexts:
+  - name: default
+    context:
+      url: "{{ sts_url }}"
+      api-token: "{{ stackstate_api_token }}"
+      api-path: /api
+current-context: default

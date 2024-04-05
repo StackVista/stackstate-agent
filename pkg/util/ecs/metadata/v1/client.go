@@ -4,6 +4,7 @@
 // Copyright 2020-present Datadog, Inc.
 
 //go:build docker
+// +build docker
 
 // Package v1 provides an ECS client for v1 of API.
 package v1

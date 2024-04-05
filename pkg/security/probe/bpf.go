@@ -4,12 +4,13 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build linux
+// +build linux
 
 // Package probe holds probe related files
 package probe
 
 import (
-	"github.com/DataDog/datadog-agent/pkg/security/ebpf/kernel"
+	"github.com/StackVista/stackstate-agent/pkg/security/ebpf/kernel"
 )
 
 func getCheckHelperCallInputType(kernelVersion *kernel.Version) uint64 {

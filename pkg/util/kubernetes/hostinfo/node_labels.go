@@ -4,15 +4,16 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build kubelet
+// +build kubelet
 
 package hostinfo
 
 import (
 	"context"
 
-	"github.com/DataDog/datadog-agent/pkg/config"
-	"github.com/DataDog/datadog-agent/pkg/util/clusteragent"
-	"github.com/DataDog/datadog-agent/pkg/util/kubernetes/kubelet"
+	"github.com/StackVista/stackstate-agent/pkg/config"
+	"github.com/StackVista/stackstate-agent/pkg/util/clusteragent"
+	"github.com/StackVista/stackstate-agent/pkg/util/kubernetes/kubelet"
 )
 
 // NodeInfo is use to get Kubernetes Node metadata information

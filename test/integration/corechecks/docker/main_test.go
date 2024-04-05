@@ -8,6 +8,7 @@ package docker
 import (
 	"context"
 	"flag"
+	"github.com/StackVista/stackstate-agent/pkg/batcher"
 	"os"
 	"strings"
 	"testing"
@@ -152,12 +153,17 @@ func doRun(m *testing.M) int {
 	sender = mocksender.NewMockSender(dockerCheck.ID())
 	sender.SetupAcceptAll()
 
+	// Setup mock batcher
+	_ = batcher.NewMockBatcher()
+
 	// Setup docker check
 	dockerCfg := integration.Data(dockerCfgString)
 	dockerInitCfg := integration.Data("")
 	dockerCheck.Configure(sender.GetSenderManager(), integration.FakeConfigHash, dockerCfg, dockerInitCfg, "test")
-
-	dockerCheck.Run()
+	err := dockerCheck.Run()
+	if err != nil {
+		log.Errorf("Docker check run error: %s", err)
+	}
 	return m.Run()
 }
 

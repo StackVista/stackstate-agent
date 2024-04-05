@@ -283,3 +283,13 @@ func (c *CheckBase) GetSenderStats() (stats.SenderStats, error) {
 func (c *CheckBase) GetDiagnoses() ([]diagnosis.Diagnosis, error) {
 	return nil, nil
 }
+
+// GetFeatures returns the features supported by StackState
+func (c *CheckBase) GetFeatures() features.Features {
+	return c.features
+}
+
+// SetFeatures sets the features supported by StackState
+func (c *CheckBase) SetFeatures(features features.Features) {
+	c.features = features
+}

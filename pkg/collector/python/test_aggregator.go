@@ -4,11 +4,18 @@
 // Copyright 2016-present Datadog, Inc.
 
 //go:build python && test
+// +build python,test
 
 package python
 
 import (
+	"github.com/StackVista/stackstate-agent/pkg/autodiscovery/integration"
+	"github.com/StackVista/stackstate-agent/pkg/collector/check/handler"
+	"github.com/StackVista/stackstate-agent/pkg/collector/transactional/transactionbatcher"
+	"github.com/StackVista/stackstate-agent/pkg/health"
+	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 
 	"github.com/DataDog/datadog-agent/pkg/aggregator/mocksender"
 	"github.com/DataDog/datadog-agent/pkg/aggregator/sender"
@@ -188,11 +195,11 @@ func testSubmitServiceCheckEmptyHostame(t *testing.T) {
 }
 
 func testSubmitEvent(t *testing.T) {
-	sender := mocksender.NewMockSender(checkid.ID("testID"))
-	release := scopeInitCheckContext(sender.GetSenderManager())
-	defer release()
+	SetupTransactionalComponents()
+	mockTransactionalBatcher := transactionbatcher.GetTransactionalBatcher().(*transactionbatcher.MockTransactionalBatcher)
 
-	sender.SetupAcceptAll()
+	testCheck := &check.STSTestCheck{Name: "check-id-event-test"}
+	handler.GetCheckManager().RegisterCheckHandler(testCheck, integration.Data{}, integration.Data{})
 
 	ev := C.event_t{}
 	ev.title = C.CString("ev_title")
@@ -207,7 +214,10 @@ func testSubmitEvent(t *testing.T) {
 	tags := []*C.char{C.CString("tag1"), C.CString("tag2"), nil}
 	ev.tags = &tags[0]
 
-	SubmitEvent(C.CString("testID"), &ev)
+	checkId := C.CString(testCheck.String())
+
+	StartTransaction(checkId)
+	SubmitEvent(checkId, &ev)
 
 	expectedEvent := event.Event{
 		Title:          "ev_title",
@@ -220,7 +230,20 @@ func testSubmitEvent(t *testing.T) {
 		AggregationKey: "aggregation_key",
 		SourceTypeName: "source_type",
 	}
-	sender.AssertEvent(t, expectedEvent, 0)
+
+	time.Sleep(50 * time.Millisecond) // sleep a bit for everything to complete
+
+	actualTopology, found := mockTransactionalBatcher.GetCheckState(testCheck.ID())
+	assert.True(t, found, "no TransactionCheckInstanceBatchState found for check: %s", testCheck.ID())
+
+	expectedTopology := transactionbatcher.TransactionCheckInstanceBatchState{
+		Transaction: actualTopology.Transaction, // not asserting this specifically, it just needs to be present
+		Health:      map[string]health.Health{},
+		Events:      &metrics.IntakeEvents{Events: []metrics.Event{expectedEvent}},
+	}
+	assert.Equal(t, expectedTopology, actualTopology)
+
+	handler.GetCheckManager().UnsubscribeCheckHandler(testCheck.ID())
 }
 
 func testSubmitHistogramBucket(t *testing.T) {
