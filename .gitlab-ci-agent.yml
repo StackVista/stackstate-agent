@@ -179,15 +179,13 @@ deps_deb:
     - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
     - ls
     - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz . || echo "No go-pkg"
+    - ls -lah $CI_PROJECT_DIR/go-pkg.tar.gz
     - cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz . || echo "No go-bin"
     - cd $CI_PROJECT_DIR/vendor && tar czf $CI_PROJECT_DIR/vendor.tar.gz . || echo "No vendor"
   artifacts:
     <<: *artifacts_expire_in
     paths:
       - $CI_PROJECT_DIR/version.txt
-      - $CI_PROJECT_DIR/go-pkg.tar.gz
-      - $CI_PROJECT_DIR/go-bin.tar.gz
-      - $CI_PROJECT_DIR/vendor.tar.gz
   retry:
     max: 2
     when:
