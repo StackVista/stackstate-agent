@@ -24,7 +24,7 @@ stages:
 
 .configure_centos_env_script: &configure_centos_env_script |
   . /root/.gimme/envs/go1.16.7.env
-  . /root/miniconda3/etc/profile.d/conda.sh
+  . /root/miniforge3/etc/profile.d/conda.sh
   conda activate $CONDA_ENV
   mkdir -p /go/src/github.com/StackVista
   rm -rf /go/src/github.com/StackVista/stackstate-agent || true
@@ -34,7 +34,7 @@ stages:
   eval $(gimme)
 
 .configure_debian_env_script: &configure_debian_env_script |
-  . /root/miniconda3/etc/profile.d/conda.sh # TODO: check possibility to use bash from the start
+  . /root/miniforge3/etc/profile.d/conda.sh # TODO: check possibility to use bash from the start
   conda activate $CONDA_ENV
   mkdir -p /go/src/github.com/StackVista
   rm -rf /go/src/github.com/StackVista/stackstate-agent || true
@@ -65,7 +65,7 @@ stages:
     allow_failure: true
 
 # Merge train rules for agent v2
-.v2_merge_train_always: &v2_merge_train_always
+.merge_train_always: &merge_train_always
   # If the major version is 2, and it is the master branch or a tag, always execute this step
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
     when: always
@@ -86,137 +86,72 @@ stages:
     when: manual
     allow_failure: true
 
-.v2_merge_train_always_on_tag: &v2_merge_train_always_on_tag
+.merge_train_always_on_tag: &merge_train_always_on_tag
   - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_TAG
     when: always
     allow_failure: false
 
-.v2_merge_train_always_manual: &v2_merge_train_always_manual
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-    when: manual
-    allow_failure: true
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
-    when: manual
-    allow_failure: true
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
-    when: manual
-    allow_failure: true
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
-    when: never
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
-    when: manual
-    allow_failure: true
-
-.v2_merge_train_on_success: &v2_merge_train_on_success
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-    when: on_success
-    allow_failure: false
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
-    when: on_success
-    allow_failure: false
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
-    when: on_success
-    allow_failure: false
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
-    when: never
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
-    when: on_success
-    allow_failure: false
-
-.v2_merge_train_on_success_allow_failure: &v2_merge_train_on_success_allow_failure
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-    when: on_success
-    allow_failure: true
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
-    when: on_success
-    allow_failure: true
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
-    when: on_success
-    allow_failure: true
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
-    when: never
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
-    when: on_success
-    allow_failure: true
-
-.v2_merge_train_on_failure: &v2_merge_train_on_failure
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-    when: on_failure
-    allow_failure: false
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
-    when: on_failure
-    allow_failure: false
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
-    when: on_failure
-    allow_failure: false
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
-    when: never
-  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
-    when: on_failure
-    allow_failure: false
-
-# Merge train rules for all agents
-.merge_train_always: &merge_train_always
-  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-    when: always
-    allow_failure: false
-  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
-    when: always
-    allow_failure: false
-  - if: $CI_MERGE_REQUEST_IID
-    when: manual
-    allow_failure: true
-  - if: $CI_OPEN_MERGE_REQUESTS
-    when: never
-  - if: $CI_COMMIT_BRANCH
-    when: manual
-    allow_failure: true
-
 .merge_train_always_manual: &merge_train_always_manual
-  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
     when: manual
     allow_failure: true
-  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
     when: manual
     allow_failure: true
-  - if: $CI_MERGE_REQUEST_IID
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
     when: manual
     allow_failure: true
-  - if: $CI_OPEN_MERGE_REQUESTS
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
     when: never
-  - if: $CI_COMMIT_BRANCH
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
     when: manual
     allow_failure: true
 
 .merge_train_on_success: &merge_train_on_success
-  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
     when: on_success
     allow_failure: false
-  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
     when: on_success
     allow_failure: false
-  - if: $CI_MERGE_REQUEST_IID
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
     when: on_success
     allow_failure: false
-  - if: $CI_OPEN_MERGE_REQUESTS
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
     when: never
-  - if: $CI_COMMIT_BRANCH
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
     when: on_success
     allow_failure: false
 
-.merge_train_on_failure: &merge_train_on_failure
-  - if: ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
-    when: on_failure
-    allow_failure: false
-  - if: $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
-    when: on_failure
-    allow_failure: false
-  - if: $CI_MERGE_REQUEST_IID
-    when: on_failure
-    allow_failure: false
-  - if: $CI_OPEN_MERGE_REQUESTS
+.merge_train_on_success_allow_failure: &merge_train_on_success_allow_failure
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: on_success
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_success
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
+    when: on_success
+    allow_failure: true
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
     when: never
-  - if: $CI_COMMIT_BRANCH
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
+    when: on_success
+    allow_failure: true
+
+.merge_train_on_failure: &merge_train_on_failure
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && ($CI_COMMIT_TAG || $CI_COMMIT_REF_NAME == "master")
+    when: on_failure
+    allow_failure: false
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"
+    when: on_failure
+    allow_failure: false
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_MERGE_REQUEST_IID
+    when: on_failure
+    allow_failure: false
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $MAJOR_VERSION == $PRIMARY_MAJOR_VERSION && $CI_COMMIT_BRANCH
     when: on_failure
     allow_failure: false
 
@@ -719,7 +654,7 @@ pre_release_swarm_agent_image:
     - ./omnibus/package-scripts/publish_swarm_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_SWARM $CI_COMMIT_SHORT_SHA $STS_DOCKER_TEST_REPO $CI_COMMIT_SHORT_SHA
   rules:
     - *cluster_agent_manual
-    - *v2_merge_train_always_manual
+    - *merge_train_always_manual
 
 pre_release_trace_agent_image:
   <<: *pre_release_image
@@ -731,7 +666,7 @@ pre_release_trace_agent_image:
     - ./omnibus/package-scripts/publish_image.sh $CI_COMMIT_REF_NAME $STS_DOCKER_TEST_REPO_TRACE $CI_PROJECT_DIR/Dockerfiles/trace-agent $CI_COMMIT_SHORT_SHA "NOP"
   rules:
     - *cluster_agent_manual
-    - *v2_merge_train_always_manual
+    - *merge_train_always_manual
 
 pre_release_cluster_agent_image:
   <<: *pre_release_image
@@ -904,7 +839,7 @@ molecule_compose_create:
   <<: *molecule_create
   rules:
     - *compose_ignore_rule
-    - *v2_merge_train_always_manual
+    - *merge_train_always_manual
   variables:
     MOLECULE_SCENARIO: compose
 
@@ -913,7 +848,7 @@ molecule_compose_test:
   <<: *molecule_test
   rules:
     - *compose_ignore_rule
-    - *v2_merge_train_on_success
+    - *merge_train_on_success
   variables:
     MOLECULE_SCENARIO: compose
   dependencies:
@@ -926,7 +861,7 @@ molecule_compose_failure_cleanup:
   <<: *molecule_destroy
   rules:
     - *compose_ignore_rule
-    - *v2_merge_train_on_failure
+    - *merge_train_on_failure
   variables:
     MOLECULE_SCENARIO: compose
   needs:
@@ -937,7 +872,7 @@ molecule_compose_success_cleanup:
   <<: *molecule_destroy
   rules:
     - *compose_ignore_rule
-    - *v2_merge_train_on_success
+    - *merge_train_on_success
   variables:
     MOLECULE_SCENARIO: compose
   dependencies:
@@ -1037,8 +972,8 @@ beest_k8s_1_25_dockerd_create:
   <<: *beest_k8s_1_25_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_always_on_tag
-    - *v2_merge_train_always_manual
+    - *merge_train_always_on_tag
+    - *merge_train_always_manual
 
 beest_k8s_1_25_containerd_create:
   <<: *beest
@@ -1046,8 +981,8 @@ beest_k8s_1_25_containerd_create:
   <<: *beest_k8s_1_25_containerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_always_on_tag
-    - *v2_merge_train_always_manual
+    - *merge_train_always_on_tag
+    - *merge_train_always_manual
 
 beest_k8s_1_29_containerd_create:
   <<: *beest
@@ -1055,7 +990,7 @@ beest_k8s_1_29_containerd_create:
   <<: *beest_k8s_1_29_containerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_always
+    - *merge_train_always
 
 beest_k8s_1_25_dockerd_test:
   <<: *beest
@@ -1063,7 +998,7 @@ beest_k8s_1_25_dockerd_test:
   <<: *beest_k8s_1_25_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_on_success
+    - *merge_train_on_success
     - when: never
   dependencies:
     - beest_k8s_1_25_dockerd_create
@@ -1078,7 +1013,7 @@ beest_k8s_1_25_containerd_test:
   <<: *beest_k8s_1_25_containerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_on_success
+    - *merge_train_on_success
     - when: never
   dependencies:
     - beest_k8s_1_25_containerd_create
@@ -1093,7 +1028,7 @@ beest_k8s_1_29_containerd_test:
   <<: *beest_k8s_1_29_containerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_on_success
+    - *merge_train_on_success
     - when: never
   dependencies:
     - beest_k8s_1_29_containerd_create
@@ -1108,7 +1043,7 @@ beest_k8s_1_25_dockerd_manual_cleanup:
   <<: *beest_k8s_1_25_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_always_manual
+    - *merge_train_always_manual
     - when: never
 
 beest_k8s_1_25_dockerd_failure_cleanup:
@@ -1117,7 +1052,7 @@ beest_k8s_1_25_dockerd_failure_cleanup:
   <<: *beest_k8s_1_25_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_on_failure
+    - *merge_train_on_failure
     - when: never
   needs:
     - beest_k8s_1_25_dockerd_test
@@ -1129,7 +1064,7 @@ beest_k8s_1_25_containerd_manual_cleanup:
   <<: *beest_k8s_1_25_containerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_always_manual
+    - *merge_train_always_manual
     - when: never
 
 beest_k8s_1_25_containerd_failure_cleanup:
@@ -1138,7 +1073,7 @@ beest_k8s_1_25_containerd_failure_cleanup:
   <<: *beest_k8s_1_25_containerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_on_failure
+    - *merge_train_on_failure
     - when: never
   needs:
     - beest_k8s_1_25_containerd_test
@@ -1150,7 +1085,7 @@ beest_k8s_1_25_dockerd_success_cleanup:
   <<: *beest_k8s_1_25_dockerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_on_success
+    - *merge_train_on_success
     - when: never
   dependencies:
     - beest_k8s_1_25_dockerd_test
@@ -1165,7 +1100,7 @@ beest_k8s_1_25_containerd_success_cleanup:
   <<: *beest_k8s_1_25_containerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_on_success
+    - *merge_train_on_success
     - when: never
   dependencies:
     - beest_k8s_1_25_containerd_test
@@ -1180,7 +1115,7 @@ beest_k8s_1_29_containerd_manual_cleanup:
   <<: *beest_k8s_1_29_containerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_always_manual
+    - *merge_train_always_manual
     - when: never
 
 beest_k8s_1_29_containerd_failure_cleanup:
@@ -1189,7 +1124,7 @@ beest_k8s_1_29_containerd_failure_cleanup:
   <<: *beest_k8s_1_29_containerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_on_failure
+    - *merge_train_on_failure
     - when: never
   needs:
     - beest_k8s_1_29_containerd_test
@@ -1201,7 +1136,7 @@ beest_k8s_1_29_containerd_success_cleanup:
   <<: *beest_k8s_1_29_containerd_variables
   rules:
     - *kubernetes_ignore_rule
-    - *v2_merge_train_on_success
+    - *merge_train_on_success
     - when: never
   dependencies:
     - beest_k8s_1_29_containerd_test
@@ -1384,7 +1319,7 @@ molecule_swarm_create:
   <<: *molecule_create
   rules:
     - *swarm_ignore_rule
-    - *v2_merge_train_always_manual
+    - *merge_train_always_manual
   variables:
     MOLECULE_SCENARIO: swarm
 
@@ -1393,7 +1328,7 @@ molecule_swarm_test:
   <<: *molecule_test
   rules:
     - *swarm_ignore_rule
-    - *v2_merge_train_on_success_allow_failure
+    - *merge_train_on_success_allow_failure
   dependencies:
     - molecule_swarm_create
   variables:
@@ -1409,7 +1344,7 @@ molecule_swarm_failure_cleanup:
   <<: *molecule_destroy
   rules:
     - *swarm_ignore_rule
-    - *v2_merge_train_on_failure
+    - *merge_train_on_failure
   needs:
     - molecule_swarm_create
     - molecule_swarm_test
@@ -1421,7 +1356,7 @@ molecule_swarm_success_cleanup:
   <<: *molecule_destroy
   rules:
     - *swarm_ignore_rule
-    - *v2_merge_train_on_success
+    - *merge_train_on_success
   dependencies:
     - molecule_swarm_create
     - molecule_swarm_test
@@ -1442,7 +1377,7 @@ molecule_vms_create:
   <<: *molecule_create
   rules:
     - *vms_ignore_rule
-    - *v2_merge_train_always_manual
+    - *merge_train_always_manual
   variables:
     MOLECULE_SCENARIO: vms
 
@@ -1451,7 +1386,7 @@ molecule_vms_test:
   <<: *molecule_test
   rules:
     - *vms_ignore_rule
-    - *v2_merge_train_on_success
+    - *merge_train_on_success
   variables:
     MOLECULE_SCENARIO: vms
   dependencies:
@@ -1469,7 +1404,7 @@ molecule_vms_failure_cleanup:
   <<: *molecule_destroy
   rules:
     - *vms_ignore_rule
-    - *v2_merge_train_on_failure
+    - *merge_train_on_failure
   needs:
     - molecule_vms_create
     - molecule_vms_test
@@ -1481,7 +1416,7 @@ molecule_vms_success_cleanup:
   <<: *molecule_destroy
   rules:
     - *vms_ignore_rule
-    - *v2_merge_train_on_success
+    - *merge_train_on_success
   dependencies:
     - molecule_vms_create
     - molecule_vms_test
@@ -1510,7 +1445,7 @@ beest_otel_create:
   <<: *beest_otel_variables
   rules:
     - *beest_otel_ignore_rule
-    - *v2_merge_train_always_manual
+    - *merge_train_always_manual
 
 beest_otel_test:
   <<: *beest
@@ -1518,7 +1453,7 @@ beest_otel_test:
   <<: *beest_otel_variables
   rules:
     - *beest_otel_ignore_rule
-    - *v2_merge_train_on_success
+    - *merge_train_on_success
     - when: never
   dependencies:
     - beest_otel_create
@@ -1532,7 +1467,7 @@ beest_otel_failure_cleanup:
   <<: *beest_otel_variables
   rules:
     - *beest_otel_ignore_rule
-    - *v2_merge_train_on_failure
+    - *merge_train_on_failure
     - when: never
   needs:
     - beest_otel_test
@@ -1544,7 +1479,7 @@ beest_otel_success_cleanup:
   <<: *beest_otel_variables
   rules:
     - *beest_otel_ignore_rule
-    - *v2_merge_train_on_success
+    - *merge_train_on_success
     - when: never
   dependencies:
     - beest_otel_test
@@ -1574,7 +1509,7 @@ beest_splunk_create:
   <<: *beest_splunk_variables
   rules:
     - *beest_splunk_ignore_rule
-    - *v2_merge_train_always_manual
+    - *merge_train_always_manual
 
 beest_splunk_test:
   <<: *beest
@@ -1584,7 +1519,7 @@ beest_splunk_test:
   timeout: 105 minutes
   rules:
     - *beest_splunk_ignore_rule
-    - *v2_merge_train_on_success
+    - *merge_train_on_success
     - when: never
   dependencies:
     - beest_splunk_create
@@ -1598,7 +1533,7 @@ beest_splunk_failure_cleanup:
   <<: *beest_splunk_variables
   rules:
     - *beest_splunk_ignore_rule
-    - *v2_merge_train_on_failure
+    - *merge_train_on_failure
     - when: never
   needs:
     - beest_splunk_test
@@ -1610,7 +1545,7 @@ beest_splunk_success_cleanup:
   <<: *beest_splunk_variables
   rules:
     - *beest_splunk_ignore_rule
-    - *v2_merge_train_on_success
+    - *merge_train_on_success
     - when: never
   dependencies:
     - beest_splunk_test
