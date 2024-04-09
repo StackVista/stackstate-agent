@@ -1,4 +1,5 @@
-image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
+#image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:debian-20220826-patched-20230511
+image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_deb_x64:8292f573
 
 stages:
   - manual
@@ -261,7 +262,7 @@ deps_deb:
 deps_rpm:
   stage: prepare
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220826
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_x64:8292f573
   cache:
     key: "deps-rpm-$STS_VER-$CI_COMMIT_REF_SLUG"
     paths:
@@ -485,7 +486,7 @@ build_deb:
 build_rpm:
   stage: build
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220826
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_x64:8292f573
   needs:
     - deps_rpm
   tags:
@@ -600,7 +601,7 @@ test_deb_renaming:
 test_rpm_renaming:
   stage: test
   interruptible: true
-  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/stackstate-agent-runner-gitlab:centos7-20220826
+  image: artifactory.tooling.stackstate.io/docker-virtual/stackstate/datadog_build_rpm_x64:8292f573
   needs:
     - build_rpm
   before_script: []
@@ -1688,7 +1689,7 @@ release_win:
 
 .base_release_image: &base_release_image
   stage: release
-  image: artifactory.tooling.stackstate.io/docker-virtual/docker:18.06.0
+  image: artifactory.tooling.stackstate.io/docker-virtual/docker:20-git
   dependencies:
     - build_deb
   variables:
@@ -1696,7 +1697,7 @@ release_win:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   services:
-    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:18.09-dind
+    - name: artifactory.tooling.stackstate.io/docker-virtual/docker:20-dind
       alias: docker
   before_script: []
   tags:
