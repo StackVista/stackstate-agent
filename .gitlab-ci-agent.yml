@@ -175,6 +175,7 @@ deps_deb:
       - venv
   script:
     - conda activate $CONDA_ENV
+    - go clean -modcache
     - inv -e deps --verbose
     - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
     - ls
