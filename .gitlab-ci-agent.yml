@@ -17,9 +17,9 @@ stages:
   echo "~~~~~> Trying to retrieve_linux_go_deps"
   ls *.tar.gz || true
   [ -e "go-bin.tar.gz" ] && mkdir -p $GOPATH/bin && tar xzf go-bin.tar.gz -C $GOPATH/bin
-  [ -e "go-pkg.tar.gz" ] && mkdir -p $GOPATH/pkg && tar xzf go-pkg.tar.gz -C $GOPATH/pkg
+  [ -e "go-pkg.tar.gz.part.aa" ] && mkdir -p $GOPATH/pkg && cat go-pkg.tar.gz.part.* | tar xz  -C $GOPATH/pkg
   [ -e "vendor.tar.gz" ] && mkdir vendor && tar xzf vendor.tar.gz -C vendor
-  rm -f go-bin.tar.gz go-pkg.tar.gz vendor.tar.gz || true
+  rm -f go-bin.tar.gz go-pkg.tar.gz.part.* vendor.tar.gz || true
   echo "~~~~~> /Trying..."
 
 .configure_centos_env_script: &configure_centos_env_script |
@@ -183,14 +183,15 @@ deps_deb:
     - conda activate $CONDA_ENV
     - inv -e deps --verbose
     - inv agent.version --major-version $MAJOR_VERSION -u > version.txt
-    - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz . || echo "No go-pkg"
+#    - cd $GOPATH/pkg && tar czf $CI_PROJECT_DIR/go-pkg.tar.gz . || echo "No go-pkg"
+    - cd $GOPATH/pkg && tar czf - . | split -b 800M - $CI_PROJECT_DIR/go-pkg.tar.gz.part. || echo "No go-pkg"
     - cd $GOPATH/bin && tar czf $CI_PROJECT_DIR/go-bin.tar.gz . || echo "No go-bin"
     - cd $CI_PROJECT_DIR/vendor && tar czf $CI_PROJECT_DIR/vendor.tar.gz . || echo "No vendor"
   artifacts:
     <<: *artifacts_expire_in
     paths:
       - $CI_PROJECT_DIR/version.txt
-      - $CI_PROJECT_DIR/go-pkg.tar.gz
+      - $CI_PROJECT_DIR/go-pkg.tar.gz.part.*
       - $CI_PROJECT_DIR/go-bin.tar.gz
       - $CI_PROJECT_DIR/vendor.tar.gz
 
