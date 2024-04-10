@@ -407,32 +407,32 @@ def get_version(
     if pipeline_id is None:
         pipeline_id = os.getenv("CI_PIPELINE_ID")
 
-    project_name = os.getenv("CI_PROJECT_NAME")
-    try:
-        agent_version_cache_file_exist = os.path.exists(AGENT_VERSION_CACHE_NAME)
-        if not agent_version_cache_file_exist:
-            if pipeline_id and pipeline_id.isdigit() and project_name == REPO_NAME:
-                ctx.run(
-                    f"aws s3 cp s3://dd-ci-artefacts-build-stable/datadog-agent/{pipeline_id}/{AGENT_VERSION_CACHE_NAME} .",
-                    hide="stdout",
-                )
-                agent_version_cache_file_exist = True
-
-        if agent_version_cache_file_exist:
-            with open(AGENT_VERSION_CACHE_NAME, "r") as file:
-                cache_data = json.load(file)
-
-            version, pre, commits_since_version, git_sha, pipeline_id = cache_data[major_version]
-            # Dev's versions behave the same as nightly
-            is_nightly = cache_data["nightly"] or cache_data["dev"]
-
-            if pre and include_pre:
-                version = f"{version}-{pre}"
-    except (IOError, json.JSONDecodeError, IndexError) as e:
-        # If a cache file is found but corrupted we ignore it.
-        print(f"Error while recovering the version from {AGENT_VERSION_CACHE_NAME}: {e}", file=sys.stderr)
-        version = ""
-    # If we didn't load the cache
+#     project_name = os.getenv("CI_PROJECT_NAME")
+#     try:
+#         agent_version_cache_file_exist = os.path.exists(AGENT_VERSION_CACHE_NAME)
+#         if not agent_version_cache_file_exist:
+#             if pipeline_id and pipeline_id.isdigit() and project_name == REPO_NAME:
+#                 ctx.run(
+#                     f"aws s3 cp s3://dd-ci-artefacts-build-stable/stackstate-agent/{pipeline_id}/{AGENT_VERSION_CACHE_NAME} .",
+#                     hide="stdout",
+#                 )
+#                 agent_version_cache_file_exist = True
+#
+#         if agent_version_cache_file_exist:
+#             with open(AGENT_VERSION_CACHE_NAME, "r") as file:
+#                 cache_data = json.load(file)
+#
+#             version, pre, commits_since_version, git_sha, pipeline_id = cache_data[major_version]
+#             # Dev's versions behave the same as nightly
+#             is_nightly = cache_data["nightly"] or cache_data["dev"]
+#
+#             if pre and include_pre:
+#                 version = f"{version}-{pre}"
+#     except (IOError, json.JSONDecodeError, IndexError) as e:
+#         # If a cache file is found but corrupted we ignore it.
+#         print(f"Error while recovering the version from {AGENT_VERSION_CACHE_NAME}: {e}", file=sys.stderr)
+#         version = ""
+#     # If we didn't load the cache
     if not version:
         if pipeline_id:
             # only log this warning in CI
